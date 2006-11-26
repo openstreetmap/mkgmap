@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<!--
+    File: build.xml
+    
+    Copyright (C) 2006 Steve Ratcliffe
+    
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License version 2 as
+     published by the Free Software Foundation.
+    
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+    
+    
+    Author: Steve Ratcliffe
+    Create date: 26 Nov 2006
+-->
+<project name="mkosmgmap" default="build" basedir=".">
+
+	<!-- Init -->
+  <property name="top" value="."/>
+
+	<property file="${top}/external.properties"/>
+
+  <property name="build" value="build"/>
+  <property name="dist" value="dist"/>
+  <property name="build.classes" value="${build}/classes"/>
+  <property name="src" value="src"/>
+  <property name="doc" value="doc"/>
+  <property name="javadoc" value="${doc}/api"/>
+
+  <path id="main">
+    <fileset dir="${log4j.lib}" includes="${log4j.jars}" />
+    <pathelement location="${build.classes}" />
+  </path>
+
+	<!-- Prepare - make all the directories -->
+	<target name="prepare">
+		<mkdir dir="${build.classes}" />
+	</target>
+
+  <target name="compile" depends="prepare" description="main compilation">
+
+    <javac srcdir="${src}" destdir="${build.classes}">
+      <include name="**/*.java" />
+      <classpath refid="main"/>
+    </javac>
+  </target>
+
+  <target name="javadoc" description="Create the javadoc">
+    <mkdir dir="doc"/>
+    <javadoc destdir="${javadoc}">
+
+      <fileset dir="${src}" includes="**/*.java"/>
+      <classpath refid="main"/>
+    </javadoc>
+  </target>
+
+
+  <target name="dist" depends="build, javadoc"
+          description="Make the distribution area">
+
+    <mkdir dir="${dist}"/>
+		<mkdir dir="${dist}/doc/api"/>
+
+		<!-- Make the jar -->
+    <jar basedir="${build.classes}" jarfile="${dist}/mkosmgmap.jar">
+      <include name="**/*.class"/>
+    </jar>
+
+		<!-- Copy in the javadoc -->
+		<copy todir="${dist}/doc/api" >
+      <fileset dir="${javadoc}"/>
+    </copy>
+
+    <!-- Copy the source code -->
+    <copy todir="${dist}/src" >
+      <fileset dir="${src}"/>
+    </copy>
+  </target>
+
+  <!-- Clean everything -->
+	<target name="clean">
+
+		<delete dir="${build}" />
+
+	</target>
+
+	<!-- Clobber all generated and built files -->
+	<target name="clobber" depends="clean">
+  </target>
+
+	<!-- Main -->
+	<target name="build" depends="compile" >
+    <copy file="resources/log4j.properties" todir="${build.classes}"/>
+  </target>
+
+	<target name="rebuild" depends="clean, build" />
+
+</project>
+

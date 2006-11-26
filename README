@@ -1,0 +1,9 @@
+
+Making maps for Garmin GPS units
+================================
+
+The goal of the project is to take OpenStreetMap data and put it on
+my Garmin Legend Cx to help show me where things are not mapped.
+
+As such, at least to begin with, the map will only be available at high
+zoom.
