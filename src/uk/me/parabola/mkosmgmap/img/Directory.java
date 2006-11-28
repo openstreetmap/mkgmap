@@ -17,9 +17,9 @@
 package uk.me.parabola.mkosmgmap.img;
 
 /**
- * Date: 26-Nov-2006 22:50:56
+ * Date: 26-Nov-2006 22:52:13
  *
  * @author steve
  */
-public class PartitionTable {
+public class Directory {
 }
