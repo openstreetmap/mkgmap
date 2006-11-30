@@ -35,6 +35,8 @@ public class FileSystem {
 	private FileChannel file;
 	private RandomAccessFile rafile;
 
+	private int blockSize;
+	
 	private ImgHeader header;
 
 

@@ -36,44 +36,61 @@ public class ImgHeader {
 	static protected Logger log = Logger.getLogger(ImgHeader.class);
 	
 	// Offsets into the header.
-	public static final int OFF_XOR = 0x0;
-	public static final int OFF_UPDATE_MONTH = 0xa;
-	public static final int OFF_UPDATE_YEAR = 0xb; // +1900 for val >= 0x63, +2000 for less
-	public static final int OFF_CHECKSUM = 0xf;
-	public static final int OFF_SIGNATURE = 0x10;
-	public static final int OFF_UNK_1 = 0x17;
+	private static final int OFF_XOR = 0x0;
+	private static final int OFF_UPDATE_MONTH = 0xa;
+	private static final int OFF_UPDATE_YEAR = 0xb; // +1900 for val >= 0x63, +2000 for less
+	private static final int OFF_CHECKSUM = 0xf;
+	private static final int OFF_SIGNATURE = 0x10;
+	private static final int OFF_UNK_1 = 0x17;
 
 	// If this was a real boot sector these would be the meanings
-	public static final int OFF_SECTORS = 0x18;
-	public static final int OFF_HEADS = 0x1a;
-	public static final int OFF_CYLINDERS = 0x1c;
+	private static final int OFF_SECTORS = 0x18;
+	private static final int OFF_HEADS = 0x1a;
+	private static final int OFF_CYLINDERS = 0x1c;
 
-	public static final int OFF_CREATION_YEAR = 0x39;
-	public static final int OFF_CREATION_MONTH = 0x3b;
-	public static final int OFF_CREATION_DAY = 0x3c;
-	public static final int OFF_CREATION_HOUR = 0x3d;
-	public static final int OFF_CREATION_MINUTE = 0x3e;
-	public static final int OFF_CREATION_SECOND = 0x3f;
+	private static final int OFF_CREATION_YEAR = 0x39;
+	private static final int OFF_CREATION_MONTH = 0x3b;
+	private static final int OFF_CREATION_DAY = 0x3c;
+	private static final int OFF_CREATION_HOUR = 0x3d;
+	private static final int OFF_CREATION_MINUTE = 0x3e;
+	private static final int OFF_CREATION_SECOND = 0x3f;
 
-	public static final int OFF_UNK_2 = 0x40;
+	// The block number where the directory starts.
+	private static final int OFF_DIRECTORY_START_BLOCK = 0x40;
 
-	public static final int OFF_MAP_FILE_INTENTIFIER = 0x41;
-	public static final int OFF_MAP_DESCRIPTION = 0x49; // 0x20 padded
+	private static final int OFF_MAP_FILE_INTENTIFIER = 0x41;
+	private static final int OFF_MAP_DESCRIPTION = 0x49; // 0x20 padded
 
-	public static final int OFF_HEADS2 = 0x5d;
-	public static final int OFF_SECTORS2 = 0x5f;
+	private static final int OFF_HEADS2 = 0x5d;
+	private static final int OFF_SECTORS2 = 0x5f;
 
-	public static final int OFF_BLOCK_SIZE_EXPONENT1 = 0x61;
-	public static final int OFF_BLOCK_SIZE_EXPONENT2 = 0x62;
-	public static final int OFF_BLOCK_SIZE = 0x63;
+	private static final int OFF_BLOCK_SIZE_EXPONENT1 = 0x61;
+	private static final int OFF_BLOCK_SIZE_EXPONENT2 = 0x62;
+	private static final int OFF_BLOCK_SIZE = 0x63;
 
-	public static final int OFF_UKN_3 = 0x63;
+//	private static final int OFF_UKN_3 = 0x63;
 
-	public static final int OFF_MAP_NAME_CONT = 0x65;
+	private static final int OFF_MAP_NAME_CONT = 0x65;
 
-	public static final int OFF_PARTITION_SIG = 0x1fe;
+	// 'Partition table' offsets.
+	private static final int OFF_START_HEAD = 0x1bf;
+	private static final int OFF_START_SECTOR = 0x1c0;
+	private static final int OFF_START_CYLINDER = 0x1c1;
+	private static final int OFF_SYSTEM_TYPE = 0x1c2;
+	private static final int OFF_END_HEAD = 0x1c3;
+	private static final int OFF_END_SECTOR = 0x1c4;
+	private static final int OFF_END_CYLINDER = 0x1c5;
+	private static final int OFF_REL_SECTORS = 0x1c6;
+	private static final int OFF_NUMBER_OF_SECTORS = 0x1ca;
 
-	public static final int HEADER_SIZE = 0x600;
+
+	private static final int OFF_PARTITION_SIG = 0x1fe;
+
+	private static final int HEADER_SIZE = 0x600;
+
+	// Variables for this file system.
+	private int directoryStartBlock = 2;
+	private int blockSize = 512;
 
 	private ByteBuffer header = ByteBuffer.allocateDirect(512);
 	private static final byte[] FILE_ID = new byte[]{
@@ -85,12 +102,21 @@ public class ImgHeader {
 
 	public ImgHeader() {
 		header.order(ByteOrder.LITTLE_ENDIAN);
-		
-		// Some things are always the same as far as we know, so set
-		// them here.
+		createFS();
+	}
+
+	/**
+	 * Create a file system from scratch.
+	 */
+	private void createFS() {
 		header.put(OFF_XOR, (byte) 0);
+
+		// Set the block size.  2^(E1+E2) where E1 is always 9.
+		int exp = getBlockExponent();
+		if (exp < 9)
+			throw new IllegalArgumentException("block size too small");
 		header.put(OFF_BLOCK_SIZE_EXPONENT1, (byte) 0x9);
-		header.put(OFF_BLOCK_SIZE_EXPONENT2, (byte) 0);
+		header.put(OFF_BLOCK_SIZE_EXPONENT2, (byte) (exp - 9));
 
 		header.position(OFF_SIGNATURE);
 		header.put(SIGNATURE);
@@ -99,28 +125,53 @@ public class ImgHeader {
 		header.put(FILE_ID);
 
 		header.put(OFF_UNK_1, (byte) 0x2);
-		header.put(OFF_UNK_2, (byte) 0x2);
+		header.put(OFF_DIRECTORY_START_BLOCK, (byte) directoryStartBlock);
 
-		header.putShort(OFF_SECTORS, (short) 0x4);
-		header.putShort(OFF_HEADS, (short) 0x10);
-		header.putShort(OFF_CYLINDERS, (short) 0x20);
-		header.putShort(OFF_HEADS2, (short) 0x10);
-		header.putShort(OFF_SECTORS2, (short) 0x4);
+		// This secotors, heads, cylinders stuff is probably just 'unknown'
+		int sectors = 4;
+		int heads = 0x10;
+		int cylinders = 0x20;
+		header.putShort(OFF_SECTORS, (short) sectors);
+		header.putShort(OFF_HEADS, (short) heads);
+		header.putShort(OFF_CYLINDERS, (short) cylinders);
+		header.putShort(OFF_HEADS2, (short) heads);
+		header.putShort(OFF_SECTORS2, (short) sectors);
 
-		header.putChar(OFF_BLOCK_SIZE, (char) (header.get(OFF_HEADS)
-				* header.get(OFF_SECTORS)
-				* header.get(OFF_CYLINDERS)
-				/ (1 << (header.get(OFF_BLOCK_SIZE_EXPONENT2)))));
+		char blocks = (char) (heads * sectors
+				* cylinders / (1 << exp - 9));
+		header.putChar(OFF_BLOCK_SIZE, blocks);
 
 		header.put(OFF_PARTITION_SIG, (byte) 0x55);
 		header.put(OFF_PARTITION_SIG+1, (byte) 0xaa);
-		
-		log.debug("is array is " + header.hasArray());
+
+		header.put(OFF_START_HEAD, (byte) 0);
+		header.put(OFF_START_SECTOR, (byte) 1);
+		header.put(OFF_START_CYLINDER, (byte) 0);
+		header.put(OFF_SYSTEM_TYPE, (byte) 0);
+		header.put(OFF_END_HEAD, (byte) (heads - 1));
+		header.put(OFF_END_SECTOR, (byte) sectors);
+		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
+		header.put(OFF_REL_SECTORS, (byte) 0);
+		header.put(OFF_NUMBER_OF_SECTORS,
+				(byte) (blocks * (2 ^ (exp - 9)) * sectors * cylinders));
+
+		// Checksum is not checked.
+		int check = 0;
+		header.put(OFF_CHECKSUM, (byte) check);
 	}
 
 	public ImgHeader(FileChannel fileChannel) {
 		this();
 		this.file = fileChannel;
+	}
+
+	/**
+	 * Sync the header to disk.
+	 * @throws IOException If an error occurs during writing.
+	 */
+	public void sync() throws IOException {
+		header.rewind();
+		file.write(header);
 	}
 
 	/**
@@ -130,8 +181,6 @@ public class ImgHeader {
 	public void setCreationTime(Date date) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
-
-		log.debug("mon" + cal.get(Calendar.MONTH));
 
 		header.putChar(OFF_CREATION_YEAR, (char) cal.get(Calendar.YEAR));
 		header.put(OFF_CREATION_MONTH, (byte) (cal.get(Calendar.MONTH)));
@@ -153,6 +202,10 @@ public class ImgHeader {
 		header.put(OFF_UPDATE_MONTH, (byte) cal.get(Calendar.MONTH));
 	}
 
+	/**
+	 * Set the description.  It is spread across two areas in the header.
+	 * @param desc The description.
+	 */
 	public void setDescription(String desc) {
 		header.position(OFF_MAP_DESCRIPTION);
 		int len = desc.length();
@@ -182,6 +235,27 @@ public class ImgHeader {
 		header.put((byte) 0);
 	}
 
+	/**
+	 * Get the exponent for the block size.
+	 * @return The power of two that the block size is.
+	 */
+	private int getBlockExponent() {
+		int bs = blockSize;
+		for (int i = 0; i < 32; i++) {
+			bs >>>= 1;
+			if (bs == 0)
+				return i;
+		}
+
+		// This cant really happen, as there are 32 bits in an int
+		throw new IllegalArgumentException("block size too large");
+	}
+
+	/**
+	 * Convert a string to a byte array.
+	 * @param s The string
+	 * @return A byte array.
+	 */
 	private byte[] toByte(String s) {
 		// NB: what character set should be used?
 		return s.getBytes();
@@ -199,15 +273,5 @@ public class ImgHeader {
 			return (byte) (y - 2000);
 		else
 			return (byte) (y - 1900 + 0x63);
-	}
-
-	public ByteBuffer getBuffer() {
-		header.rewind();
-		return header;
-	}
-
-	public void sync() throws IOException {
-		header.rewind();
-		file.write(header);
 	}
 }

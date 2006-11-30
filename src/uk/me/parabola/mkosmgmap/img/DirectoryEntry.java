@@ -12,22 +12,14 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 26-Nov-2006
+ * Create date: 30-Nov-2006
  */
 package uk.me.parabola.mkosmgmap.img;
 
-import java.util.List;
-
 /**
- * The directory.  There is only one directory and it contains the
- * filenames and block information.  On disk each entry is a
- * multiple of the block size.
+ * An entry within a directory.
  *
- * @author Steve Ratcliffe
+ * @author Steve Ratcliffe <sr@parabola.me.uk>
  */
-public class Directory {
-	private int blockSize;
-	private int nEntries;
-
-	private List<DirectoryEntry> entries;
+public class DirectoryEntry {
 }
