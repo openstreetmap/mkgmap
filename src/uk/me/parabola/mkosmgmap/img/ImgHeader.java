@@ -86,7 +86,7 @@ public class ImgHeader {
 
 	private static final int OFF_PARTITION_SIG = 0x1fe;
 
-	private static final int HEADER_SIZE = 0x600;
+//	private static final int HEADER_SIZE = 0x600;
 
 	// Variables for this file system.
 	private int directoryStartBlock = 2;
@@ -103,6 +103,11 @@ public class ImgHeader {
 	public ImgHeader() {
 		header.order(ByteOrder.LITTLE_ENDIAN);
 		createFS();
+	}
+
+	public ImgHeader(FileChannel fileChannel) {
+		this();
+		this.file = fileChannel;
 	}
 
 	/**
@@ -151,18 +156,13 @@ public class ImgHeader {
 		header.put(OFF_END_HEAD, (byte) (heads - 1));
 		header.put(OFF_END_SECTOR, (byte) sectors);
 		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
-		header.put(OFF_REL_SECTORS, (byte) 0);
-		header.put(OFF_NUMBER_OF_SECTORS,
-				(byte) (blocks * (2 ^ (exp - 9)) * sectors * cylinders));
+		header.putInt(OFF_REL_SECTORS, 0);
+		header.putInt(OFF_NUMBER_OF_SECTORS,
+				(blocks * (1 << (exp - 9))));
 
 		// Checksum is not checked.
 		int check = 0;
 		header.put(OFF_CHECKSUM, (byte) check);
-	}
-
-	public ImgHeader(FileChannel fileChannel) {
-		this();
-		this.file = fileChannel;
 	}
 
 	/**
@@ -170,6 +170,8 @@ public class ImgHeader {
 	 * @throws IOException If an error occurs during writing.
 	 */
 	public void sync() throws IOException {
+		setUpdateTime(new Date());
+
 		header.rewind();
 		file.write(header);
 	}
