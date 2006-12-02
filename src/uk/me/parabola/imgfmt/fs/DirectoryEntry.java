@@ -12,23 +12,29 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 26-Nov-2006
+ * Create date: 02-Dec-2006
  */
-package uk.me.parabola.imgfmt.sys;
-
-import java.util.List;
-import java.util.ArrayList;
+package uk.me.parabola.imgfmt.fs;
 
 /**
- * The directory.  There is only one directory and it contains the
- * filenames and block information.  On disk each entry is a
- * multiple of the block size.
- *
  * @author Steve Ratcliffe
  */
-class Directory {
-	private int blockSize;
-	private int nEntries;
+public interface DirectoryEntry {
+	/**
+	 * Get the file name.
+	 * @return The file name.
+	 */
+	String getName();
 
-	private List entries = new ArrayList();
+	/**
+	 * Get the file extension.
+	 * @return The file extension.
+	 */
+	String getExt();
+
+	/**
+	 * Get the file size.
+	 * @return The size of the file in bytes.
+	 */
+	int getSize();
 }

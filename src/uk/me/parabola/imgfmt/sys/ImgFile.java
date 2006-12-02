@@ -21,5 +21,5 @@ package uk.me.parabola.imgfmt.sys;
  *
  * @author steve
  */
-public class ImgFile {
+class ImgFile {
 }

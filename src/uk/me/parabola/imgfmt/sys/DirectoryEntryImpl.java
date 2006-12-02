@@ -16,14 +16,16 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+
 /**
  * An entry within a directory.
  *
  * @author Steve Ratcliffe
  */
-public class DirectoryEntry {
+class DirectoryEntryImpl implements DirectoryEntry {
 	// Constants.
-	private static final int MAX_FILE_LEN = 12;
+	private static final int MAX_FILE_LEN = 8;
 	private static final int MAX_EXT_LEN = 3;
 
 	// Filenames are a base+extension

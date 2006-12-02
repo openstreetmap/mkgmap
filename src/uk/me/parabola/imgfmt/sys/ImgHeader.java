@@ -32,7 +32,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe <sr@parabola.me.uk>
  */
-public class ImgHeader {
+class ImgHeader {
 	static protected Logger log = Logger.getLogger(ImgHeader.class);
 	
 	// Offsets into the header.
