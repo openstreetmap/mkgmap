@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
+import uk.me.parabola.imgfmt.sys.FileSystemParam;
+
 import java.util.List;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,8 +40,17 @@ public interface FSOps {
 	 * @return A file descriptor.
 	 * @throws FileNotFoundException When the file does not exist.
 	 */
-	public FileChannel open(String name, String mode)
+	public ImgChannel open(String name, String mode)
 			throws FileNotFoundException;
+
+	/**
+	 * Set various parameters of the file system.  Anything that
+	 * has not been set in <tt>params</tt> (ie is zero or null)
+	 * will not have any effect.
+	 *
+	 * @param params A set of parameters.
+	 */
+	public void setParams(FileSystemParam params);
 
 	/**
 	 * Lookup the file and return a directory entry for it.

@@ -30,7 +30,7 @@ import java.io.IOException;
  * same signature as a DOS partition table, although I don't know
  * exactly how much the partition concepts are used.
  *
- * @author Steve Ratcliffe <sr@parabola.me.uk>
+ * @author Steve Ratcliffe
  */
 class ImgHeader {
 	static protected Logger log = Logger.getLogger(ImgHeader.class);
@@ -90,6 +90,8 @@ class ImgHeader {
 
 	// Variables for this file system.
 	private int directoryStartBlock = 2;
+
+	// Block size defaults to 512.
 	private int blockSize = 512;
 
 	private ByteBuffer header = ByteBuffer.allocateDirect(512);
@@ -275,5 +277,23 @@ class ImgHeader {
 			return (byte) (y - 2000);
 		else
 			return (byte) (y - 1900 + 0x63);
+	}
+
+
+	public int getBlockSize() {
+		return blockSize;
+	}
+
+	/**
+	 * Set the block size.  This may only work if creating the file
+	 * from scratch.
+	 * @param blockSize The new block size to use.
+	 */
+	public void setBlockSize(int blockSize) {
+		this.blockSize = blockSize;
+	}
+
+	public int getDirectoryStartBlock() {
+		return directoryStartBlock;
 	}
 }

@@ -14,14 +14,31 @@
  * Author: Steve Ratcliffe
  * Create date: 02-Dec-2006
  */
-package uk.me.parabola.imgfmt.fs;
-
-import java.nio.channels.Channel;
-import java.nio.channels.ByteChannel;
+package uk.me.parabola.imgfmt.sys;
 
 /**
+ * Small class to hold all kinds of filesystem parameters. If a field
+ * is not set then it is not used.
+ *
  * @author Steve Ratcliffe
  */
-public interface FileChannel extends Channel, ByteChannel {
+public class FileSystemParam {
+	private String mapDescription;
+	private int blockSize;
 
+	public String getMapDescription() {
+		return mapDescription;
+	}
+
+	public void setMapDescription(String mapDescription) {
+		this.mapDescription = mapDescription;
+	}
+
+	public int getBlockSize() {
+		return blockSize;
+	}
+
+	public void setBlockSize(int blockSize) {
+		this.blockSize = blockSize;
+	}
 }

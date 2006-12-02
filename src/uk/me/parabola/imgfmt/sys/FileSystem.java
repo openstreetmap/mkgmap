@@ -18,15 +18,16 @@ package uk.me.parabola.imgfmt.sys;
 
 import org.apache.log4j.Logger;
 
-import java.nio.channels.FileChannel;
 import java.io.RandomAccessFile;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.nio.channels.FileChannel;
 
 import uk.me.parabola.imgfmt.fs.FSOps;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -36,29 +37,58 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
  * @author steve
  */
 public class FileSystem implements FSOps {
-	static protected Logger log = Logger.getLogger(FileSystem.class);
-	
-	private FileChannel file;
-	private RandomAccessFile rafile;
+	static private Logger log = Logger.getLogger(FileSystem.class);
 
-	private int blockSize;
+	private RandomAccessFile rafile;
+	private FileChannel file;
 
 	// A file system consists of a header, a directory and a data area.
 	private ImgHeader header;
 
 	private Directory directory;
 
-	public FileSystem(String filename) throws FileNotFoundException {
-
+	public FileSystem(String filename, FileSystemParam params)
+			throws FileNotFoundException
+	{
+		log.info("Creating file system");
 		rafile = new RandomAccessFile(filename, "rw");
 
 		file = rafile.getChannel();
 
 		header = new ImgHeader(file);
-		header.setCreationTime(new Date());
-		header.setDescription("hello world this is a test of desc");
+
+		// Set the times.
+		Date date = new Date();
+		header.setCreationTime(date);
+		header.setUpdateTime(date);
+
+		directory = new Directory(file, header.getDirectoryStartBlock());
+
+		if (params != null)
+			setParams(params);
+
+		directory.init();
 	}
 
+
+	/**
+	 * Set various parameters of the file system.  Anything that
+	 * has not been set in <tt>params</tt> (ie is zero or null)
+	 * will not have any effect.
+	 *
+	 * @param params A set of parameters.
+	 */
+	public void setParams(FileSystemParam params) {
+		int bs = params.getBlockSize();
+		if (bs > 0) {
+			header.setBlockSize(bs);
+			directory.setBlockSize(bs);
+		}
+
+		String mapdesc = params.getMapDescription();
+		if (mapdesc != null)
+			header.setDescription(mapdesc);
+	}
 
 	/**
 	 * Open a file.  The returned file object can be used to read and write the
@@ -70,7 +100,7 @@ public class FileSystem implements FSOps {
 	 * @return A file descriptor.
 	 * @throws java.io.FileNotFoundException When the file does not exist.
 	 */
-	public uk.me.parabola.imgfmt.fs.FileChannel open(String name, String mode) throws FileNotFoundException {
+	public ImgChannel open(String name, String mode) throws FileNotFoundException {
 		return null;
 	}
 
@@ -102,6 +132,10 @@ public class FileSystem implements FSOps {
 	 * @throws java.io.IOException If an error occurs during the write.
 	 */
 	public void sync() throws IOException {
+		header.sync();
+
+		file.position(header.getDirectoryStartBlock() * header.getBlockSize());
+		directory.sync();
 	}
 
 	/**
@@ -109,9 +143,10 @@ public class FileSystem implements FSOps {
 	 * to explicitly sync the data out first, to be sure that it has worked.
 	 */
 	public void close() {
-	}
-
-	public void setBlockSize(int blockSize) {
-		this.blockSize = blockSize;
+		try {
+			sync();
+		} catch (IOException e) {
+			log.debug("could not sync filesystem");
+		}
 	}
 }
