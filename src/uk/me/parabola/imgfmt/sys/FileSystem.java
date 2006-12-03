@@ -24,10 +24,13 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.nio.channels.FileChannel;
+import java.nio.ByteBuffer;
 
 import uk.me.parabola.imgfmt.fs.FSOps;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileSystemParam;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -45,8 +48,21 @@ public class FileSystem implements FSOps {
 	// A file system consists of a header, a directory and a data area.
 	private ImgHeader header;
 
+	// There is only one directory that holds all filename and block allocation
+	// information.
 	private Directory directory;
 
+	// The filesystem is responsible for allocating blocks
+	private BlockAllocator alloc;
+
+	/**
+	 * Create an IMG file from its external filesystem name and optionally some
+	 * parameters.
+	 *
+	 * @param filename The filename eg 'gmapsupp.img'
+	 * @param params File system parameters.  Can be null.
+	 * @throws FileNotFoundException If the file cannot be created.
+	 */
 	public FileSystem(String filename, FileSystemParam params)
 			throws FileNotFoundException
 	{
@@ -67,6 +83,7 @@ public class FileSystem implements FSOps {
 		if (params != null)
 			setParams(params);
 
+		alloc = new BlockAllocator(6);
 		directory.init();
 	}
 
@@ -88,6 +105,23 @@ public class FileSystem implements FSOps {
 		String mapdesc = params.getMapDescription();
 		if (mapdesc != null)
 			header.setDescription(mapdesc);
+	}
+
+	/**
+	 * Create a new file it must not allready exist.
+	 *
+	 * @param name The file name.
+	 * @return A directory entry for the new file.
+	 * @throws uk.me.parabola.imgfmt.FileExistsException
+	 *          If the file exists allready.
+	 */
+	public ImgChannel create(String name) throws FileExistsException {
+//		DirectoryEntryImpl ent
+//				= new DirectoryEntryImpl(name, blockSize, nextDataBlock);
+		Dirent dir = directory.create(name);
+
+		FileNode f = new FileNode(this, dir, "w");
+		return f;
 	}
 
 	/**
@@ -148,5 +182,21 @@ public class FileSystem implements FSOps {
 		} catch (IOException e) {
 			log.debug("could not sync filesystem");
 		}
+	}
+
+	int writeBlock(int bl, ByteBuffer buf) throws IOException {
+		file.position(bl * header.getBlockSize());
+
+		log.debug("writing block " + bl + " at " + file.position());
+
+		return file.write(buf);
+	}
+
+	int allocateBlock() {
+		return alloc.getNextBlock();
+	}
+
+	int getBlockSize() {
+		return header.getBlockSize();
 	}
 }

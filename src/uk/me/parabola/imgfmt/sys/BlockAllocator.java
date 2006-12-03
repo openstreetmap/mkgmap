@@ -17,28 +17,22 @@
 package uk.me.parabola.imgfmt.sys;
 
 /**
- * Small class to hold all kinds of filesystem parameters. If a field
- * is not set then it is not used.
+ * Used to allocate blocks to files.
  *
  * @author Steve Ratcliffe
  */
-public class FileSystemParam {
-	private String mapDescription;
-	private int blockSize;
+public class BlockAllocator {
+	private int nextBlock;
 
-	public String getMapDescription() {
-		return mapDescription;
+	public BlockAllocator(int initialBlock) {
+		this.nextBlock = initialBlock;
 	}
 
-	public void setMapDescription(String mapDescription) {
-		this.mapDescription = mapDescription;
+	public int getNextBlock() {
+		return nextBlock++;
 	}
 
-	public int getBlockSize() {
-		return blockSize;
-	}
-
-	public void setBlockSize(int blockSize) {
-		this.blockSize = blockSize;
+	public int getCurrentBlock() {
+		return nextBlock;
 	}
 }

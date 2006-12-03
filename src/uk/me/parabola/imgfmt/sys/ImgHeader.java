@@ -175,6 +175,7 @@ class ImgHeader {
 		setUpdateTime(new Date());
 
 		header.rewind();
+		file.position(0);
 		file.write(header);
 	}
 
@@ -269,14 +270,12 @@ class ImgHeader {
 	 * Convert to the one byte code that is used for the year.
 	 * If the year is in the 1900, then subtract 1900 and add the result to 0x63,
 	 * else subtract 2000.
+	 * Actually looks simpler, just subtract 1900..
 	 * @param y The year in real-world format eg 2006.
 	 * @return A one byte code representing the year.
 	 */
 	private byte toYearCode(int y) {
-		if (y >= 2000)
-			return (byte) (y - 2000);
-		else
-			return (byte) (y - 1900 + 0x63);
+		return (byte) (y - 1900);
 	}
 
 

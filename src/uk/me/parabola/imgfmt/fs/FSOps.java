@@ -16,7 +16,8 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
-import uk.me.parabola.imgfmt.sys.FileSystemParam;
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FileExistsException;
 
 import java.util.List;
 import java.io.FileNotFoundException;
@@ -29,6 +30,15 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public interface FSOps {
+
+	/**
+	 * Create a new file it must not allready exist.
+	 * @param name The file name.
+	 * @return A directory entry for the new file.
+	 * @throws FileExistsException If the file exists allready.
+	 */
+	public ImgChannel create(String name)
+			throws FileExistsException;
 
 	/**
 	 * Open a file.  The returned file object can be used to read and write the

@@ -27,17 +27,22 @@ import java.util.Arrays;
 import org.apache.log4j.Logger;
 
 /**
- * An entry within a directory.
+ * An entry within a directory.  This holds its name and a list
+ * of blocks that go to make up this file.
+ * <p>A directory entry may take more than block in the file system.
+ * <p>All documentation seems to point to the block numbers having to be
+ * contiguous, but seems strange so I shall experiment.
  *
  * @author Steve Ratcliffe
  */
-class DirectoryEntryImpl implements DirectoryEntry {
-	static private Logger log = Logger.getLogger(DirectoryEntryImpl.class);
+class Dirent implements DirectoryEntry {
+	static private Logger log = Logger.getLogger(Dirent.class);
 	
 	// Constants.
 	private static final int MAX_FILE_LEN = 8;
 	private static final int MAX_EXT_LEN = 3;
 
+	// Offset of the block table in the directory entry block.
 	private static final int BLOCKS_TABLE_START = 0x20;
 
 	// Filenames are a base+extension
@@ -55,12 +60,9 @@ class DirectoryEntryImpl implements DirectoryEntry {
 	private int nblocks;
 	private char[] blockTable;
 
-	// The block number where this entries data starts.
-	private int dataStart;
-
 	private boolean special;
 
-	public DirectoryEntryImpl(String name, int blockSize, int dataStart) {
+	public Dirent(String name, int blockSize) {
 		int dot;
 		dot = name.indexOf('.');
 		if (dot >= 0) {
@@ -70,14 +72,19 @@ class DirectoryEntryImpl implements DirectoryEntry {
 			throw new IllegalArgumentException("Filename did not have dot");
 
 		this.blockSize = blockSize;
-		this.dataStart = dataStart;
 
 		nBlockTables = 1;
 		blockTable = new char[(blockSize - BLOCKS_TABLE_START)/2];
 		Arrays.fill(blockTable, (char) 0xffff);
-
 	}
 
+	/**
+	 * Write this entry out to disk.
+	 * TODO: we currently do not cope with the case where this takes more
+	 * than one block.
+	 * @param file The file to write to.
+	 * @throws IOException If writing fails for any reason.
+	 */
 	void sync(FileChannel file) throws IOException {
 		if (nBlockTables > 1) {
 			throw new IllegalArgumentException("cannot deal with more than one block table yet");
@@ -109,11 +116,11 @@ class DirectoryEntryImpl implements DirectoryEntry {
 
 		buf.flip();
 		file.write(buf);
-		log.debug("data starts at " + this.dataStart);
 	}
 
 	/**
 	 * Get the file name.
+	 *
 	 * @return The file name.
 	 */
 	public String getName() {
@@ -122,6 +129,7 @@ class DirectoryEntryImpl implements DirectoryEntry {
 
 	/**
 	 * Set the file name.  It cannot be too long.
+	 *
 	 * @param name The file name.
 	 */
 	public void setName(String name) {
@@ -132,6 +140,7 @@ class DirectoryEntryImpl implements DirectoryEntry {
 
 	/**
 	 * Get the file extension.
+	 *
 	 * @return The file extension.
 	 */
 	public String getExt() {
@@ -151,12 +160,55 @@ class DirectoryEntryImpl implements DirectoryEntry {
 
 	/**
 	 * Get the file size.
+	 *
 	 * @return The size of the file in bytes.
 	 */
 	public int getSize() {
 		return size;
 	}
 
+
+	/**
+	 * Add a complete block and count the full size of it towards the
+	 * file size.
+	 *
+	 * @param n The block number.
+	 */
+	void addFullBlock(int n) {
+		blockTable[nblocks++] = (char) n;
+		size += blockSize;
+	}
+
+	/**
+	 * Set for the first directory entry that covers the header and directory
+	 * itself.
+	 *
+	 * @param special Set to true to mark as the special first entry.
+	 */
+	public void setSpecial(boolean special) {
+		this.special = special;
+	}
+
+	/**
+	 * Add a block without increasing the size of the file.
+	 *
+	 * @param n The block number.
+	 */
+	void addBlock(int n) {
+		log.debug("adding block " + n + ", at " + nblocks);
+		blockTable[nblocks++] = (char) n;
+	}
+
+	/**
+	 * Routine to convert a string to bytes and pad with a character up
+	 * to a given length.
+	 * TODO: character set issues.
+	 *
+	 * @param s The original string.
+	 * @param len The length to pad to.
+	 * @param pad The byte used to pad.
+	 * @return An array created from the string.
+	 */
 	private byte[] toBytes(String s, int len, byte pad) {
 		byte[] out = new byte[len];
 		for (int i = 0; i < len; i++) {
@@ -167,18 +219,5 @@ class DirectoryEntryImpl implements DirectoryEntry {
 			}
 		}
 		return out;
-	}
-
-	public void setSize(int size) {
-		this.size = size;
-	}
-
-	public void addBlock(int n) {
-		blockTable[nblocks++] = (char) n;
-		size += blockSize;
-	}
-
-	public void setSpecial(boolean special) {
-		this.special = special;
 	}
 }
