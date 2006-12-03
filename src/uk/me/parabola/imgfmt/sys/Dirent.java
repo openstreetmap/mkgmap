@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -96,8 +97,8 @@ class Dirent implements DirectoryEntry {
 
 		log.debug("nm " + buf.position());
 
-		buf.put(toBytes(name, MAX_FILE_LEN, (byte) ' '));
-		buf.put(toBytes(ext, MAX_EXT_LEN, (byte) ' '));
+		buf.put(Utils.toBytes(name, MAX_FILE_LEN, (byte) ' '));
+		buf.put(Utils.toBytes(ext, MAX_EXT_LEN, (byte) ' '));
 
 		buf.putInt(size);
 
@@ -199,25 +200,22 @@ class Dirent implements DirectoryEntry {
 		blockTable[nblocks++] = (char) n;
 	}
 
+	void incSize(int inc) {
+		size += inc;
+	}
+
 	/**
-	 * Routine to convert a string to bytes and pad with a character up
-	 * to a given length.
-	 * TODO: character set issues.
+	 * Converts from a logical block to a physical block.  If the block does
+	 * not exist then 0xffff will be returned.
 	 *
-	 * @param s The original string.
-	 * @param len The length to pad to.
-	 * @param pad The byte used to pad.
-	 * @return An array created from the string.
+	 * @param lblock The logical block in the file.
+	 * @return The corresponding physical block in the filesystem.
 	 */
-	private byte[] toBytes(String s, int len, byte pad) {
-		byte[] out = new byte[len];
-		for (int i = 0; i < len; i++) {
-			if (i > s.length()) {
-				out[i] = pad;
-			} else {
-				out[i] = (byte) s.charAt(i);
-			}
-		}
-		return out;
+	public int getPhysicalBlock(int lblock) {
+		if (lblock > blockTable.length)
+			throw new IllegalArgumentException("can't deal with long files yet");
+
+		int pblock = blockTable[lblock];
+		return pblock;
 	}
 }

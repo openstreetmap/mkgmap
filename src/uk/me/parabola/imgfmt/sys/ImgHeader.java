@@ -25,6 +25,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.io.IOException;
 
+import uk.me.parabola.imgfmt.Utils;
+
 /**
  * The header at the very begining of the .img filesystem.  It has the
  * same signature as a DOS partition table, although I don't know
@@ -49,11 +51,11 @@ class ImgHeader {
 	private static final int OFF_CYLINDERS = 0x1c;
 
 	private static final int OFF_CREATION_YEAR = 0x39;
-	private static final int OFF_CREATION_MONTH = 0x3b;
-	private static final int OFF_CREATION_DAY = 0x3c;
-	private static final int OFF_CREATION_HOUR = 0x3d;
-	private static final int OFF_CREATION_MINUTE = 0x3e;
-	private static final int OFF_CREATION_SECOND = 0x3f;
+//	private static final int OFF_CREATION_MONTH = 0x3b;
+//	private static final int OFF_CREATION_DAY = 0x3c;
+//	private static final int OFF_CREATION_HOUR = 0x3d;
+//	private static final int OFF_CREATION_MINUTE = 0x3e;
+//	private static final int OFF_CREATION_SECOND = 0x3f;
 
 	// The block number where the directory starts.
 	private static final int OFF_DIRECTORY_START_BLOCK = 0x40;
@@ -100,6 +102,7 @@ class ImgHeader {
 	private static final byte[] SIGNATURE = new byte[]{
 			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
 	private FileChannel file;
+	private Date creationTime;
 
 
 	public ImgHeader() {
@@ -144,6 +147,9 @@ class ImgHeader {
 		header.putShort(OFF_HEADS2, (short) heads);
 		header.putShort(OFF_SECTORS2, (short) sectors);
 
+		header.position(OFF_CREATION_YEAR);
+		Utils.setCreationTime(header, creationTime);
+
 		char blocks = (char) (heads * sectors
 				* cylinders / (1 << exp - 9));
 		header.putChar(OFF_BLOCK_SIZE, blocks);
@@ -177,22 +183,6 @@ class ImgHeader {
 		header.rewind();
 		file.position(0);
 		file.write(header);
-	}
-
-	/**
-	 * Set the creation date.  Note that the year is encoded specially.
-	 * @param date The date to set.
-	 */
-	public void setCreationTime(Date date) {
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(date);
-
-		header.putChar(OFF_CREATION_YEAR, (char) cal.get(Calendar.YEAR));
-		header.put(OFF_CREATION_MONTH, (byte) (cal.get(Calendar.MONTH)));
-		header.put(OFF_CREATION_DAY, (byte) cal.get(Calendar.DAY_OF_MONTH));
-		header.put(OFF_CREATION_HOUR, (byte) cal.get(Calendar.HOUR));
-		header.put(OFF_CREATION_MINUTE, (byte) cal.get(Calendar.MINUTE));
-		header.put(OFF_CREATION_SECOND, (byte) cal.get(Calendar.SECOND));
 	}
 
 	/**
@@ -294,5 +284,9 @@ class ImgHeader {
 
 	public int getDirectoryStartBlock() {
 		return directoryStartBlock;
+	}
+
+	public void setCreationTime(Date date) {
+		this.creationTime = date;
 	}
 }

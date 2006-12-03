@@ -42,6 +42,8 @@ import uk.me.parabola.imgfmt.FileSystemParam;
 public class FileSystem implements FSOps {
 	static private Logger log = Logger.getLogger(FileSystem.class);
 
+	private int blockSize;
+
 	private RandomAccessFile rafile;
 	private FileChannel file;
 
@@ -53,7 +55,7 @@ public class FileSystem implements FSOps {
 	private Directory directory;
 
 	// The filesystem is responsible for allocating blocks
-	private BlockAllocator alloc;
+	private BlockManager blockManager;
 
 	/**
 	 * Create an IMG file from its external filesystem name and optionally some
@@ -83,7 +85,10 @@ public class FileSystem implements FSOps {
 		if (params != null)
 			setParams(params);
 
-		alloc = new BlockAllocator(6);
+		// The block manager allocates blocks for files.
+		blockManager = new BlockManager(file, blockSize, 6);
+
+		// Initialise the directory.
 		directory.init();
 	}
 
@@ -98,6 +103,7 @@ public class FileSystem implements FSOps {
 	public void setParams(FileSystemParam params) {
 		int bs = params.getBlockSize();
 		if (bs > 0) {
+			blockSize = bs;
 			header.setBlockSize(bs);
 			directory.setBlockSize(bs);
 		}
@@ -120,7 +126,7 @@ public class FileSystem implements FSOps {
 //				= new DirectoryEntryImpl(name, blockSize, nextDataBlock);
 		Dirent dir = directory.create(name);
 
-		FileNode f = new FileNode(this, dir, "w");
+		FileNode f = new FileNode(file, blockManager, dir, "w");
 		return f;
 	}
 
@@ -193,7 +199,7 @@ public class FileSystem implements FSOps {
 	}
 
 	int allocateBlock() {
-		return alloc.getNextBlock();
+		return blockManager.allocate();
 	}
 
 	int getBlockSize() {

@@ -12,27 +12,26 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 02-Dec-2006
+ * Create date: 03-Dec-2006
  */
-package uk.me.parabola.imgfmt.sys;
+package uk.me.parabola.imgfmt.app;
+
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
- * Used to allocate blocks to files.
+ * This is the file that contains the overview of the map.  There
+ * can be different zoom levels and each level of zoom has an
+ * associated set of subdivided areas.  Each area then points
+ * into the RGN file.
  *
  * @author Steve Ratcliffe
  */
-public class BlockAllocator {
-	private int nextBlock;
+public class TREFile extends ImgFile {
+	private static final int HEADER_LEN = 116; // Other values are possible
 
-	public BlockAllocator(int initialBlock) {
-		this.nextBlock = initialBlock;
-	}
-
-	public int getNextBlock() {
-		return nextBlock++;
-	}
-
-	public int getCurrentBlock() {
-		return nextBlock;
+	public TREFile(ImgChannel chan) {
+		super(chan);
+		setLength(HEADER_LEN);
+		setType("GARMIN TRE");
 	}
 }

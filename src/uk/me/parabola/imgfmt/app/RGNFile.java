@@ -12,25 +12,20 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 02-Dec-2006
+ * Create date: 03-Dec-2006
  */
-package uk.me.parabola.imgfmt.fs;
+package uk.me.parabola.imgfmt.app;
 
-import java.nio.channels.Channel;
-import java.nio.channels.ByteChannel;
-import java.nio.ByteBuffer;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * @author Steve Ratcliffe
  */
-public interface ImgChannel extends Channel, ByteChannel {
+public class RGNFile extends ImgFile {
 
-	/**
-	 * Allocates a suitable buffer for operations.  It takes acount of the
-	 * blocksize and the fact that the file is in little endian.
-	 *
-	 * @return A suitable byte buffer.
-	 */
-	public ByteBuffer allocateBuffer();
-
+	public RGNFile(ImgChannel chan) {
+		super(chan);
+		setLength(8);
+		setType("GARMIN RGN");
+	}
 }

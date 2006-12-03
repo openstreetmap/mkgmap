@@ -20,18 +20,27 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.*;
+
+import org.apache.log4j.Logger;
 
 /**
  * @author Steve Ratcliffe
  */
 public class FileNode implements ImgChannel {
+	static private Logger log = Logger.getLogger(FileNode.class);
+
 	private boolean open;
 	private boolean writeable;
 	private boolean readable;
 
-	private FileSystem fs;
+	private FileChannel file;
+	private BlockManager blockManager;
 	private Dirent dir;
+
+	// The position in this file
+	private int position;
 
 	/**
 	 * Creates a new file in the file system.  You can treat this just like
@@ -39,13 +48,15 @@ public class FileNode implements ImgChannel {
 	 * Operations to two different files may not be interleaved although
 	 * it may be possible to implement this.
 	 *
-	 * @param fs The file system that file file is being created in.
+	 * @param file The handle to the underlying file.
+	 * @param blockManager Class to handle allocation of blocks.
 	 * @param dir The directory entry associated with this file.
 	 * @param mode The mode "rw" for read and write etc.
 	 */
-	public FileNode(FileSystem fs, Dirent dir, String mode) {
+	public FileNode(FileChannel file, BlockManager blockManager, Dirent dir, String mode) {
+		this.file = file;
 		this.dir = dir;
-		this.fs = fs;
+		this.blockManager = blockManager;
 
 		if (mode.indexOf('r') >= 0)
 			readable = true;
@@ -53,7 +64,7 @@ public class FileNode implements ImgChannel {
 			writeable = true;
 		if (!(readable || writeable))
 			throw new IllegalArgumentException("File must be readable or writeable");
-		if (fs == null)
+		if (blockManager == null)
 			throw new IllegalArgumentException("no file system supplied");
 		
 		open = true;
@@ -158,26 +169,8 @@ public class FileNode implements ImgChannel {
 	 * <p> An attempt is made to write up to <i>r</i> bytes to the channel,
 	 * where <i>r</i> is the number of bytes remaining in the buffer, that is,
 	 * <tt>dst.remaining()</tt>, at the moment this method is invoked.
-	 * <p/>
-	 * <p> Suppose that a byte sequence of length <i>n</i> is written, where
-	 * <tt>0</tt>&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;<i>r</i>.
-	 * This byte sequence will be transferred from the buffer starting at index
-	 * <i>p</i>, where <i>p</i> is the buffer's position at the moment this
-	 * method is invoked; the index of the last byte written will be
-	 * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>&nbsp;<tt>-</tt>&nbsp;<tt>1</tt>.
-	 * Upon return the buffer's position will be equal to
-	 * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>; its limit will not have changed.
-	 * <p/>
-	 * <p> Unless otherwise specified, a write operation will return only after
-	 * writing all of the <i>r</i> requested bytes.  Some types of channels,
-	 * depending upon their state, may write only some of the bytes or possibly
-	 * none at all.  A socket channel in non-blocking mode, for example, cannot
-	 * write any more bytes than are free in the socket's output buffer.
-	 * <p/>
-	 * <p> This method may be invoked at any time.  If another thread has
-	 * already initiated a write operation upon this channel, however, then an
-	 * invocation of this method will block until the first operation is
-	 * complete. </p>
+	 * <p>The logical block has to be converted to a physical block in the
+	 * underlying file.
 	 *
 	 * @param src The buffer from which bytes are to be retrieved
 	 * @return The number of bytes written, possibly zero
@@ -185,21 +178,62 @@ public class FileNode implements ImgChannel {
 	 *                             If this channel was not opened for writing
 	 * @throws ClosedChannelException
 	 *                             If this channel is closed
-	 * @throws AsynchronousCloseException
-	 *                             If another thread closes this channel
-	 *                             while the write operation is in progress
-	 * @throws ClosedByInterruptException
-	 *                             If another thread interrupts the current thread
-	 *                             while the write operation is in progress, thereby
-	 *                             closing the channel and setting the current thread's
-	 *                             interrupt status
 	 * @throws IOException If some other I/O error occurs
 	 */
 	public int write(ByteBuffer src) throws IOException {
 		if (!open)
 			throw new ClosedChannelException();
 
-		return 0;
+		// Get the logical block, ie the block as we see it in our file.
+		int lblock = position/blockManager.getBlockSize();
+
+		// First need to allocate enough blocks for this write. First check
+		// if the block exists already
+		int pblock = dir.getPhysicalBlock(lblock);
+		log.debug("block at position is " + pblock);
+		if (pblock == 0xffff) {
+			log.debug("allocating new block");
+			pblock = blockManager.allocate();
+			dir.addBlock(pblock);
+		}
+
+		// Position the underlying file, so that it is in the correct place.
+		int off = position - lblock*blockManager.getBlockSize();
+		log.debug("offset is " + off);
+		file.position(pblock * blockManager.getBlockSize() + off);
+
+		// Write to the underlying file.
+		int nw = file.write(src);
+		log.debug("wrote " + nw + " bytes");
+
+		// Update the file positions
+		position += nw;
+
+		// Update file size.  TODO should only be when position is at end.
+		dir.incSize(nw);
+
+		return nw;
+	}
+
+	/**
+	 * Allocates a suitable buffer for operations.  It takes acount of the
+	 * blocksize and the fact that the file is in little endian.
+	 *
+	 * @return A suitable byte buffer.
+	 */
+	public ByteBuffer allocateBuffer() {
+		ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+	
+		return buf;
+	}
+
+	public int position() {
+		return position;
+	}
+
+	public void position(int position) {
+		this.position = position;
 	}
 
 	/**
@@ -211,13 +245,19 @@ public class FileNode implements ImgChannel {
 		if (dir.getSize() == 0) {
 			// If the size is zero then allocate a block anyway.  Not a very
 			// realistic problem, done mainly for the testing phase.
-			ByteBuffer buf = ByteBuffer.allocate(fs.getBlockSize());
+			ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
 			while (buf.hasRemaining())
 				buf.put((byte) 0);
-			int b = fs.allocateBlock();
+
+			int b = blockManager.allocate();
 			dir.addBlock(b);
-			fs.writeBlock(b, buf);
+			writeBlock(b, buf);
 		}
+	}
+
+	private int writeBlock(int bl, ByteBuffer buf) {
+		dir.incSize(buf.position());
+		return 0;
 	}
 
 }

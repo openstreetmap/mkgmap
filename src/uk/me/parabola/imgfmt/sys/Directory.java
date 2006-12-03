@@ -39,10 +39,6 @@ class Directory {
 	private int blockSize;
 	private int nEntries;
 
-	// the next available block for data. Hardcoded to leave enough room
-	// for three files for now.
-	private BlockAllocator allocator;
-
 	private FileChannel file;
 
 	// The list of files themselves.
@@ -51,7 +47,6 @@ class Directory {
 	// The first entry in the directory covers the header and directory itself
 	// and so is special.
 	private Dirent specialEntry;
-	private BlockAllocator headerAllocator = new BlockAllocator(0);
 
 	public Directory(FileChannel file, int start) {
 		this.file = file;
@@ -97,14 +92,11 @@ class Directory {
 	 * Initialise the directory.
 	 */
 	public void init() {
-		allocator = new BlockAllocator(startBlock+4);
 
 		// There is a special entry in the directory that covers the whole
 		// of the header and the directory itself.  We have to allocate it
 		// and make it cover the right part of the file.
-		Dirent ent
-				= new Dirent("        .   ", blockSize
-		);
+		Dirent ent = new Dirent("        .   ", blockSize);
 
 		// Add blocks for the header before the directory.
 		for (int i = 0; i < startBlock; i++)
@@ -115,7 +107,6 @@ class Directory {
 
 		// Add it to this directory.
 		addEntry(ent);
-
 	}
 
 	/**
