@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
  * 
  * @author Steve Ratcliffe
  */
-public class ImgFile {
+public abstract class ImgFile {
 	static private Logger log = Logger.getLogger(ImgFile.class);
 	
 	private int length;
@@ -55,11 +55,12 @@ public class ImgFile {
 
 	private void sync() throws IOException {
 		log.debug("writing header for " + type);
+		writeCommonHeader();
 		writeHeader();
 	}
 
-	public void writeHeader() throws IOException {
-		ByteBuffer buf = chan.allocateBuffer();
+	public void writeCommonHeader() throws IOException {
+		ByteBuffer buf = allocateBuffer();
 
 		buf.putChar((char) length);
 		buf.put(Utils.toBytes(type, 10, (byte) 0));
@@ -67,10 +68,20 @@ public class ImgFile {
 		buf.put((byte) 0);
 		Utils.setCreationTime(buf, new Date());
 
-		buf.flip();
-		int n = chan.write(buf);
+		int n = write(buf);
 		log.debug("wrote " + n + " bytes for header");
 	}
+
+	protected int write(ByteBuffer buf) throws IOException {
+		buf.flip();
+		return chan.write(buf);
+	}
+
+	protected ByteBuffer allocateBuffer() {
+		return chan.allocateBuffer();
+	}
+
+	protected abstract void writeHeader() throws IOException;
 
 	public void setLength(int length) {
 		this.length = length;
@@ -78,5 +89,10 @@ public class ImgFile {
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	protected void put3(ByteBuffer buf, int val) {
+		buf.put((byte) (val & 0xff));
+		buf.putChar((char) (val >> 8));
 	}
 }

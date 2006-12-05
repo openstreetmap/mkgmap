@@ -47,8 +47,8 @@ public class Map {
 	public static Map createMap(FileSystem fs, String name) {
 		Map m = new Map();
 		try {
-			m.treFile = new TREFile(fs.create(name + ".TRE"));
 			m.rgnFile = new RGNFile(fs.create(name + ".RGN"));
+			m.treFile = new TREFile(fs.create(name + ".TRE"));
 			m.lblFile = new LBLFile(fs.create(name + ".LBL"));
 		} catch (FileExistsException e) {
 			log.error("failed to create file", e);
@@ -62,8 +62,8 @@ public class Map {
 	 * Close this map by closing all the constituent files.
 	 */
 	public void close() {
-		treFile.close();
 		rgnFile.close();
+		treFile.close();
 		lblFile.close();
 	}
 }

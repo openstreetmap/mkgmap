@@ -18,14 +18,27 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * @author Steve Ratcliffe
  */
 public class RGNFile extends ImgFile {
+	private static int HEADER_LEN = 29;
 
 	public RGNFile(ImgChannel chan) {
 		super(chan);
-		setLength(8);
+		setLength(HEADER_LEN);
 		setType("GARMIN RGN");
+	}
+
+	public void writeHeader() throws IOException {
+		ByteBuffer buf = allocateBuffer();
+
+		buf.putInt(HEADER_LEN);
+		buf.putInt(0);
+		
+		write(buf);
 	}
 }

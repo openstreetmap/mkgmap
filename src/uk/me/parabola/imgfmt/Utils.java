@@ -75,4 +75,8 @@ public class Utils {
 		buf.put((byte) cal.get(Calendar.MINUTE));
 		buf.put((byte) cal.get(Calendar.SECOND));
 	}
+
+	public static int toMapUnit(double l) {
+		return (int) (l * (1 << 24)/360);
+	}
 }
