@@ -43,6 +43,7 @@ public abstract class ImgFile {
 
 	public ImgFile(ImgChannel chan) {
 		this.chan = chan;
+		writer = new BufferedWriteStrategy(chan);
 	}
 
 	public void close() {
@@ -54,7 +55,7 @@ public abstract class ImgFile {
 	}
 
 	public int position() {
-		return chan.position();
+		return writer.position();
 	}
 	
 	private void sync() throws IOException {
@@ -62,24 +63,33 @@ public abstract class ImgFile {
 		writeCommonHeader();
 		writeHeader();
 		writeBody();
+		writer.sync();
 	}
 
 	public void writeCommonHeader() throws IOException {
+
+		putChar((char) length);
+		put(Utils.toBytes(type, 10, (byte) 0));
+		put((byte) 1);
+		put((byte) 0);
 		ByteBuffer buf = allocateBuffer();
+//		Utils.setCreationTime(buf, new Date());
+//		buf.flip();
+		putChar((char) 0);
+		put((byte) 0);
+		put((byte) 0);
+		put((byte) 0);
+		put((byte) 0);
+		put((byte) 0);
 
-		buf.putChar((char) length);
-		buf.put(Utils.toBytes(type, 10, (byte) 0));
-		buf.put((byte) 1);
-		buf.put((byte) 0);
-		Utils.setCreationTime(buf, new Date());
-
-		int n = write(buf);
-		log.debug("wrote " + n + " bytes for header");
+//		int n = write(buf);
+//		log.debug("wrote " + n + " bytes for header");
 	}
 
 	protected int write(ByteBuffer buf) throws IOException {
 		buf.flip();
-		return chan.write(buf);
+//		return chan.write(buf);
+		throw new IOException("not here");
 	}
 
 	protected ByteBuffer allocateBuffer() {
@@ -106,6 +116,7 @@ public abstract class ImgFile {
 	 * @param val The value to write.
 	 */
 	public void put3(int val) {
+		log.debug("put3 " + val);
 		writer.put((byte) (val & 0xff));
 		writer.putChar((char) (val >> 8));
 	}

@@ -21,11 +21,16 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
+import org.apache.log4j.Logger;
 
 /**
  * @author Steve Ratcliffe
  */
 public class BufferedWriteStrategy implements WriteStrategy {
+	static private Logger log = Logger.getLogger(BufferedWriteStrategy.class);
+	
 	private ByteArrayOutputStream buf3;
 
 	private static int MAX_SIZE = 1024 * 50; //XXX will grow it automatically later
@@ -35,6 +40,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 
 	public BufferedWriteStrategy(ImgChannel chan) {
 		this.chan = chan;
+		buf.order(ByteOrder.LITTLE_ENDIAN);
 	}
 
 	/**
@@ -43,7 +49,19 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * little to do.
 	 */
 	public void sync() throws IOException {
+		buf.flip();
+		log.debug("syncing to pos " + chan.position() + ", size" + buf.limit());
 		chan.write(buf);
+	}
+
+	/**
+	 * Get the position.  Needed because may not be reflected in the underlying
+	 * file if being buffered.
+	 *
+	 * @return The logical position within the file.
+	 */
+	public int position() {
+		return buf.position();
 	}
 
 	/**
@@ -58,6 +76,8 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
+		log.debug("put at " + buf.position());
+
 		buf.put(b);
 	}
 
@@ -76,6 +96,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The value to write.
 	 */
 	public void putInt(int val) {
+		log.debug("putint at " + buf.position());
 		buf.putInt(val);
 	}
 

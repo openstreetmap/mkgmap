@@ -84,30 +84,30 @@ public class TREFile extends ImgFile {
 
 
 	protected void writeHeader() throws IOException {
-		ByteBuffer buf = allocateBuffer();
+//		ByteBuffer buf = allocateBuffer();
 
 		put3(bounds.getMaxLat());
 		put3(bounds.getMaxLong());
 		put3(bounds.getMinLat());
 		put3(bounds.getMinLong());
 
-		buf.putInt(mapLevelPos);
-		buf.putInt(mapLevelsSize);
+		putInt(mapLevelPos);
+		putInt(mapLevelsSize);
 		dataPos += mapLevelsSize;
 
-		buf. putInt(dataPos);
-		buf.putInt(subdivSize);
+		putInt(dataPos);
+		putInt(subdivSize);
 		dataPos += subdivSize;
 
-		buf.putInt(dataPos);
-		buf.putInt(copyrightSize);
+		putInt(dataPos);
+		putInt(copyrightSize);
 		dataPos += copyrightSize;
 
-		buf.putChar(COPYRIGHT_REC_SIZE);
+		putChar(COPYRIGHT_REC_SIZE);
 
-		buf.putInt(0);
+		putInt(0);
 
-		buf.put(poiDisplayFlags);
+		put(poiDisplayFlags);
 
 		put3(0x19);
 		putInt(0x01040d);
@@ -138,8 +138,8 @@ public class TREFile extends ImgFile {
 
 		put(Utils.toBytes("My OSM Map"));
 
-		int n = write(buf);
-		log.debug("wrote " + n + " bytes for TRE header");
+		//int n = write(buf);
+		//log.debug("wrote " + n + " bytes for TRE header");
 	}
 
 	protected void writeBody() {

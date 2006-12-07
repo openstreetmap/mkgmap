@@ -30,6 +30,7 @@ public interface WriteStrategy {
 	 * Called to write out any saved buffers.  The strategy may write
 	 * directly to the file in which case this would have nothing or
 	 * little to do.
+	 * @throws IOException If there is an error writing.
 	 */
 	public void sync() throws IOException;
 
@@ -37,6 +38,14 @@ public interface WriteStrategy {
 	 * Called when the stream is closed.  Any resources can be freed.
 	 */
 	public void close();
+
+	/**
+	 * Get the position.  Needed because may not be reflected in the underlying
+	 * file if being buffered.
+	 *
+	 * @return The logical position within the file.
+	 */
+	public int position();
 
 	/**
 	 * Write out a single byte.
