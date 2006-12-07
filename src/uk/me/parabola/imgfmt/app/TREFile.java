@@ -41,23 +41,27 @@ public class TREFile extends ImgFile {
 	private int dataPos = HEADER_LEN + INFO_LEN;
 
 	// Bounding box.  All units are in map units.
-	private int minLat = Utils.toMapUnit(51.55109803705159);
-	private int maxLat = Utils.toMapUnit(51.56378751797807);
-	private int maxLong = Utils.toMapUnit(-0.21497659409451947);
-	private int minLong = Utils.toMapUnit(-0.24594693766998674);
+	private Bounds bounds;
+
 	private static final char POLYLINE_REC_LEN = 2;
 	private static final char POLYGON_REC_LEN = 2;
 	private static final char POINT_REC_LEN = 3;
+	private static final char COPYRIGHT_REC_SIZE = 0x3;
 
+	// Zoom levels for map
+	private int mapLevelPos;
 	private int mapLevelsSize;
+
+	private int subdivPos;
 	private int subdivSize;
+
+	private int copyrightPos;
 	private int copyrightSize;
 
 	private byte poiDisplayFlags;
 	private int polylineSize;
 	private int polygonSize;
 	private int pointSize;
-	private static final char COPYRIGHT_REC_SIZE = 0x3;
 
 	public TREFile(ImgChannel chan) {
 		super(chan);
@@ -66,33 +70,32 @@ public class TREFile extends ImgFile {
 	}
 
 	/**
-	 * Set the bounding box for this map.
-	 *
-	 * @param minLat South boundry.
-	 * @param minLong East boundry.
-	 * @param maxLat North boundry.
-	 * @param maxLong West boundry.
+	 * Set the bounds based upon the latitude and longitude in degrees.
+	 * @param area The area bounded by the map.
 	 */
-	public void setBounds(int minLat, int minLong, int maxLat, int maxLong) {
-		this.minLat = minLat;
-		this.minLong = minLong;
-		this.maxLat = maxLat;
-		this.maxLong = maxLong;
+	public void setBounds(Bounds area) {
+		this.bounds = area;
 	}
+
+	public Zoom createZoom(int zoom, int bits) {
+		Zoom z = new Zoom(zoom, bits);
+		return z;
+	}
+
 
 	protected void writeHeader() throws IOException {
 		ByteBuffer buf = allocateBuffer();
 
-		put3(buf, maxLat);
-		put3(buf, maxLong);
-		put3(buf, minLat);
-		put3(buf, minLong);
+		put3(bounds.getMaxLat());
+		put3(bounds.getMaxLong());
+		put3(bounds.getMinLat());
+		put3(bounds.getMinLong());
 
-		buf.putInt(dataPos);
+		buf.putInt(mapLevelPos);
 		buf.putInt(mapLevelsSize);
 		dataPos += mapLevelsSize;
 
-		buf.putInt(dataPos);
+		buf. putInt(dataPos);
 		buf.putInt(subdivSize);
 		dataPos += subdivSize;
 
@@ -106,37 +109,40 @@ public class TREFile extends ImgFile {
 
 		buf.put(poiDisplayFlags);
 
-		put3(buf, 0x19);
-		buf.putInt(0x01040d);
+		put3(0x19);
+		putInt(0x01040d);
 
-		buf.putChar((char) 1);
-		buf.put((byte) 0);
+		putChar((char) 1);
+		put((byte) 0);
 
-		buf.putInt(dataPos);
-		buf.putInt(polylineSize);
-		buf.putChar((char) POLYLINE_REC_LEN);
+		putInt(dataPos);
+		putInt(polylineSize);
+		putChar(POLYLINE_REC_LEN);
 
-		buf.putChar((char) 0);
-		buf.putChar((char) 0);
+		putChar((char) 0);
+		putChar((char) 0);
 
-		buf.putInt(dataPos);
-		buf.putInt(polygonSize);
-		buf.putChar(POLYGON_REC_LEN);
+		putInt(dataPos);
+		putInt(polygonSize);
+		putChar(POLYGON_REC_LEN);
 
-		buf.putChar((char) 0);
-		buf.putChar((char) 0);
+		putChar((char) 0);
+		putChar((char) 0);
 
-		buf.putInt(dataPos);
-		buf.putInt(pointSize);
-		buf.putChar((char) POINT_REC_LEN);
+		putInt(dataPos);
+		putInt(pointSize);
+		putChar(POINT_REC_LEN);
 
-		buf.putChar((char) 0);
-		buf.putChar((char) 0);
+		putChar((char) 0);
+		putChar((char) 0);
 
-		buf.put(Utils.toBytes("My OSM Map"));
+		put(Utils.toBytes("My OSM Map"));
 
 		int n = write(buf);
 		log.debug("wrote " + n + " bytes for TRE header");
 	}
 
+	protected void writeBody() {
+		
+	}
 }

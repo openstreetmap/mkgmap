@@ -20,7 +20,6 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Date;
 import java.io.IOException;
 
@@ -39,7 +38,8 @@ public abstract class ImgFile {
 	private int length;
 	private String type;
 	private ImgChannel chan;
-	private int blockSize;
+
+	private WriteStrategy writer;
 
 	public ImgFile(ImgChannel chan) {
 		this.chan = chan;
@@ -53,10 +53,15 @@ public abstract class ImgFile {
 		}
 	}
 
+	public int position() {
+		return chan.position();
+	}
+	
 	private void sync() throws IOException {
 		log.debug("writing header for " + type);
 		writeCommonHeader();
 		writeHeader();
+		writeBody();
 	}
 
 	public void writeCommonHeader() throws IOException {
@@ -78,10 +83,13 @@ public abstract class ImgFile {
 	}
 
 	protected ByteBuffer allocateBuffer() {
+		// XXX may go private
 		return chan.allocateBuffer();
 	}
 
 	protected abstract void writeHeader() throws IOException;
+
+	protected abstract void writeBody() throws IOException;
 
 	public void setLength(int length) {
 		this.length = length;
@@ -91,8 +99,28 @@ public abstract class ImgFile {
 		this.type = type;
 	}
 
-	protected void put3(ByteBuffer buf, int val) {
-		buf.put((byte) (val & 0xff));
-		buf.putChar((char) (val >> 8));
+
+	/**
+	 * Write out a 3 byte value in the correct byte order etc.
+	 *
+	 * @param val The value to write.
+	 */
+	public void put3(int val) {
+		writer.put((byte) (val & 0xff));
+		writer.putChar((char) (val >> 8));
+	}
+
+	public void putInt(int val) {
+		writer.putInt(val);
+	}
+	public void putChar(char val) {
+		writer.putChar(val);
+	}
+	public void put(byte val) {
+		writer.put(val);
+	}
+
+	protected void put(byte[] val) {
+		writer.put(val);
 	}
 }

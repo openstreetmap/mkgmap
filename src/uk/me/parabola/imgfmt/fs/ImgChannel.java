@@ -33,4 +33,11 @@ public interface ImgChannel extends Channel, ByteChannel {
 	 */
 	public ByteBuffer allocateBuffer();
 
+	/**
+	 * Get the file position. Note that this is a logical position relative
+	 * to the begining of the file.
+	 *
+	 * @return The offset in bytes from the beginning of the file.
+	 */
+	public int position();
 }

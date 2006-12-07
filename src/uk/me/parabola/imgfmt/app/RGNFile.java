@@ -41,4 +41,8 @@ public class RGNFile extends ImgFile {
 		
 		write(buf);
 	}
+
+
+	protected void writeBody() throws IOException {
+	}
 }

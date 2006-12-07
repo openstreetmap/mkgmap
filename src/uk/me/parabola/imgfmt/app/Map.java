@@ -66,4 +66,8 @@ public class Map {
 		treFile.close();
 		lblFile.close();
 	}
+
+	public TREFile getTRE() {
+		return treFile;
+	}
 }

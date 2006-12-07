@@ -122,4 +122,7 @@ public class LBLFile extends ImgFile {
 
 		write(buf);
 	}
+
+	protected void writeBody() throws IOException {
+	}
 }
