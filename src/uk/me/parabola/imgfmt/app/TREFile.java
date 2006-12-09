@@ -20,6 +20,8 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
@@ -54,6 +56,7 @@ public class TREFile extends ImgFile {
 	private int subdivPos;
 	private int subdivSize;
 
+	private List<Label> copyrights = new ArrayList<Label>();
 	private int copyrightPos;
 	private int copyrightSize;
 
@@ -72,8 +75,11 @@ public class TREFile extends ImgFile {
 	}
 
 	public void sync() throws IOException {
-		position(0);
+		// Do anything that is in structures and that needs to be dealt with.
+		prepare();
 
+		// Now refresh the header
+		position(0);
 		writeCommonHeader();
 		writeHeader();
 
@@ -93,8 +99,23 @@ public class TREFile extends ImgFile {
 		return z;
 	}
 
+	public void addCopyright(Label cr) {
+		copyrights.add(cr);
+	}
 
-	protected void writeHeader() throws IOException {
+	/**
+	 * Anything waiting to be written is dealt with here.
+	 */
+	private void prepare() {
+		// Write out the pointers to the labels that hold the copyright strings
+		copyrightPos = position();
+		for (Label l : copyrights) {
+			copyrightSize += COPYRIGHT_REC_SIZE;
+			put3(l.getOffset());
+		}
+	}
+
+	private void writeHeader() throws IOException {
 
 		put3(bounds.getMaxLat());
 		put3(bounds.getMaxLong());

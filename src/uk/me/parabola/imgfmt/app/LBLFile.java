@@ -20,15 +20,18 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 /**
  * The file that holds all the labels for the map.
  *
  * @author Steve Ratcliffe
  */
 public class LBLFile extends ImgFile {
+	static private Logger log = Logger.getLogger(LBLFile.class);
 
 	private static int HEADER_LEN = 196; // Other lengths are possible
-	private static int INFO_LEN = 5;
+	private static int INFO_LEN = 60;
 
 	private int dataPos = HEADER_LEN + INFO_LEN;
 	private static final char COUNTRY_REC_LEN = 3;
@@ -47,6 +50,8 @@ public class LBLFile extends ImgFile {
 	private static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
 	private static final int ENCODING_10BIT = 10;
 
+	private int labelSize;
+
 	public LBLFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
 		setType("GARMIN LBL");
@@ -58,6 +63,8 @@ public class LBLFile extends ImgFile {
 	}
 
 	public void sync() throws IOException {
+		log.debug("syncing lbl file");
+
 		position(0);
 
 		writeCommonHeader();
@@ -66,14 +73,32 @@ public class LBLFile extends ImgFile {
 		getWriter().sync();
 	}
 
+	/**
+	 * Add a new label with the given text.
+	 *
+	 * @param text The text of the label, it will be uppercased.
+	 * @return A reference to the created label.
+	 */
+	public Label newLabel(String text) {
+		Label l = new Label(text);
+		l.setOffset(position() - (HEADER_LEN+INFO_LEN));
+
+		l.write(this);
+		labelSize += l.getLength();
+
+		return l;
+	}
+
 	private void writeHeader() throws IOException {
 
-		putInt(HEADER_LEN);
-		putInt(INFO_LEN);
+		// LBL1 section, these are regular labels
+		putInt(HEADER_LEN + INFO_LEN);
+		putInt(labelSize);
 
 		put((byte) 0);
 		put((byte) ENCODING_6BIT);
 
+		dataPos = HEADER_LEN + INFO_LEN + labelSize;
 		putInt(dataPos);
 		putInt(0);
 		putChar(COUNTRY_REC_LEN);
@@ -104,7 +129,7 @@ public class LBLFile extends ImgFile {
 
 		putInt(dataPos);
 		putInt(0);
-		putChar((char) UNK2_REC_LEN);
+		putChar(UNK2_REC_LEN);
 		putInt(0);
 
 		putInt(dataPos);
@@ -130,20 +155,13 @@ public class LBLFile extends ImgFile {
 		putChar((char) 0); //code
 		putInt(0);
 
-		putInt(dataPos);
-		putInt(0);
+		// Sort descriptor ???
+		putInt(HEADER_LEN);
+		putInt(INFO_LEN);
 
 		putInt(dataPos);
 		putInt(0);
 		putChar(UNK3_REC_LEN);
 		putChar((char) 0);
-	}
-
-	public Label newLabel(String text) {
-		Label l = new Label(text);
-		l.setOffset(dataPos);
-		dataPos += l.getLength();
-
-		return l;
 	}
 }

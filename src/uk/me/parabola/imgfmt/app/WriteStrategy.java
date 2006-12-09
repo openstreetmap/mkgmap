@@ -77,4 +77,13 @@ public interface WriteStrategy {
 	 * @param val The values to write.
 	 */
 	void put(byte[] val);
+
+	/**
+	 * Write out part of a byte array.
+	 *
+	 * @param src The array to take bytes from.
+	 * @param start The start position.
+	 * @param length The number of bytes to write.
+	 */
+	void put(byte[] src, int start, int length);
 }

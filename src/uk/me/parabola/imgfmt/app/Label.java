@@ -33,7 +33,7 @@ public class Label {
 	private byte[] ctext;
 	private int length;
 
-	// The offset in the file.
+	// The offset in to the data section.
 	private int offset;
 
 	/**
@@ -111,6 +111,11 @@ public class Label {
 			mask = 0xfc << (8 - shift);
 			buf[byteOff + 1] = (byte) (((c << 2) << (8 - shift)) & mask);
 		}
+	}
+
+	public void write(ImgFile imgFile) {
+		log.debug("put label " + this.length);
+		imgFile.put(ctext, 0, this.length);
 	}
 
 	// For debugging only

@@ -34,6 +34,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	private static int MAX_SIZE = 1024 * 50; //XXX will grow it automatically later
 	private ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
 	private ImgChannel chan;
+	private int maxSize;
 
 
 	public BufferedWriteStrategy(ImgChannel chan) {
@@ -47,7 +48,8 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * little to do.
 	 */
 	public void sync() throws IOException {
-		buf.flip();
+		buf.limit(maxSize);
+		buf.position(0);
 		log.debug("syncing to pos " + chan.position() + ", size" + buf.limit());
 		chan.write(buf);
 	}
@@ -68,6 +70,9 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param pos The new position in the file.
 	 */
 	public void position(int pos) {
+		int cur = position();
+		if (cur > maxSize)
+			maxSize = cur;
 		buf.position(pos);
 	}
 
@@ -101,7 +106,6 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The value to write.
 	 */
 	public void putInt(int val) {
-		log.debug("putint at " + buf.position());
 		buf.putInt(val);
 	}
 
@@ -112,5 +116,16 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 */
 	public void put(byte[] val) {
 		buf.put(val);
+	}
+
+	/**
+	 * Write out part of a byte array.
+	 *
+	 * @param src	The array to take bytes from.
+	 * @param start  The start position.
+	 * @param length The number of bytes to write.
+	 */
+	public void put(byte[] src, int start, int length) {
+		buf.put(src, start, length);
 	}
 }

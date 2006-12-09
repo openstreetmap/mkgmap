@@ -136,7 +136,18 @@ public abstract class ImgFile {
 		writer.put(val);
 	}
 
+	/**
+	 * Write out a selected section of a byte array.
+	 * @param src The source array.
+	 * @param start The starting position.
+	 * @param length The number to take.
+	 */
+	public void put(byte[] src, int start, int length) {
+		writer.put(src, start, length);
+	}
+
 	protected void setWriteStrategy(WriteStrategy writer) {
 		this.writer = writer;
 	}
+
 }
