@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
 
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.io.IOException;
 
@@ -35,80 +34,60 @@ import org.apache.log4j.Logger;
 public abstract class ImgFile {
 	static private Logger log = Logger.getLogger(ImgFile.class);
 	
-	private int length;
+	private int headerLength;
 	private String type;
-	private ImgChannel chan;
 
 	private WriteStrategy writer;
-
-	public ImgFile(ImgChannel chan) {
-		this.chan = chan;
-		writer = new BufferedWriteStrategy(chan);
-	}
 
 	public void close() {
 		try {
 			sync();
 		} catch (IOException e) {
-			log.warn("error on file close");
+			log.error("error on file close", e);
 		}
 	}
 
 	public int position() {
 		return writer.position();
 	}
-	
-	private void sync() throws IOException {
-		log.debug("writing header for " + type);
-		writeCommonHeader();
-		writeHeader();
-		writeBody();
-		writer.sync();
+
+	public void position(int pos) {
+		writer.position(pos);
 	}
+	
+	public abstract void sync() throws IOException;
 
-	public void writeCommonHeader() throws IOException {
-
-		putChar((char) length);
+	/**
+	 * Writes out the header that is common to all the file types.  It should
+	 * be called by the sync() methods of subclasses when they are ready.
+	 *
+	 * @throws IOException If there is an error writing to the file.
+	 */
+	protected void writeCommonHeader() throws IOException {
+		putChar((char) headerLength);
 		put(Utils.toBytes(type, 10, (byte) 0));
 		put((byte) 1);
 		put((byte) 0);
-		ByteBuffer buf = allocateBuffer();
-//		Utils.setCreationTime(buf, new Date());
-//		buf.flip();
-		putChar((char) 0);
-		put((byte) 0);
-		put((byte) 0);
-		put((byte) 0);
-		put((byte) 0);
-		put((byte) 0);
-
-//		int n = write(buf);
-//		log.debug("wrote " + n + " bytes for header");
+		byte[] date = Utils.makeCreationTime(new Date());
+		put(date);
 	}
 
-	protected int write(ByteBuffer buf) throws IOException {
-		buf.flip();
-//		return chan.write(buf);
-		throw new IOException("not here");
-	}
-
-	protected ByteBuffer allocateBuffer() {
-		// XXX may go private
-		return chan.allocateBuffer();
-	}
-
-	protected abstract void writeHeader() throws IOException;
-
-	protected abstract void writeBody() throws IOException;
-
-	public void setLength(int length) {
-		this.length = length;
+	public void setHeaderLength(int headerLength) {
+		this.headerLength = headerLength;
 	}
 
 	public void setType(String type) {
 		this.type = type;
 	}
 
+
+	public WriteStrategy getWriter() {
+		return writer;
+	}
+
+	public void setWriter(WriteStrategy writer) {
+		this.writer = writer;
+	}
 
 	/**
 	 * Write out a 3 byte value in the correct byte order etc.
@@ -121,17 +100,43 @@ public abstract class ImgFile {
 		writer.putChar((char) (val >> 8));
 	}
 
+	/**
+	 * Write out a 4 byte value.
+	 *
+	 * @param val The integer value to write.
+	 */
 	public void putInt(int val) {
 		writer.putInt(val);
 	}
+
+	/**
+	 * Write out a 2 byte value.
+	 *
+	 * @param val The value to write.
+	 */
 	public void putChar(char val) {
 		writer.putChar(val);
 	}
+
+	/**
+	 * Write out a single byte value.
+	 *
+	 * @param val The value to write.
+	 */
 	public void put(byte val) {
 		writer.put(val);
 	}
 
+	/**
+	 * Write out a number of bytes from an array.
+	 *
+	 * @param val The values to write.
+	 */
 	protected void put(byte[] val) {
 		writer.put(val);
+	}
+
+	protected void setWriteStrategy(WriteStrategy writer) {
+		this.writer = writer;
 	}
 }

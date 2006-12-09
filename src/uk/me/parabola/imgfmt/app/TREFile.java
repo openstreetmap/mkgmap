@@ -20,7 +20,6 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.log4j.Logger;
 
@@ -64,9 +63,21 @@ public class TREFile extends ImgFile {
 	private int pointSize;
 
 	public TREFile(ImgChannel chan) {
-		super(chan);
-		setLength(HEADER_LEN);
+		setHeaderLength(HEADER_LEN);
 		setType("GARMIN TRE");
+		setWriter(new BufferedWriteStrategy(chan));
+
+		// Position at the start of the writable area.
+		position(HEADER_LEN + INFO_LEN);
+	}
+
+	public void sync() throws IOException {
+		position(0);
+
+		writeCommonHeader();
+		writeHeader();
+
+		getWriter().sync();
 	}
 
 	/**
@@ -84,7 +95,6 @@ public class TREFile extends ImgFile {
 
 
 	protected void writeHeader() throws IOException {
-//		ByteBuffer buf = allocateBuffer();
 
 		put3(bounds.getMaxLat());
 		put3(bounds.getMaxLong());
@@ -142,7 +152,5 @@ public class TREFile extends ImgFile {
 		//log.debug("wrote " + n + " bytes for TRE header");
 	}
 
-	protected void writeBody() {
-		
-	}
+
 }

@@ -31,8 +31,6 @@ import org.apache.log4j.Logger;
 public class BufferedWriteStrategy implements WriteStrategy {
 	static private Logger log = Logger.getLogger(BufferedWriteStrategy.class);
 	
-	private ByteArrayOutputStream buf3;
-
 	private static int MAX_SIZE = 1024 * 50; //XXX will grow it automatically later
 	private ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
 	private ImgChannel chan;
@@ -65,6 +63,15 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	}
 
 	/**
+	 * Set the position of the file.
+	 *
+	 * @param pos The new position in the file.
+	 */
+	public void position(int pos) {
+		buf.position(pos);
+	}
+
+	/**
 	 * Called when the stream is closed.  Any resources can be freed.
 	 */
 	public void close() {
@@ -76,8 +83,6 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
-		log.debug("put at " + buf.position());
-
 		buf.put(b);
 	}
 

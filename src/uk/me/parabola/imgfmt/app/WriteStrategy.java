@@ -48,6 +48,12 @@ public interface WriteStrategy {
 	public int position();
 
 	/**
+	 * Set the position of the file.
+	 * @param pos The new position in the file.
+	 */
+	void position(int pos);
+
+	/**
 	 * Write out a single byte.
 	 * @param b The byte to write.
 	 */

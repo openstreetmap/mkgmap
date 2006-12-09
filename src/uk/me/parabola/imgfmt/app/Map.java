@@ -70,4 +70,8 @@ public class Map {
 	public TREFile getTRE() {
 		return treFile;
 	}
+
+	public LBLFile getLBL() {
+		return lblFile;
+	}
 }

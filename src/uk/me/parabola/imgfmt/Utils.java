@@ -79,4 +79,24 @@ public class Utils {
 	public static int toMapUnit(double l) {
 		return (int) (l * (1 << 24)/360);
 	}
+
+	public static byte[] makeCreationTime(Date date) {
+		Calendar cal = Calendar.getInstance();
+
+		Date d = date;
+		if (d == null)
+			d = new Date();
+		cal.setTime(d);
+
+		byte[] ret = new byte[7];
+		ByteBuffer buf = ByteBuffer.wrap(ret);
+		buf.putChar((char) cal.get(Calendar.YEAR));
+		buf.put((byte) (cal.get(Calendar.MONTH)));
+		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
+		buf.put((byte) cal.get(Calendar.HOUR));
+		buf.put((byte) cal.get(Calendar.MINUTE));
+		buf.put((byte) cal.get(Calendar.SECOND));
+		
+		return ret;
+	}
 }

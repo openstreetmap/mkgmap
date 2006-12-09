@@ -19,9 +19,10 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
+ * The file that holds all the labels for the map.
+ *
  * @author Steve Ratcliffe
  */
 public class LBLFile extends ImgFile {
@@ -41,88 +42,108 @@ public class LBLFile extends ImgFile {
 	private static final char EXIT_REC_LEN = 5;
 	private static final char HIGHWAYDATA_REC_LEN = 3;
 
+	// Label encoding length
+	private static final int ENCODING_6BIT = 6;
+	private static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
+	private static final int ENCODING_10BIT = 10;
+
 	public LBLFile(ImgChannel chan) {
-		super(chan);
-		setLength(HEADER_LEN);
+		setHeaderLength(HEADER_LEN);
 		setType("GARMIN LBL");
+
+		WriteStrategy writer = new BufferedWriteStrategy(chan);
+		setWriteStrategy(writer);
+
+		position(HEADER_LEN + INFO_LEN);
 	}
 
-	public void writeHeader() throws IOException {
-		ByteBuffer buf = allocateBuffer();
+	public void sync() throws IOException {
+		position(0);
 
-		buf.putInt(HEADER_LEN);
-		buf.putInt(INFO_LEN);
+		writeCommonHeader();
+		writeHeader();
 
-		buf.put((byte) 0);
-		buf.put((byte) 0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(COUNTRY_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(REGION_REC_LEN);
-		buf.putInt(0);
-
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(CITY_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(UNK1_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.put((byte) 0);
-		buf.put((byte) 0);
-		buf.putChar((char) 0);
-		buf.put((byte) 0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar((char) UNK2_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(ZIP_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(HIGHWAY_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(EXIT_REC_LEN);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(HIGHWAYDATA_REC_LEN);
-		buf.putInt(0);
-
-		buf.putChar((char) 0); //code
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-
-		buf.putInt(dataPos);
-		buf.putInt(0);
-		buf.putChar(UNK3_REC_LEN);
-		buf.putChar((char) 0);
-
-		write(buf);
+		getWriter().sync();
 	}
 
-	protected void writeBody() throws IOException {
+	private void writeHeader() throws IOException {
+
+		putInt(HEADER_LEN);
+		putInt(INFO_LEN);
+
+		put((byte) 0);
+		put((byte) ENCODING_6BIT);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(COUNTRY_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(REGION_REC_LEN);
+		putInt(0);
+
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(CITY_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(UNK1_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		put((byte) 0);
+		put((byte) 0);
+		putChar((char) 0);
+		put((byte) 0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar((char) UNK2_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(ZIP_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(HIGHWAY_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(EXIT_REC_LEN);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(HIGHWAYDATA_REC_LEN);
+		putInt(0);
+
+		putChar((char) 0); //code
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+
+		putInt(dataPos);
+		putInt(0);
+		putChar(UNK3_REC_LEN);
+		putChar((char) 0);
+	}
+
+	public Label newLabel(String text) {
+		Label l = new Label(text);
+		l.setOffset(dataPos);
+		dataPos += l.getLength();
+
+		return l;
 	}
 }
