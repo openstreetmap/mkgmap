@@ -29,13 +29,13 @@ import java.util.Iterator;
  *
  * @author Steve Ratcliffe
  */
-public class Zoom {
+public class Zoom implements Writable {
 	private int zoom;
 	private boolean inherited;
 
 	private int bitsPerCoord;
 
-	private List<Subdivion> subdivs = new ArrayList<Subdivion>();
+	private List<Subdivision> subdivs = new ArrayList<Subdivision>();
 
 
 	/**
@@ -49,13 +49,20 @@ public class Zoom {
 		this.bitsPerCoord = bitsPerCoord;
 	}
 
-	public Subdivion createSubdiv(int minLat, int minLong, int width, int height)
+	public Subdivision createSubdiv(int minLat, int minLong, int width, int height)
 	{
-		Subdivion sd = new Subdivion(minLat, minLong, width, height);
+		Subdivision sd = new Subdivision(minLat, minLong, width, height);
 		subdivs.add(sd);
 
 		return sd;
 	}
+
+	public Subdivision createSubdiv(Bounds area) {
+		Subdivision sd = new Subdivision(area);
+		subdivs.add(sd);
+		return sd;
+	}
+
 
 	public int getZoom() {
 		return zoom;
@@ -65,7 +72,7 @@ public class Zoom {
 		return subdivs.size();
 	}
 
-	public Iterator subdivIterator() {
+	public Iterator<Subdivision> subdivIterator() {
 		return subdivs.iterator();
 	}
 
@@ -80,4 +87,11 @@ public class Zoom {
 	public int getBitsPerCoord() {
 		return bitsPerCoord;
 	}
+
+	public void write(ImgFile file) {
+		file.put((byte) (zoom & 0x3 | (inherited ? 0x80 : 0)));
+		file.put((byte) bitsPerCoord);
+		file.putChar((char) subdivs.size());
+	}
+
 }

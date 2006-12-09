@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.Utils;
 
 import java.io.IOException;
 
@@ -65,11 +66,16 @@ public class LBLFile extends ImgFile {
 	public void sync() throws IOException {
 		log.debug("syncing lbl file");
 
-		position(0);
+		dataPos = position();
 
+		// Reposition to re-write the header with all updated values.
+		position(0);
 		writeCommonHeader();
 		writeHeader();
 
+		put(Utils.toBytes("Some text for the label gap"));
+		
+		// Sync our writer.
 		getWriter().sync();
 	}
 
@@ -98,7 +104,6 @@ public class LBLFile extends ImgFile {
 		put((byte) 0);
 		put((byte) ENCODING_6BIT);
 
-		dataPos = HEADER_LEN + INFO_LEN + labelSize;
 		putInt(dataPos);
 		putInt(0);
 		putChar(COUNTRY_REC_LEN);

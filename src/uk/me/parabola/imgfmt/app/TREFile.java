@@ -22,6 +22,7 @@ import uk.me.parabola.imgfmt.Utils;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
@@ -39,17 +40,18 @@ public class TREFile extends ImgFile {
 	private static int HEADER_LEN = 116; // Other values are possible
 	private static int INFO_LEN = 50;
 
-	private int dataPos = HEADER_LEN + INFO_LEN;
-
 	// Bounding box.  All units are in map units.
 	private Bounds bounds;
 
+	private static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
 	private static final char POLYGON_REC_LEN = 2;
 	private static final char POINT_REC_LEN = 3;
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
 
 	// Zoom levels for map
+	//	private List<Zoom> mapLevels = new ArrayList<Zoom>();
+	private Zoom[] mapLevels = new Zoom[16];
 	private int mapLevelPos;
 	private int mapLevelsSize;
 
@@ -61,9 +63,16 @@ public class TREFile extends ImgFile {
 	private int copyrightSize;
 
 	private byte poiDisplayFlags;
+
 	private int polylineSize;
 	private int polygonSize;
+
+	private List<Overview> pointOverviews = new ArrayList<Overview>();
+	private int pointPos;
 	private int pointSize;
+
+	private static final int SUBDIV_REC_SIZE = 14;
+	private static final int SUBDIV_REC_SIZE2 = 16;
 
 	public TREFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
@@ -96,27 +105,94 @@ public class TREFile extends ImgFile {
 
 	public Zoom createZoom(int zoom, int bits) {
 		Zoom z = new Zoom(zoom, bits);
+		mapLevels[zoom] = z;
 		return z;
+	}
+
+	public Subdivision createSubdivision(Subdivision parent, Zoom z, Bounds area) {
+		Subdivision sd = z.createSubdiv(area);
+		if (parent != null)
+			parent.addSubdivision(sd);
+		return sd;
 	}
 
 	public void addCopyright(Label cr) {
 		copyrights.add(cr);
 	}
 
+	public void addPointOverview(Overview ov) {
+		pointOverviews.add(ov);
+	}
+
 	/**
 	 * Anything waiting to be written is dealt with here.
 	 */
 	private void prepare() {
+		// Write out the map levels (zoom)
+		mapLevelPos = position();
+		for (int i = 15; i >= 0; i--) {
+			// They need to be written in reverse order I think
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+			mapLevelsSize += MAP_LEVEL_REC_SIZE;
+			z.write(this);
+		}
+
+		subdivPos = position();
+		int subdivnum = 0;
+
+		// First prepare to number them all
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				Subdivision sd = it.next();
+				sd.setNumber(subdivnum++);
+			}
+		}
+
+		// Now we can write them all out.
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				Subdivision sd = it.next();
+				if (it.hasNext())
+					sd.setLast(false);
+				else
+					sd.setLast(true);
+				
+				sd.write(this);
+				if (i == 0)
+					subdivSize += SUBDIV_REC_SIZE;
+				else
+					subdivSize += SUBDIV_REC_SIZE2;
+			}
+		}
+
 		// Write out the pointers to the labels that hold the copyright strings
 		copyrightPos = position();
 		for (Label l : copyrights) {
 			copyrightSize += COPYRIGHT_REC_SIZE;
 			put3(l.getOffset());
 		}
+
+		// Point overview section
+		pointPos = position();
+		for (Overview ov : pointOverviews) {
+			ov.write(this);
+			pointSize += POINT_REC_LEN;
+		}
 	}
 
 	private void writeHeader() throws IOException {
-
 		put3(bounds.getMaxLat());
 		put3(bounds.getMaxLong());
 		put3(bounds.getMinLat());
@@ -124,24 +200,22 @@ public class TREFile extends ImgFile {
 
 		putInt(mapLevelPos);
 		putInt(mapLevelsSize);
-		dataPos += mapLevelsSize;
 
-		putInt(dataPos);
+		putInt(subdivPos);
 		putInt(subdivSize);
-		dataPos += subdivSize;
 
-		putInt(dataPos);
+		putInt(copyrightPos);
 		putInt(copyrightSize);
-		dataPos += copyrightSize;
-
 		putChar(COPYRIGHT_REC_SIZE);
+
+		int dataPos = copyrightPos + copyrightSize;
 
 		putInt(0);
 
 		put(poiDisplayFlags);
 
 		put3(0x19);
-		putInt(0x01040d);
+		putInt(0xd0401);
 
 		putChar((char) 1);
 		put((byte) 0);
@@ -160,7 +234,7 @@ public class TREFile extends ImgFile {
 		putChar((char) 0);
 		putChar((char) 0);
 
-		putInt(dataPos);
+		putInt(pointPos);
 		putInt(pointSize);
 		putChar(POINT_REC_LEN);
 
@@ -168,10 +242,5 @@ public class TREFile extends ImgFile {
 		putChar((char) 0);
 
 		put(Utils.toBytes("My OSM Map"));
-
-		//int n = write(buf);
-		//log.debug("wrote " + n + " bytes for TRE header");
 	}
-
-
 }
