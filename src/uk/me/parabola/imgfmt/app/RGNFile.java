@@ -26,6 +26,8 @@ import java.io.IOException;
 public class RGNFile extends ImgFile {
 	private static int HEADER_LEN = 29;
 
+	private int dataSize;
+
 	public RGNFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
 		setType("GARMIN RGN");
@@ -36,8 +38,9 @@ public class RGNFile extends ImgFile {
 	}
 
 	public void sync() throws IOException {
-		position(0);
+		dataSize = position() - HEADER_LEN;
 
+		position(0);
 		writeCommonHeader();
 		writeHeader();
 
@@ -47,6 +50,15 @@ public class RGNFile extends ImgFile {
 	private void writeHeader() throws IOException {
 
 		putInt(HEADER_LEN);
-		putInt(0);
+		putInt(dataSize);
+	}
+
+	public void addDivision(Subdivision sd) {
+		sd.setRgnPointer(position() - HEADER_LEN);
+		// XXX to do the index pointers.
+	}
+
+	public void addPoint(Subdivision sd, Point p) {
+		p.write(this);
 	}
 }

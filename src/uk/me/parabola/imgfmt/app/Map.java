@@ -50,6 +50,9 @@ public class Map {
 			m.rgnFile = new RGNFile(fs.create(name + ".RGN"));
 			m.treFile = new TREFile(fs.create(name + ".TRE"));
 			m.lblFile = new LBLFile(fs.create(name + ".LBL"));
+
+			m.treFile.setMapId(Integer.parseInt(name));
+
 		} catch (FileExistsException e) {
 			log.error("failed to create file", e);
 			return null;
@@ -62,6 +65,8 @@ public class Map {
 	 * Close this map by closing all the constituent files.
 	 */
 	public void close() {
+		treFile.setLastRgnPos(rgnFile.position() - 29);
+		
 		rgnFile.close();
 		treFile.close();
 		lblFile.close();
@@ -73,5 +78,9 @@ public class Map {
 
 	public LBLFile getLBL() {
 		return lblFile;
+	}
+
+	public RGNFile getRGN() {
+		return rgnFile;
 	}
 }

@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class ImgFile {
 	static private Logger log = Logger.getLogger(ImgFile.class);
-	
+
 	private int headerLength;
 	private String type;
 
@@ -42,6 +42,7 @@ public abstract class ImgFile {
 	public void close() {
 		try {
 			sync();
+			writer.close();
 		} catch (IOException e) {
 			log.error("error on file close", e);
 		}

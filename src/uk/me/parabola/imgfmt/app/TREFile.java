@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
 public class TREFile extends ImgFile {
 	static private Logger log = Logger.getLogger(TREFile.class);
 
-	private static int HEADER_LEN = 116; // Other values are possible
+	private static int HEADER_LEN = 188; // Other values are possible
 	private static int INFO_LEN = 50;
 
 	// Bounding box.  All units are in map units.
@@ -70,6 +70,9 @@ public class TREFile extends ImgFile {
 	private List<Overview> pointOverviews = new ArrayList<Overview>();
 	private int pointPos;
 	private int pointSize;
+
+	private int mapId;
+	private int lastRgnPos;
 
 	private static final int SUBDIV_REC_SIZE = 14;
 	private static final int SUBDIV_REC_SIZE2 = 16;
@@ -140,7 +143,7 @@ public class TREFile extends ImgFile {
 		}
 
 		subdivPos = position();
-		int subdivnum = 0;
+		int subdivnum = 1; // numbers start at one
 
 		// First prepare to number them all
 		for (int i = 15; i >= 0; i--) {
@@ -176,6 +179,7 @@ public class TREFile extends ImgFile {
 					subdivSize += SUBDIV_REC_SIZE2;
 			}
 		}
+		putInt(lastRgnPos);
 
 		// Write out the pointers to the labels that hold the copyright strings
 		copyrightPos = position();
@@ -241,6 +245,19 @@ public class TREFile extends ImgFile {
 		putChar((char) 0);
 		putChar((char) 0);
 
+		// Map ID
+		putInt(mapId);
+
+
+		position(HEADER_LEN);
 		put(Utils.toBytes("My OSM Map"));
+	}
+
+	public void setMapId(int id) {
+		mapId = id;
+	}
+
+	public void setLastRgnPos(int lastRgnPos) {
+		this.lastRgnPos = lastRgnPos;
 	}
 }

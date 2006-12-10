@@ -61,10 +61,26 @@ public class Subdivision {
 	public Subdivision(Bounds area) {
 		this.latitude = (area.getMaxLat()+area.getMinLat())/2;
 		this.longitude = (area.getMaxLong()+area.getMinLong())/2;
-		this.width = area.getMaxLat()-area.getMinLat();
-		this.height = area.getMaxLong()-area.getMinLong();
+		this.height = (area.getMaxLat()-area.getMinLat())/2;
+		this.width = (area.getMaxLong()-area.getMinLong())/2;
 	}
 
+	/**
+	 * Get the bounds of this subdivision.
+	 *
+	 * @return The area that this subdivision covers.
+	 */
+	public Bounds getBounds() {
+		Bounds b = new Bounds(latitude-height, longitude-width,
+				latitude+height, longitude+width);
+		return b;
+	}
+
+	/**
+	 * Format this record to the file.
+	 *
+	 * @param file The file to write to.
+	 */
 	public void write(ImgFile file) {
 		file.put3(rgnPointer);
 		file.put(getType());
@@ -79,6 +95,11 @@ public class Subdivision {
 		}
 	}
 
+	/**
+	 * Get a type that shows if this area has lines, points etc.
+	 *
+	 * @return A code showing what kinds of element are in this subdivision.
+	 */
 	private byte getType() {
 		byte b = 0;
 		if (hasPoints)
@@ -93,10 +114,19 @@ public class Subdivision {
 		return b;
 	}
 
+	/**
+	 * Get the number of the first subdivision at the next level.
+	 * @return The first subdivision at the next level.
+	 */
 	public int getNextLevel() {
 		return divisions.get(0).getNumber();
 	}
 
+	/**
+	 * Add this subdivision as our child at the next level.
+	 *
+	 * @param sd One of our subdivisions.
+	 */
 	public void addSubdivision(Subdivision sd) {
 		divisions.add(sd);
 	}
@@ -115,6 +145,18 @@ public class Subdivision {
 
 	public void setLast(boolean last) {
 		this.last = last;
+	}
+
+	public void setRgnPointer(int rgnPointer) {
+		this.rgnPointer = rgnPointer;
+	}
+
+	public int getLongitude() {
+		return longitude;
+	}
+
+	public int getLatitude() {
+		return latitude;
 	}
 
 	public void setHasPoints(boolean hasPoints) {

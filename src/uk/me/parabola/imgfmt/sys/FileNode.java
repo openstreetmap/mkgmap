@@ -252,6 +252,25 @@ public class FileNode implements ImgChannel {
 			int b = blockManager.allocate();
 			dir.addBlock(b);
 			writeBlock(b, buf);
+		} else {
+			// Ensure that a complete block is written out.
+			log.debug("on close position is " + position);
+			log.debug("chan position is " + file.position());
+			log.debug("chan position is 0x" + Integer.toHexString((int) file.position()));
+			int bs = blockManager.getBlockSize();
+			long rem = bs - (file.position() % bs);
+			log.debug("rem is " + Integer.toHexString((int) rem));
+
+			ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
+
+			for (int i = 0; i < rem; i++) {
+				buf.put((byte) 0);
+			}
+			buf.flip();
+			int n = file.write(buf);
+			log.debug("bytes writtern " + n);
+			log.debug("bytes writtern " + Integer.toHexString(n));
+			log.debug("file pos after " + file.position());
 		}
 	}
 

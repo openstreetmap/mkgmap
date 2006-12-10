@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -79,7 +78,8 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	/**
 	 * Called when the stream is closed.  Any resources can be freed.
 	 */
-	public void close() {
+	public void close() throws IOException {
+		chan.close();
 	}
 
 	/**

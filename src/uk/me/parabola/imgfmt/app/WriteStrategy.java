@@ -36,8 +36,9 @@ public interface WriteStrategy {
 
 	/**
 	 * Called when the stream is closed.  Any resources can be freed.
+	 * @throws IOException When there is an error in closing.
 	 */
-	public void close();
+	public void close() throws IOException;
 
 	/**
 	 * Get the position.  Needed because may not be reflected in the underlying
