@@ -35,6 +35,7 @@ public class Point implements Writable {
 	}
 
 	public Point(Subdivision div, double latitude, double longitude) {
+		// TODO These need to be shifted...
 		this.latitude = div.getLatitude() - Utils.toMapUnit(latitude);
 		this.longitude = div.getLongitude() - Utils.toMapUnit(longitude);
 	}
@@ -48,11 +49,13 @@ public class Point implements Writable {
 	 */
 	public void write(ImgFile file) {
 		byte b = (byte) type;
-		if (subtype != 0)
-			b |= 0x80;
 		file.put(b);
 
-		file.put3(label.getOffset());
+		int off = label.getOffset();
+		if (subtype != 0)
+			off |= 0x800000;
+
+		file.put3(off);
 		file.putChar((char) longitude);
 		file.putChar((char) latitude);
 		if (subtype != 0)

@@ -58,7 +58,15 @@ public class Zoom implements Writable {
 	}
 
 	public Subdivision createSubdiv(Bounds area) {
-		Subdivision sd = new Subdivision(area);
+		int lat = (area.getMinLat() + area.getMaxLat())/2;
+		int lng = (area.getMinLong() + area.getMaxLong())/2;
+
+		int width = (area.getMaxLong()-area.getMinLong())/2;
+		width >>= 24 - bitsPerCoord;
+		int height = (area.getMaxLat()-area.getMinLat())/2;
+		height >>= 24 - bitsPerCoord;
+
+		Subdivision sd = new Subdivision(lat, lng, width, height);
 		subdivs.add(sd);
 		return sd;
 	}

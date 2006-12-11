@@ -38,7 +38,6 @@ public class TREFile extends ImgFile {
 	static private Logger log = Logger.getLogger(TREFile.class);
 
 	private static int HEADER_LEN = 188; // Other values are possible
-	private static int INFO_LEN = 50;
 
 	// Bounding box.  All units are in map units.
 	private Bounds bounds;
@@ -48,6 +47,8 @@ public class TREFile extends ImgFile {
 	private static final char POLYGON_REC_LEN = 2;
 	private static final char POINT_REC_LEN = 3;
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
+
+	private int mapInfoSize;
 
 	// Zoom levels for map
 	//	private List<Zoom> mapLevels = new ArrayList<Zoom>();
@@ -64,7 +65,11 @@ public class TREFile extends ImgFile {
 
 	private byte poiDisplayFlags;
 
+	// Information about polylines.  eg roads etc.
+	private List<Overview> polylineOverviews = new ArrayList<Overview>();
+	private int polylinePos;
 	private int polylineSize;
+
 	private int polygonSize;
 
 	private List<Overview> pointOverviews = new ArrayList<Overview>();
@@ -83,7 +88,7 @@ public class TREFile extends ImgFile {
 		setWriter(new BufferedWriteStrategy(chan));
 
 		// Position at the start of the writable area.
-		position(HEADER_LEN + INFO_LEN);
+		position(HEADER_LEN + mapInfoSize);
 	}
 
 	public void sync() throws IOException {
@@ -119,12 +124,26 @@ public class TREFile extends ImgFile {
 		return sd;
 	}
 
+	public void addInfo(String msg) {
+		byte[] val = Utils.toBytes(msg);
+		if (position() != HEADER_LEN + mapInfoSize)
+			throw new IllegalStateException("All info must be added before anything else");
+
+		mapInfoSize += val.length+1;
+		put(val);
+		put((byte) 0);
+	}
+
 	public void addCopyright(Label cr) {
 		copyrights.add(cr);
 	}
 
 	public void addPointOverview(Overview ov) {
 		pointOverviews.add(ov);
+	}
+
+	public void addPolylineOverview(Overview ov) {
+		polylineOverviews.add(ov);
 	}
 
 	/**
@@ -194,6 +213,12 @@ public class TREFile extends ImgFile {
 			ov.write(this);
 			pointSize += POINT_REC_LEN;
 		}
+
+		polylinePos = position();
+		for (Overview ov : polylineOverviews) {
+			ov.write(this);
+			polylineSize += POLYLINE_REC_LEN;
+		}
 	}
 
 	private void writeHeader() throws IOException {
@@ -216,6 +241,7 @@ public class TREFile extends ImgFile {
 
 		putInt(0);
 
+		//poiDisplayFlags = 1; // XXX
 		put(poiDisplayFlags);
 
 		put3(0x19);
@@ -248,7 +274,19 @@ public class TREFile extends ImgFile {
 		// Map ID
 		putInt(mapId);
 
-
+		// A bunch of flag that regulate mainly unknown things.  Certain values
+		// determine if the map name/date and block lists are protected
+		// from modification in an unknown way.
+		byte[] flags = new byte[] {
+				0x41, (byte) 0xBF,  0x02, 0x3B, (byte) 0x95, (byte) 0xB3,
+				0x12, (byte) 0xF2, 0x40, (byte) 0xBF,  0x66, (byte) 0xF2,
+				0x40, (byte) 0xBF, 0x66, (byte) 0xF2
+		};
+		if (HEADER_LEN > 154) {
+			position(0x9a);
+			put(flags);
+		}
+		
 		position(HEADER_LEN);
 		put(Utils.toBytes("My OSM Map"));
 	}

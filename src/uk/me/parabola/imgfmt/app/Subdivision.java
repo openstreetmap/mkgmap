@@ -41,6 +41,8 @@ public class Subdivision {
 	private int longitude;
 	private int latitude;
 
+	// The width and the height in map units scaled by the bits-per-coordinate
+	// that applies at the map level.
 	private int width;
 	private int height;
 
@@ -58,13 +60,6 @@ public class Subdivision {
 		this.height = height;
 	}
 
-	public Subdivision(Bounds area) {
-		this.latitude = (area.getMaxLat()+area.getMinLat())/2;
-		this.longitude = (area.getMaxLong()+area.getMinLong())/2;
-		this.height = (area.getMaxLat()-area.getMinLat())/2;
-		this.width = (area.getMaxLong()-area.getMinLong())/2;
-	}
-
 	/**
 	 * Get the bounds of this subdivision.
 	 *
@@ -73,6 +68,14 @@ public class Subdivision {
 	public Bounds getBounds() {
 		Bounds b = new Bounds(latitude-height, longitude-width,
 				latitude+height, longitude+width);
+		return b;
+	}
+
+	public Bounds getBounds(int bits) {
+		int h = height << (24-bits);
+		int w = width << (24 - bits);
+		Bounds b = new Bounds(latitude-h, longitude-w,
+				latitude+h, longitude+w);
 		return b;
 	}
 

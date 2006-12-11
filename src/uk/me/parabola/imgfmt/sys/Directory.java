@@ -56,6 +56,7 @@ class Directory {
 
 	/**
 	 * Create a new file in the directory.
+	 * 
 	 * @param name The file name.  Must be 8+3 characters.
 	 * @return The new directory entity.
 	 */
@@ -69,6 +70,7 @@ class Directory {
 	/**
 	 * Write out the directory to the file.  The file should be correctly
 	 * positioned by the caller.
+	 *
 	 * @throws IOException If there is a problem writing out any
 	 * of the directory entries.
 	 */

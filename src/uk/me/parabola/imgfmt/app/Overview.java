@@ -29,7 +29,6 @@ public class Overview implements Writable {
 
 	private int size;
 
-
 	public Overview(int type, int maxLevel, int subType) {
 		this.type = (byte) type;
 		this.maxLevel = (byte) maxLevel;
@@ -42,19 +41,6 @@ public class Overview implements Writable {
 		this.maxLevel = (byte) maxLevel;
 		this.size = 2;
 	}
-
-	public void setType(byte type) {
-		this.type = type;
-	}
-
-	public void setMaxLevel(byte maxLevel) {
-		this.maxLevel = maxLevel;
-	}
-
-	public void setSubType(byte subType) {
-		this.subType = subType;
-	}
-
 
 	public void write(ImgFile file) {
 		file.put(type);

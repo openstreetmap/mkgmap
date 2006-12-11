@@ -32,7 +32,7 @@ public class LBLFile extends ImgFile {
 	static private Logger log = Logger.getLogger(LBLFile.class);
 
 	private static int HEADER_LEN = 196; // Other lengths are possible
-	private static int INFO_LEN = 60;
+	private static int INFO_LEN = 28;
 
 	private int dataPos = HEADER_LEN + INFO_LEN;
 	private static final char COUNTRY_REC_LEN = 3;
@@ -61,6 +61,9 @@ public class LBLFile extends ImgFile {
 		setWriteStrategy(writer);
 
 		position(HEADER_LEN + INFO_LEN);
+
+		// The zero offset is for no label.
+		put((byte) 0);
 	}
 
 	public void sync() throws IOException {
