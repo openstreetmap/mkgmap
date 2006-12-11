@@ -76,8 +76,9 @@ public class Label implements Writable {
 				put6(buf, off++, c - 'A' + 1);
 			} // else if ... more TODO
 		}
+
 		put6(buf, off++, 0xff);
-		this.length = (off*6)/8;
+		this.length = ((off-1) * 6)/8 + 1;
 		dumpBuf(buf);
 		return buf;
 	}
