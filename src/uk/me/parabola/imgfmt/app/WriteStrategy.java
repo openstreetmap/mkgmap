@@ -19,9 +19,12 @@ package uk.me.parabola.imgfmt.app;
 import java.io.IOException;
 
 /**
- * To allow different strategies of writing to the file.
- * I want to be able to experiment with different schemes to write out.  It
- * may be possible to mix blocks between different files for example.
+ * I want to be able to experiment with different schemes to write out.
+ *
+ * I am hoping that you do not need to write files with contiguous blocks,
+ * however since all maps seem to do that it may not be possible.  Having a block
+ * list is then a bit strange.  Perhaps you can but it performs worse so noone
+ * does it?
  *
  * @author Steve Ratcliffe
  */

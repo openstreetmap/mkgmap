@@ -19,27 +19,24 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.Utils;
 
 /**
- * Represents a particular point.
+ * Represents a particular point object on a map.  A point has a type (town
+ * restaurant etc) and a location as well as a name.
+ *
+ * A point belongs to a particular subdivision and cannot be interpreted without
+ * it as all details are relative to the subdivision.
+ *
  * @author Steve Ratcliffe
  */
-public class Point implements Writable {
-	private int latitude;
-	private int longitude;
-	private Label label;
-	private int type;
+public class Point extends MapObject {
+	// Points can have a subtype, eg for restaurant the subtype might be the
+	// kind of food served.
 	private int subtype;
 
-	public Point(int latitude, int longitude) {
-		this.latitude = latitude;
-		this.longitude = longitude;
-	}
-
 	public Point(Subdivision div, double latitude, double longitude) {
-		// TODO These need to be shifted...
-		this.latitude = div.getLatitude() - Utils.toMapUnit(latitude);
-		this.longitude = div.getLongitude() - Utils.toMapUnit(longitude);
+		this.setSubdiv(div);
+		this.setLatitude(div.getLatitude() - Utils.toMapUnit(latitude));
+		this.setLongitude(div.getLongitude() - Utils.toMapUnit(longitude));
 	}
-
 
 	/**
 	 * Format and write the contents of the object to the given
@@ -48,40 +45,20 @@ public class Point implements Writable {
 	 * @param file A reference to the file that should be written to.
 	 */
 	public void write(ImgFile file) {
-		byte b = (byte) type;
+		byte b = (byte) getType();
 		file.put(b);
 
-		int off = label.getOffset();
+		int off = getLabel().getOffset();
 		if (subtype != 0)
 			off |= 0x800000;
 
 		file.put3(off);
-		file.putChar((char) longitude);
-		file.putChar((char) latitude);
+		file.putChar((char) getLongitude());
+		file.putChar((char) getLatitude());
 		if (subtype != 0)
 			file.put((byte) subtype);
 	}
 
-	public int getLatitude() {
-		return latitude;
-	}
-
-	public int getLongitude() {
-		return longitude;
-	}
-
-
-	public void setLabel(Label label) {
-		this.label = label;
-	}
-
-	public int getType() {
-		return type;
-	}
-
-	public void setType(int type) {
-		this.type = type;
-	}
 
 	public int getSubtype() {
 		return subtype;

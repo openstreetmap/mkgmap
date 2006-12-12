@@ -25,6 +25,9 @@ import java.nio.ByteOrder;
 import org.apache.log4j.Logger;
 
 /**
+ * A straight forward implementation that just keeps all the data in a buffer
+ * until the file needs to be written to disk.
+ *
  * @author Steve Ratcliffe
  */
 public class BufferedWriteStrategy implements WriteStrategy {

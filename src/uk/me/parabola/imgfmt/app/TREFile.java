@@ -29,8 +29,11 @@ import org.apache.log4j.Logger;
 /**
  * This is the file that contains the overview of the map.  There
  * can be different zoom levels and each level of zoom has an
- * associated set of subdivided areas.  Each area then points
+ * associated set of subdivided areas.  Each of these areas then points
  * into the RGN file.
+ *
+ * This is quite a complex file as there are quite a few miscellaneous pieces
+ * of information stored.
  *
  * @author Steve Ratcliffe
  */
@@ -40,7 +43,7 @@ public class TREFile extends ImgFile {
 	private static int HEADER_LEN = 188; // Other values are possible
 
 	// Bounding box.  All units are in map units.
-	private Bounds bounds;
+	private Area area;
 
 	private static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
@@ -107,8 +110,8 @@ public class TREFile extends ImgFile {
 	 * Set the bounds based upon the latitude and longitude in degrees.
 	 * @param area The area bounded by the map.
 	 */
-	public void setBounds(Bounds area) {
-		this.bounds = area;
+	public void setBounds(Area area) {
+		this.area = area;
 	}
 
 	public Zoom createZoom(int zoom, int bits) {
@@ -117,13 +120,13 @@ public class TREFile extends ImgFile {
 		return z;
 	}
 
-	public Subdivision createSubdivision(Subdivision parent, Zoom z, Bounds area) {
-		Subdivision sd = z.createSubdiv(area);
-		if (parent != null)
-			parent.addSubdivision(sd);
-		return sd;
-	}
-
+	/**
+	 * Add a string to the 'mapinfo' section.  This is a section between the
+	 * header and the start of the data.  Nothing points to it directly.
+	 *
+	 * @param msg A string, usually used to describe the program that generated
+	 * the file.
+	 */
 	public void addInfo(String msg) {
 		byte[] val = Utils.toBytes(msg);
 		if (position() != HEADER_LEN + mapInfoSize)
@@ -222,10 +225,10 @@ public class TREFile extends ImgFile {
 	}
 
 	private void writeHeader() throws IOException {
-		put3(bounds.getMaxLat());
-		put3(bounds.getMaxLong());
-		put3(bounds.getMinLat());
-		put3(bounds.getMinLong());
+		put3(area.getMaxLat());
+		put3(area.getMaxLong());
+		put3(area.getMinLat());
+		put3(area.getMinLong());
 
 		putInt(mapLevelPos);
 		putInt(mapLevelsSize);

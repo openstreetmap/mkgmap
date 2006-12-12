@@ -30,8 +30,10 @@ import org.apache.log4j.Logger;
 /**
  * An entry within a directory.  This holds its name and a list
  * of blocks that go to make up this file.
- * <p>A directory entry may take more than block in the file system.
- * <p>All documentation seems to point to the block numbers having to be
+ *
+ * A directory entry may take more than block in the file system.
+ *
+ * All documentation seems to point to the block numbers having to be
  * contiguous, but seems strange so I shall experiment.
  *
  * @author Steve Ratcliffe
@@ -83,6 +85,7 @@ class Dirent implements DirectoryEntry {
 	 * Write this entry out to disk.
 	 * TODO: we currently do not cope with the case where this takes more
 	 * than one block.
+	 * 
 	 * @param file The file to write to.
 	 * @throws IOException If writing fails for any reason.
 	 */

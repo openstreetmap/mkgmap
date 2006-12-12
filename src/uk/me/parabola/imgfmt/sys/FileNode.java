@@ -26,6 +26,9 @@ import java.nio.channels.*;
 import org.apache.log4j.Logger;
 
 /**
+ * The internal representation of a file in the file system.  In use it
+ * should only be referred to by the {@link ImgChannel} interface.
+ *
  * @author Steve Ratcliffe
  */
 public class FileNode implements ImgChannel {

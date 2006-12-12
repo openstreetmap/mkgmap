@@ -21,32 +21,23 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Represents a multi-segment line.  Eg for a road.
+ * Represents a multi-segment line.  Eg for a road. As with all map objects
+ * it can only exist as part of a subdivision.
+ *
+ * Writing these out is particularly tricky as deltas between points are packed
+ * into the smallest number of bits possible.
+ *
+ * I am not trying to make the smallest map, so it may not be totally optimum.
  * 
  * @author Steve Ratcliffe
  */
-public class Polyline implements Writable {
-
-	// All lines are in a division and many aspects of it are with respect to
-	// the division.
-	private Subdivision div;
-
-	// The lable for this road
-	private Label label;
-
-	// The type of road etc.
-	private int type;
+public class Polyline extends MapObject {
 
 	// Set it it is a one-way street for example.
 	private boolean direction;
 
 	private boolean extraBit;
 	private boolean dataInNet;
-
-	// These long and lat values are relative to the subdivision center.
-	// Must be shifted depending on the zoom level.
-	private int longitude;
-	private int latitude;
 
 	// If the bitstreamLength is two bytes or one.
 	private boolean twoByteLen;
@@ -59,6 +50,11 @@ public class Polyline implements Writable {
 
 	private BitSet bitstream;
 
+	public Polyline(Subdivision div, int type) {
+		setSubdiv(div);
+		setType(type);
+	}
+
 	/**
 	 * Format and write the contents of the object to the given
 	 * file.
@@ -67,5 +63,9 @@ public class Polyline implements Writable {
 	 */
 	public void write(ImgFile file) {
 		// Prepare the information that we need.
+	}
+
+	public void addCoord(Coord co) {
+		points.add(co);
 	}
 }

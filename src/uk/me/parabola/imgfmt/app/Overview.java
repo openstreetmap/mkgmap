@@ -17,12 +17,15 @@
 package uk.me.parabola.imgfmt.app;
 
 /**
- * This is for polyline, polygon and point overviews.  A type of
- * object and the highest level at which it is found.
+ * This is for polyline, polygon and point overviews.  A simple record that
+ * holds the type of an object and the highest level at which it is found.
+ *
+ * It kind of declares which objects will appear in the map and if they
+ * are not included here they will not be shown.
  *
  * @author Steve Ratcliffe
  */
-public class Overview implements Writable {
+public class Overview {
 	private byte type;
 	private byte maxLevel;
 	private byte subType;

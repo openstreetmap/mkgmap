@@ -21,6 +21,8 @@ import java.util.Date;
 import java.util.Calendar;
 
 /**
+ * Some miscellaneous functions that are used within the .img code.
+ *
  * @author Steve Ratcliffe
  */
 public class Utils {
@@ -76,10 +78,23 @@ public class Utils {
 		buf.put((byte) cal.get(Calendar.SECOND));
 	}
 
+	/**
+	 * A map unit is an integer value that is 1/(2^24) degrees of latitude or
+	 * longitude.
+	 *
+	 * @param l The lat or long as decimal degrees.
+	 * @return An integer value in map units.
+	 */
 	public static int toMapUnit(double l) {
 		return (int) (l * (1 << 24)/360);
 	}
 
+	/**
+	 * Convert a date into the in-file representation of a date.
+	 *
+	 * @param date The date.
+	 * @return A byte stream in .img format.
+	 */
 	public static byte[] makeCreationTime(Date date) {
 		Calendar cal = Calendar.getInstance();
 

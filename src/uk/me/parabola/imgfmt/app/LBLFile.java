@@ -26,6 +26,11 @@ import org.apache.log4j.Logger;
 /**
  * The file that holds all the labels for the map.
  *
+ * Would be quite simple, but there are a number of sections that hold country,
+ * region, city, etc. records.
+ *
+ * To begin with I shall only support regular labels.
+ *
  * @author Steve Ratcliffe
  */
 public class LBLFile extends ImgFile {

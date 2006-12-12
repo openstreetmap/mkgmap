@@ -24,21 +24,21 @@ import uk.me.parabola.imgfmt.Utils;
  * 
  * @author Steve Ratcliffe
  */
-public class Bounds {
+public class Area {
 
 	private int minLat;
 	private int minLong;
 	private int maxLat;
 	private int maxLong;
 
-	public Bounds(int minLat, int minLong, int maxLat, int maxLong) {
+	public Area(int minLat, int minLong, int maxLat, int maxLong) {
 		this.minLat = minLat;
 		this.minLong = minLong;
 		this.maxLat = maxLat;
 		this.maxLong = maxLong;
 	}
 
-	public Bounds(double minLat, double minLong, double maxLat,
+	public Area(double minLat, double minLong, double maxLat,
 				  double maxLong)
 	{
 		this.minLat = Utils.toMapUnit(minLat);
@@ -70,7 +70,7 @@ public class Bounds {
 	 * @param area The area to check against.
 	 * @return True if this falls entirely within the area.
 	 */
-	public boolean isWithin(Bounds area) {
+	public boolean isWithin(Area area) {
 		if (minLat >= area.getMinLat()
 				&& maxLat <= area.getMaxLat()
 				&& minLong >= area.getMinLong()

@@ -21,6 +21,17 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import java.io.IOException;
 
 /**
+ * The region file.  Holds actual details of points and lines etc.
+ *
+ * The header is very simple, just a location and size.
+ *
+ * The data is rather complicated and is packed to save space.  This class does
+ * not really handle that format however as it is written by the {@link MapObject}s
+ * themselves.
+ *
+ * I am expecting this to be the biggest file, although it seems that TRE may
+ * be in some circumstances.
+ *
  * @author Steve Ratcliffe
  */
 public class RGNFile extends ImgFile {
@@ -58,7 +69,7 @@ public class RGNFile extends ImgFile {
 		// XXX to do the index pointers.
 	}
 
-	public void addPoint(Subdivision sd, Point p) {
-		p.write(this);
+	public void addMapObject(MapObject item) {
+		item.write(this);
 	}
 }

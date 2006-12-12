@@ -25,6 +25,8 @@ import org.apache.log4j.Logger;
  * Holder for a complete map.  A map is made up of several files.
  * <p>Needless to say, it has nothing to do with java.util.Map.
  *
+ * TODO: this probably needs a cleanup.
+ *
  * @author Steve Ratcliffe
  */
 public class Map {

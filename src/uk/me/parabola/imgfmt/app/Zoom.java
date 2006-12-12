@@ -24,12 +24,15 @@ import java.util.Iterator;
  * A zoom level (or map level) determines the amount of detail that
  * is shown as you zoom in and out.
  * Level 0 is the the most detailed level.
- * <p>A zoom level has a number of bits per co-ordinate and the number of
+ *
+ * A zoom level has a number of bits per co-ordinate and the number of
  * subdivisions at that level.
+ *
+ * The highest level must have one subdivision and have no elements I believe.
  *
  * @author Steve Ratcliffe
  */
-public class Zoom implements Writable {
+public class Zoom {
 	private int zoom;
 	private boolean inherited;
 
@@ -47,28 +50,6 @@ public class Zoom implements Writable {
 	public Zoom(int zoom, int bitsPerCoord) {
 		this.zoom = zoom;
 		this.bitsPerCoord = bitsPerCoord;
-	}
-
-	public Subdivision createSubdiv(int minLat, int minLong, int width, int height)
-	{
-		Subdivision sd = new Subdivision(minLat, minLong, width, height);
-		subdivs.add(sd);
-
-		return sd;
-	}
-
-	public Subdivision createSubdiv(Bounds area) {
-		int lat = (area.getMinLat() + area.getMaxLat())/2;
-		int lng = (area.getMinLong() + area.getMaxLong())/2;
-
-		int width = (area.getMaxLong()-area.getMinLong())/2;
-		width >>= 24 - bitsPerCoord;
-		int height = (area.getMaxLat()-area.getMinLat())/2;
-		height >>= 24 - bitsPerCoord;
-
-		Subdivision sd = new Subdivision(lat, lng, width, height);
-		subdivs.add(sd);
-		return sd;
 	}
 
 
@@ -102,4 +83,11 @@ public class Zoom implements Writable {
 		file.putChar((char) subdivs.size());
 	}
 
+	public void setBitsPerCoord(int bitsPerCoord) {
+		this.bitsPerCoord = bitsPerCoord;
+	}
+
+	void addSubdivision(Subdivision div) {
+		subdivs.add(div);
+	}
 }

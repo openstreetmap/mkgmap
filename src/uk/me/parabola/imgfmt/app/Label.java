@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Label implements Writable {
+public class Label {
 	static private Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.

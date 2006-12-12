@@ -24,6 +24,10 @@ import java.util.ArrayList;
 /**
  * The map is divided into areas, depending on the zoom level.  These are
  * known as subdivisions.
+ * <p>A subdivision 'belongs' to a zoom level and cannot be intepreted correctly
+ * with out knowing the <i>bitsPerCoord</i> of the associated zoom level.
+ * <p>Subdivisions also form a tree as subdivisions are further divided at
+ * lower levels.
  *
  * @author Steve Ratcliffe
  */
@@ -65,16 +69,17 @@ public class Subdivision {
 	 *
 	 * @return The area that this subdivision covers.
 	 */
-	public Bounds getBounds() {
-		Bounds b = new Bounds(latitude-height, longitude-width,
+	public Area getBounds() {
+		Area b = new Area(latitude-height, longitude-width,
 				latitude+height, longitude+width);
 		return b;
 	}
 
-	public Bounds getBounds(int bits) {
+	// XXX temporary hack
+	public Area getBounds(int bits) {
 		int h = height << (24-bits);
 		int w = width << (24 - bits);
-		Bounds b = new Bounds(latitude-h, longitude-w,
+		Area b = new Area(latitude-h, longitude-w,
 				latitude+h, longitude+w);
 		return b;
 	}
@@ -99,25 +104,6 @@ public class Subdivision {
 	}
 
 	/**
-	 * Get a type that shows if this area has lines, points etc.
-	 *
-	 * @return A code showing what kinds of element are in this subdivision.
-	 */
-	private byte getType() {
-		byte b = 0;
-		if (hasPoints)
-			b |= 0x10;
-		if (hasIndPoints)
-			b |= 0x20;
-		if (hasPolylines)
-			b |= 0x40;
-		if (hasPolygons)
-			b |= 0x80;
-
-		return b;
-	}
-
-	/**
 	 * Get the number of the first subdivision at the next level.
 	 * @return The first subdivision at the next level.
 	 */
@@ -126,7 +112,9 @@ public class Subdivision {
 	}
 
 	/**
-	 * Add this subdivision as our child at the next level.
+	 * Add this subdivision as our child at the next level.  Each subdivision
+	 * can be further divided into smaller divisions.  They form a tree like
+	 * arrangement.
 	 *
 	 * @param sd One of our subdivisions.
 	 */
@@ -176,5 +164,75 @@ public class Subdivision {
 
 	public void setHasPolygons(boolean hasPolygons) {
 		this.hasPolygons = hasPolygons;
+	}
+
+	/**
+	 * Get a type that shows if this area has lines, points etc.
+	 *
+	 * @return A code showing what kinds of element are in this subdivision.
+	 */
+	private byte getType() {
+		byte b = 0;
+		if (hasPoints)
+			b |= 0x10;
+		if (hasIndPoints)
+			b |= 0x20;
+		if (hasPolylines)
+			b |= 0x40;
+		if (hasPolygons)
+			b |= 0x80;
+
+		return b;
+	}
+
+	/**
+	 * Create a subdivision at a given zoom level.
+	 *
+	 * @param area The (unshifted) area that the subdivision covers.
+	 * @param zoom The zoom level that this division occupies.
+	 * @return A new subdivision.
+	 */
+	public Subdivision createSubdivision(Area area, Zoom zoom) {
+		Subdivision div = createDiv(area, zoom);
+		addSubdivision(div);
+		return div;
+	}
+
+	/**
+	 * This should be called only once per map to create the top level
+	 * subdivision.  The top level subdivision covers the whole map and it
+	 * must be empty.
+	 *
+	 * @param area The area bounded by the map.
+	 * @param zoom The zoom level which must be the highest (least detailed)
+	 * zoom in the map.
+	 * @return The new subdivision.
+	 */
+	public static Subdivision topLevelSubdivision(Area area, Zoom zoom) {
+		return createDiv(area, zoom);
+	}
+
+	/**
+	 * Does the work of the methods that create subdivisions.
+	 * @param area The area.
+	 * @param zoom The zoom level.
+	 * @return A new subdivision.
+	 */
+	private static Subdivision createDiv(Area area, Zoom zoom) {
+		// Get the central point of the area.
+		int lat = (area.getMinLat() + area.getMaxLat())/2;
+		int lng = (area.getMinLong() + area.getMaxLong())/2;
+
+		// Get the half width and height of the area and adjust by the
+		// bits per coord.
+		int width = (area.getMaxLong() - area.getMinLong())/2;
+		width >>= 24 - zoom.getBitsPerCoord();
+		int height = (area.getMaxLat() - area.getMinLat())/2;
+		height >>= 24 - zoom.getBitsPerCoord();
+
+		Subdivision div = new Subdivision(lat, lng, width, height);
+		zoom.addSubdivision(div);
+
+		return div;
 	}
 }
