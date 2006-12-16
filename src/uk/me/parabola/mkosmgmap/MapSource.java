@@ -12,25 +12,12 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 02-Dec-2006
+ * Create date: 16-Dec-2006
  */
-package uk.me.parabola.imgfmt.fs;
-
-import java.nio.channels.Channel;
-import java.nio.channels.ByteChannel;
-import java.nio.ByteBuffer;
+package uk.me.parabola.mkosmgmap;
 
 /**
  * @author Steve Ratcliffe
  */
-public interface ImgChannel extends Channel, ByteChannel {
-
-
-	/**
-	 * Get the file position. Note that this is a logical position relative
-	 * to the begining of the file.
-	 *
-	 * @return The offset in bytes from the beginning of the file.
-	 */
-	public int position();
+public interface MapSource {
 }

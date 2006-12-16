@@ -35,13 +35,17 @@ public class Subdivision {
 	static private Logger log = Logger.getLogger(Subdivision.class);
 
 	private int rgnPointer;
-	
+
+	// The zoom level contains the number of bits per coordinate which is
+	// critical for scaling quantities by.
+	private Zoom zoom;
+
 	private boolean hasPoints;
 	private boolean hasIndPoints;
 	private boolean hasPolylines;
 	private boolean hasPolygons;
 
-	// The location of the central point
+	// The location of the central point, not scaled AFAIK
 	private int longitude;
 	private int latitude;
 
@@ -57,7 +61,12 @@ public class Subdivision {
 
 	private List<Subdivision> divisions = new ArrayList<Subdivision>();
 
-	public Subdivision(int latitude, int longitude, int width, int height) {
+	public Subdivision(Zoom z, int latitude, int longitude,
+					   int width, int height)
+	{
+		this.zoom = z;
+		z.addSubdivision(this);
+
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.width = width;
@@ -75,13 +84,14 @@ public class Subdivision {
 		return b;
 	}
 
-	// XXX temporary hack
-	public Area getBounds(int bits) {
-		int h = height << (24-bits);
-		int w = width << (24 - bits);
-		Area b = new Area(latitude-h, longitude-w,
-				latitude+h, longitude+w);
-		return b;
+	/**
+	 * Get the shift value, that is the number of bits to left shift by for
+	 * values that need to be saved shifted in the file.
+	 *
+	 * @return The shift value.  It is 24 minus the number of bits per coord.
+	 */
+	public int getShift() {
+		return 24 - zoom.getBitsPerCoord();
 	}
 
 	/**
@@ -230,8 +240,7 @@ public class Subdivision {
 		int height = (area.getMaxLat() - area.getMinLat())/2;
 		height >>= 24 - zoom.getBitsPerCoord();
 
-		Subdivision div = new Subdivision(lat, lng, width, height);
-		zoom.addSubdivision(div);
+		Subdivision div = new Subdivision(zoom, lat, lng, width, height);
 
 		return div;
 	}

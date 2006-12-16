@@ -253,7 +253,7 @@ public class TREFile extends ImgFile {
 		putChar((char) 1);
 		put((byte) 0);
 
-		putInt(dataPos);
+		putInt(polylinePos);
 		putInt(polylineSize);
 		putChar(POLYLINE_REC_LEN);
 
@@ -300,5 +300,9 @@ public class TREFile extends ImgFile {
 
 	public void setLastRgnPos(int lastRgnPos) {
 		this.lastRgnPos = lastRgnPos;
+	}
+
+	public void setPoiDisplayFlags(byte poiDisplayFlags) {
+		this.poiDisplayFlags = poiDisplayFlags;
 	}
 }

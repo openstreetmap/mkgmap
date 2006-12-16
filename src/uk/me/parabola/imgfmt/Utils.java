@@ -114,4 +114,8 @@ public class Utils {
 		
 		return ret;
 	}
+
+	public static double toDegrees(int val) {
+		return (double) val / ((1 << 24) / 360.0);
+	}
 }

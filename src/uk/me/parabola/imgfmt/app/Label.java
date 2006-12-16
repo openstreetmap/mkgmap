@@ -101,8 +101,6 @@ public class Label {
 		// The offset withing the byte
 		int shift = bitOff - 8*byteOff;
 
-		log.debug("bit " + bitOff + ", byte " + byteOff + ", shift "+shift);
-
 		int mask = 0xfc >> shift;
 		buf[byteOff] |= ((c << 2) >> shift) & mask;
 

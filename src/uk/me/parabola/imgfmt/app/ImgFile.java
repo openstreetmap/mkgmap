@@ -150,5 +150,4 @@ public abstract class ImgFile {
 	protected void setWriteStrategy(WriteStrategy writer) {
 		this.writer = writer;
 	}
-
 }

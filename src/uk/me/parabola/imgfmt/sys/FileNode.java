@@ -218,19 +218,6 @@ public class FileNode implements ImgChannel {
 		return nw;
 	}
 
-	/**
-	 * Allocates a suitable buffer for operations.  It takes acount of the
-	 * blocksize and the fact that the file is in little endian.
-	 *
-	 * @return A suitable byte buffer.
-	 */
-	public ByteBuffer allocateBuffer() {
-		ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
-		buf.order(ByteOrder.LITTLE_ENDIAN);
-	
-		return buf;
-	}
-
 	public int position() {
 		return position;
 	}
@@ -245,41 +232,24 @@ public class FileNode implements ImgChannel {
 	 * @throws IOException If there is an error writing to disk.
 	 */
 	private void sync() throws IOException {
-		if (dir.getSize() == 0) {
-			// If the size is zero then allocate a block anyway.  Not a very
-			// realistic problem, done mainly for the testing phase.
-			ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
-			while (buf.hasRemaining())
-				buf.put((byte) 0);
+		// Ensure that a complete block is written out.
+		log.debug("on close position is " + position);
+		log.debug("chan position is " + file.position());
+		log.debug("chan position is 0x" + Integer.toHexString((int) file.position()));
+		int bs = blockManager.getBlockSize();
+		long rem = bs - (file.position() % bs);
+		log.debug("rem is " + Integer.toHexString((int) rem));
 
-			int b = blockManager.allocate();
-			dir.addBlock(b);
-			writeBlock(b, buf);
-		} else {
-			// Ensure that a complete block is written out.
-			log.debug("on close position is " + position);
-			log.debug("chan position is " + file.position());
-			log.debug("chan position is 0x" + Integer.toHexString((int) file.position()));
-			int bs = blockManager.getBlockSize();
-			long rem = bs - (file.position() % bs);
-			log.debug("rem is " + Integer.toHexString((int) rem));
+		ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
 
-			ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
-
-			for (int i = 0; i < rem; i++) {
-				buf.put((byte) 0);
-			}
-			buf.flip();
-			int n = file.write(buf);
-			log.debug("bytes writtern " + n);
-			log.debug("bytes writtern " + Integer.toHexString(n));
-			log.debug("file pos after " + file.position());
+		for (int i = 0; i < rem; i++) {
+			buf.put((byte) 0);
 		}
-	}
-
-	private int writeBlock(int bl, ByteBuffer buf) {
-		dir.incSize(buf.position());
-		return 0;
+		buf.flip();
+		int n = file.write(buf);
+		log.debug("bytes writtern " + n);
+		log.debug("bytes writtern " + Integer.toHexString(n));
+		log.debug("file pos after " + file.position());
 	}
 
 }

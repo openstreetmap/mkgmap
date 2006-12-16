@@ -20,7 +20,6 @@ import org.apache.log4j.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.BitSet;
 
 import uk.me.parabola.imgfmt.Utils;
 
@@ -62,13 +61,15 @@ public class Polyline extends MapObject {
 
 		// Prepare for writing by doing all the required calculations.
 		Work w = prepare();
-		byte[] bs = w.getBitStream();
+		BitWriter bw = w.makeBitStream();
 
 		// The type of feature, also contains a couple of flags hidden inside.
 		byte b1 = (byte) getType();
 		if (direction)
 			b1 |= 0x40;  // Polylines only.
-		if (bs.length > 255)
+		
+		int blen = bw.getLength() - 1; // allow for the sizes
+		if (blen > 255)
 			b1 |= 0x80;
 
 		file.put(b1);
@@ -84,13 +85,13 @@ public class Polyline extends MapObject {
 		file.putChar((char) getLongitude());
 		file.putChar((char) getLatitude());
 
-		if (bs.length > 255) {
-			file.putChar((char) (bs.length & 0xffff));
+		if (blen > 255) {
+			file.putChar((char) (blen & 0xffff));
 		} else {
-			file.put((byte) (bs.length & 0xff));
+			file.put((byte) (blen & 0xff));
 		}
 
-		file.put(bs);
+		file.put(bw.getBytes(), 0, blen+1);
 	}
 
 	public void addCoord(Coord co) {
@@ -111,7 +112,7 @@ public class Polyline extends MapObject {
 
 	public class Work {
 		private boolean extraBit;
-		private boolean dataInNet;
+		private boolean dataInNet = false;
 
 		private boolean xSameSign;
 		private boolean xSign;     // Set if all negative
@@ -123,6 +124,9 @@ public class Polyline extends MapObject {
 		private int xBase;
 		private int yBase;
 
+		private int xNum;    // Number of bits for the x coord
+		private int yNum;    // Number of bits for the y coord
+
 		private int[] deltas;
 
 		public Work() {
@@ -130,18 +134,7 @@ public class Polyline extends MapObject {
 			calcDeltas();
 		}
 
-		public byte[] getBitStream() {
-			BitSet bs = new BitSet();
-
-			int ind = 0;
-
-			bs.set(ind++, xSameSign);
-			if (xSameSign)
-				bs.set(ind++, xSign);
-
-			bs.set(ind++, ySameSign);
-			if (ySameSign)
-				bs.set(ind++, ySign);
+		public BitWriter makeBitStream() {
 
 			int xbits = 2;
 			if (xBase < 10)
@@ -161,9 +154,43 @@ public class Polyline extends MapObject {
 
 			// Note no sign included.
 			log.debug("xbits" + xbits + ", y=" + ybits);
+			log.debug("xNum" + xNum + ", y=" + yNum);
 
+			// Write the bitstream
+			BitWriter bw = new BitWriter();
 
-			return new byte[0];
+			// Pre bit stream info
+			bw.putn(xBase, 4);
+			bw.putn(yBase, 4);
+
+			bw.put1(xSameSign);
+			if (xSameSign)
+				bw.put1(xSign);
+
+			bw.put1(ySameSign);
+			if (ySameSign)
+				bw.put1(ySign);
+
+			log.debug("x same is " + xSameSign + ", sign is " + xSign);
+			log.debug("y same is " + ySameSign + ", sign is " + ySign);
+
+			int dx, dy;
+			for (int i = 0; i < deltas.length; i+=2) {
+				dx = deltas[i];
+				log.debug("x delta " + dx + ", " + xNum);
+				bw.putn(dx, xNum);
+				if (!xSameSign)
+					bw.put1(dx < 0);
+
+				dy = deltas[i + 1];
+				log.debug("y delta " + dy + ", " + yNum);
+				bw.putn(dy, yNum);
+				if (!ySameSign)
+					bw.put1(dy < 0);
+			}
+
+			log.debug(bw);
+			return bw;
 		}
 
 		/**
@@ -211,7 +238,7 @@ public class Polyline extends MapObject {
 			int yBits = 0;  // Number of bits needed for lat.
 
 			// Space to hold the deltas
-			int[] deltas = new int[2 * points.size()];
+			int[] deltas = new int[2 * (points.size() - 1)];
 			int   off = 0;
 
 			boolean first = true;
@@ -230,6 +257,9 @@ public class Polyline extends MapObject {
 				int dx = lng - lastLong;
 				int dy = lat - lastLat;
 
+				lastLong = lng;
+				lastLat = lat;
+				
 				// See if they can all be the same sign.
 				if (!xDiffSign) {
 					int thisSign = (dx >= 0)? 1: -1;
@@ -282,39 +312,47 @@ public class Polyline extends MapObject {
 			if (tmp > 10)
 				tmp = 9 + (tmp - 9) / 2;
 			this.xBase = tmp;
+			this.xNum = xBits;
 
 			tmp = yBits - 2;
 			if (tmp > 10)
 				tmp = 9 + (tmp - 9) / 2;
 			this.yBase = tmp;
+			this.yNum = yBits;
 
 			// Set flags for same sign etc.
 			this.xSameSign = !xDiffSign;
 			this.ySameSign = !yDiffSign;
-			this.xSign = xSign > 0;
-			this.ySign = ySign > 0;
+			this.xSign = xSign < 0;
+			this.ySign = ySign < 0;
 
 			// Save the deltas
 			this.deltas = deltas;
 		}
 
 		/**
-		 * The bits needed to represent a number.
+		 * The bits needed to hold a number without truncating it.
 		 *
 		 * @param val The number for bit couting.
 		 * @return The number of bits required.
 		 */
 		private int bitsNeeded(int val) {
-			if (val == 0)
-				return 0;
-			if (val < 0) {
-				int n = -val;
-				return Integer.bitCount(n) + 1;
-			} else {
-				return Integer.bitCount(val);
+			int n = abs(val);
+
+			int count = val < 0? 1: 0;
+			while (n != 0) {
+				n >>>= 1;
+				count++;
 			}
+			return count;
 		}
 
+		private int abs(int val) {
+			if (val < 0)
+				return -val;
+			else
+				return val;
+		}
 
 		public boolean isExtraBit() {
 			return extraBit;

@@ -129,6 +129,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param length The number of bytes to write.
 	 */
 	public void put(byte[] src, int start, int length) {
+		log.debug("start+len " + start + ", " + length);
 		buf.put(src, start, length);
 	}
 }

@@ -122,8 +122,6 @@ public class FileSystem implements FSOps {
 	 *          If the file exists allready.
 	 */
 	public ImgChannel create(String name) throws FileExistsException {
-//		DirectoryEntryImpl ent
-//				= new DirectoryEntryImpl(name, blockSize, nextDataBlock);
 		Dirent dir = directory.create(name);
 
 		FileNode f = new FileNode(file, blockManager, dir, "w");
@@ -188,21 +186,5 @@ public class FileSystem implements FSOps {
 		} catch (IOException e) {
 			log.debug("could not sync filesystem");
 		}
-	}
-
-	int writeBlock(int bl, ByteBuffer buf) throws IOException {
-		file.position(bl * header.getBlockSize());
-
-		log.debug("writing block " + bl + " at " + file.position());
-
-		return file.write(buf);
-	}
-
-	int allocateBlock() {
-		return blockManager.allocate();
-	}
-
-	int getBlockSize() {
-		return header.getBlockSize();
 	}
 }
