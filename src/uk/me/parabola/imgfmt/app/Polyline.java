@@ -207,12 +207,12 @@ public class Polyline extends MapObject {
 			log.debug("shift is " + shift);
 
 			int lat = (co.getLatitude() - div.getLatitude()) >> shift;
-			int lng = (co.getLongitude() - div.getLongitude()) >> shift;
-			log.debug("lat/long " + Utils.toDegrees(lat) + "/" + Utils.toDegrees(lng));
-			log.debug("lat/long " + lat + "/" + lng);
+			int lon = (co.getLongitude() - div.getLongitude()) >> shift;
+			log.debug("lat/long " + Utils.toDegrees(lat) + "/" + Utils.toDegrees(lon));
+			log.debug("lat/long " + lat + "/" + lon);
 
 			setLatitude(lat);
-			setLongitude(lng);
+			setLongitude(lon);
 		}
 
 		/**
@@ -246,18 +246,18 @@ public class Polyline extends MapObject {
 			// OK go through the points
 			for (Coord co : points) {
 				int lat = co.getLatitude() >> shift;
-				int lng = co.getLongitude() >> shift;
+				int lon = co.getLongitude() >> shift;
 				if (first) {
 					lastLat = lat;
-					lastLong = lng;
+					lastLong = lon;
 					first = false;
 					continue;
 				}
 
-				int dx = lng - lastLong;
+				int dx = lon - lastLong;
 				int dy = lat - lastLat;
 
-				lastLong = lng;
+				lastLong = lon;
 				lastLat = lat;
 				
 				// See if they can all be the same sign.
