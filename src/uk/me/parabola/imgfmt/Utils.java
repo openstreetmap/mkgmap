@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Date;
 import java.util.Calendar;
 
@@ -105,7 +106,8 @@ public class Utils {
 
 		byte[] ret = new byte[7];
 		ByteBuffer buf = ByteBuffer.wrap(ret);
-		buf.putChar((char) cal.get(Calendar.YEAR));
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
 		buf.put((byte) (cal.get(Calendar.MONTH)));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
 		buf.put((byte) cal.get(Calendar.HOUR));
