@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 public class TREFile extends ImgFile {
 	static private Logger log = Logger.getLogger(TREFile.class);
 
-	private static int HEADER_LEN = 188; // Other values are possible
+	private static int HEADER_LEN = 120; // Other values are possible
 
 	// Bounding box.  All units are in map units.
 	private Area area;
