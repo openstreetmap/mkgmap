@@ -277,19 +277,6 @@ public class TREFile extends ImgFile {
 		// Map ID
 		putInt(mapId);
 
-		// A bunch of flag that regulate mainly unknown things.  Certain values
-		// determine if the map name/date and block lists are protected
-		// from modification in an unknown way.
-		byte[] flags = new byte[] {
-				0x41, (byte) 0xBF,  0x02, 0x3B, (byte) 0x95, (byte) 0xB3,
-				0x12, (byte) 0xF2, 0x40, (byte) 0xBF,  0x66, (byte) 0xF2,
-				0x40, (byte) 0xBF, 0x66, (byte) 0xF2
-		};
-		if (HEADER_LEN > 154) {
-			position(0x9a);
-			put(flags);
-		}
-		
 		position(HEADER_LEN);
 		put(Utils.toBytes("My OSM Map"));
 	}
