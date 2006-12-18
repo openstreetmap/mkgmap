@@ -16,7 +16,7 @@
  * Author: Steve Ratcliffe
  * Create date: 26-Nov-2006
  */
-package uk.me.parabola.mkosmgmap;
+package uk.me.parabola.mkgmap;
 
 import org.apache.log4j.Logger;
 import uk.me.parabola.imgfmt.sys.FileSystem;
@@ -55,7 +55,7 @@ public class MakeTestMap {
 		
 		FileSystem fs = new FileSystem("gmapsupp.img", params);
 
-		Map mp = Map.createMap(fs, "72698284");
+		Map mp = Map.createMap(fs, "32860003");
 
 		TREFile tf = mp.getTRE();
 		RGNFile rgn = mp.getRGN();
@@ -83,7 +83,7 @@ public class MakeTestMap {
 		div = div.createSubdivision(area, z);
 		rgn.addDivision(div);
 
-		Overview ov = new Overview(5, 1);
+		Overview ov = new Overview(6, 1);
 		tf.addPolylineOverview(ov);
 
 		Coord co;
