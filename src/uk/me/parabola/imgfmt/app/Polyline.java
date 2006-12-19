@@ -112,7 +112,7 @@ public class Polyline extends MapObject {
 
 	public class Work {
 		private boolean extraBit;
-		private boolean dataInNet = false;
+		private boolean dataInNet;
 
 		private boolean xSameSign;
 		private boolean xSign;     // Set if all negative
@@ -132,6 +132,7 @@ public class Polyline extends MapObject {
 		public Work() {
 			calcLatLong();
 			calcDeltas();
+			dataInNet = false;
 		}
 
 		public BitWriter makeBitStream() {
@@ -181,6 +182,7 @@ public class Polyline extends MapObject {
 				if (xSameSign) {
 					bw.putn(abs(dx), xNum);
 				} else {
+					assert dx == 0 || ((dx & ((1 << xNum) - 1)) != 0);
 					bw.putn(dx, xNum);
 					bw.put1(dx < 0);
 				}
@@ -190,6 +192,7 @@ public class Polyline extends MapObject {
 				if (ySameSign) {
 					bw.putn(abs(dy), yNum);
 				} else {
+					assert dy == 0 || ((dy & ((1<<yNum) - 1)) != 0);
 					bw.putn(dy, yNum);
 					bw.put1(dy < 0);
 				}

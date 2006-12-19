@@ -31,6 +31,8 @@ import uk.me.parabola.mkgmap.MapCollector;
 import uk.me.parabola.mkgmap.MapLine;
 
 /**
+ * Reads and parses the OSM XML format.
+ *
  * @author Steve Ratcliffe
  */
 public class OSMXmlHandler extends DefaultHandler {
@@ -43,7 +45,6 @@ public class OSMXmlHandler extends DefaultHandler {
 	private Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
 	private Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
-	private Segment currentSeg;
 	private Way currentWay;
 
 	private static final int MODE_NODE = 1;
@@ -167,7 +168,6 @@ public class OSMXmlHandler extends DefaultHandler {
 	 */
 	private void processWay(Way way) {
 		log.debug(currentWay);
-		String name = way.getName();
 
 		String highway = way.getTag("highway");
 		if (highway != null)
@@ -185,13 +185,16 @@ public class OSMXmlHandler extends DefaultHandler {
 			type = 6;
 		}
 
-		List<Coord> points =  way.getPoints();
-		MapLine line = new MapLine();
-		line.setName(name);
-		line.setPoints(points);
-		line.setType(type);
+		List<List<Coord>> pointLists =  way.getPoints();
+		for (List<Coord> points : pointLists) {
+			MapLine line = new MapLine();
+			line.setName(name);
+			line.setPoints(points);
+			line.setType(type);
+			
+			mapper.addLine(line);
+		}
 
-		mapper.addLine(line);
 	}
 
 	/**
@@ -232,8 +235,8 @@ public class OSMXmlHandler extends DefaultHandler {
 
 		if (log.isDebugEnabled())
 		log.debug("adding segment " + start + " to " + end);
-		currentSeg = new Segment(start, end);
-		segMap.put(id, currentSeg);
+		Segment seg = new Segment(id, start, end);
+		segMap.put(id, seg);
 	}
 
 	private void addTagToWay(String key, String val) {

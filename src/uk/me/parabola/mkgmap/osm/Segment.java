@@ -19,26 +19,18 @@ package uk.me.parabola.mkgmap.osm;
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
+ * Holds OSM segment information.  A segment is an order list of two nodes. It
+ * can have properties, but usually doesn't (or shouldn't).
+ *
  * @author Steve Ratcliffe
  */
 public class Segment {
-//	private double startLat;
-//	private double endLat;
-//	private double startLon;
-//	private double endLon;
 
 	private Coord start;
 	private Coord end;
+	private long id;
 
-//	public Segment(double startLat, double startLon, double endLat, double endLon) {
-//		this.startLat = startLat;
-//		this.endLat = endLat;
-//		this.startLon = startLon;
-//		this.endLon = endLon;
-//	}
-
-
-	public Segment(Coord start, Coord end) {
+	public Segment(long id, Coord start, Coord end) {
 		this.start = start;
 		this.end = end;
 	}
@@ -50,7 +42,6 @@ public class Segment {
 	public Coord getEnd() {
 		return end;
 	}
-
 
 	/**
 	 * Get startLat.
@@ -90,5 +81,9 @@ public class Segment {
 	public double getEndLon()
 	{
 	    return end.getLongitude();
+	}
+
+	public long getId() {
+		return id;
 	}
 }

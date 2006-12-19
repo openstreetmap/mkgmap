@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
+
 /**
  * Represent a OSM way.  A way consists of an ordered list of segments.  Its
  * quite possible for these to be non contiguous and we shall have to deal with
@@ -32,28 +34,31 @@ import java.util.ArrayList;
  * @author Steve Ratcliffe
  */
 public class Way {
+	private static final Logger log = Logger.getLogger(Way.class);
+
 	private Map<String, String> tags = new HashMap<String, String>();
-	private List<Coord> points = new ArrayList<Coord>();
-	private int npoints;
+	private List<Segment> segments = new ArrayList<Segment>();
 	String name;
 
+	/**
+	 * Add a segment to the way.
+	 *
+	 * @param seg The segment to add.
+	 */
 	public void addSegment(Segment seg) {
 		if (seg == null)
 			return;
-		
-		Coord start = seg.getStart();
-		Coord end = seg.getEnd();
 
-		if (npoints == 0) {
-			points.add(start);
-			points.add(end);
-			npoints += 2;
-		} else {
-			points.add(end);
-			npoints++;
-		}
+		segments.add(seg);
 	}
 
+	/**
+	 * Add a tag to the way.  Some tags are recognised separately and saved in
+	 * separate fields.
+	 *
+	 * @param key The tag name.
+	 * @param val Its value.
+	 */
 	public void addTag(String key, String val) {
 		if (key.equals("name")) {
 			name = val;
@@ -67,10 +72,10 @@ public class Way {
 	 * @return A string with the name and start point
 	 */
 	public String toString() {
-		if (points.isEmpty())
+		if (segments.isEmpty())
 			return "Way: empty";
 		
-		Coord coord = points.get(0);
+		Coord coord = segments.get(0).getStart();
 		String ret = "WAY: "
 				+ name
 				+ " "
@@ -89,7 +94,68 @@ public class Way {
 		return tags.get(key);
 	}
 
-	public List<Coord> getPoints() {
+	/**
+	 * Get the points that make up the way.  We attempt to re-order the segments
+	 * and return a list of points that traces the route of the way.
+	 *
+	 * TODO: there could be multiple dis-contiguous sections and we need to deal
+	 * @return A simple list of points that form a line.
+	 */
+	public List<List<Coord>> getPoints() {
+		List<List<Coord>> points = segmentsToPoints();
 		return points;
+	}
+
+	/**
+	 * Unfortunately there are many ways that have mis-ordered segments that
+	 * do not work when converting to a map.
+	 *
+	 * @return A list of points on a line.
+	 */
+	private List<List<Coord>> segmentsToPoints() {
+
+		List<List<Coord>> pointLists = new ArrayList<List<Coord>>();
+		List<Coord> points = new ArrayList<Coord>();
+		pointLists.add(points);
+		int npoints = 0;
+
+		Coord start = null, end = null;
+
+		for (Segment seg : segments) {
+			if (npoints == 0) {
+				start = seg.getStart();
+				end = seg.getEnd();
+				points.add(start);
+				points.add(end);
+				npoints += 2;
+			} else {
+				Coord cs = seg.getStart();
+				Coord ce = seg.getEnd();
+				if (cs.equals(end)) {
+					// this is normal add the next point
+					end = ce;
+					points.add(end);
+					npoints++;
+				} else if (ce.equals(start)) {
+					// segment appears reversed, add the start of the segment.
+					log.warn("segment " + seg.getId() + " reversed");
+					end = cs;
+					points.add(end);
+					npoints++;
+				} else {
+					// segment discontinuous, TODO: try to match with other segments.
+					log.warn("segment " + seg.getId() + " disjoint");
+					// Start a new set of points
+					points = new ArrayList<Coord>();
+					pointLists.add(points);
+
+					points.add(cs);
+					points.add(ce);
+					npoints = 2;
+				}
+			}
+		}
+
+		return pointLists;
 	}
 }
