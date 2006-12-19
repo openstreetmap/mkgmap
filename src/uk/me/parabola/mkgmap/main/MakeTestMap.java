@@ -16,7 +16,7 @@
  * Author: Steve Ratcliffe
  * Create date: 26-Nov-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.mkgmap.main;
 
 import org.apache.log4j.Logger;
 import uk.me.parabola.imgfmt.sys.FileSystem;

@@ -194,7 +194,7 @@ class ImgHeader {
 		cal.setTime(date);
 
 		header.put(OFF_UPDATE_YEAR, toYearCode(cal.get(Calendar.YEAR)));
-		header.put(OFF_UPDATE_MONTH, (byte) cal.get(Calendar.MONTH));
+		header.put(OFF_UPDATE_MONTH, (byte) (cal.get(Calendar.MONTH)+1));
 	}
 
 	/**

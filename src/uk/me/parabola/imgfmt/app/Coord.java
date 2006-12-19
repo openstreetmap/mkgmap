@@ -62,4 +62,31 @@ public class Coord {
 	public int getLongitude() {
 		return longitude;
 	}
+
+	public int hashCode() {
+		return latitude+longitude;
+	}
+
+	public boolean equals(Object obj) {
+		if (obj == null)
+			return false;
+		if (obj.getClass() != getClass())
+			return false;
+		Coord other = (Coord) obj;
+		if (latitude == other.latitude && longitude == other.longitude)
+			return true;
+		else return false;
+	}
+
+	/**
+	 * Returns a string representation of the object.
+	 *
+	 * @return a string representation of the object.
+	 */
+	public String toString() {
+		return Utils.toDegrees(latitude)
+				+ "/"
+				+ Utils.toDegrees(longitude);
+	}
+
 }

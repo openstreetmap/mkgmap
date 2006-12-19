@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.nio.channels.FileChannel;
-import java.nio.ByteBuffer;
 
 import uk.me.parabola.imgfmt.fs.FSOps;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
@@ -44,7 +43,6 @@ public class FileSystem implements FSOps {
 
 	private int blockSize;
 
-	private RandomAccessFile rafile;
 	private FileChannel file;
 
 	// A file system consists of a header, a directory and a data area.
@@ -69,7 +67,7 @@ public class FileSystem implements FSOps {
 			throws FileNotFoundException
 	{
 		log.info("Creating file system");
-		rafile = new RandomAccessFile(filename, "rw");
+		RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
 
 		file = rafile.getChannel();
 
@@ -118,8 +116,7 @@ public class FileSystem implements FSOps {
 	 *
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
-	 * @throws uk.me.parabola.imgfmt.FileExistsException
-	 *          If the file exists allready.
+	 * @throws FileExistsException If the file exists allready.
 	 */
 	public ImgChannel create(String name) throws FileExistsException {
 		Dirent dir = directory.create(name);
@@ -136,7 +133,7 @@ public class FileSystem implements FSOps {
 	 * @param mode Either "r" for read access, "w" for write access or "rw"
 	 *             for both read and write.
 	 * @return A file descriptor.
-	 * @throws java.io.FileNotFoundException When the file does not exist.
+	 * @throws FileNotFoundException When the file does not exist.
 	 */
 	public ImgChannel open(String name, String mode) throws FileNotFoundException {
 		return null;
@@ -147,7 +144,7 @@ public class FileSystem implements FSOps {
 	 *
 	 * @param name The filename to look up.
 	 * @return A directory entry.
-	 * @throws java.io.IOException If an error occurs reading the directory.
+	 * @throws IOException If an error occurs reading the directory.
 	 */
 	public DirectoryEntry lookup(String name) throws IOException {
 		return null;
@@ -157,7 +154,7 @@ public class FileSystem implements FSOps {
 	 * List all the files in the directory.
 	 *
 	 * @return A List of directory entries.
-	 * @throws java.io.IOException If an error occurs reading the directory.
+	 * @throws IOException If an error occurs reading the directory.
 	 */
 	public List list() throws IOException {
 		return null;
@@ -167,7 +164,7 @@ public class FileSystem implements FSOps {
 	 * Sync with the underlying file.  All unwritten data is written out to
 	 * the underlying file.
 	 *
-	 * @throws java.io.IOException If an error occurs during the write.
+	 * @throws IOException If an error occurs during the write.
 	 */
 	public void sync() throws IOException {
 		header.sync();

@@ -47,7 +47,7 @@ public class Zoom {
 	 * @param zoom The level between 0 and 15.
 	 * @param bitsPerCoord The number of bits per coordinate, up to 24.
 	 */
-	public Zoom(int zoom, int bitsPerCoord) {
+	Zoom(int zoom, int bitsPerCoord) {
 		this.zoom = zoom;
 		this.bitsPerCoord = bitsPerCoord;
 	}

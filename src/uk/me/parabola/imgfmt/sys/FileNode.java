@@ -187,35 +187,58 @@ public class FileNode implements ImgChannel {
 		if (!open)
 			throw new ClosedChannelException();
 
-		// Get the logical block, ie the block as we see it in our file.
-		int lblock = position/blockManager.getBlockSize();
+		int blockSize = blockManager.getBlockSize();
 
-		// First need to allocate enough blocks for this write. First check
-		// if the block exists already
-		int pblock = dir.getPhysicalBlock(lblock);
-		log.debug("block at position is " + pblock);
-		if (pblock == 0xffff) {
-			log.debug("allocating new block");
-			pblock = blockManager.allocate();
-			dir.addBlock(pblock);
+		// Get the size of this write
+		int size = src.remaining();
+		int limit = src.limit();
+		log.debug("size to write " + size + ", " + limit);
+
+		// Loop over each block, if we know that they are all contiguous
+		// then we could do them all at once.
+
+		int totalWritten = 0;
+		while (size > 0) {
+			// Get the logical block, ie the block as we see it in our file.
+			int lblock = position/blockSize;
+
+			// First need to allocate enough blocks for this write. First check
+			// if the block exists already
+			int pblock = dir.getPhysicalBlock(lblock);
+			log.debug("block at position is " + pblock);
+			if (pblock == 0xffff) {
+				log.debug("allocating new block");
+				pblock = blockManager.allocate();
+				dir.addBlock(pblock);
+			}
+
+			// Position the underlying file, so that it is in the correct place.
+			int off = position - lblock*blockManager.getBlockSize();
+			log.debug("offset is " + off);
+			file.position(pblock * blockSize + off);
+
+			int n = blockSize;
+			if (off != 0) {
+				log.debug("not at block boundry " + off);
+				n = blockSize - off;
+			}
+
+			src.limit(src.position() + n);
+			size -= n;
+
+			// Write to the underlying file.
+			int nw = file.write(src);
+			log.debug("wrote " + nw + " bytes");
+
+			// Update the file positions
+			position += nw;
+			totalWritten += nw;
+
+			// Update file size.  TODO should only be when position is at end.
+			dir.incSize(nw);
 		}
 
-		// Position the underlying file, so that it is in the correct place.
-		int off = position - lblock*blockManager.getBlockSize();
-		log.debug("offset is " + off);
-		file.position(pblock * blockManager.getBlockSize() + off);
-
-		// Write to the underlying file.
-		int nw = file.write(src);
-		log.debug("wrote " + nw + " bytes");
-
-		// Update the file positions
-		position += nw;
-
-		// Update file size.  TODO should only be when position is at end.
-		dir.incSize(nw);
-
-		return nw;
+		return totalWritten;
 	}
 
 	public int position() {

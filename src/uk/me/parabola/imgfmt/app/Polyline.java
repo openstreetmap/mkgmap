@@ -178,15 +178,21 @@ public class Polyline extends MapObject {
 			for (int i = 0; i < deltas.length; i+=2) {
 				dx = deltas[i];
 				log.debug("x delta " + dx + ", " + xNum);
-				bw.putn(dx, xNum);
-				if (!xSameSign)
+				if (xSameSign) {
+					bw.putn(abs(dx), xNum);
+				} else {
+					bw.putn(dx, xNum);
 					bw.put1(dx < 0);
+				}
 
 				dy = deltas[i + 1];
 				log.debug("y delta " + dy + ", " + yNum);
-				bw.putn(dy, yNum);
-				if (!ySameSign)
+				if (ySameSign) {
+					bw.putn(abs(dy), yNum);
+				} else {
+					bw.putn(dy, yNum);
 					bw.put1(dy < 0);
+				}
 			}
 
 			log.debug(bw);

@@ -43,7 +43,7 @@ public class TREFile extends ImgFile {
 	private static int HEADER_LEN = 120; // Other values are possible
 
 	// Bounding box.  All units are in map units.
-	private Area area;
+	private Area area = new Area(0,0,0,0);
 
 	private static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
