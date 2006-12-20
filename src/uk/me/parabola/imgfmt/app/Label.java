@@ -119,6 +119,9 @@ public class Label {
 
 	// For debugging only
 	private void dumpBuf(byte[] buf) {
+		if (!log.isDebugEnabled())
+			return;
+		
 		StringBuffer sb = new StringBuffer();
 
 		for (int i = 0; i < this.length; i++) {

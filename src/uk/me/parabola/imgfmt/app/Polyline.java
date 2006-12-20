@@ -152,8 +152,10 @@ public class Polyline extends MapObject {
 				ybits++;
 
 			// Note no sign included.
-			log.debug("xbits" + xbits + ", y=" + ybits);
-			log.debug("xNum" + xNum + ", y=" + yNum);
+			if (log.isDebugEnabled()) {
+				log.debug("xNum" + xNum + ", y=" + yNum);
+				log.debug("xbits" + xbits + ", y=" + ybits);
+			}
 
 			// Write the bitstream
 			BitWriter bw = new BitWriter();
@@ -170,12 +172,15 @@ public class Polyline extends MapObject {
 			if (ySameSign)
 				bw.put1(ySignNegative);
 
-			log.debug("x same is " + xSameSign + ", sign is " + xSignNegative);
-			log.debug("y same is " + ySameSign + ", sign is " + ySignNegative);
+			if (log.isDebugEnabled()) {
+				log.debug("x same is " + xSameSign + ", sign is " + xSignNegative);
+				log.debug("y same is " + ySameSign + ", sign is " + ySignNegative);
+			}
 
 			int dx, dy;
 			for (int i = 0; i < deltas.length; i+=2) {
 				dx = deltas[i];
+				if (log.isDebugEnabled())
 				log.debug("x delta " + dx + ", " + xNum);
 				if (xSameSign) {
 					bw.putn(abs(dx), xNum);
@@ -186,6 +191,7 @@ public class Polyline extends MapObject {
 				}
 
 				dy = deltas[i + 1];
+				if (log.isDebugEnabled())
 				log.debug("y delta " + dy + ", " + yNum);
 				if (ySameSign) {
 					bw.putn(abs(dy), yNum);
@@ -196,6 +202,7 @@ public class Polyline extends MapObject {
 				}
 			}
 
+			if (log.isDebugEnabled())
 			log.debug(bw);
 			return bw;
 		}
