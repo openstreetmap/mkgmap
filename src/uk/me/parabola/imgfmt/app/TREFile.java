@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
-
 /**
  * This is the file that contains the overview of the map.  There
  * can be different zoom levels and each level of zoom has an

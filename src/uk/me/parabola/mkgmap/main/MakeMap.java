@@ -138,6 +138,7 @@ public class MakeMap {
 				pl.addCoord(co);
 			}
 
+			pl.setType(line.getType());
 			pl.setLabel(label);
 			rgn.addMapObject(pl);
 		}

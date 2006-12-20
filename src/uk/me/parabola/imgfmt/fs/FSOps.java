@@ -35,10 +35,8 @@ public interface FSOps {
 	 * Create a new file it must not allready exist.
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
-	 * @throws FileExistsException If the file exists allready.
 	 */
-	public ImgChannel create(String name)
-			throws  FileNotFoundException;
+	public ImgChannel create(String name);
 
 	/**
 	 * Open a file.  The returned file object can be used to read and write the

@@ -31,7 +31,7 @@ import java.io.FileNotFoundException;
 public class Map {
 	private static final Logger log = Logger.getLogger(Map.class);
 
-	private static FileSystem fileSystem;
+	private FileSystem fileSystem;
 
 	private TREFile treFile;
 	private RGNFile rgnFile;
@@ -55,10 +55,10 @@ public class Map {
 	public static Map createMap(String mapname, FileSystemParam params) {
 		Map m = new Map();
 		try {
-			fileSystem = new FileSystem(mapname + ".img", params);
-			m.rgnFile = new RGNFile(fileSystem.create(mapname + ".RGN"));
-			m.treFile = new TREFile(fileSystem.create(mapname + ".TRE"));
-			m.lblFile = new LBLFile(fileSystem.create(mapname + ".LBL"));
+			m.fileSystem = new FileSystem(mapname + ".img", params);
+			m.rgnFile = new RGNFile(m.fileSystem.create(mapname + ".RGN"));
+			m.treFile = new TREFile(m.fileSystem.create(mapname + ".TRE"));
+			m.lblFile = new LBLFile(m.fileSystem.create(mapname + ".LBL"));
 
 			m.treFile.setMapId(Integer.parseInt(mapname));
 

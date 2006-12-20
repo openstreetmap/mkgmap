@@ -332,9 +332,6 @@ public class Polyline extends MapObject {
 			this.ySameSign = !yDiffSign;
 			this.xSignNegative = xSign < 0;
 			this.ySignNegative = ySign < 0;
-
-			// Save the deltas
-			this.deltas = deltas;
 		}
 
 		/**

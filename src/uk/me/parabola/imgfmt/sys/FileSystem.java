@@ -117,9 +117,8 @@ public class FileSystem implements FSOps {
 	 *
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
-	 * @throws FileExistsException If the file exists allready.
 	 */
-	public ImgChannel create(String name) throws FileNotFoundException {
+	public ImgChannel create(String name)  {
 		Dirent dir = directory.create(name);
 
 		FileNode f = new FileNode(file, blockManager, dir, "w");

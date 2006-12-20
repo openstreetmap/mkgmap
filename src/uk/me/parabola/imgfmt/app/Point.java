@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.Utils;
-
 /**
  * Represents a particular point object on a map.  A point has a type (town
  * restaurant etc) and a location as well as a name.
