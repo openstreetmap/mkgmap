@@ -47,6 +47,10 @@ public class MakeMap {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
 
 	public static void main(String[] args) {
+		try {
+		if (args.length < 1)
+			throw new ExitException("Usage: mkgmap <file.osm>");
+
 		String name = args[0];
 		String mapname = "63240001";
 
@@ -54,7 +58,6 @@ public class MakeMap {
 		a.setName(name);
 		a.setMapname(mapname);
 
-		try {
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
 		} catch (ExitException e) {
@@ -128,7 +131,7 @@ public class MakeMap {
 			Polyline pl = new Polyline(div, 6);
 			String name = line.getName();
 			if (name == null)
-				continue;
+				name="";//continue;
 
 			log.debug("Road " + name + ", t=" + line.getType());
 			Label label = lbl.newLabel(name);

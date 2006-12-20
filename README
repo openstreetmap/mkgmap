@@ -3,11 +3,15 @@ Making maps for Garmin GPS units
 ================================
 
 The goal of the project is to take OpenStreetMap data and put it on
-my Garmin Legend Cx to help show me where things are not mapped.
+my Garmin Legend Cx to help show me when mapping what is done and
+what is not.
 
 As such, at least to begin with, the map will only be available at high
-zoom.
+zoom and will only show ways with names.
 
---
+Acknowledgements
+================
 
-more in map info.
+This project is almost entirely based on the file format specification
+document written by John Mechalas at the SourceForge project at
+http://sourceforge.net/projects/garmin-img
