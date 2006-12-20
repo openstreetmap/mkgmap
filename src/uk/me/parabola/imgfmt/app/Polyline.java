@@ -35,13 +35,13 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Polyline extends MapObject {
-	static private Logger log = Logger.getLogger(Polyline.class);
+	private static final Logger log = Logger.getLogger(Polyline.class);
 
 	// Set if it is a one-way street for example.
 	private boolean direction;
 
 	// The actual points that make up the line.
-	private List<Coord> points = new ArrayList<Coord>();
+	private final List<Coord> points = new ArrayList<Coord>();
 
 	public Polyline(Subdivision div, int type) {
 		setSubdiv(div);
@@ -110,15 +110,14 @@ public class Polyline extends MapObject {
 		this.direction = direction;
 	}
 
-	public class Work {
+	private class Work {
 		private boolean extraBit;
-		private boolean dataInNet;
 
 		private boolean xSameSign;
-		private boolean xSign;     // Set if all negative
+		private boolean xSignNegative;     // Set if all negative
 
 		private boolean ySameSign;
-		private boolean ySign;     // Set if all negative
+		private boolean ySignNegative;     // Set if all negative
 
 		// The base number of bits
 		private int xBase;
@@ -129,10 +128,9 @@ public class Polyline extends MapObject {
 
 		private int[] deltas;
 
-		public Work() {
+		Work() {
 			calcLatLong();
 			calcDeltas();
-			dataInNet = false;
 		}
 
 		public BitWriter makeBitStream() {
@@ -166,14 +164,14 @@ public class Polyline extends MapObject {
 
 			bw.put1(xSameSign);
 			if (xSameSign)
-				bw.put1(xSign);
+				bw.put1(xSignNegative);
 
 			bw.put1(ySameSign);
 			if (ySameSign)
-				bw.put1(ySign);
+				bw.put1(ySignNegative);
 
-			log.debug("x same is " + xSameSign + ", sign is " + xSign);
-			log.debug("y same is " + ySameSign + ", sign is " + ySign);
+			log.debug("x same is " + xSameSign + ", sign is " + xSignNegative);
+			log.debug("y same is " + ySameSign + ", sign is " + ySignNegative);
 
 			int dx, dy;
 			for (int i = 0; i < deltas.length; i+=2) {
@@ -217,8 +215,8 @@ public class Polyline extends MapObject {
 
 			int lat = (co.getLatitude() - div.getLatitude()) >> shift;
 			int lon = (co.getLongitude() - div.getLongitude()) >> shift;
-			log.debug("lat/long " + Utils.toDegrees(lat) + "/" + Utils.toDegrees(lon));
-			log.debug("lat/long " + lat + "/" + lon);
+			log.debug("lat/long " + Utils.toDegrees(lat) + '/' + Utils.toDegrees(lon));
+			log.debug("lat/long " + lat + '/' + lon);
 
 			setLatitude(lat);
 			setLongitude(lon);
@@ -247,7 +245,7 @@ public class Polyline extends MapObject {
 			int yBits = 0;  // Number of bits needed for lat.
 
 			// Space to hold the deltas
-			int[] deltas = new int[2 * (points.size() - 1)];
+			deltas = new int[2 * (points.size() - 1)];
 			int   off = 0;
 
 			boolean first = true;
@@ -332,8 +330,8 @@ public class Polyline extends MapObject {
 			// Set flags for same sign etc.
 			this.xSameSign = !xDiffSign;
 			this.ySameSign = !yDiffSign;
-			this.xSign = xSign < 0;
-			this.ySign = ySign < 0;
+			this.xSignNegative = xSign < 0;
+			this.ySignNegative = ySign < 0;
 
 			// Save the deltas
 			this.deltas = deltas;
@@ -367,33 +365,6 @@ public class Polyline extends MapObject {
 			return extraBit;
 		}
 
-		public boolean isDataInNet() {
-			return dataInNet;
-		}
-
-		public boolean isXSameSign() {
-			return xSameSign;
-		}
-
-		public boolean isXSign() {
-			return xSign;
-		}
-
-		public boolean isYSameSign() {
-			return ySameSign;
-		}
-
-		public boolean isYSign() {
-			return ySign;
-		}
-
-		public int getXBase() {
-			return xBase;
-		}
-
-		public int getYBase() {
-			return yBase;
-		}
 	}
 
 }

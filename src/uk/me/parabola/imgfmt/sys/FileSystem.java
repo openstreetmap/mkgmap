@@ -39,9 +39,9 @@ import uk.me.parabola.imgfmt.FileSystemParam;
  * @author steve
  */
 public class FileSystem implements FSOps {
-	static private Logger log = Logger.getLogger(FileSystem.class);
+	private static final Logger log = Logger.getLogger(FileSystem.class);
 
-	private int blockSize;
+	private int blockSize = 512;
 
 	private FileChannel file;
 
@@ -72,6 +72,7 @@ public class FileSystem implements FSOps {
 		file = rafile.getChannel();
 
 		header = new ImgHeader(file);
+		header.setDirectoryStartBlock(2); // could be from params
 
 		// Set the times.
 		Date date = new Date();
@@ -84,7 +85,7 @@ public class FileSystem implements FSOps {
 			setParams(params);
 
 		// The block manager allocates blocks for files.
-		blockManager = new BlockManager(file, blockSize, 6);
+		blockManager = new BlockManager(blockSize, 6); // TODO: blockSize used before being set
 
 		// Initialise the directory.
 		directory.init();
@@ -98,7 +99,7 @@ public class FileSystem implements FSOps {
 	 *
 	 * @param params A set of parameters.
 	 */
-	public void setParams(FileSystemParam params) {
+	public final void setParams(FileSystemParam params) {
 		int bs = params.getBlockSize();
 		if (bs > 0) {
 			blockSize = bs;
@@ -118,7 +119,7 @@ public class FileSystem implements FSOps {
 	 * @return A directory entry for the new file.
 	 * @throws FileExistsException If the file exists allready.
 	 */
-	public ImgChannel create(String name) throws FileExistsException {
+	public ImgChannel create(String name) throws FileNotFoundException {
 		Dirent dir = directory.create(name);
 
 		FileNode f = new FileNode(file, blockManager, dir, "w");
@@ -136,7 +137,13 @@ public class FileSystem implements FSOps {
 	 * @throws FileNotFoundException When the file does not exist.
 	 */
 	public ImgChannel open(String name, String mode) throws FileNotFoundException {
-		return null;
+		if (name == null || mode == null)
+			throw new IllegalArgumentException("null argument");
+
+		if (mode.indexOf('w') >= 0)
+			return create(name);
+
+		throw new FileNotFoundException("File not found because it isn't implemented yet");
 	}
 
 	/**
@@ -147,7 +154,10 @@ public class FileSystem implements FSOps {
 	 * @throws IOException If an error occurs reading the directory.
 	 */
 	public DirectoryEntry lookup(String name) throws IOException {
-		return null;
+		if (name == null)
+			throw new IllegalArgumentException("null name argument");
+
+		throw new IOException("not implemented");
 	}
 
 	/**
@@ -156,8 +166,8 @@ public class FileSystem implements FSOps {
 	 * @return A List of directory entries.
 	 * @throws IOException If an error occurs reading the directory.
 	 */
-	public List list() throws IOException {
-		return null;
+	public List<DirectoryEntry> list() throws IOException {
+		throw new IOException("not implemented yet");
 	}
 
 	/**
@@ -169,7 +179,7 @@ public class FileSystem implements FSOps {
 	public void sync() throws IOException {
 		header.sync();
 
-		file.position(header.getDirectoryStartBlock() * header.getBlockSize());
+		file.position((long) header.getDirectoryStartBlock() * header.getBlockSize());
 		directory.sync();
 	}
 

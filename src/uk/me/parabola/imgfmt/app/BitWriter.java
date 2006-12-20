@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class BitWriter {
-	static private Logger log = Logger.getLogger(BitWriter.class);
+	private static final Logger log = Logger.getLogger(BitWriter.class);
 
 	// Choose so that most roads will not fill it.
 	private static final int INITIAL_BUF_SIZE = 20;
@@ -48,8 +48,8 @@ public class BitWriter {
 	 *
 	 * @param b The bottom bit of the integer is set at the current bit position.
 	 */
-	public void put1(int b) {
-		checkSize(bitoff + 1);
+	private void put1(int b) {
+		ensureSize(bitoff + 1);
 
 		int off = getByteOffset(bitoff);
 
@@ -88,7 +88,7 @@ public class BitWriter {
 		if (n >= 24)
 			throw new IllegalArgumentException();
 
-		checkSize(bitoff + n);
+		ensureSize(bitoff + n);
 
 		// Get each affected byte and set bits into it until we are done.
 		while (n > 0) {
@@ -113,14 +113,6 @@ public class BitWriter {
 		debugPrint(bval, nb);
 	}
 
-	/**
-	 * The current position in the buffer by bit.
-	 * @return The bit offset that the next bit would be written to.
-	 */
-	public int position() {
-		return bitoff;
-	}
-
 	public byte[] getBytes() {
 		return buf;
 	}
@@ -139,11 +131,11 @@ public class BitWriter {
 		StringBuilder sb = new StringBuilder();
 
 		for (int i = bitoff-1; i >= 0; i--) {
-			boolean val = getBitAt(i);
+			boolean val = isBitSet(i);
 			if (val)
-				sb.append("1");
+				sb.append('1');
 			else
-				sb.append("0");
+				sb.append('0');
 		}
 
 		return sb.toString();
@@ -181,11 +173,11 @@ public class BitWriter {
 	/**
 	 * Get the byte offset for the given bit number.
 	 *
-	 * @param bitoff The number of the bit in question.
+	 * @param boff The number of the bit in question.
 	 * @return The index into the byte array where the bit resides.
 	 */
-	private int getByteOffset(int bitoff) {
-		return bitoff/8;
+	private int getByteOffset(int boff) {
+		return boff/8;
 	}
 
 	/**
@@ -194,7 +186,7 @@ public class BitWriter {
 	 *
 	 * @param newlen The new length of the bit buffer in bits.
 	 */
-	private void checkSize(int newlen) {
+	private void ensureSize(int newlen) {
 		if (newlen/8 >= bufsize)
 			reallocBuffer();
 	}
@@ -216,7 +208,7 @@ public class BitWriter {
 				+ buflen + ", pos="+bitoff);
 	}
 
-	private boolean getBitAt(int i) {
+	private boolean isBitSet(int i) {
 		int ind = getByteOffset(i);
 		int rem = i - ind*8;
 		byte b = buf[ind];

@@ -38,10 +38,4 @@ public interface MapCollector {
 	 */
 	public void addToBounds(Coord p);
 
-	/**
-	 * Get the bounds of this map.
-	 *
-	 * @return An area covering all the points in the map.
-	 */
-	public Area getBounds();
 }

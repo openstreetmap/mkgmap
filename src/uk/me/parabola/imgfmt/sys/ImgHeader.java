@@ -35,7 +35,7 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 class ImgHeader {
-	static protected Logger log = Logger.getLogger(ImgHeader.class);
+	protected static final Logger log = Logger.getLogger(ImgHeader.class);
 	
 	// Offsets into the header.
 	private static final int OFF_XOR = 0x0;
@@ -96,7 +96,7 @@ class ImgHeader {
 	// Block size defaults to 512.
 	private int blockSize = 512;
 
-	private ByteBuffer header = ByteBuffer.allocateDirect(512);
+	private final ByteBuffer header = ByteBuffer.allocateDirect(512);
 	private static final byte[] FILE_ID = new byte[]{
 			'G', 'A', 'R', 'M', 'I', 'N', '\0'};
 	private static final byte[] SIGNATURE = new byte[]{
@@ -105,12 +105,12 @@ class ImgHeader {
 	private Date creationTime;
 
 
-	public ImgHeader() {
+	private ImgHeader() {
 		header.order(ByteOrder.LITTLE_ENDIAN);
 		createFS();
 	}
 
-	public ImgHeader(FileChannel fileChannel) {
+	ImgHeader(FileChannel fileChannel) {
 		this();
 		this.file = fileChannel;
 	}
@@ -284,6 +284,10 @@ class ImgHeader {
 
 	public int getDirectoryStartBlock() {
 		return directoryStartBlock;
+	}
+
+	public void setDirectoryStartBlock(int directoryStartBlock) {
+		this.directoryStartBlock = directoryStartBlock;
 	}
 
 	public void setCreationTime(Date date) {

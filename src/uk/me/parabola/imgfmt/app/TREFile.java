@@ -38,9 +38,8 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class TREFile extends ImgFile {
-	static private Logger log = Logger.getLogger(TREFile.class);
 
-	private static int HEADER_LEN = 120; // Other values are possible
+	private static final int HEADER_LEN = 120; // Other values are possible
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -55,27 +54,27 @@ public class TREFile extends ImgFile {
 
 	// Zoom levels for map
 	//	private List<Zoom> mapLevels = new ArrayList<Zoom>();
-	private Zoom[] mapLevels = new Zoom[16];
+	private final Zoom[] mapLevels = new Zoom[16];
 	private int mapLevelPos;
 	private int mapLevelsSize;
 
 	private int subdivPos;
 	private int subdivSize;
 
-	private List<Label> copyrights = new ArrayList<Label>();
+	private final List<Label> copyrights = new ArrayList<Label>();
 	private int copyrightPos;
 	private int copyrightSize;
 
 	private byte poiDisplayFlags;
 
 	// Information about polylines.  eg roads etc.
-	private List<Overview> polylineOverviews = new ArrayList<Overview>();
+	private final List<Overview> polylineOverviews = new ArrayList<Overview>();
 	private int polylinePos;
 	private int polylineSize;
 
 	private int polygonSize;
 
-	private List<Overview> pointOverviews = new ArrayList<Overview>();
+	private final List<Overview> pointOverviews = new ArrayList<Overview>();
 	private int pointPos;
 	private int pointSize;
 
@@ -91,7 +90,7 @@ public class TREFile extends ImgFile {
 		setWriter(new BufferedWriteStrategy(chan));
 
 		// Position at the start of the writable area.
-		position(HEADER_LEN + mapInfoSize);
+		position(HEADER_LEN);
 	}
 
 	public void sync() throws IOException {
@@ -224,7 +223,7 @@ public class TREFile extends ImgFile {
 		}
 	}
 
-	private void writeHeader() throws IOException {
+	private void writeHeader()  {
 		put3(area.getMaxLat());
 		put3(area.getMaxLong());
 		put3(area.getMinLat());
@@ -244,7 +243,6 @@ public class TREFile extends ImgFile {
 
 		putInt(0);
 
-		//poiDisplayFlags = 1; // XXX
 		put(poiDisplayFlags);
 
 		put3(0x19);

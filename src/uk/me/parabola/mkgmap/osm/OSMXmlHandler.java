@@ -35,15 +35,15 @@ import uk.me.parabola.mkgmap.MapLine;
  *
  * @author Steve Ratcliffe
  */
-public class OSMXmlHandler extends DefaultHandler {
-	static private Logger log = Logger.getLogger(OSMXmlHandler.class);
+class OSMXmlHandler extends DefaultHandler {
+	private static final Logger log = Logger.getLogger(OSMXmlHandler.class);
 
 	private MapCollector mapper;
 
 	private int mode;
 
-	private Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
-	private Map<Long, Segment> segMap = new HashMap<Long, Segment>();
+	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
+	private final Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
 	private Way currentWay;
 
@@ -172,7 +172,6 @@ public class OSMXmlHandler extends DefaultHandler {
 		String highway = way.getTag("highway");
 		if (highway != null)
 			processHighway(way, highway);
-		currentWay = null;
 	}
 
 	private void processHighway(Way way, String highway) {
@@ -210,7 +209,7 @@ public class OSMXmlHandler extends DefaultHandler {
 		double lon = Double.parseDouble(slon);
 
 		if (log.isDebugEnabled())
-			log.debug("adding node" + lat + "/" + lon);
+			log.debug("adding node" + lat + '/' + lon);
 		nodeMap.put(id, new Coord(lat, lon)); // TODO: need a proper Node type
 	}
 

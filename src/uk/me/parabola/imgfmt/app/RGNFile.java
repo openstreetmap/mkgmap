@@ -35,7 +35,7 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class RGNFile extends ImgFile {
-	private static int HEADER_LEN = 29;
+	private static final int HEADER_LEN = 29;
 
 	private int dataSize;
 
@@ -58,7 +58,7 @@ public class RGNFile extends ImgFile {
 		getWriter().sync();
 	}
 
-	private void writeHeader() throws IOException {
+	private void writeHeader()  {
 
 		putInt(HEADER_LEN);
 		putInt(dataSize);

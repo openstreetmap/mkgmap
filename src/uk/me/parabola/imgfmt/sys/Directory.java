@@ -33,22 +33,22 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 class Directory {
-	static private Logger log = Logger.getLogger(Directory.class);
+	private static final Logger log = Logger.getLogger(Directory.class);
 
-	private int startBlock; // The starting block for the directory.
+	private final int startBlock; // The starting block for the directory.
 	private int blockSize;
 	private int nEntries;
 
-	private FileChannel file;
+	private final FileChannel file;
 
 	// The list of files themselves.
-	private List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>();
+	private final List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>();
 
 	// The first entry in the directory covers the header and directory itself
 	// and so is special.
 	private Dirent specialEntry;
 
-	public Directory(FileChannel file, int start) {
+	Directory(FileChannel file, int start) {
 		this.file = file;
 		this.startBlock = start;
 
@@ -75,7 +75,7 @@ class Directory {
 	 * of the directory entries.
 	 */
 	public void sync() throws IOException {
-		file.position(startBlock * blockSize);
+		file.position((long) startBlock * blockSize);
 		for (DirectoryEntry ent : entries) {
 			log.debug("wrting ent at " + file.position());
 			((Dirent) ent).sync(file);
@@ -126,7 +126,4 @@ class Directory {
 	}
 
 
-	public int getNEntries() {
-		return nEntries;
-	}
 }

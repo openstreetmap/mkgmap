@@ -34,10 +34,10 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class LBLFile extends ImgFile {
-	static private Logger log = Logger.getLogger(LBLFile.class);
+	private static final Logger log = Logger.getLogger(LBLFile.class);
 
-	private static int HEADER_LEN = 196; // Other lengths are possible
-	private static int INFO_LEN = 28;
+	private static final int HEADER_LEN = 196; // Other lengths are possible
+	private static final int INFO_LEN = 28;
 
 	private int dataPos = HEADER_LEN + INFO_LEN;
 	private static final char COUNTRY_REC_LEN = 3;
@@ -103,7 +103,7 @@ public class LBLFile extends ImgFile {
 		return l;
 	}
 
-	private void writeHeader() throws IOException {
+	private void writeHeader()  {
 
 		// LBL1 section, these are regular labels
 		putInt(HEADER_LEN + INFO_LEN);

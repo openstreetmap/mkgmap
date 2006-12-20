@@ -27,10 +27,10 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class Label {
-	static private Logger log = Logger.getLogger(Label.class);
+	private static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
-	private byte[] ctext;
+	private final byte[] ctext;
 	private int length;
 
 	// The offset in to the data section.

@@ -32,13 +32,13 @@ import java.util.ArrayList;
  * @author Steve Ratcliffe
  */
 public class Subdivision {
-	static private Logger log = Logger.getLogger(Subdivision.class);
+	private static final Logger log = Logger.getLogger(Subdivision.class);
 
 	private int rgnPointer;
 
 	// The zoom level contains the number of bits per coordinate which is
 	// critical for scaling quantities by.
-	private Zoom zoom;
+	private final Zoom zoomLevel;
 
 	private boolean hasPoints;
 	private boolean hasIndPoints;
@@ -46,42 +46,32 @@ public class Subdivision {
 	private boolean hasPolygons;
 
 	// The location of the central point, not scaled AFAIK
-	private int longitude;
-	private int latitude;
+	private final int longitude;
+	private final int latitude;
 
 	// The width and the height in map units scaled by the bits-per-coordinate
 	// that applies at the map level.
-	private int width;
-	private int height;
+	private final int width;
+	private final int height;
 
 	private int number;
 
 	// Set if this is the last one.
 	private boolean last;
 
-	private List<Subdivision> divisions = new ArrayList<Subdivision>();
+	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
 
-	public Subdivision(Zoom z, int latitude, int longitude,
+	private Subdivision(Zoom z, int latitude, int longitude,
 					   int width, int height)
 	{
-		this.zoom = z;
-		z.addSubdivision(this);
+		this.zoomLevel = z;
 
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.width = width;
 		this.height = height;
-	}
 
-	/**
-	 * Get the bounds of this subdivision.
-	 *
-	 * @return The area that this subdivision covers.
-	 */
-	public Area getBounds() {
-		Area b = new Area(latitude-height, longitude-width,
-				latitude+height, longitude+width);
-		return b;
+		z.addSubdivision(this); // FIXME: use of this in object construction
 	}
 
 	/**
@@ -91,7 +81,7 @@ public class Subdivision {
 	 * @return The shift value.  It is 24 minus the number of bits per coord.
 	 */
 	public int getShift() {
-		return 24 - zoom.getBitsPerCoord();
+		return 24 - zoomLevel.getBitsPerCoord();
 	}
 
 	/**
@@ -117,7 +107,7 @@ public class Subdivision {
 	 * Get the number of the first subdivision at the next level.
 	 * @return The first subdivision at the next level.
 	 */
-	public int getNextLevel() {
+	private int getNextLevel() {
 		return divisions.get(0).getNumber();
 	}
 
@@ -128,20 +118,16 @@ public class Subdivision {
 	 *
 	 * @param sd One of our subdivisions.
 	 */
-	public void addSubdivision(Subdivision sd) {
+	private void addSubdivision(Subdivision sd) {
 		divisions.add(sd);
 	}
 
-	public int getNumber() {
+	private int getNumber() {
 		return number;
 	}
 
 	public void setNumber(int n) {
 		number = n;
-	}
-
-	public boolean isLast() {
-		return last;
 	}
 
 	public void setLast(boolean last) {

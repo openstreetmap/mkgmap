@@ -33,12 +33,12 @@ import java.util.Iterator;
  * @author Steve Ratcliffe
  */
 public class Zoom {
-	private int zoom;
+	private final int zoom;
 	private boolean inherited;
 
-	private int bitsPerCoord;
+	private final int bitsPerCoord;
 
-	private List<Subdivision> subdivs = new ArrayList<Subdivision>();
+	private final List<Subdivision> subdivs = new ArrayList<Subdivision>();
 
 
 	/**
@@ -53,20 +53,8 @@ public class Zoom {
 	}
 
 
-	public int getZoom() {
-		return zoom;
-	}
-
-	public int getNSubdivs() {
-		return subdivs.size();
-	}
-
 	public Iterator<Subdivision> subdivIterator() {
 		return subdivs.iterator();
-	}
-
-	public boolean isInherited() {
-		return inherited;
 	}
 
 	public void setInherited(boolean inherited) {
@@ -81,10 +69,6 @@ public class Zoom {
 		file.put((byte) (zoom & 0x3 | (inherited ? 0x80 : 0)));
 		file.put((byte) bitsPerCoord);
 		file.putChar((char) subdivs.size());
-	}
-
-	public void setBitsPerCoord(int bitsPerCoord) {
-		this.bitsPerCoord = bitsPerCoord;
 	}
 
 	void addSubdivision(Subdivision div) {

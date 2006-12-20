@@ -16,14 +16,12 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
-import java.nio.channels.Channel;
 import java.nio.channels.ByteChannel;
-import java.nio.ByteBuffer;
 
 /**
  * @author Steve Ratcliffe
  */
-public interface ImgChannel extends Channel, ByteChannel {
+public interface ImgChannel extends  ByteChannel {
 
 
 	/**

@@ -16,9 +16,6 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import java.nio.channels.FileChannel;
-import java.nio.ByteBuffer;
-import java.io.IOException;
 
 /**
  * Used to allocate blocks to files.
@@ -27,12 +24,9 @@ import java.io.IOException;
  */
 public class BlockManager {
 	private int nextBlock;
-	private int blockSize;
+	private final int blockSize;
 
-	private FileChannel file;
-
-	public BlockManager(FileChannel file, int blockSize, int initialBlock) {
-		this.file = file;
+	public BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
 		this.nextBlock = initialBlock;
 	}
@@ -47,17 +41,8 @@ public class BlockManager {
 		return nextBlock++;
 	}
 
-	public int getCurrentBlock() {
-		return nextBlock;
-	}
-
 	public int getBlockSize() {
 		return blockSize;
 	}
 
-	public int writeBlock(int bl, ByteBuffer buf) throws IOException {
-		buf.flip();
-		int rc = file.write(buf);
-		return rc;
-	}
 }

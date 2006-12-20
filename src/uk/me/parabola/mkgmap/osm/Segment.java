@@ -24,15 +24,16 @@ import uk.me.parabola.imgfmt.app.Coord;
  *
  * @author Steve Ratcliffe
  */
-public class Segment {
+class Segment {
 
-	private Coord start;
-	private Coord end;
-	private long id;
+	private final Coord start;
+	private final Coord end;
+	private final long id;
 
-	public Segment(long id, Coord start, Coord end) {
+	Segment(long id, Coord start, Coord end) {
 		this.start = start;
 		this.end = end;
+		this.id = id;
 	}
 
 	public Coord getStart() {
@@ -41,46 +42,6 @@ public class Segment {
 
 	public Coord getEnd() {
 		return end;
-	}
-
-	/**
-	 * Get startLat.
-	 *
-	 * @return startLat as double.
-	 */
-	public double getStartLat()
-	{
-	    return start.getLatitude();
-	}
-	
-	/**
-	 * Get endLat.
-	 *
-	 * @return endLat as double.
-	 */
-	public double getEndLat()
-	{
-	    return end.getLatitude();
-	}
-	
-	/**
-	 * Get startLon.
-	 *
-	 * @return startLon as double.
-	 */
-	public double getStartLon()
-	{
-	    return start.getLongitude();
-	}
-	
-	/**
-	 * Get endLon.
-	 *
-	 * @return endLon as double.
-	 */
-	public double getEndLon()
-	{
-	    return end.getLongitude();
 	}
 
 	public long getId() {

@@ -22,7 +22,17 @@ import uk.me.parabola.mkgmap.MapLine;
 import uk.me.parabola.mkgmap.MapSource;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.LBLFile;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.RGNFile;
+import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.TREFile;
+import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.imgfmt.sys.FileSystem;
 
 import java.io.FileNotFoundException;
@@ -71,6 +81,9 @@ public class MakeMap {
 		Area bounds = details.getBounds();
 		tre.setBounds(bounds);
 
+		// Make a few settings
+		tre.setPoiDisplayFlags((byte) 0);
+
 		// You can any old junk here.
 		tre.addInfo("Created by mkgmap");
 		tre.addInfo("Program released under the GPL");
@@ -94,6 +107,9 @@ public class MakeMap {
 
 		// Set the fact that there are lines in the map.
 		div.setHasPolylines(true);
+		div.setHasPoints(false);
+		div.setHasIndPoints(false);
+		div.setHasPolygons(false);
 
 		List<MapLine> lines = details.getLines();
 		for (MapLine line : lines) {
@@ -102,7 +118,7 @@ public class MakeMap {
 			if (name == null)
 				continue;
 
-			log.debug("Road " + name);
+			log.debug("Road " + name + ", t=" + line.getType());
 			Label label = lbl.newLabel(name);
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {

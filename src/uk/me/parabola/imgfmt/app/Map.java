@@ -16,10 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.FileSystem;
 import uk.me.parabola.imgfmt.FileExistsException;
 import org.apache.log4j.Logger;
+
+import java.io.FileNotFoundException;
 
 /**
  * Holder for a complete map.  A map is made up of several files.
@@ -30,7 +31,7 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class Map {
-	static private Logger log = Logger.getLogger(Map.class);
+	private static final Logger log = Logger.getLogger(Map.class);
 
 	private TREFile treFile;
 	private RGNFile rgnFile;
@@ -44,7 +45,10 @@ public class Map {
 	/**
 	 * Create a complete map.  This consists of (at least) three
 	 * files that all have the same basename and different extensions.
-	 * TODO: is this needed?
+	 *
+ 	 * @param fs The file system.
+ 	 * @param name The name of the map. It must be an 8 digit string.
+	 * @return A map object that holds together all the files that make it up.
 	 */
 	public static Map createMap(FileSystem fs, String name) {
 		Map m = new Map();
@@ -55,7 +59,7 @@ public class Map {
 
 			m.treFile.setMapId(Integer.parseInt(name));
 
-		} catch (FileExistsException e) {
+		} catch (FileNotFoundException e) {
 			log.error("failed to create file", e);
 			return null;
 		}

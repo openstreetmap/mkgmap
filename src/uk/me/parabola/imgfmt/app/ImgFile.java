@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
 
 import java.util.Date;
@@ -32,7 +31,7 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public abstract class ImgFile {
-	static private Logger log = Logger.getLogger(ImgFile.class);
+	private static final Logger log = Logger.getLogger(ImgFile.class);
 
 	private int headerLength;
 	private String type;
@@ -52,19 +51,17 @@ public abstract class ImgFile {
 		return writer.position();
 	}
 
-	public void position(int pos) {
+	void position(int pos) {
 		writer.position(pos);
 	}
 	
-	public abstract void sync() throws IOException;
+	protected abstract void sync() throws IOException;
 
 	/**
 	 * Writes out the header that is common to all the file types.  It should
 	 * be called by the sync() methods of subclasses when they are ready.
-	 *
-	 * @throws IOException If there is an error writing to the file.
 	 */
-	protected void writeCommonHeader() throws IOException {
+	void writeCommonHeader()  {
 		putChar((char) headerLength);
 		put(Utils.toBytes(type, 10, (byte) 0));
 		put((byte) 1);
@@ -73,20 +70,20 @@ public abstract class ImgFile {
 		put(date);
 	}
 
-	public void setHeaderLength(int headerLength) {
+	void setHeaderLength(int headerLength) {
 		this.headerLength = headerLength;
 	}
 
-	public void setType(String type) {
+	void setType(String type) {
 		this.type = type;
 	}
 
 
-	public WriteStrategy getWriter() {
+	WriteStrategy getWriter() {
 		return writer;
 	}
 
-	public void setWriter(WriteStrategy writer) {
+	void setWriter(WriteStrategy writer) {
 		this.writer = writer;
 	}
 
@@ -106,7 +103,7 @@ public abstract class ImgFile {
 	 *
 	 * @param val The integer value to write.
 	 */
-	public void putInt(int val) {
+	void putInt(int val) {
 		writer.putInt(val);
 	}
 
@@ -133,7 +130,7 @@ public abstract class ImgFile {
 	 *
 	 * @param val The values to write.
 	 */
-	protected void put(byte[] val) {
+	void put(byte[] val) {
 		writer.put(val);
 	}
 
@@ -147,7 +144,7 @@ public abstract class ImgFile {
 		writer.put(src, start, length);
 	}
 
-	protected void setWriteStrategy(WriteStrategy writer) {
+	void setWriteStrategy(WriteStrategy writer) {
 		this.writer = writer;
 	}
 }

@@ -32,18 +32,8 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Coord {
-	private int latitude;
-	private int longitude;
-
-	/**
-	 * Construct from values already in map units.
-	 * @param latitude The latitude in map units.
-	 * @param longitude The longitude in map units.
-	 */
-	public Coord(int latitude, int longitude) {
-		this.latitude = latitude;
-		this.longitude = longitude;
-	}
+	private final int latitude;
+	private final int longitude;
 
 	/**
 	 * Construct from regular latitude and longitude.

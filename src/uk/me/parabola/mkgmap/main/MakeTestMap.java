@@ -21,9 +21,19 @@ package uk.me.parabola.mkgmap.main;
 import org.apache.log4j.Logger;
 import uk.me.parabola.imgfmt.sys.FileSystem;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.LBLFile;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.RGNFile;
+import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.TREFile;
+import uk.me.parabola.imgfmt.app.Zoom;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 
 /**
  * A test routine to make an artificial map.  Makes some lines, squares etc
@@ -34,20 +44,20 @@ import java.io.IOException;
  * @author steve
  */
 public class MakeTestMap {
-	static protected Logger log = Logger.getLogger(MakeTestMap.class);
+	private static final Logger log = Logger.getLogger(MakeTestMap.class);
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws FileNotFoundException {
 
 		// Default to nowhere in particular.
 		double lat = 51.724;
 		double lng = 0.2487;
 
 		if (args.length > 1) {
-			lat = Double.valueOf(args[0]).doubleValue();
-			lng = Double.valueOf(args[1]).doubleValue();
+			lat = Double.valueOf(args[0]);
+			lng = Double.valueOf(args[1]);
 		}
 
-		log.debug("this is a test make map program. Center " + lat + "/" + lng);
+		log.debug("this is a test make map program. Center " + lat + '/' + lng);
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
@@ -69,7 +79,7 @@ public class MakeTestMap {
 
 		// There must always be an empty zoom level at the least detailed level.
 		log.info("area " + area);
-		log.info(" or " + lat + "/" + lng);
+		log.info(" or " + lat + '/' + lng);
 
 		Zoom z1 = tf.createZoom(1, 24);
 		z1.setInherited(true);
@@ -94,16 +104,16 @@ public class MakeTestMap {
 
 		lat += 0.002;
 		lng += 0.002;
-		double SOFF = 0.001;
+		double soff = 0.001;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
-		co = new Coord(lat + SOFF, lng);
+		co = new Coord(lat + soff, lng);
 		pl.addCoord(co);
-		co = new Coord(lat + SOFF, lng + SOFF);
+		co = new Coord(lat + soff, lng + soff);
 		pl.addCoord(co);
-		co = new Coord(lat, lng + SOFF);
+		co = new Coord(lat, lng + soff);
 		pl.addCoord(co);
-		co = new Coord(lat, lng+SOFF/2);
+		co = new Coord(lat, lng+soff/2);
 		pl.addCoord(co);
 
 		Label name = lbl.newLabel("Not Really Square");
@@ -115,11 +125,11 @@ public class MakeTestMap {
 		lng += 0.004;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
-		co = new Coord(lat + SOFF, lng + SOFF);
+		co = new Coord(lat + soff, lng + soff);
 		pl.addCoord(co);
-		co = new Coord(lat, lng+2*SOFF);
+		co = new Coord(lat, lng+2*soff);
 		pl.addCoord(co);
-		co = new Coord(lat - SOFF, lng + SOFF);
+		co = new Coord(lat - soff, lng + soff);
 		pl.addCoord(co);
 
 		name = lbl.newLabel("Diamond Road");
@@ -129,12 +139,12 @@ public class MakeTestMap {
 		// lines all in the same direction.
 		pl = new Polyline(div, 6);
 		lng += 0.006;
-		double F = SOFF/4;
+		double fine = soff/4;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
-		co = new Coord(lat+SOFF+F, lng+SOFF);
+		co = new Coord(lat+soff+fine, lng+soff);
 		pl.addCoord(co);
-		co = new Coord(lat+2*SOFF, lng+ SOFF + F);
+		co = new Coord(lat+2*soff, lng+ soff + fine);
 		pl.addCoord(co);
 
 		name = lbl.newLabel("Straight Street");
@@ -146,9 +156,9 @@ public class MakeTestMap {
 		lng += 0.006;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
-		co = new Coord(lat-SOFF-F, lng-SOFF);
+		co = new Coord(lat-soff-fine, lng-soff);
 		pl.addCoord(co);
-		co = new Coord(lat-2*SOFF, lng - SOFF - F);
+		co = new Coord(lat-2*soff, lng - soff - fine);
 		pl.addCoord(co);
 
 		name = lbl.newLabel("Back Street");
@@ -160,11 +170,11 @@ public class MakeTestMap {
 		lng += 0.006;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
-		co = new Coord(lat + 2 * SOFF, lng + 2 * SOFF + F);
+		co = new Coord(lat + 2 * soff, lng + 2 * soff + fine);
 		pl.addCoord(co);
-		co = new Coord(lat + 5 * SOFF - F, lng + 4 * SOFF + F);
+		co = new Coord(lat + 5 * soff - fine, lng + 4 * soff + fine);
 		pl.addCoord(co);
-		co = new Coord(lat + 80 * SOFF - F, lng + 80 * SOFF - F);
+		co = new Coord(lat + 80 * soff - fine, lng + 80 * soff - fine);
 		pl.addCoord(co);
 
 		name = lbl.newLabel("Long Lane");

@@ -38,7 +38,7 @@ public interface FSOps {
 	 * @throws FileExistsException If the file exists allready.
 	 */
 	public ImgChannel create(String name)
-			throws FileExistsException;
+			throws  FileNotFoundException;
 
 	/**
 	 * Open a file.  The returned file object can be used to read and write the
@@ -77,7 +77,7 @@ public interface FSOps {
 	 * @return A List of directory entries.
 	 * @throws IOException If an error occurs reading the directory.
 	 */
-	public List list() throws IOException;
+	public List<DirectoryEntry> list() throws IOException;
 
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to

@@ -20,8 +20,12 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.*;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedByInterruptException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.NonWritableChannelException;
 
 import org.apache.log4j.Logger;
 
@@ -32,15 +36,15 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class FileNode implements ImgChannel {
-	static private Logger log = Logger.getLogger(FileNode.class);
+	private static final Logger log = Logger.getLogger(FileNode.class);
 
 	private boolean open;
 	private boolean writeable;
 	private boolean readable;
 
-	private FileChannel file;
-	private BlockManager blockManager;
-	private Dirent dir;
+	private final FileChannel file;
+	private final BlockManager blockManager;
+	private final Dirent dir;
 
 	// The position in this file
 	private int position;
@@ -245,8 +249,8 @@ public class FileNode implements ImgChannel {
 		return position;
 	}
 
-	public void position(int position) {
-		this.position = position;
+	public void position(int pos) {
+		this.position = pos;
 	}
 
 	/**

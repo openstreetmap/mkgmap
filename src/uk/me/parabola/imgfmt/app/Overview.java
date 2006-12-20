@@ -26,11 +26,11 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class Overview {
-	private byte type;
-	private byte maxLevel;
+	private final byte type;
+	private final byte maxLevel;
 	private byte subType;
 
-	private int size;
+	private final int size;
 
 	public Overview(int type, int maxLevel, int subType) {
 		this.type = (byte) type;

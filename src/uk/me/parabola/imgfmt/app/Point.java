@@ -32,12 +32,6 @@ public class Point extends MapObject {
 	// kind of food served.
 	private int subtype;
 
-	public Point(Subdivision div, double latitude, double longitude) {
-		this.setSubdiv(div);
-		this.setLatitude(div.getLatitude() - Utils.toMapUnit(latitude));
-		this.setLongitude(div.getLongitude() - Utils.toMapUnit(longitude));
-	}
-
 	/**
 	 * Format and write the contents of the object to the given
 	 * file.

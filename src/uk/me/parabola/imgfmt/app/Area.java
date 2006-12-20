@@ -26,10 +26,10 @@ import uk.me.parabola.imgfmt.Utils;
  */
 public class Area {
 
-	private int minLat;
-	private int minLong;
-	private int maxLat;
-	private int maxLong;
+	private final int minLat;
+	private final int minLong;
+	private final int maxLat;
+	private final int maxLong;
 
 	public Area(int minLat, int minLong, int maxLat, int maxLong) {
 		this.minLat = minLat;
@@ -63,30 +63,32 @@ public class Area {
 		return maxLong;
 	}
 
-	/**
-	 * Check whether this Bounds is entirely within the given area.
-	 * It allows an equal coordinate to be within the area.
-	 * 
-	 * @param area The area to check against.
-	 * @return True if this falls entirely within the area.
-	 */
-	public boolean isWithin(Area area) {
-		if (minLat >= area.getMinLat()
-				&& maxLat <= area.getMaxLat()
-				&& minLong >= area.getMinLong()
-				&& maxLong <= area.getMaxLong()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+// --Commented out by Inspection START (19/12/06 16:31):
+//	/**
+//	 * Check whether this Bounds is entirely within the given area.
+//	 * It allows an equal coordinate to be within the area.
+//	 *
+//	 * @param area The area to check against.
+//	 * @return True if this falls entirely within the area.
+//	 */
+//	public boolean isWithin(Area area) {
+//		if (minLat >= area.getMinLat()
+//				&& maxLat <= area.getMaxLat()
+//				&& minLong >= area.getMinLong()
+//				&& maxLong <= area.getMaxLong()) {
+//			return true;
+//		} else {
+//			return false;
+//		}
+//	}
+// --Commented out by Inspection STOP (19/12/06 16:31)
 
 	public String toString() {
 		return "("
-				+ minLat + ","
+				+ minLat + ','
 				+ minLong + ") to ("
-				+ maxLat + ","
-				+ maxLong + ")"
+				+ maxLat + ','
+				+ maxLong + ')'
 				;
 	}
 }

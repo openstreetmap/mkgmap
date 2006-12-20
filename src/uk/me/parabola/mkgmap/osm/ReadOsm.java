@@ -17,8 +17,8 @@
 package uk.me.parabola.mkgmap.osm;
 
 import uk.me.parabola.mkgmap.MapSource;
-import uk.me.parabola.mkgmap.MapData;
 import uk.me.parabola.mkgmap.MapCollector;
+import uk.me.parabola.mkgmap.FormatException;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
@@ -44,12 +44,12 @@ public class ReadOsm implements MapSource {
 	}
 
 	/**
-	 * Load the .osm file and produce the {@link MapData} intermediate format.
+	 * Load the .osm file and produce the intermediate format.
 	 *
 	 * @param name The filename to read.
 	 * @throws FileNotFoundException If the file does not exist.
 	 */
-	public void load(String name) throws FileNotFoundException {
+	public void load(String name) throws FileNotFoundException, FormatException {
 		try {
 			FileInputStream is= new FileInputStream(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
@@ -60,12 +60,12 @@ public class ReadOsm implements MapSource {
 				handler.setCallbacks(mapper);
 				parser.parse(is, handler);
 			} catch (IOException e) {
-				//
+				throw new FormatException("Error reading file", e);
 			}
 		} catch (SAXException e) {
-			//
+			throw new FormatException("Error parsing file", e);
 		} catch (ParserConfigurationException e) {
-			//
+			throw new FormatException("Internal error configuring xml parser", e);
 		}
 	}
 }

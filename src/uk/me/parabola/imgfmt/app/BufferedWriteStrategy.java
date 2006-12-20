@@ -31,11 +31,11 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class BufferedWriteStrategy implements WriteStrategy {
-	static private Logger log = Logger.getLogger(BufferedWriteStrategy.class);
+	private static final Logger log = Logger.getLogger(BufferedWriteStrategy.class);
 	
-	private static int MAX_SIZE = 1024 * 50; // TODO: grow it automatically later
-	private ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
-	private ImgChannel chan;
+	private static final int MAX_SIZE = 1024 * 50; // TODO: grow it automatically later
+	private final ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
+	private final ImgChannel chan;
 	private int maxSize;
 
 

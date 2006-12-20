@@ -28,8 +28,8 @@ import java.util.ArrayList;
  * 
  * @author Steve Ratcliffe
  */
-public class MapDetails implements MapCollector, MapDetail {
-	private List<MapLine> lines = new ArrayList<MapLine>();
+public class MapDetails implements MapCollector {
+	private final List<MapLine> lines = new ArrayList<MapLine>();
 	private int minLat = Utils.toMapUnit(180.0);
 	private int minLon = Utils.toMapUnit(180.0);
 	private int maxLat = Utils.toMapUnit(-180.0);

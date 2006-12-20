@@ -33,12 +33,12 @@ import org.apache.log4j.Logger;
  * 
  * @author Steve Ratcliffe
  */
-public class Way {
+class Way {
 	private static final Logger log = Logger.getLogger(Way.class);
 
-	private Map<String, String> tags = new HashMap<String, String>();
-	private List<Segment> segments = new ArrayList<Segment>();
-	String name;
+	private final Map<String, String> tags = new HashMap<String, String>();
+	private final List<Segment> segments = new ArrayList<Segment>();
+	private String name;
 
 	/**
 	 * Add a segment to the way.
@@ -78,9 +78,9 @@ public class Way {
 		Coord coord = segments.get(0).getStart();
 		String ret = "WAY: "
 				+ name
-				+ " "
+				+ ' '
 				+ Utils.toDegrees(coord.getLatitude())
-				+ "/"
+				+ '/'
 				+ Utils.toDegrees(coord.getLongitude())
 				;
 		return ret;
@@ -98,7 +98,6 @@ public class Way {
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.
 	 *
-	 * TODO: there could be multiple dis-contiguous sections and we need to deal
 	 * @return A simple list of points that form a line.
 	 */
 	public List<List<Coord>> getPoints() {

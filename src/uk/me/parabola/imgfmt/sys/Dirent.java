@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 class Dirent implements DirectoryEntry {
-	static private Logger log = Logger.getLogger(Dirent.class);
+	private static final Logger log = Logger.getLogger(Dirent.class);
 	
 	// Constants.
 	private static final int MAX_FILE_LEN = 8;
@@ -65,7 +65,7 @@ class Dirent implements DirectoryEntry {
 
 	private boolean special;
 
-	public Dirent(String name, int blockSize) {
+	Dirent(String name, int blockSize) {
 		int dot;
 		dot = name.indexOf('.');
 		if (dot >= 0) {
@@ -136,7 +136,7 @@ class Dirent implements DirectoryEntry {
 	 *
 	 * @param name The file name.
 	 */
-	public void setName(String name) {
+	private void setName(String name) {
 		if (name.length() != MAX_FILE_LEN)
 			throw new IllegalArgumentException("File name is wrong size");
 		this.name = name;
@@ -155,7 +155,7 @@ class Dirent implements DirectoryEntry {
 	 * Set the file extension.  Can't be longer than three characters.
 	 * @param ext The file extension.
 	 */
-	public void setExt(String ext) {
+	private void setExt(String ext) {
 		log.debug("ext len" + ext.length());
 		if (ext.length() != MAX_EXT_LEN)
 			throw new IllegalArgumentException("File extension is wrong size");
