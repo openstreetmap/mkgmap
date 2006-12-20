@@ -16,9 +16,12 @@
  */
 package uk.me.parabola.mkgmap.osm;
 
-import uk.me.parabola.mkgmap.MapSource;
-import uk.me.parabola.mkgmap.MapCollector;
+import uk.me.parabola.mkgmap.general.MapSource;
+import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.general.MapDetails;
+import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.FormatException;
+import uk.me.parabola.imgfmt.app.Area;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
@@ -26,6 +29,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 import org.xml.sax.SAXException;
 
@@ -37,11 +41,7 @@ import org.xml.sax.SAXException;
  */
 public class ReadOsm implements MapSource {
 
-	private MapCollector mapper;
-
-	public void setMapCollector(MapCollector mapper) {
-		this.mapper = mapper;
-	}
+	private MapDetails mapper = new MapDetails();
 
 	/**
 	 * Load the .osm file and produce the intermediate format.
@@ -67,5 +67,29 @@ public class ReadOsm implements MapSource {
 		} catch (ParserConfigurationException e) {
 			throw new FormatException("Internal error configuring xml parser", e);
 		}
+	}
+
+	public String copyrightMessage() {
+		return "OpenStreetMap.org contributers.";
+	}
+
+
+	/**
+	 * Get the area that this map covers. Delegates to the map collector.
+	 *
+	 * @return The area the map covers.
+	 */
+	public Area getBounds() {
+		return mapper.getBounds();
+	}
+
+	/**
+	 * Get the list of lines that need to be rendered to the map. Delegates to
+	 * the map collector.
+	 *
+	 * @return A list of {@link MapLine} objects.
+	 */
+	public List<MapLine> getLines() {
+		return mapper.getLines();
 	}
 }
