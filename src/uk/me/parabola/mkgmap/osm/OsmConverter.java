@@ -16,67 +16,18 @@
  */
 package uk.me.parabola.mkgmap.osm;
 
-import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.imgfmt.app.Coord;
-
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
 /**
- * Convert from OSM ways and points to Garmin lines, polygons and points.
- *
  * @author Steve Ratcliffe
  */
-public class OsmConverter {
-	private static final Logger log = Logger.getLogger(OsmConverter.class);
-
-	private final MapCollector mapper;
-
-	public OsmConverter(MapCollector mapper) {
-		this.mapper = mapper;
-	}
-
+public interface OsmConverter {
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
 	 *
 	 * As a few examples we might want to check for the 'highway' tag, work out
 	 * if it is an area of a park etc.
-	 * 
+	 *
 	 * @param way The OSM way.
 	 */
-	void processWay(Way way) {
-		log.debug(way);
-
-		String highway = way.getTag("highway");
-		if (highway != null)
-			processHighway(way, highway);
-	}
-
-	private void processHighway(Way way, String highway) {
-		String name = way.getName();
-
-		int type;
-		if (highway.equals("primary")) {
-			type = 2;
-		} else {
-			type = 6;
-		}
-
-		makeLines(way, name, type);
-	}
-
-	private void makeLines(Way way, String name, int type) {
-		List<List<Coord>> pointLists =  way.getPoints();
-		for (List<Coord> points : pointLists) {
-			MapLine line = new MapLine();
-			line.setName(name);
-			line.setPoints(points);
-			line.setType(type);
-
-			mapper.addLine(line);
-		}
-	}
+	void processWay(Way way);
 }

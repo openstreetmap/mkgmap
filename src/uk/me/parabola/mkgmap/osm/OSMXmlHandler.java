@@ -210,6 +210,6 @@ class OSMXmlHandler extends DefaultHandler {
 
 	public void setCallbacks(MapCollector mapCollector) {
 		mapper = mapCollector;
-		converter = new OsmConverter(mapCollector);
+		converter = new CodedConverter(mapCollector);
 	}
 }
