@@ -65,7 +65,7 @@ public class MakeTestMap {
 		
 		FileSystem fs = new FileSystem("gmapsupp.img", params);
 
-		Map mp = Map.createMap(fs, "32860003");
+		Map mp = Map.createMap("32860003", params);
 
 		TREFile tf = mp.getTRE();
 		RGNFile rgn = mp.getRGN();
