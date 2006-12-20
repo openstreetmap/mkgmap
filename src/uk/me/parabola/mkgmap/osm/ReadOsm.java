@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.osm;
 
 import uk.me.parabola.mkgmap.general.MapSource;
-import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.FormatException;
@@ -35,13 +34,18 @@ import org.xml.sax.SAXException;
 
 
 /**
- * Read an OpenStreetMap data file in .osm format.
+ * Read an OpenStreetMap data file in .osm format.  It is converted into a
+ * generic format that the map is built from.
+ * <p>Although not yet implemented, the intermediate format is important
+ * as several passes are required to produce the map at different zoom levels.
+ * At lower resolutions, some roads will have fewer points or won't be shown at
+ * all.
  *
  * @author Steve Ratcliffe
  */
 public class ReadOsm implements MapSource {
 
-	private MapDetails mapper = new MapDetails();
+	private final MapDetails mapper = new MapDetails();
 
 	/**
 	 * Load the .osm file and produce the intermediate format.

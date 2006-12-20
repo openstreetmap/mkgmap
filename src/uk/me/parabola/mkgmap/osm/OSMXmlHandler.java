@@ -24,11 +24,9 @@ import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.general.MapLine;
 
 /**
  * Reads and parses the OSM XML format.
@@ -39,6 +37,7 @@ class OSMXmlHandler extends DefaultHandler {
 	private static final Logger log = Logger.getLogger(OSMXmlHandler.class);
 
 	private MapCollector mapper;
+	private OsmConverter converter;
 
 	private int mode;
 
@@ -142,7 +141,7 @@ class OSMXmlHandler extends DefaultHandler {
 			if (qName.equals("way")) {
 				mode = 0;
 				// Process the way.
-				processWay(currentWay);
+				converter.processWay(currentWay);
 			}
 		}
 	}
@@ -156,44 +155,6 @@ class OSMXmlHandler extends DefaultHandler {
 	 */
 	public void endDocument() throws SAXException {
 		super.endDocument();
-	}
-
-	/**
-	 * This takes the way and works out what kind of map feature it is and makes
-	 * the relevant call to the mapper callback.
-	 *
-	 * As a few examples we might want to check for the 'highway' tag, work out
-	 * if it is an area of a park etc.
-	 * @param way The OSM way.
-	 */
-	private void processWay(Way way) {
-		log.debug(currentWay);
-
-		String highway = way.getTag("highway");
-		if (highway != null)
-			processHighway(way, highway);
-	}
-
-	private void processHighway(Way way, String highway) {
-		String name = way.getName();
-		int type;
-
-		if (highway.equals("primary")) {
-			type = 2;
-		} else {
-			type = 6;
-		}
-
-		List<List<Coord>> pointLists =  way.getPoints();
-		for (List<Coord> points : pointLists) {
-			MapLine line = new MapLine();
-			line.setName(name);
-			line.setPoints(points);
-			line.setType(type);
-			
-			mapper.addLine(line);
-		}
-
 	}
 
 	/**
@@ -249,5 +210,6 @@ class OSMXmlHandler extends DefaultHandler {
 
 	public void setCallbacks(MapCollector mapCollector) {
 		mapper = mapCollector;
+		converter = new OsmConverter(mapCollector);
 	}
 }
