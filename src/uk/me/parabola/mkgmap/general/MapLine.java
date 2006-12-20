@@ -21,6 +21,9 @@ import uk.me.parabola.imgfmt.app.Coord;
 import java.util.List;
 
 /**
+ * Represent a line on a Garmin map.  Lines are a list of points.  They have
+ * a type (major highway, stream etc) and a name.  And that is just about it.
+ *
  * @author Steve Ratcliffe
  */
 public class MapLine {

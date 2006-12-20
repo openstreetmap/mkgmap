@@ -23,6 +23,10 @@ import java.io.FileNotFoundException;
 import java.util.List;
 
 /**
+ * A source of map information in a standard format.  The OSM reader presents
+ * this interface to the main map making program.  OSM concepts are converted
+ * into Garmin map based structures such as {@link MapLine}. 
+ *
  * @author Steve Ratcliffe
  */
 public interface MapSource {
@@ -33,7 +37,7 @@ public interface MapSource {
 	 *
 	 * @param name The name of the resource to be loaded.
 	 * @throws FileNotFoundException When the file or resource is not found.
-	 * @throws uk.me.parabola.mkgmap.FormatException For any kind of malformed input.
+	 * @throws FormatException For any kind of malformed input.
 	 */
 	public void load(String name)
 			throws FileNotFoundException, FormatException;
