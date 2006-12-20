@@ -14,41 +14,27 @@
  * Author: Steve Ratcliffe
  * Create date: 18-Dec-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
 
-import java.util.List;
 
 /**
  * @author Steve Ratcliffe
  */
-public class MapLine {
-	private String name;
-	private int type;
-	private List<Coord> points;
+public interface MapCollector {
 
-	public String getName() {
-		return name;
-	}
+	/**
+	 * Add a line to the map.  It is given the
+	 * @param line The line information.
+	 */
+	public void addLine(MapLine line);
 
-	public void setName(String name) {
-		this.name = name;
-	}
+	/**
+	 * Add the given point to the total bounds for the map.
+	 *
+	 * @param p The coordinates of the point to add.
+	 */
+	public void addToBounds(Coord p);
 
-	public int getType() {
-		return type;
-	}
-
-	public void setType(int type) {
-		this.type = type;
-	}
-
-	public List<Coord> getPoints() {
-		return points;
-	}
-
-	public void setPoints(List<Coord> points) {
-		this.points = points;
-	}
 }

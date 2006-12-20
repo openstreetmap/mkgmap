@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 18-Dec-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;

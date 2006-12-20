@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.sys.FileSystem;
-import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileSystemParam;
 import org.apache.log4j.Logger;
 
 import java.io.FileNotFoundException;
@@ -26,12 +26,12 @@ import java.io.FileNotFoundException;
  * Holder for a complete map.  A map is made up of several files.
  * <p>Needless to say, it has nothing to do with java.util.Map.
  *
- * TODO: this probably needs a cleanup.
- *
  * @author Steve Ratcliffe
  */
 public class Map {
 	private static final Logger log = Logger.getLogger(Map.class);
+
+	private static FileSystem fileSystem;
 
 	private TREFile treFile;
 	private RGNFile rgnFile;
@@ -46,18 +46,21 @@ public class Map {
 	 * Create a complete map.  This consists of (at least) three
 	 * files that all have the same basename and different extensions.
 	 *
- 	 * @param fs The file system.
- 	 * @param name The name of the map. It must be an 8 digit string.
 	 * @return A map object that holds together all the files that make it up.
+	 * @param mapname The name of the map.  This is an 8 digit number as a
+	 * string.
+	 * @param params Parameters that describe the file system that the map
+	 * will be created in.
 	 */
-	public static Map createMap(FileSystem fs, String name) {
+	public static Map createMap(String mapname, FileSystemParam params) {
 		Map m = new Map();
 		try {
-			m.rgnFile = new RGNFile(fs.create(name + ".RGN"));
-			m.treFile = new TREFile(fs.create(name + ".TRE"));
-			m.lblFile = new LBLFile(fs.create(name + ".LBL"));
+			fileSystem = new FileSystem(mapname + ".img", params);
+			m.rgnFile = new RGNFile(fileSystem.create(mapname + ".RGN"));
+			m.treFile = new TREFile(fileSystem.create(mapname + ".TRE"));
+			m.lblFile = new LBLFile(fileSystem.create(mapname + ".LBL"));
 
-			m.treFile.setMapId(Integer.parseInt(name));
+			m.treFile.setMapId(Integer.parseInt(mapname));
 
 		} catch (FileNotFoundException e) {
 			log.error("failed to create file", e);
@@ -76,6 +79,8 @@ public class Map {
 		rgnFile.close();
 		treFile.close();
 		lblFile.close();
+
+		fileSystem.close();
 	}
 
 	public TREFile getTRE() {

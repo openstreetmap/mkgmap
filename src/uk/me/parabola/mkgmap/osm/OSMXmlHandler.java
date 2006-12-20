@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.mkgmap.MapCollector;
-import uk.me.parabola.mkgmap.MapLine;
+import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.general.MapLine;
 
 /**
  * Reads and parses the OSM XML format.

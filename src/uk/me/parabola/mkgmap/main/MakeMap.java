@@ -17,9 +17,8 @@
 package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.mkgmap.osm.ReadOsm;
-import uk.me.parabola.mkgmap.MapDetails;
-import uk.me.parabola.mkgmap.MapLine;
-import uk.me.parabola.mkgmap.MapSource;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapSource;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
@@ -33,7 +32,6 @@ import uk.me.parabola.imgfmt.app.RGNFile;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.TREFile;
 import uk.me.parabola.imgfmt.app.Zoom;
-import uk.me.parabola.imgfmt.sys.FileSystem;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -65,24 +63,39 @@ public class MakeMap {
 	}
 
 	private void makeMap(Args args) {
-		FileSystem fs = initMap(args.getMapname());
-		Map map = Map.createMap(fs, "32860001");
+		FileSystemParam params = new FileSystemParam();
+		params.setBlockSize(512);
+		params.setMapDescription("OSM street map");
 
-		MapDetails mapDetails = loadFromFile(args.getName());
+		Map map = null;
+		try {
+			map = Map.createMap(args.getMapname(), params);
 
-		processLines(map, mapDetails);
+			MapSource src = loadFromFile(args.getName());
 
-		map.close();
-		fs.close();
+			processInfo(map, src);
+			Subdivision div = makeDivisions(map, src);
+
+			List<MapLine> lines = src.getLines();
+			processLines(map, div, lines);
+			
+		} finally {
+			if (map != null)
+				map.close();
+		}
 	}
 
-	private void processLines(Map map, MapDetails details) {
+	/**
+	 * Set all the information that appears in the header.
+	 *
+	 * @param map The map to write to.
+	 * @param src The source of map information.
+	 */
+	private void processInfo(Map map, MapSource src) {
 		TREFile tre = map.getTRE();
-		LBLFile lbl = map.getLBL();
-		RGNFile rgn = map.getRGN();
 
 		// The bounds of the map.
-		Area bounds = details.getBounds();
+		Area bounds = src.getBounds();
 		tre.setBounds(bounds);
 
 		// Make a few settings
@@ -92,6 +105,61 @@ public class MakeMap {
 		tre.addInfo("Created by mkgmap");
 		tre.addInfo("Program released under the GPL");
 		tre.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
+
+		LBLFile lbl = map.getLBL();
+
+		// This one will not show up.
+		Label cpy = lbl.newLabel("mkgmap program licenced under GPL v2");
+		tre.addCopyright(cpy);
+
+		// This one gets shown when you switch on, so put the actual
+		// map copyright here.
+		cpy = lbl.newLabel(src.copyrightMessage());
+		tre.addCopyright(cpy);
+	}
+
+	private void processLines(Map map, Subdivision div,
+							  List<MapLine> lines)
+	{
+		LBLFile lbl = map.getLBL();
+		RGNFile rgn = map.getRGN();
+
+		for (MapLine line : lines) {
+			Polyline pl = new Polyline(div, 6);
+			String name = line.getName();
+			if (name == null)
+				continue;
+
+			log.debug("Road " + name + ", t=" + line.getType());
+			Label label = lbl.newLabel(name);
+			List<Coord> points = line.getPoints();
+			for (Coord co : points) {
+				log.debug("  point at " + co);
+				pl.addCoord(co);
+			}
+
+			pl.setLabel(label);
+			rgn.addMapObject(pl);
+		}
+	}
+
+	/**
+	 * Make the subdivisions in the map.
+	 * As we only use 1 (plus the empty top one) this will change a
+	 * lot.
+	 * TODO: needs to step though all zoom levels.
+	 * TODO: for each zoom level, create subdivisions.
+	 * TODO: return something more than a single division.
+	 *
+	 * @param map The map to operate on.
+	 * @param src The source of map information.
+	 * @return A single division.  Will be chnaged.
+	 */
+	private Subdivision makeDivisions(Map map, MapSource src) {
+		TREFile tre = map.getTRE();
+		RGNFile rgn = map.getRGN();
+
+		Area bounds = src.getBounds();
 
 		// There must be an empty zoom level at the least detailed level.
 		Zoom z1 = tre.createZoom(1, 24);
@@ -114,56 +182,16 @@ public class MakeMap {
 		div.setHasPoints(false);
 		div.setHasIndPoints(false);
 		div.setHasPolygons(false);
-
-		List<MapLine> lines = details.getLines();
-		for (MapLine line : lines) {
-			Polyline pl = new Polyline(div, 6);
-			String name = line.getName();
-			if (name == null)
-				continue;
-
-			log.debug("Road " + name + ", t=" + line.getType());
-			Label label = lbl.newLabel(name);
-			List<Coord> points = line.getPoints();
-			for (Coord co : points) {
-				log.debug("  point at " + co);
-				pl.addCoord(co);
-			}
-
-			pl.setLabel(label);
-			rgn.addMapObject(pl);
-		}
+		return div;
 	}
 
-	private FileSystem initMap(String mapname) {
-		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(512);
-		params.setMapDescription("OSM street map");
-
-		FileSystem fs = null;
-		try {
-			fs = new FileSystem(mapname + ".img", params);
-
-			return fs;
-		} catch (FileNotFoundException e) {
-			throw new ExitException("Could not create map", e);
-		} finally {
-			if (fs != null)
-				fs.close();
-		}
-	}
-
-	private MapDetails loadFromFile(String name) {
+	private MapSource loadFromFile(String name) {
 		try {
 			MapSource src = new ReadOsm();
 
-			MapDetails details = new MapDetails();
-			src.setMapCollector(details);
 			src.load(name);
 
-			
-
-			return details;
+			return src;
 		} catch (FileNotFoundException e) {
 			log.error("open fail", e);
 			throw new ExitException("Could not open file: ", e);

@@ -14,9 +14,13 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.mkgmap.general;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.mkgmap.FormatException;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 /**
  * @author Steve Ratcliffe
@@ -24,20 +28,34 @@ import java.io.FileNotFoundException;
 public interface MapSource {
 
 	/**
-	 * Set the object that will collect requests to add particular features
-	 * to the map.
-	 * @param mapper The object that collects mapping features.
-	 */
-	public void setMapCollector(MapCollector mapper);
-
-	/**
 	 * Load map by name.  The name is in a suitable form to be recognised
 	 * by the particular map source.  It could be a file name or a URI.
 	 *
 	 * @param name The name of the resource to be loaded.
 	 * @throws FileNotFoundException When the file or resource is not found.
-	 * @throws FormatException For any kind of malformed input.
+	 * @throws uk.me.parabola.mkgmap.FormatException For any kind of malformed input.
 	 */
 	public void load(String name)
 			throws FileNotFoundException, FormatException;
+
+	/**
+	 * Get a suitable copyright message for this map source.
+	 *
+	 * @return A string with the name of the copyright holder.
+	 */
+	public String copyrightMessage();
+
+	/**
+	 * Get the area that this map covers.
+	 *
+	 * @return The area the map covers.
+	 */
+	public Area getBounds();
+
+	/**
+	 * Get the list of lines that need to be rendered to the map.
+	 *
+	 * @return A list of {@link MapLine} objects.
+	 */
+	List<MapLine> getLines();
 }
