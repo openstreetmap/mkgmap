@@ -56,8 +56,12 @@ public class MakeMap {
 		a.setName(name);
 		a.setMapname(mapname);
 
-		MakeMap mm = new MakeMap();
-		mm.makeMap(a);
+		try {
+			MakeMap mm = new MakeMap();
+			mm.makeMap(a);
+		} catch (ExitException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 
 	private void makeMap(Args args) {
@@ -87,7 +91,7 @@ public class MakeMap {
 		// You can any old junk here.
 		tre.addInfo("Created by mkgmap");
 		tre.addInfo("Program released under the GPL");
-		tre.addInfo("Map data licenced under Creative Commons Attribution-ShareAlike 2.0");
+		tre.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 
 		// There must be an empty zoom level at the least detailed level.
 		Zoom z1 = tre.createZoom(1, 24);
@@ -142,11 +146,7 @@ public class MakeMap {
 
 			return fs;
 		} catch (FileNotFoundException e) {
-			System.err.println("Could not create map " + mapname);
-			System.exit(1);
-
-			// This can't really be reached.
-			throw new IllegalArgumentException("ignore", e);
+			throw new ExitException("Could not create map", e);
 		} finally {
 			if (fs != null)
 				fs.close();
@@ -161,16 +161,15 @@ public class MakeMap {
 			src.setMapCollector(details);
 			src.load(name);
 
+			
+
 			return details;
 		} catch (FileNotFoundException e) {
 			log.error("open fail", e);
-			System.err.println("Could not open file: " + name);
-			System.exit(1);
+			throw new ExitException("Could not open file: ", e);
 		} catch (FormatException e) {
-			System.err.println("Bad input file format");
-			System.exit(1);
+			throw new ExitException("Bad input file format", e);
 		}
-		return null;
 	}
 
 	private static class Args {
