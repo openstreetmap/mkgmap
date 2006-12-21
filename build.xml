@@ -66,9 +66,13 @@
     <mkdir dir="${dist}"/>
 		<mkdir dir="${dist}/doc/api"/>
 
+		<!-- We need log4j at the moment -->
     <delete file="${build.classes}/log4j.properties"/>
-    <copy file="${resources}/log4j-dist.properties" tofile="${build.classes}/log4j.properties">
-    </copy>
+		<copy file="${resources}/log4j-dist.properties"
+			tofile="${build.classes}/log4j.properties" />
+
+		<!-- we need the log4j library at present -->
+		<copy file="${log4j.lib}/${log4j.jars}" tofile="${dist}/log4j.jar"/>
     
     <!-- Make the jar -->
     <jar basedir="${build.classes}" jarfile="${dist}/mkosmgmap.jar"
@@ -76,10 +80,6 @@
       <include name="**/*.class"/>
       <include name="log4j.properties"/>
     </jar>
-
-		<!-- we need the log4j library at present -->
-		<copy file="${log4j.lib}/${log4j.jars}" tofile="${dist}/log4j.jar">
-		</copy>
 
 		<!-- Copy in the javadoc -->
 		<copy todir="${dist}/doc/api" >
@@ -90,17 +90,25 @@
     <copy todir="${dist}/src" >
       <fileset dir="${src}"/>
     </copy>
+
+		<!-- misc -->
+    <copy todir="${dist}" >
+			<fileset dir="${basedir}">
+				<include name="build.xml"/>
+				<include name="external.properties"/>
+				<include name="resources/*"/>
+			</fileset>
+		</copy>
   </target>
 
   <!-- Clean everything -->
 	<target name="clean">
-
 		<delete dir="${build}" />
-
 	</target>
 
 	<!-- Clobber all generated and built files -->
 	<target name="clobber" depends="clean">
+		<delete dir="${dist}" />
   </target>
 
 	<!-- Main -->
