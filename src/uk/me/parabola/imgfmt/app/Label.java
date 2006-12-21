@@ -74,7 +74,7 @@ public class Label {
 				put6(buf, off++, 0);
 			} else if (c >= 'A' && c <= 'Z') {
 				put6(buf, off++, c - 'A' + 1);
-			} // else if ... more TODO
+			} // else if ... more TODO: other characters
 		}
 
 		put6(buf, off++, 0xff);

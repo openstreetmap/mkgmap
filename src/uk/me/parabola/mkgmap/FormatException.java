@@ -21,7 +21,7 @@ package uk.me.parabola.mkgmap;
  * 
  * @author Steve Ratcliffe
  */
-public class FormatException extends Exception {
+public class FormatException extends RuntimeException {
 
 	/**
 	 * Constructs a new exception with the specified detail message.  The

@@ -85,7 +85,7 @@ public class FileSystem implements FSOps {
 			setParams(params);
 
 		// The block manager allocates blocks for files.
-		blockManager = new BlockManager(blockSize, 6); // TODO: blockSize used before being set
+		blockManager = new BlockManager(blockSize, 6);
 
 		// Initialise the directory.
 		directory.init();

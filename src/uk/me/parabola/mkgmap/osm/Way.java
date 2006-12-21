@@ -142,8 +142,17 @@ class Way {
 					points.add(end);
 					npoints++;
 				} else {
-					// segment discontinuous, TODO: try to match with other segments.
+					// segment discontinuous.
+					//  TODO: try to match with other segments.
+					//
+					// This may be OK the way just branches or has a gap in it.
+					// We still have to convert to a series of lines in this case though.
+					//
+					// Other times the segments are just in a crazy order, and
+					// needs to be fixed in the database, but we will try to at
+					// least make them display properly here.
 					log.warn("segment " + seg.getId() + " disjoint");
+					
 					// Start a new set of points
 					points = new ArrayList<Coord>();
 					pointLists.add(points);

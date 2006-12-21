@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 public class BufferedWriteStrategy implements WriteStrategy {
 	private static final Logger log = Logger.getLogger(BufferedWriteStrategy.class);
 	
-	private static final int MAX_SIZE = 1024 * 127; // TODO: grow it automatically later
+	private static final int MAX_SIZE = 1024 * 128; // TODO: grow it automatically later
 	private final ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
 	private final ImgChannel chan;
 	private int maxSize;

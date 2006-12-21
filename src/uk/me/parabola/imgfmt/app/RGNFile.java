@@ -66,7 +66,7 @@ public class RGNFile extends ImgFile {
 
 	public void addDivision(Subdivision sd) {
 		sd.setRgnPointer(position() - HEADER_LEN);
-		// XXX to do the index pointers.
+		// TODO the index pointers.
 	}
 
 	public void addMapObject(MapObject item) {

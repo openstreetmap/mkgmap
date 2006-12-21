@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.mkgmap.FormatException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -179,6 +180,10 @@ class Dirent implements DirectoryEntry {
 	 * @param n The block number.
 	 */
 	void addFullBlock(int n) {
+		// We do not currently deal with more than one directory inode block.
+		if (nblocks >= 240)
+			throw new FormatException("reached limit of file size");
+
 		blockTable[nblocks++] = (char) n;
 		size += blockSize;
 	}
