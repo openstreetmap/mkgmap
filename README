@@ -7,11 +7,58 @@ my Garmin Legend Cx to help show me when mapping what is done and
 what is not.
 
 As such, at least to begin with, the map will only be available at high
-zoom and will only show ways with names.
+zoom and will only show ways with names. Routing and the like is a non-goal
+of the project.
+
+Using
+=====
+
+Due to the complete lack of implemented options it is very easy to use.
+Change into the distribution directory and run the command
+
+	java -jar mkgmap.jar path-to-osm-data.osm
+
+It will produce a file called 63240001.img (and a log file 100 times as
+large).  I've not tried it on windows but it will probably work (I know I
+am going to regret saying that...)
+
+You can copy the map to your Garmin GPS unit in any way you know how. On my
+Legend Cx connected to a Linux system I put the unit into USB mass storage
+mode and copy the map to Garmin/gmapsupp.img
+Note that this will replace any other map you have on there.  It should
+be possible to use sendmap, but I've not tried.
+
+You should see a OSM copyright message on starting up, and the map name
+'My OSM Map' (sorry) should appear in the map setup section.
+
+You should see an outline of the map when zoomed out, but you will not
+see any streets until you are zoomed in very close.  On mine I have to
+be zoomed to 120m.
+
+Issues
+======
+
+1. You must be zoomed in close to see anything except an outline.
+2. Only lines are placed in the map.
+3. All unrecognised line types (rivers etc) will show up as residential
+   roads.
+4. There are many ways in the OSM database that have mis-ordered segments.
+   The program makes an attempt to split them into separate lines, which
+   mostly works, but can leave gaps in the road (probably just a bug)
+5. There is a limit to the size of the map you can create. It will be
+   around 1Mb.  I've done a large chunk of North London without getting
+   anywhere near the limit though.
+
 
 Acknowledgements
 ================
 
 This project is almost entirely based on the file format specification
 document written by John Mechalas at the SourceForge project at
-http://sourceforge.net/projects/garmin-img
+http://sourceforge.net/projects/garmin-img . This is a very impressive
+piece of work and in fact to only problem I had was my own mistake in
+implementation. Thanks.
+
+..Steve
+
+
