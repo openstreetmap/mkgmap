@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
  * 
  * @author Steve Ratcliffe
  */
-public class CodedConverter implements OsmConverter {
+class CodedConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(CodedConverter.class);
 
 	private final MapCollector mapper;

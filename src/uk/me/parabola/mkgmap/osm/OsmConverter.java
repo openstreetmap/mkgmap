@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.osm;
 /**
  * @author Steve Ratcliffe
  */
-public interface OsmConverter {
+interface OsmConverter {
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
