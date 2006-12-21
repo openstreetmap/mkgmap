@@ -95,6 +95,7 @@
     <copy todir="${dist}" >
 			<fileset dir="${basedir}">
 				<include name="README"/>
+				<include name="LICENCE*"/>
 				<include name="build.xml"/>
 				<include name="external.properties"/>
 				<include name="resources/*"/>
