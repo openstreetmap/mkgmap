@@ -17,7 +17,7 @@
     Author: Steve Ratcliffe
     Create date: 26 Nov 2006
 -->
-<project name="mkosmgmap" default="build" basedir=".">
+<project name="mkgmap" default="build" basedir=".">
 
 	<!-- Init -->
   <property name="top" value="."/>
@@ -75,7 +75,7 @@
 		<copy file="${log4j.lib}/${log4j.jars}" tofile="${dist}/log4j.jar"/>
     
     <!-- Make the jar -->
-    <jar basedir="${build.classes}" jarfile="${dist}/mkosmgmap.jar"
+    <jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
         manifest="${resources}/MANIFEST.MF">
       <include name="**/*.class"/>
       <include name="log4j.properties"/>
