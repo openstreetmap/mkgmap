@@ -18,22 +18,18 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import org.apache.log4j.Logger;
-import uk.me.parabola.imgfmt.sys.FileSystem;
+import java.io.FileNotFoundException;
+
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.LBLFile;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.app.Polyline;
-import uk.me.parabola.imgfmt.app.RGNFile;
 import uk.me.parabola.imgfmt.app.Subdivision;
-import uk.me.parabola.imgfmt.app.TREFile;
 import uk.me.parabola.imgfmt.app.Zoom;
 
-import java.io.FileNotFoundException;
+import org.apache.log4j.Logger;
 
 /**
  * A test routine to make an artificial map.  Makes some lines, squares etc
@@ -63,44 +59,34 @@ public class MakeTestMap {
 		params.setBlockSize(512);
 		params.setMapDescription("This is my map");
 		
-		FileSystem fs = new FileSystem("gmapsupp.img", params);
-
-		Map mp = Map.createMap("32860003", params);
-
-		TREFile tf = mp.getTRE();
-		RGNFile rgn = mp.getRGN();
-		LBLFile lbl = mp.getLBL();
+		Map map = Map.createMap("32860003", params);
 
 		Area area = new Area(lat, lng, lat + 0.05, lng + 0.05);
 
-		tf.setBounds(area);
-		tf.addInfo("Hello world");
-		tf.addInfo("Hello another world");
+		map.addInfo("Hello world");
+		map.addInfo("Hello another world");
 
 		// There must always be an empty zoom level at the least detailed level.
 		log.info("area " + area);
 		log.info(" or " + lat + '/' + lng);
 
-		Zoom z1 = tf.createZoom(1, 24);
-		z1.setInherited(true);
-		Subdivision div = Subdivision.topLevelSubdivision(area, z1);
-		rgn.addDivision(div);
+		Zoom z1 = map.createZoom(1, 24);
+		Subdivision topdiv = map.topLevelSubdivision(area, z1);
 
-		tf.setBounds(area);
+		map.setBounds(area);
 		
 		// Create a most detailed view
-		Zoom z = tf.createZoom(0, 24);
-		div = div.createSubdivision(area, z);
-		rgn.addDivision(div);
+		Zoom z = map.createZoom(0, 24);
+		Subdivision div = map.createSubdivision(topdiv, area, z);
 
 		Overview ov = new Overview(6, 1);
-		tf.addPolylineOverview(ov);
+		map.addPolylineOverview(ov);
 
 		Coord co;
 		div.setHasPolylines(true);
 
 		// Draw nearly a square to test all directions.
-		Polyline pl = new Polyline(div, 6); // residential road
+        Polyline pl = map.createLine(div, "Not really Square");
 
 		lat += 0.002;
 		lng += 0.002;
@@ -116,12 +102,10 @@ public class MakeTestMap {
 		co = new Coord(lat, lng+soff/2);
 		pl.addCoord(co);
 
-		Label name = lbl.newLabel("Not Really Square");
-		pl.setLabel(name);
-		rgn.addMapObject(pl);
+		map.addMapObject(pl);
 
 		// diagonal lines.
-		pl = new Polyline(div, 6);
+		pl = map.createLine(div, "Diamond Road");
 		lng += 0.004;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
@@ -132,12 +116,10 @@ public class MakeTestMap {
 		co = new Coord(lat - soff, lng + soff);
 		pl.addCoord(co);
 
-		name = lbl.newLabel("Diamond Road");
-		pl.setLabel(name);
-		rgn.addMapObject(pl);
+		map.addMapObject(pl);
 
 		// lines all in the same direction.
-		pl = new Polyline(div, 6);
+		pl = map.createLine(div, "Straight Street");
 		lng += 0.006;
 		double fine = soff/4;
 		co = new Coord(lat, lng);
@@ -147,12 +129,10 @@ public class MakeTestMap {
 		co = new Coord(lat+2*soff, lng+ soff + fine);
 		pl.addCoord(co);
 
-		name = lbl.newLabel("Straight Street");
-		pl.setLabel(name);
-		rgn.addMapObject(pl);
+		map.addMapObject(pl);
 
 		// Same but down to the left
-		pl = new Polyline(div, 6);
+		pl = map.createLine(div, "Back Street");
 		lng += 0.006;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
@@ -161,12 +141,10 @@ public class MakeTestMap {
 		co = new Coord(lat-2*soff, lng - soff - fine);
 		pl.addCoord(co);
 
-		name = lbl.newLabel("Back Street");
-		pl.setLabel(name);
-		rgn.addMapObject(pl);
+		map.addMapObject(pl);
 
 		// A long street
-		pl = new Polyline(div, 6);
+		pl = map.createLine(div, "Long Lane");
 		lng += 0.006;
 		co = new Coord(lat, lng);
 		pl.addCoord(co);
@@ -177,18 +155,12 @@ public class MakeTestMap {
 		co = new Coord(lat + 80 * soff - fine, lng + 80 * soff - fine);
 		pl.addCoord(co);
 
-		name = lbl.newLabel("Long Lane");
-		pl.setLabel(name);
-		rgn.addMapObject(pl);
+		map.addMapObject(pl);
 
-		Label copyright = lbl.newLabel("Copyright Steve Ratcliffe");
-		tf.addCopyright(copyright);
+		map.addCopyright("Copyright blah blah");
 
-		copyright = lbl.newLabel("another copyright message, just because");
-		tf.addCopyright(copyright);
+		map.addCopyright("Another copyright message");
 
-		mp.close();
-		fs.close();
-		
+		map.close();
 	}
 }

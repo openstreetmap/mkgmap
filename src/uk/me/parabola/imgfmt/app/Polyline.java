@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import org.apache.log4j.Logger;
-
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
+
+import org.apache.log4j.Logger;
 
 /**
  * Represents a multi-segment line.  Eg for a road. As with all map objects
@@ -30,7 +30,7 @@ import uk.me.parabola.imgfmt.Utils;
  * Writing these out is particularly tricky as deltas between points are packed
  * into the smallest number of bits possible.
  *
- * I am not trying to make the smallest map, so it may not be totally optimum.
+ * I am not trying to make the smallest map, so it will not be totally optimum.
  * 
  * @author Steve Ratcliffe
  */
@@ -43,9 +43,8 @@ public class Polyline extends MapObject {
 	// The actual points that make up the line.
 	private final List<Coord> points = new ArrayList<Coord>();
 
-	public Polyline(Subdivision div, int type) {
+	public Polyline(Subdivision div) {
 		setSubdiv(div);
-		setType(type);
 	}
 
 	/**
@@ -60,7 +59,7 @@ public class Polyline extends MapObject {
 			return;
 
 		// Prepare for writing by doing all the required calculations.
-		Work w = prepare();
+		LineWork w = prepare();
 		BitWriter bw = w.makeBitStream();
 
 		// The type of feature, also contains a couple of flags hidden inside.
@@ -98,10 +97,10 @@ public class Polyline extends MapObject {
 		points.add(co);
 	}
 
-	private Work prepare() {
+	private LineWork prepare() {
 
 		// Prepare the information that we need.
-		Work w = new Work();
+		LineWork w = new LineWork();
 		return w;
 	}
 
@@ -110,7 +109,7 @@ public class Polyline extends MapObject {
 		this.direction = direction;
 	}
 
-	private class Work {
+	private class LineWork {
 		private boolean extraBit;
 
 		private boolean xSameSign;
@@ -128,7 +127,7 @@ public class Polyline extends MapObject {
 
 		private int[] deltas;
 
-		Work() {
+		LineWork() {
 			calcLatLong();
 			calcDeltas();
 		}

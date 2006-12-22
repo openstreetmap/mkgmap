@@ -24,10 +24,13 @@ import java.util.ArrayList;
 /**
  * The map is divided into areas, depending on the zoom level.  These are
  * known as subdivisions.
- * <p>A subdivision 'belongs' to a zoom level and cannot be intepreted correctly
- * with out knowing the <i>bitsPerCoord</i> of the associated zoom level.
- * <p>Subdivisions also form a tree as subdivisions are further divided at
- * lower levels.
+ *
+ * A subdivision 'belongs' to a zoom level and cannot be intepreted correctly
+ * without knowing the <i>bitsPerCoord</i> of the associated zoom level.
+ *
+ * Subdivisions also form a tree as subdivisions are further divided at
+ * lower levels.  The subdivisions need to know their child divisions
+ * because this information is represented in the map.
  *
  * @author Steve Ratcliffe
  */
@@ -230,4 +233,59 @@ public class Subdivision {
 
 		return div;
 	}
+
+    public boolean isHasPoints() {
+        return hasPoints;
+    }
+
+    public boolean isHasIndPoints() {
+        return hasIndPoints;
+    }
+
+    public boolean isHasPolylines() {
+        return hasPolylines;
+    }
+
+    public boolean isHasPolygons() {
+        return hasPolygons;
+    }
+
+    /**
+     * The following routines answer the question 'does there need to
+     * be a pointer in the rgn section to this area?'.  You need a
+     * pointer for all the regions that exist except the first one.
+     * There is a strict order with points first and finally polygons.
+     *
+     * @return Never needed as if it exists it will be first.
+     */
+    public boolean needsPointPtr() {
+        return false;
+    }
+
+    /**
+     * Needed if it exists and is not first, ie there is a points
+     * section.
+     * @return true if pointer needed
+     */
+    public boolean needsIndPointPtr() {
+        return hasIndPoints && hasPoints;
+    }
+
+    /**
+     * Needed if it exists and is not first, ie there is a points or
+     * indexed points section.
+     * @return true if pointer needed.
+     */
+    public boolean needsPolylinePtr() {
+        return hasPolylines && (hasPoints || hasIndPoints);
+    }
+
+    /**
+     * As this is last in the list it is needed if it exists and there
+     * is another section.
+     * @return true if pointer needed.
+     */
+    public boolean needsPolygonPtr() {
+        return hasPolygons && (hasPoints || hasIndPoints || hasPolylines);
+    }
 }

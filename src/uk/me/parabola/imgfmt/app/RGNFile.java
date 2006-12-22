@@ -29,6 +29,7 @@ import java.io.IOException;
  * not really handle that format however as it is written by the {@link MapObject}s
  * themselves.
  *
+ * Each subdivision takes space in this file.  The 
  * I am expecting this to be the biggest file, although it seems that TRE may
  * be in some circumstances.
  *
@@ -64,10 +65,39 @@ public class RGNFile extends ImgFile {
 		putInt(dataSize);
 	}
 
+    private int pointPtrOff;
+    private int indPointPtrOff;
+    private int polylinePtrOff;
+    private int polygonPtrOff;
+
 	public void addDivision(Subdivision sd) {
-		sd.setRgnPointer(position() - HEADER_LEN);
-		// TODO the index pointers.
-	}
+
+        // We need to reserve space for a pointer for each type of map
+        // element that is supported by this division.  Note that these
+        // pointers are only 2bytes long
+        if (sd.needsPointPtr()) {
+            pointPtrOff = position();
+            position(position() + 2);
+        }
+
+        if (sd.needsIndPointPtr()) {
+            indPointPtrOff = position();
+            position(position() + 2);
+        }
+
+        if (sd.needsPolylinePtr()) {
+            polylinePtrOff = position();
+            position(position() + 2);
+        }
+
+        if (sd.needsPolygonPtr()) {
+            polygonPtrOff = position();
+            position(position() + 2);
+        }
+
+
+        sd.setRgnPointer(position() - HEADER_LEN);
+    }
 
 	public void addMapObject(MapObject item) {
 		item.write(this);

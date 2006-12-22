@@ -16,11 +16,12 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.sys.FileSystem;
-import uk.me.parabola.imgfmt.FileSystemParam;
-import org.apache.log4j.Logger;
-
 import java.io.FileNotFoundException;
+
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.sys.FileSystem;
+
+import org.apache.log4j.Logger;
 
 /**
  * Holder for a complete map.  A map is made up of several files.
@@ -46,11 +47,11 @@ public class Map {
 	 * Create a complete map.  This consists of (at least) three
 	 * files that all have the same basename and different extensions.
 	 *
-	 * @return A map object that holds together all the files that make it up.
 	 * @param mapname The name of the map.  This is an 8 digit number as a
 	 * string.
 	 * @param params Parameters that describe the file system that the map
 	 * will be created in.
+	 * @return A map object that holds together all the files that make it up.
 	 */
 	public static Map createMap(String mapname, FileSystemParam params) {
 		Map m = new Map();
@@ -70,7 +71,134 @@ public class Map {
 		return m;
 	}
 
-	/**
+    /**
+     * Set the area that the map covers.
+     * @param area The outer bounds of the map.
+     */
+    public void setBounds(Area area) {
+        treFile.setBounds(area); 
+    }
+
+    /**
+     * Add a copyright message to the map.
+     * @param str the copyright message. The second (last?) one set
+     * gets shown when the device starts (sometimes?).
+     */
+    public void addCopyright(String str) {
+        Label cpy = lblFile.newLabel(str);
+        treFile.addCopyright(cpy);
+    }
+
+    /**
+     * There is an area after the TRE header and before its data
+     * starts that can be used to save any old junk it seems.
+     */
+    public void addInfo(String info) {
+        treFile.addInfo(info);
+    }
+
+    /**
+     * Create a new zoom level. The level 0 is the most detailed and
+     * level 15 is the most general.  Most maps would just have 4
+     * different levels or less.  We are just having two to start with
+     * but will probably advance to at least 3.
+     *
+     * @param level The zoom level, and integer between 0 and 15. Its
+     * like a logical zoom level.
+     * @param bits  The number of bits per coordinate, a measure of
+     * the actual amount of detail that will be in the level.  So this
+     * is like a physical zoom level.
+     */
+    public Zoom createZoom(int level, int bits) {
+        return treFile.createZoom(level, bits);
+    }
+
+    /**
+     * Create the top level division. It must be empty afaik and cover
+     * the whole area of the map.
+     *
+     * @param area The whole map area.
+     * @param zoom The zoom level that you want the top level to be
+     * at.  Its going to be at least level 1.
+     */
+    public Subdivision topLevelSubdivision(Area area, Zoom zoom) {
+		zoom.setInherited(true); // May not always be necessary/desired
+
+        Subdivision sub = Subdivision.topLevelSubdivision(area, zoom);
+		rgnFile.addDivision(sub);
+
+        return sub;
+    }
+
+    /**
+     * Create a subdivision that is beneath the top level.  We have to
+     * pass the parent division.
+     *
+     * Note that you cannot create these all up front.  You must
+     * create it, fill it will its map elements and then create the
+     * next one.  You must also start at the top level and work down
+     * although thats kind of obvious.
+     *
+     * @param sub The parent subdivision.
+     * @param area The area of the new child subdiv.
+     * @param zoom The zoom level of the child.
+     */
+    public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
+    {
+        Subdivision child = sub.createSubdivision(area, zoom);
+        rgnFile.addDivision(child);
+        return child;
+    }
+
+    public void addPointOverview(Overview ov) {
+        treFile.addPointOverview(ov);
+    }
+
+    public void addPolylineOverview(Overview ov) {
+        treFile.addPolylineOverview(ov);
+    }
+
+    public void addPolygonOverview(Overview ov) {
+        treFile.addPolygonOverview(ov);
+    }
+
+    /**
+     * Set the point of interest flags.
+     * @param flags The POI flags.
+     */
+    public void setPoiDisplayFlags(int flags) {
+        treFile.setPoiDisplayFlags((byte) flags);
+    }
+
+    public Polyline createLine(Subdivision div, String name) {
+        Label label = lblFile.newLabel(name);
+        Polyline pl = new Polyline(div);
+
+        pl.setLabel(label);
+        return pl;
+    }
+
+    public Polygon createPolygon(Subdivision div, String name) {
+        Label label = lblFile.newLabel(name);
+        Polygon pg = new Polygon(div);
+
+        pg.setLabel(label);
+        return pg;
+    }
+
+    public Point createPoint(Subdivision div, String name) {
+        Point p = new Point(div);
+        Label label = lblFile.newLabel(name);
+
+        p.setLabel(label);
+        return p;
+    }
+
+    public void addMapObject(MapObject item) {
+        rgnFile.addMapObject(item);
+    }
+
+    /**
 	 * Close this map by closing all the constituent files.
 	 */
 	public void close() {
@@ -83,15 +211,4 @@ public class Map {
 		fileSystem.close();
 	}
 
-	public TREFile getTRE() {
-		return treFile;
-	}
-
-	public LBLFile getLBL() {
-		return lblFile;
-	}
-
-	public RGNFile getRGN() {
-		return rgnFile;
-	}
 }

@@ -23,14 +23,11 @@ import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.LBLFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.app.Polyline;
-import uk.me.parabola.imgfmt.app.RGNFile;
 import uk.me.parabola.imgfmt.app.Subdivision;
-import uk.me.parabola.imgfmt.app.TREFile;
 import uk.me.parabola.imgfmt.app.Zoom;
 
 import java.io.FileNotFoundException;
@@ -48,15 +45,15 @@ public class MakeMap {
 
 	public static void main(String[] args) {
 		try {
-		if (args.length < 1)
-			throw new ExitException("Usage: mkgmap <file.osm>");
+            if (args.length < 1)
+                throw new ExitException("Usage: mkgmap <file.osm>");
 
-		String name = args[0];
-		String mapname = "63240001";
+            String name = args[0];
+            String mapname = "63240001";
 
-		Args a = new Args();
-		a.setName(name);
-		a.setMapname(mapname);
+            Args a = new Args();
+            a.setName(name);
+            a.setMapname(mapname);
 
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
@@ -95,55 +92,48 @@ public class MakeMap {
 	 * @param src The source of map information.
 	 */
 	private void processInfo(Map map, MapSource src) {
-		TREFile tre = map.getTRE();
-
 		// The bounds of the map.
-		Area bounds = src.getBounds();
-		tre.setBounds(bounds);
+		map.setBounds(src.getBounds());
 
 		// Make a few settings
-		tre.setPoiDisplayFlags((byte) 0);
+		map.setPoiDisplayFlags((byte) 0);
 
-		// You can any old junk here.
-		tre.addInfo("Created by mkgmap");
-		tre.addInfo("Program released under the GPL");
-		tre.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-
-		LBLFile lbl = map.getLBL();
+		// You can add any old junk here.
+		map.addInfo("Created by mkgmap");
+		map.addInfo("Program released under the GPL");
+		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 
 		// This one will not show up.
-		Label cpy = lbl.newLabel("mkgmap program licenced under GPL v2");
-		tre.addCopyright(cpy);
+		map.addCopyright("(mkgmap) program licenced under GPL v2");
 
 		// This one gets shown when you switch on, so put the actual
 		// map copyright here.
-		cpy = lbl.newLabel(src.copyrightMessage());
-		tre.addCopyright(cpy);
+		map.addCopyright(src.copyrightMessage());
 	}
 
 	private void processLines(Map map, Subdivision div,
 							  List<MapLine> lines)
 	{
-		LBLFile lbl = map.getLBL();
-		RGNFile rgn = map.getRGN();
+//		LBLFile lbl = map.getLBL();
+//		RGNFile rgn = map.getRGN();
 
 		for (MapLine line : lines) {
-			Polyline pl = new Polyline(div, 6);
 			String name = line.getName();
-			if (name == null)
-				name="";//continue;
+            if (name == null) {
+                name="";//continue;
+            }
 
-			log.debug("Road " + name + ", t=" + line.getType());
-			Label label = lbl.newLabel(name);
-			List<Coord> points = line.getPoints();
+            log.debug("Road " + name + ", t=" + line.getType());
+            Polyline pl = map.createLine(div, name);
+
+            List<Coord> points = line.getPoints();
 			for (Coord co : points) {
 				log.debug("  point at " + co);
 				pl.addCoord(co);
 			}
 
 			pl.setType(line.getType());
-			pl.setLabel(label);
-			rgn.addMapObject(pl);
+			map.addMapObject(pl);
 		}
 	}
 
@@ -160,26 +150,20 @@ public class MakeMap {
 	 * @return A single division.  Will be chnaged.
 	 */
 	private Subdivision makeDivisions(Map map, MapSource src) {
-		TREFile tre = map.getTRE();
-		RGNFile rgn = map.getRGN();
-
 		Area bounds = src.getBounds();
 
 		// There must be an empty zoom level at the least detailed level.
-		Zoom z1 = tre.createZoom(1, 24);
+		Zoom z1 = map.createZoom(1, 24);
 
-		z1.setInherited(true);
-		Subdivision div = Subdivision.topLevelSubdivision(bounds, z1);
-		rgn.addDivision(div);
+		Subdivision topdiv = map.topLevelSubdivision(bounds, z1);
 
 		// Create the most detailed view.
-		Zoom z = tre.createZoom(0, 24);
-		div = div.createSubdivision(bounds, z);
-		rgn.addDivision(div);
+		Zoom z = map.createZoom(0, 24);
+		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
 		// Set the list of features supported on the map.
 		Overview ov = new Overview(6, 1);
-		tre.addPolylineOverview(ov);
+		map.addPolylineOverview(ov);
 
 		// Set the fact that there are lines in the map.
 		div.setHasPolylines(true);

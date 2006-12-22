@@ -29,8 +29,13 @@ public class Point extends MapObject {
 	// Points can have a subtype, eg for restaurant the subtype might be the
 	// kind of food served.
 	private int subtype;
+    private Subdivision subdiv;
 
-	/**
+    public Point(Subdivision div) {
+        this.subdiv = div;
+    }
+
+    /**
 	 * Format and write the contents of the object to the given
 	 * file.
 	 *
