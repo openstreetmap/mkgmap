@@ -22,7 +22,14 @@ import uk.me.parabola.mkgmap.general.MapSource;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.Polygon;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.Zoom;
 
 import java.io.FileNotFoundException;
 import java.util.List;
