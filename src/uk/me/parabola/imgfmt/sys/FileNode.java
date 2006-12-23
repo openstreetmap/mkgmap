@@ -209,7 +209,7 @@ public class FileNode implements ImgChannel {
 			// First need to allocate enough blocks for this write. First check
 			// if the block exists already
 			int pblock = dir.getPhysicalBlock(lblock);
-			log.debug("block at position is " + pblock);
+			log.debug("lblock / pblock " + lblock + '/' + pblock);
 			if (pblock == 0xffff) {
 				log.debug("allocating new block");
 				pblock = blockManager.allocate();
@@ -218,29 +218,35 @@ public class FileNode implements ImgChannel {
 
 			// Position the underlying file, so that it is in the correct place.
 			int off = position - lblock*blockManager.getBlockSize();
-			log.debug("offset is " + off);
 			file.position(pblock * blockSize + off);
+			log.debug("remainder after complete block is " + off);
 
-			int n = blockSize;
+			int n = size;
+			if (n > blockSize)
+				n = blockSize;
+
 			if (off != 0) {
 				log.debug("not at block boundry " + off);
 				n = blockSize - off;
 			}
 
 			src.limit(src.position() + n);
-			size -= n;
 
 			// Write to the underlying file.
 			int nw = file.write(src);
 			log.debug("wrote " + nw + " bytes");
+			if (nw == 0)
+				throw new IOException("Wrote nothing");
 
 			// Update the file positions
+			size -= nw;
 			position += nw;
 			totalWritten += nw;
 
-			// Update file size.  TODO should only be when position is at end.
-			dir.incSize(nw);
-		}
+			// Update file size.
+            if (position > dir.getSize())
+                dir.setSize(position);
+        }
 
 		return totalWritten;
 	}
@@ -269,6 +275,7 @@ public class FileNode implements ImgChannel {
 
 		ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
 
+		// Complete any partial block.
 		for (int i = 0; i < rem; i++) {
 			buf.put((byte) 0);
 		}

@@ -104,7 +104,8 @@ class Dirent implements DirectoryEntry {
 		buf.put(Utils.toBytes(name, MAX_FILE_LEN, (byte) ' '));
 		buf.put(Utils.toBytes(ext, MAX_EXT_LEN, (byte) ' '));
 
-		buf.putInt(size);
+        log.debug("dirent " + name + '.' + ext + " size is going to " + size);
+        buf.putInt(size);
 
 		// For an unknown reason, the 'sub-file part' must be three when it
 		// the header block entry.
@@ -173,7 +174,12 @@ class Dirent implements DirectoryEntry {
 	}
 
 
-	/**
+    void setSize(int size) {
+        log.debug("setting size " + getName() + getExt() + " to " + size);
+        this.size = size;
+    }
+
+    /**
 	 * Add a complete block and count the full size of it towards the
 	 * file size.
 	 *
@@ -206,10 +212,6 @@ class Dirent implements DirectoryEntry {
 	void addBlock(int n) {
 		log.debug("adding block " + n + ", at " + nblocks);
 		blockTable[nblocks++] = (char) n;
-	}
-
-	void incSize(int inc) {
-		size += inc;
 	}
 
 	/**

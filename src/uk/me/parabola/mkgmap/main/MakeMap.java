@@ -80,8 +80,8 @@ public class MakeMap {
 			List<MapLine> lines = src.getLines();
 			processLines(map, div, lines);
 			
-//            List<MapShape> shapes = src.getShapes();
-//            processShapes(map, div, shapes);
+			List<MapShape> shapes = src.getShapes();
+			//processShapes(map, div, shapes);
 
 		} finally {
 			if (map != null)
@@ -122,14 +122,14 @@ public class MakeMap {
 
 		for (MapLine line : lines) {
 			String name = line.getName();
-            if (name == null) {
-                name="";//continue;
-            }
+			if (name == null) {
+				name="";//continue;
+			}
 
-            log.debug("Road " + name + ", t=" + line.getType());
-            Polyline pl = map.createLine(div, name);
+			log.debug("Road " + name + ", t=" + line.getType());
+			Polyline pl = map.createLine(div, name);
 
-            List<Coord> points = line.getPoints();
+			List<Coord> points = line.getPoints();
 			for (Coord co : points) {
 				log.debug("  point at " + co);
 				pl.addCoord(co);
@@ -147,14 +147,14 @@ public class MakeMap {
 
 		for (MapShape shape : shapes) {
 			String name = shape.getName();
-            if (name == null) {
-                name="";//continue;
-            }
+			if (name == null) {
+				name="";//continue;
+			}
 
-            log.debug("Shape " + name + ", t=" + shape.getType());
-            Polygon pg = map.createPolygon(div, name);
+			log.debug("Shape " + name + ", t=" + shape.getType());
+			Polygon pg = map.createPolygon(div, name);
 
-            List<Coord> points = shape.getPoints();
+			List<Coord> points = shape.getPoints();
 			for (Coord co : points) {
 				log.debug("  point at " + co);
 				pg.addCoord(co);
@@ -198,8 +198,10 @@ public class MakeMap {
 		div.setHasPolylines(true);
 		div.setHasPoints(false);
 		div.setHasIndPoints(false);
-//		div.setHasPolygons(true);
-		return div;
+		//div.setHasPolygons(true);
+
+        map.startDivision(div);
+        return div;
 	}
 
 	private MapSource loadFromFile(String name) {

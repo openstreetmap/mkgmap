@@ -51,7 +51,7 @@ public abstract class ImgFile {
 		return writer.position();
 	}
 
-	void position(int pos) {
+	void position(long pos) {
 		writer.position(pos);
 	}
 	

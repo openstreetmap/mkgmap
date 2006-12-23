@@ -131,8 +131,7 @@ public class Map {
 		zoom.setInherited(true); // May not always be necessary/desired
 
         Subdivision sub = Subdivision.topLevelSubdivision(area, zoom);
-		rgnFile.addDivision(sub);
-
+		rgnFile.startDivision(sub);
         return sub;
     }
 
@@ -142,8 +141,7 @@ public class Map {
      *
      * Note that you cannot create these all up front.  You must
      * create it, fill it will its map elements and then create the
-     * next one.  You must also start at the top level and work down
-     * although thats kind of obvious.
+     * next one.  You must also start at the top level and work down.
      *
      * @param sub The parent subdivision.
      * @param area The area of the new child subdiv.
@@ -152,7 +150,7 @@ public class Map {
     public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
     {
         Subdivision child = sub.createSubdivision(area, zoom);
-        rgnFile.addDivision(child);
+		log.debug("creating main division");
         return child;
     }
 
@@ -174,6 +172,10 @@ public class Map {
      */
     public void setPoiDisplayFlags(int flags) {
         treFile.setPoiDisplayFlags((byte) flags);
+    }
+
+    public void startDivision(Subdivision sub) {
+        rgnFile.startDivision(sub);
     }
 
     /**

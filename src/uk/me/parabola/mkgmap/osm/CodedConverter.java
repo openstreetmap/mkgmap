@@ -85,17 +85,17 @@ class CodedConverter implements OsmConverter {
 		makeLines(way, name, type);
 	}
 
-    private void processLeisure(Way way, String s) {
-        String name = way.getName();
+	private void processLeisure(Way way, String s) {
+		String name = way.getName();
 
-        int type;
-        if (s.equals("park")) {
-            type = 0x17;
-        } else {
-            return;
-        }
-        makeShape(way, name, type);
-    }
+		int type;
+		if (s.equals("park")) {
+			type = 0x17;
+		} else {
+			return;
+		}
+		makeShape(way, name, type);
+	}
 
 	private void makeLines(Way way, String name, int type) {
 		List<List<Coord>> pointLists =  way.getPoints();

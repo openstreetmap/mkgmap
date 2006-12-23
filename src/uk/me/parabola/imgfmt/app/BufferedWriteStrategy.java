@@ -71,11 +71,11 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 *
 	 * @param pos The new position in the file.
 	 */
-	public void position(int pos) {
+	public void position(long pos) {
 		int cur = position();
 		if (cur > maxSize)
 			maxSize = cur;
-		buf.position(pos);
+		buf.position((int) pos);
 	}
 
 	/**
@@ -100,8 +100,9 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param c The value to write.
 	 */
 	public void putChar(char c) {
-		buf.putChar(c);
-	}
+        log.debug("char at pos " + position());
+        buf.putChar(c);
+    }
 
 	/**
 	 * Write out 4 byte value.

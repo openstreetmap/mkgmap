@@ -86,7 +86,9 @@ public class MakeTestMap {
 		Coord co;
 		div.setHasPolylines(true);
 
-		// Draw nearly a square to test all directions.
+        map.startDivision(div);
+
+        // Draw nearly a square to test all directions.
         Polyline pl = map.createLine(div, "Not really Square");
 
 		lat += 0.002;

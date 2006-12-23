@@ -55,7 +55,7 @@ public interface WriteStrategy {
 	 * Set the position of the file.
 	 * @param pos The new position in the file.
 	 */
-	void position(int pos);
+	void position(long pos);
 
 	/**
 	 * Write out a single byte.
