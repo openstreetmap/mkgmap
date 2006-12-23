@@ -69,10 +69,12 @@ public class Subdivision {
 	{
 		this.zoomLevel = z;
 
-		this.latitude = latitude;
+        int shift = getShift();
+
+        this.latitude = latitude;
 		this.longitude = longitude;
-		this.width = width;
-		this.height = height;
+		this.width = width >> shift;
+		this.height = height >> shift;
 
 		z.addSubdivision(this); // FIXME: use of this in object construction
 	}
@@ -83,7 +85,7 @@ public class Subdivision {
 	 *
 	 * @return The shift value.  It is 24 minus the number of bits per coord.
 	 */
-	public int getShift() {
+	public final int getShift() {
 		return 24 - zoomLevel.getBitsPerCoord();
 	}
 
@@ -228,30 +230,12 @@ public class Subdivision {
 		// Get the half width and height of the area and adjust by the
 		// bits per coord.
 		int width = (area.getMaxLong() - area.getMinLong())/2;
-		width >>= 24 - zoom.getBitsPerCoord();
 		int height = (area.getMaxLat() - area.getMinLat())/2;
-		height >>= 24 - zoom.getBitsPerCoord();
 
 		Subdivision div = new Subdivision(zoom, lat, lng, width, height);
 
 		return div;
 	}
-
-    public boolean isHasPoints() {
-        return hasPoints;
-    }
-
-    public boolean isHasIndPoints() {
-        return hasIndPoints;
-    }
-
-    public boolean isHasPolylines() {
-        return hasPolylines;
-    }
-
-    public boolean isHasPolygons() {
-        return hasPolygons;
-    }
 
     /**
      * The following routines answer the question 'does there need to
