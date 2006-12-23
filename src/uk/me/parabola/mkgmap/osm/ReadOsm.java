@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osm;
 import uk.me.parabola.mkgmap.general.MapSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 
@@ -96,4 +97,8 @@ public class ReadOsm implements MapSource {
 	public List<MapLine> getLines() {
 		return mapper.getLines();
 	}
+
+    public List<MapShape> getShapes() {
+        return mapper.getShapes();
+    }
 }

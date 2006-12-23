@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osm;
 
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.imgfmt.app.Coord;
 
 import java.util.List;
@@ -57,6 +58,10 @@ class CodedConverter implements OsmConverter {
 		String highway = way.getTag("highway");
 		if (highway != null)
 			processHighway(way, highway);
+
+        String leisure = way.getTag("leisure");
+        if (leisure != null)
+            processLeisure(way, leisure);
 	}
 
 	private void processHighway(Way way, String highway) {
@@ -80,6 +85,18 @@ class CodedConverter implements OsmConverter {
 		makeLines(way, name, type);
 	}
 
+    private void processLeisure(Way way, String s) {
+        String name = way.getName();
+
+        int type;
+        if (s.equals("park")) {
+            type = 0x17;
+        } else {
+            return;
+        }
+        makeShape(way, name, type);
+    }
+
 	private void makeLines(Way way, String name, int type) {
 		List<List<Coord>> pointLists =  way.getPoints();
 		for (List<Coord> points : pointLists) {
@@ -89,6 +106,18 @@ class CodedConverter implements OsmConverter {
 			line.setType(type);
 
 			mapper.addLine(line);
+		}
+	}
+
+	private void makeShape(Way way, String name, int type) {
+		List<List<Coord>> pointLists =  way.getPoints();
+		for (List<Coord> points : pointLists) {
+			MapShape line = new MapShape();
+			line.setName(name);
+			line.setPoints(points);
+			line.setType(type);
+
+			mapper.addShape(line);
 		}
 	}
 }

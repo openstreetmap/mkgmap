@@ -48,7 +48,8 @@ public class MakeTestMap {
 		double lat = 51.724;
 		double lng = 0.2487;
 
-		if (args.length > 1) {
+        // Arguments allow you to place the map where ever you wish.
+        if (args.length > 1) {
 			lat = Double.valueOf(args[0]);
 			lng = Double.valueOf(args[1]);
 		}

@@ -40,4 +40,13 @@ public interface MapCollector {
 	 * will change to Node.
 	 */
 	public void addToBounds(Coord p);
+
+    /**
+     * Add the given shape (polygon) to the map.  A shape is very similar to
+     * a line but they are separate because they need to be put in different
+     * sections in the output map.
+     *
+     * @param shape The polygon to add.
+     */
+    public void addShape(MapShape shape);
 }

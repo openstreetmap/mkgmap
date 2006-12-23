@@ -19,16 +19,10 @@ package uk.me.parabola.mkgmap.main;
 import uk.me.parabola.mkgmap.osm.ReadOsm;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapSource;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.Map;
-import uk.me.parabola.imgfmt.app.Overview;
-import uk.me.parabola.imgfmt.app.Polyline;
-import uk.me.parabola.imgfmt.app.Subdivision;
-import uk.me.parabola.imgfmt.app.Zoom;
+import uk.me.parabola.imgfmt.app.*;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -79,6 +73,9 @@ public class MakeMap {
 			List<MapLine> lines = src.getLines();
 			processLines(map, div, lines);
 			
+//            List<MapShape> shapes = src.getShapes();
+//            processShapes(map, div, shapes);
+
 		} finally {
 			if (map != null)
 				map.close();
@@ -114,8 +111,7 @@ public class MakeMap {
 	private void processLines(Map map, Subdivision div,
 							  List<MapLine> lines)
 	{
-//		LBLFile lbl = map.getLBL();
-//		RGNFile rgn = map.getRGN();
+        map.startLines();  // Signal that we are beginning to draw the lines.
 
 		for (MapLine line : lines) {
 			String name = line.getName();
@@ -134,6 +130,31 @@ public class MakeMap {
 
 			pl.setType(line.getType());
 			map.addMapObject(pl);
+		}
+	}
+
+	private void processShapes(Map map, Subdivision div,
+							  List<MapShape> shapes)
+	{
+        map.startShapes();  // Signal that we are beginning to draw the shapes.
+
+		for (MapShape shape : shapes) {
+			String name = shape.getName();
+            if (name == null) {
+                name="";//continue;
+            }
+
+            log.debug("Shape " + name + ", t=" + shape.getType());
+            Polygon pg = map.createPolygon(div, name);
+
+            List<Coord> points = shape.getPoints();
+			for (Coord co : points) {
+				log.debug("  point at " + co);
+				pg.addCoord(co);
+			}
+
+			pg.setType(shape.getType());
+			map.addMapObject(pg);
 		}
 	}
 
@@ -165,11 +186,12 @@ public class MakeMap {
 		Overview ov = new Overview(6, 1);
 		map.addPolylineOverview(ov);
 
-		// Set the fact that there are lines in the map.
+		// TODO: these need to be set first before drawing any of the
+        // division and they need to be derived from the data in the division.
 		div.setHasPolylines(true);
 		div.setHasPoints(false);
 		div.setHasIndPoints(false);
-		div.setHasPolygons(false);
+//		div.setHasPolygons(true);
 		return div;
 	}
 

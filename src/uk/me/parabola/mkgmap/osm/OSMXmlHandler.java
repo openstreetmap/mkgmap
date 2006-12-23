@@ -16,14 +16,15 @@
  */
 package uk.me.parabola.mkgmap.osm;
 
-import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.ContentHandler;
-import org.apache.log4j.Logger;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.SAXException;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -52,8 +53,7 @@ class OSMXmlHandler extends DefaultHandler {
 
 	/**
 	 * Receive notification of the start of an element.
-	 * <p/>
-
+	 *
 	 * @param uri		The Namespace URI, or the empty string if the
 	 *                   element has no Namespace URI or if Namespace
 	 *                   processing is not being performed.
@@ -114,8 +114,7 @@ class OSMXmlHandler extends DefaultHandler {
 
 	/**
 	 * Receive notification of the end of an element.
-	 * <p/>
-
+     *
 	 * @param uri	   The Namespace URI, or the empty string if the
 	 *                  element has no Namespace URI or if Namespace
 	 *                  processing is not being performed.

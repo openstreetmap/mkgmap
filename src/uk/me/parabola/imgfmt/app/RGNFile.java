@@ -20,6 +20,8 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 /**
  * The region file.  Holds actual details of points and lines etc.
  *
@@ -36,7 +38,9 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class RGNFile extends ImgFile {
-	private static final int HEADER_LEN = 29;
+    private static final Logger log = Logger.getLogger(RGNFile.class);
+    
+    private static final int HEADER_LEN = 29;
 
 	private int dataSize;
 
@@ -65,6 +69,7 @@ public class RGNFile extends ImgFile {
 		putInt(dataSize);
 	}
 
+    private Subdivision currentDivision;
     private int pointPtrOff;
     private int indPointPtrOff;
     private int polylinePtrOff;
@@ -97,9 +102,61 @@ public class RGNFile extends ImgFile {
 
 
         sd.setRgnPointer(position() - HEADER_LEN);
+        currentDivision = sd;
     }
 
 	public void addMapObject(MapObject item) {
 		item.write(this);
 	}
+
+    public void setPointPtr() {
+        if (currentDivision.needsPointPtr()) {
+            long currPos = position();
+            position(pointPtrOff);
+            long off = currPos - currentDivision.getRgnPointer();
+            if (off > 0xffff)
+                throw new IllegalArgumentException("Too many items in points section");
+            putChar((char) off);
+        }
+    }
+
+    public void setIndPointPtr() {
+        if (currentDivision.needsIndPointPtr()) {
+            long currPos = position();
+            position(indPointPtrOff);
+            long off = currPos - currentDivision.getRgnPointer();
+            if (off > 0xffff) {
+                throw new IllegalArgumentException(
+                        "Too many items in indexed points section");
+            }
+            putChar((char) off);
+        }
+    }
+
+    public void setPolylinePtr() {
+        if (currentDivision.needsPolylinePtr()) {
+            long currPos = position();
+            position(polylinePtrOff);
+            long off = currPos - currentDivision.getRgnPointer();
+            if (off > 0xffff) {
+                throw new IllegalArgumentException(
+                        "Too many items in polyline section");
+            }
+            log.debug("setting polyline offset to " + off);
+            putChar((char) off);
+        }
+    }
+    public void setPolygonPtr() {
+        if (currentDivision.needsPolygonPtr()) {
+            long currPos = position();
+            position(polygonPtrOff);
+            long off = currPos - currentDivision.getRgnPointer();
+            if (off > 0xffff) {
+                throw new IllegalArgumentException(
+                        "Too many items in the polygon section");
+            }
+            log.debug("setting polygon offset to " + off);
+            putChar((char) off);
+        }
+    }
 }

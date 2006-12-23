@@ -30,7 +30,9 @@ import java.util.ArrayList;
  */
 public class MapDetails implements MapCollector {
 	private final List<MapLine> lines = new ArrayList<MapLine>();
-	private int minLat = Utils.toMapUnit(180.0);
+	private final List<MapShape> shapes = new ArrayList<MapShape>();
+
+    private int minLat = Utils.toMapUnit(180.0);
 	private int minLon = Utils.toMapUnit(180.0);
 	private int maxLat = Utils.toMapUnit(-180.0);
 	private int maxLon = Utils.toMapUnit(-180.0);
@@ -44,7 +46,18 @@ public class MapDetails implements MapCollector {
 		lines.add(line);
 	}
 
-	/**
+    /**
+     * Add the given shape (polygon) to the map.  A shape is very similar to a
+     * line but they are separate because they need to be put in different
+     * sections in the output map.
+     *
+     * @param shape The polygon to add.
+     */
+    public void addShape(MapShape shape) {
+        shapes.add(shape);
+    }
+
+    /**
 	 * Add the given point to the total bounds for the map.
 	 *
 	 * @param p The coordinates of the point to add.
@@ -62,8 +75,7 @@ public class MapDetails implements MapCollector {
 			maxLon = lon;
 	}
 
-
-	/**
+    /**
 	 * Get the bounds of this map.
 	 *
 	 * @return An area covering all the points in the map.
@@ -78,6 +90,10 @@ public class MapDetails implements MapCollector {
 	 * @return A list of all lines defined for this map.
 	 */
 	public List<MapLine> getLines() {
-		return lines;
+        return lines;
 	}
+
+    public List<MapShape> getShapes() {
+        return shapes;
+    }
 }

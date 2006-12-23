@@ -140,6 +140,9 @@ public class Subdivision {
 	public void setRgnPointer(int rgnPointer) {
 		this.rgnPointer = rgnPointer;
 	}
+	public int getRgnPointer() {
+		return rgnPointer;
+	}
 
 	public int getLongitude() {
 		return longitude;

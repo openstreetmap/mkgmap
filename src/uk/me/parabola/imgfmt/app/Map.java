@@ -32,12 +32,18 @@ import org.apache.log4j.Logger;
 public class Map {
 	private static final Logger log = Logger.getLogger(Map.class);
 
+    private static final int MAP_POINT = 0;
+    private static final int MAP_INDEXED_POINT = 1;
+    private static final int MAP_LINE = 2;
+    private static final int MAP_SHAPE = 3;
+
 	private FileSystem fileSystem;
 
 	private TREFile treFile;
 	private RGNFile rgnFile;
 	private LBLFile lblFile;
 
+    private int lastMapElement;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -168,6 +174,55 @@ public class Map {
      */
     public void setPoiDisplayFlags(int flags) {
         treFile.setPoiDisplayFlags((byte) flags);
+    }
+
+    /**
+     * We are starting to draw the points.  These must be done first.
+     */
+    public void startPoints() {
+        if (lastMapElement > MAP_POINT)
+            throw new IllegalStateException("Points must be drawn first");
+
+        lastMapElement = MAP_POINT;
+
+        rgnFile.setPointPtr();
+    }
+
+    /**
+     * We are starting to draw the lines.  These must be done before
+     * polygons.
+     */
+    public void startIndPoints() {
+        if (lastMapElement > MAP_INDEXED_POINT)
+            throw new IllegalStateException("Indexed points must be done before lines and polygons");
+
+        lastMapElement = MAP_INDEXED_POINT;
+
+        rgnFile.setPolylinePtr();
+    }
+
+    /**
+     * We are starting to draw the lines.  These must be done before
+     * polygons.
+     */
+    public void startLines() {
+        if (lastMapElement > MAP_LINE)
+            throw new IllegalStateException("Lines must be done before polygons");
+
+        lastMapElement = MAP_LINE;
+
+        rgnFile.setPolylinePtr();
+    }
+
+    /**
+     * We are starting to draw the lines.  These must be done before
+     * polygons.
+     */
+    public void startShapes() {
+
+        lastMapElement = MAP_SHAPE;
+
+        rgnFile.setPolygonPtr();
     }
 
     public Polyline createLine(Subdivision div, String name) {
