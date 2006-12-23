@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import java.io.FileNotFoundException;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.fs.FSOps;
 import uk.me.parabola.imgfmt.sys.FileSystem;
 
 import org.apache.log4j.Logger;
@@ -37,7 +38,7 @@ public class Map {
     private static final int MAP_LINE = 2;
     private static final int MAP_SHAPE = 3;
 
-	private FileSystem fileSystem;
+	private FSOps fileSystem;
 
 	private TREFile treFile;
 	private RGNFile rgnFile;

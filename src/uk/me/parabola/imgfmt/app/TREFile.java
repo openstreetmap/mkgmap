@@ -251,8 +251,6 @@ public class TREFile extends ImgFile {
 		putInt(copyrightSize);
 		putChar(COPYRIGHT_REC_SIZE);
 
-		int dataPos = copyrightPos + copyrightSize;
-
 		putInt(0);
 
 		put(poiDisplayFlags);
