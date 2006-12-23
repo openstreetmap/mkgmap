@@ -81,7 +81,7 @@ public class MakeMap {
 			processLines(map, div, lines);
 			
 			List<MapShape> shapes = src.getShapes();
-			//processShapes(map, div, shapes);
+			processShapes(map, div, shapes);
 
 		} finally {
 			if (map != null)
@@ -192,13 +192,15 @@ public class MakeMap {
 		// Set the list of features supported on the map.
 		Overview ov = new Overview(6, 1);
 		map.addPolylineOverview(ov);
+        ov = new Overview(0x17, 1);
+        map.addPolygonOverview(ov);
 
-		// TODO: these need to be set first before drawing any of the
+        // TODO: these need to be set first before drawing any of the
         // division and they need to be derived from the data in the division.
 		div.setHasPolylines(true);
 		div.setHasPoints(false);
 		div.setHasIndPoints(false);
-		//div.setHasPolygons(true);
+		div.setHasPolygons(true);
 
         map.startDivision(div);
         return div;

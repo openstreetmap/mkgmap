@@ -114,7 +114,7 @@ public class RGNFile extends ImgFile {
         if (currentDivision.needsPointPtr()) {
             long currPos = position();
             position(pointPtrOff);
-            long off = currPos - currentDivision.getRgnPointer();
+            long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
             if (off > 0xffff)
                 throw new IllegalStateException("Too many items in points section");
             putChar((char) off);
@@ -126,7 +126,7 @@ public class RGNFile extends ImgFile {
         if (currentDivision.needsIndPointPtr()) {
             long currPos = position();
             position(indPointPtrOff);
-            long off = currPos - currentDivision.getRgnPointer();
+            long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
             if (off > 0xffff) {
                 throw new IllegalStateException(
                         "Too many items in indexed points section");
@@ -140,7 +140,7 @@ public class RGNFile extends ImgFile {
         if (currentDivision.needsPolylinePtr()) {
             long currPos = position();
             position(polylinePtrOff);
-            long off = currPos - currentDivision.getRgnPointer();
+            long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
             if (off > 0xffff) {
                 throw new IllegalStateException(
                         "Too many items in polyline section");
@@ -155,7 +155,7 @@ public class RGNFile extends ImgFile {
     public void setPolygonPtr() {
         if (currentDivision.needsPolygonPtr()) {
             long currPos = position();
-            long off = currPos - currentDivision.getRgnPointer();
+            long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
 			log.debug("currpos=" + currPos + ", off=" + off);
             if (off > 0xffff) {
                 throw new IllegalStateException(
