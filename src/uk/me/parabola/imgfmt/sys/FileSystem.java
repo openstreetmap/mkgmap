@@ -28,7 +28,6 @@ import java.nio.channels.FileChannel;
 import uk.me.parabola.imgfmt.fs.FSOps;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 
 /**

@@ -98,6 +98,8 @@ public class Map {
     /**
      * There is an area after the TRE header and before its data
      * starts that can be used to save any old junk it seems.
+     *
+     * @param info Any string.
      */
     public void addInfo(String info) {
         treFile.addInfo(info);

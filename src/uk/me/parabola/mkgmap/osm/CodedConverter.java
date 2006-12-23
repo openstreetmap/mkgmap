@@ -39,7 +39,7 @@ class CodedConverter implements OsmConverter {
 
 	private final MapCollector mapper;
 
-	public CodedConverter(MapCollector mapper) {
+	CodedConverter(MapCollector mapper) {
 		this.mapper = mapper;
 	}
 

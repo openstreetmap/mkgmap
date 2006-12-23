@@ -17,7 +17,6 @@
 package uk.me.parabola.imgfmt.fs;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.FileExistsException;
 
 import java.util.List;
 import java.io.FileNotFoundException;

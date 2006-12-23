@@ -270,7 +270,7 @@ public class TREFile extends ImgFile {
 		putChar((char) 0);
 		putChar((char) 0);
 
-		putInt(dataPos);
+		putInt(polygonPos);
 		putInt(polygonSize);
 		putChar(POLYGON_REC_LEN);
 

@@ -22,11 +22,11 @@ package uk.me.parabola.imgfmt.sys;
  *
  * @author Steve Ratcliffe
  */
-public class BlockManager {
+class BlockManager {
 	private int nextBlock;
 	private final int blockSize;
 
-	public BlockManager(int blockSize, int initialBlock) {
+	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
 		this.nextBlock = initialBlock;
 	}
