@@ -134,7 +134,9 @@ public class Polyline extends MapObject {
 
 		public BitWriter makeBitStream() {
 
-			int xbits = 2;
+            assert xBase >= 0 && yBase >= 0;
+            
+            int xbits = 2;
 			if (xBase < 10)
 				xbits += xBase;
 			else
@@ -321,13 +323,17 @@ public class Polyline extends MapObject {
 			
 			this.extraBit = false;  // Keep simple for now
 
-			int tmp = xBits - 2;
+            if (xBits < 2)
+                xBits = 2;
+            int tmp = xBits - 2;
 			if (tmp > 10)
 				tmp = 9 + (tmp - 9) / 2;
 			this.xBase = tmp;
 			this.xNum = xBits;
 
-			tmp = yBits - 2;
+            if (yBits < 2)
+                yBits = 2;
+            tmp = yBits - 2;
 			if (tmp > 10)
 				tmp = 9 + (tmp - 9) / 2;
 			this.yBase = tmp;
