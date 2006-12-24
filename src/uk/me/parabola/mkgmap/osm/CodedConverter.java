@@ -62,9 +62,29 @@ class CodedConverter implements OsmConverter {
         String leisure = way.getTag("leisure");
         if (leisure != null)
             processLeisure(way, leisure);
-	}
 
-	private void processHighway(Way way, String highway) {
+        String landuse = way.getTag("landuse");
+        if (landuse != null)
+            processLanduse(way, landuse);
+
+        String natural = way.getTag("natural");
+        if (natural != null)
+            processNatural(way, natural);
+    }
+
+    private void processNatural(Way way, String s) {
+        String name = way.getName();
+
+        int type = 0;
+        if (s.equals("water")) {
+            type = 0x3c;
+        } else if (s.equals("wood")) {
+            type = 0x50;
+        }
+        makeShape(way, name, type);
+    }
+
+    private void processHighway(Way way, String highway) {
 		String name = way.getName();
 
 		int type;
@@ -97,7 +117,18 @@ class CodedConverter implements OsmConverter {
 		makeShape(way, name, type);
 	}
 
-	private void makeLines(Way way, String name, int type) {
+    private void processLanduse(Way way, String s) {
+        String name = way.getName();
+
+        int type = 0;
+        if (s.equals("cemetery") || s.equals("cemetary")) {
+            type = 0x1a;
+        } else if (s.equals("allotments")) {
+            type = 0;
+        }
+        makeShape(way, name, type);
+    }
+    private void makeLines(Way way, String name, int type) {
 		List<List<Coord>> pointLists =  way.getPoints();
 		for (List<Coord> points : pointLists) {
 			MapLine line = new MapLine();
