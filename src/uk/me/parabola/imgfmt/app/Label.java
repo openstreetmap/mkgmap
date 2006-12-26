@@ -41,8 +41,11 @@ public class Label {
 	 * @param text The normal text of the label.
 	 */
 	public Label(String text) {
-		ctext = compressText6(text);
-	}
+        if (text != null)
+            ctext = compressText6(text);
+        else
+            ctext = null;
+    }
 
 
 	public int getLength() {
@@ -51,7 +54,10 @@ public class Label {
 
 
 	public int getOffset() {
-		return offset;
+        if (ctext == null)
+            return 0;
+        else
+            return offset;
 	}
 
 	public void setOffset(int offset) {
@@ -114,7 +120,8 @@ public class Label {
 
 	public void write(ImgFile imgFile) {
 		log.debug("put label " + this.length);
-		imgFile.put(ctext, 0, this.length);
+        if (ctext != null)
+            imgFile.put(ctext, 0, this.length);
 	}
 
 	// For debugging only

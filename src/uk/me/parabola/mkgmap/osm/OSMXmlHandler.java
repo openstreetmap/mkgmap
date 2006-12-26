@@ -45,7 +45,8 @@ class OSMXmlHandler extends DefaultHandler {
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
 	private final Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
-	private Way currentWay;
+    private Node currentNode;
+    private Way currentWay;
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_SEGMENT = 2;
@@ -83,7 +84,7 @@ class OSMXmlHandler extends DefaultHandler {
 				String lon = attributes.getValue("lon");
 
 				addNode(id, lat, lon);
-			} else if (qName.equals("segment")) {
+            } else if (qName.equals("segment")) {
 				mode = MODE_SEGMENT;
 
 				String id = attributes.getValue("id");
@@ -96,17 +97,21 @@ class OSMXmlHandler extends DefaultHandler {
 				currentWay = new Way();
 			}
 		} else if (mode == MODE_NODE) {
-			// We are not interested in anything under node.
-		} else if (mode == MODE_SEGMENT) {
+            if (qName.equals("tag")) {
+                String key = attributes.getValue("k");
+                String val = attributes.getValue("v");
+                currentNode.addTag(key, val);
+            }
+        } else if (mode == MODE_SEGMENT) {
 			// not yet interested in anything here.
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("seg")) {
 				long id = Long.parseLong(attributes.getValue("id"));
 				addSegmentToWay(id);
 			} else if (qName.equals("tag")) {
-				String key = attributes.getValue("k");
-				String val = attributes.getValue("v");
-				addTagToWay(key, val);
+                String key = attributes.getValue("k");
+                String val = attributes.getValue("v");
+                addTagToWay(key, val);
 
 			}
 		}
@@ -131,16 +136,18 @@ class OSMXmlHandler extends DefaultHandler {
 			throws SAXException
 	{
 		if (mode == MODE_NODE) {
-			if (qName.equals("node"))
+			if (qName.equals("node")) {
 				mode = 0;
-		} else if (mode == MODE_SEGMENT) {
+                converter.convertNode(currentNode);
+            }
+        } else if (mode == MODE_SEGMENT) {
 			if (qName.equals("segment"))
 				mode = 0;
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
 				// Process the way.
-				converter.processWay(currentWay);
+				converter.convertWay(currentWay);
 			}
 		}
 	}
@@ -170,8 +177,10 @@ class OSMXmlHandler extends DefaultHandler {
 
 		if (log.isDebugEnabled())
 			log.debug("adding node" + lat + '/' + lon);
-		nodeMap.put(id, new Coord(lat, lon)); // TODO: need a proper Node type
-	}
+        Coord co = new Coord(lat, lon);
+        nodeMap.put(id, co);
+        currentNode = new Node(id, co);
+    }
 
 	/**
 	 * Save a segment.  Fetch the nodes and save the coordinates as part of

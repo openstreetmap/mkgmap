@@ -56,7 +56,9 @@ public interface MapSource {
 	 */
 	public Area getBounds();
 
-	/**
+    List<MapPoint> getPoints();
+
+    /**
 	 * Get the list of lines that need to be rendered to the map.
 	 *
 	 * @return A list of {@link MapLine} objects.

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 public class MapDetails implements MapCollector {
 	private final List<MapLine> lines = new ArrayList<MapLine>();
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
+	private final List<MapPoint> points = new ArrayList<MapPoint>();
 
     private int minLat = Utils.toMapUnit(180.0);
 	private int minLon = Utils.toMapUnit(180.0);
@@ -75,6 +76,10 @@ public class MapDetails implements MapCollector {
 			maxLon = lon;
 	}
 
+    public void addPoint(MapPoint point) {
+        points.add(point);
+    }
+
     /**
 	 * Get the bounds of this map.
 	 *
@@ -84,7 +89,11 @@ public class MapDetails implements MapCollector {
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
 
-	/**
+    public List<MapPoint> getPoints() {
+        return points;
+    }
+
+    /**
 	 * Get all the lines for this map.
 	 *
 	 * @return A list of all lines defined for this map.

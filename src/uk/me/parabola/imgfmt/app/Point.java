@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import org.apache.log4j.Logger;
+
 /**
  * Represents a particular point object on a map.  A point has a type (town
  * restaurant etc) and a location as well as a name.
@@ -26,7 +28,9 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class Point extends MapObject {
-	// Points can have a subtype, eg for restaurant the subtype might be the
+    private static final Logger log = Logger.getLogger(Point.class);
+    
+    // Points can have a subtype, eg for restaurant the subtype might be the
 	// kind of food served.
 	private int subtype;
 
@@ -43,20 +47,33 @@ public class Point extends MapObject {
 	public void write(ImgFile file) {
 		byte b = (byte) getType();
 		file.put(b);
+        log.debug("writing point: " + b);
 
-		int off = getLabel().getOffset();
+        int off = getLabel().getOffset();
 		if (subtype != 0)
 			off |= 0x800000;
 
 		file.put3(off);
-		file.putChar((char) getLongitude());
+//        log.debug("long:" + getLongitude());
+//        log.debug("super long: " + super.getLongitude() + ", divlong=" + getSubdiv().getLongitude());
+//        assert (getLongitude() & ~0xffff) == 0;
+//        assert (getLatitude() & ~0xffff) == 0;
+        file.putChar((char) getLongitude());
 		file.putChar((char) getLatitude());
 		if (subtype != 0)
 			file.put((byte) subtype);
 	}
 
 
-	public int getSubtype() {
+    public int getLatitude() {
+        return super.getLatitude() - getSubdiv().getLatitude();
+    }
+
+    public int getLongitude() {
+        return super.getLongitude() - getSubdiv().getLongitude();
+    }
+
+    public int getSubtype() {
 		return subtype;
 	}
 

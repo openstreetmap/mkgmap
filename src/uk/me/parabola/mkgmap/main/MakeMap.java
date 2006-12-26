@@ -20,6 +20,7 @@ import uk.me.parabola.mkgmap.osm.ReadOsm;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapSource;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
@@ -30,6 +31,7 @@ import uk.me.parabola.imgfmt.app.Polygon;
 import uk.me.parabola.imgfmt.app.Polyline;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
+import uk.me.parabola.imgfmt.app.Point;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -77,7 +79,10 @@ public class MakeMap {
 			processInfo(map, src);
 			Subdivision div = makeDivisions(map, src);
 
-			List<MapLine> lines = src.getLines();
+            List<MapPoint> points = src.getPoints();
+            processPoints(map, div, points);
+
+            List<MapLine> lines = src.getLines();
 			processLines(map, div, lines);
 			
 			List<MapShape> shapes = src.getShapes();
@@ -89,7 +94,7 @@ public class MakeMap {
 		}
 	}
 
-	/**
+    /**
 	 * Set all the information that appears in the header.
 	 *
 	 * @param map The map to write to.
@@ -115,7 +120,25 @@ public class MakeMap {
 		map.addCopyright(src.copyrightMessage());
 	}
 
-	private void processLines(Map map, Subdivision div,
+    private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
+        map.startPoints();
+
+        for (MapPoint point : points) {
+            String name = point.getName();
+
+            Point p = map.createPoint(div, name);
+            p.setType(point.getType());
+            p.setSubtype(point.getSubType());
+
+            Coord coord = point.getLocation();
+            p.setLatitude(coord.getLatitude());
+            p.setLongitude(coord.getLongitude());
+
+            map.addMapObject(p);
+        }
+    }
+
+    private void processLines(Map map, Subdivision div,
 							  List<MapLine> lines)
 	{
         map.startLines();  // Signal that we are beginning to draw the lines.
@@ -189,16 +212,24 @@ public class MakeMap {
 		Zoom z = map.createZoom(0, 24);
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
-		// Set the list of features supported on the map.
-		Overview ov = new Overview(6, 1);
+        // Set the list of features supported on the map.
+        Overview ov = new Overview(0x2c, 1, 5);
+        map.addPointOverview(ov);
+        ov = new Overview(0x2f, 1, 0xb);
+        map.addPointOverview(ov);
+
+        ov = new Overview(6, 1);
 		map.addPolylineOverview(ov);
+
         ov = new Overview(0x17, 1);
+        map.addPolygonOverview(ov);
+        ov = new Overview(0x1a, 1);
         map.addPolygonOverview(ov);
 
         // TODO: these need to be set first before drawing any of the
         // division and they need to be derived from the data in the division.
 		div.setHasPolylines(true);
-		div.setHasPoints(false);
+		div.setHasPoints(true);
 		div.setHasIndPoints(false);
 		div.setHasPolygons(true);
 

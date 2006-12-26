@@ -19,8 +19,6 @@ package uk.me.parabola.mkgmap.osm;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.Utils;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -33,14 +31,12 @@ import org.apache.log4j.Logger;
  * 
  * @author Steve Ratcliffe
  */
-class Way {
+class Way extends Element {
 	private static final Logger log = Logger.getLogger(Way.class);
 
-	private final Map<String, String> tags = new HashMap<String, String>();
-	private final List<Segment> segments = new ArrayList<Segment>();
-	private String name;
+    private final List<Segment> segments = new ArrayList<Segment>();
 
-	/**
+    /**
 	 * Add a segment to the way.
 	 *
 	 * @param seg The segment to add.
@@ -52,22 +48,7 @@ class Way {
 		segments.add(seg);
 	}
 
-	/**
-	 * Add a tag to the way.  Some tags are recognised separately and saved in
-	 * separate fields.
-	 *
-	 * @param key The tag name.
-	 * @param val Its value.
-	 */
-	public void addTag(String key, String val) {
-		if (key.equals("name")) {
-			name = val;
-		} else {
-			tags.put(key, val);
-		}
-	}
-
-	/**
+    /**
 	 * A simple representation of this way.
 	 * @return A string with the name and start point
 	 */
@@ -77,7 +58,7 @@ class Way {
 		
 		Coord coord = segments.get(0).getStart();
 		String ret = "WAY: "
-				+ name
+				+ getName()
 				+ ' '
 				+ Utils.toDegrees(coord.getLatitude())
 				+ '/'
@@ -86,15 +67,7 @@ class Way {
 		return ret;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public String getTag(String key) {
-		return tags.get(key);
-	}
-
-	/**
+    /**
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.
 	 *

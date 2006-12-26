@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osm;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.imgfmt.app.Coord;
 
 import java.util.List;
@@ -52,7 +53,7 @@ class CodedConverter implements OsmConverter {
 	 * 
 	 * @param way The OSM way.
 	 */
-	public void processWay(Way way) {
+	public void convertWay(Way way) {
 		log.debug(way);
 
 		String highway = way.getTag("highway");
@@ -70,6 +71,12 @@ class CodedConverter implements OsmConverter {
         String natural = way.getTag("natural");
         if (natural != null)
             processNatural(way, natural);
+    }
+
+    public void convertNode(Node node) {
+        String amenity = node.getTag("amenity");
+        if (amenity != null)
+            processAmenity(node, amenity);
     }
 
     private void processNatural(Way way, String s) {
@@ -151,4 +158,48 @@ class CodedConverter implements OsmConverter {
 			mapper.addShape(line);
 		}
 	}
+
+    private void processAmenity(Node node, String s) {
+        int type;
+        int subType;
+        String name = node.getName();
+
+        if (s.equals("pub")) {
+            type = 0x2d;
+            subType = 2;
+        } else if (s.equals("place_of_worship")) {
+            type = 0x64;
+            subType = 4;
+        } else if (s.equals("parking")) {
+            type = 0x2f;
+            subType = 0xb;
+        } else if (s.equals("school")) {
+            type = 0x2c;
+            subType = 5;
+        } else if (s.equals("post_office")) {
+            type = 0x2f;
+            subType = 5;
+        } else if (s.equals("toilets")) {
+            type = 0;
+            subType = 0x22;
+        } else {
+            type = -1;
+            subType = -1;
+        }
+
+        if (type >= 0) {
+            makePoint(node, name, type, subType);
+        }
+    }
+
+    private void makePoint(Node node, String name, int type, int subType) {
+        MapPoint point = new MapPoint();
+
+        point.setName(name);
+        point.setLocation(node.getLocation());
+        point.setType(type);
+        point.setSubType(subType);
+
+        mapper.addPoint(point);
+    }
 }

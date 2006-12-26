@@ -139,6 +139,7 @@ class LinePreparer {
         int shift = div.getShift();
         log.debug("shift is " + shift);
 
+        // TODO: pull this into superclass
         int lat = (co.getLatitude() - div.getLatitude()) >> shift;
         int lon = (co.getLongitude() - div.getLongitude()) >> shift;
         log.debug("lat/long " + Utils.toDegrees(lat) + '/' + Utils.toDegrees(lon));
