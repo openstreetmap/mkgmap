@@ -24,10 +24,10 @@ import uk.me.parabola.imgfmt.app.Coord;
  *
  * @author Steve Ratcliffe
  */
-public class Node extends Element {
+class Node extends Element {
     private Coord location;
 
-    public Node(long id, Coord co) {
+    Node(long id, Coord co) {
         location = co;
         setId(id);
     }

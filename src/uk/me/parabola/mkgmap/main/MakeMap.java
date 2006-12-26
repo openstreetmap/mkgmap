@@ -213,6 +213,7 @@ public class MakeMap {
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
         // Set the list of features supported on the map.
+        // TODO should come from map source
         Overview ov = new Overview(0x2c, 1, 5);
         map.addPointOverview(ov);
         ov = new Overview(0x2f, 1, 0xb);
@@ -228,7 +229,8 @@ public class MakeMap {
 
         // TODO: these need to be set first before drawing any of the
         // division and they need to be derived from the data in the division.
-		div.setHasPolylines(true);
+        // TODO ie they need to come from the division.
+        div.setHasPolylines(true);
 		div.setHasPoints(true);
 		div.setHasIndPoints(false);
 		div.setHasPolygons(true);

@@ -73,9 +73,9 @@ public class Point extends MapObject {
         return super.getLongitude() - getSubdiv().getLongitude();
     }
 
-    public int getSubtype() {
-		return subtype;
-	}
+//    public int getSubtype() {
+//		return subtype;
+//	}
 
 	public void setSubtype(int subtype) {
 		this.subtype = subtype;

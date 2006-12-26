@@ -152,16 +152,6 @@ class OSMXmlHandler extends DefaultHandler {
 		}
 	}
 
-	/**
-	 * Receive notification of the end of the document.
-	 *
-	 * @throws SAXException Any SAX exception, possibly
-	 *                                  wrapping another exception.
-	 * @see ContentHandler#endDocument
-	 */
-	public void endDocument() throws SAXException {
-		super.endDocument();
-	}
 
 	/**
 	 * Save node information.  Consists of a location specified by lat/long.

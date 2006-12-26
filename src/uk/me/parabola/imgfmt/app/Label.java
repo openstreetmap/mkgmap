@@ -43,8 +43,6 @@ public class Label {
 	public Label(String text) {
         if (text != null)
             ctext = compressText6(text);
-        else
-            ctext = null;
     }
 
 

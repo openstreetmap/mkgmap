@@ -25,7 +25,7 @@ class LinePreparer {
     private static final Logger log = Logger.getLogger(LinePreparer.class);
 
     // These are our inputs.
-    private Polyline polyline;
+    private final Polyline polyline;
 
     private boolean extraBit;
     private boolean xSameSign;
