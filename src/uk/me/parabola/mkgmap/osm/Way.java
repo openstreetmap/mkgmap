@@ -132,6 +132,7 @@ class Way extends Element {
 
 					points.add(cs);
 					points.add(ce);
+					end = ce;
 					npoints = 2;
 				}
 			}
