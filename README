@@ -39,12 +39,14 @@ Issues
 ======
 
 1. You must be zoomed in close to see anything except an outline.
-3. Although now points, lines and shapes are recognised, only a few
-   map feature types from OSM are recognised.
-4. There are many ways in the OSM database that have mis-ordered segments.
+2. Although the program now does points, lines and shapes, only a few
+   map feature types from OSM are recognised.  These include most road
+   types, footpaths, railways, lakes, parks, churches, pubs and schools.
+3. There are many ways in the OSM database that have mis-ordered segments.
    The program makes an attempt to split them into separate lines, which
-   mostly works, but can leave gaps in the road (probably just a bug)
-5. There is a limit to the size of the map you can create. It will be
+   mostly works, but can leave gaps in the road, or get the path of the
+   street wrong.
+4. There is a limit to the size of the map you can create. It will be
    around 1Mb.  I've done a large chunk of North London without getting
    anywhere near the limit though.
 
