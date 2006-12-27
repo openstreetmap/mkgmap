@@ -30,7 +30,7 @@ public class Label {
 	private static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
-	private final byte[] ctext;
+	private byte[] ctext;
 	private int length;
 
 	// The offset in to the data section.
@@ -43,7 +43,7 @@ public class Label {
 	public Label(String text) {
         if (text != null)
             ctext = compressText6(text);
-    }
+	}
 
 
 	public int getLength() {
