@@ -218,6 +218,10 @@ public class MakeMap {
         map.addPointOverview(ov);
         ov = new Overview(0x2f, 1, 0xb);
         map.addPointOverview(ov);
+        ov = new Overview(0x0, 1, 0x22);
+        map.addPointOverview(ov);
+        ov = new Overview(0x2d, 1, 0x2);
+        map.addPointOverview(ov);
 
         ov = new Overview(6, 1);
 		map.addPolylineOverview(ov);
@@ -225,6 +229,10 @@ public class MakeMap {
         ov = new Overview(0x17, 1);
         map.addPolygonOverview(ov);
         ov = new Overview(0x1a, 1);
+        map.addPolygonOverview(ov);
+        ov = new Overview(0x3c, 1);
+        map.addPolygonOverview(ov);
+        ov = new Overview(0x50, 1);
         map.addPolygonOverview(ov);
 
         // TODO: these need to be set first before drawing any of the

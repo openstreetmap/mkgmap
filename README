@@ -39,9 +39,8 @@ Issues
 ======
 
 1. You must be zoomed in close to see anything except an outline.
-2. Only lines are placed in the map.
-3. All unrecognised line types (rivers etc) will show up as residential
-   roads.
+3. Although now points, lines and shapes are recognised, only a few
+   map feature types from OSM are recognised.
 4. There are many ways in the OSM database that have mis-ordered segments.
    The program makes an attempt to split them into separate lines, which
    mostly works, but can leave gaps in the road (probably just a bug)

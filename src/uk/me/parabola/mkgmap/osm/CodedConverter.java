@@ -71,9 +71,24 @@ class CodedConverter implements OsmConverter {
         String natural = way.getTag("natural");
         if (natural != null)
             processNatural(way, natural);
-    }
 
-    public void convertNode(Node node) {
+		String railway = way.getTag("railway");
+		if (railway != null)
+			processRail(way, railway);
+	}
+
+	private void processRail(Way way, String s) {
+		int type;
+		String name = way.getName();
+		if (s.equals("rail")) {
+			type = 0x14;
+		} else {
+			return;
+		}
+		makeLines(way, name, type);
+	}
+
+	public void convertNode(Node node) {
         String amenity = node.getTag("amenity");
         if (amenity != null)
             processAmenity(node, amenity);
@@ -105,8 +120,10 @@ class CodedConverter implements OsmConverter {
 			type = 4;
 		} else if (highway.equals("footway")) {
 			type = 0x16;
-		} else {
+		} else if (highway.equals("unclassified") || highway.equals("residential")) {
 			type = 6;
+		} else {
+			return;
 		}
 
 		makeLines(way, name, type);
