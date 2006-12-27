@@ -25,7 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.nio.channels.FileChannel;
 
-import uk.me.parabola.imgfmt.fs.FSOps;
+import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -37,8 +37,8 @@ import uk.me.parabola.imgfmt.FileSystemParam;
  *
  * @author steve
  */
-public class FileSystem implements FSOps {
-	private static final Logger log = Logger.getLogger(FileSystem.class);
+public class ImgFS implements FileSystem {
+	private static final Logger log = Logger.getLogger(ImgFS.class);
 
 	private int blockSize = 512;
 
@@ -62,7 +62,7 @@ public class FileSystem implements FSOps {
 	 * @param params File system parameters.  Can be null.
 	 * @throws FileNotFoundException If the file cannot be created.
 	 */
-	public FileSystem(String filename, FileSystemParam params)
+	public ImgFS(String filename, FileSystemParam params)
 			throws FileNotFoundException
 	{
 		log.info("Creating file system");

@@ -28,7 +28,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public interface FSOps {
+public interface FileSystem {
 
 	/**
 	 * Create a new file it must not allready exist.
