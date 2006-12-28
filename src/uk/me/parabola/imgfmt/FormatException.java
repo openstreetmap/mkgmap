@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 18-Dec-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.imgfmt;
 
 /**
  * Thrown for any kind of mallformed input to the mapping program.

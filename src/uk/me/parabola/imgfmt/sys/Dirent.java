@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.mkgmap.FormatException;
+import uk.me.parabola.imgfmt.FormatException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
