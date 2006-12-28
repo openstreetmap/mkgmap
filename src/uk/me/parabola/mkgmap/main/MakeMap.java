@@ -234,6 +234,8 @@ public class MakeMap {
         map.addPolygonOverview(ov);
         ov = new Overview(0x50, 1);
         map.addPolygonOverview(ov);
+        ov = new Overview(0x19, 1);
+        map.addPolygonOverview(ov);
 
         // TODO: these need to be set first before drawing any of the
         // division and they need to be derived from the data in the division.

@@ -135,6 +135,8 @@ class CodedConverter implements OsmConverter {
 		int type;
 		if (s.equals("park")) {
 			type = 0x17;
+		} else if (s.equals("pitch")) {
+			type = 0x19;
 		} else {
 			return;
 		}
