@@ -79,8 +79,12 @@ class Way extends Element {
 	}
 
 	/**
-	 * Unfortunately there are many ways that have mis-ordered segments that
-	 * do not work when converting to a map.
+	 * Convert the segments to a list of points.  If there is more than one
+	 * straight line in the way, then there will be several lists of point
+	 * lists.
+	 *
+	 * Unfortunately there are many ways that have mis-ordered segments. These
+	 * have to be separated into continuous lines for working on the map.
 	 *
 	 * @return A list of points on a line.
 	 */
