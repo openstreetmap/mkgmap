@@ -16,25 +16,62 @@
  */
 package uk.me.parabola.log;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 
 /**
+ * Simple logging class.
+ *
  * @author Steve Ratcliffe
  */
 public class Logger {
+	private static FileWriter file;
+	private static boolean initFailed;
+
 	public static Logger getLogger(Class aClass) {
 		return new Logger();
 	}
 
+	public Logger() {
+		openFile();
+	}
+
+	private static void openFile() {
+		if (file != null)
+			return;
+
+		try {
+			file = new FileWriter("out.log", true);
+		} catch (IOException e) {
+			if (!initFailed)
+				System.err.println("Could not create log file");
+			initFailed = true;
+		}
+	}
+
 	public void debug(String o) {
-		
+		if (initFailed)
+			return;
+		try {
+			file.write(o);
+			file.write('\n');
+			file.flush();
+		} catch (IOException e) {
+			initFailed = true;
+			System.err.println("Failed to write to log, disabling");
+		}
 	}
 
 	public boolean isDebugEnabled() {
-		return true;
+		return false;
+	}
+
+	public void debug(Object o) {
 	}
 
 	public void warn(Object o) {
-		
+
 	}
 
 	public void info(Object o) {
@@ -42,9 +79,6 @@ public class Logger {
 	}
 
 	public void error(Object o, Throwable e) {
-		
-	}
 
-	public void debug(Object o) {
 	}
 }
