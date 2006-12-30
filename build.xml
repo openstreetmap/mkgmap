@@ -33,7 +33,6 @@
   <property name="resources" value="resources"/>
 
   <path id="main">
-    <fileset dir="${log4j.lib}" includes="${log4j.jars}" />
     <pathelement location="${build.classes}" />
   </path>
 
@@ -66,19 +65,10 @@
     <mkdir dir="${dist}"/>
 		<mkdir dir="${dist}/doc/api"/>
 
-		<!-- We need log4j at the moment -->
-    <delete file="${build.classes}/log4j.properties"/>
-		<copy file="${resources}/log4j-dist.properties"
-			tofile="${build.classes}/log4j.properties" />
-
-		<!-- we need the log4j library at present -->
-		<copy file="${log4j.lib}/${log4j.jars}" tofile="${dist}/log4j.jar"/>
-    
     <!-- Make the jar -->
     <jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
         manifest="${resources}/MANIFEST.MF">
       <include name="**/*.class"/>
-      <include name="log4j.properties"/>
     </jar>
 
 		<!-- Copy in the javadoc -->
@@ -115,7 +105,6 @@
 
 	<!-- Main -->
   <target name="build" depends="compile" >
-    <copy file="${resources}/log4j.properties" todir="${build.classes}"/>
   </target>
 
 	<target name="rebuild" depends="clean, build" />

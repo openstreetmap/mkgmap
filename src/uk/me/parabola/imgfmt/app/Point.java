@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town

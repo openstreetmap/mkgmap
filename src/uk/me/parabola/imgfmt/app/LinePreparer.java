@@ -19,7 +19,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 class LinePreparer {
 	private static final Logger log = Logger.getLogger(LinePreparer.class);

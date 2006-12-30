@@ -21,8 +21,7 @@ import java.io.FileNotFoundException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
-
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * Holder for a complete map.  A map is made up of several files.

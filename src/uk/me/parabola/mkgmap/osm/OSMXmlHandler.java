@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.osm;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;

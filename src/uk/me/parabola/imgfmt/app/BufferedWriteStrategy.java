@@ -17,12 +17,11 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import org.apache.log4j.Logger;
 
 /**
  * A straight forward implementation that just keeps all the data in a buffer

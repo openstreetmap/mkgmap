@@ -29,8 +29,7 @@ import uk.me.parabola.imgfmt.app.Polyline;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.imgfmt.app.Polygon;
-
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * A test routine to make an artificial map.  Makes some lines, squares etc

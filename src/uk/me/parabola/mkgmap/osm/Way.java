@@ -18,11 +18,10 @@ package uk.me.parabola.mkgmap.osm;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
-
-import org.apache.log4j.Logger;
 
 /**
  * Represent a OSM way.  A way consists of an ordered list of segments.  Its

@@ -19,7 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represents a multi-segment line.  Eg for a road. As with all map objects

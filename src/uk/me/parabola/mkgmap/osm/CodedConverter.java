@@ -24,7 +24,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * Convert from OSM ways and points to Garmin lines, polygons and points.

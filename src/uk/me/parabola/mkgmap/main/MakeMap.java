@@ -32,11 +32,10 @@ import uk.me.parabola.imgfmt.app.Polyline;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.imgfmt.app.Point;
+import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
 import java.util.List;
-
-import org.apache.log4j.Logger;
 
 /**
  * Main routine to make a map as a command line utility.

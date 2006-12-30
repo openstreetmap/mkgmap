@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 import java.io.RandomAccessFile;
 import java.io.FileNotFoundException;

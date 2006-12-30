@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,8 +27,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
-
-import org.apache.log4j.Logger;
 
 /**
  * The internal representation of a file in the file system.  In use it

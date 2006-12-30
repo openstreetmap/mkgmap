@@ -20,7 +20,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * The region file.  Holds actual details of points and lines etc.

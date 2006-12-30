@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.nio.channels.FileChannel;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import uk.me.parabola.log.Logger;
 
 /**
  * The directory.  There is only one directory and it contains the

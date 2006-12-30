@@ -17,11 +17,10 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
 
 import java.util.Date;
 import java.io.IOException;
-
-import org.apache.log4j.Logger;
 
 /**
  * Base class for all the img files.  There is a common header that
