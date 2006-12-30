@@ -43,6 +43,8 @@ public class Element {
 	}
 
 	public String getTag(String key) {
+		if (tags == null)
+			return null;
 		return tags.get(key);
 	}
 
