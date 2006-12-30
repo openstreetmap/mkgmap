@@ -38,9 +38,6 @@ class LinePreparer {
 	private int xBase;
 	private int yBase;
 
-	private int xNum;    // Number of bits for the x coord
-	private int yNum;    // Number of bits for the y coord
-
 	// The delta changes between the points.
 	private int[] deltas;
 
@@ -72,7 +69,7 @@ class LinePreparer {
 
 		// Note no sign included.
 		if (log.isDebugEnabled()) {
-			log.debug("xNum" + xNum + ", y=" + yNum);
+//			log.debug("xNum" + xNum + ", y=" + yNum);
 			log.debug("xbits" + xbits + ", y=" + ybits);
 		}
 
@@ -100,23 +97,23 @@ class LinePreparer {
 		for (int i = 0; i < deltas.length; i+=2) {
 			dx = deltas[i];
 			if (log.isDebugEnabled())
-				log.debug("x delta " + dx + ", " + xNum);
+				log.debug("x delta " + dx + ", " + xbits);
 			if (xSameSign) {
-				bw.putn(abs(dx), xNum);
+				bw.putn(abs(dx), xbits);
 			} else {
-				assert dx == 0 || ((dx & ((1 << xNum) - 1)) != 0);
-				bw.putn(dx, xNum);
+				assert dx == 0 || ((dx & ((1 << xbits) - 1)) != 0);
+				bw.putn(dx, xbits);
 				bw.put1(dx < 0);
 			}
 
 			dy = deltas[i + 1];
 			if (log.isDebugEnabled())
-				log.debug("y delta " + dy + ", " + yNum);
+				log.debug("y delta " + dy + ", " + ybits);
 			if (ySameSign) {
-				bw.putn(abs(dy), yNum);
+				bw.putn(abs(dy), ybits);
 			} else {
-				assert dy == 0 || ((dy & ((1<<yNum) - 1)) != 0);
-				bw.putn(dy, yNum);
+				assert dy == 0 || ((dy & ((1<<ybits) - 1)) != 0);
+				bw.putn(dy, ybits);
 				bw.put1(dy < 0);
 			}
 		}
@@ -248,7 +245,6 @@ class LinePreparer {
 		if (tmp > 10)
 			tmp = 9 + (tmp - 9) / 2;
 		this.xBase = tmp;
-		this.xNum = xBits;
 
 		if (yBits < 2)
 			yBits = 2;
@@ -256,7 +252,6 @@ class LinePreparer {
 		if (tmp > 10)
 			tmp = 9 + (tmp - 9) / 2;
 		this.yBase = tmp;
-		this.yNum = yBits;
 
 		// Set flags for same sign etc.
 		this.xSameSign = !xDiffSign;
