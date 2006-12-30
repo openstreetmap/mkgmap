@@ -90,57 +90,142 @@ class Way extends Element {
 	private List<List<Coord>> segmentsToPoints() {
 
 		List<List<Coord>> pointLists = new ArrayList<List<Coord>>();
-		List<Coord> points = new ArrayList<Coord>();
-		pointLists.add(points);
-		int npoints = 0;
 
-		Coord start = null, end = null;
+		Coord start, end;
 
-		for (Segment seg : segments) {
-			if (npoints == 0) {
-				start = seg.getStart();
-				end = seg.getEnd();
-				points.add(start);
-				points.add(end);
-				npoints += 2;
-			} else {
-				Coord cs = seg.getStart();
-				Coord ce = seg.getEnd();
-				if (cs.equals(end)) {
-					// this is normal add the next point
-					end = ce;
+		List<List<Segment>> all = reorderSegments();
+
+		for (List<Segment> segs : all) {
+			log.debug("== new sublist");
+			start = null;
+			end = null;
+
+			List<Coord> points = new ArrayList<Coord>();
+			pointLists.add(points);
+
+			for (Segment seg : segs) {
+				if (start == null) {
+					start = seg.getStart();
+					end = seg.getEnd();
+					points.add(start);
 					points.add(end);
-					npoints++;
-				} else if (ce.equals(start)) {
-					// segment appears reversed, add the start of the segment.
-					log.warn("segment " + seg.getId() + " reversed");
-					end = cs;
-					points.add(end);
-					npoints++;
 				} else {
-					// segment discontinuous.
-					//  TODO: try to match with other segments.
-					//
-					// This may be OK the way just branches or has a gap in it.
-					// We still have to convert to a series of lines in this case though.
-					//
-					// Other times the segments are just in a crazy order, and
-					// needs to be fixed in the database, but we will try to at
-					// least make them display properly here.
-					log.warn("segment " + seg.getId() + " disjoint");
-
-					// Start a new set of points
-					points = new ArrayList<Coord>();
-					pointLists.add(points);
-
-					points.add(cs);
-					points.add(ce);
-					end = ce;
-					npoints = 2;
+					Coord cs = seg.getStart();
+					Coord ce = seg.getEnd();
+					if (cs.equals(end)) {
+						// this is normal add the next point
+						log.debug(this.getName() + ": " + ce);
+						points.add(ce);
+						end = ce;
+					} else {
+						log.debug("BAD:" + this.getName() + ":" + start + " to " + end + ", " + cs + " to " + ce);
+						// can't happen because all is rearranged to avoid it.
+						assert false;
+					}
 				}
 			}
 		}
 
 		return pointLists;
+	}
+
+	private List<List<Segment>> reorderSegments() {
+		List<List<Segment>> all = new ArrayList<List<Segment>>(10);
+		List<Segment> workList = new ArrayList<Segment>(20);
+
+		Coord start = null;
+		Coord end = null;
+		for (Segment seg : segments) {
+			Coord s = seg.getStart();
+			Coord e = seg.getEnd();
+
+			if (start == null || end == null) {
+				start = s;
+				end = e;
+				log.debug(getName() + ":initial segment " + seg);
+				workList.add(seg);
+			} else if (s.equals(end)) {
+				// The normal case, this segment joins to the previous one.
+				log.debug("normal join of " + seg);
+				end = e;
+				workList.add(seg);
+			} else if (e.equals(end)) {
+				// This segment will fit if reversed.
+				log.debug("reversed segment");
+				String ow = seg.getTag("one_way");
+				if (ow != null && ow.equals("true")) {
+					log.debug("but one-way so we should not change it");
+					workList = startNewSeg(all, workList);
+					workList.add(seg);
+					end = null;
+				} else {
+					Segment seg2 = new Segment(seg.getId(), e, s);
+					workList.add(seg2);
+					end = s;
+				}
+			} else if (e.equals(start)) {
+				// fits at beginning
+				log.debug("fitting segment at start " + seg);
+				workList.add(0, seg);
+				start = s;
+			} else if (s.equals(start)) {
+				// fits at start if reversed.
+				log.debug("reversed segment fitting at start");
+				String ow = seg.getTag("one_way");
+				if (ow != null && ow.equals("true")) {
+					log.debug("but one-way so we should not change it");
+					workList = startNewSeg(all, workList);
+					workList.add(seg);
+					end = null;
+				} else {
+					Segment seg2 = new Segment(seg.getId(), e, s);
+					workList.add(0, seg2);
+					start = e;
+				}
+			} else {
+				log.debug("else case, nothing applies");
+				workList = startNewSeg(all, workList);
+				log.debug("expect zero " + workList.size() + ", new list at " + seg);
+				workList.add(seg);
+				start = s;
+				end = e;
+			}
+		}
+
+		mergeList(all, workList);
+		return all;
+	}
+
+	private static List<Segment> startNewSeg(List<List<Segment>> all, List<Segment> workList) {
+		mergeList(all, workList);
+
+		return new ArrayList<Segment>(20);
+	}
+
+	private static void mergeList(List<List<Segment>> all, List<Segment> workList) {
+		boolean found = false;
+		for (List<Segment> list : all) {
+			Segment s = list.get(0);
+			Segment e = list.get(list.size()-1);
+			Segment ws = workList.get(0);
+			Segment we = workList.get(workList.size()-1);
+
+			if (ws.getStart().equals(e.getEnd())) {
+				// Work list fits on the end of a previous list.
+				log.debug("list fits at end of previous " + e + " to " + ws);
+				list.addAll(workList);
+				found = true;
+				break;
+			} else if (we.getEnd().equals(s.getStart())) {
+				// Work list fits at the beginning of a previous list.
+				log.debug("list fits at start of previous " + we + " to " + s);
+				list.addAll(0, workList);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			all.add(workList);
 	}
 }
