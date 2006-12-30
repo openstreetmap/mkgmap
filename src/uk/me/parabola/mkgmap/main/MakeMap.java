@@ -48,15 +48,15 @@ public class MakeMap {
 
 	public static void main(String[] args) {
 		try {
-            if (args.length < 1)
-                throw new ExitException("Usage: mkgmap <file.osm>");
+			if (args.length < 1)
+				throw new ExitException("Usage: mkgmap <file.osm>");
 
-            String name = args[0];
-            String mapname = "63240001";
+			String name = args[0];
+			String mapname = "63240001";
 
-            Args a = new Args();
-            a.setName(name);
-            a.setMapname(mapname);
+			Args a = new Args();
+			a.setName(name);
+			a.setMapname(mapname);
 
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
@@ -79,12 +79,12 @@ public class MakeMap {
 			processInfo(map, src);
 			Subdivision div = makeDivisions(map, src);
 
-            List<MapPoint> points = src.getPoints();
-            processPoints(map, div, points);
+			List<MapPoint> points = src.getPoints();
+			processPoints(map, div, points);
 
-            List<MapLine> lines = src.getLines();
+			List<MapLine> lines = src.getLines();
 			processLines(map, div, lines);
-			
+
 			List<MapShape> shapes = src.getShapes();
 			processShapes(map, div, shapes);
 
@@ -94,7 +94,7 @@ public class MakeMap {
 		}
 	}
 
-    /**
+	/**
 	 * Set all the information that appears in the header.
 	 *
 	 * @param map The map to write to.
@@ -108,7 +108,9 @@ public class MakeMap {
 		map.setPoiDisplayFlags((byte) 0);
 
 		// You can add any old junk here.
-		map.addInfo("Created by mkgmap");
+		// But there has to be something, otherwise the map does not show up.
+//		map.addInfo("Created by mkgmap");
+//	    map.addInfo(map)
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 
@@ -120,28 +122,28 @@ public class MakeMap {
 		map.addCopyright(src.copyrightMessage());
 	}
 
-    private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
-        map.startPoints();
+	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
+		map.startPoints();
 
-        for (MapPoint point : points) {
-            String name = point.getName();
+		for (MapPoint point : points) {
+			String name = point.getName();
 
-            Point p = map.createPoint(div, name);
-            p.setType(point.getType());
-            p.setSubtype(point.getSubType());
+			Point p = map.createPoint(div, name);
+			p.setType(point.getType());
+			p.setSubtype(point.getSubType());
 
-            Coord coord = point.getLocation();
-            p.setLatitude(coord.getLatitude());
-            p.setLongitude(coord.getLongitude());
+			Coord coord = point.getLocation();
+			p.setLatitude(coord.getLatitude());
+			p.setLongitude(coord.getLongitude());
 
-            map.addMapObject(p);
-        }
-    }
+			map.addMapObject(p);
+		}
+	}
 
-    private void processLines(Map map, Subdivision div,
-							  List<MapLine> lines)
+	private void processLines(Map map, Subdivision div,
+	                          List<MapLine> lines)
 	{
-        map.startLines();  // Signal that we are beginning to draw the lines.
+		map.startLines();  // Signal that we are beginning to draw the lines.
 
 		for (MapLine line : lines) {
 			String name = line.getName();
@@ -164,9 +166,9 @@ public class MakeMap {
 	}
 
 	private void processShapes(Map map, Subdivision div,
-							  List<MapShape> shapes)
+	                           List<MapShape> shapes)
 	{
-        map.startShapes();  // Signal that we are beginning to draw the shapes.
+		map.startShapes();  // Signal that we are beginning to draw the shapes.
 
 		for (MapShape shape : shapes) {
 			String name = shape.getName();
@@ -212,41 +214,41 @@ public class MakeMap {
 		Zoom z = map.createZoom(0, 24);
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
-        // Set the list of features supported on the map.
-        // TODO should come from map source
-        Overview ov = new Overview(0x2c, 1, 5);
-        map.addPointOverview(ov);
-        ov = new Overview(0x2f, 1, 0xb);
-        map.addPointOverview(ov);
-        ov = new Overview(0x0, 1, 0x22);
-        map.addPointOverview(ov);
-        ov = new Overview(0x2d, 1, 0x2);
-        map.addPointOverview(ov);
+		// Set the list of features supported on the map.
+		// TODO should come from map source
+		Overview ov = new Overview(0x2c, 1, 5);
+		map.addPointOverview(ov);
+		ov = new Overview(0x2f, 1, 0xb);
+		map.addPointOverview(ov);
+		ov = new Overview(0x0, 1, 0x22);
+		map.addPointOverview(ov);
+		ov = new Overview(0x2d, 1, 0x2);
+		map.addPointOverview(ov);
 
-        ov = new Overview(6, 1);
+		ov = new Overview(6, 1);
 		map.addPolylineOverview(ov);
 
-        ov = new Overview(0x17, 1);
-        map.addPolygonOverview(ov);
-        ov = new Overview(0x1a, 1);
-        map.addPolygonOverview(ov);
-        ov = new Overview(0x3c, 1);
-        map.addPolygonOverview(ov);
-        ov = new Overview(0x50, 1);
-        map.addPolygonOverview(ov);
-        ov = new Overview(0x19, 1);
-        map.addPolygonOverview(ov);
+		ov = new Overview(0x17, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x1a, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x3c, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x50, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x19, 1);
+		map.addPolygonOverview(ov);
 
-        // TODO: these need to be set first before drawing any of the
-        // division and they need to be derived from the data in the division.
-        // TODO ie they need to come from the division.
-        div.setHasPolylines(true);
+		// TODO: these need to be set first before drawing any of the
+		// division and they need to be derived from the data in the division.
+		// TODO ie they need to come from the division.
+		div.setHasPolylines(true);
 		div.setHasPoints(true);
 		div.setHasIndPoints(false);
 		div.setHasPolygons(true);
 
-        map.startDivision(div);
-        return div;
+		map.startDivision(div);
+		return div;
 	}
 
 	private MapSource loadFromFile(String name) {
