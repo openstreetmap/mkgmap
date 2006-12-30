@@ -73,7 +73,7 @@ public class FileNode implements ImgChannel {
 			throw new IllegalArgumentException("File must be readable or writeable");
 		if (blockManager == null)
 			throw new IllegalArgumentException("no file system supplied");
-		
+
 		open = true;
 	}
 
@@ -244,9 +244,9 @@ public class FileNode implements ImgChannel {
 			totalWritten += nw;
 
 			// Update file size.
-            if (position > dir.getSize())
-                dir.setSize(position);
-        }
+			if (position > dir.getSize())
+				dir.setSize(position);
+		}
 
 		return totalWritten;
 	}

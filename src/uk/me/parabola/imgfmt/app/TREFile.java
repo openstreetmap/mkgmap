@@ -70,8 +70,8 @@ public class TREFile extends ImgFile {
 	private int polylinePos;
 	private int polylineSize;
 
-    private final List<Overview> polygonOverviews = new ArrayList<Overview>();
-    private int polygonPos;
+	private final List<Overview> polygonOverviews = new ArrayList<Overview>();
+	private int polygonPos;
 	private int polygonSize;
 
 	private final List<Overview> pointOverviews = new ArrayList<Overview>();
@@ -148,9 +148,9 @@ public class TREFile extends ImgFile {
 		polylineOverviews.add(ov);
 	}
 
-    public void addPolygonOverview(Overview ov) {
+	public void addPolygonOverview(Overview ov) {
 		polygonOverviews.add(ov);
-    }
+	}
 
 	/**
 	 * Anything waiting to be written is dealt with here.
@@ -196,7 +196,7 @@ public class TREFile extends ImgFile {
 					sd.setLast(false);
 				else
 					sd.setLast(true);
-				
+
 				sd.write(this);
 				if (i == 0)
 					subdivSize += SUBDIV_REC_SIZE;
@@ -220,19 +220,19 @@ public class TREFile extends ImgFile {
 			pointSize += POINT_REC_LEN;
 		}
 
-        // Line overview section.
+		// Line overview section.
 		polylinePos = position();
 		for (Overview ov : polylineOverviews) {
 			ov.write(this);
 			polylineSize += POLYLINE_REC_LEN;
 		}
 
-        // Polygon overview section
-        polygonPos = position();
-        for (Overview ov : polygonOverviews) {
-            ov.write(this);
-            polygonSize += POLYGON_REC_LEN;
-        }
+		// Polygon overview section
+		polygonPos = position();
+		for (Overview ov : polygonOverviews) {
+			ov.write(this);
+			polygonSize += POLYGON_REC_LEN;
+		}
 	}
 
 	private void writeHeader()  {
@@ -286,7 +286,6 @@ public class TREFile extends ImgFile {
 		putInt(mapId);
 
 		position(HEADER_LEN);
-		put(Utils.toBytes("My OSM Map"));
 	}
 
 	public void setMapId(int id) {

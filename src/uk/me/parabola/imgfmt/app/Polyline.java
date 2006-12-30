@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
  * into the smallest number of bits possible.
  *
  * I am not trying to make the smallest map, so it will not be totally optimum.
- * 
+ *
  * @author Steve Ratcliffe
  */
 public class Polyline extends MapObject {
@@ -64,7 +64,7 @@ public class Polyline extends MapObject {
 		byte b1 = (byte) getType();
 		if (direction)
 			b1 |= 0x40;  // Polylines only.
-		
+
 		int blen = bw.getLength() - 1; // allow for the sizes
 		if (blen > 255)
 			b1 |= 0x80;
@@ -102,11 +102,11 @@ public class Polyline extends MapObject {
 		return w;
 	}
 
-    List<Coord> getPoints() {
-        return points;
-    }
+	List<Coord> getPoints() {
+		return points;
+	}
 
-    public void setDirection(boolean direction) {
+	public void setDirection(boolean direction) {
 		this.direction = direction;
 	}
 

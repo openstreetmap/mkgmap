@@ -25,18 +25,18 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 class Node extends Element {
-    private Coord location;
+	private Coord location;
 
-    Node(long id, Coord co) {
-        location = co;
-        setId(id);
-    }
+	Node(long id, Coord co) {
+		location = co;
+		setId(id);
+	}
 
-    public Coord getLocation() {
-        return location;
-    }
+	public Coord getLocation() {
+		return location;
+	}
 
-    public void setLocation(Coord location) {
-        this.location = location;
-    }
- }
+	public void setLocation(Coord location) {
+		this.location = location;
+	}
+}

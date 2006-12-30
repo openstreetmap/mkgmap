@@ -25,7 +25,7 @@ import java.util.ArrayList;
 
 /**
  * The map features that we are going to map are collected here.
- * 
+ *
  * @author Steve Ratcliffe
  */
 public class MapDetails implements MapCollector {
@@ -33,7 +33,7 @@ public class MapDetails implements MapCollector {
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
 
-    private int minLat = Utils.toMapUnit(180.0);
+	private int minLat = Utils.toMapUnit(180.0);
 	private int minLon = Utils.toMapUnit(180.0);
 	private int maxLat = Utils.toMapUnit(-180.0);
 	private int maxLon = Utils.toMapUnit(-180.0);
@@ -47,18 +47,18 @@ public class MapDetails implements MapCollector {
 		lines.add(line);
 	}
 
-    /**
-     * Add the given shape (polygon) to the map.  A shape is very similar to a
-     * line but they are separate because they need to be put in different
-     * sections in the output map.
-     *
-     * @param shape The polygon to add.
-     */
-    public void addShape(MapShape shape) {
-        shapes.add(shape);
-    }
+	/**
+	 * Add the given shape (polygon) to the map.  A shape is very similar to a
+	 * line but they are separate because they need to be put in different
+	 * sections in the output map.
+	 *
+	 * @param shape The polygon to add.
+	 */
+	public void addShape(MapShape shape) {
+		shapes.add(shape);
+	}
 
-    /**
+	/**
 	 * Add the given point to the total bounds for the map.
 	 *
 	 * @param p The coordinates of the point to add.
@@ -76,11 +76,11 @@ public class MapDetails implements MapCollector {
 			maxLon = lon;
 	}
 
-    public void addPoint(MapPoint point) {
-        points.add(point);
-    }
+	public void addPoint(MapPoint point) {
+		points.add(point);
+	}
 
-    /**
+	/**
 	 * Get the bounds of this map.
 	 *
 	 * @return An area covering all the points in the map.
@@ -89,20 +89,20 @@ public class MapDetails implements MapCollector {
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
 
-    public List<MapPoint> getPoints() {
-        return points;
-    }
+	public List<MapPoint> getPoints() {
+		return points;
+	}
 
-    /**
+	/**
 	 * Get all the lines for this map.
 	 *
 	 * @return A list of all lines defined for this map.
 	 */
 	public List<MapLine> getLines() {
-        return lines;
+		return lines;
 	}
 
-    public List<MapShape> getShapes() {
-        return shapes;
-    }
+	public List<MapShape> getShapes() {
+		return shapes;
+	}
 }

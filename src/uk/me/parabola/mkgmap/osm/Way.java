@@ -28,15 +28,15 @@ import org.apache.log4j.Logger;
  * Represent a OSM way.  A way consists of an ordered list of segments.  Its
  * quite possible for these to be non contiguous and we shall have to deal with
  * that.
- * 
+ *
  * @author Steve Ratcliffe
  */
 class Way extends Element {
 	private static final Logger log = Logger.getLogger(Way.class);
 
-    private final List<Segment> segments = new ArrayList<Segment>();
+	private final List<Segment> segments = new ArrayList<Segment>();
 
-    /**
+	/**
 	 * Add a segment to the way.
 	 *
 	 * @param seg The segment to add.
@@ -48,14 +48,14 @@ class Way extends Element {
 		segments.add(seg);
 	}
 
-    /**
+	/**
 	 * A simple representation of this way.
 	 * @return A string with the name and start point
 	 */
 	public String toString() {
 		if (segments.isEmpty())
 			return "Way: empty";
-		
+
 		Coord coord = segments.get(0).getStart();
 		String ret = "WAY: "
 				+ getName()
@@ -67,7 +67,7 @@ class Way extends Element {
 		return ret;
 	}
 
-    /**
+	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.
 	 *
@@ -129,7 +129,7 @@ class Way extends Element {
 					// needs to be fixed in the database, but we will try to at
 					// least make them display properly here.
 					log.warn("segment " + seg.getId() + " disjoint");
-					
+
 					// Start a new set of points
 					points = new ArrayList<Coord>();
 					pointLists.add(points);

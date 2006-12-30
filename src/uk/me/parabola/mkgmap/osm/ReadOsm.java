@@ -99,12 +99,12 @@ public class ReadOsm implements MapSource {
 		return mapper.getLines();
 	}
 
-    public List<MapShape> getShapes() {
-        return mapper.getShapes();
-    }
+	public List<MapShape> getShapes() {
+		return mapper.getShapes();
+	}
 
 
-    public List<MapPoint> getPoints() {
-        return mapper.getPoints();
-    }
+	public List<MapPoint> getPoints() {
+		return mapper.getPoints();
+	}
 }

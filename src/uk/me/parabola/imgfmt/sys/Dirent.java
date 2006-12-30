@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
  */
 class Dirent implements DirectoryEntry {
 	private static final Logger log = Logger.getLogger(Dirent.class);
-	
+
 	// Constants.
 	private static final int MAX_FILE_LEN = 8;
 	private static final int MAX_EXT_LEN = 3;
@@ -86,7 +86,7 @@ class Dirent implements DirectoryEntry {
 	 * Write this entry out to disk.
 	 * TODO: we currently do not cope with the case where this takes more
 	 * than one block.
-	 * 
+	 *
 	 * @param file The file to write to.
 	 * @throws IOException If writing fails for any reason.
 	 */
@@ -104,8 +104,8 @@ class Dirent implements DirectoryEntry {
 		buf.put(Utils.toBytes(name, MAX_FILE_LEN, (byte) ' '));
 		buf.put(Utils.toBytes(ext, MAX_EXT_LEN, (byte) ' '));
 
-        log.debug("dirent " + name + '.' + ext + " size is going to " + size);
-        buf.putInt(size);
+		log.debug("dirent " + name + '.' + ext + " size is going to " + size);
+		buf.putInt(size);
 
 		// For an unknown reason, the 'sub-file part' must be three when it
 		// the header block entry.
@@ -174,12 +174,12 @@ class Dirent implements DirectoryEntry {
 	}
 
 
-    void setSize(int size) {
-        log.debug("setting size " + getName() + getExt() + " to " + size);
-        this.size = size;
-    }
+	void setSize(int size) {
+		log.debug("setting size " + getName() + getExt() + " to " + size);
+		this.size = size;
+	}
 
-    /**
+	/**
 	 * Add a complete block and count the full size of it towards the
 	 * file size.
 	 *

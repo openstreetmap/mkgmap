@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 public class Polygon extends Polyline {
-    public Polygon(Subdivision div) {
-        super(div);
-    }
+	public Polygon(Subdivision div) {
+		super(div);
+	}
 }

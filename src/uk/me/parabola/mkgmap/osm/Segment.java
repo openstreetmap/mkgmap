@@ -32,7 +32,7 @@ class Segment extends Element {
 	Segment(long id, Coord start, Coord end) {
 		this.start = start;
 		this.end = end;
-        setId(id);
+		setId(id);
 	}
 
 	public Coord getStart() {

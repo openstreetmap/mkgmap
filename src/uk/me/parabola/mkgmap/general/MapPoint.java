@@ -24,22 +24,22 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class MapPoint extends MapElement {
-    private int subType;
-    private Coord location;
+	private int subType;
+	private Coord location;
 
-    public int getSubType() {
-        return subType;
-    }
+	public int getSubType() {
+		return subType;
+	}
 
-    public void setSubType(int subType) {
-        this.subType = subType;
-    }
+	public void setSubType(int subType) {
+		this.subType = subType;
+	}
 
-    public Coord getLocation() {
-        return location;
-    }
+	public Coord getLocation() {
+		return location;
+	}
 
-    public void setLocation(Coord location) {
-        this.location = location;
-    }
+	public void setLocation(Coord location) {
+		this.location = location;
+	}
 }

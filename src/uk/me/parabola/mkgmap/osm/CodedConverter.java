@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  * <p>Have renamed this class to indicate that it a hardcoded converter.  It
  * would be much better to read the conversions from a file I guess. So allow
  * for that possibility.
- * 
+ *
  * @author Steve Ratcliffe
  */
 class CodedConverter implements OsmConverter {
@@ -50,7 +50,7 @@ class CodedConverter implements OsmConverter {
 	 *
 	 * As a few examples we might want to check for the 'highway' tag, work out
 	 * if it is an area of a park etc.
-	 * 
+	 *
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
@@ -60,17 +60,17 @@ class CodedConverter implements OsmConverter {
 		if (highway != null)
 			processHighway(way, highway);
 
-        String leisure = way.getTag("leisure");
-        if (leisure != null)
-            processLeisure(way, leisure);
+		String leisure = way.getTag("leisure");
+		if (leisure != null)
+			processLeisure(way, leisure);
 
-        String landuse = way.getTag("landuse");
-        if (landuse != null)
-            processLanduse(way, landuse);
+		String landuse = way.getTag("landuse");
+		if (landuse != null)
+			processLanduse(way, landuse);
 
-        String natural = way.getTag("natural");
-        if (natural != null)
-            processNatural(way, natural);
+		String natural = way.getTag("natural");
+		if (natural != null)
+			processNatural(way, natural);
 
 		String railway = way.getTag("railway");
 		if (railway != null)
@@ -89,24 +89,24 @@ class CodedConverter implements OsmConverter {
 	}
 
 	public void convertNode(Node node) {
-        String amenity = node.getTag("amenity");
-        if (amenity != null)
-            processAmenity(node, amenity);
-    }
+		String amenity = node.getTag("amenity");
+		if (amenity != null)
+			processAmenity(node, amenity);
+	}
 
-    private void processNatural(Way way, String s) {
-        String name = way.getName();
+	private void processNatural(Way way, String s) {
+		String name = way.getName();
 
-        int type = 0;
-        if (s.equals("water")) {
-            type = 0x3c;
-        } else if (s.equals("wood")) {
-            type = 0x50;
-        }
-        makeShape(way, name, type);
-    }
+		int type = 0;
+		if (s.equals("water")) {
+			type = 0x3c;
+		} else if (s.equals("wood")) {
+			type = 0x50;
+		}
+		makeShape(way, name, type);
+	}
 
-    private void processHighway(Way way, String highway) {
+	private void processHighway(Way way, String highway) {
 		String name = way.getName();
 
 		int type;
@@ -143,18 +143,18 @@ class CodedConverter implements OsmConverter {
 		makeShape(way, name, type);
 	}
 
-    private void processLanduse(Way way, String s) {
-        String name = way.getName();
+	private void processLanduse(Way way, String s) {
+		String name = way.getName();
 
-        int type = 0;
-        if (s.equals("cemetery") || s.equals("cemetary")) {
-            type = 0x1a;
-        } else if (s.equals("allotments")) {
-            type = 0;
-        }
-        makeShape(way, name, type);
-    }
-    private void makeLines(Way way, String name, int type) {
+		int type = 0;
+		if (s.equals("cemetery") || s.equals("cemetary")) {
+			type = 0x1a;
+		} else if (s.equals("allotments")) {
+			type = 0;
+		}
+		makeShape(way, name, type);
+	}
+	private void makeLines(Way way, String name, int type) {
 		List<List<Coord>> pointLists =  way.getPoints();
 		for (List<Coord> points : pointLists) {
 			MapLine line = new MapLine();
@@ -178,47 +178,47 @@ class CodedConverter implements OsmConverter {
 		}
 	}
 
-    private void processAmenity(Node node, String s) {
-        int type;
-        int subType;
-        String name = node.getName();
+	private void processAmenity(Node node, String s) {
+		int type;
+		int subType;
+		String name = node.getName();
 
-        if (s.equals("pub")) {
-            type = 0x2d;
-            subType = 2;
-        } else if (s.equals("place_of_worship")) {
-            type = 0x64;
-            subType = 4;
-        } else if (s.equals("parking")) {
-            type = 0x2f;
-            subType = 0xb;
-        } else if (s.equals("school")) {
-            type = 0x2c;
-            subType = 5;
-        } else if (s.equals("post_office")) {
-            type = 0x2f;
-            subType = 5;
-        } else if (s.equals("toilets")) {
-            type = 0;
-            subType = 0x22;
-        } else {
-            type = -1;
-            subType = -1;
-        }
+		if (s.equals("pub")) {
+			type = 0x2d;
+			subType = 2;
+		} else if (s.equals("place_of_worship")) {
+			type = 0x64;
+			subType = 4;
+		} else if (s.equals("parking")) {
+			type = 0x2f;
+			subType = 0xb;
+		} else if (s.equals("school")) {
+			type = 0x2c;
+			subType = 5;
+		} else if (s.equals("post_office")) {
+			type = 0x2f;
+			subType = 5;
+		} else if (s.equals("toilets")) {
+			type = 0;
+			subType = 0x22;
+		} else {
+			type = -1;
+			subType = -1;
+		}
 
-        if (type >= 0) {
-            makePoint(node, name, type, subType);
-        }
-    }
+		if (type >= 0) {
+			makePoint(node, name, type, subType);
+		}
+	}
 
-    private void makePoint(Node node, String name, int type, int subType) {
-        MapPoint point = new MapPoint();
+	private void makePoint(Node node, String name, int type, int subType) {
+		MapPoint point = new MapPoint();
 
-        point.setName(name);
-        point.setLocation(node.getLocation());
-        point.setType(type);
-        point.setSubType(subType);
+		point.setName(name);
+		point.setLocation(node.getLocation());
+		point.setType(type);
+		point.setSubType(subType);
 
-        mapper.addPoint(point);
-    }
+		mapper.addPoint(point);
+	}
 }

@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
  */
 public class BufferedWriteStrategy implements WriteStrategy {
 	private static final Logger log = Logger.getLogger(BufferedWriteStrategy.class);
-	
+
 	private static final int MAX_SIZE = 1024 * 128; // TODO: grow it automatically later
 	private final ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
 	private final ImgChannel chan;
@@ -100,9 +100,9 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param c The value to write.
 	 */
 	public void putChar(char c) {
-        log.debug("char at pos " + position());
-        buf.putChar(c);
-    }
+		log.debug("char at pos " + position());
+		buf.putChar(c);
+	}
 
 	/**
 	 * Write out 4 byte value.

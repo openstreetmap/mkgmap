@@ -51,11 +51,11 @@ public class MakeMap {
 			if (args.length < 1)
 				throw new ExitException("Usage: mkgmap <file.osm>");
 
-			String name = args[0];
+			String filename = args[0];
 			String mapname = "63240001";
 
 			Args a = new Args();
-			a.setName(name);
+			a.setFileName(filename);
 			a.setMapname(mapname);
 
 			MakeMap mm = new MakeMap();
@@ -74,7 +74,7 @@ public class MakeMap {
 		try {
 			map = Map.createMap(args.getMapname(), params);
 
-			MapSource src = loadFromFile(args.getName());
+			MapSource src = loadFromFile(args.getFileName());
 
 			processInfo(map, src);
 			Subdivision div = makeDivisions(map, src);
@@ -105,7 +105,7 @@ public class MakeMap {
 		map.setBounds(src.getBounds());
 
 		// Make a few settings
-		map.setPoiDisplayFlags((byte) 0);
+		map.setPoiDisplayFlags(0);
 
 		// You can add any old junk here.
 		// But there has to be something, otherwise the map does not show up.
@@ -114,13 +114,77 @@ public class MakeMap {
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 
-		// This one will not show up.
-		map.addCopyright("(mkgmap) program licenced under GPL v2");
+		// There has to be (at least) two copyright messages or else the map
+		// does not show up.  The second one will be displayed at startup,
+		// although the conditions where that happens are not known.
+		map.addCopyright("program licenced under GPL v2");
 
 		// This one gets shown when you switch on, so put the actual
 		// map copyright here.
 		map.addCopyright(src.copyrightMessage());
 	}
+
+	/**
+	 * Make the subdivisions in the map.
+	 * As we only use 1 (plus the empty top one) this will change a
+	 * lot.
+	 * TODO: needs to step though all zoom levels.
+	 * TODO: for each zoom level, create subdivisions.
+	 * TODO: return something more than a single division.
+	 *
+	 * @param map The map to operate on.
+	 * @param src The source of map information.
+	 * @return A single division.  Will be chnaged.
+	 */
+	private Subdivision makeDivisions(Map map, MapSource src) {
+		Area bounds = src.getBounds();
+
+//		bounds = new Area(lat, lng, lat + 0.05, lng + 0.05);
+
+		// There must be an empty zoom level at the least detailed level.
+		Zoom z1 = map.createZoom(1, 24);
+		Subdivision topdiv = map.topLevelSubdivision(bounds, z1);
+
+		// Create the most detailed view.
+		Zoom z = map.createZoom(0, 24);
+		Subdivision div = map.createSubdivision(topdiv, bounds, z);
+
+		// Set the list of features supported on the map.
+		// TODO should come from map source
+		Overview ov = new Overview(0x2c, 1, 5);
+		map.addPointOverview(ov);
+		ov = new Overview(0x2f, 1, 0xb);
+		map.addPointOverview(ov);
+		ov = new Overview(0x0, 1, 0x22);
+		map.addPointOverview(ov);
+		ov = new Overview(0x2d, 1, 0x2);
+		map.addPointOverview(ov);
+
+		ov = new Overview(6, 1);
+		map.addPolylineOverview(ov);
+
+		ov = new Overview(0x17, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x1a, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x3c, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x50, 1);
+		map.addPolygonOverview(ov);
+		ov = new Overview(0x19, 1);
+		map.addPolygonOverview(ov);
+
+		// TODO: these need to be set first before drawing any of the
+		// division and they need to be derived from the data in the division.
+		// TODO ie they need to come from the division.
+		div.setHasPolylines(true);
+		div.setHasPoints(true);
+		div.setHasIndPoints(false);
+		div.setHasPolygons(true);
+
+		map.startDivision(div);
+		return div;
+ 	}
 
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
 		map.startPoints();
@@ -190,67 +254,6 @@ public class MakeMap {
 		}
 	}
 
-	/**
-	 * Make the subdivisions in the map.
-	 * As we only use 1 (plus the empty top one) this will change a
-	 * lot.
-	 * TODO: needs to step though all zoom levels.
-	 * TODO: for each zoom level, create subdivisions.
-	 * TODO: return something more than a single division.
-	 *
-	 * @param map The map to operate on.
-	 * @param src The source of map information.
-	 * @return A single division.  Will be chnaged.
-	 */
-	private Subdivision makeDivisions(Map map, MapSource src) {
-		Area bounds = src.getBounds();
-
-		// There must be an empty zoom level at the least detailed level.
-		Zoom z1 = map.createZoom(1, 24);
-
-		Subdivision topdiv = map.topLevelSubdivision(bounds, z1);
-
-		// Create the most detailed view.
-		Zoom z = map.createZoom(0, 24);
-		Subdivision div = map.createSubdivision(topdiv, bounds, z);
-
-		// Set the list of features supported on the map.
-		// TODO should come from map source
-		Overview ov = new Overview(0x2c, 1, 5);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2f, 1, 0xb);
-		map.addPointOverview(ov);
-		ov = new Overview(0x0, 1, 0x22);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2d, 1, 0x2);
-		map.addPointOverview(ov);
-
-		ov = new Overview(6, 1);
-		map.addPolylineOverview(ov);
-
-		ov = new Overview(0x17, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x1a, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x3c, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x50, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x19, 1);
-		map.addPolygonOverview(ov);
-
-		// TODO: these need to be set first before drawing any of the
-		// division and they need to be derived from the data in the division.
-		// TODO ie they need to come from the division.
-		div.setHasPolylines(true);
-		div.setHasPoints(true);
-		div.setHasIndPoints(false);
-		div.setHasPolygons(true);
-
-		map.startDivision(div);
-		return div;
-	}
-
 	private MapSource loadFromFile(String name) {
 		try {
 			MapSource src = new ReadOsm();
@@ -267,15 +270,15 @@ public class MakeMap {
 	}
 
 	private static class Args {
-		private String name;
+		private String fileName;
 		private String mapname;
 
-		public String getName() {
-			return name;
+		public String getFileName() {
+			return fileName;
 		}
 
-		public void setName(String name) {
-			this.name = name;
+		public void setFileName(String name) {
+			this.fileName = name;
 		}
 
 		public String getMapname() {

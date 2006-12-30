@@ -28,17 +28,17 @@ import org.apache.log4j.Logger;
  * @author Steve Ratcliffe
  */
 public class Point extends MapObject {
-    private static final Logger log = Logger.getLogger(Point.class);
-    
-    // Points can have a subtype, eg for restaurant the subtype might be the
+	private static final Logger log = Logger.getLogger(Point.class);
+
+	// Points can have a subtype, eg for restaurant the subtype might be the
 	// kind of food served.
 	private int subtype;
 
-    public Point(Subdivision div) {
-        setSubdiv(div);
-    }
+	public Point(Subdivision div) {
+		setSubdiv(div);
+	}
 
-    /**
+	/**
 	 * Format and write the contents of the object to the given
 	 * file.
 	 *
@@ -47,9 +47,9 @@ public class Point extends MapObject {
 	public void write(ImgFile file) {
 		byte b = (byte) getType();
 		file.put(b);
-        log.debug("writing point: " + b);
+		log.debug("writing point: " + b);
 
-        int off = getLabel().getOffset();
+		int off = getLabel().getOffset();
 		if (subtype != 0)
 			off |= 0x800000;
 
@@ -58,20 +58,20 @@ public class Point extends MapObject {
 //        log.debug("super long: " + super.getLongitude() + ", divlong=" + getSubdiv().getLongitude());
 //        assert (getLongitude() & ~0xffff) == 0;
 //        assert (getLatitude() & ~0xffff) == 0;
-        file.putChar((char) getLongitude());
+		file.putChar((char) getLongitude());
 		file.putChar((char) getLatitude());
 		if (subtype != 0)
 			file.put((byte) subtype);
 	}
 
 
-    public int getLatitude() {
-        return super.getLatitude() - getSubdiv().getLatitude();
-    }
+	public int getLatitude() {
+		return super.getLatitude() - getSubdiv().getLatitude();
+	}
 
-    public int getLongitude() {
-        return super.getLongitude() - getSubdiv().getLongitude();
-    }
+	public int getLongitude() {
+		return super.getLongitude() - getSubdiv().getLongitude();
+	}
 
 //    public int getSubtype() {
 //		return subtype;

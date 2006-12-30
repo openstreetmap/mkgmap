@@ -31,11 +31,11 @@ interface OsmConverter {
 	 */
 	public void convertWay(Way way);
 
-    /**
-     * Takes a node (that has its own identity) and converts it from the OSM
-     * type to the Garmin map type.
-     *
-     * @param node The node to convert.
-     */
-    public void convertNode(Node node);
+	/**
+	 * Takes a node (that has its own identity) and converts it from the OSM
+	 * type to the Garmin map type.
+	 *
+	 * @param node The node to convert.
+	 */
+	public void convertNode(Node node);
 }

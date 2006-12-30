@@ -19,42 +19,42 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Element {
-    private final Map<String, String> tags = new HashMap<String, String>();
-    private String name;
-    private long id;
+	private final Map<String, String> tags = new HashMap<String, String>();
+	private String name;
+	private long id;
 
-    /**
+	/**
 	 * Add a tag to the way.  Some tags are recognised separately and saved in
-     * separate fields.
-     *
-     * @param key The tag name.
-     * @param val Its value.
-     */
-    public void addTag(String key, String val) {
-        if (key.equals("name")) {
-            name = val;
-        } else {
-            tags.put(key, val);
-        }
-    }
+	 * separate fields.
+	 *
+	 * @param key The tag name.
+	 * @param val Its value.
+	 */
+	public void addTag(String key, String val) {
+		if (key.equals("name")) {
+			name = val;
+		} else {
+			tags.put(key, val);
+		}
+	}
 
-    public String getTag(String key) {
-        return tags.get(key);
-    }
+	public String getTag(String key) {
+		return tags.get(key);
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public long getId() {
-        return id;
-    }
+	public long getId() {
+		return id;
+	}
 
-    public void setId(long id) {
-        this.id = id;
-    }
+	public void setId(long id) {
+		this.id = id;
+	}
 }

@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public interface MapCollector {
 
-    /**
+	/**
 	 * Add the given point to the total bounds for the map.
 	 *
 	 * @param p The coordinates of the point to add.  The type here
@@ -35,26 +35,26 @@ public interface MapCollector {
 	 */
 	public void addToBounds(Coord p);
 
-    /**
-     * Add a point to the map.
-     *
-     * @param point The point to add.
-     */
-    public void addPoint(MapPoint point);
+	/**
+	 * Add a point to the map.
+	 *
+	 * @param point The point to add.
+	 */
+	public void addPoint(MapPoint point);
 
-    /**
-     * Add a line to the map.
-     *
-     * @param line The line information.
-     */
-    public void addLine(MapLine line);
+	/**
+	 * Add a line to the map.
+	 *
+	 * @param line The line information.
+	 */
+	public void addLine(MapLine line);
 
-    /**
-     * Add the given shape (polygon) to the map.  A shape is very similar to
-     * a line but they are separate because they need to be put in different
-     * sections in the output map.
-     *
-     * @param shape The polygon to add.
-     */
-    public void addShape(MapShape shape);
+	/**
+	 * Add the given shape (polygon) to the map.  A shape is very similar to
+	 * a line but they are separate because they need to be put in different
+	 * sections in the output map.
+	 *
+	 * @param shape The polygon to add.
+	 */
+	public void addShape(MapShape shape);
 }

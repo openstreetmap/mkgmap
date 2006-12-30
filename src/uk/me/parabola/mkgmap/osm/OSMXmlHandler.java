@@ -45,8 +45,8 @@ class OSMXmlHandler extends DefaultHandler {
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
 	private final Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
-    private Node currentNode;
-    private Way currentWay;
+	private Node currentNode;
+	private Way currentWay;
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_SEGMENT = 2;
@@ -71,7 +71,7 @@ class OSMXmlHandler extends DefaultHandler {
 	 * @see ContentHandler#startElement
 	 */
 	public void startElement(String uri, String localName,
-							 String qName, Attributes attributes)
+	                         String qName, Attributes attributes)
 			throws SAXException
 	{
 
@@ -84,7 +84,7 @@ class OSMXmlHandler extends DefaultHandler {
 				String lon = attributes.getValue("lon");
 
 				addNode(id, lat, lon);
-            } else if (qName.equals("segment")) {
+			} else if (qName.equals("segment")) {
 				mode = MODE_SEGMENT;
 
 				String id = attributes.getValue("id");
@@ -97,21 +97,21 @@ class OSMXmlHandler extends DefaultHandler {
 				currentWay = new Way();
 			}
 		} else if (mode == MODE_NODE) {
-            if (qName.equals("tag")) {
-                String key = attributes.getValue("k");
-                String val = attributes.getValue("v");
-                currentNode.addTag(key, val);
-            }
-        } else if (mode == MODE_SEGMENT) {
+			if (qName.equals("tag")) {
+				String key = attributes.getValue("k");
+				String val = attributes.getValue("v");
+				currentNode.addTag(key, val);
+			}
+		} else if (mode == MODE_SEGMENT) {
 			// not yet interested in anything here.
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("seg")) {
 				long id = Long.parseLong(attributes.getValue("id"));
 				addSegmentToWay(id);
 			} else if (qName.equals("tag")) {
-                String key = attributes.getValue("k");
-                String val = attributes.getValue("v");
-                addTagToWay(key, val);
+				String key = attributes.getValue("k");
+				String val = attributes.getValue("v");
+				addTagToWay(key, val);
 
 			}
 		}
@@ -119,7 +119,7 @@ class OSMXmlHandler extends DefaultHandler {
 
 	/**
 	 * Receive notification of the end of an element.
-     *
+	 *
 	 * @param uri	   The Namespace URI, or the empty string if the
 	 *                  element has no Namespace URI or if Namespace
 	 *                  processing is not being performed.
@@ -138,9 +138,9 @@ class OSMXmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
-                converter.convertNode(currentNode);
-            }
-        } else if (mode == MODE_SEGMENT) {
+				converter.convertNode(currentNode);
+			}
+		} else if (mode == MODE_SEGMENT) {
 			if (qName.equals("segment"))
 				mode = 0;
 		} else if (mode == MODE_WAY) {
@@ -167,10 +167,10 @@ class OSMXmlHandler extends DefaultHandler {
 
 		if (log.isDebugEnabled())
 			log.debug("adding node" + lat + '/' + lon);
-        Coord co = new Coord(lat, lon);
-        nodeMap.put(id, co);
-        currentNode = new Node(id, co);
-    }
+		Coord co = new Coord(lat, lon);
+		nodeMap.put(id, co);
+		currentNode = new Node(id, co);
+	}
 
 	/**
 	 * Save a segment.  Fetch the nodes and save the coordinates as part of
@@ -192,7 +192,7 @@ class OSMXmlHandler extends DefaultHandler {
 		mapper.addToBounds(start);
 
 		if (log.isDebugEnabled())
-		log.debug("adding segment " + start + " to " + end);
+			log.debug("adding segment " + start + " to " + end);
 		Segment seg = new Segment(id, start, end);
 		segMap.put(id, seg);
 	}

@@ -27,9 +27,9 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class MapLine extends MapElement {
-    private List<Coord> points;
+	private List<Coord> points;
 
-    public List<Coord> getPoints() {
+	public List<Coord> getPoints() {
 		return points;
 	}
 
