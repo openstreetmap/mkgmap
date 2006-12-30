@@ -36,6 +36,10 @@ public class Label {
 	// The offset in to the data section.
 	private int offset;
 
+	// This is 0x1b is the source document, but the accompianing code uses
+	// the value 0x1c, which seems to work.
+	private static final int SYMBOL_SHIFT = 0x1c;
+
 	/**
 	 * Create a new label.
 	 * @param text The normal text of the label.
@@ -78,7 +82,27 @@ public class Label {
 				put6(buf, off++, 0);
 			} else if (c >= 'A' && c <= 'Z') {
 				put6(buf, off++, c - 'A' + 1);
-			} // else if ... more TODO: other characters
+			} else {
+				int ind = "@!\"#$%&'()*+,-./".indexOf(c);
+				if (ind >= 0) {
+					log.debug("putting " + ind);
+					put6(buf, off++, SYMBOL_SHIFT);
+					put6(buf, off++, ind);
+				} else {
+					ind = ":;<=>?".indexOf(c);
+					if (ind >= 0) {
+						put6(buf, off++, SYMBOL_SHIFT);
+						put6(buf, off++, 0x1a + ind);
+					} else {
+						ind = "[\\]^_".indexOf(c);
+						if (ind >= 0) {
+							put6(buf, off++, SYMBOL_SHIFT);
+							put6(buf, off++, 0x2b + ind);
+						}
+					}
+				}
+			}
+			// else if ... more TODO: other characters
 		}
 
 		put6(buf, off++, 0xff);
