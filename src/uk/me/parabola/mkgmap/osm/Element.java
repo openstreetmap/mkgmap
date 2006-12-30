@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Element {
-	private final Map<String, String> tags = new HashMap<String, String>();
+	private Map<String, String> tags;
 	private String name;
 	private long id;
 
@@ -33,7 +33,11 @@ public class Element {
 	public void addTag(String key, String val) {
 		if (key.equals("name")) {
 			name = val;
+		} else if (key.equals("created_by")) {
+			// Just forget about this.
 		} else {
+			if (tags == null)
+				tags = new HashMap<String, String>();
 			tags.put(key, val);
 		}
 	}
