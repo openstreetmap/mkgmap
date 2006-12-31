@@ -111,8 +111,7 @@ public class MakeMap {
 
 		// You can add any old junk here.
 		// But there has to be something, otherwise the map does not show up.
-//		map.addInfo("Created by mkgmap");
-//	    map.addInfo(map)
+		map.addInfo("OSM Street map");
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 
