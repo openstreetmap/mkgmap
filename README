@@ -18,18 +18,18 @@ Change into the distribution directory and run the command
 
 	java -jar mkgmap.jar path-to-osm-data.osm
 
-It will produce a file called 63240001.img (and a log file 100 times as
-large).  I've not tried it on windows but it will probably work (I know I
-am going to regret saying that...)
+It will produce a file called 63240001.img.  I've not tried it on windows but
+it will probably work (I know I am going to regret saying that...)
 
 You can copy the map to your Garmin GPS unit in any way you know how. On my
 Legend Cx connected to a Linux system I put the unit into USB mass storage
-mode and copy the map to Garmin/gmapsupp.img
-Note that this will replace any other map you have on there.  It should
-be possible to use sendmap, but I've not tried.
+mode, mount the filesystem on the memory card, and copy the map to
+Garmin/gmapsupp.img Note that this will replace any other map you have on
+there.  It should be possible to use sendmap, but I've not tried.
 
-You should see a OSM copyright message on starting up, and the map name
-'My OSM Map' (sorry) should appear in the map setup section.
+You should see a OSM copyright message on starting up (although this is not
+working at present), and the map name 'My OSM Map' (sorry) should appear
+in the map setup section.
 
 You should see an outline of the map when zoomed out, but you will not
 see any streets until you are zoomed in very close.  On mine I have to
@@ -42,13 +42,15 @@ Issues
 2. Although the program now does points, lines and shapes, only a few
    map feature types from OSM are recognised.  These include most road
    types, footpaths, railways, lakes, parks, churches, pubs and schools.
-3. There are many ways in the OSM database that have mis-ordered segments.
-   The program makes an attempt to split them into separate lines, which
-   mostly works, but can leave gaps in the road, or get the path of the
-   street wrong.
-4. There is a limit to the size of the map you can create. It will be
+3. There is a limit to the size of the map you can create. It will be
    around 1Mb.  I've done a large chunk of North London without getting
    anywhere near the limit though.
+4. Non-ascii characters will not show up.  The format for Garmin maps
+   condenses text down to 6 bits per character.  This only leaves room
+   for uppercase ascii characters and a few symbols.  You can specify
+   the use of more bits (8 and 10 bits) but I don't know how those
+   formats work.  I'd be very grateful if someone knows or can work
+   them out.
 
 
 Acknowledgements
@@ -56,9 +58,9 @@ Acknowledgements
 
 This project is almost entirely based on the file format specification
 document written by John Mechalas at the SourceForge project at
-http://sourceforge.net/projects/garmin-img . This is a very impressive
-piece of work and in fact to only problem I had was my own mistake in
-implementation. Thanks.
+http://sourceforge.net/projects/garmin-img.  The 'imgdecode' program
+from the same source was also very important in checking that I was
+on the right lines to producing a good file.  Thanks.
 
 ..Steve
 
