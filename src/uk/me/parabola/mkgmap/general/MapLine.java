@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class MapLine extends MapElement {
 	private List<Coord> points;
+	private boolean direction; // set if direction is important.
 
 	public List<Coord> getPoints() {
 		return points;
@@ -35,5 +36,13 @@ public class MapLine extends MapElement {
 
 	public void setPoints(List<Coord> points) {
 		this.points = points;
+	}
+
+	public boolean isDirection() {
+		return direction;
+	}
+
+	public void setDirection(boolean direction) {
+		this.direction = direction;
 	}
 }

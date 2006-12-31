@@ -19,8 +19,6 @@ package uk.me.parabola.imgfmt.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.log.Logger;
-
 /**
  * Represents a multi-segment line.  Eg for a road. As with all map objects
  * it can only exist as part of a subdivision.
@@ -33,7 +31,6 @@ import uk.me.parabola.log.Logger;
  * @author Steve Ratcliffe
  */
 public class Polyline extends MapObject {
-	private static final Logger log = Logger.getLogger(Polyline.class);
 
 	// Set if it is a one-way street for example.
 	private boolean direction;

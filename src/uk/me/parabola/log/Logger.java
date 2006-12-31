@@ -32,34 +32,28 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public class Logger {
-	private static FileWriter file;
+	private static FileWriter file ;
 
-	private static boolean loggingActive;
-	private static boolean initFailed;
+	private static boolean loggingActive ;
 
-	private static Map<String, Logger> loggers = new ConcurrentHashMap<String, Logger>();
+	private static final Map<String, Logger> loggers = new ConcurrentHashMap<String, Logger>();
 
-	private boolean debugEnabled;
-	private boolean infoEnabled;
-	private boolean warnEnabled;
-	private boolean errorEnabled;
+	private String shortname;
+
+	private final boolean debugEnabled;
+	private final boolean infoEnabled;
+	private final boolean warnEnabled;
+	private final boolean errorEnabled;
 
 	static {
 		initLogging();
 	}
 
-	public static Logger getLogger(Class aClass) {
+	public static Logger getLogger(Class<? extends Object> aClass) {
 		String name = aClass.getName();
 		Logger log = loggers.get(name);
 		if (log == null) {
-			log = new Logger();
-
-			if (!loggingActive) {
-				log.debugEnabled = false;
-				log.infoEnabled = false;
-				log.warnEnabled = false;
-				log.errorEnabled = false;
-			}
+			log = new Logger(name);
 			
 			loggers.put(name, log);
 		}
@@ -67,7 +61,11 @@ public class Logger {
 		return log;
 	}
 
-	public Logger() {
+	private Logger(String name) {
+		int dot = name.lastIndexOf('.');
+		if (dot > 0)
+			shortname = name.substring(dot+1);
+
 		debugEnabled = true;
 		infoEnabled = true;
 		warnEnabled = true;
@@ -75,8 +73,9 @@ public class Logger {
 	}
 
 	private static void initLogging() {
-		if (file != null)
-			return;
+
+		file = null;
+		loggingActive = false;
 
 		Properties props = System.getProperties();
 		String filename = props.getProperty("log.filename");
@@ -88,9 +87,7 @@ public class Logger {
 			loggingActive = true;
 
 		} catch (IOException e) {
-			if (!initFailed)
-				System.err.println("Could not create log file");
-			initFailed = true;
+			System.err.println("ERROR: Logging initialisation failed");
 		}
 	}
 
@@ -139,26 +136,37 @@ public class Logger {
 		simpleFormat("INFO", o);
 	}
 
+	public void error(Object o) {
+		if (!errorEnabled)
+			return;
+		simpleFormat("ERROR", o);
+	}
+
 	public void error(Object o, Throwable e) {
 		if (!errorEnabled)
 			return;
 
 		simpleFormat("ERROR", o);
+		e.printStackTrace(); // XXX temporary.
 	}
 
-	private static void simpleFormat(String type, Object o) {
+	private void simpleFormat(String type, Object o) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(type);
-		sb.append(": ");
+		sb.append(": [");
+		sb.append(shortname);
+		sb.append("] ");
 		sb.append(o);
 		sb.append('\n');
 
 		commonWrite(sb);
 	}
 
-	private static void arrayFormat(String type, Object... olist) {
+	private void arrayFormat(String type, Object... olist) {
 		StringBuilder sb = new StringBuilder(type);
-		sb.append(": ");
+		sb.append(": [");
+		sb.append(shortname);
+		sb.append("] ");
 		for (Object o : olist) {
 			sb.append(o);
 			sb.append(' ');
@@ -169,7 +177,10 @@ public class Logger {
 		commonWrite(sb);
 	}
 
-	private static synchronized void commonWrite(StringBuilder sb) {
+	private static void commonWrite(StringBuilder sb) {
+		if (!loggingActive)
+			return;
+
 		try {
 			file.write(sb.toString());
 			file.flush();

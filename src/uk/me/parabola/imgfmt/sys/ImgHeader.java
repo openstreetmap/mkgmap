@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.log.Logger;
-
 import java.util.Date;
 import java.util.Calendar;
 import java.nio.ByteBuffer;
@@ -35,8 +33,6 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 class ImgHeader {
-	protected static final Logger log = Logger.getLogger(ImgHeader.class);
-	
 	// Offsets into the header.
 	private static final int OFF_XOR = 0x0;
 	private static final int OFF_UPDATE_MONTH = 0xa;

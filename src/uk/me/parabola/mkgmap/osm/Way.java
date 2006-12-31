@@ -91,35 +91,35 @@ class Way extends Element {
 
 		List<List<Coord>> pointLists = new ArrayList<List<Coord>>();
 
-		Coord start, end;
+		Coord start = null, end = null;
 
 		List<List<Segment>> all = reorderSegments();
 
 		for (List<Segment> segs : all) {
 			log.debug("== new sublist");
-			start = null;
-			end = null;
+			boolean firstPoint = true;
 
 			List<Coord> points = new ArrayList<Coord>();
 			pointLists.add(points);
 
 			for (Segment seg : segs) {
-				if (start == null) {
+				if (firstPoint) {
 					start = seg.getStart();
 					end = seg.getEnd();
 					points.add(start);
 					points.add(end);
+					firstPoint = false;
 				} else {
 					Coord cs = seg.getStart();
 					Coord ce = seg.getEnd();
 					if (cs.equals(end)) {
 						// this is normal add the next point
-						log.debug(this.getName() + ": " + ce);
+						log.debug(getName(), ce);
 						points.add(ce);
 						end = ce;
 					} else {
-						log.debug("BAD:" + this.getName() + ":" + start + " to " + end + ", " + cs + " to " + ce);
-						// can't happen because all is rearranged to avoid it.
+						// this can't happen if the re-ordering has worked.
+						log.debug("BAD:", getName(), start, "to", end, cs, ce);
 						assert false;
 					}
 				}
@@ -129,9 +129,22 @@ class Way extends Element {
 		return pointLists;
 	}
 
+	/**
+	 * Re-order our segments so that they all join up head-to-tail as much
+	 * as possible.  In particular for a simple way that has no branches (the
+	 * vast majority of them) this routine should give a single list.
+	 *
+	 * When it is not possible to produce a single list, for example the way
+	 * really has a gap in it or branches, then the smallest number of lists
+	 * that are all correctly and contiguously ordered should be returned.
+	 *
+	 * @return A list of lists of segements.  In each sublist the segments
+	 * join together.
+	 */
 	private List<List<Segment>> reorderSegments() {
 		List<List<Segment>> all = new ArrayList<List<Segment>>(10);
 		List<Segment> workList = new ArrayList<Segment>(20);
+		boolean newList = true;
 
 		Coord start = null;
 		Coord end = null;
@@ -139,25 +152,26 @@ class Way extends Element {
 			Coord s = seg.getStart();
 			Coord e = seg.getEnd();
 
-			if (start == null || end == null) {
+			if (newList) {
+				log.debug(getName(), "initial segment", seg);
 				start = s;
 				end = e;
-				log.debug(getName() + ":initial segment " + seg);
 				workList.add(seg);
+				newList = false;
 			} else if (s.equals(end)) {
 				// The normal case, this segment joins to the previous one.
-				log.debug("normal join of " + seg);
+				log.debug("normal join of ", seg);
 				end = e;
 				workList.add(seg);
 			} else if (e.equals(end)) {
 				// This segment will fit if reversed.
-				log.debug("reversed segment");
+				log.debug("reversed segment", seg);
 				String ow = seg.getTag("one_way");
 				if (ow != null && ow.equals("true")) {
 					log.debug("but one-way so we should not change it");
 					workList = startNewSeg(all, workList);
 					workList.add(seg);
-					end = null;
+					newList = true;
 				} else {
 					Segment seg2 = new Segment(seg.getId(), e, s);
 					workList.add(seg2);
@@ -165,27 +179,26 @@ class Way extends Element {
 				}
 			} else if (e.equals(start)) {
 				// fits at beginning
-				log.debug("fitting segment at start " + seg);
+				log.debug("fitting segment at start ", seg);
 				workList.add(0, seg);
 				start = s;
 			} else if (s.equals(start)) {
 				// fits at start if reversed.
-				log.debug("reversed segment fitting at start");
+				log.debug("reversed segment fitting at start", seg);
 				String ow = seg.getTag("one_way");
 				if (ow != null && ow.equals("true")) {
 					log.debug("but one-way so we should not change it");
 					workList = startNewSeg(all, workList);
 					workList.add(seg);
-					end = null;
+					newList = true;
 				} else {
 					Segment seg2 = new Segment(seg.getId(), e, s);
 					workList.add(0, seg2);
 					start = e;
 				}
 			} else {
-				log.debug("else case, nothing applies");
+				log.debug("else case, nothing applies", seg);
 				workList = startNewSeg(all, workList);
-				log.debug("expect zero " + workList.size() + ", new list at " + seg);
 				workList.add(seg);
 				start = s;
 				end = e;
@@ -202,6 +215,24 @@ class Way extends Element {
 		return new ArrayList<Segment>(20);
 	}
 
+	/**
+	 * Helper to merge a work list into the previously collected lists.  The
+	 * new list may:
+	 * <ol>
+	 * <li>Fit at the end of a previous list
+	 * <li>Fit at the beginning of a previous list.
+	 * <li>Neither, in which case we make it a separate list.
+	 * </ol>
+	 *
+	 * TODO: possible that when adding a new list to the end of a previous list
+	 * that it will allow the list to be simplified more.  For example if
+	 * the new list fits 'between' two existing lists, the current code will
+	 * just append to one of the lists and not also append the existing list
+	 * and remove it from the list-of-lists.
+	 *
+	 * @param all  The list of all the lines that we are collecting.
+	 * @param workList The new list that we are trying to fit in.
+	 */
 	private static void mergeList(List<List<Segment>> all, List<Segment> workList) {
 		boolean found = false;
 		for (List<Segment> list : all) {

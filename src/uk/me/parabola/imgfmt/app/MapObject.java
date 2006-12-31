@@ -45,9 +45,9 @@ public abstract class MapObject {
 	/**
 	 * Write this object to the given file.
 	 *
-	 * @param f The file to write to. It is usually the RGN file.
+	 * @param file The file to write to. It is usually the RGN file.
 	 */
-	public abstract void write(ImgFile f);
+	public abstract void write(ImgFile file);
 
 	public int getLatitude() {
 		return latitude;

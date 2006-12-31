@@ -46,9 +46,12 @@ public class MakeMap {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
 
 	public static void main(String[] args) {
+		if (args.length < 1) {
+			System.err.println("Usage: mkgmap <file.osm>");
+			System.exit(1);
+		}
+
 		try {
-			if (args.length < 1)
-				throw new ExitException("Usage: mkgmap <file.osm>");
 
 			String filename = args[0];
 			String mapname = "63240001";

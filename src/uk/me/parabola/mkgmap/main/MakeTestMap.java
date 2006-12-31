@@ -18,8 +18,6 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import java.io.FileNotFoundException;
-
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -42,7 +40,7 @@ import uk.me.parabola.log.Logger;
 public class MakeTestMap {
 	private static final Logger log = Logger.getLogger(MakeTestMap.class);
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args)  {
 
 		// Default to nowhere in particular.
 		double lat = 51.724;
@@ -98,15 +96,15 @@ public class MakeTestMap {
 		ov = new Overview(0x0, 1, 0x22);
 		map.addPointOverview(ov);
 
-//		ov = new Overview(6, 1);
-//		map.addPolylineOverview(ov);
+		ov = new Overview(6, 1);
+		map.addPolylineOverview(ov);
 
-//		div.setHasPolylines(true);
-//		div.setHasPolygons(true);
-//		map.startDivision(div);
+		div.setHasPolylines(true);
+		div.setHasPolygons(true);
+		map.startDivision(div);
 
-//		drawLines(map, div, lat, lng);
-//		drawPolygons(map, div, lat, lng);
+		drawLines(map, div, lat, lng);
+		drawPolygons(map, div, lat, lng);
 
 		map.close();
 	}

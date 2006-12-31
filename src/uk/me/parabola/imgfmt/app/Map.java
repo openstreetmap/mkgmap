@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import java.io.FileNotFoundException;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
@@ -72,6 +73,9 @@ public class Map {
 		} catch (FileNotFoundException e) {
 			log.error("failed to create file", e);
 			return null;
+		} catch (FileExistsException e) {
+			log.error("failed to create file as it already exists");
+			return null;
 		}
 
 		return m;
@@ -116,6 +120,7 @@ public class Map {
 	 * @param bits  The number of bits per coordinate, a measure of
 	 * the actual amount of detail that will be in the level.  So this
 	 * is like a physical zoom level.
+	 * @return The zoom object.
 	 */
 	public Zoom createZoom(int level, int bits) {
 		return treFile.createZoom(level, bits);
@@ -128,6 +133,7 @@ public class Map {
 	 * @param area The whole map area.
 	 * @param zoom The zoom level that you want the top level to be
 	 * at.  Its going to be at least level 1.
+	 * @return The top level division.
 	 */
 	public Subdivision topLevelSubdivision(Area area, Zoom zoom) {
 		zoom.setInherited(true); // May not always be necessary/desired
@@ -148,6 +154,7 @@ public class Map {
 	 * @param sub The parent subdivision.
 	 * @param area The area of the new child subdiv.
 	 * @param zoom The zoom level of the child.
+	 * @return The new division.
 	 */
 	public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
 	{

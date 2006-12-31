@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
-import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FileExistsException;
 
 import java.util.List;
 import java.io.FileNotFoundException;
@@ -34,8 +34,9 @@ public interface FileSystem {
 	 * Create a new file it must not allready exist.
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
+	 * @throws FileExistsException If the file already exists.
 	 */
-	public ImgChannel create(String name);
+	public ImgChannel create(String name) throws FileExistsException;
 
 	/**
 	 * Open a file.  The returned file object can be used to read and write the
@@ -49,15 +50,6 @@ public interface FileSystem {
 	 */
 	public ImgChannel open(String name, String mode)
 			throws FileNotFoundException;
-
-	/**
-	 * Set various parameters of the file system.  Anything that
-	 * has not been set in <tt>params</tt> (ie is zero or null)
-	 * will not have any effect.
-	 *
-	 * @param params A set of parameters.
-	 */
-	public void setParams(FileSystemParam params);
 
 	/**
 	 * Lookup the file and return a directory entry for it.

@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FileExistsException;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -117,7 +118,7 @@ public class ImgFS implements FileSystem {
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
 	 */
-	public ImgChannel create(String name)  {
+	public ImgChannel create(String name) throws FileExistsException {
 		Dirent dir = directory.create(name);
 
 		FileNode f = new FileNode(file, blockManager, dir, "w");
@@ -138,8 +139,10 @@ public class ImgFS implements FileSystem {
 		if (name == null || mode == null)
 			throw new IllegalArgumentException("null argument");
 
-		if (mode.indexOf('w') >= 0)
-			return create(name);
+		// Its wrong to do this as this routine should not throw an exception
+		// when the file exists.  Needs lookup().
+//		if (mode.indexOf('w') >= 0)
+//			return create(name);
 
 		throw new FileNotFoundException("File not found because it isn't implemented yet");
 	}

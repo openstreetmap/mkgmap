@@ -15,5 +15,17 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+
+/**
+ * A shape or polygon is just the same as a line really as far as I can tell.
+ * There are some things that you cannot do with them semantically.
+ *
+ * @author Steve Ratcliffe.
+ */
 public class MapShape extends MapLine {
+
+	public void setDirection(boolean direction) {
+		throw new IllegalArgumentException(
+				"can't set a direction on a polygon");
+	}
 }

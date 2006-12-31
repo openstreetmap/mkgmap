@@ -22,7 +22,7 @@ package uk.me.parabola.mkgmap.main;
  *
  * @author Steve Ratcliffe
  */
-public class ExitException extends RuntimeException {
+class ExitException extends RuntimeException {
 
 
 	/**
@@ -33,7 +33,7 @@ public class ExitException extends RuntimeException {
 	 * @param message the detail message. The detail message is saved for
 	 *                later retrieval by the {@link #getMessage()} method.
 	 */
-	public ExitException(String message) {
+	ExitException(String message) {
 		super(message);
 	}
 
@@ -51,7 +51,7 @@ public class ExitException extends RuntimeException {
 	 *                unknown.)
 	 * @since 1.4
 	 */
-	public ExitException(String message, Throwable cause) {
+	ExitException(String message, Throwable cause) {
 		super(message, cause);
 	}
 }

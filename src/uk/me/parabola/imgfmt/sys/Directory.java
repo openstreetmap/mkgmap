@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.FileExistsException;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -59,11 +60,20 @@ class Directory {
 	 * 
 	 * @param name The file name.  Must be 8+3 characters.
 	 * @return The new directory entity.
+	 * @throws FileExistsException If the entry already
+	 * exists.
 	 */
-	Dirent create(String name) {
-		Dirent ent = new Dirent(name, blockSize);
+	Dirent create(String name) throws FileExistsException {
+		for (DirectoryEntry e : entries) {
+			String name2 = e.getName() + '.' + e.getExt();
+			if (name.equals(name2)) {
+				throw new FileExistsException("File " + name + " exists");
+			}
+		}
 
+		Dirent ent = new Dirent(name, blockSize);
 		addEntry(ent);
+
 		return ent;
 	}
 
