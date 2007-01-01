@@ -105,6 +105,11 @@
 
 	<!-- Main -->
   <target name="build" depends="compile" >
+		<copy todir="${build.classes}">
+			<fileset dir="${resources}">
+				<include name="*.csv"/>
+			</fileset>
+		</copy>
   </target>
 
 	<target name="rebuild" depends="clean, build" />
