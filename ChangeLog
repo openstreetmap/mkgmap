@@ -1,11 +1,29 @@
+2007-01-01 11:39  steve
+
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java: Moved adding of the
+	  overview sections out of the routine to make the divisisions.
+	  Both because it doesn't belong their and in preparation for
+	  obtaining the overview from somewhere definitive.
+
+2007-01-01 11:35  steve
+
+	* ChangeLog: Added the changelog to the project.
+
+2007-01-01 11:35  steve
+
+	* src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/main/ExitException.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Minor cleanups.
+
 2007-01-01 11:25  steve
 
 	* build.xml, resources/feature_map.csv, scripts/mk_map_table.py,
 	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java,
 	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: The map featues
-	  are now driven by a file. As it turns out though the
-	  OSMGarminMap list of features doesn't contain all the features I
-	  was already using.
+	  are now driven by a file. As it turns out though the OSMGarminMap
+	  list of features doesn't contain all the features I was already
+	  using.
 
 2006-12-31 13:13  steve
 
@@ -14,8 +32,8 @@
 2006-12-31 13:13  steve
 
 	* src/uk/me/parabola/mkgmap/main/MakeMap.java: If the map info is
-	  going to display as the map name, then lets just put the
-	  map name there.
+	  going to display as the map name, then lets just put the map name
+	  there.
 
 2006-12-31 12:07  steve
 
@@ -41,8 +59,7 @@
 2006-12-30 22:42  steve
 
 	* src/uk/me/parabola/imgfmt/app/LinePreparer.java: Fixed bug where
-	  base goes over 9. Able to remove a couple of fields
-	  as a result.
+	  base goes over 9. Able to remove a couple of fields as a result.
 
 2006-12-30 21:36  steve
 
@@ -124,9 +141,8 @@
 	  src/uk/me/parabola/mkgmap/osm/ReadOsm.java,
 	  src/uk/me/parabola/mkgmap/osm/Segment.java,
 	  src/uk/me/parabola/mkgmap/osm/Way.java: Mostly a white space
-	  change. Have been experimenting with getting
-	  the map description to display instead of the map info as the map
-	  name.
+	  change. Have been experimenting with getting the map description
+	  to display instead of the map info as the map name.
 
 2006-12-30 10:12  steve
 
@@ -142,13 +158,13 @@
 
 	* ., doc, scripts, scripts/checksum.py, scripts/imgfile.py,
 	  scripts/munger.py, scripts/namesum.py: added scripts directory
-	  for python scripts plus doc base directory.
-	  Added more to svn:ignore
+	  for python scripts plus doc base directory. Added more to
+	  svn:ignore
 
 2006-12-29 21:23  steve
 
 	* src/uk/me/parabola/mkgmap/osm/Segment.java,
-	  src/uk/me/parabola/mkgmap/osm/Way.java: Comments, toString method.
+	  src/uk/me/parabola/mkgmap/osm/Way.java: Comments toString method.
 	  Stuff like that.
 
 2006-12-28 10:46  steve
@@ -175,14 +191,14 @@
 
 	* README, src/uk/me/parabola/mkgmap/main/MakeMap.java,
 	  src/uk/me/parabola/mkgmap/osm/CodedConverter.java: Added some
-	  cool features, rail, woods, water. Made them show up
-	  by adding to overview sections where necessary.
+	  cool features, rail, woods, water. Made them show up by adding to
+	  overview sections where necessary.
 
 2006-12-27 22:14  steve
 
 	* src/uk/me/parabola/mkgmap/osm/Way.java: Bug fix to make the
-	  spliting into separate lines work better without
-	  breaking into all 1 segment lengths.
+	  spliting into separate lines work better without breaking into
+	  all 1 segment lengths.
 	  
 	  This will all be re-written though soon.
 
@@ -230,14 +246,12 @@
 	  src/uk/me/parabola/mkgmap/osm/Segment.java,
 	  src/uk/me/parabola/mkgmap/osm/Way.java,
 	  src/uk/me/parabola/mkgmap/osm/package.html: Add points to the
-	  map.
-	  Working.
+	  map. Working.
 
 2006-12-24 17:00  steve
 
 	* src/uk/me/parabola/mkgmap/osm/CodedConverter.java: Added a few
-	  more feature conversions. Used the osmgarminmap
-	  feature list.
+	  more feature conversions. Used the osmgarminmap feature list.
 
 2006-12-24 16:38  steve
 
@@ -269,8 +283,8 @@
 	* src/uk/me/parabola/imgfmt/app/RGNFile.java,
 	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
 	  src/uk/me/parabola/mkgmap/main/MakeTestMap.java: Problem with the
-	  devision pointers needed the header size taken off too.
-	  Now polygons work.
+	  devision pointers needed the header size taken off too. Now
+	  polygons work.
 
 2006-12-23 16:12  steve
 
@@ -294,14 +308,13 @@
 	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
 	  src/uk/me/parabola/mkgmap/main/MakeTestMap.java,
 	  src/uk/me/parabola/mkgmap/osm/CodedConverter.java: Important fix
-	  to get the size of the files correct. Needed as unit reads to
-	  the end of the file and we don't want to read a bung of zeros.
+	  to get the size of the files correct. Needed as unit reads to the
+	  end of the file and we don't want to read a bung of zeros.
 	  
 	  Polygons draw (but no colouring or identification) but cause all
-	  the lines
-	  to have no information associated with them. When you hover over
-	  there is no 'tooltip' or when you click it just says there is
-	  nothing there.
+	  the lines to have no information associated with them. When you
+	  hover over there is no 'tooltip' or when you click it just says
+	  there is nothing there.
 
 2006-12-23 12:25  steve
 
@@ -323,8 +336,8 @@
 	  src/uk/me/parabola/mkgmap/osm/CodedConverter.java,
 	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java,
 	  src/uk/me/parabola/mkgmap/osm/ReadOsm.java: Code for adding
-	  polygons is in. Doesn't work if you enable the polygons
-	  but regression test is fine if they are not enabled.
+	  polygons is in. Doesn't work if you enable the polygons but
+	  regression test is fine if they are not enabled.
 
 2006-12-22 23:28  steve
 
@@ -337,9 +350,9 @@
 	  src/uk/me/parabola/imgfmt/app/TREFile.java,
 	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
 	  src/uk/me/parabola/mkgmap/main/MakeTestMap.java: restructured
-	  ready for adding points and polygons. Now the Map class
-	  is the center of all activity. There is no need to leak the
-	  TRE,LBL and RGN files outside of the Map class.
+	  ready for adding points and polygons. Now the Map class is the
+	  center of all activity. There is no need to leak the TRE,LBL and
+	  RGN files outside of the Map class.
 
 2006-12-21 12:40  steve
 
@@ -368,8 +381,7 @@
 	  src/uk/me/parabola/imgfmt/sys/FileSystem.java,
 	  src/uk/me/parabola/mkgmap/FormatException.java,
 	  src/uk/me/parabola/mkgmap/osm/Way.java: Some documentation
-	  additions and changed format exception
-	  to runtime
+	  additions and changed format exception to runtime
 
 2006-12-21 11:13  steve
 
@@ -409,8 +421,7 @@
 	* src/uk/me/parabola/mkgmap/osm/CodedConverter.java,
 	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java,
 	  src/uk/me/parabola/mkgmap/osm/OsmConverter.java: Prepare for a
-	  converter that is not hard coded.
-	  Plus added a few road types.
+	  converter that is not hard coded. Plus added a few road types.
 
 2006-12-20 19:00  steve
 
@@ -462,8 +473,8 @@
 	  src/uk/me/parabola/mkgmap/general/MapSource.java,
 	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
 	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: Improved the
-	  design by making clear what the collector actually is.
-	  It is just part of the generic map handling.
+	  design by making clear what the collector actually is. It is just
+	  part of the generic map handling.
 
 2006-12-20 12:00  steve
 
@@ -516,8 +527,7 @@
 	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java,
 	  src/uk/me/parabola/mkgmap/osm/Segment.java,
 	  src/uk/me/parabola/mkgmap/osm/Way.java: Some attempt to fix up
-	  mis-ordered segments. Pretty good and usable
-	  map results.
+	  mis-ordered segments. Pretty good and usable map results.
 	  
 	  Before the big cleanup.
 
@@ -568,15 +578,14 @@
 2006-12-18 13:29  steve
 
 	* src/uk/me/parabola/imgfmt/app/TREFile.java: Finally working with
-	  the short TRE header length. We should now be able
-	  to use any name.
+	  the short TRE header length. We should now be able to use any
+	  name.
 
 2006-12-18 13:18  steve
 
 	* src/uk/me/parabola/imgfmt/Utils.java: Fix byte ordering and
-	  subtrace 1900 from the year in the common
-	  header date. If the high bits are set in the date field the map
-	  does not load.
+	  subtrace 1900 from the year in the common header date. If the
+	  high bits are set in the date field the map does not load.
 
 2006-12-17 21:27  steve
 
@@ -667,14 +676,14 @@
 	  src/uk/me/parabola/imgfmt/app/TREFile.java,
 	  src/uk/me/parabola/imgfmt/app/Zoom.java,
 	  src/uk/me/parabola/imgfmt/sys/Directory.java: Working but empty
-	  map. worked with points, but I am now going
-	  on to lines to get roads.
+	  map. worked with points, but I am now going on to lines to get
+	  roads.
 
 2006-12-11 10:43  steve
 
 	* src/uk/me/parabola/imgfmt/app/Label.java: Fix the end of label
-	  marker/length. Before labels that were a multiple
-	  of 4 bytes were not ended.
+	  marker/length. Before labels that were a multiple of 4 bytes were
+	  not ended.
 
 2006-12-10 19:14  steve
 
@@ -688,8 +697,8 @@
 	  src/uk/me/parabola/imgfmt/app/TREFile.java,
 	  src/uk/me/parabola/imgfmt/app/WriteStrategy.java,
 	  src/uk/me/parabola/imgfmt/sys/FileNode.java: Oh well still not
-	  recognised. I've padded out the last block to be a full
-	  block. No go.
+	  recognised. I've padded out the last block to be a full block. No
+	  go.
 
 2006-12-09 23:03  steve
 
@@ -701,8 +710,8 @@
 	  src/uk/me/parabola/imgfmt/app/TREFile.java,
 	  src/uk/me/parabola/imgfmt/app/Writable.java,
 	  src/uk/me/parabola/imgfmt/app/Zoom.java: Interesting point,
-	  getting very close to having a 'complete' map,
-	  but still no joy in getting my unit to recognise it.
+	  getting very close to having a 'complete' map, but still no joy
+	  in getting my unit to recognise it.
 
 2006-12-09 19:06  steve
 
@@ -749,8 +758,7 @@
 	  src/uk/me/parabola/imgfmt/app/WriteStrategy.java,
 	  src/uk/me/parabola/imgfmt/app/Zoom.java,
 	  src/uk/me/parabola/imgfmt/fs/ImgChannel.java: Got some zoom and
-	  subdivision classes
-	  Working on a write strategy to start with.
+	  subdivision classes Working on a write strategy to start with.
 	  Not in a working state.
 
 2006-12-05 06:37  steve
@@ -761,8 +769,7 @@
 	  src/uk/me/parabola/imgfmt/app/Map.java,
 	  src/uk/me/parabola/imgfmt/app/RGNFile.java,
 	  src/uk/me/parabola/imgfmt/app/TREFile.java: Something reasonable
-	  is now written into all the headers. No data at
-	  all whatsoever.
+	  is now written into all the headers. No data at all whatsoever.
 
 2006-12-03 23:24  steve
 
@@ -878,8 +885,7 @@
 	  src/uk/me/parabola/mkosmgmap/img/ImgHeader.java,
 	  src/uk/me/parabola/mkosmgmap/img/PartitionTable.java,
 	  src/uk/me/parabola/mkosmgmap/osm: Initial checkin. Mostly empty
-	  files. Structure set up and ant file
-	  works.
+	  files. Structure set up and ant file works.
 
 2006-11-26 20:46  steve
 
