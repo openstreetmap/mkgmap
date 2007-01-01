@@ -33,4 +33,4 @@ munge:
 
 changelog:
 	svn update
-	svn2cl --reparagraph
+	svn2cl --group-by-day --reparagraph
