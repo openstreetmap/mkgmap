@@ -53,9 +53,6 @@ public class MakeMap {
 
 		try {
 
-			String filename = args[0];
-			String mapname = "63240001";
-
 			CommandArgs a = new CommandArgs();
 			a.readArgs(args);
 			a.dumpOptions();
