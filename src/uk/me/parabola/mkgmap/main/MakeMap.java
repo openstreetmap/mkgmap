@@ -124,6 +124,7 @@ public class MakeMap {
 		// This one gets shown when you switch on, so put the actual
 		// map copyright here.
 		map.addCopyright(src.copyrightMessage());
+		addOverviews(map);
 	}
 
 	/**
@@ -151,6 +152,19 @@ public class MakeMap {
 		Zoom z = map.createZoom(0, 24);
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
+		// TODO: these need to be set first before drawing any of the
+		// division and they need to be derived from the data in the division.
+		// TODO ie they need to come from the division.
+		div.setHasPolylines(true);
+		div.setHasPoints(true);
+		div.setHasIndPoints(false);
+		div.setHasPolygons(true);
+
+		map.startDivision(div);
+		return div;
+ 	}
+
+	private void addOverviews(Map map) {
 		// Set the list of features supported on the map.
 		// TODO should come from map source
 		Overview ov = new Overview(0x2c, 1, 5);
@@ -175,18 +189,7 @@ public class MakeMap {
 		map.addPolygonOverview(ov);
 		ov = new Overview(0x19, 1);
 		map.addPolygonOverview(ov);
-
-		// TODO: these need to be set first before drawing any of the
-		// division and they need to be derived from the data in the division.
-		// TODO ie they need to come from the division.
-		div.setHasPolylines(true);
-		div.setHasPoints(true);
-		div.setHasIndPoints(false);
-		div.setHasPolygons(true);
-
-		map.startDivision(div);
-		return div;
- 	}
+	}
 
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
 		map.startPoints();
