@@ -38,7 +38,7 @@ import java.io.FileNotFoundException;
 import java.util.List;
 
 /**
- * Main routine to make a map as a command line utility.
+ * Main routine for the command line map-making utility.
  *
  * @author Steve Ratcliffe
  */
@@ -64,6 +64,7 @@ public class MakeMap {
 			mm.makeMap(a);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
+			System.exit(1);
 		}
 	}
 

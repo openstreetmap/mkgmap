@@ -49,7 +49,7 @@ public class Logger {
 		initLogging();
 	}
 
-	public static Logger getLogger(Class<? extends Object> aClass) {
+	public static Logger getLogger(Class<?> aClass) {
 		String name = aClass.getName();
 		Logger log = loggers.get(name);
 		if (log == null) {

@@ -44,6 +44,7 @@ public class MapDetails implements MapCollector {
 	 * @param line The line information.
 	 */
 	public void addLine(MapLine line) {
+		assert !(line instanceof MapShape);
 		lines.add(line);
 	}
 
