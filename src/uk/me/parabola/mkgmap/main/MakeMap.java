@@ -56,9 +56,9 @@ public class MakeMap {
 			String filename = args[0];
 			String mapname = "63240001";
 
-			Args a = new Args();
-			a.setFileName(filename);
-			a.setMapname(mapname);
+			CommandArgs a = new CommandArgs();
+			a.readArgs(args);
+			a.dumpOptions();
 
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
@@ -68,7 +68,7 @@ public class MakeMap {
 		}
 	}
 
-	private void makeMap(Args args) {
+	private void makeMap(CommandArgs args) {
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
 		params.setMapDescription("OSM street map");
@@ -274,24 +274,4 @@ public class MakeMap {
 		}
 	}
 
-	private static class Args {
-		private String fileName;
-		private String mapname;
-
-		public String getFileName() {
-			return fileName;
-		}
-
-		public void setFileName(String name) {
-			this.fileName = name;
-		}
-
-		public String getMapname() {
-			return mapname;
-		}
-
-		public void setMapname(String mapname) {
-			this.mapname = mapname;
-		}
-	}
 }
