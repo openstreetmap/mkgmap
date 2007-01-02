@@ -25,24 +25,27 @@ package uk.me.parabola.imgfmt.app;
  *
  * @author Steve Ratcliffe
  */
-public class Overview {
+public abstract class Overview {
+	public static final int POINT_KIND = 1;
+	public static final int LINE_KIND = 2;
+	public static final int SHAPE_KIND = 3;
+
+	private final int kind; // The kind of overview; point, line etc.
 	private final byte type;
-	private final byte maxLevel;
-	private byte subType;
+	private final byte subType;
+
+	private byte maxLevel = 1; // XXX what to do with this?
 
 	private final int size;
 
-	public Overview(int type, int maxLevel, int subType) {
+	protected Overview(int kind, int type, int subType) {
+		this.kind = kind;
 		this.type = (byte) type;
-		this.maxLevel = (byte) maxLevel;
 		this.subType = (byte) subType;
-		this.size = 3;
-	}
-
-	public Overview(int type, int maxLevel) {
-		this.type = (byte) type;
-		this.maxLevel = (byte) maxLevel;
-		this.size = 2;
+		if (kind == POINT_KIND)
+			size = 3;
+		else
+			size = 2;
 	}
 
 	public void write(ImgFile file) {
@@ -50,5 +53,38 @@ public class Overview {
 		file.put(maxLevel);
 		if (size > 2)
 			file.put(subType);
+	}
+
+	/**
+	 * Returns a hash code value for the object.
+	 *
+	 * @return a hash code value for this object.
+	 * @see Object#equals(Object)
+	 */
+	public int hashCode() {
+		return (kind << 7) + (type << 3) + subType;
+	}
+
+	/**
+	 * Indicates whether some other object is "equal to" this one.
+	 *
+	 * @param obj the reference object with which to compare.
+	 * @return <code>true</code> if this object is the same as the obj
+	 *         argument; <code>false</code> otherwise.
+	 * @see #hashCode()
+	 */
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Overview))
+			return false;
+
+		Overview ov = (Overview) obj;
+		if (ov.kind == kind && ov.type == type && ov.subType == subType)
+			return true;
+
+		return false;
+	}
+
+	public int getKind() {
+		return kind;
 	}
 }

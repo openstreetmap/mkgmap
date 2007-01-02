@@ -27,6 +27,12 @@ public class MapElement {
 		this.name = name;
 	}
 
+	/**
+	 * This is the type code that goes in the .img file so that the GPS device
+	 * knows what to display.
+	 *
+	 * @return the type.
+	 */
 	public int getType() {
 		return type;
 	}

@@ -23,15 +23,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Map;
-import uk.me.parabola.imgfmt.app.Overview;
-import uk.me.parabola.imgfmt.app.Polygon;
-import uk.me.parabola.imgfmt.app.Polyline;
-import uk.me.parabola.imgfmt.app.Subdivision;
-import uk.me.parabola.imgfmt.app.Zoom;
-import uk.me.parabola.imgfmt.app.Point;
+import uk.me.parabola.imgfmt.app.*;
 import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
@@ -55,7 +47,7 @@ public class MakeMap {
 
 			CommandArgs a = new CommandArgs();
 			a.readArgs(args);
-			a.dumpOptions();
+//			a.dumpOptions();
 
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
@@ -76,6 +68,9 @@ public class MakeMap {
 
 			MapSource src = loadFromFile(args.getFileName());
 
+			List<Overview> features = src.getOverviews();
+			processOverviews(map, features);
+
 			processInfo(map, src);
 			Subdivision div = makeDivisions(map, src);
 
@@ -92,6 +87,25 @@ public class MakeMap {
 			if (map != null)
 				map.close();
 		}
+	}
+
+	private void processOverviews(Map map, List<Overview> features) {
+		for (Overview ov : features) {
+			switch (ov.getKind()) {
+			case Overview.POINT_KIND:
+				map.addPointOverview((PointOverview) ov);
+				break;
+			case Overview.LINE_KIND:
+				map.addPolylineOverview((PolylineOverview) ov);
+				break;
+			case Overview.SHAPE_KIND:
+				map.addPolygonOverview((PolygonOverview) ov);
+				break;
+			}
+		}
+
+		// The last one is being ignored so add a dummy one.
+		map.addPolygonOverview(new PolygonOverview(0x0));
 	}
 
 	/**
@@ -121,7 +135,6 @@ public class MakeMap {
 		// This one gets shown when you switch on, so put the actual
 		// map copyright here.
 		map.addCopyright(src.copyrightMessage());
-		addOverviews(map);
 	}
 
 	/**
@@ -160,33 +173,6 @@ public class MakeMap {
 		map.startDivision(div);
 		return div;
  	}
-
-	private void addOverviews(Map map) {
-		// Set the list of features supported on the map.
-		// TODO should come from map source
-		Overview ov = new Overview(0x2c, 1, 5);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2f, 1, 0xb);
-		map.addPointOverview(ov);
-		ov = new Overview(0x0, 1, 0x22);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2d, 1, 0x2);
-		map.addPointOverview(ov);
-
-		ov = new Overview(6, 1);
-		map.addPolylineOverview(ov);
-
-		ov = new Overview(0x17, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x1a, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x3c, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x50, 1);
-		map.addPolygonOverview(ov);
-		ov = new Overview(0x19, 1);
-		map.addPolygonOverview(ov);
-	}
 
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
 		map.startPoints();

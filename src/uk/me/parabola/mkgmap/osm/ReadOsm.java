@@ -23,6 +23,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Overview;
 
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
@@ -101,6 +102,20 @@ public class ReadOsm implements MapSource {
 
 	public List<MapShape> getShapes() {
 		return mapper.getShapes();
+	}
+
+	/**
+	 * Get a list of every feature that is used in the map.  As features are
+	 * created a list is kept of each separate feature that is used.  This
+	 * goes into the .img file and is important for points and polygons although
+	 * it doesn't seem to matter if lines are represented or not on my Legend Cx
+	 * anyway.
+	 *
+	 * @return A list of all the types of point, polygon and polyline that are
+	 * used in the map.
+	 */
+	public List<Overview> getOverviews() {
+		return mapper.getOverviews();
 	}
 
 

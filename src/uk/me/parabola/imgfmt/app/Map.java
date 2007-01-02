@@ -163,15 +163,15 @@ public class Map {
 		return child;
 	}
 
-	public void addPointOverview(Overview ov) {
+	public void addPointOverview(PointOverview ov) {
 		treFile.addPointOverview(ov);
 	}
 
-	public void addPolylineOverview(Overview ov) {
+	public void addPolylineOverview(PolylineOverview ov) {
 		treFile.addPolylineOverview(ov);
 	}
 
-	public void addPolygonOverview(Overview ov) {
+	public void addPolygonOverview(PolygonOverview ov) {
 		treFile.addPolygonOverview(ov);
 	}
 

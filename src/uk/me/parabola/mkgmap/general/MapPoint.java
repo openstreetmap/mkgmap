@@ -27,6 +27,12 @@ public class MapPoint extends MapElement {
 	private int subType;
 	private Coord location;
 
+	/**
+	 * Points have a subtype as well as a type.  This is the value that will
+	 * be actually stored in the .img file.
+	 *
+	 * @return The subtype code.
+	 */
 	public int getSubType() {
 		return subType;
 	}

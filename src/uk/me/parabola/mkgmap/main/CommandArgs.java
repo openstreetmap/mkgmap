@@ -65,7 +65,6 @@ class CommandArgs {
 	public void readArgs(String[] args) {
 		int i = 0;
 		while (i < args.length) {
-			System.out.println(defaults);
 			String a = args[i++];
 			if (a.startsWith("--")) {
 				// This is a long style 'property' format option.

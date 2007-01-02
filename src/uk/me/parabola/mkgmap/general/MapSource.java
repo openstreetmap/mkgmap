@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.FormatException;
 
 import java.io.FileNotFoundException;
@@ -26,6 +27,11 @@ import java.util.List;
  * A source of map information in a standard format.  The OSM reader presents
  * this interface to the main map making program.  OSM concepts are converted
  * into Garmin map based structures such as {@link MapLine}. 
+ *
+ * Note that it does not reference anything from the imgfmt package that
+ * relies on subdivisions.  In other words it does not directly reference
+ * Point or Polyline as they depend on the subdivision they are in.  It
+ * can refer to Coord and Overview however as they have global meaning.
  *
  * @author Steve Ratcliffe
  */
@@ -71,4 +77,16 @@ public interface MapSource {
 	 * @return A list of {@link MapShape} objects.
 	 */
 	List<MapShape> getShapes();
+
+	/**
+	 * Get a list of every feature that is used in the map.  As features are
+	 * created a list is kept of each separate feature that is used.  This
+	 * goes into the .img file and is important for points and polygons although
+	 * it doesn't seem to matter if lines are represented or not on my Legend Cx
+	 * anyway.
+	 *
+	 * @return A list of all the types of point, polygon and polyline that are
+	 * used in the map.
+	 */
+	List<Overview> getOverviews();
 }

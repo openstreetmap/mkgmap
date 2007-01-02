@@ -16,12 +16,10 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.*;
 import uk.me.parabola.imgfmt.Utils;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * The map features that we are going to map are collected here.
@@ -38,6 +36,14 @@ public class MapDetails implements MapCollector {
 	private int maxLat = Utils.toMapUnit(-180.0);
 	private int maxLon = Utils.toMapUnit(-180.0);
 
+	// Keep a list of all items that were used.
+	private final Set<Overview> usedItems = new HashSet<Overview>();
+
+	public void addPoint(MapPoint point) {
+		usedItems.add(new PointOverview(point.getType(), point.getSubType()));
+		points.add(point);
+	}
+
 	/**
 	 * Add a line to the map.
 	 *
@@ -45,6 +51,8 @@ public class MapDetails implements MapCollector {
 	 */
 	public void addLine(MapLine line) {
 		assert !(line instanceof MapShape);
+
+		usedItems.add(new PolylineOverview(line.getType()));
 		lines.add(line);
 	}
 
@@ -56,6 +64,7 @@ public class MapDetails implements MapCollector {
 	 * @param shape The polygon to add.
 	 */
 	public void addShape(MapShape shape) {
+		usedItems.add(new PolygonOverview(shape.getType()));
 		shapes.add(shape);
 	}
 
@@ -75,10 +84,6 @@ public class MapDetails implements MapCollector {
 			minLon = lon;
 		if (lon > maxLon)
 			maxLon = lon;
-	}
-
-	public void addPoint(MapPoint point) {
-		points.add(point);
 	}
 
 	/**
@@ -105,5 +110,11 @@ public class MapDetails implements MapCollector {
 
 	public List<MapShape> getShapes() {
 		return shapes;
+	}
+
+	public List<Overview> getOverviews() {
+
+		List<Overview> ovlist = new ArrayList<Overview>(usedItems);
+		return ovlist;
 	}
 }

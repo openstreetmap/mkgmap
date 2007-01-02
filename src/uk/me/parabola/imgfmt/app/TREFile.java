@@ -66,15 +66,16 @@ public class TREFile extends ImgFile {
 	private byte poiDisplayFlags;
 
 	// Information about polylines.  eg roads etc.
-	private final List<Overview> polylineOverviews = new ArrayList<Overview>();
+	private final List<PolylineOverview> polylineOverviews
+			= new ArrayList<PolylineOverview>();
 	private int polylinePos;
 	private int polylineSize;
 
-	private final List<Overview> polygonOverviews = new ArrayList<Overview>();
+	private final List<PolygonOverview> polygonOverviews = new ArrayList<PolygonOverview>();
 	private int polygonPos;
 	private int polygonSize;
 
-	private final List<Overview> pointOverviews = new ArrayList<Overview>();
+	private final List<PointOverview> pointOverviews = new ArrayList<PointOverview>();
 	private int pointPos;
 	private int pointSize;
 
@@ -140,15 +141,15 @@ public class TREFile extends ImgFile {
 		copyrights.add(cr);
 	}
 
-	public void addPointOverview(Overview ov) {
+	public void addPointOverview(PointOverview ov) {
 		pointOverviews.add(ov);
 	}
 
-	public void addPolylineOverview(Overview ov) {
+	public void addPolylineOverview(PolylineOverview ov) {
 		polylineOverviews.add(ov);
 	}
 
-	public void addPolygonOverview(Overview ov) {
+	public void addPolygonOverview(PolygonOverview ov) {
 		polygonOverviews.add(ov);
 	}
 

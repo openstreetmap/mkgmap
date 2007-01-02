@@ -22,11 +22,12 @@ import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
-import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.PointOverview;
+import uk.me.parabola.imgfmt.app.Polygon;
 import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
-import uk.me.parabola.imgfmt.app.Polygon;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -87,17 +88,17 @@ public class MakeTestMap {
 		Subdivision div = map.createSubdivision(topdiv, area, z);
 
 
-		Overview ov = new Overview(0x2c, 1, 5);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2f, 1, 0xb);
-		map.addPointOverview(ov);
-		ov = new Overview(0x2d, 1, 0x2);
-		map.addPointOverview(ov);
-		ov = new Overview(0x0, 1, 0x22);
-		map.addPointOverview(ov);
+		PointOverview pov = new PointOverview(0x2c, 5);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x2f, 0xb);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x2d, 0x2);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x0, 0x22);
+		map.addPointOverview(pov);
 
-		ov = new Overview(6, 1);
-		map.addPolylineOverview(ov);
+		PolylineOverview lov = new PolylineOverview(6);
+		map.addPolylineOverview(lov);
 
 		div.setHasPolylines(true);
 		div.setHasPolygons(true);
