@@ -81,47 +81,6 @@ public class FeatureListConverter implements OsmConverter {
 		}
 	}
 
-	private void readFeatures(BufferedReader in) throws IOException {
-		log.info("reading features");
-		String line;
-		while ((line = in.readLine()) != null) {
-			String[] fields = line.split("\\|", -1);
-			if (fields.length != N_FIELDS) {
-				continue;
-			}
-
-			String type = fields[F_FEATURE_TYPE];
-			log.debug("feature kind " + type);
-			if (type.equals("point")) {
-				log.debug("point type found");
-				saveFeature(fields, pointTypes, pointFeatures);
-
-			} else if (type.equals("polyline")) {
-				log.debug("polyline type found");
-				// Lines only have types and not subtypes on
-				// the garmin side
-				assert fields[F_GARMIN_SUBTYPE].length() == 0;
-				saveFeature(fields, lineTypes, lineFeatures);
-
-			} else if (type.equals("polygon")) {
-				log.debug("polygon type found");
-				saveFeature(fields, shapeTypes, shapeFeatures);
-
-			} else {
-				// Unknown type
-				log.warn("unknown feature type " + type);
-			}
-		}
-	}
-
-	private void saveFeature(String[] fields, Set<String> types, Map<String, GarminType> features) {
-		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
-		types.add(fields[F_OSM_TYPE]);
-
-		GarminType gtype = new GarminType(fields[F_GARMIN_TYPE]);
-		features.put(osm, gtype);
-	}
-
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
@@ -174,10 +133,7 @@ public class FeatureListConverter implements OsmConverter {
 				return;
 			}
 		}
-	}
-
-	private String makeKey(String key, String val) {
-		return key + '|' + val;
+		log.warn("no feature mapping for " + way);
 	}
 
 	/**
@@ -204,6 +160,52 @@ public class FeatureListConverter implements OsmConverter {
 				return;
 			}
 		}
+		log.warn("no mapping found for " + node);
+	}
+
+	private void readFeatures(BufferedReader in) throws IOException {
+		log.info("reading features");
+		String line;
+		while ((line = in.readLine()) != null) {
+			String[] fields = line.split("\\|", -1);
+			if (fields.length != N_FIELDS) {
+				continue;
+			}
+
+			String type = fields[F_FEATURE_TYPE];
+			log.debug("feature kind " + type);
+			if (type.equals("point")) {
+				log.debug("point type found");
+				saveFeature(fields, pointTypes, pointFeatures);
+
+			} else if (type.equals("polyline")) {
+				log.debug("polyline type found");
+				// Lines only have types and not subtypes on
+				// the garmin side
+				assert fields[F_GARMIN_SUBTYPE].length() == 0;
+				saveFeature(fields, lineTypes, lineFeatures);
+
+			} else if (type.equals("polygon")) {
+				log.debug("polygon type found");
+				saveFeature(fields, shapeTypes, shapeFeatures);
+
+			} else {
+				// Unknown type
+				log.warn("unknown feature type " + type);
+			}
+		}
+	}
+
+	private void saveFeature(String[] fields, Set<String> types, Map<String, GarminType> features) {
+		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
+		types.add(fields[F_OSM_TYPE]);
+
+		GarminType gtype = new GarminType(fields[F_GARMIN_TYPE]);
+		features.put(osm, gtype);
+	}
+
+	private String makeKey(String key, String val) {
+		return key + '|' + val;
 	}
 
 	static class GarminType {

@@ -18,8 +18,6 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.PointOverview;
@@ -27,8 +25,6 @@ import uk.me.parabola.imgfmt.app.Polygon;
 import uk.me.parabola.imgfmt.app.Polyline;
 import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.app.Subdivision;
-import uk.me.parabola.imgfmt.app.Zoom;
-import uk.me.parabola.log.Logger;
 
 /**
  * A test routine to make an artificial map.  Makes some lines, squares etc
@@ -38,84 +34,25 @@ import uk.me.parabola.log.Logger;
  *
  * @author steve
  */
-public class MakeTestMap {
-	private static final Logger log = Logger.getLogger(MakeTestMap.class);
+public class MakeTestMap extends AbstractTestMap {
 
 	public static void main(String[] args)  {
-
-		// Default to nowhere in particular.
-		double lat = 51.724;
-		double lng = 0.2487;
-
-		// Arguments allow you to place the map where ever you wish.
-		if (args.length > 1) {
-			lat = Double.valueOf(args[0]);
-			lng = Double.valueOf(args[1]);
-		}
-
-		log.debug("this is a test make map program. Center " + lat + '/' + lng);
-
-		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(512);
-		params.setMapDescription("OSM street map");
-
-		Map map = Map.createMap("32860003", params);
-		map.setPoiDisplayFlags(0);
-		map.addInfo("Program released under the GPL");
-		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-
-		// There has to be (at least) two copyright messages or else the map
-		// does not show up.  The second one will be displayed at startup,
-		// although the conditions where that happens are not known.
-		map.addCopyright("program licenced under GPL v2");
-
-		// This one gets shown when you switch on, so put the actual
-		// map copyright here.
-		map.addCopyright("OpenStreetMap.org contributers.");
-
-		Area area = new Area(lat, lng, lat + 0.05, lng + 0.05);
-		map.setBounds(area);
-
-		// There must always be an empty zoom level at the least detailed level.
-		log.info("area " + area);
-		log.info(" or " + lat + '/' + lng);
-
-		Zoom z1 = map.createZoom(1, 24);
-		Subdivision topdiv = map.topLevelSubdivision(area, z1);
-
-		// Create a most detailed view
-		Zoom z = map.createZoom(0, 24);
-		Subdivision div = map.createSubdivision(topdiv, area, z);
-
-
-		PointOverview pov = new PointOverview(0x2c, 5);
-		map.addPointOverview(pov);
-		pov = new PointOverview(0x2f, 0xb);
-		map.addPointOverview(pov);
-		pov = new PointOverview(0x2d, 0x2);
-		map.addPointOverview(pov);
-		pov = new PointOverview(0x0, 0x22);
-		map.addPointOverview(pov);
-
-		PolylineOverview lov = new PolylineOverview(6);
-		map.addPolylineOverview(lov);
-
-		div.setHasPolylines(true);
-		div.setHasPolygons(true);
-		map.startDivision(div);
-
-		drawLines(map, div, lat, lng);
-		drawPolygons(map, div, lat, lng);
-
-		map.close();
+		MakeTestMap tm = new MakeTestMap();
+		tm.makeMap(args);
 	}
 
-	private static void drawPolygons(Map map, Subdivision div, double slat, double slon) {
+	protected void drawTestMap(Map map, Subdivision div, double lat, double lng) {
+		drawLines(map, div, lat, lng);
+		drawPolygons(map, div, lat, lng);
+	}
+
+	private void drawPolygons(Map map, Subdivision div, double slat, double slon) {
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
 		double soff = 0.002;
 
+		div.setHasPolygons(true);
 		map.startShapes();
 
 		Polygon pg = map.createPolygon(div, "Field of dreams");
@@ -134,8 +71,9 @@ public class MakeTestMap {
 		map.addMapObject(pg);
 	}
 
-	private static void drawLines(Map map, Subdivision div, double slat, double slng) {
+	private void drawLines(Map map, Subdivision div, double slat, double slng) {
 
+		div.setHasPolylines(true);
 		map.startLines();
 
 
@@ -217,4 +155,17 @@ public class MakeTestMap {
 		map.addMapObject(pl);
 	}
 
+	protected void writeOverviews(Map map) {
+		PointOverview pov = new PointOverview(0x2c, 5);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x2f, 0xb);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x2d, 0x2);
+		map.addPointOverview(pov);
+		pov = new PointOverview(0x0, 0x22);
+		map.addPointOverview(pov);
+
+		PolylineOverview lov = new PolylineOverview(6);
+		map.addPolylineOverview(lov);
+	}
 }

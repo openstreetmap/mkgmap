@@ -63,4 +63,21 @@ public class Element {
 	public void setId(long id) {
 		this.id = id;
 	}
+
+	protected String toTagString() {
+		if (tags == null)
+			return "";
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		for (Map.Entry e : tags.entrySet()) {
+			sb.append(e.getKey());
+			sb.append('=');
+			sb.append(e.getValue());
+			sb.append(',');
+		}
+		sb.setLength(sb.length()-1);
+		sb.append(']');
+		return sb.toString();
+	}
 }

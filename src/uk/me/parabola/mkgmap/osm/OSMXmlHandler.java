@@ -138,6 +138,7 @@ class OSMXmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
+				// TODO: only do this when it is likely to be required
 				converter.convertNode(currentNode);
 			}
 		} else if (mode == MODE_SEGMENT) {

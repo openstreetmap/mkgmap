@@ -56,14 +56,17 @@ class Way extends Element {
 			return "Way: empty";
 
 		Coord coord = segments.get(0).getStart();
-		String ret = "WAY: "
-				+ getName()
-				+ ' '
-				+ Utils.toDegrees(coord.getLatitude())
-				+ '/'
-				+ Utils.toDegrees(coord.getLongitude())
-				;
-		return ret;
+		StringBuilder sb = new StringBuilder();
+		sb.append("WAY: ");
+		sb.append(getName());
+		sb.append('(');
+		sb.append(Utils.toDegrees(coord.getLatitude()));
+		sb.append('/');
+		sb.append(Utils.toDegrees(coord.getLongitude()));
+		sb.append(')');
+		sb.append(' ');
+		sb.append(toTagString());
+		return sb.toString();
 	}
 
 	/**
