@@ -74,7 +74,6 @@ public class Logger {
 
 	private static void initLogging() {
 
-		file = null;
 		loggingActive = false;
 
 		Properties props = System.getProperties();

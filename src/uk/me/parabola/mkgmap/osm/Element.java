@@ -70,7 +70,7 @@ public class Element {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
-		for (Map.Entry e : tags.entrySet()) {
+		for (Map.Entry<String, String> e : tags.entrySet()) {
 			sb.append(e.getKey());
 			sb.append('=');
 			sb.append(e.getValue());

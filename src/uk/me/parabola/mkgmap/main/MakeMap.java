@@ -23,7 +23,18 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.Point;
+import uk.me.parabola.imgfmt.app.PointOverview;
+import uk.me.parabola.imgfmt.app.Polygon;
+import uk.me.parabola.imgfmt.app.PolygonOverview;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.PolylineOverview;
+import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
@@ -100,6 +111,8 @@ public class MakeMap {
 				break;
 			case Overview.SHAPE_KIND:
 				map.addPolygonOverview((PolygonOverview) ov);
+				break;
+			default:
 				break;
 			}
 		}

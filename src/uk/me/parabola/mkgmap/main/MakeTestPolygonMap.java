@@ -60,17 +60,17 @@ public class MakeTestPolygonMap extends AbstractTestMap {
 				int type = x*16 + y;
 
 				Polygon pg = map.createPolygon(div, "0x" + Integer.toHexString(type));
-				double base_lat = lat + y * space;
-				double base_lon = lon + x * space;
-				Coord co = new Coord(base_lat, base_lon);
+				double baseLat = lat + y * space;
+				double baseLong = lon + x * space;
+				Coord co = new Coord(baseLat, baseLong);
 				pg.addCoord(co);
-				co = new Coord(base_lat + size, base_lon);
+				co = new Coord(baseLat + size, baseLong);
 				pg.addCoord(co);
-				co = new Coord(base_lat + size, base_lon + size);
+				co = new Coord(baseLat + size, baseLong + size);
 				pg.addCoord(co);
-				co = new Coord(base_lat, base_lon + size);
+				co = new Coord(baseLat, baseLong + size);
 				pg.addCoord(co);
-				co = new Coord(base_lat, base_lon);
+				co = new Coord(baseLat, baseLong);
 				pg.addCoord(co);
 
 				pg.setType(type);

@@ -24,8 +24,17 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.main.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -48,16 +57,16 @@ public class FeatureListConverter implements OsmConverter {
 
 //	private Map pointFeatures = new HashMap();
 
-	private Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
-	private Set<String> pointTypes = new HashSet<String>();
+	private final Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
+	private final Set<String> pointTypes = new HashSet<String>();
 
-	private Map<String, GarminType> lineFeatures = new HashMap<String, GarminType>();
-	private Set<String> lineTypes = new HashSet<String>();
+	private final Map<String, GarminType> lineFeatures = new HashMap<String, GarminType>();
+	private final Set<String> lineTypes = new HashSet<String>();
 
-	private Map<String, GarminType> shapeFeatures = new HashMap<String, GarminType>();
-	private Set<String> shapeTypes = new HashSet<String>();
+	private final Map<String, GarminType> shapeFeatures = new HashMap<String, GarminType>();
+	private final Set<String> shapeTypes = new HashSet<String>();
 
-	private MapCollector mapper;
+	private final MapCollector mapper;
 
 	public FeatureListConverter(MapCollector collector) {
 		this.mapper = collector;
@@ -74,10 +83,8 @@ public class FeatureListConverter implements OsmConverter {
 
 		} catch (UnsupportedEncodingException e) {
 			log.error("reading features failed");
-			e.printStackTrace();
 		} catch (IOException e) {
 			log.error("reading features failed");
-			e.printStackTrace();
 		}
 	}
 
@@ -208,29 +215,36 @@ public class FeatureListConverter implements OsmConverter {
 		return key + '|' + val;
 	}
 
-	static class GarminType {
-		private static final Logger log = Logger.getLogger(GarminType.class);
+	private static class GarminType {
 
-		private int type;
-		private int subtype;
+		private final int type;
+		private final int subtype;
 
-		public GarminType(String type) {
+		GarminType(String type) {
+			int it;
 			try {
-				this.type = Integer.decode(type);
+				it = Integer.decode(type);
 			} catch (NumberFormatException e) {
-				log.debug("not numeric ", type, subtype);
-				this.type = 0;
+				log.debug("not numeric ", type);
+				it = 0;
 			}
+			this.type = it;
+			this.subtype = 0;
 		}
 
-		public GarminType(String type, String subtype) {
+		GarminType(String type, String subtype) {
+			int it;
+			int ist;
 			try {
-				this.type = Integer.decode(type);
-				this.subtype = Integer.decode(subtype);
+				it = Integer.decode(type);
+				ist = Integer.decode(subtype);
 			} catch (NumberFormatException e) {
 				log.debug("not numeric ", type, subtype);
+				it = 0;
+				ist = 0;
 			}
-
+			this.type = it;
+			this.subtype = ist;
 		}
 
 		/**

@@ -16,7 +16,10 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Point;
+import uk.me.parabola.imgfmt.app.PointOverview;
+import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.Utils;
 
 /**
@@ -63,14 +66,14 @@ public class MakeTestPointMap extends AbstractTestMap {
 
 				Point point = map.createPoint(div,
 						"0x" + Integer.toHexString(type)
-								+ ","
+								+ ','
 								+ "0x" + Integer.toHexString(subtype));
 				
-				double base_lat = lat + y * space;
-				double base_lon = lon + x * space;
+				double baseLat = lat + y * space;
+				double baseLong = lon + x * space;
 
-				point.setLatitude(Utils.toMapUnit(base_lat));
-				point.setLongitude(Utils.toMapUnit(base_lon));
+				point.setLatitude(Utils.toMapUnit(baseLat));
+				point.setLongitude(Utils.toMapUnit(baseLong));
 				point.setType(type);
 				point.setSubtype(subtype);
 				map.addMapObject(point);

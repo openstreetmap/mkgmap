@@ -99,7 +99,7 @@ public class ImgFS implements FileSystem {
 	 *
 	 * @param params A set of parameters.
 	 */
-	public final void setParams(FileSystemParam params) {
+	private void setParams(FileSystemParam params) {
 		int bs = params.getBlockSize();
 		if (bs > 0) {
 			blockSize = bs;

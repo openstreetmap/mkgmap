@@ -17,14 +17,17 @@
 package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 /**
  * @author Steve Ratcliffe
  */
 public abstract class AbstractTestMap {
-	private static final Logger log = Logger.getLogger(MakeTestMap.class);
+	private static final Logger log = Logger.getLogger(AbstractTestMap.class);
 
 	protected void makeMap(String[] args) {
 		// Default to nowhere in particular.

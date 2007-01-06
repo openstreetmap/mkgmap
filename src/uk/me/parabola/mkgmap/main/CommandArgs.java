@@ -74,7 +74,7 @@ class CommandArgs {
 				readConfigFile(args[++i]);
 			} else if (a.equals("-n")) {
 				// Map name (should be an 8 digit number).
-				argvalues.put("mapname", args[++i]);
+				argvalues.setProperty("mapname", args[++i]);
 			} else if (a.startsWith("-")) {
 				// this is an unrecognised option.
 				log.warn("unrecognised option");
@@ -111,9 +111,9 @@ class CommandArgs {
 			fileprops.load(is);
 			argvalues = fileprops;
 		} catch (FileNotFoundException e) {
-			throw new ExitException("Cannot find configuration file " + filename);
+			throw new ExitException("Cannot find configuration file " + filename, e);
 		} catch (IOException e) {
-			throw new ExitException("Error reading configuration file");
+			throw new ExitException("Error reading configuration file", e);
 		}
 
 	}
@@ -127,7 +127,7 @@ class CommandArgs {
 	}
 
 	public void dumpOptions() {
-		Enumeration en = argvalues.propertyNames();
+		Enumeration<?> en = argvalues.propertyNames();
 		while (en.hasMoreElements()) {
 			String key = (String) en.nextElement();
 			String val = argvalues.getProperty(key);

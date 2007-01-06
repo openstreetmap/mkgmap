@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.log.Logger;
-
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
  * point.
@@ -29,7 +27,7 @@ import uk.me.parabola.log.Logger;
  * @author Steve Ratcliffe
  */
 public abstract class MapObject {
-	private static final Logger log = Logger.getLogger(MapObject.class);
+	// --Commented out by Inspection (06/01/07 23:05):private static final Logger log = Logger.getLogger(MapObject.class);
 
 	// All lines are in a division and many aspects of it are with respect to
 	// the division.

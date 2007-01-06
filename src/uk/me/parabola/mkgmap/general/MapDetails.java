@@ -16,10 +16,18 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.PointOverview;
+import uk.me.parabola.imgfmt.app.PolygonOverview;
+import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.Utils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The map features that we are going to map are collected here.
