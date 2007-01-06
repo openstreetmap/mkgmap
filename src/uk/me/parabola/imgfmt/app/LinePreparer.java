@@ -17,8 +17,6 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.List;
 
-import uk.me.parabola.imgfmt.Utils;
-
 import uk.me.parabola.log.Logger;
 
 class LinePreparer {
@@ -96,6 +94,10 @@ class LinePreparer {
 		int dx, dy;
 		for (int i = 0; i < deltas.length; i+=2) {
 			dx = deltas[i];
+			dy = deltas[i + 1];
+			if (dx == 0 && dy == 0)
+				continue;
+			
 			if (log.isDebugEnabled())
 				log.debug("x delta " + dx + ", " + xbits);
 			if (xSameSign) {
@@ -106,7 +108,6 @@ class LinePreparer {
 				bw.put1(dx < 0);
 			}
 
-			dy = deltas[i + 1];
 			if (log.isDebugEnabled())
 				log.debug("y delta " + dy + ", " + ybits);
 			if (ySameSign) {
@@ -129,20 +130,10 @@ class LinePreparer {
 	 * location is just the first point in the line.
 	 */
 	private void calcLatLong() {
-		Subdivision div = polyline.getSubdiv();
-
 		Coord co = polyline.getPoints().get(0);
 
-		int shift = div.getShift();
-		log.debug("shift is " + shift);
-
-		// TODO: pull this into superclass
-		int lat = (co.getLatitude() - div.getLatitude()) >> shift;
-		int lon = (co.getLongitude() - div.getLongitude()) >> shift;
-		log.debug("lat/long " + Utils.toDegrees(lat) + '/' + Utils.toDegrees(lon));
-
-		polyline.setLatitude(lat);
-		polyline.setLongitude(lon);
+		polyline.setLatitude(co.getLatitude());
+		polyline.setLongitude(co.getLongitude());
 	}
 
 	/**
@@ -178,6 +169,7 @@ class LinePreparer {
 		for (Coord co : points) {
 			int lat = co.getLatitude() >> shift;
 			int lon = co.getLongitude() >> shift;
+			log.debug("shifted pos", lat, lon);
 			if (first) {
 				lastLat = lat;
 				lastLong = lon;

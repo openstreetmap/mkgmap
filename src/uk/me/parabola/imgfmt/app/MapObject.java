@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import uk.me.parabola.log.Logger;
+
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
  * point.
@@ -27,6 +29,8 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public abstract class MapObject {
+	private static final Logger log = Logger.getLogger(MapObject.class);
+
 	// All lines are in a division and many aspects of it are with respect to
 	// the division.
 	private Subdivision subdiv;
@@ -39,8 +43,8 @@ public abstract class MapObject {
 
 	// These long and lat values are relative to the subdivision center.
 	// Must be shifted depending on the zoom level.
-	private int longitude;
-	private int latitude;
+	private int deltaLong;
+	private int deltaLat;
 
 	/**
 	 * Write this object to the given file.
@@ -49,12 +53,12 @@ public abstract class MapObject {
 	 */
 	public abstract void write(ImgFile file);
 
-	public int getLatitude() {
-		return latitude;
+	public int getDeltaLat() {
+		return deltaLat;
 	}
 
-	public int getLongitude() {
-		return longitude;
+	public int getDeltaLong() {
+		return deltaLong;
 	}
 
 	public void setLabel(Label label) {
@@ -69,12 +73,46 @@ public abstract class MapObject {
 		this.type = type;
 	}
 
-	public void setLatitude(int latitude) {
-		this.latitude = latitude;
+	/** 
+	 * Set an ordinary unshifted latitude.  It will be calculated
+	 * relative to the subdivision. 
+	 * 
+	 * @param lat The original latitude.
+	 */
+	public void setLatitude(int lat) {
+		Subdivision div = getSubdiv();
+		int shift = div.getShift();
+
+		int centerLat = div.getLatitude() >> shift;
+		int diff = ((lat>>shift) - centerLat);
+
+		setDeltaLat(diff);
 	}
 
-	public void setLongitude(int longitude) {
-		this.longitude = longitude;
+	/** 
+	 * Set an ordinary unshifted longitude.  It will be calculated
+	 * relative to the subdivision. 
+	 * 
+	 * @param lon The original longitude.
+	 */
+	public void setLongitude(int lon) {
+		Subdivision div = getSubdiv();
+		int shift = div.getShift();
+
+		int centerLon = div.getLongitude() >> shift;
+		int diff = ((lon>> shift) - centerLon);
+
+		setDeltaLong(diff);
+	}
+	
+    // directly setting shouldn't be done
+	private void setDeltaLat(int deltaLat) {
+		this.deltaLat = deltaLat;
+	}
+
+	// directly setting shouldn't be done.
+	private void setDeltaLong(int deltaLong) {
+		this.deltaLong = deltaLong;
 	}
 
 	public Subdivision getSubdiv() {

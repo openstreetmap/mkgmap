@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import uk.me.parabola.log.Logger;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,7 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class Polyline extends MapObject {
+	private static final Logger log = Logger.getLogger(Polyline.class);
 
 	// Set if it is a one-way street for example.
 	private boolean direction;
@@ -76,8 +79,9 @@ public class Polyline extends MapObject {
 
 		// The delta of the longitude from the subdivision centre point
 		// note that this has already been calculated.
-		file.putChar((char) getLongitude());
-		file.putChar((char) getLatitude());
+		file.putChar((char) getDeltaLong());
+		file.putChar((char) getDeltaLat());
+		log.debug("out center", getDeltaLat(), getDeltaLong());
 
 		if (blen > 255) {
 			file.putChar((char) (blen & 0xffff));

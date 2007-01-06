@@ -174,7 +174,8 @@ public class MakeMap {
 		return div;
  	}
 
-	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
+	private void processPoints(Map map, Subdivision div, List<MapPoint> points)
+	{
 		map.startPoints();
 
 		for (MapPoint point : points) {
@@ -208,7 +209,8 @@ public class MakeMap {
 
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {
-				log.debug("  point at " + co);
+				if (log.isDebugEnabled())
+				log.debug("  point at", co, '/', co.getLatitude(), co.getLongitude());
 				pl.addCoord(co);
 			}
 

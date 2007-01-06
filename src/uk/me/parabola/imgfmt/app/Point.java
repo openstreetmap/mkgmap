@@ -54,23 +54,23 @@ public class Point extends MapObject {
 			off |= 0x800000;
 
 		file.put3(off);
-//        log.debug("long:" + getLongitude());
-//        log.debug("super long: " + super.getLongitude() + ", divlong=" + getSubdiv().getLongitude());
-//        assert (getLongitude() & ~0xffff) == 0;
-//        assert (getLatitude() & ~0xffff) == 0;
-		file.putChar((char) getLongitude());
-		file.putChar((char) getLatitude());
+//        log.debug("long:" + getDeltaLong());
+//        log.debug("super long: " + super.getDeltaLong() + ", divlong=" + getSubdiv().getDeltaLong());
+//        assert (getDeltaLong() & ~0xffff) == 0;
+//        assert (getDeltaLat() & ~0xffff) == 0;
+		file.putChar((char) getDeltaLong());
+		file.putChar((char) getDeltaLat());
 		if (subtype != 0)
 			file.put((byte) subtype);
 	}
 
 
-	public int getLatitude() {
-		return super.getLatitude() - getSubdiv().getLatitude();
+	public int getDeltaLat() {
+		return super.getDeltaLat() - getSubdiv().getLatitude();
 	}
 
-	public int getLongitude() {
-		return super.getLongitude() - getSubdiv().getLongitude();
+	public int getDeltaLong() {
+		return super.getDeltaLong() - getSubdiv().getLongitude();
 	}
 
 //    public int getSubtype() {

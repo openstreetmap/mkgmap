@@ -164,7 +164,7 @@ public class LBLFile extends ImgFile {
 		putChar(HIGHWAYDATA_REC_LEN);
 		putInt(0);
 
-		putChar((char) 0); //code
+		putChar((char) 850); //code
 		putInt(0);
 
 		// Sort descriptor ???
