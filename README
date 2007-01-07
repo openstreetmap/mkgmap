@@ -3,11 +3,11 @@ Making maps for Garmin GPS units
 ================================
 
 The goal of the project is to take OpenStreetMap data and put it on
-my Garmin Legend Cx to help show me when mapping what is done and
-what is not.
+my Garmin Legend Cx so that I can see what is already mapped and what
+needs doing.
 
 As such, at least to begin with, the map will only be available at high
-zoom and will only show ways with names. Routing and the like is a non-goal
+zoom and will only show ways with names. Routing and the like is not a goal
 of the project.
 
 Using
@@ -16,36 +16,36 @@ Using
 Due to the complete lack of implemented options it is very easy to use.
 Change into the distribution directory and run the command
 
-	java -jar mkgmap.jar path-to-osm-data.osm
+	java -jar mkgmap.jar data.osm
 
-It will produce a file called 63240001.img.  I've not tried it on windows but
-it will probably work (I know I am going to regret saying that...)
+It will produce a file called 63240001.img.
 
 You can copy the map to your Garmin GPS unit in any way you know how. On my
 Legend Cx connected to a Linux system I put the unit into USB mass storage
 mode, mount the filesystem on the memory card, and copy the map to
-Garmin/gmapsupp.img Note that this will replace any other map you have on
-there.  It should be possible to use sendmap, but I've not tried.
+Garmin/gmapsupp.img  Note that this will replace any other map you have on
+there.  Another way would be to use a USB memory card writer.
+It should be possible to use sendmap, but I've not tried.
 
 You should see a OSM copyright message on starting up (although this is not
-working at present), and the map name 'My OSM Map' (sorry) should appear
+working at present), and the map name 'OSM Street map' should appear
 in the map setup section.
 
 You should see an outline of the map when zoomed out, but you will not
-see any streets until you are zoomed in very close.  On mine I have to
+see any streets until you are zoomed in quite close.  On mine I have to
 be zoomed to 120m.
 
 Issues
 ======
 
-1. You must be zoomed in close to see anything except an outline.
-2. Although the program now does points, lines and shapes, only a few
-   map feature types from OSM are recognised.  These include most road
-   types, footpaths, railways, lakes, parks, churches, pubs and schools.
-3. There is a limit to the size of the map you can create. It will be
+The program has the following limitations at present.
+
+1. You must be zoomed in close to see anything except an outline; there
+   is just one zoom level.
+2. There is a limit to the size of the map you can create. It will be
    around 1Mb.  I've done a large chunk of North London without getting
-   anywhere near the limit though.
-4. Non-ascii characters will not show up.  The format for Garmin maps
+   anywhere near the limit though.  This is the next thing to be tackled.
+3. Non-ascii characters will not show up.  The format for Garmin maps
    condenses text down to 6 bits per character.  This only leaves room
    for uppercase ascii characters and a few symbols.  You can specify
    the use of more bits (8 and 10 bits) but I don't know how those
@@ -62,6 +62,4 @@ http://sourceforge.net/projects/garmin-img.  The 'imgdecode' program
 from the same source was also very important in checking that I was
 on the right lines to producing a good file.  Thanks.
 
-..Steve
-
-
+Steve <sr at parabola me uk>

@@ -27,7 +27,6 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public abstract class MapObject {
-	// --Commented out by Inspection (06/01/07 23:05):private static final Logger log = Logger.getLogger(MapObject.class);
 
 	// All lines are in a division and many aspects of it are with respect to
 	// the division.

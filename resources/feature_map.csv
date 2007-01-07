@@ -1,10 +1,19 @@
+point|amenity|pub|0x46|0x00
 point|amenity|parking|0x2f|0x0b
-point|amenity|telephone|0x51|0x00
-point|amenity|place_of_worship|0x64|0x04
 point|amenity|fuel|0x2f|0x01
-point|amenity|courthouse|0x30|0x04
+point|amenity|telephone|0x51|0x00
+point|amenity|telephone|0x51|0x00
+point|amenity|toilets|0x4e|0x00
+point|amenity|place_of_worship|0x64|0x04
+point|amenity|post_office|0x64|0x0f
 point|amenity|school|0x2c|0x05
+point|amenity|supermarket|0x2e|0x02
+point|amenity|courthouse|0x30|0x04
 point|amenity|hospital|0x64|0x08
+point|amenity|library|0x2c|0x03
+point|amenity|police|0x30|0x01
+point|amenity|restaurant|0x45|0x00
+point|amenity|fast_food|0x2a|0x07
 polyline|highway|footway|0x16|
 polyline|highway|steps|0x16|
 polyline|highway|cycleway|0x16|
@@ -28,6 +37,7 @@ polyline|highway|motorway_link|0x02|
 polyline|railway|rail|0x14|
 polyline|railway|tram|0x14|
 polyline|railway|light_rail|0x14|
+polyline|railway|subway|0x14|
 polyline|waterway|river|0x1f|
 polyline|waterway|canal|0x1f|
 polyline|waterway|drain|0x1f|
@@ -52,3 +62,6 @@ polygon|natural|marsh|0x51|
 polygon|natural|water|0x3c|
 polygon|natural|mud|0x51|
 polygon|amenity|parking|0x05|
+polygon|amenity|grave_yard|0x1a|
+polygon|amenity|supermarket|0x08|
+polygon|amenity|hospital|0x0b|
