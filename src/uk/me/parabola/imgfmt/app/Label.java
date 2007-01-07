@@ -18,6 +18,8 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.log.Logger;
 
+import java.io.UnsupportedEncodingException;
+
 
 /**
  * Labels are used for names of roads, points of interest etc.  They are
@@ -45,6 +47,8 @@ public class Label {
 	 * @param text The normal text of the label.
 	 */
 	public Label(String text) {
+//		if (text != null)
+//			ctext = compressText6(text);
 		if (text != null)
 			ctext = compressText6(text);
 	}
@@ -67,7 +71,8 @@ public class Label {
 	}
 
 	/**
-	 * Compress the string to it's 6 bit form.
+	 * Compress the string to its 6 bit form.
+	 *
 	 * @param text The original text.
 	 * @return The encoded text.  There may be extra bytes on the end so
 	 * you have to look at the length field.
@@ -82,6 +87,8 @@ public class Label {
 				put6(buf, off++, 0);
 			} else if (c >= 'A' && c <= 'Z') {
 				put6(buf, off++, c - 'A' + 1);
+			} else if (c >= '0' && c <= '9') {
+				put6(buf, off++, c - '0' + 0x20);
 			} else {
 				int ind = "@!\"#$%&'()*+,-./".indexOf(c);
 				if (ind >= 0) {
@@ -109,6 +116,36 @@ public class Label {
 		this.length = ((off-1) * 6)/8 + 1;
 		dumpBuf(buf);
 		return buf;
+	}
+
+	/**
+	 * 'Compress' the text to its 8 bit form.  Well there appears to be no
+	 * complication to it.  Just output the bytes.  We shall have to work out
+	 * what the character set is and/or how to set it.
+	 *
+	 * TODO: this prehaps needs to be removed from here and put into LBLFile or somewhere.
+	 *
+	 * @param text The text to convert to 8bit format.
+	 * @return A set of bytes representing the string.
+	 */
+	private byte[] compressText8(String text) {
+		try {
+			byte[] res = new byte[text.length()+1];
+			System.arraycopy(text.toUpperCase().getBytes("iso-8859-1"), 0, res, 0, text.length());
+			this.length = res.length;
+			return res;
+		} catch (UnsupportedEncodingException e) {
+			log.error("could not convert the character set");
+			// Just return truncated values.  This may, or may not, be better
+			// than nothing.
+			byte[] res = new byte[text.length() + 1];
+			int off = 0;
+			for (char c : text.toCharArray()) {
+				res[off++] = (byte) c;
+			}
+			this.length = res.length;
+			return res;
+		}
 	}
 
 	/**
