@@ -167,7 +167,8 @@ public class FeatureListConverter implements OsmConverter {
 				return;
 			}
 		}
-		log.warn("no mapping found for " + node);
+		// this is the usual case with nodes!
+//		log.warn("no mapping found for " + node);
 	}
 
 	private void readFeatures(BufferedReader in) throws IOException {
@@ -194,6 +195,7 @@ public class FeatureListConverter implements OsmConverter {
 
 			} else if (type.equals("polygon")) {
 				log.debug("polygon type found");
+				assert fields[F_GARMIN_SUBTYPE].length() == 0;
 				saveFeature(fields, shapeTypes, shapeFeatures);
 
 			} else {
@@ -204,10 +206,19 @@ public class FeatureListConverter implements OsmConverter {
 	}
 
 	private void saveFeature(String[] fields, Set<String> types, Map<String, GarminType> features) {
-		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
-		types.add(fields[F_OSM_TYPE]);
+		String type = fields[F_OSM_TYPE];
+		String osm = makeKey(type, fields[F_OSM_SUBTYPE]);
+		types.add(type);
 
-		GarminType gtype = new GarminType(fields[F_GARMIN_TYPE]);
+		GarminType gtype;
+		String gsubtype = fields[F_GARMIN_SUBTYPE];
+		log.debug("subtype", gsubtype);
+		if (gsubtype == null || gsubtype.length() == 0) {
+			log.debug("took the subtype road");
+			gtype = new GarminType(fields[F_GARMIN_TYPE]);
+		} else {
+			gtype = new GarminType(fields[F_GARMIN_TYPE], gsubtype);
+		}
 		features.put(osm, gtype);
 	}
 
@@ -225,7 +236,7 @@ public class FeatureListConverter implements OsmConverter {
 			try {
 				it = Integer.decode(type);
 			} catch (NumberFormatException e) {
-				log.debug("not numeric ", type);
+				log.debug("not numeric", type);
 				it = 0;
 			}
 			this.type = it;
