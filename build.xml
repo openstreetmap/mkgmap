@@ -69,6 +69,7 @@
     <jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
         manifest="${resources}/MANIFEST.MF">
       <include name="**/*.class"/>
+			<include name="*.csv"/>
     </jar>
 
 		<!-- Copy in the javadoc -->
