@@ -56,6 +56,8 @@ public class LBLFile extends ImgFile {
 	private static final int ENCODING_10BIT = 10;
 
 	private int labelSize;
+	private int encodingLength;
+	private int labelType;
 
 	public LBLFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
@@ -86,6 +88,24 @@ public class LBLFile extends ImgFile {
 		getWriter().sync();
 	}
 
+	public void setCharacterType(String cs) {
+		if ("latin1".equals(cs)) {
+			encodingLength = ENCODING_8BIT;
+			labelType = 1;
+
+		} else if ("latin2".equals(cs)) {
+			encodingLength = ENCODING_8BIT;
+			labelType = 2;
+
+		} else if ("10bit".equals(cs)) {
+			encodingLength = ENCODING_10BIT;
+			labelType = 10;
+		} else {
+			encodingLength = ENCODING_6BIT;
+			labelType = 0;
+		}
+	}
+	
 	/**
 	 * Add a new label with the given text.
 	 *
@@ -93,10 +113,26 @@ public class LBLFile extends ImgFile {
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
-		Label l = new Label(text);
-		l.setOffset(position() - (HEADER_LEN+INFO_LEN));
+		Label l;
+		switch (labelType) {
+		case 0:
+		default:
+			l = new Label6(text);
+			break;
+		case 1:
+			l = new LabelLatin1(text);
+			break;
+		case 2:
+			l = new LabelLatin2(text);
+			break;
+		case 10:
+			l = new Label10(text);
+			break;
+		}
 
+		l.setOffset(position() - (HEADER_LEN+INFO_LEN));
 		l.write(this);
+
 		labelSize += l.getLength();
 
 		return l;
@@ -109,7 +145,7 @@ public class LBLFile extends ImgFile {
 		putInt(labelSize);
 
 		put((byte) 0);
-		put((byte) ENCODING_6BIT);
+		put((byte) encodingLength);
 
 		putInt(dataPos);
 		putInt(0);
