@@ -64,7 +64,6 @@ public class MakeMap {
 			mm.makeMap(a);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
-			System.exit(1);
 		}
 	}
 
@@ -268,8 +267,7 @@ public class MakeMap {
 
 			return src;
 		} catch (FileNotFoundException e) {
-			log.error("open fail", e);
-			throw new ExitException("Could not open file: ", e);
+			throw new ExitException("Could not open file: " + name, e);
 		} catch (FormatException e) {
 			throw new ExitException("Bad input file format", e);
 		}
