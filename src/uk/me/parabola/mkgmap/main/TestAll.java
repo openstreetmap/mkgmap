@@ -30,6 +30,17 @@ public class TestAll {
 		negative();
 	}
 
+	private static String[][] chartestArgs = new String[][] {
+		new String[] {"test/maps/czech_test.osm"},
+		new String[] {"test/maps/german_test.osm"},
+		new String[] {"test/maps/sweden_test.osm"},
+		new String[] {"--xcharset=latin1", "test/maps/czech_test.osm"},
+		new String[] {"--xcharset=latin1", "test/maps/german_test.osm"},
+		new String[] {"--xcharset=latin1", "test/maps/sweden_test.osm"},
+		new String[] {"--xcharset=simple8", "test/maps/sweden_test.osm"},
+		new String[] {"--xcharset=10bit", "test/maps/sweden_test.osm"},		
+	};
+
 	private static void positive() {
 		MakeMap.main(new String[] {
 				"--mapname=12008899",
@@ -41,20 +52,12 @@ public class TestAll {
 		MakeTestPointMap.main(noargs);
 		MakeTestPolygonMap.main(noargs);
 
-		MakeMap.main(new String[] {
-				"--xcharset=latin1",
-				"area1.osm"
-		});
+		MakeTestLang10Map.main(noargs);
+		MakeTestLangMap.main(noargs);
 
-		MakeMap.main(new String[] {
-				"--xcharset=simple8",
-				"area1.osm"
-		});
-
-		MakeMap.main(new String[] {
-				"--xcharset=10bit",
-				"area1.osm"
-		});
+		for (String[] args : chartestArgs) {
+			MakeMap.main(args);
+		}
 	}
 
 	private static void negative() {
