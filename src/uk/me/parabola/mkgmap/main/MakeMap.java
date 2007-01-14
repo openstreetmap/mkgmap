@@ -75,6 +75,7 @@ public class MakeMap {
 		Map map = null;
 		try {
 			map = Map.createMap(args.getMapname(), params);
+			setOptions(map, args);
 
 			MapSource src = loadFromFile(args.getFileName());
 
@@ -97,6 +98,16 @@ public class MakeMap {
 			if (map != null)
 				map.close();
 		}
+	}
+
+	private void setOptions(Map map, CommandArgs args) {
+		String s = args.getCharset();
+		if (s != null)
+			map.setLabelCharset(s);
+
+		int i = args.getCodePage();
+		if (i != 0)
+			map.setLabelCodePage(i);
 	}
 
 	private void processOverviews(Map map, List<Overview> features) {

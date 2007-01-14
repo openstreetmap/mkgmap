@@ -18,6 +18,12 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.labelenc.Bit10Encoder;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
+import uk.me.parabola.imgfmt.app.labelenc.Latin1Encoder;
+import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
@@ -38,7 +44,9 @@ public class LBLFile extends ImgFile {
 	private static final int HEADER_LEN = 196; // Other lengths are possible
 	private static final int INFO_LEN = 28;
 
+	private int labelSize; // Size of file.
 	private int dataPos = HEADER_LEN + INFO_LEN;
+
 	private static final char COUNTRY_REC_LEN = 3;
 	private static final char REGION_REC_LEN = 5;
 	private static final char CITY_REC_LEN = 5;
@@ -53,11 +61,13 @@ public class LBLFile extends ImgFile {
 	// Label encoding length
 	private static final int ENCODING_6BIT = 6;
 	private static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
-	private static final int ENCODING_10BIT = 10;
+	private static final int ENCODING_10BIT = 11;
 
-	private int labelSize;
-	private int encodingLength;
-	private int labelType;
+	private int encodingLength = ENCODING_6BIT;
+	private CharacterEncoder textEncoder = new Format6Encoder();
+
+	// Code page? may not do anything.
+	private int codePage = 850;
 
 	public LBLFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
@@ -91,18 +101,24 @@ public class LBLFile extends ImgFile {
 	public void setCharacterType(String cs) {
 		if ("latin1".equals(cs)) {
 			encodingLength = ENCODING_8BIT;
-			labelType = 1;
+			textEncoder = new Latin1Encoder();
 
 		} else if ("latin2".equals(cs)) {
 			encodingLength = ENCODING_8BIT;
-			labelType = 2;
+//			textEncoder = new Latin2Encoder();
+			textEncoder = new Format6Encoder();
 
 		} else if ("10bit".equals(cs)) {
 			encodingLength = ENCODING_10BIT;
-			labelType = 10;
+			textEncoder = new Bit10Encoder();
+
+		} else if ("simple8".equals(cs)) {
+			encodingLength = ENCODING_8BIT;
+			textEncoder = new Simple8Encoder();
+
 		} else {
 			encodingLength = ENCODING_6BIT;
-			labelType = 0;
+			textEncoder = new Format6Encoder();
 		}
 	}
 	
@@ -114,21 +130,8 @@ public class LBLFile extends ImgFile {
 	 */
 	public Label newLabel(String text) {
 		Label l;
-		switch (labelType) {
-		case 0:
-		default:
-			l = new Label6(text);
-			break;
-		case 1:
-			l = new LabelLatin1(text);
-			break;
-		case 2:
-			l = new LabelLatin2(text);
-			break;
-		case 10:
-			l = new Label10(text);
-			break;
-		}
+		EncodedText etext = textEncoder.encodeText(text);
+		l = new Label(etext);
 
 		l.setOffset(position() - (HEADER_LEN+INFO_LEN));
 		l.write(this);
@@ -136,6 +139,10 @@ public class LBLFile extends ImgFile {
 		labelSize += l.getLength();
 
 		return l;
+	}
+
+	public void setCodePage(int codePage) {
+		this.codePage = codePage;
 	}
 
 	private void writeHeader()  {
@@ -200,7 +207,7 @@ public class LBLFile extends ImgFile {
 		putChar(HIGHWAYDATA_REC_LEN);
 		putInt(0);
 
-		putChar((char) 850); //code
+		putChar((char) codePage); //code
 		putInt(0);
 
 		// Sort descriptor ???

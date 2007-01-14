@@ -40,6 +40,21 @@ public class TestAll {
 
 		MakeTestPointMap.main(noargs);
 		MakeTestPolygonMap.main(noargs);
+
+		MakeMap.main(new String[] {
+				"--xcharset=latin1",
+				"area1.osm"
+		});
+
+		MakeMap.main(new String[] {
+				"--xcharset=simple8",
+				"area1.osm"
+		});
+
+		MakeMap.main(new String[] {
+				"--xcharset=10bit",
+				"area1.osm"
+		});
 	}
 
 	private static void negative() {

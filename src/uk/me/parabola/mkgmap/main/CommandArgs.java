@@ -134,4 +134,21 @@ class CommandArgs {
 			System.out.println(key + '=' + val);
 		}
 	}
+
+	public String getCharset() {
+		return argvalues.getProperty("xcharset", "ascii");
+	}
+
+	public int getCodePage() {
+		int cp;
+
+		String s = argvalues.getProperty("xcode-page", "850");
+		try {
+			cp = Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			cp = 850;
+		}
+		
+		return cp;
+	}
 }

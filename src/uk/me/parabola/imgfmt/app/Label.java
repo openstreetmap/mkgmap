@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 
 /**
  * Labels are used for names of roads, points of interest etc.
@@ -34,7 +35,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public abstract class Label {
+public final class Label {
 	protected static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
@@ -43,6 +44,11 @@ public abstract class Label {
 
 	// The offset in to the data section.
 	private int offset;
+
+	public Label(EncodedText etext) {
+		ctext = etext.getCtext();
+		length = etext.getLength();
+	}
 
 	/**
 	 * The length of the label in bytes as it will appear in the file.

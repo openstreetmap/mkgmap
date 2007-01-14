@@ -28,22 +28,33 @@ test:
 	rm -fr gmapsupp/
 	rm -f 32860003.img
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestMap
-	# 51.539 -0.2313
 
 test_shape:
 	rm -fr gmapsupp/ 32860003
 	rm -f 32860003.img
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestPolygonMap 51.539 -0.2313
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestPolygonMap $$BASE_LAT $$BASE_LONG
 	imgdecode 32860003.img
 
 test_point:
 	rm -fr gmapsupp/ 32860003
 	rm -f 32860003.img
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestPointMap 51.539 -0.2313
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestPointMap $$BASE_LAT $$BASE_LON
+	imgdecode 32860003.img
+
+test_lang:
+	rm -fr gmapsupp/ 32860003
+	rm -f 32860003.img
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestLangMap $$BASE_LAT $$BASE_LON
+	imgdecode 32860003.img
+
+test_lang10:
+	rm -fr gmapsupp/ 32860003
+	rm -f 32860003.img
+	java -ea -Dlog.filename=out.log -cp build/classes uk.me.parabola.mkgmap.main.MakeTestLang10Map $$BASE_LAT $$BASE_LON
 	imgdecode 32860003.img
 
 tl:
-	mount /media/gps
+	-mount /media/gps
 	cp 32860003.img /media/gps/Garmin/gmapsupp.img
 	umount /media/gps
 

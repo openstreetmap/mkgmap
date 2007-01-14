@@ -25,7 +25,9 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 
 /**
- * Holder for a complete map.  A map is made up of several files.
+ * Holder for a complete map.  A map is made up of several files which
+ * include at least the TRE, LBL and RGN files.
+ *
  * <p>Needless to say, it has nothing to do with java.util.Map.
  *
  * @author Steve Ratcliffe
@@ -264,6 +266,14 @@ public class Map {
 		rgnFile.addMapObject(item);
 	}
 
+	public void setLabelCodePage(int cp) {
+		lblFile.setCodePage(cp);
+	}
+
+	public void setLabelCharset(String desc) {
+		lblFile.setCharacterType(desc);
+	}
+	
 	/**
 	 * Close this map by closing all the constituent files.
 	 */
