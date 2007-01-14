@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 public class BaseEncoder {
 	private static final Logger log = Logger.getLogger(BaseEncoder.class);
 
-	protected EncodedText NO_TEXT = new EncodedText(null, 0);
+	protected static final EncodedText NO_TEXT = new EncodedText(null, 0);
 
 	private boolean charsetSupported = true;
 
@@ -38,7 +38,7 @@ public class BaseEncoder {
 		return charsetSupported;
 	}
 
-	protected void checkForCharacterSet(String name) {
+	protected void prepareForCharacterSet(String name) {
 		if (Charset.isSupported(name)) {
 			charsetSupported = true;
 		} else {

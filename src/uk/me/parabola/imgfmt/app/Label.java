@@ -35,12 +35,12 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
  *
  * @author Steve Ratcliffe
  */
-public final class Label {
-	protected static final Logger log = Logger.getLogger(Label.class);
+public class Label {
+	private static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
-	protected byte[] ctext;
-	protected int length;
+	private final byte[] ctext;
+	private final int length;
 
 	// The offset in to the data section.
 	private int offset;
@@ -91,7 +91,7 @@ public final class Label {
 	}
 
 	// For debugging only
-	protected void dumpBuf(byte[] buf) {
+	private void dumpBuf(byte[] buf) {
 		if (!log.isDebugEnabled())
 			return;
 

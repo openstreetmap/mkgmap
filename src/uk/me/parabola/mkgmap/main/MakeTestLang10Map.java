@@ -16,7 +16,11 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.PolylineOverview;
+import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -26,7 +30,7 @@ import uk.me.parabola.log.Logger;
  * @author Steve Ratcliffe
  */
 public class MakeTestLang10Map extends AbstractTestMap {
-	private static Logger log = Logger.getLogger(MakeTestLang10Map.class);
+	private static final Logger log = Logger.getLogger(MakeTestLang10Map.class);
 
 	public static void main(String[] args)  {
 		MakeTestLang10Map tm = new MakeTestLang10Map();
@@ -42,8 +46,6 @@ public class MakeTestLang10Map extends AbstractTestMap {
 	}
 
 	private void drawStreetnames(Map map, Subdivision div, double slat, double slon) {
-
-		char[] hexChars = "0123456789ABCDEF".toCharArray();
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;

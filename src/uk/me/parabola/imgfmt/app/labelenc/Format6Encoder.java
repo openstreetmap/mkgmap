@@ -40,7 +40,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	private static final int SYMBOL_SHIFT = 0x1c;
 
 	// Latin-1 suppliment characters.  And their mappings to unaccented characters.
-	private static char[] latin1tab = new char[] {
+	private static final char[] latin1tab = new char[] {
 			0x80 /*<80>*/,  0x81 /*<81>*/,  0x82 /*<82>*/,  0x83 /*<83>*/,
 			0x84 /*<84>*/,  0x85 /*<85>*/,  0x86 /*<86>*/,  0x87 /*<87>*/,
 			0x88 /*<88>*/,  0x89 /*<89>*/,  0x8a /*<8a>*/,  0x8b /*<8b>*/,
@@ -76,7 +76,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	};
 
 	// Latin extended-A characters. With mappings to the unaccented characters.
-	private static char[] latin2tab = new char[] {
+	private static final char[] latin2tab = new char[] {
 			'A'   /*Ā*/,  'a'   /*ā*/,  'A'   /*Ă*/,  'a'   /*ă*/,
 			'A'   /*Ą*/,  'a'   /*ą*/,  'C'   /*Ć*/,  'c'   /*ć*/,
 			'C'   /*Ĉ*/,  'c'   /*ĉ*/,  'C'   /*Ċ*/,  'c'   /*ċ*/,

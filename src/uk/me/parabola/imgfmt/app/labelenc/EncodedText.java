@@ -26,8 +26,8 @@ package uk.me.parabola.imgfmt.app.labelenc;
  * @author Steve Ratcliffe
  */
 public class EncodedText {
-	private byte[] ctext;
-	private int length;
+	private final byte[] ctext;
+	private final int length;
 
 	public EncodedText(byte[] buf, int len) {
 		this.ctext = buf;

@@ -30,7 +30,7 @@ public class TestAll {
 		negative();
 	}
 
-	private static String[][] chartestArgs = new String[][] {
+	private static final String[][] chartestArgs = new String[][] {
 		new String[] {"test/maps/czech_test.osm"},
 		new String[] {"test/maps/german_test.osm"},
 		new String[] {"test/maps/sweden_test.osm"},

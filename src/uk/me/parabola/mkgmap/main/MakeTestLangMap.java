@@ -16,7 +16,11 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.imgfmt.app.*;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.Polyline;
+import uk.me.parabola.imgfmt.app.PolylineOverview;
+import uk.me.parabola.imgfmt.app.Subdivision;
 
 /**
  * A test map for language support.  It has a series of roads all with names
@@ -77,10 +81,9 @@ public class MakeTestLangMap extends AbstractTestMap {
 			String name = new String(out);
 			Polyline l = map.createLine(div, name);
 			double baseLat = lat + y * space;
-			double baseLong = lon ;
-			Coord co = new Coord(baseLat, baseLong);
+			Coord co = new Coord(baseLat, lon);
 			l.addCoord(co);
-			co = new Coord(baseLat, baseLong + size);
+			co = new Coord(baseLat, lon + size);
 			l.addCoord(co);
 
 			l.setType(6);

@@ -29,7 +29,7 @@ public class Latin1Encoder extends BaseEncoder
 {
 
 	public Latin1Encoder() {
-		checkForCharacterSet("iso-8859-1");
+		prepareForCharacterSet("iso-8859-1");
 	}
 
 	public EncodedText encodeText(String text) {

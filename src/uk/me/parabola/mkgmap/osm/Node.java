@@ -35,8 +35,4 @@ class Node extends Element {
 	public Coord getLocation() {
 		return location;
 	}
-
-	public void setLocation(Coord location) {
-		this.location = location;
-	}
 }

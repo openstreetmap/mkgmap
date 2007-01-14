@@ -1,6 +1,7 @@
 
 #OSMDATA = area.osm
-OSMDATA = big.osm
+#OSMDATA = big.osm
+OSMDATA = test/maps/czech_test.osm
 
 # Source code of OSMGarminMap
 OSM_GARMIN_MAP = /home/steve/src/osm/utils/osmgarminmap
