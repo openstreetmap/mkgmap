@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Collections;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -216,6 +217,7 @@ public class TREFile extends ImgFile {
 
 		// Point overview section
 		pointPos = position();
+		Collections.sort(pointOverviews);
 		for (Overview ov : pointOverviews) {
 			ov.write(this);
 			pointSize += POINT_REC_LEN;
@@ -223,6 +225,7 @@ public class TREFile extends ImgFile {
 
 		// Line overview section.
 		polylinePos = position();
+		Collections.sort(polylineOverviews);
 		for (Overview ov : polylineOverviews) {
 			ov.write(this);
 			polylineSize += POLYLINE_REC_LEN;
@@ -230,6 +233,7 @@ public class TREFile extends ImgFile {
 
 		// Polygon overview section
 		polygonPos = position();
+		Collections.sort(polygonOverviews);
 		for (Overview ov : polygonOverviews) {
 			ov.write(this);
 			polygonSize += POLYGON_REC_LEN;
