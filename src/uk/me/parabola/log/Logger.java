@@ -29,6 +29,9 @@ import java.util.Properties;
  * to make easier logging without having to do string concatenation in the
  * regular code.
  *
+ * It has the ability to set logging level for each logger separately, although
+ * I am not doing anything with that at present.
+ *
  * @author Steve Ratcliffe
  */
 public class Logger {
@@ -36,7 +39,8 @@ public class Logger {
 
 	private static boolean loggingActive ;
 
-	private static final Map<String, Logger> loggers = new ConcurrentHashMap<String, Logger>();
+	private static final Map<String, Logger> loggers
+			= new ConcurrentHashMap<String, Logger>();
 
 	private String shortname;
 
