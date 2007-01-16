@@ -58,6 +58,6 @@ public class BaseEncoder {
 		for (char c : in)
 			out[off++] = (byte) (c & 0xff);
 
-		return new EncodedText(out, off);
+		return new EncodedText(out, out.length);
 	}
 }
