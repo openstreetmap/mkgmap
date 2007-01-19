@@ -136,6 +136,10 @@ class CommandArgs {
 	}
 
 	public String getCharset() {
+		String s = argvalues.getProperty("latin1");
+		if (s != null)
+			return "latin1";
+
 		return argvalues.getProperty("xcharset", "ascii");
 	}
 
