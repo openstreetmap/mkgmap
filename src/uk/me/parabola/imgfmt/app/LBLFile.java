@@ -108,7 +108,7 @@ public class LBLFile extends ImgFile {
 //			textEncoder = new Latin2Encoder();
 			textEncoder = new Format6Encoder();
 
-		} else if ("10bit".equals(cs)) {
+		} else if ("bit10".equals(cs)) {
 			encodingLength = ENCODING_10BIT;
 			textEncoder = new Bit10Encoder();
 
