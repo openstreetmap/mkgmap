@@ -139,7 +139,8 @@ class Dirent implements DirectoryEntry {
 	 */
 	private void setName(String name) {
 		if (name.length() != MAX_FILE_LEN)
-			throw new IllegalArgumentException("File name is wrong size");
+			throw new IllegalArgumentException("File name is wrong size "
+			+ "was " + name.length() + ", should be " + MAX_FILE_LEN);
 		this.name = name;
 	}
 
