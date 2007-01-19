@@ -1,5 +1,81 @@
+2007-01-19  steve
+
+	* src/uk/me/parabola/imgfmt/app/LBLFile.java: Make an explicit
+	  --latin1 option
+
+2007-01-16  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java: Null
+	  terminate string in simple8 format.
+	* Makefile, src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java: Found problem with
+	  polygons not showing up. It would appear that the overview
+	  sections have to be sorted by value. So sort them, and points and
+	  lines for good measure too, as it may well be the same for them.
+	* src/uk/me/parabola/log/Logger.java: Added a few comments
+
+2007-01-14  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/EncodedText.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin1Encoder.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java,
+	  src/uk/me/parabola/mkgmap/osm/Node.java,
+	  src/uk/me/parabola/tdbfmt: Code cleanup
+	* src/uk/me/parabola/imgfmt/app/labelenc,
+	  src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Bit10Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CharacterEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/EncodedText.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin1Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Simple8Encoder.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java: Basic i18n code
+	  done. Now for testing it.
+	* Makefile, src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/Label10.java,
+	  src/uk/me/parabola/imgfmt/app/Label6.java,
+	  src/uk/me/parabola/imgfmt/app/LabelLatin1.java,
+	  src/uk/me/parabola/imgfmt/app/LabelLatin2.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java: Major surgury on the
+	  label system, now that it is a bit clearer how
+	  internationalisation might work.
+
+2007-01-13  steve
+
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java: Test run through
+	  different scenarios. Keeps the code coverage up now that we are
+	  adding options.
+
+2007-01-10  steve
+
+	* src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/Label10.java,
+	  src/uk/me/parabola/imgfmt/app/Label6.java,
+	  src/uk/me/parabola/imgfmt/app/LabelLatin1.java,
+	  src/uk/me/parabola/imgfmt/app/LabelLatin2.java: Reorganise label
+	  text so that we can deal with different languages.
+
+2007-01-09  steve
+
+	* build.xml: Make feature list get into the built jar.
+
 2007-01-07  steve
 
+	* ChangeLog: Change log updated
 	* src/uk/me/parabola/mkgmap/main/MakeMap.java: ChangeLog updated.
 	* README, resources/feature_map.csv,
 	  src/uk/me/parabola/imgfmt/app/MapObject.java,

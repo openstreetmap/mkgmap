@@ -2,30 +2,37 @@
 Making maps for Garmin GPS units
 ================================
 
-The goal of the project is to take OpenStreetMap data and put it on
-my Garmin Legend Cx so that I can see what is already mapped and what
-needs doing.
+The goal of the project is to take the map data from
+OpenStreetMap <http://www.openstreetmap.org>
+and to generate a map in the Garmin .img file format so
+that it can be loaded onto GPS units.
 
-As such, at least to begin with, the map will only be available at high
-zoom and will only show ways with names. Routing and the like is not a goal
-of the project.
+My motivation is to help plan mapping sessions, rather than to
+produce the most useful map.  However as the project progresses
+I expect that most of the current limitations will be removed
+and the maps will be useful for other purposes too.
 
 Using
 =====
 
-Due to the complete lack of implemented options it is very easy to use.
-Change into the distribution directory and run the command
+This program requires Java 1.5 or above to run.
+
+Producing a map is simple.  Save OpenStreetMap data from JOSM 
+or by any other method to a file and copy it to the mkgmap
+directory.  In the following examples this file is called data.osm.
+
+Run the command:
 
 	java -jar mkgmap.jar data.osm
 
-It will produce a file called 63240001.img.
+This will produce a file called 63240001.img.
 
 You can copy the map to your Garmin GPS unit in any way you know how. On my
 Legend Cx connected to a Linux system I put the unit into USB mass storage
 mode, mount the filesystem on the memory card, and copy the map to
 Garmin/gmapsupp.img  Note that this will replace any other map you have on
 there.  Another way would be to use a USB memory card writer.
-It should be possible to use sendmap, but I've not tried.
+Another convenient way is to use the sendmap program.
 
 You should see a OSM copyright message on starting up (although this is not
 working at present), and the map name 'OSM Street map' should appear
@@ -34,6 +41,25 @@ in the map setup section.
 You should see an outline of the map when zoomed out, but you will not
 see any streets until you are zoomed in quite close.  On mine I have to
 be zoomed to 120m.
+
+Options
+-------
+
+You can supply the following options before the file name.  Example:
+
+ java -jar mkgmap.jar --mapname=63240002 --xcharset=latin1 data.osm
+
+--mapname=<name>
+   This option is followed by the name of the map.  This must be an
+   eight digit number.  The default if this option is ommited is 63240001
+   for no particularly good reason.  The name is used inside the map
+   it isn't enough to just rename the file.
+
+--xcharset={latin1|ascii|bit10|simple8}
+   Experimental option to try out different schemes for encoding lables.
+   Only latin1 is of general use.  Allows the use of latin1 characters
+   in street names.
+
 
 Issues
 ======
