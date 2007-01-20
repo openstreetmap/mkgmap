@@ -18,7 +18,7 @@ package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.mkgmap.osm.ReadOsm;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapSource;
+import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.imgfmt.FormatException;
@@ -77,7 +77,7 @@ public class MakeMap {
 			map = Map.createMap(args.getMapname(), params);
 			setOptions(map, args);
 
-			MapSource src = loadFromFile(args.getFileName());
+			MapDataSource src = loadFromFile(args.getFileName());
 
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
@@ -152,7 +152,7 @@ public class MakeMap {
 	 * @param map The map to write to.
 	 * @param src The source of map information.
 	 */
-	private void processInfo(Map map, MapSource src) {
+	private void processInfo(Map map, MapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 
@@ -187,7 +187,7 @@ public class MakeMap {
 	 * @param src The source of map information.
 	 * @return A single division.  Will be chnaged.
 	 */
-	private Subdivision makeDivisions(Map map, MapSource src) {
+	private Subdivision makeDivisions(Map map, MapDataSource src) {
 		Area bounds = src.getBounds();
 
 //		bounds = new Area(lat, lng, lat + 0.05, lng + 0.05);
@@ -282,9 +282,9 @@ public class MakeMap {
 		}
 	}
 
-	private MapSource loadFromFile(String name) {
+	private MapDataSource loadFromFile(String name) {
 		try {
-			MapSource src = new ReadOsm();
+			MapDataSource src = new ReadOsm();
 
 			src.load(name);
 

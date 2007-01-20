@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-public interface MapSource {
+public interface MapDataSource {
 
 	/**
 	 * Load map by name.  The name is in a suitable form to be recognised
