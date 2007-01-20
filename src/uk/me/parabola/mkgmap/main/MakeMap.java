@@ -244,6 +244,7 @@ public class MakeMap {
 
 			log.debug("Road " + name + ", t=" + line.getType());
 			Polyline pl = map.createLine(div, name);
+			pl.setDirection(line.isDirection());
 
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {

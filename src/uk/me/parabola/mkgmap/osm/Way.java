@@ -262,4 +262,19 @@ class Way extends Element {
 		if (!found)
 			all.add(workList);
 	}
+
+	public boolean getBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("true"))
+			return true;
+		if (val.equalsIgnoreCase("yes"))
+			return true;
+
+		// Not going to support the possible -1 value.
+
+		return false;
+	}
 }
