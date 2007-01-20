@@ -120,12 +120,12 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 */
 	public EncodedText encodeText(String text) {
 
-		if (text == null)
+		if (text == null || text.length() == 0)
 			return NO_TEXT;
 
 		String s = text.toUpperCase();
 
-		byte[] buf = new byte[s.length()+1];
+		byte[] buf = new byte[2 * s.length()];
 		int off = 0;
 		for (char oc : s.toCharArray()) {
 			char c;

@@ -100,6 +100,12 @@ public class MakeMap {
 		}
 	}
 
+	/**
+	 * Set options from the command line.
+	 *
+	 * @param map The map to modify.
+	 * @param args The command line arguments.
+	 */
 	private void setOptions(Map map, CommandArgs args) {
 		String s = args.getCharset();
 		if (s != null)
@@ -110,6 +116,12 @@ public class MakeMap {
 			map.setLabelCodePage(i);
 	}
 
+	/**
+	 * Create the overview sections.
+	 *
+	 * @param map The map details.
+	 * @param features The list of overview records. 
+	 */
 	private void processOverviews(Map map, List<Overview> features) {
 		for (Overview ov : features) {
 			switch (ov.getKind()) {
@@ -189,8 +201,8 @@ public class MakeMap {
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
 		// TODO: these need to be set first before drawing any of the
-		// division and they need to be derived from the data in the division.
-		// TODO ie they need to come from the division.
+		// TODO: division and they need to be derived from the data in the division.
+		// TODO: ie they need to come from the division.
 		div.setHasPolylines(true);
 		div.setHasPoints(true);
 		div.setHasIndPoints(false);

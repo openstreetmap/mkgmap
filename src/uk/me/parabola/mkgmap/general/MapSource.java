@@ -41,6 +41,9 @@ public interface MapSource {
 	 * Load map by name.  The name is in a suitable form to be recognised
 	 * by the particular map source.  It could be a file name or a URI.
 	 *
+	 * You would implement this interface to read mapping data in an other
+	 * format.
+	 *
 	 * @param name The name of the resource to be loaded.
 	 * @throws FileNotFoundException When the file or resource is not found.
 	 * @throws FormatException For any kind of malformed input.
@@ -62,6 +65,11 @@ public interface MapSource {
 	 */
 	public Area getBounds();
 
+	/**
+	 * Get the list of points that need to be rendered on the map.
+	 *
+	 * @return A list of {@link MapPoint} objects.
+	 */
 	List<MapPoint> getPoints();
 
 	/**
