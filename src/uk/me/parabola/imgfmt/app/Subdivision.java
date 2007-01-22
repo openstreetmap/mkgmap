@@ -213,21 +213,21 @@ public class Subdivision {
 		return latitude;
 	}
 
-//	public void setHasPoints(boolean hasPoints) {
-//		this.hasPoints = hasPoints;
-//	}
-//
-//	public void setHasIndPoints(boolean hasIndPoints) {
-//		this.hasIndPoints = hasIndPoints;
-//	}
-//
-//	public void setHasPolylines(boolean hasPolylines) {
-//		this.hasPolylines = hasPolylines;
-//	}
-//
-//	public void setHasPolygons(boolean hasPolygons) {
-//		this.hasPolygons = hasPolygons;
-//	}
+	public void setHasPoints(boolean hasPoints) {
+		this.hasPoints = hasPoints;
+	}
+
+	public void setHasIndPoints(boolean hasIndPoints) {
+		this.hasIndPoints = hasIndPoints;
+	}
+
+	public void setHasPolylines(boolean hasPolylines) {
+		this.hasPolylines = hasPolylines;
+	}
+
+	public void setHasPolygons(boolean hasPolygons) {
+		this.hasPolygons = hasPolygons;
+	}
 
 	/**
 	 * The following routines answer the question 'does there need to
@@ -355,17 +355,5 @@ public class Subdivision {
 		lastMapElement = MAP_SHAPE;
 
 		rgnFile.setPolygonPtr();
-	}
-
-	public void setHasPoints(boolean hasPoints) {
-		this.hasPoints = hasPoints;
-	}
-
-	public void setHasPolylines(boolean hasLines) {
-		this.hasPolylines = hasLines;
-	}
-
-	public void setHasPolygons(boolean hasPolygons) {
-		this.hasPolygons = hasPolygons;
 	}
 }
