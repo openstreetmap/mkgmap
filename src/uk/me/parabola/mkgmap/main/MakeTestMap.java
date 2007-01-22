@@ -52,10 +52,9 @@ public class MakeTestMap extends AbstractTestMap {
 		double lon = slon + 0.002;
 		double soff = 0.002;
 
-		div.setHasPolygons(true);
-		map.startShapes();
+		div.startShapes();
 
-		Polygon pg = map.createPolygon(div, "Field of dreams");
+		Polygon pg = div.createPolygon("Field of dreams");
 		Coord co = new Coord(lat, lon);
 		pg.addCoord(co);
 		co = new Coord(lat + soff, lon);
@@ -73,15 +72,13 @@ public class MakeTestMap extends AbstractTestMap {
 
 	private void drawLines(Map map, Subdivision div, double slat, double slng) {
 
-		div.setHasPolylines(true);
-		map.startLines();
-
+		div.startLines();
 
 		double lat = slat + 0.002;
 		double lon = slng + 0.002;
 		double soff = 0.001;
 
-		Polyline pl = map.createLine(div, "Not really Square");
+		Polyline pl = div.createLine("Not really Square");
 		pl.setType(6);
 		Coord co;// Draw nearly a square to test all directions.
 		co = new Coord(lat, lon);
@@ -98,7 +95,7 @@ public class MakeTestMap extends AbstractTestMap {
 		map.addMapObject(pl);
 
 		// diagonal lines.
-		pl = map.createLine(div, "Diamond Road");
+		pl = div.createLine("Diamond Road");
 		pl.setType(6);
 		lon += 0.004;
 		co = new Coord(lat, lon);
@@ -113,7 +110,7 @@ public class MakeTestMap extends AbstractTestMap {
 		map.addMapObject(pl);
 
 		// lines all in the same direction.
-		pl = map.createLine(div, "Straight Street");
+		pl = div.createLine("Straight Street");
 		pl.setType(6);
 		lon += 0.006;
 		double fine = soff/4;
@@ -127,7 +124,7 @@ public class MakeTestMap extends AbstractTestMap {
 		map.addMapObject(pl);
 
 		// Same but down to the left
-		pl = map.createLine(div, "Back Street");
+		pl = div.createLine("Back Street");
 		pl.setType(6);
 		lon += 0.006;
 		co = new Coord(lat, lon);
@@ -140,7 +137,7 @@ public class MakeTestMap extends AbstractTestMap {
 		map.addMapObject(pl);
 
 		// A long street
-		pl = map.createLine(div, "Long Lane");
+		pl = div.createLine("Long Lane");
 		pl.setType(6);
 		lon += 0.006;
 		co = new Coord(lat, lon);

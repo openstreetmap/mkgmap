@@ -52,14 +52,13 @@ public class MakeTestPolygonMap extends AbstractTestMap {
 		double space = 0.002;
 		double size = 0.001;
 
-		div.setHasPolygons(true);
-		map.startShapes();
+		div.startShapes();
 
 		for (int x = 0; x < 8; x++) {
 			for (int y = 0; y < 16; y++) {
 				int type = x*16 + y;
 
-				Polygon pg = map.createPolygon(div, "0x" + Integer.toHexString(type));
+				Polygon pg = div.createPolygon("0x" + Integer.toHexString(type));
 				double baseLat = lat + y * space;
 				double baseLong = lon + x * space;
 				Coord co = new Coord(baseLat, baseLong);

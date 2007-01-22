@@ -254,9 +254,9 @@ public class FileNode implements ImgChannel {
 		return position;
 	}
 
-	public void position(int pos) {
-		this.position = pos;
-	}
+//	public void position(int pos) {
+//		this.position = pos;
+//	}
 
 	/**
 	 * Write out any unsaved data to disk.

@@ -56,15 +56,14 @@ public class MakeTestPointMap extends AbstractTestMap {
 		double lon = slon + 0.002;
 		double space = 0.002;
 
-		div.setHasPoints(true);
-		map.startPoints();
+		div.startPoints();
 
 		for (int x = 0; x < 0x80; x++) {
 			for (int y = 0; y < 0x20; y++) {
 				int type = x;
 				int subtype = y;
 
-				Point point = map.createPoint(div,
+				Point point = div.createPoint(
 						"0x" + Integer.toHexString(type)
 								+ ','
 								+ "0x" + Integer.toHexString(subtype));

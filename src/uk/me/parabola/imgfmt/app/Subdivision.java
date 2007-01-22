@@ -37,7 +37,17 @@ import java.util.ArrayList;
 public class Subdivision {
 	private static final Logger log = Logger.getLogger(Subdivision.class);
 
+	private static final int MAP_POINT = 0;
+	private static final int MAP_INDEXED_POINT = 1;
+	private static final int MAP_LINE = 2;
+	private static final int MAP_SHAPE = 3;
+
+	private final LBLFile lblFile;
+	private final RGNFile rgnFile;
+
 	private int rgnPointer;
+
+	private int lastMapElement;
 
 	// The zoom level contains the number of bits per coordinate which is
 	// critical for scaling quantities by.
@@ -64,19 +74,66 @@ public class Subdivision {
 
 	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
 
-	private Subdivision(Zoom z, int latitude, int longitude,
-	                    int width, int height)
-	{
+	/**
+	 * Subdivisions can not be created directly, use either the
+	 * {@link #topLevelSubdivision} or {@link #createSubdivision} factory
+	 * methods.
+	 *
+	 * @param ifiles The internal files.
+	 * @param area The area this subdivision should cover.
+	 * @param z The zoom level.
+	 */
+	private Subdivision(InternalFiles ifiles, Area area, Zoom z) {
+		this.lblFile = ifiles.getLblFile();
+		this.rgnFile = ifiles.getRgnFile();
+
 		this.zoomLevel = z;
 
 		int shift = getShift();
 
-		this.latitude = latitude;
-		this.longitude = longitude;
-		this.width = width >> shift;
-		this.height = height >> shift;
+		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
+		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
+		
+		this.width = area.getWidth()/2 >> shift;
+		this.height = area.getHeight()/2 >> shift;
+	}
 
-		z.addSubdivision(this); // FIXME: use of this in object construction
+	/**
+	 * Create a subdivision at a given zoom level.
+	 *
+	 * @param ifiles The RGN and LBL ifiles.
+	 * @param area The (unshifted) area that the subdivision covers.
+	 * @param zoom The zoom level that this division occupies.
+	 *
+	 * @return A new subdivision.
+	 */
+	public Subdivision createSubdivision(InternalFiles ifiles,
+			Area area, Zoom zoom)
+	{
+		Subdivision div = new Subdivision(ifiles, area, zoom);
+		zoom.addSubdivision(div);
+		addSubdivision(div);
+		return div;
+	}
+
+	/**
+	 * This should be called only once per map to create the top level
+	 * subdivision.  The top level subdivision covers the whole map and it
+	 * must be empty.
+	 *
+	 * @param ifiles The LBL and  RGN ifiles.
+	 * @param area The area bounded by the map.
+	 * @param zoom The zoom level which must be the highest (least detailed)
+     * zoom in the map.
+	 * 
+	 * @return The new subdivision.
+	 */
+	public static Subdivision topLevelSubdivision(InternalFiles ifiles,
+			Area area, Zoom zoom)
+	{
+		Subdivision div = new Subdivision(ifiles, area, zoom);
+		zoom.addSubdivision(div);
+		return div;
 	}
 
 	/**
@@ -108,27 +165,28 @@ public class Subdivision {
 		}
 	}
 
-	/**
-	 * Get the number of the first subdivision at the next level.
-	 * @return The first subdivision at the next level.
-	 */
-	private int getNextLevel() {
-		return divisions.get(0).getNumber();
+	public Polyline createLine(String name) {
+		Label label = lblFile.newLabel(name);
+		Polyline pl = new Polyline(this);
+
+		pl.setLabel(label);
+		return pl;
 	}
 
-	/**
-	 * Add this subdivision as our child at the next level.  Each subdivision
-	 * can be further divided into smaller divisions.  They form a tree like
-	 * arrangement.
-	 *
-	 * @param sd One of our subdivisions.
-	 */
-	private void addSubdivision(Subdivision sd) {
-		divisions.add(sd);
+	public Polygon createPolygon(String name) {
+		Label label = lblFile.newLabel(name);
+		Polygon pg = new Polygon(this);
+
+		pg.setLabel(label);
+		return pg;
 	}
 
-	private int getNumber() {
-		return number;
+	public Point createPoint(String name) {
+		Point p = new Point(this);
+		Label label = lblFile.newLabel(name);
+
+		p.setLabel(label);
+		return p;
 	}
 
 	public void setNumber(int n) {
@@ -142,6 +200,7 @@ public class Subdivision {
 	public void setRgnPointer(int rgnPointer) {
 		this.rgnPointer = rgnPointer;
 	}
+
 	public int getRgnPointer() {
 		return rgnPointer;
 	}
@@ -154,88 +213,21 @@ public class Subdivision {
 		return latitude;
 	}
 
-	public void setHasPoints(boolean hasPoints) {
-		this.hasPoints = hasPoints;
-	}
-
-	public void setHasIndPoints(boolean hasIndPoints) {
-		this.hasIndPoints = hasIndPoints;
-	}
-
-	public void setHasPolylines(boolean hasPolylines) {
-		this.hasPolylines = hasPolylines;
-	}
-
-	public void setHasPolygons(boolean hasPolygons) {
-		this.hasPolygons = hasPolygons;
-	}
-
-	/**
-	 * Get a type that shows if this area has lines, points etc.
-	 *
-	 * @return A code showing what kinds of element are in this subdivision.
-	 */
-	private byte getType() {
-		byte b = 0;
-		if (hasPoints)
-			b |= 0x10;
-		if (hasIndPoints)
-			b |= 0x20;
-		if (hasPolylines)
-			b |= 0x40;
-		if (hasPolygons)
-			b |= 0x80;
-
-		return b;
-	}
-
-	/**
-	 * Create a subdivision at a given zoom level.
-	 *
-	 * @param area The (unshifted) area that the subdivision covers.
-	 * @param zoom The zoom level that this division occupies.
-	 * @return A new subdivision.
-	 */
-	public Subdivision createSubdivision(Area area, Zoom zoom) {
-		Subdivision div = createDiv(area, zoom);
-		addSubdivision(div);
-		return div;
-	}
-
-	/**
-	 * This should be called only once per map to create the top level
-	 * subdivision.  The top level subdivision covers the whole map and it
-	 * must be empty.
-	 *
-	 * @param area The area bounded by the map.
-	 * @param zoom The zoom level which must be the highest (least detailed)
-	 * zoom in the map.
-	 * @return The new subdivision.
-	 */
-	public static Subdivision topLevelSubdivision(Area area, Zoom zoom) {
-		return createDiv(area, zoom);
-	}
-
-	/**
-	 * Does the work of the methods that create subdivisions.
-	 * @param area The area.
-	 * @param zoom The zoom level.
-	 * @return A new subdivision.
-	 */
-	private static Subdivision createDiv(Area area, Zoom zoom) {
-		// Get the central point of the area.
-		int lat = (area.getMinLat() + area.getMaxLat())/2;
-		int lng = (area.getMinLong() + area.getMaxLong())/2;
-
-		// Get the half width and height of the area and adjust by the
-		// bits per coord.
-		int width = (area.getMaxLong() - area.getMinLong())/2;
-		int height = (area.getMaxLat() - area.getMinLat())/2;
-
-		Subdivision div = new Subdivision(zoom, lat, lng, width, height);
-
-		return div;
-	}
+//	public void setHasPoints(boolean hasPoints) {
+//		this.hasPoints = hasPoints;
+//	}
+//
+//	public void setHasIndPoints(boolean hasIndPoints) {
+//		this.hasIndPoints = hasIndPoints;
+//	}
+//
+//	public void setHasPolylines(boolean hasPolylines) {
+//		this.hasPolylines = hasPolylines;
+//	}
+//
+//	public void setHasPolygons(boolean hasPolygons) {
+//		this.hasPolygons = hasPolygons;
+//	}
 
 	/**
 	 * The following routines answer the question 'does there need to
@@ -274,5 +266,106 @@ public class Subdivision {
 	 */
 	public boolean needsPolygonPtr() {
 		return hasPolygons && (hasPoints || hasIndPoints || hasPolylines);
+	}
+
+	/**
+	 * Get a type that shows if this area has lines, points etc.
+	 *
+	 * @return A code showing what kinds of element are in this subdivision.
+	 */
+	private byte getType() {
+		byte b = 0;
+		if (hasPoints)
+			b |= 0x10;
+		if (hasIndPoints)
+			b |= 0x20;
+		if (hasPolylines)
+			b |= 0x40;
+		if (hasPolygons)
+			b |= 0x80;
+
+		return b;
+	}
+	/**
+	 * Get the number of the first subdivision at the next level.
+	 * @return The first subdivision at the next level.
+	 */
+	private int getNextLevel() {
+		return divisions.get(0).getNumber();
+	}
+
+	/**
+	 * Add this subdivision as our child at the next level.  Each subdivision
+	 * can be further divided into smaller divisions.  They form a tree like
+	 * arrangement.
+	 *
+	 * @param sd One of our subdivisions.
+	 */
+	private void addSubdivision(Subdivision sd) {
+		divisions.add(sd);
+	}
+
+	private int getNumber() {
+		return number;
+	}
+
+	/**
+	 * We are starting to draw the points.  These must be done first.
+	 */
+	public void startPoints() {
+		if (lastMapElement > MAP_POINT)
+			throw new IllegalStateException("Points must be drawn first");
+
+		lastMapElement = MAP_POINT;
+
+		rgnFile.setPointPtr();
+	}
+
+	/**
+	 * We are starting to draw the lines.  These must be done before
+	 * polygons.
+	 */
+	void startIndPoints() {
+		if (lastMapElement > MAP_INDEXED_POINT)
+			throw new IllegalStateException("Indexed points must be done before lines and polygons");
+
+		lastMapElement = MAP_INDEXED_POINT;
+
+		rgnFile.setPolylinePtr();
+	}
+
+	/**
+	 * We are starting to draw the lines.  These must be done before
+	 * polygons.
+	 */
+	public void startLines() {
+		if (lastMapElement > MAP_LINE)
+			throw new IllegalStateException("Lines must be done before polygons");
+
+		lastMapElement = MAP_LINE;
+
+		rgnFile.setPolylinePtr();
+	}
+
+	/**
+	 * We are starting to draw the shapes.  This is done last.
+	 */
+	public void startShapes() {
+
+		lastMapElement = MAP_SHAPE;
+
+		rgnFile.setPolygonPtr();
+	}
+
+	public void setHasPoints(boolean hasPoints) {
+		this.hasPoints = hasPoints;
+	}
+
+	public void setHasPolylines(boolean hasLines) {
+		this.hasPolylines = hasLines;
+	}
+
+	public void setHasPolygons(boolean hasPolygons) {
+		this.hasPolygons = hasPolygons;
 	}
 }

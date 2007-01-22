@@ -52,8 +52,7 @@ public class MakeTestLang10Map extends AbstractTestMap {
 		double space = 0.002;
 		double size = 0.006;
 
-		div.setHasPolylines(true);
-		map.startLines();
+		div.startLines();
 
 		map.setLabelCharset("10bit");
 //		map.setLabelCodePage(1250); // No difference?
@@ -82,7 +81,7 @@ public class MakeTestLang10Map extends AbstractTestMap {
 
 				log.debug(sb);
 
-				Polyline l = map.createLine(div, sb.toString());
+				Polyline l = div.createLine(sb.toString());
 				double baseLat = lat + y * space;
 				double baseLong = lon + x * (size+space);
 				Coord co = new Coord(baseLat, baseLong);

@@ -34,7 +34,7 @@ public class BaseEncoder {
 
 	private boolean charsetSupported = true;
 
-	public boolean isCharsetSupported() {
+	protected boolean isCharsetSupported() {
 		return charsetSupported;
 	}
 

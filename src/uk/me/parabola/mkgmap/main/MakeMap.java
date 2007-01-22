@@ -79,19 +79,33 @@ public class MakeMap {
 
 			MapDataSource src = loadFromFile(args.getFileName());
 
+//			MapSplitter splitter = new MapSplitter(src);
+//			splitter.split();
+//			if (System.currentTimeMillis() > 2) {
+//				return;
+//			}
+			
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
 
 			processInfo(map, src);
-			Subdivision div = makeDivisions(map, src);
 
 			List<MapPoint> points = src.getPoints();
-			processPoints(map, div, points);
-
 			List<MapLine> lines = src.getLines();
-			processLines(map, div, lines);
-
 			List<MapShape> shapes = src.getShapes();
+
+			Subdivision div = makeDivisions(map, src);
+			if (!points.isEmpty())
+				div.setHasPoints(true);
+			if (!lines.isEmpty())
+				div.setHasPolylines(true);
+			if (!shapes.isEmpty())
+				div.setHasPolygons(true);
+
+			map.startDivision(div); // XXX should be on div?
+
+			processPoints(map, div, points);
+			processLines(map, div, lines);
 			processShapes(map, div, shapes);
 
 		} finally {
@@ -200,26 +214,18 @@ public class MakeMap {
 		Zoom z = map.createZoom(0, 24);
 		Subdivision div = map.createSubdivision(topdiv, bounds, z);
 
-		// TODO: these need to be set first before drawing any of the
-		// TODO: division and they need to be derived from the data in the division.
-		// TODO: ie they need to come from the division.
-		div.setHasPolylines(true);
-		div.setHasPoints(true);
-		div.setHasIndPoints(false);
-		div.setHasPolygons(true);
-
 		map.startDivision(div);
 		return div;
  	}
 
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points)
 	{
-		map.startPoints();
+		div.startPoints();
 
 		for (MapPoint point : points) {
 			String name = point.getName();
 
-			Point p = map.createPoint(div, name);
+			Point p = div.createPoint(name);
 			p.setType(point.getType());
 			p.setSubtype(point.getSubType());
 
@@ -234,7 +240,7 @@ public class MakeMap {
 	private void processLines(Map map, Subdivision div,
 	                          List<MapLine> lines)
 	{
-		map.startLines();  // Signal that we are beginning to draw the lines.
+		div.startLines();  // Signal that we are beginning to draw the lines.
 
 		for (MapLine line : lines) {
 			String name = line.getName();
@@ -243,7 +249,7 @@ public class MakeMap {
 			}
 
 			log.debug("Road " + name + ", t=" + line.getType());
-			Polyline pl = map.createLine(div, name);
+			Polyline pl = div.createLine(name);
 			pl.setDirection(line.isDirection());
 
 			List<Coord> points = line.getPoints();
@@ -261,7 +267,7 @@ public class MakeMap {
 	private void processShapes(Map map, Subdivision div,
 	                           List<MapShape> shapes)
 	{
-		map.startShapes();  // Signal that we are beginning to draw the shapes.
+		div.startShapes();  // Signal that we are beginning to draw the shapes.
 
 		for (MapShape shape : shapes) {
 			String name = shape.getName();
@@ -270,7 +276,7 @@ public class MakeMap {
 			}
 
 			log.debug("Shape " + name + ", t=" + shape.getType());
-			Polygon pg = map.createPolygon(div, name);
+			Polygon pg = div.createPolygon(name);
 
 			List<Coord> points = shape.getPoints();
 			for (Coord co : points) {

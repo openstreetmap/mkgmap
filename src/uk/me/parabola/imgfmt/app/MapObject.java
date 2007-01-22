@@ -50,11 +50,11 @@ public abstract class MapObject {
 	 */
 	public abstract void write(ImgFile file);
 
-	public int getDeltaLat() {
+	protected int getDeltaLat() {
 		return deltaLat;
 	}
 
-	public int getDeltaLong() {
+	protected int getDeltaLong() {
 		return deltaLong;
 	}
 
@@ -62,7 +62,7 @@ public abstract class MapObject {
 		this.label = label;
 	}
 
-	public int getType() {
+	protected int getType() {
 		return type;
 	}
 
@@ -116,11 +116,11 @@ public abstract class MapObject {
 		return subdiv;
 	}
 
-	public void setSubdiv(Subdivision subdiv) {
+	protected void setSubdiv(Subdivision subdiv) {
 		this.subdiv = subdiv;
 	}
 
-	public Label getLabel() {
+	protected Label getLabel() {
 		return label;
 	}
 }

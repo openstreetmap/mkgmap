@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 class Node extends Element {
-	private Coord location;
+	private final Coord location;
 
 	Node(long id, Coord co) {
 		location = co;

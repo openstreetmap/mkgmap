@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
 
 /**
  * A map area in map units.  There is a constructor available for creating
@@ -25,6 +26,7 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Area {
+	private static final Logger log = Logger.getLogger(Area.class);
 
 	private final int minLat;
 	private final int minLong;
@@ -63,25 +65,31 @@ public class Area {
 		return maxLong;
 	}
 
-// --Commented out by Inspection START (19/12/06 16:31):
-//	/**
-//	 * Check whether this Bounds is entirely within the given area.
-//	 * It allows an equal coordinate to be within the area.
-//	 *
-//	 * @param area The area to check against.
-//	 * @return True if this falls entirely within the area.
-//	 */
-//	public boolean isWithin(Area area) {
-//		if (minLat >= area.getMinLat()
-//				&& maxLat <= area.getMaxLat()
-//				&& minLong >= area.getMinLong()
-//				&& maxLong <= area.getMaxLong()) {
-//			return true;
-//		} else {
-//			return false;
-//		}
-//	}
-// --Commented out by Inspection STOP (19/12/06 16:31)
+	/**
+	 * Check whether this Bounds is entirely within the given area.
+	 * It allows an equal coordinate to be within the area.
+	 *
+	 * @param area The area to check against.
+	 * @return True if this falls entirely within the area.
+	 */
+	public boolean isWithin(Area area) {
+		if (minLat >= area.getMinLat()
+				&& maxLat <= area.getMaxLat()
+				&& minLong >= area.getMinLong()
+				&& maxLong <= area.getMaxLong()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public int getWidth() {
+		return maxLong - minLong;
+	}
+
+	public int getHeight() {
+		return maxLat - minLat;
+	}
 
 	public String toString() {
 		return "("
@@ -90,5 +98,35 @@ public class Area {
 				+ maxLat + ','
 				+ maxLong + ')'
 				;
+	}
+
+	public Area[] split(int xsplit, int ysplit) {
+		Area[] areas =  new Area[xsplit * ysplit];
+
+
+		int xsize = getWidth() / xsplit;
+		int ysize = getHeight() / ysplit;
+
+		int xextra = getWidth() - xsize * xsplit;
+		int yextra = getHeight() - ysize * ysplit;
+		
+		for (int x = 0; x < xsplit; x++) {
+			int xstart = minLong + x * xsize;
+			int xend = xstart + xsize;
+			if (x == xsplit - 1)
+				xend += xextra;
+
+			for (int y = 0; y < ysplit; y++) {
+				int ystart = minLat + y * ysize;
+				int yend = ystart + ysize;
+				if (y == ysplit - 1)
+					yend += yextra;
+				Area a = new Area(ystart, xstart, yend, xend);
+				log.debug(x, y, a);
+				areas[x * ysplit + y] = a;
+			}
+		}
+		
+		return areas;
 	}
 }

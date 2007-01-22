@@ -58,8 +58,7 @@ public class MakeTestLangMap extends AbstractTestMap {
 		double space = 0.002;
 		double size = 0.006;
 
-		div.setHasPolylines(true);
-		map.startLines();
+		div.startLines();
 
 		map.setLabelCharset("simple8");
 		map.setLabelCodePage(1250); // No difference?
@@ -79,7 +78,7 @@ public class MakeTestLangMap extends AbstractTestMap {
 			}
 
 			String name = new String(out);
-			Polyline l = map.createLine(div, name);
+			Polyline l = div.createLine(name);
 			double baseLat = lat + y * space;
 			Coord co = new Coord(baseLat, lon);
 			l.addCoord(co);

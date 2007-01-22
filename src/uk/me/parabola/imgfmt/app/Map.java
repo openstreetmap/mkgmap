@@ -28,17 +28,15 @@ import uk.me.parabola.log.Logger;
  * Holder for a complete map.  A map is made up of several files which
  * include at least the TRE, LBL and RGN files.
  *
+ * It is the interface for all information about the whole map, such as the
+ * point overviews etc.  Subdivision will hold the map elements.
+ *
  * <p>Needless to say, it has nothing to do with java.util.Map.
  *
  * @author Steve Ratcliffe
  */
-public class Map {
+public class Map implements InternalFiles {
 	private static final Logger log = Logger.getLogger(Map.class);
-
-	private static final int MAP_POINT = 0;
-	private static final int MAP_INDEXED_POINT = 1;
-	private static final int MAP_LINE = 2;
-	private static final int MAP_SHAPE = 3;
 
 	private FileSystem fileSystem;
 
@@ -46,7 +44,6 @@ public class Map {
 	private RGNFile rgnFile;
 	private LBLFile lblFile;
 
-	private int lastMapElement;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -140,7 +137,8 @@ public class Map {
 	public Subdivision topLevelSubdivision(Area area, Zoom zoom) {
 		zoom.setInherited(true); // May not always be necessary/desired
 
-		Subdivision sub = Subdivision.topLevelSubdivision(area, zoom);
+		InternalFiles ifiles = this;
+		Subdivision sub = Subdivision.topLevelSubdivision(ifiles, area, zoom);
 		rgnFile.startDivision(sub);
 		return sub;
 	}
@@ -160,8 +158,8 @@ public class Map {
 	 */
 	public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
 	{
-		Subdivision child = sub.createSubdivision(area, zoom);
 		log.debug("creating main division");
+		Subdivision child = sub.createSubdivision(this, area, zoom);
 		return child;
 	}
 
@@ -189,79 +187,6 @@ public class Map {
 		rgnFile.startDivision(sub);
 	}
 
-	/**
-	 * We are starting to draw the points.  These must be done first.
-	 */
-	public void startPoints() {
-		if (lastMapElement > MAP_POINT)
-			throw new IllegalStateException("Points must be drawn first");
-
-		lastMapElement = MAP_POINT;
-
-		rgnFile.setPointPtr();
-	}
-
-	/**
-	 * We are starting to draw the lines.  These must be done before
-	 * polygons.
-	 */
-	public void startIndPoints() {
-		if (lastMapElement > MAP_INDEXED_POINT)
-			throw new IllegalStateException("Indexed points must be done before lines and polygons");
-
-		lastMapElement = MAP_INDEXED_POINT;
-
-		rgnFile.setPolylinePtr();
-	}
-
-	/**
-	 * We are starting to draw the lines.  These must be done before
-	 * polygons.
-	 */
-	public void startLines() {
-		if (lastMapElement > MAP_LINE)
-			throw new IllegalStateException("Lines must be done before polygons");
-
-		lastMapElement = MAP_LINE;
-
-		rgnFile.setPolylinePtr();
-	}
-
-	/**
-	 * We are starting to draw the lines.  These must be done before
-	 * polygons.
-	 */
-	public void startShapes() {
-
-		lastMapElement = MAP_SHAPE;
-
-		rgnFile.setPolygonPtr();
-	}
-
-	public Polyline createLine(Subdivision div, String name) {
-		Label label = lblFile.newLabel(name);
-		Polyline pl = new Polyline(div);
-
-		pl.setLabel(label);
-		return pl;
-	}
-
-	public Polygon createPolygon(Subdivision div, String name) {
-		Label label = lblFile.newLabel(name);
-		Polygon pg = new Polygon(div);
-
-		pg.setLabel(label);
-		return pg;
-	}
-
-	public Point createPoint(Subdivision div, String name) {
-		Point p = new Point(div);
-		Label label = lblFile.newLabel(name);
-
-		p.setLabel(label);
-		return p;
-	}
-
 	public void addMapObject(MapObject item) {
 		rgnFile.addMapObject(item);
 	}
@@ -287,4 +212,11 @@ public class Map {
 		fileSystem.close();
 	}
 
+	public RGNFile getRgnFile() {
+		return rgnFile;
+	}
+
+	public LBLFile getLblFile() {
+		return lblFile;
+	}
 }
