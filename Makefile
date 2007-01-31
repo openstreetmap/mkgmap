@@ -1,6 +1,8 @@
 
 #OSMDATA = area.osm
-OSMDATA = newbig.osm
+#OSMDATA = newbig.osm
+OSMDATA = vbig.osm
+#OSMDATA = clondon.osm
 
 # Source code of OSMGarminMap
 OSM_GARMIN_MAP = /home/steve/src/osm/utils/osmgarminmap

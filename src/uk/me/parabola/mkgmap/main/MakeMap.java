@@ -21,6 +21,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
@@ -84,7 +85,9 @@ public class MakeMap {
 //			if (System.currentTimeMillis() > 2) {
 //				return;
 //			}
-			
+			MapArea mapArea = new MapArea(src.getBounds(), src);
+			mapArea.split(2, 3);
+
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
 

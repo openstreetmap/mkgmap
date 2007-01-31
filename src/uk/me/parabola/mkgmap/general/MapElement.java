@@ -15,7 +15,9 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-public class MapElement {
+import uk.me.parabola.imgfmt.app.Coord;
+
+public abstract class MapElement implements Comparable<MapElement> {
 	private String name;
 	private int type;
 
@@ -40,4 +42,27 @@ public class MapElement {
 	public void setType(int type) {
 		this.type = type;
 	}
+
+	/**
+	 * Compares this object with the specified object for order.  Returns a
+	 * negative integer, zero, or a positive integer as this object is less
+	 * than, equal to, or greater than the specified object.
+	 *
+	 * @param me the object to be compared.
+	 * @return a negative integer, zero, or a positive integer as this object
+	 *         is less than, equal to, or greater than the specified object.
+	 * @throws ClassCastException if the specified object's type prevents it
+	 *                            from being compared to this object.
+	 */
+	public int compareTo(MapElement me) {
+		Coord co = getLocation();
+		Coord co2 = me.getLocation();
+
+		if (co.getLatitude() == co2.getLatitude())
+			return co.getLongitude() - co2.getLongitude();
+		else
+			return co.getLatitude() - co2.getLatitude();
+	}
+
+	protected abstract Coord getLocation();
 }

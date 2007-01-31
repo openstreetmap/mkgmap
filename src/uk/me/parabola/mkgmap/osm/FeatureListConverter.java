@@ -108,6 +108,9 @@ public class FeatureListConverter implements OsmConverter {
 					continue;
 				List<List<Coord>> pointLists =  way.getPoints();
 				for (List<Coord> points : pointLists) {
+					if (points.isEmpty())
+						continue;
+					
 					MapLine line = new MapLine();
 					line.setName(way.getName());
 					line.setPoints(points);

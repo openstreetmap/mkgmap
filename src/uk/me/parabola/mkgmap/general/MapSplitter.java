@@ -97,7 +97,7 @@ public class MapSplitter {
 		List<MapShape> shapes = src.getShapes();
 
 		Area bounds = src.getBounds();
-		MapArea ma = new MapArea(bounds);
+		MapArea ma = new MapArea(bounds, src);
 
 		ma.setPoints(points);
 		ma.setLines(lines);

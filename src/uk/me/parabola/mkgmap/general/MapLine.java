@@ -45,4 +45,8 @@ public class MapLine extends MapElement {
 	public void setDirection(boolean direction) {
 		this.direction = direction;
 	}
+
+	protected Coord getLocation() {
+		return points.get(0);
+	}
 }

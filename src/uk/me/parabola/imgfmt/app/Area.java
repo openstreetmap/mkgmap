@@ -83,6 +83,15 @@ public class Area {
 		}
 	}
 
+	public boolean contains(Coord co) {
+		int lat = co.getLatitude();
+		if (lat < minLat || lat > maxLat)
+			return false;
+		int lon = co.getLongitude();
+		if (lon < minLong || lon > maxLong)
+			return false;
+		return true;
+	}
 	public int getWidth() {
 		return maxLong - minLong;
 	}
