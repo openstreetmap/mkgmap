@@ -152,12 +152,13 @@ public class Subdivision {
 	 * @param file The file to write to.
 	 */
 	public void write(ImgFile file) {
+		log.debug("write subdiv", latitude, longitude);
 		file.put3(rgnPointer);
 		file.put(getType());
 		file.put3(longitude);
 		file.put3(latitude);
 		log.debug("last is " + last);
-		file.putChar((char) (width | ((last)? 0x8000: 0)));
+		file.putChar((char) (width | ((last) ? 0x8000 : 0)));
 		file.putChar((char) height);
 
 		if (!divisions.isEmpty()) {

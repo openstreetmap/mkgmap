@@ -41,8 +41,8 @@ public class MapArea {
 		this.area = area;
 	}
 
-	public MapArea(Area area, MapDataSource src) {
-		this.area = area;
+	public MapArea(MapDataSource src) {
+		this.area = src.getBounds();
 		this.points = src.getPoints();
 		this.lines = src.getLines();
 		this.shapes = src.getShapes();
@@ -60,17 +60,17 @@ public class MapArea {
 		shapes.add(s);
 	}
 
-	public void setPoints(List<MapPoint> points) {
-		this.points = points;
-	}
-
-	public void setLines(List<MapLine> lines) {
-		this.lines = lines;
-	}
-
-	public void setShapes(List<MapShape> shapes) {
-		this.shapes = shapes;
-	}
+	//public void setPoints(List<MapPoint> points) {
+	//	this.points = points;
+	//}
+	//
+	//public void setLines(List<MapLine> lines) {
+	//	this.lines = lines;
+	//}
+	//
+	//public void setShapes(List<MapShape> shapes) {
+	//	this.shapes = shapes;
+	//}
 
 	public MapArea[] split(int nx, int ny) {
 		Area[] bounds = area.split(nx, ny);
@@ -111,6 +111,10 @@ public class MapArea {
 		return areas;
 	}
 
+	public Area getBounds() {
+		return area;
+	}
+
 	private MapArea pickArea(int nx, int ny, MapArea[] areas, int xbase, int ybase, int dx, int dy, MapElement e) {
 		int x = e.getLocation().getLongitude();
 		int y = e.getLocation().getLatitude();
@@ -126,5 +130,27 @@ public class MapArea {
 		assert areas[xcell * ny + ycell].area.contains(e.getLocation());
 		log.debug("adding", e.getLocation(), "to", xcell, "/", ycell, areas[xcell*ny+ycell].area);
 		return areas[xcell * ny + ycell];
+	}
+
+	public int getPointCount() {
+		return points.size();
+	}
+	public int getLineCount() {
+		return lines.size();
+	}
+	public int getShapeCount() {
+		return shapes.size();
+	}
+
+	public List<MapPoint> getPoints() {
+		return points;
+	}
+
+	public List<MapLine> getLines() {
+		return lines;
+	}
+
+	public List<MapShape> getShapes() {
+		return shapes;
 	}
 }

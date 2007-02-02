@@ -22,6 +22,7 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapArea;
+import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
@@ -79,42 +80,54 @@ public class MakeMap {
 			setOptions(map, args);
 
 			MapDataSource src = loadFromFile(args.getFileName());
-
-//			MapSplitter splitter = new MapSplitter(src);
-//			splitter.split();
-//			if (System.currentTimeMillis() > 2) {
-//				return;
-//			}
-			MapArea mapArea = new MapArea(src.getBounds(), src);
-			mapArea.split(2, 3);
-
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
 
 			processInfo(map, src);
 
-			List<MapPoint> points = src.getPoints();
-			List<MapLine> lines = src.getLines();
-			List<MapShape> shapes = src.getShapes();
-
-			Subdivision div = makeDivisions(map, src);
-			if (!points.isEmpty())
-				div.setHasPoints(true);
-			if (!lines.isEmpty())
-				div.setHasPolylines(true);
-			if (!shapes.isEmpty())
-				div.setHasPolygons(true);
-
-			map.startDivision(div); // XXX should be on div?
-
-			processPoints(map, div, points);
-			processLines(map, div, lines);
-			processShapes(map, div, shapes);
+			makeMapAreas(map, src);
 
 		} finally {
 			if (map != null)
 				map.close();
 		}
+	}
+
+	private void makeMapAreas(Map map, MapDataSource src) {
+		MapSplitter splitter = new MapSplitter(src);
+		MapArea[] areas = splitter.split();
+
+		// There must be an empty zoom level at the least detailed level.
+		Zoom z1 = map.createZoom(1, 24);
+		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), z1);
+
+		Zoom z0 = map.createZoom(0, 24);
+		for (MapArea a : areas) {
+			makeSubdivision(map, topdiv, a, z0);
+		}
+	}
+
+	private void makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {
+		List<MapPoint> points = ma.getPoints();
+		List<MapLine> lines = ma.getLines();
+		List<MapShape> shapes = ma.getShapes();
+
+		Subdivision div = map.createSubdivision(topdiv, ma.getBounds(), z);
+
+		map.startDivision(div);
+
+		if (!points.isEmpty())
+			div.setHasPoints(true);
+		if (!lines.isEmpty())
+			div.setHasPolylines(true);
+		if (!shapes.isEmpty())
+			div.setHasPolygons(true);
+
+		map.startDivision(div); // XXX should be on div
+
+		processPoints(map, div, points);
+		processLines(map, div, lines);
+		processShapes(map, div, shapes);
 	}
 
 	/**

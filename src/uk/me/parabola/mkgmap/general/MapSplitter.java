@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Steve Ratcliffe
@@ -32,6 +33,10 @@ public class MapSplitter {
 
 	private static final int MAX_DIVISION_SIZE = 1000;
 //	private static final int MAX_DIVISION_SIZE = 0x7fff;
+
+	// There is no good way of being sure of the absolute maximum number, we
+	// choose a fairly low number for testing.
+	private static final int MAX_FEATURE_NUMBER = 1000;
 
 	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
 	// zoom
@@ -53,12 +58,59 @@ public class MapSplitter {
 		this.mapSource = mapSource;
 		this.zoom = zoom.getBitsPerCoord();
 
-		MapArea ma = init(mapSource);
+
 	}
 
-	private void split() {
+	public MapSplitter(MapDataSource mapSource) {
+		this.mapSource = mapSource;
+	}
+
+	public MapArea[] split() {
 		Area bounds = mapSource.getBounds();
 		log.debug("orig area", bounds);
+
+		MapArea ma = initialArea(mapSource);
+		MapArea[] areas = splitMaxSize(ma);
+
+		// Now step through each area and see if any have too many map features
+		// in them.  For those that do, we further split them.  This is done
+		// recursively until everything fits.
+		List<MapArea> alist = new ArrayList<MapArea>();
+		addAreasToList(areas, alist);
+
+		MapArea[] results = new MapArea[alist.size()];
+		return alist.toArray(results);
+	}
+
+	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
+		for (MapArea a : areas) {
+			if (a.getPointCount() > MAX_FEATURE_NUMBER
+					|| a.getLineCount() > MAX_FEATURE_NUMBER
+					|| a.getShapeCount() > MAX_FEATURE_NUMBER)
+			{
+				log.debug("splitting area", a);
+				MapArea[] sublist = a.split(2, 2);
+				addAreasToList(sublist, alist);
+			} else {
+				log.debug("adding area unsplit");
+				alist.add(a);
+			}
+		}
+	}
+
+	/**
+	 * Split the area into portions that have the maximum size.  There is a
+	 * maximum limit to the size of a subdivision (16 bits or about 1.4 degrees)
+	 * we are choosing a limit smaller than the real max to allow for uncertaintly
+	 * about what happens with features that extend beyond the box.
+	 *
+	 * If the area is already small enough then it will be returned unchanged.
+	 *
+	 * @param mapArea The area that needs to be split down.
+	 * @return An array of map areas.  Each will be below the max size.
+	 */
+	private MapArea[] splitMaxSize(MapArea mapArea) {
+		Area bounds = mapArea.getBounds();
 
 		int width = bounds.getWidth();
 		int height = bounds.getHeight();
@@ -74,13 +126,8 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		Area[] areas;
-		if (xsplit > 1 || ysplit > 1) {
-			areas = bounds.split(xsplit, ysplit);
-		} else {
-			areas = new Area[1];
-			areas[0] = bounds;
-		}
+		MapArea[] areas = mapArea.split(xsplit, ysplit);
+		return areas;
 	}
 
 	// divide into minimum size areas
@@ -91,17 +138,21 @@ public class MapSplitter {
 	//      re-allocate to new areas
 	//      continue
 
-	private MapArea init(MapDataSource src) {
-		List<MapPoint> points = src.getPoints();
-		List<MapLine> lines = src.getLines();
-		List<MapShape> shapes = src.getShapes();
+	/**
+	 * The initial area contains all the features of the map.
+	 *
+	 * @param src The map data source.
+	 * @return The initial map area covering the whole area and containing
+	 * all the map features that are visible.
+	 */
+	private MapArea initialArea(MapDataSource src) {
 
 		Area bounds = src.getBounds();
-		MapArea ma = new MapArea(bounds, src);
+		MapArea ma = new MapArea(src);
 
-		ma.setPoints(points);
-		ma.setLines(lines);
-		ma.setShapes(shapes);
+		//ma.setPoints(src.getPoints());
+		//ma.setLines(src.getLines());
+		//ma.setShapes(src.getShapes());
 
 		return ma;
 	}

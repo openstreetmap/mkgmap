@@ -158,7 +158,7 @@ public class Map implements InternalFiles {
 	 */
 	public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
 	{
-		log.debug("creating main division");
+		log.debug("creating division");
 		Subdivision child = sub.createSubdivision(this, area, zoom);
 		return child;
 	}
