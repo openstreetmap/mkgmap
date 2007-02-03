@@ -16,10 +16,19 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 
-public abstract class MapElement implements Comparable<MapElement> {
+/**
+ * A map element is a point, line or shape that appears on the map.  This
+ * class holds all the common routines that are shared across all elements.
+ * 
+ * @author Steve Ratcliffe.
+ */
+public abstract class MapElement {
 	private String name;
 	private int type;
+	private int minLat = Integer.MAX_VALUE, minLong = Integer.MAX_VALUE;
+	private int maxLat = Integer.MIN_VALUE, maxLong = Integer.MIN_VALUE;
 
 	public String getName() {
 		return name;
@@ -43,26 +52,35 @@ public abstract class MapElement implements Comparable<MapElement> {
 		this.type = type;
 	}
 
-	/**
-	 * Compares this object with the specified object for order.  Returns a
-	 * negative integer, zero, or a positive integer as this object is less
-	 * than, equal to, or greater than the specified object.
-	 *
-	 * @param me the object to be compared.
-	 * @return a negative integer, zero, or a positive integer as this object
-	 *         is less than, equal to, or greater than the specified object.
-	 * @throws ClassCastException if the specified object's type prevents it
-	 *                            from being compared to this object.
-	 */
-	public int compareTo(MapElement me) {
-		Coord co = getLocation();
-		Coord co2 = me.getLocation();
+	protected abstract Coord getLocation();
 
-		if (co.getLatitude() == co2.getLatitude())
-			return co.getLongitude() - co2.getLongitude();
-		else
-			return co.getLatitude() - co2.getLatitude();
+	/**
+	 * We build up the bounding box of this element by calling this routine.
+	 *
+	 * @param co The coordinate to add.
+	 */
+	public void addToBounds(Coord co) {
+		int lat = co.getLatitude();
+		if (lat < minLat) {
+			minLat = lat;
+		} else if (lat > maxLat) {
+			maxLat = lat;
+		}
+
+		int lon = co.getLongitude();
+		if (lon < minLong) {
+			minLong = lon;
+		} else if (lon > maxLong) {
+			maxLong = lon;
+		}
 	}
 
-	protected abstract Coord getLocation();
+	/**
+	 * Get the region that this element covers.
+	 *
+	 * @return The area that bounds this element.
+	 */
+	public Area getBounds() {
+		return new Area(minLat, minLong, maxLat, maxLong);
+	}
 }

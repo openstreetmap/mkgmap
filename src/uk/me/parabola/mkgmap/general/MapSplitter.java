@@ -31,12 +31,12 @@ public class MapSplitter {
 
 	private final MapDataSource mapSource;
 
-	private static final int MAX_DIVISION_SIZE = 1000;
+	private static final int MAX_DIVISION_SIZE = 0x3fff;
 //	private static final int MAX_DIVISION_SIZE = 0x7fff;
 
 	// There is no good way of being sure of the absolute maximum number, we
 	// choose a fairly low number for testing.
-	private static final int MAX_FEATURE_NUMBER = 1000;
+	private static final int MAX_FEATURE_NUMBER = 3000;//2000;
 
 	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
 	// zoom
@@ -57,8 +57,6 @@ public class MapSplitter {
 	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
 		this.mapSource = mapSource;
 		this.zoom = zoom.getBitsPerCoord();
-
-
 	}
 
 	public MapSplitter(MapDataSource mapSource) {

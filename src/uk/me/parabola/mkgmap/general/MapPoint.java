@@ -47,5 +47,6 @@ public class MapPoint extends MapElement {
 
 	public void setLocation(Coord location) {
 		this.location = location;
+		addToBounds(location);
 	}
 }

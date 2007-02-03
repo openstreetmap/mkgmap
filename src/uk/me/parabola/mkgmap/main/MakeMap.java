@@ -25,7 +25,6 @@ import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.Overview;
@@ -88,6 +87,7 @@ public class MakeMap {
 			makeMapAreas(map, src);
 
 		} finally {
+			log.info("finished making map, closing");
 			if (map != null)
 				map.close();
 		}
@@ -112,7 +112,7 @@ public class MakeMap {
 		List<MapLine> lines = ma.getLines();
 		List<MapShape> shapes = ma.getShapes();
 
-		Subdivision div = map.createSubdivision(topdiv, ma.getBounds(), z);
+		Subdivision div = map.createSubdivision(topdiv, ma.getFullBounds(), z);
 
 		map.startDivision(div);
 
@@ -205,34 +205,6 @@ public class MakeMap {
 		map.addCopyright(src.copyrightMessage());
 	}
 
-	/**
-	 * Make the subdivisions in the map.
-	 * As we only use 1 (plus the empty top one) this will change a
-	 * lot.
-	 * TODO: needs to step though all zoom levels.
-	 * TODO: for each zoom level, create subdivisions.
-	 * TODO: return something more than a single division.
-	 *
-	 * @param map The map to operate on.
-	 * @param src The source of map information.
-	 * @return A single division.  Will be chnaged.
-	 */
-	private Subdivision makeDivisions(Map map, MapDataSource src) {
-		Area bounds = src.getBounds();
-
-//		bounds = new Area(lat, lng, lat + 0.05, lng + 0.05);
-
-		// There must be an empty zoom level at the least detailed level.
-		Zoom z1 = map.createZoom(1, 24);
-		Subdivision topdiv = map.topLevelSubdivision(bounds, z1);
-
-		// Create the most detailed view.
-		Zoom z = map.createZoom(0, 24);
-		Subdivision div = map.createSubdivision(topdiv, bounds, z);
-
-		map.startDivision(div);
-		return div;
- 	}
 
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points)
 	{

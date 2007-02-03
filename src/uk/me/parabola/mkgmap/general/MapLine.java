@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 
 import java.util.List;
 
@@ -36,6 +37,9 @@ public class MapLine extends MapElement {
 
 	public void setPoints(List<Coord> points) {
 		this.points = points;
+		for (Coord co : points) {
+			addToBounds(co);
+		}
 	}
 
 	public boolean isDirection() {

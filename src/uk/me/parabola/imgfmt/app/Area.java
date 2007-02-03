@@ -92,6 +92,7 @@ public class Area {
 			return false;
 		return true;
 	}
+
 	public int getWidth() {
 		return maxLong - minLong;
 	}
@@ -102,10 +103,10 @@ public class Area {
 
 	public String toString() {
 		return "("
-				+ minLat + ','
-				+ minLong + ") to ("
-				+ maxLat + ','
-				+ maxLong + ')'
+				+ Utils.toDegrees(minLat) + ','
+				+ Utils.toDegrees(minLong) + ") to ("
+				+ Utils.toDegrees(maxLat) + ','
+				+ Utils.toDegrees(maxLong) + ')'
 				;
 	}
 
