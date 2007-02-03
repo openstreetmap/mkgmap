@@ -17,13 +17,17 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
 
 /**
+ * The map must be split into subdivisions.  To do this we start off with
+ * one of these MapAreas containing all of the map and split it up into
+ * smaller and smaller areas until each area is below a maximum size and
+ * contains fewer than a maximum number of map features.
+ *
  * @author Steve Ratcliffe
  */
 public class MapSplitter {
@@ -31,16 +35,18 @@ public class MapSplitter {
 
 	private final MapDataSource mapSource;
 
+	// There is an absolute largest size as offsets are in 16 bits, we are
+	//  staying safely inside it however.
 	private static final int MAX_DIVISION_SIZE = 0x3fff;
-//	private static final int MAX_DIVISION_SIZE = 0x7fff;
 
-	// There is no good way of being sure of the absolute maximum number, we
-	// choose a fairly low number for testing.
-	private static final int MAX_FEATURE_NUMBER = 3000;//2000;
+	// The maximum number of map features in a subdivision.  Note that there
+	// not as such a maximum number, it is all about what will fit.  So we
+	// chose a number that seems safe.
+	private static final int MAX_FEATURE_NUMBER = 2500;//2000;
 
 	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
 	// zoom
-	private int zoom;
+	//private int zoom;
 
 	/**
 	 * Creates a list of map areas and keeps splitting them down until they
@@ -54,15 +60,28 @@ public class MapSplitter {
 	 * @param mapSource The input map data source.
 	 * @param zoom The zoom level that we need to split for.
 	 */
-	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
-		this.mapSource = mapSource;
-		this.zoom = zoom.getBitsPerCoord();
-	}
+	//public MapSplitter(MapDataSource mapSource, Zoom zoom) {
+	//	this.mapSource = mapSource;
+	//	//this.zoom = zoom.getBitsPerCoord();
+	//}
 
+	/**
+	 * Create a splitter.
+	 * 
+	 * @param mapSource The map source (eg an .osm file).
+	 */
 	public MapSplitter(MapDataSource mapSource) {
 		this.mapSource = mapSource;
 	}
 
+	/**
+	 * This splits the map into a series of smaller areas.  There is both a
+	 * maximum size and a maximum number of features that can be contained
+	 * in a single area.
+	 *
+	 * @return An array of map areas, each of which is within the size limit
+	 * and the limit on the number of features.
+	 */
 	public MapArea[] split() {
 		Area bounds = mapSource.getBounds();
 		log.debug("orig area", bounds);
@@ -80,12 +99,18 @@ public class MapSplitter {
 		return alist.toArray(results);
 	}
 
+	/**
+	 * Adds map areas to a list.  If an area has too many features, then it
+	 * is split into 4 and this routine is called recusively to add the new
+	 * areas.
+	 *
+	 * @param areas The areas to add to the list (and possibly split up).
+	 * @param alist The list that will finally contain the complete list of
+	 * map areas.
+	 */
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		for (MapArea a : areas) {
-			if (a.getPointCount() > MAX_FEATURE_NUMBER
-					|| a.getLineCount() > MAX_FEATURE_NUMBER
-					|| a.getShapeCount() > MAX_FEATURE_NUMBER)
-			{
+			if (a.getFeatureCount() > MAX_FEATURE_NUMBER) {
 				log.debug("splitting area", a);
 				MapArea[] sublist = a.split(2, 2);
 				addAreasToList(sublist, alist);
@@ -128,14 +153,6 @@ public class MapSplitter {
 		return areas;
 	}
 
-	// divide into minimum size areas
-	// allocate ways and points to each area
-	// for each area
-	//   if two many points or ways
-	//      split into 4
-	//      re-allocate to new areas
-	//      continue
-
 	/**
 	 * The initial area contains all the features of the map.
 	 *
@@ -144,14 +161,6 @@ public class MapSplitter {
 	 * all the map features that are visible.
 	 */
 	private MapArea initialArea(MapDataSource src) {
-
-		Area bounds = src.getBounds();
-		MapArea ma = new MapArea(src);
-
-		//ma.setPoints(src.getPoints());
-		//ma.setLines(src.getLines());
-		//ma.setShapes(src.getShapes());
-
-		return ma;
+		return new MapArea(src);
 	}
 }

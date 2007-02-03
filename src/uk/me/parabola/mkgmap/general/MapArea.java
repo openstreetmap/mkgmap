@@ -45,34 +45,35 @@ public class MapArea {
 	private List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
 
 
-	public MapArea(Area area) {
-		this.setBounds(area);
+	private MapArea(Area area) {
+		bounds = area;
 	}
 
 	public MapArea(MapDataSource src) {
-		this.setBounds(src.getBounds());
+		this.bounds = src.getBounds();
+		addToBounds(bounds);
 		this.points = src.getPoints();
 		this.lines = src.getLines();
 		this.shapes = src.getShapes();
 	}
 
-	public void addPoint(MapPoint p) {
+	private void addPoint(MapPoint p) {
 		points.add(p);
 		addToBounds(p.getBounds());
 	}
 
-	public void addLine(MapLine l) {
+	private void addLine(MapLine l) {
 		lines.add(l);
 		addToBounds(l.getBounds());
 
 	}
 
-	public void addShape(MapShape s) {
+	private void addShape(MapShape s) {
 		shapes.add(s);
 		addToBounds(s.getBounds());
 	}
 
-	public void addToBounds(Area a) {
+	private void addToBounds(Area a) {
 		int l = a.getMinLat();
 		if (l < minLat)
 			minLat = l;
@@ -98,53 +99,49 @@ public class MapArea {
 	 * @return An array of the new MapArea's.
 	 */
 	public MapArea[] split(int nx, int ny) {
-		Area[] bounds = getBounds().split(nx, ny);
-		MapArea[] areas = new MapArea[nx * ny];
+		Area[] areas = bounds.split(nx, ny);
+		MapArea[] mapAreas = new MapArea[nx * ny];
 		for (int i = 0; i < nx * ny; i++) {
-			areas[i] = new MapArea(bounds[i]);
+			mapAreas[i] = new MapArea(areas[i]);
 			if (log.isDebugEnabled())
-				log.debug("area before", areas[i].getBounds());
+				log.debug("area before", mapAreas[i].getBounds());
 		}
 
-		int xbase = bounds[0].getMinLong();
-		int ybase = bounds[0].getMinLat();
-		int dx = bounds[0].getWidth();
-		int dy = bounds[0].getHeight();
+		int xbase = areas[0].getMinLong();
+		int ybase = areas[0].getMinLat();
+		int dx = areas[0].getWidth();
+		int dy = areas[0].getHeight();
 
 		// Now sprinkle each map element into the correct map area.
 		List<MapPoint> plist = this.points;
 		for (MapPoint p : plist) {
-			MapArea area1 = pickArea(areas, p, xbase, ybase, nx, ny, dx, dy);
+			MapArea area1 = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
 			area1.addPoint(p);
 		}
 
 		List<MapLine> llist = this.lines;
 		for (MapLine l : llist) {
-			MapArea area1 = pickArea(areas, l, xbase, ybase, nx, ny, dx, dy);
+			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
 			area1.addLine(l);
 		}
 
 		List<MapShape> elist = this.shapes;
 		for (MapShape e : elist) {
-			MapArea area1 = pickArea(areas, e, xbase, ybase, nx, ny, dx, dy);
+			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
 			area1.addShape(e);
 		}
 
 		if (log.isDebugEnabled()) {
 			for (int i = 0; i < nx * ny; i++) {
-				log.debug("area after", areas[i].getBounds());
+				log.debug("area after", mapAreas[i].getBounds());
 			}
 		}
 
-		return areas;
+		return mapAreas;
 	}
 
 	public Area getBounds() {
 		return bounds;
-	}
-
-	public void setBounds(Area bounds) {
-		this.bounds = bounds;
 	}
 
 	public Area getFullBounds() {
@@ -189,18 +186,17 @@ public class MapArea {
 		return areas[xcell * ny + ycell];
 	}
 
-	public int getPointCount() {
-		return points.size();
+	/**
+	 * The number of map features in this area.  Used to determine if it needs
+	 * to be split.
+	 *
+	 * @return The number of points, lines and shapes.
+	 */
+	public int getFeatureCount() {
+		return points.size()
+				+ lines.size()
+				+ shapes.size();
 	}
-
-	public int getLineCount() {
-		return lines.size();
-	}
-
-	public int getShapeCount() {
-		return shapes.size();
-	}
-
 	public List<MapPoint> getPoints() {
 		return points;
 	}

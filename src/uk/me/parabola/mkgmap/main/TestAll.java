@@ -44,7 +44,7 @@ public class TestAll {
 	private static void positive() {
 		MakeMap.main(new String[] {
 				"--mapname=12008899",
-				"big.osm"
+				"vbig.osm"
 		});
 
 		MakeTestMap.main(defargs);

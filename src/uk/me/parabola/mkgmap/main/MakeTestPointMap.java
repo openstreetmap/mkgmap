@@ -58,18 +58,16 @@ public class MakeTestPointMap extends AbstractTestMap {
 
 		div.startPoints();
 
-		for (int x = 0; x < 0x80; x++) {
-			for (int y = 0; y < 0x20; y++) {
-				int type = x;
-				int subtype = y;
+		for (int type = 0; type < 0x80; type++) {
+			for (int subtype = 0; subtype < 0x20; subtype++) {
 
 				Point point = div.createPoint(
 						"0x" + Integer.toHexString(type)
 								+ ','
 								+ "0x" + Integer.toHexString(subtype));
 				
-				double baseLat = lat + y * space;
-				double baseLong = lon + x * space;
+				double baseLat = lat + subtype * space;
+				double baseLong = lon + type * space;
 
 				point.setLatitude(Utils.toMapUnit(baseLat));
 				point.setLongitude(Utils.toMapUnit(baseLong));

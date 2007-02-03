@@ -65,23 +65,23 @@ public class Area {
 		return maxLong;
 	}
 
-	/**
-	 * Check whether this Bounds is entirely within the given area.
-	 * It allows an equal coordinate to be within the area.
-	 *
-	 * @param area The area to check against.
-	 * @return True if this falls entirely within the area.
-	 */
-	public boolean isWithin(Area area) {
-		if (minLat >= area.getMinLat()
-				&& maxLat <= area.getMaxLat()
-				&& minLong >= area.getMinLong()
-				&& maxLong <= area.getMaxLong()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+	///**
+	// * Check whether this Bounds is entirely within the given area.
+	// * It allows an equal coordinate to be within the area.
+	// *
+	// * @param area The area to check against.
+	// * @return True if this falls entirely within the area.
+	// */
+	//public boolean isWithin(Area area) {
+	//	if (minLat >= area.getMinLat()
+	//			&& maxLat <= area.getMaxLat()
+	//			&& minLong >= area.getMinLong()
+	//			&& maxLong <= area.getMaxLong()) {
+	//		return true;
+	//	} else {
+	//		return false;
+	//	}
+	//}
 
 	public boolean contains(Coord co) {
 		int lat = co.getLatitude();

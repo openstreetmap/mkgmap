@@ -59,7 +59,7 @@ public abstract class MapElement {
 	 *
 	 * @param co The coordinate to add.
 	 */
-	public void addToBounds(Coord co) {
+	protected void addToBounds(Coord co) {
 		int lat = co.getLatitude();
 		if (lat < minLat) {
 			minLat = lat;
