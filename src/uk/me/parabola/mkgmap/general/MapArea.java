@@ -166,7 +166,11 @@ public class MapArea {
 	 * @param dy The size of each division (y direction)
 	 * @return The area from areas where the map element fits.
 	 */
-	private MapArea pickArea(MapArea[] areas, MapElement e, int xbase, int ybase, int nx, int ny, int dx, int dy) {
+	private MapArea pickArea(MapArea[] areas, MapElement e,
+			int xbase, int ybase,
+			int nx, int ny,
+			int dx, int dy)
+	{
 		int x = e.getLocation().getLongitude();
 		int y = e.getLocation().getLatitude();
 
