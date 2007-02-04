@@ -263,12 +263,12 @@ public class MakeMap {
 				name="";//continue;
 			}
 
-			log.debug("Shape " + name + ", t=" + shape.getType());
+			log.debug("Shape ", name, ", t=", shape.getType());
 			Polygon pg = div.createPolygon(name);
 
 			List<Coord> points = shape.getPoints();
 			for (Coord co : points) {
-				log.debug("  point at " + co);
+				log.debug("  point at ", co);
 				pg.addCoord(co);
 			}
 

@@ -37,7 +37,7 @@ import java.util.Properties;
 public class Logger {
 	private static FileWriter file ;
 
-	private static boolean loggingActive ;
+	private static boolean loggingActive;
 
 	private static final Map<String, Logger> loggers
 			= new ConcurrentHashMap<String, Logger>();
@@ -70,10 +70,10 @@ public class Logger {
 		if (dot > 0)
 			shortname = name.substring(dot+1);
 
-		debugEnabled = true;
-		infoEnabled = true;
-		warnEnabled = true;
-		errorEnabled = true;
+		debugEnabled = loggingActive;
+		infoEnabled = loggingActive;
+		warnEnabled = loggingActive;
+		errorEnabled = loggingActive;
 	}
 
 	private static void initLogging() {

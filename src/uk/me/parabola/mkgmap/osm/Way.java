@@ -246,13 +246,13 @@ class Way extends Element {
 
 			if (ws.getStart().equals(e.getEnd())) {
 				// Work list fits on the end of a previous list.
-				log.debug("list fits at end of previous " + e + " to " + ws);
+				log.debug("list fits at end of previous ", e, " to ", ws);
 				list.addAll(workList);
 				found = true;
 				break;
 			} else if (we.getEnd().equals(s.getStart())) {
 				// Work list fits at the beginning of a previous list.
-				log.debug("list fits at start of previous " + we + " to " + s);
+				log.debug("list fits at start of previous ", we, " to ", s);
 				list.addAll(0, workList);
 				found = true;
 				break;
