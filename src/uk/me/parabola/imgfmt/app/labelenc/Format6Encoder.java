@@ -125,7 +125,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 		String s = text.toUpperCase();
 
-		byte[] buf = new byte[2 * s.length()];
+		byte[] buf = new byte[2 * s.length() + 1];
 		int off = 0;
 		for (char oc : s.toCharArray()) {
 			char c;
