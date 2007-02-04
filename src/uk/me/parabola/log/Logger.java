@@ -35,7 +35,7 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public class Logger {
-	private static FileWriter file ;
+	private static FileWriter file;
 
 	private static boolean loggingActive;
 
@@ -82,8 +82,9 @@ public class Logger {
 
 		Properties props = System.getProperties();
 		String filename = props.getProperty("log.filename");
-		if (filename == null)
+		if (filename == null) {
 			return;
+		}
 
 		try {
 			file = new FileWriter(filename, true);

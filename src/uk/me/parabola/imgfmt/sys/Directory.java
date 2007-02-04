@@ -48,10 +48,6 @@ class Directory {
 	// The list of files themselves.
 	private final List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>();
 
-	// The first entry in the directory covers the header and directory itself
-	// and so is special.
-	private Dirent specialEntry;
-
 	Directory(FileChannel file, BlockManager blockManager) {
 		this.file = file;
 		this.startBlock = blockManager.getCurrentBlock();
@@ -135,7 +131,6 @@ class Directory {
 			ent.addFullBlock(startBlock + i);
 
 		ent.setSpecial(true);
-		specialEntry = ent;
 
 		// Add it to this directory.
 		addEntry(ent);

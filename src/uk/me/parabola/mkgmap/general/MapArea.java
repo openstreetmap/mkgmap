@@ -34,7 +34,7 @@ public class MapArea {
 
 	private static final int INITIAL_CAPACITY = 100;
 
-	private Area bounds;
+	private final Area bounds;
 	private int minLat = Integer.MAX_VALUE;
 	private int minLon = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;

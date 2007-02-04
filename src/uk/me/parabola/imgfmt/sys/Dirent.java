@@ -36,7 +36,7 @@ import java.nio.channels.FileChannel;
  *
  * @author Steve Ratcliffe
  */
-class Dirent implements DirectoryEntry, SysDirEntry {
+class Dirent implements DirectoryEntry {
 	private static final Logger log = Logger.getLogger(Dirent.class);
 
 	// Constants.

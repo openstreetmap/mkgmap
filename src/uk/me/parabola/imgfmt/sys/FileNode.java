@@ -274,7 +274,7 @@ public class FileNode implements ImgChannel {
 			buf.put((byte) 0);
 
 		buf.flip();
-		int n = file.write(buf);
+		file.write(buf);
 	}
 
 }

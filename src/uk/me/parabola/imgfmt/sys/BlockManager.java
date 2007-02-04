@@ -54,7 +54,7 @@ class BlockManager {
 	/**
 	 * Returns the next block that would be allocated if you were to call
 	 * {@link #allocate}.
-	 * @return
+	 * @return The next block that would be allocated.
 	 */
 	public int getCurrentBlock() {
 		return nextBlock;	

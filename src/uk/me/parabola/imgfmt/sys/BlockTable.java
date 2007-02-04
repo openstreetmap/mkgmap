@@ -34,19 +34,19 @@ import java.util.Arrays;
  *
  * @author Steve Ratcliffe
  */
-public class BlockTable {
+class BlockTable {
 	private static final Logger log = Logger.getLogger(BlockTable.class);
 
 	// Offset of the block table in the directory entry block.
 	private static final int BLOCKS_TABLE_START = 0x20;
 
-	private int tableSize;
+	private final int tableSize;
 
 	private int curroff;
-	private List<char[]> blocks;
+	private final List<char[]> blocks;
 	private char[] currTable;
 
-	public BlockTable(int blockSize) {
+	BlockTable(int blockSize) {
 		this.tableSize = (blockSize - BLOCKS_TABLE_START)/2;
 
 		blocks = new ArrayList<char[]>(20);
