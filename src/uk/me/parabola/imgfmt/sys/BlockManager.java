@@ -41,6 +41,25 @@ class BlockManager {
 		return nextBlock++;
 	}
 
+	/**
+	 * Reserve a number of blocks.  Used mainly to make room for the directory
+	 * blocks.
+	 *
+	 * @param n Number of blocks to reserve.
+	 */
+	public void reserveBlocks(int n) {
+		nextBlock += n;
+	}
+
+	/**
+	 * Returns the next block that would be allocated if you were to call
+	 * {@link #allocate}.
+	 * @return
+	 */
+	public int getCurrentBlock() {
+		return nextBlock;	
+	}
+
 	public int getBlockSize() {
 		return blockSize;
 	}

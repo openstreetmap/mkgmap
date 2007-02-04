@@ -36,6 +36,9 @@ import uk.me.parabola.log.Logger;
 class Directory {
 	private static final Logger log = Logger.getLogger(Directory.class);
 
+	// We reserve space for the directory to allow us to write the files first.
+	private static final int DIRECTORY_BLOCKS = 32;
+
 	private final int startBlock; // The starting block for the directory.
 	private int blockSize;
 	private int nEntries;
@@ -49,10 +52,10 @@ class Directory {
 	// and so is special.
 	private Dirent specialEntry;
 
-	Directory(FileChannel file, int start) {
+	Directory(FileChannel file, BlockManager blockManager) {
 		this.file = file;
-		this.startBlock = start;
-
+		this.startBlock = blockManager.getCurrentBlock();
+		blockManager.reserveBlocks(DIRECTORY_BLOCKS);
 	}
 
 	/**
@@ -86,6 +89,19 @@ class Directory {
 	 */
 	public void sync() throws IOException {
 		file.position((long) startBlock * blockSize);
+
+		// We have to allocate blocks for the directory entries, we have to do
+		// this first, as one of the directory entries contains this
+		// information.
+		//int bn = startBlock;
+		//for (DirectoryEntry ent : entries) {
+		//	SysDirEntry sysent = (SysDirEntry) ent;
+		//	int n = sysent.getNBlockTables();
+		//	for (int i = 0; i < n; i++) {
+		//		specialEntry.addFullBlock(bn++);
+		//	}
+		//}
+
 		for (DirectoryEntry ent : entries) {
 			log.debug("wrting ent at " + file.position());
 			((Dirent) ent).sync(file);
@@ -114,6 +130,10 @@ class Directory {
 		for (int i = 0; i < startBlock; i++)
 			ent.addFullBlock(i);
 
+		// We also reserve a number of blocks for the directory entries.
+		for (int i = 0; i < DIRECTORY_BLOCKS; i++)
+			ent.addFullBlock(startBlock + i);
+
 		ent.setSpecial(true);
 		specialEntry = ent;
 
@@ -130,10 +150,6 @@ class Directory {
 	private void addEntry(DirectoryEntry ent) {
 		nEntries++;
 
-		// take account of the directory block as part of the header.
-		specialEntry.addFullBlock(startBlock + nEntries - 1);
 		entries.add(ent);
 	}
-
-
 }

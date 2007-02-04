@@ -43,7 +43,7 @@ public class FileNode implements ImgChannel {
 
 	private final FileChannel file;
 	private final BlockManager blockManager;
-	private final Dirent dir;
+	private final Dirent dirent;
 
 	// The position in this file
 	private int position;
@@ -59,9 +59,11 @@ public class FileNode implements ImgChannel {
 	 * @param dir The directory entry associated with this file.
 	 * @param mode The mode "rw" for read and write etc.
 	 */
-	public FileNode(FileChannel file, BlockManager blockManager, Dirent dir, String mode) {
+	public FileNode(FileChannel file, BlockManager blockManager,
+			Dirent dir, String mode)
+	{
 		this.file = file;
-		this.dir = dir;
+		this.dirent = dir;
 		this.blockManager = blockManager;
 
 		if (mode.indexOf('r') >= 0)
@@ -162,6 +164,7 @@ public class FileNode implements ImgChannel {
 	 * @throws IOException If some other I/O error occurs
 	 */
 	public int read(ByteBuffer dst) throws IOException {
+		log.error("read is not supported yet");
 		if (!open)
 			throw new ClosedChannelException();
 		if (!readable)
@@ -197,8 +200,8 @@ public class FileNode implements ImgChannel {
 		int limit = src.limit();
 		log.debug("size to write " + size + ", " + limit);
 
-		// Loop over each block, if we know that they are all contiguous
-		// then we could do them all at once.
+		// Loop over each block, this is to support the case (which we may
+		// not implement) of non-contiguous blocks.
 
 		int totalWritten = 0;
 		while (size > 0) {
@@ -207,33 +210,29 @@ public class FileNode implements ImgChannel {
 
 			// First need to allocate enough blocks for this write. First check
 			// if the block exists already
-			int pblock = dir.getPhysicalBlock(lblock);
+			int pblock = dirent.getPhysicalBlock(lblock);
 			log.debug("lblock / pblock " + lblock + '/' + pblock);
 			if (pblock == 0xffff) {
 				log.debug("allocating new block");
 				pblock = blockManager.allocate();
-				dir.addBlock(pblock);
+				dirent.addBlock(pblock);
 			}
 
 			// Position the underlying file, so that it is in the correct place.
 			int off = position - lblock*blockManager.getBlockSize();
 			file.position(pblock * blockSize + off);
-			log.debug("remainder after complete block is " + off);
 
 			int n = size;
 			if (n > blockSize)
 				n = blockSize;
 
-			if (off != 0) {
-				log.debug("not at block boundry " + off);
+			if (off != 0)
 				n = blockSize - off;
-			}
 
 			src.limit(src.position() + n);
 
 			// Write to the underlying file.
 			int nw = file.write(src);
-			log.debug("wrote " + nw + " bytes");
 			if (nw == 0)
 				throw new IOException("Wrote nothing");
 
@@ -243,8 +242,8 @@ public class FileNode implements ImgChannel {
 			totalWritten += nw;
 
 			// Update file size.
-			if (position > dir.getSize())
-				dir.setSize(position);
+			if (position > dirent.getSize())
+				dirent.setSize(position);
 		}
 
 		return totalWritten;
@@ -265,24 +264,17 @@ public class FileNode implements ImgChannel {
 	 */
 	private void sync() throws IOException {
 		// Ensure that a complete block is written out.
-		log.debug("on close position is " + position);
-		log.debug("chan position is " + file.position());
-		log.debug("chan position is 0x" + Integer.toHexString((int) file.position()));
 		int bs = blockManager.getBlockSize();
 		long rem = bs - (file.position() % bs);
-		log.debug("rem is " + Integer.toHexString((int) rem));
 
 		ByteBuffer buf = ByteBuffer.allocate(blockManager.getBlockSize());
 
 		// Complete any partial block.
-		for (int i = 0; i < rem; i++) {
+		for (int i = 0; i < rem; i++)
 			buf.put((byte) 0);
-		}
+
 		buf.flip();
 		int n = file.write(buf);
-		log.debug("bytes writtern " + n);
-		log.debug("bytes writtern " + Integer.toHexString(n));
-		log.debug("file pos after " + file.position());
 	}
 
 }

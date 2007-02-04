@@ -18,14 +18,12 @@ package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
  * An entry within a directory.  This holds its name and a list
@@ -38,15 +36,12 @@ import java.util.Arrays;
  *
  * @author Steve Ratcliffe
  */
-class Dirent implements DirectoryEntry {
+class Dirent implements DirectoryEntry, SysDirEntry {
 	private static final Logger log = Logger.getLogger(Dirent.class);
 
 	// Constants.
 	private static final int MAX_FILE_LEN = 8;
 	private static final int MAX_EXT_LEN = 3;
-
-	// Offset of the block table in the directory entry block.
-	private static final int BLOCKS_TABLE_START = 0x20;
 
 	// Filenames are a base+extension
 	private String name;
@@ -58,10 +53,11 @@ class Dirent implements DirectoryEntry {
 	private int blockSize;
 
 	// The block table holds all the blocks that belong to this file.  The
-	// documentation says that
-	private int nBlockTables;
-	private int nblocks;
-	private char[] blockTable;
+	// documentation suggests that block numbers are always contiguous.
+	//private int nBlockTables;
+	//private int nblocks;
+	//private char[] blockTable;
+	private BlockTable blockTable;
 
 	private boolean special;
 
@@ -76,47 +72,48 @@ class Dirent implements DirectoryEntry {
 
 		this.blockSize = blockSize;
 
-		nBlockTables = 1;
-		blockTable = new char[(blockSize - BLOCKS_TABLE_START)/2];
-		Arrays.fill(blockTable, (char) 0xffff);
+		//blockTable = new char[(blockSize - BLOCKS_TABLE_START)/2];
+		//Arrays.fill(blockTable, (char) 0xffff);
+		blockTable = new BlockTable(blockSize);
 	}
 
 	/**
 	 * Write this entry out to disk.
-	 * TODO: we currently do not cope with the case where this takes more
-	 * than one block.
 	 *
 	 * @param file The file to write to.
 	 * @throws IOException If writing fails for any reason.
 	 */
 	void sync(FileChannel file) throws IOException {
-		if (nBlockTables > 1) {
-			throw new IllegalArgumentException("cannot deal with more than one block table yet");
-		}
-		ByteBuffer buf = ByteBuffer.allocate(blockSize);
+		int ntables = blockTable.getNBlockTables();
+		ByteBuffer buf = ByteBuffer.allocate(blockSize * ntables);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 
-		buf.put((byte) 1);
+		for (int part = 0; part < ntables; part++) {
+			log.debug("position at part", part, "is", buf.position());
+			
+			buf.put((byte) 1);
 
-		log.debug("nm " + buf.position());
+			buf.put(Utils.toBytes(name, MAX_FILE_LEN, (byte) ' '));
+			buf.put(Utils.toBytes(ext, MAX_EXT_LEN, (byte) ' '));
 
-		buf.put(Utils.toBytes(name, MAX_FILE_LEN, (byte) ' '));
-		buf.put(Utils.toBytes(ext, MAX_EXT_LEN, (byte) ' '));
+			// Size is only present in the first part
+			if (part == 0) {
+				log.debug("dirent " + name + '.' + ext + " size is going to " + size);
+				buf.putInt(size);
+			} else {
+				buf.putInt(0);
+			}
 
-		log.debug("dirent " + name + '.' + ext + " size is going to " + size);
-		buf.putInt(size);
+			// For an unknown reason, the 'sub-file part' must be three when it
+			// the header block entry.
+			if (special)
+				buf.putChar((char) 0x03);
+			else
+				buf.putChar((char) part);
 
-		// For an unknown reason, the 'sub-file part' must be three when it
-		// the header block entry.
-		if (special)
-			buf.putChar((char) 0x03);
-		else
-			buf.putChar((char) 0);
-
-		// Write out the allocation of blocks for this entry.
-		buf.position(0x20);
-		for (int i = 0; i < (blockSize - BLOCKS_TABLE_START) / 2; i++) {
-			buf.putChar(blockTable[i]);
+			// Write out the allocation of blocks for this entry.
+			buf.position(blockSize * part + 0x20);
+			blockTable.writeTable(buf, part);
 		}
 
 		buf.flip();
@@ -133,6 +130,15 @@ class Dirent implements DirectoryEntry {
 	}
 
 	/**
+	 * Get the file extension.
+	 *
+	 * @return The file extension.
+	 */
+	public String getExt() {
+		return ext;
+	}
+
+	/**
 	 * Set the file name.  It cannot be too long.
 	 *
 	 * @param name The file name.
@@ -142,15 +148,6 @@ class Dirent implements DirectoryEntry {
 			throw new IllegalArgumentException("File name is wrong size "
 			+ "was " + name.length() + ", should be " + MAX_FILE_LEN);
 		this.name = name;
-	}
-
-	/**
-	 * Get the file extension.
-	 *
-	 * @return The file extension.
-	 */
-	public String getExt() {
-		return ext;
 	}
 
 	/**
@@ -187,10 +184,11 @@ class Dirent implements DirectoryEntry {
 	 */
 	void addFullBlock(int n) {
 		// We do not currently deal with more than one directory inode block.
-		if (nblocks >= 240)
-			throw new FormatException("reached limit of file size");
+		//if (nblocks >= 240)
+		//	throw new FormatException("reached limit of file size");
 
-		blockTable[nblocks++] = (char) n;
+		//blockTable[nblocks++] = (char) n;
+		blockTable.addBlock(n);
 		size += blockSize;
 	}
 
@@ -210,8 +208,9 @@ class Dirent implements DirectoryEntry {
 	 * @param n The block number.
 	 */
 	void addBlock(int n) {
-		log.debug("adding block " + n + ", at " + nblocks);
-		blockTable[nblocks++] = (char) n;
+		//log.debug("adding block " + n + ", at " + nblocks);
+		blockTable.addBlock(n);
+		//blockTable[nblocks++] = (char) n;
 	}
 
 	/**
@@ -222,10 +221,21 @@ class Dirent implements DirectoryEntry {
 	 * @return The corresponding physical block in the filesystem.
 	 */
 	public int getPhysicalBlock(int lblock) {
-		if (lblock > blockTable.length)
-			throw new IllegalArgumentException("can't deal with long files yet");
+		//if (lblock >= blockTable.length)
+		//	throw new IllegalArgumentException("can't deal with long files yet");
+		//
+		//int pblock = blockTable[lblock];
 
-		int pblock = blockTable[lblock];
-		return pblock;
+		return blockTable.physFromLogical(lblock);
+	}
+
+
+	/**
+	 * Get the number of block tables used by this directory entry.
+	 *
+	 * @return The Number of block tables.
+	 */
+	public int getNBlockTables() {
+		return blockTable.getNBlockTables();
 	}
 }

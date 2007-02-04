@@ -79,13 +79,14 @@ public class ImgFS implements FileSystem {
 		header.setCreationTime(date);
 		header.setUpdateTime(date);
 
-		directory = new Directory(file, header.getDirectoryStartBlock());
+		// The block manager allocates blocks for files.
+		blockManager = new BlockManager(blockSize,
+				header.getDirectoryStartBlock());
+
+		directory = new Directory(file, blockManager);
 
 		if (params != null)
 			setParams(params);
-
-		// The block manager allocates blocks for files.
-		blockManager = new BlockManager(blockSize, 6);
 
 		// Initialise the directory.
 		directory.init();
