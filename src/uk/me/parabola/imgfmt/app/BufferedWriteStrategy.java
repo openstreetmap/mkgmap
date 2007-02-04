@@ -32,11 +32,15 @@ import java.nio.ByteOrder;
 public class BufferedWriteStrategy implements WriteStrategy {
 	private static final Logger log = Logger.getLogger(BufferedWriteStrategy.class);
 
-	private static final int MAX_SIZE = 1024 * 512; // TODO: grow it automatically later
-	private final ByteBuffer buf = ByteBuffer.allocate(MAX_SIZE);
-	private final ImgChannel chan;
-	private int maxSize;
+	private static final int KBYTE = 1024;
+	private static final int INIT_SIZE = 16 * KBYTE;
+	private static final int GROW_SIZE = 128 * KBYTE;
+	private static final int GUARD_SIZE = KBYTE;
 
+	private final ImgChannel chan;
+
+	private ByteBuffer buf = ByteBuffer.allocate(INIT_SIZE);
+	private int maxSize = INIT_SIZE;
 
 	public BufferedWriteStrategy(ImgChannel chan) {
 		this.chan = chan;
@@ -51,7 +55,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	public void sync() throws IOException {
 		buf.limit(maxSize);
 		buf.position(0);
-		log.debug("syncing to pos " + chan.position() + ", size" + buf.limit());
+		log.debug("syncing to pos", chan.position(), ", size", buf.limit());
 		chan.write(buf);
 	}
 
@@ -90,6 +94,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
+		checkSize();
 		buf.put(b);
 	}
 
@@ -99,7 +104,8 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param c The value to write.
 	 */
 	public void putChar(char c) {
-		log.debug("char at pos " + position());
+		checkSize();
+		log.debug("char at pos ", position());
 		buf.putChar(c);
 	}
 
@@ -109,6 +115,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The value to write.
 	 */
 	public void putInt(int val) {
+		checkSize();
 		buf.putInt(val);
 	}
 
@@ -118,6 +125,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The values to write.
 	 */
 	public void put(byte[] val) {
+		checkSize();
 		buf.put(val);
 	}
 
@@ -129,7 +137,19 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param length The number of bytes to write.
 	 */
 	public void put(byte[] src, int start, int length) {
-		log.debug("start+len " + start + ", " + length);
+		checkSize();
+		log.debug("start+len", start, ",", length);
 		buf.put(src, start, length);
+	}
+
+	private void checkSize() {
+		if (buf.position() > maxSize - GUARD_SIZE) {
+			maxSize += GROW_SIZE;
+			ByteBuffer newb = ByteBuffer.allocate(maxSize);
+			newb.order(ByteOrder.LITTLE_ENDIAN);
+			buf.flip();
+			newb.put(buf);
+			buf = newb;
+		}
 	}
 }
