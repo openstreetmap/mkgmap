@@ -104,12 +104,8 @@ class Dirent implements DirectoryEntry {
 				buf.putInt(0);
 			}
 
-			// For an unknown reason, the 'sub-file part' must be three when it
-			// the header block entry.
-			if (special)
-				buf.putChar((char) 0x03);
-			else
-				buf.putChar((char) part);
+			buf.put((byte) (special? 0x3: 0));
+			buf.putChar((char) part);
 
 			// Write out the allocation of blocks for this entry.
 			buf.position(blockSize * part + 0x20);

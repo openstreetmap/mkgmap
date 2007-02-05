@@ -40,7 +40,9 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	private final ImgChannel chan;
 
 	private ByteBuffer buf = ByteBuffer.allocate(INIT_SIZE);
-	private int maxSize = INIT_SIZE;
+	private int bufferSize = INIT_SIZE;
+
+	private int maxSize;
 
 	public BufferedWriteStrategy(ImgChannel chan) {
 		this.chan = chan;
@@ -143,9 +145,9 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	}
 
 	private void checkSize() {
-		if (buf.position() > maxSize - GUARD_SIZE) {
-			maxSize += GROW_SIZE;
-			ByteBuffer newb = ByteBuffer.allocate(maxSize);
+		if (buf.position() > bufferSize - GUARD_SIZE) {
+			bufferSize += GROW_SIZE;
+			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);
 			buf.flip();
 			newb.put(buf);
