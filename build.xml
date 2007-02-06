@@ -59,7 +59,7 @@
   </target>
 
 
-  <target name="dist" depends="build, javadoc"
+  <target name="dist" depends="build"
           description="Make the distribution area">
 
     <mkdir dir="${dist}"/>

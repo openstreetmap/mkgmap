@@ -1,5 +1,154 @@
+2007-02-06  steve
+
+	* src/uk/me/parabola/imgfmt/sys/ImgFS.java: Fix annoying problem
+	  where overwriting a bigger file leaves the new file unworkable,
+	  even if it would be alright otherwise.
+	* src/uk/me/parabola/mkgmap/general/MapArea.java: Keep the full
+	  bounds of empty areas.
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java: Small tidy up.
+
+2007-02-05  steve
+
+	* Makefile: Just a makefile change
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java: Fixed bug in the write
+	  strategy that I'd fixed before, but lost. It looks like the
+	  location of the sub-file part is incorrect in the documentation,
+	  although correct in the output of imgdecode. I modified Dirent so
+	  that the results were good in imgdecode. It looks like the 0x3
+	  needs to go *before* the part number in the 'special' dirent.
+
+2007-02-04  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java: Allow
+	  extra space, in case the name is just one funny character. Not
+	  really sure about this, just happened that there was an error.
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java: Grow
+	  the buffer for any size of file.
+	* src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockTable.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/imgfmt/sys/SysDirEntry.java,
+	  src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java: Code tidy up.
+	* src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/Way.java: I discovered that debug
+	  was really happening when it shouldn't, just not being written to
+	  the file. The Coord.toString method was taking considerable time.
+	  
+	  Anyway now whole of london takes 7 seconds, down from 27 seconds.
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockTable.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/SysDirEntry.java: Now working on
+	  the Garmin for the whole of london.
+
+2007-02-03  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapArea.java: Format long
+	  argument list.
+	* src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPointMap.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java: Tidy up with added
+	  comments too.
+	* src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapPoint.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: Working fully
+	  with large areas.
+
+2007-02-02  steve
+
+	* src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Apears to work in
+	  QLandkarte anyway on the big file that will not fit into one
+	  subdiv.
+
+2007-01-31  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java: The
+	  basic area splitter is now done.
+
+2007-01-22  steve
+
+	* src/uk/me/parabola/imgfmt/app/Subdivision.java: May as well
+	  uncomment the old methods, rather than create new ones ;)
+	* src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/InternalFiles.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPointMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPolygonMap.java,
+	  src/uk/me/parabola/mkgmap/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/osm/Node.java: Massive changes to
+	  support multiple subdivisions. Many methods moved around into
+	  more logical classes, so the code just looks better anyway.
+	  
+	  Program still works in spite of all the changes.
+
+2007-01-21  steve
+
+	* src/org: Get rid of empty directories.
+
+2007-01-20  steve
+
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/osm/Way.java: Set the direction flag
+	  properly now so that it goes into the map.
+	* src/uk/me/parabola/mkgmap/general/MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapSource.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/ReadOsm.java: Rename MapSource to
+	  MapDataSource to avoid confusion with garmin product
+	* src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/mkgmap/general/MapSource.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Comments etc while
+	  thinking about changes to allow multiple divisions.
+	* build.xml: Set target in build.xml to 1.5 to prevent requiring
+	  1.6.
+
 2007-01-19  steve
 
+	* ChangeLog, README: Final changes for release.
+	* src/uk/me/parabola/imgfmt/sys/Dirent.java: Logging message change
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java: Added explicit
+	  --latin1 option
 	* src/uk/me/parabola/imgfmt/app/LBLFile.java: Make an explicit
 	  --latin1 option
 

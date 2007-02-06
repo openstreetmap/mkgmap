@@ -67,16 +67,8 @@ Issues
 The program has the following limitations at present.
 
 1. You must be zoomed in close to see anything except an outline; there
-   is just one zoom level.
-2. There is a limit to the size of the map you can create. It will be
-   around 1Mb.  I've done a large chunk of North London without getting
-   anywhere near the limit though.  This is the next thing to be tackled.
-3. Non-ascii characters will not show up.  The format for Garmin maps
-   condenses text down to 6 bits per character.  This only leaves room
-   for uppercase ascii characters and a few symbols.  You can specify
-   the use of more bits (8 and 10 bits) but I don't know how those
-   formats work.  I'd be very grateful if someone knows or can work
-   them out.
+   is just one zoom level.  Different zoom levels will be the next
+   thing to be done.
 
 
 Acknowledgements
