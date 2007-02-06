@@ -68,6 +68,14 @@ public class ImgFS implements FileSystem {
 	{
 		log.info("Creating file system");
 		RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
+		try {
+			// Set length to zero because if you don't you can get a
+			// map that doesn't work.  Not clear why.
+			rafile.setLength(0);
+		} catch (IOException e) {
+			// It doesn't matter that much.
+			log.warn("Could not set file length to zero");
+		}
 
 		file = rafile.getChannel();
 
