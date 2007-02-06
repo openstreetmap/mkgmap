@@ -225,13 +225,4 @@ class Dirent implements DirectoryEntry {
 		return blockTable.physFromLogical(lblock);
 	}
 
-
-	/**
-	 * Get the number of block tables used by this directory entry.
-	 *
-	 * @return The Number of block tables.
-	 */
-	public int getNBlockTables() {
-		return blockTable.getNBlockTables();
-	}
 }
