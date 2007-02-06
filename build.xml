@@ -72,10 +72,11 @@
 			<include name="*.csv"/>
     </jar>
 
-		<!-- Copy in the javadoc -->
+		<!-- Copy in the javadoc
 		<copy todir="${dist}/doc/api" >
       <fileset dir="${javadoc}"/>
     </copy>
+		-->
 
     <!-- Copy the source code -->
     <copy todir="${dist}/src" >
