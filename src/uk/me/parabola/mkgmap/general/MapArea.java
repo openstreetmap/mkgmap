@@ -47,6 +47,7 @@ public class MapArea {
 
 	private MapArea(Area area) {
 		bounds = area;
+		addToBounds(area);
 	}
 
 	public MapArea(MapDataSource src) {
