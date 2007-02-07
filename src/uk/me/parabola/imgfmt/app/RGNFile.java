@@ -110,18 +110,6 @@ public class RGNFile extends ImgFile {
 		item.write(this);
 	}
 
-	public void setPointPtr() {
-		if (currentDivision.needsPointPtr()) {
-			long currPos = position();
-			position(pointPtrOff);
-			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
-			if (off > 0xffff)
-				throw new IllegalStateException("Too many items in points section");
-			putChar((char) off);
-			position(currPos);
-		}
-	}
-
 	public void setIndPointPtr() {
 		if (currentDivision.needsIndPointPtr()) {
 			long currPos = position();

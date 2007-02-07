@@ -318,8 +318,6 @@ public class Subdivision {
 			throw new IllegalStateException("Points must be drawn first");
 
 		lastMapElement = MAP_POINT;
-
-		rgnFile.setPointPtr();
 	}
 
 	/**

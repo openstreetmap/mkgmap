@@ -42,19 +42,4 @@ class Segment extends Element {
 	public Coord getEnd() {
 		return end;
 	}
-
-	/**
-	 * Returns a string representation of the object. In general, the
-	 * <code>toString</code> method returns a string that
-	 * "textually represents" this object.
-	 *
-	 * @return a string representation of the object.
-	 */
-	public String toString() {
-		return "Segment:"
-				+ getId()
-				+ " from=" + start
-				+ " to=" + end
-				;
-	}
 }

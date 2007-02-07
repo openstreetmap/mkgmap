@@ -264,39 +264,6 @@ public class FeatureListConverter implements OsmConverter {
 			this.subtype = ist;
 		}
 
-		/**
-		 * Returns a hash code value for the object.
-		 *
-		 * @return a hash code value for this object.
-		 * @see Object#equals(Object)
-		 */
-		public int hashCode() {
-			return type + subtype;
-		}
-
-		/**
-		 * Indicates whether some other object is "equal to" this one.
-		 * <p/>
-		 * The <code>equals</code> method implements an equivalence relation
-		 * on non-null object references:
-		 *
-		 *
-		 * @param obj the reference object with which to compare.
-		 * @return <code>true</code> if this object is the same as the obj
-		 *         argument; <code>false</code> otherwise.
-		 * @see #hashCode()
-		 */
-		public boolean equals(Object obj) {
-			if (obj instanceof GarminType) {
-				GarminType gt = (GarminType) obj;
-				if (gt.type == type && gt.subtype == subtype) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
 		public int getType() {
 			return type;
 		}

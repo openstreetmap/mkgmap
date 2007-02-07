@@ -126,15 +126,6 @@ class CommandArgs {
 		return argvalues.getProperty("mapname");
 	}
 
-	public void dumpOptions() {
-		Enumeration<?> en = argvalues.propertyNames();
-		while (en.hasMoreElements()) {
-			String key = (String) en.nextElement();
-			String val = argvalues.getProperty(key);
-			System.out.println(key + '=' + val);
-		}
-	}
-
 	public String getCharset() {
 		String s = argvalues.getProperty("latin1");
 		if (s != null)

@@ -89,20 +89,4 @@ public class Label {
 		if (ctext != null)
 			imgFile.put(ctext, 0, this.length);
 	}
-
-	// For debugging only
-	private void dumpBuf(byte[] buf) {
-		if (!log.isDebugEnabled())
-			return;
-
-		StringBuffer sb = new StringBuffer();
-
-		for (int i = 0; i < this.length; i++) {
-			byte b = buf[i];
-			sb.append("0x");
-			sb.append(Integer.toHexString(b & 0xff));
-			sb.append(' ');
-		}
-		log.debug(sb);
-	}
 }

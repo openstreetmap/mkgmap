@@ -187,7 +187,6 @@ public class MapArea {
 			log.debug("adding", e.getLocation(), "to", xcell, "/", ycell,
 					areas[xcell * ny + ycell].getBounds());
 		}
-		assert areas[xcell * ny + ycell].getBounds().contains(e.getLocation());
 		return areas[xcell * ny + ycell];
 	}
 

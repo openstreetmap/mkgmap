@@ -122,55 +122,6 @@ public class BitWriter {
 	}
 
 	/**
-	 * Returns a string representation of the object. This will be the buffer
-	 * as a string of 1 and 0.
-	 *
-	 * @return a string representation of the object.
-	 */
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-
-		for (int i = bitoff-1; i >= 0; i--) {
-			boolean val = isBitSet(i);
-			if (val)
-				sb.append('1');
-			else
-				sb.append('0');
-		}
-
-		return sb.toString();
-	}
-
-	// Tests.
-	public static void main(String[] args) {
-		BitWriter bw = new BitWriter();
-		System.out.println("initial " + bw);
-
-		bw.put1(1);
-		bw.put1(0);
-		bw.put1(1);
-		bw.put1(0);
-		bw.put1(1);
-		bw.put1(0);
-		bw.put1(1);
-		bw.put1(0);
-		bw.put1(1);
-		bw.put1(1);
-
-		System.out.println("want 1101010101, got " + bw);
-
-		bw.putn(10, 4);
-		System.out.println("putn 0xa got=" + bw);
-
-		// Should add a leading zero
-		bw.putn(8, 1);
-		System.out.println("putn to add leading zero got=" + bw);
-
-		bw.putn(0xffffffff, 20);
-		System.out.println("add 20 1s " + bw);
-	}
-
-	/**
 	 * Get the byte offset for the given bit number.
 	 *
 	 * @param boff The number of the bit in question.
