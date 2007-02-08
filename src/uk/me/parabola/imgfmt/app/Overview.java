@@ -132,4 +132,9 @@ public abstract class Overview implements Comparable<Overview> {
 			return type - ov.type;
 		}
 	}
+
+
+	public void setMaxLevel(byte maxLevel) {
+		this.maxLevel = maxLevel;
+	}
 }

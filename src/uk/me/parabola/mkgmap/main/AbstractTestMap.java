@@ -74,7 +74,7 @@ public abstract class AbstractTestMap {
 		Zoom z = map.createZoom(0, 24);
 		Subdivision div = map.createSubdivision(topdiv, area, z);
 
-		map.startDivision(div);
+		div.startDivision();
 
 		drawTestMap(map, div, lat, lng);
 

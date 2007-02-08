@@ -163,7 +163,6 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 					}
 				}
 			}
-			// else if ... more TODO: other characters
 		}
 
 		put6(buf, off++, 0xff);

@@ -183,10 +183,6 @@ public class Map implements InternalFiles {
 		treFile.setPoiDisplayFlags((byte) flags);
 	}
 
-	public void startDivision(Subdivision sub) {
-		rgnFile.startDivision(sub);
-	}
-
 	public void addMapObject(MapObject item) {
 		rgnFile.addMapObject(item);
 	}

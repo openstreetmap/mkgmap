@@ -69,7 +69,6 @@ public class RGNFile extends ImgFile {
 	}
 
 	private Subdivision currentDivision;
-	private int pointPtrOff;
 	private int indPointPtrOff;
 	private int polylinePtrOff;
 	private int polygonPtrOff;
@@ -80,12 +79,8 @@ public class RGNFile extends ImgFile {
 
 		// We need to reserve space for a pointer for each type of map
 		// element that is supported by this division.  Note that these
-		// pointers are only 2bytes long
-		if (sd.needsPointPtr()) {
-			pointPtrOff = position();
-			position(position() + 2);
-		}
-
+		// pointers are only 2bytes long.  A pointer to the points is never
+		// needed as it will always be first if present.
 		if (sd.needsIndPointPtr()) {
 			indPointPtrOff = position();
 			position(position() + 2);
@@ -98,10 +93,8 @@ public class RGNFile extends ImgFile {
 
 		if (sd.needsPolygonPtr()) {
 			polygonPtrOff = position();
-			log.debug("the pg ptr off=" + polygonPtrOff);
 			position(position() + 2);
 		}
-
 
 		currentDivision = sd;
 	}

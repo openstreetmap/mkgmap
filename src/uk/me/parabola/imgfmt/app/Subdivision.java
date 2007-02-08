@@ -157,7 +157,6 @@ public class Subdivision {
 		file.put(getType());
 		file.put3(longitude);
 		file.put3(latitude);
-		log.debug("last is " + last);
 		file.putChar((char) (width | ((last) ? 0x8000 : 0)));
 		file.putChar((char) height);
 
@@ -293,6 +292,10 @@ public class Subdivision {
 	 */
 	private int getNextLevel() {
 		return divisions.get(0).getNumber();
+	}
+
+	public void startDivision() {
+		rgnFile.startDivision(this);
 	}
 
 	/**

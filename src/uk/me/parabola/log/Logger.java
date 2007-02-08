@@ -18,6 +18,7 @@ package uk.me.parabola.log;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Properties;
 import java.util.HashMap;
@@ -151,7 +152,7 @@ public class Logger {
 			return;
 
 		simpleFormat("ERROR", o);
-		e.printStackTrace(); // XXX temporary.
+		e.printStackTrace(new PrintWriter(file));
 	}
 
 	private void simpleFormat(String type, Object o) {

@@ -114,8 +114,6 @@ public class MakeMap {
 
 		Subdivision div = map.createSubdivision(topdiv, ma.getFullBounds(), z);
 
-		map.startDivision(div);
-
 		if (!points.isEmpty())
 			div.setHasPoints(true);
 		if (!lines.isEmpty())
@@ -123,7 +121,7 @@ public class MakeMap {
 		if (!shapes.isEmpty())
 			div.setHasPolygons(true);
 
-		map.startDivision(div); // XXX should be on div
+		div.startDivision();
 
 		processPoints(map, div, points);
 		processLines(map, div, lines);

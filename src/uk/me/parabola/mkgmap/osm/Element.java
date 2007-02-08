@@ -52,10 +52,7 @@ public class Element {
 		return name;
 	}
 
-//	public void setName(String name) {
-//		this.name = name;
-//	}
-//
+
 	protected long getId() {
 		return id;
 	}
