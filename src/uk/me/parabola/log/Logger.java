@@ -18,9 +18,9 @@ package uk.me.parabola.log;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.HashMap;
 
 
 /**
@@ -40,7 +40,7 @@ public class Logger {
 	private static boolean loggingActive;
 
 	private static final Map<String, Logger> loggers
-			= new ConcurrentHashMap<String, Logger>();
+			= new HashMap<String, Logger>();
 
 	private String shortname;
 
