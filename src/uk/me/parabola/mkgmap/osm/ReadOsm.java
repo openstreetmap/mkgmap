@@ -58,7 +58,7 @@ public class ReadOsm implements MapDataSource {
 	 */
 	public void load(String name) throws FileNotFoundException, FormatException {
 		try {
-			FileInputStream is= new FileInputStream(name);
+			FileInputStream is = new FileInputStream(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser parser = parserFactory.newSAXParser();
 
