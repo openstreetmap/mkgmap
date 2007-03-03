@@ -48,6 +48,21 @@ class Way extends Element {
 	}
 
 	/**
+	 * Override to allow ref to be returned if no name is set.
+	 * If both then the ref is in brackets after the name.
+	 */
+	public String getName() {
+		String ref = getTag("ref");
+		String ret = super.getName();
+		if (ret == null)
+			ret = ref;
+		else if (ref != null)
+			ret = ret + " (" + ref + ")";
+
+		return ret;
+	}
+
+	/**
 	 * A simple representation of this way.
 	 * @return A string with the name and start point
 	 */
@@ -117,7 +132,6 @@ class Way extends Element {
 					Coord ce = seg.getEnd();
 					if (cs.equals(end)) {
 						// this is normal add the next point
-						log.debug(getName(), ce);
 						points.add(ce);
 						end = ce;
 					} else {
@@ -156,7 +170,6 @@ class Way extends Element {
 			Coord e = seg.getEnd();
 
 			if (newList) {
-				log.debug(getName(), "initial segment", seg);
 				start = s;
 				end = e;
 				workList.add(seg);
