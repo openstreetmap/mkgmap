@@ -40,6 +40,7 @@ class CommandArgs {
 	static {
 		defaults = new Properties();
 		defaults.setProperty("mapname", "63240001");
+		defaults.setProperty("description", "OSM street map");
 	}
 
 	// FIXME: the properties class is awful, will replace
@@ -118,6 +119,14 @@ class CommandArgs {
 
 	}
 
+	public String getDescription() {
+		return argvalues.getProperty("description");
+	}
+
+	public int getBlockSize() {
+		return getValue("block-size", 512);
+	}
+
 	public String getFileName() {
 		return fileName;
 	}
@@ -145,5 +154,17 @@ class CommandArgs {
 		}
 		
 		return cp;
+	}
+
+	private int getValue(String name, int defval) {
+		String s = argvalues.getProperty(name);
+		if (s == null)
+			return defval;
+
+		try {
+			return Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return defval;
+		}
 	}
 }

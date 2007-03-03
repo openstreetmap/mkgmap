@@ -56,10 +56,8 @@ public class MakeMap {
 		}
 
 		try {
-
 			CommandArgs a = new CommandArgs();
 			a.readArgs(args);
-//			a.dumpOptions();
 
 			MakeMap mm = new MakeMap();
 			mm.makeMap(a);
@@ -68,10 +66,15 @@ public class MakeMap {
 		}
 	}
 
+	/**
+	 * Make the map using the supplied arguments.
+	 *
+	 * @param args The arguments that were passed on the command line.
+	 */
 	private void makeMap(CommandArgs args) {
 		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(512);
-		params.setMapDescription("OSM street map");
+		params.setBlockSize(args.getBlockSize());
+		params.setMapDescription(args.getDescription());
 
 		Map map = null;
 		try {
@@ -94,17 +97,27 @@ public class MakeMap {
 	}
 
 	private void makeMapAreas(Map map, MapDataSource src) {
-		MapSplitter splitter = new MapSplitter(src);
+		// There must be an empty zoom level at the least detailed level.
+		Zoom z2 = map.createZoom(1, 16);
+		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), z2);
+
+		// first level with elements.
+		Zoom z1 = map.createZoom(0, 24);
+		MapSplitter splitter = new MapSplitter(src, z1);
 		MapArea[] areas = splitter.split();
 
-		// There must be an empty zoom level at the least detailed level.
-		Zoom z1 = map.createZoom(1, 24);
-		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), z1);
-
-		Zoom z0 = map.createZoom(0, 24);
 		for (MapArea a : areas) {
-			makeSubdivision(map, topdiv, a, z0);
+			makeSubdivision(map, topdiv, a, z1);
 		}
+
+		// next level
+		//Zoom z0 = map.createZoom(0, 24);
+		//splitter = new MapSplitter(src, z0);
+		//areas = splitter.split();
+		//
+		//for (MapArea a : areas) {
+		//	makeSubdivision(map, topdiv, a, z0);
+		//}
 	}
 
 	private void makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {

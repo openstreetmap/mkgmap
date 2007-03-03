@@ -42,8 +42,8 @@ class OSMXmlHandler extends DefaultHandler {
 
 	private int mode;
 
-	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
-	private final Map<Long, Segment> segMap = new HashMap<Long, Segment>();
+	private Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
+	private Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
 	private Node currentNode;
 	private Way currentWay;
@@ -105,6 +105,8 @@ class OSMXmlHandler extends DefaultHandler {
 		} else if (mode == MODE_SEGMENT) {
 			// not yet interested in anything here.
 		} else if (mode == MODE_WAY) {
+			if (nodeMap != null)
+				nodeMap = null;
 			if (qName.equals("seg")) {
 				long id = Long.parseLong(attributes.getValue("id"));
 				addSegmentToWay(id);
@@ -115,6 +117,11 @@ class OSMXmlHandler extends DefaultHandler {
 
 			}
 		}
+	}
+
+	@Override
+	public void endDocument() {
+		segMap = null;
 	}
 
 	/**
@@ -190,6 +197,9 @@ class OSMXmlHandler extends DefaultHandler {
 		Coord start = nodeMap.get(from);
 		Coord end = nodeMap.get(to);
 
+		if (start == null || end == null)
+			return;
+		
 		// TODO: we can do this another way now.
 		mapper.addToBounds(start);
 		mapper.addToBounds(end);

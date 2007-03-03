@@ -65,6 +65,10 @@ public class Zoom {
 		return bitsPerCoord;
 	}
 
+	public int getShiftValue() {
+		return 24 - bitsPerCoord;
+	}
+
 	public void write(ImgFile file) {
 		file.put((byte) (zoom & 0x3 | (inherited ? 0x80 : 0)));
 		file.put((byte) bitsPerCoord);

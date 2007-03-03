@@ -1,6 +1,6 @@
 
-#OSMDATA = area.osm
-OSMDATA = vbig.osm
+OSMDATA = areas.osm
+#OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 
 # Source code of OSMGarminMap

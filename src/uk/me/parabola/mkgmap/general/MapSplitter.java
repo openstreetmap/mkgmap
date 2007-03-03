@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class MapSplitter {
 
 	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
 	// zoom
-	//private int zoom;
+	private int shift;
 
 	/**
 	 * Creates a list of map areas and keeps splitting them down until they
@@ -60,19 +61,19 @@ public class MapSplitter {
 	 * @param mapSource The input map data source.
 	 * @param zoom The zoom level that we need to split for.
 	 */
-	//public MapSplitter(MapDataSource mapSource, Zoom zoom) {
-	//	this.mapSource = mapSource;
-	//	//this.zoom = zoom.getBitsPerCoord();
-	//}
-
-	/**
-	 * Create a splitter.
-	 * 
-	 * @param mapSource The map source (eg an .osm file).
-	 */
-	public MapSplitter(MapDataSource mapSource) {
+	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
 		this.mapSource = mapSource;
+		this.shift = zoom.getShiftValue();
 	}
+
+	///**
+	// * Create a splitter.
+	// *
+	// * @param mapSource The map source (eg an .osm file).
+	// */
+	//public MapSplitter(MapDataSource mapSource) {
+	//	this.mapSource = mapSource;
+	//}
 
 	/**
 	 * This splits the map into a series of smaller areas.  There is both a
@@ -123,9 +124,13 @@ public class MapSplitter {
 
 	/**
 	 * Split the area into portions that have the maximum size.  There is a
-	 * maximum limit to the size of a subdivision (16 bits or about 1.4 degrees)
-	 * we are choosing a limit smaller than the real max to allow for uncertaintly
-	 * about what happens with features that extend beyond the box.
+	 * maximum limit to the size of a subdivision (16 bits or about 1.4 degrees
+	 * at the most detailed zoom level).
+	 *
+	 * The size depends on the shift level.
+	 *
+	 * We are choosing a limit smaller than the real max to allow for
+	 * uncertaintly about what happens with features that extend beyond the box.
 	 *
 	 * If the area is already small enough then it will be returned unchanged.
 	 *
@@ -135,15 +140,15 @@ public class MapSplitter {
 	private MapArea[] splitMaxSize(MapArea mapArea) {
 		Area bounds = mapArea.getBounds();
 
-		int width = bounds.getWidth();
-		int height = bounds.getHeight();
-		log.debug("width", width, "height", height);
+		int width = bounds.getWidth() >> shift;
+		int height = bounds.getHeight() >> shift;
+		log.debug("shifted width", width, "shifted height", height);
 
 		// There is an absolute maximum size that a division can be.  Make sure
 		// that we are well inside that.
 		int xsplit = 1;
 		if (width > MAX_DIVISION_SIZE)
-			xsplit = width/MAX_DIVISION_SIZE + 1;
+			xsplit = width / MAX_DIVISION_SIZE + 1;
 
 		int ysplit = 1;
 		if (height > MAX_DIVISION_SIZE)

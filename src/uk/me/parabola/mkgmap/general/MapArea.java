@@ -34,12 +34,17 @@ public class MapArea {
 
 	private static final int INITIAL_CAPACITY = 100;
 
+	// This is the initial area.
 	private final Area bounds;
+
+	// Because ways may extend beyond the bounds, we keep track of the actual
+	// bounding box here.
 	private int minLat = Integer.MAX_VALUE;
 	private int minLon = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLon = Integer.MIN_VALUE;
 
+	// The contents of the area.
 	private List<MapPoint> points = new ArrayList<MapPoint>(INITIAL_CAPACITY);
 	private List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
 	private List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
