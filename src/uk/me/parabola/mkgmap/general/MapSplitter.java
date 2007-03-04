@@ -49,6 +49,8 @@ public class MapSplitter {
 	// zoom
 	private int shift;
 
+	private LevelFilter filter;
+
 	/**
 	 * Creates a list of map areas and keeps splitting them down until they
 	 * are small enough.  There is both a maximum size to an area and also
@@ -66,14 +68,12 @@ public class MapSplitter {
 		this.shift = zoom.getShiftValue();
 	}
 
-	///**
-	// * Create a splitter.
-	// *
-	// * @param mapSource The map source (eg an .osm file).
-	// */
-	//public MapSplitter(MapDataSource mapSource) {
-	//	this.mapSource = mapSource;
-	//}
+	public MapSplitter(MapDataSource src, Zoom zoom, LevelFilter filter) {
+		this.mapSource = src;
+		this.shift = zoom.getShiftValue();
+		this.filter = filter;
+	}
+
 
 	/**
 	 * This splits the map into a series of smaller areas.  There is both a

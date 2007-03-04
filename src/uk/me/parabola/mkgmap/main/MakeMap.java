@@ -23,6 +23,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.mkgmap.general.MapSplitter;
+import uk.me.parabola.mkgmap.general.LevelFilter;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -99,18 +100,45 @@ public class MakeMap {
 		}
 	}
 
+	static class LevelInfo {
+		int level;
+		int bits;
+		LevelFilter filter;
+
+		public LevelInfo(int level, int bits, LevelFilter filter) {
+			this.level = level;
+			this.bits = bits;
+			this.filter = filter;
+		}
+	}
+
+	private LevelInfo[] levels = new LevelInfo[] {
+		//new LevelInfo(2, 20, null),
+		//new LevelInfo(1, 22, null),
+		new LevelInfo(0, 24, null),
+	};
+
 	private void makeMapAreas(Map map, MapDataSource src) {
-		int level = 1;
-		Subdivision topdiv = makeTopArea(src, map, level);
+		// The top level has to cover the whole map without subdividing, so
+		// do a special check to make sure.
+		LevelInfo levelInfo = levels[0];
+		int maxBits = getMaxBits(src);
+		if (levelInfo.bits < maxBits)
+			maxBits = levelInfo.bits;
 
-		// first level with elements.
-		level = 0;
-		Zoom z1 = map.createZoom(level, 24);
-		MapSplitter splitter = new MapSplitter(src, z1);
-		MapArea[] areas = splitter.split();
+		// Create the empty top level
+		Zoom zoom = map.createZoom(levelInfo.level+1, maxBits);
+		Subdivision topdiv = makeTopArea(src, map, zoom);
 
-		for (MapArea a : areas) {
-			makeSubdivision(map, topdiv, a, z1);
+		// Now the levels filled with features.
+		for (LevelInfo linfo : levels) {
+			zoom = map.createZoom(linfo.level, linfo.bits);
+			MapSplitter splitter = new MapSplitter(src, zoom, linfo.filter);
+			MapArea[] areas = splitter.split();
+
+			for (MapArea a : areas) {
+				makeSubdivision(map, topdiv, a, zoom);
+			}
 		}
 
 	}
@@ -134,17 +162,18 @@ public class MakeMap {
 	 *
 	 * @param src The source of map data.
 	 * @param map The map being created.
-	 * @param level The level for this top level.
+	 * @param zoom
 	 * @return The new top level subdivision.
 	 */
-	private Subdivision makeTopArea(MapDataSource src, Map map, int level) {
-
-		int topshift = numberOfLeadingZeros(src.getBounds().getMaxDimention());
-		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
-
-		Zoom zoom = map.createZoom(level, 24 - minShift);
+	private Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
 		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), zoom);
 		return topdiv;
+	}
+
+	private int getMaxBits(MapDataSource src) {
+		int topshift = numberOfLeadingZeros(src.getBounds().getMaxDimention());
+		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
+		return 24 - minShift;
 	}
 
 	private void makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {

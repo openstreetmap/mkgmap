@@ -199,6 +199,7 @@ public class MapArea {
 	 * The number of map features in this area.  Used to determine if it needs
 	 * to be split.
 	 *
+	 * @deprecated Use the soon to be written getCountForLevel.
 	 * @return The number of points, lines and shapes.
 	 */
 	public int getFeatureCount() {
@@ -206,6 +207,7 @@ public class MapArea {
 				+ lines.size()
 				+ shapes.size();
 	}
+
 	public List<MapPoint> getPoints() {
 		return points;
 	}
