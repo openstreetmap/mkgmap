@@ -119,7 +119,6 @@ class OSMXmlHandler extends DefaultHandler {
 		}
 	}
 
-	@Override
 	public void endDocument() {
 		segMap = null;
 	}

@@ -40,6 +40,7 @@ import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import static java.lang.Integer.*;
 
 /**
  * Main routine for the command line map-making utility.
@@ -48,6 +49,8 @@ import java.util.List;
  */
 public class MakeMap {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
+
+	private static final int CLEAR_TOP_BITS = (32-15);
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
@@ -97,12 +100,12 @@ public class MakeMap {
 	}
 
 	private void makeMapAreas(Map map, MapDataSource src) {
-		// There must be an empty zoom level at the least detailed level.
-		Zoom z2 = map.createZoom(1, 16);
-		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), z2);
+		int level = 1;
+		Subdivision topdiv = makeTopArea(src, map, level);
 
 		// first level with elements.
-		Zoom z1 = map.createZoom(0, 24);
+		level = 0;
+		Zoom z1 = map.createZoom(level, 24);
 		MapSplitter splitter = new MapSplitter(src, z1);
 		MapArea[] areas = splitter.split();
 
@@ -110,14 +113,38 @@ public class MakeMap {
 			makeSubdivision(map, topdiv, a, z1);
 		}
 
-		// next level
-		//Zoom z0 = map.createZoom(0, 24);
-		//splitter = new MapSplitter(src, z0);
-		//areas = splitter.split();
-		//
-		//for (MapArea a : areas) {
-		//	makeSubdivision(map, topdiv, a, z0);
-		//}
+	}
+
+	/**
+	 * Create the top level subdivision.
+	 *
+	 * There must be an empty zoom level at the least detailed level. As it
+	 * covers the whole area in one it must be zoomed out enough so that
+	 * this can be done.
+     *
+	 * Note that the width is a 16 bit quantity, but the top bit is a
+	 * flag and so that leave only 15 bits into which the actual width
+	 * can fit.
+	 * covers the whole area in one it must be zoomed out enough so that
+	 * this can be done.
+     *
+	 * Note that the width is a 16 bit quantity, but the top bit is a
+	 * flag and so that leave only 15 bits into which the actual width
+	 * can fit.
+	 *
+	 * @param src The source of map data.
+	 * @param map The map being created.
+	 * @param level The level for this top level.
+	 * @return The new top level subdivision.
+	 */
+	private Subdivision makeTopArea(MapDataSource src, Map map, int level) {
+
+		int topshift = numberOfLeadingZeros(src.getBounds().getMaxDimention());
+		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
+
+		Zoom zoom = map.createZoom(level, 24 - minShift);
+		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), zoom);
+		return topdiv;
 	}
 
 	private void makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {

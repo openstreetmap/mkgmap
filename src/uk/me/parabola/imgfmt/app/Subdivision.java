@@ -157,6 +157,9 @@ public class Subdivision {
 		file.put(getType());
 		file.put3(longitude);
 		file.put3(latitude);
+		
+		assert width < 0x7fff;
+		assert height < 0xffff;
 		file.putChar((char) (width | ((last) ? 0x8000 : 0)));
 		file.putChar((char) height);
 

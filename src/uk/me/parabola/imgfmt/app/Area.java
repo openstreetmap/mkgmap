@@ -111,4 +111,8 @@ public class Area {
 		
 		return areas;
 	}
+
+	public int getMaxDimention() {
+		return Math.max(getWidth(), getHeight());
+	}
 }
