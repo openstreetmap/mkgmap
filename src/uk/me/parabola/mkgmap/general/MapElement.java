@@ -58,4 +58,8 @@ public abstract class MapElement {
 	 * @return The area that bounds this element.
 	 */
 	public abstract Area getBounds();
+
+	public int getResolution() {
+		return 24;
+	}
 }

@@ -33,6 +33,7 @@ public class MapArea {
 	private static final Logger log = Logger.getLogger(MapArea.class);
 
 	private static final int INITIAL_CAPACITY = 100;
+	private static final int MAX_RESOLUTION = 24;
 
 	// This is the initial area.
 	private final Area bounds;
@@ -49,36 +50,91 @@ public class MapArea {
 	private List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
 	private List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
 
+	// Counts of features available at different resolutions.
+	private int[] pointCounts = new int[MAX_RESOLUTION+1];
+	private int[] lineCounts = new int[MAX_RESOLUTION+1];
+	private int[] shapeCounts = new int[MAX_RESOLUTION+1];
 
+	/** 
+	 * Create an map area with the given initial bounds. 
+	 *
+	 * @param area The bounds for this area.
+	 */
 	private MapArea(Area area) {
 		bounds = area;
 		addToBounds(area);
 	}
 
+	/** 
+	 * Create a map area from the given map data source.  This map
+	 * area will have the same bounds as the map data source and
+	 * will contain all the same map elements.
+	 * 
+	 * @param src The map data source to initialise this area with.
+	 */
 	public MapArea(MapDataSource src) {
 		this.bounds = src.getBounds();
 		addToBounds(bounds);
-		this.points = src.getPoints();
-		this.lines = src.getLines();
-		this.shapes = src.getShapes();
+
+		for (MapPoint p : src.getPoints()) {
+			points.add(p);
+			addCount(p, pointCounts);
+		}
+
+		for (MapLine l : src.getLines()) {
+			lines.add(l);
+			addCount(l, lineCounts);
+		}
+
+		for (MapShape s : src.getShapes()) {
+			this.shapes.add(s);
+			addCount(s, shapeCounts);
+		}
 	}
 
+	private void addCount(MapElement p, int[] counts) {
+		int res = p.getResolution();
+		if (res <= MAX_RESOLUTION)
+			counts[res]++;
+	}
+
+	/** 
+	 * Add a single point to this area. 
+	 * 
+	 * @param p The point to add.
+	 */
 	private void addPoint(MapPoint p) {
 		points.add(p);
 		addToBounds(p.getBounds());
 	}
 
+	/** 
+	 * Add a single line to this area. 
+	 * 
+	 * @param l The line to add.
+	 */
 	private void addLine(MapLine l) {
 		lines.add(l);
 		addToBounds(l.getBounds());
-
 	}
 
+	/** 
+	 * Add a single shape to this map area. 
+	 * 
+	 * @param s The shape to add.
+	 */
 	private void addShape(MapShape s) {
 		shapes.add(s);
 		addToBounds(s.getBounds());
 	}
 
+	/** 
+	 * Add to the bounds of this area.  That is the new bounds
+	 * for this area will cover the existing ones plus the new
+	 * area.
+	 * 
+	 * @param a Area to add into this map area.
+	 */
 	private void addToBounds(Area a) {
 		int l = a.getMinLat();
 		if (l < minLat)
@@ -146,10 +202,25 @@ public class MapArea {
 		return mapAreas;
 	}
 
+	/** 
+	 * Get the initial bounds of this area.  That is the initial
+	 * bounds before anything was added.
+	 *
+	 * @return The initial bounds as when it was created.
+	 * @see #getFullBounds
+	 */
 	public Area getBounds() {
 		return bounds;
 	}
 
+	/**
+	 * Get the full bounds of this area.  As lines and polylines are
+	 * added then may go outside of the intial area.  Whe this happens
+	 * we need to increase the size of the area.
+	 *
+	 * @return The full size required to hold all the included
+	 * elements.
+	 */
 	public Area getFullBounds() {
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
@@ -208,14 +279,29 @@ public class MapArea {
 				+ shapes.size();
 	}
 
+	/**
+	 * Get a list of all the points. 
+	 *
+	 * @return The points.
+	 */
 	public List<MapPoint> getPoints() {
 		return points;
 	}
 
+	/**
+	 * Get a list of all the lines. 
+	 *
+	 * @return The lines.
+	 */
 	public List<MapLine> getLines() {
 		return lines;
 	}
 
+	/**
+	 * Get a list of all the shapes. 
+	 *
+	 * @return The shapes.
+	 */
 	public List<MapShape> getShapes() {
 		return shapes;
 	}
