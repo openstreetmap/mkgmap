@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osm;
 
-import uk.me.parabola.mkgmap.general.MapDataSource;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
@@ -46,7 +46,7 @@ import org.xml.sax.SAXException;
  *
  * @author Steve Ratcliffe
  */
-public class ReadOsm implements MapDataSource {
+public class ReadOsm implements LoadableMapDataSource {
 
 	private final MapDetails mapper = new MapDetails();
 

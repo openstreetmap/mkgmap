@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
+ * Copyright (C) 2007 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -12,58 +12,30 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 16-Dec-2006
+ * Create date: 24-Mar-2007
  */
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
-import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
 
-import java.io.FileNotFoundException;
 import java.util.List;
 
 /**
- * A source of map information in a standard format.  The OSM reader presents
- * this interface to the main map making program.  OSM concepts are converted
- * into Garmin map based structures such as {@link MapLine}. 
- *
- * Note that it does not reference anything from the imgfmt package that
- * relies on subdivisions.  In other words it does not directly reference
- * Point or Polyline as they depend on the subdivision they are in.  It
- * can refer to Coord and Overview however as they have global meaning.
- *
+ * A source of map data.  This base interface is used internally within
+ * the program.
+ * 
  * @author Steve Ratcliffe
  */
 public interface MapDataSource {
-
-	/**
-	 * Load map by name.  The name is in a suitable form to be recognised
-	 * by the particular map source.  It could be a file name or a URI.
-	 *
-	 * You would implement this interface to read mapping data in an other
-	 * format.
-	 *
-	 * @param name The name of the resource to be loaded.
-	 * @throws FileNotFoundException When the file or resource is not found.
-	 * @throws FormatException For any kind of malformed input.
-	 */
-	public void load(String name)
-			throws FileNotFoundException, FormatException;
-
-	/**
-	 * Get a suitable copyright message for this map source.
-	 *
-	 * @return A string with the name of the copyright holder.
-	 */
-	public String copyrightMessage();
-
 	/**
 	 * Get the area that this map covers.
 	 *
 	 * @return The area the map covers.
 	 */
-	public Area getBounds();
+	Area getBounds();
 
 	/**
 	 * Get the list of points that need to be rendered on the map.
@@ -85,16 +57,4 @@ public interface MapDataSource {
 	 * @return A list of {@link MapShape} objects.
 	 */
 	List<MapShape> getShapes();
-
-	/**
-	 * Get a list of every feature that is used in the map.  As features are
-	 * created a list is kept of each separate feature that is used.  This
-	 * goes into the .img file and is important for points and polygons although
-	 * it doesn't seem to matter if lines are represented or not on my Legend Cx
-	 * anyway.
-	 *
-	 * @return A list of all the types of point, polygon and polyline that are
-	 * used in the map.
-	 */
-	List<Overview> getOverviews();
 }

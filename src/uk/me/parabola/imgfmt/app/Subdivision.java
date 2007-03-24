@@ -143,7 +143,7 @@ public class Subdivision {
 	 * @return The shift value.  It is 24 minus the number of bits per coord.
 	 */
 	public final int getShift() {
-		return 24 - zoomLevel.getBitsPerCoord();
+		return 24 - zoomLevel.getResolution();
 	}
 
 	/**

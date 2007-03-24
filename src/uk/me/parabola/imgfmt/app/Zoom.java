@@ -33,23 +33,22 @@ import java.util.Iterator;
  * @author Steve Ratcliffe
  */
 public class Zoom {
-	private final int zoom;
+	private final int level;
 	private boolean inherited;
 
-	private final int bitsPerCoord;
+	private final int resolution;
 
 	private final List<Subdivision> subdivs = new ArrayList<Subdivision>();
-
 
 	/**
 	 * Create a new zoom level.
 	 *
 	 * @param zoom The level between 0 and 15.
-	 * @param bitsPerCoord The number of bits per coordinate, up to 24.
+	 * @param resolution The number of bits per coordinate, up to 24.
 	 */
-	Zoom(int zoom, int bitsPerCoord) {
-		this.zoom = zoom;
-		this.bitsPerCoord = bitsPerCoord;
+	Zoom(int zoom, int resolution) {
+		this.level = zoom;
+		this.resolution = resolution;
 	}
 
 
@@ -61,17 +60,22 @@ public class Zoom {
 		this.inherited = inherited;
 	}
 
-	public int getBitsPerCoord() {
-		return bitsPerCoord;
+
+	public int getLevel() {
+		return level;
+	}
+
+	public int getResolution() {
+		return resolution;
 	}
 
 	public int getShiftValue() {
-		return 24 - bitsPerCoord;
+		return 24 - resolution;
 	}
 
 	public void write(ImgFile file) {
-		file.put((byte) (zoom & 0x3 | (inherited ? 0x80 : 0)));
-		file.put((byte) bitsPerCoord);
+		file.put((byte) (level & 0x3 | (inherited ? 0x80 : 0)));
+		file.put((byte) resolution);
 		file.putChar((char) subdivs.size());
 	}
 

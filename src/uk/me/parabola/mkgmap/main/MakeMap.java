@@ -18,7 +18,7 @@ package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.mkgmap.osm.ReadOsm;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapDataSource;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapArea;
@@ -41,6 +41,7 @@ import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Collections;
 import static java.lang.Integer.*;
 
 /**
@@ -85,7 +86,7 @@ public class MakeMap {
 			map = Map.createMap(args.getMapname(), params);
 			setOptions(map, args);
 
-			MapDataSource src = loadFromFile(args.getFileName());
+			LoadableMapDataSource src = loadFromFile(args.getFileName());
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
 
@@ -114,11 +115,11 @@ public class MakeMap {
 
 	private LevelInfo[] levels = new LevelInfo[] {
 		//new LevelInfo(2, 20, null),
-		//new LevelInfo(1, 22, null),
+		new LevelInfo(1, 20, null),
 		new LevelInfo(0, 24, null),
 	};
 
-	private void makeMapAreas(Map map, MapDataSource src) {
+	private void makeMapAreas(Map map, LoadableMapDataSource src) {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
 		LevelInfo levelInfo = levels[0];
@@ -130,17 +131,24 @@ public class MakeMap {
 		Zoom zoom = map.createZoom(levelInfo.level+1, maxBits);
 		Subdivision topdiv = makeTopArea(src, map, zoom);
 
+		//MapSplitter splitter = new MapSplitter(src, zoom, linfo.filter);
+		//MapArea[] areas = splitter.split();
+
+		// We start with one map data source.
+		List<LoadableMapDataSource> srcList = Collections.singletonList(src);
+
 		// Now the levels filled with features.
 		for (LevelInfo linfo : levels) {
-			zoom = map.createZoom(linfo.level, linfo.bits);
-			MapSplitter splitter = new MapSplitter(src, zoom, linfo.filter);
-			MapArea[] areas = splitter.split();
+			for (MapDataSource dataSource : srcList) {
+				zoom = map.createZoom(linfo.level, linfo.bits);
+				MapSplitter splitter = new MapSplitter(dataSource, zoom, linfo.filter);
+				MapArea[] areas = splitter.split();
 
-			for (MapArea a : areas) {
-				makeSubdivision(map, topdiv, a, zoom);
+				for (MapArea a : areas) {
+					makeSubdivision(map, topdiv, a, zoom);
+				}
 			}
 		}
-
 	}
 
 	/**
@@ -243,7 +251,7 @@ public class MakeMap {
 	 * @param map The map to write to.
 	 * @param src The source of map information.
 	 */
-	private void processInfo(Map map, MapDataSource src) {
+	private void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 
@@ -338,9 +346,9 @@ public class MakeMap {
 		}
 	}
 
-	private MapDataSource loadFromFile(String name) {
+	private LoadableMapDataSource loadFromFile(String name) {
 		try {
-			MapDataSource src = new ReadOsm();
+			LoadableMapDataSource src = new ReadOsm();
 
 			src.load(name);
 
