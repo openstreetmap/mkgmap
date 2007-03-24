@@ -173,8 +173,6 @@ public class FeatureListConverter implements OsmConverter {
 				return;
 			}
 		}
-		// this is the usual case with nodes!
-//		log.warn("no mapping found for " + node);
 	}
 
 	private void readFeatures(BufferedReader in) throws IOException {
@@ -236,13 +234,14 @@ public class FeatureListConverter implements OsmConverter {
 
 		private final int type;
 		private final int subtype;
+		private int minResolution;
 
 		GarminType(String type) {
 			int it;
 			try {
 				it = Integer.decode(type);
 			} catch (NumberFormatException e) {
-				log.debug("not numeric", type);
+				log.error("not numeric " + type);
 				it = 0;
 			}
 			this.type = it;
@@ -256,7 +255,7 @@ public class FeatureListConverter implements OsmConverter {
 				it = Integer.decode(type);
 				ist = Integer.decode(subtype);
 			} catch (NumberFormatException e) {
-				log.debug("not numeric ", type, subtype);
+				log.error("not numeric " + type + " " + subtype);
 				it = 0;
 				ist = 0;
 			}
@@ -270,6 +269,14 @@ public class FeatureListConverter implements OsmConverter {
 
 		public int getSubtype() {
 			return subtype;
+		}
+
+		public int getMinResolution() {
+			return minResolution;
+		}
+
+		public void setMinResolution(int minResolution) {
+			this.minResolution = minResolution;
 		}
 	}
 }

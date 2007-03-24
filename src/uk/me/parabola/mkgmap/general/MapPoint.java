@@ -16,6 +16,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 
 /**
  * A point on the map.  This will appear as a symbol on the map and it will
@@ -47,6 +48,16 @@ public class MapPoint extends MapElement {
 
 	public void setLocation(Coord location) {
 		this.location = location;
-		addToBounds(location);
+	}
+
+
+	/**
+	 * Get the region that this element covers.
+	 *
+	 * @return The area that bounds this element.
+	 */
+	public Area getBounds() {
+		return new Area(location.getLatitude(), location.getLongitude(),
+				location.getLatitude(), location.getLongitude());
 	}
 }

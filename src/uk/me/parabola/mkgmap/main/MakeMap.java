@@ -151,18 +151,12 @@ public class MakeMap {
 	 * this can be done.
      *
 	 * Note that the width is a 16 bit quantity, but the top bit is a
-	 * flag and so that leave only 15 bits into which the actual width
-	 * can fit.
-	 * covers the whole area in one it must be zoomed out enough so that
-	 * this can be done.
-     *
-	 * Note that the width is a 16 bit quantity, but the top bit is a
-	 * flag and so that leave only 15 bits into which the actual width
+	 * flag and so that leaves only 15 bits into which the actual width
 	 * can fit.
 	 *
 	 * @param src The source of map data.
 	 * @param map The map being created.
-	 * @param zoom
+	 * @param zoom The zoom level.
 	 * @return The new top level subdivision.
 	 */
 	private Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
