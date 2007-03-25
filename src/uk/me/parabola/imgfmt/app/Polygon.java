@@ -16,6 +16,11 @@
 
 package uk.me.parabola.imgfmt.app;
 
+/**
+ * A Polygon on a garmin map is pretty much treated like a line.
+ *
+ * @author Steve Ratcliffe
+ */
 public class Polygon extends Polyline {
 	public Polygon(Subdivision div) {
 		super(div);

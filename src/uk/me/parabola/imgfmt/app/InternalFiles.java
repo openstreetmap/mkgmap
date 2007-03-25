@@ -17,10 +17,13 @@
 package uk.me.parabola.imgfmt.app;
 
 /**
+ * Interface to pass around the internal files in the map without
+ * passing the whole thing.
+ *
  * @author Steve Ratcliffe
  */
 public interface InternalFiles {
-	RGNFile getRgnFile();
+	public RGNFile getRgnFile();
 
-	LBLFile getLblFile();
+	public LBLFile getLblFile();
 }
