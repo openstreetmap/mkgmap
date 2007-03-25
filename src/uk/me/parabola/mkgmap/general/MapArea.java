@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.log.Logger;
 
 import java.util.List;
@@ -206,6 +207,14 @@ public class MapArea implements MapDataSource {
 		return shapes;
 	}
 
+	/**
+	 * Add one to the count.  We find the minimum resolution for the element
+	 * and increment the counter for that resolution. 
+	 *
+	 * @param p The element containing the minimum resolution that it will be
+	 * displayed at.
+	 * @param counts An array of counts, this routine updates the correct one.
+	 */
 	private void addCount(MapElement p, int[] counts) {
 		int res = p.getResolution();
 		if (res <= MAX_RESOLUTION)

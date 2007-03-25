@@ -24,6 +24,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.mkgmap.general.LevelFilter;
+import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -42,6 +43,7 @@ import uk.me.parabola.log.Logger;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Collections;
+import java.util.ArrayList;
 import static java.lang.Integer.*;
 
 /**
@@ -134,20 +136,46 @@ public class MakeMap {
 		//MapSplitter splitter = new MapSplitter(src, zoom, linfo.filter);
 		//MapArea[] areas = splitter.split();
 
+		class SourceSubdiv {
+			private MapDataSource source;
+			private Subdivision subdiv;
+
+			public SourceSubdiv(MapDataSource ds, Subdivision subdiv) {
+				this.source = ds;
+				this.subdiv = subdiv;
+			}
+
+			public MapDataSource getSource() {
+				return source;
+			}
+
+			public Subdivision getSubdiv() {
+				return subdiv;
+			}
+		}
+
 		// We start with one map data source.
-		List<LoadableMapDataSource> srcList = Collections.singletonList(src);
+		List<SourceSubdiv> srcList = Collections.singletonList(new SourceSubdiv(src, topdiv));
 
 		// Now the levels filled with features.
 		for (LevelInfo linfo : levels) {
-			for (MapDataSource dataSource : srcList) {
+			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
+
+			for (SourceSubdiv smap : srcList) {
+
 				zoom = map.createZoom(linfo.level, linfo.bits);
-				MapSplitter splitter = new MapSplitter(dataSource, zoom, linfo.filter);
+				MapSplitter splitter = new MapSplitter(smap.getSource(), zoom,
+						linfo.filter);
 				MapArea[] areas = splitter.split();
 
-				for (MapArea a : areas) {
-					makeSubdivision(map, topdiv, a, zoom);
+				for (MapArea area : areas) {
+					Subdivision div = makeSubdivision(
+							map, smap.getSubdiv(), area, zoom);
+					nextList.add(new SourceSubdiv(area, div));
 				}
 			}
+
+			srcList = nextList;
 		}
 	}
 
@@ -178,13 +206,15 @@ public class MakeMap {
 		return 24 - minShift;
 	}
 
-	private void makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {
+	private Subdivision makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {
 		List<MapPoint> points = ma.getPoints();
 		List<MapLine> lines = ma.getLines();
 		List<MapShape> shapes = ma.getShapes();
 
 		Subdivision div = map.createSubdivision(topdiv, ma.getFullBounds(), z);
+		ma.setSubdiv(div);
 
+		// TODO: needs to be aware of active numbers
 		if (!points.isEmpty())
 			div.setHasPoints(true);
 		if (!lines.isEmpty())
@@ -197,6 +227,8 @@ public class MakeMap {
 		processPoints(map, div, points);
 		processLines(map, div, lines);
 		processShapes(map, div, shapes);
+
+		return div;
 	}
 
 	/**

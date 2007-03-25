@@ -17,9 +17,6 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 
 import java.util.List;
 
