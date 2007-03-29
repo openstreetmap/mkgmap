@@ -79,6 +79,10 @@ public class Zoom {
 		file.putChar((char) subdivs.size());
 	}
 
+	public String toString() {
+		return "L " + level + ":" + resolution;
+	}
+	
 	void addSubdivision(Subdivision div) {
 		subdivs.add(div);
 	}

@@ -20,6 +20,7 @@ import uk.me.parabola.log.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * The map is divided into areas, depending on the zoom level.  These are
@@ -138,12 +139,24 @@ public class Subdivision {
 
 	/**
 	 * Get the shift value, that is the number of bits to left shift by for
-	 * values that need to be saved shifted in the file.
+	 * values that need to be saved shifted in the file.  Related to the
+	 * resolution.
 	 *
 	 * @return The shift value.  It is 24 minus the number of bits per coord.
+	 * @see #getResolution()
 	 */
 	public final int getShift() {
 		return 24 - zoomLevel.getResolution();
+	}
+
+	/**
+	 * Get the resolution of this division.  Resolution goes from 1 to 24
+	 * and the higher the number the more detail there is.
+	 *
+	 * @return The resolution.
+	 */
+	public final int getResolution() {
+		return zoomLevel.getResolution();
 	}
 
 	/**
@@ -271,6 +284,9 @@ public class Subdivision {
 		return hasPolygons && (hasPoints || hasIndPoints || hasPolylines);
 	}
 
+	public String toString() {
+		return "Sub" + zoomLevel + "(" + latitude + "," + longitude + ")";
+	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.
 	 *
@@ -299,6 +315,10 @@ public class Subdivision {
 
 	public void startDivision() {
 		rgnFile.startDivision(this);
+	}
+
+	public Iterator<Subdivision> childIterator() {
+		return divisions.iterator();
 	}
 
 	/**

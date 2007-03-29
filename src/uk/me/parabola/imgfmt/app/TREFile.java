@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Collections;
  * @author Steve Ratcliffe
  */
 public class TREFile extends ImgFile {
+	private static final Logger log = Logger.getLogger(TREFile.class);
 
 	private static final int HEADER_LEN = 120; // Other values are possible
 
@@ -181,6 +183,7 @@ public class TREFile extends ImgFile {
 			Iterator<Subdivision> it = z.subdivIterator();
 			while (it.hasNext()) {
 				Subdivision sd = it.next();
+				log.debug("setting number to", subdivnum);
 				sd.setNumber(subdivnum++);
 			}
 		}
@@ -304,5 +307,4 @@ public class TREFile extends ImgFile {
 	public void setPoiDisplayFlags(byte poiDisplayFlags) {
 		this.poiDisplayFlags = poiDisplayFlags;
 	}
-
 }

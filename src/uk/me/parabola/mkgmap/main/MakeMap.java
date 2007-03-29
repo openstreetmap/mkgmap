@@ -133,9 +133,6 @@ public class MakeMap {
 		Zoom zoom = map.createZoom(levelInfo.level+1, maxBits);
 		Subdivision topdiv = makeTopArea(src, map, zoom);
 
-		//MapSplitter splitter = new MapSplitter(src, zoom, linfo.filter);
-		//MapArea[] areas = splitter.split();
-
 		class SourceSubdiv {
 			private MapDataSource source;
 			private Subdivision subdiv;
@@ -161,16 +158,19 @@ public class MakeMap {
 		for (LevelInfo linfo : levels) {
 			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
 
+			zoom = map.createZoom(linfo.level, linfo.bits);
+			
 			for (SourceSubdiv smap : srcList) {
 
-				zoom = map.createZoom(linfo.level, linfo.bits);
 				MapSplitter splitter = new MapSplitter(smap.getSource(), zoom,
 						linfo.filter);
 				MapArea[] areas = splitter.split();
 
 				for (MapArea area : areas) {
+					Subdivision parent = smap.getSubdiv();
 					Subdivision div = makeSubdivision(
-							map, smap.getSubdiv(), area, zoom);
+							map, parent, area, zoom);
+					log.debug("ADD parent-subdiv", parent, smap.getSource(), ", z=", zoom, " new=", div);
 					nextList.add(new SourceSubdiv(area, div));
 				}
 			}
@@ -206,13 +206,12 @@ public class MakeMap {
 		return 24 - minShift;
 	}
 
-	private Subdivision makeSubdivision(Map map, Subdivision topdiv, MapArea ma, Zoom z) {
+	private Subdivision makeSubdivision(Map map, Subdivision parent, MapArea ma, Zoom z) {
 		List<MapPoint> points = ma.getPoints();
 		List<MapLine> lines = ma.getLines();
 		List<MapShape> shapes = ma.getShapes();
 
-		Subdivision div = map.createSubdivision(topdiv, ma.getFullBounds(), z);
-		ma.setSubdiv(div);
+		Subdivision div = map.createSubdivision(parent, ma.getFullBounds(), z);
 
 		// TODO: needs to be aware of active numbers
 		if (!points.isEmpty())
@@ -310,8 +309,12 @@ public class MakeMap {
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points)
 	{
 		div.startPoints();
+		int res = div.getResolution();
 
 		for (MapPoint point : points) {
+			if (point.getResolution() > res)
+				continue;
+
 			String name = point.getName();
 
 			Point p = div.createPoint(name);
@@ -330,11 +333,17 @@ public class MakeMap {
 	                          List<MapLine> lines)
 	{
 		div.startLines();  // Signal that we are beginning to draw the lines.
+		int res = div.getResolution();
+		log.info("div resolution " + res);
 
 		for (MapLine line : lines) {
+			log.info(" line res " + line.getResolution() + ", " + line.getName() + ", t=" + line.getType());
+			if (line.getResolution() > res)
+				continue;
+
 			String name = line.getName();
 			if (name == null) {
-				name="";//continue;
+				name = "";//continue;
 			}
 
 			log.debug("Road " + name + ", t=" + line.getType());
@@ -343,8 +352,8 @@ public class MakeMap {
 
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {
-				if (log.isDebugEnabled())
-				log.debug("  point at", co, '/', co.getLatitude(), co.getLongitude());
+				//if (log.isDebugEnabled())
+				//	log.debug("  point at", co, '/', co.getLatitude(), co.getLongitude());
 				pl.addCoord(co);
 			}
 
@@ -357,8 +366,12 @@ public class MakeMap {
 	                           List<MapShape> shapes)
 	{
 		div.startShapes();  // Signal that we are beginning to draw the shapes.
+		int res = div.getResolution();
 
 		for (MapShape shape : shapes) {
+			if (shape.getResolution() > res)
+				continue;
+
 			String name = shape.getName();
 			if (name == null) {
 				name="";//continue;

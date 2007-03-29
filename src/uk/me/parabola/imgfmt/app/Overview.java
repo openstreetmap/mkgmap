@@ -34,7 +34,7 @@ public abstract class Overview implements Comparable<Overview> {
 	private final byte type;
 	private final byte subType;
 
-	private byte maxLevel = 1; // XXX what to do with this?
+	private byte maxLevel = 4; // XXX what to do with this?
 
 	private final int size;
 

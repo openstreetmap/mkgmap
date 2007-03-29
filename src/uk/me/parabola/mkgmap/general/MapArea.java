@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.log.Logger;
 
 import java.util.List;
@@ -27,6 +26,9 @@ import java.util.ArrayList;
  * A sub area of the map.  We have to divide the map up into areas to meet the
  * format of the Garmin map.  This class holds all the map elements that belong
  * to a particular area and provide a way of splitting areas into smaller ones.
+ *
+ * It also acts as a map data source so that we can derive lower level
+ * areas from it.
  *
  * @author Steve Ratcliffe
  */

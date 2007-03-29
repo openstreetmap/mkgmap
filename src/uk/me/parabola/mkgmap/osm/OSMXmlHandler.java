@@ -172,8 +172,8 @@ class OSMXmlHandler extends DefaultHandler {
 		double lat = Double.parseDouble(slat);
 		double lon = Double.parseDouble(slon);
 
-		if (log.isDebugEnabled())
-			log.debug("adding node" + lat + '/' + lon);
+		//if (log.isDebugEnabled())
+		//	log.debug("adding node" + lat + '/' + lon);
 		Coord co = new Coord(lat, lon);
 		nodeMap.put(id, co);
 		currentNode = new Node(id, co);
@@ -203,8 +203,8 @@ class OSMXmlHandler extends DefaultHandler {
 		mapper.addToBounds(start);
 		mapper.addToBounds(end);
 
-		if (log.isDebugEnabled())
-			log.debug("adding segment " + start + " to " + end);
+		//if (log.isDebugEnabled())
+		//	log.debug("adding segment " + start + " to " + end);
 		Segment seg = new Segment(id, start, end);
 		segMap.put(id, seg);
 	}

@@ -151,15 +151,15 @@ public class Map implements InternalFiles {
 	 * create it, fill it will its map elements and then create the
 	 * next one.  You must also start at the top level and work down.
 	 *
-	 * @param sub The parent subdivision.
+	 * @param parent The parent subdivision.
 	 * @param area The area of the new child subdiv.
 	 * @param zoom The zoom level of the child.
 	 * @return The new division.
 	 */
-	public Subdivision createSubdivision(Subdivision sub, Area area, Zoom zoom)
+	public Subdivision createSubdivision(Subdivision parent, Area area, Zoom zoom)
 	{
 		log.debug("creating division");
-		Subdivision child = sub.createSubdivision(this, area, zoom);
+		Subdivision child = parent.createSubdivision(this, area, zoom);
 		return child;
 	}
 
