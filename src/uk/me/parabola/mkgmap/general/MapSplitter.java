@@ -48,6 +48,7 @@ public class MapSplitter {
 	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
 	// zoom
 	private int shift;
+	private int resolution;
 
 	private LevelFilter filter;
 
@@ -65,12 +66,14 @@ public class MapSplitter {
 	 */
 	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
 		this.mapSource = mapSource;
-		this.shift = zoom.getShiftValue();
+		//this.shift = zoom.getShiftValue();
+		this.resolution = zoom.getResolution();
 	}
 
 	public MapSplitter(MapDataSource src, Zoom zoom, LevelFilter filter) {
 		this.mapSource = src;
-		this.shift = zoom.getShiftValue();
+		this.resolution = zoom.getResolution();
+		//this.shift = zoom.getShiftValue();
 		this.filter = filter;
 	}
 
@@ -111,7 +114,7 @@ public class MapSplitter {
 	 */
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		for (MapArea a : areas) {
-			if (a.getFeatureCount() > MAX_FEATURE_NUMBER) {
+			if (a.getCountForResolution(resolution) > MAX_FEATURE_NUMBER) {
 				log.debug("splitting area", a);
 				MapArea[] sublist = a.split(2, 2);
 				addAreasToList(sublist, alist);

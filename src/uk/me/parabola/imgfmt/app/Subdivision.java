@@ -317,10 +317,6 @@ public class Subdivision {
 		rgnFile.startDivision(this);
 	}
 
-	public Iterator<Subdivision> childIterator() {
-		return divisions.iterator();
-	}
-
 	/**
 	 * Add this subdivision as our child at the next level.  Each subdivision
 	 * can be further divided into smaller divisions.  They form a tree like

@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.mkgmap.osm.ReadOsm;
+import uk.me.parabola.mkgmap.osm.OsmMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapShape;
@@ -117,7 +117,10 @@ public class MakeMap {
 
 	private LevelInfo[] levels = new LevelInfo[] {
 		//new LevelInfo(2, 20, null),
-		new LevelInfo(1, 20, null),
+		//new LevelInfo(4, 16, null),
+		//new LevelInfo(3, 18, null),
+		new LevelInfo(2, 20, null),
+		new LevelInfo(1, 22, null),
 		new LevelInfo(0, 24, null),
 	};
 
@@ -294,6 +297,7 @@ public class MakeMap {
 		map.addInfo("OSM Street map");
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
+		map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
 
 		// There has to be (at least) two copyright messages or else the map
 		// does not show up.  The second one will be displayed at startup,
@@ -393,7 +397,7 @@ public class MakeMap {
 
 	private LoadableMapDataSource loadFromFile(String name) {
 		try {
-			LoadableMapDataSource src = new ReadOsm();
+			LoadableMapDataSource src = new OsmMapDataSource();
 
 			src.load(name);
 

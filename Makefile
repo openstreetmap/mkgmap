@@ -1,5 +1,6 @@
 
-OSMDATA = areas.osm
+#OSMDATA = areas.osm
+OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 

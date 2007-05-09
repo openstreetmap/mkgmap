@@ -32,7 +32,7 @@ polyline|highway|primary|0x04|
 polyline|highway|primary_link|0x04|
 polyline|highway|trunk|0x02|
 polyline|highway|trunk_link|0x02|
-polyline|highway|motorway|0x02|
+polyline|highway|motorway|0x01|
 polyline|highway|motorway_link|0x02|
 polyline|railway|rail|0x14|
 polyline|railway|tram|0x14|

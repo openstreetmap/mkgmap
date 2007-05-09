@@ -80,7 +80,7 @@ public class MapArea implements MapDataSource {
 		}
 
 		for (MapShape s : src.getShapes()) {
-			this.shapes.add(s);
+			shapes.add(s);
 			addCount(s, shapeCounts);
 		}
 	}
@@ -158,17 +158,17 @@ public class MapArea implements MapDataSource {
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
 
-	/**
-	 * The number of map features in this area.  Used to determine if it needs
-	 * to be split.
-	 *
-	 * @deprecated Use the soon to be written getCountForLevel.
-	 * @return The number of points, lines and shapes.
-	 */
-	public int getFeatureCount() {
-		return points.size()
-				+ lines.size()
-				+ shapes.size();
+	public int getCountForResolution(int res) {
+		int count = 0;
+		for (int i = 0; i <= res; i++) {
+			log.debug("line cnt", i, " ", lineCounts[i]);
+			count += pointCounts[i];
+			count += lineCounts[i];
+			count += shapeCounts[i];
+		}
+
+		log.debug("returning", count, "for res", res);
+		return count;
 	}
 
 	/**
@@ -231,6 +231,7 @@ public class MapArea implements MapDataSource {
 	private void addPoint(MapPoint p) {
 		points.add(p);
 		addToBounds(p.getBounds());
+		addCount(p, pointCounts);
 	}
 
 	/**
@@ -241,6 +242,7 @@ public class MapArea implements MapDataSource {
 	private void addLine(MapLine l) {
 		lines.add(l);
 		addToBounds(l.getBounds());
+		addCount(l, lineCounts);
 	}
 
 	/**
@@ -251,6 +253,7 @@ public class MapArea implements MapDataSource {
 	private void addShape(MapShape s) {
 		shapes.add(s);
 		addToBounds(s.getBounds());
+		addCount(s, shapeCounts);
 	}
 
 	/**
