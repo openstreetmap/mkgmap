@@ -179,6 +179,9 @@ public class FeatureListConverter implements OsmConverter {
 		log.info("reading features");
 		String line;
 		while ((line = in.readLine()) != null) {
+			if (line.trim().startsWith("#"))
+				continue;
+			
 			String[] fields = line.split("\\|", -1);
 			if (fields.length != N_FIELDS) {
 				continue;

@@ -28,10 +28,10 @@ import libxml2
 import csv
 
 # The list of garmin features.
-FEATURE_LIST_FILE = 'feature-list.csv'
+FEATURE_LIST_FILE = 'garmin_feature_list.csv'
 
 # The mapping between OSM and garmin features
-FEATURE_MAP_FILE = 'osm2mpx.xml'
+FEATURE_MAP_FILE = 'osm_garmin_map.csv'
 
 if len(sys.argv) > 2:
 	FEATURE_LIST_FILE = sys.argv[1]
@@ -48,46 +48,36 @@ def main():
 		kind = line[0]
 		key = (line[1], line[2])
 		val = (line[4], line[5])
-		features[key] = val
+		try:
+			ft = features[kind]
+		except KeyError:
+			ft = {}
+			features[kind] = ft
+		ft[key] = val
 
 	# Get the osm to garmin map rules
-	doc = libxml2.parseFile(FEATURE_MAP_FILE)
-	root = doc.getRootElement()
-	el = root.children
-	while el:
-		if el.name == 'rule':
-			rule(el)
+	f = open(FEATURE_MAP_FILE)
+	r = csv.reader(f, delimiter='|')
+	w = csv.writer(sys.stdout, delimiter='|', lineterminator='\n')
 
-		el = el.next
+	for line in r:
+		kind = line[0]
+		key = (line[3], line[4])
+		try:
+			val = features[kind][key]
+			l = []
+			l.append(kind)
+			l.append(line[1])
+			l.append(line[2])
+			l.append(val[0])
+			if val[1]:
+				l.append(val[1])
+			else:
+				l.append('')
+			w.writerow(l)
+		except KeyError:
+			print >>sys.stderr, "No garmin entry at", kind, key
 
-def rule(el):
-	etype = el.prop('e')
-	key = el.prop('k')
-	val = el.prop('v')
-	vals = val.split('|')
-
-	el2 = el.children
-
-	found = 0
-	while el2:
-		if el2.type == 'element':
-			type = el2.prop('type')
-			subtype = el2.prop('subtype')
-			kind = el2.name
-			found = 1
-			break
-
-		el2 = el2.next
-
-	if not found: return
-
-	if not subtype:
-		subtype = ''
-
-	for val in vals:
-		feature = features[(type, subtype)]
-		print "%s|%s|%s|%s|%s" % (
-				kind, key, val, feature[0], feature[1])
 
 if __name__ == '__main__':
 	main()

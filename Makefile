@@ -5,7 +5,7 @@ OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = clondon.osm
 
 # Source code of OSMGarminMap
-OSM_GARMIN_MAP = /home/steve/src/osm/utils/osmgarminmap
+OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
@@ -22,9 +22,8 @@ load:
 
 
 map_features:
-	python scripts/mk_map_table.py $(OSM_GARMIN_MAP)/feature-list.csv \
-		$(OSM_GARMIN_MAP)/osm2mpx.xml > resources/feature_map.csv
-	ant
+	python scripts/mk_map_table.py resources/garmin_feature_list.csv \
+		resources/osm_garmin_map.csv | sort > resources/feature_map.csv
 
 test:
 	rm -fr gmapsupp/
