@@ -20,7 +20,6 @@ import uk.me.parabola.log.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * The map is divided into areas, depending on the zoom level.  These are
