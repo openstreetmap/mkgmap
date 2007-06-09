@@ -60,6 +60,19 @@ public abstract class MapElement {
 	public abstract Area getBounds();
 
 	public int getResolution() {
-		return 24;
+		//return getType() < 5? 15: 24;
+		switch (getType()) {
+		case 1:
+		case 2:
+			return 16;
+		case 3:
+		case 4:
+		case 5:
+		case 0x14:
+		case 0x17:
+			return 18;
+		default:
+			return 24;
+		}
 	}
 }
