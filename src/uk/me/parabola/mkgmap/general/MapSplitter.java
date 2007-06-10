@@ -45,12 +45,7 @@ public class MapSplitter {
 	// chose a number that seems safe.
 	private static final int MAX_FEATURE_NUMBER = 2500;//2000;
 
-	// This is the zoom in terms of pixels per coordinate.  So 24 is the highest
-	// zoom
-	private int shift;
-	private int resolution;
-
-	private LevelFilter filter;
+	private Zoom zoom;
 
 	/**
 	 * Creates a list of map areas and keeps splitting them down until they
@@ -66,17 +61,13 @@ public class MapSplitter {
 	 */
 	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
 		this.mapSource = mapSource;
-		//this.shift = zoom.getShiftValue();
-		this.resolution = zoom.getResolution();
+		this.zoom = zoom;
 	}
 
 	public MapSplitter(MapDataSource src, Zoom zoom, LevelFilter filter) {
 		this.mapSource = src;
-		this.resolution = zoom.getResolution();
-		//this.shift = zoom.getShiftValue();
-		this.filter = filter;
+		this.zoom = zoom;
 	}
-
 
 	/**
 	 * This splits the map into a series of smaller areas.  There is both a
@@ -114,7 +105,7 @@ public class MapSplitter {
 	 */
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		for (MapArea a : areas) {
-			if (a.getCountForResolution(resolution) > MAX_FEATURE_NUMBER) {
+			if (a.getCountForResolution(zoom.getResolution()) > MAX_FEATURE_NUMBER) {
 				log.debug("splitting area", a);
 				MapArea[] sublist = a.split(2, 2);
 				addAreasToList(sublist, alist);
@@ -143,6 +134,7 @@ public class MapSplitter {
 	private MapArea[] splitMaxSize(MapArea mapArea) {
 		Area bounds = mapArea.getBounds();
 
+		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
 		int height = bounds.getHeight() >> shift;
 		log.debug("shifted width", width, "shifted height", height);

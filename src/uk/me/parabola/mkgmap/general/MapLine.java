@@ -63,7 +63,7 @@ public class MapLine extends MapElement {
 	 *
 	 * @param co The coordinate to add.
 	 */
-	protected void addToBounds(Coord co) {
+	private void addToBounds(Coord co) {
 		int lat = co.getLatitude();
 		if (lat < minLat) {
 			minLat = lat;

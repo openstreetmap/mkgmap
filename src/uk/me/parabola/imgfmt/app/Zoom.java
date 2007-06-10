@@ -80,7 +80,7 @@ public class Zoom {
 	}
 
 	public String toString() {
-		return "L " + level + ":" + resolution;
+		return "L " + level + ':' + resolution;
 	}
 	
 	void addSubdivision(Subdivision div) {

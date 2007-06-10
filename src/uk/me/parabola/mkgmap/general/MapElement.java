@@ -72,11 +72,13 @@ public abstract class MapElement {
 		case 2:
 			return 16;
 		case 3:
-			return 21;
+			return 18;
 		case 4:
-			return 22;
+			return 19;
 		case 5:
-			return 23;
+			return 21;
+		case 6:
+			return 24;
 		case 0x14:
 		case 0x17:
 			return 20;

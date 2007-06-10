@@ -53,13 +53,18 @@ class Way extends Element {
 	 */
 	public String getName() {
 		String ref = getTag("ref");
-		String ret = super.getName();
-		if (ret == null)
-			ret = ref;
-		else if (ref != null)
-			ret = ret + " (" + ref + ")";
-
-		return ret;
+		String name = super.getName();
+		if (name == null) {
+			return ref;
+		} else if (ref != null) {
+			StringBuffer ret = new StringBuffer(name);
+			ret.append(" (");
+			ret.append(ref);
+			ret.append(')');
+			return ret.toString();
+		} else {
+			return name;
+		}
 	}
 
 	/**

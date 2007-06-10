@@ -108,7 +108,7 @@ public class MakeMap {
 		private int bits;
 		private LevelFilter filter;
 
-		public LevelInfo(int level, int bits, LevelFilter filter) {
+		LevelInfo(int level, int bits, LevelFilter filter) {
 			this.level = level;
 			this.bits = bits;
 			this.filter = filter;
@@ -127,11 +127,11 @@ public class MakeMap {
 	}
 
 	private LevelInfo[] levels = new LevelInfo[] {
-		new LevelInfo(5, 16, null),
+		new LevelInfo(5, 14, null),
 		new LevelInfo(4, 18, null),
-		new LevelInfo(3, 21, null),
-		new LevelInfo(2, 22, null),
-		new LevelInfo(1, 23, null),
+		new LevelInfo(3, 19, null),
+		new LevelInfo(2, 21, null),
+		new LevelInfo(1, 22, null),
 		new LevelInfo(0, 24, null),
 	};
 
@@ -151,7 +151,7 @@ public class MakeMap {
 			private MapDataSource source;
 			private Subdivision subdiv;
 
-			public SourceSubdiv(MapDataSource ds, Subdivision subdiv) {
+			SourceSubdiv(MapDataSource ds, Subdivision subdiv) {
 				this.source = ds;
 				this.subdiv = subdiv;
 			}

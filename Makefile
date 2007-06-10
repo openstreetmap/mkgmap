@@ -1,8 +1,10 @@
 
 #OSMDATA = areas.osm
+OSMDATA = /opt/data/planet-070207-gb-london.osm
 OSMDATA = /opt/data/uk-070530.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
+TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 # Source code of OSMGarminMap
 OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
@@ -11,7 +13,7 @@ makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
 	#java -Dlog.filename=mkgmap.log -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
-	time java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
+	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

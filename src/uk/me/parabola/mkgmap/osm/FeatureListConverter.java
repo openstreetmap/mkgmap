@@ -258,7 +258,7 @@ public class FeatureListConverter implements OsmConverter {
 				it = Integer.decode(type);
 				ist = Integer.decode(subtype);
 			} catch (NumberFormatException e) {
-				log.error("not numeric " + type + " " + subtype);
+				log.error("not numeric " + type + ' ' + subtype);
 				it = 0;
 				ist = 0;
 			}

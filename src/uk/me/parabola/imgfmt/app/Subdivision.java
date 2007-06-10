@@ -288,7 +288,7 @@ public class Subdivision {
 	}
 
 	public String toString() {
-		return "Sub" + zoomLevel + "(" + latitude + "," + longitude + ")";
+		return "Sub" + zoomLevel + '(' + latitude + ',' + longitude + ')';
 	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.
