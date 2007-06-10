@@ -93,8 +93,12 @@ public class Subdivision {
 
 		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
-		
-		this.width = area.getWidth()/2 >> shift;
+
+		int w = area.getWidth() / 2 >> shift;
+		if ((w & 0x8000) != 0)
+			w = 0x7fff;
+
+		this.width = w;
 		this.height = area.getHeight()/2 >> shift;
 	}
 
