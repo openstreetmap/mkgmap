@@ -104,23 +104,34 @@ public class MakeMap {
 	}
 
 	static class LevelInfo {
-		int level;
-		int bits;
-		LevelFilter filter;
+		private int level;
+		private int bits;
+		private LevelFilter filter;
 
 		public LevelInfo(int level, int bits, LevelFilter filter) {
 			this.level = level;
 			this.bits = bits;
 			this.filter = filter;
 		}
+
+		/**
+		 * Returns a string representation of the object. In general, the
+		 * <code>toString</code> method returns a string that
+		 * "textually represents" this object.
+		 *
+		 * @return a string representation of the object.
+		 */
+		public String toString() {
+			return "L" + level + " B" + bits;
+		}
 	}
 
 	private LevelInfo[] levels = new LevelInfo[] {
-		//new LevelInfo(2, 20, null),
-		//new LevelInfo(4, 16, null),
-		//new LevelInfo(3, 18, null),
-		new LevelInfo(2, 20, null),
-		new LevelInfo(1, 22, null),
+		new LevelInfo(5, 16, null),
+		new LevelInfo(4, 18, null),
+		new LevelInfo(3, 21, null),
+		new LevelInfo(2, 22, null),
+		new LevelInfo(1, 23, null),
 		new LevelInfo(0, 24, null),
 	};
 

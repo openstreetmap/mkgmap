@@ -59,6 +59,12 @@ public abstract class MapElement {
 	 */
 	public abstract Area getBounds();
 
+	/**
+	 * Temporary routine to get the resolutions that an element should be
+	 * displayed at.  It will be replaced by a configurable system.
+	 *
+	 * @return The lowest resolution at which the element will be visible.
+	 */
 	public int getResolution() {
 		//return getType() < 5? 15: 24;
 		switch (getType()) {
@@ -66,11 +72,14 @@ public abstract class MapElement {
 		case 2:
 			return 16;
 		case 3:
+			return 21;
 		case 4:
+			return 22;
 		case 5:
+			return 23;
 		case 0x14:
 		case 0x17:
-			return 18;
+			return 20;
 		default:
 			return 24;
 		}

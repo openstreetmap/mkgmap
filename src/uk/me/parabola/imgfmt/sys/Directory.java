@@ -37,7 +37,8 @@ class Directory {
 	private static final Logger log = Logger.getLogger(Directory.class);
 
 	// We reserve space for the directory to allow us to write the files first.
-	private static final int DIRECTORY_BLOCKS = 64;
+	// TODO Fix properly so that we don't need to reaserve up front.
+	private static final int DIRECTORY_BLOCKS = 200;
 
 	private final int startBlock; // The starting block for the directory.
 	private int blockSize;
