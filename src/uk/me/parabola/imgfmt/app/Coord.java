@@ -67,4 +67,13 @@ public class Coord {
 			return true;
 		else return false;
 	}
+
+	/**
+	 * Returns a string representation of the object.
+	 *
+	 * @return a string representation of the object.
+	 */
+	public String toString() {
+		return Utils.toDegrees(latitude) + "/" + Utils.toDegrees(longitude);
+	}
 }

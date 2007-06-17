@@ -19,6 +19,10 @@ import java.util.List;
 
 import uk.me.parabola.log.Logger;
 
+/**
+ * This class holds all of the calculations needed to encode a line into
+ * the garmin format.
+ */
 class LinePreparer {
 	private static final Logger log = Logger.getLogger(LinePreparer.class);
 
@@ -45,6 +49,11 @@ class LinePreparer {
 		calcDeltas();
 	}
 
+	/**
+	 * Write the bit stream to a BitWriter and return it.
+	 *
+	 * @return A class containing the writen byte stream.
+	 */
 	public BitWriter makeBitStream() {
 
 		assert xBase >= 0 && yBase >= 0;
