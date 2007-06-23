@@ -19,8 +19,8 @@ package uk.me.parabola.mkgmap.general;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
@@ -127,6 +127,10 @@ public class MapArea implements MapDataSource {
 
 		List<MapLine> llist = this.lines;
 		for (MapLine l : llist) {
+			// Drop any zero sized lines.
+			if (l.getBounds().getMaxDimention() == 0)
+				continue;
+
 			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
 			area1.addLine(l);
 		}
