@@ -21,7 +21,7 @@ import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.main.ExitException;
+import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
 
 import java.io.BufferedReader;

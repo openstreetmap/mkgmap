@@ -1,5 +1,148 @@
+2007-06-23  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapArea.java: Getting rid of
+	  zero length lines.
+	* src/uk/me/parabola/imgfmt/app/labelenc/package.html,
+	  src/uk/me/parabola/imgfmt/fs/package.html,
+	  src/uk/me/parabola/imgfmt/package.html,
+	  src/uk/me/parabola/mkgmap/main/package.html: Added and fixed
+	  package level javadoc.
+
+2007-06-17  steve
+
+	* src/uk/me/parabola/imgfmt/app/Coord.java,
+	  src/uk/me/parabola/imgfmt/app/LinePreparer.java: Comments and add
+	  a toString method to Coord
+
+2007-06-10  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/osm/Way.java: Tidy up and tweeking of
+	  hardwired parameters.
+	* Makefile, src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Had the wrong mask
+	  for the level, so any level above 3 would mess things up.
+	  
+	  Now working with 5 levels. Time to make it configurable...
+	* .: Tidied up the list of ignored files.
+	* Makefile, src/uk/me/parabola/imgfmt/app/Subdivision.java: Merge
+	  large file fixes in from stable branch.
+
+2007-06-09  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapElement.java: Add some more
+	  hardwired resolutions.
+
+2007-06-07  steve
+
+	* src/uk/me/parabola/imgfmt/sys/Directory.java: Increase number of
+	  directory blocks.
+
+2007-05-29  steve
+
+	* src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/osm/ReadOsm.java: Deleted file and
+	  remove unused import
+
+2007-05-13  steve
+
+	* Makefile, resources/garmin_feature_list.csv,
+	  resources/osm_garmin_map.csv, scripts/mk_map_table.py,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java: Input
+	  files for feature_map.csv and program to create. Moved away from
+	  the files in osmgarminmap, but garmin_feature_list.csv is a copy
+	  of feature-list.csv from there.
+	* resources/feature_map.csv: New feature map with many more entries
+	  and fully sorted. Contributed by Roozbeh Pournader
+
+2007-05-09  steve
+
+	* Makefile, resources/feature_map.csv,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/OsmMapDataSource.java: Zoomability
+	  now working for large maps eg London. Still basic, but now just
+	  really a matter of tuning it up.
+
+2007-03-29  steve
+
+	* src/uk/me/parabola/imgfmt/app/BitWriter.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: Zoomability now
+	  working for large maps eg London. Still basic, but now just
+	  really a matter of tuning it up.
+
+2007-03-25  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Working 'zoomable'
+	  map. Very basic, you see exactly the same things at the lower
+	  resolution levels as the higher ones.
+	  
+	  Its now just a simple matter of filtering what is wanted at each
+	  level...
+	* src/uk/me/parabola/imgfmt/app/InternalFiles.java,
+	  src/uk/me/parabola/imgfmt/app/Polygon.java: Add some javadoc.
+
+2007-03-24  steve
+
+	* src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/ReadOsm.java: Split MapDataSource
+	  to allow it to be implemented by MapArea
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java: Keep track of
+	  how many elements are at each resolution.
+	* src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapPoint.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java: Pushed
+	  bounding box code into line and polyline as it is not needed on
+	  points.
+
+2007-03-04  steve
+
+	* src/uk/me/parabola/mkgmap/general/LevelFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Level loop in place,
+	  although it will not work if more than one level in there.
+	* src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: Split out
+	  making top level subdivision.
+
 2007-03-03  steve
 
+	* ChangeLog, src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/osm/Way.java: Merged back from branch.
+	  - Use the ref tag where available - Works for large areas (really
+	  this time). Both problems pointed out by Phillip Barnett.
 	* Makefile, src/uk/me/parabola/imgfmt/app/Zoom.java,
 	  src/uk/me/parabola/mkgmap/general/MapArea.java,
 	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,

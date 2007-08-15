@@ -17,9 +17,9 @@
 package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
 
 import java.util.Properties;
-import java.util.Enumeration;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

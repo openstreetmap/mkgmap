@@ -25,6 +25,7 @@ import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.mkgmap.general.LevelFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
+import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Coord;
