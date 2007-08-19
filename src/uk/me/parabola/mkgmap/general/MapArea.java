@@ -223,8 +223,14 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addCount(MapElement p, int[] counts) {
 		int res = p.getResolution();
-		if (res <= MAX_RESOLUTION)
+		if (res <= MAX_RESOLUTION) {
+			// Coastlines typically take more room, so quick hack here.
+			// to fix properly we should estimate the actual size, which we can
+			// probably do properly at some point.
+			if (p.getType() == 0x15)
+				counts[res] += 3;
 			counts[res]++;
+		}
 	}
 
 	/**

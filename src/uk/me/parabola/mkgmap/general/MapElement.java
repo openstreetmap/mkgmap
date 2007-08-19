@@ -77,7 +77,7 @@ public abstract class MapElement {
 		switch (getType()) {
 		case 1:
 		case 2:
-			return 16;
+			return 10;
 		case 3:
 			return 18;
 		case 4:
@@ -89,6 +89,8 @@ public abstract class MapElement {
 		case 0x14:
 		case 0x17:
 			return 20;
+		case 0x15: // coast, make always visible
+			return 10;
 		default:
 			return 24;
 		}
