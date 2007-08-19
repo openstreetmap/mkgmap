@@ -1,4 +1,11 @@
 
+#
+# This is not used to build mkgmap.
+#
+# To build it use ant
+#
+#
+
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 OSMDATA = /opt/data/uk-070530.osm
