@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * The file that holds all the labels for the map.
@@ -68,6 +69,8 @@ public class LBLFile extends ImgFile {
 
 	// Code page? may not do anything.
 	private int codePage = 850;
+
+	private java.util.Map<String, Label> labelCache = new HashMap<String, Label>();
 
 	public LBLFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);
@@ -131,12 +134,16 @@ public class LBLFile extends ImgFile {
 	public Label newLabel(String text) {
 		Label l;
 		EncodedText etext = textEncoder.encodeText(text);
-		l = new Label(etext);
+		l = labelCache.get(text);
+		if (l == null) {
+			l = new Label(etext);
+			labelCache.put(text, l);
 
-		l.setOffset(position() - (HEADER_LEN+INFO_LEN));
-		l.write(this);
+			l.setOffset(position() - (HEADER_LEN+INFO_LEN));
+			l.write(this);
 
-		labelSize += l.getLength();
+			labelSize += l.getLength();
+		}
 
 		return l;
 	}
