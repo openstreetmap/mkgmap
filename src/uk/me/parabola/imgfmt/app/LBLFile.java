@@ -126,7 +126,8 @@ public class LBLFile extends ImgFile {
 	}
 	
 	/**
-	 * Add a new label with the given text.
+	 * Add a new label with the given text.  Labels are shared, so that identical
+	 * text is always represented by the same label.
 	 *
 	 * @param text The text of the label, it will be uppercased.
 	 * @return A reference to the created label.
