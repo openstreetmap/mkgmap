@@ -77,8 +77,8 @@ polygon|natural|water|0x3c|
 polygon|natural|water|0x3c|
 polygon|natural|wood|0x50|
 polyline|aeroway|runway|0x27|
-polyline|boundary|administrative|0x1d|
-polyline|boundary|national|0x1e|
+polyline|boundary|administrative|0x1c|
+polyline|boundary|national|0x1c|
 polyline|boundary|political|0x1c|
 polyline|highway|bridleway|0x16|
 polyline|highway|byway|0x16|
@@ -86,7 +86,7 @@ polyline|highway|cycleway|0x16|
 polyline|highway|footway|0x16|
 polyline|highway|minor|0x06|
 polyline|highway|motorway|0x02|
-polyline|highway|motorway_link|0x08|
+polyline|highway|motorway_link|0x02|
 polyline|highway|pedestrian|0x06|
 polyline|highway|primary|0x04|
 polyline|highway|primary_link|0x04|
