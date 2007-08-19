@@ -54,8 +54,16 @@ public class MapLine extends MapElement {
 		this.direction = direction;
 	}
 
+	/**
+	 * Get the mid-point of the bounding box for this element.  This is as good
+	 * an indication of 'where the element is' as any.  Previously we just
+	 * used the location of the first point which would lead to biases in
+	 * allocating elements to subdivisions.
+	 *
+	 * @return The mid-point of the bounding box.
+	 */
 	protected Coord getLocation() {
-		return points.get(0);
+		return new Coord((minLat + maxLat) / 2, (minLong + maxLong) / 2);
 	}
 
 	/**
@@ -67,14 +75,16 @@ public class MapLine extends MapElement {
 		int lat = co.getLatitude();
 		if (lat < minLat) {
 			minLat = lat;
-		} else if (lat > maxLat) {
+		}
+		if (lat > maxLat) {
 			maxLat = lat;
 		}
 
 		int lon = co.getLongitude();
 		if (lon < minLong) {
 			minLong = lon;
-		} else if (lon > maxLong) {
+		}
+		if (lon > maxLong) {
 			maxLong = lon;
 		}
 	}

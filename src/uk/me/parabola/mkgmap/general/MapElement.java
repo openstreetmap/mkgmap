@@ -50,6 +50,13 @@ public abstract class MapElement {
 		this.type = type;
 	}
 
+	/**
+	 * Get the 'location' of the element.  This is the mid point of the bounding
+	 * box for the element.  For a point, this will be the coordinates of the
+	 * point itself of course.
+	 *
+	 * @return Co-ordinate of the mid-point of the bounding box of the element.
+	 */
 	protected abstract Coord getLocation();
 
 	/**

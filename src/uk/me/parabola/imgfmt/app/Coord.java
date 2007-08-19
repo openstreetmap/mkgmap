@@ -36,6 +36,16 @@ public class Coord {
 	private final int longitude;
 
 	/**
+	 * Construct from co-ordinates that are already in map-units.
+	 * @param latitude The latitude in map units.
+	 * @param longitude The longitude in map units.
+	 */
+	public Coord(int latitude, int longitude) {
+		this.latitude = latitude;
+		this.longitude = longitude;
+	}
+
+	/**
 	 * Construct from regular latitude and longitude.
 	 * @param latitude The latitude in degrees.
 	 * @param longitude The longitude in degrees.

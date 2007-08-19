@@ -128,7 +128,7 @@ public class MapArea implements MapDataSource {
 		List<MapLine> llist = this.lines;
 		for (MapLine l : llist) {
 			// Drop any zero sized lines.
-			if (l.getBounds().getMaxDimention() == 0)
+			if (l.getBounds().getMaxDimention() <= 0)
 				continue;
 
 			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
