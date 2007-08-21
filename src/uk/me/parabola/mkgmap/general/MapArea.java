@@ -200,7 +200,7 @@ public class MapArea implements MapDataSource {
 		if (ssize > size)
 			size = ssize;
 
-		System.out.println("Got size of " + size + ", with esize of " + esize);
+		//System.out.println("Got size of " + size + ", with esize of " + esize);
 		return size;
 	}
 
