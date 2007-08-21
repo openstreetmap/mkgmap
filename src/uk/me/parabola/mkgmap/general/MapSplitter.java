@@ -43,7 +43,7 @@ public class MapSplitter {
 	// The maximum number of map features in a subdivision.  Note that there
 	// not as such a maximum number, it is all about what will fit.  So we
 	// chose a number that seems safe.
-	private static final int MAX_FEATURE_NUMBER = 2500;//2000;
+	private static final int MAX_RGN_SIZE = 60 * 1000;
 
 	private Zoom zoom;
 
@@ -105,7 +105,7 @@ public class MapSplitter {
 	 */
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		for (MapArea a : areas) {
-			if (a.getCountForResolution(zoom.getResolution()) > MAX_FEATURE_NUMBER) {
+			if (a.getSizeAtResolution(zoom.getResolution()) > MAX_RGN_SIZE) {
 				log.debug("splitting area", a);
 				MapArea[] sublist = a.split(2, 2);
 				addAreasToList(sublist, alist);

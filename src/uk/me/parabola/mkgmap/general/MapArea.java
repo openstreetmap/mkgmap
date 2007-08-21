@@ -54,9 +54,13 @@ public class MapArea implements MapDataSource {
 	private List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
 
 	// Counts of features available at different resolutions.
-	private int[] pointCounts = new int[MAX_RESOLUTION+1];
-	private int[] lineCounts = new int[MAX_RESOLUTION+1];
-	private int[] shapeCounts = new int[MAX_RESOLUTION+1];
+	private int[] pointSize = new int[MAX_RESOLUTION+1];
+	private int[] lineSize = new int[MAX_RESOLUTION+1];
+	private int[] shapeSize = new int[MAX_RESOLUTION+1];
+	private int[] elemCounts = new int[MAX_RESOLUTION+1];
+	private static final int POINT_KIND = 0;
+	private static final int LINE_KIND = 1;
+	private static final int SHAPE_KIND = 2;
 
 	/**
 	 * Create a map area from the given map data source.  This map
@@ -71,17 +75,17 @@ public class MapArea implements MapDataSource {
 
 		for (MapPoint p : src.getPoints()) {
 			points.add(p);
-			addCount(p, pointCounts);
+			addSize(p, pointSize, 0);
 		}
 
 		for (MapLine l : src.getLines()) {
 			lines.add(l);
-			addCount(l, lineCounts);
+			addSize(l, lineSize, 0);
 		}
 
 		for (MapShape s : src.getShapes()) {
 			shapes.add(s);
-			addCount(s, shapeCounts);
+			addSize(s, shapeSize, 0);
 		}
 	}
 
@@ -162,17 +166,42 @@ public class MapArea implements MapDataSource {
 		return new Area(minLat, minLon, maxLat, maxLon);
 	}
 
-	public int getCountForResolution(int res) {
-		int count = 0;
+	/**
+	 * Get an estimate of the size of the RGN space that will be required to
+	 * hold the points in this area.  For points we can be fairly accurate, but
+	 * we just guess an upper bound for lines and shapes since we don't know the
+	 * exact size until later.
+	 *
+	 * @param res The resolution to test for.  At lower resolutions, there are
+	 * less elements so less room is needed.
+	 * @return An estimate of the max size that will be needed in the RGN file
+	 * for this sub-division.
+	 */
+	public int getSizeAtResolution(int res) {
+		int psize = 0;
+		int lsize = 0;
+		int ssize = 0;
+		int esize = 0;
 		for (int i = 0; i <= res; i++) {
-			log.debug("line cnt", i, " ", lineCounts[i]);
-			count += pointCounts[i];
-			count += lineCounts[i];
-			count += shapeCounts[i];
+			if (log.isDebugEnabled())
+			log.debug("line cnt", i, " ", lineSize[i]);
+			psize += pointSize[i];
+			lsize += lineSize[i];
+			ssize += shapeSize[i];
+
+			esize += elemCounts[i];
 		}
 
-		log.debug("returning", count, "for res", res);
-		return count;
+		// Return the largest one as an overflow of any means that we have to
+		// split the area.
+		int size = psize;
+		if (lsize > size)
+			size = lsize;
+		if (ssize > size)
+			size = ssize;
+
+		System.out.println("Got size of " + size + ", with esize of " + esize);
+		return size;
 	}
 
 	/**
@@ -214,23 +243,36 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
-	 * Add one to the count.  We find the minimum resolution for the element
-	 * and increment the counter for that resolution. 
+	 * Add an estimate of the size that will be required to hold this element
+	 * if it should be displayed at the given resolution. 
 	 *
 	 * @param p The element containing the minimum resolution that it will be
 	 * displayed at.
-	 * @param counts An array of counts, this routine updates the correct one.
+	 * @param sizes An array of sizes, this routine updates the correct one.
+	 * @param kind
 	 */
-	private void addCount(MapElement p, int[] counts) {
+	private void addSize(MapElement p, int[] sizes, int kind) {
 		int res = p.getResolution();
-		if (res <= MAX_RESOLUTION) {
-			// Coastlines typically take more room, so quick hack here.
-			// to fix properly we should estimate the actual size, which we can
-			// probably do properly at some point.
-			if (p.getType() == 0x15)
-				counts[res] += 3;
-			counts[res]++;
+		if (res > MAX_RESOLUTION)
+			return;
+
+		int s;
+		switch (kind) {
+		case POINT_KIND:
+			// Points are predictibly less than 9 bytes.
+			s = 9;
+			break;
+
+		default:
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			int n = ((MapLine) p).getPoints().size();
+			s = 11 + n * 2;
+			break;
 		}
+
+		sizes[res] += s;
+		elemCounts[res]++;
 	}
 
 	/**
@@ -241,7 +283,7 @@ public class MapArea implements MapDataSource {
 	private void addPoint(MapPoint p) {
 		points.add(p);
 		addToBounds(p.getBounds());
-		addCount(p, pointCounts);
+		addSize(p, pointSize, POINT_KIND);
 	}
 
 	/**
@@ -252,7 +294,7 @@ public class MapArea implements MapDataSource {
 	private void addLine(MapLine l) {
 		lines.add(l);
 		addToBounds(l.getBounds());
-		addCount(l, lineCounts);
+		addSize(l, lineSize, LINE_KIND);
 	}
 
 	/**
@@ -263,7 +305,7 @@ public class MapArea implements MapDataSource {
 	private void addShape(MapShape s) {
 		shapes.add(s);
 		addToBounds(s.getBounds());
-		addCount(s, shapeCounts);
+		addSize(s, shapeSize, SHAPE_KIND);
 	}
 
 	/**
