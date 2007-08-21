@@ -35,7 +35,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	private static final int KBYTE = 1024;
 	private static final int INIT_SIZE = 16 * KBYTE;
 	private static final int GROW_SIZE = 128 * KBYTE;
-	private static final int GUARD_SIZE = KBYTE;
+	private static final int GUARD_SIZE = 4 * KBYTE;
 
 	private final ImgChannel chan;
 
