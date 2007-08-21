@@ -58,6 +58,7 @@ public class MapArea implements MapDataSource {
 	private int[] lineSize = new int[MAX_RESOLUTION+1];
 	private int[] shapeSize = new int[MAX_RESOLUTION+1];
 	private int[] elemCounts = new int[MAX_RESOLUTION+1];
+
 	private static final int POINT_KIND = 0;
 	private static final int LINE_KIND = 1;
 	private static final int SHAPE_KIND = 2;
@@ -75,17 +76,17 @@ public class MapArea implements MapDataSource {
 
 		for (MapPoint p : src.getPoints()) {
 			points.add(p);
-			addSize(p, pointSize, 0);
+			addSize(p, pointSize, POINT_KIND);
 		}
 
 		for (MapLine l : src.getLines()) {
 			lines.add(l);
-			addSize(l, lineSize, 0);
+			addSize(l, lineSize, LINE_KIND);
 		}
 
 		for (MapShape s : src.getShapes()) {
 			shapes.add(s);
-			addSize(s, shapeSize, 0);
+			addSize(s, shapeSize, SHAPE_KIND);
 		}
 	}
 
