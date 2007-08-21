@@ -1,3 +1,47 @@
+2007-08-21  steve
+
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java:
+	  Possible fix for overflow in output buffer.
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java: Attempted fix
+	  for overflowing RGN section.
+
+2007-08-19  steve
+
+	* Makefile: Add note that this is not really used to build
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java: Allow
+	  coastlines to show up at all resolutions.
+	* resources/feature_map.csv, resources/garmin_feature_list.csv,
+	  resources/osm_garmin_map.csv: Fix the feature lists which seemed
+	  to be populated with all kinds of weird things.
+	* src/uk/me/parabola/imgfmt/app/LBLFile.java: Improve description
+	  on javadoc for newLabel (now that it doesn't always return a new
+	  lable)
+	* src/uk/me/parabola/imgfmt/app/LBLFile.java: Keep a cache of label
+	  names so that we do not create multiple labels for the same piece
+	  of text. Greatly reduces the size of the label section.
+	* src/uk/me/parabola/imgfmt/app/Coord.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java: Allocate elements
+	  to sub-divisions based on the mid-point of the element rather
+	  than the first point in the line/polygon. This will create less
+	  overlapping of the sub-divisions, which may make the map faster
+	  on the Garmin units. To do reduce sub-division overlapping
+	  further will require splitting lines. It may not be worth
+	  reducing overlap either.
+
+2007-08-15  steve
+
+	* src/uk/me/parabola/mkgmap/main/ExitException.java: This should
+	  have been removed by the previous commit.
+	* ChangeLog, src/uk/me/parabola/mkgmap/ExitException.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java: Move
+	  ExitException to remove cycle in the package structure.
+
 2007-06-23  steve
 
 	* src/uk/me/parabola/mkgmap/general/MapArea.java: Getting rid of

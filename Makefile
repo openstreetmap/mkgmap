@@ -9,6 +9,7 @@
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 OSMDATA = /opt/data/uk-070530.osm
+OSMDATA = /opt/data/uk-070815.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
