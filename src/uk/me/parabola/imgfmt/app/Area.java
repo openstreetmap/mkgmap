@@ -31,22 +31,37 @@ public class Area {
 	private final int minLat;
 	private final int minLong;
 	private final int maxLat;
+
 	private final int maxLong;
 
+	/**
+	 * Create an area from the given coordinates.  We ensure that no dimention
+	 * is zero.
+	 *
+	 * @param minLat The western latitude.
+	 * @param minLong The southern longitude.
+	 * @param maxLat The eastern lat.
+	 * @param maxLong The northern long.
+	 */
 	public Area(int minLat, int minLong, int maxLat, int maxLong) {
 		this.minLat = minLat;
+		if (maxLat == minLat)
+			this.maxLat = minLat+1;
+		else
+			this.maxLat = maxLat;
+
 		this.minLong = minLong;
-		this.maxLat = maxLat;
-		this.maxLong = maxLong;
+		if (minLong == maxLong)
+			this.maxLong = maxLong+1;
+		else
+			this.maxLong = maxLong;
 	}
 
 	public Area(double minLat, double minLong, double maxLat,
 				  double maxLong)
 	{
-		this.minLat = Utils.toMapUnit(minLat);
-		this.minLong = Utils.toMapUnit(minLong);
-		this.maxLat = Utils.toMapUnit(maxLat);
-		this.maxLong = Utils.toMapUnit(maxLong);
+		this(Utils.toMapUnit(minLat), Utils.toMapUnit(minLong)
+				, Utils.toMapUnit(maxLat), Utils.toMapUnit(maxLong));
 	}
 
 	public int getMinLat() {
