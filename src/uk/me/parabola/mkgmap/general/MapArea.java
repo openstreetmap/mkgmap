@@ -361,6 +361,9 @@ public class MapArea implements MapDataSource {
 		int xcell = (x - xbase) / dx;
 		int ycell = (y - ybase) / dy;
 
+		assert (xcell >= 0);
+		assert (ycell >= 0);
+		
 		if (xcell >= nx)
 			xcell = nx - 1;
 		if (ycell >= ny)
