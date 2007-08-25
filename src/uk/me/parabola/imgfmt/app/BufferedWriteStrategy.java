@@ -35,7 +35,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	private static final int KBYTE = 1024;
 	private static final int INIT_SIZE = 16 * KBYTE;
 	private static final int GROW_SIZE = 128 * KBYTE;
-	private static final int GUARD_SIZE = 4 * KBYTE;
+	private static final int GUARD_SIZE = KBYTE;
 
 	private final ImgChannel chan;
 
@@ -96,7 +96,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param b The byte to write.
 	 */
 	public void put(byte b) {
-		ensureSize();
+		ensureSize(1);
 		buf.put(b);
 	}
 
@@ -106,7 +106,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param c The value to write.
 	 */
 	public void putChar(char c) {
-		ensureSize();
+		ensureSize(2);
 		log.debug("char at pos ", position());
 		buf.putChar(c);
 	}
@@ -117,7 +117,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The value to write.
 	 */
 	public void putInt(int val) {
-		ensureSize();
+		ensureSize(4);
 		buf.putInt(val);
 	}
 
@@ -127,7 +127,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The values to write.
 	 */
 	public void put(byte[] val) {
-		ensureSize();
+		ensureSize(val.length);
 		buf.put(val);
 	}
 
@@ -139,13 +139,20 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param length The number of bytes to write.
 	 */
 	public void put(byte[] src, int start, int length) {
-		ensureSize();
+		ensureSize(length);
 		log.debug("start+len", start, ",", length);
 		buf.put(src, start, length);
 	}
 
-	private void ensureSize() {
-		if (buf.position() > bufferSize - GUARD_SIZE) {
+	/**
+	 * Make sure there is enough room for the data we are about to write.
+	 *
+	 * 
+	 *
+	 * @param length The amount of data.
+	 */
+	private void ensureSize(int length) {
+		if (buf.position() +length > bufferSize - GUARD_SIZE) {
 			bufferSize += GROW_SIZE;
 			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);
