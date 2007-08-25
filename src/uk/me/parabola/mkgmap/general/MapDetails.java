@@ -47,6 +47,11 @@ public class MapDetails implements MapCollector {
 	// Keep a list of all items that were used.
 	private final Set<Overview> usedItems = new HashSet<Overview>();
 
+	/**
+	 * Add a point to the map.
+	 *
+	 * @param point Point to add.
+	 */
 	public void addPoint(MapPoint point) {
 		usedItems.add(new PointOverview(point.getType(), point.getSubType()));
 		points.add(point);
@@ -59,7 +64,8 @@ public class MapDetails implements MapCollector {
 	 */
 	public void addLine(MapLine line) {
 		assert !(line instanceof MapShape);
-
+		if (line.getPoints().isEmpty())
+			return;
 		usedItems.add(new PolylineOverview(line.getType()));
 		lines.add(line);
 	}
@@ -72,6 +78,8 @@ public class MapDetails implements MapCollector {
 	 * @param shape The polygon to add.
 	 */
 	public void addShape(MapShape shape) {
+		if (shape.getPoints().isEmpty())
+			return;
 		usedItems.add(new PolygonOverview(shape.getType()));
 		shapes.add(shape);
 	}
