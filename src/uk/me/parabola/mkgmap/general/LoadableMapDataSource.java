@@ -16,9 +16,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.app.Overview;
 
 import java.io.FileNotFoundException;
 import java.util.List;

@@ -140,7 +140,8 @@ class CommandArgs {
 		if (s != null)
 			return "latin1";
 
-		return argvalues.getProperty("xcharset", "ascii");
+		// xcharset is the old value, use charset instead.
+		return argvalues.getProperty("charset", argvalues.getProperty("xcharset", "ascii"));
 	}
 
 	public int getCodePage() {

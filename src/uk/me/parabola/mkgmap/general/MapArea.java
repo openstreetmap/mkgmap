@@ -250,7 +250,7 @@ public class MapArea implements MapDataSource {
 	 * @param p The element containing the minimum resolution that it will be
 	 * displayed at.
 	 * @param sizes An array of sizes, this routine updates the correct one.
-	 * @param kind
+	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
 	private void addSize(MapElement p, int[] sizes, int kind) {
 		int res = p.getResolution();

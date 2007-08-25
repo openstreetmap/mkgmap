@@ -73,20 +73,16 @@ public class MapLine extends MapElement {
 	 */
 	private void addToBounds(Coord co) {
 		int lat = co.getLatitude();
-		if (lat < minLat) {
+		if (lat < minLat)
 			minLat = lat;
-		}
-		if (lat > maxLat) {
+		if (lat > maxLat)
 			maxLat = lat;
-		}
 
 		int lon = co.getLongitude();
-		if (lon < minLong) {
+		if (lon < minLong)
 			minLong = lon;
-		}
-		if (lon > maxLong) {
+		if (lon > maxLong)
 			maxLong = lon;
-		}
 	}
 
 	/**

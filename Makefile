@@ -10,6 +10,8 @@
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 OSMDATA = /opt/data/uk-070530.osm
 OSMDATA = /opt/data/uk-070815.osm
+#OSMDATA = /tmp/63253506
+#OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
@@ -64,6 +66,14 @@ test_lang10:
 	rm -f 32860003.img
 	java -ea -Dlog.filename=out.log -cp build/classes uk.me.parabola.mkgmap.main.MakeTestLang10Map $$BASE_LAT $$BASE_LON
 	imgdecode 32860003.img
+
+tests:
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63243936
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63247525
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63253506
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/germany-070823.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/uk-070815.osm
+
 
 tl:
 	-mount /media/disk

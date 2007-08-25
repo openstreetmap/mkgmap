@@ -55,20 +55,21 @@ You can supply the following options before the file name.  Example:
    for no particularly good reason.  The name is used inside the map
    it isn't enough to just rename the file.
 
---xcharset={latin1|ascii|bit10|simple8}
-   Experimental option to try out different schemes for encoding lables.
-   Only latin1 is of general use.  Allows the use of latin1 characters
-   in street names.
+--description=<text>
+   Set the description of the map that is stored inside the map itself.  By
+   default it is 'OSM Street map'
+
+--latin1
+   Same as --xcharset=latin1
+
+--charset={latin1|ascii|bit10|simple8}
+   Sets the encoding for the lables.  Only latin1 is of general use (ascii is the default).
+   Allows the use of latin1 characters in street names.  Other values for
+   this option are experimental.
 
 
 Issues
 ======
-
-The program has the following limitations at present.
-
-1. You must be zoomed in close to see anything except an outline; there
-   is just one zoom level.  Different zoom levels will be the next
-   thing to be done.
 
 
 Acknowledgements
