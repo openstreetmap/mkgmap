@@ -65,8 +65,7 @@ public class MapSplitter {
 	}
 
 	public MapSplitter(MapDataSource src, Zoom zoom, LevelFilter filter) {
-		this.mapSource = src;
-		this.zoom = zoom;
+		this(src, zoom);
 	}
 
 	/**
