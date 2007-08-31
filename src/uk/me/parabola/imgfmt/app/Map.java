@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
 
 /**
  * Holder for a complete map.  A map is made up of several files which
@@ -61,8 +62,9 @@ public class Map implements InternalFiles {
 	 */
 	public static Map createMap(String mapname, FileSystemParam params) {
 		Map m = new Map();
+		String outFilename = mapname + ".img";
 		try {
-			m.fileSystem = new ImgFS(mapname + ".img", params);
+			m.fileSystem = new ImgFS(outFilename, params);
 			m.rgnFile = new RGNFile(m.fileSystem.create(mapname + ".RGN"));
 			m.treFile = new TREFile(m.fileSystem.create(mapname + ".TRE"));
 			m.lblFile = new LBLFile(m.fileSystem.create(mapname + ".LBL"));
@@ -71,10 +73,10 @@ public class Map implements InternalFiles {
 
 		} catch (FileNotFoundException e) {
 			log.error("failed to create file", e);
-			return null;
+			throw new ExitException("Could not create file: " + outFilename);
 		} catch (FileExistsException e) {
 			log.error("failed to create file as it already exists");
-			return null;
+			throw new ExitException("File exists already: " + outFilename);
 		}
 
 		return m;
