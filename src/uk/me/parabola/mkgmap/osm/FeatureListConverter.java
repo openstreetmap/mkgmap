@@ -53,7 +53,7 @@ public class FeatureListConverter implements OsmConverter {
 	private static final int F_GARMIN_TYPE = 3;
 	private static final int F_GARMIN_SUBTYPE = 4;
 
-	private static final int N_FIELDS = 5;
+	private static final int N_MIN_FIELDS = 5;
 
 //	private Map pointFeatures = new HashMap();
 
@@ -183,9 +183,8 @@ public class FeatureListConverter implements OsmConverter {
 				continue;
 			
 			String[] fields = line.split("\\|", -1);
-			if (fields.length != N_FIELDS) {
+			if (fields.length < N_MIN_FIELDS)
 				continue;
-			}
 
 			String type = fields[F_FEATURE_TYPE];
 			log.debug("feature kind " + type);
