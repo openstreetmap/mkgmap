@@ -17,6 +17,10 @@
 package uk.me.parabola.imgfmt.fs;
 
 /**
+ * Interface used for directory entries used to represent <i>files</i>.
+ * A directory entry has the file name, its extension (its a 8+3 filename)
+ * and the size of the file.
+ *
  * @author Steve Ratcliffe
  */
 public interface DirectoryEntry {

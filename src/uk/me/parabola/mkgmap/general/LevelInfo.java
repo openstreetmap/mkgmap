@@ -17,6 +17,19 @@
 package uk.me.parabola.mkgmap.general;
 
 /**
+ * Represents the mapping between the Garmin map levels and the built-in
+ * resolutions.  The resolutions go from 1 to 24 and the levels start at 0 and
+ * are defined by the map maker.  For each level you assign a resolution to it.
+ * The resolution for each level must be lower than that of the level below.
+ *
+ * As an example you might have the following level=resolution pairs:
+ * 0=24, 1=22, 2=20, 3=19.
+ *
+ * Note that level 0 is the most detailed level, whereas 24 is the most detailed
+ * resolution.
+ *
+ * The highest numbered level must be empty and cover the whole map.
+ *
  * @author Steve Ratcliffe
 */
 public class LevelInfo {
@@ -24,7 +37,7 @@ public class LevelInfo {
 	private int bits;
 	//private LevelFilter filter;
 
-	LevelInfo(int level, int bits) {
+	public LevelInfo(int level, int bits) {
 		this.level = level;
 		this.bits = bits;
 	}

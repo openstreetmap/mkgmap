@@ -19,6 +19,8 @@ package uk.me.parabola.imgfmt;
 import java.io.IOException;
 
 /**
+ * Thrown when a file already exists and would be overwritten.
+ * 
  * @author Steve Ratcliffe
  */
 public class FileExistsException extends IOException {

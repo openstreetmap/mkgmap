@@ -1,6 +1,15 @@
 <body>
 <h3>Generic map types</h3>
 <p>Here we have the general map types that are used to build the map.
-Other data sources, such as the OSM reader, have to convert to
-this format.
+    Other data sources, such as the OSM reader, have to convert to
+    this format.
+<p>Note that this is the most detailed representation of the map.
+    We use this intermediate form, because a Garmin map has (or can have)
+    different levels of zoom which will be at different levels of detail.
+<p>So we go through this <i>general</i> representation to construct the
+    actual representations at each level.  These actual representations will
+    use objects from the @{link uk.me.parabola.imgfmt.app} package, and
+    they may have a different number of points to this general representation.
+    Indeed they may have different points all together since we may take the
+    average of several points in the general representation</p>
 </body>

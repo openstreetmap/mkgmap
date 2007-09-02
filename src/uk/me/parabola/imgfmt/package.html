@@ -1,19 +1,28 @@
 <body>
 <h3>The IMG file format</h3>
+
 <p>The IMG file is internally structured like a file-system containing
-a number of files and a directory.  It is common to refer to the whole
-thing as a file and the contained files as sub-files.  However I use the
-terms file system and file respectively, because it is more descriptive of
-what is going on I think.</p>
+    a number of files and a directory. It is common to refer to the whole
+    thing as a file and the contained files as sub-files. However I use the
+    terms file system and file respectively, because it is more descriptive of
+    what is going on I think.</p>
 
 <p>There are two main sub-packages here.</p>
 <dl>
     <dt>fs</dt>
-    <dd>This deals with filesystem as a whole.  The individual files are just blobs
-    of data.  You could handle any filename at this level.</dd>
+    <dd>This deals with filesystem as a whole. The individual files are just
+        blobs of data. You could handle any filename at this level.
+    </dd>
 
     <dt>app</dt>
-    <dd>Code for actual application files that are used.  Code in here knows
-    about the internal structure of individual files.</dd>
+    <dd>Code for actual application files that are used. Code in here knows
+        about the internal structure of individual files.
+    </dd>
 </dl>
+
+<p>As the purpose of this application is to write IMG files (there are plenty
+    of programs that read it), the focus is on writing and not reading. The
+    code to read at the filesystem level will probably be implemented at some
+    stage so that we can combine several .img files into one gmapsupp.img
+    file.</p>
 </body>

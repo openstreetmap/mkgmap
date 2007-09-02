@@ -18,7 +18,10 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.Map;
 import java.util.HashMap;
 
-public class Element {
+/**
+ * Superclass of the node, segment and way OSM elements.
+ */
+public abstract class Element {
 	private Map<String, String> tags;
 	private String name;
 	private long id;

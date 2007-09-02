@@ -24,6 +24,9 @@ import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 
 /**
+ * Common code used for the test maps.  The test maps are programatically
+ * constructed to contain examples of each type of point and such like.
+ * 
  * @author Steve Ratcliffe
  */
 public abstract class AbstractTestMap {

@@ -19,6 +19,8 @@ package uk.me.parabola.imgfmt.fs;
 import java.nio.channels.ByteChannel;
 
 /**
+ * An extension of ByteChannel that allows us to know the position.
+ * 
  * @author Steve Ratcliffe
  */
 public interface ImgChannel extends  ByteChannel {
