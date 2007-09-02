@@ -41,6 +41,7 @@ import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
+import uk.me.parabola.mkgmap.reader.MapReader;
 
 import java.io.FileNotFoundException;
 import static java.lang.Integer.numberOfLeadingZeros;
@@ -397,15 +398,18 @@ public class MakeMap {
 		}
 	}
 
+	/**
+	 * Load up from the file.  It is not necessary for the map reader to completely
+	 * read the whole file in at once, it could pull in map-features as needed.
+	 *
+	 * @param name The filename or resource name to be read.
+	 * @return A LoadableMapDataSource that will be used to construct the map.
+	 */
 	private LoadableMapDataSource loadFromFile(String name) {
 		try {
 			LoadableMapDataSource src;
 
-			if (name.endsWith(".mp"))
-				src = new PolishMapDataSource();
-			else
-				src = new OsmMapDataSource();
-
+			src = MapReader.createMapReader(name);
 			src.load(name);
 
 			return src;
