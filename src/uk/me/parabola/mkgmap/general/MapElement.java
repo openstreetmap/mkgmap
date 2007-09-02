@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.Area;
 public abstract class MapElement {
 	private String name;
 	private int type;
+	private int minResolution;
 
 	public String getName() {
 		return name;
@@ -74,6 +75,9 @@ public abstract class MapElement {
 	 */
 	public int getResolution() {
 		//return getType() < 5? 15: 24;
+		if (minResolution != 0)
+			return minResolution;
+		
 		switch (getType()) {
 		case 1:
 		case 2:
@@ -94,5 +98,9 @@ public abstract class MapElement {
 		default:
 			return 24;
 		}
+	}
+
+	public void setMinResolution(int minResolution) {
+		this.minResolution = minResolution;
 	}
 }

@@ -70,8 +70,8 @@ public abstract class AbstractTestMap {
 		map.addCopyright("program licenced under GPL v2");
 
 		// This one gets shown when you switch on, so put the actual
-		// map copyright here.
-		map.addCopyright("OpenStreetMap.org contributers.");
+		// map copyright here.  This is made up data, so no copyright applies.
+		map.addCopyright("No copyright");
 
 		Area area = new Area(lat, lng, lat + 1, lng + 1);
 		map.setBounds(area);
@@ -90,8 +90,6 @@ public abstract class AbstractTestMap {
 		div.startDivision();
 
 		drawTestMap(map, div, lat, lng);
-
-		writeOverviews(map);
 
 		map.close();
 	}

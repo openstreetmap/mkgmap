@@ -31,8 +31,8 @@ public abstract class Overview implements Comparable<Overview> {
 	public static final int SHAPE_KIND = 3;
 
 	private final int kind; // The kind of overview; point, line etc.
-	private final byte type;
-	private final byte subType;
+	private final char type;
+	private final char subType;
 
 	private byte maxLevel = 7; // XXX what to do with this?
 
@@ -40,8 +40,8 @@ public abstract class Overview implements Comparable<Overview> {
 
 	protected Overview(int kind, int type, int subType) {
 		this.kind = kind;
-		this.type = (byte) type;
-		this.subType = (byte) subType;
+		this.type = (char) (type & 0xff);
+		this.subType = (char) (subType & 0xff);
 		if (kind == POINT_KIND)
 			size = 3;
 		else
@@ -49,10 +49,10 @@ public abstract class Overview implements Comparable<Overview> {
 	}
 
 	public void write(ImgFile file) {
-		file.put(type);
+		file.put((byte) (type & 0xff));
 		file.put(maxLevel);
 		if (size > 2)
-			file.put(subType);
+			file.put((byte) (subType & 0xff));
 	}
 
 	/**
@@ -92,32 +92,6 @@ public abstract class Overview implements Comparable<Overview> {
 	 * Compares this object with the specified object for order.  Returns a
 	 * negative integer, zero, or a positive integer as this object is less
 	 * than, equal to, or greater than the specified object.
-	 * <p/>
-	 * <p>The implementor must ensure <tt>sgn(x.compareTo(y)) ==
-	 * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>.  (This
-	 * implies that <tt>x.compareTo(y)</tt> must throw an exception iff
-	 * <tt>y.compareTo(x)</tt> throws an exception.)
-	 * <p/>
-	 * <p>The implementor must also ensure that the relation is transitive:
-	 * <tt>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</tt> implies
-	 * <tt>x.compareTo(z)&gt;0</tt>.
-	 * <p/>
-	 * <p>Finally, the implementor must ensure that <tt>x.compareTo(y)==0</tt>
-	 * implies that <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for
-	 * all <tt>z</tt>.
-	 * <p/>
-	 * <p>It is strongly recommended, but <i>not</i> strictly required that
-	 * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>.  Generally speaking, any
-	 * class that implements the <tt>Comparable</tt> interface and violates
-	 * this condition should clearly indicate this fact.  The recommended
-	 * language is "Note: this class has a natural ordering that is
-	 * inconsistent with equals."
-	 * <p/>
-	 * <p>In the foregoing description, the notation
-	 * <tt>sgn(</tt><i>expression</i><tt>)</tt> designates the mathematical
-	 * <i>signum</i> function, which is defined to return one of <tt>-1</tt>,
-	 * <tt>0</tt>, or <tt>1</tt> according to whether the value of
-	 * <i>expression</i> is negative, zero or positive.
 	 *
 	 * @param ov the object to be compared.
 	 * @return a negative integer, zero, or a positive integer as this object
@@ -127,9 +101,19 @@ public abstract class Overview implements Comparable<Overview> {
 	 */
 	public int compareTo(Overview ov) {
 		if (type == ov.type) {
-			return subType - ov.subType;
+			if (subType == ov.subType)
+				return 0;
+			else if (subType > ov.subType)
+				return 1;
+			else
+				return -1;
 		} else {
-			return type - ov.type;
+			if (type == ov.type)
+				return 0;
+			else if (type > ov.type)
+				return 1;
+			else
+				return -1;
 		}
 	}
 

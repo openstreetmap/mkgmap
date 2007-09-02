@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.reader;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
+import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
 
 /**
  * Class to find the correct map reader to use, based on the type of the file
@@ -45,6 +46,8 @@ public class MapReader {
 		// OSM unless it ends with .mp
 		if (name.endsWith(".mp"))
 			src = new PolishMapDataSource();
+		else if (name.startsWith("TEST:"))
+			src = new ElementTestDataSource();
 		else
 			src = new OsmMapDataSource();
 
