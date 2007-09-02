@@ -44,6 +44,7 @@ public class MakeTestMap extends AbstractTestMap {
 	protected void drawTestMap(Map map, Subdivision div, double lat, double lng) {
 		drawLines(map, div, lat, lng);
 		drawPolygons(map, div, lat, lng);
+		writeOverviews(map);
 	}
 
 	private void drawPolygons(Map map, Subdivision div, double slat, double slon) {
@@ -152,7 +153,7 @@ public class MakeTestMap extends AbstractTestMap {
 		map.addMapObject(pl);
 	}
 
-	protected void writeOverviews(Map map) {
+	private void writeOverviews(Map map) {
 		PointOverview pov = new PointOverview(0x2c, 5);
 		map.addPointOverview(pov);
 		pov = new PointOverview(0x2f, 0xb);

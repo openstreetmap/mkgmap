@@ -98,6 +98,4 @@ public abstract class AbstractTestMap {
 
 	protected abstract void drawTestMap(Map map, Subdivision div, double lat, double lng);
 
-	protected abstract void writeOverviews(Map map);
-
 }

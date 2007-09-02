@@ -41,10 +41,6 @@ public class MakeTestPolygonMap extends AbstractTestMap {
 		drawPolygons(map, div, lat, lng);
 	}
 
-	protected void writeOverviews(Map map) {
-		// nothing to do here
-	}
-
 	private void drawPolygons(Map map, Subdivision div, double slat, double slon) {
 
 		double lat = slat + 0.004;

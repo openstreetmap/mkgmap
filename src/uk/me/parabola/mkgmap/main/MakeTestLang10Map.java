@@ -41,10 +41,6 @@ public class MakeTestLang10Map extends AbstractTestMap {
 		drawStreetnames(map, div, lat, lng);
 	}
 
-	protected void writeOverviews(Map map) {
-		// nothing to do here
-	}
-
 	private void drawStreetnames(Map map, Subdivision div, double slat, double slon) {
 
 		double lat = slat + 0.004;

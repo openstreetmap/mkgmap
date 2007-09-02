@@ -46,10 +46,6 @@ public class MakeTestPointMap extends AbstractTestMap {
 		drawPoints(map, div, lat, lng);
 	}
 
-	protected void writeOverviews(Map map) {
-		// nothing to do here
-	}
-
 	private void drawPoints(Map map, Subdivision div, double slat, double slon) {
 
 		double lat = slat + 0.004;

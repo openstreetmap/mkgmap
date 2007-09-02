@@ -118,7 +118,7 @@ public class MakeMap {
 		LevelInfo levelInfo = levels[0];
 		int maxBits = getMaxBits(src);
 		if (levelInfo.getBits() < maxBits)
-			maxBits = levelInfo.getBits();
+			maxBits = levelInfo.getBits() + 1;
 
 		// Create the empty top level
 		Zoom zoom = map.createZoom(levelInfo.getLevel()+1, maxBits);
