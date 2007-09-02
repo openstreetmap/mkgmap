@@ -106,18 +106,11 @@ public class MakeMap {
 		}
 	}
 
-	private LevelInfo[] levels = new LevelInfo[] {
-		new LevelInfo(5, 14),
-		new LevelInfo(4, 18),
-		new LevelInfo(3, 19),
-		new LevelInfo(2, 21),
-		new LevelInfo(1, 22),
-		new LevelInfo(0, 24),
-	};
 
 	private void makeMapAreas(Map map, LoadableMapDataSource src) {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
+		LevelInfo[] levels = src.mapLevels();
 		LevelInfo levelInfo = levels[0];
 		int maxBits = getMaxBits(src);
 		if (levelInfo.getBits() < maxBits)

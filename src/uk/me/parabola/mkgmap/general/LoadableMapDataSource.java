@@ -37,6 +37,16 @@ import java.util.List;
 public interface LoadableMapDataSource extends MapDataSource {
 
 	/**
+	 * Determins if the file (or other resource) is supported by this map
+	 * data source.  The implementation may do this however it likes, eg
+	 * by extension or by opening up the file and reading part of it.
+	 *
+	 * @param name The file (or other resource) to check.
+	 * @return True if the loadable map data source supports that file.
+	 */
+	public boolean fileSupported(String name);
+
+	/**
 	 * Load map by name.  The name is in a suitable form to be recognised
 	 * by the particular map source.  It could be a file name or a URI.
 	 *
@@ -49,6 +59,20 @@ public interface LoadableMapDataSource extends MapDataSource {
 	 */
 	public void load(String name)
 			throws FileNotFoundException, FormatException;
+
+	/**
+	 * Get the map levels for this map.  This is an array of @{link LevelInfo}
+	 * structures that map a level to a resolution.  Some map data sources
+	 * may actually have the concept of map layers that can be used to
+	 * construct this information.  Others may just have to provide a default
+	 * that is useful with the map source.  In the latter case it would be
+	 * important to be able to configure the levels separately while creating
+	 * the map.
+	 *
+	 * @return Array of structures that map the level to the resolution.  Never
+	 * returns null. Some kind of default should always be returned.
+	 */
+	public LevelInfo[] mapLevels();
 
 	/**
 	 * Get a suitable copyright message for this map source.

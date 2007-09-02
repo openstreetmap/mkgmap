@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -61,6 +62,14 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 	private String copyright;
 	private int section;
 
+	public boolean fileSupported(String name) {
+		// Supported if the extension is .mp
+		if (name.endsWith(".mp"))
+			return true;
+
+		return false;
+	}
+
 	/**
 	 * Load the .osm file and produce the intermediate format.
 	 *
@@ -84,6 +93,21 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 		} catch (IOException e) {
 			throw new FormatException("Reading file failed", e);
 		}
+	}
+
+	public LevelInfo[] mapLevels() {
+		// In the future will use the information in the file - for now it
+		// is fixed.
+		LevelInfo[] levels = new LevelInfo[] {
+			new LevelInfo(5, 16),
+			new LevelInfo(4, 18),
+			new LevelInfo(3, 19),
+			new LevelInfo(2, 21),
+			new LevelInfo(1, 22),
+			new LevelInfo(0, 24),
+		};
+
+		return levels;
 	}
 
 	/**
