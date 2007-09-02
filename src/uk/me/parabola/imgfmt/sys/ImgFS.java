@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileNotWritableException;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -64,10 +65,15 @@ public class ImgFS implements FileSystem {
 	 * @throws FileNotFoundException If the file cannot be created.
 	 */
 	public ImgFS(String filename, FileSystemParam params)
-			throws FileNotFoundException
+			throws FileNotWritableException
 	{
 		log.info("Creating file system");
-		RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
+		RandomAccessFile rafile = null;
+		try {
+			rafile = new RandomAccessFile(filename, "rw");
+		} catch (FileNotFoundException e) {
+			throw new FileNotWritableException("Could not create file", e);
+		}
 		try {
 			// Set length to zero because if you don't you can get a
 			// map that doesn't work.  Not clear why.

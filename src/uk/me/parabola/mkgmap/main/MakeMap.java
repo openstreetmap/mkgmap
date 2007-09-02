@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -31,6 +33,7 @@ import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapArea;
 import uk.me.parabola.mkgmap.general.MapDataSource;
@@ -38,9 +41,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapSplitter;
-import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
-import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapReader;
 
 import java.io.FileNotFoundException;
@@ -99,6 +99,10 @@ public class MakeMap {
 
 			makeMapAreas(map, src);
 
+		} catch (FileExistsException e) {
+			throw new ExitException("File exists already", e);
+		} catch (FileNotWritableException e) {
+			throw new ExitException("Could not create or write to file", e);
 		} finally {
 			log.info("finished making map, closing");
 			if (map != null)
