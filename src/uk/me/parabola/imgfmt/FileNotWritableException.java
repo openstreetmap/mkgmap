@@ -19,7 +19,7 @@ package uk.me.parabola.imgfmt;
 import java.io.IOException;
 
 /**
- * If a file cannot be created, or written too, then this exception is thrown.
+ * If a file cannot be created, or written to, then this exception is thrown.
  * @author Steve Ratcliffe
  */
 public class FileNotWritableException extends IOException {
