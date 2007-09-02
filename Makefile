@@ -8,8 +8,9 @@
 
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
-OSMDATA = /opt/data/uk-070530.osm
-OSMDATA = /opt/data/uk-070815.osm
+OSMDATA = maps/lon.mp
+#OSMDATA = /opt/data/uk-070530.osm
+#OSMDATA = /opt/data/uk-070815.osm
 #OSMDATA = /tmp/63253506
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm

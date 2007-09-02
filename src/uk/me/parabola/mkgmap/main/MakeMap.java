@@ -16,18 +16,8 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.mkgmap.osm.OsmMapDataSource;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapArea;
-import uk.me.parabola.mkgmap.general.MapSplitter;
-import uk.me.parabola.mkgmap.general.LevelFilter;
-import uk.me.parabola.mkgmap.general.MapDataSource;
-import uk.me.parabola.mkgmap.ExitException;
-import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.Overview;
@@ -40,12 +30,23 @@ import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapArea;
+import uk.me.parabola.mkgmap.general.MapDataSource;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapSplitter;
+import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
+import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 
 import java.io.FileNotFoundException;
-import java.util.List;
-import java.util.Collections;
+import static java.lang.Integer.numberOfLeadingZeros;
 import java.util.ArrayList;
-import static java.lang.Integer.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Main routine for the command line map-making utility.
@@ -104,36 +105,13 @@ public class MakeMap {
 		}
 	}
 
-	static class LevelInfo {
-		private int level;
-		private int bits;
-		private LevelFilter filter;
-
-		LevelInfo(int level, int bits, LevelFilter filter) {
-			this.level = level;
-			this.bits = bits;
-			this.filter = filter;
-		}
-
-		/**
-		 * Returns a string representation of the object. In general, the
-		 * <code>toString</code> method returns a string that
-		 * "textually represents" this object.
-		 *
-		 * @return a string representation of the object.
-		 */
-		public String toString() {
-			return "L" + level + " B" + bits;
-		}
-	}
-
 	private LevelInfo[] levels = new LevelInfo[] {
-		new LevelInfo(5, 14, null),
-		new LevelInfo(4, 18, null),
-		new LevelInfo(3, 19, null),
-		new LevelInfo(2, 21, null),
-		new LevelInfo(1, 22, null),
-		new LevelInfo(0, 24, null),
+		new LevelInfo(5, 14),
+		new LevelInfo(4, 18),
+		new LevelInfo(3, 19),
+		new LevelInfo(2, 21),
+		new LevelInfo(1, 22),
+		new LevelInfo(0, 24),
 	};
 
 	private void makeMapAreas(Map map, LoadableMapDataSource src) {
@@ -141,11 +119,11 @@ public class MakeMap {
 		// do a special check to make sure.
 		LevelInfo levelInfo = levels[0];
 		int maxBits = getMaxBits(src);
-		if (levelInfo.bits < maxBits)
-			maxBits = levelInfo.bits;
+		if (levelInfo.getBits() < maxBits)
+			maxBits = levelInfo.getBits();
 
 		// Create the empty top level
-		Zoom zoom = map.createZoom(levelInfo.level+1, maxBits);
+		Zoom zoom = map.createZoom(levelInfo.getLevel()+1, maxBits);
 		Subdivision topdiv = makeTopArea(src, map, zoom);
 
 		class SourceSubdiv {
@@ -173,12 +151,11 @@ public class MakeMap {
 		for (LevelInfo linfo : levels) {
 			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
 
-			zoom = map.createZoom(linfo.level, linfo.bits);
+			zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
 			
 			for (SourceSubdiv smap : srcList) {
 
-				MapSplitter splitter = new MapSplitter(smap.getSource(), zoom,
-						linfo.filter);
+				MapSplitter splitter = new MapSplitter(smap.getSource(), zoom);
 				MapArea[] areas = splitter.split();
 
 				for (MapArea area : areas) {
@@ -352,28 +329,34 @@ public class MakeMap {
 		int res = div.getResolution();
 		log.info("div resolution " + res);
 
+		int shift = div.getShift();
+
 		for (MapLine line : lines) {
-			log.info(" line res " + line.getResolution() + ", " + line.getName() + ", t=" + line.getType());
 			if (line.getResolution() > res)
 				continue;
 
 			String name = line.getName();
-			if (name == null) {
-				name = "";//continue;
-			}
+			if (name == null)
+				name = "";
 
-			log.debug("Road " + name + ", t=" + line.getType());
 			Polyline pl = div.createLine(name);
 			pl.setDirection(line.isDirection());
 
+			int lastx = 0, lasty = 0;
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {
-				//if (log.isDebugEnabled())
-				//	log.debug("  point at", co, '/', co.getLatitude(), co.getLongitude());
-				pl.addCoord(co);
+				int x = co.getLongitude() >> shift;
+				int y = co.getLatitude() >> shift;
+
+				if (lastx != x || lasty != y)
+					pl.addCoord(co);
+
+				lastx = x;
+				lasty = y;
 			}
 
 			pl.setType(line.getType());
+			pl.check();
 			map.addMapObject(pl);
 		}
 	}
@@ -384,22 +367,29 @@ public class MakeMap {
 		div.startShapes();  // Signal that we are beginning to draw the shapes.
 		int res = div.getResolution();
 
+		int shift = div.getShift();
+
 		for (MapShape shape : shapes) {
 			if (shape.getResolution() > res)
 				continue;
 
 			String name = shape.getName();
-			if (name == null) {
-				name="";//continue;
-			}
+			if (name == null)
+				name = "";
 
-			log.debug("Shape ", name, ", t=", shape.getType());
 			Polygon pg = div.createPolygon(name);
 
+			int lastx = 0, lasty = 0;
 			List<Coord> points = shape.getPoints();
 			for (Coord co : points) {
-				log.debug("  point at ", co);
-				pg.addCoord(co);
+				int x = co.getLongitude() >> shift;
+				int y = co.getLatitude() >> shift;
+
+				if (x != lastx || y != lasty)
+					pg.addCoord(co);
+
+				lastx = x;
+				lasty = y;
 			}
 
 			pg.setType(shape.getType());
@@ -409,7 +399,12 @@ public class MakeMap {
 
 	private LoadableMapDataSource loadFromFile(String name) {
 		try {
-			LoadableMapDataSource src = new OsmMapDataSource();
+			LoadableMapDataSource src;
+
+			if (name.endsWith(".mp"))
+				src = new PolishMapDataSource();
+			else
+				src = new OsmMapDataSource();
 
 			src.load(name);
 
