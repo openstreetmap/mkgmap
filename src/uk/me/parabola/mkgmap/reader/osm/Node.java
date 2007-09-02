@@ -1,45 +1,38 @@
-/*
+/**
  * Copyright (C) 2006 Steve Ratcliffe
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
  *  published by the Free Software Foundation.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 17-Dec-2006
+ *
+ * Author: steve
+ * Date: 24-Dec-2006
  */
-package uk.me.parabola.mkgmap.osm;
+package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
- * Holds OSM segment information.  A segment is an order list of two nodes. It
- * can have properties, but usually doesn't (or shouldn't).
+ * A node with its own identity.  This is a node that is not just being used for
+ * its coordinates (in which case we just use {@link Coord} but has another
+ * use for example it might be a hospital or a candlestick maker.
  *
  * @author Steve Ratcliffe
  */
-class Segment extends Element {
+class Node extends Element {
+	private final Coord location;
 
-	private final Coord start;
-	private final Coord end;
-
-	Segment(long id, Coord start, Coord end) {
-		this.start = start;
-		this.end = end;
+	Node(long id, Coord co) {
+		location = co;
 		setId(id);
 	}
 
-	public Coord getStart() {
-		return start;
-	}
-
-	public Coord getEnd() {
-		return end;
+	public Coord getLocation() {
+		return location;
 	}
 }

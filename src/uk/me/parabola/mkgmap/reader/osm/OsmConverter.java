@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 20-Dec-2006
  */
-package uk.me.parabola.mkgmap.osm;
+package uk.me.parabola.mkgmap.reader.osm;
 
 /**
  * @author Steve Ratcliffe

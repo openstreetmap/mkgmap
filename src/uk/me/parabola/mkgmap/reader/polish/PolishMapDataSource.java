@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap.polish;
+package uk.me.parabola.mkgmap.reader.polish;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;

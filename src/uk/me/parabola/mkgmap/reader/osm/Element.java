@@ -13,7 +13,7 @@
  * Author: steve
  * Date: 26-Dec-2006
  */
-package uk.me.parabola.mkgmap.osm;
+package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Map;
 import java.util.HashMap;
