@@ -40,10 +40,12 @@ public class MapSplitter {
 	//  staying safely inside it however.
 	private static final int MAX_DIVISION_SIZE = 0x3fff;
 
-	// The maximum number of map features in a subdivision.  Note that there
-	// not as such a maximum number, it is all about what will fit.  So we
-	// chose a number that seems safe.
-	private static final int MAX_RGN_SIZE = 60 * 1000;
+	// The maximum region size.  Note that the offset to the start of a section
+	// has to fit into 16 bits, the end of the last section could be beyond the
+	// 16 bit limit, but we make sure that everything fits into under half the
+	// allowed space.  Really I'm not sure what the max actually is on real
+	// devices.
+	private static final int MAX_RGN_SIZE = 30 * 1024;
 
 	private Zoom zoom;
 
@@ -106,6 +108,7 @@ public class MapSplitter {
 		for (MapArea a : areas) {
 			if (a.getSizeAtResolution(zoom.getResolution()) > MAX_RGN_SIZE) {
 				log.debug("splitting area", a);
+				System.out.println("splitting area "+ a);
 				MapArea[] sublist = a.split(2, 2);
 				addAreasToList(sublist, alist);
 			} else {
