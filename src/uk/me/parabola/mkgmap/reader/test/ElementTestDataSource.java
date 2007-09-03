@@ -60,7 +60,8 @@ public class ElementTestDataSource implements LoadableMapDataSource {
 
 	public LevelInfo[] mapLevels() {
 		return new LevelInfo[] {
-				//new LevelInfo(1, 20),
+				new LevelInfo(2, 16),
+				new LevelInfo(1, 20),
 				new LevelInfo(0, 24),
 		};
 	}

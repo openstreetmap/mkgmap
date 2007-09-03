@@ -53,11 +53,14 @@ public class AllElements {
 
 	// I don't know what the max types and subtypes actually are, adjust if
 	// there seems to be more beyond.
-	private static int MAX_POINT_TYPE = 0x80;
+	private static int MAX_POINT_TYPE = 0x7f;
 	private static int MAX_POINT_SUB_TYPE = 0x30;
 
 	// we draw lines and polygons in a 16x16 square (or whatever is here).
-	private static int SQRT_MAX_LINE_TYPE = 16;
+	private static int MAX_LINE_TYPE_X = 8;
+	private static int MAX_LINE_TYPE_Y = 8;
+	private static int MAX_SHAPE_TYPE_X = 12;
+	private static int MAX_SHAPE_TYPE_Y = 12;
 
 	/**
 	 * Loading the map in this case means generating it.
@@ -94,10 +97,10 @@ public class AllElements {
 
 		drawPoints(map, lat, lng);
 
-		lng += 256 * ELEMENT_SPACING;
+		lng += MAX_POINT_TYPE * ELEMENT_SPACING;
 		drawLines(map, lat, lng);
 
-		lng += 16 * ELEMENT_SPACING;
+		lng += MAX_LINE_TYPE_X * ELEMENT_SPACING;
 		drawPolygons(map, lat, lng);
 	}
 
@@ -134,9 +137,11 @@ public class AllElements {
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
 
-		for (int x = 0; x < SQRT_MAX_LINE_TYPE; x++) {
-			for (int y = 0; y < SQRT_MAX_LINE_TYPE; y++) {
+		for (int x = 0; x < MAX_LINE_TYPE_X; x++) {
+			for (int y = 0; y < MAX_LINE_TYPE_Y; y++) {
 				int type = x*16 + y;
+				if ((type & 0xc0) != 0)
+					break;
 
 				MapLine line = new MapLine();
 				line.setMinResolution(10);
@@ -169,9 +174,11 @@ public class AllElements {
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
 
-		for (int x = 0; x < SQRT_MAX_LINE_TYPE; x++) {
-			for (int y = 0; y < SQRT_MAX_LINE_TYPE; y++) {
+		for (int x = 0; x < MAX_SHAPE_TYPE_X; x++) {
+			for (int y = 0; y < MAX_SHAPE_TYPE_Y; y++) {
 				int type = x*16 + y;
+				if ((type & 0x80) != 0)
+					break;
 
 				//Polygon pg = div.createPolygon("0x" + Integer.toHexString(type));
 
