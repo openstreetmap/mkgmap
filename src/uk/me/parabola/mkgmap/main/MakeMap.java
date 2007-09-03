@@ -258,12 +258,6 @@ public class MakeMap {
 				break;
 			}
 		}
-
-		// The last one is being ignored so add a dummy one.
-		map.addPolygonOverview(new PolygonOverview(0x0));
-
-		// Let do the same for points too.
-		map.addPointOverview(new PointOverview(0x0, 0x0));
 	}
 
 	/**
