@@ -33,7 +33,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public class CommandArgs {
+class CommandArgs {
 	private static final Logger log = Logger.getLogger(CommandArgs.class);
 
 	private static final Properties defaults;
@@ -118,6 +118,10 @@ public class CommandArgs {
 
 	}
 
+	Properties getProperties() {
+		return argvalues;
+	}
+	
 	public String getDescription() {
 		return argvalues.getProperty("description");
 	}

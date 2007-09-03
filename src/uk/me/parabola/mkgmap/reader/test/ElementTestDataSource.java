@@ -25,9 +25,11 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.reader.PropertyConfiguredReader;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * This is a map data source that just generates maps without reference to
@@ -35,8 +37,9 @@ import java.util.List;
  * 
  * @author Steve Ratcliffe
  */
-public class ElementTestDataSource implements LoadableMapDataSource {
+public class ElementTestDataSource implements LoadableMapDataSource, PropertyConfiguredReader {
 	private final MapDetails mapper = new MapDetails();
+	private Properties props;
 
 	/**
 	 * 'Filenames' that are supported begin with TEST:
@@ -53,6 +56,9 @@ public class ElementTestDataSource implements LoadableMapDataSource {
 		if ("TEST:ALL-ELEMENTS".equals(name)) {
 			AllElements all = new AllElements();
 			all.load(mapper);
+		} else if ("TEST:MANY-POINTS".equals(name)) {
+			ManyPoints test = new ManyPoints();
+			test.load(mapper, props);
 		} else {
 			throw new FileNotFoundException("Invalid test file name");
 		}
@@ -60,7 +66,8 @@ public class ElementTestDataSource implements LoadableMapDataSource {
 
 	public LevelInfo[] mapLevels() {
 		return new LevelInfo[] {
-				new LevelInfo(2, 16),
+				new LevelInfo(3, 16),
+				new LevelInfo(2, 18),
 				new LevelInfo(1, 20),
 				new LevelInfo(0, 24),
 		};
@@ -88,5 +95,9 @@ public class ElementTestDataSource implements LoadableMapDataSource {
 
 	public List<MapShape> getShapes() {
 		return mapper.getShapes();
+	}
+
+	public void config(Properties props) {
+		this.props = props;
 	}
 }

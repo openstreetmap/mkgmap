@@ -42,6 +42,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapSplitter;
 import uk.me.parabola.mkgmap.reader.MapReader;
+import uk.me.parabola.mkgmap.reader.PropertyConfiguredReader;
 
 import java.io.FileNotFoundException;
 import static java.lang.Integer.numberOfLeadingZeros;
@@ -58,6 +59,8 @@ public class MakeMap {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
 
 	private static final int CLEAR_TOP_BITS = (32-15);
+
+	private CommandArgs commandArgs;
 
 	public static void main(String[] args) {
 		if (args.length < 1) {
@@ -85,6 +88,8 @@ public class MakeMap {
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
+
+		commandArgs = args;
 
 		Map map = null;
 		try {
@@ -401,6 +406,11 @@ public class MakeMap {
 			LoadableMapDataSource src;
 
 			src = MapReader.createMapReader(name);
+
+			// If configuration required do that now.
+			if (src instanceof PropertyConfiguredReader)
+				((PropertyConfiguredReader) src).config(commandArgs.getProperties());
+
 			src.load(name);
 
 			return src;
