@@ -43,7 +43,6 @@ class CommandArgs {
 		defaults.setProperty("description", "OSM street map");
 	}
 
-	// FIXME: the properties class is awful, will replace
 	private Properties argvalues = new Properties(defaults);
 
 	private String fileName;
