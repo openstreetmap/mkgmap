@@ -33,7 +33,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-class CommandArgs {
+public class CommandArgs {
 	private static final Logger log = Logger.getLogger(CommandArgs.class);
 
 	private static final Properties defaults;
