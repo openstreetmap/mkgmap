@@ -348,7 +348,7 @@ public class MakeMap {
 			}
 
 			pl.setType(line.getType());
-			pl.check();
+			//pl.check();
 			map.addMapObject(pl);
 		}
 	}
