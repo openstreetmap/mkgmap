@@ -108,10 +108,9 @@ public class RGNFile extends ImgFile {
 			long currPos = position();
 			position(indPointPtrOff);
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
-			if (off > 0xffff) {
-				throw new IllegalStateException(
-						"Too many items in indexed points section");
-			}
+			if (off > 0xffff)
+				throw new IllegalStateException("Too many items in indexed points section");
+
 			putChar((char) off);
 			position(currPos);
 		}
@@ -122,11 +121,11 @@ public class RGNFile extends ImgFile {
 			long currPos = position();
 			position(polylinePtrOff);
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
-			if (off > 0xffff) {
-				throw new IllegalStateException(
-						"Too many items in polyline section");
-			}
-			log.debug("setting polyline offset to " + off);
+			if (off > 0xffff)
+				throw new IllegalStateException("Too many items in polyline section");
+
+			if (log.isDebugEnabled())
+				log.debug("setting polyline offset to", off);
 			putChar((char) off);
 
 			position(currPos);
@@ -138,11 +137,11 @@ public class RGNFile extends ImgFile {
 			long currPos = position();
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
 			log.debug("currpos=" + currPos + ", off=" + off);
-			if (off > 0xffff) {
-				throw new IllegalStateException(
-						"Too many items in the polygon section");
-			}
-			log.debug("setting polygon offset to " + off + " @" + polygonPtrOff);
+			if (off > 0xffff)
+				throw new IllegalStateException("Too many items in the polygon section");
+
+			if (log.isDebugEnabled())
+				log.debug("setting polygon offset to ", off, " @", polygonPtrOff);
 			position(polygonPtrOff);
 			putChar((char) off);
 			position(currPos);
