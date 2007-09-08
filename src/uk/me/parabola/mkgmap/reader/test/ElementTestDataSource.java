@@ -47,17 +47,17 @@ public class ElementTestDataSource implements LoadableMapDataSource, PropertyCon
 	 * @return True if a recognised test name beginning with TEST:
 	 */
 	public boolean fileSupported(String name) {
-		if (name.startsWith("TEST:"))
+		if (name.startsWith("test-map:"))
 			return true;
 		return false;
 	}
 
 	public void load(String name) throws FileNotFoundException, FormatException {
-		if ("TEST:ALL-ELEMENTS".equals(name)) {
+		if ("test-map:all-elements".equals(name)) {
 			AllElements all = new AllElements();
 			all.load(mapper);
-		} else if ("TEST:MANY-POINTS".equals(name)) {
-			ManyPoints test = new ManyPoints();
+		} else if ("test-map:test-points".equals(name)) {
+			TestPoints test = new TestPoints();
 			test.load(mapper, props);
 		} else {
 			throw new FileNotFoundException("Invalid test file name");

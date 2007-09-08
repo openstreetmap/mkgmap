@@ -46,7 +46,7 @@ public class MapReader {
 		// OSM unless it ends with .mp
 		if (name.endsWith(".mp"))
 			src = new PolishMapDataSource();
-		else if (name.startsWith("TEST:"))
+		else if (name.startsWith("test-map:"))
 			src = new ElementTestDataSource();
 		else
 			src = new OsmMapDataSource();

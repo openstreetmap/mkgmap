@@ -163,8 +163,7 @@ public class MakeMap {
 
 				for (MapArea area : areas) {
 					Subdivision parent = smap.getSubdiv();
-					Subdivision div = makeSubdivision(
-							map, parent, area, zoom);
+					Subdivision div = makeSubdivision(map, parent, area, zoom);
 					log.debug("ADD parent-subdiv", parent, smap.getSource(), ", z=", zoom, " new=", div);
 					nextList.add(new SourceSubdiv(area, div));
 				}
