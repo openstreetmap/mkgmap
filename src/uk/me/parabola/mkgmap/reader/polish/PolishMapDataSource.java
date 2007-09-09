@@ -21,27 +21,31 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.LevelInfo;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
  * Read an data file in Polish format.  This is the format used by a number
  * of other garmin map making programs notably cGPSmapper.
- *
- * For now we convert a bare minimum of the format and ignore its hints about
- * how the map levels should be arranged.
+ * <p>
+ * As the input format is designed for garmin maps, it is fairly easy to read
+ * into mkgmap.  Not every feature of the format is read yet, but it shouldn't
+ * be too difficult to add them in as needed.
+ * <p>
+ * Now will place elements at the level specified in the file and not at the
+ * automatic level that is used in eg. the OSM reader.
  *
  * @author Steve Ratcliffe
  */
@@ -61,6 +65,7 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 
 	private String copyright;
 	private int section;
+	private LevelInfo[] levels;
 
 	public boolean fileSupported(String name) {
 		// Supported if the extension is .mp
@@ -98,15 +103,17 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 	public LevelInfo[] mapLevels() {
 		// In the future will use the information in the file - for now it
 		// is fixed.
-		LevelInfo[] levels = new LevelInfo[] {
-			new LevelInfo(5, 16),
-			new LevelInfo(4, 18),
-			new LevelInfo(3, 19),
-			new LevelInfo(2, 21),
-			new LevelInfo(1, 22),
-			new LevelInfo(0, 24),
-		};
-
+		if (levels == null) {
+			// If it has not been set then supply some defaults.
+			levels = new LevelInfo[] {
+					new LevelInfo(5, 16),
+					new LevelInfo(4, 18),
+					new LevelInfo(3, 19),
+					new LevelInfo(2, 21),
+					new LevelInfo(1, 22),
+					new LevelInfo(0, 24),
+			};
+		}
 		return levels;
 	}
 
@@ -265,6 +272,8 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 			point.setName(value);
 		} else if (name.startsWith("Data")) {
 			Coord co = makeCoord(value);
+			int res = extractResolution(name);
+			point.setMinResolution(extractResolution(name));
 			point.setLocation(co);
 		}
 	}
@@ -294,6 +303,7 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 				points.add(co);
 			}
 
+			polyline.setMinResolution(extractResolution(name));
 			polyline.setPoints(points);
 		}
 
@@ -325,8 +335,28 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 			}
 
 			shape.setPoints(points);
+			shape.setMinResolution(extractResolution(name));
 		}
 	}
+
+	/**
+	 * Extract the resolution from the Data label.  The name will be something
+	 * like Data2: from that we know it is at level 2 and we can look up
+	 * the resolution.
+	 *
+	 * @param name The name tag DataN, where N is a digit corresponding to the
+	 * level.
+	 *
+	 * @return The resolution that corresponds to the level.
+	 */
+	private int extractResolution(String name) {
+		int level = Integer.valueOf(name.substring(4));
+		int nlevels = levels.length;
+
+		LevelInfo li = levels[nlevels - level - 1];
+		return li.getBits();
+	}
+
 
 	/**
 	 * The initial 'IMG ID' section.  Contains miscellaneous parameters for
@@ -336,8 +366,22 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 	 * @param value Command value.
 	 */
 	private void imgId(String name, String value) {
-		if (name.equals("Copyright"))
+		if (name.equals("Copyright")) {
 			copyright = value;
+		} else if (name.equals("Levels")) {
+			int nlev = Integer.valueOf(value);
+			levels = new LevelInfo[nlev];
+		} else if (name.startsWith("Level")) {
+			int level = Integer.valueOf(name.substring(5));
+			int bits = Integer.valueOf(value);
+			LevelInfo info = new LevelInfo(level, bits);
+
+			int nlevels = levels.length;
+			if (level >= nlevels)
+				return;
+
+			levels[nlevels - level - 1] = info;
+		}
 	}
 
 	/**
