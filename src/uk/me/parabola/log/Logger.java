@@ -78,6 +78,7 @@ public class Logger {
 				lm.reset();
 				lm.readConfiguration(in);
 			} catch (FileNotFoundException e) {
+				System.err.println("Failed to open logging config file " + logconf);
 				staticSetup();
 			} catch (IOException e) {
 				staticSetup();
