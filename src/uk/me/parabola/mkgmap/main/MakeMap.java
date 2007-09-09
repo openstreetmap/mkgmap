@@ -156,15 +156,16 @@ public class MakeMap {
 
 			zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
 			
-			for (SourceSubdiv smap : srcList) {
+			for (SourceSubdiv srcDivPair : srcList) {
 
-				MapSplitter splitter = new MapSplitter(smap.getSource(), zoom);
+				MapSplitter splitter = new MapSplitter(srcDivPair.getSource(), zoom);
 				MapArea[] areas = splitter.split();
 
 				for (MapArea area : areas) {
-					Subdivision parent = smap.getSubdiv();
+					Subdivision parent = srcDivPair.getSubdiv();
 					Subdivision div = makeSubdivision(map, parent, area, zoom);
-					log.debug("ADD parent-subdiv", parent, smap.getSource(), ", z=", zoom, " new=", div);
+					if (log.isDebugEnabled())
+						log.debug("ADD parent-subdiv", parent, srcDivPair.getSource(), ", z=", zoom, " new=", div);
 					nextList.add(new SourceSubdiv(area, div));
 				}
 			}
@@ -207,12 +208,11 @@ public class MakeMap {
 
 		Subdivision div = map.createSubdivision(parent, ma.getFullBounds(), z);
 
-		// TODO: needs to be aware of active numbers
-		if (!points.isEmpty())
+		if (ma.hasPoints())
 			div.setHasPoints(true);
-		if (!lines.isEmpty())
+		if (ma.hasLines())
 			div.setHasPolylines(true);
-		if (!shapes.isEmpty())
+		if (ma.hasShapes())
 			div.setHasPolygons(true);
 
 		div.startDivision();

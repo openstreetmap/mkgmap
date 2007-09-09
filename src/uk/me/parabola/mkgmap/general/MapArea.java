@@ -59,6 +59,13 @@ public class MapArea implements MapDataSource {
 	private int[] shapeSize = new int[MAX_RESOLUTION+1];
 	private int[] elemCounts = new int[MAX_RESOLUTION+1];
 
+	private int nActivePoints;
+	private int nActiveLines;
+	private int nActiveShapes;
+
+	/** The resolution that this area is at */
+	private int areaResolution;
+
 	private static final int POINT_KIND = 0;
 	private static final int LINE_KIND = 1;
 	private static final int SHAPE_KIND = 2;
@@ -71,6 +78,7 @@ public class MapArea implements MapDataSource {
 	 * @param src The map data source to initialise this area with.
 	 */
 	public MapArea(MapDataSource src) {
+		this.areaResolution = 0;
 		this.bounds = src.getBounds();
 		addToBounds(bounds);
 
@@ -94,9 +102,11 @@ public class MapArea implements MapDataSource {
 	 * Create an map area with the given initial bounds.
 	 *
 	 * @param area The bounds for this area.
+	 * @param res The minimum resolution for this area.
 	 */
-	private MapArea(Area area) {
+	private MapArea(Area area, int res) {
 		bounds = area;
+		areaResolution = res;
 		addToBounds(area);
 	}
 
@@ -107,13 +117,14 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
+	 * @param resolution
 	 * @return An array of the new MapArea's.
 	 */
-	public MapArea[] split(int nx, int ny) {
+	public MapArea[] split(int nx, int ny, int resolution) {
 		Area[] areas = bounds.split(nx, ny);
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		for (int i = 0; i < nx * ny; i++) {
-			mapAreas[i] = new MapArea(areas[i]);
+			mapAreas[i] = new MapArea(areas[i], resolution);
 			if (log.isDebugEnabled())
 				log.debug("area before", mapAreas[i].getBounds());
 		}
@@ -144,12 +155,6 @@ public class MapArea implements MapDataSource {
 		for (MapShape e : elist) {
 			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
 			area1.addShape(e);
-		}
-
-		if (log.isDebugEnabled()) {
-			for (int i = 0; i < nx * ny; i++) {
-				log.debug("area after", mapAreas[i].getBounds());
-			}
 		}
 
 		return mapAreas;
@@ -184,8 +189,7 @@ public class MapArea implements MapDataSource {
 		int ssize = 0;
 		int esize = 0;
 		for (int i = 0; i <= res; i++) {
-			if (log.isDebugEnabled())
-			log.debug("line cnt", i, " ", lineSize[i]);
+
 			psize += pointSize[i];
 			lsize += lineSize[i];
 			ssize += shapeSize[i];
@@ -201,7 +205,6 @@ public class MapArea implements MapDataSource {
 		if (ssize > size)
 			size = ssize;
 
-		System.out.println("Got size of " + size + ", with esize of " + esize);
 		return size;
 	}
 
@@ -244,8 +247,44 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
+	 * True if there are any 'active' points in this area.  Ie ones that will be
+	 * shown because their resolution is at least as high as that of the
+	 * area.
+	 *
+	 * @return True if any active points in this area.
+	 */
+	public boolean hasPoints() {
+		return nActivePoints > 0;
+	}
+
+	/**
+	 * True if there are any 'active' points in this area.  Ie ones that will be
+	 * shown because their resolution is at least as high as that of the
+	 * area.
+	 *
+	 * @return True if any active points in this area.
+	 */
+	public boolean hasLines() {
+		return nActiveLines > 0;
+	}
+
+	/**
+	 * True if there are any 'active' points in this area.  Ie ones that will be
+	 * shown because their resolution is at least as high as that of the
+	 * area.
+	 *
+	 * @return True if any active points in this area.
+	 */
+	public boolean hasShapes() {
+		return nActiveShapes > 0;
+	}
+
+	/**
 	 * Add an estimate of the size that will be required to hold this element
-	 * if it should be displayed at the given resolution. 
+	 * if it should be displayed at the given resolution.  We also keep track
+	 * of the number of <i>active</i> elements here ie elements that will be
+	 * shown because they are at a resolution at least as great as the resolution
+	 * of the area.
 	 *
 	 * @param p The element containing the minimum resolution that it will be
 	 * displayed at.
@@ -260,15 +299,36 @@ public class MapArea implements MapDataSource {
 		int s;
 		switch (kind) {
 		case POINT_KIND:
+			if (res <= areaResolution)
+				nActivePoints++;
+
 			// Points are predictibly less than 9 bytes.
 			s = 9;
 			break;
 
-		default:
+		case LINE_KIND:
+			if (res <= areaResolution)
+				nActiveLines++;
+
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
 			int n = ((MapLine) p).getPoints().size();
 			s = 11 + n * 2;
+			break;
+		case SHAPE_KIND:
+			if (res <= areaResolution)
+				nActiveShapes++;
+
+			// Estimate the size taken by lines and shapes as a constant plus
+			// a factor based on the number of points.
+			n = ((MapLine) p).getPoints().size();
+			s = 11 + n * 2;
+			break;
+
+		default:
+			log.error("should not be here");
+			assert false;
+			s = 0;
 			break;
 		}
 

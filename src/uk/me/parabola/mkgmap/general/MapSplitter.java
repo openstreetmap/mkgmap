@@ -66,10 +66,6 @@ public class MapSplitter {
 		this.zoom = zoom;
 	}
 
-	public MapSplitter(MapDataSource src, Zoom zoom, LevelFilter filter) {
-		this(src, zoom);
-	}
-
 	/**
 	 * This splits the map into a series of smaller areas.  There is both a
 	 * maximum size and a maximum number of features that can be contained
@@ -105,15 +101,20 @@ public class MapSplitter {
 	 * map areas.
 	 */
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
-		for (MapArea a : areas) {
-			if (a.getSizeAtResolution(zoom.getResolution()) > MAX_RGN_SIZE) {
-				log.debug("splitting area", a);
-				System.out.println("splitting area "+ a);
-				MapArea[] sublist = a.split(2, 2);
+		int res = zoom.getResolution();
+		for (MapArea area : areas) {
+			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE) {
+				if (log.isDebugEnabled())
+					log.debug("splitting area", area);
+				MapArea[] sublist = area.split(2, 2, res);
 				addAreasToList(sublist, alist);
 			} else {
-				log.debug("adding area unsplit");
-				alist.add(a);
+				log.debug("adding area unsplit", ",has points" + area.hasPoints());
+
+				MapArea[] sublist = area.split(1, 1, res);
+				assert sublist.length == 1: sublist.length;
+				assert sublist[0].getAreaResolution() == res: sublist[0].getAreaResolution();
+				alist.add(sublist[0]);
 			}
 		}
 	}
@@ -139,7 +140,8 @@ public class MapSplitter {
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
 		int height = bounds.getHeight() >> shift;
-		log.debug("shifted width", width, "shifted height", height);
+		if (log.isDebugEnabled())
+			log.debug("shifted width", width, "shifted height", height);
 
 		// There is an absolute maximum size that a division can be.  Make sure
 		// that we are well inside that.
@@ -151,7 +153,7 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		MapArea[] areas = mapArea.split(xsplit, ysplit);
+		MapArea[] areas = mapArea.split(xsplit, ysplit, zoom.getResolution());
 		return areas;
 	}
 

@@ -184,7 +184,18 @@ public class Subdivision {
 		}
 	}
 
+	public Point createPoint(String name) {
+		assert hasPoints || hasIndPoints;
+		
+		Point p = new Point(this);
+		Label label = lblFile.newLabel(name);
+
+		p.setLabel(label);
+		return p;
+	}
+
 	public Polyline createLine(String name) {
+		assert hasPolylines;
 		Label label = lblFile.newLabel(name);
 		Polyline pl = new Polyline(this);
 
@@ -193,19 +204,12 @@ public class Subdivision {
 	}
 
 	public Polygon createPolygon(String name) {
+		assert hasPolygons;
 		Label label = lblFile.newLabel(name);
 		Polygon pg = new Polygon(this);
 
 		pg.setLabel(label);
 		return pg;
-	}
-
-	public Point createPoint(String name) {
-		Point p = new Point(this);
-		Label label = lblFile.newLabel(name);
-
-		p.setLabel(label);
-		return p;
 	}
 
 	public void setNumber(int n) {
