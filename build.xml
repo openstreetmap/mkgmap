@@ -70,6 +70,7 @@
         manifest="${resources}/MANIFEST.MF">
       <include name="**/*.class"/>
 			<include name="*.csv"/>
+			<include name="*.properties"/>
     </jar>
 
 		<!-- Copy in the javadoc
@@ -110,6 +111,7 @@
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
+				<include name="*.properties"/>
 			</fileset>
 		</copy>
   </target>

@@ -16,13 +16,14 @@
  */
 package uk.me.parabola.log;
 
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Map;
 import java.util.Properties;
-import java.util.HashMap;
-
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 /**
  * Simple logging class.  By default it is disabled.  You have to set it up
@@ -30,168 +31,165 @@ import java.util.HashMap;
  * to make easier logging without having to do string concatenation in the
  * regular code.
  *
- * It has the ability to set logging level for each logger separately, although
- * I am not doing anything with that at present.
- *
  * @author Steve Ratcliffe
  */
 public class Logger {
-	private static FileWriter file;
-
-	private static boolean loggingActive;
-
-	private static final Map<String, Logger> loggers
-			= new HashMap<String, Logger>();
-
-	private String shortname;
-
-	private final boolean debugEnabled;
-	private final boolean infoEnabled;
-	private final boolean warnEnabled;
-	private final boolean errorEnabled;
+	private final java.util.logging.Logger log;
 
 	static {
 		initLogging();
 	}
 
-	public static Logger getLogger(Class<?> aClass) {
-		String name = aClass.getName();
-		Logger log = loggers.get(name);
-		if (log == null) {
-			log = new Logger(name);
-			
-			loggers.put(name, log);
-		}
-
-		return log;
+	public Logger(String name) {
+		this.log = java.util.logging.Logger.getLogger(name);
 	}
 
-	private Logger(String name) {
-		int dot = name.lastIndexOf('.');
-		if (dot > 0)
-			shortname = name.substring(dot+1);
+	/**
+	 * Get a logger by its name.
+	 *
+	 * @param name The name of the logger.  Uses the same conventions as in
+	 * java.util.logging.Logger as this is just a thin wrapper around that
+	 * class.
+	 * @return The logger.
+	 */
+	public static Logger getLogger(String name) {
+		return new Logger(name);
+	}
 
-		debugEnabled = loggingActive;
-		infoEnabled = loggingActive;
-		warnEnabled = loggingActive;
-		errorEnabled = loggingActive;
+	/**
+	 * Convenience class to get a logger using a class name as the name.
+	 * @param aClass The class - its name will be used to retrieve the
+	 * logger.
+	 * @return The logger.
+	 */
+	public static Logger getLogger(Class<?> aClass) {
+		String name = aClass.getName();
+		return getLogger(name);
 	}
 
 	private static void initLogging() {
-
-		loggingActive = false;
-
 		Properties props = System.getProperties();
-		String filename = props.getProperty("log.filename");
-		if (filename == null) {
-			return;
-		}
 
-		try {
-			file = new FileWriter(filename, true);
-			loggingActive = true;
-
-		} catch (IOException e) {
-			System.err.println("ERROR: Logging initialisation failed");
+		String logconf = props.getProperty("log.config");
+		if (logconf != null) {
+			try {
+				InputStream in = new FileInputStream(logconf);
+				LogManager lm = LogManager.getLogManager();
+				lm.reset();
+				lm.readConfiguration(in);
+			} catch (FileNotFoundException e) {
+				staticSetup();
+			} catch (IOException e) {
+				staticSetup();
+			}
 		}
+		else {
+			staticSetup();
+		}
+	}
+
+	/**
+	 * The default setup, which is basically not to do any logging apart from
+	 * showing warnings and errors (and I may remove that).
+	 */
+	private static void staticSetup() {
+		// Static setup.
+		LogManager.getLogManager().reset();
+		java.util.logging.Logger l = java.util.logging.Logger.getLogger("");
+
+		ConsoleHandler handler = new ConsoleHandler();
+		UsefulFormatter f = new UsefulFormatter();
+
+		f.setShowTime(false);
+
+		handler.setFormatter(f);
+		handler.setLevel(Level.WARNING);
+
+		l.addHandler(handler);
+		l.setLevel(Level.WARNING);
 	}
 
 	public boolean isDebugEnabled() {
-		return debugEnabled;
+		return log.isLoggable(Level.FINE);
 	}
 
 	public boolean isInfoEnabled() {
-		return infoEnabled;
+		return log.isLoggable(Level.FINE);
 	}
 
 	public boolean isWarnEnabled() {
-		return warnEnabled;
+		return log.isLoggable(Level.WARNING);
 	}
 
-	public boolean isErrorEnabled() {
-		return errorEnabled;
+	private boolean isErrorEnabled() {
+		return log.isLoggable(Level.SEVERE);
 	}
 
 	public void debug(Object o) {
-		if (!debugEnabled)
+		if (!log.isLoggable(Level.FINE))
 			return;
 
-		simpleFormat("DEBUG", o);
+		log.fine(o.toString());
 	}
 
 	public void debug(Object ... olist) {
-		if (!debugEnabled)
+		if (!isDebugEnabled())
 			return;
 
-		String type = "DEBUG";
-		arrayFormat(type, olist);
-	}
-
-	public void warn(Object o) {
-		if (!warnEnabled)
-			return;
-
-		simpleFormat("WARN", o);
+		arrayFormat(Level.FINE, olist);
 	}
 
 	public void info(Object o) {
-		if (!infoEnabled)
+		if (!isInfoEnabled())
 			return;
 
-		simpleFormat("INFO", o);
+		log.info(o.toString());
+	}
+
+	public void info(Object ... olist) {
+		if (!isInfoEnabled())
+			return;
+
+		arrayFormat(Level.INFO, olist);
+	}
+
+	public void warn(Object o) {
+		if (!isWarnEnabled())
+			return;
+
+		log.warning(o.toString());
+	}
+
+	public void warn(Object ... olist) {
+		if (!isWarnEnabled())
+			return;
+
+		arrayFormat(Level.WARNING, olist);
 	}
 
 	public void error(Object o) {
-		if (!errorEnabled)
+		if (!isErrorEnabled())
 			return;
-		simpleFormat("ERROR", o);
+		log.severe(o.toString());
 	}
 
 	public void error(Object o, Throwable e) {
-		if (!errorEnabled)
+		if (!isErrorEnabled())
 			return;
 
-		simpleFormat("ERROR", o);
-		e.printStackTrace(new PrintWriter(file));
+		log.log(Level.SEVERE, o.toString(), e);
 	}
 
-	private void simpleFormat(String type, Object o) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(type);
-		sb.append(": [");
-		sb.append(shortname);
-		sb.append("] ");
-		sb.append(o);
-		sb.append('\n');
+	private void arrayFormat(Level type, Object... olist) {
+		StringBuffer sb = new StringBuffer();
 
-		commonWrite(sb);
-	}
-
-	private void arrayFormat(String type, Object... olist) {
-		StringBuilder sb = new StringBuilder(type);
-		sb.append(": [");
-		sb.append(shortname);
-		sb.append("] ");
 		for (Object o : olist) {
 			sb.append(o);
 			sb.append(' ');
 		}
 		sb.setLength(sb.length()-1);
-		sb.append('\n');
 
-		commonWrite(sb);
+		log.log(type, sb.toString());
 	}
 
-	private static void commonWrite(StringBuilder sb) {
-		if (!loggingActive)
-			return;
-
-		try {
-			file.write(sb.toString());
-			file.flush();
-		} catch (IOException e) {
-			loggingActive = false;
-			System.err.println("Failed to write to log, disabling");
-		}
-	}
 }
