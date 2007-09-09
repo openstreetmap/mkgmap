@@ -104,7 +104,7 @@ public class Logger {
 		f.setShowTime(false);
 
 		handler.setFormatter(f);
-		handler.setLevel(Level.WARNING);
+		handler.setLevel(Level.SEVERE);
 
 		l.addHandler(handler);
 		l.setLevel(Level.WARNING);
