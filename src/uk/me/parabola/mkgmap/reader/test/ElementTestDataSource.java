@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
-import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -42,9 +41,9 @@ public class ElementTestDataSource implements LoadableMapDataSource, PropertyCon
 	private Properties props;
 
 	/**
-	 * 'Filenames' that are supported begin with TEST:
+	 * 'Filenames' that are supported begin with test-map:
 	 * @param name The name to check.
-	 * @return True if a recognised test name beginning with TEST:
+	 * @return True If a recognised test name beginning with test-map:
 	 */
 	public boolean fileSupported(String name) {
 		if (name.startsWith("test-map:"))
@@ -52,7 +51,12 @@ public class ElementTestDataSource implements LoadableMapDataSource, PropertyCon
 		return false;
 	}
 
-	public void load(String name) throws FileNotFoundException, FormatException {
+	/**
+	 * Load a map by generating it in code.
+	 * @param name The name of the map to generate.
+	 * @throws FileNotFoundException If the name is not recognised.
+	 */
+	public void load(String name) throws FileNotFoundException {
 		if ("test-map:all-elements".equals(name)) {
 			AllElements all = new AllElements();
 			all.load(mapper);

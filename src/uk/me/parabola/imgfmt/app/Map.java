@@ -143,7 +143,7 @@ public class Map implements InternalFiles {
 	/**
 	 * Create a subdivision that is beneath the top level.  We have to
 	 * pass the parent division.
-	 *
+	 * <p>
 	 * Note that you cannot create these all up front.  You must
 	 * create it, fill it will its map elements and then create the
 	 * next one.  You must also start at the top level and work down.
