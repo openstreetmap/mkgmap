@@ -15,8 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
  * A map element is a point, line or shape that appears on the map.  This
@@ -68,16 +68,20 @@ public abstract class MapElement {
 	public abstract Area getBounds();
 
 	/**
-	 * Temporary routine to get the resolutions that an element should be
-	 * displayed at.  It will be replaced by a configurable system.
+	 * Get the resolutions that an element should be displayed at.
+	 * It will return the minimum resolution at which this element should be
+	 * displayed at.
 	 *
 	 * @return The lowest resolution at which the element will be visible.
 	 */
 	public int getResolution() {
-		//return getType() < 5? 15: 24;
+		// This is the new way: the min resolution is set by the reader and we
+		// just return it here.
 		if (minResolution != 0)
 			return minResolution;
-		
+
+		// The old way - there is a built in list of min resolutions based on
+		// the element type, this will eventually go.
 		switch (getType()) {
 		case 1:
 		case 2:
