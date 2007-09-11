@@ -14,15 +14,16 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.reader.osm5;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.reader.osm.FeatureListConverter;
+import uk.me.parabola.mkgmap.reader.osm.Node;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,23 +33,19 @@ import java.util.Map;
  *
  * @author Steve Ratcliffe
  */
-class OSMXmlHandler extends DefaultHandler {
-	private static final Logger log = Logger.getLogger(OSMXmlHandler.class);
-
-	private MapCollector mapper;
-	private OsmConverter converter;
-
+class OSM5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
-	private Map<Long, Segment> segMap = new HashMap<Long, Segment>();
-
-	private Node currentNode;
-	private Way4 currentWay;
 
 	private static final int MODE_NODE = 1;
-	private static final int MODE_SEGMENT = 2;
-	private static final int MODE_WAY = 3;
+	private static final int MODE_WAY = 2;
+
+	private Node currentNode;
+	private Way5 currentWay;
+
+	private FeatureListConverter converter;
+	private MapCollector mapper;
 
 	/**
 	 * Receive notification of the start of an element.
@@ -82,43 +79,34 @@ class OSMXmlHandler extends DefaultHandler {
 				String lon = attributes.getValue("lon");
 
 				addNode(id, lat, lon);
-			} else if (qName.equals("segment")) {
-				mode = MODE_SEGMENT;
 
-				String id = attributes.getValue("id");
-				String from = attributes.getValue("from");
-				String to = attributes.getValue("to");
-
-				addSegment(id, from, to);
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
-				currentWay = new Way4();
+				currentWay = new Way5();
 			}
 		} else if (mode == MODE_NODE) {
 			if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
 				String val = attributes.getValue("v");
+				//addTagToNode(key, val);
 				currentNode.addTag(key, val);
 			}
-		} else if (mode == MODE_SEGMENT) {
-			// not yet interested in anything here.
+
 		} else if (mode == MODE_WAY) {
-			if (nodeMap != null)
-				nodeMap = null;
-			if (qName.equals("seg")) {
-				long id = Long.parseLong(attributes.getValue("id"));
-				addSegmentToWay(id);
+			if (qName.equals("nd")) {
+				long id = Long.parseLong(attributes.getValue("ref"));
+				addNodeToWay(id);
 			} else if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
 				String val = attributes.getValue("v");
-				addTagToWay(key, val);
-
+				currentWay.addTag(key, val);
 			}
 		}
 	}
 
-	public void endDocument() {
-		segMap = null;
+	private void addNodeToWay(long id) {
+		Coord co = nodeMap.get(id);
+		currentWay.addPoint(co);
 	}
 
 	/**
@@ -145,9 +133,7 @@ class OSMXmlHandler extends DefaultHandler {
 				// TODO: only do this when it is likely to be required
 				converter.convertNode(currentNode);
 			}
-		} else if (mode == MODE_SEGMENT) {
-			if (qName.equals("segment"))
-				mode = 0;
+
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
@@ -156,7 +142,6 @@ class OSMXmlHandler extends DefaultHandler {
 			}
 		}
 	}
-
 
 	/**
 	 * Save node information.  Consists of a location specified by lat/long.
@@ -174,47 +159,8 @@ class OSMXmlHandler extends DefaultHandler {
 		//	log.debug("adding node" + lat + '/' + lon);
 		Coord co = new Coord(lat, lon);
 		nodeMap.put(id, co);
-		currentNode = new Node4(id, co);
+		currentNode = new Node5(id, co);
 		mapper.addToBounds(co);
-	}
-
-	/**
-	 * Save a segment.  Fetch the nodes and save the coordinates as part of
-	 * the segment definition.
-	 * All inputs are as strings.
-	 *
-	 * @param sid The id as a string.
-	 * @param sfrom The from node as a string.
-	 * @param sto the to node as a string.
-	 */
-	private void addSegment(String sid, String sfrom, String sto) {
-		long id = Long.parseLong(sid);
-		long from = Long.parseLong(sfrom);
-		long to = Long.parseLong(sto);
-
-		Coord start = nodeMap.get(from);
-		Coord end = nodeMap.get(to);
-
-		if (start == null || end == null)
-			return;
-
-		// TODO: we can do this another way now.
-		mapper.addToBounds(start);
-		mapper.addToBounds(end);
-
-		//if (log.isDebugEnabled())
-		//	log.debug("adding segment " + start + " to " + end);
-		Segment seg = new Segment(id, start, end);
-		segMap.put(id, seg);
-	}
-
-	private void addTagToWay(String key, String val) {
-		currentWay.addTag(key, val);
-	}
-
-	private void addSegmentToWay(long id) {
-		Segment seg = segMap.get(id);
-		currentWay.addSegment(seg);
 	}
 
 	public void setCallbacks(MapCollector mapCollector) {

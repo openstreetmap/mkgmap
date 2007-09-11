@@ -16,15 +16,14 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.general.MapShape;
 
 import java.util.List;
-
-import uk.me.parabola.log.Logger;
 
 /**
  * Convert from OSM ways and points to Garmin lines, polygons and points.

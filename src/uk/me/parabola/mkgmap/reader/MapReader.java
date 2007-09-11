@@ -18,8 +18,12 @@ package uk.me.parabola.mkgmap.reader;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm5.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class to find the correct map reader to use, based on the type of the file
@@ -32,6 +36,17 @@ import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
  */
 public class MapReader {
 
+	private static List<Class<? extends LoadableMapDataSource>> loaders;
+
+	static {
+		loaders = new ArrayList<Class<? extends LoadableMapDataSource>>();
+
+		loaders.add(ElementTestDataSource.class);
+		loaders.add(PolishMapDataSource.class);
+		loaders.add(Osm5MapDataSource.class);
+		loaders.add(OsmMapDataSource.class);
+	}
+
 	/**
 	 * Return a suitable map reader.  The name of the resource to be read is
 	 * passed in.  This is usually a file name, but could be something else.
@@ -40,17 +55,24 @@ public class MapReader {
 	 * @return A LoadableMapDataSource that is capable of reading the resource.
 	 */
 	public static LoadableMapDataSource createMapReader(String name) {
-		LoadableMapDataSource src;
+		LoadableMapDataSource src = null;
 
-		// Very simple initial implementation.  Everything is assumed to be
-		// OSM unless it ends with .mp
-		if (name.endsWith(".mp"))
-			src = new PolishMapDataSource();
-		else if (name.startsWith("test-map:"))
-			src = new ElementTestDataSource();
-		else
+		for (Class<? extends LoadableMapDataSource> loader : loaders) {
+			try {
+				src = loader.newInstance();
+				if (src.fileSupported(name))
+					return src;
+			} catch (InstantiationException e) {
+				// try the next one.
+			} catch (IllegalAccessException e) {
+				// try the next one.
+			}
+		}
+
+		if (src == null)
 			src = new OsmMapDataSource();
 
 		return src;
 	}
+
 }

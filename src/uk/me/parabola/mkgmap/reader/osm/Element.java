@@ -15,8 +15,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Superclass of the node, segment and way OSM elements.
