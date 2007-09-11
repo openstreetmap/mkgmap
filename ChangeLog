@@ -1,5 +1,261 @@
+2007-09-11  steve
+
+	* resources/feature_map.csv, resources/garmin_feature_list.csv,
+	  resources/osm_garmin_map.csv: A few more features added. Basic
+	  city/town support, but can be better and use the indexed point
+	  feature of the maps.
+	* resources/logging.properties,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node4.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way4.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5,
+	  src/uk/me/parabola/mkgmap/reader/osm5/Node5.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5/OSM5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5/Way5.java: Added support
+	  for api version 0.5. Usage is transparent - it works out the
+	  difference between 0.4 and 0.5 automatically and uses the right
+	  reader.
+	* src/uk/me/parabola/mkgmap/general/MapSplitter.java: Remove
+	  assertion so will compile out of svn
+
+2007-09-09  steve
+
+	* src/uk/me/parabola/log/Logger.java: Make default for static setup
+	  SEVERE
+	* src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Made a lot of
+	  changes to the way that the subdivisions are split. It should now
+	  be the case that there are no empty sections within the RGN files
+	  ie if there are no points then the flag to say there are points
+	  will not be set.
+	  
+	  Doesn't appear to fix the 'find' bug. Does seem to fix the
+	  problem shown by imgdecode, where at lower-res levels there are
+	  wierd all over the place polygons.
+	  
+	  Not really tested much at all though.
+	* src/uk/me/parabola/mkgmap/general/MapElement.java: Comments to
+	  explain min resolution better and the direction it is going in.
+	* src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Update the polish input format, so that it places elements at the
+	  levels specified in the file and not at the default levels.
+	* src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java:
+	  javadoc etc.
+	* src/uk/me/parabola/log/Logger.java: Print warning if log config
+	  file could not be opened.
+	* src/uk/me/parabola/imgfmt/app/Subdivision.java: Round the sizes
+	  before shifting them.
+	* build.xml, src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/log/UsefulFormatter.java: Convert the logging
+	  to use j.u.l underneath. You can still use varargs in the logging
+	  calls and the interface is just the same (use debug() instead of
+	  fine() etc).
+	  
+	  Was it worth it? Probably not. Should be able to selectively
+	  switch on some logging now though.
+
+2007-09-08  steve
+
+	* src/uk/me/parabola/imgfmt/app/RGNFile.java: Cosmetic changes
+	* src/uk/me/parabola/mkgmap/reader/test/ManyPoints.java: Checkin
+	  deleted file after re-naming
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java: A test map
+	  to look into the 'find' bug.
+
+2007-09-03  steve
+
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/PropertyConfiguredReader.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ManyPoints.java: The test
+	  map I am using to debug the 'find' problem and missing points
+	  problem.
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java: Make public
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java: Remove comment
+	  that I don't really believe in.
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java: Fix call to function
+	  that is not checked in.
+	* src/uk/me/parabola/mkgmap/general/MapSplitter.java: Comment
+	  changed.
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java: Remove adding the
+	  dummy overview. It doesn't get added to the end since we now sort
+	  them, and the lack of sorting is probably the reason that they
+	  were added in the first place(?)
+	* src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java:
+	  Get the right values for the max number of lines and shapes.
+
+2007-09-02  steve
+
+	* src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestElementMap.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/test,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/package.html: New test data
+	  source. It generates test maps. Try it by using TEST:ALL-ELEMENTS
+	  as the input file name.
+	* src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPointMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPolygonMap.java: Remove
+	  writeOverviews from superclass, make a call in the one place it
+	  is used and remove all other usages.
+	* src/uk/me/parabola/imgfmt/FileNotWritableException.java: Fix typo
+	  in comment
+	* src/uk/me/parabola/imgfmt/app/labelenc/Bit10Encoder.java: The
+	  so-called 10-bit encoder, spoils the package dependancies and is
+	  probably not even correct. I'd imagine that they would just use
+	  unicode for other international character sets.
+	* src/uk/me/parabola/imgfmt/FileNotWritableException.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java: Fix exception
+	  handling on unwritable files to be clearer.
+	* src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  The input format interface now has two new methods. One to
+	  determine if a given file is supported, and one to return
+	  suitable map levels for the map.
+	* resources/README: Added readme file.
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java: Separate out the
+	  code to determine what kind of input file is in use. This will
+	  allow a more plugin type approach in the future.
+	* Makefile, src/uk/me/parabola/mkgmap/main/MakeMap.java: 1. Code to
+	  simplify the lines before they are written. 2. Change needed for
+	  the moving of the reader classes.
+	* src/uk/me/parabola/imgfmt/FileExistsException.java,
+	  src/uk/me/parabola/imgfmt/app/package.html,
+	  src/uk/me/parabola/imgfmt/fs/DirectoryEntry.java,
+	  src/uk/me/parabola/imgfmt/fs/ImgChannel.java,
+	  src/uk/me/parabola/imgfmt/package.html,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/package.html,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html,
+	  src/uk/me/parabola/mkgmap/reader/polish/package.html: Many
+	  javadoc improvements.
+	* src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/osm, src/uk/me/parabola/mkgmap/polish:
+	  Move LevelInfo into the general directory.
+	* src/uk/me/parabola/mkgmap/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/osm/Segment.java,
+	  src/uk/me/parabola/mkgmap/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader,
+	  src/uk/me/parabola/mkgmap/reader/osm,
+	  src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Segment.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html,
+	  src/uk/me/parabola/mkgmap/reader/polish,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Move input formats into their own directory. Will make it clearer
+	  how to add new input formats, such as shape files.
+
+2007-09-01  steve
+
+	* src/uk/me/parabola/mkgmap/polish,
+	  src/uk/me/parabola/mkgmap/polish/PolishMapDataSource.java: Add
+	  the polish format as an input choice.
+	* src/uk/me/parabola/mkgmap/osm/FeatureListConverter.java: Re-allow
+	  5 field files again.
+
+2007-08-31  steve
+
+	* src/uk/me/parabola/imgfmt/app/Map.java: Give a message when it is
+	  not possible to create the output map file.
+
+2007-08-27  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapDetails.java: Imports
+	  re-arranged.
+	* src/uk/me/parabola/mkgmap/general/MapSplitter.java: don't repeat
+	  code in the constructors.
+
+2007-08-25  steve
+
+	* Makefile, README,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/package.html: Small tidy ups for
+	  release.
+	* src/uk/me/parabola/mkgmap/general/MapDetails.java: Check for
+	  empty areas and lines.
+	  
+	  Fixes bug rendering:
+	  http://openstreetmap.gryph.de/germany/germany-070823.osm.bz2
+	* src/uk/me/parabola/imgfmt/app/Area.java: Make sure that areas
+	  never have a zero width or height. Avoids the problem below.
+	  
+	  Bearbeite Kachelnummer: 63253506 Exception in thread "main"
+	  java.lang.ArithmeticException: / by zero at
+	  uk.me.parabola.mkgmap.general.MapArea.pickArea(MapArea.java:361)
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/osm/OSMXmlHandler.java: We need to make
+	  sure that points are included in the calculation of the size of
+	  the area. Otherwise it is posible for the point to be outside the
+	  map area altogether. If it happens to outside to the west or
+	  south then you get the error below.
+	  
+	  Bearbeite Kachelnummer: 63247525 Exception in thread "main"
+	  java.lang.ArrayIndexOutOfBoundsException: -9 at
+	  uk.me.parabola.mkgmap.general.MapArea.pickArea(MapArea.java:373)
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java: Fix
+	  ensureSize() properly so that we never run out of space.
+	  
+	  Bearbeite Kachelnummer: 63243936 Exception in thread "main"
+	  java.nio.BufferOverflowException at
+	  java.nio.HeapByteBuffer.put(HeapByteBuffer.java:165)
+
 2007-08-21  steve
 
+	* src/uk/me/parabola/mkgmap/general/MapArea.java: Re-instated part
+	  of the RGN overflow change.
+	* src/uk/me/parabola/mkgmap/general/MapArea.java: Remove println
+	  that should have been removed.
+	* ChangeLog, Makefile: Changelog and makefile changes only
 	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java:
 	  Possible fix for overflow in output buffer.
 	* src/uk/me/parabola/mkgmap/general/MapArea.java,

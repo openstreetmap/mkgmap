@@ -8,7 +8,9 @@
 
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
-OSMDATA = maps/lon.mp
+#OSMDATA = test/cricklewood-5.osm
+#OSMDATA = maps/lon.mp
+#OSMDATA = TEST:MANY-POINTS
 #OSMDATA = /opt/data/uk-070530.osm
 #OSMDATA = /opt/data/uk-070815.osm
 #OSMDATA = /tmp/63253506
@@ -24,7 +26,7 @@ makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
 	#java -Dlog.filename=mkgmap.log -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
-	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
+	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap --npoints=100 $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 
@@ -44,10 +46,12 @@ test:
 	rm -f 32860003.img
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestMap
 
-test_shape:
+# Set values of BASE_LAT and BASE_LONG in your environment to be near your
+# present location.
+test_element:
 	rm -fr gmapsupp/ 32860003
 	rm -f 32860003.img
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestPolygonMap $$BASE_LAT $$BASE_LONG
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeTestElementMap $$BASE_LAT $$BASE_LONG
 	imgdecode 32860003.img
 
 test_point:
@@ -72,6 +76,7 @@ tests:
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63243936
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63247525
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63253506
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/cricklewood-5.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/germany-070823.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/uk-070815.osm
 
