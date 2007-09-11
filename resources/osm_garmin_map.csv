@@ -1,3 +1,4 @@
+# type | osm-tag | osm-value | garmin-type | garmin-subtype
 point|aeroway|airport|auto|airport
 point|amenity|atm|auto|bank
 point|amenity|bank;atm|auto|bank
@@ -36,8 +37,14 @@ point|leisure|sports_centre|leisure|sports
 point|leisure|stadium|leisure|sports
 point|leisure|track|amenity|sportcenter-stadion-race
 point|man_made|tower|man-made|tower
+point|place|city|city|city4
+point|place|hamlet|city|city17
+point|place|suburb|city|city10
+point|place|town|city|city8
+point|place|village|city|city11
 point|railway|station|auto|bus-station
 point|shop|bakers|shopping|xxx4
+point|shop|bakery|shopping|xxx4
 point|shop|butchers|shopping|xxx4
 point|tourism|camp_site|accommodation|camping
 point|tourism|caravan_site|accommodation|camping
@@ -88,16 +95,16 @@ polyline|highway|minor|road|
 polyline|highway|motorway_link|principal-highway-thick|
 polyline|highway|motorway|principal-highway-thick|
 polyline|highway|pedestrian|road|
-polyline|highway|tertiary|road|
 polyline|highway|primary|arterial-road-medium|
 polyline|highway|primary_link|arterial-road-medium|
 polyline|highway|residential|road|
 polyline|highway|secondary|arterial-road-thin|
 polyline|highway|service|alley|
 polyline|highway|steps|trail|
+polyline|highway|tertiary|road|
 polyline|highway|track|unpaved-road|
-polyline|highway|trunk|principal-highway-medium|
 polyline|highway|trunk_link|principal-highway-medium|
+polyline|highway|trunk|principal-highway-medium|
 polyline|highway|unclassified|road|
 polyline|highway|unsurfaced|unpaved-road|
 polyline|natural|coastline|shoreline|
