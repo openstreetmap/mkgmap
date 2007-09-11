@@ -46,6 +46,7 @@ def main():
 	r = csv.reader(f, delimiter='|')
 	for line in r:
 		kind = line[0]
+		if kind[0] == '#': continue
 		key = (line[1], line[2])
 		val = (line[4], line[5])
 		try:
@@ -62,6 +63,7 @@ def main():
 
 	for line in r:
 		kind = line[0]
+		if kind[0] == '#': continue
 		key = (line[3], line[4])
 		try:
 			val = features[kind][key]
