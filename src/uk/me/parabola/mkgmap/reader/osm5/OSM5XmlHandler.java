@@ -159,7 +159,7 @@ class OSM5XmlHandler extends DefaultHandler {
 		//	log.debug("adding node" + lat + '/' + lon);
 		Coord co = new Coord(lat, lon);
 		nodeMap.put(id, co);
-		currentNode = new Node5(id, co);
+		currentNode = new Node(id, co);
 		mapper.addToBounds(co);
 	}
 
