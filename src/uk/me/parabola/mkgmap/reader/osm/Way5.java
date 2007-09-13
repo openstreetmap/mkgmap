@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 17-Dec-2006
  */
-package uk.me.parabola.mkgmap.reader.osm5;
+package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -32,7 +32,7 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 class Way5 extends Element implements Way {
-	private static final Logger log = Logger.getLogger(uk.me.parabola.mkgmap.reader.osm5.Way5.class);
+	private static final Logger log = Logger.getLogger(Way5.class);
 
 	private final List<Coord> points = new ArrayList<Coord>();
 

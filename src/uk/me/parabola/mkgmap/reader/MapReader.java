@@ -18,7 +18,7 @@ package uk.me.parabola.mkgmap.reader;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm5.Osm5MapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
 

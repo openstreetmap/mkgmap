@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap.reader.osm5;
+package uk.me.parabola.mkgmap.reader.osm;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;

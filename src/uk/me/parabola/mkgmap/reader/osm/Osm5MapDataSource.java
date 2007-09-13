@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap.reader.osm5;
+package uk.me.parabola.mkgmap.reader.osm;
 
 import org.xml.sax.SAXException;
 import uk.me.parabola.imgfmt.FormatException;
@@ -35,7 +35,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.nio.CharBuffer;
 
 
 /**

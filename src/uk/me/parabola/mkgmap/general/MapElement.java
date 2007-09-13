@@ -81,7 +81,8 @@ public abstract class MapElement {
 			return minResolution;
 
 		// The old way - there is a built in list of min resolutions based on
-		// the element type, this will eventually go.
+		// the element type, this will eventually go.  You can't distinguish
+		// between points and lines here either.
 		switch (getType()) {
 		case 1:
 		case 2:
