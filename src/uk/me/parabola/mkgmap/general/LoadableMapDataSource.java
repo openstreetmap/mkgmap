@@ -44,7 +44,7 @@ public interface LoadableMapDataSource extends MapDataSource {
 	 * @param name The file (or other resource) to check.
 	 * @return True if the loadable map data source supports that file.
 	 */
-	public boolean fileSupported(String name);
+	public boolean isFileSupported(String name);
 
 	/**
 	 * Load map by name.  The name is in a suitable form to be recognised

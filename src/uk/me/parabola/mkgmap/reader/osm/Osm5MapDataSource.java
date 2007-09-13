@@ -50,7 +50,7 @@ public class Osm5MapDataSource implements LoadableMapDataSource {
 
 	private final MapDetails mapper = new MapDetails();
 
-	public boolean fileSupported(String name) {
+	public boolean isFileSupported(String name) {
 		try {
 			FileReader r = new FileReader(name);
 			char[] buf = new char[1025];

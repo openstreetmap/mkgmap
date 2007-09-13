@@ -45,7 +45,7 @@ public class MakeTestElementMap extends AbstractTestMap {
 	// These values are perhaps bias a bit towards places at mid latitues,
 	// adjust as required.
 	private static final double ELEMENT_SPACING = 0.002;
-	private double ELEMENT_SIZE = 0.001;
+	private static final double ELEMENT_SIZE = 0.001;
 
 	public static void main(String[] args)  {
 		MakeTestPointMap tm = new MakeTestPointMap();

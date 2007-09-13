@@ -31,7 +31,7 @@ import java.util.ArrayList;
  *
  * @author Steve Ratcliffe
  */
-public class TestPoints {
+class TestPoints {
 	private static final double ELEMENT_SPACING = 0.02;
 
 	private Properties props;

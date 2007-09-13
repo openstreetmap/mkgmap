@@ -51,7 +51,7 @@ public class OsmMapDataSource implements LoadableMapDataSource {
 
 	private final MapDetails mapper = new MapDetails();
 
-	public boolean fileSupported(String name) {
+	public boolean isFileSupported(String name) {
 		// This is the default format so we claim to support all files.
 		return true;
 	}

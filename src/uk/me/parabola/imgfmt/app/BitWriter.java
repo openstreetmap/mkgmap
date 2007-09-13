@@ -160,13 +160,5 @@ public class BitWriter {
 				+ buflen + ", pos="+bitoff);
 	}
 
-	private boolean isBitSet(int i) {
-		int ind = getByteOffset(i);
-		int rem = i - ind*8;
-		byte b = buf[ind];
-
-		return (b & (1 << rem)) !=0;
-	}
-
 
 }

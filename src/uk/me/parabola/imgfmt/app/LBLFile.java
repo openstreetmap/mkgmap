@@ -70,7 +70,7 @@ public class LBLFile extends ImgFile {
 	// Code page? may not do anything.
 	private int codePage = 850;
 
-	private java.util.Map<String, Label> labelCache = new HashMap<String, Label>();
+	private final java.util.Map<String, Label> labelCache = new HashMap<String, Label>();
 
 	public LBLFile(ImgChannel chan) {
 		setHeaderLength(HEADER_LEN);

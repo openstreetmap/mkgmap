@@ -49,22 +49,22 @@ public class MapArea implements MapDataSource {
 	private int maxLon = Integer.MIN_VALUE;
 
 	// The contents of the area.
-	private List<MapPoint> points = new ArrayList<MapPoint>(INITIAL_CAPACITY);
-	private List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
-	private List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
+	private final List<MapPoint> points = new ArrayList<MapPoint>(INITIAL_CAPACITY);
+	private final List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
+	private final List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
 
 	// Counts of features available at different resolutions.
-	private int[] pointSize = new int[MAX_RESOLUTION+1];
-	private int[] lineSize = new int[MAX_RESOLUTION+1];
-	private int[] shapeSize = new int[MAX_RESOLUTION+1];
-	private int[] elemCounts = new int[MAX_RESOLUTION+1];
+	private final int[] pointSize = new int[MAX_RESOLUTION+1];
+	private final int[] lineSize = new int[MAX_RESOLUTION+1];
+	private final int[] shapeSize = new int[MAX_RESOLUTION+1];
+	private final int[] elemCounts = new int[MAX_RESOLUTION+1];
 
 	private int nActivePoints;
 	private int nActiveLines;
 	private int nActiveShapes;
 
 	/** The resolution that this area is at */
-	private int areaResolution;
+	private final int areaResolution;
 
 	private static final int POINT_KIND = 0;
 	private static final int LINE_KIND = 1;
@@ -117,7 +117,7 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
-	 * @param resolution
+	 * @param resolution The resolution of the level.
 	 * @return An array of the new MapArea's.
 	 */
 	public MapArea[] split(int nx, int ny, int resolution) {
@@ -297,6 +297,8 @@ public class MapArea implements MapDataSource {
 			return;
 
 		int s;
+		int n;
+
 		switch (kind) {
 		case POINT_KIND:
 			if (res <= areaResolution)
@@ -312,7 +314,7 @@ public class MapArea implements MapDataSource {
 
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			int n = ((MapLine) p).getPoints().size();
+			n = ((MapLine) p).getPoints().size();
 			s = 11 + n * 2;
 			break;
 		case SHAPE_KIND:

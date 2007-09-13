@@ -50,7 +50,7 @@ public abstract class MapObject {
 	 */
 	public abstract void write(ImgFile file);
 
-	protected int getDeltaLat() {
+	int getDeltaLat() {
 		return deltaLat;
 	}
 

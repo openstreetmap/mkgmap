@@ -38,7 +38,7 @@ public abstract class Overview implements Comparable<Overview> {
 
 	private final int size;
 
-	protected Overview(int kind, int type, int subType) {
+	Overview(int kind, int type, int subType) {
 		this.kind = kind;
 		this.type = (char) (type & 0xff);
 		this.subType = (char) (subType & 0xff);

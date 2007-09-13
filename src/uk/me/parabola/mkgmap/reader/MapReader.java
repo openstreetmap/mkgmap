@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class MapReader {
 
-	private static List<Class<? extends LoadableMapDataSource>> loaders;
+	private static final List<Class<? extends LoadableMapDataSource>> loaders;
 
 	static {
 		loaders = new ArrayList<Class<? extends LoadableMapDataSource>>();
@@ -60,7 +60,7 @@ public class MapReader {
 		for (Class<? extends LoadableMapDataSource> loader : loaders) {
 			try {
 				src = loader.newInstance();
-				if (src.fileSupported(name))
+				if (src.isFileSupported(name))
 					return src;
 			} catch (InstantiationException e) {
 				// try the next one.

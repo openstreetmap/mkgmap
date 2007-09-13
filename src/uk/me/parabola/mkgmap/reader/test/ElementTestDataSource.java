@@ -45,7 +45,7 @@ public class ElementTestDataSource implements LoadableMapDataSource, PropertyCon
 	 * @param name The name to check.
 	 * @return True If a recognised test name beginning with test-map:
 	 */
-	public boolean fileSupported(String name) {
+	public boolean isFileSupported(String name) {
 		if (name.startsWith("test-map:"))
 			return true;
 		return false;

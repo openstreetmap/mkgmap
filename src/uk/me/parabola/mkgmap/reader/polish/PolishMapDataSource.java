@@ -67,7 +67,7 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 	private int section;
 	private LevelInfo[] levels;
 
-	public boolean fileSupported(String name) {
+	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		if (name.endsWith(".mp"))
 			return true;
@@ -210,6 +210,9 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 		case S_POLYGON:
 			if (shape.getPoints() != null)
 				mapper.addShape(shape);
+			break;
+		default:
+			log.warn("unexpected default in switch");
 			break;
 		}
 

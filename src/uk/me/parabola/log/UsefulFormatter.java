@@ -26,7 +26,7 @@ import java.util.logging.LogRecord;
  * 
  * @author Steve Ratcliffe
  */
-public class UsefulFormatter extends Formatter {
+class UsefulFormatter extends Formatter {
 	private boolean showTime = true;
 
 	public String format(LogRecord record) {

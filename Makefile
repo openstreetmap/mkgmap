@@ -10,7 +10,7 @@
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = test/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
-#OSMDATA = TEST:MANY-POINTS
+#OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
 #OSMDATA = /opt/data/uk-070815.osm
 #OSMDATA = /tmp/63253506

@@ -33,7 +33,7 @@ package uk.me.parabola.mkgmap.general;
  * @author Steve Ratcliffe
 */
 public class LevelInfo {
-	private int level;
+	private final int level;
 	private int bits;
 	//private LevelFilter filter;
 

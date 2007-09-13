@@ -62,7 +62,8 @@ public class ImgFS implements FileSystem {
 	 *
 	 * @param filename The filename eg 'gmapsupp.img'
 	 * @param params File system parameters.  Can be null.
-	 * @throws FileNotFoundException If the file cannot be created.
+	 * @throws FileNotWritableException If the file can not
+	 * be written to.
 	 */
 	public ImgFS(String filename, FileSystemParam params)
 			throws FileNotWritableException

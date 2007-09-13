@@ -27,6 +27,7 @@ interface Way {
 	/**
 	 * Override to allow ref to be returned if no name is set.
 	 * If both then the ref is in brackets after the name.
+	 * @return The name that has been set for the way.
 	 */
 	public String getName();
 

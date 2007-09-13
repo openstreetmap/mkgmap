@@ -40,7 +40,7 @@ public class Logger {
 		initLogging();
 	}
 
-	public Logger(String name) {
+	private Logger(String name) {
 		this.log = java.util.logging.Logger.getLogger(name);
 	}
 

@@ -44,7 +44,7 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-public class AllElements {
+class AllElements {
 
 	// These values are perhaps bias a bit towards places at mid latitues,
 	// adjust as required.
@@ -53,14 +53,14 @@ public class AllElements {
 
 	// I don't know what the max types and subtypes actually are, adjust if
 	// there seems to be more beyond.
-	private static int MAX_POINT_TYPE = 0x7f;
-	private static int MAX_POINT_SUB_TYPE = 0x30;
+	private static final int MAX_POINT_TYPE = 0x7f;
+	private static final int MAX_POINT_SUB_TYPE = 0x30;
 
 	// we draw lines and polygons in a 16x16 square (or whatever is here).
-	private static int MAX_LINE_TYPE_X = 8;
-	private static int MAX_LINE_TYPE_Y = 8;
-	private static int MAX_SHAPE_TYPE_X = 12;
-	private static int MAX_SHAPE_TYPE_Y = 12;
+	private static final int MAX_LINE_TYPE_X = 8;
+	private static final int MAX_LINE_TYPE_Y = 8;
+	private static final int MAX_SHAPE_TYPE_X = 12;
+	private static final int MAX_SHAPE_TYPE_Y = 12;
 
 	/**
 	 * Loading the map in this case means generating it.

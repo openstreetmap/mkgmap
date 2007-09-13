@@ -68,7 +68,7 @@ class FeatureListConverter implements OsmConverter {
 
 	private final MapCollector mapper;
 
-	public FeatureListConverter(MapCollector collector) {
+	FeatureListConverter(MapCollector collector) {
 		this.mapper = collector;
 
 		InputStream is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);

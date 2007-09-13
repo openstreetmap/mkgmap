@@ -47,7 +47,7 @@ public class MapSplitter {
 	// devices.
 	private static final int MAX_RGN_SIZE = 30 * 1024;
 
-	private Zoom zoom;
+	private final Zoom zoom;
 
 	/**
 	 * Creates a list of map areas and keeps splitting them down until they

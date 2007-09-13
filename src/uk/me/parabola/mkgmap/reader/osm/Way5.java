@@ -19,8 +19,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import java.util.ArrayList;
 import java.util.List;

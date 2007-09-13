@@ -22,8 +22,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.reader.osm.FeatureListConverter;
-import uk.me.parabola.mkgmap.reader.osm.Node;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +34,7 @@ import java.util.Map;
 class OSM5XmlHandler extends DefaultHandler {
 	private int mode;
 
-	private Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
+	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -104,11 +102,6 @@ class OSM5XmlHandler extends DefaultHandler {
 		}
 	}
 
-	private void addNodeToWay(long id) {
-		Coord co = nodeMap.get(id);
-		currentWay.addPoint(co);
-	}
-
 	/**
 	 * Receive notification of the end of an element.
 	 *
@@ -130,7 +123,9 @@ class OSM5XmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
-				// TODO: only do this when it is likely to be required
+				// TODO: only do this when it is likely to be required. ie when
+				// it has a name or a tag that makes it something more than just
+				// a point in a line.
 				converter.convertNode(currentNode);
 			}
 
@@ -141,6 +136,11 @@ class OSM5XmlHandler extends DefaultHandler {
 				converter.convertWay(currentWay);
 			}
 		}
+	}
+
+	public void setCallbacks(MapCollector mapCollector) {
+		mapper = mapCollector;
+		converter = new FeatureListConverter(mapCollector);
 	}
 
 	/**
@@ -163,8 +163,8 @@ class OSM5XmlHandler extends DefaultHandler {
 		mapper.addToBounds(co);
 	}
 
-	public void setCallbacks(MapCollector mapCollector) {
-		mapper = mapCollector;
-		converter = new FeatureListConverter(mapCollector);
+	private void addNodeToWay(long id) {
+		Coord co = nodeMap.get(id);
+		currentWay.addPoint(co);
 	}
 }
