@@ -107,7 +107,7 @@ public class Osm5MapDataSource implements LoadableMapDataSource {
 	}
 
 	public String copyrightMessage() {
-		return "OpenStreetMap.org contributers.";
+		return "OpenStreetMap.org contributors.";
 	}
 
 
