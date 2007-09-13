@@ -42,7 +42,7 @@ import java.util.Set;
  *
  * @author Steve Ratcliffe
  */
-public class FeatureListConverter implements OsmConverter {
+class FeatureListConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(FeatureListConverter.class);
 
 	private static final String FEATURE_LIST_NAME = "feature_map.csv";

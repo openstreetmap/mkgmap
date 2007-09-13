@@ -272,7 +272,6 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 			point.setName(value);
 		} else if (name.startsWith("Data")) {
 			Coord co = makeCoord(value);
-			int res = extractResolution(name);
 			point.setMinResolution(extractResolution(name));
 			point.setLocation(co);
 		}

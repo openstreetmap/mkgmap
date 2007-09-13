@@ -68,7 +68,7 @@ public class ImgFS implements FileSystem {
 			throws FileNotWritableException
 	{
 		log.info("Creating file system");
-		RandomAccessFile rafile = null;
+		RandomAccessFile rafile  ;
 		try {
 			rafile = new RandomAccessFile(filename, "rw");
 		} catch (FileNotFoundException e) {

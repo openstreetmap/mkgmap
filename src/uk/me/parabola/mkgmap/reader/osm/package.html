@@ -5,6 +5,13 @@
     This package has the code to read in a file that is in the Open Stree Map
     format (.osm files). OSM uses an XML format.
 
+<p>
+		There are two versions of the api that have readers implemented here, they
+		work out which one to use automatically.
+</p>
+
+<h4>OSM api version 0.4</h4>
+
 <p>There are three XML elements of interest: <b>node</b>,
     <b>segment</b> and <b>way</b> as well as a <b>tag</b> element that is used
     to set arbitary properties on each of the main tags.
@@ -33,23 +40,32 @@
 		that is much simpler to understand as it is designed for creating Garmin
 		maps and so has no complicating requirements.
 
+<h4>OSM api version 0.5</h4>
+
+<p>This version of the format does away with segments.  Ways are sequences of
+nodes.  As such it matches the format that we require for the Garmin maps
+much closer.  Ways cannot branch or have out of order segments, so all the code
+that deals with that is not required.</p>
+
+<h3>About the conversion</h3>
 <p>The following features of the OSM format need to be addressed to create
-the map.
+the map.  Note that some of these are not relavent to version 0.5 of the
+OSM file format.
 
 <ul>
 		<li>Lines and polygons are not sequences of points, but sequences of
 		segments - a segment is an ordered pair of two points.  We have to
 		create a list of points out of them.  This would be easy if it were not
-		for the next point.
+		for the next point. (Not 0.5)
 		</li>
 
 		<li>The segments that form a line or polygon are not necessarily in a
 		sane order. Therefore we have to reorder them so that we end up with
-		continguous points to form a line. 
+		continguous points to form a line. (Not 0.5)
 		</li>
 
 		<li>Ways can branch and can be dis-contiguous. So after being reordered
-		they need to be split up into separate lines.  </li>
+		they need to be split up into separate lines.  (Not 0.5)</li>
 
 		<li>There is no way to tell a polygon from a line feature apart from
 		looking at the type of feature it is and going from there. Note that a

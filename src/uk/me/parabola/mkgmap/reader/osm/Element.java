@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-public abstract class Element {
+abstract class Element {
 	private Map<String, String> tags;
 	private String name;
 	private long id;

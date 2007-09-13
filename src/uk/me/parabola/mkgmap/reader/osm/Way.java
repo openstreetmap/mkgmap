@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Steve Ratcliffe
  */
-public interface Way {
+interface Way {
 	/**
 	 * Override to allow ref to be returned if no name is set.
 	 * If both then the ref is in brackets after the name.
@@ -31,8 +31,6 @@ public interface Way {
 	public String getName();
 
 	public String getTag(String key);
-
-	public void addTag(String key, String val);
 
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments

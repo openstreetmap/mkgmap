@@ -57,15 +57,8 @@ public class LevelInfo {
 		return level;
 	}
 
-	public void setLevel(int level) {
-		this.level = level;
-	}
-
 	public int getBits() {
 		return bits;
 	}
 
-	public void setBits(int bits) {
-		this.bits = bits;
-	}
 }

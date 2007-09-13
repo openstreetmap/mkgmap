@@ -61,13 +61,6 @@ public abstract class MapElement {
 	protected abstract Coord getLocation();
 
 	/**
-	 * Get the region that this element covers.
-	 *
-	 * @return The area that bounds this element.
-	 */
-	public abstract Area getBounds();
-
-	/**
 	 * Get the resolutions that an element should be displayed at.
 	 * It will return the minimum resolution at which this element should be
 	 * displayed at.
