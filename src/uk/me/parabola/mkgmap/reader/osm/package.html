@@ -2,12 +2,12 @@
 <h3>OpenStreetMap converter</h3>
 
 <p>
-    This package has the code to read in a file that is in the Open Stree Map
+    This package has the code to read in a file that is in the Open Street Map
     format (.osm files). OSM uses an XML format.
 
 <p>
-		There are two versions of the api that have readers implemented here, they
-		work out which one to use automatically.
+		There are two versions of the api that have readers implemented here, the
+	version that applies is deduced automatically.
 </p>
 
 <h4>OSM api version 0.4</h4>
@@ -40,6 +40,24 @@
 		that is much simpler to understand as it is designed for creating Garmin
 		maps and so has no complicating requirements.
 
+<p>The 0.4 api format has many unusual points that require a lot of code to
+deal with.  The 0.5 format is much better in this regard.</p>
+<ul>
+		<li>Lines and polygons are not sequences of points, but sequences of
+		segments - a segment is an ordered pair of two points.  We have to
+		create a list of points out of them.  This would be easy if it were not
+		for the next point.
+		</li>
+
+		<li>The segments that form a line or polygon are not necessarily in a
+		sane order. Therefore we have to reorder them so that we end up with
+		continguous points to form a line.
+		</li>
+
+		<li>Ways can branch and can be dis-contiguous. So after being reordered
+		they need to be split up into separate lines.</li>
+</ul>
+
 <h4>OSM api version 0.5</h4>
 
 <p>This version of the format does away with segments.  Ways are sequences of
@@ -49,24 +67,9 @@ that deals with that is not required.</p>
 
 <h3>About the conversion</h3>
 <p>The following features of the OSM format need to be addressed to create
-the map.  Note that some of these are not relavent to version 0.5 of the
-OSM file format.
+the map.
 
 <ul>
-		<li>Lines and polygons are not sequences of points, but sequences of
-		segments - a segment is an ordered pair of two points.  We have to
-		create a list of points out of them.  This would be easy if it were not
-		for the next point. (Not 0.5)
-		</li>
-
-		<li>The segments that form a line or polygon are not necessarily in a
-		sane order. Therefore we have to reorder them so that we end up with
-		continguous points to form a line. (Not 0.5)
-		</li>
-
-		<li>Ways can branch and can be dis-contiguous. So after being reordered
-		they need to be split up into separate lines.  (Not 0.5)</li>
-
 		<li>There is no way to tell a polygon from a line feature apart from
 		looking at the type of feature it is and going from there. Note that a
 		line feature may form a loop (eg a roundabout, circular path in a park
@@ -81,4 +84,13 @@ OSM file format.
 		represented in Garmin features.  We have to have a look up table that
 		maps OSM tags to garmin types and subtypes.</li>
 </ul>
+
+<h3>Feature list conversion</h3>
+<p>The main way of getting a garmin feature code from the OSM tags on a point
+is to have a table that maps OSM key/value pairs to the Garmin type/sub-type
+codes.  This is fine in many cases, but we will eventually need something more.
+
+<p>A file called <tt>feature_map.csv</tt> holds the table.  In addition it also
+holds the minimum resolution that the feature will appear at.  This determines
+at which zoom levels a feature appears.</p>
 </body>

@@ -12,7 +12,7 @@ OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
-#OSMDATA = /opt/data/uk-070815.osm
+OSMDATA = /opt/data/uk-070815.osm
 #OSMDATA = /tmp/63253506
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
@@ -25,8 +25,8 @@ OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
-	#java -Dlog.filename=mkgmap.log -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
 	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap --npoints=100 $(OSMDATA)
+	: #java -Dlog.filename=mkgmap.log -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

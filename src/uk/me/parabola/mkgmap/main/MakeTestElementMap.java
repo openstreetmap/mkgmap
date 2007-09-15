@@ -77,10 +77,8 @@ public class MakeTestElementMap extends AbstractTestMap {
 		for (int type = 0; type < 0xff; type++) {
 			for (int subtype = 0; subtype < 0xff; subtype++) {
 
-				Point point = div.createPoint(
-						"0x" + Integer.toHexString(type)
-								+ ','
-								+ "0x" + Integer.toHexString(subtype));
+				Point point = div.createPoint("0x" + Integer.toHexString(type)
+						+ ",0x" + Integer.toHexString(subtype));
 
 				double baseLat = lat + subtype * ELEMENT_SPACING;
 				double baseLong = lon + type * ELEMENT_SPACING;
