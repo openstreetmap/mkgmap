@@ -16,12 +16,13 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-abstract class Element {
+abstract class Element implements Iterable<String> {
 	private Map<String, String> tags;
 	private String name;
 	private long id;
@@ -55,6 +56,30 @@ abstract class Element {
 		return name;
 	}
 
+	public Iterator<String> iterator() {
+		Iterator<String> it = new Iterator<String>() {
+			private Iterator<Map.Entry<String, String>> tagit;
+
+			{
+				if (tags != null)
+					tagit = tags.entrySet().iterator();
+			}
+
+			public boolean hasNext() {
+				return (tagit != null) && tagit.hasNext();
+			}
+
+			public String next() {
+				Map.Entry<String, String> ent = tagit.next();
+				return ent.getKey() + '|' + ent.getValue();
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+		return it;
+	}
 
 	protected long getId() {
 		return id;

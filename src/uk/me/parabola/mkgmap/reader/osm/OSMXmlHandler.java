@@ -44,6 +44,7 @@ class OSMXmlHandler extends DefaultHandler {
 	private Map<Long, Segment> segMap = new HashMap<Long, Segment>();
 
 	private Node currentNode;
+	private long currentNodeId;
 	private Way4 currentWay;
 
 	private static final int MODE_NODE = 1;
@@ -72,7 +73,6 @@ class OSMXmlHandler extends DefaultHandler {
 	                         String qName, Attributes attributes)
 			throws SAXException
 	{
-
 		if (mode == 0) {
 			if (qName.equals("node")) {
 				mode = MODE_NODE;
@@ -98,6 +98,10 @@ class OSMXmlHandler extends DefaultHandler {
 			if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
 				String val = attributes.getValue("v");
+				if (currentNode == null) {
+					Coord co = nodeMap.get(currentNodeId);
+					currentNode = new Node(currentNodeId, co);
+				}
 				currentNode.addTag(key, val);
 			}
 		} else if (mode == MODE_SEGMENT) {
@@ -142,9 +146,11 @@ class OSMXmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
-				// TODO: only do this when it is likely to be required
-				converter.convertNode(currentNode);
-			}
+				if (currentNode != null)
+					converter.convertNode(currentNode);
+                currentNodeId = 0;
+                currentNode = null;
+            }
 		} else if (mode == MODE_SEGMENT) {
 			if (qName.equals("segment"))
 				mode = 0;
@@ -170,11 +176,9 @@ class OSMXmlHandler extends DefaultHandler {
 		double lat = Double.parseDouble(slat);
 		double lon = Double.parseDouble(slon);
 
-		//if (log.isDebugEnabled())
-		//	log.debug("adding node" + lat + '/' + lon);
 		Coord co = new Coord(lat, lon);
 		nodeMap.put(id, co);
-		currentNode = new Node(id, co);
+		currentNodeId = id;
 		mapper.addToBounds(co);
 	}
 
@@ -198,12 +202,6 @@ class OSMXmlHandler extends DefaultHandler {
 		if (start == null || end == null)
 			return;
 
-		// TODO: we can do this another way now.
-		mapper.addToBounds(start);
-		mapper.addToBounds(end);
-
-		//if (log.isDebugEnabled())
-		//	log.debug("adding segment " + start + " to " + end);
 		Segment seg = new Segment(id, start, end);
 		segMap.put(id, seg);
 	}

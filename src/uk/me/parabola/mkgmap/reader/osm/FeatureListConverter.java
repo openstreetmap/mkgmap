@@ -55,8 +55,6 @@ class FeatureListConverter implements OsmConverter {
 
 	private static final int N_MIN_FIELDS = 5;
 
-//	private Map pointFeatures = new HashMap();
-
 	private final Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
 	private final Set<String> pointTypes = new HashSet<String>();
 
@@ -98,19 +96,17 @@ class FeatureListConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
-		// Try all the types we know about
-		for (String t : lineTypes) {
-			String val = way.getTag(t);
-			if (val != null) {
+
+		for (String tagKey : way) {
+			// See if this is a line feature
+			GarminType gt = lineFeatures.get(tagKey);
+			if (gt != null) {
 				// Found it! Now add to the map.
-				GarminType gt = lineFeatures.get(makeKey(t, val));
-				if (gt == null)
-					continue;
-				List<List<Coord>> pointLists =  way.getPoints();
+				List<List<Coord>> pointLists = way.getPoints();
 				for (List<Coord> points : pointLists) {
 					if (points.isEmpty())
 						continue;
-					
+
 					MapLine line = new MapLine();
 					line.setName(way.getName());
 					line.setPoints(points);
@@ -123,17 +119,12 @@ class FeatureListConverter implements OsmConverter {
 				}
 				return;
 			}
-		}
 
-		// OK if we get here, it might be a polygon instead. Its not really
-		// possible to say without checking.
-		for (String t : shapeTypes) {
-			String val = way.getTag(t);
-			if (val != null) {
+			// OK if we get here, it might be a polygon instead. Its not really
+			// possible to say without checking.
+			gt = shapeFeatures.get(tagKey);
+			if (gt != null) {
 				// Add to the map
-				GarminType gt = shapeFeatures.get(makeKey(t, val));
-				if (gt == null)
-					continue;
 				List<List<Coord>> pointLists =  way.getPoints();
 				for (List<Coord> points : pointLists) {
 					MapShape shape = new MapShape();
@@ -146,7 +137,8 @@ class FeatureListConverter implements OsmConverter {
 				return;
 			}
 		}
-		log.warn("no feature mapping for " + way);
+		if (log.isDebugEnabled())
+		log.warn("no feature mapping for ", way);
 	}
 
 	/**
@@ -156,13 +148,11 @@ class FeatureListConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
-		for (String t : pointTypes) {
-			String val = node.getTag(t);
-			if (val != null) {
+		for (String tagKey : node) {
+			GarminType gt = pointFeatures.get(tagKey);
+
+			if (gt != null) {
 				// Add to the map
-				GarminType gt = pointFeatures.get(makeKey(t, val));
-				if (gt == null)
-					continue;
 				MapPoint point = new MapPoint();
 				point.setName(node.getName());
 				point.setLocation(node.getLocation());
