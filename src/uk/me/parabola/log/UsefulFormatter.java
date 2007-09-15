@@ -23,10 +23,12 @@ import java.util.logging.LogRecord;
 /**
  * Prints the message all on one line, which amazingly is not the default
  * behaviour in j.u.l, no wonder no one uses it.
- * 
+ *
+ * MUST be public whatever crazy static analyzers might say.
+ *
  * @author Steve Ratcliffe
  */
-class UsefulFormatter extends Formatter {
+public class UsefulFormatter extends Formatter {
 	private boolean showTime = true;
 
 	public String format(LogRecord record) {
