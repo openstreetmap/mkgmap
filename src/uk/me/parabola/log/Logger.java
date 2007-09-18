@@ -122,65 +122,77 @@ public class Logger {
 		return log.isLoggable(Level.WARNING);
 	}
 
-	private boolean isErrorEnabled() {
+	public boolean isErrorEnabled() {
 		return log.isLoggable(Level.SEVERE);
 	}
 
+	/**
+	 * Debug message.  We are using the j.u.l FINE level for this.  As it is
+	 * possible that the toString method on the logged object is expensive
+	 * we check that the message should be logged first.  Though this is
+	 * perhaps overkill.
+	 *
+	 * This comment applies to all the corresponding methods below.
+	 *
+	 * @param o The object to be logged.
+	 */
 	public void debug(Object o) {
-		if (!log.isLoggable(Level.FINE))
-			return;
-
-		log.fine(o.toString());
+		if (log.isLoggable(Level.FINE))
+			log.fine(o.toString());
 	}
 
+	/**
+	 * Log a message that consists of a variable number of arguments.  The
+	 * arguments are simply concatenated with a space between them.
+	 *
+	 * The arrayFormat call is very expensive and checking the log level first
+	 * is important.  The same applies to all similar routines below.
+	 *
+	 * @param olist The list of objects to log as one message.
+	 */
 	public void debug(Object ... olist) {
-		if (!isDebugEnabled())
-			return;
-
-		arrayFormat(Level.FINE, olist);
+		if (log.isLoggable(Level.FINE))
+			arrayFormat(Level.FINE, olist);
 	}
 
 	public void info(Object o) {
-		if (!isInfoEnabled())
-			return;
-
-		log.info(o.toString());
+		if (log.isLoggable(Level.INFO))
+			log.info(o.toString());
 	}
 
 	public void info(Object ... olist) {
-		if (!isInfoEnabled())
-			return;
-
-		arrayFormat(Level.INFO, olist);
+		if (log.isLoggable(Level.INFO))
+			arrayFormat(Level.INFO, olist);
 	}
 
 	public void warn(Object o) {
-		if (!isWarnEnabled())
-			return;
-
-		log.warning(o.toString());
+		if (log.isLoggable(Level.WARNING))
+			log.warning(o.toString());
 	}
 
 	public void warn(Object ... olist) {
-		if (!isWarnEnabled())
-			return;
-
-		arrayFormat(Level.WARNING, olist);
+		if (log.isLoggable(Level.WARNING))
+			arrayFormat(Level.WARNING, olist);
 	}
 
 	public void error(Object o) {
-		if (!isErrorEnabled())
-			return;
 		log.severe(o.toString());
 	}
 
 	public void error(Object o, Throwable e) {
-		if (!isErrorEnabled())
-			return;
-
 		log.log(Level.SEVERE, o.toString(), e);
 	}
 
+	/**
+	 * Format the list of arguments by appending them to one string, keeping a
+	 * space between them.
+	 *
+	 * Only call this if you've checked that the message needs to be printed,
+	 * otherwise it will all go to waste.
+	 *
+	 * @param type The Level type FINE, INFO etc.
+	 * @param olist The argument list as objects.
+	 */
 	private void arrayFormat(Level type, Object... olist) {
 		StringBuffer sb = new StringBuffer();
 
