@@ -32,8 +32,8 @@ import java.util.Map;
  *
  * @author Steve Ratcliffe
  */
-class OSMXmlHandler extends DefaultHandler {
-	private static final Logger log = Logger.getLogger(OSMXmlHandler.class);
+class OsmXmlHandler extends DefaultHandler {
+	private static final Logger log = Logger.getLogger(OsmXmlHandler.class);
 
 	private MapCollector mapper;
 	private OsmConverter converter;
@@ -96,14 +96,18 @@ class OSMXmlHandler extends DefaultHandler {
 			}
 		} else if (mode == MODE_NODE) {
 			if (qName.equals("tag")) {
-				String key = attributes.getValue("k");
-				String val = attributes.getValue("v");
-				if (currentNode == null) {
-					Coord co = nodeMap.get(currentNodeId);
-					currentNode = new Node(currentNodeId, co);
-				}
-				currentNode.addTag(key, val);
-			}
+
+                String key = attributes.getValue("k");
+                String val = attributes.getValue("v");
+
+                if (!key.equals("created_by")) {
+                    if (currentNode == null) {
+                        Coord co = nodeMap.get(currentNodeId);
+                        currentNode = new Node(currentNodeId, co);
+                    }
+                    currentNode.addTag(key, val);
+                }
+            }
 		} else if (mode == MODE_SEGMENT) {
 			// not yet interested in anything here.
 		} else if (mode == MODE_WAY) {
@@ -116,7 +120,6 @@ class OSMXmlHandler extends DefaultHandler {
 				String key = attributes.getValue("k");
 				String val = attributes.getValue("v");
 				addTagToWay(key, val);
-
 			}
 		}
 	}

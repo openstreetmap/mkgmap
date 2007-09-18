@@ -69,7 +69,7 @@ public class OsmMapDataSource implements LoadableMapDataSource {
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				OSMXmlHandler handler = new OSMXmlHandler();
+				OsmXmlHandler handler = new OsmXmlHandler();
 				handler.setCallbacks(mapper);
 				parser.parse(is, handler);
 			} catch (IOException e) {

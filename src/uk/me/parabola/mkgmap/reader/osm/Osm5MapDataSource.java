@@ -51,11 +51,16 @@ public class Osm5MapDataSource implements LoadableMapDataSource {
 	private final MapDetails mapper = new MapDetails();
 
 	public boolean isFileSupported(String name) {
+		FileReader r = null;
 		try {
-			FileReader r = new FileReader(name);
+			r = new FileReader(name);
 			char[] buf = new char[1025];
 			r.read(buf);
 			String s = new String(buf);
+            if (!s.startsWith("<?xml"))
+                return false;
+            if (!s.contains("<osm"))
+                return false;
 			if (s.contains("version='0.5'") || s.contains("version=\"0.5\""))
 				return true;
 			return false;
@@ -63,6 +68,13 @@ public class Osm5MapDataSource implements LoadableMapDataSource {
 			return false;
 		} catch (IOException e) {
 			return false;
+		} finally {
+            try {
+                if (r != null)
+                    r.close();
+            } catch (IOException e) {
+                // go away.
+			}
 		}
 	}
 
@@ -79,7 +91,7 @@ public class Osm5MapDataSource implements LoadableMapDataSource {
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				OSM5XmlHandler handler = new OSM5XmlHandler();
+				Osm5XmlHandler handler = new Osm5XmlHandler();
 				handler.setCallbacks(mapper);
 				parser.parse(is, handler);
 			} catch (IOException e) {

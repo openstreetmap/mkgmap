@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author Steve Ratcliffe
  */
-class OSM5XmlHandler extends DefaultHandler {
+class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();

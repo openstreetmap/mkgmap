@@ -7,7 +7,7 @@
 #
 
 #OSMDATA = areas.osm
-OSMDATA = /opt/data/planet-070207-gb-london.osm
+#OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = test/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
