@@ -204,5 +204,4 @@ public class Logger {
 
 		log.log(type, sb.toString());
 	}
-
 }
