@@ -27,7 +27,7 @@ import java.io.IOException;
 
 /**
  * Command line arguments for MakeMap.
- * Since it is likely that the number of options will become quick large, you
+ * Since it is likely that the number of options will become quite large, you
  * can place options in a file and have options given on the command line over-
  * ride them.
  *
