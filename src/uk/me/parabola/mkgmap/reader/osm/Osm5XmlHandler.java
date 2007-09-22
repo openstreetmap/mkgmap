@@ -44,6 +44,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private FeatureListConverter converter;
 	private MapCollector mapper;
+	private long currentNodeId;
 
 	/**
 	 * Receive notification of the start of an element.
@@ -86,8 +87,17 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
 				String val = attributes.getValue("v");
-				//addTagToNode(key, val);
-				currentNode.addTag(key, val);
+
+				// We only want to create a full node for nodes that are POI's
+				// and not just point of a way.  Only create if it has tags that
+				// are not in a list of ignorables ones such as 'created_by'
+				if (currentNode != null || !key.equals("created_by")) {
+					if (currentNode == null) {
+						Coord co = nodeMap.get(currentNodeId);
+						currentNode = new Node(currentNodeId, co);
+					}
+					currentNode.addTag(key, val);
+                }
 			}
 
 		} else if (mode == MODE_WAY) {
@@ -123,10 +133,9 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
-				// TODO: only do this when it is likely to be required. ie when
-				// it has a name or a tag that makes it something more than just
-				// a point in a line.
-				converter.convertNode(currentNode);
+				if (currentNode != null)
+					converter.convertNode(currentNode);
+				currentNode = null;
 			}
 
 		} else if (mode == MODE_WAY) {
@@ -159,7 +168,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		//	log.debug("adding node" + lat + '/' + lon);
 		Coord co = new Coord(lat, lon);
 		nodeMap.put(id, co);
-		currentNode = new Node(id, co);
+		currentNodeId = id;
 		mapper.addToBounds(co);
 	}
 
