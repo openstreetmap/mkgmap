@@ -33,7 +33,7 @@ import java.util.List;
  * for that possibility.
  *
  * @deprecated This was just used in the early days to get going.  You wouldn't
- * want to use it now.
+ * want to use it now. Use FeatureListConverter instead.
  * 
  * @author Steve Ratcliffe
  */

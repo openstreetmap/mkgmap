@@ -301,7 +301,7 @@ public class MakeMap {
 		int res = div.getResolution();
 
 		for (MapPoint point : points) {
-			if (point.getResolution() > res)
+			if (point.getMinResolution() > res)
 				continue;
 
 			String name = point.getName();
@@ -328,7 +328,7 @@ public class MakeMap {
 		int shift = div.getShift();
 
 		for (MapLine line : lines) {
-			if (line.getResolution() > res)
+			if (line.getMinResolution() > res)
 				continue;
 
 			String name = line.getName();
@@ -366,7 +366,7 @@ public class MakeMap {
 		int shift = div.getShift();
 
 		for (MapShape shape : shapes) {
-			if (shape.getResolution() > res)
+			if (shape.getMinResolution() > res)
 				continue;
 
 			String name = shape.getName();

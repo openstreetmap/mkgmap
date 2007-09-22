@@ -292,7 +292,7 @@ public class MapArea implements MapDataSource {
 	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
 	private void addSize(MapElement p, int[] sizes, int kind) {
-		int res = p.getResolution();
+		int res = p.getMinResolution();
 		if (res > MAX_RESOLUTION)
 			return;
 

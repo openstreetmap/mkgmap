@@ -31,10 +31,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -52,17 +50,17 @@ class FeatureListConverter implements OsmConverter {
 	private static final int F_OSM_SUBTYPE = 2;
 	private static final int F_GARMIN_TYPE = 3;
 	private static final int F_GARMIN_SUBTYPE = 4;
+	private static final int F_MIN_RESOLUTION = 5;
 
 	private static final int N_MIN_FIELDS = 5;
 
+	private static final int DEFAULT_RESOLUTION = 24;
+
 	private final Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
-	private final Set<String> pointTypes = new HashSet<String>();
 
 	private final Map<String, GarminType> lineFeatures = new HashMap<String, GarminType>();
-	private final Set<String> lineTypes = new HashSet<String>();
 
 	private final Map<String, GarminType> shapeFeatures = new HashMap<String, GarminType>();
-	private final Set<String> shapeTypes = new HashSet<String>();
 
 	private final MapCollector mapper;
 
@@ -111,6 +109,7 @@ class FeatureListConverter implements OsmConverter {
 					line.setName(way.getName());
 					line.setPoints(points);
 					line.setType(gt.getType());
+					line.setMinResolution(gt.getMinResolution());
 
 					if (way.getBoolTag("oneway"))
 						line.setDirection(true);
@@ -131,6 +130,7 @@ class FeatureListConverter implements OsmConverter {
 					shape.setName(way.getName());
 					shape.setPoints(points);
 					shape.setType(gt.getType());
+					shape.setMinResolution(gt.getMinResolution());
 
 					mapper.addShape(shape);
 				}
@@ -158,6 +158,7 @@ class FeatureListConverter implements OsmConverter {
 				point.setLocation(node.getLocation());
 				point.setType(gt.getType());
 				point.setSubType(gt.getSubtype());
+				point.setMinResolution(gt.getMinResolution());
 
 				mapper.addPoint(point);
 				return;
@@ -180,19 +181,19 @@ class FeatureListConverter implements OsmConverter {
 			log.debug("feature kind " + type);
 			if (type.equals("point")) {
 				log.debug("point type found");
-				saveFeature(fields, pointTypes, pointFeatures);
+				saveFeature(fields, pointFeatures);
 
 			} else if (type.equals("polyline")) {
 				log.debug("polyline type found");
 				// Lines only have types and not subtypes on
 				// the garmin side
 				assert fields[F_GARMIN_SUBTYPE].length() == 0;
-				saveFeature(fields, lineTypes, lineFeatures);
+				saveFeature(fields, lineFeatures);
 
 			} else if (type.equals("polygon")) {
 				log.debug("polygon type found");
 				assert fields[F_GARMIN_SUBTYPE].length() == 0;
-				saveFeature(fields, shapeTypes, shapeFeatures);
+				saveFeature(fields, shapeFeatures);
 
 			} else {
 				// Unknown type
@@ -201,10 +202,9 @@ class FeatureListConverter implements OsmConverter {
 		}
 	}
 
-	private void saveFeature(String[] fields, Set<String> types, Map<String, GarminType> features) {
+	private void saveFeature(String[] fields, Map<String, GarminType> features) {
 		String type = fields[F_OSM_TYPE];
 		String osm = makeKey(type, fields[F_OSM_SUBTYPE]);
-		types.add(type);
 
 		GarminType gtype;
 		String gsubtype = fields[F_GARMIN_SUBTYPE];
@@ -215,7 +215,53 @@ class FeatureListConverter implements OsmConverter {
 		} else {
 			gtype = new GarminType(fields[F_GARMIN_TYPE], gsubtype);
 		}
+
+		if (fields.length > F_MIN_RESOLUTION) {
+			String field = fields[F_MIN_RESOLUTION];
+			int res = DEFAULT_RESOLUTION;
+			if (field != null && field.length() > 0) {
+				res = Integer.valueOf(field);
+				if (res < 0 || res > 24) {
+					System.err.println("Warning: map feature resolution out of range");
+					res = 24;
+				}
+			}
+			gtype.setMinResolution(res);
+		} else {
+			int res = getDefaultResolution(gtype.getType());
+		}
 		features.put(osm, gtype);
+	}
+
+	/**
+	 * Get a default resolution based on the type only.  This is historical.
+	 * @param type The garmin type field.
+	 * @return The minimum resolution at which the feature will be displayed.
+	 */
+	private int getDefaultResolution(int type) {
+		// The old way - there is a built in list of min resolutions based on
+		// the element type, this will eventually go.  You can't distinguish
+		// between points and lines here either.
+		switch (type) {
+		case 1:
+		case 2:
+			return 10;
+		case 3:
+			return 18;
+		case 4:
+			return 19;
+		case 5:
+			return 21;
+		case 6:
+			return 24;
+		case 0x14:
+		case 0x17:
+			return 20;
+		case 0x15: // coast, make always visible
+			return 10;
+		default:
+			return 24;
+		}
 	}
 
 	private String makeKey(String key, String val) {

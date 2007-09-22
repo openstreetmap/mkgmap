@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 public abstract class MapElement {
 	private String name;
 	private int type;
-	private int minResolution;
+	private int minResolution = 24;
 
 	public String getName() {
 		return name;
@@ -66,35 +66,8 @@ public abstract class MapElement {
 	 *
 	 * @return The lowest resolution at which the element will be visible.
 	 */
-	public int getResolution() {
-		// This is the new way: the min resolution is set by the reader and we
-		// just return it here.
-		if (minResolution != 0)
-			return minResolution;
-
-		// The old way - there is a built in list of min resolutions based on
-		// the element type, this will eventually go.  You can't distinguish
-		// between points and lines here either.
-		switch (getType()) {
-		case 1:
-		case 2:
-			return 10;
-		case 3:
-			return 18;
-		case 4:
-			return 19;
-		case 5:
-			return 21;
-		case 6:
-			return 24;
-		case 0x14:
-		case 0x17:
-			return 20;
-		case 0x15: // coast, make always visible
-			return 10;
-		default:
-			return 24;
-		}
+	public int getMinResolution() {
+		return minResolution;
 	}
 
 	public void setMinResolution(int minResolution) {
