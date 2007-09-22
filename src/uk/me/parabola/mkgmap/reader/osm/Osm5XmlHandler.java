@@ -147,11 +147,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 	}
 
-	public void setCallbacks(MapCollector mapCollector) {
-		mapper = mapCollector;
-		converter = new FeatureListConverter(mapCollector);
-	}
-
 	/**
 	 * Save node information.  Consists of a location specified by lat/long.
 	 *
@@ -175,5 +170,13 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void addNodeToWay(long id) {
 		Coord co = nodeMap.get(id);
 		currentWay.addPoint(co);
+	}
+
+	public void setCallbacks(MapCollector mapCollector) {
+		mapper = mapCollector;
+	}
+
+	public void setConverter(FeatureListConverter converter) {
+		this.converter = converter;
 	}
 }

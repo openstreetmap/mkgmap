@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 03-Sep-2007
  */
-package uk.me.parabola.mkgmap.reader;
+package uk.me.parabola.mkgmap;
 
 import java.util.Properties;
 
@@ -26,7 +26,7 @@ import java.util.Properties;
  *
  * @author Steve Ratcliffe
  */
-public interface PropertyConfiguredReader {
+public interface ConfiguredByProperties {
 
 	/**
 	 * Used to mark that a reader needs to be configured by command line

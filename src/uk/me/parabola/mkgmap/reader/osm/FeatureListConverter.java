@@ -30,9 +30,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -65,16 +68,10 @@ class FeatureListConverter implements OsmConverter {
 
 	private final MapCollector mapper;
 
-	FeatureListConverter(MapCollector collector) {
+	FeatureListConverter(MapCollector collector, Properties config) {
 		this.mapper = collector;
 
-		InputStream is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);
-		if (is == null) {
-			// Try the old name
-			is = ClassLoader.getSystemResourceAsStream(OLD_FEATURE_LIST_NAME);
-			if (is == null)
-				throw new ExitException("Could not find feature list resource");
-		}
+		InputStream is = getMapFeatures(config);
 
 		try {
 			Reader r = new InputStreamReader(is, "utf-8");
@@ -87,6 +84,30 @@ class FeatureListConverter implements OsmConverter {
 		} catch (IOException e) {
 			log.error("reading features failed");
 		}
+	}
+
+	private InputStream getMapFeatures(Properties config) {
+		String file = config.getProperty("map-features");
+		InputStream is;
+		if (file != null) {
+			try {
+				log.info("reading features from file", file);
+				is = new FileInputStream(file);
+				return is;
+			} catch (FileNotFoundException e) {
+				System.err.println("Could not open " + file);
+				System.err.println("Using the defaults");
+			}
+		}
+
+		is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);
+		if (is == null) {
+			// Try the old name
+			is = ClassLoader.getSystemResourceAsStream(OLD_FEATURE_LIST_NAME);
+			if (is == null)
+				throw new ExitException("Could not find feature list resource");
+		}
+		return is;
 	}
 
 	/**
@@ -172,7 +193,6 @@ class FeatureListConverter implements OsmConverter {
 	}
 
 	private void readFeatures(BufferedReader in) throws IOException {
-		log.info("reading features");
 		String line;
 		while ((line = in.readLine()) != null) {
 			if (line.trim().startsWith("#"))

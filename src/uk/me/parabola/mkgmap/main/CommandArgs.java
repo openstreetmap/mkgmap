@@ -71,7 +71,7 @@ class CommandArgs {
 				setProperty(a.substring(2));
 			} else if (a.equals("-c")) {
 				// Config file
-				readConfigFile(args[++i]);
+				readConfigFile(args[i++]);
 			} else if (a.equals("-n")) {
 				// Map name (should be an 8 digit number).
 				argvalues.setProperty("mapname", args[++i]);
@@ -105,6 +105,7 @@ class CommandArgs {
 	}
 
 	private void readConfigFile(String filename) {
+		log.info("reading config file", filename);
 		Properties fileprops = new Properties(argvalues);
 		try {
 			InputStream is = new FileInputStream(filename);

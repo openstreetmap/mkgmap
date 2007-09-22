@@ -24,7 +24,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.PropertyConfiguredReader;
+import uk.me.parabola.mkgmap.ConfiguredByProperties;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -36,7 +36,7 @@ import java.util.Properties;
  * 
  * @author Steve Ratcliffe
  */
-public class ElementTestDataSource implements LoadableMapDataSource, PropertyConfiguredReader {
+public class ElementTestDataSource implements LoadableMapDataSource, ConfiguredByProperties {
 	private final MapDetails mapper = new MapDetails();
 	private Properties props;
 

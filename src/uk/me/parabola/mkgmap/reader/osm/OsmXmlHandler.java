@@ -220,6 +220,9 @@ class OsmXmlHandler extends DefaultHandler {
 
 	public void setCallbacks(MapCollector mapCollector) {
 		mapper = mapCollector;
-		converter = new FeatureListConverter(mapCollector);
+	}
+
+	public void setConverter(OsmConverter converter) {
+		this.converter = converter;
 	}
 }

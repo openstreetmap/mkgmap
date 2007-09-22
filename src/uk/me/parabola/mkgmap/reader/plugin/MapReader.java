@@ -14,10 +14,10 @@
  * Author: Steve Ratcliffe
  * Create date: 02-Sep-2007
  */
-package uk.me.parabola.mkgmap.reader;
+package uk.me.parabola.mkgmap.reader.plugin;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.Osm4MapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
@@ -44,7 +44,7 @@ public class MapReader {
 		loaders.add(ElementTestDataSource.class);
 		loaders.add(PolishMapDataSource.class);
 		loaders.add(Osm5MapDataSource.class);
-		loaders.add(OsmMapDataSource.class);
+		loaders.add(Osm4MapDataSource.class);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class MapReader {
 		}
 
 		if (src == null)
-			src = new OsmMapDataSource();
+			src = new Osm4MapDataSource();
 
 		return src;
 	}

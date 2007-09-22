@@ -16,58 +16,42 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import org.xml.sax.SAXException;
-import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Overview;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.FileInputStream;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
+
+import org.xml.sax.SAXException;
 
 
 /**
- * Read an OpenStreetMap data file in .osm version 0.5 format.  It is converted
- * into a generic format that the map is built from.
- * <p>The intermediate format is important as several passes are required to
- * produce the map at different zoom levels. At lower resolutions, some roads
- * will have fewer points or won't be shown at all.
+ * Read an OpenStreetMap data file in .osm format.  It is converted into a
+ * generic format that the map is built from.
+ * <p>Although not yet implemented, the intermediate format is important
+ * as several passes are required to produce the map at different zoom levels.
+ * At lower resolutions, some roads will have fewer points or won't be shown at
+ * all.
  *
  * @author Steve Ratcliffe
  */
-public class Osm5MapDataSource extends OsmMapDataSource {
-
-	private final MapDetails mapper = new MapDetails();
+public class Osm4MapDataSource extends OsmMapDataSource {
 
 	public boolean isFileSupported(String name) {
-		FileReader r = null;
-		try {
-			r = new FileReader(name);
-			char[] buf = new char[1025];
-			r.read(buf);
-			String s = new String(buf);
-            if (!s.startsWith("<?xml"))
-                return false;
-            if (!s.contains("<osm"))
-                return false;
-			if (s.contains("version='0.5'") || s.contains("version=\"0.5\""))
-				return true;
-			return false;
-		} catch (FileNotFoundException e) {
-			return false;
-		} catch (IOException e) {
-			return false;
-		} finally {
-            try {
-                if (r != null)
-                    r.close();
-            } catch (IOException e) {
-                // go away.
-			}
-		}
+		// This is the default format so we claim to support all files.
+		return true;
 	}
 
 	/**
@@ -83,7 +67,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				Osm5XmlHandler handler = new Osm5XmlHandler();
+				OsmXmlHandler handler = new OsmXmlHandler();
 				handler.setCallbacks(mapper);
 				handler.setConverter(new FeatureListConverter(mapper, getConfig()));
 				parser.parse(is, handler);

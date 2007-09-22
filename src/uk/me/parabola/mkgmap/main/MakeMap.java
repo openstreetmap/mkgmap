@@ -41,8 +41,8 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapSplitter;
-import uk.me.parabola.mkgmap.reader.MapReader;
-import uk.me.parabola.mkgmap.reader.PropertyConfiguredReader;
+import uk.me.parabola.mkgmap.reader.plugin.MapReader;
+import uk.me.parabola.mkgmap.ConfiguredByProperties;
 
 import java.io.FileNotFoundException;
 import static java.lang.Integer.numberOfLeadingZeros;
@@ -407,8 +407,8 @@ public class MakeMap {
 			src = MapReader.createMapReader(name);
 
 			// If configuration required do that now.
-			if (src instanceof PropertyConfiguredReader)
-				((PropertyConfiguredReader) src).config(commandArgs.getProperties());
+			if (src instanceof ConfiguredByProperties)
+				((ConfiguredByProperties) src).config(commandArgs.getProperties());
 
 			src.load(name);
 
