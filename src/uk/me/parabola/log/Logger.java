@@ -67,24 +67,32 @@ public class Logger {
 		return getLogger(name);
 	}
 
+	public static void resetLogging(String filename) {
+		initLoggingFromFile(filename);
+	}
+
 	private static void initLogging() {
 		Properties props = System.getProperties();
 
 		String logconf = props.getProperty("log.config");
 		if (logconf != null) {
-			try {
-				InputStream in = new FileInputStream(logconf);
-				LogManager lm = LogManager.getLogManager();
-				lm.reset();
-				lm.readConfiguration(in);
-			} catch (FileNotFoundException e) {
-				System.err.println("Failed to open logging config file " + logconf);
-				staticSetup();
-			} catch (IOException e) {
-				staticSetup();
-			}
+			initLoggingFromFile(logconf);
 		}
 		else {
+			staticSetup();
+		}
+	}
+
+	private static void initLoggingFromFile(String logconf) {
+		try {
+			InputStream in = new FileInputStream(logconf);
+			LogManager lm = LogManager.getLogManager();
+			lm.reset();
+			lm.readConfiguration(in);
+		} catch (FileNotFoundException e) {
+			System.err.println("Failed to open logging config file " + logconf);
+			staticSetup();
+		} catch (IOException e) {
 			staticSetup();
 		}
 	}

@@ -85,6 +85,10 @@ public class MakeMap {
 	 * @param args The arguments that were passed on the command line.
 	 */
 	private void makeMap(CommandArgs args) {
+		String filename = args.getFileName();
+		if (filename == null)
+			return;
+
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
@@ -96,7 +100,7 @@ public class MakeMap {
 			map = Map.createMap(args.getMapname(), params);
 			setOptions(map, args);
 
-			LoadableMapDataSource src = loadFromFile(args.getFileName());
+			LoadableMapDataSource src = loadFromFile(filename);
 			List<Overview> features = src.getOverviews();
 			processOverviews(map, features);
 

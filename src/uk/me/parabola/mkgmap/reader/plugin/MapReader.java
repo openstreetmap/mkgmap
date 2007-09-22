@@ -60,7 +60,7 @@ public class MapReader {
 		for (Class<? extends LoadableMapDataSource> loader : loaders) {
 			try {
 				src = loader.newInstance();
-				if (src.isFileSupported(name))
+				if (name != null && src.isFileSupported(name))
 					return src;
 			} catch (InstantiationException e) {
 				// try the next one.

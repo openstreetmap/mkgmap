@@ -46,6 +46,9 @@ public class ElementTestDataSource implements LoadableMapDataSource, ConfiguredB
 	 * @return True If a recognised test name beginning with test-map:
 	 */
 	public boolean isFileSupported(String name) {
+		if (name == null)
+			return false;
+		
 		if (name.startsWith("test-map:"))
 			return true;
 		return false;
