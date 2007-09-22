@@ -113,7 +113,7 @@ polyline|highway|trunk|0x03||18
 polyline|highway|trunk_link|0x03||18
 polyline|highway|unclassified|0x06||
 polyline|highway|unsurfaced|0x0a||
-polyline|natural|coastline|0x15||
+polyline|natural|coastline|0x15||10
 polyline|power|line|0x29||
 polyline|railway|light_rail|0x14||20
 polyline|railway|rail|0x14||20

@@ -43,7 +43,8 @@ import java.util.Map;
 class FeatureListConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(FeatureListConverter.class);
 
-	private static final String FEATURE_LIST_NAME = "feature_map.csv";
+	private static final String FEATURE_LIST_NAME = "map-features.csv";
+	private static final String OLD_FEATURE_LIST_NAME = "feature_map.csv";
 
 	private static final int F_FEATURE_TYPE = 0;
 	private static final int F_OSM_TYPE = 1;
@@ -68,8 +69,12 @@ class FeatureListConverter implements OsmConverter {
 		this.mapper = collector;
 
 		InputStream is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);
-		if (is == null)
-			throw new ExitException("Could not find feature list resource");
+		if (is == null) {
+			// Try the old name
+			is = ClassLoader.getSystemResourceAsStream(OLD_FEATURE_LIST_NAME);
+			if (is == null)
+				throw new ExitException("Could not find feature list resource");
+		}
 
 		try {
 			Reader r = new InputStreamReader(is, "utf-8");

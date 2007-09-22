@@ -114,7 +114,7 @@ polyline|highway|trunk_link|principal-highway-medium||18
 polyline|highway|trunk|principal-highway-medium||18
 polyline|highway|unclassified|road||
 polyline|highway|unsurfaced|unpaved-road||
-polyline|natural|coastline|shoreline||
+polyline|natural|coastline|shoreline||10
 polyline|power|line|powerline||
 polyline|railway|light_rail|railroad||20
 polyline|railway|rail|railroad||20
