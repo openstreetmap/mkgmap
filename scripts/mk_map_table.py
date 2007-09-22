@@ -47,8 +47,8 @@ def main():
 	for line in r:
 		kind = line[0]
 		if kind[0] == '#': continue
-		key = (line[1], line[2])
-		val = (line[4], line[5])
+		key = (line[4], line[5])
+		val = (line[2], line[3])
 		try:
 			ft = features[kind]
 		except KeyError:
@@ -65,6 +65,7 @@ def main():
 		kind = line[0]
 		if kind[0] == '#': continue
 		key = (line[3], line[4])
+		res = line[5]
 		try:
 			val = features[kind][key]
 			l = []
@@ -76,6 +77,7 @@ def main():
 				l.append(val[1])
 			else:
 				l.append('')
+			l.append(res)
 			w.writerow(l)
 		except KeyError:
 			print >>sys.stderr, "No garmin entry at", kind, key
