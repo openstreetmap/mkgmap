@@ -69,4 +69,12 @@ public class CopyrightSegment {
 				+ copyright
 				;
 	}
+
+	public void write(Block block) throws IOException {
+		StructuredOutputStream os = block.getOutputStream();
+		os.write(copyrightCode);
+		os.write(whereCode);
+		os.write2(extraProperties);
+		os.writeString(copyright);
+	}
 }

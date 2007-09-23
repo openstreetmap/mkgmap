@@ -31,5 +31,7 @@ public class TestTdb {
 		Logger.resetLogging("test/log/log.all");
 		TdbFile tdb = TdbFile.read(args[0]);
 		log.debug(tdb);
+
+		tdb.write("test.tdb");
 	}
 }

@@ -16,7 +16,12 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import uk.me.parabola.log.Logger;
+
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * A block within the tdb file.  Really just a type and the contents.
@@ -24,17 +29,34 @@ import java.io.ByteArrayInputStream;
  * @author Steve Ratcliffe
  */
 public class Block {
-	private final int blockId;
-	private final int blockLength;
-	private final byte[] body;
-	private StructuredInputStream stream;
+	private static final Logger log = Logger.getLogger(Block.class);
 
+	private final int blockId;
+	private int blockLength;
+	private byte[] body;
+	private StructuredInputStream istream;
+	private ByteArrayOutputStream arrayBody;
+	private StructuredOutputStream ostream;
+
+	/**
+	 * Create a block that is going to be written to.
+	 * @param blockId The id for this block.
+	 */
+	public Block(int blockId) {
+		this.blockId = blockId;
+	}
+
+	/**
+	 * Create a block from data that is read in from a file.
+	 * @param type The block type.
+	 * @param body The raw bytes in the block.
+	 */
 	public Block(int type, byte[] body) {
 		blockId = type;
 		this.body = body;
 		this.blockLength = body.length;
 		ByteArrayInputStream stream = new ByteArrayInputStream(body);
-		this.stream = new StructuredInputStream(stream);
+		this.istream = new StructuredInputStream(stream);
 	}
 
 	public int getBlockId() {
@@ -45,7 +67,21 @@ public class Block {
 		return blockLength;
 	}
 
+	/**
+	 * Get the raw bytes for this block.  The source depends on if this block
+	 * was constructed from file data, or is being created from program calls
+	 * so that it can be written.
+	 *
+	 * @return A byte array of the raw bytes representing this block.
+	 */
 	public byte[] getBody() {
+		if (body == null && arrayBody != null) {
+			byte[] bytes = arrayBody.toByteArray();
+			blockLength = bytes.length - 3;
+			bytes[1] = (byte) (blockLength & 0xff);
+			bytes[2] = (byte) ((blockLength >> 8) & 0xff);
+			return bytes;
+		}
 		return body;
 	}
 
@@ -55,7 +91,28 @@ public class Block {
 	 * @return A structured stream that can be used to read the body of this
 	 * block.
 	 */
-	public StructuredInputStream getStream() {
-		return this.stream;
+	public StructuredInputStream getInputStream() {
+		arrayBody = null;
+		return this.istream;
+	}
+
+	public StructuredOutputStream getOutputStream() {
+		if (ostream == null) {
+			arrayBody = new ByteArrayOutputStream();
+			body = null;
+			ostream = new StructuredOutputStream(arrayBody);
+			try {
+				ostream.write(blockId);
+				ostream.write2(0); // This will be filled in later.
+			} catch (IOException e) {
+				log.warn("failed writing to array");
+			}
+		}
+
+		return ostream;
+	}
+
+	public void write(OutputStream stream) throws IOException {
+		stream.write(getBody());
 	}
 }

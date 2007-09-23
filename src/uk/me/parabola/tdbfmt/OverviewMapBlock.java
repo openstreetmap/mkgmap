@@ -40,23 +40,37 @@ public class OverviewMapBlock {
 	
 	private int mapNumber;
 	private int parentMapNumber;
-	private Area area;
 	private String description;
 
+	private int maxLat;
+	private int maxLong;
+	private int minLat;
+	private int minLong;
+
 	public OverviewMapBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getStream();
+		StructuredInputStream ds = block.getInputStream();
 
 		mapNumber = ds.read4();
 		parentMapNumber = ds.read4();
 
-		int maxLat = ds.read4() >> 8;
-		int maxlong = ds.read4() >> 8;
-		int minLat = ds.read4() >> 8;
-		int minLong = ds.read4() >> 8;
+		maxLat = ds.read4();
+		maxLong = ds.read4();
+		minLat = ds.read4();
+		minLong = ds.read4();
 
-		log.debug(minLat, minLong, maxLat, maxlong);
-		area = new Area(minLat, minLong, maxLat, maxlong);
 		description = ds.readString();
+	}
+
+	public void write(Block block) throws IOException {
+		StructuredOutputStream os = block.getOutputStream();
+
+		os.write4(mapNumber);
+		os.write4(parentMapNumber);
+		os.write4(maxLat);
+		os.write4(maxLong);
+		os.write4(minLat);
+		os.write4(minLong);
+		os.writeString(description);
 	}
 
 	public String toString() {
@@ -65,7 +79,8 @@ public class OverviewMapBlock {
 				+ ", parent="
 				+ parentMapNumber
 				+ " covers "
-				+ area
+				+ "(" + minLat + "," + minLong + ")"
+				+ "(" + maxLat + "," + maxLong + ")"
 				+ " : "
 				+ description
 				;

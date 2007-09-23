@@ -43,7 +43,7 @@ public class HeaderBlock {
 	private String familyName;
 
 	public HeaderBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getStream();
+		StructuredInputStream ds = block.getInputStream();
 
 		productId = (short) ds.read2();
 		int junk = ds.read2();
@@ -67,5 +67,15 @@ public class HeaderBlock {
 				+ ", ver="
 				+ productVersion
 				;
+	}
+
+	public void write(Block block) throws IOException {
+		StructuredOutputStream os = block.getOutputStream();
+		os.write2(productId);
+		os.write2(0);
+		os.write2(tdbVersion);
+		os.writeString(seriesName);
+		os.write2(productVersion);
+		os.writeString(familyName);
 	}
 }

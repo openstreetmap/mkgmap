@@ -19,10 +19,12 @@ package uk.me.parabola.tdbfmt;
 import uk.me.parabola.log.Logger;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +39,10 @@ public class TdbFile {
 	private CopyrightBlock copyrightBlock;
 	private OverviewMapBlock overviewMapBlock;
 	private List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private static final int BLOCK_HEADER = 0x50;
+	private static final int BLOCK_COPYRIGHT = 0x44;
+	private static final int BLOCK_OVERVIEW = 0x42;
+	private static final int BLOCK_DETAIL = 0x4c;
 
 
 	private TdbFile() {
@@ -46,14 +52,48 @@ public class TdbFile {
 	 * Read in a TDB file from the disk.
 	 *
 	 * @param name The file name to load.
-	 * @return
+	 * @return A TdbFile instance.
+	 * @throws IOException For problems reading the file.
 	 */
 	public static TdbFile read(String name) throws IOException {
 		TdbFile tdb = new TdbFile();
 
-		tdb.load(name);
+		InputStream is = new BufferedInputStream(new FileInputStream(name));
+
+		try {
+			StructuredInputStream ds = new StructuredInputStream(is);
+			tdb.load(ds, name);
+		} finally {
+			is.close();
+		}
 
 		return tdb;
+	}
+
+	public void write(String name) throws IOException {
+		OutputStream stream = new BufferedOutputStream(new FileOutputStream(name));
+
+		try {
+			Block block = new Block(BLOCK_HEADER);
+			headerBlock.write(block);
+			block.write(stream);
+
+			block = new Block(BLOCK_COPYRIGHT);
+			copyrightBlock.write(block);
+			block.write(stream);
+
+			block = new Block(BLOCK_OVERVIEW);
+			overviewMapBlock.write(block);
+			block.write(stream);
+
+			for (DetailMapBlock detail : detailBlocks) {
+				block = new Block(BLOCK_DETAIL);
+				detail.write(block);
+				block.write(stream);
+			}
+		} finally {
+			stream.close();
+		}
 	}
 
 	/**
@@ -62,28 +102,26 @@ public class TdbFile {
 	 * @param name The file name to load from.
 	 * @throws IOException For problems reading the file.
 	 */
-	private void load(String name) throws IOException {
-		InputStream is = new BufferedInputStream(new FileInputStream(name));
+	private void load(StructuredInputStream ds, String name) throws IOException {
 
-		StructuredInputStream ds = new StructuredInputStream(is);
 
 		while (!ds.testEof()) {
 			Block block = readBlock(ds);
 			log.info("block", block.getBlockId(), ", len=", block.getBlockLength());
 			switch (block.getBlockId()) {
-			case 0x50:
+			case BLOCK_HEADER:
 				headerBlock = new HeaderBlock(block);
 				log.info("header block seen", headerBlock);
 				break;
-			case 0x44:
+			case BLOCK_COPYRIGHT:
 				log.info("copyright block");
 				copyrightBlock = new CopyrightBlock(block);
 				break;
-			case 0x42:
+			case BLOCK_OVERVIEW:
 				overviewMapBlock = new OverviewMapBlock(block);
 				log.info("overview block", overviewMapBlock);
 				break;
-			case 0x4c:
+			case BLOCK_DETAIL:
 				DetailMapBlock db = new DetailMapBlock(block);
 				log.info("detail block", db);
 				detailBlocks.add(db);

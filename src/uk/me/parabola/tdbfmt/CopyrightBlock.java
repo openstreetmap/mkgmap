@@ -33,7 +33,7 @@ public class CopyrightBlock {
 	private List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
 
 	public CopyrightBlock(Block block) throws IOException {
-		StructuredInputStream ds = block.getStream();
+		StructuredInputStream ds = block.getInputStream();
 
 		while (!ds.testEof()) {
 			CopyrightSegment segment = new CopyrightSegment(ds);
@@ -45,5 +45,11 @@ public class CopyrightBlock {
 
 	public List<CopyrightSegment> getSegments() {
 		return segments;
+	}
+
+	public void write(Block block) throws IOException {
+		for (CopyrightSegment seg : segments) {
+			seg.write(block);
+		}
 	}
 }

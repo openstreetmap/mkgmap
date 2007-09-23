@@ -37,13 +37,13 @@ public class DetailMapBlock extends OverviewMapBlock {
 	public DetailMapBlock(Block block) throws IOException {
 		super(block);
 
-		StructuredInputStream ds = block.getStream();
+		StructuredInputStream ds = block.getInputStream();
 		int junk = ds.read2();
-		log.debug("junk1 is", junk);
+		//log.debug("junk1 is", junk);
 		assert junk == 4;
 
 		junk = ds.read2();
-		log.debug("junk2 is", junk);
+		//log.debug("junk2 is", junk);
 		assert junk == 3;
 
 		rgnDataSize = ds.read4();
@@ -51,8 +51,21 @@ public class DetailMapBlock extends OverviewMapBlock {
 		lblDataSize = ds.read4();
 
 		junk = ds.read();
-		log.debug("junk3 is", junk);
+		//log.debug("junk3 is", junk);
 		assert junk == 1;
+	}
+
+	public void write(Block block) throws IOException {
+		super.write(block);
+
+		StructuredOutputStream os = block.getOutputStream();
+
+		os.write2(4);
+		os.write2(3);
+		os.write4(rgnDataSize);
+		os.write4(treDataSize);
+		os.write4(lblDataSize);
+		os.write(1);
 	}
 
 	public String toString() {
