@@ -147,13 +147,13 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	/**
 	 * Make sure there is enough room for the data we are about to write.
 	 *
-	 * 
-	 *
 	 * @param length The amount of data.
 	 */
 	private void ensureSize(int length) {
 		if (buf.position() +length > bufferSize - GUARD_SIZE) {
 			bufferSize += GROW_SIZE;
+			if (bufferSize > 0xffffff)
+				System.out.println("Warning: The file is too big and the map will not work");
 			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);
 			buf.flip();
