@@ -42,19 +42,26 @@ public class TdbFile {
 	private TdbFile() {
 	}
 
-	public static TdbFile read(String name) {
+	/**
+	 * Read in a TDB file from the disk.
+	 *
+	 * @param name The file name to load.
+	 * @return
+	 */
+	public static TdbFile read(String name) throws IOException {
 		TdbFile tdb = new TdbFile();
 
-		try {
-			tdb.load(name);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		tdb.load(name);
+
 		return tdb;
 	}
 
+	/**
+	 * Load from the given file name.
+	 *
+	 * @param name The file name to load from.
+	 * @throws IOException For problems reading the file.
+	 */
 	private void load(String name) throws IOException {
 		InputStream is = new BufferedInputStream(new FileInputStream(name));
 

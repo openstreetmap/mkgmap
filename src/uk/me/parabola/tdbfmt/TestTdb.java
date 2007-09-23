@@ -18,13 +18,15 @@ package uk.me.parabola.tdbfmt;
 
 import uk.me.parabola.log.Logger;
 
+import java.io.IOException;
+
 /**
  * @author Steve Ratcliffe
  */
 public class TestTdb {
 	private static final Logger log = Logger.getLogger(TestTdb.class);
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 
 		Logger.resetLogging("test/log/log.all");
 		TdbFile tdb = TdbFile.read(args[0]);
