@@ -16,10 +16,15 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
+
 /**
  * @author Steve Ratcliffe
  */
 public class TestAll {
+	private static final Logger log = Logger.getLogger(TestAll.class);
+
 	private static final String[] noargs = new String[0];
 	private static final String[] defargs = new String[] {
 			"area1.osm"
@@ -31,14 +36,26 @@ public class TestAll {
 	}
 
 	private static final String[][] chartestArgs = new String[][] {
-		new String[] {"test/maps/czech_test.osm"},
-		new String[] {"test/maps/german_test.osm"},
-		new String[] {"test/maps/sweden_test.osm"},
-		new String[] {"--xcharset=latin1", "test/maps/czech_test.osm"},
-		new String[] {"--xcharset=latin1", "test/maps/german_test.osm"},
-		new String[] {"--xcharset=latin1", "test/maps/sweden_test.osm"},
-		new String[] {"--xcharset=simple8", "test/maps/sweden_test.osm"},
-		new String[] {"--xcharset=10bit", "test/maps/sweden_test.osm"},		
+			new String[] {"test/osm/czech_test.osm"},
+			new String[] {"test/osm/german_test.osm"},
+			new String[] {"test/osm/sweden_test.osm"},
+			new String[] {"test/osm5/cricklewood-5.osm"},
+			new String[] {"test/polish/lon.mp"},
+			new String[] {"test/polish/non-existing"},
+			new String[] {"test/osm/63247525"},
+			new String[] {"test/osm/63253506"},
+			new String[] {"test-map:all-elements"},
+			new String[] {"test-map:test-points"},
+			new String[] {"test/osm/63253506"},
+
+			new String[] {"--xcharset=latin1", "test/osm/czech_test.osm"},
+			new String[] {"--xcharset=latin1", "test/osm/german_test.osm"},
+			new String[] {"--xcharset=latin1", "test/osm/sweden_test.osm"},
+			new String[] {"--xcharset=simple8", "test/osm/sweden_test.osm"},
+			new String[] {"--xcharset=10bit", "test/osm/sweden_test.osm"},
+			new String[] {"-c", "test/args/t1", "test/osm5/cricklewood-5.osm"},
+			new String[] {"-c", "test/args/t2", "test/osm5/cricklewood-5.osm"},
+			new String[] {"-c", "test/args/t3", "test/osm5/cricklewood-5.osm"},
 	};
 
 	private static void positive() {
@@ -57,6 +74,28 @@ public class TestAll {
 
 		for (String[] args : chartestArgs) {
 			MakeMap.main(args);
+		}
+
+		Logger.resetLogging("test/log.properties");
+		MakeMap.main(new String[] {"-c",
+				"test/args/t1",
+				"area1.osm"});
+		MakeMap.main(new String[] {"-c",
+				"test/args/t1",
+				"test/osm5/cricklewood-5.osm"});
+		if (log.isInfoEnabled()) {
+			log.info("info is enabled");
+		}
+		if (log.isWarnEnabled()) {
+			log.warn("info is enabled");
+		}
+		if (log.isErrorEnabled()) {
+			log.error("error is enabled");
+			try {
+				throw new ExitException("testing");
+			} catch (ExitException e) {
+				log.error("error is enabled", e);
+			}
 		}
 	}
 

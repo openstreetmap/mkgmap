@@ -31,7 +31,6 @@ public class Area {
 	private final int minLat;
 	private final int minLong;
 	private final int maxLat;
-
 	private final int maxLong;
 
 	/**
