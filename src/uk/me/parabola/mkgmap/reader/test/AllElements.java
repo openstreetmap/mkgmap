@@ -139,7 +139,7 @@ class AllElements {
 
 		for (int x = 0; x < MAX_LINE_TYPE_X; x++) {
 			for (int y = 0; y < MAX_LINE_TYPE_Y; y++) {
-				int type = x*16 + y;
+				int type = x*MAX_LINE_TYPE_X + y;
 				if ((type & 0xc0) != 0)
 					break;
 
