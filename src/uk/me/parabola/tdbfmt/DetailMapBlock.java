@@ -21,11 +21,15 @@ import uk.me.parabola.log.Logger;
 import java.io.IOException;
 
 /**
+ * Details of a single .img file that is part of the map set.  There will be
+ * one of these for each .img file.
+ *
  * @author Steve Ratcliffe
  */
 public class DetailMapBlock extends OverviewMapBlock {
 	private static final Logger log = Logger.getLogger(DetailMapBlock.class);
-	
+
+	// Sizes of the regions.  It is possible that rgn and tre are reversed?
 	private int rgnDataSize;
 	private int treDataSize;
 	private int lblDataSize;

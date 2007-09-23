@@ -19,7 +19,7 @@ package uk.me.parabola.tdbfmt;
 import java.io.IOException;
 
 /**
- * The copyright block.
+ * One copyright that is within the copyright block.
  *
  * @author Steve Ratcliffe
  */

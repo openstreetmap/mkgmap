@@ -16,15 +16,18 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import java.io.IOException;
+import uk.me.parabola.log.Logger;
 
 /**
- * Used to note end of streams.  Not really used much now.
- *
  * @author Steve Ratcliffe
  */
-class EndOfFileException extends IOException {
-	EndOfFileException() {
-		super("End of file");
+public class TestTdb {
+	private static final Logger log = Logger.getLogger(TestTdb.class);
+
+	public static void main(String[] args) {
+
+		Logger.resetLogging("test/log/log.all");
+		TdbFile tdb = TdbFile.read(args[0]);
+		log.debug(tdb);
 	}
 }

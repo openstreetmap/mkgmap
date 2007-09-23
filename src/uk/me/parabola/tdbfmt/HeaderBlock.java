@@ -19,6 +19,8 @@ package uk.me.parabola.tdbfmt;
 import java.io.IOException;
 
 /**
+ * The header block.  Identifies the particular map set.
+ *
  * @author Steve Ratcliffe
  */
 public class HeaderBlock {

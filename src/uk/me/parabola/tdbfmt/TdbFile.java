@@ -23,13 +23,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * The TDB file.  See the package documentation.
+ * The TDB file.  See the package documentation for more details.
+ *
  * @author Steve Ratcliffe
  */
 public class TdbFile {
 	private static final Logger log = Logger.getLogger(TdbFile.class);
+	private HeaderBlock headerBlock;
+	private CopyrightBlock copyrightBlock;
+	private OverviewMapBlock overviewMapBlock;
+	private List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
 
 
 	private TdbFile() {
@@ -53,29 +60,29 @@ public class TdbFile {
 
 		StructuredInputStream ds = new StructuredInputStream(is);
 
-		while (true) {
-			try {
-				Block block = readBlock(ds);
-				log.info("block", block.getBlockId(), ", len=", block.getBlockLength());
-				switch (block.getBlockId()) {
-				case 0x50:
-					HeaderBlock hb = new HeaderBlock(block);
-					log.info("header block seen", hb);
-					break;
-				case 0x44:
-					log.info("copyright block");
-					CopyrightBlock cb = new CopyrightBlock(block); 
-					break;
-				case 0x42:
-					OverviewMapBlock ob = new OverviewMapBlock(block);
-					log.info("overview block", ob);
-					break;
-				case 0x4c:
-					DetailMapBlock db = new DetailMapBlock(block);
-					log.info("detail block", db);
-					break;
-				}
-			} catch (EndOfFileException e) {
+		while (!ds.testEof()) {
+			Block block = readBlock(ds);
+			log.info("block", block.getBlockId(), ", len=", block.getBlockLength());
+			switch (block.getBlockId()) {
+			case 0x50:
+				headerBlock = new HeaderBlock(block);
+				log.info("header block seen", headerBlock);
+				break;
+			case 0x44:
+				log.info("copyright block");
+				copyrightBlock = new CopyrightBlock(block);
+				break;
+			case 0x42:
+				overviewMapBlock = new OverviewMapBlock(block);
+				log.info("overview block", overviewMapBlock);
+				break;
+			case 0x4c:
+				DetailMapBlock db = new DetailMapBlock(block);
+				log.info("detail block", db);
+				detailBlocks.add(db);
+				break;
+			default:
+				log.warn("Unknown block in tdb file");
 				break;
 			}
 		}

@@ -16,10 +16,13 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
+ * An input stream used to make reading little endian integers and strings from
+ * the tdb file.
+ *
  * @author Steve Ratcliffe
  */
 public class StructuredInputStream extends InputStream {
@@ -94,6 +97,7 @@ public class StructuredInputStream extends InputStream {
 	 * @return True if we are at the end of the stream.
 	 */
 	public boolean testEof() {
+		assert in.markSupported();
 		in.mark(1);
 		try {
 			int b = in.read();
