@@ -38,7 +38,7 @@ public class TdbFile {
 	private HeaderBlock headerBlock;
 	private CopyrightBlock copyrightBlock;
 	private OverviewMapBlock overviewMapBlock;
-	private List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
 	private static final int BLOCK_HEADER = 0x50;
 	private static final int BLOCK_COPYRIGHT = 0x44;
 	private static final int BLOCK_OVERVIEW = 0x42;
@@ -100,6 +100,7 @@ public class TdbFile {
 	 * Load from the given file name.
 	 *
 	 * @param name The file name to load from.
+	 * @param ds The stream to read from.
 	 * @throws IOException For problems reading the file.
 	 */
 	private void load(StructuredInputStream ds, String name) throws IOException {

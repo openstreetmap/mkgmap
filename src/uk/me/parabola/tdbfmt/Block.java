@@ -28,7 +28,7 @@ import java.io.OutputStream;
  *
  * @author Steve Ratcliffe
  */
-public class Block {
+class Block {
 	private static final Logger log = Logger.getLogger(Block.class);
 
 	private final int blockId;

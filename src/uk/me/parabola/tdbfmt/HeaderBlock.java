@@ -23,7 +23,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public class HeaderBlock {
+class HeaderBlock {
 	/** A unique number associated with the map product */
 	private short productId;
 
@@ -55,6 +55,16 @@ public class HeaderBlock {
 		familyName = ds.readString();
 	}
 
+	public void write(Block block) throws IOException {
+		StructuredOutputStream os = block.getOutputStream();
+		os.write2(productId);
+		os.write2(0);
+		os.write2(tdbVersion);
+		os.writeString(seriesName);
+		os.write2(productVersion);
+		os.writeString(familyName);
+	}
+
 	public String toString() {
 		return "TDB header: "
 				+ productId
@@ -67,15 +77,5 @@ public class HeaderBlock {
 				+ ", ver="
 				+ productVersion
 				;
-	}
-
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
-		os.write2(productId);
-		os.write2(0);
-		os.write2(tdbVersion);
-		os.writeString(seriesName);
-		os.write2(productVersion);
-		os.writeString(familyName);
 	}
 }

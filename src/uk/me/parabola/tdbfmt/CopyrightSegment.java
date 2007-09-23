@@ -23,7 +23,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public class CopyrightSegment {
+class CopyrightSegment {
 	 
 
 	/**
@@ -58,6 +58,14 @@ public class CopyrightSegment {
 		copyright = ds.readString();
 	}
 
+	public void write(Block block) throws IOException {
+		StructuredOutputStream os = block.getOutputStream();
+		os.write(copyrightCode);
+		os.write(whereCode);
+		os.write2(extraProperties);
+		os.writeString(copyright);
+	}
+
 	public String toString() {
 		return "Copyright: "
 				+ copyrightCode
@@ -68,13 +76,5 @@ public class CopyrightSegment {
 				+ ": "
 				+ copyright
 				;
-	}
-
-	public void write(Block block) throws IOException {
-		StructuredOutputStream os = block.getOutputStream();
-		os.write(copyrightCode);
-		os.write(whereCode);
-		os.write2(extraProperties);
-		os.writeString(copyright);
 	}
 }

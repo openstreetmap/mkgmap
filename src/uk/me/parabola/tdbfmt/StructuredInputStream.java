@@ -26,13 +26,20 @@ import java.io.InputStream;
  * @author Steve Ratcliffe
  */
 public class StructuredInputStream extends InputStream {
-	private InputStream in;
+	private final InputStream in;
 	private boolean eof;
 
 	public StructuredInputStream(InputStream in) {
 		this.in = in;
 	}
 
+	/**
+	 * Inplementation of read that delegates to the underlying stream.  It however
+	 * also keeps track of the end of file status.
+	 *
+	 * @return The next byte, or -1 on eof.
+	 * @throws IOException For problems reading.
+	 */
 	public int read() throws IOException {
 		int r = in.read();
 		if (r == -1)
@@ -58,6 +65,7 @@ public class StructuredInputStream extends InputStream {
 
 	/**
 	 * Read a 4 byte integer quantity.  As always this is little endian.
+	 *
 	 * @return The integer.
 	 * @throws IOException If the stream could not be read.
 	 */
@@ -74,6 +82,7 @@ public class StructuredInputStream extends InputStream {
 
 	/**
 	 * Read a nul terminated string from the input stream.
+	 *
 	 * @return A string, without the null terminator.
 	 * @throws IOException If the stream cannot be read.
 	 */
@@ -86,7 +95,7 @@ public class StructuredInputStream extends InputStream {
 		return name.toString();
 	}
 
-	public boolean isEof() {
+	boolean isEof() {
 		return eof;
 	}
 
@@ -94,6 +103,7 @@ public class StructuredInputStream extends InputStream {
 	 * Test if we are at the end of the file by marking the position and trying
 	 * to read the next byte.  If not at the end then the stream position is
 	 * reset and all is as before.
+	 *
 	 * @return True if we are at the end of the stream.
 	 */
 	public boolean testEof() {

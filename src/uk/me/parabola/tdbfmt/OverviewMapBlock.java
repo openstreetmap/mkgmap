@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
@@ -36,8 +35,7 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class OverviewMapBlock {
-	private static final Logger log = Logger.getLogger(OverviewMapBlock.class);
-	
+
 	private int mapNumber;
 	private int parentMapNumber;
 	private String description;

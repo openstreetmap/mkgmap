@@ -27,34 +27,47 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class DetailMapBlock extends OverviewMapBlock {
-	private static final Logger log = Logger.getLogger(DetailMapBlock.class);
 
 	// Sizes of the regions.  It is possible that rgn and tre are reversed?
 	private int rgnDataSize;
 	private int treDataSize;
 	private int lblDataSize;
 
+	/**
+	 * Initialise this block from the raw block given.
+	 * @param block The raw block read from the file.
+	 * @throws IOException For io problems.
+	 */
 	public DetailMapBlock(Block block) throws IOException {
 		super(block);
 
 		StructuredInputStream ds = block.getInputStream();
+
+		// First there are a couple of fields that we ignore.
 		int junk = ds.read2();
-		//log.debug("junk1 is", junk);
 		assert junk == 4;
 
 		junk = ds.read2();
-		//log.debug("junk2 is", junk);
 		assert junk == 3;
 
+		// Sizes of the data
 		rgnDataSize = ds.read4();
 		treDataSize = ds.read4();
 		lblDataSize = ds.read4();
 
+		// Another ignored field
 		junk = ds.read();
-		//log.debug("junk3 is", junk);
 		assert junk == 1;
 	}
 
+	/**
+	 * Write into the given block.
+	 *
+	 * @param block The block that will have been initialised to be a detail
+	 * block.
+	 * @throws IOException Problems writing, probably can't really happen as
+	 * we use an array backed stream.
+	 */
 	public void write(Block block) throws IOException {
 		super.write(block);
 

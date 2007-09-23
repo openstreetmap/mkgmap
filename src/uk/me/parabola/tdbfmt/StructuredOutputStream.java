@@ -16,15 +16,17 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import java.io.OutputStream;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 
 /**
+ * An output stream that has methods for writing strings and little endian
+ * integers.
+ *
  * @author Steve Ratcliffe
  */
 public class StructuredOutputStream extends OutputStream {
-	private OutputStream out;
+	private final OutputStream out;
 
 	public StructuredOutputStream(OutputStream out) {
 		this.out = out;
@@ -52,12 +54,5 @@ public class StructuredOutputStream extends OutputStream {
 		}
 
 		out.write('\0');
-	}
-
-	public byte[] toByteArray() {
-		if (out instanceof ByteArrayOutputStream) {
-			return ((ByteArrayOutputStream) out).toByteArray();
-		}
-		return null;
 	}
 }

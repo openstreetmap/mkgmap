@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-public class CopyrightBlock {
+class CopyrightBlock {
 	private static final Logger log = Logger.getLogger(CopyrightBlock.class);
 	
 	private List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
