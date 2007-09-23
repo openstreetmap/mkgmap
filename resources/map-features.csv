@@ -44,8 +44,8 @@ point|natural|cliff|0x66|0x07|
 point|natural|peak|0x66|0x16|
 point|place|city|0x04||12
 point|place|hamlet|0x11||
-point|place|suburb|0x0a||20
-point|place|town|0x08||18
+point|place|suburb|0x0a||22
+point|place|town|0x08||20
 point|place|village|0x0b||20
 point|railway|station|0x2f|0x08|20
 point|shop|bakers|0x2e|0x00|
