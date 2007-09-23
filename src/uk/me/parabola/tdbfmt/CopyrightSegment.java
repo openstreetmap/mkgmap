@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import java.io.IOException;
+
 /**
  * The copyright block.
  *
@@ -48,4 +50,23 @@ public class CopyrightSegment {
 	private byte whereCode;
 	private short extraProperties;
 	private String copyright;
+
+	public CopyrightSegment(StructuredInputStream ds) throws IOException {
+		copyrightCode = (byte) ds.read();
+		whereCode = (byte) ds.read();
+		extraProperties = (short) ds.read2();
+		copyright = ds.readString();
+	}
+
+	public String toString() {
+		return "Copyright: "
+				+ copyrightCode
+				+ ", where="
+				+ whereCode
+				+ ", extra="
+				+ extraProperties
+				+ ": "
+				+ copyright
+				;
+	}
 }

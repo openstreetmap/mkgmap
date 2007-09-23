@@ -17,6 +17,9 @@
 package uk.me.parabola.tdbfmt;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.log.Logger;
+
+import java.io.IOException;
 
 /**
  * The overview map provides a low-detail image for the detailed maps.  It
@@ -33,8 +36,38 @@ import uk.me.parabola.imgfmt.app.Area;
  * @author Steve Ratcliffe
  */
 public class OverviewMapBlock {
+	private static final Logger log = Logger.getLogger(OverviewMapBlock.class);
+	
 	private int mapNumber;
 	private int parentMapNumber;
 	private Area area;
 	private String description;
+
+	public OverviewMapBlock(Block block) throws IOException {
+		StructuredInputStream ds = block.getStream();
+
+		mapNumber = ds.read4();
+		parentMapNumber = ds.read4();
+
+		int maxLat = ds.read4() >> 8;
+		int maxlong = ds.read4() >> 8;
+		int minLat = ds.read4() >> 8;
+		int minLong = ds.read4() >> 8;
+
+		log.debug(minLat, minLong, maxLat, maxlong);
+		area = new Area(minLat, minLong, maxLat, maxlong);
+		description = ds.readString();
+	}
+
+	public String toString() {
+		return "Overview: "
+				+ mapNumber
+				+ ", parent="
+				+ parentMapNumber
+				+ " covers "
+				+ area
+				+ " : "
+				+ description
+				;
+	}
 }

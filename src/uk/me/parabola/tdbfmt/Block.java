@@ -27,11 +27,14 @@ public class Block {
 	private final int blockId;
 	private final int blockLength;
 	private final byte[] body;
+	private StructuredInputStream stream;
 
 	public Block(int type, byte[] body) {
 		blockId = type;
 		this.body = body;
 		this.blockLength = body.length;
+		ByteArrayInputStream stream = new ByteArrayInputStream(body);
+		this.stream = new StructuredInputStream(stream);
 	}
 
 	public int getBlockId() {
@@ -53,8 +56,6 @@ public class Block {
 	 * block.
 	 */
 	public StructuredInputStream getStream() {
-		ByteArrayInputStream stream = new ByteArrayInputStream(getBody());
-		StructuredInputStream ds = new StructuredInputStream(stream);
-		return ds;
+		return this.stream;
 	}
 }

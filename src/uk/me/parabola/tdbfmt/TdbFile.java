@@ -62,6 +62,18 @@ public class TdbFile {
 					HeaderBlock hb = new HeaderBlock(block);
 					log.info("header block seen", hb);
 					break;
+				case 0x44:
+					log.info("copyright block");
+					CopyrightBlock cb = new CopyrightBlock(block); 
+					break;
+				case 0x42:
+					OverviewMapBlock ob = new OverviewMapBlock(block);
+					log.info("overview block", ob);
+					break;
+				case 0x4c:
+					DetailMapBlock db = new DetailMapBlock(block);
+					log.info("detail block", db);
+					break;
 				}
 			} catch (EndOfFileException e) {
 				break;
