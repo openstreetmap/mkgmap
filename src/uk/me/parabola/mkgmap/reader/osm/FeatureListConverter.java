@@ -254,6 +254,7 @@ class FeatureListConverter implements OsmConverter {
 			gtype.setMinResolution(res);
 		} else {
 			int res = getDefaultResolution(gtype.getType());
+			gtype.setMinResolution(res);
 		}
 		features.put(osm, gtype);
 	}
