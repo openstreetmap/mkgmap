@@ -25,21 +25,20 @@ import java.io.IOException;
  */
 class CopyrightSegment {
 	 
-
 	/**
 	 * Source information text string.  Describes what data sources were used
 	 * in generating the map.
 	 */
-	private static final int CODE_SOURCE_INFORMATION = 0x00;
+	public static final int CODE_SOURCE_INFORMATION = 0x00;
 
 	/** Copyright information from the map manufacturer. */
-	private static final int CODE_COPYRIGHT_TEXT_STRING = 0x06;
+	public static final int CODE_COPYRIGHT_TEXT_STRING = 0x06;
 
 	/**
 	 * A filename that contains a CMP image to be printed along with
 	 * the map.
 	 */
-	private static final int CODE_COPYRIGHT_BITMAP_REFERENCE = 0x07;
+	public static final int CODE_COPYRIGHT_BITMAP_REFERENCE = 0x07;
 
 	/**
 	 * A code that shows what kind of copyright information is

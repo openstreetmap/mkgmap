@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
 
 /**

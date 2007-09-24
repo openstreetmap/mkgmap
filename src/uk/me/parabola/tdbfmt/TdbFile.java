@@ -35,18 +35,16 @@ import java.util.List;
  */
 public class TdbFile {
 	private static final Logger log = Logger.getLogger(TdbFile.class);
-	private HeaderBlock headerBlock;
-	private CopyrightBlock copyrightBlock;
-	private OverviewMapBlock overviewMapBlock;
-	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
 	private static final int BLOCK_HEADER = 0x50;
 	private static final int BLOCK_COPYRIGHT = 0x44;
 	private static final int BLOCK_OVERVIEW = 0x42;
 	private static final int BLOCK_DETAIL = 0x4c;
 
-
-	private TdbFile() {
-	}
+	// The blocks that go to make up the file.
+	private HeaderBlock headerBlock;
+	private CopyrightBlock copyrightBlock;
+	private OverviewMapBlock overviewMapBlock;
+	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
 
 	/**
 	 * Read in a TDB file from the disk.
@@ -105,10 +103,9 @@ public class TdbFile {
 	 */
 	private void load(StructuredInputStream ds, String name) throws IOException {
 
-
 		while (!ds.testEof()) {
 			Block block = readBlock(ds);
-			log.info("block", block.getBlockId(), ", len=", block.getBlockLength());
+
 			switch (block.getBlockId()) {
 			case BLOCK_HEADER:
 				headerBlock = new HeaderBlock(block);

@@ -77,7 +77,10 @@ class Block {
 	public byte[] getBody() {
 		if (body == null && arrayBody != null) {
 			byte[] bytes = arrayBody.toByteArray();
+
 			blockLength = bytes.length - 3;
+
+			// Fill in the length in the space that we left earlier.
 			bytes[1] = (byte) (blockLength & 0xff);
 			bytes[2] = (byte) ((blockLength >> 8) & 0xff);
 			return bytes;
