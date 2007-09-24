@@ -64,11 +64,6 @@ public class TestAll {
 				"vbig.osm"
 		});
 
-		MakeTestMap.main(defargs);
-
-		MakeTestPointMap.main(noargs);
-		MakeTestPolygonMap.main(noargs);
-
 		MakeTestLang10Map.main(noargs);
 		MakeTestLangMap.main(noargs);
 
