@@ -7,12 +7,13 @@
 #
 
 #OSMDATA = areas.osm
-#OSMDATA = /opt/data/planet-070207-gb-london.osm
+OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = test/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
-OSMDATA = /opt/data/uk-070815.osm
+#OSMDATA = /opt/data/uk-070815.osm
+OSMDATA = /opt/data/uk-070919-1.osm
 #OSMDATA = /tmp/63253506
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
@@ -22,11 +23,13 @@ TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 # Source code of OSMGarminMap
 OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 
+#OPTS= --levels='0=24,1=22,2=20'
+
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
-	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap --npoints=100 $(OSMDATA)
-	: #java -Dlog.filename=mkgmap.log -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OSMDATA)
+	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap --npoints=100 $(OPTS) $(OSMDATA)
+	@ # java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 
@@ -37,9 +40,9 @@ load:
 	surun umount /media/disk
 
 
-map_features:
+map-features map_features:
 	python scripts/mk_map_table.py resources/garmin_feature_list.csv \
-		resources/osm_garmin_map.csv | sort > resources/feature_map.csv
+		resources/osm_garmin_map.csv | sort > resources/map-features.csv
 
 test:
 	rm -fr gmapsupp/
