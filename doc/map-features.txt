@@ -1,0 +1,18 @@
+
+== The map features file ==
+
+You can completely change which features are displayed and at what zoom
+levels.
+
+First you need to understand a little about the way that the zoom works
+in Garmin maps.  There are two concepts that I am going to call
+'resolution' and 'level'.
+
+The first is 'resolution' this is a number between 1 and 24 with 24 being
+the most detailed resolution and each number less is half as detailed.
+So for example if a road was 12 units long at resolution 24 it would be
+only 6 at resolution 23 and just 3 at resolution 22.
+
+The next is 'level'.  This is a number between 0 and 16 (although perhaps
+numbers above 10 are not usable), with 0 corresponding to the most
+detailed view.
