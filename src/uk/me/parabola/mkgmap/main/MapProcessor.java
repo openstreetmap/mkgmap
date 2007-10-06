@@ -12,20 +12,31 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 21-Jan-2007
+ * Create date: 29-Sep-2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.mkgmap.main;
 
 /**
- * Interface to pass around the internal files in the map without
- * passing the whole thing.
- *
+ * Different options that can be supplied that change the mode and operation
+ * of the program.
+ * 
  * @author Steve Ratcliffe
  */
-public interface InternalFiles {
-	public RGNFile getRgnFile();
+public interface MapProcessor extends FilenameProcessor {
 
-	public LBLFile getLblFile();
-	
-	public TREFile getTreFile();
+	/**
+	 * Turn an option on.
+	 *
+	 * @param opt The option type.
+	 */
+	public void optionOn(MapOption opt);
+
+	/**
+	 * Turn an option off.
+	 *
+	 * @param opt The option type.
+	 */
+	public void optionOff(MapOption opt);
+
+
 }

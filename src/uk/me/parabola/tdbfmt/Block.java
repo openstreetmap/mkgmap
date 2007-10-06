@@ -74,7 +74,7 @@ class Block {
 	 *
 	 * @return A byte array of the raw bytes representing this block.
 	 */
-	public byte[] getBody() {
+	byte[] getBody() {
 		if (body == null && arrayBody != null) {
 			byte[] bytes = arrayBody.toByteArray();
 
@@ -116,6 +116,8 @@ class Block {
 	}
 
 	public void write(OutputStream stream) throws IOException {
-		stream.write(getBody());
+		byte[] body = getBody();
+		if (body != null)
+			stream.write(body);
 	}
 }

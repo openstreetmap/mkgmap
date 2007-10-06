@@ -212,4 +212,8 @@ public class Map implements InternalFiles {
 	public LBLFile getLblFile() {
 		return lblFile;
 	}
+
+	public TREFile getTreFile() {
+		return treFile;
+	}
 }

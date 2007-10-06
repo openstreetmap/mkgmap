@@ -96,7 +96,7 @@ class FeatureListConverter implements OsmConverter {
 				return is;
 			} catch (FileNotFoundException e) {
 				System.err.println("Could not open " + file);
-				System.err.println("Using the defaults");
+				System.err.println("Using the default map features file");
 			}
 		}
 
@@ -113,7 +113,7 @@ class FeatureListConverter implements OsmConverter {
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
-	 * <p/>
+	 * <p>
 	 * As a few examples we might want to check for the 'highway' tag, work out
 	 * if it is an area of a park etc.
 	 *

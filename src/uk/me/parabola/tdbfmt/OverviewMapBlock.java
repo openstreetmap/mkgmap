@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import uk.me.parabola.log.Logger;
+import uk.me.parabola.imgfmt.app.Area;
 
 import java.io.IOException;
 
@@ -44,6 +44,10 @@ public class OverviewMapBlock {
 	private int maxLong;
 	private int minLat;
 	private int minLong;
+
+	public OverviewMapBlock() {
+		description = "overview map";
+	}
 
 	public OverviewMapBlock(Block block) throws IOException {
 		StructuredInputStream ds = block.getInputStream();
@@ -82,5 +86,24 @@ public class OverviewMapBlock {
 				+ " : "
 				+ description
 				;
+	}
+
+	public void setArea(Area bounds) {
+		minLat = bounds.getMinLat();
+		minLong = bounds.getMinLong();
+		maxLat = bounds.getMaxLat();
+		maxLong = bounds.getMaxLong();
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setMapName(String mapNumber) {
+		this.mapNumber = Integer.parseInt(mapNumber);
+	}
+
+	public void setParentMapNumber(int parentMapNumber) {
+		this.parentMapNumber = parentMapNumber;
 	}
 }

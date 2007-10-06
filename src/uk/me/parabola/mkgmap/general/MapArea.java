@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.log.Logger;
 
 import java.util.ArrayList;
@@ -187,14 +188,12 @@ public class MapArea implements MapDataSource {
 		int psize = 0;
 		int lsize = 0;
 		int ssize = 0;
-		int esize = 0;
+		
 		for (int i = 0; i <= res; i++) {
 
 			psize += pointSize[i];
 			lsize += lineSize[i];
 			ssize += shapeSize[i];
-
-			esize += elemCounts[i];
 		}
 
 		// Return the largest one as an overflow of any means that we have to
@@ -244,6 +243,14 @@ public class MapArea implements MapDataSource {
 	 */
 	public List<MapShape> getShapes() {
 		return shapes;
+	}
+
+	/**
+	 * This is not used for areas.
+	 * @return Always returns null.
+	 */
+	public List<Overview> getOverviews() {
+		return null;
 	}
 
 	/**

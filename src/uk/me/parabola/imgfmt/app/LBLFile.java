@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.labelenc.Bit10Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
@@ -111,9 +110,9 @@ public class LBLFile extends ImgFile {
 //			textEncoder = new Latin2Encoder();
 			textEncoder = new Format6Encoder();
 
-		} else if ("bit10".equals(cs)) {
-			encodingLength = ENCODING_10BIT;
-			textEncoder = new Bit10Encoder();
+		//} else if ("bit10".equals(cs)) {
+		//	encodingLength = ENCODING_10BIT;
+		//	textEncoder = new Bit10Encoder();
 
 		} else if ("simple8".equals(cs)) {
 			encodingLength = ENCODING_8BIT;

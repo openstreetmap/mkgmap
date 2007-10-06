@@ -31,6 +31,9 @@ public class DetailMapBlock extends OverviewMapBlock {
 	private int treDataSize;
 	private int lblDataSize;
 
+	public DetailMapBlock() {
+	}
+
 	/**
 	 * Initialise this block from the raw block given.
 	 * @param block The raw block read from the file.
@@ -77,6 +80,18 @@ public class DetailMapBlock extends OverviewMapBlock {
 		os.write4(treDataSize);
 		os.write4(lblDataSize);
 		os.write(1);
+	}
+
+	public void setRgnDataSize(int rgnDataSize) {
+		this.rgnDataSize = rgnDataSize;
+	}
+
+	public void setTreDataSize(int treDataSize) {
+		this.treDataSize = treDataSize;
+	}
+
+	public void setLblDataSize(int lblDataSize) {
+		this.lblDataSize = lblDataSize;
 	}
 
 	public String toString() {

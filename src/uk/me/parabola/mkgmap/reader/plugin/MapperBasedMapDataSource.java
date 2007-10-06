@@ -12,49 +12,47 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 24-Mar-2007
+ * Create date: 25-Sep-2007
  */
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.mkgmap.reader.plugin;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapDetails;
 
 import java.util.List;
 
 /**
- * A source of map data.  This base interface is used internally within
- * the program.
- * 
  * @author Steve Ratcliffe
  */
-public interface MapDataSource {
+public class MapperBasedMapDataSource {
+	protected final MapDetails mapper = new MapDetails();
+
 	/**
-	 * Get the area that this map covers.
+	 * Get the area that this map covers. Delegates to the map collector.
 	 *
 	 * @return The area the map covers.
 	 */
-	Area getBounds();
+	public Area getBounds() {
+		return mapper.getBounds();
+	}
 
 	/**
-	 * Get the list of points that need to be rendered on the map.
-	 *
-	 * @return A list of {@link MapPoint} objects.
-	 */
-	List<MapPoint> getPoints();
-
-	/**
-	 * Get the list of lines that need to be rendered to the map.
+	 * Get the list of lines that need to be rendered to the map. Delegates to
+	 * the map collector.
 	 *
 	 * @return A list of {@link MapLine} objects.
 	 */
-	List<MapLine> getLines();
+	public List<MapLine> getLines() {
+		return mapper.getLines();
+	}
 
-	/**
-	 * Get the list of shapes that need to be rendered to the map.
-	 *
-	 * @return A list of {@link MapShape} objects.
-	 */
-	List<MapShape> getShapes();
+	public List<MapShape> getShapes() {
+		return mapper.getShapes();
+	}
 
 	/**
 	 * Get a list of every feature that is used in the map.  As features are
@@ -66,5 +64,11 @@ public interface MapDataSource {
 	 * @return A list of all the types of point, polygon and polyline that are
 	 * used in the map.
 	 */
-	List<Overview> getOverviews();
+	public List<Overview> getOverviews() {
+		return mapper.getOverviews();
+	}
+
+	public List<MapPoint> getPoints() {
+		return mapper.getPoints();
+	}
 }

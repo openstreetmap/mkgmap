@@ -17,10 +17,8 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.app.Overview;
 
 import java.io.FileNotFoundException;
-import java.util.List;
 
 /**
  * A source of map information in a standard format.  The OSM reader presents
@@ -70,26 +68,17 @@ public interface LoadableMapDataSource extends MapDataSource {
 	 * the map.
 	 *
 	 * @return Array of structures that map the level to the resolution.  Never
-	 * returns null. Some kind of default should always be returned.
+	 * returns null. Some kind of default should always be returned and this
+	 * must include at least one level.
 	 */
 	public LevelInfo[] mapLevels();
 
 	/**
-	 * Get a suitable copyright message for this map source.
+	 * Get a suitable copyright message for this map source.  You can get
 	 *
-	 * @return A string with the name of the copyright holder.
+	 * @return An array of strings with copyright information.  If there are
+	 * none then return a zero length array.
 	 */
-	public String copyrightMessage();
+	public String[] copyrightMessages();
 
-	/**
-	 * Get a list of every feature that is used in the map.  As features are
-	 * created a list is kept of each separate feature that is used.  This
-	 * goes into the .img file and is important for points and polygons although
-	 * it doesn't seem to matter if lines are represented or not on my Legend Cx
-	 * anyway.
-	 *
-	 * @return A list of all the types of point, polygon and polyline that are
-	 * used in the map.
-	 */
-	List<Overview> getOverviews();
 }

@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -61,6 +63,13 @@ public class UsefulFormatter extends Formatter {
 
 		sb.append('\n');
 
+		Throwable t = record.getThrown();
+		if (t != null) {
+			StringWriter out = new StringWriter();
+			PrintWriter pw = new PrintWriter(out);
+			t.printStackTrace(pw);
+			sb.append(out.toString());
+		}
 		return sb.toString();
 	}
 

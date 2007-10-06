@@ -59,7 +59,7 @@ public class TestAll {
 	};
 
 	private static void positive() {
-		MakeMap.main(new String[] {
+		Main.main(new String[] {
 				"--mapname=12008899",
 				"vbig.osm"
 		});
@@ -68,14 +68,14 @@ public class TestAll {
 		MakeTestLangMap.main(noargs);
 
 		for (String[] args : chartestArgs) {
-			MakeMap.main(args);
+			Main.main(args);
 		}
 
 		Logger.resetLogging("test/log.properties");
-		MakeMap.main(new String[] {"-c",
+		Main.main(new String[] {"-c",
 				"test/args/t1",
 				"area1.osm"});
-		MakeMap.main(new String[] {"-c",
+		Main.main(new String[] {"-c",
 				"test/args/t1",
 				"test/osm5/cricklewood-5.osm"});
 		if (log.isInfoEnabled()) {
@@ -95,11 +95,11 @@ public class TestAll {
 	}
 
 	private static void negative() {
-		MakeMap.main(new String[] {
+		Main.main(new String[] {
 				"nonexistingfile.osm"
 		});
 
-		MakeMap.main(new String[] {
+		Main.main(new String[] {
 				"README"
 		});
 	}

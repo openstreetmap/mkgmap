@@ -34,7 +34,7 @@ package uk.me.parabola.mkgmap.general;
 */
 public class LevelInfo implements Comparable {
 	private final int level;
-	private int bits;
+	private final int bits;
 
 	public LevelInfo(int level, int bits) {
 		this.level = level;

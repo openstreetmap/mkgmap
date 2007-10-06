@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import org.xml.sax.SAXException;
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.mkgmap.general.MapDetails;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -39,8 +38,6 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class Osm5MapDataSource extends OsmMapDataSource {
-
-	private final MapDetails mapper = new MapDetails();
 
 	public boolean isFileSupported(String name) {
 		FileReader r = null;

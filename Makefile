@@ -8,16 +8,18 @@
 
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
-#OSMDATA = test/cricklewood-5.osm
+OSMDATA = test/osm5/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
 #OSMDATA = /opt/data/uk-070815.osm
-OSMDATA = /opt/data/uk-070919-1.osm
+#OSMDATA = /opt/data/uk-070919-1.osm
 #OSMDATA = /tmp/63253506
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
+OSMDATA = /opt/data/multi/6324*
+
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 # Source code of OSMGarminMap
@@ -28,8 +30,8 @@ OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
-	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap --npoints=100 $(OPTS) $(OSMDATA)
-	@ # java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap $(OPTS) $(OSMDATA)
+	@# $(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main --npoints=100 $(OPTS) $(OSMDATA)
+	 java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 
@@ -76,12 +78,12 @@ test_lang10:
 	imgdecode 32860003.img
 
 tests:
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63243936
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63247525
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/maps/63253506
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap test/cricklewood-5.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/germany-070823.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.MakeMap /opt/data/uk-070815.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main test/osm/63243936
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main test/osm/63247525
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main test/osm/63253506
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main test/osm5/cricklewood-5.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/germany-070823.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-070815.osm
 
 
 tl:

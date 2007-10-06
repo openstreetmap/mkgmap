@@ -12,20 +12,30 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 21-Jan-2007
+ * Create date: 27-Sep-2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.mkgmap.main;
+
+import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 
 /**
- * Interface to pass around the internal files in the map without
- * passing the whole thing.
- *
  * @author Steve Ratcliffe
  */
-public interface InternalFiles {
-	public RGNFile getRgnFile();
+public interface MapEvents {
 
-	public LBLFile getLblFile();
-	
-	public TREFile getTreFile();
+	/**
+	 * This is called when the map is complete.
+	 *
+	 * @param args The current options.
+	 * @param src The map data.
+	 * @param map The map.
+	 */
+	public void onMapEnd(CommandArgs args, LoadableMapDataSource src, Map map);
+
+	/**
+	 * The complete map set has been processed.  Finish off anything that needs
+	 * doing.
+	 */
+	public void onFinish();
 }

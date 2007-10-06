@@ -16,18 +16,12 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapDetails;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.ConfiguredByProperties;
+import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
 
 import java.io.FileNotFoundException;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -36,8 +30,7 @@ import java.util.Properties;
  * 
  * @author Steve Ratcliffe
  */
-public class ElementTestDataSource implements LoadableMapDataSource, ConfiguredByProperties {
-	private final MapDetails mapper = new MapDetails();
+public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource, ConfiguredByProperties {
 	private Properties props;
 
 	/**
@@ -80,28 +73,8 @@ public class ElementTestDataSource implements LoadableMapDataSource, ConfiguredB
 		};
 	}
 
-	public String copyrightMessage() {
-		return "test data";
-	}
-
-	public List<Overview> getOverviews() {
-		return mapper.getOverviews();
-	}
-
-	public Area getBounds() {
-		return mapper.getBounds();
-	}
-
-	public List<MapPoint> getPoints() {
-		return mapper.getPoints();
-	}
-
-	public List<MapLine> getLines() {
-		return mapper.getLines();
-	}
-
-	public List<MapShape> getShapes() {
-		return mapper.getShapes();
+	public String[] copyrightMessages() {
+		return new String[] {"test data"};
 	}
 
 	public void config(Properties props) {

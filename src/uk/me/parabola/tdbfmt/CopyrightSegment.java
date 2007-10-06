@@ -35,7 +35,7 @@ class CopyrightSegment {
 	public static final int CODE_COPYRIGHT_TEXT_STRING = 0x06;
 
 	/**
-	 * A filename that contains a CMP image to be printed along with
+	 * A filename that contains a BMP image to be printed along with
 	 * the map.
 	 */
 	public static final int CODE_COPYRIGHT_BITMAP_REFERENCE = 0x07;
@@ -55,6 +55,12 @@ class CopyrightSegment {
 		whereCode = (byte) ds.read();
 		extraProperties = (short) ds.read2();
 		copyright = ds.readString();
+	}
+
+	public CopyrightSegment(int code, int where, String msg) {
+		this.copyrightCode = (byte) code;
+		this.whereCode = (byte) where;
+		this.copyright = msg;
 	}
 
 	public void write(Block block) throws IOException {

@@ -42,7 +42,10 @@ class HeaderBlock {
 	 */
 	private String familyName;
 
-	public HeaderBlock(Block block) throws IOException {
+	HeaderBlock() {
+	}
+
+	HeaderBlock(Block block) throws IOException {
 		StructuredInputStream ds = block.getInputStream();
 
 		productId = (short) ds.read2();
@@ -77,5 +80,21 @@ class HeaderBlock {
 				+ ", ver="
 				+ productVersion
 				;
+	}
+
+	public void setProductId(short productId) {
+		this.productId = productId;
+	}
+
+	public void setSeriesName(String seriesName) {
+		this.seriesName = seriesName;
+	}
+
+	public void setFamilyName(String familyName) {
+		this.familyName = familyName;
+	}
+
+	public void setProductVersion(short productVersion) {
+		this.productVersion = productVersion;
 	}
 }

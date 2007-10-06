@@ -17,16 +17,14 @@
 package uk.me.parabola.mkgmap.reader.polish;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -49,15 +47,13 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-public class PolishMapDataSource implements LoadableMapDataSource {
+public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
 
 	private static final int S_IMG_ID = 1;
 	private static final int S_POINT = 2;
 	private static final int S_POLYLINE = 3;
 	private static final int S_POLYGON = 4;
-
-	private final MapDetails mapper = new MapDetails();
 
 	private MapPoint point;
 	private MapLine polyline;
@@ -123,49 +119,8 @@ public class PolishMapDataSource implements LoadableMapDataSource {
 	 *
 	 * @return A string description of the copyright.
 	 */
-	public String copyrightMessage() {
-		return copyright;
-	}
-
-	/**
-	 * Get the area that this map covers. Delegates to the map collector.
-	 *
-	 * @return The area the map covers.
-	 */
-	public Area getBounds() {
-		return mapper.getBounds();
-	}
-
-	/**
-	 * Get the list of lines that need to be rendered to the map. Delegates to
-	 * the map collector.
-	 *
-	 * @return A list of {@link MapLine} objects.
-	 */
-	public List<MapLine> getLines() {
-		return mapper.getLines();
-	}
-
-	public List<MapShape> getShapes() {
-		return mapper.getShapes();
-	}
-
-	/**
-	 * Get a list of every feature that is used in the map.  As features are
-	 * created a list is kept of each separate feature that is used.  This
-	 * goes into the .img file and is important for points and polygons although
-	 * it doesn't seem to matter if lines are represented or not on my Legend Cx
-	 * anyway.
-	 *
-	 * @return A list of all the types of point, polygon and polyline that are
-	 * used in the map.
-	 */
-	public List<Overview> getOverviews() {
-		return mapper.getOverviews();
-	}
-
-	public List<MapPoint> getPoints() {
-		return mapper.getPoints();
+	public String[] copyrightMessages() {
+		return new String[] {copyright};
 	}
 
 	/**

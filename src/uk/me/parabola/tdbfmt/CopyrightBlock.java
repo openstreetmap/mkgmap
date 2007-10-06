@@ -30,9 +30,12 @@ import java.util.List;
 class CopyrightBlock {
 	private static final Logger log = Logger.getLogger(CopyrightBlock.class);
 	
-	private List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
+	private final List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
 
-	public CopyrightBlock(Block block) throws IOException {
+	CopyrightBlock() {
+	}
+
+	CopyrightBlock(Block block) throws IOException {
 		StructuredInputStream ds = block.getInputStream();
 
 		while (!ds.testEof()) {
@@ -51,5 +54,9 @@ class CopyrightBlock {
 		for (CopyrightSegment seg : segments) {
 			seg.write(block);
 		}
+	}
+
+	public void addSegment(CopyrightSegment seg) {
+		segments.add(seg);
 	}
 }

@@ -12,20 +12,26 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 21-Jan-2007
+ * Create date: 29-Sep-2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.mkgmap.main;
 
 /**
- * Interface to pass around the internal files in the map without
- * passing the whole thing.
- *
+ * Used when looping through filenames that are being processed into maps.
+ * 
  * @author Steve Ratcliffe
  */
-public interface InternalFiles {
-	public RGNFile getRgnFile();
+public interface FilenameProcessor {
+	/**
+	 * Process the given filename.
+	 *
+	 * @param args The user supplied arguments.
+	 * @param filename The name of a file that was given to the program, eg
+	 */
+	void processFilename(CommandArgs args, String filename);
 
-	public LBLFile getLblFile();
-	
-	public TREFile getTreFile();
+	/**
+	 * Called when all the command line options have been processed.
+	 */
+	void endOfOptions();
 }
