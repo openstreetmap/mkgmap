@@ -9,6 +9,7 @@
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 OSMDATA = test/osm5/cricklewood-5.osm
+OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
@@ -18,7 +19,7 @@ OSMDATA = test/osm5/cricklewood-5.osm
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
-OSMDATA = /opt/data/multi/6324*
+#OSMDATA = /opt/data/multi/6324*
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 

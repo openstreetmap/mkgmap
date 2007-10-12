@@ -135,6 +135,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				mode = 0;
 				if (currentNode != null)
 					converter.convertNode(currentNode);
+				currentNodeId = 0;
 				currentNode = null;
 			}
 
@@ -169,7 +170,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void addNodeToWay(long id) {
 		Coord co = nodeMap.get(id);
-		currentWay.addPoint(co);
+		if (co != null)
+			currentWay.addPoint(co);
 	}
 
 	public void setCallbacks(MapCollector mapCollector) {
