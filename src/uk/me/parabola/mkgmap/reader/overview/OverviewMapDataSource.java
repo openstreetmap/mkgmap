@@ -153,13 +153,17 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	private void processPoints(List<MapPoint> points) {
-		// ignore all for present.
+		for (MapPoint p : points) {
+			int type = p.getType();
+			if (type == 0x4)
+				mapper.addPoint(p);
+		}
 	}
 
 	private void processLines(List<MapLine> lines) {
 		for (MapLine l : lines) {
 			int type = l.getType();
-			if (type <= 2)
+			if (type <= 2 || type == 0x15)
 				mapper.addLine(l);
 		}
 	}
