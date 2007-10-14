@@ -43,10 +43,10 @@ class TestPoints {
 	 * Loading the map in this case means generating it.
 	 *
 	 * @param mapper Used to collect the generated points etc.
-	 * @param props User supplied properties.
+	 * @param in User supplied properties.
 	 */
-	public void load(MapCollector mapper, Properties props) {
-		this.props = props;
+	public void load(MapCollector mapper, Properties in) {
+		this.props = in;
 
 		double baseLat = 51.7;
 		double baseLong = 0.24;
@@ -72,8 +72,6 @@ class TestPoints {
 	 * @param startLong The W coord.
 	 */
 	private void drawTestMap(MapCollector mapper, double startLat, double startLong) {
-		double lat = startLat;
-		double lng = startLong;
 
 		String s = props.getProperty("npoints");
 		int npoints = 10;
@@ -85,8 +83,8 @@ class TestPoints {
 
 				MapPoint point = new MapPoint();
 
-				double baseLat = lat + y * ELEMENT_SPACING;
-				double baseLong = lng + x * ELEMENT_SPACING;
+				double baseLat = startLat + y * ELEMENT_SPACING;
+				double baseLong = startLong + x * ELEMENT_SPACING;
 
 				point.setMinResolution(24 - (x & 0x7));
 				point.setName("P " + (x*npoints + y));
@@ -111,8 +109,8 @@ class TestPoints {
 				line.setMinResolution(10);
 				line.setName("0x" + Integer.toHexString(type));
 
-				double baseLat = lat + y * ELEMENT_SPACING;
-				double baseLong = lng + x * ELEMENT_SPACING;
+				double baseLat = startLat + y * ELEMENT_SPACING;
+				double baseLong = startLong + x * ELEMENT_SPACING;
 
 				List<Coord> coords = new ArrayList<Coord>();
 

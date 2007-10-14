@@ -95,7 +95,7 @@ public class OverviewMapBuilder implements MapEvents {
 			tdb.write(overviewMapname + ".tdb");
 		} catch (IOException e) {
 			log.error("tdb write", e);
-			throw new ExitException("Could not write the TDB file");
+			throw new ExitException("Could not write the TDB file", e);
 		}
 
 		MapBuilder mb = new MapBuilder();
@@ -109,9 +109,9 @@ public class OverviewMapBuilder implements MapEvents {
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
-			throw new ExitException("Could not create overview map");
+			throw new ExitException("Could not create overview map", e);
 		} catch (FileNotWritableException e) {
-			throw new ExitException("Could not write to overview map");
+			throw new ExitException("Could not write to overview map", e);
 		}
 	}
 }

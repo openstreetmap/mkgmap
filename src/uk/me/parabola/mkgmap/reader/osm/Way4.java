@@ -282,7 +282,7 @@ class Way4 extends Element implements Way {
 			all.add(workList);
 	}
 
-	public boolean getBoolTag(String s) {
+	public boolean isBoolTag(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;

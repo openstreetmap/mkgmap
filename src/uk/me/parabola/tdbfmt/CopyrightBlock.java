@@ -46,10 +46,6 @@ class CopyrightBlock {
 		}
 	}
 
-	public List<CopyrightSegment> getSegments() {
-		return segments;
-	}
-
 	public void write(Block block) throws IOException {
 		for (CopyrightSegment seg : segments) {
 			seg.write(block);

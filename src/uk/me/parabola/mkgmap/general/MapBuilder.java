@@ -44,7 +44,7 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class MapBuilder {
-	protected static final Logger log = Logger.getLogger(MapBuilder.class);
+	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
 	/**

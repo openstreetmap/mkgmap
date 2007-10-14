@@ -81,8 +81,8 @@ public class OverviewMapBlock {
 				+ ", parent="
 				+ parentMapNumber
 				+ " covers "
-				+ "(" + minLat + "," + minLong + ")"
-				+ "(" + maxLat + "," + maxLong + ")"
+				+ '(' + minLat + ',' + minLong + ')'
+				+ '(' + maxLat + ',' + maxLong + ')'
 				+ " : "
 				+ description
 				;

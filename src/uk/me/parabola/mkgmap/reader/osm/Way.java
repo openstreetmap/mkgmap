@@ -41,5 +41,5 @@ interface Way extends Iterable<String> {
 	 */
 	public List<List<Coord>> getPoints();
 
-	public boolean getBoolTag(String s);
+	public boolean isBoolTag(String s);
 }

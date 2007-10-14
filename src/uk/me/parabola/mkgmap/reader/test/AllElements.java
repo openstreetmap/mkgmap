@@ -92,16 +92,15 @@ class AllElements {
 	 * @param startLong The W coord.
 	 */
 	private void drawTestMap(MapCollector map, double startLat, double startLong) {
-		double lat = startLat;
 		double lng = startLong;
 
-		drawPoints(map, lat, lng);
+		drawPoints(map, startLat, lng);
 
 		lng += MAX_POINT_TYPE * ELEMENT_SPACING;
-		drawLines(map, lat, lng);
+		drawLines(map, startLat, lng);
 
 		lng += MAX_LINE_TYPE_X * ELEMENT_SPACING;
-		drawPolygons(map, lat, lng);
+		drawPolygons(map, startLat, lng);
 	}
 
 	private void drawPoints(MapCollector mapper, double slat, double slon) {

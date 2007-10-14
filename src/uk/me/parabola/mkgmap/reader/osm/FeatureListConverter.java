@@ -137,7 +137,7 @@ class FeatureListConverter implements OsmConverter {
 					line.setType(gt.getType());
 					line.setMinResolution(gt.getMinResolution());
 
-					if (way.getBoolTag("oneway"))
+					if (way.isBoolTag("oneway"))
 						line.setDirection(true);
 
 					mapper.addLine(line);

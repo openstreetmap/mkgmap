@@ -211,9 +211,9 @@ class CommandArgs {
 				setPropertyFromArg(line);
 			}
 		} catch (FileNotFoundException e) {
-			throw new ExitException("Could not read option file " + filename);
+			throw new ExitException("Could not read option file " + filename, e);
 		} catch (IOException e) {
-			throw new ExitException("Reading option file " + filename + " failed");
+			throw new ExitException("Reading option file " + filename + " failed", e);
 		}
 	}
 
@@ -258,7 +258,7 @@ class CommandArgs {
 		}
 
 		public void setProperty(String name, String value) {
-			currentOptions.put(name, value);
+			currentOptions.setProperty(name, value);
 		}
 	}
 
@@ -324,14 +324,6 @@ class CommandArgs {
 		public void processArg() {
 			currentOptions.setProperty(opt, value);
 			proc.processOption(opt, value);
-		}
-
-		public String getOpt() {
-			return opt;
-		}
-
-		public String getValue() {
-			return value;
 		}
 
 	}

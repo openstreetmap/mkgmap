@@ -31,7 +31,7 @@ import java.util.ArrayList;
  *
  * @author Steve Ratcliffe
  */
-public class MapSplitter {
+class MapSplitter {
 	private static final Logger log = Logger.getLogger(MapSplitter.class);
 
 	private final MapDataSource mapSource;

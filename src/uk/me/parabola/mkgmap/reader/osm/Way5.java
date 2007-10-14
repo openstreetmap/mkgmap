@@ -88,7 +88,7 @@ class Way5 extends Element implements Way {
 		return ll;
 	}
 
-	public boolean getBoolTag(String s) {
+	public boolean isBoolTag(String s) {
 		String val = getTag(s);
 		if (val == null)
 			return false;

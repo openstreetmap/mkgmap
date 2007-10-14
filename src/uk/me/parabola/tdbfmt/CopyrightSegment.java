@@ -50,14 +50,14 @@ class CopyrightSegment {
 	private short extraProperties;
 	private String copyright;
 
-	public CopyrightSegment(StructuredInputStream ds) throws IOException {
+	CopyrightSegment(StructuredInputStream ds) throws IOException {
 		copyrightCode = (byte) ds.read();
 		whereCode = (byte) ds.read();
 		extraProperties = (short) ds.read2();
 		copyright = ds.readString();
 	}
 
-	public CopyrightSegment(int code, int where, String msg) {
+	CopyrightSegment(int code, int where, String msg) {
 		this.copyrightCode = (byte) code;
 		this.whereCode = (byte) where;
 		this.copyright = msg;

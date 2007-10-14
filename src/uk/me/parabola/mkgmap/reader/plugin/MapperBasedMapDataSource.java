@@ -26,9 +26,12 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import java.util.List;
 
 /**
+ * A convenient base class for all map data that is based on the MapDetails
+ * class (which is all of them so far).
+ *
  * @author Steve Ratcliffe
  */
-public class MapperBasedMapDataSource {
+public abstract class MapperBasedMapDataSource {
 	protected final MapDetails mapper = new MapDetails();
 
 	/**

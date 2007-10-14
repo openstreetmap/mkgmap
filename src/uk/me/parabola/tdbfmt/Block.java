@@ -42,7 +42,7 @@ class Block {
 	 * Create a block that is going to be written to.
 	 * @param blockId The id for this block.
 	 */
-	public Block(int blockId) {
+	Block(int blockId) {
 		this.blockId = blockId;
 	}
 
@@ -51,7 +51,7 @@ class Block {
 	 * @param type The block type.
 	 * @param body The raw bytes in the block.
 	 */
-	public Block(int type, byte[] body) {
+	Block(int type, byte[] body) {
 		blockId = type;
 		this.body = body;
 		this.blockLength = body.length;
@@ -61,10 +61,6 @@ class Block {
 
 	public int getBlockId() {
 		return blockId;
-	}
-
-	public int getBlockLength() {
-		return blockLength;
 	}
 
 	/**

@@ -32,7 +32,7 @@ package uk.me.parabola.mkgmap.general;
  *
  * @author Steve Ratcliffe
 */
-public class LevelInfo implements Comparable {
+public class LevelInfo implements Comparable<LevelInfo> {
 	private final int level;
 	private final int bits;
 
@@ -64,12 +64,11 @@ public class LevelInfo implements Comparable {
 	 * These things sort so that the highest level number is the lowest.  OK
 	 * so its a bit wierd.
 	 *
-	 * @param o The LevelInfo to compare to.
+	 * @param other The LevelInfo to compare to.
 	 * @return Zero if they are equal and 1 if the object is greater and -1
 	 * otherwise.
 	 */
-	public int compareTo(Object o) {
-		LevelInfo other = (LevelInfo) o;
+	public int compareTo(LevelInfo other) {
 
 		if (other.getLevel() == getLevel())
 			return 0;

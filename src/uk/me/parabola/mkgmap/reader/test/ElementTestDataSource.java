@@ -77,7 +77,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 		return new String[] {"test data"};
 	}
 
-	public void config(Properties props) {
-		this.props = props;
+	public void config(Properties properties) {
+		this.props = properties;
 	}
 }

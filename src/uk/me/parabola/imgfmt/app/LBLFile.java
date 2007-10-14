@@ -61,7 +61,6 @@ public class LBLFile extends ImgFile {
 	// Label encoding length
 	private static final int ENCODING_6BIT = 6;
 	private static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
-	private static final int ENCODING_10BIT = 11;
 
 	private int encodingLength = ENCODING_6BIT;
 	private CharacterEncoder textEncoder = new Format6Encoder();

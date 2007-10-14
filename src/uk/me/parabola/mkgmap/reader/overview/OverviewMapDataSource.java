@@ -53,8 +53,6 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
-	private Properties props;
-
 	/**
 	 * This is a fake source of data and is not read from a file, so always
 	 * return false here.
