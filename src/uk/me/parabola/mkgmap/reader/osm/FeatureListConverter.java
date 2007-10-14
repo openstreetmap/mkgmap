@@ -140,6 +140,9 @@ class FeatureListConverter implements OsmConverter {
 					if (way.isBoolTag("oneway"))
 						line.setDirection(true);
 
+					if (tagKey.equals("contour|elevation")) {
+						line.setName(way.getTag("ele"));
+					}
 					mapper.addLine(line);
 				}
 				return;
@@ -192,6 +195,12 @@ class FeatureListConverter implements OsmConverter {
 		}
 	}
 
+	/**
+	 * Read the features from the file.
+	 *
+	 * @param in The open file.
+	 * @throws IOException On any problems reading.
+	 */
 	private void readFeatures(BufferedReader in) throws IOException {
 		String line;
 		while ((line = in.readLine()) != null) {
@@ -268,26 +277,37 @@ class FeatureListConverter implements OsmConverter {
 		// The old way - there is a built in list of min resolutions based on
 		// the element type, this will eventually go.  You can't distinguish
 		// between points and lines here either.
+		int res;
 		switch (type) {
 		case 1:
 		case 2:
-			return 10;
+			res = 10;
+			break;
 		case 3:
-			return 18;
+			res = 18;
+			break;
 		case 4:
-			return 19;
+			res = 19;
+			break;
 		case 5:
-			return 21;
+			res = 21;
+			break;
 		case 6:
-			return 24;
+			res = 24;
+			break;
 		case 0x14:
 		case 0x17:
-			return 20;
+			res = 20;
+			break;
 		case 0x15: // coast, make always visible
-			return 10;
+			res = 10;
+			break;
 		default:
-			return 24;
+			res = 24;
+			break;
 		}
+
+		return res;
 	}
 
 	private String makeKey(String key, String val) {

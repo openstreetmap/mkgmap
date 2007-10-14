@@ -20,6 +20,7 @@ OSMDATA = london.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 #OSMDATA = /opt/data/multi/6324*
+OSMDATA = test/osm5/srtm.osm
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 

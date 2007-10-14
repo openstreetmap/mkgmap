@@ -93,6 +93,7 @@ polyline|aeroway|runway|airport-runway||20
 polyline|boundary|administrative|boundary-political||20
 polyline|boundary|national|boundary-international||20
 polyline|boundary|political|boundary-political||20
+polyline|contour|elevation|land-contour-medium||20
 polyline|highway|bridleway|trail||
 polyline|highway|byway|trail||22
 polyline|highway|cycleway|trail||22
@@ -122,5 +123,5 @@ polyline|railway|tram|railroad||
 polyline|route|ferry|ferry1||
 polyline|waterway|canal|river||20
 polyline|waterway|drain|river||20
-polyline|waterway|river|river||20
 polyline|waterway|riverbank|river||18
+polyline|waterway|river|river||20

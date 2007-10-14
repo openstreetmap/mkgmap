@@ -92,6 +92,7 @@ polyline|aeroway|runway|0x27||20
 polyline|boundary|administrative|0x1c||20
 polyline|boundary|national|0x1e||20
 polyline|boundary|political|0x1c||20
+polyline|contour|elevation|0x21||20
 polyline|highway|bridleway|0x16||
 polyline|highway|byway|0x16||22
 polyline|highway|cycleway|0x16||22
