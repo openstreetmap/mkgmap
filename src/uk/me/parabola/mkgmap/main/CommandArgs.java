@@ -20,15 +20,18 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Command line arguments for Main.
@@ -53,6 +56,7 @@ class CommandArgs {
 
 	private final ArgumentProcessor proc;
 	private final Properties currentOptions = new Properties();
+	private Set<String> readFiles = new HashSet<String>();
 
 	CommandArgs(ArgumentProcessor proc) {
 		this.proc = proc;
@@ -80,7 +84,7 @@ class CommandArgs {
 			String arg = args[i++];
 			if (arg.startsWith("--")) {
 				// This is a long style 'property' format option.
-				arglist.add(new Option(arg.substring(2)));
+				addOption(arg.substring(2));
 
 			} else if (arg.equals("-c")) {
 				// Config file
@@ -88,7 +92,7 @@ class CommandArgs {
 
 			} else if (arg.equals("-n")) {
 				// Map name (should be an 8 digit number).
-				arglist.add(new Option("mapname", args[i++]));
+				addOption("mapname", args[i++]);
 
 			} else if (arg.startsWith("-")) {
 				// this is an unrecognised option.
@@ -96,7 +100,7 @@ class CommandArgs {
 
 			} else {
 				// A file name
-				arglist.add(new Filename(arg));
+				addOption("input-file", arg);
 			}
 		}
 
@@ -110,6 +114,47 @@ class CommandArgs {
 		}
 
 		proc.endOfOptions();
+	}
+
+	/**
+	 * Add an option based on the option and value separately.
+	 * @param option The option name.
+	 * @param value Its value.
+	 */
+	private void addOption(String option, String value) {
+		Option opt = new Option(option, value);
+		addOption(opt);
+	}
+
+	/**
+	 * Add an option from a raw string.
+	 * @param optval The option=value string.
+	 */
+	private void addOption(String optval) {
+		Option opt = new Option(optval);
+		addOption(opt);
+	}
+
+	/**
+	 * Actually add the option.  Some of these are special in that they are
+	 * filename arguments or instructions to read options from another file.
+	 *
+	 * @param opt The decoded option.
+	 */
+	private void addOption(Option opt) {
+		String option = opt.getOption();
+		String value = opt.getValue();
+
+		log.debug("adding option", option, value);
+
+		if (option.equals("input-file")) {
+			log.debug("adding filename");
+			arglist.add(new Filename(value));
+		} else if (option.equals("read-config")) {
+			readConfigFile(value);
+		} else {
+			arglist.add(opt);
+		}
 	}
 
 	public Properties getProperties() {
@@ -171,25 +216,6 @@ class CommandArgs {
 	}
 
 	/**
-	 * Set a long property.  These have the form --name=value.  The '--' has
-	 * already been stripped off when passed to this function.
-	 * <p/>
-	 * If there is no value part then the option will be set to the string "1".
-	 *
-	 * @param opt The option with leading '--' removed.  eg name=value.
-	 */
-	private void setPropertyFromArg(String opt) {
-		int eq = opt.indexOf('=');
-		if (eq > 0) {
-			String key = opt.substring(0, eq).trim();
-			String val = opt.substring(eq + 1).trim();
-			arglist.add(new Option((key), val));
-		} else {
-			arglist.add(new Option((opt), "1"));
-		}
-	}
-
-	/**
 	 * Read a config file that contains more options.  When the number of
 	 * options becomes large it is more convenient to place them in a file.
 	 *
@@ -197,6 +223,20 @@ class CommandArgs {
 	 */
 	private void readConfigFile(String filename) {
 		log.info("reading config file", filename);
+
+		File file = new File(filename);
+		try {
+			// Don't read the same file twice.
+			String path = file.getCanonicalPath();
+			if (readFiles.contains(path))
+				return;
+			readFiles.add(path);
+		} catch (IOException e) {
+			// Probably want to do more than warn here.
+			log.warn("the config file could not be read");
+			return;
+		}
+
 		try {
 			Reader r = new FileReader(filename);
 			BufferedReader br = new BufferedReader(r);
@@ -208,7 +248,7 @@ class CommandArgs {
 					continue;
 
 				// we don't allow continuation lines yet...
-				setPropertyFromArg(line);
+				addOption(line);
 			}
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not read option file " + filename, e);
@@ -221,21 +261,21 @@ class CommandArgs {
 	 * The arguments are held in this list.
 	 */
 	private class ArgList implements Iterable<ArgType> {
-		private final List<ArgType> arglist = new ArrayList<ArgType>();
+		private final List<ArgType> alist = new ArrayList<ArgType>();
 
 		private int filenameCount;
 
 		public void add(Option option) {
-			arglist.add(option);
+			alist.add(option);
 		}
 
 		public void add(Filename name) {
 			filenameCount++;
-			arglist.add(name);
+			alist.add(name);
 		}
 
 		public Iterator<ArgType> iterator() {
-			return arglist.iterator();
+			return alist.iterator();
 		}
 
 		public int getFilenameCount() {
@@ -302,30 +342,37 @@ class CommandArgs {
 	 * An option argument.  A key value pair.
 	 */
 	private class Option implements ArgType {
-		private final String opt;
+		private final String option;
 		private final String value;
 
 		private Option(String optval) {
-			int eq = optval.indexOf('=');
-			if (eq > 0) {
-				opt = optval.substring(0, eq);
-				value = optval.substring(eq + 1);
+			String[] v = optval.split("[=:]", 2);
+			if (v.length > 1) {
+				option = v[0].trim();
+				value = v[1].trim();
 			} else {
-				opt = optval;
+				option = optval;
 				value = "1";
 			}
 		}
 
-		private Option(String opt, String value) {
-			this.opt = opt;
+		private Option(String option, String value) {
+			this.option = option;
 			this.value = value;
 		}
 
 		public void processArg() {
-			currentOptions.setProperty(opt, value);
-			proc.processOption(opt, value);
+			currentOptions.setProperty(option, value);
+			proc.processOption(option, value);
 		}
 
+		public String getOption() {
+			return option;
+		}
+
+		public String getValue() {
+			return value;
+		}
 	}
 
 }
