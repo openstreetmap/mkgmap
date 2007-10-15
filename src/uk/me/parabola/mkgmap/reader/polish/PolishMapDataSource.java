@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
@@ -62,6 +63,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private String copyright;
 	private int section;
 	private LevelInfo[] levels;
+	private int endLevel;
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
@@ -136,13 +138,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		if (name.equals("IMG ID")) {
 			section = S_IMG_ID;
-		} else if (name.equals("POI")) {
+		} else if (name.equals("POI") || name.equals("RGN10") || name.equals("RGN20")) {
 			point = new MapPoint();
 			section = S_POINT;
-		} else if (name.equals("POLYLINE")) {
+		} else if (name.equals("POLYLINE") || name.equals("RGN40")) {
 			polyline = new MapLine();
 			section = S_POLYLINE;
-		} else if (name.equals("POLYGON")) {
+		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
 			section = S_POLYGON;
 		}
@@ -167,12 +169,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				mapper.addShape(shape);
 			break;
 		default:
-			log.warn("unexpected default in switch");
+			log.warn("unexpected default in switch", section);
 			break;
 		}
 
 		// Clear the section state.
 		section = 0;
+		endLevel = 0;
 	}
 
 	/**
@@ -197,13 +200,16 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			imgId(name, value);
 			break;
 		case S_POINT:
-			point(name, value);
+			if (!isCommonValue(point, name, value))
+				point(name, value);
 			break;
 		case S_POLYLINE:
-			line(name, value);
+			if (!isCommonValue(polyline, name, value))
+				line(name, value);
 			break;
 		case S_POLYGON:
-			shape(name, value);
+			if (!isCommonValue(shape, name, value))
+				shape(name, value);
 			break;
 		default:
 			log.debug("line ignored");
@@ -226,11 +232,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			Integer type = Integer.decode(value);
 			point.setType((type >> 8) & 0xff);
 			point.setSubType(type & 0xff);
-		} else if (name.equals("Label")) {
-			point.setName(value);
-		} else if (name.startsWith("Data")) {
+		}  else if (name.startsWith("Data")) {
 			Coord co = makeCoord(value);
-			point.setMinResolution(extractResolution(name));
+			setResolution(point, name);
 			point.setLocation(co);
 		}
 	}
@@ -247,20 +251,19 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private void line(String name, String value) {
 		if (name.equals("Type")) {
 			polyline.setType(Integer.decode(value));
-		} else if (name.equals("Label")) {
-			polyline.setName(value);
 		} else if (name.startsWith("Data")) {
 			String[] ords = value.split("\\),\\(");
 			List<Coord> points = new ArrayList<Coord>();
 
 			for (String s : ords) {
 				Coord co = makeCoord(s);
-				log.debug(" L: ", co);
+				if (log.isDebugEnabled())
+					log.debug(" L: ", co);
 				mapper.addToBounds(co);
 				points.add(co);
 			}
 
-			polyline.setMinResolution(extractResolution(name));
+			setResolution(polyline, name);
 			polyline.setPoints(points);
 		}
 
@@ -278,22 +281,45 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private void shape(String name, String value) {
 		if (name.equals("Type")) {
 			shape.setType(Integer.decode(value));
-		} else if (name.equals("Label")) {
-			shape.setName(value);
 		} else if (name.startsWith("Data")) {
 			String[] ords = value.split("\\),\\(");
 			List<Coord> points = new ArrayList<Coord>();
 
 			for (String s : ords) {
 				Coord co = makeCoord(s);
-				log.debug(" L: ", co);
+				if (log.isDebugEnabled())
+					log.debug(" L: ", co);
 				mapper.addToBounds(co);
 				points.add(co);
 			}
 
 			shape.setPoints(points);
-			shape.setMinResolution(extractResolution(name));
+			setResolution(shape, name);
 		}
+	}
+
+	private boolean isCommonValue(MapElement elem, String name, String value) {
+		if (name.equals("Label")) {
+			elem.setName(value);
+		} else if (name.equals("Levels") || name.equals("EndLevel") || name.equals("LevelsNumber")) {
+			try {
+				endLevel = Integer.valueOf(value);
+			} catch (NumberFormatException e) {
+				endLevel = 0;
+			}
+		} else {
+			return false;
+		}
+
+		// We dealt with it
+		return true;
+	}
+
+	private void setResolution(MapElement elem, String name) {
+		if (endLevel > 0)
+			elem.setMinResolution(extractResolution(endLevel));
+		else
+			elem.setMinResolution(extractResolution(name));
 	}
 
 	/**
@@ -308,6 +334,17 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private int extractResolution(String name) {
 		int level = Integer.valueOf(name.substring(4));
+		return extractResolution(level);
+	}
+
+	/**
+	 * Extract resolution from the level.
+	 *
+	 * @param level The level (0..)
+	 * @return The resolution.
+	 * @see #extractResolution(String name)
+	 */
+	private int extractResolution(int level) {
 		int nlevels = levels.length;
 
 		LevelInfo li = levels[nlevels - level - 1];
