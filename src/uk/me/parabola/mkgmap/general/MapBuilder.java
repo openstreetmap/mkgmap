@@ -290,6 +290,7 @@ public class MapBuilder {
 			Polyline pl = div.createLine(name);
 			pl.setDirection(line.isDirection());
 
+			int count = 0;
 			int lastx = 0, lasty = 0;
 			List<Coord> points = line.getPoints();
 			for (Coord co : points) {
@@ -301,14 +302,28 @@ public class MapBuilder {
 
 				lastx = x;
 				lasty = y;
+
+				// We need to split up long lines into smaller ones as there
+				// appears to be a limit on the garmin devices.
+				if (++count > 250) {
+					pl.setType(line.getType());
+					map.addMapObject(pl);
+					pl = div.createLine(name);
+					pl.addCoord(co);
+					pl.setDirection(line.isDirection());
+					count = 0;
+					lastx = 0;
+					lasty = 0;
+				}
 			}
 
-			pl.setType(line.getType());
-			//pl.check();
-			map.addMapObject(pl);
+			if (count != 0) {
+				pl.setType(line.getType());
+				map.addMapObject(pl);
+			}
 		}
 	}
-
+	
 	/**
 	 * Step through the polygons, filter, simplify if necessary, and create a map
 	 * shape which is then added to the map.
