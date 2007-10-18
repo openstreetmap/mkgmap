@@ -32,7 +32,7 @@ import java.util.List;
  * would be much better to read the conversions from a file I guess. So allow
  * for that possibility.
  *
- * @deprecated This was just used in the early days to get going.  You wouldn't
+ * Deprecated: This was just used in the early days to get going.  You wouldn't
  * want to use it now. Use FeatureListConverter instead.
  * 
  * @author Steve Ratcliffe
