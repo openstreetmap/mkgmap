@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
+import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
@@ -68,7 +69,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 				int value = Integer.parseInt(keyVal[1]);
 				levels[count] = new LevelInfo(key, value);
 			} catch (NumberFormatException e) {
-				System.err.println("The levels specification failed for " + keyVal[count]);
+				System.err.println("Levels specification not all numbers " + keyVal[count]);
 			}
 			count++;
 		}
@@ -79,6 +80,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			for (LevelInfo li : levels) {
 				log.debug("Level: " + li);
 			}
+		}
+
+		// If there are more than 8 levels the map can cause the
+		// garmin to crash.
+		if (levels.length > 8) {
+			throw new ExitException("Too many levels");
 		}
 		return levels;
 	}
