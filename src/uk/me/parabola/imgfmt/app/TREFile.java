@@ -188,6 +188,7 @@ public class TREFile extends ImgFile {
 			}
 		}
 
+		long secStart = position();
 		// Now we can write them all out.
 		for (int i = 15; i >= 0; i--) {
 			Zoom z = mapLevels[i];
@@ -197,11 +198,7 @@ public class TREFile extends ImgFile {
 			Iterator<Subdivision> it = z.subdivIterator();
 			while (it.hasNext()) {
 				Subdivision sd = it.next();
-				if (it.hasNext())
-					sd.setLast(false);
-				else
-					sd.setLast(true);
-
+				
 				sd.write(this);
 				if (i == 0)
 					subdivSize += SUBDIV_REC_SIZE;

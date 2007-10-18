@@ -105,6 +105,9 @@ public class MapBuilder {
 						log.debug("ADD parent-subdiv", parent, srcDivPair.getSource(), ", z=", zoom, " new=", div);
 					nextList.add(new SourceSubdiv(area, div));
 				}
+
+				Subdivision lastdiv = nextList.get(nextList.size() - 1).getSubdiv();
+				lastdiv.setLast(true);
 			}
 
 			srcList = nextList;
@@ -129,6 +132,7 @@ public class MapBuilder {
 	 */
 	private Subdivision makeTopArea(MapDataSource src, Map map, Zoom zoom) {
 		Subdivision topdiv = map.topLevelSubdivision(src.getBounds(), zoom);
+		topdiv.setLast(true);
 		return topdiv;
 	}
 
