@@ -8,8 +8,8 @@
 
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
-OSMDATA = test/osm5/cricklewood-5.osm
-OSMDATA = london.osm
+#OSMDATA = test/osm5/cricklewood-5.osm
+#OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-070530.osm
@@ -20,7 +20,8 @@ OSMDATA = london.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 #OSMDATA = /opt/data/multi/6324*
-OSMDATA = test/osm5/srtm.osm
+#OSMDATA = test/osm5/srtm.osm
+#OSMDATA = --levels=0:24,1:23,2:22,3:21,4:20,5:19,6:18,7:17 /opt/data/planet-070207-gb-london.osm
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 

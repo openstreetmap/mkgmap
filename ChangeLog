@@ -1,5 +1,379 @@
+2007-10-18  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java: Remove
+	  deprecated tag, its more just unused.
+	* src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/mkgmap/general/MapBuilder.java: Fix the
+	  markers at the end of a group of subdivisions. I was only putting
+	  the end marker on the last divsion in a level. Each set of
+	  divisions that has the same parent should have an end marker
+	  though.
+	  
+	  This fixes the 'Find' bug, and seems to make the map faster in
+	  dense areas.
+	* src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java:
+	  Prevent too many levels being used as this leads to maps that
+	  cause a crash.
+
+2007-10-15  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapBuilder.java: Split up long
+	  lines, this will help with coastlines, contours etc as there
+	  appears to be a limit of around 250 points that you can have in a
+	  line on the garmin devices.
+	* src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Implement the EndLevels (and it varients) and add the old RGN10
+	  etc section names.
+
+2007-10-14  steve
+
+	* Makefile, resources/map-features.csv,
+	  resources/osm_garmin_map.csv,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Hack to display contours with thier heights.
+	* src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Add coastlines and cities to the overview. I guess this should be
+	  driven by a full map-features file.
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java: Command argument
+	  can now be read from a file, including input files and further
+	  files to read options from.
+	* src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way4.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java,
+	  src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java: Merged in code
+	  cleanup from the gui branch. That branch is now merged up to r299
+
+2007-10-12  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: If a
+	  node that is part of a way is missing, then dont add a null
+	  point...
+
+2007-10-07  steve
+
+	* doc/features.txt: Will be list of features.
+
+2007-10-06  steve
+
+	* ., ChangeLog, Makefile, resources/MANIFEST.MF, resources/README,
+	  src/uk/me/parabola/imgfmt/app/InternalFiles.java,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Bit10Encoder.java,
+	  src/uk/me/parabola/log/UsefulFormatter.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/main/ArgumentProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/FilenameProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MapEvents.java,
+	  src/uk/me/parabola/mkgmap/main/MapOption.java,
+	  src/uk/me/parabola/mkgmap/main/MapProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/overview,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMap.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/package.html,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Merged in the
+	  overview/tdb branch.
+	* doc/map-features.txt: Customising the map.
+
+2007-10-04  steve
+
+	* doc/map-features.txt, doc/mkgmap-man.txt: First stab at some
+	  documentation
+
+2007-10-01  steve
+
+	* ChangeLog: Update the changelog file.
+
+2007-09-25  steve
+
+	* Makefile: makefile changes
+
+2007-09-24  steve
+
+	* src/uk/me/parabola/mkgmap/main/MakeTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPointMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestPolygonMap.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java,
+	  src/uk/me/parabola/mkgmap/main/package.html: Removed test
+	  programs that are replaced by the test-map:all-elements map and
+	  indeed probably don't even work any more.
+	* src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Code cleanup.
+
+2007-09-23  steve
+
+	* resources/map-features.csv, resources/osm_garmin_map.csv: fix
+	  previous change and made the map-features file.
+	* resources/osm_garmin_map.csv: Slight tweek to reduce the number
+	  of towns at low res.
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java:
+	  Removed imports that are not used any more.
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Not setting the resolution in the default (old) case.
+	* src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredInputStream.java,
+	  src/uk/me/parabola/tdbfmt/StructuredOutputStream.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Javadoc and code tidy up.
+	* src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredOutputStream.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java,
+	  src/uk/me/parabola/tdbfmt/TestTdb.java: Now can write out the tdb
+	  file so it is identical to the file that was read in. Not
+	  particularly useful, but shows that all is working.
+	* resources/map-features.csv, resources/osm_garmin_map.csv: Tweeked
+	  map features.
+	* src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java: Add
+	  warning for when a region is overflowing.
+	* src/uk/me/parabola/mkgmap/reader/test/AllElements.java: wasn't
+	  showing all the lines.
+	* src/uk/me/parabola/tdbfmt/TdbFile.java,
+	  src/uk/me/parabola/tdbfmt/Test.java,
+	  src/uk/me/parabola/tdbfmt/TestTdb.java: Some tidying around tdb
+	  test.
+	* src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/EndOfFileException.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredInputStream.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java,
+	  src/uk/me/parabola/tdbfmt/TestTdb.java: Javadoc additions
+	* src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java: Fuller test
+	  coverage.
+	* src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredInputStream.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Full decoding of the TDB
+	  file now.
+	* src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/EndOfFileException.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredInputStream.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java,
+	  src/uk/me/parabola/tdbfmt/Test.java,
+	  src/uk/me/parabola/tdbfmt/package.html: Initial code for the TDB
+	  file.
+	  
+	  As there are no programs that simply print the contents out, then
+	  the first task is to be able to do this so that we can check that
+	  we are producing the correct things.
+	* src/uk/me/parabola/imgfmt/fs/ImgChannel.java: javadoc
+	  clarification
+
+2007-09-22  steve
+
+	* src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestElementMap.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java:
+	  You can now set the level definitions from the command line and
+	  choose another map-features file too. --map-features=file
+	  --levels=0:24,1:22,2:20 (or you can use 0=24 etc)
+	* src/uk/me/parabola/mkgmap/ConfiguredByProperties.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/PropertyConfiguredReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java:
+	  You can now set the level definitions from the command line and
+	  choose another map-features file too. --map-features=file
+	  --levels=0:24,1:22,2:20 (or you can use 0=24 etc)
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java:
+	  Implement the selective node creation for osm5, the same as for
+	  osm4
+	* resources/feature_map.csv, resources/map-features.csv,
+	  resources/osm_garmin_map.csv,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Now have a new name for the feature map file map-features.csv
+	* resources/feature_map.csv, scripts/mk_map_table.py: Add extra
+	  column to the feature map file.
+	* resources/garmin_feature_list.csv, resources/osm_garmin_map.csv,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Now read the resolutions from the feature map file.
+
+2007-09-20  steve
+
+	* src/uk/me/parabola/mkgmap/main/CommandArgs.java: typo fix
+
+2007-09-19  steve
+
+	* src/uk/me/parabola/log/Logger.java: Logging routines more
+	  consistant.
+
+2007-09-18  steve
+
+	* src/uk/me/parabola/log/Logger.java: Logging routines more
+	  consistant.
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSM5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmXmlHandler.java: Name
+	  change for OSM --> Osm
+
+2007-09-15  steve
+
+	* src/uk/me/parabola/log/UsefulFormatter.java: The formatter must
+	  be public so that the LogManager can see it.
+	* src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java: Better lookup of
+	  features by stepping through tags and not by stepping through the
+	  list of features.
+	  
+	  Most nodes are just parts of a line. Try to prevent converting
+	  nodes that are definitly not stand alone (eg just have a
+	  created_by tag).
+	  
+	  Saves about 5%
+	* Makefile, src/uk/me/parabola/mkgmap/main/MakeTestElementMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html: Documentation
+	  and small changes.
+
+2007-09-13  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/BitWriter.java,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/log/UsefulFormatter.java,
+	  src/uk/me/parabola/mkgmap/general/LevelFilter.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestElementMap.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSM5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java: Code tidy
+	  up.
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java: Fix
+	  spelling. (Bruce Cowan)
+	* src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Made many classes package local again, now that I've recombined
+	  the OSM readers into the one package.
+	* src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/reader/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSM5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5: Remove osm5 directory and
+	  move all to the osm package.
+
+2007-09-12  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node4.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OSMXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5/Node5.java,
+	  src/uk/me/parabola/mkgmap/reader/osm5/OSM5XmlHandler.java: Got
+	  rid of Node4 and 5 as they were just the same anyway. The
+	  interface went as well.
+	* resources/garmin_feature_list.csv, resources/osm_garmin_map.csv:
+	  Extensive work-through of features from going through
+	  test-map:all-elements
+
 2007-09-11  steve
 
+	* ChangeLog, Makefile: New changelog checked in.
+	* scripts/mk_map_table.py: Change needed to create map_features
 	* resources/feature_map.csv, resources/garmin_feature_list.csv,
 	  resources/osm_garmin_map.csv: A few more features added. Basic
 	  city/town support, but can be better and use the indexed point
