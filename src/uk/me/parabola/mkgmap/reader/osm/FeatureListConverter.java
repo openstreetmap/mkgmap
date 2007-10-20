@@ -46,9 +46,11 @@ import java.util.Properties;
 class FeatureListConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(FeatureListConverter.class);
 
+	// File names
 	private static final String FEATURE_LIST_NAME = "map-features.csv";
 	private static final String OLD_FEATURE_LIST_NAME = "feature_map.csv";
 
+	// Specification of the fields in the map-features file.
 	private static final int F_FEATURE_TYPE = 0;
 	private static final int F_OSM_TYPE = 1;
 	private static final int F_OSM_SUBTYPE = 2;
@@ -60,12 +62,12 @@ class FeatureListConverter implements OsmConverter {
 
 	private static final int DEFAULT_RESOLUTION = 24;
 
+	// Maps of osm feature names to the garmin type information
 	private final Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
-
 	private final Map<String, GarminType> lineFeatures = new HashMap<String, GarminType>();
-
 	private final Map<String, GarminType> shapeFeatures = new HashMap<String, GarminType>();
 
+	// Collector for saving the created features.
 	private final MapCollector mapper;
 
 	FeatureListConverter(MapCollector collector, Properties config) {
@@ -86,6 +88,13 @@ class FeatureListConverter implements OsmConverter {
 		}
 	}
 
+	/**
+	 * Get an input stream to a map-features file.  This could have been on the
+	 * command line, in which case return an open handle to it.
+	 *
+	 * @param config Properties that may contain the name of a file to use.
+	 * @return An open stream to a map features file.
+	 */
 	private InputStream getMapFeatures(Properties config) {
 		String file = config.getProperty("map-features");
 		InputStream is;
@@ -102,10 +111,11 @@ class FeatureListConverter implements OsmConverter {
 
 		is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);
 		if (is == null) {
-			// Try the old name
+			// Try the old name, this will be removed at some point.
 			is = ClassLoader.getSystemResourceAsStream(OLD_FEATURE_LIST_NAME);
 			if (is == null)
 				throw new ExitException("Could not find feature list resource");
+			System.err.println("Warning: using old feature list file");
 		}
 		return is;
 	}
@@ -236,9 +246,14 @@ class FeatureListConverter implements OsmConverter {
 		}
 	}
 
+	/**
+	 * Create a description from the fields and put it into the features map.
+	 *
+	 * @param fields The fields from the map-features file.
+	 * @param features This is where the GarminType is put.
+	 */
 	private void saveFeature(String[] fields, Map<String, GarminType> features) {
-		String type = fields[F_OSM_TYPE];
-		String osm = makeKey(type, fields[F_OSM_SUBTYPE]);
+		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
 
 		GarminType gtype;
 		String gsubtype = fields[F_GARMIN_SUBTYPE];
