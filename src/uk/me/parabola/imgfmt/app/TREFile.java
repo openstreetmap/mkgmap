@@ -207,6 +207,7 @@ public class TREFile extends ImgFile {
 			}
 		}
 		putInt(lastRgnPos);
+		subdivSize += 4;
 
 		// Write out the pointers to the labels that hold the copyright strings
 		copyrightPos = position();
