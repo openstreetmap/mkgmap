@@ -188,7 +188,6 @@ public class TREFile extends ImgFile {
 			}
 		}
 
-		long secStart = position();
 		// Now we can write them all out.
 		for (int i = 15; i >= 0; i--) {
 			Zoom z = mapLevels[i];
