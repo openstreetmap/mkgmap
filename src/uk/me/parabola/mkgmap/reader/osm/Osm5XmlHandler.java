@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -180,5 +181,11 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	public void setConverter(FeatureListConverter converter) {
 		this.converter = converter;
+	}
+
+	public void fatalError(SAXParseException e) throws SAXException {
+		System.err.println("Error at line " + e.getLineNumber() + ", col "
+				+ e.getColumnNumber());
+		super.fatalError(e);
 	}
 }
