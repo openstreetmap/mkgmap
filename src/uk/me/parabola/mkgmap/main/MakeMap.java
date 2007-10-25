@@ -41,8 +41,15 @@ public class MakeMap  implements MapProcessor {
 	private MapEvents overview = new OverviewMapBuilder();
 
 	public void processFilename(CommandArgs args, String filename) {
-		LoadableMapDataSource src = loadFromFile(args, filename);
-		makeMap(args, src);
+		LoadableMapDataSource src;
+		try {
+			src = loadFromFile(args, filename);
+			makeMap(args, src);
+		} catch (FormatException e) {
+			System.err.println("Bad file format: " + filename);
+		} catch (FileNotFoundException e) {
+			System.err.println("Could not open file: " + filename);
+		}
 	}
 
 	public void optionOn(MapOption opt) {
@@ -122,25 +129,18 @@ public class MakeMap  implements MapProcessor {
 	 * @param args The user supplied parameters.
 	 * @param name The filename or resource name to be read.
 	 * @return A LoadableMapDataSource that will be used to construct the map.
+	 * @throws FileNotFoundException For non existing files.
+	 * @throws FormatException When the file format is not valid.
 	 */
-	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) {
-		try {
-			LoadableMapDataSource src;
-
-			src = MapReader.createMapReader(name);
-
-			// If configuration required do that now.
-			if (src instanceof ConfiguredByProperties)
-				((ConfiguredByProperties) src).config(args.getProperties());
-
-			src.load(name);
-
-			return src;
-		} catch (FileNotFoundException e) {
-			throw new ExitException("Could not open file: " + name, e);
-		} catch (FormatException e) {
-			throw new ExitException("Bad input file format", e);
-		}
+	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) throws
+			FileNotFoundException, FormatException
+	{
+		LoadableMapDataSource src;
+		src = MapReader.createMapReader(name);
+		if (src instanceof ConfiguredByProperties)
+			((ConfiguredByProperties) src).config(args.getProperties());
+		src.load(name);
+		return src;
 	}
 
 	private static class NullMapEvents implements MapEvents {
