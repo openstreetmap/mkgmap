@@ -112,8 +112,8 @@ class Block {
 	}
 
 	public void write(OutputStream stream) throws IOException {
-		byte[] body = getBody();
-		if (body != null)
-			stream.write(body);
+		byte[] b = getBody();
+		if (b != null)
+			stream.write(b);
 	}
 }

@@ -8,7 +8,8 @@
 
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
-#OSMDATA = test/osm5/cricklewood-5.osm
+#OSMDATA = 63240001.mp
+OSMDATA = test/osm5/cricklewood-5.osm
 #OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
@@ -33,8 +34,8 @@ OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
-	@# $(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main --npoints=100 $(OPTS) $(OSMDATA)
-	 java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	#java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

@@ -57,6 +57,30 @@ public class Utils {
 	}
 
 	/**
+	 * Convert from bytes to a string.  Only to be used when the character set
+	 * is ascii or latin1.
+	 *
+	 * @param buf A byte buffer to get the bytes from.  Should be ascii or latin1.
+	 * @param off The offset into buf.
+	 * @param len The length to get.
+	 * @return A string.
+	 */
+	public static String bytesToString(ByteBuffer buf, int off, int len) {
+		if (buf == null)
+			throw new IllegalArgumentException("null byte buffer provided");
+
+		byte[] bbuf = new byte[len];
+		buf.position(off);
+		buf.get(bbuf);
+		char[] cbuf = new char[len];
+		for (int i = 0; i < bbuf.length; i++) {
+			cbuf[i] = (char) bbuf[i];
+		}
+
+		return new String(cbuf);
+	}
+
+	/**
 	 * Set the creation date.  Note that the year is encoded specially.
 	 * 
 	 * @param buf The buffer to write into.  It must have been properly positioned

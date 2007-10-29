@@ -23,8 +23,10 @@ package uk.me.parabola.imgfmt;
  * @author Steve Ratcliffe
  */
 public class FileSystemParam {
-	private String mapDescription;
-	private int blockSize;
+	private String mapDescription = "Open Street Map";
+	private int blockSize = 512;
+	private int directoryStartBlock = 2;
+	private int reservedDirectoryBlocks = 202;
 
 	public String getMapDescription() {
 		return mapDescription;
@@ -40,5 +42,21 @@ public class FileSystemParam {
 
 	public void setBlockSize(int blockSize) {
 		this.blockSize = blockSize;
+	}
+
+	public int getDirectoryStartBlock() {
+		return directoryStartBlock;
+	}
+
+	public void setDirectoryStartBlock(int directoryStartBlock) {
+		this.directoryStartBlock = directoryStartBlock;
+	}
+
+	public int getReservedDirectoryBlocks() {
+		return reservedDirectoryBlocks;
+	}
+
+	public void setReservedDirectoryBlocks(int blocks) {
+		this.reservedDirectoryBlocks = blocks;
 	}
 }

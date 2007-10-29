@@ -19,9 +19,9 @@ package uk.me.parabola.imgfmt.sys;
 import uk.me.parabola.log.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Holds block numbers for a file.  It is part of the directory.  For a file
@@ -32,6 +32,8 @@ import java.util.Arrays;
  * <p>What is important here is that only part of a full block is used to
  * hold block numbers.
  *
+ * <p>The entries are 512 bytes regardless of the blocksize.
+ *
  * @author Steve Ratcliffe
  */
 class BlockTable {
@@ -39,20 +41,25 @@ class BlockTable {
 
 	// Offset of the block table in the directory entry block.
 	private static final int BLOCKS_TABLE_START = 0x20;
+	private static final int ENTRY_SIZE = 512;
 
-	private final int tableSize;
+	private static final int TABLE_SIZE = (ENTRY_SIZE - BLOCKS_TABLE_START)/2;
+	//private final int tableSize;
 
 	private int curroff;
 	private final List<char[]> blocks;
 	private char[] currTable;
 
-	BlockTable(int blockSize) {
-		this.tableSize = (blockSize - BLOCKS_TABLE_START)/2;
-
-		blocks = new ArrayList<char[]>(20);
-		newTable();
+	BlockTable() {
+		blocks = new ArrayList<char[]>(200);
 	}
 
+	/**
+	 * Write out the specified table to the given buffer.
+	 *
+	 * @param buf The buffer to write to.
+	 * @param n The number of the block table to write out.
+	 */
 	public void writeTable(ByteBuffer buf, int n) {
 		char[] cbuf = blocks.get(n);
 		log.debug("block with length", cbuf.length);
@@ -62,13 +69,29 @@ class BlockTable {
 	}
 
 	/**
+	 * Read a block table from the given buffer.  The table is added to the
+	 * list.
+	 * @param buf The buffer to read from.
+	 */
+	public void readTable(ByteBuffer buf) {
+		buf.position(BLOCKS_TABLE_START);
+		buf.limit(ENTRY_SIZE);
+
+		char[] cbuf = newTable();
+		for (int i = 0; i < cbuf.length; i++) {
+			char c = buf.getChar();
+			cbuf[i] = c;
+		}
+	}
+	
+	/**
 	 * Add the given block number to this directory.
 	 *
 	 * @param n The block number to add.
 	 */
 	public void addBlock(int n) {
 		char[] thisTable = currTable;
-		if (curroff >= tableSize)
+		if (curroff >= TABLE_SIZE  || currTable == null)
 			thisTable = newTable();
 
 		thisTable[curroff++] = (char) n;
@@ -81,10 +104,11 @@ class BlockTable {
 	 * @return The physical block number in the file system.
 	 */
 	public int physFromLogical(int lblock) {
-		int blockNum = lblock / tableSize;
-		int offset = lblock - blockNum * tableSize;
+		int blockNum = lblock / TABLE_SIZE;
+		int offset = lblock - blockNum * TABLE_SIZE;
 		if (blockNum >= blocks.size())
 			return 0xffff;
+		
 		char[] cbuf = blocks.get(blockNum);
 		return cbuf[offset];
 	}
@@ -105,13 +129,13 @@ class BlockTable {
 	 * @return Array for more numbers.
 	 */
 	private char[] newTable() {
-		char[] b = new char[tableSize];
-		Arrays.fill(b, (char) 0xffff);
+		char[] table = new char[TABLE_SIZE];
+		Arrays.fill(table, (char) 0xffff);
 
 		curroff = 0;
-		blocks.add(b);
-		currTable = b;
+		blocks.add(table);
+		currTable = table;
 
-		return b;
+		return table;
 	}
 }

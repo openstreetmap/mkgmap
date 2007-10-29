@@ -18,10 +18,11 @@ package uk.me.parabola.mkgmap.reader.plugin;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-public abstract class MapperBasedMapDataSource {
+public abstract class MapperBasedMapDataSource implements MapDataSource {
 	protected final MapDetails mapper = new MapDetails();
 
 	/**

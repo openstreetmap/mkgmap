@@ -61,7 +61,7 @@ class MapSplitter {
 	 * @param mapSource The input map data source.
 	 * @param zoom The zoom level that we need to split for.
 	 */
-	public MapSplitter(MapDataSource mapSource, Zoom zoom) {
+	MapSplitter(MapDataSource mapSource, Zoom zoom) {
 		this.mapSource = mapSource;
 		this.zoom = zoom;
 	}

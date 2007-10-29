@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
+ * Copyright (C) 2007 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -12,23 +12,23 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 02-Dec-2006
+ * Create date: 25-Oct-2007
  */
 package uk.me.parabola.imgfmt.sys;
 
-
 /**
- * Used to allocate blocks to files.
+ * This is used to allocate blocks for files in the filesystem/archive.
  *
  * @author Steve Ratcliffe
  */
 class BlockManager {
-	private int nextBlock;
+	private int currentBlock;
 	private final int blockSize;
+	private int maxBlock;
 
 	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
-		this.nextBlock = initialBlock;
+		this.currentBlock = initialBlock;
 	}
 
 	/**
@@ -38,30 +38,21 @@ class BlockManager {
 	 * @return A block number that is free to be used.
 	 */
 	public int allocate() {
-		return nextBlock++;
-	}
-
-	/**
-	 * Reserve a number of blocks.  Used mainly to make room for the directory
-	 * blocks.
-	 *
-	 * @param n Number of blocks to reserve.
-	 */
-	public void reserveBlocks(int n) {
-		nextBlock += n;
-	}
-
-	/**
-	 * Returns the next block that would be allocated if you were to call
-	 * {@link #allocate}.
-	 * @return The next block that would be allocated.
-	 */
-	public int getCurrentBlock() {
-		return nextBlock;	
+		int n = currentBlock++;
+		if (maxBlock > 0 && n > maxBlock)
+			System.err.println("Directory overflow.  Map will not work");
+		return n;
 	}
 
 	public int getBlockSize() {
 		return blockSize;
 	}
 
+	public int getMaxBlock() {
+		return maxBlock;
+	}
+
+	public void setMaxBlock(int maxBlock) {
+		this.maxBlock = maxBlock;
+	}
 }

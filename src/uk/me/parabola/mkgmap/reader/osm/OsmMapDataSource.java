@@ -94,8 +94,8 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		return new String[] {"OpenStreetMap.org contributors."};
 	}
 
-	public void config(Properties props) {
-		this.props = props;
+	public void config(Properties configProps) {
+		this.props = configProps;
 	}
 
 	Properties getConfig() {

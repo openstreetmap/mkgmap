@@ -16,14 +16,15 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 
 /**
  * An entry within a directory.  This holds its name and a list
@@ -31,17 +32,28 @@ import java.nio.channels.FileChannel;
  *
  * A directory entry may take more than block in the file system.
  *
- * All documentation seems to point to the block numbers having to be
+ * <p>All documentation seems to point to the block numbers having to be
  * contiguous, but seems strange so I shall experiment.
+ *
+ * <p>Entries are in blocks of 512 bytes, regardless of the block size.
  *
  * @author Steve Ratcliffe
  */
 class Dirent implements DirectoryEntry {
-	private static final Logger log = Logger.getLogger(Dirent.class);
+	protected static final Logger log = Logger.getLogger(Dirent.class);
 
 	// Constants.
-	private static final int MAX_FILE_LEN = 8;
-	private static final int MAX_EXT_LEN = 3;
+	static final int MAX_FILE_LEN = 8;
+	static final int MAX_EXT_LEN = 3;
+
+	// Offsets
+	static final int OFF_FILE_USED = 0x00;
+	static final int OFF_NAME = 0x01;
+	static final int OFF_EXT = 0x09;
+	static final int OFF_FILE_PART = 0x10;
+	private static final int OFF_SIZE = 0x0c;
+
+	static final int ENTRY_SIZE = 512;
 
 	// Filenames are a base+extension
 	private String name;
@@ -50,18 +62,19 @@ class Dirent implements DirectoryEntry {
 	// The file size.
 	private int size;
 
-	private int blockSize;
+	private final BlockManager blockManager;
 
 	// The block table holds all the blocks that belong to this file.  The
 	// documentation suggests that block numbers are always contiguous.
-	//private int nBlockTables;
-	//private int nblocks;
-	//private char[] blockTable;
 	private BlockTable blockTable;
 
 	private boolean special;
+	private static final int OFF_USED_FLAG = 0;
+	private boolean initialized;
 
-	Dirent(String name, int blockSize) {
+	Dirent(String name, BlockManager blockManager) {
+		this.blockManager = blockManager;
+
 		int dot;
 		dot = name.indexOf('.');
 		if (dot >= 0) {
@@ -70,22 +83,19 @@ class Dirent implements DirectoryEntry {
 		} else
 			throw new IllegalArgumentException("Filename did not have dot");
 
-		this.blockSize = blockSize;
-
-		//blockTable = new char[(blockSize - BLOCKS_TABLE_START)/2];
-		//Arrays.fill(blockTable, (char) 0xffff);
-		blockTable = new BlockTable(blockSize);
+		blockTable = new BlockTable();
 	}
 
 	/**
-	 * Write this entry out to disk.
+	 * Write this entry out to disk.  Note that these are 512 bytes, regardless
+	 * of the blocksize.
 	 *
 	 * @param file The file to write to.
 	 * @throws IOException If writing fails for any reason.
 	 */
-	void sync(FileChannel file) throws IOException {
+	void sync(ImgChannel file) throws IOException {
 		int ntables = blockTable.getNBlockTables();
-		ByteBuffer buf = ByteBuffer.allocate(blockSize * ntables);
+		ByteBuffer buf = ByteBuffer.allocate(ENTRY_SIZE * ntables);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 
 		for (int part = 0; part < ntables; part++) {
@@ -98,7 +108,7 @@ class Dirent implements DirectoryEntry {
 
 			// Size is only present in the first part
 			if (part == 0) {
-				log.debug("dirent " + name + '.' + ext + " size is going to " + size);
+				log.debug("dirent", name, '.', ext, "size is going to", size);
 				buf.putInt(size);
 			} else {
 				buf.putInt(0);
@@ -108,7 +118,7 @@ class Dirent implements DirectoryEntry {
 			buf.putChar((char) part);
 
 			// Write out the allocation of blocks for this entry.
-			buf.position(blockSize * part + 0x20);
+			buf.position(ENTRY_SIZE * part + 0x20);
 			blockTable.writeTable(buf, part);
 		}
 
@@ -135,6 +145,45 @@ class Dirent implements DirectoryEntry {
 	}
 
 	/**
+	 * The full name is of the form 8+3 with a dot in between the name and
+	 * extension.  The full name is used as the index in the directory.
+	 *
+	 * @return The full name.
+	 */
+	public String getFullName() {
+		return name + '.' + ext;
+	}
+
+	/**
+	 * Read in the block numbers from the given buffer.  If this is the first
+	 * directory block for this file, then the size is set too.
+	 *
+	 * @param buf The data as read from the file.
+	 */
+	void initBlocks(ByteBuffer buf) {
+
+		byte used = buf.get(OFF_USED_FLAG);
+		if (used != 1)
+			return;
+
+		int part = buf.getChar(OFF_FILE_PART);
+		if (part == 0 || (isSpecial() && part == 3))
+			size = buf.getInt(OFF_SIZE);
+
+		blockTable.readTable(buf);
+		initialized = true;
+	}
+
+	/**
+	 * Get the file size.
+	 *
+	 * @return The size of the file in bytes.
+	 */
+	public int getSize() {
+		return size;
+	}
+
+	/**
 	 * Set the file name.  It cannot be too long.
 	 *
 	 * @param name The file name.
@@ -158,34 +207,28 @@ class Dirent implements DirectoryEntry {
 	}
 
 	/**
-	 * Get the file size.
+	 * The number of blocks that the header covers.  The header includes
+	 * the directory for the purposes of this routine.
 	 *
-	 * @return The size of the file in bytes.
+	 * @return The total number of header basic blocks (blocks of 512 bytes).
 	 */
-	public int getSize() {
-		return size;
+	int numberHeaderBlocks() {
+		return blockTable.getNBlockTables();
 	}
 
-
 	void setSize(int size) {
-		log.debug("setting size " + getName() + getExt() + " to " + size);
+		if (log.isDebugEnabled())
+			log.debug("setting size", getName(), getExt(), "to", size);
 		this.size = size;
 	}
 
 	/**
-	 * Add a complete block and count the full size of it towards the
-	 * file size.
+	 * Add a block without increasing the size of the file.
 	 *
 	 * @param n The block number.
 	 */
-	void addFullBlock(int n) {
-		// We do not currently deal with more than one directory inode block.
-		//if (nblocks >= 240)
-		//	throw new FormatException("reached limit of file size");
-
-		//blockTable[nblocks++] = (char) n;
+	void addBlock(int n) {
 		blockTable.addBlock(n);
-		size += blockSize;
 	}
 
 	/**
@@ -198,15 +241,8 @@ class Dirent implements DirectoryEntry {
 		this.special = special;
 	}
 
-	/**
-	 * Add a block without increasing the size of the file.
-	 *
-	 * @param n The block number.
-	 */
-	void addBlock(int n) {
-		//log.debug("adding block " + n + ", at " + nblocks);
-		blockTable.addBlock(n);
-		//blockTable[nblocks++] = (char) n;
+	public boolean isSpecial() {
+		return special;
 	}
 
 	/**
@@ -217,12 +253,18 @@ class Dirent implements DirectoryEntry {
 	 * @return The corresponding physical block in the filesystem.
 	 */
 	public int getPhysicalBlock(int lblock) {
-		//if (lblock >= blockTable.length)
-		//	throw new IllegalArgumentException("can't deal with long files yet");
-		//
-		//int pblock = blockTable[lblock];
-
 		return blockTable.physFromLogical(lblock);
 	}
 
+	public BlockManager getBlockManager() {
+		return blockManager;
+	}
+
+	protected void setInitialized(boolean initialized) {
+		this.initialized = initialized;
+	}
+	
+	protected boolean isInitialized() {
+		return initialized;
+	}
 }

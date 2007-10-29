@@ -46,7 +46,7 @@ public class FileNode implements ImgChannel {
 	private final Dirent dirent;
 
 	// The position in this file
-	private int position;
+	private long position;
 
 	/**
 	 * Creates a new file in the file system.  You can treat this just like
@@ -55,16 +55,13 @@ public class FileNode implements ImgChannel {
 	 * it may be possible to implement this.
 	 *
 	 * @param file The handle to the underlying file.
-	 * @param blockManager Class to handle allocation of blocks.
 	 * @param dir The directory entry associated with this file.
 	 * @param mode The mode "rw" for read and write etc.
 	 */
-	public FileNode(FileChannel file, BlockManager blockManager,
-			Dirent dir, String mode)
+	public FileNode(FileChannel file, Dirent dir, String mode)
 	{
 		this.file = file;
 		this.dirent = dir;
-		this.blockManager = blockManager;
 
 		if (mode.indexOf('r') >= 0)
 			readable = true;
@@ -72,6 +69,8 @@ public class FileNode implements ImgChannel {
 			writeable = true;
 		if (!(readable || writeable))
 			throw new IllegalArgumentException("File must be readable or writeable");
+
+		blockManager = dir.getBlockManager();
 		if (blockManager == null)
 			throw new IllegalArgumentException("no file system supplied");
 
@@ -117,59 +116,78 @@ public class FileNode implements ImgChannel {
 
 	/**
 	 * Reads a sequence of bytes from this channel into the given buffer.
-	 * <p/>
-	 * <p> An attempt is made to read up to <i>r</i> bytes from the channel,
-	 * where <i>r</i> is the number of bytes remaining in the buffer, that is,
-	 * <tt>dst.remaining()</tt>, at the moment this method is invoked.
-	 * <p/>
-	 * <p> Suppose that a byte sequence of length <i>n</i> is read, where
-	 * <tt>0</tt>&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;<i>r</i>.
-	 * This byte sequence will be transferred into the buffer so that the first
-	 * byte in the sequence is at index <i>p</i> and the last byte is at index
-	 * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>&nbsp;<tt>-</tt>&nbsp;<tt>1</tt>,
-	 * where <i>p</i> is the buffer's position at the moment this method is
-	 * invoked.  Upon return the buffer's position will be equal to
-	 * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>; its limit will not have changed.
-	 * <p/>
-	 * <p> A read operation might not fill the buffer, and in fact it might not
-	 * read any bytes at all.  Whether or not it does so depends upon the
-	 * nature and state of the channel.  A socket channel in non-blocking mode,
-	 * for example, cannot read any more bytes than are immediately available
-	 * from the socket's input buffer; similarly, a file channel cannot read
-	 * any more bytes than remain in the file.  It is guaranteed, however, that
-	 * if a channel is in blocking mode and there is at least one byte
-	 * remaining in the buffer then this method will block until at least one
-	 * byte is read.
-	 * <p/>
-	 * <p> This method may be invoked at any time.  If another thread has
-	 * already initiated a read operation upon this channel, however, then an
-	 * invocation of this method will block until the first operation is
-	 * complete. </p>
 	 *
 	 * @param dst The buffer into which bytes are to be transferred
+	 *
 	 * @return The number of bytes read, possibly zero, or <tt>-1</tt> if the
-	 *         channel has reached end-of-stream
-	 * @throws NonReadableChannelException
-	 *                             If this channel was not opened for reading
-	 * @throws ClosedChannelException
-	 *                             If this channel is closed
-	 * @throws AsynchronousCloseException
-	 *                             If another thread closes this channel
-	 *                             while the read operation is in progress
-	 * @throws ClosedByInterruptException
-	 *                             If another thread interrupts the current thread
-	 *                             while the read operation is in progress, thereby
-	 *                             closing the channel and setting the current thread's
-	 *                             interrupt status
+	 * channel has reached end-of-stream
+	 *
+	 * @throws NonReadableChannelException If this channel was not opened for reading
+	 * @throws ClosedChannelException If this channel is closed
+	 * @throws AsynchronousCloseException If another thread closes this channel
+	 * while the read operation is in progress
+	 * @throws ClosedByInterruptException If another thread interrupts the
+	 * current thread while the read operation is in progress, thereby closing
+	 * the channel and setting the current thread's interrupt status
 	 * @throws IOException If some other I/O error occurs
 	 */
 	public int read(ByteBuffer dst) throws IOException {
-		log.error("read is not supported yet");
 		if (!open)
 			throw new ClosedChannelException();
 		if (!readable)
 			throw new NonReadableChannelException();
-		return 0;
+
+		int blockSize = blockManager.getBlockSize();
+
+		long size = dst.remaining();
+		long fileSize = dirent.getSize();
+		if (position >= fileSize)
+			return -1;
+		size = Math.min(size, fileSize - position);
+
+		int totalRead = 0;
+
+		while (size > 0) {
+			// Tet the logical block number, as we see it in our file.
+			int lblock = (int) (position / blockSize);
+
+			// Get the physical block number, the actual block number in
+			// the underlying file.
+			int pblock = dirent.getPhysicalBlock(lblock);
+			if (pblock == 0xffff) {
+				// We are at the end of the file.
+				log.debug("at eof");
+				break;
+			}
+
+			// Position the underlying file
+			int off = (int) (position - lblock*blockSize);
+			file.position((long) pblock * blockSize + off);
+
+			int n = (int) size;
+			if (n > blockSize)
+				n = blockSize;
+
+			if (off != 0)
+				n = Math.min(n, blockSize - off);
+
+
+				dst.limit(dst.position() + n);
+
+			int nr = file.read(dst);
+			if (nr == -1)
+				return -1;
+			if (nr == 0)
+				throw new IOException("Read nothing");
+
+			// Update the file positions
+			size -= nr;
+			position += nr;
+			totalRead += nr;
+		}
+
+		log.debug("read ret", totalRead);
+		return totalRead;
 	}
 
 	/**
@@ -197,8 +215,6 @@ public class FileNode implements ImgChannel {
 
 		// Get the size of this write
 		int size = src.remaining();
-		int limit = src.limit();
-		log.debug("size to write " + size + ", " + limit);
 
 		// Loop over each block, this is to support the case (which we may
 		// not implement) of non-contiguous blocks.
@@ -206,7 +222,7 @@ public class FileNode implements ImgChannel {
 		int totalWritten = 0;
 		while (size > 0) {
 			// Get the logical block, ie the block as we see it in our file.
-			int lblock = position/blockSize;
+			int lblock = (int) (position/blockSize);
 
 			// First need to allocate enough blocks for this write. First check
 			// if the block exists already
@@ -219,15 +235,15 @@ public class FileNode implements ImgChannel {
 			}
 
 			// Position the underlying file, so that it is in the correct place.
-			int off = position - lblock*blockManager.getBlockSize();
-			file.position(pblock * blockSize + off);
+			int off = (int) (position - lblock*blockSize);
+			file.position((long) pblock * blockSize + off);
 
 			int n = size;
 			if (n > blockSize)
 				n = blockSize;
 
 			if (off != 0)
-				n = blockSize - off;
+				n = Math.min(n, blockSize - off);
 
 			src.limit(src.position() + n);
 
@@ -243,19 +259,33 @@ public class FileNode implements ImgChannel {
 
 			// Update file size.
 			if (position > dirent.getSize())
-				dirent.setSize(position);
+				dirent.setSize((int) position);
 		}
 
 		return totalWritten;
 	}
 
-	public int position() {
+	public long position() {
 		return position;
 	}
 
-//	public void position(int pos) {
-//		this.position = pos;
-//	}
+	public void position(long pos) {
+		int blockSize = blockManager.getBlockSize();
+
+		while (pos > position) {
+			long lblock = position / blockSize;
+			int pblock = dirent.getPhysicalBlock((int) lblock);
+
+			if (pblock == 0xffff) {
+				log.debug("setting position allocating new block", lblock);
+				pblock = blockManager.allocate();
+				dirent.addBlock(pblock);
+			}
+			position = (lblock+1) * blockSize;
+		}
+
+		this.position = pos;
+	}
 
 	/**
 	 * Write out any unsaved data to disk.
@@ -263,6 +293,9 @@ public class FileNode implements ImgChannel {
 	 * @throws IOException If there is an error writing to disk.
 	 */
 	private void sync() throws IOException {
+		if (!writeable)
+			return;
+		
 		// Ensure that a complete block is written out.
 		int bs = blockManager.getBlockSize();
 		long rem = bs - (file.position() % bs);
@@ -276,5 +309,4 @@ public class FileNode implements ImgChannel {
 		buf.flip();
 		file.write(buf);
 	}
-
 }

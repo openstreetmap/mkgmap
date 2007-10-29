@@ -16,14 +16,16 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import java.util.Date;
-import java.util.Calendar;
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
-import java.io.IOException;
-
-import uk.me.parabola.imgfmt.Utils;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * The header at the very begining of the .img filesystem.  It has the
@@ -33,6 +35,8 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 class ImgHeader {
+	private static final Logger log = Logger.getLogger(ImgHeader.class);
+
 	// Offsets into the header.
 	private static final int OFF_XOR = 0x0;
 	private static final int OFF_UPDATE_MONTH = 0xa;
@@ -47,11 +51,11 @@ class ImgHeader {
 	private static final int OFF_CYLINDERS = 0x1c;
 
 	private static final int OFF_CREATION_YEAR = 0x39;
-//	private static final int OFF_CREATION_MONTH = 0x3b;
-//	private static final int OFF_CREATION_DAY = 0x3c;
-//	private static final int OFF_CREATION_HOUR = 0x3d;
-//	private static final int OFF_CREATION_MINUTE = 0x3e;
-//	private static final int OFF_CREATION_SECOND = 0x3f;
+	//	private static final int OFF_CREATION_MONTH = 0x3b;
+	//	private static final int OFF_CREATION_DAY = 0x3c;
+	//	private static final int OFF_CREATION_HOUR = 0x3d;
+	//	private static final int OFF_CREATION_MINUTE = 0x3e;
+	//	private static final int OFF_CREATION_SECOND = 0x3f;
 
 	// The block number where the directory starts.
 	private static final int OFF_DIRECTORY_START_BLOCK = 0x40;
@@ -66,7 +70,7 @@ class ImgHeader {
 	private static final int OFF_BLOCK_SIZE_EXPONENT2 = 0x62;
 	private static final int OFF_BLOCK_SIZE = 0x63;
 
-//	private static final int OFF_UKN_3 = 0x63;
+	//	private static final int OFF_UKN_3 = 0x63;
 
 	private static final int OFF_MAP_NAME_CONT = 0x65;
 
@@ -84,43 +88,49 @@ class ImgHeader {
 
 	private static final int OFF_PARTITION_SIG = 0x1fe;
 
-//	private static final int HEADER_SIZE = 0x600;
+	private FileSystemParam fsParams;
 
-	// Variables for this file system.
-	private int directoryStartBlock = 2;
+	private final ByteBuffer header = ByteBuffer.allocate(512);
 
-	// Block size defaults to 512.
-	private int blockSize = 512;
-
-	private final ByteBuffer header = ByteBuffer.allocateDirect(512);
-	private static final byte[] FILE_ID = new byte[]{
-			'G', 'A', 'R', 'M', 'I', 'N', '\0'};
-	private static final byte[] SIGNATURE = new byte[]{
-			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
-	private FileChannel file;
+	private ImgChannel file;
 	private Date creationTime;
 
+	// Signatures.
+	private static final byte[] FILE_ID = new byte[]{
+			'G', 'A', 'R', 'M', 'I', 'N', '\0'};
 
-	private ImgHeader() {
+	private static final byte[] SIGNATURE = new byte[]{
+			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
+
+	ImgHeader(ImgChannel chan) {
+		this.file = chan;
 		header.order(ByteOrder.LITTLE_ENDIAN);
-		createFS();
-	}
-
-	ImgHeader(FileChannel fileChannel) {
-		this();
-		this.file = fileChannel;
 	}
 
 	/**
-	 * Create a file system from scratch.
+	 * Create a header from scratch.
+	 * @param params File system parameters.
 	 */
-	private void createFS() {
+	void createHeader(FileSystemParam params) {
+		this.fsParams = params;
+
 		header.put(OFF_XOR, (byte) 0);
 
 		// Set the block size.  2^(E1+E2) where E1 is always 9.
-		int exp = getBlockExponent();
+		int exp = 9;
+
+		int bs = params.getBlockSize();
+		for (int i = 0; i < 32; i++) {
+			bs >>>= 1;
+			if (bs == 0) {
+				exp = i;
+				break;
+			}
+		}
+
 		if (exp < 9)
 			throw new IllegalArgumentException("block size too small");
+
 		header.put(OFF_BLOCK_SIZE_EXPONENT1, (byte) 0x9);
 		header.put(OFF_BLOCK_SIZE_EXPONENT2, (byte) (exp - 9));
 
@@ -131,7 +141,10 @@ class ImgHeader {
 		header.put(FILE_ID);
 
 		header.put(OFF_UNK_1, (byte) 0x2);
-		header.put(OFF_DIRECTORY_START_BLOCK, (byte) directoryStartBlock);
+
+		// Acutally this may not be the directory start block, I am guessing -
+		// always assume it is 2 anyway.
+		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartBlock());
 
 		// This secotors, heads, cylinders stuff is probably just 'unknown'
 		int sectors = 4;
@@ -146,8 +159,7 @@ class ImgHeader {
 		header.position(OFF_CREATION_YEAR);
 		Utils.setCreationTime(header, creationTime);
 
-		char blocks = (char) (heads * sectors
-				* cylinders / (1 << exp - 9));
+		char blocks = (char) (heads * sectors * cylinders / (1 << exp - 9));
 		header.putChar(OFF_BLOCK_SIZE, blocks);
 
 		header.put(OFF_PARTITION_SIG, (byte) 0x55);
@@ -161,12 +173,42 @@ class ImgHeader {
 		header.put(OFF_END_SECTOR, (byte) sectors);
 		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
 		header.putInt(OFF_REL_SECTORS, 0);
-		header.putInt(OFF_NUMBER_OF_SECTORS,
-				(blocks * (1 << (exp - 9))));
+		header.putInt(OFF_NUMBER_OF_SECTORS, (blocks * (1 << (exp - 9))));
+
+		setDirectoryStartBlock(params.getDirectoryStartBlock());
+
+		// Set the times.
+		Date date = new Date();
+		setCreationTime(date);
+		setUpdateTime(date);
+		setDescription(params.getMapDescription());
 
 		// Checksum is not checked.
 		int check = 0;
 		header.put(OFF_CHECKSUM, (byte) check);
+	}
+
+	void setHeader(ByteBuffer buf)  {
+		buf.flip();
+		header.put(buf);
+
+		byte exp1 = header.get(OFF_BLOCK_SIZE_EXPONENT1);
+		byte exp2 = header.get(OFF_BLOCK_SIZE_EXPONENT2);
+		log.debug("header exponent", exp1, exp2);
+
+		fsParams = new FileSystemParam();
+		fsParams.setBlockSize(1 << (exp1 + exp2));
+		fsParams.setDirectoryStartBlock(header.get(OFF_DIRECTORY_START_BLOCK));
+
+		// ... more to do
+	}
+
+	void setFile(ImgChannel file) {
+		this.file = file;
+	}
+	
+	FileSystemParam getParams() {
+		return fsParams;
 	}
 
 	/**
@@ -179,13 +221,14 @@ class ImgHeader {
 		header.rewind();
 		file.position(0);
 		file.write(header);
+		file.position(fsParams.getDirectoryStartBlock() * (long) 512);
 	}
 
 	/**
 	 * Set the update time.
 	 * @param date The date to use.
 	 */
-	public void setUpdateTime(Date date) {
+	protected void setUpdateTime(Date date) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 
@@ -197,7 +240,7 @@ class ImgHeader {
 	 * Set the description.  It is spread across two areas in the header.
 	 * @param desc The description.
 	 */
-	public void setDescription(String desc) {
+	protected void setDescription(String desc) {
 		header.position(OFF_MAP_DESCRIPTION);
 		int len = desc.length();
 		if (len > 50)
@@ -227,22 +270,6 @@ class ImgHeader {
 	}
 
 	/**
-	 * Get the exponent for the block size.
-	 * @return The power of two that the block size is.
-	 */
-	private int getBlockExponent() {
-		int bs = blockSize;
-		for (int i = 0; i < 32; i++) {
-			bs >>>= 1;
-			if (bs == 0)
-				return i;
-		}
-
-		// This cant really happen, as there are 32 bits in an int
-		throw new IllegalArgumentException("block size too large");
-	}
-
-	/**
 	 * Convert a string to a byte array.
 	 * @param s The string
 	 * @return A byte array.
@@ -264,9 +291,8 @@ class ImgHeader {
 		return (byte) (y - 1900);
 	}
 
-
 	public int getBlockSize() {
-		return blockSize;
+		return fsParams.getBlockSize();
 	}
 
 	/**
@@ -275,18 +301,20 @@ class ImgHeader {
 	 * @param blockSize The new block size to use.
 	 */
 	public void setBlockSize(int blockSize) {
-		this.blockSize = blockSize;
+		header.put(OFF_BLOCK_SIZE, (byte) blockSize);
+		fsParams.setBlockSize(blockSize);
 	}
 
 	public int getDirectoryStartBlock() {
-		return directoryStartBlock;
+		return fsParams.getDirectoryStartBlock();
 	}
 
-	public void setDirectoryStartBlock(int directoryStartBlock) {
-		this.directoryStartBlock = directoryStartBlock;
+	protected void setDirectoryStartBlock(int directoryStartBlock) {
+		header.put(OFF_DIRECTORY_START_BLOCK, (byte) directoryStartBlock);
+		fsParams.setDirectoryStartBlock(directoryStartBlock);
 	}
 
-	public void setCreationTime(Date date) {
+	protected void setCreationTime(Date date) {
 		this.creationTime = date;
 	}
 }

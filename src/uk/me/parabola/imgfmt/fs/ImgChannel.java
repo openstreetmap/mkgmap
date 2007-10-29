@@ -19,12 +19,13 @@ package uk.me.parabola.imgfmt.fs;
 import java.nio.channels.ByteChannel;
 
 /**
- * An extension of ByteChannel that allows us to know the position.
+ * An extension of ByteChannel that allows us to know the position.  It may
+ * evolve to have several of the methods of the FileChannel class and plays
+ * a similar role.
  * 
  * @author Steve Ratcliffe
  */
 public interface ImgChannel extends  ByteChannel {
-
 
 	/**
 	 * Get the file position. Note that this is a logical position relative
@@ -33,5 +34,12 @@ public interface ImgChannel extends  ByteChannel {
 	 *
 	 * @return The offset in bytes from the beginning of the file.
 	 */
-	public int position();
+	public long position();
+
+	/**
+	 * Set the position within the file.
+	 *
+	 * @param pos The position to set.
+	 */
+	public void position(long pos);
 }

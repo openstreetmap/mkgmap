@@ -56,7 +56,7 @@ class CommandArgs {
 
 	private final ArgumentProcessor proc;
 	private final Properties currentOptions = new Properties();
-	private Set<String> readFiles = new HashSet<String>();
+	private final Set<String> readFiles = new HashSet<String>();
 
 	CommandArgs(ArgumentProcessor proc) {
 		this.proc = proc;

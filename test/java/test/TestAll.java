@@ -14,10 +14,15 @@
  * Author: Steve Ratcliffe
  * Create date: 13-Jan-2007
  */
-package uk.me.parabola.mkgmap.main;
+package test;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.main.Main;
+import uk.me.parabola.mkgmap.main.MakeTestLang10Map;
+import uk.me.parabola.mkgmap.main.MakeTestLangMap;
+
+import java.io.IOException;
 
 /**
  * @author Steve Ratcliffe
@@ -59,6 +64,17 @@ public class TestAll {
 	};
 
 	private static void positive() {
+		try {
+			ListFile.main(new String[] {
+					"63240001.img"
+			});
+			CopyFile.main(new String[] {
+					"63240001.img"
+			});
+		} catch (IOException e) {
+			System.out.println("could not read img file");
+		}
+
 		Main.main(new String[] {
 				"--mapname=12008899",
 				"vbig.osm"

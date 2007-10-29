@@ -16,15 +16,19 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.FileExistsException;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.nio.channels.FileChannel;
-import java.io.IOException;
-
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The directory.  There is only one directory and it contains the
@@ -36,46 +40,87 @@ import uk.me.parabola.log.Logger;
 class Directory {
 	private static final Logger log = Logger.getLogger(Directory.class);
 
-	// We reserve space for the directory to allow us to write the files first.
-	// TODO Fix properly so that we don't need to reaserve up front.
-	private static final int DIRECTORY_BLOCKS = 200;
+	//private final FileChannel file;
+	private ImgChannel chan;
 
-	private final int startBlock; // The starting block for the directory.
-	private int blockSize;
-	private int nEntries;
-
-	private final FileChannel file;
+	private final BlockManager headerBlockManager;
+	private long startPos;
 
 	// The list of files themselves.
-	private final List<DirectoryEntry> entries = new ArrayList<DirectoryEntry>();
+	private final Map<String, DirectoryEntry> entries = new LinkedHashMap<String, DirectoryEntry>();
 
-	Directory(FileChannel file, BlockManager blockManager) {
-		this.file = file;
-		this.startBlock = blockManager.getCurrentBlock();
-		blockManager.reserveBlocks(DIRECTORY_BLOCKS);
+	Directory(BlockManager headerBlockManager) {
+		this.headerBlockManager = headerBlockManager;
 	}
 
 	/**
 	 * Create a new file in the directory.
 	 * 
 	 * @param name The file name.  Must be 8+3 characters.
+	 * @param blockManager To allocate blocks for the created file entry.
 	 * @return The new directory entity.
 	 * @throws FileExistsException If the entry already
 	 * exists.
 	 */
-	Dirent create(String name) throws FileExistsException {
-		for (DirectoryEntry e : entries) {
-			String name2 = e.getName() + '.' + e.getExt();
-			if (name.equals(name2)) {
-				throw new FileExistsException("File " + name + " exists");
-			}
-		}
+	Dirent create(String name, BlockManager blockManager) throws FileExistsException {
 
-		Dirent ent = new Dirent(name, blockSize);
+		// Check to see if it is already there.
+		if (entries.get(name) != null)
+			throw new FileExistsException("File " + name + " already exists");
+
+		Dirent ent;
+		if (name.equals(ImgFS.DIRECTORY_FILE_NAME)) {
+			ent = new HeaderDirent(name, blockManager);
+		} else {
+			ent = new Dirent(name, blockManager);
+		}
 		addEntry(ent);
 
 		return ent;
 	}
+
+	/**
+	 * Initialise the directory for reading the file.  The whole directory
+	 * is read in.
+	 *
+	 * @throws IOException If it cannot be read.
+	 */
+	void readInit() throws IOException {
+		assert chan != null;
+
+		ByteBuffer buf = ByteBuffer.allocate(512);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+
+		Dirent current = null;
+		chan.position(startPos);
+		while ((chan.read(buf)) > 0) {
+			buf.flip();
+
+			int used = buf.get(Dirent.OFF_FILE_USED);
+			if (used != 1)
+				continue;
+
+			String name = Utils.bytesToString(buf, Dirent.OFF_NAME, Dirent.MAX_FILE_LEN);
+			String ext = Utils.bytesToString(buf, Dirent.OFF_EXT, Dirent.MAX_EXT_LEN);
+
+			log.debug("readinit name", name, ext);
+
+			int part = buf.getChar(Dirent.OFF_FILE_PART);
+
+			if (part == 0) {
+				current = create(name + '.' + ext, headerBlockManager);
+				current.initBlocks(buf);
+			} else if (part == 3 && current == null) {
+				current = (Dirent) entries.get(ImgFS.DIRECTORY_FILE_NAME);
+				current.initBlocks(buf);
+			} else {
+				assert current != null;
+				current.initBlocks(buf);
+			}
+			buf.clear();
+		}
+	}
+
 
 	/**
 	 * Write out the directory to the file.  The file should be correctly
@@ -85,67 +130,84 @@ class Directory {
 	 * of the directory entries.
 	 */
 	public void sync() throws IOException {
-		file.position((long) startBlock * blockSize);
 
-		// We have to allocate blocks for the directory entries, we have to do
-		// this first, as one of the directory entries contains this
-		// information.
-		//int bn = startBlock;
-		//for (DirectoryEntry ent : entries) {
-		//	SysDirEntry sysent = (SysDirEntry) ent;
-		//	int n = sysent.getNBlockTables();
-		//	for (int i = 0; i < n; i++) {
-		//		specialEntry.addFullBlock(bn++);
-		//	}
-		//}
-
-		for (DirectoryEntry ent : entries) {
-			log.debug("wrting ent at " + file.position());
-			((Dirent) ent).sync(file);
+		// The first entry can't really be written until the rest of the directory is
+		// so we have to step through once to calculate the size and then again
+		// to write it out.
+		int blocks = 0;
+		for (DirectoryEntry dir : entries.values()) {
+			Dirent ent = (Dirent) dir;
+			log.debug("ent size", ent.getSize());
+			int n = ent.numberHeaderBlocks();
+			blocks += n;
 		}
+
+		// Save the current position
+		long dirPosition = chan.position();
+
+		int blockSize = headerBlockManager.getBlockSize();
+
+		int forHeader = (blocks + (Dirent.ENTRY_SIZE - 1)) / Dirent.ENTRY_SIZE;
+		log.debug("header blocks needed", forHeader);
+
+		// Write the blocks that will will contain the header blocks.
+
+		// Now fill in to the end of the reserved blocks
+		long end = (long) blockSize * headerBlockManager.getMaxBlock() - 1;
+		chan.position(end);
+		ByteBuffer buf = ByteBuffer.allocate(1);
+		buf.put((byte) 0);
+		buf.flip();
+		chan.write(buf);
+
+		chan.position(dirPosition + (long) forHeader * Dirent.ENTRY_SIZE);
+
+		for (DirectoryEntry dir : entries.values()) {
+			Dirent ent = (Dirent) dir;
+
+			if (!ent.isSpecial()) {
+				log.debug("wrting ", dir.getFullName(), " at ", chan.position());
+				log.debug("ent size", ent.getSize());
+				ent.sync(chan);
+			}
+		}
+
+		// Now go back and write in the directory entry for the header.
+		chan.position(dirPosition);
+		Dirent ent = (Dirent) entries.values().iterator().next();
+		log.debug("ent header size", ent.getSize());
+		ent.sync(chan);
+
 	}
 
 	/**
-	 * Set the block size.
-	 * @param size The size which must be a power of two.
+	 * Get the entries. Used for listing the directory.
+	 *
+	 * @return A list of the directory entries.  They will be in the same
+	 * order as in the file.
 	 */
-	public void setBlockSize(int size) {
-		blockSize = size;
+	public List<DirectoryEntry> getEntries() {
+		return new ArrayList<DirectoryEntry>(entries.values());
 	}
 
 	/**
-	 * Initialise the directory.
-	 */
-	public void init() {
-
-		// There is a special entry in the directory that covers the whole
-		// of the header and the directory itself.  We have to allocate it
-		// and make it cover the right part of the file.
-		Dirent ent = new Dirent("        .   ", blockSize);
-
-		// Add blocks for the header before the directory.
-		for (int i = 0; i < startBlock; i++)
-			ent.addFullBlock(i);
-
-		// We also reserve a number of blocks for the directory entries.
-		for (int i = 0; i < DIRECTORY_BLOCKS; i++)
-			ent.addFullBlock(startBlock + i);
-
-		ent.setSpecial(true);
-
-		// Add it to this directory.
-		addEntry(ent);
-	}
-
-	/**
-	 * Add an entry to the directory. This updates the header block allocation
-	 * too.
+	 * Add an entry to the directory.
 	 *
 	 * @param ent The entry to add.
 	 */
 	private void addEntry(DirectoryEntry ent) {
-		nEntries++;
+		entries.put(ent.getFullName(), ent);
+	}
 
-		entries.add(ent);
+	public void setFile(ImgChannel chan) {
+		this.chan = chan;
+	}
+
+	public void setStartPos(long startPos) {
+		this.startPos = startPos;
+	}
+
+	public DirectoryEntry lookup(String name) {
+		return entries.get(name);
 	}
 }

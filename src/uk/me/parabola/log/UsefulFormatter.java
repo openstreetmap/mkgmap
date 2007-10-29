@@ -78,11 +78,11 @@ public class UsefulFormatter extends Formatter {
 	}
 
 	private String fmt2(int i) {
-		String res = String.valueOf(i);
+		StringBuffer res = new StringBuffer(String.valueOf(i));
 		while (res.length() < 2) {
-			res = '0' + res;
+			res.insert(0, '0');
 		}
-		return res;
+		return res.toString();
 	}
 
 	private String shortName(String name) {

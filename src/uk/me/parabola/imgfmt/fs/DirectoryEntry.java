@@ -28,17 +28,24 @@ public interface DirectoryEntry {
 	 * Get the file name.
 	 * @return The file name.
 	 */
-	String getName();
+	public String getName();
 
 	/**
 	 * Get the file extension.
 	 * @return The file extension.
 	 */
-	String getExt();
+	public String getExt();
+
+	/**
+	 * Get the full name.  That is name + extension.
+	 *
+	 * @return The full name as NAME.EXT
+	 */
+	public String getFullName();
 
 	/**
 	 * Get the file size.
 	 * @return The size of the file in bytes.
 	 */
-	int getSize();
+	public int getSize();
 }

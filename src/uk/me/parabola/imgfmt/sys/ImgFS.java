@@ -16,21 +16,21 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.log.Logger;
-
-import java.io.RandomAccessFile;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.nio.channels.FileChannel;
-
-import uk.me.parabola.imgfmt.fs.FileSystem;
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -42,11 +42,14 @@ import uk.me.parabola.imgfmt.FileNotWritableException;
 public class ImgFS implements FileSystem {
 	private static final Logger log = Logger.getLogger(ImgFS.class);
 
-	private int blockSize = 512;
+	// The directory is just like any other file, but with a name of 8+3 spaces
+	static final String DIRECTORY_FILE_NAME = "        .   ";
 
-	private FileChannel file;
+	// This is the read or write channel to the real file system.
+	private final FileChannel file;
+	private boolean readOnly = true;
 
-	// A file system consists of a header, a directory and a data area.
+	// The header contains general information.
 	private ImgHeader header;
 
 	// There is only one directory that holds all filename and block allocation
@@ -54,90 +57,92 @@ public class ImgFS implements FileSystem {
 	private Directory directory;
 
 	// The filesystem is responsible for allocating blocks
-	private BlockManager blockManager;
+	private BlockManager fileBlockManager;
+	private static final long BASIC_BLOCK_SIZE = (long) 512;
+
+	/**
+	 * Private constructor, use the static {@link #createFs} and {@link #openFs}
+	 * routines to make a filesystem.
+	 *
+	 * @param chan The open file.
+	 */
+	private ImgFS(FileChannel chan) {
+		file = chan;
+	}
 
 	/**
 	 * Create an IMG file from its external filesystem name and optionally some
 	 * parameters.
 	 *
-	 * @param filename The filename eg 'gmapsupp.img'
-	 * @param params File system parameters.  Can be null.
-	 * @throws FileNotWritableException If the file can not
-	 * be written to.
+	 * @param filename The name of the file to be created.
+	 * @param params File system parameters.  Can not be null.
+	 * @throws FileNotWritableException If the file can not be written to.
 	 */
-	public ImgFS(String filename, FileSystemParam params)
-			throws FileNotWritableException
-	{
-		log.info("Creating file system");
+	public static FileSystem createFs(String filename, FileSystemParam params) throws FileNotWritableException {
 		RandomAccessFile rafile  ;
 		try {
 			rafile = new RandomAccessFile(filename, "rw");
+			return createFs(rafile.getChannel(), params);
 		} catch (FileNotFoundException e) {
 			throw new FileNotWritableException("Could not create file", e);
 		}
+	}
+
+	private static FileSystem createFs(FileChannel chan, FileSystemParam params)
+			throws FileNotWritableException
+	{
+		assert params != null;
+
+		// Truncate the file, because extra bytes beyond the end make for a
+		// map that doesn't work on the GPS (although its likely to work in
+		// other software viewers).
 		try {
-			// Set length to zero because if you don't you can get a
-			// map that doesn't work.  Not clear why.
-			rafile.setLength(0);
+			chan.truncate(0);
 		} catch (IOException e) {
-			// It doesn't matter that much.
-			log.warn("Could not set file length to zero");
+			throw new FileNotWritableException("Failed to truncate file", e);
 		}
 
-		file = rafile.getChannel();
+		ImgFS fs = new ImgFS(chan);
+		fs.createInitFS(chan, params);
 
-		header = new ImgHeader(file);
-		header.setDirectoryStartBlock(2); // could be from params
-
-		// Set the times.
-		Date date = new Date();
-		header.setCreationTime(date);
-		header.setUpdateTime(date);
-
-		// The block manager allocates blocks for files.
-		blockManager = new BlockManager(blockSize,
-				header.getDirectoryStartBlock());
-
-		directory = new Directory(file, blockManager);
-
-		if (params != null)
-			setParams(params);
-
-		// Initialise the directory.
-		directory.init();
+		return fs;
 	}
 
-
 	/**
-	 * Set various parameters of the file system.  Anything that
-	 * has not been set in <tt>params</tt> (ie is zero or null)
-	 * will not have any effect.
-	 *
-	 * @param params A set of parameters.
+	 * Open an existing IMG file system.
+	 * @param name The file name to open.
+	 * @return A File system that can be used lookup the internal files.
+	 * @throws FileNotFoundException When the file doesn't exist or can't be
+	 * read.
 	 */
-	private void setParams(FileSystemParam params) {
-		int bs = params.getBlockSize();
-		if (bs > 0) {
-			blockSize = bs;
-			header.setBlockSize(bs);
-			directory.setBlockSize(bs);
+	public static FileSystem openFs(String name) throws FileNotFoundException {
+		RandomAccessFile rafile  ;
+		rafile = new RandomAccessFile(name, "r");
+		return openFs(rafile.getChannel());
+	}
+
+	private static FileSystem openFs(FileChannel chan) throws FileNotFoundException {
+		ImgFS fs = new ImgFS(chan);
+
+		try {
+			fs.readInitFS(chan);
+		} catch (IOException e) {
+			throw new FileNotFoundException("Failed to read header");
 		}
 
-		String mapdesc = params.getMapDescription();
-		if (mapdesc != null)
-			header.setDescription(mapdesc);
+		return fs;
 	}
 
 	/**
-	 * Create a new file it must not allready exist.
+	 * Create a new file, it must not allready exist.
 	 *
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
 	 */
 	public ImgChannel create(String name) throws FileExistsException {
-		Dirent dir = directory.create(name);
+		Dirent dir = directory.create(name, fileBlockManager);
 
-		FileNode f = new FileNode(file, blockManager, dir, "w");
+		FileNode f = new FileNode(file, dir, "w");
 		return f;
 	}
 
@@ -155,12 +160,28 @@ public class ImgFS implements FileSystem {
 		if (name == null || mode == null)
 			throw new IllegalArgumentException("null argument");
 
-		// Its wrong to do this as this routine should not throw an exception
-		// when the file exists.  Needs lookup().
-//		if (mode.indexOf('w') >= 0)
-//			return create(name);
+		if (mode.indexOf('r') >= 0) {
+			Dirent ent = internalLookup(name);
+			FileNode f = new FileNode(file, ent, "r");
 
-		throw new FileNotFoundException("File not found because it isn't implemented yet");
+			return f;
+		} else if (mode.indexOf('w') >= 0) {
+			Dirent ent;
+			try {
+				ent = internalLookup(name);
+			} catch (FileNotFoundException e) {
+				try {
+					ent = directory.create(name, fileBlockManager);
+				} catch (FileExistsException e1) {
+					// This shouldn't happen as we have just checked.
+					throw new FileNotFoundException("Attempt to duplicate a file name");
+				}
+			}
+			FileNode f = new FileNode(file, ent, "w");
+			return f;
+		} else {
+			throw new IllegalArgumentException("Invalid mode given");
+		}
 	}
 
 	/**
@@ -168,23 +189,20 @@ public class ImgFS implements FileSystem {
 	 *
 	 * @param name The filename to look up.
 	 * @return A directory entry.
-	 * @throws IOException If an error occurs reading the directory.
+	 * @throws FileNotFoundException If an error occurs looking for the file,
+	 * including it not existing.
 	 */
-	public DirectoryEntry lookup(String name) throws IOException {
-		if (name == null)
-			throw new IllegalArgumentException("null name argument");
-
-		throw new IOException("not implemented");
+	public DirectoryEntry lookup(String name) throws FileNotFoundException {
+		return internalLookup(name);
 	}
 
 	/**
 	 * List all the files in the directory.
 	 *
 	 * @return A List of directory entries.
-	 * @throws IOException If an error occurs reading the directory.
 	 */
-	public List<DirectoryEntry> list() throws IOException {
-		throw new IOException("not implemented yet");
+	public List<DirectoryEntry> list()  {
+		return directory.getEntries();
 	}
 
 	/**
@@ -194,9 +212,10 @@ public class ImgFS implements FileSystem {
 	 * @throws IOException If an error occurs during the write.
 	 */
 	public void sync() throws IOException {
-		header.sync();
+		if (readOnly)
+			return;
 
-		file.position((long) header.getDirectoryStartBlock() * header.getBlockSize());
+		header.sync();
 		directory.sync();
 	}
 
@@ -205,10 +224,105 @@ public class ImgFS implements FileSystem {
 	 * to explicitly sync the data out first, to be sure that it has worked.
 	 */
 	public void close() {
+
 		try {
 			sync();
 		} catch (IOException e) {
 			log.debug("could not sync filesystem");
+		} finally {
+			try {
+				file.close();
+			} catch (IOException e) {
+				log.warn("Could not close file");
+			}
 		}
 	}
+
+	/**
+	 * Set up and ImgFS that has just been created.
+	 *
+	 * @param chan The real underlying file to write to.
+	 * @param params The file system parameters.
+	 * @throws FileNotWritableException If the file cannot be written for any
+	 * reason.
+	 */
+	private void createInitFS(FileChannel chan, FileSystemParam params) throws FileNotWritableException {
+		readOnly = false;
+
+		// The block manager allocates blocks for files.
+		BlockManager headerBlockManager = new BlockManager(params.getBlockSize(), 0);
+		headerBlockManager.setMaxBlock(params.getReservedDirectoryBlocks());
+
+		// This bit is tricky.  We want to use a regular ImgChannel to write
+		// to the header and directory, but to create one normally would involve
+		// it already existing, so it is created by hand.
+		try {
+			directory = new Directory(headerBlockManager);
+
+			Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
+			ent.setSpecial(true);
+			ent.setInitialized(true);
+
+			FileNode f = new FileNode(chan, ent, "w");
+
+			directory.setFile(f);
+			header = new ImgHeader(f);
+			header.createHeader(params);
+		} catch (FileExistsException e) {
+			throw new FileNotWritableException("Could not create img file directory", e);
+		}
+
+		fileBlockManager = new BlockManager(params.getBlockSize(), params.getReservedDirectoryBlocks());
+
+		assert directory != null && header != null;
+	}
+
+	/**
+	 * Initialise a filesystem that is going to be read from.  We need to read
+	 * in the header including directory.
+	 *
+	 * @param chan The file channel to read from.
+	 * @throws IOException If the file cannot be read.
+	 */
+	private void readInitFS(FileChannel chan) throws IOException {
+		ByteBuffer headerBuf = ByteBuffer.allocate(512);
+		headerBuf.order(ByteOrder.LITTLE_ENDIAN);
+		chan.read(headerBuf);
+
+		header = new ImgHeader(null);
+		header.setHeader(headerBuf);
+		FileSystemParam params = header.getParams();
+
+		BlockManager headerBlockManager = new BlockManager(params.getBlockSize(), 0);
+		headerBlockManager.setMaxBlock(params.getReservedDirectoryBlocks());
+
+		directory = new Directory(headerBlockManager);
+		directory.setStartPos(params.getDirectoryStartBlock() * BASIC_BLOCK_SIZE);
+
+		Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
+		FileNode f = new FileNode(chan, ent, "r");
+
+		header.setFile(f);
+		directory.setFile(f);
+		directory.readInit();
+	}
+
+	/**
+	 * Lookup the file and return a directory entry for it.
+	 *
+	 * @param name The filename to look up.
+	 * @return A directory entry.
+	 * @throws FileNotFoundException If an error occurs reading the directory.
+	 */
+	private Dirent internalLookup(String name) throws FileNotFoundException {
+		if (name == null)
+			throw new IllegalArgumentException("null name argument");
+
+		Dirent ent = (Dirent) directory.lookup(name);
+		if (ent == null)
+			throw new FileNotFoundException(name + " not found");
+
+		return ent;
+	}
+
 }
