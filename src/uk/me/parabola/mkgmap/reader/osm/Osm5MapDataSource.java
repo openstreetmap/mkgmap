@@ -16,16 +16,19 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import org.xml.sax.SAXException;
-import uk.me.parabola.imgfmt.FormatException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+
+import uk.me.parabola.imgfmt.FormatException;
+
+import org.xml.sax.SAXException;
 
 
 /**
@@ -40,9 +43,9 @@ import java.io.IOException;
 public class Osm5MapDataSource extends OsmMapDataSource {
 
 	public boolean isFileSupported(String name) {
-		FileReader r = null;
+		Reader r = null;
 		try {
-			r = new FileReader(name);
+			r = new InputStreamReader(openFile(name));
 			char[] buf = new char[1025];
 			r.read(buf);
 			String s = new String(buf);
@@ -75,7 +78,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 	 */
 	public void load(String name) throws FileNotFoundException, FormatException {
 		try {
-			FileInputStream is = new FileInputStream(name);
+			InputStream is = openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			SAXParser parser = parserFactory.newSAXParser();
 

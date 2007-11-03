@@ -16,6 +16,14 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -26,13 +34,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -67,7 +68,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
-		if (name.endsWith(".mp"))
+		if (name.endsWith(".mp") || name.endsWith(".mp.gz"))
 			return true;
 
 		return false;
@@ -80,7 +81,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @throws FileNotFoundException If the file does not exist.
 	 */
 	public void load(String name) throws FileNotFoundException, FormatException {
-		BufferedReader in = new BufferedReader(new FileReader(name));
+		Reader reader = new InputStreamReader(openFile(name));
+		BufferedReader in = new BufferedReader(reader);
 		String line;
 		try {
 			while ((line = in.readLine()) != null) {

@@ -16,6 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.plugin;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.mkgmap.general.MapDataSource;
@@ -23,8 +30,6 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.List;
 
 /**
  * A convenient base class for all map data that is based on the MapDetails
@@ -74,5 +79,24 @@ public abstract class MapperBasedMapDataSource implements MapDataSource {
 
 	public List<MapPoint> getPoints() {
 		return mapper.getPoints();
+	}
+
+	/**
+	 * Open a file and apply filters necessary to reading it such as decompression.
+	 *
+	 * @param name The file to open.
+	 * @return A stream that will read the file, positioned at the beginning.
+	 * @throws FileNotFoundException If the file cannot be opened for any reason.
+	 */
+	protected InputStream openFile(String name) throws FileNotFoundException {
+		InputStream is = new FileInputStream(name);
+		if (name.endsWith(".gz")) {
+			try {
+				is = new GZIPInputStream(is);
+			} catch (IOException e) {
+				throw new FileNotFoundException( "Could not read as compressed file");
+			}
+		}
+		return is;
 	}
 }
