@@ -43,8 +43,8 @@ public class MapReader {
 
 		loaders.add(ElementTestDataSource.class);
 		loaders.add(PolishMapDataSource.class);
-		loaders.add(Osm5MapDataSource.class);
 		loaders.add(Osm4MapDataSource.class);
+		loaders.add(Osm5MapDataSource.class);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class MapReader {
 		}
 
 		if (src == null)
-			src = new Osm4MapDataSource();
+			src = new Osm5MapDataSource();
 
 		return src;
 	}

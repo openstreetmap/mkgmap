@@ -19,8 +19,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -43,31 +41,9 @@ import org.xml.sax.SAXException;
 public class Osm5MapDataSource extends OsmMapDataSource {
 
 	public boolean isFileSupported(String name) {
-		Reader r = null;
-		try {
-			r = new InputStreamReader(openFile(name));
-			char[] buf = new char[1025];
-			r.read(buf);
-			String s = new String(buf);
-            if (!s.startsWith("<?xml"))
-                return false;
-            if (!s.contains("<osm"))
-                return false;
-			if (s.contains("version='0.5'") || s.contains("version=\"0.5\""))
-				return true;
-			return false;
-		} catch (FileNotFoundException e) {
-			return false;
-		} catch (IOException e) {
-			return false;
-		} finally {
-            try {
-                if (r != null)
-                    r.close();
-            } catch (IOException e) {
-                // go away.
-			}
-		}
+		// This is the default format so say supported if we get this far,
+		// this one must always be last for this reason.
+		return true;
 	}
 
 	/**
