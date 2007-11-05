@@ -21,6 +21,8 @@ import uk.me.parabola.log.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A copyright block consists of a number of copyright segments.
@@ -31,6 +33,7 @@ class CopyrightBlock {
 	private static final Logger log = Logger.getLogger(CopyrightBlock.class);
 	
 	private final List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
+	private Set<CopyrightSegment> copySet = new HashSet<CopyrightSegment>();
 
 	CopyrightBlock() {
 	}
@@ -52,7 +55,12 @@ class CopyrightBlock {
 		}
 	}
 
+	/**
+	 * Add a copyright segment.  We only add unique ones.
+	 * @param seg The copyright segment to add.
+	 */
 	public void addSegment(CopyrightSegment seg) {
-		segments.add(seg);
+		if (copySet.add(seg))
+			segments.add(seg);
 	}
 }

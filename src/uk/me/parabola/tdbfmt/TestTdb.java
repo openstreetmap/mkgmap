@@ -28,10 +28,10 @@ public class TestTdb {
 
 	public static void main(String[] args) throws IOException {
 
-		Logger.resetLogging("test/log/log.all");
+		Logger.resetLogging("localtest/log/log.all");
 		TdbFile tdb = TdbFile.read(args[0]);
 		log.debug(tdb);
 
-		tdb.write("test.tdb");
+		//tdb.write("test.tdb");
 	}
 }

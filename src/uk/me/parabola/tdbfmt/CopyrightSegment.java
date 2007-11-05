@@ -45,10 +45,10 @@ class CopyrightSegment {
 	 * contaied in this segment.
 	 * The field {@link #extraProperties} can be used too as extra information.
 	 */
-	private byte copyrightCode;
-	private byte whereCode;
-	private short extraProperties;
-	private String copyright;
+	private final byte copyrightCode;
+	private final byte whereCode;
+	private final short extraProperties;
+	private final String copyright;
 
 	CopyrightSegment(StructuredInputStream ds) throws IOException {
 		copyrightCode = (byte) ds.read();
@@ -61,6 +61,7 @@ class CopyrightSegment {
 		this.copyrightCode = (byte) code;
 		this.whereCode = (byte) where;
 		this.copyright = msg;
+		this.extraProperties = 0;
 	}
 
 	public void write(Block block) throws IOException {
@@ -81,5 +82,28 @@ class CopyrightSegment {
 				+ ": "
 				+ copyright
 				;
+	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		CopyrightSegment that = (CopyrightSegment) o;
+
+		if (copyrightCode != that.copyrightCode) return false;
+		if (extraProperties != that.extraProperties) return false;
+		if (whereCode != that.whereCode) return false;
+		if (!copyright.equals(that.copyright)) return false;
+
+		return true;
+	}
+
+	public int hashCode() {
+		int result;
+		result = (int) copyrightCode;
+		result = 31 * result + (int) whereCode;
+		result = 31 * result + (int) extraProperties;
+		result = 31 * result + copyright.hashCode();
+		return result;
 	}
 }
