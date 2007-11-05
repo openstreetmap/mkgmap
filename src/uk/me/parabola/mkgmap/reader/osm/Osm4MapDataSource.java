@@ -55,8 +55,14 @@ public class Osm4MapDataSource extends OsmMapDataSource {
                 return false;
             if (!s.contains("<osm"))
                 return false;
-			if (s.contains("version='0.4'") || s.contains("version=\"0.4\""))
+			if (s.contains("version='0.4'")
+					|| s.contains("version=\"0.4\"")
+					|| s.contains("version=\"0.3\"")
+					|| s.contains("version='0.3'")
+					)
+			{
 				return true;
+			}
 			return false;
 		} catch (FileNotFoundException e) {
 			return false;

@@ -1,5 +1,92 @@
+2007-11-04  steve
+
+	* doc, test: Add some ignores
+
+2007-11-03  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java: OSM api
+	  v0.5 is now the default format. 0.4 is still supported and
+	  detected automatically so there is not much difference.
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Allow reading from zip compressed files. This is done by file
+	  extension and not the actual type of file.
+	* .: Initialized merge tracking via "svnmerge" with revisions
+	  "1-343" from https://svn.parabola.me.uk/svn/mkgmap/branches/lang
+
+2007-11-02  steve
+
+	* src/uk/me/parabola/imgfmt/app/TYPFile.java: Skeleton code added
+
+2007-10-29  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/FileSystemParam.java,
+	  src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/fs/DirectoryEntry.java,
+	  src/uk/me/parabola/imgfmt/fs/FileSystem.java,
+	  src/uk/me/parabola/imgfmt/fs/ImgChannel.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockTable.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/imgfmt/sys/HeaderDirent.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/log/UsefulFormatter.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/TestAll.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/tdbfmt/Block.java, test, test/java,
+	  test/java/test: Merged in the img file reading support. The
+	  underlying img read code (at the imgfmt.sys level) has been
+	  heavily changed, so watch out. Appears to give the same result
+	  files as before though.
+	  
+	  In addition to read support, you should find that blocksizes
+	  other than 512 now actually work.
+	  
+	  Combining .img files into a gmapsupp.img file is now possible,
+	  although not implemented just yet.
+
+2007-10-25  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: Add
+	  line number and column number on parser errors.
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java: Now that we can have
+	  more than one file on the command line, we should deal with
+	  errors in induvidual files and then go on to the next. (bug
+	  reported by User:Lambertus)
+
+2007-10-21  steve
+
+	* src/uk/me/parabola/mkgmap/general/MapBuilder.java: Was adding one
+	  instead of subtracting when making the number of bits for the top
+	  invible level.
+	  
+	  Thanks to Petr Schönmann for pointing this out
+
+2007-10-20  steve
+
+	* src/uk/me/parabola/imgfmt/app/TREFile.java: Removed unused
+	  statement.
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Add more comments.
+	* src/uk/me/parabola/imgfmt/app/TREFile.java: Account for the size
+	  of the final RGN pointer, so that the TRE section size is
+	  correct.
+
 2007-10-18  steve
 
+	* ChangeLog, Makefile: Update changelog file.
 	* src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java: Remove
 	  deprecated tag, its more just unused.
 	* src/uk/me/parabola/imgfmt/app/TREFile.java,
