@@ -40,7 +40,7 @@ makemap:
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
-	imgdecode gmapsupp.img
+	#imgdecode gmapsupp.img
 
 load:
 	sleep 2

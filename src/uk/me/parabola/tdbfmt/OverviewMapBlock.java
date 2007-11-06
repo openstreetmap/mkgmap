@@ -89,10 +89,10 @@ public class OverviewMapBlock {
 	}
 
 	public void setArea(Area bounds) {
-		minLat = bounds.getMinLat();
-		minLong = bounds.getMinLong();
-		maxLat = bounds.getMaxLat();
-		maxLong = bounds.getMaxLong();
+		minLat = bounds.getMinLat() << 8;
+		minLong = bounds.getMinLong() << 8;
+		maxLat = bounds.getMaxLat() << 8;
+		maxLong = bounds.getMaxLong() << 8;
 	}
 
 	public void setDescription(String description) {

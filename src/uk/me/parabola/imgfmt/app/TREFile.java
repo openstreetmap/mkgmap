@@ -199,10 +199,10 @@ public class TREFile extends ImgFile {
 				Subdivision sd = it.next();
 				
 				sd.write(this);
-				if (i == 0)
-					subdivSize += SUBDIV_REC_SIZE;
-				else
+				if (sd.hasNextLevel())
 					subdivSize += SUBDIV_REC_SIZE2;
+				else
+					subdivSize += SUBDIV_REC_SIZE;
 			}
 		}
 		putInt(lastRgnPos);
@@ -258,10 +258,10 @@ public class TREFile extends ImgFile {
 
 		putInt(0);
 
-		put(poiDisplayFlags);
+		put((byte) 0xd);
 
 		put3(0x19);
-		putInt(0xd0401);
+		putInt(0x40101);
 
 		putChar((char) 1);
 		put((byte) 0);

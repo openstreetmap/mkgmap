@@ -320,6 +320,10 @@ public class Subdivision {
 		return divisions.get(0).getNumber();
 	}
 
+	public boolean hasNextLevel() {
+		return !divisions.isEmpty();
+	}
+
 	public void startDivision() {
 		rgnFile.startDivision(this);
 	}
