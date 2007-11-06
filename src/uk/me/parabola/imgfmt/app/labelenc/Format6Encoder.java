@@ -143,6 +143,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 				put6(buf, off++, c - 'A' + 1);
 			} else if (c >= '0' && c <= '9') {
 				put6(buf, off++, c - '0' + 0x20);
+			} else if (c >= 0x1d && c <= 0x1f) {
+				put6(buf, off++, c);
 			} else {
 				int ind = "@!\"#$%&'()*+,-./".indexOf(c);
 				if (ind >= 0) {
