@@ -258,10 +258,10 @@ public class TREFile extends ImgFile {
 
 		putInt(0);
 
-		put((byte) 0xd);
+		put(poiDisplayFlags);
 
 		put3(0x19);
-		putInt(0x40101);
+		putInt(0xd0401);
 
 		putChar((char) 1);
 		put((byte) 0);
