@@ -60,6 +60,9 @@ public class OverviewMapBuilder implements MapEvents {
 			tdb.addCopyright(c);
 		}
 
+		String cw = "Coverted by mkgmap";
+		tdb.addCopyright(cw);
+
 		long lblsize = map.getLblFile().position();
 		long tresize = map.getTreFile().position();
 		long rgnsize = map.getRgnFile().position();
@@ -87,7 +90,7 @@ public class OverviewMapBuilder implements MapEvents {
 	public void onFinish() {
 		log.debug("finishing overview");
 
-		String overviewMapname = "63240000";
+		String overviewMapname = "6324";
 
 		tdb.setOverview(overviewMapname, overviewSource.getBounds());
 

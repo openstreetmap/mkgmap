@@ -86,7 +86,7 @@ public class TdbFile {
 	 */
 	public void addCopyright(String msg) {
 		CopyrightSegment seg  ;
-		seg = new CopyrightSegment(0, 3, msg);
+		seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
 		copyrightBlock.addSegment(seg);
 	}
 

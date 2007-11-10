@@ -81,11 +81,15 @@ public class OverviewMapBlock {
 				+ ", parent="
 				+ parentMapNumber
 				+ " covers "
-				+ '(' + minLat + ',' + minLong + ')'
-				+ '(' + maxLat + ',' + maxLong + ')'
+				+ '(' + toDegrees(minLat) + ',' + toDegrees(minLong) + ')'
+				+ '(' + toDegrees(maxLat) + ',' + toDegrees(maxLong) + ')'
 				+ " : "
 				+ description
 				;
+	}
+
+	private double toDegrees(int tdbunits) {
+		return (double) tdbunits * 360 / Math.pow(2, 32);
 	}
 
 	public void setArea(Area bounds) {

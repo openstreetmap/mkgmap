@@ -9,7 +9,7 @@
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = 63240001.mp
-#OSMDATA = test/osm5/cricklewood-5.osm
+OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
@@ -20,11 +20,12 @@ OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
-OSMDATA = /opt/data/multi/6324*
+#OSMDATA = /opt/data/multi/6324*
 #OSMDATA = test/osm5/srtm.osm
 #OSMDATA = --levels=0:24,1:23,2:22,3:21,4:20,5:19,6:18,7:17 /opt/data/planet-070207-gb-london.osm
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
 #OSMDATA = /opt/data/osmworld/63260003
+OSMDATA = --overview-name=6324 ~/tmp/batch/*.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
@@ -40,7 +41,7 @@ makemap:
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
-	#imgdecode gmapsupp.img
+	imgdecode gmapsupp.img
 
 load:
 	sleep 2
