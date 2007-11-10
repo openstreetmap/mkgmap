@@ -22,7 +22,6 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -184,15 +183,24 @@ class Dirent implements DirectoryEntry {
 	}
 
 	/**
-	 * Set the file name.  It cannot be too long.
+	 * Set the file name.  The name should be exactly eight characters long
+	 * and it is truncated or left padded with zeros to make this true.
 	 *
 	 * @param name The file name.
 	 */
 	private void setName(String name) {
-		if (name.length() != MAX_FILE_LEN)
-			throw new IllegalArgumentException("File name is wrong size "
-			+ "was " + name.length() + ", should be " + MAX_FILE_LEN);
-		this.name = name;
+		int len = name.length();
+		if (len > MAX_FILE_LEN) {
+			this.name = name.substring(0, 8);
+		} else if (len < MAX_FILE_LEN) {
+			StringBuffer sb = new StringBuffer();
+			for (int i = 0; i < MAX_FILE_LEN - len; i++) {
+				sb.append('0');
+			}
+			sb.append(name);
+			this.name = sb.toString();
+		} else
+			this.name = name;
 	}
 
 	/**
