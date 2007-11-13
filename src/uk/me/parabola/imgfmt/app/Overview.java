@@ -33,15 +33,18 @@ public abstract class Overview implements Comparable<Overview> {
 	private final int kind; // The kind of overview; point, line etc.
 	private final char type;
 	private final char subType;
-
-	private byte maxLevel = 7; // XXX what to do with this?
-
+	private final int minResolution;
 	private final int size;
 
-	protected Overview(int kind, int type, int subType) {
+	private int maxLevel;
+
+	protected Overview(int kind, int fullType, int minres) {
 		this.kind = kind;
-		this.type = (char) (type & 0xff);
-		this.subType = (char) (subType & 0xff);
+
+		this.type = (char) ((fullType >> 8) & 0xff);
+		this.subType = (char) (fullType & 0xff);
+		this.minResolution = minres;
+
 		if (kind == POINT_KIND)
 			size = 3;
 		else
@@ -50,7 +53,7 @@ public abstract class Overview implements Comparable<Overview> {
 
 	public void write(ImgFile file) {
 		file.put((byte) (type & 0xff));
-		file.put(maxLevel);
+		file.put((byte) maxLevel);
 		if (size > 2)
 			file.put((byte) (subType & 0xff));
 	}
@@ -100,25 +103,34 @@ public abstract class Overview implements Comparable<Overview> {
 	 *                            from being compared to this object.
 	 */
 	public int compareTo(Overview ov) {
+		if (kind != ov.kind) {
+			return kind > ov.kind ? 1 : -1;
+		}
+
+		int res;
 		if (type == ov.type) {
 			if (subType == ov.subType)
-				return 0;
+				res = 0;
 			else if (subType > ov.subType)
-				return 1;
+				res = 1;
 			else
-				return -1;
+				res = -1;
 		} else {
 			if (type == ov.type)
-				return 0;
+				res = 0;
 			else if (type > ov.type)
-				return 1;
+				res = 1;
 			else
-				return -1;
+				res = -1;
 		}
+		return res;
 	}
 
-
-	public void setMaxLevel(byte maxLevel) {
+	public void setMaxLevel(int maxLevel) {
 		this.maxLevel = maxLevel;
+	}
+
+	public int getMinResolution() {
+		return minResolution;
 	}
 }

@@ -23,7 +23,7 @@ package uk.me.parabola.imgfmt.app;
  */
 public class PointOverview extends Overview {
 
-	public PointOverview(int type, int subType) {
-		super(POINT_KIND, type, subType);
+	public PointOverview(int type, int minResolution) {
+		super(POINT_KIND, type, minResolution);
 	}
 }

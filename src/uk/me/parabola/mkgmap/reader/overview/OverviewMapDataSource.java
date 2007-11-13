@@ -53,6 +53,9 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
+	private int topLevel;
+	private int topBits = 24;
+
 	/**
 	 * This is a fake source of data and is not read from a file, so always
 	 * return false here.
@@ -72,12 +75,15 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	public LevelInfo[] mapLevels() {
-		// We use higher zoom levels for the overview map.
-		// Lets hope the rest of the code will cope!
-		// TODO: calculate this based on what we see in the maps passed in.
-		return new LevelInfo[]{
-				new LevelInfo(6, 14),
-		};
+		// We use one level of zoom for the overview map and it has a level
+		// that is greater than that of the maps that go to make it up.
+		// (An extra invisible level will be added as always).
+		LevelInfo info = new LevelInfo(topLevel + 2, topBits - 1);
+
+		LevelInfo[] levels = new LevelInfo[1];
+		levels[0] = info;
+
+		return levels;
 	}
 
 	/**
@@ -145,6 +151,15 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		bg.setName(props.getProperty("mapname"));
 
 		mapper.addShape(bg);
+
+		// Get the highest level used (which is first).
+		LevelInfo[] levels = src.mapLevels();
+		int l = levels[0].getLevel();
+		int b = levels[0].getBits();
+		if (l > topLevel)
+			topLevel = l;
+		if (b < topBits)
+			topBits = b;
 
 		// Save whatever points, lines and polygons that we want.
 		processPoints(src.getPoints());

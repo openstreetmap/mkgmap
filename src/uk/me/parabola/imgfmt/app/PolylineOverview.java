@@ -23,7 +23,7 @@ package uk.me.parabola.imgfmt.app;
  */
 public class PolylineOverview extends Overview {
 
-	public PolylineOverview(int type) {
-		super(LINE_KIND, type, 0);
+	public PolylineOverview(int type, int minResolution) {
+		super(LINE_KIND, type, minResolution);
 	}
 }

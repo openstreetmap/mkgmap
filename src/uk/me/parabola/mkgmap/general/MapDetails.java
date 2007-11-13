@@ -25,9 +25,9 @@ import uk.me.parabola.imgfmt.app.PolygonOverview;
 import uk.me.parabola.imgfmt.app.PolylineOverview;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * The map features that we are going to map are collected here.
@@ -44,8 +44,10 @@ public class MapDetails implements MapCollector {
 	private int maxLat = Utils.toMapUnit(-180.0);
 	private int maxLon = Utils.toMapUnit(-180.0);
 
-	// Keep a list of all items that were used.
-	private final Set<Overview> usedItems = new HashSet<Overview>();
+	// Keep lists of all items that were used.
+	private Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
+	private Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
+	private Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
 	/**
 	 * Add a point to the map.
@@ -53,7 +55,9 @@ public class MapDetails implements MapCollector {
 	 * @param point Point to add.
 	 */
 	public void addPoint(MapPoint point) {
-		usedItems.add(new PointOverview(point.getType(), point.getSubType()));
+		updateOverview(pointOverviews, makeMapType(point.getType(), point.getSubType()),
+				point.getMinResolution());
+
 		points.add(point);
 	}
 
@@ -66,7 +70,10 @@ public class MapDetails implements MapCollector {
 		assert !(line instanceof MapShape);
 		if (line.getPoints().isEmpty())
 			return;
-		usedItems.add(new PolylineOverview(line.getType()));
+
+		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
+				line.getMinResolution());
+
 		lines.add(line);
 	}
 
@@ -80,7 +87,10 @@ public class MapDetails implements MapCollector {
 	public void addShape(MapShape shape) {
 		if (shape.getPoints().isEmpty())
 			return;
-		usedItems.add(new PolygonOverview(shape.getType()));
+
+		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
+				shape.getMinResolution());
+
 		shapes.add(shape);
 	}
 
@@ -128,9 +138,44 @@ public class MapDetails implements MapCollector {
 		return shapes;
 	}
 
+	/**
+	 * Get the overviews.  We construct them at this point from the information
+	 * that we have built up.
+	 * Perhaps this could be a separate class rather than a list.
+	 * 
+	 * @return A list of overviews.
+	 */
 	public List<Overview> getOverviews() {
+		List<Overview> ovlist = new ArrayList<Overview>();
 
-		List<Overview> ovlist = new ArrayList<Overview>(usedItems);
+		for (Map.Entry<Integer, Integer> ent : pointOverviews.entrySet()) {
+			Overview ov = new PointOverview(ent.getKey(), ent.getValue());
+			ovlist.add(ov);
+		}
+
+		for (Map.Entry<Integer, Integer> ent : lineOverviews.entrySet()) {
+			Overview ov = new PolylineOverview(ent.getKey(), ent.getValue());
+			ovlist.add(ov);
+		}
+
+		for (Map.Entry<Integer, Integer> ent : shapeOverviews.entrySet()) {
+			Overview ov = new PolygonOverview(ent.getKey(), ent.getValue());
+			ovlist.add(ov);
+		}
+		
 		return ovlist;
+	}
+
+	private int makeMapType(int type, int subtype) {
+		return type << 8 + subtype;
+	}
+
+	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
+		Integer prev = overviews.get(type);
+		if (prev == null)
+			prev = 24;
+
+		if (minResolution < prev)
+			overviews.put(type, minResolution);
 	}
 }

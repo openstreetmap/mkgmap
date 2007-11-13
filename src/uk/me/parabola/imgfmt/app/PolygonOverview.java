@@ -23,7 +23,7 @@ package uk.me.parabola.imgfmt.app;
  */
 public class PolygonOverview extends Overview {
 
-	public PolygonOverview(int type) {
-		super(SHAPE_KIND, type, 0);
+	public PolygonOverview(int type, int minResolution) {
+		super(SHAPE_KIND, type, minResolution);
 	}
 }

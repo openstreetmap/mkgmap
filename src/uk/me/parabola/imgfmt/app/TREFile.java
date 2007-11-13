@@ -16,15 +16,15 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -99,7 +99,7 @@ public class TREFile extends ImgFile {
 
 	public void sync() throws IOException {
 		// Do anything that is in structures and that needs to be dealt with.
-		prepare();
+		writeBody();
 
 		// Now refresh the header
 		position(0);
@@ -156,90 +156,6 @@ public class TREFile extends ImgFile {
 		polygonOverviews.add(ov);
 	}
 
-	/**
-	 * Anything waiting to be written is dealt with here.
-	 */
-	private void prepare() {
-		// Write out the map levels (zoom)
-		mapLevelPos = position();
-		for (int i = 15; i >= 0; i--) {
-			// They need to be written in reverse order I think
-			Zoom z = mapLevels[i];
-			if (z == null)
-				continue;
-			mapLevelsSize += MAP_LEVEL_REC_SIZE;
-			z.write(this);
-		}
-
-		subdivPos = position();
-		int subdivnum = 1; // numbers start at one
-
-		// First prepare to number them all
-		for (int i = 15; i >= 0; i--) {
-			Zoom z = mapLevels[i];
-			if (z == null)
-				continue;
-
-			Iterator<Subdivision> it = z.subdivIterator();
-			while (it.hasNext()) {
-				Subdivision sd = it.next();
-				log.debug("setting number to", subdivnum);
-				sd.setNumber(subdivnum++);
-			}
-		}
-
-		// Now we can write them all out.
-		for (int i = 15; i >= 0; i--) {
-			Zoom z = mapLevels[i];
-			if (z == null)
-				continue;
-
-			Iterator<Subdivision> it = z.subdivIterator();
-			while (it.hasNext()) {
-				Subdivision sd = it.next();
-				
-				sd.write(this);
-				if (sd.hasNextLevel())
-					subdivSize += SUBDIV_REC_SIZE2;
-				else
-					subdivSize += SUBDIV_REC_SIZE;
-			}
-		}
-		putInt(lastRgnPos);
-		subdivSize += 4;
-
-		// Write out the pointers to the labels that hold the copyright strings
-		copyrightPos = position();
-		for (Label l : copyrights) {
-			copyrightSize += COPYRIGHT_REC_SIZE;
-			put3(l.getOffset());
-		}
-
-		// Point overview section
-		pointPos = position();
-		Collections.sort(pointOverviews);
-		for (Overview ov : pointOverviews) {
-			ov.write(this);
-			pointSize += POINT_REC_LEN;
-		}
-
-		// Line overview section.
-		polylinePos = position();
-		Collections.sort(polylineOverviews);
-		for (Overview ov : polylineOverviews) {
-			ov.write(this);
-			polylineSize += POLYLINE_REC_LEN;
-		}
-
-		// Polygon overview section
-		polygonPos = position();
-		Collections.sort(polygonOverviews);
-		for (Overview ov : polygonOverviews) {
-			ov.write(this);
-			polygonSize += POLYGON_REC_LEN;
-		}
-	}
-
 	private void writeHeader()  {
 		put3(area.getMaxLat());
 		put3(area.getMaxLong());
@@ -291,6 +207,159 @@ public class TREFile extends ImgFile {
 		putInt(mapId);
 
 		position(HEADER_LEN);
+	}
+
+	/**
+	 * Write out the body of the TRE file.  The act of writing the body sections
+	 * out provides us with pointers that are needed for the header.  Therefore
+	 * the header needs to be written after the body (or obviously we could
+	 * make two passes).
+	 */
+	private void writeBody() {
+		writeMapLevels();
+
+		writeSubdivs();
+
+		writeCopyrights();
+
+		writeOverviews();
+	}
+
+	/**
+	 * Write out the subdivisions.  This is quite complex as they have to be
+	 * numbered and written out keeping their parent/child relationship
+	 * intact.
+	 */
+	private void writeSubdivs() {
+		subdivPos = position();
+		int subdivnum = 1; // numbers start at one
+
+		// First prepare to number them all
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				Subdivision sd = it.next();
+				log.debug("setting number to", subdivnum);
+				sd.setNumber(subdivnum++);
+			}
+		}
+
+		// Now we can write them all out.
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				Subdivision sd = it.next();
+
+				sd.write(this);
+				if (sd.hasNextLevel())
+					subdivSize += SUBDIV_REC_SIZE2;
+				else
+					subdivSize += SUBDIV_REC_SIZE;
+			}
+		}
+		putInt(lastRgnPos);
+		subdivSize += 4;
+	}
+
+	/**
+	 * Write out the map levels.  This is a mapping between the level number
+	 * and the resolution.
+	 */
+	private void writeMapLevels() {
+		// Write out the map levels (zoom)
+		mapLevelPos = position();
+		for (int i = 15; i >= 0; i--) {
+			// They need to be written in reverse order I think
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+			mapLevelsSize += MAP_LEVEL_REC_SIZE;
+			z.write(this);
+		}
+	}
+
+	/**
+	 * Write out the overview section.  This is a mapping between the map feature
+	 * type and the highest level (lowest detail) that it appears at.  There
+	 * are separate ones for points, lines and polygons.
+	 */
+	private void writeOverviews() {
+		pointPos = position();
+		
+		// Point overview section
+		Collections.sort(pointOverviews);
+		for (Overview ov : pointOverviews) {
+			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+			ov.write(this);
+			pointSize += POINT_REC_LEN;
+		}
+
+		// Line overview section.
+		polylinePos = position();
+		Collections.sort(polylineOverviews);
+		for (Overview ov : polylineOverviews) {
+			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+			ov.write(this);
+			polylineSize += POLYLINE_REC_LEN;
+		}
+
+		// Polygon overview section
+		polygonPos = position();
+		Collections.sort(polygonOverviews);
+		for (Overview ov : polygonOverviews) {
+			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+			ov.write(this);
+			polygonSize += POLYGON_REC_LEN;
+		}
+	}
+
+	/**
+	 * Convert a min resolution to a level.  We return the lowest level (most
+	 * detailed) that has a resolution less than or equal to the given resolution.
+	 * 
+	 * @param minResolution The minimum resolution.
+	 * @return The level corresponding to the resulution.
+	 */
+	private int decodeLevel(int minResolution) {
+		Zoom top = null;
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			if (top == null)
+				top = z;
+
+			if (z.getResolution() >= minResolution)
+				return z.getLevel();
+		}
+
+		// If not found, then allow it only at the top level
+		if (top != null)
+			return top.getLevel();
+		else
+			return 0; // Fail safe, shouldn't really happen
+	}
+
+	/**
+	 * Write out the copyrights.  This is just a list of pointers to strings
+	 * in the label section basically.
+	 */
+	private void writeCopyrights() {
+		// Write out the pointers to the labels that hold the copyright strings
+		copyrightPos = position();
+		for (Label l : copyrights) {
+			copyrightSize += COPYRIGHT_REC_SIZE;
+			put3(l.getOffset());
+		}
 	}
 
 	public void setMapId(int id) {
