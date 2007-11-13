@@ -43,12 +43,11 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		if (configuredLevels != null) {
 			levels = createLevels(configuredLevels);
 		} else {
-			// We return a fixed mapping at present.
+			// This is the default mapping.
 			levels = new LevelInfo[]{
 					new LevelInfo(5, 16),
-					new LevelInfo(4, 18),
-					new LevelInfo(3, 19),
-					new LevelInfo(2, 21),
+					new LevelInfo(3, 18),
+					new LevelInfo(2, 20),
 					new LevelInfo(1, 22),
 					new LevelInfo(0, 24),
 			};
