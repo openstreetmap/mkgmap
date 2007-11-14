@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Latin1Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
+import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
@@ -100,7 +101,11 @@ public class LBLFile extends ImgFile {
 	}
 
 	public void setCharacterType(String cs) {
-		if ("latin1".equals(cs)) {
+		log.info("encoding type " + cs);
+		if ("ascii".equals(cs)) {
+			encodingLength = ENCODING_6BIT;
+			textEncoder = new Format6Encoder();
+		} else if ("latin1".equals(cs)) {
 			encodingLength = ENCODING_8BIT;
 			textEncoder = new Latin1Encoder();
 
@@ -109,17 +114,12 @@ public class LBLFile extends ImgFile {
 //			textEncoder = new Latin2Encoder();
 			textEncoder = new Format6Encoder();
 
-		//} else if ("bit10".equals(cs)) {
-		//	encodingLength = ENCODING_10BIT;
-		//	textEncoder = new Bit10Encoder();
-
 		} else if ("simple8".equals(cs)) {
 			encodingLength = ENCODING_8BIT;
 			textEncoder = new Simple8Encoder();
-
 		} else {
-			encodingLength = ENCODING_6BIT;
-			textEncoder = new Format6Encoder();
+			encodingLength = ENCODING_8BIT;
+			textEncoder = new AnyCharsetEncoder(cs);
 		}
 	}
 	

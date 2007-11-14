@@ -71,6 +71,7 @@
       <include name="**/*.class"/>
 			<include name="*.csv"/>
 			<include name="*.properties"/>
+			<include name="**/*.trans"/>
     </jar>
 
 		<!-- Copy in the javadoc
@@ -91,7 +92,7 @@
 				<include name="LICENCE*"/>
 				<include name="build.xml"/>
 				<include name="external.properties"/>
-				<include name="resources/*"/>
+				<include name="resources/**"/>
 			</fileset>
 		</copy>
   </target>
@@ -112,6 +113,7 @@
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
 				<include name="*.properties"/>
+				<include name="**/*.trans"/>
 			</fileset>
 		</copy>
   </target>
