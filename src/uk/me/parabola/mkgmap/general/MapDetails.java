@@ -167,7 +167,7 @@ public class MapDetails implements MapCollector {
 	}
 
 	private int makeMapType(int type, int subtype) {
-		return type << 8 + subtype;
+		return (type << 8) + (subtype & 0xff);
 	}
 
 	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {

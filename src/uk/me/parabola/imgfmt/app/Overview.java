@@ -41,7 +41,7 @@ public abstract class Overview implements Comparable<Overview> {
 	protected Overview(int kind, int fullType, int minres) {
 		this.kind = kind;
 
-		this.type = (char) ((fullType >> 8) & 0xff);
+		this.type = (char) (fullType >> 8 & 0xff);
 		this.subType = (char) (fullType & 0xff);
 		this.minResolution = minres;
 
