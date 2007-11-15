@@ -74,11 +74,9 @@
 			<include name="**/*.trans"/>
     </jar>
 
-		<!-- Copy in the javadoc
-		<copy todir="${dist}/doc/api" >
-      <fileset dir="${javadoc}"/>
+		<copy todir="${dist}/doc" >
+			<fileset dir="doc" includes="*.txt"/>
     </copy>
-		-->
 
     <!-- Copy the source code -->
     <copy todir="${dist}/src" >
