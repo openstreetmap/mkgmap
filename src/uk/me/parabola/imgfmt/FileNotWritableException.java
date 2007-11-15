@@ -24,6 +24,6 @@ import java.io.IOException;
  */
 public class FileNotWritableException extends IOException {
 	public FileNotWritableException(String s, Exception e) {
-		super(s, e);
+		super(s);
 	}
 }
