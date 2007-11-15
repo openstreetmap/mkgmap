@@ -33,7 +33,7 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 
 /**

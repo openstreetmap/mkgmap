@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.reader.test;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 import java.io.FileNotFoundException;
 import java.util.Properties;

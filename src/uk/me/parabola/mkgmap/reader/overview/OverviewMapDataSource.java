@@ -24,7 +24,7 @@ import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.plugin.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
