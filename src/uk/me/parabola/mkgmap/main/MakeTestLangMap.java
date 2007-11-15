@@ -84,6 +84,6 @@ public class MakeTestLangMap extends AbstractTestMap {
 			l.setType(6);
 			map.addMapObject(l);
 		}
-		map.addPolylineOverview(new PolylineOverview(6));
+		map.addPolylineOverview(new PolylineOverview(0x600, 10));
 	}
 }
