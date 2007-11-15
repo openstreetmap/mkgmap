@@ -7,10 +7,8 @@ OpenStreetMap <http://www.openstreetmap.org>
 and to generate a map in the Garmin .img file format so
 that it can be loaded onto GPS units.
 
-My motivation is to help plan mapping sessions, rather than to
-produce the most useful map.  However as the project progresses
-I expect that most of the current limitations will be removed
-and the maps will be useful for other purposes too.
+The original motivation was to help plan mapping sessions, but now the
+maps are becoming useful in their own right.
 
 Using
 =====
@@ -34,21 +32,21 @@ Garmin/gmapsupp.img  Note that this will replace any other map you have on
 there.  Another way would be to use a USB memory card writer.
 Another convenient way is to use the sendmap program.
 
-You should see a OSM copyright message on starting up (although this is not
-working at present), and the map name 'OSM Street map' should appear
+You should (depending on the particular Garmin model) see a OSM copyright message
+on starting up, and the map name 'OSM Street map' should appear
 in the map setup section.
 
-You should see an outline of the map when zoomed out, but you will not
-see any streets until you are zoomed in quite close.  On mine I have to
-be zoomed to 120m.
+For more help see: http://wiki.openstreetmap.org/index.php/Mkgmap/help
 
 Options
 -------
 
-You can supply the following options before the file name.  Example:
+Most of the default names mentioned in the previous section can be altered
+by suitable options.  Example:
 
- java -jar mkgmap.jar --mapname=63240002 --xcharset=latin1 data.osm
+ java -jar mkgmap.jar --mapname=11225502 --charset=latin1 data.osm
 
+-n <name>
 --mapname=<name>
    This option is followed by the name of the map.  This must be an
    eight digit number.  The default if this option is ommited is 63240001
@@ -59,18 +57,33 @@ You can supply the following options before the file name.  Example:
    Set the description of the map that is stored inside the map itself.  By
    default it is 'OSM Street map'
 
+--map-features=file
+   Supply another map features file.  See http://wiki.openstreetmap.org/index.php/Mkgmap/help/custom
+
+--levels=<levels>
+   Set the levels within the map.  See http://wiki.openstreetmap.org/index.php/Mkgmap/help/custom
+
+--charset={latin1|ascii|simple8}
+   Sets the encoding for the labels.
+
 --latin1
-   Same as --xcharset=latin1
+   Same as --charset=latin1
 
---charset={latin1|ascii|bit10|simple8}
-   Sets the encoding for the lables.  Only latin1 is of general use (ascii is the default).
-   Allows the use of latin1 characters in street names.  Other values for
-   this option are experimental.
+--input-file=<file>
+   This is another way of specifying an osm file to process.
 
+Processing more than one file at a time
+---------------------------------------
 
-Issues
-======
+It is usual to split Garmin maps up into smaller tiles.  This is because
+older GPS units (before large SD cards were cheap) had a limited amount of memory
+for maps, and secondly because there are limits within the map format
+itself.
 
+You can give more than one .osm file on the command line at a time and they
+will each be converted to a separate garmin map tile.  There will also
+be two other files created: 1) a file ending in .tdb and an overview .img
+map.
 
 Acknowledgements
 ================
