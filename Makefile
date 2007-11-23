@@ -26,6 +26,7 @@ OSMDATA = /opt/data/uk-070919-1.osm.gz
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
 #OSMDATA = /opt/data/osmworld/63260003
 #OSMDATA = --overview-name=6324 ~/tmp/batch/*.osm
+OSMDATA = rus2.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
@@ -38,8 +39,8 @@ OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f 63240001.img
-	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
-	#java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	#$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

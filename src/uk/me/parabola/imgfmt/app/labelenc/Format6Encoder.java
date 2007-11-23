@@ -109,7 +109,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 				sb.append(rowmap[c & 0xff]);
 			}
 		}
-		
+
+		log.debug(" result", sb);
 		return sb.toString().toCharArray();
 	}
 
@@ -177,7 +178,6 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	}
 
 	private String[] loadRow(int row) {
-		log.debug("loading row");
 		if (rows[row] != null)
 			return rows[row];
 
@@ -193,7 +193,6 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		log.debug("getting file name", name);
 		InputStream is = getClass().getResourceAsStream(name.toString());
 
-		log.debug("is", is);
 		readCharFile(is, newRow);
 
 		return newRow;
@@ -216,31 +215,24 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 			log.debug("line in trans table");
 			if (scan.hasNext("#.*")) {
 				String s = scan.next();
-				log.debug("skiping comment pre-", s);
 				scan.nextLine();
 				continue;
 			}
 			
 
 			if (scan.hasNext("U\\+[0-9A-Fa-f]{4}")) {
-				//String line = scan.findInLine("U\\+");
-				//log.debug("skip", line);
 				String s = scan.next();
-				log.debug("got U+", s);
-				//int point = scan.nextInt(16);
-				//log.debug("code point", point);
 
 				if (scan.hasNext()) {
 					String trans = scan.next();
 
 					int ind = Integer.parseInt(s.substring(4), 16);
 					log.info("setting trans table", ind, trans);
-					newRow[ind] = trans;
+					newRow[ind] = trans.toUpperCase(Locale.ENGLISH);
 				}
 			}
 
 			String s = scan.nextLine();
-			log.debug("OUT: got final string", s);
 		}
 	}
 }
