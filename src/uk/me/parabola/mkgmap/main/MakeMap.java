@@ -29,6 +29,8 @@ import uk.me.parabola.mkgmap.general.MapBuilder;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main routine for the command line map-making utility.
@@ -38,7 +40,8 @@ import java.io.FileNotFoundException;
 public class MakeMap  implements MapProcessor {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
 
-	private MapEvents overview = new OverviewMapBuilder();
+	//private MapEventListener overview = new OverviewMapBuilder();
+	private List<MapEventListener> mapListeners = new ArrayList<MapEventListener>();
 
 	public void processFilename(CommandArgs args, String filename) {
 		LoadableMapDataSource src;
@@ -52,24 +55,12 @@ public class MakeMap  implements MapProcessor {
 		}
 	}
 
-	public void optionOn(MapOption opt) {
-		switch (opt) {
-		case OVERVIEW_MAP:
-			overview = new OverviewMapBuilder();
-			break;
-		}
-	}
-
-	public void optionOff(MapOption opt) {
-		switch (opt) {
-		case OVERVIEW_MAP:
-			overview = new NullMapEvents();
-			break;
-		}
-	}
-
 	public void endOfOptions() {
-		overview.onFinish();
+		fireFinishEvent();
+	}
+
+	public void addMapListener(MapEventListener l) {
+		mapListeners.add(l);
 	}
 
 	/**
@@ -93,7 +84,7 @@ public class MakeMap  implements MapProcessor {
 			builder.makeMap(map, src);
 
 			// Collect information on map complete.
-			overview.onMapEnd(args, src, map);
+			fireMapEndEvent(args, src, map);
 			log.info("finished making map, closing");
 			if (map != null)
 				map.close();
@@ -102,6 +93,27 @@ public class MakeMap  implements MapProcessor {
 			throw new ExitException("File exists already", e);
 		} catch (FileNotWritableException e) {
 			throw new ExitException("Could not create or write to file", e);
+		}
+	}
+
+	/**
+	 * Fire an event at the end of every map that is produced.
+	 * @param args The command aguments in effect.
+	 * @param src The data source used to produce the map.
+	 * @param map The map that was created.
+	 */
+	private void fireMapEndEvent(CommandArgs args, LoadableMapDataSource src, Map map) {
+		for (MapEventListener l : mapListeners) {
+			l.onMapEnd(args, src, map);
+		}
+	}
+
+	/**
+	 * Fire an event to all the listeners at the end of all files.
+	 */
+	private void fireFinishEvent() {
+		for (MapEventListener l : mapListeners) {
+			l.onFinish();
 		}
 	}
 
@@ -120,7 +132,6 @@ public class MakeMap  implements MapProcessor {
 		if (i != 0)
 			map.setLabelCodePage(i);
 	}
-
 
 	/**
 	 * Load up from the file.  It is not necessary for the map reader to completely
@@ -141,14 +152,5 @@ public class MakeMap  implements MapProcessor {
 			((ConfiguredByProperties) src).config(args.getProperties());
 		src.load(name);
 		return src;
-	}
-
-	private static class NullMapEvents implements MapEvents {
-
-		public void onMapEnd(CommandArgs args, LoadableMapDataSource src, Map map) {
-		}
-
-		public void onFinish() {
-		}
 	}
 }

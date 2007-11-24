@@ -144,15 +144,19 @@ class Directory {
 
 		// Save the current position
 		long dirPosition = chan.position();
-
 		int blockSize = headerBlockManager.getBlockSize();
 
-		int forHeader = (blocks + (Dirent.ENTRY_SIZE - 1)) / Dirent.ENTRY_SIZE;
+		int forHeader = (blocks + (blockSize - 1)) / blockSize;
 		log.debug("header blocks needed", forHeader);
+
+		// There is nothing really wrong with larger values (perhaps, I don't
+		// know for sure!) but the code is written to make it 1, so make sure that it is.
+		assert forHeader == 1;
 
 		// Write the blocks that will will contain the header blocks.
 
-		// Now fill in to the end of the reserved blocks
+		// Now fill in to the end of the reserved blocks by writing a single
+		// byte at the last position in the area.
 		long end = (long) blockSize * headerBlockManager.getMaxBlock() - 1;
 		chan.position(end);
 		ByteBuffer buf = ByteBuffer.allocate(1);

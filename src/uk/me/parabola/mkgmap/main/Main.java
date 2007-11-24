@@ -30,14 +30,8 @@ public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
 	//private OverviewMapMaker overview;
-	private final MapProcessor action;
+	private final MapProcessor action = new MakeMap();
 
-	public Main() {
-		//overview = new OverviewMapMaker();
-
-		// The default is to make a map
-		action = new MakeMap();
-	}
 
 	public static void main(String[] args) {
 
@@ -64,13 +58,18 @@ public class Main implements ArgumentProcessor {
 		
 		if (opt.equals("number-of-files")) {
 
-			// This option always appears first.  We use it to turn off
+			// This option always appears first.  We use it to turn on/off
 			// generation of the overview files if there is only one file
 			// to process.
 			int n = Integer.valueOf(val);
-			if (n == 1) {
-				action.optionOff(MapOption.OVERVIEW_MAP);
+			if (n > 1) {
+				// More than one file so do the overview map
+				MapEventListener overview = new OverviewMapBuilder();
+				action.addMapListener(overview);
 			}
+		} else if (opt.equals("gmapsupp")) {
+			MapEventListener gmapsupp = new GmapsuppBuilder();
+			action.addMapListener(gmapsupp);
 		}
 	}
 

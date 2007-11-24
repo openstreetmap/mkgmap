@@ -148,7 +148,8 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		bg.setType(0x4a);
 		bg.setPoints(points);
 		bg.setMinResolution(10);
-		bg.setName(props.getProperty("mapname"));
+		bg.setName(props.getProperty("description", "map with no description")
+				+ '\u001d' + props.getProperty("mapname"));
 
 		mapper.addShape(bg);
 

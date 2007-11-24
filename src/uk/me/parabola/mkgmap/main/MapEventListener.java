@@ -16,22 +16,22 @@
  */
 package uk.me.parabola.mkgmap.main;
 
-import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.InternalFiles;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 
 /**
  * @author Steve Ratcliffe
  */
-public interface MapEvents {
+public interface MapEventListener {
 
 	/**
-	 * This is called when the map is complete.
+	 * This is called when an individual map is complete.
 	 *
 	 * @param args The current options.
 	 * @param src The map data.
 	 * @param map The map.
 	 */
-	public void onMapEnd(CommandArgs args, LoadableMapDataSource src, Map map);
+	public void onMapEnd(CommandArgs args, LoadableMapDataSource src, InternalFiles map);
 
 	/**
 	 * The complete map set has been processed.  Finish off anything that needs

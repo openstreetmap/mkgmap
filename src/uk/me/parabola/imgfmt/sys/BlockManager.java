@@ -16,12 +16,16 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import uk.me.parabola.log.Logger;
+
 /**
  * This is used to allocate blocks for files in the filesystem/archive.
  *
  * @author Steve Ratcliffe
  */
 class BlockManager {
+	private static final Logger log = Logger.getLogger(BlockManager.class);
+
 	private int currentBlock;
 	private final int blockSize;
 	private int maxBlock;
@@ -39,8 +43,10 @@ class BlockManager {
 	 */
 	public int allocate() {
 		int n = currentBlock++;
-		if (maxBlock > 0 && n > maxBlock)
+		if (maxBlock > 0 && n > maxBlock) {
+			log.error("overflowed directory with max block " + maxBlock + ", current=" + n);
 			System.err.println("Directory overflow.  Map will not work");
+		}
 		return n;
 	}
 

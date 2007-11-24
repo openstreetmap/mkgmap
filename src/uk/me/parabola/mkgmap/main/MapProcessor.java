@@ -24,19 +24,6 @@ package uk.me.parabola.mkgmap.main;
  */
 public interface MapProcessor extends FilenameProcessor {
 
-	/**
-	 * Turn an option on.
-	 *
-	 * @param opt The option type.
-	 */
-	public void optionOn(MapOption opt);
-
-	/**
-	 * Turn an option off.
-	 *
-	 * @param opt The option type.
-	 */
-	public void optionOff(MapOption opt);
-
+	public void addMapListener(MapEventListener l);
 
 }
