@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.nio.charset.Charset;
 import java.util.Locale;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Convert text to a specified charset.  This is used when you give a
@@ -27,11 +28,11 @@ import java.util.Locale;
  */
 public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 
-	private Charset charSet;
+	private String charSet;
 
 	public AnyCharsetEncoder(String cs) {
 		prepareForCharacterSet(cs);
-		charSet = Charset.forName(cs);
+		charSet = cs;
 	}
 
 	public EncodedText encodeText(String text) {
@@ -47,11 +48,16 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		else
 			ucText = text;
 
-		byte[] bytes = ucText.getBytes(charSet);
+		try {
+			byte[] bytes = ucText.getBytes(charSet);
+			byte[] res = new byte[bytes.length + 1];
+			System.arraycopy(bytes, 0, res, 0, bytes.length);
 
-		byte[] res = new byte[bytes.length + 1];
-		System.arraycopy(bytes, 0, res, 0, bytes.length);
+			return new EncodedText(res, res.length);
+		} catch (UnsupportedEncodingException e) {
+			// This can't really happen as we have already checked.
+			return simpleEncode(text);
+		}
 
-		return new EncodedText(res, res.length);
 	}
 }
