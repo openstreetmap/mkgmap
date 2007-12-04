@@ -28,6 +28,15 @@ public abstract class MapElement {
 	private int type;
 	private int minResolution = 24;
 
+	protected MapElement() {
+	}
+
+	protected MapElement(MapElement orig) {
+		name = orig.name;
+		type = orig.type;
+		minResolution = orig.minResolution;
+	}
+
 	public String getName() {
 		return name;
 	}

@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 30-Sep-2007
  */
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.mkgmap.build;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
@@ -28,6 +28,22 @@ import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.BaseFilter;
+import uk.me.parabola.mkgmap.filters.FilterConfig;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
+import uk.me.parabola.mkgmap.filters.MapFilter;
+import uk.me.parabola.mkgmap.filters.MapFilterChain;
+import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
+import uk.me.parabola.mkgmap.filters.RemoveEmpty;
+import uk.me.parabola.mkgmap.filters.SmoothingFilter;
+import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapArea;
+import uk.me.parabola.mkgmap.general.MapDataSource;
+import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -276,60 +292,30 @@ public class MapBuilder {
 	 * @param div	The subdivision that the lines belong to.
 	 * @param lines The lines to be added.
 	 */
-	private void processLines(Map map, Subdivision div,
-			List<MapLine> lines)
+	private void processLines(Map map, Subdivision div, List<MapLine> lines)
 	{
 		div.startLines();  // Signal that we are beginning to draw the lines.
-		int res = div.getResolution();
-		log.info("div resolution " + res);
 
 		int shift = div.getShift();
+		int res = div.getResolution();
 
+		FilterConfig config = new FilterConfig();
+		config.setShift(shift);
+
+		LayerFilterChain filters = new LayerFilterChain(config);
+		filters.addFilter(new SmoothingFilter());
+		filters.addFilter(new LineSplitterFilter());
+		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new LineAddFilter(div, map));
+		
 		for (MapLine line : lines) {
 			if (line.getMinResolution() > res)
 				continue;
 
-			String name = line.getName();
-			if (name == null)
-				name = "";
-
-			Polyline pl = div.createLine(name);
-			pl.setDirection(line.isDirection());
-
-			int count = 0;
-			int lastx = 0, lasty = 0;
-			List<Coord> points = line.getPoints();
-			for (Coord co : points) {
-				int x = co.getLongitude() >> shift;
-				int y = co.getLatitude() >> shift;
-
-				if (lastx != x || lasty != y)
-					pl.addCoord(co);
-
-				lastx = x;
-				lasty = y;
-
-				// We need to split up long lines into smaller ones as there
-				// appears to be a limit on the garmin devices.
-				if (++count > 250) {
-					pl.setType(line.getType());
-					map.addMapObject(pl);
-					pl = div.createLine(name);
-					pl.addCoord(co);
-					pl.setDirection(line.isDirection());
-					count = 0;
-					lastx = 0;
-					lasty = 0;
-				}
-			}
-
-			if (count != 0) {
-				pl.setType(line.getType());
-				map.addMapObject(pl);
-			}
+			filters.startFilter(line);
 		}
 	}
-	
+
 	/**
 	 * Step through the polygons, filter, simplify if necessary, and create a map
 	 * shape which is then added to the map.
@@ -341,39 +327,26 @@ public class MapBuilder {
 	 * @param div	The subdivision that the polygons belong to.
 	 * @param shapes The polygons to be added.
 	 */
-	private void processShapes(Map map, Subdivision div,
-			List<MapShape> shapes)
+	private void processShapes(Map map, Subdivision div, List<MapShape> shapes)
 	{
 		div.startShapes();  // Signal that we are beginning to draw the shapes.
-		int res = div.getResolution();
 
 		int shift = div.getShift();
+		int res = div.getResolution();
+
+		FilterConfig config = new FilterConfig();
+		config.setShift(shift);
+		LayerFilterChain filters = new LayerFilterChain(config);
+		filters.addFilter(new SmoothingFilter());
+		filters.addFilter(new PolygonSplitterFilter());
+		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new ShapeAddFilter(div, map));
 
 		for (MapShape shape : shapes) {
 			if (shape.getMinResolution() > res)
 				continue;
 
-			String name = shape.getName();
-			if (name == null)
-				name = "";
-
-			Polygon pg = div.createPolygon(name);
-
-			int lastx = 0, lasty = 0;
-			List<Coord> points = shape.getPoints();
-			for (Coord co : points) {
-				int x = co.getLongitude() >> shift;
-				int y = co.getLatitude() >> shift;
-
-				if (x != lastx || y != lasty)
-					pg.addCoord(co);
-
-				lastx = x;
-				lasty = y;
-			}
-
-			pg.setType(shape.getType());
-			map.addMapObject(pg);
+			filters.startFilter(shape);
 		}
 	}
 
@@ -410,4 +383,49 @@ public class MapBuilder {
 		}
 	}
 
+	private static class LineAddFilter extends BaseFilter implements MapFilter {
+		private final Subdivision div;
+		private final Map map;
+
+		LineAddFilter(Subdivision div, Map map) {
+			this.div = div;
+			this.map = map;
+		}
+
+		public void doFilter(MapElement element, MapFilterChain next) {
+			MapLine line = (MapLine) element;
+			assert line.getPoints().size() < 255 : "too many points";
+
+			Polyline pl = div.createLine(line.getName());
+			pl.setDirection(line.isDirection());
+
+			for (Coord co : line.getPoints())
+				pl.addCoord(co);
+
+			pl.setType(line.getType());
+			map.addMapObject(pl);
+		}
+	}
+	private static class ShapeAddFilter extends BaseFilter implements MapFilter {
+		private final Subdivision div;
+		private final Map map;
+
+		ShapeAddFilter(Subdivision div, Map map) {
+			this.div = div;
+			this.map = map;
+		}
+
+		public void doFilter(MapElement element, MapFilterChain next) {
+			MapShape shape = (MapShape) element;
+			assert shape.getPoints().size() < 255 : "too many points";
+
+			Polygon pg = div.createPolygon(shape.getName());
+
+			for (Coord co : shape.getPoints())
+				pg.addCoord(co);
+
+			pg.setType(shape.getType());
+			map.addMapObject(pg);
+		}
+	}
 }

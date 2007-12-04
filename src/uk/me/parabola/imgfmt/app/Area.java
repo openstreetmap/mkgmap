@@ -96,6 +96,15 @@ public class Area {
 				;
 	}
 
+	/**
+	 * Split this area up into a number of smaller areas.
+	 *
+	 * @param xsplit The number of pieces to split this area into in the x
+	 * direction.
+	 * @param ysplit The number of pieces to split this area into in the y
+	 * direction.
+	 * @return An area containing xsplit*ysplit areas.
+	 */
 	public Area[] split(int xsplit, int ysplit) {
 		Area[] areas =  new Area[xsplit * ysplit];
 
@@ -122,10 +131,17 @@ public class Area {
 				areas[x * ysplit + y] = a;
 			}
 		}
-		
+
+		assert areas.length == xsplit * ysplit;
 		return areas;
 	}
 
+	/**
+	 * Get the largest dimention.  So either the width or heigh, depending
+	 * on which is larger.
+	 *
+	 * @return The largest dimention in map units.
+	 */
 	public int getMaxDimention() {
 		return Math.max(getWidth(), getHeight());
 	}

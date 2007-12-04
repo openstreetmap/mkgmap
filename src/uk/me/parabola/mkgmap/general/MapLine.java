@@ -35,11 +35,20 @@ public class MapLine extends MapElement {
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
+	public MapLine() {
+	}
+
+	public MapLine(MapLine orig) {
+		super(orig);
+		direction = orig.direction;
+	}
+
 	public List<Coord> getPoints() {
 		return points;
 	}
 
 	public void setPoints(List<Coord> points) {
+		assert this.points == null && points != null;
 		this.points = points;
 		for (Coord co : points) {
 			addToBounds(co);

@@ -1,0 +1,14 @@
+<body>
+<h3>Filtering at map levels</h3>
+<p>
+	The general representation that is built up in the mkgmap.general package is
+	at the full level of detail that is available in the OSM file.  The map however
+	is in different layers at different levels of detail.  There are also limitations
+	of the format or the devices that need to be taken care of.
+</p>
+<p>So when we are building up the garmin layers, we send the general representation
+through a series of filters to fix things up before being placed into a layer.
+This can involve spliting up lines and shapes, removing points from lines to
+produce a lower resolution versions and droping elements altogether.</p>
+
+</body>

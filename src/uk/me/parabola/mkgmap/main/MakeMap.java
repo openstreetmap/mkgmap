@@ -25,7 +25,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapBuilder;
+import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 import java.io.FileNotFoundException;

@@ -23,6 +23,12 @@ package uk.me.parabola.mkgmap.general;
  * @author Steve Ratcliffe.
  */
 public class MapShape extends MapLine {
+	public MapShape() {
+	}
+
+	public MapShape(MapLine orig) {
+		super(orig);
+	}
 
 	public void setDirection(boolean direction) {
 		throw new IllegalArgumentException(
