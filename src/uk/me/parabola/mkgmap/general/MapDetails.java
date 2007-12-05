@@ -23,6 +23,8 @@ import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.app.PointOverview;
 import uk.me.parabola.imgfmt.app.PolygonOverview;
 import uk.me.parabola.imgfmt.app.PolylineOverview;
+import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.MapFilterChain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +50,23 @@ public class MapDetails implements MapCollector {
 	private Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
+	private static final int MAX_ELEMENT_DIMENTIONS = 0x7fff/2;
+
+	private MapFilterChain lineChain;
+
+	public MapDetails() {
+		lineChain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				//assert ((MapLine) element).getBounds().getMaxDimention() < MAX_ELEMENT_DIMENTIONS;
+				lines.add((MapLine) element);
+			}
+
+			public void addElement(MapElement element) {
+				//assert ((MapLine) element).getBounds().getMaxDimention() < MAX_ELEMENT_DIMENTIONS;
+				lines.add((MapLine) element);
+			}
+		};
+	}
 
 	/**
 	 * Add a point to the map.
@@ -74,8 +93,14 @@ public class MapDetails implements MapCollector {
 		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
 				line.getMinResolution());
 
-		lines.add(line);
+		if (line.getBounds().getMaxDimention() > MAX_ELEMENT_DIMENTIONS) {
+			splitElement(line);
+		} else {
+			lines.add(line);
+		}
 	}
+
+
 
 	/**
 	 * Add the given shape (polygon) to the map.  A shape is very similar to a
@@ -177,5 +202,10 @@ public class MapDetails implements MapCollector {
 
 		if (minResolution < prev)
 			overviews.put(type, minResolution);
+	}
+
+	private void splitElement(MapElement element) {
+		LineSizeSplitterFilter lineSplitter = new LineSizeSplitterFilter();
+		lineSplitter.doFilter(element, lineChain);
 	}
 }
