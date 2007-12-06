@@ -29,6 +29,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 #OSMDATA = /opt/data/uk-071114.osm.gz
 OSMDATA = --gmapsupp /opt/data/uk/63*
 #OSMDATA = reg40.osm
+#OSMDATA = reg71.osm
 #OSMDATA = longline.osm
 
 
@@ -94,10 +95,12 @@ tests:
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63243936
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63247525
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63253506
-	#java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/bit-assert-fail.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg40.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg71.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/cricklewood-5.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/germany-070823.osm.gz
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-070815.osm.gz
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/bit-assert-fail.osm
 
 
 tl:
