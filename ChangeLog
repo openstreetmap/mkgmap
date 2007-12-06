@@ -1,3 +1,264 @@
+2007-12-06  steve
+
+	* Makefile, src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java:
+	  Tone down the smoothing a lot as it was way over the top.
+	* ., src/uk/me/parabola/mkgmap/filters/LineSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: Merged
+	  revisions 424 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/filters
+	  
+	  ........ r424 | steve | 2007-12-06 21:09:28 +0000 (Thu, 06 Dec
+	  2007) | 1 line Trivial bug where I was subtracting max-max not
+	  max-min ........
+
+2007-12-05  steve
+
+	* ., src/uk/me/parabola/mkgmap/filters/LineSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: Merged
+	  revisions 417-422 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/filters
+	  
+	  ........ r421 | steve | 2007-12-05 23:34:24 +0000 (Wed, 05 Dec
+	  2007) | 1 line Split lines that are too big in the sense of size,
+	  rather than too many points. ........ r422 | steve | 2007-12-05
+	  23:35:34 +0000 (Wed, 05 Dec 2007) | 1 line remove debugging
+	  ........
+
+2007-12-04  steve
+
+	* ., Makefile, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/build,
+	  src/uk/me/parabola/mkgmap/build/LayerFilterChain.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/build/package.html,
+	  src/uk/me/parabola/mkgmap/filters,
+	  src/uk/me/parabola/mkgmap/filters/BaseFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/filters/LineSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/MapFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/MapFilterChain.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/RemoveEmpty.java,
+	  src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/package.html,
+	  src/uk/me/parabola/mkgmap/general/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/MapShape.java,
+	  src/uk/me/parabola/mkgmap/general/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java: Merged
+	  revisions 391-416 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/filters
+	  
+	  ........ r391 | steve | 2007-12-01 17:22:34 +0000 (Sat, 01 Dec
+	  2007) | 1 line Broke out the splitting of lines a little.
+	  ........ r392 | steve | 2007-12-01 17:28:23 +0000 (Sat, 01 Dec
+	  2007) | 1 line Remove the inline line splitting code. ........
+	  r393 | steve | 2007-12-01 20:29:03 +0000 (Sat, 01 Dec 2007) | 1
+	  line Create filter infrastructure. ........ r394 | steve |
+	  2007-12-02 14:35:27 +0000 (Sun, 02 Dec 2007) | 2 lines A working
+	  implementation, although there is more to break out into filters
+	  and then we need to add some more functionality. ........ r395 |
+	  steve | 2007-12-02 22:12:43 +0000 (Sun, 02 Dec 2007) | 1 line
+	  rename filter chain ........ r396 | steve | 2007-12-02 22:13:25
+	  +0000 (Sun, 02 Dec 2007) | 1 line rename line splitting filter
+	  ........ r397 | steve | 2007-12-03 09:00:24 +0000 (Mon, 03 Dec
+	  2007) | 1 line rename line splitting filter, add polygon splitter
+	  ........ r398 | steve | 2007-12-03 10:28:16 +0000 (Mon, 03 Dec
+	  2007) | 1 line Make sure that lines are always copied before
+	  changing their points as this would change them for all levels.
+	  ........ r399 | steve | 2007-12-03 10:29:17 +0000 (Mon, 03 Dec
+	  2007) | 1 line Add the copy constructors to the MapShape class
+	  too. ........ r400 | steve | 2007-12-03 11:03:36 +0000 (Mon, 03
+	  Dec 2007) | 1 line Add filtering for polygons and only add the
+	  line filter for lines and the polygon filters for polygons...
+	  ........ r401 | steve | 2007-12-03 11:22:18 +0000 (Mon, 03 Dec
+	  2007) | 1 line Some tidying ........ r402 | steve | 2007-12-03
+	  12:07:22 +0000 (Mon, 03 Dec 2007) | 1 line Split out files from
+	  the general package that do the actual general-->garmin
+	  conversion. ........ r405 | steve | 2007-12-03 17:23:48 +0000
+	  (Mon, 03 Dec 2007) | 1 line Useful amount of smothing applied.
+	  ........ r406 | steve | 2007-12-03 20:58:29 +0000 (Mon, 03 Dec
+	  2007) | 1 line Fix where was not returning after chaining the
+	  filter. ........ r407 | steve | 2007-12-03 20:59:07 +0000 (Mon,
+	  03 Dec 2007) | 1 line Now we have a polygon splitter. Polygons
+	  that have too many points will be split. ........ r408 | steve |
+	  2007-12-03 21:16:07 +0000 (Mon, 03 Dec 2007) | 2 lines Remove
+	  println's ........ r409 | steve | 2007-12-03 21:23:57 +0000 (Mon,
+	  03 Dec 2007) | 1 line Now that the smoothing is in a filter,
+	  remove the old code to remove duplicate points. ........
+
+2007-12-03  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/AnyCharsetEncoder.java:
+	  Change to be compatible with java-5
+	* .: Initialized merge tracking via "svnmerge" with revisions
+	  "1-389" from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/filters
+
+2007-11-24  steve
+
+	* ., Makefile, src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/package.html,
+	  src/uk/me/parabola/mkgmap/main/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/main/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MapEventListener.java,
+	  src/uk/me/parabola/mkgmap/main/MapEvents.java,
+	  src/uk/me/parabola/mkgmap/main/MapProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Merged revisions 371-377,379-384,386-387 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/gmapsupp
+	  
+	  ........ r371 | steve | 2007-11-15 00:21:24 +0000 (Thu, 15 Nov
+	  2007) | 2 lines Allow several different listeners to be added to
+	  the map making processes. One will be the overview map as before,
+	  and we need to keep track of input files for the gmapsupp too.
+	  ........ r377 | steve | 2007-11-15 10:06:37 +0000 (Thu, 15 Nov
+	  2007) | 2 lines Part of the rename ........ r379 | steve |
+	  2007-11-15 12:36:38 +0000 (Thu, 15 Nov 2007) | 1 line Its clear
+	  how the skeleton of the implementation is going to play out now.
+	  ........ r380 | steve | 2007-11-15 15:43:36 +0000 (Thu, 15 Nov
+	  2007) | 3 lines The first working gmapsupp.img file produced. It
+	  does not have an overview map or an TDB but that doesn't actually
+	  seem to matter and it works find on my garmin device. In fact you
+	  are probably not supposed to put the TDB and the overview in
+	  there? Is it just for mapsource? ........ r381 | steve |
+	  2007-11-15 16:39:17 +0000 (Thu, 15 Nov 2007) | 3 lines Use linked
+	  hash map for predictible ordering of the maps in the output.
+	  Break up a deeply nested routine a bit. ........ r383 | steve |
+	  2007-11-17 11:45:06 +0000 (Sat, 17 Nov 2007) | 1 line FIx some
+	  problems with the header. ........ r384 | steve | 2007-11-17
+	  14:54:26 +0000 (Sat, 17 Nov 2007) | 2 lines Update to new
+	  location of tests. ........
+
+2007-11-23  steve
+
+	* ., Makefile,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java:
+	  Merged revisions 385 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/gmapsupp
+	  
+	  ........ r385 | steve | 2007-11-22 20:59:42 +0000 (Thu, 22 Nov
+	  2007) | 1 line Upper case the strings read in from the
+	  translitteration tables. Else if you have Ch for example, then
+	  the 'h' does not show up. ........
+	* .: Initialized merge tracking via "svnmerge" with revisions
+	  "1-369" from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/gmapsupp
+
+2007-11-15  steve
+
+	* build.xml: Copy the doc to the distribution directory.
+	* src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java: Fix calls to
+	  PolylineOverview() constructor, note that these files probably
+	  don't work any longer anyway.
+	* src/uk/me/parabola/mkgmap/reader/plugin/MapperBasedMapDataSource.java:
+	  This should have been removed in the previous commit
+	* src/uk/me/parabola/mkgmap/reader/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java:
+	  Get rid of package dependancy cycle
+	* src/uk/me/parabola/imgfmt/FileNotWritableException.java: Remove
+	  call to constructor that is not in 1.5
+	* README: Bring the README file more up to date.
+
+2007-11-14  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: Fix the
+	  overview records.
+	* ., build.xml, resources/chars, resources/chars/ascii,
+	  resources/chars/ascii/row00.trans,
+	  resources/chars/ascii/row01.trans,
+	  resources/chars/ascii/row02.trans,
+	  resources/chars/ascii/row03.trans,
+	  resources/chars/ascii/row04.trans,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/AnyCharsetEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/TableCreator.java: Merged
+	  revisions 345-350,352-366 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/lang
+	  
+	  ........ r345 | steve | 2007-11-02 00:33:22 +0000 (Fri, 02 Nov
+	  2007) | 1 line allow any charset as a target ........ r350 |
+	  steve | 2007-11-03 17:45:54 +0000 (Sat, 03 Nov 2007) | 1 line
+	  Allow for making upper-casing optional ........ r352 | steve |
+	  2007-11-04 16:49:05 +0000 (Sun, 04 Nov 2007) | 2 lines Make all
+	  the transliteration for the acsii-only mode to be table driven.
+	  ........ r353 | steve | 2007-11-04 19:03:47 +0000 (Sun, 04 Nov
+	  2007) | 2 lines Added missing (blank) character translit maps.
+	  ........ r354 | steve | 2007-11-04 20:00:53 +0000 (Sun, 04 Nov
+	  2007) | 2 lines Build changes needed for character tables.
+	  ........ r360 | steve | 2007-11-06 23:02:49 +0000 (Tue, 06 Nov
+	  2007) | 2 lines Russian transliteration provided by User:Liosha
+	  ........
+
+2007-11-13  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java:
+	  Changed default level definitions.
+	* resources/map-features.csv, resources/osm_garmin_map.csv:
+	  Improved set of levels for the map features by Jochen Topf.
+	* src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/PointOverview.java,
+	  src/uk/me/parabola/imgfmt/app/PolygonOverview.java,
+	  src/uk/me/parabola/imgfmt/app/PolylineOverview.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Finally made the overview sections actually reflect the levels at
+	  which things appear. Calculate the levels for the overview map,
+	  so that they do not overlap with any of the inputs, even if they
+	  are set to non-default values.
+
+2007-11-10  steve
+
+	* Makefile, src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Fix the dimentions in the
+	  TDB file. Couple of other fixes for the overview map. Also the
+	  name of the overview map now does not have the trailing zeros.
+	* src/uk/me/parabola/imgfmt/sys/Dirent.java: If the name is not
+	  eight characters then truncate or left pad with zeros.
+
+2007-11-09  steve
+
+	* src/uk/me/parabola/imgfmt/app/TREFile.java: Back out mistaken
+	  checking that broke the map.
+
+2007-11-06  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java:
+	  Characters between 1d and 1f can just go through unchanged.
+	* Makefile, src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java: More reliably
+	  work with QLandkarte. Calculation of the size of the TRE subdiv
+	  region was wrong when the lowest level was not 0, such as happens
+	  in the overview map.
+
+2007-11-05  steve
+
+	* ChangeLog, Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java:
+	  Version 0.3 works like 0.4 and recentish files claim to be 0.3 so
+	  include them in the 0.4 support
+	* src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/TestTdb.java: Don't repeat copyright
+	  statements.
+
 2007-11-04  steve
 
 	* doc, test: Add some ignores
