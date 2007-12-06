@@ -223,7 +223,6 @@ public class MapDetails implements MapCollector {
 	}
 
 	private void splitPolygon(MapShape shape) {
-		System.out.println("== split polygon for size");
 		PolygonSizeSplitterFilter shapeSplitterFilter = new PolygonSizeSplitterFilter();
 		shapeSplitterFilter.doFilter(shape, shapeChain);
 	}
