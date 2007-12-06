@@ -36,7 +36,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
 
 	// Half the max size.  Reduce further perhaps.
-	private static final int MAX_SIZE = 0x7fff/2;
+	public static final int MAX_SIZE = 0x7fff/2;
 
 	public void init(FilterConfig config) {
 	}
@@ -104,7 +104,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 			private int getMaxDim() {
 				int dx = maxLong - minLong;
-				int dy = maxLat - maxLat;
+				int dy = maxLat - minLat;
 				return Math.max(dx, dy);
 			}
 		}

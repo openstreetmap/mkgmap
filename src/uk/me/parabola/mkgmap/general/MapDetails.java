@@ -50,7 +50,6 @@ public class MapDetails implements MapCollector {
 	private Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
-	private static final int MAX_ELEMENT_DIMENTIONS = 0x7fff/2;
 
 	private MapFilterChain lineChain;
 
@@ -93,7 +92,7 @@ public class MapDetails implements MapCollector {
 		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
 				line.getMinResolution());
 
-		if (line.getBounds().getMaxDimention() > MAX_ELEMENT_DIMENTIONS) {
+		if (line.getBounds().getMaxDimention() > LineSizeSplitterFilter.MAX_SIZE) {
 			splitElement(line);
 		} else {
 			lines.add(line);
