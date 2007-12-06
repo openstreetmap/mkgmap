@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.app.PolygonOverview;
 import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
+import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public class MapDetails implements MapCollector {
 	private Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
 	private MapFilterChain lineChain;
+	private MapFilterChain shapeChain;
 
 	public MapDetails() {
 		lineChain = new MapFilterChain() {
@@ -63,6 +65,16 @@ public class MapDetails implements MapCollector {
 			public void addElement(MapElement element) {
 				//assert ((MapLine) element).getBounds().getMaxDimention() < MAX_ELEMENT_DIMENTIONS;
 				lines.add((MapLine) element);
+			}
+		};
+
+		shapeChain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				shapes.add((MapShape) element);
+			}
+
+			public void addElement(MapElement element) {
+				shapes.add((MapShape) element);
 			}
 		};
 	}
@@ -93,13 +105,11 @@ public class MapDetails implements MapCollector {
 				line.getMinResolution());
 
 		if (line.getBounds().getMaxDimention() > LineSizeSplitterFilter.MAX_SIZE) {
-			splitElement(line);
+			splitLine(line);
 		} else {
 			lines.add(line);
 		}
 	}
-
-
 
 	/**
 	 * Add the given shape (polygon) to the map.  A shape is very similar to a
@@ -115,7 +125,11 @@ public class MapDetails implements MapCollector {
 		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
 				shape.getMinResolution());
 
-		shapes.add(shape);
+		if (shape.getBounds().getMaxDimention() > PolygonSizeSplitterFilter.MAX_SIZE) {
+			splitPolygon(shape);
+		} else {
+			shapes.add(shape);
+		}
 	}
 
 	/**
@@ -203,8 +217,14 @@ public class MapDetails implements MapCollector {
 			overviews.put(type, minResolution);
 	}
 
-	private void splitElement(MapElement element) {
+	private void splitLine(MapLine line) {
 		LineSizeSplitterFilter lineSplitter = new LineSizeSplitterFilter();
-		lineSplitter.doFilter(element, lineChain);
+		lineSplitter.doFilter(line, lineChain);
+	}
+
+	private void splitPolygon(MapShape shape) {
+		System.out.println("== split polygon for size");
+		PolygonSizeSplitterFilter shapeSplitterFilter = new PolygonSizeSplitterFilter();
+		shapeSplitterFilter.doFilter(shape, shapeChain);
 	}
 }

@@ -23,21 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Split polygons.  This is difficult and I don't know how to do this, so I
- * am making use of the java built in classes.  Basically I am just taking
- * the bounding box, spliting that in half and getting the intersection of
- * each half-box with the original shape.  Recurse until all are small enough.
+ * Split polygons for physical size (rather than number of points).  The plan
+ * here is simple, if its too big cut it in half.  As we alway cut the largest
+ * dimention, then we will soon enough have cut it down to be small enough.
  *
- * <p>Cutting things up may make discontiguous shapes, but this is handled by
- * the java classes (for sure) and my code (probably).
- *
- * <p>Written assuming that this is not very common, once we start doing sea
- * areas, may want to re-examine to see if we can optimize.
- * 
  * @author Steve Ratcliffe
  */
-public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFilter {
-	private static final int MAX_POINT_IN_ELEMENT = 250;
+public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
 
 	/**
 	 * Split up polygons that have more than the max allowed number of points.
@@ -51,8 +43,7 @@ public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFil
 		assert element instanceof MapShape;
 		MapShape shape = (MapShape) element;
 
-		int n = shape.getPoints().size();
-		if (n < MAX_POINT_IN_ELEMENT) {
+		if (shape.getBounds().getMaxDimention() < MAX_SIZE) {
 			// This is ok let it through and return.
 			next.doFilter(element);
 			return;
@@ -67,7 +58,7 @@ public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFil
 		// NOTE: the end condition is changed from within the loop.
 		for (int i = 0; i < outputs.size(); i++) {
 			MapShape s = outputs.get(i);
-			if (s.getPoints().size() > MAX_POINT_IN_ELEMENT) {
+			if (s.getBounds().getMaxDimention() > MAX_SIZE) {
 				// Not small enough, so remove it and split it again.  The resulting
 				// pieces will be placed at the end of the list and will be
 				// picked up later on.
@@ -88,4 +79,5 @@ public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFil
 				next.addElement(s);
 		}
 	}
+
 }
