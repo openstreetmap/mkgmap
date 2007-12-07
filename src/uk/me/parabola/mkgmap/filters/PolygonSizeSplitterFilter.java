@@ -30,6 +30,19 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
+	private int shift;
+
+	/**
+	 * Get the scale factor so that we don't oversplit.
+	 *
+	 * @param config Configuration information, giving parameters of the map level
+	 * that is being produced through this filter.
+	 */
+	public void init(FilterConfig config) {
+		shift = config.getShift();
+		if (shift > 15)
+			shift = 15; // XXX
+	}
 
 	/**
 	 * Split up polygons that have more than the max allowed number of points.
@@ -43,7 +56,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		assert element instanceof MapShape;
 		MapShape shape = (MapShape) element;
 
-		if (shape.getBounds().getMaxDimention() < MAX_SIZE) {
+		if (shape.getBounds().getMaxDimention() < (MAX_SIZE << shift)) {
 			// This is ok let it through and return.
 			next.doFilter(element);
 			return;

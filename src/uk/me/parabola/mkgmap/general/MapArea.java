@@ -19,6 +19,9 @@ package uk.me.parabola.mkgmap.general;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.FilterConfig;
+import uk.me.parabola.mkgmap.filters.MapFilterChain;
+import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,7 +155,28 @@ public class MapArea implements MapDataSource {
 			area1.addLine(l);
 		}
 
-		List<MapShape> elist = this.shapes;
+		// Split polygons for size, such that it is appropriate for the
+		// resolution that it is at.
+		final List<MapShape> elist = new ArrayList<MapShape>();
+		MapFilterChain chain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				elist.add((MapShape) element);
+			}
+
+			public void addElement(MapElement element) {
+				elist.add((MapShape) element);
+			}
+		};
+
+		PolygonSizeSplitterFilter filter = new PolygonSizeSplitterFilter();
+		FilterConfig config = new FilterConfig();
+		config.setShift(24-resolution);
+		filter.init(config);
+
+		for (MapShape s : this.shapes) {
+			filter.doFilter(s, chain);
+		}
+
 		for (MapShape e : elist) {
 			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
 			area1.addShape(e);

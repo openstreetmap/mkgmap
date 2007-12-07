@@ -125,11 +125,11 @@ public class MapDetails implements MapCollector {
 		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
 				shape.getMinResolution());
 
-		if (shape.getBounds().getMaxDimention() > PolygonSizeSplitterFilter.MAX_SIZE) {
-			splitPolygon(shape);
-		} else {
+		//if (shape.getBounds().getMaxDimention() > PolygonSizeSplitterFilter.MAX_SIZE) {
+		//	splitPolygon(shape);
+		//} else {
 			shapes.add(shape);
-		}
+		//}
 	}
 
 	/**
