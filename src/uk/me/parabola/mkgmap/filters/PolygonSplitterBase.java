@@ -120,7 +120,6 @@ public class PolygonSplitterBase extends BaseFilter {
 				MapShape s2 = new MapShape(origShape);
 				s2.setPoints(coords);
 				outputs.add(s2);
-				s2.setName(origShape.getName() + '.' + counter++);
 				coords = null;
 			}
 			pit.next();
