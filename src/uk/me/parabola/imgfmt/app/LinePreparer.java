@@ -15,9 +15,10 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.util.List;
-
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
+
+import java.util.List;
 
 /**
  * This class holds all of the calculations needed to encode a line into
@@ -62,7 +63,7 @@ class LinePreparer {
 		if (xBase < 10)
 			xbits += xBase;
 		else
-			xbits += (2 * xBase) -9;
+			xbits += (2 * xBase) - 9;
 		if (extraBit)
 			xbits++;
 
@@ -70,15 +71,13 @@ class LinePreparer {
 		if (yBase < 10)
 			ybits += yBase;
 		else
-			ybits += (2 * yBase) -9;
+			ybits += (2 * yBase) - 9;
 		if (extraBit)
 			ybits++;
 
 		// Note no sign included.
-		if (log.isDebugEnabled()) {
-//			log.debug("xNum" + xNum + ", y=" + yNum);
+		if (log.isDebugEnabled())
 			log.debug("xbits" + xbits + ", y=" + ybits);
-		}
 
 		// Write the bitstream
 		BitWriter bw = new BitWriter();
@@ -100,29 +99,28 @@ class LinePreparer {
 			log.debug("y same is " + ySameSign + ", sign is " + ySignNegative);
 		}
 
-		int dx, dy;
 		for (int i = 0; i < deltas.length; i+=2) {
-			dx = deltas[i];
-			dy = deltas[i + 1];
+			int dx = deltas[i];
+			int dy = deltas[i + 1];
 			if (dx == 0 && dy == 0)
 				continue;
 			
 			if (log.isDebugEnabled())
 				log.debug("x delta " + dx + ", " + xbits);
+			assert dx >> xbits == 0 || dx >> xbits == -1;
 			if (xSameSign) {
 				bw.putn(abs(dx), xbits);
 			} else {
-				assert dx == 0 || ((dx & ((1 << xbits) - 1)) != 0);
 				bw.putn(dx, xbits);
 				bw.put1(dx < 0);
 			}
 
 			if (log.isDebugEnabled())
 				log.debug("y delta " + dy + ", " + ybits);
+			assert dy >> ybits == 0 || dy >> ybits == -1;
 			if (ySameSign) {
 				bw.putn(abs(dy), ybits);
 			} else {
-				assert dy == 0 || ((dy & ((1<<ybits) - 1)) != 0);
 				bw.putn(dy, ybits);
 				bw.put1(dy < 0);
 			}
@@ -152,6 +150,7 @@ class LinePreparer {
 	 * the lat and long values.
 	 */
 	private void calcDeltas() {
+		log.info("label offset", polyline.getLabel().getOffset());
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 
@@ -170,7 +169,7 @@ class LinePreparer {
 
 		// Space to hold the deltas
 		deltas = new int[2 * (points.size() - 1)];
-		int   off = 0;
+		int off = 0;
 
 		boolean first = true;
 
@@ -178,7 +177,8 @@ class LinePreparer {
 		for (Coord co : points) {
 			int lat = co.getLatitude() >> shift;
 			int lon = co.getLongitude() >> shift;
-			log.debug("shifted pos", lat, lon);
+			if (log.isDebugEnabled())
+				log.debug("shifted pos", lat, lon);
 			if (first) {
 				lastLat = lat;
 				lastLong = lon;
@@ -238,21 +238,32 @@ class LinePreparer {
 		// Note that the sign bit is already not included so there is
 		// no adjustment needed for it.
 
-		this.extraBit = false;  // Keep simple for now
+		if (log.isDebugEnabled())
+			log.debug("initial xBits, yBits", xBits, yBits);
 
+		this.extraBit = false;  // Keep simple for now
 		if (xBits < 2)
 			xBits = 2;
 		int tmp = xBits - 2;
-		if (tmp > 10)
+		if (tmp > 10) {
+			if ((tmp & 0x1) == 0)
+				tmp++;
 			tmp = 9 + (tmp - 9) / 2;
+		}
 		this.xBase = tmp;
 
 		if (yBits < 2)
 			yBits = 2;
 		tmp = yBits - 2;
-		if (tmp > 10)
+		if (tmp > 10) {
+			if ((tmp & 0x1) == 0)
+				tmp++;
 			tmp = 9 + (tmp - 9) / 2;
+		}
 		this.yBase = tmp;
+
+		if (log.isDebugEnabled())
+			log.debug("initial xBase, yBase", xBase, yBase);
 
 		// Set flags for same sign etc.
 		this.xSameSign = !xDiffSign;

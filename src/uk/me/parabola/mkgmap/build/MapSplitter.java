@@ -40,7 +40,7 @@ class MapSplitter {
 
 	// There is an absolute largest size as offsets are in 16 bits, we are
 	//  staying safely inside it however.
-	private static final int MAX_DIVISION_SIZE = 0x3fff;
+	private static final int MAX_DIVISION_SIZE = 0x7fff;
 
 	// The maximum region size.  Note that the offset to the start of a section
 	// has to fit into 16 bits, the end of the last section could be beyond the

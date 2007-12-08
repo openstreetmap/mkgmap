@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * Split polygons for physical size (rather than number of points).  The plan
- * here is simple, if its too big cut it in half.  As we alway cut the largest
+ * here is simple, if its too big, then cut it in half.  As we alway cut the largest
  * dimention, then we will soon enough have cut it down to be small enough.
  *
  * @author Steve Ratcliffe
@@ -56,7 +56,8 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		assert element instanceof MapShape;
 		MapShape shape = (MapShape) element;
 
-		if (shape.getBounds().getMaxDimention() < (MAX_SIZE << shift)) {
+		int maxSize = MAX_SIZE << shift;
+		if (shape.getBounds().getMaxDimention() < maxSize) {
 			// This is ok let it through and return.
 			next.doFilter(element);
 			return;
@@ -71,7 +72,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		// NOTE: the end condition is changed from within the loop.
 		for (int i = 0; i < outputs.size(); i++) {
 			MapShape s = outputs.get(i);
-			if (s.getBounds().getMaxDimention() > MAX_SIZE) {
+			if (s.getBounds().getMaxDimention() > maxSize) {
 				// Not small enough, so remove it and split it again.  The resulting
 				// pieces will be placed at the end of the list and will be
 				// picked up later on.

@@ -16,21 +16,22 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = /opt/data/uk-070530.osm.gz
 #OSMDATA = /opt/data/uk-070815.osm.gz
 OSMDATA = /opt/data/uk-070919-1.osm.gz
-OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
+#OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 #OSMDATA = ~/in/germany-070823.osm
 #OSMDATA = vbig.osm
 #OSMDATA = clondon.osm
 #OSMDATA = /opt/data/multi/6324*
 #OSMDATA = test/osm5/srtm.osm
 #OSMDATA = --levels=0:24,1:23,2:22,3:21,4:20,5:19,6:18,7:17 /opt/data/planet-070207-gb-london.osm
-#OSMDATA = --gmapsupp --latin1 /opt/data/osmworld/*.gz
+OSMDATA = --latin1 /opt/data/osmworld/*.gz
 #OSMDATA = /opt/data/osmworld/63260003
 #OSMDATA = --gmapsupp ~/tmp/batch/*.osm
 #OSMDATA = /opt/data/uk-071114.osm.gz
 #OSMDATA = --gmapsupp /opt/data/uk/63*
 #OSMDATA = reg40.osm
 #OSMDATA = reg71.osm
-OSMDATA = longline.osm
+#OSMDATA = --levels="0=24" reg04b.osm
+#OSMDATA = --levels="0=24" longline.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
@@ -44,7 +45,7 @@ OPTS= --gmapsupp
 makemap:
 	rm -f gmapsupp/* mkgmap.log out.log
 	rm -f gmapsupp.img 6324*.img 6324*.tdb
-	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	$(TIME) java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#cp 63240001.img gmapsupp.img
 	#imgdecode gmapsupp.img

@@ -29,7 +29,8 @@ import java.awt.geom.PathIterator;
  * @author Steve Ratcliffe
  */
 public class PolygonSplitterBase extends BaseFilter {
-	public static final int MAX_SIZE = 0x7fff/3;
+	public static final int MAX_SIZE = 0x7fff/2;
+	private int counter;
 
 	/**
 	 * Split the given shape and place the resulting shapes in the outputs list.
@@ -54,11 +55,13 @@ public class PolygonSplitterBase extends BaseFilter {
 		Rectangle r1;
 		Rectangle r2;
 		if (bounds.width > bounds.height) {
-			r1 = new Rectangle(bounds.x, bounds.y, roundUp(bounds.width / 2), bounds.height);
-			r2 = new Rectangle(bounds.x + roundDown(bounds.width/2), bounds.y, roundUp(bounds.width / 2), bounds.height);
+			int halfWidth = bounds.width / 2;
+			r1 = new Rectangle(bounds.x, bounds.y, halfWidth, bounds.height);
+			r2 = new Rectangle(bounds.x + halfWidth, bounds.y, bounds.width - halfWidth, bounds.height);
 		} else {
-			r1 = new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height/2);
-			r2 = new Rectangle(bounds.x, bounds.y + roundDown(bounds.height/2), bounds.width, roundUp(bounds.height/2));
+			int halfHeight = bounds.height / 2;
+			r1 = new Rectangle(bounds.x, bounds.y, bounds.width, halfHeight);
+			r2 = new Rectangle(bounds.x, bounds.y + halfHeight, bounds.width, bounds.height - halfHeight);
 		}
 
 		// Now find the intersection of these two boxes with the original
@@ -92,7 +95,7 @@ public class PolygonSplitterBase extends BaseFilter {
 			int type = pit.currentSegment(res);
 
 			//System.out.println("T" + type + " " + res[0] + "," + res[1] + " " + res[2] + "," + res[3] + " " + res[4] + "," + res[5]);
-			Coord co = new Coord(round(res[1]), round(res[0]));
+			Coord co = new Coord(Math.round(res[1]), Math.round(res[0]));
 
 			if (type == PathIterator.SEG_MOVETO) {
 				// We get a moveto at the begining and if this area is actually
@@ -117,20 +120,10 @@ public class PolygonSplitterBase extends BaseFilter {
 				MapShape s2 = new MapShape(origShape);
 				s2.setPoints(coords);
 				outputs.add(s2);
+				s2.setName(origShape.getName() + '.' + counter++);
+				coords = null;
 			}
 			pit.next();
 		}
-	}
-
-	private int round(float re) {
-		return (int) (re + 0.999f);
-	}
-
-	private int roundDown(int val) {
-		return (int) Math.floor(val);
-	}
-
-	private int roundUp(int val) {
-		return (int) Math.ceil(val);
 	}
 }
