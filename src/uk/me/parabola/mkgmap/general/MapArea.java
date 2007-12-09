@@ -80,9 +80,9 @@ public class MapArea implements MapDataSource {
 	 * will contain all the same map elements.
 	 *
 	 * @param src The map data source to initialise this area with.
-	 * @param shift The shift value this is being created for.
+	 * @param resolution The resolution of this area.
 	 */
-	public MapArea(MapDataSource src, int shift) {
+	public MapArea(MapDataSource src, int resolution) {
 		this.areaResolution = 0;
 		this.bounds = src.getBounds();
 		addToBounds(bounds);
@@ -101,15 +101,16 @@ public class MapArea implements MapDataSource {
 		// resolution that it is at.
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
-				if (!bounds.contains(element.getLocation())) {
-					System.out.println("no contains");
-					System.out.println(element.getLocation());
-					System.out.println("our bounds " + bounds);
-					System.out.println("name " + element.getName());
-				} else {
-					shapes.add((MapShape) element);
-					addSize(element, shapeSize, SHAPE_KIND);
-				}
+				MapShape shape = (MapShape) element;
+				//if (!bounds.contains(shape.getBounds())) {
+				//	// How can this happen?
+				//	System.out.println("no contains after");
+				//	System.out.println("polygo bounds " + shape.getBounds());
+				//	System.out.println("our bounds " + bounds);
+				//	System.out.println("name " + element.getName());
+				//}
+				shapes.add(shape);
+				addSize(element, shapeSize, SHAPE_KIND);
 			}
 
 			public void addElement(MapElement element) {
@@ -119,7 +120,8 @@ public class MapArea implements MapDataSource {
 
 		PolygonSizeSplitterFilter filter = new PolygonSizeSplitterFilter();
 		FilterConfig config = new FilterConfig();
-		config.setShift(shift);
+		config.setResolution(resolution);
+		config.setBounds(bounds);
 		filter.init(config);
 
 		for (MapShape s : src.getShapes()) {
@@ -455,8 +457,14 @@ public class MapArea implements MapDataSource {
 		int xcell = (x - xbase) / dx;
 		int ycell = (y - ybase) / dy;
 
-		assert xcell >= 0 : "x cell " + xcell;
-		assert ycell >= 0;
+		if (xcell < 0) {
+			log.warn("xcell was", xcell);
+			xcell = 0;
+		}
+		if (ycell < 0) {
+			log.warn("ycell was", ycell);
+			ycell = 0;
+		}
 		
 		if (xcell >= nx)
 			xcell = nx - 1;

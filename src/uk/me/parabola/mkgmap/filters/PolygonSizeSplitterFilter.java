@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapShape;
 
@@ -31,6 +32,7 @@ import java.util.List;
  */
 public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
 	private int shift;
+	private Area bounds ;
 
 	/**
 	 * Get the scale factor so that we don't oversplit.
@@ -41,7 +43,8 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	public void init(FilterConfig config) {
 		shift = config.getShift();
 		if (shift > 15)
-			shift = 15; // XXX
+			shift = 16;
+		bounds = config.getBounds();
 	}
 
 	/**
@@ -57,7 +60,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		MapShape shape = (MapShape) element;
 
 		int maxSize = MAX_SIZE << shift;
-		if (shape.getBounds().getMaxDimention() < maxSize) {
+		if (isSizeOk(shape, maxSize)) {
 			// This is ok let it through and return.
 			next.doFilter(element);
 			return;
@@ -72,7 +75,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		// NOTE: the end condition is changed from within the loop.
 		for (int i = 0; i < outputs.size(); i++) {
 			MapShape s = outputs.get(i);
-			if (s.getBounds().getMaxDimention() > maxSize) {
+			if (!isSizeOk(s, maxSize)) {
 				// Not small enough, so remove it and split it again.  The resulting
 				// pieces will be placed at the end of the list and will be
 				// picked up later on.
@@ -92,6 +95,14 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 			} else
 				next.addElement(s);
 		}
+	}
+
+	private boolean isSizeOk(MapShape shape, int maxSize) {
+		int factor = 4;
+		return shape.getBounds().getMaxDimention() < maxSize
+				&& shape.getBounds().getWidth() < bounds.getWidth() / factor
+				&& shape.getBounds().getHeight() < bounds.getHeight() / factor
+				;
 	}
 
 }
