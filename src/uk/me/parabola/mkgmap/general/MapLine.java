@@ -71,7 +71,7 @@ public class MapLine extends MapElement {
 	 *
 	 * @return The mid-point of the bounding box.
 	 */
-	protected Coord getLocation() {
+	public Coord getLocation() {
 		return new Coord((minLat + maxLat) / 2, (minLong + maxLong) / 2);
 	}
 

@@ -66,7 +66,7 @@ public abstract class MapElement {
 	 *
 	 * @return Co-ordinate of the mid-point of the bounding box of the element.
 	 */
-	protected abstract Coord getLocation();
+	public abstract Coord getLocation();
 
 	/**
 	 * Get the resolutions that an element should be displayed at.
