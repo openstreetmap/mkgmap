@@ -17,10 +17,9 @@
 package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
-
-import uk.me.parabola.log.Logger;
 
 /**
  * The region file.  Holds actual details of points and lines etc.

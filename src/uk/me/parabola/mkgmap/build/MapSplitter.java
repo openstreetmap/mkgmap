@@ -167,6 +167,7 @@ class MapSplitter {
 	 * all the map features that are visible.
 	 */
 	private MapArea initialArea(MapDataSource src) {
-		return new MapArea(src);
+		int shift = zoom.getShiftValue();
+		return new MapArea(src, shift);
 	}
 }

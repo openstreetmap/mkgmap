@@ -140,7 +140,6 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 */
 	public void put(byte[] src, int start, int length) {
 		ensureSize(length);
-		log.debug("start+len", start, ",", length);
 		buf.put(src, start, length);
 	}
 
@@ -153,7 +152,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 		if (buf.position() +length > bufferSize - GUARD_SIZE) {
 			bufferSize += GROW_SIZE;
 			if (bufferSize > 0xffffff)
-				System.out.println("Warning: The file is too big and the map will not work");
+				log.error("Map is too big and will not work");
 			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);
 			buf.flip();

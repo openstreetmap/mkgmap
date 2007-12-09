@@ -80,8 +80,9 @@ public class MapArea implements MapDataSource {
 	 * will contain all the same map elements.
 	 *
 	 * @param src The map data source to initialise this area with.
+	 * @param shift The shift value this is being created for.
 	 */
-	public MapArea(MapDataSource src) {
+	public MapArea(MapDataSource src, int shift) {
 		this.areaResolution = 0;
 		this.bounds = src.getBounds();
 		addToBounds(bounds);
@@ -96,9 +97,33 @@ public class MapArea implements MapDataSource {
 			addSize(l, lineSize, LINE_KIND);
 		}
 
+		// Split polygons for size, such that it is appropriate for the
+		// resolution that it is at.
+		MapFilterChain chain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				if (!bounds.contains(element.getLocation())) {
+					System.out.println("no contains");
+					System.out.println(element.getLocation());
+					System.out.println("our bounds " + bounds);
+					System.out.println("name " + element.getName());
+				} else {
+					shapes.add((MapShape) element);
+					addSize(element, shapeSize, SHAPE_KIND);
+				}
+			}
+
+			public void addElement(MapElement element) {
+				doFilter(element);
+			}
+		};
+
+		PolygonSizeSplitterFilter filter = new PolygonSizeSplitterFilter();
+		FilterConfig config = new FilterConfig();
+		config.setShift(shift);
+		filter.init(config);
+
 		for (MapShape s : src.getShapes()) {
-			shapes.add(s);
-			addSize(s, shapeSize, SHAPE_KIND);
+			filter.doFilter(s, chain);
 		}
 	}
 
@@ -139,14 +164,12 @@ public class MapArea implements MapDataSource {
 		int dy = areas[0].getHeight();
 
 		// Now sprinkle each map element into the correct map area.
-		List<MapPoint> plist = this.points;
-		for (MapPoint p : plist) {
+		for (MapPoint p : this.points) {
 			MapArea area1 = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
 			area1.addPoint(p);
 		}
 
-		List<MapLine> llist = this.lines;
-		for (MapLine l : llist) {
+		for (MapLine l : this.lines) {
 			// Drop any zero sized lines.
 			if (l.getBounds().getMaxDimention() <= 0)
 				continue;
@@ -155,29 +178,7 @@ public class MapArea implements MapDataSource {
 			area1.addLine(l);
 		}
 
-		// Split polygons for size, such that it is appropriate for the
-		// resolution that it is at.
-		final List<MapShape> elist = new ArrayList<MapShape>();
-		MapFilterChain chain = new MapFilterChain() {
-			public void doFilter(MapElement element) {
-				elist.add((MapShape) element);
-			}
-
-			public void addElement(MapElement element) {
-				elist.add((MapShape) element);
-			}
-		};
-
-		PolygonSizeSplitterFilter filter = new PolygonSizeSplitterFilter();
-		FilterConfig config = new FilterConfig();
-		config.setShift(24-resolution);
-		filter.init(config);
-
-		for (MapShape s : this.shapes) {
-			filter.doFilter(s, chain);
-		}
-
-		for (MapShape e : elist) {
+		for (MapShape e : this.shapes) {
 			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
 			area1.addShape(e);
 		}
@@ -454,8 +455,8 @@ public class MapArea implements MapDataSource {
 		int xcell = (x - xbase) / dx;
 		int ycell = (y - ybase) / dy;
 
-		assert (xcell >= 0);
-		assert (ycell >= 0);
+		assert xcell >= 0 : "x cell " + xcell;
+		assert ycell >= 0;
 		
 		if (xcell >= nx)
 			xcell = nx - 1;

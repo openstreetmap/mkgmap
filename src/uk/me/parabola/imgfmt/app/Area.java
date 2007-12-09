@@ -145,4 +145,9 @@ public class Area {
 	public int getMaxDimention() {
 		return Math.max(getWidth(), getHeight());
 	}
+
+	public boolean contains(Coord co) {
+		return co.getLatitude() >= minLat && co.getLatitude() <= maxLat
+				&& co.getLongitude() >= minLong && co.getLongitude() <= maxLong;
+	}
 }
