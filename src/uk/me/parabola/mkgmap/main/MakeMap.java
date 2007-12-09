@@ -44,9 +44,8 @@ public class MakeMap  implements MapProcessor {
 	private List<MapEventListener> mapListeners = new ArrayList<MapEventListener>();
 
 	public void processFilename(CommandArgs args, String filename) {
-		LoadableMapDataSource src;
 		try {
-			src = loadFromFile(args, filename);
+			LoadableMapDataSource src = loadFromFile(args, filename);
 			makeMap(args, src);
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
@@ -75,9 +74,8 @@ public class MakeMap  implements MapProcessor {
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
 
-		Map map;
 		try {
-			map = Map.createMap(args.getMapname(), params);
+			Map map = Map.createMap(args.getMapname(), params);
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
