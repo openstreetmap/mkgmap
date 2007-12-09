@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import uk.me.parabola.imgfmt.app.Area;
+
 /**
  * Configuration for filters.  Some filters may need extra information that
  * will be provided here.
@@ -25,20 +27,31 @@ package uk.me.parabola.mkgmap.filters;
 public class FilterConfig {
 	private int resolution;
 	private int shift;
+	private Area bounds;
 
 	public int getResolution() {
 		return resolution;
-	}
-
-	public void setResolution(int resolution) {
-		this.resolution = resolution;
 	}
 
 	public int getShift() {
 		return shift;
 	}
 
-	public void setShift(int shift) {
-		this.shift = shift;
+	/**
+	 * Set the resolution and shift values.
+	 *
+	 * @param resolution The resolution.
+	 */
+	public void setResolution(int resolution) {
+		this.resolution = resolution;
+		this.shift = 24 - resolution;
+	}
+
+	public Area getBounds() {
+		return bounds;
+	}
+
+	public void setBounds(Area bounds) {
+		this.bounds = bounds;
 	}
 }

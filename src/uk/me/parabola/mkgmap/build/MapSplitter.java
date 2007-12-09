@@ -73,12 +73,13 @@ class MapSplitter {
 	 * maximum size and a maximum number of features that can be contained
 	 * in a single area.
 	 *
+	 * This routine is not called recursively.
+	 *
 	 * @return An array of map areas, each of which is within the size limit
 	 * and the limit on the number of features.
 	 */
 	public MapArea[] split() {
-		Area bounds = mapSource.getBounds();
-		log.debug("orig area", bounds);
+		log.debug("orig area", mapSource.getBounds());
 
 		MapArea ma = initialArea(mapSource);
 		MapArea[] areas = splitMaxSize(ma);
@@ -167,7 +168,6 @@ class MapSplitter {
 	 * all the map features that are visible.
 	 */
 	private MapArea initialArea(MapDataSource src) {
-		int shift = zoom.getShiftValue();
-		return new MapArea(src, shift);
+		return new MapArea(src, zoom.getResolution());
 	}
 }

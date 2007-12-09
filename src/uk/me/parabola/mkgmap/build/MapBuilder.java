@@ -296,11 +296,10 @@ public class MapBuilder {
 	{
 		div.startLines();  // Signal that we are beginning to draw the lines.
 
-		int shift = div.getShift();
 		int res = div.getResolution();
 
 		FilterConfig config = new FilterConfig();
-		config.setShift(shift);
+		config.setResolution(res);
 
 		LayerFilterChain filters = new LayerFilterChain(config);
 		filters.addFilter(new SmoothingFilter());
@@ -331,11 +330,10 @@ public class MapBuilder {
 	{
 		div.startShapes();  // Signal that we are beginning to draw the shapes.
 
-		int shift = div.getShift();
 		int res = div.getResolution();
 
 		FilterConfig config = new FilterConfig();
-		config.setShift(shift);
+		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
 		filters.addFilter(new SmoothingFilter());
 		filters.addFilter(new PolygonSplitterFilter());
