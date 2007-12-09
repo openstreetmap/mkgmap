@@ -55,7 +55,7 @@ public class GmapsuppBuilder implements MapEventListener {
 	 */
 	private static final int ENTRY_SIZE = 240;
 
-	private Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
+	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 	private static final String GMAPSUPP = "gmapsupp.img";
 
 	/**
@@ -245,9 +245,9 @@ public class GmapsuppBuilder implements MapEventListener {
 	 * Just a data value object for various bits of block size info.
 	 */
 	private static class BlockInfo {
-		private int blockSize;
-		private int headerSlots;
-		private int reserveBlocks;
+		private final int blockSize;
+		private final int headerSlots;
+		private final int reserveBlocks;
 
 		private BlockInfo(int blockSize, int headerSlots, int reserveBlocks) {
 			this.blockSize = blockSize;

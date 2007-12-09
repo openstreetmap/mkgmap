@@ -185,5 +185,6 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	private void processShapes(List<MapShape> shapes) {
+		// TODO if we want any shapes in the overview.
 	}
 }

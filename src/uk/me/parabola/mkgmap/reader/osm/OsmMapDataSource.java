@@ -34,10 +34,10 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
-	private Properties props;
+	private Properties configProps;
 
 	public LevelInfo[] mapLevels() {
-		String configuredLevels = props.getProperty("levels");
+		String configuredLevels = configProps.getProperty("levels");
 		LevelInfo[] levels;
 
 		if (configuredLevels != null) {
@@ -93,11 +93,11 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		return new String[] {"OpenStreetMap.org contributors."};
 	}
 
-	public void config(Properties configProps) {
-		this.props = configProps;
+	public void config(Properties props) {
+		this.configProps = props;
 	}
 
 	Properties getConfig() {
-		return props;
+		return configProps;
 	}
 }

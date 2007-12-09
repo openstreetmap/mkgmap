@@ -30,7 +30,6 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 class Way5 extends Element implements Way {
-	private static final Logger log = Logger.getLogger(Way5.class);
 
 	private final List<Coord> points = new ArrayList<Coord>();
 

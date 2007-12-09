@@ -31,7 +31,7 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource, ConfiguredByProperties {
-	private Properties props;
+	private Properties configProps;
 
 	/**
 	 * 'Filenames' that are supported begin with test-map:
@@ -58,7 +58,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 			all.load(mapper);
 		} else if ("test-map:test-points".equals(name)) {
 			TestPoints test = new TestPoints();
-			test.load(mapper, props);
+			test.load(mapper, configProps);
 		} else {
 			throw new FileNotFoundException("Invalid test file name");
 		}
@@ -77,7 +77,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 		return new String[] {"test data"};
 	}
 
-	public void config(Properties configProps) {
-		this.props = configProps;
+	public void config(Properties props) {
+		this.configProps = props;
 	}
 }

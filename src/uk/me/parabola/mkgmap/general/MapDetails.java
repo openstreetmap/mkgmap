@@ -48,12 +48,12 @@ public class MapDetails implements MapCollector {
 	private int maxLon = Utils.toMapUnit(-180.0);
 
 	// Keep lists of all items that were used.
-	private Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
-	private Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
-	private Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
+	private final Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
+	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
+	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
-	private MapFilterChain lineChain;
-	private MapFilterChain shapeChain;
+	private final MapFilterChain lineChain;
+	private final MapFilterChain shapeChain;
 
 	public MapDetails() {
 		lineChain = new MapFilterChain() {
@@ -220,10 +220,5 @@ public class MapDetails implements MapCollector {
 	private void splitLine(MapLine line) {
 		LineSizeSplitterFilter lineSplitter = new LineSizeSplitterFilter();
 		lineSplitter.doFilter(line, lineChain);
-	}
-
-	private void splitPolygon(MapShape shape) {
-		PolygonSizeSplitterFilter shapeSplitterFilter = new PolygonSizeSplitterFilter();
-		shapeSplitterFilter.doFilter(shape, shapeChain);
 	}
 }

@@ -43,7 +43,7 @@ public interface MapFilterChain {
 	/**
 	 * Add an extra element and pass it down a copy of the chain.  The element
 	 * (if not filtered out) will end up being added to the map area too.
-	 * @param element
+	 * @param element The element to add.
 	 */
 	public void addElement(MapElement element);
 }

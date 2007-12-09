@@ -114,9 +114,8 @@ class TestPoints {
 
 				List<Coord> coords = new ArrayList<Coord>();
 
-				Coord co;
 				for (int i = 0; i < 5; i++) {
-					co = new Coord(baseLat + i*ELEMENT_SIZE, baseLong + i*ELEMENT_SIZE);
+					Coord co = new Coord(baseLat + i * ELEMENT_SIZE, baseLong + i * ELEMENT_SIZE);
 					coords.add(co);
 					mapper.addToBounds(co);
 				}

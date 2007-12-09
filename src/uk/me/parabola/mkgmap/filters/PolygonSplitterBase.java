@@ -29,7 +29,7 @@ import java.awt.geom.PathIterator;
  * @author Steve Ratcliffe
  */
 public class PolygonSplitterBase extends BaseFilter {
-	public static final int MAX_SIZE = 0x7fff/2;
+	protected static final int MAX_SIZE = 0x7fff/2;
 
 	/**
 	 * Split the given shape and place the resulting shapes in the outputs list.

@@ -46,7 +46,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	private static final int SYMBOL_SHIFT = 0x1c;
 
 	//
-	private static String[][] rows = new String[256][];
+	private static final String[][] rows = new String[256][];
 
 	/**
 	 * Encode the text into the 6 bit format.  See the class level notes.
@@ -214,7 +214,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		while (scan.hasNext()) {
 			log.debug("line in trans table");
 			if (scan.hasNext("#.*")) {
-				String s = scan.next();
+				scan.next();
 				scan.nextLine();
 				continue;
 			}
@@ -232,7 +232,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 				}
 			}
 
-			String s = scan.nextLine();
+			scan.nextLine();
 		}
 	}
 }

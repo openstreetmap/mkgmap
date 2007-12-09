@@ -33,7 +33,7 @@ class CopyrightBlock {
 	private static final Logger log = Logger.getLogger(CopyrightBlock.class);
 	
 	private final List<CopyrightSegment> segments = new ArrayList<CopyrightSegment>();
-	private Set<CopyrightSegment> copySet = new HashSet<CopyrightSegment>();
+	private final Set<CopyrightSegment> copySet = new HashSet<CopyrightSegment>();
 
 	CopyrightBlock() {
 	}

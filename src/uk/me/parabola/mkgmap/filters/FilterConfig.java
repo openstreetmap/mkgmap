@@ -26,7 +26,6 @@ import uk.me.parabola.imgfmt.app.Area;
  */
 public class FilterConfig {
 	private int resolution;
-	private int shift;
 	private Area bounds;
 
 	public int getResolution() {
@@ -34,7 +33,7 @@ public class FilterConfig {
 	}
 
 	public int getShift() {
-		return shift;
+		return 24 - getResolution();
 	}
 
 	/**
@@ -44,7 +43,6 @@ public class FilterConfig {
 	 */
 	public void setResolution(int resolution) {
 		this.resolution = resolution;
-		this.shift = 24 - resolution;
 	}
 
 	public Area getBounds() {

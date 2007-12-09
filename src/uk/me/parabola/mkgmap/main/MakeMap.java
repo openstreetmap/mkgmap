@@ -41,7 +41,7 @@ public class MakeMap  implements MapProcessor {
 	private static final Logger log = Logger.getLogger(MakeMap.class);
 
 	//private MapEventListener overview = new OverviewMapBuilder();
-	private List<MapEventListener> mapListeners = new ArrayList<MapEventListener>();
+	private final List<MapEventListener> mapListeners = new ArrayList<MapEventListener>();
 
 	public void processFilename(CommandArgs args, String filename) {
 		try {

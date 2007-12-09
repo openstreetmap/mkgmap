@@ -33,7 +33,6 @@ import java.util.Map;
  * @author Steve Ratcliffe
  */
 class OsmXmlHandler extends DefaultHandler {
-	private static final Logger log = Logger.getLogger(OsmXmlHandler.class);
 
 	private MapCollector mapper;
 	private OsmConverter converter;

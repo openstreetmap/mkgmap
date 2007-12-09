@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 
-	private String charSet;
+	private final String charSet;
 
 	public AnyCharsetEncoder(String cs) {
 		prepareForCharacterSet(cs);

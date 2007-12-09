@@ -83,8 +83,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	public void load(String name) throws FileNotFoundException, FormatException {
 		Reader reader = new InputStreamReader(openFile(name));
 		BufferedReader in = new BufferedReader(reader);
-		String line;
 		try {
+			String line;
 			while ((line = in.readLine()) != null) {
 				if (line.trim().length() == 0 || line.charAt(0) == ';')
 					continue;

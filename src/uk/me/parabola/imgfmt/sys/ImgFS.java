@@ -79,9 +79,8 @@ public class ImgFS implements FileSystem {
 	 * @throws FileNotWritableException If the file can not be written to.
 	 */
 	public static FileSystem createFs(String filename, FileSystemParam params) throws FileNotWritableException {
-		RandomAccessFile rafile  ;
 		try {
-			rafile = new RandomAccessFile(filename, "rw");
+			RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
 			return createFs(rafile.getChannel(), params);
 		} catch (FileNotFoundException e) {
 			throw new FileNotWritableException("Could not create file", e);

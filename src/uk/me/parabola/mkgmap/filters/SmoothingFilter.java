@@ -33,7 +33,6 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class SmoothingFilter implements MapFilter {
-	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
 
 	private static final int MIN_SPACING = 5;
 	private static final int MIN_SIZE = 0;
