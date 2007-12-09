@@ -171,7 +171,6 @@ public class SmoothingFilter implements MapFilter {
 		}
 
 		public boolean isMoreThanStep() {
-			//System.out.println("step " + step + ", stepsize=" + stepsize);
 			return (step > stepsize);
 		}
 	}

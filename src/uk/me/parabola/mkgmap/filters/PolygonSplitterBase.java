@@ -30,7 +30,6 @@ import java.awt.geom.PathIterator;
  */
 public class PolygonSplitterBase extends BaseFilter {
 	public static final int MAX_SIZE = 0x7fff/2;
-	private int counter;
 
 	/**
 	 * Split the given shape and place the resulting shapes in the outputs list.
