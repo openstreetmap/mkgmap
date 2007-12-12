@@ -117,8 +117,7 @@ public class FileInfo {
 			if ("TRE".equals(ext)) {
 				info.setTresize(ent.getSize());
 				info.setMapname(ent.getName());
-				System.out.println("The map name determined was " + info.getMapname());
-				System.out.println("tre size " + ent.getSize());
+
 				ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
 				TREFile treFile = new TREFile(treChan, false);
 				Area area = treFile.getBounds();
@@ -128,10 +127,8 @@ public class FileInfo {
 			} else if ("RGN".equals(ext)) {
 				int size = ent.getSize();
 				info.setRgnsize(size);
-				System.out.println("rgn size " + size);
 			} else if ("LBL".equals(ext)) {
 				info.setLblsize(ent.getSize());
-				System.out.println("lbl size " + ent.getSize());
 			}
 		}
 

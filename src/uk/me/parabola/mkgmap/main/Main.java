@@ -141,7 +141,6 @@ public class Main implements ArgumentProcessor {
 
 		// Tell them about each filename
 		for (String file : filenames) {
-			System.out.println("do2 file " + file);
 			try {
 				FileInfo mapReader = FileInfo.getFileInfo(file);
 				for (Combiner c : combiners) {

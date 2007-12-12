@@ -148,9 +148,6 @@ public class Utils {
 	}
 
 	public static String fmtArea(Area a) {
-		assert a.getMinLat() >= -180;
-		assert a.getMaxLat() <= 180;
-		System.out.println("Start " + a.getMinLat() + ',' + a.getMinLong());
 		StringBuffer sb = new StringBuffer();
 		sb.append('(');
 		sb.append(toDegrees(a.getMinLat()));
@@ -162,7 +159,6 @@ public class Utils {
 		sb.append(',');
 		sb.append(toDegrees(a.getMaxLong()));
 		sb.append(')');
-		System.out.println(sb);
 		return sb.toString();
 	}
 }
