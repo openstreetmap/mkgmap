@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.build;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.imgfmt.app.Overview;
@@ -28,6 +32,7 @@ import uk.me.parabola.imgfmt.app.PolylineOverview;
 import uk.me.parabola.imgfmt.app.Subdivision;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -44,10 +49,6 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -234,6 +235,7 @@ public class MapBuilder {
 		map.addInfo("http://www.openstreetmap.org/");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 		map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
+		map.addInfo("Map created with mkgmap-r" + Version.VERSION);
 
 		map.addInfo("Program released under the GPL");
 

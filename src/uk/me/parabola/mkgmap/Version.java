@@ -1,0 +1,64 @@
+/*
+ * File: Version.java
+ * 
+ * Copyright (C) 2007 Steve Ratcliffe
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ * 
+ * Author: Steve Ratcliffe
+ * Create date: 12 Dec 2007
+ */
+
+package uk.me.parabola.mkgmap;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+/**
+ * Definitions of version numbers.
+ *
+ * @author Steve Ratcliffe
+ */
+public class Version {
+
+	public static final String VERSION = getSvnVersion();
+
+	// A default version to use.  This will be changed from time to time to
+	// be the then current version number with a 'g' suffix.  If this shows
+	// up then a more acurate version was not available, but it may be useful
+	// to know roughly.
+	private static final String DEFAULT_VERSION = "444-g";
+
+	/**
+	 * Get the version number if we can find one, else 0.  This looks in
+	 * a file called version.properties on the classpath.  This is created
+	 * outside of the system by the build script.
+	 *
+	 * @return The version number or zero if a version number cannot be found.
+	 */
+	private static String getSvnVersion() {
+		InputStream is = Version.class.getResourceAsStream("version.properties");
+
+		if (is == null)
+			return DEFAULT_VERSION;
+
+		Properties props = new Properties();
+		try {
+			props.load(is);
+		} catch (IOException e) {
+			return DEFAULT_VERSION;
+		}
+
+		return props.getProperty("svn.version", DEFAULT_VERSION);
+	}
+}
+
