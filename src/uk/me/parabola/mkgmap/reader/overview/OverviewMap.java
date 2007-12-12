@@ -17,8 +17,7 @@
 package uk.me.parabola.mkgmap.reader.overview;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-
-import java.util.Properties;
+import uk.me.parabola.mkgmap.general.MapCollector;
 
 /**
  * This is the interface that is used to create the overview map.  We will then
@@ -26,20 +25,12 @@ import java.util.Properties;
  * 
  * @author Steve Ratcliffe
  */
-public interface OverviewMap {
+public interface OverviewMap extends LoadableMapDataSource, MapCollector {
 
 	/**
-	 * Add this data source to the overview map.  By this we mean that we extract
-	 * some high level features from the map, to be decided, but probably capital
-	 * cities sea, major roads etc.
+	 * Add a copyright string to the map.
 	 *
-	 * These features are then added to the overview data source so that they
-	 * can be read back and used to create the overview map.
-	 *
-	 * Of course we will be saving the bounds too for the overview map bounds.
-	 *
-	 * @param src One of the component maps that will form part of the overview.
-	 * @param props Current options.
+	 * @param cw The string to add.
 	 */
-	public void addMapDataSource(LoadableMapDataSource src, Properties props);
+	public void addCopyright(String cw);
 }

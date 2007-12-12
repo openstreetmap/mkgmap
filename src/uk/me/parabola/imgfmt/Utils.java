@@ -16,10 +16,12 @@
  */
 package uk.me.parabola.imgfmt;
 
+import uk.me.parabola.imgfmt.app.Area;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Date;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -143,5 +145,24 @@ public class Utils {
 
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
+	}
+
+	public static String fmtArea(Area a) {
+		assert a.getMinLat() >= -180;
+		assert a.getMaxLat() <= 180;
+		System.out.println("Start " + a.getMinLat() + ',' + a.getMinLong());
+		StringBuffer sb = new StringBuffer();
+		sb.append('(');
+		sb.append(toDegrees(a.getMinLat()));
+		sb.append(',');
+		sb.append(toDegrees(a.getMinLong()));
+		sb.append(')');
+		sb.append('(');
+		sb.append(toDegrees(a.getMaxLat()));
+		sb.append(',');
+		sb.append(toDegrees(a.getMaxLong()));
+		sb.append(')');
+		System.out.println(sb);
+		return sb.toString();
 	}
 }

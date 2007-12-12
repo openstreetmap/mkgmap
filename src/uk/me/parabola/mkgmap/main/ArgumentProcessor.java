@@ -21,7 +21,7 @@ package uk.me.parabola.mkgmap.main;
  *
  * @author Steve Ratcliffe
  */
-public interface ArgumentProcessor extends FilenameProcessor {
+public interface ArgumentProcessor  {
 
 	/**
 	 * Process an option.  This is intended for options that change state or
@@ -32,4 +32,23 @@ public interface ArgumentProcessor extends FilenameProcessor {
 	 */
 	public void processOption(String opt, String val);
 
+	/**
+	 * Process a filename.
+	 *
+	 * @param args The option arguments.
+	 * @param filename The filename.
+	 */
+	public void processFilename(CommandArgs args, String filename);
+
+	/**
+	 * Called when all the command line options have been processed.
+	 * @param args
+	 */
+	public void endOptions(CommandArgs args);
+
+	/**
+	 * Called right at the beginning, before any command line options have
+	 * been looked at.
+	 */
+	public void startOptions();
 }

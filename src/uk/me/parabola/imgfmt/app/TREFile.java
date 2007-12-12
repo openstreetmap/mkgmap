@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -69,8 +71,7 @@ public class TREFile extends ImgFile {
 	private byte poiDisplayFlags;
 
 	// Information about polylines.  eg roads etc.
-	private final List<PolylineOverview> polylineOverviews
-			= new ArrayList<PolylineOverview>();
+	private final List<PolylineOverview> polylineOverviews = new ArrayList<PolylineOverview>();
 	private int polylinePos;
 	private int polylineSize;
 
@@ -88,16 +89,27 @@ public class TREFile extends ImgFile {
 	private static final int SUBDIV_REC_SIZE = 14;
 	private static final int SUBDIV_REC_SIZE2 = 16;
 
-	public TREFile(ImgChannel chan) {
-		setHeaderLength(HEADER_LEN);
-		setType("GARMIN TRE");
-		setWriter(new BufferedWriteStrategy(chan));
+	private final boolean readOnly;
 
-		// Position at the start of the writable area.
-		position(HEADER_LEN);
+	public TREFile(ImgChannel chan, boolean write) {
+		if (write) {
+			readOnly = false;
+			setHeaderLength(HEADER_LEN);
+			setType("GARMIN TRE");
+			setWriter(new BufferedWriteStrategy(chan));
+
+			// Position at the start of the writable area.
+			position(HEADER_LEN);
+		} else {
+			readOnly = true;
+			readin(chan);
+		}
 	}
 
 	public void sync() throws IOException {
+		if (readOnly)
+			return;
+
 		// Do anything that is in structures and that needs to be dealt with.
 		writeBody();
 
@@ -117,6 +129,10 @@ public class TREFile extends ImgFile {
 		this.area = area;
 	}
 
+	public Area getBounds() {
+		return area;
+	}
+	
 	public Zoom createZoom(int zoom, int bits) {
 		Zoom z = new Zoom(zoom, bits);
 		mapLevels[zoom] = z;
@@ -154,6 +170,31 @@ public class TREFile extends ImgFile {
 
 	public void addPolygonOverview(PolygonOverview ov) {
 		polygonOverviews.add(ov);
+	}
+
+	private void readin(ImgChannel chan) {
+		try {
+			readHeader(chan);
+		} catch (IOException e) {
+			log.error("Cound not read TRE header");
+		}
+	}
+
+	private void readHeader(ImgChannel chan) throws IOException {
+		ByteBuffer buf = ByteBuffer.allocate(512);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		chan.position(COMMON_HEADER_LEN);
+		chan.read(buf);
+
+		buf.flip();
+
+		int maxLat = get3(buf);
+		int maxLon = get3(buf);
+		int minLat = get3(buf);
+		int minLon = get3(buf);
+
+		area = new Area(minLat, minLon, maxLat, maxLon);
+		log.info("read area is", area);
 	}
 
 	private void writeHeader()  {

@@ -20,18 +20,13 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -42,7 +37,7 @@ import java.util.Set;
  * @author Steve Ratcliffe
  */
 public class OverviewMapDataSource extends MapperBasedMapDataSource
-		implements LoadableMapDataSource, OverviewMap
+		implements OverviewMap
 {
 	// We keep all non-duplicated copyright messages from the component maps.
 	private final Set<String> copyrights = new HashSet<String>();
@@ -53,8 +48,9 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
-	private int topLevel;
-	private int topBits = 24;
+	// TODO need to change this.
+	private int topLevel = 4;
+	private int topBits = 14;
 
 	/**
 	 * This is a fake source of data and is not read from a file, so always
@@ -87,6 +83,15 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	/**
+	 * Add a copyright string to the map.
+	 *
+	 * @param cw The string to add.
+	 */
+	public void addCopyright(String cw) {
+		copyrights.add(cw);
+	}
+
+	/**
 	 * All the copyright messages that were found in the input files are
 	 * returned here.
 	 *
@@ -97,94 +102,51 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	/**
+	 * Add the given point to the total bounds for the map.
+	 *
+	 * @param p The coordinates of the point to add.  The type here will change to
+	 * Node.
+	 */
+	public void addToBounds(Coord p) {
+		mapper.addToBounds(p);
+	}
+
+	/**
 	 * Get the area covered by this overview map.  It will be the bounding box
 	 * of all the maps in the map set.
 	 *
 	 * @return The bounding box of the overview map.
 	 */
 	public Area getBounds() {
-		return new Area(minLat, minLong, maxLat, maxLong);
+		return mapper.getBounds();
 	}
 
 	/**
-	 * Each map in the map set will have its data passed in here.  We extract
-	 * things like bounding box and some key features to include on this map.
+	 * Add a point to the map.
 	 *
-	 * We also add a polygon to the map that covers the area of this map
-	 * and named after it.
-	 *
-	 * @param src One of the individual maps in the set.
-	 * @param props Current options that are in force.
+	 * @param point The point to add.
 	 */
-	public void addMapDataSource(LoadableMapDataSource src, Properties props) {
-		// Save all the copyright messages, discarding duplicates.
-		copyrights.addAll(Arrays.asList(src.copyrightMessages()));
-
-		// Add to the bounds.
-		Area a = src.getBounds();
-		if (a.getMinLat() < minLat)
-			minLat = a.getMinLat();
-		if (a.getMinLong() < minLong)
-			minLong = a.getMinLong();
-		if (a.getMaxLat() > maxLat)
-			maxLat = a.getMaxLat();
-		if (a.getMaxLong() > maxLong)
-			maxLong = a.getMaxLong();
-
-		// Add a background polygon for this map.
-		Coord start, co;
-		List<Coord> points = new ArrayList<Coord>();
-		start = new Coord(a.getMinLat(), a.getMinLong());
-		points.add(start);
-		co = new Coord(a.getMinLat(), a.getMaxLong());
-		points.add(co);
-		co = new Coord(a.getMaxLat(), a.getMaxLong());
-		points.add(co);
-		co = new Coord(a.getMaxLat(), a.getMinLong());
-		points.add(co);
-		points.add(start);
-
-		MapShape bg = new MapShape();
-		bg.setType(0x4a);
-		bg.setPoints(points);
-		bg.setMinResolution(10);
-		bg.setName(props.getProperty("description", "map with no description")
-				+ '\u001d' + props.getProperty("mapname"));
-
-		mapper.addShape(bg);
-
-		// Get the highest level used (which is first).
-		LevelInfo[] levels = src.mapLevels();
-		int l = levels[0].getLevel();
-		int b = levels[0].getBits();
-		if (l > topLevel)
-			topLevel = l;
-		if (b < topBits)
-			topBits = b;
-
-		// Save whatever points, lines and polygons that we want.
-		processPoints(src.getPoints());
-		processLines(src.getLines());
-		processShapes(src.getShapes());
+	public void addPoint(MapPoint point) {
+		mapper.addPoint(point);
 	}
 
-	private void processPoints(List<MapPoint> points) {
-		for (MapPoint p : points) {
-			int type = p.getType();
-			if (type == 0x4)
-				mapper.addPoint(p);
-		}
+	/**
+	 * Add a line to the map.
+	 *
+	 * @param line The line information.
+	 */
+	public void addLine(MapLine line) {
+		mapper.addLine(line);
 	}
 
-	private void processLines(List<MapLine> lines) {
-		for (MapLine l : lines) {
-			int type = l.getType();
-			if (type <= 2 || type == 0x15)
-				mapper.addLine(l);
-		}
-	}
-
-	private void processShapes(List<MapShape> shapes) {
-		// TODO if we want any shapes in the overview.
+	/**
+	 * Add the given shape (polygon) to the map.  A shape is very similar to a line
+	 * but they are separate because they need to be put in different sections in
+	 * the output map.
+	 *
+	 * @param shape The polygon to add.
+	 */
+	public void addShape(MapShape shape) {
+		mapper.addShape(shape);
 	}
 }

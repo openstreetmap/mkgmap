@@ -21,6 +21,7 @@ import uk.me.parabola.log.Logger;
 
 import java.util.Date;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Base class for all the img files.  There is a common header that
@@ -32,6 +33,8 @@ import java.io.IOException;
 public abstract class ImgFile {
 	private static final Logger log = Logger.getLogger(ImgFile.class);
 
+	protected static final int COMMON_HEADER_LEN = 21;
+
 	private int headerLength;
 	private String type;
 
@@ -40,7 +43,8 @@ public abstract class ImgFile {
 	public void close() {
 		try {
 			sync();
-			writer.close();
+			if (writer != null)
+				writer.close();
 		} catch (IOException e) {
 			log.error("error on file close", e);
 		}
@@ -145,5 +149,13 @@ public abstract class ImgFile {
 
 	void setWriteStrategy(WriteStrategy writer) {
 		this.writer = writer;
+	}
+
+	protected int get3(ByteBuffer buf) {
+		int val;
+		val = buf.get() & 0xff;
+		val |= (buf.get() & 0xff) << 8;
+		val |= buf.get() << 16;
+		return val;
 	}
 }

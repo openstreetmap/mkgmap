@@ -24,42 +24,31 @@ import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.ExitException;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.build.MapBuilder;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Main routine for the command line map-making utility.
  *
  * @author Steve Ratcliffe
  */
-public class MakeMap  implements MapProcessor {
-	private static final Logger log = Logger.getLogger(MakeMap.class);
+public class MapMaker implements MapProcessor {
+	private static final Logger log = Logger.getLogger(MapMaker.class);
 
-	//private MapEventListener overview = new OverviewMapBuilder();
-	private final List<MapEventListener> mapListeners = new ArrayList<MapEventListener>();
-
-	public void processFilename(CommandArgs args, String filename) {
+	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
-			makeMap(args, src);
+			return makeMap(args, src);
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
+			return null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not open file: " + filename);
+			return null;
 		}
-	}
-
-	public void endOfOptions() {
-		fireFinishEvent();
-	}
-
-	public void addMapListener(MapEventListener l) {
-		mapListeners.add(l);
 	}
 
 	/**
@@ -67,8 +56,9 @@ public class MakeMap  implements MapProcessor {
 	 *
 	 * @param args User supplied arguments.
 	 * @param src The data source to load.
+	 * @return The output filename for the map.
 	 */
-	void makeMap(CommandArgs args, LoadableMapDataSource src) {
+	String makeMap(CommandArgs args, LoadableMapDataSource src) {
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
@@ -82,36 +72,14 @@ public class MakeMap  implements MapProcessor {
 			builder.makeMap(map, src);
 
 			// Collect information on map complete.
-			fireMapEndEvent(args, src, map);
-			log.info("finished making map, closing");
-			if (map != null)
-				map.close();
-
+			String outName = map.getFilename();
+			log.info("finished making map", outName, "closing");
+			map.close();
+			return outName;
 		} catch (FileExistsException e) {
 			throw new ExitException("File exists already", e);
 		} catch (FileNotWritableException e) {
 			throw new ExitException("Could not create or write to file", e);
-		}
-	}
-
-	/**
-	 * Fire an event at the end of every map that is produced.
-	 * @param args The command aguments in effect.
-	 * @param src The data source used to produce the map.
-	 * @param map The map that was created.
-	 */
-	private void fireMapEndEvent(CommandArgs args, LoadableMapDataSource src, Map map) {
-		for (MapEventListener l : mapListeners) {
-			l.onMapEnd(args, src, map);
-		}
-	}
-
-	/**
-	 * Fire an event to all the listeners at the end of all files.
-	 */
-	private void fireFinishEvent() {
-		for (MapEventListener l : mapListeners) {
-			l.onFinish();
 		}
 	}
 

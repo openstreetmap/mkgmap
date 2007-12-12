@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.fs;
 
 import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileSystemParam;
 
 import java.util.List;
 import java.io.FileNotFoundException;
@@ -65,6 +66,14 @@ public interface FileSystem {
 	 * @return A List of directory entries.
 	 */
 	public List<DirectoryEntry> list() ;
+
+	/**
+	 * Get the filesystem / archive parameters.  Things that are stored in
+	 * the header.
+	 *
+	 * @return The filesystem parameters.
+	 */
+	public FileSystemParam fsparam();
 
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to

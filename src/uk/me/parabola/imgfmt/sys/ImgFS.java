@@ -204,6 +204,10 @@ public class ImgFS implements FileSystem {
 		return directory.getEntries();
 	}
 
+	public FileSystemParam fsparam() {
+		return header.getParams();
+	}
+
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to
 	 * the underlying file.

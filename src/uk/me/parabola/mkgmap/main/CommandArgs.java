@@ -42,7 +42,7 @@ import java.util.Set;
  *
  * @author Steve Ratcliffe
  */
-class CommandArgs {
+public class CommandArgs {
 	private static final Logger log = Logger.getLogger(CommandArgs.class);
 
 	private final ArgList arglist = new ArgList();
@@ -79,6 +79,8 @@ class CommandArgs {
 	 */
 	public void readArgs(String[] args) {
 
+		proc.startOptions();
+
 		int i = 0;
 		while (i < args.length) {
 			String arg = args[i++];
@@ -107,13 +109,13 @@ class CommandArgs {
 		// If there is more than one filename argument we inform of this fact
 		// via a fake option.
 		proc.processOption("number-of-files", String.valueOf(arglist.getFilenameCount()));
-		
+
 		// Now process the arguments in order.
 		for (ArgType a : arglist) {
 			a.processArg();
 		}
 
-		proc.endOfOptions();
+		proc.endOptions(this);
 	}
 
 	/**
@@ -201,7 +203,7 @@ class CommandArgs {
 	 * @param name   The name of the property.
 	 * @param defval The default value to supply.
 	 * @return An integer that is the value of the property.  If the property
-	 *         does not exist or if it is not numeric then the default value is returned.
+	 * does not exist or if it is not numeric then the default value is returned.
 	 */
 	private int getValue(String name, int defval) {
 		String s = arglist.getProperty(name);

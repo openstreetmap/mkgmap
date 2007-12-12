@@ -48,4 +48,11 @@ public interface DirectoryEntry {
 	 * @return The size of the file in bytes.
 	 */
 	public int getSize();
+
+	/**
+	 * If this is a special 'hidden' file.  True for the all-spaces 'file'.
+	 *
+	 * @return True if this is not a regular file.
+	 */
+	public boolean isSpecial();
 }

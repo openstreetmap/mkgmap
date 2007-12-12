@@ -22,8 +22,14 @@ package uk.me.parabola.mkgmap.main;
  * 
  * @author Steve Ratcliffe
  */
-public interface MapProcessor extends FilenameProcessor {
+public interface MapProcessor {
 
-	public void addMapListener(MapEventListener l);
-
+	/**
+	 * Make a map from the given input filename and options.
+	 *
+	 * @param args The options that are in force.
+	 * @param filename The input filename.
+	 * @return The output filename; the name of the file that was created.
+	 */
+	public String makeMap(CommandArgs args, String filename);
 }
