@@ -104,11 +104,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
 				line.getMinResolution());
 
-		if (line.getBounds().getMaxDimention() > LineSizeSplitterFilter.MAX_SIZE) {
-			splitLine(line);
-		} else {
-			lines.add(line);
-		}
+		lines.add(line);
 	}
 
 	/**
@@ -125,11 +121,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
 				shape.getMinResolution());
 
-		//if (shape.getBounds().getMaxDimention() > PolygonSizeSplitterFilter.MAX_SIZE) {
-		//	splitPolygon(shape);
-		//} else {
-			shapes.add(shape);
-		//}
+		shapes.add(shape);
 	}
 
 	/**

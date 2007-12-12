@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
+import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
 
@@ -91,24 +92,20 @@ public class MapArea implements MapDataSource {
 			points.add(p);
 			addSize(p, pointSize, POINT_KIND);
 		}
+		addLines(src, resolution);
+		addPolygons(src, resolution);
+	}
 
-		for (MapLine l : src.getLines()) {
-			lines.add(l);
-			addSize(l, lineSize, LINE_KIND);
-		}
-
-		// Split polygons for size, such that it is appropriate for the
-		// resolution that it is at.
+	/**
+	 * Add the polygons, making sure that they are not too big.
+	 * @param src The map data.
+	 * @param resolution The resolution of this layer.
+	 */
+	private void addPolygons(MapDataSource src, int resolution) {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
-				//if (!bounds.contains(shape.getBounds())) {
-				//	// How can this happen?
-				//	System.out.println("no contains after");
-				//	System.out.println("polygo bounds " + shape.getBounds());
-				//	System.out.println("our bounds " + bounds);
-				//	System.out.println("name " + element.getName());
-				//}
+
 				shapes.add(shape);
 				addSize(element, shapeSize, SHAPE_KIND);
 			}
@@ -126,6 +123,38 @@ public class MapArea implements MapDataSource {
 
 		for (MapShape s : src.getShapes()) {
 			filter.doFilter(s, chain);
+		}
+	}
+
+	/**
+	 * Add the lines, making sure that they are not too big for resolution
+	 * that we are working with.
+	 * @param src The map data.
+	 * @param resolution The current resolution of the layer.
+	 */
+	private void addLines(MapDataSource src, int resolution) {
+		// Split lines for size, such that it is appropriate for the
+		// resolution that it is at.
+		MapFilterChain chain = new MapFilterChain() {
+			public void doFilter(MapElement element) {
+				MapLine line = (MapLine) element;
+
+				lines.add(line);
+				addSize(element, lineSize, LINE_KIND);
+			}
+
+			public void addElement(MapElement element) {
+				doFilter(element);
+			}
+		};
+
+		LineSizeSplitterFilter filter = new LineSizeSplitterFilter();
+		FilterConfig config = new FilterConfig();
+		config.setResolution(resolution);
+		config.setBounds(bounds);
+		filter.init(config);
+		for (MapLine l : src.getLines()) {
+			filter.doFilter(l, chain);
 		}
 	}
 

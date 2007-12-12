@@ -29,8 +29,9 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 #OSMDATA = --gmapsupp ~/tmp/batch/*.osm
 #OSMDATA = /opt/data/uk-071114.osm.gz
 OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
-#OSMDATA = reg40.osm
-#OSMDATA = longline.osm
+OSMDATA = localtest/osm5/reg40.osm
+#OSMDATA = localtest/osm5/longline.osm
+#OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --tdbfile maps/img/*.img
 
 
@@ -44,7 +45,7 @@ OPTS= --gmapsupp
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
-	cp 63240001.img gmapsupp.img
+	#cp 63240001.img gmapsupp.img
 	#imgdecode gmapsupp.img
 
 t:
