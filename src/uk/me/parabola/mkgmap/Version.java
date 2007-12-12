@@ -46,7 +46,7 @@ public class Version {
 	 * @return The version number or zero if a version number cannot be found.
 	 */
 	private static String getSvnVersion() {
-		InputStream is = Version.class.getResourceAsStream("version.properties");
+		InputStream is = Version.class.getResourceAsStream("/version.properties");
 
 		if (is == null)
 			return DEFAULT_VERSION;
