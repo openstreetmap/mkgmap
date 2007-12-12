@@ -146,10 +146,12 @@ class ImgHeader {
 		// always assume it is 2 anyway.
 		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartBlock());
 
-		// This secotors, heads, cylinders stuff is probably just 'unknown'
-		int sectors = 4;
-		int heads = 0x10;
-		int cylinders = 0x20;
+		// This sectors, head, cylinders stuff appears to be used by mapsource
+		// and they have to be larger than the actual size of the map.  It
+		// doesn't appear to have any effect on a garmin device or other software.
+		int sectors = 0x20;   // 0x20 appears to be a max
+		int heads = 0x20;     // 0x20 appears to be max
+		int cylinders = 0x100;   // gives 128M will try more later
 		header.putShort(OFF_SECTORS, (short) sectors);
 		header.putShort(OFF_HEADS, (short) heads);
 		header.putShort(OFF_CYLINDERS, (short) cylinders);
@@ -159,8 +161,11 @@ class ImgHeader {
 		header.position(OFF_CREATION_YEAR);
 		Utils.setCreationTime(header, creationTime);
 
-		char blocks = (char) (heads * sectors * cylinders / (1 << exp - 9));
-		header.putChar(OFF_BLOCK_SIZE, blocks);
+		// Since there are only 2 bytes here but it can easily overflow, if it
+		// does we replace it with 0xffff, it doesn't work to set it to say zero
+		int blocks = heads * sectors * cylinders / (1 << exp - 9);
+		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
+		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
 
 		header.put(OFF_PARTITION_SIG, (byte) 0x55);
 		header.put(OFF_PARTITION_SIG+1, (byte) 0xaa);
@@ -174,6 +179,7 @@ class ImgHeader {
 		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
 		header.putInt(OFF_REL_SECTORS, 0);
 		header.putInt(OFF_NUMBER_OF_SECTORS, (blocks * (1 << (exp - 9))));
+		log.info("number of blocks " + blocks);
 
 		setDirectoryStartBlock(params.getDirectoryStartBlock());
 

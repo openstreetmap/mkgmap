@@ -28,11 +28,11 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 #OSMDATA = /opt/data/osmworld/63260003
 #OSMDATA = --gmapsupp ~/tmp/batch/*.osm
 #OSMDATA = /opt/data/uk-071114.osm.gz
-OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
-OSMDATA = localtest/osm5/reg40.osm
+#OSMDATA = localtest/osm5/reg40.osm
 #OSMDATA = localtest/osm5/longline.osm
-#OSMDATA = localtest/osm5/reg04.osm
+OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --tdbfile maps/img/*.img
+OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
