@@ -171,8 +171,7 @@ public class FileNode implements ImgChannel {
 			if (off != 0)
 				n = Math.min(n, blockSize - off);
 
-
-				dst.limit(dst.position() + n);
+			dst.limit(dst.position() + n);
 
 			int nr = file.read(dst);
 			if (nr == -1)

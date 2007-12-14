@@ -73,7 +73,7 @@ public class Zoom {
 		return 24 - resolution;
 	}
 
-	public void write(ImgFile file) {
+	public void write(WriteStrategy file) {
 		file.put((byte) ((level & 0xf) | (inherited ? 0x80 : 0)));
 		file.put((byte) resolution);
 		file.putChar((char) subdivs.size());

@@ -112,6 +112,18 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	}
 
 	/**
+	 * Write out a 3 byte value in the correct byte order etc.
+	 *
+	 * @param val The value to write.
+	 */
+	public void put3(int val) {
+		if (log.isDebugEnabled())
+			log.debug("put3", val);
+		buf.put((byte) (val & 0xff));
+		buf.putChar((char) (val >> 8));
+	}
+
+	/**
 	 * Write out 4 byte value.
 	 *
 	 * @param val The value to write.

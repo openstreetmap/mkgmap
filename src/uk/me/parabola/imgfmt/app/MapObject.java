@@ -48,7 +48,7 @@ public abstract class MapObject {
 	 *
 	 * @param file The file to write to. It is usually the RGN file.
 	 */
-	public abstract void write(ImgFile file);
+	public abstract void write(WriteStrategy file);
 
 	int getDeltaLat() {
 		return deltaLat;

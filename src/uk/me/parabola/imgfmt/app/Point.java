@@ -44,7 +44,7 @@ public class Point extends MapObject {
 	 *
 	 * @param file A reference to the file that should be written to.
 	 */
-	public void write(ImgFile file) {
+	public void write(WriteStrategy file) {
 		byte b = (byte) getType();
 		file.put(b);
 		log.debug("writing point: " + b);

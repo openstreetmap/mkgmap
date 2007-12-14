@@ -16,29 +16,28 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
-import java.util.Date;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
  * Base class for all the img files.  There is a common header that
- * all the sub-files share.  This will be handled in this class.
- * Also provides common services for writing the file.
+ * all the sub-files share.  They also have means of reading and writing
+ * themselves.
  * 
  * @author Steve Ratcliffe
  */
-public abstract class ImgFile {
+public abstract class ImgFile  {
 	private static final Logger log = Logger.getLogger(ImgFile.class);
 
-	protected static final int COMMON_HEADER_LEN = 21;
-
-	private int headerLength;
-	private String type;
+	private CommonHeader header;
 
 	private WriteStrategy writer;
+	private ReadStrategy reader;
+
+	private boolean readable;
+	private boolean writable;
 
 	public void close() {
 		try {
@@ -60,102 +59,37 @@ public abstract class ImgFile {
 	
 	protected abstract void sync() throws IOException;
 
-	/**
-	 * Writes out the header that is common to all the file types.  It should
-	 * be called by the sync() methods of subclasses when they are ready.
-	 */
-	void writeCommonHeader()  {
-		putChar((char) headerLength);
-		put(Utils.toBytes(type, 10, (byte) 0));
-		put((byte) 1);
-		put((byte) 0);
-		byte[] date = Utils.makeCreationTime(new Date());
-		put(date);
-	}
-
-	void setHeaderLength(int headerLength) {
-		this.headerLength = headerLength;
-	}
-
-	void setType(String type) {
-		this.type = type;
-	}
-
-
 	WriteStrategy getWriter() {
 		return writer;
 	}
 
 	void setWriter(WriteStrategy writer) {
+		writable = true;
 		this.writer = writer;
 	}
 
-	/**
-	 * Write out a 3 byte value in the correct byte order etc.
-	 *
-	 * @param val The value to write.
-	 */
-	public void put3(int val) {
-		log.debug("put3 " + val);
-		writer.put((byte) (val & 0xff));
-		writer.putChar((char) (val >> 8));
+	ReadStrategy getReader() {
+		return reader;
 	}
 
-	/**
-	 * Write out a 4 byte value.
-	 *
-	 * @param val The integer value to write.
-	 */
-	void putInt(int val) {
-		writer.putInt(val);
+	void setReader(ReadStrategy reader) {
+		readable = true;
+		this.reader = reader;
 	}
 
-	/**
-	 * Write out a 2 byte value.
-	 *
-	 * @param val The value to write.
-	 */
-	public void putChar(char val) {
-		writer.putChar(val);
+	protected CommonHeader getHeader() {
+		return header;
 	}
 
-	/**
-	 * Write out a single byte value.
-	 *
-	 * @param val The value to write.
-	 */
-	public void put(byte val) {
-		writer.put(val);
+	protected final void setHeader(CommonHeader header) {
+		this.header = header;
 	}
 
-	/**
-	 * Write out a number of bytes from an array.
-	 *
-	 * @param val The values to write.
-	 */
-	void put(byte[] val) {
-		writer.put(val);
+	public boolean isWritable() {
+		return writable;
 	}
 
-	/**
-	 * Write out a selected section of a byte array.
-	 * @param src The source array.
-	 * @param start The starting position.
-	 * @param length The number to take.
-	 */
-	public void put(byte[] src, int start, int length) {
-		writer.put(src, start, length);
-	}
-
-	void setWriteStrategy(WriteStrategy writer) {
-		this.writer = writer;
-	}
-
-	protected int get3(ByteBuffer buf) {
-		int val;
-		val = buf.get() & 0xff;
-		val |= (buf.get() & 0xff) << 8;
-		val |= buf.get() << 16;
-		return val;
+	public boolean isReadable() {
+		return readable;
 	}
 }

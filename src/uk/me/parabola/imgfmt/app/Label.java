@@ -82,11 +82,11 @@ public class Label {
 	/**
 	 * Write this label to the given img file.
 	 *
-	 * @param imgFile The LBL file to write to.
+	 * @param writer The LBL file to write to.
 	 */
-	public void write(ImgFile imgFile) {
+	public void write(WriteStrategy writer) {
 		log.debug("put label " + this.length);
 		if (ctext != null)
-			imgFile.put(ctext, 0, this.length);
+			writer.put(ctext, 0, this.length);
 	}
 }

@@ -51,7 +51,7 @@ public class Polyline extends MapObject {
 	 *
 	 * @param file A reference to the file that should be written to.
 	 */
-	public void write(ImgFile file) {
+	public void write(WriteStrategy file) {
 		// If there is nothing to do, then do nothing.
 		if (points.size() < 2)
 			return;

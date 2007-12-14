@@ -51,7 +51,7 @@ public abstract class Overview implements Comparable<Overview> {
 			size = 2;
 	}
 
-	public void write(ImgFile file) {
+	public void write(WriteStrategy file) {
 		file.put((byte) (type & 0xff));
 		file.put((byte) maxLevel);
 		if (size > 2)

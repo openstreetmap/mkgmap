@@ -24,7 +24,7 @@ import java.io.IOException;
 /**
  * The region file.  Holds actual details of points and lines etc.
  *
- * The header is very simple, just a location and size.
+ * 
  *
  * The data is rather complicated and is packed to save space.  This class does
  * not really handle that format however as it is written by the {@link
@@ -38,13 +38,19 @@ import java.io.IOException;
 public class RGNFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(RGNFile.class);
 
-	private static final int HEADER_LEN = 29;
+	private static final int HEADER_LEN = RGNHeader.HEADER_LEN;
 
-	private int dataSize;
+	private final RGNHeader header;
+
+	private Subdivision currentDivision;
+	private int indPointPtrOff;
+	private int polylinePtrOff;
+	private int polygonPtrOff;
 
 	public RGNFile(ImgChannel chan) {
-		setHeaderLength(HEADER_LEN);
-		setType("GARMIN RGN");
+		header = new RGNHeader();
+		setHeader(header);
+
 		setWriter(new BufferedWriteStrategy(chan));
 
 		// Position at the start of the writable area.
@@ -52,25 +58,13 @@ public class RGNFile extends ImgFile {
 	}
 
 	public void sync() throws IOException {
-		dataSize = position() - HEADER_LEN;
+		header.setDataSize(position() - HEADER_LEN);
 
 		position(0);
-		writeCommonHeader();
-		writeHeader();
+		getHeader().writeHeader(getWriter());
 
 		getWriter().sync();
 	}
-
-	private void writeHeader() {
-
-		putInt(HEADER_LEN);
-		putInt(dataSize);
-	}
-
-	private Subdivision currentDivision;
-	private int indPointPtrOff;
-	private int polylinePtrOff;
-	private int polygonPtrOff;
 
 	public void startDivision(Subdivision sd) {
 
@@ -99,7 +93,7 @@ public class RGNFile extends ImgFile {
 	}
 
 	public void addMapObject(MapObject item) {
-		item.write(this);
+		item.write(getWriter());
 	}
 
 	public void setIndPointPtr() {
@@ -110,7 +104,7 @@ public class RGNFile extends ImgFile {
 			if (off > 0xffff)
 				throw new IllegalStateException("Too many items in indexed points section");
 
-			putChar((char) off);
+			getWriter().putChar((char) off);
 			position(currPos);
 		}
 	}
@@ -125,7 +119,7 @@ public class RGNFile extends ImgFile {
 
 			if (log.isDebugEnabled())
 				log.debug("setting polyline offset to", off);
-			putChar((char) off);
+			getWriter().putChar((char) off);
 
 			position(currPos);
 		}
@@ -142,7 +136,7 @@ public class RGNFile extends ImgFile {
 			if (log.isDebugEnabled())
 				log.debug("setting polygon offset to ", off, " @", polygonPtrOff);
 			position(polygonPtrOff);
-			putChar((char) off);
+			getWriter().putChar((char) off);
 			position(currPos);
 		}
 	}

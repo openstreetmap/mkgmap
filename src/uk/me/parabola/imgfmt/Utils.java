@@ -141,6 +141,20 @@ public class Utils {
 		return ret;
 	}
 
+	/**
+	 * Make a date from the garmin representation.
+	 * @param date The bytes representing the date.
+	 * @return A java date.
+	 */
+	public static Date makeCreationTime(byte[] date) {
+		Calendar cal = Calendar.getInstance();
+
+		int y = ((date[1] & 0xff) << 8) + (date[0] & 0xff);
+		cal.set(y, date[2], date[3], date[4], date[5], date[6]);
+
+		return cal.getTime();
+	}
+
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
 	}

@@ -70,6 +70,14 @@ public interface WriteStrategy {
 	public void putChar(char c);
 
 	/**
+	 * Write out three bytes.  Done in the correct byte order.
+	 *
+	 * @param val The value to write, only the bottom three bytes will be
+	 * written.
+	 */
+	public void put3(int val);
+	
+	/**
 	 * Write out 4 byte value.
 	 * @param val The value to write.
 	 */

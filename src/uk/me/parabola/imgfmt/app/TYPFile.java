@@ -29,14 +29,11 @@ import java.io.IOException;
 public class TYPFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(TYPFile.class);
 
-	private static final int HEADER_LEN = 0x5b;
 
 	public TYPFile(ImgChannel chan) {
-		setHeaderLength(HEADER_LEN);
-		setType("GARMIN TYP");
 
 		WriteStrategy writer = new BufferedWriteStrategy(chan);
-		setWriteStrategy(writer);
+		setWriter(writer);
 
 		//position(HEADER_LEN + INFO_LEN);
 	}
@@ -48,16 +45,11 @@ public class TYPFile extends ImgFile {
 
 		// Reposition to re-write the header with all updated values.
 		position(0);
-		writeCommonHeader();
-		writeHeader();
+		getHeader().writeHeader(getWriter());
 
-		put(Utils.toBytes("Some text for the label gap"));
+		getWriter().put(Utils.toBytes("Some text for the label gap"));
 
 		// Sync our writer.
 		getWriter().sync();
-	}
-
-
-	private void writeHeader()  {
 	}
 }

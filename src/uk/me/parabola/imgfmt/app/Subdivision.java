@@ -167,7 +167,7 @@ public class Subdivision {
 	 *
 	 * @param file The file to write to.
 	 */
-	public void write(ImgFile file) {
+	public void write(WriteStrategy file) {
 		log.debug("write subdiv", latitude, longitude);
 		file.put3(rgnPointer);
 		file.put(getType());
