@@ -112,16 +112,6 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	}
 
 	/**
-	 * Get the area covered by this overview map.  It will be the bounding box
-	 * of all the maps in the map set.
-	 *
-	 * @return The bounding box of the overview map.
-	 */
-	public Area getBounds() {
-		return mapper.getBounds();
-	}
-
-	/**
 	 * Add a point to the map.
 	 *
 	 * @param point The point to add.

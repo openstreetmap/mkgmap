@@ -208,9 +208,4 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (minResolution < prev)
 			overviews.put(type, minResolution);
 	}
-
-	private void splitLine(MapLine line) {
-		LineSizeSplitterFilter lineSplitter = new LineSizeSplitterFilter();
-		lineSplitter.doFilter(line, lineChain);
-	}
 }
