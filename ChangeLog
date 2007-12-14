@@ -1,5 +1,176 @@
+2007-12-12  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/sys/ImgHeader.java: Fix for
+	  not loading in map source. Increase the number in the header to
+	  increase the size of the 'file system'
+	* Makefile, src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: Moved the line
+	  size splitting so that it is nearby the polygon splitting.
+	* Makefile, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/mkgmap/main/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java: removed debugging
+	  statements
+	* ., Makefile, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/MapReader.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/imgfmt/fs/DirectoryEntry.java,
+	  src/uk/me/parabola/imgfmt/fs/FileSystem.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/mkgmap/combiners,
+	  src/uk/me/parabola/mkgmap/combiners/Combiner.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/main/ArgumentProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/main/FilenameProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/main/MapEventListener.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/main/MapProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/OverviewMapBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/package.html,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMap.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Merged revisions 388-447 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/gmapsupp
+	  
+	  ................ r410 | steve | 2007-12-03 23:02:33 +0000 (Mon,
+	  03 Dec 2007) | 2 lines Progressing with adding .img files to the
+	  gmapsupp. Need to create a structure with just file sizes in I
+	  think as that is all we actually use. ................ r411 |
+	  steve | 2007-12-04 17:31:28 +0000 (Tue, 04 Dec 2007) | 3 lines
+	  Before when we couldn't read .img files, there was a need for a
+	  complex system to hook all the summarising functions into the
+	  main map making process. We don't need to do this any more. We
+	  are just going to reprocess the filenames, including any created
+	  files. ................ r412 | steve | 2007-12-04 17:34:49 +0000
+	  (Tue, 04 Dec 2007) | 9 lines Merged revisions 404 via svnmerge
+	  from https://svn.parabola.me.uk/svn/mkgmap/trunk ........ r404 |
+	  steve | 2007-12-03 12:11:46 +0000 (Mon, 03 Dec 2007) | 2 lines
+	  Change to be compatible with java-5 ........ ................
+	  r413 | steve | 2007-12-04 18:02:01 +0000 (Tue, 04 Dec 2007) | 1
+	  line Get the output filenames from the map making process.
+	  ................ r414 | steve | 2007-12-04 18:03:10 +0000 (Tue,
+	  04 Dec 2007) | 9 lines Merged revisions 373 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/trunk ........ r373 | steve
+	  | 2007-11-15 00:53:07 +0000 (Thu, 15 Nov 2007) | 1 line Remove
+	  call to constructor that is not in 1.5 ........ ................
+	  r415 | steve | 2007-12-04 18:06:57 +0000 (Tue, 04 Dec 2007) | 1
+	  line Move the overview builders into a new package.
+	  ................ r416 | steve | 2007-12-04 20:50:06 +0000 (Tue,
+	  04 Dec 2007) | 2 lines Begin on separate reading of img file to
+	  combine them. This is going to be a bigger task than I thought as
+	  we need to read more of the files than I thought and we should
+	  probably introduce file header classes for TRE etc.
+	  ................ r418 | steve | 2007-12-05 21:24:26 +0000 (Wed,
+	  05 Dec 2007) | 1 line got the bounds from the TRE section.
+	  ................ r419 | steve | 2007-12-05 21:28:39 +0000 (Wed,
+	  05 Dec 2007) | 1 line Add close method. ................ r420 |
+	  steve | 2007-12-05 21:29:16 +0000 (Wed, 05 Dec 2007) | 1 line
+	  Renamed formal param. ................ r442 | steve | 2007-12-09
+	  23:40:45 +0000 (Sun, 09 Dec 2007) | 1 line Half way working for
+	  the gmapsupp case. Looks like there is an off by one in the
+	  header dir space calc. ................ r443 | steve | 2007-12-10
+	  22:45:36 +0000 (Mon, 10 Dec 2007) | 1 line Fixed the off by one
+	  error, caused by needing to round up. ................ r444 |
+	  steve | 2007-12-10 22:53:16 +0000 (Mon, 10 Dec 2007) | 1 line Add
+	  the tdb and overview map combiners. ................ r447 | steve
+	  | 2007-12-12 14:33:31 +0000 (Wed, 12 Dec 2007) | 1 line Working
+	  TDB and overview map generation. ................
+	* src/uk/me/parabola/mkgmap/Version.java: Get version file from the
+	  root directory in the classpath.
+	* Makefile, src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: Add version
+	  stamping of the resulting maps.
+
+2007-12-09  steve
+
+	* .: ignored files.
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/FileNotWritableException.java,
+	  src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/AnyCharsetEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/filters/MapFilterChain.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterBase.java,
+	  src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/main/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/MakeMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java: Code tidy up.
+	* src/uk/me/parabola/mkgmap/filters/PolygonSplitterBase.java,
+	  src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java: Remove
+	  unsed code.
+	* src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java: Polygon splitting
+	  code changes.
+	* src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java: Change to
+	  use setResolution on filter config.
+	* src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java: Make getLocation
+	  public
+	* src/uk/me/parabola/imgfmt/app/Area.java: Add contains methods
+	* src/uk/me/parabola/mkgmap/main/MakeMap.java: Narrow scope of a
+	  couple of variables
+	* Makefile, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/RGNFile.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java: Moved the polygon
+	  size filtering code to where a level is initially created.
+
+2007-12-08  steve
+
+	* src/uk/me/parabola/mkgmap/filters/PolygonSplitterBase.java:
+	  Remove name changing code.
+	* Makefile, src/uk/me/parabola/imgfmt/app/LinePreparer.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterBase.java: Bug
+	  in determining the number of bits for the deltas. Showed up in
+	  the polygon splitting, but nothing to do with that splitting
+	  specifically.
+
+2007-12-07  steve
+
+	* src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: The polygons
+	  were not being split based on the resolution, which meant that
+	  the overview map polygons were being split inappropriately.
+	  
+	  Move split to the correct place.
+	  
+	  The line splitting should be moved here too.
+
 2007-12-06  steve
 
+	* src/uk/me/parabola/mkgmap/general/MapDetails.java: Remove println
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterBase.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java: Split polygons
+	  for size as well as number of points. The splitting is improved
+	  too I think.
+	* ChangeLog: Update changelog
 	* Makefile, src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java:
 	  Tone down the smoothing a lot as it was way over the top.
 	* ., src/uk/me/parabola/mkgmap/filters/LineSizeSplitterFilter.java,
