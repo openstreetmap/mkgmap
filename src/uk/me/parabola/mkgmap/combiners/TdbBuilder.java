@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -23,19 +27,14 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.main.CommandArgs;
-import uk.me.parabola.mkgmap.main.FileInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Build the TDB file and the overview map.

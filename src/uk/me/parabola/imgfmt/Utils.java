@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt;
 
-import uk.me.parabola.imgfmt.app.Area;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
@@ -145,20 +143,5 @@ public class Utils {
 
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
-	}
-
-	public static String fmtArea(Area a) {
-		StringBuffer sb = new StringBuffer();
-		sb.append('(');
-		sb.append(toDegrees(a.getMinLat()));
-		sb.append(',');
-		sb.append(toDegrees(a.getMinLong()));
-		sb.append(')');
-		sb.append('(');
-		sb.append(toDegrees(a.getMaxLat()));
-		sb.append(',');
-		sb.append(toDegrees(a.getMaxLong()));
-		sb.append(')');
-		return sb.toString();
 	}
 }

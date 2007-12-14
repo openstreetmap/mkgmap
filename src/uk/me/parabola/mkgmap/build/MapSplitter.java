@@ -16,14 +16,13 @@
  */
 package uk.me.parabola.mkgmap.build;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapDataSource;
-import uk.me.parabola.mkgmap.general.MapArea;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * The map must be split into subdivisions.  To do this we start off with

@@ -159,4 +159,19 @@ public class Area {
 	//			&& a.getMinLong() >= minLong
 	//			&& a.getMaxLong() <= maxLong;
 	//}
+
+	public String fmtArea() {
+		StringBuffer sb = new StringBuffer();
+		sb.append('(');
+		sb.append(Utils.toDegrees(getMinLat()));
+		sb.append(',');
+		sb.append(Utils.toDegrees(getMinLong()));
+		sb.append(')');
+		sb.append('(');
+		sb.append(Utils.toDegrees(getMaxLat()));
+		sb.append(',');
+		sb.append(Utils.toDegrees(getMaxLong()));
+		sb.append(')');
+		return sb.toString();
+	}
 }

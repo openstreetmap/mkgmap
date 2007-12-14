@@ -16,6 +16,11 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -23,14 +28,6 @@ import uk.me.parabola.imgfmt.app.Overview;
 import uk.me.parabola.imgfmt.app.PointOverview;
 import uk.me.parabola.imgfmt.app.PolygonOverview;
 import uk.me.parabola.imgfmt.app.PolylineOverview;
-import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
-import uk.me.parabola.mkgmap.filters.MapFilterChain;
-import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The map features that we are going to map are collected here.
@@ -51,33 +48,6 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> pointOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
-
-	private final MapFilterChain lineChain;
-	private final MapFilterChain shapeChain;
-
-	public MapDetails() {
-		lineChain = new MapFilterChain() {
-			public void doFilter(MapElement element) {
-				//assert ((MapLine) element).getBounds().getMaxDimention() < MAX_ELEMENT_DIMENTIONS;
-				lines.add((MapLine) element);
-			}
-
-			public void addElement(MapElement element) {
-				//assert ((MapLine) element).getBounds().getMaxDimention() < MAX_ELEMENT_DIMENTIONS;
-				lines.add((MapLine) element);
-			}
-		};
-
-		shapeChain = new MapFilterChain() {
-			public void doFilter(MapElement element) {
-				shapes.add((MapShape) element);
-			}
-
-			public void addElement(MapElement element) {
-				shapes.add((MapShape) element);
-			}
-		};
-	}
 
 	/**
 	 * Add a point to the map.

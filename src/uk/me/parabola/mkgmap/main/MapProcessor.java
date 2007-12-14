@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import uk.me.parabola.mkgmap.CommandArgs;
+
 /**
  * Different options that can be supplied that change the mode and operation
  * of the program.

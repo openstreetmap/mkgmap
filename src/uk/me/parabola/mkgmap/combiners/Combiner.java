@@ -16,8 +16,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
-import uk.me.parabola.mkgmap.main.CommandArgs;
-import uk.me.parabola.mkgmap.main.FileInfo;
+import uk.me.parabola.mkgmap.CommandArgs;
 
 /**
  * The interface for all combining operations.  These include creating the

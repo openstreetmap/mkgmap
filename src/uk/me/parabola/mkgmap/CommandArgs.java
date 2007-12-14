@@ -14,10 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 01-Jan-2007
  */
-package uk.me.parabola.mkgmap.main;
-
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
+package uk.me.parabola.mkgmap;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Command line arguments for Main.
@@ -58,7 +57,7 @@ public class CommandArgs {
 	private final Properties currentOptions = new Properties();
 	private final Set<String> readFiles = new HashSet<String>();
 
-	CommandArgs(ArgumentProcessor proc) {
+	public CommandArgs(ArgumentProcessor proc) {
 		this.proc = proc;
 	}
 

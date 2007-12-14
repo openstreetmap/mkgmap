@@ -16,6 +16,13 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
@@ -23,15 +30,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.main.FileInfo;
-import uk.me.parabola.mkgmap.main.CommandArgs;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import uk.me.parabola.mkgmap.CommandArgs;
 
 /**
  * Create the gmapsupp file.  There is nothing much special about this file

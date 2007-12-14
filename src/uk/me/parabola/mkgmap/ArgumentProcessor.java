@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 29-Sep-2007
  */
-package uk.me.parabola.mkgmap.main;
+package uk.me.parabola.mkgmap;
 
 /**
  * Used to step through each filename that is given to the program.

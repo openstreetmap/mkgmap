@@ -24,6 +24,7 @@ import uk.me.parabola.imgfmt.app.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;

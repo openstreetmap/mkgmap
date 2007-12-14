@@ -18,9 +18,12 @@ package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.ArgumentProcessor;
+import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
+import uk.me.parabola.mkgmap.combiners.FileInfo;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
