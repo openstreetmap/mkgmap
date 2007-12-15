@@ -1,3 +1,88 @@
+2007-12-14  steve
+
+	* .: Removed merge tracking for "svnmerge" for
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/imgread
+	* src/uk/me/parabola/mkgmap/general/MapArea.java,
+	  src/uk/me/parabola/mkgmap/main/FileInfo.java: These should have
+	  been removed as part of the change to remove package cycles.
+	* ., Makefile, src/uk/me/parabola/imgfmt/ReadFailedException.java,
+	  src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/Point.java,
+	  src/uk/me/parabola/imgfmt/app/Polyline.java,
+	  src/uk/me/parabola/imgfmt/app/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/RGNHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/app/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/TYPHeader.java,
+	  src/uk/me/parabola/imgfmt/app/WriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java: Merged revisions
+	  456-465 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/imgread
+	  
+	  ........ r457 | steve | 2007-12-14 13:43:42 +0000 (Fri, 14 Dec
+	  2007) | 7 lines NON-COMPILING Prepare to factor out the headers
+	  from the file definitions. CommonHeader created and the TREHeader
+	  that extends from that. ImgFile will not be used for reading and
+	  writing directly, but will have reader and writer streams, which
+	  will be implemented separately. ........ r458 | steve |
+	  2007-12-14 14:27:32 +0000 (Fri, 14 Dec 2007) | 2 lines Separate
+	  out the reader and writer in the ImgFile and add the header
+	  there. Compiles, but will not work. ........ r459 | steve |
+	  2007-12-14 15:17:35 +0000 (Fri, 14 Dec 2007) | 1 line Took all
+	  the read/write methods off ImgFile and made everything use the
+	  reader/writer. ........ r460 | steve | 2007-12-14 15:22:35 +0000
+	  (Fri, 14 Dec 2007) | 1 line The RGN file and header now complete
+	  and may work. ........ r461 | steve | 2007-12-14 17:52:03 +0000
+	  (Fri, 14 Dec 2007) | 1 line Bug fixed and working. Verified same
+	  results over a set of UK tiles. ........ r462 | steve |
+	  2007-12-14 18:02:42 +0000 (Fri, 14 Dec 2007) | 1 line Code tidy
+	  ........ r464 | steve | 2007-12-14 18:32:55 +0000 (Fri, 14 Dec
+	  2007) | 1 line Made the TRE header a bit neater by reducing the
+	  number of separate fields. ........
+	* src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/MapReader.java,
+	  src/uk/me/parabola/mkgmap/ArgumentProcessor.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/build/MapArea.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/combiners/Combiner.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/main/ArgumentProcessor.java,
+	  src/uk/me/parabola/mkgmap/main/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/main/MapProcessor.java: Move classes
+	  around to avoid pakcage cycles. Removed unused class.
+	* src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Removed unused or duplicate methods.
+	* .: Initialized merge tracking via "svnmerge" with revisions
+	  "1-455" from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/imgread
+	* .: Removed merge tracking for "svnmerge" for
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/gmapsupp
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/filter
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/lang
+	* ChangeLog: updated changelog
+
 2007-12-12  steve
 
 	* Makefile, src/uk/me/parabola/imgfmt/sys/ImgHeader.java: Fix for

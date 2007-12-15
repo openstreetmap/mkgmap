@@ -23,28 +23,32 @@ import uk.me.parabola.log.Logger;
 import java.io.IOException;
 
 /**
- *
+ * The TYP file.  I know next to nothing about this file, so the code will be
+ * very experimental for a while and indeed will be mostly to investigate
+ * the file format.
+ * 
  * @author Steve Ratcliffe
  */
 public class TYPFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(TYPFile.class);
 
+	private TYPHeader header = new TYPHeader();
 
-	public TYPFile(ImgChannel chan) {
-
-		WriteStrategy writer = new BufferedWriteStrategy(chan);
-		setWriter(writer);
-
-		//position(HEADER_LEN + INFO_LEN);
+	public TYPFile(ImgChannel chan, boolean write) {
+		setHeader(header);
+		if (write) {
+			setWriter(new BufferedWriteStrategy(chan));
+		} else {
+			setReader(new BufferedReadStrategy(chan));
+			header.readHeader(getReader());
+		}
 	}
 
 	public void sync() throws IOException {
-		log.debug("syncing lbl file");
+		log.debug("syncing TYP file");
 
 		//dataPos = position();
 
-		// Reposition to re-write the header with all updated values.
-		position(0);
 		getHeader().writeHeader(getWriter());
 
 		getWriter().put(Utils.toBytes("Some text for the label gap"));

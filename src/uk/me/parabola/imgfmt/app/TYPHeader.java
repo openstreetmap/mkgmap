@@ -22,7 +22,9 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class TYPHeader extends CommonHeader {
-	private static final int HEADER_LEN = 0x5b;
+	public static final int HEADER_LEN = 91;  // 0x5b
+
+	private byte[] unknown;
 
 	public TYPHeader() {
 		super(HEADER_LEN, "GARMIN TYP");
@@ -36,6 +38,7 @@ public class TYPHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ReadStrategy reader) {
+		unknown = reader.get(HEADER_LEN - COMMON_HEADER_LEN);
 	}
 
 	/**
@@ -45,5 +48,9 @@ public class TYPHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(WriteStrategy writer) {
+	}
+
+	public byte[] getUnknown() {
+		return unknown;
 	}
 }

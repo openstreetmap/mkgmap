@@ -9,7 +9,7 @@
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = 63240001.mp
-OSMDATA = localtest/osm5/cricklewood-5.osm
+#OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
@@ -32,7 +32,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = localtest/osm5/longline.osm
 #OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --tdbfile maps/img/*.img
-OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
+#OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
