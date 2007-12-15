@@ -37,13 +37,34 @@ import java.util.List;
 public class FileInfo {
 	private static final Logger log = Logger.getLogger(FileInfo.class);
 
+	// The file is an img file ie. it contains several subfiles.
+	public static final int IMG_KIND = 0;
+	// The file is a plain file and it doesn't need to be extracted from a .img
+	public static final int FILE_KIND = 1;
+	// The file is of an unknown or unsupported kind, and so it should be ignored.
+	public static final int UNKNOWN_KIND = 99;
+
+	// The name of the file.
+	private String filename;
+
+	// The kind of file, see *KIND definitions above.
+	private int kind;
+
 	private String mapname;
 	private String description;
+
+	// If this is an img file, the size of various sections.
 	private int rgnsize;
 	private int tresize;
 	private int lblsize;
+
+	private FileInfo(String filename, int kind) {
+		this.filename = filename;
+		this.kind = kind;
+	}
+
+	// The area covered by the map, if it is a IMG file
 	private Area bounds;
-	private String filename;
 
 	public String getMapname() {
 		return mapname;
@@ -93,16 +114,57 @@ public class FileInfo {
 		return bounds;
 	}
 
+	/**
+	 * Create a file info the the given file.
+	 *
+	 * @param inputName The filename to examine.
+	 * @return The FileInfo structure giving information about the file.
+	 * @throws FileNotFoundException If the file doesn't actually exist.
+	 */
 	public static FileInfo getFileInfo(String inputName) throws FileNotFoundException {
 
+		int end = inputName.length();
+		String ext = inputName.substring(end - 3);
+		FileInfo info;
+		System.out.print(inputName);
+		if (ext.equalsIgnoreCase("img")) {
+			info = imgInfo(inputName);
+			System.out.println(" img");
+		} else if (ext.equalsIgnoreCase("typ")) {
+			System.out.println(" typ");
+			info = typInfo(inputName);
+		} else {
+			info = new FileInfo(inputName, UNKNOWN_KIND);
+		}
+
+		return info;
+	}
+
+	/**
+	 * A TYP file, perhaps not a special enough case..
+	 * @param inputName The input file name.
+	 */
+	private static FileInfo typInfo(String inputName) {
+		FileInfo info = new FileInfo(inputName, FILE_KIND);
+		return info;
+	}
+
+	/**
+	 * An IMG file, this involves real work. We have to read in the file and
+	 * extract several pieces of information from it.
+	 *
+	 * @param inputName The name of the file.
+	 * @return The informaion obtained.
+	 * @throws FileNotFoundException If the file doesn't exist.
+	 */
+	private static FileInfo imgInfo(String inputName) throws FileNotFoundException {
 		FileSystem imgFs = ImgFS.openFs(inputName);
 
 		FileSystemParam params = imgFs.fsparam();
 		log.info("Desc", params.getMapDescription());
 		log.info("Blocksize", params.getBlockSize());
 
-		FileInfo info = new FileInfo();
-		info.filename = inputName;
+		FileInfo info = new FileInfo(inputName, IMG_KIND);
 		info.setFilename(inputName);
 		info.setDescription(params.getMapDescription());
 
@@ -131,7 +193,6 @@ public class FileInfo {
 				info.setLblsize(ent.getSize());
 			}
 		}
-
 		return info;
 	}
 
@@ -145,5 +206,13 @@ public class FileInfo {
 
 	public String getFilename() {
 		return filename;
+	}
+
+	public boolean isImg() {
+		return kind == IMG_KIND;
+	}
+
+	public int getKind() {
+		return kind;
 	}
 }

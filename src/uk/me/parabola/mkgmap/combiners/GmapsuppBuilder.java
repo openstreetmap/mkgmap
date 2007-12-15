@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 
@@ -86,16 +87,16 @@ public class GmapsuppBuilder implements Combiner {
 
 			for (FileInfo info : files.values()) {
 				String filename = info.getFilename();
-				try {
-					FileSystem infs = ImgFS.openFs(filename);
-
-					try {
-						copyAllFiles(infs, outfs);
-					} finally {
-						infs.close();
-					}
-				} catch (FileNotFoundException e) {
-					log.warn("Could not open file", filename);
+				switch (info.getKind()) {
+				case FileInfo.IMG_KIND:
+					addImg(outfs, filename);
+					break;
+				case FileInfo.FILE_KIND:
+					addFile(outfs, filename);
+					break;
+				default:
+					// do nothing, until we know what we should do..
+					break;
 				}
 			}
 		} catch (FileNotWritableException e) {
@@ -104,6 +105,41 @@ public class GmapsuppBuilder implements Combiner {
 		} finally {
 			if (outfs != null)
 				outfs.close();
+		}
+	}
+
+	/**
+	 * Add a single file to the output.
+	 *
+	 * @param outfs The output gmapsupp file.
+	 * @param filename The input filename.
+	 */
+	private void addFile(FileSystem outfs, String filename) {
+		ImgChannel chan = new FileImgChannel(filename);
+		try {
+			copyFile(chan, outfs, filename);
+		} catch (IOException e) {
+			log.error("Could not open file " + filename);
+		}
+	}
+
+	/**
+	 * Add a complete .img file, that is all the consituent files from it.
+	 *
+	 * @param outfs The gmapsupp file to write to.
+	 * @param filename The input filename.
+	 */
+	private void addImg(FileSystem outfs, String filename) {
+		try {
+			FileSystem infs = ImgFS.openFs(filename);
+
+			try {
+				copyAllFiles(infs, outfs);
+			} finally {
+				infs.close();
+			}
+		} catch (FileNotFoundException e) {
+			log.error("Could not open file " + filename);
 		}
 	}
 
@@ -167,8 +203,31 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private void copyFile(String inname, FileSystem infs, FileSystem outfs) throws IOException {
 		ImgChannel fin = infs.open(inname, "r");
+		copyFile(fin, outfs, inname);
+	}
+
+	/**
+	 * Copy a given open file to the a new file in outfs with the name inname.
+	 * @param fin The file to copy from.
+	 * @param outfs The file system to copy to.
+	 * @param inname The name of the file to create on the destination file system.
+	 * @throws IOException If a file cannot be read or written.
+	 */
+	private void copyFile(ImgChannel fin, FileSystem outfs, String inname) throws IOException {
 		ImgChannel fout = outfs.create(inname);
 
+		copyFile(fin, fout);
+	}
+
+	/**
+	 * Copy an individual file with the given name from the first archive/filesystem
+	 * to the second.
+	 *
+	 * @param fin The file to copy from.
+	 * @param fout The file to copy to.
+	 * @throws IOException If the copy fails.
+	 */
+	private void copyFile(ImgChannel fin, ImgChannel fout) throws IOException {
 		try {
 			ByteBuffer buf = ByteBuffer.allocate(1024);
 			while (fin.read(buf) > 0) {
