@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.Utils;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
@@ -32,7 +31,7 @@ import java.util.Date;
  * @author Steve Ratcliffe
  */
 public abstract class CommonHeader {
-	protected static final int COMMON_HEADER_LEN = 21;
+	public static final int COMMON_HEADER_LEN = 21;
 	private static final int TYPE_LEN = 10;
 
 	// The common header contains the length and the type which are set at
@@ -125,6 +124,14 @@ public abstract class CommonHeader {
 
 	public void setCreationDate(Date creationDate) {
 		this.creationDate = creationDate;
+	}
+
+	public int getHeaderLength() {
+		return headerLength;
+	}
+
+	public String getType() {
+		return type;
 	}
 
 	private void writePrepare() {

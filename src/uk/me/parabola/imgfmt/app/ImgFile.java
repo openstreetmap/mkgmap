@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * Base class for all the img files.  There is a common header that
@@ -68,7 +67,7 @@ public abstract class ImgFile  {
 		this.writer = writer;
 	}
 
-	ReadStrategy getReader() {
+	public ReadStrategy getReader() {
 		return reader;
 	}
 
@@ -77,7 +76,7 @@ public abstract class ImgFile  {
 		this.reader = reader;
 	}
 
-	protected CommonHeader getHeader() {
+	public CommonHeader getHeader() {
 		return header;
 	}
 

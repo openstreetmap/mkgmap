@@ -40,7 +40,7 @@ public class RGNFile extends ImgFile {
 
 	private static final int HEADER_LEN = RGNHeader.HEADER_LEN;
 
-	private final RGNHeader header;
+	private final RGNHeader header = new RGNHeader();
 
 	private Subdivision currentDivision;
 	private int indPointPtrOff;
@@ -48,7 +48,6 @@ public class RGNFile extends ImgFile {
 	private int polygonPtrOff;
 
 	public RGNFile(ImgChannel chan) {
-		header = new RGNHeader();
 		setHeader(header);
 
 		setWriter(new BufferedWriteStrategy(chan));
@@ -60,7 +59,6 @@ public class RGNFile extends ImgFile {
 	public void sync() throws IOException {
 		header.setDataSize(position() - HEADER_LEN);
 
-		position(0);
 		getHeader().writeHeader(getWriter());
 
 		getWriter().sync();

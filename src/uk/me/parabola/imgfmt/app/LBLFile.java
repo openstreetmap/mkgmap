@@ -46,10 +46,9 @@ public class LBLFile extends ImgFile {
 
 	private final java.util.Map<String, Label> labelCache = new HashMap<String, Label>();
 
-	private final LBLHeader lblheader;
+	private final LBLHeader lblheader = new LBLHeader();
 
 	public LBLFile(ImgChannel chan) {
-		lblheader = new LBLHeader();
 		setHeader(lblheader);
 
 		WriteStrategy writer = new BufferedWriteStrategy(chan);
@@ -67,7 +66,6 @@ public class LBLFile extends ImgFile {
 		lblheader.setDataPos(position());
 
 		// Reposition to re-write the header with all updated values.
-		position(0);
 		getHeader().writeHeader(getWriter());
 
 		getWriter().put(Utils.toBytes("Some text for the label gap"));
