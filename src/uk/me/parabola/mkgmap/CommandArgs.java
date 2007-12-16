@@ -333,7 +333,7 @@ public class CommandArgs {
 		public void processArg() {
 			// If there was no explicit mapname specified and the input filename
 			// looks like it contains an 8digit number then we use that.
-			String mapname = null;
+			String mapname;
 			if (!mapnameSet) {
 				mapname = extractMapName(name);
 				if (mapname != null)
