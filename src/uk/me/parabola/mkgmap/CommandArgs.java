@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap;
 
+import uk.me.parabola.log.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,8 +31,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-
-import uk.me.parabola.log.Logger;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Command line arguments for Main.
@@ -56,6 +58,8 @@ public class CommandArgs {
 	private final ArgumentProcessor proc;
 	private final Properties currentOptions = new Properties();
 	private final Set<String> readFiles = new HashSet<String>();
+
+	private boolean mapnameSet;
 
 	public CommandArgs(ArgumentProcessor proc) {
 		this.proc = proc;
@@ -147,6 +151,10 @@ public class CommandArgs {
 		String value = opt.getValue();
 
 		log.debug("adding option", option, value);
+
+		// Note if an explicit mapname is set
+		if (option.equals("mapname"))
+			mapnameSet = true;
 
 		if (option.equals("input-file")) {
 			log.debug("adding filename");
@@ -323,12 +331,23 @@ public class CommandArgs {
 		}
 
 		public void processArg() {
-			proc.processFilename(CommandArgs.this, name);
-			String mapname = arglist.getProperty("mapname");
+			// If there was no explicit mapname specified and the input filename
+			// looks like it contains an 8digit number then we use that.
+			String mapname = null;
+			if (!mapnameSet) {
+				mapname = extractMapName(name);
+				if (mapname != null)
+					arglist.setProperty("mapname", mapname);
+			}
 
+			// Now process the file
+			proc.processFilename(CommandArgs.this, name);
+
+			// Increase the name number.  If the next arg sets it then that
+			// will override this new name.
+			mapnameSet = false;
+			mapname = arglist.getProperty("mapname");
 			try {
-				// Increase the name number.  If the next arg sets it then that
-				// will override this new name.
 				int n = Integer.parseInt(mapname);
 				Formatter fmt = new Formatter();
 				fmt.format("%08d", ++n);
@@ -336,6 +355,21 @@ public class CommandArgs {
 			} catch (NumberFormatException e) {
 				// If the name is not a number then we just leave it alone...
 			}
+		}
+
+		private String extractMapName(String path) {
+
+			File file = new File(path);
+			String fname = file.getName();
+			Pattern pat = Pattern.compile("([0-9]{8})");
+			Matcher matcher = pat.matcher(fname);
+			boolean found = matcher.find();
+			if (found) {
+				String mn = matcher.group(1);
+				return mn;
+			}
+
+			return null;
 		}
 	}
 
