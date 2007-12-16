@@ -115,9 +115,10 @@ public class BufferedReadStrategy implements ReadStrategy {
 		byte b2 = get();
 		byte b3 = get();
 
-		return ((b3 << 16)
+		return (b1 & 0xff)
 				| ((b2 & 0xff) << 8)
-				| (b1 & 0xff));
+				| (b3 << 16)
+				;
 	}
 
 	/**
@@ -131,11 +132,11 @@ public class BufferedReadStrategy implements ReadStrategy {
 		byte b2 = get();
 		byte b3 = get();
 		byte b4 = get();
-
-		return (char) (((b4 & 0xff) << 24)
-				| ((b3 & 0xff) << 16)
+		return (b1 & 0xff)
 				| ((b2 & 0xff) << 8)
-				| (b1 & 0xff));
+				| ((b3 & 0xff) << 16)
+				| ((b4 & 0xff) << 24)
+				;
 	}
 
 	/**
@@ -165,7 +166,7 @@ public class BufferedReadStrategy implements ReadStrategy {
 		if (position < bufStart || position >= bufStart + bufSize) {
 
 			// Get channel position on a block boundry.
-			bufStart = position & ~(bufSize - 1);
+			bufStart = position & ~(BUF_SIZE - 1);
 			chan.position(bufStart);
 			log.debug("reading in a buffer start=", bufStart);
 

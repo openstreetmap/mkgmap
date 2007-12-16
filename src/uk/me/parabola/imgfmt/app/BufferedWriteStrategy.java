@@ -107,7 +107,6 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 */
 	public void putChar(char c) {
 		ensureSize(2);
-		log.debug("char at pos ", position());
 		buf.putChar(c);
 	}
 
@@ -117,8 +116,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 	 * @param val The value to write.
 	 */
 	public void put3(int val) {
-		if (log.isDebugEnabled())
-			log.debug("put3", val);
+		ensureSize(3);
 		buf.put((byte) (val & 0xff));
 		buf.putChar((char) (val >> 8));
 	}

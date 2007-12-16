@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
-import java.nio.channels.ByteChannel;
-import java.nio.ByteBuffer;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * This is an implementation of ImgChannel that delegates to a regular channel.
@@ -32,7 +32,7 @@ import java.io.FileNotFoundException;
  * @author Steve Ratcliffe
  */
 public class FileImgChannel implements ImgChannel {
-	private ByteChannel channel;
+	private FileChannel channel;
 	private long position;
 
 	public FileImgChannel(String filename) {
@@ -45,7 +45,7 @@ public class FileImgChannel implements ImgChannel {
 		this.channel = raf.getChannel();
 	}
 
-	public FileImgChannel(ByteChannel channel) {
+	public FileImgChannel(FileChannel channel) {
 		this.channel = channel;
 	}
 
@@ -87,6 +87,11 @@ public class FileImgChannel implements ImgChannel {
 	 * @param pos The position to set.
 	 */
 	public void position(long pos) {
-		position = pos;
+		try {
+			channel.position(pos);
+			position = pos;
+		} catch (IOException e) {
+			throw new ReadFailedException("Could not seek", e);
+		}
 	}
 }
