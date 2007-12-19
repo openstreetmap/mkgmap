@@ -161,7 +161,7 @@ public class CopyFile {
 
 			ImgChannel f = fs.open(fullname, "r");
 			try {
-				//copyToFile(f, fullname);
+				copyToFile(f, fullname);
 			} finally {
 				f.close();
 			}
