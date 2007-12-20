@@ -25,6 +25,9 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.mps.MpsFile;
+import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -50,13 +53,18 @@ import uk.me.parabola.mkgmap.CommandArgs;
 public class GmapsuppBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(GmapsuppBuilder.class);
 
+	private static final String GMAPSUPP = "gmapsupp.img";
+
 	/**
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
-
 	private Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
-	private static final String GMAPSUPP = "gmapsupp.img";
+
+	// XXX all these need to be set in the init routine from arguments.
+	private int productId = 41;
+	private String areaName = "area name";
+	private String typeName = "type name";
 
 	public void init(CommandArgs args) {
 	}
@@ -85,26 +93,72 @@ public class GmapsuppBuilder implements Combiner {
 		try {
 			outfs = createGmapsupp();
 
-			for (FileInfo info : files.values()) {
-				String filename = info.getFilename();
-				switch (info.getKind()) {
-				case FileInfo.IMG_KIND:
-					addImg(outfs, filename);
-					break;
-				case FileInfo.FILE_KIND:
-					addFile(outfs, filename);
-					break;
-				default:
-					// do nothing, until we know what we should do..
-					break;
-				}
-			}
+			addAllFiles(outfs);
+
+			writeMpsFile(outfs);
+
 		} catch (FileNotWritableException e) {
 			log.warn("Could not create gmapsupp file");
 			System.err.println("Could not create gmapsupp file");
 		} finally {
 			if (outfs != null)
 				outfs.close();
+		}
+	}
+
+	/**
+	 * Write the MPS file.  Seems to work without this, so not sure how important
+	 * it is.
+	 *
+	 * @param gmapsupp The output file in which to create the MPS file.
+	 */
+	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
+		MpsFile mps = createMpsFile(gmapsupp);
+		for (FileInfo info : files.values()) {
+			MapBlock mb = new MapBlock();
+			mb.setMapNumber(info.getMapnameAsInt());
+			mb.setMapName(info.getDescription());
+			mb.setAreaName(areaName);
+			mb.setTypeName(typeName);
+			mb.setProductId(productId);
+
+			mps.addMap(mb);
+		}
+
+		try {
+			mps.sync();
+			mps.close();
+		} catch (IOException e) {
+			throw new FileNotWritableException("Could not finish write to MPS file", e);
+		}
+	}
+
+	private void addAllFiles(FileSystem outfs) {
+		for (FileInfo info : files.values()) {
+			String filename = info.getFilename();
+			switch (info.getKind()) {
+			case FileInfo.IMG_KIND:
+				addImg(outfs, filename);
+				break;
+			case FileInfo.FILE_KIND:
+				addFile(outfs, filename);
+				break;
+			default:
+				// do nothing, until we know what we should do..
+				break;
+			}
+		}
+	}
+
+	private MpsFile createMpsFile(FileSystem outfs) throws FileNotWritableException {
+		try {
+			ImgChannel channel = outfs.create("MAPSOURC.MPS");
+			MpsFile mps = new MpsFile(channel);
+			return mps;
+		} catch (FileExistsException e) {
+			// well it shouldn't exist!
+			log.error("could not create MPS file as it already existed (aledgedly)");
+			throw new FileNotWritableException("already existed", e);
 		}
 	}
 

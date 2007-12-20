@@ -215,4 +215,12 @@ public class FileInfo {
 	public int getKind() {
 		return kind;
 	}
+
+	public int getMapnameAsInt() {
+		try {
+			return Integer.valueOf(mapname);
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
 }

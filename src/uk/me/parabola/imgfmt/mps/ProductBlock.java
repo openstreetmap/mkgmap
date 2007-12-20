@@ -27,17 +27,18 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class ProductBlock extends Block {
+	private static final int BLOCK_TYPE = 0x46;
+	
 	private int product;
-	private String description;
+	private String description = "OMS maps";
 
-	public ProductBlock(int type) {
-		super(type);
+	public ProductBlock() {
+		super(BLOCK_TYPE);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {
 		out.write4(product);
 		out.writeString(description);
-		out.write('\0');
 	}
 
 	public void setProduct(int product) {

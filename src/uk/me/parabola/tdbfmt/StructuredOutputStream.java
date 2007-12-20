@@ -48,6 +48,14 @@ public class StructuredOutputStream extends FilterOutputStream {
 		out.write(b >> 24);
 	}
 
+	/**
+	 * Writes a string including a terminating null byte.
+	 *
+	 * For each character in the string the low-order byte is written.
+	 *
+	 * @param s The string to write.
+	 * @throws IOException If the write fails.
+	 */
 	public void writeString(String s) throws IOException {
 		for (char c : s.toCharArray()) {
 			out.write((byte) c);

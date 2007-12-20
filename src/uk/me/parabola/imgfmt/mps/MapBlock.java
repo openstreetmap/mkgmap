@@ -26,14 +26,16 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class MapBlock extends Block {
+	private static final int BLOCK_TYPE = 0x4c;
+	
 	private int productId;
 	private int mapNumber;
 	private String typeName;
 	private String mapName;
 	private String areaName;
 
-	public MapBlock(int type) {
-		super(type);
+	public MapBlock() {
+		super(BLOCK_TYPE);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {

@@ -57,11 +57,13 @@ public abstract class Block {
 		buf.putChar(len);
 
 		// write the header.
+		buf.flip();
 		chan.write(buf);
 
 		// write the body.
 		buf = ByteBuffer.allocate(len);
 		buf.put(output.toByteArray());
+		buf.flip();
 		chan.write(buf);
 	}
 

@@ -26,19 +26,21 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class MapsetBlock extends Block {
-	private String name;
+	private static final int BLOCK_TYPE = 0x56;
 	
-	public MapsetBlock(int type) {
-		super(type);
+	private String name = "OSM map set";
+	
+	public MapsetBlock() {
+		super(BLOCK_TYPE);
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {
 		out.writeString(name);
-		out.write('\0');
 		out.write(0); // unknown
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		if (name != null)
+			this.name = name;
 	}
 }

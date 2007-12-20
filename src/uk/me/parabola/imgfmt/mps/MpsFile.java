@@ -33,9 +33,12 @@ import java.io.IOException;
  */
 public class MpsFile {
 	private int productId;
+	//private int productVersion = 1;
+	private String seriesName = "OSM map sets";
+	private String familyName = "OSM maps";
 
-	private ProductBlock product;
-	private MapsetBlock mapset;
+	private ProductBlock product = new ProductBlock();
+	private MapsetBlock mapset = new MapsetBlock();
 	private List<MapBlock> maps = new ArrayList<MapBlock>();
 
 	private ImgChannel chan;
@@ -45,6 +48,11 @@ public class MpsFile {
 	}
 
 	public void sync() throws IOException {
+		product.setProduct(productId);
+
+		product.setDescription(familyName); // XXX or seriesName
+		mapset.setName(seriesName); // XXX or family
+
 		for (MapBlock map : maps) {
 			map.write(chan);
 		}
@@ -57,10 +65,31 @@ public class MpsFile {
 		maps.add(map);
 	}
 
-	public void setProductInfo(int productId, int productVersion,
-			String seriesName, String familyName)
+	public void setProductInfo(int productId, String seriesName, String familyName)
 	{
+		this.productId = productId;
+		//this.productVersion = productVersion;
+		this.seriesName = seriesName;
+		this.familyName = familyName;
 	}
 
-	
+	public void setProductId(int productId) {
+		this.productId = productId;
+	}
+
+	//public void setProductVersion(int productVersion) {
+	//	this.productVersion = productVersion;
+	//}
+
+	public void setSeriesName(String seriesName) {
+		this.seriesName = seriesName;
+	}
+
+	public void setFamilyName(String familyName) {
+		this.familyName = familyName;
+	}
+
+	public void close() throws IOException {
+		chan.close();
+	}
 }
