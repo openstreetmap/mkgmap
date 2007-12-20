@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.io.IOException;
 
 /**
  * This file is a description of the map set that is loaded into the
@@ -31,6 +32,8 @@ import java.util.ArrayList;
  * @author Steve Ratcliffe
  */
 public class MpsFile {
+	private int productId;
+
 	private ProductBlock product;
 	private MapsetBlock mapset;
 	private List<MapBlock> maps = new ArrayList<MapBlock>();
@@ -41,7 +44,23 @@ public class MpsFile {
 		this.chan = chan;
 	}
 
-	public void sync() {
-		// write out.
+	public void sync() throws IOException {
+		for (MapBlock map : maps) {
+			map.write(chan);
+		}
+
+		mapset.write(chan);
+		product.write(chan);
 	}
+
+	public void addMap(MapBlock map) {
+		maps.add(map);
+	}
+
+	public void setProductInfo(int productId, int productVersion,
+			String seriesName, String familyName)
+	{
+	}
+
+	
 }

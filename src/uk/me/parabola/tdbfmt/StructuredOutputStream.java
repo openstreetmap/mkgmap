@@ -18,18 +18,18 @@ package uk.me.parabola.tdbfmt;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.FilterOutputStream;
 
 /**
  * An output stream that has methods for writing strings and little endian
- * integers.
+ * integers.  Its a bit like DataOuput, but for little endian.
  *
  * @author Steve Ratcliffe
  */
-public class StructuredOutputStream extends OutputStream {
-	private final OutputStream out;
-
+public class StructuredOutputStream extends FilterOutputStream {
+	
 	public StructuredOutputStream(OutputStream out) {
-		this.out = out;
+		super(out);
 	}
 
 	public void write(int b) throws IOException {

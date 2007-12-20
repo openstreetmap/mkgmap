@@ -16,16 +16,29 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.tdbfmt.StructuredOutputStream;
+
+import java.io.IOException;
 
 /**
+ * Block describing the map set.
+ *
  * @author Steve Ratcliffe
  */
 public class MapsetBlock extends Block {
+	private String name;
+	
 	public MapsetBlock(int type) {
 		super(type);
 	}
 
-	public void write(ImgChannel chan) {
+	protected void writeBody(StructuredOutputStream out) throws IOException {
+		out.writeString(name);
+		out.write('\0');
+		out.write(0); // unknown
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }

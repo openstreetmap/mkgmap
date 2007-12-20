@@ -16,9 +16,14 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.tdbfmt.StructuredOutputStream;
+
+import java.io.IOException;
 
 /**
+ * A block describing a particular product.  Not sure how this relates
+ * to the map set.
+ *
  * @author Steve Ratcliffe
  */
 public class ProductBlock extends Block {
@@ -29,6 +34,17 @@ public class ProductBlock extends Block {
 		super(type);
 	}
 
-	public void write(ImgChannel chan) {
+	protected void writeBody(StructuredOutputStream out) throws IOException {
+		out.write4(product);
+		out.writeString(description);
+		out.write('\0');
+	}
+
+	public void setProduct(int product) {
+		this.product = product;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 }

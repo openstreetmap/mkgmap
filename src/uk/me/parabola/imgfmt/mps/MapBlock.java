@@ -16,16 +16,53 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.tdbfmt.StructuredOutputStream;
+
+import java.io.IOException;
 
 /**
+ * A block describing an individual map.
+ * 
  * @author Steve Ratcliffe
  */
 public class MapBlock extends Block {
+	private int productId;
+	private int mapNumber;
+	private String typeName;
+	private String mapName;
+	private String areaName;
+
 	public MapBlock(int type) {
 		super(type);
 	}
 
-	public void write(ImgChannel chan) {
+	protected void writeBody(StructuredOutputStream out) throws IOException {
+		out.write4(productId);
+		out.write4(mapNumber);
+		out.writeString(typeName);
+		out.writeString(mapName);
+		out.writeString(areaName);
+		out.write4(mapNumber);
+		out.write4(0);
+	}
+
+	public void setProductId(int productId) {
+		this.productId = productId;
+	}
+
+	public void setTypeName(String typeName) {
+		this.typeName = typeName;
+	}
+
+	public void setMapNumber(int mapNumber) {
+		this.mapNumber = mapNumber;
+	}
+
+	public void setMapName(String mapName) {
+		this.mapName = mapName;
+	}
+
+	public void setAreaName(String areaName) {
+		this.areaName = areaName;
 	}
 }
