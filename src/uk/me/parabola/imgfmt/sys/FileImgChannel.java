@@ -36,9 +36,9 @@ public class FileImgChannel implements ImgChannel {
 	private long position;
 
 	public FileImgChannel(String filename) {
-		RandomAccessFile raf = null;
+		RandomAccessFile raf;
 		try {
-			raf = new RandomAccessFile(filename, "r");
+			raf = new RandomAccessFile(filename, "rw");
 		} catch (FileNotFoundException e) {
 			throw new ReadFailedException("Couldnot open " + filename, e);
 		}

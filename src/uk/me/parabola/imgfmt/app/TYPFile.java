@@ -38,6 +38,7 @@ public class TYPFile extends ImgFile {
 		setHeader(header);
 		if (write) {
 			setWriter(new BufferedWriteStrategy(chan));
+			position(TYPHeader.HEADER_LEN);
 		} else {
 			setReader(new BufferedReadStrategy(chan));
 			header.readHeader(getReader());
@@ -47,11 +48,7 @@ public class TYPFile extends ImgFile {
 	public void sync() throws IOException {
 		log.debug("syncing TYP file");
 
-		//dataPos = position();
-
 		getHeader().writeHeader(getWriter());
-
-		getWriter().put(Utils.toBytes("Some text for the label gap"));
 
 		// Sync our writer.
 		getWriter().sync();

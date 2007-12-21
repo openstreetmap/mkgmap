@@ -159,6 +159,10 @@ class AllElements {
 				coords.add(co);
 				mapper.addToBounds(co);
 
+				co = new Coord(baseLat + ELEMENT_SIZE, baseLong + ELEMENT_SIZE + ELEMENT_SIZE/2);
+				coords.add(co);
+				mapper.addToBounds(co);
+
 				line.setType(type);
 				line.setPoints(coords);
 

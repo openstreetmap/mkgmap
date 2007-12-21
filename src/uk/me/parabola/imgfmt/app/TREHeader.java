@@ -244,45 +244,4 @@ public class TREHeader extends CommonHeader {
 		return mapId;
 	}
 
-	/**
-	 * Represents an item size the position where those items start and the
-	 * total size of the section.
-	 */
-	private static class Section {
-		private char itemSize;
-		private int size;
-		private int position;
-
-		private Section(char itemSize) {
-			this.itemSize = itemSize;
-		}
-
-		public void inc() {
-			size += itemSize;
-		}
-
-		public char getItemSize() {
-			return itemSize;
-		}
-
-		public void setItemSize(char itemSize) {
-			this.itemSize = itemSize;
-		}
-
-		public int getSize() {
-			return size;
-		}
-
-		public void setSize(int size) {
-			this.size = size;
-		}
-
-		public int getPosition() {
-			return position;
-		}
-
-		public void setPosition(int position) {
-			this.position = position;
-		}
-	}
 }
