@@ -17,7 +17,7 @@
 package uk.me.parabola.mkgmap.build;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;

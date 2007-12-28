@@ -14,7 +14,7 @@
  * Date: 22-Dec-2006
  */
 
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
 /**
  * A Polygon on a garmin map is pretty much treated like a line.

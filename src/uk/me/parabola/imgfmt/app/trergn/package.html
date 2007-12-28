@@ -1,0 +1,22 @@
+<body>
+<h3>The TRE and RGN files</h3>
+
+<p>These files are so inter dependant that it only makes sense to put
+them into the same package.</p>
+
+<h4>The TRE file</h4>
+<p>This file describes the structure of the map.  It contains the
+zoom levels that exist in the map and how the map is divided up.</p>
+<p>There are in effect several copies of the map at different levels
+of detail.  Each level is divided up into several areas known as subdivisions.
+	These subdivisions form a tree, with more detailed ones being children of
+	the higher (less detailed) levels.
+</p>
+
+<h4>The RGN file</h4>
+<p>This file contains the detailed location and path of all the map
+objects.  Pointers from the TRE file indicate the start of the definition
+of a map object and information from the TRE section needs to be used
+to work out where the location of the map object is.</p>
+
+</body>

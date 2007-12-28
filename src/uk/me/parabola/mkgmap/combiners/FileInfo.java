@@ -21,7 +21,7 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 
@@ -48,7 +48,7 @@ public class FileInfo {
 	private String filename;
 
 	// The kind of file, see *KIND definitions above.
-	private int kind;
+	private final int kind;
 
 	private String mapname;
 	private String description;

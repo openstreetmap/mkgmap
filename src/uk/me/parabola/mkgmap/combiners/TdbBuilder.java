@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Map;
+import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
@@ -44,11 +44,11 @@ import uk.me.parabola.tdbfmt.TdbFile;
 public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
-	private OverviewMap overviewSource = new OverviewMapDataSource();
+	private final OverviewMap overviewSource = new OverviewMapDataSource();
 
 	private final TdbFile tdb = new TdbFile();
 
-	private int parent = 63240000;
+	private final int parent = 63240000;
 	private String overviewMapname;
 
 	/**

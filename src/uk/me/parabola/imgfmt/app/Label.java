@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.log.Logger;
 
 /**
  * Labels are used for names of roads, points of interest etc.

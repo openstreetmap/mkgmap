@@ -24,10 +24,10 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Overview;
-import uk.me.parabola.imgfmt.app.PointOverview;
-import uk.me.parabola.imgfmt.app.PolygonOverview;
-import uk.me.parabola.imgfmt.app.PolylineOverview;
+import uk.me.parabola.imgfmt.app.trergn.Overview;
+import uk.me.parabola.imgfmt.app.trergn.PointOverview;
+import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
+import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 
 /**
  * The map features that we are going to map are collected here.

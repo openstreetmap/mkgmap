@@ -20,15 +20,15 @@ package uk.me.parabola.imgfmt.app;
  * Represents an item size the position where those items start and the
  * total size of the section.
  */
-class Section {
+public class Section {
 	private char itemSize;
 	private int size;
 	private int position;
 
-	Section() {
+	public Section() {
 	}
 
-	Section(char itemSize) {
+	public Section(char itemSize) {
 		this.itemSize = itemSize;
 	}
 

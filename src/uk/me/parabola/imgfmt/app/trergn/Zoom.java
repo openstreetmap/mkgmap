@@ -14,11 +14,13 @@
  * Author: Steve Ratcliffe
  * Create date: 07-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
-import java.util.List;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
+
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A zoom level (or map level) determines the amount of detail that

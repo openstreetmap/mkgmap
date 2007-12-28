@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;

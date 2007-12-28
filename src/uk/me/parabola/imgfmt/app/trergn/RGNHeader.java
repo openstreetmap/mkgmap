@@ -14,11 +14,12 @@
  * Author: Steve Ratcliffe
  * Create date: Dec 14, 2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.ReadFailedException;
-
-import java.io.IOException;
+import uk.me.parabola.imgfmt.app.CommonHeader;
+import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * The header for the RGN file.  This is very simple, just a location and size.
@@ -67,7 +68,7 @@ public class RGNHeader extends CommonHeader {
 		this.dataOffset = dataOffset;
 	}
 
-	public int getDataSize() {
+	protected int getDataSize() {
 		return dataSize;
 	}
 

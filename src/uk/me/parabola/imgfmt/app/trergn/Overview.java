@@ -14,7 +14,9 @@
  * Author: Steve Ratcliffe
  * Create date: 09-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
+
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * This is for polyline, polygon and point overviews.  A simple record that

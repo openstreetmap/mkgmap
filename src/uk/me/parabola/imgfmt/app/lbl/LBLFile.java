@@ -14,20 +14,25 @@
  * Author: Steve Ratcliffe
  * Create date: 03-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Latin1Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
-import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The file that holds all the labels for the map.
@@ -44,7 +49,7 @@ public class LBLFile extends ImgFile {
 
 	private CharacterEncoder textEncoder = new Format6Encoder();
 
-	private final java.util.Map<String, Label> labelCache = new HashMap<String, Label>();
+	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 
 	private final LBLHeader lblheader = new LBLHeader();
 

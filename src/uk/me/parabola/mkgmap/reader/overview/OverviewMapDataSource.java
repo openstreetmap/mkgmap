@@ -49,8 +49,8 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private int maxLong = Integer.MIN_VALUE;
 
 	// TODO need to change this.
-	private int topLevel = 4;
-	private int topBits = 14;
+	private final int topLevel = 4;
+	private final int topBits = 14;
 
 	/**
 	 * This is a fake source of data and is not read from a file, so always

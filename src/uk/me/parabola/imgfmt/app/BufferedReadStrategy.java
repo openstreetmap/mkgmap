@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 import java.io.IOException;

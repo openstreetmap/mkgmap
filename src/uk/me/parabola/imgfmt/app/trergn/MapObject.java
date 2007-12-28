@@ -14,7 +14,10 @@
  * Author: Steve Ratcliffe
  * Create date: 12-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
+
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed

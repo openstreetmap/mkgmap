@@ -14,16 +14,16 @@
  * Author: Steve Ratcliffe
  * Create date: 01-Jan-2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
 /**
- * Polylines have a type and no subtype.
+ * Points have both a type and a subtype.
  * 
  * @author Steve Ratcliffe
  */
-public class PolylineOverview extends Overview {
+public class PointOverview extends Overview {
 
-	public PolylineOverview(int type, int minResolution) {
-		super(LINE_KIND, type, minResolution);
+	public PointOverview(int type, int minResolution) {
+		super(POINT_KIND, type, minResolution);
 	}
 }

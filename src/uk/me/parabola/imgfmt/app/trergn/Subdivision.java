@@ -14,12 +14,16 @@
  * Author: Steve Ratcliffe
  * Create date: 07-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.log.Logger;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The map is divided into areas, depending on the zoom level.  These are

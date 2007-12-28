@@ -14,9 +14,14 @@
  * Author: Steve Ratcliffe
  * Create date: Dec 14, 2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.CommonHeader;
+import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -28,10 +33,10 @@ public class TREHeader extends CommonHeader {
 	public static final int HEADER_LEN = 120; // Other values are possible
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
-	static final char POLYLINE_REC_LEN = 2;
+	private static final char POLYLINE_REC_LEN = 2;
 	static final char POLYGON_REC_LEN = 2;
 	static final char POINT_REC_LEN = 3;
-	static final char COPYRIGHT_REC_SIZE = 0x3;
+	private static final char COPYRIGHT_REC_SIZE = 0x3;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
 
@@ -48,10 +53,10 @@ public class TREHeader extends CommonHeader {
 
 	private byte poiDisplayFlags;
 
-	private Section copyright = new Section(COPYRIGHT_REC_SIZE);
-	private Section polyline = new Section(POLYLINE_REC_LEN);
-	private Section polygon = new Section(POLYLINE_REC_LEN);
-	private Section points = new Section(POLYLINE_REC_LEN);
+	private final Section copyright = new Section(COPYRIGHT_REC_SIZE);
+	private final Section polyline = new Section(POLYLINE_REC_LEN);
+	private final Section polygon = new Section(POLYLINE_REC_LEN);
+	private final Section points = new Section(POLYLINE_REC_LEN);
 
 	private int mapId;
 

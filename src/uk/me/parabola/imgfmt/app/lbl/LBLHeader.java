@@ -14,7 +14,11 @@
  * Author: Steve Ratcliffe
  * Create date: Dec 14, 2007
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.lbl;
+
+import uk.me.parabola.imgfmt.app.CommonHeader;
+import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * The header for the LBL file.
@@ -142,7 +146,7 @@ public class LBLHeader extends CommonHeader {
 		writer.putChar((char) 0);
 	}
 
-	public int getEncodingLength() {
+	protected int getEncodingLength() {
 		return encodingLength;
 	}
 
@@ -166,7 +170,7 @@ public class LBLHeader extends CommonHeader {
 		this.dataPos = dataPos;
 	}
 
-	public int getCodePage() {
+	protected int getCodePage() {
 		return codePage;
 	}
 

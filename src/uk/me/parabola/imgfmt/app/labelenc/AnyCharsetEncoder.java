@@ -16,9 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import java.nio.charset.Charset;
-import java.util.Locale;
 import java.io.UnsupportedEncodingException;
+import java.util.Locale;
 
 /**
  * Convert text to a specified charset.  This is used when you give a

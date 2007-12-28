@@ -14,8 +14,11 @@
  * Author: Steve Ratcliffe
  * Create date: 11-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
+import uk.me.parabola.imgfmt.app.BitWriter;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.log.Logger;
 
 import java.util.ArrayList;

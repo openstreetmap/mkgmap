@@ -17,10 +17,10 @@
 package uk.me.parabola.mkgmap.main;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Map;
-import uk.me.parabola.imgfmt.app.Polyline;
-import uk.me.parabola.imgfmt.app.PolylineOverview;
-import uk.me.parabola.imgfmt.app.Subdivision;
+import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
+import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.log.Logger;
 
 /**

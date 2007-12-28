@@ -48,12 +48,12 @@ public class Main implements ArgumentProcessor {
 	//private final MapProcessor reader = new MapReader();
 
 	// Final .img file combiners.
-	private List<Combiner> combiners = new ArrayList<Combiner>();
+	private final List<Combiner> combiners = new ArrayList<Combiner>();
 
 	// The filenames that will be used in pass2.
-	private List<String> filenames = new ArrayList<String>();
+	private final List<String> filenames = new ArrayList<String>();
 
-	private Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
+	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,

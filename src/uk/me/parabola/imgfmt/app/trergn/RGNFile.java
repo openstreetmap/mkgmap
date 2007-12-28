@@ -14,8 +14,10 @@
  * Author: Steve Ratcliffe
  * Create date: 03-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
+import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -27,8 +29,8 @@ import java.io.IOException;
  * 
  *
  * The data is rather complicated and is packed to save space.  This class does
- * not really handle that format however as it is written by the {@link
- * MapObject}s themselves.
+ * not really handle that format however as it is written by the
+ * {@link MapObject}s themselves.
  *
  * Each subdivision takes space in this file.  The I am expecting this to be the
  * biggest file, although it seems that TRE may be in some circumstances.

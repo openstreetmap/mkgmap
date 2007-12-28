@@ -17,7 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Overview;
+import uk.me.parabola.imgfmt.app.trergn.Overview;
 
 import java.util.List;
 

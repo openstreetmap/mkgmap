@@ -52,17 +52,17 @@ public abstract class ImgFile  {
 		return writer.position();
 	}
 
-	void position(long pos) {
+	protected void position(long pos) {
 		writer.position(pos);
 	}
 	
 	protected abstract void sync() throws IOException;
 
-	WriteStrategy getWriter() {
+	protected WriteStrategy getWriter() {
 		return writer;
 	}
 
-	void setWriter(WriteStrategy writer) {
+	protected void setWriter(WriteStrategy writer) {
 		writable = true;
 		this.writer = writer;
 	}
@@ -71,7 +71,7 @@ public abstract class ImgFile  {
 		return reader;
 	}
 
-	void setReader(ReadStrategy reader) {
+	protected void setReader(ReadStrategy reader) {
 		readable = true;
 		this.reader = reader;
 	}

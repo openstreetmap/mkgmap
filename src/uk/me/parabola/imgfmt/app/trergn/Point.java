@@ -14,8 +14,9 @@
  * Author: Steve Ratcliffe
  * Create date: 09-Dec-2006
  */
-package uk.me.parabola.imgfmt.app;
+package uk.me.parabola.imgfmt.app.trergn;
 
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.log.Logger;
 
 /**

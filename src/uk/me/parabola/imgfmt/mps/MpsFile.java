@@ -37,11 +37,11 @@ public class MpsFile {
 	private String seriesName = "OSM map sets";
 	private String familyName = "OSM maps";
 
-	private ProductBlock product = new ProductBlock();
-	private MapsetBlock mapset = new MapsetBlock();
-	private List<MapBlock> maps = new ArrayList<MapBlock>();
+	private final ProductBlock product = new ProductBlock();
+	private final MapsetBlock mapset = new MapsetBlock();
+	private final List<MapBlock> maps = new ArrayList<MapBlock>();
 
-	private ImgChannel chan;
+	private final ImgChannel chan;
 
 	public MpsFile(ImgChannel chan) {
 		this.chan = chan;

@@ -32,7 +32,7 @@ import java.nio.ByteOrder;
  */
 public abstract class Block {
 	private final int type;
-	private ByteArrayOutputStream output = new ByteArrayOutputStream();
+	private final ByteArrayOutputStream output = new ByteArrayOutputStream();
 
 	protected Block(int type) {
 		this.type = type;

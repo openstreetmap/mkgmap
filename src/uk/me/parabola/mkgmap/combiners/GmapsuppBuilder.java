@@ -59,12 +59,12 @@ public class GmapsuppBuilder implements Combiner {
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
-	private Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
+	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
 	// XXX all these need to be set in the init routine from arguments.
-	private int productId = 41;
-	private String areaName = "area name";
-	private String typeName = "type name";
+	private final int productId = 41;
+	private final String areaName = "area name";
+	private final String typeName = "type name";
 
 	public void init(CommandArgs args) {
 	}
@@ -344,9 +344,9 @@ public class GmapsuppBuilder implements Combiner {
 	 * Just a data value object for various bits of block size info.
 	 */
 	private static class BlockInfo {
-		private int blockSize;
-		private int headerSlots;
-		private int reserveBlocks;
+		private final int blockSize;
+		private final int headerSlots;
+		private final int reserveBlocks;
 
 		private BlockInfo(int blockSize, int headerSlots, int reserveBlocks) {
 			this.blockSize = blockSize;
