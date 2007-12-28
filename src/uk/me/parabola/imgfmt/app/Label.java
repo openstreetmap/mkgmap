@@ -27,11 +27,8 @@ import uk.me.parabola.log.Logger;
  * 1. A 6 bit compact uppercase ascii format, that has escape codes for some
  * special characters.
  *
- * 2. An 8 bit format.  Not much is known about this, but it seems fairly
- * straightforward latin-1 like encoding with no tricks to reduce the amount
- * of space required.  (at least none known yet.)
- *
- * 3. A 10 bit format about which nothing is yet known.
+ * 2. An 8 bit format.  This seems to be a fairly straightforward latin-1 like
+ * encoding with no tricks to reduce the amount of space required.
  *
  * @author Steve Ratcliffe
  */

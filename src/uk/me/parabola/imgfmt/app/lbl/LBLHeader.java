@@ -45,13 +45,18 @@ public class LBLHeader extends CommonHeader {
 	static final int ENCODING_6BIT = 6;
 	static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
 
+	private int labelStart; // Start of labels.
 	private int labelSize; // Size of file.
-	private int dataPos = HEADER_LEN + INFO_LEN;
 
-	// Code page? may not do anything.
-	private int codePage = 850;
+	// The start position of the country records. (And until we implement other
+	// kinds of records, this is the start of all the empty sections).
+	private int countryPos = HEADER_LEN + INFO_LEN;
 
-	private int encodingLength = ENCODING_6BIT;
+	// Code page.
+	private int codePage;
+
+	// The type of encoding employed.  This is not a length.
+	private int encodingType = ENCODING_6BIT;
 
 	public LBLHeader() {
 		super(HEADER_LEN, "GARMIN LBL");
@@ -65,6 +70,13 @@ public class LBLHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ReadStrategy reader) {
+		labelStart = reader.getInt();
+		labelSize = reader.getInt();
+		reader.get();
+		encodingType = reader.get();
+
+		// more to do but not needed yet...  Just set position
+		reader.position(labelStart);
 	}
 
 	/**
@@ -79,56 +91,56 @@ public class LBLHeader extends CommonHeader {
 		writer.putInt(getLabelSize());
 
 		writer.put((byte) 0);
-		writer.put((byte) getEncodingLength());
+		writer.put((byte) encodingType);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(COUNTRY_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(REGION_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(CITY_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(UNK1_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.put((byte) 0);
 		writer.put((byte) 0);
 		writer.putChar((char) 0);
 		writer.put((byte) 0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(UNK2_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(ZIP_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(HIGHWAY_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(EXIT_REC_LEN);
 		writer.putInt(0);
 
-		writer.putInt(getDataPos());
+		writer.putInt(countryPos);
 		writer.putInt(0);
 		writer.putChar(HIGHWAYDATA_REC_LEN);
 		writer.putInt(0);
@@ -140,18 +152,18 @@ public class LBLHeader extends CommonHeader {
 		writer.putInt(HEADER_LEN);
 		writer.putInt(INFO_LEN);
 
-		writer.putInt(getDataPos());
+		writer.putInt(getCountryPos());
 		writer.putInt(0);
 		writer.putChar(UNK3_REC_LEN);
 		writer.putChar((char) 0);
 	}
 
-	protected int getEncodingLength() {
-		return encodingLength;
+	protected int getEncodingType() {
+		return encodingType;
 	}
 
-	public void setEncodingLength(int encodingLength) {
-		this.encodingLength = encodingLength;
+	public void setEncodingType(int type) {
+		this.encodingType = type;
 	}
 
 	public int getLabelSize() {
@@ -162,12 +174,12 @@ public class LBLHeader extends CommonHeader {
 		this.labelSize = labelSize;
 	}
 
-	protected int getDataPos() {
-		return dataPos;
+	protected int getCountryPos() {
+		return countryPos;
 	}
 
-	public void setDataPos(int dataPos) {
-		this.dataPos = dataPos;
+	public void setCountryPos(int countryPos) {
+		this.countryPos = countryPos;
 	}
 
 	protected int getCodePage() {
