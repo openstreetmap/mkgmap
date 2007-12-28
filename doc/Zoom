@@ -1,0 +1,14 @@
+
+The zoom levels
+===============
+
+This is the range of zooms on my Legend Cx for different number-of-bits.
+I give the range over which it says 'mapsource' and not overzoom or
+basemap.
+
+16  30km-12km
+18  8km-3km
+20  2km-800m
+22  500m-200m
+23  300m-80m
+24  120m-50m

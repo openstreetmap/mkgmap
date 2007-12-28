@@ -22,12 +22,15 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
+import uk.me.parabola.imgfmt.app.ReadStrategy;
 import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Latin1Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
+import uk.me.parabola.imgfmt.app.labelenc.SimpleDecoder;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -49,6 +52,7 @@ public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
 	private CharacterEncoder textEncoder = new Format6Encoder();
+	private CharacterDecoder textDecoder;
 
 	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 

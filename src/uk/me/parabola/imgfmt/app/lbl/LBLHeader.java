@@ -189,4 +189,8 @@ public class LBLHeader extends CommonHeader {
 	public void setCodePage(int codePage) {
 		this.codePage = codePage;
 	}
+
+	public int getLabelStart() {
+		return labelStart;
+	}
 }
