@@ -17,20 +17,19 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
 import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
-import uk.me.parabola.imgfmt.app.labelenc.AnyCharsetEncoder;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFactory;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
-import uk.me.parabola.imgfmt.app.labelenc.Latin1Encoder;
-import uk.me.parabola.imgfmt.app.labelenc.Simple8Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.SimpleDecoder;
-import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -72,56 +71,46 @@ public class LBLFile extends ImgFile {
 
 		// The zero offset is for no label.
 		getWriter().put((byte) 0);
-		       if (write) {
-          setWriter(new BufferedWriteStrategy(chan));
+		if (write) {
+			setWriter(new BufferedWriteStrategy(chan));
 
-           position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
+			position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
 
-           // The zero offset is for no label.
-           getWriter().put((byte) 0);
-       } else {
-				   setReader(new BufferedReadStrategy(chan));
-           lblheader.readHeader(getReader());
-           int type = lblheader.getEncodingType();
-           setupDecoder(type);
-       }
-
+			// The zero offset is for no label.
+			getWriter().put((byte) 0);
+		} else {
+			setReader(new BufferedReadStrategy(chan));
+			lblheader.readHeader(getReader());
+			int type = lblheader.getEncodingType();
+			setupDecoder(type);
+		}
 	}
 
 	public void sync() throws IOException {
 		log.debug("syncing lbl file");
 
-		lblheader.setCountryPos(position());
+		writeBody();
 
 		getHeader().writeHeader(getWriter());
 
-		getWriter().put(Utils.toBytes("Some text for the label gap"));
+		getWriter().put(Utils.toBytes("mkgmap"));
 		
 		// Sync our writer.
 		getWriter().sync();
 	}
 
+	private void writeBody() {
+		// The label section has already been written, but we need to record
+		// its size before doing anything else.
+		lblheader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
+	}
+
 	public void setCharacterType(String cs) {
 		log.info("encoding type " + cs);
-		if ("ascii".equals(cs)) {
-			lblheader.setEncodingType(LBLHeader.ENCODING_6BIT);
-			textEncoder = new Format6Encoder();
-		} else if ("latin1".equals(cs)) {
-			lblheader.setEncodingType(LBLHeader.ENCODING_8BIT);
-			textEncoder = new Latin1Encoder();
-
-		} else if ("latin2".equals(cs)) {
-			lblheader.setEncodingType(LBLHeader.ENCODING_8BIT);
-//			textEncoder = new Latin2Encoder();
-			textEncoder = new Format6Encoder();
-
-		} else if ("simple8".equals(cs)) {
-			lblheader.setEncodingType(LBLHeader.ENCODING_8BIT);
-			textEncoder = new Simple8Encoder();
-		} else {
-			lblheader.setEncodingType(LBLHeader.ENCODING_8BIT);
-			textEncoder = new AnyCharsetEncoder(cs);
-		}
+		CodeFunctions cfuncs = CodeFactory.createEncoderForLBL(cs);
+		
+		lblheader.setEncodingType(cfuncs.getEncodingType());
+		textEncoder = cfuncs.getEncoder();
 	}
 	
 	/**
@@ -139,10 +128,8 @@ public class LBLFile extends ImgFile {
 			l = new Label(etext);
 			labelCache.put(text, l);
 
-			l.setOffset(position() - (LBLHeader.HEADER_LEN+ LBLHeader.INFO_LEN));
+			l.setOffset(position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
 			l.write(getWriter());
-
-			lblheader.setLabelSize(lblheader.getLabelSize() + l.getLength());
 		}
 
 		return l;
@@ -180,7 +167,7 @@ public class LBLFile extends ImgFile {
 
 	private void setupDecoder(int type) {
 		switch (type) {
-		case LBLHeader.ENCODING_8BIT:
+		case CodeFactory.ENCODING_8BIT:
 			textDecoder = new SimpleDecoder();
 			break;
 		default:
@@ -188,5 +175,4 @@ public class LBLFile extends ImgFile {
 			break;
 		}
 	}
-
 }

@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFactory;
 
 /**
  * The header for the LBL file.
@@ -30,36 +31,24 @@ public class LBLHeader extends CommonHeader {
 
 	static final int INFO_LEN = 28;
 
-	private static final char COUNTRY_REC_LEN = 3;
-	private static final char REGION_REC_LEN = 5;
-	private static final char CITY_REC_LEN = 5;
-	private static final char UNK1_REC_LEN = 4;
-	private static final char UNK2_REC_LEN = 4;
 	private static final char UNK3_REC_LEN = 0;
-	private static final char ZIP_REC_LEN = 3;
-	private static final char HIGHWAY_REC_LEN = 6;
-	private static final char EXIT_REC_LEN = 5;
-	private static final char HIGHWAYDATA_REC_LEN = 3;
-
-	// Label encoding length
-	static final int ENCODING_6BIT = 6;
-	static final int ENCODING_8BIT = 9;  // Yes it really is 9 apparently
 
 	private int labelStart; // Start of labels.
 	private int labelSize; // Size of file.
-
-	// The start position of the country records. (And until we implement other
-	// kinds of records, this is the start of all the empty sections).
-	private int countryPos = HEADER_LEN + INFO_LEN;
 
 	// Code page.
 	private int codePage;
 
 	// The type of encoding employed.  This is not a length.
-	private int encodingType = ENCODING_6BIT;
+	private int encodingType = CodeFactory.ENCODING_6BIT;
+
+	// The label section also contains all kinds of records related to place,
+	// so these have all been put in their own class.
+	private final PlacesHeader placesHeader;
 
 	public LBLHeader() {
 		super(HEADER_LEN, "GARMIN LBL");
+		placesHeader = new PlacesHeader();
 	}
 
 	/**
@@ -93,66 +82,16 @@ public class LBLHeader extends CommonHeader {
 		writer.put((byte) 0);
 		writer.put((byte) encodingType);
 
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(COUNTRY_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(REGION_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(CITY_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(UNK1_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.put((byte) 0);
-		writer.put((byte) 0);
-		writer.putChar((char) 0);
-		writer.put((byte) 0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(UNK2_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(ZIP_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(HIGHWAY_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(EXIT_REC_LEN);
-		writer.putInt(0);
-
-		writer.putInt(countryPos);
-		writer.putInt(0);
-		writer.putChar(HIGHWAYDATA_REC_LEN);
-		writer.putInt(0);
+		placesHeader.writeFileHeader(writer);
 
 		writer.putChar((char) getCodePage()); //code
 		writer.putInt(0);
 
-		// Sort descriptor ???
+		// Sort descriptor ??? what does that mean
 		writer.putInt(HEADER_LEN);
 		writer.putInt(INFO_LEN);
 
-		writer.putInt(getCountryPos());
+		writer.putInt(placesHeader.getLastPos());
 		writer.putInt(0);
 		writer.putChar(UNK3_REC_LEN);
 		writer.putChar((char) 0);
@@ -172,14 +111,7 @@ public class LBLHeader extends CommonHeader {
 
 	public void setLabelSize(int labelSize) {
 		this.labelSize = labelSize;
-	}
-
-	protected int getCountryPos() {
-		return countryPos;
-	}
-
-	public void setCountryPos(int countryPos) {
-		this.countryPos = countryPos;
+		placesHeader.setLabelEnd(HEADER_LEN + INFO_LEN + labelSize);
 	}
 
 	protected int getCodePage() {
@@ -193,4 +125,5 @@ public class LBLHeader extends CommonHeader {
 	public int getLabelStart() {
 		return labelStart;
 	}
+
 }

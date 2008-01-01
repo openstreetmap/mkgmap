@@ -24,12 +24,22 @@ public class Section {
 	private char itemSize;
 	private int size;
 	private int position;
+	private Section link;
 
 	public Section() {
 	}
 
 	public Section(char itemSize) {
 		this.itemSize = itemSize;
+	}
+
+	public Section(Section link, char itemSize) {
+		this.itemSize = itemSize;
+		this.link = link;
+	}
+
+	public Section(Section unk1) {
+		link = unk1;
 	}
 
 	public void inc() {
@@ -53,10 +63,16 @@ public class Section {
 	}
 
 	public int getPosition() {
+		if (link != null)
+			return link.getPosition();
 		return position;
 	}
 
 	public void setPosition(int position) {
 		this.position = position;
+	}
+
+	public int getEndPos() {
+		return getPosition() + size;
 	}
 }
