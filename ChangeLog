@@ -1,3 +1,267 @@
+2008-01-01  steve
+
+	* src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFactory.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/SimpleDecoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/City.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Country.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Region.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Zip.java: Re-wrote the label
+	  section to allow the addition of the city,region,country,zip,poi
+	  sections.
+
+2007-12-28  steve
+
+	* test: MDX file displayer. I don't really know what this does so
+	  don't trust this too much. Appears to be another file containing
+	  a list of the maps in a set.
+	  
+	  As the file gets installed at the family level, it could be
+	  family wide though.
+	* doc/Zoom, src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java: Add a doc file
+	  Fix previous merge of label read changes that didn't compile.
+	* test/java: All this has been moved to a separate repo.
+	* src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CharacterDecoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/SimpleDecoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java: Changes for
+	  reading the LBL file.
+	* src/uk/me/parabola/imgfmt/app/Map.java,
+	  src/uk/me/parabola/imgfmt/app/ShapeStacking.java,
+	  src/uk/me/parabola/imgfmt/app/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/TYPHeader.java: These should have
+	  been removed in the last commit.
+	* src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/InternalFiles.java,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/LinePreparer.java,
+	  src/uk/me/parabola/imgfmt/app/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/Point.java,
+	  src/uk/me/parabola/imgfmt/app/PointOverview.java,
+	  src/uk/me/parabola/imgfmt/app/Polygon.java,
+	  src/uk/me/parabola/imgfmt/app/PolygonOverview.java,
+	  src/uk/me/parabola/imgfmt/app/Polyline.java,
+	  src/uk/me/parabola/imgfmt/app/PolylineOverview.java,
+	  src/uk/me/parabola/imgfmt/app/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/RGNHeader.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/app/Zoom.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/AnyCharsetEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/package.html,
+	  src/uk/me/parabola/imgfmt/app/map,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/map/package.html,
+	  src/uk/me/parabola/imgfmt/app/package.html,
+	  src/uk/me/parabola/imgfmt/app/trergn,
+	  src/uk/me/parabola/imgfmt/app/trergn/InternalFiles.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/LinePreparer.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/PointOverview.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Polygon.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/PolygonOverview.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Polyline.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/PolylineOverview.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Zoom.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/package.html,
+	  src/uk/me/parabola/imgfmt/app/typ,
+	  src/uk/me/parabola/imgfmt/app/typ/ShapeStacking.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPHeader.java,
+	  src/uk/me/parabola/imgfmt/app/typ/package.html,
+	  src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/mps/MpsFile.java,
+	  src/uk/me/parabola/mkgmap/build/MapArea.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/reader/MapperBasedMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  test: Complete re-arrangement of files under the app package as
+	  it is already quite large and more files will be added here soon.
+
+2007-12-21  steve
+
+	* ., src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/ShapeStacking.java,
+	  src/uk/me/parabola/imgfmt/app/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/app/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/TYPHeader.java,
+	  src/uk/me/parabola/imgfmt/sys/FileImgChannel.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  test/java/test/TypTest.java, test/java/test/display,
+	  test/java/test/display/DisplayItem.java,
+	  test/java/test/display/Displayer.java,
+	  test/java/test/display/LineSectDisplayer.java,
+	  test/java/test/display/MpsDisplay.java,
+	  test/java/test/display/PointDisplayer.java,
+	  test/java/test/display/PolygonDisplayer.java,
+	  test/java/test/display/StackingDisplayer.java,
+	  test/java/test/display/TypDisplay.java: Merged revisions
+	  474-480,482-485,487,489-505 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/typfile
+	  
+	  ........ r474 | steve | 2007-12-15 14:07:00 +0000 (Sat, 15 Dec
+	  2007) | 2 lines Print out the header and the fields we think are
+	  pointers and sizes. This should lead to finding the other
+	  pointers. ........ r475 | steve | 2007-12-15 14:48:46 +0000 (Sat,
+	  15 Dec 2007) | 1 line analyse the sections found, print gaps
+	  between them and size fields found and speculated. ........ r476
+	  | steve | 2007-12-15 15:06:16 +0000 (Sat, 15 Dec 2007) | 1 line
+	  Appears to be another section, and probably another to be
+	  discovered. ........ r477 | steve | 2007-12-15 15:16:54 +0000
+	  (Sat, 15 Dec 2007) | 1 line Better printing of body lines.
+	  ........ r478 | steve | 2007-12-15 15:49:51 +0000 (Sat, 15 Dec
+	  2007) | 2 lines Fixed bug that was hiding section sizes. Have
+	  probably got sect 5 and 6 lengths now. ........ r479 | steve |
+	  2007-12-15 16:05:10 +0000 (Sat, 15 Dec 2007) | 1 line More
+	  possible sizes ........ r480 | steve | 2007-12-15 18:54:40 +0000
+	  (Sat, 15 Dec 2007) | 2 lines Fixed bug not showing gaps between
+	  some known values. Looks like the header is decoded fully as far
+	  as sections goes as there is not room for any more. ........ r482
+	  | steve | 2007-12-15 20:07:22 +0000 (Sat, 15 Dec 2007) | 2 lines
+	  Added sections discovered into the TYP header read/write
+	  functions. Verified that what is read is written and can be read
+	  again. ........ r483 | steve | 2007-12-15 22:59:55 +0000 (Sat, 15
+	  Dec 2007) | 1 line Most of the unknowns are certainly item sizes
+	  like in the TRE file, so add them. ........ r484 | steve |
+	  2007-12-16 15:28:12 +0000 (Sun, 16 Dec 2007) | 1 line TYP file
+	  displayer ........ r485 | steve | 2007-12-16 15:53:59 +0000 (Sun,
+	  16 Dec 2007) | 1 line Some name changes. ........ r487 | steve |
+	  2007-12-16 18:12:22 +0000 (Sun, 16 Dec 2007) | 1 line Initial
+	  printing of the line sections. still lots is unknown. ........
+	  r493 | steve | 2007-12-16 21:55:09 +0000 (Sun, 16 Dec 2007) | 2
+	  lines Should have been removed in a rename before ........ r494 |
+	  steve | 2007-12-16 22:39:01 +0000 (Sun, 16 Dec 2007) | 1 line Add
+	  the stacking order section. Fixes and documentation. ........
+	  r495 | steve | 2007-12-18 12:28:20 +0000 (Tue, 18 Dec 2007) | 1
+	  line Print out the mps file. ........ r496 | steve | 2007-12-18
+	  13:55:59 +0000 (Tue, 18 Dec 2007) | 1 line Better printing of
+	  line styles ........ r497 | steve | 2007-12-18 16:33:56 +0000
+	  (Tue, 18 Dec 2007) | 1 line Make sense of flags ending with 01
+	  ........ r498 | steve | 2007-12-18 16:34:57 +0000 (Tue, 18 Dec
+	  2007) | 1 line write out a copy of each file. ........ r499 |
+	  steve | 2007-12-18 16:35:24 +0000 (Tue, 18 Dec 2007) | 1 line
+	  make a horizontal component of lines. ........ r500 | steve |
+	  2007-12-19 09:14:27 +0000 (Wed, 19 Dec 2007) | 2 lines Add
+	  classes for points and polygons (these may be the wrong way
+	  round). ........ r501 | steve | 2007-12-19 09:15:00 +0000 (Wed,
+	  19 Dec 2007) | 1 line reword in comment ........
+
+2007-12-20  steve
+
+	* src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/mps/MapBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MapsetBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MpsFile.java,
+	  src/uk/me/parabola/imgfmt/mps/ProductBlock.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/tdbfmt/StructuredOutputStream.java: MPS file
+	  working at a first glance.
+	* src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/mps/MapBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MapsetBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MpsFile.java,
+	  src/uk/me/parabola/imgfmt/mps/ProductBlock.java,
+	  src/uk/me/parabola/tdbfmt/StructuredOutputStream.java: Most of
+	  the MPS file implemented.
+
+2007-12-19  steve
+
+	* test/java/test/CopyFile.java: Re-instate creating real files from
+	  the internal files.
+	* src/uk/me/parabola/imgfmt/mps,
+	  src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/mps/MapBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MapsetBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MpsFile.java,
+	  src/uk/me/parabola/imgfmt/mps/ProductBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/package.html: Add MPS file skeleton
+
+2007-12-16  steve
+
+	* src/uk/me/parabola/mkgmap/CommandArgs.java: Remove redundant
+	  initialiser. Forgot to mention in the previous commit that the
+	  idea for naming after the input files was requested by
+	  Computerteddy.
+	* Makefile, src/uk/me/parabola/mkgmap/CommandArgs.java: If the
+	  input file name contains an 8 digit number (in the file name
+	  part) then use that as the mapname, unless an explicit name has
+	  been specifited.
+	  
+	  If there are a mixture of files that are numbers and not, then it
+	  is always possible that you will get conflicts.
+	* ., src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/sys/FileImgChannel.java: Merged
+	  revisions 481,486,488 via svnmerge from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/typfile
+	  
+	  ........ r481 | steve | 2007-12-15 19:58:34 +0000 (Sat, 15 Dec
+	  2007) | 1 line Reading of ints were being cast to char! ........
+	  r486 | steve | 2007-12-16 16:41:10 +0000 (Sun, 16 Dec 2007) | 1
+	  line Fix for the file img channel not really seeking. ........
+	  r488 | steve | 2007-12-16 18:13:08 +0000 (Sun, 16 Dec 2007) | 1
+	  line Make sure there is enough room in the buffer on put3
+	  operations ........
+	* .: Initialized merge tracking via "svnmerge" with revisions
+	  "1-473" from
+	  https://svn.parabola.me.uk/svn/mkgmap/branches/typfile
+
+2007-12-15  steve
+
+	* src/uk/me/parabola/imgfmt/sys/FileImgChannel.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java: Allow more
+	  than .img files on the command line when combining. Other file
+	  types will be treated as appropriate to the operation being
+	  performed.
+	* src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/RGNFile.java: General consistency
+	  changes.
+	* ChangeLog, Makefile, src/uk/me/parabola/imgfmt/app/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/TYPHeader.java,
+	  test/java/test/TypTest.java: Test decoding program for the TYP
+	  file.
+
 2007-12-14  steve
 
 	* .: Removed merge tracking for "svnmerge" for

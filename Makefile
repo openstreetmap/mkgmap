@@ -53,7 +53,7 @@ t:
 
 .PHONY: clean
 clean:
-	rm -f gmapsupp/* mkgmap.log out.log
+	rm -f 63240001/* gmapsupp/* mkgmap.log out.log
 	rm -f gmapsupp.img 63*.img 63*.tdb
 
 load:
