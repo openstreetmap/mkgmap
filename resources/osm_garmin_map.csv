@@ -60,6 +60,7 @@ point|tourism|motel|lodging|hotel-motel|20
 point|tourism|picnic_site|misc|picnic-area|20
 point|tourism|theme_park|recreation|amusement-theme-park|20
 point|tourism|zoo|attractions|zoo-aquarium|20
+polygon|place|village|city3||18
 polygon|amenity|college|university||18
 polygon|amenity|grave_yard|cemetery||18
 polygon|amenity|hospital|hospital||18
@@ -123,6 +124,7 @@ polyline|railway|subway|railroad||17
 polyline|railway|tram|railroad||18
 polyline|route|ferry|ferry1||18
 polyline|waterway|canal|river||21
+polyline|waterway|stream|stream||22
 polyline|waterway|drain|river||22
 polyline|waterway|river|river||18
 polyline|waterway|riverbank|river||20

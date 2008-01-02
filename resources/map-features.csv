@@ -89,6 +89,7 @@ polygon|natural|marsh|0x51||20
 polygon|natural|mud|0x51||20
 polygon|natural|water|0x3c||20
 polygon|natural|wood|0x50||18
+polygon|place|village|0x03||18
 polyline|aeroway|runway|0x27||20
 polyline|boundary|administrative|0x1c||18
 polyline|boundary|national|0x1e||17
@@ -125,3 +126,4 @@ polyline|waterway|canal|0x1f||21
 polyline|waterway|drain|0x1f||22
 polyline|waterway|river|0x1f||18
 polyline|waterway|riverbank|0x1f||20
+polyline|waterway|stream|0x18||22
