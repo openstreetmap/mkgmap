@@ -93,7 +93,7 @@ public class MapMaker implements MapProcessor {
 	private void setOptions(Map map, CommandArgs args) {
 		String s = args.getCharset();
 		if (s != null)
-			map.setLabelCharset(s);
+			map.setLabelCharset(s, args.isForceUpper());
 
 		int i = args.getCodePage();
 		if (i != 0)

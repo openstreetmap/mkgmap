@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Locale;
 
 /**
  * For units that support latin1 characters (eg my UK Garmin Cx).
@@ -41,7 +42,8 @@ public class Latin1Encoder extends BaseEncoder
 
 		try {
 			// Guess that 8859-1 is used in the Garmin.
-			byte[] bytes = text.toUpperCase().getBytes("iso-8859-1");
+			String ucText = (isUpperCase())? text.toUpperCase(Locale.ENGLISH): text;
+			byte[] bytes = ucText.getBytes("iso-8859-1");
 
 			byte[] res = new byte[bytes.length + 1];
 			System.arraycopy(bytes, 0, res, 0, bytes.length);

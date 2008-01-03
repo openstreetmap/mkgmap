@@ -266,6 +266,10 @@ public class CommandArgs {
 		}
 	}
 
+	public boolean isForceUpper() {
+		return arglist.getProperty("lower-case") == null;
+	}
+
 	/**
 	 * The arguments are held in this list.
 	 */

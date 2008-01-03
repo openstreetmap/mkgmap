@@ -36,7 +36,7 @@ public class BaseEncoder {
 
 	// Whether to uppercase the labels or not.  Default is true because many
 	// GPS devices do not display labels in lower case.
-	private boolean upperCase = true;
+	private boolean upperCase;
 
 	protected boolean isCharsetSupported() {
 		return charsetSupported;

@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
 import uk.me.parabola.imgfmt.app.labelenc.SimpleDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -105,12 +106,16 @@ public class LBLFile extends ImgFile {
 		lblheader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
 	}
 
-	public void setCharacterType(String cs) {
+	public void setCharacterType(String cs, boolean forceUpper) {
 		log.info("encoding type " + cs);
 		CodeFunctions cfuncs = CodeFactory.createEncoderForLBL(cs);
 		
 		lblheader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
+		if (forceUpper && textEncoder instanceof BaseEncoder) {
+			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
+			baseEncoder.setUpperCase(true);
+		}
 	}
 	
 	/**

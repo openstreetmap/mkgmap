@@ -206,8 +206,8 @@ public class Map implements InternalFiles {
 		lblFile.setCodePage(cp);
 	}
 
-	public void setLabelCharset(String desc) {
-		lblFile.setCharacterType(desc);
+	public void setLabelCharset(String desc, boolean forceUpper) {
+		lblFile.setCharacterType(desc, forceUpper);
 	}
 	
 	/**
