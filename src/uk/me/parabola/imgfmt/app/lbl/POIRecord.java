@@ -17,11 +17,20 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * @author Steve Ratcliffe
  */
 public class POIRecord {
+	public static final int HAS_STREET_NUM = 0x01;
+	public static final int HAS_STREET     = 0x02;
+	public static final int HAS_CITY       = 0x04;
+	public static final int HAS_ZIP        = 0x08;
+	public static final int HAS_PHONE      = 0x10;
+	public static final int HAS_EXIT       = 0x20;
+	public static final int HAS_TIDE_PREDICTION = 0x40;
+
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
 	private static final AddrAbbr ABBR_APARTMENT = new AddrAbbr('1', "APT");
 	private static final AddrAbbr ABBR_BUILDING = new AddrAbbr('2', "BLDG");
@@ -42,6 +51,10 @@ public class POIRecord {
 	private char zipIndex;
 
 	private String phoneNumber;
+
+	void write(WriteStrategy writer) {
+		// not implemented yet
+	}
 
 	/**
 	 * Address abbreviations.

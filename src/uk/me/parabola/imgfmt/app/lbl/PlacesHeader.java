@@ -109,4 +109,16 @@ public class PlacesHeader {
 	public void setLabelEnd(int pos) {
 		country.setPosition(pos);
 	}
+
+	public void startRegions(int pos) {
+		region.setPosition(pos);
+	}
+
+	public void startCities(int pos) {
+		city.setPosition(pos);
+	}
+
+	public void startZip(int pos) {
+		zip.setPosition(pos);
+	}
 }

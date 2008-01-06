@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * A country contains one or more regions.
@@ -25,7 +26,22 @@ import uk.me.parabola.imgfmt.app.Label;
  */
 public class Country {
 	// The country number.  This is not recorded in the file
-	private int number;
+	private final char index;
+	private Label label;
 
-	private Label name;
+	public Country(int index) {
+		this.index = (char) index;
+	}
+
+	void write(WriteStrategy writer) {
+		writer.put3(label.getOffset());
+	}
+
+	public char getIndex() {
+		return index;
+	}
+
+	public void setLabel(Label label) {
+		this.label = label;
+	}
 }

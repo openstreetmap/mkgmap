@@ -12,39 +12,35 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Jan 1, 2008
+ * Create date: Jan 5, 2008
  */
-package uk.me.parabola.imgfmt.app.lbl;
+package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
 
+import java.util.List;
+
 /**
- * A region is in a country and contains one or more cities.
- * 
+ * A road definition.  This ties together all parts of a single road and provides
+ * street address information.
+ *
  * @author Steve Ratcliffe
  */
-public class Region {
-	private char index;
+public class RoadDef {
+	private static final int MAX_LABELS = 4;
 
-	private Country country;
-	private Label label;
+	// There can be up to 4 labels for the same road.
+	private Label[] label = new Label[MAX_LABELS];
 
-	public Region(Country country, int index) {
-		this.country = country;
-		this.index = (char) index;
-	}
+	private byte roadData;
 
-	public void write(WriteStrategy writer) {
-		writer.putChar(country.getIndex());
-		writer.put3(label.getOffset());
-	}
+	private int roadLength;  // in feet?
 
-	public char getIndex() {
-		return index;
-	}
+	private List<RoadIndex> roadIndexes;
 
-	public void setLabel(Label label) {
-		this.label = label;
+	void write(WriteStrategy writer) {
+		Label l = label[0];
+		l.getOffset();
 	}
 }

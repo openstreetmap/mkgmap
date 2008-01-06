@@ -33,10 +33,10 @@ public class Version {
 	public static final String VERSION = getSvnVersion();
 
 	// A default version to use.  This will be changed from time to time to
-	// be the then current version number with a 'g' suffix.  If this shows
+	// be the then current version number with a 'svn' suffix.  If this shows
 	// up then a more acurate version was not available, but it may be useful
 	// to know roughly.
-	private static final String DEFAULT_VERSION = "444-g";
+	private static final String DEFAULT_VERSION = "516-svn";
 
 	/**
 	 * Get the version number if we can find one, else 0.  This looks in

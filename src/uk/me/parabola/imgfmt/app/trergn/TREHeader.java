@@ -51,7 +51,7 @@ public class TREHeader extends CommonHeader {
 	private int subdivPos;
 	private int subdivSize;
 
-	private byte poiDisplayFlags;
+	private byte poiDisplayFlags = 0x1;
 
 	private final Section copyright = new Section(COPYRIGHT_REC_SIZE);
 	private final Section polyline = new Section(POLYLINE_REC_LEN);

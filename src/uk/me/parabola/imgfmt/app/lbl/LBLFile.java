@@ -23,14 +23,11 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
-import uk.me.parabola.imgfmt.app.labelenc.CodeFactory;
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
-import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
-import uk.me.parabola.imgfmt.app.labelenc.SimpleDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -51,12 +48,14 @@ import java.util.Map;
 public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
-	private CharacterEncoder textEncoder = new Format6Encoder();
+	private CharacterEncoder textEncoder;
 	private CharacterDecoder textDecoder;
 
 	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 
 	private final LBLHeader lblheader = new LBLHeader();
+
+	private final PlacesFile places = new PlacesFile(this);
 
 	public LBLFile(ImgChannel chan) {
 		this(chan, true);
@@ -82,8 +81,6 @@ public class LBLFile extends ImgFile {
 		} else {
 			setReader(new BufferedReadStrategy(chan));
 			lblheader.readHeader(getReader());
-			int type = lblheader.getEncodingType();
-			setupDecoder(type);
 		}
 	}
 
@@ -108,7 +105,7 @@ public class LBLFile extends ImgFile {
 
 	public void setCharacterType(String cs, boolean forceUpper) {
 		log.info("encoding type " + cs);
-		CodeFunctions cfuncs = CodeFactory.createEncoderForLBL(cs);
+		CodeFunctions cfuncs = CodeFunctions.createEncoderForLBL(cs);
 		
 		lblheader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
@@ -116,6 +113,7 @@ public class LBLFile extends ImgFile {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
 			baseEncoder.setUpperCase(true);
 		}
+		textDecoder = cfuncs.getDecoder();
 	}
 	
 	/**
@@ -170,14 +168,4 @@ public class LBLFile extends ImgFile {
 		return new String(text.getCtext(), 0, text.getLength());
 	}
 
-	private void setupDecoder(int type) {
-		switch (type) {
-		case CodeFactory.ENCODING_8BIT:
-			textDecoder = new SimpleDecoder();
-			break;
-		default:
-			log.error("Decoder not implemented yet");
-			break;
-		}
-	}
 }

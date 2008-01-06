@@ -82,7 +82,8 @@ public class Label {
 	 * @param writer The LBL file to write to.
 	 */
 	public void write(WriteStrategy writer) {
-		log.debug("put label " + this.length);
+		if (log.isDebugEnabled())
+			log.debug("put label " + this.length);
 		if (ctext != null)
 			writer.put(ctext, 0, this.length);
 	}

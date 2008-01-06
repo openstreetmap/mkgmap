@@ -19,7 +19,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
-import uk.me.parabola.imgfmt.app.labelenc.CodeFactory;
+import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 
 /**
  * The header for the LBL file.
@@ -40,7 +40,7 @@ public class LBLHeader extends CommonHeader {
 	private int codePage;
 
 	// The type of encoding employed.  This is not a length.
-	private int encodingType = CodeFactory.ENCODING_6BIT;
+	private int encodingType = CodeFunctions.ENCODING_6BIT;
 
 	// The label section also contains all kinds of records related to place,
 	// so these have all been put in their own class.

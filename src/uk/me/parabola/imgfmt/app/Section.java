@@ -38,8 +38,8 @@ public class Section {
 		this.link = link;
 	}
 
-	public Section(Section unk1) {
-		link = unk1;
+	public Section(Section link) {
+		this.link = link;
 	}
 
 	public void inc() {
