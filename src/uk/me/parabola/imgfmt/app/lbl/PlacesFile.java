@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -29,74 +29,94 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class PlacesFile {
-	private List<Country> countries = new ArrayList<Country>();
-	private List<Region> regions = new ArrayList<Region>();
-	private List<City> cities = new ArrayList<City>();
-	private List<Zip> postalCodes = new ArrayList<Zip>();
-	private List<POIRecord> pois = new ArrayList<POIRecord>();
+	private Map<String, Country> countries = new LinkedHashMap<String, Country>();
+	private Map<String, Region> regions = new LinkedHashMap<String, Region>();
+	private Map<String, City> cities = new LinkedHashMap<String, City>();
+	private Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
+	private Map<String, POIRecord> pois = new LinkedHashMap<String, POIRecord>();
 
-	private PlacesHeader header;
+	private LBLFile lblFile;
+	private PlacesHeader placeHeader;
 
-	private LBLFile lbl;
-
-	public PlacesFile(LBLFile lblFile) {
-		this.lbl = lblFile;
+	/**
+	 * We need to have links back to the main LBL file and need to be passed
+	 * the part of the header that we manage here.
+	 *
+	 * @param file The main LBL file, used so that we can create lables.
+	 * @param pheader The place header.
+	 */
+	void init(LBLFile file, PlacesHeader pheader) {
+		lblFile = file;
+		placeHeader = pheader;
 	}
 
 	void write(WriteStrategy writer) {
-		for (Country c : countries)
+		for (Country c : countries.values())
 			c.write(writer);
+		placeHeader.endCountries(writer.position());
 
-		header.startRegions(writer.position());
-		for (Region r : regions)
+		for (Region r : regions.values())
 			r.write(writer);
+		placeHeader.endRegions(writer.position());
 
-		header.startCities(writer.position());
-		for (City c : cities)
+		for (City c : cities.values())
 			c.write(writer);
+		placeHeader.endCity(writer.position());
 
-		header.startZip(writer.position());
-		for (Zip z : postalCodes)
+		for (Zip z : postalCodes.values())
 			z.write(writer);
+		placeHeader.endZip(writer.position());
+
+		for (POIRecord p : pois.values())
+			p.write(writer);
 	}
 
 	Country createCountry(String name, String abbr) {
 		Country c = new Country(countries.size());
 
-		Label l = lbl.newLabel(name);
+		String s = abbr != null ? name + 0x1d + abbr : name;
+
+		Label l = lblFile.newLabel(s);
 		c.setLabel(l);
 
-		countries.add(c);
+		countries.put(name, c);
 		return c;
 	}
 
 	Region createRegion(Country country, String name) {
 		Region r = new Region(country, regions.size());
 
-		Label l = lbl.newLabel(name);
+		Label l = lblFile.newLabel(name);
 		r.setLabel(l);
 
-		regions.add(r);
+		regions.put(name, r);
 		return r;
 	}
 
 	City createCity(Region region, String name) {
 		City c = new City(region, cities.size());
 
-		Label l = lbl.newLabel(name);
+		Label l = lblFile.newLabel(name);
 		c.setLabel(l);
 
-		cities.add(c);
+		cities.put(name, c);
 		return c;
 	}
 
-	Zip createZip(String name) {
+	Zip createZip(String code) {
 		Zip z = new Zip(postalCodes.size());
 
-		Label l = lbl.newLabel(name);
+		Label l = lblFile.newLabel(code);
 		z.setLabel(l);
 
-		postalCodes.add(z);
+		postalCodes.put(code, z);
 		return z;
+	}
+
+	POIRecord createPOI() {
+		// TODO...
+		POIRecord p = new POIRecord();
+		pois.put("xx", p);
+		return p;
 	}
 }

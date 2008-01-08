@@ -80,4 +80,12 @@ public class CodeFunctions {
 
 		return funcs;
 	}
+
+	public static CharacterEncoder getDefaultEncoder() {
+		return new Format6Encoder();
+	}
+
+	public static CharacterDecoder getDefaultDecoder() {
+		return new SimpleDecoder();
+	}
 }

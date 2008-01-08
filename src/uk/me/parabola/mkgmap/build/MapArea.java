@@ -326,6 +326,14 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
+	 * True if there are active indexed points in the area.
+	 * @return True if any active indexed points in the area.
+	 */
+	public boolean hasIndPoints() {
+		return false;
+	}
+
+	/**
 	 * True if there are any 'active' points in this area.  Ie ones that will be
 	 * shown because their resolution is at least as high as that of the
 	 * area.

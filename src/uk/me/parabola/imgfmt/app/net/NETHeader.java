@@ -16,12 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.lbl.PlacesHeader;
-import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
  * @author Steve Ratcliffe
@@ -33,7 +32,6 @@ public class NETHeader extends CommonHeader {
 
 	private Section roadDefinitions = new Section();
 	private Section segmentedRoads = new Section(roadDefinitions);
-
 	private Section sortedRoads = new Section(segmentedRoads, SORTED_ROAD_RECSIZE);
 
 	public NETHeader() {

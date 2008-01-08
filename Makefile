@@ -9,7 +9,7 @@
 #OSMDATA = areas.osm
 OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = 63240001.mp
-#OSMDATA = localtest/osm5/cricklewood-5.osm
+OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
@@ -41,7 +41,7 @@ TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 OSM_GARMIN_MAP = /home/steve/src/osm/applications/utils/export/osmgarminmap
 
 #OPTS= --levels='0=24,1=22,2=20'
-OPTS= --gmapsupp
+OPTS= --tdbfile --gmapsupp
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)

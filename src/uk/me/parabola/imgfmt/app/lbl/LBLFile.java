@@ -48,21 +48,21 @@ import java.util.Map;
 public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
-	private CharacterEncoder textEncoder;
-	private CharacterDecoder textDecoder;
+	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
+	private CharacterDecoder textDecoder = CodeFunctions.getDefaultDecoder();
 
 	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 
-	private final LBLHeader lblheader = new LBLHeader();
+	private final LBLHeader lblHeader = new LBLHeader();
 
-	private final PlacesFile places = new PlacesFile(this);
+	private final PlacesFile places = new PlacesFile();
 
 	public LBLFile(ImgChannel chan) {
 		this(chan, true);
 	}
 
 	public LBLFile(ImgChannel chan, boolean write) {
-		setHeader(lblheader);
+		setHeader(lblHeader);
 
 		WriteStrategy writer = new BufferedWriteStrategy(chan);
 		setWriter(writer);
@@ -80,8 +80,10 @@ public class LBLFile extends ImgFile {
 			getWriter().put((byte) 0);
 		} else {
 			setReader(new BufferedReadStrategy(chan));
-			lblheader.readHeader(getReader());
+			lblHeader.readHeader(getReader());
 		}
+
+		places.init(this, lblHeader.getPlaceHeader());
 	}
 
 	public void sync() throws IOException {
@@ -89,6 +91,8 @@ public class LBLFile extends ImgFile {
 
 		writeBody();
 
+		// Now that the body is written all the required offsets will be set up
+		// inside the header, so we can go back and write it.
 		getHeader().writeHeader(getWriter());
 
 		getWriter().put(Utils.toBytes("mkgmap"));
@@ -100,14 +104,15 @@ public class LBLFile extends ImgFile {
 	private void writeBody() {
 		// The label section has already been written, but we need to record
 		// its size before doing anything else.
-		lblheader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
+		lblHeader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
+		places.write(getWriter());
 	}
 
 	public void setCharacterType(String cs, boolean forceUpper) {
 		log.info("encoding type " + cs);
 		CodeFunctions cfuncs = CodeFunctions.createEncoderForLBL(cs);
 		
-		lblheader.setEncodingType(cfuncs.getEncodingType());
+		lblHeader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
 		if (forceUpper && textEncoder instanceof BaseEncoder) {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
@@ -139,7 +144,7 @@ public class LBLFile extends ImgFile {
 	}
 
 	public void setCodePage(int codePage) {
-		lblheader.setCodePage(codePage);
+		lblHeader.setCodePage(codePage);
 	}
 
 	/**
@@ -157,7 +162,7 @@ public class LBLFile extends ImgFile {
 			return "";  // or null ???
 
 		ReadStrategy reader = getReader();
-		reader.position(lblheader.getLabelStart() + offset);
+		reader.position(lblHeader.getLabelStart() + offset);
 
 		byte b;
 		do {

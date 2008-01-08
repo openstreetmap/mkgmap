@@ -110,15 +110,19 @@ public class PlacesHeader {
 		country.setPosition(pos);
 	}
 
-	public void startRegions(int pos) {
-		region.setPosition(pos);
+	public void endCountries(int pos) {
+		country.setSize(pos - country.getPosition());
 	}
 
-	public void startCities(int pos) {
-		city.setPosition(pos);
+	public void endRegions(int pos) {
+		region.setSize(pos - region.getPosition());
 	}
 
-	public void startZip(int pos) {
-		zip.setPosition(pos);
+	public void endCity(int pos) {
+		city.setSize(pos - city.getPosition());
+	}
+
+	public void endZip(int pos) {
+		zip.setSize(pos - zip.getPosition());
 	}
 }

@@ -44,11 +44,11 @@ public class LBLHeader extends CommonHeader {
 
 	// The label section also contains all kinds of records related to place,
 	// so these have all been put in their own class.
-	private final PlacesHeader placesHeader;
+	private final PlacesHeader placeHeader;
 
 	public LBLHeader() {
 		super(HEADER_LEN, "GARMIN LBL");
-		placesHeader = new PlacesHeader();
+		placeHeader = new PlacesHeader();
 	}
 
 	/**
@@ -82,7 +82,7 @@ public class LBLHeader extends CommonHeader {
 		writer.put((byte) 0);
 		writer.put((byte) encodingType);
 
-		placesHeader.writeFileHeader(writer);
+		placeHeader.writeFileHeader(writer);
 
 		writer.putChar((char) getCodePage()); //code
 		writer.putInt(0);
@@ -91,7 +91,7 @@ public class LBLHeader extends CommonHeader {
 		writer.putInt(HEADER_LEN);
 		writer.putInt(INFO_LEN);
 
-		writer.putInt(placesHeader.getLastPos());
+		writer.putInt(placeHeader.getLastPos());
 		writer.putInt(0);
 		writer.putChar(UNK3_REC_LEN);
 		writer.putChar((char) 0);
@@ -111,7 +111,7 @@ public class LBLHeader extends CommonHeader {
 
 	public void setLabelSize(int labelSize) {
 		this.labelSize = labelSize;
-		placesHeader.setLabelEnd(HEADER_LEN + INFO_LEN + labelSize);
+		placeHeader.setLabelEnd(HEADER_LEN + INFO_LEN + labelSize);
 	}
 
 	protected int getCodePage() {
@@ -126,4 +126,7 @@ public class LBLHeader extends CommonHeader {
 		return labelStart;
 	}
 
+	public PlacesHeader getPlaceHeader() {
+		return placeHeader;
+	}
 }

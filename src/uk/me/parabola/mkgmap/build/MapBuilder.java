@@ -173,6 +173,8 @@ public class MapBuilder {
 
 		if (ma.hasPoints())
 			div.setHasPoints(true);
+		if (ma.hasIndPoints())
+			div.setHasIndPoints(true);
 		if (ma.hasLines())
 			div.setHasPolylines(true);
 		if (ma.hasShapes())
