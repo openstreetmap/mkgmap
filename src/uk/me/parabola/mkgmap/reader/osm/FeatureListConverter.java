@@ -25,13 +25,13 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,53 +131,72 @@ class FeatureListConverter implements OsmConverter {
 	 */
 	public void convertWay(Way way) {
 
+		GarminType foundType = null;
+		String foundKey = null;
 		for (String tagKey : way) {
 			// See if this is a line feature
 			GarminType gt = lineFeatures.get(tagKey);
-			if (gt != null) {
-				// Found it! Now add to the map.
-				List<List<Coord>> pointLists = way.getPoints();
-				for (List<Coord> points : pointLists) {
-					if (points.isEmpty())
-						continue;
-
-					MapLine line = new MapLine();
-					line.setName(way.getName());
-					line.setPoints(points);
-					line.setType(gt.getType());
-					line.setMinResolution(gt.getMinResolution());
-
-					if (way.isBoolTag("oneway"))
-						line.setDirection(true);
-
-					if (tagKey.equals("contour|elevation")) {
-						line.setName(way.getTag("ele"));
-					}
-					mapper.addLine(line);
-				}
-				return;
+			if (gt != null && (foundType == null || gt.isBetter(foundType))) {
+				foundKey = tagKey;
+				foundType = gt;
 			}
+		}
+		
+		if (foundType != null) {
+			addLine(way, foundKey, foundType);
+			return;
+		}
 
-			// OK if we get here, it might be a polygon instead. Its not really
-			// possible to say without checking.
-			gt = shapeFeatures.get(tagKey);
+		// OK if we get here, it might be a polygon instead. Its not really
+		// possible to say without checking.
+		for (String tagKey : way) {
+			GarminType gt = shapeFeatures.get(tagKey);
 			if (gt != null) {
-				// Add to the map
-				List<List<Coord>> pointLists =  way.getPoints();
-				for (List<Coord> points : pointLists) {
-					MapShape shape = new MapShape();
-					shape.setName(way.getName());
-					shape.setPoints(points);
-					shape.setType(gt.getType());
-					shape.setMinResolution(gt.getMinResolution());
-
-					mapper.addShape(shape);
-				}
+				addShape(way, gt);
 				return;
 			}
 		}
+
+		// If we get here we don't know what it is, this is pretty normal though
 		if (log.isDebugEnabled())
-		log.warn("no feature mapping for ", way);
+			log.warn("no feature mapping for ", way);
+	}
+
+	private void addShape(Way way, GarminType gt) {
+		// Add to the map
+		List<List<Coord>> pointLists =  way.getPoints();
+		for (List<Coord> points : pointLists) {
+			MapShape shape = new MapShape();
+			shape.setName(way.getName());
+			shape.setPoints(points);
+			shape.setType(gt.getType());
+			shape.setMinResolution(gt.getMinResolution());
+
+			mapper.addShape(shape);
+		}
+	}
+
+	private void addLine(Way way, String tagKey, GarminType gt) {
+		// Found it! Now add to the map.
+		List<List<Coord>> pointLists = way.getPoints();
+		for (List<Coord> points : pointLists) {
+			if (points.isEmpty())
+				continue;
+
+			MapLine line = new MapLine();
+			line.setName(way.getName());
+			line.setPoints(points);
+			line.setType(gt.getType());
+			line.setMinResolution(gt.getMinResolution());
+
+			if (way.isBoolTag("oneway"))
+				line.setDirection(true);
+
+			if (tagKey.equals("contour|elevation")) {
+				line.setName(way.getTag("ele"));
+			}
+			mapper.addLine(line);
+		}
 	}
 
 	/**
@@ -330,7 +349,9 @@ class FeatureListConverter implements OsmConverter {
 	}
 
 	private static class GarminType {
+		private static int nextIndex;
 
+		private final int index;
 		private final int type;
 		private final int subtype;
 		private int minResolution;
@@ -345,6 +366,7 @@ class FeatureListConverter implements OsmConverter {
 			}
 			this.type = it;
 			this.subtype = 0;
+			this.index = getNextIndex();
 		}
 
 		GarminType(String type, String subtype) {
@@ -360,6 +382,7 @@ class FeatureListConverter implements OsmConverter {
 			}
 			this.type = it;
 			this.subtype = ist;
+			this.index = getNextIndex();
 		}
 
 		public int getType() {
@@ -376,6 +399,18 @@ class FeatureListConverter implements OsmConverter {
 
 		public void setMinResolution(int minResolution) {
 			this.minResolution = minResolution;
+		}
+
+		public static int getNextIndex() {
+			return nextIndex++;
+		}
+
+		public boolean isBetter(GarminType other) {
+			return index < other.getIndex();
+		}
+
+		public int getIndex() {
+			return index;
 		}
 	}
 }
