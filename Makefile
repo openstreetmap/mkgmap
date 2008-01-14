@@ -31,7 +31,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = localtest/osm5/longline.osm
 #OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --tdbfile maps/img/*.img
-#OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
+OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'

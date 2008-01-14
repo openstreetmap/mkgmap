@@ -126,10 +126,23 @@ class FeatureListConverter implements OsmConverter {
 	 * <p>
 	 * As a few examples we might want to check for the 'highway' tag, work out
 	 * if it is an area of a park etc.
+	 * <p>
+	 * Note that there is no way to know if something is a polygon or a line
+	 * feature.  You just have to look them up.  A way can be taged as both
+	 * a line and a shape.  In this case we prefer the shape.
 	 *
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
+
+		// Try looking for polygons first.
+		for (String tagKey : way) {
+			GarminType gt = shapeFeatures.get(tagKey);
+			if (gt != null) {
+				addShape(way, gt);
+				return;
+			}
+		}
 
 		GarminType foundType = null;
 		String foundKey = null;
@@ -144,22 +157,7 @@ class FeatureListConverter implements OsmConverter {
 		
 		if (foundType != null) {
 			addLine(way, foundKey, foundType);
-			return;
 		}
-
-		// OK if we get here, it might be a polygon instead. Its not really
-		// possible to say without checking.
-		for (String tagKey : way) {
-			GarminType gt = shapeFeatures.get(tagKey);
-			if (gt != null) {
-				addShape(way, gt);
-				return;
-			}
-		}
-
-		// If we get here we don't know what it is, this is pretty normal though
-		if (log.isDebugEnabled())
-			log.warn("no feature mapping for ", way);
 	}
 
 	private void addShape(Way way, GarminType gt) {
