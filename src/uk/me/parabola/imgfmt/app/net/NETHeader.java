@@ -23,6 +23,8 @@ import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 /**
+ * The header of the NET file.
+ * 
  * @author Steve Ratcliffe
  */
 public class NETHeader extends CommonHeader {
@@ -33,6 +35,9 @@ public class NETHeader extends CommonHeader {
 	private Section roadDefinitions = new Section();
 	private Section segmentedRoads = new Section(roadDefinitions);
 	private Section sortedRoads = new Section(segmentedRoads, SORTED_ROAD_RECSIZE);
+
+	private byte roadShift;
+	private byte segmentShift;
 
 	public NETHeader() {
 		super(HEADER_LEN, "GARMIN NET");
@@ -46,6 +51,21 @@ public class NETHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ReadStrategy reader) throws ReadFailedException {
+		roadDefinitions.setPosition(reader.getInt());
+		roadDefinitions.setSize(reader.getInt());
+		roadShift = reader.get();
+
+		segmentedRoads.setPosition(reader.getInt());
+		segmentedRoads.setSize(reader.getInt());
+		segmentShift = reader.get();
+
+		sortedRoads.setPosition(reader.getInt());
+		sortedRoads.setSize(reader.getInt());
+		sortedRoads.setItemSize(reader.getChar());  // may not be int
+
+		reader.getInt();
+		reader.get();
+		reader.get();
 	}
 
 	/**
@@ -57,15 +77,15 @@ public class NETHeader extends CommonHeader {
 	protected void writeFileHeader(WriteStrategy writer) {
 		writer.putInt(roadDefinitions.getPosition());
 		writer.putInt(roadDefinitions.getSize());
-		writer.put((byte) 0); // offset multiplier
+		writer.put(roadShift); // offset multiplier
 
 		writer.putInt(segmentedRoads.getPosition());
 		writer.putInt(segmentedRoads.getSize());
-		writer.put((byte) 0); // offset multiplier
+		writer.put(segmentShift); // offset multiplier
 
 		writer.putInt(sortedRoads.getPosition());
 		writer.putInt(sortedRoads.getSize());
-		writer.putInt(sortedRoads.getItemSize());
+		writer.putChar(sortedRoads.getItemSize());
 
 		writer.putInt(0);
 		writer.put((byte) 1);

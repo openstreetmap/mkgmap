@@ -40,7 +40,7 @@ public class LBLHeader extends CommonHeader {
 	private int codePage;
 
 	// The type of encoding employed.  This is not a length.
-	private int encodingType = CodeFunctions.ENCODING_6BIT;
+	private int encodingType = CodeFunctions.ENCODING_FORMAT6;
 
 	// The label section also contains all kinds of records related to place,
 	// so these have all been put in their own class.

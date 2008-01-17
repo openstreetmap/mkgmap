@@ -23,15 +23,20 @@ import java.io.ByteArrayOutputStream;
  */
 public class SimpleDecoder implements CharacterDecoder {
 	private final ByteArrayOutputStream out = new ByteArrayOutputStream();
+	private boolean needReset;
 
 	public boolean addByte(int b) {
 		if (b == 0) {
-			out.reset();
+			needReset = true;
 			return true;
 		}
 
-		out.write(b);
+		if (needReset) {
+			needReset = false;
+			out.reset();
+		}
 
+		out.write(b);
 		return false;
 	}
 

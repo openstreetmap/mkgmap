@@ -21,8 +21,8 @@ package uk.me.parabola.imgfmt.app.labelenc;
  */
 public class CodeFunctions {
 	// Label encoding length
-	public static final int ENCODING_6BIT = 6;
-	public static final int ENCODING_8BIT = 9;
+	public static final int ENCODING_FORMAT6 = 6;
+	public static final int ENCODING_FORMAT9 = 9;
 
 	private int encodingType;
 	private CharacterEncoder encoder;
@@ -63,18 +63,18 @@ public class CodeFunctions {
 
 		if ("ascii".equals(charset)) {
 			funcs.setEncoder(new Format6Encoder());
-			funcs.setEncodingType(ENCODING_6BIT);
+			funcs.setEncodingType(ENCODING_FORMAT6);
 		} else if ("latin1".equals(charset)) {
-			funcs.setEncodingType(ENCODING_8BIT);
+			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Latin1Encoder());
 		} else if ("latin2".equals(charset)) {
-			funcs.setEncodingType(ENCODING_8BIT);
+			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
 		} else if ("simple8".equals(charset)) {
-			funcs.setEncodingType(ENCODING_8BIT);
+			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Simple8Encoder());
 		} else {
-			funcs.setEncodingType(ENCODING_8BIT);
+			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new AnyCharsetEncoder(charset));
 		}
 
