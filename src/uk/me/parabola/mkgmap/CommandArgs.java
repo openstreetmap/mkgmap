@@ -194,7 +194,7 @@ public class CommandArgs {
 	public int getCodePage() {
 		int cp;
 
-		String s = arglist.getProperty("xcode-page", "850");
+		String s = arglist.getProperty("xcode-page", "1252");
 		try {
 			cp = Integer.parseInt(s);
 		} catch (NumberFormatException e) {
