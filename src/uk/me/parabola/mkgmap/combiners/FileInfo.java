@@ -58,6 +58,8 @@ public class FileInfo {
 	private int tresize;
 	private int lblsize;
 
+	private int totsize;
+
 	private FileInfo(String filename, int kind) {
 		this.filename = filename;
 		this.kind = kind;
@@ -192,6 +194,10 @@ public class FileInfo {
 			} else if ("LBL".equals(ext)) {
 				info.setLblsize(ent.getSize());
 			}
+
+			// add to the total size based on the rounded up size of this file
+			int bs = params.getBlockSize();
+			info.totsize += ent.getSize() + (bs - 1);
 		}
 		return info;
 	}
@@ -214,6 +220,10 @@ public class FileInfo {
 
 	public int getKind() {
 		return kind;
+	}
+
+	public int getTotsize() {
+		return totsize;
 	}
 
 	public int getMapnameAsInt() {

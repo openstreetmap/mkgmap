@@ -313,18 +313,8 @@ public class GmapsuppBuilder implements Combiner {
 			for (FileInfo info : files.values()) {
 				// Each file will take up at least one directory block.
 				// Each directory block can hold 480 block-references
-				int n;
-
-				n = (info.getTresize() + (bs - 1)) / bs;
-				totHeaderSlots += (n + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-				n = (info.getRgnsize() + (bs - 1)) / bs;
-				totHeaderSlots += (n + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-				n = (info.getLblsize() + (bs - 1)) / bs;
-				totHeaderSlots += (n + ENTRY_SIZE - 1) / ENTRY_SIZE;
-
-				//log.debug("header slot", totHeaderSlots);
+				int n = (info.getTotsize() + (bs - 1)) / bs;
+				totHeaderSlots += 1 + (n + ENTRY_SIZE - 1) / ENTRY_SIZE;
 			}
 
 			totHeaderSlots += 2;

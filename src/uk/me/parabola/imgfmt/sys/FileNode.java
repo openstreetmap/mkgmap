@@ -276,9 +276,11 @@ public class FileNode implements ImgChannel {
 			int pblock = dirent.getPhysicalBlock((int) lblock);
 
 			if (pblock == 0xffff) {
-				log.debug("setting position allocating new block", lblock);
-				pblock = blockManager.allocate();
-				dirent.addBlock(pblock);
+				if (writeable) {
+					log.debug("setting position allocating new block", lblock);
+					pblock = blockManager.allocate();
+					dirent.addBlock(pblock);
+				}
 			}
 			position = (lblock+1) * blockSize;
 		}
