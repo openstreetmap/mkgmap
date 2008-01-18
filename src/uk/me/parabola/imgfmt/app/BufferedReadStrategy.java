@@ -86,7 +86,8 @@ public class BufferedReadStrategy implements ReadStrategy {
 		fillBuffer();
 
 		int pos = (int) (position - bufStart);
-		assert pos < bufSize;
+		if (pos >= bufSize)
+			return 0; // XXX do something else
 
 		position++;
 		return buf.get(pos);
