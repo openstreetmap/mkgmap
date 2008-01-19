@@ -55,8 +55,8 @@ public class TREHeader extends CommonHeader {
 
 	private final Section copyright = new Section(COPYRIGHT_REC_SIZE);
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
-	private final Section polygon = new Section(POLYLINE_REC_LEN);
-	private final Section points = new Section(POLYLINE_REC_LEN);
+	private final Section polygon = new Section(POLYGON_REC_LEN);
+	private final Section points = new Section(POINT_REC_LEN);
 
 	private int mapId;
 
