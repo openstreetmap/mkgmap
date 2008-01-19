@@ -150,6 +150,19 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	/**
+	 * Receive notification of the end of the document.
+	 *
+	 * We add the background polygon here.  As this is going to be big it
+	 * may be split up further down the chain.
+	 *
+	 * @throws SAXException Any SAX exception, possibly wrapping
+	 * another exception.
+	 */
+	public void endDocument() throws SAXException {
+		mapper.finish();
+	}
+
+	/**
 	 * Save node information.  Consists of a location specified by lat/long.
 	 *
 	 * @param sid The id as a string.

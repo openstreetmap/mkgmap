@@ -94,6 +94,31 @@ public class MapDetails implements MapCollector, MapDataSource {
 		shapes.add(shape);
 	}
 
+	public void finish() {
+
+		// Make a list of points to trace out the background area.
+		List<Coord> coords = new ArrayList<Coord>();
+		Area bounds = getBounds();
+		Coord co = new Coord(bounds.getMinLat(), bounds.getMinLong());
+		coords.add(co);
+		co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
+		coords.add(co);
+		co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
+		coords.add(co);
+		co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
+		coords.add(co);
+
+		// Now add the background area
+		MapShape background = new MapShape();
+		background.setType(75); // background type
+		background.setMinResolution(0); // On all levels
+		background.setPoints(coords);
+
+		// Note we add directly to the shaps list, we do not add to the overview
+		// section.
+		shapes.add(background);
+	}
+
 	/**
 	 * Add the given point to the total bounds for the map.
 	 *

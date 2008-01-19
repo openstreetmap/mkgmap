@@ -26,6 +26,11 @@ public class MapShape extends MapLine {
 	public MapShape() {
 	}
 
+	/**
+	 * Copy from another element.  Note that this constructor takes a line
+	 * and not a shape.  It should however actually be a shape.
+	 * @param orig The shape to copy.
+	 */
 	public MapShape(MapLine orig) {
 		super(orig);
 	}

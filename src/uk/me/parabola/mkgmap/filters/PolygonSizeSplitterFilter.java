@@ -100,8 +100,8 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	private boolean isSizeOk(MapShape shape, int maxSize) {
 		int factor = 4;
 		return shape.getBounds().getMaxDimention() < maxSize
-				&& shape.getBounds().getWidth() < bounds.getWidth() / factor
-				&& shape.getBounds().getHeight() < bounds.getHeight() / factor
+				//&& shape.getBounds().getWidth() < bounds.getWidth() / factor
+				//&& shape.getBounds().getHeight() < bounds.getHeight() / factor
 				;
 	}
 

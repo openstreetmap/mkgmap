@@ -21,7 +21,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
 
 import java.util.HashMap;
