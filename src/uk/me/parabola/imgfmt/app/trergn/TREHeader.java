@@ -83,6 +83,14 @@ public class TREHeader extends CommonHeader {
 		// more to do...
 	}
 
+	private void writeSectionInfo(WriteStrategy writer, Section section) {
+		writer.putInt(section.getPosition());
+		writer.putInt(section.getSize());
+		writer.putChar(section.getItemSize());
+
+		writer.putInt(0);
+	}
+
 	/**
 	 * Write the rest of the header.  It is guaranteed that the writer will be set
 	 * to the correct position before calling.
@@ -101,11 +109,7 @@ public class TREHeader extends CommonHeader {
 		writer.putInt(getSubdivPos());
 		writer.putInt(getSubdivSize());
 
-		writer.putInt(copyright.getPosition());
-		writer.putInt(copyright.getSize());
-		writer.putChar(copyright.getItemSize());
-
-		writer.putInt(0);
+		writeSectionInfo(writer, copyright);
 
 		writer.put(getPoiDisplayFlags());
 
@@ -115,26 +119,9 @@ public class TREHeader extends CommonHeader {
 		writer.putChar((char) 1);
 		writer.put((byte) 0);
 
-		writer.putInt(polyline.getPosition());
-		writer.putInt(polyline.getSize());
-		writer.putChar(polyline.getItemSize());
-
-		writer.putChar((char) 0);
-		writer.putChar((char) 0);
-
-		writer.putInt(polygon.getPosition());
-		writer.putInt(polygon.getSize());
-		writer.putChar(polygon.getItemSize());
-
-		writer.putChar((char) 0);
-		writer.putChar((char) 0);
-
-		writer.putInt(points.getPosition());
-		writer.putInt(points.getSize());
-		writer.putChar(points.getItemSize());
-
-		writer.putChar((char) 0);
-		writer.putChar((char) 0);
+		writeSectionInfo(writer, polyline);
+		writeSectionInfo(writer, polygon);
+		writeSectionInfo(writer, points);
 
 		// Map ID
 		writer.putInt(getMapId());
