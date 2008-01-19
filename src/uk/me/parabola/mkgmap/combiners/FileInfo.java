@@ -27,6 +27,7 @@ import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Used for holding information about an individual file that will be made into
@@ -58,7 +59,8 @@ public class FileInfo {
 	private int tresize;
 	private int lblsize;
 
-	private int totsize;
+	private List<Integer> fileSizes = new ArrayList<Integer>();
+	private static final int ENTRY_SIZE = 240;
 
 	private FileInfo(String filename, int kind) {
 		this.filename = filename;
@@ -108,7 +110,7 @@ public class FileInfo {
 		this.lblsize = lblsize;
 	}
 
-	public int getSize() {
+	private int getSize() {
 		return lblsize + rgnsize + tresize;
 	}
 
@@ -128,12 +130,10 @@ public class FileInfo {
 		int end = inputName.length();
 		String ext = inputName.substring(end - 3);
 		FileInfo info;
-		System.out.print(inputName);
+
 		if (ext.equalsIgnoreCase("img")) {
 			info = imgInfo(inputName);
-			System.out.println(" img");
 		} else if (ext.equalsIgnoreCase("typ")) {
-			System.out.println(" typ");
 			info = typInfo(inputName);
 		} else {
 			info = new FileInfo(inputName, UNKNOWN_KIND);
@@ -196,8 +196,7 @@ public class FileInfo {
 			}
 
 			// add to the total size based on the rounded up size of this file
-			int bs = params.getBlockSize();
-			info.totsize += ent.getSize() + (bs - 1);
+			info.fileSizes.add(ent.getSize());
 		}
 		return info;
 	}
@@ -222,8 +221,24 @@ public class FileInfo {
 		return kind;
 	}
 
-	public int getTotsize() {
-		return totsize;
+	/**
+	 * Get the number of blocks required at a particular block size.
+	 * Each subfile will need at least one block and so we go through each
+	 * separately and round up for each and return the total.
+	 *
+	 * @param blockSize The block size.
+	 * @return The number of blocks that would be needed for all the subfiles
+	 * in this .img file.
+	 */
+	public int getNumHeaderSlots(int blockSize) {
+		int totHeaderSlots = 0;
+		for (int size : fileSizes) {
+			// You use up one header slot for every 240 blocks with a minimum
+			// of one slot
+			int nblocks = (size + (blockSize-1)) / blockSize;
+			totHeaderSlots += (nblocks + (ENTRY_SIZE - 1)) / ENTRY_SIZE;
+		}
+		return totHeaderSlots;
 	}
 
 	public int getMapnameAsInt() {
@@ -233,4 +248,5 @@ public class FileInfo {
 			return 0;
 		}
 	}
+
 }
