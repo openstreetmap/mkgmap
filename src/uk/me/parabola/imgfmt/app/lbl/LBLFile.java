@@ -28,6 +28,8 @@ import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.imgfmt.app.labelenc.Format6Decoder;
+import uk.me.parabola.imgfmt.app.labelenc.SimpleDecoder;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -81,6 +83,10 @@ public class LBLFile extends ImgFile {
 		} else {
 			setReader(new BufferedReadStrategy(chan));
 			lblHeader.readHeader(getReader());
+			CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
+					lblHeader.getEncodingType(), lblHeader.getCodePage());
+			textEncoder = funcs.getEncoder();
+			textDecoder = funcs.getDecoder();
 		}
 
 		places.init(this, lblHeader.getPlaceHeader());

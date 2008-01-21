@@ -2,18 +2,20 @@ package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.io.ByteArrayOutputStream;
 
+/**
+ * Convert the 6-bit label format back to a java string.
+ */
 public class Format6Decoder implements CharacterDecoder {
 	private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 	private boolean needReset;
 
-	private boolean symbol = false;
-	private boolean lower = false;
+	private boolean symbol;
 
-	private short store = 0;
+	private short store;
 	private int offset = -6;
 
-	public boolean addByte(int b) {
-		b = 0x000000FF & b; //wipe out high bits (in case of negative byte)
+	public boolean addByte(int in) {
+		int b = 0xff & in; //wipe out high bits (in case of negative byte)
 
 		if (needReset) {
 			needReset = false;

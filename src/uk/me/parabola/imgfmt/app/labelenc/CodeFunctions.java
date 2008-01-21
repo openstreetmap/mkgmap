@@ -62,8 +62,9 @@ public class CodeFunctions {
 		CodeFunctions funcs = new CodeFunctions();
 
 		if ("ascii".equals(charset)) {
-			funcs.setEncoder(new Format6Encoder());
 			funcs.setEncodingType(ENCODING_FORMAT6);
+			funcs.setEncoder(new Format6Encoder());
+			funcs.setDecoder(new Format6Decoder());
 		} else if ("latin1".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Latin1Encoder());
@@ -81,11 +82,35 @@ public class CodeFunctions {
 		return funcs;
 	}
 
+	/**
+	 * Create a CharacterEncoder for the given charset option.  Note that this
+	 * routine also writes to the lblHeader parameter to set the encoding type.
+	 * @param format The format from the lbl header.
+	 * @param codePage The code page parameter.  Will be ignored if not relavent.
+	 * @return The various character set parameters that will be needed.
+	 */
+	public static CodeFunctions createEncoderForLBL(int format, int codePage) {
+		CodeFunctions funcs = new CodeFunctions();
+
+		if (format == ENCODING_FORMAT6) {
+			funcs.setEncodingType(ENCODING_FORMAT6);
+			funcs.setEncoder(new Format6Encoder());
+			funcs.setDecoder(new Format6Decoder());
+		} else {
+			// TODO TEMP...
+			funcs.setEncodingType(ENCODING_FORMAT9);
+			funcs.setEncoder(new Latin1Encoder());
+			funcs.setDecoder(new SimpleDecoder());
+		}
+
+		return funcs;
+	}
+
 	public static CharacterEncoder getDefaultEncoder() {
 		return new Format6Encoder();
 	}
 
 	public static CharacterDecoder getDefaultDecoder() {
-		return new SimpleDecoder();
+		return new Format6Decoder();
 	}
 }
