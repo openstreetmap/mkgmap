@@ -57,6 +57,7 @@ point|tourism|caravan_site|lodging|campground-rv-park|20
 point|tourism|hotel|lodging|hotel-motel|20
 point|tourism|information|misc|information|20
 point|tourism|motel|lodging|hotel-motel|20
+point|tourism|hostel|lodging|bed-and-breakfast-inn|20
 point|tourism|picnic_site|misc|picnic-area|20
 point|tourism|theme_park|recreation|amusement-theme-park|20
 point|tourism|zoo|attractions|zoo-aquarium|20
@@ -72,6 +73,7 @@ polygon|landuse|cemetery|cemetery||18
 polygon|landuse|forest|woods||18
 polygon|landuse|industrial|industrial||18
 polygon|landuse|reservoir|lake4||18
+polygon|landuse|allotments|orchard||20
 polygon|leisure|common|city-park||20
 polygon|leisure|garden|city-park||20
 polygon|leisure|golf_course|golf||20

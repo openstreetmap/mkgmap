@@ -416,6 +416,7 @@ polygon|0x80|0x48||river3||River
 polygon|0x80|0x49||river4||River
 polygon|0x80|0x4c||intermittent-water||Intermittent River/Lake
 polygon|0x80|0x4d||glacier||Glaciers
+polygon|0x80|0x4e||orchard||Orchard/Plantation
 polygon|0x80|0x50||woods||Woods
 polygon|0x80|0x51||wetland||Wetland
 polygon|0x80|0x53||flats||Flats
