@@ -169,7 +169,7 @@ public class GmapsuppBuilder implements Combiner {
 			return mps;
 		} catch (FileExistsException e) {
 			// well it shouldn't exist!
-			log.error("could not create MPS file as it already existed (aledgedly)");
+			log.error("could not create MPS file as it already exists");
 			throw new FileNotWritableException("already existed", e);
 		}
 	}
@@ -220,6 +220,8 @@ public class GmapsuppBuilder implements Combiner {
 		for (DirectoryEntry ent : entries) {
 			String ext = ent.getExt();
 			if (ext.equals("   "))
+				continue;
+			if (ext.equals("MPS"))
 				continue;
 
 			String inname = ent.getFullName();
