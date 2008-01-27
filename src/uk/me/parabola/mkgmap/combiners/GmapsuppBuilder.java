@@ -61,12 +61,24 @@ public class GmapsuppBuilder implements Combiner {
 	private static final int ENTRY_SIZE = 240;
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
-	// XXX all these need to be set in the init routine from arguments.
-	private final int productId = 41;
-	private final String areaName = "area name";
-	private final String typeName = "type name";
+	// all these need to be set in the init routine from arguments.
+	private int familyId;
+	private int productId;
+	private String areaName;
+	private String familyName;
+	//private String seriesName;
+	//private String
+
+	private String overallDescription = "Combined map";
 
 	public void init(CommandArgs args) {
+		familyId = args.get("family-id", 1331);
+		productId = args.get("product-id", 1);
+		
+		familyName = args.get("family-name", "family name");
+		areaName = args.get("area-name", "area name");
+
+		overallDescription = args.getDescription();
 	}
 
 	/**
@@ -119,8 +131,8 @@ public class GmapsuppBuilder implements Combiner {
 			mb.setMapNumber(info.getMapnameAsInt());
 			mb.setMapName(info.getDescription());
 			mb.setAreaName(areaName);
-			mb.setTypeName(typeName);
-			mb.setProductId(productId);
+			mb.setTypeName(familyName);
+			mb.setIds(familyId, productId);
 
 			mps.addMap(mb);
 		}
@@ -235,7 +247,7 @@ public class GmapsuppBuilder implements Combiner {
 		// Create this file, containing all the sub files
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(blockSize);
-		params.setMapDescription("output file");
+		params.setMapDescription(overallDescription);
 		params.setDirectoryStartBlock(2);
 
 		int reserve = (int) Math.ceil(reserved * 512.0 / blockSize);

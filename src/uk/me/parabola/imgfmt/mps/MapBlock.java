@@ -48,8 +48,8 @@ public class MapBlock extends Block {
 		out.write4(0);
 	}
 
-	public void setProductId(int productId) {
-		this.productId = productId;
+	public void setIds(int familyId, int productId) {
+		this.productId = (familyId << 16) | productId;
 	}
 
 	public void setTypeName(String typeName) {

@@ -270,6 +270,26 @@ public class CommandArgs {
 		return arglist.getProperty("lower-case") == null;
 	}
 
+	public int get(String name, int def) {
+		String s = currentOptions.getProperty(name);
+		if (s == null)
+			return def;
+
+		try {
+			int ret = Integer.parseInt(s);
+			return ret;
+		} catch (NumberFormatException e) {
+			return def;
+		}
+	}
+
+	public String get(String name, String def) {
+		String s = currentOptions.getProperty(name);
+		if (s == null)
+			s = def;
+		return s;
+	}
+
 	/**
 	 * The arguments are held in this list.
 	 */

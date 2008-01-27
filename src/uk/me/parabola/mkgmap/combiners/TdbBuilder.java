@@ -16,10 +16,6 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -35,6 +31,10 @@ import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Build the TDB file and the overview map.
@@ -60,16 +60,16 @@ public class TdbBuilder implements Combiner {
 	 * have the value that was set last.
 	 */
 	public void init(CommandArgs args) {
-		overviewMapname = "63240000";  // TODO get from args
+		overviewMapname = args.get("overview-mapname", "63240000");
 		// TODO parent = ...
 
-		// TODO Get these from command args
-		int productId = 42;
-		int productVersion = 1;
-		String seriesName = "OSM map";
-		String familyName = "OSM map";
+		int familyId = args.get("family-id", 42);
+		int productVersion = args.get("product-id", 1);
+		
+		String seriesName = args.get("series-name", "OSM map");
+		String familyName = args.get("family-name", "OSM map");
 
-		tdb.setProductInfo(productId, productVersion, seriesName, familyName);
+		tdb.setProductInfo(familyId, productVersion, seriesName, familyName);
 		tdb.addCopyright("Coverted by mkgmap");
 	}
 
