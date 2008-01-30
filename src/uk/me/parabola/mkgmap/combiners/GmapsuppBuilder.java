@@ -89,7 +89,7 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param finfo Information about the img file.
 	 */
 	public void onMapEnd(FileInfo finfo) {
-		String mapname = finfo.getMapname();
+		String mapname = finfo.getFilename();
 
 		files.put(mapname, finfo);
 	}
@@ -127,6 +127,9 @@ public class GmapsuppBuilder implements Combiner {
 	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
 		MpsFile mps = createMpsFile(gmapsupp);
 		for (FileInfo info : files.values()) {
+			if (info.getKind() != FileInfo.IMG_KIND)
+				continue;
+			
 			MapBlock mb = new MapBlock();
 			mb.setMapNumber(info.getMapnameAsInt());
 			mb.setMapName(info.getDescription());

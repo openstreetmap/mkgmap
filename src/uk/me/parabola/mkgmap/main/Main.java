@@ -86,6 +86,13 @@ public class Main implements ArgumentProcessor {
 		MapProcessor saver = new NameSaver();
 		processMap.put("img", saver);
 		processMap.put("typ", saver);
+
+		// Normal map files.
+		processMap.put("rgn", saver);
+		processMap.put("tre", saver);
+		processMap.put("lbl", saver);
+		processMap.put("net", saver);
+		processMap.put("nod", saver);
 	}
 
 	/**
@@ -144,6 +151,8 @@ public class Main implements ArgumentProcessor {
 
 		// Tell them about each filename
 		for (String file : filenames) {
+			if (file == null)
+				continue;
 			try {
 				FileInfo mapReader = FileInfo.getFileInfo(file);
 				for (Combiner c : combiners) {

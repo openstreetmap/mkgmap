@@ -28,6 +28,8 @@ import uk.me.parabola.log.Logger;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Arrays;
 
 /**
  * Used for holding information about an individual file that will be made into
@@ -44,6 +46,11 @@ public class FileInfo {
 	public static final int FILE_KIND = 1;
 	// The file is of an unknown or unsupported kind, and so it should be ignored.
 	public static final int UNKNOWN_KIND = 99;
+
+	private static final List<String> KNOWN_FILE_TYPE_EXT = Arrays.asList(
+			"TRE", "RGN", "LBL", "NET", "NOD",
+			"TYP"
+	);
 
 	// The name of the file.
 	private String filename;
@@ -110,10 +117,6 @@ public class FileInfo {
 		this.lblsize = lblsize;
 	}
 
-	private int getSize() {
-		return lblsize + rgnsize + tresize;
-	}
-
 	public Area getBounds() {
 		return bounds;
 	}
@@ -128,12 +131,12 @@ public class FileInfo {
 	public static FileInfo getFileInfo(String inputName) throws FileNotFoundException {
 
 		int end = inputName.length();
-		String ext = inputName.substring(end - 3);
+		String ext = inputName.substring(end - 3).toUpperCase(Locale.ENGLISH);
 		FileInfo info;
 
-		if (ext.equalsIgnoreCase("img")) {
+		if (ext.equals("IMG")) {
 			info = imgInfo(inputName);
-		} else if (ext.equalsIgnoreCase("typ")) {
+		} else if (KNOWN_FILE_TYPE_EXT.contains(ext)) {
 			info = typInfo(inputName);
 		} else {
 			info = new FileInfo(inputName, UNKNOWN_KIND);
