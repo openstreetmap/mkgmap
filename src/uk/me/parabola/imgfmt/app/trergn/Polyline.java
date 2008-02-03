@@ -60,7 +60,9 @@ public class Polyline extends MapObject {
 			return;
 
 		// Prepare for writing by doing all the required calculations.
-		LinePreparer w = prepare();
+
+		// Prepare the information that we need.
+		LinePreparer w = new LinePreparer(this);
 		BitWriter bw = w.makeBitStream();
 
 		// The type of feature, also contains a couple of flags hidden inside.
@@ -97,13 +99,6 @@ public class Polyline extends MapObject {
 
 	public void addCoord(Coord co) {
 		points.add(co);
-	}
-
-	private LinePreparer prepare() {
-
-		// Prepare the information that we need.
-		LinePreparer w = new LinePreparer(this);
-		return w;
 	}
 
 	List<Coord> getPoints() {

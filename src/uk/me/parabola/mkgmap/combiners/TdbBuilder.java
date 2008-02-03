@@ -27,8 +27,8 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -118,22 +118,30 @@ public class TdbBuilder implements Combiner {
 	private void addToOverviewMap(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 
+		int overviewMask = ((1 << overviewSource.getShift()) - 1);
+
+		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
+		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
+		int minLat = bounds.getMinLat() & ~overviewMask;
+		int minLon = bounds.getMinLong() & ~overviewMask;
+
 		// Add a background polygon for this map.
 		Coord start, co;
 		List<Coord> points = new ArrayList<Coord>();
-		start = new Coord(bounds.getMinLat(), bounds.getMinLong());
+
+		start = new Coord(minLat, minLon);
 		points.add(start);
 		overviewSource.addToBounds(start);
 
-		co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
+		co = new Coord(maxLat, minLon);
 		points.add(co);
 		overviewSource.addToBounds(co);
 
-		co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
+		co = new Coord(maxLat, maxLon);
 		points.add(co);
 		overviewSource.addToBounds(co);
 
-		co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
+		co = new Coord(minLat, maxLon);
 		points.add(co);
 		overviewSource.addToBounds(co);
 

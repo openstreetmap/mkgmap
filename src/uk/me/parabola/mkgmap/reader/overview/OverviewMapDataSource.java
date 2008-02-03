@@ -28,6 +28,7 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 /**
  * Class for creating an overview map.  Nothing is actually read in from a file,
@@ -49,8 +50,8 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	private int maxLong = Integer.MIN_VALUE;
 
 	// TODO need to change this.
-	private final int topLevel = 4;
-	private final int topBits = 14;
+	private int topLevel = 5;
+	private int topBits = 14;
 
 	/**
 	 * This is a fake source of data and is not read from a file, so always
@@ -74,7 +75,7 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		// We use one level of zoom for the overview map and it has a level
 		// that is greater than that of the maps that go to make it up.
 		// (An extra invisible level will be added as always).
-		LevelInfo info = new LevelInfo(topLevel + 2, topBits - 1);
+		LevelInfo info = new LevelInfo(topLevel + 1, topBits - 1);
 
 		LevelInfo[] levels = new LevelInfo[1];
 		levels[0] = info;
@@ -145,5 +146,9 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	 * completed here.
 	 */
 	public void finish() {
+	}
+
+	public int getShift() {
+		return 24 - (topBits - 1);
 	}
 }

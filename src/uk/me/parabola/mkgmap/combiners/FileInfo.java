@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 
 import java.io.FileNotFoundException;
+import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -137,7 +138,7 @@ public class FileInfo {
 		if (ext.equals("IMG")) {
 			info = imgInfo(inputName);
 		} else if (KNOWN_FILE_TYPE_EXT.contains(ext)) {
-			info = typInfo(inputName);
+			info = fileInfo(inputName);
 		} else {
 			info = new FileInfo(inputName, UNKNOWN_KIND);
 		}
@@ -149,8 +150,15 @@ public class FileInfo {
 	 * A TYP file, perhaps not a special enough case..
 	 * @param inputName The input file name.
 	 */
-	private static FileInfo typInfo(String inputName) {
+	private static FileInfo fileInfo(String inputName) {
 		FileInfo info = new FileInfo(inputName, FILE_KIND);
+		info.setFilename(inputName);
+
+		// Get the size of the file.
+		File f = new File(inputName);
+		long length = f.length();
+		info.fileSizes.add((int) length);
+
 		return info;
 	}
 

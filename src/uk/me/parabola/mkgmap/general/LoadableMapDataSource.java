@@ -67,6 +67,9 @@ public interface LoadableMapDataSource extends MapDataSource {
 	 * important to be able to configure the levels separately while creating
 	 * the map.
 	 *
+	 * <p>Note that it does not include the top empty level as we will alway
+	 * generate that in the main program automatically.
+	 *
 	 * @return Array of structures that map the level to the resolution.  Never
 	 * returns null. Some kind of default should always be returned and this
 	 * must include at least one level.

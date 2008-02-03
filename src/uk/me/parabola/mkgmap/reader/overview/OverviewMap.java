@@ -33,4 +33,12 @@ public interface OverviewMap extends LoadableMapDataSource, MapCollector {
 	 * @param cw The string to add.
 	 */
 	public void addCopyright(String cw);
+
+	/**
+	 * Get the 'shift' value of the overview map.  This is used for rounding
+	 * coordinates of objects that are added to the map.
+	 *
+	 * @return An integer shift value, that is 24-bits.
+	 */
+	public int getShift();
 }

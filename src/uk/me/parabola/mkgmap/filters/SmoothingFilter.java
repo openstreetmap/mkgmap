@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.filters;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
@@ -74,11 +73,14 @@ public class SmoothingFilter implements MapFilter {
 		if (line.getBounds().getMaxDimention() < MIN_SIZE)
 			return;
 
-		// If there is just two points then there is nothing more to do
+		// If the line is not very long then just let it through.  This is done
+		// mainly for the background polygons.
 		List<Coord> points = line.getPoints();
 		int n = points.size();
-		if (n <= 2)
+		if (n <= 5) {
 			next.doFilter(element);
+			return;
+		}
 
 		// Create a new list to rewrite the points into.
 		List<Coord> coords = new ArrayList<Coord>(n);

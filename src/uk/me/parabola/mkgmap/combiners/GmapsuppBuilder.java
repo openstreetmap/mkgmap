@@ -222,9 +222,7 @@ public class GmapsuppBuilder implements Combiner {
 		List<DirectoryEntry> entries = infs.list();
 		for (DirectoryEntry ent : entries) {
 			String ext = ent.getExt();
-			if (ext.equals("   "))
-				continue;
-			if (ext.equals("MPS"))
+			if (ext.equals("   ") || ext.equals("MPS"))
 				continue;
 
 			String inname = ent.getFullName();
@@ -341,6 +339,8 @@ public class GmapsuppBuilder implements Combiner {
 			log.info("total blocks for", bs, "is", totBlocks, "based on slots=", totHeaderSlots);
 
 			if (totBlocks <= ENTRY_SIZE) {
+				// Add at least one for the MPS file
+				totHeaderSlots += 1;
 				return new BlockInfo(bs, totHeaderSlots, totHeaderSlots / bs + 1);
 			}
 		}

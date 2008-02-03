@@ -48,6 +48,10 @@ public class MapArea implements MapDataSource {
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
 
+	private static final int POINT_KIND = 0;
+	private static final int LINE_KIND = 1;
+	private static final int SHAPE_KIND = 2;
+
 	// This is the initial area.
 	private final Area bounds;
 
@@ -75,10 +79,6 @@ public class MapArea implements MapDataSource {
 
 	/** The resolution that this area is at */
 	private final int areaResolution;
-
-	private static final int POINT_KIND = 0;
-	private static final int LINE_KIND = 1;
-	private static final int SHAPE_KIND = 2;
 
 	/**
 	 * Create a map area from the given map data source.  This map

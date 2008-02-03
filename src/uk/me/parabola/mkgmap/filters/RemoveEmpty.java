@@ -16,11 +16,14 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.log.Logger;
 
 /**
+ * Filter for removing empty elements and degenerate elements, for example
+ * lines or shapes with just one point.
+ * 
  * @author Steve Ratcliffe
  */
 public class RemoveEmpty implements MapFilter {
@@ -41,7 +44,8 @@ public class RemoveEmpty implements MapFilter {
 		if (element instanceof MapLine) {
 			MapLine mapLine = (MapLine) element;
 			if (mapLine.getPoints().size() <= 1) {
-				log.debug("dropping degenerate element");
+				if (log.isDebugEnabled())
+					log.debug("dropping degenerate element");
 				return;
 			}
 		}
