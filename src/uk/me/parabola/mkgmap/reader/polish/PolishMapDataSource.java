@@ -65,6 +65,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private int section;
 	private LevelInfo[] levels;
 	private int endLevel;
+	private char elevUnits;
+	private static final double METERS_TO_FEET = 3.2808399;
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
@@ -265,10 +267,33 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				points.add(co);
 			}
 
+			// If it is a contour line, then fix the elevation if required.
+			if (polyline.getType() == 0x22)
+				fixElevation();
+
 			setResolution(polyline, name);
 			polyline.setPoints(points);
 		}
 
+	}
+
+	/**
+	 * The elevation needs to be in feet.  So if it is given in meters then
+	 * convert it.
+	 */
+	private void fixElevation() {
+		if (elevUnits == 'M') {
+			String h = polyline.getName();
+			try {
+				// Convert to feet.
+				int n = Integer.parseInt(h);
+				n *= METERS_TO_FEET;
+				polyline.setName(String.valueOf(n));
+
+			} catch (NumberFormatException e) {
+				// ok it wasn't a number, leave it alone
+			}
+		}
 	}
 
 	/**
@@ -377,6 +402,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				return;
 
 			levels[nlevels - level - 1] = info;
+		} else if (name.startsWith("Elevation")) {
+			char fc = value.charAt(0);
+			if (fc == 'm' || fc == 'M')
+				elevUnits = 'm';
 		}
 	}
 
@@ -401,6 +430,4 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		log.debug(coord);
 		return coord;
 	}
-
-
 }

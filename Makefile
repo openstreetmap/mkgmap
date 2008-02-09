@@ -2,7 +2,7 @@
 #
 # This is NOT used to build mkgmap.  To build use ant.
 #
-# 
+#
 #
 
 #OSMDATA = areas.osm
