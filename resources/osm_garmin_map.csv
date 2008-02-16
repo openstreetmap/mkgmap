@@ -49,8 +49,11 @@ point|place|suburb|city|city10|20
 point|place|town|city|city8|18
 point|place|village|city|city11|20
 point|railway|station|transportation|ground-transportation|20
-point|shop|bakers|shopping|xxx4|20
-point|shop|bakery|shopping|xxx4|20
+point|railway|halt|transportation|ground-transportation|21
+point|railway|tram_stop|transportation|ground-transportation|21
+point|highway|bus_stop|transportation|ground-transportation|21
+point|shop|bakers|shopping|grocery|20
+point|shop|bakery|shopping|grocery|20
 point|shop|butchers|shopping|xxx4|20
 point|tourism|camp_site|lodging|campground-rv-park|20
 point|tourism|caravan_site|lodging|campground-rv-park|20
@@ -74,6 +77,7 @@ polygon|landuse|forest|woods||18
 polygon|landuse|industrial|industrial||18
 polygon|landuse|reservoir|lake4||18
 polygon|landuse|allotments|orchard||20
+polygon|landuse|village_green|city-park||20
 polygon|leisure|common|city-park||20
 polygon|leisure|garden|city-park||20
 polygon|leisure|golf_course|golf||20
