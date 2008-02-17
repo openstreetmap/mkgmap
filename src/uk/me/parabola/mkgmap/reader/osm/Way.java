@@ -39,7 +39,7 @@ interface Way extends Iterable<String> {
 	 *
 	 * @return A simple list of points that form a line.
 	 */
-	public List<List<Coord>> getPoints();
+	public List<Coord> getPoints();
 
 	public boolean isBoolTag(String s);
 }

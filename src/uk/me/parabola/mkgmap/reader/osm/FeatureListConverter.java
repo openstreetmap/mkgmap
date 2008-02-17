@@ -162,39 +162,35 @@ class FeatureListConverter implements OsmConverter {
 
 	private void addShape(Way way, GarminType gt) {
 		// Add to the map
-		List<List<Coord>> pointLists =  way.getPoints();
-		for (List<Coord> points : pointLists) {
-			MapShape shape = new MapShape();
-			shape.setName(way.getName());
-			shape.setPoints(points);
-			shape.setType(gt.getType());
-			shape.setMinResolution(gt.getMinResolution());
+		List<Coord> points =  way.getPoints();
+		MapShape shape = new MapShape();
+		shape.setName(way.getName());
+		shape.setPoints(points);
+		shape.setType(gt.getType());
+		shape.setMinResolution(gt.getMinResolution());
 
-			mapper.addShape(shape);
-		}
+		mapper.addShape(shape);
 	}
 
 	private void addLine(Way way, String tagKey, GarminType gt) {
 		// Found it! Now add to the map.
-		List<List<Coord>> pointLists = way.getPoints();
-		for (List<Coord> points : pointLists) {
-			if (points.isEmpty())
-				continue;
+		List<Coord> points = way.getPoints();
+		if (points.isEmpty())
+			return;
 
-			MapLine line = new MapLine();
-			line.setName(way.getName());
-			line.setPoints(points);
-			line.setType(gt.getType());
-			line.setMinResolution(gt.getMinResolution());
+		MapLine line = new MapLine();
+		line.setName(way.getName());
+		line.setPoints(points);
+		line.setType(gt.getType());
+		line.setMinResolution(gt.getMinResolution());
 
-			if (way.isBoolTag("oneway"))
-				line.setDirection(true);
+		if (way.isBoolTag("oneway"))
+			line.setDirection(true);
 
-			if (tagKey.equals("contour|elevation")) {
-				line.setName(way.getTag("ele"));
-			}
-			mapper.addLine(line);
+		if (tagKey.equals("contour|elevation")) {
+			line.setName(way.getTag("ele"));
 		}
+		mapper.addLine(line);
 	}
 
 	/**
@@ -219,6 +215,33 @@ class FeatureListConverter implements OsmConverter {
 				mapper.addPoint(point);
 				return;
 			}
+		}
+	}
+
+	/**
+	 * A simple implementation that looks at 'name' and 'ref', if only one
+	 * of those exists, then it is used.  When they are both there then
+	 * the 'ref' is in brackets after the name.
+	 *
+	 * <p>This is called from both nodes and ways, and I guess we should
+	 * restrict the 'ref' treatment to the highways.  This is something
+	 * that might happen in the styled converter.
+	 *
+	 * @param el The element, both nodes and ways go through here.
+	 */
+	public void convertName(Element el) {
+		String ref = el.getTag("ref");
+		String name = el.getTag("name");
+		if (name == null) {
+			el.setName(ref);
+		} else if (ref != null) {
+			StringBuffer ret = new StringBuffer(name);
+			ret.append(" (");
+			ret.append(ref);
+			ret.append(')');
+			el.setName(ret.toString());
+		} else {
+			el.setName(name);
 		}
 	}
 

@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.reader.plugin;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.Osm4MapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
@@ -43,7 +42,6 @@ public class MapReader {
 
 		loaders.add(ElementTestDataSource.class);
 		loaders.add(PolishMapDataSource.class);
-		loaders.add(Osm4MapDataSource.class);
 		loaders.add(Osm5MapDataSource.class);
 	}
 

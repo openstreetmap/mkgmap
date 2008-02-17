@@ -38,4 +38,32 @@ interface OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node);
+
+	/**
+	 * In OSM there isn't just one name tag for a node or way, there are
+	 * several and you might want to create a name out of several tags.
+	 * This method allows you to do whatever you want.
+	 *
+	 * It is called before convertNode and convertWay.
+	 *
+	 * <p>Examples are:
+	 * <ul>
+	 *
+	 * <li>A road name having the reference in brackets after the name (uses
+	 * the name and ref tags).
+	 *
+	 * <li>Maps for different languages, you might want to try the local
+	 * language first and fall back to more generic versions of the name:
+	 * eg try name:zh_py first and then name:en, int_name, name in order
+	 * until one is found.
+	 *
+	 * <li>Special purpose maps like the cycling map, need to set the name
+	 * to something other than 'name', also dependant on the other
+	 * tags present.
+	 *
+	 * </ul>
+	 *
+	 * @param el The element to set the name upon.
+	 */
+	public void convertName(Element el);
 }

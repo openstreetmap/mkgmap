@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,24 +33,34 @@ class Way5 extends Element implements Way {
 	private final List<Coord> points = new ArrayList<Coord>();
 
 	/**
-	 * Override to allow ref to be returned if no name is set.
-	 * If both then the ref is in brackets after the name.
+	 * Get the points that make up the way.  We attempt to re-order the segments
+	 * and return a list of points that traces the route of the way.
+	 *
+	 * @return A simple list of points that form a line.
 	 */
-	public String getName() {
-		String ref = getTag("ref");
-		String name = super.getName();
-		if (name == null) {
-			return ref;
-		} else if (ref != null) {
-			StringBuffer ret = new StringBuffer(name);
-			ret.append(" (");
-			ret.append(ref);
-			ret.append(')');
-			return ret.toString();
-		} else {
-			return name;
-		}
+	public List<Coord> getPoints() {
+		return points;
 	}
+
+	public boolean isBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("true"))
+			return true;
+		if (val.equalsIgnoreCase("yes"))
+			return true;
+
+		// Not yet supporting the possible -1 value.
+
+		return false;
+	}
+
+	public void addPoint(Coord co) {
+		points.add(co);
+	}
+
 
 	/**
 	 * A simple representation of this way.
@@ -73,37 +82,5 @@ class Way5 extends Element implements Way {
 		sb.append(' ');
 		sb.append(toTagString());
 		return sb.toString();
-	}
-
-	/**
-	 * Get the points that make up the way.  We attempt to re-order the segments
-	 * and return a list of points that traces the route of the way.
-	 *
-	 * @return A simple list of points that form a line.
-	 */
-	public List<List<Coord>> getPoints() {
-		List<List<Coord>> ll = new ArrayList<List<Coord>>();
-		ll.add(points);
-		return ll;
-	}
-
-	public boolean isBoolTag(String s) {
-		String val = getTag(s);
-		if (val == null)
-			return false;
-
-		if (val.equalsIgnoreCase("true"))
-			return true;
-		if (val.equalsIgnoreCase("yes"))
-			return true;
-
-		// Not going to support the possible -1 value.
-
-		return false;
-	}
-
-
-	public void addPoint(Coord co) {
-		points.add(co);
 	}
 }

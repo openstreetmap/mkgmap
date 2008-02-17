@@ -134,8 +134,10 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
 				mode = 0;
-				if (currentNode != null)
+				if (currentNode != null) {
+					converter.convertName(currentNode);
 					converter.convertNode(currentNode);
+				}
 				currentNodeId = 0;
 				currentNode = null;
 			}
@@ -144,6 +146,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (qName.equals("way")) {
 				mode = 0;
 				// Process the way.
+				converter.convertName(currentWay);
 				converter.convertWay(currentWay);
 			}
 		}
