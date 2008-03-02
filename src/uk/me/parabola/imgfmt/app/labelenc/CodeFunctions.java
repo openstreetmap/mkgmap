@@ -23,17 +23,26 @@ public class CodeFunctions {
 	// Label encoding length
 	public static final int ENCODING_FORMAT6 = 6;
 	public static final int ENCODING_FORMAT9 = 9;
+	private static final int ENCODING_FORMAT10 = 10;
 
 	private int encodingType;
 	private CharacterEncoder encoder;
 	private CharacterDecoder decoder;
 
+	public void setEncoder(CharacterEncoder encoder) {
+		this.encoder = encoder;
+	}
+
 	public CharacterEncoder getEncoder() {
 		return encoder;
 	}
 
-	public void setEncoder(CharacterEncoder encoder) {
-		this.encoder = encoder;
+	public void setDecoder(CharacterDecoder decoder) {
+		this.decoder = decoder;
+	}
+
+	public CharacterDecoder getDecoder() {
+		return decoder;
 	}
 
 	public int getEncodingType() {
@@ -44,14 +53,6 @@ public class CodeFunctions {
 		this.encodingType = encodingType;
 	}
 
-	public void setDecoder(CharacterDecoder decoder) {
-		this.decoder = decoder;
-	}
-
-	public CharacterDecoder getDecoder() {
-		return decoder;
-	}
-	
 	/**
 	 * Create a CharacterEncoder for the given charset option.  Note that this
 	 * routine also writes to the lblHeader parameter to set the encoding type.
@@ -71,6 +72,10 @@ public class CodeFunctions {
 		} else if ("latin2".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
+		} else if ("unicode".equals(charset)) {
+			funcs.setEncodingType(ENCODING_FORMAT10);
+			funcs.setEncoder(new Utf8Encoder());
+			funcs.setDecoder(new Utf8Decoder());
 		} else if ("simple8".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Simple8Encoder());
@@ -83,8 +88,9 @@ public class CodeFunctions {
 	}
 
 	/**
-	 * Create a CharacterEncoder for the given charset option.  Note that this
-	 * routine also writes to the lblHeader parameter to set the encoding type.
+	 * Sets encoding functions for a given format and code page.  This is used
+	 * when reading from an existing file.
+	 *
 	 * @param format The format from the lbl header.
 	 * @param codePage The code page parameter.  Will be ignored if not relavent.
 	 * @return The various character set parameters that will be needed.

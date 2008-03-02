@@ -110,7 +110,7 @@ class Directory {
 			if (part == 0) {
 				current = create(name + '.' + ext, headerBlockManager);
 				current.initBlocks(buf);
-			} else if (part == 3 && current == null) {
+			} else if ((part == 3 || part == 2) && current == null) {
 				current = (Dirent) entries.get(ImgFS.DIRECTORY_FILE_NAME);
 				current.initBlocks(buf);
 			} else {

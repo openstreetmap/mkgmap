@@ -30,6 +30,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = localtest/osm5/reg40.osm
 #OSMDATA = localtest/osm5/longline.osm
 #OSMDATA = localtest/osm5/reg04.osm
+OSMDATA = --charset=unicode localtest/osm/czech_test.osm
 #OSMDATA = --tdbfile maps/img/*.img
 #OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
