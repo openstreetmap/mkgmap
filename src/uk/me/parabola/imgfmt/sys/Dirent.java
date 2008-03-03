@@ -49,7 +49,8 @@ class Dirent implements DirectoryEntry {
 	static final int OFF_FILE_USED = 0x00;
 	static final int OFF_NAME = 0x01;
 	static final int OFF_EXT = 0x09;
-	static final int OFF_FILE_PART = 0x10;
+	static final int OFF_FLAG = 0x10;
+	static final int OFF_FILE_PART = 0x11;
 	private static final int OFF_SIZE = 0x0c;
 
 	static final int ENTRY_SIZE = 512;
