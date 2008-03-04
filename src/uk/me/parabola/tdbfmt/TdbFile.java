@@ -18,6 +18,8 @@ package uk.me.parabola.tdbfmt;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.io.EndOfFileException;
+import uk.me.parabola.io.StructuredInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

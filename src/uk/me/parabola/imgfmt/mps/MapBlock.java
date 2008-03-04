@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.tdbfmt.StructuredOutputStream;
+import uk.me.parabola.io.StructuredOutputStream;
 
 import java.io.IOException;
 

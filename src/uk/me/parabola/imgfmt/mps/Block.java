@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.mps;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.tdbfmt.StructuredOutputStream;
+import uk.me.parabola.io.StructuredOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;

@@ -12,35 +12,19 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Dec 19, 2007
+ * Create date: 23-Sep-2007
  */
-package uk.me.parabola.imgfmt.mps;
-
-import uk.me.parabola.io.StructuredOutputStream;
+package uk.me.parabola.io;
 
 import java.io.IOException;
 
 /**
- * Block describing the map set.
+ * Used to note end of streams.  Not really used much now.
  *
  * @author Steve Ratcliffe
  */
-public class MapsetBlock extends Block {
-	private static final int BLOCK_TYPE = 0x56;
-	
-	private String name = "OSM map set";
-	
-	public MapsetBlock() {
-		super(BLOCK_TYPE);
-	}
-
-	protected void writeBody(StructuredOutputStream out) throws IOException {
-		out.writeString(name);
-		out.write(0); // unknown
-	}
-
-	public void setName(String name) {
-		if (name != null)
-			this.name = name;
+public class EndOfFileException extends IOException {
+	public EndOfFileException() {
+		super("End of file");
 	}
 }

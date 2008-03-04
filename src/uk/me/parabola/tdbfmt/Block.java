@@ -17,6 +17,8 @@
 package uk.me.parabola.tdbfmt;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.io.StructuredInputStream;
+import uk.me.parabola.io.StructuredOutputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
