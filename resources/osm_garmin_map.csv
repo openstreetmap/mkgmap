@@ -55,15 +55,18 @@ point|highway|bus_stop|transportation|ground-transportation|21
 point|shop|bakers|shopping|grocery|20
 point|shop|bakery|shopping|grocery|20
 point|shop|butchers|shopping|xxx4|20
+point|shop|supermarket|shopping|grocery|20
 point|tourism|camp_site|lodging|campground-rv-park|20
 point|tourism|caravan_site|lodging|campground-rv-park|20
 point|tourism|hotel|lodging|hotel-motel|20
 point|tourism|information|misc|information|20
 point|tourism|motel|lodging|hotel-motel|20
 point|tourism|hostel|lodging|bed-and-breakfast-inn|20
+point|tourism|museum|attractions|museum-historical|20
 point|tourism|picnic_site|misc|picnic-area|20
 point|tourism|theme_park|recreation|amusement-theme-park|20
 point|tourism|zoo|attractions|zoo-aquarium|20
+point|sport|swimming|recreation|swimming-pool|20
 polygon|place|village|city3||18
 polygon|amenity|college|university||18
 polygon|amenity|grave_yard|cemetery||18
@@ -97,6 +100,7 @@ polygon|natural|marsh|wetland||20
 polygon|natural|mud|wetland||20
 polygon|natural|water|lake1||20
 polygon|natural|wood|woods||18
+polygon|natural|scrub|scrub||20
 polyline|aeroway|runway|airport-runway||20
 polyline|boundary|administrative|boundary-political||18
 polyline|boundary|national|boundary-international||17

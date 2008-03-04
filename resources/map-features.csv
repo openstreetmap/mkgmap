@@ -54,12 +54,15 @@ point|railway|tram_stop|0x2f|0x08|21
 point|shop|bakers|0x2e|0x02|20
 point|shop|bakery|0x2e|0x02|20
 point|shop|butchers|0x2e|0x00|20
+point|shop|supermarket|0x2e|0x02|20
+point|sport|swimming|0x2d|0x09|20
 point|tourism|camp_site|0x2b|0x03|20
 point|tourism|caravan_site|0x2b|0x03|20
 point|tourism|hostel|0x2b|0x02|20
 point|tourism|hotel|0x2b|0x01|20
 point|tourism|information|0x4c|0x00|20
 point|tourism|motel|0x2b|0x01|20
+point|tourism|museum|0x2c|0x02|20
 point|tourism|picnic_site|0x4a|0x00|20
 point|tourism|theme_park|0x2c|0x01|20
 point|tourism|zoo|0x2c|0x07|20
@@ -93,6 +96,7 @@ polygon|military|danger_area|0x04||18
 polygon|military|range|0x04||18
 polygon|natural|marsh|0x51||20
 polygon|natural|mud|0x51||20
+polygon|natural|scrub|0x4f||20
 polygon|natural|water|0x3c||20
 polygon|natural|wood|0x50||18
 polygon|place|village|0x03||18
