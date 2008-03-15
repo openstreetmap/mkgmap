@@ -63,7 +63,7 @@ public class LBLFile extends ImgFile {
 		this(chan, true);
 	}
 
-	public LBLFile(ImgChannel chan, boolean write) {
+	private LBLFile(ImgChannel chan, boolean write) {
 		setHeader(lblHeader);
 
 		WriteStrategy writer = new BufferedWriteStrategy(chan);

@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.WriteStrategy;
 public class Zip {
 	// The index is not stored in the file, you just use the index of it in
 	// the section.
-	private int index;
+	private final int index;
 	
 	private Label label;
 

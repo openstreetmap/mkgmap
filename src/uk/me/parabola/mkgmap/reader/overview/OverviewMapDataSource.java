@@ -43,15 +43,9 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	// We keep all non-duplicated copyright messages from the component maps.
 	private final Set<String> copyrights = new HashSet<String>();
 
-	// We need the exact bounds that the map covers, so keep our own copy
-	private int minLat = Integer.MAX_VALUE;
-	private int minLong = Integer.MAX_VALUE;
-	private int maxLat = Integer.MIN_VALUE;
-	private int maxLong = Integer.MIN_VALUE;
-
 	// TODO need to change this.
-	private int topLevel = 5;
-	private int topBits = 14;
+	private final int topLevel = 5;
+	private final int topBits = 14;
 
 	/**
 	 * This is a fake source of data and is not read from a file, so always

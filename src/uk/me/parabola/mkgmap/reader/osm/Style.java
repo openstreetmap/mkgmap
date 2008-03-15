@@ -36,7 +36,7 @@ public class Style {
 	
 	private File file;
 
-	public void loadStyleByName(String name) throws FileNotFoundException {
+	protected void loadStyleByName(String name) throws FileNotFoundException {
 		StyleFileLoader fl = StyleFileLoader.createStyleLoaderByName(name);
 		Reader reader = fl.open("version");
 		System.out.println("got reader " + reader);

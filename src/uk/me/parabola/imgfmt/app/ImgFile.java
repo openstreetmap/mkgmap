@@ -67,7 +67,7 @@ public abstract class ImgFile  {
 		this.writer = writer;
 	}
 
-	public ReadStrategy getReader() {
+	protected ReadStrategy getReader() {
 		return reader;
 	}
 
@@ -76,7 +76,7 @@ public abstract class ImgFile  {
 		this.reader = reader;
 	}
 
-	public CommonHeader getHeader() {
+	protected CommonHeader getHeader() {
 		return header;
 	}
 
@@ -84,7 +84,7 @@ public abstract class ImgFile  {
 		this.header = header;
 	}
 
-	public boolean isWritable() {
+	protected boolean isWritable() {
 		return writable;
 	}
 

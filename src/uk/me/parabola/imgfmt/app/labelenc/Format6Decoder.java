@@ -50,7 +50,7 @@ public class Format6Decoder implements CharacterDecoder {
 
 		if (symbol) {
 			symbol = false;
-			c = Format6Encoder.symbols.charAt(b);
+			c = Format6Encoder.SYMBOLS.charAt(b);
 		} else {
 			switch(b) {
 				case 0x1B:
@@ -66,7 +66,7 @@ public class Format6Decoder implements CharacterDecoder {
 					// these define abbreviations; fall through to
 					// lookup which returns a space
 				default:
-					c = Format6Encoder.letters.charAt(b);
+					c = Format6Encoder.LETTERS.charAt(b);
 			}
 		}
 		out.write(c);

@@ -27,26 +27,26 @@ import java.util.Locale;
  */
 public class Utf8Encoder extends BaseEncoder implements CharacterEncoder {
 	
-	public EncodedText encodeText(String rawText) {
-		if (rawText == null)
-			return BaseEncoder.NO_TEXT;
+	public EncodedText encodeText(String text) {
+		if (text == null)
+			return NO_TEXT;
 
-		String text;
+		String uctext;
 		if (isUpperCase())
-			text = rawText.toUpperCase(Locale.ENGLISH);
+			uctext = text.toUpperCase(Locale.ENGLISH);
 		else
-			text = rawText;
+			uctext = text;
 
 		EncodedText et;
 		try {
-			byte[] buf = text.getBytes("utf-8");
+			byte[] buf = uctext.getBytes("utf-8");
 			byte[] res = new byte[buf.length + 1];
 			System.arraycopy(buf, 0, res, 0, buf.length);
 			res[buf.length] = 0;
 			et = new EncodedText(res, res.length);
 		} catch (UnsupportedEncodingException e) {
 			// As utf-8 must be supported, this can't happen
-			byte[] buf = text.getBytes();
+			byte[] buf = uctext.getBytes();
 			et = new EncodedText(buf, buf.length);
 		}
 		return et;

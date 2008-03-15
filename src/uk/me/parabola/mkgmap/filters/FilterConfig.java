@@ -28,7 +28,7 @@ public class FilterConfig {
 	private int resolution;
 	private Area bounds;
 
-	public int getResolution() {
+	protected int getResolution() {
 		return resolution;
 	}
 

@@ -52,7 +52,7 @@ public class Logger {
 	 * class.
 	 * @return The logger.
 	 */
-	public static Logger getLogger(String name) {
+	private static Logger getLogger(String name) {
 		return new Logger(name);
 	}
 

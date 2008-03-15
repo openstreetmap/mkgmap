@@ -22,14 +22,14 @@ package uk.me.parabola.imgfmt.app.labelenc;
 public class CodeFunctions {
 	// Label encoding length
 	public static final int ENCODING_FORMAT6 = 6;
-	public static final int ENCODING_FORMAT9 = 9;
+	private static final int ENCODING_FORMAT9 = 9;
 	private static final int ENCODING_FORMAT10 = 10;
 
 	private int encodingType;
 	private CharacterEncoder encoder;
 	private CharacterDecoder decoder;
 
-	public void setEncoder(CharacterEncoder encoder) {
+	protected void setEncoder(CharacterEncoder encoder) {
 		this.encoder = encoder;
 	}
 
@@ -37,7 +37,7 @@ public class CodeFunctions {
 		return encoder;
 	}
 
-	public void setDecoder(CharacterDecoder decoder) {
+	protected void setDecoder(CharacterDecoder decoder) {
 		this.decoder = decoder;
 	}
 
@@ -49,7 +49,7 @@ public class CodeFunctions {
 		return encodingType;
 	}
 
-	public void setEncodingType(int encodingType) {
+	protected void setEncodingType(int encodingType) {
 		this.encodingType = encodingType;
 	}
 

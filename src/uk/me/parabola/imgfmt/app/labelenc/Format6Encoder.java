@@ -43,14 +43,14 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 	// This is 0x1b is the source document, but the accompianing code uses
 	// the value 0x1c, which seems to work.
-	public static final int SYMBOL_SHIFT = 0x1c;
+	private static final int SYMBOL_SHIFT = 0x1c;
 
-	public static final String letters =
+	public static final String LETTERS =
 		" ABCDEFGHIJKLMNO" +	// 0x00-0x0F
 		"PQRSTUVWXYZxx   " +	// 0x10-0x1F
 		"0123456789xxxxxx";	// 0x20-0x2F
 
-	public static final String symbols =
+	public static final String SYMBOLS =
 		"@!\"#$%&'()*+,-./" +	// 0x00-0x0F
 		"xxxxxxxxxx:;<=>?" +	// 0x10-0x1F
 		"xxxxxxxxxxx[\\]^_";	// 0x20-0x2F
@@ -137,7 +137,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 */
 	private int shiftedSymbol(byte[] buf, int startOffset, char c) {
 		int off = startOffset;
-		int ind = symbols.indexOf(c);
+		int ind = SYMBOLS.indexOf(c);
 		if (ind >= 0) {
 			put6(buf, off++, SYMBOL_SHIFT);
 			put6(buf, off++, ind);

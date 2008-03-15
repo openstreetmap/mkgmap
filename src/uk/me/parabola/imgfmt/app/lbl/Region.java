@@ -25,9 +25,9 @@ import uk.me.parabola.imgfmt.app.WriteStrategy;
  * @author Steve Ratcliffe
  */
 public class Region {
-	private char index;
+	private final char index;
 
-	private Country country;
+	private final Country country;
 	private Label label;
 
 	public Region(Country country, int index) {

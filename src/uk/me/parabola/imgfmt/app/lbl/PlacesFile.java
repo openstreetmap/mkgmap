@@ -29,11 +29,11 @@ import java.util.Map;
  * @author Steve Ratcliffe
  */
 public class PlacesFile {
-	private Map<String, Country> countries = new LinkedHashMap<String, Country>();
-	private Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private Map<String, City> cities = new LinkedHashMap<String, City>();
-	private Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
-	private Map<String, POIRecord> pois = new LinkedHashMap<String, POIRecord>();
+	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
+	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
+	private final Map<String, City> cities = new LinkedHashMap<String, City>();
+	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
+	private final Map<String, POIRecord> pois = new LinkedHashMap<String, POIRecord>();
 
 	private LBLFile lblFile;
 	private PlacesHeader placeHeader;

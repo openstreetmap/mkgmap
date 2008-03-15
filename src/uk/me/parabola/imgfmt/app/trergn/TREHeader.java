@@ -34,8 +34,8 @@ public class TREHeader extends CommonHeader {
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
-	static final char POLYGON_REC_LEN = 2;
-	static final char POINT_REC_LEN = 3;
+	private static final char POLYGON_REC_LEN = 2;
+	private static final char POINT_REC_LEN = 3;
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;

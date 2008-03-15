@@ -104,6 +104,7 @@ public abstract class StyleFileLoader {
 	 * Find a style on the class path.  First we find out if the style is in
 	 * a jar or a directory and then use the appropriate Loader.
 	 *
+	 * @param loc The file or directory location.
 	 * @param name The style name.
 	 * @return A loader for the style.
 	 * @throws FileNotFoundException If it can't be found.

@@ -32,7 +32,6 @@ import java.util.List;
  */
 public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
 	private int shift;
-	private Area bounds ;
 
 	/**
 	 * Get the scale factor so that we don't oversplit.
@@ -44,7 +43,6 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		shift = config.getShift();
 		if (shift > 15)
 			shift = 16;
-		bounds = config.getBounds();
 	}
 
 	/**

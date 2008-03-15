@@ -31,7 +31,7 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class NETFile extends ImgFile {
-	private NETHeader netHeader = new NETHeader();
+	private final NETHeader netHeader = new NETHeader();
 
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);

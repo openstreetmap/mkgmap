@@ -31,8 +31,8 @@ import uk.me.parabola.mkgmap.general.MapCollector;
  * @author Steve Ratcliffe
  */
 public class StyledConverter implements OsmConverter {
-	private MapCollector collector;
-	private Properties config;
+	private final MapCollector collector;
+	private final Properties config;
 
 	public StyledConverter(Properties config, MapCollector collector) {
 		this.config = config;

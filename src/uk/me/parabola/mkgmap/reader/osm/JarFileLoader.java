@@ -46,7 +46,7 @@ public class JarFileLoader extends StyleFileLoader {
 		init(url);
 	}
 
-	public JarFileLoader(File file) throws FileNotFoundException {
+	private JarFileLoader(File file) throws FileNotFoundException {
 		try {
 			jarFile = new JarFile(file);
 		} catch (IOException e) {
@@ -140,7 +140,7 @@ public class JarFileLoader extends StyleFileLoader {
 	 *
 	 * @param prefix The prefix which should end in a slash.
 	 */
-	public final void setPrefix(String prefix) {
+	protected final void setPrefix(String prefix) {
 		this.prefix = prefix;
 	}
 }

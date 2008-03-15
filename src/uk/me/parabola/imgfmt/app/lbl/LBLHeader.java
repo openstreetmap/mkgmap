@@ -105,7 +105,7 @@ public class LBLHeader extends CommonHeader {
 		this.encodingType = type;
 	}
 
-	public int getLabelSize() {
+	protected int getLabelSize() {
 		return labelSize;
 	}
 

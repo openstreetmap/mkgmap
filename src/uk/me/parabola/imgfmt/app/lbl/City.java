@@ -28,9 +28,9 @@ import uk.me.parabola.imgfmt.app.WriteStrategy;
 public class City {
 	private static final int POINT_REF = 0x80;
 
-	private int index;
+	private final int index;
 
-	private Region region;
+	private final Region region;
 
 	// This determines if a label is being used or a subdivision and point
 	// combo.
