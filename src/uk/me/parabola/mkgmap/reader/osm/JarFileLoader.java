@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import uk.me.parabola.log.Logger;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,10 +30,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
-import uk.me.parabola.log.Logger;
+import java.util.Enumeration;
 
 /**
+ * Load a style from a jar file.
+ * 
  * @author Steve Ratcliffe
  */
 public class JarFileLoader extends StyleFileLoader {
@@ -59,15 +62,40 @@ public class JarFileLoader extends StyleFileLoader {
 		}
 	}
 
+	public JarFileLoader(String url, String name) throws FileNotFoundException {
+		this(url);
+		if (name != null)
+			setPrefix(name + '/');
+	}
+
+	public JarFileLoader(File f, String name) throws FileNotFoundException {
+		this(f);
+		if (name != null)
+			setPrefix(name + '/');
+	}
+
 	private void init(URL url) throws FileNotFoundException {
-		JarURLConnection jurl;
 		try {
-			jurl = (JarURLConnection) url.openConnection();
+			JarURLConnection jurl = (JarURLConnection) url.openConnection();
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
+			if (prefix == null)
+				prefix = searchPrefix(jarFile);
+			log.debug("jar prefix is", prefix);
 		} catch (IOException e) {
 			throw new FileNotFoundException("Could not open style at " + url);
 		}
+	}
+
+	private String searchPrefix(JarFile file) {
+		Enumeration<JarEntry> en = file.entries();
+		while (en.hasMoreElements()) {
+			JarEntry entry = en.nextElement();
+			String name = entry.getName();
+			if (name.endsWith("/version"))
+				return name.substring(0, name.length() - 7);
+		}
+		return null;
 	}
 
 	/**
@@ -106,7 +134,13 @@ public class JarFileLoader extends StyleFileLoader {
 		}
 	}
 
-	public void setPrefix(String prefix) {
+	/**
+	 * Set the prefix (ie the directory) the will be prepended to all file
+	 * names that we try to open.
+	 *
+	 * @param prefix The prefix which should end in a slash.
+	 */
+	public final void setPrefix(String prefix) {
 		this.prefix = prefix;
 	}
 }

@@ -17,24 +17,10 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.Reader;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLConnection;
 
 import uk.me.parabola.log.Logger;
-
-import java.net.JarURLConnection;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -50,16 +36,22 @@ public class Style {
 	
 	private File file;
 
-	public void loadStyle(String name) throws FileNotFoundException {
-		StyleFileLoader fl = StyleFileLoader.createStyleLoader(name);
+	public void loadStyleByName(String name) throws FileNotFoundException {
+		StyleFileLoader fl = StyleFileLoader.createStyleLoaderByName(name);
 		Reader reader = fl.open("version");
-		log.debug("got reader " + reader);
+		System.out.println("got reader " + reader);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
 		Style s = new Style();
 
-		s.loadStyle("testnn");
+		s.loadStyleByName("testnn");
 		s.loadStyle("http://localhost/test.jar");
+	}
+
+	private void loadStyle(String loc) throws FileNotFoundException {
+		StyleFileLoader fl = StyleFileLoader.createStyleLoader(loc, null);
+		Reader reader = fl.open("version");
+		System.out.println("got reader " + reader);
 	}
 }

@@ -32,38 +32,57 @@ public abstract class StyleFileLoader {
 	/**
 	 * Open a style that is contained in a file.  This is expected to be a
 	 * directory or zip file containing the files that make up the style.
-	 * @param file The file to open.
+	 *
+	 * @param loc The file or directory containing the style(s).
+	 * @param name If the name is given then we look for a directory with the
+	 * given name.  If there is no name, then the style is assumed to be at
+	 * the top level and/or the only file.
+	 *
 	 * @return A style loader.
 	 */
-
-	public static StyleFileLoader createStyleLoader(String file, String name) {
-		return null;
-	}
-	public static StyleFileLoader createStyleLoader(String file) {
-		return null;
-	}
-	public static StyleFileLoader createStyleLoaderByName(String name) {
-		return null;
-	}
-	public static StyleFileLoader xcreateStyleLoader(String loc) throws FileNotFoundException
+	public static StyleFileLoader createStyleLoader(String loc, String name)
+			throws FileNotFoundException
 	{
+		StyleFileLoader loader;
+
 		File f = new File(loc);
 		if (f.isDirectory()) {
-			return new DirectoryFileLoader(f);
+			File dir = f;
+			if (name != null)
+				dir = new File(f, name);
+			loader = new DirectoryFileLoader(dir);
 		} else if (f.isFile()) {
-			return new JarFileLoader(f);
+			loader = new JarFileLoader(f, name);
 		} else {
 			String s = loc.toLowerCase();
 			if (s.startsWith("classpath:")) {
-				return classpathLoader(s);
+				loader = classpathLoader(s.substring(10), name);
+				return loader;
 			} else if (s.startsWith("jar:")) {
-				return new JarFileLoader(s);
+				loader = new JarFileLoader(loc, name);
 			} else if (s.indexOf(':') > 0) {
-				return new JarFileLoader("jar:" + s + "!/");
+				loader = new JarFileLoader("jar:" + s + "!/");
+			} else {
+				loader = classpathLoader("styles/", name);
 			}
 		}
 
-		return classpathLoader("styles/" + loc + "/");
+		return loader;
+	}
+
+	/**
+	 * Load a style by name.  This implies that it will loaded from the
+	 * classpath.
+	 *
+	 * @param name The style name.  It will be a built in one, or otherwise
+	 * on the classpath.
+	 *
+	 * @return The loader.
+	 */
+	public static StyleFileLoader createStyleLoaderByName(String name)
+			throws FileNotFoundException
+	{
+		return createStyleLoader("classpath:styles", name);
 	}
 
 	/**
@@ -76,19 +95,31 @@ public abstract class StyleFileLoader {
 
 	/**
 	 * Close the FileLoader.  This is different from closing individual files
-	 * that opened via {@link #open}.  After this call then you shouldn't open
-	 * any more files.
+	 * that were opened via {@link #open}.  After this call then you shouldn't
+	 * open any more files.
 	 */
 	public abstract void close();
 
-	private static StyleFileLoader classpathLoader(String path) throws FileNotFoundException
+	/**
+	 * Find a style on the class path.  First we find out if the style is in
+	 * a jar or a directory and then use the appropriate Loader.
+	 *
+	 * @param name The style name.
+	 * @return A loader for the style.
+	 * @throws FileNotFoundException If it can't be found.
+	 */
+	private static StyleFileLoader classpathLoader(String loc, String name) throws FileNotFoundException
 	{
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		if (loader == null)
+		String path = loc;
+		if (name != null)
+			path = loc + '/' + name + '/';
+
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		if (classLoader == null)
 			throw new FileNotFoundException("cannot file style");
 
 		// all style files must be in the same directory or zip
-		URL url = loader.getResource(path);
+		URL url = classLoader.getResource(path);
 		if (url == null)
 			throw new FileNotFoundException("Could not file style " + path);
 
