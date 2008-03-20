@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import uk.me.parabola.log.Logger;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
@@ -28,6 +30,7 @@ import java.net.URL;
  * @author Steve Ratcliffe
  */
 public abstract class StyleFileLoader {
+	private static final Logger log = Logger.getLogger(StyleFileLoader.class);
 
 	/**
 	 * Open a style that is contained in a file.  This is expected to be a
@@ -43,6 +46,9 @@ public abstract class StyleFileLoader {
 	public static StyleFileLoader createStyleLoader(String loc, String name)
 			throws FileNotFoundException
 	{
+		if (loc == null)
+			return createStyleLoaderByName(name);
+		
 		StyleFileLoader loader;
 
 		File f = new File(loc);
@@ -50,12 +56,17 @@ public abstract class StyleFileLoader {
 			File dir = f;
 			if (name != null)
 				dir = new File(f, name);
+
+			log.debug("style directory", dir);
 			loader = new DirectoryFileLoader(dir);
 		} else if (f.isFile()) {
+			log.debug("jar file", f);
 			loader = new JarFileLoader(f, name);
 		} else {
+			log.debug("style url location", loc);
 			String s = loc.toLowerCase();
 			if (s.startsWith("classpath:")) {
+				log.debug("load style off classpath");
 				loader = classpathLoader(s.substring(10), name);
 				return loader;
 			} else if (s.startsWith("jar:")) {
@@ -71,7 +82,7 @@ public abstract class StyleFileLoader {
 	}
 
 	/**
-	 * Load a style by name.  This implies that it will loaded from the
+	 * Load a style by name only.  This implies that it will loaded from the
 	 * classpath.
 	 *
 	 * @param name The style name.  It will be a built in one, or otherwise

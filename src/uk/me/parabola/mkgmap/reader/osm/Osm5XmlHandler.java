@@ -43,7 +43,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Node currentNode;
 	private Way5 currentWay;
 
-	private FeatureListConverter converter;
+	private OsmConverter converter;
 	private MapCollector mapper;
 	private long currentNodeId;
 
@@ -195,7 +195,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		mapper = mapCollector;
 	}
 
-	public void setConverter(FeatureListConverter converter) {
+	public void setConverter(OsmConverter converter) {
 		this.converter = converter;
 	}
 

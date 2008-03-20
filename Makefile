@@ -34,6 +34,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = --tdbfile maps/img/*.img
 #OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
+OSMDATA = seqld.osm.gz
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'

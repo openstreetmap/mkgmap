@@ -28,9 +28,9 @@ import java.io.Reader;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.Enumeration;
 
 /**
  * Load a style from a jar file.

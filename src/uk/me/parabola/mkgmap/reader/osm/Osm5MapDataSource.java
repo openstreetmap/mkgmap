@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -61,7 +62,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			try {
 				Osm5XmlHandler handler = new Osm5XmlHandler();
 				handler.setCallbacks(mapper);
-				handler.setConverter(new FeatureListConverter(mapper, getConfig()));
+				handler.setConverter(createStyler());
 				parser.parse(is, handler);
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
@@ -71,5 +72,41 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		} catch (ParserConfigurationException e) {
 			throw new FormatException("Internal error configuring xml parser", e);
 		}
+	}
+
+	/**
+	 * Create the appropriate converter from osm to garmin styles.
+	  *
+	 * The option --style-file give the location of an alternate file or
+	 * directory containing styles rather than the default built in ones.
+	 *
+	 * The option --style gives the name of a style, either one of the
+	 * built in ones or selects one from the given style-file.
+	 *
+	 * If there is no name given, but there is a file then the file should
+	 * just contain one style.
+	 *
+	 * @return An OsmConverter based on the command line options passed in.
+	 */
+	private OsmConverter createStyler() {
+		OsmConverter converter;
+
+		Properties props = getConfig();
+		String loc = props.getProperty("style-file");
+		String name = props.getProperty("style");
+
+		if (loc == null && name == null) {
+			// We default to the old way for now... Later will just use a
+			// style named 'default'
+			converter = new FeatureListConverter(mapper, getConfig());
+		} else {
+			try {
+				converter = new StyledConverter(mapper, getConfig());
+			} catch (FileNotFoundException e) {
+				converter = new FeatureListConverter(mapper, props);
+			}
+		}
+		
+		return converter;
 	}
 }

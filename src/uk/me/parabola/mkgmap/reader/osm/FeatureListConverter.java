@@ -73,7 +73,7 @@ class FeatureListConverter implements OsmConverter {
 	FeatureListConverter(MapCollector collector, Properties config) {
 		this.mapper = collector;
 
-		InputStream is = getMapFeatures(config);
+		InputStream is = getMapFeaturesInputStream(config);
 
 		try {
 			Reader r = new InputStreamReader(is, "utf-8");
@@ -89,13 +89,25 @@ class FeatureListConverter implements OsmConverter {
 	}
 
 	/**
+	 * Constructor used for new style system.  To begin with we are just
+	 * making use of the old way of doing the styles.
+	 * @param mapper The map collector.
+	 * @param input The map-features that is built into the style.
+	 * @throws IOException If reading the file fails.
+	 */
+	FeatureListConverter(MapCollector mapper, Reader input) throws IOException {
+		this.mapper = mapper;
+		readFeatures(new BufferedReader(input));
+	}
+
+	/**
 	 * Get an input stream to a map-features file.  This could have been on the
 	 * command line, in which case return an open handle to it.
 	 *
 	 * @param config Properties that may contain the name of a file to use.
 	 * @return An open stream to a map features file.
 	 */
-	private InputStream getMapFeatures(Properties config) {
+	private InputStream getMapFeaturesInputStream(Properties config) {
 		String file = config.getProperty("map-features");
 		InputStream is;
 		if (file != null) {

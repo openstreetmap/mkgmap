@@ -16,9 +16,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.Properties;
-
 import uk.me.parabola.mkgmap.general.MapCollector;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * An new system to convert from osm styles to garmin styles.  Instead of a
@@ -26,17 +28,27 @@ import uk.me.parabola.mkgmap.general.MapCollector;
  * will be the name of the style.  From the start there will be a versioning
  * system, so that we can extend it better.
  *
- * I expect that it should be possible to set the name 
- *
  * @author Steve Ratcliffe
  */
 public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
-	private final Properties config;
+	private final Style style;
 
-	public StyledConverter(Properties config, MapCollector collector) {
-		this.config = config;
+	private OsmConverter featureConverter;
+
+	public StyledConverter(MapCollector collector, Properties config) throws FileNotFoundException {
 		this.collector = collector;
+
+		String loc = config.getProperty("style-file");
+		String name = config.getProperty("style");
+		style = new Style(loc, name);
+
+		try {
+			featureConverter = style.makeConverter(this.collector);
+		} catch (IOException e) {
+			System.out.println("could not read map-features");
+			throw new FileNotFoundException("map features could not be read");
+		}
 	}
 
 	/**
@@ -49,6 +61,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
+		featureConverter.convertWay(way);
 	}
 
 	/**
@@ -58,12 +71,17 @@ public class StyledConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
+		featureConverter.convertNode(node);
 	}
 
 	/**
-	 * 
+	 * Set the name of the element.  Usually you will just take the name
+	 * tag, but there are cases wher you may want to use other tags, eg the
+	 * 'ref' tag for roads.
+	 *
 	 * @param el The element to set the name upon.
 	 */
 	public void convertName(Element el) {
+		featureConverter.convertName(el);
 	}
 }
