@@ -110,6 +110,7 @@ polyline|highway|bridleway|0x16||23
 polyline|highway|byway|0x16||23
 polyline|highway|cycleway|0x16||23
 polyline|highway|footway|0x16||23
+polyline|highway|living_street|0x06||22
 polyline|highway|minor|0x06||21
 polyline|highway|motorway|0x01||12
 polyline|highway|motorway_link|0x01||16

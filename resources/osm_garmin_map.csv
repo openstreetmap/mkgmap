@@ -118,6 +118,7 @@ polyline|highway|pedestrian|road||22
 polyline|highway|primary|arterial-road-medium||19
 polyline|highway|primary_link|arterial-road-medium||19
 polyline|highway|residential|road||22
+polyline|highway|living_street|road||22
 polyline|highway|secondary|arterial-road-thin||20
 polyline|highway|service|alley||22
 polyline|highway|steps|trail||23
