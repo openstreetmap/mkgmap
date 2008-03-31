@@ -63,16 +63,9 @@ public class LBLFile extends ImgFile {
 		this(chan, true);
 	}
 
-	private LBLFile(ImgChannel chan, boolean write) {
+	public LBLFile(ImgChannel chan, boolean write) {
 		setHeader(lblHeader);
 
-		WriteStrategy writer = new BufferedWriteStrategy(chan);
-		setWriter(writer);
-
-		position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
-
-		// The zero offset is for no label.
-		getWriter().put((byte) 0);
 		if (write) {
 			setWriter(new BufferedWriteStrategy(chan));
 
