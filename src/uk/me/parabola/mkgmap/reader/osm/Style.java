@@ -39,11 +39,12 @@ public class Style {
 	private static final int VERSION = 0;
 
 	private static final String FILE_VERSION = "version";
-	private static final String FILE_INFO = "info";
+	//private static final String FILE_INFO = "info";
 	private static final String FILE_FEATURES = "map-features.csv";
-	private static final String FILE_CONTROL = "control";
+	private static final String FILE_OPTIONS = "options";
 
 	private final StyleFileLoader fileLoader;
+	private String[] nameChoices;
 
 	/**
 	 * Create a style from the given location and name.
@@ -60,7 +61,41 @@ public class Style {
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
 
-		//readControl();
+		readOptions();
+	}
+
+	private void readOptions() {
+		System.out.println("checking options");
+		try {
+			Reader r = fileLoader.open(FILE_OPTIONS);
+			Scanner scan = new Scanner(r);
+
+			while (scan.hasNextLine()) {
+				String s = scan.nextLine().trim();
+				System.out.println("line is " + s);
+
+				if (s.length() == 0 || s.charAt(0) == '#')
+					continue;
+
+				String[] optval = s.split("[=:]", 2);
+
+				if (optval.length > 1) {
+					String opt = optval[0].trim();
+					String val = optval[1].trim();
+
+					processOption(opt, val);
+				}
+			}
+		} catch (FileNotFoundException e) {
+			// the file is optional, so ignore if not present.
+			log.debug("no options file");
+		}
+	}
+
+	private void processOption(String opt, String val) {
+		if (opt.equals("name-tag-list")) {
+			nameChoices = val.split("[,\\s]+");
+		}
 	}
 
 	/**
@@ -89,5 +124,9 @@ public class Style {
 			System.err.println("Warning: unrecognised style version " + version +
 			", but only understand version " + VERSION);
 		}
+	}
+
+	public String[] getNameTags() {
+		return nameChoices;
 	}
 }

@@ -31,20 +31,20 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public class StyledConverter implements OsmConverter {
-	private final MapCollector collector;
-	private final Style style;
 
 	private OsmConverter featureConverter;
+	private String[] nameTagList;
 
 	public StyledConverter(MapCollector collector, Properties config) throws FileNotFoundException {
-		this.collector = collector;
 
 		String loc = config.getProperty("style-file");
 		String name = config.getProperty("style");
-		style = new Style(loc, name);
+		Style style = new Style(loc, name);
+		
+		nameTagList = style.getNameTags();
 
 		try {
-			featureConverter = style.makeConverter(this.collector);
+			featureConverter = style.makeConverter(collector);
 		} catch (IOException e) {
 			System.out.println("could not read map-features");
 			throw new FileNotFoundException("map features could not be read");
@@ -76,12 +76,44 @@ public class StyledConverter implements OsmConverter {
 
 	/**
 	 * Set the name of the element.  Usually you will just take the name
-	 * tag, but there are cases wher you may want to use other tags, eg the
+	 * tag, but there are cases where you may want to use other tags, eg the
 	 * 'ref' tag for roads.
 	 *
 	 * @param el The element to set the name upon.
 	 */
 	public void convertName(Element el) {
-		featureConverter.convertName(el);
+		String ref = el.getTag("ref");
+		String name = getName(el);
+		if (name == null) {
+			el.setName(ref);
+		} else if (ref != null) {
+			StringBuffer ret = new StringBuffer(name);
+			ret.append(" (");
+			ret.append(ref);
+			ret.append(')');
+			el.setName(ret.toString());
+		} else {
+			el.setName(name);
+		}
+	}
+
+	/**
+	 * Get the name tag. By default you get the tag called 'name', but
+	 * for special purposes you may want to provide a list of tag-names
+	 * to try.  In particular this allows you to select language specific
+	 * versions of the names.  eg. name:cy, name
+	 * @param el The element we want to get the name tag from.
+	 * @return The value of the defined 'name' tag.
+	 */
+	private String getName(Element el) {
+		if (nameTagList == null)
+			return el.getTag("name");
+
+		for (String t : nameTagList) {
+			String val = el.getTag(t);
+			if (val != null)
+				return val;
+		}
+		return null;
 	}
 }
