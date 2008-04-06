@@ -96,9 +96,11 @@ public class TdbBuilder implements Combiner {
 		DetailMapBlock detail = new DetailMapBlock();
 		detail.setArea(finfo.getBounds());
 		String mapname = finfo.getMapname();
+		String mapdesc = finfo.getDescription();
+
 		detail.setMapName(mapname);
 
-		String desc = mapname + '(' + mapname + ')';
+		String desc = mapdesc + '(' + mapname + ')';
 		detail.setDescription(desc);
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());

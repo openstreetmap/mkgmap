@@ -206,6 +206,20 @@ class ImgHeader {
 		fsParams.setBlockSize(1 << (exp1 + exp2));
 		fsParams.setDirectoryStartBlock(header.get(OFF_DIRECTORY_START_BLOCK));
 
+		byte[] bytes = new byte[30];
+		StringBuffer sb = new StringBuffer();
+		header.position(OFF_MAP_DESCRIPTION);
+		header.get(bytes, 0, 20);
+		sb.append(new String(bytes, 0, 20));
+		header.position(OFF_MAP_NAME_CONT);
+		header.get(bytes, 0, 30);
+		sb.append(new String(bytes, 0, 30));
+		int l = sb.length(); // should be 50, really
+		while ((l > 0) && (sb.charAt(l-1) == ' '))
+			l--;
+		sb.setLength(l);
+		fsParams.setMapDescription(sb.toString());
+
 		// ... more to do
 	}
 
