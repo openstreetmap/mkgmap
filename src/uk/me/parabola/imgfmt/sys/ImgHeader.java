@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Arrays;
 
 /**
  * The header at the very begining of the .img filesystem.  It has the
@@ -84,9 +85,11 @@ class ImgHeader {
 	private static final int OFF_END_CYLINDER = 0x1c5;
 	private static final int OFF_REL_SECTORS = 0x1c6;
 	private static final int OFF_NUMBER_OF_SECTORS = 0x1ca;
-
-
 	private static final int OFF_PARTITION_SIG = 0x1fe;
+
+	// Lengths of some of the fields
+	private static final int LEN_MAP_NAME_CONT = 30;
+	private static final int LEN_MAP_DESCRIPTION = 20;
 
 	private FileSystemParam fsParams;
 
@@ -206,19 +209,11 @@ class ImgHeader {
 		fsParams.setBlockSize(1 << (exp1 + exp2));
 		fsParams.setDirectoryStartBlock(header.get(OFF_DIRECTORY_START_BLOCK));
 
-		byte[] bytes = new byte[30];
 		StringBuffer sb = new StringBuffer();
-		header.position(OFF_MAP_DESCRIPTION);
-		header.get(bytes, 0, 20);
-		sb.append(new String(bytes, 0, 20));
-		header.position(OFF_MAP_NAME_CONT);
-		header.get(bytes, 0, 30);
-		sb.append(new String(bytes, 0, 30));
-		int l = sb.length(); // should be 50, really
-		while ((l > 0) && (sb.charAt(l-1) == ' '))
-			l--;
-		sb.setLength(l);
-		fsParams.setMapDescription(sb.toString());
+		sb.append(Utils.bytesToString(buf, OFF_MAP_DESCRIPTION, LEN_MAP_DESCRIPTION));
+		sb.append(Utils.bytesToString(buf, OFF_MAP_NAME_CONT, LEN_MAP_NAME_CONT));
+
+		fsParams.setMapDescription(sb.toString().trim());
 
 		// ... more to do
 	}
@@ -261,32 +256,29 @@ class ImgHeader {
 	 * @param desc The description.
 	 */
 	protected void setDescription(String desc) {
-		header.position(OFF_MAP_DESCRIPTION);
 		int len = desc.length();
 		if (len > 50)
 			throw new IllegalArgumentException("Description is too long (max 50)");
 		String part1, part2;
-		if (len > 20) {
-			part1 = desc.substring(0, 20);
-			part2 = desc.substring(20, len);
+		if (len > LEN_MAP_DESCRIPTION) {
+			part1 = desc.substring(0, LEN_MAP_DESCRIPTION);
+			part2 = desc.substring(LEN_MAP_DESCRIPTION, len);
 		} else {
 			part1 = desc.substring(0, len);
 			part2 = "";
 		}
 
+		header.position(OFF_MAP_DESCRIPTION);
 		header.put(toByte(part1));
-		for (int i = len; i < 20; i++) {
+		for (int i = len; i < LEN_MAP_DESCRIPTION; i++)
 			header.put((byte) ' ');
-		}
 
 		header.position(OFF_MAP_NAME_CONT);
 		header.put(toByte(part2));
-		int start = len - 20;
-		if (start < 0)
-			start = 0;
-		for (int i = start; i < 30; i++)
+		for (int i = Math.max(len - LEN_MAP_DESCRIPTION, 0); i < LEN_MAP_NAME_CONT; i++)
 			header.put((byte) ' ');
-		header.put((byte) 0);
+
+		header.put((byte) 0); // really?
 	}
 
 	/**
