@@ -23,6 +23,8 @@ import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.ReadStrategy;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -302,5 +304,40 @@ public class TREFile extends ImgFile {
 
 	public void setPoiDisplayFlags(byte b) {
 		header.setPoiDisplayFlags(b);
+	}
+
+	public String[] getCopyrights() {
+		List<String> msgs = new ArrayList<String>();
+
+		// First do the ones in the TRE header gap
+		ReadStrategy reader = getReader();
+		reader.position(TREHeader.HEADER_LEN);
+		while (reader.position() < TREHeader.HEADER_LEN + header.getMapInfoSize()) {
+			String m = reader.getZString();
+			msgs.add(m);
+		}
+
+		// Now get the copyright messages that are listed in the section.
+		Section sect = header.getCopyrightSection();
+
+		// TODO This needs the label section to work...
+		//
+		//long pos = sect.getPosition();
+		//while (pos < sect.getEndPos()) {
+		//	reader.position(pos);
+		//	int labelNum = header.getHeaderLength() + reader.get3();
+		//
+		//
+		//	System.out.println("position at " + labelNum);
+		//	reader.position(labelNum);
+		//	String m = reader.getZString();
+		//	System.out.println("C/R msg " + m);
+		//
+		//	msgs.add(m);
+		//
+		//	pos += sect.getItemSize();
+		//}
+
+		return msgs.toArray(new String[msgs.size()]);
 	}
 }

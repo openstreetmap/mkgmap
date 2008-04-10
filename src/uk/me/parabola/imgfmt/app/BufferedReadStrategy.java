@@ -156,6 +156,21 @@ public class BufferedReadStrategy implements ReadStrategy {
 	}
 
 	/**
+	 * Read a zero terminated string from the file.
+	 * @return A string
+	 * @throws ReadFailedException For failures.
+	 */
+	public String getZString() throws ReadFailedException {
+		StringBuffer sb = new StringBuffer();
+
+		// Slow but sure implementation.
+		for (byte b = get(); b != 0; b = get()) {
+			sb.append((char) b);
+		}
+		return sb.toString();
+	}
+
+	/**
 	 * Check to see if the buffer contains the byte at the current position.
 	 * If not then it is re-read so that it does.
 	 *

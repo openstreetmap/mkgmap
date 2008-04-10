@@ -70,7 +70,6 @@ public class TdbBuilder implements Combiner {
 		String familyName = args.get("family-name", "OSM map");
 
 		tdb.setProductInfo(familyId, productVersion, seriesName, familyName);
-		tdb.addCopyright("Coverted by mkgmap");
 	}
 
 	/**
@@ -110,6 +109,10 @@ public class TdbBuilder implements Combiner {
 		detail.setParentMapNumber(parent);
 
 		tdb.addDetail(detail);
+
+		String[] msgs = finfo.getCopyrights();
+		for (String m : msgs)
+			tdb.addCopyright(m);
 	}
 
 	/**

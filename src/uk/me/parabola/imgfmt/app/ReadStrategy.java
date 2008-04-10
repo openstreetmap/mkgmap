@@ -80,4 +80,11 @@ public interface ReadStrategy {
 	 * @param len The number of bytes to read.
 	 */
 	public byte[] get(int len) throws ReadFailedException;
+
+	/**
+	 * Read a zero terminated string from the file.
+	 * @return A string
+	 * @throws ReadFailedException For failures.
+	 */
+	public String getZString() throws ReadFailedException;
 }

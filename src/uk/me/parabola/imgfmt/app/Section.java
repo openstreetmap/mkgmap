@@ -72,7 +72,28 @@ public class Section {
 		this.position = position;
 	}
 
+	/**
+	 * Get the position of the end of the section.
+	 * @return
+	 */
 	public int getEndPos() {
 		return getPosition() + size;
+	}
+
+	public String toString() {
+		return "pos=" + position + ", size=" + size + ", itemSize=" + itemSize;
+	}
+
+	/**
+	 * Get the number of items in the section.  This should only be called
+	 * if the itemSize is set.
+	 * @return The number of items in the section, or zero if this is not
+	 * a fixed size item kind of section.
+	 */
+	public int getNumItems() {
+		if (itemSize == 0)
+			return 0;
+		
+		return size/itemSize;
 	}
 }

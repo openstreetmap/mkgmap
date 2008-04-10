@@ -76,7 +76,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 
 	/**
 	 * Create the appropriate converter from osm to garmin styles.
-	  *
+	 *
 	 * The option --style-file give the location of an alternate file or
 	 * directory containing styles rather than the default built in ones.
 	 *
