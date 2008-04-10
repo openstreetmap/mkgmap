@@ -105,7 +105,7 @@ class MapSplitter {
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
-			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE) {
+			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE && area.getBounds().getMaxDimention() > 100) {
 				if (log.isDebugEnabled())
 					log.debug("splitting area", area);
 				MapArea[] sublist = area.split(2, 2, res);
