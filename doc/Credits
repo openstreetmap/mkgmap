@@ -1,0 +1,37 @@
+
+General
+-------
+This project is almost entirely based on the file format specification
+document written by John Mechalas at the SourceForge project at
+http://sourceforge.net/projects/garmin-img.  The 'imgdecode' program
+from the same source was also very important in checking that I was
+on the right lines to producing a good file.
+
+Map features
+------------
+The original map features file was based on the files in OSMGarminMap
+by Jochen Topf.  The current file was also created by Jochen Topf.
+
+Additions have been made by a number of people notably by:
+Elrond, Roozbeh, Computerteddy
+
+Code patches
+------------
+
+Robert Vollmert:
+ - reading and changes to writing of "format-6" labels
+
+Elrond:
+ - put map names into the TDB file
+ - writing out section info
+
+
+Internationalisation
+--------------------
+Tomi B:
+ - idea for transliteration of non-ascii characters and testing of the Czech letters.
+
+Liosha:
+ - Russian transliteration.
+
+

@@ -1,3 +1,373 @@
+2008-04-12  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: Remove
+	  Scanner which is not available in GNU classpath. Once openjdk
+	  becomes available in all the linux distros, then we can consider
+	  using again, but it wasn't doing much good anyway.
+	* src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java:
+	  Remove the usage of Scanner. It ends up looking simpler anyway.
+
+2008-04-10  steve
+
+	* src/uk/me/parabola/mkgmap/build/MapSplitter.java: Temporary fix
+	  for the 'stack-overflow' problem.
+	* src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/ReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java: Fix
+	  insertion of the copyright strings from the individual files into
+	  the TDB file, a bit involved since it never worked after the
+	  rewrite of the TDB creation from existing files rather than on
+	  the fly.
+
+2008-04-08  steve
+
+	* resources/osm_garmin_map.csv: More map features from Elrond
+
+2008-04-07  steve
+
+	* src/uk/me/parabola/imgfmt/sys/ImgHeader.java: Use util routines
+	  for string manipulation.
+	  
+	  Clarify set description routine at the same time.
+
+2008-04-06  steve
+
+	* src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java: Improve tile
+	  names in MapSource: - Let ImgHeader read the Description from the
+	  .img - Use that description in writing out the .tdb (Elrond)
+	* src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java:
+	  Fix to prevent width or height getting too large
+	* src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java: Add
+	  the ability to redifine what is used as the name tag.
+
+2008-03-31  steve
+
+	* resources/map-features.csv, resources/osm_garmin_map.csv: Add
+	  living_street.
+	* src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java: Removed duplicate
+	  code and made constructor public again as it is used by the
+	  display branch. (Elrond)
+
+2008-03-20  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html: More on named
+	  styles.
+
+2008-03-15  steve
+
+	* src/uk/me/parabola/imgfmt/ReadFailedException.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Utf8Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/City.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Region.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Zip.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/filters/LineSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java: Code tidying.
+	* src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java:
+	  Styling development.
+	* resources/map-features.csv, resources/osm_garmin_map.csv:
+	  Riverbank is a polygon (strangely).
+
+2008-03-05  steve
+
+	* src/uk/me/parabola/tdbfmt/EndOfFileException.java,
+	  src/uk/me/parabola/tdbfmt/StructuredInputStream.java,
+	  src/uk/me/parabola/tdbfmt/StructuredOutputStream.java: Files that
+	  should have been removed in the last commit
+
+2008-03-04  steve
+
+	* src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/mps/MapBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/MapsetBlock.java,
+	  src/uk/me/parabola/imgfmt/mps/ProductBlock.java,
+	  src/uk/me/parabola/io,
+	  src/uk/me/parabola/io/EndOfFileException.java,
+	  src/uk/me/parabola/io/StructuredInputStream.java,
+	  src/uk/me/parabola/io/StructuredOutputStream.java,
+	  src/uk/me/parabola/tdbfmt/Block.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightBlock.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Fix package cycle.
+	* resources/garmin_feature_list.csv, resources/map-features.csv,
+	  resources/osm_garmin_map.csv: Patch by Elrond:
+	  
+	  - Add landuse=scrub and needed garmin feature - Add
+	  sport=swimming - Add newer osm names for existing features:
+	  shop=supermarket (former: amenity=supermarket) tourism=museum
+	  (former: historic=museum)
+
+2008-03-03  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java: Fix location of flag
+	  and part number in the directory entry.
+
+2008-03-02  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java: The
+	  new styled converter
+	* src/uk/me/parabola/mkgmap/reader/osm/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java: A new
+	  styling system to replace the existing single file one.
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Utf8Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Utf8Encoder.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java: work on
+	  character encodings. Preparation for none 8 bit encodings.
+
+2008-02-17  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/CodedConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm4MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way4.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java: Removed
+	  osm api version 0.4 code. Moved the setting of the element name
+	  into the converter, currently the same code, but will allow ofr
+	  more sophisticated treatment of names as required for
+	  international use and special purpose maps.
+
+2008-02-16  steve
+
+	* resources/map-features.csv, resources/osm_garmin_map.csv: Applied
+	  to wrong branch so merged from bigtre 540,541: --- Patch by
+	  Elrond:
+	  
+	  * Added "ground-transportation" for bus-stops, tram-stops, and
+	  railway-halts * bakery is better found under grocery than under
+	  xxx4 * Add landuse=village_green ---
+
+2008-02-09  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Deal with elevation data on contours that is given in meters.
+
+2008-02-03  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/trergn/Polyline.java,
+	  src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/build/MapArea.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/filters/RemoveEmpty.java,
+	  src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java,
+	  src/uk/me/parabola/mkgmap/general/LoadableMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMap.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java,
+	  test, test/README: Background and sizing fixes. Should fix
+	  problem with triangular background areas and areas that don't
+	  cover the tile properly.
+
+2008-01-30  steve
+
+	* src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java: Fix the file merging
+	  code when there is more than one FILE_KIND file with the same or
+	  no mapname.
+
+2008-01-27  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java: Don't
+	  copy the MPS file, if there should be one in the input files.
+	* src/uk/me/parabola/imgfmt/mps/MapBlock.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java, test: Start
+	  to allow configuration of the various parameters in the TDB etc
+	  files.
+
+2008-01-26  steve
+
+	* resources/garmin_feature_list.csv, resources/osm_garmin_map.csv:
+	  Just adding allotments and hostels. (Elrond)
+
+2008-01-21  steve
+
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java: Get the format
+	  decoder right on reading the LBL file.
+
+2008-01-19  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/Format6Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java:
+	  Decode the format-6 label format (Robx)
+	* src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java: Factor out
+	  writing the section information (patch by Elrond)
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/MapCollector.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/general/MapShape.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmXmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Add a background polygon to the map.
+	* src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java: Sizing
+	  of reserved blocks now works again after allowing for more files.
+	  It is still possible for the MPS file to overflow it I guess.
+	* src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java: Wasn't
+	  setting the size of the point records correctly, resulting in not
+	  all points showing up in find categories. This shows that the
+	  garmin devices actually take note of that field - and imgdeocde
+	  doesn't.
+
+2008-01-18  steve
+
+	* src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java: Improve
+	  behaviour of read when out of range of the file.
+	* src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java:
+	  Calculate the size for the gmapsupp file including all files and
+	  not just the basic three.
+
+2008-01-17  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/SimpleDecoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java: net and lbl
+	  changes
+	* src/uk/me/parabola/mkgmap/CommandArgs.java: Fix the default code
+	  page which was always supposed to be 1252
+
+2008-01-14  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Look up polygons before lines. Therefore if there is a tagging
+	  conflict then the one that specifies an area wins.
+
+2008-01-12  steve
+
+	* Makefile: Read files from within the img file where possible.
+
+2008-01-08  steve
+
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java,
+	  src/uk/me/parabola/mkgmap/build/MapArea.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: More
+	  implementation of the city indexed points.
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Allow more than one map feature to match and take the one that is
+	  first in the map-features file.
+
+2008-01-06  steve
+
+	* src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFactory.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/City.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Country.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Region.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Zip.java,
+	  src/uk/me/parabola/imgfmt/app/net,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadIndex.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/Version.java: A lot of initial code for
+	  cities and the NET section.
+
+2008-01-03  steve
+
+	* src/uk/me/parabola/imgfmt/app/labelenc/BaseEncoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin1Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLang10Map.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java: Add a --lower-case
+	  option it may be useful for the nuvi etc.
+
+2008-01-02  steve
+
+	* resources/map-features.csv, resources/osm_garmin_map.csv: Patch
+	  to add a couple of features. Submitted by Elrond.
+	* ChangeLog, Makefile,
+	  src/uk/me/parabola/mkgmap/ArgumentProcessor.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java: Update changelog
+	  makefile add javadoc comment, etc
+
 2008-01-01  steve
 
 	* src/uk/me/parabola/imgfmt/app/Section.java,

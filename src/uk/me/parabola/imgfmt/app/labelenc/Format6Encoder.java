@@ -178,6 +178,14 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		return buf;
 	}
 
+	/**
+	 * Load one row of characters.  This means unicode characters that are
+	 * of the form U+RRXX where RR is the row.
+	 * @param row Row number 0-255.
+	 * @return An array of strings, one for each character in the row.  If there
+	 * is no ascii representation then a '?' character will fill that
+	 * position.
+	 */
 	private String[] loadRow(int row) {
 		if (rows[row] != null)
 			return rows[row];
@@ -226,9 +234,9 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 			String[] fields = line.split("\\s+");
 			String upoint = fields[0];
 			String translation = fields[1];
-			if (upoint.charAt(0) != 'U') continue;
+			if (upoint.length() != 6 || upoint.charAt(0) != 'U') continue;
 
-			// The first field must look like 'U+CCXX', we extract the XX part
+			// The first field must look like 'U+RRXX', we extract the XX part
 			int index = Integer.parseInt(upoint.substring(4), 16);
 			newRow[index] = translation.toUpperCase(Locale.ENGLISH);
 		}

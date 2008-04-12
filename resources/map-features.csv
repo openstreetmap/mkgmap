@@ -4,6 +4,7 @@ point|amenity|bank|0x2f|0x06|21
 point|amenity|bank;atm|0x2f|0x06|21
 point|amenity|biergarten|0x2d|0x02|21
 point|amenity|bus_station|0x2f|0x08|21
+point|amenity|cafe|0x2a|0x0e|21
 point|amenity|car_wash|0x2f|0x0e|21
 point|amenity|cinema|0x2d|0x03|20
 point|amenity|college|0x2c|0x05|21
@@ -56,6 +57,7 @@ point|shop|bakery|0x2e|0x02|20
 point|shop|butchers|0x2e|0x00|20
 point|shop|supermarket|0x2e|0x02|20
 point|sport|swimming|0x2d|0x09|20
+point|tourism|attraction|0x2c|0x04|20
 point|tourism|camp_site|0x2b|0x03|20
 point|tourism|caravan_site|0x2b|0x03|20
 point|tourism|hostel|0x2b|0x02|20
@@ -78,6 +80,7 @@ polygon|landuse|cemetery|0x1a||18
 polygon|landuse|forest|0x50||18
 polygon|landuse|industrial|0x0c||18
 polygon|landuse|reservoir|0x3f||18
+polygon|landuse|retail|0x08||20
 polygon|landuse|village_green|0x17||20
 polygon|leisure|common|0x17||20
 polygon|leisure|garden|0x17||20

@@ -72,10 +72,11 @@
 			<include name="*.csv"/>
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
+			<include name="styles/**"/>
     </jar>
 
 		<copy todir="${dist}/doc" >
-			<fileset dir="doc" includes="*.txt"/>
+			<fileset dir="doc" includes="*.txt, Credits"/>
     </copy>
 
     <!-- Copy the source code -->
@@ -112,6 +113,8 @@
 				<include name="*.csv"/>
 				<include name="*.properties"/>
 				<include name="**/*.trans"/>
+				<include name="styles/**"/>
+				<exclude name="**/.*"/>
 			</fileset>
 		</copy>
   </target>
