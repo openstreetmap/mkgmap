@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.FileNotFoundException;
-import java.io.Reader;
-import java.io.IOException;
-import java.util.Scanner;
-
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Reader;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -44,7 +44,7 @@ public class Style {
 	private static final String FILE_OPTIONS = "options";
 
 	private final StyleFileLoader fileLoader;
-	private String[] nameChoices;
+	private String[] nameTagList;
 
 	/**
 	 * Create a style from the given location and name.
@@ -65,14 +65,13 @@ public class Style {
 	}
 
 	private void readOptions() {
-		System.out.println("checking options");
 		try {
 			Reader r = fileLoader.open(FILE_OPTIONS);
-			Scanner scan = new Scanner(r);
+			BufferedReader br = new BufferedReader(r);
 
-			while (scan.hasNextLine()) {
-				String s = scan.nextLine().trim();
-				System.out.println("line is " + s);
+			String line;
+			while ((line = br.readLine()) != null) {
+				String s = line.trim();
 
 				if (s.length() == 0 || s.charAt(0) == '#')
 					continue;
@@ -87,14 +86,20 @@ public class Style {
 				}
 			}
 		} catch (FileNotFoundException e) {
-			// the file is optional, so ignore if not present.
+			// the file is optional, so ignore if not present, or causes error
 			log.debug("no options file");
+		} catch (IOException e) {
+			log.warn("error reading options file");
 		}
 	}
 
 	private void processOption(String opt, String val) {
 		if (opt.equals("name-tag-list")) {
-			nameChoices = val.split("[,\\s]+");
+			// The name-tag-list allows you to redifine what you want to use
+			// as the name of a feature.  By default this is just 'name', but
+			// you can supply a list of tags to use
+			// instead eg. "name:en,int_name,name"
+			nameTagList = val.split("[,\\s]+");
 		}
 	}
 
@@ -116,7 +121,7 @@ public class Style {
 
 	private void checkVersion() throws FileNotFoundException {
 		Reader r = fileLoader.open(FILE_VERSION);
-		Scanner scan = new Scanner(r);
+		WordScanner scan = new WordScanner(r);
 		int version = scan.nextInt();
 		log.debug("Got version " + version);
 
@@ -126,7 +131,7 @@ public class Style {
 		}
 	}
 
-	public String[] getNameTags() {
-		return nameChoices;
+	public String[] getNameTagList() {
+		return nameTagList;
 	}
 }

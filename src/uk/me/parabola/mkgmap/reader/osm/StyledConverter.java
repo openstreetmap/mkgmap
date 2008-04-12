@@ -41,7 +41,7 @@ public class StyledConverter implements OsmConverter {
 		String name = config.getProperty("style");
 		Style style = new Style(loc, name);
 		
-		nameTagList = style.getNameTags();
+		nameTagList = style.getNameTagList();
 
 		try {
 			featureConverter = style.makeConverter(collector);
