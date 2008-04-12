@@ -18,11 +18,13 @@ package uk.me.parabola.imgfmt.app.labelenc;
 
 import uk.me.parabola.log.Logger;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.Locale;
-import java.util.Scanner;
 
 /**
  * Format according to the '6 bit' .img format.  The text is first upper
@@ -192,7 +194,11 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		log.debug("getting file name", name);
 		InputStream is = getClass().getResourceAsStream(name.toString());
 
-		readCharFile(is, newRow);
+		try {
+			readCharFile(is, newRow);
+		} catch (IOException e) {
+			log.error("Could not read character translation table");
+		}
 
 		return newRow;
 	}
@@ -205,33 +211,26 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 * @param is The open file to be read.
 	 * @param newRow The row that we fill in with strings.
 	 */
-	private void readCharFile(InputStream is, String[] newRow) {
+	private void readCharFile(InputStream is, String[] newRow) throws IOException {
 		if (is == null)
 			return;
 
-		Scanner scan = new Scanner(is, "ascii");
-		while (scan.hasNext()) {
-			log.debug("line in trans table");
-			if (scan.hasNext("#.*")) {
-				scan.next();
-				scan.nextLine();
+		BufferedReader br = new BufferedReader(new InputStreamReader(is, "ascii"));
+
+		String line;
+		while ((line = br.readLine()) != null) {
+			line = line.trim();
+			if (line.length() == 0 || line.charAt(0) == '#')
 				continue;
-			}
-			
 
-			if (scan.hasNext("U\\+[0-9A-Fa-f]{4}")) {
-				String s = scan.next();
+			String[] fields = line.split("\\s+");
+			String upoint = fields[0];
+			String translation = fields[1];
+			if (upoint.charAt(0) != 'U') continue;
 
-				if (scan.hasNext()) {
-					String trans = scan.next();
-
-					int ind = Integer.parseInt(s.substring(4), 16);
-					log.info("setting trans table", ind, trans);
-					newRow[ind] = trans.toUpperCase(Locale.ENGLISH);
-				}
-			}
-
-			scan.nextLine();
+			// The first field must look like 'U+CCXX', we extract the XX part
+			int index = Integer.parseInt(upoint.substring(4), 16);
+			newRow[index] = translation.toUpperCase(Locale.ENGLISH);
 		}
 	}
 }
