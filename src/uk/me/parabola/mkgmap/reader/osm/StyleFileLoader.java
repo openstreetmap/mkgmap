@@ -60,8 +60,14 @@ public abstract class StyleFileLoader {
 			log.debug("style directory", dir);
 			loader = new DirectoryFileLoader(dir);
 		} else if (f.isFile()) {
-			log.debug("jar file", f);
-			loader = new JarFileLoader(f, name);
+			String loclc = loc.toLowerCase();
+			if (loclc.endsWith(".style") || loclc.endsWith(".csv")) {
+				log.debug("a single file style");
+				loader = new CombinedStyleFileLoader(loc);
+			} else {
+				log.debug("jar file", f);
+				loader = new JarFileLoader(f, name);
+			}
 		} else {
 			log.debug("style url location", loc);
 			String s = loc.toLowerCase();

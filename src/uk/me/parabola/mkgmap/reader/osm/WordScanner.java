@@ -53,17 +53,22 @@ public class WordScanner {
 		char ch;
 		while ((ch = nextChar()) != -1) {
 			if (Character.isLetterOrDigit(ch)) {
+				sb.append(ch);
+			} else {
 				reset();
 				break;
-			} else {
-				sb.append(ch);
 			}
 		}
 		return sb.toString();
 	}
 
 	/**
-	 * If the next character is a space, then skip all space.
+	 * If the next character is a space, then skip all space. After returning
+	 * then the next character to be read will not be a space.  The position
+	 * in the file is not changed if it was already pointing at a non-space
+	 * character.
+	 *
+	 * If end of file is reached then an exception is thrown.
 	 */
 	public void skipSpace() {
 		char ch;

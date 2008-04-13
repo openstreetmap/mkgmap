@@ -1,0 +1,4 @@
+
+A style consists of a number of files in a single directory.
+===File version===
+This file must exist to recognise
