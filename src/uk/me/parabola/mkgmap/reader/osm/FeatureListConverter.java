@@ -146,17 +146,21 @@ class FeatureListConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
+		GarminType foundType = null;
 
 		// Try looking for polygons first.
 		for (String tagKey : way) {
 			GarminType gt = shapeFeatures.get(tagKey);
-			if (gt != null) {
-				addShape(way, gt);
-				return;
+			if (gt != null && (foundType == null || gt.isBetter(foundType))) {
+				foundType = gt;
 			}
 		}
 
-		GarminType foundType = null;
+		if (foundType != null) {
+			addShape(way, foundType);
+			return;
+		}
+
 		String foundKey = null;
 		for (String tagKey : way) {
 			// See if this is a line feature
