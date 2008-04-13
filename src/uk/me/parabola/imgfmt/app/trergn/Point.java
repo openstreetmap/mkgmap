@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -34,6 +35,9 @@ public class Point extends MapObject {
 	// Points can have a subtype, eg for restaurant the subtype might be the
 	// kind of food served.
 	private int subtype;
+
+	// Points can link to a POIRecord
+	private POIRecord poi;
 
 	public Point(Subdivision div) {
 		setSubdiv(div);
@@ -53,6 +57,10 @@ public class Point extends MapObject {
 		int off = getLabel().getOffset();
 		if (subtype != 0)
 			off |= 0x800000;
+		if (poi != null) {
+			// off = poi.getOffset();
+			// off |= 0x400000;
+		}
 
 		file.put3(off);
 		file.putChar((char) getDeltaLong());

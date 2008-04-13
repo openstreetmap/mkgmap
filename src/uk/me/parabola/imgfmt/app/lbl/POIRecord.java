@@ -52,6 +52,10 @@ public class POIRecord {
 
 	private String phoneNumber;
 
+	public void setLabel(Label label) {
+		this.poiName = label;
+	}
+
 	void write(WriteStrategy writer) {
 		// not implemented yet
 	}

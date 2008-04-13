@@ -21,6 +21,8 @@ import uk.me.parabola.imgfmt.app.WriteStrategy;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -33,7 +35,7 @@ public class PlacesFile {
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
-	private final Map<String, POIRecord> pois = new LinkedHashMap<String, POIRecord>();
+	private final List<POIRecord> pois = new ArrayList<POIRecord>();
 
 	private LBLFile lblFile;
 	private PlacesHeader placeHeader;
@@ -67,7 +69,7 @@ public class PlacesFile {
 			z.write(writer);
 		placeHeader.endZip(writer.position());
 
-		for (POIRecord p : pois.values())
+		for (POIRecord p : pois)
 			p.write(writer);
 	}
 
@@ -113,10 +115,14 @@ public class PlacesFile {
 		return z;
 	}
 
-	POIRecord createPOI() {
+	POIRecord createPOI(String name) {
 		// TODO...
 		POIRecord p = new POIRecord();
-		pois.put("xx", p);
+
+		Label l = lblFile.newLabel(name);
+		p.setLabel(l);
+
+		pois.add(p);
 		return p;
 	}
 }
