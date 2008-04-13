@@ -25,6 +25,6 @@ import java.io.IOException;
 public class FileNotWritableException extends IOException {
 	public FileNotWritableException(String s, Exception e) {
 		// super class does not have the constructor that takes an exception
-		super(s);
+		super(s + ' ' + e.getMessage());
 	}
 }

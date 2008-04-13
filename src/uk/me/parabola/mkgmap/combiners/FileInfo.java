@@ -269,7 +269,7 @@ public class FileInfo {
 		}
 	}
 
-	public void setCopyrights(String[] copyrights) {
+	protected void setCopyrights(String[] copyrights) {
 		this.copyrights = copyrights;
 	}
 

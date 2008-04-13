@@ -33,7 +33,7 @@ import java.io.Reader;
  *
  * @author Steve Ratcliffe
  */
-public class Style {
+class Style {
 	private static final Logger log = Logger.getLogger(Style.class);
 
 	private static final int VERSION = 0;

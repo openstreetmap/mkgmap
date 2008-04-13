@@ -74,7 +74,8 @@ public class Section {
 
 	/**
 	 * Get the position of the end of the section.
-	 * @return
+	 * @return The offset of the end of the section relative to the beginning
+	 * of the application file.
 	 */
 	public int getEndPos() {
 		return getPosition() + size;

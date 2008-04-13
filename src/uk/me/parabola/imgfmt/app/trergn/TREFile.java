@@ -318,7 +318,7 @@ public class TREFile extends ImgFile {
 		}
 
 		// Now get the copyright messages that are listed in the section.
-		Section sect = header.getCopyrightSection();
+		//Section sect = header.getCopyrightSection();
 
 		// TODO This needs the label section to work...
 		//

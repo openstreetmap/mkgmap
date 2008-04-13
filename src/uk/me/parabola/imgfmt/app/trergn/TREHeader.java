@@ -99,7 +99,7 @@ public class TREHeader extends CommonHeader {
 		System.out.println("SECT " + sect);
 	}
 
-	public void writeSectionInfo(WriteStrategy writer, Section section) {
+	protected void writeSectionInfo(WriteStrategy writer, Section section) {
 		writer.putInt(section.getPosition());
 		writer.putInt(section.getSize());
 		writer.putChar(section.getItemSize());

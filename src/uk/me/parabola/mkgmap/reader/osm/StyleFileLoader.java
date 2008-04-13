@@ -96,7 +96,7 @@ public abstract class StyleFileLoader {
 	 *
 	 * @return The loader.
 	 */
-	public static StyleFileLoader createStyleLoaderByName(String name)
+	private static StyleFileLoader createStyleLoaderByName(String name)
 			throws FileNotFoundException
 	{
 		return createStyleLoader("classpath:styles", name);

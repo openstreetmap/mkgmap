@@ -50,7 +50,7 @@ import java.util.Map;
 public class CombinedStyleFileLoader extends StyleFileLoader {
 	private static final Logger log = Logger.getLogger(CombinedStyleFileLoader.class);
 
-	private Map<String, String> files = new HashMap<String, String>();
+	private final Map<String, String> files = new HashMap<String, String>();
 
 	public CombinedStyleFileLoader(String filename) throws FileNotFoundException {
 		Reader in = new FileReader(filename);

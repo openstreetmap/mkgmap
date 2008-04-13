@@ -29,10 +29,10 @@ import java.util.NoSuchElementException;
  *
  * @author Steve Ratcliffe
  */
-public class WordScanner {
-	private BufferedReader reader;
+class WordScanner {
+	private final BufferedReader reader;
 
-	public WordScanner(Reader r) {
+	WordScanner(Reader r) {
 		reader = new LineNumberReader(r);
 	}
 
@@ -70,7 +70,7 @@ public class WordScanner {
 	 *
 	 * If end of file is reached then an exception is thrown.
 	 */
-	public void skipSpace() {
+	protected void skipSpace() {
 		char ch;
 		while ((ch = nextChar()) != -1) {
 			if (!Character.isWhitespace(ch)) {

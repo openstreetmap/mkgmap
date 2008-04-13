@@ -1,4 +1,67 @@
+{|
+|-
+| style="padding: 5px 50px" | ''Under construction, the new style features are under development and this documentation may not be completely aligned with the implementation''
+|}
 
+This page shows you how to design your own mkgmap style.
+A style is used to choose which OSM map features appear in the
+Garmin map and what Garmin symbols are used.
+
+As there are many different purposes a map may used for, the default
+style in mkgmap will not be ideal for everyone.  So a mechanism to allow
+different named styles to be included within mkgmap has been developed.
+You can also create and use styles external to mkgmap.
+
+==Writing a style==
 A style consists of a number of files in a single directory.
-===File version===
-This file must exist to recognise
+The best way is to start out with an existing style that is close to what
+you want and then work from there. ''TODO: link to example template''
+
+A complete description of the format of all the files that make up a
+style follows.
+
+===First steps===
+Choose a short name for your style, it should be one word or a couple of
+words joined by and underscore or hyphen.  This is how people will refer
+to the style when it is finished.
+
+Create a directory or folder with that name.  Then you must create
+several files in this directory as detailed below.  Only the ''version''
+and ''map-features.csv'' files are required in the current version.
+
+===version===
+
+This file must exist as it is used to recognise a valid style.
+It contains the version number of the style format itself (not the
+version of the particular style) and it should contain a single
+number which currently should be zero.
+Make sure that there is a new line after the number, place an empty line
+afterwards to be sure.
+
+===map-features.csv===
+For backward compatibility this file is exactly the same as the file that
+previously used to hold the styling rules.  As the new format advances
+then this file will become less important.
+
+Currently though, it contains all the style information, see the
+old [[Mkgmap/help/custom|mkgmap style customisation page]] for details
+of the contents of this file.
+
+===options===
+This file contains a number of options that should be set for this style.
+In some cases they can also be set on the command line to override the
+choice of the style designer.
+
+==Testing a style==
+You can test your style by calling mkgmap with the
+<code>--style-file</code> argument and the name of the directory or
+folder that contains the style.
+
+ ... --style-file=path-to-style ...
+
+==Packaging a style==
+A style can be used just as it was created, but if you want to make it
+available to others it will be easier if you make a zip file out of it
+and then you just have the one file to distribute.
+
+Several different styles can be placed into the same zip archive file.

@@ -92,10 +92,9 @@ public class CodeFunctions {
 	 * when reading from an existing file.
 	 *
 	 * @param format The format from the lbl header.
-	 * @param codePage The code page parameter.  Will be ignored if not relavent.
 	 * @return The various character set parameters that will be needed.
 	 */
-	public static CodeFunctions createEncoderForLBL(int format, int codePage) {
+	public static CodeFunctions createEncoderForLBL(int format) {
 		CodeFunctions funcs = new CodeFunctions();
 
 		if (format == ENCODING_FORMAT6) {
