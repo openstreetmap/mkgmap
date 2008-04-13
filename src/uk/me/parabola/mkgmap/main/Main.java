@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -71,7 +72,7 @@ public class Main implements ArgumentProcessor {
 		// We need at least one argument.
 		if (args.length < 1) {
 			System.err.println("Usage: mkgmap [options...] <file.osm>");
-			optionsHelp();
+			printHelp(System.err, getLang(), "options");
 			System.exit(1);
 		}
 
@@ -88,13 +89,17 @@ public class Main implements ArgumentProcessor {
 	}
 
 	/**
-	 * Grab the options help file and print it.  There are a lot of
-	 * options.
+	 * Grab the options help file and print it.
+	 * @param err The output print stream to write to.
+	 * @param lang A language hint.  The help will be displayed in this
+     * language if it has been translated.
+	 * @param file The help file to display.
 	 */
-	private static void optionsHelp() {
-		InputStream stream = Main.class.getResourceAsStream("/help/en/options");
+	private static void printHelp(PrintStream err, String lang, String file) {
+		String path = "/help/" + lang + '/' + file;
+		InputStream stream = Main.class.getResourceAsStream(path);
 		if (stream == null) {
-			System.err.println("Could not find the option help, sorry");
+			err.println("Could not find the help topic: " + file + ", sorry");
 			return;
 		}
 
@@ -102,9 +107,9 @@ public class Main implements ArgumentProcessor {
 		try {
 			String line;
 			while ((line = r.readLine()) != null)
-				System.err.println(line);
+				err.println(line);
 		} catch (IOException e) {
-			System.err.println("Could not read the option help, sorry");
+			err.println("Could not read the help topic: " + file + ", sorry");
 		}
 	}
 
@@ -160,7 +165,16 @@ public class Main implements ArgumentProcessor {
 			addCombiner(new TdbBuilder());
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
+		} else if (opt.equals("help")) {
+			if (val.equals("1"))
+				printHelp(System.out, getLang(), "help");
+			else
+				printHelp(System.out, getLang(), val);
 		}
+	}
+
+	private static String getLang() {
+		return "en";
 	}
 
 	private void addCombiner(Combiner combiner) {

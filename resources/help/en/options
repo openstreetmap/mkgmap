@@ -16,10 +16,6 @@ Options:
 	Sets the descriptive text for the map. This may be displayed in
 	QLandkarte, MapSource on on a GPS etc. 
 
---map-features=file
-	Use your own map features file. You can totally change which features
-	are shown and at what levels. See customisation help. 
-
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom levels
 	in the device. See customisation help. The default is the equivalent
@@ -34,3 +30,26 @@ Options:
 	will convert accented characters that cannot be displayed in the chosen
 	character set into unaccented characters. 
 
+--style=name
+	Specify a different style name, rather than the default.
+
+--style-file=file
+	Specify an external file to obtain the style from.  "file" can be a
+	directory or a zip file containing the style.  It can also be a URL.
+	If there is more than one style in the zip file, then the --style
+	argument can be used to select.
+
+	For backward compatibility, you can also supply a map-features.csv file
+	here.  See the customisation help.
+
+--map-features=file
+	Outdated option, use the --style-file option now.
+
+--name-tag-list
+	Get the tag that will be used to supply the name.  Useful for language
+	variations.  You can supply a list and the first one will be used.
+	eg. --name-tag-list=name:en,int_name,name
+
+--help=topic
+	Print help on the given topic.  The topic is ommited the a list of all
+	the help topics is printed instead.

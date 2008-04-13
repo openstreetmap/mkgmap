@@ -6,26 +6,14 @@
 #
 
 #OSMDATA = areas.osm
-OSMDATA = /opt/data/planet-070207-gb-london.osm
 #OSMDATA = 63240001.mp
 OSMDATA = localtest/osm5/cricklewood-5.osm
-#OSMDATA = london.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
-##OSMDATA = /opt/data/uk-070530.osm.gz
-##OSMDATA = /opt/data/uk-070815.osm.gz
-##OSMDATA = /opt/data/uk-070919-1.osm.gz
-OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
-OSMDATA = /opt/data/uk-071010-1.osm.gz
-#OSMDATA = vbig.osm
-#OSMDATA = clondon.osm
-#OSMDATA = /opt/data/multi/6324*
+#OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
+#OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/osm5/srtm.osm
-#OSMDATA = --levels=0:24,1:23,2:22,3:21,4:20,5:19,6:18,7:17 /opt/data/planet-070207-gb-london.osm
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
-#OSMDATA = --levels="0=24,1=22" --latin1 /opt/data/osmworld/63254855.gz
-#OSMDATA = /opt/data/osmworld/63260003
-#OSMDATA = --gmapsupp ~/tmp/batch/*.osm
 #OSMDATA = /opt/data/uk-071114.osm.gz
 #OSMDATA = localtest/osm5/reg40.osm
 #OSMDATA = localtest/osm5/longline.osm
@@ -34,7 +22,8 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = --tdbfile maps/img/*.img
 #OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
-OSMDATA = seqld.osm.gz
+#OSMDATA = seqld.osm.gz
+OSMDATA = --style=default --name-tag-list='name:en int_name name' test.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
@@ -44,8 +33,8 @@ OPTS= --tdbfile --gmapsupp
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
-	#cp 63240001.img gmapsupp.img
-	#imgdecode gmapsupp.img
+	cp 63240001.img gmapsupp.img
+	imgdecode gmapsupp.img
 
 t:
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)

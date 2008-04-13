@@ -1,5 +1,46 @@
+2008-04-13  steve
+
+	* doc/style.txt,
+	  src/uk/me/parabola/imgfmt/FileNotWritableException.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/CodeFunctions.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: Code tidy
+	  up.
+	* build.xml, src/uk/me/parabola/mkgmap/main/Main.java: Actually get
+	  the option help into the archive and fix typo in message.
+	* build.xml, resources/help, resources/help/en,
+	  resources/help/en/options,
+	  src/uk/me/parabola/mkgmap/main/Main.java: Add an options help
+	  file.
+	* doc/style.txt, resources/styles/default/map-features.csv,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: In
+	  addition to zip file archives, add a simple single file archive
+	  type. This also provides backward compatibility with the single
+	  map-features.csv file.
+
 2008-04-12  steve
 
+	* ChangeLog, build.xml, doc/Credits, resources/map-features.csv,
+	  resources/styles, resources/styles/default,
+	  resources/styles/default/options,
+	  resources/styles/default/version, resources/styles/test,
+	  resources/styles/test/version,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java: Add
+	  new style directory, tidy up and update. Add Credits file and
+	  make build.xml copy it in.
 	* src/uk/me/parabola/mkgmap/reader/osm/Style.java,
 	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
 	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: Remove
