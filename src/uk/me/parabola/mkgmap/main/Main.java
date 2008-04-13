@@ -94,7 +94,7 @@ public class Main implements ArgumentProcessor {
 	private static void optionsHelp() {
 		InputStream stream = Main.class.getResourceAsStream("/help/en/options");
 		if (stream == null) {
-			System.err.println("Could not file the option help, sorry");
+			System.err.println("Could not find the option help, sorry");
 			return;
 		}
 

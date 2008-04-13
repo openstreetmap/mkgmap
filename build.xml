@@ -73,6 +73,7 @@
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
 			<include name="styles/**"/>
+			<include name="help/**"/>
     </jar>
 
 		<copy todir="${dist}/doc" >
