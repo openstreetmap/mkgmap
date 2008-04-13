@@ -26,6 +26,10 @@ import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
 
 import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,7 +70,8 @@ public class Main implements ArgumentProcessor {
 
 		// We need at least one argument.
 		if (args.length < 1) {
-			System.err.println("Usage: mkgmap <file.osm>");
+			System.err.println("Usage: mkgmap [options...] <file.osm>");
+			optionsHelp();
 			System.exit(1);
 		}
 
@@ -79,6 +84,27 @@ public class Main implements ArgumentProcessor {
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
 			System.exit(1);
+		}
+	}
+
+	/**
+	 * Grab the options help file and print it.  There are a lot of
+	 * options.
+	 */
+	private static void optionsHelp() {
+		InputStream stream = Main.class.getResourceAsStream("/help/en/options");
+		if (stream == null) {
+			System.err.println("Could not file the option help, sorry");
+			return;
+		}
+
+		BufferedReader r = new BufferedReader(new InputStreamReader(stream));
+		try {
+			String line;
+			while ((line = r.readLine()) != null)
+				System.err.println(line);
+		} catch (IOException e) {
+			System.err.println("Could not read the option help, sorry");
 		}
 	}
 

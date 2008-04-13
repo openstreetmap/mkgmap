@@ -1,0 +1,36 @@
+Options:
+
+-c filename
+	The given file is opened and each line is an option setting of the form
+	option=value, just like on the command line except that there is no
+	leading '--'. 
+
+-n name
+--mapname=name
+	Change the name of the map. Garmin maps are named by 8 digit numbers.
+	The default is 63240001. It is best to change the name if you are going
+	to be making a map for others to use so that it is unique and does not
+	clash with others. 
+
+--description=text
+	Sets the descriptive text for the map. This may be displayed in
+	QLandkarte, MapSource on on a GPS etc. 
+
+--map-features=file
+	Use your own map features file. You can totally change which features
+	are shown and at what levels. See customisation help. 
+
+--levels=levels code
+	Change the way that the levels on the map correspond to the zoom levels
+	in the device. See customisation help. The default is the equivalent
+	of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16" although this may change. 
+
+--latin1
+	This option allows the use of non-ascii characters in street names. It
+	is hardware dependant what is actually supported on a particular
+	device. Some devices can only do ascii characters for example. 
+
+	Mkgmap goes to some length to convert un-displayable characters however. It
+	will convert accented characters that cannot be displayed in the chosen
+	character set into unaccented characters. 
+
