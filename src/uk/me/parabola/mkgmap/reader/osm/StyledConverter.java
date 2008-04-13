@@ -40,6 +40,8 @@ public class StyledConverter implements OsmConverter {
 		String loc = config.getProperty("style-file");
 		String name = config.getProperty("style");
 		Style style = new Style(loc, name);
+
+		style.applyOptionOverride(config);
 		
 		nameTagList = style.getNameTagList();
 

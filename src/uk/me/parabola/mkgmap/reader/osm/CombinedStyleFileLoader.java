@@ -45,6 +45,11 @@ import java.util.Map;
  * <p>All lines after the header and before the next header or end of file
  * are part of the named file.
  *
+ * <p>If there are no headers in the file, then we create a fake version 0
+ * file and place the complete file in the name 'map-features.csv'.  This
+ * allows us to wrap an existing map-features.csv file in the new style
+ * system.
+ * 
  * @author Steve Ratcliffe
  */
 public class CombinedStyleFileLoader extends StyleFileLoader {

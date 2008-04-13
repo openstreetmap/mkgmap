@@ -23,6 +23,9 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Properties;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -55,7 +58,7 @@ class Style {
 	 * @throws FileNotFoundException If the file doesn't exist.  This can
 	 * include the version file being missing.
 	 */
-	public Style(String loc, String name) throws FileNotFoundException {
+	Style(String loc, String name) throws FileNotFoundException {
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
 		// There must be a version file, if not then we don't create the style.
@@ -64,6 +67,26 @@ class Style {
 		readOptions();
 	}
 
+	/**
+	 * After the style is loaded we override any options that might
+	 * have been set in the style itself with the command line options.
+	 *
+	 * We may have to filter some options that we don't ever want to
+	 * set on the command line.
+	 *
+	 * @param config The command line options.
+	 */
+	void applyOptionOverride(Properties config) {
+		Set<Map.Entry<Object,Object>> entries = config.entrySet();
+		for (Map.Entry<Object,Object> ent : entries) {
+			processOption((String) ent.getKey(), (String) ent.getValue());
+		}
+	}
+
+	/**
+	 * If there is an options file, then read it and keep options that
+	 * we are interested in.
+	 */
 	private void readOptions() {
 		try {
 			Reader r = fileLoader.open(FILE_OPTIONS);
@@ -98,7 +121,8 @@ class Style {
 			// The name-tag-list allows you to redifine what you want to use
 			// as the name of a feature.  By default this is just 'name', but
 			// you can supply a list of tags to use
-			// instead eg. "name:en,int_name,name"
+			// instead eg. "name:en,int_name,name" or you could use some
+			// completely different tag...
 			nameTagList = val.split("[,\\s]+");
 		}
 	}
