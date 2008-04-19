@@ -118,6 +118,9 @@
 				<include name="help/**"/>
 				<exclude name="**/.*"/>
 			</fileset>
+			<fileset dir="src">
+				<include name="**/*.properties"/>
+			</fileset>
 		</copy>
   </target>
 
