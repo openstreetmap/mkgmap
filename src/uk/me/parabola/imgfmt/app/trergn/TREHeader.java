@@ -96,7 +96,6 @@ public class TREHeader extends CommonHeader {
 		sect.setPosition(reader.getInt());
 		sect.setSize(reader.getInt());
 		sect.setItemSize(reader.getChar());
-		System.out.println("SECT " + sect);
 	}
 
 	protected void writeSectionInfo(WriteStrategy writer, Section section) {

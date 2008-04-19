@@ -101,7 +101,11 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			converter = new FeatureListConverter(mapper, getConfig());
 		} else {
 			try {
-				converter = new StyledConverter(mapper, getConfig());
+				Style style = new Style(loc, name);
+				style.applyOptionOverride(props);
+				setStyle(style);
+
+				converter = new StyledConverter(style, mapper);
 			} catch (FileNotFoundException e) {
 				// Fall back to the old way for now...
 				converter = new FeatureListConverter(mapper, props);

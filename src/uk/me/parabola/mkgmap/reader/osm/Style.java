@@ -23,8 +23,12 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -47,7 +51,18 @@ class Style {
 	private static final String FILE_OPTIONS = "options";
 
 	private final StyleFileLoader fileLoader;
+	
 	private String[] nameTagList;
+
+	// General options just have a value and don't need any special processing.
+	private static final List<String> OPTION_LIST = new ArrayList<String>(
+			Arrays.asList("levels"));
+	private Map<String, String> generalOptions = new HashMap<String, String>();
+
+	// Options that should not be overriden from the command line if the
+	// value is empty.
+	private static final List<String> DONT_OVERRIDE = new ArrayList<String>(
+			Arrays.asList("levels"));
 
 	/**
 	 * Create a style from the given location and name.
@@ -79,7 +94,11 @@ class Style {
 	void applyOptionOverride(Properties config) {
 		Set<Map.Entry<Object,Object>> entries = config.entrySet();
 		for (Map.Entry<Object,Object> ent : entries) {
-			processOption((String) ent.getKey(), (String) ent.getValue());
+			String key = (String) ent.getKey();
+			String val = (String) ent.getValue();
+
+			if (!DONT_OVERRIDE.contains(key))
+				processOption(key, val);
 		}
 	}
 
@@ -124,6 +143,10 @@ class Style {
 			// instead eg. "name:en,int_name,name" or you could use some
 			// completely different tag...
 			nameTagList = val.split("[,\\s]+");
+		} else if (OPTION_LIST.contains(opt)) {
+			// Simple options that have string value.  Perhaps we should alow
+			// anything here?
+			generalOptions.put(opt, val);
 		}
 	}
 
@@ -157,5 +180,10 @@ class Style {
 
 	public String[] getNameTagList() {
 		return nameTagList;
+	}
+
+
+	public String getOption(String name) {
+		return generalOptions.get(name);
 	}
 }

@@ -166,7 +166,7 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
 		} else if (opt.equals("help")) {
-			if (val.equals("1"))
+			if (val.length() == 0)
 				printHelp(System.out, getLang(), "help");
 			else
 				printHelp(System.out, getLang(), val);

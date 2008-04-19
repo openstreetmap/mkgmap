@@ -20,7 +20,6 @@ import uk.me.parabola.mkgmap.general.MapCollector;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * An new system to convert from osm styles to garmin styles.  Instead of a
@@ -35,14 +34,8 @@ public class StyledConverter implements OsmConverter {
 	private OsmConverter featureConverter;
 	private String[] nameTagList;
 
-	public StyledConverter(MapCollector collector, Properties config) throws FileNotFoundException {
+	public StyledConverter(Style style, MapCollector collector) throws FileNotFoundException {
 
-		String loc = config.getProperty("style-file");
-		String name = config.getProperty("style");
-		Style style = new Style(loc, name);
-
-		style.applyOptionOverride(config);
-		
 		nameTagList = style.getNameTagList();
 
 		try {

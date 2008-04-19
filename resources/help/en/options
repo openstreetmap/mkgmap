@@ -1,5 +1,9 @@
 Options:
 
+--help=topic
+	Print help on the given topic.  The topic is omitted then a list of
+	all the help topics is printed instead.
+
 -c filename
 	The given file is opened and each line is an option setting of the form
 	option=value, just like on the command line except that there is no
@@ -16,19 +20,28 @@ Options:
 	Sets the descriptive text for the map. This may be displayed in
 	QLandkarte, MapSource on on a GPS etc. 
 
---levels=levels code
-	Change the way that the levels on the map correspond to the zoom levels
-	in the device. See customisation help. The default is the equivalent
-	of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16" although this may change. 
+Label options:
 
 --latin1
 	This option allows the use of non-ascii characters in street names. It
 	is hardware dependant what is actually supported on a particular
 	device. Some devices can only do ascii characters for example. 
 
-	Mkgmap goes to some length to convert un-displayable characters however. It
-	will convert accented characters that cannot be displayed in the chosen
-	character set into unaccented characters. 
+	Mkgmap goes to some length to convert un-displayable characters
+	however and by default (without this option) it will transliterate
+	characters to unaccented ascii characters where possible.
+
+--charset=''name''
+    Use the specified character set.
+
+--code-page=''number''
+    Use the given code page for the .  This is 
+
+--lower-case
+	Allow labels to contain lower case letters.  Note that this doesn't
+	work on many (most, all?) Garmin devices.
+
+Style options:
 
 --style=name
 	Specify a different style name, rather than the default.
@@ -42,14 +55,30 @@ Options:
 	For backward compatibility, you can also supply a map-features.csv file
 	here.  See the customisation help.
 
---map-features=file
-	Outdated option, use the --style-file option now.
+--levels=levels code
+	Change the way that the levels on the map correspond to the zoom levels
+	in the device. See customisation help. The default is the equivalent
+	of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16" although this may change. 
 
 --name-tag-list
 	Get the tag that will be used to supply the name.  Useful for language
 	variations.  You can supply a list and the first one will be used.
 	eg. --name-tag-list=name:en,int_name,name
 
---help=topic
-	Print help on the given topic.  The topic is ommited the a list of all
-	the help topics is printed instead.
+--map-features=file
+	Outdated option, use the --style-file option now.
+
+Product description options:
+
+--family-id
+    This is an integer that identifies a family of products.
+--product-id
+--series-name
+--family-name
+--area-name
+--overview-name
+
+Misc options:
+--block-size=''number''
+    Changes the block size that is used in the generated map.  There is no
+	general reason why you would want to do this.

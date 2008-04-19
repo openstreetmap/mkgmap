@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.Properties;
 
 /**
+ * Base class for OSM map sources.  It exists so that more than
+ * one version of the api can be supported at a time.
+ *
  * @author Steve Ratcliffe
  */
 public abstract class OsmMapDataSource extends MapperBasedMapDataSource
@@ -34,35 +37,67 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
-	private Properties configProps;
+	private static final String DEFAULT_LEVELS = "0:24, 1:22, 2:20, 3:18, 4:16";
 
+	private Properties configProps;
+	private Style style;
+
+	/**
+	 * Get the maps levels to be used for the current map.  This can be
+	 * specified in a number of ways in order:
+	 * <ol>
+	 * <li>On the command line with the --levels flag.
+	 * The format is a comma (or space) separated list of level/resolution
+	 * pairs.  Eg --levels=0:24,1:22,2:20
+	 * If the flag is given without an argument then the command line override
+	 * is turned off for maps following that option.
+	 *
+	 * <li>In the style options file.  This works just like the command line
+	 * option, but it applies whenever the given style is used and not overriden
+	 * on the command line.
+	 *
+	 * <li>A default setting.
+	 * </ol>
+	 *
+	 * <p>I'd advise that new styles specify their own set of levels.
+	 *
+	 * @return An array of level information, basically a [level,resolution]
+	 * pair.
+	 */
 	public LevelInfo[] mapLevels() {
-		String configuredLevels = configProps.getProperty("levels");
 		LevelInfo[] levels;
 
-		if (configuredLevels != null) {
-			levels = createLevels(configuredLevels);
-		} else {
-			// This is the default mapping.
-			levels = new LevelInfo[]{
-					new LevelInfo(5, 16),
-					new LevelInfo(3, 18),
-					new LevelInfo(2, 20),
-					new LevelInfo(1, 22),
-					new LevelInfo(0, 24),
-			};
+		// First try command line, then style, then our default.
+		String levelSpec = configProps.getProperty("levels");
+		log.debug("levels", levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
+		if (levelSpec == null || levelSpec.length() < 2) {
+			levelSpec = style.getOption("levels");
+			log.debug("getting levels from style:", levelSpec);
 		}
+
+		if (levelSpec == null)
+			levelSpec = DEFAULT_LEVELS;
+
+		levels = createLevels(levelSpec);
 
 		return levels;
 	}
 
-	private LevelInfo[] createLevels(String configuredLevels) {
-		String[] desc = configuredLevels.split("[, \\t\\n]");
+	/**
+	 * Convert a string into an array of LevelInfo structures.
+	 */
+	private LevelInfo[] createLevels(String levelSpec) {
+		String[] desc = levelSpec.split("[, \\t\\n]+");
 		LevelInfo[] levels = new LevelInfo[desc.length];
 
 		int count = 0;
 		for (String s : desc) {
 			String[] keyVal = s.split("[=:]");
+			if (keyVal == null || keyVal.length < 2) {
+				System.err.println("incorrect level specification " + levelSpec);
+				continue;
+			}
+			
 			try {
 				int key = Integer.parseInt(keyVal[0]);
 				int value = Integer.parseInt(keyVal[1]);
@@ -99,5 +134,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 
 	Properties getConfig() {
 		return configProps;
+	}
+
+	public void setStyle(Style style) {
+		this.style = style;
 	}
 }

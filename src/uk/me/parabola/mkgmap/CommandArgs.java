@@ -412,7 +412,7 @@ public class CommandArgs {
 				value = v[1].trim();
 			} else {
 				option = optval;
-				value = "1";
+				value = "";
 			}
 		}
 
