@@ -80,5 +80,5 @@ Product description options:
 
 Misc options:
 --block-size=''number''
-    Changes the block size that is used in the generated map.  There is no
+	Changes the block size that is used in the generated map.  There is no
 	general reason why you would want to do this.

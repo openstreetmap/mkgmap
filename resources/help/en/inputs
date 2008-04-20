@@ -1,0 +1,27 @@
+
+OSM 0.5 api XML format
+----------------------
+This is the newer format consisting of just nodes and ways, that is
+due to go live on Sun 7 Oct 2007. This is recognised by looking for
+the version declaration within the file. Once the 0.5 version is
+established, then this will become the default version for mkgmap. 
+
+Polish format
+-------------
+This reads the map format that is read by cGPSmapper and produced
+by map editing programs such as GPSMapEdit. If an input file ends
+with .mp the it is assumed to be in this format. The support is
+pretty basic and is more of a proof of concept. It does handle
+some files well though. 
+
+Test maps
+---------
+There are some built in maps in mkgmap. These all have names
+beginning test-map:. This is a way of producing a map for
+development purposes without actually needing an input file.
+The ones available may change over time. The most useful one
+that is likely to stay contains every single element that can
+be displayed in a Garmin map. To produce this map, just use
+test-map:all-elements instead of a file name. 
+
+  mkgmap test-map:all-elements

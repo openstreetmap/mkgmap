@@ -1,5 +1,64 @@
+2008-04-20  steve
+
+	* doc/Credits, doc/mkgmap.1: Add man page, written by Andreas Putzo
+	  for the Debian project.
+
+2008-04-19  steve
+
+	* build.xml, src/uk/me/parabola/mkgmap/gui,
+	  src/uk/me/parabola/mkgmap/gui/AppLayout.form,
+	  src/uk/me/parabola/mkgmap/gui/AppLayout.java,
+	  src/uk/me/parabola/mkgmap/gui/Buttons.form,
+	  src/uk/me/parabola/mkgmap/gui/Buttons.java,
+	  src/uk/me/parabola/mkgmap/gui/FileModel.java,
+	  src/uk/me/parabola/mkgmap/gui/FileOptions.form,
+	  src/uk/me/parabola/mkgmap/gui/FileOptions.java,
+	  src/uk/me/parabola/mkgmap/gui/FileOptions.properties,
+	  src/uk/me/parabola/mkgmap/gui/InputFile.java,
+	  src/uk/me/parabola/mkgmap/gui/Main.java,
+	  src/uk/me/parabola/mkgmap/gui/Main.properties,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList.form,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList.java,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList.properties,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList_en_US.properties,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList_no.properties,
+	  src/uk/me/parabola/mkgmap/gui/Main_en_US.properties,
+	  src/uk/me/parabola/mkgmap/gui/Main_no.properties,
+	  src/uk/me/parabola/mkgmap/gui/package.html: gui
+	* resources/help/en/options, resources/styles/default/options,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java: Make
+	  the --levels option available inside the style itself. Clean up
+	  the help file.
+
 2008-04-13  steve
 
+	* src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java: Start some
+	  POIRecord support. Nothing should change in the created maps yet.
+	  - Elrond
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Let polygons get predictable garmin types
+	  
+	  Currently, the order of tags in the input defines the result of
+	  the garmin type search for a polygon. Now the type is defined by
+	  the order in the map-features.csv.
+	  
+	  This was done for polylines a while back already. - Elrond
+	* src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java: Apply
+	  overrides to options from the command line.
+	* ChangeLog, Makefile, resources/help/en/help,
+	  resources/help/en/options,
+	  src/uk/me/parabola/mkgmap/main/Main.java: Add possibility of more
+	  help files and the --help option
 	* doc/style.txt,
 	  src/uk/me/parabola/imgfmt/FileNotWritableException.java,
 	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,

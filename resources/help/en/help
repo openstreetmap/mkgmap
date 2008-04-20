@@ -3,3 +3,10 @@ Help is available on the following topics:
 
 --help=options
 	The command line options
+
+--help=links
+	Browser links to more information about mkgmap
+	and Open Street Map.
+
+--help=copyright
+	Copyright information
