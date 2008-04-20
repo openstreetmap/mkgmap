@@ -17,13 +17,22 @@ Elrond, Roozbeh, Computerteddy
 
 Code patches
 ------------
-
 Robert Vollmert:
  - reading and changes to writing of "format-6" labels
 
 Elrond:
  - put map names into the TDB file
  - writing out section info
+
+
+Documentation
+-------------
+The man page was written by Andreas Putzo
+
+
+Packaging
+---------
+Debian - Andreas Putzo
 
 
 Internationalisation
