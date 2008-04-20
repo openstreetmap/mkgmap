@@ -26,6 +26,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.mkgmap.ExitException;
 
 import org.xml.sax.SAXException;
 
@@ -95,23 +96,20 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		String loc = props.getProperty("style-file");
 		String name = props.getProperty("style");
 
-		if (loc == null && name == null) {
-			// We default to the old way for now... Later will just use a
-			// style named 'default'
-			converter = new FeatureListConverter(mapper, getConfig());
-		} else {
-			try {
-				Style style = new Style(loc, name);
-				style.applyOptionOverride(props);
-				setStyle(style);
+		if (loc == null && name == null)
+			name = "default";
 
-				converter = new StyledConverter(style, mapper);
-			} catch (FileNotFoundException e) {
-				// Fall back to the old way for now...
-				converter = new FeatureListConverter(mapper, props);
-			}
+		try {
+			Style style = new Style(loc, name);
+			style.applyOptionOverride(props);
+			setStyle(style);
+
+			converter = new StyledConverter(style, mapper);
+		} catch (FileNotFoundException e) {
+			String name1 = (name != null)? name: loc;
+			throw new ExitException("Could not open style " + name1);
 		}
-		
+
 		return converter;
 	}
 }

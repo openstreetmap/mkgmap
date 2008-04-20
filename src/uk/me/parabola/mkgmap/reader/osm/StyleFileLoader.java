@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
 import java.net.URL;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Open a style which can be on the classpath (mainly for the built-in styles)
@@ -118,6 +118,12 @@ public abstract class StyleFileLoader {
 	public abstract void close();
 
 	/**
+	 * List the names of the styles that are contained in this loader.
+	 * @return An array of style names.
+	 */
+	public abstract String[] list();
+
+	/**
 	 * Find a style on the class path.  First we find out if the style is in
 	 * a jar or a directory and then use the appropriate Loader.
 	 *
@@ -134,17 +140,19 @@ public abstract class StyleFileLoader {
 
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (classLoader == null)
-			throw new FileNotFoundException("cannot file style");
+			throw new FileNotFoundException("no classloader to find style");
 
 		// all style files must be in the same directory or zip
 		URL url = classLoader.getResource(path);
 		if (url == null)
-			throw new FileNotFoundException("Could not file style " + path);
+			throw new FileNotFoundException("Could not find style " + path);
 
 		String proto = url.getProtocol().toLowerCase();
 		if (proto.equals("jar")) {
+			log.debug("classpath loading from jar with url", url);
 			return new JarFileLoader(url);
 		} else if (proto.equals("file")) {
+			log.debug("classpath loading from directory", url.getPath());
 			return new DirectoryFileLoader(new File(url.getPath()));
 		}
 		throw new FileNotFoundException("Could not load style from classpath");

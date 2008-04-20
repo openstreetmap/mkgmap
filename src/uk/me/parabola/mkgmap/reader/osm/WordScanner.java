@@ -22,6 +22,8 @@ import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.NoSuchElementException;
 
+import uk.me.parabola.log.Logger;
+
 /**
  * Class partially used to replace java.util.Scanner which is not available
  * in GNU classpath, but also to provide a more word orientated interface
@@ -30,7 +32,11 @@ import java.util.NoSuchElementException;
  * @author Steve Ratcliffe
  */
 class WordScanner {
+	private static final Logger log = Logger.getLogger(WordScanner.class);
+
 	private final BufferedReader reader;
+
+	private boolean eof;
 
 	WordScanner(Reader r) {
 		reader = new LineNumberReader(r);
@@ -42,16 +48,25 @@ class WordScanner {
 	}
 
 	/**
-	 * Get the next word that consists of letters and digits.
-	 *
-	 * @return A alphanumeric word.
+	 * Return the very next character in the input stream without
+	 * consuming it.
 	 */
-	private String nextWord() {
+	public int peekChar() {
+		int ch = nextChar();
+		reset();
+		return ch;
+	}
+
+	/**
+	 * Get the next word that consists of letters and digits.
+	 */
+	public String nextWord() {
+		skipSpace();
+
 		StringBuffer sb = new StringBuffer();
 
-		skipSpace();
-		char ch;
-		while ((ch = nextChar()) != -1) {
+		while (!isEndOfFile()) {
+			char ch = nextChar();
 			if (Character.isLetterOrDigit(ch)) {
 				sb.append(ch);
 			} else {
@@ -62,6 +77,62 @@ class WordScanner {
 		return sb.toString();
 	}
 
+	public boolean hasNextSymbol() {
+		log.debug("check for next symbol");
+		skipSpace();
+		if (eof)
+			return false;
+		
+		char ch = nextChar();
+		int type = Character.getType(ch);
+		reset();
+		return isSymbol(type);
+	}
+
+	/**
+	 * Get the rest of the line.  Leading and trailing space is stripped.
+	 */
+	public String nextLine() {
+		StringBuffer sb = new StringBuffer();
+		while (!isEndOfFile()) {
+			char ch = nextChar();
+			if (ch == '\n')
+				break;
+			else
+				sb.append(ch);
+		}
+		return sb.toString().trim();
+	}
+
+	public String nextSymbol() {
+		log.debug("get for symbol");
+		skipSpace();
+
+		StringBuffer sb = new StringBuffer();
+
+		while (!isEndOfFile()) {
+			char ch = nextChar();
+			log.debug("symb char got", ch);
+			int type = Character.getType(ch);
+			if (isSymbol(type)) {
+				sb.append(ch);
+			} else {
+				reset();
+				break;
+			}
+		}
+		log.debug("leave symb");
+		return sb.toString();
+	}
+
+	private boolean isSymbol(int type) {
+		log.debug("symbol type " + type);
+		return type == Character.OTHER_SYMBOL
+				|| type == Character.OTHER_PUNCTUATION
+				|| type == Character.MATH_SYMBOL
+				;
+	}
+
 	/**
 	 * If the next character is a space, then skip all space. After returning
 	 * then the next character to be read will not be a space.  The position
@@ -70,14 +141,26 @@ class WordScanner {
 	 *
 	 * If end of file is reached then an exception is thrown.
 	 */
-	protected void skipSpace() {
-		char ch;
-		while ((ch = nextChar()) != -1) {
+	private void skipSpace() {
+		while (!isEndOfFile()) {
+			char ch = nextChar();
 			if (!Character.isWhitespace(ch)) {
-				reset();
+				if (ch == '#') {
+					skipLine();
+				} else {
+					reset();
+				}
 				return;
 			}
 		}
+	}
+
+	private void skipLine() {
+		char ch;
+		do {
+			if ((ch = nextChar()) == '\n')
+				return;
+		} while (ch != -1);
 	}
 
 	/**
@@ -97,14 +180,22 @@ class WordScanner {
 	 * @return The next character in the stream.
 	 */
 	private char nextChar() {
+		if (eof)
+			throw new NoSuchElementException("End of file reached");
+
 		try {
 			reader.mark(1);
 			int ich = reader.read();
-			if (ich == -1)
-				throw new NoSuchElementException("End of file reached");
+			if (ich == -1) {
+				eof = true;
+			}
 			return (char) ich;
 		} catch (IOException e) {
 			throw new NoSuchElementException();
 		}
+	}
+
+	public boolean isEndOfFile() {
+		return eof;
 	}
 }

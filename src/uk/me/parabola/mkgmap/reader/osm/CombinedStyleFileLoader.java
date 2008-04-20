@@ -16,21 +16,19 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Load a style from a single file. All the files that make up the style
@@ -56,19 +54,14 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	private static final Logger log = Logger.getLogger(CombinedStyleFileLoader.class);
 
 	private final Map<String, String> files = new HashMap<String, String>();
+	private String styleName;
 
 	public CombinedStyleFileLoader(String filename) throws FileNotFoundException {
+		styleName = filename.replaceFirst("\\.style$", "");
+
 		Reader in = new FileReader(filename);
 
 		loadFiles(in);
-	}
-
-	public CombinedStyleFileLoader(InputStream in) {
-		loadFiles(in);
-	}
-
-	private void loadFiles(InputStream in) {
-		loadFiles(new InputStreamReader(in));
 	}
 
 	private void loadFiles(Reader in) {
@@ -100,6 +93,8 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				// file to work with (or some other error).
 				files.put("version", "0\n");
 				files.put("map-features.csv", currentFile.toString());
+				files.put("info",
+						"description Style converted from map-features.csv file\n");
 			} else {
 				files.put(currentName, currentFile.toString());
 			}
@@ -132,6 +127,12 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	 */
 	public void close() {
 		files.clear();
+	}
+
+	public String[] list() {
+		String basename = styleName.replaceFirst(".*[/\\\\]", "");
+		basename = basename.replaceFirst("\\.[^.]+$", "");
+		return new String[] {basename};
 	}
 
 	/**

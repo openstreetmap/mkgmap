@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,9 +26,13 @@ import java.io.Reader;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Load a style from a jar file.
@@ -71,7 +73,7 @@ public class JarFileLoader extends StyleFileLoader {
 	public JarFileLoader(File f, String name) throws FileNotFoundException {
 		this(f);
 		if (name != null)
-			setPrefix(name + '/');
+			setPrefix(searchPrefix(jarFile, '/' + name + "/version"));
 	}
 
 	private void init(URL url) throws FileNotFoundException {
@@ -88,11 +90,15 @@ public class JarFileLoader extends StyleFileLoader {
 	}
 
 	private String searchPrefix(JarFile file) {
+		return searchPrefix(file, "/version");
+	}
+
+	private String searchPrefix(JarFile file, String end) {
 		Enumeration<JarEntry> en = file.entries();
 		while (en.hasMoreElements()) {
 			JarEntry entry = en.nextElement();
 			String name = entry.getName();
-			if (name.endsWith("/version"))
+			if (name.endsWith(end))
 				return name.substring(0, name.length() - 7);
 		}
 		return null;
@@ -132,6 +138,32 @@ public class JarFileLoader extends StyleFileLoader {
 		} catch (IOException e) {
 			log.debug("failed to close jar file");
 		}
+	}
+
+	public String[] list() {
+		Enumeration<JarEntry> en = jarFile.entries();
+		List<String> l = new ArrayList<String>();
+		while (en.hasMoreElements()) {
+			JarEntry entry = en.nextElement();
+
+			if (!entry.isDirectory()) {
+				String name = entry.getName();
+				if (name.endsWith("version")) {
+					log.debug("name is", name);
+					String[] dirs = name.split("/");
+					if (dirs.length == 1) {
+						String s = jarFile.getName();
+						s = s.replaceFirst("\\..*$", "");
+						s = s.replaceAll(".*/", "");
+						l.add(s);
+					}
+					else
+						l.add(dirs[dirs.length - 2]);
+				}
+			}
+		}
+
+		return l.toArray(new String[l.size()]);
 	}
 
 	/**

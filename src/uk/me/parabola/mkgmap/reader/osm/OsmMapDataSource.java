@@ -16,15 +16,15 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.Arrays;
+import java.util.Properties;
+
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
-import java.util.Arrays;
-import java.util.Properties;
 
 /**
  * Base class for OSM map sources.  It exists so that more than
@@ -71,8 +71,10 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		String levelSpec = configProps.getProperty("levels");
 		log.debug("levels", levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
 		if (levelSpec == null || levelSpec.length() < 2) {
-			levelSpec = style.getOption("levels");
-			log.debug("getting levels from style:", levelSpec);
+			if (style != null) {
+				levelSpec = style.getOption("levels");
+				log.debug("getting levels from style:", levelSpec);
+			}
 		}
 
 		if (levelSpec == null)

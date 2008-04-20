@@ -40,18 +40,20 @@ import java.util.Set;
  *
  * @author Steve Ratcliffe
  */
-class Style {
+public class Style {
 	private static final Logger log = Logger.getLogger(Style.class);
 
 	private static final int VERSION = 0;
 
 	private static final String FILE_VERSION = "version";
-	//private static final String FILE_INFO = "info";
+	private static final String FILE_INFO = "info";
 	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
 
 	private final StyleFileLoader fileLoader;
-	
+
+	private StyleInfo info = new StyleInfo();
+
 	private String[] nameTagList;
 
 	// General options just have a value and don't need any special processing.
@@ -73,13 +75,20 @@ class Style {
 	 * @throws FileNotFoundException If the file doesn't exist.  This can
 	 * include the version file being missing.
 	 */
-	Style(String loc, String name) throws FileNotFoundException {
+	public Style(String loc, String name) throws FileNotFoundException {
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
 
 		readOptions();
+
+		try {
+			readInfo();
+		} catch (FileNotFoundException e) {
+			// Its optional
+			log.debug("no info file");
+		}
 	}
 
 	/**
@@ -150,6 +159,13 @@ class Style {
 		}
 	}
 
+	private void readInfo() throws FileNotFoundException {
+		BufferedReader r = new BufferedReader(fileLoader.open(FILE_INFO));
+		WordScanner ws = new WordScanner(r);
+
+		info.readInfo(ws);
+	}
+
 	/**
 	 * Make an old style converter from the style.  The plan is that to begin
 	 * with we will just delegate all style requests to the old
@@ -185,5 +201,9 @@ class Style {
 
 	public String getOption(String name) {
 		return generalOptions.get(name);
+	}
+
+	public StyleInfo getInfo() {
+		return info;
 	}
 }

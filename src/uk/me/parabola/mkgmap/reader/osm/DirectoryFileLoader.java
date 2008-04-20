@@ -16,11 +16,15 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.Reader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Deal with a style that is contained in a directory.
@@ -28,6 +32,8 @@ import java.io.BufferedReader;
  * @author Steve Ratcliffe
  */
 public class DirectoryFileLoader extends StyleFileLoader {
+	private static final Logger log = Logger.getLogger(DirectoryFileLoader.class);
+	
 	private File dir;
 
 	/**
@@ -56,5 +62,25 @@ public class DirectoryFileLoader extends StyleFileLoader {
 	 * Nothing needs doing in this case.
 	 */
 	public void close() {
+	}
+
+	public String[] list() {
+		log.debug("dir list", dir);
+		List<String> res = new ArrayList<String>();
+
+		File[] allFiles = dir.listFiles();
+		for (File f : allFiles) {
+			log.debug("dir loader", f);
+			if (f.isDirectory()) {
+				res.add(f.getName());
+			}
+		}
+
+		// If there were no included directories, then the style name is the
+		// name of the directory itself.
+		if (res.isEmpty())
+			res.add(dir.getName());
+
+		return res.toArray(new String[res.size()]);
 	}
 }
