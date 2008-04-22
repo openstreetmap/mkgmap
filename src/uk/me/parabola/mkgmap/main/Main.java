@@ -33,6 +33,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
@@ -175,6 +176,9 @@ public class Main implements ArgumentProcessor {
 			styleFile = val;
 		} else if (opt.equals("list-styles")) {
 			listStyles();
+		} else if (opt.equals("version")) {
+			System.err.println(Version.VERSION);
+			System.exit(0);
 		}
 	}
 
@@ -207,7 +211,7 @@ public class Main implements ArgumentProcessor {
 			}
 
 			StyleInfo info = style.getInfo();
-			System.out.format("%-15s %s: %s\n",
+			System.out.format("%-15s %6s: %s\n",
 					name,info.getVersion(), info.getDescription());
 		}
 	}
