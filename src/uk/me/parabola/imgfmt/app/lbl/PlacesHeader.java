@@ -122,6 +122,10 @@ public class PlacesHeader {
 		city.setSize(pos - city.getPosition());
 	}
 
+	public void endPOI(int pos) {
+		poiProperties.setSize(pos - poiProperties.getPosition());
+	}
+
 	public void endZip(int pos) {
 		zip.setSize(pos - zip.getPosition());
 	}

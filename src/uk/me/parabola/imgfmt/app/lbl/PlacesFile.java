@@ -39,6 +39,7 @@ public class PlacesFile {
 
 	private LBLFile lblFile;
 	private PlacesHeader placeHeader;
+	private boolean poisClosed;
 
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
@@ -65,12 +66,14 @@ public class PlacesFile {
 			c.write(writer);
 		placeHeader.endCity(writer.position());
 
+		int poistart = writer.position();
+		for (POIRecord p : pois)
+			p.write(writer, writer.position() - poistart);
+		placeHeader.endPOI(writer.position());
+
 		for (Zip z : postalCodes.values())
 			z.write(writer);
 		placeHeader.endZip(writer.position());
-
-		for (POIRecord p : pois)
-			p.write(writer);
 	}
 
 	Country createCountry(String name, String abbr) {
@@ -116,6 +119,7 @@ public class PlacesFile {
 	}
 
 	POIRecord createPOI(String name) {
+		assert poisClosed == false;
 		// TODO...
 		POIRecord p = new POIRecord();
 
@@ -124,5 +128,12 @@ public class PlacesFile {
 
 		pois.add(p);
 		return p;
+	}
+
+	void allPOIsDone() {
+		poisClosed = true;
+		int ofs = 0;
+		for (POIRecord p : pois)
+			ofs += p.calcOffset(ofs);
 	}
 }

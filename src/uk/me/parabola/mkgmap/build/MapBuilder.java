@@ -19,6 +19,8 @@ package uk.me.parabola.mkgmap.build;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.HashMap;
+// import java.util.Map;  --> will use "java.util.Map" where needed
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
@@ -31,6 +33,8 @@ import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -63,6 +67,9 @@ public class MapBuilder {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
+	private java.util.Map<MapPoint,POIRecord> poimap = 
+		new HashMap<MapPoint,POIRecord>();
+
 	/**
 	 * Main method to create the map, just calls out to several routines
 	 * that do the work.
@@ -71,9 +78,28 @@ public class MapBuilder {
 	 * @param src The map data.
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
+		processPOIs(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
+	}
+
+	/**
+	 * First stage of handling POIs
+	 *
+	 * POIs need to be handled first, because we need the offsets
+	 * in the LBL file.
+	 *
+	 * @param map The map.
+	 * @param src The map data.
+	 */
+	private void processPOIs(Map map, MapDataSource src) {
+		LBLFile lbl = map.getLblFile();
+		for (MapPoint p : src.getPoints()) {
+			POIRecord r = lbl.createPOI(p.getName());
+			poimap.put(p, r);
+		}
+		lbl.allPOIsDone();
 	}
 
 	/**
@@ -279,6 +305,10 @@ public class MapBuilder {
 			Coord coord = point.getLocation();
 			p.setLatitude(coord.getLatitude());
 			p.setLongitude(coord.getLongitude());
+
+			POIRecord r = poimap.get(point);
+			if (r != null)
+				p.setPOIRecord(r);
 
 			map.addMapObject(p);
 		}

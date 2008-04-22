@@ -139,6 +139,14 @@ public class LBLFile extends ImgFile {
 		return l;
 	}
 
+	public POIRecord createPOI(String name) {
+		return places.createPOI(name);
+	}
+
+	public void allPOIsDone() {
+		places.allPOIsDone();
+	}
+
 	public void setCodePage(int codePage) {
 		lblHeader.setCodePage(codePage);
 	}

@@ -55,12 +55,12 @@ public class Point extends MapObject {
 		log.debug("writing point: " + b);
 
 		int off = getLabel().getOffset();
+		if (poi != null) {
+			off = poi.getOffset();
+			off |= 0x400000;
+		}
 		if (subtype != 0)
 			off |= 0x800000;
-		if (poi != null) {
-			// off = poi.getOffset();
-			// off |= 0x400000;
-		}
 
 		file.put3(off);
 		file.putChar((char) getDeltaLong());
@@ -71,5 +71,9 @@ public class Point extends MapObject {
 
 	public void setSubtype(int subtype) {
 		this.subtype = subtype;
+	}
+
+	public void setPOIRecord(POIRecord poirecord) {
+		this.poi = poirecord;
 	}
 }

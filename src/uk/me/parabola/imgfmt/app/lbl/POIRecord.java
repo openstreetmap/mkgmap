@@ -23,13 +23,13 @@ import uk.me.parabola.imgfmt.app.WriteStrategy;
  * @author Steve Ratcliffe
  */
 public class POIRecord {
-	public static final int HAS_STREET_NUM = 0x01;
-	public static final int HAS_STREET     = 0x02;
-	public static final int HAS_CITY       = 0x04;
-	public static final int HAS_ZIP        = 0x08;
-	public static final int HAS_PHONE      = 0x10;
-	public static final int HAS_EXIT       = 0x20;
-	public static final int HAS_TIDE_PREDICTION = 0x40;
+	public static final byte HAS_STREET_NUM = 0x01;
+	public static final byte HAS_STREET     = 0x02;
+	public static final byte HAS_CITY       = 0x04;
+	public static final byte HAS_ZIP        = 0x08;
+	public static final byte HAS_PHONE      = 0x10;
+	public static final byte HAS_EXIT       = 0x20;
+	public static final byte HAS_TIDE_PREDICTION = 0x40;
 
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
 	private static final AddrAbbr ABBR_APARTMENT = new AddrAbbr('1', "APT");
@@ -40,8 +40,8 @@ public class POIRecord {
 	private static final AddrAbbr ABBR_STE = new AddrAbbr('6', "STE");  // don't know what this is?
 	private static final AddrAbbr ABBR_UNIT = new AddrAbbr('7', "UNIT");
 
+	private int offset = -1;
 	private Label poiName;
-	private byte propertyMask;
 
 	private int streetNumber;
 	private Label streetName;
@@ -56,8 +56,33 @@ public class POIRecord {
 		this.poiName = label;
 	}
 
-	void write(WriteStrategy writer) {
+	void write(WriteStrategy writer, int realofs) {
+		assert offset == realofs;
+		writer.put3(poiName.getOffset());
 		// not implemented yet
+	}
+
+	byte getPOIFlags() {
+		byte b = 0;
+		if (streetName != null)
+			b |= HAS_STREET;
+		return 0;
+	}
+
+	/**
+	 * Sets the start offset of this POIRecord
+	 *
+	 * \return Number of bytes needed by this entry
+	 */
+	int calcOffset(int ofs) {
+		offset = ofs;
+		return 3;
+	}
+
+	public int getOffset() {
+		if (offset == -1)
+			throw new IllegalStateException("Offset not known yet.");
+		return offset;
 	}
 
 	/**
