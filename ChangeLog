@@ -1,5 +1,65 @@
+2008-04-26  steve
+
+	* src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java: Add
+	  StreetNames to POI
+	  
+	  POIRecords are variable length, have optional flags for the
+	  included info and are mostly straight forward. This adds the
+	  optional flag writing and one optional field: The StreetName.
+	  
+	  - Elrond
+
+2008-04-22  steve
+
+	* src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: Basic POI
+	  support
+	  
+	  The LBL file contains a section for detailed information about
+	  POIs (street, streetnumber, ZIP, phone number). These entries can
+	  be linked from the Point-entries in the map subdivisions.
+	  
+	  For now we only use the Name field in the POIRecord. The user
+	  visible change is in MapSource: Most POIs now have a Property
+	  context-menu entry, which shows the detailed info.
+	  
+	  The Point-entry flag was found in qlandkarte. The rest is
+	  documented in the imgformat pdf.
+	  
+	  - Elrond
+	* src/uk/me/parabola/mkgmap/main/Main.java: Add --version option -
+	  suggested by Petr Schönmann.
+	  
+	  Only works properly with packaged versions of mkgmap, not direct
+	  from svn.
+
 2008-04-20  steve
 
+	* ChangeLog, doc/mkgmap.1, resources/help/en/copyright,
+	  resources/help/en/help, resources/help/en/inputs,
+	  resources/help/en/links, resources/help/en/options: Improvements
+	  and additional help files.
+	* resources/styles/default/info, resources/styles/test/info,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: Can now
+	  list styles (not that there are any available yet) Added info
+	  file so that a style listing can include information about the
+	  style
 	* doc/Credits, doc/mkgmap.1: Add man page, written by Andreas Putzo
 	  for the Debian project.
 

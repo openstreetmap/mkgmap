@@ -77,7 +77,7 @@
     </jar>
 
 		<copy todir="${dist}/doc" >
-			<fileset dir="doc" includes="*.txt, Credits"/>
+			<fileset dir="doc" includes="*.txt, Credits, mkgmap.1"/>
     </copy>
 
     <!-- Copy the source code -->

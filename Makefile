@@ -20,10 +20,10 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --charset=unicode localtest/osm/czech_test.osm
 #OSMDATA = --tdbfile maps/img/*.img
-#OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
+OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
-OSMDATA = --style=default --name-tag-list='name:en int_name name' test.osm
+#OSMDATA = --style=default --name-tag-list='name:en int_name name' test.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
