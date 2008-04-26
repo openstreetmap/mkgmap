@@ -56,17 +56,30 @@ public class POIRecord {
 		this.poiName = label;
 	}
 
-	void write(WriteStrategy writer, int realofs) {
+	public void setStreetName(Label label) {
+		this.streetName = label;
+	}
+
+	void write(WriteStrategy writer, byte POIGlobalFlags, int realofs) {
 		assert offset == realofs;
-		writer.put3(poiName.getOffset());
-		// not implemented yet
+
+		int ptr = poiName.getOffset();
+		if (POIGlobalFlags != getPOIFlags())
+			ptr |= 0x800000;
+		writer.put3(ptr);
+
+		if (POIGlobalFlags != getPOIFlags())
+			writer.put(getPOIFlags());
+
+		if (streetName != null)
+			writer.put3(streetName.getOffset());
 	}
 
 	byte getPOIFlags() {
 		byte b = 0;
 		if (streetName != null)
 			b |= HAS_STREET;
-		return 0;
+		return b;
 	}
 
 	/**
@@ -74,9 +87,14 @@ public class POIRecord {
 	 *
 	 * \return Number of bytes needed by this entry
 	 */
-	int calcOffset(int ofs) {
+	int calcOffset(int ofs, byte POIGlobalFlags) {
 		offset = ofs;
-		return 3;
+		int size = 3;
+		if (POIGlobalFlags != getPOIFlags())
+			size += 1;
+		if (streetName != null)
+			size += 3;
+		return size;
 	}
 
 	public int getOffset() {
