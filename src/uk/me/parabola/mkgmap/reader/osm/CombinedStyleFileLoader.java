@@ -54,7 +54,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	private static final Logger log = Logger.getLogger(CombinedStyleFileLoader.class);
 
 	private final Map<String, String> files = new HashMap<String, String>();
-	private String styleName;
+	private final String styleName;
 
 	public CombinedStyleFileLoader(String filename) throws FileNotFoundException {
 		styleName = filename.replaceFirst("\\.style$", "");

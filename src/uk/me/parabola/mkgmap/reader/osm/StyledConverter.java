@@ -32,7 +32,7 @@ import java.io.IOException;
 public class StyledConverter implements OsmConverter {
 
 	private OsmConverter featureConverter;
-	private String[] nameTagList;
+	private final String[] nameTagList;
 
 	public StyledConverter(Style style, MapCollector collector) throws FileNotFoundException {
 

@@ -52,14 +52,14 @@ public class Style {
 
 	private final StyleFileLoader fileLoader;
 
-	private StyleInfo info = new StyleInfo();
+	private final StyleInfo info = new StyleInfo();
 
 	private String[] nameTagList;
 
 	// General options just have a value and don't need any special processing.
 	private static final List<String> OPTION_LIST = new ArrayList<String>(
 			Arrays.asList("levels"));
-	private Map<String, String> generalOptions = new HashMap<String, String>();
+	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
 	// Options that should not be overriden from the command line if the
 	// value is empty.
@@ -83,12 +83,7 @@ public class Style {
 
 		readOptions();
 
-		try {
-			readInfo();
-		} catch (FileNotFoundException e) {
-			// Its optional
-			log.debug("no info file");
-		}
+		readInfo();
 	}
 
 	/**
@@ -159,11 +154,16 @@ public class Style {
 		}
 	}
 
-	private void readInfo() throws FileNotFoundException {
-		BufferedReader r = new BufferedReader(fileLoader.open(FILE_INFO));
-		WordScanner ws = new WordScanner(r);
+	private void readInfo() {
+		try {
+			BufferedReader r = new BufferedReader(fileLoader.open(FILE_INFO));
+			WordScanner ws = new WordScanner(r);
 
-		info.readInfo(ws);
+			info.readInfo(ws);
+		} catch (FileNotFoundException e) {
+			// optional file..
+			log.debug("no info file");
+		}
 	}
 
 	/**
