@@ -94,6 +94,8 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 
 		Properties props = getConfig();
 		String loc = props.getProperty("style-file");
+		if (loc == null)
+			loc = props.getProperty("map-features");
 		String name = props.getProperty("style");
 
 		if (loc == null && name == null)
