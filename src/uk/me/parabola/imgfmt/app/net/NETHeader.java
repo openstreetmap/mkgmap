@@ -91,4 +91,12 @@ public class NETHeader extends CommonHeader {
 		writer.put((byte) 1);
 		writer.put((byte) 0);
 	}
+
+	void startRoadDefs(int pos) {
+		roadDefinitions.setPosition(pos);
+	}
+
+	void endRoadDefs(int pos) {
+		roadDefinitions.setSize(pos - roadDefinitions.getPosition());
+	}
 }

@@ -17,11 +17,15 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
 import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The NET file.  This consists of information about roads.  It is not clear
@@ -32,6 +36,8 @@ import java.io.IOException;
  */
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
+
+	private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
 
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);
@@ -56,6 +62,21 @@ public class NETFile extends ImgFile {
 	}
 
 	private void writeBody() {
+		WriteStrategy writer = getWriter();
 
+		netHeader.startRoadDefs(position());
+		for (RoadDef r : roaddefs) {
+			r.write(writer);
+		}
+		netHeader.endRoadDefs(position());
+	}
+
+	public RoadDef createRoadDef(Label l) {
+		RoadDef r = new RoadDef();
+		r.addLabel(l);
+
+		roaddefs.add(r);
+
+		return r;
 	}
 }

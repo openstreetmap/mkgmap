@@ -31,7 +31,8 @@ public class RoadDef {
 	private static final int MAX_LABELS = 4;
 
 	// There can be up to 4 labels for the same road.
-	private final Label[] label = new Label[MAX_LABELS];
+	private final Label[] labels = new Label[MAX_LABELS];
+	private int numlabels = 0;
 
 	private byte roadData;
 
@@ -40,7 +41,21 @@ public class RoadDef {
 	private List<RoadIndex> roadIndexes;
 
 	void write(WriteStrategy writer) {
-		Label l = label[0];
-		l.getOffset();
+		for (int i = 0; i < numlabels; i++) {
+			Label l = labels[i];
+			int ptr = l.getOffset();
+			if (i == (numlabels-1))
+				ptr |= 0x800000;
+			writer.put3(ptr);
+		}
+		writer.put((byte) 0);
+		writer.put3(roadLength);
+		writer.put((byte) 0x80);
+	}
+
+	public void addLabel(Label l) {
+		if (numlabels >= MAX_LABELS)
+			throw new IllegalStateException("Too many labels");
+		labels[numlabels++] = l;
 	}
 }
