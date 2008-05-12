@@ -62,6 +62,8 @@ class FeatureListConverter implements OsmConverter {
 
 	private static final int DEFAULT_RESOLUTION = 24;
 
+	private static final double METERS_TO_FEET = 3.2808399;
+
 	// Maps of osm feature names to the garmin type information
 	private final Map<String, GarminType> pointFeatures = new HashMap<String, GarminType>();
 	private final Map<String, GarminType> lineFeatures = new HashMap<String, GarminType>();
@@ -204,8 +206,15 @@ class FeatureListConverter implements OsmConverter {
 			line.setDirection(true);
 
 		if (tagKey.equals("contour|elevation")) {
-			line.setName(way.getTag("ele"));
+			String ele = way.getTag("ele");
+			try {
+				long n = Math.round(Integer.parseInt(ele) * METERS_TO_FEET);
+				line.setName(String.valueOf(n));
+			} catch (NumberFormatException e) {
+				line.setName(ele);
+			}
 		}
+
 		mapper.addLine(line);
 	}
 
@@ -311,9 +320,9 @@ class FeatureListConverter implements OsmConverter {
 	private void saveFeature(String[] fields, Map<String, GarminType> features) {
 		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
 
-		GarminType gtype;
 		String gsubtype = fields[F_GARMIN_SUBTYPE];
 		log.debug("subtype", gsubtype);
+		GarminType gtype;
 		if (gsubtype == null || gsubtype.length() == 0) {
 			log.debug("took the subtype road");
 			gtype = new GarminType(fields[F_GARMIN_TYPE]);

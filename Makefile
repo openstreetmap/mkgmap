@@ -11,7 +11,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
-#OSMDATA = /opt/data/uk-071010-1.osm.gz
+OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/osm5/srtm.osm
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
 #OSMDATA = /opt/data/uk-071114.osm.gz
@@ -20,7 +20,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = localtest/osm5/reg04.osm
 #OSMDATA = --charset=unicode localtest/osm/czech_test.osm
 #OSMDATA = --tdbfile maps/img/*.img
-OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
+#OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --style=default --name-tag-list='name:en int_name name' test.osm
