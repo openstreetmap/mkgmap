@@ -173,16 +173,19 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * @param slon The longitude as a string.
 	 */
 	private void addNode(String sid, String slat, String slon) {
-		long id = Long.parseLong(sid);
-		double lat = Double.parseDouble(slat);
-		double lon = Double.parseDouble(slon);
+		try {
+			long id = Long.parseLong(sid);
+			double lat = Double.parseDouble(slat);
+			double lon = Double.parseDouble(slon);
 
-		//if (log.isDebugEnabled())
-		//	log.debug("adding node" + lat + '/' + lon);
-		Coord co = new Coord(lat, lon);
-		nodeMap.put(id, co);
-		currentNodeId = id;
-		mapper.addToBounds(co);
+			Coord co = new Coord(lat, lon);
+			nodeMap.put(id, co);
+			currentNodeId = id;
+			mapper.addToBounds(co);
+		} catch (NumberFormatException e) {
+			// ignore bad numeric data.
+		}
+
 	}
 
 	private void addNodeToWay(long id) {
