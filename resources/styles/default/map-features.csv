@@ -9,6 +9,7 @@ point|amenity|car_wash|0x2f|0x0e|21
 point|amenity|cinema|0x2d|0x03|20
 point|amenity|college|0x2c|0x05|21
 point|amenity|courthouse|0x30|0x04|20
+point|amenity|drinking_water|0x50|0x00|23
 point|amenity|fast_food|0x2a|0x07|21
 point|amenity|fire_station|0x30|0x08|21
 point|amenity|fuel|0x2f|0x01|19
@@ -97,6 +98,7 @@ polygon|military|airfield|0x04||18
 polygon|military|barracks|0x04||18
 polygon|military|danger_area|0x04||18
 polygon|military|range|0x04||18
+polygon|natural|glacier|0x4d||16
 polygon|natural|marsh|0x51||20
 polygon|natural|mud|0x51||20
 polygon|natural|scrub|0x4f||20

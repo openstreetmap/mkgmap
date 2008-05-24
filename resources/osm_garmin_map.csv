@@ -10,6 +10,7 @@ point|amenity|car_wash|auto-services|car-wash|21
 point|amenity|cinema|entertainment|movie-theater|20
 point|amenity|college|community|school|21
 point|amenity|courthouse|community|court-house|20
+point|amenity|drinking_water|misc|drinking-water|23
 point|amenity|fast_food|food-and-drink|fast-food|21
 point|amenity|fire_station|community|fire-department|21
 point|amenity|fuel|fuel-services|auto-fuel|19
@@ -98,6 +99,7 @@ polygon|military|airfield|military||18
 polygon|military|barracks|military||18
 polygon|military|danger_area|military||18
 polygon|military|range|military||18
+polygon|natural|glacier|glacier||16
 polygon|natural|marsh|wetland||20
 polygon|natural|mud|wetland||20
 polygon|natural|scrub|scrub||20
