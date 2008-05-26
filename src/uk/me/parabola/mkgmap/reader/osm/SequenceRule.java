@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * @author Steve Ratcliffe
  */
 public class SequenceRule extends BaseRule implements TypeRule {
-	private List<TypeRule> list = new ArrayList<TypeRule>();
+	private final List<TypeRule> list = new ArrayList<TypeRule>();
 
 	public GType resolveType(Element el) {
 		for (TypeRule rule : list) {

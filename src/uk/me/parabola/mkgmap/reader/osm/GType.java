@@ -41,7 +41,6 @@ public class GType {
 	private int minResolution;
 	private int maxResolution;
 
-	private String osmkey;
 	private String defaultName;
 
 	GType(int featureKind, String type) {
@@ -97,10 +96,6 @@ public class GType {
 
 	public void setIndex(int index) {
 		this.index = index;
-	}
-
-	void setOsmkey(String osmkey) {
-		this.osmkey = osmkey;
 	}
 
 	public String getDefaultName() {

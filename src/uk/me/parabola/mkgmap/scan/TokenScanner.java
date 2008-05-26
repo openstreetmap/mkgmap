@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
  */
 public class TokenScanner {
 	private static final int NO_PUSHBACK = 0;
-	protected final Reader reader;
+	private final Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
@@ -42,14 +42,14 @@ public class TokenScanner {
 			this.reader = new BufferedReader(reader);
 	}
 
-	public int peekChar() {
-		Token t = peekToken();
-		String val = t.getValue();
-		if (val == null) {
-			return 0;
-		} else
-			return val.charAt(0);
-	}
+	//public int peekChar() {
+	//	Token t = peekToken();
+	//	String val = t.getValue();
+	//	if (val == null) {
+	//		return 0;
+	//	} else
+	//		return val.charAt(0);
+	//}
 
 	public TokType firstTokenType() {
 		ensureTok();
@@ -73,70 +73,70 @@ public class TokenScanner {
 		return nextToken().getValue();
 	}
 
-	public Token findTokenInLine(TokType type, String val, boolean create) {
-		Token found = null;
-		Iterator<Token> it = new TokIterator();
-		while (it.hasNext()) {
-			Token t = it.next();
-			if (t.getType() == TokType.EOL)
-				break;
+	//public Token findTokenInLine(TokType type, String val, boolean create) {
+	//	Token found = null;
+	//	Iterator<Token> it = new TokIterator();
+	//	while (it.hasNext()) {
+	//		Token t = it.next();
+	//		if (t.getType() == TokType.EOL)
+	//			break;
+	//
+	//		if (t.getType() == type) {
+	//			if (val == null) {
+	//				found = t;
+	//				break;
+	//			} else if (t.getValue().equals(val)) {
+	//				found = t;
+	//				break;
+	//			}
+	//		}
+	//	}
+	//
+	//	if (create && found == null) {
+	//		found = new Token(type);
+	//		found.setValue(val);
+	//		// we must be at a new line here
+	//		tokens.add(tokens.size()-1, found);
+	//	}
+	//	return found;
+	//}
 
-			if (t.getType() == type) {
-				if (val == null) {
-					found = t;
-					break;
-				} else if (t.getValue().equals(val)) {
-					found = t;
-					break;
-				}
-			}
-		}
+	//public Token findToken(TokType type, String val) {
+	//	Token found = null;
+	//
+	//	Iterator<Token> it = new TokIterator();
+	//	while (it.hasNext()) {
+	//		Token t = it.next();
+	//		if (t.getType() == type) {
+	//			if (val == null) {
+	//				found = t;
+	//				break;
+	//			} else if (t.getValue().equals(val)) {
+	//				found = t;
+	//				break;
+	//			}
+	//		}
+	//	}
+	//
+	//	return found;
+	//}
 
-		if (create && found == null) {
-			found = new Token(type);
-			found.setValue(val);
-			// we must be at a new line here
-			tokens.add(tokens.size()-1, found);
-		}
-		return found;
-	}
-
-	public Token findToken(TokType type, String val) {
-		Token found = null;
-
-		Iterator<Token> it = new TokIterator();
-		while (it.hasNext()) {
-			Token t = it.next();
-			if (t.getType() == type) {
-				if (val == null) {
-					found = t;
-					break;
-				} else if (t.getValue().equals(val)) {
-					found = t;
-					break;
-				}
-			}
-		}
-
-		return found;
-	}
-
-	public void insertTokenBefore(Token tok, Token before) {
-		if (before == null) {
-			tokens.addFirst(tok);
-			return;
-		}
-
-		int ind = 0;
-		for (Token t : tokens) {
-			//noinspection ObjectEquality
-			if (t == before) {
-				tokens.add(ind, tok);
-				break;
-			}
-			ind++;
-		}
-	}
+	//public void insertTokenBefore(Token tok, Token before) {
+	//	if (before == null) {
+	//		tokens.addFirst(tok);
+	//		return;
+	//	}
+	//
+	//	int ind = 0;
+	//	for (Token t : tokens) {
+	//		//noinspection ObjectEquality
+	//		if (t == before) {
+	//			tokens.add(ind, tok);
+	//			break;
+	//		}
+	//		ind++;
+	//	}
+	//}
 
 	public boolean isEndOfFile() {
 		if (tokens.isEmpty()) {
@@ -284,7 +284,7 @@ public class TokenScanner {
 	 * Convience routine to get an integer.  Skips space and reads a
 	 * token.  This token is converted to an integer if possible.
 	 * @return An integer as read from the next non space token.
-	 * @thows NumberFormatException When the next symbol isn't
+	 * @throws NumberFormatException When the next symbol isn't
 	 * a valid integer.
 	 */
 	public int nextInt() {
@@ -294,61 +294,79 @@ public class TokenScanner {
 	}
 
 	/**
+	 * Read a string that consists of non-space tokens.  Skips initial
+	 * space, joins all TEXT and SYMBOL tokens until the next one
+	 * that is neither.
+	 */
+	public String readWord() {
+		skipSpace();
+		StringBuffer sb = new StringBuffer();
+		while (!isEndOfFile()) {
+			TokType tt = firstTokenType();
+			if (tt != TokType.SYMBOL && tt != TokType.TEXT)
+				break;
+
+			sb.append(nextValue());
+		}
+		return sb.toString();
+	}
+
+	/**
 	 * Iterate over tokens.  Tokens could be already on the <i>tokens</i>
 	 * queue or we might have to read them from the input.  If they are
 	 * read from the input they will be added to the queue.
 	 */
-	private class TokIterator implements Iterator<Token> {
-		private final Iterator<Token> queueIter = tokens.iterator();
-		private boolean qDone = !queueIter.hasNext();
-		private boolean finished;
-
-		/**
-		 * There is a next token if there is one in the queue, or if there is
-		 * another token that can be read.  If we have to read a token then
-		 * it gets added to the queue.
-		 */
-		public boolean hasNext() {
-			if (finished)
-				return false;
-
-			return true;
-		}
-
-		private Token loadTok() {
-			Token t = readTok();
-			tokens.add(t);
-
-			if (t.getType() == TokType.EOF)
-				finished = true;
-			return t;
-		}
-
-		/**
-		 * Return the next token.  Once the queue is finished we start reading
-		 * from the input.  These read tokens will be added to the queue, but
-		 * we do not go back to reading the queue once we have finished.
-		 * @return The next token.
-		 */
-		public Token next() {
-			if (finished)
-				throw new NoSuchElementException("finished");
-
-			Token t;
-			if (qDone) {
-				t = loadTok();
-			} else {
-				t = queueIter.next();
-				if (!queueIter.hasNext())
-					qDone = true;
-			}
-			if (t.getType() == TokType.EOF)
-				finished = true;
-			return t;
-		}
-
-		public void remove() {
-			throw new UnsupportedOperationException("removal not supported");
-		}
-	}
+	//private class TokIterator implements Iterator<Token> {
+	//	private final Iterator<Token> queueIter = tokens.iterator();
+	//	private boolean qDone = !queueIter.hasNext();
+	//	private boolean finished;
+	//
+	//	/**
+	//	 * There is a next token if there is one in the queue, or if there is
+	//	 * another token that can be read.  If we have to read a token then
+	//	 * it gets added to the queue.
+	//	 */
+	//	public boolean hasNext() {
+	//		if (finished)
+	//			return false;
+	//
+	//		return true;
+	//	}
+	//
+	//	private Token loadTok() {
+	//		Token t = readTok();
+	//		tokens.add(t);
+	//
+	//		if (t.getType() == TokType.EOF)
+	//			finished = true;
+	//		return t;
+	//	}
+	//
+	//	/**
+	//	 * Return the next token.  Once the queue is finished we start reading
+	//	 * from the input.  These read tokens will be added to the queue, but
+	//	 * we do not go back to reading the queue once we have finished.
+	//	 * @return The next token.
+	//	 */
+	//	public Token next() {
+	//		if (finished)
+	//			throw new NoSuchElementException("finished");
+	//
+	//		Token t;
+	//		if (qDone) {
+	//			t = loadTok();
+	//		} else {
+	//			t = queueIter.next();
+	//			if (!queueIter.hasNext())
+	//				qDone = true;
+	//		}
+	//		if (t.getType() == TokType.EOF)
+	//			finished = true;
+	//		return t;
+	//	}
+	//
+	//	public void remove() {
+	//		throw new UnsupportedOperationException("removal not supported");
+	//	}
+	//}
 }

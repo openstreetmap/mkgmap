@@ -35,10 +35,6 @@ public class Token {
 		return type;
 	}
 
-	public void setType(TokType type) {
-		this.type = type;
-	}
-
 	public void setValue(String value) {
 		this.value = value;
 	}

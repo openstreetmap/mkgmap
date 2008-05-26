@@ -37,7 +37,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class DefaultFeatureNames {
 	private static final Logger log = Logger.getLogger(DefaultFeatureNames.class);
 	
-	private Map<String, String> values = new HashMap<String, String>();
+	private final Map<String, String> values = new HashMap<String, String>();
 
 	public DefaultFeatureNames(StyleFileLoader loader, Locale loc) {
 		log.info("reading default names");
@@ -63,6 +63,7 @@ public class DefaultFeatureNames {
 	}
 
 	public String get(String key) {
+		log.debug("looking for", key);
 		return values.get(key);
 	}
 
@@ -71,51 +72,29 @@ public class DefaultFeatureNames {
 
 		ws.skipSpace();
 		while (!ws.isEndOfFile()) {
-			Token t = ws.peekToken();
+			String key = ws.readWord();
+			ws.skipSpace();
 
-			switch (t.getType()) {
-			case SYMBOL:
+			Token t = ws.nextToken();
+			if (checkSymbolValue(t, "(")) {
+				String def = readDefault(ws);
+				log.debug("putting", key, def);
+				values.put(key, def);
+			} else {
 				ws.skipLine();
-				break;
-			case TEXT:
-				readDefault(ws);
-				break;
-			default:
-				ws.nextToken();
-				break;
 			}
 		}
 	}
 
-	private void readDefault(TokenScanner ws) {
-		String key = ws.nextValue();
-		Token t = ws.nextToken();
-		if (!checkSymbolValue(t, "=")) {
-			ws.skipLine();
-			return;
-		}
-
-		t = ws.nextToken();
-		String val = t.getValue();
-
-		ws.skipSpace();
-		t = ws.nextToken();
-		if (!checkSymbolValue(t, "(")) {
-			ws.skipLine();
-			return;
-		}
-
+	private String readDefault(TokenScanner ws) {
 		StringBuffer sb = new StringBuffer();
 		while (!ws.isEndOfFile()) {
-			t = ws.nextToken();
+			Token t = ws.nextToken();
 			if (checkSymbolValue(t, ")"))
 				break;
 			sb.append(t.getValue());
 		}
-
-		String s = key + '=' + val;
-		log.debug("key:", s, " with val:", sb);
-		values.put(s, sb.toString());
+		return sb.toString();
 	}
 
 	private boolean checkSymbolValue(Token t, String value) {

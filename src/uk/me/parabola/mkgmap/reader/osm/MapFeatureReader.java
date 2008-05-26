@@ -87,8 +87,6 @@ public class MapFeatureReader {
 			gt = new GType(featureKind, fields[F_GARMIN_TYPE], gsubtype);
 		}
 
-		gt.setOsmkey(fields[F_OSM_TYPE] + '=' + fields[F_OSM_SUBTYPE]);
-
 		if (fields.length > F_MIN_RESOLUTION) {
 			String field = fields[F_MIN_RESOLUTION];
 			int res = DEFAULT_RESOLUTION;

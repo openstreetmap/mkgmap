@@ -79,9 +79,9 @@ public class Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	private Map<String, TypeRule> ways = new HashMap<String, TypeRule>();
+	private final Map<String, TypeRule> ways = new HashMap<String, TypeRule>();
 	//private Map<String, TypeRule> wayKeys = new HashMap<String, TypeRule>();
-	private Map<String, TypeRule> nodes = new HashMap<String, TypeRule>();
+	private final Map<String, TypeRule> nodes = new HashMap<String, TypeRule>();
 	//private Map<String, TypeRule> nodeKeys = new HashMap<String, TypeRule>();
 	private DefaultFeatureNames defaultNames;
 
@@ -104,9 +104,9 @@ public class Style {
 		checkVersion();
 		readInfo();
 
-		readOptions();
+		readDefaultNames();  //perhaps this should be triggered in options?
 
-		readDefaultNames();
+		readOptions();
 		
 		readMapFeatures();
 	}

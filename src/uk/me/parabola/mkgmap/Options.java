@@ -72,14 +72,8 @@ public class Options {
 			return;
 		}
 
-		try {
-			Reader r = new FileReader(filename);
-			readOptionFile(r);
-		} catch (FileNotFoundException e) {
-			throw new ExitException("Could not read option file " + filename, e);
-		} catch (IOException e) {
-			throw new ExitException("Reading option file " + filename + " failed", e);
-		}
+		Reader r = new FileReader(filename);
+		readOptionFile(r);
 	}
 
 	public void readOptionFile(Reader r) throws IOException {

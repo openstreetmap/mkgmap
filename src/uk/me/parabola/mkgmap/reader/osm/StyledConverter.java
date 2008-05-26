@@ -42,7 +42,7 @@ public class StyledConverter implements OsmConverter {
 	//private Map<String, GType> wayRules = new HashMap<String, GType>();
 	private Map<String, TypeRule> nodeValueRules = new HashMap<String, TypeRule>();
 	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
-	private MapCollector collector;
+	private final MapCollector collector;
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;

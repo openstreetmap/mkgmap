@@ -382,7 +382,7 @@ public class CommandArgs {
 	 * An option argument.  A key value pair.
 	 */
 	private class CommandOption implements ArgType {
-		private Option option;
+		private final Option option;
 
 		private CommandOption(Option option) {
 			this.option = option;

@@ -24,7 +24,7 @@ package uk.me.parabola.mkgmap.reader.osm;
  * @author Steve Ratcliffe
  */
 public class NoRule extends BaseRule implements TypeRule {
-	private GType gt;
+	private final GType gt;
 
 	public NoRule(GType gt) {
 		this.gt = gt;
