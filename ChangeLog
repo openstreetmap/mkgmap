@@ -47,7 +47,7 @@
 	  Let polygons get predictable garmin types
 	  
 	  Currently, the order of tags in the input defines the result of
-	  the garmin gt search for a polygon. Now the type is defined by
+	  the garmin type search for a polygon. Now the type is defined by
 	  the order in the map-features.csv.
 	  
 	  This was done for polylines a while back already. - Elrond

@@ -28,6 +28,10 @@ import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
+ * A OSM feature can have a default name that is used when there is no
+ * real name for the feature.  This is most useful when several different OSM
+ * features are represented by the same garmin type.
+ *  
  * @author Steve Ratcliffe
  */
 public class DefaultFeatureNames {
@@ -42,17 +46,15 @@ public class DefaultFeatureNames {
 
 		// First try for the lang_country varient
 		String[] names = new String[]{
-				"default-names" + "/names_" + lang + '_' + country,
-				"default-names" + "/names_" + lang,
-				"default-names/names"
+				"default-names/names",
+				"default-names/names_" + lang,
+				"default-names/names_" + lang + '_' + country,
 		};
 
 		for (String name : names) {
 			try {
 				Reader r = loader.open(name);
-				loadParent(loader, name);
 				readFile(r);
-				break;
 			} catch (FileNotFoundException e) {
 				// carry on with the next
 				log.debug("no file " + name);
@@ -64,31 +66,6 @@ public class DefaultFeatureNames {
 		return values.get(key);
 	}
 
-	/**
-	 * Attempt to load a parent bundle.  We strip off suffixes one by one
-	 * and load any file that is found.
-	 */
-	private void loadParent(StyleFileLoader loader, String origname) {
-		int ind;
-		String name = origname;
-		do {
-			ind = name.lastIndexOf('_');
-
-			if (ind > 0) {
-				name = origname.substring(0, ind);
-				log.debug("trying name " + name);
-				try {
-					Reader r = loader.open(name);
-					loadParent(loader, name);
-					readFile(r);
-				} catch (FileNotFoundException e) {
-					// It doesn't exist, so try next
-					log.debug("no parent file " + name);
-				}
-			}
-		} while (ind > 0);
-	}
-
 	private void readFile(Reader r) {
 		TokenScanner ws = new TokenScanner(r);
 
@@ -98,8 +75,7 @@ public class DefaultFeatureNames {
 
 			switch (t.getType()) {
 			case SYMBOL:
-				if (t.getValue().charAt(0) == '#')
-					ws.skipLine();
+				ws.skipLine();
 				break;
 			case TEXT:
 				readDefault(ws);
@@ -114,7 +90,7 @@ public class DefaultFeatureNames {
 	private void readDefault(TokenScanner ws) {
 		String key = ws.nextValue();
 		Token t = ws.nextToken();
-		if (t.getType() != TokType.SYMBOL || !t.getValue().equals("=")) {
+		if (!checkSymbolValue(t, "=")) {
 			ws.skipLine();
 			return;
 		}
@@ -124,7 +100,7 @@ public class DefaultFeatureNames {
 
 		ws.skipSpace();
 		t = ws.nextToken();
-		if (t.getType() != TokType.SYMBOL || !t.getValue().equals("(")) {
+		if (!checkSymbolValue(t, "(")) {
 			ws.skipLine();
 			return;
 		}
@@ -132,7 +108,7 @@ public class DefaultFeatureNames {
 		StringBuffer sb = new StringBuffer();
 		while (!ws.isEndOfFile()) {
 			t = ws.nextToken();
-			if (t.getType() == TokType.SYMBOL && t.getValue().equals(")"))
+			if (checkSymbolValue(t, ")"))
 				break;
 			sb.append(t.getValue());
 		}
@@ -140,5 +116,9 @@ public class DefaultFeatureNames {
 		String s = key + '=' + val;
 		log.debug("key:" + s + ", with val: " + sb);
 		values.put(s, sb.toString());
+	}
+
+	private boolean checkSymbolValue(Token t, String value) {
+		return t.getType() == TokType.SYMBOL && t.getValue().equals(value);
 	}
 }
