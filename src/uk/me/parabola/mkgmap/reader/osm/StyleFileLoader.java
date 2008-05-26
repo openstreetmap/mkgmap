@@ -62,6 +62,8 @@ public abstract class StyleFileLoader {
 		} else if (f.isFile()) {
 			String loclc = loc.toLowerCase();
 			if (loclc.endsWith(".style") || loclc.endsWith(".csv")) {
+				if (name != null)
+					throw new FileNotFoundException("no sub styles in a simple style file");
 				log.debug("a single file style");
 				loader = new CombinedStyleFileLoader(loc);
 			} else {

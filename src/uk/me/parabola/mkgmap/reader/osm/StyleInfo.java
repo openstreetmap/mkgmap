@@ -84,6 +84,6 @@ public class StyleInfo {
 	 */
 	public void merge(StyleInfo other) {
 		if (other.description != null)
-			this.description = other.description;
+			this.description = "Based on: " + other.description;
 	}
 }
