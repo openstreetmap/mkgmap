@@ -41,7 +41,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private static final int MODE_WAY = 2;
 
 	private Node currentNode;
-	private Way5 currentWay;
+	private Way currentWay;
 
 	private OsmConverter converter;
 	private MapCollector mapper;
@@ -82,7 +82,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
-				currentWay = new Way5();
+				currentWay = new Way();
 			}
 		} else if (mode == MODE_NODE) {
 			if (qName.equals("tag")) {

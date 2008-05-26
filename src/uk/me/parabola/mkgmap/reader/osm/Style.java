@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapCollector;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -30,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Locale;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
- * features and the garmin features.
+ * features and the garmin features.  This file reads in those files and
+ * provides methods for using the information.
  *
  * The files are either contained in a directory, in a package or in a zip'ed
  * file.
@@ -43,28 +44,45 @@ import java.util.Set;
 public class Style {
 	private static final Logger log = Logger.getLogger(Style.class);
 
+	// This is max the version that we understand
 	private static final int VERSION = 0;
-
-	private static final String FILE_VERSION = "version";
-	private static final String FILE_INFO = "info";
-	private static final String FILE_FEATURES = "map-features.csv";
-	private static final String FILE_OPTIONS = "options";
-
-	private final StyleFileLoader fileLoader;
-
-	private final StyleInfo info = new StyleInfo();
-
-	private String[] nameTagList;
 
 	// General options just have a value and don't need any special processing.
 	private static final List<String> OPTION_LIST = new ArrayList<String>(
 			Arrays.asList("levels"));
-	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
 	// Options that should not be overriden from the command line if the
 	// value is empty.
 	private static final List<String> DONT_OVERRIDE = new ArrayList<String>(
 			Arrays.asList("levels"));
+
+	// File names
+	private static final String FILE_VERSION = "version";
+	private static final String FILE_INFO = "info";
+
+	private static final String FILE_FEATURES = "map-features.csv";
+
+	private static final String FILE_OPTIONS = "options";
+
+	// A handle on the style directory or file.
+	private final StyleFileLoader fileLoader;
+
+	// The general information in the 'info' file.
+	private final StyleInfo info = new StyleInfo();
+
+	// A list of tag names to be used as the element name
+	private String[] nameTagList;
+
+	// Options from the option file that are used outside this file.
+	private final Map<String, String> generalOptions = new HashMap<String, String>();
+
+	private Map<String, TypeRule> ways = new HashMap<String, TypeRule>();
+	//private Map<String, TypeRule> wayKeys = new HashMap<String, TypeRule>();
+	private Map<String, TypeRule> nodes = new HashMap<String, TypeRule>();
+	//private Map<String, TypeRule> nodeKeys = new HashMap<String, TypeRule>();
+	private DefaultFeatureNames defaultNames;
+
+	private int nextIndex = 100000000;
 
 	/**
 	 * Create a style from the given location and name.
@@ -84,6 +102,96 @@ public class Style {
 		readOptions();
 
 		readInfo();
+
+		readDefaultNames();
+		
+		readMapFeatures();
+	}
+
+	public String[] getNameTagList() {
+		return nameTagList;
+	}
+
+
+	public String getOption(String name) {
+		return generalOptions.get(name);
+	}
+
+	public StyleInfo getInfo() {
+		return info;
+	}
+
+	public Map<String, TypeRule> getWays() {
+		return ways;
+	}
+
+	public Map<String, TypeRule> getNodes() {
+		return nodes;
+	}
+
+	private void readDefaultNames() {
+		defaultNames = new DefaultFeatureNames(fileLoader, Locale.getDefault());
+	}
+
+	/**
+	 * Read the map-features file.  This is the old format of the mapping
+	 * between osm and garmin types.
+	 */
+	private void readMapFeatures() {
+		try {
+			Reader r = fileLoader.open(FILE_FEATURES);
+			MapFeatureReader mfr = new MapFeatureReader();
+			mfr.readFeatures(new BufferedReader(r));
+			initFromMapFeatures(mfr);
+		} catch (FileNotFoundException e) {
+			// optional file
+			log.debug("no map-features file");
+		} catch (IOException e) {
+			log.error("could not read map features file");
+		}
+	}
+
+	/**
+	 * Take the output of the map-features file and create rules for
+	 * each line and add to this style.  All rules in map-features are
+	 * unconditional, in other words the osm 'amenity=cinema' always
+	 * maps to the same garmin type.
+	 *
+	 * @param mfr The map feature file reader.
+	 */
+	private void initFromMapFeatures(MapFeatureReader mfr) {
+		nextIndex -= 10000;
+		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
+			TypeRule value = createRule(me.getKey(), me.getValue());
+			ways.put(me.getKey(), value);
+		}
+
+		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
+			TypeRule value = createRule(me.getKey(), me.getValue());
+			ways.put(me.getKey(), value);
+		}
+
+		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
+			TypeRule value = createRule(me.getKey(), me.getValue());
+			nodes.put(me.getKey(), value);
+		}
+	}
+
+	/**
+	 * Create a rule from a raw gtype. You get raw gtypes when you
+	 * have read the types from a map-features file.
+	 *
+	 * @return A rule that always resolves to the given type.  It will
+	 * also have its priority set so that rules earlier in a file
+	 * will override those later.
+	 */
+	private TypeRule createRule(String key, GType gt) {
+		gt.setDefaultName(defaultNames.get(key));
+		if (gt.getDefaultName() != null)
+			log.debug("set default name of " + gt.getDefaultName() + " for  " + key);
+		TypeRule value = new NoRule(gt);
+		value.setPriority(nextIndex++);
+		return value;
 	}
 
 	/**
@@ -167,19 +275,30 @@ public class Style {
 	}
 
 	/**
-	 * Make an old style converter from the style.  The plan is that to begin
-	 * with we will just delegate all style requests to the old
-	 * {@link FeatureListConverter}.
-	 * @param collector The map collector
-	 * @return An old Feature list converter, using the map-features.csv in
-	 * the style.
-	 * @throws IOException If the map-features.csv file does not exist or can't
-	 * be read.
+	 * Merge another style into this one.  The style will have a lower
+	 * priority, in other words if rules in the current style match the
+	 * other one, then the current rule wins.
+	 *
+	 * This is used to base styles on other ones, without having to repeat
+	 * everything.
 	 */
-	public OsmConverter makeConverter(MapCollector collector) throws IOException {
-		Reader r = fileLoader.open(FILE_FEATURES);
-		OsmConverter converter = new FeatureListConverter(collector, r);
-		return converter;
+	private void mergeStyle(Style other) {
+		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
+		//	addWayKeyVal(ent.getKey(), createRule(ent));
+		//
+		//
+		//for (Map.Entry<String, TypeRule> ent : other.wayKeys.entrySet())
+		//	addWayKey(ent.getKey(), createRule(ent));
+		//
+		//
+		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
+		//	addNodeKeyVal(ent.getKey(), createRule(ent));
+		//
+		//
+		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
+		//	addNodeKey(ent.getKey(), createRule(ent));
+		//
+		//nextIndex -= 10000;
 	}
 
 	private void checkVersion() throws FileNotFoundException {
@@ -190,20 +309,7 @@ public class Style {
 
 		if (version > VERSION) {
 			System.err.println("Warning: unrecognised style version " + version +
-			", but only understand version " + VERSION);
+			", but only versions up to " + VERSION + " are understood");
 		}
-	}
-
-	public String[] getNameTagList() {
-		return nameTagList;
-	}
-
-
-	public String getOption(String name) {
-		return generalOptions.get(name);
-	}
-
-	public StyleInfo getInfo() {
-		return info;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2006 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -12,26 +12,25 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 11-Sep-2007
+ * Create date: 17-Dec-2006
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Represent a OSM way in the 0.5 api.  A way consists of an ordered list of
+ * nodes.
+ *
  * @author Steve Ratcliffe
  */
-interface Way extends Iterable<String> {
-	/**
-	 * Override to allow ref to be returned if no name is set.
-	 * If both then the ref is in brackets after the name.
-	 * @return The name that has been set for the way.
-	 */
-	public String getName();
+class Way extends Element {
 
-	public String getTag(String key);
+	private final List<Coord> points = new ArrayList<Coord>();
 
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
@@ -39,7 +38,49 @@ interface Way extends Iterable<String> {
 	 *
 	 * @return A simple list of points that form a line.
 	 */
-	public List<Coord> getPoints();
+	public List<Coord> getPoints() {
+		return points;
+	}
 
-	public boolean isBoolTag(String s);
+	public boolean isBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("true"))
+			return true;
+		if (val.equalsIgnoreCase("yes"))
+			return true;
+
+		// Not yet supporting the possible -1 value.
+
+		return false;
+	}
+
+	public void addPoint(Coord co) {
+		points.add(co);
+	}
+
+
+	/**
+	 * A simple representation of this way.
+	 * @return A string with the name and start point
+	 */
+	public String toString() {
+		if (points.isEmpty())
+			return "Way: empty";
+
+		Coord coord = points.get(0);
+		StringBuilder sb = new StringBuilder();
+		sb.append("WAY: ");
+		sb.append(getName());
+		sb.append('(');
+		sb.append(Utils.toDegrees(coord.getLatitude()));
+		sb.append('/');
+		sb.append(Utils.toDegrees(coord.getLongitude()));
+		sb.append(')');
+		sb.append(' ');
+		sb.append(toTagString());
+		return sb.toString();
+	}
 }

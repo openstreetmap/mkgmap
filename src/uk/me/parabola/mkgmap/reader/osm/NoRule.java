@@ -17,8 +17,20 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 /**
+ * This just wraps a type and always returns it.  An unconditional rule that
+ * is used for lines that were read from map-features, or that have no
+ * complex conditions.
+ *
  * @author Steve Ratcliffe
  */
-public interface TypeResolver {
-	public Type resolveType(Element el);
+public class NoRule extends BaseRule implements TypeRule {
+	private GType gt;
+
+	public NoRule(GType gt) {
+		this.gt = gt;
+	}
+
+	public GType resolveType(Element el) {
+		return gt;
+	}
 }

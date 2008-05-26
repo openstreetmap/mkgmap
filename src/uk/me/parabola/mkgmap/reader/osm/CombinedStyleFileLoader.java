@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -161,10 +162,10 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				convertToDirectory(name, dirname);
 			}
 		} catch (FileNotFoundException e) {
-			System.err.println("Could not open file");
+			System.err.println("Could not open file " + e);
 			System.exit(1);
 		} catch (IOException e) {
-			System.err.println("Could not read file");
+			System.err.println("Could not read file " + e);
 			System.exit(1);
 		}
 	}
@@ -175,6 +176,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 		dir.mkdir();
 		for (String s : loader.files.keySet()) {
 			File ent = new File(dir, s);
+			ent.getParentFile().mkdirs();
 			FileWriter writer = new FileWriter(ent);
 			BufferedReader r = null;
 			try {
@@ -192,15 +194,36 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	}
 
 	private static void convertToFile(File f, PrintStream out) throws IOException {
-		File[] list = f.listFiles();
+		File[] list = f.listFiles(new NoHiddenFilter());
+		convertToFile(out, list, null);
+	}
+
+	private static void convertToFile(PrintStream out, File[] list, String prefix) throws IOException {
 		for (File entry : list) {
 			if (entry.isFile()) {
-				out.println("<<<" + entry.getName() + ">>>");
+				out.print("<<<");
+				if (prefix != null) {
+					out.print(prefix);
+					out.print('/');
+				}
+				out.print(entry.getName());
+				out.println(">>>");
+
 				BufferedReader r = new BufferedReader(new FileReader(entry));
 				String line;
 				while ((line = r.readLine()) != null)
 					out.println(line);
+			} else {
+				convertToFile(out, entry.listFiles(new NoHiddenFilter()), entry.getName());
 			}
+		}
+	}
+
+	private static class NoHiddenFilter implements FilenameFilter {
+		public boolean accept(File dir, String name) {
+			if (name.length() == 0 || name.charAt(0) == '.')
+				return false;
+			return true;
 		}
 	}
 }

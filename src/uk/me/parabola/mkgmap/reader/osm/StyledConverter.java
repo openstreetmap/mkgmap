@@ -16,34 +16,41 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.mkgmap.general.MapCollector;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.log.Logger;
 
 /**
- * An new system to convert from osm styles to garmin styles.  Instead of a
- * single file, there will be multiple files in a directory.  The directory
- * will be the name of the style.  From the start there will be a versioning
- * system, so that we can extend it better.
+ * Convert from OSM to the mkgmap intermediate format using a style.
+ * A style is a collection of files that describe the mappings to be used
+ * when converting.
  *
  * @author Steve Ratcliffe
  */
 public class StyledConverter implements OsmConverter {
+	private static final Logger log = Logger.getLogger(StyledConverter.class);
 
-	private OsmConverter featureConverter;
 	private final String[] nameTagList;
 
-	public StyledConverter(Style style, MapCollector collector) throws FileNotFoundException {
+	private Map<String, TypeRule> wayValueRules = new HashMap<String, TypeRule>();
+	//private Map<String, GType> wayRules = new HashMap<String, GType>();
+	private Map<String, TypeRule> nodeValueRules = new HashMap<String, TypeRule>();
+	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
+	private MapCollector collector;
+
+	public StyledConverter(Style style, MapCollector collector) {
+		this.collector = collector;
 
 		nameTagList = style.getNameTagList();
 
-		try {
-			featureConverter = style.makeConverter(collector);
-		} catch (IOException e) {
-			System.out.println("could not read map-features");
-			throw new FileNotFoundException("map features could not be read");
-		}
+		wayValueRules = style.getWays();
+		nodeValueRules = style.getNodes();
 	}
 
 	/**
@@ -56,7 +63,44 @@ public class StyledConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
-		featureConverter.convertWay(way);
+		GType foundType = null;
+		for (String tagKey : way) {
+            TypeRule rule = wayValueRules.get(tagKey);
+			if (rule != null) {
+				GType gt = rule.resolveType(way);
+				if (gt != null && (foundType == null || gt.isBetter(foundType)))
+					foundType = gt;
+			}
+		}
+
+		if (foundType == null)
+			return;
+
+		// If the way does not have a name, then set the name from this
+		// type rule.
+		if (way.getName() == null)
+			way.setName(foundType.getDefaultName());
+
+		if (foundType.getFeatureKind() == GType.POLYLINE)
+            addLine(way, foundType);
+		else
+			addShape(way, foundType);
+	}
+
+	private void addLine(Way way, GType gt) {
+		MapLine ms = new MapLine();
+		elementSetup(ms, gt, way);
+		ms.setPoints(way.getPoints());
+
+		collector.addLine(ms);
+	}
+
+	private void addShape(Way way, GType gt) {
+		MapShape ms = new MapShape();
+		elementSetup(ms, gt, way);
+		ms.setPoints(way.getPoints());
+
+		collector.addShape(ms);
 	}
 
 	/**
@@ -66,7 +110,44 @@ public class StyledConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
-		featureConverter.convertNode(node);
+		GType foundType = null;
+		for (String tagKey : node) {
+			TypeRule rule = nodeValueRules.get(tagKey);
+			if (rule != null) {
+				GType gt = rule.resolveType(node);
+				if (gt != null && (foundType == null || gt.isBetter(foundType)))
+					foundType = gt;
+			}
+		}
+
+		if (foundType == null)
+			return;
+
+		// If the node does not have a name, then set the name from this
+		// type rule.
+		log.debug("node name", node.getName());
+		if (node.getName() == null) {
+			node.setName(foundType.getDefaultName());
+			log.debug("after set", node.getName());
+		}
+
+		addPoint(node, foundType);
+	}
+
+	private void addPoint(Node node, GType gt) {
+		MapPoint mp = new MapPoint();
+		elementSetup(mp, gt, node);
+		mp.setSubType(gt.getSubtype());
+		mp.setLocation(node.getLocation());
+
+		collector.addPoint(mp);
+	}
+
+	private void elementSetup(MapElement ms, GType gt, Element element) {
+		ms.setName(element.getName());
+		ms.setType(gt.getType());
+		ms.setMinResolution(gt.getMinResolution());
+		ms.setMaxResolution(gt.getMaxResolution());
 	}
 
 	/**

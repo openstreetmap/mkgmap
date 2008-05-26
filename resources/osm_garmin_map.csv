@@ -1,4 +1,4 @@
-# type|osm-tag|osm-value|garmin-type|garmin-subtype|
+# gt|osm-tag|osm-value|garmin-type|garmin-subtype|
 point|aeroway|airport|misc|airport|20
 point|amenity|atm|community|bank-atm|21
 point|amenity|bank;atm|community|bank-atm|21

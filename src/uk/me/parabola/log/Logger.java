@@ -146,7 +146,7 @@ public class Logger {
 	 */
 	public void debug(Object o) {
 		if (log.isLoggable(Level.FINE))
-			log.fine(o.toString());
+			log.fine(o!=null? o.toString(): "null");
 	}
 
 	/**

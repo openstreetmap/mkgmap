@@ -69,7 +69,7 @@ abstract class Element implements Iterable<String> {
 
 			public String next() {
 				Map.Entry<String, String> ent = tagit.next();
-				return ent.getKey() + '|' + ent.getValue();
+				return ent.getKey() + '=' + ent.getValue();
 			}
 
 			public void remove() {
