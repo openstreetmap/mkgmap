@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.Reader;
+
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -33,9 +35,12 @@ public class StyleInfo {
 	private String description = "No description available";
 	private String longDescription = "";
 
-	void readInfo(TokenScanner ws) {
+	void readInfo(Reader r) {
+		TokenScanner ws = new TokenScanner(r);
 		while (!ws.isEndOfFile()) {
 			String word = ws.nextValue();
+			if (word == null)
+				continue;
 			if (word.equals("description"))
 				fetchSummary(ws);
 			else if (word.equals("version")) {
@@ -45,7 +50,7 @@ public class StyleInfo {
 	}
 
 	private void fetchVersion(TokenScanner ws) {
-		if (ws.nextToken().getType() == TokType.SYMBOL)
+		if (ws.firstTokenType() == TokType.SYMBOL)
 			ws.nextToken();
 		version = ws.readLine();
 		log.debug("file info: set version to", version);
@@ -54,7 +59,7 @@ public class StyleInfo {
 	private void fetchSummary(TokenScanner ws) {
 		if (ws.nextToken().getType() == TokType.SYMBOL)
 			ws.nextToken();
-		
+		ws.skipSpace();
 		description = ws.readLine();
 		log.debug("file info: set description to", description);
 	}

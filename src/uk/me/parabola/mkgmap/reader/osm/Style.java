@@ -189,7 +189,7 @@ public class Style {
 	private TypeRule createRule(String key, GType gt) {
 		gt.setDefaultName(defaultNames.get(key));
 		if (gt.getDefaultName() != null)
-			log.debug("set default name of " + gt.getDefaultName() + " for  " + key);
+			log.debug("set default name of", gt.getDefaultName(), "for", key);
 		TypeRule value = new NoRule(gt);
 		value.setPriority(nextIndex++);
 		return value;
@@ -256,6 +256,7 @@ public class Style {
 			// instead eg. "name:en,int_name,name" or you could use some
 			// completely different tag...
 			nameTagList = val.split("[,\\s]+");
+		//} else if (opt.equals()) {
 		} else if (OPTION_LIST.contains(opt)) {
 			// Simple options that have string value.  Perhaps we should alow
 			// anything here?
@@ -265,10 +266,8 @@ public class Style {
 
 	private void readInfo() {
 		try {
-			BufferedReader r = new BufferedReader(fileLoader.open(FILE_INFO));
-			TokenScanner ws = new TokenScanner(r);
-
-			info.readInfo(ws);
+			BufferedReader br = new BufferedReader(fileLoader.open(FILE_INFO));
+			info.readInfo(br);
 		} catch (FileNotFoundException e) {
 			// optional file..
 			log.debug("no info file");
@@ -306,7 +305,7 @@ public class Style {
 		Reader r = fileLoader.open(FILE_VERSION);
 		TokenScanner scan = new TokenScanner(r);
 		int version = scan.nextInt();
-		log.debug("Got version " + version);
+		log.debug("Got version", version);
 
 		if (version > VERSION) {
 			System.err.println("Warning: unrecognised style version " + version +

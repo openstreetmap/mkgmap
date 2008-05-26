@@ -226,7 +226,7 @@ public class FileNode implements ImgChannel {
 			// First need to allocate enough blocks for this write. First check
 			// if the block exists already
 			int pblock = dirent.getPhysicalBlock(lblock);
-			log.debug("lblock / pblock " + lblock + '/' + pblock);
+			log.debug("lblock / pblock", lblock, '/', pblock);
 			if (pblock == 0xffff) {
 				log.debug("allocating new block");
 				pblock = blockManager.allocate();

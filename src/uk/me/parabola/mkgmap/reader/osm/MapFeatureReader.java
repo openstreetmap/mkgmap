@@ -45,7 +45,7 @@ public class MapFeatureReader {
 				continue;
 
 			String type = fields[F_FEATURE_TYPE];
-			log.debug("feature kind " + type);
+			log.debug("feature kind", type);
 			if (type.equals("point")) {
 				log.debug("point type found");
 				saveFeature(GType.POINT, fields, pointFeatures);

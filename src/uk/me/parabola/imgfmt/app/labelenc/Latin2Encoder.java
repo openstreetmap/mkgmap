@@ -35,7 +35,7 @@ public class Latin2Encoder implements CharacterEncoder {
 		try {
 			byte[] res = "É".getBytes("iso-8859-2");
 			latin2supported = true;
-			log.debug("latin2 supported " + res.length);
+			log.debug("latin2 supported ", res.length);
 		} catch (UnsupportedEncodingException e) {
 			log.warn("latin2 charset is not supported");
 			latin2supported = false;

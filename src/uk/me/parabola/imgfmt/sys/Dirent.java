@@ -209,7 +209,7 @@ class Dirent implements DirectoryEntry {
 	 * @param ext The file extension.
 	 */
 	private void setExt(String ext) {
-		log.debug("ext len" + ext.length());
+		log.debug("ext len", ext.length());
 		if (ext.length() != MAX_EXT_LEN)
 			throw new IllegalArgumentException("File extension is wrong size");
 		this.ext = ext;

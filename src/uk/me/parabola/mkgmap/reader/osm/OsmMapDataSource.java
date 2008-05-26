@@ -114,7 +114,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 
 		if (log.isDebugEnabled()) {
 			for (LevelInfo li : levels) {
-				log.debug("Level: " + li);
+				log.debug("Level:", li);
 			}
 		}
 

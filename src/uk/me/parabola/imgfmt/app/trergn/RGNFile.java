@@ -129,7 +129,7 @@ public class RGNFile extends ImgFile {
 		if (currentDivision.needsPolygonPtr()) {
 			long currPos = position();
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
-			log.debug("currpos=" + currPos + ", off=" + off);
+			log.debug("currpos=", currPos, ", off=", off);
 			if (off > 0xffff)
 				throw new IllegalStateException("Too many items in the polygon section");
 

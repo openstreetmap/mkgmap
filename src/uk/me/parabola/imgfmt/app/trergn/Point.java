@@ -52,7 +52,7 @@ public class Point extends MapObject {
 	public void write(WriteStrategy file) {
 		byte b = (byte) getType();
 		file.put(b);
-		log.debug("writing point: " + b);
+		log.debug("writing point:", b);
 
 		int off = getLabel().getOffset();
 		if (poi != null) {

@@ -57,7 +57,7 @@ public class DefaultFeatureNames {
 				readFile(r);
 			} catch (FileNotFoundException e) {
 				// carry on with the next
-				log.debug("no file " + name);
+				log.debug("no file", name);
 			}
 		}
 	}
@@ -114,7 +114,7 @@ public class DefaultFeatureNames {
 		}
 
 		String s = key + '=' + val;
-		log.debug("key:" + s + ", with val: " + sb);
+		log.debug("key:", s, " with val:", sb);
 		values.put(s, sb.toString());
 	}
 
