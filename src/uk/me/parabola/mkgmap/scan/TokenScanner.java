@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: May 10, 2008
  */
-package uk.me.parabola.mkgmap.reader.scan;
+package uk.me.parabola.mkgmap.scan;
 
 import java.io.BufferedReader;
 import java.io.IOException;

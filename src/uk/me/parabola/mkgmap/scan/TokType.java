@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: May 25, 2008
  */
-package uk.me.parabola.mkgmap.reader.scan;
+package uk.me.parabola.mkgmap.scan;
 
 /**
  * The different token types.

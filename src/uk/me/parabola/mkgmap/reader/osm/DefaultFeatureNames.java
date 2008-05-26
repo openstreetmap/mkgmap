@@ -23,9 +23,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.reader.scan.TokType;
-import uk.me.parabola.mkgmap.reader.scan.Token;
-import uk.me.parabola.mkgmap.reader.scan.TokenScanner;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * @author Steve Ratcliffe
