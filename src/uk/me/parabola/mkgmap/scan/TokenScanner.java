@@ -256,6 +256,44 @@ public class TokenScanner {
 	}
 
 	/**
+	 * Read the tokens up untill the end of the line and combine then
+	 * into one string.
+	 * 
+	 * @return A single string, not including the newline terminator.  Never
+	 * returns null, returns an empty string if there is nothing there.  The
+	 * end of line is comsumed.
+	 */
+	public String readLine() {
+		String res = readUntil(TokType.EOL);
+		nextToken();  // use up new line
+		return res;
+	}
+
+	private String readUntil(TokType type) {
+		StringBuffer sb = new StringBuffer();
+		while (!isEndOfFile()) {
+			Token t = peekToken();
+			if (t.getType() == type)
+				break;
+			sb.append(nextToken().getValue());
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Convience routine to get an integer.  Skips space and reads a
+	 * token.  This token is converted to an integer if possible.
+	 * @return An integer as read from the next non space token.
+	 * @thows NumberFormatException When the next symbol isn't
+	 * a valid integer.
+	 */
+	public int nextInt() {
+		skipSpace();
+		Token t = nextToken();
+		return Integer.parseInt(t.getValue());
+	}
+
+	/**
 	 * Iterate over tokens.  Tokens could be already on the <i>tokens</i>
 	 * queue or we might have to read them from the input.  If they are
 	 * read from the input they will be added to the queue.

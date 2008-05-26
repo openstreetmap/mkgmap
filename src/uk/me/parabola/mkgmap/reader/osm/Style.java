@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,10 +24,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Locale;
+
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -265,7 +266,7 @@ public class Style {
 	private void readInfo() {
 		try {
 			BufferedReader r = new BufferedReader(fileLoader.open(FILE_INFO));
-			WordScanner ws = new WordScanner(r);
+			TokenScanner ws = new TokenScanner(r);
 
 			info.readInfo(ws);
 		} catch (FileNotFoundException e) {
@@ -303,7 +304,7 @@ public class Style {
 
 	private void checkVersion() throws FileNotFoundException {
 		Reader r = fileLoader.open(FILE_VERSION);
-		WordScanner scan = new WordScanner(r);
+		TokenScanner scan = new TokenScanner(r);
 		int version = scan.nextInt();
 		log.debug("Got version " + version);
 

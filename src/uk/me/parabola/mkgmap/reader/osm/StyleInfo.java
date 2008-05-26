@@ -17,6 +17,8 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * Information about a style.  This is so style authors can include
@@ -31,9 +33,9 @@ public class StyleInfo {
 	private String description = "No description available";
 	private String longDescription = "";
 
-	void readInfo(WordScanner ws) {
+	void readInfo(TokenScanner ws) {
 		while (!ws.isEndOfFile()) {
-			String word = ws.nextWord();
+			String word = ws.nextValue();
 			if (word.equals("description"))
 				fetchSummary(ws);
 			else if (word.equals("version")) {
@@ -42,19 +44,18 @@ public class StyleInfo {
 		}
 	}
 
-	private void fetchVersion(WordScanner ws) {
-		if (ws.hasNextSymbol())
-			ws.nextSymbol();
-
-		version = ws.nextLine();
+	private void fetchVersion(TokenScanner ws) {
+		if (ws.nextToken().getType() == TokType.SYMBOL)
+			ws.nextToken();
+		version = ws.readLine();
 		log.debug("file info: set version to", version);
 	}
 
-	private void fetchSummary(WordScanner ws) {
-		if (ws.hasNextSymbol())
-			ws.nextSymbol();
+	private void fetchSummary(TokenScanner ws) {
+		if (ws.nextToken().getType() == TokType.SYMBOL)
+			ws.nextToken();
 		
-		description = ws.nextLine();
+		description = ws.readLine();
 		log.debug("file info: set description to", description);
 	}
 
