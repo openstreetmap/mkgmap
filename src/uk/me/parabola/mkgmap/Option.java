@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap;
 /**
  * An option or a key value pair.  Imutable class.
  */
-class Option {
+public class Option {
 	private final String option;
 	private final String value;
 

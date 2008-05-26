@@ -43,7 +43,7 @@ public class Options {
 	// Used to prevent the same file being read more than once.
 	private final Set<String> readFiles = new HashSet<String>();
 
-	protected Options(OptionProcessor proc) {
+	public Options(OptionProcessor proc) {
 		this.proc = proc;
 	}
 
@@ -56,7 +56,7 @@ public class Options {
 	 *
 	 * @param filename The filename to obtain options from.
 	 */
-	public void readOptionFile(String filename) {
+	public void readOptionFile(String filename) throws IOException {
 		log.info("reading option file", filename);
 
 		File file = new File(filename);
@@ -74,21 +74,25 @@ public class Options {
 
 		try {
 			Reader r = new FileReader(filename);
-			BufferedReader br = new BufferedReader(r);
-
-			String line;
-			while ((line = br.readLine()) != null) {
-				line = line.trim();
-				if (line.length() == 0 || line.charAt(0) == '#')
-					continue;
-
-				Option opt = new Option(line);
-				proc.processOption(opt);
-			}
+			readOptionFile(r);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not read option file " + filename, e);
 		} catch (IOException e) {
 			throw new ExitException("Reading option file " + filename + " failed", e);
+		}
+	}
+
+	public void readOptionFile(Reader r) throws IOException {
+		BufferedReader br = new BufferedReader(r);
+
+		String line;
+		while ((line = br.readLine()) != null) {
+			line = line.trim();
+			if (line.length() == 0 || line.charAt(0) == '#')
+				continue;
+
+			Option opt = new Option(line);
+			proc.processOption(opt);
 		}
 	}
 }

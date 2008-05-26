@@ -31,9 +31,9 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class StyleInfo {
 	private static final Logger log = Logger.getLogger(StyleInfo.class);
 
-	private String version = "";
-	private String description = "No description available";
-	private String longDescription = "";
+	private String version;
+	private String description;
+	private String longDescription;
 
 	void readInfo(Reader r) {
 		TokenScanner ws = new TokenScanner(r);
@@ -65,14 +65,25 @@ public class StyleInfo {
 	}
 
 	public String getDescription() {
-		return description;
+		return description == null ? "No description available" : description;
 	}
 
 	public String getVersion() {
-		return version;
+		return version == null ? "1" : version;
 	}
 
 	public String getLongDescription() {
-		return longDescription;
+		return longDescription != null ? longDescription : "";
+	}
+
+	/**
+	 * Merge the other style info in so that it doesn't override anything
+	 * in the current info.  In general, it is probably not very useful.
+	 * @param other The info to be merged in.  Nothing will overwrite anything
+	 * in 'this', although it could be added.
+	 */
+	public void merge(StyleInfo other) {
+		if (other.description != null)
+			this.description = other.description;
 	}
 }

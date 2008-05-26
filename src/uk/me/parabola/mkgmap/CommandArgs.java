@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Iterator;
@@ -259,10 +260,15 @@ public class CommandArgs {
 	private void readConfigFile(String filename) {
 		Options opts = new Options(new OptionProcessor() {
 			public void processOption(Option opt) {
+				log.debug("incoming opt", opt.getOption(), opt.getValue());
 				addOption(new CommandOption(opt));
 			}
 		});
-		opts.readOptionFile(filename);
+		try {
+			opts.readOptionFile(filename);
+		} catch (IOException e) {
+			throw new ExitException("Failed to read option file", e);
+		}
 	}
 
 	/**
@@ -392,7 +398,7 @@ public class CommandArgs {
 		}
 
 		public String getOption() {
-			return option.getValue();
+			return option.getOption();
 		}
 
 		public String getValue() {

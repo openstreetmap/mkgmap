@@ -31,6 +31,9 @@ import java.util.Set;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.OptionProcessor;
+import uk.me.parabola.mkgmap.Option;
 
 /**
  * A style is a collection of files that describe the mapping between the OSM
@@ -60,13 +63,12 @@ public class Style {
 	// File names
 	private static final String FILE_VERSION = "version";
 	private static final String FILE_INFO = "info";
-
 	private static final String FILE_FEATURES = "map-features.csv";
-
 	private static final String FILE_OPTIONS = "options";
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
+	private final String location;
 
 	// The general information in the 'info' file.
 	private final StyleInfo info = new StyleInfo();
@@ -95,14 +97,14 @@ public class Style {
 	 * include the version file being missing.
 	 */
 	public Style(String loc, String name) throws FileNotFoundException {
+		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
+		readInfo();
 
 		readOptions();
-
-		readInfo();
 
 		readDefaultNames();
 		
@@ -211,7 +213,7 @@ public class Style {
 			String val = (String) ent.getValue();
 
 			if (!DONT_OVERRIDE.contains(key))
-				processOption(key, val);
+				doOption(key, val);
 		}
 	}
 
@@ -220,26 +222,16 @@ public class Style {
 	 * we are interested in.
 	 */
 	private void readOptions() {
+
 		try {
 			Reader r = fileLoader.open(FILE_OPTIONS);
-			BufferedReader br = new BufferedReader(r);
-
-			String line;
-			while ((line = br.readLine()) != null) {
-				String s = line.trim();
-
-				if (s.length() == 0 || s.charAt(0) == '#')
-					continue;
-
-				String[] optval = s.split("[=:]", 2);
-
-				if (optval.length > 1) {
-					String opt = optval[0].trim();
-					String val = optval[1].trim();
-
-					processOption(opt, val);
+			Options opts = new Options(new OptionProcessor() {
+				public void processOption(Option opt) {
+					doOption(opt.getOption(), opt.getValue());
 				}
-			}
+			});
+
+			opts.readOptionFile(r);
 		} catch (FileNotFoundException e) {
 			// the file is optional, so ignore if not present, or causes error
 			log.debug("no options file");
@@ -248,7 +240,7 @@ public class Style {
 		}
 	}
 
-	private void processOption(String opt, String val) {
+	private void doOption(String opt, String val) {
 		if (opt.equals("name-tag-list")) {
 			// The name-tag-list allows you to redifine what you want to use
 			// as the name of a feature.  By default this is just 'name', but
@@ -256,7 +248,21 @@ public class Style {
 			// instead eg. "name:en,int_name,name" or you could use some
 			// completely different tag...
 			nameTagList = val.split("[,\\s]+");
-		//} else if (opt.equals()) {
+		} else if (opt.equals("include")) {
+			try {
+				mergeStyle(new Style(location, val));
+			} catch (FileNotFoundException e) {
+				// not found, try on the classpath.  This is the common
+				// case where you have an external style, but want to
+				// base it on a builtin one.
+				log.debug("could not open included style file", e);
+
+				try {
+					mergeStyle(new Style(null, val));
+				} catch (FileNotFoundException e1) {
+					log.error("Could not find included style", e);
+				}
+			}
 		} else if (OPTION_LIST.contains(opt)) {
 			// Simple options that have string value.  Perhaps we should alow
 			// anything here?
@@ -277,28 +283,30 @@ public class Style {
 	/**
 	 * Merge another style into this one.  The style will have a lower
 	 * priority, in other words if rules in the current style match the
-	 * other one, then the current rule wins.
+	 * 'other' one, then the current rule wins.
 	 *
+	 * This is called from the options file, and options from the other
+	 * file are processed as if they were included in the current option
+	 * file at the point of inclusion.
+	 * 
 	 * This is used to base styles on other ones, without having to repeat
 	 * everything.
 	 */
 	private void mergeStyle(Style other) {
-		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
-		//	addWayKeyVal(ent.getKey(), createRule(ent));
-		//
-		//
-		//for (Map.Entry<String, TypeRule> ent : other.wayKeys.entrySet())
-		//	addWayKey(ent.getKey(), createRule(ent));
-		//
-		//
-		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
-		//	addNodeKeyVal(ent.getKey(), createRule(ent));
-		//
-		//
-		//for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
-		//	addNodeKey(ent.getKey(), createRule(ent));
-		//
-		//nextIndex -= 10000;
+
+		for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
+			ways.put(ent.getKey(), ent.getValue());
+
+		for (Map.Entry<String, TypeRule> ent : other.nodes.entrySet())
+			nodes.put(ent.getKey(), ent.getValue());
+
+		info.merge(other.info);
+
+		this.nameTagList = other.nameTagList;
+		for (Map.Entry<String, String> ent : other.generalOptions.entrySet())
+			doOption(ent.getKey(), ent.getValue());
+
+		nextIndex -= 10000;
 	}
 
 	private void checkVersion() throws FileNotFoundException {
