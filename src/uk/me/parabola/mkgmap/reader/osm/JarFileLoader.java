@@ -36,6 +36,13 @@ import uk.me.parabola.log.Logger;
 
 /**
  * Load a style from a jar file.
+ *
+ * The style can just be jar'ed up at the top level or it can be
+ * contained within a directory in the jar.  You can have more than one
+ * style in the jar.  In this case a name will be required to select
+ * the one that you want to use.  It looks for a file with a name that
+ * ends with 'version' to work out where the style is.  If a name is given
+ * then it looks for a file path ending <code>name/version</code>.
  * 
  * @author Steve Ratcliffe
  */

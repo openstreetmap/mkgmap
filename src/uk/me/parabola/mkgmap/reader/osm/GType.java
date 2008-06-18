@@ -20,7 +20,9 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
 
 /**
- * Holds the garmin type of an element.
+ * Holds the garmin type of an element and all the information that
+ * will be needed to represent it on the map.  So we have a range of
+ * resolutions at which it will be present.
  *
  * @author Steve Ratcliffe
  */

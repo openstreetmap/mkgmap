@@ -67,7 +67,7 @@ public class MapBuilder {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
-	private java.util.Map<MapPoint,POIRecord> poimap = 
+	private final java.util.Map<MapPoint,POIRecord> poimap =
 		new HashMap<MapPoint,POIRecord>();
 
 	/**

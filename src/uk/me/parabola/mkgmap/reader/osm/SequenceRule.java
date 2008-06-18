@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
+ * A list of rules, the first one that matches wins.
+ * 
  * @author Steve Ratcliffe
  */
 public class SequenceRule extends BaseRule implements TypeRule {
