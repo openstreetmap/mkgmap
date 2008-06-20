@@ -16,23 +16,22 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
 import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.WriteStrategy;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -72,7 +71,7 @@ public class TREFile extends ImgFile {
 			setWriter(new BufferedWriteStrategy(chan));
 
 			// Position at the start of the writable area.
-			position(TREHeader.HEADER_LEN);
+			position(header.getHeaderLength());
 		} else {
 			setReader(new BufferedReadStrategy(chan));
 			header.readHeader(getReader());
@@ -94,7 +93,7 @@ public class TREFile extends ImgFile {
 	 */
 	public void addInfo(String msg) {
 		byte[] val = Utils.toBytes(msg);
-		if (position() != TREHeader.HEADER_LEN + header.getMapInfoSize())
+		if (position() != header.getHeaderLength() + header.getMapInfoSize())
 			throw new IllegalStateException("All info must be added before anything else");
 
 		header.setMapInfoSize(header.getMapInfoSize() + (val.length+1));
@@ -311,8 +310,8 @@ public class TREFile extends ImgFile {
 
 		// First do the ones in the TRE header gap
 		ReadStrategy reader = getReader();
-		reader.position(TREHeader.HEADER_LEN);
-		while (reader.position() < TREHeader.HEADER_LEN + header.getMapInfoSize()) {
+		reader.position(header.getHeaderLength());
+		while (reader.position() < header.getHeaderLength() + header.getMapInfoSize()) {
 			String m = reader.getZString();
 			msgs.add(m);
 		}
