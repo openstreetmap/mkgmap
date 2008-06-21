@@ -271,6 +271,21 @@ public class CommandArgs {
 		return arglist.getProperty("lower-case") == null;
 	}
 
+	/**
+	 * Test for the existence of an argument.
+	 */
+	public boolean exists(String name) {
+		return currentOptions.getProperty(name) != null;
+	}
+
+	/**
+	 * Get an integer argument.  If the argument was not supplied or
+	 * cannot be turned into an integer then the default value supplied
+	 * will be returned.
+	 * @param name The option name to retrieve.
+	 * @param def The default to use if the option is not set or is not an
+	 * integer.
+	 */
 	public int get(String name, int def) {
 		String s = currentOptions.getProperty(name);
 		if (s == null)

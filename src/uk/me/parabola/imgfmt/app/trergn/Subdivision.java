@@ -62,6 +62,8 @@ public class Subdivision {
 	private boolean hasPolylines;
 	private boolean hasPolygons;
 
+	private int numPolylines;
+
 	// The location of the central point, not scaled AFAIK
 	private final int longitude;
 	private final int latitude;
@@ -144,6 +146,10 @@ public class Subdivision {
 		return div;
 	}
 
+	public Zoom getZoom() {
+		return zoomLevel;
+	}
+
 	/**
 	 * Get the shift value, that is the number of bits to left shift by for
 	 * values that need to be saved shifted in the file.  Related to the
@@ -204,6 +210,8 @@ public class Subdivision {
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
+		numPolylines++;
+		pl.setNumber(numPolylines);
 		return pl;
 	}
 
@@ -343,7 +351,7 @@ public class Subdivision {
 		divisions.add(sd);
 	}
 
-	private int getNumber() {
+	public int getNumber() {
 		return number;
 	}
 

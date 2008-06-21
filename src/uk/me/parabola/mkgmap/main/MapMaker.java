@@ -90,7 +90,7 @@ public class MapMaker implements MapProcessor {
 	 * @param map The map to modify.
 	 * @param args The command line arguments.
 	 */
-	private void setOptions(Map map, CommandArgs args) {
+	private void setOptions(Map map, CommandArgs args) throws FileExistsException {
 		String s = args.getCharset();
 		if (s != null)
 			map.setLabelCharset(s, args.isForceUpper());
@@ -98,6 +98,9 @@ public class MapMaker implements MapProcessor {
 		int i = args.getCodePage();
 		if (i != 0)
 			map.setLabelCodePage(i);
+
+		if (args.exists("net"))
+			map.addNet();
 	}
 
 	/**

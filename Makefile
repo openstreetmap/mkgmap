@@ -23,7 +23,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = --tdbfile --gmapsupp /opt/data/uk/63*
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
-#OSMDATA = --style=default --name-tag-list='name:en int_name name' test.osm
+OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'

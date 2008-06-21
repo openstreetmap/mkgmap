@@ -16,8 +16,35 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
+
+
 /**
  * @author Steve Ratcliffe
  */
 public class RoadIndex {
+	private Polyline linkedRoad;
+	// int Subdivision.getNumber()
+
+	public RoadIndex(Polyline road) {
+		linkedRoad = road;
+	}
+
+	private Subdivision getSubdiv() {
+		return linkedRoad.getSubdiv();
+	}
+
+	int getZoomLevel() {
+		return getSubdiv().getZoom().getLevel();
+	}
+
+	void write(WriteStrategy writer) {
+		int roadnum = linkedRoad.getNumber();
+		assert roadnum < 256;
+		writer.put((byte) roadnum);
+		char subdivnum = (char) getSubdiv().getNumber();
+		writer.putChar(subdivnum);
+	}
 }

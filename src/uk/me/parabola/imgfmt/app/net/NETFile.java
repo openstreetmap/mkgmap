@@ -64,9 +64,10 @@ public class NETFile extends ImgFile {
 	private void writeBody() {
 		WriteStrategy writer = getWriter();
 
-		netHeader.startRoadDefs(position());
+		int start = writer.position();
+		netHeader.startRoadDefs(start);
 		for (RoadDef r : roaddefs) {
-			r.write(writer);
+			r.write(writer, writer.position() - start);
 		}
 		netHeader.endRoadDefs(position());
 	}
@@ -78,5 +79,11 @@ public class NETFile extends ImgFile {
 		roaddefs.add(r);
 
 		return r;
+	}
+
+	public void allRoadDefsDone() {
+		int ofs = 0;
+		for (RoadDef r : roaddefs)
+			ofs += r.calcOffset(ofs);
 	}
 }

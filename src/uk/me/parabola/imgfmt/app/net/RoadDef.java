@@ -18,8 +18,11 @@ package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.OffsetWriterList;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * A road definition.  This ties together all parts of a single road and provides
@@ -30,17 +33,51 @@ import java.util.List;
 public class RoadDef {
 	private static final int MAX_LABELS = 4;
 
+	private int offset = -1;
+	private OffsetWriterList owList = new OffsetWriterList();
+
 	// There can be up to 4 labels for the same road.
 	private final Label[] labels = new Label[MAX_LABELS];
-	private int numlabels = 0;
+	private int numlabels;
 
-	private byte roadData;
+	private byte roadFlags = (byte) 0x4;
 
 	private int roadLength;  // in feet?
 
-	private List<RoadIndex> roadIndexes;
+	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
-	void write(WriteStrategy writer) {
+	public void addOffsetTarget(WriteStrategy writer, int ormask) {
+		owList.addTarget(writer, ormask);
+	}
+
+	public void addPolylineRef(Polyline pl) {
+		roadIndexes.add(new RoadIndex(pl));
+	}
+
+	private int getMaxZoomLevel() {
+		int m = 0;
+		for (RoadIndex ri : roadIndexes) {
+			int z = ri.getZoomLevel();
+			m = (z > m ? z : m);
+		}
+		return m;
+	}
+
+	int calcOffset(int ofs) {
+		offset = ofs;
+		if (owList != null) {
+			owList.writeOffset(ofs);
+		}
+
+		int len = 5; // basic len
+		len += 3 * numlabels;
+		len += getMaxZoomLevel();
+		len += 3 * roadIndexes.size();
+		return len;
+	}
+
+	void write(WriteStrategy writer, int realofs) {
+		assert offset == realofs;
 		for (int i = 0; i < numlabels; i++) {
 			Label l = labels[i];
 			int ptr = l.getOffset();
@@ -48,9 +85,27 @@ public class RoadDef {
 				ptr |= 0x800000;
 			writer.put3(ptr);
 		}
-		writer.put((byte) 0);
+		writer.put(roadFlags);
 		writer.put3(roadLength);
-		writer.put((byte) 0x80);
+
+		int maxlevel = getMaxZoomLevel();
+		for (int i = 0; i <= maxlevel; i++) {
+			byte b = 0;
+			for (RoadIndex ri : roadIndexes) {
+				if (ri.getZoomLevel() == i)
+					b++;
+			}
+			if (i == maxlevel)
+				b |= 0x80;
+			writer.put(b);
+		}
+
+		for (int i = 0; i <= maxlevel; i++) {
+			for (RoadIndex ri : roadIndexes) {
+				if (ri.getZoomLevel() == i)
+					ri.write(writer);
+			}
+		}
 	}
 
 	public void addLabel(Label l) {

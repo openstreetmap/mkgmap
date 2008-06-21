@@ -23,6 +23,7 @@ import java.util.HashMap;
 // import java.util.Map;  --> will use "java.util.Map" where needed
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
@@ -35,6 +36,8 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
+import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -79,9 +82,11 @@ public class MapBuilder {
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
 		processPOIs(map, src);
+		preProcessRoads(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
+		postProcessRoads(map, src);
 	}
 
 	/**
@@ -100,6 +105,30 @@ public class MapBuilder {
 			poimap.put(p, r);
 		}
 		lbl.allPOIsDone();
+	}
+
+	/**
+	 * Process roads first to create RoadDefs
+	 */
+	private void preProcessRoads(Map target, MapDataSource src) {
+		LBLFile lbl = target.getLblFile();
+		NETFile net = target.getNetFile();
+
+		if (net == null)
+			return;
+		
+		for (MapLine l : src.getLines()) {
+			Label label = lbl.newLabel(l.getName());
+			RoadDef r = net.createRoadDef(label);
+			l.setUserData(r);
+		}
+	}
+	private void postProcessRoads(Map target, MapDataSource src) {
+		NETFile net = target.getNetFile();
+
+		if (net == null)
+			return;
+		net.allRoadDefsDone();
 	}
 
 	/**
@@ -434,6 +463,14 @@ public class MapBuilder {
 				pl.addCoord(co);
 
 			pl.setType(line.getType());
+
+			RoadDef roaddef = (RoadDef) line.getUserData();
+			if (roaddef != null)
+			{
+				pl.setRoadDef(roaddef);
+				roaddef.addPolylineRef(pl);
+			}
+
 			map.addMapObject(pl);
 		}
 	}
