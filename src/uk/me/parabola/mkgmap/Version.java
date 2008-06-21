@@ -36,7 +36,7 @@ public class Version {
 	// be the then current version number with a 'svn' suffix.  If this shows
 	// up then a more acurate version was not available, but it may be useful
 	// to know roughly.
-	private static final String DEFAULT_VERSION = "582-svn";
+	private static final String DEFAULT_VERSION = "618-svn";
 
 	/**
 	 * Get the version number if we can find one, else 0.  This looks in
