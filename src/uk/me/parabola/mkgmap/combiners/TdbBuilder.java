@@ -48,7 +48,7 @@ public class TdbBuilder implements Combiner {
 
 	private final TdbFile tdb = new TdbFile();
 
-	private final int parent = 63240000;
+	private int parent = 63240000;
 	private String overviewMapname;
 
 	/**
@@ -61,7 +61,11 @@ public class TdbBuilder implements Combiner {
 	 */
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "63240000");
-		// TODO parent = ...
+		try {
+			parent = Integer.parseInt(overviewMapname);
+		} catch (NumberFormatException e) {
+			log.debug("overview map name not an integer", overviewMapname);
+		}
 
 		int familyId = args.get("family-id", 42);
 		int productVersion = args.get("product-id", 1);
