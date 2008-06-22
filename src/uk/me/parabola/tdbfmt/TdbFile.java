@@ -72,12 +72,13 @@ public class TdbFile {
 		return tdb;
 	}
 
-	public void setProductInfo(int productId, int productVersion,
-			String seriesName, String familyName)
+	public void setProductInfo(int familyId, int productId,
+			short productVersion, String seriesName, String familyName)
 	{
 		headerBlock = new HeaderBlock();
+		headerBlock.setFamilyId((short) familyId);
 		headerBlock.setProductId((short) productId);
-		headerBlock.setProductVersion((short) productVersion);
+		headerBlock.setProductVersion(productVersion);
 		headerBlock.setSeriesName(seriesName);
 		headerBlock.setFamilyName(familyName);
 	}

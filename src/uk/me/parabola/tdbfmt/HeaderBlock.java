@@ -27,6 +27,9 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 class HeaderBlock {
+	/** The map family. */
+	private short familyId;
+
 	/** A unique number associated with the map product */
 	private short productId;
 
@@ -65,7 +68,7 @@ class HeaderBlock {
 	public void write(Block block) throws IOException {
 		StructuredOutputStream os = block.getOutputStream();
 		os.write2(productId);
-		os.write2(0);
+		os.write2(familyId);
 		os.write2(tdbVersion);
 		os.writeString(seriesName);
 		os.write2(productVersion);
@@ -100,5 +103,9 @@ class HeaderBlock {
 
 	public void setProductVersion(short productVersion) {
 		this.productVersion = productVersion;
+	}
+
+	public void setFamilyId(short familyId) {
+		this.familyId = familyId;
 	}
 }

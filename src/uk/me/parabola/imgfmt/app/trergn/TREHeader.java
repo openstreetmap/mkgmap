@@ -92,8 +92,22 @@ public class TREHeader extends CommonHeader {
 		log.info("read area is", getBounds());
 
 		// more to do...
-		int levels = reader.getInt();
-		mapInfoSize = levels - getHeaderLength();
+		mapLevelPos = reader.getInt();
+		mapLevelsSize = reader.getInt();
+		subdivPos = reader.getInt();
+		subdivSize = reader.getInt();
+
+		copyright.setPosition(reader.getInt());
+		copyright.setSize(reader.getInt());
+		copyright.setItemSize(reader.getChar());
+
+		int mapInfoOff = mapLevelPos;
+		if (subdivPos < mapInfoOff)
+			mapInfoOff = subdivPos;
+		if (copyright.getPosition() < mapInfoOff)
+			mapInfoOff = copyright.getPosition();
+
+		mapInfoSize = mapInfoOff - getHeaderLength();
 		
 		reader.getInt();
 		reader.getInt();

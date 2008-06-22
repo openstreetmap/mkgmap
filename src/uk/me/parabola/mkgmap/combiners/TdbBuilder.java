@@ -68,12 +68,12 @@ public class TdbBuilder implements Combiner {
 		}
 
 		int familyId = args.get("family-id", 42);
-		int productVersion = args.get("product-id", 1);
+		int productId = args.get("product-id", 1);
 		
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		tdb.setProductInfo(familyId, productVersion, seriesName, familyName);
+		tdb.setProductInfo(familyId, productId, (short) 100, seriesName, familyName);
 	}
 
 	/**
