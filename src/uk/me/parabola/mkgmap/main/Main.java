@@ -78,7 +78,7 @@ public class Main implements ArgumentProcessor {
 		if (args.length < 1) {
 			System.err.println("Usage: mkgmap [options...] <file.osm>");
 			printHelp(System.err, getLang(), "options");
-			System.exit(1);
+			return;
 		}
 
 		Main mm = new Main();
@@ -89,7 +89,6 @@ public class Main implements ArgumentProcessor {
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
-			System.exit(1);
 		}
 	}
 

@@ -16,26 +16,19 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -45,10 +38,6 @@ import java.util.Properties;
  */
 class FeatureListConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(FeatureListConverter.class);
-
-	// File names
-	private static final String FEATURE_LIST_NAME = "map-features.csv";
-	private static final String OLD_FEATURE_LIST_NAME = "feature_map.csv";
 
 	// Specification of the fields in the map-features file.
 	private static final int F_FEATURE_TYPE = 0;
@@ -72,24 +61,6 @@ class FeatureListConverter implements OsmConverter {
 	// Collector for saving the created features.
 	private final MapCollector mapper;
 
-	FeatureListConverter(MapCollector collector, Properties config) {
-		this.mapper = collector;
-
-		InputStream is = getMapFeaturesInputStream(config);
-
-		try {
-			Reader r = new InputStreamReader(is, "utf-8");
-			BufferedReader br = new BufferedReader(r);
-
-			readFeatures(br);
-
-		} catch (UnsupportedEncodingException e) {
-			log.error("reading features failed");
-		} catch (IOException e) {
-			log.error("reading features failed");
-		}
-	}
-
 	/**
 	 * Constructor used for new style system.  To begin with we are just
 	 * making use of the old way of doing the styles.
@@ -100,38 +71,6 @@ class FeatureListConverter implements OsmConverter {
 	FeatureListConverter(MapCollector mapper, Reader input) throws IOException {
 		this.mapper = mapper;
 		readFeatures(new BufferedReader(input));
-	}
-
-	/**
-	 * Get an input stream to a map-features file.  This could have been on the
-	 * command line, in which case return an open handle to it.
-	 *
-	 * @param config Properties that may contain the name of a file to use.
-	 * @return An open stream to a map features file.
-	 */
-	private InputStream getMapFeaturesInputStream(Properties config) {
-		String file = config.getProperty("map-features");
-		InputStream is;
-		if (file != null) {
-			try {
-				log.info("reading features from file", file);
-				is = new FileInputStream(file);
-				return is;
-			} catch (FileNotFoundException e) {
-				System.err.println("Could not open " + file);
-				System.err.println("Using the default map features file");
-			}
-		}
-
-		is = ClassLoader.getSystemResourceAsStream(FEATURE_LIST_NAME);
-		if (is == null) {
-			// Try the old name, this will be removed at some point.
-			is = ClassLoader.getSystemResourceAsStream(OLD_FEATURE_LIST_NAME);
-			if (is == null)
-				throw new ExitException("Could not find feature list resource");
-			System.err.println("Warning: using old feature list file");
-		}
-		return is;
 	}
 
 	/**
