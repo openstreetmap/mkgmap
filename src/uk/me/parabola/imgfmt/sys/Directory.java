@@ -106,7 +106,7 @@ class Directory {
 			log.debug("readinit name", name, ext);
 
 			int flag = buf.get(Dirent.OFF_FLAG);
-			int part = buf.getChar(Dirent.OFF_FILE_PART);
+			int part = buf.get(Dirent.OFF_FILE_PART) & 0xff;
 
 			if (flag == 3 && current == null) {
 				current = (Dirent) entries.get(ImgFS.DIRECTORY_FILE_NAME);

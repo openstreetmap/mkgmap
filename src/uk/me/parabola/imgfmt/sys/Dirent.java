@@ -166,7 +166,7 @@ class Dirent implements DirectoryEntry {
 		if (used != 1)
 			return;
 
-		int part = buf.getChar(OFF_FILE_PART);
+		int part = buf.get(OFF_FILE_PART) & 0xff;
 		if (part == 0 || (isSpecial() && part == 3))
 			size = buf.getInt(OFF_SIZE);
 
