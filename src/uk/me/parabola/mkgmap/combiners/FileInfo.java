@@ -68,6 +68,8 @@ public class FileInfo {
 	private int rgnsize;
 	private int tresize;
 	private int lblsize;
+	private int netsize;
+	private int nodsize;
 
 	private final List<Integer> fileSizes = new ArrayList<Integer>();
 	private String[] copyrights;
@@ -210,6 +212,10 @@ public class FileInfo {
 					info.setRgnsize(size);
 				} else if ("LBL".equals(ext)) {
 					info.setLblsize(ent.getSize());
+				} else if ("NET".equals(ext)) {
+					info.setNetsize(ent.getSize());
+				} else if ("NOD".equals(ext)) {
+					info.setNodsize(ent.getSize());
 				}
 
 				// add to the total size based on the rounded up size of this file
@@ -275,5 +281,21 @@ public class FileInfo {
 
 	public String[] getCopyrights() {
 		return copyrights;
+	}
+
+	public int getNetsize() {
+		return netsize;
+	}
+
+	public void setNetsize(int netsize) {
+		this.netsize = netsize;
+	}
+
+	public int getNodsize() {
+		return nodsize;
+	}
+
+	public void setNodsize(int nodsize) {
+		this.nodsize = nodsize;
 	}
 }

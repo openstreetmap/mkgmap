@@ -41,6 +41,12 @@ public class StructuredOutputStream extends FilterOutputStream {
 		out.write(b >> 8);
 	}
 
+	public void write3(int i) throws IOException {
+		out.write(i);
+		out.write(i >> 8);
+		out.write(i >> 16);
+	}
+
 	public void write4(int b) throws IOException {
 		out.write(b);
 		out.write(b >> 8);

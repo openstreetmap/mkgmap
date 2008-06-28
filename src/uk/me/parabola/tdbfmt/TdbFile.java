@@ -38,17 +38,34 @@ import java.util.List;
  */
 public class TdbFile {
 	private static final Logger log = Logger.getLogger(TdbFile.class);
+
+	public static final int TDB_V3 = 300;
+	public static final int TDB_V407 = 407;
+
+	private static final int BLOCK_OVERVIEW = 0x42;
 	private static final int BLOCK_HEADER = 0x50;
 	private static final int BLOCK_COPYRIGHT = 0x44;
-	private static final int BLOCK_OVERVIEW = 0x42;
 	private static final int BLOCK_DETAIL = 0x4c;
+	private static final int BLOCK_R = 0x52;
+	private static final int BLOCK_T = 0x54;
+
+	// The version number of the TDB format
+	private int tdbVersion;
 
 	// The blocks that go to make up the file.
 	private HeaderBlock headerBlock;
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
 	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private RBlock rblock = new RBlock();
+	private TBlock tblock = new TBlock();
 
+	public TdbFile() {
+	}
+
+	public TdbFile(int tdbVersion) {
+		this.tdbVersion = tdbVersion;
+	}
 
 	/**
 	 * Read in a TDB file from the disk.
@@ -75,7 +92,7 @@ public class TdbFile {
 	public void setProductInfo(int familyId, int productId,
 			short productVersion, String seriesName, String familyName)
 	{
-		headerBlock = new HeaderBlock();
+		headerBlock = new HeaderBlock(tdbVersion);
 		headerBlock.setFamilyId((short) familyId);
 		headerBlock.setProductId((short) productId);
 		headerBlock.setProductVersion(productVersion);
@@ -129,6 +146,12 @@ public class TdbFile {
 			copyrightBlock.write(block);
 			block.write(stream);
 
+			if (tdbVersion >= TDB_V407) {
+				block = new Block(BLOCK_R);
+				rblock.write(block);
+				block.write(stream);
+			}
+
 			block = new Block(BLOCK_OVERVIEW);
 			overviewMapBlock.write(block);
 			block.write(stream);
@@ -138,6 +161,10 @@ public class TdbFile {
 				detail.write(block);
 				block.write(stream);
 			}
+
+			block = new Block(BLOCK_T);
+			tblock.write(block);
+			block.write(stream);
 		} finally {
 			stream.close();
 		}
@@ -201,4 +228,5 @@ public class TdbFile {
 		Block block = new Block(blockType, body);
 		return block;
 	}
+
 }

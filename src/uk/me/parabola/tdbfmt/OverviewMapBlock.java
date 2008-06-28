@@ -39,7 +39,9 @@ import java.io.IOException;
 public class OverviewMapBlock {
 
 	private int mapNumber;
+	private String mapName;
 	private int parentMapNumber;
+
 	private String description;
 
 	private int maxLat;
@@ -105,9 +107,14 @@ public class OverviewMapBlock {
 		this.description = description;
 	}
 
-	public void setMapName(String mapNumber) {
+	public void setMapName(String mapName) {
+		this.mapName = mapName;
 		// TODO deal with map names that are not numbers.
-		this.mapNumber = Integer.parseInt(mapNumber);
+		this.mapNumber = Integer.parseInt(mapName);
+	}
+
+	protected String getMapName() {
+		return mapName;
 	}
 
 	public void setParentMapNumber(int parentMapNumber) {

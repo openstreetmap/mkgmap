@@ -46,10 +46,11 @@ public class TdbBuilder implements Combiner {
 
 	private final OverviewMap overviewSource = new OverviewMapDataSource();
 
-	private final TdbFile tdb = new TdbFile();
+	private TdbFile tdb;
 
 	private int parent = 63240000;
 	private String overviewMapname;
+	private int tdbVersion;
 
 	/**
 	 * Initialise by saving all the information we require from the command line
@@ -73,6 +74,13 @@ public class TdbBuilder implements Combiner {
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
+		if (args.exists("tdb-v4")) {
+			tdbVersion = TdbFile.TDB_V407;
+		} else {
+			tdbVersion = TdbFile.TDB_V3;
+		}
+
+		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, (short) 100, seriesName, familyName);
 	}
 
@@ -96,18 +104,20 @@ public class TdbBuilder implements Combiner {
 	 * @param finfo Information about the current .img file.
 	 */
 	private void addToTdb(FileInfo finfo) {
-		DetailMapBlock detail = new DetailMapBlock();
+		DetailMapBlock detail = new DetailMapBlock(tdbVersion);
 		detail.setArea(finfo.getBounds());
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
 
 		detail.setMapName(mapname);
 
-		String desc = mapdesc + '(' + mapname + ')';
+		String desc = mapdesc ;//+ '(' + mapname + ')';
 		detail.setDescription(desc);
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());
 		detail.setRgnDataSize(finfo.getRgnsize());
+		detail.setNetDataSize(finfo.getNetsize());
+		detail.setNodDataSize(finfo.getNodsize());
 
 		log.info("overview-name", parent);
 		detail.setParentMapNumber(parent);

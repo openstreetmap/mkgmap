@@ -27,6 +27,7 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 class HeaderBlock {
+
 	/** The map family. */
 	private short familyId;
 
@@ -34,7 +35,7 @@ class HeaderBlock {
 	private short productId;
 
 	/** The version of TDB */
-	private int tdbVersion = 0x012c;
+	private final int tdbVersion;
 
 	/** The series name is an overall name eg 'US Topo' */
 	private String seriesName;
@@ -48,7 +49,8 @@ class HeaderBlock {
 	 */
 	private String familyName;
 
-	HeaderBlock() {
+	HeaderBlock(int tdbVersion) {
+		this.tdbVersion = tdbVersion;
 	}
 
 	HeaderBlock(Block block) throws IOException {
@@ -73,6 +75,19 @@ class HeaderBlock {
 		os.writeString(seriesName);
 		os.write2(productVersion);
 		os.writeString(familyName);
+
+		if (tdbVersion >= TdbFile.TDB_V407) {
+			// Unknown purpose
+			byte[] buf = new byte[] {
+					0, 0x12, 1,1,1,0,0,0,
+					0,0,0x15,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0, (byte) 0xe4,4,
+					0,0,0x10,0x27,0,0,1,0,
+					0
+			};
+			os.write(buf);
+		}
 	}
 
 	public String toString() {
@@ -108,4 +123,6 @@ class HeaderBlock {
 	public void setFamilyId(short familyId) {
 		this.familyId = familyId;
 	}
+
+
 }
