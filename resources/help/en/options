@@ -32,10 +32,10 @@ Label options:
 	characters to unaccented ascii characters where possible.
 
 --charset=''name''
-    Use the specified character set.
+	Use the specified character set.
 
 --code-page=''number''
-    Use the given code page for the .  This is 
+	Use the given code page for the .  This is 
 
 --lower-case
 	Allow labels to contain lower case letters.  Note that this doesn't
@@ -55,6 +55,9 @@ Style options:
 	For backward compatibility, you can also supply a map-features.csv file
 	here.  See the customisation help.
 
+--list-styles
+	List the avaialble styles.
+
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom levels
 	in the device. See customisation help. The default is the equivalent
@@ -71,7 +74,7 @@ Style options:
 Product description options:
 
 --family-id
-    This is an integer that identifies a family of products.
+	This is an integer that identifies a family of products.
 --product-id
 --series-name
 --family-name
@@ -82,3 +85,17 @@ Misc options:
 --block-size=''number''
 	Changes the block size that is used in the generated map.  There is no
 	general reason why you would want to do this.
+
+--net
+	Output file that supports "lock to road" option.
+
+--gmapsupp
+	Write a gmapsupp.img file that can be uploaded to a garmin in
+	usb mode.
+
+--tdbfile
+	Write a .tdb file.
+
+--version 
+	Output program version.
+
