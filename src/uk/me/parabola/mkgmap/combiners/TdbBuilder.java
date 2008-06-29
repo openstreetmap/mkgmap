@@ -68,7 +68,7 @@ public class TdbBuilder implements Combiner {
 			log.debug("overview map name not an integer", overviewMapname);
 		}
 
-		int familyId = args.get("family-id", 42);
+		int familyId = args.get("family-id", 0);
 		int productId = args.get("product-id", 1);
 		
 		String seriesName = args.get("series-name", "OSM map");
@@ -111,7 +111,7 @@ public class TdbBuilder implements Combiner {
 
 		detail.setMapName(mapname);
 
-		String desc = mapdesc ;//+ '(' + mapname + ')';
+		String desc = mapdesc + '(' + mapname + ')';
 		detail.setDescription(desc);
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());

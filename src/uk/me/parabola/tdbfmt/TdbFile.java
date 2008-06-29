@@ -162,9 +162,11 @@ public class TdbFile {
 				block.write(stream);
 			}
 
-			block = new Block(BLOCK_T);
-			tblock.write(block);
-			block.write(stream);
+			if (tdbVersion >= TDB_V407) {
+				block = new Block(BLOCK_T);
+				tblock.write(block);
+				block.write(stream);
+			}
 		} finally {
 			stream.close();
 		}
