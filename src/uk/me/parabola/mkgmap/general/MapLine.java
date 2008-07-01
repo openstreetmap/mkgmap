@@ -50,9 +50,8 @@ public class MapLine extends MapElement {
 	public void setPoints(List<Coord> points) {
 		assert this.points == null && points != null;
 		this.points = points;
-		for (Coord co : points) {
+		for (Coord co : points)
 			addToBounds(co);
-		}
 	}
 
 	public boolean isDirection() {

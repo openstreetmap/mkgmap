@@ -146,19 +146,19 @@ public class Area {
 		return Math.max(getWidth(), getHeight());
 	}
 
-	//public boolean contains(Coord co) {
-	//	return co.getLatitude() >= minLat
-	//			&& co.getLatitude() <= maxLat
-	//			&& co.getLongitude() >= minLong
-	//			&& co.getLongitude() <= maxLong;
-	//}
-	//
-	//public boolean contains(Area a) {
-	//	return a.getMinLat() >= minLat
-	//			&& a.getMaxLat() <= maxLat
-	//			&& a.getMinLong() >= minLong
-	//			&& a.getMaxLong() <= maxLong;
-	//}
+	public boolean contains(Coord co) {
+		return co.getLatitude() >= minLat
+				&& co.getLatitude() <= maxLat
+				&& co.getLongitude() >= minLong
+				&& co.getLongitude() <= maxLong;
+	}
+	
+	public boolean contains(Area a) {
+		return a.getMinLat() >= minLat
+				&& a.getMaxLat() <= maxLat
+				&& a.getMinLong() >= minLong
+				&& a.getMaxLong() <= maxLong;
+	}
 
 	public String fmtArea() {
 		StringBuffer sb = new StringBuffer();

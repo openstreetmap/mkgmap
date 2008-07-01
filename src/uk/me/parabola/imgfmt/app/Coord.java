@@ -84,6 +84,6 @@ public class Coord {
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return Utils.toDegrees(latitude) + "/" + Utils.toDegrees(longitude);
+		return (latitude) + "/" + (longitude);
 	}
 }

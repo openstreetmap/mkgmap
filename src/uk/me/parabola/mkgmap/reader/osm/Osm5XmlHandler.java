@@ -22,7 +22,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.log.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +35,15 @@ import java.util.Map;
  * @author Steve Ratcliffe
  */
 class Osm5XmlHandler extends DefaultHandler {
+	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
+	
 	private int mode;
 
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
+	private static final int MODE_BOUND = 3;
 
 	private Node currentNode;
 	private Way5 currentWay;
@@ -46,6 +51,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private OsmConverter converter;
 	private MapCollector mapper;
 	private long currentNodeId;
+	private Area bbox;
 
 	/**
 	 * Receive notification of the start of an element.
@@ -83,7 +89,12 @@ class Osm5XmlHandler extends DefaultHandler {
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
 				currentWay = new Way5();
+			} else if (qName.equals("bound")) {
+				mode = MODE_BOUND;
+				String box = attributes.getValue("box");
+				setBox(box);
 			}
+
 		} else if (mode == MODE_NODE) {
 			if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
@@ -149,6 +160,10 @@ class Osm5XmlHandler extends DefaultHandler {
 				converter.convertName(currentWay);
 				converter.convertWay(currentWay);
 			}
+		} else if (mode == MODE_BOUND) {
+			if (qName.equals("bound")) {
+				mode = 0;
+			}
 		}
 	}
 
@@ -163,6 +178,31 @@ class Osm5XmlHandler extends DefaultHandler {
 	 */
 	public void endDocument() throws SAXException {
 		mapper.finish();
+	}
+
+	private void setBox(String box) {
+		String[] f = box.split(",");
+		try {
+			double minlat = Double.parseDouble(f[0]);
+			double minlong = Double.parseDouble(f[1]);
+			double maxlat = Double.parseDouble(f[2]);
+			double maxlong = Double.parseDouble(f[3]);
+
+			bbox = new Area(minlat, minlong, maxlat, maxlong);
+			log.debug("Map bbox: " + bbox);
+			converter.setBoundingBox(bbox);
+
+			Coord co = new Coord(minlat, minlong);
+			mapper.addToBounds(co);
+			co = new Coord(minlat, maxlong);
+			mapper.addToBounds(co);
+			co = new Coord(maxlat, minlong);
+			mapper.addToBounds(co);
+			co = new Coord(maxlat, maxlong);
+			mapper.addToBounds(co);
+		} catch (NumberFormatException e) {
+			// just ignore it
+		}
 	}
 
 	/**
@@ -181,7 +221,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			Coord co = new Coord(lat, lon);
 			nodeMap.put(id, co);
 			currentNodeId = id;
-			mapper.addToBounds(co);
+			if (bbox == null)
+				mapper.addToBounds(co);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}

@@ -22,13 +22,17 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.mkgmap.general.PolygonClipper;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -61,6 +65,8 @@ class FeatureListConverter implements OsmConverter {
 	// Collector for saving the created features.
 	private final MapCollector mapper;
 
+	private Area bbox;
+	
 	/**
 	 * Constructor used for new style system.  To begin with we are just
 	 * making use of the old way of doing the styles.
@@ -112,9 +118,9 @@ class FeatureListConverter implements OsmConverter {
 			}
 		}
 		
-		if (foundType != null) {
-			addLine(way, foundKey, foundType);
-		}
+		if (foundType != null)
+			clipAndAddLine(way, foundKey, foundType);
+
 	}
 
 	private void addShape(Way way, GarminType gt) {
@@ -126,13 +132,22 @@ class FeatureListConverter implements OsmConverter {
 		shape.setType(gt.getType());
 		shape.setMinResolution(gt.getMinResolution());
 
-		mapper.addShape(shape);
+		List<List<Coord>> list = PolygonClipper.clip(bbox, points);
+		if (list == null)
+			mapper.addShape(shape);
+		else {
+			for (List<Coord> lco : list) {
+				MapShape nshape = new MapShape(shape);
+				nshape.setPoints(lco);
+				mapper.addShape(nshape);
+			}
+		}
 	}
 
-	private void addLine(Way way, String tagKey, GarminType gt) {
-		// Found it! Now add to the map.
+	private void clipAndAddLine(Way way, String tagKey, GarminType gt) {
+		// Check for degenerate line
 		List<Coord> points = way.getPoints();
-		if (points.isEmpty())
+		if (points.size() < 2)
 			return;
 
 		MapLine line = new MapLine();
@@ -141,6 +156,21 @@ class FeatureListConverter implements OsmConverter {
 		line.setType(gt.getType());
 		line.setMinResolution(gt.getMinResolution());
 
+		List<List<Coord>> list = LineClipper.clip(bbox, points);
+		if (list == null)
+			addLine(way, tagKey, line);
+		else {
+			System.out.println("before " + Arrays.toString(points.toArray()));
+			for (List<Coord> lco : list) {
+				System.out.println("after " + Arrays.toString(lco.toArray()));
+				MapLine nline = new MapLine(line);
+				nline.setPoints(lco);
+				addLine(way, tagKey, nline);
+			}
+		}
+	}
+
+	private void addLine(Way way, String tagKey, MapLine line) {
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
 
@@ -164,6 +194,9 @@ class FeatureListConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
+		if (bbox != null && !bbox.contains(node.getLocation()))
+			return;
+		
 		for (String tagKey : node) {
 			GarminType gt = pointFeatures.get(tagKey);
 
@@ -207,6 +240,10 @@ class FeatureListConverter implements OsmConverter {
 		} else {
 			el.setName(name);
 		}
+	}
+
+	public void setBoundingBox(Area bbox) {
+		this.bbox = bbox;
 	}
 
 	/**

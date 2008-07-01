@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import uk.me.parabola.imgfmt.app.Area;
+
 /**
  * @author Steve Ratcliffe
  */
@@ -66,4 +68,18 @@ public interface OsmConverter {
 	 * @param el The element to set the name upon.
 	 */
 	public void convertName(Element el);
+
+	/**
+	 * Set the bounding box for this map.  This should be set before any other
+	 * elements are converted if you want to use it.
+	 * All elements that are added are clipped to this box, new points are
+	 * added as needed at the boundry.
+	 *
+	 * If a node or a way falls completely outside the boundry then
+	 * it would be ommited.  This would not normally happen in the way this
+	 * option is typically used however.
+	 *
+	 * @param bbox The bounding area.
+	 */
+	public void setBoundingBox(Area bbox);
 }
