@@ -24,21 +24,29 @@ import uk.me.parabola.io.StructuredOutputStream;
  * @author Steve Ratcliffe
  */
 public class TBlock {
+	private long sum;
 
 	public void write(Block block) throws IOException {
 		StructuredOutputStream os = block.getOutputStream();
-		// No idea about this, but if you change A,B,C or D the maps
+		// If you change A,B,C or D the maps
 		// will not load, you can change the rest without easily visible
 		// problems although I suppose they must do something.
+		//
+		// A,B,C,D is a standard crc32 sum of the rest of the file.
+		// (Andrzej Popowsk)
 		os.write2(0);
-		os.write(0); // A
+		os.write((int) (sum >> 24)); // A
 		os.write3(0);
 		os.write3(0);
-		os.write(0); // B
+		os.write((int) (sum >> 16)); // B
 		os.write2(0);
-		os.write(0); // C
+		os.write((int) (sum >> 8)); // C
 		os.write4(0);
-		os.write(0); // D
+		os.write((int) sum); // D
 		os.write2(0);
+	}
+
+	public void setSum(long sum) {
+		this.sum = sum;
 	}
 }

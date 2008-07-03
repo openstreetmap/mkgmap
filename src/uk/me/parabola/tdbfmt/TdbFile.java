@@ -30,6 +30,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedOutputStream;
+import java.util.zip.Checksum;
+
+import sun.security.krb5.internal.crypto.crc32;
 
 /**
  * The TDB file.  See the package documentation for more details.
@@ -132,7 +137,9 @@ public class TdbFile {
 	}
 
 	public void write(String name) throws IOException {
-		OutputStream stream = new BufferedOutputStream(new FileOutputStream(name));
+		CheckedOutputStream stream = new CheckedOutputStream(
+				new BufferedOutputStream(new FileOutputStream(name)),
+				new CRC32());
 
 		if (headerBlock == null || overviewMapBlock == null)
 			throw new IOException("Attempting to write file without being fully set up");
@@ -163,6 +170,8 @@ public class TdbFile {
 			}
 
 			if (tdbVersion >= TDB_V407) {
+				tblock.setSum(stream.getChecksum().getValue());
+
 				block = new Block(BLOCK_T);
 				tblock.write(block);
 				block.write(stream);
