@@ -174,7 +174,5 @@ public class LineClipper {
 		};
 
 		clip(a, co);
-
-		System.out.printf("cliped line from=%s to=%s", co[0], co[1]);
 	}
 }

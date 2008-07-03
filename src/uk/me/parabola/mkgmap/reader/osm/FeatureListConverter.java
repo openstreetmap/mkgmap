@@ -160,9 +160,7 @@ class FeatureListConverter implements OsmConverter {
 		if (list == null)
 			addLine(way, tagKey, line);
 		else {
-			System.out.println("before " + Arrays.toString(points.toArray()));
 			for (List<Coord> lco : list) {
-				System.out.println("after " + Arrays.toString(lco.toArray()));
 				MapLine nline = new MapLine(line);
 				nline.setPoints(lco);
 				addLine(way, tagKey, nline);

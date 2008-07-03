@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -27,14 +31,10 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Build the TDB file and the overview map.
@@ -137,12 +137,33 @@ public class TdbBuilder implements Combiner {
 	private void addToOverviewMap(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 
+		//System.out.printf("overview shift %d\n", overviewSource.getShift());
 		int overviewMask = ((1 << overviewSource.getShift()) - 1);
+		//System.out.printf("mask %x\n", overviewMask);
 
+		//int maxLon = bounds.getMaxLong();
+		//int maxLat = bounds.getMaxLat();
+		//int minLat = bounds.getMinLat();
+		//int minLon = bounds.getMinLong();
 		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
 		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
 		int minLat = bounds.getMinLat() & ~overviewMask;
 		int minLon = bounds.getMinLong() & ~overviewMask;
+		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
+		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMaxLat()),
+		//		Utils.toDegrees(maxLat));
+		//
+		//System.out.printf("minlat (map) %x, calc %x\n", bounds.getMinLat(), minLat);
+		//System.out.printf("minlat (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMinLat()),
+		//		Utils.toDegrees(minLat));
+		//System.out.printf("minlon (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMinLong()),
+		//		Utils.toDegrees(minLon));
+		//System.out.printf("maxlon (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMaxLong()),
+		//		Utils.toDegrees(maxLon));
 
 		// Add a background polygon for this map.
 		Coord start, co;
@@ -173,6 +194,7 @@ public class TdbBuilder implements Combiner {
 		bg.setMinResolution(10);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
+		//System.out.println(bg.getBounds());
 		overviewSource.addShape(bg);
 	}
 
