@@ -16,25 +16,21 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.io.EndOfFileException;
-import uk.me.parabola.io.StructuredInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedOutputStream;
-import java.util.zip.Checksum;
 
-import sun.security.krb5.internal.crypto.crc32;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.io.EndOfFileException;
+import uk.me.parabola.io.StructuredInputStream;
+import uk.me.parabola.log.Logger;
 
 /**
  * The TDB file.  See the package documentation for more details.
