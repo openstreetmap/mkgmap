@@ -170,7 +170,7 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
 		} else if (opt.equals("help")) {
-			printHelp(System.out, getLang(), (val != null) ? val : "help");
+			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
 		} else if (opt.equals("list-styles")) {
