@@ -147,8 +147,8 @@ public class TdbBuilder implements Combiner {
 		//int minLon = bounds.getMinLong();
 		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
 		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
-		int minLat = bounds.getMinLat() & ~overviewMask;
-		int minLon = bounds.getMinLong() & ~overviewMask;
+		int minLat = (bounds.getMinLat() - overviewMask) & ~overviewMask;
+		int minLon = (bounds.getMinLong() - overviewMask) & ~overviewMask;
 		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
 		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
 		//		Utils.toDegrees(bounds.getMaxLat()),

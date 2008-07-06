@@ -57,9 +57,7 @@ class HeaderBlock {
 		StructuredInputStream ds = block.getInputStream();
 
 		productId = (short) ds.read2();
-		/*int junk = */ds.read2();
-		//assert junk == 0;
-		// junk is the product id, in version 4 of the format anyway
+		familyId = (short) ds.read2();
 
 		tdbVersion = ds.read2();
 		seriesName = ds.readString();
@@ -78,18 +76,46 @@ class HeaderBlock {
 
 		if (tdbVersion >= TdbFile.TDB_V407) {
 			// Unknown purpose
-			byte[] buf = new byte[] {
-					0, 0x12, 1,1,1,0,0,0,
-					0,0,0x15,0,0,0,0,0,
-					0,0,0,0,0,0,0,0,
-					0,0,0,0,0,0, (byte) 0xe4,4,
-					0,0,0x10,0x27,0,0,1,0,
-					0
-			};
-			os.write(buf);
+
+			os.write(0);
+			os.write(0x12); // lowest map level
+			os.write(1);
+			os.write(1);
+			os.write(1);
+			os.write4(0);
+			os.write(0);
+			os.write(0x18); // highest routable? 19 no, 21 ok
+			os.write4(0);
+			os.write4(0);
+			os.write4(0);
+			os.write4(0);
+			os.write3(0);
+			os.write4(1252);
+			os.write4(10000);
+			os.write(1);
+			os.write2(0);
 		}
 	}
 
+	// good
+			//os.write(0);
+			//os.write(0x12);
+			//os.write(1);
+			//os.write(1);
+			//os.write(1);
+			//os.write4(0);
+			//os.write(0);
+			//os.write(0x15);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write3(0);
+			//os.write4(1252);
+			//os.write4(10000);
+			//os.write(1);
+			//os.write(0);
+			//os.write(0);
 	public String toString() {
 		return "TDB header: "
 				+ productId
