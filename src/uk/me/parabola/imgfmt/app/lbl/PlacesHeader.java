@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * This is not a separate header, but rather part of the LBL header.  It is just
@@ -54,7 +54,7 @@ public class PlacesHeader {
 		return POIGlobalFlags;
 	}
 
-	void writeFileHeader(WriteStrategy writer) {
+	void writeFileHeader(ImgFileWriter writer) {
 		writer.putInt(country.getPosition());
 		writer.putInt(country.getSize());
 		writer.putChar(country.getItemSize());

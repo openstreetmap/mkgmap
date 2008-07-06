@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * A country contains one or more regions.
@@ -33,7 +33,7 @@ public class Country {
 		this.index = (char) index;
 	}
 
-	void write(WriteStrategy writer) {
+	void write(ImgFileWriter writer) {
 		writer.put3(label.getOffset());
 	}
 

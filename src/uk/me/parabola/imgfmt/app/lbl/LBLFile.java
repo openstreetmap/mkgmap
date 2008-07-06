@@ -17,11 +17,11 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
@@ -64,14 +64,14 @@ public class LBLFile extends ImgFile {
 		setHeader(lblHeader);
 
 		if (write) {
-			setWriter(new BufferedWriteStrategy(chan));
+			setWriter(new BufferedImgFileWriter(chan));
 
 			position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
 
 			// The zero offset is for no label.
 			getWriter().put((byte) 0);
 		} else {
-			setReader(new BufferedReadStrategy(chan));
+			setReader(new BufferedImgFileReader(chan));
 			lblHeader.readHeader(getReader());
 			CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
 					lblHeader.getEncodingType());
@@ -165,7 +165,7 @@ public class LBLFile extends ImgFile {
 		if (offset == 0)
 			return "";  // or null ???
 
-		ReadStrategy reader = getReader();
+		ImgFileReader reader = getReader();
 		reader.position(lblHeader.getLabelStart() + offset);
 
 		byte b;

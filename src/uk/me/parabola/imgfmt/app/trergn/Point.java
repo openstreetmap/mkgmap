@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 
@@ -49,7 +49,7 @@ public class Point extends MapObject {
 	 *
 	 * @param file A reference to the file that should be written to.
 	 */
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		byte b = (byte) getType();
 		file.put(b);
 		log.debug("writing point: " + b);

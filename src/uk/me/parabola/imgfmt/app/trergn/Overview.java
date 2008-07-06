@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * This is for polyline, polygon and point overviews.  A simple record that
@@ -53,7 +53,7 @@ public abstract class Overview implements Comparable<Overview> {
 			size = 2;
 	}
 
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		file.put((byte) (type & 0xff));
 		file.put((byte) maxLevel);
 		if (size > 2)

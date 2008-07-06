@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
 
@@ -60,7 +60,7 @@ public class Polyline extends MapObject {
 	 *
 	 * @param file A reference to the file that should be written to.
 	 */
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		// If there is nothing to do, then do nothing.
 		if (points.size() < 2)
 			return;

@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 
@@ -46,7 +46,7 @@ public class RoadDef {
 
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
-	public void addOffsetTarget(WriteStrategy writer, int ormask) {
+	public void addOffsetTarget(ImgFileWriter writer, int ormask) {
 		owList.addTarget(writer, ormask);
 	}
 
@@ -76,7 +76,7 @@ public class RoadDef {
 		return len;
 	}
 
-	void write(WriteStrategy writer, int realofs) {
+	void write(ImgFileWriter writer, int realofs) {
 		assert offset == realofs;
 		for (int i = 0; i < numlabels; i++) {
 			Label l = labels[i];

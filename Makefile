@@ -31,7 +31,7 @@ OSMDATA = /opt/data/uk-test-*
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
-OPTS= --tdbfile --gmapsupp
+OPTS= --net --tdbfile --gmapsupp
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
@@ -40,6 +40,9 @@ makemap: clean
 
 t:
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+
+other:
+	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main  --levels=0:24,1:23,2:21,3=19,4=17 --net other.osm
 
 .PHONY: clean
 clean:

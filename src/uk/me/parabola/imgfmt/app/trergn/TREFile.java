@@ -24,12 +24,12 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -68,12 +68,12 @@ public class TREFile extends ImgFile {
 	public TREFile(ImgChannel chan, boolean write) {
 		setHeader(header);
 		if (write) {
-			setWriter(new BufferedWriteStrategy(chan));
+			setWriter(new BufferedImgFileWriter(chan));
 
 			// Position at the start of the writable area.
 			position(header.getHeaderLength());
 		} else {
-			setReader(new BufferedReadStrategy(chan));
+			setReader(new BufferedImgFileReader(chan));
 			header.readHeader(getReader());
 		}
 	}
@@ -268,7 +268,7 @@ public class TREFile extends ImgFile {
 	private void writeCopyrights() {
 		// Write out the pointers to the labels that hold the copyright strings
 		header.setCopyrightPos(position());
-		WriteStrategy writer = getWriter();
+		ImgFileWriter writer = getWriter();
 		for (Label l : copyrights) {
 			header.incCopyrightSize();
 			writer.put3(l.getOffset());
@@ -309,7 +309,7 @@ public class TREFile extends ImgFile {
 		List<String> msgs = new ArrayList<String>();
 
 		// First do the ones in the TRE header gap
-		ReadStrategy reader = getReader();
+		ImgFileReader reader = getReader();
 		reader.position(header.getHeaderLength());
 		while (reader.position() < header.getHeaderLength() + header.getMapInfoSize()) {
 			String m = reader.getZString();

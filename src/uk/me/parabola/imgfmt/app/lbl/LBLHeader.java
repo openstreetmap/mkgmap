@@ -17,8 +17,8 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 
 /**
@@ -58,7 +58,7 @@ public class LBLHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) {
+	protected void readFileHeader(ImgFileReader reader) {
 		labelStart = reader.getInt();
 		labelSize = reader.getInt();
 		reader.get();
@@ -74,7 +74,7 @@ public class LBLHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		// LBL1 section, these are regular labels
 		writer.putInt(HEADER_LEN + INFO_LEN);
 		writer.putInt(getLabelSize());

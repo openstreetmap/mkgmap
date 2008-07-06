@@ -81,7 +81,7 @@ public class Label {
 	 *
 	 * @param writer The LBL file to write to.
 	 */
-	public void write(WriteStrategy writer) {
+	public void write(ImgFileWriter writer) {
 		if (log.isDebugEnabled())
 			log.debug("put label " + this.length);
 		if (ctext != null)

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 public class OffsetWriterList {
 	private final List<OffsetWriter> targets = new ArrayList<OffsetWriter>();
 
-	public void addTarget(WriteStrategy writer, int ormask) {
+	public void addTarget(ImgFileWriter writer, int ormask) {
 		OffsetWriter ow = new OffsetWriter(writer, ormask);
 		targets.add(ow);
 	}

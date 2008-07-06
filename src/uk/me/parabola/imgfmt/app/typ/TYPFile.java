@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -39,10 +39,10 @@ public class TYPFile extends ImgFile {
 	public TYPFile(ImgChannel chan, boolean write) {
 		setHeader(header);
 		if (write) {
-			setWriter(new BufferedWriteStrategy(chan));
+			setWriter(new BufferedImgFileWriter(chan));
 			position(TYPHeader.HEADER_LEN);
 		} else {
-			setReader(new BufferedReadStrategy(chan));
+			setReader(new BufferedImgFileReader(chan));
 			header.readHeader(getReader());
 		}
 	}

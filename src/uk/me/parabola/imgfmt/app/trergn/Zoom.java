@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -75,7 +75,7 @@ public class Zoom {
 		return 24 - resolution;
 	}
 
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		file.put((byte) ((level & 0xf) | (inherited ? 0x80 : 0)));
 		file.put((byte) resolution);
 		file.putChar((char) subdivs.size());

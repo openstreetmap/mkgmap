@@ -32,8 +32,8 @@ public abstract class ImgFile  {
 
 	private CommonHeader header;
 
-	private WriteStrategy writer;
-	private ReadStrategy reader;
+	private ImgFileWriter writer;
+	private ImgFileReader reader;
 
 	private boolean readable;
 	private boolean writable;
@@ -58,20 +58,20 @@ public abstract class ImgFile  {
 	
 	protected abstract void sync() throws IOException;
 
-	protected WriteStrategy getWriter() {
+	protected ImgFileWriter getWriter() {
 		return writer;
 	}
 
-	protected void setWriter(WriteStrategy writer) {
+	protected void setWriter(ImgFileWriter writer) {
 		writable = true;
 		this.writer = writer;
 	}
 
-	public ReadStrategy getReader() {
+	public ImgFileReader getReader() {
 		return reader;
 	}
 
-	protected void setReader(ReadStrategy reader) {
+	protected void setReader(ImgFileReader reader) {
 		readable = true;
 		this.reader = reader;
 	}

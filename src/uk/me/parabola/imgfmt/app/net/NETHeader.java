@@ -18,9 +18,9 @@ package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * The header of the NET file.
@@ -50,7 +50,7 @@ public class NETHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) throws ReadFailedException {
+	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		roadDefinitions.setPosition(reader.getInt());
 		roadDefinitions.setSize(reader.getInt());
 		roadShift = reader.get();
@@ -74,7 +74,7 @@ public class NETHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.putInt(roadDefinitions.getPosition());
 		writer.putInt(roadDefinitions.getSize());
 		writer.put(roadShift); // offset multiplier

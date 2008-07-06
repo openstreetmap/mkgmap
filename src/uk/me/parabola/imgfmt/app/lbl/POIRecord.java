@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * @author Steve Ratcliffe
@@ -60,7 +60,7 @@ public class POIRecord {
 		this.streetName = label;
 	}
 
-	void write(WriteStrategy writer, byte POIGlobalFlags, int realofs) {
+	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs) {
 		assert offset == realofs;
 
 		int ptr = poiName.getOffset();

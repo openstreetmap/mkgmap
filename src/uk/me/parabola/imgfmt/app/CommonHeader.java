@@ -56,7 +56,7 @@ public abstract class CommonHeader {
 	 * be called by the sync() methods of subclasses when they are ready.
 	 * @param writer Used to write the header.
 	 */
-	public final void writeHeader(WriteStrategy writer)  {
+	public final void writeHeader(ImgFileWriter writer)  {
 		writePrepare();
 
 		writer.position(0);
@@ -77,7 +77,7 @@ public abstract class CommonHeader {
 	 * Read the common header.  It starts at the beginning of the file.
 	 * @param reader Used to read the header.
 	 */
-	public final void readHeader(ReadStrategy reader) throws ReadFailedException {
+	public final void readHeader(ImgFileReader reader) throws ReadFailedException {
 		reader.position(0);
 		headerLength = reader.getChar();
 		byte[] bytes = reader.get(TYPE_LEN);
@@ -101,14 +101,14 @@ public abstract class CommonHeader {
 	 * before this is called.
 	 * @param reader The header is read from here.
 	 */
-	protected abstract void readFileHeader(ReadStrategy reader) throws ReadFailedException;
+	protected abstract void readFileHeader(ImgFileReader reader) throws ReadFailedException;
 
 	/**
 	 * Write the rest of the header.  It is guaranteed that the writer will
 	 * be set to the correct position before calling.
 	 * @param writer The header is written here.
 	 */
-	protected abstract void writeFileHeader(WriteStrategy writer);
+	protected abstract void writeFileHeader(ImgFileWriter writer);
 
 	public byte getLockFlag() {
 		return lockFlag;

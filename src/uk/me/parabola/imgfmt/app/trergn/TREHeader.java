@@ -19,9 +19,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -82,7 +82,7 @@ public class TREHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) throws ReadFailedException {
+	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		assert reader.position() == COMMON_HEADER_LEN;
 		int maxLat = reader.get3();
 		int maxLon = reader.get3();
@@ -117,13 +117,13 @@ public class TREHeader extends CommonHeader {
 		reader.getInt();
 	}
 
-	private void readSectionInfo(ReadStrategy reader, Section sect) {
+	private void readSectionInfo(ImgFileReader reader, Section sect) {
 		sect.setPosition(reader.getInt());
 		sect.setSize(reader.getInt());
 		sect.setItemSize(reader.getChar());
 	}
 
-	protected void writeSectionInfo(WriteStrategy writer, Section section) {
+	protected void writeSectionInfo(ImgFileWriter writer, Section section) {
 		writer.putInt(section.getPosition());
 		writer.putInt(section.getSize());
 		if (section.getItemSize() > 0)
@@ -136,7 +136,7 @@ public class TREHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.put3(area.getMaxLat());
 		writer.put3(area.getMaxLong());
 		writer.put3(area.getMinLat());

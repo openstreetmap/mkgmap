@@ -18,11 +18,11 @@ package uk.me.parabola.imgfmt.app;
 
 
 public class OffsetWriter {
-	private WriteStrategy writer;
+	private ImgFileWriter writer;
 	private int targetOffset;
 	private int orMask;
 
-	public OffsetWriter(WriteStrategy w, int ormask) {
+	public OffsetWriter(ImgFileWriter w, int ormask) {
 		writer = w;
 		targetOffset = w.position();
 		orMask = ormask;

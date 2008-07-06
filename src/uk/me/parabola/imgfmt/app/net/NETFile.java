@@ -18,9 +18,9 @@ package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 import java.io.IOException;
@@ -42,10 +42,10 @@ public class NETFile extends ImgFile {
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);
 		if (write) {
-			setWriter(new BufferedWriteStrategy(chan));
+			setWriter(new BufferedImgFileWriter(chan));
 			position(NETHeader.HEADER_LEN);
 		} else {
-			setReader(new BufferedReadStrategy(chan));
+			setReader(new BufferedImgFileReader(chan));
 			netHeader.readHeader(getReader());
 		}
 	}
@@ -62,7 +62,7 @@ public class NETFile extends ImgFile {
 	}
 
 	private void writeBody() {
-		WriteStrategy writer = getWriter();
+		ImgFileWriter writer = getWriter();
 
 		int start = writer.position();
 		netHeader.startRoadDefs(start);

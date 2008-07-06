@@ -17,9 +17,9 @@
 package uk.me.parabola.imgfmt.app.typ;
 
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * The header for the TYP file.
@@ -55,7 +55,7 @@ public class TYPHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) {
+	protected void readFileHeader(ImgFileReader reader) {
 		// to compare that we have got it right.
 		unknown = reader.get(HEADER_LEN - COMMON_HEADER_LEN);
 
@@ -99,7 +99,7 @@ public class TYPHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		System.out.println("in file header write");
 		writer.putChar(headerId);
 		writer.putInt(sect5.getPosition());

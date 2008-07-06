@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * A zip or postal code record.
@@ -35,7 +35,7 @@ public class Zip {
 		this.index = index;
 	}
 
-	public void write(WriteStrategy writer) {
+	public void write(ImgFileWriter writer) {
 		writer.put3(label.getOffset());
 	}
 

@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -52,7 +52,7 @@ public class RGNFile extends ImgFile {
 	public RGNFile(ImgChannel chan) {
 		setHeader(header);
 
-		setWriter(new BufferedWriteStrategy(chan));
+		setWriter(new BufferedImgFileWriter(chan));
 
 		// Position at the start of the writable area.
 		position(HEADER_LEN);

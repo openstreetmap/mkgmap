@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,7 +53,7 @@ public class PlacesFile {
 		placeHeader = pheader;
 	}
 
-	void write(WriteStrategy writer) {
+	void write(ImgFileWriter writer) {
 		for (Country c : countries.values())
 			c.write(writer);
 		placeHeader.endCountries(writer.position());

@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 
@@ -40,7 +40,7 @@ public class RoadIndex {
 		return getSubdiv().getZoom().getLevel();
 	}
 
-	void write(WriteStrategy writer) {
+	void write(ImgFileWriter writer) {
 		int roadnum = linkedRoad.getNumber();
 		assert roadnum < 256;
 		writer.put((byte) roadnum);

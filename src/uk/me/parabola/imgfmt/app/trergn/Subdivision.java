@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.log.Logger;
 
@@ -177,7 +177,7 @@ public class Subdivision {
 	 *
 	 * @param file The file to write to.
 	 */
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		log.debug("write subdiv", latitude, longitude);
 		file.put3(rgnPointer);
 		file.put(getType());
