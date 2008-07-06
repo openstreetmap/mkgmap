@@ -177,4 +177,7 @@ public class LBLFile extends ImgFile {
 		return new String(text.getCtext(), 0, text.getLength());
 	}
 
+	public PlacesHeader getPlaceHeader() {
+		return lblHeader.getPlaceHeader();
+	}
 }

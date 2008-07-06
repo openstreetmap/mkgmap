@@ -64,6 +64,9 @@ public class LBLHeader extends CommonHeader {
 		reader.get();
 		encodingType = reader.get();
 
+		// Read the places part of the header.
+		placeHeader.readFileHeader(reader);
+
 		// more to do but not needed yet...  Just set position
 		reader.position(labelStart);
 	}

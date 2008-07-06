@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 
 /**
  * This is not a separate header, but rather part of the LBL header.  It is just
@@ -110,6 +111,25 @@ public class PlacesHeader {
 		writer.putInt(0);
 	}
 
+	void readFileHeader(ImgFileReader reader) {
+		reader.position(0x1f);
+
+		country.setPosition(reader.getInt());
+		country.setSize(reader.getInt());
+		country.setItemSize(reader.getChar());
+		reader.getInt();
+
+		region.setPosition(reader.getInt());
+		region.setSize(reader.getInt());
+		region.setItemSize(reader.getChar());
+		reader.getInt();
+
+		city.setPosition(reader.getInt());
+		city.setSize(reader.getInt());
+		city.setItemSize(reader.getChar());
+		reader.getInt();
+	}
+
 	int getLastPos() {
 		// Beware this is not really valid until all is written.
 		return zip.getEndPos();
@@ -137,5 +157,9 @@ public class PlacesHeader {
 
 	void endZip(int pos) {
 		zip.setSize(pos - zip.getPosition());
+	}
+
+	public int getNumCities() {
+		return city.getNumItems();
 	}
 }

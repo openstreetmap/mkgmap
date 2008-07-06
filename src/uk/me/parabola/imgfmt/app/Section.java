@@ -70,6 +70,8 @@ public class Section {
 
 	public void setPosition(int position) {
 		this.position = position;
+		// Setting a position breaks the link
+		this.link = null;
 	}
 
 	/**
@@ -82,7 +84,7 @@ public class Section {
 	}
 
 	public String toString() {
-		return "pos=" + position + ", size=" + size + ", itemSize=" + itemSize;
+		return "pos=" + getPosition() + ", size=" + size + ", itemSize=" + itemSize;
 	}
 
 	/**

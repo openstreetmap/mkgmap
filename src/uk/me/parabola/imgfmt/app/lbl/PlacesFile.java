@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -121,7 +121,7 @@ public class PlacesFile {
 	}
 
 	POIRecord createPOI(String name) {
-		assert poisClosed == false;
+		assert !poisClosed;
 		// TODO...
 		POIRecord p = new POIRecord();
 
@@ -135,14 +135,14 @@ public class PlacesFile {
 	void allPOIsDone() {
 		poisClosed = true;
 
-		byte POIFlags = 0;
+		byte poiFlags = 0;
 		for (POIRecord p : pois) {
-			POIFlags |= p.getPOIFlags();
+			poiFlags |= p.getPOIFlags();
 		}
-		placeHeader.setPOIGlobalFlags(POIFlags);
+		placeHeader.setPOIGlobalFlags(poiFlags);
 
 		int ofs = 0;
 		for (POIRecord p : pois)
-			ofs += p.calcOffset(ofs, POIFlags);
+			ofs += p.calcOffset(ofs, poiFlags);
 	}
 }
