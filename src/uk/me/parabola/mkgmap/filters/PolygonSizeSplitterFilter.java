@@ -46,9 +46,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	}
 
 	/**
-	 * Split up polygons that have more than the max allowed number of points.
-	 * Initially I shall just throw out polygons that have too many points
-	 * to see if this is causing particular problems.
+	 * Split up polygons that are too big.
 	 *
 	 * @param element A map element, only polygons will be processed.
 	 * @param next	This is used to pass the possibly transformed element onward.

@@ -101,6 +101,9 @@ public class MapMaker implements MapProcessor {
 
 		if (args.exists("net"))
 			map.addNet();
+
+		if (args.exists("nod"))
+			map.addNod();
 	}
 
 	/**

@@ -64,7 +64,7 @@ public class Section {
 
 	public int getPosition() {
 		if (link != null)
-			return link.getPosition();
+			return link.getEndPos();
 		return position;
 	}
 
@@ -98,5 +98,19 @@ public class Section {
 			return 0;
 		
 		return size/itemSize;
+	}
+
+	public void readSectionInfo(ImgFileReader reader, boolean withItemSize) {
+		setPosition(reader.getInt());
+		setSize(reader.getInt());
+		if (withItemSize)
+			setItemSize(reader.getChar());
+	}
+
+	public void writeSectionInfo(ImgFileWriter writer) {
+		writer.putInt(getPosition());
+		writer.putInt(getSize());
+		if (getItemSize() > 0)
+			writer.putChar(getItemSize());
 	}
 }
