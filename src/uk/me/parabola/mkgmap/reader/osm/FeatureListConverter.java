@@ -126,6 +126,9 @@ class FeatureListConverter implements OsmConverter {
 	private void addShape(Way way, GarminType gt) {
 		// Add to the map
 		List<Coord> points =  way.getPoints();
+		if (points.isEmpty())
+			return;
+		
 		MapShape shape = new MapShape();
 		shape.setName(way.getName());
 		shape.setPoints(points);

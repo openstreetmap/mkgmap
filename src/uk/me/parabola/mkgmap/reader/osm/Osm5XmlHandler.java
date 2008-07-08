@@ -21,6 +21,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -40,13 +41,16 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
+	private final Map<Long, Way5> wayMap = new HashMap<Long, Way5>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
 	private static final int MODE_BOUND = 3;
+	private static final int MODE_RELATION = 4;
 
 	private Node currentNode;
 	private Way5 currentWay;
+	private Relation currentRelation;
 
 	private OsmConverter converter;
 	private MapCollector mapper;
@@ -88,7 +92,10 @@ class Osm5XmlHandler extends DefaultHandler {
 
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
-				currentWay = new Way5();
+				addWay(attributes.getValue("id"));
+			} else if (qName.equals("relation")) {
+				mode = MODE_RELATION;
+				currentRelation = new Relation();		
 			} else if (qName.equals("bound")) {
 				mode = MODE_BOUND;
 				String box = attributes.getValue("box");
@@ -121,6 +128,19 @@ class Osm5XmlHandler extends DefaultHandler {
 				String val = attributes.getValue("v");
 				currentWay.addTag(key, val);
 			}
+		} else if (mode == MODE_RELATION) {
+			if (qName.equals("member")) {
+				if (attributes.getValue("type").equals("way")){
+				long id = Long.parseLong(attributes.getValue("ref"));
+				String role = attributes.getValue("role");
+				Way way = wayMap.get(id);
+				currentRelation.addWay( role, way);		
+				}
+			} else if (qName.equals("tag")) {
+				String key = attributes.getValue("k");
+				String val = attributes.getValue("v");
+				currentRelation.addTag(key, val);
+			}			
 		}
 	}
 
@@ -140,7 +160,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * @see ContentHandler#endElement
 	 */
 	public void endElement(String uri, String localName, String qName)
-			throws SAXException
+					throws SAXException
 	{
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
@@ -156,15 +176,21 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
-				// Process the way.
-				converter.convertName(currentWay);
-				converter.convertWay(currentWay);
+				currentWay = null;
+				// ways are processed at the end of the document,
+				// may be changed by a Relation class
 			}
 		} else if (mode == MODE_BOUND) {
 			if (qName.equals("bound")) {
 				mode = 0;
 			}
-		}
+		} else if (mode == MODE_RELATION) {
+			if (qName.equals("relation")) {
+				mode = 0;
+				currentRelation.processWays();
+				currentRelation = null;
+			}
+		}		
 	}
 
 	/**
@@ -177,6 +203,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
+		for (Way5 w: wayMap.values()){				
+			converter.convertName(w);			
+			converter.convertWay(w);				
+		}
 		mapper.finish();
 	}
 
@@ -226,9 +256,18 @@ class Osm5XmlHandler extends DefaultHandler {
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
-
 	}
-
+	
+	private void addWay(String sid) {
+		try {
+			currentWay = new Way5();			
+			long id = Long.parseLong(sid);						
+			wayMap.put(id, currentWay);	
+		} catch (NumberFormatException e) {
+			// ignore bad numeric data.
+		}
+	}
+	
 	private void addNodeToWay(long id) {
 		Coord co = nodeMap.get(id);
 		if (co != null)
