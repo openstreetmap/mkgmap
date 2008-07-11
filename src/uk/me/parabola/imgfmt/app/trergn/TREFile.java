@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Arrays;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -135,6 +136,17 @@ public class TREFile extends ImgFile {
 		writeCopyrights();
 
 		writeOverviews();
+	}
+
+	private void writeTre7() {
+		header.setTre7Pos(position());
+		byte[] tre7buf = new byte[13];
+		Arrays.fill(tre7buf, (byte) 0);
+		for (int i = 0; i < 4; i++) {
+
+			getWriter().put(tre7buf);
+			header.incTre7();
+		}
 	}
 
 	/**

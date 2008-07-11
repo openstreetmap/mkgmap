@@ -296,4 +296,11 @@ public class TREHeader extends CommonHeader {
 		return mapId;
 	}
 
+	public void setTre7Pos(int pos) {
+		tre7.setPosition(pos);
+	}
+
+	public void incTre7() {
+		tre7.inc();
+	}
 }
