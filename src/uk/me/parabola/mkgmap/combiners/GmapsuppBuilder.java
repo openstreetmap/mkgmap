@@ -70,6 +70,7 @@ public class GmapsuppBuilder implements Combiner {
 	//private String
 
 	private String overallDescription = "Combined map";
+	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
 		familyId = args.get("family-id", 1331);
@@ -244,14 +245,14 @@ public class GmapsuppBuilder implements Combiner {
 	private FileSystem createGmapsupp() throws FileNotWritableException {
 		BlockInfo bi = calcBlockSize();
 		int blockSize = bi.blockSize;
-		int reserved = 2 + bi.reserveBlocks + bi.headerSlots;
-		log.info("bs of", blockSize, "reserving", reserved);
-
 		// Create this file, containing all the sub files
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
-		params.setDirectoryStartBlock(2);
+		params.setDirectoryStartBlock(DIRECTORY_OFFSET_BLOCK);
+
+		int reserved = DIRECTORY_OFFSET_BLOCK + bi.reserveBlocks + bi.headerSlots;
+		log.info("bs of", blockSize, "reserving", reserved);
 
 		int reserve = (int) Math.ceil(reserved * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserve);
