@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * A road definition.  This ties together all parts of a single road and provides
- * street address information.
+ * A road definition.  This ties together all segments of a single road
+ * and provides street address information.
  *
  * @author Steve Ratcliffe
  */
@@ -40,9 +40,11 @@ public class RoadDef {
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
+	// Speeed and class
 	private byte roadFlags = (byte) 0x4;
 
-	private int roadLength;  // in feet?
+	// The road length is probably determined by other flags in the header
+	private int roadLength;
 
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 

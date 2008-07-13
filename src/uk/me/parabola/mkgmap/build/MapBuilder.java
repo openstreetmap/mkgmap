@@ -120,7 +120,7 @@ public class MapBuilder {
 		for (MapLine l : src.getLines()) {
 			Label label = lbl.newLabel(l.getName());
 			RoadDef r = net.createRoadDef(label);
-			l.setUserData(r);
+			l.setRoadDef(r);
 		}
 	}
 	private void postProcessRoads(Map target, MapDataSource src) {
@@ -464,7 +464,7 @@ public class MapBuilder {
 
 			pl.setType(line.getType());
 
-			RoadDef roaddef = (RoadDef) line.getUserData();
+			RoadDef roaddef = (RoadDef) line.getRoadDef();
 			if (roaddef != null)
 			{
 				pl.setRoadDef(roaddef);

@@ -99,10 +99,10 @@ public class MapMaker implements MapProcessor {
 		if (i != 0)
 			map.setLabelCodePage(i);
 
-		if (args.exists("net"))
+		if (args.exists("net") || args.exists("route"))
 			map.addNet();
 
-		if (args.exists("nod"))
+		if (args.exists("route"))
 			map.addNod();
 	}
 

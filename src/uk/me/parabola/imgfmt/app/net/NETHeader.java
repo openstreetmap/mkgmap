@@ -75,17 +75,15 @@ public class NETHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putInt(roadDefinitions.getPosition());
-		writer.putInt(roadDefinitions.getSize());
+		roadDefinitions.writeSectionInfo(writer);
+
 		writer.put(roadShift); // offset multiplier
 
-		writer.putInt(segmentedRoads.getPosition());
-		writer.putInt(segmentedRoads.getSize());
+		segmentedRoads.writeSectionInfo(writer);
+
 		writer.put(segmentShift); // offset multiplier
 
-		writer.putInt(sortedRoads.getPosition());
-		writer.putInt(sortedRoads.getSize());
-		writer.putChar(sortedRoads.getItemSize());
+		sortedRoads.writeSectionInfo(writer);
 
 		writer.putInt(0);
 		writer.put((byte) 1);

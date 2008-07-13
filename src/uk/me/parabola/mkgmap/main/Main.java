@@ -120,6 +120,9 @@ public class Main implements ArgumentProcessor {
 	public void startOptions() {
 		MapProcessor saver = new NameSaver();
 		processMap.put("img", saver);
+
+		// Todo: instead of the direct saver, modify the file with the correct
+		// family-id etc.
 		processMap.put("typ", saver);
 
 		// Normal map files.

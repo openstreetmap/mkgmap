@@ -32,8 +32,9 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Coord {
-	private final int latitude;
+	private int latitude;
 	private final int longitude;
+	private long id;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -43,6 +44,7 @@ public class Coord {
 	public Coord(int latitude, int longitude) {
 		this.latitude = latitude;
 		this.longitude = longitude;
+		id = 0;
 	}
 
 	/**
@@ -56,7 +58,7 @@ public class Coord {
 	}
 
 	public int getLatitude() {
-		return latitude;
+		return latitude & 0xffffff;
 	}
 
 	public int getLongitude() {
@@ -64,7 +66,7 @@ public class Coord {
 	}
 
 	public int hashCode() {
-		return latitude+longitude;
+		return getLatitude()+longitude;
 	}
 
 	public boolean equals(Object obj) {
@@ -73,7 +75,7 @@ public class Coord {
 		if (obj.getClass() != getClass())
 			return false;
 		Coord other = (Coord) obj;
-		if (latitude == other.latitude && longitude == other.longitude)
+		if (getLatitude() == other.getLatitude() && longitude == other.longitude)
 			return true;
 		else return false;
 	}
