@@ -43,7 +43,8 @@ public interface MapDataSource {
 	List<MapPoint> getPoints();
 
 	/**
-	 * Get the list of lines that need to be rendered to the map.
+	 * Get the list of lines that need to be rendered to the map.  Includes
+	 * lines that are part of roads.
 	 *
 	 * @return A list of {@link MapLine} objects.
 	 */
@@ -55,6 +56,17 @@ public interface MapDataSource {
 	 * @return A list of {@link MapShape} objects.
 	 */
 	List<MapShape> getShapes();
+
+	/**
+	 * Get the high level view of the road network.  This is used to write
+	 * the net and nod sections.  Note that information from the net
+	 * section is needed to write the RGN section if routing is wanter.
+	 *
+	 * @return A {@link RoadNetwork} object with all the connections between
+	 * roads.  If this returns null, then the NET and NOD sections should
+	 * not be written.
+	 */
+	RoadNetwork getRoadNetwork();
 
 	/**
 	 * Get a list of every feature that is used in the map.  As features are

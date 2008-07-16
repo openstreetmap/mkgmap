@@ -28,6 +28,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
  * format of the Garmin map.  This class holds all the map elements that belong
- * to a particular area and provide a way of splitting areas into smaller ones.
+ * to a particular area and provides a way of splitting areas into smaller ones.
  *
  * It also acts as a map data source so that we can derive lower level
  * areas from it.
@@ -304,6 +305,11 @@ public class MapArea implements MapDataSource {
 	 */
 	public List<MapShape> getShapes() {
 		return shapes;
+	}
+
+	public RoadNetwork getRoadNetwork() {
+		// I don't think this is needed here.
+		return null;
 	}
 
 	/**

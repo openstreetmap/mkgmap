@@ -22,17 +22,17 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.PolygonClipper;
+import uk.me.parabola.mkgmap.general.MapRoad;
 
 /**
  * Reads in a CSV file from the OSMGarminMap project that contains a list
@@ -150,6 +150,7 @@ class FeatureListConverter implements OsmConverter {
 		if (points.size() < 2)
 			return;
 
+
 		MapLine line = new MapLine();
 		line.setName(way.getName());
 		line.setPoints(points);
@@ -182,7 +183,10 @@ class FeatureListConverter implements OsmConverter {
 			}
 		}
 
-		mapper.addLine(line);
+		if (tagKey.startsWith("highway|"))
+			mapper.addRoad(new MapRoad(way.getId(), line));
+		else
+			mapper.addLine(line);
 	}
 
 	/**

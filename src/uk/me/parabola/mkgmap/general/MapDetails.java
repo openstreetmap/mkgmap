@@ -49,6 +49,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
+	private final RoadNetwork roads = new RoadNetwork();
+
 	/**
 	 * Add a point to the map.
 	 *
@@ -120,6 +122,11 @@ public class MapDetails implements MapCollector, MapDataSource {
 		shapes.add(background);
 	}
 
+	public void addRoad(MapRoad road) {
+		roads.addRoad(road);
+		addLine(road);
+	}
+
 	/**
 	 * Add the given point to the total bounds for the map.
 	 *
@@ -162,6 +169,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 
 	public List<MapShape> getShapes() {
 		return shapes;
+	}
+
+	public RoadNetwork getRoadNetwork() {
+		return roads;
 	}
 
 	/**

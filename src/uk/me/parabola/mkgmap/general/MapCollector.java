@@ -63,4 +63,11 @@ public interface MapCollector {
 	 * can be completed here.
 	 */
 	public void finish();
+
+	/**
+	 * For adding a road.  Although a road is a kind of line, it is treated
+	 * differently so that we can join up roads that are split into several
+	 * segments and to do routing etc.
+	 */
+	public void addRoad(MapRoad road);
 }

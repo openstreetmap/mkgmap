@@ -43,7 +43,7 @@ public class RoadDef {
 	// Speeed and class
 	private byte roadFlags = (byte) 0x4;
 
-	// The road length is probably determined by other flags in the header
+	// The road length is probably affected by other flags in the header
 	private int roadLength;
 
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();

@@ -23,6 +23,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.log.Logger;
 
@@ -218,7 +219,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			double lat = Double.parseDouble(slat);
 			double lon = Double.parseDouble(slon);
 
-			Coord co = new Coord(lat, lon);
+			Coord co = new CoordNode(lat, lon, id);
 			nodeMap.put(id, co);
 			currentNodeId = id;
 			if (bbox == null)

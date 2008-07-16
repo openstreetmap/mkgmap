@@ -79,7 +79,7 @@ abstract class Element implements Iterable<String> {
 		return it;
 	}
 
-	protected long getId() {
+	public long getId() {
 		return id;
 	}
 
