@@ -22,16 +22,15 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.PolygonClipper;
 
 /**
@@ -175,7 +174,7 @@ class FeatureListConverter implements OsmConverter {
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
 
-		if (tagKey.equals("contour|elevation")) {
+		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
 			String ele = way.getTag("ele");
 			try {
 				long n = Math.round(Integer.parseInt(ele) * METERS_TO_FEET);
