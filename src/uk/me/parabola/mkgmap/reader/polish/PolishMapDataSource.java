@@ -446,6 +446,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		return coord;
 	}
 
+	/**
+	 * Used to remember all the road relavent parameters in a definition so
+	 * they can be in any order.
+	 */
 	private static class RoadHelper {
 		private boolean hasRoads;
 		private int roadId;

@@ -17,19 +17,41 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The NOD file that contains routing information.
+ *
+ * NOD1 contains several groups of routing nodes.
+ * NOD2 contains road data with links into NOD1.
+ *
+ * NOD1 contains links back to NET (and NET contains links to NOD2).  So there
+ * is a loop and we have to write one section first, retaining the offsets
+ * and then go back and fill in offsets that were found later.
+ *
+ * I'm choosing to this with Table A, as the records are fixed size and so
+ * we can write them blank the first time and then go back and fix them
+ * up, once the NET offsets are known.
+ *
+ * So we are writing NOD first before NET and NOD1 before NOD2.
  * 
  * @author Steve Ratcliffe
  */
 public class NODFile extends ImgFile {
+	private static final Logger log = Logger.getLogger(NODFile.class);
+
 	private NODHeader nodHeader = new NODHeader();
+
+	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
+	private List<RoadDef> roads = new ArrayList<RoadDef>();
 
 	public NODFile(ImgChannel chan, boolean write) {
 		setHeader(nodHeader);
@@ -58,9 +80,29 @@ public class NODFile extends ImgFile {
 
 	private void writeBody() {
 		writeNodes();
+		writeRoadData();
 	}
 
-	private void writeNodes() {
-		
+	/**
+	 * Write the road data NOD2.
+	 */
+	private void writeRoadData() {
+		ImgFileWriter writer = getWriter();
+		int start = writer.position();
+
+		nodHeader.setRoadSize(writer.position() - start);
 	}
+
+	/**
+	 * Write the nodes (NOD 1).
+	 */
+	private void writeNodes() {
+		ImgFileWriter writer = getWriter();
+		int start = writer.position();
+
+		for (RouteCenter cp : centers)
+			cp.write(writer);
+		nodHeader.setNodeSIze(writer.position() - start);
+	}
+
 }

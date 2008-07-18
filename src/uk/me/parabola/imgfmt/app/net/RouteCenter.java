@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.log.Logger;
 
 /**
  * Routing nodes are divided into areas which I am calling RouteCenter's.
@@ -26,8 +28,55 @@ import uk.me.parabola.imgfmt.app.Coord;
  * to nodes in other centers.
  */
 public class RouteCenter {
+	private static final Logger log = Logger.getLogger(RouteCenter.class);
+	
 	private Coord centralPoint;
 
 	private List<RouteNode> nodes = new ArrayList<RouteNode>();
 
+	// These may be pulled into this class
+	//private Tables tables = new Tables();
+	private TableA tabA;
+	private TableB tabB;
+	private TableC tabC;
+
+	private int tableAoffset;
+
+	public RouteCenter(Coord cp) {
+		this.centralPoint = cp;
+	}
+
+	public void write(ImgFileWriter writer) {
+		if (nodes.isEmpty())
+			return;
+
+		for (RouteNode node : nodes) {
+			node.write(writer);
+		}
+
+		int off = writer.position();
+		int mask = (1 << NODHeader.DEF_ALIGN) - 1;
+		off = (off + mask) & ~mask;
+
+		for (RouteNode node : nodes) {
+			int pos = node.getOffset();
+			writer.position(pos);
+			byte bo = (byte) ((off - pos) >> NODHeader.DEF_ALIGN);
+			writer.put(bo);
+		}
+
+		writer.position(off);
+
+		writer.put(tabC.getSize());
+		writer.put3(centralPoint.getLongitude());
+		writer.put3(centralPoint.getLatitude());
+		writer.put(tabA.getSize());
+		writer.put(tabB.getSize());
+
+		tableAoffset = writer.position();
+		tabA.write(writer);
+		tabB.write(writer);
+		tabC.write(writer);
+		//tables.write(writer);
+	}
 }

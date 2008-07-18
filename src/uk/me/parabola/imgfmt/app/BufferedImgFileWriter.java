@@ -33,7 +33,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	private static final Logger log = Logger.getLogger(BufferedImgFileWriter.class);
 
 	private static final int KBYTE = 1024;
-	private static final int INIT_SIZE = 16 * KBYTE;
+	protected static final int INIT_SIZE = 16 * KBYTE;
 	private static final int GROW_SIZE = 128 * KBYTE;
 	private static final int GUARD_SIZE = KBYTE;
 
@@ -169,5 +169,12 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 			newb.put(buf);
 			buf = newb;
 		}
+	}
+
+	/**
+	 * Only to be used by the Multi buffer subclass.
+	 */
+	protected void setBuffer(ByteBuffer buf) {
+		this.buf = buf;
 	}
 }

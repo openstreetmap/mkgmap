@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008
+ * Copyright (C) 2008 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -9,32 +9,26 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *
- * Create date: 07-Jul-2008
+ * 
+ * 
+ * Author: Steve Ratcliffe
+ * Create date: 18-Jul-2008
  */
 package uk.me.parabola.imgfmt.app.net;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * A routing node with its connections to other nodes via roads.
- *
  * @author Steve Ratcliffe
  */
-public class RouteNode {
-	private int offset;
-	private int nodeId;
-
-	private List<RouteArc> arcs = new ArrayList<RouteArc>();
+public class TableC {
+	private byte size;
 
 	public void write(ImgFileWriter writer) {
-		offset = writer.position();
+		writer.put((byte) 0);
 	}
 
-	public int getOffset() {
-		return offset;
+	public byte getSize() {
+		return size;
 	}
 }

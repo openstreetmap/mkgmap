@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.ReadFailedException;
 public class NODHeader extends CommonHeader {
 	public static final int HEADER_LEN = 63;
 
-	private static final char DEF_ALIGN = 6;
+	static final char DEF_ALIGN = 6;
 	private static final char BOUNDRY_ITEM_SIZE = 9;
 
 	private Section nodes = new Section();
@@ -70,5 +70,13 @@ public class NODHeader extends CommonHeader {
 		writer.putInt(0);
 
 		boundry.writeSectionInfo(writer);
+	}
+
+	public void setNodeSIze(int size) {
+		nodes.setSize(size);
+	}
+
+	public void setRoadSize(int size) {
+		roads.setSize(size);
 	}
 }
