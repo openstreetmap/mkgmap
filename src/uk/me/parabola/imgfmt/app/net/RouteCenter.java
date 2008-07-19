@@ -36,9 +36,9 @@ public class RouteCenter {
 
 	// These may be pulled into this class
 	//private Tables tables = new Tables();
-	private TableA tabA;
-	private TableB tabB;
-	private TableC tabC;
+	private TableA tabA = new TableA();
+	private TableB tabB = new TableB();
+	private TableC tabC = new TableC();
 
 	private int tableAoffset;
 
@@ -46,6 +46,10 @@ public class RouteCenter {
 		this.centralPoint = cp;
 	}
 
+	public void addNode(RouteNode node) {
+		nodes.add(node);
+	}
+	
 	public void write(ImgFileWriter writer) {
 		if (nodes.isEmpty())
 			return;
@@ -56,15 +60,18 @@ public class RouteCenter {
 
 		int off = writer.position();
 		int mask = (1 << NODHeader.DEF_ALIGN) - 1;
-		off = (off + mask) & ~mask;
+		off = (off + 2*mask + 1) & ~mask;
 
 		for (RouteNode node : nodes) {
 			int pos = node.getOffset();
 			writer.position(pos);
 			byte bo = (byte) ((off - pos) >> NODHeader.DEF_ALIGN);
+			bo -= 1;
+			log.debug("rewrite taba offset", writer.position(), bo);
 			writer.put(bo);
 		}
 
+		log.debug("write table a at offset", Integer.toHexString(off));
 		writer.position(off);
 
 		writer.put(tabC.getSize());
@@ -74,6 +81,7 @@ public class RouteCenter {
 		writer.put(tabB.getSize());
 
 		tableAoffset = writer.position();
+		log.debug("tab a offset", tableAoffset);
 		tabA.write(writer);
 		tabB.write(writer);
 		tabC.write(writer);

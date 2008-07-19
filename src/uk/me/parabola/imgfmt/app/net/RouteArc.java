@@ -14,6 +14,8 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+
 /**
  * An arc joins two nodes within a {@link RouteCenter}.  There are also
  * links between nodes in different centers.
@@ -26,4 +28,8 @@ public class RouteArc {
 
 	private byte initialHeading;
 	private byte endHeading;
+
+	public void write(ImgFileWriter writer) {
+		
+	}
 }

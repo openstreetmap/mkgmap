@@ -72,11 +72,19 @@ public class NODHeader extends CommonHeader {
 		boundry.writeSectionInfo(writer);
 	}
 
-	public void setNodeSIze(int size) {
+	public void setNodeSize(int size) {
 		nodes.setSize(size);
 	}
 
 	public void setRoadSize(int size) {
 		roads.setSize(size);
+	}
+
+	public void setRoadStart(int start) {
+		roads.setPosition(start);
+	}
+
+	public void setNodeStart(int start) {
+		nodes.setPosition(start);
 	}
 }

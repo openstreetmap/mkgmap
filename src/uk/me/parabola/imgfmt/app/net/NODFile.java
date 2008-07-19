@@ -24,6 +24,8 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -58,10 +60,19 @@ public class NODFile extends ImgFile {
 		if (write) {
 			setWriter(new BufferedImgFileWriter(chan));
 			position(NODHeader.HEADER_LEN);
+			tmpSetup();
 		} else {
 			setReader(new BufferedImgFileReader(chan));
 			nodHeader.readHeader(getReader());
 		}
+	}
+
+	private void tmpSetup() {
+		// XXX hardcoded setup
+		RouteCenter rc = new RouteCenter(new Coord(51.2, 0.8));
+		centers.add(rc);
+		RouteNode node = new RouteNode();
+		rc.addNode(node);
 	}
 
 	protected void sync() throws IOException {
@@ -89,6 +100,7 @@ public class NODFile extends ImgFile {
 	private void writeRoadData() {
 		ImgFileWriter writer = getWriter();
 		int start = writer.position();
+		nodHeader.setRoadStart(start);
 
 		nodHeader.setRoadSize(writer.position() - start);
 	}
@@ -99,10 +111,13 @@ public class NODFile extends ImgFile {
 	private void writeNodes() {
 		ImgFileWriter writer = getWriter();
 		int start = writer.position();
+		nodHeader.setNodeStart(start);
 
+		writer = new SectionWriter(getWriter(), start);
 		for (RouteCenter cp : centers)
 			cp.write(writer);
-		nodHeader.setNodeSIze(writer.position() - start);
+		nodHeader.setNodeSize(writer.position());
+		log.debug("the nod offset", Integer.toHexString(getWriter().position()));
 	}
 
 }
