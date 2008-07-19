@@ -78,11 +78,14 @@ public class NODFile extends ImgFile {
 
 		RouteArc a = new RouteArc(node2);
 		node.addArc(a);
+		a.setLocalNet((byte) 0);
 		a.setDestinationClass((byte) 4);
 		a.setLast();
 
 		a = new RouteArc(node);
 		node2.addArc(a);
+		//a.setNewDir();
+		a.setLocalNet((byte) 0);
 		a.setDestinationClass((byte) 4);
 		a.setLast();
 	}

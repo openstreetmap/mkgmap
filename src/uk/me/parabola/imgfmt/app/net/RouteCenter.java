@@ -74,6 +74,8 @@ public class RouteCenter {
 			writer.position(pos);
 			log.debug("rewrite taba offset", writer.position(), bo);
 			writer.put(bo);
+
+			node.writeSecond(writer);
 		}
 
 		int tablesOffset = tmpTabsOff + mask + 1;

@@ -85,4 +85,9 @@ public class RouteNode {
 		if (lonOff > 0xfff)
 			flags |= F_LARGE_OFFSETS;
 	}
+
+	public void writeSecond(ImgFileWriter writer) {
+		for (RouteArc arc : arcs)
+			arc.writeSecond(writer, this);
+	}
 }
