@@ -23,13 +23,54 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class RouteArc {
-	private int nodeId;
-	private int roadId;
+	// Flags A
+	public static final int NEW_DIRECTION = 0x80;
+	public static final int DIRECTION_SIGN = 0x40;
+	public static final int DESTINATION_CLASS_MASK = 0x7;
+
+	// Flags B
+	public static final int LAST_LINK = 0x80;
+	public static final int INTER_AREA = 0x40;
 
 	private byte initialHeading;
 	private byte endHeading;
 
+	//private boolean newDirection;
+	//private boolean sign;
+
+	//private byte destinationClass;
+
+	// The node that this arc goes to
+	private RouteNode node;
+	
+	private byte flagsA;
+	private byte flagsB;
+
+	public RouteArc(RouteNode node) {
+		this.node = node;
+	}
+
 	public void write(ImgFileWriter writer) {
-		
+		writer.put(flagsA);
+		writer.put(flagsB);
+		writer.put((byte) 0);
+		writer.put3(0);
+	}
+
+	public void setDirection(boolean d) {
+		if (d) {
+			flagsA |= DIRECTION_SIGN;
+		}
+		//else {
+		//	flagsA &= ~DIRECTION_SIGN;
+		//}
+	}
+
+	public void setLast() {
+		flagsB |= LAST_LINK;
+	}
+
+	public void setDestinationClass(byte destinationClass) {
+		flagsA |= (destinationClass & DESTINATION_CLASS_MASK);
 	}
 }

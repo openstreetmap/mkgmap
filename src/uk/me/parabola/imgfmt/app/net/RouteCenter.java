@@ -46,7 +46,9 @@ public class RouteCenter {
 		this.centralPoint = cp;
 	}
 
-	public void addNode(RouteNode node) {
+	public void addNode(RouteNode node, Coord coord) {
+		node.setLatOff((char) (centralPoint.getLatitude() - coord.getLatitude()));
+		node.setLonOff((char) (centralPoint.getLongitude() - coord.getLongitude()));
 		nodes.add(node);
 	}
 	
@@ -58,21 +60,25 @@ public class RouteCenter {
 			node.write(writer);
 		}
 
-		int off = writer.position();
+		int tmpTabsOff = writer.position();
 		int mask = (1 << NODHeader.DEF_ALIGN) - 1;
-		off = (off + 2*mask + 1) & ~mask;
+		tmpTabsOff = (tmpTabsOff + mask) & ~mask;
 
+		// Go back and fill in all the table offsets
 		for (RouteNode node : nodes) {
 			int pos = node.getOffset();
+			log.debug("node pos", pos);
+			byte bo = (byte) ((tmpTabsOff - (pos & ~mask)) >> NODHeader.DEF_ALIGN);
+
+			//bo += 1;
 			writer.position(pos);
-			byte bo = (byte) ((off - pos) >> NODHeader.DEF_ALIGN);
-			bo -= 1;
 			log.debug("rewrite taba offset", writer.position(), bo);
 			writer.put(bo);
 		}
 
-		log.debug("write table a at offset", Integer.toHexString(off));
-		writer.position(off);
+		int tablesOffset = tmpTabsOff + mask + 1;
+		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
+		writer.position(tablesOffset);
 
 		writer.put(tabC.getSize());
 		writer.put3(centralPoint.getLongitude());

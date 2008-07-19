@@ -72,7 +72,19 @@ public class NODFile extends ImgFile {
 		RouteCenter rc = new RouteCenter(new Coord(51.2, 0.8));
 		centers.add(rc);
 		RouteNode node = new RouteNode();
-		rc.addNode(node);
+		rc.addNode(node, new Coord(51.2003, 0.8004));
+		RouteNode node2 = new RouteNode();
+		rc.addNode(node2, new Coord(51.1995, 0.7993));
+
+		RouteArc a = new RouteArc(node2);
+		node.addArc(a);
+		a.setDestinationClass((byte) 4);
+		a.setLast();
+
+		a = new RouteArc(node);
+		node2.addArc(a);
+		a.setDestinationClass((byte) 4);
+		a.setLast();
 	}
 
 	protected void sync() throws IOException {

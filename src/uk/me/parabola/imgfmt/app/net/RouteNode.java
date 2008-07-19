@@ -41,6 +41,10 @@ public class RouteNode {
 	private char latOff;
 	private char lonOff;
 
+	public void addArc(RouteArc arc) {
+		arcs.add(arc);
+	}
+	
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
 
@@ -54,9 +58,9 @@ public class RouteNode {
 		else
 			writer.putInt(latLonOff);
 
-		for (RouteArc arc : arcs) {
+		for (RouteArc arc : arcs)
 			arc.write(writer);
-		}
+
 	}
 
 	private int calcLatLonOffsets() {
