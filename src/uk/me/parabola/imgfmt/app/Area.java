@@ -174,4 +174,8 @@ public class Area {
 		sb.append(')');
 		return sb.toString();
 	}
+
+	public boolean isEmpty() {
+		return minLat >= maxLat || minLong >= maxLong;
+	}
 }

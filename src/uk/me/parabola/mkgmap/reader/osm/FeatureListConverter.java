@@ -98,6 +98,7 @@ class FeatureListConverter implements OsmConverter {
 		for (String tagKey : way) {
 			GarminType gt = shapeFeatures.get(tagKey);
 			if (gt != null && (foundType == null || gt.isBetter(foundType))) {
+				// Special case for the Thames and similar - coastline overrides riverbank.
 				if (gt.getType() == 0x46 && "coastline".equals(way.getTag("natural")))
 					break;
 				foundType = gt;
