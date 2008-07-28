@@ -134,7 +134,8 @@ class Osm5XmlHandler extends DefaultHandler {
 				long id = Long.parseLong(attributes.getValue("ref"));
 				String role = attributes.getValue("role");
 				Way way = wayMap.get(id);
-				currentRelation.addWay( role, way);		
+				if (way != null) // ignore non existing ways caused by splitting files 
+				  currentRelation.addWay( role, way); 		
 				}
 			} else if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
@@ -261,7 +262,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void addWay(String sid) {
 		try {
 			currentWay = new Way5();			
-			long id = Long.parseLong(sid);						
+			long id = Long.parseLong(sid);	 
 			wayMap.put(id, currentWay);	
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.Utils;
 
 /**
  * Representation of an OSM Multipolygon Relation.
@@ -39,12 +40,14 @@ public class MultiPolygonRelation extends Relation {
 	public void processWays() {
 		if (outer != null)
 		{   
-			for (Way w: inners) {			
-				List<Coord> pts = w.getPoints();
-				int[] insert = findCpa(outer.getPoints(), pts);
-				if (insert[0] > 0)
-					insertPoints(pts, insert[0], insert[1]);				
-				pts.clear();
+			for (Way w: inners) {	
+				if (w != null) {
+					List<Coord> pts = w.getPoints();
+					int[] insert = findCpa(outer.getPoints(), pts);
+					if (insert[0] > 0)
+						insertPoints(pts, insert[0], insert[1]);				
+					pts.clear();
+				}
 			}
 		}
 	}
@@ -64,8 +67,9 @@ public class MultiPolygonRelation extends Relation {
 		for (int i = 0; i <= in; i++)
 			outList.add(index++, inList.get(i));
 
-		//with this line commented we get triangles, when uncommented some areas dis-appear		
-		//outList.add(index,outList.get(out));  
+		//with this line commented we get triangles, when uncommented some areas disappear
+		// at least in mapsource, on device itself looks OK.
+		outList.add(index,outList.get(out));  
 	}
 	
 	/**
@@ -97,15 +101,31 @@ public class MultiPolygonRelation extends Relation {
 
 	/**
 	 * Find the Distance between two coordinates. 
-	 * NOTE: changes in sign for lat-long are not yet taken into account!
 	 * @param c1
 	 * @param c2
 	 * @return distance between c1 and c2.
 	 */
 	private static double distance(Coord c1, Coord c2){
-		int latDiff = c1.getLatitude() - c2.getLatitude();
-		int longDiff = c1.getLongitude() - c2.getLongitude();
-		// FIXME: ignoring hemisphere changes 
+		double lat1 = Utils.toDegrees(c1.getLatitude());
+		double lat2 = Utils.toDegrees(c2.getLatitude());
+		double long1 = Utils.toDegrees(c1.getLongitude());
+		double long2 = Utils.toDegrees(c2.getLongitude());
+				
+		double latDiff, longDiff;		
+		if (lat1 < lat2)
+			latDiff = lat2 - lat1;
+		else
+			latDiff = lat1 - lat2;	
+		if (latDiff > 90)
+			latDiff -= 180;
+		
+		if (long1 < long2)
+			longDiff = long2 - long1;
+		else
+			longDiff = long1 - long2;
+		if (longDiff > 180)
+			longDiff -= 360;
+		
 		return Math.pow((latDiff *latDiff) + (longDiff * longDiff), 0.5);
 	}
 }
