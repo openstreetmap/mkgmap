@@ -268,8 +268,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			// If it is a contour line, then fix the elevation if required.
-			if (polyline.getType() == 0x22)
+			if ((polyline.getType() == 0x20) ||
+			    (polyline.getType() == 0x21) ||
+			    (polyline.getType() == 0x22)) {
 				fixElevation();
+			}
 
 			setResolution(polyline, name);
 			polyline.setPoints(points);
@@ -282,7 +285,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * convert it.
 	 */
 	private void fixElevation() {
-		if (elevUnits == 'M') {
+		if (elevUnits == 'm') {
 			String h = polyline.getName();
 			try {
 				// Convert to feet.
