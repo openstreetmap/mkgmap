@@ -18,8 +18,11 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 
 /**
- * An arc joins two nodes within a {@link RouteCenter}.  There are also
- * links between nodes in different centers.
+ * An arc joins two nodes within a {@link RouteCenter}.  This may be renamed
+ * to a Segement.
+ * The arc also references the road that it is a part of.
+ *
+ * There are also links between nodes in different centers.
  *
  * @author Steve Ratcliffe
  */
@@ -28,7 +31,7 @@ public class RouteArc {
 	
 	// Flags A
 	public static final int NEW_DIRECTION = 0x80;
-	public static final int DIRECTION_SIGN = 0x40;
+	public static final int REVERSE = 0x40;
 	public static final int DESTINATION_CLASS_MASK = 0x7;
 	public static final int CURVE = 0x20;
 	public static final int EXTRA_LEN = 0x18;
@@ -47,15 +50,19 @@ public class RouteArc {
 
 	//private byte destinationClass;
 
+	private RoadDef roadDef;
+
 	// The node that this arc goes to
 	private RouteNode node;
+	private RouteArc other;
 	
 	private byte flagA;
 	private byte flagB;
 	private byte localNet = -1;
 	private char length; // not really known
 
-	public RouteArc(RouteNode node) {
+	public RouteArc(RoadDef roadDef, RouteNode node) {
+		this.roadDef = roadDef;
 		this.node = node;
 	}
 
@@ -86,8 +93,16 @@ public class RouteArc {
 		writer.put((byte) val);
 	}
 
-	public void setDirection() {
-		flagA |= DIRECTION_SIGN;
+	public void setReverse() {
+		flagA |= REVERSE;
+	}
+
+	public boolean isForward() {
+		return (flagA & REVERSE) == 0;
+	}
+
+	public boolean isReverse() {
+		return !isForward();
 	}
 
 	public void setLast() {
@@ -113,6 +128,8 @@ public class RouteArc {
 
 	public void setLocalNet(int localNet) {
 		this.localNet = (byte) localNet;
+		if (other != null)
+			other.localNet = (byte) localNet;
 	}
 
 	public void setLength(int len) {

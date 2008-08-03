@@ -16,6 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
@@ -89,5 +90,14 @@ public class RouteNode {
 	public void writeSecond(ImgFileWriter writer) {
 		for (RouteArc arc : arcs)
 			arc.writeSecond(writer, this);
+	}
+
+
+	public Iterable<? extends RouteArc> arcsIteration() {
+		return new Iterable<RouteArc>() {
+			public Iterator<RouteArc> iterator() {
+				return arcs.iterator();
+			}
+		};
 	}
 }

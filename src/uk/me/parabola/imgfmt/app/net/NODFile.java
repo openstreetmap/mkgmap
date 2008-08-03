@@ -76,18 +76,22 @@ public class NODFile extends ImgFile {
 		RouteNode node2 = new RouteNode();
 		rc.addNode(node2, new Coord(51.1995, 0.7993));
 
-		RouteArc a = new RouteArc(node2);
+		RoadDef rdef = new RoadDef();
+		roads.add(rdef);
+		
+		RouteArc a = new RouteArc(rdef, node2);
 		node.addArc(a);
 		a.setLocalNet((byte) 0);
 		a.setDestinationClass((byte) 4);
 		a.setLast();
 
-		a = new RouteArc(node);
-		node2.addArc(a);
+		RouteArc a2 = new RouteArc(rdef, node);
+		node2.addArc(a2);
 		//a.setNewDir();
-		a.setLocalNet((byte) 0);
-		a.setDestinationClass((byte) 4);
-		a.setLast();
+		a2.setLocalNet((byte) 0);
+		a2.setDestinationClass((byte) 4);
+		a2.setLast();
+		a2.setLocalNet(0);
 	}
 
 	protected void sync() throws IOException {
@@ -113,11 +117,18 @@ public class NODFile extends ImgFile {
 	 * Write the road data NOD2.
 	 */
 	private void writeRoadData() {
+		log.info("writeRoadData");
 		ImgFileWriter writer = getWriter();
 		int start = writer.position();
 		nodHeader.setRoadStart(start);
 
-		nodHeader.setRoadSize(writer.position() - start);
+		writer = new SectionWriter(writer, start);
+		for (RoadDef rd : roads) {
+			log.debug("wrting nod2", writer.position());
+			rd.writeNod2(writer);
+		}
+		log.debug("ending nod2", writer.position());
+		nodHeader.setRoadSize(writer.position());
 	}
 
 	/**

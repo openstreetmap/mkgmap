@@ -56,8 +56,17 @@ public class RouteCenter {
 		if (nodes.isEmpty())
 			return;
 
+		//List<RouteArc>
 		for (RouteNode node : nodes) {
 			node.write(writer);
+
+			// save table A entries
+			for (RouteArc arc : node.arcsIteration()) {
+				if (arc.isForward()) {
+					tabA.addItem();
+				}
+			}
+
 		}
 
 		int tmpTabsOff = writer.position();
@@ -70,29 +79,34 @@ public class RouteCenter {
 			log.debug("node pos", pos);
 			byte bo = (byte) ((tmpTabsOff - (pos & ~mask)) >> NODHeader.DEF_ALIGN);
 
-			//bo += 1;
 			writer.position(pos);
 			log.debug("rewrite taba offset", writer.position(), bo);
 			writer.put(bo);
 
 			node.writeSecond(writer);
+
 		}
 
+		// Get the position of the tables, and position there.
 		int tablesOffset = tmpTabsOff + mask + 1;
 		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
 		writer.position(tablesOffset);
 
+		// Calculate table A size, this will be filled in later
+
+		// Write the tables header
 		writer.put(tabC.getSize());
 		writer.put3(centralPoint.getLongitude());
 		writer.put3(centralPoint.getLatitude());
-		writer.put(tabA.getSize());
-		writer.put(tabB.getSize());
+		writer.put((byte) tabA.getNumberOfItems());
+		writer.put((byte) 0); // number of table B entries
 
 		tableAoffset = writer.position();
 		log.debug("tab a offset", tableAoffset);
-		tabA.write(writer);
+		tabA.reserve(writer);
 		tabB.write(writer);
 		tabC.write(writer);
 		//tables.write(writer);
+		log.info("endof node " + writer.position());
 	}
 }

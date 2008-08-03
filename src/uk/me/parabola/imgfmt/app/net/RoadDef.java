@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
+import uk.me.parabola.log.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -28,9 +29,12 @@ import java.util.ArrayList;
  * A road definition.  This ties together all segments of a single road
  * and provides street address information.
  *
+ * @author Elrond
  * @author Steve Ratcliffe
  */
 public class RoadDef {
+	private static final Logger log = Logger.getLogger(RoadDef.class);
+	
 	private static final int MAX_LABELS = 4;
 
 	private int offset = -1;
@@ -41,9 +45,10 @@ public class RoadDef {
 	private int numlabels;
 
 	// Speeed and class
-	private byte roadFlags = (byte) 0x4;
+	private byte roadClass = (byte) 0x4;
 
-	// The road length is probably affected by other flags in the header
+	// The road length units may be affected by other flags in the header as
+	// there is doubt as to the formula.
 	private int roadLength;
 
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
@@ -87,7 +92,7 @@ public class RoadDef {
 				ptr |= 0x800000;
 			writer.put3(ptr);
 		}
-		writer.put(roadFlags);
+		writer.put(roadClass);
 		writer.put3(roadLength);
 
 		int maxlevel = getMaxZoomLevel();
@@ -114,5 +119,16 @@ public class RoadDef {
 		if (numlabels >= MAX_LABELS)
 			throw new IllegalStateException("Too many labels");
 		labels[numlabels++] = l;
+	}
+
+	public void writeNod2(ImgFileWriter writer) {
+		log.debug("writing nod2");
+		writer.put(roadClass);
+		writer.put3(0); // offset to nod1
+
+		// this is related to the number of nodes, but there is more to it...
+		char nnodes = 2;
+		writer.putChar(nnodes);  // number of bits to follow
+		writer.put((byte) ((1<<nnodes)-1));
 	}
 }

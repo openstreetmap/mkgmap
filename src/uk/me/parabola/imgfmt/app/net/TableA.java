@@ -17,17 +17,41 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.log.Logger;
 
 /**
  * @author Steve Ratcliffe
  */
 public class TableA {
+	private static final Logger log = Logger.getLogger(TableA.class);
+	
+	private static final int ITEM_SIZE = 5;
+
 	private byte size;
+	private int numberOfItems;
 
 	public void write(ImgFileWriter writer) {
 	}
 
 	public byte getSize() {
 		return size;
+	}
+
+	public void addItem() {
+		numberOfItems++;
+		size += ITEM_SIZE;
+	}
+
+	public int getNumberOfItems() {
+		return numberOfItems;
+	}
+
+	/**
+	 * This is called first to reserve enough space.  It will be rewritten
+	 * later.
+	 */
+	public void reserve(ImgFileWriter writer) {
+		log.debug("tab a size ", size);
+		writer.position(writer.position() + size);
 	}
 }
