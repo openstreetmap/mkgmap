@@ -47,8 +47,9 @@ public class RouteCenter {
 	}
 
 	public void addNode(RouteNode node, Coord coord) {
-		node.setLatOff((char) (centralPoint.getLatitude() - coord.getLatitude()));
-		node.setLonOff((char) (centralPoint.getLongitude() - coord.getLongitude()));
+		node.setCoord(centralPoint, coord);
+		//node.setLatOff((char) (centralPoint.getLatitude() - coord.getLatitude()));
+		//node.setLonOff((char) (centralPoint.getLongitude() - coord.getLongitude()));
 		nodes.add(node);
 	}
 	

@@ -158,4 +158,8 @@ public class Utils {
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
 	}
+
+	public static double toRadians(int latitude) {
+		return toDegrees(latitude) * Math.PI / 180;
+	}
 }

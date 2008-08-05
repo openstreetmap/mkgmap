@@ -18,26 +18,26 @@ package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.HashMap;
-// import java.util.Map;  --> will use "java.util.Map" where needed
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.map.Map;
-import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.NODFile;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
-import uk.me.parabola.imgfmt.app.trergn.Polygon;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
+import uk.me.parabola.imgfmt.app.trergn.Polygon;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-import uk.me.parabola.imgfmt.app.lbl.POIRecord;
-import uk.me.parabola.imgfmt.app.net.NETFile;
-import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -54,7 +54,9 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -82,11 +84,30 @@ public class MapBuilder {
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
 		processPOIs(map, src);
-		preProcessRoads(map, src);
+		//preProcessRoads(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
-		postProcessRoads(map, src);
+		processRoads(map, src);
+		//postProcessRoads(map, src);
+	}
+
+	private void processRoads(InternalFiles files, MapDataSource src) {
+		RoadNetwork network = src.getRoadNetwork();
+		//network.tmpSetup(); //XXX
+		
+		NETFile net = files.getNetFile();
+		if (net == null)
+			return;
+
+		//net.setRoadNetwork(network);
+
+		NODFile nod = files.getNodFile();
+		if (nod != null) {
+			//nod.setRoadNetwork(network);
+			nod.writeFirstPass(network);
+		}
+		net.writeFirstPass(network);
 	}
 
 	/**
@@ -110,26 +131,27 @@ public class MapBuilder {
 	/**
 	 * Process roads first to create RoadDefs
 	 */
-	private void preProcessRoads(Map target, MapDataSource src) {
-		LBLFile lbl = target.getLblFile();
-		NETFile net = target.getNetFile();
+	//private void preProcessRoads(Map target, MapDataSource src) {
+	//	LBLFile lbl = target.getLblFile();
+	//	NETFile net = target.getNetFile();
+	//
+	//	if (net == null)
+	//		return;
+	//
+	//	for (MapLine l : src.getLines()) {
+	//		Label label = lbl.newLabel(l.getName());
+	//		RoadDef r = net.createRoadDef(label);
+	//		l.setRoadDef(r);
+	//	}
+	//}
 
-		if (net == null)
-			return;
-		
-		for (MapLine l : src.getLines()) {
-			Label label = lbl.newLabel(l.getName());
-			RoadDef r = net.createRoadDef(label);
-			l.setRoadDef(r);
-		}
-	}
-	private void postProcessRoads(Map target, MapDataSource src) {
-		NETFile net = target.getNetFile();
-
-		if (net == null)
-			return;
-		net.allRoadDefsDone();
-	}
+	//private void postProcessRoads(Map target, MapDataSource src) {
+	//	NETFile net = target.getNetFile();
+	//
+	//	if (net == null)
+	//		return;
+	//	net.allRoadDefsDone();
+	//}
 
 	/**
 	 * Drive the map generation by steping through the levels, generating the
@@ -464,9 +486,10 @@ public class MapBuilder {
 
 			pl.setType(line.getType());
 
-			RoadDef roaddef = (RoadDef) line.getRoadDef();
-			if (roaddef != null)
-			{
+			if (line instanceof MapRoad) {
+				log.debug("adding road def");
+				RoadDef roaddef = ((MapRoad) line).getRoadDef();
+
 				pl.setRoadDef(roaddef);
 				roaddef.addPolylineRef(pl);
 			}

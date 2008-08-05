@@ -15,10 +15,12 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.log.Logger;
 
 /**
  * A routing node with its connections to other nodes via roads.
@@ -26,6 +28,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class RouteNode {
+	private static final Logger log = Logger.getLogger(RouteNode.class);
+	
 	// Values for the first flag byte at offset 1
 	private static final byte F_BOUNDRY = 0x08;
 	private static final byte F_RESTRICTIONS = 0x10;
@@ -43,55 +47,69 @@ public class RouteNode {
 	private char lonOff;
 
 	public void addArc(RouteArc arc) {
+		if (!arcs.isEmpty())
+			arc.setNewDir();
 		arcs.add(arc);
 	}
 	
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
 
-		int latLonOff = calcLatLonOffsets();
-		
+
 		writer.put((byte) 0);  // will be overwritten later
 		writer.put(flags);
 
-		if ((flags & F_LARGE_OFFSETS) == 0)
-			writer.put3(latLonOff);
-		else
-			writer.putInt(latLonOff);
+		if ((flags & F_LARGE_OFFSETS) == F_LARGE_OFFSETS) {
+			writer.putInt((lonOff << 16) | (latOff & 0xffff));
+		} else {
+			writer.put3((latOff << 12) | (lonOff & 0xfff));
+		}
 
-		for (RouteArc arc : arcs)
-			arc.write(writer);
-
+		if (!arcs.isEmpty()) {
+			arcs.get(arcs.size() - 1).setLast();
+			for (RouteArc arc : arcs)
+				arc.write(writer);
+		}
 	}
 
 	private int calcLatLonOffsets() {
-		if (latOff > 0xfff || lonOff > 0xfff)
-			return (lonOff << 16) | (latOff & 0xffff);
+		if ((flags & F_LARGE_OFFSETS) == F_LARGE_OFFSETS)
+			return (lonOff << 16) | (latOff & 0xffff); // XXX may need to swap lat and lon
 		else
-			return (lonOff << 12) | (latOff & 0xfff);
+			return (latOff << 12) | (lonOff & 0xfff);
 	}
 
 	public int getOffset() {
 		return offset;
 	}
 
-	public void setLatOff(char latOff) {
-		this.latOff = latOff;
-		if (latOff > 0xfff)
-			flags |= F_LARGE_OFFSETS;
+	public void setCoord(Coord centralPoint, Coord coord) {
+		log.debug("center", centralPoint, ", coord", coord.toDegreeString());
+		setLatOff(coord.getLatitude() - centralPoint.getLatitude());
+		setLonOff(coord.getLongitude() - centralPoint.getLongitude());
 	}
 
-	public void setLonOff(char lonOff) {
-		this.lonOff = lonOff;
-		if (lonOff > 0xfff)
+	private void setLatOff(int latOff) {
+		if (latOff > 0xfff || latOff < -0xfff)
 			flags |= F_LARGE_OFFSETS;
+
+		log.debug("lat off", Integer.toHexString(latOff));
+		this.latOff = (char) latOff;
 	}
+
+	private void setLonOff(int lonOff) {
+		if (lonOff > 0xfff || lonOff < -0xfff)
+			flags |= F_LARGE_OFFSETS;
+		log.debug("long off", Integer.toHexString(lonOff));
+		this.lonOff = (char) lonOff;
+
+	}
+
 
 	public void writeSecond(ImgFileWriter writer) {
 		for (RouteArc arc : arcs)
 			arc.writeSecond(writer, this);
 	}
-
 
 	public Iterable<? extends RouteArc> arcsIteration() {
 		return new Iterable<RouteArc>() {

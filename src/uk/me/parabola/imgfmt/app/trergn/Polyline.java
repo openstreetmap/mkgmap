@@ -86,9 +86,14 @@ public class Polyline extends MapObject {
 		int loff = getLabel().getOffset();
 		if (w.isExtraBit())
 			loff |= 0x400000;
+
+		// If this is a road, then we need to save the offset of the label
+		// so that we can change it to the index in the net section
 		if (roaddef != null) {
+			roaddef.addLabel(getLabel());
 			roaddef.addOffsetTarget(file, 0x800000 | (loff & 0x400000));
 		}
+
 		file.put3(loff);
 
 		// The delta of the longitude from the subdivision centre point

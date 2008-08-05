@@ -22,4 +22,9 @@ package uk.me.parabola.mkgmap.general;
 public class IndexAndNode {
 	private int index;
 	private long nodeId;
+
+	public IndexAndNode(int index, long nodeId) {
+		this.index = index;
+		this.nodeId = nodeId;
+	}
 }

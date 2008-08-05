@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.net;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.OffsetWriterList;
+import uk.me.parabola.imgfmt.app.IntList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
 
@@ -37,7 +38,10 @@ public class RoadDef {
 	
 	private static final int MAX_LABELS = 4;
 
+	@Deprecated
 	private int offset = -1;
+
+	/** @deprecated bring in class? */
 	private OffsetWriterList owList = new OffsetWriterList();
 
 	// There can be up to 4 labels for the same road.
@@ -45,7 +49,7 @@ public class RoadDef {
 	private int numlabels;
 
 	// Speeed and class
-	private byte roadClass = (byte) 0x4;
+	private byte roadClass = (byte) 0x4d;
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
@@ -53,7 +57,17 @@ public class RoadDef {
 
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
+	//// The label
+	//private int labelOffset;
+	private IntList rgnOffsets = new IntList();
+
+	/**
+	 * Add a target location in the RGN section where we should write the
+	 * offset of this road def when it is written to NET.
+	 */
 	public void addOffsetTarget(ImgFileWriter writer, int ormask) {
+		//labelOffset = writer.position() | ormask;
+		rgnOffsets.add(writer.position() | ormask);
 		owList.addTarget(writer, ormask);
 	}
 
@@ -83,8 +97,10 @@ public class RoadDef {
 		return len;
 	}
 
-	void write(ImgFileWriter writer, int realofs) {
-		assert offset == realofs;
+	void write(ImgFileWriter writer) {
+		//assert offset == realofs;
+		assert numlabels > 0;
+		
 		for (int i = 0; i < numlabels; i++) {
 			Label l = labels[i];
 			int ptr = l.getOffset();
@@ -130,5 +146,10 @@ public class RoadDef {
 		char nnodes = 2;
 		writer.putChar(nnodes);  // number of bits to follow
 		writer.put((byte) ((1<<nnodes)-1));
+	}
+
+	public RouteArc makeRouteArc() {
+		RouteArc arc = new RouteArc(this, null);
+		return arc;
 	}
 }

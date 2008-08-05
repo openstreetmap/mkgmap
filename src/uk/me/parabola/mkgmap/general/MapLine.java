@@ -36,16 +36,13 @@ public class MapLine extends MapElement {
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
-	// So top code can link objects from here
-	private RoadDef roadDef;
-
 	public MapLine() {
 	}
 
 	public MapLine(MapLine orig) {
 		super(orig);
 		direction = orig.direction;
-		roadDef = orig.roadDef;
+		//roadDef = orig.roadDef;
 	}
 
 	public List<Coord> getPoints() {
@@ -107,11 +104,4 @@ public class MapLine extends MapElement {
 		return new Area(minLat, minLong, maxLat, maxLong);
 	}
 
-	public Object getRoadDef() {
-		return roadDef;
-	}
-
-	public void setRoadDef(RoadDef obj) {
-		roadDef = obj;
-	}
 }

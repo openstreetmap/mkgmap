@@ -21,13 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * The NOD file that contains routing information.
@@ -60,57 +60,44 @@ public class NODFile extends ImgFile {
 		if (write) {
 			setWriter(new BufferedImgFileWriter(chan));
 			position(NODHeader.HEADER_LEN);
-			tmpSetup();
+			//tmpSetup();
 		} else {
 			setReader(new BufferedImgFileReader(chan));
 			nodHeader.readHeader(getReader());
 		}
 	}
 
-	private void tmpSetup() {
-		// XXX hardcoded setup
-		RouteCenter rc = new RouteCenter(new Coord(51.2, 0.8));
-		centers.add(rc);
-		RouteNode node = new RouteNode();
-		rc.addNode(node, new Coord(51.2003, 0.8004));
-		RouteNode node2 = new RouteNode();
-		rc.addNode(node2, new Coord(51.1995, 0.7993));
-
-		RoadDef rdef = new RoadDef();
-		roads.add(rdef);
-		
-		RouteArc a = new RouteArc(rdef, node2);
-		node.addArc(a);
-		a.setLocalNet((byte) 0);
-		a.setDestinationClass((byte) 4);
-		a.setLast();
-
-		RouteArc a2 = new RouteArc(rdef, node);
-		node2.addArc(a2);
-		//a.setNewDir();
-		a2.setLocalNet((byte) 0);
-		a2.setDestinationClass((byte) 4);
-		a2.setLast();
-		a2.setLocalNet(0);
-	}
 
 	protected void sync() throws IOException {
 		if (!isWritable())
 			return;
 
-		// Do anything that is in structures and that needs to be dealt with.
-		writeBody();
+		//// Do anything that is in structures and that needs to be dealt with.
+		//writeBody();
 
-		// Now refresh the header
+		// Refresh the header
 		position(0);
 		getHeader().writeHeader(getWriter());
 
 		getWriter().sync();
 	}
 
-	private void writeBody() {
+	/**
+	 * The first pass at writing the road network out.  During this pass, certain
+	 * locations will be recorded that will be needed for completing the NET
+	 * section.  In turn the NET section will record some offset that are needed
+	 * in the second pass here.
+	 * @param network
+	 */
+	public void writeFirstPass(RoadNetwork network) {
+		centers = network.getCenters();
+		roads = network.getRoadDefs();
 		writeNodes();
 		writeRoadData();
+	}
+
+	public void writeSecondPass() {
+
 	}
 
 	/**
@@ -146,4 +133,7 @@ public class NODFile extends ImgFile {
 		log.debug("the nod offset", Integer.toHexString(getWriter().position()));
 	}
 
+	public void setRoadNetwork(RoadNetwork network) {
+		
+	}
 }

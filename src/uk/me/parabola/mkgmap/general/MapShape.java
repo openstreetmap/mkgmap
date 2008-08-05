@@ -15,6 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+
 
 /**
  * A shape or polygon is just the same as a line really as far as I can tell.
@@ -22,7 +24,9 @@ package uk.me.parabola.mkgmap.general;
  *
  * @author Steve Ratcliffe.
  */
-public class MapShape extends MapLine {
+public class MapShape extends MapLine {// So top code can link objects from here
+private RoadDef roadDef;
+
 	public MapShape() {
 	}
 
@@ -38,5 +42,13 @@ public class MapShape extends MapLine {
 	public void setDirection(boolean direction) {
 		throw new IllegalArgumentException(
 				"can't set a direction on a polygon");
+	}
+
+	public Object getRoadDef() {
+		return roadDef;
+	}
+
+	public void setRoadDef(RoadDef obj) {
+		roadDef = obj;
 	}
 }

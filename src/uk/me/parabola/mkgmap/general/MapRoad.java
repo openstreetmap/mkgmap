@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+
 /**
  * Used to represent a road.  A road is a special kind of line in that
  * it can be used to route down and can have addresses etc.
@@ -27,17 +29,20 @@ package uk.me.parabola.mkgmap.general;
  */
 public class MapRoad extends MapLine {
 	private long roadId;
-	private int roadClass;
-	private int speed;
+	private byte roadClass;
+	private byte speed;// So top code can link objects from here
+	private final RoadDef roadDef;
 
 	public MapRoad(int roadId) {
 		this.roadId = roadId;
+		this.roadDef = new RoadDef();
 	}
 
 	public MapRoad(long roadId, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());
 		this.roadId = roadId;
+		this.roadDef = new RoadDef();
 	}
 
 	public long getRoadId() {
@@ -45,10 +50,18 @@ public class MapRoad extends MapLine {
 	}
 
 	public void setRoadClass(int roadClass) {
-		this.roadClass = roadClass;
+		this.roadClass = (byte) roadClass;
 	}
 
 	public void setSpeed(int speed) {
-		this.speed = speed;
+		this.speed = (byte) speed;
+	}
+
+	public RoadDef getRoadDef() {
+		return roadDef;
+	}
+
+	public byte getRoadClass() {
+		return roadClass;
 	}
 }

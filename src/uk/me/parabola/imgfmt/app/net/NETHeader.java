@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.SectionWriter;
 
 /**
  * The header of the NET file.
@@ -90,6 +91,11 @@ public class NETHeader extends CommonHeader {
 		writer.put((byte) 0);
 	}
 
+	ImgFileWriter makeRoadWriter(ImgFileWriter writer) {
+		roadDefinitions.setPosition(writer.position());
+		return new SectionWriter(writer, roadDefinitions);
+	}
+	
 	void startRoadDefs(int pos) {
 		roadDefinitions.setPosition(pos);
 	}

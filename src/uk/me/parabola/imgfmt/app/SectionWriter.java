@@ -27,20 +27,33 @@ import java.io.IOException;
 public class SectionWriter implements ImgFileWriter {
 
 	private ImgFileWriter writer;
+	private Section section;
 	private int secStart;
 
+	/** @deprecated use the constructor with a section */
 	public SectionWriter(ImgFileWriter writer, int secStart) {
 		this.writer = writer;
 		this.secStart = secStart;
 		writer.position(secStart);
 	}
 
+	public SectionWriter(ImgFileWriter writer, Section section) {
+		this.writer = writer;
+		this.secStart = section.getPosition();
+		this.section = section;
+	}
+
 	public void sync() throws IOException {
 		writer.sync();
 	}
 
-	public void close() throws IOException {
-		writer.close();
+	/**
+	 * Note that this does not close the underlying file.
+	 */
+	public void close() {
+		if (section != null)
+			section.setSize(writer.position() - secStart);
+		//writer.close();
 	}
 
 	public int position() {

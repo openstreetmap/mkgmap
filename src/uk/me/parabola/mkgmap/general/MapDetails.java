@@ -49,7 +49,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
-	private final RoadNetwork roads = new RoadNetwork();
+	private final RoadNetwork roadNetwork = new RoadNetwork();
 
 	/**
 	 * Add a point to the map.
@@ -123,7 +123,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	}
 
 	public void addRoad(MapRoad road) {
-		roads.addRoad(road);
+		roadNetwork.addRoad(road);
 		addLine(road);
 	}
 
@@ -172,7 +172,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	}
 
 	public RoadNetwork getRoadNetwork() {
-		return roads;
+		return roadNetwork;
 	}
 
 	/**

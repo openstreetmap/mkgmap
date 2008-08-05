@@ -90,4 +90,8 @@ public class Coord {
 	public String toString() {
 		return (latitude) + "/" + (longitude);
 	}
+
+	public String toDegreeString() {
+		return String.valueOf(Utils.toDegrees(latitude)) + '/' + Utils.toDegrees(longitude);
+	}
 }
