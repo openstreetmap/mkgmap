@@ -94,19 +94,18 @@ public class MapBuilder {
 
 	private void processRoads(InternalFiles files, MapDataSource src) {
 		RoadNetwork network = src.getRoadNetwork();
-		//network.tmpSetup(); //XXX
-		
+
+		// If there is no net file then there is nothing to do at all.
 		NETFile net = files.getNetFile();
 		if (net == null)
 			return;
 
-		//net.setRoadNetwork(network);
-
+		// If there is a nod file then the first pass writes out NOD1 and NOD2
 		NODFile nod = files.getNodFile();
-		if (nod != null) {
-			//nod.setRoadNetwork(network);
+		if (nod != null)
 			nod.writeFirstPass(network);
-		}
+
+		// XXX perhaps only one pass needed?
 		net.writeFirstPass(network);
 	}
 

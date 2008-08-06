@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -87,21 +88,22 @@ public class NETFile extends ImgFile {
 	//}
 
 
-
+	/**
+	 * Write out NET1 (road definitions).  This is done after the first
+	 * pass on nod1 and nod2 and so we have offsets into those sections
+	 * available.
+	 * @param network The road network.
+	 */
 	public void writeFirstPass(RoadNetwork network) {
 		List<RoadDef> roadDefs = network.getRoadDefs();
 
 		ImgFileWriter writer = netHeader.makeRoadWriter(getWriter());
 		try {
 			for (RoadDef rd : roadDefs)
-				rd.write(writer);
+				rd.writeNet1(writer);
 
 		} finally {
-			try {
-				writer.close();
-			} catch (IOException e) {
-				// not normally thrown
-			}
+			Section.close(writer);
 		}
 	}
 }

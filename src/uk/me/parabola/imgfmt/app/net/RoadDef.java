@@ -35,7 +35,10 @@ import java.util.ArrayList;
  */
 public class RoadDef {
 	private static final Logger log = Logger.getLogger(RoadDef.class);
-	
+
+	private static final byte UNK1 = 0x04;
+	private static final byte HAS_NOD_INFO = 0x40;
+
 	private static final int MAX_LABELS = 4;
 
 	@Deprecated
@@ -55,6 +58,7 @@ public class RoadDef {
 	// there is doubt as to the formula.
 	private int roadLength;
 
+	@Deprecated // this may stay
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
 	//// The label
@@ -89,33 +93,40 @@ public class RoadDef {
 		return m;
 	}
 
-	int calcOffset(int ofs) {
-		offset = ofs;
-		if (owList != null) {
-			owList.writeOffset(ofs);
-		}
-
-		int len = 5; // basic len
-		len += 3 * numlabels;
-		len += getMaxZoomLevel();
-		len += 3 * roadIndexes.size();
-		return len;
-	}
-
-	void write(ImgFileWriter writer) {
+	/**
+	 * This is for writing to NET1
+	 */
+	void writeNet1(ImgFileWriter writer) {
 		//assert offset == realofs;
 		assert numlabels > 0;
-		
-		for (int i = 0; i < numlabels; i++) {
-			Label l = labels[i];
-			int ptr = l.getOffset();
-			if (i == (numlabels-1))
-				ptr |= 0x800000;
-			writer.put3(ptr);
-		}
-		writer.put(roadClass);
+
+		byte flags = netFlags();
+
+		writeLabels(writer);
+		writer.put(flags);
 		writer.put3(roadLength);
 
+		int maxlevel = writeLevelCount(writer);
+
+		writeLevelDivs(writer, maxlevel);
+
+		if ((flags & HAS_NOD_INFO) != 0) {
+			// We could optimise this to not always use 3 bytes...
+			writer.put((byte) 2);
+			writer.put3(node.getOffset());
+		}
+	}
+
+	private void writeLevelDivs(ImgFileWriter writer, int maxlevel) {
+		for (int i = 0; i <= maxlevel; i++) {
+			for (RoadIndex ri : roadIndexes) {
+				if (ri.getZoomLevel() == i)
+					ri.write(writer);
+			}
+		}
+	}
+
+	private int writeLevelCount(ImgFileWriter writer) {
 		int maxlevel = getMaxZoomLevel();
 		for (int i = 0; i <= maxlevel; i++) {
 			byte b = 0;
@@ -127,13 +138,24 @@ public class RoadDef {
 				b |= 0x80;
 			writer.put(b);
 		}
+		return maxlevel;
+	}
 
-		for (int i = 0; i <= maxlevel; i++) {
-			for (RoadIndex ri : roadIndexes) {
-				if (ri.getZoomLevel() == i)
-					ri.write(writer);
-			}
+	private void writeLabels(ImgFileWriter writer) {
+		for (int i = 0; i < numlabels; i++) {
+			Label l = labels[i];
+			int ptr = l.getOffset();
+			if (i == (numlabels-1))
+				ptr |= 0x800000;
+			writer.put3(ptr);
 		}
+	}
+
+	private byte netFlags() {
+		byte flags = UNK1;
+		if (node != null)
+			flags |= HAS_NOD_INFO;
+		return flags;
 	}
 
 	public void addLabel(Label l) {
@@ -151,11 +173,6 @@ public class RoadDef {
 		char nnodes = 2;
 		writer.putChar(nnodes);  // number of bits to follow
 		writer.put((byte) ((1<<nnodes)-1));
-	}
-
-	public RouteArc makeRouteArc() {
-		RouteArc arc = new RouteArc(this, null);
-		return arc;
 	}
 
 	public void setNode(RouteNode node) {
