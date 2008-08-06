@@ -67,7 +67,6 @@ public class RouteCenter {
 					tabA.addItem();
 				}
 			}
-
 		}
 
 		int tmpTabsOff = writer.position();
@@ -85,7 +84,6 @@ public class RouteCenter {
 			writer.put(bo);
 
 			node.writeSecond(writer);
-
 		}
 
 		// Get the position of the tables, and position there.

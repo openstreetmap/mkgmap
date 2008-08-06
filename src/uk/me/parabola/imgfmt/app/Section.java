@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.io.IOException;
+
 /**
  * Represents an item size the position where those items start and the
  * total size of the section.
@@ -112,5 +114,14 @@ public class Section {
 		writer.putInt(getSize());
 		if (getItemSize() > 0)
 			writer.putChar(getItemSize());
+	}
+
+	public static void close(ImgFileWriter writer) {
+		assert writer instanceof SectionWriter;
+		try {
+			writer.close();
+		} catch (IOException e) {
+			// ignore as this is only for section writers.
+		}
 	}
 }

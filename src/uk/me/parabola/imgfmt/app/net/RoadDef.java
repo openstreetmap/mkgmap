@@ -61,6 +61,11 @@ public class RoadDef {
 	//private int labelOffset;
 	private IntList rgnOffsets = new IntList();
 
+	// This is the node associated with the road.  I'm not certain about how
+	// this works, but in NOD2 each road has a reference to only one node.
+	// This is that node.
+	private RouteNode node;
+
 	/**
 	 * Add a target location in the RGN section where we should write the
 	 * offset of this road def when it is written to NET.
@@ -140,7 +145,7 @@ public class RoadDef {
 	public void writeNod2(ImgFileWriter writer) {
 		log.debug("writing nod2");
 		writer.put(roadClass);
-		writer.put3(0); // offset to nod1
+		writer.put3(node.getOffset()); // offset to nod1
 
 		// this is related to the number of nodes, but there is more to it...
 		char nnodes = 2;
@@ -151,5 +156,9 @@ public class RoadDef {
 	public RouteArc makeRouteArc() {
 		RouteArc arc = new RouteArc(this, null);
 		return arc;
+	}
+
+	public void setNode(RouteNode node) {
+		this.node = node;
 	}
 }

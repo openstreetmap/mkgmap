@@ -33,7 +33,6 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 
@@ -62,7 +61,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapLine polyline;
 	private MapShape shape;
 
-	private RoadHelper roadHelper = new RoadHelper();
+	private RoadHelper roadHelper = new RoadHelper(getRoadNetwork());
 
 	private String copyright;
 	private int section;
@@ -122,10 +121,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		return levels;
 	}
 
-	public RoadNetwork getRoadNetwork() {
-		return roadHelper.getRoadNetwork();
-	}
-
+	
 	/**
 	 * Get the copyright message.  We use whatever was specified inside the
 	 * MPF itself.

@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.SectionWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
@@ -101,36 +102,37 @@ public class NODFile extends ImgFile {
 	}
 
 	/**
+	 * Write the nodes (NOD 1).  This is done first as the offsets into
+	 * this section are needed to write NOD2.
+	 */
+	private void writeNodes() {
+		ImgFileWriter writer = getWriter();
+		nodHeader.setNodeStart(writer.position());
+
+		Section section = nodHeader.getNodeSection();
+		writer = new SectionWriter(writer, section);
+
+		for (RouteCenter cp : centers)
+			cp.write(writer);
+		nodHeader.setNodeSize(writer.position());
+		log.debug("the nod offset", Integer.toHexString(getWriter().position()));
+		Section.close(writer);
+	}
+
+	/**
 	 * Write the road data NOD2.
 	 */
 	private void writeRoadData() {
 		log.info("writeRoadData");
-		ImgFileWriter writer = getWriter();
-		int start = writer.position();
-		nodHeader.setRoadStart(start);
 
-		writer = new SectionWriter(writer, start);
+		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getRoadSection());
+
 		for (RoadDef rd : roads) {
 			log.debug("wrting nod2", writer.position());
 			rd.writeNod2(writer);
 		}
 		log.debug("ending nod2", writer.position());
 		nodHeader.setRoadSize(writer.position());
-	}
-
-	/**
-	 * Write the nodes (NOD 1).
-	 */
-	private void writeNodes() {
-		ImgFileWriter writer = getWriter();
-		int start = writer.position();
-		nodHeader.setNodeStart(start);
-
-		writer = new SectionWriter(getWriter(), start);
-		for (RouteCenter cp : centers)
-			cp.write(writer);
-		nodHeader.setNodeSize(writer.position());
-		log.debug("the nod offset", Integer.toHexString(getWriter().position()));
 	}
 
 	public void setRoadNetwork(RoadNetwork network) {

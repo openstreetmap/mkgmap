@@ -33,6 +33,7 @@ import uk.me.parabola.log.Logger;
  * This holds the road network.  That is all the roads and the nodes
  * that connect them together.
  * 
+ * @see <a href="http://www.movable-type.co.uk/scripts/latlong.html">Distance / bearing calculations</a>
  * @author Steve Ratcliffe
  */
 public class RoadNetwork {
@@ -53,6 +54,12 @@ public class RoadNetwork {
 	private List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
+
+	/**currently the must be only one... */
+private static boolean initied;
+	public RoadNetwork() {
+		Thread.dumpStack();
+	}
 
 	/**
 	 * Add a road to the list of roads that meet at a given node.
@@ -116,6 +123,9 @@ public class RoadNetwork {
 				node2.addArc(arc2);
 
 				arc.setOther(arc2);
+			} else {
+				// This is the first node in the road
+				road.getRoadDef().setNode(getNode(id, co));
 			}
 
 			lastCoord = (CoordNode) co;
@@ -124,13 +134,13 @@ public class RoadNetwork {
 	}
 
 	private RouteNode getNode(long id, Coord coord) {
-		coords.put(id, coord);
-		RouteNode node1 = nodes.get(id);
-		if (node1 == null) {
-			node1 = new RouteNode();
-			nodes.put(id, node1);
+		RouteNode node = nodes.get(id);
+		if (node == null) {
+			node = new RouteNode();
+			nodes.put(id, node);
+			coords.put(id, coord);
 		}
-		return node1;
+		return node;
 	}
 
 	private void addRoadToNode(MapRoad road, long id) {
@@ -147,9 +157,10 @@ public class RoadNetwork {
 	}
 
 	public List<RouteCenter> getCenters() {
+		assert !coords.isEmpty();
 		Coord center = coords.values().iterator().next(); // XXX pick the first coord as the center...
 		log.debug("center is", center.toDegreeString());
-		
+
 		RouteCenter rc = new RouteCenter(center);
 		centers.add(rc);
 
@@ -175,7 +186,7 @@ public class RoadNetwork {
 			//	RouteArc a = new RouteArc(roadDef, node);
 			//}
 		}
-	
+
 		return centers;
 	}
 

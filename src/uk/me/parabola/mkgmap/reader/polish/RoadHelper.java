@@ -38,10 +38,14 @@ class RoadHelper {
 	private List<NodeIndex> nodes = new ArrayList<NodeIndex>();
 	private Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
 
-	private RoadNetwork roadNetwork = new RoadNetwork();
+	private RoadNetwork roadNetwork;
 	private MapRoad road;
 	private int speed;
 	private int roadClass;
+
+	RoadHelper(RoadNetwork roadNetwork) {
+		this.roadNetwork = roadNetwork;
+	}
 
 	public void clear() {
 		roadId = 0;
@@ -106,8 +110,6 @@ class RoadHelper {
 				System.out.println("Inconsistant node ids");
 			}
 		}
-
-		roadNetwork.addRoad(road);
 	}
 
 	public RoadNetwork getRoadNetwork() {

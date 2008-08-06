@@ -36,7 +36,9 @@ public class RouteNode {
 	private static final byte F_LARGE_OFFSETS = 0x20;
 	private static final byte F_UNK_NEEDED = 0x44; // XXX
 
-	private int offset;
+	private int offset = -1;
+
+	@Deprecated
 	private int nodeId; // XXX not needed at this point?
 
 	private List<RouteArc> arcs = new ArrayList<RouteArc>();
@@ -46,6 +48,13 @@ public class RouteNode {
 	private char latOff;
 	private char lonOff;
 
+	@Deprecated
+	private static int nodeCount;
+	@Deprecated
+	public RouteNode() {
+		nodeId = nodeCount++;
+	}
+
 	public void addArc(RouteArc arc) {
 		if (!arcs.isEmpty())
 			arc.setNewDir();
@@ -53,8 +62,8 @@ public class RouteNode {
 	}
 	
 	public void write(ImgFileWriter writer) {
+		log.debug("writing node, first pass, nod1", nodeId);
 		offset = writer.position();
-
 
 		writer.put((byte) 0);  // will be overwritten later
 		writer.put(flags);
@@ -72,14 +81,8 @@ public class RouteNode {
 		}
 	}
 
-	private int calcLatLonOffsets() {
-		if ((flags & F_LARGE_OFFSETS) == F_LARGE_OFFSETS)
-			return (lonOff << 16) | (latOff & 0xffff); // XXX may need to swap lat and lon
-		else
-			return (latOff << 12) | (lonOff & 0xfff);
-	}
-
 	public int getOffset() {
+		assert offset != -1: "failed for node " + nodeId;
 		return offset;
 	}
 
