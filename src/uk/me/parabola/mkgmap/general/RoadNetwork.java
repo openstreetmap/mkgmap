@@ -55,11 +55,6 @@ public class RoadNetwork {
 
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 
-	/**currently the must be only one... */
-private static boolean initied;
-	public RoadNetwork() {
-		Thread.dumpStack();
-	}
 
 	/**
 	 * Add a road to the list of roads that meet at a given node.
