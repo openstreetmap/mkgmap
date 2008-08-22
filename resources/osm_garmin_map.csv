@@ -35,6 +35,7 @@ point|amenity|university|community|school|21
 point|amenity|zoo|attractions|zoo-aquarium|21
 point|highway|bus_stop|transportation|ground-transportation|21
 point|historic|museum|attractions|museum-historical|20
+point|historic|archaeological_site|attractions|museum-historical|21
 point|leisure|golf_course|recreation|golf-course|21
 point|leisure|marina|misc|marina|21
 point|leisure|park|recreation|park-garden|21
@@ -74,6 +75,7 @@ polygon|amenity|college|university||18
 polygon|amenity|grave_yard|cemetery||18
 polygon|amenity|hospital|hospital||18
 polygon|amenity|parking|parking-lot||21
+polygon|amenity|school|university||20
 polygon|amenity|supermarket|shopping||21
 polygon|amenity|university|university||18
 polygon|landuse|allotments|orchard||20
@@ -91,6 +93,7 @@ polygon|leisure|marina|marina||20
 polygon|leisure|nature_reserve|national-park3||18
 polygon|leisure|park|city-park||20
 polygon|leisure|pitch|sport||20
+polygon|leisure|playground|city-park||20
 polygon|leisure|sports_center|sport||20
 polygon|leisure|stadium|sport||19
 polygon|leisure|track|sport||18
