@@ -47,6 +47,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private static final int MODE_WAY = 2;
 	private static final int MODE_BOUND = 3;
 	private static final int MODE_RELATION = 4;
+	private static final int MODE_BOUNDS = 5;
 
 	private Node currentNode;
 	private Way5 currentWay;
@@ -99,7 +100,10 @@ class Osm5XmlHandler extends DefaultHandler {
 			} else if (qName.equals("bound")) {
 				mode = MODE_BOUND;
 				String box = attributes.getValue("box");
-				setBox(box);
+				setupBBoxFromBound(box);
+			} else if (qName.equals("bounds")) {
+				mode = MODE_BOUNDS;
+				setupBBoxFromBounds(attributes);
 			}
 
 		} else if (mode == MODE_NODE) {
@@ -185,6 +189,10 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (qName.equals("bound")) {
 				mode = 0;
 			}
+		} else if (mode == MODE_BOUNDS) {
+			if (qName.equals("bounds")) {
+				mode = 0;
+			}
 		} else if (mode == MODE_RELATION) {
 			if (qName.equals("relation")) {
 				mode = 0;
@@ -211,7 +219,20 @@ class Osm5XmlHandler extends DefaultHandler {
 		mapper.finish();
 	}
 
-	private void setBox(String box) {
+	private void setupBBoxFromBounds(Attributes xmlattr) {
+		try {
+			double minlat = Double.parseDouble(xmlattr.getValue("minlat"));
+			double minlon = Double.parseDouble(xmlattr.getValue("minlon"));
+			double maxlat = Double.parseDouble(xmlattr.getValue("maxlat"));
+			double maxlon = Double.parseDouble(xmlattr.getValue("maxlon"));
+
+			setBBox(minlat, minlon, maxlat, maxlon);
+		} catch (NumberFormatException e) {
+			// just ignore it
+		}
+	}
+
+	private void setupBBoxFromBound(String box) {
 		String[] f = box.split(",");
 		try {
 			double minlat = Double.parseDouble(f[0]);
@@ -219,21 +240,28 @@ class Osm5XmlHandler extends DefaultHandler {
 			double maxlat = Double.parseDouble(f[2]);
 			double maxlong = Double.parseDouble(f[3]);
 
-			bbox = new Area(minlat, minlong, maxlat, maxlong);
+			setBBox(minlat, minlong, maxlat, maxlong);
 			log.debug("Map bbox: " + bbox);
-			converter.setBoundingBox(bbox);
-
-			Coord co = new Coord(minlat, minlong);
-			mapper.addToBounds(co);
-			co = new Coord(minlat, maxlong);
-			mapper.addToBounds(co);
-			co = new Coord(maxlat, minlong);
-			mapper.addToBounds(co);
-			co = new Coord(maxlat, maxlong);
-			mapper.addToBounds(co);
 		} catch (NumberFormatException e) {
 			// just ignore it
 		}
+	}
+
+	private void setBBox(double minlat, double minlong,
+	                     double maxlat, double maxlong) {
+		assert bbox == null;
+
+		bbox = new Area(minlat, minlong, maxlat, maxlong);;
+		converter.setBoundingBox(bbox);
+
+		Coord co = new Coord(minlat, minlong);
+		mapper.addToBounds(co);
+		co = new Coord(minlat, maxlong);
+		mapper.addToBounds(co);
+		co = new Coord(maxlat, minlong);
+		mapper.addToBounds(co);
+		co = new Coord(maxlat, maxlong);
+		mapper.addToBounds(co);
 	}
 
 	/**
