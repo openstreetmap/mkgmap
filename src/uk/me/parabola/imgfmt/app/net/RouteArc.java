@@ -163,6 +163,10 @@ public class RouteArc {
 		writer.put((byte) val);
 	}
 
+	public RoadDef getRoadDef() {
+		return roadDef;
+	}
+
 	public void setOther(RouteArc other) {
 		this.other = other;
 	}

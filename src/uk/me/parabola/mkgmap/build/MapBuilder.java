@@ -107,6 +107,9 @@ public class MapBuilder {
 
 		// XXX perhaps only one pass needed?
 		net.writeFirstPass(network);
+
+		if (nod != null)
+			nod.writeSecondPass(network);
 	}
 
 	/**

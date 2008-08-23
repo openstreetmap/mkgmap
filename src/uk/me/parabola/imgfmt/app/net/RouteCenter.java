@@ -20,6 +20,7 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Routing nodes are divided into areas which I am calling RouteCenter's.
@@ -107,5 +108,22 @@ public class RouteCenter {
 		tabC.write(writer);
 		//tables.write(writer);
 		log.info("endof node " + writer.position());
+	}
+
+	public void writeTableA(ImgFileWriter writer, RoadNetwork network) {
+		writer.position(tableAoffset);
+		for (RouteNode node : nodes) {
+
+			// write the table A entries.  Consists of a pointer to net
+			// followed by 2 bytes of class and speed flags and road restrictions.
+			for (RouteArc arc : node.arcsIteration()) {
+				if (arc.isForward()) {
+					int pos = arc.getRoadDef().getNetPosition();
+					writer.put3(pos);
+					writer.put((byte) 0x46);
+					writer.put((byte) 0x0);
+				}
+			}
+		}
 	}
 }

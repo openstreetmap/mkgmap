@@ -56,7 +56,7 @@ public class RoadDef {
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
-	private int roadLength;
+	private int roadLength = 300; // XXX set the road length
 
 	@Deprecated // this may stay
 	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
@@ -69,6 +69,7 @@ public class RoadDef {
 	// this works, but in NOD2 each road has a reference to only one node.
 	// This is that node.
 	private RouteNode node;
+	private int netPosition;
 
 	/**
 	 * Add a target location in the RGN section where we should write the
@@ -94,11 +95,14 @@ public class RoadDef {
 	}
 
 	/**
-	 * This is for writing to NET1
+	 * This is for writing to NET1.
+	 * @param writer A writer that is positioned within NET1.
 	 */
 	void writeNet1(ImgFileWriter writer) {
 		//assert offset == realofs;
 		assert numlabels > 0;
+
+		netPosition = writer.position();
 
 		byte flags = netFlags();
 
@@ -177,5 +181,9 @@ public class RoadDef {
 
 	public void setNode(RouteNode node) {
 		this.node = node;
+	}
+
+	public int getNetPosition() {
+		return netPosition;
 	}
 }

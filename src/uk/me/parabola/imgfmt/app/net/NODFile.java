@@ -44,7 +44,8 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  * we can write them blank the first time and then go back and fix them
  * up, once the NET offsets are known.
  *
- * So we are writing NOD first before NET and NOD1 before NOD2.
+ * So we are writing NOD first before NET and NOD1 before NOD2.  Once NET is
+ * written then go back to Table A and fix the label offsets in RGN.
  * 
  * @author Steve Ratcliffe
  */
@@ -97,8 +98,19 @@ public class NODFile extends ImgFile {
 		writeRoadData();
 	}
 
-	public void writeSecondPass() {
+	/**
+	 * This should fix up Table A etc. within NOD1.
+	 * We need a nod1 writer, so that we get the same offsets.
+	 * @param network The road network.
+	 */
+	public void writeSecondPass(RoadNetwork network) {
+		ImgFileWriter writer;
 
+		writer = new SectionWriter(getWriter(), nodHeader.getNodeSection());
+
+		for (RouteCenter rc : centers) {
+			rc.writeTableA(writer, network);
+		}
 	}
 
 	/**
@@ -133,9 +145,5 @@ public class NODFile extends ImgFile {
 		}
 		log.debug("ending nod2", writer.position());
 		nodHeader.setRoadSize(writer.position());
-	}
-
-	public void setRoadNetwork(RoadNetwork network) {
-		
 	}
 }

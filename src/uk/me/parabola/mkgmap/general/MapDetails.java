@@ -209,10 +209,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 
 	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
 		Integer prev = overviews.get(type);
-		if (prev == null)
-			prev = 24;
-
-		if (minResolution < prev)
+		if (prev == null || minResolution < prev)
 			overviews.put(type, minResolution);
 	}
 }
