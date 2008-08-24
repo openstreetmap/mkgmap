@@ -16,9 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
+
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.log.Logger;
 
 /**
  * Base class for all the img files.  There is a common header that
@@ -41,11 +42,11 @@ public abstract class ImgFile  {
 	public void close() {
 		try {
 			sync();
-			if (writer != null)
-				writer.close();
 		} catch (IOException e) {
-			log.error("error on file close", e);
+			log.debug("could not sync file");
 		}
+		Utils.closeFile(writer);
+		Utils.closeFile(reader);
 	}
 
 	public int position() {
@@ -55,8 +56,16 @@ public abstract class ImgFile  {
 	protected void position(long pos) {
 		writer.position(pos);
 	}
-	
-	protected abstract void sync() throws IOException;
+
+	public abstract void write();
+
+	public abstract void writePost();
+
+	protected void sync() throws IOException {
+		if (!writable)
+			return;
+		getWriter().sync();
+	}
 
 	protected ImgFileWriter getWriter() {
 		return writer;

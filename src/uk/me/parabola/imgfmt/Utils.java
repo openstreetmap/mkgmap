@@ -20,6 +20,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -157,5 +159,15 @@ public class Utils {
 
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
+	}
+
+	public static void closeFile(Closeable f) {
+		if (f != null) {
+			try {
+				f.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
