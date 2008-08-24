@@ -23,7 +23,6 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -50,15 +49,13 @@ public class NETFile extends ImgFile {
 		}
 	}
 
-	protected void sync() throws IOException {
-		if (!isWritable())
-			return;
-
+	public void write() {
 		// Write out the actual file body.
 		writeBody();
+	}
 
+	public void writePost() {
 		getHeader().writeHeader(getWriter());
-		getWriter().sync();
 	}
 
 	private void writeBody() {

@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -279,18 +278,15 @@ public class TREFile extends ImgFile {
 		TREFile.this.lastRgnPos = lastRgnPos;
 	}
 
-	public void sync() throws IOException {
-		if (!isWritable())
-			return;
-		
+	public void write() {
 		// Do anything that is in structures and that needs to be dealt with.
 		writeBody();
+	}
 
+	public void writePost() {
 		// Now refresh the header
 		position(0);
 		getHeader().writeHeader(getWriter());
-
-		getWriter().sync();
 	}
 
 	public void setMapId(int mapid) {

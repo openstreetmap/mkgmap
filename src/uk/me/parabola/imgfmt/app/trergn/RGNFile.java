@@ -21,8 +21,6 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
-import java.io.IOException;
-
 /**
  * The region file.  Holds actual details of points and lines etc.
  *
@@ -58,12 +56,13 @@ public class RGNFile extends ImgFile {
 		position(HEADER_LEN);
 	}
 
-	public void sync() throws IOException {
+	public void write() {
+	}
+
+	public void writePost() {
 		header.setDataSize(position() - HEADER_LEN);
 
 		getHeader().writeHeader(getWriter());
-
-		getWriter().sync();
 	}
 
 	public void startDivision(Subdivision sd) {

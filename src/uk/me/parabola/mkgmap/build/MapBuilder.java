@@ -34,6 +34,8 @@ import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
+import uk.me.parabola.imgfmt.app.trergn.RGNFile;
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.net.NETFile;
@@ -87,6 +89,24 @@ public class MapBuilder {
 		processInfo(map, src);
 		makeMapAreas(map, src);
 		postProcessRoads(map, src);
+
+
+		RGNFile rgnFile = map.getRgnFile();
+		TREFile treFile = map.getTreFile();
+		LBLFile lblFile = map.getLblFile();
+		NETFile netFile = map.getNetFile();
+
+		treFile.setLastRgnPos(rgnFile.position() - 29);
+		rgnFile.write();
+		rgnFile.writePost();
+		treFile.write();
+		treFile.writePost();
+		lblFile.write();
+		lblFile.writePost();
+		if (netFile != null) {
+			netFile.write();
+			netFile.writePost();
+		}
 	}
 
 	/**

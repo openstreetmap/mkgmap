@@ -22,8 +22,6 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
-import java.io.IOException;
-
 /**
  * The TYP file.  I know next to nothing about this file, so the code will be
  * very experimental for a while and indeed will be mostly to investigate
@@ -47,12 +45,12 @@ public class TYPFile extends ImgFile {
 		}
 	}
 
-	public void sync() throws IOException {
-		log.debug("syncing TYP file");
-
-		getHeader().writeHeader(getWriter());
-
-		// Sync our writer.
-		getWriter().sync();
+	public void write() {
 	}
+
+	public void writePost() {
+		getHeader().writeHeader(getWriter());
+	}
+
+	
 }
