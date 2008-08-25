@@ -39,9 +39,9 @@ public class RouteNode {
 	private int offsetNod1 = -1;
 
 	@Deprecated
-	private int nodeId; // XXX not needed at this point?
+	private final int nodeId; // XXX not needed at this point?
 
-	private List<RouteArc> arcs = new ArrayList<RouteArc>();
+	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
 	
 	private byte flags = F_UNK_NEEDED;
 

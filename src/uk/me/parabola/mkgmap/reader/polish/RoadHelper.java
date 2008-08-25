@@ -112,10 +112,6 @@ class RoadHelper {
 		}
 	}
 
-	public RoadNetwork getRoadNetwork() {
-		return hasRoads ? roadNetwork : null;
-	}
-
 	public boolean isRoad() {
 		return roadId != 0;
 	}

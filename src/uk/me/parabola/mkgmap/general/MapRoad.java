@@ -33,11 +33,6 @@ public class MapRoad extends MapLine {
 	private byte speed;// So top code can link objects from here
 	private final RoadDef roadDef;
 
-	public MapRoad(int roadId) {
-		this.roadId = roadId;
-		this.roadDef = new RoadDef();
-	}
-
 	public MapRoad(long roadId, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());

@@ -44,11 +44,4 @@ private RoadDef roadDef;
 				"can't set a direction on a polygon");
 	}
 
-	public Object getRoadDef() {
-		return roadDef;
-	}
-
-	public void setRoadDef(RoadDef obj) {
-		roadDef = obj;
-	}
 }

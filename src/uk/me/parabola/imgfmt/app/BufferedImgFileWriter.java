@@ -170,11 +170,4 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 			buf = newb;
 		}
 	}
-
-	/**
-	 * Only to be used by the Multi buffer subclass.
-	 */
-	protected void setBuffer(ByteBuffer buf) {
-		this.buf = buf;
-	}
 }

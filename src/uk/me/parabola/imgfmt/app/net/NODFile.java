@@ -51,7 +51,7 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
 public class NODFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(NODFile.class);
 
-	private NODHeader nodHeader = new NODHeader();
+	private final NODHeader nodHeader = new NODHeader();
 
 	private RoadNetwork network;
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();

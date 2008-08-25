@@ -42,9 +42,6 @@ public class RoadNetwork {
 	// NodeId to list of roads that contain it
 	private Map<Long, List<MapRoad>> nodeToRoadList = new HashMap<Long, List<MapRoad>>();
 
-	// RoadId to list of nodes in the road
-	private Map<Long, List<IndexAndNode>> roadToNodeList = new HashMap<Long, List<IndexAndNode>>();
-
 	private Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
 
 	// save the coordinates.
@@ -55,26 +52,6 @@ public class RoadNetwork {
 
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 
-
-	/**
-	 * Add a road to the list of roads that meet at a given node.
-	 * @deprecated this is going ...
-	 */
-	private void addNodeAndRoad(CoordNode node, MapRoad road) {
-		mapRoads.add(road);
-		roadDefs.add(road.getRoadDef());
-
-		//nodes.put(node.getId(), node);
-
-		addRoadToNode(road, node.getId());
-
-		//List<IndexAndNode> nodeList = roadToNodeList.get(road.getRoadId());
-		//if (nodeList == null) {
-		//	nodeList = new ArrayList<IndexAndNode>();
-		//	roadToNodeList.put(road.getRoadId(), nodeList);
-		//}
-		//nodeList.add(new IndexAndNode());
-	}
 
 	public void addRoad(MapRoad road) {
 		mapRoads.add(road);
@@ -172,19 +149,8 @@ public class RoadNetwork {
 				if (arc.isForward())
 					arc.setLocalNet(localNet++);
 			}
-			// Now for each node, there is a list of roads that it leads to
-			// we create arc segments for each one.
-			//List<MapRoad> roadList = nodeToRoadList.get(ent.getKey());
-			//for (MapRoad mr : roadList) {
-			//	RoadDef roadDef = mr.getRoadDef();
-			//
-			//	RouteArc a = new RouteArc(roadDef, node);
-			//}
 		}
 
 		return centers;
 	}
-
-	//public void addRoad(MapRoad road) {
-	//}
 }

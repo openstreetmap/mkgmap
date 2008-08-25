@@ -18,9 +18,9 @@ package uk.me.parabola.imgfmt.app;
 
 
 public class OffsetWriter {
-	private ImgFileWriter writer;
-	private int targetOffset;
-	private int orMask;
+	private final ImgFileWriter writer;
+	private final int targetOffset;
+	private final int orMask;
 
 	public OffsetWriter(ImgFileWriter w, int ormask) {
 		writer = w;

@@ -52,10 +52,10 @@ public class RouteArc {
 
 	//private byte destinationClass;
 
-	private RoadDef roadDef;
+	private final RoadDef roadDef;
 
 	// The node that this arc goes to
-	private RouteNode node;
+	private final RouteNode node;
 	private RouteArc other;
 	
 	private byte flagA;

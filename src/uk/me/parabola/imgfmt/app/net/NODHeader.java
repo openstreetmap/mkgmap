@@ -31,11 +31,11 @@ public class NODHeader extends CommonHeader {
 	static final char DEF_ALIGN = 6;
 	private static final char BOUNDRY_ITEM_SIZE = 9;
 
-	private Section nodes = new Section();
-	private Section roads = new Section(nodes);
-	private Section boundry = new Section(roads, BOUNDRY_ITEM_SIZE);
+	private final Section nodes = new Section();
+	private final Section roads = new Section(nodes);
+	private final Section boundry = new Section(roads, BOUNDRY_ITEM_SIZE);
 
-	private char align = DEF_ALIGN;
+	private final char align = DEF_ALIGN;
 
 	public NODHeader() {
 		super(HEADER_LEN, "GARMIN NOD");

@@ -28,9 +28,4 @@ public class OffsetWriterList {
 		targets.add(ow);
 	}
 
-	public void writeOffset(int ofs) {
-		for (OffsetWriter t : targets) {
-			t.writeOffset(ofs);
-		}
-	}
 }

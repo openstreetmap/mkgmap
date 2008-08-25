@@ -32,7 +32,7 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Coord {
-	private int latitude;
+	private final int latitude;
 	private final int longitude;
 
 	/**

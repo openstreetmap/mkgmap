@@ -28,13 +28,13 @@ package uk.me.parabola.imgfmt.app.trergn;
  * @see <a href="http://svn.parabola.me.uk/display/trunk/src/test/display/TreCalc.java">TreCalc.java</a>
  */
 public class MapValues {
-	private int mapId;
-	private int length;
+	private final int mapId;
+	private final int length;
 
-	private byte[][] values = new byte[4][8];
+	private final byte[][] values = new byte[4][8];
 
 	// Converts the digits in the map id to the values seen in this section.
-	private static byte[] mapIdCodeTable = new byte[] {
+	private static final byte[] mapIdCodeTable = new byte[] {
 			0, 1, 0xf, 5,
 			0xd, 4, 7, 6,
 			0xb, 9, 0xe, 8,
@@ -43,7 +43,7 @@ public class MapValues {
 
 	// Used to work out the required offset that is applied to all the
 	// digits of the values.
-	private int[] offsetMap = new int[] {
+	private final int[] offsetMap = new int[] {
 			6, 7, 5, 11,
 			3, 10, 13, 12,
 			1, 15, 4, 14,

@@ -31,15 +31,15 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
 public class RouteCenter {
 	private static final Logger log = Logger.getLogger(RouteCenter.class);
 	
-	private Coord centralPoint;
+	private final Coord centralPoint;
 
-	private List<RouteNode> nodes = new ArrayList<RouteNode>();
+	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
 
 	// These may be pulled into this class
 	//private Tables tables = new Tables();
-	private TableA tabA = new TableA();
-	private TableB tabB = new TableB();
-	private TableC tabC = new TableC();
+	private final TableA tabA = new TableA();
+	private final TableB tabB = new TableB();
+	private final TableC tabC = new TableC();
 
 	private int tableAoffset;
 

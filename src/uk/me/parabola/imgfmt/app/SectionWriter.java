@@ -26,16 +26,9 @@ import java.io.IOException;
  */
 public class SectionWriter implements ImgFileWriter {
 
-	private ImgFileWriter writer;
+	private final ImgFileWriter writer;
 	private Section section;
-	private int secStart;
-
-	/** @deprecated use the constructor with a section */
-	public SectionWriter(ImgFileWriter writer, int secStart) {
-		this.writer = writer;
-		this.secStart = secStart;
-		writer.position(secStart);
-	}
+	private final int secStart;
 
 	public SectionWriter(ImgFileWriter writer, Section section) {
 		this.writer = writer;
