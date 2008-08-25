@@ -48,7 +48,7 @@ base: clean
 
 other: clean
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main \
-		--tdbfile --tdb-v4 --levels=0:24 --net --nod other.osm
+		--tdbfile --tdb-v4 --levels=0:24 --route other.mp
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

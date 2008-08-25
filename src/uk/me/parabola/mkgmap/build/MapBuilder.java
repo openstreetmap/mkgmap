@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -182,15 +183,31 @@ public class MapBuilder {
 		// do a special check to make sure.
 		LevelInfo[] levels = src.mapLevels();
 		LevelInfo levelInfo = levels[0];
-		int maxBits = getMaxBits(src);
-		// If the max is larger than the top-most data level then we
-		// decrease it so that it is less.
-		if (levelInfo.getBits() <= maxBits)
-			maxBits = levelInfo.getBits() - 1;
 
-		// Create the empty top level
-		Zoom zoom = map.createZoom(levelInfo.getLevel() + 1, maxBits);
-		Subdivision topdiv = makeTopArea(src, map, zoom);
+		// If there is already a top level zoom, then we shouldn't add our own
+		Subdivision topdiv;
+		if (levelInfo.isTop()) {
+			// There is already a top level definition.  So use the values from it and
+			// then remove it from the levels definition.
+
+			// (note: when we go to java 1.6 you can use a copyOfRange() call here to simplify
+			levels = Arrays.asList(levels).subList(1, levels.length)
+					.toArray(new LevelInfo[levels.length - 1]);
+
+			Zoom zoom = map.createZoom(levelInfo.getLevel(), levelInfo.getBits());
+			topdiv = makeTopArea(src, map, zoom);
+		} else {
+			// We have to automatically create the definition for the top zoom level.
+			int maxBits = getMaxBits(src);
+			// If the max is larger than the top-most data level then we
+			// decrease it so that it is less.
+			if (levelInfo.getBits() <= maxBits)
+				maxBits = levelInfo.getBits() - 1;
+
+			// Create the empty top level
+			Zoom zoom = map.createZoom(levelInfo.getLevel() + 1, maxBits);
+			topdiv = makeTopArea(src, map, zoom);
+		}
 
 		// We start with one map data source.
 		List<SourceSubdiv> srcList = Collections.singletonList(new SourceSubdiv(src, topdiv));
@@ -199,7 +216,7 @@ public class MapBuilder {
 		for (LevelInfo linfo : levels) {
 			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
 
-			zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
+			Zoom zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
 
 			for (SourceSubdiv srcDivPair : srcList) {
 

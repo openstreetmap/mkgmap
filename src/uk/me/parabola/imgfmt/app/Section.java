@@ -64,6 +64,11 @@ public class Section {
 		this.size = size;
 	}
 
+	/**
+	 * Get the start position of this section.  If this is linked to another
+	 * section, then we return the end address of that section.
+	 * @return The first offset for this section.
+	 */
 	public int getPosition() {
 		if (link != null)
 			return link.getEndPos();

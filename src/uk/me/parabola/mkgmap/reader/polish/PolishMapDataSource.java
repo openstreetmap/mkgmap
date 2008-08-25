@@ -110,14 +110,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (levels == null) {
 			// If it has not been set then supply some defaults.
 			levels = new LevelInfo[] {
-					new LevelInfo(5, 16),
-					new LevelInfo(4, 18),
-					new LevelInfo(3, 19),
-					new LevelInfo(2, 21),
+					new LevelInfo(3, 17),
+					new LevelInfo(2, 18),
 					new LevelInfo(1, 22),
 					new LevelInfo(0, 24),
 			};
 		}
+		levels[0].setTop(true);
 		return levels;
 	}
 
