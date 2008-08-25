@@ -28,7 +28,6 @@ import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
-import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -109,37 +108,19 @@ public class MapBuilder {
 
 		if (netFile != null) {
 			RoadNetwork network = src.getRoadNetwork();
+			netFile.setNetwork(network);
 			NODFile nodFile = map.getNodFile();
 			if (nodFile != null) {
-				nodFile.writeFirstPass(network);
+				nodFile.setNetwork(network);
+				nodFile.write();
 			}
 			netFile.write();
 
 			if (nodFile != null) {
-				nodFile.writeSecondPass(network);
+				nodFile.writePost();
 			}
 			netFile.writePost();
 		}
-	}
-
-	private void processRoads(InternalFiles files, MapDataSource src) {
-		RoadNetwork network = src.getRoadNetwork();
-
-		// If there is no net file then there is nothing to do at all.
-		NETFile net = files.getNetFile();
-		if (net == null)
-			return;
-
-		// If there is a nod file then the first pass writes out NOD1 and NOD2
-		NODFile nod = files.getNodFile();
-		if (nod != null)
-			nod.writeFirstPass(network);
-
-		// XXX perhaps only one pass needed?
-		net.writeFirstPass(network);
-
-		if (nod != null)
-			nod.writeSecondPass(network);
 	}
 
 	/**

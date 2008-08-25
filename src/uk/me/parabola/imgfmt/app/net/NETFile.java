@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.io.IOException;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
@@ -37,6 +36,8 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
 
+	private RoadNetwork network;
+
 	//private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
 
 	public NETFile(ImgChannel chan, boolean write) {
@@ -52,56 +53,23 @@ public class NETFile extends ImgFile {
 
 	public void write() {
 		// Write out the actual file body.
-		//writeBody();
+		List<RoadDef> roadDefs = network.getRoadDefs();
+
+		ImgFileWriter writer1 = netHeader.makeRoadWriter(getWriter());
+		try {
+			for (RoadDef rd : roadDefs)
+				rd.writeNet1(writer1);
+
+		} finally {
+			Section.close(writer1);
+		}
 	}
 
 	public void writePost() {
 		getHeader().writeHeader(getWriter());
 	}
 
-	//private void writeBody() {
-	//	ImgFileWriter writer = getWriter();
-	//
-	//	int start = writer.position();
-	//	netHeader.startRoadDefs(start);
-	//	for (RoadDef r : roaddefs) {
-	//		r.write(writer, writer.position() - start);
-	//	}
-	//	netHeader.endRoadDefs(position());
-	//}
-
-	//public RoadDef createRoadDef(Label l) {
-	//	RoadDef r = new RoadDef();
-	//	r.addLabel(l);
-	//
-	//	roaddefs.add(r);
-	//
-	//	return r;
-	//}
-
-	//public void allRoadDefsDone() {
-	//	int ofs = 0;
-	//	for (RoadDef r : roaddefs)
-	//		ofs += r.calcOffset(ofs);
-	//}
-
-
-	/**
-	 * Write out NET1 (road definitions).  This is done after the first
-	 * pass on nod1 and nod2 and so we have offsets into those sections
-	 * available.
-	 * @param network The road network.
-	 */
-	public void writeFirstPass(RoadNetwork network) {
-		List<RoadDef> roadDefs = network.getRoadDefs();
-
-		ImgFileWriter writer = netHeader.makeRoadWriter(getWriter());
-		try {
-			for (RoadDef rd : roadDefs)
-				rd.writeNet1(writer);
-
-		} finally {
-			Section.close(writer);
-		}
+	public void setNetwork(RoadNetwork network) {
+		this.network = network;
 	}
 }

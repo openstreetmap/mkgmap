@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +23,8 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
@@ -54,6 +53,7 @@ public class NODFile extends ImgFile {
 
 	private NODHeader nodHeader = new NODHeader();
 
+	private RoadNetwork network;
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 	private List<RoadDef> roads = new ArrayList<RoadDef>();
 
@@ -70,35 +70,13 @@ public class NODFile extends ImgFile {
 	}
 
 	public void write() {
-
-	}
-
-	public void writePost() {
-		// Refresh the header
-		position(0);
-		getHeader().writeHeader(getWriter());
-	}
-
-	/**
-	 * The first pass at writing the road network out.  During this pass, certain
-	 * locations will be recorded that will be needed for completing the NET
-	 * section.  In turn the NET section will record some offset that are needed
-	 * in the second pass here.
-	 * @param network
-	 */
-	public void writeFirstPass(RoadNetwork network) {
 		centers = network.getCenters();
 		roads = network.getRoadDefs();
 		writeNodes();
 		writeRoadData();
 	}
 
-	/**
-	 * This should fix up Table A etc. within NOD1.
-	 * We need a nod1 writer, so that we get the same offsets.
-	 * @param network The road network.
-	 */
-	public void writeSecondPass(RoadNetwork network) {
+	public void writePost() {
 		ImgFileWriter writer;
 
 		writer = new SectionWriter(getWriter(), nodHeader.getNodeSection());
@@ -106,6 +84,9 @@ public class NODFile extends ImgFile {
 		for (RouteCenter rc : centers) {
 			rc.writeTableA(writer, network);
 		}
+		// Refresh the header
+		position(0);
+		getHeader().writeHeader(getWriter());
 	}
 
 	/**
@@ -140,5 +121,9 @@ public class NODFile extends ImgFile {
 		}
 		log.debug("ending nod2", writer.position());
 		nodHeader.setRoadSize(writer.position());
+	}
+
+	public void setNetwork(RoadNetwork network) {
+		this.network = network;
 	}
 }

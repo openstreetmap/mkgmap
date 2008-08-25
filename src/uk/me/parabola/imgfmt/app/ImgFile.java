@@ -57,9 +57,9 @@ public abstract class ImgFile  {
 		writer.position(pos);
 	}
 
-	public abstract void write();
-
-	public abstract void writePost();
+	//public abstract void write();
+	//
+	//public abstract void writePost();
 
 	protected void sync() throws IOException {
 		if (!writable)
