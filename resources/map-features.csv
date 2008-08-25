@@ -34,6 +34,7 @@ point|amenity|university|0x2c|0x05|21
 point|amenity|zoo|0x2c|0x07|21
 point|highway|bus_stop|0x2f|0x08|21
 point|historic|museum|0x2c|0x02|20
+point|historic|archaeological_site|0x2c|0x02|21
 point|leisure|golf_course|0x2d|0x05|21
 point|leisure|marina|0x43|0x00|21
 point|leisure|park|0x2c|0x06|21
@@ -73,6 +74,7 @@ polygon|amenity|college|0x0a||18
 polygon|amenity|grave_yard|0x1a||18
 polygon|amenity|hospital|0x0b||18
 polygon|amenity|parking|0x05||21
+polygon|amenity|school|0x0a||20
 polygon|amenity|supermarket|0x08||21
 polygon|amenity|university|0x0a||18
 polygon|landuse|allotments|0x4e||20
@@ -90,6 +92,7 @@ polygon|leisure|marina|0x09||20
 polygon|leisure|nature_reserve|0x16||18
 polygon|leisure|park|0x17||20
 polygon|leisure|pitch|0x19||20
+polygon|leisure|playground|0x17||20
 polygon|leisure|sports_center|0x19||20
 polygon|leisure|stadium|0x19||19
 polygon|leisure|track|0x19||18

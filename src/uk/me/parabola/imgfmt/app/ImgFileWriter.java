@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.io.IOException;
+import java.io.Closeable;
 
 /**
  * I want to be able to experiment with different schemes to write out.
@@ -28,7 +29,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public interface ImgFileWriter {
+public interface ImgFileWriter extends Closeable {
 	/**
 	 * Called to write out any saved buffers.  The strategy may write
 	 * directly to the file in which case this would have nothing or
@@ -36,12 +37,6 @@ public interface ImgFileWriter {
 	 * @throws IOException If there is an error writing.
 	 */
 	public void sync() throws IOException;
-
-	/**
-	 * Called when the stream is closed.  Any resources can be freed.
-	 * @throws IOException When there is an error in closing.
-	 */
-	public void close() throws IOException;
 
 	/**
 	 * Get the position.  Needed because may not be reflected in the underlying

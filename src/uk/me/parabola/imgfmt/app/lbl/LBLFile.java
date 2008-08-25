@@ -30,7 +30,6 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,19 +81,17 @@ public class LBLFile extends ImgFile {
 		places.init(this, lblHeader.getPlaceHeader());
 	}
 
-	public void sync() throws IOException {
-		log.debug("syncing lbl file");
-
+	public void write() {
 		writeBody();
+	}
 
+	public void writePost() {
 		// Now that the body is written all the required offsets will be set up
 		// inside the header, so we can go back and write it.
 		getHeader().writeHeader(getWriter());
 
+		// Text can be put between the header and the body of the file.
 		getWriter().put(Utils.toBytes("mkgmap"));
-		
-		// Sync our writer.
-		getWriter().sync();
 	}
 
 	private void writeBody() {
@@ -125,9 +122,8 @@ public class LBLFile extends ImgFile {
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
-		Label l;
 		EncodedText etext = textEncoder.encodeText(text);
-		l = labelCache.get(text);
+		Label l = labelCache.get(text);
 		if (l == null) {
 			l = new Label(etext);
 			labelCache.put(text, l);

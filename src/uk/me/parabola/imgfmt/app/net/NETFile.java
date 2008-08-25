@@ -50,15 +50,13 @@ public class NETFile extends ImgFile {
 		}
 	}
 
-	protected void sync() throws IOException {
-		if (!isWritable())
-			return;
-
+	public void write() {
 		// Write out the actual file body.
 		//writeBody();
+	}
 
+	public void writePost() {
 		getHeader().writeHeader(getWriter());
-		getWriter().sync();
 	}
 
 	//private void writeBody() {

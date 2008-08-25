@@ -61,6 +61,9 @@ public class MapMaker implements MapProcessor {
 	 */
 	String makeMap(CommandArgs args, LoadableMapDataSource src) {
 
+		if (src.getBounds().isEmpty())
+			return null;
+
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
@@ -119,8 +122,7 @@ public class MapMaker implements MapProcessor {
 	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) throws
 			FileNotFoundException, FormatException
 	{
-		LoadableMapDataSource src;
-		src = MapReader.createMapReader(name);
+		LoadableMapDataSource src = MapReader.createMapReader(name);
 		if (src instanceof ConfiguredByProperties)
 			((ConfiguredByProperties) src).config(args.getProperties());
 		src.load(name);

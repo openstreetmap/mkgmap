@@ -25,13 +25,13 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
-OSMDATA = /opt/data/uk-test-*
+#OSMDATA = /opt/data/uk-test-*
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
-OPTS= --net --tdbfile --gmapsupp
+#OPTS= --net --tdbfile --gmapsupp
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
@@ -40,6 +40,11 @@ makemap: clean
 
 t:
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+
+base: clean
+	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-test-1.osm.gz
+	cp 63240001.img gmapsupp.img
+	imgdecode gmapsupp.img
 
 other: clean
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main \
@@ -95,6 +100,7 @@ test_lang10:
 	imgdecode 32860003.img
 
 tests:
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/empty.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63243936
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63247525
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63253506

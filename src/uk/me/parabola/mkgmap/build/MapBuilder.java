@@ -36,7 +36,9 @@ import uk.me.parabola.imgfmt.app.trergn.Polygon;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
@@ -88,8 +90,36 @@ public class MapBuilder {
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
-		processRoads(map, src);
+		//processRoads(map, src);
 		//postProcessRoads(map, src);
+
+		RGNFile rgnFile = map.getRgnFile();
+		TREFile treFile = map.getTreFile();
+		LBLFile lblFile = map.getLblFile();
+		NETFile netFile = map.getNetFile();
+
+		treFile.setLastRgnPos(rgnFile.position() - 29);
+
+		rgnFile.write();
+		rgnFile.writePost();
+		treFile.write();
+		treFile.writePost();
+		lblFile.write();
+		lblFile.writePost();
+
+		if (netFile != null) {
+			RoadNetwork network = src.getRoadNetwork();
+			NODFile nodFile = map.getNodFile();
+			if (nodFile != null) {
+				nodFile.writeFirstPass(network);
+			}
+			netFile.write();
+
+			if (nodFile != null) {
+				nodFile.writeSecondPass(network);
+			}
+			netFile.writePost();
+		}
 	}
 
 	private void processRoads(InternalFiles files, MapDataSource src) {

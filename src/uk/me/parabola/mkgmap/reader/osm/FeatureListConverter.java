@@ -99,6 +99,9 @@ class FeatureListConverter implements OsmConverter {
 		for (String tagKey : way) {
 			GarminType gt = shapeFeatures.get(tagKey);
 			if (gt != null && (foundType == null || gt.isBetter(foundType))) {
+				// Special case for the Thames and similar - coastline overrides riverbank.
+				if (gt.getType() == 0x46 && "coastline".equals(way.getTag("natural")))
+					break;
 				foundType = gt;
 			}
 		}
@@ -126,6 +129,9 @@ class FeatureListConverter implements OsmConverter {
 	private void addShape(Way way, GarminType gt) {
 		// Add to the map
 		List<Coord> points =  way.getPoints();
+		if (points.isEmpty())
+			return;
+		
 		MapShape shape = new MapShape();
 		shape.setName(way.getName());
 		shape.setPoints(points);
@@ -173,7 +179,7 @@ class FeatureListConverter implements OsmConverter {
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
 
-		if (tagKey.equals("contour|elevation")) {
+		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
 			String ele = way.getTag("ele");
 			try {
 				long n = Math.round(Integer.parseInt(ele) * METERS_TO_FEET);

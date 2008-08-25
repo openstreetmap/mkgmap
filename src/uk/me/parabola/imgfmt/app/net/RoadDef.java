@@ -163,9 +163,10 @@ public class RoadDef {
 	}
 
 	public void addLabel(Label l) {
-		if (numlabels >= MAX_LABELS)
-			throw new IllegalStateException("Too many labels");
-		labels[numlabels++] = l;
+		//if (numlabels >= MAX_LABELS)
+		//	throw new IllegalStateException("Too many labels");
+		if (numlabels == 0)
+			labels[numlabels++] = l;
 	}
 
 	public void writeNod2(ImgFileWriter writer) {

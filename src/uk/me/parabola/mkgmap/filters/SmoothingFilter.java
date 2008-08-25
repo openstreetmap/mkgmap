@@ -102,6 +102,7 @@ public class SmoothingFilter implements MapFilter {
 			if (av.isMoreThanStep()) {
 				Coord nco = av.getAverageCoord();
 				coords.add(nco);
+				if (av.pointCounter()>1) i--;
 
 				last = nco;
 				av.reset(last);
@@ -173,6 +174,10 @@ public class SmoothingFilter implements MapFilter {
 
 		public boolean isMoreThanStep() {
 			return (step > stepsize);
+		}
+
+		public int pointCounter() {
+			return count;
 		}
 	}
 }

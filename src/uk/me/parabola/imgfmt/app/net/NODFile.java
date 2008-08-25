@@ -69,19 +69,14 @@ public class NODFile extends ImgFile {
 		}
 	}
 
+	public void write() {
 
-	protected void sync() throws IOException {
-		if (!isWritable())
-			return;
+	}
 
-		//// Do anything that is in structures and that needs to be dealt with.
-		//writeBody();
-
+	public void writePost() {
 		// Refresh the header
 		position(0);
 		getHeader().writeHeader(getWriter());
-
-		getWriter().sync();
 	}
 
 	/**

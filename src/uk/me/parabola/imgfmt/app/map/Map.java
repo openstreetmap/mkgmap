@@ -227,8 +227,6 @@ public class Map implements InternalFiles {
 	 * Close this map by closing all the constituent files.
 	 */
 	public void close() {
-		treFile.setLastRgnPos(rgnFile.position() - 29);
-
 		rgnFile.close();
 		treFile.close();
 		lblFile.close();

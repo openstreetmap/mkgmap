@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.ReadFailedException;
 
 import java.io.IOException;
+import java.io.Closeable;
 
 /**
  * For reading subfiles from the img.  The focus of mkgmap is on writing,
@@ -26,13 +27,7 @@ import java.io.IOException;
  *
  * @author Steve Ratcliffe
  */
-public interface ImgFileReader {
-
-	/**
-	 * Called when the stream is closed.  Any resources can be freed.
-	 * @throws IOException When there is an error in closing.
-	 */
-	public void close() throws IOException;
+public interface ImgFileReader extends Closeable {
 
 	/**
 	 * Get the position.  Needed because may not be reflected in the underlying
