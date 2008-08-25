@@ -108,7 +108,7 @@ public class NODFile extends ImgFile {
 	}
 
 	/**
-	 * Write the road data NOD2.
+	 * Write the road data (NOD2).
 	 */
 	private void writeRoadData() {
 		log.info("writeRoadData");

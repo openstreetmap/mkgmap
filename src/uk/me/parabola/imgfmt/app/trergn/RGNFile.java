@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -138,5 +139,9 @@ public class RGNFile extends ImgFile {
 			getWriter().putChar((char) off);
 			position(currPos);
 		}
+	}
+
+	public ImgFileWriter getWriter() {
+		return super.getWriter();
 	}
 }

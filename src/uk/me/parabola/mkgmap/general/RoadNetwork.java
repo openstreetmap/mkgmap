@@ -106,6 +106,7 @@ public class RoadNetwork {
 				Coord bearing = coordList.get(lastIndex + 1);
 				RouteArc arc = new RouteArc(road.getRoadDef(), node2, lastCoord, bearing);
 				//arc.setHeading(heading);
+				arc.setForward();
 				arc.setDestinationClass(road.getRoadClass());
 				node1.addArc(arc);
 
@@ -114,7 +115,6 @@ public class RoadNetwork {
 				RouteArc arc2 = new RouteArc(road.getRoadDef(), node1, co, bearing);
 				arc2.setDestinationClass(road.getRoadClass());
 				arc.setHeading(bearing);
-				arc2.setReverse();
 				node2.addArc(arc2);
 
 				arc.setOther(arc2);

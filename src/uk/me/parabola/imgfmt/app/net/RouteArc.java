@@ -33,7 +33,7 @@ public class RouteArc {
 	
 	// Flags A
 	public static final int NEW_DIRECTION = 0x80;
-	public static final int REVERSE = 0x40;
+	public static final int FORWARD = 0x40;
 	public static final int DESTINATION_CLASS_MASK = 0x7;
 	public static final int CURVE = 0x20;
 	public static final int EXTRA_LEN = 0x18;
@@ -155,7 +155,7 @@ public class RouteArc {
 	public void writeSecond(ImgFileWriter writer, RouteNode ourNode) {
 		writer.position(offset + 1);
 		char val = (char) (flagB << 8);
-		val |= (node.getOffset() - ourNode.getOffset()) & 0x3fff;
+		val |= (node.getOffsetNod1() - ourNode.getOffsetNod1()) & 0x3fff;
 
 		// We write this big endian
 		log.debug("val is", Integer.toHexString((int)val));
@@ -171,12 +171,12 @@ public class RouteArc {
 		this.other = other;
 	}
 
-	public void setReverse() {
-		flagA |= REVERSE;
+	public void setForward() {
+		flagA |= FORWARD;
 	}
 
 	public boolean isForward() {
-		return (flagA & REVERSE) == 0;
+		return (flagA & FORWARD) != 0;
 	}
 
 	public boolean isReverse() {

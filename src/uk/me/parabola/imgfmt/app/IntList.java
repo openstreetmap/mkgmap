@@ -47,6 +47,10 @@ public class IntList {
 		return list[n];
 	}
 
+	public int size() {
+		return size;
+	}
+
 	private void checkCapacity() {
 		if (size == capacity) {
 			int[] newlist = new int[capacity + CAPACITY_INC];

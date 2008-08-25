@@ -49,8 +49,6 @@ public class RouteCenter {
 
 	public void addNode(RouteNode node, Coord coord) {
 		node.setCoord(centralPoint, coord);
-		//node.setLatOff((char) (centralPoint.getLatitude() - coord.getLatitude()));
-		//node.setLonOff((char) (centralPoint.getLongitude() - coord.getLongitude()));
 		nodes.add(node);
 	}
 	
@@ -58,7 +56,7 @@ public class RouteCenter {
 		if (nodes.isEmpty())
 			return;
 
-		//List<RouteArc>
+		// write nod1
 		for (RouteNode node : nodes) {
 			node.write(writer);
 
@@ -76,7 +74,7 @@ public class RouteCenter {
 
 		// Go back and fill in all the table offsets
 		for (RouteNode node : nodes) {
-			int pos = node.getOffset();
+			int pos = node.getOffsetNod1();
 			log.debug("node pos", pos);
 			byte bo = (byte) ((tmpTabsOff - (pos & ~mask)) >> NODHeader.DEF_ALIGN);
 

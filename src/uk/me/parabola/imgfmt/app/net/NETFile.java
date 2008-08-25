@@ -18,11 +18,11 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -55,17 +55,20 @@ public class NETFile extends ImgFile {
 		// Write out the actual file body.
 		List<RoadDef> roadDefs = network.getRoadDefs();
 
-		ImgFileWriter writer1 = netHeader.makeRoadWriter(getWriter());
+		ImgFileWriter writer = netHeader.makeRoadWriter(getWriter());
 		try {
 			for (RoadDef rd : roadDefs)
-				rd.writeNet1(writer1);
+				rd.writeNet1(writer);
 
 		} finally {
-			Section.close(writer1);
+			Utils.closeFile(writer);
 		}
 	}
 
-	public void writePost() {
+	public void writePost(ImgFileWriter rgn) {
+		for (RoadDef rd : network.getRoadDefs())
+			rd.writeRgnOffsets(rgn);
+
 		getHeader().writeHeader(getWriter());
 	}
 

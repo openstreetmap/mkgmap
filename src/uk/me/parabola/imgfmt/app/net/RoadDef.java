@@ -16,15 +16,15 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import uk.me.parabola.imgfmt.app.Label;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.IntList;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * A road definition.  This ties together all segments of a single road
@@ -41,8 +41,7 @@ public class RoadDef {
 
 	private static final int MAX_LABELS = 4;
 
-	@Deprecated
-	private int offset = -1;
+	private int offsetNod2;
 
 	/** @deprecated bring in class? */
 	private OffsetWriterList owList = new OffsetWriterList();
@@ -63,7 +62,7 @@ public class RoadDef {
 
 	//// The label
 	//private int labelOffset;
-	private IntList rgnOffsets = new IntList();
+	private IntList rgnOffsets = new IntList(4);
 
 	// This is the node associated with the road.  I'm not certain about how
 	// this works, but in NOD2 each road has a reference to only one node.
@@ -115,9 +114,29 @@ public class RoadDef {
 		writeLevelDivs(writer, maxlevel);
 
 		if ((flags & HAS_NOD_INFO) != 0) {
-			// We could optimise this to not always use 3 bytes...
-			writer.put((byte) 2);
-			writer.put3(node.getOffset());
+
+			// This is the offset of an entry in NOD2
+			int val = offsetNod2;
+			if (val < 0x7fff) {
+				writer.put((byte) 1);
+				writer.putChar((char) val);
+			} else {
+				writer.put((byte) 2);
+				writer.put3(val);
+			}
+		}
+	}
+
+	/**
+	 * Write into the RGN the offset in net1 of this road.
+	 * @param rgn A writer for the rgn file.
+	 */
+	void writeRgnOffsets(ImgFileWriter rgn) {
+		int len = rgnOffsets.size();
+		for (int i = 0; i < len; i++) {
+			int off = rgnOffsets.get(i);
+			rgn.position(off & 0x3fffff);
+			rgn.put3(netPosition | (off & 0xc00000));
 		}
 	}
 
@@ -171,11 +190,13 @@ public class RoadDef {
 
 	public void writeNod2(ImgFileWriter writer) {
 		log.debug("writing nod2");
+		offsetNod2 = writer.position();
+
 		writer.put(roadClass);
-		writer.put3(node.getOffset()); // offset to nod1
+		writer.put3(node.getOffsetNod1()); // offset to nod1
 
 		// this is related to the number of nodes, but there is more to it...
-		char nnodes = 2;
+		char nnodes = (char) 3;
 		writer.putChar(nnodes);  // number of bits to follow
 		writer.put((byte) ((1<<nnodes)-1));
 	}

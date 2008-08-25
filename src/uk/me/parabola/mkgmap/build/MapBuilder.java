@@ -117,10 +117,12 @@ public class MapBuilder {
 			}
 			netFile.write();
 
+
+
 			if (nodFile != null) {
 				nodFile.writePost();
 			}
-			netFile.writePost();
+			netFile.writePost(rgnFile.getWriter());
 		}
 	}
 
