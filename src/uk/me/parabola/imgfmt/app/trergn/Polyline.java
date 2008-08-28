@@ -123,6 +123,10 @@ public class Polyline extends MapObject {
 		this.direction = direction;
 	}
 
+	public boolean isRoad() {
+		return roaddef != null;
+	}
+
 	public void setRoadDef(RoadDef rd) {
 		this.roaddef = rd;
 	}

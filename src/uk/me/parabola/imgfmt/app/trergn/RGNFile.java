@@ -55,7 +55,7 @@ public class RGNFile extends ImgFile {
 
 		// Position at the start of the writable area.
 		position(HEADER_LEN);
-	}
+	} 
 
 	public void write() {
 	}

@@ -46,6 +46,9 @@ class LinePreparer {
 	private int[] deltas;
 
 	LinePreparer(Polyline line) {
+		if (line.isRoad())
+			extraBit = true;
+		
 		polyline = line;
 		calcLatLong();
 		calcDeltas();
@@ -65,16 +68,12 @@ class LinePreparer {
 			xbits += xBase;
 		else
 			xbits += (2 * xBase) - 9;
-		if (extraBit)
-			xbits++;
 
 		int ybits = 2;
 		if (yBase < 10)
 			ybits += yBase;
 		else
 			ybits += (2 * yBase) - 9;
-		if (extraBit)
-			ybits++;
 
 		// Note no sign included.
 		if (log.isDebugEnabled())
@@ -101,6 +100,9 @@ class LinePreparer {
 		}
 
 		for (int i = 0; i < deltas.length; i+=2) {
+			if (extraBit)
+				bw.put1(false); //TODO
+			
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
 			if (dx == 0 && dy == 0)
@@ -242,7 +244,6 @@ class LinePreparer {
 		if (log.isDebugEnabled())
 			log.debug("initial xBits, yBits", xBits, yBits);
 
-		this.extraBit = false;  // Keep simple for now
 		if (xBits < 2)
 			xBits = 2;
 		int tmp = xBits - 2;

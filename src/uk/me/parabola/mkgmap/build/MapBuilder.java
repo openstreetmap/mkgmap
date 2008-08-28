@@ -40,6 +40,7 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
+import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -98,7 +99,7 @@ public class MapBuilder {
 		LBLFile lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
 
-		treFile.setLastRgnPos(rgnFile.position() - 29);
+		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
 		rgnFile.write();
 		rgnFile.writePost();
