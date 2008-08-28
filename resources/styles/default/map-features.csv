@@ -127,6 +127,7 @@ polyline|highway|primary|0x04||19
 polyline|highway|primary_link|0x04||19
 polyline|highway|residential|0x06||22
 polyline|highway|secondary|0x05||20
+polyline|highway|path|0x16||20
 polyline|highway|service|0x07||22
 polyline|highway|steps|0x16||23
 polyline|highway|tertiary|0x06||21
