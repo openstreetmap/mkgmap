@@ -142,7 +142,7 @@ public class TREHeader extends CommonHeader {
 		writer.put3(area.getMinLat());
 		writer.put3(area.getMinLong());
 
-		writer.putInt(getMapLevelPos());
+		writer.putInt(getMapLevelsPos());
 		writer.putInt(getMapLevelsSize());
 
 		writer.putInt(getSubdivPos());
@@ -228,7 +228,7 @@ public class TREHeader extends CommonHeader {
 		this.mapInfoSize = mapInfoSize;
 	}
 
-	protected int getMapLevelPos() {
+	public int getMapLevelsPos() {
 		return mapLevelPos;
 	}
 
@@ -244,7 +244,7 @@ public class TREHeader extends CommonHeader {
 		this.mapLevelsSize = mapLevelsSize;
 	}
 
-	protected int getSubdivPos() {
+	public int getSubdivPos() {
 		return subdivPos;
 	}
 

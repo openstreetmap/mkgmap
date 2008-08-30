@@ -41,8 +41,13 @@ makemap: clean
 t:
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 
+base: clean
+	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-test-1.osm.gz
+	cp 63240001.img gmapsupp.img
+	imgdecode gmapsupp.img
+
 other: clean
-	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main  --tdbfile --tdb-v4 --levels=0:24,1:23,2:21,3=19,4=17 --net other.osm
+	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main  --tdbfile --tdb-v4 --levels=0:24,1:23,2:21,3=19,4=17 --route other.mp
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 
