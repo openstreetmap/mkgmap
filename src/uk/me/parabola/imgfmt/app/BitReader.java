@@ -37,7 +37,7 @@ public class BitReader {
 
 	public int get(int n) {
 		int res = 0;
-int orig = bitPosition;
+
 		int pos = 0;
 		while (pos < n) {
 			int index = bitPosition / 8;
@@ -54,10 +54,24 @@ int orig = bitPosition;
 			pos += nbits;
 			bitPosition += nbits;
 		}
-assert bitPosition == orig + n;
+
 		return res;
 	}
 
+	/**
+	 * A signed get.  Treats the top bit in the given bit field as a
+	 * sign bit.
+	 */
+	public int sget(int n) {
+		int res = get(n);
+		int top = 1 << (n - 1);
+		if ((res & top) != 0) {
+			int mask = top - 1;
+			res = ~mask | res;
+		}
+		return res;
+	}
+	
 	public int getBitPosition() {
 		return bitPosition;
 	}
