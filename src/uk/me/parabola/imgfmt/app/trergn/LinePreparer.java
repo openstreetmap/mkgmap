@@ -44,6 +44,7 @@ class LinePreparer {
 
 	// The delta changes between the points.
 	private int[] deltas;
+	private boolean[] nodes;
 
 	LinePreparer(Polyline line) {
 		if (line.isRoad())
@@ -101,7 +102,7 @@ class LinePreparer {
 
 		for (int i = 0; i < deltas.length; i+=2) {
 			if (extraBit)
-				bw.put1(false); //TODO
+				bw.put1(nodes[i/2]);
 			
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
@@ -174,10 +175,13 @@ class LinePreparer {
 		deltas = new int[2 * (points.size() - 1)];
 		int off = 0;
 
+		if (extraBit)
+			nodes = new boolean[points.size()];
 		boolean first = true;
 
 		// OK go through the points
 		for (Coord co : points) {
+
 			int lat = co.getLatitude() >> shift;
 			int lon = co.getLongitude() >> shift;
 			if (log.isDebugEnabled())
@@ -188,6 +192,12 @@ class LinePreparer {
 				first = false;
 				continue;
 			}
+
+			// Current thought is that the node indicator is set when:
+			// 1. The point you are comming from is a node
+			// 2. Its not the first.
+			if (extraBit)
+				nodes[off / 2 + 1] = co.getId() != 0;
 
 			int dx = lon - lastLong;
 			int dy = lat - lastLat;
