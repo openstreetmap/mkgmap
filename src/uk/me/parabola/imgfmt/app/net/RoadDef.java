@@ -99,6 +99,8 @@ public class RoadDef {
 	 */
 	void writeNet1(ImgFileWriter writer) {
 		//assert offset == realofs;
+		if (numlabels == 0)
+			return;
 		assert numlabels > 0;
 
 		netPosition = writer.position();
