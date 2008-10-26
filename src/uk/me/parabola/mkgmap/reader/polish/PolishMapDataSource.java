@@ -244,7 +244,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			Integer type = Integer.decode(value);
 			point.setType((type >> 8) & 0xff);
 			point.setSubType(type & 0xff);
-		}  else if (name.startsWith("Data")) {
+		}  else if (name.startsWith("Data") || name.startsWith("Origin")) {
 			Coord co = makeCoord(value);
 			setResolution(point, name);
 			point.setLocation(co);
@@ -379,7 +379,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @return The resolution that corresponds to the level.
 	 */
 	private int extractResolution(String name) {
-		int level = Integer.valueOf(name.substring(4));
+		int level = Integer.valueOf(name.substring(name.charAt(0) == 'O'? 6: 4));
 		return extractResolution(level);
 	}
 
