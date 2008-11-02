@@ -51,15 +51,15 @@ public abstract class StyleFileLoader {
 		
 		StyleFileLoader loader;
 
-		File f = new File(loc);
-		if (f.isDirectory()) {
-			File dir = f;
+		File file = new File(loc);
+		if (file.isDirectory()) {
+			File dir = file;
 			if (name != null)
-				dir = new File(f, name);
+				dir = new File(file, name);
 
 			log.debug("style directory", dir);
 			loader = new DirectoryFileLoader(dir);
-		} else if (f.isFile()) {
+		} else if (file.isFile()) {
 			String loclc = loc.toLowerCase();
 			if (loclc.endsWith(".style") || loclc.endsWith(".csv")) {
 				if (name != null)
@@ -67,8 +67,8 @@ public abstract class StyleFileLoader {
 				log.debug("a single file style");
 				loader = new CombinedStyleFileLoader(loc);
 			} else {
-				log.debug("jar file", f);
-				loader = new JarFileLoader(f, name);
+				log.debug("jar file", file);
+				loader = new JarFileLoader(file, name);
 			}
 		} else {
 			log.debug("style url location", loc);
@@ -106,11 +106,11 @@ public abstract class StyleFileLoader {
 
 	/**
 	 * Open the specified file in the style definition.
-	 * @param file The name of the file in the style.
+	 * @param filename The name of the file in the style.
 	 * @return An open file reader for the file.
 	 * @throws FileNotFoundException When the file can't be opened.
 	 */
-	public abstract Reader open(String file) throws FileNotFoundException;
+	public abstract Reader open(String filename) throws FileNotFoundException;
 
 	/**
 	 * Close the FileLoader.  This is different from closing individual files

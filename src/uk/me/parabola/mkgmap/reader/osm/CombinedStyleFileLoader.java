@@ -107,17 +107,17 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	/**
 	 * Open the specified file in the style definition.
 	 *
-	 * @param file The name of the file in the style.
+	 * @param filename The name of the file in the style.
 	 * @return An open file reader for the file.
 	 * @throws FileNotFoundException When the file can't be opened.
 	 */
-	public Reader open(String file) throws FileNotFoundException {
-		log.info("opening", file);
-		String contents = files.get(file);
+	public Reader open(String filename) throws FileNotFoundException {
+		log.info("opening", filename);
+		String contents = files.get(filename);
 		if (contents == null)
-			throw new FileNotFoundException(file);
+			throw new FileNotFoundException(filename);
 
-		log.debug("file", file, "found");
+		log.debug("file", filename, "found");
 		return new StringReader(contents);
 	}
 
@@ -146,12 +146,12 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	 */
 	public static void main(String[] args) {
 		String name = args[0];
-		File f = new File(name);
+		File file = new File(name);
 
 		PrintStream out = System.out;
 		try {
-			if (f.isDirectory()) {
-				convertToFile(f, out);
+			if (file.isDirectory()) {
+				convertToFile(file, out);
 			} else {
 				String dirname;
 				int ind = name.lastIndexOf('.');
@@ -193,8 +193,8 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 		}
 	}
 
-	private static void convertToFile(File f, PrintStream out) throws IOException {
-		File[] list = f.listFiles(new NoHiddenFilter());
+	private static void convertToFile(File file, PrintStream out) throws IOException {
+		File[] list = file.listFiles(new NoHiddenFilter());
 		convertToFile(out, list, null);
 	}
 

@@ -77,8 +77,8 @@ public class JarFileLoader extends StyleFileLoader {
 			setPrefix(name + '/');
 	}
 
-	public JarFileLoader(File f, String name) throws FileNotFoundException {
-		this(f);
+	public JarFileLoader(File file, String name) throws FileNotFoundException {
+		this(file);
 		if (name != null)
 			setPrefix(searchPrefix(jarFile, '/' + name + "/version"));
 	}
@@ -114,27 +114,27 @@ public class JarFileLoader extends StyleFileLoader {
 	/**
 	 * Open the specified file in the style definition.
 	 *
-	 * @param file The name of the file in the style.
+	 * @param filename The name of the file in the style.
 	 * @return An open file reader for the file.
 	 * @throws FileNotFoundException When the file can't be opened.
 	 */
-	public Reader open(String file) throws FileNotFoundException {
+	public Reader open(String filename) throws FileNotFoundException {
 		if (jarFile == null)
-			throw new FileNotFoundException("Could not open file " + file);
+			throw new FileNotFoundException("Could not open file " + filename);
 
-		String path = file;
+		String path = filename;
 		if (prefix != null)
-			path = prefix + file;
+			path = prefix + filename;
 		
 		JarEntry jarEntry = jarFile.getJarEntry(path);
 		if (jarEntry == null)
-			throw new FileNotFoundException("Could not open style file " + file);
+			throw new FileNotFoundException("Could not open style file " + filename);
 
 		InputStream stream;
 		try {
 			stream = jarFile.getInputStream(jarEntry);
 		} catch (IOException e) {
-			throw new FileNotFoundException("Could not open " + file);
+			throw new FileNotFoundException("Could not open " + filename);
 		}
 		return new InputStreamReader(new BufferedInputStream(stream));
 	}
@@ -149,7 +149,7 @@ public class JarFileLoader extends StyleFileLoader {
 
 	public String[] list() {
 		Enumeration<JarEntry> en = jarFile.entries();
-		List<String> l = new ArrayList<String>();
+		List<String> list = new ArrayList<String>();
 		while (en.hasMoreElements()) {
 			JarEntry entry = en.nextElement();
 
@@ -162,15 +162,15 @@ public class JarFileLoader extends StyleFileLoader {
 						String s = jarFile.getName();
 						s = s.replaceFirst("\\..*$", "");
 						s = s.replaceAll(".*/", "");
-						l.add(s);
+						list.add(s);
 					}
 					else
-						l.add(dirs[dirs.length - 2]);
+						list.add(dirs[dirs.length - 2]);
 				}
 			}
 		}
 
-		return l.toArray(new String[l.size()]);
+		return list.toArray(new String[list.size()]);
 	}
 
 	/**

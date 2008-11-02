@@ -48,12 +48,12 @@ public class DirectoryFileLoader extends StyleFileLoader {
 	/**
 	 * Open the specified file in the style definition.
 	 *
-	 * @param file The name of the file in the style.
+	 * @param filename The name of the file in the style.
 	 * @return An open file reader for the file.
 	 */
-	public Reader open(String file) throws FileNotFoundException {
-		File f = new File(dir, file);
-		Reader r = new FileReader(f);
+	public Reader open(String filename) throws FileNotFoundException {
+		File file = new File(dir, filename);
+		Reader r = new FileReader(file);
 
 		return new BufferedReader(r);
 	}
@@ -69,10 +69,10 @@ public class DirectoryFileLoader extends StyleFileLoader {
 		List<String> res = new ArrayList<String>();
 
 		File[] allFiles = dir.listFiles();
-		for (File f : allFiles) {
-			log.debug("dir loader", f);
-			if (f.isDirectory()) {
-				res.add(f.getName());
+		for (File file : allFiles) {
+			log.debug("dir loader", file);
+			if (file.isDirectory()) {
+				res.add(file.getName());
 			}
 		}
 
