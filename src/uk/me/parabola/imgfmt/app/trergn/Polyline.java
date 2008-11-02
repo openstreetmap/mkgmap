@@ -18,7 +18,8 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
 
 import java.util.ArrayList;
@@ -38,6 +39,11 @@ import java.util.List;
 public class Polyline extends MapObject {
 	private static final Logger log = Logger.getLogger(Polyline.class);
 
+	private int number;
+
+	// Reference to NET section, if any
+	private RoadDef roaddef;
+
 	// Set if it is a one-way street for example.
 	private boolean direction;
 
@@ -54,7 +60,7 @@ public class Polyline extends MapObject {
 	 *
 	 * @param file A reference to the file that should be written to.
 	 */
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		// If there is nothing to do, then do nothing.
 		if (points.size() < 2)
 			return;
@@ -80,6 +86,9 @@ public class Polyline extends MapObject {
 		int loff = getLabel().getOffset();
 		if (w.isExtraBit())
 			loff |= 0x400000;
+		if (roaddef != null) {
+			roaddef.addOffsetTarget(file, 0x800000 | (loff & 0x400000));
+		}
 		file.put3(loff);
 
 		// The delta of the longitude from the subdivision centre point
@@ -109,4 +118,15 @@ public class Polyline extends MapObject {
 		this.direction = direction;
 	}
 
+	public void setRoadDef(RoadDef rd) {
+		this.roaddef = rd;
+	}
+
+	void setNumber(int n) {
+		number = n;
+	}
+
+	public int getNumber() {
+		return number;
+	}
 }

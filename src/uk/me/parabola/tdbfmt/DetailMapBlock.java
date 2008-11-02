@@ -29,12 +29,18 @@ import java.io.IOException;
  */
 public class DetailMapBlock extends OverviewMapBlock {
 
+	private int tdbVersion;
+
 	// Sizes of the regions.  It is possible that rgn and tre are reversed?
 	private int rgnDataSize;
 	private int treDataSize;
 	private int lblDataSize;
+	private int netDataSize;
+	private int nodDataSize;
 
-	public DetailMapBlock() {
+	public DetailMapBlock(int tdbVersion) {
+		assert tdbVersion > 0;
+		this.tdbVersion = tdbVersion;
 	}
 
 	/**
@@ -77,12 +83,39 @@ public class DetailMapBlock extends OverviewMapBlock {
 
 		StructuredOutputStream os = block.getOutputStream();
 
-		os.write2(4);
-		os.write2(3);
-		os.write4(rgnDataSize);
+		int n = 3;
+		if (tdbVersion >= TdbFile.TDB_V407) {
+			if (netDataSize > 0)
+				n++;
+			if (nodDataSize > 0)
+				n++;
+		}
+		
+		os.write2(n+1);
+		os.write2(n);
+
 		os.write4(treDataSize);
+		os.write4(rgnDataSize);
 		os.write4(lblDataSize);
-		os.write(1);
+		
+		if (tdbVersion >= TdbFile.TDB_V407) {
+			if (n > 3) os.write4(netDataSize);
+			if (n > 4) os.write4(nodDataSize);
+//01 c3 00 ff
+			os.write4(0xff00c301);
+			os.write(0);
+			os.write(0);
+			os.write(0);
+
+			String mn = getMapName();
+			os.writeString(mn + ".TRE");
+			os.writeString(mn + ".RGN");
+			os.writeString(mn + ".LBL");
+			if (n > 3) os.writeString(mn + ".NET");
+			if (n > 4) os.writeString(mn + ".NOD");
+		} else {
+			os.write(1);
+		}
 	}
 
 	public void setRgnDataSize(int rgnDataSize) {
@@ -95,6 +128,14 @@ public class DetailMapBlock extends OverviewMapBlock {
 
 	public void setLblDataSize(int lblDataSize) {
 		this.lblDataSize = lblDataSize;
+	}
+
+	public void setNetDataSize(int netDataSize) {
+		this.netDataSize = netDataSize;
+	}
+
+	public void setNodDataSize(int nodDataSize) {
+		this.nodDataSize = nodDataSize;
 	}
 
 	public String toString() {

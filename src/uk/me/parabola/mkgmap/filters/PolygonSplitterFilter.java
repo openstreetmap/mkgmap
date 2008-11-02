@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Split polygons.  This is difficult and I don't know how to do this, so I
- * am making use of the java built in classes.  Basically I am just taking
+ * Split polygons so that they have less than the maximum number of points.
+ * This is handled by using java built in classes.  Basically I am just taking
  * the bounding box, spliting that in half and getting the intersection of
  * each half-box with the original shape.  Recurse until all are small enough.
  *

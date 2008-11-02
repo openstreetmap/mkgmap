@@ -17,11 +17,14 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.BufferedWriteStrategy;
-import uk.me.parabola.imgfmt.app.BufferedReadStrategy;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The NET file.  This consists of information about roads.  It is not clear
@@ -33,29 +36,51 @@ import java.io.IOException;
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
 
+	private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
+
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);
 		if (write) {
-			setWriter(new BufferedWriteStrategy(chan));
+			setWriter(new BufferedImgFileWriter(chan));
 			position(NETHeader.HEADER_LEN);
 		} else {
-			setReader(new BufferedReadStrategy(chan));
+			setReader(new BufferedImgFileReader(chan));
 			netHeader.readHeader(getReader());
 		}
 	}
 
-	protected void sync() throws IOException {
-		if (!isWritable())
-			return;
-
+	public void write() {
 		// Write out the actual file body.
 		writeBody();
+	}
 
+	public void writePost() {
 		getHeader().writeHeader(getWriter());
-		getWriter().sync();
 	}
 
 	private void writeBody() {
+		ImgFileWriter writer = getWriter();
 
+		int start = writer.position();
+		netHeader.startRoadDefs(start);
+		for (RoadDef r : roaddefs) {
+			r.write(writer, writer.position() - start);
+		}
+		netHeader.endRoadDefs(position());
+	}
+
+	public RoadDef createRoadDef(Label l) {
+		RoadDef r = new RoadDef();
+		r.addLabel(l);
+
+		roaddefs.add(r);
+
+		return r;
+	}
+
+	public void allRoadDefsDone() {
+		int ofs = 0;
+		for (RoadDef r : roaddefs)
+			ofs += r.calcOffset(ofs);
 	}
 }

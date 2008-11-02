@@ -19,9 +19,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -30,7 +30,15 @@ import uk.me.parabola.log.Logger;
 public class TREHeader extends CommonHeader {
 	private static final Logger log = Logger.getLogger(TREHeader.class);
 
-	public static final int HEADER_LEN = 120; // Other values are possible
+	// The tre section comes in different versions with different length
+	// headers.  We just refer to them by the header length for lack of any
+	// better description.
+	public static final int TRE_120 = 120;
+	public static final int TRE_184 = 184;
+	public static final int TRE_188 = 188;
+
+	// The header length to use when creating a file.
+	public static final int DEFAULT_HEADER_LEN = TRE_188;
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
@@ -57,11 +65,14 @@ public class TREHeader extends CommonHeader {
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
 	private final Section polygon = new Section(POLYGON_REC_LEN);
 	private final Section points = new Section(POINT_REC_LEN);
+	private Section tre7 = new Section(points, (char) 13);
+	private Section tre8 = new Section(tre7, (char) 4);
+	//private Section tre9 = new Section(tre8);
 
 	private int mapId;
 
 	public TREHeader() {
-		super(HEADER_LEN, "GARMIN TRE");
+		super(DEFAULT_HEADER_LEN, "GARMIN TRE");
 	}
 
 	/**
@@ -71,7 +82,7 @@ public class TREHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) throws ReadFailedException {
+	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		assert reader.position() == COMMON_HEADER_LEN;
 		int maxLat = reader.get3();
 		int maxLon = reader.get3();
@@ -81,8 +92,22 @@ public class TREHeader extends CommonHeader {
 		log.info("read area is", getBounds());
 
 		// more to do...
-		int levels = reader.getInt();
-		mapInfoSize = levels - getHeaderLength();
+		mapLevelPos = reader.getInt();
+		mapLevelsSize = reader.getInt();
+		subdivPos = reader.getInt();
+		subdivSize = reader.getInt();
+
+		copyright.setPosition(reader.getInt());
+		copyright.setSize(reader.getInt());
+		copyright.setItemSize(reader.getChar());
+
+		int mapInfoOff = mapLevelPos;
+		if (subdivPos < mapInfoOff)
+			mapInfoOff = subdivPos;
+		if (copyright.getPosition() < mapInfoOff)
+			mapInfoOff = copyright.getPosition();
+
+		mapInfoSize = mapInfoOff - getHeaderLength();
 		
 		reader.getInt();
 		reader.getInt();
@@ -92,18 +117,17 @@ public class TREHeader extends CommonHeader {
 		reader.getInt();
 	}
 
-	private void readSectionInfo(ReadStrategy reader, Section sect) {
+	private void readSectionInfo(ImgFileReader reader, Section sect) {
 		sect.setPosition(reader.getInt());
 		sect.setSize(reader.getInt());
 		sect.setItemSize(reader.getChar());
 	}
 
-	protected void writeSectionInfo(WriteStrategy writer, Section section) {
+	protected void writeSectionInfo(ImgFileWriter writer, Section section) {
 		writer.putInt(section.getPosition());
 		writer.putInt(section.getSize());
-		writer.putChar(section.getItemSize());
-
-		writer.putInt(0);
+		if (section.getItemSize() > 0)
+			writer.putChar(section.getItemSize());
 	}
 
 	/**
@@ -112,19 +136,20 @@ public class TREHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.put3(area.getMaxLat());
 		writer.put3(area.getMaxLong());
 		writer.put3(area.getMinLat());
 		writer.put3(area.getMinLong());
 
-		writer.putInt(getMapLevelPos());
+		writer.putInt(getMapLevelsPos());
 		writer.putInt(getMapLevelsSize());
 
 		writer.putInt(getSubdivPos());
 		writer.putInt(getSubdivSize());
 
 		writeSectionInfo(writer, copyright);
+		writer.putInt(0);
 
 		writer.put(getPoiDisplayFlags());
 
@@ -135,13 +160,43 @@ public class TREHeader extends CommonHeader {
 		writer.put((byte) 0);
 
 		writeSectionInfo(writer, polyline);
+		writer.putInt(0);
 		writeSectionInfo(writer, polygon);
+		writer.putInt(0);
 		writeSectionInfo(writer, points);
+		writer.putInt(0);
 
-		// Map ID
-		writer.putInt(getMapId());
+		// There are a number of versions of the header with increasing lengths
+		if (getHeaderLength() > 116)
+			writer.putInt(getMapId());
 
-		writer.position(HEADER_LEN);
+		if (getHeaderLength() > 120) {
+			writer.putInt(0);
+
+			writeSectionInfo(writer, tre7);
+			writer.putInt(0); // not usually zero
+
+			writeSectionInfo(writer, tre8);
+			writer.putChar((char) 0);
+			writer.putInt(0);
+		}
+
+		if (getHeaderLength() > 154) {
+			MapValues mv = new MapValues(mapId, getHeaderLength());
+			mv.calculate();
+			writer.putInt(mv.value(0));
+			writer.putInt(mv.value(1));
+			writer.putInt(mv.value(2));
+			writer.putInt(mv.value(3));
+
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putChar((char) 0);
+			writer.putInt(0);
+		}
+		
+		writer.position(getHeaderLength());
 	}
 
 
@@ -173,7 +228,7 @@ public class TREHeader extends CommonHeader {
 		this.mapInfoSize = mapInfoSize;
 	}
 
-	protected int getMapLevelPos() {
+	public int getMapLevelsPos() {
 		return mapLevelPos;
 	}
 
@@ -189,7 +244,7 @@ public class TREHeader extends CommonHeader {
 		this.mapLevelsSize = mapLevelsSize;
 	}
 
-	protected int getSubdivPos() {
+	public int getSubdivPos() {
 		return subdivPos;
 	}
 

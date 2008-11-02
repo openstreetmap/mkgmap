@@ -18,8 +18,8 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
-import uk.me.parabola.imgfmt.app.ReadStrategy;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * The header for the RGN file.  This is very simple, just a location and size.
@@ -44,7 +44,7 @@ public class RGNHeader extends CommonHeader {
 	 *
 	 * @param reader The header is read from here.
 	 */
-	protected void readFileHeader(ReadStrategy reader) throws ReadFailedException {
+	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
 		dataOffset = reader.getInt();
 		dataSize = reader.getInt();
 	}
@@ -55,7 +55,7 @@ public class RGNHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	protected void writeFileHeader(WriteStrategy writer) {
+	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.putInt(dataOffset);
         writer.putInt(getDataSize());
 	}

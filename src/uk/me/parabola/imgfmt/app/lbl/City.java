@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * A city is in a region.  It also has (or can have anyway) a reference to
@@ -51,7 +51,7 @@ public class City {
 		this.index = index;
 	}
 
-	void write(WriteStrategy writer) {
+	void write(ImgFileWriter writer) {
 		//writer.put3()
 		if (pointRef) {
 			writer.put(pointIndex);

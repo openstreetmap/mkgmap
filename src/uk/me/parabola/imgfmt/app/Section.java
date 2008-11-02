@@ -62,14 +62,21 @@ public class Section {
 		this.size = size;
 	}
 
+	/**
+	 * Get the start position of this section.  If this is linked to another
+	 * section, then we return the end address of that section.
+	 * @return The first offset for this section.
+	 */
 	public int getPosition() {
 		if (link != null)
-			return link.getPosition();
+			return link.getEndPos();
 		return position;
 	}
 
 	public void setPosition(int position) {
 		this.position = position;
+		// Setting a position breaks the link
+		this.link = null;
 	}
 
 	/**
@@ -82,7 +89,7 @@ public class Section {
 	}
 
 	public String toString() {
-		return "pos=" + position + ", size=" + size + ", itemSize=" + itemSize;
+		return "pos=" + getPosition() + ", size=" + size + ", itemSize=" + itemSize;
 	}
 
 	/**

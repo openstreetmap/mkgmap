@@ -28,8 +28,8 @@ import java.nio.ByteBuffer;
  *
  * @author Steve Ratcliffe
  */
-public class BufferedReadStrategy implements ReadStrategy {
-	private static final Logger log = Logger.getLogger(BufferedReadStrategy.class);
+public class BufferedImgFileReader implements ImgFileReader {
+	private static final Logger log = Logger.getLogger(BufferedImgFileReader.class);
 
 	// Buffer size, must be a power of 2
 	private static final int BUF_SIZE = 0x1000;
@@ -44,7 +44,7 @@ public class BufferedReadStrategy implements ReadStrategy {
 	// We keep our own idea of the file position.
 	private long position;
 
-	public BufferedReadStrategy(ImgChannel chan) {
+	public BufferedImgFileReader(ImgChannel chan) {
 		this.chan = chan;
 	}
 

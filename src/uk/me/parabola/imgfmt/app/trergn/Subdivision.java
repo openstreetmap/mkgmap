@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.log.Logger;
 
@@ -61,6 +61,8 @@ public class Subdivision {
 	private boolean hasIndPoints;
 	private boolean hasPolylines;
 	private boolean hasPolygons;
+
+	private int numPolylines;
 
 	// The location of the central point, not scaled AFAIK
 	private final int longitude;
@@ -144,6 +146,10 @@ public class Subdivision {
 		return div;
 	}
 
+	public Zoom getZoom() {
+		return zoomLevel;
+	}
+
 	/**
 	 * Get the shift value, that is the number of bits to left shift by for
 	 * values that need to be saved shifted in the file.  Related to the
@@ -171,7 +177,7 @@ public class Subdivision {
 	 *
 	 * @param file The file to write to.
 	 */
-	public void write(WriteStrategy file) {
+	public void write(ImgFileWriter file) {
 		log.debug("write subdiv", latitude, longitude);
 		file.put3(rgnPointer);
 		file.put(getType());
@@ -204,6 +210,8 @@ public class Subdivision {
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
+		numPolylines++;
+		pl.setNumber(numPolylines);
 		return pl;
 	}
 
@@ -343,7 +351,7 @@ public class Subdivision {
 		divisions.add(sd);
 	}
 
-	private int getNumber() {
+	public int getNumber() {
 		return number;
 	}
 

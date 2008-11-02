@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -27,14 +31,10 @@ import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Build the TDB file and the overview map.
@@ -46,10 +46,11 @@ public class TdbBuilder implements Combiner {
 
 	private final OverviewMap overviewSource = new OverviewMapDataSource();
 
-	private final TdbFile tdb = new TdbFile();
+	private TdbFile tdb;
 
-	private final int parent = 63240000;
+	private int parent = 63240000;
 	private String overviewMapname;
+	private int tdbVersion;
 
 	/**
 	 * Initialise by saving all the information we require from the command line
@@ -61,15 +62,26 @@ public class TdbBuilder implements Combiner {
 	 */
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "63240000");
-		// TODO parent = ...
+		try {
+			parent = Integer.parseInt(overviewMapname);
+		} catch (NumberFormatException e) {
+			log.debug("overview map name not an integer", overviewMapname);
+		}
 
-		int familyId = args.get("family-id", 42);
-		int productVersion = args.get("product-id", 1);
+		int familyId = args.get("family-id", 0);
+		int productId = args.get("product-id", 1);
 		
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		tdb.setProductInfo(familyId, productVersion, seriesName, familyName);
+		if (args.exists("tdb-v4")) {
+			tdbVersion = TdbFile.TDB_V407;
+		} else {
+			tdbVersion = TdbFile.TDB_V3;
+		}
+
+		tdb = new TdbFile(tdbVersion);
+		tdb.setProductInfo(familyId, productId, (short) 100, seriesName, familyName);
 	}
 
 	/**
@@ -92,7 +104,7 @@ public class TdbBuilder implements Combiner {
 	 * @param finfo Information about the current .img file.
 	 */
 	private void addToTdb(FileInfo finfo) {
-		DetailMapBlock detail = new DetailMapBlock();
+		DetailMapBlock detail = new DetailMapBlock(tdbVersion);
 		detail.setArea(finfo.getBounds());
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
@@ -104,6 +116,8 @@ public class TdbBuilder implements Combiner {
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());
 		detail.setRgnDataSize(finfo.getRgnsize());
+		detail.setNetDataSize(finfo.getNetsize());
+		detail.setNodDataSize(finfo.getNodsize());
 
 		log.info("overview-name", parent);
 		detail.setParentMapNumber(parent);
@@ -123,12 +137,33 @@ public class TdbBuilder implements Combiner {
 	private void addToOverviewMap(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 
+		//System.out.printf("overview shift %d\n", overviewSource.getShift());
 		int overviewMask = ((1 << overviewSource.getShift()) - 1);
+		//System.out.printf("mask %x\n", overviewMask);
 
+		//int maxLon = bounds.getMaxLong();
+		//int maxLat = bounds.getMaxLat();
+		//int minLat = bounds.getMinLat();
+		//int minLon = bounds.getMinLong();
 		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
 		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
-		int minLat = bounds.getMinLat() & ~overviewMask;
-		int minLon = bounds.getMinLong() & ~overviewMask;
+		int minLat = (bounds.getMinLat() - overviewMask) & ~overviewMask;
+		int minLon = (bounds.getMinLong() - overviewMask) & ~overviewMask;
+		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
+		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMaxLat()),
+		//		Utils.toDegrees(maxLat));
+		//
+		//System.out.printf("minlat (map) %x, calc %x\n", bounds.getMinLat(), minLat);
+		//System.out.printf("minlat (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMinLat()),
+		//		Utils.toDegrees(minLat));
+		//System.out.printf("minlon (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMinLong()),
+		//		Utils.toDegrees(minLon));
+		//System.out.printf("maxlon (map) %.3f, calc %.3f\n",
+		//		Utils.toDegrees(bounds.getMaxLong()),
+		//		Utils.toDegrees(maxLon));
 
 		// Add a background polygon for this map.
 		Coord start, co;
@@ -159,6 +194,7 @@ public class TdbBuilder implements Combiner {
 		bg.setMinResolution(10);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
+		//System.out.println(bg.getBounds());
 		overviewSource.addShape(bg);
 	}
 

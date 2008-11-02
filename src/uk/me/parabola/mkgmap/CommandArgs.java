@@ -187,6 +187,13 @@ public class CommandArgs {
 	}
 
 	/**
+	 * Test for the existence of an argument.
+	 */
+	public boolean exists(String name) {
+		return currentOptions.getProperty(name) != null;
+	}
+
+	/**
 	 * Add an option based on the option and value separately.
 	 * @param option The option name.
 	 * @param value Its value.

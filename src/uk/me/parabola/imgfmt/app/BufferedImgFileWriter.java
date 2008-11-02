@@ -29,8 +29,8 @@ import java.nio.ByteOrder;
  *
  * @author Steve Ratcliffe
  */
-public class BufferedWriteStrategy implements WriteStrategy {
-	private static final Logger log = Logger.getLogger(BufferedWriteStrategy.class);
+public class BufferedImgFileWriter implements ImgFileWriter {
+	private static final Logger log = Logger.getLogger(BufferedImgFileWriter.class);
 
 	private static final int KBYTE = 1024;
 	private static final int INIT_SIZE = 16 * KBYTE;
@@ -44,7 +44,7 @@ public class BufferedWriteStrategy implements WriteStrategy {
 
 	private int maxSize;
 
-	public BufferedWriteStrategy(ImgChannel chan) {
+	public BufferedImgFileWriter(ImgChannel chan) {
 		this.chan = chan;
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 	}

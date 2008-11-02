@@ -17,18 +17,19 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.io.IOException;
+import java.io.Closeable;
 
 /**
  * I want to be able to experiment with different schemes to write out.
  *
  * I am hoping that you do not need to write files with contiguous blocks,
  * however since all maps seem to do that it may not be possible.  Having a block
- * list is then a bit strange.  Perhaps you can but it performs worse so noone
+ * list is then a bit strange.  Perhaps you can but it performs worse so no one
  * does it?
  *
  * @author Steve Ratcliffe
  */
-public interface WriteStrategy {
+public interface ImgFileWriter extends Closeable {
 	/**
 	 * Called to write out any saved buffers.  The strategy may write
 	 * directly to the file in which case this would have nothing or
@@ -36,12 +37,6 @@ public interface WriteStrategy {
 	 * @throws IOException If there is an error writing.
 	 */
 	public void sync() throws IOException;
-
-	/**
-	 * Called when the stream is closed.  Any resources can be freed.
-	 * @throws IOException When there is an error in closing.
-	 */
-	public void close() throws IOException;
 
 	/**
 	 * Get the position.  Needed because may not be reflected in the underlying

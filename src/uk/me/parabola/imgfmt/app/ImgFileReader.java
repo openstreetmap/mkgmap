@@ -19,20 +19,15 @@ package uk.me.parabola.imgfmt.app;
 import uk.me.parabola.imgfmt.ReadFailedException;
 
 import java.io.IOException;
+import java.io.Closeable;
 
 /**
- * Read strategy interface.  Since we have a write strategy, have this for
- * balance.  It does split up reading and writing quite nicely though.
+ * For reading subfiles from the img.  The focus of mkgmap is on writing,
+ * but some limited reading is needed for several operations.
  *
  * @author Steve Ratcliffe
  */
-public interface ReadStrategy {
-
-	/**
-	 * Called when the stream is closed.  Any resources can be freed.
-	 * @throws IOException When there is an error in closing.
-	 */
-	public void close() throws IOException;
+public interface ImgFileReader extends Closeable {
 
 	/**
 	 * Get the position.  Needed because may not be reflected in the underlying

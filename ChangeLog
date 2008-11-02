@@ -1,5 +1,330 @@
+2008-08-03  steve
+
+	* .: Merge tracking for typpoi nod and style branches.
+
+2008-08-02  steve
+
+	* src/uk/me/parabola/mkgmap/filters/SmoothingFilter.java: Initial
+	  fix for polygon smoothing, more to do. - Olaf Kähler
+	* src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  some trivial bugs about converting meters/feet in .mp files...
+	  now also all three kinds of contour lines will be processed. -
+	  Olaf Kähler
+
+2008-07-28  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: 1: When
+	  using files processed by osmcut some ways which were part of the
+	  relation were not in the file causing a null-pointer exception.
+	  This is now handled in both OSM5XMLHandler and
+	  MultipolygonRelation. 2: I changed the calcutation of the
+	  distance between points to also take hemisphere changes into
+	  account. The code looks not nice to me however. 3: I uncommented
+	  the last line of the insertPoints function as the islands looked
+	  ok on my venture HC. It appears only mapsource messes things up.
+	  Rene Affourtit
+
+2008-07-27  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Completely empty osm files caused mkgmap to go into a loop and
+	  run out of memory. Now we just ignore any empty file. If the file
+	  still has a valid bounds element then the output will still be
+	  produced. Reported by Christian Ehrlicher.
+
+2008-07-23  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  When a way is tagged both riverbank and coastline, then prefer
+	  the coastline. This gives the best results until there is code to
+	  deal with filling in in-complete polygons.
+
+2008-07-18  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Add the bodge that allows the contour tag have a height
+	  specified, to the contour_ext tags too. Requested by a couple of
+	  people for use with Srtm2Osm.
+	  
+	  The mythical new style system will allow this to be configured
+	  properly...
+
+2008-07-08  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Relation.java: Patch to add
+	  relation support and in particular for the multi polygon
+	  relation.
+	  
+	  known issues: - Areas crossing equator, poles, meridian, dataline
+	  will be joined wrong. - connection between inner and outer ways.
+	  
+	  -Rene_A
+
+2008-07-06  steve
+
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/BufferedReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedWriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/ReadStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/WriteStrategy.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java: NetDisplay
+	  now looks up the number of cities and so can tell if they need
+	  one or 2 bytes.
+	* Makefile,
+	  src/uk/me/parabola/imgfmt/app/BufferedImgFileReader.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedImgFileWriter.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileReader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileWriter.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/OffsetWriter.java,
+	  src/uk/me/parabola/imgfmt/app/OffsetWriterList.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/City.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Country.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/LBLHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Region.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/Zip.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadIndex.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/MapObject.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Overview.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Polyline.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Subdivision.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Zoom.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPHeader.java: Renamed the
+	  ReadStrategy and WriteStrategy interfaces and their associated
+	  classes to ImgFileReader and ImgFileWriter etc
+	* src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java: 1. Make overview
+	  polygons completely cover the map area. 2. Read family id from
+	  tdb header. 3. re-org v4 header writing.
+
+2008-07-05  steve
+
+	* src/uk/me/parabola/mkgmap/main/Main.java: Fixed --help option.
+
+2008-07-03  steve
+
+	* src/uk/me/parabola/tdbfmt/TdbFile.java: Removed unneed imports
+	* src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSplitterFilter.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Removed debugging prints, improved display of bounds.
+	* src/uk/me/parabola/tdbfmt/TBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Add the crc to the T
+	  block
+
+2008-07-01  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/Coord.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java,
+	  src/uk/me/parabola/mkgmap/general/MapLine.java,
+	  src/uk/me/parabola/mkgmap/general/PolygonClipper.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java: If
+	  there is a bounding box in the input file, then use that to clip
+	  the output to exactly to that box.
+
+2008-06-29  steve
+
+	* src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Make the family id
+	  default to 0 (due to a bug it, the default was really always 0).
+	  Remove v4 block from v3 TDB
+	* resources/help/en/options: Add missing options - Michael Vogt
+
+2008-06-28  steve
+
+	* src/uk/me/parabola/io/StructuredOutputStream.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/tdbfmt/DetailMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java,
+	  src/uk/me/parabola/tdbfmt/RBlock.java,
+	  src/uk/me/parabola/tdbfmt/TBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Adding support for TDB
+	  v4. It does not work.
+
+2008-06-23  steve
+
+	* src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java: The part field appears
+	  to be just the one byte. - Johann Gail
+
+2008-06-22  steve
+
+	* src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java:
+	  Remove System.exit's and unused code.
+	* src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/tdbfmt/HeaderBlock.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Set family id more
+	  consistantly and read the TRE header more completely (whole
+	  header is not needed yet, so we just do part of it).
+
+2008-06-21  steve
+
+	* src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Segment.java: Segments are
+	  long gone.
+	* src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java: Looks like
+	  the parent needs to be properly set. (I don't see this crash
+	  though) See
+	  http://wiki.openstreetmap.org/index.php?title=Talk:Mkgmap&curid=4591&diff=114690&oldid=113277
+	* Makefile, src/uk/me/parabola/imgfmt/app/OffsetWriter.java,
+	  src/uk/me/parabola/imgfmt/app/OffsetWriterList.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadIndex.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Polyline.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Subdivision.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java: Merge in the net
+	  branch. This gives the ability to add the NET section. The work
+	  on the net branch was done by Elrond.
+
+2008-06-20  steve
+
+	* src/uk/me/parabola/imgfmt/app/trergn/MapValues.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java: Merge in
+	  work to extend the TRE header to the 188 byte version. Somewhat
+	  experimental at the moment.
+
+2008-05-24  steve
+
+	* resources/map-features.csv, resources/osm_garmin_map.csv,
+	  resources/styles/default/map-features.csv: Added
+	  amenity=drinking_water and natural=glacier as suggested by
+	  Frédéric Bonifas.
+
+2008-05-15  steve
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: Protect
+	  against bad numeric data in the input file.
+
+2008-05-12  steve
+
+	* Makefile,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java: I
+	  believe that the garmin is expecting that the contours are in
+	  feet, so we need to convert. You can change how it displays them
+	  on the Garmin with an option.
+
+2008-05-03  steve
+
+	* src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETHeader.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java: Little
+	  improvement to NET output routines
+	  
+	  This allows to create label-only RoadDefs in the NET file. The
+	  created NET file looks good using the display tools.
+
+2008-04-28  steve
+
+	* src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java: Make
+	  --map-features a synonym for --style-file like it is meant to be.
+
+2008-04-26  steve
+
+	* ChangeLog, Makefile, build.xml, doc/Credits,
+	  src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java: Tidy
+	  up for a release.
+	* src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java: Add
+	  StreetNames to POI
+	  
+	  POIRecords are variable length, have optional flags for the
+	  included info and are mostly straight forward. This adds the
+	  optional flag writing and one optional field: The StreetName.
+	  
+	  - Elrond
+
+2008-04-22  steve
+
+	* src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/POIRecord.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesFile.java,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: Basic POI
+	  support
+	  
+	  The LBL file contains a section for detailed information about
+	  POIs (street, streetnumber, ZIP, phone number). These entries can
+	  be linked from the Point-entries in the map subdivisions.
+	  
+	  For now we only use the Name field in the POIRecord. The user
+	  visible change is in MapSource: Most POIs now have a Property
+	  context-menu entry, which shows the detailed info.
+	  
+	  The Point-entry flag was found in qlandkarte. The rest is
+	  documented in the imgformat pdf.
+	  
+	  - Elrond
+	* src/uk/me/parabola/mkgmap/main/Main.java: Add --version option -
+	  suggested by Petr Schönmann.
+	  
+	  Only works properly with packaged versions of mkgmap, not direct
+	  from svn.
+
 2008-04-20  steve
 
+	* ChangeLog, doc/mkgmap.1, resources/help/en/copyright,
+	  resources/help/en/help, resources/help/en/inputs,
+	  resources/help/en/links, resources/help/en/options: Improvements
+	  and additional help files.
+	* resources/styles/default/info, resources/styles/test/info,
+	  src/uk/me/parabola/mkgmap/gui/MainFileList.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java: Can now
+	  list styles (not that there are any available yet) Added info
+	  file so that a style listing can include information about the
+	  style
 	* doc/Credits, doc/mkgmap.1: Add man page, written by Andreas Putzo
 	  for the Debian project.
 

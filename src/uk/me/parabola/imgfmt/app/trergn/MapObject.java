@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
@@ -51,7 +51,7 @@ public abstract class MapObject {
 	 *
 	 * @param file The file to write to. It is usually the RGN file.
 	 */
-	public abstract void write(WriteStrategy file);
+	public abstract void write(ImgFileWriter file);
 
 	int getDeltaLat() {
 		return deltaLat;

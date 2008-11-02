@@ -17,24 +17,29 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.HashMap;
-// import java.util.Map;  --> will use "java.util.Map" where needed
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.map.Map;
-import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
-import uk.me.parabola.imgfmt.app.trergn.Polygon;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
+import uk.me.parabola.imgfmt.app.trergn.Polygon;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -79,9 +84,29 @@ public class MapBuilder {
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
 		processPOIs(map, src);
+		preProcessRoads(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
+		postProcessRoads(map, src);
+
+
+		RGNFile rgnFile = map.getRgnFile();
+		TREFile treFile = map.getTreFile();
+		LBLFile lblFile = map.getLblFile();
+		NETFile netFile = map.getNetFile();
+
+		treFile.setLastRgnPos(rgnFile.position() - 29);
+		rgnFile.write();
+		rgnFile.writePost();
+		treFile.write();
+		treFile.writePost();
+		lblFile.write();
+		lblFile.writePost();
+		if (netFile != null) {
+			netFile.write();
+			netFile.writePost();
+		}
 	}
 
 	/**
@@ -103,6 +128,30 @@ public class MapBuilder {
 	}
 
 	/**
+	 * Process roads first to create RoadDefs
+	 */
+	private void preProcessRoads(Map target, MapDataSource src) {
+		LBLFile lbl = target.getLblFile();
+		NETFile net = target.getNetFile();
+
+		if (net == null)
+			return;
+		
+		for (MapLine l : src.getLines()) {
+			Label label = lbl.newLabel(l.getName());
+			RoadDef r = net.createRoadDef(label);
+			l.setUserData(r);
+		}
+	}
+	private void postProcessRoads(Map target, MapDataSource src) {
+		NETFile net = target.getNetFile();
+
+		if (net == null)
+			return;
+		net.allRoadDefsDone();
+	}
+
+	/**
 	 * Drive the map generation by steping through the levels, generating the
 	 * subdivisions for the level and filling in the map elements that should
 	 * go into the area.
@@ -118,15 +167,31 @@ public class MapBuilder {
 		// do a special check to make sure.
 		LevelInfo[] levels = src.mapLevels();
 		LevelInfo levelInfo = levels[0];
-		int maxBits = getMaxBits(src);
-		// If the max is larger than the top-most data level then we
-		// decrease it so that it is less.
-		if (levelInfo.getBits() <= maxBits)
-			maxBits = levelInfo.getBits() - 1;
 
-		// Create the empty top level
-		Zoom zoom = map.createZoom(levelInfo.getLevel() + 1, maxBits);
-		Subdivision topdiv = makeTopArea(src, map, zoom);
+		// If there is already a top level zoom, then we shouldn't add our own
+		Subdivision topdiv;
+		if (levelInfo.isTop()) {
+			// There is already a top level definition.  So use the values from it and
+			// then remove it from the levels definition.
+
+			// (note: when we go to java 1.6 you can use a copyOfRange() call here to simplify
+			levels = Arrays.asList(levels).subList(1, levels.length)
+					.toArray(new LevelInfo[levels.length - 1]);
+
+			Zoom zoom = map.createZoom(levelInfo.getLevel(), levelInfo.getBits());
+			topdiv = makeTopArea(src, map, zoom);
+		} else {
+			// We have to automatically create the definition for the top zoom level.
+			int maxBits = getMaxBits(src);
+			// If the max is larger than the top-most data level then we
+			// decrease it so that it is less.
+			if (levelInfo.getBits() <= maxBits)
+				maxBits = levelInfo.getBits() - 1;
+
+			// Create the empty top level
+			Zoom zoom = map.createZoom(levelInfo.getLevel() + 1, maxBits);
+			topdiv = makeTopArea(src, map, zoom);
+		}
 
 		// We start with one map data source.
 		List<SourceSubdiv> srcList = Collections.singletonList(new SourceSubdiv(src, topdiv));
@@ -135,7 +200,7 @@ public class MapBuilder {
 		for (LevelInfo linfo : levels) {
 			List<SourceSubdiv> nextList = new ArrayList<SourceSubdiv>();
 
-			zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
+			Zoom zoom = map.createZoom(linfo.getLevel(), linfo.getBits());
 
 			for (SourceSubdiv srcDivPair : srcList) {
 
@@ -434,6 +499,14 @@ public class MapBuilder {
 				pl.addCoord(co);
 
 			pl.setType(line.getType());
+
+			RoadDef roaddef = (RoadDef) line.getUserData();
+			if (roaddef != null)
+			{
+				pl.setRoadDef(roaddef);
+				roaddef.addPolylineRef(pl);
+			}
+
 			map.addMapObject(pl);
 		}
 	}

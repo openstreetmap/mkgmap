@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
  * A region is in a country and contains one or more cities.
@@ -35,7 +35,7 @@ public class Region {
 		this.index = (char) index;
 	}
 
-	public void write(WriteStrategy writer) {
+	public void write(ImgFileWriter writer) {
 		writer.putChar(country.getIndex());
 		writer.put3(label.getOffset());
 	}

@@ -17,7 +17,8 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 
 /**
  * This is not a separate header, but rather part of the LBL header.  It is just
@@ -44,8 +45,17 @@ public class PlacesHeader {
 	private final Section poiProperties = new Section(unk1);
 	private final Section unk2 = new Section(poiProperties, UNK2_REC_LEN);
 	private final Section zip = new Section(unk2, ZIP_REC_LEN);
+	private byte POIGlobalFlags = 0;
 
-	void writeFileHeader(WriteStrategy writer) {
+	void setPOIGlobalFlags(byte flags) {
+		this.POIGlobalFlags = flags;
+	}
+
+	byte getPOIGlobalFlags() {
+		return POIGlobalFlags;
+	}
+
+	void writeFileHeader(ImgFileWriter writer) {
 		writer.putInt(country.getPosition());
 		writer.putInt(country.getSize());
 		writer.putChar(country.getItemSize());
@@ -69,7 +79,7 @@ public class PlacesHeader {
 		writer.putInt(poiProperties.getPosition());
 		writer.putInt(poiProperties.getSize());
 		writer.put((byte) 0); // offset multiplier
-		writer.put((byte) 0); // properties global mask
+		writer.put(POIGlobalFlags); // properties global mask
 		writer.putChar((char) 0);
 		writer.put((byte) 0);
 
@@ -101,32 +111,55 @@ public class PlacesHeader {
 		writer.putInt(0);
 	}
 
-	public int getLastPos() {
+	void readFileHeader(ImgFileReader reader) {
+		reader.position(0x1f);
+
+		country.setPosition(reader.getInt());
+		country.setSize(reader.getInt());
+		country.setItemSize(reader.getChar());
+		reader.getInt();
+
+		region.setPosition(reader.getInt());
+		region.setSize(reader.getInt());
+		region.setItemSize(reader.getChar());
+		reader.getInt();
+
+		city.setPosition(reader.getInt());
+		city.setSize(reader.getInt());
+		city.setItemSize(reader.getChar());
+		reader.getInt();
+	}
+
+	int getLastPos() {
 		// Beware this is not really valid until all is written.
 		return zip.getEndPos();
 	}
 
-	public void setLabelEnd(int pos) {
+	void setLabelEnd(int pos) {
 		country.setPosition(pos);
 	}
 
-	public void endCountries(int pos) {
+	void endCountries(int pos) {
 		country.setSize(pos - country.getPosition());
 	}
 
-	public void endRegions(int pos) {
+	void endRegions(int pos) {
 		region.setSize(pos - region.getPosition());
 	}
 
-	public void endCity(int pos) {
+	void endCity(int pos) {
 		city.setSize(pos - city.getPosition());
 	}
 
-	public void endPOI(int pos) {
+	void endPOI(int pos) {
 		poiProperties.setSize(pos - poiProperties.getPosition());
 	}
 
-	public void endZip(int pos) {
+	void endZip(int pos) {
 		zip.setSize(pos - zip.getPosition());
+	}
+
+	public int getNumCities() {
+		return city.getNumItems();
 	}
 }

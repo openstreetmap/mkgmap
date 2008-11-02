@@ -21,8 +21,11 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
+
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.log.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,19 +36,27 @@ import java.util.Map;
  * @author Steve Ratcliffe
  */
 class Osm5XmlHandler extends DefaultHandler {
+	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
+	
 	private int mode;
 
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
+	private final Map<Long, Way> wayMap = new HashMap<Long, Way>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
+	private static final int MODE_BOUND = 3;
+	private static final int MODE_RELATION = 4;
+	private static final int MODE_BOUNDS = 5;
 
 	private Node currentNode;
 	private Way currentWay;
+	private Relation currentRelation;
 
 	private OsmConverter converter;
 	private MapCollector mapper;
 	private long currentNodeId;
+	private Area bbox;
 
 	/**
 	 * Receive notification of the start of an element.
@@ -82,8 +93,19 @@ class Osm5XmlHandler extends DefaultHandler {
 
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
-				currentWay = new Way();
+				addWay(attributes.getValue("id"));
+			} else if (qName.equals("relation")) {
+				mode = MODE_RELATION;
+				currentRelation = new Relation();		
+			} else if (qName.equals("bound")) {
+				mode = MODE_BOUND;
+				String box = attributes.getValue("box");
+				setupBBoxFromBound(box);
+			} else if (qName.equals("bounds")) {
+				mode = MODE_BOUNDS;
+				setupBBoxFromBounds(attributes);
 			}
+
 		} else if (mode == MODE_NODE) {
 			if (qName.equals("tag")) {
 				String key = attributes.getValue("k");
@@ -110,6 +132,20 @@ class Osm5XmlHandler extends DefaultHandler {
 				String val = attributes.getValue("v");
 				currentWay.addTag(key, val);
 			}
+		} else if (mode == MODE_RELATION) {
+			if (qName.equals("member")) {
+				if (attributes.getValue("type").equals("way")){
+				long id = Long.parseLong(attributes.getValue("ref"));
+				String role = attributes.getValue("role");
+				Way way = wayMap.get(id);
+				if (way != null) // ignore non existing ways caused by splitting files 
+				  currentRelation.addWay( role, way); 		
+				}
+			} else if (qName.equals("tag")) {
+				String key = attributes.getValue("k");
+				String val = attributes.getValue("v");
+				currentRelation.addTag(key, val);
+			}			
 		}
 	}
 
@@ -129,7 +165,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * @see ContentHandler#endElement
 	 */
 	public void endElement(String uri, String localName, String qName)
-			throws SAXException
+					throws SAXException
 	{
 		if (mode == MODE_NODE) {
 			if (qName.equals("node")) {
@@ -145,11 +181,25 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
-				// Process the way.
-				converter.convertName(currentWay);
-				converter.convertWay(currentWay);
+				currentWay = null;
+				// ways are processed at the end of the document,
+				// may be changed by a Relation class
 			}
-		}
+		} else if (mode == MODE_BOUND) {
+			if (qName.equals("bound")) {
+				mode = 0;
+			}
+		} else if (mode == MODE_BOUNDS) {
+			if (qName.equals("bounds")) {
+				mode = 0;
+			}
+		} else if (mode == MODE_RELATION) {
+			if (qName.equals("relation")) {
+				mode = 0;
+				currentRelation.processWays();
+				currentRelation = null;
+			}
+		}		
 	}
 
 	/**
@@ -162,7 +212,56 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
+		for (Way w: wayMap.values()){
+			converter.convertName(w);			
+			converter.convertWay(w);				
+		}
 		mapper.finish();
+	}
+
+	private void setupBBoxFromBounds(Attributes xmlattr) {
+		try {
+			double minlat = Double.parseDouble(xmlattr.getValue("minlat"));
+			double minlon = Double.parseDouble(xmlattr.getValue("minlon"));
+			double maxlat = Double.parseDouble(xmlattr.getValue("maxlat"));
+			double maxlon = Double.parseDouble(xmlattr.getValue("maxlon"));
+
+			setBBox(minlat, minlon, maxlat, maxlon);
+		} catch (NumberFormatException e) {
+			// just ignore it
+		}
+	}
+
+	private void setupBBoxFromBound(String box) {
+		String[] f = box.split(",");
+		try {
+			double minlat = Double.parseDouble(f[0]);
+			double minlong = Double.parseDouble(f[1]);
+			double maxlat = Double.parseDouble(f[2]);
+			double maxlong = Double.parseDouble(f[3]);
+
+			setBBox(minlat, minlong, maxlat, maxlong);
+			log.debug("Map bbox: " + bbox);
+		} catch (NumberFormatException e) {
+			// just ignore it
+		}
+	}
+
+	private void setBBox(double minlat, double minlong,
+	                     double maxlat, double maxlong) {
+		assert bbox == null;
+
+		bbox = new Area(minlat, minlong, maxlat, maxlong);
+		converter.setBoundingBox(bbox);
+
+		Coord co = new Coord(minlat, minlong);
+		mapper.addToBounds(co);
+		co = new Coord(minlat, maxlong);
+		mapper.addToBounds(co);
+		co = new Coord(maxlat, minlong);
+		mapper.addToBounds(co);
+		co = new Coord(maxlat, maxlong);
+		mapper.addToBounds(co);
 	}
 
 	/**
@@ -173,18 +272,31 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * @param slon The longitude as a string.
 	 */
 	private void addNode(String sid, String slat, String slon) {
-		long id = Long.parseLong(sid);
-		double lat = Double.parseDouble(slat);
-		double lon = Double.parseDouble(slon);
+		try {
+			long id = Long.parseLong(sid);
+			double lat = Double.parseDouble(slat);
+			double lon = Double.parseDouble(slon);
 
-		//if (log.isDebugEnabled())
-		//	log.debug("adding node" + lat + '/' + lon);
-		Coord co = new Coord(lat, lon);
-		nodeMap.put(id, co);
-		currentNodeId = id;
-		mapper.addToBounds(co);
+			Coord co = new Coord(lat, lon);
+			nodeMap.put(id, co);
+			currentNodeId = id;
+			if (bbox == null)
+				mapper.addToBounds(co);
+		} catch (NumberFormatException e) {
+			// ignore bad numeric data.
+		}
 	}
-
+	
+	private void addWay(String sid) {
+		try {
+			currentWay = new Way();
+			long id = Long.parseLong(sid);	 
+			wayMap.put(id, currentWay);	
+		} catch (NumberFormatException e) {
+			// ignore bad numeric data.
+		}
+	}
+	
 	private void addNodeToWay(long id) {
 		Coord co = nodeMap.get(id);
 		if (co != null)

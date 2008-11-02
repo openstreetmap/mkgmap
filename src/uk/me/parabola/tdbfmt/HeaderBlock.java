@@ -27,11 +27,15 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 class HeaderBlock {
+
+	/** The map family. */
+	private short familyId;
+
 	/** A unique number associated with the map product */
 	private short productId;
 
 	/** The version of TDB */
-	private int tdbVersion = 0x012c;
+	private final int tdbVersion;
 
 	/** The series name is an overall name eg 'US Topo' */
 	private String seriesName;
@@ -45,16 +49,15 @@ class HeaderBlock {
 	 */
 	private String familyName;
 
-	HeaderBlock() {
+	HeaderBlock(int tdbVersion) {
+		this.tdbVersion = tdbVersion;
 	}
 
 	HeaderBlock(Block block) throws IOException {
 		StructuredInputStream ds = block.getInputStream();
 
 		productId = (short) ds.read2();
-		/*int junk = */ds.read2();
-		//assert junk == 0;
-		// junk is the product id, in version 4 of the format anyway
+		familyId = (short) ds.read2();
 
 		tdbVersion = ds.read2();
 		seriesName = ds.readString();
@@ -65,13 +68,54 @@ class HeaderBlock {
 	public void write(Block block) throws IOException {
 		StructuredOutputStream os = block.getOutputStream();
 		os.write2(productId);
-		os.write2(0);
+		os.write2(familyId);
 		os.write2(tdbVersion);
 		os.writeString(seriesName);
 		os.write2(productVersion);
 		os.writeString(familyName);
+
+		if (tdbVersion >= TdbFile.TDB_V407) {
+			// Unknown purpose
+
+			os.write(0);
+			os.write(0x12); // lowest map level
+			os.write(1);
+			os.write(1);
+			os.write(1);
+			os.write4(0);
+			os.write(0);
+			os.write(0x18); // highest routable? 19 no, 21 ok
+			os.write4(0);
+			os.write4(0);
+			os.write4(0);
+			os.write4(0);
+			os.write3(0);
+			os.write4(1252);
+			os.write4(10000);
+			os.write(1);
+			os.write2(0);
+		}
 	}
 
+	// good
+			//os.write(0);
+			//os.write(0x12);
+			//os.write(1);
+			//os.write(1);
+			//os.write(1);
+			//os.write4(0);
+			//os.write(0);
+			//os.write(0x15);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write4(0);
+			//os.write3(0);
+			//os.write4(1252);
+			//os.write4(10000);
+			//os.write(1);
+			//os.write(0);
+			//os.write(0);
 	public String toString() {
 		return "TDB header: "
 				+ productId
@@ -101,4 +145,10 @@ class HeaderBlock {
 	public void setProductVersion(short productVersion) {
 		this.productVersion = productVersion;
 	}
+
+	public void setFamilyId(short familyId) {
+		this.familyId = familyId;
+	}
+
+
 }

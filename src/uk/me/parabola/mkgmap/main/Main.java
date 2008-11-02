@@ -78,7 +78,7 @@ public class Main implements ArgumentProcessor {
 		if (args.length < 1) {
 			System.err.println("Usage: mkgmap [options...] <file.osm>");
 			printHelp(System.err, getLang(), "options");
-			System.exit(1);
+			return;
 		}
 
 		Main mm = new Main();
@@ -89,7 +89,6 @@ public class Main implements ArgumentProcessor {
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
-			System.exit(1);
 		}
 	}
 
@@ -171,8 +170,8 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
 		} else if (opt.equals("help")) {
-			printHelp(System.out, getLang(), (val != null) ? val : "help");
-		} else if (opt.equals("style-file")) {
+			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
+		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
 		} else if (opt.equals("list-styles")) {
 			listStyles();

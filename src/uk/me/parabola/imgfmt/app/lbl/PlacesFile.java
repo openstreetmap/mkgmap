@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.WriteStrategy;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -53,7 +53,7 @@ public class PlacesFile {
 		placeHeader = pheader;
 	}
 
-	void write(WriteStrategy writer) {
+	void write(ImgFileWriter writer) {
 		for (Country c : countries.values())
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
@@ -67,8 +67,10 @@ public class PlacesFile {
 		placeHeader.endCity(writer.position());
 
 		int poistart = writer.position();
+		byte poiglobalflags = placeHeader.getPOIGlobalFlags();
 		for (POIRecord p : pois)
-			p.write(writer, writer.position() - poistart);
+			p.write(writer, poiglobalflags,
+				writer.position() - poistart);
 		placeHeader.endPOI(writer.position());
 
 		for (Zip z : postalCodes.values())
@@ -119,7 +121,7 @@ public class PlacesFile {
 	}
 
 	POIRecord createPOI(String name) {
-		assert poisClosed == false;
+		assert !poisClosed;
 		// TODO...
 		POIRecord p = new POIRecord();
 
@@ -132,8 +134,15 @@ public class PlacesFile {
 
 	void allPOIsDone() {
 		poisClosed = true;
+
+		byte poiFlags = 0;
+		for (POIRecord p : pois) {
+			poiFlags |= p.getPOIFlags();
+		}
+		placeHeader.setPOIGlobalFlags(poiFlags);
+
 		int ofs = 0;
 		for (POIRecord p : pois)
-			ofs += p.calcOffset(ofs);
+			ofs += p.calcOffset(ofs, poiFlags);
 	}
 }

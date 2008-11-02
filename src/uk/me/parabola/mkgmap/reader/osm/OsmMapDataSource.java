@@ -126,8 +126,18 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		return levels;
 	}
 
+	/**
+	 * There are no copyright messages in the OSM files themselves.  So we
+	 * include a fixed set of strings on the assumption that .osm files
+	 * are probably going to have the OSM copyright statements.
+	 *
+	 * @return A list of copyright messages as a String array.
+	 */
 	public String[] copyrightMessages() {
-		return new String[] {"OpenStreetMap.org contributors."};
+		return new String[] {
+				"OpenStreetMap.org contributors",
+				"See: http://wiki.openstreetmap.org/index.php/Attribution"
+		};
 	}
 
 	public void config(Properties props) {

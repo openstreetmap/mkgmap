@@ -61,6 +61,9 @@ public class MapMaker implements MapProcessor {
 	 */
 	String makeMap(CommandArgs args, LoadableMapDataSource src) {
 
+		if (src.getBounds().isEmpty())
+			return null;
+
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
@@ -90,7 +93,7 @@ public class MapMaker implements MapProcessor {
 	 * @param map The map to modify.
 	 * @param args The command line arguments.
 	 */
-	private void setOptions(Map map, CommandArgs args) {
+	private void setOptions(Map map, CommandArgs args) throws FileExistsException {
 		String s = args.getCharset();
 		if (s != null)
 			map.setLabelCharset(s, args.isForceUpper());
@@ -98,6 +101,9 @@ public class MapMaker implements MapProcessor {
 		int i = args.getCodePage();
 		if (i != 0)
 			map.setLabelCodePage(i);
+
+		if (args.exists("net"))
+			map.addNet();
 	}
 
 	/**
@@ -113,8 +119,7 @@ public class MapMaker implements MapProcessor {
 	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) throws
 			FileNotFoundException, FormatException
 	{
-		LoadableMapDataSource src;
-		src = MapReader.createMapReader(name);
+		LoadableMapDataSource src = MapReader.createMapReader(name);
 		if (src instanceof ConfiguredByProperties)
 			((ConfiguredByProperties) src).config(args.getProperties());
 		src.load(name);

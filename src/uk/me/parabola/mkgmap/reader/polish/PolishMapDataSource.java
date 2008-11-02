@@ -108,14 +108,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (levels == null) {
 			// If it has not been set then supply some defaults.
 			levels = new LevelInfo[] {
-					new LevelInfo(5, 16),
-					new LevelInfo(4, 18),
-					new LevelInfo(3, 19),
-					new LevelInfo(2, 21),
+					new LevelInfo(3, 17),
+					new LevelInfo(2, 18),
 					new LevelInfo(1, 22),
 					new LevelInfo(0, 24),
 			};
 		}
+		levels[0].setTop(true);
 		return levels;
 	}
 
@@ -268,8 +267,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			// If it is a contour line, then fix the elevation if required.
-			if (polyline.getType() == 0x22)
+			if ((polyline.getType() == 0x20) ||
+			    (polyline.getType() == 0x21) ||
+			    (polyline.getType() == 0x22)) {
 				fixElevation();
+			}
 
 			setResolution(polyline, name);
 			polyline.setPoints(points);
@@ -282,7 +284,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * convert it.
 	 */
 	private void fixElevation() {
-		if (elevUnits == 'M') {
+		if (elevUnits == 'm') {
 			String h = polyline.getName();
 			try {
 				// Convert to feet.

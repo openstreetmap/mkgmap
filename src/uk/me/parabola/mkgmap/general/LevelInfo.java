@@ -36,6 +36,10 @@ public class LevelInfo implements Comparable<LevelInfo> {
 	private final int level;
 	private final int bits;
 
+	// Set if this is a top level, use this when the format is supplying its own
+	// top level.
+	private boolean top;
+
 	public LevelInfo(int level, int bits) {
 		this.level = level;
 		this.bits = bits;
@@ -58,6 +62,14 @@ public class LevelInfo implements Comparable<LevelInfo> {
 
 	public int getBits() {
 		return bits;
+	}
+
+	public boolean isTop() {
+		return top;
+	}
+
+	public void setTop(boolean top) {
+		this.top = top;
 	}
 
 	/**

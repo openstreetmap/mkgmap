@@ -16,20 +16,21 @@
  */
 package uk.me.parabola.tdbfmt;
 
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.io.EndOfFileException;
-import uk.me.parabola.io.StructuredInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.CRC32;
+import java.util.zip.CheckedOutputStream;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.io.EndOfFileException;
+import uk.me.parabola.io.StructuredInputStream;
+import uk.me.parabola.log.Logger;
 
 /**
  * The TDB file.  See the package documentation for more details.
@@ -38,17 +39,34 @@ import java.util.List;
  */
 public class TdbFile {
 	private static final Logger log = Logger.getLogger(TdbFile.class);
+
+	public static final int TDB_V3 = 300;
+	public static final int TDB_V407 = 407;
+
+	private static final int BLOCK_OVERVIEW = 0x42;
 	private static final int BLOCK_HEADER = 0x50;
 	private static final int BLOCK_COPYRIGHT = 0x44;
-	private static final int BLOCK_OVERVIEW = 0x42;
 	private static final int BLOCK_DETAIL = 0x4c;
+	private static final int BLOCK_R = 0x52;
+	private static final int BLOCK_T = 0x54;
+
+	// The version number of the TDB format
+	private int tdbVersion;
 
 	// The blocks that go to make up the file.
 	private HeaderBlock headerBlock;
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
 	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
+	private RBlock rblock = new RBlock();
+	private TBlock tblock = new TBlock();
 
+	public TdbFile() {
+	}
+
+	public TdbFile(int tdbVersion) {
+		this.tdbVersion = tdbVersion;
+	}
 
 	/**
 	 * Read in a TDB file from the disk.
@@ -72,12 +90,13 @@ public class TdbFile {
 		return tdb;
 	}
 
-	public void setProductInfo(int productId, int productVersion,
-			String seriesName, String familyName)
+	public void setProductInfo(int familyId, int productId,
+			short productVersion, String seriesName, String familyName)
 	{
-		headerBlock = new HeaderBlock();
+		headerBlock = new HeaderBlock(tdbVersion);
+		headerBlock.setFamilyId((short) familyId);
 		headerBlock.setProductId((short) productId);
-		headerBlock.setProductVersion((short) productVersion);
+		headerBlock.setProductVersion(productVersion);
 		headerBlock.setSeriesName(seriesName);
 		headerBlock.setFamilyName(familyName);
 	}
@@ -114,7 +133,9 @@ public class TdbFile {
 	}
 
 	public void write(String name) throws IOException {
-		OutputStream stream = new BufferedOutputStream(new FileOutputStream(name));
+		CheckedOutputStream stream = new CheckedOutputStream(
+				new BufferedOutputStream(new FileOutputStream(name)),
+				new CRC32());
 
 		if (headerBlock == null || overviewMapBlock == null)
 			throw new IOException("Attempting to write file without being fully set up");
@@ -128,6 +149,12 @@ public class TdbFile {
 			copyrightBlock.write(block);
 			block.write(stream);
 
+			if (tdbVersion >= TDB_V407) {
+				block = new Block(BLOCK_R);
+				rblock.write(block);
+				block.write(stream);
+			}
+
 			block = new Block(BLOCK_OVERVIEW);
 			overviewMapBlock.write(block);
 			block.write(stream);
@@ -135,6 +162,14 @@ public class TdbFile {
 			for (DetailMapBlock detail : detailBlocks) {
 				block = new Block(BLOCK_DETAIL);
 				detail.write(block);
+				block.write(stream);
+			}
+
+			if (tdbVersion >= TDB_V407) {
+				tblock.setSum(stream.getChecksum().getValue());
+
+				block = new Block(BLOCK_T);
+				tblock.write(block);
 				block.write(stream);
 			}
 		} finally {
@@ -200,4 +235,5 @@ public class TdbFile {
 		Block block = new Block(blockType, body);
 		return block;
 	}
+
 }
