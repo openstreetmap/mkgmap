@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: May 25, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.FileNotFoundException;
 import java.io.Reader;

@@ -14,10 +14,14 @@
  * Author: Steve Ratcliffe
  * Create date: Apr 27, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
+import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TypeRule;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
  * A list of rules, the first one that matches wins.
@@ -37,6 +41,7 @@ public class SequenceRule extends BaseRule implements TypeRule {
 	}
 
 	public void add(TypeRule type) {
-		list.add(type);
+		// Later rules override earlier ones, so insert at the begining.
+		list.add(0, type);
 	}
 }

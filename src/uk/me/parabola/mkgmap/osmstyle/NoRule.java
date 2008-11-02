@@ -14,7 +14,11 @@
  * Author: Steve Ratcliffe
  * Create date: Apr 27, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
+
+import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.TypeRule;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
  * This just wraps a type and always returns it.  An unconditional rule that

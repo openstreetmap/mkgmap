@@ -14,18 +14,25 @@
  * Author: Steve Ratcliffe
  * Create date: Feb 17, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.reader.osm.TypeRule;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.

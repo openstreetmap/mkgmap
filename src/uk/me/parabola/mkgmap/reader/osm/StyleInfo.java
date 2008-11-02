@@ -35,7 +35,7 @@ public class StyleInfo {
 	private String description;
 	private String longDescription;
 
-	void readInfo(Reader r) {
+	public void readInfo(Reader r) {
 		TokenScanner ws = new TokenScanner(r);
 		while (!ws.isEndOfFile()) {
 			String word = ws.nextValue();

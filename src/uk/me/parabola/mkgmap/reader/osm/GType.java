@@ -45,11 +45,11 @@ public class GType {
 
 	private String defaultName;
 
-	GType(int featureKind, String type) {
+	public GType(int featureKind, String type) {
 		this(featureKind, type, "0");
 	}
 
-	GType(int featureKind, String type, String subtype) {
+	public GType(int featureKind, String type, String subtype) {
 		this.featureKind = featureKind;
 		try {
 			this.type = Integer.decode(type);

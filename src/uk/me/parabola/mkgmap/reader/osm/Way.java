@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.Coord;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
  * Represent a OSM way in the 0.5 api.  A way consists of an ordered list of
@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author Steve Ratcliffe
  */
-class Way extends Element {
+public class Way extends Element {
 
 	private final List<Coord> points = new ArrayList<Coord>();
 

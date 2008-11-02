@@ -14,18 +14,18 @@
  * Author: Steve Ratcliffe
  * Create date: Apr 13, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Map;
 

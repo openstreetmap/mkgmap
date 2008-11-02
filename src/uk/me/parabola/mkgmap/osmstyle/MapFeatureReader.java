@@ -1,4 +1,4 @@
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
  * Read in a map-features file.  This is the 'old' way of specifying styles.
@@ -34,7 +35,7 @@ public class MapFeatureReader {
 	 * @param in The open file.
 	 * @throws IOException On any problems reading.
 	 */
-	void readFeatures(BufferedReader in) throws IOException {
+	public void readFeatures(BufferedReader in) throws IOException {
 		String line;
 		while ((line = in.readLine()) != null) {
 			if (line.trim().startsWith("#"))

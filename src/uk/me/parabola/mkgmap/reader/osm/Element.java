@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Superclass of the node, segment and way OSM elements.
  */
-abstract class Element implements Iterable<String> {
+public abstract class Element implements Iterable<String> {
 	private Map<String, String> tags;
 	private String name;
 	private long id;
