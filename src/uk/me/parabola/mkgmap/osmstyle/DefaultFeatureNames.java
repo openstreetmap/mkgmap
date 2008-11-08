@@ -56,7 +56,7 @@ public class DefaultFeatureNames {
 		for (String name : names) {
 			try {
 				Reader r = loader.open(name);
-				readFile(r);
+				readFile(name, r);
 			} catch (FileNotFoundException e) {
 				// carry on with the next
 				log.debug("no file", name);
@@ -69,8 +69,8 @@ public class DefaultFeatureNames {
 		return values.get(key);
 	}
 
-	private void readFile(Reader r) {
-		TokenScanner ws = new TokenScanner(r);
+	private void readFile(String name, Reader r) {
+		TokenScanner ws = new TokenScanner(name, r);
 
 		ws.skipSpace();
 		while (!ws.isEndOfFile()) {

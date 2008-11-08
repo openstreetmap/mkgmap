@@ -32,6 +32,8 @@ public abstract class Op {
 	public static final int AND = '&';
 	public static final int OR = '|';
 	public static final char VALUE = 'V';
+	public static final char OPEN_PAREN = '(';
+	public static final char CLOSE_PAREN = ')';
 
 	protected Op first;
 	private char type;
@@ -45,6 +47,10 @@ public abstract class Op {
 			return new AndOp();
 		case OR:
 			return new OrOp();
+		case OPEN_PAREN:
+			return new OpenOp();
+		case CLOSE_PAREN:
+			return new CloseOp();
 		default:
 			throw new SyntaxException("Unrecognised operation " + c);
 		}
@@ -59,7 +65,7 @@ public abstract class Op {
 	 * @param other The other operation.
 	 */
 	public boolean hasHigherPriority(Op other) {
-		return other.priority() > priority();
+		return priority() > other.priority();
 	}
 
 	public Op getFirst() {

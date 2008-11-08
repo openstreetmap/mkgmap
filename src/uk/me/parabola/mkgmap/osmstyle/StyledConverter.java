@@ -21,6 +21,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -44,6 +45,8 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 
+	//private static final double METERS_TO_FEET = 3.2808399;
+
 	private final String[] nameTagList;
 
 	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
@@ -51,6 +54,8 @@ public class StyledConverter implements OsmConverter {
 	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
 	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
 	private final MapCollector collector;
+
+	private Clipper clipper;
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
@@ -71,13 +76,16 @@ public class StyledConverter implements OsmConverter {
 	 * @param way The OSM way.
 	 */
 	public void convertWay(Way way) {
+		if (way.getPoints().size() < 2)
+			return;
+
 		GType foundType = null;
 		for (String tagKey : way) {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
-				GType gt = rule.resolveType(way);
-				if (gt != null && (foundType == null || gt.isBetter(foundType)))
-					foundType = gt;
+				foundType = rule.resolveType(way);
+				if (foundType != null)
+					break;
 			}
 		}
 
@@ -96,19 +104,19 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addLine(Way way, GType gt) {
-		MapLine ms = new MapLine();
-		elementSetup(ms, gt, way);
-		ms.setPoints(way.getPoints());
+		MapLine line = new MapLine();
+		elementSetup(line, gt, way);
+		line.setPoints(way.getPoints());
 
-		collector.addLine(ms);
+		clipper.clipLine(line, collector);
 	}
 
 	private void addShape(Way way, GType gt) {
-		MapShape ms = new MapShape();
-		elementSetup(ms, gt, way);
-		ms.setPoints(way.getPoints());
+		MapShape shape = new MapShape();
+		elementSetup(shape, gt, way);
+		shape.setPoints(way.getPoints());
 
-		collector.addShape(ms);
+		clipper.clipShape(shape, collector);
 	}
 
 	/**
@@ -122,9 +130,9 @@ public class StyledConverter implements OsmConverter {
 		for (String tagKey : node) {
 			Rule rule = nodeValueRules.get(tagKey);
 			if (rule != null) {
-				GType gt = rule.resolveType(node);
-				if (gt != null && (foundType == null || gt.isBetter(foundType)))
-					foundType = gt;
+				foundType = rule.resolveType(node);
+				if (foundType != null)
+					break;
 			}
 		}
 
@@ -143,6 +151,9 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addPoint(Node node, GType gt) {
+		if (!clipper.contains(node.getLocation()))
+			return;
+
 		MapPoint mp = new MapPoint();
 		elementSetup(mp, gt, node);
 		mp.setSubType(gt.getSubtype());
@@ -193,8 +204,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param bbox The bounding area.
 	 */
 	public void setBoundingBox(Area bbox) {
-		//featureConverter.setBoundingBox(bbox);
-		//TODO: make this work
+		this.clipper = new Clipper(bbox);
 	}
 
 	/**

@@ -1,6 +1,7 @@
-package uk.me.parabola.mkgmap.osmstyle.eval;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
@@ -12,7 +13,6 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class TypeReader {
 	private static final Logger log = Logger.getLogger(TypeReader.class);
 
-	//private final RuleFileReader ruleFileReader;
 	private final int kind;
 
 	public TypeReader(int kind) {
@@ -20,46 +20,49 @@ public class TypeReader {
 	}
 
 	public GType readType(TokenScanner ts) {
-		// We should have a '{' to start with
+		// We should have a '[' to start with
 		ts.skipSpace();
 		Token t = ts.nextToken();
 		if (t == null || t.getType() == TokType.EOF)
-			throw new SyntaxException(ts.getLinenumber(), "No garmin type information given");
+			throw new SyntaxException(ts, "No garmin type information given");
 
-		if (!t.getValue().equals("{")) {
-			SyntaxException e = new SyntaxException(ts.getLinenumber(), "No type definition");
+		if (!t.getValue().equals("[")) {
+			SyntaxException e = new SyntaxException(ts, "No type definition");
 			throw e;
 		}
 
 		String type = ts.nextValue();
 		if (!Character.isDigit(type.charAt(0)))
-			throw new SyntaxException(ts.getLinenumber(), "Garmin type number must be first.  Saw '" + type + '\'');
+			throw new SyntaxException(ts, "Garmin type number must be first.  Saw '" + type + '\'');
 
 		log.debug("gtype", type);
-		//int level;
-		//int resolution;
+		GType gt = new GType(kind, type);
+
 		while (!ts.isEndOfFile()) {
 			ts.skipSpace();
 			log.debug("type ", ts.peekToken().getType(), "val=", ts.peekToken().getValue());
 			String w = ts.nextValue();
 			assert !ts.isEndOfFile();
-			if (w.equals("}"))
+			if (w.equals("]"))
 				break;
 			if (w.equals("level")) {
 				ts.skipSpace();
 				String val = ts.nextValue();
 				log.debug("level val=", val);
+				throw new SyntaxException(ts, "The level command is not yet implemented, coming soon...");
 			} else if (w.equals("resolution")) {
 				ts.skipSpace();
-				String val = ts.nextValue();
-				log.debug("resolution val=", val);
+				setResolution(ts, gt);
 			} else {
-				throw new SyntaxException(ts.getLinenumber(), "Unrecognised type command '" + w + '\'');
+				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
 			ts.skipSpace();
 		}
 
-		GType gt = new GType(kind, type);
 		return gt;
+	}
+
+	private void setResolution(TokenScanner ts, GType gt) {
+		gt.setMinResolution(ts.nextInt());
 	}
 }

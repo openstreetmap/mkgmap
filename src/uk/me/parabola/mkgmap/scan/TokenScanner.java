@@ -31,15 +31,18 @@ public class TokenScanner {
 	private final Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
-	private int linenumber;
+
+	private String fileName;
+	private int linenumber = 1;
 
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
 
-	public TokenScanner(Reader reader) {
+	public TokenScanner(String filename, Reader reader) {
 		if (reader instanceof BufferedReader)
 			this.reader = reader;
 		else
 			this.reader = new BufferedReader(reader);
+		fileName = filename;
 	}
 
 	/**
@@ -54,8 +57,7 @@ public class TokenScanner {
 	 * Peek and return the first token.  It is not consumed.
 	 */
 	public Token peekToken() {
-		if (tokens.isEmpty())
-			fillTok();
+		ensureTok();
 		return tokens.peek();
 	}
 
@@ -63,10 +65,12 @@ public class TokenScanner {
 	 * Get and remove the next token.
 	 */
 	public Token nextToken() {
-		if (tokens.isEmpty())
-			return readTok();
-		else
-			return tokens.removeFirst();
+		ensureTok();
+
+		Token token = tokens.removeFirst();
+		if (token.getType() == TokType.EOL)
+			linenumber++;
+		return token;
 	}
 
 	/**
@@ -90,19 +94,11 @@ public class TokenScanner {
 	 * will be end of file or something other than SPACE or EOL.
 	 */
 	public void skipSpace() {
-		while (!tokens.isEmpty() && tokens.peek().isWhiteSpace())
-			tokens.removeFirst();
-
-		// If the list is empty, directly consume white space
-		if (tokens.isEmpty()) {
-			int c = NO_PUSHBACK;
-			while (!isEndOfFile()) {
-				c = readChar();
-				if (!isSpace(c))
-					break;
-			}
-
-			pushback = c;
+		while (!isEndOfFile()) {
+			ensureTok();
+			if (!tokens.peek().isWhiteSpace())
+				break;
+			nextToken();
 		}
 	}
 
@@ -153,7 +149,6 @@ public class TokenScanner {
 
 		TokType tt;
 		if (c == '\n') {
-			linenumber++;
 			tt = TokType.EOL;
 		} else if (isSpace(c)) {
 			while (isSpace(c = readChar()) && c != '\n')
@@ -182,7 +177,7 @@ public class TokenScanner {
 		int c;
 		if (pushback != NO_PUSHBACK) {
 			c = pushback;
-			pushback = 0;
+			pushback = NO_PUSHBACK;
 			return c;
 		}
 
@@ -201,7 +196,8 @@ public class TokenScanner {
 	}
 
 	private boolean isWordChar(int ch) {
-		return Character.isLetterOrDigit(ch);
+		return Character.isLetterOrDigit(ch)
+				|| ch == '_';
 	}
 
 	/**
@@ -267,5 +263,9 @@ public class TokenScanner {
 
 	public int getLinenumber() {
 		return linenumber;
+	}
+
+	public String getFileName() {
+		return fileName;
 	}
 }

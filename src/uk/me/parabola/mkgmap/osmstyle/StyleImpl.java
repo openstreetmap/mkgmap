@@ -83,10 +83,11 @@ public class StyleImpl implements Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	private final Map<String, Rule> ways = new HashMap<String, Rule>();
-	//private Map<String, TypeRule> wayKeys = new HashMap<String, TypeRule>();
-	private final Map<String, Rule> nodes = new HashMap<String, Rule>();
-	//private Map<String, TypeRule> nodeKeys = new HashMap<String, TypeRule>();
+	private RuleSet ways = new RuleSet();
+	//private Map<String, Rule> ways = new HashMap<String, Rule>();
+	//private Map<String, Rule> nodes = new HashMap<String, Rule>();
+	private final RuleSet nodes = new RuleSet();
+
 	private DefaultFeatureNames defaultNames;
 
 	/**
@@ -109,7 +110,9 @@ public class StyleImpl implements Style {
 		readDefaultNames();  //perhaps this should be triggered in options?
 
 		readOptions();
-		
+
+		readRules();
+
 		readMapFeatures();
 	}
 
@@ -117,25 +120,49 @@ public class StyleImpl implements Style {
 		return nameTagList;
 	}
 
-
 	public String getOption(String name) {
 		return generalOptions.get(name);
 	}
+
 
 	public StyleInfo getInfo() {
 		return info;
 	}
 
 	public Map<String, Rule> getWays() {
-		return ways;
+		return ways.getMap();
 	}
 
 	public Map<String, Rule> getNodes() {
-		return nodes;
+		return nodes.getMap();
 	}
 
 	private void readDefaultNames() {
 		defaultNames = new DefaultFeatureNames(fileLoader, Locale.getDefault());
+	}
+
+	private void readRules() {
+		try {
+			RuleFileReader reader = new RuleFileReader(GType.POINT, nodes);
+			reader.load(fileLoader, "points");
+		} catch (FileNotFoundException e) {
+			// it is ok for this file to not exist.
+			log.debug("no points file");
+		}
+
+		try {
+			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, ways);
+			reader.load(fileLoader, "lines");
+		} catch (FileNotFoundException e) {
+			log.debug("no lines file");
+		}
+
+		try {
+			RuleFileReader reader = new RuleFileReader(GType.POLYGON, ways);
+			reader.load(fileLoader, "polygons");
+		} catch (FileNotFoundException e) {
+			log.debug("no polygons file");
+		}
 	}
 
 	/**
@@ -166,18 +193,18 @@ public class StyleImpl implements Style {
 	 */
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
-			Rule value = createRule(me.getKey(), me.getValue());
-			ways.put(me.getKey(), value);
+			Rule rule = createRule(me.getKey(), me.getValue());
+			ways.add(me.getKey(), rule);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
-			Rule value = createRule(me.getKey(), me.getValue());
-			ways.put(me.getKey(), value);
+			Rule rule = createRule(me.getKey(), me.getValue());
+			ways.add(me.getKey(), rule);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
-			Rule value = createRule(me.getKey(), me.getValue());
-			nodes.put(me.getKey(), value);
+			Rule rule = createRule(me.getKey(), me.getValue());
+			nodes.add(me.getKey(), rule);
 		}
 	}
 
@@ -273,7 +300,7 @@ public class StyleImpl implements Style {
 	private void readInfo() {
 		try {
 			BufferedReader br = new BufferedReader(fileLoader.open(FILE_INFO));
-			info.readInfo(br);
+			info.readInfo(FILE_INFO, br);
 		} catch (FileNotFoundException e) {
 			// optional file..
 			log.debug("no info file");
@@ -295,10 +322,10 @@ public class StyleImpl implements Style {
 	private void mergeStyle(StyleImpl other) {
 
 		for (Map.Entry<String,Rule> ent : other.ways.entrySet())
-			ways.put(ent.getKey(), ent.getValue());
+			ways.add(ent.getKey(), ent.getValue());
 
 		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
-			nodes.put(ent.getKey(), ent.getValue());
+			nodes.add(ent.getKey(), ent.getValue());
 
 		info.merge(other.info);
 
@@ -310,7 +337,7 @@ public class StyleImpl implements Style {
 
 	private void checkVersion() throws FileNotFoundException {
 		Reader r = fileLoader.open(FILE_VERSION);
-		TokenScanner scan = new TokenScanner(r);
+		TokenScanner scan = new TokenScanner(FILE_VERSION, r);
 		int version = scan.nextInt();
 		log.debug("Got version", version);
 

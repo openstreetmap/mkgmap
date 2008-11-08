@@ -37,7 +37,6 @@ public class GType {
 
 	private final int featureKind;
 	private final int type;
-
 	private final int subtype;
 
 	private int index;
@@ -48,7 +47,20 @@ public class GType {
 	private String defaultName;
 
 	public GType(int featureKind, String type) {
-		this(featureKind, type, "0");
+		this.featureKind = featureKind;
+		try {
+			int t = Integer.decode(type);
+			if (t > 0xff) {
+				this.type = t >> 8;
+				this.subtype = t & 0xff;
+			} else {
+				this.type = t;
+				this.subtype = 0;
+			}
+		} catch (NumberFormatException e) {
+			log.error("not numeric " + type);
+			throw new ExitException("non-numeric type in map-features file");
+		}
 	}
 
 	public GType(int featureKind, String type, String subtype) {

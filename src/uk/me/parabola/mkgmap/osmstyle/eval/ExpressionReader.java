@@ -13,20 +13,19 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ExpressionReader {
 	private static final Logger log = Logger.getLogger(ExpressionReader.class);
 
-	private Stack<Op> stack;
-	private Stack<Op> opStack;
+	private Stack<Op> stack = new Stack<Op>();
+	private Stack<Op> opStack = new Stack<Op>();
+	private TokenScanner scanner;
 
-	public ExpressionReader(Stack<Op> stack, Stack<Op> opStack) {
-		this.stack = stack;
-		this.opStack = opStack;
+	public ExpressionReader(TokenScanner scanner) {
+		this.scanner = scanner;
 	}
 
-
-	public Op readConditions(TokenScanner ts) {
-		while (!ts.isEndOfFile()) {
-			if (ts.checkToken(TokType.SYMBOL, "{"))
+	public Op readConditions() {
+		while (!scanner.isEndOfFile()) {
+			if (scanner.checkToken(TokType.SYMBOL, "["))
 				break;
-			Token tok = ts.nextToken();
+			Token tok = scanner.nextToken();
 
 			log.debug("Token", tok.getValue());
 
@@ -44,7 +43,6 @@ public class ExpressionReader {
 				pushValue(tok.getValue());
 				break;
 			}
-
 		}
 
 		while (!opStack.isEmpty())
@@ -55,16 +53,32 @@ public class ExpressionReader {
 
 	void saveOp(String value) {
 		log.debug("save op", value);
-		Op op = Op.createOp(value);
-		while (!opStack.isEmpty() && op.hasHigherPriority(opStack.peek())) {
-			runOp();
+		if (value.equals("#")) {
+			scanner.skipLine();
+			return;
 		}
-		opStack.push(op);
+		Op op;
+		try {
+			op = Op.createOp(value);
+			while (!opStack.isEmpty() && opStack.peek().hasHigherPriority(op))
+				runOp();
+		} catch (SyntaxException e) {
+			throw new SyntaxException(scanner, e.getRawMessage());
+		}
+
+		if (op.getType() == Op.CLOSE_PAREN) {
+			// Check that there was an opeing paren and remove it
+			if (opStack.isEmpty() || opStack.peek().getType() != Op.OPEN_PAREN)
+				throw new SyntaxException(scanner, "No matching open parenthesis");
+			opStack.pop();
+		} else {
+			opStack.push(op);
+		}
 	}
 
 	void runOp() {
-		log.debug("Running op...");
 		Op op = opStack.pop();
+		log.debug("Running op...", op.getType());
 		Op arg2 = stack.pop();
 		Op arg1 = stack.pop();
 

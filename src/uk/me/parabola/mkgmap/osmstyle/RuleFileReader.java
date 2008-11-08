@@ -19,16 +19,12 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
-import uk.me.parabola.mkgmap.osmstyle.eval.TypeReader;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokType;
@@ -46,12 +42,13 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class RuleFileReader {
 	private static final Logger log = Logger.getLogger(RuleFileReader.class);
 
-	private final ExpressionReader expressionReader = new ExpressionReader(new Stack<Op>(), new Stack<Op>());
 	private final TypeReader typeReader;
 
-	private Map<String, Rule> rules = new HashMap<String, Rule>();
+	private final RuleSet rules;
+	private TokenScanner scanner;
 
-	public RuleFileReader(int kind) {
+	public RuleFileReader(int kind, RuleSet rules) {
+		this.rules = rules;
 		typeReader = new TypeReader(kind);
 	}
 
@@ -63,30 +60,30 @@ public class RuleFileReader {
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
 		Reader r = loader.open(name);
-		load(r);
+		load(name, r);
 	}
 
-	private void load(Reader r) {
-		TokenScanner ts = new TokenScanner(r);
+	private void load(String name, Reader r) {
+		scanner = new TokenScanner(name, r);
+
+		ExpressionReader expressionReader = new ExpressionReader(scanner);
 
 		// Read all the rules in the file.
-		while (!ts.isEndOfFile()) {
-			ts.skipSpace();
-			if (ts.peekToken().getType() == TokType.EOF)
+		while (!scanner.isEndOfFile()) {
+			scanner.skipSpace();
+			if (scanner.peekToken().getType() == TokType.EOF)
 				break;
 
-			// A rule is followed by a type definition.
-
-			saveRule(expressionReader.readConditions(ts), typeReader.readType(ts));
+			saveRule(expressionReader.readConditions(), typeReader.readType(scanner));
 		}
 	}
 
-	public Map<String, Rule> getRules() {
+	public RuleSet getRules() {
 		return rules;
 	}
 
 	private void saveRule(Op op, GType gt) {
-		log.debug("save rule", op);
+		log.info("EXP", op, ", type=", gt);
 
 		// E1 | E2 {type...} is exactly the same as:
 		// E1 {type...}
@@ -103,47 +100,38 @@ public class RuleFileReader {
 			Op second = binaryOp.getSecond();
 
 			log.debug("binop", op.getType(), first.getType());
-			if (op.getType() == Op.EQUALS && first.getType() == Op.VALUE) 
-				save(op.toString(), new FixedRule(gt));
+			if (op.getType() == Op.EQUALS && first.getType() == Op.VALUE) {
+				String s = op.toString();
+				Rule rule = new FixedRule(gt);
+				log.debug("saving", s, " R:", rule);
+				rules.add(s, rule);
+			}
 			else if (op.getType() == Op.AND && first.getType() == Op.EQUALS) {
-				save(first.toString(), new ExpressionRule(second, gt));
+				String s = first.toString();
+				Rule rule = new ExpressionRule(second, gt);
+				log.debug("saving", s, " R:", rule);
+				rules.add(s, rule);
 			} else {
-				throw new SyntaxException("Invalid rule file");
+
+				throw new SyntaxException(scanner, "Invalid rule file");
 			}
 		} else {
 			// TODO: better message ;)
-			throw new SyntaxException("Invalid rule file");
-		}
-	}
-
-	private void save(String s, Rule rule) {
-		log.debug("saving", s, " R:", rule);
-		Rule existingRule = rules.get(s);
-		if (existingRule == null) {
-			rules.put(s, rule);
-		} else {
-			if (existingRule instanceof SequenceRule) {
-				((SequenceRule) existingRule).add(rule);
-			} else {
-				// There was already a single rule there.  Create a sequence
-				// rule and add the existing and the new rule to it.
-				SequenceRule sr = new SequenceRule();
-				sr.add(existingRule);
-				sr.add(rule);
-				rules.put(s, sr);
-			}
+			throw new SyntaxException(scanner, "Invalid rule file");
 		}
 	}
 
 	public static void main(String[] args) {
-		StringReader r = new StringReader("highway=footway | highway = path" +
-				"{0x23 level 2}\n" +
-				"foo=bar & bar=two {0x1}\n" +
-				"amenity=pub {0x2}\n" +
-				"highway=footway & type=rough {0x3}\n" +
+		StringReader r = new StringReader("a=b & (c=d | e=f)[0x1]\n" +
+				"highway=footway & highway = path\n" +
+				"[0x23 resolution 22]\n" +
+				"foo=\nbar & bar=two [0x1]\n" +
+				"amenity=pub [0x2]\n" +
+				"highway=footway & type=rough [0x3]\n" +
 				"");
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE);
-		rr.load(r);
-		System.out.println("Result: " + rr.rules);
+		RuleSet rs = new RuleSet();
+		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, rs);
+		rr.load("string", r);
+		log.info("Result: " + rs.getMap());
 	}
 }
