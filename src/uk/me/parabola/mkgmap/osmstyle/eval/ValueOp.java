@@ -12,27 +12,33 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Apr 27, 2008
+ * Create date: 03-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle;
+package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import uk.me.parabola.mkgmap.reader.osm.TypeRule;
+import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
  * @author Steve Ratcliffe
  */
-public abstract class BaseRule implements TypeRule {
-	private int index;
+public class ValueOp extends Op {
+	private final String value;
 
-	public int getPriority() {
-		return index;
+	public ValueOp(String value) {
+		setType(VALUE);
+		this.value = value;
 	}
 
-	public boolean isBetter(TypeRule other) {
-		return this.getPriority() < other.getPriority();
+	public boolean eval(Element el) {
+		return true;
 	}
 
-	public void setPriority(int index) {
-		this.index = index;
+	public int priority() {
+
+		return 0;
+	}
+
+	public String toString() {
+		return value;
 	}
 }

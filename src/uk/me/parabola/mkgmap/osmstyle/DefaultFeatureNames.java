@@ -31,7 +31,9 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * A OSM feature can have a default name that is used when there is no
  * real name for the feature.  This is most useful when several different OSM
  * features are represented by the same garmin type.
- *  
+ *
+ * XXX This may be replaced...
+ *
  * @author Steve Ratcliffe
  */
 public class DefaultFeatureNames {

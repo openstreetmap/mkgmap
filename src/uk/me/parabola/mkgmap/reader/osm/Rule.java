@@ -12,24 +12,24 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Apr 27, 2008
+ * Create date: 07-Nov-2008
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
 /**
- * A rule to map an element from osm to a garmin type.  Each rule has a
- * priority and lower priority rules win when more than one matches a
- * given element.
- * 
+ * A rule takes an element and returns the correct garmin type for it.
+ * Immplementations can be simple or complex as needed.
+ *
  * @author Steve Ratcliffe
  */
-public interface TypeRule {
+public interface Rule {
 
+	/**
+	 * Given the element return the garmin type that should be used to
+	 * represent it.
+	 *
+	 * @param el The element as read from an OSM xml file in 'tag' format.
+	 * @return Enough information to represent this as a garmin type.
+	 */
 	public GType resolveType(Element el);
-
-	public int getPriority();
-
-	public void setPriority(int index);
-
-	public boolean isBetter(TypeRule other);
 }

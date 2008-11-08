@@ -27,12 +27,12 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.mkgmap.reader.osm.TypeRule;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -46,9 +46,9 @@ public class StyledConverter implements OsmConverter {
 
 	private final String[] nameTagList;
 
-	private Map<String, TypeRule> wayValueRules = new HashMap<String, TypeRule>();
+	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
 	//private Map<String, GType> wayRules = new HashMap<String, GType>();
-	private Map<String, TypeRule> nodeValueRules = new HashMap<String, TypeRule>();
+	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
 	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
 	private final MapCollector collector;
 
@@ -73,7 +73,7 @@ public class StyledConverter implements OsmConverter {
 	public void convertWay(Way way) {
 		GType foundType = null;
 		for (String tagKey : way) {
-            TypeRule rule = wayValueRules.get(tagKey);
+            Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
 				GType gt = rule.resolveType(way);
 				if (gt != null && (foundType == null || gt.isBetter(foundType)))
@@ -120,7 +120,7 @@ public class StyledConverter implements OsmConverter {
 	public void convertNode(Node node) {
 		GType foundType = null;
 		for (String tagKey : node) {
-			TypeRule rule = nodeValueRules.get(tagKey);
+			Rule rule = nodeValueRules.get(tagKey);
 			if (rule != null) {
 				GType gt = rule.resolveType(node);
 				if (gt != null && (foundType == null || gt.isBetter(foundType)))

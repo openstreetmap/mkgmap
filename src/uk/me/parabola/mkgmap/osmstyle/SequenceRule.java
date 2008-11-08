@@ -12,36 +12,58 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Apr 27, 2008
+ * Create date: 07-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.TypeRule;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
- * A list of rules, the first one that matches wins.
- * 
+ * This holds a list of rules.  Each of them is tried out in order and
+ * the first one that matches is the result of this rule.
+ *
  * @author Steve Ratcliffe
  */
-public class SequenceRule extends BaseRule implements TypeRule {
-	private final List<TypeRule> list = new ArrayList<TypeRule>();
+public class SequenceRule implements Rule {
+	private List<Rule> ruleList = new ArrayList<Rule>();
+	private boolean blocked;
 
 	public GType resolveType(Element el) {
-		for (TypeRule rule : list) {
-			GType gt = rule.resolveType(el);
-			if (gt != null)
-				return gt;
+		for (Rule r : ruleList) {
+			GType type = r.resolveType(el);
+			if (type != null)
+				return type;
 		}
 		return null;
 	}
 
-	public void add(TypeRule type) {
-		// Later rules override earlier ones, so insert at the begining.
-		list.add(0, type);
+	/**
+	 * Add a rule to this sequence.  We do a quick check for impossible
+	 * situations: if a FixedRule is added, then any rule added afterwards
+	 * would never be called (because a fixed rule always returns an answer).
+	 */
+	public void add(Rule rule) {
+		if (blocked)
+			System.out.println("Warning: Unreachable rule, more general rules should be later in the file");
+		
+		ruleList.add(rule);
+		if (rule instanceof FixedRule)
+			blocked = true;
+	}
+
+	public String toString() {
+		Formatter fmt = new Formatter(new StringBuilder());
+		fmt.format("LIST(");
+		for (Rule r : ruleList) {
+			fmt.format("%s, ", r);
+		}
+		fmt.format(")");
+		return fmt.toString();
 	}
 }

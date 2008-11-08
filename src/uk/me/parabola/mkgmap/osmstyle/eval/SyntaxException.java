@@ -12,29 +12,27 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: Apr 27, 2008
+ * Create date: 03-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle;
-
-import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.TypeRule;
-import uk.me.parabola.mkgmap.reader.osm.GType;
+package uk.me.parabola.mkgmap.osmstyle.eval;
 
 /**
- * This just wraps a type and always returns it.  An unconditional rule that
- * is used for lines that were read from map-features, or that have no
- * complex conditions.
- *
  * @author Steve Ratcliffe
  */
-public class NoRule extends BaseRule implements TypeRule {
-	private final GType gt;
+public class SyntaxException extends RuntimeException {
 
-	public NoRule(GType gt) {
-		this.gt = gt;
+	private int linenumber;
+
+	public SyntaxException(int linenumber, String message) {
+		super(message);
+		this.linenumber = linenumber;
 	}
 
-	public GType resolveType(Element el) {
-		return gt;
+	public SyntaxException(String message) {
+		super(message);
+	}
+
+	public String getMessage() {
+		return "Error line " + linenumber + ": " + super.getMessage();
 	}
 }

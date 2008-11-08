@@ -33,10 +33,10 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
-import uk.me.parabola.mkgmap.reader.osm.TypeRule;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -83,13 +83,11 @@ public class StyleImpl implements Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	private final Map<String, TypeRule> ways = new HashMap<String, TypeRule>();
+	private final Map<String, Rule> ways = new HashMap<String, Rule>();
 	//private Map<String, TypeRule> wayKeys = new HashMap<String, TypeRule>();
-	private final Map<String, TypeRule> nodes = new HashMap<String, TypeRule>();
+	private final Map<String, Rule> nodes = new HashMap<String, Rule>();
 	//private Map<String, TypeRule> nodeKeys = new HashMap<String, TypeRule>();
 	private DefaultFeatureNames defaultNames;
-
-	private int nextIndex = 100000000;
 
 	/**
 	 * Create a style from the given location and name.
@@ -128,11 +126,11 @@ public class StyleImpl implements Style {
 		return info;
 	}
 
-	public Map<String, TypeRule> getWays() {
+	public Map<String, Rule> getWays() {
 		return ways;
 	}
 
-	public Map<String, TypeRule> getNodes() {
+	public Map<String, Rule> getNodes() {
 		return nodes;
 	}
 
@@ -167,19 +165,18 @@ public class StyleImpl implements Style {
 	 * @param mfr The map feature file reader.
 	 */
 	private void initFromMapFeatures(MapFeatureReader mfr) {
-		nextIndex -= 10000;
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
-			TypeRule value = createRule(me.getKey(), me.getValue());
+			Rule value = createRule(me.getKey(), me.getValue());
 			ways.put(me.getKey(), value);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
-			TypeRule value = createRule(me.getKey(), me.getValue());
+			Rule value = createRule(me.getKey(), me.getValue());
 			ways.put(me.getKey(), value);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
-			TypeRule value = createRule(me.getKey(), me.getValue());
+			Rule value = createRule(me.getKey(), me.getValue());
 			nodes.put(me.getKey(), value);
 		}
 	}
@@ -192,12 +189,11 @@ public class StyleImpl implements Style {
 	 * also have its priority set so that rules earlier in a file
 	 * will override those later.
 	 */
-	private TypeRule createRule(String key, GType gt) {
+	private Rule createRule(String key, GType gt) {
 		gt.setDefaultName(defaultNames.get(key));
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		TypeRule value = new NoRule(gt);
-		value.setPriority(nextIndex++);
+		Rule value = new FixedRule(gt);
 		return value;
 	}
 
@@ -298,10 +294,10 @@ public class StyleImpl implements Style {
 	 */
 	private void mergeStyle(StyleImpl other) {
 
-		for (Map.Entry<String, TypeRule> ent : other.ways.entrySet())
+		for (Map.Entry<String,Rule> ent : other.ways.entrySet())
 			ways.put(ent.getKey(), ent.getValue());
 
-		for (Map.Entry<String, TypeRule> ent : other.nodes.entrySet())
+		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
 			nodes.put(ent.getKey(), ent.getValue());
 
 		info.merge(other.info);
@@ -310,7 +306,6 @@ public class StyleImpl implements Style {
 		for (Map.Entry<String, String> ent : other.generalOptions.entrySet())
 			doOption(ent.getKey(), ent.getValue());
 
-		nextIndex -= 10000;
 	}
 
 	private void checkVersion() throws FileNotFoundException {

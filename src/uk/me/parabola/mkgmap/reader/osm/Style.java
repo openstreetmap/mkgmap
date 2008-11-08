@@ -29,9 +29,9 @@ public interface Style {
 
 	StyleInfo getInfo();
 
-	Map<String, TypeRule> getWays();
+	Map<String, Rule> getWays();
 
-	Map<String, TypeRule> getNodes();
+	Map<String, Rule> getNodes();
 
 	/**
 	 * After the style is loaded we override any options that might

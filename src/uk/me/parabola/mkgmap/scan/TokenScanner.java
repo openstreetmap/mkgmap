@@ -19,11 +19,10 @@ package uk.me.parabola.mkgmap.scan;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.NoSuchElementException;
 
 /**
+ * Read a file in terms of word and symbol tokens.
  *
  * @author Steve Ratcliffe
  */
@@ -32,6 +31,7 @@ public class TokenScanner {
 	private final Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
+	private int linenumber;
 
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
 
@@ -42,26 +42,26 @@ public class TokenScanner {
 			this.reader = new BufferedReader(reader);
 	}
 
-	//public int peekChar() {
-	//	Token t = peekToken();
-	//	String val = t.getValue();
-	//	if (val == null) {
-	//		return 0;
-	//	} else
-	//		return val.charAt(0);
-	//}
-
+	/**
+	 * Get the type of the first token.  The token is not consumed.
+	 */
 	public TokType firstTokenType() {
 		ensureTok();
 		return tokens.peek().getType();
 	}
 
+	/**
+	 * Peek and return the first token.  It is not consumed.
+	 */
 	public Token peekToken() {
 		if (tokens.isEmpty())
 			fillTok();
 		return tokens.peek();
 	}
 
+	/**
+	 * Get and remove the next token.
+	 */
 	public Token nextToken() {
 		if (tokens.isEmpty())
 			return readTok();
@@ -69,74 +69,13 @@ public class TokenScanner {
 			return tokens.removeFirst();
 	}
 
+	/**
+	 * Get the value of the next token and consume the token.  You'd
+	 * probably only call this after having peek'ed the type earlier.
+	 */
 	public String nextValue() {
 		return nextToken().getValue();
 	}
-
-	//public Token findTokenInLine(TokType type, String val, boolean create) {
-	//	Token found = null;
-	//	Iterator<Token> it = new TokIterator();
-	//	while (it.hasNext()) {
-	//		Token t = it.next();
-	//		if (t.getType() == TokType.EOL)
-	//			break;
-	//
-	//		if (t.getType() == type) {
-	//			if (val == null) {
-	//				found = t;
-	//				break;
-	//			} else if (t.getValue().equals(val)) {
-	//				found = t;
-	//				break;
-	//			}
-	//		}
-	//	}
-	//
-	//	if (create && found == null) {
-	//		found = new Token(type);
-	//		found.setValue(val);
-	//		// we must be at a new line here
-	//		tokens.add(tokens.size()-1, found);
-	//	}
-	//	return found;
-	//}
-
-	//public Token findToken(TokType type, String val) {
-	//	Token found = null;
-	//
-	//	Iterator<Token> it = new TokIterator();
-	//	while (it.hasNext()) {
-	//		Token t = it.next();
-	//		if (t.getType() == type) {
-	//			if (val == null) {
-	//				found = t;
-	//				break;
-	//			} else if (t.getValue().equals(val)) {
-	//				found = t;
-	//				break;
-	//			}
-	//		}
-	//	}
-	//
-	//	return found;
-	//}
-
-	//public void insertTokenBefore(Token tok, Token before) {
-	//	if (before == null) {
-	//		tokens.addFirst(tok);
-	//		return;
-	//	}
-	//
-	//	int ind = 0;
-	//	for (Token t : tokens) {
-	//		//noinspection ObjectEquality
-	//		if (t == before) {
-	//			tokens.add(ind, tok);
-	//			break;
-	//		}
-	//		ind++;
-	//	}
-	//}
 
 	public boolean isEndOfFile() {
 		if (tokens.isEmpty()) {
@@ -146,6 +85,10 @@ public class TokenScanner {
 		}
 	}
 
+	/**
+	 * Skip any white space.  After calling this the next token
+	 * will be end of file or something other than SPACE or EOL.
+	 */
 	public void skipSpace() {
 		while (!tokens.isEmpty() && tokens.peek().isWhiteSpace())
 			tokens.removeFirst();
@@ -163,6 +106,11 @@ public class TokenScanner {
 		}
 	}
 
+	/**
+	 * Skip everything up to a new line token.  The new line
+	 * token will be consumed, so the next token will the the first
+	 * on a new line (or at EOF).
+	 */
 	public void skipLine() {
 		while (!isEndOfFile()) {
 			Token t = nextToken();
@@ -205,6 +153,7 @@ public class TokenScanner {
 
 		TokType tt;
 		if (c == '\n') {
+			linenumber++;
 			tt = TokType.EOL;
 		} else if (isSpace(c)) {
 			while (isSpace(c = readChar()) && c != '\n')
@@ -311,62 +260,12 @@ public class TokenScanner {
 		return sb.toString();
 	}
 
-	/**
-	 * Iterate over tokens.  Tokens could be already on the <i>tokens</i>
-	 * queue or we might have to read them from the input.  If they are
-	 * read from the input they will be added to the queue.
-	 */
-	//private class TokIterator implements Iterator<Token> {
-	//	private final Iterator<Token> queueIter = tokens.iterator();
-	//	private boolean qDone = !queueIter.hasNext();
-	//	private boolean finished;
-	//
-	//	/**
-	//	 * There is a next token if there is one in the queue, or if there is
-	//	 * another token that can be read.  If we have to read a token then
-	//	 * it gets added to the queue.
-	//	 */
-	//	public boolean hasNext() {
-	//		if (finished)
-	//			return false;
-	//
-	//		return true;
-	//	}
-	//
-	//	private Token loadTok() {
-	//		Token t = readTok();
-	//		tokens.add(t);
-	//
-	//		if (t.getType() == TokType.EOF)
-	//			finished = true;
-	//		return t;
-	//	}
-	//
-	//	/**
-	//	 * Return the next token.  Once the queue is finished we start reading
-	//	 * from the input.  These read tokens will be added to the queue, but
-	//	 * we do not go back to reading the queue once we have finished.
-	//	 * @return The next token.
-	//	 */
-	//	public Token next() {
-	//		if (finished)
-	//			throw new NoSuchElementException("finished");
-	//
-	//		Token t;
-	//		if (qDone) {
-	//			t = loadTok();
-	//		} else {
-	//			t = queueIter.next();
-	//			if (!queueIter.hasNext())
-	//				qDone = true;
-	//		}
-	//		if (t.getType() == TokType.EOF)
-	//			finished = true;
-	//		return t;
-	//	}
-	//
-	//	public void remove() {
-	//		throw new UnsupportedOperationException("removal not supported");
-	//	}
-	//}
+	public boolean checkToken(TokType symbol, String val) {
+		Token tok = peekToken();
+		return tok.getType() == symbol && val.equals(tok.getValue());
+	}
+
+	public int getLinenumber() {
+		return linenumber;
+	}
 }

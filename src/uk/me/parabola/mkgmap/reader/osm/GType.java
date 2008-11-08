@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.Formatter;
+
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
 
@@ -106,5 +108,15 @@ public class GType {
 
 	public void setDefaultName(String defaultName) {
 		this.defaultName = defaultName;
+	}
+
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		Formatter fmt = new Formatter(sb);
+		sb.append('[');
+		fmt.format("%#x", type);
+		// TODO more...
+		sb.append(']');
+		return sb.toString();
 	}
 }
