@@ -25,7 +25,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class EqualsOp extends BinaryOp {
 	public EqualsOp() {
-		setType('=');
+		setType(EQUALS);
 	}
 
 	public boolean eval(Element el) {

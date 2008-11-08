@@ -22,6 +22,9 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class ExistsOp extends Op {
+	public ExistsOp() {
+		setType(EXISTS);
+	}
 
 	public boolean eval(Element el) {
 		Op op = getFirst();
@@ -31,7 +34,7 @@ public class ExistsOp extends Op {
 	}
 
 	public int priority() {
-		return 0;
+		return 10;
 	}
 
 	public String toString() {

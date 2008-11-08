@@ -12,26 +12,27 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 08-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * Reverses the sense of the operation it is applied to.
  * @author Steve Ratcliffe
  */
-public class AndOp extends BinaryOp {
+public class NotOp extends Op {
 
-	public AndOp() {
-		setType(AND);
+	public NotOp() {
+		setType(NOT);
 	}
 
 	public boolean eval(Element el) {
-		return getFirst().eval(el) && getSecond().eval(el);
+		return !first.eval(el);
 	}
 
 	public int priority() {
-		return 5;
+		return 0;
 	}
 }

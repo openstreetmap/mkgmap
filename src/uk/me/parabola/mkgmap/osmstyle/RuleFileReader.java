@@ -88,7 +88,7 @@ public class RuleFileReader {
 		// E1 | E2 {type...} is exactly the same as:
 		// E1 {type...}
 		// E2 {type...}
-		if (op.getType() == Op.OR) {
+		if (op.isType(Op.OR)) {
 			saveRule(op.getFirst(), gt);
 			saveRule(((BinaryOp) op).getSecond(), gt);
 			return;
@@ -100,20 +100,21 @@ public class RuleFileReader {
 			Op second = binaryOp.getSecond();
 
 			log.debug("binop", op.getType(), first.getType());
-			if (op.getType() == Op.EQUALS && first.getType() == Op.VALUE) {
+			if (op.isType(Op.EQUALS) && first.isType(Op.VALUE)) {
 				String s = op.toString();
 				Rule rule = new FixedRule(gt);
 				log.debug("saving", s, " R:", rule);
 				rules.add(s, rule);
 			}
-			else if (op.getType() == Op.AND && first.getType() == Op.EQUALS) {
+			else if (op.isType(Op.AND) && first.isType(Op.EQUALS)) {
 				String s = first.toString();
 				Rule rule = new ExpressionRule(second, gt);
 				log.debug("saving", s, " R:", rule);
 				rules.add(s, rule);
+			} else if (op.isType(Op.AND) && (first.isType(Op.EXISTS) || first.isType(Op.NOT_EXISTS))){
+				throw new SyntaxException(scanner, "Cannot yet start rule with tag=*");
 			} else {
-
-				throw new SyntaxException(scanner, "Invalid rule file");
+				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else {
 			// TODO: better message ;)
@@ -128,6 +129,7 @@ public class RuleFileReader {
 				"foo=\nbar & bar=two [0x1]\n" +
 				"amenity=pub [0x2]\n" +
 				"highway=footway & type=rough [0x3]\n" +
+				//"highway=* & oneway=true [0x0]\n" +
 				"");
 		RuleSet rs = new RuleSet();
 		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, rs);

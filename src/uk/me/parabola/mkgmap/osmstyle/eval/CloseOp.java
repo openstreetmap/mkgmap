@@ -38,6 +38,6 @@ public class CloseOp extends Op {
 	}
 
 	public boolean hasHigherPriority(Op other) {
-		return other.getType() == OPEN_PAREN;
+		return other.isType(OPEN_PAREN);
 	}
 }

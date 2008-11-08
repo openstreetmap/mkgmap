@@ -12,26 +12,33 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 08-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * True when the tag does not have the given value.
+ *
  * @author Steve Ratcliffe
  */
-public class AndOp extends BinaryOp {
-
-	public AndOp() {
-		setType(AND);
+public class NotEqualOp extends BinaryOp {
+	public NotEqualOp() {
+		setType(NOT_EQUALS);
 	}
 
 	public boolean eval(Element el) {
-		return getFirst().eval(el) && getSecond().eval(el);
+		String key = getFirst().toString();
+		String value = getSecond().toString();
+
+		String s = el.getTag(key);
+		if (s == null)
+			return false;
+		return !s.equals(value);
 	}
 
 	public int priority() {
-		return 5;
+		return 10;
 	}
 }

@@ -12,26 +12,26 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 08-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * True of the tag does not exist.
  * @author Steve Ratcliffe
  */
-public class AndOp extends BinaryOp {
-
-	public AndOp() {
-		setType(AND);
+public class NotExistsOp extends Op {
+	public NotExistsOp() {
+		setType(NOT_EXISTS);
 	}
 
 	public boolean eval(Element el) {
-		return getFirst().eval(el) && getSecond().eval(el);
+		return el.getTag(first.value()) == null;
 	}
 
 	public int priority() {
-		return 5;
+		return 10;
 	}
 }

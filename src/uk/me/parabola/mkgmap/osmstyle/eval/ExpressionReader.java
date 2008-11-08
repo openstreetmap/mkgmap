@@ -3,6 +3,7 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.*;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -37,7 +38,10 @@ public class ExpressionReader {
 			case SPACE:
 				break;
 			case SYMBOL:
-				saveOp(tok.getValue());
+				if (tok.getValue().equals("*"))
+					pushValue(tok.getValue());
+				else
+					saveOp(tok.getValue());
 				break;
 			case TEXT:
 				pushValue(tok.getValue());
@@ -66,9 +70,9 @@ public class ExpressionReader {
 			throw new SyntaxException(scanner, e.getRawMessage());
 		}
 
-		if (op.getType() == Op.CLOSE_PAREN) {
+		if (op.getType() == CLOSE_PAREN) {
 			// Check that there was an opeing paren and remove it
-			if (opStack.isEmpty() || opStack.peek().getType() != Op.OPEN_PAREN)
+			if (opStack.isEmpty() || !opStack.peek().isType(OPEN_PAREN))
 				throw new SyntaxException(scanner, "No matching open parenthesis");
 			opStack.pop();
 		} else {
@@ -79,16 +83,24 @@ public class ExpressionReader {
 	void runOp() {
 		Op op = opStack.pop();
 		log.debug("Running op...", op.getType());
-		Op arg2 = stack.pop();
-		Op arg1 = stack.pop();
 
-		//System.out.printf("%s(%s, %s)\n", op, arg1, arg2);
 		if (op instanceof BinaryOp) {
+			Op arg2 = stack.pop();
+			Op arg1 = stack.pop();
 			BinaryOp binaryOp = (BinaryOp) op;
 			binaryOp.setFirst(arg1);
 			binaryOp.setSecond(arg2);
-			stack.push(binaryOp);
+			if (op.isType(EQUALS) && arg2.isType(VALUE) && ((ValueOp) arg2).isValue("*")) {
+				log.debug("convert to EXISTS");
+				op = new ExistsOp();
+				op.setFirst(arg1);
+			} else if (op.isType(NOT_EQUALS) && arg2.isType(VALUE) && ((ValueOp) arg2).isValue("*")) {
+				log.debug("convert to NOT EXISTS");
+				op = new NotExistsOp();
+				op.setFirst(arg1);
+			} 
 		}
+		stack.push(op);
 	}
 
 	void pushValue(String value) {

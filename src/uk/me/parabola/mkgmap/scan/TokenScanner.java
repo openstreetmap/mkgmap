@@ -162,9 +162,15 @@ public class TokenScanner {
 			pushback = c;
 			tt = TokType.TEXT;
 		} else {
-			// A symbol.  The value has already been set.  At present
-			// symbols do not combine, so that they are always a single
-			// character.
+			// A symbol.  The value has already been set.  Some symbols
+			// combine from multiple characters.
+			if (c == '!') {
+				c = readChar();
+				if (c == '=')
+					val.append(c);
+				else
+					pushback = c;
+			}
 			tt = TokType.SYMBOL;
 		}
 

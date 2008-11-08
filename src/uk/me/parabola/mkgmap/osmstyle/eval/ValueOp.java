@@ -19,6 +19,8 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * Holds a string value; the name of a tag or the value of a tag for example.
+ * 
  * @author Steve Ratcliffe
  */
 public class ValueOp extends Op {
@@ -34,10 +36,17 @@ public class ValueOp extends Op {
 	}
 
 	public int priority() {
-
 		return 0;
 	}
 
+	public String value() {
+		return value;
+	}
+
+	public boolean isValue(String val) {
+		return value.equals(val);
+	}
+	
 	public String toString() {
 		return value;
 	}

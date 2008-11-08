@@ -25,35 +25,39 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public abstract class Op {
 
-	public static final int EQUALS = '=';
-	public static final int NOT_EQUALS = '!';
-	public static final int EXISTS = 'E';
-	public static final int NOT_EXISTS = 'N';
-	public static final int AND = '&';
-	public static final int OR = '|';
+	public static final char EQUALS = '=';
+	public static final char NOT_EQUALS = '!';
+	public static final char EXISTS = 'E';
+	public static final char NOT_EXISTS = 'N';
+	public static final char AND = '&';
+	public static final char OR = '|';
 	public static final char VALUE = 'V';
 	public static final char OPEN_PAREN = '(';
 	public static final char CLOSE_PAREN = ')';
+	public static final char NOT = '!';
 
 	protected Op first;
 	private char type;
 
 	public static Op createOp(String value) {
 		char c = value.charAt(0);
+		Op op;
 		switch (c) {
-		case EQUALS:
-			return new EqualsOp();
-		case AND:
-			return new AndOp();
-		case OR:
-			return new OrOp();
-		case OPEN_PAREN:
-			return new OpenOp();
-		case CLOSE_PAREN:
-			return new CloseOp();
+		case EQUALS: op = new EqualsOp(); break;
+		case AND: op = new AndOp(); break;
+		case OR: op = new OrOp(); break;
+		case OPEN_PAREN: op = new OpenOp(); break;
+		case CLOSE_PAREN: op = new CloseOp(); break;
+		case '!':
+			if (value.equals("!="))
+				op = new NotEqualOp();
+			else
+				op = new NotOp();
+			break;
 		default:
 			throw new SyntaxException("Unrecognised operation " + c);
 		}
+		return op;
 	}
 
 	public abstract boolean eval(Element el);
@@ -82,5 +86,13 @@ public abstract class Op {
 
 	public void setType(char type) {
 		this.type = type;
+	}
+
+	public String value() {
+		return first.toString();
+	}
+
+	public boolean isType(char value) {
+		return type == value;
 	}
 }
