@@ -54,6 +54,8 @@ public class EqualsOp extends BinaryOp {
 	 */
 	protected ValueWithUnit getUnitValue(Element el, String key) {
 		String val = el.getTag(key);
+		if (val == null)
+			return null;
 		return new ValueWithUnit(val);
 	}
 

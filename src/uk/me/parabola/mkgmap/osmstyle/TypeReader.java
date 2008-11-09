@@ -34,6 +34,7 @@ public class TypeReader {
 			throw e;
 		}
 
+		ts.skipSpace();
 		String type = ts.nextValue();
 		if (!Character.isDigit(type.charAt(0)))
 			throw new SyntaxException(ts, "Garmin type number must be first.  Saw '" + type + '\'');

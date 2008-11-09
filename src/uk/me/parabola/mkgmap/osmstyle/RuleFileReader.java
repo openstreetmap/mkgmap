@@ -158,8 +158,8 @@ public class RuleFileReader {
 
 	public static void main(String[] args) throws FileNotFoundException {
 		Reader r;
-		if (args.length > 1) {
-			r = new FileReader(args[1]);
+		if (args.length > 0) {
+			r = new FileReader(args[0]);
 		} else {
 			r = new StringReader(
 					"a=b & (c=d | e=f) & x>10 [0x1]\n" +
@@ -172,7 +172,7 @@ public class RuleFileReader {
 							"");
 		}
 		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18"), rs);
+		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
 		rr.load("string", r);
 		log.info("Result: " + rs);
 	}

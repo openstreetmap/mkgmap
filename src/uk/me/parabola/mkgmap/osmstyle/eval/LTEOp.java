@@ -29,6 +29,9 @@ public class LTEOp extends EqualsOp {
 
 	public boolean eval(Element el) {
 		ValueWithUnit tagValue = getUnitValue(el, getFirst().value());
+		if (tagValue == null)
+			return false;
+
 		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value());
 
 		if (!tagValue.isValid() || !ourVal.isValid())
