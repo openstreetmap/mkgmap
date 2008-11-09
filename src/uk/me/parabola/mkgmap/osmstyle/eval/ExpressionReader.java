@@ -14,9 +14,9 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ExpressionReader {
 	private static final Logger log = Logger.getLogger(ExpressionReader.class);
 
-	private Stack<Op> stack = new Stack<Op>();
-	private Stack<Op> opStack = new Stack<Op>();
-	private TokenScanner scanner;
+	private final Stack<Op> stack = new Stack<Op>();
+	private final Stack<Op> opStack = new Stack<Op>();
+	private final TokenScanner scanner;
 
 	public ExpressionReader(TokenScanner scanner) {
 		this.scanner = scanner;

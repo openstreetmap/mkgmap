@@ -23,22 +23,12 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public class NotEqualOp extends BinaryOp {
+public class NotEqualOp extends EqualsOp {
 	public NotEqualOp() {
 		setType(NOT_EQUALS);
 	}
 
 	public boolean eval(Element el) {
-		String key = getFirst().toString();
-		String value = getSecond().toString();
-
-		String s = el.getTag(key);
-		if (s == null)
-			return false;
-		return !s.equals(value);
-	}
-
-	public int priority() {
-		return 10;
+		return !super.eval(el);
 	}
 }

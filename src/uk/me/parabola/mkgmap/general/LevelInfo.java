@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.Arrays;
+
+import uk.me.parabola.mkgmap.ExitException;
+
 /**
  * Represents the mapping between the Garmin map levels and the built-in
  * resolutions.  The resolutions go from 1 to 24 and the levels start at 0 and
@@ -33,6 +37,8 @@ package uk.me.parabola.mkgmap.general;
  * @author Steve Ratcliffe
 */
 public class LevelInfo implements Comparable<LevelInfo> {
+	public static final String DEFAULT_LEVELS = "0:24, 1:22, 2:20, 3:18, 4:16";
+
 	private final int level;
 	private final int bits;
 
@@ -43,6 +49,41 @@ public class LevelInfo implements Comparable<LevelInfo> {
 	public LevelInfo(int level, int bits) {
 		this.level = level;
 		this.bits = bits;
+	}
+
+	/**
+	 * Convert a string into an array of LevelInfo structures.
+	 */
+	public static LevelInfo[] createFromString(String levelSpec) {
+		String[] desc = levelSpec.split("[, \\t\\n]+");
+		LevelInfo[] levels = new LevelInfo[desc.length];
+
+		int count = 0;
+		for (String s : desc) {
+			String[] keyVal = s.split("[=:]");
+			if (keyVal == null || keyVal.length < 2) {
+				System.err.println("incorrect level specification " + levelSpec);
+				continue;
+			}
+
+			try {
+				int key = Integer.parseInt(keyVal[0]);
+				int value = Integer.parseInt(keyVal[1]);
+				levels[count] = new LevelInfo(key, value);
+			} catch (NumberFormatException e) {
+				System.err.println("Levels specification not all numbers " + keyVal[count]);
+			}
+			count++;
+		}
+
+		Arrays.sort(levels);
+
+		// If there are more than 8 levels the map can cause the
+		// garmin to crash.
+		if (levels.length > 8)
+			throw new ExitException("Too many levels, the maximum is 8");
+
+		return levels;
 	}
 
 	/**

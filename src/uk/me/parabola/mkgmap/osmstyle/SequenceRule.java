@@ -31,7 +31,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * @author Steve Ratcliffe
  */
 public class SequenceRule implements Rule {
-	private List<Rule> ruleList = new ArrayList<Rule>();
+	private final List<Rule> ruleList = new ArrayList<Rule>();
 	private boolean blocked;
 
 	public GType resolveType(Element el) {
@@ -49,7 +49,7 @@ public class SequenceRule implements Rule {
 	 * would never be called (because a fixed rule always returns an answer).
 	 */
 	public void add(Rule rule) {
-		if (blocked)
+		if (blocked && !(rule instanceof FixedRule))
 			System.out.println("Warning: Unreachable rule, more general rules should be later in the file");
 		
 		ruleList.add(rule);
@@ -59,9 +59,9 @@ public class SequenceRule implements Rule {
 
 	public String toString() {
 		Formatter fmt = new Formatter(new StringBuilder());
-		fmt.format("LIST(");
+		fmt.format("(");
 		for (Rule r : ruleList) {
-			fmt.format("%s, ", r);
+			fmt.format("%s | ", r);
 		}
 		fmt.format(")");
 		return fmt.toString();

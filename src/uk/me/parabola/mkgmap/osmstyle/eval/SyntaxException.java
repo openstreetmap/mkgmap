@@ -52,12 +52,4 @@ public class SyntaxException extends RuntimeException {
 		fmt.format(super.getMessage());
 		return fmt.toString();
 	}
-
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-	}
-
-	public void setLineNumber(int lineNumber) {
-		this.lineNumber = lineNumber;
-	}
 }

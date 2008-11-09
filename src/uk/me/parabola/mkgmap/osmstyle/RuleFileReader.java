@@ -19,11 +19,19 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.FileReader;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.AND;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EXISTS;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EXISTS;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -47,9 +55,9 @@ public class RuleFileReader {
 	private final RuleSet rules;
 	private TokenScanner scanner;
 
-	public RuleFileReader(int kind, RuleSet rules) {
+	public RuleFileReader(int kind, LevelInfo[] levels, RuleSet rules) {
 		this.rules = rules;
-		typeReader = new TypeReader(kind);
+		typeReader = new TypeReader(kind, levels);
 	}
 
 	/**
@@ -78,62 +86,95 @@ public class RuleFileReader {
 		}
 	}
 
-	public RuleSet getRules() {
-		return rules;
-	}
-
+	/**
+	 * Save the expression as a rule.  We need to extract an index such
+	 * as highway=primary first and then add the rest of the expression as
+	 * the condition for it.
+	 *
+	 * So in other words each condition is dropped into a number of different
+	 * baskets based on the first 'tag=value' term.  We then only look
+	 * for expressions that are in the correct basket.  For each expression
+	 * in a basket we know that the first term is true so we can drop that
+	 * from the expression.
+	 */
 	private void saveRule(Op op, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
-		// E1 | E2 {type...} is exactly the same as:
+		// E1 | E2 {type...} is exactly the same as the two rules:
 		// E1 {type...}
 		// E2 {type...}
-		if (op.isType(Op.OR)) {
+		// so just recurse on each term, throwing away the original OR.
+		if (op.isType(OR)) {
 			saveRule(op.getFirst(), gt);
 			saveRule(((BinaryOp) op).getSecond(), gt);
 			return;
 		}
 
 		if (op instanceof BinaryOp) {
-			BinaryOp binaryOp = (BinaryOp) op;
-			Op first = binaryOp.getFirst();
-			Op second = binaryOp.getSecond();
+			optimiseAndSaveBinaryOp(op, gt);
+		} else {
+			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+		}
+	}
 
-			log.debug("binop", op.getType(), first.getType());
-			if (op.isType(Op.EQUALS) && first.isType(Op.VALUE)) {
-				String s = op.toString();
-				Rule rule = new FixedRule(gt);
-				log.debug("saving", s, " R:", rule);
-				rules.add(s, rule);
+	/**
+	 * Optimise the expression tree, extract the primary key and
+	 * save it as a rule.
+	 */
+	private void optimiseAndSaveBinaryOp(Op op, GType gt) {
+		BinaryOp binaryOp = (BinaryOp) op;
+		Op first = binaryOp.getFirst();
+		Op second = binaryOp.getSecond();
+
+		log.debug("binop", op.getType(), first.getType());
+
+		/*
+         * We allow the following cases:
+		 * An EQUALS at the top.
+		 * An AND at the top level.
+		 * (The case that there is an OR at the top level has already been
+		 * dealt with)
+         */
+		if (op.isType(EQUALS)) {
+			if (first.isType(VALUE) && second.isType(VALUE)) {
+				rules.add(op.toString(), new FixedRule(gt));
+			} else {
+				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
-			else if (op.isType(Op.AND) && first.isType(Op.EQUALS)) {
-				String s = first.toString();
-				Rule rule = new ExpressionRule(second, gt);
-				log.debug("saving", s, " R:", rule);
-				rules.add(s, rule);
-			} else if (op.isType(Op.AND) && (first.isType(Op.EXISTS) || first.isType(Op.NOT_EXISTS))){
-				throw new SyntaxException(scanner, "Cannot yet start rule with tag=*");
+		} else if (op.isType(AND)) {
+			if (first.isType(EQUALS)) {
+				rules.add(first.toString(), new ExpressionRule(second, gt));
+			} else if (second.isType(EQUALS)) {
+				// Swap the terms and everything will be fine.
+				rules.add(second.toString(), new ExpressionRule(first, gt));
+			} else if (first.isType(EXISTS) || first.isType(NOT_EXISTS)) {
+				throw new SyntaxException(scanner, "Cannot start rule with tag(!)=*");
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else {
-			// TODO: better message ;)
-			throw new SyntaxException(scanner, "Invalid rule file");
+			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 	}
 
-	public static void main(String[] args) {
-		StringReader r = new StringReader("a=b & (c=d | e=f)[0x1]\n" +
-				"highway=footway & highway = path\n" +
-				"[0x23 resolution 22]\n" +
-				"foo=\nbar & bar=two [0x1]\n" +
-				"amenity=pub [0x2]\n" +
-				"highway=footway & type=rough [0x3]\n" +
-				//"highway=* & oneway=true [0x0]\n" +
-				"");
+	public static void main(String[] args) throws FileNotFoundException {
+		Reader r;
+		if (args.length > 1) {
+			r = new FileReader(args[1]);
+		} else {
+			r = new StringReader(
+					"a=b & (c=d | e=f) & x>10 [0x1]\n" +
+					"highway=footway & highway = path\n" +
+							"[0x23 resolution 22]\n" +
+							"foo=\nbar & bar=two [0x1]\n" +
+							"amenity=pub [0x2]\n" +
+							"highway=footway & type=rough [0x3 level 2]\n" +
+							"highway=* & oneway=true [0x0]\n" +
+							"");
+		}
 		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, rs);
+		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18"), rs);
 		rr.load("string", r);
-		log.info("Result: " + rs.getMap());
+		log.info("Result: " + rs);
 	}
 }

@@ -28,8 +28,8 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * @author Steve Ratcliffe
  */
 public class ExpressionRule implements Rule {
-	private Op exression;
-	private GType gtype;
+	private final Op exression;
+	private final GType gtype;
 
 	public ExpressionRule(Op exression, GType gtype) {
 		this.exression = exression;
@@ -44,6 +44,6 @@ public class ExpressionRule implements Rule {
 	}
 
 	public String toString() {
-		return "COND(" + gtype + ')';
+		return exression.toString() + ' ' + gtype;
 	}
 }

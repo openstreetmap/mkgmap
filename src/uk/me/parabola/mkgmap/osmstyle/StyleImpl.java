@@ -33,6 +33,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -142,8 +143,13 @@ public class StyleImpl implements Style {
 	}
 
 	private void readRules() {
+		String l = generalOptions.get("levels");
+		if (l == null)
+			l = LevelInfo.DEFAULT_LEVELS;
+		LevelInfo[] levels = LevelInfo.createFromString(l);
+		
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POINT, nodes);
+			RuleFileReader reader = new RuleFileReader(GType.POINT, levels, nodes);
 			reader.load(fileLoader, "points");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
@@ -151,14 +157,14 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, ways);
+			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, levels, ways);
 			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYGON, ways);
+			RuleFileReader reader = new RuleFileReader(GType.POLYGON, levels, ways);
 			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");

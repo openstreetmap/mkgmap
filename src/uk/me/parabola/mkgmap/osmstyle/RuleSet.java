@@ -16,9 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Formatter;
 
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
@@ -26,12 +27,13 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * A group of rules.  Basically just a map of a tag=value strings that is used
  * as an index and the rule that applies for that tag,value pair.
  *
- * The main purpose is
+ * The main purpose is to separate out the code to add a new rule
+ * which is moderately complex.
  *
  * @author Steve Ratcliffe
  */
 public class RuleSet {
-	private Map<String, Rule> rules = new HashMap<String, Rule>();
+	private final Map<String, Rule> rules = new LinkedHashMap<String, Rule>();
 
 	public void add(String s, Rule rule) {
 		Rule existingRule = rules.get(s);
@@ -57,5 +59,22 @@ public class RuleSet {
 
 	public Set<Map.Entry<String,Rule>> entrySet() {
 		return rules.entrySet();
+	}
+
+	/**
+	 * Format the rule set.  Warning: this doesn't produce a valid input
+	 * rule file.
+	 */
+	public String toString() {
+		Formatter fmt = new Formatter();
+		for (Map.Entry<String, Rule> ent: rules.entrySet()) {
+			String first = ent.getKey();
+			Rule r = ent.getValue();
+			if (r instanceof FixedRule)
+			fmt.format("%s %s\n", first, r);
+			else
+			fmt.format("%s & %s\n", first, r);
+		}
+		return fmt.toString();
 	}
 }

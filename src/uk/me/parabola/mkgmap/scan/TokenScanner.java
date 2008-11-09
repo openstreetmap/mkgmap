@@ -164,7 +164,7 @@ public class TokenScanner {
 		} else {
 			// A symbol.  The value has already been set.  Some symbols
 			// combine from multiple characters.
-			if (c == '!') {
+			if (c == '!' || c == '<' || c == '>') {
 				c = readChar();
 				if (c == '=')
 					val.append(c);
@@ -203,7 +203,7 @@ public class TokenScanner {
 
 	private boolean isWordChar(int ch) {
 		return Character.isLetterOrDigit(ch)
-				|| ch == '_';
+				|| ch == '_' || ch == ':';
 	}
 
 	/**
@@ -249,7 +249,7 @@ public class TokenScanner {
 	 * space, joins all TEXT and SYMBOL tokens until the next one
 	 * that is neither.
 	 */
-	public String readWord() {
+	public String nextWord() {
 		skipSpace();
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {

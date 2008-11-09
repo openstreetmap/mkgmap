@@ -6,6 +6,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 
 /**
  * Read a type description from a style file.
@@ -14,9 +15,11 @@ public class TypeReader {
 	private static final Logger log = Logger.getLogger(TypeReader.class);
 
 	private final int kind;
+	private final LevelInfo[] levels;
 
-	public TypeReader(int kind) {
+	public TypeReader(int kind, LevelInfo[] levels) {
 		this.kind = kind;
+		this.levels = levels;
 	}
 
 	public GType readType(TokenScanner ts) {
@@ -40,29 +43,78 @@ public class TypeReader {
 
 		while (!ts.isEndOfFile()) {
 			ts.skipSpace();
-			log.debug("type ", ts.peekToken().getType(), "val=", ts.peekToken().getValue());
 			String w = ts.nextValue();
-			assert !ts.isEndOfFile();
 			if (w.equals("]"))
 				break;
+
 			if (w.equals("level")) {
-				ts.skipSpace();
-				String val = ts.nextValue();
-				log.debug("level val=", val);
-				throw new SyntaxException(ts, "The level command is not yet implemented, coming soon...");
+				setLevel(ts, gt);
 			} else if (w.equals("resolution")) {
-				ts.skipSpace();
 				setResolution(ts, gt);
+			} else if (w.equals("default_name")) {
+				gt.setDefaultName(fetchWord(ts));
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
-			ts.skipSpace();
 		}
 
 		return gt;
 	}
 
 	private void setResolution(TokenScanner ts, GType gt) {
-		gt.setMinResolution(ts.nextInt());
+		String str = fetchWord(ts);
+		log.debug("res word value", str);
+		try {
+			if (str.indexOf('-') >= 0) {
+				String[] minmax = str.split("-", 2);
+				gt.setMaxResolution(Integer.parseInt(minmax[0]));
+				gt.setMinResolution(Integer.parseInt(minmax[1]));
+			} else {
+				gt.setMinResolution(Integer.parseInt(str));
+			}
+		} catch (NumberFormatException e) {
+			gt.setMinResolution(24);
+		}
+	}
+
+	private void setLevel(TokenScanner ts, GType gt) {
+		String str = fetchWord(ts);
+		try {
+			if (str.indexOf('-') >= 0) {
+				String[] minmax = str.split("-", 2);
+				gt.setMaxResolution(toResolution(Integer.parseInt(minmax[0])));
+				gt.setMinResolution(toResolution(Integer.parseInt(minmax[1])));
+			} else {
+				gt.setMinResolution(toResolution(Integer.parseInt(str)));
+			}
+		} catch (NumberFormatException e) {
+			gt.setMinResolution(24);
+		}
+	}
+
+	private int toResolution(int level) {
+		int max = levels.length - 1;
+		if (level > max)
+			throw new SyntaxException("Level number too large, max=" + max);
+
+		return levels[max - level].getBits();
+	}
+
+	private String fetchWord(TokenScanner ts) {
+		ts.skipSpace();
+		StringBuilder sb = new StringBuilder();
+		while (!ts.isEndOfFile()) {
+			Token token = ts.peekToken();
+			TokType type = token.getType();
+			if (type == TokType.EOF || type == TokType.EOL || type == TokType.SPACE) {
+				ts.skipSpace();
+				break;
+			}
+			if (token.getValue().equals("]"))
+				break;
+
+			sb.append(ts.nextValue());
+		}
+		return sb.toString();
 	}
 }

@@ -27,7 +27,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.mkgmap.ExitException;
-import uk.me.parabola.mkgmap.reader.osm.xml.OsmMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;

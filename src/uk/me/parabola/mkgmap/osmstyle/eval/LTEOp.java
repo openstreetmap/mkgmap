@@ -12,26 +12,27 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 09-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 /**
+ * Less than or equal.  For population speeds etc.
  * @author Steve Ratcliffe
  */
-public abstract class BinaryOp extends Op {
-
-	private Op second;
-
-	public Op getSecond() {
-		return second;
+public class LTEOp extends EqualsOp {
+	public LTEOp() {
+		setType(LTE);
 	}
 
-	public void setSecond(Op second) {
-		this.second = second;
-	}
+	public boolean eval(Element el) {
+		ValueWithUnit tagValue = getUnitValue(el, getFirst().value());
+		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value());
 
-	public String toString() {
-		return "(" + first + getType() + second + ')';
+		if (!tagValue.isValid() || !ourVal.isValid())
+			return false;
+		return (tagValue.compareTo(ourVal) <= 0);
 	}
 }

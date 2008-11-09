@@ -26,9 +26,13 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public abstract class Op {
 
 	public static final char EQUALS = '=';
-	public static final char NOT_EQUALS = '!';
+	public static final char GT = 'g';
+	public static final char GTE = 'G';
+	public static final char LT = 'l';
+	public static final char LTE = 'L';
+	public static final char NOT_EQUALS = 'N';
 	public static final char EXISTS = 'E';
-	public static final char NOT_EXISTS = 'N';
+	public static final char NOT_EXISTS = 'n';
 	public static final char AND = '&';
 	public static final char OR = '|';
 	public static final char VALUE = 'V';
@@ -48,6 +52,18 @@ public abstract class Op {
 		case OR: op = new OrOp(); break;
 		case OPEN_PAREN: op = new OpenOp(); break;
 		case CLOSE_PAREN: op = new CloseOp(); break;
+		case '>':
+			if (value.equals(">="))
+				op = new GTEOp();
+			else
+				op = new GTOp();
+			break;
+		case '<':
+			if (value.equals("<="))
+				op = new LTEOp();
+			else
+				op = new LTOp();
+			break;
 		case '!':
 			if (value.equals("!="))
 				op = new NotEqualOp();
@@ -62,7 +78,7 @@ public abstract class Op {
 
 	public abstract boolean eval(Element el);
 
-	public abstract int priority();
+	protected abstract int priority();
 
 	/**
 	 * Does this operation have a higher priority that the other one?

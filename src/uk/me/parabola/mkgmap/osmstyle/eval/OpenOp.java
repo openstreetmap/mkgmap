@@ -29,7 +29,6 @@ public class OpenOp extends Op {
 	}
 
 	public boolean eval(Element el) {
-		assert false;
 		throw new SyntaxException("Programming error, trying to eval an open parenthesis");
 	}
 

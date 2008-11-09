@@ -39,10 +39,8 @@ public class GType {
 	private final int type;
 	private final int subtype;
 
-	private int index;
-
-	private int minResolution;
-	private int maxResolution;
+	private int minResolution = 24;
+	private int maxResolution = 24;
 
 	private String defaultName;
 
@@ -102,18 +100,6 @@ public class GType {
 		this.maxResolution = maxResolution;
 	}
 
-	public boolean isBetter(GType other) {
-		return index < other.getIndex();
-	}
-
-	public int getIndex() {
-		return index;
-	}
-
-	public void setIndex(int index) {
-		this.index = index;
-	}
-
 	public String getDefaultName() {
 		return defaultName;
 	}
@@ -127,7 +113,7 @@ public class GType {
 		Formatter fmt = new Formatter(sb);
 		sb.append('[');
 		fmt.format("%#x", type);
-		// TODO more...
+		fmt.format(" resolution %d-%d", maxResolution, minResolution);
 		sb.append(']');
 		return sb.toString();
 	}

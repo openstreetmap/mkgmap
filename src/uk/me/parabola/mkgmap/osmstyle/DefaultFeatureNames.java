@@ -74,7 +74,7 @@ public class DefaultFeatureNames {
 
 		ws.skipSpace();
 		while (!ws.isEndOfFile()) {
-			String key = ws.readWord();
+			String key = ws.nextWord();
 			ws.skipSpace();
 
 			Token t = ws.nextToken();
