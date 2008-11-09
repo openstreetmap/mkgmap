@@ -17,9 +17,9 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.FileReader;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -34,7 +34,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
-import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 

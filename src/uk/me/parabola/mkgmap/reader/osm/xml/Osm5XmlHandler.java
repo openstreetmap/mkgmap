@@ -23,10 +23,10 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.osm.Node;
-import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;

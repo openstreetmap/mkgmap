@@ -17,9 +17,9 @@
 package uk.me.parabola.log;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;

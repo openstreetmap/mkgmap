@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.plugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class to find the correct map reader to use, based on the type of the file

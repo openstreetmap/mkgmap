@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * An entry within a directory.  This holds its name and a list

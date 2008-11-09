@@ -62,7 +62,6 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * pair.
 	 */
 	public LevelInfo[] mapLevels() {
-		LevelInfo[] levels;
 
 		// First try command line, then style, then our default.
 		String levelSpec = configProps.getProperty("levels");
@@ -77,7 +76,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		if (levelSpec == null)
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
-		levels = LevelInfo.createFromString(levelSpec);
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec);
 
 		return levels;
 	}

@@ -3,7 +3,11 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.*;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.CLOSE_PAREN;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EQUALS;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OPEN_PAREN;
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;

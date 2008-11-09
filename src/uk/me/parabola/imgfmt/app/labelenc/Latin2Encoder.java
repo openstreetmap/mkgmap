@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.UnsupportedEncodingException;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Saving some old code, not in use at present.

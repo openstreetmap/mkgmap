@@ -80,12 +80,15 @@ public class StyledConverter implements OsmConverter {
 			return;
 
 		GType foundType = null;
+		String tmpFoundKey = null;
 		for (String tagKey : way) {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
 				foundType = rule.resolveType(way);
-				if (foundType != null)
+				if (foundType != null) {
+					tmpFoundKey = tagKey;
 					break;
+				}
 			}
 		}
 
@@ -98,17 +101,37 @@ public class StyledConverter implements OsmConverter {
 			way.setName(foundType.getDefaultName());
 
 		if (foundType.getFeatureKind() == GType.POLYLINE)
-            addLine(way, foundType);
+            addLine(way, foundType, tmpFoundKey);
 		else
 			addShape(way, foundType);
 	}
 
-	private void addLine(Way way, GType gt) {
+	private void addLine(Way way, GType gt, String tmpKey) {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
 		line.setPoints(way.getPoints());
 
+		tmpStuff(way, line, tmpKey);
+
 		clipper.clipLine(line, collector);
+	}
+
+	// This will be removed when better way to do contours is implemented.
+	// The oneway stuff will have to stay somewhere.
+	@Deprecated
+	private void tmpStuff(Way way, MapLine line, String tagKey) {
+		if (way.isBoolTag("oneway"))
+            line.setDirection(true);
+
+		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
+			String ele = way.getTag("ele");
+			try {
+				long n = Math.round(Integer.parseInt(ele) *  3.2808399);
+				line.setName(String.valueOf(n));
+			} catch (NumberFormatException e) {
+				line.setName(ele);
+			}
+		}
 	}
 
 	private void addShape(Way way, GType gt) {

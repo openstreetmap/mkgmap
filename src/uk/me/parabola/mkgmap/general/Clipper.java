@@ -66,9 +66,6 @@ public class Clipper {
 	}
 
 	public boolean contains(Coord location) {
-		if (bbox == null)
-			return true;
-		else
-			return bbox.contains(location);
+		return bbox == null || bbox.contains(location);
 	}
 }

@@ -15,11 +15,11 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-
-import java.util.List;
 
 /**
  * This class holds all of the calculations needed to encode a line into

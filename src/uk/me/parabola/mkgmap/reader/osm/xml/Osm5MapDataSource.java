@@ -27,10 +27,10 @@ import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.mkgmap.ExitException;
-import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
-import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
+import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Style;
 
 import org.xml.sax.SAXException;
 
@@ -94,7 +94,6 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 	 * @return An OsmConverter based on the command line options passed in.
 	 */
 	private OsmConverter createStyler() {
-		OsmConverter converter;
 
 		Properties props = getConfig();
 		String loc = props.getProperty("style-file");
@@ -105,6 +104,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		if (loc == null && name == null)
 			name = "default";
 
+		OsmConverter converter;
 		try {
 			// TODO: Move this routine, so that Style implementation reference is outside this package
 			Style style = new StyleImpl(loc, name);

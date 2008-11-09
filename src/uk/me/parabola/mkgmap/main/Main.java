@@ -34,13 +34,13 @@ import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.Version;
-import uk.me.parabola.mkgmap.reader.osm.Style;
-import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
+import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
 /**

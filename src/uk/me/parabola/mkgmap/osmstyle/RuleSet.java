@@ -16,10 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.Formatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Formatter;
 
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
