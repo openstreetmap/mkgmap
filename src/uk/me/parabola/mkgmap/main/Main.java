@@ -38,7 +38,8 @@ import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
-import uk.me.parabola.mkgmap.reader.osm.StyleFileLoader;
+import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
+import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
@@ -198,11 +199,11 @@ public class Main implements ArgumentProcessor {
 		for (String name : names) {
 			Style style;
 			try {
-				style = new Style(styleFile, name);
+				style = new StyleImpl(styleFile, name);
 			} catch (FileNotFoundException e) {
 				log.debug("could not find style", name);
 				try {
-					style = new Style(styleFile, null);
+					style = new StyleImpl(styleFile, null);
 				} catch (FileNotFoundException e1) {
 					log.debug("could not find style", styleFile);
 					continue;

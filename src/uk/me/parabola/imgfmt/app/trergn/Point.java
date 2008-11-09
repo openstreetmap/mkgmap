@@ -17,8 +17,8 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -52,7 +52,7 @@ public class Point extends MapObject {
 	public void write(ImgFileWriter file) {
 		byte b = (byte) getType();
 		file.put(b);
-		log.debug("writing point: " + b);
+		log.debug("writing point:", b);
 
 		int off = getLabel().getOffset();
 		if (poi != null) {

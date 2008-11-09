@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
  * Representation of an OSM Multipolygon Relation.

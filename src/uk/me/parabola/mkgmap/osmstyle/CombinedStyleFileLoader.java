@@ -14,13 +14,14 @@
  * Author: Steve Ratcliffe
  * Create date: Apr 13, 2008
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
@@ -54,7 +55,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	private static final Logger log = Logger.getLogger(CombinedStyleFileLoader.class);
 
 	private final Map<String, String> files = new HashMap<String, String>();
-	private String styleName;
+	private final String styleName;
 
 	public CombinedStyleFileLoader(String filename) throws FileNotFoundException {
 		styleName = filename.replaceFirst("\\.style$", "");
@@ -106,17 +107,17 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	/**
 	 * Open the specified file in the style definition.
 	 *
-	 * @param file The name of the file in the style.
+	 * @param filename The name of the file in the style.
 	 * @return An open file reader for the file.
 	 * @throws FileNotFoundException When the file can't be opened.
 	 */
-	public Reader open(String file) throws FileNotFoundException {
-		log.info("opening", file);
-		String contents = files.get(file);
+	public Reader open(String filename) throws FileNotFoundException {
+		log.info("opening", filename);
+		String contents = files.get(filename);
 		if (contents == null)
-			throw new FileNotFoundException(file);
+			throw new FileNotFoundException(filename);
 
-		log.debug("file", file, "found");
+		log.debug("file", filename, "found");
 		return new StringReader(contents);
 	}
 
@@ -145,12 +146,12 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 	 */
 	public static void main(String[] args) {
 		String name = args[0];
-		File f = new File(name);
+		File file = new File(name);
 
 		PrintStream out = System.out;
 		try {
-			if (f.isDirectory()) {
-				convertToFile(f, out);
+			if (file.isDirectory()) {
+				convertToFile(file, out);
 			} else {
 				String dirname;
 				int ind = name.lastIndexOf('.');
@@ -161,10 +162,10 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 				convertToDirectory(name, dirname);
 			}
 		} catch (FileNotFoundException e) {
-			System.err.println("Could not open file");
+			System.err.println("Could not open file " + e);
 			System.exit(1);
 		} catch (IOException e) {
-			System.err.println("Could not read file");
+			System.err.println("Could not read file " + e);
 			System.exit(1);
 		}
 	}
@@ -175,6 +176,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 		dir.mkdir();
 		for (String s : loader.files.keySet()) {
 			File ent = new File(dir, s);
+			ent.getParentFile().mkdirs();
 			FileWriter writer = new FileWriter(ent);
 			BufferedReader r = null;
 			try {
@@ -191,16 +193,37 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 		}
 	}
 
-	private static void convertToFile(File f, PrintStream out) throws IOException {
-		File[] list = f.listFiles();
+	private static void convertToFile(File file, PrintStream out) throws IOException {
+		File[] list = file.listFiles(new NoHiddenFilter());
+		convertToFile(out, list, null);
+	}
+
+	private static void convertToFile(PrintStream out, File[] list, String prefix) throws IOException {
 		for (File entry : list) {
 			if (entry.isFile()) {
-				out.println("<<<" + entry.getName() + ">>>");
+				out.print("<<<");
+				if (prefix != null) {
+					out.print(prefix);
+					out.print('/');
+				}
+				out.print(entry.getName());
+				out.println(">>>");
+
 				BufferedReader r = new BufferedReader(new FileReader(entry));
 				String line;
 				while ((line = r.readLine()) != null)
 					out.println(line);
+			} else {
+				convertToFile(out, entry.listFiles(new NoHiddenFilter()), entry.getName());
 			}
+		}
+	}
+
+	private static class NoHiddenFilter implements FilenameFilter {
+		public boolean accept(File dir, String name) {
+			if (name.length() == 0 || name.charAt(0) == '.')
+				return false;
+			return true;
 		}
 	}
 }

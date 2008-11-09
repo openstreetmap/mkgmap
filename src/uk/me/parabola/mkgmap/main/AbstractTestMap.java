@@ -46,7 +46,7 @@ public abstract class AbstractTestMap {
 			lng = Double.valueOf(args[1]);
 		}
 
-		log.debug("this is a test make map program. Start " + lat + '/' + lng);
+		log.debug("this is a test make map program. Start", lat, '/', lng);
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);

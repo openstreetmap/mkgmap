@@ -11,7 +11,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
-# takes 22s
+# takes 31s on trunk-681
 OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/osm5/srtm.osm
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
@@ -25,18 +25,19 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
-#OSMDATA = /opt/data/uk-test-*
+OSMDATA = /opt/data/uk-test-*
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
-OPTS= --net --tdbfile --gmapsupp
+#OPTS= --net --tdbfile --gmapsupp
+OPTS= --style=test
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
-	cp 63240001.img gmapsupp.img
-	imgdecode gmapsupp.img
+	#cp 63240001.img gmapsupp.img
+	#imgdecode gmapsupp.img
 
 t:
 	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)

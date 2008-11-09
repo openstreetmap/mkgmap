@@ -16,7 +16,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.Reader;
+
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * Information about a style.  This is so style authors can include
@@ -27,13 +31,16 @@ import uk.me.parabola.log.Logger;
 public class StyleInfo {
 	private static final Logger log = Logger.getLogger(StyleInfo.class);
 
-	private String version = "";
-	private String description = "No description available";
-	private String longDescription = "";
+	private String version;
+	private String description;
+	private String longDescription;
 
-	void readInfo(WordScanner ws) {
+	public void readInfo(String filename, Reader r) {
+		TokenScanner ws = new TokenScanner(filename, r);
 		while (!ws.isEndOfFile()) {
-			String word = ws.nextWord();
+			String word = ws.nextValue();
+			if (word == null)
+				continue;
 			if (word.equals("description"))
 				fetchSummary(ws);
 			else if (word.equals("version")) {
@@ -42,31 +49,41 @@ public class StyleInfo {
 		}
 	}
 
-	private void fetchVersion(WordScanner ws) {
-		if (ws.hasNextSymbol())
-			ws.nextSymbol();
-
-		version = ws.nextLine();
+	private void fetchVersion(TokenScanner ws) {
+		if (ws.firstTokenType() == TokType.SYMBOL)
+			ws.nextToken();
+		version = ws.readLine();
 		log.debug("file info: set version to", version);
 	}
 
-	private void fetchSummary(WordScanner ws) {
-		if (ws.hasNextSymbol())
-			ws.nextSymbol();
-		
-		description = ws.nextLine();
+	private void fetchSummary(TokenScanner ws) {
+		if (ws.nextToken().getType() == TokType.SYMBOL)
+			ws.nextToken();
+		ws.skipSpace();
+		description = ws.readLine();
 		log.debug("file info: set description to", description);
 	}
 
 	public String getDescription() {
-		return description;
+		return description == null ? "No description available" : description;
 	}
 
 	public String getVersion() {
-		return version;
+		return version == null ? "1" : version;
 	}
 
 	public String getLongDescription() {
-		return longDescription;
+		return longDescription != null ? longDescription : "";
+	}
+
+	/**
+	 * Merge the other style info in so that it doesn't override anything
+	 * in the current info.  In general, it is probably not very useful.
+	 * @param other The info to be merged in.  Nothing will overwrite anything
+	 * in 'this', although it could be added.
+	 */
+	public void merge(StyleInfo other) {
+		if (other.description != null)
+			this.description = "Based on: " + other.description;
 	}
 }

@@ -14,17 +14,16 @@
  * Author: Steve Ratcliffe
  * Create date: 22-Sep-2007
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.reader.osm.xml;
 
-import java.util.Arrays;
 import java.util.Properties;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.Style;
 
 /**
  * Base class for OSM map sources.  It exists so that more than
@@ -36,8 +35,6 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		implements LoadableMapDataSource, ConfiguredByProperties
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
-
-	private static final String DEFAULT_LEVELS = "0:24, 1:22, 2:20, 3:18, 4:16";
 
 	private Properties configProps;
 	private Style style;
@@ -65,7 +62,6 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * pair.
 	 */
 	public LevelInfo[] mapLevels() {
-		LevelInfo[] levels;
 
 		// First try command line, then style, then our default.
 		String levelSpec = configProps.getProperty("levels");
@@ -78,51 +74,10 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		}
 
 		if (levelSpec == null)
-			levelSpec = DEFAULT_LEVELS;
+			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
-		levels = createLevels(levelSpec);
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec);
 
-		return levels;
-	}
-
-	/**
-	 * Convert a string into an array of LevelInfo structures.
-	 */
-	private LevelInfo[] createLevels(String levelSpec) {
-		String[] desc = levelSpec.split("[, \\t\\n]+");
-		LevelInfo[] levels = new LevelInfo[desc.length];
-
-		int count = 0;
-		for (String s : desc) {
-			String[] keyVal = s.split("[=:]");
-			if (keyVal == null || keyVal.length < 2) {
-				System.err.println("incorrect level specification " + levelSpec);
-				continue;
-			}
-			
-			try {
-				int key = Integer.parseInt(keyVal[0]);
-				int value = Integer.parseInt(keyVal[1]);
-				levels[count] = new LevelInfo(key, value);
-			} catch (NumberFormatException e) {
-				System.err.println("Levels specification not all numbers " + keyVal[count]);
-			}
-			count++;
-		}
-
-		Arrays.sort(levels);
-
-		if (log.isDebugEnabled()) {
-			for (LevelInfo li : levels) {
-				log.debug("Level: " + li);
-			}
-		}
-
-		// If there are more than 8 levels the map can cause the
-		// garmin to crash.
-		if (levels.length > 8) {
-			throw new ExitException("Too many levels");
-		}
 		return levels;
 	}
 

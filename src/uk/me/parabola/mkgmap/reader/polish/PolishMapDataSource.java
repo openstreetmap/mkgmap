@@ -137,7 +137,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private void sectionStart(String line) {
 		String name = line.substring(1, line.length() - 1);
-		log.debug("section name" + name);
+		log.debug("section name", name);
 
 		if (name.equals("IMG ID")) {
 			section = S_IMG_ID;

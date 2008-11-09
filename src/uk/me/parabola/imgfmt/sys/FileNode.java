@@ -16,9 +16,6 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
@@ -27,6 +24,9 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
+
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The internal representation of a file in the file system.  In use it
@@ -226,7 +226,7 @@ public class FileNode implements ImgChannel {
 			// First need to allocate enough blocks for this write. First check
 			// if the block exists already
 			int pblock = dirent.getPhysicalBlock(lblock);
-			log.debug("lblock / pblock " + lblock + '/' + pblock);
+			log.debug("lblock / pblock", lblock, '/', pblock);
 			if (pblock == 0xffff) {
 				log.debug("allocating new block");
 				pblock = blockManager.allocate();

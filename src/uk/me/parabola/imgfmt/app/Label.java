@@ -83,7 +83,7 @@ public class Label {
 	 */
 	public void write(ImgFileWriter writer) {
 		if (log.isDebugEnabled())
-			log.debug("put label " + this.length);
+			log.debug("put label", this.length);
 		if (ctext != null)
 			writer.put(ctext, 0, this.length);
 	}

@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.UnsupportedEncodingException;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Saving some old code, not in use at present.
@@ -35,7 +35,7 @@ public class Latin2Encoder implements CharacterEncoder {
 		try {
 			byte[] res = "É".getBytes("iso-8859-2");
 			latin2supported = true;
-			log.debug("latin2 supported " + res.length);
+			log.debug("latin2 supported ", res.length);
 		} catch (UnsupportedEncodingException e) {
 			log.warn("latin2 charset is not supported");
 			latin2supported = false;

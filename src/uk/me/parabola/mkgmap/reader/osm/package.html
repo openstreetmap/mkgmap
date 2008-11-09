@@ -2,8 +2,14 @@
 <h3>OpenStreetMap converter</h3>
 
 <p>
-    This package has the code to read in a file that is in the Open Street Map
-    format (.osm files). OSM uses an XML format.
+	This package has the code to read in a file that is in the Open Street Map
+	format (.osm files). OSM uses an XML format.  The bulk of the code exists
+	to map from the OSM format to the garmin types.  In general we need
+	to look at several tags to decide on the correct garmin feature type to
+	use.  The initial versions of mkgmap could only deal with cases where
+	a single tag value was sufficient.  This was simple and works for a large
+	number of cases, but makes some things completely impossible.
+	The <i>new style system</i> will remove this limitation.
 
 <p>
 		Version 0.4 of the api is no longer supported.
@@ -59,4 +65,6 @@ The version 0 list of files is as follows.
 	<dt>map-features.csv</dt>
 	<dd>This is the map features file exactly as before.</dd>
 </dl>
+
+
 </body>
