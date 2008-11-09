@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -161,8 +162,13 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	private void ensureSize(int length) {
 		if (buf.position() +length > bufferSize - GUARD_SIZE) {
 			bufferSize += GROW_SIZE;
-			if (bufferSize > 0xffffff)
-				log.error("Map is too big and will not work");
+			if (bufferSize > 0xffffff) {
+				// Previous message was confusing people, although it is difficult to come
+				// up with something that is strictly true in all situations.
+				throw new ExitException(
+						"There is not enough room in a single garmin map for all the input data\n" +
+								"   The .osm file should be split into smaller pieces first.");
+			}
 			ByteBuffer newb = ByteBuffer.allocate(bufferSize);
 			newb.order(ByteOrder.LITTLE_ENDIAN);
 			buf.flip();
