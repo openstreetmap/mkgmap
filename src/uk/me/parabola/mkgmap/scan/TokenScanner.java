@@ -167,7 +167,7 @@ public class TokenScanner {
 			if (c == '!' || c == '<' || c == '>') {
 				c = readChar();
 				if (c == '=')
-					val.append(c);
+					val.append((char) c);
 				else
 					pushback = c;
 			}

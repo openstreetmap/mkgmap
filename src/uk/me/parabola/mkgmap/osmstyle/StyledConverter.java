@@ -27,6 +27,8 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.AreaClipper;
+import uk.me.parabola.mkgmap.general.NullClipper;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -55,7 +57,7 @@ public class StyledConverter implements OsmConverter {
 	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
 	private final MapCollector collector;
 
-	private Clipper clipper;
+	private Clipper clipper = new NullClipper();
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
@@ -227,7 +229,7 @@ public class StyledConverter implements OsmConverter {
 	 * @param bbox The bounding area.
 	 */
 	public void setBoundingBox(Area bbox) {
-		this.clipper = new Clipper(bbox);
+		this.clipper = new AreaClipper(bbox);
 	}
 
 	/**

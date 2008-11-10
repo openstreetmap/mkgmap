@@ -12,30 +12,27 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 09-Nov-2008
+ * Create date: 10-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle.eval;
+package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
- * Less than or equal.  For population speeds etc.
+ * Does no clipping and just adds the elements directly.
+ * 
  * @author Steve Ratcliffe
  */
-public class LTEOp extends EqualsOp {
-	public LTEOp() {
-		setType(LTE);
+public class NullClipper implements Clipper {
+	public void clipLine(MapLine line, MapCollector collector) {
+		collector.addLine(line);
 	}
 
-	public boolean eval(Element el) {
-		ValueWithUnit tagValue = getUnitValue(el, getFirst().value());
-		if (tagValue == null)
-			return false;
+	public void clipShape(MapShape shape, MapCollector collector) {
+		collector.addShape(shape);
+	}
 
-		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value());
-
-		if (!tagValue.isValid() || !ourVal.isValid())
-			return false;
-		return (tagValue.compareTo(ourVal) <= 0);
+	public boolean contains(Coord location) {
+		return true;
 	}
 }

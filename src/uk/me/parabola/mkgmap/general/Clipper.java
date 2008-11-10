@@ -12,60 +12,30 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 08-Nov-2008
+ * Create date: 10-Nov-2008
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.List;
-
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
- * Clip objects to a bounding box.
- * 
- * TODO: migrate LineClipper and PolygonClipper into here and simplify.
- *
+ * For clipping lines and polygons.
  * @author Steve Ratcliffe
  */
-public class Clipper {
-	private final Area bbox;
+public interface Clipper {
+	/**
+	 * Clip a line and add the resulting line or lines (if any) to the
+	 * collector.
+	 */
+	public void clipLine(MapLine line, MapCollector collector);
 
-	public Clipper() {
-		bbox = null;
-	}
+	/**
+	 * Clip a polygon and add the resulting shapes to the collector.
+	 */
+	public void clipShape(MapShape shape, MapCollector collector);
 
-	public Clipper(Area bbox) {
-		this.bbox = bbox;
-	}
-
-	public void clipLine(MapLine line, MapCollector collector) {
-		List<List<Coord>> list = LineClipper.clip(bbox, line.getPoints());
-		if (list == null) {
-			collector.addLine(line);
-		} else {
-			for (List<Coord> lco : list) {
-				MapLine nline = new MapLine(line);
-				nline.setPoints(lco);
-				collector.addLine(nline);
-			}
-		}
-	}
-
-	public void clipShape(MapShape shape, MapCollector collector) {
-		List<List<Coord>> list = PolygonClipper.clip(bbox, shape.getPoints());
-		if (list == null) {
-			collector.addShape(shape);
-		} else {
-			for (List<Coord> lco : list) {
-				MapShape nshape = new MapShape(shape);
-				nshape.setPoints(lco);
-				collector.addShape(nshape);
-			}
-		}
-	}
-
-	public boolean contains(Coord location) {
-		return bbox == null || bbox.contains(location);
-	}
+	/**
+	 * 'Clip' a point - return true if the point is within the clipped region.
+	 */
+	public boolean contains(Coord location);
 }
