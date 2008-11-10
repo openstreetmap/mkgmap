@@ -253,7 +253,6 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void setBBox(double minlat, double minlong,
 	                     double maxlat, double maxlong) {
-		assert bbox == null;
 
 		bbox = new Area(minlat, minlong, maxlat, maxlong);
 		converter.setBoundingBox(bbox);

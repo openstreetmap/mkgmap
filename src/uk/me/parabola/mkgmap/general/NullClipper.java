@@ -19,23 +19,20 @@ package uk.me.parabola.mkgmap.general;
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
- * For clipping lines and polygons.
+ * Does no clipping and just adds the elements directly.
+ * 
  * @author Steve Ratcliffe
  */
-public interface Clipper {
-	/**
-	 * Clip a line and add the resulting line or lines (if any) to the
-	 * collector.
-	 */
-	public void clipLine(MapLine line, MapCollector collector);
+public class NullClipper implements Clipper {
+	public void clipLine(MapLine line, MapCollector collector) {
+		collector.addLine(line);
+	}
 
-	/**
-	 * Clip a polygon and add the resulting shapes to the collector.
-	 */
-	public void clipShape(MapShape shape, MapCollector collector);
+	public void clipShape(MapShape shape, MapCollector collector) {
+		collector.addShape(shape);
+	}
 
-	/**
-	 * 'Clip' a point - return true if the point is within the clipped region.
-	 */
-	public boolean contains(Coord location);
+	public boolean contains(Coord location) {
+		return true;
+	}
 }
