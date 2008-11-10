@@ -46,19 +46,6 @@ public class EqualsOp extends BinaryOp {
 		return getFirst().toString() + getTypeRep() + getSecond();
 	}
 
-	/**
-	 * Get the value of a tag and split it into a numeric part and a unit.
-	 * It tries the best it can.  This is to do things like 20mph etc.
-	 * @return A class containing the value and the unit it is in if found.
-	 * @see ValueWithUnit
-	 */
-	protected ValueWithUnit getUnitValue(Element el, String key) {
-		String val = el.getTag(key);
-		if (val == null)
-			return null;
-		return new ValueWithUnit(val);
-	}
-
 	@SuppressWarnings({"MethodWithMultipleReturnPoints"})
 	private String getTypeRep() {
 		switch (getType()) {
