@@ -358,7 +358,7 @@ public class MapBuilder {
 		int res = div.getResolution();
 
 		for (MapPoint point : points) {
-			if (point.getMinResolution() > res)
+			if (point.getMinResolution() > res || point.getMaxResolution() < res)
 				continue;
 
 			String name = point.getName();
@@ -406,7 +406,7 @@ public class MapBuilder {
 		filters.addFilter(new LineAddFilter(div, map));
 		
 		for (MapLine line : lines) {
-			if (line.getMinResolution() > res)
+			if (line.getMinResolution() > res || line.getMaxResolution() < res)
 				continue;
 
 			filters.startFilter(line);
@@ -439,7 +439,7 @@ public class MapBuilder {
 		filters.addFilter(new ShapeAddFilter(div, map));
 
 		for (MapShape shape : shapes) {
-			if (shape.getMinResolution() > res)
+			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
 				continue;
 
 			filters.startFilter(shape);
