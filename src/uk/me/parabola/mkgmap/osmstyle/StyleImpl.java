@@ -89,8 +89,6 @@ public class StyleImpl implements Style {
 	//private Map<String, Rule> nodes = new HashMap<String, Rule>();
 	private final RuleSet nodes = new RuleSet();
 
-	private DefaultFeatureNames defaultNames;
-
 	/**
 	 * Create a style from the given location and name.
 	 * @param loc The location of the style. Can be null to mean just check
@@ -107,8 +105,6 @@ public class StyleImpl implements Style {
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
 		readInfo();
-
-		readDefaultNames();  //perhaps this should be triggered in options?
 
 		readOptions();
 
@@ -136,10 +132,6 @@ public class StyleImpl implements Style {
 
 	public Map<String, Rule> getNodes() {
 		return nodes.getMap();
-	}
-
-	private void readDefaultNames() {
-		defaultNames = new DefaultFeatureNames(fileLoader, Locale.getDefault());
 	}
 
 	private void readRules() {
@@ -223,7 +215,6 @@ public class StyleImpl implements Style {
 	 * will override those later.
 	 */
 	private Rule createRule(String key, GType gt) {
-		gt.setDefaultName(defaultNames.get(key));
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
 		Rule value = new FixedRule(gt);
