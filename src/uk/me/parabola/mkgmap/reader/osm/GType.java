@@ -35,6 +35,8 @@ public class GType {
 	public static final int POLYLINE = 2;
 	public static final int POLYGON = 3;
 
+	private static int nextPriority = 1;
+
 	private final int featureKind;
 	private final int type;
 	private final int subtype;
@@ -44,7 +46,10 @@ public class GType {
 
 	private String defaultName;
 
+	private final int priority;
+
 	public GType(int featureKind, String type) {
+		priority = nextPriority();
 		this.featureKind = featureKind;
 		try {
 			int t = Integer.decode(type);
@@ -61,7 +66,13 @@ public class GType {
 		}
 	}
 
+	private static int nextPriority() {
+		return nextPriority++;
+	}
+
 	public GType(int featureKind, String type, String subtype) {
+		priority = nextPriority();
+
 		this.featureKind = featureKind;
 		try {
 			this.type = Integer.decode(type);
@@ -106,6 +117,18 @@ public class GType {
 
 	public void setDefaultName(String defaultName) {
 		this.defaultName = defaultName;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	/**
+	 * Is the priority of this type better than that of other?
+	 * Lower priorities are better and win out.
+	 */
+	public boolean isBetterPriority(GType other) {
+		return this.priority < other.priority;
 	}
 
 	public String toString() {
