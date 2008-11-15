@@ -56,4 +56,21 @@ public abstract class NumericOp extends BinaryOp {
 		int inter = result.compareTo(ourVal);
 		return doesCompare(inter);
 	}
+
+	public String toString() {
+		return "(" + first + getTypeRep() + getSecond() + ')';
+	}
+
+	@SuppressWarnings({"MethodWithMultipleReturnPoints"})
+	private String getTypeRep() {
+		switch (getType()) {
+		case EQUALS: return "=";
+		case NOT_EQUALS: return "!=";
+		case GT: return ">";
+		case GTE: return ">=";
+		case LT: return "<";
+		case LTE: return "<=";
+		default: return "?";
+		}
+	}
 }

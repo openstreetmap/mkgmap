@@ -43,19 +43,8 @@ public class EqualsOp extends BinaryOp {
 	}
 
 	public String toString() {
-		return getFirst().toString() + getTypeRep() + getSecond();
+		return getFirst().toString() + '=' + getSecond();
 	}
 
-	@SuppressWarnings({"MethodWithMultipleReturnPoints"})
-	private String getTypeRep() {
-		switch (getType()) {
-		case EQUALS: return "=";
-		case NOT_EQUALS: return "!=";
-		case GT: return ">";
-		case GTE: return ">=";
-		case LT: return "<";
-		case LTE: return "<=";
-		default: return "?";
-		}
-	}
+	
 }

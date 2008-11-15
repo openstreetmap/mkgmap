@@ -59,6 +59,7 @@ public class TypeReader {
 			}
 		}
 
+		gt.fixLevels(levels);
 		return gt;
 	}
 

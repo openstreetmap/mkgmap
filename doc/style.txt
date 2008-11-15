@@ -5,7 +5,7 @@
 
 This page shows you how to design your own mkgmap style.
 A style is used to choose which OSM map features appear in the
-Garmin map and what Garmin symbols are used.
+Garmin map and which Garmin symbols are used.
 
 As there are many different purposes a map may used for, the default
 style in mkgmap will not be ideal for everyone.  So a mechanism to allow
@@ -43,10 +43,20 @@ It should contain the number 0.
 Make sure that there is a new line after the number, place an empty line
 afterwards to be sure.
 
+===info===
+This optional file, can contain a short description of the style and other
+information such as the author etc.
+
 ===options===
-This file contains a number of options that should be set for this style.
-In some cases they can also be set on the command line to override the
-choice of the style designer.
+This file contains a number of options that should be set for this style
+as if they were set on the command line.
+Only command line options that affect the style will have any effect.
+The current list is <tt>name-tag-list</tt> and <tt>levels</tt>.
+
+It is advisable to set up the levels that you want as the default is not suitable for
+all kinds of maps and may change in the future.
+
+ levels=0:23, 1:21, 2:19
 
 ===points===
 This contains a set of rules that show how to convert nodes to garmin
@@ -57,10 +67,14 @@ of how this file works.
 ===lines===
 This is the same as the points file, except that it deals with OSM ways
 that are meant to be lines.
+See the [[Mkgmap/help/style_rules style rules page]] for complete details
+of how this file works.
 
 ===polygons===
 This is the same as the points file, except that it deals with OSM ways
 that are meant to be areas.
+See the [[Mkgmap/help/style_rules style rules page]] for complete details
+of how this file works.
 
 ===map-features.csv===
 For backward compatibility this file is exactly the same as the file that

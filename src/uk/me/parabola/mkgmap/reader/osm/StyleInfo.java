@@ -16,12 +16,6 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.Reader;
-
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.scan.TokType;
-import uk.me.parabola.mkgmap.scan.TokenScanner;
-
 /**
  * Information about a style.  This is so style authors can include
  * descriptions of their styles within the style itself.
@@ -29,61 +23,42 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * @author Steve Ratcliffe
  */
 public class StyleInfo {
-	private static final Logger log = Logger.getLogger(StyleInfo.class);
 
 	private String version;
-	private String description;
+	private String summary;
 	private String longDescription;
+	private String baseStyleName;
 
-	public void readInfo(String filename, Reader r) {
-		TokenScanner ws = new TokenScanner(filename, r);
-		while (!ws.isEndOfFile()) {
-			String word = ws.nextValue();
-			if (word == null)
-				continue;
-			if (word.equals("description"))
-				fetchSummary(ws);
-			else if (word.equals("version")) {
-				fetchVersion(ws);
-			}
-		}
-	}
 
-	private void fetchVersion(TokenScanner ws) {
-		if (ws.firstTokenType() == TokType.SYMBOL)
-			ws.nextToken();
-		version = ws.readLine();
-		log.debug("file info: set version to", version);
-	}
-
-	private void fetchSummary(TokenScanner ws) {
-		if (ws.nextToken().getType() == TokType.SYMBOL)
-			ws.nextToken();
-		ws.skipSpace();
-		description = ws.readLine();
-		log.debug("file info: set description to", description);
-	}
-
-	public String getDescription() {
-		return description == null ? "No description available" : description;
+	public String getSummary() {
+		return summary == null ? "No summary available" : summary.trim();
 	}
 
 	public String getVersion() {
-		return version == null ? "1" : version;
+		return version == null ? "1" : version.trim();
 	}
 
 	public String getLongDescription() {
-		return longDescription != null ? longDescription : "";
+		return longDescription != null ? longDescription.trim() : "";
 	}
 
-	/**
-	 * Merge the other style info in so that it doesn't override anything
-	 * in the current info.  In general, it is probably not very useful.
-	 * @param other The info to be merged in.  Nothing will overwrite anything
-	 * in 'this', although it could be added.
-	 */
-	public void merge(StyleInfo other) {
-		if (other.description != null)
-			this.description = "Based on: " + other.description;
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public void setSummary(String summary) {
+		this.summary = summary;
+	}
+
+	public void setLongDescription(String longDescription) {
+		this.longDescription = longDescription;
+	}
+
+	public String getBaseStyleName() {
+		return baseStyleName;
+	}
+
+	public void setBaseStyleName(String value) {
+		this.baseStyleName = value.trim();
 	}
 }

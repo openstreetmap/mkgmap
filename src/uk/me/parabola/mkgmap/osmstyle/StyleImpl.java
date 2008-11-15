@@ -19,12 +19,14 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -38,6 +40,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
+import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -76,7 +79,10 @@ public class StyleImpl implements Style {
 	private final String location;
 
 	// The general information in the 'info' file.
-	private final StyleInfo info = new StyleInfo();
+	private StyleInfo info = new StyleInfo();
+
+	// Set if this style is based on another one.
+	private StyleImpl baseStyle;
 
 	// A list of tag names to be used as the element name
 	private String[] nameTagList;
@@ -84,9 +90,9 @@ public class StyleImpl implements Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	private RuleSet ways = new RuleSet();
-	//private Map<String, Rule> ways = new HashMap<String, Rule>();
-	//private Map<String, Rule> nodes = new HashMap<String, Rule>();
+	//private RuleSet ways = new RuleSet();
+	private final RuleSet lines = new RuleSet();
+	private final RuleSet polygons = new RuleSet();
 	private final RuleSet nodes = new RuleSet();
 
 	/**
@@ -104,13 +110,19 @@ public class StyleImpl implements Style {
 
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
+
 		readInfo();
 
-		readOptions();
+		readBaseStyle();
+		if (baseStyle != null)
+			mergeStyle(baseStyle);
 
+		readOptions();
 		readRules();
 
 		readMapFeatures();
+		if (baseStyle != null)
+			mergeRules(baseStyle);
 	}
 
 	public String[] getNameTagList() {
@@ -121,13 +133,15 @@ public class StyleImpl implements Style {
 		return generalOptions.get(name);
 	}
 
-
 	public StyleInfo getInfo() {
 		return info;
 	}
 
 	public Map<String, Rule> getWays() {
-		return ways.getMap();
+		Map<String, Rule> m = new LinkedHashMap<String, Rule>();
+		m.putAll(lines.getMap());
+		m.putAll(polygons.getMap());
+		return m;
 	}
 
 	public Map<String, Rule> getNodes() {
@@ -149,14 +163,14 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, levels, ways);
+			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, levels, lines);
 			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYGON, levels, ways);
+			RuleFileReader reader = new RuleFileReader(GType.POLYGON, levels, polygons);
 			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");
@@ -171,6 +185,10 @@ public class StyleImpl implements Style {
 		try {
 			Reader r = fileLoader.open(FILE_FEATURES);
 			MapFeatureReader mfr = new MapFeatureReader();
+			String l = generalOptions.get("levels");
+			if (l == null)
+				l = LevelInfo.DEFAULT_LEVELS;
+			mfr.setLevels(LevelInfo.createFromString(l));
 			mfr.readFeatures(new BufferedReader(r));
 			initFromMapFeatures(mfr);
 		} catch (FileNotFoundException e) {
@@ -192,12 +210,12 @@ public class StyleImpl implements Style {
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			ways.add(me.getKey(), rule);
+			lines.add(me.getKey(), rule);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			ways.add(me.getKey(), rule);
+			polygons.add(me.getKey(), rule);
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
@@ -272,21 +290,6 @@ public class StyleImpl implements Style {
 			// instead eg. "name:en,int_name,name" or you could use some
 			// completely different tag...
 			nameTagList = val.split("[,\\s]+");
-		} else if (opt.equals("include")) {
-			try {
-				mergeStyle(new StyleImpl(location, val));
-			} catch (FileNotFoundException e) {
-				// not found, try on the classpath.  This is the common
-				// case where you have an external style, but want to
-				// base it on a builtin one.
-				log.debug("could not open included style file", e);
-
-				try {
-					mergeStyle(new StyleImpl(null, val));
-				} catch (FileNotFoundException e1) {
-					log.error("Could not find included style", e);
-				}
-			}
 		} else if (OPTION_LIST.contains(opt)) {
 			// Simple options that have string value.  Perhaps we should alow
 			// anything here?
@@ -297,10 +300,79 @@ public class StyleImpl implements Style {
 	private void readInfo() {
 		try {
 			BufferedReader br = new BufferedReader(fileLoader.open(FILE_INFO));
-			info.readInfo(FILE_INFO, br);
+			info = readInfo(br, FILE_INFO);
 		} catch (FileNotFoundException e) {
 			// optional file..
 			log.debug("no info file");
+		}
+	}
+
+	private StyleInfo readInfo(Reader r, String filename) {
+		StyleInfo sinfo = new StyleInfo();
+		TokenScanner ws = new TokenScanner(filename, r);
+		ws.setExtraWordChars("-");
+		while (!ws.isEndOfFile()) {
+			ws.skipSpace();
+			String word = ws.nextValue();
+			if (word == null || word.equals("#")) {
+				ws.skipLine();
+				continue;
+			}
+
+			// There should follow a '=' or ':' which means the rest
+			// of the line, or a '{' which means read until the closing '}'.
+			ws.skipSpace();
+			String value;
+			if (ws.checkToken(TokType.SYMBOL, ":") || ws.checkToken(TokType.SYMBOL, "=")) {
+				ws.nextToken();
+				value = ws.readLine();
+			} else if (ws.checkToken(TokType.SYMBOL, "{")) {
+				ws.nextToken();
+				value = ws.readUntil(TokType.SYMBOL, "}");
+			} else {
+				ws.skipLine();
+				continue;
+			}
+
+			if (word.equals("summary"))
+				sinfo.setSummary(value);
+			else if (word.equals("version")) {
+				sinfo.setVersion(value);
+			} else if (word.equals("base-style")) {
+				sinfo.setBaseStyleName(value);
+			} else if (word.equals("description")) {
+				sinfo.setLongDescription(value);
+			}
+		}
+		return sinfo;
+	}
+
+	/**
+	 * If this style is based upon another one then read it in now.  The rules
+	 * for merging styles are that it is as-if the style was read just after
+	 * the current styles 'info' section and any option or rule specified
+	 * in the current style will override any corresponding item in the
+	 * base style.
+	 */
+	private void readBaseStyle() {
+		String name = info.getBaseStyleName();
+		if (name == null)
+			return;
+
+		try {
+			baseStyle = new StyleImpl(location, name);
+		} catch (FileNotFoundException e) {
+			// not found, try on the classpath.  This is the common
+			// case where you have an external style, but want to
+			// base it on a builtin one.
+			log.debug("could not open base style file", e);
+
+			try {
+				baseStyle = new StyleImpl(null, name);
+			} catch (FileNotFoundException e1) {
+				baseStyle = null;
+				log.error("Could not find base style", e);
+			}
 		}
 	}
 
@@ -317,19 +389,24 @@ public class StyleImpl implements Style {
 	 * everything.
 	 */
 	private void mergeStyle(StyleImpl other) {
-
-		for (Map.Entry<String,Rule> ent : other.ways.entrySet())
-			ways.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
-			nodes.add(ent.getKey(), ent.getValue());
-
-		info.merge(other.info);
-
 		this.nameTagList = other.nameTagList;
 		for (Map.Entry<String, String> ent : other.generalOptions.entrySet())
 			doOption(ent.getKey(), ent.getValue());
+	}
 
+	/**
+	 * Merge rules from the base style.  This has to called after this
+	 * style's rules are read.
+	 */
+	private void mergeRules(StyleImpl other) {
+		for (Map.Entry<String, Rule> ent : other.lines.entrySet())
+			lines.add(ent.getKey(), ent.getValue());
+
+		for (Map.Entry<String,Rule> ent : other.polygons.entrySet())
+			polygons.add(ent.getKey(), ent.getValue());
+
+		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
+			nodes.add(ent.getKey(), ent.getValue());
 	}
 
 	private void checkVersion() throws FileNotFoundException {
@@ -342,5 +419,29 @@ public class StyleImpl implements Style {
 			System.err.println("Warning: unrecognised style version " + version +
 			", but only versions up to " + VERSION + " are understood");
 		}
+	}
+
+	/**
+	 * Writes out this file to the given writer in the single file format.
+	 * This produces a valid style file, although it is mostly used
+	 * for testing.
+	 */
+	public void dumpToFile(Writer out) {
+		StylePrinter stylePrinter = new StylePrinter(this);
+		stylePrinter.setGeneralOptions(generalOptions);
+		stylePrinter.setLines(lines);
+		stylePrinter.setNodes(nodes);
+		stylePrinter.setPolygons(polygons);
+		stylePrinter.dumpToFile(out);
+	}
+
+	public static void main(String[] args) throws FileNotFoundException {
+		String file = args[0];
+		String name = null;
+		if (args.length > 1)
+			name = args[1];
+		StyleImpl style = new StyleImpl(file, name);
+
+		style.dumpToFile(new OutputStreamWriter(System.out));
 	}
 }

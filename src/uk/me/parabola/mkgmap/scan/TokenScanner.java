@@ -35,6 +35,9 @@ public class TokenScanner {
 	private String fileName;
 	private int linenumber = 1;
 
+	// Extra word characters.
+	private String extraWordChars = "";
+
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
 
 	public TokenScanner(String filename, Reader reader) {
@@ -203,7 +206,8 @@ public class TokenScanner {
 
 	private boolean isWordChar(int ch) {
 		return Character.isLetterOrDigit(ch)
-				|| ch == '_' || ch == ':';
+				|| ch == '_'
+				|| extraWordChars.indexOf(ch) >= 0;
 	}
 
 	/**
@@ -215,16 +219,16 @@ public class TokenScanner {
 	 * end of line is comsumed.
 	 */
 	public String readLine() {
-		String res = readUntil(TokType.EOL);
+		String res = readUntil(TokType.EOL, null);
 		nextToken();  // use up new line
 		return res;
 	}
 
-	private String readUntil(TokType type) {
+	public String readUntil(TokType type, String value) {
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
 			Token t = peekToken();
-			if (t.getType() == type)
+			if (t.getType() == type && (value == null || value.equals(t.getValue())))
 				break;
 			sb.append(nextToken().getValue());
 		}
@@ -273,5 +277,9 @@ public class TokenScanner {
 
 	public String getFileName() {
 		return fileName;
+	}
+
+	public void setExtraWordChars(String extraWordChars) {
+		this.extraWordChars = extraWordChars;
 	}
 }
