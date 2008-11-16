@@ -20,7 +20,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -75,22 +74,14 @@ public class RuleFileReader {
 		scanner = new TokenScanner(name, r);
 
 		ExpressionReader expressionReader = new ExpressionReader(scanner);
-		ActionReader actionReader = new ActionReader(scanner);
 
 		// Read all the rules in the file.
-		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			Op expr = expressionReader.readConditions();
-
-			List<Action> actions = actionReader.readActions();
-
-			// If there is an action list, then we don't need a type
-			GType type = null;
-			if (actions != null && scanner.checkToken(TokType.SYMBOL, "["))
-				type = typeReader.readType(scanner);
-			
-			saveRule(expr, null, type);
 			scanner.skipSpace();
+			if (scanner.peekToken().getType() == TokType.EOF)
+				break;
+
+			saveRule(expressionReader.readConditions(), typeReader.readType(scanner));
 		}
 	}
 
@@ -105,7 +96,7 @@ public class RuleFileReader {
 	 * in a basket we know that the first term is true so we can drop that
 	 * from the expression.
 	 */
-	private void saveRule(Op op, List<Action> actions, GType gt) {
+	private void saveRule(Op op, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
 		// E1 | E2 {type...} is exactly the same as the two rules:
@@ -113,13 +104,13 @@ public class RuleFileReader {
 		// E2 {type...}
 		// so just recurse on each term, throwing away the original OR.
 		if (op.isType(OR)) {
-			saveRule(op.getFirst(), actions, gt);
-			saveRule(((BinaryOp) op).getSecond(), actions, gt);
+			saveRule(op.getFirst(), gt);
+			saveRule(((BinaryOp) op).getSecond(), gt);
 			return;
 		}
 
 		if (op instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp(op, actions, gt);
+			optimiseAndSaveBinaryOp(op, gt);
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
@@ -129,7 +120,7 @@ public class RuleFileReader {
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
 	 */
-	private void optimiseAndSaveBinaryOp(Op op, List<Action> actions, GType gt) {
+	private void optimiseAndSaveBinaryOp(Op op, GType gt) {
 		BinaryOp binaryOp = (BinaryOp) op;
 		Op first = binaryOp.getFirst();
 		Op second = binaryOp.getSecond();
