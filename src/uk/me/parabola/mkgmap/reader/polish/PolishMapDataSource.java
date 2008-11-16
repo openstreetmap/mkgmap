@@ -252,16 +252,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			polyline.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
-			String[] ords = value.split("\\),\\(");
-			List<Coord> points = new ArrayList<Coord>();
-
-			for (String s : ords) {
-				Coord co = makeCoord(s);
-				if (log.isDebugEnabled())
-					log.debug(" L: ", co);
-				mapper.addToBounds(co);
-				points.add(co);
-			}
+			List<Coord> points = coordsFromString(value);
 
 			// If it is a contour line, then fix the elevation if required.
 			if ((polyline.getType() == 0x20) ||
@@ -274,6 +265,20 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			polyline.setPoints(points);
 		}
 
+	}
+
+	private List<Coord> coordsFromString(String value) {
+		String[] ords = value.split("\\),\\(");
+		List<Coord> points = new ArrayList<Coord>();
+
+		for (String s : ords) {
+			Coord co = makeCoord(s);
+			if (log.isDebugEnabled())
+				log.debug(" L: ", co);
+			mapper.addToBounds(co);
+			points.add(co);
+		}
+		return points;
 	}
 
 	/**
@@ -308,16 +313,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			shape.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
-			String[] ords = value.split("\\),\\(");
-			List<Coord> points = new ArrayList<Coord>();
-
-			for (String s : ords) {
-				Coord co = makeCoord(s);
-				if (log.isDebugEnabled())
-					log.debug(" L: ", co);
-				mapper.addToBounds(co);
-				points.add(co);
-			}
+			List<Coord> points = coordsFromString(value);
 
 			shape.setPoints(points);
 			setResolution(shape, name);

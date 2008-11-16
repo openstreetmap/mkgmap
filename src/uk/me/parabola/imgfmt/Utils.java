@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -90,14 +90,16 @@ public class Utils {
 	 * @param date The date to set.
 	 */
 	public static void setCreationTime(ByteBuffer buf, Date date) {
-		Calendar cal = Calendar.getInstance();
+		makeCreateTime(buf, date);
+	}
 
-		Date d = date;
-		if (d == null)
-			d = new Date();
+	private static void makeCreateTime(ByteBuffer buf, Date date) {
+		Date d = date == null ? new Date() : date;
+
+		Calendar cal = Calendar.getInstance();
 		cal.setTime(d);
 
-		buf.putChar((char) cal.get(Calendar.YEAR));
+		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
 		buf.put((byte) (cal.get(Calendar.MONTH)));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
 		buf.put((byte) cal.get(Calendar.HOUR));
@@ -123,23 +125,12 @@ public class Utils {
 	 * @return A byte stream in .img format.
 	 */
 	public static byte[] makeCreationTime(Date date) {
-		Calendar cal = Calendar.getInstance();
-
-		Date d = date;
-		if (d == null)
-			d = new Date();
-		cal.setTime(d);
-
 		byte[] ret = new byte[7];
 		ByteBuffer buf = ByteBuffer.wrap(ret);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
-		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
-		buf.put((byte) (cal.get(Calendar.MONTH)));
-		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
-		buf.put((byte) cal.get(Calendar.HOUR));
-		buf.put((byte) cal.get(Calendar.MINUTE));
-		buf.put((byte) cal.get(Calendar.SECOND));
-		
+
+		makeCreateTime(buf, date);
+
 		return ret;
 	}
 

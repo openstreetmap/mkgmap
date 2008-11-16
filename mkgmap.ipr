@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project relativePaths="true" version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
   </component>
@@ -608,7 +608,7 @@
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file:///home/steve/src/display/display.iml" filepath="/home/steve/src/display/display.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../display/display.iml" filepath="$PROJECT_DIR$/../display/display.iml" />
       <module fileurl="file://$PROJECT_DIR$/mkgmap.iml" filepath="$PROJECT_DIR$/mkgmap.iml" />
     </modules>
   </component>
@@ -656,7 +656,7 @@
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
-        <entry key="/home/steve/src/display">
+        <entry key="$PROJECT_DIR$/../display">
           <value>
             <SvnBranchConfiguration>
               <option name="trunkUrl" value="https://svn2.parabola.me.uk/svn/display/trunk" />
