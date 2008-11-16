@@ -21,14 +21,13 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.AreaClipper;
-import uk.me.parabola.mkgmap.general.NullClipper;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -52,12 +51,11 @@ public class StyledConverter implements OsmConverter {
 	private final String[] nameTagList;
 
 	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
-	//private Map<String, GType> wayRules = new HashMap<String, GType>();
 	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
-	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
+
 	private final MapCollector collector;
 
-	private Clipper clipper = new NullClipper();
+	private Clipper clipper = Clipper.NULL_CLIPPER;
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
