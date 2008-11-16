@@ -70,10 +70,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
-		if (name.endsWith(".mp") || name.endsWith(".mp.gz"))
-			return true;
-
-		return false;
+		return name.endsWith(".mp") || name.endsWith(".mp.gz");
 	}
 
 	/**

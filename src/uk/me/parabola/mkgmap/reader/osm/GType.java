@@ -119,10 +119,6 @@ public class GType {
 		this.defaultName = defaultName;
 	}
 
-	public int getPriority() {
-		return priority;
-	}
-
 	/**
 	 * Is the priority of this type better than that of other?
 	 * Lower priorities are better and win out.

@@ -70,14 +70,12 @@ public class StructuredInputStream extends InputStream {
 	 * @throws IOException If the stream could not be read.
 	 */
 	public int read4() throws IOException {
-		int a, b, c, d;
-		a = read() & 0xff;
-		b = read() & 0xff;
-		c = read() & 0xff;
-		d = read() & 0xff;
+		int a = read() & 0xff;
+		int b = read() & 0xff;
+		int c = read() & 0xff;
+		int d = read() & 0xff;
 
-		int res = (d << 24) | (c << 16) | (b << 8) | a;
-		return res;
+		return (d << 24) | (c << 16) | (b << 8) | a;
 	}
 
 	/**

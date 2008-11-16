@@ -23,16 +23,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.mps.MpsFile;
-import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.ImgFS;
+import uk.me.parabola.imgfmt.mps.MapBlock;
+import uk.me.parabola.imgfmt.mps.MpsFile;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
+import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 
@@ -168,8 +168,7 @@ public class GmapsuppBuilder implements Combiner {
 	private MpsFile createMpsFile(FileSystem outfs) throws FileNotWritableException {
 		try {
 			ImgChannel channel = outfs.create("MAPSOURC.MPS");
-			MpsFile mps = new MpsFile(channel);
-			return mps;
+			return new MpsFile(channel);
 		} catch (FileExistsException e) {
 			// well it shouldn't exist!
 			log.error("could not create MPS file as it already exists");
@@ -257,8 +256,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setReservedDirectoryBlocks(reserve);
 		log.info("reserved", reserve);
 
-		FileSystem outfs = ImgFS.createFs(GMAPSUPP, params);
-		return outfs;
+		return ImgFS.createFs(GMAPSUPP, params);
 	}
 
 	/**

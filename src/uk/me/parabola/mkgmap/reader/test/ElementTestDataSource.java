@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
+import java.io.FileNotFoundException;
+import java.util.Properties;
+
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
-import java.io.FileNotFoundException;
-import java.util.Properties;
 
 /**
  * This is a map data source that just generates maps without reference to
@@ -39,12 +39,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 	 * @return True If a recognised test name beginning with test-map:
 	 */
 	public boolean isFileSupported(String name) {
-		if (name == null)
-			return false;
-		
-		if (name.startsWith("test-map:"))
-			return true;
-		return false;
+		return name != null && name.startsWith("test-map:");
 	}
 
 	/**

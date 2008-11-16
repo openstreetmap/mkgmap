@@ -16,14 +16,6 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.FileNotWritableException;
-import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
-import uk.me.parabola.imgfmt.fs.FileSystem;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -31,6 +23,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileNotWritableException;
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The img file is really a filesystem containing several files.
@@ -141,8 +141,7 @@ public class ImgFS implements FileSystem {
 	public ImgChannel create(String name) throws FileExistsException {
 		Dirent dir = directory.create(name, fileBlockManager);
 
-		FileNode f = new FileNode(file, dir, "w");
-		return f;
+		return new FileNode(file, dir, "w");
 	}
 
 	/**
@@ -161,9 +160,8 @@ public class ImgFS implements FileSystem {
 
 		if (mode.indexOf('r') >= 0) {
 			Dirent ent = internalLookup(name);
-			FileNode f = new FileNode(file, ent, "r");
 
-			return f;
+			return new FileNode(file, ent, "r");
 		} else if (mode.indexOf('w') >= 0) {
 			Dirent ent;
 			try {
@@ -176,8 +174,7 @@ public class ImgFS implements FileSystem {
 					throw new FileNotFoundException("Attempt to duplicate a file name");
 				}
 			}
-			FileNode f = new FileNode(file, ent, "w");
-			return f;
+			return new FileNode(file, ent, "w");
 		} else {
 			throw new IllegalArgumentException("Invalid mode given");
 		}

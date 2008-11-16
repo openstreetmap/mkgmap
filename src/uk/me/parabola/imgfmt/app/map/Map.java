@@ -181,8 +181,7 @@ public class Map implements InternalFiles {
 	public Subdivision createSubdivision(Subdivision parent, Area area, Zoom zoom)
 	{
 		log.debug("creating division");
-		Subdivision child = parent.createSubdivision(this, area, zoom);
-		return child;
+		return parent.createSubdivision(this, area, zoom);
 	}
 
 	public void addPointOverview(PointOverview ov) {

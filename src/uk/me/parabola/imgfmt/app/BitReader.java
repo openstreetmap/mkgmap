@@ -81,7 +81,7 @@ public class BitReader {
 				(byte) 0xf1, 0x73, (byte) 0xc2, 0x5
 		});
 
-		System.out.printf("1bit %x\n", br.get1());
+		System.out.printf("1bit %b\n", br.get1());
 		System.out.printf("bits %x\n", br.get(5));
 		System.out.printf("0xf %x\n", br.get(4));
 		System.out.printf("0x %x\n", br.get(16));

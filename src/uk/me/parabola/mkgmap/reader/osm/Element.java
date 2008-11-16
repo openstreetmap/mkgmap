@@ -55,7 +55,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public Iterator<String> iterator() {
-		Iterator<String> it = new Iterator<String>() {
+		return new Iterator<String>() {
 			private Iterator<Map.Entry<String, String>> tagit;
 
 			{
@@ -76,7 +76,6 @@ public abstract class Element implements Iterable<String> {
 				throw new UnsupportedOperationException();
 			}
 		};
-		return it;
 	}
 
 	protected long getId() {

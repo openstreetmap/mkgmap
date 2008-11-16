@@ -16,17 +16,16 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Arrays;
+
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The header at the very begining of the .img filesystem.  It has the
@@ -301,24 +300,6 @@ class ImgHeader {
 	 */
 	private byte toYearCode(int y) {
 		return (byte) (y - 1900);
-	}
-
-	public int getBlockSize() {
-		return fsParams.getBlockSize();
-	}
-
-	/**
-	 * Set the block size.  This may only work if creating the file
-	 * from scratch.
-	 * @param blockSize The new block size to use.
-	 */
-	public void setBlockSize(int blockSize) {
-		header.put(OFF_BLOCK_SIZE, (byte) blockSize);
-		fsParams.setBlockSize(blockSize);
-	}
-
-	public int getDirectoryStartBlock() {
-		return fsParams.getDirectoryStartBlock();
 	}
 
 	protected void setDirectoryStartBlock(int directoryStartBlock) {

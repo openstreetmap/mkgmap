@@ -83,10 +83,7 @@ public abstract class Overview implements Comparable<Overview> {
 			return false;
 
 		Overview ov = (Overview) obj;
-		if (ov.kind == kind && ov.type == type && ov.subType == subType)
-			return true;
-
-		return false;
+		return ov.kind == kind && ov.type == type && ov.subType == subType;
 	}
 
 	public int getKind() {

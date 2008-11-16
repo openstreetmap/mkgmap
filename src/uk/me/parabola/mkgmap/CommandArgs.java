@@ -127,8 +127,7 @@ public class CommandArgs {
 			return def;
 
 		try {
-			int ret = Integer.parseInt(s);
-			return ret;
+			return Integer.parseInt(s);
 		} catch (NumberFormatException e) {
 			return def;
 		}
@@ -376,10 +375,8 @@ public class CommandArgs {
 			Pattern pat = Pattern.compile("([0-9]{8})");
 			Matcher matcher = pat.matcher(fname);
 			boolean found = matcher.find();
-			if (found) {
-				String mn = matcher.group(1);
-				return mn;
-			}
+			if (found)
+				return matcher.group(1);
 
 			return null;
 		}

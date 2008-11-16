@@ -31,10 +31,6 @@ import uk.me.parabola.imgfmt.app.Coord;
 public class AreaClipper implements Clipper {
 	private final Area bbox;
 
-	public AreaClipper() {
-		bbox = null;
-	}
-
 	public AreaClipper(Area bbox) {
 		this.bbox = bbox;
 	}

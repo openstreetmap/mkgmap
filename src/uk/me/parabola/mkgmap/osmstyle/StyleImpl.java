@@ -226,8 +226,7 @@ public class StyleImpl implements Style {
 		gt.setDefaultName(defaultNames.get(key));
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		Rule value = new FixedRule(gt);
-		return value;
+		return new FixedRule(gt);
 	}
 
 	/**

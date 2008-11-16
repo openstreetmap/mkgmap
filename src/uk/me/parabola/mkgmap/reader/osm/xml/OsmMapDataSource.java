@@ -76,9 +76,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		if (levelSpec == null)
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
-		LevelInfo[] levels = LevelInfo.createFromString(levelSpec);
-
-		return levels;
+		return LevelInfo.createFromString(levelSpec);
 	}
 
 	/**
