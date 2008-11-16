@@ -42,5 +42,9 @@ public class Token {
 	public String getValue() {
 		return value;
 	}
+
+	public boolean isValue(String val) {
+		return val.equals(value);
+	}
 }
 
