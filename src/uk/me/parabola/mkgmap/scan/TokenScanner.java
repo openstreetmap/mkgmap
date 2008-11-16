@@ -32,7 +32,7 @@ public class TokenScanner {
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
-	private String fileName;
+	private final String fileName;
 	private int linenumber = 1;
 
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
@@ -167,7 +167,7 @@ public class TokenScanner {
 			if (c == '!' || c == '<' || c == '>') {
 				c = readChar();
 				if (c == '=')
-					val.append((char) c);
+					val.append('=');
 				else
 					pushback = c;
 			}

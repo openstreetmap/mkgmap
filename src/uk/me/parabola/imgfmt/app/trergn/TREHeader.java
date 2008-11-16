@@ -20,8 +20,8 @@ import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -65,8 +65,8 @@ public class TREHeader extends CommonHeader {
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
 	private final Section polygon = new Section(POLYGON_REC_LEN);
 	private final Section points = new Section(POINT_REC_LEN);
-	private Section tre7 = new Section(points, (char) 13);
-	private Section tre8 = new Section(tre7, (char) 4);
+	private final Section tre7 = new Section(points, (char) 13);
+	private final Section tre8 = new Section(tre7, (char) 4);
 	//private Section tre9 = new Section(tre8);
 
 	private int mapId;

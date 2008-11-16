@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import uk.me.parabola.imgfmt.app.Label;
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * A road definition.  This ties together all parts of a single road and provides
@@ -34,17 +34,17 @@ public class RoadDef {
 	private static final int MAX_LABELS = 4;
 
 	private int offset = -1;
-	private OffsetWriterList owList = new OffsetWriterList();
+	private final OffsetWriterList owList = new OffsetWriterList();
 
 	// There can be up to 4 labels for the same road.
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	private byte roadFlags = (byte) 0x4;
+	private final byte roadFlags = (byte) 0x4;
 
 	private int roadLength;  // in feet?
 
-	private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
+	private final List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
 	public void addOffsetTarget(ImgFileWriter writer, int ormask) {
 		owList.addTarget(writer, ormask);

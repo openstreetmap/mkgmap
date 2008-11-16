@@ -287,6 +287,12 @@
         <inspection_tool class="VariableNotUsedInsideIf" level="WARNING" enabled="true" />
         <inspection_tool class="AmbiguousMethodCall" level="WARNING" enabled="true" />
         <inspection_tool class="SimplifiableIfStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="InconsistentResourceBundle" level="WARNING" enabled="true">
+          <option name="REPORT_MISSING_TRANSLATIONS" value="true" />
+          <option name="REPORT_INCONSISTENT_PROPERTIES" value="true" />
+          <option name="REPORT_DUPLICATED_PROPERTIES" value="true" />
+        </inspection_tool>
+        <inspection_tool class="BooleanMethodIsAlwaysInverted" level="WARNING" enabled="false" />
       </profile>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
@@ -650,6 +656,13 @@
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
+        <entry key="/home/steve/src/display">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://svn2.parabola.me.uk/svn/display/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>

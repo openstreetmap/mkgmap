@@ -28,18 +28,19 @@ import uk.me.parabola.log.Logger;
 public class Latin2Encoder implements CharacterEncoder {
 	private static final Logger log = Logger.getLogger(Latin2Encoder.class);
 
-	private static boolean latin2supported;
+	private static final boolean latin2supported;
 
 	static {
 		// Find out if 8859-2 is supported (it almost surely is).
+		boolean support = false;
 		try {
 			byte[] res = "É".getBytes("iso-8859-2");
-			latin2supported = true;
 			log.debug("latin2 supported ", res.length);
+			support = true;
 		} catch (UnsupportedEncodingException e) {
 			log.warn("latin2 charset is not supported");
-			latin2supported = false;
 		}
+		latin2supported = support;
 	}
 
 	/*
@@ -47,7 +48,7 @@ public class Latin2Encoder implements CharacterEncoder {
 	 * Where there is no base letter, then the result will be the same as the
 	 * input.
 	 */
-	private static final char[] codeTable = new char[] {
+	private static final char[] codeTable = {
 
 		0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
 		0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
