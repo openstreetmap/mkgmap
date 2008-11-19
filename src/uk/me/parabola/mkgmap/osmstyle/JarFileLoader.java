@@ -81,6 +81,8 @@ public class JarFileLoader extends StyleFileLoader {
 		this(file);
 		if (name != null)
 			setPrefix(searchPrefix(jarFile, '/' + name + "/version"));
+		else
+			setPrefix(searchPrefix(jarFile, "/version"));
 	}
 
 	private void init(URL url) throws FileNotFoundException {
