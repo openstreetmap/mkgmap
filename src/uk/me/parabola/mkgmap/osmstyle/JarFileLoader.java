@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,46 +51,35 @@ public class JarFileLoader extends StyleFileLoader {
 	private String prefix;
 
 	public JarFileLoader(URL url) throws FileNotFoundException {
-		init(url);
+		jarInit(url, null);
 	}
 
-	private JarFileLoader(File file) throws FileNotFoundException {
+	public JarFileLoader(String url, String name) throws FileNotFoundException {
 		try {
-			jarFile = new JarFile(file);
-		} catch (IOException e) {
-			throw new FileNotFoundException("Could not open style " + file);
-		}
-	}
-
-	public JarFileLoader(String url) throws FileNotFoundException {
-		try {
-			init(new URL(url));
+			jarInit(new URL(makeJarUrl(url)), name);
 		} catch (MalformedURLException e) {
 			throw new FileNotFoundException("Could not open style at " + url);
 		}
 	}
 
-	public JarFileLoader(String url, String name) throws FileNotFoundException {
-		this(url);
-		if (name != null)
-			setPrefix(name + '/');
-	}
-
-	public JarFileLoader(File file, String name) throws FileNotFoundException {
-		this(file);
-		if (name != null)
-			setPrefix(searchPrefix(jarFile, '/' + name + "/version"));
+	private String makeJarUrl(String url) {
+		if (url.toLowerCase().startsWith("jar:"))
+			return url;
 		else
-			setPrefix(searchPrefix(jarFile, "/version"));
+			return "jar:" + url + "!/";
 	}
 
-	private void init(URL url) throws FileNotFoundException {
+	private void jarInit(URL url, String name) throws FileNotFoundException {
+		log.debug("opening", url);
 		try {
 			JarURLConnection jurl = (JarURLConnection) url.openConnection();
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
-			if (prefix == null)
+			if (name != null)
+				prefix = searchPrefix(jarFile, '/' + name + "/version");
+			else
 				prefix = searchPrefix(jarFile);
+
 			log.debug("jar prefix is", prefix);
 		} catch (IOException e) {
 			throw new FileNotFoundException("Could not open style at " + url);
