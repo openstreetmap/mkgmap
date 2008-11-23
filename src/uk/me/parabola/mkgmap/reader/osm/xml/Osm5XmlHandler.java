@@ -27,6 +27,9 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
+import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -44,8 +47,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	
 	private int mode;
 
-	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
-	private final Map<Long, Way> wayMap = new HashMap<Long, Way>();
+	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
+	private Map<Long, Node> nodeMap = new HashMap<Long, Node>(5000);
+	private Map<Long, Way> wayMap = new HashMap<Long, Way>(5000);
+	private Map<Long, Relation> relationMap = new HashMap<Long, Relation>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -56,10 +61,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Node currentNode;
 	private Way currentWay;
 	private Relation currentRelation;
+	private long currentElementId;
 
 	private OsmConverter converter;
 	private MapCollector mapper;
-	private long currentNodeId;
 	private Area bbox;
 
 	/**
@@ -89,18 +94,16 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (qName.equals("node")) {
 				mode = MODE_NODE;
 
-				String id = attributes.getValue("id");
-				String lat = attributes.getValue("lat");
-				String lon = attributes.getValue("lon");
-
-				addNode(id, lat, lon);
+				addNode(attributes.getValue("id"),
+						attributes.getValue("lat"),
+						attributes.getValue("lon"));
 
 			} else if (qName.equals("way")) {
 				mode = MODE_WAY;
 				addWay(attributes.getValue("id"));
 			} else if (qName.equals("relation")) {
 				mode = MODE_RELATION;
-				currentRelation = new Relation();		
+				currentRelation = new GeneralRelation();
 			} else if (qName.equals("bound")) {
 				mode = MODE_BOUND;
 				String box = attributes.getValue("box");
@@ -111,45 +114,61 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 
 		} else if (mode == MODE_NODE) {
-			if (qName.equals("tag")) {
-				String key = attributes.getValue("k");
-				String val = attributes.getValue("v");
-
-				// We only want to create a full node for nodes that are POI's
-				// and not just point of a way.  Only create if it has tags that
-				// are not in a list of ignorables ones such as 'created_by'
-				if (currentNode != null || !key.equals("created_by")) {
-					if (currentNode == null) {
-						Coord co = nodeMap.get(currentNodeId);
-						currentNode = new Node(currentNodeId, co);
-					}
-					currentNode.addTag(key, val);
-                }
-			}
-
+			startInNode(qName, attributes);
 		} else if (mode == MODE_WAY) {
-			if (qName.equals("nd")) {
-				long id = Long.parseLong(attributes.getValue("ref"));
-				addNodeToWay(id);
-			} else if (qName.equals("tag")) {
-				String key = attributes.getValue("k");
-				String val = attributes.getValue("v");
-				currentWay.addTag(key, val);
-			}
+			startInWay(qName, attributes);
 		} else if (mode == MODE_RELATION) {
-			if (qName.equals("member")) {
-				if (attributes.getValue("type").equals("way")){
-				long id = Long.parseLong(attributes.getValue("ref"));
-				String role = attributes.getValue("role");
-				Way way = wayMap.get(id);
-				if (way != null) // ignore non existing ways caused by splitting files 
-				  currentRelation.addWay( role, way); 		
+			startInRelation(qName, attributes);
+		}
+	}
+
+	private void startInRelation(String qName, Attributes attributes) {
+		if (qName.equals("member")) {
+			long id = Long.parseLong(attributes.getValue("ref"));
+			Element el;
+			String type = attributes.getValue("type");
+			if ("way".equals(type)){
+				el = wayMap.get(id);
+			} else if ("node".equals(type)) {
+				el = nodeMap.get(id);
+			} else if ("relation".equals(type)) {
+				el = relationMap.get(id);
+			} else
+				el = null;
+			if (el != null) // ignore non existing ways caused by splitting files
+				currentRelation.addElement(attributes.getValue("role"), el);
+		} else if (qName.equals("tag")) {
+			currentRelation.addTag(attributes.getValue("k"), attributes.getValue("v"));
+		}
+	}
+
+	private void startInWay(String qName, Attributes attributes) {
+		if (qName.equals("nd")) {
+			long id = Long.parseLong(attributes.getValue("ref"));
+			addNodeToWay(id);
+		} else if (qName.equals("tag")) {
+			String key = attributes.getValue("k");
+			String val = attributes.getValue("v");
+			currentWay.addTag(key, val);
+		}
+	}
+
+	private void startInNode(String qName, Attributes attributes) {
+		if (qName.equals("tag")) {
+			String key = attributes.getValue("k");
+			String val = attributes.getValue("v");
+
+			// We only want to create a full node for nodes that are POI's
+			// and not just point of a way.  Only create if it has tags that
+			// are not in a list of ignorables ones such as 'created_by'
+			if (currentNode != null || !key.equals("created_by")) {
+				if (currentNode == null) {
+					Coord co = coordMap.get(currentElementId);
+					currentNode = new Node(currentElementId, co);
+					nodeMap.put(currentElementId, currentNode);
 				}
-			} else if (qName.equals("tag")) {
-				String key = attributes.getValue("k");
-				String val = attributes.getValue("v");
-				currentRelation.addTag(key, val);
-			}			
+				currentNode.addTag(key, val);
+			}
 		}
 	}
 
@@ -172,15 +191,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					throws SAXException
 	{
 		if (mode == MODE_NODE) {
-			if (qName.equals("node")) {
-				mode = 0;
-				if (currentNode != null) {
-					converter.convertName(currentNode);
-					converter.convertNode(currentNode);
-				}
-				currentNodeId = 0;
-				currentNode = null;
-			}
+			if (qName.equals("node"))
+				endNode();
 
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
@@ -190,20 +202,38 @@ class Osm5XmlHandler extends DefaultHandler {
 				// may be changed by a Relation class
 			}
 		} else if (mode == MODE_BOUND) {
-			if (qName.equals("bound")) {
+			if (qName.equals("bound"))
 				mode = 0;
-			}
 		} else if (mode == MODE_BOUNDS) {
-			if (qName.equals("bounds")) {
+			if (qName.equals("bounds"))
 				mode = 0;
-			}
 		} else if (mode == MODE_RELATION) {
 			if (qName.equals("relation")) {
 				mode = 0;
-				currentRelation.processWays();
-				currentRelation = null;
+				endRelation();
 			}
 		}		
+	}
+
+	private void endNode() {
+		mode = 0;
+		//if (currentNode != null) {
+		//	converter.convertName(currentNode);
+		//	converter.convertNode(currentNode);
+		//}
+		currentElementId = 0;
+		currentNode = null;
+	}
+
+	private void endRelation() {
+		String type = currentRelation.getTag("type");
+		if (type != null) {
+			if ("multipolygon".equals(type))
+				currentRelation = new MultiPolygonRelation(currentRelation);
+		}
+		relationMap.put(currentRelation.getId(), currentRelation);
+		currentRelation.processElements();
+		currentRelation = null;
 	}
 
 	/**
@@ -216,21 +246,33 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
+		coordMap = null;
+		for (Relation r : relationMap.values()) {
+			converter.convertRelation(r);
+		}
+		relationMap = null;
+
+		for (Node n : nodeMap.values()) {
+			converter.convertName(n);
+			converter.convertNode(n);
+		}
+		nodeMap = null;
+
 		for (Way w: wayMap.values()){
 			converter.convertName(w);			
-			converter.convertWay(w);				
+			converter.convertWay(w);
 		}
+
+		wayMap = null;
 		mapper.finish();
 	}
 
 	private void setupBBoxFromBounds(Attributes xmlattr) {
 		try {
-			double minlat = Double.parseDouble(xmlattr.getValue("minlat"));
-			double minlon = Double.parseDouble(xmlattr.getValue("minlon"));
-			double maxlat = Double.parseDouble(xmlattr.getValue("maxlat"));
-			double maxlon = Double.parseDouble(xmlattr.getValue("maxlon"));
-
-			setBBox(minlat, minlon, maxlat, maxlon);
+			setBBox(Double.parseDouble(xmlattr.getValue("minlat")),
+					Double.parseDouble(xmlattr.getValue("minlon")),
+					Double.parseDouble(xmlattr.getValue("maxlat")),
+					Double.parseDouble(xmlattr.getValue("maxlon")));
 		} catch (NumberFormatException e) {
 			// just ignore it
 		}
@@ -239,12 +281,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void setupBBoxFromBound(String box) {
 		String[] f = box.split(",");
 		try {
-			double minlat = Double.parseDouble(f[0]);
-			double minlong = Double.parseDouble(f[1]);
-			double maxlat = Double.parseDouble(f[2]);
-			double maxlong = Double.parseDouble(f[3]);
-
-			setBBox(minlat, minlong, maxlat, maxlong);
+			setBBox(Double.parseDouble(f[0]), Double.parseDouble(f[1]),
+					Double.parseDouble(f[2]), Double.parseDouble(f[3]));
 			log.debug("Map bbox: " + bbox);
 		} catch (NumberFormatException e) {
 			// just ignore it
@@ -257,14 +295,10 @@ class Osm5XmlHandler extends DefaultHandler {
 		bbox = new Area(minlat, minlong, maxlat, maxlong);
 		converter.setBoundingBox(bbox);
 
-		Coord co = new Coord(minlat, minlong);
-		mapper.addToBounds(co);
-		co = new Coord(minlat, maxlong);
-		mapper.addToBounds(co);
-		co = new Coord(maxlat, minlong);
-		mapper.addToBounds(co);
-		co = new Coord(maxlat, maxlong);
-		mapper.addToBounds(co);
+		mapper.addToBounds(new Coord(minlat, minlong));
+		mapper.addToBounds(new Coord(minlat, maxlong));
+		mapper.addToBounds(new Coord(maxlat, minlong));
+		mapper.addToBounds(new Coord(maxlat, maxlong));
 	}
 
 	/**
@@ -277,12 +311,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void addNode(String sid, String slat, String slon) {
 		try {
 			long id = Long.parseLong(sid);
-			double lat = Double.parseDouble(slat);
-			double lon = Double.parseDouble(slon);
 
-			Coord co = new Coord(lat, lon);
-			nodeMap.put(id, co);
-			currentNodeId = id;
+			Coord co = new Coord(Double.parseDouble(slat), Double.parseDouble(slon));
+			coordMap.put(id, co);
+			currentElementId = id;
 			if (bbox == null)
 				mapper.addToBounds(co);
 		} catch (NumberFormatException e) {
@@ -301,7 +333,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 	
 	private void addNodeToWay(long id) {
-		Coord co = nodeMap.get(id);
+		Coord co = coordMap.get(id);
 		if (co != null)
 			currentWay.addPoint(co);
 	}

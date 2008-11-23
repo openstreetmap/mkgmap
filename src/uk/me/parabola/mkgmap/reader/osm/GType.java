@@ -51,6 +51,7 @@ public class GType {
 	private String defaultName;
 
 	private final int priority;
+
 	public GType(int featureKind, String type) {
 		priority = nextPriority();
 		this.featureKind = featureKind;

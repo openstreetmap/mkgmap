@@ -35,17 +35,9 @@ public abstract class Element implements Iterable<String> {
 	 * @param val Its value.
 	 */
 	public void addTag(String key, String val) {
-		if (key.equals("created_by")) {
-			// We are attempting to not create a hash map for nodes that are
-			// not POI's but just nodes in a way.  At one time 'created_by'
-			// was the only common tag that could be ignored, but now there
-			// are many such noise tags and we need a better way.  Perhaps
-			// we can free the map once we realise that it is not needed.
-		} else {
-			if (tags == null)
-				tags = new HashMap<String, String>();
-			tags.put(key, val);
-		}
+		if (tags == null)
+			tags = new HashMap<String, String>(6);
+		tags.put(key, val);
 	}
 
 	public String getTag(String key) {
@@ -79,7 +71,7 @@ public abstract class Element implements Iterable<String> {
 		return it;
 	}
 
-	protected long getId() {
+	public long getId() {
 		return id;
 	}
 

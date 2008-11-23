@@ -362,7 +362,6 @@
         <inspection_tool class="ThisExpressionReferencesGlobalObjectJS" level="WARNING" enabled="false" />
         <inspection_tool class="InfiniteRecursionJS" level="WARNING" enabled="false" />
         <inspection_tool class="ReferencesToClassesFromDefaultPackagesInJSPFile" level="ERROR" enabled="false" />
-        <inspection_tool class="CheckEmptyScriptTag" level="WARNING" enabled="false" />
         <inspection_tool class="NoScrollPane" level="WARNING" enabled="false" />
         <inspection_tool class="NoButtonGroup" level="WARNING" enabled="false" />
         <inspection_tool class="InstanceofChain" level="WARNING" enabled="true" />
@@ -408,11 +407,6 @@
         </inspection_tool>
         <inspection_tool class="ClassComplexity" level="WARNING" enabled="true">
           <option name="m_limit" value="80" />
-        </inspection_tool>
-        <inspection_tool class="ClassCoupling" level="WARNING" enabled="true">
-          <option name="m_includeJavaClasses" value="false" />
-          <option name="m_includeLibraryClasses" value="false" />
-          <option name="m_limit" value="15" />
         </inspection_tool>
         <inspection_tool class="ClassMayBeInterface" level="WARNING" enabled="true" />
         <inspection_tool class="ClassNameDiffersFromFileName" level="WARNING" enabled="true" />
@@ -608,7 +602,7 @@
           <option name="m_limit" value="5" />
         </inspection_tool>
         <inspection_tool class="CyclomaticComplexity" level="WARNING" enabled="true">
-          <option name="m_limit" value="10" />
+          <option name="m_limit" value="20" />
         </inspection_tool>
         <inspection_tool class="MethodCoupling" level="WARNING" enabled="true">
           <option name="m_includeJavaClasses" value="false" />
@@ -943,6 +937,33 @@
           <option name="m_reportAllNonLibraryCalls" value="false" />
           <option name="callCheckString" value="java.io.InputStream,read,java.io.InputStream,skip,java.lang.StringBuffer,toString,java.lang.StringBuilder,toString,java.lang.String,.*,java.math.BigInteger,.*,java.math.BigDecimal,.*,java.net.InetAddress,.*" />
         </inspection_tool>
+        <inspection_tool class="FieldMayBeFinal" level="WARNING" enabled="true" />
+        <inspection_tool class="UnnecessaryCallToStringValueOf" level="WARNING" enabled="true" />
+        <inspection_tool class="UnnecessaryConstantArrayCreationExpression" level="WARNING" enabled="true" />
+        <inspection_tool class="UnnecessarySuperQualifier" level="WARNING" enabled="true" />
+        <inspection_tool class="ConstantValueVariableUse" level="WARNING" enabled="true" />
+        <inspection_tool class="CollectionsFieldAccessReplaceableByMethodCall" level="WARNING" enabled="true" />
+        <inspection_tool class="LoggerInitializedWithForeignClass" level="WARNING" enabled="true">
+          <option name="loggerClassName" value="org.apache.log4j.Logger" />
+          <option name="loggerFactoryMethodName" value="getLogger" />
+        </inspection_tool>
+        <inspection_tool class="LoggingConditionDisagreesWithLogStatement" level="WARNING" enabled="true" />
+        <inspection_tool class="VariableNotUsedInsideIf" level="WARNING" enabled="true" />
+        <inspection_tool class="TypeMayBeWeakened" level="INFO" enabled="true">
+          <option name="useRighthandTypeAsWeakestTypeInAssignments" value="true" />
+          <option name="useParameterizedTypeForCollectionMethods" value="true" />
+        </inspection_tool>
+        <inspection_tool class="ListIndexOfReplaceableByContains" level="WARNING" enabled="true" />
+        <inspection_tool class="CyclicPackageDependency" level="WARNING" enabled="true" />
+        <inspection_tool class="CyclicClassDependency" level="WARNING" enabled="true" />
+        <inspection_tool class="UnpredictableBigDecimalConstructorCall" level="WARNING" enabled="true" />
+        <inspection_tool class="UnnecessaryUnaryMinus" level="WARNING" enabled="true" />
+        <inspection_tool class="SuspiciousIndentAfterControlStatement" level="WARNING" enabled="true" />
+        <inspection_tool class="AccessToNonThreadSafeStaticFieldFromInstance" level="WARNING" enabled="true">
+          <option name="nonThreadSafeTypes" value="java.text.DateFormat,java.util.Calendar" />
+        </inspection_tool>
+        <inspection_tool class="MethodMayBeSynchronized" level="WARNING" enabled="true" />
+        <inspection_tool class="SynchronizedOnLiteralObject" level="WARNING" enabled="true" />
       </profile>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="mapping string" />

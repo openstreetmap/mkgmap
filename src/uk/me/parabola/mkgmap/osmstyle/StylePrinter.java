@@ -20,6 +20,7 @@ public class StylePrinter {
 	private RuleSet nodes;
 	private RuleSet lines;
 	private RuleSet polygons;
+	private RuleSet relations;
 
 	public StylePrinter(Style style) {
 		this.style = style;
@@ -36,6 +37,9 @@ public class StylePrinter {
 		dumpInfo(fmt);
 
 		dumpOptions(fmt);
+
+		if (relations != null)
+			dumpRuleSet(fmt, "relations", relations);
 
 		if (nodes != null)
 			dumpRuleSet(fmt, "points", nodes);
@@ -121,5 +125,9 @@ public class StylePrinter {
 
 	void setPolygons(RuleSet polygons) {
 		this.polygons = polygons;
+	}
+
+	public void setRelations(RuleSet relations) {
+		this.relations = relations;
 	}
 }

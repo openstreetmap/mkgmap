@@ -24,9 +24,9 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -60,12 +60,12 @@ public class StyleImpl implements Style {
 	private static final int VERSION = 0;
 
 	// General options just have a value and don't need any special processing.
-	private static final List<String> OPTION_LIST = new ArrayList<String>(
+	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
 			Arrays.asList("levels"));
 
 	// Options that should not be overriden from the command line if the
 	// value is empty.
-	private static final List<String> DONT_OVERRIDE = new ArrayList<String>(
+	private static final Collection<String> DONT_OVERRIDE = new ArrayList<String>(
 			Arrays.asList("levels"));
 
 	// File names
@@ -94,6 +94,7 @@ public class StyleImpl implements Style {
 	private final RuleSet lines = new RuleSet();
 	private final RuleSet polygons = new RuleSet();
 	private final RuleSet nodes = new RuleSet();
+	private final RuleSet relations = new RuleSet();
 
 	/**
 	 * Create a style from the given location and name.
@@ -148,12 +149,24 @@ public class StyleImpl implements Style {
 		return nodes.getMap();
 	}
 
+	public Map<String, Rule> getRelations() {
+		return relations.getMap();
+	}
+
 	private void readRules() {
 		String l = generalOptions.get("levels");
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
 		
+		try {
+			RuleFileReader reader = new RuleFileReader(0, levels, relations);
+			reader.load(fileLoader, "relations");
+		} catch (FileNotFoundException e) {
+			// it is ok for this file to not exist.
+			log.debug("no relations file");
+		}
+
 		try {
 			RuleFileReader reader = new RuleFileReader(GType.POINT, levels, nodes);
 			reader.load(fileLoader, "points");
@@ -299,7 +312,7 @@ public class StyleImpl implements Style {
 
 	private void readInfo() {
 		try {
-			BufferedReader br = new BufferedReader(fileLoader.open(FILE_INFO));
+			Reader br = new BufferedReader(fileLoader.open(FILE_INFO));
 			info = readInfo(br, FILE_INFO);
 		} catch (FileNotFoundException e) {
 			// optional file..
@@ -407,6 +420,9 @@ public class StyleImpl implements Style {
 
 		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
 			nodes.add(ent.getKey(), ent.getValue());
+
+		for (Map.Entry<String, Rule> ent : other.relations.entrySet())
+			relations.add(ent.getKey(), ent.getValue());
 	}
 
 	private void checkVersion() throws FileNotFoundException {
@@ -429,6 +445,7 @@ public class StyleImpl implements Style {
 	public void dumpToFile(Writer out) {
 		StylePrinter stylePrinter = new StylePrinter(this);
 		stylePrinter.setGeneralOptions(generalOptions);
+		stylePrinter.setRelations(relations);
 		stylePrinter.setLines(lines);
 		stylePrinter.setNodes(nodes);
 		stylePrinter.setPolygons(polygons);

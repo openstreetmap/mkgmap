@@ -35,6 +35,7 @@ import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -52,6 +53,7 @@ public class StyledConverter implements OsmConverter {
 
 	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
 	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
+	private Map<String, Rule> relationValueRules = new HashMap<String, Rule>();
 
 	private final MapCollector collector;
 
@@ -64,6 +66,7 @@ public class StyledConverter implements OsmConverter {
 
 		wayValueRules = style.getWays();
 		nodeValueRules = style.getNodes();
+		relationValueRules = style.getRelations();
 	}
 
 	/**
@@ -106,42 +109,6 @@ public class StyledConverter implements OsmConverter {
 			addShape(way, foundType);
 	}
 
-	private void addLine(Way way, GType gt, String tmpKey) {
-		MapLine line = new MapLine();
-		elementSetup(line, gt, way);
-		line.setPoints(way.getPoints());
-
-		tmpStuff(way, line, tmpKey);
-
-		clipper.clipLine(line, collector);
-	}
-
-	// This will be removed when better way to do contours is implemented.
-	// The oneway stuff will have to stay somewhere.
-	@Deprecated
-	private void tmpStuff(Way way, MapLine line, String tagKey) {
-		if (way.isBoolTag("oneway"))
-            line.setDirection(true);
-
-		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
-			String ele = way.getTag("ele");
-			try {
-				long n = Math.round(Integer.parseInt(ele) *  3.2808399);
-				line.setName(String.valueOf(n));
-			} catch (NumberFormatException e) {
-				line.setName(ele);
-			}
-		}
-	}
-
-	private void addShape(Way way, GType gt) {
-		MapShape shape = new MapShape();
-		elementSetup(shape, gt, way);
-		shape.setPoints(way.getPoints());
-
-		clipper.clipShape(shape, collector);
-	}
-
 	/**
 	 * Takes a node (that has its own identity) and converts it from the OSM
 	 * type to the Garmin map type.
@@ -171,25 +138,6 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		addPoint(node, foundType);
-	}
-
-	private void addPoint(Node node, GType gt) {
-		if (!clipper.contains(node.getLocation()))
-			return;
-
-		MapPoint mp = new MapPoint();
-		elementSetup(mp, gt, node);
-		mp.setSubType(gt.getSubtype());
-		mp.setLocation(node.getLocation());
-
-		collector.addPoint(mp);
-	}
-
-	private void elementSetup(MapElement ms, GType gt, Element element) {
-		ms.setName(element.getName());
-		ms.setType(gt.getType());
-		ms.setMinResolution(gt.getMinResolution());
-		ms.setMaxResolution(gt.getMaxResolution());
 	}
 
 	/**
@@ -228,6 +176,76 @@ public class StyledConverter implements OsmConverter {
 	 */
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
+	}
+
+	/**
+	 * Run the rules for this relation.  As this is not an end object, then
+	 * the only useful rules are action rules that set tags on the contained
+	 * ways or nodes.  Every rule should probably start with 'type=".."'.
+	 *
+	 * @param relation The relation to convert.
+	 */
+	public void convertRelation(Relation relation) {
+		for (String tagKey : relation) {
+            Rule rule = relationValueRules.get(tagKey);
+			if (rule != null)
+				rule.resolveType(relation);
+		}
+	}
+
+	private void addLine(Way way, GType gt, String tmpKey) {
+		MapLine line = new MapLine();
+		elementSetup(line, gt, way);
+		line.setPoints(way.getPoints());
+
+		tmpStuff(way, line, tmpKey);
+
+		clipper.clipLine(line, collector);
+	}
+
+	// This will be removed when better way to do contours is implemented.
+	// The oneway stuff will have to stay somewhere.
+	@Deprecated
+	private void tmpStuff(Way way, MapLine line, String tagKey) {
+		if (way.isBoolTag("oneway"))
+            line.setDirection(true);
+
+		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
+			String ele = way.getTag("ele");
+			try {
+				long n = Math.round(Integer.parseInt(ele) *  3.2808399);
+				line.setName(String.valueOf(n));
+			} catch (NumberFormatException e) {
+				line.setName(ele);
+			}
+		}
+	}
+
+	private void addShape(Way way, GType gt) {
+		MapShape shape = new MapShape();
+		elementSetup(shape, gt, way);
+		shape.setPoints(way.getPoints());
+
+		clipper.clipShape(shape, collector);
+	}
+
+	private void addPoint(Node node, GType gt) {
+		if (!clipper.contains(node.getLocation()))
+			return;
+
+		MapPoint mp = new MapPoint();
+		elementSetup(mp, gt, node);
+		mp.setSubType(gt.getSubtype());
+		mp.setLocation(node.getLocation());
+
+		collector.addPoint(mp);
+	}
+
+	private void elementSetup(MapElement ms, GType gt, Element element) {
+		ms.setName(element.getName());
+		ms.setType(gt.getType());
+		ms.setMinResolution(gt.getMinResolution());
+		ms.setMaxResolution(gt.getMaxResolution());
 	}
 
 	/**
