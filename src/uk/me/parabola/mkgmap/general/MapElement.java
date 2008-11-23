@@ -40,6 +40,7 @@ public abstract class MapElement {
 		name = orig.name;
 		type = orig.type;
 		minResolution = orig.minResolution;
+		maxResolution = orig.maxResolution;
 		userData = orig.userData;
 	}
 
