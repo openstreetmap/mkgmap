@@ -241,6 +241,7 @@ public class TokenScanner {
 	public int nextInt() {
 		skipSpace();
 		Token t = nextToken();
+		// TODO: catch number format exception
 		return Integer.parseInt(t.getValue());
 	}
 

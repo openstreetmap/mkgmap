@@ -359,9 +359,13 @@ public class CommandArgs {
 			mapnameWasSet = false;
 			mapname = arglist.getProperty("mapname");
 			try {
-				int n = Integer.parseInt(mapname);
 				Formatter fmt = new Formatter();
-				fmt.format("%08d", ++n);
+				try {
+					int n = Integer.parseInt(mapname);
+					fmt.format("%08d", ++n);
+				} catch (NumberFormatException e) {
+					fmt.format("%8.8s", mapname);
+				}
 				arglist.setProperty("mapname", fmt.toString());
 			} catch (NumberFormatException e) {
 				// If the name is not a number then we just leave it alone...

@@ -1,3 +1,262 @@
+2008-11-16  steve
+
+	* mkgmap.ipr, mkgmap.iws, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Code clean up.
+	* mkgmap.ipr, mkgmap.iws,
+	  src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/OffsetWriter.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Utf8Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadIndex.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/MapValues.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/scan/Token.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  src/uk/me/parabola/tdbfmt/RBlock.java: Code clean up.
+	* mkgmap.ipr, mkgmap.iws, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/Coord.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Overview.java,
+	  src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/io/StructuredInputStream.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/main/MapOption.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Code clean up.
+	* mkgmap.iml, mkgmap.ipr, mkgmap.iws: Add intellij files.
+	* src/uk/me/parabola/mkgmap/general/LineClipper.java: Fix clipping
+	  bug where a line runs parallel to the side we are clipping
+	  against. Also changed many double values to int's as we only work
+	  in ints for the coordinates anyway. Changed some terminology to
+	  better match the web page description of the algorithm.
+	  
+	  (Bug reported by beej71)
+
+2008-11-12  steve
+
+	* ., src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java: Merge change to
+	  restore the rule ordering within the file. Rules earlier take
+	  priority over rules later.
+
+2008-11-10  steve
+
+	* ., src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/NullClipper.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/EqualsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTOp.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java: Merge in
+	  important bug fixes from the style branch. Makes all the examples
+	  work.
+
+2008-11-09  steve
+
+	* ., Makefile, doc/style-examples.txt, doc/style-rules.txt,
+	  doc/style.txt, scripts/new_style.py,
+	  src/uk/me/parabola/imgfmt/app/BitWriter.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/LinePreparer.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/Option.java,
+	  src/uk/me/parabola/mkgmap/OptionProcessor.java,
+	  src/uk/me/parabola/mkgmap/Options.java,
+	  src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/osmstyle,
+	  src/uk/me/parabola/mkgmap/osmstyle/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DefaultFeatureNames.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/ExpressionRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/FixedRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/MapFeatureReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleSet.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/SequenceRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/AndOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/BinaryOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/CloseOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/EqualsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExistsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExpressionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotEqualOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotExistsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/OpenOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/OrOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/SyntaxException.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ValueOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ValueWithUnit.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/package.html,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Rule.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/scan,
+	  src/uk/me/parabola/mkgmap/scan/TokType.java,
+	  src/uk/me/parabola/mkgmap/scan/Token.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java: Merge the style
+	  branch back to the trunk. Next the branch will be recreated for
+	  more work.
+	* src/uk/me/parabola/imgfmt/app/BufferedImgFileWriter.java,
+	  src/uk/me/parabola/mkgmap/Version.java: Change the message when
+	  the RGN region overflows. The previous message was confusing, and
+	  I don't expect the new one will be any better, but I will keep
+	  changing it until it is. Exit the program as there is not point
+	  of going on as the map will not work and it is best not to give
+	  hope that it will.
+	  
+	  Bumped the built in version number - thanks Petr for reminding
+	  me.
+
+2008-08-31  steve
+
+	* src/uk/me/parabola/imgfmt/app/BitReader.java: Add a signed get
+	  method to the bitreader
+
+2008-08-30  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java: Changes to
+	  help display rgn files.
+
+2008-08-28  steve
+
+	* resources/styles/default/map-features.csv: Add highway=path
+	  because some people use that. -Markus Barchfeld
+
+2008-08-25  steve
+
+	* src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  When a reader plugin already contains an empty top level zoom,
+	  then we do not want to create a new one so mark such levels
+	  specially and use them for creating the empty level instead of
+	  creating our own. Thanks to Pazapas for pointing this out.
+	* src/uk/me/parabola/imgfmt/app/Section.java: Apply fix from the
+	  nod branch. When sections are linked then the begining of the
+	  second should be the end of the previous one (not the start of
+	  the previous).
+	  
+	  Possibly would have caused some weird POI behaviour.
+
+2008-08-24  steve
+
+	* ChangeLog, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileReader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileWriter.java: Some more
+	  changes that should have been included in the previous commit.
+	  
+	  Two phase writing of the sections.
+	* src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPFile.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: The sync method
+	  was a bad idea for net and nod.
+	  
+	  We need to separate writing into two phases and control the order
+	  that these phases are written in.
+	  
+	  So: 1. Make sync just write the buffers to the disk. 2. Add write
+	  and writePost() methods to control the different phases.
+	  
+	  Verified that you get the same result file on trunk.
+
+2008-08-22  elrond
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: Support
+	  <bounds> in .osm
+	  
+	  The current OSM api sends a <bounds minlat="..." minlon="..."
+	  maxlat="..." maxlon="..."/>. Use it to setup the bounding box.
+	  
+	  (<bound> is another already supported way.)
+	* resources/map-features.csv, resources/osm_garmin_map.csv,
+	  resources/styles/default/map-features.csv: Add new features
+	  (archaeological_site, school, playground)
+	  
+	  point historic=archaeological_site ->
+	  attractions|museum-historical polygon amenity=school ->
+	  university (closest match) polygon leisure=playground ->
+	  city-park (closest match)
+
 2008-08-03  steve
 
 	* .: Merge tracking for typpoi nod and style branches.

@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import java.io.IOException;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
-
-import java.io.IOException;
 
 /**
  * The overview map provides a low-detail image for the detailed maps.  It
@@ -109,8 +109,11 @@ public class OverviewMapBlock {
 
 	public void setMapName(String mapName) {
 		this.mapName = mapName;
-		// TODO deal with map names that are not numbers.
-		this.mapNumber = Integer.parseInt(mapName);
+		try {
+			this.mapNumber = Integer.parseInt(mapName);
+		} catch (NumberFormatException e) {
+			this.mapNumber = 0;
+		}
 	}
 
 	protected String getMapName() {

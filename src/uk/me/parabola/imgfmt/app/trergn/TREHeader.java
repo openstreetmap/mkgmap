@@ -115,6 +115,11 @@ public class TREHeader extends CommonHeader {
 
 		readSectionInfo(reader, copyright);
 		reader.getInt();
+
+		if (getHeaderLength() > 116) {
+			reader.position(116);
+			mapId = reader.getInt();
+		}
 	}
 
 	private void readSectionInfo(ImgFileReader reader, Section sect) {
