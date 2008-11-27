@@ -20,7 +20,7 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class BitReader {
-	private byte[] buf;
+	private final byte[] buf;
 	private int bitPosition;
 
 	public BitReader(byte[] buf) {

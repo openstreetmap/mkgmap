@@ -5,7 +5,7 @@ This project is almost entirely based on the file format specification
 document written by John Mechalas at the SourceForge project at
 http://sourceforge.net/projects/garmin-img.  The 'imgdecode' program
 from the same source was also very important in checking that I was
-on the right lines to producing a good file.
+on the right lines to producing a correct file.
 
 Map features
 ------------
@@ -25,6 +25,8 @@ Elrond:
  - writing out section info
  - POI support
 
+Rene_A:
+ - Multipolygon relation support
 
 Routing
 -------

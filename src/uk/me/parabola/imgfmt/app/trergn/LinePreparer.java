@@ -15,11 +15,11 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-
-import java.util.List;
 
 /**
  * This class holds all of the calculations needed to encode a line into
@@ -78,7 +78,7 @@ class LinePreparer {
 
 		// Note no sign included.
 		if (log.isDebugEnabled())
-			log.debug("xbits" + xbits + ", y=" + ybits);
+			log.debug("xbits", xbits, ", y=", ybits);
 
 		// Write the bitstream
 		BitWriter bw = new BitWriter();
@@ -96,8 +96,8 @@ class LinePreparer {
 			bw.put1(ySignNegative);
 
 		if (log.isDebugEnabled()) {
-			log.debug("x same is " + xSameSign + ", sign is " + xSignNegative);
-			log.debug("y same is " + ySameSign + ", sign is " + ySignNegative);
+			log.debug("x same is", xSameSign, "sign is", xSignNegative);
+			log.debug("y same is", ySameSign, "sign is", ySignNegative);
 		}
 
 		for (int i = 0; i < deltas.length; i+=2) {
@@ -110,7 +110,7 @@ class LinePreparer {
 				continue;
 			
 			if (log.isDebugEnabled())
-				log.debug("x delta " + dx + ", " + xbits);
+				log.debug("x delta", dx, "~", xbits);
 			assert dx >> xbits == 0 || dx >> xbits == -1;
 			if (xSameSign) {
 				bw.putn(abs(dx), xbits);
@@ -120,7 +120,7 @@ class LinePreparer {
 			}
 
 			if (log.isDebugEnabled())
-				log.debug("y delta " + dy + ", " + ybits);
+				log.debug("y delta", dy, ybits);
 			assert dy >> ybits == 0 || dy >> ybits == -1;
 			if (ySameSign) {
 				bw.putn(abs(dy), ybits);

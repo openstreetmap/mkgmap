@@ -14,22 +14,25 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Dec-2006
  */
-package uk.me.parabola.mkgmap.reader.osm;
+package uk.me.parabola.mkgmap.reader.osm.xml;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.CoordNode;
-import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.log.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Reads and parses the OSM XML format.
@@ -42,7 +45,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private final Map<Long, Coord> nodeMap = new HashMap<Long, Coord>();
-	private final Map<Long, Way5> wayMap = new HashMap<Long, Way5>();
+	private final Map<Long, Way> wayMap = new HashMap<Long, Way>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -51,7 +54,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private static final int MODE_BOUNDS = 5;
 
 	private Node currentNode;
-	private Way5 currentWay;
+	private Way currentWay;
 	private Relation currentRelation;
 
 	private OsmConverter converter;
@@ -213,7 +216,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
-		for (Way5 w: wayMap.values()){				
+		for (Way w: wayMap.values()){
 			converter.convertName(w);			
 			converter.convertWay(w);				
 		}
@@ -250,9 +253,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void setBBox(double minlat, double minlong,
 	                     double maxlat, double maxlong) {
-		//assert bbox == null;
 
-		bbox = new Area(minlat, minlong, maxlat, maxlong);;
+		bbox = new Area(minlat, minlong, maxlat, maxlong);
 		converter.setBoundingBox(bbox);
 
 		Coord co = new Coord(minlat, minlong);
@@ -278,7 +280,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			double lat = Double.parseDouble(slat);
 			double lon = Double.parseDouble(slon);
 
-			Coord co = new CoordNode(lat, lon, id);
+			Coord co = new Coord(lat, lon);
 			nodeMap.put(id, co);
 			currentNodeId = id;
 			if (bbox == null)
@@ -290,7 +292,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	
 	private void addWay(String sid) {
 		try {
-			currentWay = new Way5();			
+			currentWay = new Way();
 			long id = Long.parseLong(sid);	 
 			wayMap.put(id, currentWay);	
 		} catch (NumberFormatException e) {

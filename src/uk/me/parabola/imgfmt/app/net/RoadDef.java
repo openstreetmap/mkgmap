@@ -44,14 +44,14 @@ public class RoadDef {
 	private int offsetNod2;
 
 	/** @deprecated bring in class? */
-	private OffsetWriterList owList = new OffsetWriterList();
+	private final OffsetWriterList owList = new OffsetWriterList();
 
 	// There can be up to 4 labels for the same road.
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	// Speeed and class
 	private byte roadClass = (byte) 0x4d;
+	private final byte roadFlags = (byte) 0x4;
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.

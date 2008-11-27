@@ -16,20 +16,20 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import java.io.FileNotFoundException;
+
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.ExitException;
-import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
-
-import java.io.FileNotFoundException;
 
 /**
  * Main routine for the command line map-making utility.

@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 /**
  * Routine to clip a polyline to a given bounding box.
  * @author Steve Ratcliffe
+ * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">A very clear explaination of the Liang-Barsky algorithm</a>
  */
 public class LineClipper {
 
@@ -102,36 +103,36 @@ public class LineClipper {
 		double d = 0.00001;
 		assert ends.length == 2;
 
-		double x1 = ends[0].getLongitude();
-		double y1 = ends[0].getLatitude();
+		int x0 = ends[0].getLongitude();
+		int y0 = ends[0].getLatitude();
 
-		double x2 = ends[1].getLongitude();
-		double y2 = ends[1].getLatitude();
+		int x1 = ends[1].getLongitude();
+		int y1 = ends[1].getLatitude();
 
-		double dx = x2 - x1;
-		double dy = y2 - y1;
+		int dx = x1 - x0;
+		int dy = y1 - y0;
 
 		double[] t = {0, 1};
 
-		double p, q;
+		int p, q;
 
 		p = -dx;
-		q = -(a.getMinLong() - x1);
+		q = -(a.getMinLong() - x0);
 		boolean scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dx;
-		q = a.getMaxLong() - x1;
+		q = a.getMaxLong() - x0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = -dy;
-		q = -(a.getMinLat() - y1);
+		q = -(a.getMinLat() - y0);
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dy;
-		q = a.getMaxLat() - y1;
+		q = a.getMaxLat() - y0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
@@ -139,20 +140,20 @@ public class LineClipper {
 		assert t[1] <= 1;
 
 		if (t[0] > 0)
-			ends[0] = new Coord((int) (y1 + t[0] * dy + d), (int) (x1 + t[0] * dx + d));
+			ends[0] = new Coord((int) (y0 + t[0] * dy + d), (int) (x0 + t[0] * dx + d));
 
 		if (t[1] < 1)
-			ends[1] = new Coord((int)(y1 + t[1] * dy + d), (int) (x1 + t[1] * dx + d));
+			ends[1] = new Coord((int)(y0 + t[1] * dy + d), (int) (x0 + t[1] * dx + d));
 		return ends;
 	}
 
 	private static boolean checkSide(double[] t, double p, double q) {
 		double r = q/p;
 
-		if (p == 0 && q < 0)
-			return true;
-
-		if (p < 0) {
+		if (p == 0) {
+			if (q < 0)
+				return true;
+		} else if (p < 0) {
 			if (r > t[1])
 				return true;
 			else if (r > t[0])

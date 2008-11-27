@@ -26,7 +26,9 @@ import uk.me.parabola.imgfmt.app.Coord;
 public abstract class MapElement {
 	private String name;
 	private int type;
+
 	private int minResolution = 24;
+	private int maxResolution;
 
 	protected MapElement() {
 	}
@@ -83,4 +85,11 @@ public abstract class MapElement {
 		this.minResolution = minResolution;
 	}
 
+	public int getMaxResolution() {
+		return maxResolution;
+	}
+
+	public void setMaxResolution(int maxResolution) {
+		this.maxResolution = maxResolution;
+	}
 }

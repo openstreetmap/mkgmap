@@ -12,6 +12,10 @@ style in mkgmap will not be ideal for everyone.  So a mechanism to allow
 different named styles to be included within mkgmap has been developed.
 You can also create and use styles external to mkgmap.
 
+To be clear this is only needed for converting OSM tags, if you are
+starting with a Polish format file, there is no style involved as the
+garmin types are already fully specified in the input file.
+
 ==Writing a style==
 A style consists of a number of files in a single directory.
 The best way is to start out with an existing style that is close to what
@@ -20,37 +24,60 @@ you want and then work from there. ''TODO: link to example template''
 A complete description of the format of all the files that make up a
 style follows.
 
-===First steps===
+==First steps==
 Choose a short name for your style, it should be one word or a couple of
 words joined by and underscore or hyphen.  This is how people will refer
 to the style when it is finished.
 
 Create a directory or folder with that name.  Then you must create
 several files in this directory as detailed below.  Only the ''version''
-and ''map-features.csv'' files are required in the current version.
+file is required.
+
+==Files ==
+This files are read in the order that they are listed here.  In general
+things that are read first take priority of things read later.
 
 ===version===
-
 This file must exist as it is used to recognise a valid style.
-It contains the version number of the style format itself (not the
-version of the particular style) and it should contain a single
-number which currently should be zero.
+It should contain the number 0.
 Make sure that there is a new line after the number, place an empty line
 afterwards to be sure.
-
-===map-features.csv===
-For backward compatibility this file is exactly the same as the file that
-previously used to hold the styling rules.  As the new format advances
-then this file will become less important.
-
-Currently though, it contains all the style information, see the
-old [[Mkgmap/help/custom|mkgmap style customisation page]] for details
-of the contents of this file.
 
 ===options===
 This file contains a number of options that should be set for this style.
 In some cases they can also be set on the command line to override the
 choice of the style designer.
+
+===points===
+This contains a set of rules that show how to convert nodes to garmin
+POIs.
+See the [[Mkgmap/help/style_rules style rules page]] for complete details
+of how this file works.
+
+===lines===
+This is the same as the points file, except that it deals with OSM ways
+that are meant to be lines.
+
+===polygons===
+This is the same as the points file, except that it deals with OSM ways
+that are meant to be areas.
+
+===map-features.csv===
+For backward compatibility this file is exactly the same as the file that
+previously used to hold the styling rules.  New styles shouldn't use
+this file.
+
+See the old [[Mkgmap/help/custom|mkgmap style customisation page]] for details
+of the contents of this file.
+
+ point|amenity|bank|0x2f|0x06|21
+
+ # is exactly the same as the rule in the points file:
+ amenity=bank [0x2f06 resolution 21]
+
+If you have both the new points,lines and polygons files and a
+map-features file, then the new files will be read first and will
+override anything in the map-features.csv file that they conflict with.
 
 ==Testing a style==
 You can test your style by calling mkgmap with the

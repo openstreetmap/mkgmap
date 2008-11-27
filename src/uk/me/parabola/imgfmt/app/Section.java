@@ -104,7 +104,7 @@ public class Section {
 		if (itemSize == 0)
 			return 0;
 		
-		return size/itemSize;
+		return size/ (int) itemSize;
 	}
 
 	public void readSectionInfo(ImgFileReader reader, boolean withItemSize) {

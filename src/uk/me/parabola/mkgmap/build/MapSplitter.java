@@ -155,8 +155,7 @@ class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		MapArea[] areas = mapArea.split(xsplit, ysplit, zoom.getResolution());
-		return areas;
+		return mapArea.split(xsplit, ysplit, zoom.getResolution());
 	}
 
 	/**

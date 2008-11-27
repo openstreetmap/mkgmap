@@ -194,7 +194,6 @@ public class TdbBuilder implements Combiner {
 		bg.setMinResolution(10);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
-		//System.out.println(bg.getBounds());
 		overviewSource.addShape(bg);
 	}
 

@@ -77,9 +77,7 @@ public class Coord {
 		if (obj.getClass() != getClass())
 			return false;
 		Coord other = (Coord) obj;
-		if (getLatitude() == other.getLatitude() && longitude == other.longitude)
-			return true;
-		else return false;
+		return latitude == other.latitude && longitude == other.longitude;
 	}
 
 	/**

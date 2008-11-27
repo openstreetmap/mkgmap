@@ -16,30 +16,26 @@
  */
 package uk.me.parabola.mkgmap;
 
-import uk.me.parabola.log.Logger;
-
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Formatter;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import uk.me.parabola.log.Logger;
 
 /**
- * Command line arguments for Main.
+ * Command line arguments for Main.  Arguments consist of options and filenames.
+ * You read arguments from left to right and when a filename is encounted
+ * the file is processed with the options that were in force at the time.
  * 
  * Since it is likely that the number of options will become quite large, you
- * can place options in a file and have options given on the command line over-
- * ride them.
+ * can place options in a file.  Place the options each on a separate line
+ * without the initial '--'.
  *
  * @author Steve Ratcliffe
  */
@@ -47,19 +43,19 @@ public class CommandArgs {
 	private static final Logger log = Logger.getLogger(CommandArgs.class);
 
 	private final ArgList arglist = new ArgList();
+
 	{
 		// Set some default values.  It is as if these were on the command
 		// line before any user supplied options.
-		arglist.add(new Option("mapname", "63240001"));
-		arglist.add(new Option("description", "OSM street map"));
-		arglist.add(new Option("overview-name", "63240000"));
+		arglist.add(new CommandOption("mapname", "63240001"));
+		arglist.add(new CommandOption("description", "OSM street map"));
+		arglist.add(new CommandOption("overview-name", "63240000"));
 	}
 
 	private final ArgumentProcessor proc;
 	private final Properties currentOptions = new Properties();
-	private final Set<String> readFiles = new HashSet<String>();
 
-	private boolean mapnameSet;
+	private boolean mapnameWasSet;
 
 	public CommandArgs(ArgumentProcessor proc) {
 		this.proc = proc;
@@ -104,8 +100,8 @@ public class CommandArgs {
 				System.err.println("unrecognised option " + arg);
 
 			} else {
-				// A file name
-				addOption("input-file", arg);
+				log.debug("adding filename:", arg);
+				arglist.add(new Filename(arg));
 			}
 		}
 
@@ -121,54 +117,34 @@ public class CommandArgs {
 		proc.endOptions(this);
 	}
 
-	/**
-	 * Add an option based on the option and value separately.
-	 * @param option The option name.
-	 * @param value Its value.
-	 */
-	private void addOption(String option, String value) {
-		Option opt = new Option(option, value);
-		addOption(opt);
-	}
-
-	/**
-	 * Add an option from a raw string.
-	 * @param optval The option=value string.
-	 */
-	private void addOption(String optval) {
-		Option opt = new Option(optval);
-		addOption(opt);
-	}
-
-	/**
-	 * Actually add the option.  Some of these are special in that they are
-	 * filename arguments or instructions to read options from another file.
-	 *
-	 * @param opt The decoded option.
-	 */
-	private void addOption(Option opt) {
-		String option = opt.getOption();
-		String value = opt.getValue();
-
-		log.debug("adding option", option, value);
-
-		// Note if an explicit mapname is set
-		if (option.equals("mapname"))
-			mapnameSet = true;
-
-		if (option.equals("input-file")) {
-			log.debug("adding filename");
-			arglist.add(new Filename(value));
-		} else if (option.equals("read-config")) {
-			readConfigFile(value);
-		} else {
-			arglist.add(opt);
-		}
-	}
-
 	public Properties getProperties() {
 		return arglist.getProperties();
 	}
+
+	public int get(String name, int def) {
+		String s = currentOptions.getProperty(name);
+		if (s == null)
+			return def;
+
+		try {
+			return Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return def;
+		}
+	}
+
+	public String get(String name, String def) {
+		String s = currentOptions.getProperty(name);
+		if (s == null)
+			s = def;
+		return s;
+	}
+
+	// ////
+	// There are a number of methods to get specific arguments that follow.
+	// There are many more options in use however.  New code should mostly
+	// just use the get methods above.
+	// ////
 
 	public String getDescription() {
 		return arglist.getProperty("description");
@@ -205,6 +181,62 @@ public class CommandArgs {
 		return cp;
 	}
 
+	public boolean isForceUpper() {
+		return arglist.getProperty("lower-case") == null;
+	}
+
+	/**
+	 * Test for the existence of an argument.
+	 */
+	public boolean exists(String name) {
+		return currentOptions.getProperty(name) != null;
+	}
+
+	/**
+	 * Add an option based on the option and value separately.
+	 * @param option The option name.
+	 * @param value Its value.
+	 */
+	private void addOption(String option, String value) {
+		CommandOption opt = new CommandOption(option, value);
+		addOption(opt);
+	}
+
+	/**
+	 * Add an option from a raw string.
+	 * @param optval The option=value string.
+	 */
+	private void addOption(String optval) {
+		CommandOption opt = new CommandOption(new Option(optval));
+		addOption(opt);
+	}
+
+	/**
+	 * Actually add the option.  Some of these are special in that they are
+	 * filename arguments or instructions to read options from another file.
+	 *
+	 * @param opt The decoded option.
+	 */
+	private void addOption(CommandOption opt) {
+		String option = opt.getOption();
+		String value = opt.getValue();
+
+		log.debug("adding option", option, value);
+
+		// Note if an explicit mapname is set
+		if (option.equals("mapname"))
+			mapnameWasSet = true;
+
+		if (option.equals("input-file")) {
+			log.debug("adding filename", value);
+			arglist.add(new Filename(value));
+		} else if (option.equals("read-config")) {
+			readConfigFile(value);
+		} else {
+			arglist.add(opt);
+		}
+	}
+
 	/**
 	 * Get an integer value.  A default is used if the property does not exist.
 	 *
@@ -232,78 +264,17 @@ public class CommandArgs {
 	 * @param filename The filename to obtain options from.
 	 */
 	private void readConfigFile(String filename) {
-		log.info("reading config file", filename);
-
-		File file = new File(filename);
-		try {
-			// Don't read the same file twice.
-			String path = file.getCanonicalPath();
-			if (readFiles.contains(path))
-				return;
-			readFiles.add(path);
-		} catch (IOException e) {
-			// Probably want to do more than warn here.
-			log.warn("the config file could not be read");
-			return;
-		}
-
-		try {
-			Reader r = new FileReader(filename);
-			BufferedReader br = new BufferedReader(r);
-
-			String line;
-			while ((line = br.readLine()) != null) {
-				line = line.trim();
-				if (line.length() == 0 || line.charAt(0) == '#')
-					continue;
-
-				// we don't allow continuation lines yet...
-				addOption(line);
+		Options opts = new Options(new OptionProcessor() {
+			public void processOption(Option opt) {
+				log.debug("incoming opt", opt.getOption(), opt.getValue());
+				addOption(new CommandOption(opt));
 			}
-		} catch (FileNotFoundException e) {
-			throw new ExitException("Could not read option file " + filename, e);
-		} catch (IOException e) {
-			throw new ExitException("Reading option file " + filename + " failed", e);
-		}
-	}
-
-	public boolean isForceUpper() {
-		return arglist.getProperty("lower-case") == null;
-	}
-
-	/**
-	 * Test for the existence of an argument.
-	 */
-	public boolean exists(String name) {
-		return currentOptions.getProperty(name) != null;
-	}
-
-	/**
-	 * Get an integer argument.  If the argument was not supplied or
-	 * cannot be turned into an integer then the default value supplied
-	 * will be returned.
-	 * @param name The option name to retrieve.
-	 * @param def The default to use if the option is not set or is not an
-	 * integer.
-	 */
-	public int get(String name, int def) {
-		String s = currentOptions.getProperty(name);
-		if (s == null)
-			return def;
-
+		});
 		try {
-			int ret = Integer.parseInt(s);
-			return ret;
-		} catch (NumberFormatException e) {
-			return def;
+			opts.readOptionFile(filename);
+		} catch (IOException e) {
+			throw new ExitException("Failed to read option file", e);
 		}
-	}
-
-	public String get(String name, String def) {
-		String s = currentOptions.getProperty(name);
-		if (s == null)
-			s = def;
-		return s;
 	}
 
 	/**
@@ -314,7 +285,7 @@ public class CommandArgs {
 
 		private int filenameCount;
 
-		public void add(Option option) {
+		public void add(CommandOption option) {
 			alist.add(option);
 		}
 
@@ -374,7 +345,7 @@ public class CommandArgs {
 			// If there was no explicit mapname specified and the input filename
 			// looks like it contains an 8digit number then we use that.
 			String mapname;
-			if (!mapnameSet) {
+			if (!mapnameWasSet) {
 				mapname = extractMapName(name);
 				if (mapname != null)
 					arglist.setProperty("mapname", mapname);
@@ -385,12 +356,16 @@ public class CommandArgs {
 
 			// Increase the name number.  If the next arg sets it then that
 			// will override this new name.
-			mapnameSet = false;
+			mapnameWasSet = false;
 			mapname = arglist.getProperty("mapname");
 			try {
-				int n = Integer.parseInt(mapname);
 				Formatter fmt = new Formatter();
-				fmt.format("%08d", ++n);
+				try {
+					int n = Integer.parseInt(mapname);
+					fmt.format("%08d", ++n);
+				} catch (NumberFormatException e) {
+					fmt.format("%8.8s", mapname);
+				}
 				arglist.setProperty("mapname", fmt.toString());
 			} catch (NumberFormatException e) {
 				// If the name is not a number then we just leave it alone...
@@ -404,10 +379,8 @@ public class CommandArgs {
 			Pattern pat = Pattern.compile("([0-9]{8})");
 			Matcher matcher = pat.matcher(fname);
 			boolean found = matcher.find();
-			if (found) {
-				String mn = matcher.group(1);
-				return mn;
-			}
+			if (found)
+				return matcher.group(1);
 
 			return null;
 		}
@@ -416,37 +389,28 @@ public class CommandArgs {
 	/**
 	 * An option argument.  A key value pair.
 	 */
-	private class Option implements ArgType {
-		private final String option;
-		private final String value;
+	private class CommandOption implements ArgType {
+		private final Option option;
 
-		private Option(String optval) {
-			String[] v = optval.split("[=:]", 2);
-			if (v.length > 1) {
-				option = v[0].trim();
-				value = v[1].trim();
-			} else {
-				option = optval;
-				value = "";
-			}
+		private CommandOption(Option option) {
+			this.option = option;
 		}
 
-		private Option(String option, String value) {
-			this.option = option;
-			this.value = value;
+		private CommandOption(String key, String val) {
+			this.option = new Option(key, val);
 		}
 
 		public void processArg() {
-			currentOptions.setProperty(option, value);
-			proc.processOption(option, value);
+			currentOptions.setProperty(option.getOption(), option.getValue());
+			proc.processOption(option.getOption(), option.getValue());
 		}
 
 		public String getOption() {
-			return option;
+			return option.getOption();
 		}
 
 		public String getValue() {
-			return value;
+			return option.getValue();
 		}
 	}
 

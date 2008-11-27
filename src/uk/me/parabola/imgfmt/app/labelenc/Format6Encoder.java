@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import uk.me.parabola.log.Logger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +23,8 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.Locale;
+
+import uk.me.parabola.log.Logger;
 
 /**
  * Format according to the '6 bit' .img format.  The text is first upper
@@ -94,9 +94,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		buf = put6(buf, off++, 0xff);
 
 		int len = ((off - 1) * 6) / 8 + 1;
-		EncodedText etext = new EncodedText(buf, len);
 
-		return etext;
+		return new EncodedText(buf, len);
 	}
 
 	/**

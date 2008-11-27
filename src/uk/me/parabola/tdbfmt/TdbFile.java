@@ -232,8 +232,7 @@ public class TdbFile {
 		if (n < 0)
 			throw new IOException("failed to read block");
 
-		Block block = new Block(blockType, body);
-		return block;
+		return new Block(blockType, body);
 	}
 
 }

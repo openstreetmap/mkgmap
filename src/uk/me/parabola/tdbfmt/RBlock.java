@@ -24,7 +24,7 @@ import uk.me.parabola.io.StructuredOutputStream;
  * @author Steve Ratcliffe
  */
 public class RBlock {
-	private String previewDescription = "Test preview map";
+	private final String previewDescription = "Test preview map";
 
 	public void write(Block block) throws IOException {
 		StructuredOutputStream os = block.getOutputStream();

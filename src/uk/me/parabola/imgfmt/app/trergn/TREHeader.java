@@ -20,8 +20,8 @@ import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -115,6 +115,11 @@ public class TREHeader extends CommonHeader {
 
 		copyright.readSectionInfo(reader, true);
 		reader.getInt();
+
+		if (getHeaderLength() > 116) {
+			reader.position(116);
+			mapId = reader.getInt();
+		}
 	}
 
 	/**

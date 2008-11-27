@@ -94,7 +94,13 @@ public class Map implements InternalFiles {
 		m.treFile = new TREFile(m.fileSystem.create(mapname + ".TRE"), true);
 		m.lblFile = new LBLFile(m.fileSystem.create(mapname + ".LBL"));
 
-		m.treFile.setMapId(Integer.parseInt(mapname));
+		int mapid = 0;
+		try {
+			mapid = Integer.parseInt(mapname);
+		} catch (NumberFormatException e) {
+			mapid = 0;
+		}
+		m.treFile.setMapId(mapid);
 		m.fileSystem = fs;
 
 		return m;
@@ -187,8 +193,7 @@ public class Map implements InternalFiles {
 	public Subdivision createSubdivision(Subdivision parent, Area area, Zoom zoom)
 	{
 		log.debug("creating division");
-		Subdivision child = parent.createSubdivision(this, area, zoom);
-		return child;
+		return parent.createSubdivision(this, area, zoom);
 	}
 
 	public void addPointOverview(PointOverview ov) {

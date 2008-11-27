@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * An entry within a directory.  This holds its name and a list
@@ -209,7 +209,7 @@ class Dirent implements DirectoryEntry {
 	 * @param ext The file extension.
 	 */
 	private void setExt(String ext) {
-		log.debug("ext len" + ext.length());
+		log.debug("ext len", ext.length());
 		if (ext.length() != MAX_EXT_LEN)
 			throw new IllegalArgumentException("File extension is wrong size");
 		this.ext = ext;

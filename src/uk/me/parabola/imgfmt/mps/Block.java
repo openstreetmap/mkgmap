@@ -16,14 +16,13 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.io.StructuredOutputStream;
-
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * All the blocks in the file have a type and a length.
@@ -36,14 +35,6 @@ public abstract class Block {
 
 	protected Block(int type) {
 		this.type = type;
-	}
-
-	protected OutputStream getOutput() {
-		return output;
-	}
-
-	public int getType() {
-		return type;
 	}
 
 	public void write(ImgChannel chan) throws IOException {

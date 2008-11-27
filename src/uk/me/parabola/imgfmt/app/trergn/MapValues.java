@@ -34,7 +34,7 @@ public class MapValues {
 	private final byte[][] values = new byte[4][8];
 
 	// Converts the digits in the map id to the values seen in this section.
-	private static final byte[] mapIdCodeTable = new byte[] {
+	private static final byte[] mapIdCodeTable = {
 			0, 1, 0xf, 5,
 			0xd, 4, 7, 6,
 			0xb, 9, 0xe, 8,
@@ -43,7 +43,7 @@ public class MapValues {
 
 	// Used to work out the required offset that is applied to all the
 	// digits of the values.
-	private final int[] offsetMap = new int[] {
+	private final int[] offsetMap = {
 			6, 7, 5, 11,
 			3, 10, 13, 12,
 			1, 15, 4, 14,

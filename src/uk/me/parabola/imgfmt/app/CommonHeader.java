@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.ReadFailedException;
-import uk.me.parabola.imgfmt.Utils;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+
+import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.Utils;
 
 /**
  * The header that is common to all application files within the .img file.
@@ -109,14 +109,6 @@ public abstract class CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected abstract void writeFileHeader(ImgFileWriter writer);
-
-	public byte getLockFlag() {
-		return lockFlag;
-	}
-
-	public void setLockFlag(byte lockFlag) {
-		this.lockFlag = lockFlag;
-	}
 
 	public Date getCreationDate() {
 		return creationDate;
