@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
@@ -32,11 +32,12 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  * can occur in any order.
  */
 class RoadHelper {
+	private static final Logger log = Logger.getLogger(RoadHelper.class);
+
 	private boolean hasRoads;
 	private int roadId;
-	private int lastNodeIndex;
-	private List<NodeIndex> nodes = new ArrayList<NodeIndex>();
-	private Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
+	private final Map<Integer,NodeIndex> nodes = new HashMap<Integer,NodeIndex>();
+	private final Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
 
 	private RoadNetwork roadNetwork;
 	private MapRoad road;
@@ -49,7 +50,6 @@ class RoadHelper {
 
 	public void clear() {
 		roadId = 0;
-		lastNodeIndex = 0;
 		nodes.clear();
 		road = null;
 	}
@@ -60,19 +60,17 @@ class RoadHelper {
 	}
 
 	public void addNode(int nodeIndex, String value) {
-		if (nodeIndex < lastNodeIndex)
-			return;
-		lastNodeIndex = nodeIndex;
+		if (nodes.containsKey(nodeIndex))
+			log.warn("duplicate nodeidx %d, overwriting", nodeIndex);
 		String[] f = value.split(",");
 		// f[0] is the index into the line
 		// f[1] is the node id
-		nodes.add(new NodeIndex(f[0], f[1]));
+		nodes.put(nodeIndex, new NodeIndex(f[0], f[1]));
 	}
 
 	public void addLine(MapLine l) {
-		if (roadId == 0)
-			return;
-
+		if (road != null)
+			log.warn("multiple lines, overwriting");
 		road = new MapRoad(roadId, l);
 	}
 
@@ -87,15 +85,16 @@ class RoadHelper {
 		if (roadId == 0)
 			return;
 
-		System.out.printf("Road id %d\n", roadId);
+		log.debug("finishing road id " + roadId);
 
 		// Set class and speed
 		road.setRoadClass(roadClass);
 		road.setSpeed(speed);
 
-		for (NodeIndex ni : nodes) {
+		for (NodeIndex ni : nodes.values()) {
 			int n = ni.index;
 			List<Coord> points = road.getPoints();
+			log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
 			long id = coord.getId();
 			if (id == 0) {

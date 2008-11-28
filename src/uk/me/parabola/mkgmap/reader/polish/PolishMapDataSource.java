@@ -61,7 +61,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapLine polyline;
 	private MapShape shape;
 
-	private RoadHelper roadHelper = new RoadHelper(getRoadNetwork());
+	private final RoadHelper roadHelper = new RoadHelper(getRoadNetwork());
 
 	private String copyright;
 	private int section;
@@ -262,7 +262,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			polyline.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
 			List<Coord> points = coordsFromString(value);
-
 			// If it is a contour line, then fix the elevation if required.
 			if ((polyline.getType() == 0x20) ||
 			    (polyline.getType() == 0x21) ||
@@ -285,7 +284,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	private List<Coord> coordsFromString(String value) {
-		String[] ords = value.split("\\),\\(");
+		String[] ords = value.split("\\) *, *\\(");
 		List<Coord> points = new ArrayList<Coord>();
 
 		for (String s : ords) {
@@ -295,6 +294,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addToBounds(co);
 			points.add(co);
 		}
+		log.debug(points.size() + " points from " + value);
 		return points;
 	}
 
