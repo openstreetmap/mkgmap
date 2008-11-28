@@ -27,13 +27,13 @@ public class TableA {
 	
 	private static final int ITEM_SIZE = 5;
 
-	private byte size;
+	private int size;
 	private int numberOfItems;
 
 	public void write(ImgFileWriter writer) {
 	}
 
-	public byte getSize() {
+	public int getSize() {
 		return size;
 	}
 
