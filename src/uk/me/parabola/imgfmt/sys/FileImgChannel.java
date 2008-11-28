@@ -32,7 +32,7 @@ import java.nio.channels.FileChannel;
  * @author Steve Ratcliffe
  */
 public class FileImgChannel implements ImgChannel {
-	private FileChannel channel;
+	private final FileChannel channel;
 	private long position;
 
 	public FileImgChannel(String filename) {

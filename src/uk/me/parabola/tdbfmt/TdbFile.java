@@ -58,8 +58,8 @@ public class TdbFile {
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
 	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
-	private RBlock rblock = new RBlock();
-	private TBlock tblock = new TBlock();
+	private final RBlock rblock = new RBlock();
+	private final TBlock tblock = new TBlock();
 
 	public TdbFile() {
 	}
@@ -106,8 +106,7 @@ public class TdbFile {
 	 * @param msg The message to add.
 	 */
 	public void addCopyright(String msg) {
-		CopyrightSegment seg  ;
-		seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
+		CopyrightSegment seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
 		copyrightBlock.addSegment(seg);
 	}
 

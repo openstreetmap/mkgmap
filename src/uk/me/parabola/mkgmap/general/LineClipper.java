@@ -169,7 +169,7 @@ public class LineClipper {
 
 	public static void main(String[] args) {
 		Area a = new Area(60, 70, 150, 230);
-		Coord[] co = new Coord[] {
+		Coord[] co = {
 				new Coord(20, 30),
 				new Coord(160, 280),
 		};

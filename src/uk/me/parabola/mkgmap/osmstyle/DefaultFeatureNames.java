@@ -47,7 +47,7 @@ public class DefaultFeatureNames {
 		String country = loc.getCountry();
 
 		// First try for the lang_country varient
-		String[] names = new String[]{
+		String[] names = {
 				"default-names/names",
 				"default-names/names_" + lang,
 				"default-names/names_" + lang + '_' + country,

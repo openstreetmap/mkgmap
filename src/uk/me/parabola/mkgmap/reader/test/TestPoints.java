@@ -49,13 +49,14 @@ class TestPoints {
 		this.props = in;
 
 		double baseLat = 51.7;
-		double baseLong = 0.24;
 
 		String sBaseLat = System.getenv("BASE_LAT");
 		String sBaseLong = System.getenv("BASE_LONG");
 
 		if (sBaseLat != null)
 			baseLat = Double.valueOf(sBaseLat);
+
+		double baseLong = 0.24;
 		if (sBaseLong != null)
 			baseLong = Double.valueOf(sBaseLong);
 

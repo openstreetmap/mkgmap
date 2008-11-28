@@ -36,7 +36,7 @@ public class Main extends JFrame {
 	private final ResourceBundle resourceBundle =
 			ResourceBundle.getBundle("uk/me/parabola/mkgmap/gui/Main");
 
-	public Main() {
+	private Main() {
 		initComponents();
 	}
 

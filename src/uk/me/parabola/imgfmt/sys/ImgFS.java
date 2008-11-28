@@ -115,8 +115,7 @@ public class ImgFS implements FileSystem {
 	 * read.
 	 */
 	public static FileSystem openFs(String name) throws FileNotFoundException {
-		RandomAccessFile rafile  ;
-		rafile = new RandomAccessFile(name, "r");
+		RandomAccessFile rafile = new RandomAccessFile(name, "r");
 		return openFs(rafile.getChannel());
 	}
 

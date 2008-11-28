@@ -166,14 +166,13 @@ public class TdbBuilder implements Combiner {
 		//		Utils.toDegrees(maxLon));
 
 		// Add a background polygon for this map.
-		Coord start, co;
 		List<Coord> points = new ArrayList<Coord>();
 
-		start = new Coord(minLat, minLon);
+		Coord start = new Coord(minLat, minLon);
 		points.add(start);
 		overviewSource.addToBounds(start);
 
-		co = new Coord(maxLat, minLon);
+		Coord co = new Coord(maxLat, minLon);
 		points.add(co);
 		overviewSource.addToBounds(co);
 

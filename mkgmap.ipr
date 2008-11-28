@@ -293,6 +293,12 @@
           <option name="REPORT_DUPLICATED_PROPERTIES" value="true" />
         </inspection_tool>
         <inspection_tool class="BooleanMethodIsAlwaysInverted" level="WARNING" enabled="false" />
+        <inspection_tool class="SameParameterValue" level="WARNING" enabled="false" />
+        <inspection_tool class="WeakerAccess" level="WARNING" enabled="true">
+          <option name="SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS" value="false" />
+          <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="false" />
+          <option name="SUGGEST_PRIVATE_FOR_INNERS" value="false" />
+        </inspection_tool>
       </profile>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />

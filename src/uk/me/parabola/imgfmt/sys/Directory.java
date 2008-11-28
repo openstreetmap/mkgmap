@@ -91,9 +91,8 @@ class Directory {
 		ByteBuffer buf = ByteBuffer.allocate(512);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 
-		Dirent current = null;
 		chan.position(startPos);
-		while ((chan.read(buf)) > 0) {
+		Dirent current = null;while ((chan.read(buf)) > 0) {
 			buf.flip();
 
 			int used = buf.get(Dirent.OFF_FILE_USED);

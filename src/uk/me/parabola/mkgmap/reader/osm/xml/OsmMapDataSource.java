@@ -101,7 +101,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		return configProps;
 	}
 
-	public void setStyle(Style style) {
+	protected void setStyle(Style style) {
 		this.style = style;
 	}
 }

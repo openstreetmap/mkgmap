@@ -287,7 +287,7 @@ public class FileInfo {
 		return netsize;
 	}
 
-	public void setNetsize(int netsize) {
+	protected void setNetsize(int netsize) {
 		this.netsize = netsize;
 	}
 
@@ -295,7 +295,7 @@ public class FileInfo {
 		return nodsize;
 	}
 
-	public void setNodsize(int nodsize) {
+	protected void setNodsize(int nodsize) {
 		this.nodsize = nodsize;
 	}
 }

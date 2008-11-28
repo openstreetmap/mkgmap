@@ -84,7 +84,7 @@ public class StyleImpl implements Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	private RuleSet ways = new RuleSet();
+	private final RuleSet ways = new RuleSet();
 	//private Map<String, Rule> ways = new HashMap<String, Rule>();
 	//private Map<String, Rule> nodes = new HashMap<String, Rule>();
 	private final RuleSet nodes = new RuleSet();
