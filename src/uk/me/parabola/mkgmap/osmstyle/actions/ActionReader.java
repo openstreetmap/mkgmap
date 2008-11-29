@@ -25,6 +25,9 @@ import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
+ * Read an action block.  This is contained within braces and contains
+ * commands to change tags etc.
+ * 
  * @author Steve Ratcliffe
  */
 public class ActionReader {

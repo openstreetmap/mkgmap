@@ -34,21 +34,22 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * @author Steve Ratcliffe
  */
 public class ActionRule implements Rule {
-	private Op expression;
-	private GType type;
-	private List<Action> actions;
+	private final Op expression;
+	private final List<Action> actions;
+	private final GType type;
 
 	public ActionRule(Op expression, List<Action> actions, GType type) {
 		assert actions != null;
 		this.expression = expression;
-		this.type = type;
 		this.actions = actions;
+		this.type = type;
 	}
 
 	public ActionRule(Op expression, List<Action> actions) {
 		assert actions != null;
 		this.expression = expression;
 		this.actions = actions;
+		this.type = null;
 	}
 
 	public GType resolveType(Element el) {

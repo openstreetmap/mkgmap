@@ -19,7 +19,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Add a tag, optionally changing it if it already exists.
+ * Add a tag, optionally changing it if it already exists.  The value that
+ * the tag is set to can have replacements from the current tags.
  *
  * @author Steve Ratcliffe
  */
@@ -53,6 +54,69 @@ public class AddTagAction implements Action {
 		if (tv != null && !modify)
 			return;
 
-		el.addTag(tag, value);
+		String newval = resolveVars(value, el);
+		if (newval != null)
+			el.addTag(tag, newval);
+	}
+
+	/**
+	 * A tag value can contain variables that are the values of other tags.
+	 * This is especially useful for 'name', as you might want to set it to
+	 * some combination of other tags.
+	 *
+	 * If a tag does not exist then the whole string is rejected.  This allows
+	 * you to make conditional replacements.
+	 * @param in An input string that may contain tag replacement introduced
+	 * by ${tagname}.
+	 *
+	 * @return If there are no replacement values, the same string as was passed
+	 * in.  If all the replacement values exist, then the string with the
+	 * values all replaced.  If any replacement tagname does not exist
+	 * then returns null.
+	 */
+	private String resolveVars(String in, Element el) {
+		if (!in.contains("$"))
+			return in;
+
+		StringBuilder sb = new StringBuilder();
+		int state = 0;
+		StringBuilder tagname = null;
+		for (char c : in.toCharArray()) {
+			switch (state) {
+			case 0:
+				if (c == '$')
+					state = 1;
+				else
+					sb.append(c);
+				break;
+			case 1:
+				if (c == '{') {
+					tagname = new StringBuilder();
+					state = 2;
+				} else {
+					state = 0;
+					sb.append(c);
+				}
+				break;
+			case 2:
+				if (c == '}') {
+					//noinspection ConstantConditions
+					assert tagname != null;
+					String val = el.getTag(tagname.toString());
+					if (val == null)
+						return null;
+					sb.append(val);
+					state = 0;
+					tagname = null;
+				} else {
+					tagname.append(c);
+				}
+				break;
+			default:
+				assert false;
+			}
+		}
+
+		return sb.toString();
 	}
 }

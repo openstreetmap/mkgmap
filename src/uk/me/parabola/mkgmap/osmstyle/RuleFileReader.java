@@ -19,7 +19,6 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.List;
 
 import uk.me.parabola.log.Logger;
@@ -71,10 +70,10 @@ public class RuleFileReader {
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
 		Reader r = loader.open(name);
-		load(name, r);
+		load(r, name);
 	}
 
-	private void load(String name, Reader r) {
+	void load(Reader r, String name) {
 		scanner = new TokenScanner(name, r);
 		scanner.setExtraWordChars("-:");
 
@@ -191,23 +190,15 @@ public class RuleFileReader {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
-		Reader r;
 		if (args.length > 0) {
-			r = new FileReader(args[0]);
+			Reader r = new FileReader(args[0]);
+			RuleSet rs = new RuleSet();
+			RuleFileReader rr = new RuleFileReader(GType.POLYLINE,
+					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+			rr.load(r, "string");
+			log.info("Result: " + rs);
 		} else {
-			r = new StringReader(
-					"a=b & (c=d | e=f) & x>10 [0x1]\n" +
-					"highway=footway & highway = path\n" +
-							"[0x23 resolution 22]\n" +
-							"foo=\nbar & bar=two [0x1]\n" +
-							"amenity=pub [0x2]\n" +
-							"highway=footway & type=rough [0x3 level 2]\n" +
-							"highway=* & oneway=true [0x0]\n" +
-							"");
+			System.err.println("Usage: RuleFileReader <file>");
 		}
-		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-		rr.load("string", r);
-		log.info("Result: " + rs);
 	}
 }
