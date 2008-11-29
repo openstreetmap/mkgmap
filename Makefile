@@ -26,12 +26,13 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
 OSMDATA = /opt/data/uk-test-*
+OSMDATA = other.mp
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
-#OPTS= --net --tdbfile --gmapsupp
+OPTS= --route --tdbfile --tdb-v4 --levels='0:24'
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
