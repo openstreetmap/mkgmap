@@ -34,7 +34,7 @@ import uk.me.parabola.log.Logger;
 public class DirectoryFileLoader extends StyleFileLoader {
 	private static final Logger log = Logger.getLogger(DirectoryFileLoader.class);
 	
-	private File dir;
+	private final File dir;
 
 	/**
 	 * Create a loader given the directory as a File object.

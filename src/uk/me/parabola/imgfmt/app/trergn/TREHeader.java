@@ -38,7 +38,7 @@ public class TREHeader extends CommonHeader {
 	public static final int TRE_188 = 188;
 
 	// The header length to use when creating a file.
-	public static final int DEFAULT_HEADER_LEN = TRE_188;
+	private static final int DEFAULT_HEADER_LEN = TRE_188;
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;

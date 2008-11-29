@@ -102,8 +102,7 @@ class CopyrightSegment {
 	}
 
 	public int hashCode() {
-		int result;
-		result = (int) copyrightCode;
+		int result = (int) copyrightCode;
 		result = 31 * result + (int) whereCode;
 		result = 31 * result + (int) extraProperties;
 		result = 31 * result + copyright.hashCode();

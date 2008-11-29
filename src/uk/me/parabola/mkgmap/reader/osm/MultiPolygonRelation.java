@@ -111,15 +111,15 @@ public class MultiPolygonRelation extends Relation {
 		double long1 = Utils.toDegrees(c1.getLongitude());
 		double long2 = Utils.toDegrees(c2.getLongitude());
 				
-		double latDiff, longDiff;		
+		double latDiff;
 		if (lat1 < lat2)
 			latDiff = lat2 - lat1;
 		else
 			latDiff = lat1 - lat2;	
 		if (latDiff > 90)
 			latDiff -= 180;
-		
-		if (long1 < long2)
+
+		double longDiff;if (long1 < long2)
 			longDiff = long2 - long1;
 		else
 			longDiff = long1 - long2;

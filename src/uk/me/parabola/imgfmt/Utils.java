@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -42,7 +42,7 @@ public class Utils {
 	public static byte[] toBytes(String s, int len, byte pad) {
 		if (s == null)
 			throw new IllegalArgumentException("null string provided");
-		
+
 		byte[] out = new byte[len];
 		for (int i = 0; i < len; i++) {
 			if (i > s.length()) {
@@ -84,22 +84,20 @@ public class Utils {
 
 	/**
 	 * Set the creation date.  Note that the year is encoded specially.
-	 * 
+	 *
 	 * @param buf The buffer to write into.  It must have been properly positioned
 	 * beforehand.
 	 * @param date The date to set.
 	 */
 	public static void setCreationTime(ByteBuffer buf, Date date) {
-		makeCreateTime(buf, date);
-	}
-
-	private static void makeCreateTime(ByteBuffer buf, Date date) {
-		Date d = date == null ? new Date() : date;
-
 		Calendar cal = Calendar.getInstance();
+
+		Date d = date;
+		if (d == null)
+			d = new Date();
 		cal.setTime(d);
 
-		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
+		buf.putChar((char) cal.get(Calendar.YEAR));
 		buf.put((byte) (cal.get(Calendar.MONTH)));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
 		buf.put((byte) cal.get(Calendar.HOUR));
@@ -125,12 +123,23 @@ public class Utils {
 	 * @return A byte stream in .img format.
 	 */
 	public static byte[] makeCreationTime(Date date) {
+		Calendar cal = Calendar.getInstance();
+
+		Date d = date;
+		if (d == null)
+			d = new Date();
+		cal.setTime(d);
+
 		byte[] ret = new byte[7];
 		ByteBuffer buf = ByteBuffer.wrap(ret);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
-
-		makeCreateTime(buf, date);
-
+		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
+		buf.put((byte) (cal.get(Calendar.MONTH)));
+		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
+		buf.put((byte) cal.get(Calendar.HOUR));
+		buf.put((byte) cal.get(Calendar.MINUTE));
+		buf.put((byte) cal.get(Calendar.SECOND));
+		
 		return ret;
 	}
 

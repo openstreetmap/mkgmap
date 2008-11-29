@@ -98,10 +98,10 @@ class ImgHeader {
 	private Date creationTime;
 
 	// Signatures.
-	private static final byte[] FILE_ID = new byte[]{
+	private static final byte[] FILE_ID = {
 			'G', 'A', 'R', 'M', 'I', 'N', '\0'};
 
-	private static final byte[] SIGNATURE = new byte[]{
+	private static final byte[] SIGNATURE = {
 			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
 
 	ImgHeader(ImgChannel chan) {
@@ -152,10 +152,10 @@ class ImgHeader {
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
 		int sectors = 0x20;   // 0x20 appears to be a max
-		int heads = 0x20;     // 0x20 appears to be max
-		int cylinders = 0x100;   // gives 128M will try more later
 		header.putShort(OFF_SECTORS, (short) sectors);
+		int heads = 0x20;     // 0x20 appears to be max
 		header.putShort(OFF_HEADS, (short) heads);
+		int cylinders = 0x100;   // gives 128M will try more later
 		header.putShort(OFF_CYLINDERS, (short) cylinders);
 		header.putShort(OFF_HEADS2, (short) heads);
 		header.putShort(OFF_SECTORS2, (short) sectors);

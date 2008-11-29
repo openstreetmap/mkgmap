@@ -45,7 +45,7 @@ public class PlacesHeader {
 	private final Section poiProperties = new Section(unk1);
 	private final Section unk2 = new Section(poiProperties, UNK2_REC_LEN);
 	private final Section zip = new Section(unk2, ZIP_REC_LEN);
-	private byte POIGlobalFlags = 0;
+	private byte POIGlobalFlags ;
 
 	void setPOIGlobalFlags(byte flags) {
 		this.POIGlobalFlags = flags;

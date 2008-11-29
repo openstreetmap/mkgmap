@@ -94,7 +94,7 @@ public class Map implements InternalFiles {
 		m.treFile = new TREFile(m.fileSystem.create(mapname + ".TRE"), true);
 		m.lblFile = new LBLFile(m.fileSystem.create(mapname + ".LBL"));
 
-		int mapid = 0;
+		int mapid;
 		try {
 			mapid = Integer.parseInt(mapname);
 		} catch (NumberFormatException e) {
