@@ -60,6 +60,11 @@ public class ActionReader {
 			} else if ("add".equals(cmd)) {
 				AddTagAction action = readTagValue(false);
 				actions.add(action);
+			} else if ("rename".equals(cmd)) {
+				String from = scanner.nextWord();
+				String to = scanner.nextWord();
+				Action act = new RenameAction(from, to);
+				actions.add(act);
 			} else {
 				throw new SyntaxException(scanner, "Unrecognised command '" + cmd + '\'');
 			}

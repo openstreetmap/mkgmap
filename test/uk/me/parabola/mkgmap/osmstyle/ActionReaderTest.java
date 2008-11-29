@@ -29,6 +29,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 public class ActionReaderTest {
@@ -50,6 +51,16 @@ public class ActionReaderTest {
 
 		Element el = stdElementRun(actions);
 		assertEquals("park not overwritten", "no", el.getTag("park"));
+	}
+
+	@Test
+	public void testRename() {
+		List<Action> actions = readActionsFromString("{rename park landarea}");
+		assertEquals("one action", 1, actions.size());
+
+		Element el = stdElementRun(actions);
+		assertNull("park gone", el.getTag("park"));
+		assertEquals("park renamed", "no", el.getTag("landarea"));
 	}
 
 	@Test

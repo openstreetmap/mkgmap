@@ -46,6 +46,10 @@ public abstract class Element implements Iterable<String> {
 		return tags.get(key);
 	}
 
+	public void deleteTag(String tagname) {
+		tags.remove(tagname);
+	}
+
 	public Iterator<String> iterator() {
 		Iterator<String> it = new Iterator<String>() {
 			private Iterator<Map.Entry<String, String>> tagit;
