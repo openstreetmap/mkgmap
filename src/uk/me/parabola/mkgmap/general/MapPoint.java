@@ -28,6 +28,18 @@ public class MapPoint extends MapElement {
 	private int subType;
 	private Coord location;
 
+	public MapPoint() {
+		super();
+	}
+
+	MapPoint(MapPoint p) {
+		this.subType = p.subType;
+	}
+
+	public MapElement copy() {
+		return new MapPoint(this);
+	}
+
 	/**
 	 * Points have a subtype as well as a type.  This is the value that will
 	 * be actually stored in the .img file.

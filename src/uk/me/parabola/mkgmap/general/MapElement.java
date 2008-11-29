@@ -39,6 +39,14 @@ public abstract class MapElement {
 		minResolution = orig.minResolution;
 	}
 
+	/**
+	 * Provide a copy of this MapElement without geometry. This is used
+	 * when filtering and clipping to create modified versions.
+	 *
+	 * @return the copy;
+	 */
+	public abstract MapElement copy();
+
 	public String getName() {
 		return name;
 	}

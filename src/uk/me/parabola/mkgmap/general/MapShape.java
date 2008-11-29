@@ -30,13 +30,12 @@ private RoadDef roadDef;
 	public MapShape() {
 	}
 
-	/**
-	 * Copy from another element.  Note that this constructor takes a line
-	 * and not a shape.  It should however actually be a shape.
-	 * @param orig The shape to copy.
-	 */
-	public MapShape(MapLine orig) {
-		super(orig);
+	MapShape(MapShape s) {
+		super(s);
+	}
+
+	public MapElement copy() {
+		return new MapShape(this);
 	}
 
 	public void setDirection(boolean direction) {

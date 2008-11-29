@@ -63,7 +63,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		log.debug("line too big, splitting");
 
-		MapLine l = new MapLine(line);
+		MapLine l = (MapLine) line.copy();
 
 		List<Coord> coords = new ArrayList<Coord>();
 		boolean first = true;
@@ -124,7 +124,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 				else
 					next.addElement(l);
 
-				l = new MapLine(line);
+				l = (MapLine) line.copy();
 
 				first = false;
 				dim.reset();

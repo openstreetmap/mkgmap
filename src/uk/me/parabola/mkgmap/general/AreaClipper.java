@@ -41,7 +41,7 @@ public class AreaClipper implements Clipper {
 			collector.addLine(line);
 		} else {
 			for (List<Coord> lco : list) {
-				MapLine nline = new MapLine(line);
+				MapLine nline = (MapLine) line.copy();
 				nline.setPoints(lco);
 				collector.addLine(nline);
 			}

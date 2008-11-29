@@ -40,6 +40,16 @@ public class MapRoad extends MapLine {
 		this.roadDef = new RoadDef();
 	}
 
+	MapRoad(MapRoad r) {
+		super(r);
+		this.roadId = r.roadId;
+		this.roadDef = r.roadDef;
+	}
+
+	public MapElement copy() {
+		return new MapRoad(this);
+	}
+
 	public long getRoadId() {
 		return roadId;
 	}

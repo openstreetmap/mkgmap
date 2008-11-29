@@ -45,6 +45,10 @@ public class MapLine extends MapElement {
 		//roadDef = orig.roadDef;
 	}
 
+	public MapElement copy() {
+		return new MapLine(this);
+	}
+
 	public List<Coord> getPoints() {
 		return points;
 	}
