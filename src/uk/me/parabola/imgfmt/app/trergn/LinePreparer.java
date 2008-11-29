@@ -130,6 +130,8 @@ class LinePreparer {
 			}
 		}
 
+		if (extraBit)
+			bw.put1(false);
 		if (log.isDebugEnabled())
 			log.debug(bw);
 		return bw;
@@ -158,28 +160,23 @@ class LinePreparer {
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 
-		int lastLat = 0;
-		int lastLong = 0;
-
-		boolean xDiffSign = false; // The long values have different sign
-		boolean yDiffSign = false; // The lat values have different sign
-
-		int xSign = 0;  // If all the same sign, then this 1 or -1 depending
-		// on +ve or -ve
-		int ySign = 0;  // As above for lat.
-
-		int xBits = 0;  // Number of bits needed for long
-		int yBits = 0;  // Number of bits needed for lat.
-
 		// Space to hold the deltas
 		deltas = new int[2 * (points.size() - 1)];
-		int off = 0;
 
 		if (extraBit)
 			nodes = new boolean[points.size()];
 		boolean first = true;
 
 		// OK go through the points
+		int lastLat = 0;
+		int lastLong = 0;
+		boolean xDiffSign = false; // The long values have different sign
+		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
+		int ySign = 0;  // As above for lat.
+		int xBits = 0;  // Number of bits needed for long
+		int yBits = 0;  // Number of bits needed for lat.
+		int off = 0;
+		boolean yDiffSign = false; // The lat values have different sign
 		for (Coord co : points) {
 
 			int lat = co.getLatitude() >> shift;
