@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.mkgmap.osmstyle.Action;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -26,8 +25,8 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class AddTagAction implements Action {
 	private boolean modify;
-	private String tag;
-	private String value;
+	private final String tag;
+	private final String value;
 
 	/**
 	 * Create an action to add the given tag and value.  If the tag

@@ -32,7 +32,7 @@ public class TokenScanner {
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
-	private String fileName;
+	private final String fileName;
 	private int linenumber = 1;
 
 	// Extra word characters.
@@ -170,7 +170,7 @@ public class TokenScanner {
 			if (c == '!' || c == '<' || c == '>') {
 				c = readChar();
 				if (c == '=')
-					val.append((char) c);
+					val.append('=');
 				else
 					pushback = c;
 			}
@@ -249,20 +249,40 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Read a string that consists of non-space tokens.  Skips initial
-	 * space, joins all TEXT and SYMBOL tokens until the next one
-	 * that is neither.
+	 * Read a string that can be quoted.  If it is quoted, then everything
+	 * until the closing quotes is part of the string.  Both single
+	 * and double quotes can be used.
+	 *
+	 * If there are no quotes then it behaves like nextToken apart from
+	 * skipping space.
+	 *
+	 * Initial and final space is skipped.
 	 */
 	public String nextWord() {
 		skipSpace();
+		Token tok = peekToken();
+		char quotec = 0;
+		if (tok.getType() == TokType.SYMBOL) {
+			String s = tok.getValue();
+			if ("'".equals(s) || "\"".equals(s)) {
+				quotec = s.charAt(0);
+				nextToken();
+			}
+		}
+
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
-			TokType tt = firstTokenType();
-			if (tt != TokType.SYMBOL && tt != TokType.TEXT)
+			tok = nextToken();
+			if (quotec == 0) {
+				sb.append(tok.getValue());
 				break;
-
-			sb.append(nextValue());
+			} else {
+				if (tok.isValue(String.valueOf(quotec)))
+					break;
+				sb.append(tok.getValue());
+			}
 		}
+		skipSpace();
 		return sb.toString();
 	}
 

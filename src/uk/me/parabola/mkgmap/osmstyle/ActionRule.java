@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.List;
 
+import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -51,7 +52,7 @@ public class ActionRule implements Rule {
 	}
 
 	public GType resolveType(Element el) {
-		if (expression != null && expression.eval(el)) {
+		if (expression == null || expression.eval(el)) {
 			for (Action a : actions)
 				a.perform(el);
 

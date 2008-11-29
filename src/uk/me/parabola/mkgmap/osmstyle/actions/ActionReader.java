@@ -14,11 +14,12 @@
  * Author: Steve Ratcliffe
  * Create date: 16-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle;
+package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -39,13 +40,41 @@ public class ActionReader {
 		if (!scanner.checkToken(TokType.SYMBOL, "{"))
 			return actions;
 
+		scanner.nextToken();
+		
 		while (!scanner.isEndOfFile()) {
+			scanner.skipSpace();
 			Token tok = scanner.nextToken();
 			if (tok.isValue("}"))
 				break;
+			if (tok.isValue(";"))
+				continue;
 
+			String cmd = tok.getValue();
+			if ("set".equals(cmd)) {
+				AddTagAction action = readTagValue(true);
+				actions.add(action);
+			} else if ("add".equals(cmd)) {
+				AddTagAction action = readTagValue(false);
+				actions.add(action);
+			} else {
+				throw new SyntaxException(scanner, "Unrecognised command '" + cmd + '\'');
+			}
+
+			scanner.skipSpace();
 		}
 		scanner.skipSpace();
 		return actions;
+	}
+
+	private AddTagAction readTagValue(boolean modify) {
+		String key = scanner.nextWord();
+		if (!scanner.checkToken(TokType.SYMBOL, "="))
+			throw new SyntaxException(scanner, "Expecting tag=value");
+		scanner.nextToken();
+		String val = scanner.nextWord();
+
+		AddTagAction action = new AddTagAction(key, val, modify);
+		return action;
 	}
 }
