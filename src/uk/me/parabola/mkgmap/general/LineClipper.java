@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.general;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -41,49 +40,48 @@ public class LineClipper {
 	 * If clipping is needed then an array of point lists is returned.
 	 */
 	public static List<List<Coord>> clip(Area a, List<Coord> coords) {
-		if (a == null)
-			return null;
 
 		// If all the points are inside the box then we just return null
 		// to show that nothing was done and the line can be used.  This
 		// is expected to be the normal case.
-		boolean foundOutside = false;
-		for (Coord co : coords) {
-			if (!a.contains(co)) {
-				foundOutside = true;
-				break;
-			}
-		}
-		if (!foundOutside)
+		if (a == null || a.allInside(coords))
 			return null;
 
-		List<List<Coord>> ret = new ArrayList<List<Coord>>();
-		List<Coord> nlist = new ArrayList<Coord>();
-		ret.add(nlist);
+		class LineCollector {
+			private final List<List<Coord>> ret = new ArrayList<List<Coord>>(4);
+			private List<Coord> currentLine;
+			private Coord last;
 
-		Iterator<Coord> it = coords.iterator();
-		Coord last = it.next();
-		while (it.hasNext()) {
-			Coord co = it.next();
-			Coord[] ends = {last, co};
-			ends = clip(a, ends);
-			if (ends == null) {
-				last = co;
-				continue;
+			public void add(Coord[] segment) {
+				if (segment == null) {
+					currentLine = null;
+				} else {
+					// we start a new line if there isn't a current one, or if the first
+					// point of the segment is not equal to the last one in the line.
+					if (currentLine == null || !segment[0].equals(last)) {
+						currentLine = new ArrayList<Coord>(5);
+						currentLine.add(segment[0]);
+						currentLine.add(segment[1]);
+						ret.add(currentLine);
+					} else {
+						currentLine.add(segment[1]);
+					}
+					last = segment[1];
+				}
 			}
-			if (last.equals(ends[0])) {
-				if (nlist.isEmpty())
-					nlist.add(last);
-			} else {
-				// Need to start a new one
-				nlist = new ArrayList<Coord>();
-				ret.add(nlist);
-				nlist.add(ends[0]);
-			}
-			nlist.add(ends[1]);
-			last = co;
+
 		}
-		return ret;  
+
+		LineCollector seg = new LineCollector();
+
+		// Step through each segment, clip it if necessary and create a list of
+		// lines from it.
+		for (int i = 0; i <= coords.size() - 2; i++) {
+			Coord[] pair = {coords.get(i), coords.get(i+1)};
+			Coord[] clippedPair = clip(a, pair);
+			seg.add(clippedPair);
+		}
+		return seg.ret;
 	}
 
 	/**
@@ -166,14 +164,5 @@ public class LineClipper {
 		}
 		return false;
 	}
-
-	public static void main(String[] args) {
-		Area a = new Area(60, 70, 150, 230);
-		Coord[] co = {
-				new Coord(20, 30),
-				new Coord(160, 280),
-		};
-
-		clip(a, co);
-	}
 }
+	

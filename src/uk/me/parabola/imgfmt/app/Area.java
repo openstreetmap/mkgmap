@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
@@ -155,5 +157,13 @@ public class Area {
 
 	public boolean isEmpty() {
 		return minLat >= maxLat || minLong >= maxLong;
+	}
+
+	public boolean allInside(List<Coord> coords) {
+		for (Coord co : coords) {
+			if (!contains(co))
+				return false;
+		}
+		return true;
 	}
 }
