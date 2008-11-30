@@ -25,7 +25,7 @@ public class TypeReader {
 	public GType readType(TokenScanner ts) {
 		// We should have a '[' to start with
 		ts.skipSpace();
-		Token t = ts.nextToken();
+		Token t = ts.nextRawToken();
 		if (t == null || t.getType() == TokType.EOF)
 			throw new SyntaxException(ts, "No garmin type information given");
 

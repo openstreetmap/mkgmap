@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project relativePaths="true" version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
     <buildFile url="file://$PROJECT_DIR$/build.xml">
@@ -77,6 +77,14 @@
         <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="20" />
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
+        <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+          <value>
+            <package name="java.awt" withSubpackages="false" />
+            <package name="" withSubpackages="false" />
+            <package name="javax.swing" withSubpackages="false" />
+            <package name="org.junit.Assert" withSubpackages="true" />
+          </value>
+        </option>
         <option name="IMPORT_LAYOUT_TABLE">
           <value>
             <package name="java" withSubpackages="true" />
@@ -566,7 +574,7 @@
         </inspection_tool>
         <inspection_tool class="NonFinalStaticVariableUsedInClassInitialization" level="WARNING" enabled="true" />
         <inspection_tool class="OverridableMethodCallDuringObjectConstruction" level="WARNING" enabled="true" />
-        <inspection_tool class="StaticVariableInitialization" level="WARNING" enabled="true">
+        <inspection_tool class="StaticVariableInitialization" level="WARNING" enabled="false">
           <option name="m_ignorePrimitives" value="true" />
         </inspection_tool>
         <inspection_tool class="StaticVariableUninitializedUse" level="WARNING" enabled="true">
@@ -615,7 +623,7 @@
         <inspection_tool class="NestingDepth" level="WARNING" enabled="true">
           <option name="m_limit" value="5" />
         </inspection_tool>
-        <inspection_tool class="BooleanMethodNameMustStartWithQuestion" level="WARNING" enabled="true">
+        <inspection_tool class="BooleanMethodNameMustStartWithQuestion" level="WARNING" enabled="false">
           <option name="questionString" value="is,can,has,should,could,will,shall,check,contains,equals,add,put,remove,startsWith,endsWith,needs,test,exists,does,eval" />
         </inspection_tool>
         <inspection_tool class="ClassNameSameAsAncestorName" level="WARNING" enabled="true" />
@@ -1811,7 +1819,7 @@
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file:///home/steve/src/display/display.iml" filepath="/home/steve/src/display/display.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../display/display.iml" filepath="$PROJECT_DIR$/../display/display.iml" />
       <module fileurl="file://$PROJECT_DIR$/mkgmap.iml" filepath="$PROJECT_DIR$/mkgmap.iml" />
     </modules>
   </component>
@@ -1867,7 +1875,7 @@
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
-        <entry key="/home/steve/src/display">
+        <entry key="$PROJECT_DIR$/../display">
           <value>
             <SvnBranchConfiguration>
               <option name="trunkUrl" value="https://svn2.parabola.me.uk/svn/display/trunk" />
@@ -1949,6 +1957,15 @@
         <list size="0" />
       </value>
     </option>
+  </component>
+  <component name="libraryTable">
+    <library name="resource">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/test/resources" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="false" />

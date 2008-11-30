@@ -30,7 +30,7 @@ public class ExpressionReader {
 		while (!scanner.isEndOfFile()) {
 			if (scanner.checkToken(TokType.SYMBOL, "[") || scanner.checkToken(TokType.SYMBOL, "{"))
 				break;
-			Token tok = scanner.nextToken();
+			Token tok = scanner.nextRawToken();
 
 			log.debug("Token", tok.getValue());
 

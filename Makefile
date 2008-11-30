@@ -12,7 +12,7 @@ OSMDATA = localtest/osm5/cricklewood-5.osm
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 # takes 31s on trunk-681
-OSMDATA = /opt/data/uk-071010-1.osm.gz
+#OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/osm5/srtm.osm
 #OSMDATA = --latin1 /opt/data/osmworld/*.gz
 #OSMDATA = /opt/data/uk-071114.osm.gz
@@ -32,7 +32,7 @@ TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
 #OPTS= --net --tdbfile --gmapsupp
-#OPTS= --style-file=s
+OPTS= --tdbfile
 
 makemap: clean
 	$(TIME) java -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
