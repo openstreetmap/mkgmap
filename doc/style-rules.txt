@@ -116,7 +116,7 @@ To wrap up this section here are the other available tests.
 ; <tt>highway!=*</tt>
 : This is true when there is no highway tag.
 
-== Element type description ==
+== Element type definition ==
 As noted above this is contained in square brackets.
 
 The first thing must be the element type and this is the only thing that is
@@ -129,6 +129,12 @@ Following the type you can have a number of optional keywords and values.
 : This is an alternative way of specifying the level.  It is the number from 0-24 which corresponds to one of the zoom levels that the hardware recognises.  You should not use this if you have given the level and it is usually simpler to use 'level'.
 ; default_name
 : If you give this, then if the element does not already have a name, then it will be given this name.  This might be useful for things that usually don't have names and don't have a recognisable separate garmin symbol.  You could give a default name of 'bus stop' for example and all bus stops that didn't have their own name would now be labeled as such.
+
+== Action block ==
+An action block is enclosed in braces <tt>{ }</tt> and contains a number
+of statements that can alter the element being displayed.  When there
+is an action block, the element type definition is optional, but if it
+occurs it comes after the action block.
 
 == Note on backward compatibility ==
 If you convert an old map-features.csv file to the new style-rules files

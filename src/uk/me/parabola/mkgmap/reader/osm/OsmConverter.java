@@ -79,6 +79,7 @@ public interface OsmConverter {
 	 * </ul>
 	 *
 	 * @param el The element to set the name upon.
+	 * @deprecated I'm going to get rid of this I think.
 	 */
 	public void convertName(Element el);
 

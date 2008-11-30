@@ -53,6 +53,8 @@ public abstract class Element implements Iterable<String> {
 	public Iterator<String> iterator() {
 		Iterator<String> it = new Iterator<String>() {
 			private Iterator<Map.Entry<String, String>> tagit;
+			private boolean doWild;
+			private String key;
 
 			{
 				if (tags != null)
@@ -60,12 +62,20 @@ public abstract class Element implements Iterable<String> {
 			}
 
 			public boolean hasNext() {
-				return (tagit != null) && tagit.hasNext();
+				return doWild || (tagit != null) && tagit.hasNext();
 			}
 
 			public String next() {
-				Map.Entry<String, String> ent = tagit.next();
-				return ent.getKey() + '=' + ent.getValue();
+				String ret;
+				if (doWild) {
+					ret = key + "=*";
+				} else {
+					Map.Entry<String, String> ent = tagit.next();
+					key = ent.getKey();
+					ret = key + '=' + ent.getValue();
+				}
+				doWild = !doWild;
+				return ret;
 			}
 
 			public void remove() {
