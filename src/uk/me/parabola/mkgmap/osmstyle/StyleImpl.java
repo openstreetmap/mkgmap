@@ -441,7 +441,7 @@ public class StyleImpl implements Style {
 	 * This produces a valid style file, although it is mostly used
 	 * for testing.
 	 */
-	public void dumpToFile(Writer out) {
+	private void dumpToFile(Writer out) {
 		StylePrinter stylePrinter = new StylePrinter(this);
 		stylePrinter.setGeneralOptions(generalOptions);
 		stylePrinter.setRelations(relations);

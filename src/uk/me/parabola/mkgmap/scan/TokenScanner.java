@@ -49,14 +49,6 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Get the type of the first token.  The token is not consumed.
-	 */
-	public TokType firstTokenType() {
-		ensureTok();
-		return tokens.peek().getType();
-	}
-
-	/**
 	 * Peek and return the first token.  It is not consumed.
 	 */
 	public Token peekToken() {

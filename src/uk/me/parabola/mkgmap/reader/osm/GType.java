@@ -170,15 +170,4 @@ public class GType {
 		return maxLevel;
 	}
 
-	public void setMaxLevel(int maxLevel) {
-		this.maxLevel = maxLevel;
-	}
-
-	public int getMinLevel() {
-		return minLevel;
-	}
-
-	public void setMinLevel(int minLevel) {
-		this.minLevel = minLevel;
-	}
 }

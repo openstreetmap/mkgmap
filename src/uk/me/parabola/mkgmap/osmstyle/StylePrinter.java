@@ -59,8 +59,8 @@ public class StylePrinter {
 			fmt.format("name-tag-list: %s\n", fmtArray(style.getNameTagList()));
 
 		if (generalOptions != null) {
-			for (String s : generalOptions.keySet())
-				fmt.format("%s: %s\n", s, generalOptions.get(s));
+			for (Map.Entry<String, String> entry : generalOptions.entrySet())
+				fmt.format("%s: %s\n", entry.getKey(), entry.getValue());
 		}
 	}
 
