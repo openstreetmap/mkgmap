@@ -19,10 +19,12 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.io.StringReader;
+import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.osmstyle.actions.Action;
+import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
@@ -34,6 +36,7 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
@@ -67,21 +70,35 @@ public class RuleFileReader {
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
 		Reader r = loader.open(name);
-		load(name, r);
+		load(r, name);
 	}
 
-	private void load(String name, Reader r) {
+	void load(Reader r, String name) {
 		scanner = new TokenScanner(name, r);
+		scanner.setExtraWordChars("-:");
 
 		ExpressionReader expressionReader = new ExpressionReader(scanner);
+		ActionReader actionReader = new ActionReader(scanner);
 
 		// Read all the rules in the file.
+		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			scanner.skipSpace();
-			if (scanner.peekToken().getType() == TokType.EOF)
-				break;
+			Op expr = expressionReader.readConditions();
 
-			saveRule(expressionReader.readConditions(), typeReader.readType(scanner));
+			// TODO this fails when action list is just empty... although perhaps it should.
+			List<Action> actions = actionReader.readActions();
+
+			// If there is an action list, then we don't need a type
+			GType type = null;
+			if (actions.isEmpty()) {
+				if (scanner.checkToken(TokType.SYMBOL, "["))
+					type = typeReader.readType(scanner);
+				else
+					throw new SyntaxException(scanner, "No type definition given");
+			}
+			
+			saveRule(expr, actions, type);
+			scanner.skipSpace();
 		}
 	}
 
@@ -96,7 +113,7 @@ public class RuleFileReader {
 	 * in a basket we know that the first term is true so we can drop that
 	 * from the expression.
 	 */
-	private void saveRule(Op op, GType gt) {
+	private void saveRule(Op op, List<Action> actions, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
 		// E1 | E2 {type...} is exactly the same as the two rules:
@@ -104,13 +121,13 @@ public class RuleFileReader {
 		// E2 {type...}
 		// so just recurse on each term, throwing away the original OR.
 		if (op.isType(OR)) {
-			saveRule(op.getFirst(), gt);
-			saveRule(((BinaryOp) op).getSecond(), gt);
+			saveRule(op.getFirst(), actions, gt);
+			saveRule(((BinaryOp) op).getSecond(), actions, gt);
 			return;
 		}
 
 		if (op instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp(op, gt);
+			optimiseAndSaveBinaryOp(op, actions, gt);
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
@@ -120,7 +137,7 @@ public class RuleFileReader {
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
 	 */
-	private void optimiseAndSaveBinaryOp(Op op, GType gt) {
+	private void optimiseAndSaveBinaryOp(Op op, List<Action> actions, GType gt) {
 		BinaryOp binaryOp = (BinaryOp) op;
 		Op first = binaryOp.getFirst();
 		Op second = binaryOp.getSecond();
@@ -134,46 +151,54 @@ public class RuleFileReader {
 		 * (The case that there is an OR at the top level has already been
 		 * dealt with)
          */
+		String keystring;
+		Op expr;
 		if (op.isType(EQUALS)) {
 			if (first.isType(VALUE) && second.isType(VALUE)) {
-				rules.add(op.toString(), new FixedRule(gt));
+				keystring = op.toString();
+				expr = null;
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
-				rules.add(first.toString(), new ExpressionRule(second, gt));
+				keystring = first.toString();
+				expr = second;
 			} else if (second.isType(EQUALS)) {
 				// Swap the terms and everything will be fine.
-				rules.add(second.toString(), new ExpressionRule(first, gt));
+				keystring = second.toString();
+				expr = first;
 			} else if (first.isType(EXISTS) || first.isType(NOT_EXISTS)) {
-				throw new SyntaxException(scanner, "Cannot start rule with tag(!)=*");
+				throw new SyntaxException(scanner, "Cannot start rule with tag(!)=* (yet)");
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
+
+		Rule rule;
+		if (!actions.isEmpty())
+			rule = new ActionRule(expr, actions, gt);
+		else if (expr != null) {
+			rule = new ExpressionRule(expr, gt);
+		} else {
+			rule = new FixedRule(gt);
+		}
+
+		rules.add(keystring, rule);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
-		Reader r;
 		if (args.length > 0) {
-			r = new FileReader(args[0]);
+			Reader r = new FileReader(args[0]);
+			RuleSet rs = new RuleSet();
+			RuleFileReader rr = new RuleFileReader(GType.POLYLINE,
+					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+			rr.load(r, "string");
+			log.info("Result: " + rs);
 		} else {
-			r = new StringReader(
-					"a=b & (c=d | e=f) & x>10 [0x1]\n" +
-					"highway=footway & highway = path\n" +
-							"[0x23 resolution 22]\n" +
-							"foo=\nbar & bar=two [0x1]\n" +
-							"amenity=pub [0x2]\n" +
-							"highway=footway & type=rough [0x3 level 2]\n" +
-							"highway=* & oneway=true [0x0]\n" +
-							"");
+			System.err.println("Usage: RuleFileReader <file>");
 		}
-		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-		rr.load("string", r);
-		log.info("Result: " + rs);
 	}
 }

@@ -12,39 +12,31 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 29-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle.eval;
+package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Holds tag=value relationship.
- * 
+ * Renames a tag.  Specifically takes the value of the 'from' tag, sets
+ * the value of the 'to' tag and removes the 'from' tag.
  * @author Steve Ratcliffe
  */
-public class EqualsOp extends BinaryOp {
-	public EqualsOp() {
-		setType(EQUALS);
+public class RenameAction implements Action {
+	private final String from;
+	private final String to;
+
+	public RenameAction(String from, String to) {
+		this.from = from;
+		this.to = to;
 	}
 
-	public boolean eval(Element el) {
-		String key = getFirst().toString();
-		String value = getSecond().toString();
-
-		String s = el.getTag(key);
-		if (s == null)
-			return false;
-		return s.equals(value);
+	public void perform(Element el) {
+		String fromval = el.getTag(from);
+		if (fromval != null) {
+			el.addTag(to, fromval);
+			el.deleteTag(from);
+		}
 	}
-
-	public int priority() {
-		return 10;
-	}
-
-	public String toString() {
-		return getFirst().toString() + '=' + getSecond();
-	}
-
-	
 }

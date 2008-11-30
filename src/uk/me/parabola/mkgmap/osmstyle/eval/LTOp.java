@@ -16,26 +16,16 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
-
 /**
  * Less than.  For population speeds etc.
  * @author Steve Ratcliffe
  */
-public class LTOp extends EqualsOp {
+public class LTOp extends NumericOp {
 	public LTOp() {
 		setType(LT);
 	}
 
-	public boolean eval(Element el) {
-		ValueWithUnit tagValue = getUnitValue(el, getFirst().value());
-		if (tagValue == null)
-			return false;
-
-		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value());
-
-		if (!tagValue.isValid() || !ourVal.isValid())
-			return false;
-		return (tagValue.compareTo(ourVal) < 0);
+	protected boolean doesCompare(int result) {
+		return result < 0;
 	}
 }

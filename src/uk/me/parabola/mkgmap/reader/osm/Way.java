@@ -47,12 +47,11 @@ public class Way extends Element {
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("true"))
-			return true;
-		if (val.equalsIgnoreCase("yes"))
+		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
 			return true;
 
-		// Not yet supporting the possible -1 value.
+		// Not yet supporting the possible -1 value, which I think is best
+		// fixed by reversing the way.
 
 		return false;
 	}

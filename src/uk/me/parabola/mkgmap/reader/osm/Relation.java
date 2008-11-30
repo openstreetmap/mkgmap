@@ -1,6 +1,8 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** 
@@ -8,34 +10,23 @@ import java.util.Map;
  * 
  * @author Rene_A
  */
-public class Relation extends Element {
-	private final Map<Way, String> roles = new HashMap<Way, String>();
+public abstract class Relation extends Element {
+	private final Map<Element, String> roles = new HashMap<Element, String>();
+	private final List<Element> elements = new ArrayList<Element>();
 
 	/** 
 	 * Add a Way, role pair to this Relation. Only one role can be associated to a way
 	 * @param role The role this way performs in this relation
-	 * @param way The Way added 
+	 * @param el The Way added
 	 */
-	public void addWay(String role, Way way) {
-		roles.put(way, role);
+	public void addElement(String role, Element el) {
+		roles.put(el, role);
+		elements.add(el);
 	}
-	
-	/**
-	 * @return Is this a multiPolygon relation
-	 */
-	private boolean isMultiPolygon() {
-		String type = getTag("type");
-		return (type != null) && (type.equals("multipolygon"));
-	}
-	
-	public void processWays() {
-		//NOTE: this will get ugly if more types of relation are added.  
-		if (isMultiPolygon())
-			processMultiPolygons();		
-	}
-	
-	private void processMultiPolygons() {
-		MultiPolygonRelation r = new MultiPolygonRelation(roles);
-		r.processWays();
+
+	public abstract void processElements();
+
+	protected Map<Element, String> getRoles() {
+		return roles;
 	}
 }

@@ -1,6 +1,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -15,29 +16,33 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MultiPolygonRelation extends Relation {
 	private Way outer;
-	private static final List<Way> inners = new ArrayList<Way>(); 
+	private static final Collection<Way> inners = new ArrayList<Way>();
 
 	/**
-	 * Parse the roles for outer and inner members.
-	 * When not "outer" or "inner" role is found no processing is done. 
-	 * 
-	 * @param roles Role-Way pairs present in this Relation.
+	 * Create an instance based on an exsiting relation.  We need to do
+	 * this because the type of the relation is not known until after all
+	 * its tags are read in.
+	 * @param other The relation to base this one on.
 	 */
-	MultiPolygonRelation(Map<Way, String> roles) {
-		for (Map.Entry<Way, String> pairs: roles.entrySet()){
+	public MultiPolygonRelation(Relation other) {
+		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
 	        String value = pairs.getValue();
-	        
-	        if (value.equals("outer"))
-	        	outer = pairs.getKey();
-	        else if (value.equals("inner")) {
-	        	inners.add(pairs.getKey());
-	        }
-	    }
+
+			if (pairs.getKey() instanceof Way) {
+				Way way = (Way) pairs.getKey();
+				if (value.equals("outer"))
+					outer = way;
+				else if (value.equals("inner")) {
+					inners.add(way);
+				}
+			}
+		}
 	}
+
 	/** Process the ways in this relation.
 	 * Adds ways with the role "inner" to the way with the role "outer"
 	 */
-	public void processWays() {
+	public void processElements() {
 		if (outer != null)
 		{   
 			for (Way w: inners) {	
@@ -119,7 +124,8 @@ public class MultiPolygonRelation extends Relation {
 		if (latDiff > 90)
 			latDiff -= 180;
 
-		double longDiff;if (long1 < long2)
+		double longDiff;
+		if (long1 < long2)
 			longDiff = long2 - long1;
 		else
 			longDiff = long1 - long2;

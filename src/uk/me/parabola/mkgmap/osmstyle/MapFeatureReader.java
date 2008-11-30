@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
@@ -28,6 +29,8 @@ public class MapFeatureReader {
 	private final Map<String, GType> pointFeatures = new HashMap<String, GType>();
 	private final Map<String, GType> lineFeatures = new HashMap<String, GType>();
 	private final Map<String, GType> shapeFeatures = new HashMap<String, GType>();
+
+	private LevelInfo[] levels;
 
 	/**
 	 * Read the features from the file.
@@ -102,6 +105,9 @@ public class MapFeatureReader {
 		} else {
 			gt.setMinResolution(24);
 		}
+
+		if (levels != null)
+			gt.fixLevels(levels);
 		features.put(osm, gt);
 	}
 
@@ -119,5 +125,9 @@ public class MapFeatureReader {
 
 	private String makeKey(String key, String val) {
 		return key + '=' + val;
+	}
+
+	public void setLevels(LevelInfo[] levels) {
+		this.levels = levels;
 	}
 }

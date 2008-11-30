@@ -23,15 +23,17 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public interface Style {
-	String[] getNameTagList();
+	public String[] getNameTagList();
 
-	String getOption(String name);
+	public String getOption(String name);
 
-	StyleInfo getInfo();
+	public StyleInfo getInfo();
 
-	Map<String, Rule> getWays();
+	public Map<String, Rule> getWays();
 
-	Map<String, Rule> getNodes();
+	public Map<String, Rule> getNodes();
+
+	public Map<String, Rule> getRelations();
 
 	/**
 	 * After the style is loaded we override any options that might
@@ -43,4 +45,5 @@ public interface Style {
 	 * @param config The command line options.
 	 */
 	void applyOptionOverride(Properties config);
+
 }

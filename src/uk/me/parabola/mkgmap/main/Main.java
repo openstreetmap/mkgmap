@@ -212,7 +212,7 @@ public class Main implements ArgumentProcessor {
 
 			StyleInfo info = style.getInfo();
 			System.out.format("%-15s %6s: %s\n",
-					name,info.getVersion(), info.getDescription());
+					name,info.getVersion(), info.getSummary());
 		}
 	}
 

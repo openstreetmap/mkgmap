@@ -20,6 +20,7 @@ import java.util.Formatter;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 
 /**
  * Holds the garmin type of an element and all the information that
@@ -43,6 +44,9 @@ public class GType {
 
 	private int minResolution = 24;
 	private int maxResolution = 24;
+
+	private int maxLevel = -1;
+	private int minLevel;
 
 	private String defaultName;
 
@@ -127,13 +131,54 @@ public class GType {
 		return this.priority < other.priority;
 	}
 
+	/**
+	 * Set minLevel and maxLevel based on the resolution values set and
+	 * the given levels info.  We do this because we used to work only
+	 * on resolution, but we want to move more towards working with
+	 * levels.
+	 */
+	public void fixLevels(LevelInfo[] levels) {
+		for (LevelInfo info : levels) {
+			if (info.getBits() <= minResolution)
+				maxLevel = info.getLevel();
+			if (info.getBits() <= maxResolution)
+				minLevel = info.getLevel();
+		}
+	}
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		Formatter fmt = new Formatter(sb);
 		sb.append('[');
 		fmt.format("%#x", type);
-		fmt.format(" resolution %d-%d", maxResolution, minResolution);
+		if (maxLevel == -1) {
+			if (maxResolution == 24)
+				fmt.format(" resolution %d", minResolution);
+			else
+				fmt.format(" resolution %d-%d", maxResolution, minResolution);
+		} else {
+			if (minLevel == 0)
+				fmt.format(" level %d", maxLevel);
+			else
+				fmt.format(" level %d-%d", minLevel, maxLevel);
+		}
 		sb.append(']');
 		return sb.toString();
+	}
+
+	public int getMaxLevel() {
+		return maxLevel;
+	}
+
+	public void setMaxLevel(int maxLevel) {
+		this.maxLevel = maxLevel;
+	}
+
+	public int getMinLevel() {
+		return minLevel;
+	}
+
+	public void setMinLevel(int minLevel) {
+		this.minLevel = minLevel;
 	}
 }

@@ -35,6 +35,9 @@ public class TokenScanner {
 	private final String fileName;
 	private int linenumber = 1;
 
+	// Extra word characters.
+	private String extraWordChars = "";
+
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
 
 	public TokenScanner(String filename, Reader reader) {
@@ -203,7 +206,8 @@ public class TokenScanner {
 
 	private boolean isWordChar(int ch) {
 		return Character.isLetterOrDigit(ch)
-				|| ch == '_' || ch == ':';
+				|| ch == '_'
+				|| extraWordChars.indexOf(ch) >= 0;
 	}
 
 	/**
@@ -215,16 +219,16 @@ public class TokenScanner {
 	 * end of line is comsumed.
 	 */
 	public String readLine() {
-		String res = readUntil(TokType.EOL);
+		String res = readUntil(TokType.EOL, null);
 		nextToken();  // use up new line
 		return res;
 	}
 
-	private String readUntil(TokType type) {
+	public String readUntil(TokType type, String value) {
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
 			Token t = peekToken();
-			if (t.getType() == type)
+			if (t.getType() == type && (value == null || value.equals(t.getValue())))
 				break;
 			sb.append(nextToken().getValue());
 		}
@@ -246,20 +250,40 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Read a string that consists of non-space tokens.  Skips initial
-	 * space, joins all TEXT and SYMBOL tokens until the next one
-	 * that is neither.
+	 * Read a string that can be quoted.  If it is quoted, then everything
+	 * until the closing quotes is part of the string.  Both single
+	 * and double quotes can be used.
+	 *
+	 * If there are no quotes then it behaves like nextToken apart from
+	 * skipping space.
+	 *
+	 * Initial and final space is skipped.
 	 */
 	public String nextWord() {
 		skipSpace();
+		Token tok = peekToken();
+		char quotec = 0;
+		if (tok.getType() == TokType.SYMBOL) {
+			String s = tok.getValue();
+			if ("'".equals(s) || "\"".equals(s)) {
+				quotec = s.charAt(0);
+				nextToken();
+			}
+		}
+
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
-			TokType tt = firstTokenType();
-			if (tt != TokType.SYMBOL && tt != TokType.TEXT)
+			tok = nextToken();
+			if (quotec == 0) {
+				sb.append(tok.getValue());
 				break;
-
-			sb.append(nextValue());
+			} else {
+				if (tok.isValue(String.valueOf(quotec)))
+					break;
+				sb.append(tok.getValue());
+			}
 		}
+		skipSpace();
 		return sb.toString();
 	}
 
@@ -274,5 +298,9 @@ public class TokenScanner {
 
 	public String getFileName() {
 		return fileName;
+	}
+
+	public void setExtraWordChars(String extraWordChars) {
+		this.extraWordChars = extraWordChars;
 	}
 }

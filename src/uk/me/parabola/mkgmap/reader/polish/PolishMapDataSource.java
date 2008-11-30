@@ -340,8 +340,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private void setResolution(MapElement elem, String name) {
 		if (endLevel > 0)
 			elem.setMinResolution(extractResolution(endLevel));
-		else
-			elem.setMinResolution(extractResolution(name));
+		else {
+			int res = extractResolution(name);
+			elem.setMinResolution(res);
+			elem.setMaxResolution(res);
+		}
 	}
 
 	/**

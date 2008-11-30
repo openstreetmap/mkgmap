@@ -68,7 +68,7 @@ public abstract class StyleFileLoader {
 				loader = new CombinedStyleFileLoader(loc);
 			} else {
 				log.debug("jar file", file);
-				loader = new JarFileLoader(file, name);
+				loader = new JarFileLoader(file.toURI().toString(), name);
 			}
 		} else {
 			log.debug("style url location", loc);
@@ -80,7 +80,7 @@ public abstract class StyleFileLoader {
 			} else if (s.startsWith("jar:")) {
 				loader = new JarFileLoader(loc, name);
 			} else if (s.indexOf(':') > 0) {
-				loader = new JarFileLoader("jar:" + s + "!/");
+				loader = new JarFileLoader(s, name);
 			} else {
 				loader = classpathLoader("styles/", name);
 			}

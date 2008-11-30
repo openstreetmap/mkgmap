@@ -42,6 +42,19 @@ public interface OsmConverter {
 	public void convertNode(Node node);
 
 	/**
+	 * Takes a relation and applies rules that affect the garmin types
+	 * of its contained elements.
+	 *
+	 * The relation rules are run first.  A relation contains references
+	 * to a number of nodes, ways and even other relations, as well as its
+	 * own set of tags.  They have many purposes some of which are not
+	 * relevant to styling.
+	 *
+	 * @param relation The relation to convert.
+	 */
+	public void convertRelation(Relation relation);
+
+	/**
 	 * In OSM there isn't just one name tag for a node or way, there are
 	 * several and you might want to create a name out of several tags.
 	 * This method allows you to do whatever you want.
@@ -82,4 +95,5 @@ public interface OsmConverter {
 	 * @param bbox The bounding area.
 	 */
 	public void setBoundingBox(Area bbox);
+
 }

@@ -12,39 +12,18 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: May 5, 2008
+ * Create date: 23-Nov-2008
  */
-package uk.me.parabola.mkgmap.scan;
+package uk.me.parabola.mkgmap.reader.osm;
 
 /**
+ * A relation to use when no special treatment is required, or when the
+ * relation type is not recognised.
+ *
  * @author Steve Ratcliffe
  */
-public class Token {
-	private final TokType type;
-	private String value;
-
-	public boolean isWhiteSpace() {
-		return type == TokType.SPACE || type == TokType.EOL;
-	}
-
-	public Token(TokType type) {
-		this.type = type;
-	}
-
-	public TokType getType() {
-		return type;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public boolean isValue(String val) {
-		return val.equals(value);
+public class GeneralRelation extends Relation {
+	public void processElements() {
+		// Nothing to do
 	}
 }
-

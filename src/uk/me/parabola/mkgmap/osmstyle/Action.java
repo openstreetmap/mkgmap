@@ -12,39 +12,22 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 03-Nov-2008
+ * Create date: 15-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle.eval;
+package uk.me.parabola.mkgmap.osmstyle;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Holds tag=value relationship.
- * 
+ * Perform some action on an Element.  Add, change or remove tags.
+ *
  * @author Steve Ratcliffe
  */
-public class EqualsOp extends BinaryOp {
-	public EqualsOp() {
-		setType(EQUALS);
-	}
+public interface Action {
 
-	public boolean eval(Element el) {
-		String key = getFirst().toString();
-		String value = getSecond().toString();
-
-		String s = el.getTag(key);
-		if (s == null)
-			return false;
-		return s.equals(value);
-	}
-
-	public int priority() {
-		return 10;
-	}
-
-	public String toString() {
-		return getFirst().toString() + '=' + getSecond();
-	}
-
-	
+	/**
+	 * Perform the action on the element.  This will unually be adding or
+	 * changing the tags.
+	 */
+	public void perform(Element el);
 }

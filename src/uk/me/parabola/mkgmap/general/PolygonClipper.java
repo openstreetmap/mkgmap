@@ -16,34 +16,57 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.*;
 import java.awt.geom.PathIterator;
+import java.util.ArrayList;
+import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
+ * Clip a polygon to the given bounding box.  This may result in more than
+ * one polygon.
+ *
  * @author Steve Ratcliffe
  */
 public class PolygonClipper {
 
-	public static List<List<Coord>> clip(Area a, List<Coord> coords) {
-		if (a == null)
+	/**
+	 * Clip the input polygon to the given area.
+	 * @param bbox The bounding box.
+	 * @param coords The coords of the polygon.
+	 * @return Return null if the polygon is already completly inside the
+	 * bounding box.
+	 */
+	public static List<List<Coord>> clip(Area bbox, List<Coord> coords) {
+		if (bbox == null)
 			return null;
-		
+
+			// If all the points are inside the box then we just return null
+		// to show that nothing was done and the line can be used.  This
+		// is expected to be the normal case.
+		boolean foundOutside = false;
+		for (Coord co : coords) {
+			if (!bbox.contains(co)) {
+				foundOutside = true;
+				break;
+			}
+		}
+		if (!foundOutside)
+			return null;
+
 		// Convert to a awt polygon
 		Polygon polygon = new Polygon();
 		for (Coord co : coords)
 			polygon.addPoint(co.getLongitude(), co.getLatitude());
 
 		Polygon bounds = new Polygon();
-		bounds.addPoint(a.getMinLong(), a.getMinLat());
-		bounds.addPoint(a.getMinLong(), a.getMaxLat());
-		bounds.addPoint(a.getMaxLong(), a.getMaxLat());
-		bounds.addPoint(a.getMaxLong(), a.getMinLat());
-		bounds.addPoint(a.getMinLong(), a.getMinLat());
+		bounds.addPoint(bbox.getMinLong(), bbox.getMinLat());
+		bounds.addPoint(bbox.getMinLong(), bbox.getMaxLat());
+		bounds.addPoint(bbox.getMaxLong(), bbox.getMaxLat());
+		bounds.addPoint(bbox.getMaxLong(), bbox.getMinLat());
+		bounds.addPoint(bbox.getMinLong(), bbox.getMinLat());
 
 		java.awt.geom.Area bbarea = new java.awt.geom.Area(bounds);
 		java.awt.geom.Area shape = new java.awt.geom.Area(polygon);
