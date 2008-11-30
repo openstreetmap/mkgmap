@@ -1,3 +1,61 @@
+2008-11-29  steve
+
+	* src/uk/me/parabola/imgfmt/app/BitReader.java: Merge from nod to
+	  allow display to compile with trunk
+	* mkgmap.iml, mkgmap.ipr, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java, test/uk,
+	  test/uk/me, test/uk/me/parabola, test/uk/me/parabola/mkgmap,
+	  test/uk/me/parabola/mkgmap/general,
+	  test/uk/me/parabola/mkgmap/general/LineClipperTest.java: Line
+	  clipping was producing zero length lines.
+
+2008-11-28  steve
+
+	* ., mkgmap.ipr,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileImgChannel.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java,
+	  src/uk/me/parabola/mkgmap/gui/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DefaultFeatureNames.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Code tidying.
+
+2008-11-27  steve
+
+	* src/uk/me/parabola/imgfmt/Utils.java: Reversing change to the
+	  date routines in this file as I suspect they may be causing the
+	  recently observed breakage.
+	  
+	  I remember from the beginning that things dont work if the year
+	  field has certain values.
+
+2008-11-23  steve
+
+	* ChangeLog, doc/Credits,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java: Fixed
+	  NumberFormatException problems on map names that are not
+	  integers.
+
 2008-11-16  steve
 
 	* mkgmap.ipr, mkgmap.iws, src/uk/me/parabola/imgfmt/Utils.java,

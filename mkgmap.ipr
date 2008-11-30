@@ -299,6 +299,21 @@
           <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="false" />
           <option name="SUGGEST_PRIVATE_FOR_INNERS" value="false" />
         </inspection_tool>
+        <inspection_tool class="AssertEqualsMayBeAssertSame" level="WARNING" enabled="true" />
+        <inspection_tool class="JUnitTestClassNamingConvention" level="WARNING" enabled="true">
+          <option name="m_regex" value="[A-Z][A-Za-z\d]*Test" />
+          <option name="m_minLength" value="8" />
+          <option name="m_maxLength" value="64" />
+        </inspection_tool>
+        <inspection_tool class="TestMethodWithoutAssertion" level="WARNING" enabled="true" />
+        <inspection_tool class="TestCaseInProductCode" level="WARNING" enabled="true" />
+        <inspection_tool class="TestCaseWithConstructor" level="WARNING" enabled="true" />
+        <inspection_tool class="BeforeOrAfterIsPublicVoidNoArg" level="WARNING" enabled="true" />
+        <inspection_tool class="BeforeClassOrAfterClassIsPublicStaticVoidNoArg" level="WARNING" enabled="true" />
+        <inspection_tool class="AssertsWithoutMessages" level="WARNING" enabled="true" />
+        <inspection_tool class="MisorderedAssertEqualsParameters" level="WARNING" enabled="true" />
+        <inspection_tool class="SimplifiableJUnitAssertion" level="WARNING" enabled="true" />
+        <inspection_tool class="StaticSuite" level="WARNING" enabled="true" />
       </profile>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />

@@ -22,26 +22,13 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 
-import org.junit.After;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @author Steve Ratcliffe
- */
 public class LineClipperTest {
-	@Before
-	public void setUp() {
-		// Add your code here
-	}
-
-	@After
-	public void tearDown() {
-		// Add your code here
-	}
 
 	/**
 	 * This is the example as given on the referenced web page.
@@ -57,7 +44,7 @@ public class LineClipperTest {
 		};
 
 		List<List<Coord>> listList = LineClipper.clip(a, Arrays.asList(co));
-		assertTrue(!listList.isEmpty());
+		assertTrue("list should be empty", !listList.isEmpty());
 
 		Coord[] result = {
 				new Coord(60, 101),
@@ -105,6 +92,9 @@ public class LineClipperTest {
 		assertArrayEquals(secondExpectedLine, list.get(1).toArray());
 	}
 
+	/**
+	 * If all the lines are inside, then it should just return null to indicate that.
+	 */
 	@Test
 	public void testAllInside() {
 		Area a = new Area(100, 100, 200, 200);
@@ -114,6 +104,6 @@ public class LineClipperTest {
 				new Coord(190, 195)
 				);
 		List<List<Coord>> list = LineClipper.clip(a, l);
-		assertEquals("all lines inside", null, list);
+		assertNull("all lines inside", list);
 	}
 }
