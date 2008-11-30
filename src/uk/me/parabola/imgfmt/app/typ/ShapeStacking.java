@@ -20,4 +20,5 @@ package uk.me.parabola.imgfmt.app.typ;
  * @author Steve Ratcliffe
  */
 public class ShapeStacking {
+	// TODO give in content
 }
