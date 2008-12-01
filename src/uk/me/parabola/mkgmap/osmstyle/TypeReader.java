@@ -24,8 +24,7 @@ public class TypeReader {
 
 	public GType readType(TokenScanner ts) {
 		// We should have a '[' to start with
-		ts.skipSpace();
-		Token t = ts.nextRawToken();
+		Token t = ts.nextToken();
 		if (t == null || t.getType() == TokType.EOF)
 			throw new SyntaxException(ts, "No garmin type information given");
 
@@ -53,7 +52,7 @@ public class TypeReader {
 			} else if (w.equals("resolution")) {
 				setResolution(ts, gt);
 			} else if (w.equals("default_name")) {
-				gt.setDefaultName(fetchWord(ts));
+				gt.setDefaultName(ts.nextWord());
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
@@ -64,7 +63,7 @@ public class TypeReader {
 	}
 
 	private void setResolution(TokenScanner ts, GType gt) {
-		String str = fetchWord(ts);
+		String str = ts.nextWord();
 		log.debug("res word value", str);
 		try {
 			if (str.indexOf('-') >= 0) {
@@ -80,7 +79,7 @@ public class TypeReader {
 	}
 
 	private void setLevel(TokenScanner ts, GType gt) {
-		String str = fetchWord(ts);
+		String str = ts.nextWord();
 		try {
 			if (str.indexOf('-') >= 0) {
 				String[] minmax = str.split("-", 2);
@@ -100,23 +99,5 @@ public class TypeReader {
 			throw new SyntaxException("Level number too large, max=" + max);
 
 		return levels[max - level].getBits();
-	}
-
-	private String fetchWord(TokenScanner ts) {
-		ts.skipSpace();
-		StringBuilder sb = new StringBuilder();
-		while (!ts.isEndOfFile()) {
-			Token token = ts.peekToken();
-			TokType type = token.getType();
-			if (type == TokType.EOF || type == TokType.EOL || type == TokType.SPACE) {
-				ts.skipSpace();
-				break;
-			}
-			if (token.getValue().equals("]"))
-				break;
-
-			sb.append(ts.nextValue());
-		}
-		return sb.toString();
 	}
 }

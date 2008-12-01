@@ -28,9 +28,10 @@ public class ExpressionReader {
 
 	public Op readConditions() {
 		while (!scanner.isEndOfFile()) {
+			scanner.skipSpace();
 			if (scanner.checkToken(TokType.SYMBOL, "[") || scanner.checkToken(TokType.SYMBOL, "{"))
 				break;
-			Token tok = scanner.nextRawToken();
+			Token tok = scanner.nextToken();
 
 			log.debug("Token", tok.getValue());
 

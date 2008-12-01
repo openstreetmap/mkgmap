@@ -64,7 +64,7 @@ public class RuleFileReaderTest {
 	@Test
 	public void testLevel() {
 		RuleSet rs = makeRuleSet(
-				"highway=primary [0x1 level 1]"
+				"highway=primary [0x1 level 1-3]"
 		);
 		Rule rule = rs.getMap().get("highway=primary");
 
@@ -72,7 +72,8 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "primary");
 
 		GType type = rule.resolveType(el);
-		assertEquals("level should be 1", 1, type.getMaxLevel());
+		assertEquals("min level", 1, type.getMinLevel());
+		assertEquals("max level", 3, type.getMaxLevel());
 	}
 
 	/**

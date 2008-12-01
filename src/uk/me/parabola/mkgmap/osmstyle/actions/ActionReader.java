@@ -43,11 +43,10 @@ public class ActionReader {
 		if (!scanner.checkToken(TokType.SYMBOL, "{"))
 			return actions;
 
-		scanner.nextRawToken();
+		scanner.nextToken();
 		
 		while (!scanner.isEndOfFile()) {
-			scanner.skipSpace();
-			Token tok = scanner.nextRawToken();
+			Token tok = scanner.nextToken();
 			if (tok.isValue("}"))
 				break;
 			if (tok.isValue(";"))
@@ -79,7 +78,7 @@ public class ActionReader {
 		String key = scanner.nextWord();
 		if (!scanner.checkToken(TokType.SYMBOL, "="))
 			throw new SyntaxException(scanner, "Expecting tag=value");
-		scanner.nextRawToken();
+		scanner.nextToken();
 		String val = scanner.nextWord();
 
 		AddTagAction action = new AddTagAction(key, val, modify);

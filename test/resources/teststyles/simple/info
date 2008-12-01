@@ -1,0 +1,8 @@
+
+version: 2.2
+
+summary: A simple test style with just one example of most things
+
+description {
+This style is used for testing.
+}
