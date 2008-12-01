@@ -76,7 +76,7 @@ public abstract class ImgFile  {
 		this.writer = writer;
 	}
 
-	public ImgFileReader getReader() {
+	protected ImgFileReader getReader() {
 		return reader;
 	}
 

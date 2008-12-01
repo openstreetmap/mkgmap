@@ -93,7 +93,7 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 			log.error(ex.getMessage(), ex);
 			for (Map.Entry<String, Rgb> e : colors.entrySet())
 				log.info("'" + e.getKey() + "' c rgb(" + e.getValue().r + " , " + e
-						.getValue().g + " , " + e.getValue().r + ")");
+						.getValue().g + " , " + e.getValue().b + ")");
 			log.info("bild[idx+0]='" + image
 					.substring(idx, idx + cpc) + "' => " + colors
 					.get(image.substring(idx, idx + cpc)));

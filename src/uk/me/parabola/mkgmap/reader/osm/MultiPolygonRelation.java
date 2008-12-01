@@ -80,8 +80,8 @@ public class MultiPolygonRelation extends Relation {
 	/**
 	 * find the Closest Point of Approach between two coordinate-lists	 
 	 * This will probably be moved to a Utils class
-	 * @param l1 
-	 * @param l2
+	 * @param l1 First list of points.
+	 * @param l2 Second list of points.
 	 * @return The first element is the index in l1, the second in l2 which are the closest together.
 	 */
 	private static int[] findCpa(List<Coord> l1, List <Coord> l2){
@@ -106,8 +106,6 @@ public class MultiPolygonRelation extends Relation {
 
 	/**
 	 * Find the Distance between two coordinates. 
-	 * @param c1
-	 * @param c2
 	 * @return distance between c1 and c2.
 	 */
 	private static double distance(Coord c1, Coord c2){

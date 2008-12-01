@@ -155,6 +155,12 @@ class LinePreparer {
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 
+		// Space to hold the deltas
+		deltas = new int[2 * (points.size() - 1)];
+		int off = 0;
+
+		boolean first = true;
+
 		int lastLat = 0;
 		int lastLong = 0;
 
@@ -162,17 +168,11 @@ class LinePreparer {
 		boolean yDiffSign = false; // The lat values have different sign
 
 		int xSign = 0;  // If all the same sign, then this 1 or -1 depending
-		// on +ve or -ve
+		                // on +ve or -ve
 		int ySign = 0;  // As above for lat.
 
 		int xBits = 0;  // Number of bits needed for long
 		int yBits = 0;  // Number of bits needed for lat.
-
-		// Space to hold the deltas
-		deltas = new int[2 * (points.size() - 1)];
-		int off = 0;
-
-		boolean first = true;
 
 		// OK go through the points
 		for (Coord co : points) {

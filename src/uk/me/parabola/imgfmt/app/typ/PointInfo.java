@@ -3,7 +3,7 @@ package uk.me.parabola.imgfmt.app.typ;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 public class PointInfo {
-	final BitmapImage bitmap;
+	private final BitmapImage bitmap;
 
 	public PointInfo(BitmapImage bitmap) {
 		this.bitmap = bitmap;
