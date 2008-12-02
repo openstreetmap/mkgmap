@@ -32,10 +32,10 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.mkgmap.reader.osm.Relation;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -88,9 +88,11 @@ public class StyledConverter implements OsmConverter {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(way);
-				if (foundType == null || type.isBetterPriority(foundType)) {
-					foundType = type;
-					tmpFoundKey = tagKey;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType)) {
+						foundType = type;
+						tmpFoundKey = tagKey;
+					}
 				}
 			}
 		}
@@ -121,8 +123,10 @@ public class StyledConverter implements OsmConverter {
 			Rule rule = nodeValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(node);
-				if (foundType == null || type.isBetterPriority(foundType))
-					foundType = type;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType))
+						foundType = type;
+				}
 			}
 		}
 
