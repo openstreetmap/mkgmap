@@ -129,8 +129,22 @@ public class RoadNetwork {
 		return roadDefs;
 	}
 
-	public List<RouteCenter> getCenters() {
+	/**
+	 * Split the network into RouteCenters.
+	 *
+	 * The resulting centers must satisfy several constraints:
+	 *
+	 * 1. Nodes section smaller than about 0x4000, which gives
+	 *    a bound on the number of nodes.
+	 * 2. At most 0x100 entries in Table A. This gives a bound
+	 *    on the number of different roads meeting the nodes in
+	 *    this RouteCenter.
+	 * 3. At most 0x40 entries in Table B. This gives a bound
+	 *    on the number of neighboring nodes.
+	 */
+	private void splitCenters() {
 		assert !coords.isEmpty();
+		assert centers.isEmpty();
 
 		RouteCenter rc = null;
 
@@ -146,7 +160,11 @@ public class RoadNetwork {
 
 			rc.addNode(node, coord);
 		}
+	}
 
+	public List<RouteCenter> getCenters() {
+		if (centers.isEmpty())
+			splitCenters();
 		return centers;
 	}
 }
