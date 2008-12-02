@@ -57,7 +57,7 @@ public class MapLine extends MapElement {
 	}
 
 	public void setPoints(List<Coord> points) {
-		assert this.points == null : "trying to overwrite points";
+		log.warn("overwriting points");
 		assert points != null : "trying to set null points";
 
 		this.points = points;

@@ -26,6 +26,10 @@ public class TableB {
 
 	private final ArrayList<RouteNode> nodes = new ArrayList<RouteNode>();
 
+	private final static int ITEM_SIZE = 3;
+
+	private int offset;
+
 	public byte getSize() {
 		return (byte) nodes.size();
 	}
@@ -43,7 +47,21 @@ public class TableB {
 		return (byte) i;
 	}
 
+	/**
+	 * Reserve space, since node offsets in other
+	 * RoutingCenters need not be known yet. See writePost.
+	 */
 	public void write(ImgFileWriter writer) {
+		offset = writer.position();
+		int size = nodes.size() * ITEM_SIZE;
+		writer.position(offset + size);
+	}
+
+	/**
+	 * Fill in node offsets.
+	 */
+	public void writePost(ImgFileWriter writer) {
+		writer.position(offset);
 		for (RouteNode node : nodes)
 			writer.put3(node.getOffsetNod1());
 	}

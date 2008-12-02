@@ -30,7 +30,7 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  */
 public class RouteCenter {
 	private static final Logger log = Logger.getLogger(RouteCenter.class);
-	
+
 	private final Coord centralPoint;
 
 	// some heuristics so the center doesn't get too large
@@ -145,7 +145,10 @@ public class RouteCenter {
 	}
 
 	public void writePost(ImgFileWriter writer) {
+		// NET addresses are now known
 		tabA.writePost(writer);
+		// all RouteNodes now have their NOD1 offsets
+		tabB.writePost(writer);
 	}
 
 	/**
