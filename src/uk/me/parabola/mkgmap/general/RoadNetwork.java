@@ -84,7 +84,7 @@ public class RoadNetwork {
 
 				// Create forward arc from node1 to node2
 				Coord bearing = coordList.get(lastIndex + 1);
-				RouteArc arc = new RouteArc(road.getRoadDef(), node2, lastCoord, bearing);
+				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing);
 				//arc.setHeading(heading);
 				arc.setForward();
 				arc.setDestinationClass(road.getRoadClass());
@@ -92,12 +92,10 @@ public class RoadNetwork {
 
 				// Create the reverse arc
 				bearing = coordList.get(index - 1);
-				RouteArc arc2 = new RouteArc(road.getRoadDef(), node1, co, bearing);
+				RouteArc arc2 = new RouteArc(road.getRoadDef(), node2, node1, bearing);
 				arc2.setDestinationClass(road.getRoadClass());
 				arc.setHeading(bearing);
 				node2.addArc(arc2);
-
-				arc.setOther(arc2);
 			} else {
 				// This is the first node in the road
 				road.getRoadDef().setNode(getNode(id, co));
@@ -111,7 +109,7 @@ public class RoadNetwork {
 	private RouteNode getNode(long id, Coord coord) {
 		RouteNode node = nodes.get(id);
 		if (node == null) {
-			node = new RouteNode();
+			node = new RouteNode(coord);
 			nodes.put(id, node);
 			coords.put(id, coord);
 		}
@@ -136,7 +134,6 @@ public class RoadNetwork {
 
 		RouteCenter rc = null;
 
-		int localNet = 0;
 		for (Map.Entry<Long, RouteNode> ent : nodes.entrySet()) {
 			Coord coord = coords.get(ent.getKey());
 			RouteNode node = ent.getValue();
@@ -148,11 +145,6 @@ public class RoadNetwork {
 			}
 
 			rc.addNode(node, coord);
-
-			for (RouteArc arc : node.arcsIteration()) {
-				if (arc.isForward())
-					arc.setLocalNet(localNet++);
-			}
 		}
 
 		return centers;

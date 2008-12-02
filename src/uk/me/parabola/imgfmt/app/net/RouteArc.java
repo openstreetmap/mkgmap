@@ -54,16 +54,18 @@ public class RouteArc {
 
 	private final RoadDef roadDef;
 
-	// The node that this arc goes to
-	private final RouteNode node;
-	private RouteArc other;
+	// The nodes that this arc comes from and goes to
+	private final RouteNode source;
+	private final RouteNode dest;
 
-	// The index in Table B that this arc goes via.
-	private byte index;
+	// The index in Table A describing this arc, if internal.
+	private byte indexA;
+	// The index in Table B that this arc goes via, if external.
+	private byte indexB;
 	
 	private byte flagA;
 	private byte flagB;
-	private byte localNet = -1;
+
 	private char length; // not really known
 
 	/**
@@ -74,9 +76,10 @@ public class RouteArc {
 	 * are part of.
 	 * @param node The destination node.
 	 */
-	public RouteArc(RoadDef roadDef, RouteNode node) {
+	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest) {
 		this.roadDef = roadDef;
-		this.node = node;
+		this.source = source;
+		this.dest = dest;
 	}
 
 	/**
@@ -88,20 +91,21 @@ public class RouteArc {
 	 * @param start The coordinate of the start node,
 	 * @param nextCoord The heading coordinate.
 	 */
-	public RouteArc(RoadDef roadDef, RouteNode node2, Coord start, Coord nextCoord) {
-		this.roadDef = roadDef;
-		this.node = node2;
+	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest,
+				Coord nextCoord) {
+		this(roadDef, source, dest);
 
-		this.length = calcDistance(start, nextCoord);
+		this.length = calcDistance(nextCoord);
 		log.debug("set length", (int)this.length);
-		this.initialHeading = calcAngle(start, nextCoord);
+		this.initialHeading = calcAngle(nextCoord);
 	}
 
-	/**
-	 * Provide the destination node.
-	 */
-	public RouteNode getDestination() {
-		return node;
+	public RouteNode getSource() {
+		return source;
+	}
+
+	public RouteNode getDest() {
+		return dest;
 	}
 
 	/**
@@ -129,12 +133,14 @@ public class RouteArc {
 	/**
 	 * Set this arcs index into Table B. Applies to external arcs only.
 	 */
-	public void setIndex(byte idx) {
+	public void setIndexB(byte idx) {
 		assert !isInternal() : "Trying to set index on external arc.";
-		index = idx;
+		indexB = idx;
 	}
 
-	private byte calcAngle(Coord start, Coord end) {
+	private byte calcAngle(Coord end) {
+		Coord start = source.getCoord();
+
 		log.debug("start", start.toDegreeString(), ", end", end.toDegreeString());
 
 		// Quite possibly too slow...  TODO 
@@ -156,11 +162,14 @@ public class RouteArc {
 
 		byte b = (byte) (256 * (angle / (2 * Math.PI)));
 		log.debug("deg from ret val", (360 * b) / 256);
+
 		return b;
 	}
 
 
-	private char calcDistance(Coord start, Coord end) {
+	private char calcDistance(Coord end) {
+		Coord start = source.getCoord();
+
 		double lat1 = Utils.toRadians(start.getLatitude());
 		double lat2 = Utils.toRadians(end.getLatitude());
 		double lon1 = Utils.toRadians(start.getLongitude());
@@ -184,11 +193,12 @@ public class RouteArc {
 			writer.put(flagB);
 			writer.put((byte) 0);
 		} else {
-			writer.put((byte) (flagB | index));
+			writer.put((byte) (flagB | indexB));
 		}
 
-		if (localNet != -1)
-			writer.put(localNet);
+		if (isInternal())
+			writer.put(indexA);
+
 		log.debug("wrting length", (length & 0x3f), ", complete", (int)length);
 		writer.put((byte) (length & 0x3f));  // TODO more to do
 		writer.put(initialHeading);
@@ -203,13 +213,13 @@ public class RouteArc {
 	 * Node offsets are now all known, so we can write the pointers
 	 * for internal arcs.
 	 */
-	public void writeSecond(ImgFileWriter writer, RouteNode ourNode) {
+	public void writeSecond(ImgFileWriter writer) {
 		if (!isInternal())
 			return;
 
 		writer.position(offset + 1);
 		char val = (char) (flagB << 8);
-		int diff = node.getOffsetNod1() - ourNode.getOffsetNod1();
+		int diff = dest.getOffsetNod1() - source.getOffsetNod1();
 		assert diff < 0x2000 && diff >= -0x2000
 			: "relative pointer too large for 12 bits";
 		val |= diff & 0x3fff;
@@ -222,10 +232,6 @@ public class RouteArc {
 
 	public RoadDef getRoadDef() {
 		return roadDef;
-	}
-
-	public void setOther(RouteArc other) {
-		this.other = other;
 	}
 
 	public void setForward() {
@@ -261,10 +267,8 @@ public class RouteArc {
 		return (byte) (255 * ang / 360);
 	}
 
-	public void setLocalNet(int localNet) {
-		this.localNet = (byte) localNet;
-		if (other != null)
-			other.localNet = (byte) localNet;
+	public void setIndexA(byte indexA) {
+		this.indexA = indexA;
 	}
 
 	public void setLength(int len) {

@@ -56,6 +56,7 @@ public class RouteNode {
 	
 	private byte flags = F_UNK_NEEDED;
 
+	private Coord coord;
 	private char latOff;
 	private char lonOff;
 
@@ -63,7 +64,8 @@ public class RouteNode {
 	private static int nodeCount;
 
 	@Deprecated
-	public RouteNode() {
+	public RouteNode(Coord coord) {
+		this.coord = coord;
 		nodeId = nodeCount++;
 	}
 
@@ -158,10 +160,15 @@ public class RouteNode {
 		return offsetNod1;
 	}
 
-	public void setCoord(Coord centralPoint, Coord coord) {
+	public void setOffsets(Coord centralPoint) {
 		log.debug("center", centralPoint, ", coord", coord.toDegreeString());
+		this.coord = coord;
 		setLatOff(coord.getLatitude() - centralPoint.getLatitude());
 		setLonOff(coord.getLongitude() - centralPoint.getLongitude());
+	}
+
+	public Coord getCoord() {
+		return coord;
 	}
 
 	private void checkOffSize(int off) {
@@ -183,11 +190,11 @@ public class RouteNode {
 	}
 
 	/**
-	 * Second pass over the nodes. Fill in pointers.
+	 * Second pass over the nodes. Fill in pointers and Table A indices.
 	 */
 	public void writeSecond(ImgFileWriter writer) {
 		for (RouteArc arc : arcs)
-			arc.writeSecond(writer, this);
+			arc.writeSecond(writer);
 	}
 
 	public Iterable<? extends RouteArc> arcsIteration() {

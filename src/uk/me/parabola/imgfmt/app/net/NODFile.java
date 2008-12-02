@@ -82,7 +82,7 @@ public class NODFile extends ImgFile {
 		writer = new SectionWriter(getWriter(), nodHeader.getNodeSection());
 
 		for (RouteCenter rc : centers) {
-			rc.writeTableA(writer, network);
+			rc.writePost(writer);
 		}
 		// Refresh the header
 		position(0);

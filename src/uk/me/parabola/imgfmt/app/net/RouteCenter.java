@@ -48,8 +48,6 @@ public class RouteCenter {
 	private final TableB tabB = new TableB();
 	private final TableC tabC = new TableC();
 
-	private int tableAoffset;
-
 	public RouteCenter(Coord cp) {
 		this.centralPoint = cp;
 	}
@@ -62,7 +60,7 @@ public class RouteCenter {
 		estimatedNodesSize += node.boundSize();
 		assert estimatedNodesSize <= maxNodesSize : "RouteCenter full";
 
-		node.setCoord(centralPoint, coord);
+		node.setOffsets(centralPoint);
 		node.setRouteCenter(this);
 		nodes.add(node);
 	}
@@ -76,11 +74,13 @@ public class RouteCenter {
 	private void handleInterCenterArcs() {
 		for (RouteNode node : nodes) {
 			for (RouteArc arc : node.arcsIteration()) {
-				boolean internal = arc.getDestination().getRouteCenter() == this;
+				boolean internal = arc.getDest().getRouteCenter() == this;
 				arc.setInternal(internal);
-				if (!internal) {
-					byte idx = tabB.addNode(arc.getDestination());
-					arc.setIndex(idx);
+				if (internal) {
+					tabA.addArc(arc);
+				} else {					
+					byte idxB = tabB.addNode(arc.getDest());
+					arc.setIndexB(idxB);
 				}
 			}
 		}
@@ -102,13 +102,9 @@ public class RouteCenter {
 			node.write(writer);
 
 			// save table A entries
-			for (RouteArc arc : node.arcsIteration()) {
-				if (arc.isForward()) {
-					tabA.addItem();
-				}
-			}
+			for (RouteArc arc : node.arcsIteration())
+				tabA.addArc(arc);
 		}
-
 
 		int mult = 1 << NODHeader.DEF_ALIGN;
 
@@ -135,39 +131,21 @@ public class RouteCenter {
 
 		writer.position(tablesOffset);
 
-		// Calculate table A size, this will be filled in later
-
 		// Write the tables header
 		writer.put(tabC.getSize());
 		writer.put3(centralPoint.getLongitude());
 		writer.put3(centralPoint.getLatitude());
 		writer.put((byte) tabA.getNumberOfItems());
-		writer.put((byte) 0); // number of table B entries
+		writer.put((byte) tabB.getSize()); // number of table B entries
 
-		tableAoffset = writer.position();
-		log.debug("tab a offset", tableAoffset);
-		tabA.reserve(writer);
+		tabA.write(writer);
 		tabB.write(writer);
 		tabC.write(writer);
-		//tables.write(writer);
 		log.info("endof node " + writer.position());
 	}
 
-	public void writeTableA(ImgFileWriter writer, RoadNetwork network) {
-		writer.position(tableAoffset);
-		for (RouteNode node : nodes) {
-
-			// write the table A entries.  Consists of a pointer to net
-			// followed by 2 bytes of class and speed flags and road restrictions.
-			for (RouteArc arc : node.arcsIteration()) {
-				if (arc.isForward()) {
-					int pos = arc.getRoadDef().getNetPosition();
-					writer.put3(pos);
-					writer.put((byte) 0x46);
-					writer.put((byte) 0x0);
-				}
-			}
-		}
+	public void writePost(ImgFileWriter writer) {
+		tabA.writePost(writer);
 	}
 
 	/**
