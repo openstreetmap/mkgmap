@@ -192,6 +192,9 @@ public class RoadDef {
 
 	public void writeNod2(ImgFileWriter writer) {
 		log.debug("writing nod2");
+
+		assert node != null : "routing node not set: " + labels[0];
+
 		offsetNod2 = writer.position();
 
 		writer.put(roadClass);

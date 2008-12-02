@@ -87,4 +87,11 @@ public class Label {
 		if (ctext != null)
 			writer.put(ctext, 0, this.length);
 	}
+
+	/**
+	 * String version of the label, for diagnostic purposes.
+	 */
+	public String toString() {
+		return new String(ctext);
+	}
 }

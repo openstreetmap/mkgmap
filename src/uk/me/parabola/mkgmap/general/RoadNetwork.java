@@ -65,8 +65,10 @@ public class RoadNetwork {
 		for (int index = 0; index < npoints; index++) {
 			Coord co = coordList.get(index);
 			long id = co.getId();
-			if (id == 0) 
+			if (id == 0) {
+				log.debug("got id 0");
 				continue;
+			}
 
 			addRoadToNode(road, id);
 
@@ -75,6 +77,7 @@ public class RoadNetwork {
 			// the previous node to this one (and back again).
 			if (lastCoord != null) {
 				long lastId = lastCoord.getId();
+				log.debug("lastId = " + lastId);
 
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);

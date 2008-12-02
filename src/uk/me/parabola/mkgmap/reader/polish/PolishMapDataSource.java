@@ -99,6 +99,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} catch (IOException e) {
 			throw new FormatException("Reading file failed", e);
 		}
+		// write background polygon
+		mapper.finish();
 	}
 
 	public LevelInfo[] mapLevels() {
