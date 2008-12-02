@@ -59,10 +59,15 @@ public class TableA {
 			roadDef = arc.getRoadDef();
 		}
 
-		boolean equals(Arc arc) {
+		public boolean equals(Object obj) {
+			Arc arc = (Arc) obj;
 			return first.equals(arc.first)
 				&& second.equals(arc.second)
 				&& roadDef.equals(arc.roadDef);
+		}
+
+		public String toString() {
+			return "" + first + "->" + second + " (" + roadDef + ")";
 		}
 	}
 
@@ -78,6 +83,7 @@ public class TableA {
 		if ((i = arcs.indexOf(narc)) < 0) {
 			i = arcs.size();
 			arcs.add(narc);
+			log.debug("added arc", narc);
 		}
 		return (byte) i;
 	}
@@ -86,9 +92,10 @@ public class TableA {
 	 * Retrieve an arc's index.
 	 */
 	public byte getIndex(RouteArc arc) {
-		int i = arcs.indexOf(new Arc(arc));
-		assert i >= 0: "Trying to read Table A index for non-registered arc.";
-		assert i < 0x100 : "Table A index too large";
+		Arc narc = new Arc(arc);
+		int i = arcs.indexOf(narc);
+		assert i >= 0: "Trying to read Table A index for non-registered arc: " + narc;
+		assert i < 0x100 : "Table A index too large: " + narc;
 		return (byte) i;
 	}
 
