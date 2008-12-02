@@ -96,20 +96,22 @@ public class RouteNode {
 		setLonOff(coord.getLongitude() - centralPoint.getLongitude());
 	}
 
-	private void setLatOff(int latOff) {
-		if (latOff > 0xfff || latOff < -0xfff)
+	private void checkOffSize(int off) {
+		if (off > 0x7ff || off < -0x800)
+			// does off fit in signed 12 bit quantity?
 			flags |= F_LARGE_OFFSETS;
+		// does off fit in signed 16 bit quantity?
+		assert (off <= 0x7fff && off >= -0x8000);
+	}
 
+	private void setLatOff(int latOff) {
 		log.debug("lat off", Integer.toHexString(latOff));
 		this.latOff = (char) latOff;
 	}
 
 	private void setLonOff(int lonOff) {
-		if (lonOff > 0xfff || lonOff < -0xfff)
-			flags |= F_LARGE_OFFSETS;
 		log.debug("long off", Integer.toHexString(lonOff));
 		this.lonOff = (char) lonOff;
-
 	}
 
 
