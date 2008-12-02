@@ -57,6 +57,9 @@ public class RouteArc {
 	// The node that this arc goes to
 	private final RouteNode node;
 	private RouteArc other;
+
+	// The index in Table B that this arc goes via.
+	private byte index;
 	
 	private byte flagA;
 	private byte flagB;
@@ -92,6 +95,43 @@ public class RouteArc {
 		this.length = calcDistance(start, nextCoord);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(start, nextCoord);
+	}
+
+	/**
+	 * Provide the destination node.
+	 */
+	public RouteNode getDestination() {
+		return node;
+	}
+
+	/**
+	 * Provide an upper bound for the written size in bytes.
+	 */
+	public int boundSize() {
+		return 6; // XXX: this could be reduced, and may increase
+	}
+
+	/**
+	 * Is this an arc within the RouteCenter?
+	 */
+	public boolean isInternal() {
+		// we might check that setInternal has been called before
+		return (flagB & INTER_AREA) == 0;
+	}
+
+	public void setInternal(boolean internal) {
+		if (internal)
+			flagB &= ~INTER_AREA;
+		else
+			flagB |= INTER_AREA;
+	}
+
+	/**
+	 * Set this arcs index into Table B. Applies to external arcs only.
+	 */
+	public void setIndex(byte idx) {
+		assert !isInternal() : "Trying to set index on external arc.";
+		index = idx;
 	}
 
 	private byte calcAngle(Coord start, Coord end) {
@@ -138,8 +178,14 @@ public class RouteArc {
 		offset = writer.position();
 		log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
 		writer.put(flagA);
-		writer.put(flagB);
-		writer.put((byte) 0);
+
+		if (isInternal()) {
+			// space for 12 bit node offset, written in writeSecond.
+			writer.put(flagB);
+			writer.put((byte) 0);
+		} else {
+			writer.put((byte) (flagB | index));
+		}
 
 		if (localNet != -1)
 			writer.put(localNet);
@@ -151,11 +197,22 @@ public class RouteArc {
 	public void setNewDir() {
 		flagA |= NEW_DIRECTION;
 	}
-	
+
+	/**
+	 * Second pass over the nodes in this RouteCenter.
+	 * Node offsets are now all known, so we can write the pointers
+	 * for internal arcs.
+	 */
 	public void writeSecond(ImgFileWriter writer, RouteNode ourNode) {
+		if (!isInternal())
+			return;
+
 		writer.position(offset + 1);
 		char val = (char) (flagB << 8);
-		val |= (node.getOffsetNod1() - ourNode.getOffsetNod1()) & 0x3fff;
+		int diff = node.getOffsetNod1() - ourNode.getOffsetNod1();
+		assert diff < 0x2000 && diff >= -0x2000
+			: "relative pointer too large for 12 bits";
+		val |= diff & 0x3fff;
 
 		// We write this big endian
 		log.debug("val is", Integer.toHexString((int)val));

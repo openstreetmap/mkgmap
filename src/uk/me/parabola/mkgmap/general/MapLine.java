@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
@@ -29,6 +30,8 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class MapLine extends MapElement {
+	private static final Logger log = Logger.getLogger(MapLine.class);
+
 	private List<Coord> points;
 	private boolean direction; // set if direction is important.
 	private int minLat = Integer.MAX_VALUE;
@@ -58,8 +61,12 @@ public class MapLine extends MapElement {
 		assert points != null : "trying to set null points";
 
 		this.points = points;
-		for (Coord co : points)
+		Coord last = null;
+		for (Coord co : points) {
+			if (last != null && last.equals(co))
+				log.warn("consecutive identical points");
 			addToBounds(co);
+		}
 	}
 
 	public boolean isDirection() {

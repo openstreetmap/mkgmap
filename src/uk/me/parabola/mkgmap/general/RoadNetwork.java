@@ -133,19 +133,20 @@ public class RoadNetwork {
 
 	public List<RouteCenter> getCenters() {
 		assert !coords.isEmpty();
-		Coord center = coords.values().iterator().next(); // XXX pick the first coord as the center...
-		log.debug("center is", center.toDegreeString());
 
-		RouteCenter rc = new RouteCenter(center);
-		centers.add(rc);
+		RouteCenter rc = null;
 
 		int localNet = 0;
 		for (Map.Entry<Long, RouteNode> ent : nodes.entrySet()) {
+			Coord coord = coords.get(ent.getKey());
 			RouteNode node = ent.getValue();
 
-			// Create and add new node to this center
-			//RouteNode node = new RouteNode();
-			Coord coord = coords.get(ent.getKey());
+			if (rc == null || !rc.nodeFits(node)) {
+				rc = new RouteCenter(coord);
+				log.debug("new route center at", coord.toDegreeString());
+				centers.add(rc);
+			}
+
 			rc.addNode(node, coord);
 
 			for (RouteArc arc : node.arcsIteration()) {

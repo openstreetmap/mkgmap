@@ -20,7 +20,7 @@ import uk.me.parabola.imgfmt.Utils;
 
 /**
  * A point coordinate in unshifted map-units.
- * A map unit is 1/2^24 degrees.  In some places <i>shifted</i> coordinates
+ * A map unit is 360/2^24 degrees.  In some places <i>shifted</i> coordinates
  * are used, which means that they are divided by some power of two to save
  * space in the file.
  *

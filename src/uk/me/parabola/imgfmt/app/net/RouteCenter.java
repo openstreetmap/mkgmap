@@ -33,6 +33,13 @@ public class RouteCenter {
 	
 	private final Coord centralPoint;
 
+	// some heuristics so the center doesn't get too large
+	private int estimatedNodesSize = 0;
+	// absolute upper bound (would need to reduce some)
+	//private final int maxNodesSize = (1 << NODHeader.DEF_ALIGN) * 0x100;
+	// the "low bytes" don't tend do go above 0x30, so we'll try smaller than that for now
+	private final int maxNodesSize = (1 << NODHeader.DEF_ALIGN) * 0x30;
+
 	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
 
 	// These may be pulled into this class
@@ -47,10 +54,37 @@ public class RouteCenter {
 		this.centralPoint = cp;
 	}
 
+	public boolean nodeFits(RouteNode node) {
+		return estimatedNodesSize + node.boundSize() <= maxNodesSize;
+	}
+
 	public void addNode(RouteNode node, Coord coord) {
+		estimatedNodesSize += node.boundSize();
+		assert estimatedNodesSize <= maxNodesSize : "RouteCenter full";
+
 		node.setCoord(centralPoint, coord);
+		node.setRouteCenter(this);
 		nodes.add(node);
 	}
+
+	/**
+	 * Check which arcs are within the centers and do what needs to be done.
+	 *
+	 * Update arcs' INTER_AREA flag.
+	 * Prepare data for Table B.
+	 */
+	private void handleInterCenterArcs() {
+		for (RouteNode node : nodes) {
+			for (RouteArc arc : node.arcsIteration()) {
+				boolean internal = arc.getDestination().getRouteCenter() == this;
+				arc.setInternal(internal);
+				if (!internal) {
+					byte idx = tabB.addNode(arc.getDestination());
+					arc.setIndex(idx);
+				}
+			}
+		}
+	}			
 
 	/**
 	 * Write a route center.
@@ -59,10 +93,11 @@ public class RouteCenter {
 	 * Space for Table A is reserved but not written. See writeTableA.
 	 */
 	public void write(ImgFileWriter writer) {
-		if (nodes.isEmpty())
-			return;
+		assert !nodes.isEmpty(): "RouteCenter without nodes";
 
-		// write nod1
+		// we have all our nodes now
+		handleInterCenterArcs();
+
 		for (RouteNode node : nodes) {
 			node.write(writer);
 
@@ -94,6 +129,7 @@ public class RouteCenter {
 			log.debug("rewrite taba offset", writer.position(), bo);
 			writer.put(bo);
 
+			// fill in arc pointers
 			node.writeSecond(writer);
 		}
 

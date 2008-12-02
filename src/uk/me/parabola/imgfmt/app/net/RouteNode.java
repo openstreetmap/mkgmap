@@ -29,6 +29,15 @@ import uk.me.parabola.log.Logger;
  */
 public class RouteNode {
 	private static final Logger log = Logger.getLogger(RouteNode.class);
+
+	/*
+	 * 1. instantiate
+	 * 2. setCoord, addArc
+	 *      arcs, coords set
+	 * 3. write
+	 *      node offsets set in all nodes
+	 * 4. writeSecond
+	 */
 	
 	// Values for the first flag byte at offset 1
 	private static final byte F_BOUNDRY = 0x08;
@@ -37,6 +46,8 @@ public class RouteNode {
 	private static final byte F_UNK_NEEDED = 0x44; // XXX
 
 	private int offsetNod1 = -1;
+
+	private RouteCenter routeCenter;
 
 	@Deprecated
 	private final int nodeId; // XXX not needed at this point?
@@ -56,10 +67,66 @@ public class RouteNode {
 		nodeId = nodeCount++;
 	}
 
+	private boolean haveLargeOffsets() {
+		return (flags & F_LARGE_OFFSETS) != 0;
+	}
+
+	private boolean haveRestrictions() {
+		return (flags & F_RESTRICTIONS) != 0;
+	}
+
+	/**
+	 * Record the node's RouteCenter.
+	 *
+	 * We need to record this to determine whether arcs
+	 * stay within the center. May pose a problem with
+	 * respect to garbage collection.
+	 */
+	public void setRouteCenter(RouteCenter rc) {
+		if (routeCenter != null)
+			log.warn("resetting RouteCenter", nodeId);
+		routeCenter = rc;
+	}
+
+	public RouteCenter getRouteCenter() {
+		return routeCenter;
+	}
+
 	public void addArc(RouteArc arc) {
 		if (!arcs.isEmpty())
 			arc.setNewDir();
 		arcs.add(arc);
+	}
+
+	/**
+	 * Provide an upper bound to the size (in bytes) that
+	 * writing this node will take.
+	 *
+	 * Should be called only after arcs and restrictions
+	 * have been set. The size of arcs depends on whether
+	 * or not they are internal to the RoutingCenter.
+	 */
+	public int boundSize() {
+		// XXX: should perhaps better write() to some phantom writer
+		// XXX: include size of restrictions
+		return 1 + 1
+			+ (haveLargeOffsets() ? 4 : 3)
+			+ arcsSize() + restrSize();
+	}
+
+	private int arcsSize() {
+		int s = 0;
+		for (RouteArc arc : arcs) {
+			s += arc.boundSize();
+		}
+		return s;
+	}
+
+	private int restrSize() {
+		if (haveRestrictions()) {
+			throw new Error("not implemented");
+		} else
+			return 0;
 	}
 
 	/**
@@ -68,11 +135,12 @@ public class RouteNode {
 	public void write(ImgFileWriter writer) {
 		log.debug("writing node, first pass, nod1", nodeId);
 		offsetNod1 = writer.position();
+		assert offsetNod1 < 0x1000000 : "node offset doesn't fit in 3 bytes";
 
 		writer.put((byte) 0);  // will be overwritten later
 		writer.put(flags);
 
-		if ((flags & F_LARGE_OFFSETS) == F_LARGE_OFFSETS) {
+		if (haveLargeOffsets()) {
 			writer.putInt((lonOff << 16) | (latOff & 0xffff));
 		} else {
 			writer.put3((latOff << 12) | (lonOff & 0xfff));
@@ -114,7 +182,9 @@ public class RouteNode {
 		this.lonOff = (char) lonOff;
 	}
 
-
+	/**
+	 * Second pass over the nodes. Fill in pointers.
+	 */
 	public void writeSecond(ImgFileWriter writer) {
 		for (RouteArc arc : arcs)
 			arc.writeSecond(writer, this);
