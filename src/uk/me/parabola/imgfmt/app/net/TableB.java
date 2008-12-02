@@ -20,7 +20,8 @@ import java.util.ArrayList;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * @author Steve Ratcliffe
+ * Table B contains offsets in NOD1 of neighbouring nodes
+ * outside the containing RouteCenter.
  */
 public class TableB {
 
@@ -30,20 +31,52 @@ public class TableB {
 
 	private int offset;
 
-	public byte getSize() {
+        /**
+         * Retrieve the size of the Table as an int.
+         *
+         * While Table A is limited in size (0x40 entries),
+         * we temporarily build larger tables while subdividing
+         * the network.
+         */
+	public int size() {
+		return nodes.size();
+	}
+
+       /**
+         * Retrieve the size of the table as byte.
+         *
+         * This value is what should be written to the table
+         * header. When this is read, the table is assumed to
+         * be fit for writing, so at this point we check
+         * it isn't too large.
+         */
+	public byte getNumberOfItems() {
+		assert nodes.size() < 0x40 : "Table B too large.";
 		return (byte) nodes.size();
 	}
 
 	/**
 	 * Add a node (in another RouteCenter) to this Table and return its index.
+	 *
+	 * This index may overflow while it isn't certain that the
+	 * table fulfills the size constraint.
 	 */
 	public byte addNode(RouteNode node) {
 		int i = nodes.indexOf(node);
 		if (i < 0) {
 			i = nodes.size();
-			assert i < 0x40 : "Table B too large.";
 			nodes.add(node);
 		}
+		return (byte) i;
+	}
+
+	/**
+	 * Retrieve a nodes index. Checked for correct bounds.
+	 */
+	public byte getIndex(RouteNode node) {
+		int i = nodes.indexOf(node);
+		assert i >= 0 : "Trying to read Table B index for non-registered node.";
+		assert i < 0x40 : "Table B index too large.";
 		return (byte) i;
 	}
 

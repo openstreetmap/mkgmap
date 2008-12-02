@@ -16,6 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -33,6 +34,16 @@ public class RouteCenter {
 
 	private final Coord centralPoint;
 
+	private final List<RouteNode> nodes;
+
+	private final TableA tabA;
+	private final TableB tabB;
+	private final TableC tabC;
+
+	private boolean arcsHaveIndices = false;
+	private boolean tabAFilled = false;
+	private boolean tabBFilled = false;
+
 	// some heuristics so the center doesn't get too large
 	private int estimatedNodesSize = 0;
 	// absolute upper bound (would need to reduce some)
@@ -40,16 +51,34 @@ public class RouteCenter {
 	// the "low bytes" don't tend do go above 0x30, so we'll try smaller than that for now
 	private final int maxNodesSize = (1 << NODHeader.DEF_ALIGN) * 0x30;
 
-	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
-
-	// These may be pulled into this class
-	//private Tables tables = new Tables();
-	private final TableA tabA = new TableA();
-	private final TableB tabB = new TableB();
-	private final TableC tabC = new TableC();
-
 	public RouteCenter(Coord cp) {
 		this.centralPoint = cp;
+		this.nodes = new ArrayList<RouteNode>();
+		this.tabA = new TableA();
+		this.tabB = new TableB();
+		this.tabC = new TableC();
+	}
+
+	public RouteCenter(Coord cp, List<RouteNode> nodes,
+				TableA tabA, TableB tabB) {
+		this.centralPoint = cp;
+		this.nodes = nodes;
+		this.tabA = tabA;
+		this.tabB = tabB;
+		this.tabC = new TableC();
+
+		tabAFilled = true;
+		tabBFilled = true;
+
+		// update arcs with table indices
+		for (RouteNode node : nodes) {
+			for (RouteArc arc : node.arcsIteration()) {
+				arc.setIndexA(tabA.getIndex(arc));
+				if (!arc.isInternal())
+					arc.setIndexB(tabB.getIndex(arc.getDest()));
+			}
+		}
+		arcsHaveIndices = true;
 	}
 
 	public boolean nodeFits(RouteNode node) {
@@ -72,6 +101,8 @@ public class RouteCenter {
 	 * Prepare data for Table B.
 	 */
 	private void handleInterCenterArcs() {
+		if (arcsHaveIndices)
+			return;
 		for (RouteNode node : nodes) {
 			for (RouteArc arc : node.arcsIteration()) {
 				boolean internal = arc.getDest().getRouteCenter() == this;
@@ -83,7 +114,10 @@ public class RouteCenter {
 				}
 			}
 		}
-	}			
+		tabAFilled = true;
+		tabBFilled = true;
+		arcsHaveIndices = true;
+	}
 
 	/**
 	 * Write a route center.
@@ -97,13 +131,8 @@ public class RouteCenter {
 		// we have all our nodes now
 		handleInterCenterArcs();
 
-		for (RouteNode node : nodes) {
+		for (RouteNode node : nodes)
 			node.write(writer);
-
-			// save table A entries
-			for (RouteArc arc : node.arcsIteration())
-				tabA.addArc(arc);
-		}
 
 		int mult = 1 << NODHeader.DEF_ALIGN;
 
@@ -134,8 +163,8 @@ public class RouteCenter {
 		writer.put(tabC.getSize());
 		writer.put3(centralPoint.getLongitude());
 		writer.put3(centralPoint.getLatitude());
-		writer.put((byte) tabA.getNumberOfItems());
-		writer.put((byte) tabB.getSize()); // number of table B entries
+		writer.put(tabA.getNumberOfItems());
+		writer.put(tabB.getNumberOfItems());
 
 		tabA.write(writer);
 		tabB.write(writer);

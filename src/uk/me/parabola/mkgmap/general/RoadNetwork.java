@@ -119,8 +119,8 @@ public class RoadNetwork {
 	 * 1. Nodes section smaller than about 0x4000, which gives
 	 *    a bound on the number of nodes.
 	 * 2. At most 0x100 entries in Table A. This gives a bound
-	 *    on the number of different roads meeting the nodes in
-	 *    this RouteCenter.
+	 *    on the number of (forward) arcs meeting this
+	 *    RouteCenter.
 	 * 3. At most 0x40 entries in Table B. This gives a bound
 	 *    on the number of neighboring nodes.
 	 * 4. Absolute values of coordinate offsets at most 0x8000,
