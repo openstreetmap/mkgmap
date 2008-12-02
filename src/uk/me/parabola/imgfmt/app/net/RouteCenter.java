@@ -51,7 +51,13 @@ public class RouteCenter {
 		node.setCoord(centralPoint, coord);
 		nodes.add(node);
 	}
-	
+
+	/**
+	 * Write a route center.
+	 *
+	 * writer.position() is relative to the start of NOD 1.
+	 * Space for Table A is reserved but not written. See writeTableA.
+	 */
 	public void write(ImgFileWriter writer) {
 		if (nodes.isEmpty())
 			return;
@@ -68,15 +74,21 @@ public class RouteCenter {
 			}
 		}
 
-		int tmpTabsOff = writer.position();
-		int mask = (1 << NODHeader.DEF_ALIGN) - 1;
-		tmpTabsOff = (tmpTabsOff + mask) & ~mask;
+
+		int mult = 1 << NODHeader.DEF_ALIGN;
+
+		// Get the position of the tables, and position there.
+		int roundpos = (writer.position() + mult - 1) 
+					>> NODHeader.DEF_ALIGN
+					<< NODHeader.DEF_ALIGN;
+		int tablesOffset = roundpos + mult;
+		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
 
 		// Go back and fill in all the table offsets
 		for (RouteNode node : nodes) {
 			int pos = node.getOffsetNod1();
 			log.debug("node pos", pos);
-			byte bo = (byte) ((tmpTabsOff - (pos & ~mask)) >> NODHeader.DEF_ALIGN);
+			byte bo = (byte) calcLowByte(pos, tablesOffset);
 
 			writer.position(pos);
 			log.debug("rewrite taba offset", writer.position(), bo);
@@ -85,9 +97,6 @@ public class RouteCenter {
 			node.writeSecond(writer);
 		}
 
-		// Get the position of the tables, and position there.
-		int tablesOffset = tmpTabsOff + mask + 1;
-		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
 		writer.position(tablesOffset);
 
 		// Calculate table A size, this will be filled in later
@@ -123,5 +132,35 @@ public class RouteCenter {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Calculate the offset of the Tables in NOD 1 given the offset
+	 * of a node and its "low byte".
+	 */
+	public static int calcTableOffset(int nodeOffset, int low) {
+		assert low >= 0 && low < 0x100;
+		int align = NODHeader.DEF_ALIGN;
+
+		int off = nodeOffset >> align;
+		return (off + 1 + low) << align;
+
+        }
+
+	/**
+	 * Inverse of calcTableOffset.
+	 */
+	public static int calcLowByte(int nodeOffset, int tablesOffset) {
+		assert nodeOffset < tablesOffset;
+		int align = NODHeader.DEF_ALIGN;
+		int mask = (1 << align) - 1;
+		if ((tablesOffset & mask) != 0) {
+			log.warn("tablesOffset not a multiple of (1<<align): %x", tablesOffset);
+			// round up to next multiple
+			tablesOffset = ((tablesOffset >> align) + 1) << align;
+		}
+		int low = (tablesOffset >> align) - (nodeOffset >> align) - 1;
+		assert 0 <= low && low < 0x100;
+		return low;
 	}
 }
