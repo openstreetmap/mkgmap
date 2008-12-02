@@ -37,7 +37,7 @@ public class MapRoad extends MapLine {
 		super(line);
 		setPoints(line.getPoints());
 		this.roadId = roadId;
-		this.roadDef = new RoadDef();
+		this.roadDef = new RoadDef(roadId, getName());
 	}
 
 	MapRoad(MapRoad r) {

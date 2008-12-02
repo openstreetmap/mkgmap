@@ -204,4 +204,8 @@ public class RouteNode {
 			}
 		};
 	}
+
+	public String toString() {
+		return nodeId + "";
+	}
 }

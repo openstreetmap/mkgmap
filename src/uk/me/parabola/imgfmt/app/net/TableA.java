@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -38,7 +38,14 @@ public class TableA {
 	// This table's start position relative to the start of NOD 1
 	private int offset;
 
-	private ArrayList<Arc> arcs = new ArrayList<Arc>();
+	private LinkedHashMap<Arc,Integer> arcs = new LinkedHashMap<Arc,Integer>();
+	private int size = 0;
+
+	private static int count = 0;
+	public TableA() {
+		log.debug("creating TableA", count);
+		count++;
+	}
 
 	/**
 	 * Internal class tracking all the data a Table A entry needs.
@@ -66,6 +73,10 @@ public class TableA {
 				&& roadDef.equals(arc.roadDef);
 		}
 
+		public int hashCode() {
+			return first.hashCode() + 2*second.hashCode() + roadDef.hashCode();
+		}
+
 		public String toString() {
 			return "" + first + "->" + second + " (" + roadDef + ")";
 		}
@@ -80,10 +91,12 @@ public class TableA {
 	public byte addArc(RouteArc arc) {
 		Arc narc = new Arc(arc);
 		int i;
-		if ((i = arcs.indexOf(narc)) < 0) {
+		if (!arcs.containsKey(narc)) {
 			i = arcs.size();
-			arcs.add(narc);
-			log.debug("added arc", narc);
+			arcs.put(narc, new Integer(i));
+			log.debug("added arc", count, narc, i);
+		} else {
+			i = arcs.get(narc);
 		}
 		return (byte) i;
 	}
@@ -92,9 +105,11 @@ public class TableA {
 	 * Retrieve an arc's index.
 	 */
 	public byte getIndex(RouteArc arc) {
+		log.debug("getting index", arc);
 		Arc narc = new Arc(arc);
-		int i = arcs.indexOf(narc);
-		assert i >= 0: "Trying to read Table A index for non-registered arc: " + narc;
+		assert arcs.containsKey(narc):
+			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
+		int i = arcs.get(narc).intValue();
 		assert i < 0x100 : "Table A index too large: " + narc;
 		return (byte) i;
 	}
@@ -140,9 +155,10 @@ public class TableA {
 	 */
 	public void writePost(ImgFileWriter writer) {
 		writer.position(offset);
-		for (Arc arc : arcs) {
+		for (Arc arc : arcs.keySet()) {
 			// write the table A entries.  Consists of a pointer to net
 			// followed by 2 bytes of class and speed flags and road restrictions.
+			log.debug("writing Table A entry", arcs.get(arc));
 			int pos = arc.roadDef.getNetPosition();
 			writer.put3(pos);
 			writer.put((byte) 0x46);

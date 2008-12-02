@@ -61,6 +61,9 @@ public class RouteCenter {
 
 	public RouteCenter(Coord cp, List<RouteNode> nodes,
 				TableA tabA, TableB tabB) {
+		log.info("new RouteCenter at " + cp.toDegreeString() + ", nodes: " + nodes.size()
+						+ " tabA: " + tabA.size() + " tabB: " + tabB.size());
+
 		this.centralPoint = cp;
 		this.nodes = nodes;
 		this.tabA = tabA;

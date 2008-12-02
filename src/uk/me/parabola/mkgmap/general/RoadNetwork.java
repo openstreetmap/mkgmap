@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
+import uk.me.parabola.imgfmt.app.net.NOD1Part;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -45,7 +46,6 @@ public class RoadNetwork {
 	private List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
-
 
 	public void addRoad(MapRoad road) {
 		mapRoads.add(road);
@@ -136,20 +136,11 @@ public class RoadNetwork {
 		assert !nodes.isEmpty();
 		assert centers.isEmpty();
 
-		RouteCenter rc = null;
+		NOD1Part nod1 = new NOD1Part();
 
-		for (Map.Entry<Long, RouteNode> ent : nodes.entrySet()) {
-			RouteNode node = ent.getValue();
-			Coord coord = node.getCoord();
-
-			if (rc == null || !rc.nodeFits(node)) {
-				rc = new RouteCenter(coord);
-				log.debug("new route center at", coord.toDegreeString());
-				centers.add(rc);
-			}
-
-			rc.addNode(node);
-		}
+		for (RouteNode node : nodes.values())
+			nod1.addNode(node);
+		centers = nod1.subdivide();
 	}
 
 	public List<RouteCenter> getCenters() {

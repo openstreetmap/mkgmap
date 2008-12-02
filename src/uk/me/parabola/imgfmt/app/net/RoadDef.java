@@ -70,6 +70,15 @@ public class RoadDef {
 	private RouteNode node;
 	private int netPosition;
 
+	// passing these from MapRoad for diagnostic purposes
+	private long roadId;
+	private String name;
+
+	public RoadDef(long roadId, String name) {
+		this.roadId = roadId;
+		this.name = name;
+	}
+
 	/**
 	 * Add a target location in the RGN section where we should write the
 	 * offset of this road def when it is written to NET.
@@ -212,5 +221,9 @@ public class RoadDef {
 
 	public int getNetPosition() {
 		return netPosition;
+	}
+
+	public String toString() {
+		return "RoadDef " + name + " " + roadId;
 	}
 }

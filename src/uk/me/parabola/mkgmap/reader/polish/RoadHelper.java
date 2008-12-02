@@ -106,7 +106,7 @@ class RoadHelper {
 				points.set(n, node);
 				//roadNetwork.addNodeAndRoad(node, road);
 			} else if (id != ni.nodeId) {
-				System.out.println("Inconsistant node ids");
+				log.warn("Inconsistant node ids");
 			}
 		}
 	}
@@ -126,7 +126,7 @@ class RoadHelper {
 		private NodeIndex(String sInd, String sNode) {
 			index = Integer.parseInt(sInd);
 			nodeId = Integer.parseInt(sNode);
-			System.out.printf("ind=%d, node=%d\n", index, nodeId);
+			log.debug("ind=%d, node=%d\n", index, nodeId);
 		}
 	}
 }

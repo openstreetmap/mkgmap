@@ -14,13 +14,12 @@
  * Author: Robert Vollmert
  * Create date: 02-Dec-2008
  */
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.imgfmt.app.net;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
@@ -62,22 +61,117 @@ public class NOD1Part {
 	// todo: something less arbitrary
 	private static final int MAX_NODES = 0x30;
 
-	private final Area bbox;
+	private class BBox {
+		int maxLat, minLat, maxLon, minLon;
+		boolean empty;
+
+		BBox() {
+			empty = true;
+		}
+
+		BBox(Coord co) {
+			empty = false;
+			int lat = co.getLatitude();
+			int lon = co.getLongitude();
+			minLat = lat;
+			maxLat = lat+1;
+			minLon = lon;
+			maxLon = lon+1;
+		}
+
+		BBox(int minLat, int maxLat, int minLon, int maxLon) {
+			empty = false;
+			this.minLat = minLat;
+			this.maxLat = maxLat;
+			this.minLon = minLon;
+			this.maxLon = maxLon;
+		}
+
+		boolean contains(BBox bbox) {
+			return minLat <= bbox.minLat && bbox.maxLat <= maxLat
+				&& minLon <= bbox.minLon && bbox.maxLon <= maxLon;
+		}
+	
+		boolean contains(Coord co) {
+			return contains(new BBox(co));
+		}
+
+		void extend(BBox bbox) {
+			if (bbox.empty)
+				return;
+			if (empty) {
+				empty = false;
+				minLat = bbox.minLat;
+				maxLat = bbox.maxLat;
+				minLon = bbox.minLon;
+				maxLon = bbox.maxLon;
+			} else {
+				minLat = Math.min(minLat, bbox.minLat);
+				maxLat = Math.max(maxLat, bbox.maxLat);
+				minLon = Math.min(minLon, bbox.minLon);
+				maxLon = Math.max(maxLon, bbox.maxLon);
+			}
+		}
+
+		void extend(Coord co) {
+			extend(new BBox(co));
+		}
+
+		Coord center() {
+			assert !empty : "trying to get center of empty BBox";
+			return new Coord((minLat + maxLat)/2, (minLon + maxLon)/2);
+		}
+
+		BBox[] splitLat() {
+			BBox[] ret = new BBox[2];
+			int midLat = (minLat + maxLat) / 2;
+			ret[0] = new BBox(minLat, midLat, minLon, maxLon);
+			ret[1] = new BBox(midLat, maxLat, minLon, maxLon);
+			return ret;
+		}
+
+		BBox[] splitLon() {
+			BBox[] ret = new BBox[2];
+			int midLon = (minLon + maxLon) / 2;
+			ret[0] = new BBox(minLat, maxLat, minLon, midLon);
+			ret[1] = new BBox(minLat, maxLat, midLon, maxLon);
+			return ret;
+		}
+
+		int getWidth() {
+			return maxLon - minLon;
+		}
+
+		int getHeight() {
+			return maxLat - minLat;
+		}
+
+		int getMaxDimension() {
+			return Math.max(getWidth(), getHeight());
+		}
+
+		public String toString() {
+			return "BBox[" + new Coord(minLat,minLon).toDegreeString()
+				+ ", " + new Coord(maxLat,maxLon).toDegreeString() + "]";
+		}
+	}
+
+	private final BBox bbox = new BBox();
 
 	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
 	private final TableA tabA = new TableA();
 	private final TableB tabB = new TableB();
 
-	public NOD1Part(Area bbox) {
-		this.bbox = bbox;
+	public NOD1Part() {
+		log.info("creating new NOD1Part");
 	}
 
 	public void addNode(RouteNode node) {
+		bbox.extend(node.getCoord());
 		nodes.add(node);
 		for (RouteArc arc : node.arcsIteration()) {
 			tabA.addArc(arc);
 			RouteNode dest = arc.getDest();
-			// XXX: check bbox borders in bbox.contains()
 			if (!bbox.contains(dest.getCoord())) {
 				arc.setInternal(false);
 				tabB.addNode(dest);
@@ -88,7 +182,7 @@ public class NOD1Part {
 	/**
 	 * Subdivide this part recursively until it satisfies the constraints.
 	 */
-	private List<RouteCenter> subdivide() {
+	public List<RouteCenter> subdivide() {
 		List<RouteCenter> centers = new LinkedList<RouteCenter>();
 
 		if (satisfiesConstraints()) {
@@ -96,22 +190,20 @@ public class NOD1Part {
 			return centers;
 		}
 
-		int xsplit = 1, ysplit = 1;
-
+		BBox[] split ;
 		if (bbox.getWidth() > bbox.getHeight())
-			xsplit = 2;
+			split = bbox.splitLon();
 		else
-			ysplit = 2;
+			split = bbox.splitLat();
 
-		Area[] areas = bbox.split(xsplit, ysplit);
-		NOD1Part[] parts = new NOD1Part[areas.length];
+		NOD1Part[] parts = new NOD1Part[2];
 
-		for (int i = 0; i < areas.length; i++)
-			parts[i] = new NOD1Part(areas[i]);
+		for (int i = 0; i < split.length; i++)
+			parts[i] = new NOD1Part();
 
 		for (RouteNode node : nodes) {
 			int i = 0;
-			while (!areas[i].contains(node.getCoord()))
+			while (!split[i].contains(node.getCoord()))
 				i++;
 			parts[i].addNode(node);
 		}
@@ -123,13 +215,14 @@ public class NOD1Part {
 	}
 
 	private boolean satisfiesConstraints() {
-		return bbox.getMaxDimention() < MAX_SIZE
+		log.debug("constraints:", bbox, tabA.size(), tabB.size(), nodes.size());
+		return bbox.getMaxDimension() < MAX_SIZE
 			&& tabA.size() < MAX_TABA
 			&& tabB.size() < MAX_TABB
 			&& nodes.size() < MAX_NODES;
 	}
 
 	private RouteCenter toRouteCenter() {
-		return new RouteCenter(bbox.getCenter(), nodes, tabA, tabB);
+		return new RouteCenter(bbox.center(), nodes, tabA, tabB);
 	}
 }
