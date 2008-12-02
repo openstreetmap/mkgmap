@@ -56,7 +56,7 @@ public class RouteCenter {
 		return estimatedNodesSize + node.boundSize() <= maxNodesSize;
 	}
 
-	public void addNode(RouteNode node, Coord coord) {
+	public void addNode(RouteNode node) {
 		estimatedNodesSize += node.boundSize();
 		assert estimatedNodesSize <= maxNodesSize : "RouteCenter full";
 

@@ -39,13 +39,7 @@ import uk.me.parabola.log.Logger;
 public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 	
-	// NodeId to list of roads that contain it
-	private Map<Long, List<MapRoad>> nodeToRoadList = new HashMap<Long, List<MapRoad>>();
-
 	private Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
-
-	// save the coordinates.
-	private Map<Long, Coord> coords = new HashMap<Long, Coord>();
 
 	private List<MapRoad> mapRoads = new ArrayList<MapRoad>();
 	private List<RoadDef> roadDefs = new ArrayList<RoadDef>();
@@ -59,7 +53,7 @@ public class RoadNetwork {
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
-		//int index = 0;
+
 		List<Coord> coordList = road.getPoints();
 		int npoints = coordList.size();
 		for (int index = 0; index < npoints; index++) {
@@ -69,8 +63,6 @@ public class RoadNetwork {
 				log.debug("got id 0");
 				continue;
 			}
-
-			addRoadToNode(road, id);
 
 			// The next coord determins the heading
 			// If this is the not the first node, then create an arc from
@@ -111,18 +103,8 @@ public class RoadNetwork {
 		if (node == null) {
 			node = new RouteNode(coord);
 			nodes.put(id, node);
-			coords.put(id, coord);
 		}
 		return node;
-	}
-
-	private void addRoadToNode(MapRoad road, long id) {
-		List<MapRoad> l = nodeToRoadList.get(id);
-		if (l == null) {
-			l = new ArrayList<MapRoad>();
-			nodeToRoadList.put(id, l);
-		}
-		l.add(road);
 	}
 
 	public List<RoadDef> getRoadDefs() {
@@ -141,16 +123,24 @@ public class RoadNetwork {
 	 *    this RouteCenter.
 	 * 3. At most 0x40 entries in Table B. This gives a bound
 	 *    on the number of neighboring nodes.
+	 * 4. Absolute values of coordinate offsets at most 0x8000,
+	 *    which translates to about 0.7 degrees, so bounding
+	 *    box should be at most 1.4 x 1.4 degrees assuming
+	 *    the reference is in the middle. (With small offsets,
+	 *    this would be 0.08 x 0.08 degrees.)
+	 * 5. Absolute values of relative NOD1 offsets at most
+	 *    0x2000, which limits the nodes section to 0x2000
+	 *    unless we take care to order the nodes nicely.
 	 */
 	private void splitCenters() {
-		assert !coords.isEmpty();
+		assert !nodes.isEmpty();
 		assert centers.isEmpty();
 
 		RouteCenter rc = null;
 
 		for (Map.Entry<Long, RouteNode> ent : nodes.entrySet()) {
-			Coord coord = coords.get(ent.getKey());
 			RouteNode node = ent.getValue();
+			Coord coord = node.getCoord();
 
 			if (rc == null || !rc.nodeFits(node)) {
 				rc = new RouteCenter(coord);
@@ -158,7 +148,7 @@ public class RoadNetwork {
 				centers.add(rc);
 			}
 
-			rc.addNode(node, coord);
+			rc.addNode(node);
 		}
 	}
 
