@@ -76,9 +76,8 @@ public class RouteCenter {
 			for (RouteArc arc : node.arcsIteration()) {
 				boolean internal = arc.getDest().getRouteCenter() == this;
 				arc.setInternal(internal);
-				if (internal) {
-					tabA.addArc(arc);
-				} else {					
+				tabA.addArc(arc);
+				if (!internal) {
 					byte idxB = tabB.addNode(arc.getDest());
 					arc.setIndexB(idxB);
 				}

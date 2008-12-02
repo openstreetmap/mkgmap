@@ -58,7 +58,7 @@ public class RouteArc {
 	private final RouteNode source;
 	private final RouteNode dest;
 
-	// The index in Table A describing this arc, if internal.
+	// The index in Table A describing this arc.
 	private byte indexA;
 	// The index in Table B that this arc goes via, if external.
 	private byte indexB;
@@ -196,8 +196,7 @@ public class RouteArc {
 			writer.put((byte) (flagB | indexB));
 		}
 
-		if (isInternal())
-			writer.put(indexA);
+		writer.put(indexA);
 
 		log.debug("wrting length", (length & 0x3f), ", complete", (int)length);
 		writer.put((byte) (length & 0x3f));  // TODO more to do
