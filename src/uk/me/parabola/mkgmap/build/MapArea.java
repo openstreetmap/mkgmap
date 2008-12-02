@@ -351,6 +351,13 @@ public class MapArea implements MapDataSource {
 	}
 
 	/**
+	 * Return number of lines in this area.
+	 */
+	public int getNumLines() {
+		return nActiveLines;
+	}
+
+	/**
 	 * True if there are any 'active' points in this area.  Ie ones that will be
 	 * shown because their resolution is at least as high as that of the
 	 * area.

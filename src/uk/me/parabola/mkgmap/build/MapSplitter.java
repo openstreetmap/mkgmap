@@ -48,6 +48,10 @@ class MapSplitter {
 	// devices.
 	private static final int MAX_RGN_SIZE = 30 * 1024;
 
+	// The maximum number of lines. NET points to lines in subdivision
+	// using bytes.
+	private static final int MAX_NUM_LINES = 0x100;
+
 	private final Zoom zoom;
 
 	/**
@@ -105,19 +109,25 @@ class MapSplitter {
 	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
-			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE && area.getBounds().getMaxDimention() > 100) {
-				if (log.isDebugEnabled())
-					log.debug("splitting area", area);
-				MapArea[] sublist = area.split(2, 2, res);
-				addAreasToList(sublist, alist);
-			} else {
-				log.debug("adding area unsplit", ",has points" + area.hasPoints());
-
-				MapArea[] sublist = area.split(1, 1, res);
-				assert sublist.length == 1: sublist.length;
-				//assert sublist[0].getAreaResolution() == res: sublist[0].getAreaResolution();
-				alist.add(sublist[0]);
+			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE
+					|| area.getNumLines() > MAX_NUM_LINES) {
+				if (area.getBounds().getMaxDimention() > 100) {
+					if (log.isDebugEnabled())
+						log.debug("splitting area", area);
+					MapArea[] sublist = area.split(2, 2, res);
+					addAreasToList(sublist, alist);
+					continue;
+				} else {
+					log.warn("area too small to split", area);
+				}
 			}
+
+			log.debug("adding area unsplit", ",has points" + area.hasPoints());
+
+			MapArea[] sublist = area.split(1, 1, res);
+			assert sublist.length == 1: sublist.length;
+			//assert sublist[0].getAreaResolution() == res: sublist[0].getAreaResolution();
+			alist.add(sublist[0]);
 		}
 	}
 
