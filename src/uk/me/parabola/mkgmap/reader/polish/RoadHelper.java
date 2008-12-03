@@ -25,38 +25,40 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Used to remember all the road relavent parameters in a definition which
- * can occur in any order.
+ * can occur in any order. Also remembers routing nodes and makes sure
+ * the generated MapRoads all have the same RoutingNode objects.
+ *
+ * Use one instance of RoadHelper per file, and reset after reading
+ * each road.
  */
 class RoadHelper {
 	private static final Logger log = Logger.getLogger(RoadHelper.class);
 
-	private boolean hasRoads;
-	private int roadId;
-	private final Map<Integer,NodeIndex> nodes = new HashMap<Integer,NodeIndex>();
+	// routing node store, persistent over resets
 	private final Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
 
-	private RoadNetwork roadNetwork;
-	private MapRoad road;
+	private int roadId;
+	private final Map<Integer,NodeIndex> nodes = new HashMap<Integer,NodeIndex>();
+
 	private int speed;
 	private int roadClass;
 
-	RoadHelper(RoadNetwork roadNetwork) {
-		this.roadNetwork = roadNetwork;
+	public RoadHelper() {
+		clear();
 	}
 
 	public void clear() {
 		roadId = 0;
 		nodes.clear();
-		road = null;
+		speed = -1;
+		roadClass = -1;
 	}
 
 	public void setRoadId(int roadId) {
 		this.roadId = roadId;
-		hasRoads = true;
 	}
 
 	public void addNode(int nodeIndex, String value) {
@@ -68,12 +70,6 @@ class RoadHelper {
 		nodes.put(nodeIndex, new NodeIndex(f[0], f[1]));
 	}
 
-	public void addLine(MapLine l) {
-		if (road != null)
-			log.warn("multiple lines, overwriting");
-		road = new MapRoad(roadId, l);
-	}
-
 	public void setParam(String param) {
 		//this.param = param;
 		String[] f = param.split(",");
@@ -81,19 +77,21 @@ class RoadHelper {
 		roadClass = Integer.parseInt(f[1]);
 	}
 
-	public void finishRoad() {
-		if (roadId == 0)
-			return;
+	public MapRoad makeRoad(MapLine l) {
+		assert roadId != 0;
 
 		log.debug("finishing road id " + roadId);
+
+		MapRoad road = new MapRoad(roadId, l);
 
 		// Set class and speed
 		road.setRoadClass(roadClass);
 		road.setSpeed(speed);
 
+		List<Coord> points = road.getPoints();
+
 		for (NodeIndex ni : nodes.values()) {
 			int n = ni.index;
-			List<Coord> points = road.getPoints();
 			log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
 			long id = coord.getId();
@@ -104,19 +102,15 @@ class RoadHelper {
 					nodeCoords.put((long) ni.nodeId, node);
 				}
 				points.set(n, node);
-				//roadNetwork.addNodeAndRoad(node, road);
 			} else if (id != ni.nodeId) {
 				log.warn("Inconsistant node ids");
 			}
 		}
+		return road;
 	}
 
 	public boolean isRoad() {
 		return roadId != 0;
-	}
-
-	public MapRoad getRoad() {
-		return road;
 	}
 
 	private static class NodeIndex {

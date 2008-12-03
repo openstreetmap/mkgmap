@@ -92,6 +92,9 @@ public class Label {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return new String(ctext);
+		if (ctext == null)
+			return "ctext=null";
+		else
+			return new String(ctext);
 	}
 }

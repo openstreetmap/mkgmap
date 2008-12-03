@@ -61,7 +61,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapLine polyline;
 	private MapShape shape;
 
-	private final RoadHelper roadHelper = new RoadHelper(getRoadNetwork());
+	private final RoadHelper roadHelper = new RoadHelper();
 
 	private String copyright;
 	private int section;
@@ -147,8 +147,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			point = new MapPoint();
 			section = S_POINT;
 		} else if (name.equals("POLYLINE") || name.equals("RGN40")) {
-			roadHelper.clear();
 			polyline = new MapLine();
+			roadHelper.clear();
 			section = S_POLYLINE;
 		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
@@ -167,10 +167,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addPoint(point);
 			break;
 		case S_POLYLINE:
-			roadHelper.finishRoad();
 			if (polyline.getPoints() != null) {
 				if (roadHelper.isRoad())
-					mapper.addRoad(roadHelper.getRoad());
+					mapper.addRoad(roadHelper.makeRoad(polyline));
 				else
 					mapper.addLine(polyline);
 			}
@@ -272,8 +271,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			setResolution(polyline, name);
-			polyline.setPoints(points);
-			roadHelper.addLine(polyline);
+			polyline.setPoints(points); // XXX: multiple DATA sections?
 		} else if (name.equals("RoadID")) {
 			roadHelper.setRoadId(Integer.parseInt(value));
 		} else if (name.startsWith("Nod")) {
@@ -282,7 +280,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("Routeparam")) {
 			roadHelper.setParam(value);
 		}
-
 	}
 
 	private List<Coord> coordsFromString(String value) {
