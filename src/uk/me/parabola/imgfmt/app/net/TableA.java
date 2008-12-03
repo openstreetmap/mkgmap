@@ -159,10 +159,10 @@ public class TableA {
 			// write the table A entries.  Consists of a pointer to net
 			// followed by 2 bytes of class and speed flags and road restrictions.
 			log.debug("writing Table A entry", arcs.get(arc));
-			int pos = arc.roadDef.getNetPosition();
+			int pos = arc.roadDef.getOffsetNet1();
 			writer.put3(pos);
-			writer.put((byte) 0x46);
-			writer.put((byte) 0x0);
+			writer.put(arc.roadDef.getTabAInfo());
+			writer.put(arc.roadDef.getTabARestrictions());
 		}
 	}
 }
