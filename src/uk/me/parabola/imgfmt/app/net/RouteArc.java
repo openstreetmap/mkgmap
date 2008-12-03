@@ -47,11 +47,6 @@ public class RouteArc {
 	private byte initialHeading;
 	private byte endDirection;
 
-	//private boolean newDirection;
-	//private boolean sign;
-
-	//private byte destinationClass;
-
 	private final RoadDef roadDef;
 
 	// The nodes that this arc comes from and goes to
@@ -69,31 +64,18 @@ public class RouteArc {
 	private char length; // not really known
 
 	/**
-	 * Create an arc of the given road towards the given node.  This will be
-	 * added to the node that is the start point.
-	 * We don't currently have the start node in here.
-	 * @param roadDef The road that the origin point and the destination node
-	 * are part of.
-	 * @param node The destination node.
-	 */
-	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest) {
-		this.roadDef = roadDef;
-		this.source = source;
-		this.dest = dest;
-	}
-
-	/**
 	 * Create a new arc.
 	 *
 	 * @param roadDef The road that this arc segment is part of.
-	 *
-	 * @param node2 The destination node.
-	 * @param start The coordinate of the start node,
+	 * @param source The source node.
+	 * @param dest The destination node.
 	 * @param nextCoord The heading coordinate.
 	 */
 	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest,
 				Coord nextCoord) {
-		this(roadDef, source, dest);
+		this.roadDef = roadDef;
+		this.source = source;
+		this.dest = dest;
 
 		this.length = calcDistance(nextCoord);
 		log.debug("set length", (int)this.length);
@@ -130,12 +112,20 @@ public class RouteArc {
 			flagB |= INTER_AREA;
 	}
 
+
+	/**
+	 * Set this arcs index into Table A.
+	 */
+	public void setIndexA(byte indexA) {
+		this.indexA = indexA;
+	}
+
 	/**
 	 * Set this arcs index into Table B. Applies to external arcs only.
 	 */
-	public void setIndexB(byte idx) {
+	public void setIndexB(byte indexB) {
 		assert !isInternal() : "Trying to set index on external arc.";
-		indexB = idx;
+		this.indexB = indexB;
 	}
 
 	private byte calcAngle(Coord end) {
@@ -165,7 +155,6 @@ public class RouteArc {
 
 		return b;
 	}
-
 
 	private char calcDistance(Coord end) {
 		Coord start = source.getCoord();
@@ -203,10 +192,6 @@ public class RouteArc {
 		writer.put(initialHeading);
 	}
 
-	public void setNewDir() {
-		flagA |= NEW_DIRECTION;
-	}
-
 	/**
 	 * Second pass over the nodes in this RouteCenter.
 	 * Node offsets are now all known, so we can write the pointers
@@ -233,6 +218,10 @@ public class RouteArc {
 		return roadDef;
 	}
 
+	public void setNewDir() {
+		flagA |= NEW_DIRECTION;
+	}
+
 	public void setForward() {
 		flagA |= FORWARD;
 	}
@@ -253,30 +242,12 @@ public class RouteArc {
 		flagA |= (destinationClass & DESTINATION_CLASS_MASK);
 	}
 
-	public void setHeading(double ang) {
-		initialHeading = angleToByte(ang);
-	}
-
 	public void setEndDirection(double ang) {
 		endDirection = angleToByte(ang);
 		flagA |= CURVE;
 	}
 
-	private byte angleToByte(double ang) {
+	private static byte angleToByte(double ang) {
 		return (byte) (255 * ang / 360);
-	}
-
-	public void setIndexA(byte indexA) {
-		this.indexA = indexA;
-	}
-
-	public void setLength(int len) {
-		assert false;
-		//length = (char) len;
-		// Set lots of flags as approriate...
-	}
-
-	public void setHeading(Coord heading) {
-		
 	}
 }

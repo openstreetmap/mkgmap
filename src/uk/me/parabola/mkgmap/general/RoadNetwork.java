@@ -77,7 +77,6 @@ public class RoadNetwork {
 				// Create forward arc from node1 to node2
 				Coord bearing = coordList.get(lastIndex + 1);
 				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing);
-				//arc.setHeading(heading);
 				arc.setForward();
 				arc.setDestinationClass(road.getRoadClass());
 				node1.addArc(arc);
@@ -86,7 +85,6 @@ public class RoadNetwork {
 				bearing = coordList.get(index - 1);
 				RouteArc arc2 = new RouteArc(road.getRoadDef(), node2, node1, bearing);
 				arc2.setDestinationClass(road.getRoadClass());
-				arc.setHeading(bearing);
 				node2.addArc(arc2);
 			} else {
 				// This is the first node in the road
