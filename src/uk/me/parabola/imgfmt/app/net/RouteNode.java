@@ -162,7 +162,6 @@ public class RouteNode {
 
 	public void setOffsets(Coord centralPoint) {
 		log.debug("center", centralPoint, ", coord", coord.toDegreeString());
-		this.coord = coord;
 		setLatOff(coord.getLatitude() - centralPoint.getLatitude());
 		setLonOff(coord.getLongitude() - centralPoint.getLongitude());
 	}

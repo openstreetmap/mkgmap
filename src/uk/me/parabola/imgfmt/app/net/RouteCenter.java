@@ -75,6 +75,7 @@ public class RouteCenter {
 
 		// update arcs with table indices
 		for (RouteNode node : nodes) {
+			node.setOffsets(centralPoint);
 			for (RouteArc arc : node.arcsIteration()) {
 				arc.setIndexA(tabA.getIndex(arc));
 				if (!arc.isInternal())
