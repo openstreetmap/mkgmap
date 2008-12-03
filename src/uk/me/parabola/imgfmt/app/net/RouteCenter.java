@@ -40,25 +40,6 @@ public class RouteCenter {
 	private final TableB tabB;
 	private final TableC tabC;
 
-	private boolean arcsHaveIndices = false;
-	private boolean tabAFilled = false;
-	private boolean tabBFilled = false;
-
-	// some heuristics so the center doesn't get too large
-	private int estimatedNodesSize = 0;
-	// absolute upper bound (would need to reduce some)
-	//private final int maxNodesSize = (1 << NODHeader.DEF_ALIGN) * 0x100;
-	// the "low bytes" don't tend do go above 0x30, so we'll try smaller than that for now
-	private final int maxNodesSize = (1 << NODHeader.DEF_ALIGN) * 0x30;
-
-	public RouteCenter(Coord cp) {
-		this.centralPoint = cp;
-		this.nodes = new ArrayList<RouteNode>();
-		this.tabA = new TableA();
-		this.tabB = new TableB();
-		this.tabC = new TableC();
-	}
-
 	public RouteCenter(Coord cp, List<RouteNode> nodes,
 				TableA tabA, TableB tabB) {
 		log.info("new RouteCenter at " + cp.toDegreeString() + ", nodes: " + nodes.size()
@@ -70,9 +51,6 @@ public class RouteCenter {
 		this.tabB = tabB;
 		this.tabC = new TableC();
 
-		tabAFilled = true;
-		tabBFilled = true;
-
 		// update arcs with table indices
 		for (RouteNode node : nodes) {
 			node.setOffsets(centralPoint);
@@ -82,45 +60,6 @@ public class RouteCenter {
 					arc.setIndexB(tabB.getIndex(arc.getDest()));
 			}
 		}
-		arcsHaveIndices = true;
-	}
-
-	public boolean nodeFits(RouteNode node) {
-		return estimatedNodesSize + node.boundSize() <= maxNodesSize;
-	}
-
-	public void addNode(RouteNode node) {
-		estimatedNodesSize += node.boundSize();
-		assert estimatedNodesSize <= maxNodesSize : "RouteCenter full";
-
-		node.setOffsets(centralPoint);
-		node.setRouteCenter(this);
-		nodes.add(node);
-	}
-
-	/**
-	 * Check which arcs are within the centers and do what needs to be done.
-	 *
-	 * Update arcs' INTER_AREA flag.
-	 * Prepare data for Table B.
-	 */
-	private void handleInterCenterArcs() {
-		if (arcsHaveIndices)
-			return;
-		for (RouteNode node : nodes) {
-			for (RouteArc arc : node.arcsIteration()) {
-				boolean internal = arc.getDest().getRouteCenter() == this;
-				arc.setInternal(internal);
-				tabA.addArc(arc);
-				if (!internal) {
-					byte idxB = tabB.addNode(arc.getDest());
-					arc.setIndexB(idxB);
-				}
-			}
-		}
-		tabAFilled = true;
-		tabBFilled = true;
-		arcsHaveIndices = true;
 	}
 
 	/**
@@ -131,9 +70,6 @@ public class RouteCenter {
 	 */
 	public void write(ImgFileWriter writer) {
 		assert !nodes.isEmpty(): "RouteCenter without nodes";
-
-		// we have all our nodes now
-		handleInterCenterArcs();
 
 		for (RouteNode node : nodes)
 			node.write(writer);
@@ -193,7 +129,6 @@ public class RouteCenter {
 
 		int off = nodeOffset >> align;
 		return (off + 1 + low) << align;
-
         }
 
 	/**

@@ -43,6 +43,26 @@ import uk.me.parabola.log.Logger;
 public class NOD1Part {
 	private static final Logger log = Logger.getLogger(NOD1Part.class);
 
+	/*
+	 * Constraints:
+	 *
+         * 1. Nodes section smaller than about 0x4000, which gives
+         *    a bound on the number of nodes.  
+         * 2. At most 0x100 entries in Table A. This gives a bound
+         *    on the number of (forward) arcs meeting this
+         *    RouteCenter.
+         * 3. At most 0x40 entries in Table B. This gives a bound
+         *    on the number of neighboring nodes.
+         * 4. Absolute values of coordinate offsets at most 0x8000,
+         *    which translates to about 0.7 degrees, so bounding
+         *    box should be at most 1.4 x 1.4 degrees assuming
+         *    the reference is in the middle. (With small offsets,
+         *    this would be 0.08 x 0.08 degrees.)
+         * 5. Absolute values of relative NOD1 offsets at most
+         *    0x2000, which limits the nodes section to 0x2000
+         *    unless we take care to order the nodes nicely.
+         */
+
 	// maximal width and height of the bounding box, since
 	// NOD 1 coordinate offsets are at most 16 bit wide.
 	private static final int MAX_SIZE_UNSAFE = 1 << 16;
