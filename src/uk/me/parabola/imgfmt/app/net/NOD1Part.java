@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
@@ -46,22 +45,25 @@ public class NOD1Part {
 
 	// maximal width and height of the bounding box, since
 	// NOD 1 coordinate offsets are at most 16 bit wide.
-	// (halve to be on the safe side)
 	private static final int MAX_SIZE_UNSAFE = 1 << 16;
-	private static final int MAX_SIZE = MAX_SIZE_UNSAFE / 2;
+//	private static final int MAX_SIZE = MAX_SIZE_UNSAFE / 2;
+	private static final int MAX_SIZE = MAX_SIZE_UNSAFE - 0x800;
 
 	// Table A has at most 0x100 entries
 	private static final int MAX_TABA_UNSAFE = 0x100;
-	private static final int MAX_TABA = MAX_TABA_UNSAFE / 2;
+//	private static final int MAX_TABA = MAX_TABA_UNSAFE / 2;
+	private static final int MAX_TABA = MAX_TABA_UNSAFE - 0x8;
 
 	// Table B has at most 0x40 entries
 	private static final int MAX_TABB_UNSAFE = 0x40;
-	private static final int MAX_TABB = MAX_TABB_UNSAFE / 2;
+//	private static final int MAX_TABB = MAX_TABB_UNSAFE / 2;
+	private static final int MAX_TABB = MAX_TABB_UNSAFE - 0x2;
 
-	// todo: something less arbitrary
-	private static final int MAX_NODES = 0x30;
+	// Nodes size is bounded due to the byte offset to Tables.
+	private static final int MAX_NODES_SIZE = (1 << NODHeader.DEF_ALIGN) * 0x30;
+	private int nodesSize = 0;
 
-	private class BBox {
+	public class BBox {
 		int maxLat, minLat, maxLon, minLon;
 		boolean empty;
 
@@ -156,27 +158,60 @@ public class NOD1Part {
 		}
 	}
 
-	private final BBox bbox = new BBox();
+	// The area we are supposed to cover.
+	private final BBox bbox;
+	// The area that actually has nodes.
+	private final BBox bboxActual = new BBox();
 
 	private final List<RouteNode> nodes = new ArrayList<RouteNode>();
 	private final TableA tabA = new TableA();
 	private final TableB tabB = new TableB();
 
+	/**
+	 * Create an unbounded NOD1Part.
+	 *
+	 * All nodes will be accepted by addNode and
+	 * all arcs will be considered internal.
+	 */
 	public NOD1Part() {
-		log.info("creating new NOD1Part");
+		log.info("creating new unbounded NOD1Part");
+		this.bbox = null;
 	}
 
+	/**
+	 * Create a bounded NOD1Part.
+	 *
+	 * The bounding box is used to decide which arcs
+	 * are internal.
+	 */
+	public NOD1Part(BBox bbox) {
+		log.info("creating new NOD1Part:", bbox);
+		this.bbox = bbox;
+	}
+
+	/**
+	 * Add a node to this part.
+	 *
+	 * The node is used to populate the tables. If an
+	 * arc points outside the bbox, we know it's not
+	 * an internal arc. It might still turn into an
+	 * external arc at a deeper level of recursion.
+	 */
 	public void addNode(RouteNode node) {
-		bbox.extend(node.getCoord());
+		assert bbox == null || bbox.contains(node.getCoord())
+			: "trying to add out-of-bounds node: " + node;
+
+		bboxActual.extend(node.getCoord());
 		nodes.add(node);
 		for (RouteArc arc : node.arcsIteration()) {
 			tabA.addArc(arc);
 			RouteNode dest = arc.getDest();
-			if (!bbox.contains(dest.getCoord())) {
+			if (bbox != null && !bbox.contains(dest.getCoord())) {
 				arc.setInternal(false);
 				tabB.addNode(dest);
 			}
 		}
+		nodesSize += node.boundSize();
 	}
 
 	/**
@@ -190,16 +225,17 @@ public class NOD1Part {
 			return centers;
 		}
 
+		log.info("subdividing", bbox, bboxActual);
 		BBox[] split ;
-		if (bbox.getWidth() > bbox.getHeight())
-			split = bbox.splitLon();
+		if (bboxActual.getWidth() > bboxActual.getHeight())
+			split = bboxActual.splitLon();
 		else
-			split = bbox.splitLat();
+			split = bboxActual.splitLat();
 
 		NOD1Part[] parts = new NOD1Part[2];
 
 		for (int i = 0; i < split.length; i++)
-			parts[i] = new NOD1Part();
+			parts[i] = new NOD1Part(split[i]);
 
 		for (RouteNode node : nodes) {
 			int i = 0;
@@ -215,14 +251,20 @@ public class NOD1Part {
 	}
 
 	private boolean satisfiesConstraints() {
-		log.debug("constraints:", bbox, tabA.size(), tabB.size(), nodes.size());
-		return bbox.getMaxDimension() < MAX_SIZE
+		log.debug("constraints:", bboxActual, tabA.size(), tabB.size(), nodesSize);
+		return bboxActual.getMaxDimension() < MAX_SIZE
 			&& tabA.size() < MAX_TABA
 			&& tabB.size() < MAX_TABB
-			&& nodes.size() < MAX_NODES;
+			&& nodesSize < MAX_NODES_SIZE;
 	}
 
+	/**
+	 * Convert to a RouteCenter.
+	 *
+	 * satisfiesConstraints() should be true for this to
+	 * be a legal RouteCenter.
+	 */
 	private RouteCenter toRouteCenter() {
-		return new RouteCenter(bbox.center(), nodes, tabA, tabB);
+		return new RouteCenter(bboxActual.center(), nodes, tabA, tabB);
 	}
 }

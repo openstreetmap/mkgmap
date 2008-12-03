@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.Formatter;
+
 import uk.me.parabola.imgfmt.Utils;
 
 /**
@@ -90,6 +92,9 @@ public class Coord {
 	}
 
 	public String toDegreeString() {
-		return String.valueOf(Utils.toDegrees(latitude)) + '/' + Utils.toDegrees(longitude);
+		Formatter fmt = new Formatter();
+		return fmt.format("%.5f/%.5f",
+			Utils.toDegrees(latitude),
+			Utils.toDegrees(longitude)).toString();			
 	}
 }
