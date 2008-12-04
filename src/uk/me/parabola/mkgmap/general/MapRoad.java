@@ -28,9 +28,10 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
  * @author Steve Ratcliffe
  */
 public class MapRoad extends MapLine {
+
 	private long roadId;
-	private byte roadClass;
-	private byte speed;// So top code can link objects from here
+	private int roadClass;
+	private int speed;// So top code can link objects from here
 	private final RoadDef roadDef;
 
 	public MapRoad(long roadId, MapLine line) {
@@ -55,18 +56,31 @@ public class MapRoad extends MapLine {
 	}
 
 	public void setRoadClass(int roadClass) {
-		this.roadClass = (byte) roadClass;
+		this.roadDef.setRoadClass(roadClass);
 	}
 
 	public void setSpeed(int speed) {
-		this.speed = (byte) speed;
+		this.roadDef.setSpeed(speed);
+	}
+
+	public void setDirIndicator(boolean dir) {
+		this.roadDef.setDirIndicator(dir);
+	}
+
+	public void setOneway(boolean oneway) {
+		this.roadDef.setOneway(oneway);
+	}
+
+	public void setToll(boolean toll) {
+		this.roadDef.setToll(toll);
+	}
+
+	// XXX: currently passing PolishMapSource-internal format
+	public void setRestrictions(boolean[] rests) {
+		this.roadDef.setRestrictions(rests);
 	}
 
 	public RoadDef getRoadDef() {
 		return roadDef;
-	}
-
-	public byte getRoadClass() {
-		return roadClass;
 	}
 }

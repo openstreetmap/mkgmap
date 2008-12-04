@@ -78,13 +78,11 @@ public class RoadNetwork {
 				Coord bearing = coordList.get(lastIndex + 1);
 				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing);
 				arc.setForward();
-				arc.setDestinationClass(road.getRoadClass());
 				node1.addArc(arc);
 
 				// Create the reverse arc
 				bearing = coordList.get(index - 1);
 				RouteArc arc2 = new RouteArc(road.getRoadDef(), node2, node1, bearing);
-				arc2.setDestinationClass(road.getRoadClass());
 				node2.addArc(arc2);
 			} else {
 				// This is the first node in the road

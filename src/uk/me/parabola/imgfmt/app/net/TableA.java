@@ -161,8 +161,8 @@ public class TableA {
 			log.debug("writing Table A entry", arcs.get(arc));
 			int pos = arc.roadDef.getOffsetNet1();
 			writer.put3(pos);
-			writer.put(arc.roadDef.getTabAInfo());
-			writer.put(arc.roadDef.getTabARestrictions());
+			writer.put((byte) arc.roadDef.getTabAInfo());
+			writer.put((byte) arc.roadDef.getTabARestrictions());
 		}
 	}
 }

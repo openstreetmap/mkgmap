@@ -80,6 +80,7 @@ public class RouteArc {
 		this.length = calcDistance(nextCoord);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(nextCoord);
+		setDestinationClass(roadDef.getRoadClass()); // XXX: really?
 	}
 
 	public RouteNode getSource() {
@@ -238,7 +239,7 @@ public class RouteArc {
 		flagB |= LAST_LINK;
 	}
 
-	public void setDestinationClass(byte destinationClass) {
+	public void setDestinationClass(int destinationClass) {
 		flagA |= (destinationClass & DESTINATION_CLASS_MASK);
 	}
 

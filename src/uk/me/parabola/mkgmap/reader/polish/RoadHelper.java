@@ -43,8 +43,25 @@ class RoadHelper {
 	private int roadId;
 	private final Map<Integer,NodeIndex> nodes = new HashMap<Integer,NodeIndex>();
 
+	private boolean dirIndicator;
+
 	private int speed;
 	private int roadClass;
+
+	private boolean oneway;
+	private boolean toll;
+
+	public static final int NO_EMERGENCY = 0;
+	public static final int NO_DELIVERY = 1;
+	public static final int NO_CAR = 2;
+	public static final int NO_BUS = 3;
+	public static final int NO_TAXI = 4;
+	public static final int NO_FOOT = 5;
+	public static final int NO_BIKE = 6;
+	public static final int NO_TRUCK = 7;
+	public static final int NO_MAX = 8;
+
+	private boolean[] restrictions;
 
 	public RoadHelper() {
 		clear();
@@ -53,8 +70,13 @@ class RoadHelper {
 	public void clear() {
 		roadId = 0;
 		nodes.clear();
-		speed = -1;
-		roadClass = -1;
+
+		dirIndicator = false;
+		speed = 0;
+		roadClass = 0;
+		oneway = false;
+		toll = false;
+		restrictions = new boolean[NO_MAX];
 	}
 
 	public void setRoadId(int roadId) {
@@ -70,11 +92,18 @@ class RoadHelper {
 		nodes.put(nodeIndex, new NodeIndex(f[0], f[1]));
 	}
 
+	public void setDirIndicator(boolean dir) {
+		this.dirIndicator = dir;
+	}
+
 	public void setParam(String param) {
-		//this.param = param;
 		String[] f = param.split(",");
 		speed = Integer.parseInt(f[0]);
 		roadClass = Integer.parseInt(f[1]);
+		oneway = Integer.parseInt(f[2]) > 0;
+		toll = Integer.parseInt(f[3]) > 0;
+		for (int j = 0; j < NO_MAX; j++)
+			restrictions[j] = Integer.parseInt(f[4+j]) > 0;
 	}
 
 	public MapRoad makeRoad(MapLine l) {
@@ -84,9 +113,13 @@ class RoadHelper {
 
 		MapRoad road = new MapRoad(roadId, l);
 
-		// Set class and speed
+		// Set parameters.
+		road.setDirIndicator(dirIndicator);
 		road.setRoadClass(roadClass);
 		road.setSpeed(speed);
+		road.setOneway(oneway);
+		road.setToll(toll);
+		road.setRestrictions(restrictions);
 
 		List<Coord> points = road.getPoints();
 

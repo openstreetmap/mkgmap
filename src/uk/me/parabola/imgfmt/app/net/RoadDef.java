@@ -74,10 +74,12 @@ public class RoadDef {
 	 * Everything that's relevant for writing to NET1.
 	 */
 
-	private static final byte FLAG_UNK1 = 0x04;
-	private static final byte FLAG_HAS_NOD_INFO = 0x40;
+	private static final int FLAG_HAS_NOD_INFO = 0x40;
+	private static final int FLAG_UNK1 = 0x04;
+	private static final int FLAG_DIR_INDICATOR = 0x02;
+	private static final int FLAG_HAS_ADDR_INFO = 0x01;
 
-	private byte netFlags = FLAG_UNK1;
+	private int netFlags = FLAG_UNK1;
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
@@ -104,7 +106,7 @@ public class RoadDef {
 		offsetNet1 = writer.position();
 
 		writeLabels(writer);
-		writer.put(netFlags);
+		writer.put((byte) netFlags);
 		writer.put3(roadLength);
 
 		int maxlevel = writeLevelCount(writer);
@@ -179,6 +181,13 @@ public class RoadDef {
 		return m;
 	}
 
+	public void setDirIndicator(boolean dir) {
+		if (dir)
+			netFlags |= FLAG_DIR_INDICATOR;
+		else
+			netFlags &= ~FLAG_DIR_INDICATOR;
+	}
+
 	/*
 	 * Everything that's relevant for writing to RGN.
 	 */
@@ -215,8 +224,12 @@ public class RoadDef {
 	// This is that node.
 	private RouteNode node;
 
-	// XXX: hard-coded for now
-	private byte roadClass = (byte) 0x4d;
+	public static final int NOD2_MASK_SPEED = 0x0e;
+	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
+	public static final int NOD2_FLAG_UNK = 0x01;
+
+	// XXX: always appears to be set
+	private int nod2Flags = NOD2_FLAG_UNK;
 
 	/**
 	 * Set the routing node associated with this road.
@@ -249,7 +262,7 @@ public class RoadDef {
 
 		offsetNod2 = writer.position();
 
-		writer.put(roadClass);
+		writer.put((byte) nod2Flags);
 		writer.put3(node.getOffsetNod1()); // offset in nod1
 
 		// this is related to the number of nodes, but there is more to it...
@@ -278,25 +291,89 @@ public class RoadDef {
 	}
 
 	// first byte of Table A info in NOD 1
-	private static final int INFO_TOLL = 0x80;
-	private static final int INFO_CLASS = 0x70;
-	private static final int INFO_ONEWAY = 0x08;
-	private static final int INFO_SPEED = 0x07;
-	// second byte: restrictions
-	private static final int NO_BIKE = 0x20;
-	private static final int NO_FOOT = 0x10;
-	// missing restrictions: emergency, delivery, bus, car, taxi, truck
+	private static final int TABA_FLAG_TOLL = 0x80;
+	private static final int TABA_MASK_CLASS = 0x70;
+	private static final int TABA_FLAG_ONEWAY = 0x08;
+	private static final int TABA_MASK_SPEED = 0x07;
+	// second byte: restrictions, sorted as in .mp
+	// bits 0x08, 0x80 missing, but they don't appear
+	// to function as "no access" for emergency/delivery
+	private static final int[] RESTS = {
+		0x08, // emergency (unknown)
+		0x80, // delivery (unknown)
+		0x01, // car
+		0x02, // bus
+		0x04, // taxi
+		0x10, // foot
+		0x20, // bike
+		0x40 // truck
+	};
 
 	// The data for Table A
-	// XXX: hard-coded for now
-	private byte tabAInfo = 0x46; // class 4, speed 6
-	private byte tabARestrictions = 0x00; // no restrictions
+	private int tabAInfo; 
+	private int tabARestrictions;
 
-	public byte getTabAInfo() {
+	public void setToll(boolean toll) {
+		if (toll)
+			tabAInfo |= TABA_FLAG_TOLL;
+		else
+			tabAInfo &= ~TABA_FLAG_TOLL;
+	}
+
+	public void setOneway(boolean oneway) {
+		if (oneway)
+			tabAInfo |= TABA_FLAG_ONEWAY;
+		else
+			tabAInfo &= ~TABA_FLAG_ONEWAY;
+	}
+
+	public void setRestrictions(boolean[] rests) {
+		tabARestrictions = 0;
+		for (int i = 0; i < 8; i++)
+			if (rests[i])
+				tabARestrictions |= RESTS[i];
+	}
+
+	public int getTabAInfo() {
 		return tabAInfo;
 	}
 
-	public byte getTabARestrictions() {
+	public int getTabARestrictions() {
 		return tabARestrictions;
+	}
+
+	/*
+	 * These affect various parts.
+	 */
+
+	private int roadClass;
+
+	// road class that goes in various places (really?)
+	public void setRoadClass(int roadClass) {
+		assert roadClass < 0x08;
+
+		/* for RouteArcs to get as their "destination class" */
+		this.roadClass = roadClass;
+
+		/* for Table A */
+		int shifted = (roadClass << 4) & 0xff;
+		tabAInfo |= shifted;
+
+		/* for NOD 2 */
+		nod2Flags |= shifted;
+	}
+
+	public int getRoadClass() {
+		return roadClass;
+	}
+
+	public void setSpeed(int speed) {
+		assert speed < 0x08;
+
+		/* for Table A */
+		tabAInfo |= speed;
+
+		/* for NOD 2 */
+		nod2Flags |= (speed << 1);
 	}
 }
