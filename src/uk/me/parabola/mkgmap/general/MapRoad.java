@@ -76,8 +76,8 @@ public class MapRoad extends MapLine {
 	}
 
 	// XXX: currently passing PolishMapSource-internal format
-	public void setRestrictions(boolean[] rests) {
-		this.roadDef.setRestrictions(rests);
+	public void setAccess(boolean[] access) {
+		this.roadDef.setAccess(access);
 	}
 
 	public RoadDef getRoadDef() {

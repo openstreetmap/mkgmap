@@ -162,7 +162,7 @@ public class TableA {
 			int pos = arc.roadDef.getOffsetNet1();
 			writer.put3(pos);
 			writer.put((byte) arc.roadDef.getTabAInfo());
-			writer.put((byte) arc.roadDef.getTabARestrictions());
+			writer.put((byte) arc.roadDef.getTabAAccess());
 		}
 	}
 }

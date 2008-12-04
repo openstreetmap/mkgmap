@@ -295,10 +295,10 @@ public class RoadDef {
 	private static final int TABA_MASK_CLASS = 0x70;
 	private static final int TABA_FLAG_ONEWAY = 0x08;
 	private static final int TABA_MASK_SPEED = 0x07;
-	// second byte: restrictions, sorted as in .mp
+	// second byte: access flags, sorted as in .mp
 	// bits 0x08, 0x80 missing, but they don't appear
 	// to function as "no access" for emergency/delivery
-	private static final int[] RESTS = {
+	private static final int[] ACCESS = {
 		0x08, // emergency (unknown)
 		0x80, // delivery (unknown)
 		0x01, // car
@@ -311,7 +311,7 @@ public class RoadDef {
 
 	// The data for Table A
 	private int tabAInfo; 
-	private int tabARestrictions;
+	private int tabAAccess;
 
 	public void setToll(boolean toll) {
 		if (toll)
@@ -327,19 +327,19 @@ public class RoadDef {
 			tabAInfo &= ~TABA_FLAG_ONEWAY;
 	}
 
-	public void setRestrictions(boolean[] rests) {
-		tabARestrictions = 0;
+	public void setAccess(boolean[] access) {
+		tabAAccess = 0;
 		for (int i = 0; i < 8; i++)
-			if (rests[i])
-				tabARestrictions |= RESTS[i];
+			if (access[i])
+				tabAAccess |= ACCESS[i];
 	}
 
 	public int getTabAInfo() {
 		return tabAInfo;
 	}
 
-	public int getTabARestrictions() {
-		return tabARestrictions;
+	public int getTabAAccess() {
+		return tabAAccess;
 	}
 
 	/*

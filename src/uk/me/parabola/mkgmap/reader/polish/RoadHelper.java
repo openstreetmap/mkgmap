@@ -51,8 +51,8 @@ class RoadHelper {
 	private boolean oneway;
 	private boolean toll;
 
-	public static final int NO_EMERGENCY = 0;
-	public static final int NO_DELIVERY = 1;
+	public static final int EMERGENCY = 0;
+	public static final int DELIVERY = 1;
 	public static final int NO_CAR = 2;
 	public static final int NO_BUS = 3;
 	public static final int NO_TAXI = 4;
@@ -61,7 +61,7 @@ class RoadHelper {
 	public static final int NO_TRUCK = 7;
 	public static final int NO_MAX = 8;
 
-	private boolean[] restrictions;
+	private boolean[] access;
 
 	public RoadHelper() {
 		clear();
@@ -76,7 +76,7 @@ class RoadHelper {
 		roadClass = 0;
 		oneway = false;
 		toll = false;
-		restrictions = new boolean[NO_MAX];
+		access = new boolean[NO_MAX];
 	}
 
 	public void setRoadId(int roadId) {
@@ -103,7 +103,7 @@ class RoadHelper {
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
 		for (int j = 0; j < NO_MAX; j++)
-			restrictions[j] = Integer.parseInt(f[4+j]) > 0;
+			access[j] = Integer.parseInt(f[4+j]) > 0;
 	}
 
 	public MapRoad makeRoad(MapLine l) {
@@ -119,7 +119,7 @@ class RoadHelper {
 		road.setSpeed(speed);
 		road.setOneway(oneway);
 		road.setToll(toll);
-		road.setRestrictions(restrictions);
+		road.setAccess(access);
 
 		List<Coord> points = road.getPoints();
 
