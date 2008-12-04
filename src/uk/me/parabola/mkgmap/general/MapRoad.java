@@ -80,6 +80,14 @@ public class MapRoad extends MapLine {
 		this.roadDef.setAccess(access);
 	}
 
+	public void setStartsWithNode(boolean s) {
+		this.roadDef.setStartsWithNode(s);
+	}
+
+	public void setNumNodes(int n) {
+		this.roadDef.setNumNodes(n);
+	}
+
 	public RoadDef getRoadDef() {
 		return roadDef;
 	}

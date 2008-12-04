@@ -224,6 +224,11 @@ public class RoadDef {
 	// This is that node.
 	private RouteNode node;
 
+	// the first point in the road is a node (the above routing node)
+	boolean startsWithNode = true;
+	// number of nodes in the road
+	int nnodes = 0;
+
 	public static final int NOD2_MASK_SPEED = 0x0e;
 	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
 	public static final int NOD2_FLAG_UNK = 0x01;
@@ -246,6 +251,14 @@ public class RoadDef {
 		return (netFlags & FLAG_HAS_NOD_INFO) != 0;
 	}
 
+	public void setStartsWithNode(boolean s) {
+		startsWithNode = s;
+	}
+
+	public void setNumNodes(int n) {
+		nnodes = n;
+	}
+
 	/**
 	 * Write this road's NOD2 entry.
 	 *
@@ -265,11 +278,29 @@ public class RoadDef {
 		writer.put((byte) nod2Flags);
 		writer.put3(node.getOffsetNod1()); // offset in nod1
 
-		// this is related to the number of nodes, but there is more to it...
-		// XXX: hard-coded to 3 for now
-		char nnodes = (char) 3;
-		writer.putChar(nnodes);  // number of bits to follow
-		writer.put((byte) ((1<<nnodes)-1));
+		// this is related to the number of nodes, but there
+		// is more to it...
+		// For now, shift by one if the first node is not a
+		// routing node. Supposedly, other holes are also
+		// possible.
+		// This might be unnecessary if we just make sure
+		// that every road starts with a node.
+		int nbits = nnodes;
+		if (!startsWithNode)
+			nbits++;
+		writer.putChar((char) nbits);
+		boolean[] bits = new boolean[nbits];
+		for (int i = 0; i < bits.length; i++)
+			bits[i] = true;
+		if (!startsWithNode)
+			bits[0] = false;
+		for (int i = 0; i < bits.length; i += 8) {
+			int b = 0;
+			for (int j = 0; j < bits.length - i; j++)
+				if (bits[j])
+					b |= 1 << j;
+			writer.put((byte) b);
+		}
 	}
 
 	/*
