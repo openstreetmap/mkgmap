@@ -70,7 +70,7 @@ public class Coord {
 	}
 	
 	public int hashCode() {
-		return getLatitude()+longitude;
+		return latitude+longitude;
 	}
 
 	public boolean equals(Object obj) {

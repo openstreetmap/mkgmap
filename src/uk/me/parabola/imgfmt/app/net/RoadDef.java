@@ -215,6 +215,22 @@ public class RoadDef {
 		}
 	}
 
+	private boolean internalNodes = true;;
+
+	/**
+	 * Does the road have any nodes besides start and end?
+	 *
+	 * This affects whether we need to write extra bits in
+	 * the bitstream in RGN.
+	 */
+	public boolean hasInternalNodes() {
+		return internalNodes;
+	}
+
+	public void setInternalNodes(boolean n) {
+		internalNodes = n;
+	}
+
 	/*
 	 * Everything that's relevant for writing out Nod 2.
 	 */

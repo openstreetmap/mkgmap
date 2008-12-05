@@ -127,6 +127,10 @@ public class Polyline extends MapObject {
 		return roaddef != null;
 	}
 
+	public boolean roadHasInternalNodes() {
+		return roaddef.hasInternalNodes();
+	}
+
 	public void setRoadDef(RoadDef rd) {
 		this.roaddef = rd;
 	}

@@ -47,9 +47,11 @@ class LinePreparer {
 	private boolean[] nodes;
 
 	LinePreparer(Polyline line) {
-		if (line.isRoad())
+		if (line.isRoad() && line.roadHasInternalNodes())
+			// it might be safe to write the extra bits regardless,
+			// but who knows
 			extraBit = true;
-		
+
 		polyline = line;
 		calcLatLong();
 		calcDeltas();
@@ -100,10 +102,12 @@ class LinePreparer {
 			log.debug("y same is", ySameSign, "sign is", ySignNegative);
 		}
 
+		// first extra bit always appears to be false
+		// refers to the start point?
+		if (extraBit)
+			bw.put1(false);
+
 		for (int i = 0; i < deltas.length; i+=2) {
-			if (extraBit)
-				bw.put1(nodes[i/2]);
-			
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
 			if (dx == 0 && dy == 0)
@@ -128,10 +132,10 @@ class LinePreparer {
 				bw.putn(dy, ybits);
 				bw.put1(dy < 0);
 			}
+			if (extraBit)
+				bw.put1(nodes[i/2]);
 		}
 
-		if (extraBit)
-			bw.put1(false);
 		if (log.isDebugEnabled())
 			log.debug(bw);
 		return bw;
@@ -190,11 +194,18 @@ class LinePreparer {
 				continue;
 			}
 
-			// Current thought is that the node indicator is set when:
-			// 1. The point you are comming from is a node
-			// 2. Its not the first.
-			if (extraBit)
-				nodes[off / 2 + 1] = co.getId() != 0;
+			// Current thought is that the node indicator is set when
+			// the point is a node. There's a separate first extra bit
+			// that always appears to be false. The last points' extra bit
+			// is set if the point is a node and this is not the last
+			// polyline making up the road.
+			// Todo: special case the last bit
+			if (extraBit) {
+				if (off / 2 < nodes.length - 1)
+					nodes[off / 2] = co.getId() != 0;
+				else
+					nodes[off / 2] = false; // XXX
+			}
 
 			int dx = lon - lastLong;
 			int dy = lat - lastLat;

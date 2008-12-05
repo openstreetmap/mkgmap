@@ -40,10 +40,10 @@ public class RouteNode {
 	 */
 	
 	// Values for the first flag byte at offset 1
-	private static final byte F_BOUNDRY = 0x08;
-	private static final byte F_RESTRICTIONS = 0x10;
-	private static final byte F_LARGE_OFFSETS = 0x20;
-	private static final byte F_UNK_NEEDED = 0x44; // XXX
+	private static final int F_BOUNDARY = 0x08;
+	private static final int F_RESTRICTIONS = 0x10;
+	private static final int F_LARGE_OFFSETS = 0x20;
+	private static final int F_UNK_NEEDED = 0x44; // XXX
 
 	private int offsetNod1 = -1;
 
@@ -54,7 +54,7 @@ public class RouteNode {
 
 	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
 	
-	private byte flags = F_UNK_NEEDED;
+	private int flags = F_UNK_NEEDED;
 
 	private Coord coord;
 	private char latOff;
@@ -75,6 +75,17 @@ public class RouteNode {
 
 	private boolean haveRestrictions() {
 		return (flags & F_RESTRICTIONS) != 0;
+	}
+
+	public void setBoundary(boolean b) {
+		if (b)
+			flags |= F_BOUNDARY;
+		else
+			flags &= (~F_BOUNDARY) & 0xff;
+	}
+
+	public boolean isBoundary() {
+		return (flags & F_BOUNDARY) != 0;
 	}
 
 	/**
@@ -140,7 +151,7 @@ public class RouteNode {
 		assert offsetNod1 < 0x1000000 : "node offset doesn't fit in 3 bytes";
 
 		writer.put((byte) 0);  // will be overwritten later
-		writer.put(flags);
+		writer.put((byte) flags);
 
 		if (haveLargeOffsets()) {
 			writer.putInt((lonOff << 16) | (latOff & 0xffff));

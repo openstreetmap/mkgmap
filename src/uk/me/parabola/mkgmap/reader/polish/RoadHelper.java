@@ -125,10 +125,13 @@ class RoadHelper {
 
 		road.setNumNodes(nodes.size());
 		boolean starts = false;
+		boolean intern = false;
 		for (NodeIndex ni : nodes.values()) {
 			int n = ni.index;
 			if (n == 0)
 				starts = true;
+			else if (n < nodes.size())
+				intern = true;
 			log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
 			long id = coord.getId();
@@ -144,6 +147,7 @@ class RoadHelper {
 			}
 		}
 		road.setStartsWithNode(starts);
+		road.setInternalNodes(intern);
 		return road;
 	}
 
