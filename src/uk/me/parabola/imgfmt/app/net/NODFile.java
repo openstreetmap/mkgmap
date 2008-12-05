@@ -56,13 +56,13 @@ public class NODFile extends ImgFile {
 	private RoadNetwork network;
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 	private List<RoadDef> roads = new ArrayList<RoadDef>();
+	private List<RouteNode> boundary = new ArrayList<RouteNode>();
 
 	public NODFile(ImgChannel chan, boolean write) {
 		setHeader(nodHeader);
 		if (write) {
 			setWriter(new BufferedImgFileWriter(chan));
 			position(NODHeader.HEADER_LEN);
-			//tmpSetup();
 		} else {
 			setReader(new BufferedImgFileReader(chan));
 			nodHeader.readHeader(getReader());
@@ -72,8 +72,10 @@ public class NODFile extends ImgFile {
 	public void write() {
 		centers = network.getCenters();
 		roads = network.getRoadDefs();
+		boundary = network.getBoundary();
 		writeNodes();
 		writeRoadData();
+		writeBoundary();
 	}
 
 	public void writePost() {
@@ -121,6 +123,22 @@ public class NODFile extends ImgFile {
 		}
 		log.debug("ending nod2", writer.position());
 		nodHeader.setRoadSize(writer.position());
+	}
+
+	/**
+	 * Write the boundary node table (NOD3).
+	 */
+	private void writeBoundary() {
+		log.info("writeBoundary");
+
+		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getBoundarySection());
+
+		for (RouteNode node : boundary) {
+			log.debug("wrting nod3", writer.position());
+			node.writeNod3(writer);
+		}
+		log.debug("ending nod3", writer.position());
+		nodHeader.setBoundarySize(writer.position());
 	}
 
 	public void setNetwork(RoadNetwork network) {

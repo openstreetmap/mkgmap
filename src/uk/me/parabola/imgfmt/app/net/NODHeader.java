@@ -29,11 +29,11 @@ public class NODHeader extends CommonHeader {
 	public static final int HEADER_LEN = 63;
 
 	static final char DEF_ALIGN = 6;
-	private static final char BOUNDRY_ITEM_SIZE = 9;
+	private static final char BOUNDARY_ITEM_SIZE = 9;
 
 	private final Section nodes = new Section();
 	private final Section roads = new Section(nodes);
-	private final Section boundry = new Section(roads, BOUNDRY_ITEM_SIZE);
+	private final Section boundary = new Section(roads, BOUNDARY_ITEM_SIZE);
 
 	private final char align = DEF_ALIGN;
 
@@ -69,30 +69,42 @@ public class NODHeader extends CommonHeader {
 		roads.writeSectionInfo(writer);
 		writer.putInt(0);
 
-		boundry.writeSectionInfo(writer);
-	}
-
-	public void setNodeSize(int size) {
-		nodes.setSize(size);
-	}
-
-	public void setRoadSize(int size) {
-		roads.setSize(size);
-	}
-
-	public void setRoadStart(int start) {
-		roads.setPosition(start);
+		boundary.writeSectionInfo(writer);
 	}
 
 	public void setNodeStart(int start) {
 		nodes.setPosition(start);
 	}
 
+	public void setNodeSize(int size) {
+		nodes.setSize(size);
+	}
+
 	public Section getNodeSection() {
 		return nodes;
 	}
 
+	public void setRoadStart(int start) {
+		roads.setPosition(start);
+	}
+
+	public void setRoadSize(int size) {
+		roads.setSize(size);
+	}
+
 	public Section getRoadSection() {
 		return roads;
+	}
+
+	public void setBoundaryStart(int start) {
+		boundary.setPosition(start);
+	}
+
+	public void setBoundarySize(int size) {
+		boundary.setSize(size);
+	}
+
+	public Section getBoundarySection() {
+		return boundary;
 	}
 }

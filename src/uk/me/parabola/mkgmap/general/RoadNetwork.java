@@ -42,6 +42,10 @@ public class RoadNetwork {
 	
 	private Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
 
+	// boundary nodes
+	// a node should be in here iff the nodes boundary flag is set
+	private List<RouteNode> boundary = new ArrayList<RouteNode>();
+
 	private List<MapRoad> mapRoads = new ArrayList<MapRoad>();
 	private List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 
@@ -128,5 +132,14 @@ public class RoadNetwork {
 		if (centers.isEmpty())
 			splitCenters();
 		return centers;
+	}
+
+	/**
+	 * Get the list of nodes on the boundary of the network.
+	 *
+	 * Currently empty.
+	 */
+	public List<RouteNode> getBoundary() {
+		return boundary;
 	}
 }

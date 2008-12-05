@@ -166,6 +166,17 @@ public class RouteNode {
 		}
 	}
 
+	/**
+	 * Writes a nod3 entry.
+	 */
+	public void writeNod3(ImgFileWriter writer) {
+		assert isBoundary() : "trying to write nod3 for non-boundary node";
+
+		writer.put3(coord.getLongitude());
+		writer.put3(coord.getLatitude());
+		writer.put3(offsetNod1);
+	}
+
 	public int getOffsetNod1() {
 		assert offsetNod1 != -1: "failed for node " + nodeId;
 		return offsetNod1;
