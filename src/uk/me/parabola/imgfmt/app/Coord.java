@@ -83,6 +83,24 @@ public class Coord {
 	}
 
 	/**
+	 * Distance to other point in meters.
+	 */
+	// XXX: move this into Utils?
+	public double distance(Coord other) {
+		double lat1 = Utils.toRadians(latitude);
+                double lat2 = Utils.toRadians(other.getLatitude());
+                double lon1 = Utils.toRadians(longitude);
+                double lon2 = Utils.toRadians(other.getLongitude());
+
+                double R = 6371000; // meters
+                double d = Math.acos(Math.sin(lat1)*Math.sin(lat2) +
+                                Math.cos(lat1)*Math.cos(lat2) *
+                                                Math.cos(lon2-lon1)) * R;
+
+		return d;
+  	}
+
+	/**
 	 * Returns a string representation of the object.
 	 *
 	 * @return a string representation of the object.

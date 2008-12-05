@@ -57,7 +57,8 @@ public class MapLine extends MapElement {
 	}
 
 	public void setPoints(List<Coord> points) {
-		log.warn("overwriting points");
+		if (this.points != null)
+			log.warn("overwriting points");
 		assert points != null : "trying to set null points";
 
 		this.points = points;
@@ -66,6 +67,7 @@ public class MapLine extends MapElement {
 			if (last != null && last.equals(co))
 				log.warn("consecutive identical points");
 			addToBounds(co);
+			last = co;
 		}
 	}
 

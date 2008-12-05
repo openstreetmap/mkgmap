@@ -57,16 +57,20 @@ public class RoadNetwork {
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
+		double arcLength = 0;
 
 		List<Coord> coordList = road.getPoints();
 		int npoints = coordList.size();
 		for (int index = 0; index < npoints; index++) {
 			Coord co = coordList.get(index);
+
+			if (index > 0)
+				arcLength += co.distance(coordList.get(index-1));
+
 			long id = co.getId();
-			if (id == 0) {
-				log.debug("got id 0");
+			if (id == 0)
+				// not a routing node
 				continue;
-			}
 
 			// The next coord determins the heading
 			// If this is the not the first node, then create an arc from
@@ -80,13 +84,15 @@ public class RoadNetwork {
 
 				// Create forward arc from node1 to node2
 				Coord bearing = coordList.get(lastIndex + 1);
-				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing);
+				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing, arcLength);
 				arc.setForward();
 				node1.addArc(arc);
 
 				// Create the reverse arc
 				bearing = coordList.get(index - 1);
-				RouteArc arc2 = new RouteArc(road.getRoadDef(), node2, node1, bearing);
+				RouteArc arc2 = new RouteArc(road.getRoadDef(),
+							node2, node1,
+							bearing, arcLength);
 				node2.addArc(arc2);
 			} else {
 				// This is the first node in the road
@@ -95,6 +101,7 @@ public class RoadNetwork {
 
 			lastCoord = (CoordNode) co;
 			lastIndex = index;
+			arcLength = 0;
 		}
 	}
 

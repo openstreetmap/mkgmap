@@ -164,7 +164,7 @@ public class RoadDef {
 		// XXX: apparently, just one label for now?
 		if (numlabels == 0)
 			labels[numlabels++] = l;
-		else
+		else if (!l.equals(labels[0]))
 			log.warn("discarding extra label", l);
 	}
 

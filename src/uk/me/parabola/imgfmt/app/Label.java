@@ -92,9 +92,11 @@ public class Label {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		if (ctext == null)
-			return "ctext=null";
-		else
-			return new String(ctext);
+		return "label at " + offset;
+	}
+
+	public boolean equals(Object obj) {
+		Label other = (Label) obj;
+		return other.getOffset() == getOffset();
 	}
 }

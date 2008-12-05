@@ -61,7 +61,7 @@ public class RouteArc {
 	private byte flagA;
 	private byte flagB;
 
-	private char length; // not really known
+	private char length; // XXX: not really known
 
 	/**
 	 * Create a new arc.
@@ -72,7 +72,7 @@ public class RouteArc {
 	 * @param nextCoord The heading coordinate.
 	 */
 	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest,
-				Coord nextCoord) {
+				Coord nextCoord, double length) {
 		this.roadDef = roadDef;
 		this.source = source;
 		this.dest = dest;
@@ -157,18 +157,11 @@ public class RouteArc {
 		return b;
 	}
 
-	private char calcDistance(Coord end) {
+	private char calcDistance(Coord other) {
 		Coord start = source.getCoord();
 
-		double lat1 = Utils.toRadians(start.getLatitude());
-		double lat2 = Utils.toRadians(end.getLatitude());
-		double lon1 = Utils.toRadians(start.getLongitude());
-		double lon2 = Utils.toRadians(end.getLongitude());
+		double d = start.distance(other);
 
-		double R = 6371000; // meters
-		double d = Math.acos(Math.sin(lat1)*Math.sin(lat2) +
-				Math.cos(lat1)*Math.cos(lat2) *
-						Math.cos(lon2-lon1)) * R;
 		log.debug("part length", d, ", feet", d * 3.28);
 		return (char) (d * 3.28 / 4);
 	}
