@@ -61,7 +61,9 @@ public class RouteArc {
 	private byte flagA;
 	private byte flagB;
 
-	private char length; // XXX: not really known
+	private boolean curve = false;
+	private int length;
+	private int[] lendat;
 
 	/**
 	 * Create a new arc.
@@ -77,7 +79,8 @@ public class RouteArc {
 		this.source = source;
 		this.dest = dest;
 
-		this.length = calcDistance(nextCoord);
+		//this.length = calcDistance(nextCoord);
+		this.length = convertMeters(length);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(nextCoord);
 		setDestinationClass(roadDef.getRoadClass()); // XXX: really?
@@ -115,14 +118,14 @@ public class RouteArc {
 
 
 	/**
-	 * Set this arcs index into Table A.
+	 * Set this arc's index into Table A.
 	 */
 	public void setIndexA(byte indexA) {
 		this.indexA = indexA;
 	}
 
 	/**
-	 * Set this arcs index into Table B. Applies to external arcs only.
+	 * Set this arc's index into Table B. Applies to external arcs only.
 	 */
 	public void setIndexB(byte indexB) {
 		assert !isInternal() : "Trying to set index on external arc.";
@@ -157,18 +160,27 @@ public class RouteArc {
 		return b;
 	}
 
-	private char calcDistance(Coord other) {
+	private static int convertMeters(double l) {
+		// XXX: length in feet/4 -- always?
+		return (int) (l * 3.28 / 4);
+	}
+
+	private int calcDistance(Coord other) {
 		Coord start = source.getCoord();
 
 		double d = start.distance(other);
 
 		log.debug("part length", d, ", feet", d * 3.28);
-		return (char) (d * 3.28 / 4);
+		return convertMeters(d);
 	}
 
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
 		log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
+
+		// determine how to write length and curve bit
+		int[] lendat = encodeLength();
+
 		writer.put(flagA);
 
 		if (isInternal()) {
@@ -181,9 +193,14 @@ public class RouteArc {
 
 		writer.put(indexA);
 
-		log.debug("wrting length", (length & 0x3f), ", complete", (int)length);
-		writer.put((byte) (length & 0x3f));  // TODO more to do
+		log.debug("writing length", (length & 0x3f), ", complete", (int)length);
+		for (int i = 0; i < lendat.length; i++)
+			writer.put((byte) lendat[i]);
+
 		writer.put(initialHeading);
+
+		if (curve)
+			throw new Error("curve writing not implemented");
 	}
 
 	/**
@@ -206,6 +223,27 @@ public class RouteArc {
 		log.debug("val is", Integer.toHexString((int)val));
 		writer.put((byte) (val >> 8));
 		writer.put((byte) val);
+	}
+
+	/*
+	 * length and curve flag are stored in a variety of ways, involving
+	 * 1. flagA & 0x38 (3 bits)
+	 * 2. 1-3 bytes following the possible Table A index
+	 *
+	 * There's even more different encodings supposedly.
+	 */
+	private int[] encodeLength() {
+		// we'll just use a special encoding with curve=false for
+		// now, 14 bits for length
+		assert !curve : "not writing curve data yet";
+		assert length < (1 << 14) : "length too large";
+
+		flagA |= 0x38; // all three bits set
+		int[] lendat = new int[2]; // two bytes of data
+		lendat[0] = 0x80 | (length & 0x3f); // 0x40 not set, 6 low bits of length
+		lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+
+		return lendat;
 	}
 
 	public RoadDef getRoadDef() {
@@ -238,7 +276,7 @@ public class RouteArc {
 
 	public void setEndDirection(double ang) {
 		endDirection = angleToByte(ang);
-		flagA |= CURVE;
+		curve = true;
 	}
 
 	private static byte angleToByte(double ang) {

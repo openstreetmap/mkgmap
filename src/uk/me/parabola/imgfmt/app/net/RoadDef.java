@@ -188,6 +188,14 @@ public class RoadDef {
 			netFlags &= ~FLAG_DIR_INDICATOR;
 	}
 
+	/**
+	 * Set the road length (in meters).
+	 */
+	public void setLength(double l) {
+		// XXX
+		log.warn("not setting road length:", l);
+	}
+
 	/*
 	 * Everything that's relevant for writing to RGN.
 	 */

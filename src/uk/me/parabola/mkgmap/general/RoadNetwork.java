@@ -57,6 +57,7 @@ public class RoadNetwork {
 
 		CoordNode lastCoord = null;
 		int lastIndex = 0;
+		double roadLength = 0;
 		double arcLength = 0;
 
 		List<Coord> coordList = road.getPoints();
@@ -64,8 +65,11 @@ public class RoadNetwork {
 		for (int index = 0; index < npoints; index++) {
 			Coord co = coordList.get(index);
 
-			if (index > 0)
-				arcLength += co.distance(coordList.get(index-1));
+			if (index > 0) {
+				double d = co.distance(coordList.get(index-1));
+				arcLength += d;
+				roadLength += d;
+			}
 
 			long id = co.getId();
 			if (id == 0)
@@ -103,6 +107,7 @@ public class RoadNetwork {
 			lastIndex = index;
 			arcLength = 0;
 		}
+		road.getRoadDef().setLength(roadLength);
 	}
 
 	private RouteNode getNode(long id, Coord coord) {
