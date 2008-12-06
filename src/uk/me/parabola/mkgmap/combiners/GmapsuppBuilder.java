@@ -167,7 +167,7 @@ public class GmapsuppBuilder implements Combiner {
 
 	private MpsFile createMpsFile(FileSystem outfs) throws FileNotWritableException {
 		try {
-			ImgChannel channel = outfs.create("MAPSOURC.MPS");
+			ImgChannel channel = outfs.create("MAKEGMAP.MPS");
 			return new MpsFile(channel);
 		} catch (FileExistsException e) {
 			// well it shouldn't exist!
