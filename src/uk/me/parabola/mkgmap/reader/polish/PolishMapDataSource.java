@@ -431,8 +431,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private Coord makeCoord(String value) {
 		String[] fields = value.split("[(,)]");
 
-		log.debug(fields, fields[0], '#', fields[1]);
-		
 		int i = 0;
 		if (fields[0].length() == 0)
 			i = 1;
@@ -440,7 +438,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		Float f1 = Float.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
 		Coord coord = new Coord(f1, f2);
-		log.debug(coord);
 		return coord;
 	}
 }

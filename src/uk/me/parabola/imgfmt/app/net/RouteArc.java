@@ -238,7 +238,10 @@ public class RouteArc {
 		// we'll just use a special encoding with curve=false for
 		// now, 14 bits for length
 		assert !curve : "not writing curve data yet";
-		assert length < (1 << 14) : "length too large";
+		if (length >= (1 << 14)) {
+			log.warn("length too large:", length, "(truncating)");
+			length = (1 << 14) - 1;
+		}
 
 		flagA |= 0x38; // all three bits set
 		int[] lendat = new int[2]; // two bytes of data

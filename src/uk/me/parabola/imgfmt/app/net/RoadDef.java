@@ -286,16 +286,16 @@ public class RoadDef {
 	/**
 	 * Write this road's NOD2 entry.
 	 *
-	 * Assumes that setNode(RoutingNode) has been called before.
 	 * Stores the writing position to be able to link here
 	 * from NET 1 later.
 	 *
 	 * @param writer A writer positioned in NOD2.
 	 */
 	public void writeNod2(ImgFileWriter writer) {
-		log.debug("writing nod2");
+		if (!hasNodInfo())
+			return;
 
-		assert hasNodInfo() : "writing Nod2 without NodInfo";
+		log.debug("writing nod2");
 
 		offsetNod2 = writer.position();
 
