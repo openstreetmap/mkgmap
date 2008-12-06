@@ -32,15 +32,14 @@ public class RouteArc {
 	private static final Logger log = Logger.getLogger(RouteArc.class);
 	
 	// Flags A
-	public static final int NEW_DIRECTION = 0x80;
-	public static final int FORWARD = 0x40;
-	public static final int DESTINATION_CLASS_MASK = 0x7;
-	public static final int CURVE = 0x20;
-	public static final int EXTRA_LEN = 0x18;
+	public static final int FLAG_NEWDIR = 0x80;
+	public static final int FLAG_FORWARD = 0x40;
+	public static final int MASK_DESTCLASS = 0x7;
+	public static final int MASK_CURVE_LEN = 0x38;
 
 	// Flags B
-	public static final int LAST_LINK = 0x80;
-	public static final int INTER_AREA = 0x40;
+	public static final int FLAG_LAST_LINK = 0x80;
+	public static final int FLAG_EXTERNAL = 0x40;
 
 	private int offset;
 
@@ -106,14 +105,14 @@ public class RouteArc {
 	 */
 	public boolean isInternal() {
 		// we might check that setInternal has been called before
-		return (flagB & INTER_AREA) == 0;
+		return (flagB & FLAG_EXTERNAL) == 0;
 	}
 
 	public void setInternal(boolean internal) {
 		if (internal)
-			flagB &= ~INTER_AREA;
+			flagB &= ~FLAG_EXTERNAL;
 		else
-			flagB |= INTER_AREA;
+			flagB |= FLAG_EXTERNAL;
 	}
 
 
@@ -193,14 +192,17 @@ public class RouteArc {
 
 		writer.put(indexA);
 
-		log.debug("writing length", (length & 0x3f), ", complete", (int)length);
+		log.debug("writing length", length);
 		for (int i = 0; i < lendat.length; i++)
 			writer.put((byte) lendat[i]);
 
 		writer.put(initialHeading);
 
-		if (curve)
-			throw new Error("curve writing not implemented");
+		if (curve) {
+			int[] curvedat = encodeCurve();
+			for (int i = 0; i < curvedat.length; i++)
+				writer.put((byte) curvedat[i]);
+		}
 	}
 
 	/**
@@ -246,20 +248,31 @@ public class RouteArc {
 		return lendat;
 	}
 
+	/**
+	 * Encode the curve data into a sequence of bytes.
+	 *
+	 * 1 or 2 bytes show up in practice, but they're not at
+	 * all well understood yet.
+	 */
+	private int[] encodeCurve() {
+		assert !curve : "not writing curve data yet";
+		return null;
+	}
+
 	public RoadDef getRoadDef() {
 		return roadDef;
 	}
 
 	public void setNewDir() {
-		flagA |= NEW_DIRECTION;
+		flagA |= FLAG_NEWDIR;
 	}
 
 	public void setForward() {
-		flagA |= FORWARD;
+		flagA |= FLAG_FORWARD;
 	}
 
 	public boolean isForward() {
-		return (flagA & FORWARD) != 0;
+		return (flagA & FLAG_FORWARD) != 0;
 	}
 
 	public boolean isReverse() {
@@ -267,11 +280,11 @@ public class RouteArc {
 	}
 
 	public void setLast() {
-		flagB |= LAST_LINK;
+		flagB |= FLAG_LAST_LINK;
 	}
 
 	public void setDestinationClass(int destinationClass) {
-		flagA |= (destinationClass & DESTINATION_CLASS_MASK);
+		flagA |= (destinationClass & MASK_DESTCLASS);
 	}
 
 	public void setEndDirection(double ang) {
