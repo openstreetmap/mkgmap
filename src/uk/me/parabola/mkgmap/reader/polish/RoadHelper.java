@@ -89,7 +89,8 @@ class RoadHelper {
 		String[] f = value.split(",");
 		// f[0] is the index into the line
 		// f[1] is the node id
-		nodes.put(nodeIndex, new NodeIndex(f[0], f[1]));
+		// f[2] is whether it's a boundary node (?)
+		nodes.put(nodeIndex, new NodeIndex(f[0], f[1], f[2]));
 	}
 
 	public void setDirIndicator(boolean dir) {
@@ -138,7 +139,7 @@ class RoadHelper {
 			if (id == 0) {
 				CoordNode node = nodeCoords.get((long) ni.nodeId);
 				if (node == null) {
-					node = new CoordNode(coord.getLatitude(), coord.getLongitude(), ni.nodeId);
+					node = new CoordNode(coord.getLatitude(), coord.getLongitude(), ni.nodeId, ni.boundary);
 					nodeCoords.put((long) ni.nodeId, node);
 				}
 				points.set(n, node);
@@ -158,11 +159,13 @@ class RoadHelper {
 	private static class NodeIndex {
 		private int index;
 		private int nodeId;
+		private boolean boundary;
 
-		private NodeIndex(String sInd, String sNode) {
+		private NodeIndex(String sInd, String sNode, String sBound) {
 			index = Integer.parseInt(sInd);
 			nodeId = Integer.parseInt(sNode);
-			log.debug("ind=%d, node=%d\n", index, nodeId);
+			boundary = Integer.parseInt(sBound) > 0;
+			log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
 		}
 	}
 }

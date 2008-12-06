@@ -115,6 +115,8 @@ public class RoadNetwork {
 		if (node == null) {
 			node = new RouteNode(coord);
 			nodes.put(id, node);
+			if (node.isBoundary())
+				boundary.add(node);
 		}
 		return node;
 	}

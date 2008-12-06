@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 
@@ -56,7 +57,7 @@ public class RouteNode {
 	
 	private int flags = F_UNK_NEEDED;
 
-	private Coord coord;
+	private CoordNode coord;
 	private char latOff;
 	private char lonOff;
 
@@ -65,8 +66,9 @@ public class RouteNode {
 
 	@Deprecated
 	public RouteNode(Coord coord) {
-		this.coord = coord;
-		nodeId = nodeCount++;
+		this.coord = (CoordNode) coord;
+		nodeId = nodeCount++; // XXX: take coord.getId() instead?
+		setBoundary(this.coord.isBoundary());
 	}
 
 	private boolean haveLargeOffsets() {

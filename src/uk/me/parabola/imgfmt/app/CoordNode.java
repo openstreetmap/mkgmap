@@ -22,16 +22,20 @@ package uk.me.parabola.imgfmt.app;
 public class CoordNode extends Coord {
 	private final long id;
 	private int roadCount;
+	private boolean boundary;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
 	 *
 	 * @param latitude The latitude in map units.
 	 * @param longitude The longitude in map units.
+	 * @param id The ID of this routing node.
+	 * @param boundary This is a routing node on the boundary.
 	 */
-	public CoordNode(int latitude, int longitude, long id) {
+	public CoordNode(int latitude, int longitude, long id, boolean boundary) {
 		super(latitude, longitude);
 		this.id = id;
+		this.boundary = boundary;
 	}
 
 	public CoordNode(double lat, double lon, long id) {
@@ -49,5 +53,9 @@ public class CoordNode extends Coord {
 
 	public boolean isNode() {
 		return roadCount > 1;
+	}
+
+	public boolean isBoundary() {
+		return boundary;
 	}
 }
