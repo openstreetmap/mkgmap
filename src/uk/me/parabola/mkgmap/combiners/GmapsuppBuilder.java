@@ -309,9 +309,11 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	/**
-	 * Calculate the block size that we need to use.  I am calculating it so
-	 * that the special directory entry doesn't require more than one block
-	 * to hold its own block list.
+	 * Calculate the block size that we need to use.  The block size must be such that
+	 * the total number of blocks is less than 0xffff.
+	 *
+	 * I am making sure that the that the root directory entry doesn't require
+	 * more than one block to hold its own block list.
 	 *
 	 * @return A suitable block size to use for the gmapsupp.img file.
 	 */
@@ -322,8 +324,10 @@ public class GmapsuppBuilder implements Combiner {
 		};
 
 		for (int bs : ints) {
+			int totBlocks = 0;
 			int totHeaderSlots = 0;
 			for (FileInfo info : files.values()) {
+				totBlocks += info.getNumBlocks(bs);
 				// Each file will take up at least one directory block.
 				// Each directory block can hold 480 block-references
 				int slots = info.getNumHeaderSlots(bs);
@@ -332,12 +336,12 @@ public class GmapsuppBuilder implements Combiner {
 			}
 
 			totHeaderSlots += 2;
-			int totBlocks = totHeaderSlots * 512 / bs;
+			int totHeaderBlocks = totHeaderSlots * 512 / bs;
 
-			log.info("total blocks for", bs, "is", totBlocks, "based on slots=", totHeaderSlots);
+			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderSlots);
 
-			if (totBlocks <= ENTRY_SIZE) {
-				// Add at least one for the MPS file
+			if (totBlocks < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
+				// Add one for the MPS file
 				totHeaderSlots += 1;
 				return new BlockInfo(bs, totHeaderSlots, totHeaderSlots / bs + 1);
 			}

@@ -16,12 +16,6 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.fs.DirectoryEntry;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,6 +23,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The directory.  There is only one directory and it contains the
@@ -154,16 +154,6 @@ class Directory {
 		assert forHeader == 1;
 
 		// Write the blocks that will will contain the header blocks.
-
-		// Now fill in to the end of the reserved blocks by writing a single
-		// byte at the last position in the area.
-		long end = (long) blockSize * headerBlockManager.getMaxBlock() - 1;
-		chan.position(end);
-		ByteBuffer buf = ByteBuffer.allocate(1);
-		buf.put((byte) 0);
-		buf.flip();
-		chan.write(buf);
-
 		chan.position(dirPosition + (long) forHeader * Dirent.ENTRY_SIZE);
 
 		for (DirectoryEntry dir : entries.values()) {
@@ -175,6 +165,13 @@ class Directory {
 				ent.sync(chan);
 			}
 		}
+
+		long end = (long) blockSize * headerBlockManager.getMaxBlock();
+		ByteBuffer buf = ByteBuffer.allocate((int) (end - chan.position()));
+		for (int i = 0; i < buf.capacity(); i++)
+			buf.put((byte) 0);
+		buf.flip();
+		chan.write(buf);
 
 		// Now go back and write in the directory entry for the header.
 		chan.position(dirPosition);

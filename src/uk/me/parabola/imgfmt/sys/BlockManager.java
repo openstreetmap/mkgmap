@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.sys;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.ExitException;
 
 /**
  * This is used to allocate blocks for files in the filesystem/archive.
@@ -28,7 +29,7 @@ class BlockManager {
 
 	private int currentBlock;
 	private final int blockSize;
-	private int maxBlock;
+	private int maxBlock = 0xfffe;
 
 	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
@@ -45,7 +46,7 @@ class BlockManager {
 		int n = currentBlock++;
 		if (maxBlock > 0 && n > maxBlock) {
 			log.error("overflowed directory with max block " + maxBlock + ", current=" + n);
-			System.err.println("Directory overflow.  Map will not work");
+			throw new ExitException("Directory overflow.  This is a bug in mkgmap");
 		}
 		return n;
 	}

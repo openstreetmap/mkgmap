@@ -168,10 +168,6 @@
         </inspection_tool>
         <inspection_tool class="StringBufferField" level="WARNING" enabled="true" />
         <inspection_tool class="ZeroLengthArrayInitialization" level="WARNING" enabled="true" />
-        <inspection_tool class="UnnecessaryLocalVariable" level="WARNING" enabled="false">
-          <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
-          <option name="m_ignoreAnnotatedVariables" value="false" />
-        </inspection_tool>
         <inspection_tool class="AutoBoxing" level="INFO" enabled="false">
           <option name="ignoreAddedToCollection" value="false" />
         </inspection_tool>
@@ -229,7 +225,6 @@
         <inspection_tool class="ResultOfObjectAllocationIgnored" level="WARNING" enabled="true" />
         <inspection_tool class="SubtractionInCompareTo" level="WARNING" enabled="true" />
         <inspection_tool class="TextLabelInSwitchStatement" level="WARNING" enabled="true" />
-        <inspection_tool class="TrivialIf" level="WARNING" enabled="false" />
         <inspection_tool class="UnnecessaryUnboxing" level="WARNING" enabled="false" />
         <inspection_tool class="UnnecessaryBoxing" level="WARNING" enabled="false" />
         <inspection_tool class="JavaDoc" level="INFO" enabled="true">
@@ -314,6 +309,10 @@
         <inspection_tool class="MisorderedAssertEqualsParameters" level="WARNING" enabled="true" />
         <inspection_tool class="SimplifiableJUnitAssertion" level="WARNING" enabled="true" />
         <inspection_tool class="StaticSuite" level="WARNING" enabled="true" />
+        <inspection_tool class="UnnecessaryLocalVariable" level="WARNING" enabled="true">
+          <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
+          <option name="m_ignoreAnnotatedVariables" value="true" />
+        </inspection_tool>
       </profile>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
