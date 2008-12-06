@@ -29,6 +29,9 @@ public class AddTagAction implements Action {
 	private final String tag;
 	private final ValueBuilder value;
 
+	// The tags used to build the value.
+	private Element valueTags;
+
 	/**
 	 * Create an action to add the given tag and value.  If the tag
 	 * already has a value then nothing is done.
@@ -54,8 +57,14 @@ public class AddTagAction implements Action {
 		if (tv != null && !modify)
 			return;
 
-		String newval = value.build(el);
+		Element values = valueTags!=null? valueTags: el;
+
+		String newval = value.build(values);
 		if (newval != null)
 			el.addTag(tag, newval);
+	}
+
+	public void setValueTags(Element valueTags) {
+		this.valueTags = valueTags;
 	}
 }

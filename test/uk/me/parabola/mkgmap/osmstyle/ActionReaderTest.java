@@ -134,7 +134,7 @@ public class ActionReaderTest {
 	}
 
 	@Test
-	public void testAllAction() {
+	public void testApplyAction() {
 		List<Action> actions = readActionsFromString("{apply {" +
 				"add route=bike;" +
 				"set foo=bar; }" +
@@ -157,7 +157,7 @@ public class ActionReaderTest {
 	}
 
 	@Test
-	public void testAllWithRole() {
+	public void testApplyWithRole() {
 		List<Action> actions = readActionsFromString("{apply role=bar {" +
 				"add route=bike;" +
 				"set foo=bar; }}");
@@ -174,6 +174,26 @@ public class ActionReaderTest {
 		Element el2 = elements.get(1);
 		assertNull("route tag not added to second element (role=foo)", el2.getTag("route"));
 		assertNull("foo tag not set in second element (role=foo)", el2.getTag("foo"));
+	}
+
+	/**
+	 * When an apply statement runs, then substitutions on the value use
+	 * the tags of the relation and not of the sub element.
+	 */
+	@Test
+	public void testApplyWithSubst() {
+		List<Action> actions = readActionsFromString("{apply {" +
+				"add route='${route_no}';" +
+				"}}");
+
+		Relation rel = makeRelation();
+		rel.addTag("route_no", "66");
+		Element el1 = rel.getElements().get(0);
+		el1.addTag("route_no", "42");
+
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(rel);
+		assertEquals("route_no taken from relation tags", "66", el1.getTag("route"));
 	}
 
 	private Element stdElementRun(List<Action> actions) {

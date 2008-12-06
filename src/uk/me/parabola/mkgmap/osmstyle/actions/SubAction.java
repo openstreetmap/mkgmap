@@ -48,8 +48,11 @@ public class SubAction implements Action {
 		Map<Element, String> roles = rel.getRoles();
 		for (Element el : elements) {
 			if (role == null || role.equals(roles.get(el))) {
-				for (Action a : actionList)
+				for (Action a : actionList) {
+					if (a instanceof AddTagAction)
+						((AddTagAction) a).setValueTags(rel);
 					a.perform(el);
+				}
 			}
 		}
 	}
