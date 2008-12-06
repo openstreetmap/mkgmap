@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class AddTagAction implements Action {
 	private boolean modify;
 	private final String tag;
-	private final String value;
+	private final ValueBuilder value;
 
 	/**
 	 * Create an action to add the given tag and value.  If the tag
@@ -35,7 +35,7 @@ public class AddTagAction implements Action {
 	 */
 	public AddTagAction(String tag, String value) {
 		this.tag = tag;
-		this.value = value;
+		this.value = new ValueBuilder(value);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class AddTagAction implements Action {
 	public AddTagAction(String tag, String value, boolean modify) {
 		this.modify = modify;
 		this.tag = tag;
-		this.value = value;
+		this.value = new ValueBuilder(value);
 	}
 
 	public void perform(Element el) {
@@ -54,69 +54,8 @@ public class AddTagAction implements Action {
 		if (tv != null && !modify)
 			return;
 
-		String newval = resolveVars(value, el);
+		String newval = value.build(el);
 		if (newval != null)
 			el.addTag(tag, newval);
-	}
-
-	/**
-	 * A tag value can contain variables that are the values of other tags.
-	 * This is especially useful for 'name', as you might want to set it to
-	 * some combination of other tags.
-	 *
-	 * If a tag does not exist then the whole string is rejected.  This allows
-	 * you to make conditional replacements.
-	 * @param in An input string that may contain tag replacement introduced
-	 * by ${tagname}.
-	 *
-	 * @return If there are no replacement values, the same string as was passed
-	 * in.  If all the replacement values exist, then the string with the
-	 * values all replaced.  If any replacement tagname does not exist
-	 * then returns null.
-	 */
-	private String resolveVars(String in, Element el) {
-		if (!in.contains("$"))
-			return in;
-
-		StringBuilder sb = new StringBuilder();
-		int state = 0;
-		StringBuilder tagname = null;
-		for (char c : in.toCharArray()) {
-			switch (state) {
-			case 0:
-				if (c == '$')
-					state = 1;
-				else
-					sb.append(c);
-				break;
-			case 1:
-				if (c == '{') {
-					tagname = new StringBuilder();
-					state = 2;
-				} else {
-					state = 0;
-					sb.append(c);
-				}
-				break;
-			case 2:
-				if (c == '}') {
-					//noinspection ConstantConditions
-					assert tagname != null;
-					String val = el.getTag(tagname.toString());
-					if (val == null)
-						return null;
-					sb.append(val);
-					state = 0;
-					tagname = null;
-				} else {
-					tagname.append(c);
-				}
-				break;
-			default:
-				assert false;
-			}
-		}
-
-		return sb.toString();
 	}
 }

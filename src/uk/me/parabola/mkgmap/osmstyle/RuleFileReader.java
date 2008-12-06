@@ -37,7 +37,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
-import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -90,7 +89,7 @@ public class RuleFileReader {
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
-			if (scanner.checkToken(TokType.SYMBOL, "["))
+			if (scanner.checkToken("["))
 				type = typeReader.readType(scanner);
 			else if (actions == null)
 				throw new SyntaxException(scanner, "No type definition given");

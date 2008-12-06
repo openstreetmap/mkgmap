@@ -67,7 +67,7 @@ public class TokenScanner {
 	/**
 	 * Get and remove the next token.
 	 */
-	public Token nextRawToken() {
+	private Token nextRawToken() {
 		ensureTok();
 
 		Token token = tokens.removeFirst();
@@ -295,9 +295,12 @@ public class TokenScanner {
 		return sb.toString();
 	}
 
-	public boolean checkToken(TokType symbol, String val) {
+	public boolean checkToken(String val) {
+		skipSpace();
 		Token tok = peekToken();
-		return tok.getType() == symbol && val.equals(tok.getValue());
+		if (val == null || tok.getValue() == null)
+			return false;
+		return val.equals(tok.getValue());
 	}
 
 	public int getLinenumber() {

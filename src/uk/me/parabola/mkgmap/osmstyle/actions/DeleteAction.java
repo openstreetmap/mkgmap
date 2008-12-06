@@ -12,21 +12,25 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 15-Nov-2008
+ * Create date: 29-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Perform some action on an Element.  Add, change or remove tags.
- *
+ * Deletes a tag.
+ * 
  * @author Steve Ratcliffe
  */
-public interface Action {
+public class DeleteAction implements Action {
+	private final String tag;
 
-	/**
-	 * Perform the action on the element.
-	 */
-	public void perform(Element el);
+	public DeleteAction(String tag) {
+		this.tag = tag;
+	}
+
+	public void perform(Element el) {
+		el.deleteTag(tag);
+	}
 }

@@ -30,7 +30,7 @@ public abstract class Relation extends Element {
 		return elements;
 	}
 
-	protected Map<Element, String> getRoles() {
+	public Map<Element, String> getRoles() {
 		return roles;
 	}
 }

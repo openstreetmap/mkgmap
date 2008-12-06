@@ -1,0 +1,5 @@
+
+highway=primary & x=y [0x2 ]
+highway = primary [0x3]
+
+x=z [0x4]

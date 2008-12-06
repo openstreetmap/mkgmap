@@ -24,12 +24,13 @@ import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class ActionReaderTest {
@@ -93,16 +94,93 @@ public class ActionReaderTest {
 		assertEquals("pooh set", "bear", el.getTag("pooh"));
 	}
 
+	@Test(expected = SyntaxException.class)
+	public void testInvalidCommand() {
+		readActionsFromString("{bad }");
+	}
+
+	@Test
+	public void testName() {
+		List<Action> actions = readActionsFromString("{name '${name} (${ref})' |" +
+				"  '${ref}' | '${name}' ; }");
+		Element el = makeElement();
+		el.addTag("name", "Main St");
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("just name", "Main St", el.getName());
+	}
+
+	@Test
+	public void testDoubleName() {
+		List<Action> actions = readActionsFromString("{name '${name} (${ref})' |" +
+				"  '${ref}' | '${name}' ; " +
+				" name 'fred';}");
+
+		Element el = makeElement();
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("no tags, second action matches", "fred", el.getName());
+
+		el = makeElement();
+		el.addTag("ref", "A1");
+		rule.resolveType(el);
+		assertEquals("just a ref tag", "A1", el.getName());
+
+		el = makeElement();
+		el.addTag("ref", "A1");
+		el.addTag("name", "Main St");
+		rule.resolveType(el);
+		assertEquals("ref and name", "Main St (A1)", el.getName());
+	}
+
+	@Test
+	public void testAllAction() {
+		List<Action> actions = readActionsFromString("{apply {" +
+				"add route=bike;" +
+				"set foo=bar; }" +
+				"}\n");
+
+		Relation rel = makeRelation();
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(rel);
+
+		assertNull("Tag not set on relation", rel.getTag("route"));
+
+		List<Element> elements = rel.getElements();
+		Element el1 = elements.get(0);
+		assertEquals("route tag added to first", "bike", el1.getTag("route"));
+		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
+
+		Element el2 = elements.get(1);
+		assertEquals("route tag added to second", "bike", el2.getTag("route"));
+		assertEquals("foo tag set to second", "bar", el2.getTag("foo"));
+	}
+
+	@Test
+	public void testAllWithRole() {
+		List<Action> actions = readActionsFromString("{apply role=bar {" +
+				"add route=bike;" +
+				"set foo=bar; }}");
+
+		Relation rel = makeRelation();
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(rel);
+
+		List<Element> elements = rel.getElements();
+		Element el1 = elements.get(0);
+		assertEquals("route tag added to first", "bike", el1.getTag("route"));
+		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
+
+		Element el2 = elements.get(1);
+		assertNull("route tag not added to second element (role=foo)", el2.getTag("route"));
+		assertNull("foo tag not set in second element (role=foo)", el2.getTag("foo"));
+	}
+
 	private Element stdElementRun(List<Action> actions) {
 		Rule rule = new ActionRule(null, actions);
 		Element el = makeElement();
 		rule.resolveType(el);
 		return el;
-	}
-
-	@Test(expected = SyntaxException.class)
-	public void testInvalidCommand() {
-		readActionsFromString("{bad }");
 	}
 
 	/**
@@ -115,6 +193,12 @@ public class ActionReaderTest {
 		return el;
 	}
 
+	private Relation makeRelation() {
+		Relation rel = new GeneralRelation();
+		rel.addElement("bar", makeElement());
+		rel.addElement("foo", makeElement());
+		return rel;
+	}
 	/**
 	 * Read a action list from a string.
 	 */
