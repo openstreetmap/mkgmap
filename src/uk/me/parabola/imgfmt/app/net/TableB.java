@@ -87,7 +87,8 @@ public class TableB {
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
 		int size = nodes.size() * ITEM_SIZE;
-		writer.position(offset + size);
+		for (int i = 0; i < size; i++)
+			writer.put((byte) 0);
 	}
 
 	/**

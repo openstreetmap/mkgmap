@@ -147,7 +147,8 @@ public class TableA {
 		int size = arcs.size() * ITEM_SIZE;		
 		log.debug("tab a offset", offset, "tab a size", size);
 	
-		writer.position(writer.position() + size);
+		for (int i = 0; i < size; i++)
+			writer.put((byte) 0);
 	}
 
 	/**
