@@ -80,11 +80,6 @@
 			<fileset dir="doc" includes="*.txt, Credits, mkgmap.1"/>
     </copy>
 
-    <!-- Copy the source code -->
-    <copy todir="${dist}/src" >
-      <fileset dir="${src}"/>
-    </copy>
-
 		<!-- misc -->
     <copy todir="${dist}" >
 			<fileset dir="${basedir}">
