@@ -40,7 +40,6 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
-import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -267,25 +266,50 @@ public class StyleImpl implements Style {
 			String val = (String) ent.getValue();
 
 			if (!DONT_OVERRIDE.contains(key))
-				doOption(key, val);
+				if (key.equals("name-tag-list")) {
+					// The name-tag-list allows you to redifine what you want to use
+					// as the name of a feature.  By default this is just 'name', but
+					// you can supply a list of tags to use
+					// instead eg. "name:en,int_name,name" or you could use some
+					// completely different tag...
+					nameTagList = val.split("[,\\s]+");
+				} else if (OPTION_LIST.contains(key)) {
+					// Simple options that have string value.  Perhaps we should alow
+					// anything here?
+					generalOptions.put(key, val);
+				}
 		}
 	}
 
 	/**
 	 * If there is an options file, then read it and keep options that
 	 * we are interested in.
+	 *
+	 * Only specific options can be set.
 	 */
 	private void readOptions() {
-
 		try {
 			Reader r = fileLoader.open(FILE_OPTIONS);
 			Options opts = new Options(new OptionProcessor() {
 				public void processOption(Option opt) {
-					doOption(opt.getOption(), opt.getValue());
+					String key = opt.getOption();
+					String val = opt.getValue();
+					if (key.equals("name-tag-list")) {
+						// The name-tag-list allows you to redifine what you want to use
+						// as the name of a feature.  By default this is just 'name', but
+						// you can supply a list of tags to use
+						// instead eg. "name:en,int_name,name" or you could use some
+						// completely different tag...
+						nameTagList = val.split("[,\\s]+");
+					} else if (OPTION_LIST.contains(key)) {
+						// Simple options that have string value.  Perhaps we should alow
+						// anything here?
+						generalOptions.put(key, val);
+					}
 				}
 			});
 
-			opts.readOptionFile(r);
+			opts.readOptionFile(r, FILE_OPTIONS);
 		} catch (FileNotFoundException e) {
 			// the file is optional, so ignore if not present, or causes error
 			log.debug("no options file");
@@ -294,69 +318,39 @@ public class StyleImpl implements Style {
 		}
 	}
 
-	private void doOption(String opt, String val) {
-		if (opt.equals("name-tag-list")) {
-			// The name-tag-list allows you to redifine what you want to use
-			// as the name of a feature.  By default this is just 'name', but
-			// you can supply a list of tags to use
-			// instead eg. "name:en,int_name,name" or you could use some
-			// completely different tag...
-			nameTagList = val.split("[,\\s]+");
-		} else if (OPTION_LIST.contains(opt)) {
-			// Simple options that have string value.  Perhaps we should alow
-			// anything here?
-			generalOptions.put(opt, val);
-		}
-	}
-
+	/**
+	 * Read the info file.  This is just information about the style.
+	 */
 	private void readInfo() {
 		try {
 			Reader br = new BufferedReader(fileLoader.open(FILE_INFO));
-			info = readInfo(br, FILE_INFO);
+			info = new StyleInfo();
+
+			Options opts = new Options(new OptionProcessor() {
+				public void processOption(Option opt) {
+					String word = opt.getOption();
+					String value = opt.getValue();
+					if (word.equals("summary"))
+						info.setSummary(value);
+					else if (word.equals("version")) {
+						info.setVersion(value);
+					} else if (word.equals("base-style")) {
+						info.setBaseStyleName(value);
+					} else if (word.equals("description")) {
+						info.setLongDescription(value);
+					}
+
+				}
+			});
+
+			opts.readOptionFile(br, FILE_INFO);
+
 		} catch (FileNotFoundException e) {
 			// optional file..
 			log.debug("no info file");
+		} catch (IOException e) {
+			log.debug("failed reading info file");
 		}
-	}
-
-	private StyleInfo readInfo(Reader r, String filename) {
-		StyleInfo sinfo = new StyleInfo();
-		TokenScanner ws = new TokenScanner(filename, r);
-		ws.setExtraWordChars("-");
-		while (!ws.isEndOfFile()) {
-			ws.skipSpace();
-			String word = ws.nextValue();
-			if (word == null || word.equals("#")) {
-				ws.skipLine();
-				continue;
-			}
-
-			// There should follow a '=' or ':' which means the rest
-			// of the line, or a '{' which means read until the closing '}'.
-			ws.skipSpace();
-			String value;
-			if (ws.checkToken(TokType.SYMBOL, ":") || ws.checkToken(TokType.SYMBOL, "=")) {
-				ws.nextToken();
-				value = ws.readLine();
-			} else if (ws.checkToken(TokType.SYMBOL, "{")) {
-				ws.nextToken();
-				value = ws.readUntil(TokType.SYMBOL, "}");
-			} else {
-				ws.skipLine();
-				continue;
-			}
-
-			if (word.equals("summary"))
-				sinfo.setSummary(value);
-			else if (word.equals("version")) {
-				sinfo.setVersion(value);
-			} else if (word.equals("base-style")) {
-				sinfo.setBaseStyleName(value);
-			} else if (word.equals("description")) {
-				sinfo.setLongDescription(value);
-			}
-		}
-		return sinfo;
 	}
 
 	/**
@@ -402,8 +396,22 @@ public class StyleImpl implements Style {
 	 */
 	private void mergeStyle(StyleImpl other) {
 		this.nameTagList = other.nameTagList;
-		for (Map.Entry<String, String> ent : other.generalOptions.entrySet())
-			doOption(ent.getKey(), ent.getValue());
+		for (Map.Entry<String, String> ent : other.generalOptions.entrySet()) {
+			String opt = ent.getKey();
+			String val = ent.getValue();
+			if (opt.equals("name-tag-list")) {
+				// The name-tag-list allows you to redifine what you want to use
+				// as the name of a feature.  By default this is just 'name', but
+				// you can supply a list of tags to use
+				// instead eg. "name:en,int_name,name" or you could use some
+				// completely different tag...
+				nameTagList = val.split("[,\\s]+");
+			} else if (OPTION_LIST.contains(opt)) {
+				// Simple options that have string value.  Perhaps we should alow
+				// anything here?
+				generalOptions.put(opt, val);
+			}
+		}
 	}
 
 	/**
@@ -441,7 +449,7 @@ public class StyleImpl implements Style {
 	 * This produces a valid style file, although it is mostly used
 	 * for testing.
 	 */
-	private void dumpToFile(Writer out) {
+	void dumpToFile(Writer out) {
 		StylePrinter stylePrinter = new StylePrinter(this);
 		stylePrinter.setGeneralOptions(generalOptions);
 		stylePrinter.setRelations(relations);

@@ -88,9 +88,11 @@ public class StyledConverter implements OsmConverter {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(way);
-				if (foundType == null || type.isBetterPriority(foundType)) {
-					foundType = type;
-					tmpFoundKey = tagKey;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType)) {
+						foundType = type;
+						tmpFoundKey = tagKey;
+					}
 				}
 			}
 		}
@@ -121,8 +123,10 @@ public class StyledConverter implements OsmConverter {
 			Rule rule = nodeValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(node);
-				if (foundType == null || type.isBetterPriority(foundType))
-					foundType = type;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType))
+						foundType = type;
+				}
 			}
 		}
 

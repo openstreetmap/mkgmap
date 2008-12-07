@@ -12,21 +12,23 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 15-Nov-2008
+ * Create date: 07-Dec-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
-
 /**
- * Perform some action on an Element.  Add, change or remove tags.
- *
+ * Provide a default value if there is not one present.
+ * Do we really need this?
  * @author Steve Ratcliffe
  */
-public interface Action {
+public class DefaultFilter extends ValueFilter {
+	private final String def;
 
-	/**
-	 * Perform the action on the element.
-	 */
-	public void perform(Element el);
+	public DefaultFilter(String d) {
+		def = d;
+	}
+
+	public String doFilter(String value) {
+		return value == null || value.length() == 0 ? def : value;
+	}
 }

@@ -104,7 +104,7 @@ public abstract class Op {
 		this.type = type;
 	}
 
-	protected String value() {
+	public String value() {
 		return first.toString();
 	}
 

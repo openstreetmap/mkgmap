@@ -50,6 +50,10 @@ public class GType {
 
 	private String defaultName;
 
+	// road class and speed will be set on roads.
+	private int roadClass;
+	private int roadSpeed;
+
 	private final int priority;
 
 	public GType(int featureKind, String type) {
@@ -166,8 +170,27 @@ public class GType {
 		return sb.toString();
 	}
 
+	public int getMinLevel() {
+		return minLevel;
+	}
+
 	public int getMaxLevel() {
 		return maxLevel;
 	}
 
+	public int getRoadClass() {
+		return roadClass;
+	}
+
+	public void setRoadClass(int roadClass) {
+		this.roadClass = roadClass;
+	}
+
+	public int getRoadSpeed() {
+		return roadSpeed;
+	}
+
+	public void setRoadSpeed(int roadSpeed) {
+		this.roadSpeed = roadSpeed;
+	}
 }

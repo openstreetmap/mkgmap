@@ -19,8 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
 
@@ -80,6 +79,36 @@ public class AddTagActionTest {
 		el.addTag("a", val);
 		act.perform(el);
 		assertSame("no substitution", val, el.getTag("a"));
+	}
+
+	/**
+	 * Test substitutions that get a conversion factor applied to them.
+	 */
+	@Test
+	public void testNumberWithUnit() {
+		Action act = new AddTagAction("result", "${ele|conv:m=>ft}");
+
+		Element el = stdElement();
+		el.addTag("ele", "100");
+		act.perform(el);
+
+		assertEquals("subst ref", "328.08", el.getTag("result"));
+	}
+
+	@Test
+	public void testSubstWithDefault() {
+		Action act = new AddTagAction("result", "${ref|def:default-ref}", true);
+
+		Element el = stdElement();
+		act.perform(el);
+
+		assertEquals("ref not defaulted", REFVAL, el.getTag("result"));
+
+		act = new AddTagAction("result", "${ref|def:default-ref}", true);
+		el = stdElement();
+		el.deleteTag("ref");
+		act.perform(el);
+		assertEquals("ref was defaulted", "default-ref", el.getTag("result"));
 	}
 
 	private Element stdElement() {

@@ -26,7 +26,11 @@ public abstract class Relation extends Element {
 
 	public abstract void processElements();
 
-	protected Map<Element, String> getRoles() {
+	public List<Element> getElements() {
+		return elements;
+	}
+
+	public Map<Element, String> getRoles() {
 		return roles;
 	}
 }

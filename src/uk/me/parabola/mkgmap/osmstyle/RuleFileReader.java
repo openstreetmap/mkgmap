@@ -37,7 +37,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
-import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -90,13 +89,11 @@ public class RuleFileReader {
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
-			if (actions.isEmpty()) {
-				if (scanner.checkToken(TokType.SYMBOL, "["))
-					type = typeReader.readType(scanner);
-				else
-					throw new SyntaxException(scanner, "No type definition given");
-			}
-			
+			if (scanner.checkToken("["))
+				type = typeReader.readType(scanner);
+			else if (actions == null)
+				throw new SyntaxException(scanner, "No type definition given");
+
 			saveRule(expr, actions, type);
 			scanner.skipSpace();
 		}
@@ -128,6 +125,15 @@ public class RuleFileReader {
 
 		if (op instanceof BinaryOp) {
 			optimiseAndSaveBinaryOp(op, actions, gt);
+		} else {
+			optimiseAndSaveOtherOp(op, actions, gt);
+			//throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+		}
+	}
+
+	private void optimiseAndSaveOtherOp(Op op, List<Action> actions, GType gt) {
+		if (op.isType(EXISTS)) {
+			createAndSaveRule(op.value() + "=*", null, actions, gt);
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
@@ -168,8 +174,11 @@ public class RuleFileReader {
 				// Swap the terms and everything will be fine.
 				keystring = second.toString();
 				expr = first;
-			} else if (first.isType(EXISTS) || first.isType(NOT_EXISTS)) {
-				throw new SyntaxException(scanner, "Cannot start rule with tag(!)=* (yet)");
+			} else if (first.isType(EXISTS)) {
+				keystring = first.value() + "=*";
+				expr = second;
+			} else if (first.isType(NOT_EXISTS)) {
+				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
@@ -177,6 +186,10 @@ public class RuleFileReader {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 
+		createAndSaveRule(keystring, expr, actions, gt);
+	}
+
+	private void createAndSaveRule(String keystring, Op expr, List<Action> actions, GType gt) {
 		Rule rule;
 		if (!actions.isEmpty())
 			rule = new ActionRule(expr, actions, gt);

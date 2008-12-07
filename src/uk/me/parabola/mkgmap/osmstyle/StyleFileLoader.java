@@ -75,7 +75,7 @@ public abstract class StyleFileLoader {
 			String s = loc.toLowerCase();
 			if (s.startsWith("classpath:")) {
 				log.debug("load style off classpath");
-				loader = classpathLoader(s.substring(10), name);
+				loader = classpathLoader(loc.substring(10), name);
 				return loader;
 			} else if (s.startsWith("jar:")) {
 				loader = new JarFileLoader(loc, name);

@@ -12,21 +12,35 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 15-Nov-2008
+ * Create date: 07-Dec-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
-
 /**
- * Perform some action on an Element.  Add, change or remove tags.
+ * Filter a value.  This is used for special effects and not for the majority
+ * of substitutions.
  *
+ * Takes a value, applies the filter and returns the result.  Filters
+ * can be chained.
+ * 
  * @author Steve Ratcliffe
  */
-public interface Action {
+public abstract class ValueFilter {
+	private ValueFilter next;
 
-	/**
-	 * Perform the action on the element.
-	 */
-	public void perform(Element el);
+	public final String filter(String value) {
+		String res = doFilter(value);
+		if (next != null)
+			res = next.doFilter(res);
+		return res;
+	}
+
+	protected abstract String doFilter(String value);
+
+	public void add(ValueFilter f) {
+		if (next == null)
+			next = f;
+		else
+			next.add(f);
+	}
 }
