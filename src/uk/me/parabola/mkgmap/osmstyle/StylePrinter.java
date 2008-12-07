@@ -107,8 +107,14 @@ public class StylePrinter {
 	private void dumpRule(Formatter fmt, String s, Rule rule) {
 		if (rule instanceof FixedRule)
 			fmt.format("%s %s\n", s, rule);
-		else
-			fmt.format("%s & %s\n", s, rule.toString());
+		else {
+			String rulestr = rule.toString();
+			System.out.println("rulestr:" + rulestr);
+			if (!rulestr.matches("^[a-zA-Z].*") && !rulestr.matches("^[a-zA-Z].*"))
+				fmt.format("%s %s\n", s, rulestr);
+			else
+				fmt.format("%s & %s\n", s, rulestr);
+		}
 	}
 
 	void setGeneralOptions(Map<String, String> generalOptions) {

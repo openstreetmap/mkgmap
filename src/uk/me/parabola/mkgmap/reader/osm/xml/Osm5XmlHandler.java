@@ -244,9 +244,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	 */
 	public void endDocument() throws SAXException {
 		coordMap = null;
-		for (Relation r : relationMap.values()) {
+		for (Relation r : relationMap.values()) 
 			converter.convertRelation(r);
-		}
+
 		relationMap = null;
 
 		for (Node n : nodeMap.values())

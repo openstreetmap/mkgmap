@@ -156,4 +156,13 @@ public class ValueBuilder {
 			item.addFilter(new ConvertFilter(arg));
 		}
 	}
+
+	public String toString() {
+		StringBuilder sb = new StringBuilder("'");
+		for (ValueItem v : items) {
+			sb.append(v);
+		}
+		sb.append("'");
+		return sb.toString();
+	}
 }

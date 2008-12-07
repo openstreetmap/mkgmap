@@ -51,7 +51,7 @@ public class SequenceRule implements Rule, Iterable<Rule> {
 	 */
 	public void add(Rule rule) {
 		if (blocked && !(rule instanceof FixedRule))
-			System.out.println("Warning: Unreachable rule, more general rules should be later in the file");
+			System.err.println("Warning: Unreachable rule (" + rule + "), more general rules should be later in the file");
 		
 		ruleList.add(rule);
 		if (rule instanceof FixedRule)

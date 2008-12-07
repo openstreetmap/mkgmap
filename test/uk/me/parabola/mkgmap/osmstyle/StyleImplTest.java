@@ -55,17 +55,11 @@ public class StyleImplTest {
 				style.getNameTagList());
 	}
 
-	//@Test
-	//public void testGetWays() {
-	//}
-	//
-	//@Test
-	//public void testGetNodes() {
-	//}
-	//
-	//@Test
-	//public void testGetRelations() {
-	//}
+	@Test
+	public void testEmptyFiles() throws FileNotFoundException {
+		style = new StyleImpl(STYLE_LOC, "empty");
+		assertNotNull("read style ok", style);
+	}
 
 	private void printStyle(StyleImpl in) {
 		in.dumpToFile(new OutputStreamWriter(System.out));

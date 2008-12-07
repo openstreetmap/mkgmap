@@ -61,4 +61,12 @@ public class ValueItem {
 	public void setTagname(String tagname) {
 		this.tagname = tagname;
 	}
+
+	public String toString() {
+		if (tagname != null) {
+			// TODO: don't ignore filter.
+			return "${" + tagname + "}";
+		} else
+			return value;
+	}
 }

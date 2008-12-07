@@ -67,4 +67,13 @@ public class AddTagAction implements Action {
 	public void setValueTags(Element valueTags) {
 		this.valueTags = valueTags;
 	}
+
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(modify ? "set " : "add ");
+		sb.append(tag);
+		sb.append("=");
+		sb.append(value);
+		return sb.toString();
+	}
 }

@@ -100,6 +100,10 @@ public class TokenScanner {
 	public void skipSpace() {
 		while (!isEndOfFile()) {
 			ensureTok();
+			if (tokens.peek().isValue("#")) {
+				skipLine();
+				continue;
+			}
 			if (!tokens.peek().isWhiteSpace())
 				break;
 			nextRawToken();
