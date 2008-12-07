@@ -129,12 +129,78 @@ Following the type you can have a number of optional keywords and values.
 : This is an alternative way of specifying the level.  It is the number from 0-24 which corresponds to one of the zoom levels that the hardware recognises.  You should not use this if you have given the level and it is usually simpler to use 'level'.
 ; default_name
 : If you give this, then if the element does not already have a name, then it will be given this name.  This might be useful for things that usually don't have names and don't have a recognisable separate garmin symbol.  You could give a default name of 'bus stop' for example and all bus stops that didn't have their own name would now be labeled as such.
+; road_class
+: Used for routing; gives the class of the road where 4 is the best roads eg. motorways and 0 are residential roads etc.
+; road_speed
+: Used for routing; an indication of how fast traffic on the road is.  0 is the slowest and 7 the fastest.
+
+Example: <tt>[0x2 road_class=3 road_speed=5 level 2]</tt>
 
 == Action block ==
 An action block is enclosed in braces <tt>{ }</tt> and contains a number
 of statements that can alter the element being displayed.  When there
 is an action block, the element type definition is optional, but if it
 occurs it comes after the action block.
+
+=== name ===
+This sets the final name of the element, that is the name that will be used on the map.
+It is distinct from any 'name' tag on the element.
+You can give a list of alternatives separated by '|' pipe symbols.  This first alternative that matches
+will be used.  Once the name is set it cannot be overridden, so if more than one 'name' command matches then 
+only the first to set the name will take effect.
+
+Tags can be used in the value by using the notation: <tt>${tagname}</tt>.
+
+Example for roads we do this:
+ name '${name} (${ref})' | '${ref}' | '${name}';
+
+This means that if name='Main St' and ref=A1 the name would be "Main St (A1)", but if there
+was no 'name' tag then the result would be just "A1".  If the name tag was set and not the ref tag, then
+the element-name would just be the value of the name tag.
+This emulates the historical behaviour of mkgmap.
+
+=== add ===
+The add command adds a tag if it does not already exist.
+The only tag where this is directly useful is the 'oneway' or 'name' tags.
+For example make motorways oneway unless the oneway tag is set:
+ highway=motorway { add oneway=yes }
+
+The other use is in in relations with the 'apply' command.
+
+All the same you can set any tag you want, it might be useful so you can match
+on it elsewhere in the rules.
+
+You can also use substitutions.
+ { set name='${ele}'; set name='${ref}'; }
+
+These two commands would set the 'name' tag to the value of the 'ele' tag if it exists, or to the value of the 'ref' tag
+if that exists.
+
+=== set ===
+The 'set' command is just like the 'add' command, except that it sets the tag, even if the tag
+already exists.
+
+
+=== apply ===
+The apply command only makes sense in relations.
+Say you have a relation marking a bus route but none of the ways that are in the relation have any special tags
+to indicate that it is a bus route.  You want to display the bus route specially.  You might write a rule
+in the relations file such as:
+
+<pre>
+ type=route & route=bus {
+ 	apply {
+		set route=bus;
+		set route_ref='${route_ref}';
+	}
+ }
+</pre>
+
+Then in the lines file you can write a rule to match on <tt>route=bus</tt>.
+All the relation rules are run before any others so that this works.
+
+The substitution '${route_ref}' takes the value of the tag on the '''relation''' and applies it to each of the
+ways in the relation.
 
 == Note on backward compatibility ==
 If you convert an old map-features.csv file to the new style-rules files

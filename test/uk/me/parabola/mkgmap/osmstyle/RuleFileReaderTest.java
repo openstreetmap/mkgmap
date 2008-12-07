@@ -26,9 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
 
@@ -152,6 +150,21 @@ public class RuleFileReaderTest {
 		assertNotNull("found match", type);
 		assertEquals("correct type", 1, type.getType());
 		assertEquals("tag set", "square", el.getTag("a"));
+	}
+
+	@Test
+	public void testGType() {
+		RuleSet rs = makeRuleSet("highway=motorway " +
+				"[0x1 road_class=4 road_speed=7 default_name='motor way']\n");
+
+		Rule rule = rs.getMap().get("highway=motorway");
+		Element el = new Way();
+		el.addTag("highway", "motorway");
+		GType type = rule.resolveType(el);
+
+		assertEquals("class", 4, type.getRoadClass());
+		assertEquals("class", 7, type.getRoadSpeed());
+		assertEquals("default name", "motor way", type.getDefaultName());
 	}
 
 	private RuleSet makeRuleSet(String in) {

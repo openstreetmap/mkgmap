@@ -52,7 +52,13 @@ public class TypeReader {
 			} else if (w.equals("resolution")) {
 				setResolution(ts, gt);
 			} else if (w.equals("default_name")) {
-				gt.setDefaultName(ts.nextWord());
+				gt.setDefaultName(nextValue(ts));
+			} else if (w.equals("road_class")) {
+				gt.setRoadClass(nextIntValue(ts));
+			} else if (w.equals("road_speed")) {
+				gt.setRoadSpeed(nextIntValue(ts));
+			} else if (w.equals("copy")) {
+				// reserved word.  not currently used
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
@@ -60,6 +66,25 @@ public class TypeReader {
 
 		gt.fixLevels(levels);
 		return gt;
+	}
+
+	private int nextIntValue(TokenScanner ts) {
+		if (ts.checkToken("="))
+			ts.nextToken();
+		try {
+			return ts.nextInt();
+		} catch (NumberFormatException e) {
+			throw new SyntaxException(ts, "Expecting numeric value");
+		}
+	}
+
+	/**
+	 * Get the value in a 'name=value' pair.
+	 */
+	private String nextValue(TokenScanner ts) {
+		if (ts.checkToken("="))
+			ts.nextToken();
+		return ts.nextWord();
 	}
 
 	private void setResolution(TokenScanner ts, GType gt) {
