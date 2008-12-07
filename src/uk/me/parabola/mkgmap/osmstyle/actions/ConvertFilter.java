@@ -39,8 +39,8 @@ public class ConvertFilter extends ValueFilter {
 			double d = Double.parseDouble(value);
 
 			double res = d * factor;
-			res = Math.round(res * 100)/100.0;
-			return String.valueOf(res);
+			res = Math.round(res);
+			return String.valueOf((int) res);
 		} catch (NumberFormatException e) {
 			return value;
 		}

@@ -92,7 +92,7 @@ public class AddTagActionTest {
 		el.addTag("ele", "100");
 		act.perform(el);
 
-		assertEquals("subst ref", "328.08", el.getTag("result"));
+		assertEquals("subst ref", "328", el.getTag("result"));
 	}
 
 	@Test

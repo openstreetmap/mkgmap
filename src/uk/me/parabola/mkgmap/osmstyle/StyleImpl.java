@@ -30,11 +30,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.osmstyle.actions.Action;
+import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -220,6 +223,8 @@ public class StyleImpl implements Style {
 	 * @param mfr The map feature file reader.
 	 */
 	private void initFromMapFeatures(MapFeatureReader mfr) {
+		addBackwardCompatibleRules();
+		
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
 			lines.add(me.getKey(), rule);
@@ -234,6 +239,34 @@ public class StyleImpl implements Style {
 			Rule rule = createRule(me.getKey(), me.getValue());
 			nodes.add(me.getKey(), rule);
 		}
+	}
+
+	/**
+	 * For backward compatibility, when we find a map-features file we add
+	 * rules for actions that were previously hard coded in the conversion.
+	 * These are added even if there was also a lines, points, etc file.
+	 */
+	private void addBackwardCompatibleRules() {
+		// Name rule for highways
+		List<Action> l = new ArrayList<Action>();
+		NameAction action = new NameAction();
+		action.add("${name} (${ref})");
+		action.add("${ref}");
+		action.add("${name}");
+		l.add(action);
+
+		Rule rule = new ActionRule(null, l);
+		lines.add("highway=*", rule);
+
+		// Name rule for contour lines
+		l = new ArrayList<Action>();
+		action = new NameAction();
+		action.add("${ele|conv:m=>ft}");
+		l.add(action);
+
+		rule = new ActionRule(null, l);
+		lines.add("contour=elevation", rule);
+		lines.add("contour_ext=elevation", rule);
 	}
 
 	/**

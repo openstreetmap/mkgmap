@@ -47,8 +47,6 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 
-	//private static final double METERS_TO_FEET = 3.2808399;
-
 	private final String[] nameTagList;
 
 	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
@@ -82,8 +80,9 @@ public class StyledConverter implements OsmConverter {
 		if (way.getPoints().size() < 2)
 			return;
 
+		preConvertRules(way);
+
 		GType foundType = null;
-		String tmpFoundKey = null;
 		for (String tagKey : way) {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
@@ -91,7 +90,6 @@ public class StyledConverter implements OsmConverter {
 				if (type != null) {
 					if (foundType == null || type.isBetterPriority(foundType)) {
 						foundType = type;
-						tmpFoundKey = tagKey;
 					}
 				}
 			}
@@ -100,13 +98,10 @@ public class StyledConverter implements OsmConverter {
 		if (foundType == null)
 			return;
 
-		// If the way does not have a name, then set the name from this
-		// type rule.
-		if (way.getName() == null)
-			way.setName(foundType.getDefaultName());
+		postConvertRules(way, foundType);
 
 		if (foundType.getFeatureKind() == GType.POLYLINE)
-            addLine(way, foundType, tmpFoundKey);
+            addLine(way, foundType);
 		else
 			addShape(way, foundType);
 	}
@@ -118,6 +113,8 @@ public class StyledConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
+		preConvertRules(node);
+
 		GType foundType = null;
 		for (String tagKey : node) {
 			Rule rule = nodeValueRules.get(tagKey);
@@ -141,30 +138,36 @@ public class StyledConverter implements OsmConverter {
 			log.debug("after set", node.getName());
 		}
 
+		postConvertRules(node, foundType);
+
 		addPoint(node, foundType);
 	}
 
 	/**
-	 * Set the name of the element.  Usually you will just take the name
-	 * tag, but there are cases where you may want to use other tags, eg the
-	 * 'ref' tag for roads.
-	 *
-	 * @param el The element to set the name upon.
+	 * Rules to run before converting the element.
 	 */
-	public void convertName(Element el) {
-		String ref = el.getTag("ref");
-		String name = getName(el);
-		if (name == null) {
-			el.setName(ref);
-		} else if (ref != null) {
-			StringBuffer ret = new StringBuffer(name);
-			ret.append(" (");
-			ret.append(ref);
-			ret.append(')');
-			el.setName(ret.toString());
-		} else {
-			el.setName(name);
+	private void preConvertRules(Element el) {
+		if (nameTagList == null)
+			return;
+
+		for (String t : nameTagList) {
+			String val = el.getTag(t);
+			if (val != null) {
+				el.addTag("name", val);
+				break;
+			}
 		}
+	}
+
+	/**
+	 * Built in rules to run after converting the element.
+	 */
+	private void postConvertRules(Element el, GType type) {
+		// Set the name from the 'name' tag or failing that from
+		// the default_name.
+		el.setName(el.getTag("name"));
+		if (el.getName() == null)
+			el.setName(type.getDefaultName());
 	}
 
 	/**
@@ -197,32 +200,15 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	private void addLine(Way way, GType gt, String tmpKey) {
+	private void addLine(Way way, GType gt) {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
 		line.setPoints(way.getPoints());
 
-		tmpStuff(way, line, tmpKey);
-
-		clipper.clipLine(line, collector);
-	}
-
-	// This will be removed when better way to do contours is implemented.
-	// The oneway stuff will have to stay somewhere.
-	@Deprecated
-	private void tmpStuff(Way way, MapLine line, String tagKey) {
 		if (way.isBoolTag("oneway"))
             line.setDirection(true);
 
-		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
-			String ele = way.getTag("ele");
-			try {
-				long n = Math.round(Integer.parseInt(ele) *  3.2808399);
-				line.setName(String.valueOf(n));
-			} catch (NumberFormatException e) {
-				line.setName(ele);
-			}
-		}
+		clipper.clipLine(line, collector);
 	}
 
 	private void addShape(Way way, GType gt) {
@@ -250,25 +236,5 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
-	}
-
-	/**
-	 * Get the name tag. By default you get the tag called 'name', but
-	 * for special purposes you may want to provide a list of tag-names
-	 * to try.  In particular this allows you to select language specific
-	 * versions of the names.  eg. name:cy, name
-	 * @param el The element we want to get the name tag from.
-	 * @return The value of the defined 'name' tag.
-	 */
-	private String getName(Element el) {
-		if (nameTagList == null)
-			return el.getTag("name");
-
-		for (String t : nameTagList) {
-			String val = el.getTag(t);
-			if (val != null)
-				return val;
-		}
-		return null;
 	}
 }

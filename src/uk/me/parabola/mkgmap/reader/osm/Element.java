@@ -114,6 +114,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		if (this.name == null)
+			this.name = name;
 	}
 }

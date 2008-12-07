@@ -37,7 +37,7 @@ public class ValueItem {
 	}
 
 	public String getValue(Element el) {
-		if (value != null)
+		if (tagname == null && value != null)
 			return value;   // already known
 		
 		if (tagname != null) {

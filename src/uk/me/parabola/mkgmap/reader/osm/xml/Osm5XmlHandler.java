@@ -217,10 +217,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void endNode() {
 		mode = 0;
-		//if (currentNode != null) {
-		//	converter.convertName(currentNode);
-		//	converter.convertNode(currentNode);
-		//}
+		
 		currentElementId = 0;
 		currentNode = null;
 	}
@@ -252,16 +249,13 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 		relationMap = null;
 
-		for (Node n : nodeMap.values()) {
-			converter.convertName(n);
+		for (Node n : nodeMap.values())
 			converter.convertNode(n);
-		}
+
 		nodeMap = null;
 
-		for (Way w: wayMap.values()){
-			converter.convertName(w);			
+		for (Way w: wayMap.values())
 			converter.convertWay(w);
-		}
 
 		wayMap = null;
 		mapper.finish();
