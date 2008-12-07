@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 07-Dec-2008
  */
-package uk.me.parabola.mkgmap.osmstyle;
+package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import java.util.HashMap;
 import java.util.Map;

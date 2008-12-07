@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import uk.me.parabola.mkgmap.osmstyle.UnitConversions;
+import uk.me.parabola.mkgmap.osmstyle.eval.UnitConversions;
 
 /**
  * Convert a numeric quantity from one set of units to another.
