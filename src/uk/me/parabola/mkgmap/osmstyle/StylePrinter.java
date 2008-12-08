@@ -110,7 +110,7 @@ public class StylePrinter {
 		else {
 			String rulestr = rule.toString();
 			System.out.println("rulestr:" + rulestr);
-			if (!rulestr.matches("^[a-zA-Z].*") && !rulestr.matches("^[a-zA-Z].*"))
+			if (rulestr.startsWith("\n") || rulestr.matches("^[ \t\n].*") || rulestr.matches("^[ \t\n].*"))
 				fmt.format("%s %s\n", s, rulestr);
 			else
 				fmt.format("%s & %s\n", s, rulestr);

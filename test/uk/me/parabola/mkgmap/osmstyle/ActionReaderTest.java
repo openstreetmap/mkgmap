@@ -60,7 +60,7 @@ public class ActionReaderTest {
 		assertEquals("one action", 1, actions.size());
 
 		Element el = stdElementRun(actions);
-		assertNull("park gone", el.getTag("park"));
+		assertNull("park should be gone", el.getTag("park"));
 		assertEquals("park renamed", "no", el.getTag("landarea"));
 	}
 

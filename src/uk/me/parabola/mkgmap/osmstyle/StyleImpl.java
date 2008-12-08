@@ -38,6 +38,7 @@ import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -399,7 +400,10 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
+			GType.push();
 			baseStyle = new StyleImpl(location, name);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
 			// not found, try on the classpath.  This is the common
 			// case where you have an external style, but want to
@@ -408,10 +412,14 @@ public class StyleImpl implements Style {
 
 			try {
 				baseStyle = new StyleImpl(null, name);
+			} catch (SyntaxException se) {
+				System.err.println("Error in style: " + se.getMessage());
 			} catch (FileNotFoundException e1) {
 				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
+		} finally {
+			GType.pop();
 		}
 	}
 

@@ -37,6 +37,7 @@ public class GType {
 	public static final int POLYGON = 3;
 
 	private static int nextPriority = 1;
+	private static final int PRIORITY_PUSH = 100000;
 
 	private final int featureKind;
 	private final int type;
@@ -192,5 +193,13 @@ public class GType {
 
 	public void setRoadSpeed(int roadSpeed) {
 		this.roadSpeed = roadSpeed;
+	}
+
+	public static void push() {
+		nextPriority += PRIORITY_PUSH;
+	}
+
+	public static void pop() {
+		nextPriority -= PRIORITY_PUSH;
 	}
 }

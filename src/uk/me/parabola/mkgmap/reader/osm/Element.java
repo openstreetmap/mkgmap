@@ -15,8 +15,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,7 +37,7 @@ public abstract class Element implements Iterable<String> {
 	 */
 	public void addTag(String key, String val) {
 		if (tags == null)
-			tags = new HashMap<String, String>(6);
+			tags = new SimpleMap();
 		tags.put(key, val);
 	}
 
@@ -51,37 +52,42 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public Iterator<String> iterator() {
-		return new Iterator<String>() {
-			private Iterator<Map.Entry<String, String>> tagit;
-			private boolean doWild;
-			private String key;
-
-			{
-				if (tags != null)
-					tagit = tags.entrySet().iterator();
-			}
-
-			public boolean hasNext() {
-				return doWild || (tagit != null) && tagit.hasNext();
-			}
-
-			public String next() {
-				String ret;
-				if (doWild) {
-					ret = key + "=*";
-				} else {
-					Map.Entry<String, String> ent = tagit.next();
-					key = ent.getKey();
-					ret = key + '=' + ent.getValue();
-				}
-				doWild = !doWild;
-				return ret;
-			}
-
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-		};
+		if (tags == null) {
+			List<String> l = Collections.emptyList();
+			return l.iterator();
+		}
+		return ((SimpleMap) tags).iterator();
+		//return new Iterator<String>() {
+		//	private Iterator<Map.Entry<String, String>> tagit;
+		//	private boolean doWild;
+		//	private String key;
+		//
+		//	{
+		//		if (tags != null)
+		//			tagit = tags.entrySet().iterator();
+		//	}
+		//
+		//	public boolean hasNext() {
+		//		return doWild || (tagit != null) && tagit.hasNext();
+		//	}
+		//
+		//	public String next() {
+		//		String ret;
+		//		if (doWild) {
+		//			ret = key + "=*";
+		//		} else {
+		//			Map.Entry<String, String> ent = tagit.next();
+		//			key = ent.getKey();
+		//			ret = key + '=' + ent.getValue();
+		//		}
+		//		doWild = !doWild;
+		//		return ret;
+		//	}
+		//
+		//	public void remove() {
+		//		throw new UnsupportedOperationException();
+		//	}
+		//};
 	}
 
 	public long getId() {

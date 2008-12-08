@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 
@@ -112,6 +113,9 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			setStyle(style);
 
 			converter = new StyledConverter(style, mapper);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+			throw new ExitException("Could not open style " + name);
 		} catch (FileNotFoundException e) {
 			String name1 = (name != null)? name: loc;
 			throw new ExitException("Could not open style " + name1);

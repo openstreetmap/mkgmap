@@ -129,6 +129,32 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Deal with cases such as
+	 * (a = b | a = c) & d!=*
+	 * where there is no key at the top level.  This gets converted
+	 * to: (a=b & d!=*) | (a=c & d!= *) which can then be used.
+	 *
+	 * This is applied recursively, so you can have chains of any length.
+	 */
+	@Test
+	public void testLeftSideOr() {
+		RuleSet rs = makeRuleSet("(a = b | a = c | a=d) & e!=* [0x2]" +
+				"a=c & e!=* [0x1]");
+
+		Map<String, Rule> map = rs.getMap();
+		assertNotNull("a=b chain", map.get("a=b"));
+		assertNotNull("a=c chain", map.get("a=c"));
+		assertNotNull("a=d chain", map.get("a=d"));
+
+		// get the a=c chain and look at it more closely
+		Rule rule = map.get("a=c");
+		Element el = new Way();
+		GType type = rule.resolveType(el);
+		assertNotNull("match e not existing", type);
+		assertEquals("correct type", 2, type.getType());
+	}
+
+	/**
 	 * You can now have a wild card at the top level, here we have & between
 	 * two of them.
 	 */

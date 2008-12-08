@@ -35,6 +35,7 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EXISTS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -177,6 +178,19 @@ public class RuleFileReader {
 			} else if (first.isType(EXISTS)) {
 				keystring = first.value() + "=*";
 				expr = second;
+			} else if (first.isType(OR)) {
+				// (a=b|a=c) & d=f => (a=b&d=f) | (a=c&d=f) => solved
+				BinaryOp and1 = new AndOp();
+				and1.setFirst(first.getFirst());
+				and1.setSecond(second);
+				optimiseAndSaveBinaryOp(and1, actions, gt);
+
+				BinaryOp and2 = new AndOp();
+				and2.setFirst(((BinaryOp) first).getSecond());
+				and2.setSecond(second);
+				optimiseAndSaveBinaryOp(and2, actions, gt);
+				
+				return;
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
 			} else {

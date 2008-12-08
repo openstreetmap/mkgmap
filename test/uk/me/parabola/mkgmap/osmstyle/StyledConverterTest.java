@@ -61,6 +61,19 @@ public class StyledConverterTest {
 		assertEquals("line from x=y", 0x3, lines.get(0).getType());
 	}
 
+	@Test
+	public void testModifyingTagsInUse() throws FileNotFoundException {
+		Way way = makeWay();
+		way.addTag("name", "bar");
+		way.addTag("highway", "other");
+		way.addTag("a", "z");
+		way.addTag("z", "z");
+		converter.convertWay(way);
+
+		assertEquals("line converted", 1, lines.size());
+		assertEquals("line", 0x12, lines.get(0).getType());
+	}
+
 	private Way makeWay() {
 		Way way = new Way();
 		way.addPoint(new Coord(100, 100));

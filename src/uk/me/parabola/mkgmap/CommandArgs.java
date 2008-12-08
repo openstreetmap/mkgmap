@@ -95,6 +95,10 @@ public class CommandArgs {
 				// Map name (should be an 8 digit number).
 				addOption("mapname", args[i++]);
 
+			} else if (arg.equals("-v")) {
+				// make commands more verbose
+				addOption("verbose");
+
 			} else if (arg.startsWith("-")) {
 				// this is an unrecognised option.
 				System.err.println("unrecognised option " + arg);
