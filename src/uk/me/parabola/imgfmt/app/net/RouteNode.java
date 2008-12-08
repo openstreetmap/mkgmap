@@ -61,6 +61,11 @@ public class RouteNode {
 	private char latOff;
 	private char lonOff;
 
+	// this is for setting destination class on arcs
+	// we're taking the maximum of roads this node is
+	// on for now -- unsure of precise mechanic
+	private int nodeClass = 0;
+
 	@Deprecated
 	private static int nodeCount;
 
@@ -111,6 +116,9 @@ public class RouteNode {
 		if (!arcs.isEmpty())
 			arc.setNewDir();
 		arcs.add(arc);
+		int cl = arc.getRoadDef().getRoadClass();
+		if (cl > nodeClass)
+			nodeClass = cl;
 	}
 
 	/**
@@ -218,6 +226,14 @@ public class RouteNode {
 	public void writeSecond(ImgFileWriter writer) {
 		for (RouteArc arc : arcs)
 			arc.writeSecond(writer);
+	}
+
+	/**
+	 * Return the node's class, which is the maximum of
+	 * classes of the roads it's on.
+	 */
+	public int getNodeClass() {
+		return nodeClass;
 	}
 
 	public Iterable<? extends RouteArc> arcsIteration() {

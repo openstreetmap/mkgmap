@@ -82,7 +82,7 @@ public class RouteArc {
 		this.length = convertMeters(length);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(nextCoord);
-		setDestinationClass(roadDef.getRoadClass()); // XXX: really?
+		setDestinationClass(dest.getNodeClass());
 	}
 
 	public RouteNode getSource() {
