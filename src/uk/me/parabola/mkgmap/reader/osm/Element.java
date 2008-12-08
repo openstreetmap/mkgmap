@@ -15,8 +15,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,17 +36,9 @@ public abstract class Element implements Iterable<String> {
 	 * @param val Its value.
 	 */
 	public void addTag(String key, String val) {
-		if (key.equals("created_by")) {
-			// We are attempting to not create a hash map for nodes that are
-			// not POI's but just nodes in a way.  At one time 'created_by'
-			// was the only common tag that could be ignored, but now there
-			// are many such noise tags and we need a better way.  Perhaps
-			// we can free the map once we realise that it is not needed.
-		} else {
-			if (tags == null)
-				tags = new HashMap<String, String>();
-			tags.put(key, val);
-		}
+		if (tags == null)
+			tags = new SimpleMap();
+		tags.put(key, val);
 	}
 
 	public String getTag(String key) {
@@ -54,28 +47,47 @@ public abstract class Element implements Iterable<String> {
 		return tags.get(key);
 	}
 
+	public void deleteTag(String tagname) {
+		tags.remove(tagname);
+	}
+
 	public Iterator<String> iterator() {
-		return new Iterator<String>() {
-			private Iterator<Map.Entry<String, String>> tagit;
-
-			{
-				if (tags != null)
-					tagit = tags.entrySet().iterator();
-			}
-
-			public boolean hasNext() {
-				return (tagit != null) && tagit.hasNext();
-			}
-
-			public String next() {
-				Map.Entry<String, String> ent = tagit.next();
-				return ent.getKey() + '=' + ent.getValue();
-			}
-
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-		};
+		if (tags == null) {
+			List<String> l = Collections.emptyList();
+			return l.iterator();
+		}
+		return ((SimpleMap) tags).iterator();
+		//return new Iterator<String>() {
+		//	private Iterator<Map.Entry<String, String>> tagit;
+		//	private boolean doWild;
+		//	private String key;
+		//
+		//	{
+		//		if (tags != null)
+		//			tagit = tags.entrySet().iterator();
+		//	}
+		//
+		//	public boolean hasNext() {
+		//		return doWild || (tagit != null) && tagit.hasNext();
+		//	}
+		//
+		//	public String next() {
+		//		String ret;
+		//		if (doWild) {
+		//			ret = key + "=*";
+		//		} else {
+		//			Map.Entry<String, String> ent = tagit.next();
+		//			key = ent.getKey();
+		//			ret = key + '=' + ent.getValue();
+		//		}
+		//		doWild = !doWild;
+		//		return ret;
+		//	}
+		//
+		//	public void remove() {
+		//		throw new UnsupportedOperationException();
+		//	}
+		//};
 	}
 
 	public long getId() {
@@ -108,6 +120,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		if (this.name == null)
+			this.name = name;
 	}
 }

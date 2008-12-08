@@ -16,21 +16,21 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
-import uk.me.parabola.imgfmt.fs.FileSystem;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
-import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.app.trergn.TREFile;
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
-
-import java.io.FileNotFoundException;
-import java.io.File;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Arrays;
 
 /**
  * Used for holding information about an individual file that will be made into
@@ -218,7 +218,6 @@ public class FileInfo {
 					info.setNodsize(ent.getSize());
 				}
 
-				// add to the total size based on the rounded up size of this file
 				info.fileSizes.add(ent.getSize());
 			}
 			return info;
@@ -265,6 +264,20 @@ public class FileInfo {
 			totHeaderSlots += (nblocks + (ENTRY_SIZE - 1)) / ENTRY_SIZE;
 		}
 		return totHeaderSlots;
+	}
+
+	/**
+	 * Get the number of blocks at the given block size.  Note that a complete block is
+	 * always used for a file.
+	 * @param bs The block size at which to calculate the value.
+	 */
+	public int getNumBlocks(int bs) {
+		int totBlocks = 0;
+		for (int size : fileSizes) {
+			int nblocks = (size + (bs - 1)) / bs;
+			totBlocks += nblocks;
+		}
+		return totBlocks;
 	}
 
 	public int getMapnameAsInt() {

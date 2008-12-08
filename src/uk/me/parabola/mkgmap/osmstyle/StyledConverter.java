@@ -21,18 +21,18 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.general.AreaClipper;
-import uk.me.parabola.mkgmap.general.NullClipper;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -47,17 +47,15 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 
-	//private static final double METERS_TO_FEET = 3.2808399;
-
 	private final String[] nameTagList;
 
 	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
-	//private Map<String, GType> wayRules = new HashMap<String, GType>();
 	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
-	//private Map<String, GType> nodeRules = new HashMap<String, GType>();
+	private Map<String, Rule> relationValueRules = new HashMap<String, Rule>();
+
 	private final MapCollector collector;
 
-	private Clipper clipper = new NullClipper();
+	private Clipper clipper = Clipper.NULL_CLIPPER;
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
@@ -66,6 +64,7 @@ public class StyledConverter implements OsmConverter {
 
 		wayValueRules = style.getWays();
 		nodeValueRules = style.getNodes();
+		relationValueRules = style.getRelations();
 	}
 
 	/**
@@ -81,15 +80,17 @@ public class StyledConverter implements OsmConverter {
 		if (way.getPoints().size() < 2)
 			return;
 
+		preConvertRules(way);
+
 		GType foundType = null;
-		String tmpFoundKey = null;
 		for (String tagKey : way) {
             Rule rule = wayValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(way);
-				if (foundType == null || type.isBetterPriority(foundType)) {
-					foundType = type;
-					tmpFoundKey = tagKey;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType)) {
+						foundType = type;
+					}
 				}
 			}
 		}
@@ -97,51 +98,12 @@ public class StyledConverter implements OsmConverter {
 		if (foundType == null)
 			return;
 
-		// If the way does not have a name, then set the name from this
-		// type rule.
-		if (way.getName() == null)
-			way.setName(foundType.getDefaultName());
+		postConvertRules(way, foundType);
 
 		if (foundType.getFeatureKind() == GType.POLYLINE)
-            addLine(way, foundType, tmpFoundKey);
+            addLine(way, foundType);
 		else
 			addShape(way, foundType);
-	}
-
-	private void addLine(Way way, GType gt, String tmpKey) {
-		MapLine line = new MapLine();
-		elementSetup(line, gt, way);
-		line.setPoints(way.getPoints());
-
-		tmpStuff(way, line, tmpKey);
-
-		clipper.clipLine(line, collector);
-	}
-
-	// This will be removed when better way to do contours is implemented.
-	// The oneway stuff will have to stay somewhere.
-	@Deprecated
-	private void tmpStuff(Way way, MapLine line, String tagKey) {
-		if (way.isBoolTag("oneway"))
-            line.setDirection(true);
-
-		if (tagKey.equals("contour|elevation") || tagKey.startsWith("contour_ext|elevation")) {
-			String ele = way.getTag("ele");
-			try {
-				long n = Math.round(Integer.parseInt(ele) *  3.2808399);
-				line.setName(String.valueOf(n));
-			} catch (NumberFormatException e) {
-				line.setName(ele);
-			}
-		}
-	}
-
-	private void addShape(Way way, GType gt) {
-		MapShape shape = new MapShape();
-		elementSetup(shape, gt, way);
-		shape.setPoints(way.getPoints());
-
-		clipper.clipShape(shape, collector);
 	}
 
 	/**
@@ -151,13 +113,17 @@ public class StyledConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(Node node) {
+		preConvertRules(node);
+
 		GType foundType = null;
 		for (String tagKey : node) {
 			Rule rule = nodeValueRules.get(tagKey);
 			if (rule != null) {
 				GType type = rule.resolveType(node);
-				if (foundType == null || type.isBetterPriority(foundType))
-					foundType = type;
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType))
+						foundType = type;
+				}
 			}
 		}
 
@@ -172,7 +138,85 @@ public class StyledConverter implements OsmConverter {
 			log.debug("after set", node.getName());
 		}
 
+		postConvertRules(node, foundType);
+
 		addPoint(node, foundType);
+	}
+
+	/**
+	 * Rules to run before converting the element.
+	 */
+	private void preConvertRules(Element el) {
+		if (nameTagList == null)
+			return;
+
+		for (String t : nameTagList) {
+			String val = el.getTag(t);
+			if (val != null) {
+				el.addTag("name", val);
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Built in rules to run after converting the element.
+	 */
+	private void postConvertRules(Element el, GType type) {
+		// Set the name from the 'name' tag or failing that from
+		// the default_name.
+		el.setName(el.getTag("name"));
+		if (el.getName() == null)
+			el.setName(type.getDefaultName());
+	}
+
+	/**
+	 * Set the bounding box for this map.  This should be set before any other
+	 * elements are converted if you want to use it. All elements that are added
+	 * are clipped to this box, new points are added as needed at the boundry.
+	 *
+	 * If a node or a way falls completely outside the boundry then it would be
+	 * ommited.  This would not normally happen in the way this option is typically
+	 * used however.
+	 *
+	 * @param bbox The bounding area.
+	 */
+	public void setBoundingBox(Area bbox) {
+		this.clipper = new AreaClipper(bbox);
+	}
+
+	/**
+	 * Run the rules for this relation.  As this is not an end object, then
+	 * the only useful rules are action rules that set tags on the contained
+	 * ways or nodes.  Every rule should probably start with 'type=".."'.
+	 *
+	 * @param relation The relation to convert.
+	 */
+	public void convertRelation(Relation relation) {
+		for (String tagKey : relation) {
+            Rule rule = relationValueRules.get(tagKey);
+			if (rule != null)
+				rule.resolveType(relation);
+		}
+	}
+
+	private void addLine(Way way, GType gt) {
+		MapLine line = new MapLine();
+		elementSetup(line, gt, way);
+		line.setPoints(way.getPoints());
+
+		if (way.isBoolTag("oneway"))
+            line.setDirection(true);
+
+		clipper.clipLine(line, collector);
+	}
+
+	private void addShape(Way way, GType gt) {
+		MapShape shape = new MapShape();
+		elementSetup(shape, gt, way);
+		shape.setPoints(way.getPoints());
+
+		clipper.clipShape(shape, collector);
 	}
 
 	private void addPoint(Node node, GType gt) {
@@ -192,63 +236,5 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
-	}
-
-	/**
-	 * Set the name of the element.  Usually you will just take the name
-	 * tag, but there are cases where you may want to use other tags, eg the
-	 * 'ref' tag for roads.
-	 *
-	 * @param el The element to set the name upon.
-	 */
-	public void convertName(Element el) {
-		String ref = el.getTag("ref");
-		String name = getName(el);
-		if (name == null) {
-			el.setName(ref);
-		} else if (ref != null) {
-			StringBuffer ret = new StringBuffer(name);
-			ret.append(" (");
-			ret.append(ref);
-			ret.append(')');
-			el.setName(ret.toString());
-		} else {
-			el.setName(name);
-		}
-	}
-
-	/**
-	 * Set the bounding box for this map.  This should be set before any other
-	 * elements are converted if you want to use it. All elements that are added
-	 * are clipped to this box, new points are added as needed at the boundry.
-	 *
-	 * If a node or a way falls completely outside the boundry then it would be
-	 * ommited.  This would not normally happen in the way this option is typically
-	 * used however.
-	 *
-	 * @param bbox The bounding area.
-	 */
-	public void setBoundingBox(Area bbox) {
-		this.clipper = new AreaClipper(bbox);
-	}
-
-	/**
-	 * Get the name tag. By default you get the tag called 'name', but
-	 * for special purposes you may want to provide a list of tag-names
-	 * to try.  In particular this allows you to select language specific
-	 * versions of the names.  eg. name:cy, name
-	 * @param el The element we want to get the name tag from.
-	 * @return The value of the defined 'name' tag.
-	 */
-	private String getName(Element el) {
-		if (nameTagList == null)
-			return el.getTag("name");
-
-		for (String t : nameTagList) {
-			String val = el.getTag(t);
-			if (val != null)
-				return val;
-		}
-		return null;
 	}
 }

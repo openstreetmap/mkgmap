@@ -42,32 +42,17 @@ public interface OsmConverter {
 	public void convertNode(Node node);
 
 	/**
-	 * In OSM there isn't just one name tag for a node or way, there are
-	 * several and you might want to create a name out of several tags.
-	 * This method allows you to do whatever you want.
+	 * Takes a relation and applies rules that affect the garmin types
+	 * of its contained elements.
 	 *
-	 * It is called before convertNode and convertWay.
+	 * The relation rules are run first.  A relation contains references
+	 * to a number of nodes, ways and even other relations, as well as its
+	 * own set of tags.  They have many purposes some of which are not
+	 * relevant to styling.
 	 *
-	 * <p>Examples are:
-	 * <ul>
-	 *
-	 * <li>A road name having the reference in brackets after the name (uses
-	 * the name and ref tags).
-	 *
-	 * <li>Maps for different languages, you might want to try the local
-	 * language first and fall back to more generic versions of the name:
-	 * eg try name:zh_py first and then name:en, int_name, name in order
-	 * until one is found.
-	 *
-	 * <li>Special purpose maps like the cycling map, need to set the name
-	 * to something other than 'name', also dependant on the other
-	 * tags present.
-	 *
-	 * </ul>
-	 *
-	 * @param el The element to set the name upon.
+	 * @param relation The relation to convert.
 	 */
-	public void convertName(Element el);
+	public void convertRelation(Relation relation);
 
 	/**
 	 * Set the bounding box for this map.  This should be set before any other
@@ -82,4 +67,5 @@ public interface OsmConverter {
 	 * @param bbox The bounding area.
 	 */
 	public void setBoundingBox(Area bbox);
+
 }

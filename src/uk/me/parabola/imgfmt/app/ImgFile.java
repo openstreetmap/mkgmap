@@ -61,7 +61,7 @@ public abstract class ImgFile  {
 	//
 	//public abstract void writePost();
 
-	protected void sync() throws IOException {
+	protected final void sync() throws IOException {
 		if (!writable)
 			return;
 		getWriter().sync();
@@ -76,7 +76,7 @@ public abstract class ImgFile  {
 		this.writer = writer;
 	}
 
-	public ImgFileReader getReader() {
+	protected ImgFileReader getReader() {
 		return reader;
 	}
 

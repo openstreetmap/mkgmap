@@ -68,19 +68,19 @@ public abstract class StyleFileLoader {
 				loader = new CombinedStyleFileLoader(loc);
 			} else {
 				log.debug("jar file", file);
-				loader = new JarFileLoader(file, name);
+				loader = new JarFileLoader(file.toURI().toString(), name);
 			}
 		} else {
 			log.debug("style url location", loc);
 			String s = loc.toLowerCase();
 			if (s.startsWith("classpath:")) {
 				log.debug("load style off classpath");
-				loader = classpathLoader(s.substring(10), name);
+				loader = classpathLoader(loc.substring(10), name);
 				return loader;
 			} else if (s.startsWith("jar:")) {
 				loader = new JarFileLoader(loc, name);
 			} else if (s.indexOf(':') > 0) {
-				loader = new JarFileLoader("jar:" + s + "!/");
+				loader = new JarFileLoader(s, name);
 			} else {
 				loader = classpathLoader("styles/", name);
 			}

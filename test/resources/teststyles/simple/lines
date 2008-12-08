@@ -1,0 +1,12 @@
+
+highway=primary & x=y [0x2 ]
+highway = primary [0x3]
+
+x=z [0x4]
+
+highway=other {set is_a_road = yes; }
+
+# This should win
+is_a_road = yes [0x12]
+
+highway=other [0x8]

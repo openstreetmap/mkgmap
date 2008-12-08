@@ -35,6 +35,9 @@ public class TokenScanner {
 	private final String fileName;
 	private int linenumber = 1;
 
+	// Extra word characters.
+	private String extraWordChars = "";
+
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
 
 	public TokenScanner(String filename, Reader reader) {
@@ -43,14 +46,6 @@ public class TokenScanner {
 		else
 			this.reader = new BufferedReader(reader);
 		fileName = filename;
-	}
-
-	/**
-	 * Get the type of the first token.  The token is not consumed.
-	 */
-	public TokType firstTokenType() {
-		ensureTok();
-		return tokens.peek().getType();
 	}
 
 	/**
@@ -64,7 +59,7 @@ public class TokenScanner {
 	/**
 	 * Get and remove the next token.
 	 */
-	public Token nextToken() {
+	private Token nextRawToken() {
 		ensureTok();
 
 		Token token = tokens.removeFirst();
@@ -74,11 +69,20 @@ public class TokenScanner {
 	}
 
 	/**
+	 * Get the next token tht is not a space or newline.
+	 * @return The first valid text or symbol token.
+	 */
+	public Token nextToken() {
+		skipSpace();
+		return nextRawToken();
+	}
+
+	/**
 	 * Get the value of the next token and consume the token.  You'd
 	 * probably only call this after having peek'ed the type earlier.
 	 */
 	public String nextValue() {
-		return nextToken().getValue();
+		return nextRawToken().getValue();
 	}
 
 	public boolean isEndOfFile() {
@@ -96,9 +100,13 @@ public class TokenScanner {
 	public void skipSpace() {
 		while (!isEndOfFile()) {
 			ensureTok();
+			if (tokens.peek().isValue("#")) {
+				skipLine();
+				continue;
+			}
 			if (!tokens.peek().isWhiteSpace())
 				break;
-			nextToken();
+			nextRawToken();
 		}
 	}
 
@@ -109,7 +117,7 @@ public class TokenScanner {
 	 */
 	public void skipLine() {
 		while (!isEndOfFile()) {
-			Token t = nextToken();
+			Token t = nextRawToken();
 			if (t.getType() == TokType.EOL)
 				break;
 		}
@@ -203,7 +211,8 @@ public class TokenScanner {
 
 	private boolean isWordChar(int ch) {
 		return Character.isLetterOrDigit(ch)
-				|| ch == '_' || ch == ':';
+				|| ch == '_'
+				|| extraWordChars.indexOf(ch) >= 0;
 	}
 
 	/**
@@ -215,20 +224,20 @@ public class TokenScanner {
 	 * end of line is comsumed.
 	 */
 	public String readLine() {
-		String res = readUntil(TokType.EOL);
-		nextToken();  // use up new line
+		String res = readUntil(TokType.EOL, null);
+		nextRawToken();  // use up new line
 		return res;
 	}
 
-	private String readUntil(TokType type) {
+	public String readUntil(TokType type, String value) {
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
 			Token t = peekToken();
-			if (t.getType() == type)
+			if (t.getType() == type && (value == null || value.equals(t.getValue())))
 				break;
-			sb.append(nextToken().getValue());
+			sb.append(nextRawToken().getValue());
 		}
-		return sb.toString();
+		return sb.toString().trim();
 	}
 
 	/**
@@ -240,32 +249,55 @@ public class TokenScanner {
 	 */
 	public int nextInt() {
 		skipSpace();
-		Token t = nextToken();
+		Token t = nextRawToken();
 		// TODO: catch number format exception
 		return Integer.parseInt(t.getValue());
 	}
 
 	/**
-	 * Read a string that consists of non-space tokens.  Skips initial
-	 * space, joins all TEXT and SYMBOL tokens until the next one
-	 * that is neither.
+	 * Read a string that can be quoted.  If it is quoted, then everything
+	 * until the closing quotes is part of the string.  Both single
+	 * and double quotes can be used.
+	 *
+	 * If there are no quotes then it behaves like nextToken apart from
+	 * skipping space.
+	 *
+	 * Initial and final space is skipped.
 	 */
 	public String nextWord() {
 		skipSpace();
+		Token tok = peekToken();
+		char quotec = 0;
+		if (tok.getType() == TokType.SYMBOL) {
+			String s = tok.getValue();
+			if ("'".equals(s) || "\"".equals(s)) {
+				quotec = s.charAt(0);
+				nextRawToken();
+			}
+		}
+
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
-			TokType tt = firstTokenType();
-			if (tt != TokType.SYMBOL && tt != TokType.TEXT)
+			tok = nextRawToken();
+			if (quotec == 0) {
+				sb.append(tok.getValue());
 				break;
-
-			sb.append(nextValue());
+			} else {
+				if (tok.isValue(String.valueOf(quotec)))
+					break;
+				sb.append(tok.getValue());
+			}
 		}
+		skipSpace();
 		return sb.toString();
 	}
 
-	public boolean checkToken(TokType symbol, String val) {
+	public boolean checkToken(String val) {
+		skipSpace();
 		Token tok = peekToken();
-		return tok.getType() == symbol && val.equals(tok.getValue());
+		if (val == null || tok.getValue() == null)
+			return false;
+		return val.equals(tok.getValue());
 	}
 
 	public int getLinenumber() {
@@ -274,5 +306,9 @@ public class TokenScanner {
 
 	public String getFileName() {
 		return fileName;
+	}
+
+	public void setExtraWordChars(String extraWordChars) {
+		this.extraWordChars = extraWordChars;
 	}
 }

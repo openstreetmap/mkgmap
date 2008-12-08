@@ -40,6 +40,7 @@ import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
@@ -53,9 +54,7 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
-	//private OverviewMapMaker overview;
 	private final MapProcessor maker = new MapMaker();
-	//private final MapProcessor reader = new MapReader();
 
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
@@ -65,6 +64,7 @@ public class Main implements ArgumentProcessor {
 
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
+	private boolean verbose = false;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -177,6 +177,8 @@ public class Main implements ArgumentProcessor {
 			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
+		} else if (opt.equals("verbose")) {
+			verbose = true;
 		} else if (opt.equals("list-styles")) {
 			listStyles();
 		} else if (opt.equals("version")) {
@@ -203,10 +205,16 @@ public class Main implements ArgumentProcessor {
 			Style style;
 			try {
 				style = new StyleImpl(styleFile, name);
+			} catch (SyntaxException e) {
+				System.err.println("Error in style: " + e.getMessage());
+				continue;
 			} catch (FileNotFoundException e) {
 				log.debug("could not find style", name);
 				try {
 					style = new StyleImpl(styleFile, null);
+				} catch (SyntaxException e1) {
+					System.err.println("Error in style: " + e1.getMessage());
+					continue;
 				} catch (FileNotFoundException e1) {
 					log.debug("could not find style", styleFile);
 					continue;
@@ -215,7 +223,11 @@ public class Main implements ArgumentProcessor {
 
 			StyleInfo info = style.getInfo();
 			System.out.format("%-15s %6s: %s\n",
-					name,info.getVersion(), info.getDescription());
+					name,info.getVersion(), info.getSummary());
+			if (verbose) {
+				for (String s : info.getLongDescription().split("\n"))
+					System.out.printf("\t%s\n", s.trim());
+			}
 		}
 	}
 

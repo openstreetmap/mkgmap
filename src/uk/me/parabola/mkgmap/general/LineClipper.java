@@ -98,7 +98,6 @@ public class LineClipper {
 	 * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">Liang-Barsky algorithm</a>
 	 */
 	private static Coord[] clip(Area a, Coord[] ends) {
-		double d = 0.00001;
 		assert ends.length == 2;
 
 		int x0 = ends[0].getLongitude();
@@ -112,10 +111,8 @@ public class LineClipper {
 
 		double[] t = {0, 1};
 
-		int p, q;
-
-		p = -dx;
-		q = -(a.getMinLong() - x0);
+		int p = -dx;
+		int q = -(a.getMinLong() - x0);
 		boolean scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
@@ -137,6 +134,7 @@ public class LineClipper {
 		assert t[0] >= 0;
 		assert t[1] <= 1;
 
+		double d = 0.00001;
 		if (t[0] > 0)
 			ends[0] = new Coord((int) (y0 + t[0] * dy + d), (int) (x0 + t[0] * dx + d));
 

@@ -24,7 +24,6 @@ public class TypeReader {
 
 	public GType readType(TokenScanner ts) {
 		// We should have a '[' to start with
-		ts.skipSpace();
 		Token t = ts.nextToken();
 		if (t == null || t.getType() == TokType.EOF)
 			throw new SyntaxException(ts, "No garmin type information given");
@@ -52,17 +51,43 @@ public class TypeReader {
 			} else if (w.equals("resolution")) {
 				setResolution(ts, gt);
 			} else if (w.equals("default_name")) {
-				gt.setDefaultName(fetchWord(ts));
+				gt.setDefaultName(nextValue(ts));
+			} else if (w.equals("road_class")) {
+				gt.setRoadClass(nextIntValue(ts));
+			} else if (w.equals("road_speed")) {
+				gt.setRoadSpeed(nextIntValue(ts));
+			} else if (w.equals("copy")) {
+				// reserved word.  not currently used
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
 		}
 
+		gt.fixLevels(levels);
 		return gt;
 	}
 
+	private int nextIntValue(TokenScanner ts) {
+		if (ts.checkToken("="))
+			ts.nextToken();
+		try {
+			return ts.nextInt();
+		} catch (NumberFormatException e) {
+			throw new SyntaxException(ts, "Expecting numeric value");
+		}
+	}
+
+	/**
+	 * Get the value in a 'name=value' pair.
+	 */
+	private String nextValue(TokenScanner ts) {
+		if (ts.checkToken("="))
+			ts.nextToken();
+		return ts.nextWord();
+	}
+
 	private void setResolution(TokenScanner ts, GType gt) {
-		String str = fetchWord(ts);
+		String str = ts.nextWord();
 		log.debug("res word value", str);
 		try {
 			if (str.indexOf('-') >= 0) {
@@ -78,7 +103,7 @@ public class TypeReader {
 	}
 
 	private void setLevel(TokenScanner ts, GType gt) {
-		String str = fetchWord(ts);
+		String str = ts.nextWord();
 		try {
 			if (str.indexOf('-') >= 0) {
 				String[] minmax = str.split("-", 2);
@@ -98,23 +123,5 @@ public class TypeReader {
 			throw new SyntaxException("Level number too large, max=" + max);
 
 		return levels[max - level].getBits();
-	}
-
-	private String fetchWord(TokenScanner ts) {
-		ts.skipSpace();
-		StringBuilder sb = new StringBuilder();
-		while (!ts.isEndOfFile()) {
-			Token token = ts.peekToken();
-			TokType type = token.getType();
-			if (type == TokType.EOF || type == TokType.EOL || type == TokType.SPACE) {
-				ts.skipSpace();
-				break;
-			}
-			if (token.getValue().equals("]"))
-				break;
-
-			sb.append(ts.nextValue());
-		}
-		return sb.toString();
 	}
 }

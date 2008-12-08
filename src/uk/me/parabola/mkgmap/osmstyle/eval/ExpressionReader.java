@@ -8,7 +8,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EQUALS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OPEN_PAREN;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
-import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
@@ -28,7 +27,8 @@ public class ExpressionReader {
 
 	public Op readConditions() {
 		while (!scanner.isEndOfFile()) {
-			if (scanner.checkToken(TokType.SYMBOL, "["))
+			scanner.skipSpace();
+			if (scanner.checkToken("[") || scanner.checkToken("{"))
 				break;
 			Token tok = scanner.nextToken();
 

@@ -21,16 +21,21 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * Holds and reads options.  Like a properties file, but order is important
  * and events are generated when options are read.
  *
- * This should be used by CommandArgs and will do eventually.
+ * You can use the normal option syntax <tt>foo=bar</tt>.
+ * You can also use <tt>foo: bar</tt> and for longer options that
+ * span several lines <tt>foo { this can span lines }</tt>
  *
  * @author Steve Ratcliffe
  */
@@ -40,7 +45,7 @@ public class Options {
 	private final OptionProcessor proc;
 
 	// Used to prevent the same file being read more than once.
-	private final Set<String> readFiles = new HashSet<String>();
+	private final Collection<String> readFiles = new HashSet<String>();
 
 	public Options(OptionProcessor proc) {
 		this.proc = proc;
@@ -72,20 +77,40 @@ public class Options {
 		}
 
 		Reader r = new FileReader(filename);
-		readOptionFile(r);
+		readOptionFile(r, filename);
 	}
 
-	public void readOptionFile(Reader r) throws IOException {
+	public void readOptionFile(Reader r, String filename) {
 		BufferedReader br = new BufferedReader(r);
+		TokenScanner ts = new TokenScanner(filename, br);
+		ts.setExtraWordChars("-");
 
-		String line;
-		while ((line = br.readLine()) != null) {
-			line = line.trim();
-			if (line.length() == 0 || line.charAt(0) == '#')
+		while (!ts.isEndOfFile()) {
+			Token tok = ts.nextToken();
+			if (tok.isValue("#")) {
+				ts.skipLine();
 				continue;
+			}
 
-			Option opt = new Option(line);
-			proc.processOption(opt);
+			String key = tok.getValue();
+
+			tok = ts.nextToken();
+			if (tok.getType() != TokType.SYMBOL) {
+				ts.skipLine();
+				continue;
+			}
+
+			String punc = tok.getValue();
+			String val;
+			if (punc.equals(":") || punc.equals("=")) {
+				val = ts.readLine();
+			} else if (punc.equals("{")) {
+				val = ts.readUntil(TokType.SYMBOL, "}");
+			} else {
+				ts.skipLine();
+				continue;
+			}
+			proc.processOption(new Option(key, val));
 		}
 	}
 }

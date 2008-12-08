@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -30,7 +31,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  *
  * @author Steve Ratcliffe
  */
-public class SequenceRule implements Rule {
+public class SequenceRule implements Rule, Iterable<Rule> {
 	private final List<Rule> ruleList = new ArrayList<Rule>();
 	private boolean blocked;
 
@@ -49,12 +50,16 @@ public class SequenceRule implements Rule {
 	 * would never be called (because a fixed rule always returns an answer).
 	 */
 	public void add(Rule rule) {
-		if (blocked && !(rule instanceof FixedRule))
-			System.out.println("Warning: Unreachable rule, more general rules should be later in the file");
+		//if (blocked && !(rule instanceof FixedRule))
+		//	System.err.println("Warning: Unreachable rule (" + rule + "), more general rules should be later in the file");
 		
 		ruleList.add(rule);
 		if (rule instanceof FixedRule)
 			blocked = true;
+	}
+
+	public Iterator<Rule> iterator() {
+		return ruleList.listIterator();
 	}
 
 	public String toString() {

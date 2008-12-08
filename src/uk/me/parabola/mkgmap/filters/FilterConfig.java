@@ -45,6 +45,10 @@ public class FilterConfig {
 		this.resolution = resolution;
 	}
 
+	public Area getBounds() {
+		return bounds;
+	}
+
 	public void setBounds(Area bounds) {
 		this.bounds = bounds;
 	}

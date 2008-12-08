@@ -23,6 +23,8 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public interface Clipper {
+	public static final Clipper NULL_CLIPPER = new NullClipper();
+
 	/**
 	 * Clip a line and add the resulting line or lines (if any) to the
 	 * collector.

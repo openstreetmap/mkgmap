@@ -30,4 +30,8 @@ public class NotExistsOp extends EqualsOp {
 	public boolean eval(Element el) {
 		return el.getTag(first.value()) == null;
 	}
+
+	public String toString() {
+		return getFirst().toString() + "!=*";
+	}
 }

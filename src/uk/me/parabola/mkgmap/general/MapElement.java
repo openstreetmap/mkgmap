@@ -28,7 +28,7 @@ public abstract class MapElement {
 	private int type;
 
 	private int minResolution = 24;
-	private int maxResolution;
+	private int maxResolution = 24;
 
 	protected MapElement() {
 	}
@@ -37,6 +37,7 @@ public abstract class MapElement {
 		name = orig.name;
 		type = orig.type;
 		minResolution = orig.minResolution;
+		maxResolution = orig.maxResolution;
 	}
 
 	/**
