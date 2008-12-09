@@ -28,7 +28,7 @@ public abstract class MapElement {
 	private int type;
 
 	private int minResolution = 24;
-	private int maxResolution;
+	private int maxResolution = 24;
 
 	// So top code can link objects from here
 	private Object userData;
