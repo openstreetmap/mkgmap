@@ -78,7 +78,6 @@ public class RouteArc {
 		this.source = source;
 		this.dest = dest;
 
-		//this.length = calcDistance(nextCoord);
 		this.length = convertMeters(length);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(nextCoord);
@@ -160,17 +159,12 @@ public class RouteArc {
 	}
 
 	private static int convertMeters(double l) {
-		// XXX: length in feet/4 -- always?
-		return (int) (l * 3.28 / 4);
-	}
-
-	private int calcDistance(Coord other) {
-		Coord start = source.getCoord();
-
-		double d = start.distance(other);
-
-		log.debug("part length", d, ", feet", d * 3.28);
-		return convertMeters(d);
+		// XXX: really a constant factor?
+		// this factor derived by looking at a variety
+		// of arcs in an IMG of Berlin; 1/4 of
+		// what used to be here
+		double factor = 3.28 / 16;
+		return (int) (l * factor);
 	}
 
 	public void write(ImgFileWriter writer) {
