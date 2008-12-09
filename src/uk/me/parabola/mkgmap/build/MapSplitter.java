@@ -50,7 +50,8 @@ class MapSplitter {
 
 	// The maximum number of lines. NET points to lines in subdivision
 	// using bytes.
-	private static final int MAX_NUM_LINES = 0x100;
+	// Theoretical maximum about 0x100, which still gives errors.
+	private static final int MAX_NUM_LINES = 0xf0;
 
 	private final Zoom zoom;
 
