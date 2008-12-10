@@ -43,7 +43,11 @@ public class AreaClipper implements Clipper {
 			for (List<Coord> lco : list) {
 				MapLine nline = (MapLine) line.copy();
 				nline.setPoints(lco);
-				collector.addLine(nline);
+
+				if (nline instanceof MapRoad)
+					collector.addRoad((MapRoad) nline);
+				else
+					collector.addLine(nline);
 			}
 		}
 	}

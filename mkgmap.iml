@@ -20,5 +20,6 @@
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="library" name="resource" level="project" />
   </component>
+  <component name="ProjectRunConfigurationManager" />
 </module>
 

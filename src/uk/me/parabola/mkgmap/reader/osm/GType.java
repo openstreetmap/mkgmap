@@ -57,6 +57,8 @@ public class GType {
 
 	private final int priority;
 
+	private boolean road;
+
 	public GType(int featureKind, String type) {
 		priority = nextPriority();
 		this.featureKind = featureKind;
@@ -184,6 +186,7 @@ public class GType {
 	}
 
 	public void setRoadClass(int roadClass) {
+		road = true;
 		this.roadClass = roadClass;
 	}
 
@@ -192,7 +195,12 @@ public class GType {
 	}
 
 	public void setRoadSpeed(int roadSpeed) {
+		road = true;
 		this.roadSpeed = roadSpeed;
+	}
+
+	public boolean isRoad() {
+		return road;
 	}
 
 	public static void push() {

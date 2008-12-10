@@ -28,6 +28,7 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -56,6 +57,8 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
+
+	private int roadId;
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
@@ -205,8 +208,14 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, gt, way);
 		line.setPoints(way.getPoints());
 
-		if (way.isBoolTag("oneway"))
-            line.setDirection(true);
+		if (gt.isRoad()) {
+			if (way.isBoolTag("oneway"))
+				line.setDirection(true);
+			MapRoad r = new MapRoad(roadId++, line);
+			r.setRoadClass(gt.getRoadClass());
+			r.setSpeed(gt.getRoadSpeed());
+			line = r;
+		}
 
 		clipper.clipLine(line, collector);
 	}

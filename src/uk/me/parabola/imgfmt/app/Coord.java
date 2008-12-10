@@ -35,7 +35,7 @@ import uk.me.parabola.imgfmt.Utils;
  */
 public class Coord {
 	private final int latitude;
-	private final int longitude;
+	private int longitude;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -62,7 +62,7 @@ public class Coord {
 	}
 
 	public int getLongitude() {
-		return longitude;
+		return longitude & ~0xf0000000;
 	}
 
 	public long getId() {
@@ -70,7 +70,7 @@ public class Coord {
 	}
 	
 	public int hashCode() {
-		return latitude+longitude;
+		return latitude+getLongitude();
 	}
 
 	public boolean equals(Object obj) {
@@ -79,25 +79,23 @@ public class Coord {
 		if (obj.getClass() != getClass())
 			return false;
 		Coord other = (Coord) obj;
-		return latitude == other.latitude && longitude == other.longitude;
+		return latitude == other.latitude && getLongitude() == other.getLongitude();
 	}
 
 	/**
 	 * Distance to other point in meters.
 	 */
-	// XXX: move this into Utils?
 	public double distance(Coord other) {
 		double lat1 = Utils.toRadians(latitude);
-                double lat2 = Utils.toRadians(other.getLatitude());
-                double lon1 = Utils.toRadians(longitude);
-                double lon2 = Utils.toRadians(other.getLongitude());
+		double lat2 = Utils.toRadians(other.getLatitude());
+		double lon1 = Utils.toRadians(getLongitude());
+		double lon2 = Utils.toRadians(other.getLongitude());
 
-                double R = 6371000; // meters
-                double d = Math.acos(Math.sin(lat1)*Math.sin(lat2) +
-                                Math.cos(lat1)*Math.cos(lat2) *
-                                                Math.cos(lon2-lon1)) * R;
+		double R = 6371000; // meters
 
-		return d;
+		return Math.acos(Math.sin(lat1)*Math.sin(lat2) +
+				Math.cos(lat1)*Math.cos(lat2) *
+						Math.cos(lon2-lon1)) * R;
   	}
 
 	/**
@@ -106,13 +104,24 @@ public class Coord {
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return (latitude) + "/" + (longitude);
+		return (latitude) + "/" + (getLongitude());
 	}
 
 	public String toDegreeString() {
 		Formatter fmt = new Formatter();
 		return fmt.format("%.5f/%.5f",
 			Utils.toDegrees(latitude),
-			Utils.toDegrees(longitude)).toString();			
+			Utils.toDegrees(getLongitude())).toString();
+	}
+
+	public void incCount() {
+		if ((longitude & 0x80000000) == 0)
+		longitude |= 0x80000000;
+		else
+			longitude |= 0x40000000;
+	}
+
+	public boolean couldBeNode() {
+		return (longitude & 0x40000000) != 0;
 	}
 }

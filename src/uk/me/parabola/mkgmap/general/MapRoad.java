@@ -24,14 +24,16 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
  *
  * A road has several coordinates, and some of those coordinates can be
  * routing nodes.
- * 
+ *
+ * A lot of the information is kept in a {@link RoadDef} this is done
+ * because it needs to be shared between all sections and all levels
+ * of the same road.
+ *  
  * @author Steve Ratcliffe
  */
 public class MapRoad extends MapLine {
 
-	private long roadId;
-	private int roadClass;
-	private int speed;// So top code can link objects from here
+	private final long roadId;
 	private final RoadDef roadDef;
 
 	public MapRoad(long roadId, MapLine line) {

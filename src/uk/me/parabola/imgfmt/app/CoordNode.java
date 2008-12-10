@@ -17,6 +17,9 @@
 package uk.me.parabola.imgfmt.app;
 
 /**
+ * A coordinate that is known to be a routing node.  You can tell by the fact
+ * that getId() returns != 0.
+ * 
  * @author Steve Ratcliffe
  */
 public class CoordNode extends Coord {
@@ -51,7 +54,7 @@ public class CoordNode extends Coord {
 		roadCount++;
 	}
 
-	public boolean isNode() {
+	public boolean couldBeNode() {
 		return roadCount > 1;
 	}
 
