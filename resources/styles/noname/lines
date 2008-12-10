@@ -25,5 +25,5 @@ highway=primary [0x6 resolution 19]
 # Everything else goes as a thin line.
 highway=*
 	{name '${name} (${ref})' | '${ref}' }
-	[0x0 resolution 22]
+	[0x7 resolution 22]
 
