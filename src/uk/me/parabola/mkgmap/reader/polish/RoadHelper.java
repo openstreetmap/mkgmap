@@ -110,7 +110,8 @@ class RoadHelper {
 	public MapRoad makeRoad(MapLine l) {
 		assert roadId != 0;
 
-		log.debug("finishing road id " + roadId);
+		if (log.isDebugEnabled())
+			log.debug("finishing road id " + roadId);
 
 		MapRoad road = new MapRoad(roadId, l);
 
@@ -131,9 +132,10 @@ class RoadHelper {
 			int n = ni.index;
 			if (n == 0)
 				starts = true;
-			else if (n < nodes.size())
-				intern = true; // XXX todo: fix or remove
-			log.debug("road has " + points.size() +" points");
+			else if (n < points.size() - 1)
+				intern = true;
+			if (log.isDebugEnabled())
+				log.debug("road has " + points.size() +" points");
 			Coord coord = points.get(n);
 			long id = coord.getId();
 			if (id == 0) {
@@ -148,7 +150,7 @@ class RoadHelper {
 			}
 		}
 		road.setStartsWithNode(starts);
-		road.setInternalNodes(nodes.size()>2);
+		road.setInternalNodes(intern);
 		return road;
 	}
 
@@ -165,7 +167,8 @@ class RoadHelper {
 			index = Integer.parseInt(sInd);
 			nodeId = Integer.parseInt(sNode);
 			boundary = Integer.parseInt(sBound) > 0;
-			log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
+			if (log.isDebugEnabled())
+				log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
 		}
 	}
 }
