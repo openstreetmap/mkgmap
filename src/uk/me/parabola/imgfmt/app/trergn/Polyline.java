@@ -62,8 +62,10 @@ public class Polyline extends MapObject {
 	 */
 	public void write(ImgFileWriter file) {
 		// If there is nothing to do, then do nothing.
-		if (points.size() < 2)
+		if (points.size() < 2) {
+			log.debug("less than two points, not writing");
 			return;
+		}
 
 		// Prepare for writing by doing all the required calculations.
 
@@ -77,7 +79,9 @@ public class Polyline extends MapObject {
 			b1 |= 0x40;  // Polylines only.
 
 		int blen = bw.getLength() - 1; // allow for the sizes
-		if (blen > 255)
+		assert blen > 0 : "zero length bitstream";
+		assert blen < 0x10000 : "bitstream too long " + blen;
+		if (blen >= 0x100)
 			b1 |= 0x80;
 
 		file.put(b1);
@@ -102,11 +106,10 @@ public class Polyline extends MapObject {
 		file.putChar((char) getDeltaLat());
 		log.debug("out center", getDeltaLat(), getDeltaLong());
 
-		if (blen > 255) {
-			file.putChar((char) (blen & 0xffff));
-		} else {
+		if (blen < 0x100)
 			file.put((byte) (blen & 0xff));
-		}
+		else
+			file.putChar((char) (blen & 0xffff));
 
 		file.put(bw.getBytes(), 0, blen+1);
 	}
