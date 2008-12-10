@@ -95,7 +95,7 @@ public class Polyline extends MapObject {
 		// so that we can change it to the index in the net section
 		if (roaddef != null) {
 			roaddef.addLabel(getLabel());
-			roaddef.addOffsetTarget(file, 0x800000 | (loff & 0x400000));
+			roaddef.addOffsetTarget(file.position(), 0x800000 | (loff & 0x400000));
 		}
 
 		file.put3(loff);

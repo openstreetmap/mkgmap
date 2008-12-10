@@ -200,14 +200,35 @@ public class RoadDef {
 	 * Everything that's relevant for writing to RGN.
 	 */
 
-	private IntList rgnOffsets = new IntList(4);
+	class Offset {
+		int position;
+		int flags;
+
+		Offset(int position, int flags) {
+			this.position = position;
+			this.flags = flags;
+		}
+
+		int getPosition() {
+			return position;
+		}
+
+		int getFlags() {
+			return flags;
+		}
+	}
+
+	private List<Offset> rgnOffsets = new ArrayList<Offset>(4);
 
 	/**
 	 * Add a target location in the RGN section where we should write the
 	 * offset of this road def when it is written to NET.
+	 *
+	 * @param offset The offset in RGN.
+	 * @param flags The flags that should be set.
 	 */
-	public void addOffsetTarget(ImgFileWriter writer, int ormask) {
-		rgnOffsets.add(writer.position() | ormask);
+	public void addOffsetTarget(int position, int flags) {
+		rgnOffsets.add(new Offset(position, flags));
 	}
 
 	/**
@@ -215,11 +236,10 @@ public class RoadDef {
 	 * @param rgn A writer for the rgn file.
 	 */
 	void writeRgnOffsets(ImgFileWriter rgn) {
-		int len = rgnOffsets.size();
-		for (int i = 0; i < len; i++) {
-			int off = rgnOffsets.get(i);
-			rgn.position(off & 0x3fffff);
-			rgn.put3(offsetNet1 | (off & 0xc00000));
+		assert offsetNet1 < 0x400000 : "NET 1 offset too large";
+		for (Offset off : rgnOffsets) {
+			rgn.position(off.getPosition());
+			rgn.put3(offsetNet1 | off.getFlags());
 		}
 	}
 
