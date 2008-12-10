@@ -83,7 +83,7 @@ public class RoadDef {
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
-	private int roadLength = 300; // XXX set the road length
+	private int roadLength = 0; // XXX set the road length
 
 	// There can be up to 4 labels for the same road.
 	private static final int MAX_LABELS = 4;
@@ -192,8 +192,8 @@ public class RoadDef {
 	 * Set the road length (in meters).
 	 */
 	public void setLength(double l) {
-		// XXX
-		log.warn("not setting road length:", l);
+		// XXX: this is from test.display.NetDisplay, possibly varies
+		roadLength = (int) l / 2;
 	}
 
 	/*
