@@ -133,7 +133,7 @@ class LinePreparer {
 				bw.put1(dy < 0);
 			}
 			if (extraBit)
-				bw.put1(nodes[i/2]);
+				bw.put1(nodes[i/2+1]);
 		}
 
 		if (log.isDebugEnabled())

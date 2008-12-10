@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.IntList;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.OffsetWriterList;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
 
@@ -57,8 +55,8 @@ public class RoadDef {
 	private int offsetNet1;
 
 	// for diagnostic purposes
-	private long roadId;
-	private String name;
+	private final long roadId;
+	private final String name;
 
 	public RoadDef(long roadId, String name) {
 		this.roadId = roadId;
@@ -83,7 +81,7 @@ public class RoadDef {
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
-	private int roadLength = 0; // XXX set the road length
+	private int roadLength; // XXX set the road length
 
 	// There can be up to 4 labels for the same road.
 	private static final int MAX_LABELS = 4;
@@ -92,7 +90,7 @@ public class RoadDef {
 	private int numlabels;
 
 	// this may stay
-	@Deprecated private List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
+	@Deprecated private final List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
 
 	/**
 	 * This is for writing to NET1.
@@ -218,13 +216,13 @@ public class RoadDef {
 		}
 	}
 
-	private List<Offset> rgnOffsets = new ArrayList<Offset>(4);
+	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
 
 	/**
 	 * Add a target location in the RGN section where we should write the
 	 * offset of this road def when it is written to NET.
 	 *
-	 * @param offset The offset in RGN.
+	 * @param position The offset in RGN.
 	 * @param flags The flags that should be set.
 	 */
 	public void addOffsetTarget(int position, int flags) {
@@ -243,7 +241,7 @@ public class RoadDef {
 		}
 	}
 
-	private boolean internalNodes = true;;
+	private boolean internalNodes = true;
 
 	/**
 	 * Does the road have any nodes besides start and end?
@@ -271,7 +269,7 @@ public class RoadDef {
 	// the first point in the road is a node (the above routing node)
 	boolean startsWithNode = true;
 	// number of nodes in the road
-	int nnodes = 0;
+	int nnodes;
 
 	public static final int NOD2_MASK_SPEED = 0x0e;
 	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
