@@ -175,13 +175,16 @@ class LinePreparer {
 		int lastLat = 0;
 		int lastLong = 0;
 		boolean xDiffSign = false; // The long values have different sign
+		boolean yDiffSign = false; // The lat values have different sign
 		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
 		int ySign = 0;  // As above for lat.
 		int xBits = 0;  // Number of bits needed for long
 		int yBits = 0;  // Number of bits needed for lat.
-		int off = 0;
-		boolean yDiffSign = false; // The lat values have different sign
-		for (Coord co : points) {
+
+		// index of first point in a series of identical coords (after shift)
+		int firstsame = 0;
+		for (int i = 0; i < points.size(); i++) {
+			Coord co = points.get(i);
 
 			int lat = co.getLatitude() >> shift;
 			int lon = co.getLongitude() >> shift;
@@ -194,6 +197,15 @@ class LinePreparer {
 				continue;
 			}
 
+			int dx = lon - lastLong;
+			int dy = lat - lastLat;
+
+			lastLong = lon;
+			lastLat = lat;
+
+			if (dx != 0 || dy != 0)
+				firstsame = i;
+
 			// Current thought is that the node indicator is set when
 			// the point is a node. There's a separate first extra bit
 			// that always appears to be false. The last points' extra bit
@@ -201,17 +213,16 @@ class LinePreparer {
 			// polyline making up the road.
 			// Todo: special case the last bit
 			if (extraBit) {
-				if (off / 2 < nodes.length - 1)
-					nodes[off / 2] = co.getId() != 0;
+				boolean extra;
+				if (i < nodes.length - 1)
+					extra = co.getId() != 0;
 				else
-					nodes[off / 2] = false; // XXX
+					extra = false; // XXX
+				// only the first among a range of equal points
+				// is written, so set the bit if any of the points
+				// is a node
+				nodes[firstsame] = nodes[firstsame] || extra;
 			}
-
-			int dx = lon - lastLong;
-			int dy = lat - lastLat;
-
-			lastLong = lon;
-			lastLat = lat;
 
 			// See if they can all be the same sign.
 			if (!xDiffSign) {
@@ -243,9 +254,8 @@ class LinePreparer {
 				yBits = nbits;
 
 			// Save the deltas
-			deltas[off] = dx;
-			deltas[off + 1] = dy;
-			off += 2;
+			deltas[2*i] = dx;
+			deltas[2*i + 1] = dy;
 		}
 
 		// Now we need to know the 'base' number of bits used to represent
