@@ -35,7 +35,7 @@ import uk.me.parabola.imgfmt.Utils;
  */
 public class Coord {
 	private final int latitude;
-	private int longitude;
+	private final int longitude;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -62,15 +62,15 @@ public class Coord {
 	}
 
 	public int getLongitude() {
-		return longitude & ~0xf0000000;
+		return longitude;
 	}
 
 	public long getId() {
 		return 0;
 	}
-	
+
 	public int hashCode() {
-		return latitude+getLongitude();
+		return latitude+longitude;
 	}
 
 	public boolean equals(Object obj) {
@@ -79,7 +79,7 @@ public class Coord {
 		if (obj.getClass() != getClass())
 			return false;
 		Coord other = (Coord) obj;
-		return latitude == other.latitude && getLongitude() == other.getLongitude();
+		return latitude == other.latitude && longitude == other.longitude;
 	}
 
 	/**
@@ -104,24 +104,13 @@ public class Coord {
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return (latitude) + "/" + (getLongitude());
+		return (latitude) + "/" + (longitude);
 	}
 
 	public String toDegreeString() {
 		Formatter fmt = new Formatter();
 		return fmt.format("%.5f/%.5f",
 			Utils.toDegrees(latitude),
-			Utils.toDegrees(getLongitude())).toString();
-	}
-
-	public void incCount() {
-		if ((longitude & 0x80000000) == 0)
-		longitude |= 0x80000000;
-		else
-			longitude |= 0x40000000;
-	}
-
-	public boolean couldBeNode() {
-		return (longitude & 0x40000000) != 0;
+			Utils.toDegrees(longitude)).toString();
 	}
 }

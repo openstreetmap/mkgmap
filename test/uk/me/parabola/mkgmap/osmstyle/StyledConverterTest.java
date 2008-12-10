@@ -25,6 +25,7 @@ import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -97,6 +98,9 @@ public class StyledConverterTest {
 			}
 
 			public void addShape(MapShape shape) {
+			}
+
+			public void addRoad(MapRoad road) {
 			}
 
 			public void finish() {
