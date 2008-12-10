@@ -401,7 +401,7 @@ public class RoadDef {
 	 * These affect various parts.
 	 */
 
-	private int roadClass;
+	private int roadClass = -1;
 
 	// road class that goes in various places (really?)
 	public void setRoadClass(int roadClass) {
@@ -419,6 +419,7 @@ public class RoadDef {
 	}
 
 	public int getRoadClass() {
+		assert roadClass >= 0 : "roadClass not set";
 		return roadClass;
 	}
 

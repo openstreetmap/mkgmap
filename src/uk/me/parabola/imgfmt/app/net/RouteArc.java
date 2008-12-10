@@ -81,7 +81,8 @@ public class RouteArc {
 		this.length = convertMeters(length);
 		log.debug("set length", (int)this.length);
 		this.initialHeading = calcAngle(nextCoord);
-		setDestinationClass(dest.getNodeClass());
+		// too early: dest.nodeClass may still increase
+		//setDestinationClass(dest.getNodeClass());
 	}
 
 	public RouteNode getSource() {
@@ -170,6 +171,9 @@ public class RouteArc {
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
 		log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
+
+		// fetch destination class -- will have been set correctly by now
+		setDestinationClass(dest.getNodeClass());
 
 		// determine how to write length and curve bit
 		int[] lendat = encodeLength();
@@ -281,6 +285,7 @@ public class RouteArc {
 	}
 
 	public void setDestinationClass(int destinationClass) {
+		log.debug("setting destination class", destinationClass);
 		flagA |= (destinationClass & MASK_DESTCLASS);
 	}
 

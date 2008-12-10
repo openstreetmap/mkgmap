@@ -117,6 +117,7 @@ public class RouteNode {
 			arc.setNewDir();
 		arcs.add(arc);
 		int cl = arc.getRoadDef().getRoadClass();
+		log.debug("adding arc", arc.getRoadDef(), cl);
 		if (cl > nodeClass)
 			nodeClass = cl;
 	}

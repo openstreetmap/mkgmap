@@ -513,11 +513,11 @@ public class MapArea implements MapDataSource {
 		int ycell = (y - ybase) / dy;
 
 		if (xcell < 0) {
-			log.warn("xcell was", xcell);
+			log.warn("xcell was", xcell, "x", x, "xbase", xbase);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.warn("ycell was", ycell);
+			log.warn("ycell was", ycell, "y", y, "ybase", ybase);
 			ycell = 0;
 		}
 		
