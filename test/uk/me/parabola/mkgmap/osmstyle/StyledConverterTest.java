@@ -74,6 +74,22 @@ public class StyledConverterTest {
 		assertEquals("line", 0x12, lines.get(0).getType());
 	}
 
+	/**
+	 * Test the overlay feature, when one line is duplicated with different
+	 * types.
+	 */
+	@Test
+	public void testOverlay() {
+		Way way = makeWay();
+		way.addTag("highway", "overlay");
+		converter.convertWay(way);
+
+		assertEquals("lines produced", 3, lines.size());
+		assertEquals("first line is 1", 1, lines.get(0).getType());
+		assertEquals("second line is 2", 2, lines.get(1).getType());
+		assertEquals("third line is 3", 3, lines.get(2).getType());
+	}
+
 	private Way makeWay() {
 		Way way = new Way();
 		way.addPoint(new Coord(100, 100));

@@ -25,6 +25,10 @@ import org.junit.Test;
 
 
 public class ElementTest {
+	/*
+	 * Test the iterator.  It is kind of special in that it iterates over
+	 * strings which are "key=value" and also the wildcard version "key=*".
+	 */
 	@Test
 	public void testIterator() {
 		Element el = new Way();

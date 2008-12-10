@@ -10,3 +10,7 @@ highway=other {set is_a_road = yes; }
 is_a_road = yes [0x12]
 
 highway=other [0x8]
+
+
+# A test for overlays
+highway = overlay [0x142]

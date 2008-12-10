@@ -55,8 +55,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @param point Point to add.
 	 */
 	public void addPoint(MapPoint point) {
-		updateOverview(pointOverviews, makeMapType(point.getType(), point.getSubType()),
-				point.getMinResolution());
+		updateOverview(pointOverviews, point.getType(), point.getMinResolution());
 
 		points.add(point);
 	}

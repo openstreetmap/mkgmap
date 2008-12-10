@@ -26,20 +26,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
-import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -76,6 +75,7 @@ public class StyleImpl implements Style {
 	private static final String FILE_INFO = "info";
 	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
+	private static final String FILE_OVERLAYS = "overlays";
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -93,11 +93,12 @@ public class StyleImpl implements Style {
 	// Options from the option file that are used outside this file.
 	private final Map<String, String> generalOptions = new HashMap<String, String>();
 
-	//private RuleSet ways = new RuleSet();
 	private final RuleSet lines = new RuleSet();
 	private final RuleSet polygons = new RuleSet();
 	private final RuleSet nodes = new RuleSet();
 	private final RuleSet relations = new RuleSet();
+
+	private OverlayReader overlays;
 
 	/**
 	 * Create a style from the given location and name.
@@ -124,6 +125,8 @@ public class StyleImpl implements Style {
 		readOptions();
 		readRules();
 
+		readOverlays();
+
 		readMapFeatures();
 		if (baseStyle != null)
 			mergeRules(baseStyle);
@@ -141,19 +144,54 @@ public class StyleImpl implements Style {
 		return info;
 	}
 
-	public Map<String, Rule> getWays() {
-		Map<String, Rule> m = new LinkedHashMap<String, Rule>();
-		m.putAll(lines.getMap());
-		m.putAll(polygons.getMap());
-		return m;
+	/**
+	 * After the style is loaded we override any options that might
+	 * have been set in the style itself with the command line options.
+	 *
+	 * We may have to filter some options that we don't ever want to
+	 * set on the command line.
+	 *
+	 * @param config The command line options.
+	 */
+	public void applyOptionOverride(Properties config) {
+		Set<Map.Entry<Object,Object>> entries = config.entrySet();
+		for (Map.Entry<Object,Object> ent : entries) {
+			String key = (String) ent.getKey();
+			String val = (String) ent.getValue();
+
+			if (!DONT_OVERRIDE.contains(key))
+				if (key.equals("name-tag-list")) {
+					// The name-tag-list allows you to redifine what you want to use
+					// as the name of a feature.  By default this is just 'name', but
+					// you can supply a list of tags to use
+					// instead eg. "name:en,int_name,name" or you could use some
+					// completely different tag...
+					nameTagList = val.split("[,\\s]+");
+				} else if (OPTION_LIST.contains(key)) {
+					// Simple options that have string value.  Perhaps we should alow
+					// anything here?
+					generalOptions.put(key, val);
+				}
+		}
 	}
 
-	public Map<String, Rule> getNodes() {
-		return nodes.getMap();
+	public RuleSet getNodeRules() {
+		return nodes;
 	}
 
-	public Map<String, Rule> getRelations() {
-		return relations.getMap();
+	public RuleSet getWayRules() {
+		RuleSet r = new RuleSet();
+		r.addAll(lines);
+		r.addAll(polygons);
+		return r;
+	}
+
+	public RuleSet getRelationRules() {
+		return relations;
+	}
+
+	public OverlayReader getOverlays() {
+		return overlays;
 	}
 
 	private void readRules() {
@@ -161,7 +199,7 @@ public class StyleImpl implements Style {
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
-		
+
 		try {
 			RuleFileReader reader = new RuleFileReader(0, levels, relations);
 			reader.load(fileLoader, "relations");
@@ -225,7 +263,7 @@ public class StyleImpl implements Style {
 	 */
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		addBackwardCompatibleRules();
-		
+
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
 			lines.add(me.getKey(), rule);
@@ -282,37 +320,6 @@ public class StyleImpl implements Style {
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
 		return new FixedRule(gt);
-	}
-
-	/**
-	 * After the style is loaded we override any options that might
-	 * have been set in the style itself with the command line options.
-	 *
-	 * We may have to filter some options that we don't ever want to
-	 * set on the command line.
-	 *
-	 * @param config The command line options.
-	 */
-	public void applyOptionOverride(Properties config) {
-		Set<Map.Entry<Object,Object>> entries = config.entrySet();
-		for (Map.Entry<Object,Object> ent : entries) {
-			String key = (String) ent.getKey();
-			String val = (String) ent.getValue();
-
-			if (!DONT_OVERRIDE.contains(key))
-				if (key.equals("name-tag-list")) {
-					// The name-tag-list allows you to redifine what you want to use
-					// as the name of a feature.  By default this is just 'name', but
-					// you can supply a list of tags to use
-					// instead eg. "name:en,int_name,name" or you could use some
-					// completely different tag...
-					nameTagList = val.split("[,\\s]+");
-				} else if (OPTION_LIST.contains(key)) {
-					// Simple options that have string value.  Perhaps we should alow
-					// anything here?
-					generalOptions.put(key, val);
-				}
-		}
 	}
 
 	/**
@@ -384,6 +391,17 @@ public class StyleImpl implements Style {
 			log.debug("no info file");
 		} catch (IOException e) {
 			log.debug("failed reading info file");
+		}
+	}
+
+	private void readOverlays() {
+		try {
+			Reader r = fileLoader.open(FILE_OVERLAYS);
+			overlays = new OverlayReader(r, FILE_OVERLAYS);
+			overlays.readOverlays();
+		} catch (FileNotFoundException e) {
+			// this is perfectly normal
+			log.debug("no overlay file");
 		}
 	}
 

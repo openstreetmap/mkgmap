@@ -16,9 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
@@ -49,22 +46,38 @@ public class StyledConverter implements OsmConverter {
 
 	private final String[] nameTagList;
 
-	private Map<String, Rule> wayValueRules = new HashMap<String, Rule>();
-	private Map<String, Rule> nodeValueRules = new HashMap<String, Rule>();
-	private Map<String, Rule> relationValueRules = new HashMap<String, Rule>();
-
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
+
+	private final Rule wayRules;
+	private final Rule nodeRules;
+	private final Rule relationRules;
+
+	private LineAdder lineAdder = new LineAdder() {
+		public void add(MapLine element) {
+			// this will do more when roads are separate to lines.
+			collector.addLine(element);
+		}
+	};
 
 	public StyledConverter(Style style, MapCollector collector) {
 		this.collector = collector;
 
 		nameTagList = style.getNameTagList();
+		wayRules = style.getWayRules();
+		nodeRules = style.getNodeRules();
+		relationRules = style.getRelationRules();
 
-		wayValueRules = style.getWays();
-		nodeValueRules = style.getNodes();
-		relationValueRules = style.getRelations();
+		final OverlayReader overlays = style.getOverlays();
+		if (overlays != null) {
+			lineAdder = new LineAdder() {
+				LineAdder origAdder = lineAdder;
+				public void add(MapLine element) {
+					overlays.addLine(element, origAdder);
+				}
+			};
+		}
 	}
 
 	/**
@@ -82,19 +95,7 @@ public class StyledConverter implements OsmConverter {
 
 		preConvertRules(way);
 
-		GType foundType = null;
-		for (String tagKey : way) {
-            Rule rule = wayValueRules.get(tagKey);
-			if (rule != null) {
-				GType type = rule.resolveType(way);
-				if (type != null) {
-					if (foundType == null || type.isBetterPriority(foundType)) {
-						foundType = type;
-					}
-				}
-			}
-		}
-
+		GType foundType = wayRules.resolveType(way);
 		if (foundType == null)
 			return;
 
@@ -115,18 +116,7 @@ public class StyledConverter implements OsmConverter {
 	public void convertNode(Node node) {
 		preConvertRules(node);
 
-		GType foundType = null;
-		for (String tagKey : node) {
-			Rule rule = nodeValueRules.get(tagKey);
-			if (rule != null) {
-				GType type = rule.resolveType(node);
-				if (type != null) {
-					if (foundType == null || type.isBetterPriority(foundType))
-						foundType = type;
-				}
-			}
-		}
-
+		GType foundType = nodeRules.resolveType(node);
 		if (foundType == null)
 			return;
 
@@ -193,11 +183,9 @@ public class StyledConverter implements OsmConverter {
 	 * @param relation The relation to convert.
 	 */
 	public void convertRelation(Relation relation) {
-		for (String tagKey : relation) {
-            Rule rule = relationValueRules.get(tagKey);
-			if (rule != null)
-				rule.resolveType(relation);
-		}
+		// Relations never resolve to a GType and so we ignore the return
+		// value.
+		relationRules.resolveType(relation);
 	}
 
 	private void addLine(Way way, GType gt) {
@@ -208,7 +196,7 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway"))
             line.setDirection(true);
 
-		clipper.clipLine(line, collector);
+		clipper.clipLine(line, lineAdder);
 	}
 
 	private void addShape(Way way, GType gt) {
@@ -225,7 +213,6 @@ public class StyledConverter implements OsmConverter {
 
 		MapPoint mp = new MapPoint();
 		elementSetup(mp, gt, node);
-		mp.setSubType(gt.getSubtype());
 		mp.setLocation(node.getLocation());
 
 		collector.addPoint(mp);

@@ -41,7 +41,6 @@ public class GType {
 
 	private final int featureKind;
 	private final int type;
-	private final int subtype;
 
 	private int minResolution = 24;
 	private int maxResolution = 24;
@@ -61,14 +60,7 @@ public class GType {
 		priority = nextPriority();
 		this.featureKind = featureKind;
 		try {
-			int t = Integer.decode(type);
-			if (t > 0xff) {
-				this.type = t >> 8;
-				this.subtype = t & 0xff;
-			} else {
-				this.type = t;
-				this.subtype = 0;
-			}
+			this.type = Integer.decode(type);
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type);
 			throw new ExitException("non-numeric type in map-features file");
@@ -84,8 +76,7 @@ public class GType {
 
 		this.featureKind = featureKind;
 		try {
-			this.type = Integer.decode(type);
-			this.subtype = Integer.decode(subtype);
+			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type + ' ' + subtype);
 			throw new ExitException("non-numeric type in map-features file");
@@ -98,10 +89,6 @@ public class GType {
 
 	public int getType() {
 		return type;
-	}
-
-	public int getSubtype() {
-		return subtype;
 	}
 
 	public int getMinResolution() {

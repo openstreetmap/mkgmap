@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
-import uk.me.parabola.log.Logger;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -30,12 +29,6 @@ import uk.me.parabola.log.Logger;
  * @author Steve Ratcliffe
  */
 public class Point extends MapObject {
-	private static final Logger log = Logger.getLogger(Point.class);
-
-	// Points can have a subtype, eg for restaurant the subtype might be the
-	// kind of food served.
-	private int subtype;
-
 	// Points can link to a POIRecord
 	private POIRecord poi;
 
@@ -50,27 +43,30 @@ public class Point extends MapObject {
 	 * @param file A reference to the file that should be written to.
 	 */
 	public void write(ImgFileWriter file) {
-		byte b = (byte) getType();
-		file.put(b);
-		log.debug("writing point:", b);
+		boolean hasSubtype = false;
+		int type = getType();
+		byte subtype = 0;
+		if (type > 0xff) {
+			hasSubtype = true;
+			subtype = (byte) type;
+			type >>= 8;
+		}
+
+		file.put((byte) type);
 
 		int off = getLabel().getOffset();
 		if (poi != null) {
 			off = poi.getOffset();
 			off |= 0x400000;
 		}
-		if (subtype != 0)
+		if (hasSubtype)
 			off |= 0x800000;
 
 		file.put3(off);
 		file.putChar((char) getDeltaLong());
 		file.putChar((char) getDeltaLat());
-		if (subtype != 0)
-			file.put((byte) subtype);
-	}
-
-	public void setSubtype(int subtype) {
-		this.subtype = subtype;
+		if (hasSubtype)
+			file.put(subtype);
 	}
 
 	public void setPOIRecord(POIRecord poirecord) {

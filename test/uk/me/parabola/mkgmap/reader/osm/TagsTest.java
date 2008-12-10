@@ -21,9 +21,7 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-/**
- * @author Steve Ratcliffe
- */
+
 public class TagsTest {
 	private static final String[][] SMALL_SET = {
 			{"highway", "primary"},
@@ -61,6 +59,9 @@ public class TagsTest {
 		}
 	}
 
+	/**
+	 * Larger than the initial size, and so will need to be resized.
+	 */
 	@Test
 	public void testLargeSet() {
 		Tags tags = new Tags();
@@ -73,6 +74,9 @@ public class TagsTest {
 		}
 	}
 
+	/**
+	 * Test removing tags.
+	 */
 	@Test
 	public void testRemove() {
 		Tags tags = new Tags();

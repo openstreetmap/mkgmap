@@ -15,8 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
  * A point on the map.  This will appear as a symbol on the map and it will
@@ -25,22 +25,7 @@ import uk.me.parabola.imgfmt.app.Area;
  * @author Steve Ratcliffe
  */
 public class MapPoint extends MapElement {
-	private int subType;
 	private Coord location;
-
-	/**
-	 * Points have a subtype as well as a type.  This is the value that will
-	 * be actually stored in the .img file.
-	 *
-	 * @return The subtype code.
-	 */
-	public int getSubType() {
-		return subType;
-	}
-
-	public void setSubType(int subType) {
-		this.subType = subType;
-	}
 
 	public Coord getLocation() {
 		return location;
@@ -49,7 +34,6 @@ public class MapPoint extends MapElement {
 	public void setLocation(Coord location) {
 		this.location = location;
 	}
-
 
 	/**
 	 * Get the region that this element covers.

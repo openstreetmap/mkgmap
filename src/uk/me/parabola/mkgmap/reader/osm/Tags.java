@@ -45,6 +45,9 @@ public class Tags implements Iterable<String> {
 
 	private ExtraEntry extra;
 
+	/**
+	 * Used for tags that are added during iteration.
+	 */
 	static class ExtraEntry {
 		private String key;
 		private String value;
@@ -149,12 +152,20 @@ public class Tags implements Iterable<String> {
 		return null;
 	}
 
+	/**
+	 * Iterates over the tags in a special way that is used to look up in
+	 * the rules.
+	 *
+	 * If you have the tags a=b, c=d then you will get the following strings
+	 * returned: "a=b", "a=*", "c=d", "c=*".
+	 */
 	public Iterator<String> iterator() {
 		return new Iterator<String>() {
 			private int pos;
 			private String wild;
 			private boolean doWild;
 
+			// Set the extra field in the containing class.
 			{ extra = new ExtraEntry(); }
 
 			public boolean hasNext() {
@@ -171,6 +182,10 @@ public class Tags implements Iterable<String> {
 				return false;
 			}
 
+			/**
+			 * Get the next tag as a single string.  Also returns wild card
+			 * entries.
+			 */
 			public String next() {
 				if (doWild) {
 					doWild = false;

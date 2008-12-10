@@ -365,7 +365,6 @@ public class MapBuilder {
 
 			Point p = div.createPoint(name);
 			p.setType(point.getType());
-			p.setSubtype(point.getSubType());
 
 			Coord coord = point.getLocation();
 			p.setLatitude(coord.getLatitude());

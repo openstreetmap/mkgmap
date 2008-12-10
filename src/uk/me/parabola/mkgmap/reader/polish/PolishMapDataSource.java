@@ -230,8 +230,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private void point(String name, String value) {
 		if (name.equals("Type")) {
 			Integer type = Integer.decode(value);
-			point.setType((type >> 8) & 0xff);
-			point.setSubType(type & 0xff);
+			point.setType(type);
 		}  else if (name.startsWith("Data")) {
 			Coord co = makeCoord(value);
 			setResolution(point, name);

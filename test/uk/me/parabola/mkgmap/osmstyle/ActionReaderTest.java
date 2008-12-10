@@ -33,6 +33,10 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+/**
+ * Test the possible actions that can appear in an action block.
+ * These are run before any rule is finally matched.
+ */
 public class ActionReaderTest {
 
 	@Test
