@@ -254,8 +254,8 @@ class LinePreparer {
 				yBits = nbits;
 
 			// Save the deltas
-			deltas[2*i] = dx;
-			deltas[2*i + 1] = dy;
+			deltas[2*(i-1)] = dx;
+			deltas[2*(i-1) + 1] = dy;
 		}
 
 		// Now we need to know the 'base' number of bits used to represent
