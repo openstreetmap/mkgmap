@@ -39,6 +39,14 @@ import java.util.List;
 public class Polyline extends MapObject {
 	private static final Logger log = Logger.getLogger(Polyline.class);
 
+	// flags in the label offset
+	public static final int FLAG_NETINFO = 0x800000;
+	public static final int FLAG_EXTRABIT = 0x400000;;
+
+	// flags in the type
+	public static final int FLAG_DIR = 0x40;
+	public static final int FLAG_2BYTE_LEN = 0x80;
+
 	private int number;
 
 	// Reference to NET section, if any
@@ -76,26 +84,27 @@ public class Polyline extends MapObject {
 		// The type of feature, also contains a couple of flags hidden inside.
 		byte b1 = (byte) getType();
 		if (direction)
-			b1 |= 0x40;  // Polylines only.
+			b1 |= FLAG_DIR;  // Polylines only.
 
 		int blen = bw.getLength() - 1; // allow for the sizes
 		assert blen > 0 : "zero length bitstream";
 		assert blen < 0x10000 : "bitstream too long " + blen;
 		if (blen >= 0x100)
-			b1 |= 0x80;
+			b1 |= FLAG_2BYTE_LEN;
 
 		file.put(b1);
 
 		// The label, contains a couple of flags within it.
 		int loff = getLabel().getOffset();
 		if (w.isExtraBit())
-			loff |= 0x400000;
+			loff |= FLAG_EXTRABIT;
 
 		// If this is a road, then we need to save the offset of the label
 		// so that we can change it to the index in the net section
 		if (roaddef != null) {
 			roaddef.addLabel(getLabel());
-			roaddef.addOffsetTarget(file.position(), 0x800000 | (loff & 0x400000));
+			roaddef.addOffsetTarget(file.position(),
+					FLAG_NETINFO | (loff & FLAG_EXTRABIT));
 		}
 
 		file.put3(loff);
