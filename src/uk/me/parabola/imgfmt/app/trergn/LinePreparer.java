@@ -47,10 +47,13 @@ class LinePreparer {
 	private boolean[] nodes;
 
 	LinePreparer(Polyline line) {
-		if (line.isRoad() && line.roadHasInternalNodes())
+		if (line.isRoad() && 
+			line.getSubdiv().getZoom().getLevel() == 0 &&
+			line.roadHasInternalNodes()) {
 			// it might be safe to write the extra bits regardless,
 			// but who knows
 			extraBit = true;
+		}
 
 		polyline = line;
 		calcLatLong();
