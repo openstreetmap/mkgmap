@@ -87,10 +87,7 @@ class RoadHelper {
 		if (nodes.containsKey(nodeIndex))
 			log.warn("duplicate nodeidx %d, overwriting", nodeIndex);
 		String[] f = value.split(",");
-		// f[0] is the index into the line
-		// f[1] is the node id
-		// f[2] is whether it's a boundary node (?)
-		nodes.put(nodeIndex, new NodeIndex(f[0], f[1], f[2]));
+		nodes.put(nodeIndex, new NodeIndex(f));
 	}
 
 	public void setDirIndicator(boolean dir) {
@@ -161,12 +158,16 @@ class RoadHelper {
 	private static class NodeIndex {
 		private int index;
 		private int nodeId;
-		private boolean boundary;
+		private boolean boundary = false;
 
-		private NodeIndex(String sInd, String sNode, String sBound) {
-			index = Integer.parseInt(sInd);
-			nodeId = Integer.parseInt(sNode);
-			boundary = Integer.parseInt(sBound) > 0;
+		private NodeIndex(String[] f) {
+			// f[0] is the index into the line
+			// f[1] is the node id
+			// f[2] is whether it's a boundary node
+			index = Integer.parseInt(f[0]);
+			nodeId = Integer.parseInt(f[1]);
+			if (f.length > 2)
+				boundary = Integer.parseInt(f[2]) > 0;
 			if (log.isDebugEnabled())
 				log.debug("ind=%d, node=%d, bound=%b\n", index, nodeId, boundary);
 		}
