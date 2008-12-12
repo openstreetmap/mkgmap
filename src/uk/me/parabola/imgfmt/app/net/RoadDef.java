@@ -93,7 +93,6 @@ public class RoadDef {
 
 	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
 
-
 	/**
 	 * This is for writing to NET1.
 	 * @param writer A writer that is positioned within NET1.

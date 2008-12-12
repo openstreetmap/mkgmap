@@ -100,7 +100,7 @@ public class RouteCenter {
 		writer.position(tablesOffset);
 
 		// Write the tables header
-		writer.put(tabC.getSize());
+		writer.put(tabC.getSizeBytes());
 		writer.put3(centralPoint.getLongitude());
 		writer.put3(centralPoint.getLatitude());
 		writer.put(tabA.getNumberOfItems());
