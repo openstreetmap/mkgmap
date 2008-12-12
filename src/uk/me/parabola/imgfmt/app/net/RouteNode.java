@@ -48,8 +48,6 @@ public class RouteNode {
 
 	private int offsetNod1 = -1;
 
-	private RouteCenter routeCenter;
-
 	@Deprecated
 	private final int nodeId; // XXX not needed at this point?
 
@@ -93,23 +91,6 @@ public class RouteNode {
 
 	public boolean isBoundary() {
 		return (flags & F_BOUNDARY) != 0;
-	}
-
-	/**
-	 * Record the node's RouteCenter.
-	 *
-	 * We need to record this to determine whether arcs
-	 * stay within the center. May pose a problem with
-	 * respect to garbage collection.
-	 */
-	public void setRouteCenter(RouteCenter rc) {
-		if (routeCenter != null)
-			log.warn("resetting RouteCenter", nodeId);
-		routeCenter = rc;
-	}
-
-	public RouteCenter getRouteCenter() {
-		return routeCenter;
 	}
 
 	public void addArc(RouteArc arc) {
