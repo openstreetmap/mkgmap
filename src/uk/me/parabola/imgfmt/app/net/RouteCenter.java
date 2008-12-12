@@ -109,7 +109,7 @@ public class RouteCenter {
 		tabA.write(writer);
 		tabB.write(writer);
 		tabC.write(writer);
-		log.info("endof node " + writer.position());
+		log.info("end of center:", writer.position());
 	}
 
 	public void writePost(ImgFileWriter writer) {

@@ -18,6 +18,8 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.SortedMap;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -89,8 +91,8 @@ public class RoadDef {
 	private final Label[] labels = new Label[MAX_LABELS];
 	private int numlabels;
 
-	// this may stay
-	@Deprecated private final List<RoadIndex> roadIndexes = new ArrayList<RoadIndex>();
+	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+
 
 	/**
 	 * This is for writing to NET1.
@@ -137,22 +139,21 @@ public class RoadDef {
 	private int writeLevelCount(ImgFileWriter writer) {
 		int maxlevel = getMaxZoomLevel();
 		for (int i = 0; i <= maxlevel; i++) {
-			byte b = 0;
-			for (RoadIndex ri : roadIndexes) {
-				if (ri.getZoomLevel() == i)
-					b++;
-			}
+			List l = roadIndexes.get(i);
+			int b = (l == null) ? 0 : l.size();
+			assert b < 0x80 : "too many polylines at level " + i;
 			if (i == maxlevel)
 				b |= 0x80;
-			writer.put(b);
+			writer.put((byte) b);
 		}
 		return maxlevel;
 	}
 
 	private void writeLevelDivs(ImgFileWriter writer, int maxlevel) {
 		for (int i = 0; i <= maxlevel; i++) {
-			for (RoadIndex ri : roadIndexes) {
-				if (ri.getZoomLevel() == i)
+			List<RoadIndex> l = roadIndexes.get(i);
+			if (l != null) {
+				for (RoadIndex ri : l)
 					ri.write(writer);
 			}
 		}
@@ -166,17 +167,30 @@ public class RoadDef {
 			log.warn("discarding extra label", l);
 	}
 
+	/**
+	 * Add a polyline to this road.
+	 *
+	 * References to these are written to NET. At a given zoom
+	 * level, we're writing these in the order we get them,
+	 * which possibly needs to be the order the segments have
+	 * in the road.
+	 */
 	public void addPolylineRef(Polyline pl) {
-		roadIndexes.add(new RoadIndex(pl));
+		log.debug("adding polyline ref", this, pl.getSubdiv());
+		int level = pl.getSubdiv().getZoom().getLevel();
+		List<RoadIndex> l = roadIndexes.get(level);
+		if (l == null) {
+			l = new ArrayList<RoadIndex>();
+			roadIndexes.put(level, l);
+		}
+		int s = l.size();
+		if (s > 0)
+			l.get(s-1).getLine().setLastSegment(false);
+		l.add(new RoadIndex(pl));
 	}
 
 	private int getMaxZoomLevel() {
-		int m = 0;
-		for (RoadIndex ri : roadIndexes) {
-			int z = ri.getZoomLevel();
-			m = (z > m ? z : m);
-		}
-		return m;
+		return roadIndexes.lastKey().intValue();
 	}
 
 	public void setDirIndicator(boolean dir) {

@@ -163,7 +163,7 @@ class LinePreparer {
 	 * the lat and long values.
 	 */
 	private void calcDeltas() {
-		log.info("label offset", polyline.getLabel().getOffset());
+		log.debug("label offset", polyline.getLabel().getOffset());
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 
@@ -209,21 +209,36 @@ class LinePreparer {
 			if (dx != 0 || dy != 0)
 				firstsame = i;
 
-			// Current thought is that the node indicator is set when
-			// the point is a node. There's a separate first extra bit
-			// that always appears to be false. The last points' extra bit
-			// is set if the point is a node and this is not the last
-			// polyline making up the road.
-			// Todo: special case the last bit
+			/*
+			 * Current thought is that the node indicator is set when
+			 * the point is a node. There's a separate first extra bit
+			 * that always appears to be false. The last points' extra bit
+			 * is set if the point is a node and this is not the last
+			 * polyline making up the road.
+			 * Todo: special case the last bit
+			 */
 			if (extraBit) {
-				boolean extra;
-				if (i < nodes.length - 1)
-					extra = co.getId() != 0;
-				else
-					extra = false; // XXX
-				// only the first among a range of equal points
-				// is written, so set the bit if any of the points
-				// is a node
+				boolean extra = false;
+				if (co.getId() != 0) {
+					if (i < nodes.length - 1)
+						// inner node of polyline
+						extra = true;
+					else
+						// end node of polyline: set if inner
+						// node of road
+						extra = !polyline.isLastSegment();
+				}
+
+				/*
+				 * Only the first among a range of equal points
+				 * is written, so set the bit if any of the points
+				 * is a node.
+				 * Since we only write extra bits at level 0 now,
+				 * this can only happen when points in the input
+				 * data round to the same point in map units, so
+				 * it may be better to handle this in the
+				 * reader.
+				 */ 
 				nodes[firstsame] = nodes[firstsame] || extra;
 			}
 

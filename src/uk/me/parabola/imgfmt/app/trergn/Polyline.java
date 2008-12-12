@@ -52,6 +52,11 @@ public class Polyline extends MapObject {
 	// Reference to NET section, if any
 	private RoadDef roaddef;
 
+	// If a road gets subdivided into several segments, this
+	// says whether this line is the last segment. Need this
+	// for writing extra bits.
+	private boolean lastSegment = true;
+
 	// Set if it is a one-way street for example.
 	private boolean direction;
 
@@ -141,6 +146,14 @@ public class Polyline extends MapObject {
 
 	public boolean roadHasInternalNodes() {
 		return roaddef.hasInternalNodes();
+	}
+
+	public void setLastSegment(boolean last) {
+		lastSegment = last;
+	}
+
+	public boolean isLastSegment() {
+		return lastSegment;
 	}
 
 	public void setRoadDef(RoadDef rd) {
