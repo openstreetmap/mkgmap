@@ -61,6 +61,9 @@ public class NOD1Part {
          * 5. Absolute values of relative NOD1 offsets at most
          *    0x2000, which limits the nodes section to 0x2000
          *    unless we take care to order the nodes nicely.
+	 * 6. Distance between nodes and start of tables must
+	 *    fit in a char for writing Table C. So nodes
+	 *    section smaller than 0x10000.
          */
 
 	// maximal width and height of the bounding box, since

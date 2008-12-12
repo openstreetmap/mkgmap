@@ -51,7 +51,10 @@ public class RouteNode {
 	@Deprecated
 	private final int nodeId; // XXX not needed at this point?
 
+	// arcs from this node
 	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
+	// restrictions at (via) this node
+	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
 	
 	private int flags = F_UNK_NEEDED;
 
@@ -79,7 +82,7 @@ public class RouteNode {
 	}
 
 	private boolean haveRestrictions() {
-		return (flags & F_RESTRICTIONS) != 0;
+		return !restrictions.isEmpty();
 	}
 
 	public void setBoundary(boolean b) {
@@ -103,6 +106,11 @@ public class RouteNode {
 			nodeClass = cl;
 	}
 
+	public void addRestriction(RouteRestriction restr) {
+		restrictions.add(restr);
+		flags |= F_RESTRICTIONS;
+	}
+
 	/**
 	 * Provide an upper bound to the size (in bytes) that
 	 * writing this node will take.
@@ -112,8 +120,6 @@ public class RouteNode {
 	 * or not they are internal to the RoutingCenter.
 	 */
 	public int boundSize() {
-		// XXX: should perhaps better write() to some phantom writer
-		// XXX: include size of restrictions
 		return 1 + 1
 			+ (haveLargeOffsets() ? 4 : 3)
 			+ arcsSize() + restrSize();
@@ -128,10 +134,7 @@ public class RouteNode {
 	}
 
 	private int restrSize() {
-		if (haveRestrictions()) {
-			throw new Error("not implemented");
-		} else
-			return 0;
+		return 2*restrictions.size();
 	}
 
 	/**
@@ -155,6 +158,12 @@ public class RouteNode {
 			arcs.get(arcs.size() - 1).setLast();
 			for (RouteArc arc : arcs)
 				arc.write(writer);
+		}
+
+		if (!restrictions.isEmpty()) {
+			restrictions.get(restrictions.size() - 1).setLast();
+			for (RouteRestriction restr : restrictions)
+				restr.writeOffset(writer);
 		}
 	}
 
@@ -224,6 +233,10 @@ public class RouteNode {
 				return arcs.iterator();
 			}
 		};
+	}
+
+	public List<RouteRestriction> getRestrictions() {
+		return restrictions;
 	}
 
 	public String toString() {

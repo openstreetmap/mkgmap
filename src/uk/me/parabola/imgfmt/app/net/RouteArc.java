@@ -124,6 +124,15 @@ public class RouteArc {
 	}
 
 	/**
+	 * Get this arc's index into Table A.
+	 *
+	 * Required for writing restrictions (Table C).
+	 */
+	public byte getIndexA() {
+		return indexA;
+	}
+
+	/**
 	 * Set this arc's index into Table B. Applies to external arcs only.
 	 */
 	public void setIndexB(byte indexB) {

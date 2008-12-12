@@ -51,7 +51,7 @@ public class RouteCenter {
 		this.tabB = tabB;
 		this.tabC = new TableC();
 
-		// update arcs with table indices
+		// update lat/lon offsets; update arcs with table indices; populate tabC
 		for (RouteNode node : nodes) {
 			node.setOffsets(centralPoint);
 			for (RouteArc arc : node.arcsIteration()) {
@@ -59,7 +59,11 @@ public class RouteCenter {
 				if (!arc.isInternal())
 					arc.setIndexB(tabB.getIndex(arc.getDest()));
 			}
+			for (RouteRestriction restr : node.getRestrictions())
+				restr.setOffsetC(tabC.addRestriction(restr));
 		}
+		// update size of tabC offsets, now that tabC has been populated
+		tabC.propagateSizeBytes();
 	}
 
 	/**
@@ -108,7 +112,7 @@ public class RouteCenter {
 
 		tabA.write(writer);
 		tabB.write(writer);
-		tabC.write(writer);
+		tabC.write(writer, tablesOffset);
 		log.info("end of center:", writer.position());
 	}
 

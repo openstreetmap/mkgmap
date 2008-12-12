@@ -33,7 +33,7 @@ public class TableC {
 	/**
 	 * Write the table including size field.
 	 */
-	public void write(ImgFileWriter writer) {
+	public void write(ImgFileWriter writer, int tablesOffset) {
 		if (restrictions.isEmpty()) {
 			writer.put((byte) 0);
 			return;
@@ -46,7 +46,7 @@ public class TableC {
 				writer.putChar((char) size);
 		}
 		for (RouteRestriction restr : restrictions)
-			restr.write(writer);
+			restr.write(writer, tablesOffset);
 	}
 
 	/**
@@ -77,5 +77,11 @@ public class TableC {
 		else
 			// XXX: haven't seen larger than 2, may well be possible
 			throw new Error("too many restrictions");
+	}
+
+	public void propagateSizeBytes() {
+		byte b = getSizeBytes();
+		for (RouteRestriction restr : restrictions)
+			restr.setOffsetSize(b);
 	}
 }
