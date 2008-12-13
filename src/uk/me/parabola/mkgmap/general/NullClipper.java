@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.mkgmap.osmstyle.LineAdder;
 
 /**
  * Does no clipping and just adds the elements directly.

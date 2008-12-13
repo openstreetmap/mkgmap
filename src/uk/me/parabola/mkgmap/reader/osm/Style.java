@@ -18,8 +18,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Properties;
 
-import uk.me.parabola.mkgmap.osmstyle.OverlayReader;
-import uk.me.parabola.mkgmap.osmstyle.RuleSet;
+import uk.me.parabola.mkgmap.general.LineAdder;
 
 /**
  * A style converts an OSM element into a garmin element.
@@ -56,20 +55,20 @@ public interface Style {
 	 * Get the rules that apply to ways.  This includes lines and polygons
 	 * as they are not separate primatives in osm.
 	 */
-	public RuleSet getWayRules();
+	public Rule getWayRules();
 
 	/**
 	 * Get the rules that apply to nodes.
 	 */
-	public RuleSet getNodeRules();
+	public Rule getNodeRules();
 
 	/**
 	 * Get the relation rules.
 	 */
-	public RuleSet getRelationRules();
+	public Rule getRelationRules();
 
 	/**
 	 * Get the overlay definitions.  Most styles will not use this.
 	 */
-	public OverlayReader getOverlays();
+	public LineAdder getOverlays(LineAdder lineAdder);
 }

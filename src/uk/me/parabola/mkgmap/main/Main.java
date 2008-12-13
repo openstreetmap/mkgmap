@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;

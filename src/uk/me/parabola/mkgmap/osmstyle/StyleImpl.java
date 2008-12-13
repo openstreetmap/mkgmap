@@ -36,6 +36,8 @@ import uk.me.parabola.mkgmap.Option;
 import uk.me.parabola.mkgmap.OptionProcessor;
 import uk.me.parabola.mkgmap.Options;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.general.LineAdder;
+import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
@@ -175,23 +177,34 @@ public class StyleImpl implements Style {
 		}
 	}
 
-	public RuleSet getNodeRules() {
+	public Rule getNodeRules() {
 		return nodes;
 	}
 
-	public RuleSet getWayRules() {
+	public Rule getWayRules() {
 		RuleSet r = new RuleSet();
 		r.addAll(lines);
 		r.addAll(polygons);
 		return r;
 	}
 
-	public RuleSet getRelationRules() {
+	public Rule getRelationRules() {
 		return relations;
 	}
 
-	public OverlayReader getOverlays() {
-		return overlays;
+	public LineAdder getOverlays(final LineAdder lineAdder) {
+		LineAdder adder = null;
+
+		if (overlays != null) {
+			adder = new LineAdder() {
+				final LineAdder origAdder = lineAdder;
+
+				public void add(MapLine element) {
+					overlays.addLine(element, lineAdder);
+				}
+			};
+		}
+		return adder;
 	}
 
 	private void readRules() {

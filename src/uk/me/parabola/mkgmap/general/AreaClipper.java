@@ -20,7 +20,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.mkgmap.osmstyle.LineAdder;
 
 /**
  * Clip objects to a bounding box.

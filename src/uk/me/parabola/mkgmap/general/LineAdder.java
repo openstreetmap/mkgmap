@@ -14,10 +14,17 @@
  * Author: Steve Ratcliffe
  * Create date: 10-Dec-2008
  */
-package uk.me.parabola.mkgmap.osmstyle;
+package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.mkgmap.general.MapLine;
-
+/**
+ * For adding a line to the map model.  Created for the overlay feature.
+ *
+ * @author Steve Ratcliffe
+ */
 public interface LineAdder {
+
+	/**
+	 * Add the given line.  This will usually be to a MapCollector.
+	 */
 	public void add(MapLine element);
 }

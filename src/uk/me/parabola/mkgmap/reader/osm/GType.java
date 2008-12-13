@@ -18,8 +18,8 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Formatter;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 
 /**

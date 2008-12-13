@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
+import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -69,15 +70,9 @@ public class StyledConverter implements OsmConverter {
 		nodeRules = style.getNodeRules();
 		relationRules = style.getRelationRules();
 
-		final OverlayReader overlays = style.getOverlays();
-		if (overlays != null) {
-			lineAdder = new LineAdder() {
-				final LineAdder origAdder = lineAdder;
-				public void add(MapLine element) {
-					overlays.addLine(element, origAdder);
-				}
-			};
-		}
+		LineAdder overlayAdder = style.getOverlays(lineAdder);
+		if (overlayAdder != null)
+			lineAdder = overlayAdder;
 	}
 
 	/**

@@ -18,7 +18,7 @@ package uk.me.parabola.mkgmap.general;
 
 import java.util.Arrays;
 
-import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.imgfmt.ExitException;
 
 /**
  * Represents the mapping between the Garmin map levels and the built-in
