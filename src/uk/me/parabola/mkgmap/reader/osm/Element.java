@@ -17,14 +17,12 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Superclass of the node, segment and way OSM elements.
  */
 public abstract class Element implements Iterable<String> {
-	private Map<String, String> tags;
+	private Tags tags;
 	private String name;
 	private long id;
 
@@ -37,7 +35,7 @@ public abstract class Element implements Iterable<String> {
 	 */
 	public void addTag(String key, String val) {
 		if (tags == null)
-			tags = new SimpleMap();
+			tags = new Tags();
 		tags.put(key, val);
 	}
 
@@ -52,42 +50,10 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public Iterator<String> iterator() {
-		if (tags == null) {
-			List<String> l = Collections.emptyList();
-			return l.iterator();
-		}
-		return ((SimpleMap) tags).iterator();
-		//return new Iterator<String>() {
-		//	private Iterator<Map.Entry<String, String>> tagit;
-		//	private boolean doWild;
-		//	private String key;
-		//
-		//	{
-		//		if (tags != null)
-		//			tagit = tags.entrySet().iterator();
-		//	}
-		//
-		//	public boolean hasNext() {
-		//		return doWild || (tagit != null) && tagit.hasNext();
-		//	}
-		//
-		//	public String next() {
-		//		String ret;
-		//		if (doWild) {
-		//			ret = key + "=*";
-		//		} else {
-		//			Map.Entry<String, String> ent = tagit.next();
-		//			key = ent.getKey();
-		//			ret = key + '=' + ent.getValue();
-		//		}
-		//		doWild = !doWild;
-		//		return ret;
-		//	}
-		//
-		//	public void remove() {
-		//		throw new UnsupportedOperationException();
-		//	}
-		//};
+		if (tags == null) 
+			return Collections.<String>emptyList().iterator();
+
+		return tags.iterator();
 	}
 
 	public long getId() {
@@ -104,10 +70,8 @@ public abstract class Element implements Iterable<String> {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
-		for (Map.Entry<String, String> e : tags.entrySet()) {
-			sb.append(e.getKey());
-			sb.append('=');
-			sb.append(e.getValue());
+		for (String nameval : tags) {
+			sb.append(nameval);
 			sb.append(',');
 		}
 		sb.setLength(sb.length()-1);

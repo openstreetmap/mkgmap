@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -123,8 +123,7 @@ class AllElements {
 								+ "0x" + Integer.toHexString(subtype));
 
 				point.setLocation(new Coord(baseLat, baseLong));
-				point.setType(type);
-				point.setSubType(subtype);
+				point.setType((type << 8) + subtype);
 
 				mapper.addPoint(point);
 				mapper.addToBounds(point.getLocation()); // XXX shouldn't be needed.

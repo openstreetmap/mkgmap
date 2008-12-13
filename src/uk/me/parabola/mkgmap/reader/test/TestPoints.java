@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapLine;
-
-import java.util.Properties;
-import java.util.List;
-import java.util.ArrayList;
+import uk.me.parabola.mkgmap.general.MapPoint;
 
 /**
  * This is a map that contains many points in a dense grid.  It is going to
@@ -91,8 +91,7 @@ class TestPoints {
 				point.setName("P " + (x*npoints + y));
 
 				point.setLocation(new Coord(baseLat, baseLong));
-				point.setType(0x2c);
-				point.setSubType(y & 0xf);
+				point.setType((0x2c << 8) + (y & 0xf));
 
 				mapper.addPoint(point);
 				mapper.addToBounds(point.getLocation()); // XXX shouldn't be needed.

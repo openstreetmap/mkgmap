@@ -20,6 +20,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.osmstyle.LineAdder;
 
 /**
  * Clip objects to a bounding box.
@@ -35,19 +36,15 @@ public class AreaClipper implements Clipper {
 		this.bbox = bbox;
 	}
 
-	public void clipLine(MapLine line, MapCollector collector) {
+	public void clipLine(MapLine line, LineAdder collector) {
 		List<List<Coord>> list = LineClipper.clip(bbox, line.getPoints());
 		if (list == null) {
-			collector.addLine(line);
+			collector.add(line);
 		} else {
 			for (List<Coord> lco : list) {
 				MapLine nline = (MapLine) line.copy();
 				nline.setPoints(lco);
-
-				if (nline instanceof MapRoad)
-					collector.addRoad((MapRoad) nline);
-				else
-					collector.addLine(nline);
+				collector.add(nline);
 			}
 		}
 	}

@@ -16,21 +16,25 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 /**
- * A map implementation that allows values to be added during an iteration
- * and for those values be guaranteed to show up later in the iteration.
+ * Store the tags that belong to an Element.
  *
- * It also uses less memory (hash maps are the main use of memory in the
- * application).  Performance is unchanged compared with a regular HashMap.
- * 
+ * Used to use a HashMap for this.  We have a requirement to be able
+ * to add to the map during iteration over it so this class was written
+ * instead.
+ *
+ * It should also uses less memory (hash maps are the main use of memory in the
+ * application), as it doesn't allocate a Map.Entry object for every tag.
+ * Performance of the whole application is unchanged compared with when
+ * a regular HashMap was used.
+ *
+ * It doesn't fully behave the same way that a map would.
+ *
  * @author Steve Ratcliffe
  */
-public class SimpleMap implements Map<String, String> {
+public class Tags implements Iterable<String> {
 	private static final int INIT_SIZE = 8;
 
 	private int size;
@@ -41,6 +45,9 @@ public class SimpleMap implements Map<String, String> {
 
 	private ExtraEntry extra;
 
+	/**
+	 * Used for tags that are added during iteration.
+	 */
 	static class ExtraEntry {
 		private String key;
 		private String value;
@@ -50,7 +57,7 @@ public class SimpleMap implements Map<String, String> {
 	//private int hit;
 	//private int miss;
 
-	public SimpleMap() {
+	public Tags() {
 		keys = new String[INIT_SIZE];
 		values = new String[INIT_SIZE];
 		capacity = INIT_SIZE;
@@ -63,14 +70,6 @@ public class SimpleMap implements Map<String, String> {
 
 	public boolean isEmpty() {
 		return size == 0;
-	}
-
-	public boolean containsKey(Object key) {
-		throw new UnsupportedOperationException();
-	}
-
-	public boolean containsValue(Object value) {
-		throw new UnsupportedOperationException();
 	}
 
 	public String get(Object key) {
@@ -100,6 +99,21 @@ public class SimpleMap implements Map<String, String> {
 		values[ind] = value;
 
 		return old;
+	}
+
+	public String remove(Object key) {
+		Integer k = keyPos((String) key);
+
+		if (k != null) {
+			// because of the way this works, you can never remove keys
+			// except when resizing.
+			String old = values[k];
+			values[k] = null;
+			if (old != null)
+				size--;
+			return old;
+		}
+		return null;
 	}
 
 	private void ensureSpace() {
@@ -138,45 +152,20 @@ public class SimpleMap implements Map<String, String> {
 		return null;
 	}
 
-	public String remove(Object key) {
-		Integer k = keyPos((String) key);
-
-		if (k != null) {
-			String old = values[k];
-			values[k] = null;
-			if (old != null)
-				size--;
-			return old;
-		}
-		return null;
-	}
-
-	public void putAll(Map<? extends String, ? extends String> t) {
-		throw new UnsupportedOperationException();
-	}
-
-	public void clear() {
-		throw new UnsupportedOperationException();
-	}
-
-	public Set<String> keySet() {
-		throw new UnsupportedOperationException();
-	}
-
-	public Collection<String> values() {
-		throw new UnsupportedOperationException();
-	}
-
-	public Set<Entry<String, String>> entrySet() {
-		throw new UnsupportedOperationException();
-	}
-
+	/**
+	 * Iterates over the tags in a special way that is used to look up in
+	 * the rules.
+	 *
+	 * If you have the tags a=b, c=d then you will get the following strings
+	 * returned: "a=b", "a=*", "c=d", "c=*".
+	 */
 	public Iterator<String> iterator() {
 		return new Iterator<String>() {
 			private int pos;
 			private String wild;
 			private boolean doWild;
 
+			// Set the extra field in the containing class.
 			{ extra = new ExtraEntry(); }
 
 			public boolean hasNext() {
@@ -193,6 +182,10 @@ public class SimpleMap implements Map<String, String> {
 				return false;
 			}
 
+			/**
+			 * Get the next tag as a single string.  Also returns wild card
+			 * entries.
+			 */
 			public String next() {
 				if (doWild) {
 					doWild = false;

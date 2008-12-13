@@ -35,6 +35,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+/**
+ * High level tests of the complete converter chain, using an actual
+ * rules file.
+ */
 public class StyledConverterTest {
 	private static final String LOC = "classpath:teststyles";
 	private OsmConverter converter;
@@ -75,6 +79,44 @@ public class StyledConverterTest {
 		assertEquals("line", 0x12, lines.get(0).getType());
 	}
 
+	/**
+	 * Test the overlay feature, when one line is duplicated with different
+	 * types.
+	 */
+	@Test
+	public void testOverlay() {
+		Way way = makeWay();
+		way.addTag("highway", "overlay");
+		converter.convertWay(way);
+
+		assertEquals("lines produced", 3, lines.size());
+		assertEquals("first line is 1", 1, lines.get(0).getType());
+		assertEquals("second line is 2", 2, lines.get(1).getType());
+		assertEquals("third line is 3", 3, lines.get(2).getType());
+	}
+
+	/**
+	 * Test styles that are derived from others.  Rules should behave as
+	 * if they were combined in order with the base rule last.
+	 */
+	@Test
+	public void testBaseStyle() throws FileNotFoundException {
+		converter = makeConverter("derived");
+		Way way = makeWay();
+		way.addTag("overridden", "xyz");
+		converter.convertWay(way);
+
+		assertEquals("lines converted", 1, lines.size());
+		assertEquals("derived type", 0x12, lines.get(0).getType());
+
+		// Now try a rule that is only in the base 'simple' file.
+		way = makeWay();
+		way.addTag("highway", "primary");
+		converter.convertWay(way); 
+		assertEquals("new line converted from base", 2, lines.size());
+		assertEquals("from base style", 0x3, lines.get(1).getType());
+	}
+
 	private Way makeWay() {
 		Way way = new Way();
 		way.addPoint(new Coord(100, 100));
@@ -85,28 +127,29 @@ public class StyledConverterTest {
 
 	@Before
 	public void setUp() throws FileNotFoundException {
-		Style style = new StyleImpl(LOC, "simple");
-		MapCollector coll = new MapCollector() {
-			public void addToBounds(Coord p) {
-			}
+		converter = makeConverter("simple");
+	}
 
-			public void addPoint(MapPoint point) {
-			}
+	private StyledConverter makeConverter(String name) throws FileNotFoundException {
+		Style style = new StyleImpl(LOC, name);
+		MapCollector coll = new MapCollector() {
+			public void addToBounds(Coord p) { }
+
+			// could save points in the same way as lines to test them
+			public void addPoint(MapPoint point) { }
 
 			public void addLine(MapLine line) {
+				// Save line so that it can be examined in the tests.
 				lines.add(line);
 			}
 
-			public void addShape(MapShape shape) {
-			}
+			public void addShape(MapShape shape) { }
 
-			public void addRoad(MapRoad road) {
-			}
+			public void addRoad(MapRoad road) { }
 
-			public void finish() {
-			}
+			public void finish() { }
 		};
 
-		converter = new StyledConverter(style, coll);
+		return new StyledConverter(style, coll);
 	}
 }

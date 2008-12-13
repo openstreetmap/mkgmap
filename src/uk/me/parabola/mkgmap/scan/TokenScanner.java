@@ -82,6 +82,7 @@ public class TokenScanner {
 	 * probably only call this after having peek'ed the type earlier.
 	 */
 	public String nextValue() {
+		skipSpace();
 		return nextRawToken().getValue();
 	}
 

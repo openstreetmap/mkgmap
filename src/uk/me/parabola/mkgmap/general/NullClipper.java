@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.osmstyle.LineAdder;
 
 /**
  * Does no clipping and just adds the elements directly.
@@ -24,8 +25,8 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class NullClipper implements Clipper {
-	public void clipLine(MapLine line, MapCollector collector) {
-		collector.addLine(line);
+	public void clipLine(MapLine line, LineAdder adder) {
+		adder.add(line);
 	}
 
 	public void clipShape(MapShape shape, MapCollector collector) {
