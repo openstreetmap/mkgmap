@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Used to remember all the road relavent parameters in a definition which
@@ -51,16 +52,6 @@ class RoadHelper {
 	private boolean oneway;
 	private boolean toll;
 
-	public static final int EMERGENCY = 0;
-	public static final int DELIVERY = 1;
-	public static final int NO_CAR = 2;
-	public static final int NO_BUS = 3;
-	public static final int NO_TAXI = 4;
-	public static final int NO_FOOT = 5;
-	public static final int NO_BIKE = 6;
-	public static final int NO_TRUCK = 7;
-	public static final int NO_MAX = 8;
-
 	private boolean[] access;
 
 	public RoadHelper() {
@@ -76,7 +67,7 @@ class RoadHelper {
 		roadClass = 0;
 		oneway = false;
 		toll = false;
-		access = new boolean[NO_MAX];
+		access = new boolean[RoadNetwork.NO_MAX];
 	}
 
 	public void setRoadId(int roadId) {
@@ -100,7 +91,7 @@ class RoadHelper {
 		roadClass = Integer.parseInt(f[1]);
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
-		for (int j = 0; j < NO_MAX; j++)
+		for (int j = 0; j < RoadNetwork.NO_MAX; j++)
 			access[j] = Integer.parseInt(f[4+j]) > 0;
 	}
 
@@ -158,7 +149,7 @@ class RoadHelper {
 	private static class NodeIndex {
 		private int index;
 		private int nodeId;
-		private boolean boundary = false;
+		private boolean boundary;
 
 		private NodeIndex(String[] f) {
 			// f[0] is the index into the line

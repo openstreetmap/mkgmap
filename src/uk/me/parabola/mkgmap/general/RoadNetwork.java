@@ -39,20 +39,29 @@ import uk.me.parabola.log.Logger;
  */
 public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
-	
-	private Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
+
+	public static final int EMERGENCY = 0;
+	public static final int DELIVERY = 1;
+	public static final int NO_CAR = 2;
+	public static final int NO_BUS = 3;
+	public static final int NO_TAXI = 4;
+	public static final int NO_FOOT = 5;
+	public static final int NO_BIKE = 6;
+	public static final int NO_TRUCK = 7;
+	public static final int NO_MAX = 8;
+
+	private final Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
 
 	// boundary nodes
 	// a node should be in here iff the nodes boundary flag is set
-	private List<RouteNode> boundary = new ArrayList<RouteNode>();
+	private final List<RouteNode> boundary = new ArrayList<RouteNode>();
+	//private final List<MapRoad> mapRoads = new ArrayList<MapRoad>();
 
-	private List<MapRoad> mapRoads = new ArrayList<MapRoad>();
-	private List<RoadDef> roadDefs = new ArrayList<RoadDef>();
-
+	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 
 	public void addRoad(MapRoad road) {
-		mapRoads.add(road);
+		//mapRoads.add(road);
 		roadDefs.add(road.getRoadDef()); //XXX
 
 		CoordNode lastCoord = null;
