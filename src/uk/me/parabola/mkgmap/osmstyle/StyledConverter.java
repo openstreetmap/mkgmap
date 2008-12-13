@@ -72,7 +72,7 @@ public class StyledConverter implements OsmConverter {
 		final OverlayReader overlays = style.getOverlays();
 		if (overlays != null) {
 			lineAdder = new LineAdder() {
-				LineAdder origAdder = lineAdder;
+				final LineAdder origAdder = lineAdder;
 				public void add(MapLine element) {
 					overlays.addLine(element, origAdder);
 				}

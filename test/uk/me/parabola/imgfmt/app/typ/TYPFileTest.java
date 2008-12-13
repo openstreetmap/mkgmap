@@ -23,12 +23,9 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
-/**
- * @author Steve Ratcliffe
- */
 public class TYPFileTest {
 	@Test
 	public void testWrite() throws FileNotWritableException, FileExistsException {
@@ -37,10 +34,5 @@ public class TYPFileTest {
 		ImgChannel channel = fs.create("XXX.TYP");
 		TYPFile typFile = new TYPFile(channel, true);
 		assertNotNull("typ file is created", typFile);
-	}
-
-	@Test
-	public void testParseXpm() {
-		// Add your code here
 	}
 }

@@ -14,3 +14,7 @@ highway=other [0x8]
 
 # A test for overlays
 highway = overlay [0x142]
+
+# Test for overriding in derived styles
+overridden = xyz [0x2]
+

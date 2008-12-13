@@ -31,6 +31,10 @@ import org.junit.Test;
 
 
 public class RuleFileReaderTest {
+	/**
+	 * Test of a file containing a number of different rules, with varying
+	 * formatting and including comments.
+	 */
 	@Test
 	public void testLoad() {
 		RuleSet rs = makeRuleSet("highway=footway & type=rough [0x2 level 2]\n" +
@@ -59,6 +63,10 @@ public class RuleFileReaderTest {
 		assertEquals("oneway footway", "[0x6 level 1]", type.toString());
 	}
 
+	/**
+	 * Test for non-standard level specification.  You can give a range
+	 * of levels, rather than defaulting the max end to 0.
+	 */
 	@Test
 	public void testLevel() {
 		RuleSet rs = makeRuleSet(
@@ -91,10 +99,17 @@ public class RuleFileReaderTest {
 		GType type = rule.resolveType(el);
 		assertEquals("expression ok", 1, type.getType());
 
+		// fails with x less than 10
 		el.addTag("x", "9");
 		type = rule.resolveType(el);
 		assertNull("x too low", type);
 
+		// also fails with x equal to 10
+		el.addTag("x", "10");
+		type = rule.resolveType(el);
+		assertNull("x too low", type);
+
+		// OK with x > 10
 		el.addTag("x", "100");
 		el.addTag("e", "f");
 		type = rule.resolveType(el);
@@ -178,6 +193,9 @@ public class RuleFileReaderTest {
 		assertEquals("tag set", "square", el.getTag("a"));
 	}
 
+	/**
+	 * Tests for the road classification and other parts of the GType.
+	 */
 	@Test
 	public void testGType() {
 		RuleSet rs = makeRuleSet("highway=motorway " +
@@ -188,11 +206,40 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "motorway");
 		GType type = rule.resolveType(el);
 
+		// Check that the correct class and speed are returned.
 		assertEquals("class", 4, type.getRoadClass());
 		assertEquals("class", 7, type.getRoadSpeed());
 		assertEquals("default name", "motor way", type.getDefaultName());
 	}
 
+	/**
+	 * Check for the regexp handling.
+	 */
+	@Test
+	public void testRegexp() {
+		RuleSet rs = makeRuleSet("highway=* & name ~ 'blue.*' [0x2]\n");
+
+		Rule rule = rs.getMap().get("highway=*");
+		assertNotNull("rule found", rule);
+
+		// Set up element with matching name
+		Element el = new Way();
+		el.addTag("highway", "secondary");
+		el.addTag("name", "blue sq");
+		GType type = rule.resolveType(el);
+		assertNotNull("matched regexp", type);
+		assertEquals("matched type", 2, type.getType());
+
+		// change name to one that should not match
+		el.addTag("name", "yellow");
+		type = rule.resolveType(el);
+		assertNull("no match for yello", type);
+	}
+
+	/**
+	 * Create a rule set out of a string.  The string is processed
+	 * as if it were in a file and the levels spec had been set.
+	 */
 	private RuleSet makeRuleSet(String in) {
 		Reader r = new StringReader(in);
 
