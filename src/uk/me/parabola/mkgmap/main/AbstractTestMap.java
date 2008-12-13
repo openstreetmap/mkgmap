@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -24,7 +25,6 @@ import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 
 /**
  * Common code used for the test maps.  The test maps are programatically

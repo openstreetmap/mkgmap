@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 
 /**
  * This is used to allocate blocks for files in the filesystem/archive.

@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 
 /**

@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 20-Dec-2006
  */
-package uk.me.parabola.mkgmap;
+package uk.me.parabola.imgfmt;
 
 /**
  * Used to exit the program.  So that System.exit need only be called

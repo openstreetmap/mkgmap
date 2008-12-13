@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * A straight forward implementation that just keeps all the data in a buffer
