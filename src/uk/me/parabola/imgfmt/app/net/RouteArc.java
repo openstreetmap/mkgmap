@@ -140,6 +140,15 @@ public class RouteArc {
 		this.indexB = indexB;
 	}
 
+	/**
+	 * Get this arc's index into Table B.
+	 *
+	 * Required for writing restrictions (Table C).
+	 */
+	public byte getIndexB() {
+		return indexB;
+	}
+	 
 	private byte calcAngle(Coord end) {
 		Coord start = source.getCoord();
 

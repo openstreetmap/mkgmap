@@ -26,7 +26,11 @@ import uk.me.parabola.log.Logger;
  * we might consider splitting them into several classes. For the
  * moment, just simple from-to-via restrictions.
  *
- * The restriction needs to be within a route center for now.
+ * A from-to-via restriction says you can't go along arc "to"
+ * if you came to node to.getSource() == from.getSource()
+ * via the inverse arc of "from". We're using the inverse of
+ * "from" since that has the information we need for writing
+ * the Table C entry.
  *
  * @author Robert Vollmert
  */
@@ -40,12 +44,13 @@ public class RouteRestriction {
 	// and when it is active
 	private static final int HEADER = 0x054000;
 
+	// To specifiy that a node is given by a relative offset instead
+	// of an entry to Table B.
+	private static final int F_INTERNAL = 0x8000;
+
 	// the arcs
 	private RouteArc from;
 	private RouteArc to;
-
-	// from/via/to nodes
-	private final RouteNode[] nodes = new RouteNode[3];
 
 	// offset in Table C
 	private byte offsetSize;
@@ -54,13 +59,23 @@ public class RouteRestriction {
 	// last restriction in a node
 	private boolean last = false;
 
+	/**
+	 * Create a route restriction.
+	 *
+	 * @param from The inverse arc of "from" arc.
+	 * @param to The "to" arc.
+	 */
 	public RouteRestriction(RouteArc from, RouteArc to) {
-		assert from.getDest().equals(to.getSource()) : "arcs in restriction don't meet";
+		assert from.getSource().equals(to.getSource()) : "arcs in restriction don't meet";
 		this.from = from;
 		this.to = to;
-		nodes[0] = from.getSource();
-		nodes[1] = from.getDest();
-		nodes[2] = to.getDest();
+	}
+
+	private int calcOffset(RouteNode node, int tableOffset) {
+		int offset = tableOffset - node.getOffsetNod1();
+		assert offset >= 0 : "node behind start of tables";
+		assert offset < 0x8000 : "node offset too large";
+		return offset | F_INTERNAL;
 	}
 
 	/**
@@ -70,16 +85,22 @@ public class RouteRestriction {
 	 * @param tableOffset The offset in NOD 1 of the tables area.
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
-		assert from.isInternal() && to.isInternal()
-			: "turn restriction not internal to route center";
-
 		writer.put3(HEADER);
-		for (int i = 0; i < nodes.length; i++) {
-			int offset = tableOffset - nodes[i].getOffsetNod1();
-			assert offset >= 0 : "node behind start of tables";
-			assert offset < 0x10000 : "node offset too large";
-			writer.putChar((char) offset);
-		}
+		int[] offsets = new int[3];
+
+		if (from.isInternal())
+			offsets[0] = calcOffset(from.getDest(), tableOffset);
+		else
+			offsets[0] = from.getIndexB();
+		offsets[1] = calcOffset(from.getDest(), tableOffset);
+		if (to.isInternal())
+			offsets[0] = calcOffset(to.getDest(), tableOffset);
+		else
+			offsets[0] = to.getIndexB();
+
+		for (int i = 0; i < offsets.length; i++)
+			writer.putChar((char) offsets[i]);
+
 		writer.put((byte) from.getIndexA());
 		writer.put((byte) to.getIndexA());
 	}
