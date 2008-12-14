@@ -48,7 +48,7 @@ public class MapLine extends MapElement {
 		//roadDef = orig.roadDef;
 	}
 
-	public MapElement copy() {
+	public MapLine copy() {
 		return new MapLine(this);
 	}
 
@@ -77,6 +77,10 @@ public class MapLine extends MapElement {
 
 	public void setDirection(boolean direction) {
 		this.direction = direction;
+	}
+
+	public boolean isRoad() {
+		return false;
 	}
 
 	/**

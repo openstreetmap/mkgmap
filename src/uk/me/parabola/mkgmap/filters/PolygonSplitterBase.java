@@ -101,7 +101,7 @@ public class PolygonSplitterBase extends BaseFilter {
 				// discontiguous we may get more than one, each one representing
 				// the start of another polygon in the output.
 				if (coords != null) {
-					MapShape s2 = (MapShape) origShape.copy();
+					MapShape s2 = origShape.copy();
 					s2.setPoints(coords);
 					outputs.add(s2);
 				}
@@ -116,7 +116,7 @@ public class PolygonSplitterBase extends BaseFilter {
 				assert coords != null;
 				coords.add(co);
 
-				MapShape s2 = (MapShape) origShape.copy();
+				MapShape s2 = origShape.copy();
 				s2.setPoints(coords);
 				outputs.add(s2);
 				coords = null;

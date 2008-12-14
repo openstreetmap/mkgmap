@@ -100,7 +100,7 @@ public class OverlayReader {
 		List<Integer> integerList = overlays.get(origType);
 		if (integerList != null) {
 			for (int t : integerList) {
-				MapLine newline = (MapLine) line.copy();
+				MapLine newline = line.copy();
 				newline.setType(t);
 				adder.add(newline);
 			}

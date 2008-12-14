@@ -63,7 +63,7 @@ public class LineSplitterFilter implements MapFilter {
 
 		log.debug("line too long, splitting");
 
-		MapLine l = (MapLine) line.copy();
+		MapLine l = line.copy();
 
 		List<Coord> coords = new ArrayList<Coord>();
 		int count = 0;

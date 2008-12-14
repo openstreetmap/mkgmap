@@ -113,7 +113,7 @@ public class SmoothingFilter implements MapFilter {
 		if (!last.equals(end))
 			coords.add(end);
 
-		MapLine newline = (MapLine) line.copy();
+		MapLine newline = line.copy();
 
 		newline.setPoints(coords);
 		next.doFilter(newline);

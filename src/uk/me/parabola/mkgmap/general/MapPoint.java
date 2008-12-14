@@ -35,7 +35,7 @@ public class MapPoint extends MapElement {
 		location = p.location;
 	}
 
-	public MapElement copy() {
+	public MapPoint copy() {
 		return new MapPoint(this);
 	}
 

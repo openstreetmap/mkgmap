@@ -49,12 +49,16 @@ public class MapRoad extends MapLine {
 		this.roadDef = r.roadDef;
 	}
 
-	public MapElement copy() {
+	public MapRoad copy() {
 		return new MapRoad(this);
 	}
 
 	public long getRoadId() {
 		return roadId;
+	}
+
+	public boolean isRoad() {
+		return true;
 	}
 
 	public void setRoadClass(int roadClass) {

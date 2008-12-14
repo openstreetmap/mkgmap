@@ -34,7 +34,7 @@ private RoadDef roadDef;
 		super(s);
 	}
 
-	public MapElement copy() {
+	public MapShape copy() {
 		return new MapShape(this);
 	}
 

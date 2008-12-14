@@ -518,7 +518,7 @@ public class MapBuilder {
 
 			pl.setType(line.getType());
 
-			if (line instanceof MapRoad) {
+			if (line.isRoad()) {
 				log.debug("adding road def: " + line.getName());
 				RoadDef roaddef = ((MapRoad) line).getRoadDef();
 
