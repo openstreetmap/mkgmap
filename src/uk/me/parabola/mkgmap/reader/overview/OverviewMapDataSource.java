@@ -16,19 +16,18 @@
  */
 package uk.me.parabola.mkgmap.reader.overview;
 
+import java.io.FileNotFoundException;
+import java.util.HashSet;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
-import java.io.FileNotFoundException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.List;
 
 /**
  * Class for creating an overview map.  Nothing is actually read in from a file,

@@ -31,8 +31,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -44,7 +42,7 @@ import uk.me.parabola.tdbfmt.TdbFile;
 public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
-	private final OverviewMap overviewSource = new OverviewMapDataSource();
+	private OverviewMap overviewSource;
 
 	private TdbFile tdb;
 
@@ -241,5 +239,9 @@ public class TdbBuilder implements Combiner {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);
 		}
+	}
+
+	public void setOverviewSource(OverviewMap overviewSource) {
+		this.overviewSource = overviewSource;
 	}
 }

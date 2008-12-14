@@ -260,8 +260,10 @@
     <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
     <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs/*||file:src/uk/me/parabola/imgfmt/mps/*||file:src/uk/me/parabola/imgfmt/sys/*" />
     <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
+    <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
+    <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*" />
     <option name="SKIP_IMPORT_STATEMENTS" value="true" />
-    <deny_rule from_scope="reader" to_scope="style" is_deny="true" />
+    <deny_rule from_scope="reader_no_style" to_scope="style" is_deny="true" />
     <deny_rule from_scope="general" to_scope="style" is_deny="true" />
     <deny_rule from_scope="general" to_scope="reader" is_deny="true" />
     <deny_rule from_scope="build" to_scope="style" is_deny="true" />
