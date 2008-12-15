@@ -103,6 +103,7 @@ public class OverlayReader {
 				// TODO: after nod integration, this will use copy().
 				MapLine newline = new MapLine(line);
 				newline.setType(t);
+				newline.setPoints(line.getPoints());
 				adder.add(newline);
 			}
 		} else {

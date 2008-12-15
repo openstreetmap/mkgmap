@@ -139,6 +139,7 @@ public class StyledConverterTest {
 
 			public void addLine(MapLine line) {
 				// Save line so that it can be examined in the tests.
+				assertNotNull("points are not null", line.getPoints());
 				lines.add(line);
 			}
 
