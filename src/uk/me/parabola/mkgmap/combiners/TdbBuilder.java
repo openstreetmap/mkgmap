@@ -138,29 +138,26 @@ public class TdbBuilder implements Combiner {
 		//System.out.printf("overview shift %d\n", overviewSource.getShift());
 		int overviewMask = ((1 << overviewSource.getShift()) - 1);
 		//System.out.printf("mask %x\n", overviewMask);
+		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
 
-		//int maxLon = bounds.getMaxLong();
-		//int maxLat = bounds.getMaxLat();
-		//int minLat = bounds.getMinLat();
-		//int minLon = bounds.getMinLong();
-		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
-		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
-		int minLat = (bounds.getMinLat() - overviewMask) & ~overviewMask;
-		int minLon = (bounds.getMinLong() - overviewMask) & ~overviewMask;
-		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
-		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMaxLat()),
-		//		Utils.toDegrees(maxLat));
-		//
-		//System.out.printf("minlat (map) %x, calc %x\n", bounds.getMinLat(), minLat);
-		//System.out.printf("minlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMinLat()),
-		//		Utils.toDegrees(minLat));
-		//System.out.printf("minlon (map) %.3f, calc %.3f\n",
+		int maxLon = round(bounds.getMaxLong(), overviewMask);
+		int maxLat = round(bounds.getMaxLat(), overviewMask);
+		int minLat = round(bounds.getMinLat(), overviewMask);
+		int minLon = round(bounds.getMinLong(), overviewMask);
+
+		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
+		//System.out.printf("maxLat %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLat()), Utils.toDegrees(maxLat));
+		//System.out.printf("minLat 0x%x, modified=0x%x\n", bounds.getMinLat(), minLat);
+		//System.out.printf("minLat %f, modified=%f\n", Utils.toDegrees(bounds.getMinLat()), Utils.toDegrees(minLat));
+		//System.out.printf("minlon (map) 0x%x %.3f, calc 0x%x %.3f\n",
+		//		bounds.getMinLong(),
 		//		Utils.toDegrees(bounds.getMinLong()),
+		//		minLon,
 		//		Utils.toDegrees(minLon));
-		//System.out.printf("maxlon (map) %.3f, calc %.3f\n",
+		//System.out.printf("maxlon (map) 0x%x %.3f, calc 0x%x %.3f\n",
+		//		bounds.getMaxLong(),
 		//		Utils.toDegrees(bounds.getMaxLong()),
+		//		maxLon,
 		//		Utils.toDegrees(maxLon));
 
 		// Add a background polygon for this map.
@@ -192,6 +189,13 @@ public class TdbBuilder implements Combiner {
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
 		overviewSource.addShape(bg);
+	}
+
+	private int round(int len, int overviewMask) {
+		if (len > 0)
+			return (len + overviewMask) & ~overviewMask;
+		else
+			return len & ~overviewMask;
 	}
 
 	/**
