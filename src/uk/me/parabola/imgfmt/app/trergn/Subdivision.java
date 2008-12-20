@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-import uk.me.parabola.log.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.log.Logger;
 
 /**
  * The map is divided into areas, depending on the zoom level.  These are
@@ -100,12 +100,16 @@ public class Subdivision {
 		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
-		int w = (area.getWidth()+(1<<shift)) / 2 >> shift;
-		if ((w & 0x8000) != 0)
+		int w = (area.getWidth() + (1<<shift)) / 2 >> shift;
+		if (w > 0x7fff)
 			w = 0x7fff;
 
+		int h = (area.getHeight() + (1 << shift)) / 2 >> shift;
+		if (h > 0xffff)
+			h = 0xffff;
+
 		this.width = w;
-		this.height = (area.getHeight()+(1<<shift))/2 >> shift;
+		this.height = h;
 	}
 
 	/**
