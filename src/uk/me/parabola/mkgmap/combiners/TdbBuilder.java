@@ -140,25 +140,19 @@ public class TdbBuilder implements Combiner {
 		//System.out.printf("mask %x\n", overviewMask);
 		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
 
-		int maxLon = round(bounds.getMaxLong(), overviewMask);
-		int maxLat = round(bounds.getMaxLat(), overviewMask);
-		int minLat = round(bounds.getMinLat(), overviewMask);
-		int minLon = round(bounds.getMinLong(), overviewMask);
+		int maxLon = roundUp(bounds.getMaxLong(), overviewMask);
+		int maxLat = roundUp(bounds.getMaxLat(), overviewMask);
+		int minLat = roundDown(bounds.getMinLat(), overviewMask);
+		int minLon = roundDown(bounds.getMinLong(), overviewMask);
 
 		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
 		//System.out.printf("maxLat %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLat()), Utils.toDegrees(maxLat));
 		//System.out.printf("minLat 0x%x, modified=0x%x\n", bounds.getMinLat(), minLat);
 		//System.out.printf("minLat %f, modified=%f\n", Utils.toDegrees(bounds.getMinLat()), Utils.toDegrees(minLat));
-		//System.out.printf("minlon (map) 0x%x %.3f, calc 0x%x %.3f\n",
-		//		bounds.getMinLong(),
-		//		Utils.toDegrees(bounds.getMinLong()),
-		//		minLon,
-		//		Utils.toDegrees(minLon));
-		//System.out.printf("maxlon (map) 0x%x %.3f, calc 0x%x %.3f\n",
-		//		bounds.getMaxLong(),
-		//		Utils.toDegrees(bounds.getMaxLong()),
-		//		maxLon,
-		//		Utils.toDegrees(maxLon));
+		//System.out.printf("maxLon 0x%x, modified=0x%x\n", bounds.getMaxLong(), maxLon);
+		//System.out.printf("maxLon %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLong()), Utils.toDegrees(maxLon));
+		//System.out.printf("minLon 0x%x, modified=0x%x\n", bounds.getMinLong(), minLon);
+		//System.out.printf("minLon %f, modified=%f\n", Utils.toDegrees(bounds.getMinLong()), Utils.toDegrees(minLon));
 
 		// Add a background polygon for this map.
 		List<Coord> points = new ArrayList<Coord>();
@@ -191,11 +185,20 @@ public class TdbBuilder implements Combiner {
 		overviewSource.addShape(bg);
 	}
 
-	private int round(int len, int overviewMask) {
+	private int roundUp(int len, int overviewMask) {
+		System.out.printf("before up 0x%x\n", len);
 		if (len > 0)
 			return (len + overviewMask) & ~overviewMask;
 		else
 			return len & ~overviewMask;
+	}
+
+	private int roundDown(int len, int overviewMask) {
+		System.out.printf("before down 0x%x\n", len);
+		if (len > 0)
+			return len & ~overviewMask;
+		else
+			return -(-len +overviewMask & ~overviewMask);
 	}
 
 	/**

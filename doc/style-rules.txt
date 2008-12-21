@@ -9,7 +9,7 @@ Each file contains a number of rules where you test the values of the
 tags of an OSM node or way and select a specific Garmin type based on the
 result of those tests.
 
-See also: [[mkgmap/help/style examples|style examples]].
+See also: [[mkgmap/help/style examples|Style examples]] | [[Mkgmap/help/Custom_styles|Custom styles]].
 
 ==Simple example==
 In the majority of cases everything is very simple, say you want roads
