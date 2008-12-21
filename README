@@ -57,13 +57,20 @@ by suitable options.  Example:
    Set the description of the map that is stored inside the map itself.  By
    default it is 'OSM Street map'
 
---map-features=file
-   Supply another map features file.  See http://wiki.openstreetmap.org/index.php/Mkgmap/help/custom
+--style=<style-name>
+   Select another built in style.  Use --list-styles to show the available
+   styles.
+
+--list-styles
+   Show the available styles.
+
+--style-file=file
+   Supply another style.  See http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 
 --levels=<levels>
-   Set the levels within the map.  See http://wiki.openstreetmap.org/index.php/Mkgmap/help/custom
+   Set the levels within the map.  See http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 
---charset={latin1|ascii|simple8}
+--charset={latin1|ascii}
    Sets the encoding for the labels.
 
 --latin1
@@ -71,6 +78,9 @@ by suitable options.  Example:
 
 --input-file=<file>
    This is another way of specifying an osm file to process.
+
+--help
+   For a more complete list of options.
 
 Processing more than one file at a time
 ---------------------------------------

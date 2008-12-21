@@ -1,14 +1,19 @@
+Rules allow you to take a map feature in the OSM format, which uses a set
+of tags to describe the feature into the format required by Garmin maps,
+where features are identified by a number.
 
-Rules for points, lines and polygons are held in correspondingly named
+The rules for converting points, lines and polygons are held in correspondingly named
 files.
 
 Each file contains a number of rules where you test the values of the
-tags of an OSM node or way and select a specific garmin type based on the
+tags of an OSM node or way and select a specific Garmin type based on the
 result of those tests.
+
+See also: [[mkgmap/help/style examples|style examples]].
 
 ==Simple example==
 In the majority of cases everything is very simple, say you want roads
-that are tagged as <tt>highway=motorway</tt> to have the garmin type 0x01
+that are tagged as <tt>highway=motorway</tt> to have the Garmin type 0x01
 and for it to appear up until the zoom level 3.
 
 You would write the following rule.
@@ -17,13 +22,13 @@ You would write the following rule.
 
 This will be explained in more detail in the following sections along
 with how to use more than one tag to make the choice.
-However with that one rule, you can do everything that the old map-features
+However with that one form of rule, you can do everything that the old map-features
 file could do.
 
 == More detail ==
 A rule is made up of two parts.  The first part is a set of tests that are
 performed on the tags of the item to be converted.  The second part is the
-garmin type that will used if the tests match and associated details.  This
+Garmin type that will used if the tests match and associated details.  This
 part is contained in square brackets <tt>[ ... ]</tt>.
 
 As a general point, space and newlines don't matter.  There is no need to
@@ -71,7 +76,7 @@ differently than roads that just have a plain
  highway=unclassified & abutters=residential [ 0x06 ]
  highway=unclassified [ 0x05 ]
 
-This means that roads that have both tags would have garmin element type
+This means that roads that have both tags would have Garmin element type
 of 6, whereas unclassified roads without would have the type 5.
 
 It is important to note that the order is important here.  The rules are
@@ -128,7 +133,7 @@ Following the type you can have a number of optional keywords and values.
 ; resolution
 : This is an alternative way of specifying the level.  It is the number from 0-24 which corresponds to one of the zoom levels that the hardware recognises.  You should not use this if you have given the level and it is usually simpler to use 'level'.
 ; default_name
-: If you give this, then if the element does not already have a name, then it will be given this name.  This might be useful for things that usually don't have names and don't have a recognisable separate garmin symbol.  You could give a default name of 'bus stop' for example and all bus stops that didn't have their own name would now be labeled as such.
+: If you give this, then if the element does not already have a name, then it will be given this name.  This might be useful for things that usually don't have names and don't have a recognisable separate Garmin symbol.  You could give a default name of 'bus stop' for example and all bus stops that didn't have their own name would now be labeled as such.
 ; road_class
 : Used for routing; gives the class of the road where 4 is the best roads eg. motorways and 0 are residential roads etc.
 ; road_speed

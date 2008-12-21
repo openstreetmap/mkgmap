@@ -75,7 +75,11 @@ Product description options:
 
 --family-id
 	This is an integer that identifies a family of products.
+
 --product-id
+	This is an integer that identifies a product within a family.  It
+	is often just 1.
+
 --series-name
 --family-name
 --area-name
