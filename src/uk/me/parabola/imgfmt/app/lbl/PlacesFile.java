@@ -79,7 +79,7 @@ public class PlacesFile {
 	}
 
 	Country createCountry(String name, String abbr) {
-		Country c = new Country(countries.size());
+		Country c = new Country(countries.size()+1);
 
 		String s = abbr != null ? name + 0x1d + abbr : name;
 
@@ -91,7 +91,7 @@ public class PlacesFile {
 	}
 
 	Region createRegion(Country country, String name) {
-		Region r = new Region(country, regions.size());
+		Region r = new Region(country, regions.size()+1);
 
 		Label l = lblFile.newLabel(name);
 		r.setLabel(l);
@@ -101,7 +101,7 @@ public class PlacesFile {
 	}
 
 	City createCity(Region region, String name) {
-		City c = new City(region, cities.size());
+		City c = new City(region, cities.size()+1);
 
 		Label l = lblFile.newLabel(name);
 		c.setLabel(l);
@@ -111,7 +111,7 @@ public class PlacesFile {
 	}
 
 	Zip createZip(String code) {
-		Zip z = new Zip(postalCodes.size());
+		Zip z = new Zip(postalCodes.size()+1);
 
 		Label l = lblFile.newLabel(code);
 		z.setLabel(l);
@@ -129,6 +129,7 @@ public class PlacesFile {
 		p.setLabel(l);
 
 		pois.add(p);
+		
 		return p;
 	}
 
