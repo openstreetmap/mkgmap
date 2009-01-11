@@ -70,7 +70,7 @@ public class PlacesFile {
 		byte poiglobalflags = placeHeader.getPOIGlobalFlags();
 		for (POIRecord p : pois)
 			p.write(writer, poiglobalflags,
-				writer.position() - poistart);
+				writer.position() - poistart, cities.size(), postalCodes.size());
 		placeHeader.endPOI(writer.position());
 
 		for (Zip z : postalCodes.values())
@@ -144,6 +144,6 @@ public class PlacesFile {
 
 		int ofs = 0;
 		for (POIRecord p : pois)
-			ofs += p.calcOffset(ofs, poiFlags);
+			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size());
 	}
 }

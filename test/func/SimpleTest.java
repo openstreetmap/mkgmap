@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
+import func.lib.TestUtils;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,12 +48,11 @@ public class SimpleTest {
 	 */
 	@Test
 	public void testSize() throws FileNotFoundException {
-		String[] args = {
+
+		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
-		};
-
-		Main.main(args);
+		});
 
 		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_ID + ".img");
 		assertNotNull("file exists", fs);
@@ -77,12 +77,47 @@ public class SimpleTest {
 		assertTrue("enough checks run", count >= 3);
 	}
 
+	@Test
+	public void testNoSuchFile() {
+		Main.main(new String[]{
+				"no-such-file-xyz.osm",
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
+		});
+		assertFalse("no file generated", new File(Args.DEF_MAP_FILENAME).exists());
+	}
+
+	@Test
+	public void testPolish() throws FileNotFoundException {
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				Args.TEST_RESOURCE_MP + "test1.mp"
+		});
+
+		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
+		assertNotNull("file exists", fs);
+
+		List<DirectoryEntry> entries = fs.list();
+		int count = 0;
+		for (DirectoryEntry ent : entries) {
+			String ext = ent.getExt();
+
+			int size = ent.getSize();
+			if (ext.equals("RGN")) {
+				count++;
+				assertEquals("RGN size", 251, size);
+			} else if (ext.equals("TRE")) {
+				count++;
+				assertEquals("TRE size", 546, size);
+			} else if (ext.equals("LBL")) {
+				count++;
+				assertEquals("LBL size", 457, size);
+			}
+		}
+		assertTrue("enough checks run", count >= 3);
+	}
+
 	@Before
 	public void setUp() {
-		File f = new File(Args.DEF_MAP_ID + ".img");
-		if (f.exists()) {
-			boolean b = f.delete();
-			assertTrue(b);
-		}
+		TestUtils.deleteOutputFiles();
 	}
 }

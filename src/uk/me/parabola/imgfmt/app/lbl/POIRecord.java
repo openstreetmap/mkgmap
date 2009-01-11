@@ -47,8 +47,8 @@ public class POIRecord {
 	private Label streetName;
 	private Label streetNumberName; // Used for numbers such as 221b
 
-	private char cityIndex;
-	private char zipIndex;
+	private char cityIndex = 0;
+	private char zipIndex  = 0;
 
 	private String phoneNumber;
 
@@ -59,8 +59,19 @@ public class POIRecord {
 	public void setStreetName(Label label) {
 		this.streetName = label;
 	}
+	
+	public void setZipIndex(int zipIndex)
+	{
+		this.zipIndex =  (char) zipIndex;
+	}
+	
+	public void setCityIndex(int cityIndex)
+	{
+		this.cityIndex  = (char) cityIndex;
+	}
 
-	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs) {
+	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs,
+		   long numCities, long numZips) {
 		assert offset == realofs;
 
 		int ptr = poiName.getOffset();
@@ -69,17 +80,66 @@ public class POIRecord {
 		writer.put3(ptr);
 
 		if (POIGlobalFlags != getPOIFlags())
-			writer.put(getPOIFlags());
+			writer.put(getWrittenPOIFlags(POIGlobalFlags));
 
 		if (streetName != null)
 			writer.put3(streetName.getOffset());
+			
+		if (cityIndex > 0)
+		{
+			if(numCities > 255)
+ 			  writer.putChar(cityIndex);
+			else
+			  writer.put((byte)cityIndex);
+		}
+			
+		if (zipIndex > 0)
+		{
+			if(numZips > 255)
+ 			  writer.putChar(zipIndex);			
+			else
+			 writer.put((byte)zipIndex);
+		}
 	}
 
 	byte getPOIFlags() {
 		byte b = 0;
 		if (streetName != null)
 			b |= HAS_STREET;
+		if (cityIndex > 0)
+		        b |= HAS_CITY;
+		if (zipIndex > 0)
+		        b |= HAS_ZIP;			
 		return b;
+	}
+	
+	byte getWrittenPOIFlags(byte POIGlobalFlags) 
+	{
+	    int mask;
+	    int flag = 0;
+	    int j = 0;
+	
+	    int usedFields = getPOIFlags();
+	
+	    /* the local POI flag is really tricky
+	       if a bit is not set in the global mask
+	       we have to skip this bit in the local mask.
+	       In other words the meaning of the local bits
+	       change influenced by the global bits */
+	
+	    for(byte i = 0; i < 6; i++)
+	    {
+	    	mask =  1 << i;
+		
+		if((mask & POIGlobalFlags) == mask)
+		{
+		   if((mask & usedFields) == mask)
+		     flag = flag | (1 << j);
+		   j++;
+		}
+		
+	    }
+	    return (byte) flag;
 	}
 
 	/**
@@ -87,13 +147,37 @@ public class POIRecord {
 	 *
 	 * \return Number of bytes needed by this entry
 	 */
-	int calcOffset(int ofs, byte POIGlobalFlags) {
+	int calcOffset(int ofs, byte POIGlobalFlags, long numCities, long numZips) {
 		offset = ofs;
 		int size = 3;
 		if (POIGlobalFlags != getPOIFlags())
 			size += 1;
 		if (streetName != null)
 			size += 3;
+		if (cityIndex > 0) 
+		{
+			/*
+			  depending on how many cities are in the LBL block we have
+			  to write one or two bytes 
+			*/
+		
+			if(numCities > 255)
+	  		  size += 2;
+			else
+			  size += 1;
+		}
+		if (zipIndex > 0)
+		{
+			/*
+			  depending on how many zips are in the LBL block we have
+			  to write one or two bytes 
+			*/
+		
+			if(numZips > 255)
+			   size += 2;						
+			else
+			   size += 1;
+		}
 		return size;
 	}
 

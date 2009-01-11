@@ -32,7 +32,7 @@ public class TestUtils {
 	 * Used to clean up before/after a test.
 	 */
 	public static void deleteOutputFiles() {
-		File f = new File(Args.DEF_MAP_ID);
+		File f = new File(Args.DEF_MAP_FILENAME);
 		if (f.exists())
 			assertTrue("delete existing file", f.delete());
 	}
