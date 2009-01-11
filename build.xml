@@ -32,6 +32,14 @@
   <property name="javadoc" value="${doc}/api"/>
   <property name="resources" value="resources"/>
 
+	<!-- A place to keep a local copy of the test input data.  The test files
+	 are large and so are not kept in svn.  If you don't set this then they
+	 will be downloaded.
+
+	 You can set it in the external.properties file too.
+	 -->
+	<property name="test.input.cache" value="/opt/data/testinput"/>
+
   <path id="main">
     <pathelement location="${build.classes}" />
   </path>
@@ -92,7 +100,24 @@
 		</copy>
   </target>
 
-  <!-- Clean everything -->
+	<target name="obtain-test-input-files" description="download the input files for the functional tests">
+		<!-- Local cache, if it doesn't exist then it is not a problem the files
+		will be downloaded in the next step -->
+		<copy todir="test/resources/in" failonerror="false">
+			<fileset dir="${test.input.cache}" includes="**"/>
+		</copy>
+		<get src="http://www.mkgmap.org.uk/testinput/osm/lon1.osm.gz"
+			dest="test/resources/in/osm/lon1.osm.gz" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/osm/uk-test-1.osm.gz"
+			dest="test/resources/in/osm/uk-test-1.osm.gz" usetimestamp="true"
+			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/osm/uk-test-2.osm.gz"
+			dest="test/resources/in/osm/uk-test-2.osm.gz" usetimestamp="true"
+		  ignoreerrors="true"/> 
+	</target>
+
+	<!-- Clean everything -->
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
