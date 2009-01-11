@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +68,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private int endLevel;
 	private char elevUnits;
 	private static final double METERS_TO_FEET = 3.2808399;
+	private String codePage = "cp1252";
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
@@ -80,7 +82,15 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @throws FileNotFoundException If the file does not exist.
 	 */
 	public void load(String name) throws FileNotFoundException, FormatException {
-		Reader reader = new InputStreamReader(openFile(name));
+		Reader reader;
+		try {
+			reader = new InputStreamReader(openFile(name), codePage);
+		} catch (UnsupportedEncodingException e) {
+			// we might need to recognise codepage names and convert them
+			// to other names.
+			throw new FormatException("Unrecognised code page " + codePage);
+		}
+		
 		BufferedReader in = new BufferedReader(reader);
 		try {
 			String line;
@@ -403,6 +413,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			char fc = value.charAt(0);
 			if (fc == 'm' || fc == 'M')
 				elevUnits = 'm';
+		} else if (name.equals("CodePage")) {
+			codePage = value;
 		}
 	}
 
