@@ -186,7 +186,7 @@ public class TdbBuilder implements Combiner {
 	}
 
 	private int roundUp(int len, int overviewMask) {
-		System.out.printf("before up 0x%x\n", len);
+		//System.out.printf("before up 0x%x\n", len);
 		if (len > 0)
 			return (len + overviewMask) & ~overviewMask;
 		else
@@ -194,7 +194,7 @@ public class TdbBuilder implements Combiner {
 	}
 
 	private int roundDown(int len, int overviewMask) {
-		System.out.printf("before down 0x%x\n", len);
+		//System.out.printf("before down 0x%x\n", len);
 		if (len > 0)
 			return len & ~overviewMask;
 		else
