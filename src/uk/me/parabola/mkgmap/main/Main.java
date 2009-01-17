@@ -65,7 +65,7 @@ public class Main implements ArgumentProcessor {
 
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
-	private boolean verbose = false;
+	private boolean verbose;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,

@@ -9,7 +9,7 @@
       <maximumHeapSize value="128" />
       <maximumStackSize value="32" />
       <properties />
-      <executeOn event="beforeRun" target="obtain-test-input-files" runConfigurationType="JUnit" runConfigurationName="Functional" />
+      <executeOn event="beforeRun" target="obtain-test-input-files" />
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
@@ -1436,7 +1436,13 @@
         <value defaultName="wholeProject" />
       </option>
       <envs />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="58506" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
       <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Run Ant target" value="true" />

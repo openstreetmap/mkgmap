@@ -17,6 +17,14 @@
 package func.lib;
 
 import java.io.File;
+import java.io.PrintStream;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import uk.me.parabola.mkgmap.main.Main;
 
 import static org.junit.Assert.*;
 
@@ -35,5 +43,46 @@ public class TestUtils {
 		File f = new File(Args.DEF_MAP_FILENAME);
 		if (f.exists())
 			assertTrue("delete existing file", f.delete());
+	}
+
+	/**
+	 * Run with a single argument.  The standard arguments are added first.
+	 * @param arg The argument.
+	 */
+	public static Outputs run(String arg) {
+		return run(new String[] {arg});
+	}
+
+	/**
+	 * Run with the given args.  Some standard arguments are added first.
+	 *
+	 * To run without the standard args, use runRaw().
+	 * @param in The arguments to use.
+	 */
+	public static Outputs run(String ... in) {
+		List<String> args = new ArrayList<String>(Arrays.asList(in));
+		args.add(0, Args.TEST_STYLE_ARG);
+
+		OutputStream outsink = new ByteArrayOutputStream();
+		PrintStream out = new PrintStream(outsink);
+
+		OutputStream errsink = new ByteArrayOutputStream();
+		PrintStream err = new PrintStream(errsink);
+
+		PrintStream origout = System.out;
+		PrintStream origerr = System.err;
+
+		try {
+			System.setOut(out);
+			System.setErr(err);
+			Main.main(args.toArray(new String[args.size()]));
+		} finally {
+			out.close();
+			err.close();
+			System.setOut(origout);
+			System.setErr(origerr);
+		}
+
+		return new Outputs(outsink.toString(), errsink.toString());
 	}
 }

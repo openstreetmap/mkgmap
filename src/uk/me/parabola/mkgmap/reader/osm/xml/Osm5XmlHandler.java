@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -49,9 +50,9 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
 	private Map<Long, Node> nodeMap = new HashMap<Long, Node>(5000);
-	private Map<Long, Way> wayMap = new HashMap<Long, Way>(5000);
-	private Map<Long, Relation> relationMap = new HashMap<Long, Relation>();
-	private Map<String, Long> fakeIdMap = new HashMap<String, Long>();
+	private Map<Long, Way> wayMap = new LinkedHashMap<Long, Way>(5000);
+	private Map<Long, Relation> relationMap = new LinkedHashMap<Long, Relation>();
+	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;

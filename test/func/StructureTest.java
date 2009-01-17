@@ -36,8 +36,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Creates a file and runs several tests on it to verify the structure of
- * it.
+ * Creates a single img file and runs several tests on it to verify
+ * the basic structure of it.
  *
  * @author Steve Ratcliffe
  */
@@ -61,6 +61,10 @@ public class StructureTest {
 		assertEquals("header length", 188, header.getHeaderLength());
 	}
 
+	/**
+	 * Read in the file and open all the sections, leave references to them
+	 * in fields so that the other tests can check things.
+	 */
 	@BeforeClass
 	public static void init() throws FileNotFoundException {
 		TestUtils.deleteOutputFiles();
@@ -81,6 +85,9 @@ public class StructureTest {
 		rgnFile = new RGNFile(rgn);
 	}
 
+	/**
+	 * Close everything down.
+	 */
 	@AfterClass
 	public static void cleanup() {
 		TestUtils.deleteOutputFiles();

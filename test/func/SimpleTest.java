@@ -81,7 +81,6 @@ public class SimpleTest {
 	public void testNoSuchFile() {
 		Main.main(new String[]{
 				"no-such-file-xyz.osm",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
 		});
 		assertFalse("no file generated", new File(Args.DEF_MAP_FILENAME).exists());
 	}
