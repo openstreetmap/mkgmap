@@ -22,12 +22,12 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Command line arguments for Main.  Arguments consist of options and filenames.
@@ -54,7 +54,7 @@ public class CommandArgs {
 	}
 
 	private final ArgumentProcessor proc;
-	private final Properties currentOptions = new Properties();
+	private final EnhancedProperties currentOptions = new EnhancedProperties();
 
 	private boolean mapnameWasSet;
 
@@ -122,27 +122,16 @@ public class CommandArgs {
 		proc.endOptions(this);
 	}
 
-	public Properties getProperties() {
+	public EnhancedProperties getProperties() {
 		return arglist.getProperties();
 	}
 
 	public int get(String name, int def) {
-		String s = currentOptions.getProperty(name);
-		if (s == null)
-			return def;
-
-		try {
-			return Integer.parseInt(s);
-		} catch (NumberFormatException e) {
-			return def;
-		}
+		return currentOptions.getProperty(name, def);
 	}
 
 	public String get(String name, String def) {
-		String s = currentOptions.getProperty(name);
-		if (s == null)
-			s = def;
-		return s;
+		return currentOptions.getProperty(name, def);
 	}
 
 	// ////
@@ -156,7 +145,7 @@ public class CommandArgs {
 	}
 
 	public int getBlockSize() {
-		return getValue("block-size", 512);
+		return get("block-size", 512);
 	}
 
 	public String getMapname() {
@@ -194,7 +183,7 @@ public class CommandArgs {
 	 * Test for the existence of an argument.
 	 */
 	public boolean exists(String name) {
-		return currentOptions.getProperty(name) != null;
+		return currentOptions.containsKey(name);
 	}
 
 	/**
@@ -239,26 +228,6 @@ public class CommandArgs {
 			readConfigFile(value);
 		} else {
 			arglist.add(opt);
-		}
-	}
-
-	/**
-	 * Get an integer value.  A default is used if the property does not exist.
-	 *
-	 * @param name   The name of the property.
-	 * @param defval The default value to supply.
-	 * @return An integer that is the value of the property.  If the property
-	 * does not exist or if it is not numeric then the default value is returned.
-	 */
-	private int getValue(String name, int defval) {
-		String s = arglist.getProperty(name);
-		if (s == null)
-			return defval;
-
-		try {
-			return Integer.parseInt(s);
-		} catch (NumberFormatException e) {
-			return defval;
 		}
 	}
 
@@ -318,7 +287,7 @@ public class CommandArgs {
 			return val;
 		}
 
-		public Properties getProperties() {
+		public EnhancedProperties getProperties() {
 			return currentOptions;
 		}
 

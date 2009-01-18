@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * @author Steve Ratcliffe
@@ -35,10 +36,14 @@ public class TREHeader extends CommonHeader {
 	// better description.
 	public static final int TRE_120 = 120;
 	public static final int TRE_184 = 184;
-	public static final int TRE_188 = 188;
+	private static final int TRE_188 = 188;
 
 	// The header length to use when creating a file.
 	private static final int DEFAULT_HEADER_LEN = TRE_188;
+
+	// A map has a display priority that determines which map is on top
+	// when two maps cover the same area.
+	private static final int DEFAULT_DISPLAY_PRIORITY = 0x19;
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
@@ -47,6 +52,8 @@ public class TREHeader extends CommonHeader {
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
+
+	private static final int POI_FLAG_TRANSPARENT = 0x2;
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -60,6 +67,8 @@ public class TREHeader extends CommonHeader {
 	private int subdivSize;
 
 	private byte poiDisplayFlags = 0x1;
+
+	private int displayPriority = DEFAULT_DISPLAY_PRIORITY;
 
 	private final Section copyright = new Section(COPYRIGHT_REC_SIZE);
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
@@ -97,9 +106,21 @@ public class TREHeader extends CommonHeader {
 		subdivPos = reader.getInt();
 		subdivSize = reader.getInt();
 
-		copyright.setPosition(reader.getInt());
-		copyright.setSize(reader.getInt());
-		copyright.setItemSize(reader.getChar());
+		readSectionInfo(reader, copyright);
+		reader.getInt();
+
+		poiDisplayFlags = reader.get();
+		displayPriority = reader.get3();
+		reader.getInt();
+		reader.getChar();
+		reader.get();
+
+		readSectionInfo(reader, polyline);
+		reader.getInt();
+		readSectionInfo(reader, polygon);
+		reader.getInt();
+		readSectionInfo(reader, points);
+		reader.getInt();
 
 		int mapInfoOff = mapLevelPos;
 		if (subdivPos < mapInfoOff)
@@ -158,7 +179,7 @@ public class TREHeader extends CommonHeader {
 
 		writer.put(getPoiDisplayFlags());
 
-		writer.put3(0x19);
+		writer.put3(displayPriority);
 		writer.putInt(0xd0401);
 
 		writer.putChar((char) 1);
@@ -204,7 +225,15 @@ public class TREHeader extends CommonHeader {
 		writer.position(getHeaderLength());
 	}
 
+	public void config(EnhancedProperties props) {
+		String key = "draw-priority";
+		if (props.containsKey(key))
+			setDisplayPriority(props.getProperty(key, 0x19));
 
+		if (props.containsKey("transparent"))
+			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
+	}
+	
 	/**
 	 * Set the bounds based upon the latitude and longitude in degrees.
 	 * @param area The area bounded by the map.
@@ -314,4 +343,19 @@ public class TREHeader extends CommonHeader {
 		return mapId;
 	}
 
+	public void setDisplayPriority(int displayPriority) {
+		this.displayPriority = displayPriority;
+	}
+
+	public void setTre7Pos(int pos) {
+		tre7.setPosition(pos);
+	}
+
+	public void incTre7() {
+		tre7.inc();
+	}
+
+	public int getDisplayPriority() {
+		return displayPriority;
+	}
 }

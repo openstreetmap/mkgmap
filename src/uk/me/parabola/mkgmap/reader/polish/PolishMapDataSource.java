@@ -107,6 +107,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} catch (IOException e) {
 			throw new FormatException("Reading file failed", e);
 		}
+
+		addBackground();
+
+		mapper.finish();
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -435,8 +439,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		Float f1 = Float.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
-		Coord coord = new Coord(f1, f2);
-		log.debug(coord);
-		return coord;
+		return new Coord(f1, f2);
 	}
 }

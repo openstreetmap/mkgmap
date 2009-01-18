@@ -144,7 +144,7 @@ public class GmapsuppBuilder implements Combiner {
 			mps.sync();
 			mps.close();
 		} catch (IOException e) {
-			throw new FileNotWritableException("Could not finish write to MPS file", e);
+			throw new FileNotWritableException("Could not inish write to MPS file", e);
 		}
 	}
 

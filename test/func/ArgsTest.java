@@ -16,9 +16,19 @@
  */
 package func;
 
-import org.junit.Test;
-import func.lib.TestUtils;
+import java.io.FileNotFoundException;
+
+import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREHeader;
+import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.ImgFS;
+
+import func.lib.Args;
 import func.lib.Outputs;
+import func.lib.TestUtils;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * A basic check of various arguments that can be passed in.
@@ -29,32 +39,32 @@ public class ArgsTest extends Base {
 	@Test
 	public void testHelp() {
 		Outputs outputs = TestUtils.run("--help");
-		checkOutput(outputs, "--help=options", "--help=links");
-		checkNoError(outputs);
+		outputs.checkOutput("--help=options", "--help=links");
+		outputs.checkNoError();
 		checkNoStdFile();
 	}
 
 	@Test
 	public void testHelpOptions() {
 		Outputs outputs = TestUtils.run("--help=options");
-		checkNoError(outputs);
-		checkOutput(outputs, "--mapname=name", "--latin1", "--list-styles");
+		outputs.checkNoError();
+		outputs.checkOutput("--mapname=name", "--latin1", "--list-styles");
 		checkNoStdFile();
 	}
 
 	@Test
 	public void testHelpUnknown() {
 		Outputs outputs = TestUtils.run("--help=unknown-help-option");
-		checkNoError(outputs);
-		checkOutput(outputs, "Could not find", "unknown-help-option");
+		outputs.checkNoError();
+		outputs.checkOutput("Could not find", "unknown-help-option");
 		checkNoStdFile();
 	}
 
 	@Test
 	public void testListStyles() {
 		Outputs op = TestUtils.run("--style-file=test/resources/teststyles", "--list-styles");
-		checkNoError(op);
-		checkOutput(op, "empty", "main", "simple", "derived", "2.2: A simple test style");
+		op.checkNoError();
+		op.checkOutput("empty", "main", "simple", "derived", "2.2: A simple test style");
 		checkNoStdFile();
 	}
 
@@ -62,9 +72,23 @@ public class ArgsTest extends Base {
 	public void testListStylesVerbose() {
 		Outputs op = TestUtils.run("--style-file=test/resources/teststyles",
 				"--verbose", "--list-styles");
-		checkNoError(op);
-		checkOutput(op, "empty", "main", "simple", "derived",
+		op.checkNoError();
+		op.checkOutput("empty", "main", "simple", "derived",
 				"2.2: A simple test style", "Used for many functional tests");
 		checkNoStdFile();
+	}
+
+	@Test
+	public void testDisplayPriority() throws FileNotFoundException {
+		int pri = 42;
+		Outputs op = TestUtils.run("--draw-priority=" + pri,
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
+		op.checkNoError();
+
+		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
+		ImgChannel chan = fs.open(Args.DEF_MAP_ID + ".TRE", "r");
+		TREFile treFile = new TREFile(chan, false);
+
+		assertEquals("display priority", pri, ((TREHeader) treFile.getHeader()).getDisplayPriority());
 	}
 }

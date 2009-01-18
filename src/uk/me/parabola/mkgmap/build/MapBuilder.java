@@ -315,9 +315,6 @@ public class MapBuilder {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 
-		// Make a few settings
-		map.setPoiDisplayFlags(0);
-
 		// You can add anything here.
 		// But there has to be something, otherwise the map does not show up.
 		//

@@ -63,15 +63,6 @@ public class Tags implements Iterable<String> {
 		capacity = INIT_SIZE;
 	}
 
-
-	public int size() {
-		return size;
-	}
-
-	public boolean isEmpty() {
-		return size == 0;
-	}
-
 	public String get(Object key) {
 		Integer ind = keyPos((String) key);
 		if (ind == null)

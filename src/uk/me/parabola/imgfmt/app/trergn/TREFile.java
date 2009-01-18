@@ -26,11 +26,13 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -43,7 +45,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class TREFile extends ImgFile {
+public class TREFile extends ImgFile implements ConfiguredByProperties {
 	private static final Logger log = Logger.getLogger(TREFile.class);
 
 	// Zoom levels for map
@@ -118,6 +120,10 @@ public class TREFile extends ImgFile {
 
 	public void addPolygonOverview(PolygonOverview ov) {
 		polygonOverviews.add(ov);
+	}
+
+	public void config(EnhancedProperties props) {
+		header.config(props);
 	}
 
 	/**
@@ -295,10 +301,6 @@ public class TREFile extends ImgFile {
 
 	public void setBounds(Area area) {
 		header.setBounds(area);
-	}
-
-	public void setPoiDisplayFlags(byte b) {
-		header.setPoiDisplayFlags(b);
 	}
 
 	public String[] getCopyrights() {

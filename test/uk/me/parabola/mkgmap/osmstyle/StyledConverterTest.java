@@ -145,7 +145,6 @@ public class StyledConverterTest {
 
 			public void addShape(MapShape shape) { }
 
-			public void finish() { }
 		};
 
 		return new StyledConverter(style, coll);

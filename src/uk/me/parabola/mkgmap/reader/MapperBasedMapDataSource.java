@@ -20,16 +20,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * A convenient base class for all map data that is based on the MapDetails
@@ -39,6 +42,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
  */
 public abstract class MapperBasedMapDataSource implements MapDataSource {
 	protected final MapDetails mapper = new MapDetails();
+	private EnhancedProperties configProps;
 
 	/**
 	 * Get the area that this map covers. Delegates to the map collector.
@@ -98,5 +102,43 @@ public abstract class MapperBasedMapDataSource implements MapDataSource {
 			}
 		}
 		return is;
+	}
+
+	public void config(EnhancedProperties props) {
+		configProps = props;
+	}
+
+	public EnhancedProperties getConfig() {
+		return configProps;
+	}
+
+	/**
+	 * We add the background polygons if the map is not transparent.
+	 */
+	protected void addBackground() {
+		if (!getConfig().getProperty("transparent", false)) {
+			// Make a list of points to trace out the background area.
+			List<Coord> coords = new ArrayList<Coord>();
+			Area bounds = mapper.getBounds();
+			Coord start = new Coord(bounds.getMinLat(), bounds.getMinLong());
+			coords.add(start);
+			Coord co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
+			coords.add(co);
+			co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
+			coords.add(co);
+			co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
+			coords.add(co);
+			//coords.add(start);
+
+			// Now add the background area
+			MapShape background = new MapShape();
+			background.setType(0x4b); // background type
+			background.setMinResolution(0); // On all levels
+			background.setPoints(coords);
+
+			// Note we add directly to the shapes list, we do not add to
+			// the overview section.
+			mapper.addShape(background);
+		}
 	}
 }

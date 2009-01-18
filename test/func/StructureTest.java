@@ -59,6 +59,8 @@ public class StructureTest {
 	public void testTreHeader() {
 		TREHeader header = (TREHeader) treFile.getHeader();
 		assertEquals("header length", 188, header.getHeaderLength());
+		
+		assertEquals("display prio", 25, header.getDisplayPriority());
 	}
 
 	/**
@@ -71,7 +73,7 @@ public class StructureTest {
 
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
-				Args.TEST_RESOURCE_OSM + "lon1.osm.gz"
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
 		});
 
 		fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);

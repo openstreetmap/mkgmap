@@ -103,7 +103,7 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 251, size);
+				assertEquals("RGN size", 338, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 546, size);

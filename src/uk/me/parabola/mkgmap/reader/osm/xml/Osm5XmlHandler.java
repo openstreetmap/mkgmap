@@ -45,7 +45,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class Osm5XmlHandler extends DefaultHandler {
 	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
-	
+
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
@@ -68,6 +68,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private OsmConverter converter;
 	private MapCollector mapper;
 	private Area bbox;
+	private Runnable endTask;
 
 	private long nextFakeId = 1;
 
@@ -216,12 +217,12 @@ class Osm5XmlHandler extends DefaultHandler {
 				mode = 0;
 				endRelation();
 			}
-		}		
+		}
 	}
 
 	private void endNode() {
 		mode = 0;
-		
+
 		currentElementId = 0;
 		currentNode = null;
 	}
@@ -248,7 +249,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 */
 	public void endDocument() throws SAXException {
 		coordMap = null;
-		for (Relation r : relationMap.values()) 
+		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
 		relationMap = null;
@@ -262,7 +263,9 @@ class Osm5XmlHandler extends DefaultHandler {
 			converter.convertWay(w);
 
 		wayMap = null;
-		mapper.finish();
+
+		// Run a finishing task.
+		endTask.run();
 	}
 
 	private void setupBBoxFromBounds(Attributes xmlattr) {
@@ -319,29 +322,33 @@ class Osm5XmlHandler extends DefaultHandler {
 			// ignore bad numeric data.
 		}
 	}
-	
+
 	private void addWay(String sid) {
 		try {
 			currentWay = new Way();
-			long id = idVal(sid);	 
-			wayMap.put(id, currentWay);	
+			long id = idVal(sid);
+			wayMap.put(id, currentWay);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
 	}
-	
+
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
 		if (co != null)
 			currentWay.addPoint(co);
 	}
 
-	public void setCallbacks(MapCollector mapCollector) {
+	public void setConverter(OsmConverter converter) {
+		this.converter = converter;
+	}
+
+	public void setCollector(MapCollector mapCollector) {
 		mapper = mapCollector;
 	}
 
-	public void setConverter(OsmConverter converter) {
-		this.converter = converter;
+	public void setEndTask(Runnable endTask) {
+		this.endTask = endTask;
 	}
 
 	public void fatalError(SAXParseException e) throws SAXException {
@@ -359,7 +366,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = new Long((1L << 62) + nextFakeId++);
+				fakeIdVal = (1L << 62) + nextFakeId++;
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);

@@ -26,7 +26,6 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
@@ -102,8 +101,7 @@ public class MapMaker implements MapProcessor {
 		if (i != 0)
 			map.setLabelCodePage(i);
 
-		if (args.exists("net"))
-			map.addNet();
+		map.config(args.getProperties());
 	}
 
 	/**
@@ -120,8 +118,7 @@ public class MapMaker implements MapProcessor {
 			FileNotFoundException, FormatException
 	{
 		LoadableMapDataSource src = MapReader.createMapReader(name);
-		if (src instanceof ConfiguredByProperties)
-			((ConfiguredByProperties) src).config(args.getProperties());
+		src.config(args.getProperties());
 		src.load(name);
 		return src;
 	}

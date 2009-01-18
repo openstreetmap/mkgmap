@@ -19,10 +19,10 @@ package uk.me.parabola.mkgmap.reader.test;
 import java.io.FileNotFoundException;
 import java.util.Properties;
 
-import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is a map data source that just generates maps without reference to
@@ -30,7 +30,7 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
  * 
  * @author Steve Ratcliffe
  */
-public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource, ConfiguredByProperties {
+public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private Properties configProps;
 
 	/**
@@ -72,7 +72,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 		return new String[] {"test data"};
 	}
 
-	public void config(Properties props) {
+	public void config(EnhancedProperties props) {
 		this.configProps = props;
 	}
 }

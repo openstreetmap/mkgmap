@@ -58,9 +58,4 @@ public interface MapCollector {
 	 */
 	public void addShape(MapShape shape);
 
-	/**
-	 * Called at the end of processing the input file. Any final operations
-	 * can be completed here.
-	 */
-	public void finish();
 }

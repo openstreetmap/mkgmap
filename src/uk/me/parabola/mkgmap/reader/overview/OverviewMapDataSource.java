@@ -134,13 +134,6 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		mapper.addShape(shape);
 	}
 
-	/**
-	 * Called at the end of processing the input file. Any final operations can be
-	 * completed here.
-	 */
-	public void finish() {
-	}
-
 	public int getShift() {
 		return 24 - (topBits - 1);
 	}
