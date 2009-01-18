@@ -66,7 +66,7 @@ public class TREHeader extends CommonHeader {
 	private int subdivPos;
 	private int subdivSize;
 
-	private byte poiDisplayFlags = 0x1;
+	private byte poiDisplayFlags;
 
 	private int displayPriority = DEFAULT_DISPLAY_PRIORITY;
 
