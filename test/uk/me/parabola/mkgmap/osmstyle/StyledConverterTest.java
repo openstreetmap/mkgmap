@@ -24,8 +24,8 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapRoad;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -140,14 +140,13 @@ public class StyledConverterTest {
 
 			public void addLine(MapLine line) {
 				// Save line so that it can be examined in the tests.
+				assertNotNull("points are not null", line.getPoints());
 				lines.add(line);
 			}
 
 			public void addShape(MapShape shape) { }
 
 			public void addRoad(MapRoad road) { }
-
-			public void finish() { }
 		};
 
 		return new StyledConverter(style, coll);

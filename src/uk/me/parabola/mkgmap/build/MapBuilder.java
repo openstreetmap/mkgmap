@@ -37,10 +37,10 @@ import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 import uk.me.parabola.imgfmt.app.trergn.RGNFile;
+import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
-import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
@@ -333,9 +333,6 @@ public class MapBuilder {
 	protected void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
-
-		// Make a few settings
-		map.setPoiDisplayFlags(0);
 
 		// You can add anything here.
 		// But there has to be something, otherwise the map does not show up.

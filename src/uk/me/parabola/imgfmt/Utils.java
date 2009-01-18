@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -113,7 +113,11 @@ public class Utils {
 	 * @return An integer value in map units.
 	 */
 	public static int toMapUnit(double l) {
-		return (int) (l * (1 << 24)/360);
+		double DELTA = 0.000001; // TODO check if we really mean this
+		if (l > 0)
+			return (int) ((l + DELTA) * (1 << 24)/360);
+		else
+			return (int) ((l - DELTA) * (1 << 24)/360);
 	}
 
 	/**

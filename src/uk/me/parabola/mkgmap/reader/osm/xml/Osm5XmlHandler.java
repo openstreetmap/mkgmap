@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -44,13 +45,14 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class Osm5XmlHandler extends DefaultHandler {
 	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
-	
+
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
 	private Map<Long, Node> nodeMap = new HashMap<Long, Node>(5000);
-	private Map<Long, Way> wayMap = new HashMap<Long, Way>(5000);
-	private Map<Long, Relation> relationMap = new HashMap<Long, Relation>();
+	private Map<Long, Way> wayMap = new LinkedHashMap<Long, Way>(5000);
+	private Map<Long, Relation> relationMap = new LinkedHashMap<Long, Relation>();
+	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -66,6 +68,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	private OsmConverter converter;
 	private MapCollector mapper;
 	private Area bbox;
+	private Runnable endTask;
+
+	private long nextFakeId = 1;
 
 	/**
 	 * Receive notification of the start of an element.
@@ -124,7 +129,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void startInRelation(String qName, Attributes attributes) {
 		if (qName.equals("member")) {
-			long id = Long.parseLong(attributes.getValue("ref"));
+			long id = idVal(attributes.getValue("ref"));
 			Element el;
 			String type = attributes.getValue("type");
 			if ("way".equals(type)){
@@ -144,7 +149,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void startInWay(String qName, Attributes attributes) {
 		if (qName.equals("nd")) {
-			long id = Long.parseLong(attributes.getValue("ref"));
+			long id = idVal(attributes.getValue("ref"));
 			addNodeToWay(id);
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
@@ -212,12 +217,12 @@ class Osm5XmlHandler extends DefaultHandler {
 				mode = 0;
 				endRelation();
 			}
-		}		
+		}
 	}
 
 	private void endNode() {
 		mode = 0;
-		
+
 		currentElementId = 0;
 		currentNode = null;
 	}
@@ -244,7 +249,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 */
 	public void endDocument() throws SAXException {
 		coordMap = null;
-		for (Relation r : relationMap.values()) 
+		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
 		relationMap = null;
@@ -258,7 +263,9 @@ class Osm5XmlHandler extends DefaultHandler {
 			converter.convertWay(w);
 
 		wayMap = null;
-		mapper.finish();
+
+		// Run a finishing task.
+		endTask.run();
 	}
 
 	private void setupBBoxFromBounds(Attributes xmlattr) {
@@ -304,7 +311,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 */
 	private void addNode(String sid, String slat, String slon) {
 		try {
-			long id = Long.parseLong(sid);
+			long id = idVal(sid);
 
 			Coord co = new Coord(Double.parseDouble(slat), Double.parseDouble(slon));
 			coordMap.put(id, co);
@@ -315,17 +322,17 @@ class Osm5XmlHandler extends DefaultHandler {
 			// ignore bad numeric data.
 		}
 	}
-	
+
 	private void addWay(String sid) {
 		try {
 			currentWay = new Way();
-			long id = Long.parseLong(sid);	 
-			wayMap.put(id, currentWay);	
+			long id = idVal(sid);
+			wayMap.put(id, currentWay);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
 	}
-	
+
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
 		//co.incCount();
@@ -333,17 +340,38 @@ class Osm5XmlHandler extends DefaultHandler {
 			currentWay.addPoint(co);
 	}
 
-	public void setCallbacks(MapCollector mapCollector) {
+	public void setConverter(OsmConverter converter) {
+		this.converter = converter;
+	}
+
+	public void setCollector(MapCollector mapCollector) {
 		mapper = mapCollector;
 	}
 
-	public void setConverter(OsmConverter converter) {
-		this.converter = converter;
+	public void setEndTask(Runnable endTask) {
+		this.endTask = endTask;
 	}
 
 	public void fatalError(SAXParseException e) throws SAXException {
 		System.err.println("Error at line " + e.getLineNumber() + ", col "
 				+ e.getColumnNumber());
 		super.fatalError(e);
+	}
+
+	private long idVal(String id) {
+		try {
+			// attempt to parse id as a number
+			return Long.parseLong(id);
+		}
+		catch (NumberFormatException e) {
+			// if that fails, fake a (hopefully) unique value
+			Long fakeIdVal = fakeIdMap.get(id);
+			if(fakeIdVal == null) {
+				fakeIdVal = (1L << 62) + nextFakeId++;
+				fakeIdMap.put(id, fakeIdVal);
+			}
+			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
+			return fakeIdVal;
+		}
 	}
 }

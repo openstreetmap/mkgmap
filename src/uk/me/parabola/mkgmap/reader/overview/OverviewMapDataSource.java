@@ -22,6 +22,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
@@ -132,13 +133,6 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	 */
 	public void addShape(MapShape shape) {
 		mapper.addShape(shape);
-	}
-
-	/**
-	 * Called at the end of processing the input file. Any final operations can be
-	 * completed here.
-	 */
-	public void finish() {
 	}
 
 	public void addRoad(MapRoad road) {

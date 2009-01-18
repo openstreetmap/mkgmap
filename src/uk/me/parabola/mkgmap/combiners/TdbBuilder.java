@@ -31,8 +31,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -44,7 +42,7 @@ import uk.me.parabola.tdbfmt.TdbFile;
 public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
-	private final OverviewMap overviewSource = new OverviewMapDataSource();
+	private OverviewMap overviewSource;
 
 	private TdbFile tdb;
 
@@ -140,30 +138,21 @@ public class TdbBuilder implements Combiner {
 		//System.out.printf("overview shift %d\n", overviewSource.getShift());
 		int overviewMask = ((1 << overviewSource.getShift()) - 1);
 		//System.out.printf("mask %x\n", overviewMask);
+		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
 
-		//int maxLon = bounds.getMaxLong();
-		//int maxLat = bounds.getMaxLat();
-		//int minLat = bounds.getMinLat();
-		//int minLon = bounds.getMinLong();
-		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
-		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
-		int minLat = (bounds.getMinLat() - overviewMask) & ~overviewMask;
-		int minLon = (bounds.getMinLong() - overviewMask) & ~overviewMask;
-		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
-		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMaxLat()),
-		//		Utils.toDegrees(maxLat));
-		//
-		//System.out.printf("minlat (map) %x, calc %x\n", bounds.getMinLat(), minLat);
-		//System.out.printf("minlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMinLat()),
-		//		Utils.toDegrees(minLat));
-		//System.out.printf("minlon (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMinLong()),
-		//		Utils.toDegrees(minLon));
-		//System.out.printf("maxlon (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMaxLong()),
-		//		Utils.toDegrees(maxLon));
+		int maxLon = roundUp(bounds.getMaxLong(), overviewMask);
+		int maxLat = roundUp(bounds.getMaxLat(), overviewMask);
+		int minLat = roundDown(bounds.getMinLat(), overviewMask);
+		int minLon = roundDown(bounds.getMinLong(), overviewMask);
+
+		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
+		//System.out.printf("maxLat %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLat()), Utils.toDegrees(maxLat));
+		//System.out.printf("minLat 0x%x, modified=0x%x\n", bounds.getMinLat(), minLat);
+		//System.out.printf("minLat %f, modified=%f\n", Utils.toDegrees(bounds.getMinLat()), Utils.toDegrees(minLat));
+		//System.out.printf("maxLon 0x%x, modified=0x%x\n", bounds.getMaxLong(), maxLon);
+		//System.out.printf("maxLon %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLong()), Utils.toDegrees(maxLon));
+		//System.out.printf("minLon 0x%x, modified=0x%x\n", bounds.getMinLong(), minLon);
+		//System.out.printf("minLon %f, modified=%f\n", Utils.toDegrees(bounds.getMinLong()), Utils.toDegrees(minLon));
 
 		// Add a background polygon for this map.
 		List<Coord> points = new ArrayList<Coord>();
@@ -194,6 +183,22 @@ public class TdbBuilder implements Combiner {
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
 		overviewSource.addShape(bg);
+	}
+
+	private int roundUp(int len, int overviewMask) {
+		//System.out.printf("before up 0x%x\n", len);
+		if (len > 0)
+			return (len + overviewMask) & ~overviewMask;
+		else
+			return len & ~overviewMask;
+	}
+
+	private int roundDown(int len, int overviewMask) {
+		//System.out.printf("before down 0x%x\n", len);
+		if (len > 0)
+			return len & ~overviewMask;
+		else
+			return -(-len +overviewMask & ~overviewMask);
 	}
 
 	/**
@@ -241,5 +246,9 @@ public class TdbBuilder implements Combiner {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);
 		}
+	}
+
+	public void setOverviewSource(OverviewMap overviewSource) {
+		this.overviewSource = overviewSource;
 	}
 }

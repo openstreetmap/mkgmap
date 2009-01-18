@@ -1,0 +1,7 @@
+
+The input files required for this directory are located at
+
+http://www.mkgmap.org.uk/testinput
+
+You can also set up a local cache of the files, see the target
+*obtain-test-input-files* in the build.xml file.

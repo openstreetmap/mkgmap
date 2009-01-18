@@ -16,12 +16,15 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
@@ -29,9 +32,6 @@ import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The file that holds all the labels for the map.
@@ -138,6 +138,19 @@ public class LBLFile extends ImgFile {
 	public POIRecord createPOI(String name) {
 		return places.createPOI(name);
 	}
+	
+	public Country createCountry(String name, String abbr) {
+		return places.createCountry(name, abbr);
+	}
+	
+	public Region createRegion(Country country, String region) {
+		return places.createRegion(country, region);
+	}
+	
+	public City createCity(Region region, String city) {
+		return places.createCity(region, city);
+	}
+		
 
 	public void allPOIsDone() {
 		places.allPOIsDone();

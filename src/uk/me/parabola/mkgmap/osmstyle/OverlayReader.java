@@ -102,6 +102,7 @@ public class OverlayReader {
 			for (int t : integerList) {
 				MapLine newline = line.copy();
 				newline.setType(t);
+				newline.setPoints(line.getPoints());
 				adder.add(newline);
 			}
 		} else {

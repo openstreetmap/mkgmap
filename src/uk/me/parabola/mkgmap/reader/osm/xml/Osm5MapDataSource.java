@@ -67,7 +67,13 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 
 			try {
 				Osm5XmlHandler handler = new Osm5XmlHandler();
-				handler.setCallbacks(mapper);
+				handler.setCollector(mapper);
+				Runnable task = new Runnable() {
+					public void run() {
+						addBackground();
+					}
+				};
+				handler.setEndTask(task);
 				handler.setConverter(createStyler());
 				parser.parse(is, handler);
 			} catch (IOException e) {

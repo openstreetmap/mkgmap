@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * A city is in a region.  It also has (or can have anyway) a reference to
@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class City {
-	private static final int POINT_REF = 0x80;
+	private static final int POINT_REF = 0x8000;
 
 	private final int index;
 

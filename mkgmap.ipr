@@ -2,6 +2,15 @@
 <project relativePaths="true" version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
+    <buildFile url="file://$PROJECT_DIR$/build.xml">
+      <additionalClassPath />
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+      <executeOn event="beforeRun" target="obtain-test-input-files" />
+    </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -260,8 +269,10 @@
     <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
     <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs/*||file:src/uk/me/parabola/imgfmt/mps/*||file:src/uk/me/parabola/imgfmt/sys/*" />
     <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
+    <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
+    <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*" />
     <option name="SKIP_IMPORT_STATEMENTS" value="true" />
-    <deny_rule from_scope="reader" to_scope="style" is_deny="true" />
+    <deny_rule from_scope="reader_no_style" to_scope="style" is_deny="true" />
     <deny_rule from_scope="general" to_scope="style" is_deny="true" />
     <deny_rule from_scope="general" to_scope="reader" is_deny="true" />
     <deny_rule from_scope="build" to_scope="style" is_deny="true" />
@@ -1399,6 +1410,45 @@
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Functional" type="JUnit" factoryName="JUnit" enabled="true" merge="false" sample_coverage="true" runner="emma">
+      <pattern>
+        <option name="PATTERN" value="uk.me.parabola.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+      <pattern>
+        <option name="PATTERN" value="*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+      <module name="display" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="MAIN_CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="package" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="ADDITIONAL_CLASS_PATH" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <envs />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="58506" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Debug" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Run Ant target" value="true" />
+        <option name="Make" value="true" />
+      </method>
+    </configuration>
     <configuration default="false" name="Unit tests" type="JUnit" factoryName="JUnit" enabled="false" merge="false" sample_coverage="true" runner="emma">
       <module name="display" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />

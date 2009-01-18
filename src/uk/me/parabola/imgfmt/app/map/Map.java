@@ -36,6 +36,8 @@ import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Holder for a complete map.  A map is made up of several files which
@@ -48,7 +50,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Map implements InternalFiles {
+public class Map implements InternalFiles, ConfiguredByProperties {
 	private static final Logger log = Logger.getLogger(Map.class);
 
 	private String filename;
@@ -104,6 +106,21 @@ public class Map implements InternalFiles {
 		m.fileSystem = fs;
 
 		return m;
+	}
+
+	public void config(EnhancedProperties props) {
+		try {
+			if (props.containsKey("route")) {
+				addNet();
+				addNod();
+			} else if (props.containsKey("net")) {
+				addNet();
+			}
+		} catch (FileExistsException e) {
+			log.warn("Could not add NET and/or NOD sections");
+		}
+
+		treFile.config(props);
 	}
 
 	public void addNet() throws FileExistsException {
@@ -206,14 +223,6 @@ public class Map implements InternalFiles {
 
 	public void addPolygonOverview(PolygonOverview ov) {
 		treFile.addPolygonOverview(ov);
-	}
-
-	/**
-	 * Set the point of interest flags.
-	 * @param flags The POI flags.
-	 */
-	public void setPoiDisplayFlags(int flags) {
-		treFile.setPoiDisplayFlags((byte) flags);
 	}
 
 	public void addMapObject(MapObject item) {

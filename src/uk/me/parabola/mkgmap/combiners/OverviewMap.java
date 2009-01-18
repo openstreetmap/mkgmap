@@ -14,7 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 25-Sep-2007
  */
-package uk.me.parabola.mkgmap.reader.overview;
+package uk.me.parabola.mkgmap.combiners;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapCollector;

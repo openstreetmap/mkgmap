@@ -60,7 +60,6 @@ public abstract class AbstractTestMap {
 		} catch (FileNotWritableException e) {
 			throw new ExitException("Could not create or write file", e);
 		}
-		map.setPoiDisplayFlags(0);
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 

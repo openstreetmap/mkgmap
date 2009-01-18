@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Split polygons for physical size (rather than number of points).  The plan
@@ -94,6 +94,8 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	}
 
 	private boolean isSizeOk(MapShape shape, int maxSize) {
+		if (shape.getType() == 0x4a)
+			return true;
 		Area bounds = shape.getBounds();
 		return bounds.getMaxDimention() < maxSize
 				&& bounds.getWidth() < 0x7fff

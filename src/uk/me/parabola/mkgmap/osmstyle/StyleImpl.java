@@ -197,8 +197,6 @@ public class StyleImpl implements Style {
 
 		if (overlays != null) {
 			adder = new LineAdder() {
-				final LineAdder origAdder = lineAdder;
-
 				public void add(MapLine element) {
 					overlays.addLine(element, lineAdder);
 				}

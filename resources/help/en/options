@@ -75,7 +75,11 @@ Product description options:
 
 --family-id
 	This is an integer that identifies a family of products.
+
 --product-id
+	This is an integer that identifies a product within a family.  It
+	is often just 1.
+
 --series-name
 --family-name
 --area-name
@@ -95,6 +99,16 @@ Misc options:
 
 --tdbfile
 	Write a .tdb file.
+
+--draw-priority=25
+	When two maps cover the same area, this option controls what order they
+	are drawn in and therefore which map is on top of which.  Higher
+	priorities are drawn "on top" of lower priorities.
+
+--transparent
+	Make the map transparent, so that if two maps are loaded that cover the
+	same area, you can see through this map and see the lower map too.
+	Useful for contour line maps among other things.
 
 --version 
 	Output program version.

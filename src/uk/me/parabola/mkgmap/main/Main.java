@@ -43,6 +43,7 @@ import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 
 /**
  * The new main program.  There can be many filenames to process and there can
@@ -64,7 +65,7 @@ public class Main implements ArgumentProcessor {
 
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
-	private boolean verbose = false;
+	private boolean verbose;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -166,11 +167,11 @@ public class Main implements ArgumentProcessor {
 			// generation of the overview files if there is only one file
 			// to process.
 			int n = Integer.valueOf(val);
-			if (n > 1) {
-				addCombiner(new TdbBuilder());
-			}
+			if (n > 1)
+				addTdbBuilder();
+
 		} else if (opt.equals("tdbfile")) {
-			addCombiner(new TdbBuilder());
+			addTdbBuilder();
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
 		} else if (opt.equals("help")) {
@@ -185,6 +186,12 @@ public class Main implements ArgumentProcessor {
 			System.err.println(Version.VERSION);
 			System.exit(0);
 		}
+	}
+
+	private void addTdbBuilder() {
+		TdbBuilder builder = new TdbBuilder();
+		builder.setOverviewSource(new OverviewMapDataSource());
+		addCombiner(builder);
 	}
 
 	private void listStyles() {

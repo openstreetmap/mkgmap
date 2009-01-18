@@ -89,36 +89,12 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (shape.getPoints().isEmpty())
 			return;
 
-		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
-				shape.getMinResolution());
+		int type = shape.getType();
+		if (type != 0x4b)
+			updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
+					shape.getMinResolution());
 
 		shapes.add(shape);
-	}
-
-	public void finish() {
-
-		// Make a list of points to trace out the background area.
-		List<Coord> coords = new ArrayList<Coord>();
-		Area bounds = getBounds();
-		Coord start = new Coord(bounds.getMinLat(), bounds.getMinLong());
-		coords.add(start);
-		Coord co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
-		coords.add(co);
-		co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
-		coords.add(co);
-		co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
-		coords.add(co);
-		coords.add(start);
-
-		// Now add the background area
-		MapShape background = new MapShape();
-		background.setType(0x4b); // background type
-		background.setMinResolution(0); // On all levels
-		background.setPoints(coords);
-
-		// Note we add directly to the shapes list, we do not add to
-		// the overview section.
-		shapes.add(background);
 	}
 
 	public void addRoad(MapRoad road) {

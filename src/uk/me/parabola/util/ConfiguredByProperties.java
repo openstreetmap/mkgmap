@@ -14,9 +14,7 @@
  * Author: Steve Ratcliffe
  * Create date: 03-Sep-2007
  */
-package uk.me.parabola.mkgmap;
-
-import java.util.Properties;
+package uk.me.parabola.util;
 
 /**
  * A map reader that wants to inspect command line arguments.  A separate
@@ -35,5 +33,5 @@ public interface ConfiguredByProperties {
 	 *
 	 * @param props The input properties.
 	 */
-	public void config(Properties props);
+	public void config(EnhancedProperties props);
 }
