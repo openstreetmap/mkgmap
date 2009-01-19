@@ -65,10 +65,10 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 150816, size);
+				assertEquals("RGN size", 151080, size);
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 773, size);
+				assertEquals("TRE size", 1895, size);
 			} else if (ext.equals("LBL")) {
 				count++;
 				assertEquals("LBL size", 27575, size);
@@ -103,13 +103,13 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 338, size);
+				assertEquals("RGN size", 2949, size);
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 546, size);
+				assertEquals("TRE size", 579, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 457, size);
+				assertEquals("LBL size", 972, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);

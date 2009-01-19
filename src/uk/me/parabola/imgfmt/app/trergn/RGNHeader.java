@@ -28,15 +28,16 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Steve Ratcliffe
  */
 public class RGNHeader extends CommonHeader {
-	//public static final int HEADER_LEN = 29;
-	public static final int HEADER_LEN = 125;
+	private static final int DEF_LEN = 29;
+	//private static final int DEF_LEN = 125;
+	public static final int HEADER_LEN = DEF_LEN;
 
 	private int dataOffset;
 	private int dataSize;
 	
-	private Section rgn2 = new Section();
-	private Section rgn3 = new Section(rgn2);
-	private Section rgn4 = new Section(rgn3);
+	private final Section rgn2 = new Section();
+	private final Section rgn3 = new Section(rgn2);
+	private final Section rgn4 = new Section(rgn3);
 
 	public RGNHeader() {
 		super(HEADER_LEN, "GARMIN RGN");

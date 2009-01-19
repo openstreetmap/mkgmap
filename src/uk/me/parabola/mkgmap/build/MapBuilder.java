@@ -75,8 +75,8 @@ public class MapBuilder {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
-	private final java.util.Map<MapPoint,POIRecord> poimap =
-		new HashMap<MapPoint,POIRecord>();
+	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
+	private boolean doRoads;
 
 	/**
 	 * Main method to create the map, just calls out to several routines
@@ -118,8 +118,6 @@ public class MapBuilder {
 			}
 			netFile.write();
 
-
-
 			if (nodFile != null) {
 				nodFile.writePost();
 			}
@@ -144,31 +142,6 @@ public class MapBuilder {
 		}
 		lbl.allPOIsDone();
 	}
-
-	/**
-	 * Process roads first to create RoadDefs
-	 */
-	//private void preProcessRoads(Map target, MapDataSource src) {
-	//	LBLFile lbl = target.getLblFile();
-	//	NETFile net = target.getNetFile();
-	//
-	//	if (net == null)
-	//		return;
-	//
-	//	for (MapLine l : src.getLines()) {
-	//		Label label = lbl.newLabel(l.getName());
-	//		RoadDef r = net.createRoadDef(label);
-	//		l.setRoadDef(r);
-	//	}
-	//}
-
-	//private void postProcessRoads(Map target, MapDataSource src) {
-	//	NETFile net = target.getNetFile();
-	//
-	//	if (net == null)
-	//		return;
-	//	net.allRoadDefsDone();
-	//}
 
 	/**
 	 * Drive the map generation by steping through the levels, generating the
@@ -418,7 +391,7 @@ public class MapBuilder {
 		filters.addFilter(new SmoothingFilter());
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
-		filters.addFilter(new LineAddFilter(div, map));
+		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
 		for (MapLine line : lines) {
 			if (line.getMinResolution() > res || line.getMaxResolution() < res)
@@ -476,6 +449,10 @@ public class MapBuilder {
 		return 24 - minShift;
 	}
 
+	public void setDoRoads(boolean doRoads) {
+		this.doRoads = doRoads;
+	}
+
 	private static class SourceSubdiv {
 		private final MapDataSource source;
 		private final Subdivision subdiv;
@@ -497,10 +474,12 @@ public class MapBuilder {
 	private static class LineAddFilter extends BaseFilter implements MapFilter {
 		private final Subdivision div;
 		private final Map map;
+		private final boolean doRoads;
 
-		LineAddFilter(Subdivision div, Map map) {
+		LineAddFilter(Subdivision div, Map map, boolean doRoads) {
 			this.div = div;
 			this.map = map;
+			this.doRoads = doRoads;
 		}
 
 		public void doFilter(MapElement element, MapFilterChain next) {
@@ -515,8 +494,9 @@ public class MapBuilder {
 
 			pl.setType(line.getType());
 
-			if (line.isRoad()) {
-				log.debug("adding road def: " + line.getName());
+			if (doRoads && line.isRoad()) {
+				if (log.isDebugEnabled())
+					log.debug("adding road def: " + line.getName());
 				RoadDef roaddef = ((MapRoad) line).getRoadDef();
 
 				pl.setRoadDef(roaddef);
