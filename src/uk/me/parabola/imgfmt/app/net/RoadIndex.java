@@ -36,10 +36,6 @@ public class RoadIndex {
 		return linkedRoad.getSubdiv();
 	}
 
-	int getZoomLevel() {
-		return getSubdiv().getZoom().getLevel();
-	}
-
 	Polyline getLine() {
 		return linkedRoad;
 	}

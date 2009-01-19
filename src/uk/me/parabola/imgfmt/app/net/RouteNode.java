@@ -58,14 +58,14 @@ public class RouteNode {
 	
 	private int flags = F_UNK_NEEDED;
 
-	private CoordNode coord;
+	private final CoordNode coord;
 	private char latOff;
 	private char lonOff;
 
 	// this is for setting destination class on arcs
 	// we're taking the maximum of roads this node is
 	// on for now -- unsure of precise mechanic
-	private int nodeClass = 0;
+	private int nodeClass;
 
 	@Deprecated
 	private static int nodeCount;

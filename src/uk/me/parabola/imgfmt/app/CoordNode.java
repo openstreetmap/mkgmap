@@ -41,11 +41,6 @@ public class CoordNode extends Coord {
 		this.boundary = boundary;
 	}
 
-	public CoordNode(double lat, double lon, long id) {
-		super(lat, lon);
-		this.id = id;
-	}
-
 	public long getId() {
 		return id;
 	}

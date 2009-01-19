@@ -135,7 +135,7 @@ public class RouteCenter {
 	/**
 	 * Inverse of calcTableOffset.
 	 */
-	public static int calcLowByte(int nodeOffset, int tablesOffset) {
+	private static int calcLowByte(int nodeOffset, int tablesOffset) {
 		assert nodeOffset < tablesOffset;
 		int align = NODHeader.DEF_ALIGN;
 		int mask = (1 << align) - 1;

@@ -47,8 +47,8 @@ public class POIRecord {
 	private Label streetName;
 	private Label streetNumberName; // Used for numbers such as 221b
 
-	private char cityIndex = 0;
-	private char zipIndex  = 0;
+	private char cityIndex ;
+	private char zipIndex  ;
 
 	private String phoneNumber;
 
@@ -126,19 +126,17 @@ public class POIRecord {
 	       we have to skip this bit in the local mask.
 	       In other words the meaning of the local bits
 	       change influenced by the global bits */
-	
-	    for(byte i = 0; i < 6; i++)
-	    {
-	    	mask =  1 << i;
-		
-		if((mask & POIGlobalFlags) == mask)
-		{
-		   if((mask & usedFields) == mask)
-		     flag = flag | (1 << j);
-		   j++;
+
+		for (byte i = 0; i < 6; i++) {
+			mask = 1 << i;
+
+			if ((mask & POIGlobalFlags) == mask) {
+				if ((mask & usedFields) == mask)
+					flag |= (1 << j);
+				j++;
+			}
+
 		}
-		
-	    }
 	    return (byte) flag;
 	}
 

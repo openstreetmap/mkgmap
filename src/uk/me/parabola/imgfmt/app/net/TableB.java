@@ -62,13 +62,12 @@ public class TableB {
 	 * This index may overflow while it isn't certain that the
 	 * table fulfills the size constraint.
 	 */
-	public byte addNode(RouteNode node) {
+	public void addNode(RouteNode node) {
 		int i = nodes.indexOf(node);
 		if (i < 0) {
 			i = nodes.size();
 			nodes.add(node);
 		}
-		return (byte) i;
 	}
 
 	/**

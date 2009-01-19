@@ -27,7 +27,6 @@ class InputFile {
 	private final File inputFile;
 	private final String outputBaseName;
 
-	private String description;
 	private boolean enabled;
 
 	InputFile(File inputFile, String outputBaseName) {
@@ -37,10 +36,6 @@ class InputFile {
 
 	public File getInputFile() {
 		return inputFile;
-	}
-
-	public String getInputFileName() {
-		return inputFile.getName();
 	}
 
 	public String getOutputBaseName() {

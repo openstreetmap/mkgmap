@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class TableC {
 	// size of the table, excluding the size field
-	private int size = 0;
+	private int size;
 
 	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
 

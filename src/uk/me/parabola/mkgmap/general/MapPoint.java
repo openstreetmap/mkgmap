@@ -30,7 +30,7 @@ public class MapPoint extends MapElement {
 	public MapPoint() {
 	}
 
-	MapPoint(MapPoint p) {
+	private MapPoint(MapPoint p) {
 		super(p);
 		location = p.location;
 	}

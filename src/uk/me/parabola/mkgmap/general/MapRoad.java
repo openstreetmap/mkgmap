@@ -43,7 +43,7 @@ public class MapRoad extends MapLine {
 		this.roadDef = new RoadDef(roadId, getName());
 	}
 
-	MapRoad(MapRoad r) {
+	private MapRoad(MapRoad r) {
 		super(r);
 		this.roadId = r.roadId;
 		this.roadDef = r.roadDef;

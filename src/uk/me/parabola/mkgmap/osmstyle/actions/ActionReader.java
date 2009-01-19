@@ -119,8 +119,7 @@ public class ActionReader {
 		scanner.nextToken();
 		String val = scanner.nextWord();
 
-		AddTagAction action = new AddTagAction(key, val, modify);
-		return action;
+		return new AddTagAction(key, val, modify);
 	}
 
 	private boolean inActionCmd() {

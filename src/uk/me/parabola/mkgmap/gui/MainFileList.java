@@ -16,16 +16,15 @@
  */
 package uk.me.parabola.mkgmap.gui;
 
-import uk.me.parabola.log.Logger;
-
-import javax.swing.*;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import javax.swing.*;
+import javax.swing.table.TableColumn;
 
 /**
  * This is the main file list of input files that will be converted to the
@@ -34,7 +33,7 @@ import java.util.ResourceBundle;
  * @author Steve Ratcliffe
  */
 public class MainFileList {
-	private static final Logger log = Logger.getLogger(MainFileList.class);
+	//private static final Logger log = Logger.getLogger(MainFileList.class);
 
 	private JPanel panel1;
 	private JTable inputFiles;

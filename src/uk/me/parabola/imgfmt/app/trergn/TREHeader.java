@@ -237,10 +237,6 @@ public class TREHeader extends CommonHeader {
 		mapId = id;
 	}
 
-	public void setPoiDisplayFlags(byte poiDisplayFlags) {
-		this.poiDisplayFlags = poiDisplayFlags;
-	}
-
 	public int getMapInfoSize() {
 		return mapInfoSize;
 	}
@@ -330,7 +326,7 @@ public class TREHeader extends CommonHeader {
 		return mapId;
 	}
 
-	public void setDisplayPriority(int displayPriority) {
+	protected void setDisplayPriority(int displayPriority) {
 		this.displayPriority = displayPriority;
 	}
 

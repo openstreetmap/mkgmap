@@ -27,7 +27,7 @@ import java.io.IOException;
 public class SectionWriter implements ImgFileWriter {
 
 	private final ImgFileWriter writer;
-	private Section section;
+	private final Section section;
 	private final int secStart;
 
 	public SectionWriter(ImgFileWriter writer, Section section) {

@@ -95,12 +95,4 @@ public class NETHeader extends CommonHeader {
 		roadDefinitions.setPosition(writer.position());
 		return new SectionWriter(writer, roadDefinitions);
 	}
-	
-	void startRoadDefs(int pos) {
-		roadDefinitions.setPosition(pos);
-	}
-
-	void endRoadDefs(int pos) {
-		roadDefinitions.setSize(pos - roadDefinitions.getPosition());
-	}
 }

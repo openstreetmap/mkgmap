@@ -37,10 +37,10 @@ public class TableA {
 	// This table's start position relative to the start of NOD 1
 	private int offset;
 
-	private LinkedHashMap<Arc,Integer> arcs = new LinkedHashMap<Arc,Integer>();
-	private int size = 0;
+	private final LinkedHashMap<Arc,Integer> arcs = new LinkedHashMap<Arc,Integer>();
 
-	private static int count = 0;
+	private static int count;
+
 	public TableA() {
 		log.debug("creating TableA", count);
 		count++;
@@ -51,8 +51,8 @@ public class TableA {
 	 * Basically a "forward arc".
 	 */
 	private class Arc {
-		RouteNode first, second;
-		RoadDef roadDef;
+		final RouteNode first; final RouteNode second;
+		final RoadDef roadDef;
 
 		Arc(RouteArc arc) {
 			if (arc.isForward()) {
@@ -87,17 +87,14 @@ public class TableA {
 	 * The value may overflow while it isn't certain that
 	 * the table fulfills the size constraint.
 	 */
-	public byte addArc(RouteArc arc) {
+	public void addArc(RouteArc arc) {
 		Arc narc = new Arc(arc);
 		int i;
 		if (!arcs.containsKey(narc)) {
 			i = arcs.size();
-			arcs.put(narc, new Integer(i));
+			arcs.put(narc, i);
 			log.debug("added arc", count, narc, i);
-		} else {
-			i = arcs.get(narc);
 		}
-		return (byte) i;
 	}
 
 	/**
@@ -108,7 +105,7 @@ public class TableA {
 		Arc narc = new Arc(arc);
 		assert arcs.containsKey(narc):
 			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
-		int i = arcs.get(narc).intValue();
+		int i = arcs.get(narc);
 		assert i < 0x100 : "Table A index too large: " + narc;
 		return (byte) i;
 	}

@@ -163,13 +163,4 @@ public class JarFileLoader extends StyleFileLoader {
 		return list.toArray(new String[list.size()]);
 	}
 
-	/**
-	 * Set the prefix (ie the directory) the will be prepended to all file
-	 * names that we try to open.
-	 *
-	 * @param prefix The prefix which should end in a slash.
-	 */
-	protected final void setPrefix(String prefix) {
-		this.prefix = prefix;
-	}
 }

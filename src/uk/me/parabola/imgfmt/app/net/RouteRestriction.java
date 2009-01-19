@@ -15,7 +15,6 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.log.Logger;
 
 /**
  * A restriction in the routing graph.
@@ -33,10 +32,10 @@ import uk.me.parabola.log.Logger;
  * @author Robert Vollmert
  */
 public class RouteRestriction {
-	private static final Logger log = Logger.getLogger(RouteRestriction.class);
+	//private static final Logger log = Logger.getLogger(RouteRestriction.class);
 
 	// size in bytes
-	public static final int SIZE = 11;
+	private static final int SIZE = 11;
 
 	// first three bytes of the header -- might specify the type of restriction
 	// and when it is active
@@ -47,15 +46,15 @@ public class RouteRestriction {
 	private static final int F_INTERNAL = 0x8000;
 
 	// the arcs
-	private RouteArc from;
-	private RouteArc to;
+	private final RouteArc from;
+	private final RouteArc to;
 
 	// offset in Table C
 	private byte offsetSize;
 	private int offsetC;
 
 	// last restriction in a node
-	private boolean last = false;
+	private boolean last;
 
 	/**
 	 * Create a route restriction.
@@ -96,11 +95,11 @@ public class RouteRestriction {
 		else
 			offsets[0] = to.getIndexB();
 
-		for (int i = 0; i < offsets.length; i++)
-			writer.putChar((char) offsets[i]);
+		for (int offset : offsets)
+			writer.putChar((char) offset);
 
-		writer.put((byte) from.getIndexA());
-		writer.put((byte) to.getIndexA());
+		writer.put(from.getIndexA());
+		writer.put(to.getIndexA());
 	}
 
 	public void writeOffset(ImgFileWriter writer) {
