@@ -23,11 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.Point;
@@ -37,6 +37,7 @@ import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
 import uk.me.parabola.imgfmt.app.trergn.RGNFile;
+import uk.me.parabola.imgfmt.app.trergn.RGNHeader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
@@ -56,7 +57,9 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -72,8 +75,8 @@ public class MapBuilder {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
-	private final java.util.Map<MapPoint,POIRecord> poimap =
-		new HashMap<MapPoint,POIRecord>();
+	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
+	private boolean doRoads;
 
 	/**
 	 * Main method to create the map, just calls out to several routines
@@ -84,28 +87,41 @@ public class MapBuilder {
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
 		processPOIs(map, src);
-		preProcessRoads(map, src);
+		//preProcessRoads(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
-		postProcessRoads(map, src);
-
+		//processRoads(map, src);
+		//postProcessRoads(map, src);
 
 		RGNFile rgnFile = map.getRgnFile();
 		TREFile treFile = map.getTreFile();
 		LBLFile lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
 
-		treFile.setLastRgnPos(rgnFile.position() - 29);
+		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
+
 		rgnFile.write();
 		rgnFile.writePost();
 		treFile.write();
 		treFile.writePost();
 		lblFile.write();
 		lblFile.writePost();
+
 		if (netFile != null) {
+			RoadNetwork network = src.getRoadNetwork();
+			netFile.setNetwork(network);
+			NODFile nodFile = map.getNodFile();
+			if (nodFile != null) {
+				nodFile.setNetwork(network);
+				nodFile.write();
+			}
 			netFile.write();
-			netFile.writePost();
+
+			if (nodFile != null) {
+				nodFile.writePost();
+			}
+			netFile.writePost(rgnFile.getWriter());
 		}
 	}
 
@@ -125,30 +141,6 @@ public class MapBuilder {
 			poimap.put(p, r);
 		}
 		lbl.allPOIsDone();
-	}
-
-	/**
-	 * Process roads first to create RoadDefs
-	 */
-	private void preProcessRoads(Map target, MapDataSource src) {
-		LBLFile lbl = target.getLblFile();
-		NETFile net = target.getNetFile();
-
-		if (net == null)
-			return;
-		
-		for (MapLine l : src.getLines()) {
-			Label label = lbl.newLabel(l.getName());
-			RoadDef r = net.createRoadDef(label);
-			l.setUserData(r);
-		}
-	}
-	private void postProcessRoads(Map target, MapDataSource src) {
-		NETFile net = target.getNetFile();
-
-		if (net == null)
-			return;
-		net.allRoadDefsDone();
 	}
 
 	/**
@@ -399,7 +391,7 @@ public class MapBuilder {
 		filters.addFilter(new SmoothingFilter());
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
-		filters.addFilter(new LineAddFilter(div, map));
+		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
 		for (MapLine line : lines) {
 			if (line.getMinResolution() > res || line.getMaxResolution() < res)
@@ -457,6 +449,10 @@ public class MapBuilder {
 		return 24 - minShift;
 	}
 
+	public void setDoRoads(boolean doRoads) {
+		this.doRoads = doRoads;
+	}
+
 	private static class SourceSubdiv {
 		private final MapDataSource source;
 		private final Subdivision subdiv;
@@ -478,10 +474,12 @@ public class MapBuilder {
 	private static class LineAddFilter extends BaseFilter implements MapFilter {
 		private final Subdivision div;
 		private final Map map;
+		private final boolean doRoads;
 
-		LineAddFilter(Subdivision div, Map map) {
+		LineAddFilter(Subdivision div, Map map, boolean doRoads) {
 			this.div = div;
 			this.map = map;
+			this.doRoads = doRoads;
 		}
 
 		public void doFilter(MapElement element, MapFilterChain next) {
@@ -496,9 +494,11 @@ public class MapBuilder {
 
 			pl.setType(line.getType());
 
-			RoadDef roaddef = (RoadDef) line.getUserData();
-			if (roaddef != null)
-			{
+			if (doRoads && line.isRoad()) {
+				if (log.isDebugEnabled())
+					log.debug("adding road def: " + line.getName());
+				RoadDef roaddef = ((MapRoad) line).getRoadDef();
+
 				pl.setRoadDef(roaddef);
 				roaddef.addPolylineRef(pl);
 			}

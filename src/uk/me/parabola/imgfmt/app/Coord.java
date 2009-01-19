@@ -16,11 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.Formatter;
+
 import uk.me.parabola.imgfmt.Utils;
 
 /**
  * A point coordinate in unshifted map-units.
- * A map unit is 1/2^24 degrees.  In some places <i>shifted</i> coordinates
+ * A map unit is 360/2^24 degrees.  In some places <i>shifted</i> coordinates
  * are used, which means that they are divided by some power of two to save
  * space in the file.
  *
@@ -63,6 +65,10 @@ public class Coord {
 		return longitude;
 	}
 
+	public long getId() {
+		return 0;
+	}
+
 	public int hashCode() {
 		return latitude+longitude;
 	}
@@ -77,11 +83,34 @@ public class Coord {
 	}
 
 	/**
+	 * Distance to other point in meters.
+	 */
+	public double distance(Coord other) {
+		double lat1 = Utils.toRadians(latitude);
+		double lat2 = Utils.toRadians(other.getLatitude());
+		double lon1 = Utils.toRadians(getLongitude());
+		double lon2 = Utils.toRadians(other.getLongitude());
+
+		double R = 6371000; // meters
+
+		return Math.acos(Math.sin(lat1)*Math.sin(lat2) +
+				Math.cos(lat1)*Math.cos(lat2) *
+						Math.cos(lon2-lon1)) * R;
+  	}
+
+	/**
 	 * Returns a string representation of the object.
 	 *
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
 		return (latitude) + "/" + (longitude);
+	}
+
+	public String toDegreeString() {
+		Formatter fmt = new Formatter();
+		return fmt.format("%.5f/%.5f",
+			Utils.toDegrees(latitude),
+			Utils.toDegrees(longitude)).toString();
 	}
 }

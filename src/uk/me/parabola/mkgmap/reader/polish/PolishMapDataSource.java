@@ -62,6 +62,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapLine polyline;
 	private MapShape shape;
 
+	private final RoadHelper roadHelper = new RoadHelper();
+
 	private String copyright;
 	private int section;
 	private LevelInfo[] levels;
@@ -109,8 +111,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground();
-
-		mapper.finish();
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -129,6 +129,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		return levels;
 	}
 
+	
 	/**
 	 * Get the copyright message.  We use whatever was specified inside the
 	 * MPF itself.
@@ -157,6 +158,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			section = S_POINT;
 		} else if (name.equals("POLYLINE") || name.equals("RGN40")) {
 			polyline = new MapLine();
+			roadHelper.clear();
 			section = S_POLYLINE;
 		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
@@ -175,8 +177,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addPoint(point);
 			break;
 		case S_POLYLINE:
-			if (polyline.getPoints() != null)
-				mapper.addLine(polyline);
+			if (polyline.getPoints() != null) {
+				if (roadHelper.isRoad())
+					mapper.addRoad(roadHelper.makeRoad(polyline));
+				else
+					mapper.addLine(polyline);
+			}
 			break;
 		case S_POLYGON:
 			if (shape.getPoints() != null)
@@ -245,7 +251,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			Integer type = Integer.decode(value);
 			point.setType(type);
-		}  else if (name.startsWith("Data")) {
+		}  else if (name.startsWith("Data") || name.startsWith("Origin")) {
 			Coord co = makeCoord(value);
 			setResolution(point, name);
 			point.setLocation(co);
@@ -266,7 +272,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			polyline.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
 			List<Coord> points = coordsFromString(value);
-
 			// If it is a contour line, then fix the elevation if required.
 			if ((polyline.getType() == 0x20) ||
 			    (polyline.getType() == 0x21) ||
@@ -275,13 +280,21 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			setResolution(polyline, name);
-			polyline.setPoints(points);
+			polyline.setPoints(points); // XXX: multiple DATA sections?
+		} else if (name.equals("RoadID")) {
+			roadHelper.setRoadId(Integer.parseInt(value));
+		} else if (name.startsWith("Nod")) {
+			int nodIndex = Integer.parseInt(name.substring(3));
+			roadHelper.addNode(nodIndex, value);
+		} else if (name.equals("Routeparam") || name.equals("RouteParams")) {
+			roadHelper.setParam(value);
+		} else if (name.equals("DirIndicator")) {
+			roadHelper.setDirIndicator(Integer.parseInt(value) > 0);
 		}
-
 	}
 
 	private List<Coord> coordsFromString(String value) {
-		String[] ords = value.split("\\),\\(");
+		String[] ords = value.split("\\) *, *\\(");
 		List<Coord> points = new ArrayList<Coord>();
 
 		for (String s : ords) {
@@ -291,6 +304,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addToBounds(co);
 			points.add(co);
 		}
+		log.debug(points.size() + " points from " + value);
 		return points;
 	}
 
@@ -371,7 +385,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @return The resolution that corresponds to the level.
 	 */
 	private int extractResolution(String name) {
-		int level = Integer.valueOf(name.substring(4));
+		int level = Integer.valueOf(name.substring(name.charAt(0) == 'O'? 6: 4));
 		return extractResolution(level);
 	}
 
@@ -431,8 +445,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private Coord makeCoord(String value) {
 		String[] fields = value.split("[(,)]");
 
-		log.debug(fields, fields[0], '#', fields[1]);
-		
 		int i = 0;
 		if (fields[0].length() == 0)
 			i = 1;

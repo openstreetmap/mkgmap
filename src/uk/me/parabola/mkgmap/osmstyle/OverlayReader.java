@@ -100,8 +100,7 @@ public class OverlayReader {
 		List<Integer> integerList = overlays.get(origType);
 		if (integerList != null) {
 			for (int t : integerList) {
-				// TODO: after nod integration, this will use copy().
-				MapLine newline = new MapLine(line);
+				MapLine newline = line.copy();
 				newline.setType(t);
 				newline.setPoints(line.getPoints());
 				adder.add(newline);

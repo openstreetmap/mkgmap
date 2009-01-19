@@ -58,10 +58,6 @@ public class BitReader {
 		return res;
 	}
 
-	/**
-	 * A signed get.  Treats the top bit in the given bit field as a
-	 * sign bit.
-	 */
 	public int sget(int n) {
 		int res = get(n);
 		int top = 1 << (n - 1);

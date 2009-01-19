@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -140,6 +141,17 @@ public class TREFile extends ImgFile implements ConfiguredByProperties {
 		writeCopyrights();
 
 		writeOverviews();
+	}
+
+	private void writeTre7() {
+		header.setTre7Pos(position());
+		byte[] tre7buf = new byte[13];
+		Arrays.fill(tre7buf, (byte) 0);
+		for (int i = 0; i < 4; i++) {
+
+			getWriter().put(tre7buf);
+			header.incTre7();
+		}
 	}
 
 	/**

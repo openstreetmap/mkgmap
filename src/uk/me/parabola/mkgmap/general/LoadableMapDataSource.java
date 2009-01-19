@@ -79,6 +79,9 @@ public interface LoadableMapDataSource extends MapDataSource, ConfiguredByProper
 
 	/**
 	 * Get a suitable copyright message for this map source.  You can get
+	 * this information from the input file, if the file has such information
+	 * or as in the case of OSM the data has a well known copyright, so we
+	 * can return fixed strings referring to it.
 	 *
 	 * @return An array of strings with copyright information.  If there are
 	 * none then return a zero length array.

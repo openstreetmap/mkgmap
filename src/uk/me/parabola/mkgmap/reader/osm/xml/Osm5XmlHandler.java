@@ -335,6 +335,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
+		//co.incCount();
 		if (co != null)
 			currentWay.addPoint(co);
 	}

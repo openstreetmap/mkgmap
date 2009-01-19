@@ -166,4 +166,11 @@ public class Area {
 		}
 		return true;
 	}
+
+	/**
+	 * Compute the central point of the area.
+	 */
+	public Coord getCenter() {
+		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);
+	}
 }

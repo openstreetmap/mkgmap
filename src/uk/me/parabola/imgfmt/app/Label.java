@@ -87,4 +87,16 @@ public class Label {
 		if (ctext != null)
 			writer.put(ctext, 0, this.length);
 	}
+
+	/**
+	 * String version of the label, for diagnostic purposes.
+	 */
+	public String toString() {
+		return "label at " + offset;
+	}
+
+	public boolean equals(Object obj) {
+		Label other = (Label) obj;
+		return other.getOffset() == getOffset();
+	}
 }

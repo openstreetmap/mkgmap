@@ -15,6 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+
 
 /**
  * A shape or polygon is just the same as a line really as far as I can tell.
@@ -22,21 +24,23 @@ package uk.me.parabola.mkgmap.general;
  *
  * @author Steve Ratcliffe.
  */
-public class MapShape extends MapLine {
+public class MapShape extends MapLine {// So top code can link objects from here
+private RoadDef roadDef;
+
 	public MapShape() {
 	}
 
-	/**
-	 * Copy from another element.  Note that this constructor takes a line
-	 * and not a shape.  It should however actually be a shape.
-	 * @param orig The shape to copy.
-	 */
-	public MapShape(MapLine orig) {
-		super(orig);
+	MapShape(MapShape s) {
+		super(s);
+	}
+
+	public MapShape copy() {
+		return new MapShape(this);
 	}
 
 	public void setDirection(boolean direction) {
 		throw new IllegalArgumentException(
 				"can't set a direction on a polygon");
 	}
+
 }

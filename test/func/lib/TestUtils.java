@@ -16,13 +16,13 @@
  */
 package func.lib;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.List;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import uk.me.parabola.mkgmap.main.Main;
 

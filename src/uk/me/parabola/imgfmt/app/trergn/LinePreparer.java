@@ -44,8 +44,17 @@ class LinePreparer {
 
 	// The delta changes between the points.
 	private int[] deltas;
+	private boolean[] nodes;
 
 	LinePreparer(Polyline line) {
+		if (line.isRoad() && 
+			line.getSubdiv().getZoom().getLevel() == 0 &&
+			line.roadHasInternalNodes()) {
+			// it might be safe to write the extra bits regardless,
+			// but who knows
+			extraBit = true;
+		}
+
 		polyline = line;
 		calcLatLong();
 		calcDeltas();
@@ -65,16 +74,12 @@ class LinePreparer {
 			xbits += xBase;
 		else
 			xbits += (2 * xBase) - 9;
-		if (extraBit)
-			xbits++;
 
 		int ybits = 2;
 		if (yBase < 10)
 			ybits += yBase;
 		else
 			ybits += (2 * yBase) - 9;
-		if (extraBit)
-			ybits++;
 
 		// Note no sign included.
 		if (log.isDebugEnabled())
@@ -99,6 +104,11 @@ class LinePreparer {
 			log.debug("x same is", xSameSign, "sign is", xSignNegative);
 			log.debug("y same is", ySameSign, "sign is", ySignNegative);
 		}
+
+		// first extra bit always appears to be false
+		// refers to the start point?
+		if (extraBit)
+			bw.put1(false);
 
 		for (int i = 0; i < deltas.length; i+=2) {
 			int dx = deltas[i];
@@ -125,6 +135,8 @@ class LinePreparer {
 				bw.putn(dy, ybits);
 				bw.put1(dy < 0);
 			}
+			if (extraBit)
+				bw.put1(nodes[i/2+1]);
 		}
 
 		if (log.isDebugEnabled())
@@ -151,31 +163,32 @@ class LinePreparer {
 	 * the lat and long values.
 	 */
 	private void calcDeltas() {
-		log.info("label offset", polyline.getLabel().getOffset());
+		log.debug("label offset", polyline.getLabel().getOffset());
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 
 		// Space to hold the deltas
 		deltas = new int[2 * (points.size() - 1)];
-		int off = 0;
 
+		if (extraBit)
+			nodes = new boolean[points.size()];
 		boolean first = true;
 
+		// OK go through the points
 		int lastLat = 0;
 		int lastLong = 0;
-
 		boolean xDiffSign = false; // The long values have different sign
 		boolean yDiffSign = false; // The lat values have different sign
-
-		int xSign = 0;  // If all the same sign, then this 1 or -1 depending
-		                // on +ve or -ve
+		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
 		int ySign = 0;  // As above for lat.
-
 		int xBits = 0;  // Number of bits needed for long
 		int yBits = 0;  // Number of bits needed for lat.
 
-		// OK go through the points
-		for (Coord co : points) {
+		// index of first point in a series of identical coords (after shift)
+		int firstsame = 0;
+		for (int i = 0; i < points.size(); i++) {
+			Coord co = points.get(i);
+
 			int lat = co.getLatitude() >> shift;
 			int lon = co.getLongitude() >> shift;
 			if (log.isDebugEnabled())
@@ -192,6 +205,42 @@ class LinePreparer {
 
 			lastLong = lon;
 			lastLat = lat;
+
+			if (dx != 0 || dy != 0)
+				firstsame = i;
+
+			/*
+			 * Current thought is that the node indicator is set when
+			 * the point is a node. There's a separate first extra bit
+			 * that always appears to be false. The last points' extra bit
+			 * is set if the point is a node and this is not the last
+			 * polyline making up the road.
+			 * Todo: special case the last bit
+			 */
+			if (extraBit) {
+				boolean extra = false;
+				if (co.getId() != 0) {
+					if (i < nodes.length - 1)
+						// inner node of polyline
+						extra = true;
+					else
+						// end node of polyline: set if inner
+						// node of road
+						extra = !polyline.isLastSegment();
+				}
+
+				/*
+				 * Only the first among a range of equal points
+				 * is written, so set the bit if any of the points
+				 * is a node.
+				 * Since we only write extra bits at level 0 now,
+				 * this can only happen when points in the input
+				 * data round to the same point in map units, so
+				 * it may be better to handle this in the
+				 * reader.
+				 */ 
+				nodes[firstsame] = nodes[firstsame] || extra;
+			}
 
 			// See if they can all be the same sign.
 			if (!xDiffSign) {
@@ -223,9 +272,8 @@ class LinePreparer {
 				yBits = nbits;
 
 			// Save the deltas
-			deltas[off] = dx;
-			deltas[off + 1] = dy;
-			off += 2;
+			deltas[2*(i-1)] = dx;
+			deltas[2*(i-1) + 1] = dy;
 		}
 
 		// Now we need to know the 'base' number of bits used to represent
@@ -242,7 +290,6 @@ class LinePreparer {
 		if (log.isDebugEnabled())
 			log.debug("initial xBits, yBits", xBits, yBits);
 
-		this.extraBit = false;  // Keep simple for now
 		if (xBits < 2)
 			xBits = 2;
 		int tmp = xBits - 2;

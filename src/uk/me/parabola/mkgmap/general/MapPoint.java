@@ -27,6 +27,18 @@ import uk.me.parabola.imgfmt.app.Coord;
 public class MapPoint extends MapElement {
 	private Coord location;
 
+	public MapPoint() {
+	}
+
+	MapPoint(MapPoint p) {
+		super(p);
+		location = p.location;
+	}
+
+	public MapPoint copy() {
+		return new MapPoint(this);
+	}
+
 	public Coord getLocation() {
 		return location;
 	}

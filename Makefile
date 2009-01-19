@@ -8,7 +8,7 @@
 #OSMDATA = areas.osm
 #OSMDATA = 63240001.mp
 OSMDATA = localtest/osm5/cricklewood-5.osm
-OSMDATA = /opt/data/uk-lon.osm
+#OSMDATA = maps/lon.mp
 #OSMDATA = --mapname=90000001 test-map:all-elements
 #OSMDATA = /opt/data/uk-071010-1.osm.gz /opt/data/uk-071010-2.osm.gz
 # takes 31s on trunk-681
@@ -25,18 +25,19 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = test/samples/test.osm
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
-#OSMDATA = t.osm
+OSMDATA = /opt/data/uk-test-1.osm.gz
+OSMDATA = /opt/data/uk-lon.osm
+#OSMDATA = other.mp
 
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
-#OPTS= --net --tdbfile --gmapsupp
-OPTS= --style=noname
+OPTS= --route --tdbfile --tdb-v4 
 
 makemap: clean
 	$(TIME) java -Xmx400m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
-	cp 63240001.img gmapsupp.img
+	#cp 63240001.img gmapsupp.img
 	#imgdecode gmapsupp.img
 
 t:
@@ -48,7 +49,8 @@ base: clean
 	imgdecode gmapsupp.img
 
 other: clean
-	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main  --tdbfile --tdb-v4 --levels=0:24,1:23,2:21,3=19,4=17 --route other.mp
+	java -Dlog.config=l -ea -cp build/classes uk.me.parabola.mkgmap.main.Main \
+		--tdbfile --tdb-v4 --levels=0:24 --route 63240001.mp
 	cp 63240001.img gmapsupp.img
 	imgdecode gmapsupp.img
 

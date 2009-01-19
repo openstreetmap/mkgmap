@@ -16,15 +16,15 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
-import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-
 import java.util.List;
-import java.util.ArrayList;
+
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * The NET file.  This consists of information about roads.  It is not clear
@@ -36,7 +36,9 @@ import java.util.ArrayList;
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
 
-	private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
+	private RoadNetwork network;
+
+	//private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
 
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);
@@ -51,36 +53,26 @@ public class NETFile extends ImgFile {
 
 	public void write() {
 		// Write out the actual file body.
-		writeBody();
+		List<RoadDef> roadDefs = network.getRoadDefs();
+
+		ImgFileWriter writer = netHeader.makeRoadWriter(getWriter());
+		try {
+			for (RoadDef rd : roadDefs)
+				rd.writeNet1(writer);
+
+		} finally {
+			Utils.closeFile(writer);
+		}
 	}
 
-	public void writePost() {
+	public void writePost(ImgFileWriter rgn) {
+		for (RoadDef rd : network.getRoadDefs())
+			rd.writeRgnOffsets(rgn);
+
 		getHeader().writeHeader(getWriter());
 	}
 
-	private void writeBody() {
-		ImgFileWriter writer = getWriter();
-
-		int start = writer.position();
-		netHeader.startRoadDefs(start);
-		for (RoadDef r : roaddefs) {
-			r.write(writer, writer.position() - start);
-		}
-		netHeader.endRoadDefs(position());
-	}
-
-	public RoadDef createRoadDef(Label l) {
-		RoadDef r = new RoadDef();
-		r.addLabel(l);
-
-		roaddefs.add(r);
-
-		return r;
-	}
-
-	public void allRoadDefsDone() {
-		int ofs = 0;
-		for (RoadDef r : roaddefs)
-			ofs += r.calcOffset(ofs);
+	public void setNetwork(RoadNetwork network) {
+		this.network = network;
 	}
 }

@@ -32,6 +32,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -65,6 +66,10 @@ public abstract class MapperBasedMapDataSource implements MapDataSource {
 
 	public List<MapShape> getShapes() {
 		return mapper.getShapes();
+	}
+
+	public RoadNetwork getRoadNetwork() {
+		return mapper.getRoadNetwork();
 	}
 
 	/**

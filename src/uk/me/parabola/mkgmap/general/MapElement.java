@@ -30,9 +30,6 @@ public abstract class MapElement {
 	private int minResolution = 24;
 	private int maxResolution = 24;
 
-	// So top code can link objects from here
-	private Object userData;
-
 	protected MapElement() {
 	}
 
@@ -41,8 +38,15 @@ public abstract class MapElement {
 		type = orig.type;
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
-		userData = orig.userData;
 	}
+
+	/**
+	 * Provide a copy of this MapElement without geometry. This is used
+	 * when filtering and clipping to create modified versions.
+	 *
+	 * @return the copy;
+	 */
+	public abstract MapElement copy();
 
 	public String getName() {
 		return name;
@@ -96,13 +100,5 @@ public abstract class MapElement {
 
 	public void setMaxResolution(int maxResolution) {
 		this.maxResolution = maxResolution;
-	}
-
-	public Object getUserData() {
-		return userData;
-	}
-
-	public void setUserData(Object obj) {
-		userData = obj;
 	}
 }

@@ -49,6 +49,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
+	private final RoadNetwork roadNetwork = new RoadNetwork();
+
 	/**
 	 * Add a point to the map.
 	 *
@@ -95,7 +97,9 @@ public class MapDetails implements MapCollector, MapDataSource {
 		shapes.add(shape);
 	}
 
-	public void finish() {
+	public void addRoad(MapRoad road) {
+		roadNetwork.addRoad(road);
+		addLine(road);
 	}
 
 	/**
@@ -142,6 +146,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return shapes;
 	}
 
+	public RoadNetwork getRoadNetwork() {
+		return roadNetwork;
+	}
+
 	/**
 	 * Get the overviews.  We construct them at this point from the information
 	 * that we have built up.
@@ -176,10 +184,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 
 	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
 		Integer prev = overviews.get(type);
-		if (prev == null)
-			prev = 24;
-
-		if (minResolution < prev)
+		if (prev == null || minResolution < prev)
 			overviews.put(type, minResolution);
 	}
 }

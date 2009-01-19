@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents a multi-segment line.  Eg for a road. As with all map objects
@@ -39,10 +39,23 @@ import java.util.List;
 public class Polyline extends MapObject {
 	private static final Logger log = Logger.getLogger(Polyline.class);
 
+	// flags in the label offset
+	public static final int FLAG_NETINFO = 0x800000;
+	public static final int FLAG_EXTRABIT = 0x400000;;
+
+	// flags in the type
+	public static final int FLAG_DIR = 0x40;
+	public static final int FLAG_2BYTE_LEN = 0x80;
+
 	private int number;
 
 	// Reference to NET section, if any
 	private RoadDef roaddef;
+
+	// If a road gets subdivided into several segments, this
+	// says whether this line is the last segment. Need this
+	// for writing extra bits.
+	private boolean lastSegment = true;
 
 	// Set if it is a one-way street for example.
 	private boolean direction;
@@ -62,8 +75,10 @@ public class Polyline extends MapObject {
 	 */
 	public void write(ImgFileWriter file) {
 		// If there is nothing to do, then do nothing.
-		if (points.size() < 2)
+		if (points.size() < 2) {
+			log.debug("less than two points, not writing");
 			return;
+		}
 
 		// Prepare for writing by doing all the required calculations.
 
@@ -74,21 +89,29 @@ public class Polyline extends MapObject {
 		// The type of feature, also contains a couple of flags hidden inside.
 		byte b1 = (byte) getType();
 		if (direction)
-			b1 |= 0x40;  // Polylines only.
+			b1 |= FLAG_DIR;  // Polylines only.
 
 		int blen = bw.getLength() - 1; // allow for the sizes
-		if (blen > 255)
-			b1 |= 0x80;
+		assert blen > 0 : "zero length bitstream";
+		assert blen < 0x10000 : "bitstream too long " + blen;
+		if (blen >= 0x100)
+			b1 |= FLAG_2BYTE_LEN;
 
 		file.put(b1);
 
 		// The label, contains a couple of flags within it.
 		int loff = getLabel().getOffset();
 		if (w.isExtraBit())
-			loff |= 0x400000;
+			loff |= FLAG_EXTRABIT;
+
+		// If this is a road, then we need to save the offset of the label
+		// so that we can change it to the index in the net section
 		if (roaddef != null) {
-			roaddef.addOffsetTarget(file, 0x800000 | (loff & 0x400000));
+			roaddef.addLabel(getLabel());
+			roaddef.addOffsetTarget(file.position(),
+					FLAG_NETINFO | (loff & FLAG_EXTRABIT));
 		}
+
 		file.put3(loff);
 
 		// The delta of the longitude from the subdivision centre point
@@ -97,11 +120,10 @@ public class Polyline extends MapObject {
 		file.putChar((char) getDeltaLat());
 		log.debug("out center", getDeltaLat(), getDeltaLong());
 
-		if (blen > 255) {
-			file.putChar((char) (blen & 0xffff));
-		} else {
+		if (blen < 0x100)
 			file.put((byte) (blen & 0xff));
-		}
+		else
+			file.putChar((char) (blen & 0xffff));
 
 		file.put(bw.getBytes(), 0, blen+1);
 	}
@@ -116,6 +138,22 @@ public class Polyline extends MapObject {
 
 	public void setDirection(boolean direction) {
 		this.direction = direction;
+	}
+
+	public boolean isRoad() {
+		return roaddef != null;
+	}
+
+	public boolean roadHasInternalNodes() {
+		return roaddef.hasInternalNodes();
+	}
+
+	public void setLastSegment(boolean last) {
+		lastSegment = last;
+	}
+
+	public boolean isLastSegment() {
+		return lastSegment;
 	}
 
 	public void setRoadDef(RoadDef rd) {

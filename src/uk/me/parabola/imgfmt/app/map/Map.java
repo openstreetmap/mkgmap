@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -60,6 +61,7 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 	private RGNFile rgnFile;
 	private LBLFile lblFile;
 	private NETFile netFile;
+	private NODFile nodFile;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -107,12 +109,15 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 	}
 
 	public void config(EnhancedProperties props) {
-		if (props.containsKey("net")) {
-			try {
+		try {
+			if (props.containsKey("route")) {
 				addNet();
-			} catch (FileExistsException e) {
-				log.error("Cannot add NET seciont");
+				addNod();
+			} else if (props.containsKey("net")) {
+				addNet();
 			}
+		} catch (FileExistsException e) {
+			log.warn("Could not add NET and/or NOD sections");
 		}
 
 		treFile.config(props);
@@ -120,6 +125,10 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 
 	public void addNet() throws FileExistsException {
 		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
+	}
+
+	public void addNod() throws FileExistsException {
+		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 
 	/**
@@ -237,6 +246,8 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 		lblFile.close();
 		if (netFile != null)
 			netFile.close();
+		if (nodFile != null)
+			nodFile.close();
 
 		fileSystem.close();
 	}
@@ -259,5 +270,9 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 
 	public NETFile getNetFile() {
 		return netFile;
+	}
+
+	public NODFile getNodFile() {
+		return nodFile;
 	}
 }

@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class OffsetWriterList {
@@ -28,9 +28,4 @@ public class OffsetWriterList {
 		targets.add(ow);
 	}
 
-	public void writeOffset(int ofs) {
-		for (OffsetWriter t : targets) {
-			t.writeOffset(ofs);
-		}
-	}
 }

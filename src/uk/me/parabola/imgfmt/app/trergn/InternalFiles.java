@@ -17,6 +17,8 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.NODFile;
 
 /**
  * Interface to pass around the internal files in the map without
@@ -32,4 +34,8 @@ public interface InternalFiles {
 	public LBLFile getLblFile();
 	
 	public TREFile getTreFile();
+
+	public NETFile getNetFile();
+
+	public NODFile getNodFile();
 }

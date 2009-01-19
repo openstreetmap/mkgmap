@@ -40,6 +40,10 @@ public class RoadIndex {
 		return getSubdiv().getZoom().getLevel();
 	}
 
+	Polyline getLine() {
+		return linkedRoad;
+	}
+
 	void write(ImgFileWriter writer) {
 		int roadnum = linkedRoad.getNumber();
 		assert roadnum < 256;

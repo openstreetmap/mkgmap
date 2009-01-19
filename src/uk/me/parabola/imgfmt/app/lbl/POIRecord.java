@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * @author Steve Ratcliffe

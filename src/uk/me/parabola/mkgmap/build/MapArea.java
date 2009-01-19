@@ -16,6 +16,9 @@
  */
 package uk.me.parabola.mkgmap.build;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
@@ -24,18 +27,16 @@ import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapElement;
-
-import java.util.ArrayList;
-import java.util.List;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
  * format of the Garmin map.  This class holds all the map elements that belong
- * to a particular area and provide a way of splitting areas into smaller ones.
+ * to a particular area and provides a way of splitting areas into smaller ones.
  *
  * It also acts as a map data source so that we can derive lower level
  * areas from it.
@@ -306,6 +307,11 @@ public class MapArea implements MapDataSource {
 		return shapes;
 	}
 
+	public RoadNetwork getRoadNetwork() {
+		// I don't think this is needed here.
+		return null;
+	}
+
 	/**
 	 * This is not used for areas.
 	 * @return Always returns null.
@@ -342,6 +348,13 @@ public class MapArea implements MapDataSource {
 	 */
 	public boolean hasLines() {
 		return nActiveLines > 0;
+	}
+
+	/**
+	 * Return number of lines in this area.
+	 */
+	public int getNumLines() {
+		return nActiveLines;
 	}
 
 	/**
@@ -500,11 +513,11 @@ public class MapArea implements MapDataSource {
 		int ycell = (y - ybase) / dy;
 
 		if (xcell < 0) {
-			log.warn("xcell was", xcell);
+			log.warn("xcell was", xcell, "x", x, "xbase", xbase);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.warn("ycell was", ycell);
+			log.warn("ycell was", ycell, "y", y, "ybase", ybase);
 			ycell = 0;
 		}
 		

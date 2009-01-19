@@ -113,7 +113,7 @@ public class Utils {
 	 * @return An integer value in map units.
 	 */
 	public static int toMapUnit(double l) {
-		double DELTA = 0.000001;
+		double DELTA = 0.000001; // TODO check if we really mean this
 		if (l > 0)
 			return (int) ((l + DELTA) * (1 << 24)/360);
 		else
@@ -163,6 +163,10 @@ public class Utils {
 
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
+	}
+
+	public static double toRadians(int latitude) {
+		return toDegrees(latitude) * Math.PI / 180;
 	}
 
 	public static void closeFile(Closeable f) {

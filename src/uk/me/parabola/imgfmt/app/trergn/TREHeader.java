@@ -106,7 +106,7 @@ public class TREHeader extends CommonHeader {
 		subdivPos = reader.getInt();
 		subdivSize = reader.getInt();
 
-		readSectionInfo(reader, copyright);
+		copyright.readSectionInfo(reader, true);
 		reader.getInt();
 
 		poiDisplayFlags = reader.get();
@@ -115,11 +115,11 @@ public class TREHeader extends CommonHeader {
 		reader.getChar();
 		reader.get();
 
-		readSectionInfo(reader, polyline);
+		polyline.readSectionInfo(reader, true);
 		reader.getInt();
-		readSectionInfo(reader, polygon);
+		polygon.readSectionInfo(reader, true);
 		reader.getInt();
-		readSectionInfo(reader, points);
+		points.readSectionInfo(reader, true);
 		reader.getInt();
 
 		int mapInfoOff = mapLevelPos;
@@ -134,26 +134,13 @@ public class TREHeader extends CommonHeader {
 		reader.getInt();
 		reader.getInt();
 
-		readSectionInfo(reader, copyright);
+		copyright.readSectionInfo(reader, true);
 		reader.getInt();
 
 		if (getHeaderLength() > 116) {
 			reader.position(116);
 			mapId = reader.getInt();
 		}
-	}
-
-	private void readSectionInfo(ImgFileReader reader, Section sect) {
-		sect.setPosition(reader.getInt());
-		sect.setSize(reader.getInt());
-		sect.setItemSize(reader.getChar());
-	}
-
-	protected void writeSectionInfo(ImgFileWriter writer, Section section) {
-		writer.putInt(section.getPosition());
-		writer.putInt(section.getSize());
-		if (section.getItemSize() > 0)
-			writer.putChar(section.getItemSize());
 	}
 
 	/**
@@ -174,7 +161,7 @@ public class TREHeader extends CommonHeader {
 		writer.putInt(getSubdivPos());
 		writer.putInt(getSubdivSize());
 
-		writeSectionInfo(writer, copyright);
+		copyright.writeSectionInfo(writer);
 		writer.putInt(0);
 
 		writer.put(getPoiDisplayFlags());
@@ -185,11 +172,11 @@ public class TREHeader extends CommonHeader {
 		writer.putChar((char) 1);
 		writer.put((byte) 0);
 
-		writeSectionInfo(writer, polyline);
+		polyline.writeSectionInfo(writer);
 		writer.putInt(0);
-		writeSectionInfo(writer, polygon);
+		polygon.writeSectionInfo(writer);
 		writer.putInt(0);
-		writeSectionInfo(writer, points);
+		points.writeSectionInfo(writer);
 		writer.putInt(0);
 
 		// There are a number of versions of the header with increasing lengths
@@ -199,10 +186,10 @@ public class TREHeader extends CommonHeader {
 		if (getHeaderLength() > 120) {
 			writer.putInt(0);
 
-			writeSectionInfo(writer, tre7);
+			tre7.writeSectionInfo(writer);
 			writer.putInt(0); // not usually zero
 
-			writeSectionInfo(writer, tre8);
+			tre8.writeSectionInfo(writer);
 			writer.putChar((char) 0);
 			writer.putInt(0);
 		}

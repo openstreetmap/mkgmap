@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
@@ -132,6 +133,10 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 	 */
 	public void addShape(MapShape shape) {
 		mapper.addShape(shape);
+	}
+
+	public void addRoad(MapRoad road) {
+		addLine(road);
 	}
 
 	public int getShift() {
