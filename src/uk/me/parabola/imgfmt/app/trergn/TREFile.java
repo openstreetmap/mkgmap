@@ -316,6 +316,9 @@ public class TREFile extends ImgFile implements ConfiguredByProperties {
 	}
 
 	public String[] getCopyrights() {
+		if (!isReadable())
+			throw new IllegalStateException("not open for reading");
+
 		List<String> msgs = new ArrayList<String>();
 
 		// First do the ones in the TRE header gap

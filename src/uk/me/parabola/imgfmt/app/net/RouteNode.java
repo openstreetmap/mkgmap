@@ -85,7 +85,7 @@ public class RouteNode {
 		return !restrictions.isEmpty();
 	}
 
-	public void setBoundary(boolean b) {
+	protected void setBoundary(boolean b) {
 		if (b)
 			flags |= F_BOUNDARY;
 		else

@@ -65,7 +65,7 @@ public class TableB {
 	public void addNode(RouteNode node) {
 		int i = nodes.indexOf(node);
 		if (i < 0) {
-			i = nodes.size();
+			//i = nodes.size();
 			nodes.add(node);
 		}
 	}

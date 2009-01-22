@@ -110,10 +110,6 @@ public abstract class CommonHeader {
 	 */
 	protected abstract void writeFileHeader(ImgFileWriter writer);
 
-	public void setCreationDate(Date creationDate) {
-		this.creationDate = creationDate;
-	}
-
 	public int getHeaderLength() {
 		return headerLength;
 	}

@@ -48,17 +48,6 @@ public class Label {
 	}
 
 	/**
-	 * The length of the label in bytes as it will appear in the file.
-	 * This is after the text has been converted to the label format being used.
-	 * It will usually not be the same length as the text it is representing.
-	 *
-	 * @return Byte length of the label.
-	 */
-	public int getLength() {
-		return length;
-	}
-
-	/**
 	 * The offset of this label in the LBL file.  The first byte of this file
 	 * is zero and an offset of zero means that the label has a zero length/is
 	 * empty.
@@ -95,8 +84,27 @@ public class Label {
 		return "label at " + offset;
 	}
 
-	public boolean equals(Object obj) {
-		Label other = (Label) obj;
-		return other.getOffset() == getOffset();
+	//public boolean equals(Object obj) {
+	//	Label other = (Label) obj;
+	//	return other.getOffset() == getOffset();
+	//}
+	//
+	//@Override
+	//public int hashCode() {
+	//	return offset;
+	//}
+
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+
+		return offset == ((Label) o).offset;
+
+	}
+
+	public int hashCode() {
+		return offset;
 	}
 }

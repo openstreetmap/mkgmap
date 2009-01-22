@@ -277,10 +277,6 @@ public class TREHeader extends CommonHeader {
 		this.subdivSize = subdivSize;
 	}
 
-	protected int getCopyrightPos() {
-		return copyright.getPosition();
-	}
-
 	public void setCopyrightPos(int copyrightPos) {
 		//this.copyrightPos = copyrightPos;
 		copyright.setPosition(copyrightPos);
@@ -288,10 +284,6 @@ public class TREHeader extends CommonHeader {
 
 	public void incCopyrightSize() {
 		copyright.inc();
-	}
-
-	public Section getCopyrightSection() {
-		return copyright;
 	}
 
 	protected byte getPoiDisplayFlags() {

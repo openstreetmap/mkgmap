@@ -123,11 +123,11 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 		treFile.config(props);
 	}
 
-	public void addNet() throws FileExistsException {
+	protected void addNet() throws FileExistsException {
 		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
 	}
 
-	public void addNod() throws FileExistsException {
+	protected void addNod() throws FileExistsException {
 		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 

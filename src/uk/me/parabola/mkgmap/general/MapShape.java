@@ -15,9 +15,6 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.net.RoadDef;
-
-
 /**
  * A shape or polygon is just the same as a line really as far as I can tell.
  * There are some things that you cannot do with them semantically.
@@ -25,7 +22,6 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
  * @author Steve Ratcliffe.
  */
 public class MapShape extends MapLine {// So top code can link objects from here
-private RoadDef roadDef;
 
 	public MapShape() {
 	}

@@ -32,6 +32,7 @@ import javax.swing.table.TableColumn;
  *
  * @author Steve Ratcliffe
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class MainFileList {
 	//private static final Logger log = Logger.getLogger(MainFileList.class);
 

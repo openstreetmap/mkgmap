@@ -102,7 +102,6 @@ public class MapBuilder {
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
 		rgnFile.write();
-		rgnFile.writePost();
 		treFile.write();
 		treFile.writePost();
 		lblFile.write();
