@@ -97,7 +97,7 @@ public abstract class ImgFile  {
 		return writable;
 	}
 
-	public boolean isReadable() {
+	protected boolean isReadable() {
 		return readable;
 	}
 }

@@ -39,7 +39,7 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="ASCII"/>
+          <text value="&amp;ASCII"/>
         </properties>
       </component>
       <component id="e24fa" class="javax.swing.JRadioButton" binding="latin1RadioButton" default-binding="true">
@@ -48,7 +48,7 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Latin1"/>
+          <text value="&amp;Latin1"/>
         </properties>
       </component>
       <component id="c9cbe" class="javax.swing.JLabel">
@@ -69,4 +69,7 @@
       <member id="b35d9"/>
     </group>
   </buttonGroups>
+  <inspectionSuppressions>
+    <suppress inspection="NoLabelFor" id="37c1f"/>
+  </inspectionSuppressions>
 </form>

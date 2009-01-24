@@ -33,7 +33,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
-import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -42,7 +42,7 @@ import uk.me.parabola.util.EnhancedProperties;
  *
  * @author Steve Ratcliffe
  */
-public abstract class MapperBasedMapDataSource implements MapDataSource, ConfiguredByProperties {
+public abstract class MapperBasedMapDataSource implements MapDataSource, Configurable {
 	protected final MapDetails mapper = new MapDetails();
 	private EnhancedProperties configProps;
 

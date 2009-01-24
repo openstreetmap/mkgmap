@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.general;
 import java.io.FileNotFoundException;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.Configurable;
 
 /**
  * A source of map information in a standard format.  The OSM reader presents
@@ -33,7 +33,7 @@ import uk.me.parabola.util.ConfiguredByProperties;
  *
  * @author Steve Ratcliffe
  */
-public interface LoadableMapDataSource extends MapDataSource, ConfiguredByProperties {
+public interface LoadableMapDataSource extends MapDataSource, Configurable {
 
 	/**
 	 * Determins if the file (or other resource) is supported by this map

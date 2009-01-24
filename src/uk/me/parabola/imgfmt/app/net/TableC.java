@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.net;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -76,7 +77,7 @@ public class TableC {
 			return 2;
 		else
 			// XXX: haven't seen larger than 2, may well be possible
-			throw new Error("too many restrictions");
+			throw new FormatException("too many restrictions");
 	}
 
 	public void propagateSizeBytes() {

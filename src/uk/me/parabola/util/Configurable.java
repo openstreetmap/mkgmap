@@ -24,7 +24,7 @@ package uk.me.parabola.util;
  *
  * @author Steve Ratcliffe
  */
-public interface ConfiguredByProperties {
+public interface Configurable {
 
 	/**
 	 * Used to mark that a reader needs to be configured by command line
