@@ -63,10 +63,11 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		try {
 			InputStream is = openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			boolean ignoreBounds = getConfig().getProperty("ignore-osm-bounds", false);
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				Osm5XmlHandler handler = new Osm5XmlHandler();
+				Osm5XmlHandler handler = new Osm5XmlHandler(ignoreBounds);
 				handler.setCollector(mapper);
 				Runnable task = new Runnable() {
 					public void run() {

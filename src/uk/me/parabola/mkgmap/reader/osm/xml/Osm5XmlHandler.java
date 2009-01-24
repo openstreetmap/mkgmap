@@ -72,6 +72,12 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private long nextFakeId = 1;
 
+	private final boolean ignoreBounds;
+
+	public Osm5XmlHandler(boolean ignoreBounds) {
+		this.ignoreBounds = ignoreBounds;
+	}
+
 	/**
 	 * Receive notification of the start of an element.
 	 *
@@ -111,11 +117,14 @@ class Osm5XmlHandler extends DefaultHandler {
 				currentRelation = new GeneralRelation();
 			} else if (qName.equals("bound")) {
 				mode = MODE_BOUND;
-				String box = attributes.getValue("box");
-				setupBBoxFromBound(box);
+				if(!ignoreBounds) {
+					String box = attributes.getValue("box");
+					setupBBoxFromBound(box);
+				}
 			} else if (qName.equals("bounds")) {
 				mode = MODE_BOUNDS;
-				setupBBoxFromBounds(attributes);
+				if(!ignoreBounds)
+					setupBBoxFromBounds(attributes);
 			}
 
 		} else if (mode == MODE_NODE) {
