@@ -147,8 +147,8 @@ class RoadHelper {
 	}
 
 	private static class NodeIndex {
-		private int index;
-		private int nodeId;
+		private final int index;
+		private final int nodeId;
 		private boolean boundary;
 
 		private NodeIndex(String[] f) {

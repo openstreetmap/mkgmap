@@ -16,10 +16,10 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
-
-import java.util.List;
 
 /**
  * A source of map data.  This base interface is used internally within

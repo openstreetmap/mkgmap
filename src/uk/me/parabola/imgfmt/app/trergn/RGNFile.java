@@ -58,9 +58,9 @@ public class RGNFile extends ImgFile {
 	} 
 
 	public void write() {
-	}
+		if (!isWritable())
+			throw new IllegalStateException("File not writable");
 
-	public void writePost() {
 		header.setDataSize(position() - HEADER_LEN);
 
 		getHeader().writeHeader(getWriter());

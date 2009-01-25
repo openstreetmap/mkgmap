@@ -97,6 +97,9 @@ Misc options:
 	Write a gmapsupp.img file that can be uploaded to a garmin in
 	usb mode.
 
+--ignore-osm-bounds
+	When reading OSM files, ignore any "bounds" elements.
+
 --tdbfile
 	Write a .tdb file.
 

@@ -32,7 +32,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -46,7 +46,7 @@ import uk.me.parabola.util.EnhancedProperties;
  *
  * @author Steve Ratcliffe
  */
-public class TREFile extends ImgFile implements ConfiguredByProperties {
+public class TREFile extends ImgFile implements Configurable {
 	private static final Logger log = Logger.getLogger(TREFile.class);
 
 	// Zoom levels for map
@@ -316,6 +316,9 @@ public class TREFile extends ImgFile implements ConfiguredByProperties {
 	}
 
 	public String[] getCopyrights() {
+		if (!isReadable())
+			throw new IllegalStateException("not open for reading");
+
 		List<String> msgs = new ArrayList<String>();
 
 		// First do the ones in the TRE header gap

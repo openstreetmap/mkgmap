@@ -25,6 +25,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param other The relation to base this one on.
 	 */
 	public MultiPolygonRelation(Relation other) {
+		setId(other.getId());
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
 	        String value = pairs.getValue();
 

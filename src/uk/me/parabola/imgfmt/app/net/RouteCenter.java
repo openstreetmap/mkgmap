@@ -14,14 +14,11 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Routing nodes are divided into areas which I am calling RouteCenter's.
@@ -138,7 +135,7 @@ public class RouteCenter {
 	/**
 	 * Inverse of calcTableOffset.
 	 */
-	public static int calcLowByte(int nodeOffset, int tablesOffset) {
+	private static int calcLowByte(int nodeOffset, int tablesOffset) {
 		assert nodeOffset < tablesOffset;
 		int align = NODHeader.DEF_ALIGN;
 		int mask = (1 << align) - 1;

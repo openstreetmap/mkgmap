@@ -18,8 +18,8 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -189,7 +189,7 @@ public class RoadDef {
 	}
 
 	private int getMaxZoomLevel() {
-		return roadIndexes.lastKey().intValue();
+		return roadIndexes.lastKey();
 	}
 
 	public void setDirIndicator(boolean dir) {
@@ -212,8 +212,8 @@ public class RoadDef {
 	 */
 
 	class Offset {
-		int position;
-		int flags;
+		final int position;
+		final int flags;
 
 		Offset(int position, int flags) {
 			this.position = position;
@@ -280,9 +280,9 @@ public class RoadDef {
 	private RouteNode node;
 
 	// the first point in the road is a node (the above routing node)
-	boolean startsWithNode = true;
+	private boolean startsWithNode = true;
 	// number of nodes in the road
-	int nnodes;
+	private int nnodes;
 
 	public static final int NOD2_MASK_SPEED = 0x0e;
 	public static final int NOD2_MASK_CLASS = 0xf0; // might be less

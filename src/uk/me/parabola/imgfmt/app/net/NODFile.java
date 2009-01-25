@@ -27,7 +27,6 @@ import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * The NOD file that contains routing information.
@@ -53,7 +52,6 @@ public class NODFile extends ImgFile {
 
 	private final NODHeader nodHeader = new NODHeader();
 
-	private RoadNetwork network;
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 	private List<RoadDef> roads = new ArrayList<RoadDef>();
 	private List<RouteNode> boundary = new ArrayList<RouteNode>();
@@ -70,9 +68,6 @@ public class NODFile extends ImgFile {
 	}
 
 	public void write() {
-		centers = network.getCenters();
-		roads = network.getRoadDefs();
-		boundary = network.getBoundary();
 		writeNodes();
 		writeRoadData();
 		writeBoundary();
@@ -141,7 +136,9 @@ public class NODFile extends ImgFile {
 		nodHeader.setBoundarySize(writer.position());
 	}
 
-	public void setNetwork(RoadNetwork network) {
-		this.network = network;
+	public void setNetwork(List<RouteCenter> centers, List<RoadDef> roads, List<RouteNode> boundary) {
+		this.centers = centers;
+		this.roads = roads;
+		this.boundary = boundary;
 	}
 }

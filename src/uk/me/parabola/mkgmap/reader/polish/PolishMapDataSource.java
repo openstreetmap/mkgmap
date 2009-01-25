@@ -22,6 +22,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +58,8 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
 
+	private static final String READING_CHARSET = "iso-8859-1";
+
 	private static final int S_IMG_ID = 1;
 	private static final int S_POINT = 2;
 	private static final int S_POLYLINE = 3;
@@ -70,7 +77,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private int endLevel;
 	private char elevUnits;
 	private static final double METERS_TO_FEET = 3.2808399;
-	private String codePage = "cp1252";
+
+	// Use to decode labels if they are not in cp1252
+	private CharsetDecoder dec;
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
@@ -86,13 +95,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	public void load(String name) throws FileNotFoundException, FormatException {
 		Reader reader;
 		try {
-			reader = new InputStreamReader(openFile(name), codePage);
+			reader = new InputStreamReader(openFile(name), READING_CHARSET);
 		} catch (UnsupportedEncodingException e) {
-			// we might need to recognise codepage names and convert them
-			// to other names.
-			throw new FormatException("Unrecognised code page " + codePage);
+			// Java is required to support iso-8859-1 so this is unlikely
+			throw new FormatException("Unrecognised charset " + READING_CHARSET);
 		}
-		
+
 		BufferedReader in = new BufferedReader(reader);
 		try {
 			String line;
@@ -114,8 +122,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	public LevelInfo[] mapLevels() {
-		// In the future will use the information in the file - for now it
-		// is fixed.
 		if (levels == null) {
 			// If it has not been set then supply some defaults.
 			levels = new LevelInfo[] {
@@ -349,7 +355,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	private boolean isCommonValue(MapElement elem, String name, String value) {
 		if (name.equals("Label")) {
-			elem.setName(value);
+			elem.setName(recode(value));
 		} else if (name.equals("Levels") || name.equals("EndLevel") || name.equals("LevelsNumber")) {
 			try {
 				endLevel = Integer.valueOf(value);
@@ -362,6 +368,38 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		// We dealt with it
 		return true;
+	}
+
+	/**
+	 * Convert the value of a label into a string based on the declared
+	 * code page in the file.
+	 *
+	 * This makes assumptions about the way that the .mp file is written
+	 * that may not be correct.
+	 *
+	 * @param value The string that has been read with iso-8859-1.
+	 * @return A possibly different string that is obtained by taking the
+	 * bytes in the input string and decoding them as if they had the
+	 * declared code page.
+	 */
+	private String recode(String value) {
+		if (dec != null) {
+			try {
+				// Get the bytes that were actually in the file.
+				byte[] bytes = value.getBytes(READING_CHARSET);
+				ByteBuffer buf = ByteBuffer.wrap(bytes);
+
+				// Decode from bytes with the correct code page.
+				CharBuffer out = dec.decode(buf);
+				return out.toString();
+			} catch (UnsupportedEncodingException e) {
+				// Java requires this support, so unlikely to happen
+				log.warn("no support for " + READING_CHARSET);
+			} catch (CharacterCodingException e) {
+				log.error("error decoding label", e);
+			}
+		}
+		return value;
 	}
 
 	private void setResolution(MapElement elem, String name) {
@@ -432,7 +470,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (fc == 'm' || fc == 'M')
 				elevUnits = 'm';
 		} else if (name.equals("CodePage")) {
-			codePage = value;
+			if (!value.equals("1252"))
+				dec = Charset.forName("cp" + value).newDecoder();
 		}
 	}
 

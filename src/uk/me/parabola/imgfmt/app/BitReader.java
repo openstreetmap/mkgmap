@@ -58,24 +58,14 @@ public class BitReader {
 		return res;
 	}
 
-	public int sget(int n) {
-		int res = get(n);
-		int top = 1 << (n - 1);
-		if ((res & top) != 0) {
-			int mask = top - 1;
-			res = ~mask | res;
-		}
-		return res;
-	}
-
 	/**
 	 * Get a signed n-bit value, treating 1 << (n-1) as a
 	 * flag to read another signed n-bit value for extended
-         * range (mysteriously only in the negative direction).
+	 * range (mysteriously only in the negative direction).
 	 *
 	 * At least two levels of recursion show up in the wild;
 	 * current code computes correctly in that example.
-         */
+	 */
 	public int sget2(int n) {
 		int res = get(n);
 		int top = 1 << (n - 1);

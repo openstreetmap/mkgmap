@@ -23,11 +23,11 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.NOD1Part;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
-import uk.me.parabola.imgfmt.app.net.NOD1Part;
 import uk.me.parabola.log.Logger;
 
 /**

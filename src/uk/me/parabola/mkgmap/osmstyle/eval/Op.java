@@ -102,7 +102,7 @@ public abstract class Op {
 		return type;
 	}
 
-	public void setType(char type) {
+	void setType(char type) {
 		this.type = type;
 	}
 

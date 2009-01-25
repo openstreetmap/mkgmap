@@ -36,7 +36,7 @@ import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.util.ConfiguredByProperties;
+import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -50,7 +50,7 @@ import uk.me.parabola.util.EnhancedProperties;
  *
  * @author Steve Ratcliffe
  */
-public class Map implements InternalFiles, ConfiguredByProperties {
+public class Map implements InternalFiles, Configurable {
 	private static final Logger log = Logger.getLogger(Map.class);
 
 	private String filename;
@@ -123,11 +123,11 @@ public class Map implements InternalFiles, ConfiguredByProperties {
 		treFile.config(props);
 	}
 
-	public void addNet() throws FileExistsException {
+	protected void addNet() throws FileExistsException {
 		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
 	}
 
-	public void addNod() throws FileExistsException {
+	protected void addNod() throws FileExistsException {
 		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 

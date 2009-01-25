@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.ReadFailedException;
 
 /**
  * @author Steve Ratcliffe

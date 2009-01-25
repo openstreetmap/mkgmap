@@ -92,14 +92,6 @@ public class RGNHeader extends CommonHeader {
 		}
 	}
 
-	public int getDataOffset() {
-		return dataOffset;
-	}
-
-	public void setDataOffset(int dataOffset) {
-		this.dataOffset = dataOffset;
-	}
-
 	protected int getDataSize() {
 		return dataSize;
 	}

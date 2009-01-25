@@ -24,8 +24,8 @@ package uk.me.parabola.imgfmt.app;
  */
 public class CoordNode extends Coord {
 	private final long id;
-	private int roadCount;
-	private boolean boundary;
+	//private int roadCount;
+	private final boolean boundary;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -41,21 +41,8 @@ public class CoordNode extends Coord {
 		this.boundary = boundary;
 	}
 
-	public CoordNode(double lat, double lon, long id) {
-		super(lat, lon);
-		this.id = id;
-	}
-
 	public long getId() {
 		return id;
-	}
-
-	public void incRoadCount() {
-		roadCount++;
-	}
-
-	public boolean couldBeNode() {
-		return roadCount > 1;
 	}
 
 	public boolean isBoundary() {

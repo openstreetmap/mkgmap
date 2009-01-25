@@ -16,12 +16,11 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.net.RoadDef;
-
 import java.util.List;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represent a line on a Garmin map.  Lines are a list of points.  They have

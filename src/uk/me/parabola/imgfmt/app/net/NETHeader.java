@@ -19,8 +19,8 @@ package uk.me.parabola.imgfmt.app.net;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.SectionWriter;
 
 /**
@@ -94,13 +94,5 @@ public class NETHeader extends CommonHeader {
 	ImgFileWriter makeRoadWriter(ImgFileWriter writer) {
 		roadDefinitions.setPosition(writer.position());
 		return new SectionWriter(writer, roadDefinitions);
-	}
-	
-	void startRoadDefs(int pos) {
-		roadDefinitions.setPosition(pos);
-	}
-
-	void endRoadDefs(int pos) {
-		roadDefinitions.setSize(pos - roadDefinitions.getPosition());
 	}
 }

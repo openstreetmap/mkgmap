@@ -91,6 +91,7 @@ public class Main implements ArgumentProcessor {
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
+			System.exit(1);
 		}
 	}
 

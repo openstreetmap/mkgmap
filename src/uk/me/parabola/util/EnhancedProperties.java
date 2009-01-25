@@ -26,9 +26,6 @@ import java.util.Properties;
  */
 public class EnhancedProperties extends Properties {
 
-	public EnhancedProperties() {
-	}
-
 	/**
 	 * Get a property as an integer value.  If the property does not exist
 	 * or the value is not a valid integer, then the default value is returned
@@ -88,9 +85,5 @@ public class EnhancedProperties extends Properties {
 		} catch (NumberFormatException e) {
 			return def;
 		}
-	}
-
-	public Object clone() {
-		return super.clone();
 	}
 }

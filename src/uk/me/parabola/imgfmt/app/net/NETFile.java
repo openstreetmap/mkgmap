@@ -24,7 +24,6 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * The NET file.  This consists of information about roads.  It is not clear
@@ -35,10 +34,7 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  */
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
-
-	private RoadNetwork network;
-
-	//private final List<RoadDef> roaddefs = new ArrayList<RoadDef>();
+	private List<RoadDef> roads;
 
 	public NETFile(ImgChannel chan, boolean write) {
 		setHeader(netHeader);
@@ -53,11 +49,9 @@ public class NETFile extends ImgFile {
 
 	public void write() {
 		// Write out the actual file body.
-		List<RoadDef> roadDefs = network.getRoadDefs();
-
 		ImgFileWriter writer = netHeader.makeRoadWriter(getWriter());
 		try {
-			for (RoadDef rd : roadDefs)
+			for (RoadDef rd : roads)
 				rd.writeNet1(writer);
 
 		} finally {
@@ -66,13 +60,13 @@ public class NETFile extends ImgFile {
 	}
 
 	public void writePost(ImgFileWriter rgn) {
-		for (RoadDef rd : network.getRoadDefs())
+		for (RoadDef rd : roads)
 			rd.writeRgnOffsets(rgn);
 
 		getHeader().writeHeader(getWriter());
 	}
 
-	public void setNetwork(RoadNetwork network) {
-		this.network = network;
+	public void setNetwork(List<RoadDef> roads) {
+		this.roads = roads;
 	}
 }

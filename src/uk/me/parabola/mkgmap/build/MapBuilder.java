@@ -102,7 +102,6 @@ public class MapBuilder {
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
 		rgnFile.write();
-		rgnFile.writePost();
 		treFile.write();
 		treFile.writePost();
 		lblFile.write();
@@ -110,10 +109,10 @@ public class MapBuilder {
 
 		if (netFile != null) {
 			RoadNetwork network = src.getRoadNetwork();
-			netFile.setNetwork(network);
+			netFile.setNetwork(network.getRoadDefs());
 			NODFile nodFile = map.getNodFile();
 			if (nodFile != null) {
-				nodFile.setNetwork(network);
+				nodFile.setNetwork(network.getCenters(), network.getRoadDefs(), network.getBoundary());
 				nodFile.write();
 			}
 			netFile.write();

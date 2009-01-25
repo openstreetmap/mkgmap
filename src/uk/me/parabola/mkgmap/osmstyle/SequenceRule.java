@@ -33,7 +33,6 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  */
 public class SequenceRule implements Rule, Iterable<Rule> {
 	private final List<Rule> ruleList = new ArrayList<Rule>();
-	private boolean blocked;
 
 	public GType resolveType(Element el) {
 		for (Rule r : ruleList) {
@@ -54,8 +53,9 @@ public class SequenceRule implements Rule, Iterable<Rule> {
 		//	System.err.println("Warning: Unreachable rule (" + rule + "), more general rules should be later in the file");
 		
 		ruleList.add(rule);
-		if (rule instanceof FixedRule)
-			blocked = true;
+		//boolean blocked;
+		//if (rule instanceof FixedRule)
+		//	blocked = true;
 	}
 
 	public Iterator<Rule> iterator() {

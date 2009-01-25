@@ -43,7 +43,7 @@ public class RouteArc {
 
 	private int offset;
 
-	private byte initialHeading;
+	private final byte initialHeading;
 	private byte endDirection;
 
 	private final RoadDef roadDef;
@@ -60,7 +60,7 @@ public class RouteArc {
 	private byte flagA;
 	private byte flagB;
 
-	private boolean curve = false;
+	private boolean curve;
 	private int length;
 	private int[] lendat;
 
@@ -79,7 +79,7 @@ public class RouteArc {
 		this.dest = dest;
 
 		this.length = convertMeters(length);
-		log.debug("set length", (int)this.length);
+		log.debug("set length", this.length);
 		this.initialHeading = calcAngle(nextCoord);
 		// too early: dest.nodeClass may still increase
 		//setDestinationClass(dest.getNodeClass());
@@ -209,15 +209,15 @@ public class RouteArc {
 		writer.put(indexA);
 
 		log.debug("writing length", length);
-		for (int i = 0; i < lendat.length; i++)
-			writer.put((byte) lendat[i]);
+		for (int aLendat : lendat)
+			writer.put((byte) aLendat);
 
 		writer.put(initialHeading);
 
 		if (curve) {
 			int[] curvedat = encodeCurve();
-			for (int i = 0; i < curvedat.length; i++)
-				writer.put((byte) curvedat[i]);
+			for (int aCurvedat : curvedat)
+				writer.put((byte) aCurvedat);
 		}
 	}
 

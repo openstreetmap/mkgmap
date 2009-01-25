@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents a multi-segment line.  Eg for a road. As with all map objects
@@ -40,12 +40,12 @@ public class Polyline extends MapObject {
 	private static final Logger log = Logger.getLogger(Polyline.class);
 
 	// flags in the label offset
-	public static final int FLAG_NETINFO = 0x800000;
-	public static final int FLAG_EXTRABIT = 0x400000;;
+	private static final int FLAG_NETINFO = 0x800000;
+	private static final int FLAG_EXTRABIT = 0x400000;
 
 	// flags in the type
-	public static final int FLAG_DIR = 0x40;
-	public static final int FLAG_2BYTE_LEN = 0x80;
+	private static final int FLAG_DIR = 0x40;
+	private static final int FLAG_2BYTE_LEN = 0x80;
 
 	private int number;
 

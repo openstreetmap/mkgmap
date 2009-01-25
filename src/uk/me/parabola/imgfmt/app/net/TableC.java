@@ -16,9 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -26,7 +27,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class TableC {
 	// size of the table, excluding the size field
-	private int size = 0;
+	private int size;
 
 	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
 
@@ -76,7 +77,7 @@ public class TableC {
 			return 2;
 		else
 			// XXX: haven't seen larger than 2, may well be possible
-			throw new Error("too many restrictions");
+			throw new FormatException("too many restrictions");
 	}
 
 	public void propagateSizeBytes() {

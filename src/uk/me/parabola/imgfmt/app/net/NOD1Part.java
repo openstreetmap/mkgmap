@@ -16,16 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.net.RouteArc;
-import uk.me.parabola.imgfmt.app.net.RouteCenter;
-import uk.me.parabola.imgfmt.app.net.RouteNode;
-import uk.me.parabola.imgfmt.app.net.TableA;
-import uk.me.parabola.imgfmt.app.net.TableB;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -84,7 +79,7 @@ public class NOD1Part {
 
 	// Nodes size is bounded due to the byte offset to Tables.
 	private static final int MAX_NODES_SIZE = (1 << NODHeader.DEF_ALIGN) * 0x30;
-	private int nodesSize = 0;
+	private int nodesSize;
 
 	public class BBox {
 		int maxLat, minLat, maxLon, minLon;
@@ -207,7 +202,7 @@ public class NOD1Part {
 	 * The bounding box is used to decide which arcs
 	 * are internal.
 	 */
-	public NOD1Part(BBox bbox) {
+	private NOD1Part(BBox bbox) {
 		log.info("creating new NOD1Part:", bbox);
 		this.bbox = bbox;
 	}

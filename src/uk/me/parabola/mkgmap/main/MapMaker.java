@@ -94,7 +94,7 @@ public class MapMaker implements MapProcessor {
 	 * @param map The map to modify.
 	 * @param args The command line arguments.
 	 */
-	private void setOptions(Map map, CommandArgs args) throws FileExistsException {
+	private void setOptions(Map map, CommandArgs args) {
 		String s = args.getCharset();
 		if (s != null)
 			map.setLabelCharset(s, args.isForceUpper());

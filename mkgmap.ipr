@@ -434,10 +434,14 @@
         <inspection_tool class="SimplifiableIfStatement" level="WARNING" enabled="false" />
         <inspection_tool class="BooleanMethodIsAlwaysInverted" level="WARNING" enabled="false" />
         <inspection_tool class="SameReturnValue" level="WARNING" enabled="false" />
-        <inspection_tool class="InconsistentResourceBundle" level="INFO" enabled="true">
+        <inspection_tool class="InconsistentResourceBundle" level="INFO" enabled="false">
           <option name="REPORT_MISSING_TRANSLATIONS" value="true" />
           <option name="REPORT_INCONSISTENT_PROPERTIES" value="true" />
           <option name="REPORT_DUPLICATED_PROPERTIES" value="true" />
+        </inspection_tool>
+        <inspection_tool class="IgnoreResultOfCall" level="WARNING" enabled="false">
+          <option name="m_reportAllNonLibraryCalls" value="false" />
+          <option name="callCheckString" value="java.io.InputStream,read,java.io.InputStream,skip,java.lang.StringBuffer,toString,java.lang.StringBuilder,toString,java.lang.String,.*,java.math.BigInteger,.*,java.math.BigDecimal,.*,java.net.InetAddress,.*,java.io.File,.*" />
         </inspection_tool>
       </profile>
       <profile version="1.0" is_locked="false">
