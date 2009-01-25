@@ -241,7 +241,7 @@ public class ActionReaderTest {
 	}
 
 	private Relation makeRelation() {
-		Relation rel = new GeneralRelation();
+		Relation rel = new GeneralRelation(23);
 		rel.addElement("bar", makeElement());
 		rel.addElement("foo", makeElement());
 		return rel;

@@ -114,7 +114,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				addWay(attributes.getValue("id"));
 			} else if (qName.equals("relation")) {
 				mode = MODE_RELATION;
-				currentRelation = new GeneralRelation();
+				currentRelation = new GeneralRelation(idVal(attributes.getValue("id")));
 			} else if (qName.equals("bound")) {
 				mode = MODE_BOUND;
 				if(!ignoreBounds) {

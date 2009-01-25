@@ -23,6 +23,10 @@ package uk.me.parabola.mkgmap.reader.osm;
  * @author Steve Ratcliffe
  */
 public class GeneralRelation extends Relation {
+	public GeneralRelation(long id) {
+		setId(id);
+	}
+
 	public void processElements() {
 		// Nothing to do
 	}
