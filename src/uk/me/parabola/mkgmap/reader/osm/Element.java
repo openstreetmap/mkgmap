@@ -79,6 +79,16 @@ public abstract class Element implements Iterable<String> {
 		return sb.toString();
 	}
 
+	/**
+	 * Copy the tags of the other element.  Only to be used internally
+	 * by subclasses.
+	 * @param other The other element.  All its tags will be copied to this
+	 * element.
+	 */
+	protected void copyTags(Element other) {
+		tags = other.tags.copy();
+	}
+
 	public String getName() {
 		return name;
 	}

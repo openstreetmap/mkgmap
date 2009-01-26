@@ -107,6 +107,24 @@ public class Tags implements Iterable<String> {
 		return null;
 	}
 
+	/**
+	 * Make a deep copy of this object.
+	 * @return A copy of this object.
+	 */
+	Tags copy() {
+		Tags cp = new Tags();
+		cp.size = size;
+		cp.capacity = capacity;
+		cp.extra = null;
+
+		// Copy the arrays.  (For java 1.6 we can use Arrays.copyOf().)
+		cp.keys = new String[keys.length];
+		System.arraycopy(keys, 0, cp.keys, 0, keys.length);
+		cp.values = new String[values.length];
+		System.arraycopy(values, 0, cp.values, 0, values.length);
+		return cp;
+	}
+
 	private void ensureSpace() {
 		while (size + 1 >= capacity) {
 			int ncap = capacity*2;
