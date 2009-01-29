@@ -72,6 +72,7 @@ public class MapMaker implements MapProcessor {
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
+			builder.config(args.getProperties());
 			if (args.getProperties().getProperty("route", false))
 				builder.setDoRoads(true);
 			builder.makeMap(map, src);

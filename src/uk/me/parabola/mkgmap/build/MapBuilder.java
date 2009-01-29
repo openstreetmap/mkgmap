@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
+import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -64,6 +65,8 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.util.Configurable;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -75,7 +78,7 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  *
  * @author Steve Ratcliffe
  */
-public class MapBuilder {
+public class MapBuilder implements Configurable {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
@@ -84,6 +87,23 @@ public class MapBuilder {
 	private boolean doRoads;
 
 	private Country country;
+	private Region  region;
+
+	private String countryName = "UNITED KINGDOM";
+	private String countryAbbr = "GBR";
+	private String regionName;
+	private String regionAbbr;
+
+	public MapBuilder() {
+		regionName = null;
+	}
+
+	public void config(EnhancedProperties props) {
+		countryName = props.getProperty("country-name", countryName);
+		countryAbbr = props.getProperty("country-abbr", countryAbbr);
+		regionName = props.getProperty("region-name", null);
+		regionAbbr = props.getProperty("region-abbr", null);
+	}
 
 	/**
 	 * Main method to create the map, just calls out to several routines
@@ -99,7 +119,9 @@ public class MapBuilder {
 		LBLFile lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
 
-		country = lblFile.createCountry("UNITED KINGDOM", "GBR");
+		country = lblFile.createCountry(countryName, countryAbbr);
+		if(regionName != null)
+			region = lblFile.createRegion(country, regionName, regionAbbr);
 
 		processPOIs(map, src);
 		//preProcessRoads(map, src);
@@ -154,7 +176,12 @@ public class MapBuilder {
 
 		// create the city records in alphabetic order
 		for (String s : sortedCities.keySet()) {
-		    sortedCities.put(s, lbl.createCity(country, s));
+		    City c;
+		    if(region != null)
+		    	c = lbl.createCity(region, s);
+		    else
+		    	c = lbl.createCity(country, s);
+		    sortedCities.put(s, c);
 		}
 		// TODO: this is temporarily removed, but should be put back
 		// in once there are some addresses etc available here.
