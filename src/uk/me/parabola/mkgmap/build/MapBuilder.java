@@ -399,11 +399,16 @@ public class MapBuilder implements Configurable {
 		div.startPoints();
 		int res = div.getResolution();
 
-		int pointIndex = 1;
+		boolean haveIndPoints = false;
 
 		for (MapPoint point : points) {
 			if (point.getMinResolution() > res || point.getMaxResolution() < res)
 				continue;
+
+			if (point.isCity()) {
+				haveIndPoints = true;
+				continue;
+			}
 
 			String name = point.getName();
 
@@ -414,24 +419,49 @@ public class MapBuilder implements Configurable {
 			p.setLatitude(coord.getLatitude());
 			p.setLongitude(coord.getLongitude());
 
-			if(div.getZoom().getLevel() == 0) {
-			    POIRecord r = poimap.get(point);
-			    if (r != null)
-				p.setPOIRecord(r);
-				if(point.isCity() && point.getName() != null) {
-					City c = sortedCities.get(point.getName());
+			if (div.getZoom().getLevel() == 0) {
+				POIRecord r = poimap.get(point);
+				if (r != null)
+					p.setPOIRecord(r);
+			}
+
+			map.addMapObject(p);
+		}
+
+		if (haveIndPoints) {
+			div.startIndPoints();
+
+			int pointIndex = 1;
+			for (MapPoint point : points) {
+				if (point.getMinResolution() > res || point.getMaxResolution() < res)
+					continue;
+
+				if(!point.isCity())
+					continue;
+
+				String name = point.getName();
+
+				Point p = div.createPoint(name);
+				p.setType(point.getType());
+
+				Coord coord = point.getLocation();
+				p.setLatitude(coord.getLatitude());
+				p.setLongitude(coord.getLongitude());
+
+				if(div.getZoom().getLevel() == 0 && name != null) {
+					City c = sortedCities.get(name);
 
 					if(pointIndex > 255) {
-						System.err.println("Can't set city point index (too many points in division)\n");
+						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");
 					} else {
 						c.setPointIndex((byte)pointIndex);
 						c.setSubdivision(div);
 					}
-			    }
-			}
+				}
 
-			map.addMapObject(p);
-			++pointIndex;
+				map.addMapObject(p);
+				++pointIndex;
+			}
 		}
 	}
 
@@ -574,6 +604,7 @@ public class MapBuilder implements Configurable {
 			map.addMapObject(pl);
 		}
 	}
+	
 	private static class ShapeAddFilter extends BaseFilter implements MapFilter {
 		private final Subdivision div;
 		private final Map map;
