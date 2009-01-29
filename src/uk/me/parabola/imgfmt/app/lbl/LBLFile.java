@@ -143,14 +143,17 @@ public class LBLFile extends ImgFile {
 		return places.createCountry(name, abbr);
 	}
 	
-	public Region createRegion(Country country, String region) {
-		return places.createRegion(country, region);
+	public Region createRegion(Country country, String region, String abbr) {
+	    return places.createRegion(country, region, abbr);
 	}
 	
 	public City createCity(Region region, String city) {
 		return places.createCity(region, city);
 	}
-		
+
+	public City createCity(Country country, String city) {
+		return places.createCity(country, city);
+	}
 
 	public void allPOIsDone() {
 		places.allPOIsDone();

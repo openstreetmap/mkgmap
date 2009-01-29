@@ -56,4 +56,9 @@ public class MapPoint extends MapElement {
 		return new Area(location.getLatitude(), location.getLongitude(),
 				location.getLatitude(), location.getLongitude());
 	}
+
+    public boolean isCity() {
+		int type = getType();
+		return type >= 0x0100 && type <= 0x1100;
+    }
 }

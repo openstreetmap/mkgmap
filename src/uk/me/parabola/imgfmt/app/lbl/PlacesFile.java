@@ -81,7 +81,7 @@ public class PlacesFile {
 	Country createCountry(String name, String abbr) {
 		Country c = new Country(countries.size()+1);
 
-		String s = abbr != null ? name + 0x1d + abbr : name;
+		String s = abbr != null ? name + (char)0x1d + abbr : name;
 
 		Label l = lblFile.newLabel(s);
 		c.setLabel(l);
@@ -90,21 +90,33 @@ public class PlacesFile {
 		return c;
 	}
 
-	Region createRegion(Country country, String name) {
+	Region createRegion(Country country, String name, String abbr) {
 		Region r = new Region(country, regions.size()+1);
 
-		Label l = lblFile.newLabel(name);
+		String s = abbr != null ? name + (char)0x1d + abbr : name;
+
+		Label l = lblFile.newLabel(s);
 		r.setLabel(l);
 
 		regions.put(name, r);
 		return r;
 	}
 
+	City createCity(Country country, String name) {
+		City c = new City(country, cities.size()+1);
+
+		Label l = lblFile.newLabel(name);
+		c.setLabel(l);	// label may be ignored if pointref is set
+
+		cities.put(name, c);
+		return c;
+	}
+
 	City createCity(Region region, String name) {
 		City c = new City(region, cities.size()+1);
 
 		Label l = lblFile.newLabel(name);
-		c.setLabel(l);
+		c.setLabel(l);	// label may be ignored if pointref is set
 
 		cities.put(name, c);
 		return c;

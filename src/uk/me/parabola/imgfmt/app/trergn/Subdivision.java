@@ -373,13 +373,13 @@ public class Subdivision {
 	 * We are starting to draw the lines.  These must be done before
 	 * polygons.
 	 */
-	void startIndPoints() {
+	public void startIndPoints() {
 		if (lastMapElement > MAP_INDEXED_POINT)
 			throw new IllegalStateException("Indexed points must be done before lines and polygons");
 
 		lastMapElement = MAP_INDEXED_POINT;
 
-		rgnFile.setPolylinePtr();
+		rgnFile.setIndPointPtr();
 	}
 
 	/**

@@ -47,8 +47,10 @@ public class Point extends MapObject {
 		int type = getType();
 		byte subtype = 0;
 		if (type > 0xff) {
-			hasSubtype = true;
-			subtype = (byte) type;
+			if((type & 0xff) != 0) {
+			    hasSubtype = true;
+			    subtype = (byte) type;
+			}
 			type >>= 8;
 		}
 
