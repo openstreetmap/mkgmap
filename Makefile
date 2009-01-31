@@ -26,7 +26,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
 #OSMDATA = /opt/data/uk-test-1.osm.gz
-#OSMDATA = /opt/data/uk-lon.osm
+OSMDATA = /opt/data/uk-lon.osm
 #OSMDATA = other.mp
 
 

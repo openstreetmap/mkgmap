@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project relativePaths="false" version="4">
+  <component name="DependencyValidationManager">
+    <scope name="general" pattern="file:src/uk/me/parabola/mkgmap/general//*" />
+    <scope name="reader" pattern="file:src/uk/me/parabola/mkgmap/reader//*" />
+    <scope name="imgfmt" pattern="file:src/uk/me/parabola/imgfmt//*" />
+    <scope name="mkgmap" pattern="file:src/uk/me/parabola/mkgmap//*" />
+    <scope name="style" pattern="file:src/uk/me/parabola/mkgmap/osmstyle//*" />
+    <scope name="build" pattern="file:src/uk/me/parabola/mkgmap/build//*||file:src/uk/me/parabola/mkgmap/combiners//*||file:src/uk/me/parabola/mkgmap/filters//*" />
+    <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
+    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs/*||file:src/uk/me/parabola/imgfmt/mps/*||file:src/uk/me/parabola/imgfmt/sys/*" />
+    <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
+    <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
+    <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*" />
+    <option name="SKIP_IMPORT_STATEMENTS" value="true" />
+    <deny_rule from_scope="reader_no_style" to_scope="style" is_deny="true" />
+    <deny_rule from_scope="general" to_scope="style" is_deny="true" />
+    <deny_rule from_scope="general" to_scope="reader" is_deny="true" />
+    <deny_rule from_scope="build" to_scope="style" is_deny="true" />
+    <deny_rule from_scope="build" to_scope="reader" is_deny="true" />
+    <deny_rule from_scope="imgfmt" to_scope="mkgmap" is_deny="true" />
+    <deny_rule from_scope="img base" to_scope="imgapp" is_deny="true" />
+    <deny_rule from_scope="util" to_scope="mkgmap" is_deny="true" />
+    <deny_rule from_scope="util" to_scope="imgfmt" is_deny="true" />
+  </component>
+  <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" value="" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="ProjectDetails">
+    <option name="projectName" value="mkgmap" />
+  </component>
+  <component name="ProjectFileVersion" converted="true" />
+  <component name="ProjectKey">
+    <option name="state" value="https://svn.parabola.me.uk/svn/mkgmap/trunk/.idea/misc.xml" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.5" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myVersion" value="124" />
+    <option name="mySupportsUserInfoFilter" value="true" />
+  </component>
+</project>
+

@@ -1,0 +1,134 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0" is_locked="false">
+    <option name="myName" value="Mapping" />
+    <option name="myLocal" value="false" />
+    <inspection_tool class="SamePackageImport" level="WARNING" enabled="true" />
+    <inspection_tool class="JavaLangImport" level="WARNING" enabled="true" />
+    <inspection_tool class="RedundantImport" level="WARNING" enabled="true" />
+    <inspection_tool class="SystemGC" level="WARNING" enabled="true" />
+    <inspection_tool class="StaticCollection" level="WARNING" enabled="true">
+      <option name="m_ignoreWeakCollections" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StringBufferField" level="WARNING" enabled="true" />
+    <inspection_tool class="ZeroLengthArrayInitialization" level="WARNING" enabled="true" />
+    <inspection_tool class="AutoBoxing" level="INFO" enabled="false">
+      <option name="ignoreAddedToCollection" value="false" />
+    </inspection_tool>
+    <inspection_tool class="ReplaceAssignmentWithOperatorAssignment" level="WARNING" enabled="true">
+      <option name="ignoreLazyOperators" value="true" />
+      <option name="ignoreObscureOperators" value="false" />
+    </inspection_tool>
+    <inspection_tool class="AssignmentToForLoopParameter" level="WARNING" enabled="true">
+      <option name="m_checkForeachParameters" value="false" />
+    </inspection_tool>
+    <inspection_tool class="AssignmentToCatchBlockParameter" level="WARNING" enabled="true" />
+    <inspection_tool class="ClassMayBeInterface" level="WARNING" enabled="true" />
+    <inspection_tool class="ClassInTopLevelPackage" level="WARNING" enabled="true" />
+    <inspection_tool class="EmptyClass" level="WARNING" enabled="true" />
+    <inspection_tool class="CloneInNonCloneableClass" level="WARNING" enabled="true" />
+    <inspection_tool class="CloneableImplementsClone" level="WARNING" enabled="true">
+      <option name="m_ignoreCloneableDueToInheritance" value="false" />
+    </inspection_tool>
+    <inspection_tool class="ObsoleteCollection" level="WARNING" enabled="true">
+      <option name="ignoreLibraryArguments" value="false" />
+    </inspection_tool>
+    <inspection_tool class="CStyleArrayDeclaration" level="WARNING" enabled="true" />
+    <inspection_tool class="ConfusingOctalEscape" level="WARNING" enabled="true" />
+    <inspection_tool class="RedundantFieldInitialization" level="WARNING" enabled="true" />
+    <inspection_tool class="UnnecessaryConstructor" level="WARNING" enabled="true" />
+    <inspection_tool class="UnnecessarySuperConstructor" level="WARNING" enabled="true" />
+    <inspection_tool class="UnnecessaryFullyQualifiedName" level="WARNING" enabled="true">
+      <option name="m_ignoreJavadoc" value="false" />
+    </inspection_tool>
+    <inspection_tool class="FallthruInSwitchStatement" level="WARNING" enabled="true" />
+    <inspection_tool class="ForLoopReplaceableByWhile" level="WARNING" enabled="true">
+      <option name="m_ignoreLoopsWithoutConditions" value="false" />
+    </inspection_tool>
+    <inspection_tool class="IfStatementWithIdenticalBranches" level="WARNING" enabled="true" />
+    <inspection_tool class="NegatedIfElse" level="WARNING" enabled="true">
+      <option name="m_ignoreNegatedNullComparison" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PublicField" level="WARNING" enabled="true">
+      <option name="ignoreEnums" value="false" />
+    </inspection_tool>
+    <inspection_tool class="ErrorRethrown" level="WARNING" enabled="true" />
+    <inspection_tool class="BadExceptionThrown" level="WARNING" enabled="true">
+      <option name="exceptionsString" value="java.lang.Throwable,java.lang.Exception,java.lang.Error,java.lang.RuntimeException,java.lang.NullPointerException,java.lang.ClassCastException,java.lang.ArrayIndexOutOfBoundsException" />
+    </inspection_tool>
+    <inspection_tool class="AbstractMethodOverridesAbstractMethod" level="WARNING" enabled="true" />
+    <inspection_tool class="AbstractMethodCallInConstructor" level="WARNING" enabled="true" />
+    <inspection_tool class="ComparisonOfShortAndChar" level="WARNING" enabled="true" />
+    <inspection_tool class="StringBufferReplaceableByString" level="WARNING" enabled="true" />
+    <inspection_tool class="SubstringZero" level="WARNING" enabled="true" />
+    <inspection_tool class="SizeReplaceableByIsEmpty" level="WARNING" enabled="true">
+      <option name="ignoreNegations" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StringEqualsEmptyString" level="WARNING" enabled="true" />
+    <inspection_tool class="AssignmentUsedAsCondition" level="WARNING" enabled="true" />
+    <inspection_tool class="ResultOfObjectAllocationIgnored" level="WARNING" enabled="true" />
+    <inspection_tool class="SubtractionInCompareTo" level="WARNING" enabled="true" />
+    <inspection_tool class="TextLabelInSwitchStatement" level="WARNING" enabled="true" />
+    <inspection_tool class="TrivialIf" level="WARNING" enabled="false" />
+    <inspection_tool class="UnnecessaryConstantArrayCreationExpression" level="WARNING" enabled="true" />
+    <inspection_tool class="FieldMayBeFinal" level="WARNING" enabled="true" />
+    <inspection_tool class="UnnecessaryCallToStringValueOf" level="WARNING" enabled="true" />
+    <inspection_tool class="AssertEqualsMayBeAssertSame" level="WARNING" enabled="true" />
+    <inspection_tool class="LoggerInitializedWithForeignClass" level="WARNING" enabled="true">
+      <option name="loggerClassName" value="org.apache.log4j.Logger" />
+      <option name="loggerFactoryMethodName" value="getLogger" />
+    </inspection_tool>
+    <inspection_tool class="KeySetIterationMayUseEntrySet" level="WARNING" enabled="true" />
+    <inspection_tool class="RedundantStringFormatCall" level="WARNING" enabled="true" />
+    <inspection_tool class="SameParameterValue" level="WARNING" enabled="false" />
+    <inspection_tool class="JavaDoc" level="WARNING" enabled="true">
+      <option name="TOP_LEVEL_CLASS_OPTIONS">
+        <value>
+          <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+          <option name="REQUIRED_TAGS" value="" />
+        </value>
+      </option>
+      <option name="INNER_CLASS_OPTIONS">
+        <value>
+          <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+          <option name="REQUIRED_TAGS" value="" />
+        </value>
+      </option>
+      <option name="METHOD_OPTIONS">
+        <value>
+          <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+          <option name="REQUIRED_TAGS" value="" />
+        </value>
+      </option>
+      <option name="FIELD_OPTIONS">
+        <value>
+          <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+          <option name="REQUIRED_TAGS" value="" />
+        </value>
+      </option>
+      <option name="IGNORE_DEPRECATED" value="false" />
+      <option name="IGNORE_JAVADOC_PERIOD" value="true" />
+      <option name="myAdditionalJavadocTags" value="" />
+    </inspection_tool>
+    <inspection_tool class="WeakerAccess" level="WARNING" enabled="true">
+      <option name="SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS" value="false" />
+      <option name="SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES" value="false" />
+      <option name="SUGGEST_PRIVATE_FOR_INNERS" value="false" />
+    </inspection_tool>
+    <inspection_tool class="SimplifiableIfStatement" level="WARNING" enabled="false" />
+    <inspection_tool class="BooleanMethodIsAlwaysInverted" level="WARNING" enabled="false" />
+    <inspection_tool class="SameReturnValue" level="WARNING" enabled="false" />
+    <inspection_tool class="InconsistentResourceBundle" level="INFO" enabled="false">
+      <option name="REPORT_MISSING_TRANSLATIONS" value="true" />
+      <option name="REPORT_INCONSISTENT_PROPERTIES" value="true" />
+      <option name="REPORT_DUPLICATED_PROPERTIES" value="true" />
+    </inspection_tool>
+    <inspection_tool class="IgnoreResultOfCall" level="WARNING" enabled="false">
+      <option name="m_reportAllNonLibraryCalls" value="false" />
+      <option name="callCheckString" value="java.io.InputStream,read,java.io.InputStream,skip,java.lang.StringBuffer,toString,java.lang.StringBuilder,toString,java.lang.String,.*,java.math.BigInteger,.*,java.math.BigDecimal,.*,java.net.InetAddress,.*,java.io.File,.*" />
+    </inspection_tool>
+    <inspection_tool class="RawUseOfParameterizedType" level="WARNING" enabled="true">
+      <option name="ignoreObjectConstruction" value="true" />
+      <option name="ignoreTypeCasts" value="true" />
+    </inspection_tool>
+  </profile>
+</component>
