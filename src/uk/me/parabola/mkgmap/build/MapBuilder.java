@@ -83,7 +83,7 @@ public class MapBuilder implements Configurable {
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
-	private final SortedMap<String, City> sortedCities = new TreeMap<String, City>();
+	private final SortedMap<String, Object> sortedCities = new TreeMap<String, Object>();
 	private boolean doRoads;
 
 	private Country country;
@@ -168,19 +168,27 @@ public class MapBuilder implements Configurable {
 	private void processPOIs(Map map, MapDataSource src) {
 		LBLFile lbl = map.getLblFile();
 
-		// collect the names of the cities
+		// gpsmapedit doesn't sort the city names so to be
+		// friendly we generate the city objects in alphabetic
+		// order - to do that we first build a map from city
+		// name to the associated MapPoint - we don't want to
+		// be fooled by duplicate names so suffix the name
+		// with the object to make it unique
 		for (MapPoint p : src.getPoints()) {
 			if(p.isCity() && p.getName() != null)
-				sortedCities.put(p.getName(), null);
+				sortedCities.put(p.getName() + "@" + p, p);
 		}
 
-		// create the city records in alphabetic order
+		// now loop through the sorted keys and retrieve
+		// the MapPoint associated with the key - now we
+		// can create the City object and remember it for later
 		for (String s : sortedCities.keySet()) {
+		    MapPoint p = (MapPoint)sortedCities.get(s);
 		    City c;
 		    if(region != null)
-		    	c = lbl.createCity(region, s);
+		    	c = lbl.createCity(region, p.getName());
 		    else
-		    	c = lbl.createCity(country, s);
+		    	c = lbl.createCity(country, p.getName());
 		    sortedCities.put(s, c);
 		}
 		// TODO: this is temporarily removed, but should be put back
@@ -449,8 +457,10 @@ public class MapBuilder implements Configurable {
 				p.setLongitude(coord.getLongitude());
 
 				if(div.getZoom().getLevel() == 0 && name != null) {
-					City c = sortedCities.get(name);
-
+					// retrieve the City created earlier for
+					// this point and store the point info
+					// in it
+					City c = (City)sortedCities.get(name + "@" + point);
 					if(pointIndex > 255) {
 						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");
 					} else {

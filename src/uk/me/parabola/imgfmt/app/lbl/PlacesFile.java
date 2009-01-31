@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.app.Label;
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private final Map<String, City> cities = new LinkedHashMap<String, City>();
+	private final List<City> cities = new ArrayList<City>();
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<POIRecord> pois = new ArrayList<POIRecord>();
 
@@ -62,7 +62,7 @@ public class PlacesFile {
 			r.write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (City c : cities.values())
+		for (City c : cities)
 			c.write(writer);
 		placeHeader.endCity(writer.position());
 
@@ -108,7 +108,7 @@ public class PlacesFile {
 		Label l = lblFile.newLabel(name);
 		c.setLabel(l);	// label may be ignored if pointref is set
 
-		cities.put(name, c);
+		cities.add(c);
 		return c;
 	}
 
@@ -118,7 +118,7 @@ public class PlacesFile {
 		Label l = lblFile.newLabel(name);
 		c.setLabel(l);	// label may be ignored if pointref is set
 
-		cities.put(name, c);
+		cities.add(c);
 		return c;
 	}
 
