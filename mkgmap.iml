@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="CopyrightManager" />
+  <component name="EclipseCompilerSettings" />
+  <component name="InspectionProjectProfileManager" />
+  <component name="JavacSettings" />
+  <component name="JikesSettings" />
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes" />
     <output-test url="file://$MODULE_DIR$/build/test" />
@@ -14,12 +19,16 @@
       <excludeFolder url="file://$MODULE_DIR$/gmapsupp" />
       <excludeFolder url="file://$MODULE_DIR$/localtest" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
-      <excludeFolder url="file://$MODULE_DIR$/nbproject" />
+      <excludeFolder url="file://$MODULE_DIR$/samples" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="library" name="resource" level="project" />
   </component>
+  <component name="ProjectRunConfigurationManager" />
+  <component name="RmicSettings" />
+  <component name="SvnBranchConfigurationManager" />
+  <component name="libraryTable" />
 </module>
 

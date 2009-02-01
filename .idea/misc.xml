@@ -41,6 +41,7 @@
     <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
   </component>
+  <component name="NewModuleRootManager" />
   <component name="ProjectDetails">
     <option name="projectName" value="mkgmap" />
   </component>
