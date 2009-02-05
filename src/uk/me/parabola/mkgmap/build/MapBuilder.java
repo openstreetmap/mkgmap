@@ -191,16 +191,17 @@ public class MapBuilder implements Configurable {
 		    	c = lbl.createCity(country, p.getName());
 		    sortedCities.put(s, c);
 		}
-		// TODO: this is temporarily removed, but should be put back
-		// in once there are some addresses etc available here.
-		//for (MapPoint p : src.getPoints()) {
-			//POIRecord r = null;
-		    //		    if(p.hasCityName()) {
-		    //	r = lbl.createPOI(p.getName());
-		    //	r.setCityIndex(sortedCities.get(p.getCityName()).getIndex());
-		    //}
-			//poimap.put(p, r);
-		//}
+		// if point has a nearest city, create a POIRecord to
+		// reference it
+		for (MapPoint p : src.getPoints()) {
+			MapPoint nearestCityPoint = p.getNearestCityPoint();
+			if(nearestCityPoint != null && p.getName() != null) {
+				POIRecord r = lbl.createPOI(p.getName());
+				City nearestCity = (City)sortedCities.get(nearestCityPoint.getName() + "@" + nearestCityPoint);
+				r.setCityIndex(nearestCity.getIndex());
+				poimap.put(p, r);
+			}
+		}
 		lbl.allPOIsDone();
 	}
 

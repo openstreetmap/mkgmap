@@ -17,17 +17,25 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 /**
@@ -41,6 +49,7 @@ public class MapMaker implements MapProcessor {
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
+			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
@@ -124,5 +133,178 @@ public class MapMaker implements MapProcessor {
 		src.config(args.getProperties());
 		src.load(name);
 		return src;
+	}
+
+	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
+		String rnp = args.getProperties().getProperty("road-name-pois", null);
+		// are road name POIS wanted?
+		if(rnp != null) {
+			int rnpt = 0x640a; // Garmin type 'Locale'
+			rnp = rnp.toUpperCase();
+			if(rnp.length() > 0) {
+				// override type code
+				rnpt = Integer.decode(rnp);
+			}
+			// collect lists of roads that have the same name
+			java.util.Map<String, List<MapLine>> namedRoads = new HashMap<String, List<MapLine>>();
+			for(MapLine l : src.getLines()) {
+				// isRoad() needed until OSM loader marks lines as roads
+				if(l.isRoad() || isRoad(l)) {
+					String ln = l.getName();
+					if(ln != null) {
+						List<MapLine> rl = namedRoads.get(ln);
+						if(rl == null) {
+							rl = new ArrayList<MapLine>();
+							namedRoads.put(ln, rl);
+						}
+						rl.add(l);
+					}
+				}
+			}
+
+			List<MapPoint> cities = new ArrayList<MapPoint>();
+			for(MapPoint mp : src.getPoints()) {
+				if(mp.isCity())
+					cities.add(mp);
+			}
+
+			// generate a POI for each named road
+			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
+				// connected roads are not ordered so just use first in list
+				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt, cities));
+			}
+		}
+	}
+
+	private boolean roadsAreJoined(MapLine r1, MapLine r2) {
+
+		if(r1 != r2) {
+			for(Coord c1 : r1.getPoints()) {
+				for(Coord c2 : r2.getPoints()) {
+					if(c1 == c2)
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	// hairy function to build a set of lists - each list contains
+	// the roads that have the same name and are connected
+
+	private Set<List<MapLine>> findConnectedRoadsWithSameName(java.util.Map<String, List<MapLine>> namedRoads) {
+		// roadGroups is a set to avoid duplicate groups
+		Set<List<MapLine>> roadGroups = new HashSet<List<MapLine>>();
+
+		// loop over the lists of roads that have the same name
+		for(List<MapLine> allRoadsWithSameName : namedRoads.values()) {
+			// for each road that has the same name, keep track of its group
+			java.util.Map<MapLine,List<MapLine>> roadGroupMap = new HashMap<MapLine,List<MapLine>>();
+
+			// loop over all of the roads with the same name
+			for(int i = 0; i < allRoadsWithSameName.size(); ++i) {
+				boolean roadWasJoined = false;
+				for(int j = 0; j < allRoadsWithSameName.size(); ++j) {
+					if(i != j) {
+						// see if these two roads are joined
+						MapLine ri = allRoadsWithSameName.get(i);
+						MapLine rj = allRoadsWithSameName.get(j);
+						if(roadsAreJoined(ri, rj)) {
+							// yes, the're joined so put both in a group
+							// and associate the group with each road
+							roadWasJoined = true;
+							List<MapLine> groupi = roadGroupMap.get(ri);
+							List<MapLine> groupj = roadGroupMap.get(rj);
+							if(groupi == null) {
+								// ri is not in a group yet
+								if(groupj == null) {
+									// neither is rj so make a new group
+									groupi = new ArrayList<MapLine>();
+									groupi.add(ri);
+									groupi.add(rj);
+									roadGroupMap.put(ri, groupi);
+									roadGroupMap.put(rj, groupi);
+								}
+								else {
+									// add ri to groupj
+									groupj.add(ri);
+									roadGroupMap.put(ri, groupj);
+								}
+							}
+							else if(groupj == null) {
+								// add rj to groupi
+								groupi.add(rj);
+								roadGroupMap.put(rj, groupi);
+							}
+							else if(groupi != groupj) {
+								// ri and rj are in separate groups so put
+								// all the roads in groupj into groupi
+								for(MapLine r : groupj)
+									roadGroupMap.put(r, groupi);
+								groupi.addAll(groupj);
+							}
+						}
+					}
+				}
+				if(!roadWasJoined) {
+					// make a group with just one entry
+					MapLine ri = allRoadsWithSameName.get(i);
+					List<MapLine>group = new ArrayList<MapLine>();
+					group.add(ri);
+					roadGroupMap.put(ri, group);
+				}
+			}
+
+			// now add the new group(s) to the final result
+			for(List<MapLine> l : roadGroupMap.values())
+				roadGroups.add(l);
+		}
+		return roadGroups;
+	}
+
+	private MapPoint makeRoadNamePOI(MapLine road, int type, List<MapPoint> cities) {
+		List<Coord> points = road.getPoints();
+		int numPoints = points.size();
+		Coord coord;
+		if((numPoints & 1) != 0)
+			coord = points.get(numPoints / 2);
+		else {
+			int i2 = numPoints / 2;
+			int i1 = i2 - 1;
+			coord = new Coord((points.get(i1).getLatitude() +
+					points.get(i2).getLatitude()) / 2,
+					(points.get(i1).getLongitude() +
+							points.get(i2).getLongitude()) / 2);
+		}
+
+		String name = road.getName();
+		MapPoint nearestCity = null;
+		if(cities != null) {
+			double shortestDistance = 10000000;
+			for(MapPoint mp : cities) {
+				double distance = coord.distance(mp.getLocation());
+				if(distance < shortestDistance) {
+					shortestDistance = distance;
+					nearestCity = mp;
+				}
+			}
+		}
+
+		MapPoint rnp = new MapPoint();
+
+		if(nearestCity != null && nearestCity.getName() != null) {
+			//rnp.setNearestCityPoint(nearestCity);
+			name += "/" + nearestCity.getName();
+		}
+
+		rnp.setName(name);
+		rnp.setType(type);
+		rnp.setLocation(coord);
+		return rnp;
+	}
+
+	// this is only needed until OSM reader identifies roads
+	boolean isRoad(MapLine l) {
+		return l.getType() <= 0x0c;
 	}
 }
