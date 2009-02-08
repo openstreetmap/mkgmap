@@ -97,7 +97,11 @@ public class RouteArc {
 	 * Provide an upper bound for the written size in bytes.
 	 */
 	public int boundSize() {
-		return 6; // XXX: this could be reduced, and may increase
+		// XXX: this could be reduced, and may increase
+		// currently: 1 (flagA) + 1-2 (offset) + 1 (indexA)
+		//          + 2 (length) + 1 (initialHeading)
+		// needs updating when curve data is written
+		return 7;
 	}
 
 	/**
