@@ -149,7 +149,7 @@ public class RouteNode {
 		writer.put((byte) flags);
 
 		if (haveLargeOffsets()) {
-			writer.putInt((lonOff << 16) | (latOff & 0xffff));
+			writer.putInt((latOff << 16) | (lonOff & 0xffff));
 		} else {
 			writer.put3((latOff << 12) | (lonOff & 0xfff));
 		}
@@ -204,11 +204,13 @@ public class RouteNode {
 	private void setLatOff(int latOff) {
 		log.debug("lat off", Integer.toHexString(latOff));
 		this.latOff = (char) latOff;
+		checkOffSize(latOff);
 	}
 
 	private void setLonOff(int lonOff) {
 		log.debug("long off", Integer.toHexString(lonOff));
 		this.lonOff = (char) lonOff;
+		checkOffSize(lonOff);
 	}
 
 	/**
