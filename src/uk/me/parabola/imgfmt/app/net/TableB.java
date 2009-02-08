@@ -35,7 +35,7 @@ public class TableB {
         /**
          * Retrieve the size of the Table as an int.
          *
-         * While Table A is limited in size (0x40 entries),
+         * While Table B is limited in size (0x40 entries),
          * we temporarily build larger tables while subdividing
          * the network.
          */
