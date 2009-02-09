@@ -319,6 +319,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * @param slon The longitude as a string.
 	 */
 	private void addNode(String sid, String slat, String slon) {
+		if (sid == null || slat == null || slon == null)
+			return;
+		
 		try {
 			long id = idVal(sid);
 

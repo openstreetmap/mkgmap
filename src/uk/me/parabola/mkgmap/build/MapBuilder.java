@@ -21,10 +21,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
+import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -60,6 +65,8 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.util.Configurable;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -71,12 +78,32 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  *
  * @author Steve Ratcliffe
  */
-public class MapBuilder {
+public class MapBuilder implements Configurable {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
+	private final SortedMap<String, Object> sortedCities = new TreeMap<String, Object>();
 	private boolean doRoads;
+
+	private Country country;
+	private Region  region;
+
+	private String countryName = "UNITED KINGDOM";
+	private String countryAbbr = "GBR";
+	private String regionName;
+	private String regionAbbr;
+
+	public MapBuilder() {
+		regionName = null;
+	}
+
+	public void config(EnhancedProperties props) {
+		countryName = props.getProperty("country-name", countryName);
+		countryAbbr = props.getProperty("country-abbr", countryAbbr);
+		regionName = props.getProperty("region-name", null);
+		regionAbbr = props.getProperty("region-abbr", null);
+	}
 
 	/**
 	 * Main method to create the map, just calls out to several routines
@@ -86,6 +113,16 @@ public class MapBuilder {
 	 * @param src The map data.
 	 */
 	public void makeMap(Map map, LoadableMapDataSource src) {
+
+		RGNFile rgnFile = map.getRgnFile();
+		TREFile treFile = map.getTreFile();
+		LBLFile lblFile = map.getLblFile();
+		NETFile netFile = map.getNetFile();
+
+		country = lblFile.createCountry(countryName, countryAbbr);
+		if(regionName != null)
+			region = lblFile.createRegion(country, regionName, regionAbbr);
+
 		processPOIs(map, src);
 		//preProcessRoads(map, src);
 		processOverviews(map, src);
@@ -93,11 +130,6 @@ public class MapBuilder {
 		makeMapAreas(map, src);
 		//processRoads(map, src);
 		//postProcessRoads(map, src);
-
-		RGNFile rgnFile = map.getRgnFile();
-		TREFile treFile = map.getTreFile();
-		LBLFile lblFile = map.getLblFile();
-		NETFile netFile = map.getNetFile();
 
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
@@ -135,9 +167,40 @@ public class MapBuilder {
 	 */
 	private void processPOIs(Map map, MapDataSource src) {
 		LBLFile lbl = map.getLblFile();
+
+		// gpsmapedit doesn't sort the city names so to be
+		// friendly we generate the city objects in alphabetic
+		// order - to do that we first build a map from city
+		// name to the associated MapPoint - we don't want to
+		// be fooled by duplicate names so suffix the name
+		// with the object to make it unique
 		for (MapPoint p : src.getPoints()) {
-			POIRecord r = lbl.createPOI(p.getName());
-			poimap.put(p, r);
+			if(p.isCity() && p.getName() != null)
+				sortedCities.put(p.getName() + "@" + p, p);
+		}
+
+		// now loop through the sorted keys and retrieve
+		// the MapPoint associated with the key - now we
+		// can create the City object and remember it for later
+		for (String s : sortedCities.keySet()) {
+		    MapPoint p = (MapPoint)sortedCities.get(s);
+		    City c;
+		    if(region != null)
+		    	c = lbl.createCity(region, p.getName());
+		    else
+		    	c = lbl.createCity(country, p.getName());
+		    sortedCities.put(s, c);
+		}
+		// if point has a nearest city, create a POIRecord to
+		// reference it
+		for (MapPoint p : src.getPoints()) {
+			MapPoint nearestCityPoint = p.getNearestCityPoint();
+			if(nearestCityPoint != null && p.getName() != null) {
+				POIRecord r = lbl.createPOI(p.getName());
+				City nearestCity = (City)sortedCities.get(nearestCityPoint.getName() + "@" + nearestCityPoint);
+				r.setCityIndex(nearestCity.getIndex());
+				poimap.put(p, r);
+			}
 		}
 		lbl.allPOIsDone();
 	}
@@ -345,9 +408,16 @@ public class MapBuilder {
 		div.startPoints();
 		int res = div.getResolution();
 
+		boolean haveIndPoints = false;
+
 		for (MapPoint point : points) {
 			if (point.getMinResolution() > res || point.getMaxResolution() < res)
 				continue;
+
+			if (point.isCity()) {
+				haveIndPoints = true;
+				continue;
+			}
 
 			String name = point.getName();
 
@@ -358,11 +428,51 @@ public class MapBuilder {
 			p.setLatitude(coord.getLatitude());
 			p.setLongitude(coord.getLongitude());
 
-			POIRecord r = poimap.get(point);
-			if (r != null)
-				p.setPOIRecord(r);
+			if (div.getZoom().getLevel() == 0) {
+				POIRecord r = poimap.get(point);
+				if (r != null)
+					p.setPOIRecord(r);
+			}
 
 			map.addMapObject(p);
+		}
+
+		if (haveIndPoints) {
+			div.startIndPoints();
+
+			int pointIndex = 1;
+			for (MapPoint point : points) {
+				if (point.getMinResolution() > res || point.getMaxResolution() < res)
+					continue;
+
+				if(!point.isCity())
+					continue;
+
+				String name = point.getName();
+
+				Point p = div.createPoint(name);
+				p.setType(point.getType());
+
+				Coord coord = point.getLocation();
+				p.setLatitude(coord.getLatitude());
+				p.setLongitude(coord.getLongitude());
+
+				if(div.getZoom().getLevel() == 0 && name != null) {
+					// retrieve the City created earlier for
+					// this point and store the point info
+					// in it
+					City c = (City)sortedCities.get(name + "@" + point);
+					if(pointIndex > 255) {
+						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");
+					} else {
+						c.setPointIndex((byte)pointIndex);
+						c.setSubdivision(div);
+					}
+				}
+
+				map.addMapObject(p);
+				++pointIndex;
+			}
 		}
 	}
 
@@ -505,6 +615,7 @@ public class MapBuilder {
 			map.addMapObject(pl);
 		}
 	}
+	
 	private static class ShapeAddFilter extends BaseFilter implements MapFilter {
 		private final Subdivision div;
 		private final Map map;

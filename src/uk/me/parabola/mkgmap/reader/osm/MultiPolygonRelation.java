@@ -27,6 +27,8 @@ public class MultiPolygonRelation extends Relation {
 	public MultiPolygonRelation(Relation other) {
 		setId(other.getId());
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
+			addElement(pairs.getValue(), pairs.getKey());
+			
 	        String value = pairs.getValue();
 
 			if (pairs.getKey() instanceof Way) {
@@ -38,6 +40,9 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
+
+		setName(other.getName());
+		copyTags(other);
 	}
 
 	/** Process the ways in this relation.

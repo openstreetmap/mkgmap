@@ -97,7 +97,11 @@ public class RouteArc {
 	 * Provide an upper bound for the written size in bytes.
 	 */
 	public int boundSize() {
-		return 6; // XXX: this could be reduced, and may increase
+		// XXX: this could be reduced, and may increase
+		// currently: 1 (flagA) + 1-2 (offset) + 1 (indexA)
+		//          + 2 (length) + 1 (initialHeading)
+		// needs updating when curve data is written
+		return 7;
 	}
 
 	/**
@@ -136,7 +140,7 @@ public class RouteArc {
 	 * Set this arc's index into Table B. Applies to external arcs only.
 	 */
 	public void setIndexB(byte indexB) {
-		assert !isInternal() : "Trying to set index on external arc.";
+		assert !isInternal() : "Trying to set index on internal arc.";
 		this.indexB = indexB;
 	}
 
@@ -199,7 +203,7 @@ public class RouteArc {
 		writer.put(flagA);
 
 		if (isInternal()) {
-			// space for 12 bit node offset, written in writeSecond.
+			// space for 14 bit node offset, written in writeSecond.
 			writer.put(flagB);
 			writer.put((byte) 0);
 		} else {
@@ -234,7 +238,7 @@ public class RouteArc {
 		char val = (char) (flagB << 8);
 		int diff = dest.getOffsetNod1() - source.getOffsetNod1();
 		assert diff < 0x2000 && diff >= -0x2000
-			: "relative pointer too large for 12 bits";
+			: "relative pointer too large for 14 bits";
 		val |= diff & 0x3fff;
 
 		// We write this big endian

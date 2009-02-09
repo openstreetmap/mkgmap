@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MapPoint extends MapElement {
 	private Coord location;
+	private MapPoint nearestCityPoint;
 
 	public MapPoint() {
 	}
@@ -55,5 +56,18 @@ public class MapPoint extends MapElement {
 	public Area getBounds() {
 		return new Area(location.getLatitude(), location.getLongitude(),
 				location.getLatitude(), location.getLongitude());
+	}
+
+	public boolean isCity() {
+		int type = getType();
+		return type >= 0x0100 && type <= 0x1100;
+	}
+
+	public void setNearestCityPoint(MapPoint nearestCityPoint) {
+		this.nearestCityPoint = nearestCityPoint;
+	}
+
+	public MapPoint getNearestCityPoint() {
+		return nearestCityPoint;
 	}
 }

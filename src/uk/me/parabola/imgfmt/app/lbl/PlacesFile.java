@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.app.Label;
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private final Map<String, City> cities = new LinkedHashMap<String, City>();
+	private final List<City> cities = new ArrayList<City>();
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<POIRecord> pois = new ArrayList<POIRecord>();
 
@@ -62,7 +62,7 @@ public class PlacesFile {
 			r.write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (City c : cities.values())
+		for (City c : cities)
 			c.write(writer);
 		placeHeader.endCity(writer.position());
 
@@ -81,7 +81,7 @@ public class PlacesFile {
 	Country createCountry(String name, String abbr) {
 		Country c = new Country(countries.size()+1);
 
-		String s = abbr != null ? name + 0x1d + abbr : name;
+		String s = abbr != null ? name + (char)0x1d + abbr : name;
 
 		Label l = lblFile.newLabel(s);
 		c.setLabel(l);
@@ -90,23 +90,35 @@ public class PlacesFile {
 		return c;
 	}
 
-	Region createRegion(Country country, String name) {
+	Region createRegion(Country country, String name, String abbr) {
 		Region r = new Region(country, regions.size()+1);
 
-		Label l = lblFile.newLabel(name);
+		String s = abbr != null ? name + (char)0x1d + abbr : name;
+
+		Label l = lblFile.newLabel(s);
 		r.setLabel(l);
 
 		regions.put(name, r);
 		return r;
 	}
 
+	City createCity(Country country, String name) {
+		City c = new City(country, cities.size()+1);
+
+		Label l = lblFile.newLabel(name);
+		c.setLabel(l);	// label may be ignored if pointref is set
+
+		cities.add(c);
+		return c;
+	}
+
 	City createCity(Region region, String name) {
 		City c = new City(region, cities.size()+1);
 
 		Label l = lblFile.newLabel(name);
-		c.setLabel(l);
+		c.setLabel(l);	// label may be ignored if pointref is set
 
-		cities.put(name, c);
+		cities.add(c);
 		return c;
 	}
 

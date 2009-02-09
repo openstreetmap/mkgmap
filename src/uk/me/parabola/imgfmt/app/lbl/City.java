@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 
 /**
  * A city is in a region.  It also has (or can have anyway) a reference to
@@ -27,10 +28,12 @@ import uk.me.parabola.imgfmt.app.Label;
  */
 public class City {
 	private static final int POINT_REF = 0x8000;
+	private static final int REGION_IS_COUNTRY = 0x4000;
 
 	private final int index;
 
 	private final Region region;
+	private final Country country;
 
 	// This determines if a label is being used or a subdivision and point
 	// combo.
@@ -38,7 +41,7 @@ public class City {
 
 	// The location of the city.  These could both be zero if we are using a
 	// label instead.
-	private char subdivision;
+	private Subdivision subdivision;
 	private byte pointIndex;
 
 
@@ -48,19 +51,31 @@ public class City {
 
 	public City(Region region, int index) {
 		this.region = region;
+		this.country = null;
+		this.index = index;
+	}
+
+	public City(Country country, int index) {
+		this.country = country;
+		this.region = null;
 		this.index = index;
 	}
 
 	void write(ImgFileWriter writer) {
 		//writer.put3()
 		if (pointRef) {
+		    //		    System.err.println("City point = " + (int)pointIndex + " div = " + subdivision.getNumber());
 			writer.put(pointIndex);
-			writer.putChar(subdivision);
+			writer.putChar((char)subdivision.getNumber());
 		} else {
 			writer.put3(label.getOffset());
 		}
-		
-		char info = (char) (region.getIndex() & 0x3fff);
+
+		char info;
+		if(region != null)
+		    info = (char) (region.getIndex() & 0x3fff);
+		else
+		    info = (char) (REGION_IS_COUNTRY | (country.getIndex() & 0x3fff));
 		if (pointRef)
 			info |= POINT_REF;
 
@@ -81,7 +96,7 @@ public class City {
 		this.pointIndex = pointIndex;
 	}
 
-	public void setSubdivision(char subdivision) {
+	public void setSubdivision(Subdivision subdivision) {
 		pointRef = true;
 		this.subdivision = subdivision;
 	}

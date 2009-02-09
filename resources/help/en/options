@@ -20,6 +20,19 @@ Options:
 	Sets the descriptive text for the map. This may be displayed in
 	QLandkarte, MapSource on on a GPS etc. 
 
+--country-name
+	Sets the map's country name. The default is "UNITED KINGDOM".
+
+--country-abbr
+	Sets the map's abbreviated country name. The default is "GBR".
+
+--region-name
+	Sets the map's region name. By default, the map has no region name.
+
+--region-abbr
+	Sets the map's abbreviated region name. By default, the map has
+	no abbreviated region name.
+
 Label options:
 
 --latin1
@@ -99,6 +112,11 @@ Misc options:
 
 --ignore-osm-bounds
 	When reading OSM files, ignore any "bounds" elements.
+
+--road-name-pois[=GarminCode]
+	Generate a POI for each named road. By default, the POIs'
+	Garmin type code is 0x640a. If desired, a different type code
+	can be specified with this option.
 
 --tdbfile
 	Write a .tdb file.

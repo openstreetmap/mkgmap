@@ -75,6 +75,7 @@ public class MapArea implements MapDataSource {
 	private final int[] elemCounts = new int[MAX_RESOLUTION+1];
 
 	private int nActivePoints;
+	private int nActiveIndPoints;
 	private int nActiveLines;
 	private int nActiveShapes;
 
@@ -336,7 +337,7 @@ public class MapArea implements MapDataSource {
 	 * @return True if any active indexed points in the area.
 	 */
 	public boolean hasIndPoints() {
-		return false;
+		return nActiveIndPoints > 0;
 	}
 
 	/**
@@ -390,8 +391,12 @@ public class MapArea implements MapDataSource {
 
 		switch (kind) {
 		case POINT_KIND:
-			if (res <= areaResolution)
-				nActivePoints++;
+			if (res <= areaResolution) {
+				if(((MapPoint) p).isCity())
+					nActiveIndPoints++;
+				else
+					nActivePoints++;
+			}
 
 			// Points are predictibly less than 9 bytes.
 			s = 9;
