@@ -36,6 +36,7 @@ import uk.me.parabola.imgfmt.Utils;
 public class Coord {
 	private final int latitude;
 	private final int longitude;
+	private int highwayCount; // number of highways that use this point
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -67,6 +68,14 @@ public class Coord {
 
 	public long getId() {
 		return 0;
+	}
+
+	public int getHighwayCount() {
+		return highwayCount;
+	}
+
+	public void incHighwayCount() {
+		++highwayCount;
 	}
 
 	public int hashCode() {

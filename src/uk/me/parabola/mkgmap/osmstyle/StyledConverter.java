@@ -16,7 +16,14 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
@@ -27,6 +34,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -53,6 +61,12 @@ public class StyledConverter implements OsmConverter {
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 
 	private int roadId;
+
+	private final int MAX_NODES_IN_WAY = 16;
+
+	// nodeIdMap maps a Coord into a nodeId
+	private Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
+	private int nextNodeId;
 	
 	private final Rule wayRules;
 	private final Rule nodeRules;
@@ -101,8 +115,12 @@ public class StyledConverter implements OsmConverter {
 
 		postConvertRules(way, foundType);
 
-		if (foundType.getFeatureKind() == GType.POLYLINE)
-            addLine(way, foundType);
+		if (foundType.getFeatureKind() == GType.POLYLINE) {
+		    if(foundType.isRoad())
+			addRoad(way, foundType);
+		    else
+			addLine(way, foundType);
+		}
 		else
 			addShape(way, foundType);
 	}
@@ -195,12 +213,6 @@ public class StyledConverter implements OsmConverter {
 
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
-		if (gt.isRoad()) {
-			MapRoad r = new MapRoad(roadId++, line);
-			r.setRoadClass(gt.getRoadClass());
-			r.setSpeed(gt.getRoadSpeed());
-			line = r;
-		}
 
 		clipper.clipLine(line, lineAdder);
 	}
@@ -229,5 +241,175 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
+	}
+
+	void addRoad(Way way, GType gt) {
+		boolean looped = false;
+		List<Coord> wayPoints = way.getPoints();
+		int numPointsInWay = wayPoints.size();
+
+		if(numPointsInWay > 1) {
+			// check if the last point in the way is the same as
+			// any other point in the way - if it is, there's a loop
+			Coord wayEndCoord = wayPoints.get(numPointsInWay - 1);
+			for(int i = 0; !looped && i < numPointsInWay - 1; ++i) {
+				if(wayPoints.get(i) == wayEndCoord)
+					looped = true;
+			}
+		}
+	
+		if(looped) {
+			if(numPointsInWay > 2) {
+				// create a new way to replace the last segment
+				Way loopTail = splitWayAt(way, numPointsInWay - 2);
+				// make roads from the un-looped ways
+				addRoadWithoutLoops(way, gt);
+				addRoadWithoutLoops(loopTail, gt);
+			}
+			else {
+				System.err.println("Ignoring looped way with only 2 points located at " + wayPoints.get(0).toDegreeString());
+			}
+		}
+		else {
+			// make a road from the way (it wasn't looped)
+			addRoadWithoutLoops(way, gt);
+		}
+	}
+
+	void addRoadWithoutLoops(Way way, GType gt) {
+		List<Integer> nodeIndices = new ArrayList<Integer>();
+		List<Coord> points = way.getPoints();
+		Way trailingWay = null;
+
+		// collect the Way's nodes
+		for(int i = 0; i < points.size(); ++i) {
+			Coord p = points.get(i);
+			int highwayCount = p.getHighwayCount();
+			if(highwayCount > 1) {
+				// this point is a node connecting highways
+				Integer nodeId = nodeIdMap.get(p);
+				if(nodeId == null) {
+					// assign a node id
+					nodeId = nextNodeId++;
+					nodeIdMap.put(p, nodeId);
+				}
+				nodeIndices.add(i);
+		//		System.err.println("Found node " + nodeId + " at " + p.toDegreeString());
+
+				if((i + 1) < points.size() &&
+				   nodeIndices.size() == MAX_NODES_IN_WAY) {
+					// this isn't the last point in the way
+					// so split it here to avoid exceeding
+					// the max nodes in way limit
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated
+					// the current Way's points so
+					// the loop will now terminate
+					//					System.err.println("Splitting way " + way.getName() + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+				}
+			}
+		}
+
+		MapLine line = new MapLine();
+		elementSetup(line, gt, way);
+		line.setPoints(points);
+
+		if(way.isBoolTag("oneway"))
+			line.setDirection(true);
+
+		MapRoad road = new MapRoad(roadId++, line);
+
+		// set road parameters.
+		road.setRoadClass(gt.getRoadClass());
+		road.setSpeed(gt.getRoadSpeed());
+		road.setOneway(line.isDirection());
+
+		boolean noAccess[] = new boolean[RoadNetwork.NO_MAX];
+		String highwayType = way.getTag("highway");
+		String access = way.getTag("access");
+		if(access != null &&
+		   (access.toUpperCase().equals("NO") ||
+		    access.toUpperCase().equals("PRIVATE"))) {
+			for(int i = 0; i < noAccess.length; ++i)
+				noAccess[i] = true;
+		}
+		else if(highwayType.equals("footway")) {
+			noAccess[RoadNetwork.EMERGENCY] = true;
+			noAccess[RoadNetwork.DELIVERY] = true;
+			noAccess[RoadNetwork.NO_CAR] = true;
+			noAccess[RoadNetwork.NO_BUS] = true;
+			noAccess[RoadNetwork.NO_TAXI] = true;
+			if(!way.isBoolTag("bicycle"))
+				noAccess[RoadNetwork.NO_BIKE] = true;
+			noAccess[RoadNetwork.NO_TRUCK] = true;
+		}
+		else if(highwayType.equals("cycleway") ||
+			highwayType.equals("bridleway")) {
+			noAccess[RoadNetwork.EMERGENCY] = true;
+			noAccess[RoadNetwork.DELIVERY] = true;
+			noAccess[RoadNetwork.NO_CAR] = true;
+			noAccess[RoadNetwork.NO_BUS] = true;
+			noAccess[RoadNetwork.NO_TAXI] = true;
+			noAccess[RoadNetwork.NO_TRUCK] = true;
+		}
+
+		road.setAccess(noAccess);
+
+		String toll = way.getTag("toll");
+		if(toll != null && toll.equals("yes"))
+			road.setToll(true);
+
+		//road.setDirIndicator(dirIndicator); // FIXME
+
+		int numNodes = nodeIndices.size();
+		road.setNumNodes(numNodes);
+
+		if(numNodes > 0) {
+			// replace Coords that are nodes with CoordNodes
+			boolean hasInternalNodes = false;
+			for(int i = 0; i < numNodes; ++i) {
+				int n = nodeIndices.get(i);
+				if(n > 0 && n < points.size() - 1)
+					hasInternalNodes = true;
+				Coord coord = points.get(n);
+				Integer nodeId = nodeIdMap.get(coord);
+				boolean boundary = false; // FIXME
+				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
+				//		System.err.println("Road " + road.getRoadId() + " node[" + i + "] " + nodeId + " at " + coord.toDegreeString());
+			}
+
+			road.setStartsWithNode(nodeIndices.get(0) == 0);
+			road.setInternalNodes(hasInternalNodes);
+		}
+
+		clipper.clipLine(road, lineAdder);
+
+		if(trailingWay != null)
+		    addRoadWithoutLoops(trailingWay, gt);
+	}
+
+	// split a Way at the specified point and return the new Way
+        // (the original Way is truncated)
+
+	Way splitWayAt(Way way, int index) {
+		Way trailingWay = new Way();
+		List<Coord> wayPoints = way.getPoints();
+		int numPointsInWay = wayPoints.size();
+
+		for(int i = index; i < numPointsInWay; ++i)
+			trailingWay.addPoint(wayPoints.get(i));
+
+		// ensure split point becomes a node
+		wayPoints.get(index).incHighwayCount();
+
+		// copy the way's name and tags to the new way
+		trailingWay.setName(way.getName());
+		trailingWay.copyTags(way);
+
+		// remove the points after the split from the original way
+		for(int i = index + 1; i < wayPoints.size(); ++i)
+			wayPoints.remove(i);
+
+		return trailingWay;
 	}
 }

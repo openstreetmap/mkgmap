@@ -85,7 +85,7 @@ public abstract class Element implements Iterable<String> {
 	 * @param other The other element.  All its tags will be copied to this
 	 * element.
 	 */
-	protected void copyTags(Element other) {
+	public void copyTags(Element other) {
 		tags = other.tags.copy();
 	}
 

@@ -148,8 +148,7 @@ public class MapMaker implements MapProcessor {
 			// collect lists of roads that have the same name
 			java.util.Map<String, List<MapLine>> namedRoads = new HashMap<String, List<MapLine>>();
 			for(MapLine l : src.getLines()) {
-				// isRoad() needed until OSM loader marks lines as roads
-				if(l.isRoad() || isRoad(l)) {
+				if(l.isRoad()) {
 					String ln = l.getName();
 					if(ln != null) {
 						List<MapLine> rl = namedRoads.get(ln);
@@ -301,10 +300,5 @@ public class MapMaker implements MapProcessor {
 		rnp.setType(type);
 		rnp.setLocation(coord);
 		return rnp;
-	}
-
-	// this is only needed until OSM reader identifies roads
-	boolean isRoad(MapLine l) {
-		return l.getType() <= 0x0c;
 	}
 }
