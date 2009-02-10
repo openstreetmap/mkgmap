@@ -315,6 +315,10 @@ public class TREFile extends ImgFile implements Configurable {
 		header.setBounds(area);
 	}
 
+	public void setPoiDisplayFlags(byte b) {
+		header.setPoiDisplayFlags(b);
+	}	
+
 	public String[] getCopyrights() {
 		if (!isReadable())
 			throw new IllegalStateException("not open for reading");

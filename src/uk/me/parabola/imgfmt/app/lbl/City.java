@@ -30,7 +30,7 @@ public class City {
 	private static final int POINT_REF = 0x8000;
 	private static final int REGION_IS_COUNTRY = 0x4000;
 
-	private final int index;
+	private int index = -1;
 
 	private final Region region;
 	private final Country country;
@@ -49,13 +49,13 @@ public class City {
 	// null if the location is being specified.
 	private Label label;
 
-	public City(Region region, int index) {
+	public City(Region region) {
 		this.region = region;
 		this.country = null;
 		this.index = index;
 	}
 
-	public City(Country country, int index) {
+	public City(Country country) {
 		this.country = country;
 		this.region = null;
 		this.index = index;
@@ -83,7 +83,13 @@ public class City {
 	}
 
 	public int getIndex() {
+		if (index == -1)
+			throw new IllegalStateException("Offset not known yet.");
 		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
 	}
 
 	public void setLabel(Label label) {

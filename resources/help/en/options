@@ -131,6 +131,17 @@ Misc options:
 	same area, you can see through this map and see the lower map too.
 	Useful for contour line maps among other things.
 
+--location-autofill=''number''
+	Controls how country region info is gathered for cities / streets and pois
+
+	0	(Default) Info of nearest city is taken. If no country region info is present
+		for next city the default passed default country region is used. The country region 
+		info is gathered by analysis of the cities is_in tags.
+	1	Additional analysis of partial is_in info to get relations between hamlets and cities
+	2	Brute force search for nearest city with info if all methods before failed. Warning
+		cities my end up in the wrong country/region.
+	3	Enables debug output about suspicious relations that might cause wrong country region info
+
 --version 
 	Output program version.
 

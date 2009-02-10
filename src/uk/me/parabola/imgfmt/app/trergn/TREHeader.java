@@ -236,6 +236,10 @@ public class TREHeader extends CommonHeader {
 	public void setMapId(int id) {
 		mapId = id;
 	}
+	
+	public void setPoiDisplayFlags(byte poiDisplayFlags) {
+		this.poiDisplayFlags = poiDisplayFlags;
+	}	
 
 	public int getMapInfoSize() {
 		return mapInfoSize;

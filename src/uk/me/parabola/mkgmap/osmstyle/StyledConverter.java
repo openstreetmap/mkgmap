@@ -225,9 +225,54 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void elementSetup(MapElement ms, GType gt, Element element) {
+							
 		ms.setName(element.getName());
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
+		
+		// Now try to get some address info for POIs
+		
+		String city         = element.getTag("addr:city");
+		String zip          = element.getTag("addr:postcode");
+		String street 	    = element.getTag("addr:street");
+		String houseNumber  = element.getTag("addr:housenumber");		
+		String phone	 	    = element.getTag("phone");		
+		String isIn	        = element.getTag("is_in");
+		String country      = element.getTag("is_in:country");
+		String region       = element.getTag("is_in:county");
+		
+		if(country != null)
+			country = element.getTag("addr:country");
+
+		if(zip == null)
+		  zip = element.getTag("openGeoDB:postal_codes");
+		
+		if(city == null)
+		  city = element.getTag("openGeoDB:sort_name");
+		
+		if(city != null)
+		  ms.setCity(city);
+		  
+		if(zip != null)
+		  ms.setZip(zip);
+		  
+		if(street != null)
+		  ms.setStreet(street);		  
+
+		if(houseNumber != null)
+		  ms.setHouseNumber(houseNumber);
+		  
+		if(isIn != null)
+		  ms.setIsIn(isIn);		  
+			
+		if(phone != null)
+		  ms.setPhone(phone);	
+
+		if(country != null)
+		  ms.setCountry(country);	
+
+		if(region != null)
+		  ms.setRegion(region);			
 	}
 }

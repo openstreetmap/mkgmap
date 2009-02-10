@@ -278,26 +278,10 @@ public class MapMaker implements MapProcessor {
 		}
 
 		String name = road.getName();
-		MapPoint nearestCity = null;
-		if(cities != null) {
-			double shortestDistance = 10000000;
-			for(MapPoint mp : cities) {
-				double distance = coord.distance(mp.getLocation());
-				if(distance < shortestDistance) {
-					shortestDistance = distance;
-					nearestCity = mp;
-				}
-			}
-		}
-
 		MapPoint rnp = new MapPoint();
 
-		if(nearestCity != null && nearestCity.getName() != null) {
-			//rnp.setNearestCityPoint(nearestCity);
-			name += "/" + nearestCity.getName();
-		}
-
 		rnp.setName(name);
+		rnp.setRoadNamePOI(true);
 		rnp.setType(type);
 		rnp.setLocation(coord);
 		return rnp;

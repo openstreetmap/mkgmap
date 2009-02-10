@@ -225,6 +225,14 @@ public class Map implements InternalFiles, Configurable {
 		treFile.addPolygonOverview(ov);
 	}
 
+	/**
+	 * Set the point of interest flags.
+	 * @param flags The POI flags.
+	 */
+	public void setPoiDisplayFlags(int flags) {
+		treFile.setPoiDisplayFlags((byte) flags);
+	}
+
 	public void addMapObject(MapObject item) {
 		rgnFile.addMapObject(item);
 	}
