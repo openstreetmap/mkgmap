@@ -355,8 +355,7 @@ public class StyledConverter implements OsmConverter {
 
 		road.setAccess(noAccess);
 
-		String toll = way.getTag("toll");
-		if(toll != null && toll.equals("yes"))
+		if(way.isBoolTag("toll"))
 			road.setToll(true);
 
 		//road.setDirIndicator(dirIndicator); // FIXME
@@ -373,7 +372,7 @@ public class StyledConverter implements OsmConverter {
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				Integer nodeId = nodeIdMap.get(coord);
-				boolean boundary = false; // FIXME
+				boolean boundary = way.isBoolTag("mkg:boundary_node");
 				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
 				//		System.err.println("Road " + road.getRoadId() + " node[" + i + "] " + nodeId + " at " + coord.toDegreeString());
 			}
@@ -407,7 +406,8 @@ public class StyledConverter implements OsmConverter {
 		trailingWay.copyTags(way);
 
 		// remove the points after the split from the original way
-		for(int i = index + 1; i < wayPoints.size(); ++i)
+		// it's probably more efficient to remove from the end first
+		for(int i = numPointsInWay - 1; i > index; --i)
 			wayPoints.remove(i);
 
 		return trailingWay;
