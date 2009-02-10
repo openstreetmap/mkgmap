@@ -65,7 +65,7 @@ public class StyledConverter implements OsmConverter {
 	private final int MAX_NODES_IN_WAY = 16;
 
 	// nodeIdMap maps a Coord into a nodeId
-	private Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
+	private final Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
 	private int nextNodeId;
 	
 	private final Rule wayRules;
@@ -324,7 +324,7 @@ public class StyledConverter implements OsmConverter {
 		road.setSpeed(gt.getRoadSpeed());
 		road.setOneway(line.isDirection());
 
-		boolean noAccess[] = new boolean[RoadNetwork.NO_MAX];
+		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
 		String access = way.getTag("access");
 		if(access != null &&
@@ -333,7 +333,7 @@ public class StyledConverter implements OsmConverter {
 			for(int i = 0; i < noAccess.length; ++i)
 				noAccess[i] = true;
 		}
-		else if(highwayType.equals("footway")) {
+		else if("footway".equals(highwayType)) {
 			noAccess[RoadNetwork.EMERGENCY] = true;
 			noAccess[RoadNetwork.DELIVERY] = true;
 			noAccess[RoadNetwork.NO_CAR] = true;
@@ -343,8 +343,7 @@ public class StyledConverter implements OsmConverter {
 				noAccess[RoadNetwork.NO_BIKE] = true;
 			noAccess[RoadNetwork.NO_TRUCK] = true;
 		}
-		else if(highwayType.equals("cycleway") ||
-			highwayType.equals("bridleway")) {
+		else if("cycleway".equals(highwayType) || "bridleway".equals(highwayType)) {
 			noAccess[RoadNetwork.EMERGENCY] = true;
 			noAccess[RoadNetwork.DELIVERY] = true;
 			noAccess[RoadNetwork.NO_CAR] = true;
