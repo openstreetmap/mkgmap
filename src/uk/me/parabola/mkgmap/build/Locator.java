@@ -58,8 +58,8 @@ import java.util.Vector;
 
 public class Locator {
 
-	private final MapPointFastFindMap  cityMap  			= new MapPointFastFindMap();
-	private final MapPointFastFindMap  fuzzyCityMap		= new MapPointFastFindMap();
+	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
+	private final MapPointMultiMap  	fuzzyCityMap			= new MapPointMultiMap();
 	private final java.util.Vector<MapPoint> placesMap  =  new Vector<MapPoint>();
 
 	private LocatorConfig locConfig = new LocatorConfig();
@@ -80,12 +80,16 @@ public class Locator {
 				// In Germany, Austria and Swizerland this are real independet communites Gemeinden
 
 	 	  	cityMap.put(p.getCity(),p);	
+
 		  	fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
+
+				if(p.getName() != null && p.getCity().equals(p.getName()) == false) // Name variants ? 
+					fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
 			}
 			else
 			{
 				// All other places which do not seam to be a real city has to resolved later
-		  	placesMap.add(p);		
+				placesMap.add(p);		
 			}
 		}
 		else
@@ -276,7 +280,7 @@ public class Locator {
 			 	}
 			}
 
-			if (autoFillLevel > 2)  // Some debug output to find suspicios relations
+			if (autoFillLevel > 3)  // Some debug output to find suspicios relations
 			{
 			   
 				if(near != null && minDist > 30000)
@@ -287,16 +291,11 @@ public class Locator {
 				   		System.out.println("Number of cities with this name: " + nextCityList.size());					
 			  }
 			   
-			  if(near == null)
-			  {
-					System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn());
-			  }
-
- 				if(near != null && fuzzy)
-			  {
-				 System.out.println("Locator: " + place.getName() + " may belong to " +
-							 near.getName() + " is_in" + place.getIsIn());
-				}
+ 				//if(near != null && fuzzy)
+			  //{
+				// System.out.println("Locator: " + place.getName() + " may belong to " +
+				//			 near.getName() + " is_in" + place.getIsIn());
+				//}
 			}
 		}
 
@@ -339,6 +338,12 @@ public class Locator {
 		  		if(near == null)
 			  		near = findCity(place, true);
 				
+			  	if(autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns)
+			  	{
+						if(place.getIsIn() != null)
+						System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn());
+			  	}
+
 	
 					if(near != null)
 					{
@@ -360,8 +365,6 @@ public class Locator {
 						if(place.getCountry() == null)
 							place.setCountry(near.getCountry());	
 
-						if((runCount + 1) == maxRuns)
-							place.setCity(place.getName());
 					}
 
 					if(near == null)
@@ -420,6 +423,9 @@ public class Locator {
 		// German umlaut resolution
 		decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
 		
+		//if(decodeString.equals(stringToDecode) == false)
+		//	System.out.println(stringToDecode + " -> " + decodeString);
+
 		return (decodeString);
 	}
 		

@@ -136,6 +136,12 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
+			/*
+				 Adding 0 in between is important to get right sort order !!!
+				 We have to make sure that "Kirchdorf" gets sorted before "Kirchdorf am Inn"
+				 If this order is not correct nuvi would not find right city
+			*/
+
 		  cityList.put(name + " 0" + c, c);
 			cities.put(uniqueCityName, c);
 		}
@@ -159,7 +165,13 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.put(name + " 0" + c, c);
+			/*
+				 Adding 0 in between is important to get right sort order !!!
+				 We have to make sure that "Kirchdorf" gets sorted before "Kirchdorf am Inn"
+				 If this order is not correct nuvi would not find right city
+			*/
+
+			cityList.put(name + " 0" + c, c); 
 			cities.put(uniqueCityName, c);
 		}
 

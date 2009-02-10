@@ -97,8 +97,9 @@ public class MapBuilder implements Configurable {
 	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
-	private int 	 locationAutofillLevel = 0;
-	private int		 poiDisplayFlags = 0;
+	private int 	  locationAutofillLevel = 0;
+	private boolean poiAddresses = false;
+	private int		  poiDisplayFlags = 0;
 
 	public MapBuilder() {
 		regionName = null;
@@ -113,6 +114,9 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
 		
+		if(props.getProperty("pois-addresses", null) != null)
+			poiAddresses = true;
+
 		autoFillPar = props.getProperty("location-autofill", null);
 
 		if(autoFillPar != null)
@@ -128,6 +132,8 @@ public class MapBuilder implements Configurable {
 		}
 
 		locator.setAutoFillLevel(locationAutofillLevel);
+
+
 	}
 
 	/**
@@ -252,7 +258,8 @@ public class MapBuilder implements Configurable {
 
 		for (MapPoint p : src.getPoints()) {
 
-			if(p.isCity() == false)
+			if(p.isCity() == false &&
+				 (p.isRoadNamePOI() || poiAddresses))
 			{		
 
 				String CountryStr = p.getCountry();
