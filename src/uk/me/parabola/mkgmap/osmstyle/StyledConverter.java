@@ -326,6 +326,12 @@ public class StyledConverter implements OsmConverter {
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
+		if(highwayType == null) {
+		    // it's a routable way but not a highway (e.g. a ferry)
+		    // use the value of the route tag as the highwayType
+		    // for the purpose of testing for access restrictions
+		    highwayType = way.getTag("route");
+		}
 		String access = way.getTag("access");
 		if(access != null &&
 		   (access.toUpperCase().equals("NO") ||

@@ -215,10 +215,12 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (qName.equals("way")) {
 				mode = 0;
 				if(routing &&
-				   currentWay.getTag("highway") != null) {
-				    // the way is a highway so for each
-				    // of it's points, increment the number
-				    // of highways using that point
+				   (currentWay.getTag("highway") != null ||
+				    "ferry".equals(currentWay.getTag("route")))) {
+				    // the way is a highway (or ferry
+				    // route), so for each of it's
+				    // points, increment the number of
+				    // highways using that point
 				    for(Coord p : currentWay.getPoints())
 					p.incHighwayCount();
 				    // if the way is a roundabout but isn't
