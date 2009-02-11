@@ -86,6 +86,9 @@ public class Coord {
 	 * Distance to other point in meters.
 	 */
 	public double distance(Coord other) {
+		if (equals(other))
+			return 0;
+
 		double lat1 = Utils.toRadians(latitude);
 		double lat2 = Utils.toRadians(other.getLatitude());
 		double lon1 = Utils.toRadians(getLongitude());
@@ -93,9 +96,11 @@ public class Coord {
 
 		double R = 6371000; // meters
 
-		return Math.acos(Math.sin(lat1)*Math.sin(lat2) +
-				Math.cos(lat1)*Math.cos(lat2) *
-						Math.cos(lon2-lon1)) * R;
+		// cosine of great circle angle between points
+		double cangle = Math.sin(lat1)*Math.sin(lat2) +
+			        Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1);
+
+		return Math.acos(cangle) * R;
   	}
 
 	/**

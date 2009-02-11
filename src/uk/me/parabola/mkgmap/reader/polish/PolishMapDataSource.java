@@ -487,7 +487,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (fields[0].length() == 0)
 			i = 1;
 
-		Float f1 = Float.valueOf(fields[i]);
+		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
 		return new Coord(f1, f2);
 	}
