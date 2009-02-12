@@ -23,6 +23,9 @@
     <deny_rule from_scope="util" to_scope="mkgmap" is_deny="true" />
     <deny_rule from_scope="util" to_scope="imgfmt" is_deny="true" />
   </component>
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
   <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -41,7 +44,6 @@
     <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
   </component>
-  <component name="NewModuleRootManager" />
   <component name="ProjectDetails">
     <option name="projectName" value="mkgmap" />
   </component>
@@ -53,6 +55,31 @@
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="SvnBranchConfigurationManager">
+    <option name="myConfigurationMap">
+      <map>
+        <entry key="/home/steve/src/display">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://svn.parabola.me.uk/svn/display/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchUrls">
+                <list>
+                  <option value="https://svn.parabola.me.uk/svn/mkgmap/branches" />
+                  <option value="https://svn.parabola.me.uk/svn/mkgmap/releases" />
+                  <option value="https://svn.parabola.me.uk/svn/mkgmap/tags" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="https://svn.parabola.me.uk/svn/mkgmap/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
   </component>
