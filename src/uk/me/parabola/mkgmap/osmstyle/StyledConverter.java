@@ -332,14 +332,47 @@ public class StyledConverter implements OsmConverter {
 		    // for the purpose of testing for access restrictions
 		    highwayType = way.getTag("route");
 		}
-		String access = way.getTag("access");
-		if(access != null &&
-		   (access.toUpperCase().equals("NO") ||
-		    access.toUpperCase().equals("PRIVATE"))) {
-			for(int i = 0; i < noAccess.length; ++i)
-				noAccess[i] = true;
+
+		String[] vehicleClass = { "access",
+					  "bicycle",
+					  "foot",
+					  "hgv",
+					  "motorcar",
+					  "motorcycle",
+					  "psv",
+		};
+		int[] accessSelector = { RoadNetwork.NO_MAX,
+					 RoadNetwork.NO_BIKE,
+					 RoadNetwork.NO_FOOT,
+					 RoadNetwork.NO_TRUCK,
+					 RoadNetwork.NO_CAR,
+					 RoadNetwork.NO_CAR, // motorcycle
+					 RoadNetwork.NO_BUS };
+
+		for(int i = 0; i < vehicleClass.length; ++i) {
+			String access = way.getTag(vehicleClass[i]);
+			if(access != null)
+				access = access.toUpperCase();
+			if(access != null &&
+			   (access.equals("PRIVATE") ||
+			    access.equals("DESTINATION") || // FIXME - too strict
+			    access.equals("UNKNOWN") ||
+			    access.equals("NO"))) {
+				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+					// everything is denied access
+					for(int j = 0; j < noAccess.length; ++j)
+						noAccess[j] = true;
+				}
+				else {
+					// just the specific vehicle
+					// class is denied access
+					noAccess[accessSelector[i]] = true;
+				}
+				//System.err.println("No " + vehicleClass[i] + " allowed in " + highwayType + " " + way.getName());
+			}
 		}
-		else if("footway".equals(highwayType)) {
+
+		if("footway".equals(highwayType)) {
 			noAccess[RoadNetwork.EMERGENCY] = true;
 			noAccess[RoadNetwork.DELIVERY] = true;
 			noAccess[RoadNetwork.NO_CAR] = true;
