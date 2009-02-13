@@ -200,8 +200,12 @@ class LinePreparer {
 				continue;
 			}
 
-			int dx = lon - lastLong;
-			int dy = lat - lastLat;
+			// compute normalized differences
+			//   -2^(shift-1) <= dx, dy < 2^(shift-1)
+			// XXX: relies on the fact that java ints are 32 bit signd
+			final int offset = 8+shift;
+			int dx = (lon - lastLong) << offset >> offset;
+			int dy = (lat - lastLat) << offset >> offset;
 
 			lastLong = lon;
 			lastLat = lat;
