@@ -75,10 +75,12 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private final boolean ignoreBounds;
 	private final boolean routing;
+	private final String frigRoundabouts;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
+		frigRoundabouts = props.getProperty("frig-roundabouts");
 	}
 
 	/**
@@ -217,19 +219,25 @@ class Osm5XmlHandler extends DefaultHandler {
 				if(routing &&
 				   (currentWay.getTag("highway") != null ||
 				    "ferry".equals(currentWay.getTag("route")))) {
-				    // the way is a highway (or ferry
-				    // route), so for each of it's
-				    // points, increment the number of
-				    // highways using that point
-				    for(Coord p : currentWay.getPoints())
-					p.incHighwayCount();
-				    // if the way is a roundabout but isn't
-				    // already flagged as "oneway", flag it here
-				    if(currentWay.getTag("oneway") == null) {
-					String junction = currentWay.getTag("junction");
-					if(junction != null && junction.equals("roundabout"))
-					    currentWay.addTag("oneway", "yes");
-				    }
+					// the way is a highway (or
+				    	// ferry route), so for each
+				    	// of it's points, increment
+				    	// the number of highways
+				    	// using that point
+					for(Coord p : currentWay.getPoints())
+						p.incHighwayCount();
+					// if the way is a roundabout
+					// but isn't already flagged
+					// as "oneway", flag it here
+					if("roundabout".equals(currentWay.getTag("junction"))) {
+						if(currentWay.getTag("oneway") == null) {
+							currentWay.addTag("oneway", "yes");
+						}
+						if(currentWay.getTag("mkgmap:frig_roundabout") == null) {
+							if(frigRoundabouts != null)
+								currentWay.addTag("mkgmap:frig_roundabout", frigRoundabouts);
+						}
+					}
 				}
 				currentWay = null;
 				// ways are processed at the end of the document,

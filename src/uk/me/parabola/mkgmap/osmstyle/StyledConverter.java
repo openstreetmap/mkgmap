@@ -244,6 +244,23 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	void addRoad(Way way, GType gt) {
+
+		if("roundabout".equals(way.getTag("junction"))) {
+			String frigFactorTag = way.getTag("mkgmap:frig_roundabout");
+			if(frigFactorTag != null) {
+				// do special roundabout frigging to make gps
+				// routing prompt use the correct exit number
+				double frigFactor = 0.25; // default
+				try {
+					frigFactor = Double.parseDouble(frigFactorTag);
+				}
+				catch (NumberFormatException nfe) {
+					// relax, tag was probably not a number anyway
+				}
+				frigRoundabout(way, frigFactor);
+			}
+		}
+
 		boolean looped = false;
 		List<Coord> wayPoints = way.getPoints();
 		int numPointsInWay = wayPoints.size();
@@ -327,10 +344,10 @@ public class StyledConverter implements OsmConverter {
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
 		if(highwayType == null) {
-		    // it's a routable way but not a highway (e.g. a ferry)
-		    // use the value of the route tag as the highwayType
-		    // for the purpose of testing for access restrictions
-		    highwayType = way.getTag("route");
+			// it's a routable way but not a highway (e.g. a ferry)
+			// use the value of the route tag as the highwayType
+			// for the purpose of testing for access restrictions
+			highwayType = way.getTag("route");
 		}
 
 		String[] vehicleClass = { "access",
@@ -410,7 +427,7 @@ public class StyledConverter implements OsmConverter {
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				Integer nodeId = nodeIdMap.get(coord);
-				boolean boundary = way.isBoolTag("mkg:boundary_node");
+				boolean boundary = way.isBoolTag("mkgmap:boundary_node");
 				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
 				//		System.err.println("Road " + road.getRoadId() + " node[" + i + "] " + nodeId + " at " + coord.toDegreeString());
 			}
@@ -449,5 +466,83 @@ public class StyledConverter implements OsmConverter {
 			wayPoints.remove(i);
 
 		return trailingWay;
+	}
+
+	// function to add points between adjacent nodes in a roundabout
+	// to make gps use correct exit number in routing instructions
+	void frigRoundabout(Way way, double frigFactor) {
+		List<Coord> wayPoints = way.getPoints();
+		int origNumPoints = wayPoints.size();
+
+		if(origNumPoints < 3) {
+			// forget it!
+			return;
+		}
+
+		int[] highWayCounts = new int[origNumPoints];
+		int middleLat = 0;
+		int middleLon = 0;
+		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
+		for(int i = 1; i < origNumPoints; ++i) {
+			Coord p = wayPoints.get(i);
+			middleLat += p.getLatitude();
+			middleLon += p.getLongitude();
+			highWayCounts[i] = p.getHighwayCount();
+		}
+		middleLat /= origNumPoints - 1;
+		middleLon /= origNumPoints - 1;
+		Coord middleCoord = new Coord(middleLat, middleLon);
+
+		// account for fact that roundabout joins itself
+		--highWayCounts[0];
+		--highWayCounts[origNumPoints - 1];
+
+		for(int i = origNumPoints - 2; i >= 0; --i) {
+			Coord p1 = wayPoints.get(i);
+			Coord p2 = wayPoints.get(i + 1);
+			if(highWayCounts[i] > 1 && highWayCounts[i + 1] > 1) {
+				// both points will be nodes so insert
+				// a new point between them that
+				// (approximately) falls on the
+				// roundabout's perimeter
+				int newLat = (p1.getLatitude() + p2.getLatitude()) / 2;
+				int newLon = (p1.getLongitude() + p2.getLongitude()) / 2;
+				// new point has to be "outside" of
+				// existing line joining p1 and p2 -
+				// how far outside is determined by
+				// the ratio of the distance between
+				// p2 and p2 compared to the distance
+				// of p1 from the "middle" of the
+				// roundabout (aka, the approx radius
+				// of the roundabout) - the higher the
+				// value of frigFactor, the further out
+				// the point will be
+				double scale = 1 + frigFactor * p1.distance(p2) / p1.distance(middleCoord);
+				newLat = (int)((newLat - middleLat) * scale) + middleLat;
+				newLon = (int)((newLon - middleLon) * scale) + middleLon;
+				Coord newPoint = new Coord(newLat, newLon);
+				double d1 = p1.distance(newPoint);
+				double d2 = p2.distance(newPoint);
+				double minDistance = 5;
+				double maxDistance = 100;
+				if(d1 >= minDistance && d1 <= maxDistance &&
+				   d2 >= minDistance && d2 <= maxDistance) {
+				    newPoint.incHighwayCount();
+				    wayPoints.add(i + 1, newPoint);
+				}
+				else {
+				    System.err.println("Not inserting point in roundabout after node " +
+						       i + " " +
+						       way.getName() +
+						       " @ " + 
+						       middleCoord.toDegreeString() +
+						       " (d1 = " +
+						       p1.distance(newPoint) +
+						       " d2 = " +
+						       p2.distance(newPoint) +
+						       ")");
+				}
+			}
+		}
 	}
 }
