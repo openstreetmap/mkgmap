@@ -261,35 +261,50 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
-		boolean looped = false;
-		List<Coord> wayPoints = way.getPoints();
-		int numPointsInWay = wayPoints.size();
+		// check if the way is a loop or intersects with itself
 
-		if(numPointsInWay > 1) {
-			// check if the last point in the way is the same as
-			// any other point in the way - if it is, there's a loop
-			Coord wayEndCoord = wayPoints.get(numPointsInWay - 1);
-			for(int i = 0; !looped && i < numPointsInWay - 1; ++i) {
-				if(wayPoints.get(i) == wayEndCoord)
-					looped = true;
+		boolean wayWasSplit = true; // aka rescan required
+
+		while(wayWasSplit) {
+			List<Coord> wayPoints = way.getPoints();
+			int numPointsInWay = wayPoints.size();
+
+			wayWasSplit = false; // assume way won't be split
+
+			// check each point in the way to see if it is
+			// the same point as a following point in the way
+			for(int p1I = 0; !wayWasSplit && p1I < (numPointsInWay - 1); p1I++) {
+				Coord p1 = wayPoints.get(p1I);
+				for(int p2I = p1I + 1; !wayWasSplit && p2I < numPointsInWay; p2I++) {
+					if(p1 == wayPoints.get(p2I)) {
+						// way is a loop or intersects itself
+						int splitI = p2I - 1; // split before second point
+						if(splitI == p1I) {
+							System.err.println("Way at " + wayPoints.get(0).toDegreeString() + " has identical consecutive points - removing second point");
+							wayPoints.remove(p2I);
+							// next point to inspect has same index
+							--p2I;
+							// but number of points has reduced
+							--numPointsInWay;
+						}
+						else {
+							// split the way before the second point
+							System.err.println("Split way at " + wayPoints.get(splitI).toDegreeString() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segments.");
+							Way loopTail = splitWayAt(way, splitI);
+							// way before split has now been verified
+							addRoadWithoutLoops(way, gt);
+							// now repeat for the tail of the way
+							way = loopTail;
+							wayWasSplit = true;
+						}
+					}
+				}
 			}
-		}
-	
-		if(looped) {
-			if(numPointsInWay > 2) {
-				// create a new way to replace the last segment
-				Way loopTail = splitWayAt(way, numPointsInWay - 2);
-				// make roads from the un-looped ways
+
+			if(!wayWasSplit) {
+				// no split required so make road from way
 				addRoadWithoutLoops(way, gt);
-				addRoadWithoutLoops(loopTail, gt);
 			}
-			else {
-				System.err.println("Ignoring looped way with only 2 points located at " + wayPoints.get(0).toDegreeString());
-			}
-		}
-		else {
-			// make a road from the way (it wasn't looped)
-			addRoadWithoutLoops(way, gt);
 		}
 	}
 
