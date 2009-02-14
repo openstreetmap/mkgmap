@@ -452,6 +452,7 @@ public class StyledConverter implements OsmConverter {
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
+            road.setEndsWithNode(nodeIndices.get(numNodes-1) == points.size() - 1);
 			road.setInternalNodes(hasInternalNodes);
 		}
 
