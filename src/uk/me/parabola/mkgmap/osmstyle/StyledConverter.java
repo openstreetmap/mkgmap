@@ -298,6 +298,10 @@ public class StyledConverter implements OsmConverter {
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
 
+		// make sure the way has nodes at each end
+		points.get(0).incHighwayCount();
+		points.get(points.size() - 1).incHighwayCount();
+
 		// collect the Way's nodes
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
@@ -511,7 +515,7 @@ public class StyledConverter implements OsmConverter {
 				// existing line joining p1 and p2 -
 				// how far outside is determined by
 				// the ratio of the distance between
-				// p2 and p2 compared to the distance
+				// p1 and p2 compared to the distance
 				// of p1 from the "middle" of the
 				// roundabout (aka, the approx radius
 				// of the roundabout) - the higher the
@@ -523,14 +527,14 @@ public class StyledConverter implements OsmConverter {
 				Coord newPoint = new Coord(newLat, newLon);
 				double d1 = p1.distance(newPoint);
 				double d2 = p2.distance(newPoint);
-				double minDistance = 5;
+				double minDistance = 5.5;
 				double maxDistance = 100;
 				if(d1 >= minDistance && d1 <= maxDistance &&
 				   d2 >= minDistance && d2 <= maxDistance) {
 				    newPoint.incHighwayCount();
 				    wayPoints.add(i + 1, newPoint);
 				}
-				else {
+				else if(false) {
 				    System.err.println("Not inserting point in roundabout after node " +
 						       i + " " +
 						       way.getName() +
