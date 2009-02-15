@@ -17,7 +17,7 @@
     Author: Steve Ratcliffe
     Create date: 26 Nov 2006
 -->
-<project name="mkgmap" default="build" basedir=".">
+<project name="mkgmap" default="dist" basedir=".">
 
 	<!-- Init -->
   <property name="top" value="."/>
