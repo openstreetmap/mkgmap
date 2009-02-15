@@ -280,7 +280,7 @@ public class StyledConverter implements OsmConverter {
 						// way is a loop or intersects itself
 						int splitI = p2I - 1; // split before second point
 						if(splitI == p1I) {
-							System.err.println("Way has zero length segment at " + wayPoints.get(splitI).toDegreeString());
+							System.err.println("Way has zero length segment - " + wayPoints.get(splitI).toOSMURL());
 							wayPoints.remove(p2I);
 							// next point to inspect has same index
 							--p2I;
