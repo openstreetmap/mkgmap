@@ -423,11 +423,12 @@ public class StyledConverter implements OsmConverter {
 			noAccess[RoadNetwork.NO_CAR] = true;
 			noAccess[RoadNetwork.NO_BUS] = true;
 			noAccess[RoadNetwork.NO_TAXI] = true;
-			if(!way.isBoolTag("bicycle"))
+			if(!way.accessExplicitlyAllowed("bicycle"))
 				noAccess[RoadNetwork.NO_BIKE] = true;
 			noAccess[RoadNetwork.NO_TRUCK] = true;
 		}
-		else if("cycleway".equals(highwayType) || "bridleway".equals(highwayType)) {
+		else if("cycleway".equals(highwayType) ||
+			"bridleway".equals(highwayType)) {
 			noAccess[RoadNetwork.EMERGENCY] = true;
 			noAccess[RoadNetwork.DELIVERY] = true;
 			noAccess[RoadNetwork.NO_CAR] = true;

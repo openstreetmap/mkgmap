@@ -56,6 +56,24 @@ public class Way extends Element {
 		return false;
 	}
 
+	public boolean accessExplicitlyAllowed(String trafficClass) {
+		String val = getTag(trafficClass);
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("yes") ||
+			val.equalsIgnoreCase("permissive"));
+	}
+
+	public boolean accessExplicitlyDenied(String trafficClass) {
+		String val = getTag(trafficClass);
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("no") ||
+			val.equalsIgnoreCase("private"));
+	}
+
 	public void addPoint(Coord co) {
 		points.add(co);
 	}
