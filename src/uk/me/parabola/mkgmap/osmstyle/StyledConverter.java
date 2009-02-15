@@ -308,6 +308,48 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	int getSpeedIdx(String tag)
+	{
+		double kmh = 0.0;
+		double factor = 1.0;
+		
+		String speedTag = tag.toLowerCase().trim();
+		
+		if(speedTag.matches(".*mph")) // Check if it is a limit in mph
+		{
+			speedTag = speedTag.replaceFirst("mph", "");
+			factor = 1.61;
+		}
+		else
+			speedTag = speedTag.replaceFirst("kmh", "");  // get rid of kmh just in case
+		
+		try {
+			kmh = Integer.parseInt(speedTag) * factor;
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
+		
+		if(kmh > 110)
+			return 7;
+		if(kmh > 90)
+			return 6;
+		if(kmh > 80)
+			return 5;
+		if(kmh > 60)
+			return 4;
+		if(kmh > 40)
+			return 3;
+		if(kmh > 20)
+			return 2;
+		if(kmh > 10)
+			return 1;
+		else
+			return 0;	    
+
+	}
+	
 	void addRoadWithoutLoops(Way way, GType gt) {
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();
@@ -357,8 +399,17 @@ public class StyledConverter implements OsmConverter {
 
 		// set road parameters.
 		road.setRoadClass(gt.getRoadClass());
-		road.setSpeed(gt.getRoadSpeed());
 		road.setOneway(line.isDirection());
+		
+		// maxspeed attribute overrides default for road type
+		
+		String maxSpeed = way.getTag("maxspeed");
+		int speedIdx = -1;
+		
+		if(maxSpeed != null)
+			speedIdx = getSpeedIdx(maxSpeed);
+
+		road.setSpeed(speedIdx >= 0? speedIdx : gt.getRoadSpeed());
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
