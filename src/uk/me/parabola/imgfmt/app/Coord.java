@@ -127,4 +127,17 @@ public class Coord {
 			Utils.toDegrees(latitude),
 			Utils.toDegrees(longitude)).toString();
 	}
+
+	public String toOSMURL(int zoom) {
+		return ("http://www.openstreetmap.org/?lat=" +
+			new Formatter().format("%.5f", Utils.toDegrees(latitude)) +
+			"&lon=" +
+			new Formatter().format("%.5f", Utils.toDegrees(longitude)) +
+			"&zoom=" +
+			zoom);
+	}
+
+    	public String toOSMURL() {
+		return toOSMURL(17);
+	}
 }
