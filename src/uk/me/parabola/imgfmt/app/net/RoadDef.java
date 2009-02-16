@@ -83,7 +83,7 @@ public class RoadDef {
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
-	private int roadLength; // XXX set the road length
+	private int roadLength;
 
 	// There can be up to 4 labels for the same road.
 	private static final int MAX_LABELS = 4;
@@ -138,7 +138,7 @@ public class RoadDef {
 	private int writeLevelCount(ImgFileWriter writer) {
 		int maxlevel = getMaxZoomLevel();
 		for (int i = 0; i <= maxlevel; i++) {
-			List l = roadIndexes.get(i);
+			List<RoadIndex> l = roadIndexes.get(i);
 			int b = (l == null) ? 0 : l.size();
 			assert b < 0x80 : "too many polylines at level " + i;
 			if (i == maxlevel)
@@ -288,7 +288,7 @@ public class RoadDef {
 	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
 	public static final int NOD2_FLAG_UNK = 0x01;
 
-	// XXX: always appears to be set
+	// always appears to be set
 	private int nod2Flags = NOD2_FLAG_UNK;
 
 	/**
@@ -351,8 +351,8 @@ public class RoadDef {
 			bits[0] = false;
 		for (int i = 0; i < bits.length; i += 8) {
 			int b = 0;
-			for (int j = 0; j < bits.length - i; j++)
-				if (bits[j])
+            for (int j = 0; j < 8 && j < bits.length - i; j++)
+				if (bits[i+j])
 					b |= 1 << j;
 			writer.put((byte) b);
 		}

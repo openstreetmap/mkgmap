@@ -31,6 +31,7 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -73,9 +74,13 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long nextFakeId = 1;
 
 	private final boolean ignoreBounds;
+	private final boolean routing;
+	private final String frigRoundabouts;
 
-	public Osm5XmlHandler(boolean ignoreBounds) {
-		this.ignoreBounds = ignoreBounds;
+	public Osm5XmlHandler(EnhancedProperties props) {
+		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
+		routing = props.containsKey("route");
+		frigRoundabouts = props.getProperty("frig-roundabouts");
 	}
 
 	/**
@@ -211,6 +216,29 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
+				if(routing &&
+				   (currentWay.getTag("highway") != null ||
+				    "ferry".equals(currentWay.getTag("route")))) {
+					// the way is a highway (or
+				    	// ferry route), so for each
+				    	// of it's points, increment
+				    	// the number of highways
+				    	// using that point
+					for(Coord p : currentWay.getPoints())
+						p.incHighwayCount();
+					// if the way is a roundabout
+					// but isn't already flagged
+					// as "oneway", flag it here
+					if("roundabout".equals(currentWay.getTag("junction"))) {
+						if(currentWay.getTag("oneway") == null) {
+							currentWay.addTag("oneway", "yes");
+						}
+						if(currentWay.getTag("mkgmap:frig_roundabout") == null) {
+							if(frigRoundabouts != null)
+								currentWay.addTag("mkgmap:frig_roundabout", frigRoundabouts);
+						}
+					}
+				}
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class

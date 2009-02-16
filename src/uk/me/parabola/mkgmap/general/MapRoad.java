@@ -90,6 +90,10 @@ public class MapRoad extends MapLine {
 		this.roadDef.setStartsWithNode(s);
 	}
 
+    public void setEndsWithNode(boolean s) {
+        this.roadDef.setStartsWithNode(s);
+    }
+
 	public void setInternalNodes(boolean s) {
 		this.roadDef.setInternalNodes(s);
 	}
