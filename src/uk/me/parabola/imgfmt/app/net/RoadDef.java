@@ -138,7 +138,7 @@ public class RoadDef {
 	private int writeLevelCount(ImgFileWriter writer) {
 		int maxlevel = getMaxZoomLevel();
 		for (int i = 0; i <= maxlevel; i++) {
-			List l = roadIndexes.get(i);
+			List<RoadIndex> l = roadIndexes.get(i);
 			int b = (l == null) ? 0 : l.size();
 			assert b < 0x80 : "too many polylines at level " + i;
 			if (i == maxlevel)
