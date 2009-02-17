@@ -46,7 +46,9 @@ class BlockManager {
 		int n = currentBlock++;
 		if (maxBlock > 0 && n > maxBlock) {
 			log.error("overflowed directory with max block " + maxBlock + ", current=" + n);
-			throw new ExitException("Directory overflow.  This is a bug in mkgmap");
+			throw new ExitException(
+					"There is not enough room in a single garmin map for all the input data\n" +
+							"   The .osm file should be split into smaller pieces first.");
 		}
 		return n;
 	}
