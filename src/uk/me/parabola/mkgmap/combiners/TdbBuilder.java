@@ -48,6 +48,7 @@ public class TdbBuilder implements Combiner {
 
 	private int parent = 63240000;
 	private String overviewMapname;
+	private String overviewDescription;
 	private int tdbVersion;
 
 	/**
@@ -66,9 +67,12 @@ public class TdbBuilder implements Combiner {
 			log.debug("overview map name not an integer", overviewMapname);
 		}
 
+		overviewDescription = args.get("overview-description", "Overview Map");
+
 		int familyId = args.get("family-id", 0);
 		int productId = args.get("product-id", 1);
-		
+		short productVersion = (short)args.get("product-version", 100);
+
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
@@ -79,7 +83,8 @@ public class TdbBuilder implements Combiner {
 		}
 
 		tdb = new TdbFile(tdbVersion);
-		tdb.setProductInfo(familyId, productId, (short) 100, seriesName, familyName);
+		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
+				familyName, overviewDescription);
 	}
 
 	/**
@@ -109,7 +114,7 @@ public class TdbBuilder implements Combiner {
 
 		detail.setMapName(mapname);
 
-		String desc = mapdesc + '(' + mapname + ')';
+		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());
@@ -223,7 +228,7 @@ public class TdbBuilder implements Combiner {
 		MapBuilder mb = new MapBuilder();
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
-		params.setMapDescription("Overview map");
+		params.setMapDescription(overviewDescription);
 
 		try {
 			Map map = Map.createMap(overviewMapname, params);
