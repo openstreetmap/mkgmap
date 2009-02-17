@@ -301,6 +301,17 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		wayMap = null;
 
+		if(bbox != null) {
+			mapper.addToBounds(new Coord(bbox.getMinLat(),
+						     bbox.getMinLong()));
+			mapper.addToBounds(new Coord(bbox.getMinLat(),
+						     bbox.getMaxLong()));
+			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+						     bbox.getMinLong()));
+			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+						     bbox.getMaxLong()));
+		}
+
 		// Run a finishing task.
 		endTask.run();
 	}
@@ -332,11 +343,6 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		bbox = new Area(minlat, minlong, maxlat, maxlong);
 		converter.setBoundingBox(bbox);
-
-		mapper.addToBounds(new Coord(minlat, minlong));
-		mapper.addToBounds(new Coord(minlat, maxlong));
-		mapper.addToBounds(new Coord(maxlat, minlong));
-		mapper.addToBounds(new Coord(maxlat, maxlong));
 	}
 
 	/**
