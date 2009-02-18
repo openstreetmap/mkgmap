@@ -74,12 +74,12 @@ public class RoadDef {
 	 * Everything that's relevant for writing to NET1.
 	 */
 
-	private static final int FLAG_HAS_NOD_INFO = 0x40;
-	private static final int FLAG_UNK1 = 0x04;
-	private static final int FLAG_DIR_INDICATOR = 0x02;
-	private static final int FLAG_HAS_ADDR_INFO = 0x01;
+	private static final int NET_FLAG_NODINFO = 0x40;
+	private static final int NET_FLAG_UNK1 = 0x04;
+	private static final int NET_FLAG_ONEWAY = 0x02;
+	private static final int NET_FLAG_ADDRINFO = 0x01;
 
-	private int netFlags = FLAG_UNK1;
+	private int netFlags = NET_FLAG_UNK1;
 
 	// The road length units may be affected by other flags in the header as
 	// there is doubt as to the formula.
@@ -192,12 +192,6 @@ public class RoadDef {
 		return roadIndexes.lastKey();
 	}
 
-	public void setDirIndicator(boolean dir) {
-		if (dir)
-			netFlags |= FLAG_DIR_INDICATOR;
-		else
-			netFlags &= ~FLAG_DIR_INDICATOR;
-	}
 
 	/**
 	 * Set the road length (in meters).
@@ -298,12 +292,12 @@ public class RoadDef {
 	 * which will be pointed at from NET 1.
 	 */
 	public void setNode(RouteNode node) {
-		netFlags |= FLAG_HAS_NOD_INFO;
+		netFlags |= NET_FLAG_NODINFO;
 		this.node = node;
 	}
 
 	private boolean hasNodInfo() {
-		return (netFlags & FLAG_HAS_NOD_INFO) != 0;
+		return (netFlags & NET_FLAG_NODINFO) != 0;
 	}
 
 	public void setStartsWithNode(boolean s) {
@@ -399,18 +393,8 @@ public class RoadDef {
 	private int tabAInfo; 
 	private int tabAAccess;
 
-	public void setToll(boolean toll) {
-		if (toll)
-			tabAInfo |= TABA_FLAG_TOLL;
-		else
-			tabAInfo &= ~TABA_FLAG_TOLL;
-	}
-
-	public void setOneway(boolean oneway) {
-		if (oneway)
-			tabAInfo |= TABA_FLAG_ONEWAY;
-		else
-			tabAInfo &= ~TABA_FLAG_ONEWAY;
+	public void setToll() {
+		tabAInfo |= TABA_FLAG_TOLL;
 	}
 
 	public void setAccess(boolean[] access) {
@@ -462,5 +446,10 @@ public class RoadDef {
 
 		/* for NOD 2 */
 		nod2Flags |= (speed << 1);
+	}
+
+	public void setOneway() {
+		tabAInfo |= TABA_FLAG_ONEWAY;
+		netFlags |= NET_FLAG_ONEWAY;
 	}
 }

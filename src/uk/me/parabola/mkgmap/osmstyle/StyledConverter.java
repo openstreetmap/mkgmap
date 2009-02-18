@@ -350,15 +350,15 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, gt, way);
 		line.setPoints(points);
 
-		if(way.isBoolTag("oneway"))
-			line.setDirection(true);
-
 		MapRoad road = new MapRoad(roadId++, line);
 
 		// set road parameters.
 		road.setRoadClass(gt.getRoadClass());
-		road.setOneway(line.isDirection());
-		
+		if (way.isBoolTag("oneway")) {
+			line.setDirection(true);
+			road.setOneway();
+		}
+
 		// maxspeed attribute overrides default for road type
 		
 		String maxSpeed = way.getTag("maxspeed");
@@ -440,9 +440,7 @@ public class StyledConverter implements OsmConverter {
 		road.setAccess(noAccess);
 
 		if(way.isBoolTag("toll"))
-			road.setToll(true);
-
-		//road.setDirIndicator(dirIndicator); // FIXME
+			road.setToll();
 
 		int numNodes = nodeIndices.size();
 		road.setNumNodes(numNodes);
@@ -462,7 +460,6 @@ public class StyledConverter implements OsmConverter {
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
-            road.setEndsWithNode(nodeIndices.get(numNodes-1) == points.size() - 1);
 			road.setInternalNodes(hasInternalNodes);
 		}
 

@@ -44,8 +44,6 @@ class RoadHelper {
 	private int roadId;
 	private final Map<Integer,NodeIndex> nodes = new HashMap<Integer,NodeIndex>();
 
-	private boolean dirIndicator;
-
 	private int speed;
 	private int roadClass;
 
@@ -62,7 +60,6 @@ class RoadHelper {
 		roadId = 0;
 		nodes.clear();
 
-		dirIndicator = false;
 		speed = 0;
 		roadClass = 0;
 		oneway = false;
@@ -79,10 +76,6 @@ class RoadHelper {
 			log.warn("duplicate nodeidx %d, overwriting", nodeIndex);
 		String[] f = value.split(",");
 		nodes.put(nodeIndex, new NodeIndex(f));
-	}
-
-	public void setDirIndicator(boolean dir) {
-		this.dirIndicator = dir;
 	}
 
 	public void setParam(String param) {
@@ -104,11 +97,12 @@ class RoadHelper {
 		MapRoad road = new MapRoad(roadId, l);
 
 		// Set parameters.
-		road.setDirIndicator(dirIndicator);
 		road.setRoadClass(roadClass);
 		road.setSpeed(speed);
-		road.setOneway(oneway);
-		road.setToll(toll);
+		if (oneway)
+			road.setOneway();
+		if (toll)
+			road.setToll();
 		road.setAccess(access);
 
 		List<Coord> points = road.getPoints();
