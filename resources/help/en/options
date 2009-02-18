@@ -48,7 +48,7 @@ Label options:
 	Use the specified character set.
 
 --code-page=''number''
-	Use the given code page for the .  This is 
+	Write the given code page number to the header of the LBL file. 
 
 --lower-case
 	Allow labels to contain lower case letters.  Note that this doesn't
