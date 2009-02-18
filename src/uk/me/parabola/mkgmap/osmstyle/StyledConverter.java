@@ -355,7 +355,7 @@ public class StyledConverter implements OsmConverter {
 		// set road parameters.
 		road.setRoadClass(gt.getRoadClass());
 		if (way.isBoolTag("oneway")) {
-			line.setDirection(true);
+			road.setDirection(true);
 			road.setOneway();
 		}
 
