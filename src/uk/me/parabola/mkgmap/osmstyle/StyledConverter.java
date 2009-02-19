@@ -18,8 +18,10 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -28,6 +30,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.LineAdder;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -59,10 +62,14 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
+	private Area bbox = null;
+	private Set<Coord> boundaryCoords = null;
 
 	private int roadId;
 
 	private final int MAX_NODES_IN_WAY = 16;
+
+	private final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
 
 	// nodeIdMap maps a Coord into a nodeId
 	private final Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
@@ -191,6 +198,7 @@ public class StyledConverter implements OsmConverter {
 	 */
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
+		this.bbox = bbox;
 	}
 
 	/**
@@ -261,6 +269,47 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
+		// if there is a bounding box, clip the way with it
+
+		List<Way> clippedWays = null;
+
+		if(bbox != null) {
+			List<List<Coord>> lineSegs = LineClipper.clip(bbox, way.getPoints());
+			boundaryCoords = new HashSet<Coord>();
+
+			if (lineSegs != null) {
+
+				clippedWays = new ArrayList<Way>();
+
+				for (List<Coord> lco : lineSegs) {
+					Way nWay = new Way();
+					nWay.setName(way.getName());
+					nWay.copyTags(way);
+					for(Coord co : lco) {
+						nWay.addPoint(co);
+						if(co.getHighwayCount() == 0) {
+							boundaryCoords.add(co);
+							co.incHighwayCount();
+						}
+					}
+					clippedWays.add(nWay);
+				}
+			}
+		}
+
+		if(clippedWays != null) {
+			for(Way cw : clippedWays) {
+				addRoadAfterSplittingLoops(cw, gt);
+			}
+		}
+		else {
+			// no bounding box or way was not clipped
+			addRoadAfterSplittingLoops(way, gt);
+		}
+	}
+
+	void addRoadAfterSplittingLoops(Way way, GType gt) {
+
 		// check if the way is a loop or intersects with itself
 
 		boolean wayWasSplit = true; // aka rescan required
@@ -289,7 +338,7 @@ public class StyledConverter implements OsmConverter {
 						}
 						else {
 							// split the way before the second point
-							//System.err.println("Split way at " + wayPoints.get(splitI).toDegreeString() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segments.");
+							log.info("Split way at " + wayPoints.get(splitI).toDegreeString() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segments.");
 							Way loopTail = splitWayAt(way, splitI);
 							// way before split has now been verified
 							addRoadWithoutLoops(way, gt);
@@ -330,7 +379,6 @@ public class StyledConverter implements OsmConverter {
 					nodeIdMap.put(p, nodeId);
 				}
 				nodeIndices.add(i);
-		//		System.err.println("Found node " + nodeId + " at " + p.toDegreeString());
 
 				if((i + 1) < points.size() &&
 				   nodeIndices.size() == MAX_NODES_IN_WAY) {
@@ -341,7 +389,7 @@ public class StyledConverter implements OsmConverter {
 					// this will have truncated
 					// the current Way's points so
 					// the loop will now terminate
-					//					System.err.println("Splitting way " + way.getName() + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+					log.info("Splitting way " + way.getName() + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
 				}
 			}
 		}
@@ -413,7 +461,7 @@ public class StyledConverter implements OsmConverter {
 					// class is denied access
 					noAccess[accessSelector[i]] = true;
 				}
-				//System.err.println("No " + vehicleClass[i] + " allowed in " + highwayType + " " + way.getName());
+				log.info("No " + vehicleClass[i] + " allowed in " + highwayType + " " + way.getName());
 			}
 		}
 
@@ -454,9 +502,11 @@ public class StyledConverter implements OsmConverter {
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				Integer nodeId = nodeIdMap.get(coord);
-				boolean boundary = way.isBoolTag("mkgmap:boundary_node");
+				boolean boundary = boundaryCoords.contains(coord);
+				if(boundary) {
+					log.info("Way " + way.getName() + "'s point #" + n + " at " + points.get(0).toDegreeString() + " is a boundary node");
+				}
 				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
-				//		System.err.println("Road " + road.getRoadId() + " node[" + i + "] " + nodeId + " at " + coord.toDegreeString());
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
@@ -550,10 +600,9 @@ public class StyledConverter implements OsmConverter {
 				Coord newPoint = new Coord(newLat, newLon);
 				double d1 = p1.distance(newPoint);
 				double d2 = p2.distance(newPoint);
-				double minDistance = 5.5;
 				double maxDistance = 100;
-				if(d1 >= minDistance && d1 <= maxDistance &&
-				   d2 >= minDistance && d2 <= maxDistance) {
+				if(d1 >= MIN_DISTANCE_BETWEEN_NODES && d1 <= maxDistance &&
+				   d2 >= MIN_DISTANCE_BETWEEN_NODES && d2 <= maxDistance) {
 				    newPoint.incHighwayCount();
 				    wayPoints.add(i + 1, newPoint);
 				}
