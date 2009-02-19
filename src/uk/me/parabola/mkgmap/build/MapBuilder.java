@@ -603,8 +603,7 @@ public class MapBuilder implements Configurable {
 
 			pl.setType(line.getType());
 
-			if (doRoads && line.isRoad() &&
-			    div.getZoom().getLevel() == 0) {
+			if (doRoads && line.isRoad()) {
 				if (log.isDebugEnabled())
 					log.debug("adding road def: " + line.getName());
 				RoadDef roaddef = ((MapRoad) line).getRoadDef();
