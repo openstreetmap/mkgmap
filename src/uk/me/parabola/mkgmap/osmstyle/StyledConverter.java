@@ -63,7 +63,7 @@ public class StyledConverter implements OsmConverter {
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 	private Area bbox = null;
-	private Set<Coord> boundaryCoords = null;
+	private Set<Coord> boundaryCoords = new HashSet<Coord>();
 
 	private int roadId;
 
