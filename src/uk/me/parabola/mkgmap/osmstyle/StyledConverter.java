@@ -513,7 +513,7 @@ public class StyledConverter implements OsmConverter {
 			road.setInternalNodes(hasInternalNodes);
 		}
 
-		clipper.clipLine(road, lineAdder);
+		lineAdder.add(road);
 
 		if(trailingWay != null)
 		    addRoadWithoutLoops(trailingWay, gt);
