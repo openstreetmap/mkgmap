@@ -119,13 +119,11 @@ public class Coord implements Comparable {
 	 */
 	public int compareTo(Object o) {
 		Coord other = (Coord) o;
-		int clon = Double.compare(Utils.toDegrees(longitude),
-			Utils.toDegrees(other.getLongitude()));
+		int clon = longitude - other.getLongitude();
 		if (clon != 0)
 			return clon;
 		else
-			return Double.compare(Utils.toDegrees(latitude),
-				Utils.toDegrees(other.getLatitude()));
+			return latitude - other.getLatitude();
 	}			
 
 	/**
