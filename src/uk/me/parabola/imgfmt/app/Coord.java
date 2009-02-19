@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.Utils;
  *
  * @author Steve Ratcliffe
  */
-public class Coord {
+public class Coord implements Comparable {
 	private final int latitude;
 	private final int longitude;
 	private int highwayCount; // number of highways that use this point
@@ -111,6 +111,22 @@ public class Coord {
 
 		return Math.acos(cangle) * R;
   	}
+
+	/**
+	 * Sort lexicographically by longitude, then latitude.
+	 *
+	 * This ordering is used for sorting entries in NOD3.
+	 */
+	public int compareTo(Object o) {
+		Coord other = (Coord) o;
+		int clon = Double.compare(Utils.toDegrees(longitude),
+			Utils.toDegrees(other.getLongitude()));
+		if (clon != 0)
+			return clon;
+		else
+			return Double.compare(Utils.toDegrees(latitude),
+				Utils.toDegrees(other.getLatitude()));
+	}			
 
 	/**
 	 * Returns a string representation of the object.

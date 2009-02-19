@@ -250,10 +250,6 @@ public class RouteNode implements Comparable {
 	 */
 	public int compareTo(Object o) {
 		Coord other = ((RouteNode) o).getCoord();
-		int lon = coord.getLongitude();
-		int lat = coord.getLatitude();
-		int lon2 = other.getLongitude();
-		int lat2 = other.getLatitude();
-		return (lon - lon2 == 0) ? (lat - lat2) : (lon - lon2);
+		return coord.compareTo(other);
 	}
 }
