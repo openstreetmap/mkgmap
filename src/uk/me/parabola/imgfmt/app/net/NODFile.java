@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -125,6 +126,8 @@ public class NODFile extends ImgFile {
 	 */
 	private void writeBoundary() {
 		log.info("writeBoundary");
+
+		Collections.sort(boundary);
 
 		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getBoundarySection());
 

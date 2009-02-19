@@ -28,7 +28,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class RouteNode {
+public class RouteNode implements Comparable {
 	private static final Logger log = Logger.getLogger(RouteNode.class);
 
 	/*
@@ -243,5 +243,17 @@ public class RouteNode {
 
 	public String toString() {
 		return nodeId + "";
+	}
+
+	/*
+	 * For sorting node entries in NOD 3.
+	 */
+	public int compareTo(Object o) {
+		Coord other = ((RouteNode) o).getCoord();
+		int lon = coord.getLongitude();
+		int lat = coord.getLatitude();
+		int lon2 = other.getLongitude();
+		int lat2 = other.getLatitude();
+		return (lon - lon2 == 0) ? (lat - lat2) : (lon - lon2);
 	}
 }
