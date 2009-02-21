@@ -151,7 +151,7 @@ public class Coord implements Comparable {
 			zoom);
 	}
 
-    	public String toOSMURL() {
+	public String toOSMURL() {
 		return toOSMURL(17);
 	}
 }

@@ -29,5 +29,9 @@ public interface Args {
 	public static final String TEST_STYLE_ARG = "--style-file=test/resources/teststyles/main";
 
 	public static final String DEF_MAP_ID = "63240001";
+	public static final String DEF_MAP_ID2 = "63240002";
 	public static final String DEF_MAP_FILENAME = "63240001.img";
+	public static final String DEF_MAP_FILENAME2 = "63240002.img";
+	public static final String DEF_GMAPSUPP_FILENAME = "gmapsupp.img";
+	public static final String DEF_TDB_FILENAME = "63240000.tdb";
 }

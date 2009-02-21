@@ -37,7 +37,8 @@ public class SimpleRoute {
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--route",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
+				Args.TEST_RESOURCE_MP + "test1.mp"
 		});
 
 		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_ID + ".img");
@@ -51,7 +52,7 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 155300, size);
+				assertEquals("RGN size", 155266, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 1945, size);
@@ -60,10 +61,38 @@ public class SimpleRoute {
 				assertEquals("LBL size", 26980, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 66827, size);
+				assertEquals("NET size", 66799, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 194727, size);
+				assertEquals("NOD size", 203559, size);
+			}
+		}
+		assertTrue("enough checks run", count == 5);
+
+		fs = ImgFS.openFs(Args.DEF_MAP_FILENAME2);
+		assertNotNull("file exists", fs);
+
+		entries = fs.list();
+		count = 0;
+		for (DirectoryEntry ent : entries) {
+			String ext = ent.getExt();
+
+			int size = ent.getSize();
+			if (ext.equals("RGN")) {
+				count++;
+				assertEquals("RGN size", 2962, size);
+			} else if (ext.equals("TRE")) {
+				count++;
+				assertEquals("TRE size", 579, size);
+			} else if (ext.equals("LBL")) {
+				count++;
+				assertEquals("LBL size", 917, size);
+			} else if (ext.equals("NET")) {
+				count++;
+				assertEquals("NET size", 1147, size);
+			} else if (ext.equals("NOD")) {
+				count++;
+				assertEquals("NOD size", 3242, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
