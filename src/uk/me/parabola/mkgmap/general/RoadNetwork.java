@@ -144,7 +144,8 @@ public class RoadNetwork {
 	 * documented in NOD1Part.
 	 */
 	private void splitCenters() {
-		assert !nodes.isEmpty() : "network has no nodes";
+		if (nodes.isEmpty())
+			return;
 		assert centers.isEmpty() : "already subdivided into centers";
 
 		NOD1Part nod1 = new NOD1Part();
