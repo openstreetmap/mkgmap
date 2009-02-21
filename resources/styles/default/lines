@@ -24,7 +24,7 @@ highway=footway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=minor [0x06 road_class=1 road_speed=2 resolution 21]
 highway=motorway {add oneway = yes } [0x01 road_class=4 road_speed=6 resolution 12]
 highway=motorway_link [0x01 road_class=4 road_speed=3 resolution 16]
-highway=pedestrian [0x06 road_class=0 road_speed=0 resolution 22]
+highway=pedestrian & area!=yes [0x06 road_class=0 road_speed=0 resolution 22]
 highway=primary [0x02 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x03 road_class=3 road_speed=3 resolution 19]
 highway=residential | highway=living_street [0x06 road_class=0 road_speed=2 resolution 21]
@@ -40,7 +40,7 @@ highway=unclassified [0x06 road_class=1 road_speed=2 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
-highway=* [0x07 ]
+highway=* & area!=yes [0x07 ]
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 20]

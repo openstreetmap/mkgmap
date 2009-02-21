@@ -42,4 +42,9 @@ natural=wood [0x50 resolution 18]
 
 place=village [0x03 resolution 18]
 
+# squares and plazas
+highway=pedestrian & area=yes [0x13 resolution 20]
+# other highways that have area=yes set must be parking lots
+highway=* & area=yes [0x05 resolution 21]
+
 waterway=riverbank [0x46 resolution 20]
