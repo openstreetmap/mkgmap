@@ -76,10 +76,12 @@ public class TdbBuilder implements Combiner {
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		if (args.exists("tdb-v4")) {
-			tdbVersion = TdbFile.TDB_V407;
-		} else {
+		// Versin 4 is the default.  If you really want v3 then the tdb-v3
+		// option can be used.
+		if (args.exists("tdb-v3")) {
 			tdbVersion = TdbFile.TDB_V3;
+		} else {
+			tdbVersion = TdbFile.TDB_V407;
 		}
 
 		tdb = new TdbFile(tdbVersion);
