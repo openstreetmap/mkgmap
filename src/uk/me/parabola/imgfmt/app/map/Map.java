@@ -19,8 +19,10 @@ package uk.me.parabola.imgfmt.app.map;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -241,13 +243,30 @@ public class Map implements InternalFiles, Configurable {
 	 * Close this map by closing all the constituent files.
 	 */
 	public void close() {
-		rgnFile.close();
-		treFile.close();
-		lblFile.close();
-		if (netFile != null)
-			netFile.close();
-		if (nodFile != null)
-			nodFile.close();
+		ImgFile[] files = {
+				rgnFile, treFile, lblFile,
+				netFile, nodFile
+		};
+
+		int blocksRequired = 0;
+		for (ImgFile f : files) {
+			if (f == null)
+				continue;
+
+			long len = f.getSize();
+			System.out.println("len=" + len);
+
+			FileSystemParam param = fileSystem.fsparam();
+			int blockSize = param.getBlockSize();
+
+			long n = (len + blockSize - 1) / blockSize;
+			blocksRequired += n;
+		}
+
+		System.out.println("blocks " + blocksRequired);
+		
+		for (ImgFile f : files)
+			Utils.closeFile(f);
 
 		fileSystem.close();
 	}
