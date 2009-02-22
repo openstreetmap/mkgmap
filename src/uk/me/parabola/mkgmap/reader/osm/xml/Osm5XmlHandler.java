@@ -324,6 +324,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					Double.parseDouble(xmlattr.getValue("maxlon")));
 		} catch (NumberFormatException e) {
 			// just ignore it
+			log.warn("NumberformatException: Cannot read bbox");
 		}
 	}
 
@@ -335,6 +336,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			log.debug("Map bbox: " + bbox);
 		} catch (NumberFormatException e) {
 			// just ignore it
+			log.warn("NumberformatException: Cannot read bbox");
 		}
 	}
 
