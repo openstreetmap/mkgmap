@@ -504,7 +504,7 @@ public class StyledConverter implements OsmConverter {
 				Integer nodeId = nodeIdMap.get(coord);
 				boolean boundary = boundaryCoords.contains(coord);
 				if(boundary) {
-					log.info("Way " + way.getName() + "'s point #" + n + " at " + points.get(0).toDegreeString() + " is a boundary node");
+					log.info("Way " + way.getName() + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
 				}
 				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
 			}
