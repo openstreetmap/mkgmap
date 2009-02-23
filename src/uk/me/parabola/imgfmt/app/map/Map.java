@@ -36,6 +36,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.Configurable;
@@ -241,6 +242,8 @@ public class Map implements InternalFiles, Configurable {
 	
 	/**
 	 * Close this map by closing all the constituent files.
+	 *
+	 * Some history: 
 	 */
 	public void close() {
 		ImgFile[] files = {
@@ -248,7 +251,11 @@ public class Map implements InternalFiles, Configurable {
 				netFile, nodFile
 		};
 
-		int blocksRequired = 0;
+		int headerSlotsRequired = 0;
+
+		FileSystemParam param = fileSystem.fsparam();
+		int blockSize = param.getBlockSize();
+
 		for (ImgFile f : files) {
 			if (f == null)
 				continue;
@@ -256,15 +263,24 @@ public class Map implements InternalFiles, Configurable {
 			long len = f.getSize();
 			System.out.println("len=" + len);
 
-			FileSystemParam param = fileSystem.fsparam();
-			int blockSize = param.getBlockSize();
+			// Blocks required for this file
+			int nBlocks = (int) ((len + blockSize - 1) / blockSize);
 
-			long n = (len + blockSize - 1) / blockSize;
-			blocksRequired += n;
+			// Now we calculate how many directory blocks we need, you have
+			// to round up as files do not share directory blocks.
+			headerSlotsRequired += (nBlocks + DirectoryEntry.ENTRY_SIZE - 1)/DirectoryEntry.ENTRY_SIZE;
 		}
 
-		System.out.println("blocks " + blocksRequired);
-		
+		System.out.println("blocks " + headerSlotsRequired);
+
+		// A header slot is always 512 bytes, so we need to calculate the
+		// number of blocks if the blocksize is different.
+		// There are 2 slots for the header itself.
+		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
+
+		param.setReservedDirectoryBlocks(blocksRequired);
+		fileSystem.fsparam(param);
+
 		for (ImgFile f : files)
 			Utils.closeFile(f);
 

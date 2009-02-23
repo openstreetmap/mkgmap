@@ -76,6 +76,16 @@ public interface FileSystem {
 	public FileSystemParam fsparam();
 
 	/**
+	 * Reconfigure the filesystem with the given parameters.
+	 * Only some parameters can be changed and the may only be changeable
+	 * at certain points in the construction of a file system for example.
+	 * @param param The new parameters.
+	 * @throws IllegalStateException If the changes cannot be made (for example
+	 * if the file system is already written).
+	 */
+	public void fsparam(FileSystemParam param);
+
+	/**
 	 * Sync with the underlying file.  All unwritten data is written out to
 	 * the underlying file.
 	 * @throws IOException If an error occurs during the write.
