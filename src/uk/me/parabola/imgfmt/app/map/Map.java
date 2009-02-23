@@ -268,7 +268,7 @@ public class Map implements InternalFiles, Configurable {
 
 			// Now we calculate how many directory blocks we need, you have
 			// to round up as files do not share directory blocks.
-			headerSlotsRequired += (nBlocks + DirectoryEntry.ENTRY_SIZE - 1)/DirectoryEntry.ENTRY_SIZE;
+			headerSlotsRequired += (nBlocks + DirectoryEntry.SLOTS_PER_ENTRY - 1)/DirectoryEntry.SLOTS_PER_ENTRY;
 		}
 
 		System.out.println("blocks " + headerSlotsRequired);
