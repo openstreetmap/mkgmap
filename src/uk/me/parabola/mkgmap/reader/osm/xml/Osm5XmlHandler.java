@@ -23,13 +23,15 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.general.MapDetails;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -67,13 +69,14 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long currentElementId;
 
 	private OsmConverter converter;
-	private MapCollector mapper;
+	private MapDetails mapper;
 	private Area bbox;
 	private Runnable endTask;
 
 	private long nextFakeId = 1;
 
 	private final boolean ignoreBounds;
+	private final boolean ignoreTurnRestrictions;
 	private final boolean routing;
 	private final String frigRoundabouts;
 
@@ -81,6 +84,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
 		frigRoundabouts = props.getProperty("frig-roundabouts");
+		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
 	}
 
 	/**
@@ -150,6 +154,16 @@ class Osm5XmlHandler extends DefaultHandler {
 				el = wayMap.get(id);
 			} else if ("node".equals(type)) {
 				el = nodeMap.get(id);
+				if(el == null) {
+					// we didn't make a node for
+					// this point earlier, do it
+					// now (if it exists)
+					Coord co = coordMap.get(id);
+					if(co != null) {
+						el = new Node(id, co);
+						nodeMap.put(id, (Node)el);
+					}
+				}
 			} else if ("relation".equals(type)) {
 				el = relationMap.get(id);
 			} else
@@ -269,10 +283,23 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (type != null) {
 			if ("multipolygon".equals(type))
 				currentRelation = new MultiPolygonRelation(currentRelation);
+			else if("restriction".equals(type)) {
+
+				if(ignoreTurnRestrictions)
+					currentRelation = null;
+				else
+					currentRelation = new RestrictionRelation(currentRelation);
+			}
+			else {
+				log.info("ignoring relation type '" + type + "'");
+				currentRelation = null;
+			}
 		}
-		relationMap.put(currentRelation.getId(), currentRelation);
-		currentRelation.processElements();
-		currentRelation = null;
+		if(currentRelation != null) {
+			relationMap.put(currentRelation.getId(), currentRelation);
+			currentRelation.processElements();
+			currentRelation = null;
+		}
 	}
 
 	/**
@@ -289,8 +316,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
-		relationMap = null;
-
 		for (Node n : nodeMap.values())
 			converter.convertNode(n);
 
@@ -300,6 +325,15 @@ class Osm5XmlHandler extends DefaultHandler {
 			converter.convertWay(w);
 
 		wayMap = null;
+
+		RoadNetwork roadNetwork = mapper.getRoadNetwork();
+		for (Relation r : relationMap.values()) {
+			if(r instanceof RestrictionRelation) {
+				((RestrictionRelation)r).addRestriction(roadNetwork);
+			}
+		}
+
+		relationMap = null;
 
 		if(bbox != null) {
 			mapper.addToBounds(new Coord(bbox.getMinLat(),
@@ -392,8 +426,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		this.converter = converter;
 	}
 
-	public void setCollector(MapCollector mapCollector) {
-		mapper = mapCollector;
+	public void setMapper(MapDetails mapper) {
+		this.mapper = mapper;
 	}
 
 	public void setEndTask(Runnable endTask) {

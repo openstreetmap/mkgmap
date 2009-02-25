@@ -43,6 +43,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -64,6 +65,15 @@ public class StyledConverter implements OsmConverter {
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 	private Area bbox = null;
 	private Set<Coord> boundaryCoords = new HashSet<Coord>();
+
+	// restrictions associates lists of turn restrictions with the
+	// Coord corresponding to the restrictions' 'via' node
+	private Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
+
+	// originalWay associates Ways that have been created due to
+	// splitting or clipping with the Ways that they were derived
+	// from
+	private Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
 	private int roadId;
 
@@ -212,6 +222,18 @@ public class StyledConverter implements OsmConverter {
 		// Relations never resolve to a GType and so we ignore the return
 		// value.
 		relationRules.resolveType(relation);
+
+		if(relation instanceof RestrictionRelation) {
+			RestrictionRelation rr = (RestrictionRelation)relation;
+			if(rr.isValid()) {
+				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
+				if(lrr == null) {
+					lrr = new ArrayList<RestrictionRelation>();
+					restrictions.put(rr.getViaCoord(), lrr);
+				}
+				lrr.add(rr);
+			}
+		}
 	}
 
 	private void addLine(Way way, GType gt) {
@@ -293,6 +315,12 @@ public class StyledConverter implements OsmConverter {
 						}
 					}
 					clippedWays.add(nWay);
+					// associate the original Way
+					// to the new Way
+					Way origWay = originalWay.get(way);
+					if(origWay == null)
+						origWay = way;
+					originalWay.put(nWay, origWay);
 				}
 			}
 		}
@@ -490,12 +518,18 @@ public class StyledConverter implements OsmConverter {
 		if(way.isBoolTag("toll"))
 			road.setToll();
 
+		Way origWay = originalWay.get(way);
+		if(origWay == null)
+		    origWay = way;
+
 		int numNodes = nodeIndices.size();
 		road.setNumNodes(numNodes);
 
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			boolean hasInternalNodes = false;
+		        CoordNode lastCoordNode = null;
+			List<RestrictionRelation> lastRestrictions = null;
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);
 				if(n > 0 && n < points.size() - 1)
@@ -506,7 +540,52 @@ public class StyledConverter implements OsmConverter {
 				if(boundary) {
 					log.info("Way " + way.getName() + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
 				}
-				points.set(n, new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary));
+
+				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
+				points.set(n, thisCoordNode);
+
+				// see if this node plays a role in any
+				// turn restrictions
+
+				if(lastRestrictions != null) {
+					// the previous node was the
+					// location of one or more
+					// restrictions
+					for(RestrictionRelation rr : lastRestrictions) {
+						if(rr.getToWay().equals(origWay)) {
+							rr.setToNode(thisCoordNode);
+						}
+						else if(rr.getFromWay().equals(origWay)) {
+							rr.setFromNode(thisCoordNode);
+						}
+						else {
+							rr.addOtherNode(thisCoordNode);
+						}
+					}
+				}
+
+				List<RestrictionRelation> theseRestrictions = restrictions.get(coord);
+				if(theseRestrictions != null) {
+					// this node is the location
+					// of one or more restrictions
+					for(RestrictionRelation rr : theseRestrictions) {
+						rr.setViaNode(thisCoordNode);
+						if(rr.getToWay().equals(origWay)) {
+							if(lastCoordNode != null)
+								rr.setToNode(lastCoordNode);
+						}
+						else if(rr.getFromWay().equals(origWay)) {
+							if(lastCoordNode != null)
+								rr.setFromNode(lastCoordNode);
+						}
+						else if(lastCoordNode != null) {
+							rr.addOtherNode(lastCoordNode);
+						}
+					}
+				}
+
+				lastRestrictions = theseRestrictions;
+				lastCoordNode = thisCoordNode;
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
@@ -516,7 +595,7 @@ public class StyledConverter implements OsmConverter {
 		lineAdder.add(road);
 
 		if(trailingWay != null)
-		    addRoadWithoutLoops(trailingWay, gt);
+			addRoadWithoutLoops(trailingWay, gt);
 	}
 
 	// split a Way at the specified point and return the new Way
@@ -541,6 +620,12 @@ public class StyledConverter implements OsmConverter {
 		// it's probably more efficient to remove from the end first
 		for(int i = numPointsInWay - 1; i > index; --i)
 			wayPoints.remove(i);
+
+		// associate the original Way to the new Way
+		Way origWay = originalWay.get(way);
+		if(origWay == null)
+			origWay = way;
+		originalWay.put(trailingWay, origWay);
 
 		return trailingWay;
 	}
