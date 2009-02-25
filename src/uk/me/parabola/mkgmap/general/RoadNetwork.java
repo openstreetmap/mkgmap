@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -169,4 +170,23 @@ public class RoadNetwork {
 	public List<RouteNode> getBoundary() {
 		return boundary;
 	}
+
+	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode) {
+		RouteNode fn = nodes.get(fromNode.getId());
+		RouteNode tn = nodes.get(toNode.getId());
+		RouteNode vn = nodes.get(viaNode.getId());
+
+		assert fn != null : "can't locate 'from' RouteNode with id " + fromNode.getId();
+		assert tn != null : "can't locate 'to' RouteNode with id " + toNode.getId();
+		assert vn != null : "can't locate 'via' RouteNode with id " + viaNode.getId();
+
+		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
+		RouteArc ta = vn.getArcTo(tn);
+
+		assert fa != null : "can't locate arc from 'via' node to 'from' node";
+		assert ta != null : "can't locate arc from 'via' node to 'to' node";
+
+		vn.addRestriction(new RouteRestriction(fa, ta));
+    }
+
 }
