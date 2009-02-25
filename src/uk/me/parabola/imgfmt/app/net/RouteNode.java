@@ -113,6 +113,22 @@ public class RouteNode implements Comparable {
 		flags |= F_RESTRICTIONS;
 	}
 
+	public RouteArc getArcTo(RouteNode otherNode) {
+		for(RouteArc a : arcs)
+			if(a.getDest() == otherNode)
+				return a;
+
+		return null;
+	}
+
+	public RouteArc getArcFrom(RouteNode otherNode) {
+		for(RouteArc a : arcs)
+			if(a.getSource() == otherNode)
+				return a;
+
+		return null;
+	}
+
 	/**
 	 * Provide an upper bound to the size (in bytes) that
 	 * writing this node will take.
@@ -181,7 +197,7 @@ public class RouteNode implements Comparable {
 	}
 
 	public int getOffsetNod1() {
-		assert offsetNod1 != -1: "failed for node " + nodeId;
+		assert offsetNod1 != -1: "failed for node " + nodeId + " at " + coord.toDegreeString();
 		return offsetNod1;
 	}
 
