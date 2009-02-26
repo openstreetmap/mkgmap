@@ -229,21 +229,25 @@ public class RestrictionRelation extends Relation {
 
 	public void addRestriction(RoadNetwork roadNetwork) {
 
-		if(viaNode == null || fromNode == null || toNode == null) {
+		if(restriction == null || viaNode == null || fromNode == null || toNode == null) {
 			// restriction must have some error (reported earlier)
 		    return;
 		}
 
-		if("no_left_turn".equals(restriction) ||
-		   "no_right_turn".equals(restriction) ||
-		   "no_straight_on".equals(restriction) ||
-		   "no_u_turn".equals(restriction)) {
+		if(restriction.equals("no_left_turn") ||
+		   restriction.equals("no_right_turn") ||
+		   restriction.equals("no_straight_on") ||
+		   restriction.equals("no_u_turn") ||
+		   restriction.startsWith("no_turn")) {
 			roadNetwork.addRestriction(fromNode, toNode, viaNode);
-			log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
+			if(restriction.startsWith("no_turn"))
+				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
+			else
+				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
 		}
-		else if("only_left_turn".equals(restriction) ||
-			"only_right_turn".equals(restriction) ||
-			"only_straight_on".equals(restriction)) {
+		else if(restriction.equals("only_left_turn") ||
+			restriction.equals("only_right_turn") ||
+			restriction.equals("only_straight_on")) {
 			for(CoordNode otherNode : otherNodes) {
 				roadNetwork.addRestriction(fromNode, otherNode, viaNode);
 				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + otherNode.toDegreeString() + ")");
