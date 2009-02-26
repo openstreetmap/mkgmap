@@ -71,10 +71,10 @@ public class TableC {
 	public byte getSizeBytes() {
 		if (size == 0)
 			return 0;
-		else if (size < 0x100)
-			return 1;
-		else if (size < 0x10000)
-			return 2;
+		else if (size < 0x80)
+			return 1; // allows 7 bit index (8th bit is flag)
+		else if (size < 0x8000)
+			return 2; // allows 15 bit index (16th bit is flag)
 		else
 			// XXX: haven't seen larger than 2, may well be possible
 			throw new FormatException("too many restrictions");
