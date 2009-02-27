@@ -92,6 +92,14 @@ public class Tags implements Iterable<String> {
 		return old;
 	}
 
+	public String reallyPut(String key, String value) {
+	    ExtraEntry saveExtra = extra;
+	    extra = null;
+	    String result = put(key, value);
+	    extra = saveExtra;
+	    return result;
+	}
+
 	public String remove(Object key) {
 		Integer k = keyPos((String) key);
 

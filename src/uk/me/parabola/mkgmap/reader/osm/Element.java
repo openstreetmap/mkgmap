@@ -36,7 +36,7 @@ public abstract class Element implements Iterable<String> {
 	public void addTag(String key, String val) {
 		if (tags == null)
 			tags = new Tags();
-		tags.put(key, val);
+		tags.reallyPut(key, val);
 	}
 
 	public String getTag(String key) {
