@@ -454,7 +454,7 @@ public class StyledConverter implements OsmConverter {
 			highwayType = way.getTag("route");
 		}
 
-		String[] vehicleClass = { "access",
+		String[] vehicleClass = { "access", // must be first in list
 					  "bicycle",
 					  "foot",
 					  "hgv",
@@ -472,13 +472,9 @@ public class StyledConverter implements OsmConverter {
 
 		for(int i = 0; i < vehicleClass.length; ++i) {
 			String access = way.getTag(vehicleClass[i]);
-			if(access != null)
-				access = access.toUpperCase();
-			if(access != null &&
-			   (access.equals("PRIVATE") ||
-			    access.equals("DESTINATION") || // FIXME - too strict
-			    access.equals("UNKNOWN") ||
-			    access.equals("NO"))) {
+			if(access == null)
+				continue;
+			if(accessExplicitlyDenied(access)) {
 				if(accessSelector[i] == RoadNetwork.NO_MAX) {
 					// everything is denied access
 					for(int j = 0; j < noAccess.length; ++j)
@@ -489,28 +485,27 @@ public class StyledConverter implements OsmConverter {
 					// class is denied access
 					noAccess[accessSelector[i]] = true;
 				}
-				log.info("No " + vehicleClass[i] + " allowed in " + highwayType + " " + way.getName());
+				log.info("No " + vehicleClass[i] + " is allowed in " + highwayType + " " + way.getName());
 			}
-		}
-
-		if("footway".equals(highwayType)) {
-			noAccess[RoadNetwork.EMERGENCY] = true;
-			noAccess[RoadNetwork.DELIVERY] = true;
-			noAccess[RoadNetwork.NO_CAR] = true;
-			noAccess[RoadNetwork.NO_BUS] = true;
-			noAccess[RoadNetwork.NO_TAXI] = true;
-			if(!way.accessExplicitlyAllowed("bicycle"))
-				noAccess[RoadNetwork.NO_BIKE] = true;
-			noAccess[RoadNetwork.NO_TRUCK] = true;
-		}
-		else if("cycleway".equals(highwayType) ||
-			"bridleway".equals(highwayType)) {
-			noAccess[RoadNetwork.EMERGENCY] = true;
-			noAccess[RoadNetwork.DELIVERY] = true;
-			noAccess[RoadNetwork.NO_CAR] = true;
-			noAccess[RoadNetwork.NO_BUS] = true;
-			noAccess[RoadNetwork.NO_TAXI] = true;
-			noAccess[RoadNetwork.NO_TRUCK] = true;
+			else if(accessExplicitlyAllowed(access)) {
+				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+					// everything is allowed access
+					for(int j = 0; j < noAccess.length; ++j)
+						noAccess[j] = false;
+				}
+				else {
+					// just the specific vehicle
+					// class is allowed access
+					noAccess[accessSelector[i]] = false;
+				}
+				log.info(vehicleClass[i] + " is allowed in " + highwayType + " " + way.getName());
+			}
+			else if(access.equalsIgnoreCase("unknown")) {
+				// implicitly allow access
+			}
+			else {
+				log.warn("Ignoring unsupported access tag " + vehicleClass[i] + "=" + way.getTag(vehicleClass[i]));
+			}
 		}
 
 		road.setAccess(noAccess);
@@ -747,5 +742,22 @@ public class StyledConverter implements OsmConverter {
 		else
 			return 0;	    
 
+	}
+
+	public boolean accessExplicitlyAllowed(String val) {
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("yes") ||
+			val.equalsIgnoreCase("designated") ||
+			val.equalsIgnoreCase("permissive"));
+	}
+
+	public boolean accessExplicitlyDenied(String val) {
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("no") ||
+			val.equalsIgnoreCase("private"));
 	}
 }
