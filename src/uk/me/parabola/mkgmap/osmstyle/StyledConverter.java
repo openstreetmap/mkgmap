@@ -485,7 +485,7 @@ public class StyledConverter implements OsmConverter {
 					// class is denied access
 					noAccess[accessSelector[i]] = true;
 				}
-				log.info("No " + vehicleClass[i] + " is allowed in " + highwayType + " " + way.getName());
+				log.info(vehicleClass[i] + " is not allowed in " + highwayType + " " + way.getName());
 			}
 			else if(accessExplicitlyAllowed(access)) {
 				if(accessSelector[i] == RoadNetwork.NO_MAX) {
