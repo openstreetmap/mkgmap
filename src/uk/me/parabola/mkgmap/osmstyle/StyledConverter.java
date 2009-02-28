@@ -225,7 +225,6 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void elementSetup(MapElement ms, GType gt, Element element) {
-							
 		ms.setName(element.getName());
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());

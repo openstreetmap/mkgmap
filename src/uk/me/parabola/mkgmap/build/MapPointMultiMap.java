@@ -11,7 +11,6 @@
  *  GNU General Public License for more details.
  * 
  * 	This is multimap to store city information for the Address Locator
- *  It provides also a fast tile based nearest point search function
  *
  *
  * Author: Bernhard Heibler

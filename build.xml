@@ -78,8 +78,9 @@
   <target name="build" depends="compile" >
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
-				<include name="*.csv"/>
+				<include name="*.csv"/>				
 				<include name="*.properties"/>
+				<include name="*.xml"/>				
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
 				<include name="help/**"/>
@@ -151,6 +152,7 @@
 				manifest="${resources}/MANIFEST.MF">
 			<include name="**/*.class"/>
 			<include name="*.csv"/>
+			<include name="*.xml"/>			
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
 			<include name="styles/**"/>

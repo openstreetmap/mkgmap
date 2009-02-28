@@ -53,7 +53,6 @@ package uk.me.parabola.mkgmap.build;
 
 import java.util.Collection;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.imgfmt.app.Coord;
 import java.util.Vector;
 
 public class Locator {
@@ -70,35 +69,29 @@ public class Locator {
 
 	public void addLocation(MapPoint p) 
 	{
-		resolveIsInInfo(p); // Preprocess the is_in field 
-
-		if(autoFillLevel > 0)
+		resolveIsInInfo(p); // Preprocess the is_in field
+		
+		if(autoFillLevel < 1 &&  p.getCity() == null)
+		{			
+			// Without autofill city name is the name of the tag
+			p.setCity(p.getName());
+		}
+		
+		if(p.getCity() != null)
 		{
-			if(p.getCity() != null)  
-			{
-				// All cities I have more detailed info about. 
-				// In Germany, Austria and Swizerland this are real independet communites Gemeinden
+			cityMap.put(p.getCity(), p);
+			
+			fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
 
-	 	  	cityMap.put(p.getCity(),p);	
-
-		  	fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
-
-				if(p.getName() != null && p.getCity().equals(p.getName()) == false) // Name variants ? 
-					fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
-			}
-			else
-			{
-				// All other places which do not seam to be a real city has to resolved later
-				placesMap.add(p);		
-			}
+			if(p.getName() != null && p.getCity().equals(p.getName()) == false) // Name variants ? 
+				fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
 		}
 		else
 		{
-			if(p.getCity() == null)			// Without autofill city name is the name of the tag
-				p.setCity(p.getName());
-
-			cityMap.put(p.getCity(),p);
+			// All other places which do not seam to be a real city has to resolved later
+			placesMap.add(p);		
 		}
+			
 	}
 
 			
@@ -240,6 +233,53 @@ public class Locator {
 		return nextPoint;
 	}
 	
+	public  MapPoint findByCityName(MapPoint p)
+	{
+		MapPoint near   = null;
+		Double minDist  = Double.MAX_VALUE;
+		Collection <MapPoint> nextCityList = null;			
+		
+		if(p.getCity() == null)
+			return null;
+		
+		nextCityList = cityMap.getList(p.getCity());
+				
+		if(nextCityList != null)
+		{
+			for (MapPoint nextCity: nextCityList)		
+			{
+				Double dist = p.getLocation().distance(nextCity.getLocation());
+
+				if(dist < minDist)
+				{
+					minDist = dist;
+					near = nextCity;
+				}
+			}
+	 	}
+		
+		nextCityList = fuzzyCityMap.getList(fuzzyDecode(p.getCity()));
+		
+		if(nextCityList != null)
+		{
+			for (MapPoint nextCity: nextCityList)		
+			{
+				Double dist = p.getLocation().distance(nextCity.getLocation());
+
+				if(dist < minDist)
+				{
+					minDist = dist;
+					near = nextCity;
+				}
+			}
+	 	}
+		
+		if(near != null && minDist < 30000) // Wrong hit more the 30 km away ?
+			return near;
+		else
+			return null;
+	}
+	
 	private MapPoint findCity(MapPoint place, boolean fuzzy)
 	{
 		MapPoint near   = null;
@@ -340,8 +380,10 @@ public class Locator {
 				
 			  	if(autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns)
 			  	{
-						if(place.getIsIn() != null)
-						System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn());
+					  //TODO: re-enable after merge
+						//if(place.getIsIn() != null)
+						//System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn()
+						//		+ " " + place.getLocation().toOSMURL());
 			  	}
 
 	

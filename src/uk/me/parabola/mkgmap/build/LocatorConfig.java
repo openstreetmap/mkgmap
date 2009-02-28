@@ -21,7 +21,6 @@
 package uk.me.parabola.mkgmap.build;
 
 import org.w3c.dom.*;
-import org.xml.sax.*;
 import javax.xml.parsers.*;
 import java.io.*;
 
@@ -39,7 +38,7 @@ public class LocatorConfig {
 
 	public LocatorConfig()
 	{
-    loadConfig("resources/LocatorConfig.xml");
+    loadConfig("/LocatorConfig.xml");
 	}
 
  	private void loadConfig(String fileName)
@@ -47,8 +46,22 @@ public class LocatorConfig {
 		try 
 		{
 			DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-  
-			Document document = builder.parse(fileName);
+
+			InputStream inStream;
+
+			try
+      {
+			  inStream = new FileInputStream("resources/" + fileName);
+			}
+			catch (Exception ex)
+			{
+				inStream = null;
+			}
+
+			if(inStream == null)	// If not loaded from disk use from jar file
+				inStream = this.getClass().getResourceAsStream(fileName);
+
+			Document document = builder.parse(inStream);
   		
 			Node rootNode = document.getDocumentElement();
 			

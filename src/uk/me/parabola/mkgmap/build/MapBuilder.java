@@ -21,8 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -97,9 +95,9 @@ public class MapBuilder implements Configurable {
 	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
-	private int 	  locationAutofillLevel = 0;
-	private boolean poiAddresses = false;
-	private int		  poiDisplayFlags = 0;
+	private int		locationAutofillLevel = 0;
+	private boolean	poiAddresses = true;
+	private int		poiDisplayFlags = 0;
 
 	public MapBuilder() {
 		regionName = null;
@@ -114,8 +112,8 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
 		
-		if(props.getProperty("pois-addresses", null) != null)
-			poiAddresses = true;
+		if(props.getProperty("no-poi-address", null) != null)
+			poiAddresses = false;
 
 		autoFillPar = props.getProperty("location-autofill", null);
 
@@ -216,11 +214,6 @@ public class MapBuilder implements Configurable {
 		{
 			if(p.isCity() && p.getName() != null)
 			{
-
-				String cityName = p.getName();
-				
-				//System.out.println(s);
-
 				Country thisCountry;
 				Region 	thisRegion;
 				City 		thisCity;
@@ -255,13 +248,19 @@ public class MapBuilder implements Configurable {
 		LBLFile lbl = map.getLblFile();
 		long poiAddrCountr = 0;
 		boolean checkedForPoiDispFlag = false;
+		boolean doAutofill;
 
 		for (MapPoint p : src.getPoints()) {
 
 			if(p.isCity() == false &&
 				 (p.isRoadNamePOI() || poiAddresses))
 			{		
-
+				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
+					doAutofill = true;
+				else
+					doAutofill = false;
+				
+				
 				String CountryStr = p.getCountry();
 				String RegionStr  = p.getRegion();		
 				String ZipStr     = p.getZip();
@@ -276,20 +275,36 @@ public class MapBuilder implements Configurable {
 
 				if(CountryStr == null || RegionStr == null || (ZipStr == null && CityStr == null))
 				{
-					MapPoint nextCity = locator.findNextPoint(p);
-
-					if(nextCity != null)
-					{
-						guessed = true;
-
-						if (CountryStr == null)	CountryStr = nextCity.getCountry();
-						if (RegionStr == null)  RegionStr  = nextCity.getRegion();
-
-						if(ZipStr == null) ZipStr = nextCity.getZip();
-						if(CityStr == null) CityStr = nextCity.getCity();
+						MapPoint nextCity = locator.findByCityName(p);
 						
-					}
+						if(doAutofill && nextCity == null)
+							nextCity = locator.findNextPoint(p);
+
+						if(nextCity != null)
+						{
+							guessed = true;
+
+							if (CountryStr == null)	CountryStr = nextCity.getCountry();
+							if (RegionStr == null)  RegionStr  = nextCity.getRegion();
+
+							if(doAutofill)
+							{
+								if(ZipStr == null)
+								{
+									String CityZipStr = nextCity.getZip();
+									
+									// Ignore list of Zips seperated by ;
+									
+									if(CityZipStr != null && CityZipStr.indexOf(',') < 0)
+										ZipStr = CityZipStr; 
+								}
+								
+								if(CityStr == null) CityStr = nextCity.getCity();								
+							}
+						
+						}
 				}
+				
 	
 				if(CountryStr != null && checkedForPoiDispFlag == false)
 				{
@@ -300,7 +315,7 @@ public class MapBuilder implements Configurable {
 				}
 
 
-				if(CityStr != null && p.isRoadNamePOI())	
+				if(p.isRoadNamePOI() && CityStr != null)					
 				{
 						// If it is road POI add city name and street name into address info
 						p.setStreet(p.getName());
@@ -345,7 +360,7 @@ public class MapBuilder implements Configurable {
 					Label streetName = lbl.newLabel(p.getStreet());
 					r.setStreetName(streetName);			  
 				}
-				else if (guessed == true)
+				else if (guessed == true && locationAutofillLevel > 0)
 				{
 					Label streetName = lbl.newLabel("FIX MY ADDRESS");
 					r.setStreetName(streetName);		

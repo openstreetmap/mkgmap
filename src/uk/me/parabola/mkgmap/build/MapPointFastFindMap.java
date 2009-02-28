@@ -11,7 +11,7 @@
  *  GNU General Public License for more details.
  * 
  * 	This is multimap to store city information for the Address Locator
- *  It provides also a fast tile based nearest point search function
+ *  tt provides also a fast tile based nearest point search function
  *
  *
  * Author: Bernhard Heibler
@@ -23,10 +23,8 @@ package uk.me.parabola.mkgmap.build;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Vector;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.imgfmt.app.Coord;
 
 class MapPointFastFindMap{
 
