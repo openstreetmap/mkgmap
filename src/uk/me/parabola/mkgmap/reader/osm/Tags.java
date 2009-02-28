@@ -67,15 +67,17 @@ public class Tags implements Iterable<String> {
 		Integer ind = keyPos((String) key);
 		if (ind == null)
 			return null;
-		//System.out.printf("hit %d, miss %d\n", hit, miss);
 		return values[ind];
 	}
 
 	public String put(String key, String value) {
 		if (extra != null) {
-			extra.key = key;
-			extra.value = value;
-			extra.next = new ExtraEntry();
+			ExtraEntry emptyEntry = extra;
+			while (emptyEntry.next != null)
+				emptyEntry = emptyEntry.next;
+			emptyEntry.key = key;
+			emptyEntry.value = value;
+			emptyEntry.next = new ExtraEntry();
 			return null;
 		}
 		ensureSpace();
@@ -112,10 +114,11 @@ public class Tags implements Iterable<String> {
 	 * @return A copy of this object.
 	 */
 	Tags copy() {
+		addExtraItems();
+		
 		Tags cp = new Tags();
 		cp.size = size;
 		cp.capacity = capacity;
-		cp.extra = null;
 
 		// Copy the arrays.  (For java 1.6 we can use Arrays.copyOf().)
 		cp.keys = new String[keys.length];
@@ -178,7 +181,10 @@ public class Tags implements Iterable<String> {
 			private boolean doWild;
 
 			// Set the extra field in the containing class.
-			{ extra = new ExtraEntry(); }
+			{
+				addExtraItems();
+				extra = new ExtraEntry();
+			}
 
 			public boolean hasNext() {
 				if (doWild)
@@ -191,6 +197,12 @@ public class Tags implements Iterable<String> {
 				}
 				if (extra != null && extra.value != null)
 					return true;
+
+				// Add everything from extra, there is no guarantee that this
+				// gets called here (because you may stop the iteration early)
+				// but in the normal case it will be called and will remove all
+				// the ExtraEntry objects.
+				addExtraItems();
 				return false;
 			}
 
@@ -216,10 +228,8 @@ public class Tags implements Iterable<String> {
 				if (extra != null && extra.value != null) {
 					ExtraEntry ex = extra;
 
-					extra = null;
-					put(ex.key, ex.value);
-
 					extra = ex.next;
+
 					doWild = true;
 					wild = ex.key;
 					return ex.key + '=' + ex.value;
@@ -231,5 +241,18 @@ public class Tags implements Iterable<String> {
 				throw new UnsupportedOperationException();
 			}
 		};
+	}
+
+	/**
+	 * Add the items that are in 'extra' to the map proper.
+	 */
+	private void addExtraItems() {
+		if (extra != null) {
+			ExtraEntry e = extra;
+			extra = null;
+			for (; e != null; e = e.next)
+				if (e.value != null)
+					put(e.key, e.value);
+		}
 	}
 }

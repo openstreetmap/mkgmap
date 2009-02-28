@@ -140,7 +140,7 @@ public class TagsTest {
 			tags.put(a[0], a[1]);
 
 		for (String[] a : addlist) {
-			assertTrue(it.hasNext());
+			assertTrue("tag added", it.hasNext());
 			assertEquals("tag added", a[0] + '=' + a[1], it.next());
 			assertEquals("tag added wildcard", a[0] + "=*", it.next());
 		}
@@ -164,7 +164,7 @@ public class TagsTest {
 		Iterator<String> it = tags.iterator();
 		int n = (SMALL_SET.length + 1) * 2;
 		for (int i = 0; i < n; i++) {
-			assertTrue("has next at position "+i, it.hasNext());
+			assertTrue("should be tag at position " + i, it.hasNext());
 			assertNotNull("result should be non null", it.next());
 		}
 	}
