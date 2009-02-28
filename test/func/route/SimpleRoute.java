@@ -64,7 +64,7 @@ public class SimpleRoute {
 				assertEquals("NET size", 66799, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 203559, size);
+				assertEquals("NOD size", 203687, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
