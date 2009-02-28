@@ -52,9 +52,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
-	private Map<Long, Node> nodeMap = new HashMap<Long, Node>(5000);
-	private Map<Long, Way> wayMap = new LinkedHashMap<Long, Way>(5000);
-	private Map<Long, Relation> relationMap = new LinkedHashMap<Long, Relation>();
+	private Map<Long, Node> nodeMap;
+	private Map<Long, Way> wayMap;
+	private Map<Long, Relation> relationMap;
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
 	private static final int MODE_NODE = 1;
@@ -85,6 +85,15 @@ class Osm5XmlHandler extends DefaultHandler {
 		routing = props.containsKey("route");
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		if (props.getProperty("preserve-element-order", false)) {
+			nodeMap = new LinkedHashMap<Long, Node>(5000);
+			wayMap = new LinkedHashMap<Long, Way>(5000);
+			relationMap = new LinkedHashMap<Long, Relation>();
+		} else {
+			nodeMap = new HashMap<Long, Node>(5000);
+			wayMap = new HashMap<Long, Way>(5000);
+			relationMap = new HashMap<Long, Relation>();
+		}
 	}
 
 	/**
