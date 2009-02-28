@@ -92,14 +92,6 @@ public class Tags implements Iterable<String> {
 		return old;
 	}
 
-	public String reallyPut(String key, String value) {
-	    ExtraEntry saveExtra = extra;
-	    extra = null;
-	    String result = put(key, value);
-	    extra = saveExtra;
-	    return result;
-	}
-
 	public String remove(Object key) {
 		Integer k = keyPos((String) key);
 
@@ -175,6 +167,9 @@ public class Tags implements Iterable<String> {
 	 *
 	 * If you have the tags a=b, c=d then you will get the following strings
 	 * returned: "a=b", "a=*", "c=d", "c=*".
+	 *
+	 * If you add a tag during the iteration, then it is guaranteed to
+	 * appear later in the iteration.
 	 */
 	public Iterator<String> iterator() {
 		return new Iterator<String>() {
