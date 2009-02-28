@@ -37,12 +37,14 @@ import java.util.Iterator;
 public class Tags implements Iterable<String> {
 	private static final int INIT_SIZE = 8;
 
-	private int size;
+	private short size;
+	private short capacity;
+
 	private String[] keys;
 	private String[] values;
 
-	private int capacity;
-
+	// This is a flag that iteration is taking place and a place to store
+	// tags that are added during iteration.
 	private ExtraEntry extra;
 
 	/**
@@ -53,9 +55,6 @@ public class Tags implements Iterable<String> {
 		private String value;
 		private ExtraEntry next;
 	}
-
-	//private int hit;
-	//private int miss;
 
 	public Tags() {
 		keys = new String[INIT_SIZE];
@@ -72,6 +71,8 @@ public class Tags implements Iterable<String> {
 
 	public String put(String key, String value) {
 		if (extra != null) {
+			// Deal with the case where we are adding a tag during iteration
+			// of the tags.  This is flagged by extra being non null.
 			ExtraEntry emptyEntry = extra;
 			while (emptyEntry.next != null)
 				emptyEntry = emptyEntry.next;
@@ -80,6 +81,7 @@ public class Tags implements Iterable<String> {
 			emptyEntry.next = new ExtraEntry();
 			return null;
 		}
+
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
@@ -130,7 +132,7 @@ public class Tags implements Iterable<String> {
 
 	private void ensureSpace() {
 		while (size + 1 >= capacity) {
-			int ncap = capacity*2;
+			short ncap = (short) (capacity*2);
 			String[] okey = keys;
 			String[] oval = values;
 			keys = new String[ncap];
@@ -155,11 +157,8 @@ public class Tags implements Iterable<String> {
 				i -= capacity;
 
 			String fk = keys[i];
-			if (fk == null || fk.equals(key)) {
-				//hit++;
+			if (fk == null || fk.equals(key))
 				return i;
-			}
-			//miss++;
 		}
 		return null;
 	}
@@ -179,29 +178,37 @@ public class Tags implements Iterable<String> {
 			private int pos;
 			private String wild;
 			private boolean doWild;
+			private ExtraEntry nextEntry;
 
 			// Set the extra field in the containing class.
 			{
 				addExtraItems();
 				extra = new ExtraEntry();
+				nextEntry = extra;
 			}
 
 			public boolean hasNext() {
+				// After every normal entry there is a wild card entry.
 				if (doWild)
 					return true;
+
+				// Normal entries in the map
 				for (int i = pos; i < capacity; i++) {
 					if (values[i] != null) {
 						pos = i;
 						return true;
 					}
 				}
-				if (extra != null && extra.value != null)
+
+				// Entries that were added during iteration
+				if (nextEntry != null && nextEntry.value != null)
 					return true;
 
-				// Add everything from extra, there is no guarantee that this
-				// gets called here (because you may stop the iteration early)
-				// but in the normal case it will be called and will remove all
-				// the ExtraEntry objects.
+				// Add everything from extra and clean up, there is no guarantee
+				// that this gets called here (because you may stop the
+				// iteration early) but in the normal case it will be called
+				// and will remove all the ExtraEntry objects, thus keeping
+				// the memory usage to a minimum.
 				addExtraItems();
 				return false;
 			}
@@ -225,11 +232,10 @@ public class Tags implements Iterable<String> {
 					}
 					pos = capacity;
 				}
-				if (extra != null && extra.value != null) {
-					ExtraEntry ex = extra;
 
-					extra = ex.next;
-
+				ExtraEntry ex = nextEntry;
+				if (nextEntry != null && nextEntry.value != null) {
+					nextEntry = ex.next;
 					doWild = true;
 					wild = ex.key;
 					return ex.key + '=' + ex.value;

@@ -156,12 +156,15 @@ public class TagsTest {
 	public void testAddedTagsKeptAfterIter() {
 		Tags tags = smallSetTags();
 
-		iterateOverTags(tags);
-
+		Iterator<String> it = iterateOverTags(tags);
 		tags.put("added", "iter");
 
-		// Check for the extra tags
-		Iterator<String> it = tags.iterator();
+		// Complete the iteration for the added tag.
+		assertNotNull(it.next());
+		assertNotNull(it.next());
+
+		// Create a new iterator and make sure the tags are still there.
+		it = tags.iterator();
 		int n = (SMALL_SET.length + 1) * 2;
 		for (int i = 0; i < n; i++) {
 			assertTrue("should be tag at position " + i, it.hasNext());
@@ -177,15 +180,18 @@ public class TagsTest {
 	public void testAddedTagsKeptOnCopy() {
 		Tags tags = smallSetTags();
 
-		iterateOverTags(tags);
-
+		Iterator<String> it = iterateOverTags(tags);
 		tags.put("added", "iter");
+
+		// Complete the iteration for the added tag.
+		assertNotNull(it.next());
+		assertNotNull(it.next());
 
 		// Copy the tags.
 		tags = tags.copy();
 
 		// Check that the copy contains the extra tags.
-		Iterator<String> it = tags.iterator();
+		it = tags.iterator();
 		int n = (SMALL_SET.length + 1) * 2;
 		for (int i = 0; i < n; i++) {
 			assertTrue("has next at position "+i, it.hasNext());
