@@ -221,7 +221,7 @@ public class Tags implements Iterable<String> {
 
 					extra = ex.next;
 					doWild = true;
-					wild = ex.value;
+					wild = ex.key;
 					return ex.key + '=' + ex.value;
 				}
 				return null;

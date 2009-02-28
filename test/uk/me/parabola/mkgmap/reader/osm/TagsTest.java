@@ -122,7 +122,7 @@ public class TagsTest {
 		assertEquals("the wildcard tag added", "added=*", it.next());
 
 		// And that should be it...
-		assertNull("iteration is finished", it.hasNext());
+		assertFalse("iteration is finished", it.hasNext());
 	}
 
 	@Test
