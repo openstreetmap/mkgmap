@@ -36,6 +36,8 @@ import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 /**
@@ -49,6 +51,7 @@ public class MapMaker implements MapProcessor {
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
+			makeAreaPOIs(args, src);			
 			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
 		} catch (FormatException e) {
@@ -135,6 +138,44 @@ public class MapMaker implements MapProcessor {
 		return src;
 	}
 
+	private void makeAreaPOIs(CommandArgs args, LoadableMapDataSource src) {
+		String s = args.getProperties().getProperty("add-pois-to-areas");
+		if (s != null) {
+			
+			MapPointFastFindMap poiMap = new MapPointFastFindMap();
+			
+			for (MapPoint point : src.getPoints()) 
+			{
+				if(point.isRoadNamePOI() == false) // Don't put road pois in this list
+					poiMap.put(null, point);
+			}
+			
+			for (MapShape shape : src.getShapes()) {
+				String shapeName = shape.getName();
+
+				int pointType = shape.getPoiType();
+				
+				// only make a point if the shape has a name and we know what type of point to make
+				if (pointType == 0)
+					continue;
+
+				// check if there is not already a poi in that shape 
+							
+				if(poiMap.findPointInShape(shape, pointType) == null)
+				{
+					MapPoint newPoint = new MapPoint();
+					newPoint.setName(shapeName);
+					newPoint.setType(pointType);
+					newPoint.setLocation(shape.getLocation()); // TODO use centriod
+					src.getPoints().add(newPoint);
+					log.info("created POI ", shapeName, "from shape");
+				}
+			}
+		}
+
+	}
+
+	
 	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
 		String rnp = args.getProperties().getProperty("road-name-pois", null);
 		// are road name POIS wanted?

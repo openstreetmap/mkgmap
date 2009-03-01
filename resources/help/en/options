@@ -117,6 +117,11 @@ Misc options:
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
 	can be specified with this option.
+	
+--add-pois-to-areas
+	Generate a POI for each area. The POIs are created after the style
+	is applied and only for polygon types that have a reasonable point
+	equivalent.
 
 --tdbfile
 	Write a .tdb file.

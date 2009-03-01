@@ -53,6 +53,9 @@ package uk.me.parabola.mkgmap.build;
 
 import java.util.Collection;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.general.MapPointMultiMap;
+
 import java.util.Vector;
 
 public class Locator {
@@ -380,7 +383,7 @@ public class Locator {
 				
 			  	if(autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns)
 			  	{
-					  //TODO: re-enable after merge
+					  // TODO re-enable on merge
 						//if(place.getIsIn() != null)
 						//System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn()
 						//		+ " " + place.getLocation().toOSMURL());
