@@ -16,12 +16,15 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
+import java.text.CollationKey;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -29,20 +32,20 @@ import uk.me.parabola.imgfmt.app.Label;
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
  * that are to do with location to here.
- *
- * @author Steve Ratcliffe
  */
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
-	private final SortedMap<String, City> cityList = new TreeMap<String, City>();
+	private final List<CitySort> cityList = new ArrayList<CitySort>();
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<POIRecord> pois = new ArrayList<POIRecord>();
 
 	private LBLFile lblFile;
 	private PlacesHeader placeHeader;
 	private boolean poisClosed;
+
+	private Collator collator;
 
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
@@ -54,6 +57,7 @@ public class PlacesFile {
 	void init(LBLFile file, PlacesHeader pheader) {
 		lblFile = file;
 		placeHeader = pheader;
+		collator = Collator.getInstance(Locale.US); // TODO work out how this should work
 	}
 
 	void write(ImgFileWriter writer) {
@@ -65,11 +69,8 @@ public class PlacesFile {
 			r.write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (String s : cityList.keySet())
-		{
-			City c = cityList.get(s);
-			c.write(writer);
-		}
+		for (CitySort c : cityList)
+			c.getCity().write(writer);
 
 		placeHeader.endCity(writer.position());
 
@@ -136,13 +137,8 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			/*
-				 Adding 0 in between is important to get right sort order !!!
-				 We have to make sure that "Kirchdorf" gets sorted before "Kirchdorf am Inn"
-				 If this order is not correct nuvi would not find right city
-			*/
-
-		  cityList.put(name + " 0" + c, c);
+			CollationKey key = collator.getCollationKey(name);
+			cityList.add(new CitySort(key, c));
 			cities.put(uniqueCityName, c);
 		}
 
@@ -160,18 +156,13 @@ public class PlacesFile {
 		
 		if(c == null)
 		{
-		   c = new City(region);
+			c = new City(region);
 
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			/*
-				 Adding 0 in between is important to get right sort order !!!
-				 We have to make sure that "Kirchdorf" gets sorted before "Kirchdorf am Inn"
-				 If this order is not correct nuvi would not find right city
-			*/
-
-			cityList.put(name + " 0" + c, c); 
+			CollationKey key = collator.getCollationKey(name);
+			cityList.add(new CitySort(key, c));
 			cities.put(uniqueCityName, c);
 		}
 
@@ -182,11 +173,13 @@ public class PlacesFile {
 	{
 		int index = 1;
 
-		for (String s : cityList.keySet())
-		{
-			City c = cityList.get(s);
-			c.setIndex(index++);
-		}
+		Collections.sort(cityList, new Comparator<CitySort>() {
+			public int compare(CitySort o1, CitySort o2) {
+				return o1.getKey().compareTo(o2.getKey());
+			}
+		});
+		for (CitySort cs: cityList)
+			cs.getCity().setIndex(index++);
 	}
 
 	Zip createZip(String code) {
@@ -233,5 +226,23 @@ public class PlacesFile {
 		int ofs = 0;
 		for (POIRecord p : pois)
 			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size());
+	}
+
+	private class CitySort {
+		private final CollationKey key;
+		private final City city;
+
+		private CitySort(CollationKey key, City city) {
+			this.key = key;
+			this.city = city;
+		}
+
+		public CollationKey getKey() {
+			return key;
+		}
+
+		public City getCity() {
+			return city;
+		}
 	}
 }
