@@ -20,16 +20,16 @@ Options:
 	Sets the descriptive text for the map. This may be displayed in
 	QLandkarte, MapSource on on a GPS etc. 
 
---country-name
+--country-name=name
 	Sets the map's country name. The default is "UNITED KINGDOM".
 
---country-abbr
+--country-abbr=abbreviation
 	Sets the map's abbreviated country name. The default is "GBR".
 
---region-name
+--region-name=name
 	Sets the map's region name. By default, the map has no region name.
 
---region-abbr
+--region-abbr=abbreviation
 	Sets the map's abbreviated region name. By default, the map has
 	no abbreviated region name.
 
