@@ -52,13 +52,11 @@ public class City {
 	public City(Region region) {
 		this.region = region;
 		this.country = null;
-		this.index = index;
 	}
 
 	public City(Country country) {
 		this.country = country;
 		this.region = null;
-		this.index = index;
 	}
 
 	void write(ImgFileWriter writer) {

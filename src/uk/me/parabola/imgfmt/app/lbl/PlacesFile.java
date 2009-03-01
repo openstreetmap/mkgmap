@@ -94,11 +94,11 @@ public class PlacesFile {
 	
 		if(c == null)
 		{
-		   c = new Country(countries.size()+1);
+			c = new Country(countries.size()+1);
 
-		   Label l = lblFile.newLabel(s);
-		   c.setLabel(l);
-   		 countries.put(s, c);
+			Label l = lblFile.newLabel(s);
+			c.setLabel(l);
+			countries.put(s, c);
 		}
 		return c;
 	}
@@ -113,10 +113,10 @@ public class PlacesFile {
 		
 		if(r == null)
 		{
-		  r = new Region(country, regions.size()+1);
-		  Label l = lblFile.newLabel(s);
-		  r.setLabel(l);
-		  regions.put(uniqueRegionName, r);
+			r = new Region(country, regions.size()+1);
+			Label l = lblFile.newLabel(s);
+			r.setLabel(l);
+			regions.put(uniqueRegionName, r);
 		}
 		return r;
 	}
@@ -194,7 +194,7 @@ public class PlacesFile {
 		   z.setLabel(l);
 
 		   postalCodes.put(code, z);
- 	        }
+		}
 		return z;
 	}
 

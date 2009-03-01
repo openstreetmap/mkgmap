@@ -36,8 +36,8 @@ import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 /**
@@ -211,7 +211,7 @@ public class MapMaker implements MapProcessor {
 			// generate a POI for each named road
 			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
-				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt, cities));
+				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt));
 			}
 		}
 	}
@@ -302,7 +302,7 @@ public class MapMaker implements MapProcessor {
 		return roadGroups;
 	}
 
-	private MapPoint makeRoadNamePOI(MapLine road, int type, List<MapPoint> cities) {
+	private MapPoint makeRoadNamePOI(MapLine road, int type) {
 		List<Coord> points = road.getPoints();
 		int numPoints = points.size();
 		Coord coord;

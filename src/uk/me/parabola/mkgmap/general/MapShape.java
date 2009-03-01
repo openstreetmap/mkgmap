@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MapShape extends MapLine {// So top code can link objects from here
 
-	private int poiType = 0;
+	private int poiType;
 	
 	public MapShape() {
 	}

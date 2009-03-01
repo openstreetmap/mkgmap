@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import java.util.Vector;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 
@@ -25,7 +24,7 @@ import uk.me.parabola.imgfmt.app.Label;
  */
 public class POIRecord {
 
-  class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
+	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
 	{
 		/**
 			Street and Phone numbers can be stored in two different ways in the poi record
@@ -34,8 +33,8 @@ public class POIRecord {
 			chars like in 4a the coding fails and the caller has to use a Label instead
 		*/
 	
-		private byte encodedNumber[] = null;
-		private int  encodedSize = 0;
+		private byte[] encodedNumber;
+		private int  encodedSize;
 		
 		public boolean set(String number)
 		{
@@ -51,8 +50,8 @@ public class POIRecord {
 				
 			while(i < number.length())
 			{
-				int c1 = 0;
-				int c2 = 0;
+				int c1;
+				int c2;
 
 				c1 = decodeChar(number.charAt(i));
 				i++;
@@ -120,6 +119,7 @@ public class POIRecord {
 	public static final byte HAS_EXIT       = 0x20;
 	public static final byte HAS_TIDE_PREDICTION = 0x40;
 
+	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
 	private static final AddrAbbr ABBR_APARTMENT = new AddrAbbr('1', "APT");
 	private static final AddrAbbr ABBR_BUILDING = new AddrAbbr('2', "BLDG");
@@ -128,21 +128,22 @@ public class POIRecord {
 	private static final AddrAbbr ABBR_ROOM = new AddrAbbr('5', "RM");
 	private static final AddrAbbr ABBR_STE = new AddrAbbr('6', "STE");  // don't know what this is?
 	private static final AddrAbbr ABBR_UNIT = new AddrAbbr('7', "UNIT");
+	*/
 
 	private int offset = -1;
 	private Label poiName;
 
-	private SimpleStreetPhoneNumber simpleStreetNumber = new SimpleStreetPhoneNumber();
-	private SimpleStreetPhoneNumber simplePhoneNumber = new SimpleStreetPhoneNumber();
+	private final SimpleStreetPhoneNumber simpleStreetNumber = new SimpleStreetPhoneNumber();
+	private final SimpleStreetPhoneNumber simplePhoneNumber = new SimpleStreetPhoneNumber();
 
 	private Label streetName;
 	private Label streetNumberName; // Used for numbers such as 221b
 	private Label complexPhoneNumber; // Used for numbers such as 221b
 	
-	private City city = null;
-	private char zipIndex  = 0;
+	private City city;
+	private char zipIndex;
 
-	private String phoneNumber;
+	//private String phoneNumber;
 
 	public void setLabel(Label label) {
 		this.poiName = label;

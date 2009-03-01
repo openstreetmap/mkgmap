@@ -51,24 +51,25 @@
 
 package uk.me.parabola.mkgmap.build;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.general.MapPointMultiMap;
-
-import java.util.Vector;
 
 public class Locator {
 
 	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
 	private final MapPointMultiMap  	fuzzyCityMap			= new MapPointMultiMap();
-	private final java.util.Vector<MapPoint> placesMap  =  new Vector<MapPoint>();
+	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
-	private LocatorConfig locConfig = new LocatorConfig();
+	private final LocatorConfig locConfig = new LocatorConfig();
 
-	static double totalTime = 0;
-	static long totalFinds = 0;
-	private int autoFillLevel = 0;
+	private static double totalTime;
+	private static long totalFinds;
+	private int autoFillLevel;
 
 	public void addLocation(MapPoint p) 
 	{
@@ -159,7 +160,7 @@ public class Locator {
 
 		if(p.getIsIn() != null)
 		{	
-			String cityList[] = p.getIsIn().split(",");			
+			String[] cityList = p.getIsIn().split(",");
 			
 			//System.out.println(p.getIsIn());
 
@@ -227,7 +228,7 @@ public class Locator {
 	{
 		long   startTime = System.nanoTime();
 	
-		MapPoint nextPoint = null;
+		MapPoint nextPoint;
 	
 		nextPoint = cityMap.findNextPoint(p);
 		
@@ -240,7 +241,7 @@ public class Locator {
 	{
 		MapPoint near   = null;
 		Double minDist  = Double.MAX_VALUE;
-		Collection <MapPoint> nextCityList = null;			
+		Collection <MapPoint> nextCityList;
 		
 		if(p.getCity() == null)
 			return null;
@@ -293,34 +294,30 @@ public class Locator {
 			
 		if(isIn != null)
 		{
-			String cityList[] = isIn.split(",");
+			String[] cityList = isIn.split(",");
  
 			// Go through the isIn string and check if we find a city with this name
 			// Lets hope we find the next bigger city 
 
-			for(int i = 0; i < cityList.length; i++)
-		  {
-		  	String biggerCityName=cityList[i].trim();
-				
+			for (String aCityList : cityList) {
+				String biggerCityName = aCityList.trim();
 
-				if(fuzzy == false)
+
+				if (fuzzy == false)
 					nextCityList = cityMap.getList(biggerCityName);
 				else
-				  nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
+					nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
 
-				if(nextCityList != null)
-				{
-					for (MapPoint nextCity: nextCityList)		
-					{
+				if (nextCityList != null) {
+					for (MapPoint nextCity : nextCityList) {
 						Double dist = place.getLocation().distance(nextCity.getLocation());
 
-						if(dist < minDist)
-						{
+						if (dist < minDist) {
 							minDist = dist;
 							near = nextCity;
-				  	}
+						}
 					}
-			 	}
+				}
 			}
 
 			if (autoFillLevel > 3)  // Some debug output to find suspicios relations
@@ -364,55 +361,46 @@ public class Locator {
 		{
 			unresCount=0;
 
-			for (int i = 0; i < placesMap.size(); i++)
-			{
-				MapPoint place = placesMap.get(i);
-
-				if(place != null)
-				{
+			for (MapPoint place : placesMap) {
+				if (place != null) {
 
 					// first lets try exact name
 
 					MapPoint near = findCity(place, false);
 
-					
+
 					// if this didn't worked try to workaround german umlaute 
 
-		  		if(near == null)
-			  		near = findCity(place, true);
-				
-			  	if(autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns)
-			  	{
-					  // TODO re-enable on merge
+					if (near == null)
+						near = findCity(place, true);
+
+					if (autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns) {
+						// TODO re-enable on merge
 						//if(place.getIsIn() != null)
 						//System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn()
 						//		+ " " + place.getLocation().toOSMURL());
-			  	}
+					}
 
-	
-					if(near != null)
-					{
+
+					if (near != null) {
 						place.setCity(near.getCity());
 						place.setZip(near.getZip());
-		     	}
-					else if (autoFillLevel > 1 && (runCount + 1) == maxRuns)
-					{
-							// In the last resolve run just take info from the next known city
-							near = cityMap.findNextPoint(place);
+					} else if (autoFillLevel > 1 && (runCount + 1) == maxRuns) {
+						// In the last resolve run just take info from the next known city
+						near = cityMap.findNextPoint(place);
 					}
 
 
-					if(near != null) 
-					{
-						if(place.getRegion() == null)
+					if (near != null) {
+						if (place.getRegion() == null)
 							place.setRegion(near.getRegion());
 
-						if(place.getCountry() == null)
-							place.setCountry(near.getCountry());	
+						if (place.getCountry() == null)
+							place.setCountry(near.getCountry());
 
 					}
 
-					if(near == null)
+					if (near == null)
 						unresCount++;
 
 				}

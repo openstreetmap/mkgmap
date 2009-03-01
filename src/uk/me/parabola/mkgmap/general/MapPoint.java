@@ -26,8 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MapPoint extends MapElement {
 	private Coord location;
-	private MapPoint nearestCityPoint;
-	private boolean isRoadNamePoi = false;
+	private boolean isRoadNamePoi;
 
 	public MapPoint() {
 	}

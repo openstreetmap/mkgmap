@@ -23,13 +23,13 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
-import uk.me.parabola.imgfmt.app.lbl.Zip;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -87,7 +87,7 @@ public class MapBuilder implements Configurable {
 
 	private boolean doRoads;
 
-	private Locator locator = new Locator();
+	private final Locator locator = new Locator();
 	private Country country;
 	private Region  region;
 
@@ -95,9 +95,9 @@ public class MapBuilder implements Configurable {
 	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
-	private int		locationAutofillLevel = 0;
+	private int		locationAutofillLevel;
 	private boolean	poiAddresses = true;
-	private int		poiDisplayFlags = 0;
+	private int		poiDisplayFlags;
 
 	public MapBuilder() {
 		regionName = null;
@@ -653,7 +653,7 @@ public class MapBuilder implements Configurable {
 					// retrieve the City created earlier for
 					// this point and store the point info
 					// in it
-					City c = (City)cityMap.get(point);
+					City c = cityMap.get(point);
 
 					if(pointIndex > 255) {
 						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");

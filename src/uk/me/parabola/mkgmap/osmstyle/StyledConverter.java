@@ -63,17 +63,17 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
-	private Area bbox = null;
+	private Area bbox;
 	private Set<Coord> boundaryCoords = new HashSet<Coord>();
 
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
-	private Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
+	private final Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
 
 	// originalWay associates Ways that have been created due to
 	// splitting or clipping with the Ways that they were derived
 	// from
-	private Map<Way, Way> originalWay = new HashMap<Way, Way>();
+	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
 	private int roadId;
 
@@ -753,7 +753,7 @@ public class StyledConverter implements OsmConverter {
 
 	int getSpeedIdx(String tag)
 	{
-		double kmh = 0.0;
+		double kmh;
 		double factor = 1.0;
 		
 		String speedTag = tag.toLowerCase().trim();

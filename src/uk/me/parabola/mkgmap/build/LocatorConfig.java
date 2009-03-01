@@ -20,25 +20,31 @@
  */
 package uk.me.parabola.mkgmap.build;
 
-import org.w3c.dom.*;
-import javax.xml.parsers.*;
-import java.io.*;
-
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 public class LocatorConfig {
 
-	private final java.util.Map<String,String>  variantMap = new HashMap<String,String>();
-	private final java.util.Map<String,String>  abrMap = new HashMap<String,String>();
-	private final java.util.Map<String,Boolean> geoDbMap = new HashMap<String,Boolean>();
-	private final java.util.Map<String,Integer>  regOffsetMap = new HashMap<String,Integer>();
-	private final java.util.Map<String,Integer>  poiDispFlagMap = new HashMap<String,Integer>();
-	private final java.util.Map<String,Boolean> continentMap = new HashMap<String,Boolean>();
+	private final Map<String,String>  variantMap = new HashMap<String,String>();
+	private final Map<String,String>  abrMap = new HashMap<String,String>();
+	private final Map<String,Boolean> geoDbMap = new HashMap<String,Boolean>();
+	private final Map<String,Integer>  regOffsetMap = new HashMap<String,Integer>();
+	private final Map<String,Integer>  poiDispFlagMap = new HashMap<String,Integer>();
+	private final Map<String,Boolean> continentMap = new HashMap<String,Boolean>();
 
 
 	public LocatorConfig()
 	{
-    loadConfig("/LocatorConfig.xml");
+		loadConfig("/LocatorConfig.xml");
 	}
 
  	private void loadConfig(String fileName)
@@ -74,7 +80,7 @@ public class LocatorConfig {
 						if(cNode.getNodeName().equals("continent"))
 						{
 							NamedNodeMap attr = cNode.getAttributes();
-							Node nameTag = null;
+							Node nameTag;
 	
 							if(attr != null)
 							{
@@ -153,66 +159,65 @@ public class LocatorConfig {
 			ex.printStackTrace();
 			//System.out.println("Something is wrong here");
 		}
-  	return;
- }
+  	}
 
 	private void addVariant(String country, String variant)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		String vStr = variant.toUpperCase().trim();
 
 		//System.out.println(vStr + " -> " + cStr);
 
 		variantMap.put(vStr,cStr);
-  }
+	}
 
 	private void addAbr(String country, String abr)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		String aStr = abr.toUpperCase().trim();
 
 		//System.out.println(cStr + " -> " + aStr);
 
 		abrMap.put(cStr,aStr);
-  }
+	}
 
 	private void addRegionOffset(String country, Integer offset)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 
 		//System.out.println(cStr + " -> " + offset);
 
 		regOffsetMap.put(cStr,offset);
-  }
+	}
 
 	private void addPoiDispTag(String country, Integer flag)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 
 		//System.out.println(cStr + " -> " + flag);
 
 		poiDispFlagMap.put(cStr,flag);
-  }
+	}
 
 	private void addOpenGeoDb(String country)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		
 		//System.out.println(cStr + " openGeoDb");
 		
 		geoDbMap.put(cStr,true);
 		
-  }
+	}
 
 	private void addContinent(String continent)
-  {
+	{
 		String cStr = continent.toUpperCase().trim();
 		
 		//System.out.println(cStr + " continent");
 		
 		continentMap.put(cStr,true);
 		
-  }
+	}
 
 
 	public void setDefaultCountry(String country, String abbr)
@@ -220,8 +225,8 @@ public class LocatorConfig {
 		addAbr(country, abbr);
 	}
 
-  public String fixCountryString(String country)
-  {
+	public String fixCountryString(String country)
+	{
 		String cStr = country.toUpperCase().trim();
 		
 		String fixedString = variantMap.get(cStr);
@@ -233,7 +238,7 @@ public class LocatorConfig {
 	}
 
 	public String isCountry(String country)
-  {
+	{
 		String cStr = fixCountryString(country);
 
 		if(getCountryCode(cStr) != null)
@@ -244,13 +249,13 @@ public class LocatorConfig {
 	}
 
 	public String getCountryCode(String country)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		return abrMap.get(cStr);
-  }
+	}
 
 	public int getRegionOffset(String country)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		
 		Integer regOffset = regOffsetMap.get(cStr);
@@ -259,10 +264,10 @@ public class LocatorConfig {
 			return regOffset;
 		else
 			return 1; // Default is 1 the next string after before country
-  }
+	}
 
 	public int getPoiDispFlag(String country)
-  {
+	{
 		String cStr = country.toUpperCase().trim();
 		
 		Integer flag = poiDispFlagMap.get(cStr);
@@ -271,7 +276,7 @@ public class LocatorConfig {
 			return flag;
 		else
 			return 0; // Default is 1 the next string after before country
-  }
+	}
 
 	public boolean isOpenGeoDBCountry(String country)
 	{
@@ -287,17 +292,13 @@ public class LocatorConfig {
 	}
 
 	public boolean isContinent(String continent)
-  {
+	{
 		String s = continent.toUpperCase().trim();
 
 		if(continentMap.get(s) != null)
 			return(true);
 
 		return false;
-	}
-
-
-
-		
+	}		
 }
 

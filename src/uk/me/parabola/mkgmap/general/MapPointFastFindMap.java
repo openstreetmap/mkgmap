@@ -21,24 +21,26 @@
 package uk.me.parabola.mkgmap.general;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.List;
+import java.util.Map;
+
 import uk.me.parabola.imgfmt.app.Coord;
 
 public class MapPointFastFindMap{
 
-	private final java.util.Map<String,Vector<MapPoint>> map  = new HashMap<String,Vector<MapPoint>>();
-	private final java.util.Map<Long,Vector<MapPoint>> posMap = new HashMap<Long,Vector<MapPoint>>();	   
-	private final java.util.Vector<MapPoint> points  =  new Vector<MapPoint>();
+	private final Map<String, ArrayList<MapPoint>> map  = new HashMap<String, ArrayList<MapPoint>>();
+	private final Map<Long,ArrayList<MapPoint>> posMap = new HashMap<Long,ArrayList<MapPoint>>();
+	private final ArrayList<MapPoint> points  =  new ArrayList<MapPoint>();
 
 	private static final  long POS_HASH_DIV = 8000;  	// the smaller -> more tiles 
 	private static final  long POS_HASH_MUL = 10000;		// multiplicator for latitude to create hash
 
 	public MapPoint put(String name, MapPoint p)
 	{
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		
 		if(name != null)
 		{
@@ -46,7 +48,7 @@ public class MapPointFastFindMap{
 		
 			if(list == null){
 
-				list = new Vector<MapPoint>();
+				list = new ArrayList<MapPoint>();
 				list.add(p);		
 				map.put(name, list);
 			}
@@ -62,7 +64,7 @@ public class MapPointFastFindMap{
 		
 		if(list == null)
 		{
-			list = new Vector<MapPoint>();
+			list = new ArrayList<MapPoint>();
 			list.add(p);		
 			posMap.put(posHash, list);
 		}
@@ -74,14 +76,14 @@ public class MapPointFastFindMap{
 
 	public MapPoint get(String name)
 	{
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		
 		list = map.get(name);
 		
 		if(list != null)		
-				return list.elementAt(0);
+			return list.get(0);
 		else
-		  return null;
+			return null;
 	}
 	   
 	public Collection<MapPoint> getList(String name)
@@ -126,7 +128,7 @@ public class MapPointFastFindMap{
 
 		*/
 			
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		double minDist = Double.MAX_VALUE;
 		MapPoint nextPoint = null;
 		
@@ -185,7 +187,7 @@ public class MapPointFastFindMap{
 	
 	public MapPoint findPointInShape(MapShape shape, int pointType)
 	{
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		List<Coord>	points = shape.getPoints();
 		MapPoint nextPoint = null;
 		long lastHashValue = -1;
@@ -193,26 +195,22 @@ public class MapPointFastFindMap{
 				
 		if(posMap.size() < 1)  // No point in list
 		   return nextPoint;
-		
-		for(int i=0; i < points.size(); i++)
-		{
-			posHash = getPosHashVal(points.get(i).getLatitude(),points.get(i).getLongitude());
-			
-			if(posHash == lastHashValue) // Have we already checked this tile ?
+
+		for (Coord point : points) {
+			posHash = getPosHashVal(point.getLatitude(), point.getLongitude());
+
+			if (posHash == lastHashValue) // Have we already checked this tile ?
 				continue;
-			
+
 			lastHashValue = posHash;
-			
-			list = posMap.get(posHash);		
-			
-			if(list != null)
-			{
-				for (MapPoint actPoint: list)
-				{
-					if(pointType == 0 || actPoint.getType() == pointType)
-					{
-						if(shape.contains( actPoint.getLocation()))
-							return actPoint; 
+
+			list = posMap.get(posHash);
+
+			if (list != null) {
+				for (MapPoint actPoint : list) {
+					if (pointType == 0 || actPoint.getType() == pointType) {
+						if (shape.contains(actPoint.getLocation()))
+							return actPoint;
 					}
 				}
 			}

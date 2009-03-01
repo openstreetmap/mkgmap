@@ -19,24 +19,24 @@
 
 package uk.me.parabola.mkgmap.general;
 
-
-import java.util.Vector;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MapPointMultiMap{
 
-	private final java.util.Map<String,Vector<MapPoint>> map  = new HashMap<String,Vector<MapPoint>>();
+	private final Map<String,ArrayList<MapPoint>> map  = new HashMap<String, ArrayList<MapPoint>>();
 
 	public MapPoint put(String name, MapPoint p)
 	{
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		
 		list = map.get(name);
 		
 		if(list == null){
 
-		   list = new Vector<MapPoint>();
+		   list = new ArrayList<MapPoint>();
 		   list.add(p);		
 		   map.put(name, list);
 		}
@@ -48,14 +48,14 @@ public class MapPointMultiMap{
 
 	public MapPoint get(String name)
 	{
-		Vector<MapPoint> list;
+		ArrayList<MapPoint> list;
 		
 		list = map.get(name);
 		
 		if(list != null)		
-				return list.elementAt(0);
+			return list.get(0);
 		else
-		  return null;
+			return null;
 	}
 	   
 	public Collection<MapPoint> getList(String name)
