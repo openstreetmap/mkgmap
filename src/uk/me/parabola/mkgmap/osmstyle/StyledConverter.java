@@ -16,22 +16,34 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.LineAdder;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -51,8 +63,27 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
+	private Area bbox = null;
+	private Set<Coord> boundaryCoords = new HashSet<Coord>();
+
+	// restrictions associates lists of turn restrictions with the
+	// Coord corresponding to the restrictions' 'via' node
+	private Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
+
+	// originalWay associates Ways that have been created due to
+	// splitting or clipping with the Ways that they were derived
+	// from
+	private Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
 	private int roadId;
+
+	private final int MAX_NODES_IN_WAY = 16;
+
+	private final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
+
+	// nodeIdMap maps a Coord into a nodeId
+	private final Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
+	private int nextNodeId;
 	
 	private final Rule wayRules;
 	private final Rule nodeRules;
@@ -101,8 +132,12 @@ public class StyledConverter implements OsmConverter {
 
 		postConvertRules(way, foundType);
 
-		if (foundType.getFeatureKind() == GType.POLYLINE)
-            addLine(way, foundType);
+		if (foundType.getFeatureKind() == GType.POLYLINE) {
+		    if(foundType.isRoad())
+			addRoad(way, foundType);
+		    else
+			addLine(way, foundType);
+		}
 		else
 			addShape(way, foundType);
 	}
@@ -173,6 +208,7 @@ public class StyledConverter implements OsmConverter {
 	 */
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
+		this.bbox = bbox;
 	}
 
 	/**
@@ -186,6 +222,18 @@ public class StyledConverter implements OsmConverter {
 		// Relations never resolve to a GType and so we ignore the return
 		// value.
 		relationRules.resolveType(relation);
+
+		if(relation instanceof RestrictionRelation) {
+			RestrictionRelation rr = (RestrictionRelation)relation;
+			if(rr.isValid()) {
+				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
+				if(lrr == null) {
+					lrr = new ArrayList<RestrictionRelation>();
+					restrictions.put(rr.getViaCoord(), lrr);
+				}
+				lrr.add(rr);
+			}
+		}
 	}
 
 	private void addLine(Way way, GType gt) {
@@ -195,12 +243,6 @@ public class StyledConverter implements OsmConverter {
 
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
-		if (gt.isRoad()) {
-			MapRoad r = new MapRoad(roadId++, line);
-			r.setRoadClass(gt.getRoadClass());
-			r.setSpeed(gt.getRoadSpeed());
-			line = r;
-		}
 
 		clipper.clipLine(line, lineAdder);
 	}
@@ -278,5 +320,493 @@ public class StyledConverter implements OsmConverter {
 
 		if(region != null)
 		  ms.setRegion(region);			
+	}
+
+	void addRoad(Way way, GType gt) {
+
+		if("roundabout".equals(way.getTag("junction"))) {
+			String frigFactorTag = way.getTag("mkgmap:frig_roundabout");
+			if(frigFactorTag != null) {
+				// do special roundabout frigging to make gps
+				// routing prompt use the correct exit number
+				double frigFactor = 0.25; // default
+				try {
+					frigFactor = Double.parseDouble(frigFactorTag);
+				}
+				catch (NumberFormatException nfe) {
+					// relax, tag was probably not a number anyway
+				}
+				frigRoundabout(way, frigFactor);
+			}
+		}
+
+		// if there is a bounding box, clip the way with it
+
+		List<Way> clippedWays = null;
+
+		if(bbox != null) {
+			List<List<Coord>> lineSegs = LineClipper.clip(bbox, way.getPoints());
+			boundaryCoords = new HashSet<Coord>();
+
+			if (lineSegs != null) {
+
+				clippedWays = new ArrayList<Way>();
+
+				for (List<Coord> lco : lineSegs) {
+					Way nWay = new Way();
+					nWay.setName(way.getName());
+					nWay.copyTags(way);
+					for(Coord co : lco) {
+						nWay.addPoint(co);
+						if(co.getHighwayCount() == 0) {
+							boundaryCoords.add(co);
+							co.incHighwayCount();
+						}
+					}
+					clippedWays.add(nWay);
+					// associate the original Way
+					// to the new Way
+					Way origWay = originalWay.get(way);
+					if(origWay == null)
+						origWay = way;
+					originalWay.put(nWay, origWay);
+				}
+			}
+		}
+
+		if(clippedWays != null) {
+			for(Way cw : clippedWays) {
+				addRoadAfterSplittingLoops(cw, gt);
+			}
+		}
+		else {
+			// no bounding box or way was not clipped
+			addRoadAfterSplittingLoops(way, gt);
+		}
+	}
+
+	void addRoadAfterSplittingLoops(Way way, GType gt) {
+
+		// check if the way is a loop or intersects with itself
+
+		boolean wayWasSplit = true; // aka rescan required
+
+		while(wayWasSplit) {
+			List<Coord> wayPoints = way.getPoints();
+			int numPointsInWay = wayPoints.size();
+
+			wayWasSplit = false; // assume way won't be split
+
+			// check each point in the way to see if it is
+			// the same point as a following point in the way
+			for(int p1I = 0; !wayWasSplit && p1I < (numPointsInWay - 1); p1I++) {
+				Coord p1 = wayPoints.get(p1I);
+				for(int p2I = p1I + 1; !wayWasSplit && p2I < numPointsInWay; p2I++) {
+					if(p1 == wayPoints.get(p2I)) {
+						// way is a loop or intersects itself
+						int splitI = p2I - 1; // split before second point
+						if(splitI == p1I) {
+							log.info("Way has zero length segment - " + wayPoints.get(splitI).toOSMURL());
+							wayPoints.remove(p2I);
+							// next point to inspect has same index
+							--p2I;
+							// but number of points has reduced
+							--numPointsInWay;
+						}
+						else {
+							// split the way before the second point
+							log.info("Split way at " + wayPoints.get(splitI).toDegreeString() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segments.");
+							Way loopTail = splitWayAt(way, splitI);
+							// way before split has now been verified
+							addRoadWithoutLoops(way, gt);
+							// now repeat for the tail of the way
+							way = loopTail;
+							wayWasSplit = true;
+						}
+					}
+				}
+			}
+
+			if(!wayWasSplit) {
+				// no split required so make road from way
+				addRoadWithoutLoops(way, gt);
+			}
+		}
+	}
+
+	void addRoadWithoutLoops(Way way, GType gt) {
+		List<Integer> nodeIndices = new ArrayList<Integer>();
+		List<Coord> points = way.getPoints();
+		Way trailingWay = null;
+
+		// make sure the way has nodes at each end
+		points.get(0).incHighwayCount();
+		points.get(points.size() - 1).incHighwayCount();
+
+		// collect the Way's nodes
+		for(int i = 0; i < points.size(); ++i) {
+			Coord p = points.get(i);
+			int highwayCount = p.getHighwayCount();
+			if(highwayCount > 1) {
+				// this point is a node connecting highways
+				Integer nodeId = nodeIdMap.get(p);
+				if(nodeId == null) {
+					// assign a node id
+					nodeId = nextNodeId++;
+					nodeIdMap.put(p, nodeId);
+				}
+				nodeIndices.add(i);
+
+				if((i + 1) < points.size() &&
+				   nodeIndices.size() == MAX_NODES_IN_WAY) {
+					// this isn't the last point in the way
+					// so split it here to avoid exceeding
+					// the max nodes in way limit
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated
+					// the current Way's points so
+					// the loop will now terminate
+					log.info("Splitting way " + way.getName() + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+				}
+			}
+		}
+
+		MapLine line = new MapLine();
+		elementSetup(line, gt, way);
+		line.setPoints(points);
+
+		MapRoad road = new MapRoad(roadId++, line);
+
+		// set road parameters.
+		road.setRoadClass(gt.getRoadClass());
+		if (way.isBoolTag("oneway")) {
+			road.setDirection(true);
+			road.setOneway();
+		}
+
+		// maxspeed attribute overrides default for road type
+		
+		String maxSpeed = way.getTag("maxspeed");
+		int speedIdx = -1;
+		
+		if(maxSpeed != null)
+			speedIdx = getSpeedIdx(maxSpeed);
+
+		road.setSpeed(speedIdx >= 0? speedIdx : gt.getRoadSpeed());
+
+		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
+		String highwayType = way.getTag("highway");
+		if(highwayType == null) {
+			// it's a routable way but not a highway (e.g. a ferry)
+			// use the value of the route tag as the highwayType
+			// for the purpose of testing for access restrictions
+			highwayType = way.getTag("route");
+		}
+
+		String[] vehicleClass = { "access", // must be first in list
+					  "bicycle",
+					  "foot",
+					  "hgv",
+					  "motorcar",
+					  "motorcycle",
+					  "psv",
+		};
+		int[] accessSelector = { RoadNetwork.NO_MAX,
+					 RoadNetwork.NO_BIKE,
+					 RoadNetwork.NO_FOOT,
+					 RoadNetwork.NO_TRUCK,
+					 RoadNetwork.NO_CAR,
+					 RoadNetwork.NO_CAR, // motorcycle
+					 RoadNetwork.NO_BUS };
+
+		for(int i = 0; i < vehicleClass.length; ++i) {
+			String access = way.getTag(vehicleClass[i]);
+			if(access == null)
+				continue;
+			if(accessExplicitlyDenied(access)) {
+				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+					// everything is denied access
+					for(int j = 0; j < noAccess.length; ++j)
+						noAccess[j] = true;
+				}
+				else {
+					// just the specific vehicle
+					// class is denied access
+					noAccess[accessSelector[i]] = true;
+				}
+				log.info(vehicleClass[i] + " is not allowed in " + highwayType + " " + way.getName());
+			}
+			else if(accessExplicitlyAllowed(access)) {
+				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+					// everything is allowed access
+					for(int j = 0; j < noAccess.length; ++j)
+						noAccess[j] = false;
+				}
+				else {
+					// just the specific vehicle
+					// class is allowed access
+					noAccess[accessSelector[i]] = false;
+				}
+				log.info(vehicleClass[i] + " is allowed in " + highwayType + " " + way.getName());
+			}
+			else if(access.equalsIgnoreCase("unknown")) {
+				// implicitly allow access
+			}
+			else {
+				log.warn("Ignoring unsupported access tag " + vehicleClass[i] + "=" + way.getTag(vehicleClass[i]));
+			}
+		}
+
+		road.setAccess(noAccess);
+
+		if(way.isBoolTag("toll"))
+			road.setToll();
+
+		Way origWay = originalWay.get(way);
+		if(origWay == null)
+		    origWay = way;
+
+		int numNodes = nodeIndices.size();
+		road.setNumNodes(numNodes);
+
+		if(numNodes > 0) {
+			// replace Coords that are nodes with CoordNodes
+			boolean hasInternalNodes = false;
+		        CoordNode lastCoordNode = null;
+			List<RestrictionRelation> lastRestrictions = null;
+			for(int i = 0; i < numNodes; ++i) {
+				int n = nodeIndices.get(i);
+				if(n > 0 && n < points.size() - 1)
+					hasInternalNodes = true;
+				Coord coord = points.get(n);
+				Integer nodeId = nodeIdMap.get(coord);
+				boolean boundary = boundaryCoords.contains(coord);
+				if(boundary) {
+					log.info("Way " + way.getName() + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
+				}
+
+				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
+				points.set(n, thisCoordNode);
+
+				// see if this node plays a role in any
+				// turn restrictions
+
+				if(lastRestrictions != null) {
+					// the previous node was the
+					// location of one or more
+					// restrictions
+					for(RestrictionRelation rr : lastRestrictions) {
+						if(rr.getToWay().equals(origWay)) {
+							rr.setToNode(thisCoordNode);
+						}
+						else if(rr.getFromWay().equals(origWay)) {
+							rr.setFromNode(thisCoordNode);
+						}
+						else {
+							rr.addOtherNode(thisCoordNode);
+						}
+					}
+				}
+
+				List<RestrictionRelation> theseRestrictions = restrictions.get(coord);
+				if(theseRestrictions != null) {
+					// this node is the location
+					// of one or more restrictions
+					for(RestrictionRelation rr : theseRestrictions) {
+						rr.setViaNode(thisCoordNode);
+						if(rr.getToWay().equals(origWay)) {
+							if(lastCoordNode != null)
+								rr.setToNode(lastCoordNode);
+						}
+						else if(rr.getFromWay().equals(origWay)) {
+							if(lastCoordNode != null)
+								rr.setFromNode(lastCoordNode);
+						}
+						else if(lastCoordNode != null) {
+							rr.addOtherNode(lastCoordNode);
+						}
+					}
+				}
+
+				lastRestrictions = theseRestrictions;
+				lastCoordNode = thisCoordNode;
+			}
+
+			road.setStartsWithNode(nodeIndices.get(0) == 0);
+			road.setInternalNodes(hasInternalNodes);
+		}
+
+		lineAdder.add(road);
+
+		if(trailingWay != null)
+			addRoadWithoutLoops(trailingWay, gt);
+	}
+
+	// split a Way at the specified point and return the new Way
+        // (the original Way is truncated)
+
+	Way splitWayAt(Way way, int index) {
+		Way trailingWay = new Way();
+		List<Coord> wayPoints = way.getPoints();
+		int numPointsInWay = wayPoints.size();
+
+		for(int i = index; i < numPointsInWay; ++i)
+			trailingWay.addPoint(wayPoints.get(i));
+
+		// ensure split point becomes a node
+		wayPoints.get(index).incHighwayCount();
+
+		// copy the way's name and tags to the new way
+		trailingWay.setName(way.getName());
+		trailingWay.copyTags(way);
+
+		// remove the points after the split from the original way
+		// it's probably more efficient to remove from the end first
+		for(int i = numPointsInWay - 1; i > index; --i)
+			wayPoints.remove(i);
+
+		// associate the original Way to the new Way
+		Way origWay = originalWay.get(way);
+		if(origWay == null)
+			origWay = way;
+		originalWay.put(trailingWay, origWay);
+
+		return trailingWay;
+	}
+
+	// function to add points between adjacent nodes in a roundabout
+	// to make gps use correct exit number in routing instructions
+	void frigRoundabout(Way way, double frigFactor) {
+		List<Coord> wayPoints = way.getPoints();
+		int origNumPoints = wayPoints.size();
+
+		if(origNumPoints < 3) {
+			// forget it!
+			return;
+		}
+
+		int[] highWayCounts = new int[origNumPoints];
+		int middleLat = 0;
+		int middleLon = 0;
+		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
+		for(int i = 1; i < origNumPoints; ++i) {
+			Coord p = wayPoints.get(i);
+			middleLat += p.getLatitude();
+			middleLon += p.getLongitude();
+			highWayCounts[i] = p.getHighwayCount();
+		}
+		middleLat /= origNumPoints - 1;
+		middleLon /= origNumPoints - 1;
+		Coord middleCoord = new Coord(middleLat, middleLon);
+
+		// account for fact that roundabout joins itself
+		--highWayCounts[0];
+		--highWayCounts[origNumPoints - 1];
+
+		for(int i = origNumPoints - 2; i >= 0; --i) {
+			Coord p1 = wayPoints.get(i);
+			Coord p2 = wayPoints.get(i + 1);
+			if(highWayCounts[i] > 1 && highWayCounts[i + 1] > 1) {
+				// both points will be nodes so insert
+				// a new point between them that
+				// (approximately) falls on the
+				// roundabout's perimeter
+				int newLat = (p1.getLatitude() + p2.getLatitude()) / 2;
+				int newLon = (p1.getLongitude() + p2.getLongitude()) / 2;
+				// new point has to be "outside" of
+				// existing line joining p1 and p2 -
+				// how far outside is determined by
+				// the ratio of the distance between
+				// p1 and p2 compared to the distance
+				// of p1 from the "middle" of the
+				// roundabout (aka, the approx radius
+				// of the roundabout) - the higher the
+				// value of frigFactor, the further out
+				// the point will be
+				double scale = 1 + frigFactor * p1.distance(p2) / p1.distance(middleCoord);
+				newLat = (int)((newLat - middleLat) * scale) + middleLat;
+				newLon = (int)((newLon - middleLon) * scale) + middleLon;
+				Coord newPoint = new Coord(newLat, newLon);
+				double d1 = p1.distance(newPoint);
+				double d2 = p2.distance(newPoint);
+				double maxDistance = 100;
+				if(d1 >= MIN_DISTANCE_BETWEEN_NODES && d1 <= maxDistance &&
+				   d2 >= MIN_DISTANCE_BETWEEN_NODES && d2 <= maxDistance) {
+				    newPoint.incHighwayCount();
+				    wayPoints.add(i + 1, newPoint);
+				}
+				else if(false) {
+				    System.err.println("Not inserting point in roundabout after node " +
+						       i + " " +
+						       way.getName() +
+						       " @ " + 
+						       middleCoord.toDegreeString() +
+						       " (d1 = " +
+						       p1.distance(newPoint) +
+						       " d2 = " +
+						       p2.distance(newPoint) +
+						       ")");
+				}
+			}
+		}
+	}
+
+	int getSpeedIdx(String tag)
+	{
+		double kmh = 0.0;
+		double factor = 1.0;
+		
+		String speedTag = tag.toLowerCase().trim();
+		
+		if(speedTag.matches(".*mph")) // Check if it is a limit in mph
+		{
+			speedTag = speedTag.replaceFirst("mph", "");
+			factor = 1.61;
+		}
+		else
+			speedTag = speedTag.replaceFirst("kmh", "");  // get rid of kmh just in case
+		
+		try {
+			kmh = Integer.parseInt(speedTag) * factor;
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
+		
+		if(kmh > 110)
+			return 7;
+		if(kmh > 90)
+			return 6;
+		if(kmh > 80)
+			return 5;
+		if(kmh > 60)
+			return 4;
+		if(kmh > 40)
+			return 3;
+		if(kmh > 20)
+			return 2;
+		if(kmh > 10)
+			return 1;
+		else
+			return 0;	    
+
+	}
+
+	public boolean accessExplicitlyAllowed(String val) {
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("yes") ||
+			val.equalsIgnoreCase("designated") ||
+			val.equalsIgnoreCase("permissive"));
+	}
+
+	public boolean accessExplicitlyDenied(String val) {
+		if (val == null)
+			return false;
+
+		return (val.equalsIgnoreCase("no") ||
+			val.equalsIgnoreCase("private"));
 	}
 }

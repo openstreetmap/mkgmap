@@ -23,14 +23,17 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapCollector;
+import uk.me.parabola.mkgmap.general.MapDetails;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -49,9 +52,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
-	private Map<Long, Node> nodeMap = new HashMap<Long, Node>(5000);
-	private Map<Long, Way> wayMap = new LinkedHashMap<Long, Way>(5000);
-	private Map<Long, Relation> relationMap = new LinkedHashMap<Long, Relation>();
+	private Map<Long, Node> nodeMap;
+	private Map<Long, Way> wayMap;
+	private Map<Long, Relation> relationMap;
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 
 	private static final int MODE_NODE = 1;
@@ -66,16 +69,31 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long currentElementId;
 
 	private OsmConverter converter;
-	private MapCollector mapper;
+	private MapDetails mapper;
 	private Area bbox;
 	private Runnable endTask;
 
 	private long nextFakeId = 1;
 
 	private final boolean ignoreBounds;
+	private final boolean ignoreTurnRestrictions;
+	private final boolean routing;
+	private final String frigRoundabouts;
 
-	public Osm5XmlHandler(boolean ignoreBounds) {
-		this.ignoreBounds = ignoreBounds;
+	public Osm5XmlHandler(EnhancedProperties props) {
+		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
+		routing = props.containsKey("route");
+		frigRoundabouts = props.getProperty("frig-roundabouts");
+		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		if (props.getProperty("preserve-element-order", false)) {
+			nodeMap = new LinkedHashMap<Long, Node>(5000);
+			wayMap = new LinkedHashMap<Long, Way>(5000);
+			relationMap = new LinkedHashMap<Long, Relation>();
+		} else {
+			nodeMap = new HashMap<Long, Node>(5000);
+			wayMap = new HashMap<Long, Way>(5000);
+			relationMap = new HashMap<Long, Relation>();
+		}
 	}
 
 	/**
@@ -145,6 +163,16 @@ class Osm5XmlHandler extends DefaultHandler {
 				el = wayMap.get(id);
 			} else if ("node".equals(type)) {
 				el = nodeMap.get(id);
+				if(el == null) {
+					// we didn't make a node for
+					// this point earlier, do it
+					// now (if it exists)
+					Coord co = coordMap.get(id);
+					if(co != null) {
+						el = new Node(id, co);
+						nodeMap.put(id, (Node)el);
+					}
+				}
 			} else if ("relation".equals(type)) {
 				el = relationMap.get(id);
 			} else
@@ -211,6 +239,29 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
+				if(routing &&
+				   (currentWay.getTag("highway") != null ||
+				    "ferry".equals(currentWay.getTag("route")))) {
+					// the way is a highway (or
+				    	// ferry route), so for each
+				    	// of it's points, increment
+				    	// the number of highways
+				    	// using that point
+					for(Coord p : currentWay.getPoints())
+						p.incHighwayCount();
+					// if the way is a roundabout
+					// but isn't already flagged
+					// as "oneway", flag it here
+					if("roundabout".equals(currentWay.getTag("junction"))) {
+						if(currentWay.getTag("oneway") == null) {
+							currentWay.addTag("oneway", "yes");
+						}
+						if(currentWay.getTag("mkgmap:frig_roundabout") == null) {
+							if(frigRoundabouts != null)
+								currentWay.addTag("mkgmap:frig_roundabout", frigRoundabouts);
+						}
+					}
+				}
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -241,10 +292,23 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (type != null) {
 			if ("multipolygon".equals(type))
 				currentRelation = new MultiPolygonRelation(currentRelation);
+			else if("restriction".equals(type)) {
+
+				if(ignoreTurnRestrictions)
+					currentRelation = null;
+				else
+					currentRelation = new RestrictionRelation(currentRelation);
+			}
+			else {
+				log.info("ignoring relation type '" + type + "'");
+				currentRelation = null;
+			}
 		}
-		relationMap.put(currentRelation.getId(), currentRelation);
-		currentRelation.processElements();
-		currentRelation = null;
+		if(currentRelation != null) {
+			relationMap.put(currentRelation.getId(), currentRelation);
+			currentRelation.processElements();
+			currentRelation = null;
+		}
 	}
 
 	/**
@@ -261,8 +325,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
-		relationMap = null;
-
 		for (Node n : nodeMap.values())
 			converter.convertNode(n);
 
@@ -272,6 +334,26 @@ class Osm5XmlHandler extends DefaultHandler {
 			converter.convertWay(w);
 
 		wayMap = null;
+
+		RoadNetwork roadNetwork = mapper.getRoadNetwork();
+		for (Relation r : relationMap.values()) {
+			if(r instanceof RestrictionRelation) {
+				((RestrictionRelation)r).addRestriction(roadNetwork);
+			}
+		}
+
+		relationMap = null;
+
+		if(bbox != null) {
+			mapper.addToBounds(new Coord(bbox.getMinLat(),
+						     bbox.getMinLong()));
+			mapper.addToBounds(new Coord(bbox.getMinLat(),
+						     bbox.getMaxLong()));
+			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+						     bbox.getMinLong()));
+			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+						     bbox.getMaxLong()));
+		}
 
 		// Run a finishing task.
 		endTask.run();
@@ -285,6 +367,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					Double.parseDouble(xmlattr.getValue("maxlon")));
 		} catch (NumberFormatException e) {
 			// just ignore it
+			log.warn("NumberformatException: Cannot read bbox");
 		}
 	}
 
@@ -296,6 +379,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			log.debug("Map bbox: " + bbox);
 		} catch (NumberFormatException e) {
 			// just ignore it
+			log.warn("NumberformatException: Cannot read bbox");
 		}
 	}
 
@@ -304,11 +388,6 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		bbox = new Area(minlat, minlong, maxlat, maxlong);
 		converter.setBoundingBox(bbox);
-
-		mapper.addToBounds(new Coord(minlat, minlong));
-		mapper.addToBounds(new Coord(minlat, maxlong));
-		mapper.addToBounds(new Coord(maxlat, minlong));
-		mapper.addToBounds(new Coord(maxlat, maxlong));
 	}
 
 	/**
@@ -356,8 +435,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		this.converter = converter;
 	}
 
-	public void setCollector(MapCollector mapCollector) {
-		mapper = mapCollector;
+	public void setMapper(MapDetails mapper) {
+		this.mapper = mapper;
 	}
 
 	public void setEndTask(Runnable endTask) {

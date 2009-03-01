@@ -40,9 +40,18 @@ public class TestUtils {
 	 * Used to clean up before/after a test.
 	 */
 	public static void deleteOutputFiles() {
-		File f = new File(Args.DEF_MAP_FILENAME);
-		if (f.exists())
-			assertTrue("delete existing file", f.delete());
+		String[] files = {
+				Args.DEF_MAP_FILENAME,
+				Args.DEF_GMAPSUPP_FILENAME,
+				Args.DEF_TDB_FILENAME,
+		};
+
+		for (String fname : files) {
+			File f = new File(fname);
+
+			if (f.exists())
+				assertTrue("delete existing file", f.delete());
+		}
 	}
 
 	/**

@@ -35,4 +35,8 @@ public class Node extends Element {
 	public Coord getLocation() {
 		return location;
 	}
+
+	public String toString() {
+		return "NODE: " + getId() + " @ " + location.toDegreeString();
+	}
 }

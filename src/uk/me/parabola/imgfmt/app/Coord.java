@@ -33,9 +33,10 @@ import uk.me.parabola.imgfmt.Utils;
  *
  * @author Steve Ratcliffe
  */
-public class Coord {
+public class Coord implements Comparable {
 	private final int latitude;
 	private final int longitude;
+	private int highwayCount; // number of highways that use this point
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -69,6 +70,14 @@ public class Coord {
 		return 0;
 	}
 
+	public int getHighwayCount() {
+		return highwayCount;
+	}
+
+	public void incHighwayCount() {
+		++highwayCount;
+	}
+
 	public int hashCode() {
 		return latitude+longitude;
 	}
@@ -86,6 +95,9 @@ public class Coord {
 	 * Distance to other point in meters.
 	 */
 	public double distance(Coord other) {
+		if (equals(other))
+			return 0;
+
 		double lat1 = Utils.toRadians(latitude);
 		double lat2 = Utils.toRadians(other.getLatitude());
 		double lon1 = Utils.toRadians(getLongitude());
@@ -93,10 +105,26 @@ public class Coord {
 
 		double R = 6371000; // meters
 
-		return Math.acos(Math.sin(lat1)*Math.sin(lat2) +
-				Math.cos(lat1)*Math.cos(lat2) *
-						Math.cos(lon2-lon1)) * R;
+		// cosine of great circle angle between points
+		double cangle = Math.sin(lat1)*Math.sin(lat2) +
+			        Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1);
+
+		return Math.acos(cangle) * R;
   	}
+
+	/**
+	 * Sort lexicographically by longitude, then latitude.
+	 *
+	 * This ordering is used for sorting entries in NOD3.
+	 */
+	public int compareTo(Object o) {
+		Coord other = (Coord) o;
+		int clon = longitude - other.getLongitude();
+		if (clon != 0)
+			return clon;
+		else
+			return latitude - other.getLatitude();
+	}			
 
 	/**
 	 * Returns a string representation of the object.
@@ -112,5 +140,18 @@ public class Coord {
 		return fmt.format("%.5f/%.5f",
 			Utils.toDegrees(latitude),
 			Utils.toDegrees(longitude)).toString();
+	}
+
+	public String toOSMURL(int zoom) {
+		return ("http://www.openstreetmap.org/?lat=" +
+			new Formatter().format("%.5f", Utils.toDegrees(latitude)) +
+			"&lon=" +
+			new Formatter().format("%.5f", Utils.toDegrees(longitude)) +
+			"&zoom=" +
+			zoom);
+	}
+
+	public String toOSMURL() {
+		return toOSMURL(17);
 	}
 }

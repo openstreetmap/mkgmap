@@ -69,16 +69,12 @@ public class MapRoad extends MapLine {
 		this.roadDef.setSpeed(speed);
 	}
 
-	public void setDirIndicator(boolean dir) {
-		this.roadDef.setDirIndicator(dir);
+	public void setOneway() {
+		this.roadDef.setOneway();
 	}
 
-	public void setOneway(boolean oneway) {
-		this.roadDef.setOneway(oneway);
-	}
-
-	public void setToll(boolean toll) {
-		this.roadDef.setToll(toll);
+	public void setToll() {
+		this.roadDef.setToll();
 	}
 
 	// XXX: currently passing PolishMapSource-internal format

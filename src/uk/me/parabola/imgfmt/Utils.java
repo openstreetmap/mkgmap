@@ -161,12 +161,18 @@ public class Utils {
 		return cal.getTime();
 	}
 
+	/**
+	 * Convert an angle in map units to degrees.
+	 */
 	public static double toDegrees(int val) {
 		return (double) val / ((1 << 24) / 360.0);
 	}
 
-	public static double toRadians(int latitude) {
-		return toDegrees(latitude) * Math.PI / 180;
+	/**
+	 * Convert an angle in map units to radians.
+	 */
+	public static double toRadians(int mapunits) {
+		return toDegrees(mapunits) * Math.PI / 180;
 	}
 
 	public static void closeFile(Closeable f) {

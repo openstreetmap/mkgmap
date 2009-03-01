@@ -125,6 +125,20 @@ public class RuleFileReaderTest {
 		assertEquals("e is set to f", 1, type.getType());
 	}
 
+	@Test
+	public void testMultipleActions() {
+		String rstr = "highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]";
+		RuleSet rs = makeRuleSet(rstr);
+		Rule rule = rs.getMap().get("highway=footway");
+
+		Element el = new Way();
+		el.addTag("highway", "footway");
+
+		GType type = rule.resolveType(el);
+		assertEquals("access set", "no", el.getTag("access"));
+		assertEquals("access set", "yes", el.getTag("foot"));
+	}
+
 	/**
 	 * You can now have a wild card at the top level.
 	 */

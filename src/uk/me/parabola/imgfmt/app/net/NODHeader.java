@@ -61,7 +61,8 @@ public class NODHeader extends CommonHeader {
 		nodes.setPosition(HEADER_LEN);
 		nodes.writeSectionInfo(writer);
 
-		writer.putInt(0x25);
+		// now sets 0x02 (enable turn restrictions?)
+		writer.putInt(0x27);
 
 		writer.putChar(align);
 		writer.putChar((char) (align - 1));

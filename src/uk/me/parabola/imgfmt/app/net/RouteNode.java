@@ -28,7 +28,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class RouteNode {
+public class RouteNode implements Comparable {
 	private static final Logger log = Logger.getLogger(RouteNode.class);
 
 	/*
@@ -44,7 +44,8 @@ public class RouteNode {
 	private static final int F_BOUNDARY = 0x08;
 	private static final int F_RESTRICTIONS = 0x10;
 	private static final int F_LARGE_OFFSETS = 0x20;
-	private static final int F_UNK_NEEDED = 0x44; // XXX
+	private static final int F_ARCS = 0x40;
+	private static final int F_UNK_NEEDED = 0x04; // XXX
 
 	private int offsetNod1 = -1;
 
@@ -104,11 +105,28 @@ public class RouteNode {
 		log.debug("adding arc", arc.getRoadDef(), cl);
 		if (cl > nodeClass)
 			nodeClass = cl;
+		flags |= F_ARCS;
 	}
 
 	public void addRestriction(RouteRestriction restr) {
 		restrictions.add(restr);
 		flags |= F_RESTRICTIONS;
+	}
+
+	public RouteArc getArcTo(RouteNode otherNode) {
+		for(RouteArc a : arcs)
+			if(a.getDest() == otherNode)
+				return a;
+
+		return null;
+	}
+
+	public RouteArc getArcFrom(RouteNode otherNode) {
+		for(RouteArc a : arcs)
+			if(a.getSource() == otherNode)
+				return a;
+
+		return null;
 	}
 
 	/**
@@ -179,7 +197,7 @@ public class RouteNode {
 	}
 
 	public int getOffsetNod1() {
-		assert offsetNod1 != -1: "failed for node " + nodeId;
+		assert offsetNod1 != -1: "failed for node " + nodeId + " at " + coord.toDegreeString();
 		return offsetNod1;
 	}
 
@@ -243,5 +261,13 @@ public class RouteNode {
 
 	public String toString() {
 		return nodeId + "";
+	}
+
+	/*
+	 * For sorting node entries in NOD 3.
+	 */
+	public int compareTo(Object o) {
+		Coord other = ((RouteNode) o).getCoord();
+		return coord.compareTo(other);
 	}
 }

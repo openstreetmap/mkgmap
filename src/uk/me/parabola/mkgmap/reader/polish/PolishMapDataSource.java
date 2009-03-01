@@ -58,7 +58,7 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
 
-	private static final String READING_CHARSET = "iso-8859-1";
+	private static final String READING_CHARSET = "UTF-8";
 
 	private static final int S_IMG_ID = 1;
 	private static final int S_POINT = 2;
@@ -295,7 +295,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("Routeparam") || name.equals("RouteParams")) {
 			roadHelper.setParam(value);
 		} else if (name.equals("DirIndicator")) {
-			roadHelper.setDirIndicator(Integer.parseInt(value) > 0);
+			polyline.setDirection(Integer.parseInt(value) > 0);
 		}
 	}
 
@@ -420,9 +420,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	private void setResolution(MapElement elem, String name) {
-		if (endLevel > 0)
+		if (endLevel > 0) {
 			elem.setMinResolution(extractResolution(endLevel));
-		else {
+		    elem.setMaxResolution(extractResolution(name));
+		} else {
 			int res = extractResolution(name);
 			elem.setMinResolution(res);
 			elem.setMaxResolution(res);
@@ -487,8 +488,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (fc == 'm' || fc == 'M')
 				elevUnits = 'm';
 		} else if (name.equals("CodePage")) {
-			if (!value.equals("1252"))
-				dec = Charset.forName("cp" + value).newDecoder();
+			dec = Charset.forName("cp" + value).newDecoder();
 		}
 	}
 
@@ -505,7 +505,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (fields[0].length() == 0)
 			i = 1;
 
-		Float f1 = Float.valueOf(fields[i]);
+		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
 		return new Coord(f1, f2);
 	}

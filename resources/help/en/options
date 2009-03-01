@@ -48,7 +48,7 @@ Label options:
 	Use the specified character set.
 
 --code-page=''number''
-	Use the given code page for the .  This is 
+	Write the given code page number to the header of the LBL file. 
 
 --lower-case
 	Allow labels to contain lower case letters.  Note that this doesn't
@@ -69,7 +69,7 @@ Style options:
 	here.  See the customisation help.
 
 --list-styles
-	List the avaialble styles.
+	List the available styles.
 
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom levels
@@ -110,8 +110,16 @@ Misc options:
 	Write a gmapsupp.img file that can be uploaded to a garmin in
 	usb mode.
 
+--ignore-turn-restrictions
+	When reading OSM files, ignore any "restriction" relations.
+
 --ignore-osm-bounds
 	When reading OSM files, ignore any "bounds" elements.
+
+--preserve-element-order
+	Process the map elements (nodes, ways, relations) in the order
+	in which they appear in the OSM input. Without this option,
+	the order in which the elements are processed is not defined.
 
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'

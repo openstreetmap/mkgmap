@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.net.RouteArc;
 import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -90,7 +91,10 @@ public class RoadNetwork {
 			// the previous node to this one (and back again).
 			if (lastCoord != null) {
 				long lastId = lastCoord.getId();
-				log.debug("lastId = " + lastId);
+				log.debug("lastId = " + lastId + " curId = " + id);
+				log.debug("from " + lastCoord.toDegreeString() 
+					 + " to " + co.toDegreeString());
+				log.debug("arclength=" + arcLength + " roadlength=" + roadLength);
 
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);
@@ -141,7 +145,8 @@ public class RoadNetwork {
 	 * documented in NOD1Part.
 	 */
 	private void splitCenters() {
-		assert !nodes.isEmpty() : "network has no nodes";
+		if (nodes.isEmpty())
+			return;
 		assert centers.isEmpty() : "already subdivided into centers";
 
 		NOD1Part nod1 = new NOD1Part();
@@ -165,4 +170,23 @@ public class RoadNetwork {
 	public List<RouteNode> getBoundary() {
 		return boundary;
 	}
+
+	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode) {
+		RouteNode fn = nodes.get(fromNode.getId());
+		RouteNode tn = nodes.get(toNode.getId());
+		RouteNode vn = nodes.get(viaNode.getId());
+
+		assert fn != null : "can't locate 'from' RouteNode with id " + fromNode.getId();
+		assert tn != null : "can't locate 'to' RouteNode with id " + toNode.getId();
+		assert vn != null : "can't locate 'via' RouteNode with id " + viaNode.getId();
+
+		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
+		RouteArc ta = vn.getArcTo(tn);
+
+		assert fa != null : "can't locate arc from 'via' node to 'from' node";
+		assert ta != null : "can't locate arc from 'via' node to 'to' node";
+
+		vn.addRestriction(new RouteRestriction(fa, ta));
+    }
+
 }

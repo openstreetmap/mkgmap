@@ -136,6 +136,6 @@ public class MultiPolygonRelation extends Relation {
 		if (longDiff > 180)
 			longDiff -= 360;
 		
-		return Math.pow((latDiff *latDiff) + (longDiff * longDiff), 0.5);
+		return Math.sqrt((latDiff * latDiff) + (longDiff * longDiff));
 	}
 }

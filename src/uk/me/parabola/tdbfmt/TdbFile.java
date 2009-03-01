@@ -60,6 +60,7 @@ public class TdbFile {
 	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
 	private final RBlock rblock = new RBlock();
 	private final TBlock tblock = new TBlock();
+	private String overviewDescription;
 
 	public TdbFile() {
 	}
@@ -91,7 +92,7 @@ public class TdbFile {
 	}
 
 	public void setProductInfo(int familyId, int productId,
-			short productVersion, String seriesName, String familyName)
+			short productVersion, String seriesName, String familyName, String overviewDescription)
 	{
 		headerBlock = new HeaderBlock(tdbVersion);
 		headerBlock.setFamilyId((short) familyId);
@@ -99,6 +100,7 @@ public class TdbFile {
 		headerBlock.setProductVersion(productVersion);
 		headerBlock.setSeriesName(seriesName);
 		headerBlock.setFamilyName(familyName);
+		this.overviewDescription = overviewDescription;
 	}
 
 	/**
@@ -120,6 +122,7 @@ public class TdbFile {
 		overviewMapBlock = new OverviewMapBlock();
 		overviewMapBlock.setArea(bounds);
 		overviewMapBlock.setMapName(name);
+		overviewMapBlock.setDescription(overviewDescription);
 	}
 
 	/**
@@ -234,4 +237,15 @@ public class TdbFile {
 		return new Block(blockType, body);
 	}
 
+	public int getTdbVersion() {
+		return headerBlock.getTdbVersion();
+	}
+
+	public HeaderBlock getHeaderBlock() {
+		return headerBlock;
+	}
+
+	public String getOverviewDescription() {
+		return overviewDescription;
+	}
 }

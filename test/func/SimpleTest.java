@@ -51,6 +51,7 @@ public class SimpleTest {
 
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
+				"--preserve-element-order",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
 		});
 
@@ -65,13 +66,13 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 150959, size);
+				assertEquals("RGN size", 153466, size);
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 1895, size);
+				assertEquals("TRE size", 1897, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 26980, size);
+				assertEquals("LBL size", 27587, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
@@ -103,13 +104,13 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 2939, size);
+				assertEquals("RGN size", 2938, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 917, size);
+				assertEquals("LBL size", 984, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);

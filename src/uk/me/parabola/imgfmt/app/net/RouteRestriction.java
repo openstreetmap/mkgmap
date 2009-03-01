@@ -39,7 +39,7 @@ public class RouteRestriction {
 
 	// first three bytes of the header -- might specify the type of restriction
 	// and when it is active
-	private static final int HEADER = 0x054000;
+	private static final int HEADER = 0x004005;
 
 	// To specifiy that a node is given by a relative offset instead
 	// of an entry to Table B.
@@ -89,11 +89,11 @@ public class RouteRestriction {
 			offsets[0] = calcOffset(from.getDest(), tableOffset);
 		else
 			offsets[0] = from.getIndexB();
-		offsets[1] = calcOffset(from.getDest(), tableOffset);
+		offsets[1] = calcOffset(to.getSource(), tableOffset);
 		if (to.isInternal())
-			offsets[0] = calcOffset(to.getDest(), tableOffset);
+			offsets[2] = calcOffset(to.getDest(), tableOffset);
 		else
-			offsets[0] = to.getIndexB();
+			offsets[2] = to.getIndexB();
 
 		for (int offset : offsets)
 			writer.putChar((char) offset);
@@ -102,6 +102,9 @@ public class RouteRestriction {
 		writer.put(to.getIndexA());
 	}
 
+	/**
+	 * Write this restriction's offset within Table C into a node record.
+	 */
 	public void writeOffset(ImgFileWriter writer) {
 		assert 0 < offsetSize && offsetSize <= 2 : "illegal offset size";
 		int offset = offsetC;

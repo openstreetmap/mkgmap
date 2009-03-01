@@ -12,6 +12,7 @@ landuse=allotments [0x4e resolution 20]
 landuse=cemetary [0x1a resolution 18]
 landuse=cemetery [0x1a resolution 18]
 landuse=forest [0x50 resolution 18]
+landuse=farmyard [0x4e resolution 18]
 landuse=industrial [0x0c resolution 18]
 landuse=reservoir [0x3f resolution 18]
 landuse=retail [0x08 resolution 20]
@@ -43,5 +44,10 @@ natural=water [0x3c resolution 20]
 natural=wood [0x50 resolution 18]
 
 place=village [0x03 resolution 18]
+
+# squares and plazas
+highway=pedestrian & area=yes [0x13 resolution 20]
+# other highways that have area=yes set must be parking lots
+highway=* & area=yes [0x05 resolution 21]
 
 waterway=riverbank [0x46 resolution 20]
