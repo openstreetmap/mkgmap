@@ -51,6 +51,7 @@ public class SimpleTest {
 
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
+				"--preserve-element-order",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
 		});
 
