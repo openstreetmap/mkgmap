@@ -461,14 +461,16 @@ public class StyledConverter implements OsmConverter {
 					  "motorcar",
 					  "motorcycle",
 					  "psv",
+					  "taxi",
 		};
-		int[] accessSelector = { RoadNetwork.NO_MAX,
+		int[] accessSelector = { RoadNetwork.NO_MAX, // use value as wildcard flag
 					 RoadNetwork.NO_BIKE,
 					 RoadNetwork.NO_FOOT,
 					 RoadNetwork.NO_TRUCK,
 					 RoadNetwork.NO_CAR,
 					 RoadNetwork.NO_CAR, // motorcycle
-					 RoadNetwork.NO_BUS };
+					 RoadNetwork.NO_BUS,
+					 RoadNetwork.NO_TAXI };
 
 		for(int i = 0; i < vehicleClass.length; ++i) {
 			String access = way.getTag(vehicleClass[i]);
@@ -477,8 +479,8 @@ public class StyledConverter implements OsmConverter {
 			if(accessExplicitlyDenied(access)) {
 				if(accessSelector[i] == RoadNetwork.NO_MAX) {
 					// everything is denied access
-					for(int j = 0; j < noAccess.length; ++j)
-						noAccess[j] = true;
+					for(int j = 1; j < accessSelector.length; ++j)
+						noAccess[accessSelector[j]] = true;
 				}
 				else {
 					// just the specific vehicle
@@ -490,8 +492,8 @@ public class StyledConverter implements OsmConverter {
 			else if(accessExplicitlyAllowed(access)) {
 				if(accessSelector[i] == RoadNetwork.NO_MAX) {
 					// everything is allowed access
-					for(int j = 0; j < noAccess.length; ++j)
-						noAccess[j] = false;
+					for(int j = 1; j < accessSelector.length; ++j)
+						noAccess[accessSelector[j]] = false;
 				}
 				else {
 					// just the specific vehicle
