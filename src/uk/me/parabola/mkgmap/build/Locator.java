@@ -111,24 +111,24 @@ public class Locator {
 	}
 
 	public String fixCountryString(String country)
-  {
+	{
 		return locConfig.fixCountryString(country);
 	}
 
 	private String isCountry(String country)
-  {
+	{
 		return locConfig.isCountry(country);
 	}
 
 	public String getCountryCode(String country)
-  {
+	{
 		return locConfig.getCountryCode(country);
-  }
+	}
 
 	public int getPOIDispFlag(String country)
-  {
+	{
 		return locConfig.getPoiDispFlag(country);
-  }
+	}
 
 	private boolean isOpenGeoDBCountry(String country)
 	{
@@ -138,7 +138,7 @@ public class Locator {
 	}
 
 	private boolean isContinent(String continent)
-  {
+	{
 		return locConfig.isContinent(continent);
 	}
 
@@ -186,7 +186,7 @@ public class Locator {
 			if(cityList.length > 1 && isContinent(cityList[0]))	// Is first a continent ?
 			{
 				// The one before contient should be the country
-	  		p.setCountry(fixCountryString(cityList[1].trim()));				
+				p.setCountry(fixCountryString(cityList[1].trim()));
 				
 				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
 
@@ -303,10 +303,10 @@ public class Locator {
 				String biggerCityName = aCityList.trim();
 
 
-				if (fuzzy == false)
-					nextCityList = cityMap.getList(biggerCityName);
-				else
+				if (fuzzy)
 					nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
+				else
+					nextCityList = cityMap.getList(biggerCityName);
 
 				if (nextCityList != null) {
 					for (MapPoint nextCity : nextCityList) {
@@ -324,15 +324,15 @@ public class Locator {
 			{
 			   
 				if(near != null && minDist > 30000)
-			  {
-			  		System.out.println("Locator: " + place.getName() + " is far away from " +
-								near.getName() + 	" " + (minDist/1000.0) + " km is_in" +	place.getIsIn());
-						if(nextCityList != null)
-				   		System.out.println("Number of cities with this name: " + nextCityList.size());					
-			  }
+				{
+					System.out.println("Locator: " + place.getName() + " is far away from " +
+							near.getName() + 	" " + (minDist/1000.0) + " km is_in" +	place.getIsIn());
+					if(nextCityList != null)
+						System.out.println("Number of cities with this name: " + nextCityList.size());
+				}
 			   
- 				//if(near != null && fuzzy)
-			  //{
+				//if(near != null && fuzzy)
+				//{
 				// System.out.println("Locator: " + place.getName() + " may belong to " +
 				//			 near.getName() + " is_in" + place.getIsIn());
 				//}
@@ -388,6 +388,14 @@ public class Locator {
 					} else if (autoFillLevel > 1 && (runCount + 1) == maxRuns) {
 						// In the last resolve run just take info from the next known city
 						near = cityMap.findNextPoint(place);
+						if(near != null && near.getCountry() != null)
+						{
+							// In OpenGeoDB Countries I don't want to mess up the info which city is a
+							// real independent Community in all other countries I just have to do it
+
+							if(!isOpenGeoDBCountry(near.getCountry()))
+								place.setCity(place.getName());
+						}
 					}
 
 
@@ -414,7 +422,7 @@ public class Locator {
 				{
 					if( place.getCity() != null)
 					{
-		 	  		cityMap.put(place.getName(),place);
+						cityMap.put(place.getName(),place);
 						fuzzyCityMap.put(fuzzyDecode(place.getName()),place);
 						placesMap.set(i, null);
 					}
@@ -446,7 +454,7 @@ public class Locator {
 	}	
 	
 	private String fuzzyDecode(String stringToDecode)
-  {
+	{
 
 		if(stringToDecode == null)
 			return stringToDecode;
@@ -461,6 +469,5 @@ public class Locator {
 
 		return (decodeString);
 	}
-		
 }
 

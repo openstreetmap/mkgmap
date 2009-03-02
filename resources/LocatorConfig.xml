@@ -23,6 +23,9 @@
 	</country>	
 	<country name="France" abr="FRA">
 	</country>	
+	<country name="United States" abr="USA">
+		<variant>USA</variant>
+	</country>	
 	<continent name="Europe">
 	</continent>
 	<continent name="Africa">
