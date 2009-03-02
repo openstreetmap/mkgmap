@@ -75,18 +75,18 @@ public class RestrictionRelation extends Relation {
 			}
 			else if("via".equals(role)) {
 				if(viaCoord != null) {
-					log.warn(messagePrefix + "can't cope (yet) with multiple 'via' members");
+					log.error(messagePrefix + "has multiple 'via' members");
 				}
 				else if(el instanceof Node) {
 					viaCoord = ((Node)el).getLocation();
 				}
 				else {
-					String bleat = messagePrefix + "can't cope (yet) with 'via' member not being a node";
+					String bleat = messagePrefix + "'via' member is not a node";
 					if(el instanceof Way) {
 						List<Coord> vp = ((Way)el).getPoints();
 						bleat += " ('via' way starts at " + vp.get(0).toDegreeString() + ")";
 					}
-					log.warn(bleat);
+					log.error(bleat);
 				}
 			}
 			else if("location_hint".equals(role)) {
