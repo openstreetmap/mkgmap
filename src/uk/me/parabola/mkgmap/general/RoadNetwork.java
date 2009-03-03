@@ -41,8 +41,8 @@ import uk.me.parabola.log.Logger;
 public class RoadNetwork {
 	private static final Logger log = Logger.getLogger(RoadNetwork.class);
 
-	public static final int EMERGENCY = 0;
-	public static final int DELIVERY = 1;
+	public static final int NO_EMERGENCY = 0;
+	public static final int NO_DELIVERY = 1;
 	public static final int NO_CAR = 2;
 	public static final int NO_BUS = 3;
 	public static final int NO_TAXI = 4;
