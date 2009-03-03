@@ -185,7 +185,7 @@ public class MapPointFastFindMap{
 		return nextPoint;
 	}
 	
-	public MapPoint findPointInShape(MapShape shape, int pointType)
+	public MapPoint findPointInShape(MapShape shape, int pointType, String poiName)
 	{
 		ArrayList<MapPoint> list;
 		List<Coord>	points = shape.getPoints();
@@ -208,14 +208,27 @@ public class MapPointFastFindMap{
 
 			if (list != null) {
 				for (MapPoint actPoint : list) {
-					if (pointType == 0 || actPoint.getType() == pointType) {
-						if (shape.contains(actPoint.getLocation()))
-							return actPoint;
+					boolean checkThisPoint = false;
+					
+					if (pointType == 0 || actPoint.getType() == pointType)
+						checkThisPoint = true;
+					
+					if(MapPoint.isCityType(pointType) && actPoint.isCity()	&& 
+						 actPoint.getName() != null && poiName != null)
+					{
+						// Check for city name pois in that shape
+						// Since the types might not be exactly the same we
+						// check for all places pois with the same name
+						
+						checkThisPoint = actPoint.getName().equalsIgnoreCase(poiName);
 					}
+							
+					if (checkThisPoint && shape.contains(actPoint.getLocation()))
+						return actPoint;
 				}
 			}
 		}
-		
+	
 		return null;		
 	}
 	

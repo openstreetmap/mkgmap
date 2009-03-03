@@ -143,10 +143,10 @@ public class MapMaker implements MapProcessor {
 		if (s != null) {
 			
 			MapPointFastFindMap poiMap = new MapPointFastFindMap();
-			
+
 			for (MapPoint point : src.getPoints()) 
 			{
-				if(point.isRoadNamePOI() == false) // Don't put road pois in this list
+				if(!point.isRoadNamePOI()) // Don't put road pois in this list
 					poiMap.put(null, point);
 			}
 			
@@ -159,9 +159,14 @@ public class MapMaker implements MapProcessor {
 				if (pointType == 0)
 					continue;
 
+				
+				// We don't want to add unnamed cities !!
+				if(MapPoint.isCityType(pointType) && shapeName == null)
+					continue;
+				
 				// check if there is not already a poi in that shape 
 							
-				if(poiMap.findPointInShape(shape, pointType) == null)
+				if(poiMap.findPointInShape(shape, pointType, shapeName) == null)
 				{
 					MapPoint newPoint = new MapPoint();
 					newPoint.setName(shapeName);

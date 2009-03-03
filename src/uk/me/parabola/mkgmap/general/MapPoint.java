@@ -59,8 +59,7 @@ public class MapPoint extends MapElement {
 	}
 
 	public boolean isCity() {
-		int type = getType();
-		return type >= 0x0100 && type <= 0x1100;
+		return isCityType(getType());
 	}
 
 	public void setRoadNamePOI(boolean isRoadNamePoi) {
@@ -69,5 +68,10 @@ public class MapPoint extends MapElement {
 
 	public boolean isRoadNamePOI() {
 		return this.isRoadNamePoi;
+	}
+	
+	public static boolean isCityType(int type)
+	{
+		return type >= 0x0100 && type <= 0x1100;
 	}
 }
