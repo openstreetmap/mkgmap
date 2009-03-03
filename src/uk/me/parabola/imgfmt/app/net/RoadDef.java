@@ -376,11 +376,10 @@ public class RoadDef {
 	private static final int TABA_FLAG_ONEWAY = 0x08;
 	private static final int TABA_MASK_SPEED = 0x07;
 	// second byte: access flags, sorted as in .mp
-	// bits 0x08, 0x80 missing, but they don't appear
-	// to function as "no access" for emergency/delivery
+	// bits 0x08, 0x80 missing (purpose unknown)
 	private static final int[] ACCESS = {
-		0x4000, // emergency
-		0x8000, // delivery
+		0x4000, // emergency (net pointer bit 30)
+		0x8000, // delivery (net pointer bit 31)
 		0x0001, // car
 		0x0002, // bus
 		0x0004, // taxi
