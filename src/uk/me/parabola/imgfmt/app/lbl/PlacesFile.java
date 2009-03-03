@@ -16,14 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import java.text.CollationKey;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -45,7 +42,7 @@ public class PlacesFile {
 	private PlacesHeader placeHeader;
 	private boolean poisClosed;
 
-	private Collator collator;
+	//private Collator collator;
 
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
@@ -57,7 +54,7 @@ public class PlacesFile {
 	void init(LBLFile file, PlacesHeader pheader) {
 		lblFile = file;
 		placeHeader = pheader;
-		collator = Collator.getInstance(Locale.US); // TODO work out how this should work
+		//collator = Collator.getInstance(Locale.US); // TODO work out how this should work
 	}
 
 	void write(ImgFileWriter writer) {
@@ -137,8 +134,7 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			CollationKey key = collator.getCollationKey(name);
-			cityList.add(new CitySort(key, c));
+			cityList.add(new CitySort(name, c));
 			cities.put(uniqueCityName, c);
 		}
 
@@ -161,8 +157,7 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			CollationKey key = collator.getCollationKey(name);
-			cityList.add(new CitySort(key, c));
+			cityList.add(new CitySort(name, c));
 			cities.put(uniqueCityName, c);
 		}
 
@@ -229,15 +224,15 @@ public class PlacesFile {
 	}
 
 	private class CitySort {
-		private final CollationKey key;
+		private final String key;
 		private final City city;
 
-		private CitySort(CollationKey key, City city) {
+		private CitySort(String key, City city) {
 			this.key = key;
 			this.city = city;
 		}
 
-		public CollationKey getKey() {
+		public String getKey() {
 			return key;
 		}
 
