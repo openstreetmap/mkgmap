@@ -379,14 +379,14 @@ public class RoadDef {
 	// bits 0x08, 0x80 missing, but they don't appear
 	// to function as "no access" for emergency/delivery
 	private static final int[] ACCESS = {
-		0x08, // emergency (unknown)
-		0x80, // delivery (unknown)
-		0x01, // car
-		0x02, // bus
-		0x04, // taxi
-		0x10, // foot
-		0x20, // bike
-		0x40 // truck
+		0x4000, // emergency
+		0x8000, // delivery
+		0x0001, // car
+		0x0002, // bus
+		0x0004, // taxi
+		0x0010, // foot
+		0x0020, // bike
+		0x0040, // truck
 	};
 
 	// The data for Table A
