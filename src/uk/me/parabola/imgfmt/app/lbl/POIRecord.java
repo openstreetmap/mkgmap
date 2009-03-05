@@ -23,6 +23,94 @@ import uk.me.parabola.imgfmt.app.Label;
  * @author Steve Ratcliffe
  */
 public class POIRecord {
+
+	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
+	{
+		/**
+			Street and Phone numbers can be stored in two different ways in the poi record
+			Simple Number that only contain digits are coded in base 11 coding. 
+			This helper	class tries to code the given number. If the number contains other
+			chars like in 4a the coding fails and the caller has to use a Label instead
+		*/
+	
+		private byte[] encodedNumber;
+		private int  encodedSize;
+		
+		public boolean set(String number)
+		{
+			int i = 0;
+			int j = 0;
+			int val = 0;
+
+			// remove sourounding whitespaces to increase chance for simple encoding
+
+			number = number.trim();  
+
+			encodedNumber  = new byte[(number.length()/2)+2];
+				
+			while(i < number.length())
+			{
+				int c1;
+				int c2;
+
+				c1 = decodeChar(number.charAt(i));
+				i++;
+ 
+				if(i < number.length())
+				{
+					c2 = decodeChar(number.charAt(i));
+					i++;
+				}
+				else
+					c2 = 10;
+	
+				if(c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10) // Only 0-9 and - allowed
+				{
+					return false;
+				}
+
+				val = c1 * 11 + c2;  							// Encode as base 11
+ 
+				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
+					val = val | 0x80;							 // If this is not set would be treated as label pointer
+
+				encodedNumber[j++] = (byte)val;	
+			}
+			
+			if((val & 0x80) == 0 || i < 3)  // terminate string with 0x80 if not done 
+			{
+				val = 0xF8;
+				encodedNumber[j++] = (byte)val;
+			}
+			
+			encodedSize  = j;
+			
+			return true;
+		}
+		
+		public void write(ImgFileWriter writer)
+		{
+			for(int i = 0; i < encodedSize; i++)
+				writer.put(encodedNumber[i]);
+		}
+		
+		public boolean isUsed()
+		{
+			return (encodedSize > 0);
+		}
+		
+		public int getSize()	
+		{
+			return encodedSize;
+		}
+		
+		private int decodeChar(char ch)
+		{		
+			return (ch - '0');
+		}
+		
+	}
+
 	public static final byte HAS_STREET_NUM = 0x01;
 	public static final byte HAS_STREET     = 0x02;
 	public static final byte HAS_CITY       = 0x04;
@@ -31,6 +119,7 @@ public class POIRecord {
 	public static final byte HAS_EXIT       = 0x20;
 	public static final byte HAS_TIDE_PREDICTION = 0x40;
 
+	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
 	private static final AddrAbbr ABBR_APARTMENT = new AddrAbbr('1', "APT");
 	private static final AddrAbbr ABBR_BUILDING = new AddrAbbr('2', "BLDG");
@@ -39,18 +128,22 @@ public class POIRecord {
 	private static final AddrAbbr ABBR_ROOM = new AddrAbbr('5', "RM");
 	private static final AddrAbbr ABBR_STE = new AddrAbbr('6', "STE");  // don't know what this is?
 	private static final AddrAbbr ABBR_UNIT = new AddrAbbr('7', "UNIT");
+	*/
 
 	private int offset = -1;
 	private Label poiName;
 
-	private int streetNumber;
+	private final SimpleStreetPhoneNumber simpleStreetNumber = new SimpleStreetPhoneNumber();
+	private final SimpleStreetPhoneNumber simplePhoneNumber = new SimpleStreetPhoneNumber();
+
 	private Label streetName;
 	private Label streetNumberName; // Used for numbers such as 221b
+	private Label complexPhoneNumber; // Used for numbers such as 221b
+	
+	private City city;
+	private char zipIndex;
 
-	private char cityIndex ;
-	private char zipIndex  ;
-
-	private String phoneNumber;
+	//private String phoneNumber;
 
 	public void setLabel(Label label) {
 		this.poiName = label;
@@ -60,14 +153,35 @@ public class POIRecord {
 		this.streetName = label;
 	}
 	
+	public boolean setSimpleStreetNumber(String streetNumber) 
+	{
+		return simpleStreetNumber.set(streetNumber);
+	}
+	
+	public void setComplexStreetNumber(Label label) 
+	{
+		streetNumberName = label;
+	}
+	
+	public boolean setSimplePhoneNumber(String phone) 
+	{
+		return simplePhoneNumber.set(phone);
+	}
+	
+	public void setComplexPhoneNumber(Label label) 
+	{
+		complexPhoneNumber = label;
+	}
+	
+	
 	public void setZipIndex(int zipIndex)
 	{
 		this.zipIndex =  (char) zipIndex;
 	}
 	
-	public void setCityIndex(int cityIndex)
+	public void setCity(City city)
 	{
-		this.cityIndex  = (char) cityIndex;
+		this.city = city;
 	}
 
 	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs,
@@ -82,62 +196,88 @@ public class POIRecord {
 		if (POIGlobalFlags != getPOIFlags())
 			writer.put(getWrittenPOIFlags(POIGlobalFlags));
 
+		if (streetNumberName != null)
+		{
+			int labOff = streetNumberName.getOffset();
+			writer.put((byte)((labOff & 0x7F0000) >> 16));
+			writer.putChar((char)(labOff & 0xFFFF));
+		}
+		else if (simpleStreetNumber.isUsed())
+			simpleStreetNumber.write(writer);
+
 		if (streetName != null)
 			writer.put3(streetName.getOffset());
 			
-		if (cityIndex > 0)
+		if (city != null)
 		{
+			char cityIndex = (char) city.getIndex();
 			if(numCities > 255)
- 			  writer.putChar(cityIndex);
+				writer.putChar(cityIndex);
 			else
-			  writer.put((byte)cityIndex);
+				writer.put((byte)cityIndex);
 		}
 			
 		if (zipIndex > 0)
 		{
 			if(numZips > 255)
- 			  writer.putChar(zipIndex);			
+				writer.putChar(zipIndex);
 			else
-			 writer.put((byte)zipIndex);
+				writer.put((byte)zipIndex);
 		}
+		
+		if (complexPhoneNumber != null)
+		{
+			int labOff = complexPhoneNumber.getOffset();
+			writer.put((byte)((labOff & 0x7F0000) >> 16));
+			writer.putChar((char)(labOff & 0xFFFF));
+		}
+		else if (simplePhoneNumber.isUsed())
+			simplePhoneNumber.write(writer);
 	}
 
 	byte getPOIFlags() {
 		byte b = 0;
 		if (streetName != null)
 			b |= HAS_STREET;
-		if (cityIndex > 0)
+		if (simpleStreetNumber.isUsed() || streetNumberName != null)
+		   b |= HAS_STREET_NUM;
+		if (city != null)
 		        b |= HAS_CITY;
 		if (zipIndex > 0)
-		        b |= HAS_ZIP;			
+		        b |= HAS_ZIP;	
+		if (simplePhoneNumber.isUsed() || complexPhoneNumber != null)
+		   b |= HAS_PHONE;				  		
 		return b;
 	}
 	
 	byte getWrittenPOIFlags(byte POIGlobalFlags) 
 	{
-	    int mask;
-	    int flag = 0;
-	    int j = 0;
+			int mask;
+			int flag = 0;
+			int j = 0;
 	
-	    int usedFields = getPOIFlags();
+			int usedFields = getPOIFlags();
 	
-	    /* the local POI flag is really tricky
-	       if a bit is not set in the global mask
-	       we have to skip this bit in the local mask.
-	       In other words the meaning of the local bits
-	       change influenced by the global bits */
+			/* the local POI flag is really tricky if a bit is not set in the global mask
+					we have to skip this bit in the local mask. In other words the meaning of the local bits
+					change influenced by the global bits */
+	
+			for(byte i = 0; i < 6; i++)
+			{
+				mask =  1 << i;
 
-		for (byte i = 0; i < 6; i++) {
-			mask = 1 << i;
-
-			if ((mask & POIGlobalFlags) == mask) {
-				if ((mask & usedFields) == mask)
-					flag |= (1 << j);
-				j++;
+				if((mask & POIGlobalFlags) == mask)
+				{
+					if((mask & usedFields) == mask)
+						flag = flag | (1 << j);
+					j++;
+				}
+		
 			}
 
-		}
-	    return (byte) flag;
+			flag = flag | 0x80; // gpsmapedit asserts for this bit set
+	    
+			return (byte) flag;
 	}
 
 	/**
@@ -150,9 +290,17 @@ public class POIRecord {
 		int size = 3;
 		if (POIGlobalFlags != getPOIFlags())
 			size += 1;
-		if (streetName != null)
+		if (simpleStreetNumber.isUsed())		
+			size += simpleStreetNumber.getSize();
+		if (streetNumberName != null)
 			size += 3;
-		if (cityIndex > 0) 
+		if (simplePhoneNumber.isUsed())		
+			size += simplePhoneNumber.getSize();			
+		if (complexPhoneNumber != null)
+			size += 3;			
+		if (streetName != null)
+			size += 3;	
+		if (city != null) 
 		{
 			/*
 			  depending on how many cities are in the LBL block we have
@@ -160,9 +308,9 @@ public class POIRecord {
 			*/
 		
 			if(numCities > 255)
-	  		  size += 2;
+				size += 2;
 			else
-			  size += 1;
+				size += 1;
 		}
 		if (zipIndex > 0)
 		{

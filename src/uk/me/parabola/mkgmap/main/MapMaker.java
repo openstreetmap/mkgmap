@@ -36,6 +36,8 @@ import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 /**
@@ -49,6 +51,7 @@ public class MapMaker implements MapProcessor {
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
+			makeAreaPOIs(args, src);			
 			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
 		} catch (FormatException e) {
@@ -135,6 +138,49 @@ public class MapMaker implements MapProcessor {
 		return src;
 	}
 
+	private void makeAreaPOIs(CommandArgs args, LoadableMapDataSource src) {
+		String s = args.getProperties().getProperty("add-pois-to-areas");
+		if (s != null) {
+			
+			MapPointFastFindMap poiMap = new MapPointFastFindMap();
+
+			for (MapPoint point : src.getPoints()) 
+			{
+				if(!point.isRoadNamePOI()) // Don't put road pois in this list
+					poiMap.put(null, point);
+			}
+			
+			for (MapShape shape : src.getShapes()) {
+				String shapeName = shape.getName();
+
+				int pointType = shape.getPoiType();
+				
+				// only make a point if the shape has a name and we know what type of point to make
+				if (pointType == 0)
+					continue;
+
+				
+				// We don't want to add unnamed cities !!
+				if(MapPoint.isCityType(pointType) && shapeName == null)
+					continue;
+				
+				// check if there is not already a poi in that shape 
+							
+				if(poiMap.findPointInShape(shape, pointType, shapeName) == null)
+				{
+					MapPoint newPoint = new MapPoint();
+					newPoint.setName(shapeName);
+					newPoint.setType(pointType);
+					newPoint.setLocation(shape.getLocation()); // TODO use centriod
+					src.getPoints().add(newPoint);
+					log.info("created POI ", shapeName, "from shape");
+				}
+			}
+		}
+
+	}
+
+	
 	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
 		String rnp = args.getProperties().getProperty("road-name-pois", null);
 		// are road name POIS wanted?
@@ -170,7 +216,7 @@ public class MapMaker implements MapProcessor {
 			// generate a POI for each named road
 			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
-				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt, cities));
+				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt));
 			}
 		}
 	}
@@ -261,7 +307,7 @@ public class MapMaker implements MapProcessor {
 		return roadGroups;
 	}
 
-	private MapPoint makeRoadNamePOI(MapLine road, int type, List<MapPoint> cities) {
+	private MapPoint makeRoadNamePOI(MapLine road, int type) {
 		List<Coord> points = road.getPoints();
 		int numPoints = points.size();
 		Coord coord;
@@ -277,26 +323,10 @@ public class MapMaker implements MapProcessor {
 		}
 
 		String name = road.getName();
-		MapPoint nearestCity = null;
-		if(cities != null) {
-			double shortestDistance = 10000000;
-			for(MapPoint mp : cities) {
-				double distance = coord.distance(mp.getLocation());
-				if(distance < shortestDistance) {
-					shortestDistance = distance;
-					nearestCity = mp;
-				}
-			}
-		}
-
 		MapPoint rnp = new MapPoint();
 
-		if(nearestCity != null && nearestCity.getName() != null) {
-			//rnp.setNearestCityPoint(nearestCity);
-			name += "/" + nearestCity.getName();
-		}
-
 		rnp.setName(name);
+		rnp.setRoadNamePOI(true);
 		rnp.setType(type);
 		rnp.setLocation(coord);
 		return rnp;

@@ -15,6 +15,9 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.Map;
+import java.util.HashMap;
+
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
@@ -29,6 +32,13 @@ public abstract class MapElement {
 
 	private int minResolution = 24;
 	private int maxResolution = 24;
+	
+	private String zipCode;
+	private String city;
+	private String region;
+	private String country;	
+	
+	private final Map<String, String> attributes = new HashMap<String, String>();
 
 	protected MapElement() {
 	}
@@ -53,8 +63,83 @@ public abstract class MapElement {
 	}
 
 	public void setName(String name) {
-		this.name = name;
+	  if(name != null)
+		this.name = name.toUpperCase();
 	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+	  if(city != null)
+		this.city = city.toUpperCase();
+	}
+	
+	public String getZip() {
+		return zipCode;
+	}
+
+	public void setZip(String zip) {
+		this.zipCode = zip;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+	  if(country != null)
+		this.country = country.toUpperCase();
+	}
+	
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+	  if(region != null)
+  		this.region = region.toUpperCase();
+	}	
+	
+	public String getStreet() {
+		return attributes.get("street");
+	}
+
+	public void setStreet(String street) {
+		attributes.put("street", street);	
+	}
+
+	public String getPhone() {
+		return attributes.get("phone");
+	}
+
+	public void setPhone(String phone) {
+	
+	  if(phone.startsWith("00"))
+		{
+		  phone = phone.replaceFirst("00","+");
+		}
+		attributes.put("phone", phone);	
+	}
+
+	public String getHouseNumber() {
+		return attributes.get("houseNumber");
+	}
+
+	public void setHouseNumber(String houseNumber) {
+		attributes.put("houseNumber", houseNumber);		
+	}
+	
+	public String getIsIn() {
+		return attributes.get("isIn");
+	}
+
+	public void setIsIn(String isIn) {
+	  if(isIn != null)
+		attributes.put("isIn", isIn.toUpperCase());
+	}	
+
 
 	/**
 	 * This is the type code that goes in the .img file so that the GPS device

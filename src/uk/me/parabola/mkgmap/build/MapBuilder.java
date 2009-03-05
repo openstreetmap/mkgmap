@@ -21,15 +21,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -83,26 +83,55 @@ public class MapBuilder implements Configurable {
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
-	private final SortedMap<String, Object> sortedCities = new TreeMap<String, Object>();
+	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
+
 	private boolean doRoads;
 
+	private final Locator locator = new Locator();
 	private Country country;
 	private Region  region;
 
-	private String countryName = "UNITED KINGDOM";
-	private String countryAbbr = "GBR";
+	private String countryName = "COUNTRY";
+	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
+	private int		locationAutofillLevel;
+	private boolean	poiAddresses = true;
+	private int		poiDisplayFlags;
 
 	public MapBuilder() {
 		regionName = null;
 	}
 
 	public void config(EnhancedProperties props) {
+
+		String autoFillPar;
+
 		countryName = props.getProperty("country-name", countryName);
 		countryAbbr = props.getProperty("country-abbr", countryAbbr);
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
+		
+		if(props.getProperty("no-poi-address", null) != null)
+			poiAddresses = false;
+
+		autoFillPar = props.getProperty("location-autofill", null);
+
+		if(autoFillPar != null)
+		{
+			try
+			{
+				locationAutofillLevel = Integer.parseInt(autoFillPar);
+			}
+			catch (Exception e)
+			{
+				locationAutofillLevel = 1;
+			}
+		}
+
+		locator.setAutoFillLevel(locationAutofillLevel);
+
+
 	}
 
 	/**
@@ -123,6 +152,7 @@ public class MapBuilder implements Configurable {
 		if(regionName != null)
 			region = lblFile.createRegion(country, regionName, regionAbbr);
 
+		processCities(map, src);
 		processPOIs(map, src);
 		//preProcessRoads(map, src);
 		processOverviews(map, src);
@@ -157,52 +187,211 @@ public class MapBuilder implements Configurable {
 	}
 
 	/**
-	 * First stage of handling POIs
+	 * Processing of Cities
 	 *
-	 * POIs need to be handled first, because we need the offsets
-	 * in the LBL file.
+	 * Fills the city list in lbl block that is required for find by name
+	 * It also builds up information that is required to get address info
+	 * for the POIs
 	 *
 	 * @param map The map.
 	 * @param src The map data.
 	 */
-	private void processPOIs(Map map, MapDataSource src) {
+	private void processCities(Map map, MapDataSource src) {
 		LBLFile lbl = map.getLblFile();
 
-		// gpsmapedit doesn't sort the city names so to be
-		// friendly we generate the city objects in alphabetic
-		// order - to do that we first build a map from city
-		// name to the associated MapPoint - we don't want to
-		// be fooled by duplicate names so suffix the name
-		// with the object to make it unique
+		locator.setDefaultCountry(countryName, countryAbbr);
+		
+		// collect the names of the cities
 		for (MapPoint p : src.getPoints()) {
 			if(p.isCity() && p.getName() != null)
-				sortedCities.put(p.getName() + "@" + p, p);
+				locator.addLocation(p); // Put the city info the map for missing info 
 		}
 
-		// now loop through the sorted keys and retrieve
-		// the MapPoint associated with the key - now we
-		// can create the City object and remember it for later
-		for (String s : sortedCities.keySet()) {
-		    MapPoint p = (MapPoint)sortedCities.get(s);
-		    City c;
-		    if(region != null)
-		    	c = lbl.createCity(region, p.getName());
-		    else
-		    	c = lbl.createCity(country, p.getName());
-		    sortedCities.put(s, c);
+		if(locationAutofillLevel > 0)
+			locator.resolve(); // Try to fill missing information that include search of next city
+
+		for (MapPoint p : src.getPoints()) 
+		{
+			if(p.isCity() && p.getName() != null)
+			{
+				Country thisCountry;
+				Region 	thisRegion;
+				City 		thisCity;
+
+				String CountryStr = p.getCountry();
+				String RegionStr  = p.getRegion();
+
+				if(CountryStr != null)
+					thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
+				else
+					thisCountry = country;
+					
+				if(RegionStr != null)
+				{
+					thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
+				}
+				else
+					thisRegion = region;
+
+				if(thisRegion != null)
+					thisCity = lbl.createCity(thisRegion, p.getName(), true);
+				else
+					thisCity = lbl.createCity(thisCountry, p.getName(), true);
+
+				cityMap.put(p, thisCity);
+			}
 		}
-		// if point has a nearest city, create a POIRecord to
-		// reference it
+	}
+
+	private void processPOIs(Map map, MapDataSource src) {
+
+		LBLFile lbl = map.getLblFile();
+		long poiAddrCountr = 0;
+		boolean checkedForPoiDispFlag = false;
+		boolean doAutofill;
+
 		for (MapPoint p : src.getPoints()) {
-			MapPoint nearestCityPoint = p.getNearestCityPoint();
-			if(nearestCityPoint != null && p.getName() != null) {
-				POIRecord r = lbl.createPOI(p.getName());
-				City nearestCity = (City)sortedCities.get(nearestCityPoint.getName() + "@" + nearestCityPoint);
-				r.setCityIndex(nearestCity.getIndex());
+
+			if(p.isCity() == false &&
+				 (p.isRoadNamePOI() || poiAddresses))
+			{		
+				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
+					doAutofill = true;
+				else
+					doAutofill = false;
+				
+				
+				String CountryStr = p.getCountry();
+				String RegionStr  = p.getRegion();		
+				String ZipStr     = p.getZip();
+				String CityStr    = p.getCity();
+				boolean guessed   = false;
+
+				if(CityStr != null || ZipStr != null ||RegionStr != null || CountryStr != null)
+					poiAddrCountr++;
+
+				if(CountryStr != null)
+					CountryStr = locator.fixCountryString(CountryStr);	
+
+				if(CountryStr == null || RegionStr == null || (ZipStr == null && CityStr == null))
+				{
+						MapPoint nextCity = locator.findByCityName(p);
+						
+						if(doAutofill && nextCity == null)
+							nextCity = locator.findNextPoint(p);
+
+						if(nextCity != null)
+						{
+							guessed = true;
+
+							if (CountryStr == null)	CountryStr = nextCity.getCountry();
+							if (RegionStr == null)  RegionStr  = nextCity.getRegion();
+
+							if(doAutofill)
+							{
+								if(ZipStr == null)
+								{
+									String CityZipStr = nextCity.getZip();
+									
+									// Ignore list of Zips seperated by ;
+									
+									if(CityZipStr != null && CityZipStr.indexOf(',') < 0)
+										ZipStr = CityZipStr; 
+								}
+								
+								if(CityStr == null) CityStr = nextCity.getCity();								
+							}
+						
+						}
+				}
+				
+	
+				if(CountryStr != null && checkedForPoiDispFlag == false)
+				{
+					// Different countries require different address notation
+
+					poiDisplayFlags = locator.getPOIDispFlag(CountryStr);
+					checkedForPoiDispFlag = true;
+				}
+
+
+				if(p.isRoadNamePOI() && CityStr != null)					
+				{
+						// If it is road POI add city name and street name into address info
+						p.setStreet(p.getName());
+						p.setName(p.getName() + "/" + CityStr);
+				}
+
+				POIRecord r = lbl.createPOI(p.getName());	
+
+				if(CityStr != null)
+				{
+					Country thisCountry;
+					Region 	thisRegion;
+					City 		city;
+
+					if(CountryStr != null)
+						thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
+					else
+						thisCountry = country;
+					
+					if(RegionStr != null)
+						thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
+					else
+						thisRegion = region;
+
+					if(thisRegion != null)
+						city = lbl.createCity(thisRegion, CityStr, false);
+					else
+						city = lbl.createCity(thisCountry, CityStr, false);
+
+	  			r.setCity(city);
+
+				}
+
+				if (ZipStr != null)
+				{
+					Zip zip = lbl.createZip(ZipStr);
+					r.setZipIndex(zip.getIndex());
+				}
+
+				if(p.getStreet() != null)
+				{
+					Label streetName = lbl.newLabel(p.getStreet());
+					r.setStreetName(streetName);			  
+				}
+				else if (guessed == true && locationAutofillLevel > 0)
+				{
+					Label streetName = lbl.newLabel("FIX MY ADDRESS");
+					r.setStreetName(streetName);		
+				}
+
+				if(p.getHouseNumber() != null)
+				{
+					if(r.setSimpleStreetNumber(p.getHouseNumber()) == false)
+					{
+						Label streetNumber = lbl.newLabel(p.getHouseNumber());
+						r.setComplexStreetNumber(streetNumber);
+					}
+				}
+
+				if(p.getPhone() != null)
+				{
+					if(r.setSimplePhoneNumber(p.getPhone()) == false)
+					{
+						Label phoneNumber = lbl.newLabel(p.getPhone());
+						r.setComplexPhoneNumber(phoneNumber);
+					}
+				}	
+		  	
 				poimap.put(p, r);
 			}
 		}
+
+		//System.out.println(poiAddrCountr + " POIs have address info");
+
 		lbl.allPOIsDone();
+
 	}
 
 	/**
@@ -369,6 +558,9 @@ public class MapBuilder implements Configurable {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 
+		if(poiDisplayFlags != 0)							// POI requested alterate address notation
+			map.setPoiDisplayFlags(poiDisplayFlags);
+
 		// You can add anything here.
 		// But there has to be something, otherwise the map does not show up.
 		//
@@ -461,7 +653,8 @@ public class MapBuilder implements Configurable {
 					// retrieve the City created earlier for
 					// this point and store the point info
 					// in it
-					City c = (City)sortedCities.get(name + "@" + point);
+					City c = cityMap.get(point);
+
 					if(pointIndex > 255) {
 						System.err.println("Can't set city point index for " + name + " (too many indexed points in division)\n");
 					} else {

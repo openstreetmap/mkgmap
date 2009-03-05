@@ -125,6 +125,11 @@ Misc options:
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
 	can be specified with this option.
+	
+--add-pois-to-areas
+	Generate a POI for each area. The POIs are created after the style
+	is applied and only for polygon types that have a reasonable point
+	equivalent.
 
 --tdbfile
 	Write a .tdb file.
@@ -138,6 +143,24 @@ Misc options:
 	Make the map transparent, so that if two maps are loaded that cover the
 	same area, you can see through this map and see the lower map too.
 	Useful for contour line maps among other things.
+
+--no-poi-address
+	Disable address / phone information to POIs. Address info is read according to
+	the "Karlsruhe" tagging schema. Automatic filling of missing information could
+	be enabled using the "location-autofill" option.
+
+--location-autofill=''number''
+	Controls how country region info is gathered for cities / streets and pois
+
+	0	(Default) The country region info is gathered by analysis of the cities is_in tags.
+		If no country region info is present the default passed default country	region is used.
+		 
+	1	Additional analysis of partial is_in info to get relations between hamlets and cities
+	
+	2	Brute force search for nearest city with info if all methods before failed. Warning
+		cities my end up in the wrong country/region.
+		
+	3	Enables debug output about suspicious relations that might cause wrong country region info
 
 --version 
 	Output program version.

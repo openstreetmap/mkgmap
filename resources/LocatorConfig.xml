@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<locator>
+	<country name="Deutschland" abr="DEU" geodb="1" regionOffset="3" poiDispFlag="0xc">
+		<variant>Bundesrepublik Deutschland</variant>
+		<variant>Germany</variant>
+		<variant>DE</variant>		
+	</country>
+	<country name="Österreich" abr="AUT" geodb="1" poiDispFlag="0xc">
+		<variant>Austria</variant>
+		<variant>AT</variant>		
+	</country>
+	<country name="Schweiz" abr="CHE" geodb="1" poiDispFlag="0xc">
+		<variant>Switzerland</variant>
+		<variant>CH</variant>		
+	</country>	
+	<country name="United Kingdom" abr="GBR">
+		<variant>UK</variant>
+		<variant>GB</variant>		
+	</country>
+	<country name="Italia" abr="ITA" regionOffset="2">
+		<variant>Italy</variant>
+		<variant>IT</variant>		
+	</country>	
+	<country name="France" abr="FRA">
+	</country>	
+	<country name="United States" abr="USA">
+		<variant>USA</variant>
+	</country>	
+	<continent name="Europe">
+	</continent>
+	<continent name="Africa">
+	</continent>
+	<continent name="Asia">
+	</continent>		
+	<continent name="North America">
+	</continent>		
+	<continent name="South America">
+	</continent>			
+	<continent name="Oceania">
+	</continent>		
+</locator>

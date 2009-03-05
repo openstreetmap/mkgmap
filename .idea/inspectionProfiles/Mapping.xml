@@ -130,7 +130,5 @@
       <option name="ignoreObjectConstruction" value="true" />
       <option name="ignoreTypeCasts" value="true" />
     </inspection_tool>
-    <inspection_tool class="HtmlDeprecatedTag" level="WARNING" enabled="false" />
-    <inspection_tool class="XmlUnboundNsPrefix" level="WARNING" enabled="false" />
   </profile>
 </component>

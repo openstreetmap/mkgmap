@@ -362,6 +362,23 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			} catch (NumberFormatException e) {
 				endLevel = 0;
 			}
+		} else if (name.equals("ZipCode")) {
+		  elem.setZip(recode(value));
+		} else if (name.equals("CityName")) {
+		  elem.setCity(recode(value));		  
+		} else if (name.equals("StreetDesc")) {
+		  elem.setStreet(recode(value));
+		} else if (name.equals("HouseNumber")) {
+		  elem.setHouseNumber(recode(value));
+		} else if (name.equals("is_in")) {
+		  elem.setIsIn(recode(value));		  
+		} else if (name.equals("Phone")) {
+		  elem.setPhone(recode(value));			
+		} else if (name.equals("CountryName")) {
+		  elem.setCountry(recode(value));
+		} else if (name.equals("RegionName")) {
+			//System.out.println("RegionName " + value);
+		  elem.setRegion(recode(value));				
 		} else {
 			return false;
 		}

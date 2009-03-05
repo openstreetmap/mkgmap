@@ -2,19 +2,13 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.log.Logger;
-
-import uk.me.parabola.mkgmap.general.RoadNetwork;
-
-import uk.me.parabola.mkgmap.reader.osm.Node;
-import uk.me.parabola.mkgmap.reader.osm.Way;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Representation of an OSM turn restriction
@@ -28,12 +22,12 @@ public class RestrictionRelation extends Relation {
     private Way fromWay;
     private Way toWay;
     private Coord viaCoord;
-    private String restriction;
+    private final String restriction;
 
     private CoordNode fromNode;
     private CoordNode toNode;
     private CoordNode viaNode;
-    private List<CoordNode> otherNodes = new ArrayList<CoordNode>();
+    private final List<CoordNode> otherNodes = new ArrayList<CoordNode>();
     private final String messagePrefix;
 
 	/**
@@ -109,9 +103,9 @@ public class RestrictionRelation extends Relation {
 		    "day_off",
 		    "hour_on",
 		    "hour_off" };
-		for(int i = 0; i < unsupportedTags.length; ++i) {
-			if(getTag(unsupportedTags[i]) != null) {
-				log.warn(messagePrefix + "ignoring unsupported '" + unsupportedTags[i] + "' tag");
+		for (String unsupportedTag : unsupportedTags) {
+			if (getTag(unsupportedTag) != null) {
+				log.warn(messagePrefix + "ignoring unsupported '" + unsupportedTag + "' tag");
 			}
 		}
 	}

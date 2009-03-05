@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MapPoint extends MapElement {
 	private Coord location;
-	private MapPoint nearestCityPoint;
+	private boolean isRoadNamePoi;
 
 	public MapPoint() {
 	}
@@ -59,15 +59,19 @@ public class MapPoint extends MapElement {
 	}
 
 	public boolean isCity() {
-		int type = getType();
+		return isCityType(getType());
+	}
+
+	public void setRoadNamePOI(boolean isRoadNamePoi) {
+		this.isRoadNamePoi = isRoadNamePoi;
+	}
+
+	public boolean isRoadNamePOI() {
+		return this.isRoadNamePoi;
+	}
+	
+	public static boolean isCityType(int type)
+	{
 		return type >= 0x0100 && type <= 0x1100;
-	}
-
-	public void setNearestCityPoint(MapPoint nearestCityPoint) {
-		this.nearestCityPoint = nearestCityPoint;
-	}
-
-	public MapPoint getNearestCityPoint() {
-		return nearestCityPoint;
 	}
 }

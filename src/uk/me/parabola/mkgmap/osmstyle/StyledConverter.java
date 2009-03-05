@@ -63,17 +63,17 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
-	private Area bbox = null;
+	private Area bbox;
 	private Set<Coord> boundaryCoords = new HashSet<Coord>();
 
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
-	private Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
+	private final Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
 
 	// originalWay associates Ways that have been created due to
 	// splitting or clipping with the Ways that they were derived
 	// from
-	private Map<Way, Way> originalWay = new HashMap<Way, Way>();
+	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
 	private int roadId;
 
@@ -277,6 +277,11 @@ public class StyledConverter implements OsmConverter {
 		shape.setPoints(way.getPoints());
 
 		clipper.clipShape(shape, collector);
+		
+		GType pointType = nodeRules.resolveType(way);
+		
+		if(pointType != null)
+			shape.setPoiType(pointType.getType());
 	}
 
 	private void addPoint(Node node, GType gt) {
@@ -295,6 +300,50 @@ public class StyledConverter implements OsmConverter {
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
+		
+		// Now try to get some address info for POIs
+		
+		String city         = element.getTag("addr:city");
+		String zip          = element.getTag("addr:postcode");
+		String street 	    = element.getTag("addr:street");
+		String houseNumber  = element.getTag("addr:housenumber");		
+		String phone	 	    = element.getTag("phone");		
+		String isIn	        = element.getTag("is_in");
+		String country      = element.getTag("is_in:country");
+		String region       = element.getTag("is_in:county");
+		
+		if(country != null)
+			country = element.getTag("addr:country");
+
+		if(zip == null)
+		  zip = element.getTag("openGeoDB:postal_codes");
+		
+		if(city == null)
+		  city = element.getTag("openGeoDB:sort_name");
+		
+		if(city != null)
+		  ms.setCity(city);
+		  
+		if(zip != null)
+		  ms.setZip(zip);
+		  
+		if(street != null)
+		  ms.setStreet(street);		  
+
+		if(houseNumber != null)
+		  ms.setHouseNumber(houseNumber);
+		  
+		if(isIn != null)
+		  ms.setIsIn(isIn);		  
+			
+		if(phone != null)
+		  ms.setPhone(phone);	
+
+		if(country != null)
+		  ms.setCountry(country);	
+
+		if(region != null)
+		  ms.setRegion(region);			
 	}
 
 	void addRoad(Way way, GType gt) {
@@ -714,7 +763,7 @@ public class StyledConverter implements OsmConverter {
 
 	int getSpeedIdx(String tag)
 	{
-		double kmh = 0.0;
+		double kmh;
 		double factor = 1.0;
 		
 		String speedTag = tag.toLowerCase().trim();
