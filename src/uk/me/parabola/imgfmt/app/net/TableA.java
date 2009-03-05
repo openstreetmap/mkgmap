@@ -157,9 +157,14 @@ public class TableA {
 			// followed by 2 bytes of class and speed flags and road restrictions.
 			log.debug("writing Table A entry", arcs.get(arc));
 			int pos = arc.roadDef.getOffsetNet1();
+			int access = arc.roadDef.getTabAAccess();
+			// top bits of access go into net1 offset
+			final int ACCESS_TOP_BITS = 0xc000;
+			pos |= (access & ACCESS_TOP_BITS) << 8;
+			access &= ~ACCESS_TOP_BITS;
 			writer.put3(pos);
 			writer.put((byte) arc.roadDef.getTabAInfo());
-			writer.put((byte) arc.roadDef.getTabAAccess());
+			writer.put((byte) access);
 		}
 	}
 }

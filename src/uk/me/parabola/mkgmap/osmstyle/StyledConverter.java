@@ -89,6 +89,30 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule relationRules;
 
+
+	class AccessMapping {
+		String type;
+		int index;
+		AccessMapping(String type, int index) {
+			this.type = type;
+			this.index = index;
+		}
+	};
+
+	AccessMapping[] accessMap = {
+		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
+		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
+		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
+		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
+		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
+		new AccessMapping("motorcycle", RoadNetwork.NO_CAR),
+		new AccessMapping("psv",        RoadNetwork.NO_BUS),
+		new AccessMapping("taxi",       RoadNetwork.NO_TAXI),
+		new AccessMapping("emergency",  RoadNetwork.NO_EMERGENCY),
+		new AccessMapping("delivery",   RoadNetwork.NO_DELIVERY),
+		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
+	};
+
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
 			if (element instanceof MapRoad)
@@ -503,57 +527,43 @@ public class StyledConverter implements OsmConverter {
 			highwayType = way.getTag("route");
 		}
 
-		String[] vehicleClass = { "access", // must be first in list
-					  "bicycle",
-					  "foot",
-					  "hgv",
-					  "motorcar",
-					  "motorcycle",
-					  "psv",
-		};
-		int[] accessSelector = { RoadNetwork.NO_MAX,
-					 RoadNetwork.NO_BIKE,
-					 RoadNetwork.NO_FOOT,
-					 RoadNetwork.NO_TRUCK,
-					 RoadNetwork.NO_CAR,
-					 RoadNetwork.NO_CAR, // motorcycle
-					 RoadNetwork.NO_BUS };
-
-		for(int i = 0; i < vehicleClass.length; ++i) {
-			String access = way.getTag(vehicleClass[i]);
-			if(access == null)
+		for(int i = 0; i < accessMap.length; ++i) {
+			int index = accessMap[i].index;
+			String type = accessMap[i].type;
+			String accessTagValue = way.getTag(type);
+			if(accessTagValue == null)
 				continue;
-			if(accessExplicitlyDenied(access)) {
-				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+			if(accessExplicitlyDenied(accessTagValue)) {
+				if(index == RoadNetwork.NO_MAX) {
 					// everything is denied access
-					for(int j = 0; j < noAccess.length; ++j)
-						noAccess[j] = true;
+					for(int j = 1; j < accessMap.length; ++j)
+						noAccess[accessMap[j].index] = true;
 				}
 				else {
 					// just the specific vehicle
 					// class is denied access
-					noAccess[accessSelector[i]] = true;
+					noAccess[index] = true;
 				}
-				log.info(vehicleClass[i] + " is not allowed in " + highwayType + " " + way.getName());
+				log.info(type + " is not allowed in " + highwayType + " " + way.getName());
 			}
-			else if(accessExplicitlyAllowed(access)) {
-				if(accessSelector[i] == RoadNetwork.NO_MAX) {
+			else if(accessExplicitlyAllowed(accessTagValue)) {
+				if(index == RoadNetwork.NO_MAX) {
 					// everything is allowed access
-					for(int j = 0; j < noAccess.length; ++j)
-						noAccess[j] = false;
+					for(int j = 1; j < accessMap.length; ++j)
+						noAccess[accessMap[j].index] = false;
 				}
 				else {
 					// just the specific vehicle
 					// class is allowed access
-					noAccess[accessSelector[i]] = false;
+					noAccess[index] = false;
 				}
-				log.info(vehicleClass[i] + " is allowed in " + highwayType + " " + way.getName());
+				log.info(type + " is allowed in " + highwayType + " " + way.getName());
 			}
-			else if(access.equalsIgnoreCase("unknown")) {
+			else if(accessTagValue.equalsIgnoreCase("unknown")) {
 				// implicitly allow access
 			}
 			else {
-				log.warn("Ignoring unsupported access tag " + vehicleClass[i] + "=" + way.getTag(vehicleClass[i]));
+				log.warn("Ignoring unsupported access tag value " + type + "=" + accessTagValue);
 			}
 		}
 
