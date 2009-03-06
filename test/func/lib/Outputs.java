@@ -32,16 +32,12 @@ public class Outputs {
 		this.err = err;
 	}
 
-	public String getOut() {
+	protected String getOut() {
 		return out;
 	}
 
-	public String getErr() {
+	protected String getErr() {
 		return err;
-	}
-
-	public void printOut() {
-		System.out.println(out);
 	}
 
 	/**

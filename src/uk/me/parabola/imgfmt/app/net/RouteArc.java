@@ -32,14 +32,14 @@ public class RouteArc {
 	private static final Logger log = Logger.getLogger(RouteArc.class);
 	
 	// Flags A
-	public static final int FLAG_NEWDIR = 0x80;
-	public static final int FLAG_FORWARD = 0x40;
-	public static final int MASK_DESTCLASS = 0x7;
+	private static final int FLAG_NEWDIR = 0x80;
+	private static final int FLAG_FORWARD = 0x40;
+	private static final int MASK_DESTCLASS = 0x7;
 	public static final int MASK_CURVE_LEN = 0x38;
 
 	// Flags B
-	public static final int FLAG_LAST_LINK = 0x80;
-	public static final int FLAG_EXTERNAL = 0x40;
+	private static final int FLAG_LAST_LINK = 0x80;
+	private static final int FLAG_EXTERNAL = 0x40;
 
 	private int offset;
 
@@ -62,7 +62,6 @@ public class RouteArc {
 
 	private boolean curve;
 	private int length;
-	private int[] lendat;
 
 	/**
 	 * Create a new arc.
@@ -298,15 +297,11 @@ public class RouteArc {
 		return (flagA & FLAG_FORWARD) != 0;
 	}
 
-	public boolean isReverse() {
-		return !isForward();
-	}
-
 	public void setLast() {
 		flagB |= FLAG_LAST_LINK;
 	}
 
-	public void setDestinationClass(int destinationClass) {
+	protected void setDestinationClass(int destinationClass) {
 		log.debug("setting destination class", destinationClass);
 		flagA |= (destinationClass & MASK_DESTCLASS);
 	}

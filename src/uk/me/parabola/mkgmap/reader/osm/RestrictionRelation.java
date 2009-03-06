@@ -122,10 +122,6 @@ public class RestrictionRelation extends Relation {
 		return viaCoord;
 	}
 
-	public String getRestriction() {
-		return restriction;
-	}
-
 	public void setFromNode(CoordNode fromNode) {
 		this.fromNode = fromNode;
 		log.debug(messagePrefix + restriction + " 'from' node is " + fromNode.toDegreeString());

@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.Utils;
  *
  * @author Steve Ratcliffe
  */
-public class Coord implements Comparable {
+public class Coord implements Comparable<Coord> {
 	private final int latitude;
 	private final int longitude;
 	private int highwayCount; // number of highways that use this point
@@ -117,13 +117,12 @@ public class Coord implements Comparable {
 	 *
 	 * This ordering is used for sorting entries in NOD3.
 	 */
-	public int compareTo(Object o) {
-		Coord other = (Coord) o;
+	public int compareTo(Coord other) {
 		int clon = longitude - other.getLongitude();
-		if (clon != 0)
-			return clon;
-		else
+		if (clon == 0)
 			return latitude - other.getLatitude();
+		else
+			return clon;
 	}			
 
 	/**

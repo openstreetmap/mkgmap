@@ -130,7 +130,7 @@ public class RouteCenter {
 
 		int off = nodeOffset >> align;
 		return (off + 1 + low) << align;
-        }
+	}
 
 	/**
 	 * Inverse of calcTableOffset.

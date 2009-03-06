@@ -27,7 +27,7 @@
     <inspection_tool class="EmptyClass" level="WARNING" enabled="true" />
     <inspection_tool class="CloneInNonCloneableClass" level="WARNING" enabled="true" />
     <inspection_tool class="CloneableImplementsClone" level="WARNING" enabled="true">
-      <option name="m_ignoreCloneableDueToInheritance" value="false" />
+      <option name="m_ignoreCloneableDueToInheritance" value="true" />
     </inspection_tool>
     <inspection_tool class="ObsoleteCollection" level="WARNING" enabled="true">
       <option name="ignoreLibraryArguments" value="false" />
@@ -130,5 +130,6 @@
       <option name="ignoreObjectConstruction" value="true" />
       <option name="ignoreTypeCasts" value="true" />
     </inspection_tool>
+    <inspection_tool class="XmlUnboundNsPrefix" level="WARNING" enabled="false" />
   </profile>
 </component>

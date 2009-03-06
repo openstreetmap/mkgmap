@@ -56,8 +56,8 @@ public class LocatorConfig {
 			InputStream inStream;
 
 			try
-      {
-			  inStream = new FileInputStream("resources/" + fileName);
+			{
+				inStream = new FileInputStream("resources/" + fileName);
 			}
 			catch (Exception ex)
 			{

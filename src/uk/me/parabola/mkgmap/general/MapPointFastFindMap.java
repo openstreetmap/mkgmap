@@ -95,28 +95,8 @@ public class MapPointFastFindMap{
 	{
 		return points.size();
 	}
-	   
-	public Collection<MapPoint> values()
-	{
-		return points;
-	}
 
-	public MapPoint get(int index)
-	{
-		return points.get(index);
-	}
 
-	public MapPoint set(int index, MapPoint p)
-	{
-		return points.set(index, p);
-	}
-	   
-	public boolean remove(MapPoint p)
-	{
-		return points.remove(p);
-	}
-
-	
 	public MapPoint findNextPoint(MapPoint p)
 	{
 		/* tile based search 
@@ -240,10 +220,5 @@ public class MapPointFastFindMap{
 		//System.out.println("LatIdx " + latitIdx + " LonIdx " + longiIdx);
 	
 		return latitIdx * POS_HASH_MUL + longiIdx;
-	}
-	   
-	public void printStat()
-	{
-	   	System.out.println("Locator PosHashmap contains " + posMap.size() + " tiles");
 	}
 }

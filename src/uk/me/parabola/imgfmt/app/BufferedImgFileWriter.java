@@ -34,7 +34,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	private static final Logger log = Logger.getLogger(BufferedImgFileWriter.class);
 
 	private static final int KBYTE = 1024;
-	protected static final int INIT_SIZE = 16 * KBYTE;
+	private static final int INIT_SIZE = 16 * KBYTE;
 	private static final int GROW_SIZE = 128 * KBYTE;
 	private static final int GUARD_SIZE = KBYTE;
 

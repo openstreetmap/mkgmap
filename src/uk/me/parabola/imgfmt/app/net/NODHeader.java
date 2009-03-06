@@ -85,20 +85,12 @@ public class NODHeader extends CommonHeader {
 		return nodes;
 	}
 
-	public void setRoadStart(int start) {
-		roads.setPosition(start);
-	}
-
 	public void setRoadSize(int size) {
 		roads.setSize(size);
 	}
 
 	public Section getRoadSection() {
 		return roads;
-	}
-
-	public void setBoundaryStart(int start) {
-		boundary.setPosition(start);
 	}
 
 	public void setBoundarySize(int size) {

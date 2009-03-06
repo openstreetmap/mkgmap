@@ -252,9 +252,7 @@ public class MapBuilder implements Configurable {
 
 		for (MapPoint p : src.getPoints()) {
 
-			if(p.isCity() == false &&
-				 (p.isRoadNamePOI() || poiAddresses))
-			{		
+			if(!p.isCity() && (p.isRoadNamePOI() || poiAddresses)) {
 				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
 					doAutofill = true;
 				else
@@ -306,7 +304,7 @@ public class MapBuilder implements Configurable {
 				}
 				
 	
-				if(CountryStr != null && checkedForPoiDispFlag == false)
+				if(CountryStr != null && !checkedForPoiDispFlag)
 				{
 					// Different countries require different address notation
 
@@ -360,7 +358,7 @@ public class MapBuilder implements Configurable {
 					Label streetName = lbl.newLabel(p.getStreet());
 					r.setStreetName(streetName);			  
 				}
-				else if (guessed == true && locationAutofillLevel > 0)
+				else if (guessed && locationAutofillLevel > 0)
 				{
 					Label streetName = lbl.newLabel("FIX MY ADDRESS");
 					r.setStreetName(streetName);		
@@ -368,7 +366,7 @@ public class MapBuilder implements Configurable {
 
 				if(p.getHouseNumber() != null)
 				{
-					if(r.setSimpleStreetNumber(p.getHouseNumber()) == false)
+					if(!r.setSimpleStreetNumber(p.getHouseNumber()))
 					{
 						Label streetNumber = lbl.newLabel(p.getHouseNumber());
 						r.setComplexStreetNumber(streetNumber);
@@ -377,7 +375,7 @@ public class MapBuilder implements Configurable {
 
 				if(p.getPhone() != null)
 				{
-					if(r.setSimplePhoneNumber(p.getPhone()) == false)
+					if(!r.setSimplePhoneNumber(p.getPhone()))
 					{
 						Label phoneNumber = lbl.newLabel(p.getPhone());
 						r.setComplexPhoneNumber(phoneNumber);

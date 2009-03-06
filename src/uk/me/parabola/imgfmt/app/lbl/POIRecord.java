@@ -72,7 +72,7 @@ public class POIRecord {
 				val = c1 * 11 + c2;  							// Encode as base 11
  
 				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
-					val = val | 0x80;							 // If this is not set would be treated as label pointer
+					val |= 0x80;							 // If this is not set would be treated as label pointer
 
 				encodedNumber[j++] = (byte)val;	
 			}
@@ -111,13 +111,13 @@ public class POIRecord {
 		
 	}
 
-	public static final byte HAS_STREET_NUM = 0x01;
-	public static final byte HAS_STREET     = 0x02;
-	public static final byte HAS_CITY       = 0x04;
-	public static final byte HAS_ZIP        = 0x08;
-	public static final byte HAS_PHONE      = 0x10;
-	public static final byte HAS_EXIT       = 0x20;
-	public static final byte HAS_TIDE_PREDICTION = 0x40;
+	private static final byte HAS_STREET_NUM = 0x01;
+	private static final byte HAS_STREET     = 0x02;
+	private static final byte HAS_CITY       = 0x04;
+	private static final byte HAS_ZIP        = 0x08;
+	private static final byte HAS_PHONE      = 0x10;
+	private static final byte HAS_EXIT       = 0x20;
+	private static final byte HAS_TIDE_PREDICTION = 0x40;
 
 	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
@@ -269,15 +269,15 @@ public class POIRecord {
 				if((mask & POIGlobalFlags) == mask)
 				{
 					if((mask & usedFields) == mask)
-						flag = flag | (1 << j);
+						flag |= (1 << j);
 					j++;
 				}
 		
 			}
 
-			flag = flag | 0x80; // gpsmapedit asserts for this bit set
+		flag |= 0x80; // gpsmapedit asserts for this bit set
 	    
-			return (byte) flag;
+		return (byte) flag;
 	}
 
 	/**

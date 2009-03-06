@@ -91,15 +91,15 @@ public class StyledConverter implements OsmConverter {
 
 
 	class AccessMapping {
-		String type;
-		int index;
+		private final String type;
+		private final int index;
 		AccessMapping(String type, int index) {
 			this.type = type;
 			this.index = index;
 		}
-	};
+	}
 
-	AccessMapping[] accessMap = {
+	private final AccessMapping[] accessMap = {
 		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
 		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
 		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
@@ -527,42 +527,37 @@ public class StyledConverter implements OsmConverter {
 			highwayType = way.getTag("route");
 		}
 
-		for(int i = 0; i < accessMap.length; ++i) {
-			int index = accessMap[i].index;
-			String type = accessMap[i].type;
+		for (AccessMapping anAccessMap : accessMap) {
+			int index = anAccessMap.index;
+			String type = anAccessMap.type;
 			String accessTagValue = way.getTag(type);
-			if(accessTagValue == null)
+			if (accessTagValue == null)
 				continue;
-			if(accessExplicitlyDenied(accessTagValue)) {
-				if(index == RoadNetwork.NO_MAX) {
+			if (accessExplicitlyDenied(accessTagValue)) {
+				if (index == RoadNetwork.NO_MAX) {
 					// everything is denied access
-					for(int j = 1; j < accessMap.length; ++j)
+					for (int j = 1; j < accessMap.length; ++j)
 						noAccess[accessMap[j].index] = true;
-				}
-				else {
+				} else {
 					// just the specific vehicle
 					// class is denied access
 					noAccess[index] = true;
 				}
 				log.info(type + " is not allowed in " + highwayType + " " + way.getName());
-			}
-			else if(accessExplicitlyAllowed(accessTagValue)) {
-				if(index == RoadNetwork.NO_MAX) {
+			} else if (accessExplicitlyAllowed(accessTagValue)) {
+				if (index == RoadNetwork.NO_MAX) {
 					// everything is allowed access
-					for(int j = 1; j < accessMap.length; ++j)
+					for (int j = 1; j < accessMap.length; ++j)
 						noAccess[accessMap[j].index] = false;
-				}
-				else {
+				} else {
 					// just the specific vehicle
 					// class is allowed access
 					noAccess[index] = false;
 				}
 				log.info(type + " is allowed in " + highwayType + " " + way.getName());
-			}
-			else if(accessTagValue.equalsIgnoreCase("unknown")) {
+			} else if (accessTagValue.equalsIgnoreCase("unknown")) {
 				// implicitly allow access
-			}
-			else {
+			} else {
 				log.warn("Ignoring unsupported access tag value " + type + "=" + accessTagValue);
 			}
 		}
@@ -745,18 +740,6 @@ public class StyledConverter implements OsmConverter {
 				    newPoint.incHighwayCount();
 				    wayPoints.add(i + 1, newPoint);
 				}
-				else if(false) {
-				    System.err.println("Not inserting point in roundabout after node " +
-						       i + " " +
-						       way.getName() +
-						       " @ " + 
-						       middleCoord.toDegreeString() +
-						       " (d1 = " +
-						       p1.distance(newPoint) +
-						       " d2 = " +
-						       p2.distance(newPoint) +
-						       ")");
-				}
 			}
 		}
 	}
@@ -803,7 +786,7 @@ public class StyledConverter implements OsmConverter {
 
 	}
 
-	public boolean accessExplicitlyAllowed(String val) {
+	protected boolean accessExplicitlyAllowed(String val) {
 		if (val == null)
 			return false;
 
@@ -812,7 +795,7 @@ public class StyledConverter implements OsmConverter {
 			val.equalsIgnoreCase("permissive"));
 	}
 
-	public boolean accessExplicitlyDenied(String val) {
+	protected boolean accessExplicitlyDenied(String val) {
 		if (val == null)
 			return false;
 

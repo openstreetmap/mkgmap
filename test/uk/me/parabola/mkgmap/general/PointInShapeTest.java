@@ -18,8 +18,10 @@ import org.junit.Test;
  */
 public class PointInShapeTest {
 
-	MapShape square, triangle, line;
-	int squareSize = 4;
+	private MapShape square;
+	private MapShape triangle;
+	private MapShape line;
+	private final int squareSize = 4;
 
 	/**
 	 * @throws Exception

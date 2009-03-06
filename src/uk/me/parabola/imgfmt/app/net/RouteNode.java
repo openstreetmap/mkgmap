@@ -28,7 +28,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class RouteNode implements Comparable {
+public class RouteNode implements Comparable<RouteNode> {
 	private static final Logger log = Logger.getLogger(RouteNode.class);
 
 	/*
@@ -80,10 +80,6 @@ public class RouteNode implements Comparable {
 
 	private boolean haveLargeOffsets() {
 		return (flags & F_LARGE_OFFSETS) != 0;
-	}
-
-	private boolean haveRestrictions() {
-		return !restrictions.isEmpty();
 	}
 
 	protected void setBoundary(boolean b) {
@@ -266,8 +262,7 @@ public class RouteNode implements Comparable {
 	/*
 	 * For sorting node entries in NOD 3.
 	 */
-	public int compareTo(Object o) {
-		Coord other = ((RouteNode) o).getCoord();
-		return coord.compareTo(other);
+	public int compareTo(RouteNode otherNode) {
+		return coord.compareTo(otherNode.getCoord());
 	}
 }

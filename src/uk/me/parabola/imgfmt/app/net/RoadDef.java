@@ -280,7 +280,7 @@ public class RoadDef {
 
 	public static final int NOD2_MASK_SPEED = 0x0e;
 	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
-	public static final int NOD2_FLAG_UNK = 0x01;
+	private static final int NOD2_FLAG_UNK = 0x01;
 
 	// always appears to be set
 	private int nod2Flags = NOD2_FLAG_UNK;

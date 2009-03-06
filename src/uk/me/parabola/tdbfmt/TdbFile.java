@@ -240,12 +240,4 @@ public class TdbFile {
 	public int getTdbVersion() {
 		return headerBlock.getTdbVersion();
 	}
-
-	public HeaderBlock getHeaderBlock() {
-		return headerBlock;
-	}
-
-	public String getOverviewDescription() {
-		return overviewDescription;
-	}
 }

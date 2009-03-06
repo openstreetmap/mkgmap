@@ -160,10 +160,10 @@ public class MapShape extends MapLine {// So top code can link objects from here
 	private static boolean isPointOnLine(int x0, int y0, int x1, int y1, int xt, int yt) {
 		// this implementation avoids using doubles
 		// apply transformation points to change target point to (0,0)
-		x0 = x0 - xt;
-		y0 = y0 - yt;
-		x1 = x1 - xt;
-		y1 = y1 - yt;
+		x0 -= xt;
+		y0 -= yt;
+		x1 -= xt;
+		y1 -= yt;
 
 		// ensure that x0 is smaller than x1 so that we can just check to see if the line intersects the y axis easily
 		if (x0 > x1) {

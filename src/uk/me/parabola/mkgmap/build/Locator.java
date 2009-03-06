@@ -87,7 +87,7 @@ public class Locator {
 			
 			fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
 
-			if(p.getName() != null && p.getCity().equals(p.getName()) == false) // Name variants ? 
+			if(p.getName() != null && !p.getCity().equals(p.getName())) // Name variants ?
 				fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
 		}
 		else
@@ -219,7 +219,7 @@ public class Locator {
 			// In OpenGeoDB Countries I don't want to mess up the info which city is a real independent
 			// Community in all other countries I just have to do it
 
-			if(isOpenGeoDBCountry(p.getCountry()) == false)	
+			if(!isOpenGeoDBCountry(p.getCountry()))
 				p.setCity(p.getName());
 		}
 	}
@@ -233,7 +233,7 @@ public class Locator {
 		nextPoint = cityMap.findNextPoint(p);
 		
 		totalFinds++;
-		totalTime = totalTime + ((System.nanoTime() - startTime)/1e9);
+		totalTime += ((System.nanoTime() - startTime) / 1e9);
 		return nextPoint;
 	}
 	
@@ -444,15 +444,7 @@ public class Locator {
 		while(unresCount > 0 && runCount < maxRuns);
 		
 	}
-	
-	public void printStat()
-	{	
-	   System.out.println("Locator Find called: " + totalFinds + " time");
-	   System.out.println("Locator Find time:   " + totalTime + " s");
-	   
-	   cityMap.printStat();
-	}	
-	
+
 	private String fuzzyDecode(String stringToDecode)
 	{
 

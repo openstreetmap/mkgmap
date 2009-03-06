@@ -53,10 +53,6 @@ public class MapRoad extends MapLine {
 		return new MapRoad(this);
 	}
 
-	public long getRoadId() {
-		return roadId;
-	}
-
 	public boolean isRoad() {
 		return true;
 	}
