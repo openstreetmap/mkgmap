@@ -396,8 +396,15 @@ public class RoadDef {
 		tabAInfo |= TABA_FLAG_TOLL;
 	}
 
+	public void setUnknownAccess08() {
+		tabAAccess |= 0x08;
+	}
+
+	public void setNoThroughRouting() {
+		tabAAccess |= 0x80;
+	}
+
 	public void setAccess(boolean[] access) {
-		tabAAccess = 0;
 		for (int i = 0; i < 8; i++)
 			if (access[i])
 				tabAAccess |= ACCESS[i];

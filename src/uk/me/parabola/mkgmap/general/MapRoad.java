@@ -78,6 +78,14 @@ public class MapRoad extends MapLine {
 		this.roadDef.setAccess(access);
 	}
 
+	public void setUnknownAccess08() {
+		this.roadDef.setUnknownAccess08();
+	}
+
+	public void setNoThroughRouting() {
+		this.roadDef.setNoThroughRouting();
+	}
+
 	public void setStartsWithNode(boolean s) {
 		this.roadDef.setStartsWithNode(s);
 	}
