@@ -1,3 +1,7 @@
+aeroway=airport [0x07 resolution 18]
+aeroway=aerodrome [0x07 resolution 18]
+aeroway=terminal [0x13 resolution 20]
+
 amenity=college [0x0a resolution 18]
 amenity=grave_yard [0x1a resolution 18]
 amenity=hospital [0x0b resolution 18]
