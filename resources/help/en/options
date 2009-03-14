@@ -96,7 +96,7 @@ Product description options:
 --series-name
 --family-name
 --area-name
---overview-name
+--overview-mapname
 
 Misc options:
 --block-size=''number''

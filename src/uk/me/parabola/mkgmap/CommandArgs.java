@@ -50,7 +50,7 @@ public class CommandArgs {
 		// line before any user supplied options.
 		arglist.add(new CommandOption("mapname", "63240001"));
 		arglist.add(new CommandOption("description", "OSM street map"));
-		arglist.add(new CommandOption("overview-name", "63240000"));
+		arglist.add(new CommandOption("overview-mapname", "63240000"));
 	}
 
 	private final ArgumentProcessor proc;

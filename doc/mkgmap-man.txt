@@ -27,5 +27,5 @@
     however.  It will convert accented characters that cannot be
     displayed in the chosen character set into unaccented characters.
 
---overview-name=''name''
+--overview-mapname=''name''
     This gives the name of the overview map.
