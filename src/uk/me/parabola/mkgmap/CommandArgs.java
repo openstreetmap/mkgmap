@@ -310,16 +310,19 @@ public class CommandArgs {
 	 */
 	private class Filename implements ArgType {
 		private final String name;
+		private boolean useFilenameAsMapname = true;
 
 		private Filename(String name) {
 			this.name = name;
+			if (mapnameWasSet)
+				useFilenameAsMapname = false;
 		}
 
 		public void processArg() {
 			// If there was no explicit mapname specified and the input filename
 			// looks like it contains an 8digit number then we use that.
 			String mapname;
-			if (!mapnameWasSet) {
+			if (useFilenameAsMapname) {
 				mapname = extractMapName(name);
 				if (mapname != null)
 					arglist.setProperty("mapname", mapname);
@@ -330,7 +333,6 @@ public class CommandArgs {
 
 			// Increase the name number.  If the next arg sets it then that
 			// will override this new name.
-			mapnameWasSet = false;
 			mapname = arglist.getProperty("mapname");
 			try {
 				Formatter fmt = new Formatter();
