@@ -49,27 +49,27 @@ public class RestrictionRelation extends Relation {
 
 			if("to".equals(role)) {
 				if(toWay != null) {
-					log.error(messagePrefix + "has multiple 'to' members - first 'to' member starts at " + toWay.getPoints().get(0).toDegreeString());
+					log.warn(messagePrefix + "has multiple 'to' members - first 'to' member starts at " + toWay.getPoints().get(0).toDegreeString());
 				}
 				else if(el instanceof Way) {
 					toWay = (Way)el;
 				}
 				else
-					log.error(messagePrefix + "'to' member should be a Way but is a " + el);
+					log.warn(messagePrefix + "'to' member should be a Way but is a " + el);
 			}
 			else if("from".equals(role)) {
 				if(fromWay != null) {
-					log.error(messagePrefix + "has multiple 'from' members - first 'from' member starts at " + fromWay.getPoints().get(0).toDegreeString());
+					log.warn(messagePrefix + "has multiple 'from' members - first 'from' member starts at " + fromWay.getPoints().get(0).toDegreeString());
 				}
 				else if(el instanceof Way) {
 					fromWay = (Way)el;
 				}
 				else
-					log.error(messagePrefix + "'from' member should be a Way but is a " + el);
+					log.warn(messagePrefix + "'from' member should be a Way but is a " + el);
 			}
 			else if("via".equals(role)) {
 				if(viaCoord != null) {
-					log.error(messagePrefix + "has multiple 'via' members");
+					log.warn(messagePrefix + "has multiple 'via' members");
 				}
 				else if(el instanceof Node) {
 					viaCoord = ((Node)el).getLocation();
@@ -80,7 +80,7 @@ public class RestrictionRelation extends Relation {
 						List<Coord> vp = ((Way)el).getPoints();
 						bleat += " ('via' way starts at " + vp.get(0).toDegreeString() + ")";
 					}
-					log.error(bleat);
+					log.warn(bleat);
 				}
 			}
 			else if("location_hint".equals(role)) {
@@ -136,7 +136,7 @@ public class RestrictionRelation extends Relation {
 		if(this.viaNode == null)
 			log.debug(messagePrefix + restriction + " 'via' node is " + viaNode.toDegreeString());
 		else if(!this.viaNode.equals(viaNode))
-			log.error(messagePrefix + restriction + " 'via' node redefined from " +
+			log.warn(messagePrefix + restriction + " 'via' node redefined from " +
 				  this.viaNode.toDegreeString() + " to " +
 				  viaNode.toDegreeString());
 		this.viaNode = viaNode;
@@ -151,7 +151,7 @@ public class RestrictionRelation extends Relation {
 		boolean result = true;
 
 		if(restriction == null) {
-			log.error(messagePrefix + "lacks 'restriction' tag (e.g. no_left_turn)");
+			log.warn(messagePrefix + "lacks 'restriction' tag (e.g. no_left_turn)");
 			result = false;
 		}
 
@@ -160,7 +160,7 @@ public class RestrictionRelation extends Relation {
 			if(toWay != null) {
 				bleat += " ('to' way starts at " + toWay.getPoints().get(0).toDegreeString() + ")";
 			}
-			log.error(bleat);
+			log.warn(bleat);
 		}
 
 		if(toWay == null) {
@@ -169,7 +169,7 @@ public class RestrictionRelation extends Relation {
 				List<Coord> fp = fromWay.getPoints();
 				bleat += " ('from' way ends at " + fp.get(fp.size() - 1).toDegreeString() + ")";
 			}
-			log.error(bleat);
+			log.warn(bleat);
 		}
 
 		if(fromWay == null || toWay == null)
@@ -185,7 +185,7 @@ public class RestrictionRelation extends Relation {
 							viaCoord = fp;
 						}
 						else {
-							log.error(messagePrefix + "lacks 'via' node and the 'from' and 'to' ways connect in more than one place - first connection is at " + viaCoord.toDegreeString());
+							log.warn(messagePrefix + "lacks 'via' node and the 'from' and 'to' ways connect in more than one place - first connection is at " + viaCoord.toDegreeString());
 							return false;
 						}
 					}
@@ -193,7 +193,7 @@ public class RestrictionRelation extends Relation {
 			}
 
 			if(viaCoord == null) {
-				log.error(messagePrefix + "lacks 'via' node and the 'from' and 'to' ways don't connect");
+				log.warn(messagePrefix + "lacks 'via' node and the 'from' and 'to' ways don't connect");
 				return false;
 			}
 
@@ -203,14 +203,14 @@ public class RestrictionRelation extends Relation {
 		Coord e1 = fromWay.getPoints().get(0);
 		Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
 		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.error(messagePrefix + "'from' way doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
+			log.warn(messagePrefix + "'from' way doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
 			result = false;
 		}
 
 		e1 = toWay.getPoints().get(0);
 		e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
 		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.error(messagePrefix + "'to' way doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
+			log.warn(messagePrefix + "'to' way doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
 			result = false;
 		}
 
@@ -244,7 +244,7 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 		else {
-			log.error(messagePrefix + "has unsupported type '" + restriction + "'");
+			log.warn(messagePrefix + "has unsupported type '" + restriction + "'");
 		}
 	}
 
