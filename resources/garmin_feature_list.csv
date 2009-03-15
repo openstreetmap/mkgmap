@@ -388,7 +388,7 @@ polygon|0x80|0x09||marina||Marina
 polygon|0x80|0x0a||university||University
 polygon|0x80|0x0b||hospital||Hospital
 polygon|0x80|0x0c||industrial||Industrial
-polygon|0x80|0x0d||reservation||Reservation
+polygon|0x80|0x0d||reservation||Native American Reservation
 polygon|0x80|0x0e||airport-runway||Airport Runway
 polygon|0x80|0x14||national-park1||National park
 polygon|0x80|0x15||national-park2||National park
@@ -420,7 +420,7 @@ polygon|0x80|0x4e||orchard||Orchard/Plantation
 polygon|0x80|0x4f||scrub||Scrub
 polygon|0x80|0x50||woods||Woods
 polygon|0x80|0x51||wetland||Wetland
-polygon|0x80|0x53||flats||Flats
+polygon|0x80|0x53||flats||Flatland
 polyline|0x40|0x01||major-highway-thick||Major HWY - thick
 polyline|0x40|0x02||principal-highway-thick||Principal HWY - thick
 polyline|0x40|0x03||principal-highway-medium||Principal HWY - medium
