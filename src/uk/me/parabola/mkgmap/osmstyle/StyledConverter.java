@@ -29,10 +29,12 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
+import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapExitPoint;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
@@ -288,7 +290,32 @@ public class StyledConverter implements OsmConverter {
 		if (!clipper.contains(node.getLocation()))
 			return;
 
-		MapPoint mp = new MapPoint();
+		// to handle exit points we use a subclass of MapPoint
+		// to carry some extra info (a reference to the
+		// motorway associated with the exit)
+		MapPoint mp;
+		int type = gt.getType();
+		if(type >= 0x2000 && type < 0x2800) {
+			String ref = node.getTag(Exit.TAG_ROAD_REF);
+			String id = node.getTag("osm:id");
+			if(ref != null) {
+				String to = node.getTag(Exit.TAG_TO);
+				MapExitPoint mep = new MapExitPoint(ref, to);
+				String fd = node.getTag(Exit.TAG_FACILITY);
+				if(fd != null)
+					mep.setFacilityDescription(fd);
+				if(id != null)
+					mep.setOSMId(id);
+				mp = mep;
+			}
+			else {
+				mp = new MapPoint();
+				log.warn("Motorway exit " + node.getName() + " (OSM id " + id + ") located at " + node.getLocation().toDegreeString() + " has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a " + Exit.TAG_ROAD_REF + " tag)");
+			}
+		}
+		else {
+			mp = new MapPoint();
+		}
 		elementSetup(mp, gt, node);
 		mp.setLocation(node.getLocation());
 
@@ -578,6 +605,14 @@ public class StyledConverter implements OsmConverter {
 
 		if(way.isBoolTag("toll"))
 			road.setToll();
+
+		// if the way is a motorway and has a ref tag, we may
+		// be generating a Garmin "highway" record for it so
+		// save the ref tag for later
+		String ref = way.getTag("ref");
+		if(ref != null) {
+			road.setRef(ref);
+		}
 
 		Way origWay = originalWay.get(way);
 		if(origWay == null)

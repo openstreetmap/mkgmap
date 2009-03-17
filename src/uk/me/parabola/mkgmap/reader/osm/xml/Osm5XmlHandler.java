@@ -16,13 +16,16 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -56,6 +59,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
+	private final List<Node> exits = new ArrayList<Node>();
+	private final List<Way> motorways = new ArrayList<Way>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -209,6 +214,14 @@ class Osm5XmlHandler extends DefaultHandler {
 					currentNode = new Node(currentElementId, co);
 					nodeMap.put(currentElementId, currentNode);
 				}
+
+				if((val.equals("motorway_junction") ||
+				    val.equals("services")) &&
+				   key.equals("highway")) {
+					exits.add(currentNode);
+					currentNode.addTag("osm:id", "" + currentElementId);
+				}
+
 				currentNode.addTag(key, val);
 			}
 		}
@@ -239,9 +252,9 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
-				if(routing &&
-				   (currentWay.getTag("highway") != null ||
-				    "ferry".equals(currentWay.getTag("route")))) {
+				String highway = currentWay.getTag("highway");
+				if(routing && (highway != null ||
+					       "ferry".equals(currentWay.getTag("route")))) {
 					// the way is a highway (or
 				    	// ferry route), so for each
 				    	// of it's points, increment
@@ -262,6 +275,9 @@ class Osm5XmlHandler extends DefaultHandler {
 						}
 					}
 				}
+				if("motorway".equals(highway) ||
+				   "trunk".equals(highway))
+					motorways.add(currentWay);
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -321,6 +337,26 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
+
+		for (Node e : exits) {
+			String refTag = Exit.TAG_ROAD_REF;
+			if(e.getTag(refTag) == null) {
+				for (Way w : motorways) {
+					String ref = w.getTag("ref");
+					if (w.getPoints().contains(e.getLocation())) {
+						if(ref != null) {
+							log.info("Adding " + refTag + "=" + ref + " to exit" + e.getTag("ref"));
+							e.addTag(refTag, ref);
+						}
+						else {
+							log.warn("Motorway exit is positioned on a motorway that doesn't have a 'ref' tag");
+						}
+						break;
+					}
+				}
+			}
+		}
+
 		coordMap = null;
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);

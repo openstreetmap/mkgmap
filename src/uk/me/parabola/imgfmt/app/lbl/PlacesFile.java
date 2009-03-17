@@ -23,8 +23,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+
+import uk.me.parabola.mkgmap.general.Exit;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -36,7 +40,10 @@ public class PlacesFile {
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
 	private final List<CitySort> cityList = new ArrayList<CitySort>();
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
+	private final List<Highway> highways = new ArrayList<Highway>();
+	private final List<ExitFacility> exitFacilities = new ArrayList<ExitFacility>();
 	private final List<POIRecord> pois = new ArrayList<POIRecord>();
+	private final List[] poiIndex = new ArrayList[256];
 
 	private LBLFile lblFile;
 	private PlacesHeader placeHeader;
@@ -71,16 +78,52 @@ public class PlacesFile {
 
 		placeHeader.endCity(writer.position());
 
+		for (List<POIIndex> pil : poiIndex) {
+			if(pil != null) {
+				// sort entries by POI name
+				Collections.sort(pil);
+				for(POIIndex pi : pil)
+					pi.write(writer);
+			}
+		}
+		placeHeader.endPOIIndex(writer.position());
+
 		int poistart = writer.position();
 		byte poiglobalflags = placeHeader.getPOIGlobalFlags();
 		for (POIRecord p : pois)
 			p.write(writer, poiglobalflags,
-				writer.position() - poistart, cities.size(), postalCodes.size());
+				writer.position() - poistart, cities.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 		placeHeader.endPOI(writer.position());
+
+		int numPoiIndexEntries = 0;
+		for (int i = 0; i < 256; ++i) {
+			if(poiIndex[i] != null) {
+				writer.put((byte)i);
+				writer.put3(numPoiIndexEntries + 1);
+				numPoiIndexEntries += poiIndex[i].size();
+			}
+		}
+		placeHeader.endPOITypeIndex(writer.position());
 
 		for (Zip z : postalCodes.values())
 			z.write(writer);
 		placeHeader.endZip(writer.position());
+
+		int extraHighwayDataOffset = 0;
+		for (Highway h : highways) {
+		    h.setExtraDataOffset(extraHighwayDataOffset);
+		    extraHighwayDataOffset += h.getExtraDataSize();
+		    h.write(writer, false);
+		}
+		placeHeader.endHighway(writer.position());
+
+		for (ExitFacility ef : exitFacilities)
+			ef.write(writer);
+		placeHeader.endExitFacility(writer.position());
+
+		for (Highway h : highways)
+			h.write(writer, true);
+		placeHeader.endHighwayData(writer.position());
 	}
 
 	Country createCountry(String name, String abbr) {
@@ -193,6 +236,23 @@ public class PlacesFile {
 		return z;
 	}
 
+	Highway createHighway(Region region, String name) {
+		Highway h = new Highway(region, highways.size()+1);
+
+		Label l = lblFile.newLabel(name);
+		h.setLabel(l);
+
+		highways.add(h);
+		return h;
+	}
+
+	public ExitFacility createExitFacility(int type, char direction, int facilities, String description, boolean last) {
+		Label d = lblFile.newLabel(description);
+		ExitFacility ef = new ExitFacility(type, direction, facilities, d, last, exitFacilities.size()+1);
+		exitFacilities.add(ef);
+		return ef;
+	}
+
 	POIRecord createPOI(String name) {
 		assert !poisClosed;
 		// TODO...
@@ -204,6 +264,31 @@ public class PlacesFile {
 		pois.add(p);
 		
 		return p;
+	}
+
+	POIRecord createExitPOI(String name, Exit exit) {
+		assert !poisClosed;
+		// TODO...
+		POIRecord p = new POIRecord();
+
+		Label l = lblFile.newLabel(name);
+		p.setLabel(l);
+
+		p.setExit(exit);
+
+		pois.add(p);
+
+		return p;
+	}
+
+	POIIndex createPOIIndex(String name, int index, Subdivision group, int type) {
+		assert index < 0x100 : "Too many POIS in division";
+		POIIndex pi = new POIIndex(name, (byte)index, group, (byte)type);
+		int t = type >> 8;
+		if(poiIndex[t] == null)
+			poiIndex[t] = new ArrayList<POIIndex>();
+		poiIndex[t].add(pi);
+		return pi;
 	}
 
 	void allPOIsDone() {
@@ -220,7 +305,7 @@ public class PlacesFile {
 
 		int ofs = 0;
 		for (POIRecord p : pois)
-			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size());
+			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 	}
 
 	private class CitySort {

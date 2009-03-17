@@ -75,7 +75,7 @@ public class RoadDef {
 	 */
 
 	private static final int NET_FLAG_NODINFO = 0x40;
-	private static final int NET_FLAG_UNK1 = 0x04;
+	private static final int NET_FLAG_UNK1 = 0x04; // lock on road?
 	private static final int NET_FLAG_ONEWAY = 0x02;
 	private static final int NET_FLAG_ADDRINFO = 0x01;
 

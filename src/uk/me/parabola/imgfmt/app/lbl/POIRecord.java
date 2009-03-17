@@ -16,8 +16,12 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+
+import uk.me.parabola.mkgmap.general.Exit;
 
 /**
  * @author Steve Ratcliffe
@@ -142,6 +146,7 @@ public class POIRecord {
 	
 	private City city;
 	private char zipIndex;
+	private Exit exit;
 
 	//private String phoneNumber;
 
@@ -184,10 +189,13 @@ public class POIRecord {
 		this.city = city;
 	}
 
-	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs,
-		   long numCities, long numZips) {
-		assert offset == realofs;
+	public void setExit(Exit exit) {
+		this.exit = exit;
+	}
 
+	void write(ImgFileWriter writer, byte POIGlobalFlags, int realofs,
+		   long numCities, long numZips, long numHighways, long numExitFacilities) {
+		assert offset == realofs : "offset = " + offset + " realofs = " + realofs;
 		int ptr = poiName.getOffset();
 		if (POIGlobalFlags != getPOIFlags())
 			ptr |= 0x800000;
@@ -207,7 +215,7 @@ public class POIRecord {
 
 		if (streetName != null)
 			writer.put3(streetName.getOffset());
-			
+
 		if (city != null)
 		{
 			char cityIndex = (char) city.getIndex();
@@ -216,7 +224,7 @@ public class POIRecord {
 			else
 				writer.put((byte)cityIndex);
 		}
-			
+
 		if (zipIndex > 0)
 		{
 			if(numZips > 255)
@@ -224,7 +232,7 @@ public class POIRecord {
 			else
 				writer.put((byte)zipIndex);
 		}
-		
+
 		if (complexPhoneNumber != null)
 		{
 			int labOff = complexPhoneNumber.getOffset();
@@ -233,6 +241,36 @@ public class POIRecord {
 		}
 		else if (simplePhoneNumber.isUsed())
 			simplePhoneNumber.write(writer);
+
+		if(exit != null) {
+			Label description = exit.getDescription();
+			int val = 0;
+			if(description != null) {
+				val = description.getOffset();
+				assert val < 0x400000 : "Exit description label offset too large";
+			}
+			if(exit.getOvernightParking())
+				val |= 0x400000;
+			List<ExitFacility> facilites = exit.getFacilities();
+			ExitFacility ef = null;
+			if(facilites.size() > 0)
+				ef = facilites.get(0);
+			if(ef != null)
+				val |= 0x800000; // exit facilites defined
+			writer.put3(val);
+			char highwayIndex = (char)exit.getHighway().getIndex();
+			if(numHighways > 255)
+				writer.putChar(highwayIndex);
+			else
+				writer.put((byte)highwayIndex);
+			if(ef != null) {
+				char exitFacilityIndex = (char)ef.getIndex();
+				if(numExitFacilities > 255)
+					writer.putChar(exitFacilityIndex);
+				else
+					writer.put((byte)exitFacilityIndex);
+			}
+		}
 	}
 
 	byte getPOIFlags() {
@@ -240,13 +278,15 @@ public class POIRecord {
 		if (streetName != null)
 			b |= HAS_STREET;
 		if (simpleStreetNumber.isUsed() || streetNumberName != null)
-		   b |= HAS_STREET_NUM;
+			b |= HAS_STREET_NUM;
 		if (city != null)
 		        b |= HAS_CITY;
 		if (zipIndex > 0)
-		        b |= HAS_ZIP;	
+		        b |= HAS_ZIP;
 		if (simplePhoneNumber.isUsed() || complexPhoneNumber != null)
-		   b |= HAS_PHONE;				  		
+			b |= HAS_PHONE;
+		if (exit != null)
+			b |= HAS_EXIT;
 		return b;
 	}
 	
@@ -285,9 +325,15 @@ public class POIRecord {
 	 *
 	 * \return Number of bytes needed by this entry
 	 */
-	int calcOffset(int ofs, byte POIGlobalFlags, long numCities, long numZips) {
+	int calcOffset(int ofs, byte POIGlobalFlags, long numCities, long numZips, long numHighways, long numExitFacilities) {
 		offset = ofs;
 		int size = 3;
+		if (exit != null) {
+			size += 3;
+			size += (numHighways > 255)? 2 : 1;
+			if(exit.getFacilities().size() > 0)
+				size += (numExitFacilities > 255)? 2 : 1;
+		}
 		if (POIGlobalFlags != getPOIFlags())
 			size += 1;
 		if (simpleStreetNumber.isUsed())		

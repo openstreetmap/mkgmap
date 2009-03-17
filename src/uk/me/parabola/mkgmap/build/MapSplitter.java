@@ -53,6 +53,8 @@ class MapSplitter {
 	// Theoretical maximum about 0x100, which still gives errors.
 	private static final int MAX_NUM_LINES = 0xf0;
 
+	private static final int MAX_NUM_POINTS = 0xff;
+
 	private final Zoom zoom;
 
 	/**
@@ -111,7 +113,8 @@ class MapSplitter {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
 			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE
-					|| area.getNumLines() > MAX_NUM_LINES) {
+			    || area.getNumLines() > MAX_NUM_LINES
+			    || area.getNumPoints() > MAX_NUM_POINTS) {
 				if (area.getBounds().getMaxDimention() > 100) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);

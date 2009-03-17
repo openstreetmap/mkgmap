@@ -30,8 +30,10 @@ import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.Exit;
 
 /**
  * The file that holds all the labels for the map.
@@ -138,6 +140,14 @@ public class LBLFile extends ImgFile {
 	public POIRecord createPOI(String name) {
 		return places.createPOI(name);
 	}
+
+	public POIRecord createExitPOI(String name, Exit exit) {
+		return places.createExitPOI(name, exit);
+	}
+
+	public POIIndex createPOIIndex(String name, int poiIndex, Subdivision group, int type) {
+		return places.createPOIIndex(name, poiIndex, group, type);
+	}
 	
 	public Country createCountry(String name, String abbr) {
 		return places.createCountry(name, abbr);
@@ -157,6 +167,14 @@ public class LBLFile extends ImgFile {
 
 	public Zip createZip(String code) {
 		return places.createZip(code);
+	}
+
+	public Highway createHighway(Region region, String name) {
+		return places.createHighway(region, name);
+	}
+
+	public ExitFacility createExitFacility(int type, char direction, int facilities, String description, boolean last) {
+		return places.createExitFacility(type, direction, facilities, description, last);
 	}
 
 	public void allPOIsDone() {

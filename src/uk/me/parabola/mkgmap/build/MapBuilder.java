@@ -26,10 +26,12 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
+import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.imgfmt.app.lbl.Highway;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -56,10 +58,12 @@ import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.SmoothingFilter;
+import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapExitPoint;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
@@ -88,6 +92,9 @@ public class MapBuilder implements Configurable {
 	private boolean doRoads;
 
 	private final Locator locator = new Locator();
+
+	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
+
 	private Country country;
 	private Region  region;
 
@@ -251,8 +258,10 @@ public class MapBuilder implements Configurable {
 		boolean doAutofill;
 
 		for (MapPoint p : src.getPoints()) {
-
-			if(!p.isCity() && (p.isRoadNamePOI() || poiAddresses)) {
+			if(p.isExit()) {
+				processExit(map, (MapExitPoint)p);
+			}
+			else if(!p.isCity() && (p.isRoadNamePOI() || poiAddresses)) {
 				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
 					doAutofill = true;
 				else
@@ -390,6 +399,59 @@ public class MapBuilder implements Configurable {
 
 		lbl.allPOIsDone();
 
+	}
+
+	private void processExit(Map map, MapExitPoint mep) {
+		LBLFile lbl = map.getLblFile();
+		String ref = mep.getMotorwayRef();
+		String OSMId = mep.getOSMId();
+		if(ref != null) {
+			Highway hw = highways.get(ref);
+			if(hw == null)
+				hw = makeHighway(map, ref);
+			if(hw == null) {
+			    log.warn("Can't create exit " + mep.getName() + " (OSM id " + OSMId + ") on unknown highway " + ref);
+			    return;
+			}
+			String exitName = mep.getName();
+			String exitTo = mep.getTo();
+			Exit exit = new Exit(hw);
+			String facilityDescription = mep.getFacilityDescription();
+			log.info("Creating " + ref + " exit " + exitName + " (OSM id " + OSMId +") to " + exitTo + " with facility " + ((facilityDescription == null)? "(none)" : facilityDescription));
+			if(facilityDescription != null) {
+				// description is TYPE,DIR,FACILITIES,LABEL
+				// (same as Polish Format)
+				String[] atts = facilityDescription.split(",");
+				int type = 0;
+				if(atts.length > 0)
+					type = Integer.decode(atts[0]);
+				char direction = ' ';
+				if(atts.length > 1) {
+					direction = atts[1].charAt(0);
+					if(direction == '\'' && atts[1].length() > 1)
+						direction = atts[1].charAt(1);
+				}
+				int facilities = 0x0;
+				if(atts.length > 2)
+					facilities = Integer.decode(atts[2]);
+				String description = "";
+				if(atts.length > 3)
+					description = atts[3];
+				boolean last = true; // FIXME - handle multiple facilities?
+				ExitFacility ef = lbl.createExitFacility(type, direction, facilities, description, last);
+
+				exit.addFacility(ef);
+			}
+			mep.setExit(exit);
+			POIRecord r = lbl.createExitPOI(exitName, exit);
+			if(exitTo != null) {
+				Label ed = lbl.newLabel(exitTo);
+				exit.setDescription(ed);
+			}
+			poimap.put(mep, r);
+			// FIXME - set bottom bits of
+			// type to reflect facilities available?
+		}
 	}
 
 	/**
@@ -595,19 +657,31 @@ public class MapBuilder implements Configurable {
 	 * @param points The points to be added.
 	 */
 	private void processPoints(Map map, Subdivision div, List<MapPoint> points) {
+		LBLFile lbl = map.getLblFile();
 		div.startPoints();
 		int res = div.getResolution();
 
 		boolean haveIndPoints = false;
+		int pointIndex = 1;
+
+		// although the non-indexed points are output first,
+		// pointIndex must be initialised to the number of
+		// indexed points (not 1)
+		for (MapPoint point : points) {
+			if (point.isCity() &&
+			    point.getMinResolution() <= res &&
+			    point.getMaxResolution() >= res) {
+				++pointIndex;
+				haveIndPoints = true;
+			}
+		}
 
 		for (MapPoint point : points) {
-			if (point.getMinResolution() > res || point.getMaxResolution() < res)
-				continue;
 
-			if (point.isCity()) {
-				haveIndPoints = true;
+			if (point.isCity() ||
+			    point.getMinResolution() > res ||
+			    point.getMaxResolution() < res)
 				continue;
-			}
 
 			String name = point.getName();
 
@@ -618,24 +692,35 @@ public class MapBuilder implements Configurable {
 			p.setLatitude(coord.getLatitude());
 			p.setLongitude(coord.getLongitude());
 
-			if (div.getZoom().getLevel() == 0) {
-				POIRecord r = poimap.get(point);
-				if (r != null)
-					p.setPOIRecord(r);
-			}
+			POIRecord r = poimap.get(point);
+			if (r != null)
+				p.setPOIRecord(r);
 
 			map.addMapObject(p);
+			if(name != null && div.getZoom().getLevel() == 0) {
+				if(pointIndex > 255)
+					log.error("FIXME - too many POIs in group");
+				else if(point.isExit()) {
+					Exit e = ((MapExitPoint)point).getExit();
+					if(e != null)
+						e.getHighway().addExitPoint(name, pointIndex, div);
+				}
+				else
+					lbl.createPOIIndex(name, pointIndex, div, point.getType());
+
+			}
+			++pointIndex;
 		}
 
 		if (haveIndPoints) {
 			div.startIndPoints();
 
-			int pointIndex = 1;
+			pointIndex = 1; // reset to 1
 			for (MapPoint point : points) {
-				if (point.getMinResolution() > res || point.getMaxResolution() < res)
-					continue;
 
-				if(!point.isCity())
+				if (!point.isCity() ||
+				    point.getMinResolution() > res ||
+				    point.getMaxResolution() < res)
 					continue;
 
 				String name = point.getName();
@@ -647,10 +732,11 @@ public class MapBuilder implements Configurable {
 				p.setLatitude(coord.getLatitude());
 				p.setLongitude(coord.getLongitude());
 
-				if(div.getZoom().getLevel() == 0 && name != null) {
-					// retrieve the City created earlier for
-					// this point and store the point info
-					// in it
+				map.addMapObject(p);
+				if(name != null && div.getZoom().getLevel() == 0) {
+					// retrieve the City created
+					// earlier for this point and
+					// store the point info in it
 					City c = cityMap.get(point);
 
 					if(pointIndex > 255) {
@@ -661,7 +747,6 @@ public class MapBuilder implements Configurable {
 					}
 				}
 
-				map.addMapObject(p);
 				++pointIndex;
 			}
 		}
@@ -734,6 +819,21 @@ public class MapBuilder implements Configurable {
 		}
 	}
 
+	Highway makeHighway(Map map, String ref) {
+		if(region == null) {
+			log.warn("Highway " + ref + " has no region (define a default region to zap this warning)");
+		}
+		Highway hw = highways.get(ref);
+		if(hw == null) {
+			LBLFile lblFile = map.getLblFile();
+			log.info("creating highway " + ref);
+			hw = lblFile.createHighway(region, ref);
+			highways.put(ref, hw);
+		}
+
+		return hw;
+	}
+
 	/**
 	 * It is not possible to represent large maps at the 24 bit resolution.  This
 	 * gets the largest resolution that can still cover the whole area of the
@@ -771,7 +871,7 @@ public class MapBuilder implements Configurable {
 		}
 	}
 
-	private static class LineAddFilter extends BaseFilter implements MapFilter {
+	private class LineAddFilter extends BaseFilter implements MapFilter {
 		private final Subdivision div;
 		private final Map map;
 		private final boolean doRoads;
