@@ -73,7 +73,7 @@ public class GmapsuppBuilder implements Combiner {
 	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
-		familyId = args.get("family-id", 1331);
+		familyId = args.get("family-id", 0);
 		productId = args.get("product-id", 1);
 		
 		familyName = args.get("family-name", "family name");

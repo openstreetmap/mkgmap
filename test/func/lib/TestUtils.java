@@ -34,24 +34,38 @@ import static org.junit.Assert.*;
  * @author Steve Ratcliffe
  */
 public class TestUtils {
+	private static final List<String> files = new ArrayList<String>();
+
+	static {
+		files.add(Args.DEF_MAP_FILENAME);
+		files.add(Args.DEF_MAP_FILENAME2);
+		files.add(Args.DEF_GMAPSUPP_FILENAME);
+		files.add(Args.DEF_TDB_FILENAME);
+
+		Runnable r = new Runnable() {
+			public void run() {
+				deleteOutputFiles();
+			}
+		};
+		Thread t = new Thread(r);
+		Runtime.getRuntime().addShutdownHook(t);
+	}
 
 	/**
 	 * Delelete output files that were created by the tests.
 	 * Used to clean up before/after a test.
 	 */
 	public static void deleteOutputFiles() {
-		String[] files = {
-				Args.DEF_MAP_FILENAME,
-				Args.DEF_GMAPSUPP_FILENAME,
-				Args.DEF_TDB_FILENAME,
-		};
-
 		for (String fname : files) {
 			File f = new File(fname);
 
 			if (f.exists())
 				assertTrue("delete existing file", f.delete());
 		}
+	}
+
+	public static void registerFile(String name) {
+		files.add(name);
 	}
 
 	/**

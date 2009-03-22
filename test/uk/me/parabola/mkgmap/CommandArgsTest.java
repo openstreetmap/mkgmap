@@ -13,10 +13,16 @@
 /* Create date: 15-Mar-2009 */
 package uk.me.parabola.mkgmap;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import uk.me.parabola.imgfmt.Utils;
+
+import func.lib.TestUtils;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -94,6 +100,73 @@ public class CommandArgsTest {
 	}
 
 	/**
+	 * An argument file is parsed a little differently from regular arguments
+	 * as the code is reused with the style files.
+	 */
+	@Test
+	public void testArgumentFile() throws IOException {
+
+		String SETNAME1 = "11110000";
+		String SETNAME2 = "22220000";
+
+		String F1 = "VIC.osm.gz";
+		String F2 = "NSW.osm.gz";
+
+		String cfile = "family-id=3081\n" +
+				"product-id=2601\n" +
+				"overview-mapname=30810100\n" +
+				"net\n" +
+				"gmapsupp\n" +
+				"tdbfile\n" +
+				"mapname=" + SETNAME1 + "\n" +
+				"description=OSM-AU-Victoria\n" +
+				"country-name=Australia\n" +
+				"country-abbr=AUS\n" +
+				"region-name=Victoria\n" +
+				"region-abbr=VIC\n" +
+				"input-file=" + F1 + "\n" +
+
+				"mapname=" + SETNAME2 + "\n" +
+				"description {\nOSM-AU New South Wales}\n" +
+				"country-name=Australia\n" +
+				"country-abbr=AUS\n" +
+				"# Test that comments are ignored til EOL\n" +
+				"region-name=New-South-Wales\n" +
+				"region-abbr=NSW\n" +
+				"input-file=" + F2 + "\n";
+
+		TestUtils.registerFile("30810100.img");
+		TestUtils.registerFile("30810100.tdb");
+		createFile("args", cfile);
+
+		carg.readArgs(new String[] {
+				"-c", "args",
+		});
+
+		ArgCollector.FileArgs arg = proc.getFileArg(0);
+		assertEquals("file name", F1, arg.name);
+		assertEquals("first file", SETNAME1, arg.getMapname());
+		assertEquals("region-abbr", "VIC", arg.getProperty("region-abbr"));
+
+		arg = proc.getFileArg(1);
+		assertEquals("file name", F2, arg.name);
+		assertEquals("second file", SETNAME2, arg.getMapname());
+		assertEquals("region-abbr", "NSW", arg.getProperty("region-abbr"));
+		assertEquals("description", "OSM-AU New South Wales", arg.getProperty("description"));
+	}
+
+	private void createFile(String name, String content) throws IOException {
+		Writer w = null;
+		TestUtils.registerFile(name);
+		try {
+			w = new FileWriter(name);
+			w.append(content);
+		} finally {
+			Utils.closeFile(w);
+		}
+	}
+
+	/**
 	 * Combinations of all mapname possibilities.
 	 */
 	@Test
@@ -124,8 +197,13 @@ public class CommandArgsTest {
 		private class FileArgs {
 			private String name;
 			private Properties props;
+
 			public String getProperty(String key) {
 				return props.getProperty(key);
+			}
+
+			public String getMapname() {
+				return getProperty("mapname");
 			}
 		}
 

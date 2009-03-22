@@ -51,7 +51,7 @@ public class TokenScanner {
 	/**
 	 * Peek and return the first token.  It is not consumed.
 	 */
-	protected Token peekToken() {
+	public Token peekToken() {
 		ensureTok();
 		return tokens.peek();
 	}

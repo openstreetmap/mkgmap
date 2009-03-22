@@ -26,7 +26,7 @@ OSMDATA = /opt/data/uk-071010-1.osm.gz
 #OSMDATA = seqld.osm.gz
 #OSMDATA = --net --style=default --name-tag-list='name:en int_name name' test.osm
 #OSMDATA = /opt/data/uk-test-1.osm.gz
-#OSMDATA = /opt/data/uk-lon.osm
+OSMDATA = /opt/data/uk-lon.osm
 #OSMDATA = other.mp
 
 
@@ -34,6 +34,7 @@ TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
 #OPTS= --levels='0=24,1=22,2=20'
 #OPTS= --route --tdbfile --tdb-v4 
+OPTS=--tdbfile --family-id=909 --series-name="other map"  --description='A test map'
 
 makemap: clean
 	$(TIME) java -Xmx500m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)

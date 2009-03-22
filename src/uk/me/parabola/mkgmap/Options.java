@@ -94,23 +94,27 @@ public class Options {
 
 			String key = tok.getValue();
 
-			tok = ts.nextToken();
-			if (tok.getType() != TokType.SYMBOL) {
-				ts.skipLine();
-				continue;
-			}
+			ts.skipSpace();
+			tok = ts.peekToken();
+			
+			if (tok.getType() == TokType.SYMBOL) {
 
-			String punc = tok.getValue();
-			String val;
-			if (punc.equals(":") || punc.equals("=")) {
-				val = ts.readLine();
-			} else if (punc.equals("{")) {
-				val = ts.readUntil(TokType.SYMBOL, "}");
+				String punc = ts.nextValue();
+				String val;
+				if (punc.equals(":") || punc.equals("=")) {
+					val = ts.readLine();
+				} else if (punc.equals("{")) {
+					val = ts.readUntil(TokType.SYMBOL, "}");
+				} else {
+					ts.skipLine();
+					continue;
+				}
+				proc.processOption(new Option(key, val));
+			} else if (tok.getType() == TokType.TEXT){
+				proc.processOption(new Option(key, ""));
 			} else {
 				ts.skipLine();
-				continue;
 			}
-			proc.processOption(new Option(key, val));
 		}
 	}
 }
