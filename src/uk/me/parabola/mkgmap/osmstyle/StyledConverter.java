@@ -79,6 +79,8 @@ public class StyledConverter implements OsmConverter {
 
 	private int roadId;
 
+	private final int MAX_POINTS_IN_WAY = 200;
+
 	private final int MAX_NODES_IN_WAY = 16;
 
 	private final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
@@ -427,11 +429,21 @@ public class StyledConverter implements OsmConverter {
 
 		if(clippedWays != null) {
 			for(Way cw : clippedWays) {
+				while(cw.getPoints().size() > MAX_POINTS_IN_WAY) {
+					Way tail = splitWayAt(cw, MAX_POINTS_IN_WAY - 1);
+					addRoadAfterSplittingLoops(cw, gt);
+					cw = tail;
+				}
 				addRoadAfterSplittingLoops(cw, gt);
 			}
 		}
 		else {
 			// no bounding box or way was not clipped
+			while(way.getPoints().size() > MAX_POINTS_IN_WAY) {
+				Way tail = splitWayAt(way, MAX_POINTS_IN_WAY - 1);
+				addRoadAfterSplittingLoops(way, gt);
+				way = tail;
+			}
 			addRoadAfterSplittingLoops(way, gt);
 		}
 	}
