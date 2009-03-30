@@ -169,9 +169,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			} else if ("node".equals(type)) {
 				el = nodeMap.get(id);
 				if(el == null) {
-					// we didn't make a node for
-					// this point earlier, do it
-					// now (if it exists)
+					// we didn't make a node for this point earlier,
+					// do it now (if it exists)
 					Coord co = coordMap.get(id);
 					if(co != null) {
 						el = new Node(id, co);
@@ -254,17 +253,14 @@ class Osm5XmlHandler extends DefaultHandler {
 				mode = 0;
 				String highway = currentWay.getTag("highway");
 				if(routing && (highway != null ||
-					       "ferry".equals(currentWay.getTag("route")))) {
-					// the way is a highway (or
-				    	// ferry route), so for each
-				    	// of it's points, increment
-				    	// the number of highways
-				    	// using that point
+							   "ferry".equals(currentWay.getTag("route")))) {
+					// the way is a highway (or ferry route), so for
+					// each of it's points, increment the number of
+					// highways using that point
 					for(Coord p : currentWay.getPoints())
 						p.incHighwayCount();
-					// if the way is a roundabout
-					// but isn't already flagged
-					// as "oneway", flag it here
+					// if the way is a roundabout but isn't already
+					// flagged as "oneway", flag it here
 					if("roundabout".equals(currentWay.getTag("junction"))) {
 						if(currentWay.getTag("oneway") == null) {
 							currentWay.addTag("oneway", "yes");

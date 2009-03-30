@@ -214,4 +214,20 @@ public class LBLFile extends ImgFile {
 	public PlacesHeader getPlaceHeader() {
 		return lblHeader.getPlaceHeader();
 	}
+
+	public int numCities() {
+		return places.numCities();
+	}
+
+	public int numZips() {
+		return places.numZips();
+	}
+
+	public int numHighways() {
+		return places.numHighways();
+	}
+
+	public int numExitFacilities() {
+		return places.numExitFacilities();
+	}
 }

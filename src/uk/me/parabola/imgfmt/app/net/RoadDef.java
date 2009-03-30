@@ -23,6 +23,8 @@ import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
 
@@ -47,7 +49,7 @@ import uk.me.parabola.log.Logger;
  * @author Robert Vollmert
  */
 
-public class RoadDef {
+public class RoadDef implements Comparable {
 	private static final Logger log = Logger.getLogger(RoadDef.class);
 
 	// the offset in Nod2 of our Nod2 record
@@ -74,10 +76,10 @@ public class RoadDef {
 	 * Everything that's relevant for writing to NET1.
 	 */
 
-	private static final int NET_FLAG_NODINFO = 0x40;
-	private static final int NET_FLAG_UNK1 = 0x04; // lock on road?
-	private static final int NET_FLAG_ONEWAY = 0x02;
-	private static final int NET_FLAG_ADDRINFO = 0x01;
+	private static final int NET_FLAG_NODINFO  = 0x40;
+	private static final int NET_FLAG_ADDRINFO = 0x10;
+	private static final int NET_FLAG_UNK1     = 0x04; // lock on road?
+	private static final int NET_FLAG_ONEWAY   = 0x02;
 
 	private int netFlags = NET_FLAG_UNK1;
 
@@ -93,11 +95,14 @@ public class RoadDef {
 
 	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
 
+	private City city;
+	private Zip zip;
+
 	/**
 	 * This is for writing to NET1.
 	 * @param writer A writer that is positioned within NET1.
 	 */
-	void writeNet1(ImgFileWriter writer) {
+	void writeNet1(ImgFileWriter writer, int numCities, int numZips) {
 		if (numlabels == 0)
 			return;
 		assert numlabels > 0;
@@ -111,6 +116,30 @@ public class RoadDef {
 		int maxlevel = writeLevelCount(writer);
 
 		writeLevelDivs(writer, maxlevel);
+
+		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
+			writer.put((byte)0); // unknown (nearly always zero)
+			int code = 0xe8;     // zip and city present
+			if(city == null)
+				code |= 0x10; // no city
+			if(zip == null)
+				code |= 0x04; // no zip
+			writer.put((byte)code);
+			if(zip != null) {
+				char zipIndex = (char)zip.getIndex();
+				if(numZips > 255)
+					writer.putChar(zipIndex);
+				else
+					writer.put((byte)zipIndex);
+			}
+			if(city != null) {
+				char cityIndex = (char)city.getIndex();
+				if(numCities > 255)
+					writer.putChar(cityIndex);
+				else
+					writer.put((byte)cityIndex);
+			}
+		}
 
 		if (hasNodInfo()) {
 			// This is the offset of an entry in NOD2
@@ -132,6 +161,15 @@ public class RoadDef {
 			if (i == (numlabels-1))
 				ptr |= 0x800000;
 			writer.put3(ptr);
+		}
+	}
+
+	public void putSortedRoadEntry(ImgFileWriter writer, Label label) {
+		for(int i = 0; i < labels.length && labels[i] != null; ++i) {
+			if(labels[i].equals(label)) {
+				writer.put3((i << 22) | offsetNet1);
+				return;
+			}
 		}
 	}
 
@@ -159,11 +197,28 @@ public class RoadDef {
 	}
 
 	public void addLabel(Label l) {
-		// XXX: apparently, just one label for now?
-		if (numlabels == 0)
-			labels[numlabels++] = l;
-		else if (!l.equals(labels[0]))
+		int i;
+		for (i = 0; i < MAX_LABELS && labels[i] != null; ++i) {
+			if (l.equals(labels[i])) {
+				// label already present
+				return;
+			}
+		}
+
+		if (i < MAX_LABELS) {
+			labels[i] = l;
+			++numlabels;
+		}
+		else
 			log.warn("discarding extra label", l);
+	}
+
+	public int getNumLabels() {
+		return numlabels;
+	}
+
+	public Label[] getLabels() {
+		return labels;
 	}
 
 	/**
@@ -192,6 +247,20 @@ public class RoadDef {
 		return roadIndexes.lastKey();
 	}
 
+	public boolean connectedTo(RoadDef other, int level) {
+		List<RoadIndex> l = roadIndexes.get(level);
+		if(l == null)
+			return false;
+		List<RoadIndex> ol = other.roadIndexes.get(level);
+		if(ol == null)
+			return false;
+
+		for(RoadIndex ri : l)
+			for(RoadIndex ori : ol)
+				if(ri.getLine().intersects(ori.getLine()))
+					return true;
+		return false;
+	}
 
 	/**
 	 * Set the road length (in meters).
@@ -457,5 +526,30 @@ public class RoadDef {
 	public void setOneway() {
 		tabAInfo |= TABA_FLAG_ONEWAY;
 		netFlags |= NET_FLAG_ONEWAY;
+	}
+
+	public void setCity(City city) {
+		this.city = city;
+		netFlags |= NET_FLAG_ADDRINFO;
+	}
+
+	public void setZip(Zip zip) {
+		this.zip = zip;
+		netFlags |= NET_FLAG_ADDRINFO;
+	}
+
+	public int compareTo(Object other) {
+		// sort by city name - this is used to group together
+		// roads that have been split into segments
+		RoadDef o = (RoadDef)other;
+		if(o == this)
+			return 0;
+		if(city != null && o.city != null)
+			return city.compareTo(o.city);
+		return hashCode() - o.hashCode();
+	}
+
+	public City getCity() {
+		return city;
 	}
 }

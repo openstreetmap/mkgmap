@@ -16,7 +16,7 @@ junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=2 resol
 junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
 
 # Set highway names to include the reference if there is one
-highway=* {name '${name} (${ref})' | '${ref}' | '${name}' }
+#highway=* {name '${name} (${ref})' | '${ref}' | '${name}' }
 highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]

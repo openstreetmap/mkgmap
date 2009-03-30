@@ -184,7 +184,7 @@ public class MapBuilder implements Configurable {
 				nodFile.setNetwork(network.getCenters(), network.getRoadDefs(), network.getBoundary());
 				nodFile.write();
 			}
-			netFile.write();
+			netFile.write(lblFile.numCities(), lblFile.numZips());
 
 			if (nodFile != null) {
 				nodFile.writePost();
@@ -223,7 +223,7 @@ public class MapBuilder implements Configurable {
 			{
 				Country thisCountry;
 				Region 	thisRegion;
-				City 		thisCity;
+				City	thisCity;
 
 				String CountryStr = p.getCountry();
 				String RegionStr  = p.getRegion();
@@ -246,6 +246,53 @@ public class MapBuilder implements Configurable {
 					thisCity = lbl.createCity(thisCountry, p.getName(), true);
 
 				cityMap.put(p, thisCity);
+			}
+		}
+
+		MapPoint tempPoint = new MapPoint();
+
+		for (MapLine line : src.getLines()) {
+			if(line.isRoad()) {
+				String cityName = line.getCity();
+				String cityCountryName = line.getCountry();
+				String cityRegionName  = line.getRegion();
+				String zipStr = line.getZip();
+
+				if(cityName == null) {
+					// Get name of next city if untagged
+
+					tempPoint.setLocation(line.getLocation());
+					MapPoint nextCity = locator.findNextPoint(tempPoint);
+
+					if(nextCity != null) {
+						cityName = nextCity.getCity();
+						if(cityCountryName == null)
+							cityCountryName = nextCity.getCountry();
+						if(cityRegionName == null)
+							cityRegionName = nextCity.getRegion();
+						if(zipStr == null)
+							zipStr = nextCity.getZip();
+					}
+				}
+
+				if(cityName != null) {
+
+					Country cc = (cityCountryName == null)? country : lbl.createCountry(cityCountryName, locator.getCountryCode(cityCountryName));
+
+					Region cr = (cityRegionName == null)? region : lbl.createRegion(cc, cityRegionName, null);
+
+					if(cr != null) {
+						((MapRoad)line).setRoadCity(lbl.createCity(cr, cityName, false));
+					}
+					else {
+						((MapRoad)line).setRoadCity(lbl.createCity(cc, cityName, false));
+					}
+				}
+
+				if(zipStr != null) {
+					((MapRoad)line).setRoadZip(lbl.createZip(zipStr));
+				}
+
 			}
 		}
 	}
@@ -665,8 +712,8 @@ public class MapBuilder implements Configurable {
 		int pointIndex = 1;
 
 		// although the non-indexed points are output first,
-		// pointIndex must be initialised to the number of
-		// indexed points (not 1)
+		// pointIndex must be initialised to the number of indexed
+		// points (not 1)
 		for (MapPoint point : points) {
 			if (point.isCity() &&
 			    point.getMinResolution() <= res &&
@@ -734,9 +781,8 @@ public class MapBuilder implements Configurable {
 
 				map.addMapObject(p);
 				if(name != null && div.getZoom().getLevel() == 0) {
-					// retrieve the City created
-					// earlier for this point and
-					// store the point info in it
+					// retrieve the City created earlier for this
+					// point and store the point info in it
 					City c = cityMap.get(point);
 
 					if(pointIndex > 255) {
@@ -886,7 +932,7 @@ public class MapBuilder implements Configurable {
 			MapLine line = (MapLine) element;
 			assert line.getPoints().size() < 255 : "too many points";
 
-			Polyline pl = div.createLine(line.getName());
+			Polyline pl = div.createLine(line.getName(), line.getRef());
 			pl.setDirection(line.isDirection());
 
 			for (Coord co : line.getPoints())

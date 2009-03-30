@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 
 /**
@@ -100,5 +102,13 @@ public class MapRoad extends MapLine {
 
 	public RoadDef getRoadDef() {
 		return roadDef;
+	}
+
+	public void setRoadCity(City c) {
+		this.roadDef.setCity(c);
+	}
+
+	public void setRoadZip(Zip z) {
+		this.roadDef.setZip(z);
 	}
 }

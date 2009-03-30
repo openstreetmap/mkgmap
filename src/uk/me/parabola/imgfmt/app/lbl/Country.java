@@ -44,4 +44,8 @@ public class Country {
 	public void setLabel(Label label) {
 		this.label = label;
 	}
+
+	public Label getLabel() {
+		return label;
+	}
 }

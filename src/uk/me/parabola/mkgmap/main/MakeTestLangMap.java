@@ -73,7 +73,7 @@ public class MakeTestLangMap extends AbstractTestMap {
 			}
 
 			String name = new String(out);
-			Polyline l = div.createLine(name);
+			Polyline l = div.createLine(name, null);
 			double baseLat = lat + y * space;
 			Coord co = new Coord(baseLat, lon);
 			l.addCoord(co);

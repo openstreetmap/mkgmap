@@ -25,14 +25,13 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Region {
-	private final char index;
+	private char index;
 
 	private final Country country;
 	private Label label;
 
-	public Region(Country country, int index) {
+	public Region(Country country) {
 		this.country = country;
-		this.index = (char) index;
 	}
 
 	public void write(ImgFileWriter writer) {
@@ -41,10 +40,23 @@ public class Region {
 	}
 
 	public char getIndex() {
+		assert index > 0 : "Index not yet set";
 		return index;
+	}
+
+	public Country getCountry() {
+		return country;
+	}
+
+	public void setIndex(int index) {
+		this.index = (char)index;
 	}
 
 	public void setLabel(Label label) {
 		this.label = label;
+	}
+
+	public Label getLabel() {
+		return label;
 	}
 }

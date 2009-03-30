@@ -207,12 +207,6 @@ public class MapMaker implements MapProcessor {
 				}
 			}
 
-			List<MapPoint> cities = new ArrayList<MapPoint>();
-			for(MapPoint mp : src.getPoints()) {
-				if(mp.isCity())
-					cities.add(mp);
-			}
-
 			// generate a POI for each named road
 			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
@@ -315,11 +309,12 @@ public class MapMaker implements MapProcessor {
 			int i2 = numPoints / 2;
 			int i1 = i2 - 1;
 			coord = new Coord((points.get(i1).getLatitude() +
-					points.get(i2).getLatitude()) / 2,
-					(points.get(i1).getLongitude() +
-							points.get(i2).getLongitude()) / 2);
-		} else
+					   points.get(i2).getLatitude()) / 2,
+					  (points.get(i1).getLongitude() +
+					   points.get(i2).getLongitude()) / 2);
+		} else {
 			coord = points.get(numPoints / 2);
+		}
 
 		String name = road.getName();
 		MapPoint rnp = new MapPoint();

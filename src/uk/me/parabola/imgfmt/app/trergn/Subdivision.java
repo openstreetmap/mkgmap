@@ -208,12 +208,23 @@ public class Subdivision {
 		return p;
 	}
 
-	public Polyline createLine(String name) {
+	public Polyline createLine(String name, String ref) {
 		assert hasPolylines;
 		Label label = lblFile.newLabel(name);
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
+		if(ref != null) {
+			// ref may contain multiple ids separated by ";"
+			for(String r : ref.split(";")) {
+				String tr = r.trim();
+				if(tr.length() > 0) {
+					//System.err.println("Adding ref " + tr + " to road " + name);
+					pl.addRefLabel(lblFile.newLabel(tr));
+				}
+			}
+		}
+
 		numPolylines++;
 		pl.setNumber(numPolylines);
 		return pl;

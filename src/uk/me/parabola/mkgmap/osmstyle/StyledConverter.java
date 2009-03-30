@@ -324,8 +324,44 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
+	private String combineRefs(Element element) {
+		String ref = element.getTag("ref");
+		String int_ref = element.getTag("int_ref");
+		if(int_ref != null) {
+			if(ref == null)
+				ref = int_ref;
+			else
+				ref += ";" + int_ref;
+		}
+		String nat_ref = element.getTag("nat_ref");
+		if(nat_ref != null) {
+			if(ref == null)
+				ref = nat_ref;
+			else
+				ref += ";" + nat_ref;
+		}
+		String reg_ref = element.getTag("reg_ref");
+		if(reg_ref != null) {
+			if(ref == null)
+				ref = reg_ref;
+			else
+				ref += ";" + reg_ref;
+		}
+
+		return ref;
+	}
+
 	private void elementSetup(MapElement ms, GType gt, Element element) {
-		ms.setName(element.getName());
+		String name = element.getName();
+		String refs = combineRefs(element);
+		if(name == null && refs != null) {
+			// use first ref as name
+			name = refs.split(";")[0].trim();
+		}
+		if(name != null)
+			ms.setName(name);
+		if(refs != null)
+			ms.setRef(refs);
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
@@ -335,9 +371,9 @@ public class StyledConverter implements OsmConverter {
 		String city         = element.getTag("addr:city");
 		String zip          = element.getTag("addr:postcode");
 		String street 	    = element.getTag("addr:street");
-		String houseNumber  = element.getTag("addr:housenumber");		
-		String phone	 	    = element.getTag("phone");		
-		String isIn	        = element.getTag("is_in");
+		String houseNumber  = element.getTag("addr:housenumber");
+		String phone        = element.getTag("phone");
+		String isIn         = element.getTag("is_in");
 		String country      = element.getTag("is_in:country");
 		String region       = element.getTag("is_in:county");
 		
@@ -523,13 +559,12 @@ public class StyledConverter implements OsmConverter {
 
 				if((i + 1) < points.size() &&
 				   nodeIndices.size() == MAX_NODES_IN_WAY) {
-					// this isn't the last point in the way
-					// so split it here to avoid exceeding
-					// the max nodes in way limit
+					// this isn't the last point in the way so split
+					// it here to avoid exceeding the max nodes in way
+					// limit
 					trailingWay = splitWayAt(way, i);
-					// this will have truncated
-					// the current Way's points so
-					// the loop will now terminate
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
 					log.info("Splitting way " + wayName + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
 				}
 			}
@@ -562,8 +597,8 @@ public class StyledConverter implements OsmConverter {
 		String highwayType = way.getTag("highway");
 		if(highwayType == null) {
 			// it's a routable way but not a highway (e.g. a ferry)
-			// use the value of the route tag as the highwayType
-			// for the purpose of testing for access restrictions
+			// use the value of the route tag as the highwayType for
+			// the purpose of testing for access restrictions
 			highwayType = way.getTag("route");
 		}
 
@@ -579,8 +614,8 @@ public class StyledConverter implements OsmConverter {
 					for (int j = 1; j < accessMap.length; ++j)
 						noAccess[accessMap[j].index] = true;
 				} else {
-					// just the specific vehicle
-					// class is denied access
+					// just the specific vehicle class is denied
+					// access
 					noAccess[index] = true;
 				}
 				log.info(type + " is not allowed in " + highwayType + " " + wayName);
@@ -590,8 +625,8 @@ public class StyledConverter implements OsmConverter {
 					for (int j = 1; j < accessMap.length; ++j)
 						noAccess[accessMap[j].index] = false;
 				} else {
-					// just the specific vehicle
-					// class is allowed access
+					// just the specific vehicle class is allowed
+					// access
 					noAccess[index] = false;
 				}
 				log.info(type + " is allowed in " + highwayType + " " + wayName);
@@ -618,10 +653,10 @@ public class StyledConverter implements OsmConverter {
 		if(way.isBoolTag("toll"))
 			road.setToll();
 
-		// if the way is a motorway and has a ref tag, we may
-		// be generating a Garmin "highway" record for it so
-		// save the ref tag for later
-		String ref = way.getTag("ref");
+		// if the way is a motorway and has a ref tag, we may be
+		// generating a Garmin "highway" record for it so save the ref
+		// tag for later
+		String ref = combineRefs(way);
 		if(ref != null) {
 			road.setRef(ref);
 		}
@@ -652,13 +687,12 @@ public class StyledConverter implements OsmConverter {
 				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
 				points.set(n, thisCoordNode);
 
-				// see if this node plays a role in any
-				// turn restrictions
+				// see if this node plays a role in any turn
+				// restrictions
 
 				if(lastRestrictions != null) {
-					// the previous node was the
-					// location of one or more
-					// restrictions
+					// the previous node was the location of one or
+					// more restrictions
 					for(RestrictionRelation rr : lastRestrictions) {
 						if(rr.getToWay().equals(origWay)) {
 							rr.setToNode(thisCoordNode);
@@ -674,8 +708,8 @@ public class StyledConverter implements OsmConverter {
 
 				List<RestrictionRelation> theseRestrictions = restrictions.get(coord);
 				if(theseRestrictions != null) {
-					// this node is the location
-					// of one or more restrictions
+					// this node is the location of one or more
+					// restrictions
 					for(RestrictionRelation rr : theseRestrictions) {
 						rr.setViaNode(thisCoordNode);
 						if(rr.getToWay().equals(origWay)) {
@@ -706,8 +740,8 @@ public class StyledConverter implements OsmConverter {
 			addRoadWithoutLoops(trailingWay, gt);
 	}
 
-	// split a Way at the specified point and return the new Way
-        // (the original Way is truncated)
+	// split a Way at the specified point and return the new Way (the
+	// original Way is truncated)
 
 	Way splitWayAt(Way way, int index) {
 		Way trailingWay = new Way();
@@ -771,22 +805,18 @@ public class StyledConverter implements OsmConverter {
 			Coord p1 = wayPoints.get(i);
 			Coord p2 = wayPoints.get(i + 1);
 			if(highWayCounts[i] > 1 && highWayCounts[i + 1] > 1) {
-				// both points will be nodes so insert
-				// a new point between them that
-				// (approximately) falls on the
+				// both points will be nodes so insert a new point
+				// between them that (approximately) falls on the
 				// roundabout's perimeter
 				int newLat = (p1.getLatitude() + p2.getLatitude()) / 2;
 				int newLon = (p1.getLongitude() + p2.getLongitude()) / 2;
-				// new point has to be "outside" of
-				// existing line joining p1 and p2 -
-				// how far outside is determined by
-				// the ratio of the distance between
-				// p1 and p2 compared to the distance
-				// of p1 from the "middle" of the
-				// roundabout (aka, the approx radius
-				// of the roundabout) - the higher the
-				// value of frigFactor, the further out
-				// the point will be
+				// new point has to be "outside" of existing line
+				// joining p1 and p2 - how far outside is determined
+				// by the ratio of the distance between p1 and p2
+				// compared to the distance of p1 from the "middle" of
+				// the roundabout (aka, the approx radius of the
+				// roundabout) - the higher the value of frigFactor,
+				// the further out the point will be
 				double scale = 1 + frigFactor * p1.distance(p2) / p1.distance(middleCoord);
 				newLat = (int)((newLat - middleLat) * scale) + middleLat;
 				newLon = (int)((newLon - middleLon) * scale) + middleLon;

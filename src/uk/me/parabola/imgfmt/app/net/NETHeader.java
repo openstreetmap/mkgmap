@@ -95,4 +95,9 @@ public class NETHeader extends CommonHeader {
 		roadDefinitions.setPosition(writer.position());
 		return new SectionWriter(writer, roadDefinitions);
 	}
+
+	ImgFileWriter makeSortedRoadWriter(ImgFileWriter writer) {
+		sortedRoads.setPosition(writer.position());
+		return new SectionWriter(writer, sortedRoads);
+	}
 }

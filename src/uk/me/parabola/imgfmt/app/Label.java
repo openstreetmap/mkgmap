@@ -32,7 +32,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Label {
+public class Label implements Comparable {
 	private static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
@@ -45,6 +45,14 @@ public class Label {
 	public Label(EncodedText etext) {
 		ctext = etext.getCtext();
 		length = etext.getLength();
+	}
+
+	public byte[] getCtext() {
+		return ctext;
+	}
+
+	public int getLength() {
+		return length;
 	}
 
 	/**
@@ -106,5 +114,19 @@ public class Label {
 
 	public int hashCode() {
 		return offset;
+	}
+
+	public int compareTo(Object other) {
+		Label o = (Label)other;
+		if(this == other)
+			return 0;
+		for(int i = 0; i < length && i < o.length; ++i) {
+			int diff = (ctext[i] & 0xff) - (o.ctext[i] & 0xff);
+			if(diff != 0)
+				return diff;
+		}
+		if(length == o.length)
+			return 0;
+		return (length > o.length)? 1 : -1;
 	}
 }

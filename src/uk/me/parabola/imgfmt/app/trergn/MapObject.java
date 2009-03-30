@@ -19,6 +19,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
  * point.
@@ -35,8 +38,9 @@ public abstract class MapObject {
 	// the division.
 	private Subdivision subdiv;
 
-	// The lable for this object
+	// The label(s) for this object
 	private Label label;
+	private List<Label> refLabels;
 
 	// The type of road etc.
 	private int type;
@@ -63,6 +67,12 @@ public abstract class MapObject {
 
 	public void setLabel(Label label) {
 		this.label = label;
+	}
+
+	public void addRefLabel(Label refLabel) {
+		if(refLabels == null)
+			refLabels = new ArrayList<Label>();
+		refLabels.add(refLabel);
 	}
 
 	protected int getType() {
@@ -125,5 +135,9 @@ public abstract class MapObject {
 
 	protected Label getLabel() {
 		return label;
+	}
+
+	public List<Label> getRefLabels() {
+		return refLabels;
 	}
 }

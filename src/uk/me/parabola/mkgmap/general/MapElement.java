@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public abstract class MapElement {
 	private String name;
+	private String ref;
 	private int type;
 
 	private int minResolution = 24;
@@ -45,6 +46,7 @@ public abstract class MapElement {
 
 	protected MapElement(MapElement orig) {
 		name = orig.name;
+		ref = orig.ref;
 		type = orig.type;
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
@@ -62,9 +64,18 @@ public abstract class MapElement {
 		return name;
 	}
 
+	public String getRef() {
+		return ref;
+	}
+
 	public void setName(String name) {
 	  if(name != null)
 		this.name = name.toUpperCase();
+	}
+
+	public void setRef(String ref) {
+	  if(ref != null)
+		this.ref = ref.toUpperCase();
 	}
 
 	public String getCity() {

@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
-
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+
+import uk.me.parabola.util.Sortable;
 
 import uk.me.parabola.mkgmap.general.Exit;
 
@@ -36,9 +37,13 @@ import uk.me.parabola.mkgmap.general.Exit;
  */
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
+
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
+	private final List<Sortable<String, Region>> regionList = new ArrayList<Sortable<String, Region>>();
+
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
-	private final List<CitySort> cityList = new ArrayList<CitySort>();
+	private final List<Sortable<String, City>> cityList = new ArrayList<Sortable<String, City>>();
+
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<Highway> highways = new ArrayList<Highway>();
 	private final List<ExitFacility> exitFacilities = new ArrayList<ExitFacility>();
@@ -69,12 +74,12 @@ public class PlacesFile {
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
 
-		for (Region r : regions.values())
-			r.write(writer);
+		for (Sortable<String, Region> sr : regionList)
+			sr.getValue().write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (CitySort c : cityList)
-			c.getCity().write(writer);
+		for (Sortable<String, City> sc : cityList)
+			sc.getValue().write(writer);
 
 		placeHeader.endCity(writer.position());
 
@@ -147,15 +152,16 @@ public class PlacesFile {
 	
 		String s = abbr != null ? name + (char)0x1d + abbr : name;
 
-		String uniqueRegionName = s.toUpperCase().concat(Long.toString(country.getIndex()));	
+		String uniqueRegionName = s.toUpperCase() + "_C" + country.getLabel().getOffset();
 	
 		Region r = regions.get(uniqueRegionName);
 		
 		if(r == null)
 		{
-			r = new Region(country, regions.size()+1);
+			r = new Region(country);
 			Label l = lblFile.newLabel(s);
 			r.setLabel(l);
+			regionList.add(new Sortable<String, Region>(name, r));
 			regions.put(uniqueRegionName, r);
 		}
 		return r;
@@ -163,7 +169,7 @@ public class PlacesFile {
 
 	City createCity(Country country, String name, boolean unique) {
 		
-		String uniqueCityName = name.toUpperCase().concat("_C").concat(Long.toString(country.getIndex()));
+		String uniqueCityName = name.toUpperCase() + "_C" + country.getLabel().getOffset();
 		
 		City c = null;
 
@@ -177,16 +183,16 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new CitySort(name, c));
+			cityList.add(new Sortable<String, City>(name, c));
 			cities.put(uniqueCityName, c);
 		}
 
 		return c;
-  }
+	}
 
 	City createCity(Region region, String name, boolean unique) {
 		
-		String uniqueCityName = name.toUpperCase().concat("_R").concat(Long.toString(region.getIndex()));
+		String uniqueCityName = name.toUpperCase() + "_R" + region.getLabel().getOffset();
 		
 		City c = null;
 
@@ -200,24 +206,11 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new CitySort(name, c));
+			cityList.add(new Sortable<String, City>(name, c));
 			cities.put(uniqueCityName, c);
 		}
 
 		return c;
-	}
-
-	private void sortCities()
-	{
-		int index = 1;
-
-		Collections.sort(cityList, new Comparator<CitySort>() {
-			public int compare(CitySort o1, CitySort o2) {
-				return o1.getKey().compareTo(o2.getKey());
-			}
-		});
-		for (CitySort cs: cityList)
-			cs.getCity().setIndex(index++);
 	}
 
 	Zip createZip(String code) {
@@ -293,7 +286,15 @@ public class PlacesFile {
 
 	void allPOIsDone() {
 
-		sortCities();
+		int index = 1;
+		Collections.sort(regionList);
+		for (Sortable<String, Region> sr: regionList)
+			sr.getValue().setIndex(index++);
+
+		index = 1;
+		Collections.sort(cityList);
+		for (Sortable<String, City> sc: cityList)
+			sc.getValue().setIndex(index++);
 
 		poisClosed = true;
 
@@ -308,21 +309,19 @@ public class PlacesFile {
 			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 	}
 
-	private class CitySort {
-		private final String key;
-		private final City city;
+	public int numCities() {
+		return cities.size();
+	}
 
-		private CitySort(String key, City city) {
-			this.key = key;
-			this.city = city;
-		}
+	public int numZips() {
+		return postalCodes.size();
+	}
 
-		public String getKey() {
-			return key;
-		}
+	public int numHighways() {
+		return highways.size();
+	}
 
-		public City getCity() {
-			return city;
-		}
+	public int numExitFacilities() {
+		return exitFacilities.size();
 	}
 }

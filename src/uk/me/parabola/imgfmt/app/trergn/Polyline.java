@@ -22,6 +22,7 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.log.Logger;
 
@@ -110,6 +111,11 @@ public class Polyline extends MapObject {
 			roaddef.addLabel(getLabel());
 			roaddef.addOffsetTarget(file.position(),
 					FLAG_NETINFO | (loff & FLAG_EXTRABIT));
+			// also add ref label(s) if present
+			List<Label> refLabels = getRefLabels();
+			if(refLabels != null)
+				for(Label rl : refLabels)
+					roaddef.addLabel(rl);
 		}
 
 		file.put3(loff);
@@ -166,5 +172,21 @@ public class Polyline extends MapObject {
 
 	public int getNumber() {
 		return number;
+	}
+
+	public boolean intersects(Polyline other) {
+		// optimise detection of simple concatenation
+		Coord s0 = points.get(0);
+		Coord e0 = points.get(points.size() - 1);
+		Coord s1 = other.points.get(0);
+		Coord e1 = other.points.get(other.points.size() - 1);
+		if(s0.equals(e1) || e0.equals(s1) || s0.equals(s1) || e0.equals(e1))
+			return true;
+		for(Coord p1 : points)
+			for(Coord p2 : other.points)
+				if(p1.equals(p2))
+					return true;
+
+		return false;
 	}
 }
