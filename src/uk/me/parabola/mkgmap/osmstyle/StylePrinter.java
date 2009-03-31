@@ -109,7 +109,7 @@ public class StylePrinter {
 			fmt.format("%s %s\n", s, rule);
 		else {
 			String rulestr = rule.toString();
-			System.out.println("rulestr:" + rulestr);
+			fmt.format("rulestr:%s", rulestr);
 			if (rulestr.startsWith("\n") || rulestr.matches("^[ \t\n].*") || rulestr.matches("^[ \t\n].*"))
 				fmt.format("%s %s\n", s, rulestr);
 			else

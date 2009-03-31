@@ -72,7 +72,7 @@ public class SimpleTest {
 				assertEquals("TRE size", 1897, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 28235, size);
+				assertEquals("LBL size", 28351, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
