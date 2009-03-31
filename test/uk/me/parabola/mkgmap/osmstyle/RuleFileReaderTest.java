@@ -27,6 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -248,6 +249,16 @@ public class RuleFileReaderTest {
 		el.addTag("name", "yellow");
 		type = rule.resolveType(el);
 		assertNull("no match for yello", type);
+	}
+
+	@Test @Ignore
+	public void testSelfReference() {
+		RuleSet rs = makeRuleSet("iii=* { set iii=no }");
+		//Rule rule = rs.getMap().get("foot=*");
+		Way el = new Way();
+		el.addTag("foot", "yes");
+		el.addTag("iii", "xyz");
+		rs.resolveType(el);
 	}
 
 	/**

@@ -311,10 +311,6 @@ class Osm5XmlHandler extends DefaultHandler {
 				else
 					currentRelation = new RestrictionRelation(currentRelation);
 			}
-			else {
-				log.info("ignoring relation type '" + type + "'");
-				currentRelation = null;
-			}
 		}
 		if(currentRelation != null) {
 			relationMap.put(currentRelation.getId(), currentRelation);
