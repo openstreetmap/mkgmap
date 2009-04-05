@@ -77,7 +77,7 @@ public class GmapsuppBuilder implements Combiner {
 		productId = args.get("product-id", 1);
 		
 		familyName = args.get("family-name", "family name");
-		areaName = args.get("area-name", "area name");
+		areaName = args.get("area-name", null);
 
 		overallDescription = args.getDescription();
 	}
@@ -134,7 +134,7 @@ public class GmapsuppBuilder implements Combiner {
 			MapBlock mb = new MapBlock();
 			mb.setMapNumber(info.getMapnameAsInt());
 			mb.setMapName(info.getDescription());
-			mb.setAreaName(areaName);
+			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
 			mb.setTypeName(familyName);
 			mb.setIds(familyId, productId);
 
