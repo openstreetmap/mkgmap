@@ -63,6 +63,8 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		try {
 			InputStream is = openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			parserFactory.setXIncludeAware(true);
+			parserFactory.setNamespaceAware(true);
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
