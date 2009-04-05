@@ -65,15 +65,17 @@ public class NETFile extends ImgFile {
 		}
 	}
 
-	public void writePost(ImgFileWriter rgn) {
+	public void writePost(ImgFileWriter rgn, boolean sortRoads) {
 		List<Sortable<Label, RoadDef>> sortedRoads = new ArrayList<Sortable<Label, RoadDef>>(roads.size());
 
 		for (RoadDef rd : roads) {
 			rd.writeRgnOffsets(rgn);
-			Label[] l = rd.getLabels();
-			for(int i = 0; i < l.length && l[i] != null; ++i)
-				if(l[i].getLength() != 0)
-					sortedRoads.add(new Sortable<Label, RoadDef>(l[i], rd));
+			if(sortRoads) {
+				Label[] l = rd.getLabels();
+				for(int i = 0; i < l.length && l[i] != null; ++i)
+					if(l[i].getLength() != 0)
+						sortedRoads.add(new Sortable<Label, RoadDef>(l[i], rd));
+			}
 		}
 
 		if(sortedRoads.size() > 0) {

@@ -105,6 +105,7 @@ public class MapBuilder implements Configurable {
 	private int		locationAutofillLevel;
 	private boolean	poiAddresses = true;
 	private int		poiDisplayFlags;
+	private boolean sortRoads = true;
 
 	public MapBuilder() {
 		regionName = null;
@@ -138,7 +139,8 @@ public class MapBuilder implements Configurable {
 
 		locator.setAutoFillLevel(locationAutofillLevel);
 
-
+		if(props.getProperty("no-sorted-roads", null) != null)
+			sortRoads = false;
 	}
 
 	/**
@@ -189,7 +191,7 @@ public class MapBuilder implements Configurable {
 			if (nodFile != null) {
 				nodFile.writePost();
 			}
-			netFile.writePost(rgnFile.getWriter());
+			netFile.writePost(rgnFile.getWriter(), sortRoads);
 		}
 	}
 
