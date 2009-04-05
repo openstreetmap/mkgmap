@@ -183,14 +183,6 @@ public class StyledConverter implements OsmConverter {
 		if (foundType == null)
 			return;
 
-		// If the node does not have a name, then set the name from this
-		// type rule.
-		log.debug("node name", node.getName());
-		if (node.getName() == null) {
-			node.setName(foundType.getDefaultName());
-			log.debug("after set", node.getName());
-		}
-
 		postConvertRules(node, foundType);
 
 		addPoint(node, foundType);
