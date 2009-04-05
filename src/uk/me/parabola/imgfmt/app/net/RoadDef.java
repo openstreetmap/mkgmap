@@ -257,7 +257,7 @@ public class RoadDef implements Comparable {
 
 		for(RoadIndex ri : l)
 			for(RoadIndex ori : ol)
-				if(ri.getLine().intersects(ori.getLine()))
+				if(ri.getLine().sharesNodeWith(ori.getLine()))
 					return true;
 		return false;
 	}

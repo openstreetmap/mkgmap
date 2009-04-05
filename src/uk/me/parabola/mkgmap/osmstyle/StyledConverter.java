@@ -87,7 +87,7 @@ public class StyledConverter implements OsmConverter {
 
 	// nodeIdMap maps a Coord into a nodeId
 	private final Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
-	private int nextNodeId;
+	private int nextNodeId = 1;
 	
 	private final Rule wayRules;
 	private final Rule nodeRules;
@@ -552,8 +552,7 @@ public class StyledConverter implements OsmConverter {
 				Integer nodeId = nodeIdMap.get(p);
 				if(nodeId == null) {
 					// assign a node id
-					nodeId = nextNodeId++;
-					nodeIdMap.put(p, nodeId);
+					nodeIdMap.put(p, nextNodeId++);
 				}
 				nodeIndices.add(i);
 
@@ -671,7 +670,7 @@ public class StyledConverter implements OsmConverter {
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			boolean hasInternalNodes = false;
-		        CoordNode lastCoordNode = null;
+			CoordNode lastCoordNode = null;
 			List<RestrictionRelation> lastRestrictions = null;
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);

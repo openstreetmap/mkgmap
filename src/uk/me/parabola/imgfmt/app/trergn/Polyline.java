@@ -174,18 +174,17 @@ public class Polyline extends MapObject {
 		return number;
 	}
 
-	public boolean intersects(Polyline other) {
-		// optimise detection of simple concatenation
-		Coord s0 = points.get(0);
-		Coord e0 = points.get(points.size() - 1);
-		Coord s1 = other.points.get(0);
-		Coord e1 = other.points.get(other.points.size() - 1);
-		if(s0.equals(e1) || e0.equals(s1) || s0.equals(s1) || e0.equals(e1))
-			return true;
-		for(Coord p1 : points)
-			for(Coord p2 : other.points)
-				if(p1.equals(p2))
-					return true;
+	public boolean sharesNodeWith(Polyline other) {
+		for(Coord p1 : points) {
+			long p1Id = p1.getId();
+			if(p1Id != 0) {
+				// point is a node, see if the other line contain the
+				// same node
+				for(Coord p2 : other.points)
+					if(p2.getId() == p1Id)
+						return true;
+			}
+		}
 
 		return false;
 	}
