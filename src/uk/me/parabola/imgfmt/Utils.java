@@ -113,7 +113,7 @@ public class Utils {
 	 * @return An integer value in map units.
 	 */
 	public static int toMapUnit(double l) {
-		double DELTA = 0.000001; // TODO check if we really mean this
+		double DELTA = 360.0D / (1 << 24) / 2; //Correct rounding
 		if (l > 0)
 			return (int) ((l + DELTA) * (1 << 24)/360);
 		else

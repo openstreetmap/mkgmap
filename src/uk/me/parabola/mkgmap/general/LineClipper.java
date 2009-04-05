@@ -134,7 +134,7 @@ public class LineClipper {
 		assert t[0] >= 0;
 		assert t[1] <= 1;
 
-		double d = 0.00001;
+		double d = 0.5;
 		if (t[0] > 0)
 			ends[0] = new Coord((int) (y0 + t[0] * dy + d), (int) (x0 + t[0] * dx + d));
 

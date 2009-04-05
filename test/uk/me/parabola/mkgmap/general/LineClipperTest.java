@@ -66,7 +66,7 @@ public class LineClipperTest {
 				new Coord(102, 110),
 				new Coord(150, 150),
 				new Coord(210, 220),
-				new Coord(190, 195)
+				new Coord(190, 135)
 				);
 		List<List<Coord>> list = LineClipper.clip(a, l);
 
@@ -82,12 +82,12 @@ public class LineClipperTest {
 				new Coord(100, 108),
 				new Coord(102, 110),
 				new Coord(150, 150),
-				new Coord(192, 200)
+				new Coord(193, 200)
 		};
 		assertArrayEquals(firstExpectedLine, list.get(0).toArray());
 		Coord[] secondExpectedLine = {
-				new Coord(194, 200),
-				new Coord(190, 195)
+				new Coord(200, 178),
+				new Coord(190, 135)
 		};
 		assertArrayEquals(secondExpectedLine, list.get(1).toArray());
 	}
