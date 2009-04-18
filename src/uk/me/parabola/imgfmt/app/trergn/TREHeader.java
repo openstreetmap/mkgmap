@@ -167,7 +167,7 @@ public class TREHeader extends CommonHeader {
 		writer.put(getPoiDisplayFlags());
 
 		writer.put3(displayPriority);
-		writer.putInt(0xd0401);
+		writer.putInt(0x110301);
 
 		writer.putChar((char) 1);
 		writer.put((byte) 0);
