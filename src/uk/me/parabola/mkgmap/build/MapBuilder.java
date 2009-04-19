@@ -27,11 +27,11 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
+import uk.me.parabola.imgfmt.app.lbl.Highway;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
-import uk.me.parabola.imgfmt.app.lbl.Highway;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
@@ -51,13 +51,13 @@ import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
+import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
-import uk.me.parabola.mkgmap.filters.SmoothingFilter;
 import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -106,6 +106,7 @@ public class MapBuilder implements Configurable {
 	private boolean	poiAddresses = true;
 	private int		poiDisplayFlags;
 	private boolean sortRoads = true;
+	private static final double FILTER_DISTANCE = 2.6;
 
 	public MapBuilder() {
 		regionName = null;
@@ -302,7 +303,6 @@ public class MapBuilder implements Configurable {
 	private void processPOIs(Map map, MapDataSource src) {
 
 		LBLFile lbl = map.getLblFile();
-		long poiAddrCountr = 0;
 		boolean checkedForPoiDispFlag = false;
 		boolean doAutofill;
 
@@ -324,7 +324,6 @@ public class MapBuilder implements Configurable {
 				boolean guessed   = false;
 
 				if(CityStr != null || ZipStr != null ||RegionStr != null || CountryStr != null)
-					poiAddrCountr++;
 
 				if(CountryStr != null)
 					CountryStr = locator.fixCountryString(CountryStr);	
@@ -821,7 +820,7 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 
 		LayerFilterChain filters = new LayerFilterChain(config);
-		filters.addFilter(new SmoothingFilter());
+		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
@@ -854,7 +853,9 @@ public class MapBuilder implements Configurable {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
-		filters.addFilter(new SmoothingFilter());
+		//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
+		//Is there an similar algorithm for polygons?
+		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new ShapeAddFilter(div, map));
