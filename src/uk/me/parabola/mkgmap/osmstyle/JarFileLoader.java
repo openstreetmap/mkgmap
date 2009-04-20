@@ -73,6 +73,7 @@ public class JarFileLoader extends StyleFileLoader {
 		log.debug("opening", url);
 		try {
 			JarURLConnection jurl = (JarURLConnection) url.openConnection();
+			jurl.setUseCaches(false);
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
 			if (name != null)
