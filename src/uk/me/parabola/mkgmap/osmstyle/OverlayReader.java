@@ -62,9 +62,13 @@ public class OverlayReader {
 		while (!ts.isEndOfFile()) {
 			String line = ts.readLine();
 
+			// Remove comments before parsing
+			int commentstart = line.indexOf("#");
+			if (commentstart != -1)
+				line = line.substring(0, commentstart);
+
 			String[] fields = line.split(":", 2);
 			if (fields.length == 2) {
-
 				try {
 					overlays.put(Integer.decode(fields[0]), readReplacements(ts, fields[1]));
 				} catch (NumberFormatException e) {
