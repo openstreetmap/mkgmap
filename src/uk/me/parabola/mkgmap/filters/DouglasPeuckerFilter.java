@@ -30,18 +30,17 @@ public class DouglasPeuckerFilter implements MapFilter {
 
 	private static final double ERROR_DISTANCE = 5.4 / 2;	//One unit is 5.4 m, so error dist is 2.6m
 															//Can be increased more, but may lead to artifacts on T-crossings
-
-	private double filterDistance;
+	private final double filterDistance;
 	private double maxErrorDistance;
+	private int resolution;
 
 	public DouglasPeuckerFilter(double filterDistance) {
 		this.filterDistance = filterDistance;
 	}
-		
 
 	public void init(FilterConfig config) {
-		int shift = config.getShift();
-		this.maxErrorDistance = filterDistance * (1<<shift);
+		this.resolution = config.getResolution();
+		this.maxErrorDistance = filterDistance * (1<< config.getShift());
 	}
 
 	/**
@@ -52,6 +51,13 @@ public class DouglasPeuckerFilter implements MapFilter {
 	 * @param next This is used to pass the possibly transformed element onward.
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
+		// First off we don't touch things if at the highest level of detail
+		if (resolution == 24) {
+			// XXX 24 is not necessarily the highest level.
+			next.doFilter(element);
+			return;
+		}
+
 		MapLine line = (MapLine) element;
 
 		List<Coord> points = line.getPoints();
