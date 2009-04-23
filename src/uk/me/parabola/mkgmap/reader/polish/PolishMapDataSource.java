@@ -292,7 +292,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.startsWith("Nod")) {
 			int nodIndex = Integer.parseInt(name.substring(3));
 			roadHelper.addNode(nodIndex, value);
-		} else if (name.equals("Routeparam") || name.equals("RouteParams")) {
+		} else if (name.equals("RouteParam") || name.equals("RouteParams")) {
 			roadHelper.setParam(value);
 		} else if (name.equals("DirIndicator")) {
 			polyline.setDirection(Integer.parseInt(value) > 0);
