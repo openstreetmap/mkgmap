@@ -114,6 +114,8 @@ public class LBLFile extends ImgFile {
 			baseEncoder.setUpperCase(true);
 		}
 		textDecoder = cfuncs.getDecoder();
+		if (lblHeader.getCodePage() == 0)
+			setCodePage(cfuncs.getCodepage());
 	}
 	
 	/**
