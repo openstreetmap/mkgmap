@@ -17,6 +17,11 @@
 		<variant>UK</variant>
 		<variant>GB</variant>		
 	</country>
+	<country name="Ísland" abr="ICE" poiDispFlag="0xc">
+		<variant>Lýðveldið Ísland</variant>
+		<variant>Iceland</variant>
+		<variant>IS</variant>
+	</country>
 	<country name="Italia" abr="ITA" regionOffset="2">
 		<variant>Italy</variant>
 		<variant>IT</variant>		
