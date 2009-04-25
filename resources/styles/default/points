@@ -3,7 +3,7 @@ aeroway=airport [0x2f04 resolution 20]
 aeroway=aerodrome [0x2f04 resolution 20]
 aeroway=terminal [0x2f04 resolution 20]
 
-amenity=atm [0x2f06 resolution 21]
+amenity=atm { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f06 resolution 21]
 amenity=bank { name '${name} (${operator})' | '${name}' | '${operator}' } [0x2f06 resolution 21]
 amenity=biergarten [0x2d02 resolution 21]
 amenity=bus_station [0x2f08 resolution 21]
