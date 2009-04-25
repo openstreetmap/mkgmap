@@ -153,12 +153,20 @@ public class CommandArgs {
 	}
 
 	public String getCharset() {
-		String s = arglist.getProperty("latin1");
-		if (s != null)
+		String charset = arglist.getProperty("latin1");
+		if (charset != null)
 			return "latin1";
 
 		// xcharset is the old value, use charset instead.
-		return arglist.getProperty("charset", arglist.getProperty("xcharset", "ascii"));
+		charset = arglist.getProperty("charset", arglist.getProperty("xcharset"));
+		if (charset != null)
+			return charset;
+
+		int cp = getCodePage();
+		if (cp != 0)
+			return "cp" + cp;
+
+		return "ascii";
 	}
 
 	public int getCodePage() {
