@@ -122,6 +122,9 @@ class LinePreparer {
 			if (xSameSign) {
 				bw.putn(abs(dx), xbits);
 			} else {
+				// catch inadvertent output of "magic" value that has
+				// sign bit set but other bits all 0
+				assert dx >= 0 || (dx & ((1 << xbits) - 1)) != 0;
 				bw.putn(dx, xbits);
 				bw.put1(dx < 0);
 			}
@@ -132,6 +135,9 @@ class LinePreparer {
 			if (ySameSign) {
 				bw.putn(abs(dy), ybits);
 			} else {
+				// catch inadvertent output of "magic" value that has
+				// sign bit set but other bits all 0
+				assert dy >= 0 || (dy & ((1 << ybits) - 1)) != 0;
 				bw.putn(dy, ybits);
 				bw.put1(dy < 0);
 			}
