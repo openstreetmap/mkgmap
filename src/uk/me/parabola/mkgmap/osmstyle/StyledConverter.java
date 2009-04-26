@@ -162,9 +162,9 @@ public class StyledConverter implements OsmConverter {
 
 		if (foundType.getFeatureKind() == GType.POLYLINE) {
 		    if(foundType.isRoad())
-			addRoad(way, foundType);
+				addRoad(way, foundType);
 		    else
-			addLine(way, foundType);
+				addLine(way, foundType);
 		}
 		else
 			addShape(way, foundType);
