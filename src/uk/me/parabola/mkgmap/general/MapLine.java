@@ -65,7 +65,7 @@ public class MapLine extends MapElement {
 		Coord last = null;
 		for (Coord co : points) {
 			if (last != null && last.equals(co))
-				log.warn("consecutive identical points", getName());
+				log.warn("Line " + getName() + " has consecutive identical points at ", co.toDegreeString());
 			addToBounds(co);
 			last = co;
 		}
