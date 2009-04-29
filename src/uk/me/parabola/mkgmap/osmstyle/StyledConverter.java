@@ -79,6 +79,8 @@ public class StyledConverter implements OsmConverter {
 
 	private int roadId;
 
+	private final int MAX_ARC_LENGTH = (1 << 14) - 1;
+
 	private final int MAX_POINTS_IN_WAY = 200;
 
 	private final int MAX_NODES_IN_WAY = 16;
@@ -529,17 +531,44 @@ public class StyledConverter implements OsmConverter {
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
-		String wayName = way.getName();
+		String wayName = way.getName(); // only use for diagnostic messages
+		if(wayName == null)
+			wayName = way.getTag("ref");
 
 		// make sure the way has nodes at each end
 		points.get(0).incHighwayCount();
 		points.get(points.size() - 1).incHighwayCount();
 
-		// collect the Way's nodes
+		// collect the Way's nodes and also split the way if any
+		// inter-node arc length becomes excessive
+		double arcLength = 0;
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
-			int highwayCount = p.getHighwayCount();
-			if(highwayCount > 1) {
+
+			// check if we should split the way at this point to limit
+			// the arc length between nodes
+			if((i + 1) < points.size()) {
+				double d = p.distance(points.get(i + 1));
+				if(d > MAX_ARC_LENGTH) {
+					log.error("Way " + wayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + " (routing will fail for that way)");
+				}
+				else if((arcLength + d) > MAX_ARC_LENGTH) {
+					assert i > 0;
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+					log.warn("Splitting way " + wayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength);
+				}
+				else {
+					if(p.getHighwayCount() > 1)
+						// point is a node so zero arc length
+						arcLength = 0;
+
+					arcLength += d;
+				}
+			}
+
+			if(p.getHighwayCount() > 1) {
 				// this point is a node connecting highways
 				Integer nodeId = nodeIdMap.get(p);
 				if(nodeId == null) {
