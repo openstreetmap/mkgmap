@@ -444,8 +444,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void addWay(String sid) {
 		try {
-			currentWay = new Way();
 			long id = idVal(sid);
+			currentWay = new Way(id);
 			wayMap.put(id, currentWay);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.

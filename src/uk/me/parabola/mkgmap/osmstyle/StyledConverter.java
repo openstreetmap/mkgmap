@@ -436,7 +436,7 @@ public class StyledConverter implements OsmConverter {
 				clippedWays = new ArrayList<Way>();
 
 				for (List<Coord> lco : lineSegs) {
-					Way nWay = new Way();
+					Way nWay = new Way(way.getId());
 					nWay.setName(way.getName());
 					nWay.copyTags(way);
 					for(Coord co : lco) {
@@ -527,13 +527,22 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	String getDebugName(Way way) {
+		String name = way.getName();
+		if(name == null)
+			name = way.getTag("ref");
+		if(name == null)
+			name = "";
+		else
+			name += " ";
+		return name + "(OSM id " + way.getId() + ")";
+	}
+
 	void addRoadWithoutLoops(Way way, GType gt) {
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
-		String wayName = way.getName(); // only use for diagnostic messages
-		if(wayName == null)
-			wayName = way.getTag("ref");
+		String debugWayName = getDebugName(way);
 
 		// make sure the way has nodes at each end
 		points.get(0).incHighwayCount();
@@ -550,14 +559,14 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				double d = p.distance(points.get(i + 1));
 				if(d > MAX_ARC_LENGTH) {
-					log.error("Way " + wayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + " (routing will fail for that way)");
+					log.error("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + " (routing will fail for that way)");
 				}
 				else if((arcLength + d) > MAX_ARC_LENGTH) {
 					assert i > 0;
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.warn("Splitting way " + wayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength);
+					log.warn("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength);
 				}
 				else {
 					if(p.getHighwayCount() > 1)
@@ -585,7 +594,7 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + wayName + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
 				}
 			}
 		}
@@ -638,7 +647,7 @@ public class StyledConverter implements OsmConverter {
 					// access
 					noAccess[index] = true;
 				}
-				log.info(type + " is not allowed in " + highwayType + " " + wayName);
+				log.info(type + " is not allowed in " + highwayType + " " + debugWayName);
 			} else if (accessExplicitlyAllowed(accessTagValue)) {
 				if (index == RoadNetwork.NO_MAX) {
 					// everything is allowed access
@@ -649,22 +658,22 @@ public class StyledConverter implements OsmConverter {
 					// access
 					noAccess[index] = false;
 				}
-				log.info(type + " is allowed in " + highwayType + " " + wayName);
+				log.info(type + " is allowed in " + highwayType + " " + debugWayName);
 			}
 			else if (accessTagValue.equalsIgnoreCase("destination")) {
 				if (type.equals("motorcar") ||
 				    type.equals("motorcycle")) {
 					road.setNoThroughRouting();
 				} else if (type.equals("access")) {
-					log.warn("access=destination only affects routing for cars in " + highwayType + " " + wayName);
+					log.warn("access=destination only affects routing for cars in " + highwayType + " " + debugWayName);
 					road.setNoThroughRouting();
 				} else {
-					log.warn(type + "=destination ignored in " + highwayType + " " + wayName);
+					log.warn(type + "=destination ignored in " + highwayType + " " + debugWayName);
 				}
 			} else if (accessTagValue.equalsIgnoreCase("unknown")) {
 				// implicitly allow access
 			} else {
-				log.warn("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + wayName);
+				log.warn("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
 			}
 		}
 
@@ -701,7 +710,7 @@ public class StyledConverter implements OsmConverter {
 				Integer nodeId = nodeIdMap.get(coord);
 				boolean boundary = boundaryCoords.contains(coord);
 				if(boundary) {
-					log.info("Way " + wayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
+					log.info("Way " + debugWayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
 				}
 
 				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
@@ -764,7 +773,7 @@ public class StyledConverter implements OsmConverter {
 	// original Way is truncated)
 
 	Way splitWayAt(Way way, int index) {
-		Way trailingWay = new Way();
+		Way trailingWay = new Way(way.getId());
 		List<Coord> wayPoints = way.getPoints();
 		int numPointsInWay = wayPoints.size();
 

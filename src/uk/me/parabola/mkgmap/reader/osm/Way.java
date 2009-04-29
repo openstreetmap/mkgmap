@@ -32,6 +32,10 @@ public class Way extends Element {
 
 	private final List<Coord> points = new ArrayList<Coord>();
 
+	public Way(long id) {
+		setId(id);
+	}
+
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.

@@ -72,6 +72,10 @@ public class RoadDef implements Comparable {
 		return "RoadDef(" + name + ", " + roadId + ")";
 	}
 
+	public String getName() {
+		return name;
+	}
+
 	/*
 	 * Everything that's relevant for writing to NET1.
 	 */
