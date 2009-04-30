@@ -48,7 +48,7 @@ public class RuleFileReaderTest {
 		Map<String,Rule> ruleMap = rs.getMap();
 		Rule rule = ruleMap.get("highway=footway");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
 		GType type = rule.resolveType(el);
@@ -75,7 +75,7 @@ public class RuleFileReaderTest {
 		);
 		Rule rule = rs.getMap().get("highway=primary");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "primary");
 
 		GType type = rule.resolveType(el);
@@ -92,7 +92,7 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet(str);
 		Rule rule = rs.getMap().get("a=b");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("a", "b");
 		el.addTag("c", "d");
 		el.addTag("x", "11");
@@ -132,7 +132,7 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet(rstr);
 		Rule rule = rs.getMap().get("highway=footway");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
 		GType type = rule.resolveType(el);
@@ -150,7 +150,7 @@ public class RuleFileReaderTest {
 		Rule rule = rs.getMap().get("highway=*");
 		assertNotNull("rule found", rule);
 		
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		GType type = rule.resolveType(el);
 		assertNotNull("can find match", type);
@@ -178,7 +178,7 @@ public class RuleFileReaderTest {
 
 		// get the a=c chain and look at it more closely
 		Rule rule = map.get("a=c");
-		Element el = new Way();
+		Element el = new Way(1);
 		GType type = rule.resolveType(el);
 		assertNotNull("match e not existing", type);
 		assertEquals("correct type", 2, type.getType());
@@ -195,7 +195,7 @@ public class RuleFileReaderTest {
 		Rule rule = rs.getMap().get("highway=*");
 		assertNotNull("rule found", rule);
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		GType type = rule.resolveType(el);
 		assertNull("type not found with no z tag", type);
@@ -217,7 +217,7 @@ public class RuleFileReaderTest {
 				"[0x1 road_class=4 road_speed=7 default_name='motor way']\n");
 
 		Rule rule = rs.getMap().get("highway=motorway");
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "motorway");
 		GType type = rule.resolveType(el);
 
@@ -238,7 +238,7 @@ public class RuleFileReaderTest {
 		assertNotNull("rule found", rule);
 
 		// Set up element with matching name
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		el.addTag("name", "blue sq");
 		GType type = rule.resolveType(el);
@@ -255,7 +255,7 @@ public class RuleFileReaderTest {
 	public void testSelfReference() {
 		RuleSet rs = makeRuleSet("iii=* { set iii=no }");
 		//Rule rule = rs.getMap().get("foot=*");
-		Way el = new Way();
+		Way el = new Way(1);
 		el.addTag("foot", "yes");
 		el.addTag("iii", "xyz");
 		rs.resolveType(el);

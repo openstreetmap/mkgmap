@@ -234,7 +234,7 @@ public class ActionReaderTest {
 	 * Make a standard element for the tests.
 	 */
 	private Element makeElement() {
-		Element el = new Way();
+		Element el = new Way(0);
 		el.addTag("park", "no");
 		el.addTag("test", "1");
 		return el;

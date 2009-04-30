@@ -118,7 +118,7 @@ public class StyledConverterTest {
 	}
 
 	private Way makeWay() {
-		Way way = new Way();
+		Way way = new Way(1);
 		way.addPoint(new Coord(100, 100));
 		way.addPoint(new Coord(100, 102));
 		way.addPoint(new Coord(100, 103));

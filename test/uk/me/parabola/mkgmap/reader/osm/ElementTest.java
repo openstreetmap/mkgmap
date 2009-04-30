@@ -31,7 +31,7 @@ public class ElementTest {
 	 */
 	@Test
 	public void testIterator() {
-		Element el = new Way();
+		Element el = new Way(1);
 
 		el.addTag("a", "1");
 		el.addTag("b", "2");

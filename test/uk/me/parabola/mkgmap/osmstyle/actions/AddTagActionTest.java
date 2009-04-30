@@ -112,7 +112,7 @@ public class AddTagActionTest {
 	}
 
 	private Element stdElement() {
-		Element el1 = new Way();
+		Element el1 = new Way(1);
 		el1.addTag("ref", REFVAL);
 		el1.addTag("name:cy", PLACENAME);
 		return el1;
