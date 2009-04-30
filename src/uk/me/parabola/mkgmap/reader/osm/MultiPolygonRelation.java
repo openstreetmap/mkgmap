@@ -31,13 +31,12 @@ public class MultiPolygonRelation extends Relation {
 			
 	        String value = pairs.getValue();
 
-			if (pairs.getKey() instanceof Way) {
+			if (value != null && pairs.getKey() instanceof Way) {
 				Way way = (Way) pairs.getKey();
 				if (value.equals("outer"))
 					outer = way;
-				else if (value.equals("inner")) {
+				else if (value.equals("inner"))
 					inners.add(way);
-				}
 			}
 		}
 
