@@ -16,7 +16,7 @@
 
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.mkgmap.general.Exit;
+import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * A point on the map that represents a motorway exit.

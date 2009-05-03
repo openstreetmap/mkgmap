@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,7 @@ import uk.me.parabola.imgfmt.app.Label;
 
 import uk.me.parabola.util.Sortable;
 
-import uk.me.parabola.mkgmap.general.Exit;
+import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file

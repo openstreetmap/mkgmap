@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.Exit;
+import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * The file that holds all the labels for the map.

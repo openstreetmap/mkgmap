@@ -20,8 +20,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-
-import uk.me.parabola.mkgmap.general.Exit;
+import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * @author Steve Ratcliffe

@@ -24,8 +24,8 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.Element;

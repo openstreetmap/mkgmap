@@ -24,6 +24,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
@@ -58,7 +59,6 @@ import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
-import uk.me.parabola.mkgmap.general.Exit;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;

@@ -14,14 +14,13 @@
  * Author: Steve Ratcliffe
  * Create date: Jan 1, 2008
  */
-package uk.me.parabola.mkgmap.general;
+package uk.me.parabola.imgfmt.app;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
 import uk.me.parabola.imgfmt.app.lbl.Highway;
-import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * Represent a motorway exit
