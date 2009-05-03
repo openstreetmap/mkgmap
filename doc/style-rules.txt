@@ -48,14 +48,14 @@ This means that we look up the highway tag and if it exists and has the value
 You can also compare numeric quantities:
 
  population > 10000
- max_speed >= 30
+ maxspeed >= 30
  population < 10000000
 
 This means a population greater than ten thousand, a max speed greater than or equal
 to 30 and a population less than one million respectively.
 You will be able to compare quantities that have units too, for example
 
- max_speed > 30mph
+ maxspeed > 30mph
 
 If a different unit is given in the tag (say km/h) then conversion will
 be performed.  This is not implemented at the time of writing, so please let
