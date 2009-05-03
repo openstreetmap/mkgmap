@@ -16,12 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Formatter;
 import java.util.Locale;
 
 import uk.me.parabola.log.Logger;
@@ -58,9 +52,6 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		"xxxxxxxxxxx[\\]^_";	// 0x20-0x2F
 
 
-	//
-	private static final String[][] rows = new String[256][];
-
 	/**
 	 * Encode the text into the 6 bit format.  See the class level notes.
 	 *
@@ -96,34 +87,6 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		int len = ((off - 1) * 6) / 8 + 1;
 
 		return new EncodedText(buf, len);
-	}
-
-	/**
-	 * Convert a string into a string that uses only ascii characters.
-	 *
-	 * @param s The original string.  It can use any unicode character.
-	 * @return A string that uses only ascii characters that is a transcription
-	 * or transliteration of the original string.
-	 */
-	private char[] transliterate(String s) {
-		log.debug("call transliterate", s);
-		StringBuilder sb = new StringBuilder(s.length() + 5);
-		for (char c : s.toCharArray()) {
-			if (c < 0x80) {
-				sb.append(c);
-			} else {
-				int row = c >>> 8;
-
-				String[] rowmap = rows[row];
-				if (rowmap == null)
-					rowmap = loadRow(row);
-				//log.debug("char", Integer.toHexString(c), rowmap[c & 0xff]);
-				sb.append(rowmap[c & 0xff]);
-			}
-		}
-
-		log.debug(" result", sb);
-		return sb.toString().toCharArray();
 	}
 
 	/**
@@ -177,67 +140,4 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		return buf;
 	}
 
-	/**
-	 * Load one row of characters.  This means unicode characters that are
-	 * of the form U+RRXX where RR is the row.
-	 * @param row Row number 0-255.
-	 * @return An array of strings, one for each character in the row.  If there
-	 * is no ascii representation then a '?' character will fill that
-	 * position.
-	 */
-	private String[] loadRow(int row) {
-		if (rows[row] != null)
-			return rows[row];
-
-		String[] newRow = new String[256];
-		rows[row] = newRow;
-
-		// Default all to a question mark
-		Arrays.fill(newRow, "?");
-
-		StringBuilder name = new StringBuilder("/chars/ascii/row");
-		Formatter fmt = new Formatter(name);
-		fmt.format("%02d.trans", row);
-		log.debug("getting file name", name);
-		InputStream is = getClass().getResourceAsStream(name.toString());
-
-		try {
-			readCharFile(is, newRow);
-		} catch (IOException e) {
-			log.error("Could not read character translation table");
-		}
-
-		return newRow;
-	}
-
-	/**
-	 * Read in a character translit file.  Not all code points need to
-	 * be defined inside the file.  Anything that is left out will become
-	 * a question mark.
-	 *
-	 * @param is The open file to be read.
-	 * @param newRow The row that we fill in with strings.
-	 */
-	private void readCharFile(InputStream is, String[] newRow) throws IOException {
-		if (is == null)
-			return;
-
-		BufferedReader br = new BufferedReader(new InputStreamReader(is, "ascii"));
-
-		String line;
-		while ((line = br.readLine()) != null) {
-			line = line.trim();
-			if (line.length() == 0 || line.charAt(0) == '#')
-				continue;
-
-			String[] fields = line.split("\\s+");
-			String upoint = fields[0];
-			String translation = fields[1];
-			if (upoint.length() != 6 || upoint.charAt(0) != 'U') continue;
-
-			// The first field must look like 'U+RRXX', we extract the XX part
-			int index = Integer.parseInt(upoint.substring(4), 16);
-			newRow[index] = translation.toUpperCase(Locale.ENGLISH);
-		}
-	}
 }

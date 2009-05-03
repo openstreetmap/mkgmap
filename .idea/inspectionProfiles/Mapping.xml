@@ -131,5 +131,10 @@
       <option name="ignoreTypeCasts" value="true" />
     </inspection_tool>
     <inspection_tool class="XmlUnboundNsPrefix" level="WARNING" enabled="false" />
+    <inspection_tool class="TooBroadScope" level="WARNING" enabled="true">
+      <option name="m_allowConstructorAsInitializer" value="false" />
+      <option name="m_onlyLookAtBlocks" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StringBufferToStringInConcatenation" level="WARNING" enabled="true" />
   </profile>
 </component>
