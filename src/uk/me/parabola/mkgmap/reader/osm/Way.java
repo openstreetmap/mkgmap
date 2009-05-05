@@ -75,7 +75,7 @@ public class Way extends Element {
 
 		Coord coord = points.get(0);
 		StringBuilder sb = new StringBuilder();
-		sb.append("WAY: ");
+		sb.append("WAY: " + getId() + " ");
 		sb.append(getName());
 		sb.append('(');
 		sb.append(Utils.toDegrees(coord.getLatitude()));
