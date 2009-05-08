@@ -130,7 +130,7 @@ public class BaseEncoder {
 		charset = "ascii";
 		StringBuilder name = new StringBuilder();
 		Formatter fmt = new Formatter(name);
-		fmt.format("/chars/%s/row/%02d.trans", charset, row);
+		fmt.format("/chars/%s/row%02d.trans", charset, row);
 		log.debug("getting file name", name);
 		InputStream is = getClass().getResourceAsStream(name.toString());
 
