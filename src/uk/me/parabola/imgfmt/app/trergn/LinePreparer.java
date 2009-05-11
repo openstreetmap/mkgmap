@@ -169,7 +169,8 @@ class LinePreparer {
 	 * the lat and long values.
 	 */
 	private void calcDeltas() {
-		log.debug("label offset", polyline.getLabel().getOffset());
+		if(log.isDebugEnabled())
+			log.debug("label offset", polyline.getLabel().getOffset());
 		int shift = polyline.getSubdiv().getShift();
 		List<Coord> points = polyline.getPoints();
 

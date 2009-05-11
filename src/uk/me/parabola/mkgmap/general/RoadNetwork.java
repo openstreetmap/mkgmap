@@ -91,10 +91,12 @@ public class RoadNetwork {
 			// the previous node to this one (and back again).
 			if (lastCoord != null) {
 				long lastId = lastCoord.getId();
-				log.debug("lastId = " + lastId + " curId = " + id);
-				log.debug("from " + lastCoord.toDegreeString() 
-					 + " to " + co.toDegreeString());
-				log.debug("arclength=" + arcLength + " roadlength=" + roadLength);
+				if(log.isDebugEnabled()) {
+					log.debug("lastId = " + lastId + " curId = " + id);
+					log.debug("from " + lastCoord.toDegreeString() 
+							  + " to " + co.toDegreeString());
+					log.debug("arclength=" + arcLength + " roadlength=" + roadLength);
+				}
 
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);

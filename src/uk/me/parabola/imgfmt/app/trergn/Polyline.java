@@ -124,7 +124,8 @@ public class Polyline extends MapObject {
 		// note that this has already been calculated.
 		file.putChar((char) getDeltaLong());
 		file.putChar((char) getDeltaLat());
-		log.debug("out center", getDeltaLat(), getDeltaLong());
+		if(log.isDebugEnabled())
+			log.debug("out center", getDeltaLat(), getDeltaLong());
 
 		if (blen < 0x100)
 			file.put((byte) (blen & 0xff));

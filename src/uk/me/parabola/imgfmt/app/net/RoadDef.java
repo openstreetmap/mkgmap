@@ -234,7 +234,8 @@ public class RoadDef implements Comparable {
 	 * in the road.
 	 */
 	public void addPolylineRef(Polyline pl) {
-		log.debug("adding polyline ref", this, pl.getSubdiv());
+		if(log.isDebugEnabled())
+			log.debug("adding polyline ref", this, pl.getSubdiv());
 		int level = pl.getSubdiv().getZoom().getLevel();
 		List<RoadIndex> l = roadIndexes.get(level);
 		if (l == null) {

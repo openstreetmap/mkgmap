@@ -78,7 +78,8 @@ public class RouteArc {
 		this.dest = dest;
 
 		this.length = convertMeters(length);
-		log.debug("set length", this.length);
+		if(log.isDebugEnabled())
+			log.debug("set length", this.length);
 		this.initialHeading = calcAngle(nextCoord);
 		// too early: dest.nodeClass may still increase
 		//setDestinationClass(dest.getNodeClass());
@@ -155,7 +156,8 @@ public class RouteArc {
 	private byte calcAngle(Coord end) {
 		Coord start = source.getCoord();
 
-		log.debug("start", start.toDegreeString(), ", end", end.toDegreeString());
+		if(log.isDebugEnabled())
+			log.debug("start", start.toDegreeString(), ", end", end.toDegreeString());
 
 		// Quite possibly too slow...  TODO 
 		double lat1 = Utils.toRadians(start.getLatitude());
@@ -172,10 +174,12 @@ public class RouteArc {
 		double angle = Math.atan2(y, x);
 
 		// angle is in radians
-		log.debug("angle is ", angle, ", deg", angle*57.29);
+		if(log.isDebugEnabled())
+			log.debug("angle is ", angle, ", deg", angle*57.29);
 
 		byte b = (byte) (256 * (angle / (2 * Math.PI)));
-		log.debug("deg from ret val", (360 * b) / 256);
+		if(log.isDebugEnabled())
+			log.debug("deg from ret val", (360 * b) / 256);
 
 		return b;
 	}
@@ -191,7 +195,8 @@ public class RouteArc {
 
 	public void write(ImgFileWriter writer) {
 		offset = writer.position();
-		log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
+		if(log.isDebugEnabled())
+			log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
 
 		// fetch destination class -- will have been set correctly by now
 		setDestinationClass(dest.getNodeClass());
@@ -211,7 +216,8 @@ public class RouteArc {
 
 		writer.put(indexA);
 
-		log.debug("writing length", length);
+		if(log.isDebugEnabled())
+			log.debug("writing length", length);
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
@@ -241,7 +247,8 @@ public class RouteArc {
 		val |= diff & 0x3fff;
 
 		// We write this big endian
-		log.debug("val is", Integer.toHexString((int)val));
+		if(log.isDebugEnabled())
+			log.debug("val is", Integer.toHexString((int)val));
 		writer.put((byte) (val >> 8));
 		writer.put((byte) val);
 	}
@@ -302,7 +309,8 @@ public class RouteArc {
 	}
 
 	protected void setDestinationClass(int destinationClass) {
-		log.debug("setting destination class", destinationClass);
+		if(log.isDebugEnabled())
+			log.debug("setting destination class", destinationClass);
 		flagA |= (destinationClass & MASK_DESTCLASS);
 	}
 

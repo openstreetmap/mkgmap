@@ -113,11 +113,14 @@ public class NODFile extends ImgFile {
 
 		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getRoadSection());
 
+		boolean debug = log.isDebugEnabled();
 		for (RoadDef rd : roads) {
-			log.debug("wrting nod2", writer.position());
+			if(debug)
+				log.debug("wrting nod2", writer.position());
 			rd.writeNod2(writer);
 		}
-		log.debug("ending nod2", writer.position());
+		if(debug)
+			log.debug("ending nod2", writer.position());
 		nodHeader.setRoadSize(writer.position());
 	}
 
@@ -131,11 +134,14 @@ public class NODFile extends ImgFile {
 
 		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getBoundarySection());
 
+		boolean debug = log.isDebugEnabled();
 		for (RouteNode node : boundary) {
-			log.debug("wrting nod3", writer.position());
+			if(debug)
+				log.debug("wrting nod3", writer.position());
 			node.writeNod3(writer);
 		}
-		log.debug("ending nod3", writer.position());
+		if(debug)
+			log.debug("ending nod3", writer.position());
 		nodHeader.setBoundarySize(writer.position());
 	}
 

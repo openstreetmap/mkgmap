@@ -98,7 +98,8 @@ public class RouteNode implements Comparable<RouteNode> {
 			arc.setNewDir();
 		arcs.add(arc);
 		int cl = arc.getRoadDef().getRoadClass();
-		log.debug("adding arc", arc.getRoadDef(), cl);
+		if(log.isDebugEnabled())
+			log.debug("adding arc", arc.getRoadDef(), cl);
 		if (cl > nodeClass)
 			nodeClass = cl;
 		flags |= F_ARCS;
@@ -155,7 +156,8 @@ public class RouteNode implements Comparable<RouteNode> {
 	 * Writes a nod1 entry.
 	 */
 	public void write(ImgFileWriter writer) {
-		log.debug("writing node, first pass, nod1", nodeId);
+		if(log.isDebugEnabled())
+			log.debug("writing node, first pass, nod1", nodeId);
 		offsetNod1 = writer.position();
 		assert offsetNod1 < 0x1000000 : "node offset doesn't fit in 3 bytes";
 
@@ -198,7 +200,8 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void setOffsets(Coord centralPoint) {
-		log.debug("center", centralPoint, ", coord", coord.toDegreeString());
+		if(log.isDebugEnabled())
+			log.debug("center", centralPoint, ", coord", coord.toDegreeString());
 		setLatOff(coord.getLatitude() - centralPoint.getLatitude());
 		setLonOff(coord.getLongitude() - centralPoint.getLongitude());
 	}
@@ -216,13 +219,15 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	private void setLatOff(int latOff) {
-		log.debug("lat off", Integer.toHexString(latOff));
+		if(log.isDebugEnabled())
+			log.debug("lat off", Integer.toHexString(latOff));
 		this.latOff = (char) latOff;
 		checkOffSize(latOff);
 	}
 
 	private void setLonOff(int lonOff) {
-		log.debug("long off", Integer.toHexString(lonOff));
+		if(log.isDebugEnabled())
+			log.debug("long off", Integer.toHexString(lonOff));
 		this.lonOff = (char) lonOff;
 		checkOffSize(lonOff);
 	}
