@@ -112,6 +112,11 @@ public class Coord implements Comparable<Coord> {
 		return Math.acos(cangle) * R;
   	}
 
+	public Coord makeBetweenPoint(Coord other, double fraction) {
+		return new Coord((int)(latitude + (other.latitude - latitude) * fraction),
+						 (int)(longitude + (other.longitude - longitude) * fraction));
+	}
+
 	/**
 	 * Sort lexicographically by longitude, then latitude.
 	 *
