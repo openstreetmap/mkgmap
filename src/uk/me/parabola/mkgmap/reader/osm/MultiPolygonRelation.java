@@ -16,7 +16,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MultiPolygonRelation extends Relation {
 	private Way outer;
-	private static final Collection<Way> inners = new ArrayList<Way>();
+	private final Collection<Way> inners = new ArrayList<Way>();
 
 	/**
 	 * Create an instance based on an exsiting relation.  We need to do
