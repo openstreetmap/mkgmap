@@ -559,14 +559,21 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				double d = p.distance(points.get(i + 1));
 				if(d > MAX_ARC_LENGTH) {
-					log.error("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + " (routing will fail for that way)");
+					double fraction = 0.99 * MAX_ARC_LENGTH / d;
+					Coord extrap = p.makeBetweenPoint(points.get(i + 1), fraction);
+					extrap.incHighwayCount();
+					points.add(i + 1, extrap);
+					double newD = p.distance(extrap);
+					log.warn("Way " + debugWayName + " contains a segment that is " + (int)d + "m long so I am adding a point to reduce its length to " + (int)newD + "m");
+					d = newD;
 				}
-				else if((arcLength + d) > MAX_ARC_LENGTH) {
+
+				if((arcLength + d) > MAX_ARC_LENGTH) {
 					assert i > 0;
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.warn("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength);
+					log.warn("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength + "m");
 				}
 				else {
 					if(p.getHighwayCount() > 1)
