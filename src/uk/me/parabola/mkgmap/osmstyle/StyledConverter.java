@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -95,6 +96,7 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule relationRules;
 
+	private boolean ignoreMaxspeeds;
 
 	class AccessMapping {
 		private final String type;
@@ -128,13 +130,14 @@ public class StyledConverter implements OsmConverter {
 		}
 	};
 
-	public StyledConverter(Style style, MapCollector collector) {
+	public StyledConverter(Style style, MapCollector collector, Properties props) {
 		this.collector = collector;
 
 		nameTagList = style.getNameTagList();
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
 		relationRules = style.getRelationRules();
+		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
@@ -619,13 +622,15 @@ public class StyledConverter implements OsmConverter {
 			road.setOneway();
 		}
 
-		// maxspeed attribute overrides default for road type
-		
-		String maxSpeed = way.getTag("maxspeed");
 		int speedIdx = -1;
-		
-		if(maxSpeed != null)
-			speedIdx = getSpeedIdx(maxSpeed);
+		if(!ignoreMaxspeeds) {
+			// maxspeed attribute overrides default for road type
+			String maxSpeed = way.getTag("maxspeed");
+			if(maxSpeed != null) {
+				speedIdx = getSpeedIdx(maxSpeed);
+				log.info(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + speedIdx);
+			}
+		}
 
 		road.setSpeed(speedIdx >= 0? speedIdx : gt.getRoadSpeed());
 

@@ -112,6 +112,9 @@ Misc options:
 	Write a gmapsupp.img file that can be uploaded to a garmin in
 	usb mode.
 
+--ignore-maxspeeds
+	When reading OSM files, ignore any "maxspeed" tags.
+
 --ignore-turn-restrictions
 	When reading OSM files, ignore any "restriction" relations.
 

@@ -120,7 +120,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			style.applyOptionOverride(props);
 			setStyle(style);
 
-			converter = new StyledConverter(style, mapper);
+			converter = new StyledConverter(style, mapper, props);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 			throw new ExitException("Could not open style " + name);
