@@ -251,6 +251,13 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (mode == MODE_WAY) {
 			if (qName.equals("way")) {
 				mode = 0;
+				if("-1".equals(currentWay.getTag("oneway"))) {
+					// it's a oneway street in the reverse direction
+					// so reverse the order of the nodes and change
+					// the oneway tag to "yes"
+					currentWay.reverse();
+					currentWay.addTag("oneway", "yes");
+				}
 				String highway = currentWay.getTag("highway");
 				if(routing && (highway != null ||
 							   "ferry".equals(currentWay.getTag("route")))) {

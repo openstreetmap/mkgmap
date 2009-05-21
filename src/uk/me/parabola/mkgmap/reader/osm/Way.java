@@ -54,9 +54,6 @@ public class Way extends Element {
 		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
 			return true;
 
-		// Not yet supporting the possible -1 value, which I think is best
-		// fixed by reversing the way.
-
 		return false;
 	}
 
@@ -64,6 +61,14 @@ public class Way extends Element {
 		points.add(co);
 	}
 
+	public void reverse() {
+		int numPoints = points.size();
+		for(int i = 0; i < numPoints/2; ++i) {
+			Coord t = points.get(i);
+			points.set(i, points.get(numPoints - 1 - i));
+			points.set(numPoints - 1 - i, t);
+		}
+	}
 
 	/**
 	 * A simple representation of this way.
