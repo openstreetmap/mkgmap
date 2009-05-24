@@ -108,6 +108,9 @@ Misc options:
 --net
 	Output file that supports "lock to road" option.
 
+--route
+	Experimental: Output Routing Information (implies --net)
+
 --gmapsupp
 	Write a gmapsupp.img file that can be uploaded to a garmin in
 	usb mode.
