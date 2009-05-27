@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class StyledConverter implements OsmConverter {
 
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
-	private final Map<Coord, List<RestrictionRelation>> restrictions = new HashMap<Coord, List<RestrictionRelation>>();
+	private final Map<Coord, List<RestrictionRelation>> restrictions = new IdentityHashMap<Coord, List<RestrictionRelation>>();
 
 	// originalWay associates Ways that have been created due to
 	// splitting or clipping with the Ways that they were derived
@@ -89,7 +90,7 @@ public class StyledConverter implements OsmConverter {
 	private final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
 
 	// nodeIdMap maps a Coord into a nodeId
-	private final Map<Coord, Integer> nodeIdMap = new HashMap<Coord, Integer>();
+	private final Map<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
 	private int nextNodeId = 1;
 	
 	private final Rule wayRules;
