@@ -101,6 +101,9 @@ public class RoadNetwork {
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);
 
+				if(node1 == node2)
+					log.error("Road " + road.getRoadDef().getName() + " contains consecutive identical nodes - routing will be broken");
+
 				// Create forward arc from node1 to node2
 				Coord bearing = coordList.get(lastIndex + 1);
 				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing, arcLength);
