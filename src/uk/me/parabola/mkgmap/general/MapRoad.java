@@ -35,19 +35,16 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
  */
 public class MapRoad extends MapLine {
 
-	private final long roadId;
 	private final RoadDef roadDef;
 
-	public MapRoad(long roadId, MapLine line) {
+	public MapRoad(long id, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());
-		this.roadId = roadId;
-		this.roadDef = new RoadDef(roadId, getName());
+		this.roadDef = new RoadDef(id, getName());
 	}
 
 	private MapRoad(MapRoad r) {
 		super(r);
-		this.roadId = r.roadId;
 		this.roadDef = r.roadDef;
 	}
 

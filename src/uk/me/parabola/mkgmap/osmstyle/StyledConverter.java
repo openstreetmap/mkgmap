@@ -79,8 +79,6 @@ public class StyledConverter implements OsmConverter {
 	// from
 	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
-	private int roadId;
-
 	private final int MAX_ARC_LENGTH = (1 << 14) - 1;
 
 	private final int MAX_POINTS_IN_WAY = 200;
@@ -614,7 +612,7 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, gt, way);
 		line.setPoints(points);
 
-		MapRoad road = new MapRoad(roadId++, line);
+		MapRoad road = new MapRoad(way.getId(), line);
 
 		// set road parameters.
 		road.setRoadClass(gt.getRoadClass());

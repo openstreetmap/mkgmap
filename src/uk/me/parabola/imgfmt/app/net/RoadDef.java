@@ -59,21 +59,25 @@ public class RoadDef implements Comparable {
 	private int offsetNet1;
 
 	// for diagnostic purposes
-	private final long roadId;
+	private final long id;
 	private final String name;
 
-	public RoadDef(long roadId, String name) {
-		this.roadId = roadId;
+	public RoadDef(long id, String name) {
+		this.id = id;
 		this.name = name;
 	}
 
 	// for diagnostic purposes
 	public String toString() {
-		return "RoadDef(" + name + ", " + roadId + ")";
+		return "RoadDef(" + name + ", " + id + ")";
 	}
 
 	public String getName() {
 		return name;
+	}
+
+	public long getId() {
+		return id;
 	}
 
 	/*
