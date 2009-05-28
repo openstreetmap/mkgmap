@@ -139,6 +139,11 @@ Misc options:
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
 
+--make-opposite-cycleways
+	Some oneway streets allow bicycle traffic in the reverse
+	direction and this option makes a way with the same points as
+	the original that allows bicycle traffic (in both directions).
+
 --tdbfile
 	Write a .tdb file.
 
