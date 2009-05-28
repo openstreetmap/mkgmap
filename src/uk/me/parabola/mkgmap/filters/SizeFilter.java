@@ -30,11 +30,7 @@ public class SizeFilter implements MapFilter {
 	private int minSize;
 
 	public void init(FilterConfig config) {
-		int shift = config.getShift();
-		if (shift <= 23)
-			minSize = 0;
-		else
-			minSize = MIN_SIZE * (1<<shift);
+		minSize = MIN_SIZE * (1<<config.getShift());
 	}
 
 	/**

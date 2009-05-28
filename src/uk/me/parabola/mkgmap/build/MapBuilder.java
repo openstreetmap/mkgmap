@@ -59,6 +59,7 @@ import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
+import uk.me.parabola.mkgmap.filters.SizeFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;
@@ -114,8 +115,6 @@ public class MapBuilder implements Configurable {
 
 	public void config(EnhancedProperties props) {
 
-		String autoFillPar;
-
 		countryName = props.getProperty("country-name", countryName);
 		countryAbbr = props.getProperty("country-abbr", countryAbbr);
 		regionName = props.getProperty("region-name", null);
@@ -124,7 +123,7 @@ public class MapBuilder implements Configurable {
 		if(props.getProperty("no-poi-address", null) != null)
 			poiAddresses = false;
 
-		autoFillPar = props.getProperty("location-autofill", null);
+		String autoFillPar = props.getProperty("location-autofill", null);
 
 		if(autoFillPar != null)
 		{
@@ -225,8 +224,6 @@ public class MapBuilder implements Configurable {
 			if(p.isCity() && p.getName() != null)
 			{
 				Country thisCountry;
-				Region 	thisRegion;
-				City	thisCity;
 
 				String CountryStr = p.getCountry();
 				String RegionStr  = p.getRegion();
@@ -235,7 +232,8 @@ public class MapBuilder implements Configurable {
 					thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
 				else
 					thisCountry = country;
-					
+
+				Region thisRegion;
 				if(RegionStr != null)
 				{
 					thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
@@ -243,6 +241,7 @@ public class MapBuilder implements Configurable {
 				else
 					thisRegion = region;
 
+				City thisCity;
 				if(thisRegion != null)
 					thisCity = lbl.createCity(thisRegion, p.getName(), true);
 				else
@@ -304,13 +303,13 @@ public class MapBuilder implements Configurable {
 
 		LBLFile lbl = map.getLblFile();
 		boolean checkedForPoiDispFlag = false;
-		boolean doAutofill;
 
 		for (MapPoint p : src.getPoints()) {
 			if(p.isExit()) {
 				processExit(map, (MapExitPoint)p);
 			}
 			else if(!p.isCity() && (p.isRoadNamePOI() || poiAddresses)) {
+				boolean doAutofill;
 				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
 					doAutofill = true;
 				else
@@ -321,13 +320,13 @@ public class MapBuilder implements Configurable {
 				String RegionStr  = p.getRegion();		
 				String ZipStr     = p.getZip();
 				String CityStr    = p.getCity();
-				boolean guessed   = false;
 
 				if(CityStr != null || ZipStr != null ||RegionStr != null || CountryStr != null)
 
 				if(CountryStr != null)
-					CountryStr = locator.fixCountryString(CountryStr);	
+					CountryStr = locator.fixCountryString(CountryStr);
 
+				boolean guessed = false;
 				if(CountryStr == null || RegionStr == null || (ZipStr == null && CityStr == null))
 				{
 						MapPoint nextCity = locator.findByCityName(p);
@@ -382,19 +381,19 @@ public class MapBuilder implements Configurable {
 				if(CityStr != null)
 				{
 					Country thisCountry;
-					Region 	thisRegion;
-					City 		city;
 
 					if(CountryStr != null)
 						thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
 					else
 						thisCountry = country;
-					
+
+					Region thisRegion;
 					if(RegionStr != null)
 						thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
 					else
 						thisRegion = region;
 
+					City city;
 					if(thisRegion != null)
 						city = lbl.createCity(thisRegion, CityStr, false);
 					else
@@ -820,6 +819,7 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 
 		LayerFilterChain filters = new LayerFilterChain(config);
+		filters.addFilter(new SizeFilter());
 		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
@@ -853,6 +853,7 @@ public class MapBuilder implements Configurable {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
+		filters.addFilter(new SizeFilter());
 		//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 		//Is there an similar algorithm for polygons?
 		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));

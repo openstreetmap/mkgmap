@@ -68,10 +68,6 @@ public class SmoothingFilter implements MapFilter {
 			return;
 		}
 
-		// Drop things that are too small.
-		if (line.getBounds().getMaxDimention() < MIN_SIZE)
-			return;
-
 		// If the line is not very long then just let it through.  This is done
 		// mainly for the background polygons.
 		List<Coord> points = line.getPoints();
