@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -149,6 +150,6 @@ public class StyledConverterTest {
 			public void addRoad(MapRoad road) { }
 		};
 
-		return new StyledConverter(style, coll);
+		return new StyledConverter(style, coll, new Properties());
 	}
 }
