@@ -129,6 +129,9 @@ Misc options:
 	in which they appear in the OSM input. Without this option,
 	the order in which the elements are processed is not defined.
 
+--remove-short-arcs
+	Merge nodes to remove short arcs that can cause routing problems.
+
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code

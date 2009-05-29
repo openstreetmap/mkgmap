@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.osm.xml;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
+	// currently, nodeIdMap is only used for the short arc removal
+	private Map<Coord, Long> nodeIdMap = new IdentityHashMap<Coord, Long>();
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
@@ -86,12 +89,14 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean routing;
+	private final boolean removeShortArcs;
 	private final String frigRoundabouts;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
+		removeShortArcs = props.getProperty("remove-short-arcs", false);
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
 		if (props.getProperty("preserve-element-order", false)) {
@@ -397,6 +402,11 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		nodeMap = null;
 
+		if(removeShortArcs)
+			removeShortArcsByMergingNodes();
+
+		nodeIdMap = null;
+
 		for (Way w: wayMap.values())
 			converter.convertWay(w);
 
@@ -424,6 +434,125 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		// Run a finishing task.
 		endTask.run();
+	}
+
+	private final void incArcCount(Map<Coord, Integer> map, Coord p, int inc) {
+		Integer i = map.get(p);
+		if(i != null)
+			inc += i;
+		map.put(p, inc);
+	}
+
+	private void removeShortArcsByMergingNodes() {
+		// keep track of how many arcs reach a given point
+		Map<Coord, Integer> arcCounts = new IdentityHashMap<Coord, Integer>();
+		int numWaysDeleted = 0;
+		int numNodesMerged = 0;
+		log.info("Removing short arcs - counting arcs");
+		for(Way w : wayMap.values()) {
+			List<Coord> points = w.getPoints();
+			int numPoints = points.size();
+			if(numPoints >= 2) {
+				// all end points have 1 arc
+				incArcCount(arcCounts, points.get(0), 1);
+				incArcCount(arcCounts, points.get(numPoints - 1), 1);
+				// non-end points have 2 arcs but ignore points that
+				// are only in a single way
+				for(int i = numPoints - 2; i >= 1; --i) {
+					Coord p = points.get(i);
+					if(p.getHighwayCount() > 1)
+						incArcCount(arcCounts, p, 2);
+				}
+			}
+		}
+		// replacements maps those nodes that have been replaced to
+		// the node that replaces them
+		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+		boolean anotherPassRequired = true;
+		int pass = 0;
+		while(anotherPassRequired && pass < 10) {
+			anotherPassRequired = false;
+			log.info("Removing short arcs - PASS " + ++pass);
+			Way[] ways = wayMap.values().toArray(new Way[wayMap.size()]);
+			for(int w = 0; w < ways.length; ++w) {
+				Way way = ways[w];
+				List<Coord> points = way.getPoints();
+				if(points.size() < 2) {
+					log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has less than 2 points - deleting it");
+					wayMap.remove(way.getId());
+					++numWaysDeleted;
+					continue;
+				}
+				int previousNodeIndex = 0; // first point will be a node
+				Coord previousPoint = points.get(0);
+				for(int i = 0; i < points.size(); ++i) {
+					Coord p = points.get(i);
+					// check if this point is to be replaced because
+					// it was previously merged into another point
+					Coord replacement = null;
+					Coord r = p;
+					while((r = replacements.get(r)) != null) {
+						replacement = r;
+					}
+					if(replacement != null) {
+						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + nodeIdMap.get(replacement));
+						p = replacement;
+						// replace point in way
+						points.set(i, p);
+						if(i == 0)
+							previousPoint = p;
+						anotherPassRequired = true;
+					}
+					if(i > 0) {
+						// this is not the first point in the way
+						if(p == previousPoint) {
+							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical nodes (" + nodeIdMap.get(p) + ") - deleting the second node");
+							points.remove(i);
+							// hack alert! rewind the loop index
+							--i;
+							anotherPassRequired = true;
+							continue;
+						}
+						previousPoint = p;
+						Coord previousNode = points.get(previousNodeIndex);
+						// this point is a node if it has an arc count
+						Integer arcCount = arcCounts.get(p);
+						if(arcCount != null) {
+							// merge this node to previous node if the
+							// two points have identical coordinates
+							// but they are not the same point object
+							if(p != previousNode && p.equals(previousNode)) {
+								log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
+								++numNodesMerged;
+								replacements.put(p, previousNode);
+								// add this node's arc count to the node
+								// that is replacing it
+								incArcCount(arcCounts, previousNode, arcCount - 1);
+								// reset previous point to be the previous node
+								previousPoint = previousNode;
+								// remove the point(s) back to the previous node
+								for(int j = i; j > previousNodeIndex; --j) {
+									points.remove(j);
+								}
+								// hack alert! rewind the loop index
+								i = previousNodeIndex;
+								anotherPassRequired = true;
+							}
+							else {
+								// the node did not need to be merged so
+								// it now becomes the new previous node
+								previousNodeIndex = i;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if(anotherPassRequired)
+			log.error("Removing short arcs - didn't finish in " + pass + " passes, giving up!");
+		else
+			log.info("Removing short arcs - finished in " + pass + " passes (" + numNodesMerged + " nodes merged, " + numWaysDeleted + " ways deleted)");
 	}
 
 	private void setupBBoxFromBounds(Attributes xmlattr) {
@@ -494,8 +623,11 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
 		//co.incCount();
-		if (co != null)
+		if (co != null) {
 			currentWay.addPoint(co);
+			if(removeShortArcs)
+				nodeIdMap.put(co, id);
+		}
 	}
 
 	public void setConverter(OsmConverter converter) {
