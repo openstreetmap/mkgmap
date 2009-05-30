@@ -95,6 +95,10 @@ public class Coord implements Comparable<Coord> {
 	 * Distance to other point in meters.
 	 */
 	public double distance(Coord other) {
+		return quickDistance(other);
+	}
+
+	public double slowDistance(Coord other) {
 		if (equals(other))
 			return 0;
 
@@ -111,6 +115,49 @@ public class Coord implements Comparable<Coord> {
 
 		return Math.acos(cangle) * R;
   	}
+
+	public double quickDistance(Coord other){
+		double qd = 40075000 * Math.sqrt(distanceInDegreesSquared(other)) / 360;
+		final boolean testing = false;
+		if(testing) {
+			double sd = slowDistance(other);
+			double delta = Math.abs(qd - sd);
+			if(delta > sd / 500)
+				System.err.println("quickDistance() = " + qd + " slowDistance() = " + sd + " (" + (100 * delta / sd) + "% difference)");
+		}
+		return qd;
+	}
+
+	public double distanceInDegreesSquared(Coord other) {
+		if (equals(other))
+			return 0;
+
+		double lat1 = Utils.toDegrees(getLatitude());
+		double lat2 = Utils.toDegrees(other.getLatitude());
+		double long1 = Utils.toDegrees(getLongitude());
+		double long2 = Utils.toDegrees(other.getLongitude());
+				
+		double latDiff;
+		if (lat1 < lat2)
+			latDiff = lat2 - lat1;
+		else
+			latDiff = lat1 - lat2;	
+		if (latDiff > 90)
+			latDiff -= 180;
+
+		double longDiff;
+		if (long1 < long2)
+			longDiff = long2 - long1;
+		else
+			longDiff = long1 - long2;
+		if (longDiff > 180)
+			longDiff -= 360;
+
+		// scale longDiff by cosine of average latitude
+		longDiff *= Math.cos(Math.PI / 180 * Math.abs((lat1 + lat2) / 2));
+
+		return (latDiff * latDiff) + (longDiff * longDiff);
+	}
 
 	public Coord makeBetweenPoint(Coord other, double fraction) {
 		return new Coord((int)(latitude + (other.latitude - latitude) * fraction),

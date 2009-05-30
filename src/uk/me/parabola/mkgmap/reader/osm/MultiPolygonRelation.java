@@ -96,7 +96,7 @@ public class MultiPolygonRelation extends Relation {
 
 		for (Coord c1: l1){
 			for(Coord c2: l2){
-				double newDistance = distance(c1, c2);
+				double newDistance = c1.distanceInDegreesSquared(c2);
 				if (newDistance < oldDistance)
 				{
 					oldDistance = newDistance;
@@ -107,34 +107,5 @@ public class MultiPolygonRelation extends Relation {
 		}
 		// FIXME: what if not found?
 		return new int[]{l1.indexOf(found1), l2.indexOf(found2)};
-	}
-
-	/**
-	 * Find the Distance between two coordinates. 
-	 * @return distance between c1 and c2.
-	 */
-	private static double distance(Coord c1, Coord c2){
-		double lat1 = Utils.toDegrees(c1.getLatitude());
-		double lat2 = Utils.toDegrees(c2.getLatitude());
-		double long1 = Utils.toDegrees(c1.getLongitude());
-		double long2 = Utils.toDegrees(c2.getLongitude());
-				
-		double latDiff;
-		if (lat1 < lat2)
-			latDiff = lat2 - lat1;
-		else
-			latDiff = lat1 - lat2;	
-		if (latDiff > 90)
-			latDiff -= 180;
-
-		double longDiff;
-		if (long1 < long2)
-			longDiff = long2 - long1;
-		else
-			longDiff = long1 - long2;
-		if (longDiff > 180)
-			longDiff -= 360;
-		
-		return Math.sqrt((latDiff * latDiff) + (longDiff * longDiff));
 	}
 }

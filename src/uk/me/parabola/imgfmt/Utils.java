@@ -165,14 +165,14 @@ public class Utils {
 	 * Convert an angle in map units to degrees.
 	 */
 	public static double toDegrees(int val) {
-		return (double) val / ((1 << 24) / 360.0);
+		return (double) val * (360.0 / (1 << 24));
 	}
 
 	/**
 	 * Convert an angle in map units to radians.
 	 */
 	public static double toRadians(int mapunits) {
-		return toDegrees(mapunits) * Math.PI / 180;
+		return toDegrees(mapunits) * (Math.PI / 180);
 	}
 
 	public static void closeFile(Closeable f) {

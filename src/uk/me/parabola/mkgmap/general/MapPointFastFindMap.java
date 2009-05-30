@@ -146,7 +146,7 @@ public class MapPointFastFindMap{
 			    
 							for (MapPoint actPoint: list)
 							{
-								double distance =  actPoint.getLocation().distance(p.getLocation());
+								double distance =  actPoint.getLocation().distanceInDegreesSquared(p.getLocation());
 
 								if(distance < minDist)
 								{
