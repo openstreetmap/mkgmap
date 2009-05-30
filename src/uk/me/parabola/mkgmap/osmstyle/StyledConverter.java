@@ -492,16 +492,26 @@ public class StyledConverter implements OsmConverter {
 
 			wayWasSplit = false; // assume way won't be split
 
-			// check each point in the way to see if it is
-			// the same point as a following point in the way
+			// check each point in the way to see if it is the same
+			// point as a following point in the way (actually the
+			// same object not just the same coordinates)
 			for(int p1I = 0; !wayWasSplit && p1I < (numPointsInWay - 1); p1I++) {
 				Coord p1 = wayPoints.get(p1I);
 				for(int p2I = p1I + 1; !wayWasSplit && p2I < numPointsInWay; p2I++) {
 					if(p1 == wayPoints.get(p2I)) {
-						// way is a loop or intersects itself
-						int splitI = p2I - 1; // split before second point
+						// way is a loop or intersects itself 
+						// attempt to split it into two ways
+
+						// start at point before intersection point
+						// check that splitting there will not produce
+						// a zero length arc - if it does try the
+						// previous point(s)
+						int splitI = p2I - 1;
+						while(splitI > p1I && p1.equals(wayPoints.get(splitI)))
+							--splitI;
+
 						if(splitI == p1I) {
-							log.info("Way has zero length segment - " + wayPoints.get(splitI).toOSMURL());
+							log.warn("Looped way " + getDebugName(way) + " has zero length arc - deleting node[" + p2I + "] to remove it");
 							wayPoints.remove(p2I);
 							// next point to inspect has same index
 							--p2I;
@@ -510,11 +520,12 @@ public class StyledConverter implements OsmConverter {
 						}
 						else {
 							// split the way before the second point
-							log.info("Split way at " + wayPoints.get(splitI).toDegreeString() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segments.");
+							log.info("Splitting looped way " + getDebugName(way) + " at node[" + splitI + "] - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
-							// way before split has now been verified
-							addRoadWithoutLoops(way, gt);
-							// now repeat for the tail of the way
+							// recursively check (shortened) head for
+							// more loops
+							addRoadAfterSplittingLoops(way, gt);
+							// now process the tail of the way
 							way = loopTail;
 							wayWasSplit = true;
 						}
