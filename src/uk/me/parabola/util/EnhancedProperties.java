@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.util;
 
+import java.util.Enumeration;
 import java.util.Properties;
 
 /**
@@ -25,6 +26,19 @@ import java.util.Properties;
  * @author Steve Ratcliffe
  */
 public class EnhancedProperties extends Properties {
+	
+	public EnhancedProperties() {
+	}
+
+	public EnhancedProperties(Properties defaults) {
+		// We copy values, rather than making them default values so that
+		// we can enumerate all the options.
+		Enumeration<?> en = defaults.propertyNames();
+		while (en.hasMoreElements()) {
+			String key = (String) en.nextElement();
+			setProperty(key, defaults.getProperty(key));
+		}
+	}
 
 	/**
 	 * Get a property as an integer value.  If the property does not exist

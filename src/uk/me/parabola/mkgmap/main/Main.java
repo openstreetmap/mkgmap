@@ -33,6 +33,7 @@ import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.CommandArgsReader;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
@@ -87,7 +88,7 @@ public class Main implements ArgumentProcessor {
 
 		try {
 			// Read the command line arguments and process each filename found.
-			CommandArgs commandArgs = new CommandArgs(mm);
+			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());

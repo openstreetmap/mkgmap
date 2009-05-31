@@ -52,19 +52,19 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 147386, size);
+				assertEquals("RGN size", 141921, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 1945, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 28351, size);
+				assertEquals("LBL size", 28330, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 74566, size);
+				assertEquals("NET size", 73028, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 203704, size);
+				assertEquals("NOD size", 203786, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -80,7 +80,7 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 2831, size);
+				assertEquals("RGN size", 2787, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);
@@ -89,7 +89,7 @@ public class SimpleRoute {
 				assertEquals("LBL size", 1040, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 1288, size);
+				assertEquals("NET size", 1272, size);
 			} else if (ext.equals("NOD")) {
 				count++;
 				assertEquals("NOD size", 3242, size);

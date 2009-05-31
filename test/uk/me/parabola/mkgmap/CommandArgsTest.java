@@ -44,7 +44,7 @@ public class CommandArgsTest {
 	private static final String FILE3 = "00000003.osm";
 
 	private final ArgCollector proc = new ArgCollector();
-	private final CommandArgs carg = new CommandArgs(proc);
+	private final CommandArgsReader carg = new CommandArgsReader(proc);
 
 	/**
 	 * Test that the default mapnames are correct.  Should start with 63240001

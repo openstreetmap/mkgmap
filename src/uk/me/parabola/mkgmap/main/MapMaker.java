@@ -139,7 +139,7 @@ public class MapMaker implements MapProcessor {
 	}
 
 	private void makeAreaPOIs(CommandArgs args, LoadableMapDataSource src) {
-		String s = args.getProperties().getProperty("add-pois-to-areas");
+		String s = args.get("add-pois-to-areas", null);
 		if (s != null) {
 			
 			MapPointFastFindMap poiMap = new MapPointFastFindMap();
@@ -182,7 +182,7 @@ public class MapMaker implements MapProcessor {
 
 	
 	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
-		String rnp = args.getProperties().getProperty("road-name-pois", null);
+		String rnp = args.get("road-name-pois", null);
 		// are road name POIS wanted?
 		if(rnp != null) {
 			int rnpt = 0x640a; // Garmin type 'Locale'

@@ -151,15 +151,15 @@ public class Tags implements Iterable<String> {
 		int h = key.hashCode();
 		int k = h & (capacity - 1);
 
-		for (int i = k+1; i != k; i++) {
-			if (i >= capacity)
-				//noinspection AssignmentToForLoopParameter
-				i -= capacity;
-
+		int i = k;
+		do {
 			String fk = keys[i];
 			if (fk == null || fk.equals(key))
 				return i;
-		}
+			i++;
+			if (i >= capacity)
+				i = 0;
+		} while (i != k);
 		return null;
 	}
 
