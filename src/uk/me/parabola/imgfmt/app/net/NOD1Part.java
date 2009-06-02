@@ -262,8 +262,14 @@ public class NOD1Part {
 			parts[i].addNode(node);
 		}
 
-		for (NOD1Part part : parts)
-			centers.addAll(part.subdivide());
+		for (NOD1Part part : parts) {
+			if(part.nodes.size() == nodes.size()) {
+				log.error("Subdivision failed to reduce number of nodes in " + bbox + " (giving up, sorry)");
+				System.exit(1);
+			}
+			else if(!part.bboxActual.empty)
+				centers.addAll(part.subdivide());
+		}
 
 		return centers;
 	}
