@@ -205,10 +205,8 @@ public class NOD1Part {
 	private NOD1Part(BBox bbox) {
 		log.info("creating new NOD1Part:", bbox);
 		this.bbox = bbox;
-		assert bbox.getWidth() != 0 : "BBox has zero width " + bbox;
-		assert bbox.getHeight() != 0 : "BBox has zero height " + bbox;
 		if(bbox.getWidth() == 0 || bbox.getHeight() == 0) {
-			log.error("BBox has zero width or height " + bbox + " (giving up, sorry)");
+			log.error(bbox + " has zero width or height - does the OSM data near there contain zillions of nodes?");
 			System.exit(1);
 		}
 	}
