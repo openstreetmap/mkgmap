@@ -39,13 +39,15 @@ public class RouteNode implements Comparable<RouteNode> {
 	 *      node offsets set in all nodes
 	 * 4. writeSecond
 	 */
-	
+
 	// Values for the first flag byte at offset 1
 	private static final int F_BOUNDARY = 0x08;
 	private static final int F_RESTRICTIONS = 0x10;
 	private static final int F_LARGE_OFFSETS = 0x20;
 	private static final int F_ARCS = 0x40;
 	private static final int F_UNK_NEEDED = 0x04; // XXX
+	// only used internally in mkgmap
+	private static final int F_DISCARDED = 0x100; // node has been discarded
 
 	private int offsetNod1 = -1;
 
@@ -161,6 +163,8 @@ public class RouteNode implements Comparable<RouteNode> {
 		offsetNod1 = writer.position();
 		assert offsetNod1 < 0x1000000 : "node offset doesn't fit in 3 bytes";
 
+		assert (flags & F_DISCARDED) == 0 : "attempt to write discarded node";
+
 		writer.put((byte) 0);  // will be overwritten later
 		writer.put((byte) flags);
 
@@ -194,7 +198,16 @@ public class RouteNode implements Comparable<RouteNode> {
 		writer.put3(offsetNod1);
 	}
 
+	public void discard() {
+		// mark the node as having been discarded
+		flags |= F_DISCARDED;
+	}
+
 	public int getOffsetNod1() {
+		if((flags & F_DISCARDED) != 0) {
+			// return something so that the program can continue
+			return 0;
+		}
 		assert offsetNod1 != -1: "failed for node " + nodeId + " at " + coord.toDegreeString();
 		return offsetNod1;
 	}
