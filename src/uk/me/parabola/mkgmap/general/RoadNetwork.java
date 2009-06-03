@@ -17,7 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +51,7 @@ public class RoadNetwork {
 	public static final int NO_TRUCK = 7;
 	public static final int NO_MAX = 8;
 
-	private final Map<Long, RouteNode> nodes = new HashMap<Long, RouteNode>();
+	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 
 	// boundary nodes
 	// a node should be in here iff the nodes boundary flag is set

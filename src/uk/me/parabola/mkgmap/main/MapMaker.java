@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.main;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +40,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
+import uk.me.parabola.util.Sortable;
 
 /**
  * Main routine for the command line map-making utility.
@@ -51,7 +53,9 @@ public class MapMaker implements MapProcessor {
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
+			log.info("Making Area POIs for " + filename);
 			makeAreaPOIs(args, src);			
+			log.info("Making Road Name POIs for " + filename);
 			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
 		} catch (FormatException e) {
@@ -79,6 +83,7 @@ public class MapMaker implements MapProcessor {
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
 
+		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
 			Map map = Map.createMap(args.getMapname(), params);
 			setOptions(map, args);
@@ -132,9 +137,16 @@ public class MapMaker implements MapProcessor {
 	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) throws
 			FileNotFoundException, FormatException
 	{
-		LoadableMapDataSource src = MapReader.createMapReader(name);
-		src.config(args.getProperties());
-		src.load(name);
+		LoadableMapDataSource src;
+		// work around non-reentrancy of GType priority stuff
+		// by serialising the map reading
+		synchronized(MapMaker.class) {
+			src = MapReader.createMapReader(name);
+			src.config(args.getProperties());
+			log.info("Started loading " + name);
+			src.load(name);
+			log.info("Finished loading " + name);
+		}
 		return src;
 	}
 
@@ -208,10 +220,22 @@ public class MapMaker implements MapProcessor {
 			}
 
 			// generate a POI for each named road
+
+			// sort by name and coordinate of first point so that
+			// the order is always the same for the same input
+			List<Sortable<String, MapLine>> rnpRoads = new ArrayList<Sortable<String, MapLine>>();
 			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
-				src.getPoints().add(makeRoadNamePOI(lr.get(0), rnpt));
+				MapLine r = lr.get(0);
+				String key = r.getName();
+				List<Coord> points = r.getPoints();
+				if(points.size() > 0)
+					key += "_" + points.get(0);
+				rnpRoads.add(new Sortable<String, MapLine>(key, r));
 			}
+			Collections.sort(rnpRoads);
+			for(Sortable<String, MapLine> sr : rnpRoads)
+				src.getPoints().add(makeRoadNamePOI(sr.getValue(), rnpt));
 		}
 	}
 

@@ -25,9 +25,15 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
@@ -61,12 +67,14 @@ public class Main implements ArgumentProcessor {
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
 
-	// The filenames that will be used in pass2.
-	private final List<String> filenames = new ArrayList<String>();
-
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
 	private boolean verbose;
+
+	public List<Future<String>> futures = new LinkedList<Future<String>>();
+	public ExecutorService threadPool = null;
+	// default number of threads
+	public int maxJobs = 1;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -143,14 +151,25 @@ public class Main implements ArgumentProcessor {
 	 * @param args The command arguments.
 	 * @param filename The filename to process.
 	 */
-	public void processFilename(CommandArgs args, String filename) {
-		String ext = extractExtension(filename);
+	public void processFilename(final CommandArgs args, final String filename) {
+		final String ext = extractExtension(filename);
 		log.debug("file", filename, ", extension is", ext);
 
-		MapProcessor mp = mapMaker(ext);
-		String output = mp.makeMap(args, filename);
-		log.debug("adding output name", output);
-		filenames.add(output);
+		final MapProcessor mp = mapMaker(ext);
+
+		if(threadPool == null) {
+			log.info("Creating thread pool with " + maxJobs + " threads");
+			threadPool = Executors.newFixedThreadPool(maxJobs);
+		}
+
+		log.info("Submitting job " + filename);
+		futures.add(threadPool.submit(new Callable<String>() {
+				public String call() {
+					String output = mp.makeMap(args, filename);
+					log.debug("adding output name", output);
+					return output;
+				}
+			}));
 	}
 
 	private MapProcessor mapMaker(String ext) {
@@ -184,6 +203,15 @@ public class Main implements ArgumentProcessor {
 			verbose = true;
 		} else if (opt.equals("list-styles")) {
 			listStyles();
+		} else if (opt.equals("max-jobs")) {
+			if(val.length() > 0)
+				maxJobs = Integer.parseInt(val);
+			else
+				maxJobs = Runtime.getRuntime().availableProcessors();
+			if(maxJobs < 1) {
+				log.warn("max-jobs has to be at least 1");
+				maxJobs = 1;
+			}
 		} else if (opt.equals("version")) {
 			System.err.println(Version.VERSION);
 			System.exit(0);
@@ -249,8 +277,30 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void endOptions(CommandArgs args) {
+
+		List<String> filenames = new ArrayList<String>();
+
+		if(threadPool != null) {
+			threadPool.shutdown();
+			while(!futures.isEmpty()) {
+				try {
+					// don't call get() until a job has finished
+					if(futures.get(0).isDone())
+						filenames.add(futures.remove(0).get());
+					else
+						Thread.sleep(10);
+				}
+				catch(Exception e) {
+					log.error("" + e);
+					e.printStackTrace(System.err);
+				}
+			}
+		}
+
 		if (combiners.isEmpty())
 			return;
+
+		log.info("Combining maps");
 
 		// Get them all set up.
 		for (Combiner c : combiners)
@@ -261,6 +311,7 @@ public class Main implements ArgumentProcessor {
 			if (file == null)
 				continue;
 			try {
+				log.info("  " + file);
 				FileInfo mapReader = FileInfo.getFileInfo(file);
 				for (Combiner c : combiners) {
 					c.onMapEnd(mapReader);

@@ -101,6 +101,13 @@ Product description options:
 --overview-mapname
 
 Misc options:
+--max-jobs[=number]
+	When number is specified, allow that number of maps to be
+	processed concurrently. If number is not specified, the limit
+	is set equal to the number of CPU cores. If this option is not
+	given at all, the limit is 1 (i.e. the maps are processed
+	sequentially).
+
 --block-size=''number''
 	Changes the block size that is used in the generated map.
 	There is no general reason why you would want to do this.
