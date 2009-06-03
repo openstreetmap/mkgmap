@@ -205,10 +205,6 @@ public class NOD1Part {
 	private NOD1Part(BBox bbox) {
 		log.info("creating new NOD1Part:", bbox);
 		this.bbox = bbox;
-		if(bbox.getWidth() == 0 || bbox.getHeight() == 0) {
-			log.error(bbox + " has zero width or height - does the OSM data near there contain zillions of nodes?");
-			System.exit(1);
-		}
 	}
 
 	/**
@@ -240,10 +236,25 @@ public class NOD1Part {
 	 * Subdivide this part recursively until it satisfies the constraints.
 	 */
 	public List<RouteCenter> subdivide() {
+		return subdivideHelper(0);
+	}
+
+	/**
+	 * Subdivide this part recursively until it satisfies the constraints.
+	 */
+	public List<RouteCenter> subdivideHelper(int depth) {
 		List<RouteCenter> centers = new LinkedList<RouteCenter>();
 
 		if (satisfiesConstraints()) {
 			centers.add(this.toRouteCenter());
+			return centers;
+		}
+
+		if(depth > 48) {
+			log.error("Region contains too many nodes/arcs (discarding " + nodes.size() + " nodes to be able to continue)");
+			log.error("  Expect the routing to be broken near " + bbox);
+			for (RouteNode node : nodes)
+				node.discard();
 			return centers;
 		}
 
@@ -268,7 +279,7 @@ public class NOD1Part {
 
 		for (NOD1Part part : parts)
 			if(!part.bboxActual.empty)
-				centers.addAll(part.subdivide());
+				centers.addAll(part.subdivideHelper(depth + 1));
 
 		return centers;
 	}
