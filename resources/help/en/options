@@ -136,8 +136,11 @@ Misc options:
 	in which they appear in the OSM input. Without this option,
 	the order in which the elements are processed is not defined.
 
---remove-short-arcs
-	Merge nodes to remove short arcs that can cause routing problems.
+--remove-short-arcs[=MinLength]
+	Merge nodes to remove short arcs that can cause routing
+	problems. If MinLength is specified (in metres), arcs shorter
+	than that length will be removed. If a length is not
+	specified, only zero-length arcs will be removed.
 
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'

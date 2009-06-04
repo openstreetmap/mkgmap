@@ -89,14 +89,18 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean routing;
-	private final boolean removeShortArcs;
+	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
-		removeShortArcs = props.getProperty("remove-short-arcs", false);
+		String rsa = props.getProperty("remove-short-arcs", null);
+		if(rsa != null)
+			minimumArcLength = (rsa.length() > 0)? Double.parseDouble(rsa) : 0.0;
+		else
+			minimumArcLength = null;
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
 		if (props.getProperty("preserve-element-order", false)) {
@@ -402,8 +406,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		nodeMap = null;
 
-		if(removeShortArcs)
-			removeShortArcsByMergingNodes();
+		if(minimumArcLength != null)
+			removeShortArcsByMergingNodes(minimumArcLength);
 
 		nodeIdMap = null;
 
@@ -443,7 +447,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		map.put(p, inc);
 	}
 
-	private void removeShortArcsByMergingNodes() {
+	private void removeShortArcsByMergingNodes(double minArcLength) {
 		// keep track of how many arcs reach a given point
 		Map<Coord, Integer> arcCounts = new IdentityHashMap<Coord, Integer>();
 		int numWaysDeleted = 0;
@@ -520,9 +524,17 @@ class Osm5XmlHandler extends DefaultHandler {
 						if(arcCount != null) {
 							// merge this node to previous node if the
 							// two points have identical coordinates
-							// but they are not the same point object
-							if(p != previousNode && p.equals(previousNode)) {
-								log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
+							// or are closer than the minimum distance
+							// allowed but they are not the same point
+							// object
+							if(p != previousNode &&
+							   (p.equals(previousNode) ||
+								(minArcLength > 0 &&
+								 minArcLength > p.distance(previousNode)))) {
+								if(p.equals(previousNode))
+									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
+								else
+									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + ((int)(100 * p.distance(previousNode)))/100.0 + "m) - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
 								++numNodesMerged;
 								replacements.put(p, previousNode);
 								// add this node's arc count to the node
@@ -625,7 +637,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		//co.incCount();
 		if (co != null) {
 			currentWay.addPoint(co);
-			if(removeShortArcs)
+			if(minimumArcLength != null)
 				nodeIdMap.put(co, id);
 		}
 	}
