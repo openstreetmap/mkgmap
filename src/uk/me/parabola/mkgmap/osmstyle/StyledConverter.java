@@ -704,14 +704,6 @@ public class StyledConverter implements OsmConverter {
 		if(way.isBoolTag("toll"))
 			road.setToll();
 
-		// if the way is a motorway and has a ref tag, we may be
-		// generating a Garmin "highway" record for it so save the ref
-		// tag for later
-		String ref = combineRefs(way);
-		if(ref != null) {
-			road.setRef(ref);
-		}
-
 		Way origWay = originalWay.get(way);
 		if(origWay == null)
 			origWay = way;
