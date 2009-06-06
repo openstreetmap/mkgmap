@@ -819,8 +819,10 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 
 		LayerFilterChain filters = new LayerFilterChain(config);
-		filters.addFilter(new SizeFilter());
-		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+		if(res < 24) {
+			filters.addFilter(new SizeFilter());
+			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+		}
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
@@ -853,10 +855,12 @@ public class MapBuilder implements Configurable {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
-		filters.addFilter(new SizeFilter());
-		//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
-		//Is there an similar algorithm for polygons?
-		filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+		if(res < 24) {
+			filters.addFilter(new SizeFilter());
+			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
+			//Is there an similar algorithm for polygons?
+			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+		}
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new ShapeAddFilter(div, map));
