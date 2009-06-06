@@ -38,6 +38,7 @@ import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 import uk.me.parabola.util.Sortable;
@@ -204,17 +205,18 @@ public class MapMaker implements MapProcessor {
 				rnpt = Integer.decode(rnp);
 			}
 			// collect lists of roads that have the same name
-			java.util.Map<String, List<MapLine>> namedRoads = new HashMap<String, List<MapLine>>();
+			java.util.Map<String, List<MapRoad>> namedRoads = new HashMap<String, List<MapRoad>>();
 			for(MapLine l : src.getLines()) {
 				if(l.isRoad()) {
-					String ln = l.getName();
-					if(ln != null) {
-						List<MapLine> rl = namedRoads.get(ln);
+					MapRoad r = (MapRoad)l;
+					String rn = r.getName();
+					if(rn != null) {
+						List<MapRoad> rl = namedRoads.get(rn);
 						if(rl == null) {
-							rl = new ArrayList<MapLine>();
-							namedRoads.put(ln, rl);
+							rl = new ArrayList<MapRoad>();
+							namedRoads.put(rn, rl);
 						}
-						rl.add(l);
+						rl.add(r);
 					}
 				}
 			}
@@ -223,18 +225,18 @@ public class MapMaker implements MapProcessor {
 
 			// sort by name and coordinate of first point so that
 			// the order is always the same for the same input
-			List<Sortable<String, MapLine>> rnpRoads = new ArrayList<Sortable<String, MapLine>>();
-			for(List<MapLine> lr : findConnectedRoadsWithSameName(namedRoads)) {
+			List<Sortable<String, MapRoad>> rnpRoads = new ArrayList<Sortable<String, MapRoad>>();
+			for(List<MapRoad> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
-				MapLine r = lr.get(0);
+				MapRoad r = lr.get(0);
 				String key = r.getName();
 				List<Coord> points = r.getPoints();
 				if(points.size() > 0)
 					key += "_" + points.get(0);
-				rnpRoads.add(new Sortable<String, MapLine>(key, r));
+				rnpRoads.add(new Sortable<String, MapRoad>(key, r));
 			}
 			Collections.sort(rnpRoads);
-			for(Sortable<String, MapLine> sr : rnpRoads)
+			for(Sortable<String, MapRoad> sr : rnpRoads)
 				src.getPoints().add(makeRoadNamePOI(sr.getValue(), rnpt));
 		}
 	}
@@ -255,14 +257,14 @@ public class MapMaker implements MapProcessor {
 	// hairy function to build a set of lists - each list contains
 	// the roads that have the same name and are connected
 
-	private Set<List<MapLine>> findConnectedRoadsWithSameName(java.util.Map<String, List<MapLine>> namedRoads) {
+	private Set<List<MapRoad>> findConnectedRoadsWithSameName(java.util.Map<String, List<MapRoad>> namedRoads) {
 		// roadGroups is a set to avoid duplicate groups
-		Set<List<MapLine>> roadGroups = new HashSet<List<MapLine>>();
+		Set<List<MapRoad>> roadGroups = new HashSet<List<MapRoad>>();
 
 		// loop over the lists of roads that have the same name
-		for(List<MapLine> allRoadsWithSameName : namedRoads.values()) {
+		for(List<MapRoad> allRoadsWithSameName : namedRoads.values()) {
 			// for each road that has the same name, keep track of its group
-			java.util.Map<MapLine,List<MapLine>> roadGroupMap = new HashMap<MapLine,List<MapLine>>();
+			java.util.Map<MapRoad,List<MapRoad>> roadGroupMap = new HashMap<MapRoad,List<MapRoad>>();
 
 			// loop over all of the roads with the same name
 			for(int i = 0; i < allRoadsWithSameName.size(); ++i) {
@@ -270,19 +272,19 @@ public class MapMaker implements MapProcessor {
 				for(int j = 0; j < allRoadsWithSameName.size(); ++j) {
 					if(i != j) {
 						// see if these two roads are joined
-						MapLine ri = allRoadsWithSameName.get(i);
-						MapLine rj = allRoadsWithSameName.get(j);
+						MapRoad ri = allRoadsWithSameName.get(i);
+						MapRoad rj = allRoadsWithSameName.get(j);
 						if(roadsAreJoined(ri, rj)) {
 							// yes, the're joined so put both in a group
 							// and associate the group with each road
 							roadWasJoined = true;
-							List<MapLine> groupi = roadGroupMap.get(ri);
-							List<MapLine> groupj = roadGroupMap.get(rj);
+							List<MapRoad> groupi = roadGroupMap.get(ri);
+							List<MapRoad> groupj = roadGroupMap.get(rj);
 							if(groupi == null) {
 								// ri is not in a group yet
 								if(groupj == null) {
 									// neither is rj so make a new group
-									groupi = new ArrayList<MapLine>();
+									groupi = new ArrayList<MapRoad>();
 									groupi.add(ri);
 									groupi.add(rj);
 									roadGroupMap.put(ri, groupi);
@@ -302,7 +304,7 @@ public class MapMaker implements MapProcessor {
 							else if(groupi != groupj) {
 								// ri and rj are in separate groups so put
 								// all the roads in groupj into groupi
-								for(MapLine r : groupj)
+								for(MapRoad r : groupj)
 									roadGroupMap.put(r, groupi);
 								groupi.addAll(groupj);
 							}
@@ -311,21 +313,21 @@ public class MapMaker implements MapProcessor {
 				}
 				if(!roadWasJoined) {
 					// make a group with just one entry
-					MapLine ri = allRoadsWithSameName.get(i);
-					List<MapLine>group = new ArrayList<MapLine>();
+					MapRoad ri = allRoadsWithSameName.get(i);
+					List<MapRoad>group = new ArrayList<MapRoad>();
 					group.add(ri);
 					roadGroupMap.put(ri, group);
 				}
 			}
 
 			// now add the new group(s) to the final result
-			for(List<MapLine> l : roadGroupMap.values())
-				roadGroups.add(l);
+			for(List<MapRoad> r : roadGroupMap.values())
+				roadGroups.add(r);
 		}
 		return roadGroups;
 	}
 
-	private MapPoint makeRoadNamePOI(MapLine road, int type) {
+	private MapPoint makeRoadNamePOI(MapRoad road, int type) {
 		List<Coord> points = road.getPoints();
 		int numPoints = points.size();
 		Coord coord;
