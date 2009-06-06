@@ -37,7 +37,6 @@ public class MapLine extends MapElement {
 	private int minLong = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
-	private String ref;
 
 	public MapLine() {
 	}
@@ -85,14 +84,6 @@ public class MapLine extends MapElement {
 
 	public boolean isHighway() {
 		return false;
-	}
-
-	public String getRef() {
-		return ref;
-	}
-
-	public void setRef(String ref) {
-		this.ref = ref;
 	}
 
 	/**
