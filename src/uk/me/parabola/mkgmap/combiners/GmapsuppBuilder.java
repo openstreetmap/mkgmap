@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -186,10 +187,37 @@ public class GmapsuppBuilder implements Combiner {
 	private void addFile(FileSystem outfs, String filename) {
 		ImgChannel chan = new FileImgChannel(filename);
 		try {
-			copyFile(chan, outfs, filename);
+			String imgname = createImgFilename(filename);
+			copyFile(chan, outfs, imgname);
 		} catch (IOException e) {
 			log.error("Could not open file " + filename);
 		}
+	}
+
+	/**
+	 * Create a suitable filename for use in the .img file from the external
+	 * file name.
+	 *
+	 * The external file name might look something like /home/steve/foo.typ
+	 * or c:\maps\foo.typ and we need to take the filename part and make
+	 * sure that it is no more than 8+3 characters.
+	 *
+	 * @param pathname The external filesystem path name.
+	 * @return The filename part, will be restricted to 8+3 characters.
+	 */
+	private String createImgFilename(String pathname) {
+		File f = new File(pathname);
+		String name = f.getName();
+		int dot = name.lastIndexOf('.');
+
+		String base = name.substring(0, dot);
+		String ext = name.substring(dot+1);
+		if (base.length() > 8)
+			base = base.substring(0, 8);
+		if (ext.length() > 3)
+			ext = ext.substring(0, 3);
+
+		return base + '.' + ext;
 	}
 
 	/**

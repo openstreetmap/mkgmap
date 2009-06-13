@@ -52,16 +52,16 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 141921, size);
+				assertEquals("RGN size", 141999, size);
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 1945, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 28330, size);
+				assertEquals("LBL size", 28351, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73028, size);
+				assertEquals("NET size", 73138, size);
 			} else if (ext.equals("NOD")) {
 				count++;
 				assertEquals("NOD size", 203786, size);
