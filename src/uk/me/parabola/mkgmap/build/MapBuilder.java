@@ -108,6 +108,7 @@ public class MapBuilder implements Configurable {
 	private int		poiDisplayFlags;
 	private boolean sortRoads = true;
 	private static final double FILTER_DISTANCE = 2.6;
+	private boolean enableLineCleanFilters = true;
 
 	public MapBuilder() {
 		regionName = null;
@@ -819,7 +820,7 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 
 		LayerFilterChain filters = new LayerFilterChain(config);
-		if(res < 24) {
+		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new SizeFilter());
 			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
 		}
@@ -855,7 +856,7 @@ public class MapBuilder implements Configurable {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
-		if(res < 24) {
+		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new SizeFilter());
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
@@ -905,6 +906,10 @@ public class MapBuilder implements Configurable {
 
 	public void setDoRoads(boolean doRoads) {
 		this.doRoads = doRoads;
+	}
+
+	public void setEnableLineCleanFilters(boolean enable) {
+		this.enableLineCleanFilters = enable;
 	}
 
 	private static class SourceSubdiv {

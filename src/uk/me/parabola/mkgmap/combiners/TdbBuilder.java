@@ -227,6 +227,8 @@ public class TdbBuilder implements Combiner {
 	 */
 	private void writeOverviewMap() {
 		MapBuilder mb = new MapBuilder();
+		mb.setEnableLineCleanFilters(false);
+
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
 		params.setMapDescription(overviewDescription);
