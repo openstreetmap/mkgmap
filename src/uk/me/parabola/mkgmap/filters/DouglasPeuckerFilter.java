@@ -90,7 +90,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 			if (p instanceof CoordNode) {
 				douglasPeucker(coords, i, endIndex, maxErrorDistance);
 				endIndex = i;
-				i--;
 			}
 		}
 		// Simplify the rest
@@ -131,7 +130,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 		double ab = a.distance(b);
 
 		// Find point with highest distance.
-		// Loop runs downwards, as the list length gets modified while running
 		for(int i = endIndex-1; i > startIndex; i--) {
 			Coord p = points.get(i);
 			double ap = p.distance(a);
