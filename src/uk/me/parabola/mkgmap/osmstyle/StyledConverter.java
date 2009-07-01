@@ -573,7 +573,7 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				double d = p.distance(points.get(i + 1));
 				if(d > MAX_ARC_LENGTH) {
-					double fraction = MAX_ARC_LENGTH / d;
+					double fraction = 0.99 * MAX_ARC_LENGTH / d;
 					Coord extrap = p.makeBetweenPoint(points.get(i + 1), fraction);
 					extrap.incHighwayCount();
 					points.add(i + 1, extrap);
