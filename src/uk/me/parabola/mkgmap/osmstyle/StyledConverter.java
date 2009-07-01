@@ -79,7 +79,8 @@ public class StyledConverter implements OsmConverter {
 	// from
 	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
-	private final int MAX_ARC_LENGTH = (1 << 14) - 1;
+	// limit arc lengths to what can currently be handled by RouteArc
+	private final int MAX_ARC_LENGTH = 75000;
 
 	private final int MAX_POINTS_IN_WAY = 200;
 
@@ -572,7 +573,7 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				double d = p.distance(points.get(i + 1));
 				if(d > MAX_ARC_LENGTH) {
-					double fraction = 0.99 * MAX_ARC_LENGTH / d;
+					double fraction = MAX_ARC_LENGTH / d;
 					Coord extrap = p.makeBetweenPoint(points.get(i + 1), fraction);
 					extrap.incHighwayCount();
 					points.add(i + 1, extrap);
