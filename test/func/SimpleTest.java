@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
+import func.lib.RangeMatcher;
 import func.lib.TestUtils;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 138293, size);
+				assertThat("RGN size", size, new RangeMatcher(138300));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 1897, size);
@@ -104,7 +105,7 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 2762, size);
+				assertThat("RGN size", size, new RangeMatcher(2762));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);
@@ -120,4 +121,5 @@ public class SimpleTest {
 	public void setUp() {
 		TestUtils.deleteOutputFiles();
 	}
+
 }

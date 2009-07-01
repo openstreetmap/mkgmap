@@ -22,6 +22,7 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
+import func.lib.RangeMatcher;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -52,7 +53,7 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 141999, size);
+				assertThat("RGN size", size, new RangeMatcher(141999));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 1945, size);
@@ -80,7 +81,7 @@ public class SimpleRoute {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertEquals("RGN size", 2787, size);
+				assertThat("RGN size", size, new RangeMatcher(2787));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);

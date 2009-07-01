@@ -15,8 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 
@@ -69,13 +69,11 @@ public abstract class MapElement {
 	}
 
 	public void setName(String name) {
-	  if(name != null)
-		this.name = name.toUpperCase();
+		this.name = name;
 	}
 
 	public void setRef(String ref) {
-	  if(ref != null)
-		this.ref = ref.toUpperCase();
+		this.ref = ref;
 	}
 
 	public String getCity() {
@@ -83,8 +81,7 @@ public abstract class MapElement {
 	}
 
 	public void setCity(String city) {
-	  if(city != null)
-		this.city = city.toUpperCase();
+		this.city = city;
 	}
 	
 	public String getZip() {
@@ -100,8 +97,7 @@ public abstract class MapElement {
 	}
 
 	public void setCountry(String country) {
-	  if(country != null)
-		this.country = country.toUpperCase();
+		this.country = country;
 	}
 	
 	public String getRegion() {
@@ -109,8 +105,7 @@ public abstract class MapElement {
 	}
 
 	public void setRegion(String region) {
-	  if(region != null)
-  		this.region = region.toUpperCase();
+  		this.region = region;
 	}	
 	
 	public String getStreet() {
@@ -127,9 +122,8 @@ public abstract class MapElement {
 
 	public void setPhone(String phone) {
 	
-	  if(phone.startsWith("00"))
-		{
-		  phone = phone.replaceFirst("00","+");
+		if(phone.startsWith("00")) {
+			phone = phone.replaceFirst("00","+");
 		}
 		attributes.put("phone", phone);	
 	}
