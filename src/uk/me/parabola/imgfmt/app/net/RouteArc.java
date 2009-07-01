@@ -265,7 +265,7 @@ public class RouteArc {
 		// now, 14 bits for length
 		assert !curve : "not writing curve data yet";
 		if (length >= (1 << 14)) {
-			log.error("Way " + roadDef.getName() + " contains an arc whose length is too big to be encoded so the road will not be routable");
+			log.error("Way " + roadDef.getName() + " (OSM id " + roadDef.getId() + ") contains an arc whose length is too big to be encoded so the road will not be routable");
 			length = (1 << 14) - 1;
 		}
 
