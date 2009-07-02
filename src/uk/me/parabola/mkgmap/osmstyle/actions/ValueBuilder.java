@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2008 Steve Ratcliffe
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
  *  published by the Free Software Foundation.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
- * 
+ *
+ *
  * Author: Steve Ratcliffe
  * Create date: 02-Dec-2008
  */
@@ -27,6 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * Build a value that can have tag values substituted in it.
  *
  * @author Steve Ratcliffe
+ * @author Toby Speight
  */
 public class ValueBuilder {
 
@@ -37,7 +38,7 @@ public class ValueBuilder {
 	}
 
 	/**
-	 * Bulid this string if all the tags that are required are available.
+	 * Build this string if all the tags that are required are available.
 	 *
 	 * If a tag does not exist then the whole string is rejected.  This allows
 	 * you to make conditional replacements.
@@ -92,20 +93,21 @@ public class ValueBuilder {
 			switch (state) {
 			case 0:
 				if (c == '$') {
-					if (text.length() > 0) {
-						items.add(new ValueItem(text.toString()));
-						text.setLength(0);
-					}
 					state = 1;
 				} else
 					text.append(c);
 				break;
 			case 1:
 				if (c == '{') {
+					if (text.length() > 0) {
+						items.add(new ValueItem(text.toString()));
+						text.setLength(0);
+					}
 					tagname = new StringBuilder();
 					state = 2;
 				} else {
 					state = 0;
+					text.append('$');
 					text.append(c);
 				}
 				break;
@@ -154,6 +156,14 @@ public class ValueBuilder {
 			item.addFilter(new DefaultFilter(arg));
 		} else if (cmd.equals("conv")) {
 			item.addFilter(new ConvertFilter(arg));
+		} else if (cmd.equals("subst")) {
+			item.addFilter(new SubstitutionFilter(arg));
+		} else if (cmd.equals("prefix")) {
+			item.addFilter(new PrependFilter(arg));
+		} else if (cmd.equals("highway-symbol")) {
+			item.addFilter(new HighwaySymbolFilter(arg));
+		} else if (cmd.equals("height")) {
+			item.addFilter(new HeightFilter(arg));
 		}
 	}
 

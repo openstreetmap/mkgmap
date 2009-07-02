@@ -99,9 +99,10 @@ man_made=tower [0x6411 resolution 21]
 
 # Edge 705 displays 0x650a,0x6511,0x6512,0x6513 as hollow white circles, no menu
 natural=beach [0x6604 resolution 21]
+natural=cave_entrance [0x6601 resolution 19]
 natural=cliff [0x6607 resolution 21]
 natural=glacier [0x650a resolution 21]
-natural=peak [0x6616 resolution 21]
+natural=peak {name '${name|def:}${ele|height:m=>ft|def:}' } [0x6616 resolution 18]
 natural=spring [0x6511 resolution 21]
 #natural=stream [0x6512 resolution 21]
 natural=volcano [0x2c0c resolution 21]

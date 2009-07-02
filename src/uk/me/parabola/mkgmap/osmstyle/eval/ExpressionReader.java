@@ -35,7 +35,7 @@ public class ExpressionReader {
 				break;
 
 			String val = scanner.nextWord();
-			if ("&|!=~()><".contains(val)) 
+			if ("&|!=~()><".contains(val))
 				saveOp(val);
 			else
 				pushValue(val);
@@ -46,6 +46,9 @@ public class ExpressionReader {
 			runOp();
 
 		// The stack should contain one entry which is the complete tree
+		if (stack.size() != 1)
+			throw new SyntaxException(scanner, "Stack size is "+stack.size());
+
 		assert stack.size() == 1;
 		return stack.pop();
 	}
@@ -102,7 +105,7 @@ public class ExpressionReader {
 				log.debug("convert to NOT EXISTS");
 				op = new NotExistsOp();
 				op.setFirst(arg1);
-			} 
+			}
 		}
 		stack.push(op);
 	}
