@@ -4,6 +4,15 @@ boundary=national [0x1e resolution 17]
 boundary=political [0x1c resolution 17]
 
 # Contours take their name from the elevation setting.
+contour=elevation & contour_ext=elevation_minor
+	{ name '${ele|conv:m=>ft}'; }
+	[0x20 resolution 23]
+contour=elevation & contour_ext=elevation_medium
+	{ name '${ele|conv:m=>ft}'; }
+	[0x21 resolution 21]
+contour=elevation & contour_ext=elevation_major
+	{ name '${ele|conv:m=>ft}'; }
+	[0x22 resolution 20]
 contour=elevation | contour_ext=elevation
 	{ name '${ele|conv:m=>ft}'; }
 	[0x21 resolution 20]
@@ -61,3 +70,5 @@ waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]
 waterway=river [0x1f resolution 18]
 waterway=stream [0x18 resolution 22]
+
+man_made=pipeline {name '${operator}'} [0x28 resolution 23]
