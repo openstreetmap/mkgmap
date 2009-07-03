@@ -148,10 +148,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	/**
 	 * Record that we are starting a new section.
-	 * Section names are enclosed in square brackets.  Inside the sectin there
+	 * Section names are enclosed in square brackets.  Inside the section there
 	 * are a number of lines with the key=value format.
 	 *
-	 * @param line The raw line from the inputfile.
+	 * @param line The raw line from the input file.
 	 */
 	private void sectionStart(String line) {
 		String name = line.substring(1, line.length() - 1);
@@ -328,7 +328,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				polyline.setName(String.valueOf(n));
 
 			} catch (NumberFormatException e) {
-				// ok it wasn't a number, leave it alone
+				// OK it wasn't a number, leave it alone
 			}
 		}
 	}
@@ -355,7 +355,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	private boolean isCommonValue(MapElement elem, String name, String value) {
 		if (name.equals("Label")) {
-			elem.setName(recode(value));
+			elem.setName(unescape(recode(value)));
 		} else if (name.equals("Levels") || name.equals("EndLevel") || name.equals("LevelsNumber")) {
 			try {
 				endLevel = Integer.valueOf(value);
@@ -388,13 +388,54 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	/**
+	 * Deal with the polish map escape codes of the form ~[0x##].  These
+	 * stand for a single character and is usually used for highway
+	 * symbols, name separators etc.
+	 *
+	 * The code ~[0x05] stands for the character \005 for example.
+	 * 
+	 * @param s The original string that may contain codes.
+	 * @return A string with the escape codes replaced by the single character.
+	 */
+	private String unescape(String s) {
+		int ind = s.indexOf("~[");
+		if (ind < 0)
+			return s;
+
+		StringBuilder sb = new StringBuilder();
+		if (ind > 0)
+			sb.append(s.substring(0, ind));
+
+		char[] buf = s.toCharArray();
+		while (ind < buf.length) {
+			if (ind < buf.length-2 && buf[ind] == '~' && buf[ind+1] == '[') {
+				StringBuffer num = new StringBuffer();
+				ind += 2; // skip "~["
+				while (ind < buf.length && buf[ind++] != ']')
+					num.append(buf[ind - 1]);
+
+				try {
+					int inum = Integer.decode(num.toString());
+					sb.append((char) inum);
+				} catch (NumberFormatException e) {
+					// Input is malformed so lets just ignore it.
+				}
+			} else {
+				sb.append(buf[ind]);
+				ind++;
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
 	 * Convert the value of a label into a string based on the declared
 	 * code page in the file.
 	 *
 	 * This makes assumptions about the way that the .mp file is written
 	 * that may not be correct.
 	 *
-	 * @param value The string that has been read with iso-8859-1.
+	 * @param value The string that has been read with ISO-8859-1.
 	 * @return A possibly different string that is obtained by taking the
 	 * bytes in the input string and decoding them as if they had the
 	 * declared code page.
