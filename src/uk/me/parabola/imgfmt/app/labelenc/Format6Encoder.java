@@ -18,8 +18,6 @@ package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.util.Locale;
 
-import uk.me.parabola.log.Logger;
-
 /**
  * Format according to the '6 bit' .img format.  The text is first upper
  * cased.  Any letter with a diacritic or accent is replaced with its base
@@ -35,9 +33,8 @@ import uk.me.parabola.log.Logger;
  * @see <a href="http://garmin-img.sf.net">Garmin IMG File Format</a>
  */
 public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
-	private static final Logger log = Logger.getLogger(Format6Encoder.class);
 
-	// This is 0x1b is the source document, but the accompianing code uses
+	// This is 0x1b is the source document, but the accompanying code uses
 	// the value 0x1c, which seems to work.
 	private static final int SYMBOL_SHIFT = 0x1c;
 
@@ -77,6 +74,9 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 				buf = put6(buf, off++, c - '0' + 0x20);
 			} else if (c >= 0x1d && c <= 0x1f) {
 				put6(buf, off++, c);
+			} else if (c >= 1 && c <= 6) {
+				// Highway shields
+				put6(buf, off++, 0x2a + c);
 			} else {
 				off = shiftedSymbol(buf, off, c);
 			}
@@ -97,7 +97,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 * @param startOffset The offset to start writing to in the output buffer.
 	 * @param c The character that we are decoding.
 	 * @return The final offset.  This will be unchanged if there was nothing
-	 * writen because the character does not have any representation.
+	 * written because the character does not have any representation.
 	 */
 	private int shiftedSymbol(byte[] buf, int startOffset, char c) {
 		int off = startOffset;

@@ -24,7 +24,7 @@ import org.junit.Test;
 
 
 public class AddTagActionTest {
-	private static final String REFVAL = "ref123";
+	private static final String REFVAL = "A11";
 	private static final String PLACENAME = "Trefriw";
 
 	/**
@@ -111,6 +111,21 @@ public class AddTagActionTest {
 		assertEquals("ref was defaulted", "default-ref", el.getTag("result"));
 	}
 
+	/**
+	 * Test for the highway symbol substitution.
+	 */
+	@Test
+	public void testHighwaySymbol() {
+		Action act = new AddTagAction("a", "${ref|highway-symbol:hbox}");
+
+		Element el = stdElement();
+		act.perform(el);
+
+		// There should be one of the magic garmin values at the beginning
+		// of the string.
+		assertEquals("subst ref", "\u0004" + REFVAL, el.getTag("a"));
+	}
+	
 	private Element stdElement() {
 		Element el1 = new Way(1);
 		el1.addTag("ref", REFVAL);
