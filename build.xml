@@ -72,6 +72,7 @@
       <include name="**/*.java" />
       <classpath refid="main"/>
       <!-- <compilerarg value="-Xlint:unchecked"/> -->
+			<exclude name="**/reader/dem/*.java"/>
     </javac>
   </target>
 
