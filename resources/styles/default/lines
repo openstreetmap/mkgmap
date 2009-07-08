@@ -1,7 +1,4 @@
 aeroway=runway [0x27 resolution 20]
-boundary=administrative [0x1c resolution 18]
-boundary=national [0x1e resolution 17]
-boundary=political [0x1c resolution 17]
 
 # Contours take their name from the elevation setting.
 contour=elevation & contour_ext=elevation_minor
@@ -31,6 +28,11 @@ junction=roundabout & highway=tertiary [0x0c road_class=1 road_speed=3 resolutio
 junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=2 resolution 21]
 junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
 
+# Convert generic path to most specific
+highway=path & bicycle=designated {add highway=cycleway }
+highway=path & horse=designated {add highway=footway }
+highway=path & foot=designated {add highway=footway }
+
 highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
@@ -43,14 +45,14 @@ highway=primary [0x02 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x08 road_class=3 road_speed=3 resolution 19]
 highway=residential | highway=living_street [0x06 road_class=0 road_speed=2 resolution 21]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
-highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 20]
+highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=1 resolution 22]
 highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=tertiary [0x05 road_class=1 road_speed=3 resolution 20]
 highway=track [0x0a road_class=0 road_speed=1 resolution 21]
 highway=trunk  [0x02 road_class=3 road_speed=5 resolution 16]
 highway=trunk_link [0x08 road_class=3 road_speed=3 resolution 16]
-highway=unclassified [0x06 road_class=1 road_speed=2 resolution 21]
+highway=unclassified | highway=road [0x06 road_class=1 road_speed=2 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
@@ -72,3 +74,10 @@ waterway=river [0x1f resolution 18]
 waterway=stream [0x18 resolution 22]
 
 man_made=pipeline {name '${operator}'} [0x28 resolution 23]
+
+# The following boundary styles are after the highway rules because ways
+# are frequently tagged with both and we want the highway to take priority.
+boundary=administrative [0x1c resolution 18]
+boundary=national [0x1e resolution 17]
+boundary=political [0x1c resolution 17]
+
