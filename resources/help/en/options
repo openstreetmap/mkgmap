@@ -108,6 +108,10 @@ Misc options:
 	given at all, the limit is 1 (i.e. the maps are processed
 	sequentially).
 
+--keep-going
+	Don't quit whole application if an exception occurs while
+	processing a job - continue to process the other jobs.
+
 --block-size=''number''
 	Changes the block size that is used in the generated map.
 	There is no general reason why you would want to do this.
