@@ -32,7 +32,7 @@ OSMDATA = /opt/data/uk-lon.osm
 
 TIME=/usr/bin/time --format 'Real: %E, %S+%U'
 
-#OPTS= --levels='0=24,1=22,2=20'
+OPTS= --tdbfile
 #OPTS= --route --tdbfile --tdb-v4 
 OPTS=--tdbfile --family-id=909 --series-name="other map"  --description='A test map'
 
@@ -59,6 +59,7 @@ other: clean
 clean:
 	rm -f 63240001/* gmapsupp/* mkgmap.log out.log
 	rm -f gmapsupp.img 63*.img 63*.tdb
+	rm -f 11112222.img 11112222.tdb
 
 load:
 	sleep 2

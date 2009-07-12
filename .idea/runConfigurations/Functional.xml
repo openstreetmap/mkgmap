@@ -34,8 +34,8 @@
     <ConfigurationWrapper RunnerId="Debug" />
     <ConfigurationWrapper RunnerId="Run" />
     <method>
-      <option name="Run Ant target" value="true" />
-      <option name="Make" value="true" />
+      <option name="AntTarget" enabled="false" />
+      <option name="Make" enabled="true" />
     </method>
   </configuration>
 </component>

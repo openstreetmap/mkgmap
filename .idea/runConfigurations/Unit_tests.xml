@@ -20,7 +20,8 @@
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Run" />
     <method>
-      <option name="Make" value="true" />
+      <option name="AntTarget" enabled="false" />
+      <option name="Make" enabled="true" />
     </method>
   </configuration>
 </component>

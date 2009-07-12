@@ -53,8 +53,6 @@ class Dirent implements DirectoryEntry {
 	static final int OFF_FILE_PART = 0x11;
 	private static final int OFF_SIZE = 0x0c;
 
-	static final int ENTRY_SIZE = 512;
-
 	// Filenames are a base+extension
 	private String name;
 	private String ext;

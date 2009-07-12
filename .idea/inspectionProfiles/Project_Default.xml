@@ -2,82 +2,38 @@
   <profile version="1.0" is_locked="false">
     <option name="myName" value="Project Default" />
     <option name="myLocal" value="false" />
-    <inspection_tool class="SamePackageImport" level="WARNING" enabled="true" />
-    <inspection_tool class="JavaLangImport" level="WARNING" enabled="true" />
-    <inspection_tool class="RedundantImport" level="WARNING" enabled="true" />
-    <inspection_tool class="UnusedImport" level="WARNING" enabled="true" />
-    <inspection_tool class="SystemGC" level="WARNING" enabled="true" />
-    <inspection_tool class="StaticCollection" level="WARNING" enabled="true">
-      <option name="m_ignoreWeakCollections" value="false" />
-    </inspection_tool>
-    <inspection_tool class="StringBufferField" level="WARNING" enabled="true" />
-    <inspection_tool class="ZeroLengthArrayInitialization" level="WARNING" enabled="true" />
-    <inspection_tool class="UnnecessaryLocalVariable" level="WARNING" enabled="false">
-      <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
-      <option name="m_ignoreAnnotatedVariables" value="false" />
-    </inspection_tool>
-    <inspection_tool class="AutoBoxing" level="INFO" enabled="false">
-      <option name="ignoreAddedToCollection" value="false" />
-    </inspection_tool>
-    <inspection_tool class="ReplaceAssignmentWithOperatorAssignment" level="WARNING" enabled="true">
-      <option name="ignoreLazyOperators" value="true" />
-      <option name="ignoreObscureOperators" value="false" />
-    </inspection_tool>
-    <inspection_tool class="AssignmentToForLoopParameter" level="WARNING" enabled="true">
+    <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AbstractMethodOverridesAbstractMethod" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AssignmentToCatchBlockParameter" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AssignmentToForLoopParameter" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="m_checkForeachParameters" value="false" />
     </inspection_tool>
-    <inspection_tool class="AssignmentToCatchBlockParameter" level="WARNING" enabled="true" />
-    <inspection_tool class="ClassMayBeInterface" level="WARNING" enabled="true" />
-    <inspection_tool class="ClassInTopLevelPackage" level="WARNING" enabled="true" />
-    <inspection_tool class="EmptyClass" level="WARNING" enabled="true" />
-    <inspection_tool class="CloneInNonCloneableClass" level="WARNING" enabled="true" />
-    <inspection_tool class="CloneableImplementsClone" level="WARNING" enabled="true">
-      <option name="m_ignoreCloneableDueToInheritance" value="false" />
+    <inspection_tool class="AssignmentUsedAsCondition" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AutoBoxing" enabled="false" level="INFO" enabled_by_default="false">
+      <option name="ignoreAddedToCollection" value="false" />
     </inspection_tool>
-    <inspection_tool class="ObsoleteCollection" level="WARNING" enabled="true">
-      <option name="ignoreLibraryArguments" value="false" />
-    </inspection_tool>
-    <inspection_tool class="CStyleArrayDeclaration" level="WARNING" enabled="true" />
-    <inspection_tool class="ConfusingOctalEscape" level="WARNING" enabled="true" />
-    <inspection_tool class="RedundantFieldInitialization" level="WARNING" enabled="true" />
-    <inspection_tool class="UnnecessaryConstructor" level="WARNING" enabled="true" />
-    <inspection_tool class="UnnecessarySuperConstructor" level="WARNING" enabled="true" />
-    <inspection_tool class="UnnecessaryFullyQualifiedName" level="WARNING" enabled="true">
-      <option name="m_ignoreJavadoc" value="false" />
-    </inspection_tool>
-    <inspection_tool class="FallthruInSwitchStatement" level="WARNING" enabled="true" />
-    <inspection_tool class="ForLoopReplaceableByWhile" level="WARNING" enabled="true">
-      <option name="m_ignoreLoopsWithoutConditions" value="false" />
-    </inspection_tool>
-    <inspection_tool class="IfStatementWithIdenticalBranches" level="WARNING" enabled="true" />
-    <inspection_tool class="NegatedIfElse" level="WARNING" enabled="true">
-      <option name="m_ignoreNegatedNullComparison" value="true" />
-    </inspection_tool>
-    <inspection_tool class="PublicField" level="WARNING" enabled="true">
-      <option name="ignoreEnums" value="false" />
-    </inspection_tool>
-    <inspection_tool class="CatchGenericClass" level="WARNING" enabled="true" />
-    <inspection_tool class="ErrorRethrown" level="WARNING" enabled="true" />
-    <inspection_tool class="BadExceptionThrown" level="WARNING" enabled="true">
+    <inspection_tool class="AutoUnboxing" enabled="false" level="INFO" enabled_by_default="false" />
+    <inspection_tool class="BadExceptionThrown" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="exceptionsString" value="java.lang.Throwable,java.lang.Exception,java.lang.Error,java.lang.RuntimeException,java.lang.NullPointerException,java.lang.ClassCastException,java.lang.ArrayIndexOutOfBoundsException" />
     </inspection_tool>
-    <inspection_tool class="AbstractMethodOverridesAbstractMethod" level="WARNING" enabled="true" />
-    <inspection_tool class="AbstractMethodCallInConstructor" level="WARNING" enabled="true" />
-    <inspection_tool class="ComparisonOfShortAndChar" level="WARNING" enabled="true" />
-    <inspection_tool class="StringBufferReplaceableByString" level="WARNING" enabled="true" />
-    <inspection_tool class="SubstringZero" level="WARNING" enabled="true" />
-    <inspection_tool class="SizeReplaceableByIsEmpty" level="WARNING" enabled="true">
-      <option name="ignoreNegations" value="false" />
+    <inspection_tool class="CStyleArrayDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CatchGenericClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ClassInTopLevelPackage" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ClassMayBeInterface" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CloneInNonCloneableClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="CloneableImplementsClone" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreCloneableDueToInheritance" value="false" />
     </inspection_tool>
-    <inspection_tool class="StringEqualsEmptyString" level="WARNING" enabled="true" />
-    <inspection_tool class="AssignmentUsedAsCondition" level="WARNING" enabled="true" />
-    <inspection_tool class="ResultOfObjectAllocationIgnored" level="WARNING" enabled="true" />
-    <inspection_tool class="SubtractionInCompareTo" level="WARNING" enabled="true" />
-    <inspection_tool class="TextLabelInSwitchStatement" level="WARNING" enabled="true" />
-    <inspection_tool class="TrivialIf" level="WARNING" enabled="false" />
-    <inspection_tool class="UnnecessaryUnboxing" level="WARNING" enabled="false" />
-    <inspection_tool class="UnnecessaryBoxing" level="WARNING" enabled="false" />
-    <inspection_tool class="JavaDoc" level="INFO" enabled="true">
+    <inspection_tool class="ComparisonOfShortAndChar" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ConfusingOctalEscape" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="EmptyClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ErrorRethrown" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="FallthruInSwitchStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ForLoopReplaceableByWhile" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreLoopsWithoutConditions" value="false" />
+    </inspection_tool>
+    <inspection_tool class="IfStatementWithIdenticalBranches" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JavaDoc" enabled="true" level="INFO" enabled_by_default="true">
       <option name="TOP_LEVEL_CLASS_OPTIONS">
         <value>
           <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
@@ -106,12 +62,56 @@
       <option name="IGNORE_JAVADOC_PERIOD" value="true" />
       <option name="myAdditionalJavadocTags" value="" />
     </inspection_tool>
-    <inspection_tool class="AutoUnboxing" level="INFO" enabled="false" />
-    <inspection_tool class="SameReturnValue" level="WARNING" enabled="false" />
-    <inspection_tool class="MethodOnlyUsedFromInnerClass" level="WARNING" enabled="true">
+    <inspection_tool class="JavaLangImport" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JavadocReference" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="MethodOnlyUsedFromInnerClass" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreMethodsAccessedFromAnonymousClass" value="true" />
     </inspection_tool>
-    <inspection_tool class="OverridableMethodCallDuringObjectConstruction" level="WARNING" enabled="true" />
-    <inspection_tool class="JavadocReference" level="INFO" enabled="true" />
+    <inspection_tool class="NegatedIfElse" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreNegatedNullComparison" value="true" />
+    </inspection_tool>
+    <inspection_tool class="ObsoleteCollection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreLibraryArguments" value="false" />
+    </inspection_tool>
+    <inspection_tool class="OverridableMethodCallDuringObjectConstruction" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PublicField" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreEnums" value="false" />
+    </inspection_tool>
+    <inspection_tool class="RedundantFieldInitialization" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="RedundantImport" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ReplaceAssignmentWithOperatorAssignment" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreLazyOperators" value="true" />
+      <option name="ignoreObscureOperators" value="false" />
+    </inspection_tool>
+    <inspection_tool class="ResultOfObjectAllocationIgnored" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SamePackageImport" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SameReturnValue" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SizeReplaceableByIsEmpty" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreNegations" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StaticCollection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreWeakCollections" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StringBufferField" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="StringBufferReplaceableByString" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SubstringZero" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SystemGC" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="TextLabelInSwitchStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="TrivialIf" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnnecessaryBoxing" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnnecessaryConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreJavadoc" value="false" />
+    </inspection_tool>
+    <inspection_tool class="UnnecessaryLocalVariable" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
+      <option name="m_ignoreAnnotatedVariables" value="false" />
+    </inspection_tool>
+    <inspection_tool class="UnnecessarySuperConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UnnecessaryUnboxing" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedImport" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ZeroLengthArrayInitialization" enabled="true" level="WARNING" enabled_by_default="true" />
   </profile>
 </component>

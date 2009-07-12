@@ -1,8 +1,8 @@
 <component name="InspectionProjectProfileManager">
   <settings>
     <option name="PROJECT_PROFILE" value="Mapping" />
-    <option name="USE_PROJECT_LEVEL_SETTINGS" value="true" />
-    <scopes />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
     <list size="4">
       <item index="0" class="java.lang.String" itemvalue="SERVER PROBLEM" />
       <item index="1" class="java.lang.String" itemvalue="INFO" />

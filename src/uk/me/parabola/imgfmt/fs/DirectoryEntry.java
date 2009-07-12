@@ -24,6 +24,9 @@ package uk.me.parabola.imgfmt.fs;
  * @author Steve Ratcliffe
  */
 public interface DirectoryEntry {
+	public static final int ENTRY_SIZE = 512;
+	public static final int SLOTS_PER_ENTRY = 240;
+
 	/**
 	 * Get the file name.
 	 * @return The file name.

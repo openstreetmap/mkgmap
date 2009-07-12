@@ -27,9 +27,11 @@ import uk.me.parabola.log.Logger;
 class BlockManager {
 	private static final Logger log = Logger.getLogger(BlockManager.class);
 
-	private int currentBlock;
 	private final int blockSize;
+	
+	private int currentBlock;
 	private int maxBlock = 0xfffe;
+	private int numberAllocated;
 
 	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
@@ -50,6 +52,7 @@ class BlockManager {
 					"There is not enough room in a single garmin map for all the input data\n" +
 							"   The .osm file should be split into smaller pieces first.");
 		}
+		numberAllocated++;
 		return n;
 	}
 
@@ -63,5 +66,11 @@ class BlockManager {
 
 	public void setMaxBlock(int maxBlock) {
 		this.maxBlock = maxBlock;
+	}
+
+	public void setCurrentBlock(int n) {
+		if (numberAllocated != 0)
+			throw new IllegalStateException("Blocks already allocated");
+		currentBlock = n;
 	}
 }

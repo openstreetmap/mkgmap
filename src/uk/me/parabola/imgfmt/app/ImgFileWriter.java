@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.io.IOException;
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * I want to be able to experiment with different schemes to write out.
@@ -83,7 +83,7 @@ public interface ImgFileWriter extends Closeable {
 	 *
 	 * @param val The values to write.
 	 */
-	void put(byte[] val);
+	public void put(byte[] val);
 
 	/**
 	 * Write out part of a byte array.
@@ -92,5 +92,15 @@ public interface ImgFileWriter extends Closeable {
 	 * @param start The start position.
 	 * @param length The number of bytes to write.
 	 */
-	void put(byte[] src, int start, int length);
+	public void put(byte[] src, int start, int length);
+
+	/**
+	 * Returns the size of the file.
+	 *
+	 * Note that this is not a general purpose routine and it may not be
+	 * possible to give the correct answer at all times.
+	 * 
+	 * @return The file size in bytes.
+	 */
+	public long getSize();
 }

@@ -59,6 +59,7 @@ public class ImgFS implements FileSystem {
 	// The filesystem is responsible for allocating blocks
 	private BlockManager fileBlockManager;
 	private static final long BASIC_BLOCK_SIZE = (long) 512;
+	private BlockManager headerBlockManager;
 
 	/**
 	 * Private constructor, use the static {@link #createFs} and {@link #openFs}
@@ -204,6 +205,12 @@ public class ImgFS implements FileSystem {
 		return header.getParams();
 	}
 
+	public void fsparam(FileSystemParam param) {
+		int reserved = param.getReservedDirectoryBlocks() + 2;
+		fileBlockManager.setCurrentBlock(reserved);
+		headerBlockManager.setMaxBlock(reserved);
+	}
+
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to
 	 * the underlying file.
@@ -249,7 +256,7 @@ public class ImgFS implements FileSystem {
 		readOnly = false;
 
 		// The block manager allocates blocks for files.
-		BlockManager headerBlockManager = new BlockManager(params.getBlockSize(), 0);
+		headerBlockManager = new BlockManager(params.getBlockSize(), 0);
 		headerBlockManager.setMaxBlock(params.getReservedDirectoryBlocks());
 
 		// This bit is tricky.  We want to use a regular ImgChannel to write

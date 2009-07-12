@@ -43,6 +43,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	private ByteBuffer buf = ByteBuffer.allocate(INIT_SIZE);
 	private int bufferSize = INIT_SIZE;
 
+	// The size of the file.  Note that for this to be set properly, the
+	// position must be set to a low value after the full file is written. This
+	// always happens because we go back and write the header after all is
+	// written.
 	private int maxSize;
 
 	public BufferedImgFileWriter(ImgChannel chan) {
@@ -152,6 +156,17 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	public void put(byte[] src, int start, int length) {
 		ensureSize(length);
 		buf.put(src, start, length);
+	}
+
+	/**
+	 * Get the size of the file as written.
+	 *
+	 * NOTE: that calling this is only valid at certain times.
+	 * 
+	 * @return The size of the file, if it is available.
+	 */
+	public long getSize() {
+		return maxSize;
 	}
 
 	/**

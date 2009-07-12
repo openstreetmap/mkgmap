@@ -19,7 +19,9 @@ package uk.me.parabola.imgfmt.app.map;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
@@ -33,6 +35,7 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
@@ -247,15 +250,47 @@ public class Map implements InternalFiles, Configurable {
 	
 	/**
 	 * Close this map by closing all the constituent files.
+	 *
+	 * Some history: 
 	 */
 	public void close() {
-		rgnFile.close();
-		treFile.close();
-		lblFile.close();
-		if (netFile != null)
-			netFile.close();
-		if (nodFile != null)
-			nodFile.close();
+		ImgFile[] files = {
+				rgnFile, treFile, lblFile,
+				netFile, nodFile
+		};
+
+		int headerSlotsRequired = 0;
+
+		FileSystemParam param = fileSystem.fsparam();
+		int blockSize = param.getBlockSize();
+
+		for (ImgFile f : files) {
+			if (f == null)
+				continue;
+
+			long len = f.getSize();
+			log.debug("img file len=", len);
+
+			// Blocks required for this file
+			int nBlocks = (int) ((len + blockSize - 1) / blockSize);
+
+			// Now we calculate how many directory blocks we need, you have
+			// to round up as files do not share directory blocks.
+			headerSlotsRequired += (nBlocks + DirectoryEntry.SLOTS_PER_ENTRY - 1)/DirectoryEntry.SLOTS_PER_ENTRY;
+		}
+
+		log.debug("header slots required", headerSlotsRequired);
+
+		// A header slot is always 512 bytes, so we need to calculate the
+		// number of blocks if the blocksize is different.
+		// There are 2 slots for the header itself.
+		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
+
+		param.setReservedDirectoryBlocks(blocksRequired);
+		fileSystem.fsparam(param);
+
+		for (ImgFile f : files)
+			Utils.closeFile(f);
 
 		fileSystem.close();
 	}

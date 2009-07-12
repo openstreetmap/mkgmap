@@ -81,4 +81,7 @@ public class SectionWriter implements ImgFileWriter {
 		writer.put(src, start, length);
 	}
 
+	public long getSize() {
+		throw new UnsupportedOperationException("Cannot get size at this point");
+	}
 }
