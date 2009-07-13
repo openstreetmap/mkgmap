@@ -30,9 +30,15 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class Way extends Element {
 
-	private final List<Coord> points = new ArrayList<Coord>();
+	private final List<Coord> points;
 
 	public Way(long id) {
+		points = new ArrayList<Coord>();
+		setId(id);
+	}
+
+	public Way(long id, List<Coord> points) {
+		this.points = points;
 		setId(id);
 	}
 

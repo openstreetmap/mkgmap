@@ -27,12 +27,14 @@ import java.util.zip.GZIPInputStream;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.mkgmap.reader.dem.DEM;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -118,6 +120,10 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		return configProps;
 	}
 
+	public MapDetails getMapper() {
+		return mapper;
+	}
+
 	/**
 	 * We add the background polygons if the map is not transparent.
 	 */
@@ -145,6 +151,9 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 			// Note we add directly to the shapes list, we do not add to
 			// the overview section.
 			mapper.addShape(background);
+		}
+		if (getConfig().getProperty("contours", false)) {		    
+		    DEM.createContours((LoadableMapDataSource) this, getConfig());
 		}
 	}
 }
