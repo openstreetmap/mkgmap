@@ -16,33 +16,28 @@
  */
 package uk.me.parabola.mkgmap.reader.dem;
 
-import java.io.*;
-import java.util.Vector;
-import java.util.List;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Locale;
+import java.util.List;
+import java.util.Vector;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.ExitException;
-import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
-
 import uk.me.parabola.mkgmap.build.MapBuilder;
-import uk.me.parabola.mkgmap.general.MapDetails;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 
@@ -168,7 +163,8 @@ public abstract class DEM {
 			params.setMapDescription("contour lines");
 			long mapName = Integer.valueOf(config.getProperty("mapname", "63240000"));
 			try {
-				Map map = Map.createMap(String.format("%08d", mapName + 10000000), params);
+				String mapname = String.format("%08d", mapName + 10000000);
+				Map map = Map.createMap(mapname, params, mapname);
 				builder.makeMap(map, dest);
 				map.close();
 			}

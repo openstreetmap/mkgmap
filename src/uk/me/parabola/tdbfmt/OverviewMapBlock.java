@@ -107,10 +107,10 @@ public class OverviewMapBlock {
 		this.description = description;
 	}
 
-	public void setMapName(String mapName) {
+	public void setMapName(String mapName, String mapNumber) {
 		this.mapName = mapName;
 		try {
-			this.mapNumber = Integer.parseInt(mapName);
+			this.mapNumber = Integer.parseInt(mapNumber);
 		} catch (NumberFormatException e) {
 			this.mapNumber = 0;
 		}

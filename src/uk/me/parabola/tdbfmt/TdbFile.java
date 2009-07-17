@@ -118,10 +118,10 @@ public class TdbFile {
 	 * @param name The overview map name.
 	 * @param bounds The bounds for the map.
 	 */
-	public void setOverview(String name, Area bounds) {
+	public void setOverview(String name, Area bounds, String number) {
 		overviewMapBlock = new OverviewMapBlock();
 		overviewMapBlock.setArea(bounds);
-		overviewMapBlock.setMapName(name);
+		overviewMapBlock.setMapName(name, number);
 		overviewMapBlock.setDescription(overviewDescription);
 	}
 

@@ -57,6 +57,7 @@ public class CommandArgsReader {
 		add(new CommandOption("mapname", "63240001"));
 		add(new CommandOption("description", "OSM street map"));
 		add(new CommandOption("overview-mapname", "63240000"));
+		add(new CommandOption("overview-mapnumber", "63240000"));
 	}
 
 	public CommandArgsReader(ArgumentProcessor proc) {

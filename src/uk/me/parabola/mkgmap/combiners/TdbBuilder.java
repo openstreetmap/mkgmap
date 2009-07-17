@@ -48,6 +48,7 @@ public class TdbBuilder implements Combiner {
 
 	private int parent = 63240000;
 	private String overviewMapname;
+	private String overviewMapnumber;
 	private String overviewDescription;
 	private int tdbVersion;
 
@@ -59,11 +60,12 @@ public class TdbBuilder implements Combiner {
 	 * In otherwords if the same argument appears more than once, then it will
 	 */
 	public void init(CommandArgs args) {
-		overviewMapname = args.get("overview-mapname", "63240000");
+		overviewMapname = args.get("overview-mapname", "OSM_map");
+		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		try {
-			parent = Integer.parseInt(overviewMapname);
+			parent = Integer.parseInt(overviewMapnumber);
 		} catch (NumberFormatException e) {
-			log.debug("overview map name not an integer", overviewMapname);
+			log.debug("overview map number not an integer", overviewMapnumber);
 		}
 
 		overviewDescription = args.get("overview-description", "Overview Map");
@@ -113,7 +115,7 @@ public class TdbBuilder implements Combiner {
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
 
-		detail.setMapName(mapname);
+		detail.setMapName(mapname, mapname);
 
 		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
@@ -123,7 +125,8 @@ public class TdbBuilder implements Combiner {
 		detail.setNetDataSize(finfo.getNetsize());
 		detail.setNodDataSize(finfo.getNodsize());
 
-		log.info("overview-mapname", parent);
+		log.info("overview-mapname", overviewMapname);
+		log.info("overview-mapnumber", parent);
 		detail.setParentMapNumber(parent);
 
 		tdb.addDetail(detail);
@@ -216,7 +219,7 @@ public class TdbBuilder implements Combiner {
 
 		// We can set the overall bounds easily as it was calcualted as part of
 		// the overview map.
-		tdb.setOverview(overviewMapname, overviewSource.getBounds());
+		tdb.setOverview(overviewMapname, overviewSource.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
 		writeOverviewMap();
@@ -234,7 +237,7 @@ public class TdbBuilder implements Combiner {
 		params.setMapDescription(overviewDescription);
 
 		try {
-			Map map = Map.createMap(overviewMapname, params);
+			Map map = Map.createMap(overviewMapname, params, overviewMapnumber);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
