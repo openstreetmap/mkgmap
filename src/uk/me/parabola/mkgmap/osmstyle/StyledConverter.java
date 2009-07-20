@@ -42,6 +42,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -423,6 +424,123 @@ public class StyledConverter implements OsmConverter {
 					// relax, tag was probably not a number anyway
 				}
 				frigRoundabout(way, frigFactor);
+			}
+		}
+
+		// process any Coords that have a POI associated with them
+		if("true".equals(way.getTag("mkgmap:way-has-pois"))) {
+			List<Coord> points = way.getPoints();
+
+			// at this time, we are only looking for POIs that have
+			// the "access" tag defined - if they do, copy the access
+			// permissions to the way - what we want to achieve is
+			// modifying the way's access permissions where it passes
+			// through the POI without affecting the rest of the way
+			// too much - to that end we split the way before and
+			// after the POI - if necessary, extra points are inserted
+			// before and after the POI to limit the size of the
+			// affected region
+
+			final double stubSegmentLength = 25; // metres
+			for(int i = 0; i < points.size(); ++i) {
+				Coord p = points.get(i);
+				// check if this POI modifies access and if so, split
+				// the way at the following point (if any) and then
+				// copy its access restrictions to the way
+				if(p instanceof CoordPOI) {
+					CoordPOI cp = (CoordPOI)p;
+					Node node = cp.getNode();
+					if(node.getTag("access") != null) {
+						// if this or the next point are not the last
+						// points in the way, split at the next point
+						// taking care not to produce a short arc
+						if((i + 1) < points.size()) {
+							Coord p1 = points.get(i + 1);
+							// check if the next point is further away
+							// than we would like
+							double dist = p.distance(p1);
+							if(dist >= (2 * stubSegmentLength)) {
+								// insert a new point after the POI to
+								// make a short stub segment
+								p1 = p.makeBetweenPoint(p1, stubSegmentLength / dist);
+								points.add(i + 1, p1);
+							}
+
+							// now split the way at the next point to
+							// limit the region that has restricted
+							// access
+							if(!p.equals(p1) &&
+							   ((i + 2) == points.size() ||
+								!p1.equals(points.get(i + 2)))) {
+								Way tail = splitWayAt(way, i + 1);
+								// recursively process tail of way
+								addRoad(tail, gt);
+							}
+						}
+
+						// make the POI a node so that the region with
+						// restricted access is split into two as far
+						// as routing is concerned - this should stop
+						// routing across the POI when the start point
+						// is within the restricted region and the
+						// destination point is outside of the
+						// restricted region on the other side of the
+						// POI
+
+						// however, this still doesn't stop routing
+						// across the POI when both the start and end
+						// points are either side of the POI and both
+						// are in the restricted region
+						p.incHighwayCount();
+
+						// copy all of the POI's access restrictions
+						// to the way segment
+						for (AccessMapping anAccessMap : accessMap) {
+							String accessType = anAccessMap.type;
+							String accessModifier = node.getTag(accessType);
+							if(accessModifier != null)
+								way.addTag(accessType, accessModifier);
+						}
+					}
+				}
+
+				// check if the next point modifies access and if so,
+				// split the way either here or at a new point that's
+				// closer to the POI taking care not to introduce a
+				// short arc
+				if((i + 1) < points.size()) {
+					Coord p1 = points.get(i + 1);
+					if(p1 instanceof CoordPOI) {
+						CoordPOI cp = (CoordPOI)p1;
+						Node node = cp.getNode();
+						if(node.getTag("access") != null) {
+							// check if this point is further away
+							// from the POI than we would like
+							double dist = p.distance(p1);
+							if(dist >= (2 * stubSegmentLength)) {
+								// insert a new point to make a short
+								// stub segment
+								p1 = p1.makeBetweenPoint(p, stubSegmentLength / dist);
+								points.add(i + 1, p1);
+								// as p1 is now no longer a CoordPOI,
+								// the split below will be deferred
+								// until the next iteration of the
+								// loop (which is what we want!)
+							}
+
+							// now split the way here if it is not the
+							// first point in the way
+							if(p1 instanceof CoordPOI &&
+							   i > 0 &&
+							   !p.equals(points.get(i - 1)) &&
+							   !p.equals(p1)) {
+								Way tail = splitWayAt(way, i);
+								// recursively process tail of road
+								addRoad(tail, gt);
+							}
+						}
+					}
+				}
 			}
 		}
 
