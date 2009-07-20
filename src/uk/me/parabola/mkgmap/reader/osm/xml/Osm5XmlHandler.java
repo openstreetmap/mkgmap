@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
@@ -88,12 +89,14 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean makeOppositeCycleways;
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
+	private final boolean linkPOIsToWays;
 	private final boolean routing;
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
+		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
 		String rsa = props.getProperty("remove-short-arcs", null);
@@ -636,6 +639,21 @@ class Osm5XmlHandler extends DefaultHandler {
 		Coord co = coordMap.get(id);
 		//co.incCount();
 		if (co != null) {
+			if(linkPOIsToWays) {
+				// if this Coord is also a POI, replace it with an
+				// equivalent CoordPOI that contains a reference to
+				// the POI's Node so we can access the POI's tags
+				Node node = nodeMap.get(id);
+				if(node != null) {
+					if(!(co instanceof CoordPOI)) {
+						co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
+						coordMap.put(id, co);
+					}
+					// flag this Way as having a CoordPOI so it will
+					// be processed later
+					currentWay.addTag("mkgmap:way-has-pois", "true");
+				}
+			}
 			currentWay.addPoint(co);
 			if(minimumArcLength != null)
 				nodeIdMap.put(co, id);
