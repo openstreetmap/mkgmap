@@ -69,7 +69,6 @@ public class StyledConverter implements OsmConverter {
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 	private Area bbox;
-	private Set<Coord> boundaryCoords = new HashSet<Coord>();
 
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
@@ -550,7 +549,6 @@ public class StyledConverter implements OsmConverter {
 
 		if(bbox != null) {
 			List<List<Coord>> lineSegs = LineClipper.clip(bbox, way.getPoints());
-			boundaryCoords = new HashSet<Coord>();
 
 			if (lineSegs != null) {
 
@@ -562,8 +560,9 @@ public class StyledConverter implements OsmConverter {
 					nWay.copyTags(way);
 					for(Coord co : lco) {
 						nWay.addPoint(co);
-						if(co.getHighwayCount() == 0) {
-							boundaryCoords.add(co);
+						if(co.getOnBoundary()) {
+							// this point lies on a boundary
+							// make sure it becomes a node
 							co.incHighwayCount();
 						}
 					}
@@ -841,7 +840,7 @@ public class StyledConverter implements OsmConverter {
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
 				Integer nodeId = nodeIdMap.get(coord);
-				boolean boundary = boundaryCoords.contains(coord);
+				boolean boundary = coord.getOnBoundary();
 				if(boundary) {
 					log.info("Way " + debugWayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
 				}

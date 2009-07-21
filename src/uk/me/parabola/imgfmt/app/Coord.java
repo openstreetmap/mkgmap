@@ -36,7 +36,8 @@ import uk.me.parabola.imgfmt.Utils;
 public class Coord implements Comparable<Coord> {
 	private final int latitude;
 	private final int longitude;
-	private int highwayCount; // number of highways that use this point
+	private byte highwayCount; // number of highways that use this point
+	private boolean onBoundary;	// true if point lies on a boundary
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -75,7 +76,17 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public void incHighwayCount() {
-		++highwayCount;
+		// don't let it wrap
+		if(highwayCount < Byte.MAX_VALUE)
+			++highwayCount;
+	}
+
+	public boolean getOnBoundary() {
+		return onBoundary;
+	}
+
+	public void setOnBoundary(boolean onBoundary) {
+		this.onBoundary = onBoundary;
 	}
 
 	public int hashCode() {

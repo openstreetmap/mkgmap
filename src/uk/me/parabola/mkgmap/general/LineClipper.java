@@ -44,7 +44,7 @@ public class LineClipper {
 		// If all the points are inside the box then we just return null
 		// to show that nothing was done and the line can be used.  This
 		// is expected to be the normal case.
-		if (a == null || a.allInside(coords))
+		if (a == null || a.allInsideBoundary(coords))
 			return null;
 
 		class LineCollector {
@@ -135,11 +135,64 @@ public class LineClipper {
 		assert t[1] <= 1;
 
 		double d = 0.5;
-		if (t[0] > 0)
+		Coord orig0 = ends[0];
+		Coord orig1 = ends[1];
+		if (t[0] > 0) {
+			// line is clipped so create the new end point and mark it
+			// as a boundary node
 			ends[0] = new Coord((int) (y0 + t[0] * dy + d), (int) (x0 + t[0] * dx + d));
+			ends[0].setOnBoundary(true);
+		}
+		else if(!a.insideBoundary(ends[0])) {
+			// point lies on the boundary so it's a boundary node
+			ends[0].setOnBoundary(true);
+		}
 
-		if (t[1] < 1)
+		if (t[1] < 1) {
+			// line is clipped so create the new end point and mark it
+			// as a boundary node
 			ends[1] = new Coord((int)(y0 + t[1] * dy + d), (int) (x0 + t[1] * dx + d));
+			ends[1].setOnBoundary(true);
+		}
+		else if(!a.insideBoundary(ends[1])) {
+			// point lies on the boundary so it's a boundary node
+			ends[1].setOnBoundary(true);
+		}
+
+		// zero length segments can be created if one point lies on
+		// the boundary and the other is outside of the area
+
+		// try really hard to catch these as they will break the
+		// routing 
+
+		// the check for t[0] >= t[1] should quickly find all the zero
+		// length segments but the extra check to see if the points
+		// are equal could catch the situation where although t[0] and
+		// t[1] differ, the coordinates come out the same for both
+		// points
+
+		if(t[0] >= t[1] || ends[0].equals(ends[1]))
+			return null;
+
+		// these last two tests catch the situation where the new point
+		// on the clipped line is so close to the original point that
+		// they have the same coordinates - in which case we need to use
+		// the original point so it maintains its identity
+
+		if(ends[0] != orig0 && ends[0].equals(orig0)) {
+			// new Coord has same coordinates as original so use the
+			// original Coord and flag it as a boundary node
+			orig0.setOnBoundary(true);
+			ends[0] = orig0;
+		}
+
+		if(ends[1] != orig1 && ends[1].equals(orig1)) {
+			// new Coord has same coordinates as original so use the
+			// original Coord and flag it as a boundary node
+			orig1.setOnBoundary(true);
+			ends[1] = orig1;
+		}
+
 		return ends;
 	}
 
