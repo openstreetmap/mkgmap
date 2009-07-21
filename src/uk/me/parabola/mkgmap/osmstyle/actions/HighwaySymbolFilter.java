@@ -62,7 +62,7 @@ public class HighwaySymbolFilter extends ValueFilter {
 
 		// remove space if there is exactly one
 		int first_space = value.indexOf(" ");
-		if (first_space >= 0 && value.indexOf(" ", first_space) < 0) {
+		if (first_space >= 0 && value.indexOf(" ", first_space + 1) < 0) {
 			value = value.replace(" ", "");
 		}
 
