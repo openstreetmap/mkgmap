@@ -149,19 +149,30 @@ public class Area {
 	}
 
 	public boolean contains(Coord co) {
+		// return true if co is inside the Area (it may touch the
+		// boundary)
 		return co.getLatitude() >= minLat
 				&& co.getLatitude() <= maxLat
 				&& co.getLongitude() >= minLong
 				&& co.getLongitude() <= maxLong;
 	}
 
+	public boolean insideBoundary(Coord co) {
+		// return true if co is inside the Area and doesn't touch the
+		// boundary
+		return co.getLatitude() > minLat
+				&& co.getLatitude() < maxLat
+				&& co.getLongitude() > minLong
+				&& co.getLongitude() < maxLong;
+	}
+
 	public boolean isEmpty() {
 		return minLat >= maxLat || minLong >= maxLong;
 	}
 
-	public boolean allInside(List<Coord> coords) {
+	public boolean allInsideBoundary(List<Coord> coords) {
 		for (Coord co : coords) {
-			if (!contains(co))
+			if (!insideBoundary(co))
 				return false;
 		}
 		return true;
