@@ -94,9 +94,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public boolean equals(Object obj) {
-		if (obj == null)
-			return false;
-		if (obj.getClass() != getClass())
+		if (obj == null || !(obj instanceof Coord))
 			return false;
 		Coord other = (Coord) obj;
 		return latitude == other.latitude && longitude == other.longitude;
