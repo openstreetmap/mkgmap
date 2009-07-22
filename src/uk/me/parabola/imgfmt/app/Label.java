@@ -105,7 +105,7 @@ public class Label implements Comparable {
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;
-		if (o == null || getClass() != o.getClass())
+		if (o == null || !(o instanceof Label))
 			return false;
 
 		return offset == ((Label) o).offset;
