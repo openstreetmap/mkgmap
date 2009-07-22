@@ -625,7 +625,9 @@ public class StyledConverter implements OsmConverter {
 						// a zero length arc - if it does try the
 						// previous point(s)
 						int splitI = p2I - 1;
-						while(splitI > p1I && p1.equals(wayPoints.get(splitI)))
+						while(splitI > p1I &&
+							  (wayPoints.get(splitI).equals(wayPoints.get(splitI + 1)) ||
+							   wayPoints.get(splitI).equals(wayPoints.get(splitI - 1))))
 							--splitI;
 
 						if(splitI == p1I) {
