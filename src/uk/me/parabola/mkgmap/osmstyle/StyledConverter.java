@@ -626,21 +626,32 @@ public class StyledConverter implements OsmConverter {
 						// previous point(s)
 						int splitI = p2I - 1;
 						while(splitI > p1I &&
-							  (wayPoints.get(splitI).equals(wayPoints.get(splitI + 1)) ||
-							   wayPoints.get(splitI).equals(wayPoints.get(splitI - 1))))
+							  !safeToSplitWay(wayPoints, splitI, p1I, p2I)) {
+								log.info("Looped way " + getDebugName(way) + " can't safely split at point[" + splitI + "], trying the preceeding point");
 							--splitI;
+						}
 
 						if(splitI == p1I) {
-							log.warn("Looped way " + getDebugName(way) + " has zero length arc - deleting node[" + p2I + "] to remove it");
-							wayPoints.remove(p2I);
-							// next point to inspect has same index
-							--p2I;
-							// but number of points has reduced
-							--numPointsInWay;
+							log.warn("Splitting looped way " + getDebugName(way) + " would make a zero length arc, so it will have to be pruned");
+							do {
+								log.warn("  Pruning point[" + p2I + "]");
+								wayPoints.remove(p2I);
+								// next point to inspect has same index
+								--p2I;
+								// but number of points has reduced
+								--numPointsInWay;
+
+								// if wayPoints[p2I] is the last point
+								// in the way and it is so close to p1
+								// that a short arc would be produced,
+								// loop back and prune it
+							} while(p2I > p1I &&
+									(p2I + 1) == numPointsInWay &&
+									p1.equals(wayPoints.get(p2I)));
 						}
 						else {
 							// split the way before the second point
-							log.info("Splitting looped way " + getDebugName(way) + " at node[" + splitI + "] - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
+							log.info("Splitting looped way " + getDebugName(way) + " at point[" + splitI + "] - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
 							// recursively check (shortened) head for
 							// more loops
@@ -658,6 +669,42 @@ public class StyledConverter implements OsmConverter {
 				addRoadWithoutLoops(way, gt);
 			}
 		}
+	}
+
+	// safeToSplitWay() returns true if it safe (no short arcs will be
+	// created) to split a way at a given position
+	//
+	// points - the way's points
+	// pos - the position we are testing
+	// floor - lower limit of points to test (inclusive)
+	// ceiling - upper limit of points to test (inclusive)
+
+	boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
+		Coord candidate = points.get(pos);
+		// test points after pos
+		for(int i = pos + 1; i <= ceiling; ++i) {
+			Coord p = points.get(i);
+			if(p.getHighwayCount() > 1) {
+				// point is going to be a node
+				if(candidate.equals(p))
+					return false;
+				// no need to test further
+				break;
+			}
+		}
+		// test points before pos
+		for(int i = pos - 1; i >= floor; --i) {
+			Coord p = points.get(i);
+			if(p.getHighwayCount() > 1) {
+				// point is going to be a node
+				if(candidate.equals(p))
+					return false;
+				// no need to test further
+				break;
+			}
+		}
+
+		return true;
 	}
 
 	String getDebugName(Way way) {
