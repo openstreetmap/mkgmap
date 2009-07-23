@@ -697,7 +697,7 @@ public class StyledConverter implements OsmConverter {
 					extrap.incHighwayCount();
 					points.add(i + 1, extrap);
 					double newD = p.distance(extrap);
-					log.warn("Way " + debugWayName + " contains a segment that is " + (int)d + "m long so I am adding a point to reduce its length to " + (int)newD + "m");
+					log.info("Way " + debugWayName + " contains a segment that is " + (int)d + "m long so I am adding a point to reduce its length to " + (int)newD + "m");
 					d = newD;
 				}
 
@@ -706,7 +706,7 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.warn("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength + "m");
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength + "m");
 				}
 				else {
 					if(p.getHighwayCount() > 1)
@@ -807,15 +807,15 @@ public class StyledConverter implements OsmConverter {
 				    type.equals("motorcycle")) {
 					road.setNoThroughRouting();
 				} else if (type.equals("access")) {
-					log.warn("access=destination only affects routing for cars in " + highwayType + " " + debugWayName);
+					log.info("access=destination only affects routing for cars in " + highwayType + " " + debugWayName);
 					road.setNoThroughRouting();
 				} else {
-					log.warn(type + "=destination ignored in " + highwayType + " " + debugWayName);
+					log.info(type + "=destination ignored in " + highwayType + " " + debugWayName);
 				}
 			} else if (accessTagValue.equalsIgnoreCase("unknown")) {
 				// implicitly allow access
 			} else {
-				log.warn("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
+				log.info("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
 			}
 		}
 
