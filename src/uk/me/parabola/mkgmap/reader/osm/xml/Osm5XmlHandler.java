@@ -275,8 +275,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					currentWay.addTag("oneway", "yes");
 				}
 				String highway = currentWay.getTag("highway");
-				if(routing && (highway != null ||
-							   "ferry".equals(currentWay.getTag("route")))) {
+				if(highway != null ||
+				   "ferry".equals(currentWay.getTag("route"))) {
 					// the way is a highway (or ferry route), so for
 					// each of it's points, increment the number of
 					// highways using that point
