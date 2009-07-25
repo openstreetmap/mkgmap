@@ -1,0 +1,63 @@
+$Id$
+
+README.img for mkgmap
+
+WRITEME
+
+* Format descriptions
+
+See
+
+  http://sourceforge.net/projects/garmin-img
+
+This site also has a program 'imgdecode' which reads a .img file and
+produces a textual representation of it.
+
+** Codepoints
+
+Besides the structure of files, mkgmap needs to know the codepoints to
+represent different kinds of roads and different POIs.  Information
+about these values is stored in the file:
+
+  resources/garmin_feature_list.csv
+
+The files
+
+  resources/map-features.csv
+  resources/osm_garmin_map.csv
+
+are obsolete and used to be used to convert OSM tags to garmin
+codepoints.  Now, style files are used - see README.styles.  They have
+not been modified in a long time and should perhaps be deleted.
+
+mkgmap has support for generating test maps with lines and points of
+possible codepoints.  Instead of using an OSM file as input, use the
+special input name "test-map:all-elements":
+  java -jar mkgmap.jar test-map:all-elements
+
+Set BASE_LAT and BASE_LON in the environment to control the location
+of the test elements.  See
+http://wiki.openstreetmap.org/wiki/Talk:Mkgmap/dev for more
+information.
+
+* TYP files
+
+TODO: links to TYP editors, and explanations of what TYP files are.
+
+* mapid and familyid values
+
+The .img format has an ID for tiles.  The splitter recommends
+63240001.img as the name of the first tile.
+
+Maps also have a family id code (set with --family-id) that denotes a
+map family.  TODO: Explain whether two maps have to differ in
+family-id or just tile numbers to easily coexist within MapSource and
+RoadTrip.
+
+If one would like to have multiple versions of OSM data installed at
+once, the compiled maps must appear distinct to MapSource and
+RoadTrip.
+
+TODO: Is there a registry of these values?  Is there any way for
+different people who want to produce and distribute Garmin-format maps
+to avoid colliding with each other?

@@ -1,0 +1,61 @@
+$Id$
+
+README.INDEX for mkgmap
+
+This file describes the various README files for mkgmap.  Each file is
+named README.name (where name is lower case) and covers a different
+area of mkgmap usage.
+
+The intent is that everything known about mkgmap will be contained in
+the various README files.  Currently, README.INDEX describes a
+proposed organization.  Files are listed in an order intended to be
+helpful to new users.
+
+* wiki, web pages
+
+http://wiki.openstreetmap.org/wiki/Mkgmap
+http://www.mkgmap.org.uk/page/main
+
+* README.overview
+
+This file describes the purpose of the program and contains
+acknowledgements.
+
+* README.invoking
+
+This file describes every command-line option for mkgmap.  It assumes
+that a .jar already exists and that there are no java issues.
+
+* README.splitter
+
+This file describes how to use the splitter with mkgmap.
+
+* README.examples
+
+This file describes typical ways to run mkgmap.  It is intended to
+cover various normal use cases.
+
+* README.styles
+
+This file describes how the style files work.
+
+* README.sizes
+
+This file contains information about how much memory is needed to
+perform various operations.
+
+* README.img
+
+This files contains pointers to descriptions of the garmin formats.
+It contains links to other related programs and documents.
+
+* README.installing
+
+This file explains how to get maps from mkgmap into GPS receivers via
+USB Mass Storage, via MapSource (Windows) and RoadTrip (Mac).
+
+* README.java
+
+This file describes how to deal with java, CLASSPATH, which versions
+work, etc.  It describes how to build mkgmap from source.
+
