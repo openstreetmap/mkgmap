@@ -698,6 +698,12 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(!(co instanceof CoordPOI)) {
 						co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
 						coordMap.put(id, co);
+						// even if this point isn't actually shared by
+						// multiple ways, as it may well become a node
+						// later, we want to consider it a node now so
+						// that it will be processed by the short arc
+						// removal code
+						co.incHighwayCount();
 					}
 					// flag this Way as having a CoordPOI so it will
 					// be processed later
