@@ -101,10 +101,13 @@ public class RoadNetwork {
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);
 
-				if(node1 == node2)
+				if(node1 == node2) {
 					log.error("Road " + road.getRoadDef().getName() + " (OSM id " + road.getRoadDef().getId() + ") contains consecutive identical nodes - routing will be broken");
+					log.error("  " + co.toOSMURL());
+				}
 				else if(arcLength == 0) {
 					log.error("Road " + road.getRoadDef().getName() + " (OSM id " + road.getRoadDef().getId() + ") contains zero length arc");
+					log.error("  " + co.toOSMURL());
 				}
 
 				// Create forward arc from node1 to node2
