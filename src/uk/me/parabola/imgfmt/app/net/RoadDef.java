@@ -218,7 +218,7 @@ public class RoadDef implements Comparable {
 			++numlabels;
 		}
 		else
-			log.warn("discarding extra label", l);
+			log.warn(this.toString() + " discarding extra label (already have " + MAX_LABELS + ")");
 	}
 
 	public int getNumLabels() {
