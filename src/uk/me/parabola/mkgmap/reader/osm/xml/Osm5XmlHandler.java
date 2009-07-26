@@ -87,6 +87,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long nextFakeId = 1;
 
 	private final boolean makeOppositeCycleways;
+	private final boolean makeCycleways;
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean linkPOIsToWays;
@@ -95,7 +96,13 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final String frigRoundabouts;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
-		makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
+		if(props.getProperty("make-all-cycleways", false)) {
+			makeOppositeCycleways = makeCycleways = true;
+		}
+		else {
+			makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
+			makeCycleways = props.getProperty("make-cycleways", false);
+		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
 		routing = props.containsKey("route");
@@ -293,33 +300,76 @@ class Osm5XmlHandler extends DefaultHandler {
 								currentWay.addTag("mkgmap:frig_roundabout", frigRoundabouts);
 						}
 					}
-					if(makeOppositeCycleways && currentWay.isBoolTag("oneway")) {
-						String cyclewayTag = currentWay.getTag("cycleway");
-						if("opposite".equals(cyclewayTag) ||
-						   "opposite_lane".equals(cyclewayTag) ||
-						   "opposite_track".equals(cyclewayTag)) {
-							// what we have here is a oneway street
-							// that allows bicycle traffic in both
-							// directions -- to enable bicyle routing
-							// in the reverse direction, we synthesise
-							// a cycleway that has the same points as
-							// the original way
-							long cycleWayId = currentWay.getId() + CYCLEWAY_ID_OFFSET;
-							Way cycleWay = new Way(cycleWayId);
-							wayMap.put(cycleWayId, cycleWay);
-							// this reverses the direction of the way
-							// but that isn't really necessary as the
-							// cycleway isn't tagged as oneway
-							List<Coord> points = currentWay.getPoints();
-							for(int i = points.size() - 1; i >= 0; --i)
-								cycleWay.addPoint(points.get(i));
-							cycleWay.copyTags(currentWay);
-							cycleWay.addTag("name", currentWay.getTag("name") + " (cycleway)");
-							cycleWay.addTag("oneway", "no");
-							cycleWay.addTag("access", "no");
-							cycleWay.addTag("bicycle", "yes");
-							log.info("Making opposite cycleway '" + cycleWay.getTag("name") + "'");
-						}
+					String cycleway = currentWay.getTag("cycleway");
+					if(makeOppositeCycleways &&
+					   cycleway != null &&
+					   !"cycleway".equals(highway) &&
+					   currentWay.isBoolTag("oneway") &&
+					   ("opposite".equals(cycleway) ||
+						"opposite_lane".equals(cycleway) ||
+						"opposite_track".equals(cycleway))) {
+						// what we have here is a oneway street
+						// that allows bicycle traffic in both
+						// directions -- to enable bicyle routing
+						// in the reverse direction, we synthesise
+						// a cycleway that has the same points as
+						// the original way
+						long cycleWayId = currentWay.getId() + CYCLEWAY_ID_OFFSET;
+						Way cycleWay = new Way(cycleWayId);
+						wayMap.put(cycleWayId, cycleWay);
+						// this reverses the direction of the way but
+						// that isn't really necessary as the cycleway
+						// isn't tagged as oneway
+						List<Coord> points = currentWay.getPoints();
+						for(int i = points.size() - 1; i >= 0; --i)
+							cycleWay.addPoint(points.get(i));
+						cycleWay.copyTags(currentWay);
+						//cycleWay.addTag("highway", "cycleway");
+						String name = currentWay.getTag("name");
+						if(name != null)
+							name += " (cycleway)";
+						else
+							name = "cycleway";
+						cycleWay.addTag("name", name);
+						cycleWay.addTag("oneway", "no");
+						cycleWay.addTag("access", "no");
+						cycleWay.addTag("bicycle", "yes");
+						cycleWay.addTag("foot", "no");
+						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
+					}
+					else if(makeCycleways &&
+							cycleway != null &&
+							!"cycleway".equals(highway) &&
+							("track".equals(cycleway) ||
+							 "lane".equals(cycleway) ||
+							 "both".equals(cycleway) ||
+							 "left".equals(cycleway) ||
+							 "right".equals(cycleway))) {
+						// what we have here is a highway with a
+						// separate track for cycles -- to enable
+						// bicyle routing, we synthesise a cycleway
+						// that has the same points as the original
+						// way
+						long cycleWayId = currentWay.getId() + CYCLEWAY_ID_OFFSET;
+						Way cycleWay = new Way(cycleWayId);
+						wayMap.put(cycleWayId, cycleWay);
+						List<Coord> points = currentWay.getPoints();
+						for(int i = 0; i < points.size(); ++i)
+							cycleWay.addPoint(points.get(i));
+						cycleWay.copyTags(currentWay);
+						if(currentWay.getTag("bicycle") == null)
+							currentWay.addTag("bicycle", "no");
+						//cycleWay.addTag("highway", "cycleway");
+						String name = currentWay.getTag("name");
+						if(name != null)
+							name += " (cycleway)";
+						else
+							name = "cycleway";
+						cycleWay.addTag("name", name);
+						cycleWay.addTag("access", "no");
+						cycleWay.addTag("bicycle", "yes");
+						cycleWay.addTag("foot", "no");
+						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
 					}
 				}
 				if("motorway".equals(highway) ||

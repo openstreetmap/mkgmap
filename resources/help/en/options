@@ -163,10 +163,20 @@ Misc options:
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
 
+--make-all-cycleways
+	Turn on all of the options that make cycleways.
+
 --make-opposite-cycleways
 	Some oneway streets allow bicycle traffic in the reverse
 	direction and this option makes a way with the same points as
 	the original that allows bicycle traffic (in both directions).
+
+--make-cycleways
+	Some streets have a separate cycleway track/lane just for
+	bicycle traffic and this option makes a way with the same
+	points as the original that allows bicycle traffic. Also,
+	bicycle traffic is prohibited from using the original way
+	(unless that way's bicycle access has been defined).
 
 --link-pois-to-ways
 	If this option is enabled, POIs that are situated at a point
