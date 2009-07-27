@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.util.Formatter;
+import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
 
@@ -204,9 +205,9 @@ public class Coord implements Comparable<Coord> {
 
 	public String toOSMURL(int zoom) {
 		return ("http://www.openstreetmap.org/?lat=" +
-			new Formatter().format("%.5f", Utils.toDegrees(latitude)) +
+			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(latitude)) +
 			"&lon=" +
-			new Formatter().format("%.5f", Utils.toDegrees(longitude)) +
+			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(longitude)) +
 			"&zoom=" +
 			zoom);
 	}
