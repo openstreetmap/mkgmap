@@ -29,9 +29,9 @@ junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=2 resol
 junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
 
 # Convert generic path to most specific
-highway=path & bicycle=designated {add highway=cycleway }
-highway=path & horse=designated {add highway=footway }
-highway=path & foot=designated {add highway=footway }
+highway=path & bicycle=designated {set highway=cycleway }
+highway=path & horse=designated {set highway=bridleway }
+highway=path & foot=designated {set highway=footway }
 
 highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
