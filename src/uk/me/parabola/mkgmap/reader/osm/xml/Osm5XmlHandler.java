@@ -284,11 +284,6 @@ class Osm5XmlHandler extends DefaultHandler {
 				String highway = currentWay.getTag("highway");
 				if(highway != null ||
 				   "ferry".equals(currentWay.getTag("route"))) {
-					// the way is a highway (or ferry route), so for
-					// each of it's points, increment the number of
-					// highways using that point
-					for(Coord p : currentWay.getPoints())
-						p.incHighwayCount();
 					// if the way is a roundabout but isn't already
 					// flagged as "oneway", flag it here
 					if("roundabout".equals(currentWay.getTag("junction"))) {
@@ -711,6 +706,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			}
 			currentWay.addPoint(co);
+			co.incHighwayCount(); // nodes (way joins) will have highwayCount > 1
 			if(minimumArcLength != null)
 				nodeIdMap.put(co, id);
 		}
