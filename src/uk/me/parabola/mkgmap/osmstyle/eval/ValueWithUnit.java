@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  */
 public class ValueWithUnit implements Comparable<ValueWithUnit> {
 	private static final Pattern EXTRACT_NUMBER_UNIT
-			= Pattern.compile("[ \t]*([0-9]+)[ \t]*(.*)");
+			= Pattern.compile("[ \t]*(-?[0-9]+)[ \t]*(.*)");
 
 	private final int value;
 	private final String unit;
