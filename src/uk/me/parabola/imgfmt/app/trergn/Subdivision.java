@@ -29,7 +29,7 @@ import uk.me.parabola.log.Logger;
  * The map is divided into areas, depending on the zoom level.  These are
  * known as subdivisions.
  *
- * A subdivision 'belongs' to a zoom level and cannot be intepreted correctly
+ * A subdivision 'belongs' to a zoom level and cannot be interpreted correctly
  * without knowing the <i>bitsPerCoord</i> of the associated zoom level.
  *
  * Subdivisions also form a tree as subdivisions are further divided at
@@ -96,15 +96,16 @@ public class Subdivision {
 		this.zoomLevel = z;
 
 		int shift = getShift();
+		int mask = getMask();
 
 		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
-		int w = (area.getWidth() + (1<<shift)) / 2 >> shift;
+		int w = (area.getWidth()/2 + mask) >> shift;
 		if (w > 0x7fff)
 			w = 0x7fff;
 
-		int h = (area.getHeight() + (1 << shift)) / 2 >> shift;
+		int h = (area.getHeight()/2 + mask) >> shift;
 		if (h > 0xffff)
 			h = 0xffff;
 
@@ -164,6 +165,16 @@ public class Subdivision {
 	 */
 	public final int getShift() {
 		return 24 - zoomLevel.getResolution();
+	}
+
+	/**
+	 * Get the shift mask.  The bits that will be lost due to the resolution
+	 * shift level.
+	 *
+	 * @return A bit mask with the lower <i>shift</i> bits set.
+	 */
+	public int getMask() {
+		return (1 << getShift()) - 1;
 	}
 
 	/**
