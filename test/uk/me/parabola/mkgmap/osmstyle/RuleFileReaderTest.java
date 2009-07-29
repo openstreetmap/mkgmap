@@ -126,6 +126,52 @@ public class RuleFileReaderTest {
 		assertEquals("e is set to f", 1, type.getType());
 	}
 
+	/**
+	 * Test based on email on the mailing list at:
+	 * http://www.mkgmap.org.uk/pipermail/mkgmap-dev/2009q3/003009.html
+	 * See that email for an explanation.
+	 */
+	@Test
+	public void testComparasons() {
+		String str = "highway=null_null & layer<0  [0x01 resolution 10]\n" +
+				"highway=null_null & layer=0  [0x02 resolution 10]\n" +
+				"highway=null_null & layer>0  [0x03 resolution 10]\n" +
+				"highway=null_null & layer='-1'  [0x04 resolution 10]\n" +
+				"highway=null_null & layer='0'  [0x05 resolution 10]\n" +
+				"highway=null_null & layer='1'  [0x06 resolution 10]\n" +
+				"highway=null_null & layer='+1'  [0x07 resolution 10]\n" +
+				"highway=null_null   [0x08 resolution 10]";
+		RuleSet rs = makeRuleSet(str);
+		Rule rule = rs.getMap().get("highway=null_null");
+
+		// 9902
+		Element el = new Way(1);
+		el.addTag("highway", "null_null");
+		el.addTag("layer", "-1");
+
+		GType type = rule.resolveType(el);
+		assertEquals("9902 layer = -1", 0x1, type.getType());
+
+		// 9912
+		el.addTag("layer", "0");
+		type = rule.resolveType(el);
+		assertEquals("9912 layer = 0", 0x2, type.getType());
+
+		// 9922
+		el.deleteTag("layer");
+		type = rule.resolveType(el);
+		assertEquals("9922 no layer tag", 0x8, type.getType());
+
+		// 9932
+		el.addTag("layer", "1");
+		type = rule.resolveType(el);
+		assertEquals("9932 layer is 1", 0x3, type.getType());
+
+		// 9952
+		el.addTag("layer", "+1");
+		assertEquals("9952 layer is +1", 0x3, type.getType());
+	}
+
 	@Test
 	public void testMultipleActions() {
 		String rstr = "highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]";
@@ -135,7 +181,7 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
-		GType type = rule.resolveType(el);
+		rule.resolveType(el);
 		assertEquals("access set", "no", el.getTag("access"));
 		assertEquals("access set", "yes", el.getTag("foot"));
 	}
