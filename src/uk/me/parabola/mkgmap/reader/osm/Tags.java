@@ -74,8 +74,9 @@ public class Tags implements Iterable<String> {
 			// Deal with the case where we are adding a tag during iteration
 			// of the tags.  This is flagged by extra being non null.
 			ExtraEntry emptyEntry = extra;
-			while (emptyEntry.next != null)
+			while (emptyEntry.next != null && !key.equals(emptyEntry.key))
 				emptyEntry = emptyEntry.next;
+			
 			emptyEntry.key = key;
 			emptyEntry.value = value;
 			emptyEntry.next = new ExtraEntry();
