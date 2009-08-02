@@ -76,7 +76,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 				put6(buf, off++, c);
 			} else if (c >= 1 && c <= 6) {
 				// Highway shields
-				put6(buf, off++, 0x2a + c);
+				put6(buf, off++, 0x29 + c);
 			} else {
 				off = shiftedSymbol(buf, off, c);
 			}
