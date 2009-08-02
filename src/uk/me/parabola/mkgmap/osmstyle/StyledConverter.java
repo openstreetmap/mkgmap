@@ -80,7 +80,7 @@ public class StyledConverter implements OsmConverter {
 	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
 	// limit arc lengths to what can currently be handled by RouteArc
-	private final int MAX_ARC_LENGTH = 75000;
+	private final int MAX_ARC_LENGTH = 25000;
 
 	private final int MAX_POINTS_IN_WAY = 200;
 
