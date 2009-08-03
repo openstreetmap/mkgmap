@@ -43,7 +43,7 @@ highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09
 highway=pedestrian & area!=yes {add access = no; add foot = yes} [0x06 road_class=0 road_speed=0 resolution 22]
 highway=primary [0x02 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x08 road_class=3 road_speed=3 resolution 19]
-highway=residential | highway=living_street [0x06 road_class=0 road_speed=2 resolution 21]
+highway=residential | highway=living_street [0x06 road_class=0 road_speed=2 resolution 23]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
 highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=1 resolution 22]

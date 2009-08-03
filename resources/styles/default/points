@@ -37,6 +37,7 @@ amenity=fuel & shop=convenience [ 0x2e06 resolution 19 ]
 amenity=fuel { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f01 resolution 19 ]
 amenity=grave_yard [0x6403 resolution 21]
 amenity=hospital [0x3002 resolution 20]
+amenity=kindergarten [0x2c05 resolution 21]
 amenity=library [0x2c03 resolution 21]
 amenity=nightclub [0x2d02 resolution 21]
 amenity=parking [0x2f0b resolution 21 default_name 'Parking']
@@ -196,6 +197,7 @@ tourism=viewpoint [0x2c04 resolution 20]
 tourism=wine_cellar [0x2c0a resolution 20]
 tourism=zoo [0x2c07 resolution 20]
 
-barrier=bollard {add access = no; add bicycle = yes; add foot = yes} [0x660f resolution 20]
-barrier=cycle_barier {add access = no; add bicycle = yes; add foot = yes} [0x660f resolution 20]
-
+barrier=bollard | barrier=bus_trap
+    {add access = no; add bicycle = yes; add foot = yes} [0x660f resolution 21]
+barrier=block | barrier=cycle_barier | barrier=stile | barrier=kissing_gate
+    {add access = no; add foot = yes} [0x660f resolution 21]

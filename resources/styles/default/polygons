@@ -2,6 +2,7 @@ aeroway=airport [0x07 resolution 18]
 aeroway=aerodrome [0x07 resolution 18]
 aeroway=terminal [0x13 resolution 20]
 
+amenity=kindergarten [0x0a resolution 18]
 amenity=college [0x0a resolution 18]
 amenity=grave_yard [0x1a resolution 18]
 amenity=hospital [0x0b resolution 18]
@@ -9,8 +10,6 @@ amenity=parking [0x05 resolution 21]
 amenity=school [0x0a resolution 20]
 amenity=supermarket [0x08 resolution 21]
 amenity=university [0x0a resolution 18]
-
-building=* [0x13 resolution 20]
 
 landuse=allotments [0x4e resolution 20]
 landuse=basin [0x3f resolution 18]
@@ -59,9 +58,14 @@ natural=wood [0x50 resolution 18]
 
 place=village [0x03 resolution 18]
 
+shop=* [0x08 resolution 20]
+
 # squares and plazas
 highway=pedestrian & area=yes [0x17 resolution 20]
 # other highways that have area=yes set must be parking lots
 highway=* & area=yes [0x05 resolution 21]
 
 waterway=riverbank [0x46 resolution 20]
+
+# building tag should be last
+building=* [0x13 resolution 24]
