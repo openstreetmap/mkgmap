@@ -179,13 +179,18 @@ public class MapMaker implements MapProcessor {
 				
 				// check if there is not already a poi in that shape 
 							
-				if(poiMap.findPointInShape(shape, pointType, shapeName) == null)
-				{
+				if(poiMap.findPointInShape(shape, pointType, shapeName) == null) {
 					MapPoint newPoint = new MapPoint();
+					
 					newPoint.setName(shapeName);
 					newPoint.setType(pointType);
+
+					copyAddressInformation(shape, newPoint);
+
 					newPoint.setLocation(shape.getLocation()); // TODO use centriod
+
 					src.getPoints().add(newPoint);
+
 					log.info("created POI ", shapeName, "from shape");
 				}
 			}
@@ -193,13 +198,39 @@ public class MapMaker implements MapProcessor {
 
 	}
 
-	
+	/**
+	 * Copy the address information from a shape to a POI.  Used when creating
+	 * POIs from areas.
+	 *
+	 * @param shape The shape which contains the address information.
+	 * @param newPoint The new point that will receive the address information.
+	 */
+	private void copyAddressInformation(MapShape shape, MapPoint newPoint) {
+		if (shape.getStreet() != null)
+			newPoint.setStreet(shape.getStreet());
+		if (shape.getCity() != null)
+			newPoint.setCity(shape.getCity());
+		if (shape.getZip() != null)
+			newPoint.setZip(shape.getZip());
+		if (shape.getCountry() != null)
+			newPoint.setCountry(shape.getCountry());
+		if (shape.getRegion() != null)
+			newPoint.setRegion(shape.getRegion());
+		if (shape.getPhone() != null)
+			newPoint.setPhone(shape.getPhone());
+		if (shape.getHouseNumber() != null)
+			newPoint.setHouseNumber(shape.getHouseNumber());
+		if (shape.getIsIn() != null)
+			newPoint.setIsIn(shape.getIsIn());
+	}
+
+
 	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
 		String rnp = args.get("road-name-pois", null);
 		// are road name POIS wanted?
 		if(rnp != null) {
-			int rnpt = 0x640a; // Garmin type 'Locale'
 			rnp = rnp.toUpperCase();
+			int rnpt = 0x640a; // Garmin type 'Locale'
 			if(rnp.length() > 0) {
 				// override type code
 				rnpt = Integer.decode(rnp);
@@ -231,7 +262,7 @@ public class MapMaker implements MapProcessor {
 				MapRoad r = lr.get(0);
 				String key = r.getName();
 				List<Coord> points = r.getPoints();
-				if(points.size() > 0)
+				if(!points.isEmpty())
 					key += "_" + points.get(0);
 				rnpRoads.add(new Sortable<String, MapRoad>(key, r));
 			}
@@ -275,7 +306,7 @@ public class MapMaker implements MapProcessor {
 						MapRoad ri = allRoadsWithSameName.get(i);
 						MapRoad rj = allRoadsWithSameName.get(j);
 						if(roadsAreJoined(ri, rj)) {
-							// yes, the're joined so put both in a group
+							// yes, they are joined so put both in a group
 							// and associate the group with each road
 							roadWasJoined = true;
 							List<MapRoad> groupi = roadGroupMap.get(ri);
