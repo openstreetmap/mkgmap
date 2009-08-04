@@ -1,8 +1,28 @@
-Options:
+General options:
 
 --help=topic
-	Print help on the given topic.  The topic is omitted then a
+	Print help on the given topic.  If the topic is omitted then a
 	list of all the help topics is printed instead.
+
+--version 
+	Output program version.
+
+--enable-assertions
+	Turn on assertions in the code.  This will make the program
+	more likely to abort and less likely to do the wrong thing.
+	Use of this option is recommended.
+
+filename
+--input-file=filename
+	Read input data from the give file.  This option (or just a
+	filename) may be given more than once.
+
+--gmapsupp
+	Write a gmapsupp.img file that can be uploaded to a Garmin or
+	placed in "/Garmin" in a microSD card (such as by mounting the
+	device in USB mass storage mode).
+	TODO: explain if this is in addition to or instead of the
+	per-input files.
 
 -c filename
 	The given file is opened and each line is an option setting of
@@ -11,8 +31,8 @@ Options:
 
 -n name
 --mapname=name
-	Change the name of the map. Garmin maps are named by 8 digit
-	numbers.  The default is 63240001. It is best to change the
+	Set the name of the map. Garmin maps are named by 8 digit
+	numbers.  The default is 63240001.  It is best to use a different
 	name if you are going to be making a map for others to use so
 	that it is unique and does not clash with others.
 
@@ -35,7 +55,7 @@ Options:
 
 Label options:
 
---latin1
+--charset=name
 	This option allows the use of non-ascii characters in street
 	names. It is hardware dependant what is actually supported on
 	a particular device. Some devices can only do ascii characters
@@ -45,11 +65,15 @@ Label options:
 	however and by default (without this option) it will transliterate
 	characters to unaccented ascii characters where possible.
 
---charset=''name''
-	Use the specified character set.
+--latin1
+	This is equivalent to --charset=latin1.
 
---code-page=''number''
+--code-page=number
+	TODO: is one really supposed to give two single quotes?
 	Write the given code page number to the header of the LBL file. 
+	Some examples on the mailing list use --code-page=1252.
+	TODO: explain what this does, and why one would or would not want
+	to do it.
 
 --lower-case
 	Allow labels to contain lower case letters.  Note that this
@@ -58,13 +82,22 @@ Label options:
 Style options:
 
 --style=name
-	Specify a different style name, rather than the default.
+	Specify a different style name, rather than the default value
+	(which is the word default).
 
 --style-file=file
 	Specify an external file to obtain the style from.  "file" can
-	be a directory or a zip file containing the style.  It can
-	also be a URL.  If there is more than one style in the zip
-	file, then the --style argument can be used to select.
+	be a directory containing files such as info, lines, options
+	(see resources/styles/default for an example).  The directory
+	path must be absolute or relative to the current working
+	directory when mkgmap is invoked.
+
+	The file can be a zip file instead of a directory.  TODO-check
+	this: In this case, the zip file should contain directories
+	with styles, and the style 'default' will be used, unless the
+	--style option is also given to select a different one.
+
+	The argument can also be a URL, in which case TODO.
 
 	For backward compatibility, you can also supply a
 	map-features.csv file here.  See the customisation help.
@@ -84,54 +117,58 @@ Style options:
 	will be used.  eg. --name-tag-list=name:en,int_name,name
 
 --map-features=file
-	Outdated option, use the --style-file option now.
+	This option is obsolete; use the --style-file option instead.
 
 Product description options:
 
 --family-id
 	This is an integer that identifies a family of products.
 
+--family-name
+	TODO: describe this
+
 --product-id
 	This is an integer that identifies a product within a family.
 	It is often just 1.
 
 --series-name
---family-name
 --area-name
+
 --overview-mapname=name
-	If --tdbfile is enabled, this gives the name of the overview .img and .tdb files.
+	If --tdbfile is enabled, this gives the name of the overview
+	.img and .tdb files.
 	The default map name is OSM_map.
 	
 --overview-mapnumber=8 digit number
-	If --tdbfile is enabled, this gives the internal 8 digit number used in overview map and
-	tdb file. The default number is 63240000.
+	If --tdbfile is enabled, this gives the internal 8 digit
+	number used in the overview map and tdb file.  The default
+	number is 63240000.
 	
 
-Misc options:
+Miscellaneous options:
+
 --max-jobs[=number]
 	When number is specified, allow that number of maps to be
 	processed concurrently. If number is not specified, the limit
 	is set equal to the number of CPU cores. If this option is not
-	given at all, the limit is 1 (i.e. the maps are processed
+	given at all, the limit is 1 (i.e., the maps are processed
 	sequentially).
 
 --keep-going
 	Don't quit whole application if an exception occurs while
 	processing a job - continue to process the other jobs.
 
---block-size=''number''
+--block-size=number
 	Changes the block size that is used in the generated map.
-	There is no general reason why you would want to do this.
+	TODO: explain what this meant
+	Use of this option is not recommended.
 
 --net
-	Output file that supports "lock to road" option.
+	Create maps that supports the "lock to road" option.
 
 --route
-	Experimental: Output Routing Information (implies --net)
-
---gmapsupp
-	Write a gmapsupp.img file that can be uploaded to a garmin in
-	usb mode.
+	Experimental: Create maps that support routing.  This implies --net
+	(so that --net need not be given if --route is given).
 
 --ignore-maxspeeds
 	When reading OSM files, ignore any "maxspeed" tags.
@@ -156,7 +193,8 @@ Misc options:
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
-	can be specified with this option.
+	can be specified with this option.  This is a workaround for not
+	being able to search for roads.
 	
 --add-pois-to-areas
 	Generate a POI for each area. The POIs are created after the
@@ -230,7 +268,3 @@ Misc options:
 		
 	3	Enables debug output about suspicious relations that
 		might cause wrong country region info
-
---version 
-	Output program version.
-
