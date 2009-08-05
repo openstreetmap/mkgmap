@@ -7,11 +7,6 @@ General options:
 --version 
 	Output program version.
 
---enable-assertions
-	Turn on assertions in the code.  This will make the program
-	more likely to abort and less likely to do the wrong thing.
-	Use of this option is recommended.
-
 filename
 --input-file=filename
 	Read input data from the give file.  This option (or just a
