@@ -296,6 +296,10 @@ public class RuleFileReaderTest {
 		assertNull("no match for yello", type);
 	}
 
+	/**
+	 * This simply is to make sure that actions that affect their own
+	 * conditions do not hang. There are no defined semantics for this.
+	 */
 	@Test
 	public void testSelfReference() {
 		RuleSet rs = makeRuleSet("iii=* { set iii=no }");
@@ -304,6 +308,46 @@ public class RuleFileReaderTest {
 		el.addTag("foot", "yes");
 		el.addTag("iii", "xyz");
 		rs.resolveType(el);
+	}
+
+	/**
+	 * A moderately complex set of conditions and substitutions.
+	 */
+	@Test
+	public void testMtbRules() {
+		RuleSet rs = makeRuleSet(
+				"(mtb:scale=*  | mtb:scale:uphill=*) & route=mtb" +
+						"{ name 'mtbrt${mtb:scale|def:.}${mtb:scale:uphill|def:.} ${name}' " +
+						"       | 'mtbrt${mtb:scale|def:.}${mtb:scale:uphill|def:.}' }" +
+						" (mtb:scale=* | mtb:scale:uphill=*) & route!=mtb " +
+						"{ name 'mtb${mtb:scale|def:.}${mtb:scale:uphill|def:.} ${name}' " +
+						"       | 'mtb${mtb:scale|def:.}${mtb:scale:uphill|def:.}' }"
+				
+				);
+
+		Way el = new Way(1);
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale", "2");
+		rs.resolveType(el);
+		assertEquals("mtbrt2.", el.getName());
+
+		el = new Way(1);
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtbrt.3", el.getName());
+
+		el = new Way(1);
+		el.addTag("name", "myname");
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtbrt.3 myname", el.getName());
+
+		el = new Way(1);
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtb.3", el.getName());
 	}
 
 	/**
