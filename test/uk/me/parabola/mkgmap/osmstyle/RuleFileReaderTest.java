@@ -350,6 +350,27 @@ public class RuleFileReaderTest {
 		assertEquals("mtb.3", el.getName());
 	}
 
+	@Test
+	public void testTagAppend() throws Exception {
+		RuleSet rs = makeRuleSet(
+				"highway=*{set fullname='${ref}';" +
+						"set fullname='${fullname} ${name}';" +
+						"set fullname='${fullname} ${name1}';" +
+						"set fullname='${fullname} ${name2}';" +
+						"name '${fullname}'}"
+		);
+		
+		Way el = new Way(1);
+		el.addTag("highway", "road");
+		el.addTag("ref", "A1");
+		el.addTag("name", "long lane");
+		el.addTag("name1", "foo");
+		el.addTag("name2", "bar");
+
+		rs.resolveType(el);
+		assertEquals("appended name", "A1 long lane foo bar", el.getName());
+	}
+
 	/**
 	 * Create a rule set out of a string.  The string is processed
 	 * as if it were in a file and the levels spec had been set.

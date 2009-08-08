@@ -63,9 +63,18 @@ public class Tags implements Iterable<String> {
 	}
 
 	public String get(Object key) {
+		// If we are iterating over this tag set then we may have extra
+		// entries.  These have to be searched first.
+		if (extra != null) {
+			for (ExtraEntry ent = extra; ent.next != null; ent = ent.next)
+					if (ent.key.equals(key))
+						return ent.value;
+		}
+
 		Integer ind = keyPos((String) key);
 		if (ind == null)
 			return null;
+
 		return values[ind];
 	}
 
