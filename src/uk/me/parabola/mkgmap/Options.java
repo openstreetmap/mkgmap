@@ -104,13 +104,15 @@ public class Options {
 				if (punc.equals(":") || punc.equals("=")) {
 					val = ts.readLine();
 				} else if (punc.equals("{")) {
+					ts.skipSpace();
 					val = ts.readUntil(TokType.SYMBOL, "}");
+					ts.nextToken();  // discard the closing brace
 				} else {
 					ts.skipLine();
 					continue;
 				}
 				proc.processOption(new Option(key, val));
-			} else if (tok.getType() == TokType.TEXT){
+			} else if (key != null){
 				proc.processOption(new Option(key, ""));
 			} else {
 				ts.skipLine();
