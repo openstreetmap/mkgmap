@@ -20,9 +20,12 @@ filename
 	per-input files.
 
 -c filename
+--read-config=filename
 	The given file is opened and each line is an option setting of
-	the form option=value, just like on the command line except
-	that there is no leading '--'.
+	the form option=value, any option that could be used on the command
+	line can be used, however you omit the leading '--'.  The short
+	option names with a single '-' cannot be used, simply use the
+	long name instead.
 
 -n name
 --mapname=name
