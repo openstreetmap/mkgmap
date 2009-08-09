@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 
 /**
@@ -54,7 +53,7 @@ public class MultiPolygonRelation extends Relation {
 				if (w != null) {
 					List<Coord> pts = w.getPoints();
 					int[] insert = findCpa(outer.getPoints(), pts);
-					if (insert[0] > 0)
+					if (insert[0] >= 0)
 						insertPoints(pts, insert[0], insert[1]);				
 					pts.clear();
 				}
