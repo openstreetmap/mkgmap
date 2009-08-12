@@ -123,7 +123,13 @@ Product description options:
 	This is an integer that identifies a family of products.
 
 --family-name
-	TODO: describe this
+	If you build several maps, this option describes the
+	family name of all of your maps. Garmin will display this
+	in the map selection screen.
+	Example: --family-name="OpenStreetmap mkgmap XL 2019"
+	TODO: at least the "-" character seems to have a strange
+	effect on the family name; latin-alphabet and digits seem
+	safe, but other characters should be checked.
 
 --product-id
 	This is an integer that identifies a product within a family.
@@ -134,8 +140,11 @@ Product description options:
 
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files.
-	The default map name is OSM_map.
+	.img and .tdb files. The default map name is OSM_map.
+	On Garmin maps, this option describes the area of your
+	map, for example "Germany_and_Belgium".
+	TODO: underscores seem to render as spaces, not sure if this
+	is mandatory.
 	
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
