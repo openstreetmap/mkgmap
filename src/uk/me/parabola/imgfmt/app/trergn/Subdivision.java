@@ -101,11 +101,11 @@ public class Subdivision {
 		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
-		int w = (area.getWidth()/2 + mask) >> shift;
+		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
 		if (w > 0x7fff)
 			w = 0x7fff;
 
-		int h = (area.getHeight()/2 + mask) >> shift;
+		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
 		if (h > 0xffff)
 			h = 0xffff;
 
@@ -413,5 +413,25 @@ public class Subdivision {
 		lastMapElement = MAP_SHAPE;
 
 		rgnFile.setPolygonPtr();
+	}
+
+	/**
+	 * Convert an absolute Lat to a local, shifted value
+	 */
+	public int roundLatToLocalShifted(int absval) {
+		int shift = getShift();
+		int val = absval - getLatitude();
+		val += ((1 << shift) / 2);
+		return (val >> shift);
+	}
+
+	/**
+	 * Convert an absolute Lon to a local, shifted value
+	 */
+	public int roundLonToLocalShifted(int absval) {
+		int shift = getShift();
+		int val = absval - getLongitude();
+		val += ((1 << shift) / 2);
+		return (val >> shift);
 	}
 }

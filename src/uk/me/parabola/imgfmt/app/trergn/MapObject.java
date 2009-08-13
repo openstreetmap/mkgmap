@@ -91,10 +91,8 @@ public abstract class MapObject {
 	 */
 	public void setLatitude(int lat) {
 		Subdivision div = getSubdiv();
-		int shift = div.getShift();
 
-		int centerLat = div.getLatitude() >> shift;
-		int diff = ((lat>>shift) - centerLat);
+		int diff = div.roundLatToLocalShifted(lat);
 
 		setDeltaLat(diff);
 	}
@@ -107,15 +105,13 @@ public abstract class MapObject {
 	 */
 	public void setLongitude(int lon) {
 		Subdivision div = getSubdiv();
-		int shift = div.getShift();
 
-		int centerLon = div.getLongitude() >> shift;
-		int diff = ((lon>> shift) - centerLon);
+		int diff = div.roundLonToLocalShifted(lon);
 
 		setDeltaLong(diff);
 	}
 	
-    // directly setting shouldn't be done
+	// directly setting shouldn't be done
 	private void setDeltaLat(int deltaLat) {
 		this.deltaLat = deltaLat;
 	}
