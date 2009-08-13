@@ -140,11 +140,7 @@ Product description options:
 
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files. The default map name is OSM_map.
-	On Garmin maps, this option describes the area of your
-	map, for example "Germany_and_Belgium".
-	TODO: underscores seem to render as spaces, not sure if this
-	is mandatory.
+	.img and .tdb files. The default map name is OSM_map
 	
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
