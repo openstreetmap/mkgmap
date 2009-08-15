@@ -53,7 +53,7 @@ public class MultiPolygonRelation extends Relation {
 				if (w != null) {
 					List<Coord> pts = w.getPoints();
 					int[] insert = findCpa(outer.getPoints(), pts);
-					if (insert[0] >= 0)
+					if (insert[0] >= 0 && insert[1] >= 0)
 						insertPoints(pts, insert[0], insert[1]);				
 					pts.clear();
 				}
