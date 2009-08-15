@@ -86,6 +86,7 @@ public abstract class Element implements Iterable<String> {
 	 * element.
 	 */
 	public void copyTags(Element other) {
+		if (other.tags != null)
 		tags = other.tags.copy();
 	}
 
@@ -96,5 +97,9 @@ public abstract class Element implements Iterable<String> {
 	public void setName(String name) {
 		if (this.name == null)
 			this.name = name;
+	}
+
+	public Tags getTags() {
+		return tags;
 	}
 }

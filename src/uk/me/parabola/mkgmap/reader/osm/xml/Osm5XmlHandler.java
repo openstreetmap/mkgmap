@@ -399,7 +399,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
 			if ("multipolygon".equals(type))
-				currentRelation = new MultiPolygonRelation(currentRelation);
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
 			else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)

@@ -22,8 +22,9 @@ public class MultiPolygonRelation extends Relation {
 	 * this because the type of the relation is not known until after all
 	 * its tags are read in.
 	 * @param other The relation to base this one on.
+	 * @param wayMap Map of all ways.
 	 */
-	public MultiPolygonRelation(Relation other) {
+	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap) {
 		setId(other.getId());
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
 			addElement(pairs.getValue(), pairs.getKey());
@@ -32,8 +33,16 @@ public class MultiPolygonRelation extends Relation {
 
 			if (value != null && pairs.getKey() instanceof Way) {
 				Way way = (Way) pairs.getKey();
-				if (value.equals("outer"))
-					outer = way;
+				if (value.equals("outer")){
+					// duplicate outer way and remove tags for cascaded multipolygons
+					outer = new Way(-way.getId());
+					outer.copyTags(way);
+					for(Coord point: way.getPoints())
+						outer.addPoint(point);
+					wayMap.put(outer.getId(), outer);
+					if (way.getTags() != null)
+						way.getTags().removeAll();
+				}
 				else if (value.equals("inner"))
 					inners.add(way);
 			}
@@ -49,13 +58,23 @@ public class MultiPolygonRelation extends Relation {
 	public void processElements() {
 		if (outer != null)
 		{   
+
 			for (Way w: inners) {	
 				if (w != null) {
-					List<Coord> pts = w.getPoints();
-					int[] insert = findCpa(outer.getPoints(), pts);
+					int[] insert = findCpa(outer.getPoints(), w.getPoints());
 					if (insert[0] >= 0 && insert[1] >= 0)
-						insertPoints(pts, insert[0], insert[1]);				
-					pts.clear();
+						insertPoints(w, insert[0], insert[1]);
+					
+					// remove tags from inner way that are available in the outer way
+					if (outer.getTags() != null){
+						for (Map.Entry<String, String> mapTags: outer.getTags().getKeyValues().entrySet()){
+							String key = mapTags.getKey();
+							String value = mapTags.getValue();
+							if (w.getTag(key) != null)
+								if (w.getTag(key).equals(value))
+									w.deleteTag(key);
+						}
+					}
 				}
 			}
 		}
@@ -63,22 +82,39 @@ public class MultiPolygonRelation extends Relation {
 	
 	/**
 	 * Insert Coordinates into the outer way.
-	 * @param inList List of Coordinates to be inserted
+	 * @param way Way to be inserted
 	 * @param out Coordinates will be inserted after this point in the outer way.
 	 * @param in Points will be inserted starting at this index, 
 	 *    then from element 0 to (including) this element;
 	 */
-	private void insertPoints(List<Coord> inList, int out, int in){
+	private void insertPoints(Way way, int out, int in){
 		List<Coord> outList = outer.getPoints();
+		List<Coord> inList = way.getPoints();
 		int index = out+1;
 		for (int i = in; i < inList.size(); i++)
 			outList.add(index++, inList.get(i));
-		for (int i = 0; i <= in; i++)
+		for (int i = 0; i < in; i++)
 			outList.add(index++, inList.get(i));
-
-		//with this line commented we get triangles, when uncommented some areas disappear
-		// at least in mapsource, on device itself looks OK.
-		outList.add(index,outList.get(out));  
+		
+		if (outer.getPoints().size() < 32){
+			outList.add(index++, inList.get(in));
+			outList.add(index, outList.get(out));
+		}
+		else{
+			// we shift the nodes to avoid duplicate nodes (large areas only)
+			int oLat = outList.get(out).getLatitude();
+			int oLon = outList.get(out).getLongitude();
+			int iLat = inList.get(in).getLatitude();
+			int iLon = inList.get(in).getLongitude();
+			if ((oLat - iLat) > (oLon - iLon)){
+				outList.add(index++, new Coord(iLat-1, iLon));
+				outList.add(index, new Coord(oLat-1, oLon));
+				}
+			else{
+				outList.add(index++, new Coord(iLat, iLon-1));
+				outList.add(index, new Coord(oLat, oLon-1));
+			}
+		}
 	}
 	
 	/**

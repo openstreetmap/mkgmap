@@ -16,7 +16,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Store the tags that belong to an Element.
@@ -120,7 +122,7 @@ public class Tags implements Iterable<String> {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Make a deep copy of this object.
 	 * @return A copy of this object.
@@ -271,4 +273,22 @@ public class Tags implements Iterable<String> {
 					put(e.key, e.value);
 		}
 	}
+	
+	public void removeAll() {
+		for (int i = 0; i < capacity; i++){
+			keys[i] = null;
+			values[i] = null;
+		}
+		size = 0;
+	}
+
+	public Map<String, String> getKeyValues() {
+		Map<String, String> tagMap = new HashMap<String, String>();
+		for (int i = 0; i < capacity; i++)
+			if (keys[i] != null && values[i] != null)
+				tagMap.put(keys[i], values[i]);
+		return tagMap;
+	}
+
+
 }
