@@ -397,7 +397,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 * @param s The original string that may contain codes.
 	 * @return A string with the escape codes replaced by the single character.
 	 */
-	private String unescape(String s) {
+	public static String unescape(String s) {
 		int ind = s.indexOf("~[");
 		if (ind < 0)
 			return s;
