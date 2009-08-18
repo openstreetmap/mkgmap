@@ -1,7 +1,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +15,9 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MultiPolygonRelation extends Relation {
 	private Way outer;
-	private final Collection<Way> inners = new ArrayList<Way>();
+	private List<Way> outers = new ArrayList<Way>();
+	private List<Way> inners = new ArrayList<Way>();
+	private Map<Long, Way> myWayMap;
 
 	/**
 	 * Create an instance based on an exsiting relation.  We need to do
@@ -25,6 +27,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayMap Map of all ways.
 	 */
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap) {
+		myWayMap = wayMap;
 		setId(other.getId());
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
 			addElement(pairs.getValue(), pairs.getKey());
@@ -34,17 +37,11 @@ public class MultiPolygonRelation extends Relation {
 			if (value != null && pairs.getKey() instanceof Way) {
 				Way way = (Way) pairs.getKey();
 				if (value.equals("outer")){
-					// duplicate outer way and remove tags for cascaded multipolygons
-					outer = new Way(-way.getId());
-					outer.copyTags(way);
-					for(Coord point: way.getPoints())
-						outer.addPoint(point);
-					wayMap.put(outer.getId(), outer);
-					if (way.getTags() != null)
-						way.getTags().removeAll();
+					outers.add(way);
 				}
-				else if (value.equals("inner"))
+				else if (value.equals("inner")){
 					inners.add(way);
+				}
 			}
 		}
 
@@ -53,26 +50,61 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/** Process the ways in this relation.
+	 * Joins way with the role "outer"
 	 * Adds ways with the role "inner" to the way with the role "outer"
 	 */
 	public void processElements() {
-		if (outer != null)
-		{   
 
+		if (outers != null)
+		{
+			// copy first outer way
+			Iterator<Way> it = outers.iterator();
+			if (it.hasNext()){
+				// duplicate outer way and remove tags for cascaded multipolygons
+				Way tempWay = it.next();
+				outer = new Way(-tempWay.getId());
+				outer.copyTags(tempWay);
+				for(Coord point: tempWay.getPoints()){
+					outer.addPoint(point);
+				}
+				myWayMap.put(outer.getId(), outer);
+				if (tempWay.getTags() != null){
+					tempWay.getTags().removeAll();
+				}
+				it.remove();
+			}
+			
+			// if we have more than one outer way, we join them if they are parts of a long way
+			it = outers.iterator();
+			while (it.hasNext()){
+				Way tempWay = it.next();
+				if (tempWay.getPoints().get(0) == outer.getPoints().get(outer.getPoints().size()-1)){
+					for(Coord point: tempWay.getPoints()){
+						outer.addPoint(point);
+					}
+					if (tempWay.getTags() != null){
+						tempWay.getTags().removeAll();
+					}
+					it.remove();
+					it = outers.iterator();
+				}
+			}
+		
 			for (Way w: inners) {	
-				if (w != null) {
+				if (w != null && outer!= null) {
 					int[] insert = findCpa(outer.getPoints(), w.getPoints());
-					if (insert[0] >= 0 && insert[1] >= 0)
-						insertPoints(w, insert[0], insert[1]);
-					
+					insertPoints(w, insert[0], insert[1]);
+
 					// remove tags from inner way that are available in the outer way
 					if (outer.getTags() != null){
 						for (Map.Entry<String, String> mapTags: outer.getTags().getKeyValues().entrySet()){
 							String key = mapTags.getKey();
 							String value = mapTags.getValue();
-							if (w.getTag(key) != null)
-								if (w.getTag(key).equals(value))
+							if (w.getTag(key) != null){
+								if (w.getTag(key).equals(value)){
 									w.deleteTag(key);
+								}
+							}
 						}
 					}
 				}
@@ -91,10 +123,12 @@ public class MultiPolygonRelation extends Relation {
 		List<Coord> outList = outer.getPoints();
 		List<Coord> inList = way.getPoints();
 		int index = out+1;
-		for (int i = in; i < inList.size(); i++)
+		for (int i = in; i < inList.size(); i++){
 			outList.add(index++, inList.get(i));
-		for (int i = 0; i < in; i++)
+		}
+		for (int i = 0; i < in; i++){
 			outList.add(index++, inList.get(i));
+		}
 		
 		if (outer.getPoints().size() < 32){
 			outList.add(index++, inList.get(in));
@@ -106,13 +140,15 @@ public class MultiPolygonRelation extends Relation {
 			int oLon = outList.get(out).getLongitude();
 			int iLat = inList.get(in).getLatitude();
 			int iLon = inList.get(in).getLongitude();
-			if ((oLat - iLat) > (oLon - iLon)){
-				outList.add(index++, new Coord(iLat-1, iLon));
-				outList.add(index, new Coord(oLat-1, oLon));
+			if (Math.abs(oLat - iLat) > Math.abs(oLon - iLon)){
+				int delta = (oLon > iLon)? -1 : 1;
+				outList.add(index++, new Coord(iLat + delta, iLon));
+				outList.add(index, new Coord(oLat + delta, oLon));
 				}
 			else{
-				outList.add(index++, new Coord(iLat, iLon-1));
-				outList.add(index, new Coord(oLat, oLon-1));
+				int delta = (oLat > iLat)? 1 : -1;
+				outList.add(index++, new Coord(iLat, iLon + delta));
+				outList.add(index, new Coord(oLat, oLon + delta));
 			}
 		}
 	}
