@@ -389,6 +389,12 @@ public class MapArea implements MapDataSource {
 	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
 	private void addSize(MapElement p, int[] sizes, int kind) {
+
+		if(p.hasExtendedType()) {
+			// not applicable for elements with extended types
+			return;
+		}
+
 		int res = p.getMinResolution();
 		if (res > MAX_RESOLUTION)
 			return;

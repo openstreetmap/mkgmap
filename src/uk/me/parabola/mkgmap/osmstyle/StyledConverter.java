@@ -257,7 +257,8 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if (foundType.getFeatureKind() == GType.POLYLINE) {
-		    if(foundType.isRoad())
+		    if(foundType.isRoad() &&
+			   !MapElement.hasExtendedType(foundType.getType()))
 				addRoad(way, foundType);
 		    else
 				addLine(way, foundType);

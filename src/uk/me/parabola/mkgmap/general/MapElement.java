@@ -160,6 +160,14 @@ public abstract class MapElement {
 		this.type = type;
 	}
 
+	public boolean hasExtendedType() {
+		return hasExtendedType(type);
+	}
+
+	public final static boolean hasExtendedType(int type) {
+		return type >= 0x010000;
+	}
+
 	/**
 	 * Get the 'location' of the element.  This is the mid point of the bounding
 	 * box for the element.  For a point, this will be the coordinates of the

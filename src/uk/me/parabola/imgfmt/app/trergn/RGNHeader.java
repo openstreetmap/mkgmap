@@ -28,16 +28,19 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Steve Ratcliffe
  */
 public class RGNHeader extends CommonHeader {
-	private static final int DEF_LEN = 29;
-	//private static final int DEF_LEN = 125;
+	//private static final int DEF_LEN = 29;
+	private static final int DEF_LEN = 125;
 	public static final int HEADER_LEN = DEF_LEN;
 
 	private int dataOffset;
 	private int dataSize;
 	
-	private final Section rgn2 = new Section();
-	private final Section rgn3 = new Section(rgn2);
-	private final Section rgn4 = new Section(rgn3);
+	private int extTypeAreasOffset;
+	private int extTypeAreasSize;
+	private int extTypeLinesOffset;
+	private int extTypeLinesSize;
+	private int extTypePointsOffset;
+	private int extTypePointsSize;
 
 	public RGNHeader() {
 		super(HEADER_LEN, "GARMIN RGN");
@@ -66,21 +69,24 @@ public class RGNHeader extends CommonHeader {
 		writer.putInt(dataOffset);
         writer.putInt(getDataSize());
 		if (getHeaderLength() > 29) {
-			rgn2.setPosition(dataOffset + dataSize);
-			rgn2.writeSectionInfo(writer);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putInt(0);
-			rgn3.writeSectionInfo(writer);
+			writer.putInt(extTypeAreasOffset);
+			writer.putInt(extTypeAreasSize);
 			writer.putInt(0);
 			writer.putInt(0);
 			writer.putInt(0);
 			writer.putInt(0);
 			writer.putInt(0);
 
-			rgn4.writeSectionInfo(writer);
+			writer.putInt(extTypeLinesOffset);
+			writer.putInt(extTypeLinesSize);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+
+			writer.putInt(extTypePointsOffset);
+			writer.putInt(extTypePointsSize);
 			writer.putInt(0);
 			writer.putInt(0);
 			writer.putInt(0);
@@ -98,5 +104,20 @@ public class RGNHeader extends CommonHeader {
 
 	public void setDataSize(int dataSize) {
 		this.dataSize = dataSize;
+	}
+
+	public void setExtTypeAreasInfo(int offset, int size) {
+		extTypeAreasOffset = offset;
+		extTypeAreasSize = size;
+	}
+
+	public void setExtTypeLinesInfo(int offset, int size) {
+		extTypeLinesOffset = offset;
+		extTypeLinesSize = size;
+	}
+
+	public void setExtTypePointsInfo(int offset, int size) {
+		extTypePointsOffset = offset;
+		extTypePointsSize = size;
 	}
 }

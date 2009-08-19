@@ -133,7 +133,7 @@ public class TREFile extends ImgFile implements Configurable {
 	 * the header needs to be written after the body (or obviously we could
 	 * make two passes).
 	 */
-	private void writeBody() {
+	private void writeBody(boolean includeExtendedTypeData) {
 		writeMapLevels();
 
 		writeSubdivs();
@@ -141,16 +141,10 @@ public class TREFile extends ImgFile implements Configurable {
 		writeCopyrights();
 
 		writeOverviews();
-	}
 
-	private void writeTre7() {
-		header.setTre7Pos(position());
-		byte[] tre7buf = new byte[13];
-		Arrays.fill(tre7buf, (byte) 0);
-		for (int i = 0; i < 4; i++) {
-
-			getWriter().put(tre7buf);
-			header.incTre7();
+		if(includeExtendedTypeData) {
+			writeExtTypeOffsetsRecords();
+			writeExtTypeOverviews();
 		}
 	}
 
@@ -198,6 +192,27 @@ public class TREFile extends ImgFile implements Configurable {
 		header.setSubdivSize(header.getSubdivSize() + 4);
 	}
 
+	private void writeExtTypeOffsetsRecords() {
+		header.setExtTypeOffsetsPos(position());
+		Subdivision sd = null;
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				sd = it.next();
+				sd.writeExtTypeOffsetsRecord(getWriter());
+				header.incExtTypeOffsetsSize();
+			}
+		}
+		if(sd != null) {
+			sd.writeLastExtTypeOffsetsRecord(getWriter());
+			header.incExtTypeOffsetsSize();
+		}
+	}
+
 	/**
 	 * Write out the map levels.  This is a mapping between the level number
 	 * and the resolution.
@@ -226,27 +241,67 @@ public class TREFile extends ImgFile implements Configurable {
 		// Point overview section
 		Collections.sort(pointOverviews);
 		for (Overview ov : pointOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPointSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPointSize();
+			}
 		}
 
 		// Line overview section.
 		header.setPolylinePos(position());
 		Collections.sort(polylineOverviews);
 		for (Overview ov : polylineOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPolylineSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPolylineSize();
+			}
 		}
 
 		// Polygon overview section
 		header.setPolygonPos(position());
 		Collections.sort(polygonOverviews);
 		for (Overview ov : polygonOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPolygonSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPolygonSize();
+			}
+		}
+	}
+
+	private void writeExtTypeOverviews() {
+
+		header.setExtTypeOverviewsPos(position());
+
+		// assumes overviews are already sorted
+
+		for (Overview ov : polylineOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypeLineTypes();
+			}
+		}
+
+		for (Overview ov : polygonOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypeAreaTypes();
+			}
+		}
+
+		for (Overview ov : pointOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypePointTypes();
+			}
 		}
 	}
 
@@ -296,9 +351,9 @@ public class TREFile extends ImgFile implements Configurable {
 		TREFile.this.lastRgnPos = lastRgnPos;
 	}
 
-	public void write() {
+	public void write(boolean includeExtendedTypeData) {
 		// Do anything that is in structures and that needs to be dealt with.
-		writeBody();
+		writeBody(includeExtendedTypeData);
 	}
 
 	public void writePost() {

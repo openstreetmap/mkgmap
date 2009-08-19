@@ -19,8 +19,13 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
+import uk.me.parabola.mkgmap.general.MapElement;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.OutputStream;
+import java.io.IOException;
 
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
@@ -57,6 +62,8 @@ public abstract class MapObject {
 	 */
 	public abstract void write(ImgFileWriter file);
 
+	public abstract void write(OutputStream stream) throws IOException;
+
 	int getDeltaLat() {
 		return deltaLat;
 	}
@@ -81,6 +88,10 @@ public abstract class MapObject {
 
 	public void setType(int type) {
 		this.type = type;
+	}
+
+	public boolean hasExtendedType() {
+		return MapElement.hasExtendedType(type);
 	}
 
 	/** 

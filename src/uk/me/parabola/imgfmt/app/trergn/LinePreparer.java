@@ -32,6 +32,7 @@ class LinePreparer {
 	private final Polyline polyline;
 
 	private boolean extraBit;
+	private boolean extTypeLine;
 	private boolean xSameSign;
 	private boolean xSignNegative;     // Set if all negative
 
@@ -54,6 +55,8 @@ class LinePreparer {
 			// but who knows
 			extraBit = true;
 		}
+
+		extTypeLine = line.hasExtendedType();
 
 		polyline = line;
 		calcLatLong();
@@ -103,6 +106,10 @@ class LinePreparer {
 		if (log.isDebugEnabled()) {
 			log.debug("x same is", xSameSign, "sign is", xSignNegative);
 			log.debug("y same is", ySameSign, "sign is", ySignNegative);
+		}
+
+		if(extTypeLine) {
+			bw.put1(false);		// no extra bits required
 		}
 
 		// first extra bit always appears to be false

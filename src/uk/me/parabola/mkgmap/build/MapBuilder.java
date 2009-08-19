@@ -174,7 +174,7 @@ public class MapBuilder implements Configurable {
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
 		rgnFile.write();
-		treFile.write();
+		treFile.write(rgnFile.haveExtendedTypes());
 		treFile.writePost();
 		lblFile.write();
 		lblFile.writePost();
@@ -628,6 +628,8 @@ public class MapBuilder implements Configurable {
 		processLines(map, div, lines);
 		processShapes(map, div, shapes);
 
+		div.endDivision();
+
 		return div;
 	}
 
@@ -745,19 +747,21 @@ public class MapBuilder implements Configurable {
 				p.setPOIRecord(r);
 
 			map.addMapObject(p);
-			if(name != null && div.getZoom().getLevel() == 0) {
-				if(pointIndex > 255)
-					log.error("FIXME - too many POIs in group");
-				else if(point.isExit()) {
-					Exit e = ((MapExitPoint)point).getExit();
-					if(e != null)
-						e.getHighway().addExitPoint(name, pointIndex, div);
+			if(!point.hasExtendedType()) {
+				if(name != null && div.getZoom().getLevel() == 0) {
+					if(pointIndex > 255)
+						log.error("FIXME - too many POIs in group");
+					else if(point.isExit()) {
+						Exit e = ((MapExitPoint)point).getExit();
+						if(e != null)
+							e.getHighway().addExitPoint(name, pointIndex, div);
+					}
+					else
+						lbl.createPOIIndex(name, pointIndex, div, point.getType());
 				}
-				else
-					lbl.createPOIIndex(name, pointIndex, div, point.getType());
 
+				++pointIndex;
 			}
-			++pointIndex;
 		}
 
 		if (haveIndPoints) {
@@ -946,6 +950,8 @@ public class MapBuilder implements Configurable {
 			assert line.getPoints().size() < 255 : "too many points";
 
 			Polyline pl = div.createLine(line.getName(), line.getRef());
+			if(!element.hasExtendedType())
+				div.setPolylineNumber(pl);
 			pl.setDirection(line.isDirection());
 
 			for (Coord co : line.getPoints())

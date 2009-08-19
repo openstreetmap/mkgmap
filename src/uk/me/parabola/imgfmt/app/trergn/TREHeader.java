@@ -50,6 +50,8 @@ public class TREHeader extends CommonHeader {
 	private static final char POLYGON_REC_LEN = 2;
 	private static final char POINT_REC_LEN = 3;
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
+	private static final char EXT_TYPE_OFFSETS_REC_LEN = 13;
+	private static final char EXT_TYPE_OVERVIEWS_REC_LEN = 4;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
 
@@ -74,9 +76,12 @@ public class TREHeader extends CommonHeader {
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
 	private final Section polygon = new Section(POLYGON_REC_LEN);
 	private final Section points = new Section(POINT_REC_LEN);
-	private final Section tre7 = new Section(points, (char) 13);
-	private final Section tre8 = new Section(tre7, (char) 4);
-	//private Section tre9 = new Section(tre8);
+	private final Section extTypeOffsets = new Section(points, EXT_TYPE_OFFSETS_REC_LEN);
+	private final Section extTypeOverviews = new Section(extTypeOffsets, EXT_TYPE_OVERVIEWS_REC_LEN);
+
+	private int numExtTypeAreaTypes;
+	private int numExtTypeLineTypes;
+	private int numExtTypePointTypes;
 
 	private int mapId;
 
@@ -186,12 +191,21 @@ public class TREHeader extends CommonHeader {
 		if (getHeaderLength() > 120) {
 			writer.putInt(0);
 
-			tre7.writeSectionInfo(writer);
-			writer.putInt(0); // not usually zero
+			extTypeOffsets.writeSectionInfo(writer);
 
-			tre8.writeSectionInfo(writer);
-			writer.putChar((char) 0);
-			writer.putInt(0);
+			// the second byte value of 6 appears to mean "extended
+			// type info present" - a value of 4 has been seen in some
+			// maps but those maps contain something else in these two
+			// sections and not extended type info - the 7 in the
+			// bottom byte could possibly be a bitmask to say which
+			// types are present (line, area, point) but this is just
+			// conjecture
+			writer.putInt(0x0607);
+
+			extTypeOverviews.writeSectionInfo(writer);
+			writer.putChar((char)numExtTypeLineTypes);
+			writer.putChar((char)numExtTypeAreaTypes);
+			writer.putChar((char)numExtTypePointTypes);
 		}
 
 		if (getHeaderLength() > 154) {
@@ -318,20 +332,39 @@ public class TREHeader extends CommonHeader {
 		points.inc();
 	}
 
+	public void setExtTypeOffsetsPos(int pos) {
+		extTypeOffsets.setPosition(pos);
+	}
+
+	public void incExtTypeOffsetsSize() {
+		extTypeOffsets.inc();
+	}
+
+	public void setExtTypeOverviewsPos(int pos) {
+		extTypeOverviews.setPosition(pos);
+	}
+
+	public void incExtTypeOverviewsSize() {
+		extTypeOverviews.inc();
+	}
+
+	public void incNumExtTypeAreaTypes() {
+		++numExtTypeAreaTypes;
+	}
+
+	public void incNumExtTypeLineTypes() {
+		++numExtTypeLineTypes;
+	}
+	public void incNumExtTypePointTypes() {
+		++numExtTypePointTypes;
+	}
+
 	protected int getMapId() {
 		return mapId;
 	}
 
 	protected void setDisplayPriority(int displayPriority) {
 		this.displayPriority = displayPriority;
-	}
-
-	public void setTre7Pos(int pos) {
-		tre7.setPosition(pos);
-	}
-
-	public void incTre7() {
-		tre7.inc();
 	}
 
 	public int getDisplayPriority() {

@@ -19,6 +19,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 
+import java.io.OutputStream;
+import java.io.IOException;
+
 /**
  * Represents a particular point object on a map.  A point has a type (town
  * restaurant etc) and a location as well as a name.
@@ -69,6 +72,40 @@ public class Point extends MapObject {
 		file.putChar((char) getDeltaLat());
 		if (hasSubtype)
 			file.put(subtype);
+	}
+
+	/*
+	 * write the point to an OutputStream - only use for outputting
+	 * points with extended (3 byte) types.
+	 *
+	 */
+	public void write(OutputStream stream) throws IOException {
+		assert hasExtendedType();
+		int type = getType();
+		int labelOff = getLabel().getOffset();
+
+		if (poi != null) {
+			labelOff = poi.getOffset();
+			labelOff |= 0x400000;
+		}
+		if(labelOff != 0)
+			type |= 0x20;		// has label
+
+		stream.write(type >> 8);
+		stream.write(type);
+		int deltaLong = getDeltaLong();
+		int deltaLat = getDeltaLat();
+		stream.write(deltaLong);
+		stream.write(deltaLong >> 8);
+		stream.write(deltaLat);
+		stream.write(deltaLat >> 8);
+
+		if(labelOff != 0) {
+			stream.write(labelOff);
+			stream.write(labelOff >> 8);
+			stream.write(labelOff >> 16);
+		}
+		// FIXME - extra bytes?
 	}
 
 	public void setPOIRecord(POIRecord poirecord) {

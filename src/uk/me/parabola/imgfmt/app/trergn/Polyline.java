@@ -19,6 +19,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.OutputStream;
+import java.io.IOException;
+
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -133,6 +136,53 @@ public class Polyline extends MapObject {
 			file.putChar((char) (blen & 0xffff));
 
 		file.put(bw.getBytes(), 0, blen+1);
+	}
+
+	/*
+	 * write the polyline to an OutputStream - only use for outputting
+	 * lines with extended (3 byte) types.
+	 *
+	 */
+	public void write(OutputStream stream) throws IOException {
+		assert hasExtendedType();
+		int type = getType();
+		int labelOff = getLabel().getOffset();
+
+		if(labelOff != 0)
+			type |= 0x20;		// has label
+		stream.write(type >> 8);
+		stream.write(type);
+
+		// need to prepare line info before outputing lat/lon
+		LinePreparer w = new LinePreparer(this);
+		BitWriter bw = w.makeBitStream();
+		int blen = bw.getLength();
+		assert blen > 1 : "zero length bitstream";
+		assert blen < 0x10000 : "bitstream too long " + blen;
+
+		int deltaLong = getDeltaLong();
+		int deltaLat = getDeltaLat();
+		stream.write(deltaLong);
+		stream.write(deltaLong >> 8);
+		stream.write(deltaLat);
+		stream.write(deltaLat >> 8);
+
+		if (blen >= 0x7f) {
+			stream.write((blen << 2) | 2);
+			stream.write((blen << 2) >> 8);
+		}
+		else {
+			stream.write((blen << 1) | 1);
+		}
+
+		stream.write(bw.getBytes(), 0, blen);
+
+		if(labelOff != 0) {
+			stream.write(labelOff);
+			stream.write(labelOff >> 8);
+			stream.write(labelOff >> 16);
+		}
+		// FIXME - extra bytes?
 	}
 
 	public void addCoord(Coord co) {

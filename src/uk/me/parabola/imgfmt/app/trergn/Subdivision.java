@@ -80,6 +80,13 @@ public class Subdivision {
 
 	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
 
+	private int extTypeAreasOffset;
+	private int extTypeLinesOffset;
+	private int extTypePointsOffset;
+	private int extTypeAreasSize;
+	private int extTypeLinesSize;
+	private int extTypePointsSize;
+
 	/**
 	 * Subdivisions can not be created directly, use either the
 	 * {@link #topLevelSubdivision} or {@link #createSubdivision} factory
@@ -210,8 +217,6 @@ public class Subdivision {
 	}
 
 	public Point createPoint(String name) {
-		assert hasPoints || hasIndPoints;
-		
 		Point p = new Point(this);
 		Label label = lblFile.newLabel(name);
 
@@ -220,7 +225,6 @@ public class Subdivision {
 	}
 
 	public Polyline createLine(String name, String ref) {
-		assert hasPolylines;
 		Label label = lblFile.newLabel(name);
 		Polyline pl = new Polyline(this);
 
@@ -236,13 +240,14 @@ public class Subdivision {
 			}
 		}
 
-		numPolylines++;
-		pl.setNumber(numPolylines);
 		return pl;
 	}
 
+	public void setPolylineNumber(Polyline pl) {
+		pl.setNumber(++numPolylines);
+	}
+
 	public Polygon createPolygon(String name) {
-		assert hasPolygons;
 		Label label = lblFile.newLabel(name);
 		Polygon pg = new Polygon(this);
 
@@ -352,6 +357,36 @@ public class Subdivision {
 
 	public void startDivision() {
 		rgnFile.startDivision(this);
+		extTypeAreasOffset = rgnFile.getExtTypeAreasSize();
+		extTypeLinesOffset = rgnFile.getExtTypeLinesSize();
+		extTypePointsOffset = rgnFile.getExtTypePointsSize();
+	}
+
+	public void endDivision() {
+		extTypeAreasSize = rgnFile.getExtTypeAreasSize() - extTypeAreasOffset;
+		extTypeLinesSize = rgnFile.getExtTypeLinesSize() - extTypeLinesOffset;
+		extTypePointsSize = rgnFile.getExtTypePointsSize() - extTypePointsOffset;
+	}
+
+	public void writeExtTypeOffsetsRecord(ImgFileWriter file) {
+		file.putInt(extTypeAreasOffset);
+		file.putInt(extTypeLinesOffset);
+		file.putInt(extTypePointsOffset);
+		int kinds = 0;
+		if(extTypeAreasSize != 0)
+			++kinds;
+		if(extTypeLinesSize != 0)
+			++kinds;
+		if(extTypePointsSize != 0)
+			++kinds;
+		file.put((byte)kinds);
+	}
+
+	public void writeLastExtTypeOffsetsRecord(ImgFileWriter file) {
+		file.putInt(rgnFile.getExtTypeAreasSize());
+		file.putInt(rgnFile.getExtTypeLinesSize());
+		file.putInt(rgnFile.getExtTypePointsSize());
+		file.put((byte)0);
 	}
 
 	/**
