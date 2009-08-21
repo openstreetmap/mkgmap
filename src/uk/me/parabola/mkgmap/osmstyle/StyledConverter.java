@@ -159,7 +159,9 @@ public class StyledConverter implements OsmConverter {
 			return null;
 		}
 
-		element.setName(PolishMapDataSource.unescape(element.getTag("name")));
+		String name = element.getTag("name");
+		if(name != null)
+			element.setName(PolishMapDataSource.unescape(name));
 
 		for(int i = 0; i < vals.length; ++i)
 			vals[i] = vals[i].trim();
