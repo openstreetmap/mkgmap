@@ -20,8 +20,10 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
@@ -103,10 +105,17 @@ public class OverlayReader {
 		int origType = line.getType();
 		List<Integer> integerList = overlays.get(origType);
 		if (integerList != null) {
-			for (int t : integerList) {
-				MapLine newline = line.copy();
-				newline.setType(t);
-				newline.setPoints(line.getPoints());
+			MapLine newline = line.copy();
+			newline.setType(integerList.get(0));
+			List<Coord> points = line.getPoints();
+			newline.setPoints(points);
+			adder.add(newline);
+
+			// Force all following types to be added as lines rather than roads.
+			for (ListIterator<Integer> t=integerList.listIterator(1); t.hasNext(); ) {
+				newline = new MapLine(line);
+				newline.setType(t.next());
+				newline.setPoints(new ArrayList<Coord>(points));
 				adder.add(newline);
 			}
 		} else {
