@@ -175,8 +175,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	 * @param length The amount of data.
 	 */
 	private void ensureSize(int length) {
-		if (buf.position() +length > bufferSize - GUARD_SIZE) {
-			bufferSize += GROW_SIZE;
+		int needed = buf.position() + length;
+		if (needed > (bufferSize - GUARD_SIZE)) {
+			while(needed > (bufferSize - GUARD_SIZE))
+				bufferSize += GROW_SIZE;
 			if (bufferSize > 0xffffff) {
 				// Previous message was confusing people, although it is difficult to come
 				// up with something that is strictly true in all situations.
