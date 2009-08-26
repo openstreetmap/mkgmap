@@ -76,9 +76,9 @@ public class Way extends Element {
 		}
 	}
 
-        public boolean isClosed() {
-	    return points.size() > 0 && points.get(0).equals(points.get(points.size()-1));
-        }
+	public boolean isClosed() {
+		return !points.isEmpty() && points.get(0).equals(points.get(points.size()-1));
+	}
 
 	/**
 	 * A simple representation of this way.
@@ -90,7 +90,7 @@ public class Way extends Element {
 
 		Coord coord = points.get(0);
 		StringBuilder sb = new StringBuilder();
-		sb.append("WAY: " + getId() + " ");
+		sb.append("WAY: ").append(getId()).append(" ");
 		sb.append(getName());
 		sb.append('(');
 		sb.append(Utils.toDegrees(coord.getLatitude()));
