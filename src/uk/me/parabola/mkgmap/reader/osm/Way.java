@@ -76,6 +76,10 @@ public class Way extends Element {
 		}
 	}
 
+        public boolean isClosed() {
+	    return points.size() > 0 && points.get(0).equals(points.get(points.size()-1));
+        }
+
 	/**
 	 * A simple representation of this way.
 	 * @return A string with the name and start point

@@ -19,14 +19,19 @@ package uk.me.parabola.mkgmap.reader.osm.xml;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.NavigableSet;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
@@ -65,6 +70,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
 	private final List<Way> motorways = new ArrayList<Way>();
+	private final List<Way> shoreline = new ArrayList<Way>();
 
 	private static final int MODE_NODE = 1;
 	private static final int MODE_WAY = 2;
@@ -92,6 +98,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean ignoreTurnRestrictions;
 	private final boolean linkPOIsToWays;
 	private final boolean routing;
+        private final boolean generateSea;
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
@@ -105,6 +112,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
+		generateSea = props.getProperty("generate-sea", false);
 		routing = props.containsKey("route");
 		String rsa = props.getProperty("remove-short-arcs", null);
 		if(rsa != null)
@@ -370,6 +378,8 @@ class Osm5XmlHandler extends DefaultHandler {
 				if("motorway".equals(highway) ||
 				   "trunk".equals(highway))
 					motorways.add(currentWay);
+				if(generateSea && "coastline".equals(currentWay.getTag("natural")))
+				    shoreline.add(currentWay);
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -446,6 +456,10 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 
 		coordMap = null;
+
+		if (generateSea)
+		    generateSeaPolygon(shoreline);
+
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -707,7 +721,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 			currentWay.addPoint(co);
 			co.incHighwayCount(); // nodes (way joins) will have highwayCount > 1
-			if(minimumArcLength != null)
+			if (minimumArcLength != null || generateSea)
 				nodeIdMap.put(co, id);
 		}
 	}
@@ -746,4 +760,358 @@ class Osm5XmlHandler extends DefaultHandler {
 			return fakeIdVal;
 		}
 	}
+
+        private void generateSeaPolygon(List<Way> shoreline) {
+	    // don't do anything if there is no shoreline
+	    if (shoreline.size() == 0)
+		return;
+
+	    Area seaBounds;
+	    if (bbox != null)
+		seaBounds = bbox;
+	    else
+		seaBounds = mapper.getBounds();
+
+	    // clip all shoreline segments
+	    List<Way> toBeRemoved = new ArrayList<Way>();
+	    List<Way> toBeAdded = new ArrayList<Way>();
+	    for (Way segment : shoreline) {
+		List<Coord> points = segment.getPoints();
+		List<List<Coord>> clipped = LineClipper.clip(seaBounds, points);
+		if (clipped != null) {
+		    log.info("clipping " + segment);
+		    toBeRemoved.add(segment);
+		    for (List<Coord> pts : clipped) {
+			long id = (1L << 62) + nextFakeId++;
+			Way shore = new Way(id, pts);
+			toBeAdded.add(shore);
+		    }
+		}
+	    }
+	    log.info("clipping: adding " + toBeAdded.size() + ", removing " + toBeRemoved.size());
+	    shoreline.removeAll(toBeRemoved);
+	    shoreline.addAll(toBeAdded);
+
+	    log.info("generating sea, seaBounds=", seaBounds);
+	    int minLat = seaBounds.getMinLat();
+	    int maxLat = seaBounds.getMaxLat();
+	    int minLong = seaBounds.getMinLong();
+	    int maxLong = seaBounds.getMaxLong();
+	    Coord nw = new Coord(minLat, minLong);
+	    Coord ne = new Coord(minLat, maxLong);
+	    Coord sw = new Coord(maxLat, minLong);
+	    Coord se = new Coord(maxLat, maxLong);
+
+	    long seaId;
+	    Way sea;
+
+	    long multiId = (1L << 62) + nextFakeId++;
+	    Relation seaRelation = new GeneralRelation(multiId);
+	    seaRelation.addTag("type", "multipolygon");
+
+	    List<Way> islands = new ArrayList();
+	    
+	    // handle islands (closes shoreline components) first (they're easy)
+	    Iterator<Way> it = shoreline.iterator();
+	    while (it.hasNext()) {
+		Way w = it.next();
+		if (w.isClosed()) {
+		    islands.add(w);
+		    it.remove();
+		}
+	    }
+	    concatenateWays(shoreline);
+	    // there may be more islands now
+	    it = shoreline.iterator();
+	    while (it.hasNext()) {
+		Way w = it.next();
+		if (w.isClosed()) {
+		    log.debug("island after concatenating\n");
+		    islands.add(w);
+		    it.remove();
+		}
+	    }
+
+	    // create a "inner" way for each island
+	    for (Way w : islands) {
+		log.info("adding island " + w);
+		seaRelation.addElement("inner", w);
+	    }
+
+	    boolean generateSeaBackground = true;
+	    
+	    // the remaining shoreline segments should intersect the boundary
+	    // find the intersection points and store them in a SortedMap
+	    SortedMap<EdgeHit, Way> hitMap = new TreeMap<EdgeHit, Way>();
+	    for (Way w : shoreline) {
+		List<Coord> points = w.getPoints();
+		Coord pStart = points.get(0);
+		Coord pEnd = points.get(points.size()-1);
+		
+		EdgeHit hStart = getEdgeHit(seaBounds, pStart);
+		EdgeHit hEnd = getEdgeHit(seaBounds, pEnd);
+		if (hStart == null || hEnd == null) {
+		    String msg = String.format("Non-closed coastline segment does not hit bounding box: %d (%s) %d (%s) %s\n",
+					       nodeIdMap.get(pStart),  pStart.toDegreeString(), 
+					       nodeIdMap.get(pEnd),  pEnd.toDegreeString(),
+					       pStart.toOSMURL());
+		    log.warn(msg);
+		    
+		    /* 
+		     * This problem occurs usually when the shoreline is cut by osmosis (e.g. country-extracts from geofabrik)
+		     * There are two possibilities to solve this problem:
+		     * 1. Close the way and treat it as an island. This is sometimes the best solution (Germany: Usedom at the 
+		     *    border to Poland)  
+		     * 2. Create a "sea sector" only for this shoreline segment. This may also be the best solution 
+		     *    (see German border to the Netherlands where the shoreline continues in the Netherlands)
+		     * The first choice may lead to "flooded" areas, the second may lead to "triangles".
+		     *
+		     * Usually, the first choice is appropriate if the segment is "nearly" closed.
+		     */
+		    double length = 0;
+		    Coord p0 = pStart;
+		    for (Coord p1 : points.subList(1, points.size()-1)) {
+			length += p0.distance(p1);
+			p0 = p1;
+		    }
+		    boolean nearlyClosed = pStart.distance(pEnd) < 0.1 * length;
+
+		    if (nearlyClosed) {
+			// close the way
+			points.add(pStart);
+			seaRelation.addElement("inner", w);
+		    }
+		    else {
+			seaId = (1L << 62) + nextFakeId++;
+			sea = new Way(seaId);
+			sea.getPoints().addAll(points);
+			sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
+			sea.addPoint(pStart);
+			sea.addTag("natural", "sea");
+			log.info("sea: ", sea);
+			wayMap.put(seaId, sea);
+			seaRelation.addElement("outer", sea);
+			generateSeaBackground = false;
+		    }
+		}
+		else {
+		    log.debug("hits: ", hStart, hEnd);
+		    hitMap.put(hStart, w);
+		    hitMap.put(hEnd, null);
+		}
+	    }
+	    if (generateSeaBackground) {
+		seaId = (1L << 62) + nextFakeId++;
+		sea = new Way(seaId);
+		sea.addPoint(nw);
+		sea.addPoint(sw);
+		sea.addPoint(se);
+		sea.addPoint(ne);
+		sea.addPoint(nw);
+		sea.addTag("natural", "sea");
+		log.info("sea: ", sea);
+		wayMap.put(seaId, sea);
+		seaRelation.addElement("outer", sea);
+	    }
+	    	    
+	    // now construct inner ways from these segments
+	    NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
+	    while (hits.size() > 0) {
+		long id = (1L << 62) + nextFakeId++;
+		Way w = new Way(id);
+		wayMap.put(id, w);
+		
+		EdgeHit hit =  hits.first();
+		EdgeHit hFirst = hit;
+		EdgeHit hNext;
+		do {
+		    Way segment = hitMap.get(hit);
+		    log.info("current hit: " + hit);
+		    if (segment != null) {
+			// add the segment and get the "ending hit"
+			log.info("adding: ", segment);
+			w.getPoints().addAll(segment.getPoints());
+			hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
+		    }
+		    else {
+			w.addPoint(hit.getPoint(seaBounds));
+			hNext = hits.higher(hit);
+			if (hNext == null)
+			    hNext = hFirst;
+
+			Coord p = hit.getPoint(seaBounds);
+			if (hit.compareTo(hNext) < 0) {
+			    log.info("joining: ", hit, hNext);
+			    for (int i=hit.edge; i<hNext.edge; i++) {
+				EdgeHit corner = new EdgeHit(i, 1.0);
+				p = corner.getPoint(seaBounds);
+				log.debug("way: ", corner, p);
+				w.addPoint(p);
+			    }
+			}
+			else if (hit.compareTo(hNext) > 0) {
+			    log.info("joining: ", hit, hNext);
+			    for (int i=hit.edge; i<4; i++) {
+				EdgeHit corner = new EdgeHit(i, 1.0);
+				p = corner.getPoint(seaBounds);
+				log.debug("way: ", corner, p);
+				w.addPoint(p);
+			    }
+			    for (int i=0; i<hNext.edge; i++) {
+				EdgeHit corner = new EdgeHit(i, 1.0);
+				p = corner.getPoint(seaBounds);
+				log.debug("way: ", corner, p);
+				w.addPoint(p);
+			    }
+			}
+			w.addPoint(hNext.getPoint(seaBounds));
+		    }
+		    hits.remove(hit);
+		    hit = hNext;
+		} while (hits.size() > 0 && !hit.equals(hFirst));
+
+		if (!w.isClosed())
+		    w.getPoints().add(w.getPoints().get(0));
+		log.info("adding non-island landmass, hits.size()=" + hits.size());
+		//w.addTag("highway", "motorway");
+		seaRelation.addElement("inner", w);
+	    }
+	    
+	    seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+	    relationMap.put(multiId, seaRelation);
+	    seaRelation.processElements();
+        }
+
+        /**
+	 * Specifies where an edge of the bounding box is hit.
+	 */
+        private static class EdgeHit implements Comparable<EdgeHit>
+	{
+	    int edge;
+	    double t;
+	    
+	    EdgeHit(int edge, double t) {
+		this.edge = edge;
+		this.t = t;
+	    }
+
+	    public int compareTo(EdgeHit o) {
+		if (edge < o.edge)
+		    return -1;
+		else if (edge > o.edge)
+		    return +1;
+		else if (t > o.t)
+		    return +1;
+		else if (t < o.t)
+		    return -1;
+		else
+		    return 0;
+	    }
+
+	    @Override public boolean equals(Object o) {
+		if (o instanceof EdgeHit) {
+		    EdgeHit h = (EdgeHit) o;
+		    return (h.edge == edge && Double.compare(h.t, t) == 0);
+		}
+		else
+		    return false;
+	    }
+
+	    Coord getPoint(Area a) {
+		log.info("getPoint: ", this, a);
+		switch (edge) {
+		case 0:
+		    return new Coord(a.getMinLat(), (int) (a.getMinLong() + t * (a.getMaxLong()-a.getMinLong())));
+
+		case 1:
+		    return new Coord((int)(a.getMinLat() + t * (a.getMaxLat()-a.getMinLat())), a.getMaxLong());
+
+		case 2:
+		    return new Coord(a.getMaxLat(), (int)(a.getMaxLong() - t * (a.getMaxLong()-a.getMinLong())));
+
+		case 3:
+		    return new Coord((int)(a.getMaxLat() - t * (a.getMaxLat()-a.getMinLat())), a.getMinLong());
+
+		default: 
+		    throw new RuntimeException("illegal state");
+		}
+	    }
+
+	    public String toString() {
+		return "EdgeHit " + edge + "@" + t; 
+	    }
+	}
+        
+        private EdgeHit getEdgeHit(Area a, Coord p)
+        {  
+	    return getEdgeHit(a, p, 10);
+        }
+  
+        private EdgeHit getEdgeHit(Area a, Coord p, int tolerance)
+        {  
+	    int lat = p.getLatitude();
+	    int lon = p.getLongitude();
+	    int minLat = a.getMinLat();
+	    int maxLat = a.getMaxLat();
+	    int minLong = a.getMinLong();
+	    int maxLong = a.getMaxLong();
+	    
+	    log.info(String.format("getEdgeHit: (%d %d) (%d %d %d %d)", lat, lon, minLat, minLong, maxLat, maxLong));
+	    if (lat <= minLat+tolerance) {
+		return new EdgeHit(0, ((double)(lon - minLong))/(maxLong-minLong));
+	    }
+	    else if (lon >= maxLong-tolerance) {
+		return new EdgeHit(1, ((double)(lat - minLat))/(maxLat-minLat));
+	    }
+	    else if (lat >= maxLat-tolerance) {
+		return new EdgeHit(2, ((double)(maxLong - lon))/(maxLong-minLong));
+	    }
+	    else if (lon <= minLong+tolerance) {
+		return new EdgeHit(3, ((double)(maxLat - lat))/(maxLat-minLat));
+	    }
+	    else 
+		return null;
+        } 
+
+        private void concatenateWays(List<Way> ways) {
+	    Map<Coord, Way> beginMap = new HashMap();
+	    
+	    for (Way w : ways) {
+		if (!w.isClosed()) {
+		    List<Coord> points = w.getPoints();
+		    beginMap.put(points.get(0), w);
+		}	
+	    }
+
+	    int merged = 1;
+	    while (merged > 0) {
+		merged = 0;
+		for (Way w1 : ways) {
+		    if (w1.isClosed()) continue;
+
+		    List<Coord> points1 = w1.getPoints();
+		    Way w2 = beginMap.get(points1.get(points1.size()-1));
+		    if (w2 != null) {
+			log.info("merging: ", ways.size(), w1.getId(), w2.getId());
+			List<Coord> points2 = w2.getPoints();
+			Way wm;
+			if (w1.getId() < (1L << 62)) {
+			    wm = new Way((1L << 62) + nextFakeId++);
+			    ways.remove(w1);
+			    ways.add(wm);
+			    wm.getPoints().addAll(points1);
+			    beginMap.put(points1.get(0), wm);
+			}
+			else {
+			    wm = w1;
+			}
+			wm.getPoints().addAll(points2);
+			ways.remove(w2);
+			beginMap.remove(points2.get(0));
+			merged++;
+			break;
+		    }
+		}
+	    }
+        }
 }
