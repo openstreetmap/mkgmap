@@ -16,7 +16,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Store the tags that belong to an Element.
@@ -270,5 +272,21 @@ public class Tags implements Iterable<String> {
 				if (e.value != null)
 					put(e.key, e.value);
 		}
+	}
+
+	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
+		Map<String, String> map = new HashMap<String, String>();
+
+		int prefixLen = prefix.length();
+		for(int i = 0; i < capacity; ++i) {
+			if(keys[i] != null && keys[i].startsWith(prefix)) {
+				if(removePrefix)
+					map.put(keys[i].substring(prefixLen), values[i]);
+				else
+					map.put(keys[i], values[i]);
+			}
+		}
+
+		return map;
 	}
 }

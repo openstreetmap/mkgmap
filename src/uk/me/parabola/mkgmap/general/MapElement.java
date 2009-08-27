@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 
 /**
  * A map element is a point, line or shape that appears on the map.  This
@@ -33,11 +34,8 @@ public abstract class MapElement {
 
 	private int minResolution = 24;
 	private int maxResolution = 24;
-	
-	private String zipCode;
-	private String city;
-	private String region;
-	private String country;	
+
+	private ExtTypeAttributes extTypeAttributes;
 	
 	private final Map<String, String> attributes = new HashMap<String, String>();
 
@@ -50,6 +48,7 @@ public abstract class MapElement {
 		type = orig.type;
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
+		extTypeAttributes = orig.extTypeAttributes;
 	}
 
 	/**
@@ -76,36 +75,44 @@ public abstract class MapElement {
 		this.ref = ref;
 	}
 
+	public ExtTypeAttributes getExtTypeAttributes() {
+		return extTypeAttributes;
+	}
+
+	public void setExtTypeAttributes(ExtTypeAttributes eta) {
+		extTypeAttributes = eta;
+	}
+
 	public String getCity() {
-		return city;
+		return attributes.get("city");
 	}
 
 	public void setCity(String city) {
-		this.city = city;
+		attributes.put("city", city);
 	}
 	
 	public String getZip() {
-		return zipCode;
+		return attributes.get("zip");
 	}
 
 	public void setZip(String zip) {
-		this.zipCode = zip;
+		attributes.put("zip", zip);
 	}
 
 	public String getCountry() {
-		return country;
+		return attributes.get("country");
 	}
 
 	public void setCountry(String country) {
-		this.country = country;
+		attributes.put("country", country);
 	}
 	
 	public String getRegion() {
-		return region;
+		return attributes.get("region");
 	}
 
 	public void setRegion(String region) {
-  		this.region = region;
+		attributes.put("region", region);
 	}	
 	
 	public String getStreet() {

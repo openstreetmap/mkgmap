@@ -37,6 +37,7 @@ import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -309,7 +310,7 @@ public class MapBuilder implements Configurable {
 			if(p.isExit()) {
 				processExit(map, (MapExitPoint)p);
 			}
-			else if(!p.isCity() && (p.isRoadNamePOI() || poiAddresses)) {
+			else if(!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses)) {
 				boolean doAutofill;
 				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
 					doAutofill = true;
@@ -738,6 +739,12 @@ public class MapBuilder implements Configurable {
 			Point p = div.createPoint(name);
 			p.setType(point.getType());
 
+			if(point.hasExtendedType()) {
+				ExtTypeAttributes eta = point.getExtTypeAttributes();
+				eta.processLabels(lbl);
+				p.setExtTypeAttributes(eta);
+			}
+
 			Coord coord = point.getLocation();
 			p.setLatitude(coord.getLatitude());
 			p.setLongitude(coord.getLongitude());
@@ -952,6 +959,12 @@ public class MapBuilder implements Configurable {
 			Polyline pl = div.createLine(line.getName(), line.getRef());
 			if(!element.hasExtendedType())
 				div.setPolylineNumber(pl);
+			else {
+				ExtTypeAttributes eta = element.getExtTypeAttributes();
+				eta.processLabels(map.getLblFile());
+				pl.setExtTypeAttributes(eta);
+			}
+
 			pl.setDirection(line.isDirection());
 
 			for (Coord co : line.getPoints())
@@ -991,6 +1004,11 @@ public class MapBuilder implements Configurable {
 				pg.addCoord(co);
 
 			pg.setType(shape.getType());
+			if(element.hasExtendedType()) {
+				ExtTypeAttributes eta = element.getExtTypeAttributes();
+				eta.processLabels(map.getLblFile());
+				pg.setExtTypeAttributes(eta);
+			}
 			map.addMapObject(pg);
 		}
 	}

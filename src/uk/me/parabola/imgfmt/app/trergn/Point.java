@@ -83,6 +83,7 @@ public class Point extends MapObject {
 		assert hasExtendedType();
 		int type = getType();
 		int labelOff = getLabel().getOffset();
+		byte[] extraBytes = getExtTypeExtraBytes();
 
 		if (poi != null) {
 			labelOff = poi.getOffset();
@@ -90,9 +91,11 @@ public class Point extends MapObject {
 		}
 		if(labelOff != 0)
 			type |= 0x20;		// has label
-
+		if(extraBytes != null)
+			type |= 0x80;		// has extra bytes
 		stream.write(type >> 8);
 		stream.write(type);
+
 		int deltaLong = getDeltaLong();
 		int deltaLat = getDeltaLat();
 		stream.write(deltaLong);
@@ -105,7 +108,9 @@ public class Point extends MapObject {
 			stream.write(labelOff >> 8);
 			stream.write(labelOff >> 16);
 		}
-		// FIXME - extra bytes?
+
+		if(extraBytes != null)
+			stream.write(extraBytes);
 	}
 
 	public void setPOIRecord(POIRecord poirecord) {

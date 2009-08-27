@@ -147,9 +147,12 @@ public class Polyline extends MapObject {
 		assert hasExtendedType();
 		int type = getType();
 		int labelOff = getLabel().getOffset();
+		byte[] extraBytes = getExtTypeExtraBytes();
 
 		if(labelOff != 0)
 			type |= 0x20;		// has label
+		if(extraBytes != null)
+			type |= 0x80;		// has extra bytes
 		stream.write(type >> 8);
 		stream.write(type);
 
@@ -182,7 +185,9 @@ public class Polyline extends MapObject {
 			stream.write(labelOff >> 8);
 			stream.write(labelOff >> 16);
 		}
-		// FIXME - extra bytes?
+
+		if(extraBytes != null)
+			stream.write(extraBytes);
 	}
 
 	public void addCoord(Coord co) {

@@ -17,6 +17,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Superclass of the node, segment and way OSM elements.
@@ -96,5 +97,9 @@ public abstract class Element implements Iterable<String> {
 	public void setName(String name) {
 		if (this.name == null)
 			this.name = name;
+	}
+
+	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
+		return tags.getTagsWithPrefix(prefix, removePrefix);
 	}
 }

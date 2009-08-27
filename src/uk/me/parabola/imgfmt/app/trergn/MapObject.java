@@ -55,6 +55,8 @@ public abstract class MapObject {
 	private int deltaLong;
 	private int deltaLat;
 
+	private ExtTypeAttributes extTypeAttributes;
+
 	/**
 	 * Write this object to the given file.
 	 *
@@ -146,5 +148,13 @@ public abstract class MapObject {
 
 	public List<Label> getRefLabels() {
 		return refLabels;
+	}
+
+	protected byte[] getExtTypeExtraBytes() {
+		return (extTypeAttributes != null)? extTypeAttributes.getExtTypeExtraBytes(this) : null;
+	}
+
+	public void setExtTypeAttributes(ExtTypeAttributes eta) {
+		extTypeAttributes = eta;
 	}
 }

@@ -31,6 +31,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
+import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
@@ -509,6 +510,9 @@ public class StyledConverter implements OsmConverter {
 
 		if(region != null)
 		  ms.setRegion(region);			
+
+		if(MapElement.hasExtendedType(gt.getType()))
+			ms.setExtTypeAttributes(new ExtTypeAttributes(element.getTagsWithPrefix("mkgmap:xt-", true), "OSM id " + element.getId()));
 	}
 
 	void addRoad(Way way, GType gt) {
