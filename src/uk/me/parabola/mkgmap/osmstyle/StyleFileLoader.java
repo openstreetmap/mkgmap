@@ -82,7 +82,7 @@ public abstract class StyleFileLoader {
 			} else if (s.indexOf(':') > 0) {
 				loader = new JarFileLoader(s, name);
 			} else {
-				loader = classpathLoader("styles/", name);
+				throw new FileNotFoundException("no such file or path: " + loc);
 			}
 		}
 
