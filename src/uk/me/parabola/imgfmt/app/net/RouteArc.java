@@ -80,7 +80,21 @@ public class RouteArc {
 		this.length = convertMeters(length);
 		if(log.isDebugEnabled())
 			log.debug("set length", this.length);
-		this.initialHeading = calcAngle(nextCoord);
+		// if nextCoord is so close to the source node that the
+		// coordinates are equal, it won't be possible to determine
+		// the heading angle so use the dest node instead
+		if(source.getCoord().equals(nextCoord)) {
+			if(source.getCoord().equals(dest.getCoord())) {
+				log.warn("Can't determine arc heading (using 0) at " + source.getCoord().toOSMURL());
+				this.initialHeading = (byte)0;
+			}
+			else {
+				log.info("Using destination node to determine arc heading at " + source.getCoord().toOSMURL());
+				this.initialHeading = calcAngle(dest.getCoord());
+			}
+		}
+		else
+			this.initialHeading = calcAngle(nextCoord);
 		// too early: dest.nodeClass may still increase
 		//setDestinationClass(dest.getNodeClass());
 	}
