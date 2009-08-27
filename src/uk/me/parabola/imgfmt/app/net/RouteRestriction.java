@@ -56,16 +56,27 @@ public class RouteRestriction {
 	// last restriction in a node
 	private boolean last;
 
+	// mask that specifies which vehicle types the restriction doesn't apply to
+	private final byte exceptMask;
+
+	public final static byte EXCEPT_CAR      = 0x01;
+	public final static byte EXCEPT_BUS      = 0x02;
+	public final static byte EXCEPT_TAXI     = 0x04;
+	public final static byte EXCEPT_DELIVERY = 0x10;
+	public final static byte EXCEPT_BICYCLE  = 0x20;
+	public final static byte EXCEPT_TRUCK    = 0x40;
+
 	/**
 	 * Create a route restriction.
 	 *
 	 * @param from The inverse arc of "from" arc.
 	 * @param to The "to" arc.
 	 */
-	public RouteRestriction(RouteArc from, RouteArc to) {
+	public RouteRestriction(RouteArc from, RouteArc to, byte exceptMask) {
 		assert from.getSource().equals(to.getSource()) : "arcs in restriction don't meet";
 		this.from = from;
 		this.to = to;
+		this.exceptMask = exceptMask;
 	}
 
 	private int calcOffset(RouteNode node, int tableOffset) {
@@ -82,7 +93,16 @@ public class RouteRestriction {
 	 * @param tableOffset The offset in NOD 1 of the tables area.
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
-		writer.put3(HEADER);
+		int header = HEADER;
+
+		if(exceptMask != 0)
+			header |= 0x0800;
+
+		writer.put3(header);
+
+		if(exceptMask != 0)
+			writer.put(exceptMask);
+
 		int[] offsets = new int[3];
 
 		if (from.isInternal())
@@ -125,7 +145,10 @@ public class RouteRestriction {
 	 * Size in bytes of the Table C entry.
 	 */
 	public int getSize() {
-		return SIZE;
+		int size = SIZE;
+		if(exceptMask != 0)
+			++size;
+		return size;
 	}
 
 	public void setOffsetC(int offsetC) {

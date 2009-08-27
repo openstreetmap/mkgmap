@@ -7,6 +7,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -28,6 +29,7 @@ public class RestrictionRelation extends Relation {
     private CoordNode toNode;
     private CoordNode viaNode;
     private final List<CoordNode> otherNodes = new ArrayList<CoordNode>();
+	private byte exceptMask;
     private final String messagePrefix;
 
 	/**
@@ -105,7 +107,6 @@ public class RestrictionRelation extends Relation {
 		restriction = getTag("restriction");
 
 		String[] unsupportedTags = {
-		    "except",
 		    "day_on",
 		    "day_off",
 		    "hour_on",
@@ -113,6 +114,29 @@ public class RestrictionRelation extends Relation {
 		for (String unsupportedTag : unsupportedTags) {
 			if (getTag(unsupportedTag) != null) {
 				log.warn(messagePrefix + "ignoring unsupported '" + unsupportedTag + "' tag");
+			}
+		}
+
+		String except = getTag("except");
+		if(except == null)
+			except = getTag("exception"); // be nice
+		if(except != null) {
+			for(String e : except.split("[,;]")) { // be nice
+				e = e.trim();
+				if(e.equals("motorcar") || e.equals("motorcycle"))
+					exceptMask |= RouteRestriction.EXCEPT_CAR;
+				else if(e.equals("psv") || e.equals("bus"))
+					exceptMask |= RouteRestriction.EXCEPT_BUS;
+				else if(e.equals("taxi"))
+					exceptMask |= RouteRestriction.EXCEPT_TAXI;
+				else if(e.equals("delivery") || e.equals("goods"))
+					exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+				else if(e.equals("bicycle"))
+					exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+				else if(e.equals("hgv") || e.equals("truck"))
+					exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+				else
+					log.warn(messagePrefix + "ignoring unsupported vehicle class '" + e + "' in turn restriction exception");
 			}
 		}
 	}
@@ -236,7 +260,7 @@ public class RestrictionRelation extends Relation {
 		   restriction.equals("no_straight_on") ||
 		   restriction.equals("no_u_turn") ||
 		   restriction.startsWith("no_turn")) {
-			roadNetwork.addRestriction(fromNode, toNode, viaNode);
+			roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
 			if(restriction.startsWith("no_turn"))
 				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
 			else
@@ -246,7 +270,7 @@ public class RestrictionRelation extends Relation {
 			restriction.equals("only_right_turn") ||
 			restriction.equals("only_straight_on")) {
 			for(CoordNode otherNode : otherNodes) {
-				roadNetwork.addRestriction(fromNode, otherNode, viaNode);
+				roadNetwork.addRestriction(fromNode, otherNode, viaNode, exceptMask);
 				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + otherNode.toDegreeString() + ")");
 			}
 		}

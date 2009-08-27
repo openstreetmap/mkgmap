@@ -182,7 +182,7 @@ public class RoadNetwork {
 		return boundary;
 	}
 
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode) {
+	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
 		RouteNode fn = nodes.get(fromNode.getId());
 		RouteNode tn = nodes.get(toNode.getId());
 		RouteNode vn = nodes.get(viaNode.getId());
@@ -197,7 +197,7 @@ public class RoadNetwork {
 		assert fa != null : "can't locate arc from 'via' node to 'from' node";
 		assert ta != null : "can't locate arc from 'via' node to 'to' node";
 
-		vn.addRestriction(new RouteRestriction(fa, ta));
+		vn.addRestriction(new RouteRestriction(fa, ta, exceptMask));
     }
 
 }
