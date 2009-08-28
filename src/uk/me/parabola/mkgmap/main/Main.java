@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
@@ -71,10 +72,10 @@ public class Main implements ArgumentProcessor {
 	private String styleFile = "classpath:styles";
 	private boolean verbose;
 
-	public List<Future<String>> futures = new LinkedList<Future<String>>();
-	public ExecutorService threadPool = null;
+	private final List<Future<String>> futures = new LinkedList<Future<String>>();
+	private ExecutorService threadPool;
 	// default number of threads
-	public int maxJobs = 1;
+	private int maxJobs = 1;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -284,17 +285,26 @@ public class Main implements ArgumentProcessor {
 			threadPool.shutdown();
 			while(!futures.isEmpty()) {
 				try {
-					// don't call get() until a job has finished
-					if(futures.get(0).isDone())
-						filenames.add(futures.remove(0).get());
-					else
-						Thread.sleep(10);
-				}
-				catch(Exception e) {
-					log.error("" + e);
-					e.printStackTrace(System.err);
-					if(!args.getProperties().getProperty("keep-going", false)) {
-						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
+					try {
+						// don't call get() until a job has finished
+						if(futures.get(0).isDone())
+							filenames.add(futures.remove(0).get());
+						else
+							Thread.sleep(10);
+					} catch (ExecutionException e) {
+						// Re throw the underlying exception
+						Throwable cause = e.getCause();
+						if (cause instanceof Exception)
+							throw (Exception) cause;
+						else
+							throw e;
+					}
+				} catch (Exception e) {
+					if (args.getProperties().getProperty("keep-going", false)) {
+						System.err.println("ERROR: " + e.getMessage());
+						System.err.println("  continuing regardless because --keep-going was given");
+					} else {
+						throw (RuntimeException) e;
 					}
 				}
 			}
