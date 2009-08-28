@@ -741,8 +741,10 @@ public class MapBuilder implements Configurable {
 
 			if(point.hasExtendedType()) {
 				ExtTypeAttributes eta = point.getExtTypeAttributes();
-				eta.processLabels(lbl);
-				p.setExtTypeAttributes(eta);
+				if(eta != null) {
+					eta.processLabels(lbl);
+					p.setExtTypeAttributes(eta);
+				}
 			}
 
 			Coord coord = point.getLocation();
@@ -961,8 +963,10 @@ public class MapBuilder implements Configurable {
 				div.setPolylineNumber(pl);
 			else {
 				ExtTypeAttributes eta = element.getExtTypeAttributes();
-				eta.processLabels(map.getLblFile());
-				pl.setExtTypeAttributes(eta);
+				if(eta != null) {
+					eta.processLabels(map.getLblFile());
+					pl.setExtTypeAttributes(eta);
+				}
 			}
 
 			pl.setDirection(line.isDirection());
@@ -1006,8 +1010,10 @@ public class MapBuilder implements Configurable {
 			pg.setType(shape.getType());
 			if(element.hasExtendedType()) {
 				ExtTypeAttributes eta = element.getExtTypeAttributes();
-				eta.processLabels(map.getLblFile());
-				pg.setExtTypeAttributes(eta);
+				if(eta != null) {
+					eta.processLabels(map.getLblFile());
+					pg.setExtTypeAttributes(eta);
+				}
 			}
 			map.addMapObject(pg);
 		}
