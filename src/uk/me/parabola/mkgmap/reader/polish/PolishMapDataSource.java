@@ -28,10 +28,13 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -71,12 +74,16 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	private final RoadHelper roadHelper = new RoadHelper();
 
+	private Map<String, String> extraAttributes;
+
 	private String copyright;
 	private int section;
 	private LevelInfo[] levels;
 	private int endLevel;
 	private char elevUnits;
 	private static final double METERS_TO_FEET = 3.2808399;
+
+	private int lineNo;
 
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
@@ -105,6 +112,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		try {
 			String line;
 			while ((line = in.readLine()) != null) {
+				++lineNo;
 				if (line.trim().length() == 0 || line.charAt(0) == ';')
 					continue;
 				if (line.startsWith("[END"))
@@ -157,6 +165,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		String name = line.substring(1, line.length() - 1);
 		log.debug("section name", name);
 
+		extraAttributes = null;
+
 		if (name.equals("IMG ID")) {
 			section = S_IMG_ID;
 		} else if (name.equals("POI") || name.equals("RGN10") || name.equals("RGN20")) {
@@ -179,11 +189,15 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private void endSection() {
 		switch (section) {
 		case S_POINT:
+			if(extraAttributes != null && point.hasExtendedType())
+				point.setExtTypeAttributes(makeExtTypeAttributes());
 			mapper.addToBounds(point.getLocation());
 			mapper.addPoint(point);
 			break;
 		case S_POLYLINE:
 			if (polyline.getPoints() != null) {
+				if(extraAttributes != null && polyline.hasExtendedType())
+					polyline.setExtTypeAttributes(makeExtTypeAttributes());
 				if (roadHelper.isRoad())
 					mapper.addRoad(roadHelper.makeRoad(polyline));
 				else
@@ -191,8 +205,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 			break;
 		case S_POLYGON:
-			if (shape.getPoints() != null)
+			if (shape.getPoints() != null) {
+				if(extraAttributes != null && shape.hasExtendedType())
+					shape.setExtTypeAttributes(makeExtTypeAttributes());
 				mapper.addShape(shape);
+			}
 			break;
 		default:
 			log.warn("unexpected default in switch", section);
@@ -262,6 +279,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			setResolution(point, name);
 			point.setLocation(co);
 		}
+		else {
+			if(extraAttributes == null)
+				extraAttributes = new HashMap<String, String>();
+			extraAttributes.put(name, value);
+		}
 	}
 
 	/**
@@ -296,6 +318,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			roadHelper.setParam(value);
 		} else if (name.equals("DirIndicator")) {
 			polyline.setDirection(Integer.parseInt(value) > 0);
+		}
+		else {
+			if(extraAttributes == null)
+				extraAttributes = new HashMap<String, String>();
+			extraAttributes.put(name, value);
 		}
 	}
 
@@ -350,6 +377,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 			shape.setPoints(points);
 			setResolution(shape, name);
+		}
+		else {
+			if(extraAttributes == null)
+				extraAttributes = new HashMap<String, String>();
+			extraAttributes.put(name, value);
 		}
 	}
 
@@ -549,5 +581,83 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
 		return new Coord(f1, f2);
+	}
+
+	private ExtTypeAttributes makeExtTypeAttributes() {
+		Map<String, String> eta = new HashMap<String, String>();
+		int colour = 0;
+		int style = 0;
+
+		for(String key : extraAttributes.keySet()) {
+			String v = extraAttributes.get(key);
+			if(key.equals("Depth")) {
+				String u = extraAttributes.get("DepthUnit");
+				if("f".equals(u))
+					v += "ft";
+				eta.put("depth", v);
+			}
+			else if(key.equals("Height")) {
+				String u = extraAttributes.get("HeightUnit");
+				if("f".equals(u))
+					v += "ft";
+				eta.put("height", v);
+			}
+			else if(key.equals("HeightAboveFoundation")) {
+				String u = extraAttributes.get("HeightAboveFoundationUnit");
+				if("f".equals(u))
+					v += "ft";
+				eta.put("height-above-foundation", v);
+			}
+			else if(key.equals("HeightAboveDatum")) {
+				String u = extraAttributes.get("HeightAboveDatumUnit");
+				if("f".equals(u))
+					v += "ft";
+				eta.put("height-above-datum", v);
+			}
+			else if(key.equals("Color")) {
+				colour = Integer.decode(v);
+			}
+			else if(key.equals("Style")) {
+				style = Integer.decode(v);
+			}
+			else if(key.equals("Position")) {
+				eta.put("position", v);
+			}
+			else if(key.equals("FoundationColor")) {
+				eta.put("color", v);
+			}
+			else if(key.equals("Light")) {
+				eta.put("light", v);
+			}
+			else if(key.equals("LightType")) {
+				eta.put("type", v);
+			}
+			else if(key.equals("Period")) {
+				eta.put("period", v);
+			}
+			else if(key.equals("Note")) {
+				eta.put("note", v);
+			}
+			else if(key.equals("LocalDesignator")) {
+				eta.put("local-desig", v);
+			}
+			else if(key.equals("InternationalDesignator")) {
+				eta.put("int-desig", v);
+			}
+			else if(key.equals("FacilityPoint")) {
+				eta.put("facilities", v);
+			}
+			else if(key.equals("Racon")) {
+				eta.put("racon", v);
+			}
+			else if(key.equals("LeadingAngle")) {
+				eta.put("leading-angle", v);
+			}
+		}
+
+		if(colour != 0 || style != 0)
+			eta.put("style", "0x" + Integer.toHexString((style << 8) | colour));
+
+		return new ExtTypeAttributes(eta, "Line " + lineNo);
 	}
 }
