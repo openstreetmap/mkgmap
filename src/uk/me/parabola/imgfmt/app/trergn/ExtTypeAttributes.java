@@ -90,7 +90,7 @@ mkgmap:xt-type
 	composite group occulting
 	long flashing
 	group long flashing
-	morse (followed by a letter)
+	(a morse code letter)
 	quick
 	group quick
 	group quick and long flashing
@@ -667,6 +667,12 @@ public class ExtTypeAttributes {
 		if(c == null)
 			return 0;
 
+		c = c.trim();
+
+		if(Character.isDigit(c.charAt(0))) {
+			return Integer.decode(c);
+		}
+
 		String[] colours = {
 			"",
 			"red",
@@ -710,6 +716,17 @@ public class ExtTypeAttributes {
 		if(lt == null)
 			return 0;
 
+		lt = lt.trim();
+
+		if(Character.isDigit(lt.charAt(0))) {
+			return Integer.decode(lt);
+		}
+
+		if(lt.length() == 1) {
+			morseLetter = (byte)lt.charAt(0);
+			return 0x0b;
+		}
+
 		String[] types = {
 			"",
 			"fixed",
@@ -722,7 +739,7 @@ public class ExtTypeAttributes {
 			"composite group occulting",
 			"long flashing",
 			"group long flashing",
-			"morse",
+			"morse code letter",
 			"quick",
 			"group quick",
 			"group quick and long flashing",
@@ -745,14 +762,6 @@ public class ExtTypeAttributes {
 			"alternating group flashing"
 		};
 
-		if(lt.toLowerCase().startsWith("morse")) {
-			String ml = lt.substring(5).trim();
-			if(ml.length() > 0) {
-				morseLetter = (byte)ml.charAt(0);
-				lt = "morse";
-			}
-		}
-
 		lt = lt.toLowerCase();
 
 		for(int i = 0; i < types.length; ++i)
@@ -766,6 +775,12 @@ public class ExtTypeAttributes {
 		String ps = attributes.get("position");
 		if(ps == null)
 			return 0;
+
+		ps = ps.trim();
+
+		if(Character.isDigit(ps.charAt(0))) {
+			return Integer.decode(ps);
+		}
 
 		String[] positions = {
 			"unknown",
@@ -798,7 +813,28 @@ public class ExtTypeAttributes {
 	private Light[] parseLights(String ls) {
 		if(ls == null)
 			return new Light[0];
-		String[] defs = ls.split("[:;/]");
+		ls = ls.trim();
+		String[] defs = new String[0];
+		if(ls.startsWith("(")) {
+			// handle polish syntax "(c,r,a),(c,r,a)..."
+			List<String> out = new ArrayList<String>();
+			int start = 0;
+			// start should be on the '(' at the start of the loop
+			while(start < ls.length()) {
+				int end = ++start;
+				while(end < ls.length() && ls.charAt(end) != ')')
+					++end;
+				out.add(ls.substring(start, end));
+				start = end + 1;
+				while(start < ls.length() && ls.charAt(start) != '(')
+					++start;
+			}
+			defs = out.toArray(defs);
+		}
+		else {
+			// handle our "simple" syntax
+			defs = ls.split("[:;/]");
+		}
 		Light[] lights = new Light[defs.length];
 		for(int i = 0; i < defs.length; ++i) {
 			String def = defs[i].trim();
@@ -827,11 +863,16 @@ public class ExtTypeAttributes {
 		public Light(String desc) {
 			String[] parts = desc.split(",");
 			if(parts.length > 0) {
-				String lc = parts[0].toLowerCase();
-				for(int i = 0; i < colours.length; ++i) {
-					if(colours[i].equals(lc)) {
-						colour = i;
-						break;
+				String lc = parts[0].trim().toLowerCase();
+				if(Character.isDigit(lc.charAt(0))) {
+					colour = Integer.decode(lc);
+				}
+				else {
+					for(int i = 0; i < colours.length; ++i) {
+						if(colours[i].equals(lc)) {
+							colour = i;
+							break;
+						}
 					}
 				}
 			}
