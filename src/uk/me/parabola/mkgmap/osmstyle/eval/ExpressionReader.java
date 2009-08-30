@@ -106,6 +106,8 @@ public class ExpressionReader {
 				op = new NotExistsOp();
 				op.setFirst(arg1);
 			}
+		} else if (!op.isType(OPEN_PAREN)) {
+			op.setFirst(stack.pop());
 		}
 		stack.push(op);
 	}

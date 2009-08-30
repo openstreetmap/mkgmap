@@ -33,6 +33,6 @@ public class NotOp extends Op {
 	}
 
 	public int priority() {
-		return 0;
+		return 50;
 	}
 }

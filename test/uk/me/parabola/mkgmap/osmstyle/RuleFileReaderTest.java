@@ -311,6 +311,25 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Test the not operator.
+	 */
+	@Test
+	public void testNot() {
+		RuleSet rs = makeRuleSet("tunnel=yes & !(route=mtb | route=bicycle) [0x1]");
+		//RuleSet rs = makeRuleSet("tunnel=yes & (route!=mtb & route!=bicycle) [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("tunnel", "yes");
+		el.addTag("route", "abc");
+		GType type = rs.resolveType(el);
+		assertNotNull("without route mtb or bicycle", type);
+
+		el.addTag("route", "mtb");
+		type = rs.resolveType(el);
+		assertNull("with route mtb", type);
+	}
+
+	/**
 	 * A moderately complex set of conditions and substitutions.
 	 */
 	@Test
