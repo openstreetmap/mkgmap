@@ -300,11 +300,12 @@ public class Main implements ArgumentProcessor {
 							throw e;
 					}
 				} catch (Exception e) {
-					if (args.getProperties().getProperty("keep-going", false)) {
+					if(args.getProperties().getProperty("keep-going", false)) {
 						System.err.println("ERROR: " + e.getMessage());
-						System.err.println("  continuing regardless because --keep-going was given");
-					} else {
-						throw (RuntimeException) e;
+					}
+					else {
+						System.err.println("Exiting - if you want to carry on regardless, use the --keep-going option");
+						throw new ExitException(e.getMessage());
 					}
 				}
 			}
