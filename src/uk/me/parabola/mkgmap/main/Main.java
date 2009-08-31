@@ -299,13 +299,14 @@ public class Main implements ArgumentProcessor {
 						else
 							throw e;
 					}
-				} catch (Exception e) {
-					if(args.getProperties().getProperty("keep-going", false)) {
-						System.err.println("ERROR: " + e.getMessage());
-					}
-					else {
-						System.err.println("Exiting - if you want to carry on regardless, use the --keep-going option");
-						throw new ExitException(e.getMessage());
+				}
+				catch (ExitException ee) {
+					throw ee;
+				}
+				catch (Exception e) {
+					e.printStackTrace(System.err);
+					if(!args.getProperties().getProperty("keep-going", false)) {
+						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
 					}
 				}
 			}
