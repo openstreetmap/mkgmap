@@ -76,10 +76,12 @@ public class JarFileLoader extends StyleFileLoader {
 			jurl.setUseCaches(false);
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
-			if (name != null)
-				prefix = searchPrefix(jarFile, '/' + name + "/version");
-			else
-				prefix = searchPrefix(jarFile);
+			if (prefix == null) {
+				if (name != null)
+					prefix = searchPrefix(jarFile, '/' + name + "/version");
+				else
+					prefix = searchPrefix(jarFile);
+			}
 
 			log.debug("jar prefix is", prefix);
 		} catch (IOException e) {

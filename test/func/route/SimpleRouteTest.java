@@ -26,7 +26,7 @@ import func.lib.RangeMatcher;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-public class SimpleRoute {
+public class SimpleRouteTest {
 
 	/**
 	 * Simple test to ensure that nothing has changed.  Of course
@@ -62,10 +62,10 @@ public class SimpleRoute {
 				assertEquals("LBL size", 28341, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73104, size);
+				assertEquals("NET size", 73126, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 203553, size);
+				assertEquals("NOD size", 207473, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
