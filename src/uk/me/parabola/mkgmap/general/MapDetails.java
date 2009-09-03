@@ -72,8 +72,12 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (line.getPoints().isEmpty())
 			return;
 
-		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
-				line.getMinResolution());
+		int type;
+		if(line.hasExtendedType())
+			type = line.getType();
+		else
+			type = line.getType() << 8;
+		updateOverview(lineOverviews, type, line.getMinResolution());
 
 		lines.add(line);
 	}
@@ -89,10 +93,13 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (shape.getPoints().isEmpty())
 			return;
 
-		int type = shape.getType();
-		if (type != 0x4b)
-			updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
-					shape.getMinResolution());
+		int type;
+		if(shape.hasExtendedType())
+			type = shape.getType();
+		else
+			type = shape.getType() << 8;
+		if (type != 0x4b00)
+			updateOverview(shapeOverviews, type, shape.getMinResolution());
 
 		shapes.add(shape);
 	}
@@ -176,10 +183,6 @@ public class MapDetails implements MapCollector, MapDataSource {
 		}
 		
 		return ovlist;
-	}
-
-	private int makeMapType(int type, int subtype) {
-		return (type << 8) + (subtype & 0xff);
 	}
 
 	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
