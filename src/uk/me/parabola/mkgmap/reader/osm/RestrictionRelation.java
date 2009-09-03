@@ -267,8 +267,8 @@ public class RestrictionRelation extends Relation {
 				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
 		}
 		else if(restriction.equals("only_left_turn") ||
-			restriction.equals("only_right_turn") ||
-			restriction.equals("only_straight_on")) {
+				restriction.equals("only_right_turn") ||
+				restriction.equals("only_straight_on")) {
 			for(CoordNode otherNode : otherNodes) {
 				roadNetwork.addRestriction(fromNode, otherNode, viaNode, exceptMask);
 				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + otherNode.toDegreeString() + ")");
