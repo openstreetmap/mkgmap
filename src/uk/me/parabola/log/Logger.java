@@ -123,7 +123,7 @@ public class Logger {
 	}
 
 	public boolean isInfoEnabled() {
-		return log.isLoggable(Level.FINE);
+		return log.isLoggable(Level.INFO);
 	}
 
 	public boolean isWarnEnabled() {
