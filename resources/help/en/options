@@ -204,6 +204,9 @@ Miscellaneous options:
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
 
+--make-poi-index
+	Generate the POI index (not yet useful).
+
 --make-all-cycleways
 	Turn on all of the options that make cycleways.
 

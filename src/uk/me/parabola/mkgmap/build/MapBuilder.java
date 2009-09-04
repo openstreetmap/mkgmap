@@ -110,6 +110,7 @@ public class MapBuilder implements Configurable {
 	private boolean sortRoads = true;
 	private static final double FILTER_DISTANCE = 2.6;
 	private boolean enableLineCleanFilters = true;
+	private boolean makePOIIndex = false;
 
 	public MapBuilder() {
 		regionName = null;
@@ -121,7 +122,9 @@ public class MapBuilder implements Configurable {
 		countryAbbr = props.getProperty("country-abbr", countryAbbr);
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
-		
+
+		makePOIIndex = props.getProperty("make-poi-index", false);
+
 		if(props.getProperty("no-poi-address", null) != null)
 			poiAddresses = false;
 
@@ -765,7 +768,7 @@ public class MapBuilder implements Configurable {
 						if(e != null)
 							e.getHighway().addExitPoint(name, pointIndex, div);
 					}
-					else
+					else if(makePOIIndex)
 						lbl.createPOIIndex(name, pointIndex, div, point.getType());
 				}
 
