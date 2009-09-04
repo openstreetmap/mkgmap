@@ -66,9 +66,7 @@ public class MultiPolygonRelation extends Relation {
 					outer.addPoint(point);
 				}
 				myWayMap.put(outer.getId(), outer);
-				if (tempWay.getTags() != null) {
-					tempWay.getTags().removeAll();
-				}
+				tempWay.removeAllTags();
 				it.remove();
 			}
 			
@@ -80,9 +78,7 @@ public class MultiPolygonRelation extends Relation {
 					for(Coord point: tempWay.getPoints()){
 						outer.addPoint(point);
 					}
-					if (tempWay.getTags() != null){
-						tempWay.getTags().removeAll();
-					}
+					tempWay.removeAllTags();
 					it.remove();
 					it = outers.iterator();
 				}
@@ -95,14 +91,12 @@ public class MultiPolygonRelation extends Relation {
 						insertPoints(w, insert[0], insert[1]);
 
 					// remove tags from inner way that are available in the outer way
-					if (outer.getTags() != null){
-						for (Map.Entry<String, String> mapTags: outer.getTags().getKeyValues().entrySet()){
-							String key = mapTags.getKey();
-							String value = mapTags.getValue();
-							if (w.getTag(key) != null){
-								if (w.getTag(key).equals(value))
-									w.deleteTag(key);
-							}
+					for (Map.Entry<String, String> mapTags: outer.getEntryIteratable()){
+						String key = mapTags.getKey();
+						String value = mapTags.getValue();
+						if (w.getTag(key) != null){
+							if (w.getTag(key).equals(value))
+								w.deleteTag(key);
 						}
 					}
 				}

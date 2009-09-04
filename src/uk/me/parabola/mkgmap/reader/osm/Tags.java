@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.AbstractMap;
 
 /**
  * Store the tags that belong to an Element.
@@ -261,6 +262,32 @@ public class Tags implements Iterable<String> {
 		};
 	}
 
+	public Iterator<Map.Entry<String, String>> entryIterator() {
+		return new Iterator<Map.Entry<String, String>>() {
+			private int pos;
+			
+			public boolean hasNext() {
+				for (int i = pos; i < capacity; i++) {
+					if (values[i] != null) {
+						pos = i;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			public Map.Entry<String, String> next() {
+				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(keys[pos], values[pos]);
+				pos++;
+				return entry;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
 	/**
 	 * Add the items that are in 'extra' to the map proper.
 	 */
@@ -281,14 +308,4 @@ public class Tags implements Iterable<String> {
 		}
 		size = 0;
 	}
-
-	public Map<String, String> getKeyValues() {
-		Map<String, String> tagMap = new HashMap<String, String>();
-		for (int i = 0; i < capacity; i++)
-			if (keys[i] != null && values[i] != null)
-				tagMap.put(keys[i], values[i]);
-		return tagMap;
-	}
-
-
 }
