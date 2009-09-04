@@ -291,11 +291,14 @@ public class Main implements ArgumentProcessor {
 							filenames.add(futures.remove(0).get());
 						else
 							Thread.sleep(10);
-					} catch (ExecutionException e) {
+					}
+					catch (ExecutionException e) {
 						// Re throw the underlying exception
 						Throwable cause = e.getCause();
 						if (cause instanceof Exception)
-							throw (Exception) cause;
+							throw (Exception)cause;
+						else if (cause instanceof Error)
+							throw (Error)cause;
 						else
 							throw e;
 					}
