@@ -83,6 +83,14 @@ public class PlacesHeader {
 		writer.putInt(poiProperties.getPosition());
 		writer.putInt(poiProperties.getSize());
 		writer.put((byte) 0); // offset multiplier
+
+		// mb 5/9/2009 - discovered that Garmin maps can contain more
+		// than 8 bits of POI global flags - have seen the 9th bit set
+		// to indicate the presence of some extra POI info (purpose
+		// unknown but it starts with a byte that contains the number
+		// of further bytes to read << 1) - therefore, this group
+		// should probably be: 16 bits of POI global flags followed by
+		// 16 zero bits rather than 8 bits of flags and 24 zero bits
 		writer.put(POIGlobalFlags); // properties global mask
 		writer.putChar((char) 0);
 		writer.put((byte) 0);
