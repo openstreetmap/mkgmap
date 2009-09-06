@@ -68,7 +68,7 @@ class LinePreparer {
 	 *
 	 * @return A class containing the writen byte stream.
 	 */
-	public BitWriter makeBitStream() {
+	public BitWriter makeBitStream(int minPointsRequired) {
 
 		assert xBase >= 0 && yBase >= 0;
 
@@ -117,12 +117,15 @@ class LinePreparer {
 		if (extraBit)
 			bw.put1(false);
 
+		int numPointsEncoded = 1;
 		for (int i = 0; i < deltas.length; i+=2) {
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
 			if (dx == 0 && dy == 0)
 				continue;
 			
+			++numPointsEncoded;
+
 			if (log.isDebugEnabled())
 				log.debug("x delta", dx, "~", xbits);
 			assert dx >> xbits == 0 || dx >> xbits == -1;
@@ -154,6 +157,10 @@ class LinePreparer {
 
 		if (log.isDebugEnabled())
 			log.debug(bw);
+
+		if(numPointsEncoded < minPointsRequired)
+			return null;
+
 		return bw;
 	}
 

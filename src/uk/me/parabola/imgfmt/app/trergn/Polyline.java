@@ -78,17 +78,17 @@ public class Polyline extends MapObject {
 	 * @param file A reference to the file that should be written to.
 	 */
 	public void write(ImgFileWriter file) {
-		// If there is nothing to do, then do nothing.
-		if (points.size() < 2) {
-			log.debug("less than two points, not writing");
-			return;
-		}
 
 		// Prepare for writing by doing all the required calculations.
 
 		// Prepare the information that we need.
 		LinePreparer w = new LinePreparer(this);
-		BitWriter bw = w.makeBitStream();
+		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
+		BitWriter bw = w.makeBitStream(minPointsRequired);
+		if(bw == null) {
+			log.info("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
+			return;
+		}
 
 		// The type of feature, also contains a couple of flags hidden inside.
 		byte b1 = (byte) getType();
@@ -149,19 +149,24 @@ public class Polyline extends MapObject {
 		int labelOff = getLabel().getOffset();
 		byte[] extraBytes = getExtTypeExtraBytes();
 
+		// need to prepare line info before outputing lat/lon
+		LinePreparer w = new LinePreparer(this);
+		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
+		BitWriter bw = w.makeBitStream(minPointsRequired);
+		if(bw == null) {
+			log.info("Level " + getSubdiv().getZoom().getLevel() + " " + ((this instanceof Polygon)? "polygon" : "polyline") + " has less than " + minPointsRequired + " points, discarding");
+			return;
+		}
+		int blen = bw.getLength();
+		assert blen > 1 : "zero length bitstream";
+		assert blen < 0x10000 : "bitstream too long " + blen;
+
 		if(labelOff != 0)
 			type |= 0x20;		// has label
 		if(extraBytes != null)
 			type |= 0x80;		// has extra bytes
 		stream.write(type >> 8);
 		stream.write(type);
-
-		// need to prepare line info before outputing lat/lon
-		LinePreparer w = new LinePreparer(this);
-		BitWriter bw = w.makeBitStream();
-		int blen = bw.getLength();
-		assert blen > 1 : "zero length bitstream";
-		assert blen < 0x10000 : "bitstream too long " + blen;
 
 		int deltaLong = getDeltaLong();
 		int deltaLat = getDeltaLat();
