@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
@@ -454,8 +455,11 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		nodeMap = null;
 
-		if(minimumArcLength != null)
+		if(minimumArcLength != null) {
+			if(bbox != null)
+				makeBoundaryNodes();
 			removeShortArcsByMergingNodes(minimumArcLength);
+		}
 
 		nodeIdMap = null;
 
@@ -486,6 +490,71 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		// Run a finishing task.
 		endTask.run();
+	}
+
+	// "soft clip" each way that crosses a boundary by adding a point
+	//  at each place where it meets the boundary
+	private void makeBoundaryNodes() {
+		log.info("Making boundary nodes");
+		int numBoundaryNodesDetected = 0;
+		int numBoundaryNodesAdded = 0;
+		for(Way way : wayMap.values()) {
+			List<Coord> points = way.getPoints();
+			// clip each segment in the way against the bounding box
+			// to find the positions of the boundary nodes - loop runs
+			// backwards so we can safely insert points into way
+			for (int i = points.size() - 1; i >= 1; --i) {
+				Coord[] pair = { points.get(i - 1), points.get(i) };
+				Coord[] clippedPair = LineClipper.clip(bbox, pair);
+				// we're only interested in segments that touch the
+				// boundary
+				if(clippedPair != null) {
+					// the segment touches the boundary or is
+					// completely inside the bounding box
+					if(clippedPair[1] != points.get(i)) {
+						// the second point in the segment is outside
+						// of the boundary
+						assert clippedPair[1].getOnBoundary();
+						// insert boundary point before the second point
+						points.add(i, clippedPair[1]);
+						// it's a newly created point so make its
+						// highway count one
+						clippedPair[1].incHighwayCount();
+						++numBoundaryNodesAdded;
+
+					}
+					else if(clippedPair[1].getOnBoundary())
+						++numBoundaryNodesDetected;
+
+					if(clippedPair[1].getOnBoundary()) {
+						// the point is on the boundary so make sure
+						// it becomes a node
+						clippedPair[1].incHighwayCount();
+					}
+
+					if(clippedPair[0] != points.get(i - 1)) {
+						// the first point in the segment is outside
+						// of the boundary
+						assert clippedPair[0].getOnBoundary();
+						// insert boundary point after the first point
+						points.add(i, clippedPair[0]);
+						// it's a newly created point so make its
+						// highway count one
+						clippedPair[0].incHighwayCount();
+						++numBoundaryNodesAdded;
+					}
+					else if(clippedPair[0].getOnBoundary())
+						++numBoundaryNodesDetected;
+
+					if(clippedPair[0].getOnBoundary()) {
+						// the point is on the boundary so make sure
+						// it becomes a node
+						clippedPair[0].incHighwayCount();
+					}
+				}
+			}
+		}
+		log.info("Making boundary nodes - finished (" + numBoundaryNodesAdded + " added, " + numBoundaryNodesDetected + " detected)");
 	}
 
 	private final void incArcCount(Map<Coord, Integer> map, Coord p, int inc) {
@@ -520,6 +589,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+		Map<Way, Way> complainedAbout = new IdentityHashMap<Way, Way>();
 		boolean anotherPassRequired = true;
 		int pass = 0;
 		while(anotherPassRequired && pass < 10) {
@@ -537,6 +607,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 				int previousNodeIndex = 0; // first point will be a node
 				Coord previousPoint = points.get(0);
+				double arcLength = 0;
 				for(int i = 0; i < points.size(); ++i) {
 					Coord p = points.get(i);
 					// check if this point is to be replaced because
@@ -547,7 +618,9 @@ class Osm5XmlHandler extends DefaultHandler {
 						replacement = r;
 					}
 					if(replacement != null) {
-						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + nodeIdMap.get(replacement));
+						assert !p.getOnBoundary() : "Boundary node replaced";
+						String replacementId = (replacement.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(replacement);
+						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
 						p = replacement;
 						// replace point in way
 						points.set(i, p);
@@ -558,13 +631,14 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(i > 0) {
 						// this is not the first point in the way
 						if(p == previousPoint) {
-							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical nodes (" + nodeIdMap.get(p) + ") - deleting the second node");
+							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical points (" + nodeIdMap.get(p) + ") - deleting the second point");
 							points.remove(i);
 							// hack alert! rewind the loop index
 							--i;
 							anotherPassRequired = true;
 							continue;
 						}
+						arcLength += p.distance(previousPoint);
 						previousPoint = p;
 						Coord previousNode = points.get(previousNodeIndex);
 						// this point is a node if it has an arc count
@@ -578,31 +652,71 @@ class Osm5XmlHandler extends DefaultHandler {
 							if(p != previousNode &&
 							   (p.equals(previousNode) ||
 								(minArcLength > 0 &&
-								 minArcLength > p.distance(previousNode)))) {
-								if(p.equals(previousNode))
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
-								else
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + ((int)(100 * p.distance(previousNode)))/100.0 + "m) - removing it by merging node " + nodeIdMap.get(p) + " into " + nodeIdMap.get(previousNode));
-								++numNodesMerged;
-								replacements.put(p, previousNode);
-								// add this node's arc count to the node
-								// that is replacing it
-								incArcCount(arcCounts, previousNode, arcCount - 1);
-								// reset previous point to be the previous node
-								previousPoint = previousNode;
-								// remove the point(s) back to the previous node
-								for(int j = i; j > previousNodeIndex; --j) {
-									points.remove(j);
+								 minArcLength > arcLength))) {
+								if(previousNode.getOnBoundary() && p.getOnBoundary()) {
+									// both the previous node and this node
+									// are on the boundary
+									if(complainedAbout.get(way) == null) {
+										log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - but it can't be removed because both ends of the arc are boundary nodes!");
+										complainedAbout.put(way, way);
+									}
+									break; // give up with this way
 								}
-								// hack alert! rewind the loop index
-								i = previousNodeIndex;
-								anotherPassRequired = true;
+								String thisNodeId = (p.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(p);
+								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
+
+								if(p.equals(previousNode))
+									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+								else
+									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+								if(p.getOnBoundary()) {
+									// current point is a boundary node so
+									// we need to merge the previous node into
+									// this node
+									++numNodesMerged;
+									replacements.put(previousNode, p);
+									// add the previous node's arc
+									// count to this node
+									incArcCount(arcCounts, p, arcCounts.get(previousNode) - 1);
+									// remove the preceding point(s)
+									// back to and including the
+									// previous node
+									for(int j = i - 1; j >= previousNodeIndex; --j) {
+										points.remove(j);
+									}
+									// hack alert! rewind the loop index
+									i = previousNodeIndex;
+									anotherPassRequired = true;
+								}
+								else {
+									// current point is not on a boundary so
+									// merge this node into the previous one
+									++numNodesMerged;
+									replacements.put(p, previousNode);
+									// add this node's arc count to the node
+									// that is replacing it
+									incArcCount(arcCounts, previousNode, arcCount - 1);
+									// reset previous point to be the
+									// previous node
+									previousPoint = previousNode;
+									// remove the point(s) back to the
+									// previous node
+									for(int j = i; j > previousNodeIndex; --j) {
+										points.remove(j);
+									}
+									// hack alert! rewind the loop index
+									i = previousNodeIndex;
+									anotherPassRequired = true;
+								}
 							}
 							else {
 								// the node did not need to be merged so
 								// it now becomes the new previous node
 								previousNodeIndex = i;
 							}
+
+							// reset arc length
+							arcLength = 0;
 						}
 					}
 				}

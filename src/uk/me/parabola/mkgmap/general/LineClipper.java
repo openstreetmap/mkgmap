@@ -97,7 +97,7 @@ public class LineClipper {
 	 * be returned as was passed in.
 	 * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">Liang-Barsky algorithm</a>
 	 */
-	private static Coord[] clip(Area a, Coord[] ends) {
+	public static Coord[] clip(Area a, Coord[] ends) {
 		assert ends.length == 2;
 
 		int x0 = ends[0].getLongitude();
