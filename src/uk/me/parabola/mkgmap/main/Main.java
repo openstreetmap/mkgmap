@@ -306,8 +306,8 @@ public class Main implements ArgumentProcessor {
 				catch (ExitException ee) {
 					throw ee;
 				}
-				catch (Exception e) {
-					e.printStackTrace(System.err);
+				catch (Throwable t) {
+					t.printStackTrace();
 					if(!args.getProperties().getProperty("keep-going", false)) {
 						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
 					}
