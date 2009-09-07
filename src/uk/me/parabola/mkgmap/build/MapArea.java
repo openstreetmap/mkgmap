@@ -51,9 +51,9 @@ public class MapArea implements MapDataSource {
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
 
-	private static final int POINT_KIND = 0;
-	private static final int LINE_KIND = 1;
-	private static final int SHAPE_KIND = 2;
+	public static final int POINT_KIND = 0;
+	public static final int LINE_KIND = 1;
+	public static final int SHAPE_KIND = 2;
 
 	// This is the initial area.
 	private final Area bounds;
@@ -249,27 +249,16 @@ public class MapArea implements MapDataSource {
 	 * @return An estimate of the max size that will be needed in the RGN file
 	 * for this sub-division.
 	 */
-	public int getSizeAtResolution(int res) {
-		int psize = 0;
-		int lsize = 0;
-		int ssize = 0;
+	public int[] getSizeAtResolution(int res) {
+		int[] sizes = new int[3];
 		
 		for (int i = 0; i <= res; i++) {
-
-			psize += pointSize[i];
-			lsize += lineSize[i];
-			ssize += shapeSize[i];
+			sizes[POINT_KIND] += pointSize[i];
+			sizes[LINE_KIND] += lineSize[i];
+			sizes[SHAPE_KIND] += shapeSize[i];
 		}
 
-		// Return the largest one as an overflow of any means that we have to
-		// split the area.
-		int size = psize;
-		if (lsize > size)
-			size = lsize;
-		if (ssize > size)
-			size = ssize;
-
-		return size;
+		return sizes;
 	}
 
 	/**
@@ -358,6 +347,13 @@ public class MapArea implements MapDataSource {
 	 */
 	public int getNumLines() {
 		return nActiveLines;
+	}
+
+	/**
+	 * Return number of shapes in this area.
+	 */
+	public int getNumShapes() {
+		return nActiveShapes;
 	}
 
 	/**

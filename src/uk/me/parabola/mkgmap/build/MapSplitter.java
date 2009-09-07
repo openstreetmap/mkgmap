@@ -91,7 +91,7 @@ class MapSplitter {
 		// in them.  For those that do, we further split them.  This is done
 		// recursively until everything fits.
 		List<MapArea> alist = new ArrayList<MapArea>();
-		addAreasToList(areas, alist);
+		addAreasToList(areas, alist, 0);
 
 		MapArea[] results = new MapArea[alist.size()];
 		return alist.toArray(results);
@@ -106,17 +106,36 @@ class MapSplitter {
 	 * @param alist The list that will finally contain the complete list of
 	 * map areas.
 	 */
-	private void addAreasToList(MapArea[] areas, List<MapArea> alist) {
+	private void addAreasToList(MapArea[] areas, List<MapArea> alist, int depth) {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
-			if (area.getSizeAtResolution(res) > MAX_RGN_SIZE
-			    || area.getNumLines() > MAX_NUM_LINES
-			    || area.getNumPoints() > MAX_NUM_POINTS) {
+			Area bounds = area.getBounds();
+			int[] sizes = area.getSizeAtResolution(res);
+			if(log.isInfoEnabled()) {
+				String padding = depth + "                                            ";
+				log.info(padding.substring(0, (depth + 1) * 2) + 
+						 bounds.getWidth() + "x" + bounds.getHeight() +
+						 ", res = " + res +
+						 ", points = " + area.getNumPoints() + "/" + sizes[MapArea.POINT_KIND] +
+						 ", lines = " + area.getNumLines() + "/" + sizes[MapArea.LINE_KIND] +
+						 ", shapes = " + area.getNumShapes() + "/" + sizes[MapArea.SHAPE_KIND]);
+			}
+
+			if (area.getNumLines() > MAX_NUM_LINES ||
+			    area.getNumPoints() > MAX_NUM_POINTS ||
+				(sizes[MapArea.POINT_KIND] > MAX_RGN_SIZE &&
+				 (area.hasIndPoints() || area.hasLines() || area.hasShapes())) ||
+				(((sizes[MapArea.POINT_KIND] + sizes[MapArea.LINE_KIND]) > MAX_RGN_SIZE) &&
+				 area.hasShapes())) {
 				if (area.getBounds().getMaxDimention() > 100) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
-					MapArea[] sublist = area.split(2, 2, res);
-					addAreasToList(sublist, alist);
+					MapArea[] sublist;
+					if(bounds.getWidth() > bounds.getHeight())
+						sublist = area.split(2, 1, res);
+					else
+						sublist = area.split(1, 2, res);
+					addAreasToList(sublist, alist, depth + 1);
 					continue;
 				} else {
 					log.warn("area too small to split", area);
