@@ -43,15 +43,12 @@ class MapSplitter {
 
 	// The maximum region size.  Note that the offset to the start of a section
 	// has to fit into 16 bits, the end of the last section could be beyond the
-	// 16 bit limit, but we make sure that everything fits into under half the
-	// allowed space.  Really I'm not sure what the max actually is on real
-	// devices.
-	private static final int MAX_RGN_SIZE = 30 * 1024;
+	// 16 bit limit. Leave a little room for the region pointers
+	private static final int MAX_RGN_SIZE = 0xfff8;
 
 	// The maximum number of lines. NET points to lines in subdivision
 	// using bytes.
-	// Theoretical maximum about 0x100, which still gives errors.
-	private static final int MAX_NUM_LINES = 0xf0;
+	private static final int MAX_NUM_LINES = 0xff;
 
 	private static final int MAX_NUM_POINTS = 0xff;
 
