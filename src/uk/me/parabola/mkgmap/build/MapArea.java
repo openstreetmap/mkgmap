@@ -24,8 +24,10 @@ import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -416,22 +418,20 @@ public class MapArea implements MapDataSource {
 			break;
 
 		case LINE_KIND:
-			if (res <= areaResolution)
-				nActiveLines++;
-
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
 			n = ((MapLine) p).getPoints().size();
 			s = 11 + n * 2;
+			if (res <= areaResolution)
+				nActiveLines += 1 + ((n - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
 			break;
 		case SHAPE_KIND:
-			if (res <= areaResolution)
-				nActiveShapes++;
-
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
 			n = ((MapLine) p).getPoints().size();
 			s = 11 + n * 2;
+			if (res <= areaResolution)
+				nActiveShapes += 1 + ((n - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
 			break;
 
 		default:

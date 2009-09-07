@@ -37,7 +37,7 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class PolygonSplitterFilter extends PolygonSplitterBase implements MapFilter {
-	private static final int MAX_POINT_IN_ELEMENT = 250;
+	public static final int MAX_POINT_IN_ELEMENT = 250;
 
 	/**
 	 * Split up polygons that have more than the max allowed number of points.
