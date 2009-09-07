@@ -134,27 +134,44 @@ public class LineClipper {
 		assert t[0] >= 0;
 		assert t[1] <= 1;
 
-		double d = 0.5;
 		Coord orig0 = ends[0];
 		Coord orig1 = ends[1];
-		if (t[0] > 0) {
-			// line is clipped so create the new end point and mark it
-			// as a boundary node
-			ends[0] = new Coord((int) (y0 + t[0] * dy + d), (int) (x0 + t[0] * dx + d));
+		if(ends[0].getOnBoundary()) {
+			// consistency check
+			assert a.onBoundary(ends[0]) : "Point marked as boundary node at " + ends[0].toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+		}
+		else if (t[0] > 0) {
+			// line requires clipping so create a new end point and if
+			// its position (in map coordinates) is different from the
+			// original point, use the new point as a boundary node
+			Coord new0 = new Coord((int) (y0 + t[0] * dy), (int) (x0 + t[0] * dx));
+			// check the maths worked out
+			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+			if(!new0.equals(orig0))
+				ends[0] = new0;
 			ends[0].setOnBoundary(true);
 		}
-		else if(!a.insideBoundary(ends[0])) {
+		else if(a.onBoundary(ends[0])) {
 			// point lies on the boundary so it's a boundary node
 			ends[0].setOnBoundary(true);
 		}
 
-		if (t[1] < 1) {
-			// line is clipped so create the new end point and mark it
-			// as a boundary node
-			ends[1] = new Coord((int)(y0 + t[1] * dy + d), (int) (x0 + t[1] * dx + d));
+		if(ends[1].getOnBoundary()) {
+			// consistency check
+			assert a.onBoundary(ends[1]) : "Point marked as boundary node at " + ends[1].toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+		}
+		else if (t[1] < 1) {
+			// line requires clipping so create a new end point and if
+			// its position (in map coordinates) is different from the
+			// original point, use the new point as a boundary node
+			Coord new1 = new Coord((int)(y0 + t[1] * dy), (int) (x0 + t[1] * dx));
+			// check the maths worked out
+			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+			if(!new1.equals(orig1))
+				ends[1] = new1;
 			ends[1].setOnBoundary(true);
 		}
-		else if(!a.insideBoundary(ends[1])) {
+		else if(a.onBoundary(ends[1])) {
 			// point lies on the boundary so it's a boundary node
 			ends[1].setOnBoundary(true);
 		}
@@ -173,25 +190,6 @@ public class LineClipper {
 
 		if(t[0] >= t[1] || ends[0].equals(ends[1]))
 			return null;
-
-		// these last two tests catch the situation where the new point
-		// on the clipped line is so close to the original point that
-		// they have the same coordinates - in which case we need to use
-		// the original point so it maintains its identity
-
-		if(ends[0] != orig0 && ends[0].equals(orig0)) {
-			// new Coord has same coordinates as original so use the
-			// original Coord and flag it as a boundary node
-			orig0.setOnBoundary(true);
-			ends[0] = orig0;
-		}
-
-		if(ends[1] != orig1 && ends[1].equals(orig1)) {
-			// new Coord has same coordinates as original so use the
-			// original Coord and flag it as a boundary node
-			orig1.setOnBoundary(true);
-			ends[1] = orig1;
-		}
 
 		return ends;
 	}
