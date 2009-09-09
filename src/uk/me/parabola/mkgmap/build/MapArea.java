@@ -398,7 +398,8 @@ public class MapArea implements MapDataSource {
 			return;
 
 		int s;
-		int n;
+		int numPoints;
+		int numElements;
 
 		switch (kind) {
 		case POINT_KIND:
@@ -416,18 +417,20 @@ public class MapArea implements MapDataSource {
 		case LINE_KIND:
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			n = ((MapLine) p).getPoints().size();
-			s = 11 + n * 2;
+			numPoints = ((MapLine) p).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+			s = numElements * 11 + numPoints * 2;
 			if (res <= areaResolution)
-				nActiveLines += 1 + ((n - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+				nActiveLines += numElements;
 			break;
 		case SHAPE_KIND:
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			n = ((MapLine) p).getPoints().size();
-			s = 11 + n * 2;
+			numPoints = ((MapLine) p).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+			s = numElements * 11 + numPoints * 2;
 			if (res <= areaResolution)
-				nActiveShapes += 1 + ((n - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+				nActiveShapes += numElements;
 			break;
 
 		default:

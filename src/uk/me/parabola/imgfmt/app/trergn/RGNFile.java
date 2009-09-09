@@ -147,7 +147,7 @@ public class RGNFile extends ImgFile {
 			position(indPointPtrOff);
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
 			if (off > 0xffff)
-				throw new IllegalStateException("IndPoint offset too large");
+				throw new IllegalStateException("IndPoint offset too large: " + off);
 
 			getWriter().putChar((char) off);
 			position(currPos);
@@ -160,7 +160,7 @@ public class RGNFile extends ImgFile {
 			position(polylinePtrOff);
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
 			if (off > 0xffff)
-				throw new IllegalStateException("Polyline offset too large");
+				throw new IllegalStateException("Polyline offset too large: " + off);
 
 			if (log.isDebugEnabled())
 				log.debug("setting polyline offset to", off);
@@ -176,7 +176,7 @@ public class RGNFile extends ImgFile {
 			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
 			log.debug("currpos=", currPos, ", off=", off);
 			if (off > 0xffff)
-				throw new IllegalStateException("Polygon offset too large");
+				throw new IllegalStateException("Polygon offset too large: " + off);
 
 			if (log.isDebugEnabled())
 				log.debug("setting polygon offset to ", off, " @", polygonPtrOff);
