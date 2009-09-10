@@ -517,6 +517,15 @@ public class StyledConverter implements OsmConverter {
 
 	void addRoad(Way way, GType gt) {
 
+		String oneWay = way.getTag("oneway");
+		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+			// it's a oneway street in the reverse direction
+			// so reverse the order of the nodes and change
+			// the oneway tag to "yes"
+			way.reverse();
+			way.addTag("oneway", "yes");
+		}
+
 		if("roundabout".equals(way.getTag("junction"))) {
 			String frigFactorTag = way.getTag("mkgmap:frig_roundabout");
 			if(frigFactorTag != null) {
