@@ -17,6 +17,8 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -59,5 +61,22 @@ public class SubAction implements Action {
 
 	public void add(Action act) {
 		actionList.add(act);
+	}
+
+	public String toString() {
+		Formatter fmt = new Formatter();
+		if (role != null)
+			fmt.format("role=%s ", role);
+		fmt.format("apply {");
+
+		for (Iterator<Action> it = actionList.iterator(); it.hasNext();) {
+			Action a = it.next();
+			fmt.format(a.toString());
+			if (it.hasNext())
+				fmt.format(", ");
+		}
+		
+		fmt.format("}");
+		return fmt.toString();
 	}
 }

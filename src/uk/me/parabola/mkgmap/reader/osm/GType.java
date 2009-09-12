@@ -18,8 +18,8 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Formatter;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 
 /**
@@ -37,10 +37,10 @@ public class GType {
 	public static final int POLYGON = 3;
 
 	private static int nextPriority = 1;
+	private static final int PRIORITY_PUSH = 100000;
 
 	private final int featureKind;
 	private final int type;
-	private final int subtype;
 
 	private int minResolution = 24;
 	private int maxResolution = 24;
@@ -56,18 +56,13 @@ public class GType {
 
 	private final int priority;
 
+	private boolean road;
+
 	public GType(int featureKind, String type) {
 		priority = nextPriority();
 		this.featureKind = featureKind;
 		try {
-			int t = Integer.decode(type);
-			if (t > 0xff) {
-				this.type = t >> 8;
-				this.subtype = t & 0xff;
-			} else {
-				this.type = t;
-				this.subtype = 0;
-			}
+			this.type = Integer.decode(type);
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type);
 			throw new ExitException("non-numeric type in map-features file");
@@ -83,8 +78,7 @@ public class GType {
 
 		this.featureKind = featureKind;
 		try {
-			this.type = Integer.decode(type);
-			this.subtype = Integer.decode(subtype);
+			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type + ' ' + subtype);
 			throw new ExitException("non-numeric type in map-features file");
@@ -97,10 +91,6 @@ public class GType {
 
 	public int getType() {
 		return type;
-	}
-
-	public int getSubtype() {
-		return subtype;
 	}
 
 	public int getMinResolution() {
@@ -125,10 +115,6 @@ public class GType {
 
 	public void setDefaultName(String defaultName) {
 		this.defaultName = defaultName;
-	}
-
-	public int getPriority() {
-		return priority;
 	}
 
 	/**
@@ -174,20 +160,12 @@ public class GType {
 		return sb.toString();
 	}
 
-	public int getMaxLevel() {
-		return maxLevel;
-	}
-
-	public void setMaxLevel(int maxLevel) {
-		this.maxLevel = maxLevel;
-	}
-
 	public int getMinLevel() {
 		return minLevel;
 	}
 
-	public void setMinLevel(int minLevel) {
-		this.minLevel = minLevel;
+	public int getMaxLevel() {
+		return maxLevel;
 	}
 
 	public int getRoadClass() {
@@ -195,6 +173,7 @@ public class GType {
 	}
 
 	public void setRoadClass(int roadClass) {
+		road = true;
 		this.roadClass = roadClass;
 	}
 
@@ -203,6 +182,19 @@ public class GType {
 	}
 
 	public void setRoadSpeed(int roadSpeed) {
+		road = true;
 		this.roadSpeed = roadSpeed;
+	}
+
+	public boolean isRoad() {
+		return road;
+	}
+
+	public static void push() {
+		nextPriority += PRIORITY_PUSH;
+	}
+
+	public static void pop() {
+		nextPriority -= PRIORITY_PUSH;
 	}
 }

@@ -25,10 +25,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 
@@ -62,11 +63,19 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		try {
 			InputStream is = openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			parserFactory.setXIncludeAware(true);
+			parserFactory.setNamespaceAware(true);
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				Osm5XmlHandler handler = new Osm5XmlHandler();
-				handler.setCallbacks(mapper);
+				Osm5XmlHandler handler = new Osm5XmlHandler(getConfig());
+				handler.setMapper(mapper);
+				Runnable task = new Runnable() {
+					public void run() {
+						addBackground();
+					}
+				};
+				handler.setEndTask(task);
 				handler.setConverter(createStyler());
 				parser.parse(is, handler);
 			} catch (IOException e) {
@@ -111,7 +120,10 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			style.applyOptionOverride(props);
 			setStyle(style);
 
-			converter = new StyledConverter(style, mapper);
+			converter = new StyledConverter(style, mapper, props);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+			throw new ExitException("Could not open style " + name);
 		} catch (FileNotFoundException e) {
 			String name1 = (name != null)? name: loc;
 			throw new ExitException("Could not open style " + name1);

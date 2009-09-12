@@ -66,6 +66,9 @@ public class ActionReader {
 				String to = scanner.nextWord();
 				Action act = new RenameAction(from, to);
 				actions.add(act);
+			} else if ("echo".equals(cmd)) {
+				String str = scanner.nextWord();
+				actions.add(new EchoAction(str));
 			} else {
 				throw new SyntaxException(scanner, "Unrecognised command '" + cmd + '\'');
 			}
@@ -119,8 +122,7 @@ public class ActionReader {
 		scanner.nextToken();
 		String val = scanner.nextWord();
 
-		AddTagAction action = new AddTagAction(key, val, modify);
-		return action;
+		return new AddTagAction(key, val, modify);
 	}
 
 	private boolean inActionCmd() {

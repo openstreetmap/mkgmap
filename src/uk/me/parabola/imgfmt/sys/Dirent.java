@@ -53,8 +53,6 @@ class Dirent implements DirectoryEntry {
 	static final int OFF_FILE_PART = 0x11;
 	private static final int OFF_SIZE = 0x0c;
 
-	static final int ENTRY_SIZE = 512;
-
 	// Filenames are a base+extension
 	private String name;
 	private String ext;
@@ -66,7 +64,7 @@ class Dirent implements DirectoryEntry {
 
 	// The block table holds all the blocks that belong to this file.  The
 	// documentation suggests that block numbers are always contiguous.
-	private BlockTable blockTable;
+	private final BlockTable blockTable;
 
 	private boolean special;
 	private static final int OFF_USED_FLAG = 0;
@@ -75,8 +73,7 @@ class Dirent implements DirectoryEntry {
 	Dirent(String name, BlockManager blockManager) {
 		this.blockManager = blockManager;
 
-		int dot;
-		dot = name.indexOf('.');
+		int dot = name.indexOf('.');
 		if (dot >= 0) {
 			setName(name.substring(0, dot));
 			setExt(name.substring(dot+1));

@@ -16,10 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
-import java.util.Properties;
-
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ConfiguredByProperties;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
@@ -32,11 +29,10 @@ import uk.me.parabola.mkgmap.reader.osm.Style;
  * @author Steve Ratcliffe
  */
 public abstract class OsmMapDataSource extends MapperBasedMapDataSource
-		implements LoadableMapDataSource, ConfiguredByProperties
+		implements LoadableMapDataSource
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
-	private Properties configProps;
 	private Style style;
 
 	/**
@@ -64,7 +60,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	public LevelInfo[] mapLevels() {
 
 		// First try command line, then style, then our default.
-		String levelSpec = configProps.getProperty("levels");
+		String levelSpec = getConfig().getProperty("levels");
 		log.debug("levels", levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
 		if (levelSpec == null || levelSpec.length() < 2) {
 			if (style != null) {
@@ -76,9 +72,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		if (levelSpec == null)
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
-		LevelInfo[] levels = LevelInfo.createFromString(levelSpec);
-
-		return levels;
+		return LevelInfo.createFromString(levelSpec);
 	}
 
 	/**
@@ -95,15 +89,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		};
 	}
 
-	public void config(Properties props) {
-		this.configProps = props;
-	}
-
-	Properties getConfig() {
-		return configProps;
-	}
-
-	public void setStyle(Style style) {
+	protected void setStyle(Style style) {
 		this.style = style;
 	}
 }

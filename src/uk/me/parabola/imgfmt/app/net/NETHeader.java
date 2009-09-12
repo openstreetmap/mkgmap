@@ -19,8 +19,9 @@ package uk.me.parabola.imgfmt.app.net;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.SectionWriter;
 
 /**
  * The header of the NET file.
@@ -75,28 +76,28 @@ public class NETHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putInt(roadDefinitions.getPosition());
-		writer.putInt(roadDefinitions.getSize());
+		roadDefinitions.writeSectionInfo(writer);
+
 		writer.put(roadShift); // offset multiplier
 
-		writer.putInt(segmentedRoads.getPosition());
-		writer.putInt(segmentedRoads.getSize());
+		segmentedRoads.writeSectionInfo(writer);
+
 		writer.put(segmentShift); // offset multiplier
 
-		writer.putInt(sortedRoads.getPosition());
-		writer.putInt(sortedRoads.getSize());
-		writer.putChar(sortedRoads.getItemSize());
+		sortedRoads.writeSectionInfo(writer);
 
 		writer.putInt(0);
 		writer.put((byte) 1);
 		writer.put((byte) 0);
 	}
 
-	void startRoadDefs(int pos) {
-		roadDefinitions.setPosition(pos);
+	ImgFileWriter makeRoadWriter(ImgFileWriter writer) {
+		roadDefinitions.setPosition(writer.position());
+		return new SectionWriter(writer, roadDefinitions);
 	}
 
-	void endRoadDefs(int pos) {
-		roadDefinitions.setSize(pos - roadDefinitions.getPosition());
+	ImgFileWriter makeSortedRoadWriter(ImgFileWriter writer) {
+		sortedRoads.setPosition(writer.position());
+		return new SectionWriter(writer, sortedRoads);
 	}
 }

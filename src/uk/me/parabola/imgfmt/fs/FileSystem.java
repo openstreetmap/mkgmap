@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.FileSystemParam;
-
-import java.util.List;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+
+import uk.me.parabola.imgfmt.FileExistsException;
+import uk.me.parabola.imgfmt.FileSystemParam;
 
 
 /**
@@ -32,7 +32,7 @@ import java.io.IOException;
 public interface FileSystem {
 
 	/**
-	 * Create a new file it must not allready exist.
+	 * Create a new file it must not already exist.
 	 * @param name The file name.
 	 * @return A directory entry for the new file.
 	 * @throws FileExistsException If the file already exists.
@@ -74,6 +74,16 @@ public interface FileSystem {
 	 * @return The filesystem parameters.
 	 */
 	public FileSystemParam fsparam();
+
+	/**
+	 * Reconfigure the filesystem with the given parameters.
+	 * Only some parameters can be changed and the may only be changeable
+	 * at certain points in the construction of a file system for example.
+	 * @param param The new parameters.
+	 * @throws IllegalStateException If the changes cannot be made (for example
+	 * if the file system is already written).
+	 */
+	public void fsparam(FileSystemParam param);
 
 	/**
 	 * Sync with the underlying file.  All unwritten data is written out to

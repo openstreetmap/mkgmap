@@ -21,13 +21,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.HashSet;
 import java.util.Collection;
+import java.util.HashSet;
 
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.scan.TokenScanner;
-import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
+import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * Holds and reads options.  Like a properties file, but order is important
@@ -80,7 +80,7 @@ public class Options {
 		readOptionFile(r, filename);
 	}
 
-	public void readOptionFile(Reader r, String filename) throws IOException {
+	public void readOptionFile(Reader r, String filename) {
 		BufferedReader br = new BufferedReader(r);
 		TokenScanner ts = new TokenScanner(filename, br);
 		ts.setExtraWordChars("-");
@@ -94,23 +94,29 @@ public class Options {
 
 			String key = tok.getValue();
 
-			tok = ts.nextToken();
-			if (tok.getType() != TokType.SYMBOL) {
-				ts.skipLine();
-				continue;
-			}
+			ts.skipSpace();
+			tok = ts.peekToken();
+			
+			if (tok.getType() == TokType.SYMBOL) {
 
-			String punc = tok.getValue();
-			String val;
-			if (punc.equals(":") || punc.equals("=")) {
-				val = ts.readLine();
-			} else if (punc.equals("{")) {
-				val = ts.readUntil(TokType.SYMBOL, "}");
+				String punc = ts.nextValue();
+				String val;
+				if (punc.equals(":") || punc.equals("=")) {
+					val = ts.readLine();
+				} else if (punc.equals("{")) {
+					ts.skipSpace();
+					val = ts.readUntil(TokType.SYMBOL, "}");
+					ts.nextToken();  // discard the closing brace
+				} else {
+					ts.skipLine();
+					continue;
+				}
+				proc.processOption(new Option(key, val));
+			} else if (key != null){
+				proc.processOption(new Option(key, ""));
 			} else {
 				ts.skipLine();
-				continue;
 			}
-			proc.processOption(new Option(key, val));
 		}
 	}
 }

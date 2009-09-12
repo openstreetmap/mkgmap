@@ -16,9 +16,10 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.FormatException;
-
 import java.io.FileNotFoundException;
+
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.util.Configurable;
 
 /**
  * A source of map information in a standard format.  The OSM reader presents
@@ -32,7 +33,7 @@ import java.io.FileNotFoundException;
  *
  * @author Steve Ratcliffe
  */
-public interface LoadableMapDataSource extends MapDataSource {
+public interface LoadableMapDataSource extends MapDataSource, Configurable {
 
 	/**
 	 * Determins if the file (or other resource) is supported by this map
@@ -78,6 +79,9 @@ public interface LoadableMapDataSource extends MapDataSource {
 
 	/**
 	 * Get a suitable copyright message for this map source.  You can get
+	 * this information from the input file, if the file has such information
+	 * or as in the case of OSM the data has a well known copyright, so we
+	 * can return fixed strings referring to it.
 	 *
 	 * @return An array of strings with copyright information.  If there are
 	 * none then return a zero length array.

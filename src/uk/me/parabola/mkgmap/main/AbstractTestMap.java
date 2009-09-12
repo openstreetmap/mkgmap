@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -24,7 +25,6 @@ import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
 
 /**
  * Common code used for the test maps.  The test maps are programatically
@@ -54,13 +54,12 @@ public abstract class AbstractTestMap {
 
 		Map map;
 		try {
-			map = Map.createMap("32860003", params);
+			map = Map.createMap("32860003", params, "32860003");
 		} catch (FileExistsException e) {
 			throw new ExitException("File exists already", e);
 		} catch (FileNotWritableException e) {
 			throw new ExitException("Could not create or write file", e);
 		}
-		map.setPoiDisplayFlags(0);
 		map.addInfo("Program released under the GPL");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 

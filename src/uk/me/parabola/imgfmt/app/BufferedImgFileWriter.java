@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.ExitException;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * A straight forward implementation that just keeps all the data in a buffer
@@ -43,6 +43,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	private ByteBuffer buf = ByteBuffer.allocate(INIT_SIZE);
 	private int bufferSize = INIT_SIZE;
 
+	// The size of the file.  Note that for this to be set properly, the
+	// position must be set to a low value after the full file is written. This
+	// always happens because we go back and write the header after all is
+	// written.
 	private int maxSize;
 
 	public BufferedImgFileWriter(ImgChannel chan) {
@@ -155,13 +159,26 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	}
 
 	/**
+	 * Get the size of the file as written.
+	 *
+	 * NOTE: that calling this is only valid at certain times.
+	 * 
+	 * @return The size of the file, if it is available.
+	 */
+	public long getSize() {
+		return maxSize;
+	}
+
+	/**
 	 * Make sure there is enough room for the data we are about to write.
 	 *
 	 * @param length The amount of data.
 	 */
 	private void ensureSize(int length) {
-		if (buf.position() +length > bufferSize - GUARD_SIZE) {
-			bufferSize += GROW_SIZE;
+		int needed = buf.position() + length;
+		if (needed > (bufferSize - GUARD_SIZE)) {
+			while(needed > (bufferSize - GUARD_SIZE))
+				bufferSize += GROW_SIZE;
 			if (bufferSize > 0xffffff) {
 				// Previous message was confusing people, although it is difficult to come
 				// up with something that is strictly true in all situations.

@@ -1,0 +1,41 @@
+$Id$
+
+README.examples for mkgmap
+
+This file contains a number of examples of how to run mkgmap.  It does
+not attempt to label any way correct, but rather to give a number of
+situations and goals and show ways that people think are useful for
+that situation.  It is formatted to enable reasonably easy cut and paste.
+
+* OSM maps for use on garmin
+
+This example is for the goal of producing a maximally usable OSM map
+for Garmin, intended for use rather than to assist with mapping.
+
+# Split the Massachusetts osm file (from cloudmade).
+java -Xmx2000m -jar splitter.jar massachusetts.osm > OUT.01.splitter 2>&1
+
+# Create the map.  Family-id is arbitrary.  Use the areas created by
+# the splitter.  Create an overview map and a tdb file.
+java -enableassertions \
+  -Xmx2048m \
+  -jar mkgmap.jar \
+  --tdbfile \
+  --gmapsupp \
+  --family-id=632 \
+  --overview-mapname=40000001 \
+  --country-abbr="US" \
+  --country-name="United States" \
+  --region-abbr="MA" \
+  --region-name="Massachusetts" \
+  --description="OSM gdt" \
+  --ignore-osm-bounds \
+  --net \
+  --route \
+  --add-pois-to-areas \
+  --remove-short-arcs \
+  -c template.args > OUT.02.mkgmap 2>&1
+
+# Create a gmapi format map given the above map, overview map, and tdb.
+mkdir -p GMAPI
+gmapi-builder.py -o GMAPI -t 40000001.tdb -b 40000001.img -v

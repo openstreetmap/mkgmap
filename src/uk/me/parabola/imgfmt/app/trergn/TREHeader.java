@@ -20,9 +20,10 @@ import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
-import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * @author Steve Ratcliffe
@@ -35,18 +36,26 @@ public class TREHeader extends CommonHeader {
 	// better description.
 	public static final int TRE_120 = 120;
 	public static final int TRE_184 = 184;
-	public static final int TRE_188 = 188;
+	private static final int TRE_188 = 188;
 
 	// The header length to use when creating a file.
-	public static final int DEFAULT_HEADER_LEN = TRE_188;
+	private static final int DEFAULT_HEADER_LEN = TRE_188;
+
+	// A map has a display priority that determines which map is on top
+	// when two maps cover the same area.
+	private static final int DEFAULT_DISPLAY_PRIORITY = 0x19;
 
 	static final int MAP_LEVEL_REC_SIZE = 4;
 	private static final char POLYLINE_REC_LEN = 2;
 	private static final char POLYGON_REC_LEN = 2;
 	private static final char POINT_REC_LEN = 3;
 	private static final char COPYRIGHT_REC_SIZE = 0x3;
+	private static final char EXT_TYPE_OFFSETS_REC_LEN = 13;
+	private static final char EXT_TYPE_OVERVIEWS_REC_LEN = 4;
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
+
+	private static final int POI_FLAG_TRANSPARENT = 0x2;
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -59,15 +68,20 @@ public class TREHeader extends CommonHeader {
 	private int subdivPos;
 	private int subdivSize;
 
-	private byte poiDisplayFlags = 0x1;
+	private byte poiDisplayFlags;
+
+	private int displayPriority = DEFAULT_DISPLAY_PRIORITY;
 
 	private final Section copyright = new Section(COPYRIGHT_REC_SIZE);
 	private final Section polyline = new Section(POLYLINE_REC_LEN);
 	private final Section polygon = new Section(POLYGON_REC_LEN);
 	private final Section points = new Section(POINT_REC_LEN);
-	private Section tre7 = new Section(points, (char) 13);
-	private Section tre8 = new Section(tre7, (char) 4);
-	//private Section tre9 = new Section(tre8);
+	private final Section extTypeOffsets = new Section(points, EXT_TYPE_OFFSETS_REC_LEN);
+	private final Section extTypeOverviews = new Section(extTypeOffsets, EXT_TYPE_OVERVIEWS_REC_LEN);
+
+	private int numExtTypeAreaTypes;
+	private int numExtTypeLineTypes;
+	private int numExtTypePointTypes;
 
 	private int mapId;
 
@@ -97,9 +111,21 @@ public class TREHeader extends CommonHeader {
 		subdivPos = reader.getInt();
 		subdivSize = reader.getInt();
 
-		copyright.setPosition(reader.getInt());
-		copyright.setSize(reader.getInt());
-		copyright.setItemSize(reader.getChar());
+		copyright.readSectionInfo(reader, true);
+		reader.getInt();
+
+		poiDisplayFlags = reader.get();
+		displayPriority = reader.get3();
+		reader.getInt();
+		reader.getChar();
+		reader.get();
+
+		polyline.readSectionInfo(reader, true);
+		reader.getInt();
+		polygon.readSectionInfo(reader, true);
+		reader.getInt();
+		points.readSectionInfo(reader, true);
+		reader.getInt();
 
 		int mapInfoOff = mapLevelPos;
 		if (subdivPos < mapInfoOff)
@@ -113,21 +139,13 @@ public class TREHeader extends CommonHeader {
 		reader.getInt();
 		reader.getInt();
 
-		readSectionInfo(reader, copyright);
+		copyright.readSectionInfo(reader, true);
 		reader.getInt();
-	}
 
-	private void readSectionInfo(ImgFileReader reader, Section sect) {
-		sect.setPosition(reader.getInt());
-		sect.setSize(reader.getInt());
-		sect.setItemSize(reader.getChar());
-	}
-
-	protected void writeSectionInfo(ImgFileWriter writer, Section section) {
-		writer.putInt(section.getPosition());
-		writer.putInt(section.getSize());
-		if (section.getItemSize() > 0)
-			writer.putChar(section.getItemSize());
+		if (getHeaderLength() > 116) {
+			reader.position(116);
+			mapId = reader.getInt();
+		}
 	}
 
 	/**
@@ -148,22 +166,22 @@ public class TREHeader extends CommonHeader {
 		writer.putInt(getSubdivPos());
 		writer.putInt(getSubdivSize());
 
-		writeSectionInfo(writer, copyright);
+		copyright.writeSectionInfo(writer);
 		writer.putInt(0);
 
 		writer.put(getPoiDisplayFlags());
 
-		writer.put3(0x19);
-		writer.putInt(0xd0401);
+		writer.put3(displayPriority);
+		writer.putInt(0x110301);
 
 		writer.putChar((char) 1);
 		writer.put((byte) 0);
 
-		writeSectionInfo(writer, polyline);
+		polyline.writeSectionInfo(writer);
 		writer.putInt(0);
-		writeSectionInfo(writer, polygon);
+		polygon.writeSectionInfo(writer);
 		writer.putInt(0);
-		writeSectionInfo(writer, points);
+		points.writeSectionInfo(writer);
 		writer.putInt(0);
 
 		// There are a number of versions of the header with increasing lengths
@@ -173,12 +191,21 @@ public class TREHeader extends CommonHeader {
 		if (getHeaderLength() > 120) {
 			writer.putInt(0);
 
-			writeSectionInfo(writer, tre7);
-			writer.putInt(0); // not usually zero
+			extTypeOffsets.writeSectionInfo(writer);
 
-			writeSectionInfo(writer, tre8);
-			writer.putChar((char) 0);
-			writer.putInt(0);
+			// the second byte value of 6 appears to mean "extended
+			// type info present" - a value of 4 has been seen in some
+			// maps but those maps contain something else in these two
+			// sections and not extended type info - the 7 in the
+			// bottom byte could possibly be a bitmask to say which
+			// types are present (line, area, point) but this is just
+			// conjecture
+			writer.putInt(0x0607);
+
+			extTypeOverviews.writeSectionInfo(writer);
+			writer.putChar((char)numExtTypeLineTypes);
+			writer.putChar((char)numExtTypeAreaTypes);
+			writer.putChar((char)numExtTypePointTypes);
 		}
 
 		if (getHeaderLength() > 154) {
@@ -199,7 +226,15 @@ public class TREHeader extends CommonHeader {
 		writer.position(getHeaderLength());
 	}
 
+	public void config(EnhancedProperties props) {
+		String key = "draw-priority";
+		if (props.containsKey(key))
+			setDisplayPriority(props.getProperty(key, 0x19));
 
+		if (props.containsKey("transparent"))
+			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
+	}
+	
 	/**
 	 * Set the bounds based upon the latitude and longitude in degrees.
 	 * @param area The area bounded by the map.
@@ -215,10 +250,10 @@ public class TREHeader extends CommonHeader {
 	public void setMapId(int id) {
 		mapId = id;
 	}
-
+	
 	public void setPoiDisplayFlags(byte poiDisplayFlags) {
 		this.poiDisplayFlags = poiDisplayFlags;
-	}
+	}	
 
 	public int getMapInfoSize() {
 		return mapInfoSize;
@@ -260,10 +295,6 @@ public class TREHeader extends CommonHeader {
 		this.subdivSize = subdivSize;
 	}
 
-	protected int getCopyrightPos() {
-		return copyright.getPosition();
-	}
-
 	public void setCopyrightPos(int copyrightPos) {
 		//this.copyrightPos = copyrightPos;
 		copyright.setPosition(copyrightPos);
@@ -271,10 +302,6 @@ public class TREHeader extends CommonHeader {
 
 	public void incCopyrightSize() {
 		copyright.inc();
-	}
-
-	public Section getCopyrightSection() {
-		return copyright;
 	}
 
 	protected byte getPoiDisplayFlags() {
@@ -305,8 +332,42 @@ public class TREHeader extends CommonHeader {
 		points.inc();
 	}
 
+	public void setExtTypeOffsetsPos(int pos) {
+		extTypeOffsets.setPosition(pos);
+	}
+
+	public void incExtTypeOffsetsSize() {
+		extTypeOffsets.inc();
+	}
+
+	public void setExtTypeOverviewsPos(int pos) {
+		extTypeOverviews.setPosition(pos);
+	}
+
+	public void incExtTypeOverviewsSize() {
+		extTypeOverviews.inc();
+	}
+
+	public void incNumExtTypeAreaTypes() {
+		++numExtTypeAreaTypes;
+	}
+
+	public void incNumExtTypeLineTypes() {
+		++numExtTypeLineTypes;
+	}
+	public void incNumExtTypePointTypes() {
+		++numExtTypePointTypes;
+	}
+
 	protected int getMapId() {
 		return mapId;
 	}
 
+	protected void setDisplayPriority(int displayPriority) {
+		this.displayPriority = displayPriority;
+	}
+
+	public int getDisplayPriority() {
+		return displayPriority;
+	}
 }

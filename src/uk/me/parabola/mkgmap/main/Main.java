@@ -25,14 +25,22 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.ExitException;
+import uk.me.parabola.mkgmap.CommandArgsReader;
 import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
@@ -40,8 +48,10 @@ import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 
 /**
  * The new main program.  There can be many filenames to process and there can
@@ -53,18 +63,19 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
-	//private OverviewMapMaker overview;
 	private final MapProcessor maker = new MapMaker();
-	//private final MapProcessor reader = new MapReader();
 
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
 
-	// The filenames that will be used in pass2.
-	private final List<String> filenames = new ArrayList<String>();
-
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
+	private boolean verbose;
+
+	private final List<Future<String>> futures = new LinkedList<Future<String>>();
+	private ExecutorService threadPool;
+	// default number of threads
+	private int maxJobs = 1;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -86,10 +97,11 @@ public class Main implements ArgumentProcessor {
 
 		try {
 			// Read the command line arguments and process each filename found.
-			CommandArgs commandArgs = new CommandArgs(mm);
+			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
+			System.exit(1);
 		}
 	}
 
@@ -121,6 +133,9 @@ public class Main implements ArgumentProcessor {
 	public void startOptions() {
 		MapProcessor saver = new NameSaver();
 		processMap.put("img", saver);
+
+		// Todo: instead of the direct saver, modify the file with the correct
+		// family-id etc.
 		processMap.put("typ", saver);
 
 		// Normal map files.
@@ -137,14 +152,25 @@ public class Main implements ArgumentProcessor {
 	 * @param args The command arguments.
 	 * @param filename The filename to process.
 	 */
-	public void processFilename(CommandArgs args, String filename) {
-		String ext = extractExtension(filename);
+	public void processFilename(final CommandArgs args, final String filename) {
+		final String ext = extractExtension(filename);
 		log.debug("file", filename, ", extension is", ext);
 
-		MapProcessor mp = mapMaker(ext);
-		String output = mp.makeMap(args, filename);
-		log.debug("adding output name", output);
-		filenames.add(output);
+		final MapProcessor mp = mapMaker(ext);
+
+		if(threadPool == null) {
+			log.info("Creating thread pool with " + maxJobs + " threads");
+			threadPool = Executors.newFixedThreadPool(maxJobs);
+		}
+
+		log.info("Submitting job " + filename);
+		futures.add(threadPool.submit(new Callable<String>() {
+				public String call() {
+					String output = mp.makeMap(args, filename);
+					log.debug("adding output name", output);
+					return output;
+				}
+			}));
 	}
 
 	private MapProcessor mapMaker(String ext) {
@@ -163,23 +189,40 @@ public class Main implements ArgumentProcessor {
 			// generation of the overview files if there is only one file
 			// to process.
 			int n = Integer.valueOf(val);
-			if (n > 1) {
-				addCombiner(new TdbBuilder());
-			}
+			if (n > 1)
+				addTdbBuilder();
+
 		} else if (opt.equals("tdbfile")) {
-			addCombiner(new TdbBuilder());
+			addTdbBuilder();
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
 		} else if (opt.equals("help")) {
 			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
+		} else if (opt.equals("verbose")) {
+			verbose = true;
 		} else if (opt.equals("list-styles")) {
 			listStyles();
+		} else if (opt.equals("max-jobs")) {
+			if(val.length() > 0)
+				maxJobs = Integer.parseInt(val);
+			else
+				maxJobs = Runtime.getRuntime().availableProcessors();
+			if(maxJobs < 1) {
+				log.warn("max-jobs has to be at least 1");
+				maxJobs = 1;
+			}
 		} else if (opt.equals("version")) {
 			System.err.println(Version.VERSION);
 			System.exit(0);
 		}
+	}
+
+	private void addTdbBuilder() {
+		TdbBuilder builder = new TdbBuilder();
+		builder.setOverviewSource(new OverviewMapDataSource());
+		addCombiner(builder);
 	}
 
 	private void listStyles() {
@@ -200,10 +243,16 @@ public class Main implements ArgumentProcessor {
 			Style style;
 			try {
 				style = new StyleImpl(styleFile, name);
+			} catch (SyntaxException e) {
+				System.err.println("Error in style: " + e.getMessage());
+				continue;
 			} catch (FileNotFoundException e) {
 				log.debug("could not find style", name);
 				try {
 					style = new StyleImpl(styleFile, null);
+				} catch (SyntaxException e1) {
+					System.err.println("Error in style: " + e1.getMessage());
+					continue;
 				} catch (FileNotFoundException e1) {
 					log.debug("could not find style", styleFile);
 					continue;
@@ -213,6 +262,10 @@ public class Main implements ArgumentProcessor {
 			StyleInfo info = style.getInfo();
 			System.out.format("%-15s %6s: %s\n",
 					name,info.getVersion(), info.getSummary());
+			if (verbose) {
+				for (String s : info.getLongDescription().split("\n"))
+					System.out.printf("\t%s\n", s.trim());
+			}
 		}
 	}
 
@@ -225,8 +278,47 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void endOptions(CommandArgs args) {
+
+		List<String> filenames = new ArrayList<String>();
+
+		if(threadPool != null) {
+			threadPool.shutdown();
+			while(!futures.isEmpty()) {
+				try {
+					try {
+						// don't call get() until a job has finished
+						if(futures.get(0).isDone())
+							filenames.add(futures.remove(0).get());
+						else
+							Thread.sleep(10);
+					}
+					catch (ExecutionException e) {
+						// Re throw the underlying exception
+						Throwable cause = e.getCause();
+						if (cause instanceof Exception)
+							throw (Exception)cause;
+						else if (cause instanceof Error)
+							throw (Error)cause;
+						else
+							throw e;
+					}
+				}
+				catch (ExitException ee) {
+					throw ee;
+				}
+				catch (Throwable t) {
+					t.printStackTrace();
+					if(!args.getProperties().getProperty("keep-going", false)) {
+						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
+					}
+				}
+			}
+		}
+
 		if (combiners.isEmpty())
 			return;
+
+		log.info("Combining maps");
 
 		// Get them all set up.
 		for (Combiner c : combiners)
@@ -237,6 +329,7 @@ public class Main implements ArgumentProcessor {
 			if (file == null)
 				continue;
 			try {
+				log.info("  " + file);
 				FileInfo mapReader = FileInfo.getFileInfo(file);
 				for (Combiner c : combiners) {
 					c.onMapEnd(mapReader);

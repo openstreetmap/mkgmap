@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  * @author Steve Ratcliffe
  */
 public class RoadIndex {
-	private Polyline linkedRoad;
+	private final Polyline linkedRoad;
 	// int Subdivision.getNumber()
 
 	public RoadIndex(Polyline road) {
@@ -36,8 +36,8 @@ public class RoadIndex {
 		return linkedRoad.getSubdiv();
 	}
 
-	int getZoomLevel() {
-		return getSubdiv().getZoom().getLevel();
+	Polyline getLine() {
+		return linkedRoad;
 	}
 
 	void write(ImgFileWriter writer) {

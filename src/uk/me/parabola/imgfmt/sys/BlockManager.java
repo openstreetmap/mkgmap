@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -26,9 +27,11 @@ import uk.me.parabola.log.Logger;
 class BlockManager {
 	private static final Logger log = Logger.getLogger(BlockManager.class);
 
-	private int currentBlock;
 	private final int blockSize;
-	private int maxBlock;
+	
+	private int currentBlock;
+	private int maxBlock = 0xfffe;
+	private int numberAllocated;
 
 	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
@@ -45,8 +48,11 @@ class BlockManager {
 		int n = currentBlock++;
 		if (maxBlock > 0 && n > maxBlock) {
 			log.error("overflowed directory with max block " + maxBlock + ", current=" + n);
-			System.err.println("Directory overflow.  Map will not work");
+			throw new ExitException(
+					"There is not enough room in a single garmin map for all the input data\n" +
+							"   The .osm file should be split into smaller pieces first.");
 		}
+		numberAllocated++;
 		return n;
 	}
 
@@ -60,5 +66,11 @@ class BlockManager {
 
 	public void setMaxBlock(int maxBlock) {
 		this.maxBlock = maxBlock;
+	}
+
+	public void setCurrentBlock(int n) {
+		if (numberAllocated != 0)
+			throw new IllegalStateException("Blocks already allocated");
+		currentBlock = n;
 	}
 }

@@ -19,6 +19,14 @@ package uk.me.parabola.imgfmt.app.trergn;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
+import uk.me.parabola.mkgmap.general.MapElement;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import java.io.OutputStream;
+import java.io.IOException;
+
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
  * point.
@@ -35,8 +43,9 @@ public abstract class MapObject {
 	// the division.
 	private Subdivision subdiv;
 
-	// The lable for this object
+	// The label(s) for this object
 	private Label label;
+	private List<Label> refLabels;
 
 	// The type of road etc.
 	private int type;
@@ -46,12 +55,16 @@ public abstract class MapObject {
 	private int deltaLong;
 	private int deltaLat;
 
+	private ExtTypeAttributes extTypeAttributes;
+
 	/**
 	 * Write this object to the given file.
 	 *
 	 * @param file The file to write to. It is usually the RGN file.
 	 */
 	public abstract void write(ImgFileWriter file);
+
+	public abstract void write(OutputStream stream) throws IOException;
 
 	int getDeltaLat() {
 		return deltaLat;
@@ -65,12 +78,22 @@ public abstract class MapObject {
 		this.label = label;
 	}
 
+	public void addRefLabel(Label refLabel) {
+		if(refLabels == null)
+			refLabels = new ArrayList<Label>();
+		refLabels.add(refLabel);
+	}
+
 	protected int getType() {
 		return type;
 	}
 
 	public void setType(int type) {
 		this.type = type;
+	}
+
+	public boolean hasExtendedType() {
+		return MapElement.hasExtendedType(type);
 	}
 
 	/** 
@@ -81,10 +104,8 @@ public abstract class MapObject {
 	 */
 	public void setLatitude(int lat) {
 		Subdivision div = getSubdiv();
-		int shift = div.getShift();
 
-		int centerLat = div.getLatitude() >> shift;
-		int diff = ((lat>>shift) - centerLat);
+		int diff = div.roundLatToLocalShifted(lat);
 
 		setDeltaLat(diff);
 	}
@@ -97,15 +118,13 @@ public abstract class MapObject {
 	 */
 	public void setLongitude(int lon) {
 		Subdivision div = getSubdiv();
-		int shift = div.getShift();
 
-		int centerLon = div.getLongitude() >> shift;
-		int diff = ((lon>> shift) - centerLon);
+		int diff = div.roundLonToLocalShifted(lon);
 
 		setDeltaLong(diff);
 	}
 	
-    // directly setting shouldn't be done
+	// directly setting shouldn't be done
 	private void setDeltaLat(int deltaLat) {
 		this.deltaLat = deltaLat;
 	}
@@ -125,5 +144,17 @@ public abstract class MapObject {
 
 	protected Label getLabel() {
 		return label;
+	}
+
+	public List<Label> getRefLabels() {
+		return refLabels;
+	}
+
+	protected byte[] getExtTypeExtraBytes() {
+		return (extTypeAttributes != null)? extTypeAttributes.getExtTypeExtraBytes(this) : null;
+	}
+
+	public void setExtTypeAttributes(ExtTypeAttributes eta) {
+		extTypeAttributes = eta;
 	}
 }

@@ -58,8 +58,9 @@ public class TdbFile {
 	private CopyrightBlock copyrightBlock = new CopyrightBlock();
 	private OverviewMapBlock overviewMapBlock;
 	private final List<DetailMapBlock> detailBlocks = new ArrayList<DetailMapBlock>();
-	private RBlock rblock = new RBlock();
-	private TBlock tblock = new TBlock();
+	private final RBlock rblock = new RBlock();
+	private final TBlock tblock = new TBlock();
+	private String overviewDescription;
 
 	public TdbFile() {
 	}
@@ -91,7 +92,7 @@ public class TdbFile {
 	}
 
 	public void setProductInfo(int familyId, int productId,
-			short productVersion, String seriesName, String familyName)
+			short productVersion, String seriesName, String familyName, String overviewDescription)
 	{
 		headerBlock = new HeaderBlock(tdbVersion);
 		headerBlock.setFamilyId((short) familyId);
@@ -99,6 +100,7 @@ public class TdbFile {
 		headerBlock.setProductVersion(productVersion);
 		headerBlock.setSeriesName(seriesName);
 		headerBlock.setFamilyName(familyName);
+		this.overviewDescription = overviewDescription;
 	}
 
 	/**
@@ -106,8 +108,7 @@ public class TdbFile {
 	 * @param msg The message to add.
 	 */
 	public void addCopyright(String msg) {
-		CopyrightSegment seg  ;
-		seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
+		CopyrightSegment seg = new CopyrightSegment(CopyrightSegment.CODE_COPYRIGHT_TEXT_STRING, 3, msg);
 		copyrightBlock.addSegment(seg);
 	}
 
@@ -117,10 +118,11 @@ public class TdbFile {
 	 * @param name The overview map name.
 	 * @param bounds The bounds for the map.
 	 */
-	public void setOverview(String name, Area bounds) {
+	public void setOverview(String name, Area bounds, String number) {
 		overviewMapBlock = new OverviewMapBlock();
 		overviewMapBlock.setArea(bounds);
-		overviewMapBlock.setMapName(name);
+		overviewMapBlock.setMapName(name, number);
+		overviewMapBlock.setDescription(overviewDescription);
 	}
 
 	/**
@@ -232,8 +234,10 @@ public class TdbFile {
 		if (n < 0)
 			throw new IOException("failed to read block");
 
-		Block block = new Block(blockType, body);
-		return block;
+		return new Block(blockType, body);
 	}
 
+	public int getTdbVersion() {
+		return headerBlock.getTdbVersion();
+	}
 }

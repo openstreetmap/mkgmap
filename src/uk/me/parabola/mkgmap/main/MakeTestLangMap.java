@@ -51,15 +51,14 @@ public class MakeTestLangMap extends AbstractTestMap {
 
 		double lat = slat + 0.004;
 		double lon = slon + 0.002;
-		double space = 0.002;
-		double size = 0.006;
 
 		div.startLines();
 
 		map.setLabelCharset("simple8", true);
 		map.setLabelCodePage(1250); // No difference?
 
-		for (int y = 0; y < 16; y++) {
+		double space = 0.002;
+		double size = 0.006;for (int y = 0; y < 16; y++) {
 
 			int start = 128 + 8*y;
 
@@ -74,7 +73,7 @@ public class MakeTestLangMap extends AbstractTestMap {
 			}
 
 			String name = new String(out);
-			Polyline l = div.createLine(name);
+			Polyline l = div.createLine(name, null);
 			double baseLat = lat + y * space;
 			Coord co = new Coord(baseLat, lon);
 			l.addCoord(co);

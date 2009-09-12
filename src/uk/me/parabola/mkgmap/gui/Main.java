@@ -16,13 +16,12 @@
  */
 package uk.me.parabola.mkgmap.gui;
 
-import uk.me.parabola.log.Logger;
-
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ResourceBundle;
+
+import javax.swing.*;
 
 /**
  * Main class for the GUI version of mkgmap.  Sets up the main window.
@@ -30,13 +29,13 @@ import java.util.ResourceBundle;
  * @author Steve Ratcliffe
  */
 public class Main extends JFrame {
-	private static final Logger log = Logger.getLogger(Main.class);
+	//private static final Logger log = Logger.getLogger(Main.class);
 
 	private final JMenuBar jMenuBar1 = new JMenuBar();
 	private final ResourceBundle resourceBundle =
 			ResourceBundle.getBundle("uk/me/parabola/mkgmap/gui/Main");
 
-	public Main() {
+	private Main() {
 		initComponents();
 	}
 

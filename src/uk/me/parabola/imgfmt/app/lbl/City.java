@@ -16,8 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 
 /**
  * A city is in a region.  It also has (or can have anyway) a reference to
@@ -25,12 +26,14 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * 
  * @author Steve Ratcliffe
  */
-public class City {
-	private static final int POINT_REF = 0x80;
+public class City implements Comparable {
+	private static final int POINT_REF = 0x8000;
+	private static final int REGION_IS_COUNTRY = 0x4000;
 
-	private final int index;
+	private int index = -1;
 
 	private final Region region;
+	private final Country country;
 
 	// This determines if a label is being used or a subdivision and point
 	// combo.
@@ -38,7 +41,7 @@ public class City {
 
 	// The location of the city.  These could both be zero if we are using a
 	// label instead.
-	private char subdivision;
+	private Subdivision subdivision;
 	private byte pointIndex;
 
 
@@ -46,21 +49,31 @@ public class City {
 	// null if the location is being specified.
 	private Label label;
 
-	public City(Region region, int index) {
+	public City(Region region) {
 		this.region = region;
-		this.index = index;
+		this.country = null;
+	}
+
+	public City(Country country) {
+		this.country = country;
+		this.region = null;
 	}
 
 	void write(ImgFileWriter writer) {
 		//writer.put3()
 		if (pointRef) {
+		    //		    System.err.println("City point = " + (int)pointIndex + " div = " + subdivision.getNumber());
 			writer.put(pointIndex);
-			writer.putChar(subdivision);
+			writer.putChar((char)subdivision.getNumber());
 		} else {
 			writer.put3(label.getOffset());
 		}
-		
-		char info = (char) (region.getIndex() & 0x3fff);
+
+		char info;
+		if(region != null)
+		    info = (char) (region.getIndex() & 0x3fff);
+		else
+		    info = (char) (REGION_IS_COUNTRY | (country.getIndex() & 0x3fff));
 		if (pointRef)
 			info |= POINT_REF;
 
@@ -68,7 +81,13 @@ public class City {
 	}
 
 	public int getIndex() {
+		if (index == -1)
+			throw new IllegalStateException("Offset not known yet.");
 		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
 	}
 
 	public void setLabel(Label label) {
@@ -81,8 +100,29 @@ public class City {
 		this.pointIndex = pointIndex;
 	}
 
-	public void setSubdivision(char subdivision) {
+	public void setSubdivision(Subdivision subdivision) {
 		pointRef = true;
 		this.subdivision = subdivision;
+	}
+
+	public int compareTo(Object other) {
+		City o = (City)other;
+		if(o == this)
+			return 0;
+		if(label != null && o.label != null)
+			return label.compareTo(o.label);
+		return hashCode() - o.hashCode();
+	}
+
+	public String toString() {
+		String result = "";
+		if(label != null)
+			result += new String(label.getCtext());
+		if(country != null)
+			result += " in country " + (0 + country.getIndex());
+		if(region != null)
+			result += " in region " + (0 + region.getIndex());
+
+		return result;
 	}
 }

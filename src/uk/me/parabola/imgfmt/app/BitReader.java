@@ -20,7 +20,7 @@ package uk.me.parabola.imgfmt.app;
  * @author Steve Ratcliffe
  */
 public class BitReader {
-	private byte[] buf;
+	private final byte[] buf;
 	private int bitPosition;
 
 	public BitReader(byte[] buf) {
@@ -59,27 +59,13 @@ public class BitReader {
 	}
 
 	/**
-	 * A signed get.  Treats the top bit in the given bit field as a
-	 * sign bit.
-	 */
-	public int sget(int n) {
-		int res = get(n);
-		int top = 1 << (n - 1);
-		if ((res & top) != 0) {
-			int mask = top - 1;
-			res = ~mask | res;
-		}
-		return res;
-	}
-
-	/**
 	 * Get a signed n-bit value, treating 1 << (n-1) as a
 	 * flag to read another signed n-bit value for extended
-         * range (mysteriously only in the negative direction).
+	 * range (mysteriously only in the negative direction).
 	 *
 	 * At least two levels of recursion show up in the wild;
 	 * current code computes correctly in that example.
-         */
+	 */
 	public int sget2(int n) {
 		int res = get(n);
 		int top = 1 << (n - 1);
@@ -97,16 +83,5 @@ public class BitReader {
 
 	public int getBitPosition() {
 		return bitPosition;
-	}
-
-	public static void main(String[] args) {
-		BitReader br = new BitReader(new byte[] {
-				(byte) 0xf1, 0x73, (byte) 0xc2, 0x5
-		});
-
-		System.out.printf("1bit %b\n", br.get1());
-		System.out.printf("bits %x\n", br.get(5));
-		System.out.printf("0xf %x\n", br.get(4));
-		System.out.printf("0x %x\n", br.get(16));
 	}
 }

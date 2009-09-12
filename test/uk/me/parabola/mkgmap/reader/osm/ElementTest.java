@@ -20,15 +20,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import org.junit.Test;
 
 
 public class ElementTest {
+	/*
+	 * Test the iterator.  It is kind of special in that it iterates over
+	 * strings which are "key=value" and also the wildcard version "key=*".
+	 */
 	@Test
 	public void testIterator() {
-		Element el = new Way();
+		Element el = new Way(1);
 
 		el.addTag("a", "1");
 		el.addTag("b", "2");

@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,16 +24,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.mps.MpsFile;
-import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.ImgFS;
+import uk.me.parabola.imgfmt.mps.MapBlock;
+import uk.me.parabola.imgfmt.mps.MpsFile;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
+import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 
@@ -70,13 +71,14 @@ public class GmapsuppBuilder implements Combiner {
 	//private String
 
 	private String overallDescription = "Combined map";
+	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
-		familyId = args.get("family-id", 1331);
+		familyId = args.get("family-id", 0);
 		productId = args.get("product-id", 1);
 		
 		familyName = args.get("family-name", "family name");
-		areaName = args.get("area-name", "area name");
+		areaName = args.get("area-name", null);
 
 		overallDescription = args.getDescription();
 	}
@@ -133,7 +135,7 @@ public class GmapsuppBuilder implements Combiner {
 			MapBlock mb = new MapBlock();
 			mb.setMapNumber(info.getMapnameAsInt());
 			mb.setMapName(info.getDescription());
-			mb.setAreaName(areaName);
+			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
 			mb.setTypeName(familyName);
 			mb.setIds(familyId, productId);
 
@@ -144,7 +146,7 @@ public class GmapsuppBuilder implements Combiner {
 			mps.sync();
 			mps.close();
 		} catch (IOException e) {
-			throw new FileNotWritableException("Could not finish write to MPS file", e);
+			throw new FileNotWritableException("Could not inish write to MPS file", e);
 		}
 	}
 
@@ -167,9 +169,8 @@ public class GmapsuppBuilder implements Combiner {
 
 	private MpsFile createMpsFile(FileSystem outfs) throws FileNotWritableException {
 		try {
-			ImgChannel channel = outfs.create("MAPSOURC.MPS");
-			MpsFile mps = new MpsFile(channel);
-			return mps;
+			ImgChannel channel = outfs.create("MAKEGMAP.MPS");
+			return new MpsFile(channel);
 		} catch (FileExistsException e) {
 			// well it shouldn't exist!
 			log.error("could not create MPS file as it already exists");
@@ -186,10 +187,37 @@ public class GmapsuppBuilder implements Combiner {
 	private void addFile(FileSystem outfs, String filename) {
 		ImgChannel chan = new FileImgChannel(filename);
 		try {
-			copyFile(chan, outfs, filename);
+			String imgname = createImgFilename(filename);
+			copyFile(chan, outfs, imgname);
 		} catch (IOException e) {
 			log.error("Could not open file " + filename);
 		}
+	}
+
+	/**
+	 * Create a suitable filename for use in the .img file from the external
+	 * file name.
+	 *
+	 * The external file name might look something like /home/steve/foo.typ
+	 * or c:\maps\foo.typ and we need to take the filename part and make
+	 * sure that it is no more than 8+3 characters.
+	 *
+	 * @param pathname The external filesystem path name.
+	 * @return The filename part, will be restricted to 8+3 characters.
+	 */
+	private String createImgFilename(String pathname) {
+		File f = new File(pathname);
+		String name = f.getName();
+		int dot = name.lastIndexOf('.');
+
+		String base = name.substring(0, dot);
+		String ext = name.substring(dot+1);
+		if (base.length() > 8)
+			base = base.substring(0, 8);
+		if (ext.length() > 3)
+			ext = ext.substring(0, 3);
+
+		return base + '.' + ext;
 	}
 
 	/**
@@ -244,21 +272,20 @@ public class GmapsuppBuilder implements Combiner {
 	private FileSystem createGmapsupp() throws FileNotWritableException {
 		BlockInfo bi = calcBlockSize();
 		int blockSize = bi.blockSize;
-		int reserved = 2 + bi.reserveBlocks + bi.headerSlots;
-		log.info("bs of", blockSize, "reserving", reserved);
-
 		// Create this file, containing all the sub files
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
-		params.setDirectoryStartBlock(2);
+		params.setDirectoryStartBlock(DIRECTORY_OFFSET_BLOCK);
+
+		int reserved = DIRECTORY_OFFSET_BLOCK + bi.reserveBlocks + bi.headerSlots;
+		log.info("bs of", blockSize, "reserving", reserved);
 
 		int reserve = (int) Math.ceil(reserved * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserve);
 		log.info("reserved", reserve);
 
-		FileSystem outfs = ImgFS.createFs(GMAPSUPP, params);
-		return outfs;
+		return ImgFS.createFs(GMAPSUPP, params);
 	}
 
 	/**
@@ -311,9 +338,11 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	/**
-	 * Calculate the block size that we need to use.  I am calculating it so
-	 * that the special directory entry doesn't require more than one block
-	 * to hold its own block list.
+	 * Calculate the block size that we need to use.  The block size must be such that
+	 * the total number of blocks is less than 0xffff.
+	 *
+	 * I am making sure that the that the root directory entry doesn't require
+	 * more than one block to hold its own block list.
 	 *
 	 * @return A suitable block size to use for the gmapsupp.img file.
 	 */
@@ -324,8 +353,10 @@ public class GmapsuppBuilder implements Combiner {
 		};
 
 		for (int bs : ints) {
+			int totBlocks = 0;
 			int totHeaderSlots = 0;
 			for (FileInfo info : files.values()) {
+				totBlocks += info.getNumBlocks(bs);
 				// Each file will take up at least one directory block.
 				// Each directory block can hold 480 block-references
 				int slots = info.getNumHeaderSlots(bs);
@@ -334,12 +365,12 @@ public class GmapsuppBuilder implements Combiner {
 			}
 
 			totHeaderSlots += 2;
-			int totBlocks = totHeaderSlots * 512 / bs;
+			int totHeaderBlocks = totHeaderSlots * 512 / bs;
 
-			log.info("total blocks for", bs, "is", totBlocks, "based on slots=", totHeaderSlots);
+			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderSlots);
 
-			if (totBlocks <= ENTRY_SIZE) {
-				// Add at least one for the MPS file
+			if (totBlocks < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
+				// Add one for the MPS file
 				totHeaderSlots += 1;
 				return new BlockInfo(bs, totHeaderSlots, totHeaderSlots / bs + 1);
 			}

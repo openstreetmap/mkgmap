@@ -20,7 +20,7 @@ package uk.me.parabola.mkgmap.scan;
  * @author Steve Ratcliffe
  */
 public class Token {
-	private TokType type;
+	private final TokType type;
 	private String value;
 
 	public boolean isWhiteSpace() {

@@ -8,7 +8,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EQUALS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OPEN_PAREN;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
-import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -25,41 +24,40 @@ public class ExpressionReader {
 		this.scanner = scanner;
 	}
 
+	/**
+	 * Read the conditions.  They are terminated by a '[' or '{' character
+	 * or by end of file.
+	 */
 	public Op readConditions() {
 		while (!scanner.isEndOfFile()) {
 			scanner.skipSpace();
 			if (scanner.checkToken("[") || scanner.checkToken("{"))
 				break;
-			Token tok = scanner.nextToken();
 
-			log.debug("Token", tok.getValue());
-
-			switch (tok.getType()) {
-			case EOF:
-				break;
-			case EOL:
-				break;
-			case SPACE:
-				break;
-			case SYMBOL:
-				if (tok.getValue().equals("*"))
-					pushValue(tok.getValue());
-				else
-					saveOp(tok.getValue());
-				break;
-			case TEXT:
-				pushValue(tok.getValue());
-				break;
-			}
+			String val = scanner.nextWord();
+			if ("&|!=~()><".contains(val))
+				saveOp(val);
+			else
+				pushValue(val);
 		}
 
+		// Complete building the tree
 		while (!opStack.isEmpty())
 			runOp();
 
+		// The stack should contain one entry which is the complete tree
+		if (stack.size() != 1)
+			throw new SyntaxException(scanner, "Stack size is "+stack.size());
+
+		assert stack.size() == 1;
 		return stack.pop();
 	}
 
-	void saveOp(String value) {
+	/**
+	 * An operation is saved on the operation stack.  The tree is built
+	 * as operations of different priorities arrive.
+	 */
+	private void saveOp(String value) {
 		log.debug("save op", value);
 		if (value.equals("#")) {
 			scanner.skipLine();
@@ -84,7 +82,10 @@ public class ExpressionReader {
 		}
 	}
 
-	void runOp() {
+	/**
+	 * Combine the operation at the top of its stack with its values.
+	 */
+	private void runOp() {
 		Op op = opStack.pop();
 		log.debug("Running op...", op.getType());
 
@@ -94,6 +95,8 @@ public class ExpressionReader {
 			BinaryOp binaryOp = (BinaryOp) op;
 			binaryOp.setFirst(arg1);
 			binaryOp.setSecond(arg2);
+
+			// The combination foo=* is converted to exists(foo).
 			if (op.isType(EQUALS) && arg2.isType(VALUE) && ((ValueOp) arg2).isValue("*")) {
 				log.debug("convert to EXISTS");
 				op = new ExistsOp();
@@ -102,13 +105,14 @@ public class ExpressionReader {
 				log.debug("convert to NOT EXISTS");
 				op = new NotExistsOp();
 				op.setFirst(arg1);
-			} 
+			}
+		} else if (!op.isType(OPEN_PAREN)) {
+			op.setFirst(stack.pop());
 		}
 		stack.push(op);
 	}
 
-	void pushValue(String value) {
-		log.debug("push value", value);
+	private void pushValue(String value) {
 		stack.push(new ValueOp(value));
 	}
 }

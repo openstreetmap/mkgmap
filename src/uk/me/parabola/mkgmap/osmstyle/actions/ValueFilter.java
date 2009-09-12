@@ -35,7 +35,7 @@ public abstract class ValueFilter {
 		return res;
 	}
 
-	public abstract String doFilter(String value);
+	protected abstract String doFilter(String value);
 
 	public void add(ValueFilter f) {
 		if (next == null)

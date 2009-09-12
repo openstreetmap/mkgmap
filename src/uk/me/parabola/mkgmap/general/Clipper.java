@@ -29,7 +29,7 @@ public interface Clipper {
 	 * Clip a line and add the resulting line or lines (if any) to the
 	 * collector.
 	 */
-	public void clipLine(MapLine line, MapCollector collector);
+	public void clipLine(MapLine line, LineAdder adder);
 
 	/**
 	 * Clip a polygon and add the resulting shapes to the collector.

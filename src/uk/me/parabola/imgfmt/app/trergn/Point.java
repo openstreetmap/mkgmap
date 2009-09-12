@@ -18,7 +18,9 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
-import uk.me.parabola.log.Logger;
+
+import java.io.OutputStream;
+import java.io.IOException;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -30,12 +32,6 @@ import uk.me.parabola.log.Logger;
  * @author Steve Ratcliffe
  */
 public class Point extends MapObject {
-	private static final Logger log = Logger.getLogger(Point.class);
-
-	// Points can have a subtype, eg for restaurant the subtype might be the
-	// kind of food served.
-	private int subtype;
-
 	// Points can link to a POIRecord
 	private POIRecord poi;
 
@@ -50,27 +46,71 @@ public class Point extends MapObject {
 	 * @param file A reference to the file that should be written to.
 	 */
 	public void write(ImgFileWriter file) {
-		byte b = (byte) getType();
-		file.put(b);
-		log.debug("writing point:", b);
+		boolean hasSubtype = false;
+		int type = getType();
+		byte subtype = 0;
+		if (type > 0xff) {
+			if((type & 0xff) != 0) {
+			    hasSubtype = true;
+			    subtype = (byte) type;
+			}
+			type >>= 8;
+		}
+
+		file.put((byte) type);
 
 		int off = getLabel().getOffset();
 		if (poi != null) {
 			off = poi.getOffset();
 			off |= 0x400000;
 		}
-		if (subtype != 0)
+		if (hasSubtype)
 			off |= 0x800000;
 
 		file.put3(off);
 		file.putChar((char) getDeltaLong());
 		file.putChar((char) getDeltaLat());
-		if (subtype != 0)
-			file.put((byte) subtype);
+		if (hasSubtype)
+			file.put(subtype);
 	}
 
-	public void setSubtype(int subtype) {
-		this.subtype = subtype;
+	/*
+	 * write the point to an OutputStream - only use for outputting
+	 * points with extended (3 byte) types.
+	 *
+	 */
+	public void write(OutputStream stream) throws IOException {
+		assert hasExtendedType();
+		int type = getType();
+		int labelOff = getLabel().getOffset();
+		byte[] extraBytes = getExtTypeExtraBytes();
+
+		if (poi != null) {
+			labelOff = poi.getOffset();
+			labelOff |= 0x400000;
+		}
+		if(labelOff != 0)
+			type |= 0x20;		// has label
+		if(extraBytes != null)
+			type |= 0x80;		// has extra bytes
+		stream.write(type >> 8);
+		stream.write(type);
+
+		int deltaLong = getDeltaLong();
+		int deltaLat = getDeltaLat();
+		stream.write(deltaLong);
+		stream.write(deltaLong >> 8);
+		stream.write(deltaLat);
+		stream.write(deltaLat >> 8);
+
+		if(labelOff != 0) {
+			stream.write(labelOff);
+			stream.write(labelOff >> 8);
+			stream.write(labelOff >> 16);
+		}
+
+		if(extraBytes != null)
+			stream.write(extraBytes);
 	}
 
 	public void setPOIRecord(POIRecord poirecord) {

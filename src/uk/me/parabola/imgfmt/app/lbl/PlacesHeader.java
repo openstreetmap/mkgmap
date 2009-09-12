@@ -28,11 +28,12 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
  * @author Steve Ratcliffe
  */
 public class PlacesHeader {
+
 	private static final char COUNTRY_REC_LEN = 3;
 	private static final char REGION_REC_LEN = 5;
 	private static final char CITY_REC_LEN = 5;
-	private static final char UNK1_REC_LEN = 4;
-	private static final char UNK2_REC_LEN = 4;
+	private static final char POI_INDEX_REC_LEN = 4;
+	private static final char POI_TYPE_INDEX_REC_LEN = 4;
 	private static final char ZIP_REC_LEN = 3;
 	private static final char HIGHWAY_REC_LEN = 6;
 	private static final char EXIT_REC_LEN = 5;
@@ -41,11 +42,14 @@ public class PlacesHeader {
 	private final Section country = new Section(COUNTRY_REC_LEN);
 	private final Section region = new Section(country, REGION_REC_LEN);
 	private final Section city = new Section(region, CITY_REC_LEN);
-	private final Section unk1 = new Section(city, UNK1_REC_LEN);
-	private final Section poiProperties = new Section(unk1);
-	private final Section unk2 = new Section(poiProperties, UNK2_REC_LEN);
-	private final Section zip = new Section(unk2, ZIP_REC_LEN);
-	private byte POIGlobalFlags = 0;
+	private final Section poiIndex = new Section(city, POI_INDEX_REC_LEN);
+	private final Section poiProperties = new Section(poiIndex);
+	private final Section poiTypeIndex = new Section(poiProperties, POI_TYPE_INDEX_REC_LEN);
+	private final Section zip = new Section(poiTypeIndex, ZIP_REC_LEN);
+	private final Section highway = new Section(zip, HIGHWAY_REC_LEN);
+	private final Section exitFacility = new Section(highway, EXIT_REC_LEN);
+	private final Section highwayData = new Section(exitFacility, HIGHWAYDATA_REC_LEN);
+	private byte POIGlobalFlags ;
 
 	void setPOIGlobalFlags(byte flags) {
 		this.POIGlobalFlags = flags;
@@ -71,21 +75,29 @@ public class PlacesHeader {
 		writer.putChar(city.getItemSize());
 		writer.putInt(0);
 
-		writer.putInt(unk1.getPosition());
-		writer.putInt(unk1.getSize());
-		writer.putChar(unk1.getItemSize());
+		writer.putInt(poiIndex.getPosition());
+		writer.putInt(poiIndex.getSize());
+		writer.putChar(poiIndex.getItemSize());
 		writer.putInt(0);
 
 		writer.putInt(poiProperties.getPosition());
 		writer.putInt(poiProperties.getSize());
 		writer.put((byte) 0); // offset multiplier
+
+		// mb 5/9/2009 - discovered that Garmin maps can contain more
+		// than 8 bits of POI global flags - have seen the 9th bit set
+		// to indicate the presence of some extra POI info (purpose
+		// unknown but it starts with a byte that contains the number
+		// of further bytes to read << 1) - therefore, this group
+		// should probably be: 16 bits of POI global flags followed by
+		// 16 zero bits rather than 8 bits of flags and 24 zero bits
 		writer.put(POIGlobalFlags); // properties global mask
 		writer.putChar((char) 0);
 		writer.put((byte) 0);
 
-		writer.putInt(unk2.getPosition());
-		writer.putInt(unk2.getSize());
-		writer.putChar(unk2.getItemSize());
+		writer.putInt(poiTypeIndex.getPosition());
+		writer.putInt(poiTypeIndex.getSize());
+		writer.putChar(poiTypeIndex.getItemSize());
 		writer.putInt(0);
 
 		writer.putInt(zip.getPosition());
@@ -93,21 +105,19 @@ public class PlacesHeader {
 		writer.putChar(zip.getItemSize());
 		writer.putInt(0);
 
-		int lastPos = zip.getEndPos();
-
-		writer.putInt(lastPos);
-		writer.putInt(0);
-		writer.putChar(HIGHWAY_REC_LEN);
+		writer.putInt(highway.getPosition());
+		writer.putInt(highway.getSize());
+		writer.putChar(highway.getItemSize());
 		writer.putInt(0);
 
-		writer.putInt(lastPos);
-		writer.putInt(0);
-		writer.putChar(EXIT_REC_LEN);
+		writer.putInt(exitFacility.getPosition());
+		writer.putInt(exitFacility.getSize());
+		writer.putChar(exitFacility.getItemSize());
 		writer.putInt(0);
 
-		writer.putInt(lastPos);
-		writer.putInt(0);
-		writer.putChar(HIGHWAYDATA_REC_LEN);
+		writer.putInt(highwayData.getPosition());
+		writer.putInt(highwayData.getSize());
+		writer.putChar(highwayData.getItemSize());
 		writer.putInt(0);
 	}
 
@@ -132,7 +142,7 @@ public class PlacesHeader {
 
 	int getLastPos() {
 		// Beware this is not really valid until all is written.
-		return zip.getEndPos();
+		return highwayData.getEndPos();
 	}
 
 	void setLabelEnd(int pos) {
@@ -155,8 +165,28 @@ public class PlacesHeader {
 		poiProperties.setSize(pos - poiProperties.getPosition());
 	}
 
+	void endPOIIndex(int pos) {
+		poiIndex.setSize(pos - poiIndex.getPosition());
+	}
+
+	void endPOITypeIndex(int pos) {
+		poiTypeIndex.setSize(pos - poiTypeIndex.getPosition());
+	}
+
 	void endZip(int pos) {
 		zip.setSize(pos - zip.getPosition());
+	}
+
+	void endHighway(int pos) {
+		highway.setSize(pos - highway.getPosition());
+	}
+
+	void endExitFacility(int pos) {
+		exitFacility.setSize(pos - exitFacility.getPosition());
+	}
+
+	void endHighwayData(int pos) {
+		highwayData.setSize(pos - highwayData.getPosition());
 	}
 
 	public int getNumCities() {

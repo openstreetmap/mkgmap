@@ -25,6 +25,7 @@ public class CodeFunctions {
 	private static final int ENCODING_FORMAT9 = 9;
 	private static final int ENCODING_FORMAT10 = 10;
 
+	private int codepage;
 	private int encodingType;
 	private CharacterEncoder encoder;
 	private CharacterDecoder decoder;
@@ -53,6 +54,14 @@ public class CodeFunctions {
 		this.encodingType = encodingType;
 	}
 
+	public int getCodepage() {
+		return codepage;
+	}
+
+	public void setCodepage(int codepage) {
+		this.codepage = codepage;
+	}
+
 	/**
 	 * Create a CharacterEncoder for the given charset option.  Note that this
 	 * routine also writes to the lblHeader parameter to set the encoding type.
@@ -68,10 +77,8 @@ public class CodeFunctions {
 			funcs.setDecoder(new Format6Decoder());
 		} else if ("latin1".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new Latin1Encoder());
-		} else if ("latin2".equals(charset)) {
-			funcs.setEncodingType(ENCODING_FORMAT6);
-			funcs.setEncoder(new Format6Encoder());
+			funcs.setEncoder(new AnyCharsetEncoder("cp1252"));
+			funcs.setCodepage(1252);
 		} else if ("unicode".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new Utf8Encoder());
@@ -82,9 +89,35 @@ public class CodeFunctions {
 		} else {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new AnyCharsetEncoder(charset));
+			guessCodepage(funcs, charset);
 		}
 
 		return funcs;
+	}
+
+	/**
+	 * Guess the code page from the given charset.  Only works with things
+	 * like cp1252, windows-1252 and some well known ones.
+	 * @param funcs The code page functions.
+	 * @param charset The charset that was given.
+	 */
+	private static void guessCodepage(CodeFunctions funcs, String charset) {
+		String cs = charset.toLowerCase();
+		if (cs.startsWith("cp")) {
+			try {
+				funcs.setCodepage(Integer.parseInt(charset.substring(2)));
+			} catch (NumberFormatException e) {
+				// wasn't in the right form
+			}
+		} else if (cs.startsWith("windows-")) {
+			try {
+				funcs.setCodepage(Integer.parseInt(charset.substring(8)));
+			} catch (NumberFormatException e) {
+				// wasn't in the right form to guess
+			}
+		} else if (cs.equals("latin1")) {
+			funcs.setCodepage(1252);
+		}
 	}
 
 	/**
@@ -104,7 +137,7 @@ public class CodeFunctions {
 		} else {
 			// TODO TEMP...
 			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new Latin1Encoder());
+			funcs.setEncoder(new AnyCharsetEncoder("cp1252"));
 			funcs.setDecoder(new SimpleDecoder());
 		}
 

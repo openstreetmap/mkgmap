@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -26,11 +27,13 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.Configurable;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is the file that contains the overview of the map.  There
@@ -43,7 +46,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class TREFile extends ImgFile {
+public class TREFile extends ImgFile implements Configurable {
 	private static final Logger log = Logger.getLogger(TREFile.class);
 
 	// Zoom levels for map
@@ -120,13 +123,17 @@ public class TREFile extends ImgFile {
 		polygonOverviews.add(ov);
 	}
 
+	public void config(EnhancedProperties props) {
+		header.config(props);
+	}
+
 	/**
 	 * Write out the body of the TRE file.  The act of writing the body sections
 	 * out provides us with pointers that are needed for the header.  Therefore
 	 * the header needs to be written after the body (or obviously we could
 	 * make two passes).
 	 */
-	private void writeBody() {
+	private void writeBody(boolean includeExtendedTypeData) {
 		writeMapLevels();
 
 		writeSubdivs();
@@ -134,6 +141,11 @@ public class TREFile extends ImgFile {
 		writeCopyrights();
 
 		writeOverviews();
+
+		if(includeExtendedTypeData) {
+			writeExtTypeOffsetsRecords();
+			writeExtTypeOverviews();
+		}
 	}
 
 	/**
@@ -180,6 +192,27 @@ public class TREFile extends ImgFile {
 		header.setSubdivSize(header.getSubdivSize() + 4);
 	}
 
+	private void writeExtTypeOffsetsRecords() {
+		header.setExtTypeOffsetsPos(position());
+		Subdivision sd = null;
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			Iterator<Subdivision> it = z.subdivIterator();
+			while (it.hasNext()) {
+				sd = it.next();
+				sd.writeExtTypeOffsetsRecord(getWriter());
+				header.incExtTypeOffsetsSize();
+			}
+		}
+		if(sd != null) {
+			sd.writeLastExtTypeOffsetsRecord(getWriter());
+			header.incExtTypeOffsetsSize();
+		}
+	}
+
 	/**
 	 * Write out the map levels.  This is a mapping between the level number
 	 * and the resolution.
@@ -208,27 +241,67 @@ public class TREFile extends ImgFile {
 		// Point overview section
 		Collections.sort(pointOverviews);
 		for (Overview ov : pointOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPointSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPointSize();
+			}
 		}
 
 		// Line overview section.
 		header.setPolylinePos(position());
 		Collections.sort(polylineOverviews);
 		for (Overview ov : polylineOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPolylineSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPolylineSize();
+			}
 		}
 
 		// Polygon overview section
 		header.setPolygonPos(position());
 		Collections.sort(polygonOverviews);
 		for (Overview ov : polygonOverviews) {
-			ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
-			ov.write(getWriter());
-			header.incPolygonSize();
+			if(!ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incPolygonSize();
+			}
+		}
+	}
+
+	private void writeExtTypeOverviews() {
+
+		header.setExtTypeOverviewsPos(position());
+
+		// assumes overviews are already sorted
+
+		for (Overview ov : polylineOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypeLineTypes();
+			}
+		}
+
+		for (Overview ov : polygonOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypeAreaTypes();
+			}
+		}
+
+		for (Overview ov : pointOverviews) {
+			if(ov.hasExtType()) {
+				ov.setMaxLevel(decodeLevel(ov.getMinResolution()));
+				ov.write(getWriter());
+				header.incExtTypeOverviewsSize();
+				header.incNumExtTypePointTypes();
+			}
 		}
 	}
 
@@ -278,9 +351,9 @@ public class TREFile extends ImgFile {
 		TREFile.this.lastRgnPos = lastRgnPos;
 	}
 
-	public void write() {
+	public void write(boolean includeExtendedTypeData) {
 		// Do anything that is in structures and that needs to be dealt with.
-		writeBody();
+		writeBody(includeExtendedTypeData);
 	}
 
 	public void writePost() {
@@ -299,9 +372,12 @@ public class TREFile extends ImgFile {
 
 	public void setPoiDisplayFlags(byte b) {
 		header.setPoiDisplayFlags(b);
-	}
+	}	
 
 	public String[] getCopyrights() {
+		if (!isReadable())
+			throw new IllegalStateException("not open for reading");
+
 		List<String> msgs = new ArrayList<String>();
 
 		// First do the ones in the TRE header gap

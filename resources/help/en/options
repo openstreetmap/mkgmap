@@ -1,101 +1,276 @@
-Options:
+General options:
 
 --help=topic
-	Print help on the given topic.  The topic is omitted then a list of
-	all the help topics is printed instead.
+	Print help on the given topic.  If the topic is omitted then a
+	list of all the help topics is printed instead.
+
+--version 
+	Output program version.
+
+filename
+--input-file=filename
+	Read input data from the give file.  This option (or just a
+	filename) may be given more than once.
+
+--gmapsupp
+	Write a gmapsupp.img file that can be uploaded to a Garmin or
+	placed in "/Garmin" in a microSD card (such as by mounting the
+	device in USB mass storage mode).
+	TODO: explain if this is in addition to or instead of the
+	per-input files.
 
 -c filename
-	The given file is opened and each line is an option setting of the form
-	option=value, just like on the command line except that there is no
-	leading '--'. 
+--read-config=filename
+	The given file is opened and each line is an option setting of
+	the form option=value, any option that could be used on the command
+	line can be used, however you omit the leading '--'.  The short
+	option names with a single '-' cannot be used, simply use the
+	long name instead.
 
 -n name
 --mapname=name
-	Change the name of the map. Garmin maps are named by 8 digit numbers.
-	The default is 63240001. It is best to change the name if you are going
-	to be making a map for others to use so that it is unique and does not
-	clash with others. 
+	Set the name of the map. Garmin maps are named by 8 digit
+	numbers.  The default is 63240001.  It is best to use a different
+	name if you are going to be making a map for others to use so
+	that it is unique and does not clash with others.
 
 --description=text
 	Sets the descriptive text for the map. This may be displayed in
 	QLandkarte, MapSource on on a GPS etc. 
 
+--country-name=name
+	Sets the map's country name. The default is "COUNTRY".
+
+--country-abbr=abbreviation
+	Sets the map's abbreviated country name. The default is "ABC".
+
+--region-name=name
+	Sets the map's region name. By default, the map has no region name.
+
+--region-abbr=abbreviation
+	Sets the map's abbreviated region name. By default, the map has
+	no abbreviated region name.
+
 Label options:
 
---latin1
-	This option allows the use of non-ascii characters in street names. It
-	is hardware dependant what is actually supported on a particular
-	device. Some devices can only do ascii characters for example. 
+--charset=name
+	This option allows the use of non-ascii characters in street
+	names. It is hardware dependant what is actually supported on
+	a particular device. Some devices can only do ascii characters
+	for example.
 
 	Mkgmap goes to some length to convert un-displayable characters
 	however and by default (without this option) it will transliterate
 	characters to unaccented ascii characters where possible.
 
---charset=''name''
-	Use the specified character set.
+--latin1
+	This is equivalent to --charset=latin1.
 
---code-page=''number''
-	Use the given code page for the .  This is 
+--code-page=number
+	TODO: is one really supposed to give two single quotes?
+	Write the given code page number to the header of the LBL file. 
+	Some examples on the mailing list use --code-page=1252.
+	TODO: explain what this does, and why one would or would not want
+	to do it.
 
 --lower-case
-	Allow labels to contain lower case letters.  Note that this doesn't
-	work on many (most, all?) Garmin devices.
+	Allow labels to contain lower case letters.  Note that this
+	doesn't work on many (most, all?) Garmin devices.
 
 Style options:
 
 --style=name
-	Specify a different style name, rather than the default.
+	Specify a different style name, rather than the default value
+	(which is the word default).
 
 --style-file=file
-	Specify an external file to obtain the style from.  "file" can be a
-	directory or a zip file containing the style.  It can also be a URL.
-	If there is more than one style in the zip file, then the --style
-	argument can be used to select.
+	Specify an external file to obtain the style from.  "file" can
+	be a directory containing files such as info, lines, options
+	(see resources/styles/default for an example).  The directory
+	path must be absolute or relative to the current working
+	directory when mkgmap is invoked.
 
-	For backward compatibility, you can also supply a map-features.csv file
-	here.  See the customisation help.
+	The file can be a zip file instead of a directory.  TODO-check
+	this: In this case, the zip file should contain directories
+	with styles, and the style 'default' will be used, unless the
+	--style option is also given to select a different one.
+
+	The argument can also be a URL, in which case TODO.
+
+	For backward compatibility, you can also supply a
+	map-features.csv file here.  See the customisation help.
 
 --list-styles
-	List the avaialble styles.
+	List the available styles.
 
 --levels=levels code
-	Change the way that the levels on the map correspond to the zoom levels
-	in the device. See customisation help. The default is the equivalent
-	of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16" although this may change. 
+	Change the way that the levels on the map correspond to the
+	zoom levels in the device. See customisation help. The default
+	is the equivalent of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16"
+	although this may change.
 
 --name-tag-list
-	Get the tag that will be used to supply the name.  Useful for language
-	variations.  You can supply a list and the first one will be used.
-	eg. --name-tag-list=name:en,int_name,name
+	Get the tag that will be used to supply the name.  Useful for
+	language variations.  You can supply a list and the first one
+	will be used.  eg. --name-tag-list=name:en,int_name,name
 
 --map-features=file
-	Outdated option, use the --style-file option now.
+	This option is obsolete; use the --style-file option instead.
 
 Product description options:
 
 --family-id
 	This is an integer that identifies a family of products.
---product-id
---series-name
---family-name
---area-name
---overview-name
 
-Misc options:
---block-size=''number''
-	Changes the block size that is used in the generated map.  There is no
-	general reason why you would want to do this.
+--family-name
+	If you build several maps, this option describes the
+	family name of all of your maps. Garmin will display this
+	in the map selection screen.
+	Example: --family-name="OpenStreetmap mkgmap XL 2019"
+	TODO: at least the "-" character seems to have a strange
+	effect on the family name; latin-alphabet and digits seem
+	safe, but other characters should be checked.
+
+--product-id
+	This is an integer that identifies a product within a family.
+	It is often just 1.
+
+--series-name
+--area-name
+
+--overview-mapname=name
+	If --tdbfile is enabled, this gives the name of the overview
+	.img and .tdb files. The default map name is OSM_map
+	
+--overview-mapnumber=8 digit number
+	If --tdbfile is enabled, this gives the internal 8 digit
+	number used in the overview map and tdb file.  The default
+	number is 63240000.
+	
+
+Miscellaneous options:
+
+--max-jobs[=number]
+	When number is specified, allow that number of maps to be
+	processed concurrently. If number is not specified, the limit
+	is set equal to the number of CPU cores. If this option is not
+	given at all, the limit is 1 (i.e., the maps are processed
+	sequentially).
+
+--keep-going
+	Don't quit whole application if an exception occurs while
+	processing a job - continue to process the other jobs.
+
+--block-size=number
+	Changes the block size that is used in the generated map.
+	TODO: explain what this meant
+	Use of this option is not recommended.
 
 --net
-	Output file that supports "lock to road" option.
+	Create maps that supports the "lock to road" option.
 
---gmapsupp
-	Write a gmapsupp.img file that can be uploaded to a garmin in
-	usb mode.
+--route
+	Experimental: Create maps that support routing.  This implies --net
+	(so that --net need not be given if --route is given).
+
+--ignore-maxspeeds
+	When reading OSM files, ignore any "maxspeed" tags.
+
+--ignore-turn-restrictions
+	When reading OSM files, ignore any "restriction" relations.
+
+--ignore-osm-bounds
+	When reading OSM files, ignore any "bounds" elements.
+
+--preserve-element-order
+	Process the map elements (nodes, ways, relations) in the order
+	in which they appear in the OSM input. Without this option,
+	the order in which the elements are processed is not defined.
+
+--remove-short-arcs[=MinLength]
+	Merge nodes to remove short arcs that can cause routing
+	problems. If MinLength is specified (in metres), arcs shorter
+	than that length will be removed. If a length is not
+	specified, only zero-length arcs will be removed.
+
+--road-name-pois[=GarminCode]
+	Generate a POI for each named road. By default, the POIs'
+	Garmin type code is 0x640a. If desired, a different type code
+	can be specified with this option.  This is a workaround for not
+	being able to search for roads.
+	
+--add-pois-to-areas
+	Generate a POI for each area. The POIs are created after the
+	style is applied and only for polygon types that have a
+	reasonable point equivalent.
+
+--make-poi-index
+	Generate the POI index (not yet useful).
+
+--make-all-cycleways
+	Turn on all of the options that make cycleways.
+
+--make-opposite-cycleways
+	Some oneway streets allow bicycle traffic in the reverse
+	direction and this option makes a way with the same points as
+	the original that allows bicycle traffic (in both directions).
+
+--make-cycleways
+	Some streets have a separate cycleway track/lane just for
+	bicycle traffic and this option makes a way with the same
+	points as the original that allows bicycle traffic. Also,
+	bicycle traffic is prohibited from using the original way
+	(unless that way's bicycle access has been defined).
+
+--link-pois-to-ways
+	If this option is enabled, POIs that are situated at a point
+	in a way will be associated with that way and may modify the
+	way's properties. Currently supported are POIs that restrict
+	access (e.g. bollards). Their access restrictions are applied
+	to a small region of the way near the POI.
 
 --tdbfile
 	Write a .tdb file.
 
---version 
-	Output program version.
+--draw-priority=25
+	When two maps cover the same area, this option controls what
+	order they are drawn in and therefore which map is on top of
+	which.  Higher priorities are drawn "on top" of lower
+	priorities.
 
+--transparent
+	Make the map transparent, so that if two maps are loaded that
+	cover the same area, you can see through this map and see the
+	lower map too.  Useful for contour line maps among other
+	things.
+
+--no-poi-address
+	Disable address / phone information to POIs. Address info is
+	read according to the "Karlsruhe" tagging schema. Automatic
+	filling of missing information could be enabled using the
+	"location-autofill" option.
+
+--no-sorted-roads
+	Suppress the normal generation of sorted road data. This will
+	make the map quicker to build but the find address or
+	intersection functions will be lost.
+
+--location-autofill=''number''
+	Controls how country region info is gathered for cities /
+	streets and pois
+
+	0 	(Default) The country region info is gathered by
+		analysis of the cities is_in tags.
+
+		If no country region info is present the default
+		passed default country region is used.
+		 
+	1	Additional analysis of partial is_in info to get
+		relations between hamlets and cities
+	
+	2	Brute force search for nearest city with info if all
+		methods before failed. Warning cities my end up in the
+		wrong country/region.
+		
+	3	Enables debug output about suspicious relations that
+		might cause wrong country region info

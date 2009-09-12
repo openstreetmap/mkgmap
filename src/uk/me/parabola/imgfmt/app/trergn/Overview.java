@@ -33,6 +33,7 @@ public abstract class Overview implements Comparable<Overview> {
 	public static final int SHAPE_KIND = 3;
 
 	private final int kind; // The kind of overview; point, line etc.
+	private final char extType;
 	private final char type;
 	private final char subType;
 	private final int minResolution;
@@ -43,6 +44,7 @@ public abstract class Overview implements Comparable<Overview> {
 	protected Overview(int kind, int fullType, int minres) {
 		this.kind = kind;
 
+		this.extType = (char)((fullType >> 16) & 0xff);
 		this.type = (char) (fullType >> 8 & 0xff);
 		this.subType = (char) (fullType & 0xff);
 		this.minResolution = minres;
@@ -54,10 +56,18 @@ public abstract class Overview implements Comparable<Overview> {
 	}
 
 	public void write(ImgFileWriter file) {
-		file.put((byte) (type & 0xff));
-		file.put((byte) maxLevel);
-		if (size > 2)
-			file.put((byte) (subType & 0xff));
+		if(extType != 0) {
+			file.put((byte)type);
+			file.put((byte)maxLevel);
+			file.put((byte)subType);
+			file.put((byte)0);
+		}
+		else {
+			file.put((byte) (type & 0xff));
+			file.put((byte) maxLevel);
+			if (size > 2)
+				file.put((byte) (subType & 0xff));
+		}
 	}
 
 	/**
@@ -83,10 +93,10 @@ public abstract class Overview implements Comparable<Overview> {
 			return false;
 
 		Overview ov = (Overview) obj;
-		if (ov.kind == kind && ov.type == type && ov.subType == subType)
-			return true;
-
-		return false;
+		return (ov.kind == kind &&
+				ov.extType == extType &&
+				ov.type == type &&
+				ov.subType == subType);
 	}
 
 	public int getKind() {
@@ -107,6 +117,10 @@ public abstract class Overview implements Comparable<Overview> {
 	public int compareTo(Overview ov) {
 		if (kind != ov.kind) {
 			return kind > ov.kind ? 1 : -1;
+		}
+
+		if(extType != ov.extType) {
+			return extType - ov.extType;
 		}
 
 		int res;
@@ -134,5 +148,9 @@ public abstract class Overview implements Comparable<Overview> {
 
 	public int getMinResolution() {
 		return minResolution;
+	}
+
+	public boolean hasExtType() {
+		return extType != 0;
 	}
 }

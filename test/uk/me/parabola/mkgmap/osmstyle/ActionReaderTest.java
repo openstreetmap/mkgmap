@@ -33,6 +33,10 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+/**
+ * Test the possible actions that can appear in an action block.
+ * These are run before any rule is finally matched.
+ */
 public class ActionReaderTest {
 
 	@Test
@@ -50,6 +54,7 @@ public class ActionReaderTest {
 		List<Action> actions = readActionsFromString("{add park=yes}");
 		assertEquals("one action", 1, actions.size());
 
+		// add does not overwrite existing tags.
 		Element el = stdElementRun(actions);
 		assertEquals("park not overwritten", "no", el.getTag("park"));
 	}
@@ -60,14 +65,17 @@ public class ActionReaderTest {
 		assertEquals("one action", 1, actions.size());
 
 		Element el = stdElementRun(actions);
-		assertNull("park gone", el.getTag("park"));
+		assertNull("park should be gone", el.getTag("park"));
 		assertEquals("park renamed", "no", el.getTag("landarea"));
 	}
 
+	/**
+	 * Test with embeded comment, newlines, semicolon used as separator.
+	 */
 	@Test
 	public void testFreeForm() {
 		List<Action> actions = readActionsFromString(" { set web='world wide';" +
-				"set ribbon = 'yellow' } ");
+				"set \nribbon = 'yellow' \n# a comment } ");
 
 		assertEquals("number of actions", 2, actions.size());
 		Element el = stdElementRun(actions);
@@ -99,6 +107,10 @@ public class ActionReaderTest {
 		readActionsFromString("{bad }");
 	}
 
+	/**
+	 * The name action set the element-name (not the 'name' tag).
+	 * The first value to set it counts, later matches are ignored.
+	 */
 	@Test
 	public void testName() {
 		List<Action> actions = readActionsFromString("{name '${name} (${ref})' |" +
@@ -110,12 +122,18 @@ public class ActionReaderTest {
 		assertEquals("just name", "Main St", el.getName());
 	}
 
+	/**
+	 * Test with two name actions.  This works just the same as having several
+	 * name options on the same name command, in that it is still the
+	 * first one to match that counts.
+	 */
 	@Test
 	public void testDoubleName() {
 		List<Action> actions = readActionsFromString("{name '${name} (${ref})' |" +
 				"  '${ref}' | '${name}' ; " +
 				" name 'fred';}");
 
+		// Something that matches nothing in the first name command.
 		Element el = makeElement();
 		Rule rule = new ActionRule(null, actions);
 		rule.resolveType(el);
@@ -133,6 +151,9 @@ public class ActionReaderTest {
 		assertEquals("ref and name", "Main St (A1)", el.getName());
 	}
 
+	/**
+	 * The apply action works on the members of relations.
+	 */
 	@Test
 	public void testApplyAction() {
 		List<Action> actions = readActionsFromString("{apply {" +
@@ -146,6 +167,7 @@ public class ActionReaderTest {
 
 		assertNull("Tag not set on relation", rel.getTag("route"));
 
+		// Will be set on all members as there is no role filter.
 		List<Element> elements = rel.getElements();
 		Element el1 = elements.get(0);
 		assertEquals("route tag added to first", "bike", el1.getTag("route"));
@@ -156,6 +178,10 @@ public class ActionReaderTest {
 		assertEquals("foo tag set to second", "bar", el2.getTag("foo"));
 	}
 
+	/**
+	 * You can have a role filter, so that the actions are only applied
+	 * to members with the given role.
+	 */
 	@Test
 	public void testApplyWithRole() {
 		List<Action> actions = readActionsFromString("{apply role=bar {" +
@@ -171,6 +197,7 @@ public class ActionReaderTest {
 		assertEquals("route tag added to first", "bike", el1.getTag("route"));
 		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
 
+		// Wrong role, so not applied.
 		Element el2 = elements.get(1);
 		assertNull("route tag not added to second element (role=foo)", el2.getTag("route"));
 		assertNull("foo tag not set in second element (role=foo)", el2.getTag("foo"));
@@ -207,14 +234,14 @@ public class ActionReaderTest {
 	 * Make a standard element for the tests.
 	 */
 	private Element makeElement() {
-		Element el = new Way();
+		Element el = new Way(0);
 		el.addTag("park", "no");
 		el.addTag("test", "1");
 		return el;
 	}
 
 	private Relation makeRelation() {
-		Relation rel = new GeneralRelation();
+		Relation rel = new GeneralRelation(23);
 		rel.addElement("bar", makeElement());
 		rel.addElement("foo", makeElement());
 		return rel;
@@ -226,7 +253,6 @@ public class ActionReaderTest {
 		Reader sr = new StringReader(in);
 		TokenScanner ts = new TokenScanner("string", sr);
 		ActionReader ar = new ActionReader(ts);
-		List<Action> actions = ar.readActions();
-		return actions;
+		return ar.readActions();
 	}
 }

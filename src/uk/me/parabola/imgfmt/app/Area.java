@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
@@ -146,36 +148,38 @@ public class Area {
 		return Math.max(getWidth(), getHeight());
 	}
 
-	public boolean contains(Coord co) {
+	public final boolean contains(Coord co) {
+		// return true if co is inside the Area (it may touch the
+		// boundary)
 		return co.getLatitude() >= minLat
 				&& co.getLatitude() <= maxLat
 				&& co.getLongitude() >= minLong
 				&& co.getLongitude() <= maxLong;
 	}
-	
-	public boolean contains(Area a) {
-		return a.getMinLat() >= minLat
-				&& a.getMaxLat() <= maxLat
-				&& a.getMinLong() >= minLong
-				&& a.getMaxLong() <= maxLong;
+
+	public final boolean insideBoundary(Coord co) {
+		// return true if co is inside the Area and doesn't touch the
+		// boundary
+		return co.getLatitude() > minLat
+				&& co.getLatitude() < maxLat
+				&& co.getLongitude() > minLong
+				&& co.getLongitude() < maxLong;
 	}
 
-	public String fmtArea() {
-		StringBuffer sb = new StringBuffer();
-		sb.append('(');
-		sb.append(Utils.toDegrees(getMinLat()));
-		sb.append(',');
-		sb.append(Utils.toDegrees(getMinLong()));
-		sb.append(')');
-		sb.append('(');
-		sb.append(Utils.toDegrees(getMaxLat()));
-		sb.append(',');
-		sb.append(Utils.toDegrees(getMaxLong()));
-		sb.append(')');
-		return sb.toString();
+	public final boolean onBoundary(Coord co) {
+		// return true if co is on the boundary
+		return contains(co) && !insideBoundary(co);
 	}
 
 	public boolean isEmpty() {
 		return minLat >= maxLat || minLong >= maxLong;
+	}
+
+	public boolean allInsideBoundary(List<Coord> coords) {
+		for (Coord co : coords) {
+			if (!insideBoundary(co))
+				return false;
+		}
+		return true;
 	}
 }

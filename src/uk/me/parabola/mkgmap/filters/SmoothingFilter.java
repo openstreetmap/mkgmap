@@ -16,13 +16,12 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This is a filter that smooths out lines at low resolutions. If the element
@@ -69,10 +68,6 @@ public class SmoothingFilter implements MapFilter {
 			return;
 		}
 
-		// Drop things that are too small.
-		if (line.getBounds().getMaxDimention() < MIN_SIZE)
-			return;
-
 		// If the line is not very long then just let it through.  This is done
 		// mainly for the background polygons.
 		List<Coord> points = line.getPoints();
@@ -113,14 +108,10 @@ public class SmoothingFilter implements MapFilter {
 		if (!last.equals(end))
 			coords.add(end);
 
-		MapLine newelem;
-		if (element instanceof MapShape)
-			newelem = new MapShape(line);
-		else
-			newelem = new MapLine(line);
+		MapLine newline = line.copy();
 
-		newelem.setPoints(coords);
-		next.doFilter(newelem);
+		newline.setPoints(coords);
+		next.doFilter(newline);
 	}
 
 	/**

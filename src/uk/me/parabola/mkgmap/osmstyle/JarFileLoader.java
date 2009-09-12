@@ -73,12 +73,15 @@ public class JarFileLoader extends StyleFileLoader {
 		log.debug("opening", url);
 		try {
 			JarURLConnection jurl = (JarURLConnection) url.openConnection();
+			jurl.setUseCaches(false);
 			jarFile = jurl.getJarFile();
 			prefix = jurl.getEntryName();
-			if (name != null)
-				prefix = searchPrefix(jarFile, '/' + name + "/version");
-			else
-				prefix = searchPrefix(jarFile);
+			if (prefix == null) {
+				if (name != null)
+					prefix = searchPrefix(jarFile, '/' + name + "/version");
+				else
+					prefix = searchPrefix(jarFile);
+			}
 
 			log.debug("jar prefix is", prefix);
 		} catch (IOException e) {
@@ -163,13 +166,4 @@ public class JarFileLoader extends StyleFileLoader {
 		return list.toArray(new String[list.size()]);
 	}
 
-	/**
-	 * Set the prefix (ie the directory) the will be prepended to all file
-	 * names that we try to open.
-	 *
-	 * @param prefix The prefix which should end in a slash.
-	 */
-	protected final void setPrefix(String prefix) {
-		this.prefix = prefix;
-	}
 }

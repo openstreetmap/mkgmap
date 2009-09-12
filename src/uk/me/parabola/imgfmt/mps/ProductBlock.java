@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.io.StructuredOutputStream;
-
 import java.io.IOException;
+
+import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * A block describing a particular product.  Not sure how this relates
@@ -30,7 +30,7 @@ public class ProductBlock extends Block {
 	private static final int BLOCK_TYPE = 0x46;
 	
 	private int product;
-	private String description = "OMS maps";
+	private String description = "OSM maps";
 
 	public ProductBlock() {
 		super(BLOCK_TYPE);

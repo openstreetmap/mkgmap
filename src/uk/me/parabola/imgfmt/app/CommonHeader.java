@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.ReadFailedException;
-import uk.me.parabola.imgfmt.Utils;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+
+import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.Utils;
 
 /**
  * The header that is common to all application files within the .img file.
@@ -31,7 +31,7 @@ import java.util.Date;
  * @author Steve Ratcliffe
  */
 public abstract class CommonHeader {
-	public static final int COMMON_HEADER_LEN = 21;
+	protected static final int COMMON_HEADER_LEN = 21;
 	private static final int TYPE_LEN = 10;
 
 	// The common header contains the length and the type which are set at
@@ -41,7 +41,7 @@ public abstract class CommonHeader {
 
 	// Set to 0x80 on locked maps.  We are not interested in creating locked
 	// maps, but may be useful to recognise them for completeness.
-	private byte lockFlag;
+	//	private byte lockFlag;
 
 	// A date of creation.
 	private Date creationDate;
@@ -110,33 +110,13 @@ public abstract class CommonHeader {
 	 */
 	protected abstract void writeFileHeader(ImgFileWriter writer);
 
-	public byte getLockFlag() {
-		return lockFlag;
-	}
-
-	public void setLockFlag(byte lockFlag) {
-		this.lockFlag = lockFlag;
-	}
-
-	public Date getCreationDate() {
-		return creationDate;
-	}
-
-	public void setCreationDate(Date creationDate) {
-		this.creationDate = creationDate;
-	}
-
 	public int getHeaderLength() {
 		return headerLength;
 	}
 
-	public String getType() {
-		return type;
-	}
-
 	private void writePrepare() {
 		// Prepare for write by setting our defaults.
-		lockFlag = 0;
+		// lockFlag = 0;
 		if (creationDate == null)
 			creationDate = new Date();
 	}

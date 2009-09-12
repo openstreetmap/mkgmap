@@ -31,23 +31,19 @@ import uk.me.parabola.imgfmt.app.Coord;
 public class AreaClipper implements Clipper {
 	private final Area bbox;
 
-	public AreaClipper() {
-		bbox = null;
-	}
-
 	public AreaClipper(Area bbox) {
 		this.bbox = bbox;
 	}
 
-	public void clipLine(MapLine line, MapCollector collector) {
+	public void clipLine(MapLine line, LineAdder collector) {
 		List<List<Coord>> list = LineClipper.clip(bbox, line.getPoints());
 		if (list == null) {
-			collector.addLine(line);
+			collector.add(line);
 		} else {
 			for (List<Coord> lco : list) {
-				MapLine nline = new MapLine(line);
+				MapLine nline = line.copy();
 				nline.setPoints(lco);
-				collector.addLine(nline);
+				collector.add(nline);
 			}
 		}
 	}

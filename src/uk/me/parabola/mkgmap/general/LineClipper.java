@@ -16,9 +16,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -26,6 +25,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 /**
  * Routine to clip a polyline to a given bounding box.
  * @author Steve Ratcliffe
+ * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">A very clear explaination of the Liang-Barsky algorithm</a>
  */
 public class LineClipper {
 
@@ -40,49 +40,48 @@ public class LineClipper {
 	 * If clipping is needed then an array of point lists is returned.
 	 */
 	public static List<List<Coord>> clip(Area a, List<Coord> coords) {
-		if (a == null)
-			return null;
 
 		// If all the points are inside the box then we just return null
 		// to show that nothing was done and the line can be used.  This
 		// is expected to be the normal case.
-		boolean foundOutside = false;
-		for (Coord co : coords) {
-			if (!a.contains(co)) {
-				foundOutside = true;
-				break;
-			}
-		}
-		if (!foundOutside)
+		if (a == null || a.allInsideBoundary(coords))
 			return null;
 
-		List<List<Coord>> ret = new ArrayList<List<Coord>>();
-		List<Coord> nlist = new ArrayList<Coord>();
-		ret.add(nlist);
+		class LineCollector {
+			private final List<List<Coord>> ret = new ArrayList<List<Coord>>(4);
+			private List<Coord> currentLine;
+			private Coord last;
 
-		Iterator<Coord> it = coords.iterator();
-		Coord last = it.next();
-		while (it.hasNext()) {
-			Coord co = it.next();
-			Coord[] ends = {last, co};
-			ends = clip(a, ends);
-			if (ends == null) {
-				last = co;
-				continue;
+			public void add(Coord[] segment) {
+				if (segment == null) {
+					currentLine = null;
+				} else {
+					// we start a new line if there isn't a current one, or if the first
+					// point of the segment is not equal to the last one in the line.
+					if (currentLine == null || !segment[0].equals(last)) {
+						currentLine = new ArrayList<Coord>(5);
+						currentLine.add(segment[0]);
+						currentLine.add(segment[1]);
+						ret.add(currentLine);
+					} else {
+						currentLine.add(segment[1]);
+					}
+					last = segment[1];
+				}
 			}
-			if (last.equals(ends[0])) {
-				if (nlist.isEmpty())
-					nlist.add(last);
-			} else {
-				// Need to start a new one
-				nlist = new ArrayList<Coord>();
-				ret.add(nlist);
-				nlist.add(ends[0]);
-			}
-			nlist.add(ends[1]);
-			last = co;
+
 		}
-		return ret;  
+
+		LineCollector seg = new LineCollector();
+
+		// Step through each segment, clip it if necessary and create a list of
+		// lines from it.
+		for (int i = 0; i <= coords.size() - 2; i++) {
+			Coord[] pair = {coords.get(i), coords.get(i+1)};
+			Coord[] clippedPair = clip(a, pair);
+			seg.add(clippedPair);
+		}
+		return seg.ret;
 	}
 
 	/**
@@ -93,66 +92,123 @@ public class LineClipper {
 	 * be changed if the line is clipped to contain the new start and end
 	 * points.  A point that was inside the box will not be changed.
 	 * @return An array of the new start and end points if any of the line is
-	 * within the box.  If the line is wholy outside then null is returned.
+	 * within the box.  If the line is wholly outside then null is returned.
 	 * If a point is within the box then the same coordinate object will
 	 * be returned as was passed in.
 	 * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">Liang-Barsky algorithm</a>
 	 */
-	private static Coord[] clip(Area a, Coord[] ends) {
-		double d = 0.00001;
+	public static Coord[] clip(Area a, Coord[] ends) {
 		assert ends.length == 2;
 
-		double x1 = ends[0].getLongitude();
-		double y1 = ends[0].getLatitude();
+		int x0 = ends[0].getLongitude();
+		int y0 = ends[0].getLatitude();
 
-		double x2 = ends[1].getLongitude();
-		double y2 = ends[1].getLatitude();
+		int x1 = ends[1].getLongitude();
+		int y1 = ends[1].getLatitude();
 
-		double dx = x2 - x1;
-		double dy = y2 - y1;
+		int dx = x1 - x0;
+		int dy = y1 - y0;
 
 		double[] t = {0, 1};
 
-		double p, q;
-
-		p = -dx;
-		q = -(a.getMinLong() - x1);
+		int p = -dx;
+		int q = -(a.getMinLong() - x0);
 		boolean scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dx;
-		q = a.getMaxLong() - x1;
+		q = a.getMaxLong() - x0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = -dy;
-		q = -(a.getMinLat() - y1);
+		q = -(a.getMinLat() - y0);
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		p = dy;
-		q = a.getMaxLat() - y1;
+		q = a.getMaxLat() - y0;
 		scrap = checkSide(t, p, q);
 		if (scrap) return null;
 
 		assert t[0] >= 0;
 		assert t[1] <= 1;
 
-		if (t[0] > 0)
-			ends[0] = new Coord((int) (y1 + t[0] * dy + d), (int) (x1 + t[0] * dx + d));
+		Coord orig0 = ends[0];
+		Coord orig1 = ends[1];
+		if(ends[0].getOnBoundary()) {
+			// consistency check
+			assert a.onBoundary(ends[0]) : "Point marked as boundary node at " + ends[0].toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+		}
+		else if (t[0] > 0) {
+			// line requires clipping so create a new end point and if
+			// its position (in map coordinates) is different from the
+			// original point, use the new point as a boundary node
+			Coord new0 = new Coord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
 
-		if (t[1] < 1)
-			ends[1] = new Coord((int)(y1 + t[1] * dy + d), (int) (x1 + t[1] * dx + d));
+			// check the maths worked out
+			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+			if(!new0.equals(orig0))
+				ends[0] = new0;
+			ends[0].setOnBoundary(true);
+		}
+		else if(a.onBoundary(ends[0])) {
+			// point lies on the boundary so it's a boundary node
+			ends[0].setOnBoundary(true);
+		}
+
+		if(ends[1].getOnBoundary()) {
+			// consistency check
+			assert a.onBoundary(ends[1]) : "Point marked as boundary node at " + ends[1].toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+		}
+		else if (t[1] < 1) {
+			// line requires clipping so create a new end point and if
+			// its position (in map coordinates) is different from the
+			// original point, use the new point as a boundary node
+			Coord new1 = new Coord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1]));
+
+			// check the maths worked out
+			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
+			if(!new1.equals(orig1))
+				ends[1] = new1;
+			ends[1].setOnBoundary(true);
+		}
+		else if(a.onBoundary(ends[1])) {
+			// point lies on the boundary so it's a boundary node
+			ends[1].setOnBoundary(true);
+		}
+
+		// zero length segments can be created if one point lies on
+		// the boundary and the other is outside of the area
+
+		// try really hard to catch these as they will break the
+		// routing 
+
+		// the check for t[0] >= t[1] should quickly find all the zero
+		// length segments but the extra check to see if the points
+		// are equal could catch the situation where although t[0] and
+		// t[1] differ, the coordinates come out the same for both
+		// points
+
+		if(t[0] >= t[1] || ends[0].equals(ends[1]))
+			return null;
+
 		return ends;
+	}
+
+	private static int calcCoord(int base, int delta, double t) {
+		double d = 0.5;
+		double y = (base + t * delta);
+		return (int) ((y >= 0) ? y + d : y - d);
 	}
 
 	private static boolean checkSide(double[] t, double p, double q) {
 		double r = q/p;
 
-		if (p == 0 && q < 0)
-			return true;
-
-		if (p < 0) {
+		if (p == 0) {
+			if (q < 0)
+				return true;
+		} else if (p < 0) {
 			if (r > t[1])
 				return true;
 			else if (r > t[0])
@@ -165,14 +221,5 @@ public class LineClipper {
 		}
 		return false;
 	}
-
-	public static void main(String[] args) {
-		Area a = new Area(60, 70, 150, 230);
-		Coord[] co = new Coord[] {
-				new Coord(20, 30),
-				new Coord(160, 280),
-		};
-
-		clip(a, co);
-	}
 }
+	

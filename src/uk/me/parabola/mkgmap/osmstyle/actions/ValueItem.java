@@ -37,13 +37,13 @@ public class ValueItem {
 	}
 
 	public String getValue(Element el) {
-		if (value != null)
+		if (tagname == null && value != null)
 			return value;   // already known
 		
 		if (tagname != null) {
 			String tagval = el.getTag(tagname);
 			if (filter != null)
-				value = filter.doFilter(tagval);
+				value = filter.filter(tagval);
 			else
 				value = tagval;
 		}
@@ -60,5 +60,13 @@ public class ValueItem {
 
 	public void setTagname(String tagname) {
 		this.tagname = tagname;
+	}
+
+	public String toString() {
+		if (tagname != null) {
+			// TODO: don't ignore filter.
+			return "${" + tagname + "}";
+		} else
+			return value;
 	}
 }

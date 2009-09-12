@@ -16,7 +16,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MultiPolygonRelation extends Relation {
 	private Way outer;
-	private static final Collection<Way> inners = new ArrayList<Way>();
+	private final Collection<Way> inners = new ArrayList<Way>();
 
 	/**
 	 * Create an instance based on an exsiting relation.  We need to do
@@ -25,18 +25,23 @@ public class MultiPolygonRelation extends Relation {
 	 * @param other The relation to base this one on.
 	 */
 	public MultiPolygonRelation(Relation other) {
+		setId(other.getId());
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
+			addElement(pairs.getValue(), pairs.getKey());
+			
 	        String value = pairs.getValue();
 
-			if (pairs.getKey() instanceof Way) {
+			if (value != null && pairs.getKey() instanceof Way) {
 				Way way = (Way) pairs.getKey();
 				if (value.equals("outer"))
 					outer = way;
-				else if (value.equals("inner")) {
+				else if (value.equals("inner"))
 					inners.add(way);
-				}
 			}
 		}
+
+		setName(other.getName());
+		copyTags(other);
 	}
 
 	/** Process the ways in this relation.
@@ -80,8 +85,8 @@ public class MultiPolygonRelation extends Relation {
 	/**
 	 * find the Closest Point of Approach between two coordinate-lists	 
 	 * This will probably be moved to a Utils class
-	 * @param l1 
-	 * @param l2
+	 * @param l1 First list of points.
+	 * @param l2 Second list of points.
 	 * @return The first element is the index in l1, the second in l2 which are the closest together.
 	 */
 	private static int[] findCpa(List<Coord> l1, List <Coord> l2){
@@ -91,7 +96,7 @@ public class MultiPolygonRelation extends Relation {
 
 		for (Coord c1: l1){
 			for(Coord c2: l2){
-				double newDistance = distance(c1, c2);
+				double newDistance = c1.distanceInDegreesSquared(c2);
 				if (newDistance < oldDistance)
 				{
 					oldDistance = newDistance;
@@ -102,36 +107,5 @@ public class MultiPolygonRelation extends Relation {
 		}
 		// FIXME: what if not found?
 		return new int[]{l1.indexOf(found1), l2.indexOf(found2)};
-	}
-
-	/**
-	 * Find the Distance between two coordinates. 
-	 * @param c1
-	 * @param c2
-	 * @return distance between c1 and c2.
-	 */
-	private static double distance(Coord c1, Coord c2){
-		double lat1 = Utils.toDegrees(c1.getLatitude());
-		double lat2 = Utils.toDegrees(c2.getLatitude());
-		double long1 = Utils.toDegrees(c1.getLongitude());
-		double long2 = Utils.toDegrees(c2.getLongitude());
-				
-		double latDiff;
-		if (lat1 < lat2)
-			latDiff = lat2 - lat1;
-		else
-			latDiff = lat1 - lat2;	
-		if (latDiff > 90)
-			latDiff -= 180;
-
-		double longDiff;
-		if (long1 < long2)
-			longDiff = long2 - long1;
-		else
-			longDiff = long1 - long2;
-		if (longDiff > 180)
-			longDiff -= 360;
-		
-		return Math.pow((latDiff *latDiff) + (longDiff * longDiff), 0.5);
 	}
 }

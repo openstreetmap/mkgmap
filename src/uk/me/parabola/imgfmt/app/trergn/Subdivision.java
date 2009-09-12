@@ -16,20 +16,20 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-import uk.me.parabola.log.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.log.Logger;
 
 /**
  * The map is divided into areas, depending on the zoom level.  These are
  * known as subdivisions.
  *
- * A subdivision 'belongs' to a zoom level and cannot be intepreted correctly
+ * A subdivision 'belongs' to a zoom level and cannot be interpreted correctly
  * without knowing the <i>bitsPerCoord</i> of the associated zoom level.
  *
  * Subdivisions also form a tree as subdivisions are further divided at
@@ -80,6 +80,13 @@ public class Subdivision {
 
 	private final List<Subdivision> divisions = new ArrayList<Subdivision>();
 
+	private int extTypeAreasOffset;
+	private int extTypeLinesOffset;
+	private int extTypePointsOffset;
+	private int extTypeAreasSize;
+	private int extTypeLinesSize;
+	private int extTypePointsSize;
+
 	/**
 	 * Subdivisions can not be created directly, use either the
 	 * {@link #topLevelSubdivision} or {@link #createSubdivision} factory
@@ -96,16 +103,21 @@ public class Subdivision {
 		this.zoomLevel = z;
 
 		int shift = getShift();
+		int mask = getMask();
 
 		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
-		int w = (area.getWidth()+(1<<shift)) / 2 >> shift;
-		if ((w & 0x8000) != 0)
+		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
+		if (w > 0x7fff)
 			w = 0x7fff;
 
+		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
+		if (h > 0xffff)
+			h = 0xffff;
+
 		this.width = w;
-		this.height = (area.getHeight()+(1<<shift))/2 >> shift;
+		this.height = h;
 	}
 
 	/**
@@ -163,6 +175,16 @@ public class Subdivision {
 	}
 
 	/**
+	 * Get the shift mask.  The bits that will be lost due to the resolution
+	 * shift level.
+	 *
+	 * @return A bit mask with the lower <i>shift</i> bits set.
+	 */
+	public int getMask() {
+		return (1 << getShift()) - 1;
+	}
+
+	/**
 	 * Get the resolution of this division.  Resolution goes from 1 to 24
 	 * and the higher the number the more detail there is.
 	 *
@@ -195,8 +217,6 @@ public class Subdivision {
 	}
 
 	public Point createPoint(String name) {
-		assert hasPoints || hasIndPoints;
-		
 		Point p = new Point(this);
 		Label label = lblFile.newLabel(name);
 
@@ -204,19 +224,30 @@ public class Subdivision {
 		return p;
 	}
 
-	public Polyline createLine(String name) {
-		assert hasPolylines;
+	public Polyline createLine(String name, String ref) {
 		Label label = lblFile.newLabel(name);
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
-		numPolylines++;
-		pl.setNumber(numPolylines);
+		if(ref != null) {
+			// ref may contain multiple ids separated by ";"
+			for(String r : ref.split(";")) {
+				String tr = r.trim();
+				if(tr.length() > 0) {
+					//System.err.println("Adding ref " + tr + " to road " + name);
+					pl.addRefLabel(lblFile.newLabel(tr));
+				}
+			}
+		}
+
 		return pl;
 	}
 
+	public void setPolylineNumber(Polyline pl) {
+		pl.setNumber(++numPolylines);
+	}
+
 	public Polygon createPolygon(String name) {
-		assert hasPolygons;
 		Label label = lblFile.newLabel(name);
 		Polygon pg = new Polygon(this);
 
@@ -262,18 +293,6 @@ public class Subdivision {
 
 	public void setHasPolygons(boolean hasPolygons) {
 		this.hasPolygons = hasPolygons;
-	}
-
-	/**
-	 * The following routines answer the question 'does there need to
-	 * be a pointer in the rgn section to this area?'.  You need a
-	 * pointer for all the regions that exist except the first one.
-	 * There is a strict order with points first and finally polygons.
-	 *
-	 * @return Never needed as if it exists it will be first.
-	 */
-	public boolean needsPointPtr() {
-		return false;
 	}
 
 	/**
@@ -338,6 +357,36 @@ public class Subdivision {
 
 	public void startDivision() {
 		rgnFile.startDivision(this);
+		extTypeAreasOffset = rgnFile.getExtTypeAreasSize();
+		extTypeLinesOffset = rgnFile.getExtTypeLinesSize();
+		extTypePointsOffset = rgnFile.getExtTypePointsSize();
+	}
+
+	public void endDivision() {
+		extTypeAreasSize = rgnFile.getExtTypeAreasSize() - extTypeAreasOffset;
+		extTypeLinesSize = rgnFile.getExtTypeLinesSize() - extTypeLinesOffset;
+		extTypePointsSize = rgnFile.getExtTypePointsSize() - extTypePointsOffset;
+	}
+
+	public void writeExtTypeOffsetsRecord(ImgFileWriter file) {
+		file.putInt(extTypeAreasOffset);
+		file.putInt(extTypeLinesOffset);
+		file.putInt(extTypePointsOffset);
+		int kinds = 0;
+		if(extTypeAreasSize != 0)
+			++kinds;
+		if(extTypeLinesSize != 0)
+			++kinds;
+		if(extTypePointsSize != 0)
+			++kinds;
+		file.put((byte)kinds);
+	}
+
+	public void writeLastExtTypeOffsetsRecord(ImgFileWriter file) {
+		file.putInt(rgnFile.getExtTypeAreasSize());
+		file.putInt(rgnFile.getExtTypeLinesSize());
+		file.putInt(rgnFile.getExtTypePointsSize());
+		file.put((byte)0);
 	}
 
 	/**
@@ -369,13 +418,13 @@ public class Subdivision {
 	 * We are starting to draw the lines.  These must be done before
 	 * polygons.
 	 */
-	void startIndPoints() {
+	public void startIndPoints() {
 		if (lastMapElement > MAP_INDEXED_POINT)
 			throw new IllegalStateException("Indexed points must be done before lines and polygons");
 
 		lastMapElement = MAP_INDEXED_POINT;
 
-		rgnFile.setPolylinePtr();
+		rgnFile.setIndPointPtr();
 	}
 
 	/**
@@ -399,5 +448,25 @@ public class Subdivision {
 		lastMapElement = MAP_SHAPE;
 
 		rgnFile.setPolygonPtr();
+	}
+
+	/**
+	 * Convert an absolute Lat to a local, shifted value
+	 */
+	public int roundLatToLocalShifted(int absval) {
+		int shift = getShift();
+		int val = absval - getLatitude();
+		val += ((1 << shift) / 2);
+		return (val >> shift);
+	}
+
+	/**
+	 * Convert an absolute Lon to a local, shifted value
+	 */
+	public int roundLonToLocalShifted(int absval) {
+		int shift = getShift();
+		int val = absval - getLongitude();
+		val += ((1 << shift) / 2);
+		return (val >> shift);
 	}
 }

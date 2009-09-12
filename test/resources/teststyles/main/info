@@ -1,0 +1,18 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+# 
+
+
+# A short one line description of the style
+#
+summary: The default test style
+
+# Version of the style itself
+#
+version=1.0
+
+# A longer description of the style.
+description {
+Used for many functional tests.  It should not be changed at all ever.
+}

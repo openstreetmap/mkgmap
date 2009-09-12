@@ -82,7 +82,7 @@ public abstract class StyleFileLoader {
 			} else if (s.indexOf(':') > 0) {
 				loader = new JarFileLoader(s, name);
 			} else {
-				loader = classpathLoader("styles/", name);
+				throw new FileNotFoundException("no such file or path: " + loc);
 			}
 		}
 
@@ -146,8 +146,12 @@ public abstract class StyleFileLoader {
 
 		// all style files must be in the same directory or zip
 		URL url = classLoader.getResource(path);
-		if (url == null)
-			throw new FileNotFoundException("Could not find style " + path);
+		if (url == null) {
+			classLoader = StyleFileLoader.class.getClassLoader();
+			url = classLoader.getResource(path);
+			if (url == null)
+				throw new FileNotFoundException("Could not find style " + path);
+		}
 
 		String proto = url.getProtocol().toLowerCase();
 		if (proto.equals("jar")) {

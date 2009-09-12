@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 
 /**
  * The header for the RGN file.  This is very simple, just a location and size.
@@ -27,11 +28,20 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class RGNHeader extends CommonHeader {
-	public static final int HEADER_LEN = 29;
+	//private static final int DEF_LEN = 29;
+	private static final int DEF_LEN = 125;
+	public static final int HEADER_LEN = DEF_LEN;
 
 	private int dataOffset;
 	private int dataSize;
 	
+	private int extTypeAreasOffset;
+	private int extTypeAreasSize;
+	private int extTypeLinesOffset;
+	private int extTypeLinesSize;
+	private int extTypePointsOffset;
+	private int extTypePointsSize;
+
 	public RGNHeader() {
 		super(HEADER_LEN, "GARMIN RGN");
 		dataOffset = HEADER_LEN;
@@ -58,14 +68,34 @@ public class RGNHeader extends CommonHeader {
 	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.putInt(dataOffset);
         writer.putInt(getDataSize());
-	}
+		if (getHeaderLength() > 29) {
+			writer.putInt(extTypeAreasOffset);
+			writer.putInt(extTypeAreasSize);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
 
-	public int getDataOffset() {
-		return dataOffset;
-	}
+			writer.putInt(extTypeLinesOffset);
+			writer.putInt(extTypeLinesSize);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
 
-	public void setDataOffset(int dataOffset) {
-		this.dataOffset = dataOffset;
+			writer.putInt(extTypePointsOffset);
+			writer.putInt(extTypePointsSize);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putInt(0);
+		}
 	}
 
 	protected int getDataSize() {
@@ -74,5 +104,20 @@ public class RGNHeader extends CommonHeader {
 
 	public void setDataSize(int dataSize) {
 		this.dataSize = dataSize;
+	}
+
+	public void setExtTypeAreasInfo(int offset, int size) {
+		extTypeAreasOffset = offset;
+		extTypeAreasSize = size;
+	}
+
+	public void setExtTypeLinesInfo(int offset, int size) {
+		extTypeLinesOffset = offset;
+		extTypeLinesSize = size;
+	}
+
+	public void setExtTypePointsInfo(int offset, int size) {
+		extTypePointsOffset = offset;
+		extTypePointsSize = size;
 	}
 }

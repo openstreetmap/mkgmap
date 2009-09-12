@@ -30,7 +30,17 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class Way extends Element {
 
-	private final List<Coord> points = new ArrayList<Coord>();
+	private final List<Coord> points;
+
+	public Way(long id) {
+		points = new ArrayList<Coord>();
+		setId(id);
+	}
+
+	public Way(long id, List<Coord> points) {
+		this.points = points;
+		setId(id);
+	}
 
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
@@ -50,9 +60,6 @@ public class Way extends Element {
 		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
 			return true;
 
-		// Not yet supporting the possible -1 value, which I think is best
-		// fixed by reversing the way.
-
 		return false;
 	}
 
@@ -60,6 +67,14 @@ public class Way extends Element {
 		points.add(co);
 	}
 
+	public void reverse() {
+		int numPoints = points.size();
+		for(int i = 0; i < numPoints/2; ++i) {
+			Coord t = points.get(i);
+			points.set(i, points.get(numPoints - 1 - i));
+			points.set(numPoints - 1 - i, t);
+		}
+	}
 
 	/**
 	 * A simple representation of this way.
@@ -71,7 +86,7 @@ public class Way extends Element {
 
 		Coord coord = points.get(0);
 		StringBuilder sb = new StringBuilder();
-		sb.append("WAY: ");
+		sb.append("WAY: " + getId() + " ");
 		sb.append(getName());
 		sb.append('(');
 		sb.append(Utils.toDegrees(coord.getLatitude()));

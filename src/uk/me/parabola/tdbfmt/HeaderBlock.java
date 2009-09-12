@@ -16,10 +16,10 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import java.io.IOException;
+
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
-
-import java.io.IOException;
 
 /**
  * The header block.  Identifies the particular map set.
@@ -151,4 +151,7 @@ class HeaderBlock {
 	}
 
 
+	public int getTdbVersion() {
+		return tdbVersion;
+	}
 }

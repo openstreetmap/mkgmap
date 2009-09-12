@@ -29,8 +29,7 @@ public class TypeReader {
 			throw new SyntaxException(ts, "No garmin type information given");
 
 		if (!t.getValue().equals("[")) {
-			SyntaxException e = new SyntaxException(ts, "No type definition");
-			throw e;
+			throw new SyntaxException(ts, "No type definition");
 		}
 
 		ts.skipSpace();

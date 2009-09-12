@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.filters;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * Filter for removing empty elements and degenerate elements, for example
@@ -44,6 +45,14 @@ public class RemoveEmpty implements MapFilter {
 		if (element instanceof MapLine) {
 			MapLine mapLine = (MapLine) element;
 			if (mapLine.getPoints().size() <= 1) {
+				if (log.isDebugEnabled())
+					log.debug("dropping degenerate element");
+				return;
+			}
+		}
+		if (element instanceof MapShape) {
+			MapShape mapLine = (MapShape) element;
+			if (mapLine.getPoints().size() <= 2) {
 				if (log.isDebugEnabled())
 					log.debug("dropping degenerate element");
 				return;

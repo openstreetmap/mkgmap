@@ -1,3 +1,677 @@
+2008-12-20  steve
+
+	* src/uk/me/parabola/imgfmt/app/trergn/Subdivision.java: Ensure
+	  that it is impossible for subdivisions to be too big. They are
+	  just limited to the max size if found to be so.
+
+2008-12-16  steve
+
+	* src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/filters/PolygonSizeSplitterFilter.java:
+	  Fix the rounding of the map definition areas (I hope).
+
+2008-12-15  steve
+
+	* src/uk/me/parabola/mkgmap/osmstyle/OverlayReader.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyledConverterTest.java:
+	  Points were not copied when overlays were in use.
+
+2008-12-14  steve
+
+	* mkgmap.ipr, src/uk/me/parabola/mkgmap/combiners/OverviewMap.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMap.java,
+	  src/uk/me/parabola/mkgmap/reader/overview/OverviewMapDataSource.java:
+	  Misc: Rearranged overview map classes. Planning to re-work so
+	  that it works again.
+
+2008-12-13  steve
+
+	* Makefile, mkgmap.ipr,
+	  src/uk/me/parabola/imgfmt/ExitException.java,
+	  src/uk/me/parabola/imgfmt/app/BufferedImgFileWriter.java,
+	  src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/ExitException.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/LineAdder.java,
+	  src/uk/me/parabola/mkgmap/general/NullClipper.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/LineAdder.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/OverlayReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleSet.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java:
+	  Misc: Reorganise the package structure to remove cycles that were
+	  introduced in the style system.
+	* src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExpressionReader.java,
+	  test/resources/teststyles/derived,
+	  test/resources/teststyles/derived/info,
+	  test/resources/teststyles/derived/lines,
+	  test/resources/teststyles/derived/version,
+	  test/resources/teststyles/simple/lines,
+	  test/uk/me/parabola/imgfmt/app/typ/TYPFileTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/ActionReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/RuleFileReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyledConverterTest.java:
+	  Recognise the match operator, add test for derived styles.
+	* src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/RegexOp.java: Add regex
+	  operation for rules files.
+
+2008-12-10  steve
+
+	* resources/styles/noname/lines: The noname style was mostly
+	  invisible when in the night-time scheme. So use a different code
+	  for named roads.
+	* src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/MapDetails.java,
+	  src/uk/me/parabola/mkgmap/general/MapPoint.java,
+	  src/uk/me/parabola/mkgmap/general/NullClipper.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/LineAdder.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/OverlayReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleSet.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Tags.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  test/resources/teststyles/simple/lines,
+	  test/resources/teststyles/simple/overlays,
+	  test/uk/me/parabola/mkgmap/osmstyle/ActionReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyledConverterTest.java,
+	  test/uk/me/parabola/mkgmap/reader/osm/ElementTest.java,
+	  test/uk/me/parabola/mkgmap/reader/osm/TagsTest.java: Implement
+	  overlays.
+	  
+	  With this feature you can have a line style that is formed by
+	  over laying two lines. By using a TYP file with appropriate
+	  definitions, you can create some useful effects.
+	  
+	  To use this create an overlays file in the style. Lines in the
+	  file look like this:
+	  
+	  0x142: 0x12, 0x17, 0x18
+	  
+	  This means that if you have a line of type 0x142, it will be
+	  written as three lines with types 0x12, 0x17 and 0x18
+	  respectively instead of 0x142.
+
+2008-12-09  steve
+
+	* mkgmap.iml, src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/SimpleMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Tags.java,
+	  test/uk/me/parabola/mkgmap/reader/osm/TagsTest.java: Rename
+	  SimpleMap to Tags to reflect its only use.
+	* src/uk/me/parabola/mkgmap/general/MapElement.java: Bug fix for
+	  max resolution.
+
+2008-12-08  steve
+
+	* Makefile, resources/styles/default/lines,
+	  resources/styles/default/relations, resources/styles/noname,
+	  resources/styles/noname/info, resources/styles/noname/lines,
+	  resources/styles/noname/version,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/SequenceRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StylePrinter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotExistsOp.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/SimpleMap.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java,
+	  test/resources/teststyles/simple/lines,
+	  test/uk/me/parabola/mkgmap/osmstyle/ActionReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/RuleFileReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyledConverterTest.java: Add
+	  a noname style.
+	  
+	  Can be used with --style=noname
+	  
+	  Major roads that do not have a ref, as well as residential roads
+	  that do not have a name are highlighted. You can use the tag
+	  noname=yes to show that a road doesn't have and name and
+	  therefore shouldn't be highlighted.
+	  
+	  No-name roads show up as a thick line that is visible at higher
+	  zooms than is usual for residential roads to help you find areas
+	  with poor naming coverage.
+
+2008-12-07  steve
+
+	* resources/styles/default/info, resources/styles/default/lines,
+	  resources/styles/default/map-features.csv,
+	  resources/styles/default/points,
+	  resources/styles/default/polygons,
+	  src/uk/me/parabola/mkgmap/osmstyle/SequenceRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StylePrinter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/AddTagAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/NameAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueBuilder.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueItem.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  test/resources/teststyles/empty,
+	  test/resources/teststyles/empty/points,
+	  test/resources/teststyles/empty/relations,
+	  test/resources/teststyles/empty/version,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyleImplTest.java: Make the
+	  default style a rules-based one.
+	  
+	  Fix a bug when a file is empty.
+	  
+	  add to strings to the value action rules.
+	* src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ConvertFilter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueItem.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/actions/AddTagActionTest.java:
+	  Remove old hardcoded rules for name and contours but add
+	  equivilent rules if you are using an old map-features.csv based
+	  style for backward compatibility.
+	  
+	  New styles have to be particular about how to format the name of
+	  a road and how to deal with contour lines etc.
+	* ., doc/style-rules.txt, mkgmap.iml, mkgmap.ipr,
+	  src/uk/me/parabola/imgfmt/app/typ,
+	  src/uk/me/parabola/mkgmap/Options.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/Action.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ActionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/AddTagAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ConvertFilter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/DefaultFilter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/DeleteAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/NameAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/SubAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueBuilder.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueFilter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ValueItem.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExpressionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/UnitConversions.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Relation.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java, test/resources,
+	  test/resources/teststyles, test/resources/teststyles/simple,
+	  test/resources/teststyles/simple/info,
+	  test/resources/teststyles/simple/lines,
+	  test/resources/teststyles/simple/options,
+	  test/resources/teststyles/simple/version, test/uk, test/uk/me,
+	  test/uk/me/parabola, test/uk/me/parabola/mkgmap,
+	  test/uk/me/parabola/mkgmap/osmstyle/ActionReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/RuleFileReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyleImplTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/StyledConverterTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/actions/AddTagActionTest.java,
+	  test/uk/me/parabola/mkgmap/reader,
+	  test/uk/me/parabola/mkgmap/reader/osm,
+	  test/uk/me/parabola/mkgmap/reader/osm/ElementTest.java: Merge
+	  style branch into trunk.
+	  
+	  The style system is now nearly complete. Will then remove the
+	  hardcoded rules for name and contours.
+	* build.xml: Don't include the source in the distributions as we
+	  have a separate source one now and have done for a while.
+
+2008-12-06  steve
+
+	* src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java: Make
+	  the MPS file name distinctive.
+	* mkgmap.ipr, src/uk/me/parabola/imgfmt/sys/BlockManager.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java:
+	  Calculate the block size needed for the gmapsupp correctly. Was
+	  ignoring the main constraint while concentrating on a minor
+	  one....
+	  
+	  Also there should be a warning now if the directory overflows. If
+	  it does that would be a bug.
+
+2008-12-01  steve
+
+	* mkgmap.ipr, src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/LinePreparer.java,
+	  src/uk/me/parabola/imgfmt/app/typ/BitmapImage.java,
+	  src/uk/me/parabola/imgfmt/app/typ/PointInfo.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  test/uk/me/parabola/imgfmt/app/typ,
+	  test/uk/me/parabola/imgfmt/app/typ/TYPFileTest.java: Misc: code
+	  clean up.
+
+2008-11-30  steve
+
+	* src/uk/me/parabola/imgfmt/FormatException.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/Writeable.java,
+	  src/uk/me/parabola/imgfmt/app/typ,
+	  src/uk/me/parabola/imgfmt/app/typ/BitmapImage.java,
+	  src/uk/me/parabola/imgfmt/app/typ/DrawOrder.java,
+	  src/uk/me/parabola/imgfmt/app/typ/PointInfo.java,
+	  src/uk/me/parabola/imgfmt/app/typ/Rgb.java,
+	  src/uk/me/parabola/imgfmt/app/typ/ShapeStacking.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPFile.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPHeader.java: Brought in the
+	  TYP file implementation from Thomas Lußnig.
+	  
+	  This is from the typpoi branch, there is still more to be
+	  integrated from that branch.
+	* src/uk/me/parabola/mkgmap/osmstyle/Action.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StylePrinter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java: Misc: Code
+	  tidy.
+	* ., Makefile, doc/style.txt, mkgmap.ipr,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/general/PolygonClipper.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/Action.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/ActionRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DefaultFeatureNames.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/MapFeatureReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/SequenceRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StylePrinter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/Action.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/ActionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/AddTagAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/actions/RenameAction.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/EqualsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExpressionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NumericOp.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GeneralRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Relation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/scan/Token.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java, test/uk,
+	  test/uk/me, test/uk/me/parabola, test/uk/me/parabola/mkgmap,
+	  test/uk/me/parabola/mkgmap/osmstyle,
+	  test/uk/me/parabola/mkgmap/osmstyle/ActionReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/RuleFileReaderTest.java,
+	  test/uk/me/parabola/mkgmap/osmstyle/actions,
+	  test/uk/me/parabola/mkgmap/osmstyle/actions/AddTagActionTest.java:
+	  Merge from style branch.
+	* ., ChangeLog, mkgmap.ipr,
+	  src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/mkgmap/Version.java,
+	  test/uk/me/parabola/imgfmt, test/uk/me/parabola/imgfmt/app,
+	  test/uk/me/parabola/imgfmt/app/BitReaderTest.java,
+	  test/uk/me/parabola/mkgmap/general/LineClipperTest.java: Misc:
+	  tests, version and changelog updating.
+
+2008-11-29  steve
+
+	* src/uk/me/parabola/imgfmt/app/BitReader.java: Merge from nod to
+	  allow display to compile with trunk
+	* mkgmap.iml, mkgmap.ipr, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java, test/uk,
+	  test/uk/me, test/uk/me/parabola, test/uk/me/parabola/mkgmap,
+	  test/uk/me/parabola/mkgmap/general,
+	  test/uk/me/parabola/mkgmap/general/LineClipperTest.java: Line
+	  clipping was producing zero length lines.
+
+2008-11-28  steve
+
+	* ., mkgmap.ipr,
+	  src/uk/me/parabola/imgfmt/app/lbl/PlacesHeader.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/imgfmt/sys/Directory.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileImgChannel.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/mkgmap/combiners/FileInfo.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/LineClipper.java,
+	  src/uk/me/parabola/mkgmap/gui/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MakeTestLangMap.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DefaultFeatureNames.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/AllElements.java,
+	  src/uk/me/parabola/mkgmap/reader/test/TestPoints.java,
+	  src/uk/me/parabola/tdbfmt/CopyrightSegment.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Code tidying.
+
+2008-11-27  steve
+
+	* src/uk/me/parabola/imgfmt/Utils.java: Reversing change to the
+	  date routines in this file as I suspect they may be causing the
+	  recently observed breakage.
+	  
+	  I remember from the beginning that things dont work if the year
+	  field has certain values.
+
+2008-11-23  steve
+
+	* ChangeLog, doc/Credits,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  src/uk/me/parabola/tdbfmt/OverviewMapBlock.java: Fixed
+	  NumberFormatException problems on map names that are not
+	  integers.
+
+2008-11-16  steve
+
+	* mkgmap.ipr, mkgmap.iws, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  Code clean up.
+	* mkgmap.ipr, mkgmap.iws,
+	  src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/CommonHeader.java,
+	  src/uk/me/parabola/imgfmt/app/OffsetWriter.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Utf8Decoder.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadDef.java,
+	  src/uk/me/parabola/imgfmt/app/net/RoadIndex.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/MapValues.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java,
+	  src/uk/me/parabola/mkgmap/scan/Token.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java,
+	  src/uk/me/parabola/tdbfmt/RBlock.java: Code clean up.
+	* mkgmap.ipr, mkgmap.iws, src/uk/me/parabola/imgfmt/app/Area.java,
+	  src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/Coord.java,
+	  src/uk/me/parabola/imgfmt/app/Section.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Format6Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Overview.java,
+	  src/uk/me/parabola/imgfmt/mps/Block.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgFS.java,
+	  src/uk/me/parabola/imgfmt/sys/ImgHeader.java,
+	  src/uk/me/parabola/io/StructuredInputStream.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/build/MapSplitter.java,
+	  src/uk/me/parabola/mkgmap/combiners/GmapsuppBuilder.java,
+	  src/uk/me/parabola/mkgmap/combiners/TdbBuilder.java,
+	  src/uk/me/parabola/mkgmap/filters/FilterConfig.java,
+	  src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/main/MapOption.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/test/ElementTestDataSource.java,
+	  src/uk/me/parabola/tdbfmt/TdbFile.java: Code clean up.
+	* mkgmap.iml, mkgmap.ipr, mkgmap.iws: Add intellij files.
+	* src/uk/me/parabola/mkgmap/general/LineClipper.java: Fix clipping
+	  bug where a line runs parallel to the side we are clipping
+	  against. Also changed many double values to int's as we only work
+	  in ints for the coordinates anyway. Changed some terminology to
+	  better match the web page description of the algorithm.
+	  
+	  (Bug reported by beej71)
+
+2008-11-12  steve
+
+	* ., src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java: Merge change to
+	  restore the rule ordering within the file. Rules earlier take
+	  priority over rules later.
+
+2008-11-10  steve
+
+	* ., src/uk/me/parabola/mkgmap/general/AreaClipper.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/NullClipper.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/EqualsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTOp.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java: Merge in
+	  important bug fixes from the style branch. Makes all the examples
+	  work.
+
+2008-11-09  steve
+
+	* ., Makefile, doc/style-examples.txt, doc/style-rules.txt,
+	  doc/style.txt, scripts/new_style.py,
+	  src/uk/me/parabola/imgfmt/app/BitWriter.java,
+	  src/uk/me/parabola/imgfmt/app/Label.java,
+	  src/uk/me/parabola/imgfmt/app/labelenc/Latin2Encoder.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/LinePreparer.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/Point.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/sys/Dirent.java,
+	  src/uk/me/parabola/imgfmt/sys/FileNode.java,
+	  src/uk/me/parabola/log/Logger.java,
+	  src/uk/me/parabola/mkgmap/CommandArgs.java,
+	  src/uk/me/parabola/mkgmap/Option.java,
+	  src/uk/me/parabola/mkgmap/OptionProcessor.java,
+	  src/uk/me/parabola/mkgmap/Options.java,
+	  src/uk/me/parabola/mkgmap/Version.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/Clipper.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/general/MapElement.java,
+	  src/uk/me/parabola/mkgmap/main/AbstractTestMap.java,
+	  src/uk/me/parabola/mkgmap/main/Main.java,
+	  src/uk/me/parabola/mkgmap/main/MapMaker.java,
+	  src/uk/me/parabola/mkgmap/osmstyle,
+	  src/uk/me/parabola/mkgmap/osmstyle/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DefaultFeatureNames.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/ExpressionRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/FixedRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/MapFeatureReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleFileReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/RuleSet.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/SequenceRule.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyleImpl.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/TypeReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/AndOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/BinaryOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/CloseOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/EqualsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExistsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ExpressionReader.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/GTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTEOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/LTOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotEqualOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotExistsOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/NotOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/Op.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/OpenOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/OrOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/SyntaxException.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ValueOp.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/eval/ValueWithUnit.java,
+	  src/uk/me/parabola/mkgmap/osmstyle/package.html,
+	  src/uk/me/parabola/mkgmap/reader/osm/CombinedStyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/DirectoryFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Element.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/FeatureListConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/GType.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/JarFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/MultiPolygonRelation.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Node.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Rule.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Style.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleFileLoader.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyleInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/StyledConverter.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/Way5.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/WordScanner.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/package.html,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5XmlHandler.java,
+	  src/uk/me/parabola/mkgmap/reader/osm/xml/OsmMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/reader/plugin/MapReader.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java,
+	  src/uk/me/parabola/mkgmap/scan,
+	  src/uk/me/parabola/mkgmap/scan/TokType.java,
+	  src/uk/me/parabola/mkgmap/scan/Token.java,
+	  src/uk/me/parabola/mkgmap/scan/TokenScanner.java: Merge the style
+	  branch back to the trunk. Next the branch will be recreated for
+	  more work.
+	* src/uk/me/parabola/imgfmt/app/BufferedImgFileWriter.java,
+	  src/uk/me/parabola/mkgmap/Version.java: Change the message when
+	  the RGN region overflows. The previous message was confusing, and
+	  I don't expect the new one will be any better, but I will keep
+	  changing it until it is. Exit the program as there is not point
+	  of going on as the map will not work and it is best not to give
+	  hope that it will.
+	  
+	  Bumped the built in version number - thanks Petr for reminding
+	  me.
+
+2008-08-31  steve
+
+	* src/uk/me/parabola/imgfmt/app/BitReader.java: Add a signed get
+	  method to the bitreader
+
+2008-08-30  steve
+
+	* Makefile, src/uk/me/parabola/imgfmt/app/BitReader.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREHeader.java: Changes to
+	  help display rgn files.
+
+2008-08-28  steve
+
+	* resources/styles/default/map-features.csv: Add highway=path
+	  because some people use that. -Markus Barchfeld
+
+2008-08-25  steve
+
+	* src/uk/me/parabola/mkgmap/build/MapBuilder.java,
+	  src/uk/me/parabola/mkgmap/general/LevelInfo.java,
+	  src/uk/me/parabola/mkgmap/reader/polish/PolishMapDataSource.java:
+	  When a reader plugin already contains an empty top level zoom,
+	  then we do not want to create a new one so mark such levels
+	  specially and use them for creating the empty level instead of
+	  creating our own. Thanks to Pazapas for pointing this out.
+	* src/uk/me/parabola/imgfmt/app/Section.java: Apply fix from the
+	  nod branch. When sections are linked then the begining of the
+	  second should be the end of the previous one (not the start of
+	  the previous).
+	  
+	  Possibly would have caused some weird POI behaviour.
+
+2008-08-24  steve
+
+	* ChangeLog, src/uk/me/parabola/imgfmt/Utils.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFile.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileReader.java,
+	  src/uk/me/parabola/imgfmt/app/ImgFileWriter.java: Some more
+	  changes that should have been included in the previous commit.
+	  
+	  Two phase writing of the sections.
+	* src/uk/me/parabola/imgfmt/app/lbl/LBLFile.java,
+	  src/uk/me/parabola/imgfmt/app/map/Map.java,
+	  src/uk/me/parabola/imgfmt/app/net/NETFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/RGNFile.java,
+	  src/uk/me/parabola/imgfmt/app/trergn/TREFile.java,
+	  src/uk/me/parabola/imgfmt/app/typ/TYPFile.java,
+	  src/uk/me/parabola/mkgmap/build/MapBuilder.java: The sync method
+	  was a bad idea for net and nod.
+	  
+	  We need to separate writing into two phases and control the order
+	  that these phases are written in.
+	  
+	  So: 1. Make sync just write the buffers to the disk. 2. Add write
+	  and writePost() methods to control the different phases.
+	  
+	  Verified that you get the same result file on trunk.
+
+2008-08-22  elrond
+
+	* src/uk/me/parabola/mkgmap/reader/osm/Osm5XmlHandler.java: Support
+	  <bounds> in .osm
+	  
+	  The current OSM api sends a <bounds minlat="..." minlon="..."
+	  maxlat="..." maxlon="..."/>. Use it to setup the bounding box.
+	  
+	  (<bound> is another already supported way.)
+	* resources/map-features.csv, resources/osm_garmin_map.csv,
+	  resources/styles/default/map-features.csv: Add new features
+	  (archaeological_site, school, playground)
+	  
+	  point historic=archaeological_site ->
+	  attractions|museum-historical polygon amenity=school ->
+	  university (closest match) polygon leisure=playground ->
+	  city-park (closest match)
+
 2008-08-03  steve
 
 	* .: Merge tracking for typpoi nod and style branches.

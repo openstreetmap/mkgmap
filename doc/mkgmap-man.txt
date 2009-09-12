@@ -27,5 +27,10 @@
     however.  It will convert accented characters that cannot be
     displayed in the chosen character set into unaccented characters.
 
---overview-name=''name''
-    This gives the name of the overview map.
+--overview-mapname=''name''
+	If --tdbfile is enabled, this gives the name of the overview .img and .tdb files.
+	The default map name is OSM_map.
+	
+--overview-mapnumber=''8 digit number''
+	If --tdbfile is enabled, this gives the internal 8 digit number used in overview map and
+	tdb file. The default number is 63240000.

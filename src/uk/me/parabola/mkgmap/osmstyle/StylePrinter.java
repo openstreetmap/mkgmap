@@ -59,8 +59,8 @@ public class StylePrinter {
 			fmt.format("name-tag-list: %s\n", fmtArray(style.getNameTagList()));
 
 		if (generalOptions != null) {
-			for (String s : generalOptions.keySet())
-				fmt.format("%s: %s\n", s, generalOptions.get(s));
+			for (Map.Entry<String, String> entry : generalOptions.entrySet())
+				fmt.format("%s: %s\n", entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -107,8 +107,13 @@ public class StylePrinter {
 	private void dumpRule(Formatter fmt, String s, Rule rule) {
 		if (rule instanceof FixedRule)
 			fmt.format("%s %s\n", s, rule);
-		else
-			fmt.format("%s & %s\n", s, rule.toString());
+		else {
+			String rulestr = rule.toString();
+			if (rulestr.startsWith("\n") || rulestr.matches("^[ \t\n].*") || rulestr.matches("^[ \t\n].*"))
+				fmt.format("%s %s\n", s, rulestr);
+			else
+				fmt.format("%s & %s\n", s, rulestr);
+		}
 	}
 
 	void setGeneralOptions(Map<String, String> generalOptions) {

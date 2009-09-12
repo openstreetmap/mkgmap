@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A filter that ensures that a line does not exceed the allowed number of
@@ -35,7 +35,7 @@ public class LineSplitterFilter implements MapFilter {
 	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
 	
 	// Not sure of the value, probably 255.  Say 250 here.
-	private static final int MAX_POINTS_IN_LINE = 250;
+	public static final int MAX_POINTS_IN_LINE = 250;
 
 	public void init(FilterConfig config) {
 	}
@@ -63,7 +63,7 @@ public class LineSplitterFilter implements MapFilter {
 
 		log.debug("line too long, splitting");
 
-		MapLine l = new MapLine(line);
+		MapLine l = line.copy();
 
 		List<Coord> coords = new ArrayList<Coord>();
 		int count = 0;

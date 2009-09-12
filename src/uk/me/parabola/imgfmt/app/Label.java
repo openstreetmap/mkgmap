@@ -32,7 +32,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Label {
+public class Label implements Comparable {
 	private static final Logger log = Logger.getLogger(Label.class);
 
 	// The compressed form of the label text.
@@ -47,13 +47,10 @@ public class Label {
 		length = etext.getLength();
 	}
 
-	/**
-	 * The length of the label in bytes as it will appear in the file.
-	 * This is after the text has been converted to the label format being used.
-	 * It will usually not be the same length as the text it is representing.
-	 *
-	 * @return Byte length of the label.
-	 */
+	public byte[] getCtext() {
+		return ctext;
+	}
+
 	public int getLength() {
 		return length;
 	}
@@ -86,5 +83,50 @@ public class Label {
 			log.debug("put label", this.length);
 		if (ctext != null)
 			writer.put(ctext, 0, this.length);
+	}
+
+	/**
+	 * String version of the label, for diagnostic purposes.
+	 */
+	public String toString() {
+		return "label at " + offset;
+	}
+
+	//public boolean equals(Object obj) {
+	//	Label other = (Label) obj;
+	//	return other.getOffset() == getOffset();
+	//}
+	//
+	//@Override
+	//public int hashCode() {
+	//	return offset;
+	//}
+
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || !(o instanceof Label))
+			return false;
+
+		return offset == ((Label) o).offset;
+
+	}
+
+	public int hashCode() {
+		return offset;
+	}
+
+	public int compareTo(Object other) {
+		Label o = (Label)other;
+		if(this == other)
+			return 0;
+		for(int i = 0; i < length && i < o.length; ++i) {
+			int diff = (ctext[i] & 0xff) - (o.ctext[i] & 0xff);
+			if(diff != 0)
+				return diff;
+		}
+		if(length == o.length)
+			return 0;
+		return (length > o.length)? 1 : -1;
 	}
 }

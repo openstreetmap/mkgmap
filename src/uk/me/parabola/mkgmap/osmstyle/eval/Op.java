@@ -39,6 +39,7 @@ public abstract class Op {
 	public static final char OPEN_PAREN = '(';
 	public static final char CLOSE_PAREN = ')';
 	public static final char NOT = '!';
+	public static final char REGEX = '~';
 
 	protected Op first;
 	private char type;
@@ -50,6 +51,7 @@ public abstract class Op {
 		case EQUALS: op = new EqualsOp(); break;
 		case AND: op = new AndOp(); break;
 		case OR: op = new OrOp(); break;
+		case REGEX: op = new RegexOp(); break;
 		case OPEN_PAREN: op = new OpenOp(); break;
 		case CLOSE_PAREN: op = new CloseOp(); break;
 		case '>':
@@ -100,7 +102,7 @@ public abstract class Op {
 		return type;
 	}
 
-	public void setType(char type) {
+	void setType(char type) {
 		this.type = type;
 	}
 

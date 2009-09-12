@@ -49,14 +49,6 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Get the type of the first token.  The token is not consumed.
-	 */
-	public TokType firstTokenType() {
-		ensureTok();
-		return tokens.peek().getType();
-	}
-
-	/**
 	 * Peek and return the first token.  It is not consumed.
 	 */
 	public Token peekToken() {
@@ -90,6 +82,7 @@ public class TokenScanner {
 	 * probably only call this after having peek'ed the type earlier.
 	 */
 	public String nextValue() {
+		skipSpace();
 		return nextRawToken().getValue();
 	}
 
@@ -108,6 +101,10 @@ public class TokenScanner {
 	public void skipSpace() {
 		while (!isEndOfFile()) {
 			ensureTok();
+			if (tokens.peek().isValue("#")) {
+				skipLine();
+				continue;
+			}
 			if (!tokens.peek().isWhiteSpace())
 				break;
 			nextRawToken();
@@ -254,6 +251,7 @@ public class TokenScanner {
 	public int nextInt() {
 		skipSpace();
 		Token t = nextRawToken();
+		// TODO: catch number format exception
 		return Integer.parseInt(t.getValue());
 	}
 

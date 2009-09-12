@@ -89,7 +89,7 @@ class CopyrightSegment {
 
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
+		if (o == null || !(o instanceof CopyrightSegment)) return false;
 
 		CopyrightSegment that = (CopyrightSegment) o;
 
@@ -102,8 +102,7 @@ class CopyrightSegment {
 	}
 
 	public int hashCode() {
-		int result;
-		result = (int) copyrightCode;
+		int result = (int) copyrightCode;
 		result = 31 * result + (int) whereCode;
 		result = 31 * result + (int) extraProperties;
 		result = 31 * result + copyright.hashCode();

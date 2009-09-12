@@ -31,6 +31,10 @@ import org.junit.Test;
 
 
 public class RuleFileReaderTest {
+	/**
+	 * Test of a file containing a number of different rules, with varying
+	 * formatting and including comments.
+	 */
 	@Test
 	public void testLoad() {
 		RuleSet rs = makeRuleSet("highway=footway & type=rough [0x2 level 2]\n" +
@@ -43,7 +47,7 @@ public class RuleFileReaderTest {
 		Map<String,Rule> ruleMap = rs.getMap();
 		Rule rule = ruleMap.get("highway=footway");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
 		GType type = rule.resolveType(el);
@@ -59,6 +63,10 @@ public class RuleFileReaderTest {
 		assertEquals("oneway footway", "[0x6 level 1]", type.toString());
 	}
 
+	/**
+	 * Test for non-standard level specification.  You can give a range
+	 * of levels, rather than defaulting the max end to 0.
+	 */
 	@Test
 	public void testLevel() {
 		RuleSet rs = makeRuleSet(
@@ -66,7 +74,7 @@ public class RuleFileReaderTest {
 		);
 		Rule rule = rs.getMap().get("highway=primary");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "primary");
 
 		GType type = rule.resolveType(el);
@@ -83,7 +91,7 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet(str);
 		Rule rule = rs.getMap().get("a=b");
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("a", "b");
 		el.addTag("c", "d");
 		el.addTag("x", "11");
@@ -91,10 +99,17 @@ public class RuleFileReaderTest {
 		GType type = rule.resolveType(el);
 		assertEquals("expression ok", 1, type.getType());
 
+		// fails with x less than 10
 		el.addTag("x", "9");
 		type = rule.resolveType(el);
 		assertNull("x too low", type);
 
+		// also fails with x equal to 10
+		el.addTag("x", "10");
+		type = rule.resolveType(el);
+		assertNull("x too low", type);
+
+		// OK with x > 10
 		el.addTag("x", "100");
 		el.addTag("e", "f");
 		type = rule.resolveType(el);
@@ -111,6 +126,66 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Test based on email on the mailing list at:
+	 * http://www.mkgmap.org.uk/pipermail/mkgmap-dev/2009q3/003009.html
+	 * See that email for an explanation.
+	 */
+	@Test
+	public void testComparasons() {
+		String str = "highway=null_null & layer<0  [0x01 resolution 10]\n" +
+				"highway=null_null & layer=0  [0x02 resolution 10]\n" +
+				"highway=null_null & layer>0  [0x03 resolution 10]\n" +
+				"highway=null_null & layer='-1'  [0x04 resolution 10]\n" +
+				"highway=null_null & layer='0'  [0x05 resolution 10]\n" +
+				"highway=null_null & layer='1'  [0x06 resolution 10]\n" +
+				"highway=null_null & layer='+1'  [0x07 resolution 10]\n" +
+				"highway=null_null   [0x08 resolution 10]";
+		RuleSet rs = makeRuleSet(str);
+		Rule rule = rs.getMap().get("highway=null_null");
+
+		// 9902
+		Element el = new Way(1);
+		el.addTag("highway", "null_null");
+		el.addTag("layer", "-1");
+
+		GType type = rule.resolveType(el);
+		assertEquals("9902 layer = -1", 0x1, type.getType());
+
+		// 9912
+		el.addTag("layer", "0");
+		type = rule.resolveType(el);
+		assertEquals("9912 layer = 0", 0x2, type.getType());
+
+		// 9922
+		el.deleteTag("layer");
+		type = rule.resolveType(el);
+		assertEquals("9922 no layer tag", 0x8, type.getType());
+
+		// 9932
+		el.addTag("layer", "1");
+		type = rule.resolveType(el);
+		assertEquals("9932 layer is 1", 0x3, type.getType());
+
+		// 9952
+		el.addTag("layer", "+1");
+		assertEquals("9952 layer is +1", 0x3, type.getType());
+	}
+
+	@Test
+	public void testMultipleActions() {
+		String rstr = "highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]";
+		RuleSet rs = makeRuleSet(rstr);
+		Rule rule = rs.getMap().get("highway=footway");
+
+		Element el = new Way(1);
+		el.addTag("highway", "footway");
+
+		rule.resolveType(el);
+		assertEquals("access set", "no", el.getTag("access"));
+		assertEquals("access set", "yes", el.getTag("foot"));
+	}
+
+	/**
 	 * You can now have a wild card at the top level.
 	 */
 	@Test
@@ -120,12 +195,38 @@ public class RuleFileReaderTest {
 		Rule rule = rs.getMap().get("highway=*");
 		assertNotNull("rule found", rule);
 		
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		GType type = rule.resolveType(el);
 		assertNotNull("can find match", type);
 		assertEquals("correct type", 1, type.getType());
 		assertEquals("tag set", "fred", el.getTag("a"));
+	}
+
+	/**
+	 * Deal with cases such as
+	 * (a = b | a = c) & d!=*
+	 * where there is no key at the top level.  This gets converted
+	 * to: (a=b & d!=*) | (a=c & d!= *) which can then be used.
+	 *
+	 * This is applied recursively, so you can have chains of any length.
+	 */
+	@Test
+	public void testLeftSideOr() {
+		RuleSet rs = makeRuleSet("(a = b | a = c | a=d) & e!=* [0x2]" +
+				"a=c & e!=* [0x1]");
+
+		Map<String, Rule> map = rs.getMap();
+		assertNotNull("a=b chain", map.get("a=b"));
+		assertNotNull("a=c chain", map.get("a=c"));
+		assertNotNull("a=d chain", map.get("a=d"));
+
+		// get the a=c chain and look at it more closely
+		Rule rule = map.get("a=c");
+		Element el = new Way(1);
+		GType type = rule.resolveType(el);
+		assertNotNull("match e not existing", type);
+		assertEquals("correct type", 2, type.getType());
 	}
 
 	/**
@@ -139,7 +240,7 @@ public class RuleFileReaderTest {
 		Rule rule = rs.getMap().get("highway=*");
 		assertNotNull("rule found", rule);
 
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		GType type = rule.resolveType(el);
 		assertNull("type not found with no z tag", type);
@@ -152,21 +253,147 @@ public class RuleFileReaderTest {
 		assertEquals("tag set", "square", el.getTag("a"));
 	}
 
+	/**
+	 * Tests for the road classification and other parts of the GType.
+	 */
 	@Test
 	public void testGType() {
 		RuleSet rs = makeRuleSet("highway=motorway " +
 				"[0x1 road_class=4 road_speed=7 default_name='motor way']\n");
 
 		Rule rule = rs.getMap().get("highway=motorway");
-		Element el = new Way();
+		Element el = new Way(1);
 		el.addTag("highway", "motorway");
 		GType type = rule.resolveType(el);
 
+		// Check that the correct class and speed are returned.
 		assertEquals("class", 4, type.getRoadClass());
 		assertEquals("class", 7, type.getRoadSpeed());
 		assertEquals("default name", "motor way", type.getDefaultName());
 	}
 
+	/**
+	 * Check for the regexp handling.
+	 */
+	@Test
+	public void testRegexp() {
+		RuleSet rs = makeRuleSet("highway=* & name ~ 'blue.*' [0x2]\n");
+
+		Rule rule = rs.getMap().get("highway=*");
+		assertNotNull("rule found", rule);
+
+		// Set up element with matching name
+		Element el = new Way(1);
+		el.addTag("highway", "secondary");
+		el.addTag("name", "blue sq");
+		GType type = rule.resolveType(el);
+		assertNotNull("matched regexp", type);
+		assertEquals("matched type", 2, type.getType());
+
+		// change name to one that should not match
+		el.addTag("name", "yellow");
+		type = rule.resolveType(el);
+		assertNull("no match for yello", type);
+	}
+
+	/**
+	 * This simply is to make sure that actions that affect their own
+	 * conditions do not hang. There are no defined semantics for this.
+	 */
+	@Test
+	public void testSelfReference() {
+		RuleSet rs = makeRuleSet("iii=* { set iii=no }");
+		//Rule rule = rs.getMap().get("foot=*");
+		Way el = new Way(1);
+		el.addTag("foot", "yes");
+		el.addTag("iii", "xyz");
+		rs.resolveType(el);
+	}
+
+	/**
+	 * Test the not operator.
+	 */
+	@Test
+	public void testNot() {
+		RuleSet rs = makeRuleSet("tunnel=yes & !(route=mtb | route=bicycle) [0x1]");
+		//RuleSet rs = makeRuleSet("tunnel=yes & (route!=mtb & route!=bicycle) [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("tunnel", "yes");
+		el.addTag("route", "abc");
+		GType type = rs.resolveType(el);
+		assertNotNull("without route mtb or bicycle", type);
+
+		el.addTag("route", "mtb");
+		type = rs.resolveType(el);
+		assertNull("with route mtb", type);
+	}
+
+	/**
+	 * A moderately complex set of conditions and substitutions.
+	 */
+	@Test
+	public void testMtbRules() {
+		RuleSet rs = makeRuleSet(
+				"(mtb:scale=*  | mtb:scale:uphill=*) & route=mtb" +
+						"{ name 'mtbrt${mtb:scale|def:.}${mtb:scale:uphill|def:.} ${name}' " +
+						"       | 'mtbrt${mtb:scale|def:.}${mtb:scale:uphill|def:.}' }" +
+						" (mtb:scale=* | mtb:scale:uphill=*) & route!=mtb " +
+						"{ name 'mtb${mtb:scale|def:.}${mtb:scale:uphill|def:.} ${name}' " +
+						"       | 'mtb${mtb:scale|def:.}${mtb:scale:uphill|def:.}' }"
+				
+				);
+
+		Way el = new Way(1);
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale", "2");
+		rs.resolveType(el);
+		assertEquals("mtbrt2.", el.getName());
+
+		el = new Way(1);
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtbrt.3", el.getName());
+
+		el = new Way(1);
+		el.addTag("name", "myname");
+		el.addTag("route", "mtb");
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtbrt.3 myname", el.getName());
+
+		el = new Way(1);
+		el.addTag("mtb:scale:uphill", "3");
+		rs.resolveType(el);
+		assertEquals("mtb.3", el.getName());
+	}
+
+	@Test
+	public void testTagAppend() throws Exception {
+		RuleSet rs = makeRuleSet(
+				"highway=*{set fullname='${ref}';" +
+						"set fullname='${fullname} ${name}';" +
+						"set fullname='${fullname} ${name1}';" +
+						"set fullname='${fullname} ${name2}';" +
+						"name '${fullname}'}"
+		);
+		
+		Way el = new Way(1);
+		el.addTag("highway", "road");
+		el.addTag("ref", "A1");
+		el.addTag("name", "long lane");
+		el.addTag("name1", "foo");
+		el.addTag("name2", "bar");
+
+		rs.resolveType(el);
+		assertEquals("appended name", "A1 long lane foo bar", el.getName());
+	}
+
+	/**
+	 * Create a rule set out of a string.  The string is processed
+	 * as if it were in a file and the levels spec had been set.
+	 */
 	private RuleSet makeRuleSet(String in) {
 		Reader r = new StringReader(in);
 

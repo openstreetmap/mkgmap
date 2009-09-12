@@ -19,10 +19,13 @@ package uk.me.parabola.imgfmt.app.map;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
+import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -32,9 +35,12 @@ import uk.me.parabola.imgfmt.app.trergn.RGNFile;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.Configurable;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Holder for a complete map.  A map is made up of several files which
@@ -47,7 +53,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Map implements InternalFiles {
+public class Map implements InternalFiles, Configurable {
 	private static final Logger log = Logger.getLogger(Map.class);
 
 	private String filename;
@@ -58,6 +64,7 @@ public class Map implements InternalFiles {
 	private RGNFile rgnFile;
 	private LBLFile lblFile;
 	private NETFile netFile;
+	private NODFile nodFile;
 
 	// Use createMap() or loadMap() instead of creating a map directly.
 	private Map() {
@@ -77,7 +84,7 @@ public class Map implements InternalFiles {
 	 * @throws FileNotWritableException If the file cannot
 	 * be opened for write.
 	 */
-	public static Map createMap(String mapname, FileSystemParam params)
+	public static Map createMap(String mapname, FileSystemParam params, String mapnumber)
 			throws FileExistsException, FileNotWritableException
 	{
 		Map m = new Map();
@@ -88,18 +95,43 @@ public class Map implements InternalFiles {
 		m.filename = outFilename;
 		m.fileSystem = fs;
 
-		m.rgnFile = new RGNFile(m.fileSystem.create(mapname + ".RGN"));
-		m.treFile = new TREFile(m.fileSystem.create(mapname + ".TRE"), true);
-		m.lblFile = new LBLFile(m.fileSystem.create(mapname + ".LBL"));
+		m.rgnFile = new RGNFile(m.fileSystem.create(mapnumber + ".RGN"));
+		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"), true);
+		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"));
 
-		m.treFile.setMapId(Integer.parseInt(mapname));
+		int mapid;
+		try {
+			mapid = Integer.parseInt(mapnumber);
+		} catch (NumberFormatException e) {
+			mapid = 0;
+		}
+		m.treFile.setMapId(mapid);
 		m.fileSystem = fs;
 
 		return m;
 	}
 
-	public void addNet() throws FileExistsException {
+	public void config(EnhancedProperties props) {
+		try {
+			if (props.containsKey("route")) {
+				addNet();
+				addNod();
+			} else if (props.containsKey("net")) {
+				addNet();
+			}
+		} catch (FileExistsException e) {
+			log.warn("Could not add NET and/or NOD sections");
+		}
+
+		treFile.config(props);
+	}
+
+	protected void addNet() throws FileExistsException {
 		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
+	}
+
+	protected void addNod() throws FileExistsException {
+		nodFile = new NODFile(fileSystem.create(mapName + ".NOD"), true);
 	}
 
 	/**
@@ -181,8 +213,7 @@ public class Map implements InternalFiles {
 	public Subdivision createSubdivision(Subdivision parent, Area area, Zoom zoom)
 	{
 		log.debug("creating division");
-		Subdivision child = parent.createSubdivision(this, area, zoom);
-		return child;
+		return parent.createSubdivision(this, area, zoom);
 	}
 
 	public void addPointOverview(PointOverview ov) {
@@ -219,13 +250,47 @@ public class Map implements InternalFiles {
 	
 	/**
 	 * Close this map by closing all the constituent files.
+	 *
+	 * Some history: 
 	 */
 	public void close() {
-		rgnFile.close();
-		treFile.close();
-		lblFile.close();
-		if (netFile != null)
-			netFile.close();
+		ImgFile[] files = {
+				rgnFile, treFile, lblFile,
+				netFile, nodFile
+		};
+
+		int headerSlotsRequired = 0;
+
+		FileSystemParam param = fileSystem.fsparam();
+		int blockSize = param.getBlockSize();
+
+		for (ImgFile f : files) {
+			if (f == null)
+				continue;
+
+			long len = f.getSize();
+			log.debug("img file len=", len);
+
+			// Blocks required for this file
+			int nBlocks = (int) ((len + blockSize - 1) / blockSize);
+
+			// Now we calculate how many directory blocks we need, you have
+			// to round up as files do not share directory blocks.
+			headerSlotsRequired += (nBlocks + DirectoryEntry.SLOTS_PER_ENTRY - 1)/DirectoryEntry.SLOTS_PER_ENTRY;
+		}
+
+		log.debug("header slots required", headerSlotsRequired);
+
+		// A header slot is always 512 bytes, so we need to calculate the
+		// number of blocks if the blocksize is different.
+		// There are 2 slots for the header itself.
+		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
+
+		param.setReservedDirectoryBlocks(blocksRequired);
+		fileSystem.fsparam(param);
+
+		for (ImgFile f : files)
+			Utils.closeFile(f);
 
 		fileSystem.close();
 	}
@@ -248,5 +313,9 @@ public class Map implements InternalFiles {
 
 	public NETFile getNetFile() {
 		return netFile;
+	}
+
+	public NODFile getNodFile() {
+		return nodFile;
 	}
 }

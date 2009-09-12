@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -28,11 +29,8 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.ExitException;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMap;
-import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -44,12 +42,14 @@ import uk.me.parabola.tdbfmt.TdbFile;
 public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
-	private final OverviewMap overviewSource = new OverviewMapDataSource();
+	private OverviewMap overviewSource;
 
 	private TdbFile tdb;
 
 	private int parent = 63240000;
 	private String overviewMapname;
+	private String overviewMapnumber;
+	private String overviewDescription;
 	private int tdbVersion;
 
 	/**
@@ -58,30 +58,36 @@ public class TdbBuilder implements Combiner {
 	 *
 	 * @param args The command line arguments as they are at the end of the list.
 	 * In otherwords if the same argument appears more than once, then it will
-	 * have the value that was set last.
 	 */
 	public void init(CommandArgs args) {
-		overviewMapname = args.get("overview-mapname", "63240000");
+		overviewMapname = args.get("overview-mapname", "OSM_map");
+		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		try {
-			parent = Integer.parseInt(overviewMapname);
+			parent = Integer.parseInt(overviewMapnumber);
 		} catch (NumberFormatException e) {
-			log.debug("overview map name not an integer", overviewMapname);
+			log.debug("overview map number not an integer", overviewMapnumber);
 		}
+
+		overviewDescription = args.get("overview-description", "Overview Map");
 
 		int familyId = args.get("family-id", 0);
 		int productId = args.get("product-id", 1);
-		
+		short productVersion = (short)args.get("product-version", 100);
+
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		if (args.exists("tdb-v4")) {
-			tdbVersion = TdbFile.TDB_V407;
-		} else {
+		// Versin 4 is the default.  If you really want v3 then the tdb-v3
+		// option can be used.
+		if (args.exists("tdb-v3")) {
 			tdbVersion = TdbFile.TDB_V3;
+		} else {
+			tdbVersion = TdbFile.TDB_V407;
 		}
 
 		tdb = new TdbFile(tdbVersion);
-		tdb.setProductInfo(familyId, productId, (short) 100, seriesName, familyName);
+		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
+				familyName, overviewDescription);
 	}
 
 	/**
@@ -109,9 +115,9 @@ public class TdbBuilder implements Combiner {
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
 
-		detail.setMapName(mapname);
+		detail.setMapName(mapname, mapname);
 
-		String desc = mapdesc + '(' + mapname + ')';
+		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
 		detail.setLblDataSize(finfo.getLblsize());
 		detail.setTreDataSize(finfo.getTresize());
@@ -119,7 +125,8 @@ public class TdbBuilder implements Combiner {
 		detail.setNetDataSize(finfo.getNetsize());
 		detail.setNodDataSize(finfo.getNodsize());
 
-		log.info("overview-name", parent);
+		log.info("overview-mapname", overviewMapname);
+		log.info("overview-mapnumber", parent);
 		detail.setParentMapNumber(parent);
 
 		tdb.addDetail(detail);
@@ -140,40 +147,30 @@ public class TdbBuilder implements Combiner {
 		//System.out.printf("overview shift %d\n", overviewSource.getShift());
 		int overviewMask = ((1 << overviewSource.getShift()) - 1);
 		//System.out.printf("mask %x\n", overviewMask);
+		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
 
-		//int maxLon = bounds.getMaxLong();
-		//int maxLat = bounds.getMaxLat();
-		//int minLat = bounds.getMinLat();
-		//int minLon = bounds.getMinLong();
-		int maxLon = (bounds.getMaxLong() + overviewMask) & ~overviewMask;
-		int maxLat = (bounds.getMaxLat() + overviewMask) & ~overviewMask;
-		int minLat = (bounds.getMinLat() - overviewMask) & ~overviewMask;
-		int minLon = (bounds.getMinLong() - overviewMask) & ~overviewMask;
-		//System.out.printf("maxlat (map) %x, calc %x\n", bounds.getMaxLat(), maxLat);
-		//System.out.printf("maxlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMaxLat()),
-		//		Utils.toDegrees(maxLat));
-		//
-		//System.out.printf("minlat (map) %x, calc %x\n", bounds.getMinLat(), minLat);
-		//System.out.printf("minlat (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMinLat()),
-		//		Utils.toDegrees(minLat));
-		//System.out.printf("minlon (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMinLong()),
-		//		Utils.toDegrees(minLon));
-		//System.out.printf("maxlon (map) %.3f, calc %.3f\n",
-		//		Utils.toDegrees(bounds.getMaxLong()),
-		//		Utils.toDegrees(maxLon));
+		int maxLon = roundUp(bounds.getMaxLong(), overviewMask);
+		int maxLat = roundUp(bounds.getMaxLat(), overviewMask);
+		int minLat = roundDown(bounds.getMinLat(), overviewMask);
+		int minLon = roundDown(bounds.getMinLong(), overviewMask);
+
+		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
+		//System.out.printf("maxLat %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLat()), Utils.toDegrees(maxLat));
+		//System.out.printf("minLat 0x%x, modified=0x%x\n", bounds.getMinLat(), minLat);
+		//System.out.printf("minLat %f, modified=%f\n", Utils.toDegrees(bounds.getMinLat()), Utils.toDegrees(minLat));
+		//System.out.printf("maxLon 0x%x, modified=0x%x\n", bounds.getMaxLong(), maxLon);
+		//System.out.printf("maxLon %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLong()), Utils.toDegrees(maxLon));
+		//System.out.printf("minLon 0x%x, modified=0x%x\n", bounds.getMinLong(), minLon);
+		//System.out.printf("minLon %f, modified=%f\n", Utils.toDegrees(bounds.getMinLong()), Utils.toDegrees(minLon));
 
 		// Add a background polygon for this map.
-		Coord start, co;
 		List<Coord> points = new ArrayList<Coord>();
 
-		start = new Coord(minLat, minLon);
+		Coord start = new Coord(minLat, minLon);
 		points.add(start);
 		overviewSource.addToBounds(start);
 
-		co = new Coord(maxLat, minLon);
+		Coord co = new Coord(maxLat, minLon);
 		points.add(co);
 		overviewSource.addToBounds(co);
 
@@ -194,8 +191,23 @@ public class TdbBuilder implements Combiner {
 		bg.setMinResolution(10);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
-		//System.out.println(bg.getBounds());
 		overviewSource.addShape(bg);
+	}
+
+	private int roundUp(int len, int overviewMask) {
+		//System.out.printf("before up 0x%x\n", len);
+		if (len > 0)
+			return (len + overviewMask) & ~overviewMask;
+		else
+			return len & ~overviewMask;
+	}
+
+	private int roundDown(int len, int overviewMask) {
+		//System.out.printf("before down 0x%x\n", len);
+		if (len > 0)
+			return len & ~overviewMask;
+		else
+			return -(-len +overviewMask & ~overviewMask);
 	}
 
 	/**
@@ -207,7 +219,7 @@ public class TdbBuilder implements Combiner {
 
 		// We can set the overall bounds easily as it was calcualted as part of
 		// the overview map.
-		tdb.setOverview(overviewMapname, overviewSource.getBounds());
+		tdb.setOverview(overviewMapname, overviewSource.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
 		writeOverviewMap();
@@ -218,12 +230,14 @@ public class TdbBuilder implements Combiner {
 	 */
 	private void writeOverviewMap() {
 		MapBuilder mb = new MapBuilder();
+		mb.setEnableLineCleanFilters(false);
+
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
-		params.setMapDescription("Overview map");
+		params.setMapDescription(overviewDescription);
 
 		try {
-			Map map = Map.createMap(overviewMapname, params);
+			Map map = Map.createMap(overviewMapname, params, overviewMapnumber);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
@@ -243,5 +257,9 @@ public class TdbBuilder implements Combiner {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);
 		}
+	}
+
+	public void setOverviewSource(OverviewMap overviewSource) {
+		this.overviewSource = overviewSource;
 	}
 }

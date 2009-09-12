@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -28,7 +29,7 @@ import uk.me.parabola.log.Logger;
  * 
  * @author Steve Ratcliffe
  */
-public abstract class ImgFile  {
+public abstract class ImgFile implements Closeable {
 	private static final Logger log = Logger.getLogger(ImgFile.class);
 
 	private CommonHeader header;
@@ -53,15 +54,21 @@ public abstract class ImgFile  {
 		return writer.position();
 	}
 
+	public CommonHeader getHeader() {
+		return header;
+	}
+
+	public long getSize() {
+		if (writable)
+			return writer.getSize();
+		throw new UnsupportedOperationException("getSize not implemented for read");
+	}
+
 	protected void position(long pos) {
 		writer.position(pos);
 	}
 
-	public abstract void write();
-
-	public abstract void writePost();
-
-	protected void sync() throws IOException {
+	protected final void sync() throws IOException {
 		if (!writable)
 			return;
 		getWriter().sync();
@@ -76,17 +83,13 @@ public abstract class ImgFile  {
 		this.writer = writer;
 	}
 
-	public ImgFileReader getReader() {
+	protected ImgFileReader getReader() {
 		return reader;
 	}
 
 	protected void setReader(ImgFileReader reader) {
 		readable = true;
 		this.reader = reader;
-	}
-
-	public CommonHeader getHeader() {
-		return header;
 	}
 
 	protected final void setHeader(CommonHeader header) {
@@ -97,7 +100,7 @@ public abstract class ImgFile  {
 		return writable;
 	}
 
-	public boolean isReadable() {
+	protected boolean isReadable() {
 		return readable;
 	}
 }

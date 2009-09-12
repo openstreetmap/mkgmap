@@ -49,14 +49,15 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> lineOverviews = new HashMap<Integer, Integer>();
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
+	private final RoadNetwork roadNetwork = new RoadNetwork();
+
 	/**
 	 * Add a point to the map.
 	 *
 	 * @param point Point to add.
 	 */
 	public void addPoint(MapPoint point) {
-		updateOverview(pointOverviews, makeMapType(point.getType(), point.getSubType()),
-				point.getMinResolution());
+		updateOverview(pointOverviews, point.getType(), point.getMinResolution());
 
 		points.add(point);
 	}
@@ -71,8 +72,12 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (line.getPoints().isEmpty())
 			return;
 
-		updateOverview(lineOverviews, makeMapType(line.getType(), 0),
-				line.getMinResolution());
+		int type;
+		if(line.hasExtendedType())
+			type = line.getType();
+		else
+			type = line.getType() << 8;
+		updateOverview(lineOverviews, type, line.getMinResolution());
 
 		lines.add(line);
 	}
@@ -88,35 +93,20 @@ public class MapDetails implements MapCollector, MapDataSource {
 		if (shape.getPoints().isEmpty())
 			return;
 
-		updateOverview(shapeOverviews, makeMapType(shape.getType(), 0),
-				shape.getMinResolution());
+		int type;
+		if(shape.hasExtendedType())
+			type = shape.getType();
+		else
+			type = shape.getType() << 8;
+		if (type != 0x4b00)
+			updateOverview(shapeOverviews, type, shape.getMinResolution());
 
 		shapes.add(shape);
 	}
 
-	public void finish() {
-
-		// Make a list of points to trace out the background area.
-		List<Coord> coords = new ArrayList<Coord>();
-		Area bounds = getBounds();
-		Coord co = new Coord(bounds.getMinLat(), bounds.getMinLong());
-		coords.add(co);
-		co = new Coord(bounds.getMinLat(), bounds.getMaxLong());
-		coords.add(co);
-		co = new Coord(bounds.getMaxLat(), bounds.getMaxLong());
-		coords.add(co);
-		co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
-		coords.add(co);
-
-		// Now add the background area
-		MapShape background = new MapShape();
-		background.setType(75); // background type
-		background.setMinResolution(0); // On all levels
-		background.setPoints(coords);
-
-		// Note we add directly to the shaps list, we do not add to the overview
-		// section.
-		shapes.add(background);
+	public void addRoad(MapRoad road) {
+		roadNetwork.addRoad(road);
+		addLine(road);
 	}
 
 	/**
@@ -163,6 +153,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return shapes;
 	}
 
+	public RoadNetwork getRoadNetwork() {
+		return roadNetwork;
+	}
+
 	/**
 	 * Get the overviews.  We construct them at this point from the information
 	 * that we have built up.
@@ -191,16 +185,9 @@ public class MapDetails implements MapCollector, MapDataSource {
 		return ovlist;
 	}
 
-	private int makeMapType(int type, int subtype) {
-		return (type << 8) + (subtype & 0xff);
-	}
-
 	private void updateOverview(Map<Integer, Integer> overviews, int type, int minResolution) {
 		Integer prev = overviews.get(type);
-		if (prev == null)
-			prev = 24;
-
-		if (minResolution < prev)
+		if (prev == null || minResolution < prev)
 			overviews.put(type, minResolution);
 	}
 }

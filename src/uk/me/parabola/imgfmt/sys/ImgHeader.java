@@ -16,17 +16,16 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.FileSystemParam;
-import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.log.Logger;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Arrays;
+
+import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.log.Logger;
 
 /**
  * The header at the very begining of the .img filesystem.  It has the
@@ -99,10 +98,10 @@ class ImgHeader {
 	private Date creationTime;
 
 	// Signatures.
-	private static final byte[] FILE_ID = new byte[]{
+	private static final byte[] FILE_ID = {
 			'G', 'A', 'R', 'M', 'I', 'N', '\0'};
 
-	private static final byte[] SIGNATURE = new byte[]{
+	private static final byte[] SIGNATURE = {
 			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
 
 	ImgHeader(ImgChannel chan) {
@@ -153,10 +152,10 @@ class ImgHeader {
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
 		int sectors = 0x20;   // 0x20 appears to be a max
-		int heads = 0x20;     // 0x20 appears to be max
-		int cylinders = 0x100;   // gives 128M will try more later
 		header.putShort(OFF_SECTORS, (short) sectors);
+		int heads = 0x20;     // 0x20 appears to be max
 		header.putShort(OFF_HEADS, (short) heads);
+		int cylinders = 0x100;   // gives 128M will try more later
 		header.putShort(OFF_CYLINDERS, (short) cylinders);
 		header.putShort(OFF_HEADS2, (short) heads);
 		header.putShort(OFF_SECTORS2, (short) sectors);
@@ -301,24 +300,6 @@ class ImgHeader {
 	 */
 	private byte toYearCode(int y) {
 		return (byte) (y - 1900);
-	}
-
-	public int getBlockSize() {
-		return fsParams.getBlockSize();
-	}
-
-	/**
-	 * Set the block size.  This may only work if creating the file
-	 * from scratch.
-	 * @param blockSize The new block size to use.
-	 */
-	public void setBlockSize(int blockSize) {
-		header.put(OFF_BLOCK_SIZE, (byte) blockSize);
-		fsParams.setBlockSize(blockSize);
-	}
-
-	public int getDirectoryStartBlock() {
-		return fsParams.getDirectoryStartBlock();
 	}
 
 	protected void setDirectoryStartBlock(int directoryStartBlock) {

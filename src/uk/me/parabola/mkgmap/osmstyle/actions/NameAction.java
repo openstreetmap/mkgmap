@@ -58,4 +58,15 @@ public class NameAction implements Action {
 		ValueBuilder vb = new ValueBuilder(val);
 		names.add(vb);
 	}
+
+	public String toString() {
+		StringBuilder sb = new  StringBuilder();
+		sb.append("name ");
+		for (ValueBuilder vb : names) {
+			sb.append(vb);
+			sb.append("|");
+		}
+		sb.setLength(sb.length() - 1);
+		return sb.toString();
+	}
 }

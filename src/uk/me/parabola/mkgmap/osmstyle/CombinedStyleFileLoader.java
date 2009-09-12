@@ -221,9 +221,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 
 	private static class NoHiddenFilter implements FilenameFilter {
 		public boolean accept(File dir, String name) {
-			if (name.length() == 0 || name.charAt(0) == '.')
-				return false;
-			return true;
+			return !(name.length() == 0 || name.charAt(0) == '.');
 		}
 	}
 }

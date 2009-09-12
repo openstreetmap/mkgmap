@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -42,7 +42,7 @@ public class Utils {
 	public static byte[] toBytes(String s, int len, byte pad) {
 		if (s == null)
 			throw new IllegalArgumentException("null string provided");
-		
+
 		byte[] out = new byte[len];
 		for (int i = 0; i < len; i++) {
 			if (i > s.length()) {
@@ -84,7 +84,7 @@ public class Utils {
 
 	/**
 	 * Set the creation date.  Note that the year is encoded specially.
-	 * 
+	 *
 	 * @param buf The buffer to write into.  It must have been properly positioned
 	 * beforehand.
 	 * @param date The date to set.
@@ -100,7 +100,7 @@ public class Utils {
 		buf.putChar((char) cal.get(Calendar.YEAR));
 		buf.put((byte) (cal.get(Calendar.MONTH)));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
-		buf.put((byte) cal.get(Calendar.HOUR));
+		buf.put((byte) cal.get(Calendar.HOUR_OF_DAY));
 		buf.put((byte) cal.get(Calendar.MINUTE));
 		buf.put((byte) cal.get(Calendar.SECOND));
 	}
@@ -113,7 +113,11 @@ public class Utils {
 	 * @return An integer value in map units.
 	 */
 	public static int toMapUnit(double l) {
-		return (int) (l * (1 << 24)/360);
+		double DELTA = 360.0D / (1 << 24) / 2; //Correct rounding
+		if (l > 0)
+			return (int) ((l + DELTA) * (1 << 24)/360);
+		else
+			return (int) ((l - DELTA) * (1 << 24)/360);
 	}
 
 	/**
@@ -133,10 +137,10 @@ public class Utils {
 		byte[] ret = new byte[7];
 		ByteBuffer buf = ByteBuffer.wrap(ret);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
-		buf.putChar((char) (cal.get(Calendar.YEAR) - 1900));
+		buf.putChar((char) (cal.get(Calendar.YEAR)));
 		buf.put((byte) (cal.get(Calendar.MONTH)));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
-		buf.put((byte) cal.get(Calendar.HOUR));
+		buf.put((byte) cal.get(Calendar.HOUR_OF_DAY));
 		buf.put((byte) cal.get(Calendar.MINUTE));
 		buf.put((byte) cal.get(Calendar.SECOND));
 		
@@ -157,8 +161,18 @@ public class Utils {
 		return cal.getTime();
 	}
 
+	/**
+	 * Convert an angle in map units to degrees.
+	 */
 	public static double toDegrees(int val) {
-		return (double) val / ((1 << 24) / 360.0);
+		return (double) val * (360.0 / (1 << 24));
+	}
+
+	/**
+	 * Convert an angle in map units to radians.
+	 */
+	public static double toRadians(int mapunits) {
+		return toDegrees(mapunits) * (Math.PI / 180);
 	}
 
 	public static void closeFile(Closeable f) {

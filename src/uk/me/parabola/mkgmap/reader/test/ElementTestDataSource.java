@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.reader.test;
 
-import uk.me.parabola.mkgmap.ConfiguredByProperties;
+import java.io.FileNotFoundException;
+import java.util.Properties;
+
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
-import java.io.FileNotFoundException;
-import java.util.Properties;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This is a map data source that just generates maps without reference to
@@ -30,7 +30,7 @@ import java.util.Properties;
  * 
  * @author Steve Ratcliffe
  */
-public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource, ConfiguredByProperties {
+public class ElementTestDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private Properties configProps;
 
 	/**
@@ -39,12 +39,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 	 * @return True If a recognised test name beginning with test-map:
 	 */
 	public boolean isFileSupported(String name) {
-		if (name == null)
-			return false;
-		
-		if (name.startsWith("test-map:"))
-			return true;
-		return false;
+		return name != null && name.startsWith("test-map:");
 	}
 
 	/**
@@ -77,7 +72,7 @@ public class ElementTestDataSource extends MapperBasedMapDataSource implements L
 		return new String[] {"test data"};
 	}
 
-	public void config(Properties props) {
+	public void config(EnhancedProperties props) {
 		this.configProps = props;
 	}
 }

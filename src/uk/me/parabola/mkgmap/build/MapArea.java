@@ -16,26 +16,29 @@
  */
 package uk.me.parabola.mkgmap.build;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
+import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.MapElement;
-
-import java.util.ArrayList;
-import java.util.List;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * A sub area of the map.  We have to divide the map up into areas to meet the
  * format of the Garmin map.  This class holds all the map elements that belong
- * to a particular area and provide a way of splitting areas into smaller ones.
+ * to a particular area and provides a way of splitting areas into smaller ones.
  *
  * It also acts as a map data source so that we can derive lower level
  * areas from it.
@@ -48,9 +51,9 @@ public class MapArea implements MapDataSource {
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
 
-	private static final int POINT_KIND = 0;
-	private static final int LINE_KIND = 1;
-	private static final int SHAPE_KIND = 2;
+	public static final int POINT_KIND = 0;
+	public static final int LINE_KIND = 1;
+	public static final int SHAPE_KIND = 2;
 
 	// This is the initial area.
 	private final Area bounds;
@@ -74,6 +77,7 @@ public class MapArea implements MapDataSource {
 	private final int[] elemCounts = new int[MAX_RESOLUTION+1];
 
 	private int nActivePoints;
+	private int nActiveIndPoints;
 	private int nActiveLines;
 	private int nActiveShapes;
 
@@ -245,27 +249,16 @@ public class MapArea implements MapDataSource {
 	 * @return An estimate of the max size that will be needed in the RGN file
 	 * for this sub-division.
 	 */
-	public int getSizeAtResolution(int res) {
-		int psize = 0;
-		int lsize = 0;
-		int ssize = 0;
+	public int[] getSizeAtResolution(int res) {
+		int[] sizes = new int[3];
 		
 		for (int i = 0; i <= res; i++) {
-
-			psize += pointSize[i];
-			lsize += lineSize[i];
-			ssize += shapeSize[i];
+			sizes[POINT_KIND] += pointSize[i];
+			sizes[LINE_KIND] += lineSize[i];
+			sizes[SHAPE_KIND] += shapeSize[i];
 		}
 
-		// Return the largest one as an overflow of any means that we have to
-		// split the area.
-		int size = psize;
-		if (lsize > size)
-			size = lsize;
-		if (ssize > size)
-			size = ssize;
-
-		return size;
+		return sizes;
 	}
 
 	/**
@@ -306,6 +299,11 @@ public class MapArea implements MapDataSource {
 		return shapes;
 	}
 
+	public RoadNetwork getRoadNetwork() {
+		// I don't think this is needed here.
+		return null;
+	}
+
 	/**
 	 * This is not used for areas.
 	 * @return Always returns null.
@@ -330,7 +328,7 @@ public class MapArea implements MapDataSource {
 	 * @return True if any active indexed points in the area.
 	 */
 	public boolean hasIndPoints() {
-		return false;
+		return nActiveIndPoints > 0;
 	}
 
 	/**
@@ -342,6 +340,27 @@ public class MapArea implements MapDataSource {
 	 */
 	public boolean hasLines() {
 		return nActiveLines > 0;
+	}
+
+	/**
+	 * Return number of lines in this area.
+	 */
+	public int getNumLines() {
+		return nActiveLines;
+	}
+
+	/**
+	 * Return number of shapes in this area.
+	 */
+	public int getNumShapes() {
+		return nActiveShapes;
+	}
+
+	/**
+	 * Return number of points in this area.
+	 */
+	public int getNumPoints() {
+		return nActivePoints + nActiveIndPoints;
 	}
 
 	/**
@@ -368,39 +387,50 @@ public class MapArea implements MapDataSource {
 	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
 	private void addSize(MapElement p, int[] sizes, int kind) {
+
+		if(p.hasExtendedType()) {
+			// not applicable for elements with extended types
+			return;
+		}
+
 		int res = p.getMinResolution();
 		if (res > MAX_RESOLUTION)
 			return;
 
 		int s;
-		int n;
+		int numPoints;
+		int numElements;
 
 		switch (kind) {
 		case POINT_KIND:
-			if (res <= areaResolution)
-				nActivePoints++;
+			if (res <= areaResolution) {
+				if(((MapPoint) p).isCity())
+					nActiveIndPoints++;
+				else
+					nActivePoints++;
+			}
 
 			// Points are predictibly less than 9 bytes.
 			s = 9;
 			break;
 
 		case LINE_KIND:
-			if (res <= areaResolution)
-				nActiveLines++;
-
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			n = ((MapLine) p).getPoints().size();
-			s = 11 + n * 2;
+			numPoints = ((MapLine) p).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+			s = numElements * 11 + numPoints * 2;
+			if (res <= areaResolution)
+				nActiveLines += numElements;
 			break;
 		case SHAPE_KIND:
-			if (res <= areaResolution)
-				nActiveShapes++;
-
 			// Estimate the size taken by lines and shapes as a constant plus
 			// a factor based on the number of points.
-			n = ((MapLine) p).getPoints().size();
-			s = 11 + n * 2;
+			numPoints = ((MapLine) p).getPoints().size();
+			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+			s = numElements * 11 + numPoints * 2;
+			if (res <= areaResolution)
+				nActiveShapes += numElements;
 			break;
 
 		default:
@@ -500,11 +530,11 @@ public class MapArea implements MapDataSource {
 		int ycell = (y - ybase) / dy;
 
 		if (xcell < 0) {
-			log.warn("xcell was", xcell);
+			log.info("xcell was", xcell, "x", x, "xbase", xbase);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.warn("ycell was", ycell);
+			log.info("ycell was", ycell, "y", y, "ybase", ybase);
 			ycell = 0;
 		}
 		

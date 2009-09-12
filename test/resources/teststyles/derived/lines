@@ -1,0 +1,4 @@
+
+# This is overridden in this file, all other rules
+# come from the base.
+overridden = xyz [0x12]

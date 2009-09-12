@@ -16,10 +16,11 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Area;
-
 import java.util.List;
+
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represent a line on a Garmin map.  Lines are a list of points.  They have
@@ -28,6 +29,8 @@ import java.util.List;
  * @author Steve Ratcliffe
  */
 public class MapLine extends MapElement {
+	private static final Logger log = Logger.getLogger(MapLine.class);
+
 	private List<Coord> points;
 	private boolean direction; // set if direction is important.
 	private int minLat = Integer.MAX_VALUE;
@@ -41,6 +44,11 @@ public class MapLine extends MapElement {
 	public MapLine(MapLine orig) {
 		super(orig);
 		direction = orig.direction;
+		//roadDef = orig.roadDef;
+	}
+
+	public MapLine copy() {
+		return new MapLine(this);
 	}
 
 	public List<Coord> getPoints() {
@@ -48,10 +56,20 @@ public class MapLine extends MapElement {
 	}
 
 	public void setPoints(List<Coord> points) {
-		assert this.points == null && points != null;
+		if (this.points != null)
+			log.warn("overwriting points");
+		assert points != null : "trying to set null points";
+
 		this.points = points;
-		for (Coord co : points)
-			addToBounds(co);
+		Coord last = null;
+		for (Coord co : points) {
+			if (last != null && last.equals(co))
+				log.info("Line " + getName() + " has consecutive identical points at " + co.toDegreeString() + " (discarding)");
+			else {
+				addToBounds(co);
+				last = co;
+			}
+		}
 	}
 
 	public boolean isDirection() {
@@ -60,6 +78,14 @@ public class MapLine extends MapElement {
 
 	public void setDirection(boolean direction) {
 		this.direction = direction;
+	}
+
+	public boolean isRoad() {
+		return false;
+	}
+
+	public boolean isHighway() {
+		return false;
 	}
 
 	/**
@@ -101,4 +127,5 @@ public class MapLine extends MapElement {
 	public Area getBounds() {
 		return new Area(minLat, minLong, maxLat, maxLong);
 	}
+
 }

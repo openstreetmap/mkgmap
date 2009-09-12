@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
-import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.imgfmt.app.Coord;
-
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
+import java.util.ArrayList;
+import java.util.List;
+
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * @author Steve Ratcliffe
@@ -101,7 +101,7 @@ public class PolygonSplitterBase extends BaseFilter {
 				// discontiguous we may get more than one, each one representing
 				// the start of another polygon in the output.
 				if (coords != null) {
-					MapShape s2 = new MapShape(origShape);
+					MapShape s2 = origShape.copy();
 					s2.setPoints(coords);
 					outputs.add(s2);
 				}
@@ -116,7 +116,7 @@ public class PolygonSplitterBase extends BaseFilter {
 				assert coords != null;
 				coords.add(co);
 
-				MapShape s2 = new MapShape(origShape);
+				MapShape s2 = origShape.copy();
 				s2.setPoints(coords);
 				outputs.add(s2);
 				coords = null;

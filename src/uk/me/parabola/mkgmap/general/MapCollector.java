@@ -58,9 +58,11 @@ public interface MapCollector {
 	 */
 	public void addShape(MapShape shape);
 
+
 	/**
-	 * Called at the end of processing the input file. Any final operations
-	 * can be completed here.
+	 * For adding a road.  Although a road is a kind of line, it is treated
+	 * differently so that we can join up roads that are split into several
+	 * segments and to do routing etc.
 	 */
-	public void finish();
+	public void addRoad(MapRoad road);
 }

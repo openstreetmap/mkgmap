@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
@@ -32,7 +34,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  *
  * @author Steve Ratcliffe
  */
-public class RuleSet {
+public class RuleSet implements Rule {
 	private final Map<String, Rule> rules = new LinkedHashMap<String, Rule>();
 
 	public void add(String s, Rule rule) {
@@ -61,6 +63,27 @@ public class RuleSet {
 		return rules.entrySet();
 	}
 
+	public GType resolveType(Element el) {
+		GType foundType = null;
+		for (String tagKey : el) {
+			Rule rule = rules.get(tagKey);
+			if (rule != null) {
+				GType type = rule.resolveType(el);
+				if (type != null) {
+					if (foundType == null || type.isBetterPriority(foundType)) {
+						foundType = type;
+					}
+				}
+			}
+		}
+		return foundType;
+	}
+
+	public void addAll(RuleSet rs) {
+		for (Map.Entry<String, Rule> ent : rs.entrySet())
+			add(ent.getKey(), ent.getValue());
+	}
+
 	/**
 	 * Format the rule set.  Warning: this doesn't produce a valid input
 	 * rule file.
@@ -71,9 +94,9 @@ public class RuleSet {
 			String first = ent.getKey();
 			Rule r = ent.getValue();
 			if (r instanceof FixedRule)
-			fmt.format("%s %s\n", first, r);
+				fmt.format("%s %s\n", first, r);
 			else
-			fmt.format("%s & %s\n", first, r);
+				fmt.format("%s & %s\n", first, r);
 		}
 		return fmt.toString();
 	}
