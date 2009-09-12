@@ -92,7 +92,7 @@ public class LineClipper {
 	 * be changed if the line is clipped to contain the new start and end
 	 * points.  A point that was inside the box will not be changed.
 	 * @return An array of the new start and end points if any of the line is
-	 * within the box.  If the line is wholy outside then null is returned.
+	 * within the box.  If the line is wholly outside then null is returned.
 	 * If a point is within the box then the same coordinate object will
 	 * be returned as was passed in.
 	 * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">Liang-Barsky algorithm</a>
@@ -144,7 +144,8 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new0 = new Coord((int) (y0 + t[0] * dy), (int) (x0 + t[0] * dx));
+			Coord new0 = new Coord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
+
 			// check the maths worked out
 			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
 			if(!new0.equals(orig0))
@@ -164,7 +165,8 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new1 = new Coord((int)(y0 + t[1] * dy), (int) (x0 + t[1] * dx));
+			Coord new1 = new Coord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1]));
+
 			// check the maths worked out
 			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
 			if(!new1.equals(orig1))
@@ -192,6 +194,12 @@ public class LineClipper {
 			return null;
 
 		return ends;
+	}
+
+	private static int calcCoord(int base, int delta, double t) {
+		double d = 0.5;
+		double y = (base + t * delta);
+		return (int) ((y >= 0) ? y + d : y - d);
 	}
 
 	private static boolean checkSide(double[] t, double p, double q) {
