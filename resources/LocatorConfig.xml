@@ -27,6 +27,13 @@
 		<variant>IT</variant>		
 	</country>	
 	<country name="France" abr="FRA">
+	</country>
+	<country name="España" abr="ESP" poiDispFlag="0xc">
+		<variant>Spain</variant>
+		<variant>ES</variant>
+	</country>
+	<country name="Portugal" abr="POR" poiDispFlag="0xc">
+		<variant>PT</variant>
 	</country>	
 	<country name="United States" abr="USA">
 		<variant>USA</variant>
