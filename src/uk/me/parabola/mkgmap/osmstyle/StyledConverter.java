@@ -19,12 +19,9 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -55,7 +52,6 @@ import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 
 /**
@@ -1159,26 +1155,22 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	int getSpeedIdx(String tag)
-	{
-		double kmh;
+	private int getSpeedIdx(String tag) {
 		double factor = 1.0;
 		
 		String speedTag = tag.toLowerCase().trim();
 		
-		if(speedTag.matches(".*mph")) // Check if it is a limit in mph
-		{
-			speedTag = speedTag.replaceFirst("mph", "");
+		if (speedTag.matches(".*mph")) {
+			// Check if it is a limit in mph
+			speedTag = speedTag.replaceFirst("[ \t]*mph", "");
 			factor = 1.61;
-		}
-		else
-			speedTag = speedTag.replaceFirst("kmh", "");  // get rid of kmh just in case
-		
+		} else
+			speedTag = speedTag.replaceFirst("[ \t]*kmh", "");  // get rid of kmh just in case
+
+		double kmh;
 		try {
 			kmh = Integer.parseInt(speedTag) * factor;
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			return -1;
 		}
 		
@@ -1197,8 +1189,7 @@ public class StyledConverter implements OsmConverter {
 		if(kmh > 10)
 			return 1;
 		else
-			return 0;	    
-
+			return 0;
 	}
 
 	protected boolean accessExplicitlyAllowed(String val) {

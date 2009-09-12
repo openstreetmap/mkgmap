@@ -70,10 +70,10 @@ public class SimpleTest {
 				assertThat("RGN size", size, new RangeMatcher(138300));
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 1945, size);
+				assertEquals("TRE size", 1329, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 28341, size);
+				assertEquals("LBL size", 27693, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
@@ -111,7 +111,7 @@ public class SimpleTest {
 				assertEquals("TRE size", 579, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 1040, size);
+				assertEquals("LBL size", 984, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);

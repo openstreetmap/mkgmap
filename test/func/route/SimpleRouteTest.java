@@ -56,16 +56,16 @@ public class SimpleRouteTest {
 				assertThat("RGN size", size, new RangeMatcher(141999));
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 1945, size);
+				assertEquals("TRE size", 1329, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 28341, size);
+				assertEquals("LBL size", 27693, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73126, size);
+				assertEquals("NET size", 73118, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 207473, size);
+				assertEquals("NOD size", 207418, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -87,7 +87,7 @@ public class SimpleRouteTest {
 				assertEquals("TRE size", 579, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 1040, size);
+				assertEquals("LBL size", 984, size);
 			} else if (ext.equals("NET")) {
 				count++;
 				assertEquals("NET size", 1272, size);
