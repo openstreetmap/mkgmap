@@ -366,8 +366,11 @@ public class RuleFileReaderTest {
 		assertEquals("mtb.3", el.getName());
 	}
 
+	/**
+	 * Appending to an existing tag.
+	 */
 	@Test
-	public void testTagAppend() throws Exception {
+	public void testTagAppend() {
 		RuleSet rs = makeRuleSet(
 				"highway=*{set fullname='${ref}';" +
 						"set fullname='${fullname} ${name}';" +
@@ -385,6 +388,22 @@ public class RuleFileReaderTest {
 
 		rs.resolveType(el);
 		assertEquals("appended name", "A1 long lane foo bar", el.getName());
+	}
+
+	@Test
+	public void testExists() {
+		RuleSet rs = makeRuleSet("highway=* & maxspeed=40 {set mcssl=40}" +
+				"highway=primary & mcssl=40 [0x2 ]" +
+				"highway=* & mcssl=40 [0x3]");
+		Way el = new Way(1);
+		el.addTag("ref", "A123");
+		el.addTag("name", "Long Lane");
+		el.addTag("highway", "primary");
+		el.addTag("maxspeed", "40");
+
+		GType type = rs.resolveType(el);
+		assertNotNull("finds the type", type);
+		assertEquals("resulting type", 2, type.getType());
 	}
 
 	/**

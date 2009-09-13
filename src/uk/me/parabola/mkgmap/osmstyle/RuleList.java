@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Collections;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -30,7 +31,12 @@ public class RuleList implements Rule {
 		ruleList.add(new RuleHolder(rule));
 	}
 
+	public void add(RuleList other) {
+		ruleList.addAll(other.ruleList);
+	}
+
 	public GType resolveType(Element el) {
+		Collections.sort(ruleList);
 		for (RuleHolder rh : ruleList) {
 			GType type = rh.resolveType(el);
 			if (type != null)

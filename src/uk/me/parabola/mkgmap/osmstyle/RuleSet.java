@@ -47,19 +47,14 @@ public class RuleSet implements Rule {
 	}
 
 	public GType resolveType(Element el) {
-		GType foundType = null;
+		RuleList combined = new RuleList();
 		for (String tagKey : el) {
-			Rule rule = rules.get(tagKey);
-			if (rule != null) {
-				GType type = rule.resolveType(el);
-				if (type != null) {
-					if (foundType == null /*|| type.isBetterPriority(foundType)*/) {
-						foundType = type;
-					}
-				}
-			}
+			RuleList rl = rules.get(tagKey);
+			if (rl != null)
+				combined.add(rl);
 		}
-		return foundType;
+
+		return combined.resolveType(el);
 	}
 
 	public void addAll(RuleSet rs) {

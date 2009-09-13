@@ -126,6 +126,22 @@ public class RuleSetTest {
 	}
 
 	/**
+	 * Match on a tag that was set in a previous action rule and was not
+	 * on the original element.
+	 */
+	@Test
+	public void testMatchOnSetTag() {
+		RuleSet rs = makeRuleSet("highway=yes {set abcxyz = 1}" +
+				"abcxyz=1 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "yes");
+
+		GType type = rs.resolveType(el);
+		assertNotNull("type matched on previously set tag", type);
+	}
+
+	/**
 	 * A chain of rules, some of which contain tags from the element and
 	 * some that contain only tags that are set in previous rules.
 	 */
