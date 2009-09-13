@@ -25,6 +25,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
+import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
@@ -35,7 +36,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EXISTS;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
 import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
-import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -222,7 +222,7 @@ public class RuleFileReader {
 			RuleFileReader rr = new RuleFileReader(GType.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
 			rr.load(r, "string");
-			log.info("Result: " + rs);
+			System.out.println("Result: " + rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");
 		}

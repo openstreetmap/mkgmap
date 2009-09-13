@@ -97,4 +97,8 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 				fmt.format("%s & %s\n", key, rulestr);
 		}
 	}
+
+	public String toString() {
+		return rule.toString();
+	}
 }

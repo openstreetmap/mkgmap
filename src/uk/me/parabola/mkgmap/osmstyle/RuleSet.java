@@ -39,11 +39,12 @@ public class RuleSet implements Rule {
 
 	public void add(String key, Rule rule) {
 		RuleList rl = rules.get(key);
-		if (rl == null)
+		if (rl == null) {
 			rl = new RuleList();
+			rules.put(key, rl);
+		}
 
 		rl.add(rule);
-		rules.put(key, rl);
 	}
 
 	public GType resolveType(Element el) {
@@ -70,11 +71,8 @@ public class RuleSet implements Rule {
 		Formatter fmt = new Formatter();
 		for (Map.Entry<String, RuleList> ent: rules.entrySet()) {
 			String first = ent.getKey();
-			Rule r = ent.getValue();
-			if (r instanceof FixedRule)
-				fmt.format("%s %s\n", first, r);
-			else
-				fmt.format("%s & %s\n", first, r);
+			RuleList r = ent.getValue();
+			r.dumpRules(fmt, first);
 		}
 		return fmt.toString();
 	}

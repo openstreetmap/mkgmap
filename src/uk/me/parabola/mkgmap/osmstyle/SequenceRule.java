@@ -30,6 +30,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * the first one that matches is the result of this rule.
  *
  * @author Steve Ratcliffe
+ * @deprecated this is replaced by RuleList
  */
 public class SequenceRule implements Rule, Iterable<Rule> {
 	private final List<Rule> ruleList = new ArrayList<Rule>();

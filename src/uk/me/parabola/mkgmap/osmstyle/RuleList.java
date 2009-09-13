@@ -13,9 +13,9 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Collections;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -54,4 +54,14 @@ public class RuleList implements Rule {
 			rh.format(fmt, key);
 		}
 	}
+
+	public String toString() {
+		Formatter fmt = new Formatter(new StringBuilder());
+		fmt.format("(");
+		for (Rule r : ruleList) {
+			fmt.format("%s | ", r);
+		}
+		fmt.format(")");
+		return fmt.toString();
+	}	
 }
