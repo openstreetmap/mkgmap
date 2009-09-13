@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Map;
 
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -44,8 +43,7 @@ public class RuleFileReaderTest {
 		"highway=* & oneway=true [0x6 level 1]\n" +
 		"");
 
-		Map<String,Rule> ruleMap = rs.getMap();
-		Rule rule = ruleMap.get("highway=footway");
+		Rule rule = rs.getRule("highway=footway");
 
 		Element el = new Way(1);
 		el.addTag("highway", "footway");
@@ -58,7 +56,7 @@ public class RuleFileReaderTest {
 		assertEquals("rough footway", "[0x2 level 2]", type.toString());
 
 		el.addTag("oneway", "true");
-		rule = ruleMap.get("oneway=true");
+		rule = rs.getRule("highway=*");
 		type = rule.resolveType(el);
 		assertEquals("oneway footway", "[0x6 level 1]", type.toString());
 	}
@@ -72,7 +70,7 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet(
 				"highway=primary [0x1 level 1-3]"
 		);
-		Rule rule = rs.getMap().get("highway=primary");
+		Rule rule = rs.getRule("highway=primary");
 
 		Element el = new Way(1);
 		el.addTag("highway", "primary");
@@ -89,7 +87,7 @@ public class RuleFileReaderTest {
 	public void testComplexExpressions() {
 		String str = "a=b & (c=d | e=f) & x>10 [0x1]\n";
 		RuleSet rs = makeRuleSet(str);
-		Rule rule = rs.getMap().get("a=b");
+		Rule rule = rs.getRule("a=b");
 
 		Element el = new Way(1);
 		el.addTag("a", "b");
@@ -141,7 +139,7 @@ public class RuleFileReaderTest {
 				"highway=null_null & layer='+1'  [0x07 resolution 10]\n" +
 				"highway=null_null   [0x08 resolution 10]";
 		RuleSet rs = makeRuleSet(str);
-		Rule rule = rs.getMap().get("highway=null_null");
+		Rule rule = rs.getRule("highway=null_null");
 
 		// 9902
 		Element el = new Way(1);
@@ -175,7 +173,7 @@ public class RuleFileReaderTest {
 	public void testMultipleActions() {
 		String rstr = "highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]";
 		RuleSet rs = makeRuleSet(rstr);
-		Rule rule = rs.getMap().get("highway=footway");
+		Rule rule = rs.getRule("highway=footway");
 
 		Element el = new Way(1);
 		el.addTag("highway", "footway");
@@ -192,7 +190,7 @@ public class RuleFileReaderTest {
 	public void testWildcardTop() {
 		RuleSet rs = makeRuleSet("highway=* {set a=fred} [0x1]\n");
 
-		Rule rule = rs.getMap().get("highway=*");
+		Rule rule = rs.getRule("highway=*");
 		assertNotNull("rule found", rule);
 		
 		Element el = new Way(1);
@@ -216,13 +214,12 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet("(a = b | a = c | a=d) & e!=* [0x2]" +
 				"a=c & e!=* [0x1]");
 
-		Map<String, Rule> map = rs.getMap();
-		assertNotNull("a=b chain", map.get("a=b"));
-		assertNotNull("a=c chain", map.get("a=c"));
-		assertNotNull("a=d chain", map.get("a=d"));
+		assertNotNull("a=b chain", rs.getRule("a=b"));
+		assertNotNull("a=c chain", rs.getRule("a=c"));
+		assertNotNull("a=d chain", rs.getRule("a=d"));
 
 		// get the a=c chain and look at it more closely
-		Rule rule = map.get("a=c");
+		Rule rule = rs.getRule("a=c");
 		Element el = new Way(1);
 		GType type = rule.resolveType(el);
 		assertNotNull("match e not existing", type);
@@ -237,7 +234,7 @@ public class RuleFileReaderTest {
 	public void testWildcard2() {
 		RuleSet rs = makeRuleSet("highway=* & z=* {set a=square} [0x1]\n");
 
-		Rule rule = rs.getMap().get("highway=*");
+		Rule rule = rs.getRule("highway=*");
 		assertNotNull("rule found", rule);
 
 		Element el = new Way(1);
@@ -261,7 +258,7 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet("highway=motorway " +
 				"[0x1 road_class=4 road_speed=7 default_name='motor way']\n");
 
-		Rule rule = rs.getMap().get("highway=motorway");
+		Rule rule = rs.getRule("highway=motorway");
 		Element el = new Way(1);
 		el.addTag("highway", "motorway");
 		GType type = rule.resolveType(el);
@@ -279,7 +276,7 @@ public class RuleFileReaderTest {
 	public void testRegexp() {
 		RuleSet rs = makeRuleSet("highway=* & name ~ 'blue.*' [0x2]\n");
 
-		Rule rule = rs.getMap().get("highway=*");
+		Rule rule = rs.getRule("highway=*");
 		assertNotNull("rule found", rule);
 
 		// Set up element with matching name

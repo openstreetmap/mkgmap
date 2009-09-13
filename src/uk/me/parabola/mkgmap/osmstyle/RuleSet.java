@@ -35,32 +35,15 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * @author Steve Ratcliffe
  */
 public class RuleSet implements Rule {
-	private final Map<String, Rule> rules = new LinkedHashMap<String, Rule>();
+	private final Map<String, RuleList> rules = new LinkedHashMap<String, RuleList>();
 
-	public void add(String s, Rule rule) {
-		Rule existingRule = rules.get(s);
-		if (existingRule == null) {
-			rules.put(s, rule);
-		} else {
-			if (existingRule instanceof SequenceRule) {
-				((SequenceRule) existingRule).add(rule);
-			} else {
-				// There was already a single rule there.  Create a sequence
-				// rule and add the existing and the new rule to it.
-				SequenceRule sr = new SequenceRule();
-				sr.add(existingRule);
-				sr.add(rule);
-				rules.put(s, sr);
-			}
-		}
-	}
+	public void add(String key, Rule rule) {
+		RuleList rl = rules.get(key);
+		if (rl == null)
+			rl = new RuleList();
 
-	public Map<String, Rule> getMap() {
-		return rules;
-	}
-
-	public Set<Map.Entry<String,Rule>> entrySet() {
-		return rules.entrySet();
+		rl.add(rule);
+		rules.put(key, rl);
 	}
 
 	public GType resolveType(Element el) {
@@ -80,7 +63,7 @@ public class RuleSet implements Rule {
 	}
 
 	public void addAll(RuleSet rs) {
-		for (Map.Entry<String, Rule> ent : rs.entrySet())
+		for (Map.Entry<String, RuleList> ent : rs.rules.entrySet())
 			add(ent.getKey(), ent.getValue());
 	}
 
@@ -90,7 +73,7 @@ public class RuleSet implements Rule {
 	 */
 	public String toString() {
 		Formatter fmt = new Formatter();
-		for (Map.Entry<String, Rule> ent: rules.entrySet()) {
+		for (Map.Entry<String, RuleList> ent: rules.entrySet()) {
 			String first = ent.getKey();
 			Rule r = ent.getValue();
 			if (r instanceof FixedRule)
@@ -99,5 +82,18 @@ public class RuleSet implements Rule {
 				fmt.format("%s & %s\n", first, r);
 		}
 		return fmt.toString();
+	}
+
+	public void merge(RuleSet lines) {
+		for (Map.Entry<String, RuleList> ent : lines.rules.entrySet())
+			add(ent.getKey(), ent.getValue());
+	}
+
+	public Set<Map.Entry<String, RuleList>> entrySet() {
+		return rules.entrySet();
+	}
+	
+	public Rule getRule(String key) {
+		return rules.get(key);
 	}
 }

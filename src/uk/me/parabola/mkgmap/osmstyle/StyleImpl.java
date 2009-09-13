@@ -489,17 +489,21 @@ public class StyleImpl implements Style {
 	 * style's rules are read.
 	 */
 	private void mergeRules(StyleImpl other) {
-		for (Map.Entry<String, Rule> ent : other.lines.entrySet())
-			lines.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String,Rule> ent : other.polygons.entrySet())
-			polygons.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
-			nodes.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String, Rule> ent : other.relations.entrySet())
-			relations.add(ent.getKey(), ent.getValue());
+		lines.merge(other.lines);
+		polygons.merge(other.polygons);
+		nodes.merge(other.nodes);
+		relations.merge(other.relations);
+		//for (Map.Entry<String, Rule> ent : other.lines.entrySet())
+		//	lines.add(ent.getKey(), ent.getValue());
+		//
+		//for (Map.Entry<String, Rule> ent : other.polygons.entrySet())
+		//	polygons.add(ent.getKey(), ent.getValue());
+		//
+		//for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
+		//	nodes.add(ent.getKey(), ent.getValue());
+		//
+		//for (Map.Entry<String, Rule> ent : other.relations.entrySet())
+		//	relations.add(ent.getKey(), ent.getValue());
 	}
 
 	private void checkVersion() throws FileNotFoundException {

@@ -4,7 +4,6 @@ import java.io.Writer;
 import java.util.Formatter;
 import java.util.Map;
 
-import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
@@ -93,28 +92,13 @@ public class StylePrinter {
 
 	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
 		fmt.format("<<<%s>>>\n", name);
-		for (Map.Entry<String, Rule> ent : set.getMap().entrySet()) {
-			Rule rule = ent.getValue();
-			if (rule instanceof SequenceRule) {
-				for (Rule sr : (SequenceRule) rule)
-					dumpRule(fmt, ent.getKey(), sr);
-			} else {
-				dumpRule(fmt, ent.getKey(), rule);
-			}
+		for (Map.Entry<String, RuleList> ent : set.entrySet()) {
+			RuleList rl = ent.getValue();
+			rl.dumpRules(fmt, ent.getKey());
 		}
 	}
 
-	private void dumpRule(Formatter fmt, String s, Rule rule) {
-		if (rule instanceof FixedRule)
-			fmt.format("%s %s\n", s, rule);
-		else {
-			String rulestr = rule.toString();
-			if (rulestr.startsWith("\n") || rulestr.matches("^[ \t\n].*") || rulestr.matches("^[ \t\n].*"))
-				fmt.format("%s %s\n", s, rulestr);
-			else
-				fmt.format("%s & %s\n", s, rulestr);
-		}
-	}
+
 
 	void setGeneralOptions(Map<String, String> generalOptions) {
 		this.generalOptions = generalOptions;
