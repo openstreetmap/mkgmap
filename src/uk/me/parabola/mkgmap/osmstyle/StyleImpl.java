@@ -429,7 +429,7 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
-			GType.push();
+			//GType.push();
 			baseStyle = new StyleImpl(location, name);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
@@ -448,7 +448,7 @@ public class StyleImpl implements Style {
 				log.error("Could not find base style", e);
 			}
 		} finally {
-			GType.pop();
+			//GType.pop();
 		}
 	}
 

@@ -70,7 +70,7 @@ public class RuleSet implements Rule {
 			if (rule != null) {
 				GType type = rule.resolveType(el);
 				if (type != null) {
-					if (foundType == null || type.isBetterPriority(foundType)) {
+					if (foundType == null /*|| type.isBetterPriority(foundType)*/) {
 						foundType = type;
 					}
 				}

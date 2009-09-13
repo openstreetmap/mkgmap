@@ -128,7 +128,6 @@ public class RuleFileReader {
 			optimiseAndSaveBinaryOp(op, actions, gt);
 		} else {
 			optimiseAndSaveOtherOp(op, actions, gt);
-			//throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 	}
 
@@ -171,13 +170,13 @@ public class RuleFileReader {
 			if (first.isType(EQUALS)) {
 				keystring = first.toString();
 				expr = second;
+			} else if (first.isType(EXISTS)) {
+				keystring = first.value() + "=*";
+				expr = second;
 			} else if (second.isType(EQUALS)) {
 				// Swap the terms and everything will be fine.
 				keystring = second.toString();
 				expr = first;
-			} else if (first.isType(EXISTS)) {
-				keystring = first.value() + "=*";
-				expr = second;
 			} else if (first.isType(OR)) {
 				// (a=b|a=c) & d=f => (a=b&d=f) | (a=c&d=f) => solved
 				BinaryOp and1 = new AndOp();
