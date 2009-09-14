@@ -99,6 +99,10 @@ public class StyledConverterTest {
 	/**
 	 * Test styles that are derived from others.  Rules should behave as
 	 * if they were combined in order with the base rule last.
+	 *
+	 * This test contains the exact same rule that occurs in the base
+	 * style with a different type.  It is the derived style type that we
+	 * should see.
 	 */
 	@Test
 	public void testBaseStyle() throws FileNotFoundException {
@@ -108,7 +112,7 @@ public class StyledConverterTest {
 		converter.convertWay(way);
 
 		assertEquals("lines converted", 1, lines.size());
-		assertEquals("derived type", 0x12, lines.get(0).getType());
+		assertEquals("derived type", 0x22, lines.get(0).getType());
 
 		// Now try a rule that is only in the base 'simple' file.
 		way = makeWay();
@@ -116,6 +120,25 @@ public class StyledConverterTest {
 		converter.convertWay(way); 
 		assertEquals("new line converted from base", 2, lines.size());
 		assertEquals("from base style", 0x3, lines.get(1).getType());
+	}
+
+	/**
+	 * The derived style has a rule that is not in the base style.  Call with
+	 * a way that would match a rule in the base style and with the different
+	 * rule in the derived style.  You should get the type from the derived
+	 * style.
+	 * @throws FileNotFoundException
+	 */
+	@Test
+	public void testOverridePriority() throws FileNotFoundException {
+		converter = makeConverter("derived");
+		Way way = makeWay();
+		way.addTag("highway", "other"); // this would match in the base
+		way.addTag("derived", "first"); // this matches in the derived style
+		converter.convertWay(way);
+
+		assertEquals("lines converted", 1, lines.size());
+		assertEquals("derived type", 0x25, lines.get(0).getType());
 	}
 
 	private Way makeWay() {

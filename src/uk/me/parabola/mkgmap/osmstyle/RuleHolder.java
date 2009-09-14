@@ -58,32 +58,17 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 	}
 
 	/**
-	 * Is the priority of this type better than that of other?
-	 * Lower priorities are better and win out.
+	 * The priority value uniquely identifies the rule.  It also used for
+	 * ordering rules; rules with a lower priority value override any
+	 * rule with a higher one.
+	 * @return The rule priority.
 	 */
-	public boolean isBetterPriority(RuleHolder other) {
-		return this.priority < other.priority;
+	public int priority() {
+		return priority;
 	}
 
 	private static int nextPriority() {
 		return nextPriority++;
-	}
-
-	/**
-	 * Increment the priority temporarily so another file can be read in
-	 * that should have a higher priority.
-	 * XXX find a better way if possible.
-	 */
-	public static void push() {
-		nextPriority += PRIORITY_PUSH;
-	}
-
-	/**
-	 * Decrement priority to a value the same or greater than the one that
-	 * existed before the previous push.
-	 */
-	public static void pop() {
-		nextPriority -= PRIORITY_PUSH;
 	}
 
 	public void format(Formatter fmt, String key) {

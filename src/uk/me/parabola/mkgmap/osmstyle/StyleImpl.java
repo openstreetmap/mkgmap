@@ -429,7 +429,6 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
-			//GType.push();
 			baseStyle = new StyleImpl(location, name);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
@@ -447,8 +446,6 @@ public class StyleImpl implements Style {
 				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
-		} finally {
-			//GType.pop();
 		}
 	}
 
@@ -493,17 +490,6 @@ public class StyleImpl implements Style {
 		polygons.merge(other.polygons);
 		nodes.merge(other.nodes);
 		relations.merge(other.relations);
-		//for (Map.Entry<String, Rule> ent : other.lines.entrySet())
-		//	lines.add(ent.getKey(), ent.getValue());
-		//
-		//for (Map.Entry<String, Rule> ent : other.polygons.entrySet())
-		//	polygons.add(ent.getKey(), ent.getValue());
-		//
-		//for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
-		//	nodes.add(ent.getKey(), ent.getValue());
-		//
-		//for (Map.Entry<String, Rule> ent : other.relations.entrySet())
-		//	relations.add(ent.getKey(), ent.getValue());
 	}
 
 	private void checkVersion() throws FileNotFoundException {
