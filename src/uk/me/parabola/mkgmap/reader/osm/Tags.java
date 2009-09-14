@@ -122,7 +122,7 @@ public class Tags implements Iterable<String> {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Make a deep copy of this object.
 	 * @return A copy of this object.
@@ -261,6 +261,78 @@ public class Tags implements Iterable<String> {
 		};
 	}
 
+	public Iterator<Map.Entry<String, String>> entryIterator() {
+		return new Iterator<Map.Entry<String, String>>() {
+			private int pos;
+			
+			public boolean hasNext() {
+				for (int i = pos; i < capacity; i++) {
+					if (values[i] != null) {
+						pos = i;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			public Map.Entry<String, String> next() {
+				Map.Entry<String, String> entry = new StringEntry(keys[pos], values[pos]);
+
+				pos++;
+				return entry;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
+	// TODO replace with AbstractMap.SimpleEntry as soon as we go to 1.6
+	static class StringEntry implements Map.Entry<String,String> {
+		String key;
+		String value;
+
+		public StringEntry(String key, String value) {
+			this.key   = key;
+			this.value = value;
+		}
+
+		public String getKey() {
+			return key;
+		}
+
+		public String getValue() {
+			return value;
+		}
+
+		public String setValue(String value) {
+			String oldValue = this.value;
+			this.value = value;
+			return oldValue;
+		}
+
+		public boolean equals(Object o) {
+			if (!(o instanceof Map.Entry))
+				return false;
+			Map.Entry<String,String> e = (Map.Entry)o;
+			return eq(key, e.getKey()) && eq(value, e.getValue());
+		}
+
+		public int hashCode() {
+			return ((key   == null)? 0: key.hashCode()) ^
+					((value == null)? 0: value.hashCode());
+		}
+
+		public String toString() {
+			return key + "=" + value;
+		}
+
+		private static boolean eq(Object o1, Object o2) {
+			return (o1 == null ? o2 == null : o1.equals(o2));
+		}
+	}
+
 	/**
 	 * Add the items that are in 'extra' to the map proper.
 	 */
@@ -288,5 +360,13 @@ public class Tags implements Iterable<String> {
 		}
 
 		return map;
+	}
+	
+	public void removeAll() {
+		for (int i = 0; i < capacity; i++){
+			keys[i] = null;
+			values[i] = null;
+		}
+		size = 0;
 	}
 }

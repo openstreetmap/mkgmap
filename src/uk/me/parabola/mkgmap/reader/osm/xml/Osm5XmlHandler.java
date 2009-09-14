@@ -343,8 +343,8 @@ class Osm5XmlHandler extends DefaultHandler {
 						Way cycleWay = new Way(cycleWayId);
 						wayMap.put(cycleWayId, cycleWay);
 						List<Coord> points = currentWay.getPoints();
-						for(int i = 0; i < points.size(); ++i)
-							cycleWay.addPoint(points.get(i));
+						for (Coord point : points)
+							cycleWay.addPoint(point);
 						cycleWay.copyTags(currentWay);
 						if(currentWay.getTag("bicycle") == null)
 							currentWay.addTag("bicycle", "no");
@@ -393,7 +393,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
 			if ("multipolygon".equals(type))
-				currentRelation = new MultiPolygonRelation(currentRelation);
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
 			else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
@@ -550,7 +550,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		log.info("Making boundary nodes - finished (" + numBoundaryNodesAdded + " added, " + numBoundaryNodesDetected + " detected)");
 	}
 
-	private final void incArcCount(Map<Coord, Integer> map, Coord p, int inc) {
+	private void incArcCount(Map<Coord, Integer> map, Coord p, int inc) {
 		Integer i = map.get(p);
 		if(i != null)
 			inc += i;
@@ -560,8 +560,6 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void removeShortArcsByMergingNodes(double minArcLength) {
 		// keep track of how many arcs reach a given point
 		Map<Coord, Integer> arcCounts = new IdentityHashMap<Coord, Integer>();
-		int numWaysDeleted = 0;
-		int numNodesMerged = 0;
 		log.info("Removing short arcs - counting arcs");
 		for(Way w : wayMap.values()) {
 			List<Coord> points = w.getPoints();
@@ -585,14 +583,15 @@ class Osm5XmlHandler extends DefaultHandler {
 		Map<Way, Way> complainedAbout = new IdentityHashMap<Way, Way>();
 		boolean anotherPassRequired = true;
 		int pass = 0;
+		int numWaysDeleted = 0;
+		int numNodesMerged = 0;
 		while(anotherPassRequired && pass < 10) {
 			anotherPassRequired = false;
 			log.info("Removing short arcs - PASS " + ++pass);
 			Way[] ways = wayMap.values().toArray(new Way[wayMap.size()]);
-			for(int w = 0; w < ways.length; ++w) {
-				Way way = ways[w];
+			for (Way way : ways) {
 				List<Coord> points = way.getPoints();
-				if(points.size() < 2) {
+				if (points.size() < 2) {
 					log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has less than 2 points - deleting it");
 					wayMap.remove(way.getId());
 					++numWaysDeleted;
@@ -607,23 +606,23 @@ class Osm5XmlHandler extends DefaultHandler {
 					// it was previously merged into another point
 					Coord replacement = null;
 					Coord r = p;
-					while((r = replacements.get(r)) != null) {
+					while ((r = replacements.get(r)) != null) {
 						replacement = r;
 					}
-					if(replacement != null) {
+					if (replacement != null) {
 						assert !p.getOnBoundary() : "Boundary node replaced";
 						String replacementId = (replacement.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(replacement);
 						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
 						p = replacement;
 						// replace point in way
 						points.set(i, p);
-						if(i == 0)
+						if (i == 0)
 							previousPoint = p;
 						anotherPassRequired = true;
 					}
-					if(i > 0) {
+					if (i > 0) {
 						// this is not the first point in the way
-						if(p == previousPoint) {
+						if (p == previousPoint) {
 							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical points (" + nodeIdMap.get(p) + ") - deleting the second point");
 							points.remove(i);
 							// hack alert! rewind the loop index
@@ -636,7 +635,7 @@ class Osm5XmlHandler extends DefaultHandler {
 						Coord previousNode = points.get(previousNodeIndex);
 						// this point is a node if it has an arc count
 						Integer arcCount = arcCounts.get(p);
-						if(arcCount != null) {
+						if (arcCount != null) {
 							// merge this node to previous node if the
 							// two points have identical coordinates
 							// or are closer than the minimum distance
@@ -701,8 +700,7 @@ class Osm5XmlHandler extends DefaultHandler {
 									i = previousNodeIndex;
 									anotherPassRequired = true;
 								}
-							}
-							else {
+							} else {
 								// the node did not need to be merged so
 								// it now becomes the new previous node
 								previousNodeIndex = i;
