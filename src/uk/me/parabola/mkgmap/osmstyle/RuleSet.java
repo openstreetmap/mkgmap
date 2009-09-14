@@ -47,6 +47,16 @@ public class RuleSet implements Rule {
 		rl.add(rule);
 	}
 
+	/**
+	 * Resolve the type for this element by running the rules in order.
+	 *
+	 * This is a very performance critical part of the style system as parts
+	 * of the code are run for every tag in the input file.
+	 *
+	 * @param el The element as read from an OSM xml file in 'tag' format.
+	 * @return A GType describing the Garmin type of the first rule that
+	 * matches.  If there is no match then null is returned.
+	 */
 	public GType resolveType(Element el) {
 		RuleList combined = new RuleList();
 		for (String tagKey : el) {

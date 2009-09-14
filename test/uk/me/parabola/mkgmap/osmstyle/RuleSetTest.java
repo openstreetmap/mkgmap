@@ -150,6 +150,26 @@ public class RuleSetTest {
 		RuleSet rs = makeRuleSet("z=1 {add fred=1;}" +
 				"fred=1 {add abba=1}" +
 				"z=1 & abba=1 {add destiny=1}" +
+				"destiny=1 [0x1]" +
+				"z=1 [0x2]");
+
+		Way el = new Way(1);
+		el.addTag("z", "1");
+
+		GType type = rs.resolveType(el);
+		assertNotNull("chain of commands", type);
+		assertEquals("'destiny' should be selected", 1, type.getType());
+	}
+
+	/**
+	 * A chain of rules, some of which contain tags from the element and
+	 * some that contain only tags that are set in previous rules.
+	 */
+	@Test
+	public void testOrderChain2() {
+		RuleSet rs = makeRuleSet("z=1 {add fred=1;}" +
+				"fred=1 {add abba=1}" +
+				"abba=1 {add destiny=1}" +
 				"destiny=1 [0x1]");
 
 		Way el = new Way(1);
