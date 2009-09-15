@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -134,11 +136,8 @@ public class Tags implements Iterable<String> {
 		cp.size = size;
 		cp.capacity = capacity;
 
-		// Copy the arrays.  (For java 1.6 we can use Arrays.copyOf().)
-		cp.keys = new String[keys.length];
-		System.arraycopy(keys, 0, cp.keys, 0, keys.length);
-		cp.values = new String[values.length];
-		System.arraycopy(values, 0, cp.values, 0, values.length);
+		cp.keys = Arrays.copyOf(keys, keys.length);
+		cp.values = Arrays.copyOf(values, values.length);
 		return cp;
 	}
 
@@ -276,7 +275,7 @@ public class Tags implements Iterable<String> {
 			}
 
 			public Map.Entry<String, String> next() {
-				Map.Entry<String, String> entry = new StringEntry(keys[pos], values[pos]);
+				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(keys[pos], values[pos]);
 
 				pos++;
 				return entry;
@@ -286,51 +285,6 @@ public class Tags implements Iterable<String> {
 				throw new UnsupportedOperationException();
 			}
 		};
-	}
-
-	// TODO replace with AbstractMap.SimpleEntry as soon as we go to 1.6
-	static class StringEntry implements Map.Entry<String,String> {
-		String key;
-		String value;
-
-		public StringEntry(String key, String value) {
-			this.key   = key;
-			this.value = value;
-		}
-
-		public String getKey() {
-			return key;
-		}
-
-		public String getValue() {
-			return value;
-		}
-
-		public String setValue(String value) {
-			String oldValue = this.value;
-			this.value = value;
-			return oldValue;
-		}
-
-		public boolean equals(Object o) {
-			if (!(o instanceof Map.Entry))
-				return false;
-			Map.Entry<String,String> e = (Map.Entry)o;
-			return eq(key, e.getKey()) && eq(value, e.getValue());
-		}
-
-		public int hashCode() {
-			return ((key   == null)? 0: key.hashCode()) ^
-					((value == null)? 0: value.hashCode());
-		}
-
-		public String toString() {
-			return key + "=" + value;
-		}
-
-		private static boolean eq(Object o1, Object o2) {
-			return (o1 == null ? o2 == null : o1.equals(o2));
-		}
 	}
 
 	/**

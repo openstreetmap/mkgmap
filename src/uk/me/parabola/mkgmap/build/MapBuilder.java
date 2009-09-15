@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.Exit;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.ExitFacility;
@@ -529,9 +529,7 @@ public class MapBuilder implements Configurable {
 			// There is already a top level definition.  So use the values from it and
 			// then remove it from the levels definition.
 
-			// (note: when we go to java 1.6 you can use a copyOfRange() call here to simplify
-			levels = Arrays.asList(levels).subList(1, levels.length)
-					.toArray(new LevelInfo[levels.length - 1]);
+			levels = Arrays.copyOfRange(levels, 1, levels.length);
 
 			Zoom zoom = map.createZoom(levelInfo.getLevel(), levelInfo.getBits());
 			topdiv = makeTopArea(src, map, zoom);

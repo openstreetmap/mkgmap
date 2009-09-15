@@ -29,12 +29,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
@@ -85,6 +84,24 @@ public class Main implements ArgumentProcessor {
 	 * @param args The command line arguments.
 	 */
 	public static void main(String[] args) {
+
+		// Temporary test for version 1.6.  During a transition period we are
+		// compiling with target 1.5 so that it will run with 1.5 long enough
+		// to give an error message.
+		//
+		// TODO This can be removed after say one month, Oct 15.  At that time
+		// remove the target=1.5 from the build file.
+		try {
+			// Use a method that was introduced in 1.6
+			"".isEmpty();
+		} catch (NoSuchMethodError e) {
+			// Doesn't exist so we do not have a useful 1.6
+			String version = System.getProperty("java.version");
+
+			System.err.println("Error: mkgmap now requires java 1.6 to run");
+			System.err.printf("You have version %s of java, and mkgmap requires at least version 1.6.0\n", version);
+			System.exit(1);
+		}
 
 		// We need at least one argument.
 		if (args.length < 1) {
