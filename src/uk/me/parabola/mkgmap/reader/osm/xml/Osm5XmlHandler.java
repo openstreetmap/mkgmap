@@ -62,7 +62,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private int mode;
 
 	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
-	// currently, nodeIdMap is only used for the short arc removal
+
 	private Map<Coord, Long> nodeIdMap = new IdentityHashMap<Coord, Long>();
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
