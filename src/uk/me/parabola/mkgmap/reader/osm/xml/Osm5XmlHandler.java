@@ -573,6 +573,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void removeShortArcsByMergingNodes(double minArcLength) {
 		// keep track of how many arcs reach a given point
 		Map<Coord, Integer> arcCounts = new IdentityHashMap<Coord, Integer>();
+		log.info("Removing short arcs (min arc length = " + minArcLength + "m)");
 		log.info("Removing short arcs - counting arcs");
 		for(Way w : wayMap.values()) {
 			List<Coord> points = w.getPoints();
@@ -662,7 +663,10 @@ class Osm5XmlHandler extends DefaultHandler {
 									// both the previous node and this node
 									// are on the boundary
 									if(complainedAbout.get(way) == null) {
-										log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - but it can't be removed because both ends of the arc are boundary nodes!");
+										if(p.equals(previousNode))
+											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates but they can't be merged because both are boundary nodes!");
+										else
+											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - but it can't be removed because both ends of the arc are boundary nodes!");
 										complainedAbout.put(way, way);
 									}
 									break; // give up with this way
@@ -671,7 +675,7 @@ class Osm5XmlHandler extends DefaultHandler {
 								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
 
 								if(p.equals(previousNode))
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has zero length arc - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates - merging node " + thisNodeId + " into " + previousNodeId);
 								else
 									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - removing it by merging node " + thisNodeId + " into " + previousNodeId);
 								if(p.getOnBoundary()) {
