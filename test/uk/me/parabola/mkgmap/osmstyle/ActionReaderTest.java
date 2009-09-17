@@ -223,6 +223,12 @@ public class ActionReaderTest {
 		assertEquals("route_no taken from relation tags", "66", el1.getTag("route"));
 	}
 
+	@Test
+	public void testEmptyActionList() {
+		List<Action> actions = readActionsFromString("{}");
+		assertEquals("no actions found", 0, actions.size());		
+	}
+
 	private Element stdElementRun(List<Action> actions) {
 		Rule rule = new ActionRule(null, actions);
 		Element el = makeElement();
@@ -253,6 +259,6 @@ public class ActionReaderTest {
 		Reader sr = new StringReader(in);
 		TokenScanner ts = new TokenScanner("string", sr);
 		ActionReader ar = new ActionReader(ts);
-		return ar.readActions();
+		return ar.readActions().getValue();
 	}
 }
