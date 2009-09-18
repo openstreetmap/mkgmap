@@ -235,6 +235,20 @@ public class RuleSetTest {
 		assertEquals("first match is on blue", 1, type.getType());
 	}
 
+	@Test
+	public void testActionsMixedWithTypes() {
+		RuleSet rs = makeRuleSet("highway=primary {set marker=1}" +
+				"marker=2 [0x1]" +
+				"highway=primary {set marker=2}" +
+				"marker=2 [0x2]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "primary");
+
+		GType type = rs.resolveType(el);
+		assertEquals("second marker rule", 2, type.getType());
+	}
+
 	/**
 	 * Create a rule set out of a string.  The string is processed
 	 * as if it were in a file and the levels spec had been set.

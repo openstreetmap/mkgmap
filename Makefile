@@ -37,7 +37,7 @@ OPTS= --tdbfile
 OPTS=--tdbfile --family-id=909 --series-name="other map"  --description='A test map'
 
 makemap: clean
-	$(TIME) java -Xmx500m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	$(TIME) java -Xmx600m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#cp 63240001.img gmapsupp.img
 	#imgdecode gmapsupp.img
 
