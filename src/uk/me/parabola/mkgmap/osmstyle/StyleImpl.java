@@ -185,6 +185,7 @@ public class StyleImpl implements Style {
 		RuleSet r = new RuleSet();
 		r.addAll(lines);
 		r.addAll(polygons);
+		r.init();
 		return r;
 	}
 
@@ -277,17 +278,17 @@ public class StyleImpl implements Style {
 
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			lines.add(me.getKey(), rule);
+			lines.add(me.getKey(), new RuleHolder(rule, null));
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			polygons.add(me.getKey(), rule);
+			polygons.add(me.getKey(), new RuleHolder(rule));
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			nodes.add(me.getKey(), rule);
+			nodes.add(me.getKey(), new RuleHolder(rule));
 		}
 	}
 
@@ -306,7 +307,7 @@ public class StyleImpl implements Style {
 		l.add(action);
 
 		Rule rule = new ActionRule(null, l);
-		lines.add("highway=*", rule);
+		lines.add("highway=*", new RuleHolder(rule));
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -315,8 +316,8 @@ public class StyleImpl implements Style {
 		l.add(action);
 
 		rule = new ActionRule(null, l);
-		lines.add("contour=elevation", rule);
-		lines.add("contour_ext=elevation", rule);
+		lines.add("contour=elevation", new RuleHolder(rule));
+		lines.add("contour_ext=elevation", new RuleHolder(rule));
 	}
 
 	/**
@@ -486,10 +487,10 @@ public class StyleImpl implements Style {
 	 * style's rules are read.
 	 */
 	private void mergeRules(StyleImpl other) {
-		lines.merge(other.lines);
-		polygons.merge(other.polygons);
-		nodes.merge(other.nodes);
-		relations.merge(other.relations);
+		lines.addAll(other.lines);
+		polygons.addAll(other.polygons);
+		nodes.addAll(other.nodes);
+		relations.addAll(other.relations);
 	}
 
 	private void checkVersion() throws FileNotFoundException {

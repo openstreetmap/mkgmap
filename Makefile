@@ -104,16 +104,13 @@ test_lang10:
 	imgdecode 32860003.img
 
 tests:
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/empty.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63243936
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63247525
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63253506
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg40.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg71.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/cricklewood-5.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg04.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg04b.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/rus.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/empty.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg40.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg71.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/cricklewood-5.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg04.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg04b.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/rus.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/germany-070823.osm.gz
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-070815.osm.gz
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/bit-assert-fail.osm

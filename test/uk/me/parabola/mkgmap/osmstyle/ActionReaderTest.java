@@ -259,6 +259,6 @@ public class ActionReaderTest {
 		Reader sr = new StringReader(in);
 		TokenScanner ts = new TokenScanner("string", sr);
 		ActionReader ar = new ActionReader(ts);
-		return ar.readActions().getValue();
+		return ar.readActions().getList();
 	}
 }

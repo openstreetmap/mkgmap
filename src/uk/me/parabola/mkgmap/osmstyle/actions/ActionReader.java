@@ -17,7 +17,9 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.scan.Token;
@@ -32,18 +34,20 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ActionReader {
 	private final TokenScanner scanner;
 
+
+
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
 
-	public List<Action> readActions() {
+	public ActionList readActions() {
 		List<Action> actions = new ArrayList<Action>();
 		scanner.skipSpace();
 		if (!scanner.checkToken("{"))
-			return actions;
+			return new ActionList(actions);
 
 		scanner.nextToken();
-		
+	 	Set<String> changeableTags = new HashSet<String>();
 		while (inAction()) {
 			Token tok = scanner.nextToken();
 			if (tok.isValue(";"))
@@ -51,9 +55,9 @@ public class ActionReader {
 
 			String cmd = tok.getValue();
 			if ("set".equals(cmd)) {
-				actions.add(readTagValue(true));
+				actions.add(readTagValue(true, changeableTags));
 			} else if ("add".equals(cmd)) {
-				actions.add(readTagValue(false));
+				actions.add(readTagValue(false, changeableTags));
 			} else if ("apply".equals(cmd)) {
 				actions.add(readAllCmd());
 			} else if ("name".equals(cmd)) {
@@ -66,6 +70,9 @@ public class ActionReader {
 				String to = scanner.nextWord();
 				Action act = new RenameAction(from, to);
 				actions.add(act);
+				// The 'to' tag may come into existance and you may attempt
+				// to match on it, therefore we have to save it.
+				changeableTags.add(to);
 			} else if ("echo".equals(cmd)) {
 				String str = scanner.nextWord();
 				actions.add(new EchoAction(str));
@@ -78,7 +85,10 @@ public class ActionReader {
 		if (scanner.checkToken("}"))
 			scanner.nextToken();
 		scanner.skipSpace();
-		return actions;
+		
+		ActionList actionList = new ActionList(actions);
+		actionList.setChangeableTags(changeableTags);
+		return actionList;
 	}
 
 	private Action readAllCmd() {
@@ -92,10 +102,10 @@ public class ActionReader {
 		}
 		SubAction subAction = new SubAction(role);
 
-		List<Action> actionList = readActions();
+		List<Action> actionList = readActions().getList();
 		for (Action a : actionList)
 			subAction.add(a);
-		
+
 		return subAction;
 	}
 
@@ -115,12 +125,27 @@ public class ActionReader {
 		return nameAct;
 	}
 
-	private AddTagAction readTagValue(boolean modify) {
+	/**
+	 * Read a tag/value pair.  If the action is executed then the tag name
+	 * will possibly be modified or set.  If that is the case then we will
+	 * have to make sure that we are executing rules for that tag.
+	 *
+	 * @param modify If true the tag value can be modified.  If it is not set
+	 * then a tag can only be added; if it already exists, then it will not
+	 * be changed.
+	 * @param changeableTags Tags that could be changed by the action.  This is
+	 * an output paramater, any such tags should be added to this set.
+	 * @return The new add tag action.
+	 */
+	private AddTagAction readTagValue(boolean modify, Set<String> changeableTags) {
 		String key = scanner.nextWord();
 		if (!scanner.checkToken("="))
 			throw new SyntaxException(scanner, "Expecting tag=value");
 		scanner.nextToken();
 		String val = scanner.nextWord();
+
+		// Save the tag as this is potentially set during the operation.
+		changeableTags.add(key);
 
 		return new AddTagAction(key, val, modify);
 	}

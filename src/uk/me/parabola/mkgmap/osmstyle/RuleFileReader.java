@@ -19,11 +19,10 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.osmstyle.actions.Action;
+import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
@@ -85,19 +84,19 @@ public class RuleFileReader {
 		while (!scanner.isEndOfFile()) {
 			Op expr = expressionReader.readConditions();
 
-			// TODO this fails when action list is just empty... although perhaps it should.
-			List<Action> actions = actionReader.readActions();
+			ActionList actionList = actionReader.readActions();
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
 			if (scanner.checkToken("["))
 				type = typeReader.readType(scanner);
-			else if (actions == null)
+			else if (actionList == null)
 				throw new SyntaxException(scanner, "No type definition given");
 
-			saveRule(expr, actions, type);
+			saveRule(expr, actionList, type);
 			scanner.skipSpace();
 		}
+		rules.init();
 	}
 
 	/**
@@ -111,7 +110,7 @@ public class RuleFileReader {
 	 * in a basket we know that the first term is true so we can drop that
 	 * from the expression.
 	 */
-	private void saveRule(Op op, List<Action> actions, GType gt) {
+	private void saveRule(Op op, ActionList actions, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
 		// E1 | E2 {type...} is exactly the same as the two rules:
@@ -131,8 +130,9 @@ public class RuleFileReader {
 		}
 	}
 
-	private void optimiseAndSaveOtherOp(Op op, List<Action> actions, GType gt) {
+	private void optimiseAndSaveOtherOp(Op op, ActionList actions, GType gt) {
 		if (op.isType(EXISTS)) {
+			// The lookup key for the exists operation is 'tag=*'
 			createAndSaveRule(op.value() + "=*", null, actions, gt);
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
@@ -143,7 +143,7 @@ public class RuleFileReader {
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
 	 */
-	private void optimiseAndSaveBinaryOp(Op op, List<Action> actions, GType gt) {
+	private void optimiseAndSaveBinaryOp(Op op, ActionList actions, GType gt) {
 		BinaryOp binaryOp = (BinaryOp) op;
 		Op first = binaryOp.getFirst();
 		Op second = binaryOp.getSecond();
@@ -202,17 +202,19 @@ public class RuleFileReader {
 		createAndSaveRule(keystring, expr, actions, gt);
 	}
 
-	private void createAndSaveRule(String keystring, Op expr, List<Action> actions, GType gt) {
+	private void createAndSaveRule(String keystring, Op expr, ActionList actions, GType gt) {
 		Rule rule;
 		if (!actions.isEmpty())
-			rule = new ActionRule(expr, actions, gt);
+			rule = new ActionRule(expr, actions.getList(), gt);
 		else if (expr != null) {
 			rule = new ExpressionRule(expr, gt);
 		} else {
 			rule = new FixedRule(gt);
 		}
 
-		rules.add(keystring, rule);
+
+		RuleHolder rh = new RuleHolder(rule, actions.getChangeableTags());
+		rules.add(keystring, rh);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {

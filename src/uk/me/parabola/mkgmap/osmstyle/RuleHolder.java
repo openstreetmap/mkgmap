@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.Formatter;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -28,15 +29,24 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	private static int nextPriority = 1;
-	private static final int PRIORITY_PUSH = 100000;
 
 	private final int priority;
 
 	private final Rule rule;
+	private final Set<String> changeableTags;
 
 	public RuleHolder(Rule rule) {
+		this(rule, null);
+	}
+
+	public RuleHolder(Rule rule, Set<String> changeableTags) {
+		this(rule, changeableTags, nextPriority());
+	}
+
+	private RuleHolder(Rule rule, Set<String> changeableTags, int priority) {
 		this.rule = rule;
-		priority = nextPriority();
+		this.changeableTags = changeableTags;
+		this.priority = priority;
 	}
 
 	public GType resolveType(Element el) {
@@ -67,8 +77,8 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 		return priority;
 	}
 
-	private static int nextPriority() {
-		return nextPriority++;
+	public Set<String> getChangeableTags() {
+		return changeableTags;
 	}
 
 	public void format(Formatter fmt, String key) {
@@ -85,5 +95,13 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	public String toString() {
 		return rule.toString();
+	}
+
+	private static int nextPriority() {
+		return nextPriority++;
+	}
+
+	public RuleHolder createCopy(Rule rule) {
+		return new RuleHolder(rule, null, this.priority);
 	}
 }

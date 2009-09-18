@@ -16,11 +16,20 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.Op;
+import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -37,7 +46,12 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class RuleSet implements Rule {
 	private final Map<String, RuleList> rules = new LinkedHashMap<String, RuleList>();
 
-	public void add(String key, Rule rule) {
+	// TODO make this per RuleHolder.  With a global extra rules we might
+	// end up running almost every rule on every element.
+	private final List<RuleList> extraRules = new ArrayList<RuleList>();
+	private boolean initRun;
+
+	public void add(String key, RuleHolder rule) {
 		RuleList rl = rules.get(key);
 		if (rl == null) {
 			rl = new RuleList();
@@ -45,6 +59,67 @@ public class RuleSet implements Rule {
 		}
 
 		rl.add(rule);
+	}
+
+	/**
+	 * Initialise this rule set before it gets used.  What we do is find all
+	 * the rules that might be needed as a result of tags being set during the
+	 * execution of other rules.
+	 *
+	 * TODO tidy this up
+	 * TODO optimise, ie keep extra rules per RuleHolder and not globally.
+	 */
+	public void init() {
+		for (RuleList rl : rules.values()) {
+			for (RuleHolder rh : rl) {
+				Set<String> tags = rh.getChangeableTags();
+				Set<String> moreTags = new HashSet<String>(tags);
+				do {
+
+					for (String t : tags) {
+						String match = t + '=';
+						for (Map.Entry<String, RuleList> ent : rules.entrySet()) {
+							if (ent.getKey().startsWith(match)) {
+								RuleList other = ent.getValue();
+								String exprstr = ent.getKey();
+
+								// This must be an equals op or an existance op.
+								// We re-create the operation
+								String[] keyVal = exprstr.split("=", 2);
+								Op op;
+								if (keyVal[1].equals("*")) {
+									op = new ExistsOp();
+									op.setFirst(new ValueOp(keyVal[0]));
+								} else {
+									op = new EqualsOp();
+									op.setFirst(new ValueOp(keyVal[0]));
+									((BinaryOp) op).setSecond(new ValueOp(keyVal[1]));
+								}
+
+								RuleList other2 = new RuleList();
+								for (RuleHolder rh2 : other) {
+									// There may be even more changeable tags
+									// so add them here.
+									moreTags.addAll(rh2.getChangeableTags());
+
+									Rule r = new ExpressionSubRule(op, rh2);
+									RuleHolder rh3 = rh2.createCopy(r);
+									other2.add(rh3);
+								}
+								extraRules.add(other2);
+							}
+						}
+					}
+
+					if (moreTags.size() == tags.size())
+						break;
+					moreTags.removeAll(tags);
+					tags = Collections.unmodifiableSet(new HashSet<String>(moreTags));
+				} while (true);
+			}
+		}
+
+		initRun = true;
 	}
 
 	/**
@@ -58,6 +133,7 @@ public class RuleSet implements Rule {
 	 * matches.  If there is no match then null is returned.
 	 */
 	public GType resolveType(Element el) {
+		assert initRun;
 		RuleList combined = new RuleList();
 		for (String tagKey : el) {
 			RuleList rl = rules.get(tagKey);
@@ -65,12 +141,19 @@ public class RuleSet implements Rule {
 				combined.add(rl);
 		}
 
+		for (RuleList r : extraRules) {
+			combined.add(r);
+		}
+
 		return combined.resolveType(el);
 	}
 
+	/**
+	 * Add all rules from the given rule set to this one.
+	 * @param rs The other rule set.
+	 */
 	public void addAll(RuleSet rs) {
-		for (Map.Entry<String, RuleList> ent : rs.rules.entrySet())
-			add(ent.getKey(), ent.getValue());
+		rules.putAll(rs.rules);
 	}
 
 	/**
@@ -85,11 +168,6 @@ public class RuleSet implements Rule {
 			r.dumpRules(fmt, first);
 		}
 		return fmt.toString();
-	}
-
-	public void merge(RuleSet lines) {
-		for (Map.Entry<String, RuleList> ent : lines.rules.entrySet())
-			add(ent.getKey(), ent.getValue());
 	}
 
 	public Set<Map.Entry<String, RuleList>> entrySet() {

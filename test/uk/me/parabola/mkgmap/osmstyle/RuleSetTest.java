@@ -180,6 +180,62 @@ public class RuleSetTest {
 	}
 
 	/**
+	 * Append to a variable in the correct order as in the rule set.
+	 */
+	@Test
+	public void testAppendInOrder() {
+		RuleSet rs = makeRuleSet("highway=primary {set R='${R} a'}" +
+				"ref=A1 {set R='${R} b'}" +
+				"z=1 {set R='${R} c'}" +
+				"a=1 {set R='${R} d'}");
+
+		Way el = new Way(1);
+		el.addTag("R", "init");
+		el.addTag("highway", "primary");
+		el.addTag("ref", "A1");
+		el.addTag("z", "1");
+		el.addTag("a", "1");
+
+		rs.resolveType(el);
+		String s = el.getTag("R");
+		assertEquals("appended value", "init a b c d", s);
+	}
+
+	/**
+	 * Rules should only be evaluated once for an element.
+	 */
+	@Test
+	public void testRuleEvaluatedOnce() {
+		RuleSet rs = makeRuleSet(
+				"z=1 {set highway=secondary}" +
+				"highway=secondary {set R='ABC ${R}';}" +
+				"R='ABC a' [0x1]" +
+				"R='ABC ABC a' [0x2]");
+
+		Way el = new Way(1);
+		el.addTag("R", "a");
+		el.addTag("z", "1");
+		el.addTag("highway", "secondary");
+
+		GType type = rs.resolveType(el);
+		System.out.println(el.getTag("R"));
+		assertNotNull(type);
+	}
+
+	@Test
+	public void testCheckinExample() throws Exception {
+		RuleSet rs = makeRuleSet("highway=motorway  {set blue=true;}\n" +
+				"blue=true  [0x1 ]\n" +
+				"highway=motorway [0x2]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "motorway");
+
+		GType type = rs.resolveType(el);
+		assertEquals("first match is on blue", 1, type.getType());
+	}
+
+	/**
 	 * Create a rule set out of a string.  The string is processed
 	 * as if it were in a file and the levels spec had been set.
 	 */

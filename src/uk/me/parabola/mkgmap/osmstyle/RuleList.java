@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -24,11 +25,11 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 /**
  * @author Steve Ratcliffe
  */
-public class RuleList implements Rule {
+public class RuleList implements Rule, Iterable<RuleHolder> {
 	private final List<RuleHolder> ruleList = new ArrayList<RuleHolder>();
 
-	public void add(Rule rule) {
-		ruleList.add(new RuleHolder(rule));
+	public void add(RuleHolder holder) {
+		ruleList.add(holder);
 	}
 
 	public void add(RuleList other) {
@@ -37,6 +38,14 @@ public class RuleList implements Rule {
 
 	public GType resolveType(Element el) {
 		Collections.sort(ruleList);
+
+		if (false) {
+		// XXX remove after testing
+		for (RuleHolder rh : ruleList) {
+			System.out.printf("%d: %s\n", rh.priority(), rh);
+		}
+		}
+		
 		for (RuleHolder rh : ruleList) {
 			GType type = rh.resolveType(el);
 			if (type != null)
@@ -45,23 +54,23 @@ public class RuleList implements Rule {
 		return null;
 	}
 
-	//public Iterator<Rule> iterator() {
-	//	return ruleList.
-	//}
-
 	public void dumpRules(Formatter fmt, String key) {
 		for (RuleHolder rh : ruleList) {
 			rh.format(fmt, key);
 		}
 	}
 
+	public Iterator<RuleHolder> iterator() {
+		return ruleList.iterator();
+	}
+
 	public String toString() {
 		Formatter fmt = new Formatter(new StringBuilder());
 		fmt.format("(");
-		for (Rule r : ruleList) {
+		for (RuleHolder r : ruleList) {
 			fmt.format("%s | ", r);
 		}
 		fmt.format(")");
 		return fmt.toString();
-	}	
+	}
 }

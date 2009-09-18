@@ -8,7 +8,7 @@
       <option name="PATTERN" value="*" />
       <option name="ENABLED" value="true" />
     </pattern>
-    <module name="display" />
+    <module name="mkgmap" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" value="" />
     <option name="PACKAGE_NAME" value="" />
@@ -22,7 +22,7 @@
     <option name="PASS_PARENT_ENVS" value="true" />
     <option name="ADDITIONAL_CLASS_PATH" />
     <option name="TEST_SEARCH_SCOPE">
-      <value defaultName="wholeProject" />
+      <value defaultName="singleModule" />
     </option>
     <envs />
     <RunnerSettings RunnerId="Debug">
