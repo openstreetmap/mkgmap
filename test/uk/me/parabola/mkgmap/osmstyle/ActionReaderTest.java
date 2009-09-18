@@ -70,7 +70,7 @@ public class ActionReaderTest {
 	}
 
 	/**
-	 * Test with embeded comment, newlines, semicolon used as separator.
+	 * Test with embedded comment, newlines, semicolon used as separator.
 	 */
 	@Test
 	public void testFreeForm() {

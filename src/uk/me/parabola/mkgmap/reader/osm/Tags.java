@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -122,7 +124,7 @@ public class Tags implements Iterable<String> {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Make a deep copy of this object.
 	 * @return A copy of this object.
@@ -134,11 +136,8 @@ public class Tags implements Iterable<String> {
 		cp.size = size;
 		cp.capacity = capacity;
 
-		// Copy the arrays.  (For java 1.6 we can use Arrays.copyOf().)
-		cp.keys = new String[keys.length];
-		System.arraycopy(keys, 0, cp.keys, 0, keys.length);
-		cp.values = new String[values.length];
-		System.arraycopy(values, 0, cp.values, 0, values.length);
+		cp.keys = Arrays.copyOf(keys, keys.length);
+		cp.values = Arrays.copyOf(values, values.length);
 		return cp;
 	}
 
@@ -261,6 +260,33 @@ public class Tags implements Iterable<String> {
 		};
 	}
 
+	public Iterator<Map.Entry<String, String>> entryIterator() {
+		return new Iterator<Map.Entry<String, String>>() {
+			private int pos;
+			
+			public boolean hasNext() {
+				for (int i = pos; i < capacity; i++) {
+					if (values[i] != null) {
+						pos = i;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			public Map.Entry<String, String> next() {
+				Map.Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(keys[pos], values[pos]);
+
+				pos++;
+				return entry;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
 	/**
 	 * Add the items that are in 'extra' to the map proper.
 	 */
@@ -288,5 +314,13 @@ public class Tags implements Iterable<String> {
 		}
 
 		return map;
+	}
+	
+	public void removeAll() {
+		for (int i = 0; i < capacity; i++){
+			keys[i] = null;
+			values[i] = null;
+		}
+		size = 0;
 	}
 }

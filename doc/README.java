@@ -4,10 +4,7 @@ README.java for mkgmap
 
 * java versions
 
-The main version of java for which mkgmap is tested is 1.6.
-Java 1.5 should also work.
-
-TODO: Openjdk 1.7 may work.
+Version 1.6, or later, of java is required to run mkgmap.
 
 * building
 

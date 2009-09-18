@@ -419,7 +419,7 @@ public class MapArea implements MapDataSource {
 			// a factor based on the number of points.
 			numPoints = ((MapLine) p).getPoints().size();
 			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
-			s = numElements * 11 + numPoints * 2;
+			s = numElements * 11 + numPoints * 4;
 			if (res <= areaResolution)
 				nActiveLines += numElements;
 			break;
@@ -428,7 +428,7 @@ public class MapArea implements MapDataSource {
 			// a factor based on the number of points.
 			numPoints = ((MapLine) p).getPoints().size();
 			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
-			s = numElements * 11 + numPoints * 2;
+			s = numElements * 11 + numPoints * 4;
 			if (res <= areaResolution)
 				nActiveShapes += numElements;
 			break;

@@ -87,7 +87,8 @@ public abstract class Element implements Iterable<String> {
 	 * element.
 	 */
 	public void copyTags(Element other) {
-		tags = other.tags.copy();
+		if (other.tags != null)
+			tags = other.tags.copy();
 	}
 
 	public String getName() {
@@ -101,5 +102,21 @@ public abstract class Element implements Iterable<String> {
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
 		return tags.getTagsWithPrefix(prefix, removePrefix);
+	}
+
+	public void removeAllTags() {
+		if (tags != null)
+			tags.removeAll();
+	}
+
+	public Iterable<Map.Entry<String, String>> getEntryIteratable() {
+		return new Iterable<Map.Entry<String, String>>() {
+			public Iterator<Map.Entry<String, String>> iterator() {
+				if (tags == null)
+					return Collections.<String, String>emptyMap().entrySet().iterator();
+				else
+					return tags.entryIterator();
+			}
+		};
 	}
 }

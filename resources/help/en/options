@@ -36,7 +36,12 @@ filename
 
 --description=text
 	Sets the descriptive text for the map. This may be displayed in
-	QLandkarte, MapSource on on a GPS etc. 
+	QLandkarte, MapSource on on a GPS etc, where it is normally shown
+	below the family name. Example: --description="Germany, Denmark"
+	Please note: if you use splitter.jar to build a template.args file
+	and use -c template.args, then that file may contain a
+	"description" that will override this option. Use "--description" in
+	splitter.jar to change the description in the template.args file.
 
 --country-name=name
 	Sets the map's country name. The default is "COUNTRY".
