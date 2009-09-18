@@ -98,108 +98,6 @@ public class TagsTest {
 	}
 
 	/**
-	 * Test that we can add tags during the iteration and that they will
-	 * appear at the end of the iteration.  This is behaviour that is not
-	 * usually expected of iterators.
-	 */
-	@Test
-	public void testAddTagDuringIter() {
-		Tags tags = smallSetTags();
-		Iterator<String> it = iterateOverTags(tags);
-
-		// Add an extra tag.  We are already at the end of the iteration and so
-		// this should force into play the 
-		tags.put("added", "iter");
-		assertTrue("more to iterate over", it.hasNext());
-
-		// The addition should cause two more values to be returned.  The
-		// first is the specific value.
-		assertTrue(it.hasNext());
-		assertEquals("the specific tag added", "added=iter", it.next());
-
-		// The second is the wildcard value.
-		assertTrue(it.hasNext());
-		assertEquals("the wildcard tag added", "added=*", it.next());
-
-		// And that should be it...
-		assertFalse("iteration is finished", it.hasNext());
-	}
-
-	@Test
-	public void testAddMultipleTagsDuringIter() {
-		Tags tags = smallSetTags();
-		Iterator<String> it = iterateOverTags(tags);
-
-		String[][] addlist = {
-				{"add1", "first"},
-				{"add2", "second"},
-				{"add3", "third"},
-				{"add4", "fourth"},
-		};
-		for (String[] a : addlist)
-			tags.put(a[0], a[1]);
-
-		for (String[] a : addlist) {
-			assertTrue("tag added", it.hasNext());
-			assertEquals("tag added", a[0] + '=' + a[1], it.next());
-			assertEquals("tag added wildcard", a[0] + "=*", it.next());
-		}
-
-		assertFalse("iteration finished", it.hasNext());
-	}
-
-	/**
-	 * Test that tags that are added during an iteration run, are kept and are
-	 * seen on subsequent iterations.
-	 */
-	@Test
-	public void testAddedTagsKeptAfterIter() {
-		Tags tags = smallSetTags();
-
-		Iterator<String> it = iterateOverTags(tags);
-		tags.put("added", "iter");
-
-		// Complete the iteration for the added tag.
-		assertNotNull(it.next());
-		assertNotNull(it.next());
-
-		// Create a new iterator and make sure the tags are still there.
-		it = tags.iterator();
-		int n = (SMALL_SET.length + 1) * 2;
-		for (int i = 0; i < n; i++) {
-			assertTrue("should be tag at position " + i, it.hasNext());
-			assertNotNull("result should be non null", it.next());
-		}
-	}
-
-	/**
-	 * Test that tags that are added during an iteration run, are kept after
-	 * the object is copied with {@link Tags#copy}.
-	 */
-	@Test
-	public void testAddedTagsKeptOnCopy() {
-		Tags tags = smallSetTags();
-
-		Iterator<String> it = iterateOverTags(tags);
-		tags.put("added", "iter");
-
-		// Complete the iteration for the added tag.
-		assertNotNull(it.next());
-		assertNotNull(it.next());
-
-		// Copy the tags.
-		tags = tags.copy();
-
-		// Check that the copy contains the extra tags.
-		it = tags.iterator();
-		int n = (SMALL_SET.length + 1) * 2;
-		for (int i = 0; i < n; i++) {
-			assertTrue("has next at position "+i, it.hasNext());
-			assertNotNull("result should be non null", it.next());
-		}
-	}
-
-	/**
 	 * Create tags initialised with SMALL_SET.
 	 */
 	private Tags smallSetTags() {
@@ -224,6 +122,4 @@ public class TagsTest {
 		}
 		return it;
 	}
-
-
 }

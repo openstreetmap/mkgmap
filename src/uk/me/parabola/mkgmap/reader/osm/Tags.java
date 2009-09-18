@@ -25,11 +25,10 @@ import java.util.Map;
 /**
  * Store the tags that belong to an Element.
  *
- * Used to use a HashMap for this.  We have a requirement to be able
- * to add to the map during iteration over it so this class was written
- * instead.
- *
- * It should also uses less memory (hash maps are the main use of memory in the
+ * Used to use a HashMap for this.  We used to have a requirement to be able
+ * to add to the map during iteration over it but now the main reason
+ * to keep this class is that it is more memory efficient than a regular
+ * HashMap (hash maps are the main use of memory in the
  * application), as it doesn't allocate a Map.Entry object for every tag.
  * Performance of the whole application is unchanged compared with when
  * a regular HashMap was used.
@@ -47,19 +46,6 @@ public class Tags implements Iterable<String> {
 	private String[] keys;
 	private String[] values;
 
-	// This is a flag that iteration is taking place and a place to store
-	// tags that are added during iteration.
-	private ExtraEntry extra;
-
-	/**
-	 * Used for tags that are added during iteration.
-	 */
-	static class ExtraEntry {
-		private String key;
-		private String value;
-		private ExtraEntry next;
-	}
-
 	public Tags() {
 		keys = new String[INIT_SIZE];
 		values = new String[INIT_SIZE];
@@ -67,14 +53,6 @@ public class Tags implements Iterable<String> {
 	}
 
 	public String get(Object key) {
-		// If we are iterating over this tag set then we may have extra
-		// entries.  These have to be searched first.
-		if (extra != null) {
-			for (ExtraEntry ent = extra; ent.next != null; ent = ent.next)
-					if (ent.key.equals(key))
-						return ent.value;
-		}
-
 		Integer ind = keyPos((String) key);
 		if (ind == null)
 			return null;
@@ -83,19 +61,6 @@ public class Tags implements Iterable<String> {
 	}
 
 	public String put(String key, String value) {
-		if (extra != null) {
-			// Deal with the case where we are adding a tag during iteration
-			// of the tags.  This is flagged by extra being non null.
-			ExtraEntry emptyEntry = extra;
-			while (emptyEntry.next != null && !key.equals(emptyEntry.key))
-				emptyEntry = emptyEntry.next;
-			
-			emptyEntry.key = key;
-			emptyEntry.value = value;
-			emptyEntry.next = new ExtraEntry();
-			return null;
-		}
-
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
@@ -130,8 +95,6 @@ public class Tags implements Iterable<String> {
 	 * @return A copy of this object.
 	 */
 	Tags copy() {
-		addExtraItems();
-		
 		Tags cp = new Tags();
 		cp.size = size;
 		cp.capacity = capacity;
@@ -189,14 +152,6 @@ public class Tags implements Iterable<String> {
 			private int pos;
 			private String wild;
 			private boolean doWild;
-			private ExtraEntry nextEntry;
-
-			// Set the extra field in the containing class.
-			{
-				addExtraItems();
-				extra = new ExtraEntry();
-				nextEntry = extra;
-			}
 
 			public boolean hasNext() {
 				// After every normal entry there is a wild card entry.
@@ -211,16 +166,6 @@ public class Tags implements Iterable<String> {
 					}
 				}
 
-				// Entries that were added during iteration
-				if (nextEntry != null && nextEntry.value != null)
-					return true;
-
-				// Add everything from extra and clean up, there is no guarantee
-				// that this gets called here (because you may stop the
-				// iteration early) but in the normal case it will be called
-				// and will remove all the ExtraEntry objects, thus keeping
-				// the memory usage to a minimum.
-				addExtraItems();
 				return false;
 			}
 
@@ -244,13 +189,6 @@ public class Tags implements Iterable<String> {
 					pos = capacity;
 				}
 
-				ExtraEntry ex = nextEntry;
-				if (nextEntry != null && nextEntry.value != null) {
-					nextEntry = ex.next;
-					doWild = true;
-					wild = ex.key;
-					return ex.key + '=' + ex.value;
-				}
 				return null;
 			}
 
@@ -285,19 +223,6 @@ public class Tags implements Iterable<String> {
 				throw new UnsupportedOperationException();
 			}
 		};
-	}
-
-	/**
-	 * Add the items that are in 'extra' to the map proper.
-	 */
-	private void addExtraItems() {
-		if (extra != null) {
-			ExtraEntry e = extra;
-			extra = null;
-			for (; e != null; e = e.next)
-				if (e.value != null)
-					put(e.key, e.value);
-		}
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
