@@ -430,6 +430,7 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
+			RuleHolder.pushPriority();
 			baseStyle = new StyleImpl(location, name);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
@@ -447,6 +448,8 @@ public class StyleImpl implements Style {
 				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
+		} finally {
+			RuleHolder.popPriority();
 		}
 	}
 
@@ -487,10 +490,10 @@ public class StyleImpl implements Style {
 	 * style's rules are read.
 	 */
 	private void mergeRules(StyleImpl other) {
-		lines.addAll(other.lines);
-		polygons.addAll(other.polygons);
-		nodes.addAll(other.nodes);
-		relations.addAll(other.relations);
+		lines.merge(other.lines);
+		polygons.merge(other.polygons);
+		nodes.merge(other.nodes);
+		relations.merge(other.relations);
 	}
 
 	private void checkVersion() throws FileNotFoundException {

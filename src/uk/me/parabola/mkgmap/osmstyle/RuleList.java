@@ -39,13 +39,6 @@ public class RuleList implements Rule, Iterable<RuleHolder> {
 	public GType resolveType(Element el) {
 		Collections.sort(ruleList);
 
-		if (false) {
-		// XXX remove after testing
-		for (RuleHolder rh : ruleList) {
-			System.out.printf("%d: %s\n", rh.priority(), rh);
-		}
-		}
-		
 		for (RuleHolder rh : ruleList) {
 			GType type = rh.resolveType(el);
 			if (type != null)

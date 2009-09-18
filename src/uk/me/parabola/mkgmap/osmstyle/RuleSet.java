@@ -177,4 +177,22 @@ public class RuleSet implements Rule {
 	public Rule getRule(String key) {
 		return rules.get(key);
 	}
+
+	public void merge(RuleSet rs) {
+		for (Map.Entry<String, RuleList> ent : rs.rules.entrySet()) {
+			String key = ent.getKey();
+			RuleList otherList = ent.getValue();
+
+			// get our list for this key and merge the lists.
+			// if we don't already have a list then just add it.
+			RuleList ourList = rules.get(key);
+			if (ourList == null) {
+				rules.put(key, otherList);
+			} else {
+				for (RuleHolder rh : otherList) {
+					ourList.add(rh);
+				}
+			}
+		}
+	}
 }

@@ -28,10 +28,11 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  */
 public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
+	private static final int PRIORITY_INC = 100000;
+
 	private static int nextPriority = 1;
 
 	private final int priority;
-
 	private final Rule rule;
 	private final Set<String> changeableTags;
 
@@ -99,6 +100,14 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	private static int nextPriority() {
 		return nextPriority++;
+	}
+
+	public static void pushPriority() {
+		nextPriority += PRIORITY_INC;
+	}
+
+	public static void popPriority() {
+		nextPriority -= PRIORITY_INC;
 	}
 
 	public RuleHolder createCopy(Rule rule) {
