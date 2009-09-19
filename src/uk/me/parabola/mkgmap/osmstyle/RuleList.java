@@ -39,7 +39,15 @@ public class RuleList implements Rule, Iterable<RuleHolder> {
 	public GType resolveType(Element el) {
 		Collections.sort(ruleList);
 
+		int lastPriority = Integer.MIN_VALUE;
 		for (RuleHolder rh : ruleList) {
+			// As the priority value identifies the rule, throw out all
+			// duplicates.
+			int priority = rh.priority();
+			if (lastPriority == priority)
+				continue;
+			lastPriority = rh.priority();
+
 			GType type = rh.resolveType(el);
 			if (type != null)
 				return type;

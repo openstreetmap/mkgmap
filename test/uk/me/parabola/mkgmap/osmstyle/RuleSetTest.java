@@ -202,28 +202,32 @@ public class RuleSetTest {
 	}
 
 	/**
-	 * Rules should only be evaluated once for an element.
+	 * Rules should only be evaluated once for an element.  Because of the
+	 * way that we handle rules that may get run after tags are set in actions
+	 * it is possible that a rule would get run twice if not careful.
+	 *
+	 * It is not that easy to trigger, as this is the second attempt at
+	 * showing it is possible...
 	 */
 	@Test
 	public void testRuleEvaluatedOnce() {
-		RuleSet rs = makeRuleSet(
-				"z=1 {set highway=secondary}" +
-				"highway=secondary {set R='ABC ${R}';}" +
-				"R='ABC a' [0x1]" +
-				"R='ABC ABC a' [0x2]");
-
+		RuleSet rs = makeRuleSet("highway=primary " +
+				"  {set highway=primary; set result='${result} 1';}" +
+				"highway='primary' {set result='${result} 2'");
 		Way el = new Way(1);
-		el.addTag("R", "a");
-		el.addTag("z", "1");
-		el.addTag("highway", "secondary");
+		el.addTag("highway", "primary");
+		el.addTag("result", "0");
 
-		GType type = rs.resolveType(el);
-		System.out.println(el.getTag("R"));
-		assertNotNull(type);
+		rs.resolveType(el);
+		assertEquals("rules run once", "0 1 2", el.getTag("result"));
 	}
 
+	/**
+	 * The example that was in the checkin comment, make sure it actually
+	 * does work ;)
+	 */
 	@Test
-	public void testCheckinExample() throws Exception {
+	public void testCheckinExample() {
 		RuleSet rs = makeRuleSet("highway=motorway  {set blue=true;}\n" +
 				"blue=true  [0x1 ]\n" +
 				"highway=motorway [0x2]");

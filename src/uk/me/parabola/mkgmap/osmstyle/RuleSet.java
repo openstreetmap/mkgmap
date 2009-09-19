@@ -16,12 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,9 +44,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class RuleSet implements Rule {
 	private final Map<String, RuleList> rules = new LinkedHashMap<String, RuleList>();
 
-	// TODO make this per RuleHolder.  With a global extra rules we might
-	// end up running almost every rule on every element.
-	private final List<RuleList> extraRules = new ArrayList<RuleList>();
+
 	private boolean initRun;
 
 	public void add(String key, RuleHolder rule) {
@@ -65,61 +61,90 @@ public class RuleSet implements Rule {
 	 * Initialise this rule set before it gets used.  What we do is find all
 	 * the rules that might be needed as a result of tags being set during the
 	 * execution of other rules.
-	 *
-	 * TODO tidy this up
-	 * TODO optimise, ie keep extra rules per RuleHolder and not globally.
 	 */
 	public void init() {
 		for (RuleList rl : rules.values()) {
+			RuleList ruleList = new RuleList();
 			for (RuleHolder rh : rl) {
-				Set<String> tags = rh.getChangeableTags();
-				Set<String> moreTags = new HashSet<String>(tags);
-				do {
-
-					for (String t : tags) {
-						String match = t + '=';
-						for (Map.Entry<String, RuleList> ent : rules.entrySet()) {
-							if (ent.getKey().startsWith(match)) {
-								RuleList other = ent.getValue();
-								String exprstr = ent.getKey();
-
-								// This must be an equals op or an existance op.
-								// We re-create the operation
-								String[] keyVal = exprstr.split("=", 2);
-								Op op;
-								if (keyVal[1].equals("*")) {
-									op = new ExistsOp();
-									op.setFirst(new ValueOp(keyVal[0]));
-								} else {
-									op = new EqualsOp();
-									op.setFirst(new ValueOp(keyVal[0]));
-									((BinaryOp) op).setSecond(new ValueOp(keyVal[1]));
-								}
-
-								RuleList other2 = new RuleList();
-								for (RuleHolder rh2 : other) {
-									// There may be even more changeable tags
-									// so add them here.
-									moreTags.addAll(rh2.getChangeableTags());
-
-									Rule r = new ExpressionSubRule(op, rh2);
-									RuleHolder rh3 = rh2.createCopy(r);
-									other2.add(rh3);
-								}
-								extraRules.add(other2);
-							}
-						}
-					}
-
-					if (moreTags.size() == tags.size())
-						break;
-					moreTags.removeAll(tags);
-					tags = Collections.unmodifiableSet(new HashSet<String>(moreTags));
-				} while (true);
+				if (rh.getChangeableTags() != null)
+					initExtraRules(rh, ruleList);
 			}
+
+			rl.add(ruleList);
 		}
 
 		initRun = true;
+	}
+
+	/**
+	 * Initialise the extra rules that could be needed for a given rule.
+	 * Normally we search for rules by looking up the tags that are on an
+	 * element (to save having to really look through each rule).  However
+	 * if an action causes a tag to be set, we might miss a rule that
+	 * would match the newly set tag.
+	 *
+	 * So we have to search for all rules that could match a newly set tag.
+	 * These get added to the rule list.
+	 *
+	 * @param rule An individual rule.
+	 * @param extraRules This is a output parameter, new rules are saved here
+	 * by this method.  All rules that might be required due to actions
+	 * that set a tag.
+	 */
+	private void initExtraRules(RuleHolder rule, RuleList extraRules) {
+		Set<String> tags = rule.getChangeableTags();
+		Set<String> moreTags = new HashSet<String>();
+
+		do {
+			for (String t : tags) {
+				String match = t + '=';
+				for (Map.Entry<String, RuleList> ent : rules.entrySet()) {
+					if (ent.getKey().startsWith(match)) {
+						String exprstr = ent.getKey();
+						RuleList other = ent.getValue();
+
+						// As we are going to run this rule no matter what
+						// tags were present, we need to add back the condition
+						// that was represented by the key in the rule map.
+						Op op = createExpression(exprstr);
+
+						for (RuleHolder rh : other) {
+							// There may be even more changeable tags
+							// so add them here.
+							moreTags.addAll(rh.getChangeableTags());
+
+							// Re-construct the rule and add it to the output list
+							Rule r = new ExpressionSubRule(op, rh);
+							extraRules.add(rh.createCopy(r));
+						}
+					}
+				}
+			}
+
+			// Remove the tags we already know about, and run through the others.
+			moreTags.removeAll(tags);
+			tags = Collections.unmodifiableSet(new HashSet<String>(moreTags));
+
+		} while (!tags.isEmpty());
+	}
+
+	/**
+	 * Create an expression from a plain string.
+	 * @param expr The string containing an expression.
+	 * @return The compiled form of the expression.
+	 */
+	private Op createExpression(String expr) {
+		String[] keyVal = expr.split("=", 2);
+		Op op;
+		if (keyVal[1].equals("*")) {
+			op = new ExistsOp();
+			op.setFirst(new ValueOp(keyVal[0]));
+		} else {
+			op = new EqualsOp();
+			op.setFirst(new ValueOp(keyVal[0]));
+			((BinaryOp) op).setSecond(new ValueOp(keyVal[1]));
+		}
+		return op;
 	}
 
 	/**
@@ -139,10 +164,6 @@ public class RuleSet implements Rule {
 			RuleList rl = rules.get(tagKey);
 			if (rl != null)
 				combined.add(rl);
-		}
-
-		for (RuleList r : extraRules) {
-			combined.add(r);
 		}
 
 		return combined.resolveType(el);
