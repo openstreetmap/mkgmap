@@ -17,23 +17,26 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 /**
  * @author Steve Ratcliffe
  */
-public abstract class MdrSection extends ConfigBase {
-	/**
-	 * Write out the contents of this section.
-	 * @param writer Where to write it.
-	 */
-	public abstract void writeSectData(ImgFileWriter writer);
+public class Mdr13Record extends RecordBase {
+	private int regionIndex;
+	private int strOffset;
 
-	/**
-	 * The size of a record in the section.  This is not a constant and
-	 * might vary on various factors, such as the file version, if we are
-	 * preparing for a device, the number of maps etc.
-	 *
-	 * @return The size of a record in this section.
-	 */
-	public abstract int getItemSize();
+	public void write(ImgFileWriter writer) {
+	}
 
-	protected void putMapIndex(ImgFileWriter writer, int mapIndex) {
-		writer.put((byte) mapIndex);
+	public int getRegionIndex() {
+		return regionIndex;
+	}
+
+	public void setRegionIndex(int regionIndex) {
+		this.regionIndex = regionIndex;
+	}
+
+	public int getStrOffset() {
+		return strOffset;
+	}
+
+	public void setStrOffset(int strOffset) {
+		this.strOffset = strOffset;
 	}
 }

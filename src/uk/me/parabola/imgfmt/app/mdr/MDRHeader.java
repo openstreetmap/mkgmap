@@ -40,8 +40,8 @@ public class MDRHeader extends CommonHeader {
 	private final char[] sectRecLen = {
 		0,
 			8, 2, 2, 3,  // 1 - 4
-			11, 6, 7, 6,  // 5 - 8
-			4, 0, 12, 7,  // 9 - 12
+			11, 5, 7, 4,  // 5 - 8
+			4, 0, 12, 6,  // 9 - 12
 			8, 6, 0, 0,  // 13 - 16
 			0, 0, 0, 0,  // 17 - 20
 	};
@@ -132,7 +132,7 @@ public class MDRHeader extends CommonHeader {
 		writer.putInt(0);
 	}
 
-	public void setSectSize(int sectionNumber, int itemSize) {
+	public void setItemSize(int sectionNumber, int itemSize) {
 		Section section = sections[sectionNumber];
 		section.setItemSize((char) itemSize);
 	}

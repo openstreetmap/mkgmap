@@ -47,11 +47,8 @@ public class Mdr1 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		int size = 0;
 		for (Mdr1Record rec : maps)
-			size += rec.write(writer);
-
-		System.out.println("mdr1 sz=" + size);
+			rec.write(writer);
 	}
 
 	public int getItemSize() {

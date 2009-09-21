@@ -17,27 +17,41 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr1Record extends RecordBase {
-	private final int mapNumber;
-	private int indexOffset;
+public class Mdr5Record extends RecordBase {
+	private int cityIndex;
+	private int lblOffset;
+	private int stringOffset;
 
-	public Mdr1Record(int mapNumber, MdrConfig config) {
+	public Mdr5Record(MdrConfig config) {
+		// XXX this may not be a good idea
 		setConfig(config);
-		this.mapNumber = mapNumber;
 	}
 
-	/**
-	 * Write out this record.  If for the device, this is just a list of
-	 * maps.
-	 * @param writer Where to write to.
-	 */
 	public void write(ImgFileWriter writer) {
-		writer.putInt(mapNumber);
-		if (!isForDevice())
-			writer.putInt(indexOffset);
+		
 	}
 
-	public void setIndexOffset(int indexOffset) {
-		this.indexOffset = indexOffset;
+	public int getCityIndex() {
+		return cityIndex;
+	}
+
+	public void setCityIndex(int cityIndex) {
+		this.cityIndex = cityIndex;
+	}
+
+	public int getLblOffset() {
+		return lblOffset;
+	}
+
+	public void setLblOffset(int lblOffset) {
+		this.lblOffset = lblOffset;
+	}
+
+	public int getStringOffset() {
+		return stringOffset;
+	}
+
+	public void setStringOffset(int stringOffset) {
+		this.stringOffset = stringOffset;
 	}
 }

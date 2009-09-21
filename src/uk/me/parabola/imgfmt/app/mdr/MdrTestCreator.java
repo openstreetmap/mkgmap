@@ -50,6 +50,10 @@ public class MdrTestCreator {
 
 	private void populate(MDRFile file) {
 		file.addMap(63240001);
+
+		file.addCountry(1, 1, "World");
+		file.addRegion(1, 1, "Region");
+		file.addCity(1, 1, "Test city");
 	}
 
 	/**
