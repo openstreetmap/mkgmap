@@ -115,9 +115,13 @@ public class Section {
 	}
 
 	public void writeSectionInfo(ImgFileWriter writer) {
+		writeSectionInfo(writer, false);
+	}
+
+	public void writeSectionInfo(ImgFileWriter writer, boolean withItemSize) {
 		writer.putInt(getPosition());
 		writer.putInt(getSize());
-		if (getItemSize() > 0)
+		if (withItemSize || getItemSize() > 0)
 			writer.putChar(getItemSize());
 	}
 
