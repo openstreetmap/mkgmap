@@ -31,7 +31,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr1 extends ConfigBase {
+public class Mdr1 extends MdrSection {
 	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
 	private final List<Mdr1SubSection> subSections = new ArrayList<Mdr1SubSection>();
 
@@ -40,19 +40,18 @@ public class Mdr1 extends ConfigBase {
 		setConfig(config);
 	}
 
-	public int writeSectData(ImgFileWriter writer) {
-		int size = 0;
-		for (Mdr1Record rec : maps) 
-			size += rec.write(writer);
-
-		System.out.println("mdr1 sz=" + size);
-		return size;
-	}
-
 	public void addMap(int mapNumber) {
 		Mdr1Record rec = new Mdr1Record(mapNumber, getConfig());
 		maps.add(rec);
 		subSections.add(new Mdr1SubSection());
+	}
+
+	public void writeSectData(ImgFileWriter writer) {
+		int size = 0;
+		for (Mdr1Record rec : maps)
+			size += rec.write(writer);
+
+		System.out.println("mdr1 sz=" + size);
 	}
 
 	public int getItemSize() {
@@ -65,8 +64,7 @@ public class Mdr1 extends ConfigBase {
 			Mdr1Record rec = maps.get(i);
 			Mdr1SubSection sub = subSections.get(i);
 
-			int pos = writer.position();
-			rec.setIndexOffset(pos);
+			rec.setIndexOffset(writer.position());
 
 			sub.writeSubSection(writer);
 		}

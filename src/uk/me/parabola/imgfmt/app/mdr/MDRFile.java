@@ -66,8 +66,10 @@ public class MDRFile extends ImgFile {
 
 		mdrHeader.setPosition(1, writer.position());
 
-		int size = mdr1.writeSectData(writer);
+		mdr1.writeSectData(writer);
+		mdrHeader.setEnd(1, writer.position());
+
 		int itemSize = mdr1.getItemSize();
-		mdrHeader.setSectSize(1, size, itemSize);
+		mdrHeader.setSectSize(1, itemSize);
 	}
 }

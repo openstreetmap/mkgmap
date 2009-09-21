@@ -132,17 +132,17 @@ public class MDRHeader extends CommonHeader {
 		writer.putInt(0);
 	}
 
-	public void setSectSize(int sectionNumber, int size, int itemSize) {
+	public void setSectSize(int sectionNumber, int itemSize) {
 		Section section = sections[sectionNumber];
-		section.setSize(size);
 		section.setItemSize((char) itemSize);
-	}
-
-	public void setSectSize(int sectionNumber, int size) {
-		setSectSize(sectionNumber, size, 0);
 	}
 
 	public void setPosition(int sectionNumber, int position) {
 		sections[sectionNumber].setPosition(position);
+	}
+
+	public void setEnd(int sectionNumber, int position) {
+		Section s = sections[sectionNumber];
+		s.setSize(position - s.getPosition());
 	}
 }
