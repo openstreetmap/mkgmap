@@ -10,27 +10,34 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr5Record extends RecordBase {
-	private int cityIndex;
+public class Mdr11Record extends RecordBase {
+	private int pointIndex;
+	private int subdiv;
 	private int lblOffset;
-	private int stringOffset;
+	private int cityIndex;
+	private int strOffset;
 
-	public Mdr5Record(MdrConfig config) {
-		// XXX this may not be a good idea
-		setConfig(config);
+
+	public int getPointIndex() {
+		return pointIndex;
 	}
 
-	public int getCityIndex() {
-		return cityIndex;
+	public void setPointIndex(int pointIndex) {
+		this.pointIndex = pointIndex;
 	}
 
-	public void setCityIndex(int cityIndex) {
-		this.cityIndex = cityIndex;
+	public int getSubdiv() {
+		return subdiv;
+	}
+
+	public void setSubdiv(int subdiv) {
+		this.subdiv = subdiv;
 	}
 
 	public int getLblOffset() {
@@ -41,11 +48,23 @@ public class Mdr5Record extends RecordBase {
 		this.lblOffset = lblOffset;
 	}
 
-	public int getStringOffset() {
-		return stringOffset;
+	public int getCityIndex() {
+		return cityIndex;
 	}
 
-	public void setStringOffset(int stringOffset) {
-		this.stringOffset = stringOffset;
+	public void setCityIndex(int cityIndex) {
+		this.cityIndex = cityIndex;
+	}
+
+	public int getStrOffset() {
+		return strOffset;
+	}
+
+	public void setStrOffset(int strOffset) {
+		this.strOffset = strOffset;
+	}
+
+	public int getOffset() {
+		return 0;
 	}
 }

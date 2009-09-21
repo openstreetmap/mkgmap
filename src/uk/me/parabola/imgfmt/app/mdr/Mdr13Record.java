@@ -12,17 +12,12 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-
 /**
  * @author Steve Ratcliffe
  */
 public class Mdr13Record extends RecordBase {
 	private int regionIndex;
 	private int strOffset;
-
-	public void write(ImgFileWriter writer) {
-	}
 
 	public int getRegionIndex() {
 		return regionIndex;

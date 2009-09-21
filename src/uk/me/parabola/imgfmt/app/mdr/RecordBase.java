@@ -12,20 +12,11 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-
 /**
  * @author Steve Ratcliffe
  */
 public abstract class RecordBase extends ConfigBase {
 	private int mapIndex;
-
-	/**
-	 * Write out this record.  If for the device, this is just a list of
-	 * maps.
-	 * @param writer Where to write to.
-	 */
-	public abstract void write(ImgFileWriter writer);
 
 	public int getMapIndex() {
 		return mapIndex;

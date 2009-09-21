@@ -44,7 +44,7 @@ public class Mdr5 extends MdrSection {
 	}
 
 	private void putCityIndex(ImgFileWriter writer, int cityIndex) {
-		writer.put((byte) cityIndex);
+		writer.putChar((char) cityIndex);
 	}
 
 	/**

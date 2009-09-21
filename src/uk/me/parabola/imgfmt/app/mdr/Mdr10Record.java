@@ -10,28 +10,29 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr14Record extends RecordBase {
-	private int countryIndex;
-	private int strOff;
+public class Mdr10Record extends RecordBase {
+	private int type;
+	private Mdr11Record mdr11ref;
 
-	public int getCountryIndex() {
-		return countryIndex;
+	public Mdr11Record getMdr11ref() {
+		return mdr11ref;
 	}
 
-	public void setCountryIndex(int countryIndex) {
-		this.countryIndex = countryIndex;
+	public void setMdr11ref(Mdr11Record mdr11ref) {
+		this.mdr11ref = mdr11ref;
 	}
 
-	public int getStrOff() {
-		return strOff;
+	public int getType() {
+		return type;
 	}
 
-	public void setStrOff(int strOff) {
-		this.strOff = strOff;
+	public void setType(int type) {
+		this.type = type;
 	}
 }

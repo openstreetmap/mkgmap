@@ -31,6 +31,8 @@ public class MDRFile extends ImgFile {
 	// The sections
 	private final Mdr1 mdr1;
 	private final Mdr5 mdr5;
+	private final Mdr10 mdr10;
+	private final Mdr11 mdr11;
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
@@ -48,8 +50,11 @@ public class MDRFile extends ImgFile {
 			mdrHeader.readHeader(getReader());
 		}
 
+		// Initialise the sections
 		mdr1 = new Mdr1(config);
 		mdr5 = new Mdr5(config);
+		mdr10 = new Mdr10(config);
+		mdr11 = new Mdr11(config);
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
@@ -72,6 +77,9 @@ public class MDRFile extends ImgFile {
 	public void addCity(int mapIndex, int cityIndex, String name) {
 		int strOff = createString(name);
 		mdr5.addCity(mapIndex, cityIndex, 0, strOff);
+
+		Mdr11Record poi = mdr11.addPoi(mapIndex, 1, 12545, 0, cityIndex, strOff);
+		mdr10.addPoiType(0xc, poi);
 	}
 
 	public void write() {
@@ -92,27 +100,26 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
 
-		mdr5.writeSectData(writer);
-		mdrHeader.setItemSize(5, mdr5.getItemSize());
-		mdrHeader.setEnd(5, writer.position());
+		writeSection(writer, 5, mdr5);
+
+		writeSection(writer, 11, mdr11);
+		writeSection(writer, 10, mdr10);
 
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
-
-		//mdr14.writeSectData(writer);
-		//mdrHeader.setEnd(14, writer.position());
-		//
-		//mdr15.writeSectData(writer);
-		//mdrHeader.setEnd(15, writer.position());
 	}
 
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
+		mdrHeader.setPosition(sectionNumber, writer.position());
 		section.writeSectData(writer);
+		int itemSize = section.getItemSize();
+		if (itemSize > 0)
+			mdrHeader.setItemSize(sectionNumber, itemSize);
 		mdrHeader.setEnd(sectionNumber, writer.position());
 	}
 
 	private int createString(String str) {
-		return mdr15.createString(str);
+		return mdr15.createString(str.toUpperCase());
 	}
 }
