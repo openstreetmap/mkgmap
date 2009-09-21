@@ -37,7 +37,7 @@ public class Mdr1Record extends ConfigBase {
 		writer.putInt(mapNumber);
 		if (!isForDevice())
 			writer.putInt(indexOffset);
-		return isForDevice()? 8: 4;
+		return isForDevice()? 4: 8;
 	}
 
 	public void setIndexOffset(int indexOffset) {

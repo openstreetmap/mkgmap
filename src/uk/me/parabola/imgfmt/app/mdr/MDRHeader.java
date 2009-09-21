@@ -139,6 +139,10 @@ public class MDRHeader extends CommonHeader {
 	}
 
 	public void setSectSize(int sectionNumber, int size) {
-		setSectSize(sectionNumber, size, -1);
+		setSectSize(sectionNumber, size, 0);
+	}
+
+	public void setPosition(int sectionNumber, int position) {
+		sections[sectionNumber].setPosition(position);
 	}
 }

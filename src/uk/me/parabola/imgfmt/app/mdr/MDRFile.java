@@ -52,19 +52,22 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
-		writeSections();
+		ImgFileWriter writer = getWriter();
+		writeSections(writer);
 
 		// Now refresh the header
 		position(0);
-		getHeader().writeHeader(getWriter());
+		getHeader().writeHeader(writer);
 	}
 
-	private void writeSections() {
-		ImgFileWriter writer = getWriter();
+	private void writeSections(ImgFileWriter writer) {
+
+		mdr1.writeSubSections(writer);
+
+		mdrHeader.setPosition(1, writer.position());
 
 		int size = mdr1.writeSectData(writer);
-		int recSize = mdr1.getRecSize();
-		mdrHeader.setSectSize(1, size);
+		int itemSize = mdr1.getItemSize();
+		mdrHeader.setSectSize(1, size, itemSize);
 	}
-
 }
