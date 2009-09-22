@@ -22,6 +22,7 @@ public class Mdr11Record extends RecordBase {
 	private int lblOffset;
 	private int cityIndex;
 	private int strOffset;
+	private int recordNumber;
 
 
 	public int getPointIndex() {
@@ -64,7 +65,11 @@ public class Mdr11Record extends RecordBase {
 		this.strOffset = strOffset;
 	}
 
-	public int getOffset() {
-		return 0;
+	public int getRecordNumber() {
+		return recordNumber;
+	}
+
+	public void setRecordNumber(int recordNumber) {
+		this.recordNumber = recordNumber;
 	}
 }

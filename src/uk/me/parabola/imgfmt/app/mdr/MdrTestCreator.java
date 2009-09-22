@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 
 /**
+ * Test program to create a sample mdr file.
  * @author Steve Ratcliffe
  */
 public class MdrTestCreator {
@@ -53,7 +54,8 @@ public class MdrTestCreator {
 
 		file.addCountry(1, 1, "World");
 		file.addRegion(1, 1, "Region");
-		file.addCity(1, 1, "Test city");
+		file.addCity(1, 1, "Test city", 15, 0);
+		file.addCity(1, 2, "Another city", 14, 0);
 	}
 
 	/**

@@ -30,7 +30,9 @@ public class MDRFile extends ImgFile {
 
 	// The sections
 	private final Mdr1 mdr1;
+	private final Mdr4 mdr4;
 	private final Mdr5 mdr5;
+	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
 	private final Mdr13 mdr13;
@@ -52,7 +54,9 @@ public class MDRFile extends ImgFile {
 
 		// Initialise the sections
 		mdr1 = new Mdr1(config);
+		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
+		mdr9 = new Mdr9(config);
 		mdr10 = new Mdr10(config);
 		mdr11 = new Mdr11(config);
 		mdr13 = new Mdr13(config);
@@ -74,12 +78,12 @@ public class MDRFile extends ImgFile {
 		mdr13.addRegion(mapIndex, regionIndex, strOff);
 	}
 
-	public void addCity(int mapIndex, int cityIndex, String name) {
+	public void addCity(int mapIndex, int cityIndex, String name, int subdiv, int lblOffset) {
 		int strOff = createString(name);
-		mdr5.addCity(mapIndex, cityIndex, 0, strOff);
+		mdr5.addCity(mapIndex, cityIndex, lblOffset, strOff);
 
-		Mdr11Record poi = mdr11.addPoi(mapIndex, 1, 12545, 0, cityIndex, strOff);
-		mdr10.addPoiType(0xc, poi);
+		Mdr11Record poi = mdr11.addPoi(mapIndex, 1, subdiv, lblOffset, cityIndex, strOff);
+		mdr10.addPoiType(0xb, poi);
 	}
 
 	public void write() {
@@ -92,6 +96,7 @@ public class MDRFile extends ImgFile {
 	}
 
 	private void writeSections(ImgFileWriter writer) {
+		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 
 		mdr1.writeSubSections(writer);
 		mdrHeader.setPosition(1, writer.position());
@@ -100,13 +105,18 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
 
-		writeSection(writer, 5, mdr5);
+		writeSection(writer, 4, mdr4);
+		//writeSection(writer, 5, mdr5);
 
+		writeSection(writer, 9, mdr9);
+
+		// We do 11 before 10, because 10 needs information that is only available
+		// after 11 has run.
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
 
-		writeSection(writer, 13, mdr13);
-		writeSection(writer, 14, mdr14);
+		//writeSection(writer, 13, mdr13);
+		//writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
 	}
 

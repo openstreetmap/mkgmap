@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr10 extends MdrSection {
 	private final List<Mdr10Record> poiTypes = new ArrayList<Mdr10Record>();
+	private int numberOfPois;
 
 	public Mdr10(MdrConfig config) {
 		setConfig(config);
@@ -38,11 +39,25 @@ public class Mdr10 extends MdrSection {
 	}
 	
 	public void writeSectData(ImgFileWriter writer) {
+
 		for (Mdr10Record t : poiTypes) {
 			writer.put((byte) t.getType());
-			int offset = t.getMdr11ref().getOffset() + 1;
-			offset |= 0x8000; // XXX only if a city (or not a city?)
-			writer.putChar((char) offset);
+			int offset = t.getMdr11ref().getRecordNumber() + 1;
+
+			boolean isCity = t.getMdr11ref().getCityIndex() > 0;
+			if (numberOfPois < 0x80) {
+				if (isCity)
+					offset |= 0x80;
+				writer.put((byte) offset);
+			} else if (numberOfPois < 0x8000) {
+				if (isCity)
+					offset |= 0x8000;
+				writer.putChar((char) offset);
+			} else {
+				if (isCity)
+					offset |= 0x800000;
+				writer.put3(offset);
+			}
 		}
 	}
 
@@ -52,5 +67,9 @@ public class Mdr10 extends MdrSection {
 	 */
 	public int getItemSize() {
 		return 0;
+	}
+
+	public void setNumberOfPois(int numberOfPois) {
+		this.numberOfPois = numberOfPois;
 	}
 }

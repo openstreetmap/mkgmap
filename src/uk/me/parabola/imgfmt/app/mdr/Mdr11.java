@@ -19,7 +19,8 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Holds all the POIs.
+ * Holds all the POIs, including cities.
+ * Cities are marked specially.
  *
  * @author Steve Ratcliffe
  */
@@ -46,7 +47,9 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		int count = 0;
 		for (Mdr11Record poi : pois) {
+			poi.setRecordNumber(count++);
 			putMapIndex(writer, poi.getMapIndex());
 			putPointIndex(writer, poi.getPointIndex());
 			writer.putChar((char) poi.getSubdiv());
@@ -66,6 +69,10 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		return 12; // XXX it is variable
+		return 12; // TODO calculate correct value.
+	}
+
+	public int getNumberOfPois() {
+		return pois.size();
 	}
 }
