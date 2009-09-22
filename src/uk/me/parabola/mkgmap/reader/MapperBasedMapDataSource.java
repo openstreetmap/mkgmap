@@ -156,4 +156,18 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		    DEM.createContours((LoadableMapDataSource) this, getConfig());
 		}
 	}
+
+	public void addBoundaryLine(Area area, int type) {
+		List<Coord> coords = new ArrayList<Coord>();
+		coords.add(new Coord(area.getMinLat(), area.getMinLong()));
+		coords.add(new Coord(area.getMinLat(), area.getMaxLong()));
+		coords.add(new Coord(area.getMaxLat(), area.getMaxLong()));
+		coords.add(new Coord(area.getMaxLat(), area.getMinLong()));
+		coords.add(new Coord(area.getMinLat() + 1, area.getMinLong()));
+		MapLine boundary = new MapLine();
+		boundary.setType(type);
+		boundary.setMinResolution(0); // On all levels
+		boundary.setPoints(coords);
+		mapper.addLine(boundary);
+	}
 }

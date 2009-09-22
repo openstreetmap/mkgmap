@@ -16,6 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
@@ -29,6 +30,7 @@ import uk.me.parabola.log.Logger;
 public class RouteCenter {
 	private static final Logger log = Logger.getLogger(RouteCenter.class);
 
+	private final Area area;
 	private final Coord centralPoint;
 
 	private final List<RouteNode> nodes;
@@ -37,16 +39,19 @@ public class RouteCenter {
 	private final TableB tabB;
 	private final TableC tabC;
 
-	public RouteCenter(Coord cp, List<RouteNode> nodes,
-				TableA tabA, TableB tabB) {
-		log.info("new RouteCenter at " + cp.toDegreeString() + ", nodes: " + nodes.size()
-						+ " tabA: " + tabA.size() + " tabB: " + tabB.size());
+	public RouteCenter(Area area, List<RouteNode> nodes,
+					   TableA tabA, TableB tabB) {
 
-		this.centralPoint = cp;
+		this.area = area;
+		this.centralPoint = area.getCenter();
 		this.nodes = nodes;
 		this.tabA = tabA;
 		this.tabB = tabB;
 		this.tabC = new TableC();
+
+		log.info("new RouteCenter at " + centralPoint.toDegreeString() +
+				 ", nodes: " + nodes.size()	+ " tabA: " + tabA.size() +
+				 " tabB: " + tabB.size());
 
 		// update lat/lon offsets; update arcs with table indices; populate tabC
 		for (RouteNode node : nodes) {
@@ -147,5 +152,9 @@ public class RouteCenter {
 		int low = (tablesOffset >> align) - (nodeOffset >> align) - 1;
 		assert 0 <= low && low < 0x100;
 		return low;
+	}
+
+	public Area getArea() {
+		return area;
 	}
 }

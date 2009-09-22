@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 
@@ -105,6 +106,10 @@ public class NOD1Part {
 			this.maxLat = maxLat;
 			this.minLon = minLon;
 			this.maxLon = maxLon;
+		}
+
+	    Area toArea() {
+			return new Area(minLat, minLon, maxLat, maxLon);
 		}
 
 		boolean contains(BBox bbox) {
@@ -299,6 +304,6 @@ public class NOD1Part {
 	 * be a legal RouteCenter.
 	 */
 	private RouteCenter toRouteCenter() {
-		return new RouteCenter(bboxActual.center(), nodes, tabA, tabB);
+		return new RouteCenter(bboxActual.toArea(), nodes, tabA, tabB);
 	}
 }

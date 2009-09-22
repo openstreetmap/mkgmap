@@ -37,6 +37,7 @@ import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.Point;
@@ -71,6 +72,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -111,6 +113,7 @@ public class MapBuilder implements Configurable {
 	private static final double FILTER_DISTANCE = 2.6;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex = false;
+	private int routeCenterBoundaryType = 0;
 
 	public MapBuilder() {
 		regionName = null;
@@ -146,6 +149,8 @@ public class MapBuilder implements Configurable {
 
 		if(props.getProperty("no-sorted-roads", null) != null)
 			sortRoads = false;
+
+		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
 	}
 
 	/**
@@ -165,6 +170,14 @@ public class MapBuilder implements Configurable {
 		country = lblFile.createCountry(countryName, countryAbbr);
 		if(regionName != null)
 			region = lblFile.createRegion(country, regionName, regionAbbr);
+
+		if(routeCenterBoundaryType != 0 &&
+		   netFile != null &&
+		   src instanceof MapperBasedMapDataSource) {
+			for(RouteCenter rc : src.getRoadNetwork().getCenters()) {
+				((MapperBasedMapDataSource)src).addBoundaryLine(rc.getArea(), routeCenterBoundaryType);
+			}
+		}
 
 		processCities(map, src);
 		processPOIs(map, src);
