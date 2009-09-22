@@ -10,7 +10,7 @@ contour=elevation | contour_ext=elevation
 
 # Set highway names to include the reference if there is one
 highway=* {name '${name} (${ref})' | '${ref}' | '${name}' }
-highway=bridleway [0x16 road_class=0 road_speed=0 resolution 23]
+highway=bridleway {set highway=bridleway} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=cycleway [0x16 road_class=0 road_speed=1 resolution 23]
 highway=footway [0x16 road_class=0 road_speed=0 resolution 23]

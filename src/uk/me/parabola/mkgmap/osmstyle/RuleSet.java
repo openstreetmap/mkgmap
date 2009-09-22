@@ -111,7 +111,10 @@ public class RuleSet implements Rule {
 						for (RuleHolder rh : other) {
 							// There may be even more changeable tags
 							// so add them here.
-							moreTags.addAll(rh.getChangeableTags());
+							Set<String> changeableTags = rh.getChangeableTags();
+							if (changeableTags == null)
+								continue;
+							moreTags.addAll(changeableTags);
 
 							// Re-construct the rule and add it to the output list
 							Rule r = new ExpressionSubRule(op, rh);
