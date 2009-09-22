@@ -157,4 +157,11 @@ public class RouteCenter {
 	public Area getArea() {
 		return area;
 	}
+
+	public String reportSizes() {
+		int nodesSize = 0;
+		for(RouteNode n : nodes)
+			nodesSize += n.boundSize();
+		return "n=(" + nodes.size() + "," + nodesSize + "), a=" + tabA.size() + ", b=" + tabB.size();
+	}
 }

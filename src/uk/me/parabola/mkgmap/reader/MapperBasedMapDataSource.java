@@ -157,7 +157,7 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		}
 	}
 
-	public void addBoundaryLine(Area area, int type) {
+	public void addBoundaryLine(Area area, int type, String name) {
 		List<Coord> coords = new ArrayList<Coord>();
 		coords.add(new Coord(area.getMinLat(), area.getMinLong()));
 		coords.add(new Coord(area.getMinLat(), area.getMaxLong()));
@@ -166,6 +166,8 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		coords.add(new Coord(area.getMinLat() + 1, area.getMinLong()));
 		MapLine boundary = new MapLine();
 		boundary.setType(type);
+		if(name != null)
+			boundary.setName(name);
 		boundary.setMinResolution(0); // On all levels
 		boundary.setPoints(coords);
 		mapper.addLine(boundary);

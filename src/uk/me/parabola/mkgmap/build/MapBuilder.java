@@ -175,7 +175,7 @@ public class MapBuilder implements Configurable {
 		   netFile != null &&
 		   src instanceof MapperBasedMapDataSource) {
 			for(RouteCenter rc : src.getRoadNetwork().getCenters()) {
-				((MapperBasedMapDataSource)src).addBoundaryLine(rc.getArea(), routeCenterBoundaryType);
+				((MapperBasedMapDataSource)src).addBoundaryLine(rc.getArea(), routeCenterBoundaryType, rc.reportSizes());
 			}
 		}
 
