@@ -586,7 +586,11 @@ class Osm5XmlHandler extends DefaultHandler {
 				// are only in a single way
 				for(int i = numPoints - 2; i >= 1; --i) {
 					Coord p = points.get(i);
-					if(p.getHighwayCount() > 1)
+					// if this point is a CoordPOI it may become a
+					// node later even if it isn't actually a junction
+					// between ways at this time - so for the purposes
+					// of short arc removal, consider it to be a node
+					if(p.getHighwayCount() > 1 || p instanceof CoordPOI)
 						incArcCount(arcCounts, p, 2);
 				}
 			}
@@ -811,16 +815,13 @@ class Osm5XmlHandler extends DefaultHandler {
 				// equivalent CoordPOI that contains a reference to
 				// the POI's Node so we can access the POI's tags
 				Node node = nodeMap.get(id);
-				if(node != null) {
+				// for now, only do this for nodes that have an access
+				// tag otherwise we will end up creating a CoordPOI
+				// for every node
+				if(node != null && node.getTag("access") != null) {
 					if(!(co instanceof CoordPOI)) {
 						co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
 						coordMap.put(id, co);
-						// even if this point isn't actually shared by
-						// multiple ways, as it may well become a node
-						// later, we want to consider it a node now so
-						// that it will be processed by the short arc
-						// removal code
-						co.incHighwayCount();
 					}
 					// flag this Way as having a CoordPOI so it will
 					// be processed later
