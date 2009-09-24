@@ -37,7 +37,7 @@ public class TableA {
 	// This table's start position relative to the start of NOD 1
 	private int offset;
 
-	private final LinkedHashMap<Arc,Integer> arcs = new LinkedHashMap<Arc,Integer>();
+	private final LinkedHashMap<RoadDef,Integer> arcs = new LinkedHashMap<RoadDef,Integer>();
 
 	private static int count;
 
@@ -47,53 +47,16 @@ public class TableA {
 	}
 
 	/**
-	 * Internal class tracking all the data a Table A entry needs.
-	 * Basically a "forward arc".
-	 */
-	private class Arc {
-		final RouteNode first; final RouteNode second;
-		final RoadDef roadDef;
-
-		Arc(RouteArc arc) {
-			if (arc.isForward()) {
-				first = arc.getSource();
-				second = arc.getDest();
-			} else {
-				first = arc.getDest();
-				second = arc.getSource();
-			}
-			roadDef = arc.getRoadDef();
-		}
-
-		public boolean equals(Object obj) {
-			Arc arc = (Arc) obj;
-			return first.equals(arc.first)
-				&& second.equals(arc.second)
-				&& roadDef.equals(arc.roadDef);
-		}
-
-		public int hashCode() {
-			return first.hashCode() + 2*second.hashCode() + roadDef.hashCode();
-		}
-
-		public String toString() {
-			return "" + first + "->" + second + " (" + roadDef + ")";
-		}
-	}
-
-	/**
 	 * Add an arc to the table if not present and set its index.
 	 *
 	 * The value may overflow while it isn't certain that
 	 * the table fulfills the size constraint.
 	 */
 	public void addArc(RouteArc arc) {
-		Arc narc = new Arc(arc);
-		int i;
-		if (!arcs.containsKey(narc)) {
-			i = arcs.size();
-			arcs.put(narc, i);
-			log.debug("added arc", count, narc, i);
+		if (!arcs.containsKey(arc.getRoadDef())) {
+			int i = arcs.size();
+			arcs.put(arc.getRoadDef(), i);
+			log.debug("added arc", count, arc, i);
 		}
 	}
 
@@ -102,11 +65,10 @@ public class TableA {
 	 */
 	public byte getIndex(RouteArc arc) {
 		log.debug("getting index", arc);
-		Arc narc = new Arc(arc);
-		assert arcs.containsKey(narc):
-			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
-		int i = arcs.get(narc);
-		assert i < 0x100 : "Table A index too large: " + narc;
+		assert arcs.containsKey(arc.getRoadDef()):
+			"Trying to read Table A index for non-registered arc: " + count + " " + arc;
+		int i = arcs.get(arc.getRoadDef());
+		assert i < 0x100 : "Table A index too large: " + arc;
 		return (byte) i;
 	}
 
@@ -152,18 +114,18 @@ public class TableA {
 	 */
 	public void writePost(ImgFileWriter writer) {
 		writer.position(offset);
-		for (Arc arc : arcs.keySet()) {
+		for (RoadDef roadDef : arcs.keySet()) {
 			// write the table A entries.  Consists of a pointer to net
 			// followed by 2 bytes of class and speed flags and road restrictions.
-			log.debug("writing Table A entry", arcs.get(arc));
-			int pos = arc.roadDef.getOffsetNet1();
-			int access = arc.roadDef.getTabAAccess();
+			log.debug("writing Table A entry", roadDef);
+			int pos = roadDef.getOffsetNet1();
+			int access = roadDef.getTabAAccess();
 			// top bits of access go into net1 offset
 			final int ACCESS_TOP_BITS = 0xc000;
 			pos |= (access & ACCESS_TOP_BITS) << 8;
 			access &= ~ACCESS_TOP_BITS;
 			writer.put3(pos);
-			writer.put((byte) arc.roadDef.getTabAInfo());
+			writer.put((byte) roadDef.getTabAInfo());
 			writer.put((byte) access);
 		}
 	}
