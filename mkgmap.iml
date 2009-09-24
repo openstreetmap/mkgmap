@@ -16,6 +16,7 @@
       <excludeFolder url="file://$MODULE_DIR$/localtest" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
       <excludeFolder url="file://$MODULE_DIR$/samples" />
+      <excludeFolder url="file://$MODULE_DIR$/test/resources/in" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

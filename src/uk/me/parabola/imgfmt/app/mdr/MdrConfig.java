@@ -13,6 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
+ * Configuration for the MDR file.
+ * Mostly used when creating a file as there are a number of different options
+ * in the way that it is done.
+ *
  * @author Steve Ratcliffe
  */
 public class MdrConfig {
@@ -22,6 +26,9 @@ public class MdrConfig {
 	private boolean forDevice;
 	private int headerLen = DEFAULT_HEADER_LEN;
 
+	/**
+	 * True if we are creating the file, rather than reading it.
+	 */
 	public boolean isWritable() {
 		return writable;
 	}
@@ -30,6 +37,12 @@ public class MdrConfig {
 		this.writable = writable;
 	}
 
+	/**
+	 * The format that is used by the GPS devices is different to that used
+	 * by Map Source. This parameter says which to do.
+	 * @return True if we are creating the the more compact format required
+	 * for a device.
+	 */
 	public boolean isForDevice() {
 		return forDevice;
 	}
@@ -38,6 +51,11 @@ public class MdrConfig {
 		this.forDevice = forDevice;
 	}
 
+	/**
+	 * There are a number of different header lengths in existence.  This
+	 * controls what sections can exist (and perhaps what must exist).
+	 * @return The header length.
+	 */
 	public int getHeaderLen() {
 		return headerLen;
 	}
