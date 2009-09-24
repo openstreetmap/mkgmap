@@ -61,6 +61,8 @@ public class ImgFS implements FileSystem {
 	private static final long BASIC_BLOCK_SIZE = (long) 512;
 	private BlockManager headerBlockManager;
 
+	private byte xorByte = 0;	// if non-zero, all bytes are XORed with this
+
 	/**
 	 * Private constructor, use the static {@link #createFs} and {@link #openFs}
 	 * routines to make a filesystem.
@@ -161,7 +163,10 @@ public class ImgFS implements FileSystem {
 		if (mode.indexOf('r') >= 0) {
 			Dirent ent = internalLookup(name);
 
-			return new FileNode(file, ent, "r");
+			FileNode fn = new FileNode(file, ent, "r");
+			if(xorByte != 0)
+				fn.setXorByte(xorByte);
+			return fn;
 		} else if (mode.indexOf('w') >= 0) {
 			Dirent ent;
 			try {
@@ -294,6 +299,12 @@ public class ImgFS implements FileSystem {
 		ByteBuffer headerBuf = ByteBuffer.allocate(512);
 		headerBuf.order(ByteOrder.LITTLE_ENDIAN);
 		chan.read(headerBuf);
+		xorByte = headerBuf.get(0);
+		if(xorByte != 0) {
+			byte[] headerBytes = headerBuf.array();
+			for(int i = 0; i < headerBytes.length; ++i)
+				headerBytes[i] ^= xorByte;
+		}
 
 		header = new ImgHeader(null);
 		header.setHeader(headerBuf);
@@ -310,7 +321,7 @@ public class ImgFS implements FileSystem {
 
 		header.setFile(f);
 		directory.setFile(f);
-		directory.readInit();
+		directory.readInit(xorByte);
 	}
 
 	/**
