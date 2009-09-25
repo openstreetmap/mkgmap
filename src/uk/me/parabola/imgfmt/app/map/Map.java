@@ -49,7 +49,9 @@ import uk.me.parabola.util.EnhancedProperties;
  * It is the interface for all information about the whole map, such as the
  * point overviews etc.  Subdivision will hold the map elements.
  *
- * <p>Needless to say, it has nothing to do with java.util.Map.
+ * <p>Needless to say, it has nothing to do with java.util.Map and given
+ * how it has turned out, with all reading functionality in MapReader
+ * it would have been better named MapWriter.
  *
  * @author Steve Ratcliffe
  */

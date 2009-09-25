@@ -120,6 +120,28 @@ public class Subdivision {
 		this.height = h;
 	}
 
+	private Subdivision(Zoom z, SubdivData data) {
+		lblFile = null;
+		rgnFile = null;
+		zoomLevel = z;
+		latitude = data.getLat();
+		longitude = data.getLon();
+		this.width = data.getWidth();
+		this.height = data.getHeight();
+
+		rgnPointer = data.getRgnPointer();
+
+		int elem = data.getFlags();
+		if ((elem & 0x10) != 0)
+			setHasPoints(true);
+		if ((elem & 0x20) != 0)
+			setHasIndPoints(true);
+		if ((elem & 0x40) != 0)
+			setHasPolylines(true);
+		if ((elem & 0x80) != 0)
+			setHasPolygons(true);
+	}
+
 	/**
 	 * Create a subdivision at a given zoom level.
 	 *
@@ -156,6 +178,10 @@ public class Subdivision {
 		Subdivision div = new Subdivision(ifiles, area, zoom);
 		zoom.addSubdivision(div);
 		return div;
+	}
+
+	public static Subdivision readSubdivision(Zoom zoom, SubdivData subdivData) {
+		return new Subdivision(zoom, subdivData);
 	}
 
 	public Zoom getZoom() {
