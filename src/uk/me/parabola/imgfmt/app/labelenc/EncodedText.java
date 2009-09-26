@@ -21,7 +21,7 @@ package uk.me.parabola.imgfmt.app.labelenc;
  * The length of the byte array may be longer than the part that is actually
  * used, so the length property should always be used.
  *
- * Class is imutable.
+ * Class is immutable.
  *
  * @author Steve Ratcliffe
  */

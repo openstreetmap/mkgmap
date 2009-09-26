@@ -117,7 +117,7 @@ public class City implements Comparable {
 	public String toString() {
 		String result = "";
 		if(label != null)
-			result += new String(label.getCtext());
+			result += label.getText();
 		if(country != null)
 			result += " in country " + (0 + country.getIndex());
 		if(region != null)
