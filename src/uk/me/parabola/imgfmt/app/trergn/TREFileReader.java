@@ -40,6 +40,8 @@ public class TREFileReader extends ImgReader {
 	private Zoom[] mapLevels = new Zoom[MAX_ZOOM_LEVELS];
 	private Subdivision[][] levelDivs = new Subdivision[MAX_ZOOM_LEVELS][];
 
+	private static final Subdivision[] EMPTY_SUBDIVISIONS = new Subdivision[0];
+
 	private final TREHeader header = new TREHeader();
 
 
@@ -52,37 +54,24 @@ public class TREFileReader extends ImgReader {
 		readSubdivs();
 	}
 
+	public Area getBounds() {
+		return header.getBounds();
+	}
+
 	/**
-	 * Read the map levels.  This is needed to make sense of the subdivision
-	 * data.  Unlike in the write case, we just keep an array of zoom levels
-	 * as found, there is no correspondence between the array index and level.
+	 * Return the subdivisions for the given level.
+	 * @param level The level, 0 being the most detailed.  There may not be
+	 * a level zero in the map.
+	 * @return The subdivisions for the level. Never returns null; a zero length
+	 * array is returned if there is no such level.
 	 */
-	private void readMapLevels() {
-		ImgFileReader reader = getReader();
-
-		int levelsPos = header.getMapLevelsPos();
-		int levelsSize = header.getMapLevelsSize();
-		reader.position(levelsPos);
-
-		List<Subdivision[]> levelDivs = new ArrayList<Subdivision[]>();
-		List<Zoom> mapLevels = new ArrayList<Zoom>();
-		int end = levelsPos + levelsSize;
-		while (reader.position() < end) {
-			int level = reader.get();
-			int nbits = reader.get();
-			int ndivs = reader.getChar();
-
-			Subdivision[] divs = new Subdivision[ndivs];
-			levelDivs.add(divs);
-			level &= 0x7f;
-
-			Zoom z = new Zoom(level, nbits);
-			System.out.println("zoom" + z);
-			mapLevels.add(z);
+	public Subdivision[] subdivForLevel(int level) {
+		for (int i = 0; i < MAX_ZOOM_LEVELS; i++) {
+			if (mapLevels[i].getLevel() == level) {
+				return levelDivs[i];
+			}
 		}
-
-		this.levelDivs = levelDivs.toArray(new Subdivision[levelDivs.size()][]);
-		this.mapLevels = mapLevels.toArray(new Zoom[mapLevels.size()]);
+		return EMPTY_SUBDIVISIONS;
 	}
 
 	/**
@@ -112,11 +101,14 @@ public class TREFileReader extends ImgReader {
 				if (count < levelDivs.length-1)
 					reader.getChar();
 
-
 				int endRgnOffset = reader.get3();
 
-				SubdivData subdivData = new SubdivData(flags, lat, lon, width, height, lastRgnOffset);
+				SubdivData subdivData = new SubdivData(flags,
+						lat, lon, width, height,
+						lastRgnOffset, endRgnOffset);
+
 				Subdivision subdiv = Subdivision.readSubdivision(mapLevels[count], subdivData);
+				
 				divs[i] = subdiv;
 
 				lastRgnOffset = endRgnOffset;
@@ -124,40 +116,40 @@ public class TREFileReader extends ImgReader {
 		}
 	}
 
-	public Area getBounds() {
-		return header.getBounds();
+	/**
+	 * Read the map levels.  This is needed to make sense of the subdivision
+	 * data.  Unlike in the write case, we just keep an array of zoom levels
+	 * as found, there is no correspondence between the array index and level.
+	 */
+	private void readMapLevels() {
+		ImgFileReader reader = getReader();
+
+		int levelsPos = header.getMapLevelsPos();
+		int levelsSize = header.getMapLevelsSize();
+		reader.position(levelsPos);
+
+		List<Subdivision[]> levelDivs = new ArrayList<Subdivision[]>();
+		List<Zoom> mapLevels = new ArrayList<Zoom>();
+		int end = levelsPos + levelsSize;
+		while (reader.position() < end) {
+			int level = reader.get();
+			int nbits = reader.get();
+			int ndivs = reader.getChar();
+
+			Subdivision[] divs = new Subdivision[ndivs];
+			levelDivs.add(divs);
+			level &= 0x7f;
+
+			Zoom z = new Zoom(level, nbits);
+			mapLevels.add(z);
+		}
+
+		this.levelDivs = levelDivs.toArray(new Subdivision[levelDivs.size()][]);
+		this.mapLevels = mapLevels.toArray(new Zoom[mapLevels.size()]);
 	}
 
 	public void config(EnhancedProperties props) {
 		header.config(props);
-	}
-
-	/**
-	 * Convert a min resolution to a level.  We return the lowest level (most
-	 * detailed) that has a resolution less than or equal to the given resolution.
-	 *
-	 * @param minResolution The minimum resolution.
-	 * @return The level corresponding to the resolution.
-	 */
-	private int decodeLevel(int minResolution) {
-		Zoom top = null;
-		for (int i = 15; i >= 0; i--) {
-			Zoom z = mapLevels[i];
-			if (z == null)
-				continue;
-
-			if (top == null)
-				top = z;
-
-			if (z.getResolution() >= minResolution)
-				return z.getLevel();
-		}
-
-		// If not found, then allow it only at the top level
-		if (top != null)
-			return top.getLevel();
-		else
-			return 0; // Fail safe, shouldn't really happen
 	}
 
 	public String[] getCopyrights() {
@@ -194,5 +186,33 @@ public class TREFileReader extends ImgReader {
 		//}
 
 		return msgs.toArray(new String[msgs.size()]);
+	}
+
+	/**
+	 * Convert a min resolution to a level.  We return the lowest level (most
+	 * detailed) that has a resolution less than or equal to the given resolution.
+	 *
+	 * @param minResolution The minimum resolution.
+	 * @return The level corresponding to the resolution.
+	 */
+	private int decodeLevel(int minResolution) {
+		Zoom top = null;
+		for (int i = 15; i >= 0; i--) {
+			Zoom z = mapLevels[i];
+			if (z == null)
+				continue;
+
+			if (top == null)
+				top = z;
+
+			if (z.getResolution() >= minResolution)
+				return z.getLevel();
+		}
+
+		// If not found, then allow it only at the top level
+		if (top != null)
+			return top.getLevel();
+		else
+			return 0; // Fail safe, shouldn't really happen
 	}
 }

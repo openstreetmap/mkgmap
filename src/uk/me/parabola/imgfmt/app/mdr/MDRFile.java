@@ -16,6 +16,7 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -38,6 +39,8 @@ public class MDRFile extends ImgFile {
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
+
+	private int currentMap;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		mdrHeader = new MDRHeader(config.getHeaderLen());
@@ -64,7 +67,13 @@ public class MDRFile extends ImgFile {
 		mdr15 = new Mdr15(config);
 	}
 
+	/**
+	 * Add a map to the index.  You must add the map, then all of the items
+	 * that belong to it, before adding the next map.
+	 * @param mapName The numeric name of the map.
+	 */
 	public void addMap(int mapName) {
+		currentMap++;
 		mdr1.addMap(mapName);
 	}
 
@@ -84,6 +93,11 @@ public class MDRFile extends ImgFile {
 
 		Mdr11Record poi = mdr11.addPoi(mapIndex, 1, subdiv, lblOffset, cityIndex, strOff);
 		mdr10.addPoiType(0xb, poi);
+	}
+
+	public void addPoint(Point point, boolean indexed) {
+		assert currentMap > 0;
+		//Mdr11Record poi = mdr11.addPoi(currentMap, point.)
 	}
 
 	public void write() {

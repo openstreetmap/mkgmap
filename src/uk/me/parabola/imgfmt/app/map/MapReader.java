@@ -16,12 +16,15 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
@@ -70,6 +73,18 @@ public class MapReader implements Closeable {
 		chan = fs.open(mapname + ".LBL", "r");
 		lblFile = new LBLFileReader(chan);
 		saveForClose(lblFile, chan);
+	}
+
+	public List<Point> indexedPointsForLevel(int level) {
+		List<Point> points = new ArrayList<Point>();
+
+		Subdivision[] subdivisions = treFile.subdivForLevel(level);
+		for (Subdivision sd : subdivisions) {
+			List<Point> subdivPoints = rgnFile.indexPointsForSubdiv(sd);
+			points.addAll(subdivPoints);
+		}
+
+		return points;
 	}
 
 	public void close() throws IOException {

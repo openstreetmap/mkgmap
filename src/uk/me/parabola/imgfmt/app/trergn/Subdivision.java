@@ -49,7 +49,10 @@ public class Subdivision {
 	private final LBLFile lblFile;
 	private final RGNFile rgnFile;
 
-	private int rgnPointer;
+	// The start pointer is set for read and write.  The end pointer is only
+	// set for subdivisions that are read from a file.
+	private int startRgnPointer;
+	private int endRgnPointer;
 
 	private int lastMapElement;
 
@@ -129,7 +132,8 @@ public class Subdivision {
 		this.width = data.getWidth();
 		this.height = data.getHeight();
 
-		rgnPointer = data.getRgnPointer();
+		startRgnPointer = data.getRgnPointer();
+		endRgnPointer = data.getEndRgnOffset();
 
 		int elem = data.getFlags();
 		if ((elem & 0x10) != 0)
@@ -227,7 +231,7 @@ public class Subdivision {
 	 */
 	public void write(ImgFileWriter file) {
 		log.debug("write subdiv", latitude, longitude);
-		file.put3(rgnPointer);
+		file.put3(startRgnPointer);
 		file.put(getType());
 		file.put3(longitude);
 		file.put3(latitude);
@@ -289,12 +293,16 @@ public class Subdivision {
 		this.last = last;
 	}
 
-	public void setRgnPointer(int rgnPointer) {
-		this.rgnPointer = rgnPointer;
+	public void setStartRgnPointer(int startRgnPointer) {
+		this.startRgnPointer = startRgnPointer;
 	}
 
-	public int getRgnPointer() {
-		return rgnPointer;
+	public int getStartRgnPointer() {
+		return startRgnPointer;
+	}
+
+	public int getEndRgnPointer() {
+		return endRgnPointer;
 	}
 
 	public int getLongitude() {
@@ -319,6 +327,22 @@ public class Subdivision {
 
 	public void setHasPolygons(boolean hasPolygons) {
 		this.hasPolygons = hasPolygons;
+	}
+
+	public boolean hasPoints() {
+		return hasPoints;
+	}
+
+	public boolean hasIndPoints() {
+		return hasIndPoints;
+	}
+
+	public boolean hasPolylines() {
+		return hasPolylines;
+	}
+
+	public boolean hasPolygons() {
+		return hasPolygons;
 	}
 
 	/**

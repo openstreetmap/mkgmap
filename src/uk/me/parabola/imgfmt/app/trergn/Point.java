@@ -16,11 +16,12 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
-
-import java.io.OutputStream;
-import java.io.IOException;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -72,6 +73,26 @@ public class Point extends MapObject {
 		file.putChar((char) getDeltaLat());
 		if (hasSubtype)
 			file.put(subtype);
+	}
+
+	public void read(ImgFileReader file) {
+		byte t = file.get();
+		int off = file.get3();
+		boolean hasSubtype = false;
+		if ((off & 0x800000) != 0)
+			hasSubtype = true;
+
+		//Label l =
+		//setLabel();
+		setDeltaLong(file.getChar());
+		setDeltaLat(file.getChar());
+		
+		if (hasSubtype) {
+			byte st = file.get();
+			setType(((t & 0xff) << 8) | (st & 0xff));
+		} else {
+			setType(t & 0xffff);
+		}
 	}
 
 	/*

@@ -13,16 +13,20 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
@@ -70,6 +74,19 @@ public class MdrBuilder implements Combiner {
 
 	public void onMapEnd(FileInfo finfo) {
 		mdrFile.addMap(finfo.getMapnameAsInt());
+
+		String filename = finfo.getFilename();
+		MapReader mr;
+		try {
+			mr = new MapReader(filename);
+		} catch (FileNotFoundException e) {
+			throw new ExitException("Could not open " + filename + " when creating mdr file");
+		}
+
+		List<Point> list = mr.indexedPointsForLevel(0);
+		for (Point p : list) {
+			mdrFile.addPoint(p, true);
+		}
 	}
 
 	public void onFinish() {

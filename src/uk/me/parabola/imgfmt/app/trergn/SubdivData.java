@@ -24,14 +24,16 @@ public class SubdivData {
 	private final int width;
 	private final int height;
 	private final int rgnPointer;
+	private final int endRgnOffset;
 
-	public SubdivData(int flags, int lat, int lon, int width, int height, int rgnPointer) {
+	public SubdivData(int flags, int lat, int lon, int width, int height, int rgnPointer, int endRgnOffset) {
 		this.flags = flags;
 		this.lat = lat;
 		this.lon = lon;
 		this.width = width;
 		this.height = height;
 		this.rgnPointer = rgnPointer;
+		this.endRgnOffset = endRgnOffset;
 	}
 
 	public int getFlags() {
@@ -56,5 +58,9 @@ public class SubdivData {
 
 	public int getRgnPointer() {
 		return rgnPointer;
+	}
+
+	public int getEndRgnOffset() {
+		return endRgnOffset;
 	}
 }
