@@ -192,4 +192,9 @@ public class GType {
 
 		end.next = type;
 	}
+
+	public void clear() {
+		while (next != null)
+			next = next.next;
+	}
 }

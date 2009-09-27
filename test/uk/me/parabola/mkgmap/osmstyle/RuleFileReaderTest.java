@@ -439,6 +439,24 @@ public class RuleFileReaderTest {
 		assertEquals("type of third", 3, list.get(2).getType());
 	}
 
+	@Test
+	public void testContinueRepeat() {
+		RuleSet rs = makeRuleSet("highway=primary [0x1 continue]" +
+				"highway=primary [0x2 continue]" +
+				"highway=primary [0x3]" +
+				"highway=primary [0x4]"
+		);
+
+		Way el = new Way(1);
+		el.addTag("highway", "primary");
+
+		for (int i = 0; i < 3; i++) {
+			GType type = rs.resolveType(el);
+			assertEquals("first type", 1, type.getType());
+			assertEquals("continue search", true, type.isContinueSearch());
+		}
+	}
+
 	/**
 	 * Create a rule set out of a string.  The string is processed
 	 * as if it were in a file and the levels spec had been set.

@@ -41,7 +41,7 @@ public class RuleList implements Rule, Iterable<RuleHolder> {
 		Collections.sort(ruleList);
 
 		int lastPriority = Integer.MIN_VALUE;
-		GType rettype = null;
+		GType gType = null;
 		for (RuleHolder rh : ruleList) {
 			// As the priority value identifies the rule, throw out all
 			// duplicates.
@@ -51,19 +51,20 @@ public class RuleList implements Rule, Iterable<RuleHolder> {
 			lastPriority = priority;
 
 			// Get the type
-			GType type = rh.resolveType(el);
-			if (type == null)
+			GType t = rh.resolveType(el);
+			if (t == null)
 				continue;
 
-			if (rettype == null) {
-				rettype = type;
+			t.clear();
+			if (gType == null) {
+				gType = t;
 			} else {
-				rettype.addType(type);
+				gType.addType(t);
 			}
-			if (!type.isContinueSearch())
+			if (!t.isContinueSearch())
 				break;
 		}
-		return rettype;
+		return gType;
 	}
 
 	public void dumpRules(Formatter fmt, String key) {
