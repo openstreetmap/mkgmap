@@ -18,6 +18,8 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -404,6 +406,37 @@ public class RuleFileReaderTest {
 		GType type = rs.resolveType(el);
 		assertNotNull("finds the type", type);
 		assertEquals("resulting type", 2, type.getType());
+	}
+
+	/**
+	 * Test the continue keyword.  If a type is marked with this word, then
+	 * further matches are performed and this might result in more types
+	 * being added.
+	 */
+	@Test
+	public void testContinue() {
+		RuleSet rs = makeRuleSet("highway=primary [0x1 continue]" +
+				"highway=primary [0x2 continue]" +
+				"highway=primary [0x3]" +
+				"highway=primary [0x4]"
+		);
+
+		Way el = new Way(1);
+		el.addTag("highway", "primary");
+
+		GType type = rs.resolveType(el);
+		assertEquals("first type", 1, type.getType());
+		assertEquals("continue search", true, type.isContinueSearch());
+
+		// Build list of types
+		List<GType> list = new ArrayList<GType>();
+		for (; type != null; type = type.next())
+			list.add(type);
+
+		assertEquals("number of result types", 3, list.size());
+		assertEquals("type of first", 1, list.get(0).getType());
+		assertEquals("type of second", 2, list.get(1).getType());
+		assertEquals("type of third", 3, list.get(2).getType());
 	}
 
 	/**

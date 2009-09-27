@@ -23,6 +23,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
+ * A list of rules.
  * @author Steve Ratcliffe
  */
 public class RuleList implements Rule, Iterable<RuleHolder> {
@@ -40,19 +41,29 @@ public class RuleList implements Rule, Iterable<RuleHolder> {
 		Collections.sort(ruleList);
 
 		int lastPriority = Integer.MIN_VALUE;
+		GType rettype = null;
 		for (RuleHolder rh : ruleList) {
 			// As the priority value identifies the rule, throw out all
 			// duplicates.
 			int priority = rh.priority();
 			if (lastPriority == priority)
 				continue;
-			lastPriority = rh.priority();
+			lastPriority = priority;
 
+			// Get the type
 			GType type = rh.resolveType(el);
-			if (type != null)
-				return type;
+			if (type == null)
+				continue;
+
+			if (rettype == null) {
+				rettype = type;
+			} else {
+				rettype.addType(type);
+			}
+			if (!type.isContinueSearch())
+				break;
 		}
-		return null;
+		return rettype;
 	}
 
 	public void dumpRules(Formatter fmt, String key) {

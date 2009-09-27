@@ -51,6 +51,11 @@ public class GType {
 
 	private boolean road;
 
+	private boolean continueSearch;
+
+	// Linked list of resolved types.
+	private GType next;
+
 	public GType(int featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
@@ -166,5 +171,25 @@ public class GType {
 
 	public boolean isRoad() {
 		return road;
+	}
+
+	public boolean isContinueSearch() {
+		return continueSearch;
+	}
+
+	public void setContinueSearch(boolean continueSearch) {
+		this.continueSearch = continueSearch;
+	}
+
+	public GType next() {
+		return next;
+	}
+
+	public void addType(GType type) {
+		GType end = this;
+		while (end.next != null)
+			end = end.next;
+
+		end.next = type;
 	}
 }

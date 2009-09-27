@@ -97,7 +97,7 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule relationRules;
 
-	private boolean ignoreMaxspeeds;
+	private final boolean ignoreMaxspeeds;
 
 	class AccessMapping {
 		private final String type;
@@ -145,7 +145,7 @@ public class StyledConverter implements OsmConverter {
 			lineAdder = overlayAdder;
 	}
 
-	private static Pattern commaPattern = Pattern.compile(",");
+	private static final Pattern commaPattern = Pattern.compile(",");
 
 	public GType makeGTypeFromTags(Element element) {
 		String[] vals = commaPattern.split(element.getTag("mkgmap:gtype"));
@@ -239,22 +239,26 @@ public class StyledConverter implements OsmConverter {
 		if (way.getPoints().size() < 2)
 			return;
 
-		GType foundType = null;
+		GType foundType;
 		if(way.getTag("mkgmap:gtype") != null) {
 			foundType = makeGTypeFromTags(way);
 			if(foundType == null)
 				return;
+			addConvertedWay(way, foundType);
+			return;
 		}
-		else {
-			preConvertRules(way);
 
-			foundType = wayRules.resolveType(way);
-			if (foundType == null)
-				return;
+		preConvertRules(way);
 
+		foundType = wayRules.resolveType(way);
+		while (foundType != null) {
 			postConvertRules(way, foundType);
+			addConvertedWay(way, foundType);
+			foundType = foundType.next();
 		}
+	}
 
+	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == GType.POLYLINE) {
 		    if(foundType.isRoad() &&
 			   !MapElement.hasExtendedType(foundType.getType()))
@@ -274,23 +278,24 @@ public class StyledConverter implements OsmConverter {
 	 */
 	public void convertNode(Node node) {
 
-		GType foundType = null;
+		GType foundType;
 		if(node.getTag("mkgmap:gtype") != null) {
 			foundType = makeGTypeFromTags(node);
 			if(foundType == null)
 				return;
+
+			addPoint(node, foundType);
+			return;
 		}
-		else {
-			preConvertRules(node);
 
-			foundType = nodeRules.resolveType(node);
-			if (foundType == null)
-				return;
+		preConvertRules(node);
 
+		foundType = nodeRules.resolveType(node);
+		while (foundType != null) {
 			postConvertRules(node, foundType);
+			addPoint(node, foundType);
+			foundType = foundType.next();
 		}
-
-		addPoint(node, foundType);
 	}
 
 	/**
