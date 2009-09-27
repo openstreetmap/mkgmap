@@ -23,9 +23,10 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	private int cityIndex;
 	private int strOffset;
 	private int recordNumber;
+	private String name;
 
 	public int compareTo(Mdr11Record o) {
-		return 0;
+		return name.compareTo(o.name);
 	}
 
 	public int getPointIndex() {
@@ -74,5 +75,15 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 
 	public void setRecordNumber(int recordNumber) {
 		this.recordNumber = recordNumber;
+	}
+
+	public String getName() {
+		assert name!=null;
+		return name;
+	}
+
+	public void setName(String name) {
+		assert name!=null;
+		this.name = name;
 	}
 }

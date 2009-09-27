@@ -89,21 +89,21 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void addCity(int mapIndex, int cityIndex, String name, int subdiv, int lblOffset) {
-		int strOff = createString(name);
-		mdr5.addCity(mapIndex, cityIndex, lblOffset, strOff);
-
-		Mdr11Record poi = mdr11.addPoi(mapIndex, 1, subdiv, lblOffset, cityIndex, strOff);
-		mdr10.addPoiType(0xb, poi);
+		//int strOff = createString(name);
+		//mdr5.addCity(mapIndex, cityIndex, lblOffset, strOff);
+		//
+		//Mdr11Record poi = mdr11.addPoi(mapIndex, 1, subdiv, lblOffset, cityIndex, strOff);
+		//mdr10.addPoiType(0xb, poi);
 	}
 
 	public void addPoint(Point point, boolean indexed) {
 		assert currentMap > 0;
 
 		Label label = point.getLabel();
-		String s = label.getText();
-		int strOff = createString(s);
+		String name = label.getText();
+		int strOff = createString(name);
 		Mdr11Record poi = mdr11.addPoi(currentMap,
-				point, strOff);
+				point, name, strOff);
 
 		mdr10.addPoiType(point.getType(), poi);
 	}

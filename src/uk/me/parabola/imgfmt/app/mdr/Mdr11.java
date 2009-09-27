@@ -14,6 +14,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -32,13 +33,14 @@ public class Mdr11 extends MdrSection {
 		setConfig(config);
 	}
 
-	public Mdr11Record addPoi(int mapIndex, Point point, int strOff) {
+	public Mdr11Record addPoi(int mapIndex, Point point, String name, int strOff) {
 		Mdr11Record poi = new Mdr11Record();
 		poi.setMapIndex(mapIndex);
 		poi.setPointIndex(point.getNumber());
 		poi.setSubdiv(point.getSubdiv().getNumber());
 		poi.setLblOffset(point.getLabel().getOffset());
 		poi.setCityIndex(0);
+		poi.setName(name);
 		poi.setStrOffset(strOff);
 
 		pois.add(poi);
@@ -46,14 +48,16 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public Mdr11Record addPoi(int mapIndex, int pointIndex, int subdiv,
-		int lblOffset, int cityIndex, int strOff)
+			int lblOffset, int cityIndex, String name, int strOff)
 	{
+		assert name!=null;
 		Mdr11Record poi = new Mdr11Record();
 		poi.setMapIndex(mapIndex);
 		poi.setPointIndex(pointIndex);
 		poi.setSubdiv(subdiv);
 		poi.setLblOffset(lblOffset);
 		poi.setCityIndex(cityIndex);
+		poi.setName(name);
 		poi.setStrOffset(strOff);
 
 		pois.add(poi);
@@ -61,7 +65,7 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		//Collections.sort(pois);
+		Collections.sort(pois);
 
 		int count = 0;
 		for (Mdr11Record poi : pois) {

@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -39,6 +40,7 @@ public class Mdr10 extends MdrSection {
 	}
 	
 	public void writeSectData(ImgFileWriter writer) {
+		Collections.sort(poiTypes);
 
 		for (Mdr10Record t : poiTypes) {
 			writer.put((byte) t.getType());
