@@ -55,6 +55,9 @@ public abstract class MapObject {
 
 	private ExtTypeAttributes extTypeAttributes;
 
+	// The number of this point within its subdivision.  Set on read only.
+	private int number;
+
 	/**
 	 * Write this object to the given file.
 	 *
@@ -82,7 +85,7 @@ public abstract class MapObject {
 		refLabels.add(refLabel);
 	}
 
-	protected int getType() {
+	public int getType() {
 		return type;
 	}
 
@@ -158,5 +161,13 @@ public abstract class MapObject {
 
 	public String toString() {
 		return "Type=" + type + ", l=" + label;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
 	}
 }

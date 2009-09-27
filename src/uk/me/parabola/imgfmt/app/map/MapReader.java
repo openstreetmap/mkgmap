@@ -73,10 +73,14 @@ public class MapReader implements Closeable {
 		chan = fs.open(mapname + ".LBL", "r");
 		lblFile = new LBLFileReader(chan);
 		saveForClose(lblFile, chan);
+
+		rgnFile.setLblFile(lblFile);
 	}
 
 	public List<Point> indexedPointsForLevel(int level) {
 		List<Point> points = new ArrayList<Point>();
+
+		int n = treFile.getFirstSubdivForLevel(level);
 
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision sd : subdivisions) {

@@ -84,6 +84,7 @@ public class TREFileReader extends ImgReader {
 		int end = start + header.getSubdivSize();
 		reader.position(start);
 
+		int subdivNum = 1;
 		int lastRgnOffset = reader.get3();
 		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
 
@@ -108,6 +109,7 @@ public class TREFileReader extends ImgReader {
 						lastRgnOffset, endRgnOffset);
 
 				Subdivision subdiv = Subdivision.readSubdivision(mapLevels[count], subdivData);
+				subdiv.setNumber(subdivNum++);
 				
 				divs[i] = subdiv;
 
@@ -214,5 +216,19 @@ public class TREFileReader extends ImgReader {
 			return top.getLevel();
 		else
 			return 0; // Fail safe, shouldn't really happen
+	}
+
+	public int getFirstSubdivForLevel(int level) {
+		int n = 1;
+		for (int i = 0; i < levelDivs.length; i++) {
+			Zoom z = mapLevels[i];
+			if (z.getLevel() == level)
+				return n;
+			
+			Subdivision[] div = levelDivs[i];
+			n += div.length;
+		}
+
+		return n;
 	}
 }

@@ -67,6 +67,46 @@
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/branches">
+                    <value>
+                      <list>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1254066128787" />
+                          <option name="revision" value="1235" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/style" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1254008907568" />
+                          <option name="revision" value="1233" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/mdr" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1252055175332" />
+                          <option name="revision" value="1166" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/multipolygon" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1240156952632" />
+                          <option name="revision" value="1005" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/smoothing" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1236291460415" />
+                          <option name="revision" value="970" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/poi" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1228044192952" />
+                          <option name="revision" value="740" />
+                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/typpoi" />
+                        </SvnBranchItem>
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.parabola.me.uk/svn/mkgmap/branches" />

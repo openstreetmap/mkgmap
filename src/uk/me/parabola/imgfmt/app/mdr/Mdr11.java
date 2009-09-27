@@ -17,10 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.trergn.Point;
 
 /**
  * Holds all the POIs, including cities.
- * Cities are marked specially.
+ * Cities? or indexed points are marked specially.
  *
  * @author Steve Ratcliffe
  */
@@ -29,6 +30,19 @@ public class Mdr11 extends MdrSection {
 
 	public Mdr11(MdrConfig config) {
 		setConfig(config);
+	}
+
+	public Mdr11Record addPoi(int mapIndex, Point point, int strOff) {
+		Mdr11Record poi = new Mdr11Record();
+		poi.setMapIndex(mapIndex);
+		poi.setPointIndex(point.getNumber());
+		poi.setSubdiv(point.getSubdiv().getNumber());
+		poi.setLblOffset(point.getLabel().getOffset());
+		poi.setCityIndex(0);
+		poi.setStrOffset(strOff);
+
+		pois.add(poi);
+		return poi;
 	}
 
 	public Mdr11Record addPoi(int mapIndex, int pointIndex, int subdiv,

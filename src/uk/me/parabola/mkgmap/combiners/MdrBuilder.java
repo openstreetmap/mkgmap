@@ -44,6 +44,13 @@ public class MdrBuilder implements Combiner {
 	// Push things onto this stack to have them closed in the reverse order.
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
 
+	/**
+	 * Create the mdr file and initialise.
+	 * It has a name that is based on the overview-mapname option, as does
+	 * the associated MDX file.
+	 *
+	 * @param args The command line arguments.
+	 */
 	public void init(CommandArgs args) {
 		String name = args.get("overview-mapname", "osmmap");
 
@@ -72,20 +79,28 @@ public class MdrBuilder implements Combiner {
 		toClose.push(mdrFile);
 	}
 
+	/**
+	 * Adds a new map to the file.  We need to read in the img file and
+	 * extract all the information that can be indexed from it.
+	 *
+	 * @param finfo An interface to read the map.
+	 */
 	public void onMapEnd(FileInfo finfo) {
+		// Add the map name
 		mdrFile.addMap(finfo.getMapnameAsInt());
 
 		String filename = finfo.getFilename();
-		MapReader mr;
+		MapReader mr = null;
 		try {
 			mr = new MapReader(filename);
+			List<Point> list = mr.indexedPointsForLevel(0);
+			for (Point p : list) {
+				mdrFile.addPoint(p, true);
+			}
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
-		}
-
-		List<Point> list = mr.indexedPointsForLevel(0);
-		for (Point p : list) {
-			mdrFile.addPoint(p, true);
+		} finally {
+			Utils.closeFile(mr);
 		}
 	}
 
@@ -93,6 +108,7 @@ public class MdrBuilder implements Combiner {
 		// Write out the mdr file
 		mdrFile.write();
 
+		// Close everything
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
 	}

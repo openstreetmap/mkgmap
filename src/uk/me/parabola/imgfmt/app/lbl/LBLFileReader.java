@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,57 +40,106 @@ import uk.me.parabola.log.Logger;
  */
 public class LBLFileReader extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFileReader.class);
+	private static final Label NULL_LABEL = new Label("");
 
 	private CharacterDecoder textDecoder = CodeFunctions.getDefaultDecoder();
 
 	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 
-	private final LBLHeader lblHeader = new LBLHeader();
+	private final LBLHeader header = new LBLHeader();
 
 	private final PlacesFile places = new PlacesFile();
 
+	private final Map<Integer, Label> labels = new HashMap<Integer, Label>();
+
 	public LBLFileReader(ImgChannel chan) {
-		setHeader(lblHeader);
+		setHeader(header);
 
 		setReader(new BufferedImgFileReader(chan));
-		lblHeader.readHeader(getReader());
+		header.readHeader(getReader());
 		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
-				lblHeader.getEncodingType());
+				header.getEncodingType());
 		textDecoder = funcs.getDecoder();
 
-		// TODO read the places file
-		//places.init(this, lblHeader.getPlaceHeader());
+		 //TODO read the places file
+		//places.init(this, header.getPlaceHeader());
+		readLables();
 	}
 
+	/**
+	 * Read and cache all the labels.
+	 *
+	 * Note: It is pretty pointless saving the whole label rather than just
+	 * the text, except that other objects take a Lable.  Perhaps this can
+	 * be changed.
+	 */
+	private void readLables() {
+		ImgFileReader reader = getReader();
+
+		labels.put(0, NULL_LABEL);
+		
+		int start = header.getLabelStart();
+		int size =  header.getLabelSize();
+
+		int hl = getHeader().getHeaderLength();
+		reader.position(start + 1);
+		int offset = 1;
+		for (int i = 0; i < size; i++) {
+			byte b = reader.get();
+			if (textDecoder.addByte(b)) {
+				EncodedText encText = textDecoder.getText();
+				String text;
+				try {
+					text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
+				} catch (UnsupportedEncodingException e) {
+					// this can't really happen because utf-8 must be supported
+					text = "";
+				}
+
+				Label l = new Label(text);
+				l.setOffset(offset);
+				labels.put(offset, l);
+
+				offset = i+1;
+			}
+		}
+
+		// XXX Testing
+		Label l = labels.get(0);
+		assert l != null;
+		assert l.getText().length() == 0;
+	}
+
+	public Label fetchLabel(int offset) {
+		Label label = labels.get(offset);
+		if (label == null)
+			return NULL_LABEL;
+		else
+			return label;
+	}
 
 	/**
-	 * Bit of a shortcut to get a text string from the label file given its
-	 * offset.
+	 * Get the string associated with a label, given the labels offset value.
 	 * @param offset Offset in the file.  These offsets are used in the other
 	 * map files, such as RGN and NET.
 	 * @return The label as a string.  Will be an empty string if there is no
 	 * text for the label.  Note that this is particularly the case when the
 	 * offset is zero.
 	 */
-	public String fetchLableString(int offset) {
+	public String fetchLabelString(int offset) {
 		// Short cut the simple case of no label
 		if (offset == 0)
 			return "";  // or null ???
 
-		ImgFileReader reader = getReader();
-		reader.position(lblHeader.getLabelStart() + offset);
-
-		byte b;
-		do {
-			b = reader.get();
-		} while (!textDecoder.addByte(b)) ;
-
-		EncodedText text = textDecoder.getText();
-		return new String(text.getCtext(), 0, text.getLength());
+		Label l= labels.get(offset);
+		if (l == null)
+			return "";
+		else
+			return l.getText();
 	}
 
 	public PlacesHeader getPlaceHeader() {
-		return lblHeader.getPlaceHeader();
+		return header.getPlaceHeader();
 	}
 
 	public int numCities() {

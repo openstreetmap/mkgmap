@@ -16,6 +16,7 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
@@ -97,7 +98,14 @@ public class MDRFile extends ImgFile {
 
 	public void addPoint(Point point, boolean indexed) {
 		assert currentMap > 0;
-		//Mdr11Record poi = mdr11.addPoi(currentMap, point.)
+
+		Label label = point.getLabel();
+		String s = label.getText();
+		int strOff = createString(s);
+		Mdr11Record poi = mdr11.addPoi(currentMap,
+				point, strOff);
+
+		mdr10.addPoiType(point.getType(), poi);
 	}
 
 	public void write() {

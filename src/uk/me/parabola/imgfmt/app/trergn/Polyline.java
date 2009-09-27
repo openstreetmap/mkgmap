@@ -16,11 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.OutputStream;
-import java.io.IOException;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -225,14 +224,6 @@ public class Polyline extends MapObject {
 
 	public void setRoadDef(RoadDef rd) {
 		this.roaddef = rd;
-	}
-
-	void setNumber(int n) {
-		number = n;
-	}
-
-	public int getNumber() {
-		return number;
 	}
 
 	public boolean sharesNodeWith(Polyline other) {

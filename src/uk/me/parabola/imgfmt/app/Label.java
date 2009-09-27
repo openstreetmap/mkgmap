@@ -92,7 +92,7 @@ public class Label implements Comparable<Label> {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return "label at " + offset;
+		return "[" + offset + "]" + text;
 	}
 
 	public boolean equals(Object o) {

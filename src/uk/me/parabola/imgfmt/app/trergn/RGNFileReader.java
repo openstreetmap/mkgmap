@@ -18,6 +18,8 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -34,9 +36,8 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public class RGNFileReader extends ImgReader {
-	//private static final Logger log = Logger.getLogger(RGNFileReader.class);
 
-	//private EnhancedProperties config;
+	private LBLFileReader lblFile;
 
 	public RGNFileReader(ImgChannel chan) {
 		RGNHeader header = new RGNHeader();
@@ -62,14 +63,41 @@ public class RGNFileReader extends ImgReader {
 
 		Offsets offsets = new Offsets(sd);
 		position(offsets.getIndPointStart());
+		System.out.println(offsets);
 
+		int number = 1;
 		while (position() < offsets.getIndPointEnd()) {
 			Point p = new Point(sd);
-			p.read(reader);
+
+			byte t = reader.get();
+			int labelOffset = reader.get3();
+			boolean hasSubtype = false;
+			if ((labelOffset & 0x800000) != 0)
+				hasSubtype = true;
+
+			Label l = lblFile.fetchLabel(labelOffset & 0x7fffff);
+			p.setLabel(l);
+
+			p.setDeltaLong(reader.getChar());
+			p.setDeltaLat(reader.getChar());
+
+			if (hasSubtype) {
+				byte st = reader.get();
+				p.setType(((t & 0xff) << 8) | (st & 0xff));
+			} else {
+				p.setType(t & 0xffff);
+			}
+
+			p.setNumber(number++);
+			System.out.println("p " + p);
 			points.add(p);
 		}
 
 		return points;
+	}
+
+	public void setLblFile(LBLFileReader lblFile) {
+		this.lblFile = lblFile;
 	}
 
 	/**
@@ -120,7 +148,7 @@ public class RGNFileReader extends ImgReader {
 				else if (sd.hasPolygons())
 					pointEnd = polygonOffset;
 				else
-					pointEnd = sd.getEndRgnPointer();
+					pointEnd = sd.getEndRgnPointer() - sd.getStartRgnPointer();
 			}
 			if (sd.hasIndPoints()) {
 				if (sd.hasPolylines())
@@ -128,16 +156,16 @@ public class RGNFileReader extends ImgReader {
 				else if (sd.hasPolygons())
 					indPointEnd = polygonOffset;
 				else
-					indPointEnd = sd.getEndRgnPointer();
+					indPointEnd = sd.getEndRgnPointer() - sd.getStartRgnPointer();
 			}
 			if (sd.hasPolylines()) {
 				if (sd.hasPolygons())
 					lineEnd = polygonOffset;
 				else
-					lineEnd = sd.getEndRgnPointer();
+					lineEnd = sd.getEndRgnPointer() - sd.getStartRgnPointer();
 			}
 			if (sd.hasPolygons()) {
-				polygonEnd = sd.getEndRgnPointer();
+				polygonEnd = sd.getEndRgnPointer() - sd.getStartRgnPointer();
 			}
 		}
 

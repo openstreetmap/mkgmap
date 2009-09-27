@@ -75,6 +75,7 @@ public class Point extends MapObject {
 			file.put(subtype);
 	}
 
+	@Deprecated // get rid of this again
 	public void read(ImgFileReader file) {
 		byte t = file.get();
 		int off = file.get3();
