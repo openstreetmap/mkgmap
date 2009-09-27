@@ -37,8 +37,8 @@ import uk.me.parabola.util.EnhancedProperties;
 public class TREFileReader extends ImgReader {
 	// Zoom levels and subdiv data, this is needed to make sense of the RGN
 	private static final int MAX_ZOOM_LEVELS = 16;
-	private Zoom[] mapLevels = new Zoom[MAX_ZOOM_LEVELS];
-	private Subdivision[][] levelDivs = new Subdivision[MAX_ZOOM_LEVELS][];
+	private Zoom[] mapLevels;
+	private Subdivision[][] levelDivs;
 
 	private static final Subdivision[] EMPTY_SUBDIVISIONS = new Subdivision[0];
 
@@ -66,7 +66,7 @@ public class TREFileReader extends ImgReader {
 	 * array is returned if there is no such level.
 	 */
 	public Subdivision[] subdivForLevel(int level) {
-		for (int i = 0; i < MAX_ZOOM_LEVELS; i++) {
+		for (int i = 0; i < mapLevels.length; i++) {
 			if (mapLevels[i].getLevel() == level) {
 				return levelDivs[i];
 			}

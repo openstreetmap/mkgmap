@@ -16,7 +16,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr11Record extends RecordBase {
+public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	private int pointIndex;
 	private int subdiv;
 	private int lblOffset;
@@ -24,6 +24,9 @@ public class Mdr11Record extends RecordBase {
 	private int strOffset;
 	private int recordNumber;
 
+	public int compareTo(Mdr11Record o) {
+		return 0;
+	}
 
 	public int getPointIndex() {
 		return pointIndex;

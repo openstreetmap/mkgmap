@@ -61,6 +61,8 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		//Collections.sort(pois);
+
 		int count = 0;
 		for (Mdr11Record poi : pois) {
 			poi.setRecordNumber(count++);
