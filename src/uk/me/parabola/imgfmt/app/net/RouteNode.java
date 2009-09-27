@@ -137,9 +137,11 @@ public class RouteNode implements Comparable<RouteNode> {
 	 * or not they are internal to the RoutingCenter.
 	 */
 	public int boundSize() {
-		return 1 + 1
-			+ (haveLargeOffsets() ? 4 : 3)
-			+ arcsSize() + restrSize();
+		return 1 // table pointer
+			+ 1 // flags
+			+ 4 // assume large offsets required
+			+ arcsSize()
+			+ restrSize();
 	}
 
 	private int arcsSize() {
