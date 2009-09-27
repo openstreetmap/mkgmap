@@ -257,7 +257,7 @@ public class RouteArc {
 		char val = (char) (flagB << 8);
 		int diff = dest.getOffsetNod1() - source.getOffsetNod1();
 		assert diff < 0x2000 && diff >= -0x2000
-			: "relative pointer too large for 14 bits";
+			: "relative pointer too large for 14 bits (source offset = " + source.getOffsetNod1() + ", dest offset = " + dest.getOffsetNod1() + ")";
 		val |= diff & 0x3fff;
 
 		// We write this big endian
