@@ -16,10 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import uk.me.parabola.imgfmt.ReadFailedException;
-
-import java.io.IOException;
 import java.io.Closeable;
+
+import uk.me.parabola.imgfmt.ReadFailedException;
 
 /**
  * For reading subfiles from the img.  The focus of mkgmap is on writing,
@@ -82,4 +81,14 @@ public interface ImgFileReader extends Closeable {
 	 * @throws ReadFailedException For failures.
 	 */
 	public String getZString() throws ReadFailedException;
+
+	/**
+	 * Read in a string of digits in the compressed base 11 format that is used
+	 * for phone numbers in the POI section.
+	 * @param delimiter This will replace all digit 11 characters.  Usually a
+	 * '-' to separate numbers in a telephone.  No doubt there is a different
+	 * standard in each country.
+	 * @return A phone number possibly containing the delimeter character.
+	 */
+	public String getBase11str(char delimiter);
 }

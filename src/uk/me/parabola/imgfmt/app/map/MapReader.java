@@ -91,6 +91,20 @@ public class MapReader implements Closeable {
 		return points;
 	}
 
+	public List<Point> pointsForLevel(int level) {
+		List<Point> points = new ArrayList<Point>();
+
+		int n = treFile.getFirstSubdivForLevel(level);
+
+		Subdivision[] subdivisions = treFile.subdivForLevel(level);
+		for (Subdivision sd : subdivisions) {
+			List<Point> subdivPoints = rgnFile.pointsForSubdiv(sd);
+			points.addAll(subdivPoints);
+		}
+
+		return points;
+	}
+
 	public void close() throws IOException {
 		for (Closeable c : toClose)
 			Utils.closeFile(c);

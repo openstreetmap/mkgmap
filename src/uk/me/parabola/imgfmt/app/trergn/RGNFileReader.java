@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
@@ -51,30 +52,49 @@ public class RGNFileReader extends ImgReader {
 		//config = props;
 	}
 
+	public List<Point> pointsForSubdiv(Subdivision sd) {
+		if (!sd.hasPoints())
+			return Collections.emptyList();
+
+		Offsets offsets = getOffsets(sd);
+		return fetchPointsCommon(sd, offsets.getPointStart(), offsets.getPointEnd());
+	}
+
 	public List<Point> indexPointsForSubdiv(Subdivision sd) {
-		ImgFileReader reader = getReader();
-		List<Point> points = new ArrayList<Point>();
-
 		if (!sd.hasIndPoints())
-			return points;
+			return Collections.emptyList();
 
-		int off = sd.getStartRgnPointer();
-		position(getHeader().getHeaderLength() + off);
+		Offsets offsets = getOffsets(sd);
+		return fetchPointsCommon(sd, offsets.getIndPointStart(), offsets.getIndPointEnd());
+	}
 
-		Offsets offsets = new Offsets(sd);
-		position(offsets.getIndPointStart());
+	private List<Point> fetchPointsCommon(Subdivision sd, long start, long end) {
+		List<Point> points = new ArrayList<Point>();
+		position(start);
+		ImgFileReader reader = getReader();
 
 		int number = 1;
-		while (position() < offsets.getIndPointEnd()) {
+		while (position() < end) {
 			Point p = new Point(sd);
 
 			byte t = reader.get();
-			int labelOffset = reader.get3();
+			int val = reader.get3();
 			boolean hasSubtype = false;
-			if ((labelOffset & 0x800000) != 0)
+			if ((val & 0x800000) != 0)
 				hasSubtype = true;
 
-			Label l = lblFile.fetchLabel(labelOffset & 0x7fffff);
+			boolean hasPoi = false;
+			if ((val & 0x400000) != 0)
+				hasPoi = true;
+
+			Label l;
+			int labelOffset = val & 0x3fffff;
+			if (hasPoi) {
+				l = lblFile.fetchPoi(labelOffset);
+				System.out.println("poi label " + l);
+			} else {
+				l = lblFile.fetchLabel(labelOffset);
+			}
 			p.setLabel(l);
 
 			p.setDeltaLong(reader.getChar());
@@ -90,8 +110,14 @@ public class RGNFileReader extends ImgReader {
 			p.setNumber(number++);
 			points.add(p);
 		}
-
 		return points;
+	}
+
+	private Offsets getOffsets(Subdivision sd) {
+		int off = sd.getStartRgnPointer();
+		position(getHeader().getHeaderLength() + off);
+
+		return new Offsets(sd);
 	}
 
 	public void setLblFile(LBLFileReader lblFile) {
@@ -181,6 +207,14 @@ public class RGNFileReader extends ImgReader {
 			return String.format("rgn div offsets: %x-%x/%x-%x/%x-%x/%x-%x",
 					pointOffset, pointEnd, indPointOffset, indPointEnd,
 					lineOffset, lineEnd, polygonOffset, polygonEnd);
+		}
+
+		public long getPointStart() {
+			return pointOffset == 0 ? start + headerLen : start + pointOffset;
+		}
+
+		public long getPointEnd() {
+			return start + pointEnd;
 		}
 
 		public long getIndPointStart() {

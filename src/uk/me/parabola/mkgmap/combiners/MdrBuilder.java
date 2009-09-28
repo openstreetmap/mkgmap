@@ -23,6 +23,7 @@ import java.util.Locale;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
@@ -95,8 +96,16 @@ public class MdrBuilder implements Combiner {
 			mr = new MapReader(filename);
 			List<Point> list = mr.indexedPointsForLevel(0);
 			for (Point p : list) {
-				if (p.getLabel().getText().length() > 0 /*&& p.getType() == 0xb*/)		
+				Label label = p.getLabel();
+				if (label != null && label.getText().length() > 0)
 					mdrFile.addPoint(p, true);
+			}
+
+			list = mr.pointsForLevel(0);
+			for (Point p : list) {
+				Label label = p.getLabel();
+				if (label != null && label.getText().length() > 0)
+					mdrFile.addPoint(p, false);
 			}
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
