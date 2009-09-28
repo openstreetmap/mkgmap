@@ -87,14 +87,7 @@ public class LBLFileReader extends ImgFile {
 		for (int i = 0; i < size; i++) {
 			byte b = reader.get();
 			if (textDecoder.addByte(b)) {
-				EncodedText encText = textDecoder.getText();
-				String text;
-				try {
-					text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
-				} catch (UnsupportedEncodingException e) {
-					// this can't really happen because utf-8 must be supported
-					text = "";
-				}
+				String text = recoverText();
 
 				Label l = new Label(text);
 				l.setOffset(offset);
@@ -103,15 +96,24 @@ public class LBLFileReader extends ImgFile {
 				offset = i+1;
 			}
 		}
+	}
 
-		// XXX Testing
-		Label l = labels.get(0);
-		assert l != null;
-		assert l.getText().length() == 0;
+	private String recoverText() {
+		EncodedText encText = textDecoder.getText();
+		String text;
+		try {
+			text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			// this can't really happen because utf-8 must be supported
+			text = "";
+		}
+		return text;
 	}
 
 	public Label fetchLabel(int offset) {
 		Label label = labels.get(offset);
+		if (label == null) // TODO this is a problem with the 6 byte decoder in that you don't know the actual offset
+			label = labels.get(offset-1);
 		if (label == null)
 			return NULL_LABEL;
 		else

@@ -63,7 +63,6 @@ public class RGNFileReader extends ImgReader {
 
 		Offsets offsets = new Offsets(sd);
 		position(offsets.getIndPointStart());
-		System.out.println(offsets);
 
 		int number = 1;
 		while (position() < offsets.getIndPointEnd()) {
@@ -89,7 +88,6 @@ public class RGNFileReader extends ImgReader {
 			}
 
 			p.setNumber(number++);
-			System.out.println("p " + p);
 			points.add(p);
 		}
 
@@ -118,6 +116,7 @@ public class RGNFileReader extends ImgReader {
 		private int polygonEnd;
 
 		private final int start;
+		private int headerLen;
 
 		/**
 		 * Calculate the offsets for the given subdivision.
@@ -133,12 +132,21 @@ public class RGNFileReader extends ImgReader {
 			
 			pointOffset = 0;
 
-			if (sd.needsIndPointPtr())
+			if (sd.needsIndPointPtr()) {
 				indPointOffset = reader.getChar();
-			if (sd.needsPolylinePtr())
+				headerLen += 2;
+			}
+			
+			if (sd.needsPolylinePtr()) {
 				lineOffset = reader.getChar();
-			if (sd.needsPolygonPtr())
+				headerLen += 2;
+			}
+
+			if (sd.needsPolygonPtr()) {
 				polygonOffset = reader.getChar();
+				headerLen += 2;
+			}
+
 
 			if (sd.hasPoints()) {
 				if (sd.hasIndPoints())
@@ -176,7 +184,7 @@ public class RGNFileReader extends ImgReader {
 		}
 
 		public long getIndPointStart() {
-			return start + indPointOffset;
+			return indPointOffset == 0 ? start + headerLen : start + indPointOffset;
 		}
 
 		public long getIndPointEnd() {

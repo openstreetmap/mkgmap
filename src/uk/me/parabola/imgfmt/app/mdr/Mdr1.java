@@ -52,7 +52,6 @@ public class Mdr1 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		System.out.println("for dev " + isForDevice());
 		return isForDevice()? 4: 8;
 	}
 

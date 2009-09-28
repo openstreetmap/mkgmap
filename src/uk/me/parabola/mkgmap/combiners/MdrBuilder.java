@@ -95,7 +95,7 @@ public class MdrBuilder implements Combiner {
 			mr = new MapReader(filename);
 			List<Point> list = mr.indexedPointsForLevel(0);
 			for (Point p : list) {
-				if (p.getLabel().getText().length() > 0 && p.getType() == 0xb)		
+				if (p.getLabel().getText().length() > 0 /*&& p.getType() == 0xb*/)		
 					mdrFile.addPoint(p, true);
 			}
 		} catch (FileNotFoundException e) {
