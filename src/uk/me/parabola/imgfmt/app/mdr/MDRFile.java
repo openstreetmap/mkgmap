@@ -102,10 +102,13 @@ public class MDRFile extends ImgFile {
 		Label label = point.getLabel();
 		String name = label.getText();
 		int strOff = createString(name);
+
 		Mdr11Record poi = mdr11.addPoi(currentMap,
 				point, name, strOff);
 
-		mdr10.addPoiType(point.getType(), poi);
+		mdr10.addPoiType(point.getType(), poi, indexed);
+
+		mdr4.addType(point.getType());
 	}
 
 	public void write() {

@@ -32,10 +32,11 @@ public class Mdr10 extends MdrSection {
 		setConfig(config);
 	}
 
-	public void addPoiType(int type, Mdr11Record poi) {
+	public void addPoiType(int type, Mdr11Record poi, boolean indexed) {
 		Mdr10Record t = new Mdr10Record();
 		t.setType(type);
 		t.setMdr11ref(poi);
+		t.setIndexed(indexed);
 		poiTypes.add(t);
 	}
 	
@@ -46,7 +47,8 @@ public class Mdr10 extends MdrSection {
 			writer.put((byte) t.getType());
 			int offset = t.getMdr11ref().getRecordNumber() + 1;
 
-			boolean isCity = t.getMdr11ref().getCityIndex() > 0;
+			// Current theory is that the top bit is set for indexed points. (Alex)
+			boolean isCity = t.isIndexed();
 			if (numberOfPois < 0x80) {
 				if (isCity)
 					offset |= 0x80;
