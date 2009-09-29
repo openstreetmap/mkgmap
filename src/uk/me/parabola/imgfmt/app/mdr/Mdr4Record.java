@@ -14,7 +14,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
- * @author Steve Ratcliffe
+ * The records in MDR 4 are a list of poi types with an unknown byte.
  */
 public class Mdr4Record extends RecordBase implements Comparable<Mdr4Record> {
 	private int type;
@@ -22,8 +22,8 @@ public class Mdr4Record extends RecordBase implements Comparable<Mdr4Record> {
 	private int unknown;
 
 	public int compareTo(Mdr4Record o) {
-		int t1 = (type<<8 + subtype) & 0xffff;
-		int t2 = (o.type<<8 + o.subtype) & 0xffff;
+		int t1 = ((type<<8) + subtype) & 0xffff;
+		int t2 = ((o.type<<8) + o.subtype) & 0xffff;
 		if (t1 == t2)
 			return 0;
 		else if (t1 < t2)
