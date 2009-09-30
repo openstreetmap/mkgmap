@@ -34,9 +34,18 @@ public class Mdr10 extends MdrSection {
 
 	public void addPoiType(int type, Mdr11Record poi, boolean indexed) {
 		Mdr10Record t = new Mdr10Record();
-		t.setType(type);
+		int t1 = (type>>8) & 0xff;
+		int t2 = type & 0xff;
+
+		// This must be set to the subtype, unless there isn't one
+		// TODO this may not be totally correct yet as we don't save the fact
+		// that there is a subtype anywhere.
+		if (t2 == 0)
+			t.setType(t1);
+		else
+			t.setType(t2);
+
 		t.setMdr11ref(poi);
-		t.setIndexed(indexed);
 		poiTypes.add(t);
 	}
 	
@@ -47,18 +56,20 @@ public class Mdr10 extends MdrSection {
 			writer.put((byte) t.getType());
 			int offset = t.getMdr11ref().getRecordNumber() + 1;
 
-			// Current theory is that the top bit is set for indexed points. (Alex)
-			boolean isCity = t.isIndexed();
+			// Top bit actually represents a non-repeated name.  ie if
+			// the bit is not set, then the name is the same as the previous
+			// record.
+			boolean isRepeated = false; // TODO set this properly
 			if (numberOfPois < 0x80) {
-				if (isCity)
+				if (!isRepeated)
 					offset |= 0x80;
 				writer.put((byte) offset);
 			} else if (numberOfPois < 0x8000) {
-				if (isCity)
+				if (!isRepeated)
 					offset |= 0x8000;
 				writer.putChar((char) offset);
 			} else {
-				if (isCity)
+				if (!isRepeated)
 					offset |= 0x800000;
 				writer.put3(offset);
 			}

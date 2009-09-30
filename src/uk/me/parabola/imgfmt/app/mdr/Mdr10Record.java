@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.app.mdr;
 public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 	private int type;
 	private Mdr11Record mdr11ref;
-	private boolean indexed;
 
 	public int compareTo(Mdr10Record o) {
 		if (mdr11ref.getRecordNumber() == o.mdr11ref.getRecordNumber())
@@ -44,13 +43,5 @@ public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 
 	public void setType(int type) {
 		this.type = type;
-	}
-
-	public void setIndexed(boolean indexed) {
-		this.indexed = indexed;
-	}
-
-	public boolean isIndexed() {
-		return indexed;
 	}
 }
