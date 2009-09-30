@@ -103,10 +103,14 @@ public class MDRFile extends ImgFile {
 		String name = label.getText();
 		int strOff = createString(name);
 
+		int fullType = point.getType();
+		if (!Utils.canBeIndexed(fullType))
+			return;
+
 		Mdr11Record poi = mdr11.addPoi(currentMap,
 				point, name, strOff);
 
-		mdr10.addPoiType(point.getType(), poi, indexed);
+		mdr10.addPoiType(fullType, poi, indexed);
 
 		mdr4.addType(point.getType());
 	}
@@ -133,12 +137,15 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 4, mdr4);
 		//writeSection(writer, 5, mdr5);
 
-		writeSection(writer, 9, mdr9);
 
 		// We do 11 before 10, because 10 needs information that is only available
 		// after 11 has run.
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
+
+		// likewise 9 depends on stuff from 10.
+		mdr9.setGroups(mdr10.getGroupSizes());
+		writeSection(writer, 9, mdr9);
 
 		//writeSection(writer, 13, mdr13);
 		//writeSection(writer, 14, mdr14);

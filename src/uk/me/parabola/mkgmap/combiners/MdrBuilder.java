@@ -74,6 +74,7 @@ public class MdrBuilder implements Combiner {
 		config.setHeaderLen(286);
 		config.setWritable(true);
 		config.setForDevice(false);
+		config.setNumberOfMaps(args.get("number-of-files", 0));
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
@@ -97,14 +98,14 @@ public class MdrBuilder implements Combiner {
 			List<Point> list = mr.indexedPointsForLevel(0);
 			for (Point p : list) {
 				Label label = p.getLabel();
-				if (label != null && label.getText().length() > 0)
+				if (label != null && label.getText().trim().length() > 0)
 					mdrFile.addPoint(p, true);
 			}
 
 			list = mr.pointsForLevel(0);
 			for (Point p : list) {
 				Label label = p.getLabel();
-				if (label != null && label.getText().length() > 0)
+				if (label != null && label.getText().trim().length() > 0)
 					mdrFile.addPoint(p, false);
 			}
 		} catch (FileNotFoundException e) {

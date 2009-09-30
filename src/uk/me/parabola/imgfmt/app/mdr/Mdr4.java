@@ -13,7 +13,6 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -30,9 +29,6 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr4 extends MdrSection {
 	private final Set<Mdr4Record> poiTypes = new HashSet<Mdr4Record>();
-
-	// Temporary until we sort out what is allowed where.
-	private final List<Integer> VALID = Arrays.asList(0xb, 10, 8, 4, 17);
 
 	public Mdr4(MdrConfig config) {
 		setConfig(config);
@@ -64,7 +60,6 @@ public class Mdr4 extends MdrSection {
 		}
 		r.setUnknown(0);
 
-		//if (VALID.contains(type))
-			poiTypes.add(r);
+		poiTypes.add(r);
 	}
 }

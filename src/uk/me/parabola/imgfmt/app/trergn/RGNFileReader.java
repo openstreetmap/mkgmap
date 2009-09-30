@@ -91,7 +91,6 @@ public class RGNFileReader extends ImgReader {
 			int labelOffset = val & 0x3fffff;
 			if (hasPoi) {
 				l = lblFile.fetchPoi(labelOffset);
-				System.out.println("poi label " + l);
 			} else {
 				l = lblFile.fetchLabel(labelOffset);
 			}

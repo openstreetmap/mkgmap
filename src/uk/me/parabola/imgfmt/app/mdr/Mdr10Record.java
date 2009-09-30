@@ -14,11 +14,20 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
+ * An index into mdr11.
+ * There is a primary ordering on the type and a secondary ordering on the
+ * record number of the mdr11 record.  The type is not actually stored
+ * in this section, you use mdr9 to divide up this section into groups of
+ * types.
+ *
+ * This section contains the subtype of each point.
+ *
  * @author Steve Ratcliffe
  */
 public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
-	private int type;
+	private int subtype;
 	private Mdr11Record mdr11ref;
+	private boolean isRepeat;
 
 	public int compareTo(Mdr10Record o) {
 		if (mdr11ref.getRecordNumber() == o.mdr11ref.getRecordNumber())
@@ -37,11 +46,19 @@ public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 		this.mdr11ref = mdr11ref;
 	}
 
-	public int getType() {
-		return type;
+	public int getSubtype() {
+		return subtype;
 	}
 
-	public void setType(int type) {
-		this.type = type;
+	public void setSubtype(int subtype) {
+		this.subtype = subtype;
+	}
+
+	public boolean isRepeat() {
+		return isRepeat;
+	}
+
+	public void setRepeat(boolean repeat) {
+		isRepeat = repeat;
 	}
 }

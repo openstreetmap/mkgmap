@@ -21,8 +21,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 
 /**
- * Holds all the POIs, including cities.
- * Cities? or indexed points are marked specially.
+ * Holds all the POIs, including cities.  Arranged alphabetically by
+ * the name.
  *
  * @author Steve Ratcliffe
  */
@@ -89,7 +89,7 @@ public class Mdr11 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		return 12; // TODO calculate correct value.
+		return 11 + getConfig().getMapIndexSize();
 	}
 
 	public int getNumberOfPois() {
