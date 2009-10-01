@@ -432,18 +432,25 @@ class Osm5XmlHandler extends DefaultHandler {
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
+				String ref = null;
+				Way motorway = null;
+				String exitName = e.getTag("name");
+				if(exitName == null)
+					exitName = e.getTag("ref");
 				for (Way w : motorways) {
-					String ref = w.getTag("ref");
 					if (w.getPoints().contains(e.getLocation())) {
-						if(ref != null) {
-							log.info("Adding " + refTag + "=" + ref + " to exit" + e.getTag("ref"));
-							e.addTag(refTag, ref);
-						}
-						else {
-							log.warn("Motorway exit is positioned on a motorway that doesn't have a 'ref' tag");
-						}
-						break;
+						motorway = w;
+						ref = w.getTag("ref");
+						if(ref != null)
+						    break;
 					}
+				}
+				if(ref != null) {
+					log.info("Adding " + refTag + "=" + ref + " to exit" + exitName);
+					e.addTag(refTag, ref);
+				}
+				else if(motorway != null) {
+					log.warn("Motorway exit " + exitName + " is positioned on a motorway that doesn't have a 'ref' tag (" + e.getLocation().toOSMURL() + ")");
 				}
 			}
 		}

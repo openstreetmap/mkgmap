@@ -409,7 +409,7 @@ public class StyledConverter implements OsmConverter {
 			}
 			else {
 				mp = new MapPoint();
-				log.warn("Motorway exit " + node.getName() + " (OSM id " + id + ") located at " + node.getLocation().toDegreeString() + " has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a " + Exit.TAG_ROAD_REF + " tag)");
+				log.warn("Motorway exit " + node.getName() + " (" + node.getLocation().toOSMURL() + ") has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a " + Exit.TAG_ROAD_REF + " tag)");
 			}
 		}
 		else {
