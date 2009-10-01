@@ -40,7 +40,6 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 public class MapReader implements Closeable {
 	private final TREFileReader treFile;
 	private final RGNFileReader rgnFile;
-	private final LBLFileReader lblFile;
 
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
 
@@ -71,30 +70,18 @@ public class MapReader implements Closeable {
 		saveForClose(rgnFile, chan);
 
 		chan = fs.open(mapname + ".LBL", "r");
-		lblFile = new LBLFileReader(chan);
+		LBLFileReader lblFile = new LBLFileReader(chan);
 		saveForClose(lblFile, chan);
 
 		rgnFile.setLblFile(lblFile);
 	}
 
-	public List<Point> indexedPointsForLevel(int level) {
-		List<Point> points = new ArrayList<Point>();
-
-		int n = treFile.getFirstSubdivForLevel(level);
-
-		Subdivision[] subdivisions = treFile.subdivForLevel(level);
-		for (Subdivision sd : subdivisions) {
-			List<Point> subdivPoints = rgnFile.indexPointsForSubdiv(sd);
-			points.addAll(subdivPoints);
-		}
-
-		return points;
-	}
-
+	/**
+	 * Get a list of all the points for a given level.
+	 * @param level The level, lower numbers are the most detailed.
+	 */
 	public List<Point> pointsForLevel(int level) {
 		List<Point> points = new ArrayList<Point>();
-
-		int n = treFile.getFirstSubdivForLevel(level);
 
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision sd : subdivisions) {
@@ -117,10 +104,5 @@ public class MapReader implements Closeable {
 
 	private void saveForClose(Closeable c) {
 		toClose.push(c);
-	}
-
-	@Deprecated // just for initial testing
-	public static void main(String[] args) throws FileNotFoundException {
-		MapReader mr = new MapReader("63240001.img");
 	}
 }

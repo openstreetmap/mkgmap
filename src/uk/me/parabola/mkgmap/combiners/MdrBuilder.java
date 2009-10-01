@@ -95,19 +95,23 @@ public class MdrBuilder implements Combiner {
 		MapReader mr = null;
 		try {
 			mr = new MapReader(filename);
-			List<Point> list = mr.indexedPointsForLevel(0);
+			List<Point> list = mr.pointsForLevel(0);
 			for (Point p : list) {
 				Label label = p.getLabel();
+				if (p.getNumber() > 256) {
+					System.out.println("number too big");
+					continue;
+				}
 				if (label != null && label.getText().trim().length() > 0)
-					mdrFile.addPoint(p, true);
+					mdrFile.addPoint(p);
 			}
 
-			list = mr.pointsForLevel(0);
-			for (Point p : list) {
-				Label label = p.getLabel();
-				if (label != null && label.getText().trim().length() > 0)
-					mdrFile.addPoint(p, false);
-			}
+			//list = mr.pointsForLevel(0);
+			//for (Point p : list) {
+			//	Label label = p.getLabel();
+			//	if (label != null && label.getText().trim().length() > 0)
+			//		mdrFile.addPoint(p);
+			//}
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {

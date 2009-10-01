@@ -96,21 +96,20 @@ public class MDRFile extends ImgFile {
 		//mdr10.addPoiType(0xb, poi);
 	}
 
-	public void addPoint(Point point, boolean indexed) {
+	public void addPoint(Point point) {
 		assert currentMap > 0;
-
-		Label label = point.getLabel();
-		String name = label.getText();
-		int strOff = createString(name);
 
 		int fullType = point.getType();
 		if (!Utils.canBeIndexed(fullType))
 			return;
 
-		Mdr11Record poi = mdr11.addPoi(currentMap,
-				point, name, strOff);
+		Label label = point.getLabel();
+		String name = label.getText();
+		int strOff = createString(name);
 
-		mdr10.addPoiType(fullType, poi, indexed);
+		Mdr11Record poi = mdr11.addPoi(currentMap, point, name, strOff);
+
+		mdr10.addPoiType(fullType, poi);
 
 		mdr4.addType(point.getType());
 	}

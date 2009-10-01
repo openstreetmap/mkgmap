@@ -52,28 +52,37 @@ public class RGNFileReader extends ImgReader {
 		//config = props;
 	}
 
+	/**
+	 * Get a list of all points for the given subdivision.  This includes
+	 * both the indexed points section and the points section.
+	 *
+	 * The numbering of the points carries through the sectins.
+	 * @param sd The subdivision that we are interested in.
+	 * @return A list of all points for the subdiv.
+	 */
 	public List<Point> pointsForSubdiv(Subdivision sd) {
-		if (!sd.hasPoints())
+		if (!sd.hasIndPoints() && !sd.hasPoints())
 			return Collections.emptyList();
 
-		Offsets offsets = getOffsets(sd);
-		return fetchPointsCommon(sd, offsets.getPointStart(), offsets.getPointEnd());
+		RgnOffsets rgnOffsets = getOffsets(sd);
+		ArrayList<Point> list = new ArrayList<Point>();
+
+		// Even though the indexed points are after the points, the numbering
+		// starts with 1 for the first indexed point and carries on into the
+		// points section.
+		fetchPointsCommon(sd, rgnOffsets.getIndPointStart(), rgnOffsets.getIndPointEnd(), list);
+		fetchPointsCommon(sd, rgnOffsets.getPointStart(), rgnOffsets.getPointEnd(), list);
+		return list;
 	}
 
-	public List<Point> indexPointsForSubdiv(Subdivision sd) {
-		if (!sd.hasIndPoints())
-			return Collections.emptyList();
-
-		Offsets offsets = getOffsets(sd);
-		return fetchPointsCommon(sd, offsets.getIndPointStart(), offsets.getIndPointEnd());
-	}
-
-	private List<Point> fetchPointsCommon(Subdivision sd, long start, long end) {
-		List<Point> points = new ArrayList<Point>();
+	/**
+	 * The indexed points and the points sections are both read just the same.
+	 */
+	private void fetchPointsCommon(Subdivision sd, long start, long end, List<Point> points) {
 		position(start);
 		ImgFileReader reader = getReader();
 
-		int number = 1;
+		int number = points.size() + 1;
 		while (position() < end) {
 			Point p = new Point(sd);
 
@@ -110,14 +119,18 @@ public class RGNFileReader extends ImgReader {
 			p.setNumber(number++);
 			points.add(p);
 		}
-		return points;
 	}
 
-	private Offsets getOffsets(Subdivision sd) {
+	/**
+	 * Get the offsets to the points, lines etc in RGN for the given subdiv.
+	 * @param sd The subdivision is needed to work out the starting points.
+	 * @return An Offsets class that allows you to obtain the offsets.
+	 */
+	private RgnOffsets getOffsets(Subdivision sd) {
 		int off = sd.getStartRgnPointer();
 		position(getHeader().getHeaderLength() + off);
 
-		return new Offsets(sd);
+		return new RgnOffsets(sd);
 	}
 
 	public void setLblFile(LBLFileReader lblFile) {
@@ -128,7 +141,7 @@ public class RGNFileReader extends ImgReader {
 	 * Class to hold the start and end points of point, lines etc within
 	 * the area for a given subdivision in the RGN data.
 	 */
-	private class Offsets {
+	private class RgnOffsets {
 		private final int pointOffset;
 		private int pointEnd;
 
@@ -151,7 +164,7 @@ public class RGNFileReader extends ImgReader {
 		 *
 		 * @param sd The subdivision.
 		 */
-		private Offsets(Subdivision sd) {
+		private RgnOffsets(Subdivision sd) {
 			ImgFileReader reader = getReader();
 
 			start = (int) position();

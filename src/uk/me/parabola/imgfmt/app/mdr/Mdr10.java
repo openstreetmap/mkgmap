@@ -47,7 +47,7 @@ public class Mdr10 extends MdrSection {
 		}
 	}
 
-	public void addPoiType(int type, Mdr11Record poi, boolean indexed) {
+	public void addPoiType(int type, Mdr11Record poi) {
 		Mdr10Record t = new Mdr10Record();
 		// TODO this may not be totally correct yet as we don't save the fact
 		// that there is a subtype anywhere.
