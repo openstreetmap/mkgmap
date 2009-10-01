@@ -27,7 +27,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 	private int subtype;
 	private Mdr11Record mdr11ref;
-	private boolean isRepeat;
+	private int fullType; // TODO remove this, just for testing
 
 	public int compareTo(Mdr10Record o) {
 		if (mdr11ref.getRecordNumber() == o.mdr11ref.getRecordNumber())
@@ -54,11 +54,11 @@ public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 		this.subtype = subtype;
 	}
 
-	public boolean isRepeat() {
-		return isRepeat;
+	public void setFullType(int fullType) {
+		this.fullType = fullType;
 	}
 
-	public void setRepeat(boolean repeat) {
-		isRepeat = repeat;
+	public int getFullType() {
+		return fullType;
 	}
 }

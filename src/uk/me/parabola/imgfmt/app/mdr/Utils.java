@@ -29,9 +29,9 @@ public class Utils {
 	 */
 	public static int getGroupForPoi(int fullType) {
 		// We group pois based on their type.  This may not be the final thoughts on this.
-		int type = Utils.getTypeFromFullType(fullType);
+		int type = (fullType>>8) & 0xff;
 		int group = 0;
-		if (type < 0x20)
+		if (fullType < 0xf)
 			group = 1;
 		else if (type >= 0x2a && type <= 0x30) {
 			group = type - 0x28;
@@ -46,7 +46,10 @@ public class Utils {
 	}
 
 	public static int getTypeFromFullType(int fullType) {
-		return (fullType>>8) & 0xff;
+		if ((fullType & 0xff00) > 0)
+			return (fullType>>8) & 0xff;
+		else
+			return fullType & 0xff;
 	}
 
 	public static int getSubtypeFromFullType(int fullType) {

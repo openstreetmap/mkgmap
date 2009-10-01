@@ -51,18 +51,11 @@ public class Mdr10 extends MdrSection {
 		Mdr10Record t = new Mdr10Record();
 		// TODO this may not be totally correct yet as we don't save the fact
 		// that there is a subtype anywhere.
-		int t1 = Utils.getTypeFromFullType(type);
-		int t2 = Utils.getSubtypeFromFullType(type);
-
-		// This must be set to the subtype, unless there isn't one XXX see comment above
-		if (t2 == 0)
-			t.setSubtype(t1);
-		else
-			t.setSubtype(t2);
-
+		t.setSubtype(Utils.getSubtypeFromFullType(type));
 		t.setMdr11ref(poi);
-		int group = Utils.getGroupForPoi(type);
 
+		t.setFullType(type);
+		int group = Utils.getGroupForPoi(type);
 		if (group == 0)
 			return;
 		poiTypes[group].add(t);
@@ -77,6 +70,7 @@ public class Mdr10 extends MdrSection {
 
 			String lastName = "";
 			for (Mdr10Record t : poiGroup) {
+				//System.out.printf("10 type: %x, sub=%x\n", t.getFullType(), t.getSubtype());
 				writer.put((byte) t.getSubtype());
 				int offset = t.getMdr11ref().getRecordNumber() + 1;
 

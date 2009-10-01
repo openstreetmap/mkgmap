@@ -102,8 +102,9 @@ public class RGNFileReader extends ImgReader {
 			if (hasSubtype) {
 				byte st = reader.get();
 				p.setType(((t & 0xff) << 8) | (st & 0xff));
+				//p.setHasSubtype(true);
 			} else {
-				p.setType(t & 0xffff);
+				p.setType(t & 0xff);
 			}
 
 			p.setNumber(number++);
