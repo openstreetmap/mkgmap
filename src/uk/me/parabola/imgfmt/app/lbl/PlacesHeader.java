@@ -212,6 +212,10 @@ public class PlacesHeader {
 		return city.getNumItems();
 	}
 
+	public int getNumZips() {
+		return zip.getNumItems();
+	}
+	
 	public int getPoiPropertiesStart() {
 		return poiProperties.getPosition();
 	}

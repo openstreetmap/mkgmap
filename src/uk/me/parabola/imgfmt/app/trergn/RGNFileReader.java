@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -99,7 +100,12 @@ public class RGNFileReader extends ImgReader {
 			Label l;
 			int labelOffset = val & 0x3fffff;
 			if (hasPoi) {
-				l = lblFile.fetchPoi(labelOffset);
+				POIRecord record = lblFile.fetchPoi(labelOffset);
+				if (record != null) {
+					l = record.getNameLabel();
+					p.setPOIRecord(record);
+				} else
+					l = lblFile.fetchLabel(0);
 			} else {
 				l = lblFile.fetchLabel(labelOffset);
 			}

@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
+import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
@@ -135,7 +136,6 @@ public class MdrBuilder implements Combiner {
 
 		Map<Integer, City> cityMap = new LinkedHashMap<Integer, City>();
 		for (City c : cities) {
-			System.out.printf("city subdiv=%x, ind=%d\n", c.getSubdivNumber(), c.getPointIndex());
 			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
 			assert key < 0xffffff;
 			cityMap.put(key, c);
@@ -164,11 +164,15 @@ public class MdrBuilder implements Combiner {
 				int cnum = (p.getSubdiv().getNumber() << 8) + p.getNumber();
 				City city = cityMap.get(cnum);
 				if (city != null) {
-					System.out.printf("matched city %s (ind %d) to point %s\n", city, city.getIndex(), p);
-					
+
 					city.setLabel(p.getLabel());
 					cityIndex = city.getIndex();
 				}
+			} else {
+				POIRecord poi = p.getPOIRecord();
+				City city = poi.getCity();
+				if (city != null)
+					cityIndex = city.getIndex();
 			}
 			if (label != null && label.getText().trim().length() > 0)
 				mdrFile.addPoint(p, cityIndex);

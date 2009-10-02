@@ -291,6 +291,14 @@ public class POIRecord {
 		return offset;
 	}
 
+	public Label getNameLabel() {
+		return poiName;
+	}
+
+	public City getCity() {
+		return city;
+	}
+
 	/**
 	 * Address abbreviations.
 	 */

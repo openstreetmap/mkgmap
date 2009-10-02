@@ -116,4 +116,10 @@ public class Point extends MapObject {
 	public void setPOIRecord(POIRecord poirecord) {
 		this.poi = poirecord;
 	}
+
+	public POIRecord getPOIRecord() {
+		if (poi == null)
+			return new POIRecord();
+		return poi;
+	}
 }

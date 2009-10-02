@@ -90,5 +90,5 @@ public interface ImgFileReader extends Closeable {
 	 * standard in each country.
 	 * @return A phone number possibly containing the delimeter character.
 	 */
-	public String getBase11str(char delimiter);
+	public String getBase11str(byte firstChar, char delimiter);
 }

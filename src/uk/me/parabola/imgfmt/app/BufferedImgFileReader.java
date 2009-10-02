@@ -178,14 +178,13 @@ public class BufferedImgFileReader implements ImgFileReader {
 	 * standard in each country.
 	 * @return A phone number possibly containing the delimeter character.
 	 */
-	public String getBase11str(char delimiter) {
+	public String getBase11str(byte firstChar, char delimiter) {
 		// NB totally untested.
 		StringBuilder str11 = new StringBuilder();
 		int term = 2;
 
-		while (term != 0) {
-			byte ch = get();
-
+		int ch = firstChar & 0xff;
+		do {
 			if (str11.length() == 0) {
 				// Not found
 				if (ch < 0x80)
@@ -195,7 +194,9 @@ public class BufferedImgFileReader implements ImgFileReader {
 			if ((ch & 0x80) != 0)
 				--term;
 			str11.append(base(ch & 0x7F, 11, 2));
-		}
+			if (term != 0)
+				ch = get();
+		} while (term != 0);
 
 		// Remove any trailing delimiters
 		int idx;
