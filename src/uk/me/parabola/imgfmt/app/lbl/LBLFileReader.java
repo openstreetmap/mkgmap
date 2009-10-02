@@ -114,7 +114,6 @@ public class LBLFileReader extends ImgFile {
 				int pointIndex = label & 0xff;
 				int subdiv = (label >> 8) & 0xffff;
 
-				System.out.printf("city subdiv %x, idxpoint %d\n", subdiv, pointIndex);
 				City city;
 				if ((info & 0x4000) != 0) {
 					Country country = countries.get(info & 0x3fff);
@@ -175,7 +174,6 @@ public class LBLFileReader extends ImgFile {
 			Label label = fetchLabel(offset);
 
 			if (label != null) {
-				System.out.printf("country %d: %s\n", index, label.getText());
 				Country country = new Country(index);
 				country.setLabel(label);
 				countries.put(index, country);
@@ -202,7 +200,6 @@ public class LBLFileReader extends ImgFile {
 			int offset = reader.get3();
 			Label label = fetchLabel(offset);
 			if (label != null) {
-				System.out.printf("region %d: %s c=%d\n", index, label.getText(), country);
 				Region region = new Region(countries.get(country));
 				region.setIndex(index);
 				region.setLabel(label);

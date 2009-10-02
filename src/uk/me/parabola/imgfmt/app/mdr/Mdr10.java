@@ -70,7 +70,6 @@ public class Mdr10 extends MdrSection {
 
 			String lastName = "";
 			for (Mdr10Record t : poiGroup) {
-				//System.out.printf("10 type: %x, sub=%x\n", t.getFullType(), t.getSubtype());
 				writer.put((byte) t.getSubtype());
 				int offset = t.getMdr11ref().getRecordNumber() + 1;
 

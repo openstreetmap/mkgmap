@@ -105,7 +105,7 @@ public class MDRFile extends ImgFile {
 		}
 	}
 
-	public void addPoint(Point point) {
+	public void addPoint(Point point, int cityIndex) {
 		assert currentMap > 0;
 
 		int fullType = point.getType();
@@ -117,6 +117,7 @@ public class MDRFile extends ImgFile {
 		int strOff = createString(name);
 
 		Mdr11Record poi = mdr11.addPoi(currentMap, point, name, strOff);
+		poi.setCityIndex(cityIndex);
 
 		mdr10.addPoiType(fullType, poi);
 

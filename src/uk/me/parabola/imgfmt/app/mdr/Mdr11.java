@@ -47,23 +47,6 @@ public class Mdr11 extends MdrSection {
 		return poi;
 	}
 
-	public Mdr11Record addPoi(int mapIndex, int pointIndex, int subdiv,
-			int lblOffset, int cityIndex, String name, int strOff)
-	{
-		assert name!=null;
-		Mdr11Record poi = new Mdr11Record();
-		poi.setMapIndex(mapIndex);
-		poi.setPointIndex(pointIndex);
-		poi.setSubdiv(subdiv);
-		poi.setLblOffset(lblOffset);
-		poi.setCityIndex(cityIndex);
-		poi.setName(name);
-		poi.setStrOffset(strOff);
-
-		pois.add(poi);
-		return poi;
-	}
-
 	public void writeSectData(ImgFileWriter writer) {
 		Collections.sort(pois);
 

@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -103,13 +103,19 @@ public class MdrBuilder implements Combiner {
 
 			addCountries(mr);
 			addRegions(mr);
-			Map<Integer, City> cityMap = addCities(mr);
-			addPoints(mr);
+			Map<Integer, City> cityMap = makeCityMap(mr);
+			addPoints(mr, cityMap);
+			addCities(cityMap);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {
 			Utils.closeFile(mr);
 		}
+	}
+
+	private void addCities(Map<Integer, City> cityMap) {
+		for (City c : cityMap.values())
+			mdrFile.addCity(c);
 	}
 
 	private void addCountries(MapReader mr) {
@@ -124,14 +130,15 @@ public class MdrBuilder implements Combiner {
 			mdrFile.addRegion(region);
 	}
 
-	private Map<Integer, City> addCities(MapReader mr) {
+	private Map<Integer, City> makeCityMap(MapReader mr) {
 		List<City> cities = mr.getCities();
 
-		Map<Integer, City> cityMap = new HashMap<Integer, City>();
+		Map<Integer, City> cityMap = new LinkedHashMap<Integer, City>();
 		for (City c : cities) {
-			cityMap.put((c.getSubdivNumber() << 8) + c.getIndex(), c);
-
-			mdrFile.addCity(c);
+			System.out.printf("city subdiv=%x, ind=%d\n", c.getSubdivNumber(), c.getPointIndex());
+			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
+			assert key < 0xffffff;
+			cityMap.put(key, c);
 		}
 
 		return cityMap;
@@ -140,8 +147,9 @@ public class MdrBuilder implements Combiner {
 	/**
 	 * Read points from this map and add them to the index.
 	 * @param mr The currently open map.
+	 * @param cityMap Cites indexed by subdiv and point index.
 	 */
-	private void addPoints(MapReader mr) {
+	private void addPoints(MapReader mr, Map<Integer, City> cityMap) {
 		List<Point> list = mr.pointsForLevel(0);
 		for (Point p : list) {
 			Label label = p.getLabel();
@@ -150,8 +158,20 @@ public class MdrBuilder implements Combiner {
 				System.out.println("point number too big");
 				continue;
 			}
+
+			int cityIndex = 0;
+			if (p.getType() < 0x11) {
+				int cnum = (p.getSubdiv().getNumber() << 8) + p.getNumber();
+				City city = cityMap.get(cnum);
+				if (city != null) {
+					System.out.printf("matched city %s (ind %d) to point %s\n", city, city.getIndex(), p);
+					
+					city.setLabel(p.getLabel());
+					cityIndex = city.getIndex();
+				}
+			}
 			if (label != null && label.getText().trim().length() > 0)
-				mdrFile.addPoint(p);
+				mdrFile.addPoint(p, cityIndex);
 		}
 	}
 

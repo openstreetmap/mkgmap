@@ -35,11 +35,24 @@ public class Mdr5 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		int lastMap = 0;
+		int lastName = 0;
+
 		for (Mdr5Record city : cities) {
-			putMapIndex(writer, city.getMapIndex());
+			// Work out if the name is the same as the previous one and set
+			// the flag if so.
+			int flag = 0x800000;
+			int mapIndex = city.getMapIndex();
+			if (lastMap == mapIndex && lastName == city.getLblOffset())
+				flag = 0;
+			lastMap = mapIndex;
+
+			// Write out the record
+			lastName = city.getLblOffset();
+			putMapIndex(writer, mapIndex);
 			putCityIndex(writer, city.getCityIndex());
-			writer.put3(0x800000 | city.getLblOffset());
-			writer.putChar((char) 1);
+			writer.put3(flag | city.getLblOffset());
+			writer.putChar((char) 1); // TODO still don't know what this is
 			writer.put3(city.getStringOffset());
 		}
 	}
@@ -48,6 +61,7 @@ public class Mdr5 extends MdrSection {
 		Mdr5Record rec = new Mdr5Record(getConfig());
 		rec.setMapIndex(mapIndex);
 		rec.setCityIndex(cityIndex);
+		rec.setLblOffset(lblOff);
 		rec.setStringOffset(strOff);
 		cities.add(rec);
 		if (cityIndex > maxIndex)
