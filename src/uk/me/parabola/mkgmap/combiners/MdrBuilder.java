@@ -17,13 +17,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Country;
+import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
@@ -95,27 +100,58 @@ public class MdrBuilder implements Combiner {
 		MapReader mr = null;
 		try {
 			mr = new MapReader(filename);
-			List<Point> list = mr.pointsForLevel(0);
-			for (Point p : list) {
-				Label label = p.getLabel();
-				if (p.getNumber() > 256) {
-					System.out.println("number too big");
-					continue;
-				}
-				if (label != null && label.getText().trim().length() > 0)
-					mdrFile.addPoint(p);
-			}
 
-			//list = mr.pointsForLevel(0);
-			//for (Point p : list) {
-			//	Label label = p.getLabel();
-			//	if (label != null && label.getText().trim().length() > 0)
-			//		mdrFile.addPoint(p);
-			//}
+			addCountries(mr);
+			addRegions(mr);
+			Map<Integer, City> cityMap = addCities(mr);
+			addPoints(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {
 			Utils.closeFile(mr);
+		}
+	}
+
+	private void addCountries(MapReader mr) {
+		List<Country> countries = mr.getCountries();
+		for (Country c : countries)
+			mdrFile.addCountry(c);
+	}
+
+	private void addRegions(MapReader mr) {
+		List<Region> regions = mr.getRegions();
+		for (Region region : regions)
+			mdrFile.addRegion(region);
+	}
+
+	private Map<Integer, City> addCities(MapReader mr) {
+		List<City> cities = mr.getCities();
+
+		Map<Integer, City> cityMap = new HashMap<Integer, City>();
+		for (City c : cities) {
+			cityMap.put((c.getSubdivNumber() << 8) + c.getIndex(), c);
+
+			mdrFile.addCity(c);
+		}
+
+		return cityMap;
+	}
+
+	/**
+	 * Read points from this map and add them to the index.
+	 * @param mr The currently open map.
+	 */
+	private void addPoints(MapReader mr) {
+		List<Point> list = mr.pointsForLevel(0);
+		for (Point p : list) {
+			Label label = p.getLabel();
+			if (p.getNumber() > 256) {
+				// I think we limit the number of points+ind-points, but just in case
+				System.out.println("point number too big");
+				continue;
+			}
+			if (label != null && label.getText().trim().length() > 0)
+				mdrFile.addPoint(p);
 		}
 	}
 

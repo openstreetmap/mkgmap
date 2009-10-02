@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 public class Mdr13Record extends RecordBase {
 	private int regionIndex;
 	private int strOffset;
+	private int countryIndex;
 
 	public int getRegionIndex() {
 		return regionIndex;
@@ -33,5 +34,13 @@ public class Mdr13Record extends RecordBase {
 
 	public void setStrOffset(int strOffset) {
 		this.strOffset = strOffset;
+	}
+
+	public void setCountryIndex(int countryIndex) {
+		this.countryIndex = countryIndex;
+	}
+
+	public int getCountryIndex() {
+		return countryIndex;
 	}
 }

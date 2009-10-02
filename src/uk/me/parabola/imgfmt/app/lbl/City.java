@@ -125,4 +125,12 @@ public class City implements Comparable {
 
 		return result;
 	}
+
+	public int getSubdivNumber() {
+		return subdivision.getNumber();
+	}
+
+	public Label getLabel() {
+		return label;
+	}
 }

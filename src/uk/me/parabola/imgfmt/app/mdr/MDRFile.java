@@ -17,6 +17,9 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Country;
+import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
@@ -78,22 +81,28 @@ public class MDRFile extends ImgFile {
 		mdr1.addMap(mapName);
 	}
 
-	public void addCountry(int mapIndex, int countryIndex, String name) {
+	public void addRegion(Region region) {
+		int index = region.getIndex();
+		int countryIndex = region.getCountry().getIndex();
+		String name = region.getLabel().getText();
 		int strOff = createString(name);
-		mdr14.addCountry(mapIndex, countryIndex, strOff);
+
+		mdr13.addRegion(currentMap, countryIndex, index, strOff);
 	}
 
-	public void addRegion(int mapIndex, int regionIndex, String name) {
+	public void addCountry(Country country) {
+		String name = country.getLabel().getText();
+		int countryIndex = country.getIndex();
 		int strOff = createString(name);
-		mdr13.addRegion(mapIndex, regionIndex, strOff);
+		mdr14.addCountry(currentMap, countryIndex, strOff);
 	}
 
-	public void addCity(int mapIndex, int cityIndex, String name, int subdiv, int lblOffset) {
-		//int strOff = createString(name);
-		//mdr5.addCity(mapIndex, cityIndex, lblOffset, strOff);
-		//
-		//Mdr11Record poi = mdr11.addPoi(mapIndex, 1, subdiv, lblOffset, cityIndex, strOff);
-		//mdr10.addPoiType(0xb, poi);
+	public void addCity(City city) {
+		Label label = city.getLabel();
+		if (label != null) {
+			int strOff = createString(label.getText());
+			mdr5.addCity(currentMap, city.getIndex(), label.getOffset(), strOff);
+		}
 	}
 
 	public void addPoint(Point point) {
@@ -134,7 +143,7 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setEnd(1, writer.position());
 
 		writeSection(writer, 4, mdr4);
-		//writeSection(writer, 5, mdr5);
+		writeSection(writer, 5, mdr5);
 
 
 		// We do 11 before 10, because 10 needs information that is only available
@@ -146,8 +155,8 @@ public class MDRFile extends ImgFile {
 		mdr9.setGroups(mdr10.getGroupSizes());
 		writeSection(writer, 9, mdr9);
 
-		//writeSection(writer, 13, mdr13);
-		//writeSection(writer, 14, mdr14);
+		writeSection(writer, 13, mdr13);
+		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
 	}
 

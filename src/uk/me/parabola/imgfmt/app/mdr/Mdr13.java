@@ -29,9 +29,10 @@ public class Mdr13 extends MdrSection {
 		setConfig(config);
 	}
 
-	public void addRegion(int mapIndex, int regionIndex, int strOff) {
+	public void addRegion(int mapIndex, int countryIndex, int regionIndex, int strOff) {
 		Mdr13Record rec = new Mdr13Record();
 		rec.setMapIndex(mapIndex);
+		rec.setCountryIndex(countryIndex);
 		rec.setRegionIndex(regionIndex);
 		rec.setStrOffset(strOff);
 		regions.add(rec);
@@ -40,7 +41,7 @@ public class Mdr13 extends MdrSection {
 		for (Mdr13Record region : regions) {
 			putMapIndex(writer, region.getMapIndex());
 			writer.putChar((char) region.getRegionIndex());
-			writer.putChar((char) 1);
+			writer.putChar((char) region.getCountryIndex());
 			writer.put3(region.getStrOffset());
 		}
 	}

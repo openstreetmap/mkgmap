@@ -136,6 +136,14 @@ public class LBLFileReader extends ImgFile {
 		return cities;
 	}
 
+	public List<Country> getCountries() {
+		return new ArrayList<Country>(countries.values());
+	}
+
+	public List<Region> getRegions() {
+		return new ArrayList<Region>(regions.values());
+	}
+
 	/**
 	 * Return POI information.
 	 * @param offset The offset of the poi information in the header.

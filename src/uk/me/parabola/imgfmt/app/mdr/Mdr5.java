@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 public class Mdr5 extends MdrSection {
 
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
+	private int maxIndex;
 
 	public Mdr5(MdrConfig config) {
 		setConfig(config);
@@ -43,8 +44,14 @@ public class Mdr5 extends MdrSection {
 		}
 	}
 
-	private void putCityIndex(ImgFileWriter writer, int cityIndex) {
-		writer.putChar((char) cityIndex);
+	public void addCity(int mapIndex, int cityIndex, int lblOff, int strOff) {
+		Mdr5Record rec = new Mdr5Record(getConfig());
+		rec.setMapIndex(mapIndex);
+		rec.setCityIndex(cityIndex);
+		rec.setStringOffset(strOff);
+		cities.add(rec);
+		if (cityIndex > maxIndex)
+			maxIndex = cityIndex;
 	}
 
 	/**
@@ -53,14 +60,13 @@ public class Mdr5 extends MdrSection {
 	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
-		return 8 + 2;
+		return 9 + ((maxIndex > 256)? 2: 1);
 	}
 
-	public void addCity(int mapIndex, int cityIndex, int lblOff, int strOff) {
-		Mdr5Record rec = new Mdr5Record(getConfig());
-		rec.setMapIndex(mapIndex);
-		rec.setCityIndex(cityIndex);
-		rec.setStringOffset(strOff);
-		cities.add(rec);
+	private void putCityIndex(ImgFileWriter writer, int cityIndex) {
+		if (maxIndex > 256)
+			writer.putChar((char) cityIndex);
+		else
+			writer.put((byte) cityIndex);
 	}
 }

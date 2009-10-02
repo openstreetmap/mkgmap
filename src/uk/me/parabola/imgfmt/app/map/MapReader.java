@@ -21,7 +21,10 @@ import java.util.Deque;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
@@ -42,6 +45,7 @@ public class MapReader implements Closeable {
 	private final RGNFileReader rgnFile;
 
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
+	private LBLFileReader lblFile;
 
 	public MapReader(String filename) throws FileNotFoundException {
 		FileSystem fs = ImgFS.openFs(filename);
@@ -70,7 +74,7 @@ public class MapReader implements Closeable {
 		saveForClose(rgnFile, chan);
 
 		chan = fs.open(mapname + ".LBL", "r");
-		LBLFileReader lblFile = new LBLFileReader(chan);
+		lblFile = new LBLFileReader(chan);
 		saveForClose(lblFile, chan);
 
 		rgnFile.setLblFile(lblFile);
@@ -104,5 +108,17 @@ public class MapReader implements Closeable {
 
 	private void saveForClose(Closeable c) {
 		toClose.push(c);
+	}
+
+	public List<City> getCities() {
+		return lblFile.getCities();
+	}
+
+	public List<Country> getCountries() {
+		return lblFile.getCountries();
+	}
+
+	public List<Region> getRegions() {
+		return lblFile.getRegions();
 	}
 }
