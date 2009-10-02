@@ -184,6 +184,20 @@ public class Subdivision {
 		return div;
 	}
 
+	/**
+	 * Create a subdivision that only contains the number.  This is only
+	 * used when reading cities and similar such usages that do not really
+	 * require the full subdivision to be present.
+	 * @param number The subdivision number.
+	 * @return An empty subdivision.  Any operation other than getting the
+	 * subdiv number is likely to fail.
+	 */
+	public static Subdivision createEmptySubdivision(int number) {
+		Subdivision sd = new Subdivision(null, new SubdivData(0,0,0,0,0,0,0));
+		sd.setNumber(number);
+		return sd;
+	}
+
 	public static Subdivision readSubdivision(Zoom zoom, SubdivData subdivData) {
 		return new Subdivision(zoom, subdivData);
 	}

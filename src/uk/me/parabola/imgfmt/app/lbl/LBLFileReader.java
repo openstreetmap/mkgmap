@@ -13,7 +13,9 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
@@ -23,6 +25,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -46,6 +49,9 @@ public class LBLFileReader extends ImgFile {
 
 	private final Map<Integer, Label> labels = new HashMap<Integer, Label>();
 	private final Map<Integer, Label> pois = new HashMap<Integer, Label>();
+	private final Map<Integer, Country> countries = new HashMap<Integer, Country>();
+	private final Map<Integer, Region> regions = new HashMap<Integer, Region>();
+
 
 	public LBLFileReader(ImgChannel chan) {
 		setHeader(header);
@@ -60,6 +66,144 @@ public class LBLFileReader extends ImgFile {
 		//places.init(this, header.getPlaceHeader());
 		readLables();
 		readPoiInfo();
+
+		readCountries();
+		readRegions();
+	}
+
+	/**
+	 * Get a label by its offset in the label area.
+	 * @param offset The offset in the label section.  The offset 0 always
+	 * is an empty string.
+	 * @return The label including its text.
+	 */
+	public Label fetchLabel(int offset) {
+		Label label = labels.get(offset);
+		if (label == null) // TODO this is a problem with the 6 byte decoder in that the actual offset could be one behind
+			label = labels.get(offset-1);
+		if (label == null)
+			return NULL_LABEL;
+		else
+			return label;
+	}
+
+	/**
+	 * Get a list of cites.  This is not cached here.
+	 * @return A list of City objects.
+	 */
+	public List<City> getCities() {
+		List<City> cities = new ArrayList<City>();
+
+		PlacesHeader placeHeader = header.getPlaceHeader();
+		int start = placeHeader.getCitiesStart();
+		int end = placeHeader.getCitiesEnd();
+
+		ImgFileReader reader = getReader();
+
+		int index = 1;
+		reader.position(start);
+		while (reader.position() < end) {
+			// First is either a label offset or a point/subdiv combo, we
+			// don't know until we have read further
+			int label = reader.get3();
+
+			boolean isPointRef = false, regionIsCountry= false;
+			int info = reader.getChar();
+			if ((info & 0x8000) != 0) {
+				// Has subdiv/point index
+				int pointIndex = label & 0xff;
+				int subdiv = (label >> 8) & 0xffff;
+
+				System.out.printf("city subdiv %x, idxpoint %d\n", subdiv, pointIndex);
+				City city;
+				if ((info & 0x4000) != 0) {
+					Country country = countries.get(info & 0x3fff);
+					city = new City(country);
+				} else {
+					Region region = regions.get(info & 0x3fff);
+					city = new City(region);
+				}
+
+				city.setIndex(index);
+				city.setPointIndex((byte) pointIndex);
+				city.setSubdivision(Subdivision.createEmptySubdivision(subdiv));
+				cities.add(city);
+			} // else it has a label but that isn't much use for the index and so we ignore them
+
+			index++;
+		}
+
+		return cities;
+	}
+
+	/**
+	 * Return POI information.
+	 * @param offset The offset of the poi information in the header.
+	 * @return Currently just a string, later a POIRecord with all information
+	 * in it. TODO actually return POI :)
+	 */
+	public Label fetchPoi(int offset) {
+		Label s = pois.get(offset);
+		if (s == null)
+			s = NULL_LABEL;
+		return s;
+	}
+
+	/**
+	 * Read a cache the countries. These are used when reading cities.
+	 */
+	private void readCountries() {
+		ImgFileReader reader = getReader();
+
+		PlacesHeader placeHeader = header.getPlaceHeader();
+
+		int start = placeHeader.getCountriesStart();
+		int end = placeHeader.getCountriesEnd();
+
+		int index = 1;
+		reader.position(start);
+		while (reader.position() < end) {
+			int offset = reader.get3();
+			Label label = fetchLabel(offset);
+
+			if (label != null) {
+				System.out.printf("country %d: %s\n", index, label.getText());
+				Country country = new Country(index);
+				country.setLabel(label);
+				countries.put(index, country);
+			}
+			index++;
+		}
+	}
+
+	/**
+	 * Read an cache the regions.  These are used when reading cities.
+	 */
+	private void readRegions() {
+		ImgFileReader reader = getReader();
+
+		PlacesHeader placeHeader = header.getPlaceHeader();
+
+		int start = placeHeader.getRegionsStart();
+		int end = placeHeader.getRegionsEnd();
+
+		int index = 1;
+		reader.position(start);
+		while (reader.position() < end) {
+			int country = reader.getChar();
+			int offset = reader.get3();
+			Label label = fetchLabel(offset);
+			if (label != null) {
+				System.out.printf("region %d: %s c=%d\n", index, label.getText(), country);
+				Region region = new Region(countries.get(country));
+				region.setIndex(index);
+				region.setLabel(label);
+
+				regions.put(index, region);
+			}
+
+			index++;
+		}
 	}
 
 	/**
@@ -73,7 +217,7 @@ public class LBLFileReader extends ImgFile {
 		ImgFileReader reader = getReader();
 
 		labels.put(0, NULL_LABEL);
-		
+
 		int start = header.getLabelStart();
 		int size =  header.getLabelSize();
 
@@ -96,6 +240,8 @@ public class LBLFileReader extends ImgFile {
 	/**
 	 * Read all the POI information.
 	 * This will create a POIRecord, but we just get the name at the minute.
+	 *
+	 * TODO: not finished
 	 */
 	private void readPoiInfo() {
 		ImgFileReader reader = getReader();
@@ -158,15 +304,7 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasStreetNum) {
-				String snum = reader.getBase11str('-');
-				if (snum.isEmpty()) {
-					int mpoffset;
-					int idx;
-
-					mpoffset = reader.get() << 16;
-					mpoffset |= reader.getInt();
-					snum = fetchLabel(mpoffset).getText();
-				}
+				fetchBase11(reader);
 			}
 
 			if (hasStreet) {
@@ -182,9 +320,8 @@ public class LBLFileReader extends ImgFile {
 					cidx = reader.get();
 			}
 
-
 			if (hasPhone) {
-				String phone = reader.getBase11str('-');
+				String phone = fetchBase11(reader);
 			}
 
 			if (hasHighwayExit) {
@@ -211,6 +348,25 @@ public class LBLFileReader extends ImgFile {
 	}
 
 	/**
+	 * Fetch a base 11 quantity.  If there is not one, then fetch a label
+	 * instead.
+	 * @param reader A reader correctly positioned at the start of the number
+	 * or label reference.
+	 */
+	private String fetchBase11(ImgFileReader reader) {
+		String num = reader.getBase11str('-');
+		if (num.isEmpty()) {
+			int mpoffset;
+			int idx;
+
+			mpoffset = reader.get() << 16;
+			mpoffset |= reader.getInt();
+			num = fetchLabel(mpoffset).getText();
+		}
+		return num;
+	}
+
+	/**
 	 * The meaning of the bits in the local flags depends on which bits
 	 * are set in the global flags.  Hence we have to calculate the
 	 * masks to use.  These are held in an instance of PoiMasks
@@ -228,7 +384,7 @@ public class LBLFileReader extends ImgFile {
 		boolean has_hwyexit;
 		boolean has_tides;
 		boolean has_unkn;
-		
+
 		char mask= 0x1;
 
 		has_street_num = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
@@ -244,12 +400,12 @@ public class LBLFileReader extends ImgFile {
 		if ( has_street_num ) {
 			localMask.streetNumMask = mask;
 			mask <<= 1;
-        }
+		}
 
 		if ( has_street ) {
 			localMask.streetMask = mask;
 			mask <<= 1;
-        }
+		}
 
 		if ( has_city ) {
 			localMask.cityMask= mask;
@@ -275,7 +431,7 @@ public class LBLFileReader extends ImgFile {
 			localMask.tidesMask = mask;
 			mask <<=1;
 		}
-		
+
 		return localMask;
 	}
 
@@ -291,49 +447,7 @@ public class LBLFileReader extends ImgFile {
 		return text;
 	}
 
-	public Label fetchLabel(int offset) {
-		Label label = labels.get(offset);
-		if (label == null) // TODO this is a problem with the 6 byte decoder in that the actual offset could be one behind
-			label = labels.get(offset-1);
-		if (label == null)
-			return NULL_LABEL;
-		else
-			return label;
-	}
 
-	/**
-	 * Return POI information.
-	 * @param offset The offset of the poi information in the header.
-	 * @return Currently just a string, later a POIRecord with all information
-	 * in it.
-	 */
-	public Label fetchPoi(int offset) {
-		Label s = pois.get(offset);
-		if (s == null)
-			s = NULL_LABEL;
-		return s;
-	}
-
-	///**
-	// * Get the string associated with a label, given the labels offset value.
-	// * @param offset Offset in the file.  These offsets are used in the other
-	// * map files, such as RGN and NET.
-	// * @return The label as a string.  Will be an empty string if there is no
-	// * text for the label.  Note that this is particularly the case when the
-	// * offset is zero.
-	// */
-	//public String fetchLabelString(int offset) {
-	//	// Short cut the simple case of no label
-	//	if (offset == 0)
-	//		return "";  // or null ???
-	//
-	//	Label l= labels.get(offset);
-	//	if (l == null)
-	//		return "";
-	//	else
-	//		return l.getText();
-	//}
-	//
 	//public PlacesHeader getPlaceHeader() {
 	//	return header.getPlaceHeader();
 	//}

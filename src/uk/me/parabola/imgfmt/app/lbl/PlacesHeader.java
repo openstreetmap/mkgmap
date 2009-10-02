@@ -219,7 +219,30 @@ public class PlacesHeader {
 		return poiProperties.getEndPos();
 	}
 
+	public int getCitiesStart() {
+		return city.getPosition();
+	}
+	public int getCitiesEnd() {
+		return city.getEndPos();
+	}
+	
 	public int getNumExits() {
 		return exitFacility.getNumItems();
+	}
+
+	public int getCountriesStart() {
+		return country.getPosition();
+	}
+
+	public int getCountriesEnd() {
+		return country.getEndPos();
+	}
+
+	public int getRegionsStart() {
+		return region.getPosition();
+	}
+
+	public int getRegionsEnd() {
+		return region.getEndPos();
 	}
 }
