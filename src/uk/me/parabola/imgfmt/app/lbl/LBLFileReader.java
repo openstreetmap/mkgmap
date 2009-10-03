@@ -86,7 +86,7 @@ public class LBLFileReader extends ImgFile {
 			label = labels.get(offset-1);
 		if (label == null) {
 			if (offset != 0)
-				System.out.println("Invalid offset for poi " + offset);
+				System.out.println("Invalid offset for label " + offset);
 			return NULL_LABEL;
 		}
 		else
@@ -193,25 +193,28 @@ public class LBLFileReader extends ImgFile {
 			int label = reader.get3();
 
 			int info = reader.getChar();
+
+
+			City city;
+			if ((info & 0x4000) != 0) {
+				Country country = countries.get(info & 0x3fff);
+				city = new City(country);
+			} else {
+				Region region = regions.get(info & 0x3fff);
+				city = new City(region);
+			}
+
+			city.setIndex(index);
 			if ((info & 0x8000) != 0) {
 				// Has subdiv/point index
 				int pointIndex = label & 0xff;
 				int subdiv = (label >> 8) & 0xffff;
-
-				City city;
-				if ((info & 0x4000) != 0) {
-					Country country = countries.get(info & 0x3fff);
-					city = new City(country);
-				} else {
-					Region region = regions.get(info & 0x3fff);
-					city = new City(region);
-				}
-
-				city.setIndex(index);
 				city.setPointIndex((byte) pointIndex);
 				city.setSubdivision(Subdivision.createEmptySubdivision(subdiv));
-				cities.add(city);
-			} // else it has a label but that isn't much use for the index and so we ignore them
+			} else {
+				city.setSubdivision(Subdivision.createEmptySubdivision(1));
+			}
+			cities.add(city);
 
 			index++;
 		}
@@ -271,7 +274,7 @@ public class LBLFileReader extends ImgFile {
 
 		PoiMasks localMask = makeLocalMask(placeHeader);
 
-		while (position() < end) {
+		while (reader.position() < end) {
 			poiOffset = position() - start;
 			int val = reader.get3();
 			int labelOffset = val & 0x3fffff;
