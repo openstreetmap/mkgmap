@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -45,7 +46,7 @@ public class MapReader implements Closeable {
 	private final RGNFileReader rgnFile;
 
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
-	private LBLFileReader lblFile;
+	private final LBLFileReader lblFile;
 
 	public MapReader(String filename) throws FileNotFoundException {
 		FileSystem fs = ImgFS.openFs(filename);
@@ -90,6 +91,22 @@ public class MapReader implements Closeable {
 		Subdivision[] subdivisions = treFile.subdivForLevel(level);
 		for (Subdivision sd : subdivisions) {
 			List<Point> subdivPoints = rgnFile.pointsForSubdiv(sd);
+			points.addAll(subdivPoints);
+		}
+
+		return points;
+	}
+
+	/**
+	 * Get a list of all the lines for a given level.
+	 * @param level The level, lower numbers are the most detailed.
+	 */
+	public List<Polyline> linesForLevel(int level) {
+		ArrayList<Polyline> points = new ArrayList<Polyline>();
+
+		Subdivision[] subdivisions = treFile.subdivForLevel(level);
+		for (Subdivision div : subdivisions) {
+			List<Polyline> subdivPoints = rgnFile.linesForSubdiv(div);
 			points.addAll(subdivPoints);
 		}
 

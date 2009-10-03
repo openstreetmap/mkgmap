@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -39,14 +40,15 @@ import uk.me.parabola.util.EnhancedProperties;
  */
 public class RGNFileReader extends ImgReader {
 
+	private final RGNHeader rgnHeader;
 	private LBLFileReader lblFile;
 
 	public RGNFileReader(ImgChannel chan) {
-		RGNHeader header = new RGNHeader();
-		setHeader(header);
+		rgnHeader = new RGNHeader();
+		setHeader(rgnHeader);
 
 		setReader(new BufferedImgFileReader(chan));
-		header.readHeader(getReader());
+		rgnHeader.readHeader(getReader());
 	}
 
 	public void config(EnhancedProperties props) {
@@ -127,6 +129,50 @@ public class RGNFileReader extends ImgReader {
 		}
 	}
 
+	public List<Polyline> linesForSubdiv(Subdivision div) {
+		if (!div.hasPolylines())
+			return Collections.emptyList();
+
+		RgnOffsets rgnOffsets = getOffsets(div);
+		ArrayList<Polyline> list = new ArrayList<Polyline>();
+
+		int start = rgnOffsets.getLineStart();
+		int end = rgnOffsets.getLineEnd();
+
+		position(start);
+		ImgFileReader reader = getReader();
+		while (position() < end) {
+			Polyline line = new Polyline(div);
+			byte type = reader.get();
+			line.setType(type & 0x7f);
+
+			int labelOffset = reader.get3() & 0xffffff;
+			Label label;
+			if ((labelOffset & 0x800000) == 0) {
+				label = lblFile.fetchLabel(labelOffset & 0x7fffff);
+			} else {
+				// TODO offset into NET
+				label = lblFile.fetchLabel(0);
+			}
+			line.setLabel(label);
+
+			line.setDeltaLong(reader.getChar());
+			line.setDeltaLat(reader.getChar());
+
+			int len;
+			if ((type & 0x80) == 0)
+				len = reader.get() & 0xff;
+			else
+				len = reader.getChar();
+
+			reader.get(len + 1);
+
+			//System.out.println("add line " + line);
+			list.add(line);
+		}
+
+		return list;
+	}
 	/**
 	 * Get the offsets to the points, lines etc in RGN for the given subdiv.
 	 * @param sd The subdivision is needed to work out the starting points.
@@ -134,7 +180,7 @@ public class RGNFileReader extends ImgReader {
 	 */
 	private RgnOffsets getOffsets(Subdivision sd) {
 		int off = sd.getStartRgnPointer();
-		position(getHeader().getHeaderLength() + off);
+		position(rgnHeader.getDataOffset() + off);
 
 		return new RgnOffsets(sd);
 	}
@@ -242,6 +288,14 @@ public class RGNFileReader extends ImgReader {
 
 		public long getIndPointEnd() {
 			return start + indPointEnd;
+		}
+
+		public int getLineStart() {
+			return lineOffset == 0? start + headerLen: start + lineOffset;
+		}
+
+		public int getLineEnd() {
+			return start + lineEnd;
 		}
 	}
 }

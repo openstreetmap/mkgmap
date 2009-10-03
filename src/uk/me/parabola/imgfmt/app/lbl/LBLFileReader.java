@@ -82,8 +82,10 @@ public class LBLFileReader extends ImgFile {
 	 */
 	public Label fetchLabel(int offset) {
 		Label label = labels.get(offset);
-		if (label == null) // TODO this is a problem with the 6 byte decoder in that the actual offset could be one behind
+		if (label == null) {
+			// TODO this is a problem with the 6 byte decoder in that the actual offset could be one behind
 			label = labels.get(offset-1);
+		}
 		if (label == null) {
 			if (offset != 0)
 				System.out.println("Invalid offset for label " + offset);

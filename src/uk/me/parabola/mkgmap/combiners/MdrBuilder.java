@@ -34,6 +34,7 @@ import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
 import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
@@ -107,6 +108,8 @@ public class MdrBuilder implements Combiner {
 			Map<Integer, City> cityMap = makeCityMap(mr);
 			addPoints(mr, cityMap);
 			addCities(cityMap);
+
+			addStreets(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {
@@ -176,6 +179,18 @@ public class MdrBuilder implements Combiner {
 			}
 			if (label != null && label.getText().trim().length() > 0)
 				mdrFile.addPoint(p, cityIndex);
+		}
+	}
+
+	private void addStreets(MapReader mr) {
+		List<Polyline> list = mr.linesForLevel(0);
+		for (Polyline l : list) {
+			if (l.getType() < 8) {
+
+				Label label = l.getLabel();
+				if (label != null && label.getText().trim().length() > 0)
+					mdrFile.addStreet(l);
+			}
 		}
 	}
 

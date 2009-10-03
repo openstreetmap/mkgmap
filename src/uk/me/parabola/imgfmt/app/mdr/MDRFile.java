@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -37,6 +38,7 @@ public class MDRFile extends ImgFile {
 	private final Mdr1 mdr1;
 	private final Mdr4 mdr4;
 	private final Mdr5 mdr5;
+	private final Mdr7 mdr7;
 	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
@@ -63,6 +65,7 @@ public class MDRFile extends ImgFile {
 		mdr1 = new Mdr1(config);
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
+		mdr7 = new Mdr7(config);
 		mdr9 = new Mdr9(config);
 		mdr10 = new Mdr10(config);
 		mdr11 = new Mdr11(config);
@@ -124,6 +127,15 @@ public class MDRFile extends ImgFile {
 		mdr4.addType(point.getType());
 	}
 
+	public void addStreet(Polyline street) {
+		Label label = street.getLabel();
+		String name = label.getText();
+		int strOff = createString(name);
+
+		//System.out.println("add street " + name);
+		mdr7.addStreet(currentMap, name, label.getOffset(), strOff);
+	}
+
 	public void write() {
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
@@ -146,6 +158,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 4, mdr4);
 		writeSection(writer, 5, mdr5);
 
+		writeSection(writer, 7, mdr7);
 
 		// We do 11 before 10, because 10 needs information that is only available
 		// after 11 has run.
