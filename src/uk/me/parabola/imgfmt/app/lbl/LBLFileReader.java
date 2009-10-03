@@ -130,8 +130,8 @@ public class LBLFileReader extends ImgFile {
 		int start = placeHeader.getCountriesStart();
 		int end = placeHeader.getCountriesEnd();
 
-		int index = 1;
 		reader.position(start);
+		int index = 1;
 		while (reader.position() < end) {
 			int offset = reader.get3();
 			Label label = fetchLabel(offset);
@@ -156,8 +156,8 @@ public class LBLFileReader extends ImgFile {
 		int start = placeHeader.getRegionsStart();
 		int end = placeHeader.getRegionsEnd();
 
-		int index = 1;
 		reader.position(start);
+		int index = 1;
 		while (reader.position() < end) {
 			int country = reader.getChar();
 			int offset = reader.get3();
@@ -185,8 +185,10 @@ public class LBLFileReader extends ImgFile {
 
 		ImgFileReader reader = getReader();
 
-		int index = 1;
+		// Since cities are indexed starting from 1, we add a null one at index 0
+
 		reader.position(start);
+		int index = 1;
 		while (reader.position() < end) {
 			// First is either a label offset or a point/subdiv combo, we
 			// don't know until we have read further
@@ -196,23 +198,23 @@ public class LBLFileReader extends ImgFile {
 
 
 			City city;
-			if ((info & 0x4000) != 0) {
-				Country country = countries.get(info & 0x3fff);
-				city = new City(country);
-			} else {
+			if ((info & 0x4000) == 0) {
 				Region region = regions.get(info & 0x3fff);
 				city = new City(region);
+			} else {
+				Country country = countries.get(info & 0x3fff);
+				city = new City(country);
 			}
 
 			city.setIndex(index);
-			if ((info & 0x8000) != 0) {
+			if ((info & 0x8000) == 0) {
+				city.setSubdivision(Subdivision.createEmptySubdivision(1));
+			} else {
 				// Has subdiv/point index
 				int pointIndex = label & 0xff;
 				int subdiv = (label >> 8) & 0xffff;
 				city.setPointIndex((byte) pointIndex);
 				city.setSubdivision(Subdivision.createEmptySubdivision(subdiv));
-			} else {
-				city.setSubdivision(Subdivision.createEmptySubdivision(1));
 			}
 			cities.add(city);
 
@@ -266,21 +268,17 @@ public class LBLFileReader extends ImgFile {
 		int start = placeHeader.getPoiPropertiesStart();
 		int end = placeHeader.getPoiPropertiesEnd();
 
-		int poiOffset;
 		reader.position(start);
-
-		int lblinfo;
-		boolean override;
 
 		PoiMasks localMask = makeLocalMask(placeHeader);
 
 		while (reader.position() < end) {
-			poiOffset = position() - start;
+			int poiOffset = position() - start;
 			int val = reader.get3();
 			int labelOffset = val & 0x3fffff;
 
 
-			override = (val & 0x800000) != 0;
+			boolean override = (val & 0x800000) != 0;
 
 			POIRecord poi = new POIRecord();
 			poi.setLabel(fetchLabel(labelOffset));
@@ -288,12 +286,12 @@ public class LBLFileReader extends ImgFile {
 			// We have what we want, but now have to find the start of the
 			// next record as they are not fixed length.
 			int flags;
-			boolean hasStreet = false;
-			boolean hasStreetNum = false;
-			boolean hasCity = false;
-			boolean hasZip = false;
-			boolean hasPhone = false;
-			boolean hasHighwayExit = false;
+			boolean hasStreet;
+			boolean hasStreetNum;
+			boolean hasCity;
+			boolean hasZip;
+			boolean hasPhone;
+			boolean hasHighwayExit;
 			boolean hasTides = false;
 			boolean hasUnkn = false;
 
@@ -334,7 +332,9 @@ public class LBLFileReader extends ImgFile {
 
 			if (hasStreet) {
 				int streetNameOffset = reader.get3();// label for street
-				poi.setStreetName(fetchLabel(streetNameOffset));
+				Label label = fetchLabel(streetNameOffset);
+				//System.out.println("street " + label.getText());
+				poi.setStreetName(label);
 			}
 
 			if (hasCity) {
@@ -344,7 +344,9 @@ public class LBLFileReader extends ImgFile {
 					cityIndex = reader.getChar();
 				else
 					cityIndex = reader.get() & 0xff;
-				poi.setCity(cities.get(cityIndex));
+				//System.out.println("city " + cityIndex);
+				
+				poi.setCity(cities.get(cityIndex-1));
 			}
 
 			if (hasZip) {
@@ -359,14 +361,12 @@ public class LBLFileReader extends ImgFile {
 			if (hasPhone) {
 				byte b = reader.get();
 				String num = reader.getBase11str(b, '-');
-				System.out.printf("phone %s\n", num);
 				if (num.isEmpty()) {
 					// Yes this is a bit strange it is a byte followed by a char
 					int mpoffset = (b << 16) & 0xff0000;
 					mpoffset |= reader.getChar() & 0xffff;
 
 					Label label = fetchLabel(mpoffset);
-					System.out.printf("c phone %s\n", label.getText());
 					poi.setComplexPhoneNumber(label);
 				} else {
 					poi.setSimplePhoneNumber(num);
@@ -374,14 +374,11 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasHighwayExit) {
-				boolean indexed;
-				boolean overnightParking;
-				String ehas;
 
-				lblinfo = reader.get3();
+				int lblinfo = reader.get3();
 				int highwayLabelOffset = lblinfo & 0x3FFFF;
-				indexed = (lblinfo & 0x800000) != 0;
-				overnightParking = (lblinfo & 0x400000) != 0;
+				boolean indexed = (lblinfo & 0x800000) != 0;
+				boolean overnightParking = (lblinfo & 0x400000) != 0;
 
 				byte highwayIndex = reader.get();
 				if (indexed) {
@@ -391,7 +388,6 @@ public class LBLFileReader extends ImgFile {
 				}
 			}
 
-			System.out.printf("poi off=%x %s\n", poiOffset, poi.getNameLabel().getText());
 			pois.put(poiOffset, poi);
 		}
 	}
@@ -406,24 +402,15 @@ public class LBLFileReader extends ImgFile {
 	private PoiMasks makeLocalMask(PlacesHeader placeHeader) {
 		int globalPoi = placeHeader.getPOIGlobalFlags();
 
-		boolean has_street;
-		boolean has_street_num;
-		boolean has_city;
-		boolean has_zip;
-		boolean has_phone;
-		boolean has_hwyexit;
-		boolean has_tides;
-		//boolean has_unkn;
-
 		char mask= 0x1;
 
-		has_street_num = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
-		has_street = (globalPoi & POIRecord.HAS_STREET) != 0;
-		has_city = (globalPoi & POIRecord.HAS_CITY) != 0;
-		has_zip = (globalPoi & POIRecord.HAS_ZIP) != 0;
-		has_phone = (globalPoi & POIRecord.HAS_PHONE) != 0;
-		has_hwyexit = (globalPoi & POIRecord.HAS_EXIT) != 0;
-		has_tides = (globalPoi & POIRecord.HAS_TIDE_PREDICTION) != 0;
+		boolean has_street_num = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
+		boolean has_street = (globalPoi & POIRecord.HAS_STREET) != 0;
+		boolean has_city = (globalPoi & POIRecord.HAS_CITY) != 0;
+		boolean has_zip = (globalPoi & POIRecord.HAS_ZIP) != 0;
+		boolean has_phone = (globalPoi & POIRecord.HAS_PHONE) != 0;
+		boolean has_hwyexit = (globalPoi & POIRecord.HAS_EXIT) != 0;
+		boolean has_tides = (globalPoi & POIRecord.HAS_TIDE_PREDICTION) != 0;
 
 		PoiMasks localMask = new PoiMasks();
 
