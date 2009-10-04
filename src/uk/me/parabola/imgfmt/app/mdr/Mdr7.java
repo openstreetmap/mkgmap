@@ -19,6 +19,9 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
+ * The MDR 7 section is a list of all streets.  Only street names are saved
+ * and so I believe that the NET section is required to make this work.
+ *
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrSection {
@@ -42,12 +45,12 @@ public class Mdr7 extends MdrSection {
 		
 		for (Mdr7Record s : streets) {
 			putMapIndex(writer, s.getMapIndex());
-			writer.put3(s.getLabelOffset() | 0x800000);
+			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
 			writer.put3(s.getStringOffset());
 		}
 	}
 
 	public int getItemSize() {
-		return 7; // adjust for number of maps
+		return 6 + getConfig().getMapIndexSize();
 	}
 }

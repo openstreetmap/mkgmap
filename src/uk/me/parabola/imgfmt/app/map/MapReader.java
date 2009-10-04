@@ -25,11 +25,12 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.net.NETFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
-import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -44,9 +45,10 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 public class MapReader implements Closeable {
 	private final TREFileReader treFile;
 	private final RGNFileReader rgnFile;
+	private final LBLFileReader lblFile;
+	private final NETFileReader netFile;
 
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
-	private final LBLFileReader lblFile;
 
 	public MapReader(String filename) throws FileNotFoundException {
 		FileSystem fs = ImgFS.openFs(filename);
@@ -78,6 +80,17 @@ public class MapReader implements Closeable {
 		lblFile = new LBLFileReader(chan);
 		saveForClose(lblFile, chan);
 
+		// The NET file is optional
+		NETFileReader nr;
+		try {
+			chan = fs.open(mapname + ".NET", "r");
+			nr = new NETFileReader(chan);
+		} catch (FileNotFoundException e) {
+			nr = null;
+		}
+		netFile = nr;
+
+		rgnFile.setNetFile(netFile);
 		rgnFile.setLblFile(lblFile);
 	}
 

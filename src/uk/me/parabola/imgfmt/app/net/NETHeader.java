@@ -52,17 +52,13 @@ public class NETHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
-		roadDefinitions.setPosition(reader.getInt());
-		roadDefinitions.setSize(reader.getInt());
+		roadDefinitions.readSectionInfo(reader, false);
 		roadShift = reader.get();
 
-		segmentedRoads.setPosition(reader.getInt());
-		segmentedRoads.setSize(reader.getInt());
+		segmentedRoads.readSectionInfo(reader, false);
 		segmentShift = reader.get();
 
-		sortedRoads.setPosition(reader.getInt());
-		sortedRoads.setSize(reader.getInt());
-		sortedRoads.setItemSize(reader.getChar());  // may not be int
+		sortedRoads.readSectionInfo(reader, true);
 
 		reader.getInt();
 		reader.get();
@@ -99,5 +95,17 @@ public class NETHeader extends CommonHeader {
 	ImgFileWriter makeSortedRoadWriter(ImgFileWriter writer) {
 		sortedRoads.setPosition(writer.position());
 		return new SectionWriter(writer, sortedRoads);
+	}
+
+	public int getRoadDefinitionsStart() {
+		return roadDefinitions.getPosition();
+	}
+
+	public int getSortedRoadsStart() {
+		return sortedRoads.getPosition();
+	}
+
+	public int getSortedRoadsEnd() {
+		return sortedRoads.getEndPos();
 	}
 }

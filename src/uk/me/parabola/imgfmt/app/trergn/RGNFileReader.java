@@ -20,9 +20,9 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
+import uk.me.parabola.imgfmt.app.net.NETFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -42,6 +42,7 @@ public class RGNFileReader extends ImgReader {
 
 	private final RGNHeader rgnHeader;
 	private LBLFileReader lblFile;
+	private NETFileReader netFile;
 
 	public RGNFileReader(ImgChannel chan) {
 		rgnHeader = new RGNHeader();
@@ -151,8 +152,8 @@ public class RGNFileReader extends ImgReader {
 			if ((labelOffset & 0x800000) == 0) {
 				label = lblFile.fetchLabel(labelOffset & 0x7fffff);
 			} else {
-				// TODO offset into NET
-				label = lblFile.fetchLabel(0);
+				labelOffset = netFile.getLabelOffset(labelOffset & 0x3fffff);
+				label = lblFile.fetchLabel(labelOffset);
 			}
 			line.setLabel(label);
 
@@ -187,6 +188,10 @@ public class RGNFileReader extends ImgReader {
 
 	public void setLblFile(LBLFileReader lblFile) {
 		this.lblFile = lblFile;
+	}
+
+	public void setNetFile(NETFileReader netFile) {
+		this.netFile = netFile;
 	}
 
 	/**
