@@ -31,7 +31,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 /**
  * The file that holds all the labels for the map.
  *
- * Would be quite simple, but there are a number of sections that hold country,
+ * There are also a number of sections that hold country,
  * region, city, etc. records.
  *
  * The main focus of mkgmap is creating files, there are plenty of applications
@@ -63,8 +63,6 @@ public class LBLFileReader extends ImgFile {
 				header.getEncodingType());
 		textDecoder = funcs.getDecoder();
 
-		 //TODO read the places file
-		//places.init(this, header.getPlaceHeader());
 		readLables();
 
 		readCountries();
@@ -83,16 +81,11 @@ public class LBLFileReader extends ImgFile {
 	public Label fetchLabel(int offset) {
 		Label label = labels.get(offset);
 		if (label == null) {
-			// TODO this is a problem with the 6 byte decoder in that the actual offset could be one behind
-			label = labels.get(offset-1);
-		}
-		if (label == null) {
-			if (offset != 0)
-				System.out.println("Invalid offset for label " + offset);
+			assert offset == 0 : "Invalid label offset found " + offset;
 			return NULL_LABEL;
 		}
-		else
-			return label;
+
+		return label;
 	}
 
 	/**
@@ -240,19 +233,38 @@ public class LBLFileReader extends ImgFile {
 		int size =  header.getLabelSize();
 
 		reader.position(start + 1);
-		int offset = 1;
-		for (int i = 0; i < size; i++) {
+		int labelOffset = 1;
+		for (int off = 1; off <= size; off++) {
 			byte b = reader.get();
 			if (textDecoder.addByte(b)) {
-				String text = recoverText();
-
-				Label l = new Label(text);
-				l.setOffset(offset);
-				labels.put(offset, l);
-
-				offset = i+1;
+				labelOffset = saveLabel(labelOffset, off);
 			}
 		}
+	}
+
+	/**
+	 * We have a label and we need to save it.
+	 * @param labelOffset The offset of the label we are about to save.
+	 * @param currentOffset The current offset that last read from.
+	 * @return The offset of the next label.
+	 */
+	private int saveLabel(int labelOffset, int currentOffset) {
+		EncodedText encText = textDecoder.getText();
+		String text;
+		try {
+			text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			text = ""; // this can't really happen because utf-8 must be supported
+		}
+
+		Label l = new Label(text);
+		l.setOffset(labelOffset);
+		labels.put(labelOffset, l);
+
+		// Calculate the offset of the next label. This is not always
+		// the current offset + 1 because there may be bytes left
+		// inside the decoder.
+		return currentOffset + 1 + encText.getOffsetAdjustment();
 	}
 
 	/**
@@ -335,7 +347,6 @@ public class LBLFileReader extends ImgFile {
 			if (hasStreet) {
 				int streetNameOffset = reader.get3();// label for street
 				Label label = fetchLabel(streetNameOffset);
-				//System.out.println("street " + label.getText());
 				poi.setStreetName(label);
 			}
 
@@ -346,8 +357,7 @@ public class LBLFileReader extends ImgFile {
 					cityIndex = reader.getChar();
 				else
 					cityIndex = reader.get() & 0xff;
-				//System.out.println("city " + cityIndex);
-				
+
 				poi.setCity(cities.get(cityIndex-1));
 			}
 
@@ -406,49 +416,49 @@ public class LBLFileReader extends ImgFile {
 
 		char mask= 0x1;
 
-		boolean has_street_num = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
-		boolean has_street = (globalPoi & POIRecord.HAS_STREET) != 0;
-		boolean has_city = (globalPoi & POIRecord.HAS_CITY) != 0;
-		boolean has_zip = (globalPoi & POIRecord.HAS_ZIP) != 0;
-		boolean has_phone = (globalPoi & POIRecord.HAS_PHONE) != 0;
-		boolean has_hwyexit = (globalPoi & POIRecord.HAS_EXIT) != 0;
-		boolean has_tides = (globalPoi & POIRecord.HAS_TIDE_PREDICTION) != 0;
+		boolean hasStreetNum = (globalPoi & POIRecord.HAS_STREET_NUM) != 0;
+		boolean hasStreet = (globalPoi & POIRecord.HAS_STREET) != 0;
+		boolean hasCity = (globalPoi & POIRecord.HAS_CITY) != 0;
+		boolean hasZip = (globalPoi & POIRecord.HAS_ZIP) != 0;
+		boolean hasPhone = (globalPoi & POIRecord.HAS_PHONE) != 0;
+		boolean hasHighwayExit = (globalPoi & POIRecord.HAS_EXIT) != 0;
+		boolean hasTides = (globalPoi & POIRecord.HAS_TIDE_PREDICTION) != 0;
 
 		PoiMasks localMask = new PoiMasks();
 
-		if ( has_street_num ) {
+		if (hasStreetNum) {
 			localMask.streetNumMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_street ) {
+		if (hasStreet) {
 			localMask.streetMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_city ) {
-			localMask.cityMask= mask;
+		if (hasCity) {
+			localMask.cityMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_zip ) {
-			localMask.zipMask= mask;
+		if (hasZip) {
+			localMask.zipMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_phone ) {
-			localMask.phoneMask= mask;
+		if (hasPhone) {
+			localMask.phoneMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_hwyexit ) {
+		if (hasHighwayExit) {
 			localMask.highwayExitMask = mask;
 			mask <<= 1;
 		}
 
-		if ( has_tides ) {
+		if (hasTides) {
 			localMask.tidesMask = mask;
-			mask <<=1;
+			mask <<= 1;
 		}
 
 		return localMask;

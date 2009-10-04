@@ -45,6 +45,20 @@ public class Format6Decoder implements CharacterDecoder {
 		return needReset;
 	}
 
+	public EncodedText getText() {
+		byte[] ba = out.toByteArray();
+		EncodedText text = new EncodedText(ba, ba.length);
+
+		assert nbits == 0 || nbits == 8;
+		// If there is a byte left inside the decoder then we have to let our
+		// caller know, so that they can adjust the offset of the next label
+		// appropriately.
+		if (nbits == 8)
+			text.setPositionOffset(-1);
+		return text;
+	}
+
+
 	/**
 	 * Convert a single 6 bit quantity into a character.
 	 * @param b The six bit int.
@@ -80,11 +94,5 @@ public class Format6Decoder implements CharacterDecoder {
 			}
 		}
 		out.write(c);
-	}
-
-
-	public EncodedText getText() {
-		byte[] ba = out.toByteArray();
-		return new EncodedText(ba, ba.length);
 	}
 }
