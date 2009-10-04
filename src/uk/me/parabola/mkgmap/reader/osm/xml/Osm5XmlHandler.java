@@ -822,17 +822,24 @@ class Osm5XmlHandler extends DefaultHandler {
 				// equivalent CoordPOI that contains a reference to
 				// the POI's Node so we can access the POI's tags
 				Node node = nodeMap.get(id);
-				// for now, only do this for nodes that have an access
-				// tag otherwise we will end up creating a CoordPOI
+				// for now, only do this for nodes that have certain
+				// tags otherwise we will end up creating a CoordPOI
 				// for every node
-				if(node != null && node.getTag("access") != null) {
-					if(!(co instanceof CoordPOI)) {
-						co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
-						coordMap.put(id, co);
+				if(node != null) {
+					final String[] coordPOITags = { "access", "barrier" };
+					for(String cpt : coordPOITags) {
+						if(node.getTag(cpt) != null) {
+							if(!(co instanceof CoordPOI)) {
+								co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
+								coordMap.put(id, co);
+							}
+							// flag this Way as having a CoordPOI so it will
+							// be processed later
+							currentWay.addTag("mkgmap:way-has-pois", "true");
+							log.info("Linking POI with " + cpt + " tag to way at " + co.toOSMURL());
+							break;
+						}
 					}
-					// flag this Way as having a CoordPOI so it will
-					// be processed later
-					currentWay.addTag("mkgmap:way-has-pois", "true");
 				}
 			}
 			currentWay.addPoint(co);
