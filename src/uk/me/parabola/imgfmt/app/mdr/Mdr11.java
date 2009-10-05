@@ -39,7 +39,6 @@ public class Mdr11 extends MdrMapSection {
 		poi.setPointIndex(point.getNumber());
 		poi.setSubdiv(point.getSubdiv().getNumber());
 		poi.setLblOffset(point.getLabel().getOffset());
-		poi.setCityIndex(0);
 		poi.setName(name);
 		poi.setStrOffset(strOff);
 

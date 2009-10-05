@@ -32,6 +32,7 @@ import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
+import uk.me.parabola.imgfmt.app.mdr.Mdr5Record;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
@@ -105,7 +106,7 @@ public class MdrBuilder implements Combiner {
 
 			addCountries(mr);
 			addRegions(mr);
-			Map<Integer, City> cityMap = makeCityMap(mr);
+			Map<Integer, Mdr5Record> cityMap = makeCityMap(mr);
 			addPoints(mr, cityMap);
 			addCities(cityMap);
 
@@ -115,11 +116,6 @@ public class MdrBuilder implements Combiner {
 		} finally {
 			Utils.closeFile(mr);
 		}
-	}
-
-	private void addCities(Map<Integer, City> cityMap) {
-		for (City c : cityMap.values())
-			mdrFile.addCity(c);
 	}
 
 	private void addCountries(MapReader mr) {
@@ -134,14 +130,30 @@ public class MdrBuilder implements Combiner {
 			mdrFile.addRegion(region);
 	}
 
-	private Map<Integer, City> makeCityMap(MapReader mr) {
+	private void addCities(Map<Integer, Mdr5Record> cityMap) {
+		for (Mdr5Record c : cityMap.values()) {
+			mdrFile.addCity(c);
+		}
+	}
+
+	/**
+	 * Make a map from the subdivision and point index of the city within
+	 * its own map to the MDR city record.
+	 *
+	 * This is used to link the city to its name when we read the points.
+	 *
+	 * @param mr The reader for the map.
+	 * @return Map with subdiv<<8 + point-index as the key and a newly created
+	 * MDR city record as the value.
+	 */
+	private Map<Integer, Mdr5Record> makeCityMap(MapReader mr) {
 		List<City> cities = mr.getCities();
 
-		Map<Integer, City> cityMap = new LinkedHashMap<Integer, City>();
+		Map<Integer, Mdr5Record> cityMap = new LinkedHashMap<Integer, Mdr5Record>();
 		for (City c : cities) {
 			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
 			assert key < 0xffffff;
-			cityMap.put(key, c);
+			cityMap.put(key, new Mdr5Record(c));
 		}
 
 		return cityMap;
@@ -152,7 +164,7 @@ public class MdrBuilder implements Combiner {
 	 * @param mr The currently open map.
 	 * @param cityMap Cites indexed by subdiv and point index.
 	 */
-	private void addPoints(MapReader mr, Map<Integer, City> cityMap) {
+	private void addPoints(MapReader mr, Map<Integer, Mdr5Record> cityMap) {
 		List<Point> list = mr.pointsForLevel(0);
 		for (Point p : list) {
 			Label label = p.getLabel();
@@ -162,23 +174,28 @@ public class MdrBuilder implements Combiner {
 				continue;
 			}
 
-			int cityIndex = 0;
+			Mdr5Record city = null;
 			if (p.getType() < 0x11) {
+				// This is itself a city, it gets a reference to its own MDR 5 record.
 				int cnum = (p.getSubdiv().getNumber() << 8) + p.getNumber();
-				City city = cityMap.get(cnum);
-				if (city != null) {
+				city = cityMap.get(cnum);
 
-					city.setLabel(p.getLabel());
-					cityIndex = city.getIndex();
-				}
 			} else {
+				// This is not a city, but we have information about which city
+				// it is in.  If so then add the mdr5 record number of the city.
 				POIRecord poi = p.getPOIRecord();
-				City city = poi.getCity();
-				if (city != null)
-					cityIndex = city.getIndex();
+				City c = poi.getCity();
+				if (c != null)
+					city = cityMap.get(c.getIndex());
 			}
+
+			if (city != null) {
+				city.setLblOffset(label.getOffset());
+				city.setName(label.getText());
+			}
+
 			if (label != null && label.getText().trim().length() > 0)
-				mdrFile.addPoint(p, cityIndex);
+				mdrFile.addPoint(p, city);
 		}
 	}
 

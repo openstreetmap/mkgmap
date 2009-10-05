@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -34,15 +35,33 @@ public class Mdr5 extends MdrMapSection {
 		setConfig(config);
 	}
 
-	public void writeSectData(ImgFileWriter writer) {
-		//Collections.sort(cities); TODO sort, but also need to fix allocation of city to points first.
+	public void addCity(int mapIndex, Mdr5Record record, int lblOff, String name, int strOff) {
+		record.setMapIndex(mapIndex);
+		record.setLblOffset(lblOff);
+		record.setName(name);
+		record.setStringOffset(strOff);
+		cities.add(record);
+		if (record.getCityIndex() > maxIndex)
+			maxIndex = record.getCityIndex();
+	}
 
+	/**
+	 * Called after all cities to sort and number them.
+	 */
+	public void finishCities() {
+		Collections.sort(cities);
+
+		int count = 1;
+		for (Mdr5Record c : cities)
+			c.setGlobalCityIndex(count++);
+	}
+
+	public void writeSectData(ImgFileWriter writer) {
 		int lastMap = 0;
 		int lastName = 0;
 
-		int recordNumber = 1;
 		for (Mdr5Record city : cities) {
-			addPointer(city.getMapIndex(), recordNumber);
+			addPointer(city.getMapIndex(), city.getGlobalCityIndex());
 
 			// Work out if the name is the same as the previous one and set
 			// the flag if so.
@@ -59,21 +78,7 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) 1); // TODO still don't know what this is
 			writer.put3(city.getStringOffset());
-
-			recordNumber++;
 		}
-	}
-
-	public void addCity(int mapIndex, int cityIndex, int lblOff, String name, int strOff) {
-		Mdr5Record rec = new Mdr5Record();
-		rec.setMapIndex(mapIndex);
-		rec.setCityIndex(cityIndex);
-		rec.setLblOffset(lblOff);
-		rec.setName(name);
-		rec.setStringOffset(strOff);
-		cities.add(rec);
-		if (cityIndex > maxIndex)
-			maxIndex = cityIndex;
 	}
 
 	/**

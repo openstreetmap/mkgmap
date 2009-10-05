@@ -17,7 +17,6 @@ import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.trergn.Point;
@@ -100,16 +99,16 @@ public class MDRFile extends ImgFile {
 		mdr14.addCountry(currentMap, countryIndex, strOff);
 	}
 
-	public void addCity(City city) {
-		Label label = city.getLabel();
-		if (label != null) {
-			String name = label.getText();
+	public void addCity(Mdr5Record city) {
+		int labelOffset = city.getLblOffset();
+		if (labelOffset != 0) {
+			String name = city.getName();
 			int strOff = createString(name);
-			mdr5.addCity(currentMap, city.getIndex(), label.getOffset(), name, strOff);
+			mdr5.addCity(currentMap, city, labelOffset, name, strOff);
 		}
 	}
 
-	public void addPoint(Point point, int cityIndex) {
+	public void addPoint(Point point, Mdr5Record city) {
 		assert currentMap > 0;
 
 		int fullType = point.getType();
@@ -121,7 +120,7 @@ public class MDRFile extends ImgFile {
 		int strOff = createString(name);
 
 		Mdr11Record poi = mdr11.addPoi(currentMap, point, name, strOff);
-		poi.setCityIndex(cityIndex);
+		poi.setCity(city);
 
 		mdr10.addPoiType(fullType, poi);
 
@@ -138,6 +137,8 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
+		mdr5.finishCities();
+
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
 
@@ -177,6 +178,9 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setEnd(1, writer.position());
 	}
 
+	/**
+	 * Write out the given single section.
+	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
 		mdrHeader.setPosition(sectionNumber, writer.position());
 		mdr1.setStartPosition(sectionNumber);
@@ -197,6 +201,12 @@ public class MDRFile extends ImgFile {
 		mdr1.setEndPosition(sectionNumber);
 	}
 
+	/**
+	 * Creates a string in MDR 15 and returns an offset value that can be
+	 * used to refer to it in the other sections.
+	 * @param str The text of the string.
+	 * @return An offset value.
+	 */
 	private int createString(String str) {
 		return mdr15.createString(str.toUpperCase());
 	}
