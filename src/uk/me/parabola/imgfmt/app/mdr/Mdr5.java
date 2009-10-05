@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * 
  * @author Steve Ratcliffe
  */
-public class Mdr5 extends MdrSection {
+public class Mdr5 extends MdrMapSection {
 
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
 	private int maxIndex;
@@ -35,10 +35,15 @@ public class Mdr5 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		//Collections.sort(cities); TODO sort, but also need to fix allocation of city to points first.
+
 		int lastMap = 0;
 		int lastName = 0;
 
+		int recordNumber = 1;
 		for (Mdr5Record city : cities) {
+			addPointer(city.getMapIndex(), recordNumber);
+
 			// Work out if the name is the same as the previous one and set
 			// the flag if so.
 			int flag = 0x800000;
@@ -54,14 +59,17 @@ public class Mdr5 extends MdrSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) 1); // TODO still don't know what this is
 			writer.put3(city.getStringOffset());
+
+			recordNumber++;
 		}
 	}
 
-	public void addCity(int mapIndex, int cityIndex, int lblOff, int strOff) {
-		Mdr5Record rec = new Mdr5Record(getConfig());
+	public void addCity(int mapIndex, int cityIndex, int lblOff, String name, int strOff) {
+		Mdr5Record rec = new Mdr5Record();
 		rec.setMapIndex(mapIndex);
 		rec.setCityIndex(cityIndex);
 		rec.setLblOffset(lblOff);
+		rec.setName(name);
 		rec.setStringOffset(strOff);
 		cities.add(rec);
 		if (cityIndex > maxIndex)
@@ -75,6 +83,10 @@ public class Mdr5 extends MdrSection {
 	 */
 	public int getItemSize() {
 		return 9 + ((maxIndex > 256)? 2: 1);
+	}
+
+	public int getNumberOfItems() {
+		return cities.size();
 	}
 
 	private void putCityIndex(ImgFileWriter writer, int cityIndex) {

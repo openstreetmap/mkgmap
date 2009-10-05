@@ -62,7 +62,7 @@ public class MDRFile extends ImgFile {
 		}
 
 		// Initialise the sections
-		mdr1 = new Mdr1(config);
+		mdr1 = new Mdr1(config, chan);
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
 		mdr7 = new Mdr7(config);
@@ -103,8 +103,9 @@ public class MDRFile extends ImgFile {
 	public void addCity(City city) {
 		Label label = city.getLabel();
 		if (label != null) {
-			int strOff = createString(label.getText());
-			mdr5.addCity(currentMap, city.getIndex(), label.getOffset(), strOff);
+			String name = label.getText();
+			int strOff = createString(name);
+			mdr5.addCity(currentMap, city.getIndex(), label.getOffset(), name, strOff);
 		}
 	}
 
@@ -148,39 +149,52 @@ public class MDRFile extends ImgFile {
 	private void writeSections(ImgFileWriter writer) {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 
-		mdr1.writeSubSections(writer);
-		mdrHeader.setPosition(1, writer.position());
-
-		mdr1.writeSectData(writer);
-		mdrHeader.setItemSize(1, mdr1.getItemSize());
-		mdrHeader.setEnd(1, writer.position());
-
 		writeSection(writer, 4, mdr4);
-		writeSection(writer, 5, mdr5);
 
-		writeSection(writer, 7, mdr7);
-
-		// We do 11 before 10, because 10 needs information that is only available
-		// after 11 has run.
+		// We write the following sections that contain per-map data, in the
+		// order of the subsections of the reverse index that they are associated
+		// with.
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
+		writeSection(writer, 7, mdr7);
+		writeSection(writer, 5, mdr5);
+		//writeSection(writer, 6, mdr6);
 
-		// likewise 9 depends on stuff from 10.
+		// 9 depends on stuff from 10.
 		mdr9.setGroups(mdr10.getGroupSizes());
 		writeSection(writer, 9, mdr9);
 
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
+
+		// write the reverse index last.
+		mdr1.writeSubSections(writer);
+		mdrHeader.setPosition(1, writer.position());
+
+		mdr1.writeSectData(writer);
+		mdrHeader.setItemSize(1, mdr1.getItemSize());
+		mdrHeader.setEnd(1, writer.position());
 	}
 
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
 		mdrHeader.setPosition(sectionNumber, writer.position());
+		mdr1.setStartPosition(sectionNumber);
+
+		if (section instanceof MdrMapSection) {
+			MdrMapSection mapSection = (MdrMapSection) section;
+			mapSection.setMapIndex(mdr1);
+			mapSection.init(sectionNumber);
+		}
+
 		section.writeSectData(writer);
+
 		int itemSize = section.getItemSize();
 		if (itemSize > 0)
 			mdrHeader.setItemSize(sectionNumber, itemSize);
+		
 		mdrHeader.setEnd(sectionNumber, writer.position());
+		mdr1.setEndPosition(sectionNumber);
 	}
 
 	private int createString(String str) {

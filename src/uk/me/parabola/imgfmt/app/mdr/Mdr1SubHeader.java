@@ -16,18 +16,9 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
 
 /**
- * A sub header for section 1.
- * There are a number of subsections as follows:
- *
- * sub1 points into MDR 11 (POIs)
- * sub2 points into MDR 10 (POI types)
- * sub3 points into MDR 7 (street names)
- * sub4 points into MDR 5 (cities)
- * sub5
- * sub6
- * sub7
- * sub8
- *
+ * A header for the map index, pointed to from MDR 1.
+ * There is one of these for each map.
+ * 
  * @author Steve Ratcliffe
  */
 public class Mdr1SubHeader {
@@ -59,8 +50,31 @@ public class Mdr1SubHeader {
 			// has the same length as subsection 1.
 			if (n == 2)
 				writer.putInt(section.getPosition());
-			else
-				section.writeSectionInfo(writer);
+			else {
+				//section.writeSectionInfo(writer);
+				writer.putInt(section.getPosition());
+				int size = section.getSize();
+				if (size == 0)
+					writer.putInt(0);
+				else
+					writer.putInt(size / section.getItemSize());
+			}
 		}
+	}
+
+	public void setStartSubsection(int sub, int pos) {
+		//sections[sub].setPosition(pos);
+	}
+
+	public void setEndSubsection(int sub, int pos) {
+		sections[sub].setSize(pos - sections[sub].getPosition());
+	}
+
+	public long getHeaderLen() {
+		return HEADER_SIZE;
+	}
+
+	public void setItemSize(int sectionNumber, int itemSize) {
+		sections[sectionNumber].setItemSize((char) itemSize);
 	}
 }

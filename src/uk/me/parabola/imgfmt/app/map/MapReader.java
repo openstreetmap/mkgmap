@@ -85,6 +85,7 @@ public class MapReader implements Closeable {
 		try {
 			chan = fs.open(mapname + ".NET", "r");
 			nr = new NETFileReader(chan);
+			saveForClose(nr);
 		} catch (FileNotFoundException e) {
 			nr = null;
 		}

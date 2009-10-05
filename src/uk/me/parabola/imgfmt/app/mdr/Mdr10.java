@@ -30,7 +30,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr10 extends MdrSection {
+public class Mdr10 extends MdrMapSection {
 	// The maximum group number.  Note that this is 1 based, not 0 based.
 	private static final int MAX_GROUP_NUMBER = 9;
 
@@ -70,8 +70,11 @@ public class Mdr10 extends MdrSection {
 
 			String lastName = "";
 			for (Mdr10Record t : poiGroup) {
+
+				addPointer(t.getMdr11ref().getMapIndex(), t.getMdr11ref().getRecordNumber());
+				
 				writer.put((byte) t.getSubtype());
-				int offset = t.getMdr11ref().getRecordNumber() + 1;
+				int offset = t.getMdr11ref().getRecordNumber();
 
 				// Top bit actually represents a non-repeated name.  ie if
 				// the bit is not set, then the name is the same as the previous
@@ -119,6 +122,10 @@ public class Mdr10 extends MdrSection {
 	 */
 	public int getItemSize() {
 		return 0;
+	}
+
+	public int getNumberOfItems() {
+		return numberOfPois;
 	}
 
 	public void setNumberOfPois(int numberOfPois) {

@@ -19,6 +19,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr1Record extends RecordBase {
 	private final int mapNumber;
+	private Mdr1MapIndex mdrMapIndex;
 	private int indexOffset;
 
 	public Mdr1Record(int mapNumber, MdrConfig config) {
@@ -35,6 +36,14 @@ public class Mdr1Record extends RecordBase {
 		writer.putInt(mapNumber);
 		if (!isForDevice())
 			writer.putInt(indexOffset);
+	}
+
+	public Mdr1MapIndex getMdrMapIndex() {
+		return mdrMapIndex;
+	}
+
+	public void setMdrMapIndex(Mdr1MapIndex mdrMapIndex) {
+		this.mdrMapIndex = mdrMapIndex;
 	}
 
 	public void setIndexOffset(int indexOffset) {

@@ -24,7 +24,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr7 extends MdrSection {
+public class Mdr7 extends MdrMapSection {
 	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
 	public Mdr7(MdrConfig config) {
@@ -42,15 +42,23 @@ public class Mdr7 extends MdrSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		Collections.sort(streets);
-		
+
+		int recordNumber = 1;
 		for (Mdr7Record s : streets) {
+			addPointer(s.getMapIndex(), recordNumber);
 			putMapIndex(writer, s.getMapIndex());
 			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
 			writer.put3(s.getStringOffset());
+
+			recordNumber++;
 		}
 	}
 
 	public int getItemSize() {
 		return 6 + getConfig().getMapIndexSize();
+	}
+
+	public int getNumberOfItems() {
+		return streets.size();
 	}
 }

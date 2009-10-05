@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr11 extends MdrSection {
+public class Mdr11 extends MdrMapSection {
 	private final List<Mdr11Record> pois = new ArrayList<Mdr11Record>();
 
 	public Mdr11(MdrConfig config) {
@@ -50,8 +50,9 @@ public class Mdr11 extends MdrSection {
 	public void writeSectData(ImgFileWriter writer) {
 		Collections.sort(pois);
 
-		int count = 0;
+		int count = 1;
 		for (Mdr11Record poi : pois) {
+			addPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
 			putMapIndex(writer, poi.getMapIndex());
 			putPointIndex(writer, poi.getPointIndex());
@@ -73,6 +74,10 @@ public class Mdr11 extends MdrSection {
 
 	public int getItemSize() {
 		return 11 + getConfig().getMapIndexSize();
+	}
+
+	public int getNumberOfItems() {
+		return pois.size();
 	}
 
 	public int getNumberOfPois() {

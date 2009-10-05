@@ -15,14 +15,15 @@ package uk.me.parabola.imgfmt.app.mdr;
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr5Record extends RecordBase {
+public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
 	private int cityIndex;
 	private int lblOffset;
 	private int stringOffset;
+	private String name;
 
-	public Mdr5Record(MdrConfig config) {
-		// XXX this may not be a good idea
-		setConfig(config);
+
+	public int compareTo(Mdr5Record o) {
+		return name.compareTo(o.name);
 	}
 
 	public int getCityIndex() {
@@ -47,5 +48,9 @@ public class Mdr5Record extends RecordBase {
 
 	public void setStringOffset(int stringOffset) {
 		this.stringOffset = stringOffset;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }
