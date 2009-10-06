@@ -15,7 +15,6 @@ package uk.me.parabola.imgfmt.app.mdr;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
@@ -65,7 +64,6 @@ public class Mdr1 extends MdrSection {
 		maps.add(rec);
 
 		if (!isForDevice()) {
-			BufferedImgFileWriter writer = new BufferedImgFileWriter(chan);
 			Mdr1MapIndex mapIndex = new Mdr1MapIndex();
 			rec.setMdrMapIndex(mapIndex);
 		}

@@ -43,14 +43,14 @@ public class Mdr7 extends MdrMapSection {
 	public void writeSectData(ImgFileWriter writer) {
 		Collections.sort(streets);
 
-		int recordNumber = 1;
+		int recordNumber = 0;
 		for (Mdr7Record s : streets) {
+			recordNumber++;
 			addPointer(s.getMapIndex(), recordNumber);
+
 			putMapIndex(writer, s.getMapIndex());
 			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
 			writer.put3(s.getStringOffset());
-
-			recordNumber++;
 		}
 	}
 

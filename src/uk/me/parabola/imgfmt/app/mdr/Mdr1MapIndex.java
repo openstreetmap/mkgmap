@@ -47,11 +47,17 @@ public class Mdr1MapIndex {
 	}
 
 	public void addPointer(int recordNumber) {
-		//System.out.printf("add rec %d, with size %d\n", recordNumber, pointerSize);
-		if (pointerSize == 3)
+		switch (pointerSize) {
+		case 3:
 			subWriter.put3(recordNumber);
-		else
+			break;
+		case 2:
 			subWriter.putChar((char) recordNumber);
+			break;
+		case 1:
+			subWriter.put((byte) recordNumber);
+			break;
+		}
 	}
 	
 	private int sectionToSubsection(int n) {

@@ -62,6 +62,7 @@ public class Mdr10 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		int count = 0;
 		for (List<Mdr10Record> poiGroup : poiTypes) {
 			if (poiGroup == null)
 				continue;
@@ -71,7 +72,8 @@ public class Mdr10 extends MdrMapSection {
 			String lastName = "";
 			for (Mdr10Record t : poiGroup) {
 
-				addPointer(t.getMdr11ref().getMapIndex(), t.getMdr11ref().getRecordNumber());
+				count++;
+				addPointer(t.getMdr11ref().getMapIndex(), count);
 				
 				writer.put((byte) t.getSubtype());
 				int offset = t.getMdr11ref().getRecordNumber();

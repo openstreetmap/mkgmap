@@ -17,21 +17,22 @@ package uk.me.parabola.imgfmt.app.mdr;
  */
 public abstract class MdrMapSection extends MdrSection {
 	private Mdr1 index;
-	private int sectionNumber;
 
 	public void setMapIndex(Mdr1 index) {
 		this.index = index;
 	}
 
 	public void init(int sectionNumber) {
-		this.sectionNumber = sectionNumber;
 		int n = getNumberOfItems();
-		int psize = 2;
+		int psize;
 		if (n > 0xffff)
 			psize = 3;
+		else if (n > 0xff)
+			psize = 2;
+		else
+			psize = 1;
 
 		index.setPointerSize(sectionNumber, psize);
-		System.out.printf("for section %d, use pointer size of %d\n", sectionNumber, psize);
 	}
 
 	public void addPointer(int mapNumber, int recordNumber) {
