@@ -101,4 +101,18 @@ public class Way extends Element {
 		sb.append(toTagString());
 		return sb.toString();
 	}
+
+	public Coord getCofG() {
+		int lat = 0;
+		int lon = 0;
+		int numPoints = points.size();
+		if(numPoints < 1)
+			return null;
+		for(Coord p : points) {
+			lat += p.getLatitude();
+			lon += p.getLongitude();
+		}
+		return new Coord((lat + numPoints / 2) / numPoints,
+						 (lon + numPoints / 2) / numPoints);
+	}
 }

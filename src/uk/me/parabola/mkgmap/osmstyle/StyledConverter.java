@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
+import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.AreaClipper;
@@ -98,6 +99,9 @@ public class StyledConverter implements OsmConverter {
 	private final Rule relationRules;
 
 	private boolean ignoreMaxspeeds;
+	private boolean driveOnLeft;
+	private boolean driveOnRight;
+	private boolean checkRoundabouts;
 
 	class AccessMapping {
 		private final String type;
@@ -139,6 +143,10 @@ public class StyledConverter implements OsmConverter {
 		nodeRules = style.getNodeRules();
 		relationRules = style.getRelationRules();
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
+		driveOnLeft = props.getProperty("drive-on-left") != null;
+		NODHeader.setDriveOnLeft(driveOnLeft);
+		driveOnRight = props.getProperty("drive-on-right") != null;
+		checkRoundabouts = props.getProperty("check-roundabouts") != null;
 
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
@@ -523,6 +531,69 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if("roundabout".equals(way.getTag("junction"))) {
+			List<Coord> points = way.getPoints();
+			// if roundabout checking is enabled and roundabout has at
+			// least 3 points and it has not been marked as "don't
+			// check", check its direction
+			if(checkRoundabouts &&
+			   way.getPoints().size() > 3 &&
+			   !way.isBoolTag("mkgmap:no-dir-check")) {
+				Coord centre = way.getCofG();
+				int dir = 0;
+				// check every third segment
+				for(int i = 0; (i + 1) < points.size(); i += 3) {
+					Coord pi = points.get(i);
+					Coord pi1 = points.get(i + 1);
+					// don't check segments that are very short
+					if(pi.quickDistance(centre) > 2.5 &&
+					   pi.quickDistance(pi1) > 2.5) {
+						// determine bearing from segment that starts with
+						// point i to centre of roundabout
+						double a = pi.bearingTo(pi1);
+						double b = pi.bearingTo(centre) - a;
+						while(b > 180)
+							b -= 360;
+						while(b < -180)
+							b += 360;
+						// if bearing to centre is between 15 and 165
+						// degrees consider it trustworthy
+						if(b >= 15 && b < 165)
+							++dir;
+						else if(b <= -15 && b > -165)
+							--dir;
+					}
+				}
+				if(dir != 0) {
+					boolean clockwise = dir > 0;
+					if(points.get(0) == points.get(points.size() - 1)) {
+						// roundabout is a loop
+						if(!driveOnLeft && !driveOnRight) {
+							if(clockwise) {
+								log.info("Roundabout " + way.getId() + " is clockwise so assuming vehicles should drive on left side of road (" + centre.toOSMURL() + ")");
+								driveOnLeft = true;
+								NODHeader.setDriveOnLeft(true);
+							}
+							else {
+								log.info("Roundabout " + way.getId() + " is anti-clockwise so assuming vehicles should drive on right side of road (" + centre.toOSMURL() + ")");
+								driveOnRight = true;
+							}
+						}
+						if(driveOnLeft && !clockwise ||
+						   driveOnRight && clockwise) {
+							log.warn("Roundabout " + way.getId() + " direction is wrong - reversing it (see " + centre.toOSMURL() + ")");
+							way.reverse();
+						}
+					}
+					else if(driveOnLeft && !clockwise ||
+							driveOnRight && clockwise) {
+						// roundabout is a line
+						log.warn("Roundabout segment " + way.getId() + " direction looks wrong (see " + points.get(0).toOSMURL() + ")");
+					}
+				}
+				else
+					log.info("Roundabout segment " + way.getId() + " direction unknown (see " + points.get(0).toOSMURL() + ")");
+			}
+
 			String frigFactorTag = way.getTag("mkgmap:frig_roundabout");
 			if(frigFactorTag != null) {
 				// do special roundabout frigging to make gps

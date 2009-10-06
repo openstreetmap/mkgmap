@@ -178,6 +178,19 @@ Miscellaneous options:
 	Experimental: Create maps that support routing.  This implies --net
 	(so that --net need not be given if --route is given).
 
+--drive-on-left
+--drive-on-right
+	Explicitly specify which side of the road vehicles are
+	expected to drive on. If neither of these options are
+	specified, it is assumed that vehicles drive on the right
+	unless --check-roundabouts is specified and the first
+	roundabout processed is clockwise.
+
+--check-roundabouts
+	Check that roundabouts have the expected direction (clockwise
+	when vehicles drive on the left). Roundabouts that are complete
+	loops and have the wrong direction are reversed.
+
 --ignore-maxspeeds
 	When reading OSM files, ignore any "maxspeed" tags.
 
