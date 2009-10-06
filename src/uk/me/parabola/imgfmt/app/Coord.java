@@ -174,6 +174,22 @@ public class Coord implements Comparable<Coord> {
 						 (int)(longitude + (other.longitude - longitude) * fraction));
 	}
 
+
+	// returns bearing (in degrees) from current point to another point
+	public double bearingTo(Coord point) {
+		double lat1 = Utils.toRadians(latitude);
+		double lat2 = Utils.toRadians(point.latitude);
+		double lon1 = Utils.toRadians(longitude);
+		double lon2 = Utils.toRadians(point.longitude);
+
+		double dlon = lon2 - lon1;
+
+		double y = Math.sin(dlon) * Math.cos(lat2);
+		double x = Math.cos(lat1)*Math.sin(lat2) -
+			Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
+		return Math.atan2(y, x) * 180 / Math.PI;
+	}
+
 	/**
 	 * Sort lexicographically by longitude, then latitude.
 	 *

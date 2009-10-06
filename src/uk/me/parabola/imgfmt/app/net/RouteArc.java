@@ -173,25 +173,12 @@ public class RouteArc {
 		if(log.isDebugEnabled())
 			log.debug("start", start.toDegreeString(), ", end", end.toDegreeString());
 
-		// Quite possibly too slow...  TODO 
-		double lat1 = Utils.toRadians(start.getLatitude());
-		double lat2 = Utils.toRadians(end.getLatitude());
-		double lon1 = Utils.toRadians(start.getLongitude());
-		double lon2 = Utils.toRadians(end.getLongitude());
+		double angle = source.getCoord().bearingTo(end);
 
-		//double dlat = lat2 - lat1;
-		double dlon = lon2 - lon1;
-
-		double y = Math.sin(dlon) * Math.cos(lat2);
-		double x = Math.cos(lat1)*Math.sin(lat2) -
-				Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
-		double angle = Math.atan2(y, x);
-
-		// angle is in radians
 		if(log.isDebugEnabled())
-			log.debug("angle is ", angle, ", deg", angle*57.29);
+			log.debug("angle is ", angle);
 
-		byte b = (byte) (256 * (angle / (2 * Math.PI)));
+		byte b = (byte) (256 * angle / 360);
 		if(log.isDebugEnabled())
 			log.debug("deg from ret val", (360 * b) / 256);
 
