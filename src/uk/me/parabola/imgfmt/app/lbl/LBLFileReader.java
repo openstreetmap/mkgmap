@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +23,7 @@ import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
+import uk.me.parabola.imgfmt.app.labelenc.DecodedText;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
@@ -249,13 +248,8 @@ public class LBLFileReader extends ImgFile {
 	 * @return The offset of the next label.
 	 */
 	private int saveLabel(int labelOffset, int currentOffset) {
-		EncodedText encText = textDecoder.getText();
-		String text;
-		try {
-			text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
-		} catch (UnsupportedEncodingException e) {
-			text = ""; // this can't really happen because utf-8 must be supported
-		}
+		DecodedText encText = textDecoder.getText();
+		String text = encText.getText();
 
 		Label l = new Label(text);
 		l.setOffset(labelOffset);
@@ -462,18 +456,6 @@ public class LBLFileReader extends ImgFile {
 		}
 
 		return localMask;
-	}
-
-	private String recoverText() {
-		EncodedText encText = textDecoder.getText();
-		String text;
-		try {
-			text = new String(encText.getCtext(), 0, encText.getLength(), "utf-8");
-		} catch (UnsupportedEncodingException e) {
-			// this can't really happen because utf-8 must be supported
-			text = "";
-		}
-		return text;
 	}
 
 	private class PoiMasks {

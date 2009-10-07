@@ -43,7 +43,7 @@ public interface CharacterDecoder {
 	 *
 	 * @return The byte array and length as an EncodedText struct.
 	 */
-	public EncodedText getText();
+	public DecodedText getText();
 
 	/**
 	 * Resets the state.  This should be called for example if the reader is

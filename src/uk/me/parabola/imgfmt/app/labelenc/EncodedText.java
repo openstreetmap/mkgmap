@@ -28,7 +28,6 @@ package uk.me.parabola.imgfmt.app.labelenc;
 public class EncodedText {
 	private final byte[] ctext;
 	private final int length;
-	private int offset;
 
 	public EncodedText(byte[] buf, int len) {
 		this.ctext = buf;
@@ -41,13 +40,5 @@ public class EncodedText {
 
 	public int getLength() {
 		return length;
-	}
-
-	public void setPositionOffset(int offset) {
-		this.offset = offset;
-	}
-
-	public int getOffsetAdjustment() {
-		return offset;
 	}
 }
