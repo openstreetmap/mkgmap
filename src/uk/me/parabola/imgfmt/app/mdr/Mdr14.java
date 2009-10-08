@@ -46,6 +46,7 @@ public class Mdr14 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		return 5 + 1;
+		PointerSizes sizes = getSizes();
+		return sizes.getMapSize() + 2 + sizes.getStrOffSize();
 	}
 }

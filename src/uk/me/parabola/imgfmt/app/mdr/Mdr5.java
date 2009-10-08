@@ -61,7 +61,7 @@ public class Mdr5 extends MdrMapSection {
 		int lastName = 0;
 
 		for (Mdr5Record city : cities) {
-			addPointer(city.getMapIndex(), city.getGlobalCityIndex());
+			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
 
 			// Work out if the name is the same as the previous one and set
 			// the flag if so.
@@ -74,11 +74,22 @@ public class Mdr5 extends MdrMapSection {
 			// Write out the record
 			lastName = city.getLblOffset();
 			putMapIndex(writer, mapIndex);
-			putCityIndex(writer, city.getCityIndex());
+			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) 1); // TODO still don't know what this is
-			writer.put3(city.getStringOffset());
+			putStringOffset(writer, city.getStringOffset());
 		}
+	}
+
+	/**
+	 * Put the map city index.  This is the index within the individual map
+	 * and not the global city index used in mdr11.
+	 */
+	private void putLocalCityIndex(ImgFileWriter writer, int cityIndex) {
+		if (maxIndex > 256)
+			writer.putChar((char) cityIndex);
+		else
+			writer.put((byte) cityIndex);
 	}
 
 	/**
@@ -87,17 +98,22 @@ public class Mdr5 extends MdrMapSection {
 	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
-		return 9 + ((maxIndex > 256)? 2: 1);
+		PointerSizes sizes = getSizes();
+		int localCitySize = (maxIndex > 255)? 2: 1;
+		return sizes.getMapSize() + localCitySize + 5 + sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
 		return cities.size();
 	}
 
-	private void putCityIndex(ImgFileWriter writer, int cityIndex) {
-		if (maxIndex > 256)
-			writer.putChar((char) cityIndex);
-		else
-			writer.put((byte) cityIndex);
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(cities.size() << 1);
 	}
 }

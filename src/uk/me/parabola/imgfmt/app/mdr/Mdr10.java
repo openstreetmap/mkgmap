@@ -73,7 +73,7 @@ public class Mdr10 extends MdrMapSection {
 			for (Mdr10Record t : poiGroup) {
 
 				count++;
-				addPointer(t.getMdr11ref().getMapIndex(), count);
+				addIndexPointer(t.getMdr11ref().getMapIndex(), count);
 				
 				writer.put((byte) t.getSubtype());
 				int offset = t.getMdr11ref().getRecordNumber();
@@ -82,21 +82,9 @@ public class Mdr10 extends MdrMapSection {
 				// the bit is not set, then the name is the same as the previous
 				// record.
 				String name = t.getMdr11ref().getName();
-				boolean isRepeated = name.equals(lastName);
+				boolean isNew = !name.equals(lastName);
 				lastName = name;
-				if (numberOfPois < 0x80) {
-					if (!isRepeated)
-						offset |= 0x80;
-					writer.put((byte) offset);
-				} else if (numberOfPois < 0x8000) {
-					if (!isRepeated)
-						offset |= 0x8000;
-					writer.putChar((char) offset);
-				} else {
-					if (!isRepeated)
-						offset |= 0x800000;
-					writer.put3(offset);
-				}
+				putPoiIndex(writer, offset, isNew);
 			}
 		}
 	}
@@ -132,5 +120,15 @@ public class Mdr10 extends MdrMapSection {
 
 	public void setNumberOfPois(int numberOfPois) {
 		this.numberOfPois = numberOfPois;
+	}
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(numberOfPois << 1);
 	}
 }

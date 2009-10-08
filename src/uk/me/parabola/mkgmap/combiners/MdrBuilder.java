@@ -109,7 +109,6 @@ public class MdrBuilder implements Combiner {
 			Map<Integer, Mdr5Record> cityMap = makeCityMap(mr);
 			addPoints(mr, cityMap);
 			addCities(cityMap);
-
 			addStreets(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");

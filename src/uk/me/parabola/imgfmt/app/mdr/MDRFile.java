@@ -46,8 +46,11 @@ public class MDRFile extends ImgFile {
 	private final Mdr15 mdr15;
 
 	private int currentMap;
+	private final MdrConfig config;
+	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
+		this.config = config;
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
@@ -61,7 +64,7 @@ public class MDRFile extends ImgFile {
 		}
 
 		// Initialise the sections
-		mdr1 = new Mdr1(config, chan);
+		mdr1 = new Mdr1(config);
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
 		mdr7 = new Mdr7(config);
@@ -149,6 +152,7 @@ public class MDRFile extends ImgFile {
 
 	private void writeSections(ImgFileWriter writer) {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
+		initSizes();
 
 		writeSection(writer, 4, mdr4);
 
@@ -178,10 +182,20 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setEnd(1, writer.position());
 	}
 
+	private void initSizes() {
+		sizes = new MdrMapSection.PointerSizes();
+		sizes.setMapSize(config.getMapIndexSize());
+		sizes.setCitySize(mdr5.getPointerSize());
+		sizes.setPoiSize(mdr11.getPointerSize());
+		sizes.setStrOffSize(mdr15.getPointerSize());
+	}
+
 	/**
 	 * Write out the given single section.
 	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
+		section.setSizes(sizes);
+		
 		mdrHeader.setPosition(sectionNumber, writer.position());
 		mdr1.setStartPosition(sectionNumber);
 

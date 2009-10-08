@@ -57,4 +57,13 @@ public class Mdr15 extends MdrSection {
 
 		return off;
 	}
+
+	/**
+	 * The meaning of number of items for this section is the largest string
+	 * offset possible.  We are taking the total size of the string section
+	 * for this.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(buffer.size());
+	}
 }

@@ -85,9 +85,7 @@ public class Mdr1MapIndex {
 	public void setPointerSize(int sectionNumber, int pointerSize) {
 		this.pointerSize = pointerSize;
 		int sn = sectionToSubsection(sectionNumber);
-		if (sn == 0)
-			assert false : "Should not be called if not in sectionToSubsection";
-		else
-			subHeader.setItemSize(sn, pointerSize); 
+		if (sn != 0)
+			subHeader.setItemSize(sn, pointerSize);
 	}
 }

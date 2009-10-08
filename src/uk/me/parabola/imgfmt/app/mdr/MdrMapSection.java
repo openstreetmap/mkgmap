@@ -12,7 +12,12 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+
 /**
+ * Super class of all sections that contain items that belong to a particular
+ * map.
+ *
  * @author Steve Ratcliffe
  */
 public abstract class MdrMapSection extends MdrSection {
@@ -23,21 +28,44 @@ public abstract class MdrMapSection extends MdrSection {
 	}
 
 	public void init(int sectionNumber) {
+		// Set the size required to store the record numbers for this section.
+		// There are no flags or minimums required here, unlike in setPointerSize()
+		// which does a similar thing.
 		int n = getNumberOfItems();
-		int psize;
-		if (n > 0xffff)
-			psize = 3;
-		else if (n > 0xff)
-			psize = 2;
-		else
-			psize = 1;
-
-		index.setPointerSize(sectionNumber, psize);
+		index.setPointerSize(sectionNumber, numberToPointerSize(n));
 	}
 
-	public void addPointer(int mapNumber, int recordNumber) {
+	/**
+	 * Add a pointer to the reverse index for this section.
+	 * @param recordNumber A record number in this section, beloning to the
+	 * given map.
+	 */
+	public void addIndexPointer(int mapNumber, int recordNumber) {
 		index.addPointer(mapNumber, recordNumber);
 	}
 
+	/**
+	 * The number of records in this section.
+	 * @return The number of items in the section.
+	 */
 	public abstract int getNumberOfItems();
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.  If the pointer has a flag(s) then this must be
+	 * taken into account too.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public abstract int getPointerSize();
+
+	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
+		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
+		putN(writer, getSizes().getCitySize(), cityIndex | flag);
+	}
+
+	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
+		int flag = isNew? getSizes().getPoiFlag(): 0;
+		putN(writer, getSizes().getPoiSize(), poiIndex | flag);
+	}
 }

@@ -46,19 +46,30 @@ public class Mdr7 extends MdrMapSection {
 		int recordNumber = 0;
 		for (Mdr7Record s : streets) {
 			recordNumber++;
-			addPointer(s.getMapIndex(), recordNumber);
+			addIndexPointer(s.getMapIndex(), recordNumber);
 
 			putMapIndex(writer, s.getMapIndex());
 			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
-			writer.put3(s.getStringOffset());
+			putStringOffset(writer, s.getStringOffset());
 		}
 	}
 
 	public int getItemSize() {
-		return 6 + getConfig().getMapIndexSize();
+		PointerSizes sizes = getSizes();
+		return sizes.getMapSize() + 3 + sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
 		return streets.size();
+	}
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(streets.size());
 	}
 }

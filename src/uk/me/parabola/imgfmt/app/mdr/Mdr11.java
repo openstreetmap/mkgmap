@@ -51,28 +51,22 @@ public class Mdr11 extends MdrMapSection {
 
 		int count = 1;
 		for (Mdr11Record poi : pois) {
-			addPointer(poi.getMapIndex(), count);
+			addIndexPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
+
 			putMapIndex(writer, poi.getMapIndex());
-			putPointIndex(writer, poi.getPointIndex());
+			writer.put((byte) poi.getPointIndex());
 			writer.putChar((char) poi.getSubdiv());
 			writer.put3(poi.getLblOffset());
 
-			int index = poi.getCityIndex();
-			if (index > 0)
-				writer.putChar((char) (index | 0x8000));
-			else
-				writer.putChar((char) 0);
-			writer.put3(poi.getStrOffset());
+			putCityIndex(writer, poi.getCityIndex(), true); //XXX
+			putStringOffset(writer, poi.getStrOffset());
 		}
 	}
 
-	private void putPointIndex(ImgFileWriter writer, int pointIndex) {
-		writer.put((byte) pointIndex);
-	}
-
 	public int getItemSize() {
-		return 11 + getConfig().getMapIndexSize();
+		PointerSizes sizes = getSizes();
+		return sizes.getMapSize() + 6 + sizes.getCitySize() + sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
@@ -81,5 +75,15 @@ public class Mdr11 extends MdrMapSection {
 
 	public int getNumberOfPois() {
 		return pois.size();
+	}
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(pois.size() << 1);
 	}
 }

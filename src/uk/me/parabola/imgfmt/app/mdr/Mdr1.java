@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * The section MDR 1 contains a list of maps and for each map
@@ -37,20 +36,16 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * sub3 points into MDR 7 (street names)
  * sub4 points into MDR 5 (cities)
  * sub5 points into MDR 6
- * sub6
- * sub7
- * sub8
+ * sub6 points into MDR 20
+ * sub7 points into MDR 21
+ * sub8 points into MDR 22
  *
  * @author Steve Ratcliffe
  */
 public class Mdr1 extends MdrSection {
 	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
 
-	private final ImgChannel chan;
-
-	public Mdr1(MdrConfig config, ImgChannel chan) {
-		this.chan = chan;
-
+	public Mdr1(MdrConfig config) {
 		setConfig(config);
 	}
 
