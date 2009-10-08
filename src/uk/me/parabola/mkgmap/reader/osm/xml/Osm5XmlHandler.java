@@ -824,9 +824,9 @@ class Osm5XmlHandler extends DefaultHandler {
 				Node node = nodeMap.get(id);
 				// for now, only do this for nodes that have certain
 				// tags otherwise we will end up creating a CoordPOI
-				// for every node
+				// for every node in the way
 				if(node != null) {
-					final String[] coordPOITags = { "access", "barrier" };
+					final String[] coordPOITags = { "access", "barrier", "highway" };
 					for(String cpt : coordPOITags) {
 						if(node.getTag(cpt) != null) {
 							if(!(co instanceof CoordPOI)) {

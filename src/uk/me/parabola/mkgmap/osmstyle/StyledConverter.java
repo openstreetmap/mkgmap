@@ -613,6 +613,20 @@ public class StyledConverter implements OsmConverter {
 		if("true".equals(way.getTag("mkgmap:way-has-pois"))) {
 			List<Coord> points = way.getPoints();
 
+			// for highways, see if its name is set by a POI located
+			// at the first point
+			if(points.size() > 1 && points.get(0) instanceof CoordPOI) {
+				String highwayKind = way.getTag("highway");
+				if(highwayKind != null) {
+					Node poiNode = ((CoordPOI)points.get(0)).getNode();
+					String nameFromPoi = poiNode.getTag(highwayKind + "_name");
+					if(nameFromPoi != null) {
+						way.setName(nameFromPoi);
+						log.info(highwayKind + " " + way.getId() + " named '" + way.getName() + "'");
+					}
+				}
+			}
+
 			// at this time, we are only looking for POIs that have
 			// the "access" tag defined - if they do, copy the access
 			// permissions to the way - what we want to achieve is
