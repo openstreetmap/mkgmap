@@ -190,7 +190,6 @@ public class LBLFileReader extends ImgFile {
 
 			int info = reader.getChar();
 
-
 			City city;
 			if ((info & 0x4000) == 0) {
 				Region region = regions.get(info & 0x3fff);

@@ -176,8 +176,12 @@ public class MdrBuilder implements Combiner {
 			Mdr5Record city = null;
 			if (p.getType() < 0x11) {
 				// This is itself a city, it gets a reference to its own MDR 5 record.
-				int cnum = (p.getSubdiv().getNumber() << 8) + p.getNumber();
-				city = cityMap.get(cnum);
+				// and we also use it to set the name of the city.
+				city = cityMap.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
+				if (city != null) {
+					city.setLblOffset(label.getOffset());
+					city.setName(label.getText());
+				}
 
 			} else {
 				// This is not a city, but we have information about which city
@@ -185,12 +189,7 @@ public class MdrBuilder implements Combiner {
 				POIRecord poi = p.getPOIRecord();
 				City c = poi.getCity();
 				if (c != null)
-					city = cityMap.get(c.getIndex());
-			}
-
-			if (city != null) {
-				city.setLblOffset(label.getOffset());
-				city.setName(label.getText());
+					city = cityMap.get((c.getSubdivNumber()<<8) + (c.getPointIndex() & 0xff));
 			}
 
 			if (label != null && label.getText().trim().length() > 0)
