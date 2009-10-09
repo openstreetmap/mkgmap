@@ -138,4 +138,11 @@ public class City implements Comparable<City> {
 	public Label getLabel() {
 		return label;
 	}
+
+	public int getRegionNumber() {
+		if (region == null)
+			return 0;
+		else
+			return region.getIndex();
+	}
 }

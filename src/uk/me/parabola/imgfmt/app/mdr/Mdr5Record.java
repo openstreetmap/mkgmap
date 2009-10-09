@@ -28,6 +28,7 @@ public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
 	/** The index across all maps */
 	private int globalCityIndex;
 
+	private int region;
 	private int lblOffset;
 	private int stringOffset;
 	private String name;
@@ -37,6 +38,7 @@ public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
 
 	public Mdr5Record(City c) {
 		cityIndex = c.getIndex();
+		region = c.getRegionNumber();
 	}
 
 	public int compareTo(Mdr5Record o) {
@@ -53,6 +55,14 @@ public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
 
 	public void setGlobalCityIndex(int globalCityIndex) {
 		this.globalCityIndex = globalCityIndex;
+	}
+
+	public int getRegion() {
+		return region;
+	}
+
+	public void setRegion(int region) {
+		this.region = region;
 	}
 
 	public int getLblOffset() {

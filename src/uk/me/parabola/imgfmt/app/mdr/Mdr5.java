@@ -76,7 +76,7 @@ public class Mdr5 extends MdrMapSection {
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
-			writer.putChar((char) 1); // TODO still don't know what this is
+			writer.putChar((char) city.getRegion());
 			putStringOffset(writer, city.getStringOffset());
 		}
 	}
