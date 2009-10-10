@@ -522,6 +522,13 @@ public class StyledConverter implements OsmConverter {
 	void addRoad(Way way, GType gt) {
 
 		String oneWay = way.getTag("oneway");
+		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+			// it's a oneway street in the reverse direction
+			// so reverse the order of the nodes and change
+			// the oneway tag to "yes"
+			way.reverse();
+			way.addTag("oneway", "yes");
+		}
 
 		if("roundabout".equals(way.getTag("junction"))) {
 			List<Coord> points = way.getPoints();
@@ -532,10 +539,6 @@ public class StyledConverter implements OsmConverter {
 			   way.getPoints().size() > 3 &&
 			   !way.isBoolTag("mkgmap:no-dir-check")) {
 				Coord centre = way.getCofG();
-
-				if(oneWay != null)
-					log.info("Ignoring oneway tag for roundabout " + way.getId() + " at " + centre.toOSMURL());
-
 				int dir = 0;
 				// check every third segment
 				for(int i = 0; (i + 1) < points.size(); i += 3) {
@@ -605,14 +608,6 @@ public class StyledConverter implements OsmConverter {
 				frigRoundabout(way, frigFactor);
 			}
 		}
-		else if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-			// it's a oneway street in the reverse direction
-			// so reverse the order of the nodes and change
-			// the oneway tag to "yes"
-			way.reverse();
-			way.addTag("oneway", "yes");
-		}
-
 
 		// process any Coords that have a POI associated with them
 		if("true".equals(way.getTag("mkgmap:way-has-pois"))) {
