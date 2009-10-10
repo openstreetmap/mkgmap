@@ -185,7 +185,7 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param filename The input filename.
 	 */
 	private void addFile(FileSystem outfs, String filename) {
-		ImgChannel chan = new FileImgChannel(filename);
+		ImgChannel chan = new FileImgChannel(filename, "r");
 		try {
 			String imgname = createImgFilename(filename);
 			copyFile(chan, outfs, imgname);
