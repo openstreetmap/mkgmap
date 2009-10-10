@@ -528,6 +528,8 @@ public class StyledConverter implements OsmConverter {
 			// the oneway tag to "yes"
 			way.reverse();
 			way.addTag("oneway", "yes");
+			if("roundabout".equals(way.getTag("junction")))
+				log.warn("Roundabout " + way.getId() + " has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
 		}
 
 		if("roundabout".equals(way.getTag("junction"))) {
