@@ -83,14 +83,12 @@ public class MDRHeader extends CommonHeader {
 		sections[4].writeSectionInfo(writer);
 		writer.putInt(0);
 
-		sections[5].writeSectionInfo(writer);
-		writer.putInt(0x1d);
+		sections[5].writeSectionInfo(writer, true, true);
 
 		sections[6].writeSectionInfo(writer);
 		writer.putInt(2);
 
-		sections[7].writeSectionInfo(writer);
-		writer.putInt(3);
+		sections[7].writeSectionInfo(writer, true, true);
 
 		sections[8].writeSectionInfo(writer);
 		writer.putInt(0x40a);
@@ -98,11 +96,9 @@ public class MDRHeader extends CommonHeader {
 		sections[9].writeSectionInfo(writer);
 		writer.putInt(0);
 
-		sections[10].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[10].writeSectionInfo(writer, false, true);
 
-		sections[11].writeSectionInfo(writer);
-		writer.putInt(19);
+		sections[11].writeSectionInfo(writer, true, true);
 
 		sections[12].writeSectionInfo(writer);
 		writer.putInt(0x40a);
@@ -137,6 +133,11 @@ public class MDRHeader extends CommonHeader {
 		section.setItemSize((char) itemSize);
 	}
 
+	public void setExtraValue(int sectionNumber, int extraValue) {
+		Section section = sections[sectionNumber];
+		section.setExtraValue(extraValue);
+	}
+	
 	public void setPosition(int sectionNumber, int position) {
 		sections[sectionNumber].setPosition(position);
 	}

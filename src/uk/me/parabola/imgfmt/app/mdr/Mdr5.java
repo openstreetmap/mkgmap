@@ -29,7 +29,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 public class Mdr5 extends MdrMapSection {
 
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
-	private int maxIndex;
+	private int maxCityIndex;
+	private int localCitySize;
 
 	public Mdr5(MdrConfig config) {
 		setConfig(config);
@@ -41,14 +42,16 @@ public class Mdr5 extends MdrMapSection {
 		record.setName(name);
 		record.setStringOffset(strOff);
 		cities.add(record);
-		if (record.getCityIndex() > maxIndex)
-			maxIndex = record.getCityIndex();
+		if (record.getCityIndex() > maxCityIndex)
+			maxCityIndex = record.getCityIndex();
 	}
 
 	/**
 	 * Called after all cities to sort and number them.
 	 */
 	public void finishCities() {
+		localCitySize = numberToPointerSize(maxCityIndex + 1);
+		
 		Collections.sort(cities);
 
 		int count = 1;
@@ -86,7 +89,7 @@ public class Mdr5 extends MdrMapSection {
 	 * and not the global city index used in mdr11.
 	 */
 	private void putLocalCityIndex(ImgFileWriter writer, int cityIndex) {
-		if (maxIndex > 256)
+		if (localCitySize == 2) // 3 probably not possible in actual maps.
 			writer.putChar((char) cityIndex);
 		else
 			writer.put((byte) cityIndex);
@@ -99,7 +102,6 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		int localCitySize = (maxIndex > 255)? 2: 1;
 		return sizes.getMapSize() + localCitySize + 5 + sizes.getStrOffSize();
 	}
 
@@ -115,5 +117,16 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public int getPointerSize() {
 		return numberToPointerSize(cities.size() << 1);
+	}
+
+	/**
+	 * Known structure:
+	 * bits 0-1: size of local city index - 1 (all values appear to work)
+	 * bits 2-3: size of label offset (only 0 and 3 appear to work)
+	 * bit  4    does not appear to have any effect
+	 * @return The value to be placed in the header.
+	 */
+	public int getExtraValue() {
+		return 0x1c | (localCitySize - 1);
 	}
 }

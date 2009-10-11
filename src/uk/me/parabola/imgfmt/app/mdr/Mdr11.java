@@ -59,7 +59,7 @@ public class Mdr11 extends MdrMapSection {
 			writer.putChar((char) poi.getSubdiv());
 			writer.put3(poi.getLblOffset());
 
-			putCityIndex(writer, poi.getCityIndex(), true); //XXX
+			putCityIndex(writer, poi.getCityIndex(), true);
 			putStringOffset(writer, poi.getStrOffset());
 		}
 	}
@@ -85,5 +85,11 @@ public class Mdr11 extends MdrMapSection {
 	 */
 	public int getPointerSize() {
 		return numberToPointerSize(pois.size() << 1);
+	}
+
+	public int getExtraValue() {
+		// Possibly 0x3 for label field
+		// 0x10 for city index... XXX
+		return 0x13;
 	}
 }

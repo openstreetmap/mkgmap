@@ -131,4 +131,9 @@ public class Mdr10 extends MdrMapSection {
 	public int getPointerSize() {
 		return numberToPointerSize(numberOfPois << 1);
 	}
+
+	public int getExtraValue() {
+		// Nothing to do here
+		return 0;
+	}
 }

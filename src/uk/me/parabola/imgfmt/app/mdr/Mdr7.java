@@ -72,4 +72,11 @@ public class Mdr7 extends MdrMapSection {
 	public int getPointerSize() {
 		return numberToPointerSize(streets.size());
 	}
+
+	/**
+	 * Value of 3 possibly the existence of the lbl field.
+	 */
+	public int getExtraValue() {
+		return 3;
+	}
 }

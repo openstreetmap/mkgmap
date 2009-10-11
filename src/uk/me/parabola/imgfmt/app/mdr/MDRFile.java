@@ -203,6 +203,7 @@ public class MDRFile extends ImgFile {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.init(sectionNumber);
+			mdrHeader.setExtraValue(sectionNumber, mapSection.getExtraValue());
 		}
 
 		section.writeSectData(writer);
