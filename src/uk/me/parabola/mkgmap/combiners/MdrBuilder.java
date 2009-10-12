@@ -200,8 +200,9 @@ public class MdrBuilder implements Combiner {
 	private void addStreets(MapReader mr) {
 		List<Polyline> list = mr.linesForLevel(0);
 		for (Polyline l : list) {
-			if (l.getType() < 8) {
-
+			// Routable street types 0x01-0x13; 0x16; 0x1a; 0x1b
+			int type = l.getType();
+			if (type < 0x13 || type == 0x16 || type == 0x1a || type == 0x1b) {
 				Label label = l.getLabel();
 				if (label != null && label.getText().trim().length() > 0)
 					mdrFile.addStreet(l);
