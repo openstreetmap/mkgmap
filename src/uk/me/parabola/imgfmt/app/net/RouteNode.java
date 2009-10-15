@@ -21,6 +21,7 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -58,7 +59,9 @@ public class RouteNode implements Comparable<RouteNode> {
 	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
 	// restrictions at (via) this node
 	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
-	
+	// arcs to this node
+	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>();
+
 	private int flags = F_UNK_NEEDED;
 
 	private final CoordNode coord;
@@ -105,6 +108,10 @@ public class RouteNode implements Comparable<RouteNode> {
 		if (cl > nodeClass)
 			nodeClass = cl;
 		flags |= F_ARCS;
+	}
+
+	public void addIncomingArc(RouteArc arc) {
+		incomingArcs.add(arc);
 	}
 
 	public void addRestriction(RouteRestriction restr) {
@@ -284,5 +291,181 @@ public class RouteNode implements Comparable<RouteNode> {
 	 */
 	public int compareTo(RouteNode otherNode) {
 		return coord.compareTo(otherNode.getCoord());
+	}
+
+	private static boolean possiblySameRoad(RouteArc raa, RouteArc rab) {
+
+		if(raa == rab) {
+			// the arcs are the same object
+			return true;
+		}
+
+		RoadDef rda = raa.getRoadDef();
+		RoadDef rdb = rab.getRoadDef();
+		if(rda == rdb) {
+			// the arcs share the same RoadDef
+			return true;
+		}
+
+		boolean bothArcsNamed = false;
+		for(Label laba : rda.getLabels()) {
+			if(laba != null && laba.getOffset() != 0) {
+				for(Label labb : rdb.getLabels()) {
+					if(labb != null && labb.getOffset() != 0) {
+						bothArcsNamed = true;
+						if(laba.equals(labb)) {
+							// the roads have the same name
+							if(rda.isLinkRoad() == rdb.isLinkRoad()) {
+								// if both are a link road or both are
+								// not a link road, consider them the
+								// same road
+								return true;
+							}
+							// one's a link road and the other isn't
+							// so consider them different roads - this
+							// is because people often give a link
+							// road that's leaving some road the same
+							// ref as that road but it suits us better
+							// to consider them as different roads
+							return false;
+						}
+					}
+				}
+			}
+		}
+
+		if(bothArcsNamed) {
+			// both roads have names and they don't match
+			return false;
+		}
+
+		// at least one road is unnamed
+		if(rda.isRoundabout() && rdb.isRoundabout()) {
+			// hopefully, segments of the same (unnamed) roundabout
+			return true;
+		}
+
+		return false;
+	}
+
+	public void tweezeArcs() {
+		if(arcs.size() >= 3) {
+			final int maxMainRoadHeadingChange = 120;
+			final int minSideRoadHeadingChange = 45; // min change to be a "turn"
+
+			// detect the "shallow turn" scenario where at a junction
+			// on some road, the side road leaves the original road at
+			// a very shallow angle and the GPS says "keep right/left"
+			// when it would be better if it said "turn right/left"
+
+			// the code tries to detect a pair of arcs (the "incoming"
+			// arc and the "continuing" arc) that are the "main road"
+			// and the remaining arc (called the "other" arc) which is
+			// the "side road"
+
+			// having worked out the roles for the arcs, the heuristic
+			// applied is that if the main road doesn't change its
+			// heading by more than maxMainRoadHeadingChange, ensure
+			// that the side road heading differs from the continuing
+			// heading by at least minSideRoadHeadingChange
+
+			for(RouteArc inArc : incomingArcs) {
+
+				int inHeading = inArc.getFinalHeading();
+				// determine the outgoing (continuing) arc that is
+				// likely to be the same road as the incoming arc
+				RouteArc continuingArc = null;
+				for(RouteArc ca : arcs) {
+					if(ca.getDest() != inArc.getSource()) {
+						// this arc is not going to the same node as
+						// inArc came from
+						if(possiblySameRoad(inArc, ca)) {
+							continuingArc = ca;
+							break;
+						}
+					}
+				}
+				// if we did not find the continuing arc, give up with
+				// this incoming arc
+				if(continuingArc == null) {
+					//log.info("Can't continue road " + inArc.getRoadDef() + " at " + coord.toOSMURL());
+					continue;
+				}
+				int continuingHeading = continuingArc.getInitialHeading();
+				int mainHeadingDelta = continuingHeading - inHeading;
+				while(mainHeadingDelta > 180)
+					mainHeadingDelta -= 360;
+				while(mainHeadingDelta < -180)
+					mainHeadingDelta += 360;
+				//log.info(inArc.getRoadDef() + " continues to " + continuingArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
+
+				if(Math.abs(mainHeadingDelta) > maxMainRoadHeadingChange) {
+					// if the continuation road heading change is
+					// greater than maxMainRoadHeadingChange don't
+					// adjust anything
+					continue;
+				}
+
+				for(RouteArc otherArc : arcs) {
+
+					// for each other arc leaving this node, tweeze
+					// its heading if its heading change from the
+					// continuation heading is less than
+					// minSideRoadHeadingChange
+
+					if(otherArc.getDest() == inArc.getSource() ||
+					   otherArc == continuingArc) {
+						// we're looking at the incoming or continuing
+						// arc, ignore it
+						continue;
+					}
+
+					if(possiblySameRoad(inArc, otherArc) ||
+					   possiblySameRoad(continuingArc, otherArc)) {
+						// not obviously a different road so give up
+						continue;
+					}
+
+					int outHeading = otherArc.getInitialHeading();
+					int outHeadingDelta = outHeading - continuingHeading;
+					while(outHeadingDelta > 180)
+						outHeadingDelta -= 360;
+					while(outHeadingDelta < -180)
+						outHeadingDelta += 360;
+						//						log.warn("Found turn ("+ outHeadingDelta + " deg) from " + inArc.getRoadDef() + " to " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
+					if(outHeadingDelta > 0 &&
+					   outHeadingDelta < minSideRoadHeadingChange) {
+						int newHeading = continuingHeading + minSideRoadHeadingChange;
+						if(newHeading > 180)
+							newHeading -= 360;
+						otherArc.setInitialHeading(newHeading);
+						log.info("Adjusting turn heading from " + outHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
+					}
+					else if(outHeadingDelta < 0 &&
+							outHeadingDelta > -minSideRoadHeadingChange) {
+						int newHeading = continuingHeading - minSideRoadHeadingChange;
+
+						if(newHeading < -180)
+							newHeading += 360;
+						otherArc.setInitialHeading(newHeading);
+						log.info("Adjusting turn heading from " + outHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
+					}
+				}
+			}
+		}
+	}
+
+	public void reportSimilarArcs() {
+		for(int i = 0; i < arcs.size(); ++i) {
+			RouteArc arci = arcs.get(i);
+			for(int j = i + 1; j < arcs.size(); ++j) {
+				RouteArc arcj = arcs.get(j);
+				if(arci.getDest() == arcj.getDest() &&
+				   arci.getLength() == arcj.getLength() &&
+				   arci.getPointsHash() == arcj.getPointsHash()) {
+					log.warn("Similar arcs (" + arci.getRoadDef() + " and " + arcj.getRoadDef() + ") from " + coord.toOSMURL());
+				}
+			}
+		}
 	}
 }

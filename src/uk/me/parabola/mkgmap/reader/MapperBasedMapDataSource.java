@@ -114,6 +114,7 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 
 	public void config(EnhancedProperties props) {
 		configProps = props;
+		mapper.config(props);
 	}
 
 	protected EnhancedProperties getConfig() {

@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.app.net.RouteCenter;
 import uk.me.parabola.imgfmt.app.net.RouteNode;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * This holds the road network.  That is all the roads and the nodes
@@ -60,6 +61,15 @@ public class RoadNetwork {
 
 	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
+	private boolean adjustTurnHeadings;
+	private boolean reportSimilarArcs;
+	private boolean outputCurveData;
+
+	public void config(EnhancedProperties props) {
+		adjustTurnHeadings = props.getProperty("adjust-turn-headings", false);
+		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
+		outputCurveData = !props.getProperty("no-arc-curves", false);
+	}
 
 	public void addRoad(MapRoad road) {
 		//mapRoads.add(road);
@@ -69,6 +79,7 @@ public class RoadNetwork {
 		int lastIndex = 0;
 		double roadLength = 0;
 		double arcLength = 0;
+		int pointsHash = 0;
 
 		List<Coord> coordList = road.getPoints();
 		int npoints = coordList.size();
@@ -82,11 +93,14 @@ public class RoadNetwork {
 			}
 
 			long id = co.getId();
+
+			pointsHash += co.hashCode();
+
 			if (id == 0)
 				// not a routing node
 				continue;
 
-			// The next coord determins the heading
+			// The next coord determines the heading
 			// If this is the not the first node, then create an arc from
 			// the previous node to this one (and back again).
 			if (lastCoord != null) {
@@ -110,18 +124,57 @@ public class RoadNetwork {
 					log.error("  " + co.toOSMURL());
 				}
 
+				Coord bearingPoint = coordList.get(lastIndex + 1);
+				if(lastCoord.equals(bearingPoint)) {
+					// bearing point is too close to last node to be
+					// useful - try some more points
+					for(int bi = lastIndex + 2; bi <= index; ++bi) {
+						if(!lastCoord.equals(coordList.get(bi))) {
+							bearingPoint = coordList.get(bi);
+							break;
+						}
+					}
+				}
+				int forwardBearing = (int)lastCoord.bearingTo(bearingPoint);
+				int inverseForwardBearing = (int)bearingPoint.bearingTo(lastCoord);
+
+				bearingPoint = coordList.get(index - 1);
+				if(co.equals(bearingPoint)) {
+					// bearing point is too close to this node to be
+					// useful - try some more points
+					for(int bi = index - 2; bi > lastIndex; --bi) {
+						if(!co.equals(coordList.get(bi))) {
+							bearingPoint = coordList.get(bi);
+							break;
+						}
+					}
+				}
+				int reverseBearing = (int)co.bearingTo(bearingPoint);
+				int inverseReverseBearing = (int)bearingPoint.bearingTo(co);
+
 				// Create forward arc from node1 to node2
-				Coord bearing = coordList.get(lastIndex + 1);
-				RouteArc arc = new RouteArc(road.getRoadDef(), node1, node2, bearing, arcLength);
+				RouteArc arc = new RouteArc(road.getRoadDef(),
+											node1,
+											node2,
+											forwardBearing,
+											inverseReverseBearing,
+											arcLength,
+											outputCurveData,
+											pointsHash);
 				arc.setForward();
 				node1.addArc(arc);
+				node2.addIncomingArc(arc);
 
 				// Create the reverse arc
-				bearing = coordList.get(index - 1);
-				RouteArc arc2 = new RouteArc(road.getRoadDef(),
-							node2, node1,
-							bearing, arcLength);
-				node2.addArc(arc2);
+				arc = new RouteArc(road.getRoadDef(),
+								   node2, node1,
+								   reverseBearing,
+								   inverseForwardBearing,
+								   arcLength,
+								   outputCurveData,
+								   pointsHash);
+				node2.addArc(arc);
+				node1.addIncomingArc(arc);
 			} else {
 				// This is the first node in the road
 				road.getRoadDef().setNode(getNode(id, co));
@@ -130,6 +183,7 @@ public class RoadNetwork {
 			lastCoord = (CoordNode) co;
 			lastIndex = index;
 			arcLength = 0;
+			pointsHash = co.hashCode();
 		}
 		road.getRoadDef().setLength(roadLength);
 	}
@@ -162,8 +216,13 @@ public class RoadNetwork {
 
 		NOD1Part nod1 = new NOD1Part();
 
-		for (RouteNode node : nodes.values())
+		for (RouteNode node : nodes.values()) {
+			if(reportSimilarArcs)
+				node.reportSimilarArcs();
+			if(adjustTurnHeadings)
+				node.tweezeArcs();
 			nod1.addNode(node);
+		}
 		centers = nod1.subdivide();
 	}
 

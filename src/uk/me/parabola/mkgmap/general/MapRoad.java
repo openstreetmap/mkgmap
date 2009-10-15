@@ -108,4 +108,12 @@ public class MapRoad extends MapLine {
 	public void setRoadZip(Zip z) {
 		this.roadDef.setZip(z);
 	}
+
+	public void setRoundabout(boolean r) {
+		this.roadDef.setRoundabout(r);
+	}
+
+	public void setLinkRoad(boolean lr) {
+		this.roadDef.setLinkRoad(lr);
+	}
 }

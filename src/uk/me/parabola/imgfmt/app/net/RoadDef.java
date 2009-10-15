@@ -69,7 +69,7 @@ public class RoadDef implements Comparable {
 
 	// for diagnostic purposes
 	public String toString() {
-		return "RoadDef(" + name + ", " + id + ")";
+		return "(" + name + ", " + id + ")";
 	}
 
 	public String getName() {
@@ -105,6 +105,8 @@ public class RoadDef implements Comparable {
 
 	private City city;
 	private Zip zip;
+	private boolean roundabout;
+	private boolean linkRoad;
 
 	/**
 	 * This is for writing to NET1.
@@ -537,6 +539,10 @@ public class RoadDef implements Comparable {
 		netFlags |= NET_FLAG_ONEWAY;
 	}
 
+	public boolean isOneway() {
+		return (netFlags & NET_FLAG_ONEWAY) != 0;
+	}
+
 	public void setCity(City city) {
 		this.city = city;
 		netFlags |= NET_FLAG_ADDRINFO;
@@ -560,5 +566,21 @@ public class RoadDef implements Comparable {
 
 	public City getCity() {
 		return city;
+	}
+
+	public void setRoundabout(boolean r) {
+		roundabout = r;
+	}
+
+	public boolean isRoundabout() {
+		return roundabout;
+	}
+
+	public void setLinkRoad(boolean lr) {
+		linkRoad = lr;
+	}
+
+	public boolean isLinkRoad() {
+		return linkRoad;
 	}
 }

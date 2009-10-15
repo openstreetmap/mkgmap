@@ -211,6 +211,13 @@ Miscellaneous options:
 	than that length will be removed. If a length is not
 	specified, only zero-length arcs will be removed.
 
+--adjust-turn-headings
+	Where possible, ensure that turns off to side roads change
+	heading sufficiently so that the GPS believes that a turn is
+	required rather than a fork. This also avoids spurious
+	instructions to "keep right/left" when the road doesn't
+	actually fork.
+
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code

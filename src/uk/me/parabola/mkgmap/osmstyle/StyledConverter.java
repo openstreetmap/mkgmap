@@ -991,6 +991,11 @@ public class StyledConverter implements OsmConverter {
 
 		MapRoad road = new MapRoad(way.getId(), line);
 
+		if("roundabout".equals(way.getTag("junction")))
+			road.setRoundabout(true);
+
+		road.setLinkRoad(gt.getType() == 0x08 || gt.getType() == 0x09);
+
 		// set road parameters.
 		road.setRoadClass(gt.getRoadClass());
 		if (way.isBoolTag("oneway")) {

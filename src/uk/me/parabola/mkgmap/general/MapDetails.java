@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * The map features that we are going to map are collected here.
@@ -50,6 +51,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 	private final Map<Integer, Integer> shapeOverviews = new HashMap<Integer, Integer>();
 
 	private final RoadNetwork roadNetwork = new RoadNetwork();
+
+	public void config(EnhancedProperties props) {
+		roadNetwork.config(props);
+	}
 
 	/**
 	 * Add a point to the map.
