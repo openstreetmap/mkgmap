@@ -629,15 +629,78 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 
-			// at this time, we are only looking for POIs that have
-			// the "access" tag defined - if they do, copy the access
-			// permissions to the way - what we want to achieve is
-			// modifying the way's access permissions where it passes
-			// through the POI without affecting the rest of the way
-			// too much - to that end we split the way before and
-			// after the POI - if necessary, extra points are inserted
-			// before and after the POI to limit the size of the
-			// affected region
+			// now look for POIs that modify the way's road class or
+			// speed
+			for(int i = 0; i < points.size(); ++i) {
+				Coord p = points.get(i);
+				if(p instanceof CoordPOI) {
+					CoordPOI cp = (CoordPOI)p;
+					Node node = cp.getNode();
+					String roadClass = node.getTag("mkgmap:road-class");
+					String roadSpeed = node.getTag("mkgmap:road-speed");
+					if(roadClass != null || roadSpeed != null) {
+						// if the way has more than one point
+						// following this one, split the way at the
+						// next point to limit the size of the
+						// affected region
+						if((i + 2) < points.size() &&
+						   safeToSplitWay(points, i + 1, i, points.size() - 1)) {
+							Way tail = splitWayAt(way, i + 1);
+							// recursively process tail of way
+							addRoad(tail, gt);
+						}
+						// we can't modify the road class or type in
+						// the GType as that's global so for now just
+						// transfer the tags to the way
+						if(roadClass != null) {
+							way.addTag("mkgmap:road-class", roadClass);
+							String val = node.getTag("mkgmap:road-class-min");
+							if(val != null)
+								way.addTag("mkgmap:road-class-min", val);
+							val = node.getTag("mkgmap:road-class-max");
+							if(val != null)
+								way.addTag("mkgmap:road-class-max", val);
+						}
+						if(roadSpeed != null) {
+							way.addTag("mkgmap:road-speed", roadSpeed);
+							String val = node.getTag("mkgmap:road-speed-min");
+							if(val != null)
+								way.addTag("mkgmap:road-speed-min", val);
+							val = node.getTag("mkgmap:road-speed-max");
+							if(val != null)
+								way.addTag("mkgmap:road-speed-max", val);
+						}
+					}
+				}
+
+				// if this isn't the first (or last) point in the way
+				// and the next point modifies the way's speed/class,
+				// split the way at this point to limit the size of
+				// the affected region
+				if(i > 0 &&
+				   (i + 1) < points.size() &&
+				   points.get(i + 1) instanceof CoordPOI) {
+					CoordPOI cp = (CoordPOI)points.get(i + 1);
+					Node node = cp.getNode();
+					if(node.getTag("mkgmap:road-class") != null ||
+					   node.getTag("mkgmap:road-speed") != null) {
+						if(safeToSplitWay(points, i, i - 1, points.size() - 1)) {
+							Way tail = splitWayAt(way, i);
+							// recursively process tail of way
+							addRoad(tail, gt);
+						}
+					}
+				}
+			}
+
+			// now look for POIs that have the "access" tag defined -
+			// if they do, copy the access permissions to the way -
+			// what we want to achieve is modifying the way's access
+			// permissions where it passes through the POI without
+			// affecting the rest of the way too much - to that end we
+			// split the way before and after the POI - if necessary,
+			// extra points are inserted before and after the POI to
+			// limit the size of the affected region
 
 			final double stubSegmentLength = 25; // metres
 			for(int i = 0; i < points.size(); ++i) {
@@ -996,24 +1059,79 @@ public class StyledConverter implements OsmConverter {
 
 		road.setLinkRoad(gt.getType() == 0x08 || gt.getType() == 0x09);
 
-		// set road parameters.
-		road.setRoadClass(gt.getRoadClass());
-		if (way.isBoolTag("oneway")) {
-			road.setDirection(true);
-			road.setOneway();
-		}
+		// set road parameters 
 
-		int speedIdx = -1;
+		// road class (can be overriden by mkgmap:road-class tag)
+		int roadClass = gt.getRoadClass();
+		String val = way.getTag("mkgmap:road-class");
+		if(val != null) {
+			if(val.startsWith("-")) {
+				roadClass -= Integer.decode(val.substring(1));
+			}
+			else if(val.startsWith("+")) {
+				roadClass += Integer.decode(val.substring(1));
+			}
+			else {
+				roadClass = Integer.decode(val);
+			}
+			int roadClassMax = 4;
+			int roadClassMin = 0;
+			val = way.getTag("mkgmap:road-class-max");
+			if(val != null)
+				roadClassMax = Integer.decode(val);
+			val = way.getTag("mkgmap:road-class-min");
+			if(val != null)
+				roadClassMin = Integer.decode(val);
+			if(roadClass > roadClassMax)
+				roadClass = roadClassMax;
+			else if(roadClass < roadClassMin)
+				roadClass = roadClassMin;
+			log.info("POI changing road class of " + way.getName() + " (" + way.getId() + ") to " + roadClass + " at " + points.get(0));
+		}
+		road.setRoadClass(roadClass);
+
+		// road speed (can be overriden by maxspeed (OSM) tag or
+		// mkgmap:road-speed tag)
+		int roadSpeed = gt.getRoadSpeed();
 		if(!ignoreMaxspeeds) {
 			// maxspeed attribute overrides default for road type
 			String maxSpeed = way.getTag("maxspeed");
 			if(maxSpeed != null) {
-				speedIdx = getSpeedIdx(maxSpeed);
-				log.info(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + speedIdx);
+				roadSpeed = getSpeedIdx(maxSpeed);
+				log.info(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
 			}
 		}
-
-		road.setSpeed(speedIdx >= 0? speedIdx : gt.getRoadSpeed());
+		val = way.getTag("mkgmap:road-speed");
+		if(val != null) {
+			if(val.startsWith("-")) {
+				roadSpeed -= Integer.decode(val.substring(1));
+			}
+			else if(val.startsWith("+")) {
+				roadSpeed += Integer.decode(val.substring(1));
+			}
+			else {
+				roadSpeed = Integer.decode(val);
+			}
+			int roadSpeedMax = 7;
+			int roadSpeedMin = 0;
+			val = way.getTag("mkgmap:road-speed-max");
+			if(val != null)
+				roadSpeedMax = Integer.decode(val);
+			val = way.getTag("mkgmap:road-speed-min");
+			if(val != null)
+				roadSpeedMin = Integer.decode(val);
+			if(roadSpeed > roadSpeedMax)
+				roadSpeed = roadSpeedMax;
+			else if(roadSpeed < roadSpeedMin)
+				roadSpeed = roadSpeedMin;
+			log.info("POI changing road speed of " + way.getName() + " (" + way.getId() + ") to " + roadSpeed + " at " + points.get(0));
+		}
+		road.setSpeed(roadSpeed);
+		
+		if (way.isBoolTag("oneway")) {
+			road.setDirection(true);
+			road.setOneway();
+		}
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
