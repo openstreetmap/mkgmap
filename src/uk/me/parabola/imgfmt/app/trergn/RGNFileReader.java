@@ -91,7 +91,7 @@ public class RGNFileReader extends ImgReader {
 			Point p = new Point(sd);
 
 			byte t = reader.get();
-			int val = reader.get3();
+			int val = reader.getu3();
 			boolean hasSubtype = false;
 			if ((val & 0x800000) != 0)
 				hasSubtype = true;
@@ -147,7 +147,7 @@ public class RGNFileReader extends ImgReader {
 			byte type = reader.get();
 			line.setType(type & 0x7f);
 
-			int labelOffset = reader.get3() & 0xffffff;
+			int labelOffset = reader.getu3();
 			Label label;
 			if ((labelOffset & 0x800000) == 0) {
 				label = lblFile.fetchLabel(labelOffset & 0x7fffff);

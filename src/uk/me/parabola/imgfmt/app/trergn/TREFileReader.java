@@ -85,7 +85,7 @@ public class TREFileReader extends ImgReader {
 		reader.position(start);
 
 		int subdivNum = 1;
-		int lastRgnOffset = reader.get3();
+		int lastRgnOffset = reader.getu3();
 		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
 
 			Subdivision[] divs = levelDivs[count];
@@ -102,7 +102,7 @@ public class TREFileReader extends ImgReader {
 				if (count < levelDivs.length-1)
 					reader.getChar();
 
-				int endRgnOffset = reader.get3();
+				int endRgnOffset = reader.getu3();
 
 				SubdivData subdivData = new SubdivData(flags,
 						lat, lon, width, height,

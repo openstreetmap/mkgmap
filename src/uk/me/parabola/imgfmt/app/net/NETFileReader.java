@@ -66,7 +66,7 @@ public class NETFileReader extends ImgFile {
 		int start = netHeader.getRoadDefinitionsStart();
 		for (int off : offsets) {
 			reader.position(start + off);
-			int labelOffset = reader.get3() & 0xffffff;
+			int labelOffset = reader.getu3();
 			//System.out.printf("l off %x\n" , labelOffset);
 			offsetLabelMap.put(off, labelOffset & 0x7fffff); // TODO what if top bit is not set?
 		}
@@ -86,7 +86,7 @@ public class NETFileReader extends ImgFile {
 
 		List<Integer> offsets = new ArrayList<Integer>();
 		while (reader.position() < end) {
-			int off = reader.get3() & 0xffffff;
+			int off = reader.getu3();
 			offsets.add(off);
 		}
 

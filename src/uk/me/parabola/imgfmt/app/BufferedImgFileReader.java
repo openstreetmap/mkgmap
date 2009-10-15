@@ -122,6 +122,10 @@ public class BufferedImgFileReader implements ImgFileReader {
 				;
 	}
 
+	public int getu3() throws ReadFailedException {
+		return get3() & 0xffffff;
+	}
+
 	/**
 	 * Read in a 4 byte value.
 	 *

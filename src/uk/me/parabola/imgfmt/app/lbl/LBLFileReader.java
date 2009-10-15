@@ -127,7 +127,7 @@ public class LBLFileReader extends ImgFile {
 		reader.position(start);
 		int index = 1;
 		while (reader.position() < end) {
-			int offset = reader.get3();
+			int offset = reader.getu3();
 			Label label = fetchLabel(offset);
 
 			if (label != null) {
@@ -154,7 +154,7 @@ public class LBLFileReader extends ImgFile {
 		int index = 1;
 		while (reader.position() < end) {
 			int country = reader.getChar();
-			int offset = reader.get3();
+			int offset = reader.getu3();
 			Label label = fetchLabel(offset);
 			if (label != null) {
 				Region region = new Region(countries.get(country));
@@ -186,7 +186,7 @@ public class LBLFileReader extends ImgFile {
 		while (reader.position() < end) {
 			// First is either a label offset or a point/subdiv combo, we
 			// don't know until we have read further
-			int label = reader.get3();
+			int label = reader.getu3();
 
 			int info = reader.getChar();
 
@@ -281,7 +281,7 @@ public class LBLFileReader extends ImgFile {
 
 		while (reader.position() < end) {
 			int poiOffset = position() - start;
-			int val = reader.get3();
+			int val = reader.getu3();
 			int labelOffset = val & 0x3fffff;
 
 
@@ -338,7 +338,7 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasStreet) {
-				int streetNameOffset = reader.get3();// label for street
+				int streetNameOffset = reader.getu3();// label for street
 				Label label = fetchLabel(streetNameOffset);
 				poi.setStreetName(label);
 			}
@@ -380,7 +380,7 @@ public class LBLFileReader extends ImgFile {
 
 			if (hasHighwayExit) {
 
-				int lblinfo = reader.get3();
+				int lblinfo = reader.getu3();
 				int highwayLabelOffset = lblinfo & 0x3FFFF;
 				boolean indexed = (lblinfo & 0x800000) != 0;
 				boolean overnightParking = (lblinfo & 0x400000) != 0;

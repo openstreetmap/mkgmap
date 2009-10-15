@@ -63,6 +63,14 @@ public interface ImgFileReader extends Closeable {
 	public int get3() throws ReadFailedException;
 
 	/**
+	 * Get a 3byte unsigned quantity.
+	 *
+	 * @return The value read.
+	 * @throws ReadFailedException When the file cannot be read.
+	 */
+	public int getu3() throws ReadFailedException;
+
+	/**
 	 * Read in a 4 byte value.
 	 * @return A 4 byte integer.
 	 */
