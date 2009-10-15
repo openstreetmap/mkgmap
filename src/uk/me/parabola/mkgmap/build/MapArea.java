@@ -51,9 +51,13 @@ public class MapArea implements MapDataSource {
 	private static final int INITIAL_CAPACITY = 100;
 	private static final int MAX_RESOLUTION = 24;
 
-	public static final int POINT_KIND = 0;
-	public static final int LINE_KIND = 1;
-	public static final int SHAPE_KIND = 2;
+	public static final int POINT_KIND    = 0;
+	public static final int LINE_KIND     = 1;
+	public static final int SHAPE_KIND    = 2;
+	public static final int XT_POINT_KIND = 3;
+	public static final int XT_LINE_KIND  = 4;
+	public static final int XT_SHAPE_KIND = 5;
+	public static final int NUM_KINDS     = 6;
 
 	// This is the initial area.
 	private final Area bounds;
@@ -70,11 +74,8 @@ public class MapArea implements MapDataSource {
 	private final List<MapLine> lines = new ArrayList<MapLine>(INITIAL_CAPACITY);
 	private final List<MapShape> shapes = new ArrayList<MapShape>(INITIAL_CAPACITY);
 
-	// Counts of features available at different resolutions.
-	private final int[] pointSize = new int[MAX_RESOLUTION+1];
-	private final int[] lineSize = new int[MAX_RESOLUTION+1];
-	private final int[] shapeSize = new int[MAX_RESOLUTION+1];
-	private final int[] elemCounts = new int[MAX_RESOLUTION+1];
+	// amount of space required for the contents
+	private final int[] sizes = new int[NUM_KINDS];
 
 	private int nActivePoints;
 	private int nActiveIndPoints;
@@ -99,7 +100,7 @@ public class MapArea implements MapDataSource {
 
 		for (MapPoint p : src.getPoints()) {
 			points.add(p);
-			addSize(p, pointSize, POINT_KIND);
+			addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 		}
 		addLines(src, resolution);
 		addPolygons(src, resolution);
@@ -116,7 +117,7 @@ public class MapArea implements MapDataSource {
 				MapShape shape = (MapShape) element;
 
 				shapes.add(shape);
-				addSize(element, shapeSize, SHAPE_KIND);
+				addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 			}
 
 			public void addElement(MapElement element) {
@@ -149,7 +150,7 @@ public class MapArea implements MapDataSource {
 				MapLine line = (MapLine) element;
 
 				lines.add(line);
-				addSize(element, lineSize, LINE_KIND);
+				addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 			}
 
 			public void addElement(MapElement element) {
@@ -240,24 +241,12 @@ public class MapArea implements MapDataSource {
 
 	/**
 	 * Get an estimate of the size of the RGN space that will be required to
-	 * hold the points in this area.  For points we can be fairly accurate, but
-	 * we just guess an upper bound for lines and shapes since we don't know the
-	 * exact size until later.
+	 * hold the elements
 	 *
-	 * @param res The resolution to test for.  At lower resolutions, there are
-	 * less elements so less room is needed.
-	 * @return An estimate of the max size that will be needed in the RGN file
-	 * for this sub-division.
+	 * @return Estimates of the max size that will be needed in the RGN file
+	 * for the points/lines/shapes in this sub-division.
 	 */
-	public int[] getSizeAtResolution(int res) {
-		int[] sizes = new int[3];
-		
-		for (int i = 0; i <= res; i++) {
-			sizes[POINT_KIND] += pointSize[i];
-			sizes[LINE_KIND] += lineSize[i];
-			sizes[SHAPE_KIND] += shapeSize[i];
-		}
-
+	public int[] getEstimatedSizes() {
 		return sizes;
 	}
 
@@ -383,65 +372,64 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param p The element containing the minimum resolution that it will be
 	 * displayed at.
-	 * @param sizes An array of sizes, this routine updates the correct one.
 	 * @param kind What kind of element this is KIND_POINT etc.
 	 */
-	private void addSize(MapElement p, int[] sizes, int kind) {
-
-		if(p.hasExtendedType()) {
-			// not applicable for elements with extended types
-			return;
-		}
+	private void addSize(MapElement p, int kind) {
 
 		int res = p.getMinResolution();
 		if (res > MAX_RESOLUTION)
 			return;
 
-		int s;
 		int numPoints;
 		int numElements;
 
 		switch (kind) {
 		case POINT_KIND:
-			if (res <= areaResolution) {
-				if(((MapPoint) p).isCity())
-					nActiveIndPoints++;
-				else
-					nActivePoints++;
+		case XT_POINT_KIND:
+			if(res <= areaResolution) {
+				// Points are predictibly less than 9 bytes.
+				sizes[kind] += 9;
+				if(!p.hasExtendedType()) {
+					if(((MapPoint) p).isCity())
+						nActiveIndPoints++;
+					else
+						nActivePoints++;
+				}
 			}
-
-			// Points are predictibly less than 9 bytes.
-			s = 9;
 			break;
 
 		case LINE_KIND:
-			// Estimate the size taken by lines and shapes as a constant plus
-			// a factor based on the number of points.
-			numPoints = ((MapLine) p).getPoints().size();
-			numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
-			s = numElements * 11 + numPoints * 4;
-			if (res <= areaResolution)
-				nActiveLines += numElements;
+		case XT_LINE_KIND:
+			if(res <= areaResolution) {
+				// Estimate the size taken by lines and shapes as a constant plus
+				// a factor based on the number of points.
+				numPoints = ((MapLine) p).getPoints().size();
+				numElements = 1 + ((numPoints - 1) / LineSplitterFilter.MAX_POINTS_IN_LINE);
+				sizes[kind] += numElements * 11 + numPoints * 4;
+				if (!p.hasExtendedType())
+					nActiveLines += numElements;
+			}
 			break;
+
 		case SHAPE_KIND:
-			// Estimate the size taken by lines and shapes as a constant plus
-			// a factor based on the number of points.
-			numPoints = ((MapLine) p).getPoints().size();
-			numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
-			s = numElements * 11 + numPoints * 4;
-			if (res <= areaResolution)
-				nActiveShapes += numElements;
+		case XT_SHAPE_KIND:
+			if(res <= areaResolution) {
+				// Estimate the size taken by lines and shapes as a constant plus
+				// a factor based on the number of points.
+				numPoints = ((MapLine) p).getPoints().size();
+				numElements = 1 + ((numPoints - 1) / PolygonSplitterFilter.MAX_POINT_IN_ELEMENT);
+				sizes[kind] += numElements * 11 + numPoints * 4;
+				if (!p.hasExtendedType())
+					nActiveShapes += numElements;
+			}
 			break;
 
 		default:
 			log.error("should not be here");
 			assert false;
-			s = 0;
 			break;
 		}
 
-		sizes[res] += s;
-		elemCounts[res]++;
 	}
 
 	/**
@@ -452,7 +440,7 @@ public class MapArea implements MapDataSource {
 	private void addPoint(MapPoint p) {
 		points.add(p);
 		addToBounds(p.getBounds());
-		addSize(p, pointSize, POINT_KIND);
+		addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 	}
 
 	/**
@@ -463,7 +451,7 @@ public class MapArea implements MapDataSource {
 	private void addLine(MapLine l) {
 		lines.add(l);
 		addToBounds(l.getBounds());
-		addSize(l, lineSize, LINE_KIND);
+		addSize(l, l.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 	}
 
 	/**
@@ -474,7 +462,7 @@ public class MapArea implements MapDataSource {
 	private void addShape(MapShape s) {
 		shapes.add(s);
 		addToBounds(s.getBounds());
-		addSize(s, shapeSize, SHAPE_KIND);
+		addSize(s, s.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 	}
 
 	/**

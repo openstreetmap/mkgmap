@@ -52,6 +52,13 @@ class MapSplitter {
 
 	private static final int MAX_NUM_POINTS = 0xff;
 
+	// maximum allowed amounts of points/lines/shapes with extended types
+	// real limits are not known but if these values are too large, data
+	// goes missing (lines disappear, etc.)
+	private static final int MAX_XT_POINTS_SIZE = 0xff00;
+	private static final int MAX_XT_LINES_SIZE  = 0xff00;
+	private static final int MAX_XT_SHAPES_SIZE = 0xff00;
+
 	private final Zoom zoom;
 
 	/**
@@ -110,7 +117,7 @@ class MapSplitter {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
 			Area bounds = area.getBounds();
-			int[] sizes = area.getSizeAtResolution(res);
+			int[] sizes = area.getEstimatedSizes();
 			if(log.isInfoEnabled()) {
 				String padding = depth + "                                            ";
 				log.info(padding.substring(0, (depth + 1) * 2) + 
@@ -126,7 +133,10 @@ class MapSplitter {
 				(sizes[MapArea.POINT_KIND] > MAX_RGN_SIZE &&
 				 (area.hasIndPoints() || area.hasLines() || area.hasShapes())) ||
 				(((sizes[MapArea.POINT_KIND] + sizes[MapArea.LINE_KIND]) > MAX_RGN_SIZE) &&
-				 area.hasShapes())) {
+				 area.hasShapes()) ||
+				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
+				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
+				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
 				if (area.getBounds().getMaxDimention() > 100) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
