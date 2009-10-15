@@ -16,14 +16,23 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -102,6 +111,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
+	private HashMap<String,Set<String>> deletedTags;
+
 	public Osm5XmlHandler(EnhancedProperties props) {
 		if(props.getProperty("make-all-cycleways", false)) {
 			makeOppositeCycleways = makeCycleways = true;
@@ -121,6 +132,10 @@ class Osm5XmlHandler extends DefaultHandler {
 			minimumArcLength = null;
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		String deleteTagsFileName = props.getProperty("delete-tags-file");
+		if(deleteTagsFileName != null)
+			readDeleteTagsFile(deleteTagsFileName);
+
 		if (props.getProperty("preserve-element-order", false)) {
 			nodeMap = new LinkedHashMap<Long, Node>(5000);
 			wayMap = new LinkedHashMap<Long, Way>(5000);
@@ -130,6 +145,60 @@ class Osm5XmlHandler extends DefaultHandler {
 			wayMap = new HashMap<Long, Way>(5000);
 			relationMap = new HashMap<Long, Relation>();
 		}
+	}
+
+	private void readDeleteTagsFile(String fileName) {
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(fileName))));
+			String line;
+			deletedTags = new HashMap<String,Set<String>>();
+			while((line = br.readLine()) != null) {
+				line = line.trim();
+				if(line.length() > 0 && 
+				   !line.startsWith("#") &&
+				   !line.startsWith(";")) {
+					String parts[] = line.split("=");
+					if(parts.length != 2) {
+						log.error("Ignoring bad line in deleted tags file: " + line);
+					}
+					else {
+						parts[0] = parts[0].trim();
+						parts[1] = parts[1].trim();
+						if("*".equals(parts[1])) {
+							deletedTags.put(parts[0], new HashSet<String>());
+						}
+						else {
+							Set<String> vals = deletedTags.get(parts[0]);
+							if(vals == null)
+								vals = new HashSet<String>();
+							vals.add(parts[1]);
+							deletedTags.put(parts[0], vals);
+						}
+					}
+				}
+			}
+			br.close();
+		}
+		catch(FileNotFoundException e) {
+			log.error("Could not open delete tags file " + fileName);
+		}
+		catch(IOException e) {
+			log.error("Error reading delete tags file " + fileName);
+		}
+
+		if(deletedTags != null && deletedTags.size() == 0)
+			deletedTags = null;
+	}
+
+	private boolean deleteTag(String key, String val) {
+		if(deletedTags != null) {
+			Set<String> vals = deletedTags.get(key);
+			if(vals != null && (vals.size() == 0 || vals.contains(val))) {
+				//				System.err.println("Deleting " + key + "=" + val);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -215,7 +284,10 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (el != null) // ignore non existing ways caused by splitting files
 				currentRelation.addElement(attributes.getValue("role"), el);
 		} else if (qName.equals("tag")) {
-			currentRelation.addTag(attributes.getValue("k"), attributes.getValue("v"));
+			String key = attributes.getValue("k");
+			String val = attributes.getValue("v");
+			if(!deleteTag(key, val))
+				currentRelation.addTag(key, val);
 		}
 	}
 
@@ -226,7 +298,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-			currentWay.addTag(key, val);
+			if(!deleteTag(key, val))
+				currentWay.addTag(key, val);
 		}
 	}
 
@@ -234,6 +307,9 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
+
+			if(deleteTag(key, val))
+				return;
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that

@@ -254,6 +254,12 @@ Miscellaneous options:
 	access (e.g. bollards). Their access restrictions are applied
 	to a small region of the way near the POI.
 
+--delete-tags-file=FILENAME
+	Names a file that should contain one or more lines of the form
+	TAG=VALUE or TAG=*. Blank lines and lines that start with
+	# or ; are ignored. All tag/value pairs in the OSM input are
+	compared with these patterns and those that match are deleted.
+
 --tdbfile
 	Write a .tdb file.
 
