@@ -96,6 +96,9 @@ public class MdrBuilder implements Combiner {
 	 * @param finfo An interface to read the map.
 	 */
 	public void onMapEnd(FileInfo finfo) {
+		if (!finfo.isImg())
+			return;
+		
 		// Add the map name
 		mdrFile.addMap(finfo.getMapnameAsInt());
 
