@@ -218,6 +218,12 @@ Miscellaneous options:
 	instructions to "keep right/left" when the road doesn't
 	actually fork.
 
+--report-similar-arcs
+	Issue a warning when more than one arc connects two nodes and
+	the ways that the arcs are derived from contain identical
+	points. It doesn't make sense to use this option at the same
+	time as using the cycleway creating options.
+
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
