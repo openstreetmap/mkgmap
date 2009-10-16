@@ -29,41 +29,83 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * from other MDR sections without having to go through them all and check
  * which map they belong to.
  *
+ * The subsections are as follows:
+ *
+ * sub1 points into MDR 11 (POIs)
+ * sub2 points into MDR 10 (POI types)
+ * sub3 points into MDR 7 (street names)
+ * sub4 points into MDR 5 (cities)
+ * sub5 points into MDR 6
+ * sub6 points into MDR 20
+ * sub7 points into MDR 21
+ * sub8 points into MDR 22
+ *
  * @author Steve Ratcliffe
  */
 public class Mdr1 extends MdrSection {
 	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
-	private final List<Mdr1SubSection> subSections = new ArrayList<Mdr1SubSection>();
 
 	public Mdr1(MdrConfig config) {
-		assert config != null;
 		setConfig(config);
 	}
 
+	/**
+	 * Add a map.  Create an MDR1 record for it and also allocate its reverse
+	 * index if this is not for a device.
+	 * @param mapNumber The map index number.
+	 */
 	public void addMap(int mapNumber) {
 		Mdr1Record rec = new Mdr1Record(mapNumber, getConfig());
 		maps.add(rec);
-		subSections.add(new Mdr1SubSection());
+
+		if (!isForDevice()) {
+			Mdr1MapIndex mapIndex = new Mdr1MapIndex();
+			rec.setMdrMapIndex(mapIndex);
+		}
 	}
 
+	public void writeSubSections(ImgFileWriter writer) {
+		for (Mdr1Record rec : maps) {
+			rec.setIndexOffset(writer.position());
+			Mdr1MapIndex mapIndex = rec.getMdrMapIndex();
+			mapIndex.writeSubSection(writer);
+		}
+	}
+
+	/**
+	 * This is written right at the end after we know all the offsets in
+	 * the MDR 1 record.
+	 * @param writer The mdr 1 records are written out to this writer.
+	 */
 	public void writeSectData(ImgFileWriter writer) {
 		for (Mdr1Record rec : maps)
 			rec.write(writer);
 	}
 
 	public int getItemSize() {
-		System.out.println("for dev " + isForDevice());
 		return isForDevice()? 4: 8;
 	}
 
-	public void writeSubSections(ImgFileWriter writer) {
-		for (int i = 0; i < maps.size(); i++) {
-			Mdr1Record rec = maps.get(i);
-			Mdr1SubSection sub = subSections.get(i);
+	public void setStartPosition(int sectionNumber) {
+		for (Mdr1Record mi : maps)
+			mi.getMdrMapIndex().startSection(sectionNumber);
+	}
 
-			rec.setIndexOffset(writer.position());
+	public void setEndPosition(int sectionNumber) {
+		for (Mdr1Record mi : maps) {
+			mi.getMdrMapIndex().endSection(sectionNumber);
+	}
+}
 
-			sub.writeSubSection(writer);
+	public void setPointerSize(int sectionSize, int recordSize) {
+		for (Mdr1Record mi : maps) {
+			Mdr1MapIndex mapIndex = mi.getMdrMapIndex();
+			mapIndex.setPointerSize(sectionSize, recordSize);
 		}
+	}
+
+	public void addPointer(int mapNumber, int recordNumber) {
+		Mdr1MapIndex mi = maps.get(mapNumber - 1).getMdrMapIndex();
+		mi.addPointer(recordNumber);
 	}
 }

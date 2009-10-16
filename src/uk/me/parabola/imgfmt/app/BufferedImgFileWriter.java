@@ -169,6 +169,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 		return maxSize;
 	}
 
+	public ByteBuffer getBuffer() {
+		return buf;
+	}
+
 	/**
 	 * Make sure there is enough room for the data we are about to write.
 	 *

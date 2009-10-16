@@ -15,32 +15,32 @@ package uk.me.parabola.imgfmt.app.mdr;
 /**
  * @author Steve Ratcliffe
  */
-public class Mdr13Record extends RecordBase {
-	private int regionIndex;
-	private int strOffset;
-	private int countryIndex;
+public class Mdr7Record extends RecordBase implements Comparable<Mdr7Record> {
+	private int labelOffset;
+	private int stringOffset;
+	private String name;
 
-	public int getRegionIndex() {
-		return regionIndex;
+	public int compareTo(Mdr7Record o) {
+		return name.compareTo(o.name);
 	}
 
-	public void setRegionIndex(int regionIndex) {
-		this.regionIndex = regionIndex;
+	public int getLabelOffset() {
+		return labelOffset;
 	}
 
-	public int getStrOffset() {
-		return strOffset;
+	public void setLabelOffset(int labelOffset) {
+		this.labelOffset = labelOffset;
 	}
 
-	public void setStrOffset(int strOffset) {
-		this.strOffset = strOffset;
+	public int getStringOffset() {
+		return stringOffset;
 	}
 
-	public void setCountryIndex(int countryIndex) {
-		this.countryIndex = countryIndex;
+	public void setStringOffset(int stringOffset) {
+		this.stringOffset = stringOffset;
 	}
 
-	public int getCountryIndex() {
-		return countryIndex;
+	public void setName(String name) {
+		this.name = name;
 	}
 }

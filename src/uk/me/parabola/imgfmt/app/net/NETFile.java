@@ -145,14 +145,6 @@ public class NETFile extends ImgFile {
 						}
 					}
 				}
-
-				/*
-				try {
-					System.err.println(new String(name0.getCtext()) + " in " + city0 + " is connected to " + connectedRoads.size() + " other segment(s)");
-				}
-				catch (Exception e) {
-				}
-				*/
 			}
 		}
 

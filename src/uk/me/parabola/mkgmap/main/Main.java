@@ -44,6 +44,8 @@ import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.combiners.Combiner;
 import uk.me.parabola.mkgmap.combiners.FileInfo;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
+import uk.me.parabola.mkgmap.combiners.MdrBuilder;
+import uk.me.parabola.mkgmap.combiners.MdxBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
@@ -91,6 +93,7 @@ public class Main implements ArgumentProcessor {
 		//
 		// TODO This can be removed after say one month, Oct 15.  At that time
 		// remove the target=1.5 from the build file.
+		//noinspection ErrorNotRethrown
 		try {
 			// Use a method that was introduced in 1.6
 			"".isEmpty();
@@ -213,6 +216,9 @@ public class Main implements ArgumentProcessor {
 			addTdbBuilder();
 		} else if (opt.equals("gmapsupp")) {
 			addCombiner(new GmapsuppBuilder());
+		} else if (opt.equals("index")) {
+			addCombiner(new MdxBuilder());
+			addCombiner(new MdrBuilder());
 		} else if (opt.equals("help")) {
 			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {

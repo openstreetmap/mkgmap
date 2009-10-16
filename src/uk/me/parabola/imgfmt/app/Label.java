@@ -16,8 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.nio.charset.Charset;
+
+import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
-import uk.me.parabola.log.Logger;
 
 /**
  * Labels are used for names of roads, points of interest etc.
@@ -32,27 +34,26 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public class Label implements Comparable {
-	private static final Logger log = Logger.getLogger(Label.class);
+public class Label implements Comparable<Label> {
 
-	// The compressed form of the label text.
-	private final byte[] ctext;
-	private final int length;
+	private final String text;
 
 	// The offset in to the data section.
 	private int offset;
 
-	public Label(EncodedText etext) {
-		ctext = etext.getCtext();
-		length = etext.getLength();
-	}
-
-	public byte[] getCtext() {
-		return ctext;
+	public Label(String text) {
+		this.text = text;
 	}
 
 	public int getLength() {
-		return length;
+		if (text == null)
+			return 0;
+		else
+			return text.length();
+	}
+
+	public String getText() {
+		return text;
 	}
 
 	/**
@@ -63,7 +64,7 @@ public class Label implements Comparable {
 	 * @return The offset within the LBL file of this string.
 	 */
 	public int getOffset() {
-		if (ctext == null)
+		if (text == null)
 			return 0;
 		else
 			return offset;
@@ -77,30 +78,24 @@ public class Label implements Comparable {
 	 * Write this label to the given img file.
 	 *
 	 * @param writer The LBL file to write to.
+	 * @param textEncoder The encoder to use for this text.  Converts the
+	 * unicode string representation to the correct byte stream for the file.
+	 * This depends on encoding format, character set etc.
 	 */
-	public void write(ImgFileWriter writer) {
-		if (log.isDebugEnabled())
-			log.debug("put label", this.length);
-		if (ctext != null)
-			writer.put(ctext, 0, this.length);
+	public void write(ImgFileWriter writer, CharacterEncoder textEncoder) {
+		EncodedText encText = textEncoder.encodeText(text);
+		assert encText != null;
+
+		if (encText.getLength() > 0)
+			writer.put(encText.getCtext(), 0, encText.getLength());
 	}
 
 	/**
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return "label at " + offset;
+		return "[" + offset + "]" + text;
 	}
-
-	//public boolean equals(Object obj) {
-	//	Label other = (Label) obj;
-	//	return other.getOffset() == getOffset();
-	//}
-	//
-	//@Override
-	//public int hashCode() {
-	//	return offset;
-	//}
 
 	public boolean equals(Object o) {
 		if (this == o)
@@ -115,18 +110,15 @@ public class Label implements Comparable {
 	public int hashCode() {
 		return offset;
 	}
+	Charset cs = Charset.forName("latin1");
 
-	public int compareTo(Object other) {
-		Label o = (Label)other;
+	/**
+	 * Note: this class has a natural ordering that is inconsistent with equals.
+	 * (But perhaps it shouldn't?)
+	 */
+	public int compareTo(Label other) {
 		if(this == other)
 			return 0;
-		for(int i = 0; i < length && i < o.length; ++i) {
-			int diff = (ctext[i] & 0xff) - (o.ctext[i] & 0xff);
-			if(diff != 0)
-				return diff;
-		}
-		if(length == o.length)
-			return 0;
-		return (length > o.length)? 1 : -1;
+		return text.compareToIgnoreCase(other.text);
 	}
 }

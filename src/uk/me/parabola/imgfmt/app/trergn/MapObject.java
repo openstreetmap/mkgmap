@@ -16,16 +16,14 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
-
-import uk.me.parabola.mkgmap.general.MapElement;
-
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.OutputStream;
-import java.io.IOException;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.mkgmap.general.MapElement;
 
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
@@ -57,6 +55,9 @@ public abstract class MapObject {
 
 	private ExtTypeAttributes extTypeAttributes;
 
+	// The number of this point within its subdivision.  Set on read only.
+	private int number;
+
 	/**
 	 * Write this object to the given file.
 	 *
@@ -84,7 +85,7 @@ public abstract class MapObject {
 		refLabels.add(refLabel);
 	}
 
-	protected int getType() {
+	public int getType() {
 		return type;
 	}
 
@@ -124,13 +125,13 @@ public abstract class MapObject {
 		setDeltaLong(diff);
 	}
 	
-	// directly setting shouldn't be done
-	private void setDeltaLat(int deltaLat) {
+	// directly setting shouldn't be done, unless reading from a file
+	protected void setDeltaLat(int deltaLat) {
 		this.deltaLat = deltaLat;
 	}
 
-	// directly setting shouldn't be done.
-	private void setDeltaLong(int deltaLong) {
+	// directly setting shouldn't be done, unless reading from a file
+	protected void setDeltaLong(int deltaLong) {
 		this.deltaLong = deltaLong;
 	}
 
@@ -142,7 +143,7 @@ public abstract class MapObject {
 		this.subdiv = subdiv;
 	}
 
-	protected Label getLabel() {
+	public Label getLabel() {
 		return label;
 	}
 
@@ -156,5 +157,17 @@ public abstract class MapObject {
 
 	public void setExtTypeAttributes(ExtTypeAttributes eta) {
 		extTypeAttributes = eta;
+	}
+
+	public String toString() {
+		return "Type=" + type + ", l=" + label;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
 	}
 }

@@ -56,7 +56,7 @@ public class CommandArgsReader {
 		// line before any user supplied options.
 		add(new CommandOption("mapname", "63240001"));
 		add(new CommandOption("description", "OSM street map"));
-		add(new CommandOption("overview-mapname", "63240000"));
+		add(new CommandOption("overview-mapname", "osmmap"));
 		add(new CommandOption("overview-mapnumber", "63240000"));
 	}
 

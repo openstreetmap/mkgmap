@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.fs;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +30,7 @@ import uk.me.parabola.imgfmt.FileSystemParam;
  *
  * @author Steve Ratcliffe
  */
-public interface FileSystem {
+public interface FileSystem extends Closeable {
 
 	/**
 	 * Create a new file it must not already exist.

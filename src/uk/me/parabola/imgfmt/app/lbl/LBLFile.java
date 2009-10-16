@@ -22,6 +22,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Label;
@@ -29,11 +30,9 @@ import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * The file that holds all the labels for the map.
@@ -126,14 +125,13 @@ public class LBLFile extends ImgFile {
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
-		EncodedText etext = textEncoder.encodeText(text);
 		Label l = labelCache.get(text);
 		if (l == null) {
-			l = new Label(etext);
+			l = new Label(text);
 			labelCache.put(text, l);
 
 			l.setOffset(position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
-			l.write(getWriter());
+			l.write(getWriter(), textEncoder);
 		}
 
 		return l;
@@ -209,8 +207,7 @@ public class LBLFile extends ImgFile {
 			b = reader.get();
 		} while (!textDecoder.addByte(b)) ;
 
-		EncodedText text = textDecoder.getText();
-		return new String(text.getCtext(), 0, text.getLength());
+		return textDecoder.getText().getText();
 	}
 
 	public PlacesHeader getPlaceHeader() {

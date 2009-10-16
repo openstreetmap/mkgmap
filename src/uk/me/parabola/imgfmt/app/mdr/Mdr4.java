@@ -12,6 +12,12 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
@@ -22,15 +28,38 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr4 extends MdrSection {
+	private final Set<Mdr4Record> poiTypes = new HashSet<Mdr4Record>();
+
 	public Mdr4(MdrConfig config) {
 		setConfig(config);
 	}
 
+	
 	public void writeSectData(ImgFileWriter writer) {
-		writer.put3(0x10b);
+		List<Mdr4Record> list = new ArrayList<Mdr4Record>(poiTypes);
+		Collections.sort(list);
+
+		for (Mdr4Record r : list) {
+			writer.put((byte) r.getType());
+			writer.put((byte) r.getUnknown());
+			writer.put((byte) r.getSubtype());
+		}
 	}
 
 	public int getItemSize() {
-		return 0;
+		return 3;
+	}
+
+	public void addType(int type) {
+		Mdr4Record r = new Mdr4Record();
+		if (type <= 0xff)
+			r.setType(type);
+		else {
+			r.setType((type >> 8) & 0xff);
+			r.setSubtype(type & 0xff);
+		}
+		r.setUnknown(0);
+
+		poiTypes.add(r);
 	}
 }

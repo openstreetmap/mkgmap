@@ -25,7 +25,7 @@ import org.junit.Test;
 
 
 public class TdbTest {
-	private static final String TDBNAME = "63240000.tdb";
+	private static final String TDBNAME = "osmmap.tdb";
 
 	/**
 	 * Basic test that the correct file is created.  Check a few

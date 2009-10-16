@@ -13,52 +13,97 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * POI type with a reference to MDR11.
- * I don't really understand the purpose of this section.
+ * POI subtype with a reference to MDR11.
+ * These are sorted into groups based on the type, and contain the
+ * subtype.
+ *
+ * The mdr9 section contains an index to this section based on the
+ * the type groups.
  *
  * @author Steve Ratcliffe
  */
-public class Mdr10 extends MdrSection {
-	private final List<Mdr10Record> poiTypes = new ArrayList<Mdr10Record>();
+public class Mdr10 extends MdrMapSection {
+	// The maximum group number.  Note that this is 1 based, not 0 based.
+	private static final int MAX_GROUP_NUMBER = 9;
+
+	@SuppressWarnings({"unchecked"})
+	private final List<Mdr10Record>[] poiTypes = new ArrayList[MAX_GROUP_NUMBER+1];
+
 	private int numberOfPois;
 
 	public Mdr10(MdrConfig config) {
 		setConfig(config);
+
+		for (int i = 1; i <= MAX_GROUP_NUMBER; i++) {
+			poiTypes[i] = new ArrayList<Mdr10Record>();
+		}
 	}
 
 	public void addPoiType(int type, Mdr11Record poi) {
 		Mdr10Record t = new Mdr10Record();
-		t.setType(type);
+		// TODO this may not be totally correct yet as we don't save the fact
+		// that there is a subtype anywhere.
+		t.setSubtype(Utils.getSubtypeFromFullType(type));
 		t.setMdr11ref(poi);
-		poiTypes.add(t);
+
+		t.setFullType(type);
+		int group = Utils.getGroupForPoi(type);
+		if (group == 0)
+			return;
+		poiTypes[group].add(t);
 	}
-	
+
 	public void writeSectData(ImgFileWriter writer) {
+		int count = 0;
+		for (List<Mdr10Record> poiGroup : poiTypes) {
+			if (poiGroup == null)
+				continue;
+			
+			Collections.sort(poiGroup);
 
-		for (Mdr10Record t : poiTypes) {
-			writer.put((byte) t.getType());
-			int offset = t.getMdr11ref().getRecordNumber() + 1;
+			String lastName = "";
+			for (Mdr10Record t : poiGroup) {
 
-			boolean isCity = t.getMdr11ref().getCityIndex() > 0;
-			if (numberOfPois < 0x80) {
-				if (isCity)
-					offset |= 0x80;
-				writer.put((byte) offset);
-			} else if (numberOfPois < 0x8000) {
-				if (isCity)
-					offset |= 0x8000;
-				writer.putChar((char) offset);
-			} else {
-				if (isCity)
-					offset |= 0x800000;
-				writer.put3(offset);
+				count++;
+				addIndexPointer(t.getMdr11ref().getMapIndex(), count);
+				
+				writer.put((byte) t.getSubtype());
+				int offset = t.getMdr11ref().getRecordNumber();
+
+				// Top bit actually represents a non-repeated name.  ie if
+				// the bit is not set, then the name is the same as the previous
+				// record.
+				String name = t.getMdr11ref().getName();
+				boolean isNew = !name.equals(lastName);
+				lastName = name;
+				putPoiIndex(writer, offset, isNew);
 			}
 		}
+	}
+
+	/**
+	 * Get a list of the group sizes along with the group index number.
+	 * @return A map that is guaranteed to iterate in the correct order for
+	 * writing mdr9. The key is the group number and the value is the
+	 * number of entries in that group.
+	 */
+	public Map<Integer, Integer> getGroupSizes() {
+		Map<Integer, Integer> m = new LinkedHashMap<Integer, Integer>();
+
+		for (int i = 1; i < MAX_GROUP_NUMBER; i++) {
+			List<Mdr10Record> poiGroup = poiTypes[i];
+			if (!poiGroup.isEmpty())
+				m.put(i, poiGroup.size());
+		}
+		return m;
 	}
 
 	/**
@@ -69,7 +114,26 @@ public class Mdr10 extends MdrSection {
 		return 0;
 	}
 
+	public int getNumberOfItems() {
+		return numberOfPois;
+	}
+
 	public void setNumberOfPois(int numberOfPois) {
 		this.numberOfPois = numberOfPois;
+	}
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(numberOfPois << 1);
+	}
+
+	public int getExtraValue() {
+		// Nothing to do here
+		return 0;
 	}
 }

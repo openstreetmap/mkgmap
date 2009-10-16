@@ -18,109 +18,22 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * @author Steve Ratcliffe
  */
 public class POIRecord {
 
-	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
-	{
-		/**
-			Street and Phone numbers can be stored in two different ways in the poi record
-			Simple Number that only contain digits are coded in base 11 coding. 
-			This helper	class tries to code the given number. If the number contains other
-			chars like in 4a the coding fails and the caller has to use a Label instead
-		*/
-	
-		private byte[] encodedNumber;
-		private int  encodedSize;
-		
-		public boolean set(String number)
-		{
-			int i = 0;
-			int j = 0;
-			int val = 0;
-
-			// remove sourounding whitespaces to increase chance for simple encoding
-
-			number = number.trim();  
-
-			encodedNumber  = new byte[(number.length()/2)+2];
-				
-			while(i < number.length())
-			{
-				int c1;
-				int c2;
-
-				c1 = decodeChar(number.charAt(i));
-				i++;
- 
-				if(i < number.length())
-				{
-					c2 = decodeChar(number.charAt(i));
-					i++;
-				}
-				else
-					c2 = 10;
-	
-				if(c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10) // Only 0-9 and - allowed
-				{
-					return false;
-				}
-
-				val = c1 * 11 + c2;  							// Encode as base 11
- 
-				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
-					val |= 0x80;							 // If this is not set would be treated as label pointer
-
-				encodedNumber[j++] = (byte)val;	
-			}
-			
-			if((val & 0x80) == 0 || i < 3)  // terminate string with 0x80 if not done 
-			{
-				val = 0xF8;
-				encodedNumber[j++] = (byte)val;
-			}
-			
-			encodedSize  = j;
-			
-			return true;
-		}
-		
-		public void write(ImgFileWriter writer)
-		{
-			for(int i = 0; i < encodedSize; i++)
-				writer.put(encodedNumber[i]);
-		}
-		
-		public boolean isUsed()
-		{
-			return (encodedSize > 0);
-		}
-		
-		public int getSize()	
-		{
-			return encodedSize;
-		}
-		
-		private int decodeChar(char ch)
-		{		
-			return (ch - '0');
-		}
-		
-	}
-
-	private static final byte HAS_STREET_NUM = 0x01;
-	private static final byte HAS_STREET     = 0x02;
-	private static final byte HAS_CITY       = 0x04;
-	private static final byte HAS_ZIP        = 0x08;
-	private static final byte HAS_PHONE      = 0x10;
-	private static final byte HAS_EXIT       = 0x20;
-	private static final byte HAS_TIDE_PREDICTION = 0x40;
+	static final byte HAS_STREET_NUM = 0x01;
+	static final byte HAS_STREET     = 0x02;
+	static final byte HAS_CITY       = 0x04;
+	static final byte HAS_ZIP        = 0x08;
+	static final byte HAS_PHONE      = 0x10;
+	static final byte HAS_EXIT       = 0x20;
+	static final byte HAS_TIDE_PREDICTION = 0x40;
 
 	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
@@ -378,6 +291,14 @@ public class POIRecord {
 		return offset;
 	}
 
+	public Label getNameLabel() {
+		return poiName;
+	}
+
+	public City getCity() {
+		return city;
+	}
+
 	/**
 	 * Address abbreviations.
 	 */
@@ -398,4 +319,91 @@ public class POIRecord {
 			return code;
 		}
 	}
+
+	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
+	{
+		/**
+			Street and Phone numbers can be stored in two different ways in the poi record
+			Simple Number that only contain digits are coded in base 11 coding.
+			This helper	class tries to code the given number. If the number contains other
+			chars like in 4a the coding fails and the caller has to use a Label instead
+		*/
+
+		private byte[] encodedNumber;
+		private int  encodedSize;
+
+		public boolean set(String number)
+		{
+			int i = 0;
+			int j = 0;
+			int val = 0;
+
+			// remove sourounding whitespaces to increase chance for simple encoding
+
+			number = number.trim();
+
+			encodedNumber  = new byte[(number.length()/2)+2];
+
+			while(i < number.length())
+			{
+				int c1;
+				int c2;
+
+				c1 = decodeChar(number.charAt(i));
+				i++;
+
+				if(i < number.length())
+				{
+					c2 = decodeChar(number.charAt(i));
+					i++;
+				}
+				else
+					c2 = 10;
+
+				if(c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10) // Only 0-9 and - allowed
+				{
+					return false;
+				}
+
+				val = c1 * 11 + c2;  							// Encode as base 11
+
+				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
+					val |= 0x80;							 // If this is not set would be treated as label pointer
+
+				encodedNumber[j++] = (byte)val;
+			}
+
+			if((val & 0x80) == 0 || i < 3)  // terminate string with 0x80 if not done
+			{
+				val = 0xF8;
+				encodedNumber[j++] = (byte)val;
+			}
+
+			encodedSize  = j;
+
+			return true;
+		}
+
+		public void write(ImgFileWriter writer)
+		{
+			for(int i = 0; i < encodedSize; i++)
+				writer.put(encodedNumber[i]);
+		}
+
+		public boolean isUsed()
+		{
+			return (encodedSize > 0);
+		}
+
+		public int getSize()
+		{
+			return encodedSize;
+		}
+
+		private int decodeChar(char ch)
+		{
+			return (ch - '0');
+		}
+
+	}	
 }

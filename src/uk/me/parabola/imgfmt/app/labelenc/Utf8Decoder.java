@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 
 /**
  * Decoder for labels in utf-8, note that I am not actually sure that this
@@ -27,6 +28,8 @@ import java.io.ByteArrayOutputStream;
 public class Utf8Decoder implements CharacterDecoder {
 	private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 	private boolean needreset;
+
+	private final Charset charset = Charset.forName("utf-8");
 
 	/**
 	 * Add a byte to this decoder.  This will be saved until a complete
@@ -57,8 +60,8 @@ public class Utf8Decoder implements CharacterDecoder {
 	 *
 	 * @return The byte array and length as an EncodedText struct.
 	 */
-	public EncodedText getText() {
+	public DecodedText getText() {
 		byte[] ba = out.toByteArray();
-		return new EncodedText(ba, ba.length);
+		return new DecodedText(ba, charset);
 	}
 }
