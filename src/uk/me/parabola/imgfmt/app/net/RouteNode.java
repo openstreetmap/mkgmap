@@ -508,23 +508,23 @@ public class RouteNode implements Comparable<RouteNode> {
 
 						// only issue one warning per flare
 						if(!fa.isForward())
-							log.warn("Roundabout outgoing flare road (" + fa.getRoadDef() + ") points in wrong direction? " + fa.getSource().coord.toOSMURL());
+							log.warn("Outgoing roundabout flare road " + fa.getRoadDef() + " points in wrong direction? " + fa.getSource().coord.toOSMURL());
 						else if(fb.isForward())
-							log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") points in wrong direction? " + fb.getSource().coord.toOSMURL());
+							log.warn("Incoming roundabout flare road " + fb.getRoadDef() + " points in wrong direction? " + fb.getSource().coord.toOSMURL());
 						else if(!fa.getRoadDef().isOneway())
-							log.warn("Roundabout outgoing flare road (" + fa.getRoadDef() + ") is not oneway? " + fa.getSource().coord.toOSMURL());
+							log.warn("Outgoing roundabout flare road " + fa.getRoadDef() + " is not oneway? " + fa.getSource().coord.toOSMURL());
 
 						else if(!fb.getRoadDef().isOneway())
-							log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") is not oneway? " + fb.getDest().coord.toOSMURL());
+							log.warn("Incoming roundabout flare road " + fb.getRoadDef() + " is not oneway? " + fb.getDest().coord.toOSMURL());
 						else {
 							// check that the flare road arcs are not
 							// part of a longer way
 							for(RouteArc a : fa.getDest().arcs) {
 								if(a.getDest() != this && a.getDest() != nb) {
 									if(a.getRoadDef() == fa.getRoadDef())
-										log.warn("Roundabout outgoing flare road (" + fb.getRoadDef() + ") doesn't finish at flare? " + fa.getDest().coord.toOSMURL());
+										log.warn("Outgoing roundabout flare road " + fb.getRoadDef() + " does not finish at flare? " + fa.getDest().coord.toOSMURL());
 									else if(a.getRoadDef() == fb.getRoadDef())
-										log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") starts before flare? " + fb.getDest().coord.toOSMURL());
+										log.warn("Incoming roundabout flare road " + fb.getRoadDef() + " does not start at flare? " + fb.getDest().coord.toOSMURL());
 								}
 							}
 						}
