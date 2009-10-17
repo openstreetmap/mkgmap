@@ -46,11 +46,9 @@ public class MDRFile extends ImgFile {
 	private final Mdr15 mdr15;
 
 	private int currentMap;
-	private final MdrConfig config;
 	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
-		this.config = config;
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
@@ -186,7 +184,7 @@ public class MDRFile extends ImgFile {
 
 	private void initSizes() {
 		sizes = new MdrMapSection.PointerSizes();
-		sizes.setMapSize(config.getMapIndexSize());
+		sizes.setMapSize(mdr1.getMapPointerSize());
 		sizes.setCitySize(mdr5.getPointerSize());
 		sizes.setPoiSize(mdr11.getPointerSize());
 		sizes.setStrOffSize(mdr15.getPointerSize());

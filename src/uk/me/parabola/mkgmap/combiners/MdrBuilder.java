@@ -82,7 +82,6 @@ public class MdrBuilder implements Combiner {
 		config.setHeaderLen(286);
 		config.setWritable(true);
 		config.setForDevice(false);
-		config.setNumberOfMaps(args.get("number-of-files", 0));
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);

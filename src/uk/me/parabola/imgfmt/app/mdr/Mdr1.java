@@ -108,4 +108,8 @@ public class Mdr1 extends MdrSection {
 		Mdr1MapIndex mi = maps.get(mapNumber - 1).getMdrMapIndex();
 		mi.addPointer(recordNumber);
 	}
+
+	public int getMapPointerSize() {
+		return numberToPointerSize(maps.size());
+	}
 }

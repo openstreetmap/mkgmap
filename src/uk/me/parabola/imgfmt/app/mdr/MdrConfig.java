@@ -26,8 +26,6 @@ public class MdrConfig {
 	private boolean forDevice;
 	private int headerLen = DEFAULT_HEADER_LEN;
 
-	private int numberOfMaps;
-
 	/**
 	 * True if we are creating the file, rather than reading it.
 	 */
@@ -64,19 +62,5 @@ public class MdrConfig {
 
 	public void setHeaderLen(int headerLen) {
 		this.headerLen = headerLen;
-	}
-
-	/**
-	 * If there are more than 256 maps, then you need two bytes to store
-	 * the map index.  Having more than 64k maps is not supported by anything,
-	 * but if it were, then that would need to be taken into account too.
-	 * @return The number of bytes that the map index requires.
-	 */
-	public int getMapIndexSize() {
-		return numberOfMaps > 256? 2: 1;
-	}
-
-	public void setNumberOfMaps(int numberOfMaps) {
-		this.numberOfMaps = numberOfMaps;
 	}
 }
