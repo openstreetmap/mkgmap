@@ -35,8 +35,6 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public class TREFileReader extends ImgReader {
-	// Zoom levels and subdiv data, this is needed to make sense of the RGN
-	private static final int MAX_ZOOM_LEVELS = 16;
 	private Zoom[] mapLevels;
 	private Subdivision[][] levelDivs;
 
@@ -188,47 +186,5 @@ public class TREFileReader extends ImgReader {
 		//}
 
 		return msgs.toArray(new String[msgs.size()]);
-	}
-
-	/**
-	 * Convert a min resolution to a level.  We return the lowest level (most
-	 * detailed) that has a resolution less than or equal to the given resolution.
-	 *
-	 * @param minResolution The minimum resolution.
-	 * @return The level corresponding to the resolution.
-	 */
-	private int decodeLevel(int minResolution) {
-		Zoom top = null;
-		for (int i = 15; i >= 0; i--) {
-			Zoom z = mapLevels[i];
-			if (z == null)
-				continue;
-
-			if (top == null)
-				top = z;
-
-			if (z.getResolution() >= minResolution)
-				return z.getLevel();
-		}
-
-		// If not found, then allow it only at the top level
-		if (top != null)
-			return top.getLevel();
-		else
-			return 0; // Fail safe, shouldn't really happen
-	}
-
-	public int getFirstSubdivForLevel(int level) {
-		int n = 1;
-		for (int i = 0; i < levelDivs.length; i++) {
-			Zoom z = mapLevels[i];
-			if (z.getLevel() == level)
-				return n;
-			
-			Subdivision[] div = levelDivs[i];
-			n += div.length;
-		}
-
-		return n;
 	}
 }

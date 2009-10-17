@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project version="4">
   <component name="DependencyValidationManager">
     <scope name="general" pattern="file:src/uk/me/parabola/mkgmap/general//*" />
     <scope name="reader" pattern="file:src/uk/me/parabola/mkgmap/reader//*" />
@@ -47,7 +47,6 @@
   <component name="ProjectDetails">
     <option name="projectName" value="mkgmap" />
   </component>
-  <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectKey">
     <option name="state" value="https://svn.parabola.me.uk/svn/mkgmap/trunk/.idea/misc.xml" />
   </component>

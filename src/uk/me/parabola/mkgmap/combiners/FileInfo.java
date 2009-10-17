@@ -25,7 +25,7 @@ import java.util.Locale;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -199,7 +199,7 @@ public class FileInfo {
 					info.setMapname(ent.getName());
 
 					ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
-					TREFile treFile = new TREFile(treChan, false);
+					TREFileReader treFile = new TREFileReader(treChan);
 					Area area = treFile.getBounds();
 					info.setBounds(area);
 

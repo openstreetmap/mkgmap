@@ -98,7 +98,7 @@ public class Map implements InternalFiles, Configurable {
 		m.fileSystem = fs;
 
 		m.rgnFile = new RGNFile(m.fileSystem.create(mapnumber + ".RGN"));
-		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"), true);
+		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"));
 		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"));
 
 		int mapid;
@@ -129,7 +129,7 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	protected void addNet() throws FileExistsException {
-		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
+		netFile = new NETFile(fileSystem.create(mapName + ".NET"));
 	}
 
 	protected void addNod() throws FileExistsException {

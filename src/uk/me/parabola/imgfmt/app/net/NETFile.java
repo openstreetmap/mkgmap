@@ -22,7 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -42,15 +41,10 @@ public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
 	private List<RoadDef> roads;
 
-	public NETFile(ImgChannel chan, boolean write) {
+	public NETFile(ImgChannel chan) {
 		setHeader(netHeader);
-		if (write) {
-			setWriter(new BufferedImgFileWriter(chan));
-			position(NETHeader.HEADER_LEN);
-		} else {
-			setReader(new BufferedImgFileReader(chan));
-			netHeader.readHeader(getReader());
-		}
+		setWriter(new BufferedImgFileWriter(chan));
+		position(NETHeader.HEADER_LEN);
 	}
 
 	public void write(int numCities, int numZips) {
