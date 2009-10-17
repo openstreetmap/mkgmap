@@ -191,6 +191,11 @@ Miscellaneous options:
 	when vehicles drive on the left). Roundabouts that are complete
 	loops and have the wrong direction are reversed.
 
+--check-roundabout-flares
+	Sanity check roundabout flare roads - warn if they don't point
+	in the correct direction or if they are not oneway or if they
+	extend too far.
+
 --ignore-maxspeeds
 	When reading OSM files, ignore any "maxspeed" tags.
 

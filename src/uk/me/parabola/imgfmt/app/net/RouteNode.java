@@ -468,4 +468,59 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 		}
 	}
+
+	// sanity check roundabout flare roads - the flare roads connect a
+	// two-way road to a roundabout using short one-way segments so
+	// the resulting sub-junction looks like a triangle with two
+	// corners of the triangle being attached to the roundabout and
+	// the last corner being connected to the two-way road
+
+	public void checkRoundaboutFlares() {
+		for(RouteArc r : arcs) {
+			// see if node has a forward arc that is part of a
+			// roundabout
+			if(!r.isForward() || !r.getRoadDef().isRoundabout())
+				continue;
+			// yes, now try and find the two arcs that make up the
+			// triangular "flare" connected to both ends of r
+			RouteNode nb = r.getDest();
+			for(RouteArc fa : arcs) {
+				if(fa.getRoadDef().isRoundabout())
+					continue;
+				for(RouteArc fb : nb.arcs) {
+					if(fb.getRoadDef().isRoundabout())
+						continue;
+					if(fa.getDest() == fb.getDest()) {
+						// found the 3rd point of the triangle that
+						// should be connecting the two flare roads,
+						// now check the flare roads for direction and
+						// onewayness
+
+						// only issue one warning per flare
+						if(!fa.isForward())
+							log.warn("Roundabout outgoing flare road (" + fa.getRoadDef() + ") points in wrong direction? " + fa.getSource().coord.toOSMURL());
+						else if(fb.isForward())
+							log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") points in wrong direction? " + fb.getSource().coord.toOSMURL());
+						else if(!fa.getRoadDef().isOneway())
+							log.warn("Roundabout outgoing flare road (" + fa.getRoadDef() + ") is not oneway? " + fa.getSource().coord.toOSMURL());
+
+						else if(!fb.getRoadDef().isOneway())
+							log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") is not oneway? " + fb.getDest().coord.toOSMURL());
+						else {
+							// check that the flare road arcs are not
+							// part of a longer way
+							for(RouteArc a : fa.getDest().arcs) {
+								if(a.getDest() != this && a.getDest() != nb) {
+									if(a.getRoadDef() == fa.getRoadDef())
+										log.warn("Roundabout outgoing flare road (" + fb.getRoadDef() + ") doesn't finish at flare? " + fa.getDest().coord.toOSMURL());
+									else if(a.getRoadDef() == fb.getRoadDef())
+										log.warn("Roundabout incoming flare road (" + fb.getRoadDef() + ") starts before flare? " + fb.getDest().coord.toOSMURL());
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
