@@ -426,6 +426,16 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					}
 
+					if(inArc.getRoadDef().isLinkRoad() &&
+					   otherArc.getRoadDef().isLinkRoad()) {
+						// it's a link road leaving a link road so
+						// leave the angle unchanged to avoid
+						// introducing a time penalty by increasing
+						// the angle (this stops the router using link
+						// roads that "cut the corner" at roundabouts)
+						continue;
+					}
+
 					int outHeading = otherArc.getInitialHeading();
 					int outHeadingDelta = outHeading - continuingHeading;
 					while(outHeadingDelta > 180)
