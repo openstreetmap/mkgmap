@@ -47,6 +47,6 @@ public class Mdr13 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		return 7 + getConfig().getMapIndexSize();
+		return 7 + getSizes().getMapSize();
 	}
 }
