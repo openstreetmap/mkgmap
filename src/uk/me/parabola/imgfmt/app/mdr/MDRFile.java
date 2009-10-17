@@ -54,7 +54,9 @@ public class MDRFile extends ImgFile {
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
-			setWriter(new BufferedImgFileWriter(chan));
+			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);
+			fileWriter.setMaxSize(Long.MAX_VALUE);
+			setWriter(fileWriter);
 
 			// Position at the start of the writable area.
 			position(mdrHeader.getHeaderLength());
