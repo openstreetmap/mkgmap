@@ -1097,7 +1097,9 @@ public class StyledConverter implements OsmConverter {
 			// maxspeed attribute overrides default for road type
 			String maxSpeed = way.getTag("maxspeed");
 			if(maxSpeed != null) {
-				roadSpeed = getSpeedIdx(maxSpeed);
+				int rs = getSpeedIdx(maxSpeed);
+				if(rs >= 0)
+					roadSpeed = rs;
 				log.info(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
 			}
 		}
