@@ -42,6 +42,17 @@ public class Way extends Element {
 		setId(id);
 	}
 
+	// create a new Way that is a duplicate of this one - the new Way
+	// has a shallow copy of the points list so that changes to the
+	// original list don't affect the points in the duplicate
+
+	public Way duplicate() {
+		Way dup = new Way(getId(), new ArrayList<Coord>(points));
+		dup.setName(getName());
+		dup.copyTags(this);
+		return dup;
+	}
+
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.
