@@ -116,6 +116,7 @@ public class Mdr5 extends MdrMapSection {
 	 * to store the largest record number in this section.
 	 */
 	public int getPointerSize() {
+		// Since the city is flagged in mdr11, you need an extra bit to save them
 		return numberToPointerSize(cities.size() << 1);
 	}
 

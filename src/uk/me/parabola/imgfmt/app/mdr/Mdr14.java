@@ -33,7 +33,7 @@ public class Mdr14 extends MdrSection {
 		for (Mdr14Record country : countries) {
 			putMapIndex(writer, country.getMapIndex());
 			writer.putChar((char) country.getCountryIndex());
-			writer.put3(country.getStrOff());
+			putStringOffset(writer, country.getStrOff());
 		}
 	}
 

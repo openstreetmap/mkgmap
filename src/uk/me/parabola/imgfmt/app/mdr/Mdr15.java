@@ -64,6 +64,10 @@ public class Mdr15 extends MdrSection {
 	 * for this.
 	 */
 	public int getPointerSize() {
-		return numberToPointerSize(buffer.size());
+		int n = numberToPointerSize(buffer.size());
+		if (n != 3)
+			System.err.println("WARNING: string pointer size is not 3, index will probably not work" +
+					" try with fewer maps until this is resolved.");
+		return n;
 	}
 }

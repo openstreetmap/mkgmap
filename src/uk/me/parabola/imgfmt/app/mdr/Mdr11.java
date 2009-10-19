@@ -88,8 +88,11 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public int getExtraValue() {
-		// Possibly 0x3 for label field
-		// 0x10 for city index... XXX
-		return 0x13;
+		// XXX don't really know how this is organised for this section.
+		int val = 0x13;
+		PointerSizes sizes = getSizes();
+		if (sizes.getCitySize() == 3)
+			val |= 0x4;
+		return val;
 	}
 }

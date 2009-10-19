@@ -37,16 +37,17 @@ public class Mdr13 extends MdrSection {
 		rec.setStrOffset(strOff);
 		regions.add(rec);
 	}
+	
 	public void writeSectData(ImgFileWriter writer) {
 		for (Mdr13Record region : regions) {
 			putMapIndex(writer, region.getMapIndex());
 			writer.putChar((char) region.getRegionIndex());
 			writer.putChar((char) region.getCountryIndex());
-			writer.put3(region.getStrOffset());
+			putStringOffset(writer, region.getStrOffset());
 		}
 	}
 
 	public int getItemSize() {
-		return 7 + getSizes().getMapSize();
+		return getSizes().getMapSize() + 4 + getSizes().getStrOffSize();
 	}
 }
