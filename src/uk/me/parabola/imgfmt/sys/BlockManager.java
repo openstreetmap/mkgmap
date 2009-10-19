@@ -48,9 +48,14 @@ class BlockManager {
 		int n = currentBlock++;
 		if (maxBlock > 0 && n > maxBlock) {
 			log.error("overflowed directory with max block " + maxBlock + ", current=" + n);
-			throw new ExitException(
-					"There is not enough room in a single garmin map for all the input data\n" +
-							"   The .osm file should be split into smaller pieces first.");
+
+			// This problem is fixable so give some useful advice on what
+			// to do about it
+			String message = String.format("Too many blocks." +
+					" Use a larger block size with an option such as" +
+					" --block-size=%d or --block-size=%d",
+					blockSize * 2, blockSize * 4);
+			throw new ExitException(message);
 		}
 		numberAllocated++;
 		return n;

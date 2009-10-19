@@ -67,6 +67,7 @@ public class MdrBuilder implements Combiner {
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
+			params.setBlockSize(args.get("block-size", 4096));
 			FileSystem fs = ImgFS.createFs(name + "_mdr.img", params);
 			toClose.push(fs);
 
