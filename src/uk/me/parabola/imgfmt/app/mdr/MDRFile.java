@@ -133,10 +133,25 @@ public class MDRFile extends ImgFile {
 	public void addStreet(Polyline street) {
 		Label label = street.getLabel();
 		String name = label.getText();
+
+		name = cleanUpName(name);
 		int strOff = createString(name);
 
-		//System.out.println("add street " + name);
 		mdr7.addStreet(currentMap, name, label.getOffset(), strOff);
+	}
+
+	/**
+	 * Remove shields and other kinds of strange characters.  Perform any
+	 * rearrangement of the name to make it searchable.
+	 * @param name The street name as read from the img file.
+	 * @return The name as it will go into the index.
+	 */
+	private String cleanUpName(String name) {
+		// TODO Currently just drop an initial shield, but more to do
+		if (name.charAt(0) < ' ')
+			return name.substring(1);
+		
+		return name;
 	}
 
 	public void write() {
