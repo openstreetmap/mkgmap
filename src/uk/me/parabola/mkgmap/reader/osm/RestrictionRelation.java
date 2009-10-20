@@ -30,7 +30,7 @@ public class RestrictionRelation extends Relation {
     private CoordNode viaNode;
     private final List<CoordNode> otherNodes = new ArrayList<CoordNode>();
 	private byte exceptMask;
-    private final String messagePrefix;
+    private String messagePrefix;
 
 	/**
 	 * Create an instance based on an existing relation.  We need to do
@@ -49,47 +49,53 @@ public class RestrictionRelation extends Relation {
 			String role = pairs.getValue();
 			addElement(role, el);
 
+			Coord location = null;
+
+			if(viaCoord != null)
+				location = viaCoord;
+			else if(fromWay != null && fromWay.getPoints().size() > 0)
+				location = fromWay.getPoints().get(0);
+			else if(toWay != null && toWay.getPoints().size() > 0)
+				location = toWay.getPoints().get(0);
+
+			if(location != null)
+				messagePrefix = "Turn restriction " + getId() + " (" + location.toOSMURL() + ") ";
+
 			if("to".equals(role)) {
 				if(toWay != null) {
-					log.warn(messagePrefix + "has multiple 'to' members - first 'to' member is " + toWay.getId());
+					log.warn(messagePrefix + "has extra 'to' member " + toWay.getId());
 				}
 				else if(!(el instanceof Way)) {
 					log.warn(messagePrefix + "'to' member should be a Way but is a " + el);
 				}
 				else if(((Way)el).getPoints().isEmpty()) {
-					log.warn(messagePrefix + "ignoring 'to' way " + ((Way)el).getId() + " as it contains no points");
+					log.warn(messagePrefix + "ignoring empty 'to' way " + ((Way)el).getId());
 				}
 				else
 					toWay = (Way)el;
 			}
 			else if("from".equals(role)) {
 				if(fromWay != null) {
-					log.warn(messagePrefix + "has multiple 'from' members - first 'from' member is " + fromWay.getId());
+					log.warn(messagePrefix + "has extra 'from' member " + fromWay.getId());
 				}
 				else if(!(el instanceof Way)) {
 					log.warn(messagePrefix + "'from' member should be a Way but is a " + el);
 				}
 				else if(((Way)el).getPoints().isEmpty()) {
-					log.warn(messagePrefix + "ignoring 'from' way " + ((Way)el).getId() + " as it contains no points");
+					log.warn(messagePrefix + "ignoring empty 'from' way " + ((Way)el).getId());
 				}
 				else
 					fromWay = (Way)el;
 			}
 			else if("via".equals(role)) {
 				if(viaCoord != null) {
-					log.warn(messagePrefix + "has multiple 'via' members");
+					log.warn(messagePrefix + "has extra 'via' member " + el.getId());
 				}
 				else if(el instanceof Node) {
 					viaCoord = ((Node)el).getLocation();
 				}
 				else {
-					String bleat = messagePrefix + "'via' member is not a node";
-					if(el instanceof Way) {
-						List<Coord> vp = ((Way)el).getPoints();
-						if(!vp.isEmpty())
-							bleat += " ('via' way starts at " + vp.get(0).toDegreeString() + ")";
-					}
-					log.warn(bleat);
+					log.warn(messagePrefix + "'via' member " + el.getId() + " is not a node");
 				}
 			}
 			else if("location_hint".equals(role)) {
@@ -187,20 +193,11 @@ public class RestrictionRelation extends Relation {
 		}
 
 		if(fromWay == null) {
-			String bleat = messagePrefix + "lacks 'from' way";
-			if(toWay != null) {
-				bleat += " ('to' way starts at " + toWay.getPoints().get(0).toDegreeString() + ")";
-			}
-			log.warn(bleat);
+			log.warn(messagePrefix + "lacks 'from' way");
 		}
 
 		if(toWay == null) {
-			String bleat = messagePrefix + "lacks 'to' way";
-			if(fromWay != null) {
-				List<Coord> fp = fromWay.getPoints();
-				bleat += " ('from' way ends at " + fp.get(fp.size() - 1).toDegreeString() + ")";
-			}
-			log.warn(bleat);
+			log.warn(messagePrefix + "lacks 'to' way");
 		}
 
 		if(fromWay == null || toWay == null)
@@ -216,7 +213,7 @@ public class RestrictionRelation extends Relation {
 							viaCoord = fp;
 						}
 						else {
-							log.warn(messagePrefix + "lacks 'via' node and the 'from' (" + fromWay.getId() + ") and 'to' (" + toWay.getId() + ") ways connect in more than one place - first connection is at " + viaCoord.toDegreeString());
+							log.warn(messagePrefix + "lacks 'via' node and the 'from' (" + fromWay.getId() + ") and 'to' (" + toWay.getId() + ") ways connect in more than one place");
 							return false;
 						}
 					}
@@ -234,14 +231,14 @@ public class RestrictionRelation extends Relation {
 		Coord e1 = fromWay.getPoints().get(0);
 		Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
 		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.warn(messagePrefix + "'from' way (" + fromWay.getId() + ") doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
+			log.warn(messagePrefix + "'from' way (" + fromWay.getId() + ") doesn't start or end at 'via' node");
 			result = false;
 		}
 
 		e1 = toWay.getPoints().get(0);
 		e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
 		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.warn(messagePrefix + "'to' way (" + toWay.getId() + ") doesn't start or end at 'via' node (" + viaCoord.toDegreeString() + ")");
+			log.warn(messagePrefix + "'to' way (" + toWay.getId() + ") doesn't start or end at 'via' node");
 			result = false;
 		}
 
@@ -262,17 +259,19 @@ public class RestrictionRelation extends Relation {
 		   restriction.startsWith("no_turn")) {
 			roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
 			if(restriction.startsWith("no_turn"))
-				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
+				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way " + toWay.getId());
 			else
-				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + toNode.toDegreeString() + ")");
+				log.info(messagePrefix + restriction + " added - blocks routing to way " + toWay.getId());
 		}
 		else if(restriction.equals("only_left_turn") ||
 				restriction.equals("only_right_turn") ||
-				restriction.equals("only_straight_on")) {
-			for(CoordNode otherNode : otherNodes) {
+				restriction.startsWith("only_straight") ||
+				restriction.startsWith("only_turn")) {
+			if(restriction.startsWith("only_turn"))
+				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way " + toWay.getId());
+			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.getId());
+			for(CoordNode otherNode : otherNodes)
 				roadNetwork.addRestriction(fromNode, otherNode, viaNode, exceptMask);
-				log.info(messagePrefix + "(" + restriction + ") added at " + viaNode.toDegreeString() + " (blocked routing to " + otherNode.toDegreeString() + ")");
-			}
 		}
 		else {
 			log.warn(messagePrefix + "has unsupported type '" + restriction + "'");
