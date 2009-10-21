@@ -538,7 +538,7 @@ public class StyledConverter implements OsmConverter {
 			// least 3 points and it has not been marked as "don't
 			// check", check its direction
 			if(checkRoundabouts &&
-			   way.getPoints().size() > 3 &&
+			   way.getPoints().size() > 2 &&
 			   !way.isBoolTag("mkgmap:no-dir-check")) {
 				Coord centre = way.getCofG();
 				int dir = 0;
