@@ -538,16 +538,36 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		if(level > 0 && !isBoundary()) {
 			boolean noWayOut = true;
+			boolean noWayIn = true;
 			
 			for(RouteArc a : arcs) {
-				if(a.isForward() ||
-				   (!a.getRoadDef().isOneway() &&
-					!a.getRoadDef().isRoundabout())) {
+				boolean oneway = a.getRoadDef().isOneway() || a.getRoadDef().isRoundabout();
+				if(!oneway)
+					noWayOut = noWayIn = false;
+
+				if(a.isForward())
 					noWayOut = false;
-					break;
-				}
+				else
+					noWayIn = false;
 			}
 			
+			if(noWayIn) {
+				if(arcs.size() == 1) {
+					if(level > 1)
+						log.warn("Oneway road " + arcs.get(0).getRoadDef() + " comes from nowhere at " + coord.toOSMURL());
+				}
+				else {
+					String roads = null;
+					for(RouteArc a : arcs) {
+						if(roads == null)
+							roads = "" + a.getRoadDef();
+						else
+							roads += ", " + a.getRoadDef();
+					}
+					log.warn("Source of oneway roads " + roads + " at " + coord.toOSMURL());
+				}
+			}
+
 			if(noWayOut) {
 				if(arcs.size() == 1) {
 					if(level > 1)
