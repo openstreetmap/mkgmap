@@ -63,14 +63,15 @@ public class RoadNetwork {
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
 	private boolean adjustTurnHeadings;
 	private boolean checkRoundaboutFlares;
-	private boolean reportDeadEnds;
 	private boolean reportSimilarArcs;
 	private boolean outputCurveData;
+	private int reportDeadEnds = 0;
 
 	public void config(EnhancedProperties props) {
 		adjustTurnHeadings = props.getProperty("adjust-turn-headings", false);
 		checkRoundaboutFlares = props.getProperty("check-roundabout-flares", false);
-		reportDeadEnds = props.getProperty("report-dead-ends", false);
+		reportDeadEnds = props.getProperty("report-dead-ends", 1);
+
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
 
 		outputCurveData = !props.getProperty("no-arc-curves", false);
@@ -226,8 +227,8 @@ public class RoadNetwork {
 				node.checkRoundaboutFlares();
 			if(reportSimilarArcs)
 				node.reportSimilarArcs();
-			if(reportDeadEnds)
-				node.reportDeadEnds();
+			if(reportDeadEnds != 0)
+				node.reportDeadEnds(reportDeadEnds);
 			if(adjustTurnHeadings)
 				node.tweezeArcs();
 			nod1.addNode(node);

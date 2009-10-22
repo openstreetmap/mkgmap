@@ -229,9 +229,12 @@ Miscellaneous options:
 	points. It doesn't make sense to use this option at the same
 	time as using the cycleway creating options.
 
---report-dead-ends
-	Issue a warning when either a oneway road goes nowhere or
-	when multiple oneway roads meet with nowhere else to go.
+--report-dead-ends=LEVEL
+	Set the dead end road warning level. The value of LEVEL (which
+	defaults to 1 if this option is not specified) determines
+	those roads to report: 0 = none, 1 = multiple oneway roads
+	that join together but go nowhere, 2 = individual oneway roads
+	that go nowhere.
 
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'

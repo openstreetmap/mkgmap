@@ -534,9 +534,9 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 	}
 
-	public void reportDeadEnds() {
+	public void reportDeadEnds(int level) {
 
-		if(!isBoundary()) {
+		if(level > 0 && !isBoundary()) {
 			boolean noWayOut = true;
 			
 			for(RouteArc a : arcs) {
@@ -549,10 +549,20 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 			
 			if(noWayOut) {
-				if(arcs.size() == 1)
-					log.warn("Oneway street " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
-				else
-					log.warn("Confluence of oneway streets at " + coord.toOSMURL());
+				if(arcs.size() == 1) {
+					if(level > 1)
+						log.warn("Oneway street " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
+				}
+				else {
+					String streets = null;
+					for(RouteArc a : arcs) {
+						if(streets == null)
+							streets = "" + a.getRoadDef();
+						else
+							streets += ", " + a.getRoadDef();
+					}
+					log.warn("Confluence of oneway streets " + streets + " at " + coord.toOSMURL());
+				}
 			}
 		}
 	}
