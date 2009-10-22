@@ -69,7 +69,10 @@ public class RoadDef implements Comparable {
 
 	// for diagnostic purposes
 	public String toString() {
-		return "(" + name + ", " + id + ")";
+		if(name != null)
+			return "(" + name + ", " + id + ")";
+		else
+			return "(" + id + ")";
 	}
 
 	public String getName() {
