@@ -894,7 +894,7 @@ public class StyledConverter implements OsmConverter {
 						}
 
 						if(splitI == p1I) {
-							log.warn("Splitting looped way " + getDebugName(way) + " would make a zero length arc, so it will have to be pruned");
+							log.warn("Splitting looped way " + getDebugName(way) + " would make a zero length arc, so it will have to be pruned at " + wayPoints.get(p2I).toOSMURL());
 							do {
 								log.warn("  Pruning point[" + p2I + "]");
 								wayPoints.remove(p2I);
