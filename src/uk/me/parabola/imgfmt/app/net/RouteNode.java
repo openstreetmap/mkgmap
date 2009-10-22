@@ -539,10 +539,10 @@ public class RouteNode implements Comparable<RouteNode> {
 		if(!isBoundary()) {
 			boolean noWayOut = true;
 			
-			for(RouteArc r : arcs) {
-				if(r.isForward() ||
-				   (!r.getRoadDef().isOneway() &&
-					!r.getRoadDef().isRoundabout())) {
+			for(RouteArc a : arcs) {
+				if(a.isForward() ||
+				   (!a.getRoadDef().isOneway() &&
+					!a.getRoadDef().isRoundabout())) {
 					noWayOut = false;
 					break;
 				}
@@ -550,7 +550,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			
 			if(noWayOut) {
 				if(arcs.size() == 1)
-					log.warn("Oneway street goes nowhere at " + coord.toOSMURL());
+					log.warn("Oneway street " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
 				else
 					log.warn("Confluence of oneway streets at " + coord.toOSMURL());
 			}
