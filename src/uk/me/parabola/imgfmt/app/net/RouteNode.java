@@ -533,4 +533,27 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 		}
 	}
+
+	public void reportDeadEnds() {
+
+		if(!isBoundary()) {
+			boolean noWayOut = true;
+			
+			for(RouteArc r : arcs) {
+				if(r.isForward() ||
+				   (!r.getRoadDef().isOneway() &&
+					!r.getRoadDef().isRoundabout())) {
+					noWayOut = false;
+					break;
+				}
+			}
+			
+			if(noWayOut) {
+				if(arcs.size() == 1)
+					log.warn("Oneway street goes nowhere at " + coord.toOSMURL());
+				else
+					log.warn("Confluence of oneway streets at " + coord.toOSMURL());
+			}
+		}
+	}
 }

@@ -229,6 +229,10 @@ Miscellaneous options:
 	points. It doesn't make sense to use this option at the same
 	time as using the cycleway creating options.
 
+--report-dead-ends
+	Issue a warning when either a oneway road goes nowhere or
+	when multiple oneway roads meet with nowhere else to go.
+
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
