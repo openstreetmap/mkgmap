@@ -551,17 +551,17 @@ public class RouteNode implements Comparable<RouteNode> {
 			if(noWayOut) {
 				if(arcs.size() == 1) {
 					if(level > 1)
-						log.warn("Oneway street " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
+						log.warn("Oneway road " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
 				}
 				else {
-					String streets = null;
+					String roads = null;
 					for(RouteArc a : arcs) {
-						if(streets == null)
-							streets = "" + a.getRoadDef();
+						if(roads == null)
+							roads = "" + a.getRoadDef();
 						else
-							streets += ", " + a.getRoadDef();
+							roads += ", " + a.getRoadDef();
 					}
-					log.warn("Confluence of oneway streets " + streets + " at " + coord.toOSMURL());
+					log.warn("Confluence of oneway roads " + roads + " at " + coord.toOSMURL());
 				}
 			}
 		}
