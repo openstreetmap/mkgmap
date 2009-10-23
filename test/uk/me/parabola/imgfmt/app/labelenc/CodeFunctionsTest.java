@@ -49,6 +49,27 @@ public class CodeFunctionsTest {
 	}
 
 	/**
+	 * Transliteration when going to ascii in format 6.  This was originally
+	 * the only place where transliteration was available.
+	 */
+	@Test
+	public void testTransliterate6() {
+		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6);
+
+		CharacterEncoder encoder = functions.getEncoder();
+		EncodedText text = encoder.encodeText("Körnerstraße, Velkomezeříčská, Skólavörðustigur");
+
+		CharacterDecoder decoder = functions.getDecoder();
+		byte[] ctext = text.getCtext();
+		for (int i = 0; i < text.getLength(); i++) {
+			decoder.addByte(ctext[i]);
+		}
+		decoder.addByte(0xff);
+		String result = decoder.getText().getText();
+		assertEquals("transliterated text", "KORNERSTRASSE, VELKOMEZERICSKA, SKOLAVORDUSTIGUR", result);
+	}
+
+	/**
 	 * Backward compatibility test.
 	 */
 	@Test
