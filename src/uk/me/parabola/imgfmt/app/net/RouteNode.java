@@ -539,9 +539,16 @@ public class RouteNode implements Comparable<RouteNode> {
 		if(level > 0 && !isBoundary()) {
 			boolean noWayOut = true;
 			boolean noWayIn = true;
-			
+			List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
+
 			for(RouteArc a : arcs) {
-				boolean oneway = a.getRoadDef().isOneway() || a.getRoadDef().isRoundabout();
+				boolean oneway = a.getRoadDef().isOneway();
+
+				if(a.getRoadDef().isRoundabout()) {
+					roundaboutArcs.add(a);
+					oneway = true;
+				}
+
 				if(!oneway)
 					noWayOut = noWayIn = false;
 
@@ -564,7 +571,7 @@ public class RouteNode implements Comparable<RouteNode> {
 						else
 							roads += ", " + a.getRoadDef();
 					}
-					log.warn("Source of oneway roads " + roads + " at " + coord.toOSMURL());
+					log.warn("Oneway roads " + roads + " come from nowhere at " + coord.toOSMURL());
 				}
 			}
 
@@ -581,8 +588,15 @@ public class RouteNode implements Comparable<RouteNode> {
 						else
 							roads += ", " + a.getRoadDef();
 					}
-					log.warn("Confluence of oneway roads " + roads + " at " + coord.toOSMURL());
+					log.warn("Oneway roads " + roads + " go nowhere at " + coord.toOSMURL());
 				}
+			}
+
+			if(arcs.size() > 1 && roundaboutArcs.size() == 1) {
+				if(roundaboutArcs.get(0).isForward())
+					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " starts at " + coord.toOSMURL());
+				else
+					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " ends at " + coord.toOSMURL());
 			}
 		}
 	}
