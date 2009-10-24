@@ -18,25 +18,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.Formatter;
-import java.util.Locale;
 
 import uk.me.parabola.log.Logger;
 
 /**
  * A simple transliterator that transliterates character by character based
- * on pre-prepared tables.  It should be reasonably fast, but it maps each
- * character in the input string to one or more in the output only. No context
- * is taken into account.
+ * on pre-prepared tables.  It is not context sensitive - the same input character
+ * always produces the same output character(s), so the results are
+ * not very good for languages where that is important.
+ *
+ * Tabels are only read when needed, so for a typical map only a small
+ * number of files will actually be read.
  */
 public class TableTransliterator implements Transliterator {
 	private static final Logger log = Logger.getLogger(TableTransliterator.class);
 
-	private static final String[][] rows = new String[256][];
-	private final String charset;
+	private final String[][] rows = new String[256][];
+	private final boolean useLatin;
 
 	public TableTransliterator(String targetCharset) {
-		charset = targetCharset;
+		if (targetCharset.equals("latin1"))
+			useLatin = true;
+		else
+			useLatin = false;
 	}
 
 	/**
@@ -49,7 +53,7 @@ public class TableTransliterator implements Transliterator {
 	public String transliterate(String s) {
 		StringBuilder sb = new StringBuilder(s.length() + 5);
 		for (char c : s.toCharArray()) {
-			if (c < 0x80) {
+			if (c <= (useLatin? 0xff: 0x7f)) {
 				sb.append(c);
 			} else {
 				int row = c >>> 8;
@@ -83,49 +87,49 @@ public class TableTransliterator implements Transliterator {
 		// Default all to a question mark
 		Arrays.fill(newRow, "?");
 
-		StringBuilder name = new StringBuilder();
-		Formatter fmt = new Formatter(name);
-		fmt.format("/chars/%s/row%02d.trans", charset, row);
-		log.debug("getting file name", name);
-		InputStream is = getClass().getResourceAsStream(name.toString());
-
-		try {
-			readCharFile(is, newRow);
-		} catch (IOException e) {
-			log.error("Could not read character translation table");
+		// If we are doing latin1, see if there is a specific file for latin
+		// characters first.
+		if (useLatin) {
+			String name = String.format("/chars/latin1/row%02x.trans", row);
+			readCharFile(name, newRow);
 		}
+
+		// Fill in any remaining characters from the ascii mappings.
+		String name = String.format("/chars/ascii/row%02x.trans", row);
+		readCharFile(name, newRow);
 
 		return newRow;
 	}
 
-	/**
-	 * Read in a character transliteration file.  Not all code points need to
-	 * be defined inside the file.  Anything that is left out will become a
-	 * question mark.
-	 *
-	 * @param is The open file to be read.
-	 * @param newRow The row that we fill in with strings.
-	 */
-	private void readCharFile(InputStream is, String[] newRow) throws IOException {
+	private void readCharFile(String name, String[] newRow) {
+		InputStream is = getClass().getResourceAsStream(name);
 		if (is == null)
 			return;
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(is, "ascii"));
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(is, "utf-8"));
 
-		String line;
-		while ((line = br.readLine()) != null) {
-			line = line.trim();
-			if (line.length() == 0 || line.charAt(0) == '#')
-				continue;
+			String line;
+			while ((line = br.readLine()) != null) {
+				line = line.trim();
+				if (line.length() == 0 || line.charAt(0) == '#')
+					continue;
 
-			String[] fields = line.split("\\s+");
-			String upoint = fields[0];
-			String translation = fields[1];
-			if (upoint.length() != 6 || upoint.charAt(0) != 'U') continue;
+				String[] fields = line.split("\\s+");
+				String upoint = fields[0];
+				String translation = fields[1];
 
-			// The first field must look like 'U+RRXX', we extract the XX part
-			int index = Integer.parseInt(upoint.substring(4), 16);
-			newRow[index] = translation.toUpperCase(Locale.ENGLISH);
+				if ("?".equals(translation)) continue;
+				if (upoint.length() != 6 || upoint.charAt(0) != 'U') continue;
+
+				// The first field must look like 'U+RRXX', we extract the XX part
+				int index = Integer.parseInt(upoint.substring(4), 16);
+				if (newRow[index].equals("?"))
+					newRow[index] = translation;
+			}
+		} catch (IOException e) {
+			log.error("Could not read character translation table");
 		}
 	}
+
 }

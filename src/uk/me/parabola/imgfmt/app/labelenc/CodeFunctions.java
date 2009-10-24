@@ -77,7 +77,8 @@ public class CodeFunctions {
 			funcs.setDecoder(new Format6Decoder());
 		} else if ("latin1".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new AnyCharsetEncoder("cp1252"));
+			funcs.setEncoder(new LatinEncoder());
+			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
 			funcs.setCodepage(1252);
 		} else if ("unicode".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT10);

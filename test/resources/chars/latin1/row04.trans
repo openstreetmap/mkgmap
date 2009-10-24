@@ -1,0 +1,4 @@
+
+# For testing overriding from the latin tables.
+U+0400 È            # Character Ѐ
+U+0401 Ë            # Character Ё

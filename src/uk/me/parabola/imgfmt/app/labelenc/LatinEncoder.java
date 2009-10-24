@@ -12,18 +12,20 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
+import java.nio.charset.Charset;
+
 /**
- * Interface for transliterator functions.
- *
+ * An encoder for latin script
  * @author Steve Ratcliffe
  */
-public interface Transliterator {
-	/**
-	 * Convert a string into a string that uses only ascii characters.
-	 *
-	 * @param s The original string.  It can use any unicode character.
-	 * @return A string that uses a restricted subset of characters (ascii or
-	 * latin) that is a transliterated form of the input string.
-	 */
-	public String transliterate(String s);
+public class LatinEncoder implements CharacterEncoder {
+	private final Transliterator trans = new TableTransliterator("latin1");
+	private final Charset latinCharset = Charset.forName("latin1");
+
+	public EncodedText encodeText(String text) {
+		// Need to add a null character at the end of the string for this format.
+		String s = trans.transliterate(text + "\000");
+		byte[] chars = s.getBytes(latinCharset);
+		return new EncodedText(chars, chars.length);
+	}
 }
