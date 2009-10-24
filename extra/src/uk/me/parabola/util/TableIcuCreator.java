@@ -67,22 +67,14 @@ public class TableIcuCreator {
 	}
 
 	private static void printRow(PrintWriter out, int row) throws UselessException {
-		//out.println("");
-		//out.println("# This is table for transliterating characters in the range");
-		//out.format( "# from U+%02x00 to U+%02xff\n", row, row);
-		//out.println("#");
-		//out.println("# The first column is the unicode character and the second");
-		//out.println("# column is the transliteration of that character to ascii characters.");
-		//out.println("# One or more characters can be used, for example for a character æ which");
-		//out.println("# is a combined a and e you could write 'ae' (without the quotes) as the ");
-		//out.println("# transliteration.");
-		//out.println("#");
-		//out.println("# There are languages where this will not work very well, in case");
-		//out.println("# another approach should be tried.");
-		//out.println("#");
-		//out.println("# Any line can be deleted and will default to a '?' character");
-		//out.println("#");
-		//out.println("");
+		out.println("#");
+		out.println("# This is a table for transliterating characters.");
+		out.println("# It was created using icu4j");
+		out.println("#");
+		out.println("# All resulting strings that contained characters outside the");
+		out.println("# range of iso 8859-1 are commented out");
+		out.println("#");
+		out.println();
 
 		int count = 0;
 		for (int i = 0; i < 256; i++) {
@@ -111,13 +103,13 @@ public class TableIcuCreator {
 
 			out.format("U+%02x%02x %-12.12s # Character %s", row, i, result, single);
 
-			if (!inRange) {
-				String s = decomposed.transliterate(single);
-				out.format(", %s", s);
-				for (char rc : s.toCharArray()) {
-					out.format(" %04x", (int) rc);
-				}
-			}
+			//if (!inRange) {
+			//	String s = decomposed.transliterate(single);
+			//	out.format(", %s", s);
+			//	for (char rc : s.toCharArray()) {
+			//		out.format(" %04x", (int) rc);
+			//	}
+			//}
 			out.println();
 		}
 

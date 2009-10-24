@@ -1,0 +1,264 @@
+#
+# This is a table for transliterating characters.
+# It was created using icu4j
+#
+# All resulting strings that contained characters outside the
+# range of iso 8859-1 are commented out
+#
+
+U+0900 ?            # Character ऀ
+#U+0901 m̐           # Character ँ
+#U+0902 ṁ            # Character ं
+#U+0903 ḥ            # Character ः
+U+0904              # Character ऄ
+U+0905 a            # Character अ
+#U+0906 ā            # Character आ
+U+0907 i            # Character इ
+#U+0908 ī            # Character ई
+U+0909 u            # Character उ
+#U+090a ū            # Character ऊ
+#U+090b r̥           # Character ऋ
+#U+090c l̥           # Character ऌ
+#U+090d ĕ            # Character ऍ
+U+090e e            # Character ऎ
+#U+090f ē            # Character ए
+U+0910 ai           # Character ऐ
+#U+0911 ŏ            # Character ऑ
+U+0912 o            # Character ऒ
+#U+0913 ō            # Character ओ
+U+0914 au           # Character औ
+U+0915 ka           # Character क
+U+0916 kha          # Character ख
+U+0917 ga           # Character ग
+U+0918 gha          # Character घ
+#U+0919 ṅa           # Character ङ
+U+091a ca           # Character च
+U+091b cha          # Character छ
+U+091c ja           # Character ज
+U+091d jha          # Character झ
+U+091e ña           # Character ञ
+#U+091f ṭa           # Character ट
+#U+0920 ṭha          # Character ठ
+#U+0921 ḍa           # Character ड
+#U+0922 ḍha          # Character ढ
+#U+0923 ṇa           # Character ण
+U+0924 ta           # Character त
+U+0925 tha          # Character थ
+U+0926 da           # Character द
+U+0927 dha          # Character ध
+U+0928 na           # Character न
+#U+0929 ṉa           # Character ऩ
+U+092a pa           # Character प
+U+092b pha          # Character फ
+U+092c ba           # Character ब
+U+092d bha          # Character भ
+U+092e ma           # Character म
+U+092f ya           # Character य
+U+0930 ra           # Character र
+#U+0931 ṟa           # Character ऱ
+U+0932 la           # Character ल
+#U+0933 ḷa           # Character ळ
+#U+0934 ḻa           # Character ऴ
+U+0935 va           # Character व
+#U+0936 śa           # Character श
+#U+0937 ṣa           # Character ष
+U+0938 sa           # Character स
+U+0939 ha           # Character ह
+U+093a ?            # Character ऺ
+U+093b ?            # Character ऻ
+U+093c              # Character ़
+#U+093d ̕            # Character ऽ
+#U+093e ̔ā           # Character ा
+#U+093f ̔i           # Character ि
+#U+0940 ̔ī           # Character ी
+#U+0941 ̔u           # Character ु
+#U+0942 ̔ū           # Character ू
+#U+0943 ̔r̥          # Character ृ
+#U+0944 ̔l̥          # Character ॄ
+#U+0945 ̔ĕ           # Character ॅ
+#U+0946 ̔e           # Character ॆ
+#U+0947 ̔ē           # Character े
+#U+0948 ̔ai          # Character ै
+#U+0949 ̔ŏ           # Character ॉ
+#U+094a ̔o           # Character ॊ
+#U+094b ̔ō           # Character ो
+#U+094c ̔au          # Character ौ
+U+094d              # Character ्
+U+094e ?            # Character ॎ
+U+094f ?            # Character ॏ
+U+0950 'om          # Character ॐ
+U+0951 ?            # Character ॑
+U+0952 ?            # Character ॒
+U+0953              # Character ॓
+U+0954              # Character ॔
+U+0955 ?            # Character ॕ
+U+0956 ?            # Character ॖ
+U+0957 ?            # Character ॗ
+U+0958 qa           # Character क़
+#U+0959 ḵẖa          # Character ख़
+#U+095a ġa           # Character ग़
+U+095b za           # Character ज़
+#U+095c ṛa           # Character ड़
+#U+095d ṛha          # Character ढ़
+U+095e fa           # Character फ़
+#U+095f ẏa           # Character य़
+#U+0960 r̥̄          # Character ॠ
+#U+0961 l̥̄          # Character ॡ
+#U+0962 ̔r̥̄         # Character ॢ
+#U+0963 ̔l̥̄         # Character ॣ
+U+0964 ?            # Character ।
+U+0965 ?            # Character ॥
+U+0966 0            # Character ०
+U+0967 1            # Character १
+U+0968 2            # Character २
+U+0969 3            # Character ३
+U+096a 4            # Character ४
+U+096b 5            # Character ५
+U+096c 6            # Character ६
+U+096d 7            # Character ७
+U+096e 8            # Character ८
+U+096f 9            # Character ९
+U+0970 ?            # Character ॰
+U+0971 ?            # Character ॱ
+U+0972 ?            # Character ॲ
+U+0973 ?            # Character ॳ
+U+0974 ?            # Character ॴ
+U+0975 ?            # Character ॵ
+U+0976 ?            # Character ॶ
+U+0977 ?            # Character ॷ
+U+0978 ?            # Character ॸ
+U+0979 ?            # Character ॹ
+U+097a ?            # Character ॺ
+U+097b ?            # Character ॻ
+U+097c ?            # Character ॼ
+#U+097d ʔ            # Character ॽ
+U+097e ?            # Character ॾ
+U+097f ?            # Character ॿ
+U+0980 ?            # Character ঀ
+#U+0981 m̐           # Character ঁ
+#U+0982 ṁ            # Character ং
+#U+0983 ḥ            # Character ঃ
+U+0984 ?            # Character ঄
+U+0985 a            # Character অ
+#U+0986 ā            # Character আ
+U+0987 i            # Character ই
+#U+0988 ī            # Character ঈ
+U+0989 u            # Character উ
+#U+098a ū            # Character ঊ
+#U+098b r̥           # Character ঋ
+#U+098c l̥           # Character ঌ
+U+098d ?            # Character ঍
+U+098e ?            # Character ঎
+#U+098f ē            # Character এ
+U+0990 ai           # Character ঐ
+U+0991 ?            # Character ঑
+U+0992 ?            # Character ঒
+#U+0993 ō            # Character ও
+U+0994 au           # Character ঔ
+U+0995 ka           # Character ক
+U+0996 kha          # Character খ
+U+0997 ga           # Character গ
+U+0998 gha          # Character ঘ
+#U+0999 ṅa           # Character ঙ
+U+099a ca           # Character চ
+U+099b cha          # Character ছ
+U+099c ja           # Character জ
+U+099d jha          # Character ঝ
+U+099e ña           # Character ঞ
+#U+099f ṭa           # Character ট
+#U+09a0 ṭha          # Character ঠ
+#U+09a1 ḍa           # Character ড
+#U+09a2 ḍha          # Character ঢ
+#U+09a3 ṇa           # Character ণ
+U+09a4 ta           # Character ত
+U+09a5 tha          # Character থ
+U+09a6 da           # Character দ
+U+09a7 dha          # Character ধ
+U+09a8 na           # Character ন
+U+09a9 ?            # Character ঩
+U+09aa pa           # Character প
+U+09ab pha          # Character ফ
+U+09ac ba           # Character ব
+U+09ad bha          # Character ভ
+U+09ae ma           # Character ম
+U+09af ya           # Character য
+U+09b0 ra           # Character র
+U+09b1 ?            # Character ঱
+U+09b2 la           # Character ল
+U+09b3 ?            # Character ঳
+U+09b4 ?            # Character ঴
+U+09b5 ?            # Character ঵
+#U+09b6 śa           # Character শ
+#U+09b7 ṣa           # Character ষ
+U+09b8 sa           # Character স
+U+09b9 ha           # Character হ
+U+09ba ?            # Character ঺
+U+09bb ?            # Character ঻
+U+09bc              # Character ়
+#U+09bd ̕            # Character ঽ
+#U+09be ̔ā           # Character া
+#U+09bf ̔i           # Character ি
+#U+09c0 ̔ī           # Character ী
+#U+09c1 ̔u           # Character ু
+#U+09c2 ̔ū           # Character ূ
+#U+09c3 ̔r̥          # Character ৃ
+#U+09c4 ̔l̥          # Character ৄ
+U+09c5 ?            # Character ৅
+U+09c6 ?            # Character ৆
+#U+09c7 ̔ē           # Character ে
+#U+09c8 ̔ai          # Character ৈ
+U+09c9 ?            # Character ৉
+U+09ca ?            # Character ৊
+#U+09cb ̔ō           # Character ো
+#U+09cc ̔au          # Character ৌ
+U+09cd              # Character ্
+#U+09ce ṯ            # Character ৎ
+U+09cf ?            # Character ৏
+U+09d0 ?            # Character ৐
+U+09d1 ?            # Character ৑
+U+09d2 ?            # Character ৒
+U+09d3 ?            # Character ৓
+U+09d4 ?            # Character ৔
+U+09d5 ?            # Character ৕
+U+09d6 ?            # Character ৖
+U+09d7              # Character ৗ
+U+09d8 ?            # Character ৘
+U+09d9 ?            # Character ৙
+U+09da ?            # Character ৚
+U+09db ?            # Character ৛
+#U+09dc ṛa           # Character ড়
+#U+09dd ṛha          # Character ঢ়
+U+09de ?            # Character ৞
+#U+09df ẏa           # Character য়
+#U+09e0 r̥̄          # Character ৠ
+#U+09e1 l̥̄          # Character ৡ
+#U+09e2 ̔r̥̄         # Character ৢ
+#U+09e3 ̔l̥̄         # Character ৣ
+U+09e4 ?            # Character ৤
+U+09e5 ?            # Character ৥
+U+09e6 0            # Character ০
+U+09e7 1            # Character ১
+U+09e8 2            # Character ২
+U+09e9 3            # Character ৩
+U+09ea 4            # Character ৪
+U+09eb 5            # Character ৫
+U+09ec 6            # Character ৬
+U+09ed 7            # Character ৭
+U+09ee 8            # Character ৮
+U+09ef 9            # Character ৯
+U+09f0 ra           # Character ৰ
+U+09f1 ra           # Character ৱ
+U+09f2              # Character ৲
+U+09f3              # Character ৳
+U+09f4              # Character ৴
+U+09f5              # Character ৵
+U+09f6              # Character ৶
+U+09f7              # Character ৷
+U+09f8              # Character ৸
+U+09f9              # Character ৹
+U+09fa              # Character ৺
+U+09fb ?            # Character ৻
+U+09fc ?            # Character ৼ
+U+09fd ?            # Character ৽
+U+09fe ?            # Character ৾
+U+09ff ?            # Character ৿
