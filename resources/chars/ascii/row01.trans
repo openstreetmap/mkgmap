@@ -1,134 +1,261 @@
-
 #
-# This is the transliteration table for the latin 2 characters
-# that start at unicode U+0100 into ascii.
+# A look up table to transliterate to ascii.
+# Created with the Text::Unidecode module of perl
 #
 
-U+0100 A           # latin character Ā
-U+0101 a           # latin character ā
-U+0102 A           # latin character Ă
-U+0103 a           # latin character ă
-U+0104 A           # latin character Ą
-U+0105 a           # latin character ą
-U+0106 C           # latin character Ć
-U+0107 c           # latin character ć
-U+0108 C           # latin character Ĉ
-U+0109 c           # latin character ĉ
-U+010a C           # latin character Ċ
-U+010b c           # latin character ċ
-U+010c C           # latin character Č
-U+010d c           # latin character č
-U+010e D           # latin character Ď
-U+010f d           # latin character ď
-U+0110 D           # latin character Đ
-U+0111 d           # latin character đ
-U+0112 E           # latin character Ē
-U+0113 e           # latin character ē
-U+0114 E           # latin character Ĕ
-U+0115 e           # latin character ĕ
-U+0116 E           # latin character Ė
-U+0117 e           # latin character ė
-U+0118 E           # latin character Ę
-U+0119 e           # latin character ę
-U+011a E           # latin character Ě
-U+011b e           # latin character ě
-U+011c G           # latin character Ĝ
-U+011d g           # latin character ĝ
-U+011e G           # latin character Ğ
-U+011f g           # latin character ğ
-U+0120 G           # latin character Ġ
-U+0121 g           # latin character ġ
-U+0122 G           # latin character Ģ
-U+0123 g           # latin character ģ
-U+0124 H           # latin character Ĥ
-U+0125 h           # latin character ĥ
-U+0126 H           # latin character Ħ
-U+0127 h           # latin character ħ
-U+0128 I           # latin character Ĩ
-U+0129 i           # latin character ĩ
-U+012a I           # latin character Ī
-U+012b i           # latin character ī
-U+012c I           # latin character Ĭ
-U+012d i           # latin character ĭ
-U+012e I           # latin character Į
-U+012f i           # latin character į
-U+0130 I           # latin character İ
-U+0131 i           # latin character ı
-U+0132 IJ          # latin character Ĳ
-U+0133 ij          # latin character ĳ
-U+0134 J           # latin character Ĵ
-U+0135 j           # latin character ĵ
-U+0136 K           # latin character Ķ
-U+0137 k           # latin character ķ
-U+0138 k           # latin character ĸ
-U+0139 L           # latin character Ĺ
-U+013a l           # latin character ĺ
-U+013b L           # latin character Ļ
-U+013c l           # latin character ļ
-U+013d L           # latin character Ľ
-U+013e l           # latin character ľ
-U+013f L           # latin character Ŀ
-U+0140 l           # latin character ŀ
-U+0141 L           # latin character Ł
-U+0142 l           # latin character ł
-U+0143 N           # latin character Ń
-U+0144 n           # latin character ń
-U+0145 N           # latin character Ņ
-U+0146 n           # latin character ņ
-U+0147 N           # latin character Ň
-U+0148 n           # latin character ň
-U+0149 n           # latin character ŉ
-U+014a N           # latin character Ŋ
-U+014b n           # latin character ŋ
-U+014c O           # latin character Ō
-U+014d o           # latin character ō
-U+014e O           # latin character Ŏ
-U+014f o           # latin character ŏ
-U+0150 O           # latin character Ő
-U+0151 o           # latin character ő
-U+0152 OE          # latin character Œ
-U+0153 oe          # latin character œ
-U+0154 R           # latin character Ŕ
-U+0155 r           # latin character ŕ
-U+0156 R           # latin character Ŗ
-U+0157 r           # latin character ŗ
-U+0158 R           # latin character Ř
-U+0159 r           # latin character ř
-U+015a S           # latin character Ś
-U+015b s           # latin character ś
-U+015c S           # latin character Ŝ
-U+015d s           # latin character ŝ
-U+015e S           # latin character Ş
-U+015f s           # latin character ş
-U+0160 S           # latin character Š
-U+0161 s           # latin character š
-U+0162 T           # latin character Ţ
-U+0163 t           # latin character ţ
-U+0164 T           # latin character Ť
-U+0165 t           # latin character ť
-U+0166 T           # latin character Ŧ
-U+0167 t           # latin character ŧ
-U+0168 U           # latin character Ũ
-U+0169 u           # latin character ũ
-U+016a U           # latin character Ū
-U+016b u           # latin character ū
-U+016c U           # latin character Ŭ
-U+016d u           # latin character ŭ
-U+016e U           # latin character Ů
-U+016f u           # latin character ů
-U+0170 U           # latin character Ű
-U+0171 u           # latin character ű
-U+0172 U           # latin character Ų
-U+0173 u           # latin character ų
-U+0174 W           # latin character Ŵ
-U+0175 w           # latin character ŵ
-U+0176 Y           # latin character Ŷ
-U+0177 y           # latin character ŷ
-U+0178 Y           # latin character Ÿ
-U+0179 Z           # latin character Ź
-U+017a z           # latin character ź
-U+017b Z           # latin character Ż
-U+017c z           # latin character ż
-U+017d Z           # latin character Ž
-U+017e z           # latin character ž
-U+017f f           # latin character ſ
+U+0100 A            # Character Ā
+U+0101 a            # Character ā
+U+0102 A            # Character Ă
+U+0103 a            # Character ă
+U+0104 A            # Character Ą
+U+0105 a            # Character ą
+U+0106 C            # Character Ć
+U+0107 c            # Character ć
+U+0108 C            # Character Ĉ
+U+0109 c            # Character ĉ
+U+010a C            # Character Ċ
+U+010b c            # Character ċ
+U+010c C            # Character Č
+U+010d c            # Character č
+U+010e D            # Character Ď
+U+010f d            # Character ď
+U+0110 D            # Character Đ
+U+0111 d            # Character đ
+U+0112 E            # Character Ē
+U+0113 e            # Character ē
+U+0114 E            # Character Ĕ
+U+0115 e            # Character ĕ
+U+0116 E            # Character Ė
+U+0117 e            # Character ė
+U+0118 E            # Character Ę
+U+0119 e            # Character ę
+U+011a E            # Character Ě
+U+011b e            # Character ě
+U+011c G            # Character Ĝ
+U+011d g            # Character ĝ
+U+011e G            # Character Ğ
+U+011f g            # Character ğ
+U+0120 G            # Character Ġ
+U+0121 g            # Character ġ
+U+0122 G            # Character Ģ
+U+0123 g            # Character ģ
+U+0124 H            # Character Ĥ
+U+0125 h            # Character ĥ
+U+0126 H            # Character Ħ
+U+0127 h            # Character ħ
+U+0128 I            # Character Ĩ
+U+0129 i            # Character ĩ
+U+012a I            # Character Ī
+U+012b i            # Character ī
+U+012c I            # Character Ĭ
+U+012d i            # Character ĭ
+U+012e I            # Character Į
+U+012f i            # Character į
+U+0130 I            # Character İ
+U+0131 i            # Character ı
+U+0132 IJ           # Character Ĳ
+U+0133 ?            # Character ĳ
+U+0134 J            # Character Ĵ
+U+0135 j            # Character ĵ
+U+0136 K            # Character Ķ
+U+0137 k            # Character ķ
+U+0138 k            # Character ĸ
+U+0139 L            # Character Ĺ
+U+013a l            # Character ĺ
+U+013b L            # Character Ļ
+U+013c l            # Character ļ
+U+013d L            # Character Ľ
+U+013e l            # Character ľ
+U+013f L            # Character Ŀ
+U+0140 l            # Character ŀ
+U+0141 L            # Character Ł
+U+0142 l            # Character ł
+U+0143 N            # Character Ń
+U+0144 n            # Character ń
+U+0145 N            # Character Ņ
+U+0146 n            # Character ņ
+U+0147 N            # Character Ň
+U+0148 n            # Character ň
+U+0149 'n           # Character ŉ
+U+014a ng           # Character Ŋ
+U+014b NG           # Character ŋ
+U+014c O            # Character Ō
+U+014d o            # Character ō
+U+014e O            # Character Ŏ
+U+014f o            # Character ŏ
+U+0150 O            # Character Ő
+U+0151 o            # Character ő
+U+0152 OE           # Character Œ
+U+0153 oe           # Character œ
+U+0154 R            # Character Ŕ
+U+0155 r            # Character ŕ
+U+0156 R            # Character Ŗ
+U+0157 r            # Character ŗ
+U+0158 R            # Character Ř
+U+0159 r            # Character ř
+U+015a S            # Character Ś
+U+015b s            # Character ś
+U+015c S            # Character Ŝ
+U+015d s            # Character ŝ
+U+015e S            # Character Ş
+U+015f s            # Character ş
+U+0160 S            # Character Š
+U+0161 s            # Character š
+U+0162 T            # Character Ţ
+U+0163 t            # Character ţ
+U+0164 T            # Character Ť
+U+0165 t            # Character ť
+U+0166 T            # Character Ŧ
+U+0167 t            # Character ŧ
+U+0168 U            # Character Ũ
+U+0169 u            # Character ũ
+U+016a U            # Character Ū
+U+016b u            # Character ū
+U+016c U            # Character Ŭ
+U+016d u            # Character ŭ
+U+016e U            # Character Ů
+U+016f u            # Character ů
+U+0170 U            # Character Ű
+U+0171 u            # Character ű
+U+0172 U            # Character Ų
+U+0173 u            # Character ų
+U+0174 W            # Character Ŵ
+U+0175 w            # Character ŵ
+U+0176 Y            # Character Ŷ
+U+0177 y            # Character ŷ
+U+0178 Y            # Character Ÿ
+U+0179 Z            # Character Ź
+U+017a z            # Character ź
+U+017b Z            # Character Ż
+U+017c z            # Character ż
+U+017d Z            # Character Ž
+U+017e z            # Character ž
+U+017f s            # Character ſ
+U+0180 b            # Character ƀ
+U+0181 B            # Character Ɓ
+U+0182 B            # Character Ƃ
+U+0183 b            # Character ƃ
+U+0184 6            # Character Ƅ
+U+0185 6            # Character ƅ
+U+0186 O            # Character Ɔ
+U+0187 C            # Character Ƈ
+U+0188 c            # Character ƈ
+U+0189 D            # Character Ɖ
+U+018a D            # Character Ɗ
+U+018b D            # Character Ƌ
+U+018c d            # Character ƌ
+U+018d d            # Character ƍ
+U+018e 3            # Character Ǝ
+U+018f @            # Character Ə
+U+0190 E            # Character Ɛ
+U+0191 F            # Character Ƒ
+U+0192 f            # Character ƒ
+U+0193 G            # Character Ɠ
+U+0194 G            # Character Ɣ
+U+0195 hv           # Character ƕ
+U+0196 I            # Character Ɩ
+U+0197 I            # Character Ɨ
+U+0198 K            # Character Ƙ
+U+0199 k            # Character ƙ
+U+019a l            # Character ƚ
+U+019b l            # Character ƛ
+U+019c W            # Character Ɯ
+U+019d N            # Character Ɲ
+U+019e n            # Character ƞ
+U+019f O            # Character Ɵ
+U+01a0 O            # Character Ơ
+U+01a1 o            # Character ơ
+U+01a2 OI           # Character Ƣ
+U+01a3 oi           # Character ƣ
+U+01a4 P            # Character Ƥ
+U+01a5 p            # Character ƥ
+U+01a6 YR           # Character Ʀ
+U+01a7 2            # Character Ƨ
+U+01a8 2            # Character ƨ
+U+01a9 SH           # Character Ʃ
+U+01aa sh           # Character ƪ
+U+01ab t            # Character ƫ
+U+01ac T            # Character Ƭ
+U+01ad t            # Character ƭ
+U+01ae T            # Character Ʈ
+U+01af U            # Character Ư
+U+01b0 u            # Character ư
+U+01b1 Y            # Character Ʊ
+U+01b2 V            # Character Ʋ
+U+01b3 Y            # Character Ƴ
+U+01b4 y            # Character ƴ
+U+01b5 Z            # Character Ƶ
+U+01b6 z            # Character ƶ
+U+01b7 ZH           # Character Ʒ
+U+01b8 ZH           # Character Ƹ
+U+01b9 zh           # Character ƹ
+U+01ba zh           # Character ƺ
+U+01bb 2            # Character ƻ
+U+01bc 5            # Character Ƽ
+U+01bd 5            # Character ƽ
+U+01be ts           # Character ƾ
+U+01bf w            # Character ƿ
+U+01c0 |            # Character ǀ
+U+01c1 ||           # Character ǁ
+U+01c2 |=           # Character ǂ
+U+01c3 !            # Character ǃ
+U+01c4 DZ           # Character Ǆ
+U+01c5 Dz           # Character ǅ
+U+01c6 dz           # Character ǆ
+U+01c7 LJ           # Character Ǉ
+U+01c8 Lj           # Character ǈ
+U+01c9 lj           # Character ǉ
+U+01ca NJ           # Character Ǌ
+U+01cb Nj           # Character ǋ
+U+01cc nj           # Character ǌ
+U+01cd A            # Character Ǎ
+U+01ce a            # Character ǎ
+U+01cf I            # Character Ǐ
+U+01d0 i            # Character ǐ
+U+01d1 O            # Character Ǒ
+U+01d2 o            # Character ǒ
+U+01d3 U            # Character Ǔ
+U+01d4 u            # Character ǔ
+U+01d5 U            # Character Ǖ
+U+01d6 u            # Character ǖ
+U+01d7 U            # Character Ǘ
+U+01d8 u            # Character ǘ
+U+01d9 U            # Character Ǚ
+U+01da u            # Character ǚ
+U+01db U            # Character Ǜ
+U+01dc u            # Character ǜ
+U+01dd @            # Character ǝ
+U+01de A            # Character Ǟ
+U+01df a            # Character ǟ
+U+01e0 A            # Character Ǡ
+U+01e1 a            # Character ǡ
+U+01e2 AE           # Character Ǣ
+U+01e3 ae           # Character ǣ
+U+01e4 G            # Character Ǥ
+U+01e5 g            # Character ǥ
+U+01e6 G            # Character Ǧ
+U+01e7 g            # Character ǧ
+U+01e8 K            # Character Ǩ
+U+01e9 k            # Character ǩ
+U+01ea O            # Character Ǫ
+U+01eb o            # Character ǫ
+U+01ec O            # Character Ǭ
+U+01ed o            # Character ǭ
+U+01ee ZH           # Character Ǯ
+U+01ef zh           # Character ǯ
+U+01f0 j            # Character ǰ
+U+01f1 DZ           # Character Ǳ
+U+01f2 D            # Character ǲ
+U+01f3 dz           # Character ǳ
+U+01f4 G            # Character Ǵ
+U+01f5 g            # Character ǵ
+U+01f6 HV           # Character Ƕ
+U+01f7 W            # Character Ƿ
+U+01f8 N            # Character Ǹ
+U+01f9 n            # Character ǹ
+U+01fa A            # Character Ǻ
+U+01fb a            # Character ǻ
+U+01fc AE           # Character Ǽ
+U+01fd ae           # Character ǽ
+U+01fe O            # Character Ǿ
+U+01ff o            # Character ǿ
