@@ -491,7 +491,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			// roundabout
 			if(!r.isForward() || !r.getRoadDef().isRoundabout())
 				continue;
-			// yes, now try and find the two arcs that make up the
+			// now try and find the two arcs that make up the
 			// triangular "flare" connected to both ends of r
 			RouteNode nb = r.getDest();
 			for(RouteArc fa : arcs) {
@@ -502,7 +502,26 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					if(fa.getDest() == fb.getDest()) {
 						// found the 3rd point of the triangle that
-						// should be connecting the two flare roads,
+						// should be connecting the two flare roads
+
+						// first, special test for roundabouts that
+						// have a single flare and no other
+						// connections - only check the flare for the
+						// shorter of the two roundabout segments
+
+						boolean isShortest = true;
+						for(RouteArc rb : nb.arcs) {
+							if(rb.getDest() == this &&
+							   rb.isForward() &&
+							   rb.getRoadDef().isRoundabout()) {
+								isShortest = r.getLength() < rb.getLength();
+								break;
+							}
+						}
+
+						if(!isShortest)
+							continue;
+
 						// now check the flare roads for direction and
 						// onewayness
 
@@ -542,6 +561,13 @@ public class RouteNode implements Comparable<RouteNode> {
 			List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
 
 			for(RouteArc a : arcs) {
+
+				if(a.getRoadDef().isSynthesised()) {
+					// ignore ways that have been synthesised by
+					// mkgmap
+					continue;
+				}
+
 				boolean oneway = a.getRoadDef().isOneway();
 
 				if(a.getRoadDef().isRoundabout()) {
@@ -566,7 +592,11 @@ public class RouteNode implements Comparable<RouteNode> {
 				else {
 					String roads = null;
 					for(RouteArc a : arcs) {
-						if(roads == null)
+						if(a.getRoadDef().isSynthesised()) {
+							// ignore ways that have been synthesised by
+							// mkgmap
+						}
+						else if(roads == null)
 							roads = "" + a.getRoadDef();
 						else
 							roads += ", " + a.getRoadDef();
@@ -583,7 +613,11 @@ public class RouteNode implements Comparable<RouteNode> {
 				else {
 					String roads = null;
 					for(RouteArc a : arcs) {
-						if(roads == null)
+						if(a.getRoadDef().isSynthesised()) {
+							// ignore ways that have been synthesised by
+							// mkgmap
+						}
+						else if(roads == null)
 							roads = "" + a.getRoadDef();
 						else
 							roads += ", " + a.getRoadDef();
@@ -597,6 +631,10 @@ public class RouteNode implements Comparable<RouteNode> {
 					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " starts at " + coord.toOSMURL());
 				else
 					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " ends at " + coord.toOSMURL());
+			}
+
+			if(roundaboutArcs.size() > 2) {
+				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " forks at " + coord.toOSMURL());
 			}
 		}
 	}

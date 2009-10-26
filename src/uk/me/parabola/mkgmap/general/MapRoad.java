@@ -72,6 +72,10 @@ public class MapRoad extends MapLine {
 		this.roadDef.setToll();
 	}
 
+	public void setSynthesised(boolean s) {
+		this.roadDef.setSynthesised(s);
+	}
+
 	// XXX: currently passing PolishMapSource-internal format
 	public void setAccess(boolean[] access) {
 		this.roadDef.setAccess(access);

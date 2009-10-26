@@ -407,6 +407,7 @@ class Osm5XmlHandler extends DefaultHandler {
 						cycleWay.addTag("access", "no");
 						cycleWay.addTag("bicycle", "yes");
 						cycleWay.addTag("foot", "no");
+						cycleWay.addTag("mkgmap:synthesised", "yes");
 						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
 					}
 					else if(makeCycleways &&
@@ -441,6 +442,7 @@ class Osm5XmlHandler extends DefaultHandler {
 						cycleWay.addTag("access", "no");
 						cycleWay.addTag("bicycle", "yes");
 						cycleWay.addTag("foot", "no");
+						cycleWay.addTag("mkgmap:synthesised", "yes");
 						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
 					}
 				}

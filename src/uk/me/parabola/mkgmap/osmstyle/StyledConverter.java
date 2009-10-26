@@ -1195,6 +1195,8 @@ public class StyledConverter implements OsmConverter {
 		if(way.isBoolTag("toll"))
 			road.setToll();
 
+		road.setSynthesised(way.isBoolTag("mkgmap:synthesised"));
+
 		Way origWay = originalWay.get(way);
 		if(origWay == null)
 			origWay = way;

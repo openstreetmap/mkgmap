@@ -110,6 +110,7 @@ public class RoadDef implements Comparable {
 	private Zip zip;
 	private boolean roundabout;
 	private boolean linkRoad;
+	private boolean synthesised;
 
 	/**
 	 * This is for writing to NET1.
@@ -585,5 +586,13 @@ public class RoadDef implements Comparable {
 
 	public boolean isLinkRoad() {
 		return linkRoad;
+	}
+
+	public void setSynthesised(boolean s) {
+		synthesised = s;
+	}
+
+	public boolean isSynthesised() {
+		return synthesised;
 	}
 }
