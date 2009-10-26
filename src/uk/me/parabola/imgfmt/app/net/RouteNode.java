@@ -634,7 +634,9 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 
 			if(roundaboutArcs.size() > 2) {
-				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " forks at " + coord.toOSMURL());
+				RoadDef rd = roundaboutArcs.get(0).getRoadDef();
+				if(!rd.messagePreviouslyIssued("roundabout forks"))
+					log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
 			}
 		}
 	}

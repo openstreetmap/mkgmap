@@ -17,7 +17,9 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -111,6 +113,7 @@ public class RoadDef implements Comparable {
 	private boolean roundabout;
 	private boolean linkRoad;
 	private boolean synthesised;
+	private Set<String> messageIssued;
 
 	/**
 	 * This is for writing to NET1.
@@ -594,5 +597,14 @@ public class RoadDef implements Comparable {
 
 	public boolean isSynthesised() {
 		return synthesised;
+	}
+
+	public boolean messagePreviouslyIssued(String key) {
+		boolean previouslyIssued;
+		if(messageIssued == null)
+			messageIssued = new HashSet<String>();
+		previouslyIssued = messageIssued.contains(key);
+		messageIssued.add(key);
+		return previouslyIssued;
 	}
 }
