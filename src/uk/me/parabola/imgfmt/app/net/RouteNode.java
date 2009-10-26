@@ -465,15 +465,44 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 	}
 
-	public void reportSimilarArcs() {
-		for(int i = 0; i < arcs.size(); ++i) {
-			RouteArc arci = arcs.get(i);
-			for(int j = i + 1; j < arcs.size(); ++j) {
-				RouteArc arcj = arcs.get(j);
-				if(arci.getDest() == arcj.getDest() &&
-				   arci.getLength() == arcj.getLength() &&
-				   arci.getPointsHash() == arcj.getPointsHash()) {
-					log.warn("Similar arcs (" + arci.getRoadDef() + " and " + arcj.getRoadDef() + ") from " + coord.toOSMURL());
+	public void checkRoundabouts() {
+
+		List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
+
+		for(RouteArc a : arcs) {
+			// ignore ways that have been synthesised by mkgmap
+			if(!a.getRoadDef().isSynthesised() &&
+			   a.getRoadDef().isRoundabout()) {
+				roundaboutArcs.add(a);
+			}
+		}
+			
+		if(arcs.size() > 1 && roundaboutArcs.size() == 1) {
+			if(roundaboutArcs.get(0).isForward())
+				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " starts at " + coord.toOSMURL());
+			else
+				log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " ends at " + coord.toOSMURL());
+		}
+
+		if(roundaboutArcs.size() > 2) {
+			for(RouteArc fa : arcs) {
+				if(fa.isForward()) {
+					RoadDef rd = fa.getRoadDef();
+					for(RouteArc fb : arcs) {
+						if(fb != fa &&
+						   fa.getPointsHash() == fb.getPointsHash() &&
+						   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
+							(!fb.isForward() && fb.getSource() == fa.getDest()))) {
+							if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+								log.warn("Roundabout " + rd + " overlaps " + fb.getRoadDef() + " at " + coord.toOSMURL());
+							}
+						}
+						else if(fa != fb && fb.isForward()) {
+							if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+								log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
+							}
+						}
+					}
 				}
 			}
 		}
@@ -553,12 +582,25 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 	}
 
+	public void reportSimilarArcs() {
+		for(int i = 0; i < arcs.size(); ++i) {
+			RouteArc arci = arcs.get(i);
+			for(int j = i + 1; j < arcs.size(); ++j) {
+				RouteArc arcj = arcs.get(j);
+				if(arci.getDest() == arcj.getDest() &&
+				   arci.getLength() == arcj.getLength() &&
+				   arci.getPointsHash() == arcj.getPointsHash()) {
+					log.warn("Similar arcs (" + arci.getRoadDef() + " and " + arcj.getRoadDef() + ") from " + coord.toOSMURL());
+				}
+			}
+		}
+	}
+
 	public void reportDeadEnds(int level) {
 
-		if(level > 0 && !isBoundary()) {
+		if(level > 0) {
 			boolean noWayOut = true;
 			boolean noWayIn = true;
-			List<RouteArc> roundaboutArcs = new ArrayList<RouteArc>();
 
 			for(RouteArc a : arcs) {
 
@@ -568,12 +610,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					continue;
 				}
 
-				boolean oneway = a.getRoadDef().isOneway();
-
-				if(a.getRoadDef().isRoundabout()) {
-					roundaboutArcs.add(a);
-					oneway = true;
-				}
+				boolean oneway = a.getRoadDef().isOneway() || a.getRoadDef().isRoundabout();
 
 				if(!oneway)
 					noWayOut = noWayIn = false;
@@ -623,36 +660,6 @@ public class RouteNode implements Comparable<RouteNode> {
 							roads += ", " + a.getRoadDef();
 					}
 					log.warn("Oneway roads " + roads + " go nowhere at " + coord.toOSMURL());
-				}
-			}
-
-			if(arcs.size() > 1 && roundaboutArcs.size() == 1) {
-				if(roundaboutArcs.get(0).isForward())
-					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " starts at " + coord.toOSMURL());
-				else
-					log.warn("Roundabout " + roundaboutArcs.get(0).getRoadDef() + " ends at " + coord.toOSMURL());
-			}
-
-			if(roundaboutArcs.size() > 2) {
-				for(RouteArc fa : arcs) {
-					if(fa.isForward()) {
-						RoadDef rd = fa.getRoadDef();
-						for(RouteArc fb : arcs) {
-							if(fb != fa &&
-							   fa.getPointsHash() == fb.getPointsHash() &&
-							   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
-								(!fb.isForward() && fb.getSource() == fa.getDest()))) {
-								if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
-									log.warn("Roundabout " + rd + " overlaps other roundabout segments at " + coord.toOSMURL());
-								}
-							}
-							else if(fa != fb && fb.isForward()) {
-								if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
-									log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
-								}
-							}
-						}
-					}
 				}
 			}
 		}
