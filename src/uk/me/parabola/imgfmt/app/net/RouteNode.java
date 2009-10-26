@@ -634,9 +634,26 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 
 			if(roundaboutArcs.size() > 2) {
-				RoadDef rd = roundaboutArcs.get(0).getRoadDef();
-				if(!rd.messagePreviouslyIssued("roundabout forks"))
-					log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
+				for(RouteArc fa : arcs) {
+					if(fa.isForward()) {
+						RoadDef rd = fa.getRoadDef();
+						for(RouteArc fb : arcs) {
+							if(fb != fa &&
+							   fa.getPointsHash() == fb.getPointsHash() &&
+							   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
+								(!fb.isForward() && fb.getSource() == fa.getDest()))) {
+								if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+									log.warn("Roundabout " + rd + " overlaps other roundabout segments at " + coord.toOSMURL());
+								}
+							}
+							else if(fa != fb && fb.isForward()) {
+								if(!rd.messagePreviouslyIssued("roundabout forks/overlaps")) {
+									log.warn("Roundabout " + rd + " forks at " + coord.toOSMURL());
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
