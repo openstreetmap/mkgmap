@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.FileExistsException;
@@ -203,11 +204,12 @@ public class GmapsuppBuilder implements Combiner {
 	 * sure that it is no more than 8+3 characters.
 	 *
 	 * @param pathname The external filesystem path name.
-	 * @return The filename part, will be restricted to 8+3 characters.
+	 * @return The filename part, will be restricted to 8+3 characters and all
+	 * in upper case.
 	 */
 	private String createImgFilename(String pathname) {
 		File f = new File(pathname);
-		String name = f.getName();
+		String name = f.getName().toUpperCase(Locale.ENGLISH);
 		int dot = name.lastIndexOf('.');
 
 		String base = name.substring(0, dot);

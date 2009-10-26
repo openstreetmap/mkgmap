@@ -91,7 +91,7 @@ public class Main implements ArgumentProcessor {
 		// compiling with target 1.5 so that it will run with 1.5 long enough
 		// to give an error message.
 		//
-		// TODO This can be removed after say one month, Oct 15.  At that time
+		// TODO This can be removed after stable release has been made.  At that time
 		// remove the target=1.5 from the build file.
 		//noinspection ErrorNotRethrown
 		try {
