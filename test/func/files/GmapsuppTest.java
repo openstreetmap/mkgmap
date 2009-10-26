@@ -26,8 +26,9 @@ import uk.me.parabola.mkgmap.main.Main;
 
 import func.Base;
 import func.lib.Args;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class GmapsuppTest extends Base {
 	private static final String GMAPSUPP_IMG = "gmapsupp.img";
@@ -86,6 +87,7 @@ public class GmapsuppTest extends Base {
 			assertEquals("product id", 24, map.getProductId());
 			assertEquals("series name", "tst series", map.getSeriesName());
 			assertEquals("area name", "tst area", map.getAreaName());
+			assertEquals("map description", "uk test " + count, map.getMapDescription());
 		}
 	}
 

@@ -70,8 +70,8 @@ public class MpsFileReader {
 		int val = reader.getInt();
 		block.setIds(val >>> 16, val & 0xffff);
 		block.setMapNumber(reader.getInt());
-		block.setTypeName(reader.getZString());
-		block.setMapName(reader.getZString());
+		block.setSeriesName(reader.getZString());
+		block.setMapDescription(reader.getZString());
 		block.setAreaName(reader.getZString());
 		reader.getInt();
 		reader.getInt();

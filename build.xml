@@ -129,6 +129,9 @@
 		<copy todir="test/resources/in" failonerror="false">
 			<fileset dir="${test.input.cache}" includes="**"/>
 		</copy>
+		<mkdir dir="test/resources/in/osm"/>
+		<mkdir dir="test/resources/in/mp"/>
+		<mkdir dir="test/resources/in/img"/>
 		<get src="http://www.mkgmap.org.uk/testinput/osm/lon1.osm.gz"
 			dest="test/resources/in/osm/lon1.osm.gz" usetimestamp="true"
 			ignoreerrors="true"/>
@@ -140,6 +143,12 @@
 		  ignoreerrors="true"/>
 		<get src="http://www.mkgmap.org.uk/testinput/mp/test1.mp"
 			dest="test/resources/in/mp/test1.mp" usetimestamp="true"
+		  ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/img/63240001.img"
+			dest="test/resources/in/img/63240001.img" usetimestamp="true"
+		  ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/img/63240002.img"
+			dest="test/resources/in/img/63240002.img" usetimestamp="true"
 		  ignoreerrors="true"/>
 	</target>
 

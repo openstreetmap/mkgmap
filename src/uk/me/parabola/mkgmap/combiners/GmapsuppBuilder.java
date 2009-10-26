@@ -68,7 +68,7 @@ public class GmapsuppBuilder implements Combiner {
 	private int productId;
 	private String areaName;
 	private String familyName;
-	//private String seriesName;
+	private String seriesName;
 	//private String
 
 	private String overallDescription = "Combined map";
@@ -79,6 +79,7 @@ public class GmapsuppBuilder implements Combiner {
 		productId = args.get("product-id", 1);
 		
 		familyName = args.get("family-name", "family name");
+		seriesName = args.get("series-name", "series name");
 		areaName = args.get("area-name", null);
 
 		overallDescription = args.getDescription();
@@ -135,9 +136,9 @@ public class GmapsuppBuilder implements Combiner {
 			
 			MapBlock mb = new MapBlock();
 			mb.setMapNumber(info.getMapnameAsInt());
-			mb.setMapName(info.getDescription());
+			mb.setMapDescription(info.getDescription());
 			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
-			mb.setTypeName(familyName);
+			mb.setSeriesName(seriesName);
 			mb.setIds(familyId, productId);
 
 			mps.addMap(mb);
@@ -147,7 +148,7 @@ public class GmapsuppBuilder implements Combiner {
 			mps.sync();
 			mps.close();
 		} catch (IOException e) {
-			throw new FileNotWritableException("Could not inish write to MPS file", e);
+			throw new FileNotWritableException("Could not finish write to MPS file", e);
 		}
 	}
 

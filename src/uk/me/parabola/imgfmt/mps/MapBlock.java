@@ -27,11 +27,13 @@ import uk.me.parabola.io.StructuredOutputStream;
  */
 public class MapBlock extends Block {
 	private static final int BLOCK_TYPE = 0x4c;
-	
-	private int productId; // For historical reasons this is combined family/product id. TODO split
+
+	private int familyId;
+	private int productId;
+
 	private int mapNumber;
 	private String seriesName;
-	private String mapName;
+	private String mapDescription;
 	private String areaName;
 
 	public MapBlock() {
@@ -39,20 +41,22 @@ public class MapBlock extends Block {
 	}
 
 	protected void writeBody(StructuredOutputStream out) throws IOException {
-		out.write4(productId);
+		out.write2(productId);
+		out.write2(familyId);
 		out.write4(mapNumber);
 		out.writeString(seriesName);
-		out.writeString(mapName);
+		out.writeString(mapDescription);
 		out.writeString(areaName);
 		out.write4(mapNumber);
 		out.write4(0);
 	}
 
 	public void setIds(int familyId, int productId) {
-		this.productId = (familyId << 16) | productId;
+		this.familyId = familyId;
+		this.productId = productId;
 	}
 
-	public void setTypeName(String seriesName) {
+	public void setSeriesName(String seriesName) {
 		this.seriesName = seriesName;
 	}
 
@@ -60,8 +64,8 @@ public class MapBlock extends Block {
 		this.mapNumber = mapNumber;
 	}
 
-	public void setMapName(String mapName) {
-		this.mapName = mapName;
+	public void setMapDescription(String mapDescription) {
+		this.mapDescription = mapDescription;
 	}
 
 	public void setAreaName(String areaName) {
@@ -69,11 +73,11 @@ public class MapBlock extends Block {
 	}
 
 	public int getFamilyId() {
-		return productId >>> 16;
+		return familyId;
 	}
 
 	public int getProductId() {
-		return productId & 0xffff;
+		return productId;
 	}
 
 	public int getMapNumber() {
@@ -84,8 +88,8 @@ public class MapBlock extends Block {
 		return seriesName;
 	}
 
-	public String getMapName() {
-		return mapName;
+	public String getMapDescription() {
+		return mapDescription;
 	}
 
 	public String getAreaName() {
