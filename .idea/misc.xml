@@ -56,7 +56,7 @@
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
-        <entry key="/home/steve/src/display">
+        <entry key="$PROJECT_DIR$/../display">
           <value>
             <SvnBranchConfiguration>
               <option name="trunkUrl" value="https://svn.parabola.me.uk/svn/display/trunk" />

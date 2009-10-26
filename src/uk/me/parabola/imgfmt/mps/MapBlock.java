@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.io.StructuredOutputStream;
-
 import java.io.IOException;
+
+import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * A block describing an individual map.
@@ -28,9 +28,9 @@ import java.io.IOException;
 public class MapBlock extends Block {
 	private static final int BLOCK_TYPE = 0x4c;
 	
-	private int productId;
+	private int productId; // For historical reasons this is combined family/product id. TODO split
 	private int mapNumber;
-	private String typeName;
+	private String seriesName;
 	private String mapName;
 	private String areaName;
 
@@ -41,7 +41,7 @@ public class MapBlock extends Block {
 	protected void writeBody(StructuredOutputStream out) throws IOException {
 		out.write4(productId);
 		out.write4(mapNumber);
-		out.writeString(typeName);
+		out.writeString(seriesName);
 		out.writeString(mapName);
 		out.writeString(areaName);
 		out.write4(mapNumber);
@@ -52,8 +52,8 @@ public class MapBlock extends Block {
 		this.productId = (familyId << 16) | productId;
 	}
 
-	public void setTypeName(String typeName) {
-		this.typeName = typeName;
+	public void setTypeName(String seriesName) {
+		this.seriesName = seriesName;
 	}
 
 	public void setMapNumber(int mapNumber) {
@@ -66,5 +66,29 @@ public class MapBlock extends Block {
 
 	public void setAreaName(String areaName) {
 		this.areaName = areaName;
+	}
+
+	public int getFamilyId() {
+		return productId >>> 16;
+	}
+
+	public int getProductId() {
+		return productId & 0xffff;
+	}
+
+	public int getMapNumber() {
+		return mapNumber;
+	}
+
+	public String getSeriesName() {
+		return seriesName;
+	}
+
+	public String getMapName() {
+		return mapName;
+	}
+
+	public String getAreaName() {
+		return areaName;
 	}
 }

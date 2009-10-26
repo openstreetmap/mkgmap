@@ -15,11 +15,17 @@ package func.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
+import uk.me.parabola.imgfmt.fs.DirectoryEntry;
+import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.mps.MapBlock;
+import uk.me.parabola.imgfmt.mps.MpsFileReader;
+import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
-import func.lib.Args;
 import func.Base;
+import func.lib.Args;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -34,10 +40,100 @@ public class GmapsuppTest extends Base {
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
-				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz"
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
 		});
 
-		assertTrue("gmapsupp.img was created", f.exists());
+		assertTrue("gmapsupp.img is created", f.exists());
+
+		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		DirectoryEntry entry = fs.lookup("63240001.TRE");
+		assertNotNull("first file TRE", entry);
+		assertEquals("first file TRE size", getFileSize(Args.TEST_RESOURCE_IMG + "63240001.img", "63240001.TRE"), entry.getSize());
+
+		entry = fs.lookup("63240002.TRE");
+		assertNotNull("second file TRE", entry);
+		assertEquals("second file TRE size", getFileSize(Args.TEST_RESOURCE_IMG + "63240002.img", "63240002.TRE"), entry.getSize());
+	}
+
+	/**
+	 * Check the values inside the MPS file, when the family id etc is
+	 * common to all files.
+	 */
+	@Test
+	public void testMpsFile() throws IOException {
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--family-id=150",
+				"--product-id=24",
+				"--series-name=tst series",
+				"--family-name=tst family",
+				"--area-name=tst area",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
+		});
+
+		MpsFileReader reader = getMpsFile();
+		List<MapBlock> list = reader.getMaps();
+		assertEquals("number of map blocks", 2, list.size());
+
+		// All maps will have the same parameters apart from map name here
+		int count = 0;
+		for (MapBlock map : list) {
+			assertEquals("map number", 63240001 + count++, map.getMapNumber());
+			assertEquals("family id", 150, map.getFamilyId());
+			assertEquals("product id", 24, map.getProductId());
+			assertEquals("series name", "tst series", map.getSeriesName());
+			assertEquals("area name", "tst area", map.getAreaName());
+		}
+	}
+
+	/**
+	 * Test the case where we are combining img files with different family
+	 * and product ids.
+	 */
+	@Test
+	public void testDifferentFamilies() throws IOException {
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+
+				"--family-id=101",
+				"--product-id=1",
+				"--series-name=tst1 series",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+
+				"--family-id=102",
+				"--product-id=2",
+				"--series-name=tst2 series",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
+		});
+
+		MpsFileReader reader = getMpsFile();
+		List<MapBlock> list = reader.getMaps();
+		assertEquals("number of map blocks", 2, list.size());
+
+		// Directly check the family id's
+		assertEquals("family in map1", 101, list.get(0).getFamilyId());
+		assertEquals("family in map2", 102, list.get(1).getFamilyId());
+
+		// Check more things
+		int count = 1;
+		for (MapBlock map : list) {
+			assertEquals("family in map" + count, 100 + count, map.getFamilyId());
+			assertEquals("product in map" + count, count, map.getProductId());
+			assertEquals("series name in map" + count, "tst" + count + " series", map.getSeriesName());
+		}
+	}
+
+	private MpsFileReader getMpsFile() throws IOException {
+		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		return new MpsFileReader(fs.open("MAKEGMAP.MPS", "r"));
+	}
+
+	private int getFileSize(String imgName, String fileName) throws IOException {
+		FileSystem fs = ImgFS.openFs(imgName);
+		return fs.lookup(fileName).getSize();
 	}
 }
