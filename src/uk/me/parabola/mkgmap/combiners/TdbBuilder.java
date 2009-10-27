@@ -49,7 +49,7 @@ public class TdbBuilder implements Combiner {
 	private int parent = 63240000;
 	private String overviewMapname;
 	private String overviewMapnumber;
-	private String overviewDescription;
+	private String areaName;
 	private int tdbVersion;
 
 	/**
@@ -68,7 +68,7 @@ public class TdbBuilder implements Combiner {
 			log.debug("overview map number not an integer", overviewMapnumber);
 		}
 
-		overviewDescription = args.get("overview-description", "Overview Map");
+		areaName = args.get("area-name", "Overview Map");
 
 		int familyId = args.get("family-id", 0);
 		int productId = args.get("product-id", 1);
@@ -87,7 +87,7 @@ public class TdbBuilder implements Combiner {
 
 		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
-				familyName, overviewDescription);
+				familyName, areaName);
 	}
 
 	/**
@@ -234,7 +234,7 @@ public class TdbBuilder implements Combiner {
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
-		params.setMapDescription(overviewDescription);
+		params.setMapDescription(areaName);
 
 		try {
 			Map map = Map.createMap(overviewMapname, params, overviewMapnumber);
