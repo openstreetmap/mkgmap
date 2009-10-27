@@ -69,12 +69,22 @@ public class RoadDef implements Comparable {
 		this.name = name;
 	}
 
+	public void showOSMBrowseURL() {
+		showBrowseURL = true;
+	}
+
 	// for diagnostic purposes
 	public String toString() {
-		if(name != null)
-			return "(" + name + ", " + id + ")";
+		String browseURL;
+		if(showBrowseURL)
+			browseURL = "http://www.openstreetmap.org/browse/way/" + id;
 		else
-			return "(" + id + ")";
+			browseURL = "" + id;
+
+		if(name != null)
+			return "(" + name + ", " + browseURL + ")";
+		else
+			return "(" + browseURL + ")";
 	}
 
 	public String getName() {
@@ -113,6 +123,7 @@ public class RoadDef implements Comparable {
 	private boolean roundabout;
 	private boolean linkRoad;
 	private boolean synthesised;
+	private boolean showBrowseURL;
 	private Set<String> messageIssued;
 
 	/**

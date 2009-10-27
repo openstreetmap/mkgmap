@@ -72,6 +72,10 @@ public class MapRoad extends MapLine {
 		this.roadDef.setToll();
 	}
 
+	public void showOSMBrowseURL() {
+		this.roadDef.showOSMBrowseURL();
+	}
+
 	public void setSynthesised(boolean s) {
 		this.roadDef.setSynthesised(s);
 	}
