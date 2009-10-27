@@ -64,24 +64,13 @@ public class GmapsuppBuilder implements Combiner {
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
 	// all these need to be set in the init routine from arguments.
-	private int familyId;
-	private int productId;
 	private String areaName;
-	private String familyName;
-	private String seriesName;
-	//private String
-
 	private String overallDescription = "Combined map";
+
 	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
-		familyId = args.get("family-id", 0);
-		productId = args.get("product-id", 1);
-		
-		familyName = args.get("family-name", "family name");
-		seriesName = args.get("series-name", "series name");
 		areaName = args.get("area-name", null);
-
 		overallDescription = args.getDescription();
 	}
 
@@ -138,8 +127,9 @@ public class GmapsuppBuilder implements Combiner {
 			mb.setMapNumber(info.getMapnameAsInt());
 			mb.setMapDescription(info.getDescription());
 			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
-			mb.setSeriesName(seriesName);
-			mb.setIds(familyId, productId);
+
+			mb.setSeriesName(info.getSeriesName());
+			mb.setIds(info.getFamilyId(), info.getProductId());
 
 			mps.addMap(mb);
 		}

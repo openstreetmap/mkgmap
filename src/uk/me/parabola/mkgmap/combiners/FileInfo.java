@@ -31,6 +31,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.CommandArgs;
 
 /**
  * Used for holding information about an individual file that will be made into
@@ -73,6 +74,7 @@ public class FileInfo {
 
 	private final List<Integer> fileSizes = new ArrayList<Integer>();
 	private String[] copyrights;
+	private CommandArgs args;
 
 	private FileInfo(String filename, int kind) {
 		this.filename = filename;
@@ -310,5 +312,21 @@ public class FileInfo {
 
 	protected void setNodsize(int nodsize) {
 		this.nodsize = nodsize;
+	}
+
+	public void setArgs(CommandArgs args) {
+		this.args = args;
+	}
+
+	public String getSeriesName() {
+		return args.get("series-name", "series name");
+	}
+
+	public int getFamilyId() {
+		return args.get("family-id", 0);
+	}
+
+	public int getProductId() {
+		return args.get("product-id", 1);
 	}
 }

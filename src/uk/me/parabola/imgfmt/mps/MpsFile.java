@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-
-import java.util.List;
-import java.util.ArrayList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * This file is a description of the map set that is loaded into the
@@ -34,8 +34,8 @@ import java.io.IOException;
 public class MpsFile {
 	private int productId;
 	//private int productVersion = 1;
-	private String seriesName = "OSM map sets";
-	private String familyName = "OSM maps";
+	private final String seriesName = "OSM map sets";
+	private final String familyName = "OSM maps";
 
 	private final ProductBlock product = new ProductBlock();
 	private final MapsetBlock mapset = new MapsetBlock();
@@ -63,30 +63,6 @@ public class MpsFile {
 
 	public void addMap(MapBlock map) {
 		maps.add(map);
-	}
-
-	public void setProductInfo(int productId, String seriesName, String familyName)
-	{
-		this.productId = productId;
-		//this.productVersion = productVersion;
-		this.seriesName = seriesName;
-		this.familyName = familyName;
-	}
-
-	public void setProductId(int productId) {
-		this.productId = productId;
-	}
-
-	//public void setProductVersion(int productVersion) {
-	//	this.productVersion = productVersion;
-	//}
-
-	public void setSeriesName(String seriesName) {
-		this.seriesName = seriesName;
-	}
-
-	public void setFamilyName(String familyName) {
-		this.familyName = familyName;
 	}
 
 	public void close() throws IOException {

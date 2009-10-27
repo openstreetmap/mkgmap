@@ -121,8 +121,9 @@ public class GmapsuppTest extends Base {
 		assertEquals("family in map2", 102, list.get(1).getFamilyId());
 
 		// Check more things
-		int count = 1;
+		int count = 0;
 		for (MapBlock map : list) {
+			count++;
 			assertEquals("family in map" + count, 100 + count, map.getFamilyId());
 			assertEquals("product in map" + count, count, map.getProductId());
 			assertEquals("series name in map" + count, "tst" + count + " series", map.getSeriesName());
