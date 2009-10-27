@@ -34,9 +34,9 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * @author Steve Ratcliffe
  */
 public class MpsFileReader {
-	//private final ProductBlock product = new ProductBlock();
-	//private final MapsetBlock mapset = new MapsetBlock();
+
 	private final List<MapBlock> maps = new ArrayList<MapBlock>();
+	private final List<ProductBlock> products = new ArrayList<ProductBlock>();
 
 	private final ImgChannel chan;
 	private final ImgFileReader reader;
@@ -56,6 +56,9 @@ public class MpsFileReader {
 			switch (type) {
 			case 0x4c:
 				readMapBlock();
+				break;
+			case 0x46:
+				readProductBlock();
 				break;
 			default:
 				// We always know the length, so just read over it
@@ -78,8 +81,20 @@ public class MpsFileReader {
 		maps.add(block);
 	}
 
+	private void readProductBlock() {
+		ProductBlock block = new ProductBlock();
+		block.setProductId(reader.getChar());
+		block.setFamilyId(reader.getChar());
+		block.setDescription(reader.getZString());
+		products.add(block);
+	}
+
 	public List<MapBlock> getMaps() {
 		return maps;
+	}
+
+	public List<ProductBlock> getProducts() {
+		return products;
 	}
 
 	public void close() throws IOException {

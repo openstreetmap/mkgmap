@@ -318,6 +318,10 @@ public class FileInfo {
 		this.args = args;
 	}
 
+	public String getFamilyName() {
+		return args.get("family-name", "family name");
+	}
+
 	public String getSeriesName() {
 		return args.get("series-name", "series name");
 	}

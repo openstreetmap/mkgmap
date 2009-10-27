@@ -20,10 +20,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
@@ -33,6 +35,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.mps.MpsFile;
+import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
@@ -118,20 +121,20 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param gmapsupp The output file in which to create the MPS file.
 	 */
 	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
+		Set<Integer> products = new HashSet<Integer>();
 		MpsFile mps = createMpsFile(gmapsupp);
 		for (FileInfo info : files.values()) {
 			if (info.getKind() != FileInfo.IMG_KIND)
 				continue;
-			
-			MapBlock mb = new MapBlock();
-			mb.setMapNumber(info.getMapnameAsInt());
-			mb.setMapDescription(info.getDescription());
-			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
 
-			mb.setSeriesName(info.getSeriesName());
-			mb.setIds(info.getFamilyId(), info.getProductId());
+			mps.addMap(makeMapBlock(info));
 
-			mps.addMap(mb);
+			// Add a new product block if we have found a new product
+			int prod = info.getFamilyId() << 16 + info.getProductId();
+			if (!products.contains(prod)) {
+				products.add(prod);
+				mps.addProduct(makeProductBlock(info));
+			}
 		}
 
 		try {
@@ -140,6 +143,25 @@ public class GmapsuppBuilder implements Combiner {
 		} catch (IOException e) {
 			throw new FileNotWritableException("Could not finish write to MPS file", e);
 		}
+	}
+
+	private MapBlock makeMapBlock(FileInfo info) {
+		MapBlock mb = new MapBlock();
+		mb.setMapNumber(info.getMapnameAsInt());
+		mb.setMapDescription(info.getDescription());
+		mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
+
+		mb.setSeriesName(info.getSeriesName());
+		mb.setIds(info.getFamilyId(), info.getProductId());
+		return mb;
+	}
+
+	private ProductBlock makeProductBlock(FileInfo info) {
+		ProductBlock pb = new ProductBlock();
+		pb.setFamilyId(info.getFamilyId());
+		pb.setProductId(info.getProductId());
+		pb.setDescription(info.getFamilyName());
+		return pb;
 	}
 
 	private void addAllFiles(FileSystem outfs) {

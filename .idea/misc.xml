@@ -8,7 +8,7 @@
     <scope name="style" pattern="file:src/uk/me/parabola/mkgmap/osmstyle//*" />
     <scope name="build" pattern="file:src/uk/me/parabola/mkgmap/build//*||file:src/uk/me/parabola/mkgmap/combiners//*||file:src/uk/me/parabola/mkgmap/filters//*" />
     <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
-    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs/*||file:src/uk/me/parabola/imgfmt/mps/*||file:src/uk/me/parabola/imgfmt/sys/*" />
+    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs//*||file:src/uk/me/parabola/imgfmt/sys//*" />
     <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
     <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
     <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*" />

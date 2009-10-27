@@ -15,12 +15,15 @@ package func.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.mps.MpsFileReader;
+import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
@@ -103,12 +106,12 @@ public class GmapsuppTest extends Base {
 
 				"--family-id=101",
 				"--product-id=1",
-				"--series-name=tst1 series",
+				"--series-name=tst series1",
 				Args.TEST_RESOURCE_IMG + "63240001.img",
 
 				"--family-id=102",
 				"--product-id=2",
-				"--series-name=tst2 series",
+				"--series-name=tst series2",
 				Args.TEST_RESOURCE_IMG + "63240002.img"
 		});
 
@@ -126,8 +129,77 @@ public class GmapsuppTest extends Base {
 			count++;
 			assertEquals("family in map" + count, 100 + count, map.getFamilyId());
 			assertEquals("product in map" + count, count, map.getProductId());
-			assertEquals("series name in map" + count, "tst" + count + " series", map.getSeriesName());
+			assertEquals("series name in map" + count, "tst series" + count, map.getSeriesName());
 		}
+	}
+
+	/**
+	 * The mps file has a block for each family/product in the map set.
+	 */
+	@Test
+	public void testProductBlocks() throws IOException {
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+
+				"--family-id=101",
+				"--product-id=1",
+				"--family-name=tst family1",
+				"--series-name=tst series1",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+
+				"--family-id=102",
+				"--product-id=2",
+				"--family-name=tst family2",
+				"--series-name=tst series2",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
+		});
+
+		MpsFileReader reader = getMpsFile();
+
+		List<ProductBlock> products = reader.getProducts();
+		Collections.sort(products, new Comparator<ProductBlock>() {
+			public int compare(ProductBlock o1, ProductBlock o2) {
+				if (o1.getFamilyId() == o2.getFamilyId())
+					return 0;
+				else if (o1.getFamilyId() > o2.getFamilyId())
+					return 1;
+				else return -1;
+			}
+		});
+
+		ProductBlock block = products.get(0);
+		assertEquals("product block first family", 101, block.getFamilyId());
+		assertEquals("product block first product id", 1, block.getProductId());
+		assertEquals("product block first family name", "tst family1", block.getDescription());
+		
+		block = products.get(1);
+		assertEquals("product block second family", 102, block.getFamilyId());
+		assertEquals("product block first product id", 2, block.getProductId());
+		assertEquals("product block first family name", "tst family2", block.getDescription());
+	}
+
+	/**
+	 * Make sure that if we have multiple maps in the same family, which after
+	 * all is the common case, that we only get one product block.
+	 */
+	@Test
+	public void testProductWithSeveralMaps() throws IOException {
+		Main.main(new String[]{
+						Args.TEST_STYLE_ARG,
+						"--gmapsupp",
+
+						"--family-id=101",
+						"--product-id=1",
+						"--family-name=tst family1",
+						"--series-name=tst series1",
+						Args.TEST_RESOURCE_IMG + "63240001.img",
+						Args.TEST_RESOURCE_IMG + "63240002.img"
+				});
+
+		MpsFileReader reader = getMpsFile();
+		assertEquals("number of map blocks", 2, reader.getMaps().size());
+		assertEquals("number of product blocks", 1, reader.getProducts().size());
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {
