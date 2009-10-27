@@ -42,7 +42,9 @@ public class RestrictionRelation extends Relation {
 
 		setId(other.getId());
 
-		messagePrefix = "Turn restriction " + getId() + " ";
+		final String browseURL = "http://www.openstreetmap.org/browse/relation/" + getId();
+
+		messagePrefix = "Turn restriction " + browseURL + " ";
 
 		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
 			Element el = pairs.getKey();
@@ -59,7 +61,7 @@ public class RestrictionRelation extends Relation {
 				location = toWay.getPoints().get(0);
 
 			if(location != null)
-				messagePrefix = "Turn restriction " + getId() + " (" + location.toOSMURL() + ") ";
+				messagePrefix = "Turn restriction " + browseURL + " (at " + location.toOSMURL() + ") ";
 
 			if("to".equals(role)) {
 				if(toWay != null) {
