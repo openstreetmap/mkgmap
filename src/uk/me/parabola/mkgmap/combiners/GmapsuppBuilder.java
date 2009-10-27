@@ -64,16 +64,19 @@ public class GmapsuppBuilder implements Combiner {
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
+
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
 	// all these need to be set in the init routine from arguments.
 	private String areaName;
+	private String mapsetName;
 	private String overallDescription = "Combined map";
 
 	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
+		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 	}
 
@@ -121,8 +124,10 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param gmapsupp The output file in which to create the MPS file.
 	 */
 	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
-		Set<Integer> products = new HashSet<Integer>();
 		MpsFile mps = createMpsFile(gmapsupp);
+		mps.setMapsetName(mapsetName);
+
+		Set<Integer> products = new HashSet<Integer>();
 		for (FileInfo info : files.values()) {
 			if (info.getKind() != FileInfo.IMG_KIND)
 				continue;

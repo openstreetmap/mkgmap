@@ -32,9 +32,8 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * @author Steve Ratcliffe
  */
 public class MpsFile {
-	private final String seriesName = "OSM map sets";
+	private String mapsetName = "OSM map set";
 
-	private final MapsetBlock mapset = new MapsetBlock();
 	private final List<ProductBlock> products = new ArrayList<ProductBlock>();
 	private final List<MapBlock> maps = new ArrayList<MapBlock>();
 
@@ -45,15 +44,14 @@ public class MpsFile {
 	}
 
 	public void sync() throws IOException {
-		
-		mapset.setName(seriesName); // XXX or family
-
 		for (MapBlock map : maps)
 			map.write(chan);
 
 		for (ProductBlock block : products)
 			block.write(chan);
 
+		MapsetBlock mapset = new MapsetBlock();
+		mapset.setName(mapsetName);
 		mapset.write(chan);
 	}
 
@@ -61,11 +59,15 @@ public class MpsFile {
 		maps.add(map);
 	}
 
-	public void close() throws IOException {
-		chan.close();
-	}
-
 	public void addProduct(ProductBlock pb) {
 		products.add(pb);
+	}
+
+	public void setMapsetName(String mapsetName) {
+		this.mapsetName = mapsetName;
+	}
+
+	public void close() throws IOException {
+		chan.close();
 	}
 }
