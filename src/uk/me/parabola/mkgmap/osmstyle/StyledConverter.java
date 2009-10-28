@@ -459,6 +459,19 @@ public class StyledConverter implements OsmConverter {
 	private void elementSetup(MapElement ms, GType gt, Element element) {
 		String name = element.getName();
 		String refs = combineRefs(element);
+		
+		// Insert display_name as first ref.
+		// This causes display_name to be displayed in routing 
+		// directions, instead of only the ref.
+		String displayName = element.getTag("display_name");
+
+		if (displayName != null) {
+			if (refs == null)
+				refs = displayName;
+			else
+				refs = displayName + ";" + refs;
+		}
+
 		if(name == null && refs != null) {
 			// use first ref as name
 			name = refs.split(";")[0].trim();
