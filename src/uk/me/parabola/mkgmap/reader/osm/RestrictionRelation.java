@@ -22,6 +22,7 @@ public class RestrictionRelation extends Relation {
 
     private Way fromWay;
     private Way toWay;
+    private Way viaWay;
     private Coord viaCoord;
     private final String restriction;
 
@@ -90,14 +91,17 @@ public class RestrictionRelation extends Relation {
 					fromWay = (Way)el;
 			}
 			else if("via".equals(role)) {
-				if(viaCoord != null) {
+				if(viaCoord != null || viaWay != null) {
 					log.warn(messagePrefix + "has extra 'via' member " + el.getId());
 				}
 				else if(el instanceof Node) {
 					viaCoord = ((Node)el).getLocation();
 				}
+				else if(el instanceof Way) {
+					viaWay = (Way)el;
+				}
 				else {
-					log.warn(messagePrefix + "'via' member " + el.getId() + " is not a node");
+					log.warn(messagePrefix + "'via' member " + el.getId() + " is not a node or way");
 				}
 			}
 			else if("location_hint".equals(role)) {
@@ -157,6 +161,10 @@ public class RestrictionRelation extends Relation {
 		return toWay;
 	}
 
+	public Way getViaWay() {
+		return viaWay;
+	}
+
 	public Coord getViaCoord() {
 		return viaCoord;
 	}
@@ -205,7 +213,7 @@ public class RestrictionRelation extends Relation {
 		if(fromWay == null || toWay == null)
 			return false;
 
-		if(viaCoord == null) {
+		if(viaCoord == null && viaWay == null) {
 			List<Coord>fromPoints = fromWay.getPoints();
 			List<Coord>toPoints = toWay.getPoints();
 			for(Coord fp : fromPoints) {
@@ -230,18 +238,32 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix + "lacks 'via' node (guessing it should be at " + viaCoord.toDegreeString() + ", why don't you add it to the OSM data?)");
 		}
 
+		Coord v1 = viaCoord;
+		Coord v2 = null;
+
+		if(viaWay != null) {
+			v1 = viaWay.getPoints().get(0);
+			v2 = viaWay.getPoints().get(viaWay.getPoints().size() - 1);
+		}
+
 		Coord e1 = fromWay.getPoints().get(0);
 		Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
-		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.warn(messagePrefix + "'from' way (" + fromWay.getId() + ") doesn't start or end at 'via' node");
+		if(!e1.equals(v1) && !e2.equals(v1) &&
+		   !e1.equals(v2) && !e2.equals(v2)) {
+			log.warn(messagePrefix + "'from' way (" + fromWay.getId() + ") doesn't start or end at 'via' node or way");
 			result = false;
 		}
 
 		e1 = toWay.getPoints().get(0);
 		e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
-		if(!viaCoord.equals(e1) && !viaCoord.equals(e2)) {
-			log.warn(messagePrefix + "'to' way (" + toWay.getId() + ") doesn't start or end at 'via' node");
+		if(!e1.equals(v1) && !e2.equals(v1) &&
+		   !e1.equals(v2) && !e2.equals(v2)) {
+			log.warn(messagePrefix + "'to' way (" + toWay.getId() + ") doesn't start or end at 'via' node or way");
 			result = false;
+		}
+
+		if (result && viaNode == null) {
+			log.warn(messagePrefix + "sorry, 'via' ways are not supported - ignoring restriction");
 		}
 
 		return result;
