@@ -64,6 +64,7 @@ public class RoadNetwork {
 	private boolean adjustTurnHeadings;
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
+	private int maxFlareLengthRatio = 0;
 	private boolean reportSimilarArcs;
 	private boolean outputCurveData;
 	private int reportDeadEnds = 0;
@@ -72,6 +73,8 @@ public class RoadNetwork {
 		adjustTurnHeadings = props.getProperty("adjust-turn-headings", false);
 		checkRoundabouts = props.getProperty("check-roundabouts", false);
 		checkRoundaboutFlares = props.getProperty("check-roundabout-flares", false);
+		maxFlareLengthRatio = props.getProperty("max-flare-length-ratio", 0);
+
 		reportDeadEnds = props.getProperty("report-dead-ends", 1);
 
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
@@ -229,7 +232,7 @@ public class RoadNetwork {
 				if(checkRoundabouts)
 					node.checkRoundabouts();
 				if(checkRoundaboutFlares)
-					node.checkRoundaboutFlares();
+					node.checkRoundaboutFlares(maxFlareLengthRatio);
 				if(reportSimilarArcs)
 					node.reportSimilarArcs();
 				if(reportDeadEnds != 0)

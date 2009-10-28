@@ -514,7 +514,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	// corners of the triangle being attached to the roundabout and
 	// the last corner being connected to the two-way road
 
-	public void checkRoundaboutFlares() {
+	public void checkRoundaboutFlares(int maxFlareLengthRatio) {
 		for(RouteArc r : arcs) {
 			// see if node has a forward arc that is part of a
 			// roundabout
@@ -550,6 +550,20 @@ public class RouteNode implements Comparable<RouteNode> {
 
 						if(!isShortest)
 							continue;
+
+						if(maxFlareLengthRatio > 0) {
+							// if both of the flare roads are much
+							// longer than the length of r, they are
+							// probably not flare roads at all but
+							// just two roads that meet up - so ignore
+							// them
+							final int maxFlareLength = r.getLength() * maxFlareLengthRatio;
+							if(r.getLength() > 0 &&
+							   fa.getLength() > maxFlareLength &&
+							   fb.getLength() > maxFlareLength) {
+								continue;
+							}
+						}
 
 						// now check the flare roads for direction and
 						// onewayness

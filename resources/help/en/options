@@ -197,6 +197,15 @@ Miscellaneous options:
 	in the correct direction or if they are not oneway or if they
 	extend too far.
 
+--max-flare-length-ratio=NUM
+	When checking flare roads, ignore roads whose length is
+	greater than NUM (an integer) times the distance between the
+	nodes on the roundabout that the flare roads connect to. Using
+	this option with a value of at least 5 will cut down the
+	number of legitimate roads that are flagged as flare road
+	problems. Default value is 0 (disabled) because it's not a
+	completely reliable heuristic.
+
 --ignore-maxspeeds
 	When reading OSM files, ignore any "maxspeed" tags.
 
