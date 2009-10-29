@@ -86,7 +86,17 @@ amenity=townhall [0x3003 resolution 21]
 amenity=university [0x2c05 resolution 21]
 amenity=zoo [0x2c07 resolution 21]
 
-highway=bus_stop [0x2f08 resolution 21]
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& (shelter=yes | covered=yes)
+{ name '${name|def:} ${ref|def:}+${operator|def:}'; }
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& (shelter=no | covered=no)
+{ name '${name|def:} ${ref|def:}-${operator|def:}' }
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& (name=*|ref=*|operator=*)
+{ name '${name|def:} ${ref|def:} ${operator|def:}' }
+
+highway=bus_stop [0x2f17 resolution 20]
 
 highway=motorway_junction { name '${ref} ${name}' | '${ref}' | '${name}' }
 highway=motorway_junction [0x2000 resolution 16]
@@ -134,7 +144,7 @@ place=island [0x650c resolution 20]
 
 railway=halt [0x2f08 resolution 21]
 railway=station [0x2f08 resolution 20]
-railway=tram_stop [0x2f08 resolution 21]
+railway=tram_stop [0x2f17 resolution 21]
 
 shop=bakers [0x2e02 resolution 20]
 shop=bakery [0x2e02 resolution 20]
