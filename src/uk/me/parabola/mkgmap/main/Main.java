@@ -46,6 +46,7 @@ import uk.me.parabola.mkgmap.combiners.FileInfo;
 import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.MdrBuilder;
 import uk.me.parabola.mkgmap.combiners.MdxBuilder;
+import uk.me.parabola.mkgmap.combiners.NsisBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
@@ -219,6 +220,8 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("index")) {
 			addCombiner(new MdxBuilder());
 			addCombiner(new MdrBuilder());
+		} else if (opt.equals("nsis")) {
+			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
 			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
