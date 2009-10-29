@@ -45,6 +45,8 @@ public class FileInfo {
 	public static final int IMG_KIND = 0;
 	// The file is a plain file and it doesn't need to be extracted from a .img
 	public static final int FILE_KIND = 1;
+	// The file is an img containing an MDR file
+	public static final int MDR_KIND = 2;
 	// The file is of an unknown or unsupported kind, and so it should be ignored.
 	private static final int UNKNOWN_KIND = 99;
 
@@ -151,7 +153,10 @@ public class FileInfo {
 	}
 
 	/**
-	 * A TYP file, perhaps not a special enough case..
+	 * A TYP file or a component file that goes into a .img (a TRE, LBL etc).
+	 * The component files are not usually given on the command line like this
+	 * but you can do.
+	 * 
 	 * @param inputName The input file name.
 	 */
 	private static FileInfo fileInfo(String inputName) {
@@ -216,6 +221,9 @@ public class FileInfo {
 					info.setNetsize(ent.getSize());
 				} else if ("NOD".equals(ext)) {
 					info.setNodsize(ent.getSize());
+				} else if ("MDR".equals(ext)) {
+					// It is not actually a regular img file, so change the kind.
+					info = new FileInfo(inputName, MDR_KIND);
 				}
 
 				info.fileSizes.add(ent.getSize());
@@ -240,6 +248,10 @@ public class FileInfo {
 
 	public boolean isImg() {
 		return kind == IMG_KIND;
+	}
+
+	public boolean isMdr() {
+		return kind == MDR_KIND;
 	}
 
 	public int getKind() {
