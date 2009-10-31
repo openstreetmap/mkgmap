@@ -262,8 +262,9 @@ public class RestrictionRelation extends Relation {
 			result = false;
 		}
 
-		if (result && viaNode == null) {
+		if (result && viaWay != null) {
 			log.warn(messagePrefix + "sorry, 'via' ways are not supported - ignoring restriction");
+			result = false;
 		}
 
 		return result;
