@@ -339,7 +339,7 @@ public class RoadDef implements Comparable {
 	 * @param rgn A writer for the rgn file.
 	 */
 	void writeRgnOffsets(ImgFileWriter rgn) {
-		assert offsetNet1 < 0x400000 : "NET 1 offset too large";
+		assert offsetNet1 < 0x400000 : "NET 1 offset too large at " + this;
 		for (Offset off : rgnOffsets) {
 			rgn.position(off.getPosition());
 			rgn.put3(offsetNet1 | off.getFlags());
