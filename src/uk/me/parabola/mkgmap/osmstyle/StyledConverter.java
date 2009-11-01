@@ -84,7 +84,10 @@ public class StyledConverter implements OsmConverter {
 	// limit arc lengths to what can currently be handled by RouteArc
 	private final int MAX_ARC_LENGTH = 25000;
 
-	private final int MAX_POINTS_IN_WAY = 200;
+	// MAX_POINTS_IN_WAY has been revised down as this appears to fix
+	// some routing issues - not 100% confident that this is the real
+	// solution
+	private final int MAX_POINTS_IN_WAY = 80;
 
 	private final int MAX_NODES_IN_WAY = 16;
 
@@ -926,7 +929,7 @@ public class StyledConverter implements OsmConverter {
 						}
 						else {
 							// split the way before the second point
-							log.info("Splitting looped way " + getDebugName(way) + " at point[" + splitI + "] - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
+							log.info("Splitting looped way " + getDebugName(way) + " at " + wayPoints.get(splitI).toOSMURL() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
 							// recursively check (shortened) head for
 							// more loops
@@ -1028,7 +1031,7 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " to limit arc length to " + (long)arcLength + "m");
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
 				}
 				else {
 					if(p.getHighwayCount() > 1)
@@ -1056,7 +1059,7 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toDegreeString() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
 				}
 			}
 		}
