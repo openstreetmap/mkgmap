@@ -84,10 +84,9 @@ public class StyledConverter implements OsmConverter {
 	// limit arc lengths to what can currently be handled by RouteArc
 	private final int MAX_ARC_LENGTH = 80000;
 
-	// MAX_POINTS_IN_WAY has been revised down as this appears to fix
-	// some routing issues - not 100% confident that this is the real
-	// solution
-	private final int MAX_POINTS_IN_WAY = 80;
+	private final int MAX_POINTS_IN_WAY = 200;
+
+	private final int MAX_POINTS_IN_ARC = 50;
 
 	private final int MAX_NODES_IN_WAY = 16;
 
@@ -1009,6 +1008,7 @@ public class StyledConverter implements OsmConverter {
 		// collect the Way's nodes and also split the way if any
 		// inter-node arc length becomes excessive
 		double arcLength = 0;
+		int numPointsInArc = 0;
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
@@ -1033,12 +1033,33 @@ public class StyledConverter implements OsmConverter {
 					// points so the loop will now terminate
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
 				}
+				else if(numPointsInArc >= (MAX_POINTS_IN_ARC / 2) &&
+						points.size() > MAX_POINTS_IN_ARC &&
+						p.getHighwayCount() > 1) {
+					// this point is already a node so it's a good place
+					// to split the way
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (using an existing node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+				}
+				else if(numPointsInArc >= MAX_POINTS_IN_ARC &&
+						safeToSplitWay(points, i, i - numPointsInArc, points.size() - 1)) {
+					// we have to split the way here
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (making a new node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+				}
 				else {
-					if(p.getHighwayCount() > 1)
+					if(p.getHighwayCount() > 1) {
 						// point is a node so zero arc length
 						arcLength = 0;
+						numPointsInArc = 0;
+					}
 
 					arcLength += d;
+					++numPointsInArc;
 				}
 			}
 
