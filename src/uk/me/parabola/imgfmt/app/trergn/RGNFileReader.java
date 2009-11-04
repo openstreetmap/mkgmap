@@ -114,8 +114,8 @@ public class RGNFileReader extends ImgReader {
 			}
 			p.setLabel(l);
 
-			p.setDeltaLong(reader.getChar());
-			p.setDeltaLat(reader.getChar());
+			p.setDeltaLong((short)reader.getChar());
+			p.setDeltaLat((short)reader.getChar());
 
 			if (hasSubtype) {
 				byte st = reader.get();
@@ -157,8 +157,8 @@ public class RGNFileReader extends ImgReader {
 			}
 			line.setLabel(label);
 
-			line.setDeltaLong(reader.getChar());
-			line.setDeltaLat(reader.getChar());
+			line.setDeltaLong((short)reader.getChar());
+			line.setDeltaLat((short)reader.getChar());
 
 			int len;
 			if ((type & 0x80) == 0)
