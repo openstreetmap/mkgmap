@@ -127,11 +127,13 @@ public abstract class MapObject {
 	
 	// directly setting shouldn't be done, unless reading from a file
 	protected void setDeltaLat(int deltaLat) {
+		assert deltaLat >= -0x8000 && deltaLat <= 0x7fff : "deltaLat = " + deltaLat;
 		this.deltaLat = deltaLat;
 	}
 
 	// directly setting shouldn't be done, unless reading from a file
 	protected void setDeltaLong(int deltaLong) {
+		assert deltaLong >= -0x8000 && deltaLong <= 0x7fff : "deltaLong = " + deltaLong;
 		this.deltaLong = deltaLong;
 	}
 
