@@ -56,7 +56,7 @@ public class LineSplitterFilter implements MapFilter {
 
 		List<Coord> points = line.getPoints();
 		int npoints = points.size();
-		if (npoints < MAX_POINTS_IN_LINE) {
+		if (npoints <= MAX_POINTS_IN_LINE) {
 			next.doFilter(element);
 			return;
 		}
