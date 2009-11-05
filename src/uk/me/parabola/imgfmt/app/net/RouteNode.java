@@ -518,16 +518,16 @@ public class RouteNode implements Comparable<RouteNode> {
 		for(RouteArc r : arcs) {
 			// see if node has a forward arc that is part of a
 			// roundabout
-			if(!r.isForward() || !r.getRoadDef().isRoundabout())
+			if(!r.isForward() || !r.getRoadDef().isRoundabout() || r.getRoadDef().isSynthesised())
 				continue;
 			// now try and find the two arcs that make up the
 			// triangular "flare" connected to both ends of r
 			RouteNode nb = r.getDest();
 			for(RouteArc fa : arcs) {
-				if(fa.getRoadDef().isRoundabout())
+				if(fa.getRoadDef().isRoundabout() || fa.getRoadDef().isSynthesised())
 					continue;
 				for(RouteArc fb : nb.arcs) {
-					if(fb.getRoadDef().isRoundabout())
+					if(fb.getRoadDef().isRoundabout() || fb.getRoadDef().isSynthesised())
 						continue;
 					if(fa.getDest() == fb.getDest()) {
 						// found the 3rd point of the triangle that
