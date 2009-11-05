@@ -1195,7 +1195,7 @@ public class StyledConverter implements OsmConverter {
 				int rs = getSpeedIdx(maxSpeed);
 				if(rs >= 0)
 					roadSpeed = rs;
-				log.info(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
+				log.debug(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
 			}
 		}
 		val = way.getTag("mkgmap:road-speed");
@@ -1255,7 +1255,7 @@ public class StyledConverter implements OsmConverter {
 					// access
 					noAccess[index] = true;
 				}
-				log.info(type + " is not allowed in " + highwayType + " " + debugWayName);
+				log.debug(type + " is not allowed in " + highwayType + " " + debugWayName);
 			} else if (accessExplicitlyAllowed(accessTagValue)) {
 				if (index == RoadNetwork.NO_MAX) {
 					// everything is allowed access
@@ -1266,7 +1266,7 @@ public class StyledConverter implements OsmConverter {
 					// access
 					noAccess[index] = false;
 				}
-				log.info(type + " is allowed in " + highwayType + " " + debugWayName);
+				log.debug(type + " is allowed in " + highwayType + " " + debugWayName);
 			}
 			else if (accessTagValue.equalsIgnoreCase("destination")) {
 				if (type.equals("motorcar") ||
