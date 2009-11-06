@@ -470,6 +470,9 @@ public class StyledConverter implements OsmConverter {
 		String displayName = element.getTag("display_name");
 
 		if (displayName != null) {
+			// substitute '/' for ';' in display_name to avoid it
+			// getting split below
+			displayName = displayName.replace(";","/");
 			if (refs == null)
 				refs = displayName;
 			else
