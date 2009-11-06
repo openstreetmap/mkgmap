@@ -25,6 +25,15 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	private int recordNumber;
 	private String name;
 	private Mdr5Record city;
+	private boolean isCity;
+
+	public boolean isCity() {
+		return isCity;
+	}
+
+	public void setIsCity(boolean isCity) {
+		this.isCity = isCity;
+	}
 
 	public int compareTo(Mdr11Record o) {
 		return name.compareTo(o.name);
@@ -58,6 +67,10 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 		return city == null ? 0 : city.getGlobalCityIndex();
 	}
 
+	public int getRegionIndex() {
+		return city == null ? 0 : city.getRegion();
+	}
+
 	public int getStrOffset() {
 		return strOffset;
 	}
@@ -82,6 +95,10 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	public void setName(String name) {
 		assert name!=null;
 		this.name = name;
+	}
+
+	public Mdr5Record getCity() {
+		return city;
 	}
 
 	public void setCity(Mdr5Record city) {
