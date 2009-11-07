@@ -119,4 +119,12 @@ public abstract class Element implements Iterable<String> {
 			}
 		};
 	}
+
+	public String kind() {
+		return "unknown";
+	}
+
+	public String toBrowseURL() {
+		return "http://www.openstreetmap.org/browse/" + kind() + "/" + id;
+	}
 }

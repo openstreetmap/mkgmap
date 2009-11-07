@@ -33,4 +33,8 @@ public abstract class Relation extends Element {
 	public Map<Element, String> getRoles() {
 		return roles;
 	}
+
+	public String kind() {
+		return "relation";
+	}
 }

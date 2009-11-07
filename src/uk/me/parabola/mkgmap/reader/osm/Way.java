@@ -126,4 +126,8 @@ public class Way extends Element {
 		return new Coord((lat + numPoints / 2) / numPoints,
 						 (lon + numPoints / 2) / numPoints);
 	}
+
+	public String kind() {
+		return "way";
+	}
 }
