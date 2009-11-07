@@ -43,7 +43,7 @@ public class RestrictionRelation extends Relation {
 
 		setId(other.getId());
 
-		final String browseURL = "http://www.openstreetmap.org/browse/relation/" + getId();
+		final String browseURL = toBrowseURL();
 
 		messagePrefix = "Turn restriction " + browseURL + " ";
 

@@ -928,7 +928,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				nodeIdMap.put(co, id);
 		}
 		else if(reportUndefinedNodes && currentWay != null)
-			log.warn("Way " + currentWay.getId() + " references undefined node " + id);
+			log.warn("Way " + currentWay.toBrowseURL() + " references undefined node " + id);
 	}
 
 	public void setConverter(OsmConverter converter) {
