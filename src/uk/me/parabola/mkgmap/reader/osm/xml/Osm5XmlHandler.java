@@ -101,6 +101,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private long nextFakeId = 1;
 
+	private final boolean reportUndefinedNodes;
 	private final boolean makeOppositeCycleways;
 	private final boolean makeCycleways;
 	private final boolean ignoreBounds;
@@ -132,6 +133,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			minimumArcLength = null;
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		reportUndefinedNodes = props.getProperty("report-undefined-nodes", false);
 		String deleteTagsFileName = props.getProperty("delete-tags-file");
 		if(deleteTagsFileName != null)
 			readDeleteTagsFile(deleteTagsFileName);
@@ -925,6 +927,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (minimumArcLength != null || generateSea)
 				nodeIdMap.put(co, id);
 		}
+		else if(reportUndefinedNodes && currentWay != null)
+			log.warn("Way " + currentWay.getId() + " references undefined node " + id);
 	}
 
 	public void setConverter(OsmConverter converter) {
