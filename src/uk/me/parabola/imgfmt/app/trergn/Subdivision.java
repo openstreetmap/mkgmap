@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
@@ -387,7 +388,7 @@ public class Subdivision {
 	}
 
 	public String toString() {
-		return "Sub" + zoomLevel + '(' + latitude + ',' + longitude + ')';
+		return "Sub" + zoomLevel + '(' + new Coord(latitude, longitude).toOSMURL() + ')';
 	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.
