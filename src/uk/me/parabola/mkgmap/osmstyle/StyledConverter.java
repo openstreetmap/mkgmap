@@ -1073,16 +1073,16 @@ public class StyledConverter implements OsmConverter {
 				wayBBox.addPoint(nextP);
 
 				if((arcLength + d) > MAX_ARC_LENGTH) {
-					assert i > 0;
-					assert trailingWay == null;
+					assert i > 0 : "long arc segment was not split";
+					assert trailingWay == null : "trailingWay not null #1";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
 				}
 				else if(wayBBox.tooBig()) {
-					assert i > 0;
-					assert trailingWay == null;
+					assert i > 0 : "arc segment with big bbox not split";
+					assert trailingWay == null : "trailingWay not null #2";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
@@ -1094,7 +1094,7 @@ public class StyledConverter implements OsmConverter {
 					// this point is already a node so it's a good place
 					// to split the way
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (using an existing node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
-					assert trailingWay == null;
+					assert trailingWay == null : "trailingWay not null #3";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
@@ -1103,7 +1103,7 @@ public class StyledConverter implements OsmConverter {
 						safeToSplitWay(points, i, i - numPointsInArc, points.size() - 1)) {
 					// we have to split the way here
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (making a new node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
-					assert trailingWay == null;
+					assert trailingWay == null : "trailingWay not null #4";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
@@ -1134,7 +1134,7 @@ public class StyledConverter implements OsmConverter {
 					// this isn't the last point in the way so split
 					// it here to avoid exceeding the max nodes in way
 					// limit
-					assert trailingWay == null;
+					assert trailingWay == null : "trailingWay not null #5";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
