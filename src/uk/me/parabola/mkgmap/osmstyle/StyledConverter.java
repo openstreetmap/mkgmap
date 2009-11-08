@@ -1061,10 +1061,7 @@ public class StyledConverter implements OsmConverter {
 																 nextP.getLongitude() -
 																 p.getLongitude());
 				if(arcProp > 1.0 || d > MAX_ARC_LENGTH) {
-					if(arcProp > 1.0)
-						nextP = p.makeBetweenPoint(nextP, 0.95 / arcProp);
-					else
-						nextP = p.makeBetweenPoint(nextP, 0.95 * MAX_ARC_LENGTH / d);
+					nextP = p.makeBetweenPoint(nextP, 0.95 * Math.min(1 / arcProp, MAX_ARC_LENGTH / d));
 					nextP.incHighwayCount();
 					points.add(i + 1, nextP);
 					double newD = p.distance(nextP);
