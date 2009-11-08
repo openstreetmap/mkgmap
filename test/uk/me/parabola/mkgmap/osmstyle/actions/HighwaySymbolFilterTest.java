@@ -13,8 +13,9 @@
 /* Create date: 21-Jul-2009 */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Steve Ratcliffe
@@ -41,24 +42,24 @@ public class HighwaySymbolFilterTest {
 	}
 
 	/**
-	 * If there are multiple spaces, then none are removed.
-	 * (Not sure why this exists).
+	 * If there are multiple spaces, then all are removed.
 	 */
 	@Test
 	public void testMultipleSpaces() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
 		String s = filter.doFilter("A 1 01");
-		assertEquals("two spaces", "\u0002A 1 01", s);
+		assertEquals("two spaces", "\u0002A101", s);
 	}
 
 	/**
-	 * Strings that are mostly alphabetic do not get changed.
+	 * Strings that are mostly alphabetic used to be unchanged but now
+	 * are treated exactly the same.
 	 */
 	@Test
 	public void testMostlyAlpha() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
 		String value = "AN1";
 		String s = filter.doFilter(value);
-		assertEquals("mostly alphabetic", value, s);
+		assertEquals("mostly alphabetic", "\002" + value, s);
 	}
 }

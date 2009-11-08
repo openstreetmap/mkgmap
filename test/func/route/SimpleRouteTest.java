@@ -23,8 +23,9 @@ import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
 import func.lib.RangeMatcher;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class SimpleRouteTest {
 
@@ -62,10 +63,10 @@ public class SimpleRouteTest {
 				assertEquals("LBL size", 27693, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73118, size);
+				assertEquals("NET size", 72709, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 172971, size);
+				assertEquals("NOD size", 172675, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
