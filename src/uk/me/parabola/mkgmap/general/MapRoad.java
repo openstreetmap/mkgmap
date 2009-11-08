@@ -121,6 +121,10 @@ public class MapRoad extends MapLine {
 		this.roadDef.setRoundabout(r);
 	}
 
+	public void doFlareCheck(boolean fc) {
+		this.roadDef.doFlareCheck(fc);
+	}
+
 	public void setLinkRoad(boolean lr) {
 		this.roadDef.setLinkRoad(lr);
 	}

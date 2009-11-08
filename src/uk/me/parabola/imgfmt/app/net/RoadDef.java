@@ -123,6 +123,7 @@ public class RoadDef implements Comparable {
 	private boolean roundabout;
 	private boolean linkRoad;
 	private boolean synthesised;
+	private boolean flareCheck;
 	private boolean showBrowseURL;
 	private Set<String> messageIssued;
 
@@ -608,6 +609,14 @@ public class RoadDef implements Comparable {
 
 	public boolean isSynthesised() {
 		return synthesised;
+	}
+
+	public void doFlareCheck(boolean fc) {
+		flareCheck = fc;
+	}
+
+	public boolean doFlareCheck() {
+		return flareCheck;
 	}
 
 	public boolean messagePreviouslyIssued(String key) {

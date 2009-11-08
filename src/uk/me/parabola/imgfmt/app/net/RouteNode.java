@@ -524,10 +524,10 @@ public class RouteNode implements Comparable<RouteNode> {
 			// triangular "flare" connected to both ends of r
 			RouteNode nb = r.getDest();
 			for(RouteArc fa : arcs) {
-				if(fa.getRoadDef().isRoundabout() || fa.getRoadDef().isSynthesised())
+				if(!fa.getRoadDef().doFlareCheck())
 					continue;
 				for(RouteArc fb : nb.arcs) {
-					if(fb.getRoadDef().isRoundabout() || fb.getRoadDef().isSynthesised())
+					if(!fb.getRoadDef().doFlareCheck())
 						continue;
 					if(fa.getDest() == fb.getDest()) {
 						// found the 3rd point of the triangle that

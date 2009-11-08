@@ -559,7 +559,8 @@ public class StyledConverter implements OsmConverter {
 			// check", check its direction
 			if(checkRoundabouts &&
 			   way.getPoints().size() > 2 &&
-			   !way.isBoolTag("mkgmap:no-dir-check")) {
+			   !way.isBoolTag("mkgmap:no-dir-check") &&
+			   !way.isNotBoolTag("mkgmap:dir-check")) {
 				Coord centre = way.getCofG();
 				int dir = 0;
 				// check every third segment
@@ -1149,8 +1150,24 @@ public class StyledConverter implements OsmConverter {
 		MapRoad road = new MapRoad(way.getId(), line);
 		road.showOSMBrowseURL();
 
-		if("roundabout".equals(way.getTag("junction")))
+		boolean doFlareCheck = true;
+		if("roundabout".equals(way.getTag("junction"))) {
 			road.setRoundabout(true);
+			doFlareCheck = false;
+		}
+
+		if(way.isBoolTag("mkgmap:synthesised")) {
+			road.setSynthesised(true);
+			doFlareCheck = false;
+		}
+
+		if(way.isNotBoolTag("mkgmap:flare-check")) {
+			doFlareCheck = false;
+		}
+		else if(way.isBoolTag("mkgmap:flare-check")) {
+			doFlareCheck = true;
+		}
+		road.doFlareCheck(doFlareCheck);
 
 		road.setLinkRoad(gt.getType() == 0x08 || gt.getType() == 0x09);
 
@@ -1289,8 +1306,6 @@ public class StyledConverter implements OsmConverter {
 
 		if(way.isBoolTag("toll"))
 			road.setToll();
-
-		road.setSynthesised(way.isBoolTag("mkgmap:synthesised"));
 
 		Way origWay = originalWay.get(way);
 		if(origWay == null)
