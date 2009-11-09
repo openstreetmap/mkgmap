@@ -25,6 +25,7 @@ package func.lib;
 public interface Args {
 	public static final String TEST_RESOURCE_OSM = "test/resources/in/osm/";
 	public static final String TEST_RESOURCE_MP = "test/resources/in/mp/";
+	public static final String TEST_RESOURCE_IMG = "test/resources/in/img/";
 
 	public static final String TEST_STYLE_ARG = "--style-file=test/resources/teststyles/main";
 

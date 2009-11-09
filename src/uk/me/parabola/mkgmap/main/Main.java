@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
@@ -74,7 +74,7 @@ public class Main implements ArgumentProcessor {
 	private String styleFile = "classpath:styles";
 	private boolean verbose;
 
-	private final List<Future<String>> futures = new LinkedList<Future<String>>();
+	private final List<FilenameTask> futures = new LinkedList<FilenameTask>();
 	private ExecutorService threadPool;
 	// default number of threads
 	private int maxJobs = 1;
@@ -169,9 +169,6 @@ public class Main implements ArgumentProcessor {
 
 	/**
 	 * Switch out to the appropriate class to process the filename.
-	 *
-	 * @param args The command arguments.
-	 * @param filename The filename to process.
 	 */
 	public void processFilename(final CommandArgs args, final String filename) {
 		final String ext = extractExtension(filename);
@@ -185,13 +182,16 @@ public class Main implements ArgumentProcessor {
 		}
 
 		log.info("Submitting job " + filename);
-		futures.add(threadPool.submit(new Callable<String>() {
-				public String call() {
-					String output = mp.makeMap(args, filename);
-					log.debug("adding output name", output);
-					return output;
-				}
-			}));
+		FilenameTask task = new FilenameTask(new Callable<String>() {
+			public String call() {
+				String output = mp.makeMap(args, filename);
+				log.debug("adding output name", output);
+				return output;
+			}
+		});
+		task.setArgs(args);
+		futures.add(task);
+		threadPool.execute(task);
 	}
 
 	private MapProcessor mapMaker(String ext) {
@@ -305,7 +305,7 @@ public class Main implements ArgumentProcessor {
 
 	public void endOptions(CommandArgs args) {
 
-		List<String> filenames = new ArrayList<String>();
+		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
 
 		if(threadPool != null) {
 			threadPool.shutdown();
@@ -313,8 +313,14 @@ public class Main implements ArgumentProcessor {
 				try {
 					try {
 						// don't call get() until a job has finished
-						if(futures.get(0).isDone())
-							filenames.add(futures.remove(0).get());
+						if(futures.get(0).isDone()) {
+							FilenameTask future = futures.remove(0);
+
+							// Provoke any exceptions by calling get and then
+							// save the result for later use
+							future.setFilename(future.get());
+							filenames.add(future);
+						}
 						else
 							Thread.sleep(10);
 					}
@@ -351,24 +357,24 @@ public class Main implements ArgumentProcessor {
 			c.init(args);
 
 		// Tell them about each filename
-		for (String file : filenames) {
-			if (file == null)
+		for (FilenameTask file : filenames) {
+			if (file == null || file.isCancelled())
 				continue;
+
 			try {
 				log.info("  " + file);
-				FileInfo mapReader = FileInfo.getFileInfo(file);
-				for (Combiner c : combiners) {
-					c.onMapEnd(mapReader);
-				}
+				FileInfo fileInfo = FileInfo.getFileInfo(file.getFilename());
+				fileInfo.setArgs(file.getArgs());
+				for (Combiner c : combiners)
+					c.onMapEnd(fileInfo);
 			} catch (FileNotFoundException e) {
 				log.error("could not open file", e);
 			}
 		}
 
 		// All done, allow tidy up or file creation to happen
-		for (Combiner c : combiners) {
+		for (Combiner c : combiners)
 			c.onFinish();
-		}
 	}
 
 	/**
@@ -395,6 +401,35 @@ public class Main implements ArgumentProcessor {
 	 */
 	private static class NameSaver implements MapProcessor {
 		public String makeMap(CommandArgs args, String filename) {
+			return filename;
+		}
+	}
+
+	private static class FilenameTask extends FutureTask<String> {
+		private CommandArgs args;
+		private String filename;
+
+		private FilenameTask(Callable<String> callable) {
+			super(callable);
+		}
+
+		public void setArgs(CommandArgs args) {
+			this.args = args;
+		}
+
+		public CommandArgs getArgs() {
+			return args;
+		}
+
+		public void setFilename(String filename) {
+			this.filename = filename;
+		}
+
+		public String getFilename() {
+			return filename;
+		}
+
+		public String toString() {
 			return filename;
 		}
 	}

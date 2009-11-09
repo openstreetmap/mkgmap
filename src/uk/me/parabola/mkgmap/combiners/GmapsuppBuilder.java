@@ -20,10 +20,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
@@ -33,6 +35,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.mps.MpsFile;
+import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
@@ -61,26 +64,19 @@ public class GmapsuppBuilder implements Combiner {
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
+
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
 	// all these need to be set in the init routine from arguments.
-	private int familyId;
-	private int productId;
 	private String areaName;
-	private String familyName;
-	//private String seriesName;
-	//private String
-
+	private String mapsetName;
 	private String overallDescription = "Combined map";
+
 	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	public void init(CommandArgs args) {
-		familyId = args.get("family-id", 0);
-		productId = args.get("product-id", 1);
-		
-		familyName = args.get("family-name", "family name");
 		areaName = args.get("area-name", null);
-
+		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 	}
 
@@ -129,26 +125,48 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
 		MpsFile mps = createMpsFile(gmapsupp);
+		mps.setMapsetName(mapsetName);
+
+		Set<Integer> products = new HashSet<Integer>();
 		for (FileInfo info : files.values()) {
 			if (info.getKind() != FileInfo.IMG_KIND)
 				continue;
-			
-			MapBlock mb = new MapBlock();
-			mb.setMapNumber(info.getMapnameAsInt());
-			mb.setMapName(info.getDescription());
-			mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
-			mb.setTypeName(familyName);
-			mb.setIds(familyId, productId);
 
-			mps.addMap(mb);
+			mps.addMap(makeMapBlock(info));
+
+			// Add a new product block if we have found a new product
+			int prod = info.getFamilyId() << 16 + info.getProductId();
+			if (!products.contains(prod)) {
+				products.add(prod);
+				mps.addProduct(makeProductBlock(info));
+			}
 		}
 
 		try {
 			mps.sync();
 			mps.close();
 		} catch (IOException e) {
-			throw new FileNotWritableException("Could not inish write to MPS file", e);
+			throw new FileNotWritableException("Could not finish write to MPS file", e);
 		}
+	}
+
+	private MapBlock makeMapBlock(FileInfo info) {
+		MapBlock mb = new MapBlock();
+		mb.setMapNumber(info.getMapnameAsInt());
+		mb.setMapDescription(info.getDescription());
+		mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
+
+		mb.setSeriesName(info.getSeriesName());
+		mb.setIds(info.getFamilyId(), info.getProductId());
+		return mb;
+	}
+
+	private ProductBlock makeProductBlock(FileInfo info) {
+		ProductBlock pb = new ProductBlock();
+		pb.setFamilyId(info.getFamilyId());
+		pb.setProductId(info.getProductId());
+		pb.setDescription(info.getFamilyName());
+		return pb;
 	}
 
 	private void addAllFiles(FileSystem outfs) {

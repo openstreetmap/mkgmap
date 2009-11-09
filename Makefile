@@ -60,7 +60,7 @@ clean:
 	rm -f 63240001/* gmapsupp/* mkgmap.log out.log
 	rm -f gmapsupp.img 632*
 	rm -f 11112222.img 11112222.tdb
-	rm -f osmmap.*
+	rm -f osmmap*
 
 load:
 	sleep 2
