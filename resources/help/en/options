@@ -141,11 +141,14 @@ Product description options:
 	It is often just 1.
 
 --series-name
+	This name will be displayed in MapSource in the map selection
+	drop-down. The default is "OSM map".
+
 --area-name
 
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files. The default map name is OSM_map
+	.img and .tdb files. The default map name is osmmap.
 	
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
@@ -214,6 +217,8 @@ Miscellaneous options:
 
 --ignore-osm-bounds
 	When reading OSM files, ignore any "bounds" elements.
+	With this option selected generate-sea sometimes works better,
+	but routing accross tiles will not work.
 
 --preserve-element-order
 	Process the map elements (nodes, ways, relations) in the order
@@ -254,6 +259,8 @@ Miscellaneous options:
 	Garmin type code is 0x640a. If desired, a different type code
 	can be specified with this option.  This is a workaround for not
 	being able to search for roads.
+	0x2f15: a blue dot in the middle of the road, and if you select,
+		or 'hover' over it, the streetname appears.
 	
 --add-pois-to-areas
 	Generate a POI for each area. The POIs are created after the
@@ -262,6 +269,17 @@ Miscellaneous options:
 
 --make-poi-index
 	Generate the POI index (not yet useful).
+
+--index
+	Generate a global index that can be used with MapSource.
+	Makes the find places functions in MapSource available.
+	The index consists of two files named osmmap.mdx and osmmap_mdr.img
+	by default.  The overview-mapname can be used to change the name.
+	If the mapset is sent to the device from MapSource, it will enable
+	find by name and address search on the GPS.
+
+	This is an experimental option and there are several unresolved
+	issues.
 
 --make-all-cycleways
 	Turn on all of the options that make cycleways.

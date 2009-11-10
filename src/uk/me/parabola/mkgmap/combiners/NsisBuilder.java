@@ -41,7 +41,7 @@ public class NsisBuilder implements Combiner {
 		productId = args.get("product-id", 1);
 
 		baseFilename = args.get("overview-mapname", "osm");
-		seriesName = args.get("series-name", "OSM maps");
+		seriesName = args.get("series-name", "OSM map");
 
 		String tmpId = Integer.toHexString(0x10000 | familyId);
 
