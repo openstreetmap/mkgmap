@@ -762,8 +762,15 @@ public class MapBuilder implements Configurable {
 			}
 
 			Coord coord = point.getLocation();
-			p.setLatitude(coord.getLatitude());
-			p.setLongitude(coord.getLongitude());
+			try {
+				p.setLatitude(coord.getLatitude());
+				p.setLongitude(coord.getLongitude());
+			}
+			catch (AssertionError ae) {
+				log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
+				log.error("  " + ae.getMessage());
+				continue;
+			}
 
 			POIRecord r = poimap.get(point);
 			if (r != null)
@@ -804,8 +811,15 @@ public class MapBuilder implements Configurable {
 				p.setType(point.getType());
 
 				Coord coord = point.getLocation();
-				p.setLatitude(coord.getLatitude());
-				p.setLongitude(coord.getLongitude());
+				try {
+					p.setLatitude(coord.getLatitude());
+					p.setLongitude(coord.getLongitude());
+				}
+				catch (AssertionError ae) {
+					log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
+					log.error("  " + ae.getMessage());
+					continue;
+				}
 
 				map.addMapObject(p);
 				if(name != null && div.getZoom().getLevel() == 0) {
