@@ -83,6 +83,10 @@ public class StyledConverter implements OsmConverter {
 	// from
 	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
+	// limit line length to avoid problems with portions of really
+	// long lines being assigned to the wrong subdivision
+	private final int MAX_LINE_LENGTH = 40000;
+
 	// limit arc lengths to avoid Nuvi routing failures
 	private final int MAX_ARC_LENGTH = 35000;
 
@@ -374,9 +378,33 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addLine(Way way, GType gt) {
+		List<Coord> wayPoints = way.getPoints();
+		List<Coord> points = new ArrayList<Coord>(wayPoints.size());
+		double lineLength = 0;
+		Coord lastP = null;
+		for(Coord p : wayPoints) {
+			points.add(p);
+			if(lastP != null) {
+				lineLength += p.distance(lastP);
+				if(lineLength >= MAX_LINE_LENGTH) {
+					addLine(way, gt, points);
+					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
+					points.add(p);
+					lineLength = 0;
+					log.info("Splitting line at " + p.toOSMURL() + " to limit its length to " + (long)lineLength + "m");
+				}
+			}
+			lastP = p;
+		}
+
+		if(points.size() > 1)
+			addLine(way, gt, points);
+	}
+
+	private void addLine(Way way, GType gt, List<Coord> points) {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
-		line.setPoints(way.getPoints());
+		line.setPoints(points);
 
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
