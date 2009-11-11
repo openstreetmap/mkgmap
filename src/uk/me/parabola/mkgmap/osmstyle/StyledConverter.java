@@ -83,8 +83,8 @@ public class StyledConverter implements OsmConverter {
 	// from
 	private final Map<Way, Way> originalWay = new HashMap<Way, Way>();
 
-	// limit arc lengths to what can be handled by RouteArc
-	private final int MAX_ARC_LENGTH = 75000;
+	// limit arc lengths to avoid Nuvi routing failures
+	private final int MAX_ARC_LENGTH = 35000;
 
 	private final int MAX_POINTS_IN_WAY = LineSplitterFilter.MAX_POINTS_IN_LINE;
 
