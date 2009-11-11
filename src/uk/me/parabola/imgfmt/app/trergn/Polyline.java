@@ -86,12 +86,12 @@ public class Polyline extends MapObject {
 			w = new LinePreparer(this);
 		}
 		catch (AssertionError ae) {
-			log.error("Problem writing line of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
-			log.error("Subdivision shift is " + getSubdiv().getShift() +
+			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
+			log.error("  Subdivision shift is " + getSubdiv().getShift() +
 					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
+			log.error("  " + ae.getMessage());
 			if(roaddef != null)
-				log.error("Way is " + roaddef);
-			ae.printStackTrace();
+				log.error("  Way is " + roaddef);
 			return;
 		}
 
@@ -167,13 +167,12 @@ public class Polyline extends MapObject {
 			w = new LinePreparer(this);
 		}
 		catch (AssertionError ae) {
-			log.error("Problem writing line of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
+			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
 			log.error("  Subdivision shift is " + getSubdiv().getShift() +
 					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
 			log.error("  " + ae.getMessage());
 			if(roaddef != null)
 				log.error("  Way is " + roaddef);
-			ae.printStackTrace();
 			return;
 		}
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
