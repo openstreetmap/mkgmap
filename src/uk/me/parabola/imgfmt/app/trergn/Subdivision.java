@@ -113,12 +113,16 @@ public class Subdivision {
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
 		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
-		if (w > 0x7fff)
+		if (w > 0x7fff) {
+			log.warn("Subdivision width is " + w + " at " + new Coord(latitude, longitude));
 			w = 0x7fff;
+		}
 
 		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
-		if (h > 0xffff)
+		if (h > 0xffff) {
+			log.warn("Subdivision height is " + h + " at " + new Coord(latitude, longitude));
 			h = 0xffff;
+		}
 
 		this.width = w;
 		this.height = h;
