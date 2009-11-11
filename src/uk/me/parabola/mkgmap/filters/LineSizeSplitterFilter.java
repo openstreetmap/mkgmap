@@ -156,7 +156,10 @@ public class LineSizeSplitterFilter implements MapFilter {
 		if (coords.size() > 1) {
 			log.debug("bigness saving a final part");
 			l.setPoints(coords);
-			next.addElement(l);
+			if(first)
+				next.doFilter(l);
+			else
+				next.addElement(l);
 		}
 	}
 }
