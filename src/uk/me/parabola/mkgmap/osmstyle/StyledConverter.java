@@ -862,21 +862,18 @@ public class StyledConverter implements OsmConverter {
 
 		if(clippedWays != null) {
 			for(Way cw : clippedWays) {
-				while(cw.getPoints().size() > MAX_POINTS_IN_WAY) {
-					Way tail = splitWayAt(cw, MAX_POINTS_IN_WAY - 1);
-					addRoadAfterSplittingLoops(cw, gt);
-					cw = tail;
-				}
+				// make sure the way has nodes at each end
+				cw.getPoints().get(0).incHighwayCount();
+				cw.getPoints().get(cw.getPoints().size() - 1).incHighwayCount();
 				addRoadAfterSplittingLoops(cw, gt);
 			}
 		}
 		else {
 			// no bounding box or way was not clipped
-			while(way.getPoints().size() > MAX_POINTS_IN_WAY) {
-				Way tail = splitWayAt(way, MAX_POINTS_IN_WAY - 1);
-				addRoadAfterSplittingLoops(way, gt);
-				way = tail;
-			}
+
+			// make sure the way has nodes at each end
+			way.getPoints().get(0).incHighwayCount();
+			way.getPoints().get(way.getPoints().size() - 1).incHighwayCount();
 			addRoadAfterSplittingLoops(way, gt);
 		}
 	}
@@ -955,7 +952,9 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	// safeToSplitWay() returns true if it safe (no short arcs will be
-	// created) to split a way at a given position
+	// created) to split a way at a given position - assumes that the
+	// floor and ceiling points will become nodes even if they are not
+	// yet
 	//
 	// points - the way's points
 	// pos - the position we are testing
@@ -964,13 +963,24 @@ public class StyledConverter implements OsmConverter {
 
 	boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
 		Coord candidate = points.get(pos);
+		// avoid running off the ends of the list
+		if(floor < 0)
+			floor = 0;
+		if(ceiling >= points.size())
+			ceiling = points.size() - 1;
 		// test points after pos
 		for(int i = pos + 1; i <= ceiling; ++i) {
 			Coord p = points.get(i);
-			if(p.getHighwayCount() > 1) {
+			if(i == ceiling || p.getHighwayCount() > 1) {
 				// point is going to be a node
-				if(candidate.equals(p))
+				if(candidate.equals(p)) {
+					// coordinates are equal, that's too close
 					return false;
+				}
+				// no need to test further
+				break;
+			}
+			else if(!candidate.equals(p)) {
 				// no need to test further
 				break;
 			}
@@ -978,10 +988,16 @@ public class StyledConverter implements OsmConverter {
 		// test points before pos
 		for(int i = pos - 1; i >= floor; --i) {
 			Coord p = points.get(i);
-			if(p.getHighwayCount() > 1) {
+			if(i == floor || p.getHighwayCount() > 1) {
 				// point is going to be a node
-				if(candidate.equals(p))
+				if(candidate.equals(p)) {
+					// coordinates are equal, that's too close
 					return false;
+				}
+				// no need to test further
+				break;
+			}
+			else if(!candidate.equals(p)) {
 				// no need to test further
 				break;
 			}
@@ -1007,14 +1023,10 @@ public class StyledConverter implements OsmConverter {
 		Way trailingWay = null;
 		String debugWayName = getDebugName(way);
 
-		// make sure the way has nodes at each end
-		points.get(0).incHighwayCount();
-		points.get(points.size() - 1).incHighwayCount();
-
 		// collect the Way's nodes and also split the way if any
 		// inter-node arc length becomes excessive
 		double arcLength = 0;
-		int numPointsInArc = 0;
+		int numPointsInArc = 1;
 		// track the dimensions of the way's bbox so that we can
 		// detect if it would be split by the LineSizeSplitterFilter
 		class WayBBox {
@@ -1054,6 +1066,7 @@ public class StyledConverter implements OsmConverter {
 			if((i + 1) < points.size()) {
 				Coord nextP = points.get(i + 1);
 				double d = p.distance(nextP);
+				int numPointsRemaining = points.size() - i;
 				// get arc size as a proportion of the max allowed - a
 				// value greater than 1.0 indicate that the bbox is
 				// too large in at least one dimension
@@ -1088,31 +1101,86 @@ public class StyledConverter implements OsmConverter {
 					// points so the loop will now terminate
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
 				}
-				else if(numPointsInArc >= (MAX_POINTS_IN_ARC / 2) &&
-						points.size() > MAX_POINTS_IN_ARC &&
+				else if(i > 0 &&
+						(numPointsInArc + numPointsRemaining) > MAX_POINTS_IN_ARC &&
+						numPointsRemaining <= MAX_POINTS_IN_ARC &&
 						p.getHighwayCount() > 1) {
-					// this point is already a node so it's a good place
-					// to split the way
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (using an existing node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
+					// if there happens to be no more nodes following
+					// this one, the way will have to be split
+					// somewhere otherwise the arc will be too long so
+					// may as well split it here
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (using an existing node) to limit number of points in this arc to " + numPointsInArc + ", way has " + numPointsRemaining + " more points");
 					assert trailingWay == null : "trailingWay not null #3";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
 				}
 				else if(numPointsInArc >= MAX_POINTS_IN_ARC &&
-						safeToSplitWay(points, i, i - numPointsInArc, points.size() - 1)) {
-					// we have to split the way here
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (making a new node) to limit number of points in this arc to " + numPointsInArc + ", way has " + (points.size() - i) + " more points");
-					assert trailingWay == null : "trailingWay not null #4";
+						p.getHighwayCount() < 2) {
+					// we have to split the way here or earlier
+					// search backwards for a safe place to split the way
+					int splitI = i;
+					int npia = numPointsInArc;
+					while(splitI > 0 &&
+						  !safeToSplitWay(points, splitI, i - numPointsInArc - 1, points.size() - 1)) {
+						--splitI;
+						--npia;
+					}
+					if(splitI > 0) {
+						// we have to split the way here
+						log.info("Splitting way " + debugWayName + " at " + points.get(splitI).toOSMURL() + " (making a new node) to limit number of points in this arc to " + npia + ", way has " + (points.size() - splitI) + " more points");
+						assert trailingWay == null : "trailingWay not null #4";
+						trailingWay = splitWayAt(way, splitI);
+						// this will have truncated the current Way's
+						// points so the loop will now terminate
+						p = points.get(splitI);
+						i = splitI; // hack alert! modify loop index
+					}
+					else {
+						log.error("Way " + debugWayName + " at " + points.get(i).toOSMURL() + " has too many points in an arc (" + numPointsInArc + ") but I can't find a safe place to split the way - something's badly wrong here!");
+						return;
+					}
+				}
+				else if(i > 0 &&
+						(i + numPointsRemaining + 1) > MAX_POINTS_IN_WAY &&
+						numPointsRemaining <= MAX_POINTS_IN_WAY &&
+						p.getHighwayCount() > 1) {
+					// if there happens to be no more nodes following
+					// this one, the way will have to be split
+					// somewhere otherwise it will be too long so may
+					// as well split it here
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (using an existing node) to limit number of points in this way to " + (i + 1) + ", way has " + numPointsRemaining + " more points");
+					assert trailingWay == null : "trailingWay not null #5";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
+				}
+				else if(i >= (MAX_POINTS_IN_WAY-1) && p.getHighwayCount() < 2) {
+					// we have to split the way here or earlier
+					// search backwards for a safe place to split the way
+					int splitI = i;
+					while(splitI > 0 &&
+						  !safeToSplitWay(points, splitI, i - numPointsInArc - 1, points.size() - 1))
+						--splitI;
+					if(splitI > 0) {
+						log.info("Splitting way " + debugWayName + " at " + points.get(splitI).toOSMURL() + " (making a new node) to limit number of points in this way to " + (splitI + 1) + ", way has " + (points.size() - splitI) + " more points");
+						assert trailingWay == null : "trailingWay not null #6";
+						trailingWay = splitWayAt(way, splitI);
+						// this will have truncated the current Way's
+						// points so the loop will now terminate
+						p = points.get(splitI);
+						i = splitI; // hack alert! modify loop index
+					}
+					else {
+						log.error("Way " + debugWayName + " at " + points.get(i).toOSMURL() + " has too many points (" + points.size() + ") but I can't find a safe place to split the way - something's badly wrong here!");
+						return;
+					}
 				}
 				else {
 					if(p.getHighwayCount() > 1) {
 						// point is a node so zero arc length
 						arcLength = 0;
-						numPointsInArc = 0;
+						numPointsInArc = 1;
 					}
 
 					arcLength += d;
@@ -1134,7 +1202,7 @@ public class StyledConverter implements OsmConverter {
 					// this isn't the last point in the way so split
 					// it here to avoid exceeding the max nodes in way
 					// limit
-					assert trailingWay == null : "trailingWay not null #5";
+					assert trailingWay == null : "trailingWay not null #7";
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
