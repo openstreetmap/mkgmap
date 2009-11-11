@@ -38,7 +38,12 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 	private static final int MAX_SIZE = 0x7fff;
 
+	private int shift;
+
 	public void init(FilterConfig config) {
+		shift = config.getShift();
+		if (shift > 15)
+			shift = 16;
 	}
 
 	// return the greater of the absolute values of HEIGHT and WIDTH
@@ -59,9 +64,11 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// We do not deal with shapes.
 		assert !(element instanceof MapShape) && element instanceof MapLine;
 
+		int maxSize = MAX_SIZE << shift;
+
 		MapLine line = (MapLine) element;
 
-		if (line.getBounds().getMaxDimention() < MAX_SIZE) {
+		if (line.getBounds().getMaxDimention() < maxSize) {
 			next.doFilter(element);
 			return;
 		}
@@ -127,7 +134,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		for (Coord co : points) {
 			coords.add(co);
 			dim.addToBounds(co);
-			if (dim.getMaxDim() > MAX_SIZE) {
+			if (dim.getMaxDim() > maxSize) {
 				log.debug("bigness saving first part");
 				l.setPoints(coords);
 
