@@ -194,6 +194,7 @@ public class MapArea implements MapDataSource {
 	public MapArea[] split(int nx, int ny, int resolution) {
 		Area[] areas = bounds.split(nx, ny);
 		MapArea[] mapAreas = new MapArea[nx * ny];
+		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
 		for (int i = 0; i < nx * ny; i++) {
 			mapAreas[i] = new MapArea(areas[i], resolution);
 			if (log.isDebugEnabled())
@@ -501,7 +502,7 @@ public class MapArea implements MapDataSource {
 				return ma;
 		if(e.getType() == 0x4b)
 			return areas[0]; // as good as any?
-		log.error("Map element with type 0x" + Integer.toHexString(e.getType()) + " (" + e.getClass() + " at " + e.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+		log.error("Map element with type 0x" + Integer.toHexString(e.getType()) + " (" + e.getClass() + ") at " + e.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
 		return null;
 	}
 }

@@ -572,6 +572,7 @@ public class MapBuilder implements Configurable {
 
 				MapSplitter splitter = new MapSplitter(srcDivPair.getSource(), zoom);
 				MapArea[] areas = splitter.split();
+				log.info("Map region " + srcDivPair.getSource().getBounds() + " split into " + areas.length + " areas at resolution " + zoom.getResolution());
 
 				for (MapArea area : areas) {
 					Subdivision parent = srcDivPair.getSubdiv();

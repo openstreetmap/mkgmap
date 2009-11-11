@@ -182,6 +182,7 @@ class MapSplitter {
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
 		int height = bounds.getHeight() >> shift;
+		log.info("splitMaxSize() bounds = " + bounds + " shift = " + shift + " width = " + width + " height = " + height);
 		if (log.isDebugEnabled())
 			log.debug("shifted width", width, "shifted height", height);
 
