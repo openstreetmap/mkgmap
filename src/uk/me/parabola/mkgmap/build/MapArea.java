@@ -100,8 +100,10 @@ public class MapArea implements MapDataSource {
 		addToBounds(bounds);
 
 		for (MapPoint p : src.getPoints()) {
-			points.add(p);
-			addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
+			if(bounds.contains(p.getLocation()))
+				addPoint(p);
+			else
+				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
 		}
 		addLines(src, resolution);
 		addPolygons(src, resolution);
@@ -117,8 +119,13 @@ public class MapArea implements MapDataSource {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
 
-				shapes.add(shape);
-				addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
+				if(bounds.contains(element.getLocation()) ||
+				   element.getType() == 0x4b) {
+					shapes.add(shape);
+					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
+				}
+				else
+					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
 			}
 
 			public void addElement(MapElement element) {
@@ -150,8 +157,13 @@ public class MapArea implements MapDataSource {
 			public void doFilter(MapElement element) {
 				MapLine line = (MapLine) element;
 
-				lines.add(line);
-				addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
+				if(bounds.contains(element.getLocation())) {
+					lines.add(line);
+					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
+				}
+				else
+					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+
 			}
 
 			public void addElement(MapElement element) {
