@@ -514,7 +514,7 @@ public class MapArea implements MapDataSource {
 				return ma;
 		if(e.getType() == 0x4b)
 			return areas[0]; // as good as any?
-		log.error("Map element with type 0x" + Integer.toHexString(e.getType()) + " (" + e.getClass() + ") at " + e.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+		log.error("CONSIDER THIS AS AN ASSERTION: Map element with type 0x" + Integer.toHexString(e.getType()) + " (" + e.getClass() + ") at " + e.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
 		return null;
 	}
 }
