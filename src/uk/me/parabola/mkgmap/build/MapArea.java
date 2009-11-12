@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -213,11 +212,15 @@ public class MapArea implements MapDataSource {
 				log.debug("area before", mapAreas[i].getBounds());
 		}
 
+		int xbase = areas[0].getMinLong();
+		int ybase = areas[0].getMinLat();
+		int dx = areas[0].getWidth();
+		int dy = areas[0].getHeight();
+
 		// Now sprinkle each map element into the correct map area.
 		for (MapPoint p : this.points) {
-			MapArea area1 = pickArea(mapAreas, p);
-			if(area1 != null)
-				area1.addPoint(p);
+			MapArea area1 = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
+			area1.addPoint(p);
 		}
 
 		for (MapLine l : this.lines) {
@@ -225,15 +228,13 @@ public class MapArea implements MapDataSource {
 			if (l.getBounds().getMaxDimention() <= 0)
 				continue;
 
-			MapArea area1 = pickArea(mapAreas, l);
-			if(area1 != null)
-				area1.addLine(l);
+			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
+			area1.addLine(l);
 		}
 
 		for (MapShape e : this.shapes) {
-			MapArea area1 = pickArea(mapAreas, e);
-			if(area1 != null)
-				area1.addShape(e);
+			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
+			area1.addShape(e);
 		}
 
 		return mapAreas;
@@ -504,17 +505,49 @@ public class MapArea implements MapDataSource {
 	 * Out of all the available areas, it picks the one that the map element
 	 * should be placed into.
 	 *
+	 * Since we know how the area is divided (equal sizes) we can work out
+	 * which one it fits into without stepping through them all and checking
+	 * coordinates.
+	 *
 	 * @param areas The available areas to choose from.
 	 * @param e The map element.
+	 * @param xbase The x coord at the origin
+	 * @param ybase The y coord of the origin
+	 * @param nx number of divisions.
+	 * @param ny number of divisions in y.
+	 * @param dx The size of each division (x direction)
+	 * @param dy The size of each division (y direction)
 	 * @return The area from areas where the map element fits.
 	 */
-	private MapArea pickArea(MapArea[] areas, MapElement e) {
-		for(MapArea ma : areas)
-			if(ma.bounds.contains(e.getLocation()))
-				return ma;
-		if(e.getType() == 0x4b)
-			return areas[0]; // as good as any?
-		log.error("CONSIDER THIS AS AN ASSERTION: Map element with type 0x" + Integer.toHexString(e.getType()) + " (" + e.getClass() + ") at " + e.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
-		return null;
+	private MapArea pickArea(MapArea[] areas, MapElement e,
+			int xbase, int ybase,
+			int nx, int ny,
+			int dx, int dy)
+	{
+		int x = e.getLocation().getLongitude();
+		int y = e.getLocation().getLatitude();
+
+		int xcell = (x - xbase) / dx;
+		int ycell = (y - ybase) / dy;
+
+		if (xcell < 0) {
+			log.info("xcell was", xcell, "x", x, "xbase", xbase);
+			xcell = 0;
+		}
+		if (ycell < 0) {
+			log.info("ycell was", ycell, "y", y, "ybase", ybase);
+			ycell = 0;
+		}
+		
+		if (xcell >= nx)
+			xcell = nx - 1;
+		if (ycell >= ny)
+			ycell = ny - 1;
+
+		if (log.isDebugEnabled()) {
+			log.debug("adding", e.getLocation(), "to", xcell, "/", ycell,
+					areas[xcell * ny + ycell].getBounds());
+		}
+		return areas[xcell * ny + ycell];
 	}
 }
