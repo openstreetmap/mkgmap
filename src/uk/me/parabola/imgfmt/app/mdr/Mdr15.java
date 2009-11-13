@@ -14,6 +14,8 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
@@ -27,6 +29,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Mdr15 extends MdrSection {
 	private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+	private final Map<String, Integer> strings = new HashMap<String, Integer>();
 
 	public Mdr15(MdrConfig config) {
 		setConfig(config);
@@ -45,8 +49,11 @@ public class Mdr15 extends MdrSection {
 	}
 
 	public int createString(String str) {
-		int off = buffer.size();
+		Integer offset = strings.get(str);
+		if (offset != null)
+			return offset;
 
+		int off = buffer.size();
 		try {
 			buffer.write(str.getBytes("latin1"));
 			buffer.write(0);
@@ -55,6 +62,7 @@ public class Mdr15 extends MdrSection {
 			off = 0;
 		}
 
+		strings.put(str, off);
 		return off;
 	}
 
