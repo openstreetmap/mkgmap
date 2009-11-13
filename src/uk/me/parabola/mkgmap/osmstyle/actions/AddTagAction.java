@@ -16,6 +16,9 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -25,21 +28,12 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class AddTagAction implements Action {
-	private boolean modify;
+	private final boolean modify;
 	private final String tag;
-	private final ValueBuilder value;
+	private final List<ValueBuilder> values = new ArrayList<ValueBuilder>();
 
 	// The tags used to build the value.
 	private Element valueTags;
-
-	/**
-	 * Create an action to add the given tag and value.  If the tag
-	 * already has a value then nothing is done.
-	 */
-	public AddTagAction(String tag, String value) {
-		this.tag = tag;
-		this.value = new ValueBuilder(value);
-	}
 
 	/**
 	 * Create an action to add the given tag with a value.
@@ -49,7 +43,7 @@ public class AddTagAction implements Action {
 	public AddTagAction(String tag, String value, boolean modify) {
 		this.modify = modify;
 		this.tag = tag;
-		this.value = new ValueBuilder(value);
+		this.values.add(new ValueBuilder(value));
 	}
 
 	public void perform(Element el) {
@@ -57,11 +51,19 @@ public class AddTagAction implements Action {
 		if (tv != null && !modify)
 			return;
 
-		Element values = valueTags!=null? valueTags: el;
+		Element tags = valueTags!=null? valueTags: el;
 
-		String newval = value.build(values);
-		if (newval != null)
-			el.addTag(tag, newval);
+		for (ValueBuilder value : values) {
+			String newval = value.build(tags);
+			if (newval != null) {
+				el.addTag(tag, newval);
+				break;
+			}
+		}
+	}
+
+	public void add(String value) {
+		values.add(new ValueBuilder(value));
 	}
 
 	public void setValueTags(Element valueTags) {
@@ -73,7 +75,7 @@ public class AddTagAction implements Action {
 		sb.append(modify ? "set " : "add ");
 		sb.append(tag);
 		sb.append("=");
-		sb.append(value);
+		sb.append(values);
 		return sb.toString();
 	}
 }

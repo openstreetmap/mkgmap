@@ -30,8 +30,9 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Test the possible actions that can appear in an action block.
@@ -221,6 +222,29 @@ public class ActionReaderTest {
 		Rule rule = new ActionRule(null, actions);
 		rule.resolveType(rel);
 		assertEquals("route_no taken from relation tags", "66", el1.getTag("route"));
+	}
+
+	@Test
+	public void testAlternatives() {
+		List<Action> actions = readActionsFromString(
+				"{set fred = '${park}' | 'default value'}");
+
+		Element el = makeElement();
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("first alternative", "no", el.getTag("fred"));
+	}
+
+	@Test
+	public void testSecondAlternative() {
+		List<Action> actions = readActionsFromString(
+				"{set fred = '${notset}' | 'default value'}");
+
+		Element el = makeElement();
+		el.addTag("fred", "origvalue");
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("second alternative", "default value", el.getTag("fred"));
 	}
 
 	private Element stdElementRun(List<Action> actions) {

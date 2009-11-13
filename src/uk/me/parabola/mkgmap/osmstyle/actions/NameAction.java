@@ -55,8 +55,7 @@ public class NameAction implements Action {
 	}
 
 	public void add(String val) {
-		ValueBuilder vb = new ValueBuilder(val);
-		names.add(vb);
+		names.add(new ValueBuilder(val));
 	}
 
 	public String toString() {
