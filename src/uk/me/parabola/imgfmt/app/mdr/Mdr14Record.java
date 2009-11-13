@@ -13,11 +13,28 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
+ * A country record.
  * @author Steve Ratcliffe
  */
-public class Mdr14Record extends RecordBase {
+public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 	private int countryIndex;
 	private int strOff;
+
+	/**
+	 * Sort by map id and then country id like for regions.  We don't have
+	 * any evidence that this is necessary, but it would be suprising if
+	 * it wasn't.
+	 */
+	public int compareTo(Mdr14Record o) {
+		int v1 = (getMapIndex()<<16) + countryIndex;
+		int v2 = (o.getMapIndex()<<16) + o.countryIndex;
+		if (v1 < v2)
+			return -1;
+		else if (v1 > v2)
+			return 1;
+		else
+			return 0;
+	}
 
 	public int getCountryIndex() {
 		return countryIndex;

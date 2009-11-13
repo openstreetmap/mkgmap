@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -30,6 +31,8 @@ public class Mdr14 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		Collections.sort(countries);
+		
 		for (Mdr14Record country : countries) {
 			putMapIndex(writer, country.getMapIndex());
 			writer.putChar((char) country.getCountryIndex());
