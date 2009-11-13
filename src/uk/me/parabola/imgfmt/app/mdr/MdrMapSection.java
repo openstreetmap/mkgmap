@@ -60,13 +60,12 @@ public abstract class MdrMapSection extends MdrSection {
 	public abstract int getPointerSize();
 
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
-		//int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
-		//putN(writer, getSizes().getCitySize(), cityIndex | flag);
-		putN(writer, 2, cityIndex | 0x8000);
+		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
+		putN(writer, getSizes().getCitySize(), cityIndex | flag);
 	}
 
 	protected void putRegionIndex(ImgFileWriter writer, int region) {
-		putN(writer, 2, region);
+		putN(writer, getSizes().getCitySize(), region);
 	}
 
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {

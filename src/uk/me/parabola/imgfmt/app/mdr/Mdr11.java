@@ -90,11 +90,14 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public int getExtraValue() {
-		// XXX don't really know how this is organised for this section.
-		int val = 0x13;
+		int mdr11flags = 0x13;
 		PointerSizes sizes = getSizes();
-		if (sizes.getCitySize() == 3)
-			val |= 0x4;
-		return val;
+
+		// two bit field for city bytes.  minimum size of 2
+		int citySize = sizes.getCitySize();
+		if (citySize > 2)
+			mdr11flags |= (citySize-2) << 2;
+
+		return mdr11flags;
 	}
 }
