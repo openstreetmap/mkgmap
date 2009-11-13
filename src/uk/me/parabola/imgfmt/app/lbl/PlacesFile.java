@@ -22,13 +22,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.app.trergn.Subdivision;
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-
+import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.util.Sortable;
-
-import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -96,7 +94,7 @@ public class PlacesFile {
 		byte poiglobalflags = placeHeader.getPOIGlobalFlags();
 		for (POIRecord p : pois)
 			p.write(writer, poiglobalflags,
-				writer.position() - poistart, cities.size(), postalCodes.size(), highways.size(), exitFacilities.size());
+				writer.position() - poistart, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 		placeHeader.endPOI(writer.position());
 
 		int numPoiIndexEntries = 0;
@@ -285,8 +283,8 @@ public class PlacesFile {
 
 	void allPOIsDone() {
 
-		int index = 1;
 		Collections.sort(regionList);
+		int index = 1;
 		for (Sortable<String, Region> sr: regionList)
 			sr.getValue().setIndex(index++);
 
@@ -305,11 +303,11 @@ public class PlacesFile {
 
 		int ofs = 0;
 		for (POIRecord p : pois)
-			ofs += p.calcOffset(ofs, poiFlags, cities.size(), postalCodes.size(), highways.size(), exitFacilities.size());
+			ofs += p.calcOffset(ofs, poiFlags, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 	}
 
 	public int numCities() {
-		return cities.size();
+		return cityList.size();
 	}
 
 	public int numZips() {
