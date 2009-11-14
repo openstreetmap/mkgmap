@@ -102,7 +102,7 @@ public class MapArea implements MapDataSource {
 			if(bounds.contains(p.getLocation()))
 				addPoint(p);
 			else
-				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+				log.error("Point with type 0x" + Integer.toHexString(p.getType()) + " at " + p.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 		}
 		addLines(src, resolution);
 		addPolygons(src, resolution);
@@ -113,7 +113,7 @@ public class MapArea implements MapDataSource {
 	 * @param src The map data.
 	 * @param resolution The resolution of this layer.
 	 */
-	private void addPolygons(MapDataSource src, int resolution) {
+	private void addPolygons(MapDataSource src, final int resolution) {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
@@ -124,7 +124,7 @@ public class MapArea implements MapDataSource {
 					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 				}
 				else
-					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 			}
 
 			public void addElement(MapElement element) {
@@ -149,7 +149,7 @@ public class MapArea implements MapDataSource {
 	 * @param src The map data.
 	 * @param resolution The current resolution of the layer.
 	 */
-	private void addLines(MapDataSource src, int resolution) {
+	private void addLines(MapDataSource src, final int resolution) {
 		// Split lines for size, such that it is appropriate for the
 		// resolution that it is at.
 		MapFilterChain chain = new MapFilterChain() {
@@ -161,7 +161,7 @@ public class MapArea implements MapDataSource {
 					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 				}
 				else
-					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight());
+					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 
 			}
 
