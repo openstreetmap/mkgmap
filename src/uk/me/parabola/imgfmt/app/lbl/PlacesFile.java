@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -170,6 +171,14 @@ public class PlacesFile {
 		
 		City c = null;
 
+		// if unique is true, make sure that the name really is unique
+		if(unique && cities.get(uniqueCityName) != null) {
+			do {
+				// add random suffix
+				uniqueCityName += "_" + new Random().nextInt(0x10000);
+			} while(cities.get(uniqueCityName) != null);
+		}
+
 		if(!unique)
 			c = cities.get(uniqueCityName);
 		
@@ -182,6 +191,7 @@ public class PlacesFile {
 
 			cityList.add(new Sortable<String, City>(name, c));
 			cities.put(uniqueCityName, c);
+			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
 
 		return c;
@@ -192,6 +202,14 @@ public class PlacesFile {
 		String uniqueCityName = name.toUpperCase() + "_R" + region.getLabel().getOffset();
 		
 		City c = null;
+
+		// if unique is true, make sure that the name really is unique
+		if(unique && cities.get(uniqueCityName) != null) {
+			do {
+				// add randomish suffix
+				uniqueCityName += "_" + new Random().nextInt(0x10000);
+			} while(cities.get(uniqueCityName) != null);
+		}
 
 		if(!unique)
 			c = cities.get(uniqueCityName);
@@ -205,6 +223,7 @@ public class PlacesFile {
 
 			cityList.add(new Sortable<String, City>(name, c));
 			cities.put(uniqueCityName, c);
+			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
 
 		return c;
