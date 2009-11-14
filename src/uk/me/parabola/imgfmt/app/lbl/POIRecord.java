@@ -320,65 +320,64 @@ public class POIRecord {
 		}
 	}
 
-	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
-	{
-		/**
-			Street and Phone numbers can be stored in two different ways in the poi record
-			Simple Number that only contain digits are coded in base 11 coding.
-			This helper	class tries to code the given number. If the number contains other
-			chars like in 4a the coding fails and the caller has to use a Label instead
-		*/
+	/**
+	 * Street and Phone numbers can be stored in two different ways in the poi record
+	 * Simple Number that only contain digits are coded in base 11 coding.
+	 * This helperclass tries to code the given number. If the number contains other
+	 * chars like in 4a the coding fails and the caller has to use a Label instead
+	 */
+	class SimpleStreetPhoneNumber {
 
 		private byte[] encodedNumber;
 		private int  encodedSize;
 
-		public boolean set(String number)
-		{
-			int i = 0;
-			int j = 0;
-			int val = 0;
+		/**
+		 * Encode a string as base 11.
+		 * @param str The input string.
+		 * @return If the string is not all numeric (or A) then false is returned
+		 * and the string will be encoded as a label instead.
+		 */
+		public boolean set(String str) {
 
-			// remove sourounding whitespaces to increase chance for simple encoding
-
-			number = number.trim();
+			// remove surrounding whitespace to increase chance for simple encoding
+			String number = str.trim();
 
 			encodedNumber  = new byte[(number.length()/2)+2];
 
-			while(i < number.length())
-			{
-				int c1;
+			int i = 0;
+			int j = 0;
+			int val = 0;
+			while (i < number.length()) {
+
+				int c1 = decodeChar(number.charAt(i++));
+
 				int c2;
-
-				c1 = decodeChar(number.charAt(i));
-				i++;
-
-				if(i < number.length())
-				{
-					c2 = decodeChar(number.charAt(i));
-					i++;
-				}
-				else
+				if (i < number.length()) {
+					c2 = decodeChar(number.charAt(i++));
+				} else
 					c2 = 10;
 
-				if(c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10) // Only 0-9 and - allowed
-				{
+				// Only 0-9 and - allowed
+				if (c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10)
 					return false;
-				}
 
-				val = c1 * 11 + c2;  							// Encode as base 11
+				// Encode as base 11
+				val = c1 * 11 + c2;
 
-				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
-					val |= 0x80;							 // If this is not set would be treated as label pointer
+				// first byte needs special marking with 0x80
+				// If this is not set would be treated as label pointer
+				if (j == 0)
+					val |= 0x80;
 
 				encodedNumber[j++] = (byte)val;
 			}
+			if (j == 0)
+				return false;
 
-			if((val & 0x80) == 0 || i < 3)  // terminate string with 0x80 if not done
-			{
-				val = 0xF8;
-				encodedNumber[j++] = (byte)val;
-			}
-
+			if (j == 1)
+				encodedNumber[j++] = (byte) 0xf8;
+			else
+				encodedNumber[j-1] |= 0x80;
 			encodedSize  = j;
 
 			return true;

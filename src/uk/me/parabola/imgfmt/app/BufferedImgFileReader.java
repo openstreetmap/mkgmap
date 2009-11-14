@@ -226,7 +226,7 @@ public class BufferedImgFileReader implements ImgFileReader {
 
 		String digit = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		while (num != 0) {
-			val.append(digit.charAt((int) (num % base)));
+			val.append(digit.charAt(num % base));
 			num /= base;
 		}
 
