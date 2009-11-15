@@ -118,7 +118,8 @@ public class MapArea implements MapDataSource {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
 
-				if(bounds.contains(element.getLocation()) ||
+				if(true ||
+				   bounds.contains(element.getLocation()) ||
 				   element.getType() == 0x4b) {
 					shapes.add(shape);
 					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
@@ -156,7 +157,8 @@ public class MapArea implements MapDataSource {
 			public void doFilter(MapElement element) {
 				MapLine line = (MapLine) element;
 
-				if(bounds.contains(element.getLocation())) {
+				if(true ||
+				   bounds.contains(element.getLocation())) {
 					lines.add(line);
 					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 				}
