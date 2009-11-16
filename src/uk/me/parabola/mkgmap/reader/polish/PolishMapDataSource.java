@@ -36,6 +36,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -43,7 +44,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
 
 /**
  * Read an data file in Polish format.  This is the format used by a number
@@ -71,6 +71,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapPoint point;
 	private MapLine polyline;
 	private MapShape shape;
+
+	private List<Coord> points;
 
 	private final RoadHelper roadHelper = new RoadHelper();
 
@@ -201,17 +203,42 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addPoint(point);
 			break;
 		case S_POLYLINE:
-			if (polyline.getPoints() != null) {
-				if(extraAttributes != null && polyline.hasExtendedType())
-					polyline.setExtTypeAttributes(makeExtTypeAttributes());
-				if (roadHelper.isRoad())
+			if (points != null) {
+				if (roadHelper.isRoad()) {
+					polyline.setPoints(points);
 					mapper.addRoad(roadHelper.makeRoad(polyline));
-				else
-					mapper.addLine(polyline);
+				}
+				else {
+					if(extraAttributes != null && polyline.hasExtendedType())
+						polyline.setExtTypeAttributes(makeExtTypeAttributes());
+					final int maxPointsInLine = LineSplitterFilter.MAX_POINTS_IN_LINE;
+					if(points.size() > maxPointsInLine) {
+						List<Coord> segPoints = new ArrayList<Coord>(maxPointsInLine);
+						for(Coord p : points) {
+							segPoints.add(p);
+							if(segPoints.size() == maxPointsInLine) {
+								MapLine seg = polyline.copy();
+								seg.setPoints(segPoints);
+								mapper.addLine(seg);
+								segPoints = new ArrayList<Coord>(maxPointsInLine);
+								segPoints.add(p);
+							}
+						}
+						if(segPoints.size() > 0) {
+							polyline.setPoints(segPoints);
+							mapper.addLine(polyline);
+						}
+					}
+					else {
+						polyline.setPoints(points);
+						mapper.addLine(polyline);
+					}
+				}
 			}
 			break;
 		case S_POLYGON:
-			if (shape.getPoints() != null) {
+			if (points != null) {
+				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
 					shape.setExtTypeAttributes(makeExtTypeAttributes());
 				mapper.addShape(shape);
@@ -230,6 +257,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		// Clear the section state.
 		section = 0;
 		endLevel = 0;
+		points = null;
 	}
 
 	/**
@@ -310,7 +338,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			polyline.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
-			List<Coord> points = coordsFromString(value);
+			List<Coord> newPoints = coordsFromString(value);
 			// If it is a contour line, then fix the elevation if required.
 			if ((polyline.getType() == 0x20) ||
 			    (polyline.getType() == 0x21) ||
@@ -319,7 +347,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			setResolution(polyline, name);
-			polyline.setPoints(points); // XXX: multiple DATA sections?
+			if(points != null) {
+				log.error("Line " + polyline.getName() + " has multiple Data lines - concatenating the points");
+				points.addAll(newPoints);
+			}
+			else
+				points = newPoints;
 		} else if (name.equals("RoadID")) {
 			roadHelper.setRoadId(Integer.parseInt(value));
 		} else if (name.startsWith("Nod")) {
@@ -384,9 +417,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			shape.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
-			List<Coord> points = coordsFromString(value);
+			List<Coord> newPoints = coordsFromString(value);
 
-			shape.setPoints(points);
+			if(points != null)
+				points.addAll(newPoints);
+			else
+				points = newPoints;
 			setResolution(shape, name);
 		}
 		else {
