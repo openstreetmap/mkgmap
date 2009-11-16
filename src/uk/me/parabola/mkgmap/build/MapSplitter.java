@@ -130,10 +130,9 @@ class MapSplitter {
 
 			if (area.getNumLines() > MAX_NUM_LINES ||
 			    area.getNumPoints() > MAX_NUM_POINTS ||
-				(sizes[MapArea.POINT_KIND] > MAX_RGN_SIZE &&
-				 (area.hasIndPoints() || area.hasLines() || area.hasShapes())) ||
-				(((sizes[MapArea.POINT_KIND] + sizes[MapArea.LINE_KIND]) > MAX_RGN_SIZE) &&
-				 area.hasShapes()) ||
+				(sizes[MapArea.POINT_KIND] +
+				 sizes[MapArea.LINE_KIND] +
+				 sizes[MapArea.SHAPE_KIND]) > MAX_RGN_SIZE ||
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
@@ -148,7 +147,7 @@ class MapSplitter {
 					addAreasToList(sublist, alist, depth + 1);
 					continue;
 				} else {
-					log.warn("area too small to split", area);
+					log.error("Area too small to split at " + area.getBounds().getCenter().toOSMURL() + " (reduce the density of points, length of lines, etc.)");
 				}
 			}
 
