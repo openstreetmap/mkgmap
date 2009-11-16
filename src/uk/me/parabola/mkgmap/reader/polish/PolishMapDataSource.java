@@ -180,6 +180,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			shape = new MapShape();
 			section = S_POLYGON;
 		}
+		else
+			log.info("Ignoring " + name + " section");
 	}
 
 	/**
@@ -188,6 +190,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private void endSection() {
 		switch (section) {
+
+		case S_IMG_ID:
+			break;
+
 		case S_POINT:
 			if(extraAttributes != null && point.hasExtendedType())
 				point.setExtTypeAttributes(makeExtTypeAttributes());
@@ -211,6 +217,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				mapper.addShape(shape);
 			}
 			break;
+
+		case 0:
+			// ignored section
+			break;
+
 		default:
 			log.warn("unexpected default in switch", section);
 			break;
