@@ -697,7 +697,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			for (Way way : ways) {
 				List<Coord> points = way.getPoints();
 				if (points.size() < 2) {
-					log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has less than 2 points - deleting it");
+					log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
 					wayMap.remove(way.getId());
 					++numWaysDeleted;
 					continue;
@@ -717,7 +717,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if (replacement != null) {
 						assert !p.getOnBoundary() : "Boundary node replaced";
 						String replacementId = (replacement.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(replacement);
-						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
 						p = replacement;
 						// replace point in way
 						points.set(i, p);
@@ -728,7 +728,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if (i > 0) {
 						// this is not the first point in the way
 						if (p == previousPoint) {
-							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical points (" + nodeIdMap.get(p) + ") - deleting the second point");
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
 							points.remove(i);
 							// hack alert! rewind the loop index
 							--i;
@@ -755,9 +755,9 @@ class Osm5XmlHandler extends DefaultHandler {
 									// are on the boundary
 									if(complainedAbout.get(way) == null) {
 										if(p.equals(previousNode))
-											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates but they can't be merged because both are boundary nodes!");
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") but they can't be merged because both are boundary nodes!");
 										else
-											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - but it can't be removed because both ends of the arc are boundary nodes!");
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
 										complainedAbout.put(way, way);
 									}
 									break; // give up with this way
@@ -766,9 +766,9 @@ class Osm5XmlHandler extends DefaultHandler {
 								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
 
 								if(p.equals(previousNode))
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates - merging node " + thisNodeId + " into " + previousNodeId);
+									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") - merging node " + thisNodeId + " into " + previousNodeId);
 								else
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - removing it by merging node " + thisNodeId + " into " + previousNodeId);
 								if(p.getOnBoundary()) {
 									// current point is a boundary node so
 									// we need to merge the previous node into

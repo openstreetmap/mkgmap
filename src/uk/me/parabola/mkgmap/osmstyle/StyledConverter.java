@@ -387,11 +387,11 @@ public class StyledConverter implements OsmConverter {
 			if(lastP != null) {
 				lineLength += p.distance(lastP);
 				if(lineLength >= MAX_LINE_LENGTH) {
+					log.info("Splitting line " + way.toBrowseURL() + " at " + p.toOSMURL() + " to limit its length to " + (long)lineLength + "m");
 					addLine(way, gt, points);
 					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
 					points.add(p);
 					lineLength = 0;
-					log.info("Splitting line at " + p.toOSMURL() + " to limit its length to " + (long)lineLength + "m");
 				}
 			}
 			lastP = p;
