@@ -124,6 +124,7 @@ public class RoadDef implements Comparable {
 	private boolean linkRoad;
 	private boolean synthesised;
 	private boolean flareCheck;
+	private boolean deadEndCheck;
 	private boolean showBrowseURL;
 	private Set<String> messageIssued;
 
@@ -617,6 +618,14 @@ public class RoadDef implements Comparable {
 
 	public boolean doFlareCheck() {
 		return flareCheck;
+	}
+
+	public void doDeadEndCheck(boolean dec) {
+		deadEndCheck = dec;
+	}
+
+	public boolean doDeadEndCheck() {
+		return deadEndCheck;
 	}
 
 	public boolean messagePreviouslyIssued(String key) {

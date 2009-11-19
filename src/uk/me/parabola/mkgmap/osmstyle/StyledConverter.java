@@ -1332,6 +1332,7 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
+			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];

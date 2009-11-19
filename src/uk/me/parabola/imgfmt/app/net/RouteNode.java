@@ -615,45 +615,51 @@ public class RouteNode implements Comparable<RouteNode> {
 		if(level > 0) {
 			boolean noWayOut = true;
 			boolean noWayIn = true;
-			int nonSynthesisedArcs = 0;
+			List<RouteArc> maybeDeadEndArcs = new ArrayList<RouteArc>();
 
 			for(RouteArc a : arcs) {
 
 				if(!a.getRoadDef().isSynthesised()) {
 
-					++nonSynthesisedArcs;
-
-					boolean oneway = a.getRoadDef().isOneway() || a.getRoadDef().isRoundabout();
-
-					if(!oneway)
+					if(a.getRoadDef().isOneway() ||
+					   a.getRoadDef().isRoundabout()) {
+						// it's a oneway road
+						if(a.getRoadDef().doDeadEndCheck()) {
+							// it's not been excluded from the check
+							maybeDeadEndArcs.add(a);
+						}
+					}
+					else {
+						// it's not a oneway road so traffic can both
+						// leave this node and arrive at this node
 						noWayOut = noWayIn = false;
+					}
 
-					if(a.isForward())
+					if(a.isForward()) {
+						// traffic can leave this node
 						noWayOut = false;
-					else
+					}
+					else {
+						// traffic can arrive at this node
 						noWayIn = false;
+					}
 				}
 			}
 
-			if(nonSynthesisedArcs == 0) {
-				// ignore junctions that join only ways that have been
-				// synthesised by mkgmap
+			if(maybeDeadEndArcs.size() == 0) {
+				// nothing to complain about
 				return;
 			}
 
 			if(noWayIn) {
-				if(nonSynthesisedArcs == 1) {
+				if(maybeDeadEndArcs.size() == 1) {
 					if(level > 1)
-						log.warn("Oneway road " + arcs.get(0).getRoadDef() + " comes from nowhere at " + coord.toOSMURL());
+						log.warn("Oneway road " + maybeDeadEndArcs.get(0).getRoadDef() + " comes from nowhere at " + coord.toOSMURL());
 				}
 				else {
 					String roads = null;
-					for(RouteArc a : arcs) {
-						if(a.getRoadDef().isSynthesised()) {
-							// ignore ways that have been synthesised by
-							// mkgmap
-						}
-						else if(roads == null)
+					for(RouteArc a : maybeDeadEndArcs) {
+						if(roads == null)
 							roads = "" + a.getRoadDef();
 						else
 							roads += ", " + a.getRoadDef();
@@ -663,18 +669,14 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 
 			if(noWayOut) {
-				if(nonSynthesisedArcs == 1) {
+				if(maybeDeadEndArcs.size() == 1) {
 					if(level > 1)
-						log.warn("Oneway road " + arcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
+						log.warn("Oneway road " + maybeDeadEndArcs.get(0).getRoadDef() + " goes nowhere at " + coord.toOSMURL());
 				}
 				else {
 					String roads = null;
-					for(RouteArc a : arcs) {
-						if(a.getRoadDef().isSynthesised()) {
-							// ignore ways that have been synthesised by
-							// mkgmap
-						}
-						else if(roads == null)
+					for(RouteArc a : maybeDeadEndArcs) {
+						if(roads == null)
 							roads = "" + a.getRoadDef();
 						else
 							roads += ", " + a.getRoadDef();

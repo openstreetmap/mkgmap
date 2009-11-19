@@ -125,6 +125,10 @@ public class MapRoad extends MapLine {
 		this.roadDef.doFlareCheck(fc);
 	}
 
+	public void doDeadEndCheck(boolean dec) {
+		this.roadDef.doDeadEndCheck(dec);
+	}
+
 	public void setLinkRoad(boolean lr) {
 		this.roadDef.setLinkRoad(lr);
 	}
