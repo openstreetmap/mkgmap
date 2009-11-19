@@ -25,7 +25,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 public class SizeFilter implements MapFilter {
 
 	// Minsize==1 may cause small holes in QLandkarte, but does not at etrex!
-	private static final int MIN_SIZE = 2;
+	private static final int MIN_SIZE = 1;
 
 	private int minSize;
 
