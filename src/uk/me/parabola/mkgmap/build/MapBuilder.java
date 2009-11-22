@@ -61,6 +61,7 @@ import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
+import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -867,6 +868,7 @@ public class MapBuilder implements Configurable {
 
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
+			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter());
 			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
 		}
@@ -903,6 +905,7 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
+			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter());
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
