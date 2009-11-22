@@ -87,6 +87,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	private int lineNo;
 
+	private boolean havePolygon4B;
+
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
@@ -128,7 +130,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			throw new FormatException("Reading file failed", e);
 		}
 
-		addBackground();
+		addBackground(havePolygon4B);
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -415,7 +417,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private void shape(String name, String value) {
 		if (name.equals("Type")) {
-			shape.setType(Integer.decode(value));
+			int type = Integer.decode(value);
+			shape.setType(type);
+			if(type == 0x4b)
+				havePolygon4B = true;
 		} else if (name.startsWith("Data")) {
 			List<Coord> newPoints = coordsFromString(value);
 

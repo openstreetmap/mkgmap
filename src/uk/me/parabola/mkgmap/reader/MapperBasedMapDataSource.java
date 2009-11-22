@@ -129,7 +129,11 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 	 * We add the background polygons if the map is not transparent.
 	 */
 	protected void addBackground() {
-		if (!getConfig().getProperty("transparent", false)) {
+		addBackground(false);
+	}
+
+	protected void addBackground(boolean mapHasPolygon4B) {
+		if (!mapHasPolygon4B && !getConfig().getProperty("transparent", false)) {
 			// Make a list of points to trace out the background area.
 			List<Coord> coords = new ArrayList<Coord>();
 			Area bounds = mapper.getBounds();
