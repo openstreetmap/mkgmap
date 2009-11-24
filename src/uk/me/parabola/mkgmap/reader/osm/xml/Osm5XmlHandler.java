@@ -902,24 +902,38 @@ class Osm5XmlHandler extends DefaultHandler {
 				// equivalent CoordPOI that contains a reference to
 				// the POI's Node so we can access the POI's tags
 				Node node = nodeMap.get(id);
-				// for now, only do this for nodes that have certain
-				// tags otherwise we will end up creating a CoordPOI
-				// for every node in the way
-				if(node != null) {
+				if(!(co instanceof CoordPOI) && node != null) {
+					// for now, only do this for nodes that have
+					// certain tags otherwise we will end up creating
+					// a CoordPOI for every node in the way
 					final String[] coordPOITags = { "access", "barrier", "highway" };
 					for(String cpt : coordPOITags) {
 						if(node.getTag(cpt) != null) {
-							if(!(co instanceof CoordPOI)) {
-								co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
-								coordMap.put(id, co);
-							}
-							// flag this Way as having a CoordPOI so it will
-							// be processed later
-							currentWay.addTag("mkgmap:way-has-pois", "true");
-							log.info("Linking POI with " + cpt + " tag to way at " + co.toOSMURL());
+							// the POI has one of the approved tags so
+							// replace the Coord with a CoordPOI
+							CoordPOI cp = new CoordPOI(co.getLatitude(), co.getLongitude());
+							coordMap.put(id, cp);
+							// we also have to jump through hoops to
+							// make a new version of Node because we
+							// can't replace the Coord that defines
+							// its location
+							Node newNode = new Node(id, cp);
+							newNode.copyTags(node);
+							nodeMap.put(id, newNode);
+							// tell the CoordPOI what node it's
+							// associated with
+							cp.setNode(newNode);
+							co = cp;
+							node = newNode;
 							break;
 						}
 					}
+				}
+				if(co instanceof CoordPOI) {
+					// flag this Way as having a CoordPOI so it
+					// will be processed later
+					currentWay.addTag("mkgmap:way-has-pois", "true");
+					log.info("Linking POI " + node.toBrowseURL() + " to way at " + co.toOSMURL());
 				}
 			}
 			currentWay.addPoint(co);

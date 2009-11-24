@@ -24,21 +24,23 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class CoordPOI extends Coord {
-	private final Node node;
+	private Node node;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
 	 *
 	 * @param latitude The latitude in map units.
 	 * @param longitude The longitude in map units.
-	 * @param node The Node that represents the POI.
 	 */
-	public CoordPOI(int latitude, int longitude, Node node) {
+	public CoordPOI(int latitude, int longitude) {
 		super(latitude, longitude);
-		this.node = node;
 	}
 
 	public Node getNode() {
 		return node;
+	}
+
+	public void setNode(Node node) {
+		this.node = node;
 	}
 }
