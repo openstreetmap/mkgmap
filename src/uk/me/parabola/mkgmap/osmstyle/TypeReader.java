@@ -58,6 +58,10 @@ public class TypeReader {
 				gt.setRoadSpeed(nextIntValue(ts));
 			} else if (w.equals("copy")) {
 				// reserved word.  not currently used
+			} else if (w.equals("continue")) {
+				gt.setContinue();
+			} else if (w.equals("stop")) {
+				gt.setFinal();
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}

@@ -34,9 +34,9 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 public class SequenceRule implements Rule, Iterable<Rule> {
 	private final List<Rule> ruleList = new ArrayList<Rule>();
 
-	public GType resolveType(Element el) {
+	public GType resolveType(Element el, GType pre) {
 		for (Rule r : ruleList) {
-			GType type = r.resolveType(el);
+			GType type = r.resolveType(el, pre);
 			if (type != null)
 				return type;
 		}

@@ -52,7 +52,7 @@ public class ActionRule implements Rule {
 		this.type = null;
 	}
 
-	public GType resolveType(Element el) {
+	public GType resolveType(Element el, GType pre) {
 		if (expression == null || expression.eval(el)) {
 			for (Action a : actions)
 				a.perform(el);

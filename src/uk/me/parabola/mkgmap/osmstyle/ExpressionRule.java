@@ -28,22 +28,22 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * @author Steve Ratcliffe
  */
 public class ExpressionRule implements Rule {
-	private final Op exression;
+	private final Op expression;
 	private final GType gtype;
 
-	public ExpressionRule(Op exression, GType gtype) {
-		this.exression = exression;
+	public ExpressionRule(Op expression, GType gtype) {
+		this.expression = expression;
 		this.gtype = gtype;
 	}
 
-	public GType resolveType(Element el) {
-		if (exression.eval(el))
+	public GType resolveType(Element el, GType pre) {
+		if (expression.eval(el))
 			return gtype;
 
 		return null;
 	}
 
 	public String toString() {
-		return exression.toString() + ' ' + gtype;
+		return expression.toString() + ' ' + gtype;
 	}
 }

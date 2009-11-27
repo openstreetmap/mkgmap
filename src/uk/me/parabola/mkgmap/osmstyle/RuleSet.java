@@ -63,14 +63,14 @@ public class RuleSet implements Rule {
 		return rules.entrySet();
 	}
 
-	public GType resolveType(Element el) {
+	public GType resolveType(Element el, GType pre) {
 		GType foundType = null;
 		for (String tagKey : el) {
 			Rule rule = rules.get(tagKey);
 			if (rule != null) {
-				GType type = rule.resolveType(el);
+				GType type = rule.resolveType(el, pre);
 				if (type != null) {
-					if (foundType == null || type.isBetterPriority(foundType)) {
+					if ((foundType == null || type.isBetterPriority(foundType)) && (pre == null || pre.isBetterPriority(type))) {
 						foundType = type;
 					}
 				}

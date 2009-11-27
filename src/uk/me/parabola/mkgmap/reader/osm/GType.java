@@ -58,6 +58,11 @@ public class GType {
 
 	private boolean road;
 
+	// control flag, whether this element defines
+	// the final conversion, or whether we shall search
+	// for further matching elements
+	private boolean FinalElement = true;
+	
 	public GType(int featureKind, String type) {
 		priority = nextPriority();
 		this.featureKind = featureKind;
@@ -190,6 +195,18 @@ public class GType {
 		return road;
 	}
 
+	public void setFinal() {
+		FinalElement = true;
+	}
+	
+	public void setContinue() {
+		FinalElement = false;
+	}
+	
+	public boolean isFinal() {
+		return FinalElement;
+	}
+	
 	public static void push() {
 		nextPriority += PRIORITY_PUSH;
 	}

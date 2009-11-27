@@ -257,29 +257,41 @@ public class StyledConverter implements OsmConverter {
 
 		GType foundType = null;
 		if(way.getTag("mkgmap:gtype") != null) {
+
 			foundType = makeGTypeFromTags(way);
 			if(foundType == null)
 				return;
+
+			if (foundType.getFeatureKind() == GType.POLYLINE) {
+				if(foundType.isRoad() &&
+				   !MapElement.hasExtendedType(foundType.getType()))
+					addRoad(way, foundType);
+				else
+					addLine(way, foundType);
+			}
+			else
+				addShape(way, foundType);
 		}
 		else {
 			preConvertRules(way);
 
-			foundType = wayRules.resolveType(way);
-			if (foundType == null)
-				return;
+			do {
+				foundType = wayRules.resolveType(way, foundType);
+				if (foundType == null)
+					return;
 
-			postConvertRules(way, foundType);
-		}
+				postConvertRules(way, foundType);
 
-		if (foundType.getFeatureKind() == GType.POLYLINE) {
-		    if(foundType.isRoad() &&
-			   !MapElement.hasExtendedType(foundType.getType()))
-				addRoad(way, foundType);
-		    else
-				addLine(way, foundType);
+				if (foundType.getFeatureKind() == GType.POLYLINE) {
+					if(foundType.isRoad())
+						addRoad(way, foundType);
+					else
+						addLine(way, foundType);
+				}
+				else
+					addShape(way, foundType);
+			} while (!foundType.isFinal());
 		}
-		else
-			addShape(way, foundType);
 	}
 
 	/**
@@ -295,18 +307,21 @@ public class StyledConverter implements OsmConverter {
 			foundType = makeGTypeFromTags(node);
 			if(foundType == null)
 				return;
+			addPoint(node, foundType);
 		}
 		else {
 			preConvertRules(node);
 
-			foundType = nodeRules.resolveType(node);
-			if (foundType == null)
-				return;
+			do {
+				foundType = nodeRules.resolveType(node, foundType);
+				if (foundType == null)
+					return;
+  
+				postConvertRules(node, foundType);
 
-			postConvertRules(node, foundType);
+				addPoint(node, foundType);
+			} while (!foundType.isFinal());
 		}
-
-		addPoint(node, foundType);
 	}
 
 	/**
@@ -362,7 +377,7 @@ public class StyledConverter implements OsmConverter {
 	public void convertRelation(Relation relation) {
 		// Relations never resolve to a GType and so we ignore the return
 		// value.
-		relationRules.resolveType(relation);
+		relationRules.resolveType(relation, null);
 
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
@@ -419,7 +434,7 @@ public class StyledConverter implements OsmConverter {
 
 		clipper.clipShape(shape, collector);
 		
-		GType pointType = nodeRules.resolveType(way);
+		GType pointType = nodeRules.resolveType(way, null);
 		
 		if(pointType != null)
 			shape.setPoiType(pointType.getType());

@@ -29,7 +29,8 @@ public interface Rule {
 	 * represent it.
 	 *
 	 * @param el The element as read from an OSM xml file in 'tag' format.
+	 * @param pre The previous garmin type generated from the element.
 	 * @return Enough information to represent this as a garmin type.
 	 */
-	public GType resolveType(Element el);
+	public GType resolveType(Element el, GType pre);
 }

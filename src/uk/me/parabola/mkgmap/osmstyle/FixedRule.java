@@ -32,7 +32,7 @@ public class FixedRule implements Rule {
 		this.gtype = gtype;
 	}
 
-	public GType resolveType(Element el) {
+	public GType resolveType(Element el, GType pre) {
 		return gtype;
 	}
 
