@@ -79,7 +79,8 @@ public class DouglasPeuckerFilter implements MapFilter {
 			
 			// If a node in the line use the douglas peucker algorithm for upper segment
 			// TODO: Should consider only nodes connected to roads visible at current resolution.
-			if (p instanceof CoordNode) {
+			if (p.preserved()) {
+				// point is "preserved", don't remove it
 				douglasPeucker(coords, i, endIndex, maxErrorDistance);
 				endIndex = i;
 			}

@@ -741,6 +741,9 @@ class Osm5XmlHandler extends DefaultHandler {
 						// this point is a node if it has an arc count
 						Integer arcCount = arcCounts.get(p);
 						if (arcCount != null) {
+							// make the point "preserved" so that it
+							// won't get filtered out later
+							p.preserved(true);
 							// merge this node to previous node if the
 							// two points have identical coordinates
 							// or are closer than the minimum distance

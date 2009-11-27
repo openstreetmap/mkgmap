@@ -56,6 +56,8 @@ public class RoundCoordsFilter implements MapFilter {
 					newP = new CoordNode(lat, lon, ((CoordNode)p).getId(), p.getOnBoundary());
 				else
 					newP = new Coord(lat, lon);
+				newP.preserved(p.preserved());
+
 				// only add the new point if it has different
 				// coordinates to the last point or if it's a
 				// CoordNode and the last point wasn't a CoordNode
@@ -64,6 +66,14 @@ public class RoundCoordsFilter implements MapFilter {
 				   (newP instanceof CoordNode && !(lastP instanceof CoordNode))) {
 					newPoints.add(newP);
 					lastP = newP;
+				}
+				else if(newP.preserved()) {
+					// this point is not going to be used because it
+					// has the same (rounded) coordinates as the last
+					// node but it has been marked as being "preserved" -
+					// transfer that property to the previous point so
+					// that it's not lost
+					lastP.preserved(true);
 				}
 			}
 			if(newPoints.size() > 1) {

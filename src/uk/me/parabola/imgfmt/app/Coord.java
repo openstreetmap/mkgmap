@@ -39,6 +39,7 @@ public class Coord implements Comparable<Coord> {
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
 	private boolean onBoundary;	// true if point lies on a boundary
+	private boolean preserved; // true if point should not be filtered out
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -88,6 +89,14 @@ public class Coord implements Comparable<Coord> {
 
 	public void setOnBoundary(boolean onBoundary) {
 		this.onBoundary = onBoundary;
+	}
+
+	public boolean preserved() {
+		return preserved;
+	}
+
+	public void preserved(boolean preserved) {
+		this.preserved = preserved;
 	}
 
 	public int hashCode() {
