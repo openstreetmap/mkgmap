@@ -80,7 +80,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	public RouteNode(Coord coord) {
 		this.coord = (CoordNode) coord;
 		nodeId = nodeCount++; // XXX: take coord.getId() instead?
-		setBoundary(this.coord.isBoundary());
+		setBoundary(this.coord.getOnBoundary());
 	}
 
 	private boolean haveLargeOffsets() {

@@ -53,7 +53,7 @@ public class RoundCoordsFilter implements MapFilter {
 				int lon = (p.getLongitude() + half) & mask;
 				Coord newP;
 				if(p instanceof CoordNode)
-					newP = new CoordNode(lat, lon, ((CoordNode)p).getId(), ((CoordNode)p).isBoundary());
+					newP = new CoordNode(lat, lon, ((CoordNode)p).getId(), p.getOnBoundary());
 				else
 					newP = new Coord(lat, lon);
 				// only add the new point if it has different
