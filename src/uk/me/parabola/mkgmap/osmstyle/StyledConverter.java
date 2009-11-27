@@ -87,8 +87,8 @@ public class StyledConverter implements OsmConverter {
 	// long lines being assigned to the wrong subdivision
 	private final int MAX_LINE_LENGTH = 40000;
 
-	// limit arc lengths to avoid Nuvi routing failures
-	private final int MAX_ARC_LENGTH = 35000;
+	// limit arc lengths to what can be handled by RouteArc
+	private final int MAX_ARC_LENGTH = 75000;
 
 	private final int MAX_POINTS_IN_WAY = LineSplitterFilter.MAX_POINTS_IN_LINE;
 
