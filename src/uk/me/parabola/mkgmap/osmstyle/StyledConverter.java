@@ -277,20 +277,21 @@ public class StyledConverter implements OsmConverter {
 			preConvertRules(way);
 
 			do {
-				foundType = wayRules.resolveType(way, foundType);
+				Way dupWay = way.duplicate();
+				foundType = wayRules.resolveType(dupWay, foundType);
 				if (foundType == null)
 					return;
 
-				postConvertRules(way, foundType);
+				postConvertRules(dupWay, foundType);
 
 				if (foundType.getFeatureKind() == GType.POLYLINE) {
 					if(foundType.isRoad())
-						addRoad(way, foundType);
+						addRoad(dupWay, foundType);
 					else
-						addLine(way, foundType);
+						addLine(dupWay, foundType);
 				}
 				else
-					addShape(way, foundType);
+					addShape(dupWay, foundType);
 			} while (!foundType.isFinal());
 		}
 	}
