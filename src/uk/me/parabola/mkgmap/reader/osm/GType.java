@@ -62,6 +62,10 @@ public class GType {
 	// the final conversion, or whether we shall search
 	// for further matching elements
 	private boolean FinalElement = true;
+	// by default, a rule's actions are skipped when searching for
+	// further rules to match - by setting this true, the rule's
+	// actions will always be executed
+	private boolean alwaysExecuteActions = false;
 	
 	public GType(int featureKind, String type) {
 		priority = nextPriority();
@@ -201,6 +205,14 @@ public class GType {
 	
 	public void setContinue() {
 		FinalElement = false;
+	}
+
+	public void alwaysExecuteActions(boolean aea) {
+		alwaysExecuteActions = aea;
+	}
+
+	public boolean alwaysExecuteActions() {
+		return alwaysExecuteActions;
 	}
 	
 	public boolean isFinal() {

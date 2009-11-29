@@ -58,10 +58,21 @@ public class ActionRule implements Rule {
 
 	public GType resolveType(Element el, GType pre) {
 		if (expression == null || expression.eval(el)) {
-			for (Action a : actions)
-				a.perform(el);
+			if (type == null || pre == null || pre.isBetterPriority(type)) {
+				// this is the first (or only) time this rule has
+				// matched so execute the actions associated with the
+				// rule
+				for (Action a : actions)
+					a.perform(el);
 
-			return type;
+				return type;
+			}
+			else if(type.alwaysExecuteActions()) {
+				// this is not the first time the rule has matched but
+				// the user wants the actions executed anyway
+				for (Action a : actions)
+					a.perform(el);
+			}
 		}
 		return null;
 	}

@@ -62,6 +62,8 @@ public class TypeReader {
 				gt.setContinue();
 			} else if (w.equals("stop")) {
 				gt.setFinal();
+			} else if (w.equals("with_actions") || w.equals("withactions")) {
+				gt.alwaysExecuteActions(true);
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
