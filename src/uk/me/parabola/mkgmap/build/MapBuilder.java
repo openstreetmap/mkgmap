@@ -57,6 +57,7 @@ import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
+import uk.me.parabola.mkgmap.filters.LineMergeFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
@@ -107,11 +108,14 @@ public class MapBuilder implements Configurable {
 	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
+
+	private double reducePointError;
+	private boolean mergeLines;
+
 	private int		locationAutofillLevel;
 	private boolean	poiAddresses = true;
 	private int		poiDisplayFlags;
 	private boolean sortRoads = true;
-	private static final double FILTER_DISTANCE = 2.6;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex = false;
 	private int routeCenterBoundaryType = 0;
@@ -126,6 +130,8 @@ public class MapBuilder implements Configurable {
 		countryAbbr = props.getProperty("country-abbr", countryAbbr);
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
+		reducePointError = props.getProperty("reduce-point-density", 2.6);
+		mergeLines = props.containsKey("merge-lines");
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
@@ -866,11 +872,20 @@ public class MapBuilder implements Configurable {
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
 
+
+		//TODO: Maybe this is the wrong place to do merging.
+		// Maybe more efficient if merging before creating subdivisions.
+		if (mergeLines && res < 24) {
+			LineMergeFilter merger = new LineMergeFilter();
+			lines = merger.merge(lines);
+		}
+
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter());
-			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+			if(reducePointError > 0)
+				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
@@ -909,7 +924,8 @@ public class MapBuilder implements Configurable {
 			filters.addFilter(new SizeFilter());
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
-			filters.addFilter(new DouglasPeuckerFilter(FILTER_DISTANCE));
+			if(reducePointError > 0)
+				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());

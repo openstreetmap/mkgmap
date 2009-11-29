@@ -32,6 +32,7 @@ import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.util.EnhancedProperties;
 
 import org.xml.sax.SAXException;
 
@@ -104,7 +105,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 	 */
 	private OsmConverter createStyler() {
 
-		Properties props = getConfig();
+		EnhancedProperties props = getConfig();
 		String loc = props.getProperty("style-file");
 		if (loc == null)
 			loc = props.getProperty("map-features");

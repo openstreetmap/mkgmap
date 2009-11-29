@@ -156,6 +156,21 @@ Product description options:
 	number is 63240000.
 	
 
+Optimization options:
+
+--reduce-point-density=NUM
+	Simplifies the ways with the Douglas Peucker algorithm.
+	NUM is the maximal allowed error distance, by which the resulting
+	way may differ from the original one.
+	This distance gets shifted with lower zoom levels. 
+	Recommended setting is 10, this should lead to only small differences
+	(Default is 2.6, which should lead to invisible changes) 
+
+--merge-lines
+	Try to merge lines. This helps the simplify filter to straighten out
+	longer chunks at lower zoom levels. Decreases file size more.
+	Increases paint speed at low zoom levels.
+
 Miscellaneous options:
 
 --max-jobs[=number]

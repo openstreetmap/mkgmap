@@ -167,6 +167,24 @@ public abstract class MapElement {
 		this.type = type;
 	}
 
+	public boolean isSimilar(MapElement other) {
+		if (this.minResolution != other.minResolution)
+			return false;
+		if (this.maxResolution != other.maxResolution)
+			return false;
+		if (this.type != other.type)
+			return false;
+
+		String thisName = getName();
+		String otherName = other.getName();
+
+		if (thisName == null && otherName == null)	
+			return true;
+		if (thisName!=null && otherName!=null && thisName.equals(otherName))
+			return true;
+		return false;
+	}
+
 	public boolean hasExtendedType() {
 		return hasExtendedType(type);
 	}
