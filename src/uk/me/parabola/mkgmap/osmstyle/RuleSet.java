@@ -63,6 +63,10 @@ public class RuleSet implements Rule {
 		return rules.entrySet();
 	}
 
+	public GType resolveType(Element el) {
+		return resolveType(el, null);
+	}
+
 	public GType resolveType(Element el, GType pre) {
 		GType foundType = null;
 		for (String tagKey : el) {

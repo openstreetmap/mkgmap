@@ -36,6 +36,10 @@ public class ExpressionRule implements Rule {
 		this.gtype = gtype;
 	}
 
+	public GType resolveType(Element el) {
+		return resolveType(el, null);
+	}
+
 	public GType resolveType(Element el, GType pre) {
 		if (expression.eval(el))
 			return gtype;
