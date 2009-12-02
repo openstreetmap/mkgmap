@@ -282,6 +282,7 @@ public class StyledConverter implements OsmConverter {
 				if (foundType == null)
 					return;
 
+				originalWay.put(dupWay, way);
 				postConvertRules(dupWay, foundType);
 
 				if (foundType.getFeatureKind() == GType.POLYLINE) {

@@ -273,7 +273,7 @@ public class RestrictionRelation extends Relation {
 
 		if(restriction == null || viaNode == null || fromNode == null || toNode == null) {
 			// restriction must have some error (reported earlier)
-		    return;
+			return;
 		}
 
 		if(restriction.equals("no_left_turn") ||
@@ -294,8 +294,10 @@ public class RestrictionRelation extends Relation {
 			if(restriction.startsWith("only_turn"))
 				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way " + toWay.toBrowseURL());
 			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.toBrowseURL());
-			for(CoordNode otherNode : otherNodes)
+			for(CoordNode otherNode : otherNodes) {
+				log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
 				roadNetwork.addRestriction(fromNode, otherNode, viaNode, exceptMask);
+			}
 		}
 		else {
 			log.warn(messagePrefix + "has unsupported type '" + restriction + "'");
