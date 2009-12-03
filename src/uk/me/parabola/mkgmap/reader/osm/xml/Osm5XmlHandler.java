@@ -91,6 +91,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private Node currentNode;
 	private Way currentWay;
+	private Node currentNodeInWay;
 	private Relation currentRelation;
 	private long currentElementId;
 
@@ -363,6 +364,16 @@ class Osm5XmlHandler extends DefaultHandler {
 				String highway = currentWay.getTag("highway");
 				if(highway != null ||
 				   "ferry".equals(currentWay.getTag("route"))) {
+					boolean oneway = currentWay.isBoolTag("oneway");
+					// if the last Node of the Way has a FIXME attribute,
+					// disable dead-end-check for oneways
+					if (oneway &&
+						currentNodeInWay != null &&
+						(currentNodeInWay.getTag("FIXME") != null ||
+						 currentNodeInWay.getTag("fixme") != null)) {
+						currentWay.addTag("mkgmap:dead-end-check", "false");
+					}
+
 					// if the way is a roundabout but isn't already
 					// flagged as "oneway", flag it here
 					if("roundabout".equals(currentWay.getTag("junction"))) {
@@ -378,7 +389,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(makeOppositeCycleways &&
 					   cycleway != null &&
 					   !"cycleway".equals(highway) &&
-					   currentWay.isBoolTag("oneway") &&
+					   oneway &&
 					   ("opposite".equals(cycleway) ||
 						"opposite_lane".equals(cycleway) ||
 						"opposite_track".equals(cycleway))) {
@@ -453,6 +464,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					motorways.add(currentWay);
 				if(generateSea && "coastline".equals(currentWay.getTag("natural")))
 				    shoreline.add(currentWay);
+				currentNodeInWay = null;
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -898,20 +910,20 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
+		currentNodeInWay = nodeMap.get(id);
 		//co.incCount();
 		if (co != null) {
 			if(linkPOIsToWays) {
 				// if this Coord is also a POI, replace it with an
 				// equivalent CoordPOI that contains a reference to
 				// the POI's Node so we can access the POI's tags
-				Node node = nodeMap.get(id);
-				if(!(co instanceof CoordPOI) && node != null) {
+				if(!(co instanceof CoordPOI) && currentNodeInWay != null) {
 					// for now, only do this for nodes that have
 					// certain tags otherwise we will end up creating
 					// a CoordPOI for every node in the way
 					final String[] coordPOITags = { "access", "barrier", "highway" };
 					for(String cpt : coordPOITags) {
-						if(node.getTag(cpt) != null) {
+						if(currentNodeInWay.getTag(cpt) != null) {
 							// the POI has one of the approved tags so
 							// replace the Coord with a CoordPOI
 							CoordPOI cp = new CoordPOI(co.getLatitude(), co.getLongitude());
@@ -921,13 +933,13 @@ class Osm5XmlHandler extends DefaultHandler {
 							// can't replace the Coord that defines
 							// its location
 							Node newNode = new Node(id, cp);
-							newNode.copyTags(node);
+							newNode.copyTags(currentNodeInWay);
 							nodeMap.put(id, newNode);
 							// tell the CoordPOI what node it's
 							// associated with
 							cp.setNode(newNode);
 							co = cp;
-							node = newNode;
+							currentNodeInWay = newNode;
 							break;
 						}
 					}
@@ -936,9 +948,20 @@ class Osm5XmlHandler extends DefaultHandler {
 					// flag this Way as having a CoordPOI so it
 					// will be processed later
 					currentWay.addTag("mkgmap:way-has-pois", "true");
-					log.info("Linking POI " + node.toBrowseURL() + " to way at " + co.toOSMURL());
+					log.info("Linking POI " + currentNodeInWay.toBrowseURL() + " to way at " + co.toOSMURL());
 				}
 			}
+
+			// if the first Node of the Way has a FIXME attribute,
+			// disable dead-end-check for oneways
+			if (currentWay.getPoints().size() == 0 &&
+				currentWay.isBoolTag("oneway") &&
+				currentNodeInWay != null &&
+				(currentNodeInWay.getTag("FIXME") != null ||
+				 currentNodeInWay.getTag("fixme") != null)) {
+				currentWay.addTag("mkgmap:dead-end-check", "false");
+			}
+
 			currentWay.addPoint(co);
 			co.incHighwayCount(); // nodes (way joins) will have highwayCount > 1
 			if (minimumArcLength != null || generateSea)
