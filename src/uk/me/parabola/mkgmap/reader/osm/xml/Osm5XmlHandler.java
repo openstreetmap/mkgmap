@@ -92,6 +92,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Node currentNode;
 	private Way currentWay;
 	private Node currentNodeInWay;
+	private boolean currentWayStartsWithFIXME;
 	private Relation currentRelation;
 	private long currentElementId;
 
@@ -365,12 +366,14 @@ class Osm5XmlHandler extends DefaultHandler {
 				if(highway != null ||
 				   "ferry".equals(currentWay.getTag("route"))) {
 					boolean oneway = currentWay.isBoolTag("oneway");
-					// if the last Node of the Way has a FIXME attribute,
-					// disable dead-end-check for oneways
+					// if the first or last Node of the Way has a
+					// FIXME attribute, disable dead-end-check for
+					// oneways
 					if (oneway &&
-						currentNodeInWay != null &&
-						(currentNodeInWay.getTag("FIXME") != null ||
-						 currentNodeInWay.getTag("fixme") != null)) {
+						currentWayStartsWithFIXME ||
+						(currentNodeInWay != null &&
+						 (currentNodeInWay.getTag("FIXME") != null ||
+						  currentNodeInWay.getTag("fixme") != null))) {
 						currentWay.addTag("mkgmap:dead-end-check", "false");
 					}
 
@@ -465,6 +468,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				if(generateSea && "coastline".equals(currentWay.getTag("natural")))
 				    shoreline.add(currentWay);
 				currentNodeInWay = null;
+				currentWayStartsWithFIXME = false;
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -903,6 +907,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			long id = idVal(sid);
 			currentWay = new Way(id);
 			wayMap.put(id, currentWay);
+			currentNodeInWay = null;
+			currentWayStartsWithFIXME = false;
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
@@ -952,14 +958,11 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			}
 
-			// if the first Node of the Way has a FIXME attribute,
-			// disable dead-end-check for oneways
-			if (currentWay.getPoints().size() == 0 &&
-				currentWay.isBoolTag("oneway") &&
-				currentNodeInWay != null &&
-				(currentNodeInWay.getTag("FIXME") != null ||
-				 currentNodeInWay.getTag("fixme") != null)) {
-				currentWay.addTag("mkgmap:dead-end-check", "false");
+			// See if the first Node of the Way has a FIXME attribute
+			if (currentWay.getPoints().size() == 0) {
+				currentWayStartsWithFIXME = (currentNodeInWay != null &&
+											 (currentNodeInWay.getTag("FIXME") != null ||
+											  currentNodeInWay.getTag("fixme") != null));
 			}
 
 			currentWay.addPoint(co);
