@@ -87,6 +87,9 @@ amenity=university [0x2c05 resolution 21]
 amenity=zoo [0x2c07 resolution 21]
 
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& lit=yes & (shelter=yes | covered=yes)
+{ name '${name|def:} ${ref|def:}*${operator|def:}'; }
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (shelter=yes | covered=yes)
 { name '${name|def:} ${ref|def:}+${operator|def:}'; }
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
