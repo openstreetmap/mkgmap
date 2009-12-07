@@ -124,6 +124,7 @@ public class StyledConverter implements OsmConverter {
 	private final AccessMapping[] accessMap = {
 		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
 		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
+		new AccessMapping("carpool",    RoadNetwork.NO_CARPOOL),
 		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
 		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
 		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
@@ -1406,6 +1407,18 @@ public class StyledConverter implements OsmConverter {
 			} else {
 				log.info("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
 			}
+		}
+
+		if(way.isBoolTag("carpool")) {
+			// to make a way into a "carpool lane" all access disable
+			// bits must be set except for CARPOOL and EMERGENCY (BUS
+			// can also be clear)
+			road.setNoThroughRouting();
+			for (int j = 1; j < accessMap.length; ++j)
+				noAccess[accessMap[j].index] = true;
+			noAccess[RoadNetwork.NO_CARPOOL] = false;
+			noAccess[RoadNetwork.NO_EMERGENCY] = false;
+			noAccess[RoadNetwork.NO_BUS] = false;
 		}
 
 		road.setAccess(noAccess);

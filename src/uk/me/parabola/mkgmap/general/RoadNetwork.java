@@ -47,10 +47,11 @@ public class RoadNetwork {
 	public static final int NO_CAR = 2;
 	public static final int NO_BUS = 3;
 	public static final int NO_TAXI = 4;
-	public static final int NO_FOOT = 5;
-	public static final int NO_BIKE = 6;
-	public static final int NO_TRUCK = 7;
-	public static final int NO_MAX = 8;
+	public static final int NO_CARPOOL = 5;
+	public static final int NO_FOOT = 6;
+	public static final int NO_BIKE = 7;
+	public static final int NO_TRUCK = 8;
+	public static final int NO_MAX = 9;
 
 	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 

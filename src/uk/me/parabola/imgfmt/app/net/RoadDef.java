@@ -30,6 +30,8 @@ import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
 
+import uk.me.parabola.mkgmap.general.RoadNetwork;
+
 /**
  * A road definition.  This ties together all segments of a single road
  * and provides street address information.
@@ -378,9 +380,8 @@ public class RoadDef implements Comparable {
 	// number of nodes in the road
 	private int nnodes;
 
-	public static final int NOD2_MASK_SPEED = 0x0e;
-	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
-	private static final int NOD2_FLAG_UNK = 0x01;
+	private static final int NOD2_FLAG_UNK        = 0x01;
+	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
 
 	// always appears to be set
 	private int nod2Flags = NOD2_FLAG_UNK;
@@ -483,6 +484,7 @@ public class RoadDef implements Comparable {
 		0x0001, // car
 		0x0002, // bus
 		0x0004, // taxi
+		0x0008, // carpool
 		0x0010, // foot
 		0x0020, // bike
 		0x0040, // truck
@@ -496,16 +498,12 @@ public class RoadDef implements Comparable {
 		tabAInfo |= TABA_FLAG_TOLL;
 	}
 
-	public void setUnknownAccess08() {
-		tabAAccess |= 0x08;
-	}
-
 	public void setNoThroughRouting() {
 		tabAAccess |= 0x80;
 	}
 
 	public void setAccess(boolean[] access) {
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < RoadNetwork.NO_MAX; i++)
 			if (access[i])
 				tabAAccess |= ACCESS[i];
 	}
