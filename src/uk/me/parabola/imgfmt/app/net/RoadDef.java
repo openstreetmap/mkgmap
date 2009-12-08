@@ -122,6 +122,8 @@ public class RoadDef implements Comparable {
 
 	private City city;
 	private Zip zip;
+	private boolean paved = true;
+	private boolean ferry = false;
 	private boolean roundabout;
 	private boolean linkRoad;
 	private boolean synthesised;
@@ -584,6 +586,22 @@ public class RoadDef implements Comparable {
 
 	public City getCity() {
 		return city;
+	}
+
+	public boolean paved() {
+		return paved;
+	}
+
+	public void paved(boolean p) {
+		paved = p;
+	}
+
+	public void ferry(boolean f) {
+		ferry = f;
+	}
+
+	public boolean ferry() {
+		return ferry;
 	}
 
 	public void setRoundabout(boolean r) {

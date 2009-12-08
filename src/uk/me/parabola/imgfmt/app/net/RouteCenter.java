@@ -47,7 +47,7 @@ public class RouteCenter {
 		this.nodes = nodes;
 		this.tabA = tabA;
 		this.tabB = tabB;
-		this.tabC = new TableC();
+		this.tabC = new TableC(tabA);
 
 		log.info("new RouteCenter at " + centralPoint.toDegreeString() +
 				 ", nodes: " + nodes.size()	+ " tabA: " + tabA.size() +
@@ -106,7 +106,7 @@ public class RouteCenter {
 		writer.position(tablesOffset);
 
 		// Write the tables header
-		writer.put(tabC.getSizeBytes());
+		writer.put(tabC.getFormat());
 		writer.put3(centralPoint.getLongitude());
 		writer.put3(centralPoint.getLatitude());
 		writer.put(tabA.getNumberOfItems());

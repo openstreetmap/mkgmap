@@ -1426,6 +1426,14 @@ public class StyledConverter implements OsmConverter {
 		if(way.isBoolTag("toll"))
 			road.setToll();
 
+		// by default, ways are paved
+		if(way.isBoolTag("mkgmap:unpaved"))
+			road.paved(false);
+
+		// by default, way's are not ferry routes
+		if(way.isBoolTag("mkgmap:ferry"))
+			road.ferry(true);
+
 		Way origWay = originalWay.get(way);
 		if(origWay == null)
 			origWay = way;

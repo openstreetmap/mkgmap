@@ -72,6 +72,14 @@ public class MapRoad extends MapLine {
 		this.roadDef.setToll();
 	}
 
+	public void paved(boolean p) {
+		this.roadDef.paved(p);
+	}
+
+	public void ferry(boolean f) {
+		this.roadDef.ferry(f);
+	}
+
 	public void showOSMBrowseURL() {
 		this.roadDef.showOSMBrowseURL();
 	}
