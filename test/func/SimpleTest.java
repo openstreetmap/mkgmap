@@ -29,9 +29,10 @@ import uk.me.parabola.mkgmap.main.Main;
 import func.lib.Args;
 import func.lib.RangeMatcher;
 import func.lib.TestUtils;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Very simple checks.  May go away as more detailed checks are developed.
@@ -107,7 +108,7 @@ public class SimpleTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2762));
+				assertThat("RGN size", size, new RangeMatcher(2901));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);

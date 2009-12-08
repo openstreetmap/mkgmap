@@ -30,8 +30,6 @@ import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.log.Logger;
 
-import uk.me.parabola.mkgmap.general.RoadNetwork;
-
 /**
  * A road definition.  This ties together all segments of a single road
  * and provides street address information.
@@ -505,7 +503,7 @@ public class RoadDef implements Comparable {
 	}
 
 	public void setAccess(boolean[] access) {
-		for (int i = 0; i < RoadNetwork.NO_MAX; i++)
+		for (int i = 0; i < access.length; i++)
 			if (access[i])
 				tabAAccess |= ACCESS[i];
 	}

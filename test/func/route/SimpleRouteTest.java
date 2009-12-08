@@ -63,10 +63,10 @@ public class SimpleRouteTest {
 				assertEquals("LBL size", 27693, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 72709, size);
+				assertEquals("NET size", 73850, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 172675, size);
+				assertEquals("NOD size", 195187, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -91,10 +91,10 @@ public class SimpleRouteTest {
 				assertEquals("LBL size", 984, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 1272, size);
+				assertEquals("NET size", 1280, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 2819, size);
+				assertEquals("NOD size", 3114, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);

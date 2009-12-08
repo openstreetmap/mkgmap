@@ -55,7 +55,6 @@ import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 
 /**
@@ -145,7 +144,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	};
 
-	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
+	public StyledConverter(Style style, MapCollector collector, Properties props) {
 		this.collector = collector;
 
 		nameTagList = style.getNameTagList();

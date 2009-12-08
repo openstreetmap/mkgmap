@@ -66,6 +66,25 @@
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/branches">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/releases">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/tags">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                </map>
+              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.parabola.me.uk/svn/mkgmap/branches" />
