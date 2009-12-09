@@ -484,10 +484,10 @@ public class RoadDef implements Comparable {
 		0x0001, // car
 		0x0002, // bus
 		0x0004, // taxi
-		0x0008, // carpool
 		0x0010, // foot
 		0x0020, // bike
 		0x0040, // truck
+		0x0008, // carpool
 	};
 
 	// The data for Table A
