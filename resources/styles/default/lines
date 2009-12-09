@@ -26,10 +26,14 @@ highway=*
    surface=earth | surface=grass | surface=grass_paver |
    surface=gravel | surface=grit | surface=ground | surface=mud |
    surface=pebblestone | surface=sand | surface=unpaved |
-   'mtb:scale'=*)
+   mtb:scale=* |
+   tracktype ~ 'grade[2-6]' |
+   smoothness ~ '.*\(bad\|horrible\|impassable\)' |
+   sac_scale ~ '.*\(mountain\|alpine\)_hiking' |
+   sport=via_ferrata)
 { add mkgmap:unpaved=1 }
 (highway=bridleway | highway=path | highway=track | highway=unsurfaced)
-& surface!=*
+& surface!=* & tracktype!=* & smoothness!=* & sac_scale!=*
 { add mkgmap:unpaved=1 }
 
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=5 resolution 16]
