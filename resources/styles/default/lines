@@ -21,6 +21,17 @@ highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbo
 highway=secondary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}' }
 highway=* {name '${ref} ${name}' | '${ref}' | '${name}' }
 
+highway=*
+& (surface=cobblestone | surface=compacted | surface=dirt |
+   surface=earth | surface=grass | surface=grass_paver |
+   surface=gravel | surface=grit | surface=ground | surface=mud |
+   surface=pebblestone | surface=sand | surface=unpaved |
+   'mtb:scale'=*)
+{ add mkgmap:unpaved=1 }
+(highway=bridleway | highway=path | highway=track | highway=unsurfaced)
+& surface!=*
+{ add mkgmap:unpaved=1 }
+
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=5 resolution 16]
 junction=roundabout & highway=primary [0x0c road_class=3 road_speed=4 resolution 19]
 junction=roundabout & highway=secondary [0x0c road_class=2 road_speed=3 resolution 20]
@@ -69,7 +80,7 @@ railway=subway [0x14 resolution 17]
 railway=tram [0x14 resolution 18]
 railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 
-route=ferry [0x1b road_class=0 road_speed=0 resolution 18]
+route=ferry {add mkgmap:ferry=1} [0x1b road_class=0 road_speed=0 resolution 18]
 
 waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]
