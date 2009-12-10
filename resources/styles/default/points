@@ -103,10 +103,10 @@ amenity=zoo [0x2c07 resolution 21]
 highway=bus_stop [0x2f17 resolution 20]
 
 highway=motorway_junction { name '${ref} ${name}' | '${ref}' | '${name}' }
-highway=motorway_junction [0x2000 resolution 16]
+highway=motorway_junction [0x2000 resolution 20]
 
 highway=services { name '${ref} ${name}' | '${ref}' | '${name}' }
-highway=services [0x210f resolution 16]
+highway=services [0x210f resolution 20]
 
 historic=museum [0x2c02 resolution 20]
 historic=archaeological_site [0x2c02 resolution 21]
