@@ -1408,7 +1408,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
-		if(way.isBoolTag("carpool")) {
+		if(way.isBoolTag("mkgmap:carpool")) {
 			// to make a way into a "carpool lane" all access disable
 			// bits must be set except for CARPOOL and EMERGENCY (BUS
 			// can also be clear)
