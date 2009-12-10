@@ -1,3 +1,13 @@
+# -------------------------------------------------------------------
+# This is the default mkgmap style file for converting OSM nodes
+# into Garmin POIs.
+# Any line prefaced with # is a comment and will not be applied.
+# Each line is a rule, of the generalised format:
+#  OSM_tag(s)_to_match  [Garmin_type_code resolution]
+# See http://wiki.openstreetmap.org/wiki/Mkgmap/help/style_rules
+# and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
+# for more information.
+
 #aeroway=airport [0x5900 resolution 20]
 aeroway=airport [0x2f04 resolution 20]
 aeroway=aerodrome [0x2f04 resolution 20]
