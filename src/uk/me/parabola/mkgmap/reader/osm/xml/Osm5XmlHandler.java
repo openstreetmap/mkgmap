@@ -542,7 +542,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					}
 				}
 				if(ref != null) {
-					log.info("Adding " + refTag + "=" + ref + " to exit" + exitName);
+					log.info("Adding " + refTag + "=" + ref + " to exit " + exitName);
 					e.addTag(refTag, ref);
 				}
 				else if(motorway != null) {
@@ -945,6 +945,9 @@ class Osm5XmlHandler extends DefaultHandler {
 							// associated with
 							cp.setNode(newNode);
 							co = cp;
+							// if original node is in exits, replace it
+							if(exits.remove(currentNodeInWay))
+								exits.add(newNode);
 							currentNodeInWay = newNode;
 							break;
 						}
