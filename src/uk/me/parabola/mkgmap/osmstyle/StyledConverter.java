@@ -1192,10 +1192,19 @@ public class StyledConverter implements OsmConverter {
 						  points.get(splitI).getHighwayCount() < 2 &&
 						  !safeToSplitWay(points, splitI, i - numPointsInArc - 1, points.size() - 1))
 						--splitI;
-					if(points.get(splitI).getHighwayCount() > 1) {
+					if(points.get(i).getHighwayCount() > 1) {
+						// the current point is going to be a node
+						// anyway so split right here
+						log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " (would be a node anyway) to limit number of points in this way to " + (i + 1) + ", way has " + (points.size() - i) + " more points");
+						assert trailingWay == null : "trailingWay not null #6a";
+						trailingWay = splitWayAt(way, i);
+						// this will have truncated the current Way's
+						// points so the loop will now terminate
+					}
+					else if(points.get(splitI).getHighwayCount() > 1) {
 						// we have found an existing node, use that
 						log.info("Splitting way " + debugWayName + " at " + points.get(splitI).toOSMURL() + " (using an existing node) to limit number of points in this way to " + (splitI + 1) + ", way has " + (points.size() - splitI) + " more points");
-						assert trailingWay == null : "trailingWay not null #6a";
+						assert trailingWay == null : "trailingWay not null #6b";
 						trailingWay = splitWayAt(way, splitI);
 						// this will have truncated the current Way's
 						// points so the loop will now terminate
@@ -1207,7 +1216,7 @@ public class StyledConverter implements OsmConverter {
 					}
 					else if(splitI > 0) {
 						log.info("Splitting way " + debugWayName + " at " + points.get(splitI).toOSMURL() + " (making a new node) to limit number of points in this way to " + (splitI + 1) + ", way has " + (points.size() - splitI) + " more points");
-						assert trailingWay == null : "trailingWay not null #6b";
+						assert trailingWay == null : "trailingWay not null #6c";
 						trailingWay = splitWayAt(way, splitI);
 						// this will have truncated the current Way's
 						// points so the loop will now terminate
