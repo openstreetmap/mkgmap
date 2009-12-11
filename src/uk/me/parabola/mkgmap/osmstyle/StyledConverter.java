@@ -1105,6 +1105,10 @@ public class StyledConverter implements OsmConverter {
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
+			// flag that's set true when we back up to a previous node
+			// while finding a good place to split the line
+			boolean splitAtPreviousNode = false;
+
 			wayBBox.addPoint(p);
 
 			// check if we should split the way at this point to limit
@@ -1197,6 +1201,9 @@ public class StyledConverter implements OsmConverter {
 						// points so the loop will now terminate
 						p = points.get(splitI);
 						i = splitI; // hack alert! modify loop index
+						// note that we have split the line at a node
+						// that has already been processed
+						splitAtPreviousNode = true;
 					}
 					else if(splitI > 0) {
 						log.info("Splitting way " + debugWayName + " at " + points.get(splitI).toOSMURL() + " (making a new node) to limit number of points in this way to " + (splitI + 1) + ", way has " + (points.size() - splitI) + " more points");
@@ -1231,8 +1238,18 @@ public class StyledConverter implements OsmConverter {
 					// assign a node id
 					nodeIdMap.put(p, nextNodeId++);
 				}
-				assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i;
-				nodeIndices.add(i);
+
+				if(splitAtPreviousNode) {
+					// consistency check - this node index should
+					// already be recorded
+					assert nodeIndices.contains(i) : debugWayName + " has backed up to point " + i + " but can't find a node for that point " + p.toOSMURL();
+				}
+				else {
+					// add this index to nodeIndices (should not
+					// already be there)
+					assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i + " new node is " + p.toOSMURL();
+					nodeIndices.add(i);
+				}
 
 				if((i + 1) < points.size() &&
 				   nodeIndices.size() == MAX_NODES_IN_WAY) {
