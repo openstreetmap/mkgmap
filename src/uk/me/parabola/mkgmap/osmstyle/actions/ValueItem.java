@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class ValueItem {
 	private String tagname;
+	private boolean tagname_is_local;
 	private ValueFilter filter;
 	private String value;
 
@@ -36,12 +37,13 @@ public class ValueItem {
 		this.value = value;
 	}
 
-	public String getValue(Element el) {
+	public String getValue(Element el, Element local_el) {
 		if (tagname == null && value != null)
 			return value;   // already known
-		
+
 		if (tagname != null) {
-			String tagval = el.getTag(tagname);
+			Element e = tagname_is_local ? local_el : el;
+			String tagval = e.getTag(tagname);
 			if (filter != null)
 				value = filter.filter(tagval);
 			else
@@ -58,15 +60,20 @@ public class ValueItem {
 			filter.add(f);
 	}
 
-	public void setTagname(String tagname) {
+	public void setTagname(String tagname, boolean local) {
 		this.tagname = tagname;
+		this.tagname_is_local = local;
 	}
 
 	public String toString() {
-		if (tagname != null) {
+		if (tagname == null)
+			return value;
+		if (tagname_is_local) {
+			// TODO: don't ignore filter.
+			return "$(" + tagname + ")";
+		} else {
 			// TODO: don't ignore filter.
 			return "${" + tagname + "}";
-		} else
-			return value;
+		}
 	}
 }

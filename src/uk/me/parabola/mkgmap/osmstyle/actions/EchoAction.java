@@ -30,7 +30,7 @@ public class EchoAction implements Action {
 	}
 
 	public void perform(Element el) {
-		String e = value.build(el);
+		String e = value.build(el, el);
 		System.err.println(el.getId() + ": " + e);
 	}
 }

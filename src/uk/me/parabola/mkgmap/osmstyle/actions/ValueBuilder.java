@@ -44,25 +44,26 @@ public class ValueBuilder {
 	 * you to make conditional replacements.
 	 *
 	 * @param el Used as a source of tags.
+	 * @param lel Used as a source of local tags.
 	 * @return The built string if all required tags are available.  If any
 	 * are missing then it returns null.
 	 */
-	public String build(Element el) {
+	public String build(Element el, Element lel) {
 		// Check early for no match and return early
 		for (ValueItem item : items) {
-			if (item.getValue(el) == null)
+			if (item.getValue(el, lel) == null)
 				return null;
 		}
 
 		// If we get here we can build the final string.  A common case
 		// is that there is just one, so return it directly.
 		if (items.size() == 1)
-			return items.get(0).getValue(el);
+			return items.get(0).getValue(el, lel);
 
 		// OK we have to construct the result.
 		StringBuilder sb = new StringBuilder();
 		for (ValueItem item : items)
-			sb.append(item.getValue(el));
+			sb.append(item.getValue(el, lel));
 
 		return sb.toString();
 	}
@@ -86,37 +87,41 @@ public class ValueBuilder {
 			return;
 		}
 
-		int state = 0;
+		char state = '\0';
 		StringBuilder text = new StringBuilder();
 		StringBuilder tagname = null;
 		for (char c : in.toCharArray()) {
 			switch (state) {
-			case 0:
+			case '\0':
 				if (c == '$') {
-					state = 1;
+					state = '$';
 				} else
 					text.append(c);
 				break;
-			case 1:
-				if (c == '{') {
+			case '$':
+				switch (c) {
+				case '{':
+				case '(':
 					if (text.length() > 0) {
 						items.add(new ValueItem(text.toString()));
 						text.setLength(0);
 					}
 					tagname = new StringBuilder();
-					state = 2;
-				} else {
-					state = 0;
+					state = (c == '{') ? '}' : ')';
+					break;
+				default:
+					state = '\0';
 					text.append('$');
 					text.append(c);
 				}
 				break;
-			case 2:
-				if (c == '}') {
+			case '}':
+			case ')':
+				if (c == state) {
 					//noinspection ConstantConditions
 					assert tagname != null;
-					addTagValue(tagname.toString());
-					state = 0;
+					addTagValue(tagname.toString(), c == ')');
+					state = '\0';
 					tagname = null;
 				} else {
 					tagname.append(c);
@@ -131,16 +136,16 @@ public class ValueBuilder {
 			items.add(new ValueItem(text.toString()));
 	}
 
-	private void addTagValue(String tagname) {
+	private void addTagValue(String tagname, boolean is_local) {
 		ValueItem item = new ValueItem();
 		if (tagname.contains("|")) {
 			String[] parts = tagname.split("\\|");
 			assert parts.length > 1;
-			item.setTagname(parts[0]);
+			item.setTagname(parts[0], is_local);
 			for (int i = 1; i < parts.length; i++)
 				addFilter(item, parts[i]);
 		} else {
-			item.setTagname(tagname);
+			item.setTagname(tagname, is_local);
 		}
 		items.add(item);
 	}

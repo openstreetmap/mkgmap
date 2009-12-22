@@ -1,7 +1,22 @@
+# -------------------------------------------------------------------
+# This is the default mkgmap style file for applying rules on
+# OSM relations.  Usually you will set tags on the
+# elements that make up the relation, and the tags will be
+# processed by the rules defined in the "points" or "lines" files.
+#
+# Any line prefaced with # is a comment and will not be applied.
+# Each line is a rule, of the generalised format:
+#  OSM_tag(s)_to_match  [Garmin_type_code resolution]
+# See http://wiki.openstreetmap.org/wiki/Mkgmap/help/style_rules
+# and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
+# for more information.
 
-#
-# You can have rules for relations.  Usually you will set tags on the
-# elements that make up the relation.
-#
 # eg. type=route & route=bus { apply { set route=bus; add rn='${route_no}' ; }}
 #
+
+(type=boundary | type=multipolygon) & boundary=administrative & name=*
+{ apply
+  {
+    set mkgmap:boundary_name='$(mkgmap:boundary_name)/${name}' | '${name}';
+  }
+}

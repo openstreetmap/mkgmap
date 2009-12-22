@@ -54,7 +54,7 @@ public class AddTagAction implements Action {
 		Element tags = valueTags!=null? valueTags: el;
 
 		for (ValueBuilder value : values) {
-			String newval = value.build(tags);
+			String newval = value.build(tags, el);
 			if (newval != null) {
 				el.addTag(tag, newval);
 				break;

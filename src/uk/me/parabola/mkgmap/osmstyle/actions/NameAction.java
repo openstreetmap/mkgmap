@@ -46,7 +46,7 @@ public class NameAction implements Action {
 			return;
 		
 		for (ValueBuilder vb : names) {
-			String s = vb.build(el);
+			String s = vb.build(el, el);
 			if (s != null) {
 				el.setName(s);
 				break;

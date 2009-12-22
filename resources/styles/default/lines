@@ -113,7 +113,7 @@ man_made=pipeline {name '${operator}'} [0x28 resolution 23]
 # The following boundary styles are after the highway rules because ways
 # are frequently tagged with both and we want the highway to take priority.
 boundary=administrative
-{ name
+{ name '${mkgmap:boundary_name}' |
   '${left:country}/${right:country}' |
   '${left:state}/${right:state}' |
   '${left:district}/${right:district}' |
