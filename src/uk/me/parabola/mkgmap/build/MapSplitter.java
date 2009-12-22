@@ -136,7 +136,7 @@ class MapSplitter {
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
-				if (area.getBounds().getMaxDimention() > 100) {
+				if (area.getBounds().getMaxDimention() > 10) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
 					MapArea[] sublist;
