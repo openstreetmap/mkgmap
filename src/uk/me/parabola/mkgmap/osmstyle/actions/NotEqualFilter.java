@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Toby Speight
+ * Copyright 2009 Clinton Gladstone
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -10,35 +10,41 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Perform simple string substitution on a value.
+ * This can be used to filter out redundant values.
  *
- * @author Toby Speight
+ * The filter checks the equality of a value with another tag's value.
+ * If the two values match, a null string is returned.
+ *
+ * @author Clinton Gladstone
  */
-public class SubstitutionFilter extends ValueFilter {
-	private final String from;
-	private final String to;
+public class NotEqualFilter extends ValueFilter {
 
-	public SubstitutionFilter(String arg) {
-		int i = arg.indexOf("=>");
-		if (i >= 0) {
-			from = arg.substring(0, i);
-			to = arg.substring(i + 2);
-		} else {
-			from = arg;
-			to = "";
-		}
+	private final String tagName; 
+
+	public NotEqualFilter(String s) {
+
+		tagName = s;
+
 	}
 
 	public String doFilter(String value, Element el) {
-		if (value == null) return null;
-		if (from == null || to == null)
-			// can't happen!
+		if (value == null) return value;
+
+		String tagValue = el.getTag(tagName);
+
+		if (tagValue == null)
 			return value;
-		return value.replace(from, to);
+
+		if (value.equals(tagValue))
+			return null;  // Return nothing if value is identical to the tag's value 
+		else
+			return value;
+
 	}
 }

@@ -169,6 +169,8 @@ public class ValueBuilder {
 			item.addFilter(new HighwaySymbolFilter(arg));
 		} else if (cmd.equals("height")) {
 			item.addFilter(new HeightFilter(arg));
+		} else if (cmd.equals("not-equal")) {
+			item.addFilter(new NotEqualFilter(arg));
 		}
 	}
 

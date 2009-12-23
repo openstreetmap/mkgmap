@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 /**
  * Filter a value.  This is used for special effects and not for the majority
  * of substitutions.
@@ -28,14 +30,14 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 public abstract class ValueFilter {
 	private ValueFilter next;
 
-	public final String filter(String value) {
-		String res = doFilter(value);
+	public final String filter(String value, Element el) {
+		String res = doFilter(value, el);
 		if (next != null)
-			res = next.doFilter(res);
+			res = next.doFilter(res, el);
 		return res;
 	}
 
-	protected abstract String doFilter(String value);
+	protected abstract String doFilter(String value, Element el);
 
 	public void add(ValueFilter f) {
 		if (next == null)

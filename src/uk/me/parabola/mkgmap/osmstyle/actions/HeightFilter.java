@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 /**
  * A <code>HeightFilter</code> transforms values into Garmin-tagged elevations.
  *
@@ -26,8 +28,8 @@ public class HeightFilter extends ConvertFilter {
 		super(s);
     }
 
-	public String doFilter(String value) {
-		String s = super.doFilter(value);
+	public String doFilter(String value, Element el) {
+		String s = super.doFilter(value, el);
 		if (s != null)
 			s = "\u001f" + s;
 		return s;

@@ -16,6 +16,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 
 /**
  * Prepend a Garmin magic-character to the value.
@@ -29,7 +31,7 @@ public class HighwaySymbolFilter extends ValueFilter {
 	private static final Map<String, String>symbols = new HashMap<String, String>();
 	private static final int MAX_REF_LENGTH = 8; // enough for "A6144(M)" (RIP)
 
-	private int maxAlphaNum = MAX_REF_LENGTH; // Max. length for alpahnumeric (e.g., 'A67')
+	private int maxAlphaNum = MAX_REF_LENGTH; // Max. length for alphanumeric (e.g., 'A67')
 	private int maxAlpha = MAX_REF_LENGTH; // Max. length for alpha only signs (e.g., 'QEW')
 
 	static {
@@ -55,7 +57,7 @@ public class HighwaySymbolFilter extends ValueFilter {
 		}
 		prefix = p;
 
-		// Set maximum length for apha/alphanumeric signs:
+		// Set maximum length for alpha/alphanumeric signs:
 		if ( filters.length == 3 ) {
 			maxAlphaNum = Integer.parseInt(filters[1]);
 			maxAlpha = Integer.parseInt(filters[2]);
@@ -69,7 +71,7 @@ public class HighwaySymbolFilter extends ValueFilter {
 
 	}
 
-	public String doFilter(String value) {
+	public String doFilter(String value, Element el) {
 		if (value == null) return value;
 
 		// is it mostly alphabetic?
@@ -97,7 +99,7 @@ public class HighwaySymbolFilter extends ValueFilter {
 
 		for (char c : shieldText.toCharArray()) {
 		  	if (Character.isDigit(c)) {
-				isAlphaNum = true; // Consider alpahnumeric if we find one or more digits
+				isAlphaNum = true; // Consider alphanumeric if we find one or more digits
 			}
 		}
 

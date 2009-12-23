@@ -17,9 +17,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * @author Steve Ratcliffe
- */
+
 public class HighwaySymbolFilterTest {
 	/**
 	 * Basic test for a mostly numeric ref.
@@ -27,7 +25,7 @@ public class HighwaySymbolFilterTest {
 	@Test
 	public void testDoFilter() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A101");
+		String s = filter.doFilter("A101", null);
 		assertEquals("A101", "\u0002A101", s);
 	}
 
@@ -37,7 +35,7 @@ public class HighwaySymbolFilterTest {
 	@Test
 	public void testOneSpace() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A 101");
+		String s = filter.doFilter("A 101", null);
 		assertEquals("with one space", "\u0002A101", s);
 	}
 
@@ -47,7 +45,7 @@ public class HighwaySymbolFilterTest {
 	@Test
 	public void testMultipleSpaces() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A 1 01");
+		String s = filter.doFilter("A 1 01", null);
 		assertEquals("two spaces", "\u0002A101", s);
 	}
 
@@ -59,7 +57,7 @@ public class HighwaySymbolFilterTest {
 	public void testMostlyAlpha() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
 		String value = "AN1";
-		String s = filter.doFilter(value);
+		String s = filter.doFilter(value, null);
 		assertEquals("mostly alphabetic", "\002" + value, s);
 	}
 }

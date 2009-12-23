@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.osmstyle.eval.UnitConversions;
+import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
  * Convert a numeric quantity from one set of units to another.
@@ -32,7 +33,7 @@ public class ConvertFilter extends ValueFilter {
 		factor = UnitConversions.convertFactor(arg);
 	}
 
-	public String doFilter(String value) {
+	protected String doFilter(String value, Element el) {
 		if (value == null) return null;
 		
 		try {
