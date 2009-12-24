@@ -90,7 +90,7 @@ highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 highway=road [0x06 road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
-highway=* & area!=yes [0x07 ]
+highway=* & highway!=construction & area!=yes [0x07 ]
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 20]
