@@ -123,8 +123,8 @@ boundary=administrative
   '${left:village}/${right:village}' |
   '${left:suburban}/${right:suburban}'
 }
-boundary=administrative & admin_level<3 [0x1c resolution 18]
-boundary=administrative & admin_level<5 [0x1c resolution 19]
+boundary=administrative & admin_level<3 [0x1e resolution 16]
+boundary=administrative & admin_level<5 [0x1d resolution 18]
 boundary=administrative & admin_level<7 [0x1c resolution 20]
 boundary=administrative & admin_level<9 [0x1c resolution 21]
 boundary=administrative [0x1c resolution 22]
