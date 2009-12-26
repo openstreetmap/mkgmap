@@ -27,6 +27,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -614,6 +615,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				elevUnits = 'm';
 		} else if (name.equals("CodePage")) {
 			dec = Charset.forName("cp" + value).newDecoder();
+			dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		}
 	}
 
