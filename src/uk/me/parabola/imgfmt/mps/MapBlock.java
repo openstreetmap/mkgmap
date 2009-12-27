@@ -22,7 +22,10 @@ import uk.me.parabola.io.StructuredOutputStream;
 
 /**
  * A block describing an individual map.
- * 
+ *
+ * The family id, product id, series name, area name and map description can
+ * be set per map.
+ *
  * @author Steve Ratcliffe
  */
 public class MapBlock extends Block {

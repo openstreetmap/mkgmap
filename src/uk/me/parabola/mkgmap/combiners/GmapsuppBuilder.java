@@ -20,12 +20,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
@@ -35,6 +33,7 @@ import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.mps.MapBlock;
 import uk.me.parabola.imgfmt.mps.MpsFile;
+import uk.me.parabola.imgfmt.mps.MpsFileReader;
 import uk.me.parabola.imgfmt.mps.ProductBlock;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
@@ -64,15 +63,16 @@ public class GmapsuppBuilder implements Combiner {
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
+	private static final int DIRECTORY_OFFSET_BLOCK = 2;
 
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
 	// all these need to be set in the init routine from arguments.
 	private String areaName;
 	private String mapsetName;
-	private String overallDescription = "Combined map";
 
-	private static final int DIRECTORY_OFFSET_BLOCK = 2;
+	private String overallDescription = "Combined map";
+	private MpsFile mpsFile;
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
@@ -99,52 +99,33 @@ public class GmapsuppBuilder implements Combiner {
 	 * file, reading all the sub files and copying them into the gmapsupp file.
 	 */
 	public void onFinish() {
-		FileSystem outfs = null;
+		FileSystem imgFs = null;
 
 		try {
-			outfs = createGmapsupp();
+			imgFs = createGmapsupp();
 
-			addAllFiles(outfs);
+			addAllFiles(imgFs);
 
-			writeMpsFile(outfs);
+			writeMpsFile();
 
 		} catch (FileNotWritableException e) {
 			log.warn("Could not create gmapsupp file");
 			System.err.println("Could not create gmapsupp file");
 		} finally {
-			if (outfs != null)
-				outfs.close();
+			if (imgFs != null)
+				imgFs.close();
 		}
 	}
 
 	/**
-	 * Write the MPS file.  Seems to work without this, so not sure how important
-	 * it is.
-	 *
-	 * @param gmapsupp The output file in which to create the MPS file.
+	 * Write the MPS file.  The gmapsupp file will work without this, but it
+	 * important if you want to include more than one map family and be able
+	 * to turn them on and off separately.
 	 */
-	private void writeMpsFile(FileSystem gmapsupp) throws FileNotWritableException {
-		MpsFile mps = createMpsFile(gmapsupp);
-		mps.setMapsetName(mapsetName);
-
-		Set<Integer> products = new HashSet<Integer>();
-		for (FileInfo info : files.values()) {
-			if (info.getKind() != FileInfo.IMG_KIND)
-				continue;
-
-			mps.addMap(makeMapBlock(info));
-
-			// Add a new product block if we have found a new product
-			int prod = info.getFamilyId() << 16 + info.getProductId();
-			if (!products.contains(prod)) {
-				products.add(prod);
-				mps.addProduct(makeProductBlock(info));
-			}
-		}
-
+	private void writeMpsFile() throws FileNotWritableException {
 		try {
-			mps.sync();
-			mps.close();
+			mpsFile.sync();
+			mpsFile.close();
 		} catch (IOException e) {
 			throw new FileNotWritableException("Could not finish write to MPS file", e);
 		}
@@ -173,17 +154,52 @@ public class GmapsuppBuilder implements Combiner {
 		for (FileInfo info : files.values()) {
 			String filename = info.getFilename();
 			switch (info.getKind()) {
-			case FileInfo.IMG_KIND:
+			case IMG_KIND:
 				addImg(outfs, filename);
+				addMpsEntry(info);
 				break;
-			case FileInfo.FILE_KIND:
+			case GMAPSUPP_KIND:
+				addImg(outfs, filename);
+				addMpsFile(info);
+				break;
+			case FILE_KIND:
 				addFile(outfs, filename);
 				break;
-			default:
-				// do nothing, until we know what we should do..
+			case MDR_KIND:
 				break;
 			}
 		}
+	}
+
+	/**
+	 * Add a complete pre-existing mps file to the mps file we are currently
+	 * building for this gmapsupp.
+	 * @param info The details of the gmapsupp file that we need to extract the
+	 */
+	private void addMpsFile(FileInfo info) {
+		String name = info.getFilename();
+		try {
+			FileSystem fs = ImgFS.openFs(name);
+			MpsFileReader mr = new MpsFileReader(fs.open(info.getMpsName(), "r"));
+			for (MapBlock block : mr.getMaps())
+				mpsFile.addMap(block);
+
+			for (ProductBlock b : mr.getProducts())
+				mpsFile.addProduct(b);
+		} catch (IOException e) {
+			log.error("Could not read MPS file from gmapsupp", e);
+		}
+	}
+
+	/**
+	 * Add a single entry to the mps file.
+	 * @param info The img file information.
+	 */
+	private void addMpsEntry(FileInfo info) {
+		mpsFile.addMap(makeMapBlock(info));
+
+		// Add a new product block if we have found a new product
+		mpsFile.addProduct(makeProductBlock(info));
 	}
 
 	private MpsFile createMpsFile(FileSystem outfs) throws FileNotWritableException {
@@ -305,7 +321,11 @@ public class GmapsuppBuilder implements Combiner {
 		params.setReservedDirectoryBlocks(reserve);
 		log.info("reserved", reserve);
 
-		return ImgFS.createFs(GMAPSUPP, params);
+		FileSystem outfs = ImgFS.createFs(GMAPSUPP, params);
+		mpsFile = createMpsFile(outfs);
+		mpsFile.setMapsetName(mapsetName);
+
+		return outfs;
 	}
 
 	/**

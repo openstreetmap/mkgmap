@@ -18,7 +18,9 @@ package uk.me.parabola.imgfmt.mps;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
@@ -34,7 +36,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 public class MpsFile {
 	private String mapsetName = "OSM map set";
 
-	private final List<ProductBlock> products = new ArrayList<ProductBlock>();
+	private final Set<ProductBlock> products = new HashSet<ProductBlock>();
 	private final List<MapBlock> maps = new ArrayList<MapBlock>();
 
 	private final ImgChannel chan;

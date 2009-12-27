@@ -66,4 +66,22 @@ public class ProductBlock extends Block {
 	public String getDescription() {
 		return description;
 	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		ProductBlock that = (ProductBlock) o;
+
+		if (familyId != that.familyId) return false;
+		if (productId != that.productId) return false;
+
+		return true;
+	}
+
+	public int hashCode() {
+		int result = familyId;
+		result = 31 * result + productId;
+		return result;
+	}
 }

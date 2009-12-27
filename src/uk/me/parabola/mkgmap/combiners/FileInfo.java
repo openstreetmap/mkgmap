@@ -33,6 +33,8 @@ import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 
+import static uk.me.parabola.mkgmap.combiners.FileKind.*;
+
 /**
  * Used for holding information about an individual file that will be made into
  * a gmapsupp file.
@@ -42,15 +44,6 @@ import uk.me.parabola.mkgmap.CommandArgs;
 public class FileInfo {
 	private static final Logger log = Logger.getLogger(FileInfo.class);
 
-	// The file is an img file ie. it contains several subfiles.
-	public static final int IMG_KIND = 0;
-	// The file is a plain file and it doesn't need to be extracted from a .img
-	public static final int FILE_KIND = 1;
-	// The file is an img containing an MDR file
-	public static final int MDR_KIND = 2;
-	// The file is of an unknown or unsupported kind, and so it should be ignored.
-	private static final int UNKNOWN_KIND = 99;
-
 	private static final int ENTRY_SIZE = 240;
 
 	private static final List<String> KNOWN_FILE_TYPE_EXT = Arrays.asList(
@@ -59,10 +52,10 @@ public class FileInfo {
 	);
 
 	// The name of the file.
-	private String filename;
+	private final String filename;
 
 	// The kind of file, see *KIND definitions above.
-	private final int kind;
+	private FileKind kind;
 
 	private String mapname;
 	private String description;
@@ -77,8 +70,9 @@ public class FileInfo {
 	private final List<Integer> fileSizes = new ArrayList<Integer>();
 	private String[] copyrights;
 	private CommandArgs args;
+	private String mpsName;
 
-	private FileInfo(String filename, int kind) {
+	private FileInfo(String filename, FileKind kind) {
 		this.filename = filename;
 		this.kind = kind;
 	}
@@ -163,7 +157,6 @@ public class FileInfo {
 	 */
 	private static FileInfo fileInfo(String inputName) {
 		FileInfo info = new FileInfo(inputName, FILE_KIND);
-		info.setFilename(inputName);
 
 		// Get the size of the file.
 		File f = new File(inputName);
@@ -190,7 +183,6 @@ public class FileInfo {
 			log.info("Blocksize", params.getBlockSize());
 
 			FileInfo info = new FileInfo(inputName, IMG_KIND);
-			info.setFilename(inputName);
 			info.setDescription(params.getMapDescription());
 
 			List<DirectoryEntry> entries = imgFs.list();
@@ -225,7 +217,11 @@ public class FileInfo {
 					info.setNodsize(ent.getSize());
 				} else if ("MDR".equals(ext)) {
 					// It is not actually a regular img file, so change the kind.
-					info = new FileInfo(inputName, MDR_KIND);
+					info.setKind(MDR_KIND);
+				} else if ("MPS".equals(ext)) {
+					// This is a gmapsupp file containing several maps.
+					info.setKind(GMAPSUPP_KIND);
+					info.mpsName = ent.getFullName();
 				}
 
 				info.fileSizes.add(ent.getSize());
@@ -240,10 +236,6 @@ public class FileInfo {
 		this.bounds = area;
 	}
 
-	private void setFilename(String filename) {
-		this.filename = filename;
-	}
-
 	public String getFilename() {
 		return filename;
 	}
@@ -252,11 +244,11 @@ public class FileInfo {
 		return kind == IMG_KIND;
 	}
 
-	public boolean isMdr() {
-		return kind == MDR_KIND;
+	public void setKind(FileKind kind) {
+		this.kind = kind;
 	}
 
-	public int getKind() {
+	public FileKind getKind() {
 		return kind;
 	}
 
@@ -344,5 +336,9 @@ public class FileInfo {
 
 	public int getProductId() {
 		return args.get("product-id", 1);
+	}
+
+	public String getMpsName() {
+		return mpsName;
 	}
 }

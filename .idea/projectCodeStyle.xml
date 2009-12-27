@@ -57,7 +57,6 @@
         <option name="ALIGN_MULTILINE_PARAMETERS" value="false" />
         <option name="USE_FQ_CLASS_NAMES_IN_JAVADOC" value="false" />
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="20" />
-        <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
         <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
           <value>
             <package name="java.awt" withSubpackages="false" static="false" />

@@ -95,6 +95,70 @@ public class GmapsuppTest extends Base {
 	}
 
 	/**
+	 * Test combining gmapsupp files.  The family id etc should be taken from
+	 * the MPS file in the gmapsupp.
+	 */
+	@Test
+	public void testCombiningSupps() throws IOException {
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--family-id=150",
+				"--product-id=24",
+				"--series-name=tst series",
+				"--family-name=tst family",
+				"--area-name=tst area",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+		});
+
+		File f = new File("gmapsupp.img");
+		f.renameTo(new File("g1.img"));
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--family-id=152",
+				"--product-id=26",
+				"--series-name=tst series 2",
+				"--family-name=tst family 2",
+				"--area-name=tst area 2",
+				Args.TEST_RESOURCE_IMG + "63240002.img",
+		});
+		f.renameTo(new File("g2.img"));
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"g1.img",
+				"g2.img"
+		});
+
+
+		MpsFileReader reader = getMpsFile();
+		List<MapBlock> list = reader.getMaps();
+		assertEquals("number of map blocks", 2, list.size());
+
+		int count = 0;
+		for (MapBlock map : list) {
+			if (map.getMapNumber() == 63240001) {
+				assertEquals("family id", 150, map.getFamilyId());
+				assertEquals("product id", 24, map.getProductId());
+				assertEquals("series name", "tst series", map.getSeriesName());
+				assertEquals("area name", "tst area", map.getAreaName());
+				assertEquals("map description", "uk test 1", map.getMapDescription());
+			} else if (map.getMapNumber() == 63240002) {
+				assertEquals("family id", 152, map.getFamilyId());
+				assertEquals("product id", 26, map.getProductId());
+				assertEquals("series name", "tst series 2", map.getSeriesName());
+				assertEquals("area name", "tst area 2", map.getAreaName());
+				assertEquals("map description", "uk test 2", map.getMapDescription());
+			} else {
+				assertTrue("Unexpected map found", false);
+			}
+		}
+	}
+
+	/**
 	 * Test the case where we are combining img files with different family
 	 * and product ids.
 	 */
