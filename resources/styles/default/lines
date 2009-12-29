@@ -60,6 +60,13 @@ junction=roundabout & highway=tertiary [0x0c road_class=1 road_speed=1 resolutio
 junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
 
+# Ways that may or may not be useable
+
+# Treat ways under construction as highway=path
+highway=construction | highway=* & construction=* {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
+# Treat disused ways as highway=service, but at lower road_speed.
+highway=* & disused=yes [0x07 road_class=0 road_speed=1 resolution 22]
+
 # Ways sorted roughly by descending order of class
 highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 14]
 highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 16]
@@ -90,7 +97,7 @@ highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 highway=road [0x06 road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
-highway=* & highway!=construction & area!=yes [0x07 ]
+highway=* & area!=yes [0x07 ]
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 20]
