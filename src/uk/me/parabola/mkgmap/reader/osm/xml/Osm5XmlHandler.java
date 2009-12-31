@@ -113,6 +113,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean generateSea;
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
+	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
@@ -140,13 +141,16 @@ class Osm5XmlHandler extends DefaultHandler {
 					generateSeaUsingMP = true;
 				else if("no-sea-sectors".equals(o))
 					allowSeaSectors = false;
+				else if(o.startsWith("land-tag="))
+					landTag = o.substring(9).split("=");
 				else {
 					if(!"help".equals(o))
 						System.err.println("Unknown sea generation option '" + o + "'");
 					System.err.println("Known sea generation options are:");
-					System.err.println("  multipolygon      use multipolygons (default)");
-					System.err.println("  polygons | no-mp  use polygons rather than multipolygons");
+					System.err.println("  multipolygon      use a multipolygon (default)");
+					System.err.println("  polygons | no-mp  use polygons rather than a multipolygon");
 					System.err.println("  no-sea-sectors    disable use of \"sea sectors\"");
+					System.err.println("  land-tag=TAG=VAL  tag to use for land polygons (default natural=land)");
 				}
 			}
 		}
@@ -1092,7 +1096,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				land.addPoint(se);
 				land.addPoint(ne);
 				land.addPoint(nw);
-				land.addTag("natural", "land");
+				land.addTag(landTag[0], landTag[1]);
 				wayMap.put(landId, land);
 			}
 			// nothing more to do
@@ -1135,7 +1139,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				w.addTag("natural", "land");
+				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
 		}
@@ -1186,7 +1190,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(generateSeaUsingMP)
 						seaRelation.addElement("inner", w);
 					else {
-						w.addTag("natural", "land");
+						w.addTag(landTag[0], landTag[1]);
 						wayMap.put(w.getId(), w);
 					}
 				}
@@ -1294,7 +1298,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				w.addTag("natural", "land");
+				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
 		}

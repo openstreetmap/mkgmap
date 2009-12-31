@@ -303,6 +303,9 @@ Miscellaneous options:
 		disable the generation of "sea sectors" when the
 		coastline fails to reach the tile's boundary.
 
+	land-tag=TAG=VAL
+		tag to use for land polygons (default natural=land).
+
 --make-poi-index
 	Generate the POI index (not yet useful).
 
