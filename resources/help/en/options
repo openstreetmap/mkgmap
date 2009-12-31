@@ -282,6 +282,27 @@ Miscellaneous options:
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
 
+--generate-sea[=ValueList]
+	Generate sea polygons. ValueList is an optional comma
+	separated list of values:
+
+	multipolygon
+		generate the sea using a multipolygon (the default
+		behaviour so this really doesn't need to be specified).
+
+	polygons | no-mp
+		don't generate the sea using a multipolygon - instead,
+		generate a background sea polygon plus individual land
+		polygons with tag natural=land. This requires a
+		suitable land polygon type to be defined in the style
+		file (suggested type is 0x010100) and the polygon must
+		be defined in the TYP file as having a higher drawing
+		level than the sea polygon type.
+
+	no-sea-sectors
+		disable the generation of "sea sectors" when the
+		coastline fails to reach the tile's boundary.
+
 --make-poi-index
 	Generate the POI index (not yet useful).
 
