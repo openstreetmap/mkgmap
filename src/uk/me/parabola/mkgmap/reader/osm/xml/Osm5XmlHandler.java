@@ -995,6 +995,10 @@ class Osm5XmlHandler extends DefaultHandler {
 		super.fatalError(e);
 	}
 
+	public long makeFakeId() {
+		return (1L << 62) + nextFakeId++;
+	}
+
 	private long idVal(String id) {
 		try {
 			// attempt to parse id as a number
@@ -1004,7 +1008,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = (1L << 62) + nextFakeId++;
+				fakeIdVal = makeFakeId();
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
@@ -1033,7 +1037,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.info("clipping " + segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = (1L << 62) + nextFakeId++;
+					long id = makeFakeId();
 					Way shore = new Way(id, pts);
 					toBeAdded.add(shore);
 				}
@@ -1053,7 +1057,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		Coord sw = new Coord(maxLat, minLong);
 		Coord se = new Coord(maxLat, maxLong);
 
-		long multiId = (1L << 62) + nextFakeId++;
+		long multiId = makeFakeId();
 		Relation seaRelation = new GeneralRelation(multiId);
 		seaRelation.addTag("type", "multipolygon");
 
@@ -1151,7 +1155,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if (generateSeaBackground) {
-			seaId = (1L << 62) + nextFakeId++;
+			seaId = makeFakeId();
 			sea = new Way(seaId);
 			sea.addPoint(nw);
 			sea.addPoint(sw);
@@ -1167,7 +1171,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
 		while (!hits.isEmpty()) {
-			long id = (1L << 62) + nextFakeId++;
+			long id = makeFakeId();
 			Way w = new Way(id);
 			wayMap.put(id, w);
 
@@ -1346,7 +1350,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
 					if (w1.getId() < (1L << 62)) {
-						wm = new Way((1L << 62) + nextFakeId++);
+						wm = new Way(makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
