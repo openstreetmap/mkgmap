@@ -581,8 +581,13 @@ public class StyledConverter implements OsmConverter {
 		if(region != null)
 		  ms.setRegion(region);			
 
-		if(MapElement.hasExtendedType(gt.getType()))
-			ms.setExtTypeAttributes(new ExtTypeAttributes(element.getTagsWithPrefix("mkgmap:xt-", true), "OSM id " + element.getId()));
+		if(MapElement.hasExtendedType(gt.getType())) {
+			// pass attributes with mkgmap:xt- prefix (strip prefix)
+			Map<String,String> xta = element.getTagsWithPrefix("mkgmap:xt-", true);
+			// also pass all attributes with seamark: prefix (no strip prefix)
+			xta.putAll(element.getTagsWithPrefix("seamark:", false));
+			ms.setExtTypeAttributes(new ExtTypeAttributes(xta, "OSM id " + element.getId()));
+		}
 	}
 
 	void addRoad(Way way, GType gt) {
