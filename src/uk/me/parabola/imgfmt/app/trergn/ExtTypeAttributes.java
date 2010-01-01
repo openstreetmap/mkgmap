@@ -197,8 +197,8 @@ public class ExtTypeAttributes {
 
 	private final byte FLAGS0_RACON_BIT       = (1 << 0);
 	private final byte FLAGS0_NOTE_BIT        = (1 << 1);
-	private final byte FLAGS0_INT_DESIG_BIT   = (1 << 2);
-	private final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 3);
+	private final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 2);
+	private final byte FLAGS0_INT_DESIG_BIT   = (1 << 3);
 
 	public ExtTypeAttributes(Map<String, String> attributes, String objectName) {
 		this.attributes = attributes;
