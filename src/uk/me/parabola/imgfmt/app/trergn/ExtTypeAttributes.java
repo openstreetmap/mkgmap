@@ -528,6 +528,14 @@ public class ExtTypeAttributes {
 					nob += 2;
 					flags1 |= 0x02; // leading angle present
 				}
+				int period = 0;
+				for(int p : periods)
+					period += p;
+				if(period >= 256)
+					lightType |= 0x40; // 9th bit of period
+				else if(period >= 512)
+					log.warn("Can't encode periods greater than 51.2 seconds");
+
 				extraBytes = new byte[nob + 2];
 				int i = 0;
 				extraBytes[i++] = (byte)(0xe0 | flags0);
@@ -545,9 +553,6 @@ public class ExtTypeAttributes {
 					if(hadi > 255)
 						extraBytes[i++] = (byte)(hadi >> 8);
 				}
-				int period = 0;
-				for(int p : periods)
-					period += p;
 				extraBytes[i++] = (byte)period;
 				if(note != null) {
 					int off = note.getOffset();
