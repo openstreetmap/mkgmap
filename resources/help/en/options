@@ -149,7 +149,11 @@ Product description options:
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
 	.img and .tdb files. The default map name is osmmap.
-	
+
+--nsis
+	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
+	(NSIS) to create a Windows Mapsource Installer.
+
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
 	number used in the overview map and tdb file.  The default
