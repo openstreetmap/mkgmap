@@ -5,9 +5,12 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -31,6 +34,8 @@ public class MultiPolygonRelation extends Relation {
 	// this list contains the polygons that should be used to create the garmin
 	// map
 	public final List<Way> polygonResults = new ArrayList<Way>();
+
+	private ArrayList<JoinedWay> rings;
 
 	private static final List<String> relationTags = Arrays.asList("boundary",
 			"natural", "landuse", "building", "waterway");
@@ -129,7 +134,7 @@ public class MultiPolygonRelation extends Relation {
 						joinWay.getPoints().size() - 1) == tempWay.getPoints()
 						.get(0)) {
 					for (Coord point : tempWay.getPoints().subList(1,
-							tempWay.getPoints().size() - 1)) {
+							tempWay.getPoints().size())) {
 						joinWay.addPoint(point);
 					}
 					joined = true;
@@ -210,12 +215,63 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
+	 * Finds all rings that are not contained by any other rings. All rings with
+	 * index given by <var>candidates</var> are used.
+	 * 
+	 * @param candidates
+	 *            indexes of the rings that should be used
+	 * @return the bits of all outmost rings are set to true
+	 */
+	private BitSet findOutmostRings(BitSet candidates) {
+		BitSet outmostRings = new BitSet();
+
+		// go through all candidates and check if they are contained by any
+		// other candidate
+		for (int candidateIndex = candidates.nextSetBit(0); candidateIndex >= 0; candidateIndex = candidates
+				.nextSetBit(candidateIndex + 1)) {
+			// check if the candidateIndex ring is not contained by any
+			// other candidate ring
+			boolean isOutmost = true;
+			for (int otherCandidateIndex = candidates.nextSetBit(0); otherCandidateIndex >= 0; otherCandidateIndex = candidates
+					.nextSetBit(otherCandidateIndex + 1)) {
+				if (contains(otherCandidateIndex, candidateIndex)) {
+					// candidateIndex is not an outmost ring because it is
+					// contained by
+					// the otherCandidateIndex ring
+					isOutmost = false;
+					break;
+				}
+			}
+			if (isOutmost) {
+				// this is an outmost ring
+				// put it to the bitset
+				outmostRings.set(candidateIndex);
+			}
+		}
+
+		return outmostRings;
+	}
+
+	private ArrayList<RingStatus> getRingStatus(BitSet outmostRings,
+			boolean outer) {
+		ArrayList<RingStatus> ringStatusList = new ArrayList<RingStatus>();
+		for (int ringIndex = outmostRings.nextSetBit(0); ringIndex >= 0; ringIndex = outmostRings
+				.nextSetBit(ringIndex + 1)) {
+			// ringIndex is the ring that is not contained by any other
+			// ring
+			JoinedWay ring = rings.get(ringIndex);
+			ringStatusList.add(new RingStatus(outer, ringIndex, ring));
+		}
+		return ringStatusList;
+	}
+
+	/**
 	 * Process the ways in this relation. Joins way with the role "outer" Adds
 	 * ways with the role "inner" to the way with the role "outer"
 	 */
 	public void processElements() {
 		// don't care about outer and inner declaration
-		// because this is a first 
+		// because this is a first
 		ArrayList<Way> allWays = new ArrayList<Way>();
 		for (Element element : getElements()) {
 			if (element instanceof Way) {
@@ -226,167 +282,135 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		ArrayList<JoinedWay> rings = joinWays(allWays);
+		rings = joinWays(allWays);
 		removeUnclosedWays(rings);
 		// now we have closed ways == rings only
 
-		/* 
-		 ===== start considering outer and inner ways ====
-		 ArrayList<JoinedWay> joinedOuterWays = joinWays(outerWays);
-		 ArrayList<JoinedWay> joinedInnerWays = joinWays(innerWays);
-		
-		 removeUnclosedWays(joinedOuterWays);
-		 removeUnclosedWays(joinedInnerWays);
-
-		// at this point we don't care about outer and inner
-		// in the end we will compare if outer and inner tags are matching
-		// what we detect here and issue some warnings and errors
-		 ArrayList<JoinedWay> completeJoinedWays = new
-		 ArrayList<JoinedWay>();
-		 completeJoinedWays.addAll(joinedOuterWays);
-		 completeJoinedWays.addAll(joinedInnerWays);
-		 ===== end considering outer and inner ways ====
+		/*
+		 * ===== start considering outer and inner ways ====
+		 * ArrayList<JoinedWay> joinedOuterWays = joinWays(outerWays);
+		 * ArrayList<JoinedWay> joinedInnerWays = joinWays(innerWays);
+		 * 
+		 * removeUnclosedWays(joinedOuterWays);
+		 * removeUnclosedWays(joinedInnerWays);
+		 * 
+		 * // at this point we don't care about outer and inner // in the end we
+		 * will compare if outer and inner tags are matching // what we detect
+		 * here and issue some warnings and errors ArrayList<JoinedWay>
+		 * completeJoinedWays = new ArrayList<JoinedWay>();
+		 * completeJoinedWays.addAll(joinedOuterWays);
+		 * completeJoinedWays.addAll(joinedInnerWays); ===== end considering
+		 * outer and inner ways ====
 		 */
 
 		// check if we have at least one ring left
-		if (rings.isEmpty() == false) {
+		if (rings.isEmpty()) {
+			// do nothing
+			log.warn("Multipolygon " + toBrowseURL()
+					+ " does not contain a closed polygon.");
+			return;
+		}
 
-			createContainsMatrix(rings);
-			
+		createContainsMatrix(rings);
 
-			BitSet unfinishedRings = new BitSet(rings.size());
-			unfinishedRings.set(0, rings.size());
+		BitSet unfinishedRings = new BitSet(rings.size());
+		unfinishedRings.set(0, rings.size());
 
-			while (unfinishedRings.isEmpty() == false) {
-				// there are still unfinished rings
+		Queue<RingStatus> ringWorkingQueue = new LinkedBlockingQueue<RingStatus>();
 
-				// find the next outer ring
-				int outerRingIndex = -1;
-				for (int checkOuterIndex = unfinishedRings.nextSetBit(0); checkOuterIndex >= 0; checkOuterIndex = unfinishedRings
-						.nextSetBit(checkOuterIndex + 1)) {
-					// check if the checkOuterIndex ring is not contained by any
-					// other unfinished ring
-					boolean isNotContained = true;
-					for (int possibleOuterIndex = unfinishedRings.nextSetBit(0); possibleOuterIndex >= 0; possibleOuterIndex = unfinishedRings
-							.nextSetBit(possibleOuterIndex + 1)) {
-						if (contains(possibleOuterIndex,checkOuterIndex)) {
-							isNotContained = false;
-							break;
-						}
-					}
+		BitSet outmostRings = findOutmostRings(unfinishedRings);
 
-					if (isNotContained) {
-						// the checkOuterIndex ring is not contained by any other
-						// unfinished ring
-						outerRingIndex = checkOuterIndex;
-						break;
-					}
-				}
+		ringWorkingQueue.addAll(getRingStatus(outmostRings, true));
 
-				if (outerRingIndex < 0) {
-					// we have an error in this multipolygon
-					// => cannot continue
-					log.error("Multipolygon " + toBrowseURL()
-							+ " contains intersected ways");
-					return;
-				}
+		while (ringWorkingQueue.isEmpty() == false) {
 
-				// outerRingIndex is the ring that is not contained by any other
-				// ring
-				JoinedWay outerRing = rings.get(outerRingIndex);
-				// QA: check that all ways carry the role "outer" and issue
-				// warnings
-				checkRoles(outerRing.getOriginalWays(), "outer");
+			// the ring is not contained by any other unfinished ring
+			RingStatus currentRing = ringWorkingQueue.poll();
 
-				// this ring is now processed and should not be used by any
-				// further step
-				unfinishedRings.clear(outerRingIndex);
+			// QA: check that all ways carry the role "outer/inner" and
+			// issue
+			// warnings
+			checkRoles(currentRing.ring.getOriginalWays(),
+					(currentRing.outer ? "outer" : "inner"));
 
-				// create a list of inner rings
-				ArrayList<JoinedWay> innerRings = new ArrayList<JoinedWay>();
-				BitSet innerIndexes = new BitSet();
+			// this ring is now processed and should not be used by any
+			// further step
+			unfinishedRings.clear(currentRing.index);
 
-				BitSet outerRingContains = containsMatrix.get(outerRingIndex);
-				// use only rings that are contained by the outer ring
-				outerRingContains.and(unfinishedRings);
-				// outerRingContains now contains all rings that are contained
-				// by the outer ring and that are not finished yet
+			BitSet ringContains = new BitSet();
+			ringContains.or(containsMatrix.get(currentRing.index));
+			// use only rings that are contained by the ring
+			ringContains.and(unfinishedRings);
+			// ringContains is the intersection of the unfinished and
+			// the contained rings
 
-				// get the holes (inner rings)
-				// go through all inner rings of the outer ring
-				// and leave only the ones that are not contained by any other
-				// ring
-				for (int innerRingIndex = outerRingContains.nextSetBit(0); innerRingIndex >= 0; innerRingIndex = outerRingContains
-						.nextSetBit(innerRingIndex + 1)) {
-					// check if the inner ring is not contained by any
-					// other unfinished ring
-					boolean realInnerRing = true;
-					for (int unfinishedIndex = unfinishedRings.nextSetBit(0); unfinishedIndex >= 0; unfinishedIndex = unfinishedRings
-							.nextSetBit(unfinishedIndex + 1)) {
-						if (contains(unfinishedIndex, innerRingIndex)) {
-							realInnerRing = false;
-							break;
-						}
-					}
+			// get the holes
+			// these are all rings that are in the main ring
+			// and that are not contained by any other ring
+			BitSet holeIndexes = findOutmostRings(ringContains);
 
-					if (realInnerRing) {
-						// this is a real inner ring of the outer ring
-						JoinedWay innerRing = rings.get(innerRingIndex);
-						innerRings.add(innerRing);
-						innerIndexes.set(innerRingIndex);
+			ArrayList<RingStatus> holes = getRingStatus(holeIndexes,
+					!currentRing.outer);
 
-						// QA: check that all ways carry the role "inner"
-						// and issue warnings
-						checkRoles(innerRing.getOriginalWays(), "inner");
+			// these rings must all be checked for inner rings
+			ringWorkingQueue.addAll(holes);
 
-						// TODO in case the innerRing is tagged itself it
-						// must also be treated
-						// as special outer ring with its own inner polygons
-					}
-				}
+			// check if the ring has tags and therefore should be processed
+			boolean processRing = currentRing.outer
+					|| hasUsefulTags(currentRing.ring);
 
-				// all inner rings are used now, so they are finished
-				unfinishedRings.andNot(innerIndexes);
-
-				// now construct the outer polygon with its holes
-				for (Way innerRing : innerRings) {
-					int[] insert = findCpa(outerRing.getPoints(), innerRing
-							.getPoints());
+			if (processRing) {
+				// now construct the ring polygon with its holes
+				for (RingStatus holeRingStatus : holes) {
+					int[] insert = findCpa(currentRing.ring.getPoints(),
+							holeRingStatus.ring.getPoints());
 					if (insert[0] >= 0 && insert[1] >= 0) {
-						insertPoints(outerRing, innerRing, insert[0], insert[1]);
+						insertPoints(currentRing.ring, holeRingStatus.ring,
+								insert[0], insert[1]);
+					} else {
+						// this must not happen
+						log.error("Cannot find cpa in multipolygon "
+								+ toBrowseURL());
 					}
 				}
 
-				// set the tags of the outer ring
-				// does the multipolygon itself have any tags?
-				boolean validTagFound = false;
-				for (Map.Entry<String, String> tagEntry : getEntryIteratable()) {
-					if (relationTags.contains(tagEntry.getKey())) {
-						validTagFound = true;
-						break;
-					}
-				}
+				boolean useRelationTags = currentRing.outer
+						&& hasUsefulTags(this);
 
-				if (validTagFound) {
-					// the multipolygon contains tags that overwhelm the tags
+				if (useRelationTags) {
+					// the multipolygon contains tags that overwhelm the
+					// tags
 					// out the outer ring
-					outerRing.copyTags(this);
+					currentRing.ring.copyTags(this);
 				} else {
 					// the multipolygon does not contain any relevant tag
-					// use the segments of the outer ring and merge the tags
-					for (Way outerRingSegment : outerRing.getOriginalWays()) {
-						// TODO uuh, this is bad => the last of the outer ring
-						// segments win
+					// use the segments of the ring and merge the tags
+					for (Way ringSegment : currentRing.ring.getOriginalWays()) {
+						// TODO uuh, this is bad => the last of the
+						// ring segments win
 						// => any better idea?
-						for (Map.Entry<String, String> outSegmentTag : outerRingSegment
+						for (Map.Entry<String, String> outSegmentTag : ringSegment
 								.getEntryIteratable()) {
-							outerRing.addTag(outSegmentTag.getKey(),
+							currentRing.ring.addTag(outSegmentTag.getKey(),
 									outSegmentTag.getValue());
 						}
 					}
 				}
 
-				polygonResults.add(outerRing);
+				polygonResults.add(currentRing.ring);
+			}
+		}
+
+		if (unfinishedRings.isEmpty() == false) {
+			// we have at least one ring that could not be processed
+			// Probably we have intersecting polygons
+			// => issue a warning
+			log.error("Multipolygon " + toBrowseURL()
+					+ " contains intersected ways");
+			ArrayList<RingStatus> ringList = getRingStatus(unfinishedRings,
+					true);
+			for (RingStatus ring : ringList) {
+				log.error("- " + ring.ring.toBrowseURL());
 			}
 		}
 
@@ -397,6 +421,24 @@ public class MultiPolygonRelation extends Relation {
 			myWayMap.put(resultWay.getId(), resultWay);
 		}
 
+	}
+
+	private boolean hasUsefulTags(JoinedWay way) {
+		for (Way segment : way.getOriginalWays()) {
+			if (hasUsefulTags(segment)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean hasUsefulTags(Element element) {
+		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
+			if (relationTags.contains(tagEntry.getKey())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -442,11 +484,12 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
-	
+
 	}
-	
+
 	/**
 	 * Checks if the ring with ringIndex1 contains the ring with ringIndex2.
+	 * 
 	 * @param ringIndex1
 	 * @param ringIndex2
 	 * @return true if ring(ringIndex1) contains ring(ringIndex2)
@@ -465,8 +508,8 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private boolean contains(Way ring1, Way ring2) {
 		// TODO this is a simple algorithm
-		// might be improved 
-		
+		// might be improved
+
 		if (ring1.isClosed() == false) {
 			return false;
 		}
@@ -518,7 +561,7 @@ public class MultiPolygonRelation extends Relation {
 	 * Insert Coordinates into the outer way.
 	 * 
 	 * @param outer
-	 *            the outer way 
+	 *            the outer way
 	 * @param inner
 	 *            Way to be inserted
 	 * @param out
@@ -532,7 +575,7 @@ public class MultiPolygonRelation extends Relation {
 		// TODO this algorithm may generate a self intersecting polygon
 		// because it does not consider the direction of both ways
 		// don't know if that's a problem
-		
+
 		List<Coord> outList = outer.getPoints();
 		List<Coord> inList = inner.getPoints();
 		int index = out + 1;
@@ -567,9 +610,33 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
+	private static final class DistIndex implements Comparable<DistIndex> {
+		int index1;
+		int index2;
+		double distance;
+
+		public DistIndex(int index1, int index2, double distance) {
+			super();
+			this.index1 = index1;
+			this.index2 = index2;
+			this.distance = distance;
+		}
+
+		@Override
+		public int compareTo(DistIndex o) {
+			if (distance < o.distance)
+				return -1;
+			else if (distance > o.distance) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	}
+
 	/**
 	 * find the Closest Point of Approach between two coordinate-lists This will
-	 * probably be moved to a Utils class
+	 * probably be moved to a Utils class. Note: works only if l2 lies into l1.
 	 * 
 	 * @param l1
 	 *            First list of points.
@@ -579,27 +646,102 @@ public class MultiPolygonRelation extends Relation {
 	 *         the closest together.
 	 */
 	private static int[] findCpa(List<Coord> l1, List<Coord> l2) {
-		double oldDistance = Double.MAX_VALUE;
-		Coord found1 = null;
-		Coord found2 = null;
+		// calculate and sort all distances first before
+		// to avoid the very costly calls of intersect
+		// Limit the size of this list to 500000 entries to
+		// avoid extreme memory consumption
+		int maxEntries = 500000;
+		ArrayList<DistIndex> distList = new ArrayList<DistIndex>(Math.min(l1
+				.size()
+				* l2.size(), maxEntries));
 
+		DistIndex minDistance = null;
+
+		int index1 = 0;
 		for (Coord c1 : l1) {
+			int index2 = 0;
 			for (Coord c2 : l2) {
-				double newDistance = c1.distanceInDegreesSquared(c2);
-				if (newDistance < oldDistance) {
-					oldDistance = newDistance;
-					found1 = c1;
-					found2 = c2;
+				double distance = c1.distanceInDegreesSquared(c2);
+				distList.add(new DistIndex(index1, index2, distance));
+				index2++;
+
+				if (distList.size() == maxEntries) {
+					Collections.sort(distList);
+					for (DistIndex newDistance : distList) {
+						if (minDistance == null
+								|| minDistance.distance > newDistance.distance) {
+							// this is a new minimum
+							// test if a line between c1 and c2 intersects
+							// the outer polygon l1.
+							if (intersects(l1, l1.get(newDistance.index1), l2
+									.get(newDistance.index2)) == false) {
+								minDistance = newDistance;
+								break;
+							}
+						} else {
+							break;
+						}
+					}
+					distList.clear();
 				}
+			}
+			index1++;
+		}
+
+		Collections.sort(distList);
+		for (DistIndex newDistance : distList) {
+			if (minDistance == null
+					|| minDistance.distance > newDistance.distance) {
+				// this is a new minimum
+				// test if a line between c1 and c2 intersects
+				// the outer polygon l1.
+				if (intersects(l1, l1.get(newDistance.index1), l2
+						.get(newDistance.index2)) == false) {
+					minDistance = newDistance;
+					break;
+				}
+			} else {
+				break;
 			}
 		}
 
-		return new int[] { l1.indexOf(found1), l2.indexOf(found2) };
+		if (minDistance == null) {
+			// this should not happen
+			return new int[] { -1, -1 };
+		} else {
+			return new int[] { minDistance.index1, minDistance.index2 };
+		}
+	}
+
+	private static boolean intersects(List<Coord> lc, Coord lp1, Coord lp2) {
+		Coord c11 = null;
+		Coord c12 = null;
+		for (Coord c : lc) {
+			c12 = c11;
+			c11 = c;
+			if (c12 == null) {
+				continue;
+			}
+
+			// in case the line intersects in a well known point this is not an
+			// inline intersection
+			if (c11.equals(lp1) || c11.equals(lp2) || c12.equals(lp1)
+					|| c12.equals(lp2)) {
+				continue;
+			}
+
+			if (Line2D.linesIntersect(c11.getLatitude(), c11.getLongitude(),
+					c12.getLatitude(), c12.getLongitude(), lp1.getLatitude(),
+					lp1.getLongitude(), lp2.getLatitude(), lp2.getLongitude())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
-	 * This is a helper class that stores that gives access to the original segments
-	 * of a joined way.
+	 * This is a helper class that stores that gives access to the original
+	 * segments of a joined way.
 	 */
 	private static class JoinedWay extends Way {
 		private final List<Way> originalWays;
@@ -617,11 +759,11 @@ public class MultiPolygonRelation extends Relation {
 
 		public void addWay(Way way) {
 			if (way instanceof JoinedWay) {
-				this.originalWays
-						.addAll(((JoinedWay) way).getOriginalWays());
+				this.originalWays.addAll(((JoinedWay) way).getOriginalWays());
 			} else {
 				this.originalWays.add(way);
 			}
+			log.debug("Joined", this.getId(), "with", way.getId());
 		}
 
 		public List<Way> getOriginalWays() {
@@ -630,4 +772,16 @@ public class MultiPolygonRelation extends Relation {
 
 	}
 
+	private static class RingStatus {
+		boolean outer;
+		int index;
+		JoinedWay ring;
+
+		public RingStatus(boolean outer, int index, JoinedWay ring) {
+			super();
+			this.outer = outer;
+			this.index = index;
+			this.ring = ring;
+		}
+	}
 }
