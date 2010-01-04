@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +36,11 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 public class SubAction implements Action {
 	private final List<Action> actionList = new ArrayList<Action>();
 	private final String role;
+	private final boolean once;
 
-	public SubAction(String role) {
+	public SubAction(String role, boolean once) {
 		this.role = role;
+		this.once = once;
 	}
 
 	public void perform(Element el) {
@@ -48,8 +51,10 @@ public class SubAction implements Action {
 	private void performOnSubElements(Relation rel) {
 		List<Element> elements = rel.getElements();
 		Map<Element, String> roles = rel.getRoles();
+		HashSet<Element> elems = once ? new HashSet<Element>() : null;
+
 		for (Element el : elements) {
-			if (role == null || role.equals(roles.get(el))) {
+			if ((role == null || role.equals(roles.get(el))) && (!once || elems.add(el))) {
 				for (Action a : actionList) {
 					if (a instanceof AddTagAction)
 						((AddTagAction) a).setValueTags(rel);
@@ -67,7 +72,8 @@ public class SubAction implements Action {
 		Formatter fmt = new Formatter();
 		if (role != null)
 			fmt.format("role=%s ", role);
-		fmt.format("apply {");
+		fmt.format(once ? "apply_once" : "apply");
+		fmt.format(" {");
 
 		for (Iterator<Action> it = actionList.iterator(); it.hasNext();) {
 			Action a = it.next();
