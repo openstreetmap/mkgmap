@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,6 +77,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
+	private Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
+		new HashMap<Long, List<Map.Entry<String,Relation>>>();
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
 	private final List<Way> motorways = new ArrayList<Way>();
@@ -310,6 +313,22 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			} else if ("relation".equals(type)) {
 				el = relationMap.get(id);
+				if (el == null) {
+					// The relation may be defined later in the input.
+					// Defer the lookup.
+					Map.Entry<String,Relation> entry =
+						new AbstractMap.SimpleEntry<String,Relation>
+						(attributes.getValue("role"), currentRelation);
+
+					List<Map.Entry<String,Relation>> entries =
+						deferredRelationMap.get(id);
+					if (entries == null) {
+						entries = new ArrayList<Map.Entry<String,Relation>>();
+						deferredRelationMap.put(id, entries);
+					}
+
+					entries.add(entry);
+				}
 			} else
 				el = null;
 			if (el != null) // ignore non existing ways caused by splitting files
@@ -537,8 +556,17 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if(currentRelation != null) {
-			relationMap.put(currentRelation.getId(), currentRelation);
+			long id = currentRelation.getId();
+
+			relationMap.put(id, currentRelation);
 			currentRelation.processElements();
+
+			List<Map.Entry<String,Relation>> entries =
+				deferredRelationMap.remove(id);
+			if (entries != null)
+				for (Map.Entry<String,Relation> entry : entries)
+					entry.getValue().addElement(entry.getKey(), currentRelation);
+
 			currentRelation = null;
 		}
 	}
