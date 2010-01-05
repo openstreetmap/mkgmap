@@ -115,7 +115,7 @@ amenity=zoo [0x2c07 resolution 21]
   name '${name|def:} ${ref|def:}-${operator|def:}';
 }
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (name=*|ref=*|operator=*)
+& (name=*|ref=*|operator=*|route_ref=*)
 {
   set ref='${ref|def:}(${route_ref})';
   name '${name|def:} ${ref|def:} ${operator|def:}';
