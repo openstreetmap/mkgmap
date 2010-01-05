@@ -49,17 +49,20 @@ public class SubAction implements Action {
 	}
 
 	private void performOnSubElements(Relation rel) {
-		List<Element> elements = rel.getElements();
-		Map<Element, String> roles = rel.getRoles();
+		List<Map.Entry<String,Element>> elements = rel.getElements();
+
+		for (Action a : actionList)
+			if (a instanceof AddTagAction)
+				((AddTagAction) a).setValueTags(rel);
+
 		HashSet<Element> elems = once ? new HashSet<Element>() : null;
 
-		for (Element el : elements) {
-			if ((role == null || role.equals(roles.get(el))) && (!once || elems.add(el))) {
-				for (Action a : actionList) {
-					if (a instanceof AddTagAction)
-						((AddTagAction) a).setValueTags(rel);
-					a.perform(el);
-				}
+		for (Map.Entry<String,Element> r_el : elements) {
+			if ((role == null || role.equals(r_el.getKey())) &&
+				(!once || elems.add(r_el.getValue()))) {
+
+				for (Action a : actionList)
+					a.perform(r_el.getValue());
 			}
 		}
 	}

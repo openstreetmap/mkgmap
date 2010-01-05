@@ -29,16 +29,16 @@ public class MultiPolygonRelation extends Relation {
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap) {
 		myWayMap = wayMap;
 		setId(other.getId());
-		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
-			addElement(pairs.getValue(), pairs.getKey());
-			
-	        String value = pairs.getValue();
+		for (Map.Entry<String, Element> pair : other.getElements()) {
+			String role = pair.getKey();
+			Element el = pair.getValue();
+			addElement(role, el);
 
-			if (value != null && pairs.getKey() instanceof Way) {
-				Way way = (Way) pairs.getKey();
-				if (value.equals("outer")){
+			if (role != null && el instanceof Way) {
+				Way way = (Way) el;
+				if ("outer".equals(role)) {
 					outers.add(way);
-				} else if (value.equals("inner")){
+				} else if ("inner".equals(role)) {
 					inners.add(way);
 				}
 			}
