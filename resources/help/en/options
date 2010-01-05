@@ -149,7 +149,11 @@ Product description options:
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
 	.img and .tdb files. The default map name is osmmap.
-	
+
+--nsis
+	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
+	(NSIS) to create a Windows Mapsource Installer.
+
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
 	number used in the overview map and tdb file.  The default
@@ -281,6 +285,30 @@ Miscellaneous options:
 	Generate a POI for each area. The POIs are created after the
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
+
+--generate-sea[=ValueList]
+	Generate sea polygons. ValueList is an optional comma
+	separated list of values:
+
+	multipolygon
+		generate the sea using a multipolygon (the default
+		behaviour so this really doesn't need to be specified).
+
+	polygons | no-mp
+		don't generate the sea using a multipolygon - instead,
+		generate a background sea polygon plus individual land
+		polygons with tag natural=land. This requires a
+		suitable land polygon type to be defined in the style
+		file (suggested type is 0x010100) and the polygon must
+		be defined in the TYP file as having a higher drawing
+		level than the sea polygon type.
+
+	no-sea-sectors
+		disable the generation of "sea sectors" when the
+		coastline fails to reach the tile's boundary.
+
+	land-tag=TAG=VAL
+		tag to use for land polygons (default natural=land).
 
 --make-poi-index
 	Generate the POI index (not yet useful).

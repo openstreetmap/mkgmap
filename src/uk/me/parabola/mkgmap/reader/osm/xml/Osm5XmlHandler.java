@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,6 +77,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
+	private Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
+		new HashMap<Long, List<Map.Entry<String,Relation>>>();
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
 	private final List<Way> motorways = new ArrayList<Way>();
@@ -111,6 +114,9 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean linkPOIsToWays;
 	private final boolean routing;
 	private final boolean generateSea;
+	private boolean generateSeaUsingMP = true;
+	private boolean allowSeaSectors = true;
+	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
 
@@ -126,7 +132,31 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
-		generateSea = props.getProperty("generate-sea", false);
+		String gs = props.getProperty("generate-sea", null);
+		generateSea = gs != null;
+		if(generateSea) {
+			for(String o : gs.split(",")) {
+				if("no-mp".equals(o) ||
+				   "polygon".equals(o) ||
+				   "polygons".equals(o))
+					generateSeaUsingMP = false;
+				else if("multipolygon".equals(o))
+					generateSeaUsingMP = true;
+				else if("no-sea-sectors".equals(o))
+					allowSeaSectors = false;
+				else if(o.startsWith("land-tag="))
+					landTag = o.substring(9).split("=");
+				else {
+					if(!"help".equals(o))
+						System.err.println("Unknown sea generation option '" + o + "'");
+					System.err.println("Known sea generation options are:");
+					System.err.println("  multipolygon      use a multipolygon (default)");
+					System.err.println("  polygons | no-mp  use polygons rather than a multipolygon");
+					System.err.println("  no-sea-sectors    disable use of \"sea sectors\"");
+					System.err.println("  land-tag=TAG=VAL  tag to use for land polygons (default natural=land)");
+				}
+			}
+		}
 		routing = props.containsKey("route");
 		String rsa = props.getProperty("remove-short-arcs", null);
 		if(rsa != null)
@@ -283,6 +313,22 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			} else if ("relation".equals(type)) {
 				el = relationMap.get(id);
+				if (el == null) {
+					// The relation may be defined later in the input.
+					// Defer the lookup.
+					Map.Entry<String,Relation> entry =
+						new AbstractMap.SimpleEntry<String,Relation>
+						(attributes.getValue("role"), currentRelation);
+
+					List<Map.Entry<String,Relation>> entries =
+						deferredRelationMap.get(id);
+					if (entries == null) {
+						entries = new ArrayList<Map.Entry<String,Relation>>();
+						deferredRelationMap.put(id, entries);
+					}
+
+					entries.add(entry);
+				}
 			} else
 				el = null;
 			if (el != null) // ignore non existing ways caused by splitting files
@@ -465,8 +511,10 @@ class Osm5XmlHandler extends DefaultHandler {
 				if("motorway".equals(highway) ||
 				   "trunk".equals(highway))
 					motorways.add(currentWay);
-				if(generateSea && "coastline".equals(currentWay.getTag("natural")))
-				    shoreline.add(currentWay);
+				if(generateSea && "coastline".equals(currentWay.getTag("natural"))) {
+					currentWay.deleteTag("natural");
+					shoreline.add(currentWay);
+				}
 				currentNodeInWay = null;
 				currentWayStartsWithFIXME = false;
 				currentWay = null;
@@ -508,8 +556,17 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if(currentRelation != null) {
-			relationMap.put(currentRelation.getId(), currentRelation);
+			long id = currentRelation.getId();
+
+			relationMap.put(id, currentRelation);
 			currentRelation.processElements();
+
+			List<Map.Entry<String,Relation>> entries =
+				deferredRelationMap.remove(id);
+			if (entries != null)
+				for (Map.Entry<String,Relation> entry : entries)
+					entry.getValue().addElement(entry.getKey(), currentRelation);
+
 			currentRelation = null;
 		}
 	}
@@ -995,6 +1052,10 @@ class Osm5XmlHandler extends DefaultHandler {
 		super.fatalError(e);
 	}
 
+	public long makeFakeId() {
+		return (1L << 62) + nextFakeId++;
+	}
+
 	private long idVal(String id) {
 		try {
 			// attempt to parse id as a number
@@ -1004,7 +1065,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = (1L << 62) + nextFakeId++;
+				fakeIdVal = makeFakeId();
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
@@ -1013,10 +1074,6 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	private void generateSeaPolygon(List<Way> shoreline) {
-		// don't do anything if there is no shoreline
-		if (shoreline.isEmpty())
-			return;
-
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
@@ -1033,7 +1090,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.info("clipping " + segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = (1L << 62) + nextFakeId++;
+					long id = makeFakeId();
 					Way shore = new Way(id, pts);
 					toBeAdded.add(shore);
 				}
@@ -1053,9 +1110,33 @@ class Osm5XmlHandler extends DefaultHandler {
 		Coord sw = new Coord(maxLat, minLong);
 		Coord se = new Coord(maxLat, maxLong);
 
-		long multiId = (1L << 62) + nextFakeId++;
-		Relation seaRelation = new GeneralRelation(multiId);
-		seaRelation.addTag("type", "multipolygon");
+		if(shoreline.isEmpty()) {
+			// no sea required
+			if(!generateSeaUsingMP) {
+				// even though there is no sea, generate a land
+				// polygon so that the tile's background colour will
+				// match the land colour on the tiles that do contain
+				// some sea
+				long landId = makeFakeId();
+				Way land = new Way(landId);
+				land.addPoint(nw);
+				land.addPoint(sw);
+				land.addPoint(se);
+				land.addPoint(ne);
+				land.addPoint(nw);
+				land.addTag(landTag[0], landTag[1]);
+				wayMap.put(landId, land);
+			}
+			// nothing more to do
+			return;
+		}
+
+		long multiId = makeFakeId();
+		Relation seaRelation = null;
+		if(generateSeaUsingMP) {
+			seaRelation = new GeneralRelation(multiId);
+			seaRelation.addTag("type", "multipolygon");
+		}
 
 		List<Way> islands = new ArrayList<Way>();
 
@@ -1083,7 +1164,12 @@ class Osm5XmlHandler extends DefaultHandler {
 		// create a "inner" way for each island
 		for (Way w : islands) {
 			log.info("adding island " + w);
-			seaRelation.addElement("inner", w);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("inner", w);
+			else {
+				w.addTag(landTag[0], landTag[1]);
+				wayMap.put(w.getId(), w);
+			}
 		}
 
 		boolean generateSeaBackground = true;
@@ -1129,10 +1215,15 @@ class Osm5XmlHandler extends DefaultHandler {
 				if (nearlyClosed) {
 					// close the way
 					points.add(pStart);
-					seaRelation.addElement("inner", w);
+					if(generateSeaUsingMP)
+						seaRelation.addElement("inner", w);
+					else {
+						w.addTag(landTag[0], landTag[1]);
+						wayMap.put(w.getId(), w);
+					}
 				}
-				else {
-					seaId = (1L << 62) + nextFakeId++;
+				else if(allowSeaSectors) {
+					seaId = makeFakeId();
 					sea = new Way(seaId);
 					sea.getPoints().addAll(points);
 					sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
@@ -1140,8 +1231,15 @@ class Osm5XmlHandler extends DefaultHandler {
 					sea.addTag("natural", "sea");
 					log.info("sea: ", sea);
 					wayMap.put(seaId, sea);
-					seaRelation.addElement("outer", sea);
+					if(generateSeaUsingMP)
+						seaRelation.addElement("outer", sea);
 					generateSeaBackground = false;
+				}
+				else {
+					// show the coastline even though we can't produce
+					// a polygon for the land
+					w.addTag("natural", "coastline");
+					wayMap.put(w.getId(), w);
 				}
 			}
 			else {
@@ -1151,7 +1249,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if (generateSeaBackground) {
-			seaId = (1L << 62) + nextFakeId++;
+			seaId = makeFakeId();
 			sea = new Way(seaId);
 			sea.addPoint(nw);
 			sea.addPoint(sw);
@@ -1161,13 +1259,14 @@ class Osm5XmlHandler extends DefaultHandler {
 			sea.addTag("natural", "sea");
 			log.info("sea: ", sea);
 			wayMap.put(seaId, sea);
-			seaRelation.addElement("outer", sea);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("outer", sea);
 		}
 
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
 		while (!hits.isEmpty()) {
-			long id = (1L << 62) + nextFakeId++;
+			long id = makeFakeId();
 			Way w = new Way(id);
 			wayMap.put(id, w);
 
@@ -1224,12 +1323,19 @@ class Osm5XmlHandler extends DefaultHandler {
 				w.getPoints().add(w.getPoints().get(0));
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
 			//w.addTag("highway", "motorway");
-			seaRelation.addElement("inner", w);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("inner", w);
+			else {
+				w.addTag(landTag[0], landTag[1]);
+				wayMap.put(w.getId(), w);
+			}
 		}
 
-		seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
-		relationMap.put(multiId, seaRelation);
-		seaRelation.processElements();
+		if(generateSeaUsingMP) {
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+			relationMap.put(multiId, seaRelation);
+			seaRelation.processElements();
+		}
 	}
 
 	/**
@@ -1346,11 +1452,12 @@ class Osm5XmlHandler extends DefaultHandler {
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
 					if (w1.getId() < (1L << 62)) {
-						wm = new Way((1L << 62) + nextFakeId++);
+						wm = new Way(makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
+						wm.copyTags(w1);
 					}
 					else {
 						wm = w1;

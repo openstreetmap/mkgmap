@@ -2,6 +2,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.awt.Polygon;
 import java.awt.geom.Line2D;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -53,18 +54,18 @@ public class MultiPolygonRelation extends Relation {
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap) {
 		myWayMap = wayMap;
 		setId(other.getId());
-		for (Map.Entry<Element, String> pairs : other.getRoles().entrySet()) {
-			addElement(pairs.getValue(), pairs.getKey());
+		for (Map.Entry<String, Element> pair : other.getElements()) {
+			String role = pair.getKey();
+			Element el = pair.getValue();
+			addElement(role, el);
 
-			// String value = pairs.getValue();
-			//
-			// if (value != null && pairs.getKey() instanceof Way) {
-			// Way way = (Way) pairs.getKey();
-			// if (value.equals("outer")) {
-			// outerSegments.add(way);
-			// } else if (value.equals("inner")) {
-			// innerSegments.add(way);
-			// }
+			// if (role != null && el instanceof Way) {
+			// 	Way way = (Way) el;
+			// 	if ("outer".equals(role)) {
+			// 		outerSegments.add(way);
+			// 	} else if ("inner".equals(role)) {
+			// 		innerSegments.add(way);
+			// 	}
 			// }
 		}
 
@@ -79,7 +80,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            a list of closed or unclosed ways
 	 * @return a list of closed ways
 	 */
-	private ArrayList<JoinedWay> joinWays(List<Way> segments) {
+	private ArrayList<JoinedWay> joinWays(List<Map.Entry<String,Way>> segments) {
 		// this method implements RA-1 to RA-4
 		// TODO check if the closed polygon is valid and implement a
 		// backtracking algorithm to get other combinations
@@ -92,11 +93,14 @@ public class MultiPolygonRelation extends Relation {
 		// go through all segments and categorize them to closed and unclosed
 		// list
 		ArrayList<JoinedWay> unclosedWays = new ArrayList<JoinedWay>();
-		for (Way orgSegment : segments) {
-			if (orgSegment.isClosed()) {
-				joinedWays.add(new JoinedWay(orgSegment));
+		for (Map.Entry<String,Way> orgSegment : segments) {
+			String role = orgSegment.getKey();
+			Way way = orgSegment.getValue();
+
+			if (way.isClosed()) {
+				joinedWays.add(new JoinedWay(role, way));
 			} else {
-				unclosedWays.add(new JoinedWay(orgSegment));
+				unclosedWays.add(new JoinedWay(role, way));
 			}
 		}
 
@@ -123,6 +127,7 @@ public class MultiPolygonRelation extends Relation {
 					continue;
 				}
 
+				// TODO: compare roles too
 				// use == or equals as comparator??
 				if (joinWay.getPoints().get(0) == tempWay.getPoints().get(0)) {
 					for (Coord point : tempWay.getPoints().subList(1,
@@ -203,9 +208,11 @@ public class MultiPolygonRelation extends Relation {
 					log.warn("Unclosed polygons in multipolygon relation "
 							+ getId() + ":");
 				}
-				for (Way orgWay : tempWay.getOriginalWays()) {
-					log.warn(" - way:", orgWay.getId(), "role:", getRoles()
-							.get(orgWay), "osm:", orgWay.toBrowseURL());
+				for (Map.Entry<String,Way> rw : tempWay.getOriginalRoleWays()) {
+					String role = rw.getKey();
+					Way way = rw.getValue();
+					log.warn(" - way:", way.getId(), "role:", role,
+							"osm:", way.toBrowseURL());
 				}
 
 				it.remove();
@@ -270,12 +277,16 @@ public class MultiPolygonRelation extends Relation {
 	 * ways with the role "inner" to the way with the role "outer"
 	 */
 	public void processElements() {
-		// don't care about outer and inner declaration
-		// because this is a first
-		ArrayList<Way> allWays = new ArrayList<Way>();
-		for (Element element : getElements()) {
+		ArrayList<Map.Entry<String,Way>> allWays =
+				new ArrayList<Map.Entry<String,Way>>();
+
+		for (Map.Entry<String,Element> r_el : getElements()) {
+			String role = r_el.getKey();
+			Element element = r_el.getValue();
+
 			if (element instanceof Way) {
-				allWays.add((Way) element);
+				allWays.add(new AbstractMap.SimpleEntry<String,Way>
+						(role, (Way) element));
 			} else {
 				log.warn("Non way element", element.getId(), "in multipolygon",
 						getId());
@@ -330,7 +341,7 @@ public class MultiPolygonRelation extends Relation {
 			// QA: check that all ways carry the role "outer/inner" and
 			// issue
 			// warnings
-			checkRoles(currentRing.ring.getOriginalWays(),
+			checkRoles(currentRing.ring.getOriginalRoleWays(),
 					(currentRing.outer ? "outer" : "inner"));
 
 			// this ring is now processed and should not be used by any
@@ -385,7 +396,9 @@ public class MultiPolygonRelation extends Relation {
 				} else {
 					// the multipolygon does not contain any relevant tag
 					// use the segments of the ring and merge the tags
-					for (Way ringSegment : currentRing.ring.getOriginalWays()) {
+					for (Map.Entry<String,Way> roleway : currentRing.ring.getOriginalRoleWays()) {
+						String role = roleway.getKey();
+						Way ringSegment = roleway.getValue();
 						// TODO uuh, this is bad => the last of the
 						// ring segments win
 						// => any better idea?
@@ -424,8 +437,8 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private boolean hasUsefulTags(JoinedWay way) {
-		for (Way segment : way.getOriginalWays()) {
-			if (hasUsefulTags(segment)) {
+		for (Map.Entry<String,Way> segment : way.getOriginalRoleWays()) {
+			if (hasUsefulTags(segment.getValue())) {
 				return true;
 			}
 		}
@@ -448,12 +461,14 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayList
 	 * @param checkRole
 	 */
-	private void checkRoles(List<Way> wayList, String checkRole) {
+	private void checkRoles(List<Map.Entry<String,Way>> wayList,
+							String checkRole) {
 		// QA: check that all ways carry the role "inner" and issue warnings
-		for (Way tempWay : wayList) {
-			String realRole = getRoles().get(tempWay);
-			if (checkRole.equals(realRole) == false) {
-				log.warn("Way", tempWay.getId(), "carries role", realRole,
+		for (Map.Entry<String,Way> rw : wayList) {
+			String role = rw.getKey();
+			Way way = rw.getValue();
+			if (!checkRole.equals(role) == false) {
+				log.warn("Way", way.getId(), "carries role", role,
 						"but should carry role", checkRole);
 			}
 		}
@@ -744,30 +759,27 @@ public class MultiPolygonRelation extends Relation {
 	 * segments of a joined way.
 	 */
 	private static class JoinedWay extends Way {
-		private final List<Way> originalWays;
+		private final List<Map.Entry<String,Way>> originalRoleWays;
 
-		public JoinedWay(Way originalWay) {
+		public JoinedWay(String role, Way originalWay) {
 			super(-originalWay.getId(), new ArrayList<Coord>(originalWay
 					.getPoints()));
-			this.originalWays = new ArrayList<Way>();
-			this.originalWays.add(originalWay);
+			this.originalRoleWays = new ArrayList<Map.Entry<String,Way>>();
+			this.originalRoleWays.add(new AbstractMap.SimpleEntry<String,Way>
+									  (role, originalWay));
 		}
 
 		public void addPoint(int index, Coord point) {
 			getPoints().add(index, point);
 		}
 
-		public void addWay(Way way) {
-			if (way instanceof JoinedWay) {
-				this.originalWays.addAll(((JoinedWay) way).getOriginalWays());
-			} else {
-				this.originalWays.add(way);
-			}
+		public void addWay(JoinedWay way) {
+			originalRoleWays.addAll(way.originalRoleWays);
 			log.debug("Joined", this.getId(), "with", way.getId());
 		}
 
-		public List<Way> getOriginalWays() {
-			return originalWays;
+		public List<Map.Entry<String, Way>> getOriginalRoleWays() {
+			return originalRoleWays;
 		}
 
 	}

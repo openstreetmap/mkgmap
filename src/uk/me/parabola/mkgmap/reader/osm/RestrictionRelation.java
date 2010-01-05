@@ -47,9 +47,9 @@ public class RestrictionRelation extends Relation {
 
 		messagePrefix = "Turn restriction " + browseURL + " ";
 
-		for (Map.Entry<Element, String> pairs: other.getRoles().entrySet()){
-			Element el = pairs.getKey();
-			String role = pairs.getValue();
+		for (Map.Entry<String, Element> pair : other.getElements()) {
+			String role = pair.getKey();
+			Element el = pair.getValue();
 			addElement(role, el);
 
 			Coord location = null;

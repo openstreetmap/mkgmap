@@ -19,7 +19,7 @@ amenity=biergarten [0x2d02 resolution 21]
 amenity=border_control | barrier=border_control [0x3006 resolution 18]
 amenity=bus_station [0x2f08 resolution 20]
 amenity=cafe [0x2a0e resolution 21]
-#amenity=car_club [0x2f0d resolution 20]
+amenity=car_club [0x2f0d resolution 20]
 amenity=car_rental [0x2f02 resolution 20]
 amenity=car_sharing [0x2f02 resolution 20]
 amenity=car_wash [0x2f0e resolution 21]
@@ -34,12 +34,12 @@ amenity=community_center [0x3005 resolution 20]
 amenity=courthouse [0x3004 resolution 20]
 amenity=doctors [0x3002 resolution 20]
 amenity=drinking_water [0x5000 resolution 23 default_name 'Water']
-amenity=embassy [0x3003 resolution 21 default_name 'Embassy']
+amenity=embassy & country=* { name '${country} ${name|def:}' } [0x3003 resolution 21]
+amenity=embassy & country!=* [0x3003 resolution 21 default_name 'Embassy']
 amenity=emergency_phone [0x2f12 resolution 21 default_name 'Emergency Phone']
 amenity=ferry_terminal [0x2f08 resolution 19]
 amenity=fast_food & cuisine=grill [0x2a03 resolution 20]
-amenity=fast_food & cuisine=pizza [0x2a0a resolution 20]
-amenity=fast_food & cuisine='pizza;kebab' [0x2a0a resolution 20]
+amenity=fast_food & cuisine ~ '.*pizza.*' [0x2a0a resolution 20]
 amenity=fast_food [0x2a07 resolution 21]
 amenity=fire_station [0x3008 resolution 21]
 amenity=food_court [0x2a13 resolution 20]
@@ -76,8 +76,7 @@ amenity=restaurant & cuisine=italian [0x2a08 resolution 20]
 amenity=restaurant & cuisine=japanese [0x2a02 resolution 20]
 amenity=restaurant & cuisine=korean [0x2a02 resolution 20]
 amenity=restaurant & cuisine=mexican [0x2a09 resolution 20]
-amenity=restaurant & cuisine=pizza [0x2a0a resolution 20]
-amenity=restaurant & cuisine='pizza;kebab' [0x2a0a resolution 20]
+amenity=restaurant & cuisine ~ '.*pizza.*' [0x2a0a resolution 20]
 amenity=restaurant & cuisine=sea_food [0x2a0b resolution 20]
 amenity=restaurant & cuisine=spanish [0x2a09 resolution 20]
 amenity=restaurant & cuisine=speciality [0x2a12 resolution 20]
@@ -99,16 +98,28 @@ amenity=zoo [0x2c07 resolution 21]
 
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & lit=yes & (shelter=yes | covered=yes)
-{ name '${name|def:} ${ref|def:}*${operator|def:}'; }
+{
+  set ref='${ref|def:}(${route_ref})';
+  name '${name|def:} ${ref|def:}*${operator|def:}';
+}
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (shelter=yes | covered=yes)
-{ name '${name|def:} ${ref|def:}+${operator|def:}'; }
+{
+  set ref='${ref|def:}(${route_ref})';
+  name '${name|def:} ${ref|def:}+${operator|def:}';
+}
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
 & (shelter=no | covered=no)
-{ name '${name|def:} ${ref|def:}-${operator|def:}' }
+{
+  set ref='${ref|def:}(${route_ref})';
+  name '${name|def:} ${ref|def:}-${operator|def:}';
+}
 (highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (name=*|ref=*|operator=*)
-{ name '${name|def:} ${ref|def:} ${operator|def:}' }
+& (name=*|ref=*|operator=*|route_ref=*)
+{
+  set ref='${ref|def:}(${route_ref})';
+  name '${name|def:} ${ref|def:} ${operator|def:}';
+}
 
 highway=bus_stop [0x2f17 resolution 20]
 
@@ -143,7 +154,7 @@ natural=glacier [0x650a resolution 21]
 natural=peak {name '${name|def:}${ele|height:m=>ft|def:}' } [0x6616 resolution 18]
 natural=rock [0x6614 resolution 21]
 natural=spring [0x6511 resolution 21]
-#natural=stream [0x6512 resolution 21]
+natural=stream [0x6512 resolution 21]
 natural=volcano [0x2c0c resolution 21]
 natural=water [0x6603 resolution 21]
 natural=wetland [0x6513 resolution 21]
@@ -164,14 +175,14 @@ shop=bakers [0x2e02 resolution 20]
 shop=bakery [0x2e02 resolution 20]
 shop=beauty [0x2f10 resolution 20]
 shop=bicycle [0x2f13 resolution 20]
-#shop=boat [0x2f09 resolution 20]
+shop=boat [0x2f09 resolution 20]
 shop=butcher [0x2e0c resolution 20]
 shop=car [0x2f07 resolution 20]
 shop=car_dealer [0x2f07 resolution 20]
 shop=car_parts [0x2f07 resolution 20]
 shop=car_rental [0x2f02 resolution 20]
 shop=car_repair [0x2f03 resolution 20]
-#shop=car_wrecker [0x2f0a resolution 20]
+shop=car_wrecker [0x2f0a resolution 20]
 shop=chemist [0x2e05 resolution 20]
 shop=clothes [0x2e07 resolution 20]
 shop=computer [0x2e0b resolution 20]
@@ -195,7 +206,7 @@ shop=* [0x2e0c resolution 20]
 
 sport=9pin [0x2d07 resolution 20]
 sport=10pin [0x2d07 resolution 20]
-#sport=airport [0x2d0b resolution 19]
+sport=airport [0x2d0b resolution 19]
 sport=multi [0x2d0a resolution 20]
 sport=skating [0x2d08 resolution 20]
 sport=skiing [0x2d06 resolution 20]
@@ -215,7 +226,7 @@ tourism=information [0x2f0c resolution 20]
 tourism=motel [0x2b01 resolution 20]
 tourism=museum [0x2c02 resolution 20]
 tourism=picnic_site [0x4a00 resolution 20]
-#tourism=resort [0x2b04 resolution 20]
+tourism=resort [0x2b04 resolution 20]
 tourism=theme_park [0x2c01 resolution 20]
 tourism=viewpoint [0x2c04 resolution 20]
 tourism=wine_cellar [0x2c0a resolution 20]

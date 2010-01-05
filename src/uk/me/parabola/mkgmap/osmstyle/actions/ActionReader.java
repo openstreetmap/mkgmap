@@ -55,7 +55,9 @@ public class ActionReader {
 			} else if ("add".equals(cmd)) {
 				actions.add(readTagValue(false));
 			} else if ("apply".equals(cmd)) {
-				actions.add(readAllCmd());
+				actions.add(readAllCmd(false));
+			} else if ("apply_once".equals(cmd)) {
+				actions.add(readAllCmd(true));
 			} else if ("name".equals(cmd)) {
 				actions.add(readNameCmd());
 			} else if ("delete".equals(cmd)) {
@@ -81,7 +83,7 @@ public class ActionReader {
 		return actions;
 	}
 
-	private Action readAllCmd() {
+	private Action readAllCmd(boolean once) {
 		String role = null;
 		if (scanner.checkToken("role")) {
 			scanner.nextToken();
@@ -90,7 +92,7 @@ public class ActionReader {
 				throw new SyntaxException(scanner, "Expecting '=' after role keyword");
 			role = scanner.nextWord();
 		}
-		SubAction subAction = new SubAction(role);
+		SubAction subAction = new SubAction(role, once);
 
 		List<Action> actionList = readActions();
 		for (Action a : actionList)
