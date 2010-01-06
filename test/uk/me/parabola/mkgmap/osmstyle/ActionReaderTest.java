@@ -172,7 +172,7 @@ public class ActionReaderTest {
 		// Will be set on all members as there is no role filter.
 		List<Map.Entry<String,Element>> r_el = rel.getElements();
 		Element el1 = r_el.get(0).getValue();
-		assertEquals("route tag added to first", "bike", el1.getKey("route"));
+		assertEquals("route tag added to first", "bike", el1.getTag("route"));
 		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
 
 		Element el2 = r_el.get(1).getValue();
