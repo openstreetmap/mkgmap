@@ -99,7 +99,7 @@ public class Tags implements Iterable<String> {
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
-			assert false;
+			assert false : "keyPos(" + key + ") returns null - size = " + size + ", capacity = " + capacity;
 		keys[ind] = key;
 
 		String old = values[ind];
@@ -118,8 +118,6 @@ public class Tags implements Iterable<String> {
 			// except when resizing.
 			String old = values[k];
 			values[k] = null;
-			if (old != null)
-				size--;
 			return old;
 		}
 		return null;
@@ -149,10 +147,12 @@ public class Tags implements Iterable<String> {
 			keys = new String[ncap];
 			values = new String[ncap];
 			capacity = ncap;
+			size = 0;
 			for (int i = 0; i < okey.length; i++) {
 				String k = okey[i];
-				if (k != null)
-					put(k, oval[i]);
+				String v = oval[i]; // null if tag has been removed
+				if (k != null && v != null)
+					put(k, v);
 			}
 		}
 		assert size < capacity;
