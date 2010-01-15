@@ -92,6 +92,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private static final long CYCLEWAY_ID_OFFSET = 0x10000000;
 
+	private static final long FAKE_ID_BASE = 1L << 62;
+
 	private Node currentNode;
 	private Way currentWay;
 	private Node currentNodeInWay;
@@ -1053,7 +1055,11 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	public long makeFakeId() {
-		return (1L << 62) + nextFakeId++;
+		return FAKE_ID_BASE + nextFakeId++;
+	}
+
+	public boolean isFakeId(long id) {
+		return id >= FAKE_ID_BASE;
 	}
 
 	private long idVal(String id) {
