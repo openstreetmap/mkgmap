@@ -47,7 +47,8 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public void deleteTag(String tagname) {
-		tags.remove(tagname);
+		if(tags != null)
+			tags.remove(tagname);
 	}
 
 	public Iterator<String> iterator() {
