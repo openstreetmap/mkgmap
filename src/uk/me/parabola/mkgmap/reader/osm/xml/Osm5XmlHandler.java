@@ -1167,6 +1167,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
+				w.deleteTag("boundary");
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
@@ -1218,6 +1219,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(generateSeaUsingMP)
 						seaRelation.addElement("inner", w);
 					else {
+						w.deleteTag("boundary");
 						w.addTag(landTag[0], landTag[1]);
 						wayMap.put(w.getId(), w);
 					}
@@ -1326,6 +1328,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
+				w.deleteTag("boundary");
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
