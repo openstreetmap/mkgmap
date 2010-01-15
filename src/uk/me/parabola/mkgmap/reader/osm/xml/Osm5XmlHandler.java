@@ -1173,7 +1173,15 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				w.deleteTag("boundary");
+				if(!isFakeId(w.getId())) {
+					Way w1 = new Way(makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					// only copy the name tags
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
@@ -1225,7 +1233,15 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(generateSeaUsingMP)
 						seaRelation.addElement("inner", w);
 					else {
-						w.deleteTag("boundary");
+						if(!isFakeId(w.getId())) {
+							Way w1 = new Way(makeFakeId());
+							w1.getPoints().addAll(w.getPoints());
+							// only copy the name tags
+							for(String tag : w)
+								if(tag.equals("name") || tag.endsWith(":name"))
+									w1.addTag(tag, w.getTag(tag));
+							w = w1;
+						}
 						w.addTag(landTag[0], landTag[1]);
 						wayMap.put(w.getId(), w);
 					}
@@ -1334,7 +1350,14 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				w.deleteTag("boundary");
+				if(!isFakeId(w.getId())) {
+					Way w1 = new Way(makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
@@ -1460,13 +1483,16 @@ class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (w1.getId() < (1L << 62)) {
+					if (!isFakeId(w1.getId())) {
 						wm = new Way(makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
-						wm.copyTags(w1);
+						// only copy the name tags
+						for(String tag : w1)
+							if(tag.equals("name") || tag.endsWith(":name"))
+							   wm.addTag(tag, w1.getTag(tag));
 					}
 					else {
 						wm = w1;
