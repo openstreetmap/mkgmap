@@ -229,9 +229,9 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public String toOSMURL(int zoom) {
-		return ("http://www.openstreetmap.org/?lat=" +
+		return ("http://www.openstreetmap.org/?mlat=" +
 			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(latitude)) +
-			"&lon=" +
+			"&mlon=" +
 			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(longitude)) +
 			"&zoom=" +
 			zoom);
