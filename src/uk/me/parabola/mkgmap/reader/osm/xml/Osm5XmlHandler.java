@@ -20,9 +20,8 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.io.IOException;
-
+import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +45,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -103,8 +103,6 @@ class Osm5XmlHandler extends DefaultHandler {
 	private MapDetails mapper;
 	private Area bbox;
 	private Runnable endTask;
-
-	private long nextFakeId = 1;
 
 	private final boolean reportUndefinedNodes;
 	private final boolean makeOppositeCycleways;
@@ -545,8 +543,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void endRelation() {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
-			if ("multipolygon".equals(type))
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
+			if ("multipolygon".equals(type)) {
+				Area mpbbox = (bbox == null ? mapper.getBounds() : bbox);
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpbbox);
+			}
 			else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
@@ -570,7 +570,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			currentRelation = null;
 		}
 	}
-
+	
 	/**
 	 * Receive notification of the end of the document.
 	 *
@@ -581,7 +581,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
-
+		
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
@@ -1052,10 +1052,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		super.fatalError(e);
 	}
 
-	public long makeFakeId() {
-		return (1L << 62) + nextFakeId++;
-	}
-
 	private long idVal(String id) {
 		try {
 			// attempt to parse id as a number
@@ -1065,7 +1061,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = makeFakeId();
+				fakeIdVal = FakeIdGenerator.makeFakeId();
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
@@ -1090,7 +1086,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.info("clipping " + segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = makeFakeId();
+					long id = FakeIdGenerator.makeFakeId();
 					Way shore = new Way(id, pts);
 					toBeAdded.add(shore);
 				}
@@ -1117,7 +1113,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				// polygon so that the tile's background colour will
 				// match the land colour on the tiles that do contain
 				// some sea
-				long landId = makeFakeId();
+				long landId = FakeIdGenerator.makeFakeId();
 				Way land = new Way(landId);
 				land.addPoint(nw);
 				land.addPoint(sw);
@@ -1131,7 +1127,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			return;
 		}
 
-		long multiId = makeFakeId();
+		long multiId = FakeIdGenerator.makeFakeId();
 		Relation seaRelation = null;
 		if(generateSeaUsingMP) {
 			seaRelation = new GeneralRelation(multiId);
@@ -1223,7 +1219,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					}
 				}
 				else if(allowSeaSectors) {
-					seaId = makeFakeId();
+					seaId = FakeIdGenerator.makeFakeId();
 					sea = new Way(seaId);
 					sea.getPoints().addAll(points);
 					sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
@@ -1249,7 +1245,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if (generateSeaBackground) {
-			seaId = makeFakeId();
+			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
 			sea.addPoint(nw);
 			sea.addPoint(sw);
@@ -1266,7 +1262,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
 		while (!hits.isEmpty()) {
-			long id = makeFakeId();
+			long id = FakeIdGenerator.makeFakeId();
 			Way w = new Way(id);
 			wayMap.put(id, w);
 
@@ -1332,7 +1328,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 
 		if(generateSeaUsingMP) {
-			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+			Area mpbbox = (bbox == null ? mapper.getBounds() : bbox);
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpbbox);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();
 		}
@@ -1451,8 +1448,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (w1.getId() < (1L << 62)) {
-						wm = new Way(makeFakeId());
+					if (FakeIdGenerator.isFakeId(w1.getId())) {
+						wm = new Way(FakeIdGenerator.makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
