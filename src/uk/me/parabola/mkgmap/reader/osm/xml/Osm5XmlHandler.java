@@ -36,6 +36,12 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
+
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -54,12 +60,6 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Reads and parses the OSM XML format.
@@ -543,10 +543,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void endRelation() {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
-			if ("multipolygon".equals(type)) {
-				Area mpbbox = (bbox == null ? mapper.getBounds() : bbox);
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpbbox);
-			}
+			if ("multipolygon".equals(type))
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
 			else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
@@ -570,7 +568,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			currentRelation = null;
 		}
 	}
-	
+
 	/**
 	 * Receive notification of the end of the document.
 	 *
@@ -581,7 +579,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
-		
+
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
@@ -1163,6 +1161,15 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					// only copy the name tags
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
@@ -1214,6 +1221,15 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(generateSeaUsingMP)
 						seaRelation.addElement("inner", w);
 					else {
+						if(!FakeIdGenerator.isFakeId(w.getId())) {
+							Way w1 = new Way(FakeIdGenerator.makeFakeId());
+							w1.getPoints().addAll(w.getPoints());
+							// only copy the name tags
+							for(String tag : w)
+								if(tag.equals("name") || tag.endsWith(":name"))
+									w1.addTag(tag, w.getTag(tag));
+							w = w1;
+						}
 						w.addTag(landTag[0], landTag[1]);
 						wayMap.put(w.getId(), w);
 					}
@@ -1322,14 +1338,21 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
 				w.addTag(landTag[0], landTag[1]);
 				wayMap.put(w.getId(), w);
 			}
 		}
 
 		if(generateSeaUsingMP) {
-			Area mpbbox = (bbox == null ? mapper.getBounds() : bbox);
-			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpbbox);
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();
 		}
@@ -1448,13 +1471,16 @@ class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (FakeIdGenerator.isFakeId(w1.getId())) {
+					if (!FakeIdGenerator.isFakeId(w1.getId())) {
 						wm = new Way(FakeIdGenerator.makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
-						wm.copyTags(w1);
+						// only copy the name tags
+						for(String tag : w1)
+							if(tag.equals("name") || tag.endsWith(":name"))
+							   wm.addTag(tag, w1.getTag(tag));
 					}
 					else {
 						wm = w1;
