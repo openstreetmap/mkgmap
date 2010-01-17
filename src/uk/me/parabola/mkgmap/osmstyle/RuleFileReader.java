@@ -125,7 +125,7 @@ public class RuleFileReader {
 		}
 
 		if (op instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp(op, actions, gt);
+			optimiseAndSaveBinaryOp((BinaryOp) op, actions, gt);
 		} else {
 			optimiseAndSaveOtherOp(op, actions, gt);
 			//throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
@@ -144,20 +144,19 @@ public class RuleFileReader {
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
 	 */
-	private void optimiseAndSaveBinaryOp(Op op, List<Action> actions, GType gt) {
-		BinaryOp binaryOp = (BinaryOp) op;
-		Op first = binaryOp.getFirst();
-		Op second = binaryOp.getSecond();
+	private void optimiseAndSaveBinaryOp(BinaryOp op, List<Action> actions, GType gt) {
+		Op first = op.getFirst();
+		Op second = op.getSecond();
 
 		log.debug("binop", op.getType(), first.getType());
 
 		/*
-         * We allow the following cases:
+		 * We allow the following cases:
 		 * An EQUALS at the top.
 		 * An AND at the top level.
 		 * (The case that there is an OR at the top level has already been
 		 * dealt with)
-         */
+		 */
 		String keystring;
 		Op expr;
 		if (op.isType(EQUALS)) {
