@@ -118,6 +118,10 @@ public class Logger {
 		l.setLevel(Level.WARNING);
 	}
 
+	public boolean isLoggable(Level level) {
+		return log.isLoggable(level);
+	}
+
 	public boolean isDebugEnabled() {
 		return log.isLoggable(Level.FINE);
 	}
@@ -191,6 +195,16 @@ public class Logger {
 		log.log(Level.SEVERE, o.toString(), e);
 	}
 
+	public void log(Level level, Object o) {
+		if (log.isLoggable(level))
+			log.log(level, o.toString());
+	}
+
+	public void log(Level level, Object ... olist) {
+		if (log.isLoggable(Level.INFO))
+			arrayFormat(level, olist);
+	}
+	
 	/**
 	 * Format the list of arguments by appending them to one string, keeping a
 	 * space between them.

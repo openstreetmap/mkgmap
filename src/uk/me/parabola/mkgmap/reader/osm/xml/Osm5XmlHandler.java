@@ -1068,6 +1068,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	private void generateSeaPolygon(List<Way> shoreline) {
+		
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
@@ -1128,6 +1129,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		long multiId = FakeIdGenerator.makeFakeId();
 		Relation seaRelation = null;
 		if(generateSeaUsingMP) {
+			log.debug("Generate seabounds relation "+multiId);
 			seaRelation = new GeneralRelation(multiId);
 			seaRelation.addTag("type", "multipolygon");
 		}
@@ -1263,11 +1265,16 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (generateSeaBackground) {
 			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
-			sea.addPoint(nw);
-			sea.addPoint(sw);
-			sea.addPoint(se);
-			sea.addPoint(ne);
-			sea.addPoint(nw);
+			// the sea background area must be a little bigger than all
+			// inner land areas. this is a workaround for a mp shortcoming:
+			// mp is not able to combine outer and inner if they intersect
+			// or have overlaying lines
+			// the added area will be clipped later by the style generator (?)
+			sea.addPoint(new Coord(nw.getLatitude()-1,nw.getLongitude()-1));
+			sea.addPoint(new Coord(sw.getLatitude()+1,sw.getLongitude()-1));
+			sea.addPoint(new Coord(se.getLatitude()+1,se.getLongitude()+1));
+			sea.addPoint(new Coord(ne.getLatitude()-1,ne.getLongitude()+1));
+			sea.addPoint(new Coord(nw.getLatitude()-1,nw.getLongitude()-1));
 			sea.addTag("natural", "sea");
 			log.info("sea: ", sea);
 			wayMap.put(seaId, sea);

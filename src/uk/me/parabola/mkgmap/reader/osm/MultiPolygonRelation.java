@@ -1,6 +1,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.*;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -57,10 +59,16 @@ public class MultiPolygonRelation extends Relation {
 
 		setId(other.getId());
 
+		if (log.isDebugEnabled()) {
+			log.debug("Construct multipolygon", toBrowseURL());
+		}
+
 		for (Map.Entry<String, Element> pair : other.getElements()) {
 			String role = pair.getKey();
 			Element el = pair.getValue();
-			log.debug(" ", role, el.toBrowseURL());
+			if (log.isDebugEnabled()) {
+				log.debug(" ", role, el.toBrowseURL());
+			}
 			addElement(role, el);
 			roleMap.put(el.getId(), role);
 		}
@@ -248,10 +256,14 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (joined == false && wrongRoleWay != null) {
+
 				log.warn("Join ways with different roles. Multipolygon: "
 						+ toBrowseURL());
-				log.warn("Way1:", joinWay, "Role:", getRole(joinWay));
-				log.warn("Way2:", wrongRoleWay, "Role:", getRole(wrongRoleWay));
+				log.warn("Way1 Role:", getRole(joinWay));
+				logWayURLs(Level.WARNING, "-", joinWay);
+				log.warn("Way2 Role:", getRole(wrongRoleWay));
+				logWayURLs(Level.WARNING, "-", wrongRoleWay);
+
 				joined = joinWays(joinWay, wrongRoleWay, false);
 				if (joined) {
 					// we have joined the way
@@ -346,13 +358,11 @@ public class MultiPolygonRelation extends Relation {
 			JoinedWay tempWay = it.next();
 			if (tempWay.isClosed() == false) {
 				if (first) {
-					log.warn("Unclosed polygons in multipolygon relation "
-							+ getId() + ":");
+					log.warn(
+						"Cannot join the following ways to closed polygons. MP-Relation",
+									toBrowseURL());
 				}
-				for (Way orgWay : tempWay.getOriginalWays()) {
-					log.warn(" - way:", orgWay.getId(), "role:",
-							getRole(orgWay), "osm:", orgWay.toBrowseURL());
-				}
+				logWayURLs(Level.WARNING, "- way:", tempWay);
 
 				it.remove();
 				first = false;
@@ -584,7 +594,7 @@ public class MultiPolygonRelation extends Relation {
 			ArrayList<RingStatus> ringList = getRingStatus(unfinishedRings,
 					true);
 			for (RingStatus ring : ringList) {
-				log.error("- " + ring.ring.toBrowseURL());
+				logWayURLs(Level.WARNING, "-", ring.ring);
 			}
 		}
 
@@ -807,7 +817,9 @@ public class MultiPolygonRelation extends Relation {
 							toBrowseURL());
 		}
 		if (area.isEmpty()) {
-			log.debug("Empty area.", toBrowseURL());
+			if (log.isDebugEnabled()) {
+				log.debug("Empty area.", toBrowseURL());
+			}
 			return null;
 		}
 
@@ -880,7 +892,8 @@ public class MultiPolygonRelation extends Relation {
 	 * Creates a matrix which polygon contains which polygon. A polygon does not
 	 * contain itself.
 	 * 
-	 * @param poplygonList a list of polygons
+	 * @param poplygonList
+	 *            a list of polygons
 	 */
 	private void createContainsMatrix(List<JoinedWay> poplygonList) {
 		containsMatrix = new ArrayList<BitSet>();
@@ -909,9 +922,11 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		log.debug("Containsmatrix");
-		for (BitSet b : containsMatrix) {
-			log.debug(b);
+		if (log.isDebugEnabled()) {
+			log.debug("Containsmatrix");
+			for (BitSet b : containsMatrix) {
+				log.debug(b);
+			}
 		}
 	}
 
@@ -1046,6 +1061,26 @@ public class MultiPolygonRelation extends Relation {
 		return true;
 	}
 
+	private void logWayURLs(Level level, String preMsg, Way way) {
+		if (log.isLoggable(level)) {
+			if (way instanceof JoinedWay) {
+				for (Way segment : ((JoinedWay) way).getOriginalWays()) {
+					if (preMsg == null || preMsg.length() == 0) {
+						log.log(level, segment.toBrowseURL());
+					} else {
+						log.log(level, preMsg, segment.toBrowseURL());
+					}
+				}
+			} else {
+				if (preMsg == null || preMsg.length() == 0) {
+					log.log(level, way.toBrowseURL());
+				} else {
+					log.log(level, preMsg, way.toBrowseURL());
+				}
+			}
+		}
+	}
+
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
@@ -1071,13 +1106,15 @@ public class MultiPolygonRelation extends Relation {
 					addWay(w);
 				}
 			} else {
+				if (log.isDebugEnabled()) {
+					log.debug("Joined", this.getId(), "with", way.getId());
+				}
 				this.originalWays.add(way);
 				addTagsOf(way);
 				if (getName() == null && way.getName() != null) {
 					setName(way.getName());
 				}
 			}
-			log.debug("Joined", this.getId(), "with", way.getId());
 		}
 
 		public void closeWayArtificial() {
