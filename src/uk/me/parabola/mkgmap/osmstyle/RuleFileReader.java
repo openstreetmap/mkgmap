@@ -142,15 +142,15 @@ public class RuleFileReader {
 	}
 
 	/**
-	 * Translate (a=b|a=c) &amp; d=f
-	 * into (a=b&amp;d=f) | (a=c&amp;d=f)
+	 * Translate (a=b|a=c) &amp; d~f
+	 * into (a=b&amp;d~f) | (a=c&amp;d~f)
 	 * @param first an OrOp that is the operand of an AndOp
 	 * @param second the other operand of the AndOp
 	 * @param actions list of actions to execute on match
 	 * @param gt the Garmin type of the element
 	 */
 	private void optimiseAndSaveAndOr(OrOp first, Op second, List<Action> actions, GType gt) {
-		// (a=b|a=c) & d=f => (a=b&d=f) | (a=c&d=f) => solved
+		// (a=b|a=c) & d~f => (a=b&d~f) | (a=c&d~f) => solved
 		BinaryOp and1 = new AndOp();
 		and1.setFirst(first.getFirst());
 		and1.setSecond(second);
