@@ -20,9 +20,8 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.io.IOException;
-
+import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -118,6 +117,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean generateSea;
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
+	private boolean extendSeaSectors = false;
 	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
@@ -146,16 +146,21 @@ class Osm5XmlHandler extends DefaultHandler {
 					generateSeaUsingMP = true;
 				else if("no-sea-sectors".equals(o))
 					allowSeaSectors = false;
+				else if("extend-sea-sectors".equals(o)) {
+					allowSeaSectors = false;
+					extendSeaSectors = true;
+				}
 				else if(o.startsWith("land-tag="))
 					landTag = o.substring(9).split("=");
 				else {
 					if(!"help".equals(o))
 						System.err.println("Unknown sea generation option '" + o + "'");
 					System.err.println("Known sea generation options are:");
-					System.err.println("  multipolygon      use a multipolygon (default)");
-					System.err.println("  polygons | no-mp  use polygons rather than a multipolygon");
-					System.err.println("  no-sea-sectors    disable use of \"sea sectors\"");
-					System.err.println("  land-tag=TAG=VAL  tag to use for land polygons (default natural=land)");
+					System.err.println("  multipolygon        use a multipolygon (default)");
+					System.err.println("  polygons | no-mp    use polygons rather than a multipolygon");
+					System.err.println("  no-sea-sectors      disable use of \"sea sectors\"");
+					System.err.println("  extend-sea-sectors  extend coastline to reach border");
+					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
 				}
 			}
 		}
@@ -1259,6 +1264,20 @@ class Osm5XmlHandler extends DefaultHandler {
 						seaRelation.addElement("outer", sea);
 					generateSeaBackground = false;
 				}
+				else if (extendSeaSectors) {
+					// create additional points at next border to prevent triangles from point 2
+					if (null == hStart) {
+						hStart = getNextEdgeHit(seaBounds, pStart);
+						w.getPoints().add(0, hStart.getPoint(seaBounds));
+					}
+					if (null == hEnd) {
+						hEnd = getNextEdgeHit(seaBounds, pEnd);
+						w.getPoints().add(hEnd.getPoint(seaBounds));
+					}
+					log.debug("hits (second try): ", hStart, hEnd);
+					hitMap.put(hStart, w);
+					hitMap.put(hEnd, null);
+				}
 				else {
 					// show the coastline even though we can't produce
 					// a polygon for the land
@@ -1461,6 +1480,51 @@ class Osm5XmlHandler extends DefaultHandler {
 			return null;
 	}
 
+	/*
+	 * Find the nearest edge for supplied Coord p.
+	 */
+	private EdgeHit getNextEdgeHit(Area a, Coord p)
+	{
+		int lat = p.getLatitude();
+		int lon = p.getLongitude();
+		int minLat = a.getMinLat();
+		int maxLat = a.getMaxLat();
+		int minLong = a.getMinLong();
+		int maxLong = a.getMaxLong();
+
+		log.info(String.format("getNextEdgeHit: (%d %d) (%d %d %d %d)", lat, lon, minLat, minLong, maxLat, maxLong));
+		// shortest distance to border (init with distance to southern border) 
+		int min = lat - minLat;
+		// number of edge as used in getEdgeHit. 
+		// 0 = southern
+		// 1 = eastern
+		// 2 = northern
+		// 3 = western edge of Area a
+		int i = 0;
+		// normalized position at border (0..1)
+		double l = ((double)(lon - minLong))/(maxLong-minLong);
+		// now compare distance to eastern border with already known distance
+		if (maxLong - lon < min) {
+			// update data if distance is shorter
+			min = maxLong - lon;
+			i = 1;
+			l = ((double)(lat - minLat))/(maxLat-minLat);
+		}
+		// same for northern border
+		if (maxLat - lat < min) {
+			min = maxLat - lat;
+			i = 2;
+			l = ((double)(maxLong - lon))/(maxLong-minLong);
+		}
+		// same for western border
+		if (lon - minLong < min) {
+			i = 3;
+			l = ((double)(maxLat - lat))/(maxLat-minLat);
+		}
+		// now created the EdgeHit for found values
+		return new EdgeHit(i, l);
+	} 
+	
 	private void concatenateWays(List<Way> ways) {
 		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
 
