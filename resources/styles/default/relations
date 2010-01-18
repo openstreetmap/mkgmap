@@ -34,7 +34,7 @@ type=route
   # the member nodes recursively (even to members of subrelations).
   # Stops can be grouped within subrelations comprising the vehicle
   # stop node and the passenger wait node.
-  apply { # node role ~ '\(start_\|end_\)stop'
+  apply { # node role ~ '(start_|end_)stop'
     set route_ref='$(route_ref),${ref}' | '${ref}';
 
     # In route relations, stops may be defined as relations that group
