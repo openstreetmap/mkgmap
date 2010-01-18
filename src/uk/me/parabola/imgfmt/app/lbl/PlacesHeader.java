@@ -249,4 +249,8 @@ public class PlacesHeader {
 	public int getRegionsEnd() {
 		return region.getEndPos();
 	}
+
+	public int getNumHighways() {
+		return highway.getNumItems();
+	}
 }
