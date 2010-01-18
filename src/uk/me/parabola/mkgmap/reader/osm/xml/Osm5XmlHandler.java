@@ -36,12 +36,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
-
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -60,6 +54,12 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Reads and parses the OSM XML format.
@@ -1265,16 +1265,29 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (generateSeaBackground) {
 			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
-			// the sea background area must be a little bigger than all
-			// inner land areas. this is a workaround for a mp shortcoming:
-			// mp is not able to combine outer and inner if they intersect
-			// or have overlaying lines
-			// the added area will be clipped later by the style generator (?)
-			sea.addPoint(new Coord(nw.getLatitude()-1,nw.getLongitude()-1));
-			sea.addPoint(new Coord(sw.getLatitude()+1,sw.getLongitude()-1));
-			sea.addPoint(new Coord(se.getLatitude()+1,se.getLongitude()+1));
-			sea.addPoint(new Coord(ne.getLatitude()-1,ne.getLongitude()+1));
-			sea.addPoint(new Coord(nw.getLatitude()-1,nw.getLongitude()-1));
+			if (generateSeaUsingMP) {
+				// the sea background area must be a little bigger than all
+				// inner land areas. this is a workaround for a mp shortcoming:
+				// mp is not able to combine outer and inner if they intersect
+				// or have overlaying lines
+				// the added area will be clipped later by the style generator
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+				sea.addPoint(new Coord(sw.getLatitude() + 1,
+						sw.getLongitude() - 1));
+				sea.addPoint(new Coord(se.getLatitude() + 1,
+						se.getLongitude() + 1));
+				sea.addPoint(new Coord(ne.getLatitude() - 1,
+						ne.getLongitude() + 1));
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+			} else {
+				sea.addPoint(nw);
+				sea.addPoint(sw);
+				sea.addPoint(se);
+				sea.addPoint(ne);
+				sea.addPoint(nw);
+			}
 			sea.addTag("natural", "sea");
 			log.info("sea: ", sea);
 			wayMap.put(seaId, sea);
