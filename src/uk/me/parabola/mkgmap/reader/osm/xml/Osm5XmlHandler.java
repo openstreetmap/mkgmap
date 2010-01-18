@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -77,7 +78,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
-	private Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
+	private final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
 		new HashMap<Long, List<Map.Entry<String,Relation>>>();
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
@@ -189,7 +190,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				if(line.length() > 0 && 
 				   !line.startsWith("#") &&
 				   !line.startsWith(";")) {
-					String parts[] = line.split("=");
+					String[] parts = line.split("=");
 					if(parts.length != 2) {
 						log.error("Ignoring bad line in deleted tags file: " + line);
 					}
@@ -1429,7 +1430,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				return new Coord((int)(a.getMaxLat() - t * (a.getMaxLat()-a.getMinLat())), a.getMinLong());
 
 			default:
-				throw new RuntimeException("illegal state");
+				throw new ExitException("illegal state");
 			}
 		}
 

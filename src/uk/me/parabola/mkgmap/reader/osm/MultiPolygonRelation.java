@@ -1,7 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.Polygon;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
@@ -338,7 +337,7 @@ public class MultiPolygonRelation extends Relation {
 				log.info("from", way.getPoints().get(0).toOSMURL());
 				log.info("to", way.getPoints().get(way.getPoints().size() - 1)
 						.toOSMURL());
-				// mark this ways as artifically closed
+				// mark this ways as artificially closed
 				way.closeWayArtificial();
 			}
 		}
@@ -811,9 +810,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private Way singularAreaToWay(Area area, long wayId) {
 		if (area.isSingular() == false) {
-			log
-					.warn(
-							"singularAreaToWay called with non singular area. Multipolygon ",
+			log.warn("singularAreaToWay called with non singular area. Multipolygon ",
 							toBrowseURL());
 		}
 		if (area.isEmpty()) {
@@ -873,9 +870,6 @@ public class MultiPolygonRelation extends Relation {
 	/**
 	 * This is a QA method. All ways of the given wayList are checked if they
 	 * they carry the checkRole. If not a warning is logged.
-	 * 
-	 * @param wayList
-	 * @param checkRole
 	 */
 	private void checkRoles(List<Way> wayList, String checkRole) {
 		// QA: check that all ways carry the role "inner" and issue warnings
@@ -907,7 +901,7 @@ public class MultiPolygonRelation extends Relation {
 			BitSet bitSet = containsMatrix.get(i);
 
 			for (int j = 0; j < poplygonList.size(); j++) {
-				boolean contains = false;
+				boolean contains;
 				if (i == j) {
 					// this is special: a way does not contain itself for
 					// our usage here
@@ -1000,7 +994,7 @@ public class MultiPolygonRelation extends Relation {
 	 * 
 	 * @param ring1
 	 *            a closed way
-	 * @param ring2
+	 * @param ring2 A second closed way.
 	 * @return true if ring1 contains ring2
 	 */
 	private boolean contains(JoinedWay ring1, JoinedWay ring2) {
@@ -1022,16 +1016,14 @@ public class MultiPolygonRelation extends Relation {
 		// check all lines of way1 and way2 for intersections
 		Iterator<Coord> it2 = ring2.getPoints().iterator();
 		Coord p2_1 = it2.next();
-		Coord p2_2 = null;
 		while (it2.hasNext()) {
-			p2_2 = p2_1;
+			Coord p2_2 = p2_1;
 			p2_1 = it2.next();
 
 			Iterator<Coord> it1 = ring1.getPoints().iterator();
 			Coord p1_1 = it1.next();
-			Coord p1_2 = null;
 			while (it1.hasNext()) {
-				p1_2 = p1_1;
+				Coord p1_2 = p1_1;
 				p1_1 = it1.next();
 
 				boolean intersects = Line2D.linesIntersect(p1_1.getLongitude(),
@@ -1087,7 +1079,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private static class JoinedWay extends Way {
 		private final List<Way> originalWays;
-		private boolean closedArtifical = false;
+		private boolean closedArtifical;
 
 		public JoinedWay(Way originalWay) {
 			super(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(
@@ -1153,7 +1145,6 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(200);
 			sb.append(getId());
@@ -1184,7 +1175,6 @@ public class MultiPolygonRelation extends Relation {
 		JoinedWay ring;
 
 		public RingStatus(boolean outer, int index, JoinedWay ring) {
-			super();
 			this.outer = outer;
 			this.index = index;
 			this.ring = ring;
