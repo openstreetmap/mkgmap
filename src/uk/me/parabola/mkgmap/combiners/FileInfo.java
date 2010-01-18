@@ -139,8 +139,10 @@ public class FileInfo {
 
 		if (ext.equals("IMG")) {
 			info = imgInfo(inputName);
+		} else if ("TYP".equals(ext)) {
+			info = fileInfo(inputName, TYP_KIND);
 		} else if (KNOWN_FILE_TYPE_EXT.contains(ext)) {
-			info = fileInfo(inputName);
+			info = fileInfo(inputName, APP_KIND);
 		} else {
 			info = new FileInfo(inputName, UNKNOWN_KIND);
 		}
@@ -154,9 +156,10 @@ public class FileInfo {
 	 * but you can do.
 	 * 
 	 * @param inputName The input file name.
+	 * @param kind The kind of file being added.
 	 */
-	private static FileInfo fileInfo(String inputName) {
-		FileInfo info = new FileInfo(inputName, FILE_KIND);
+	private static FileInfo fileInfo(String inputName, FileKind kind) {
+		FileInfo info = new FileInfo(inputName, kind);
 
 		// Get the size of the file.
 		File f = new File(inputName);

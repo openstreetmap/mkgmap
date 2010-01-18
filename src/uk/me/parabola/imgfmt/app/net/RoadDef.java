@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -343,7 +344,9 @@ public class RoadDef implements Comparable {
 	 * @param rgn A writer for the rgn file.
 	 */
 	void writeRgnOffsets(ImgFileWriter rgn) {
-		assert offsetNet1 < 0x400000 : "NET 1 offset too large at " + this;
+		if (offsetNet1 >= 0x400000)
+			throw new ExitException("Overflow of the NET1. The tile must be split so that there are fewer road in it");
+
 		for (Offset off : rgnOffsets) {
 			rgn.position(off.getPosition());
 			rgn.put3(offsetNet1 | off.getFlags());

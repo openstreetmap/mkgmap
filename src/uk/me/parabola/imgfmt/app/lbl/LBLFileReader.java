@@ -385,7 +385,8 @@ public class LBLFileReader extends ImgFile {
 				boolean indexed = (lblinfo & 0x800000) != 0;
 				boolean overnightParking = (lblinfo & 0x400000) != 0;
 
-				byte highwayIndex = reader.get();
+				int highwayIndex = (placeHeader.getNumHighways() > 255)
+					? reader.getChar() : reader.get();
 				if (indexed) {
 					int eidx = (placeHeader.getNumExits() > 255) ?
 									reader.getChar() :

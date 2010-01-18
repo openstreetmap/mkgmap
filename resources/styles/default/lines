@@ -39,8 +39,8 @@ highway=*
    surface=pebblestone | surface=sand | surface=unpaved |
    mtb:scale=* |
    tracktype ~ 'grade[2-6]' |
-   smoothness ~ '.*\(bad\|horrible\|impassable\)' |
-   sac_scale ~ '.*\(mountain\|alpine\)_hiking' |
+   smoothness ~ '.*(bad|horrible|impassable)' |
+   sac_scale ~ '.*(mountain|alpine)_hiking' |
    sport=via_ferrata)
 { add mkgmap:unpaved=1 }
 (highway=bridleway | highway=path | highway=track | highway=unsurfaced)

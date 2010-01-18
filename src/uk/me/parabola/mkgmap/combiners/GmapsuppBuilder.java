@@ -162,7 +162,8 @@ public class GmapsuppBuilder implements Combiner {
 				addImg(outfs, filename);
 				addMpsFile(info);
 				break;
-			case FILE_KIND:
+			case APP_KIND:
+			case TYP_KIND:
 				addFile(outfs, filename);
 				break;
 			case MDR_KIND:

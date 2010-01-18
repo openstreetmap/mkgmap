@@ -165,16 +165,18 @@ public class POIRecord {
 				val |= 0x400000;
 			List<ExitFacility> facilites = exit.getFacilities();
 			ExitFacility ef = null;
-			if(facilites.size() > 0)
+			if(!facilites.isEmpty())
 				ef = facilites.get(0);
 			if(ef != null)
-				val |= 0x800000; // exit facilites defined
+				val |= 0x800000; // exit facilities defined
 			writer.put3(val);
+
 			char highwayIndex = (char)exit.getHighway().getIndex();
 			if(numHighways > 255)
 				writer.putChar(highwayIndex);
 			else
 				writer.put((byte)highwayIndex);
+			
 			if(ef != null) {
 				char exitFacilityIndex = (char)ef.getIndex();
 				if(numExitFacilities > 255)
@@ -204,28 +206,27 @@ public class POIRecord {
 	
 	byte getWrittenPOIFlags(byte POIGlobalFlags) 
 	{
-			int mask;
-			int flag = 0;
-			int j = 0;
+		int flag = 0;
+		int j = 0;
 	
-			int usedFields = getPOIFlags();
+		int usedFields = getPOIFlags();
 	
-			/* the local POI flag is really tricky if a bit is not set in the global mask
+		/* the local POI flag is really tricky if a bit is not set in the global mask
 					we have to skip this bit in the local mask. In other words the meaning of the local bits
 					change influenced by the global bits */
 	
-			for(byte i = 0; i < 6; i++)
-			{
-				mask =  1 << i;
+		for(byte i = 0; i < 6; i++)
+		{
+			int mask = 1 << i;
 
-				if((mask & POIGlobalFlags) == mask)
-				{
-					if((mask & usedFields) == mask)
-						flag |= (1 << j);
-					j++;
-				}
-		
+			if((mask & POIGlobalFlags) == mask)
+			{
+				if((mask & usedFields) == mask)
+					flag |= (1 << j);
+				j++;
 			}
+		
+		}
 
 		flag |= 0x80; // gpsmapedit asserts for this bit set
 	    
@@ -243,7 +244,7 @@ public class POIRecord {
 		if (exit != null) {
 			size += 3;
 			size += (numHighways > 255)? 2 : 1;
-			if(exit.getFacilities().size() > 0)
+			if(!exit.getFacilities().isEmpty())
 				size += (numExitFacilities > 255)? 2 : 1;
 		}
 		if (POIGlobalFlags != getPOIFlags())
@@ -302,23 +303,23 @@ public class POIRecord {
 	/**
 	 * Address abbreviations.
 	 */
-	static class AddrAbbr {
-		private final char code;
-		private final String value;
-
-		AddrAbbr(char code, String value) {
-			this.code = code;
-			this.value = value;
-		}
-
-		public String toString() {
-			return value;
-		}
-
-		public char getCode() {
-			return code;
-		}
-	}
+	//static class AddrAbbr {
+	//	private final char code;
+	//	private final String value;
+	//
+	//	AddrAbbr(char code, String value) {
+	//		this.code = code;
+	//		this.value = value;
+	//	}
+	//
+	//	public String toString() {
+	//		return value;
+	//	}
+	//
+	//	public char getCode() {
+	//		return code;
+	//	}
+	//}
 
 	/**
 	 * Street and Phone numbers can be stored in two different ways in the poi record
@@ -346,7 +347,6 @@ public class POIRecord {
 
 			int i = 0;
 			int j = 0;
-			int val = 0;
 			while (i < number.length()) {
 
 				int c1 = decodeChar(number.charAt(i++));
@@ -362,7 +362,7 @@ public class POIRecord {
 					return false;
 
 				// Encode as base 11
-				val = c1 * 11 + c2;
+				int val = c1 * 11 + c2;
 
 				// first byte needs special marking with 0x80
 				// If this is not set would be treated as label pointer

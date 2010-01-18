@@ -60,7 +60,7 @@ public class TdbBuilder implements Combiner {
 	 * In otherwords if the same argument appears more than once, then it will
 	 */
 	public void init(CommandArgs args) {
-		overviewMapname = args.get("overview-mapname", "OSM_map");
+		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		try {
 			parent = Integer.parseInt(overviewMapnumber);

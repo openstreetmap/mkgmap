@@ -306,6 +306,10 @@ Miscellaneous options:
 	no-sea-sectors
 		disable the generation of "sea sectors" when the
 		coastline fails to reach the tile's boundary.
+		
+	extend-sea-sectors
+	  same as no-sea-sectors. Additional adds a point so 
+	  coastline reaches the nearest tile boundary.
 
 	land-tag=TAG=VAL
 		tag to use for land polygons (default natural=land).
