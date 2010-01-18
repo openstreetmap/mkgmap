@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -45,6 +46,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -76,7 +78,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
-	private Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
+	private final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
 		new HashMap<Long, List<Map.Entry<String,Relation>>>();
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
@@ -104,8 +106,6 @@ class Osm5XmlHandler extends DefaultHandler {
 	private MapDetails mapper;
 	private Area bbox;
 	private Runnable endTask;
-
-	private long nextFakeId = 1;
 
 	private final boolean reportUndefinedNodes;
 	private final boolean makeOppositeCycleways;
@@ -198,7 +198,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				if(line.length() > 0 && 
 				   !line.startsWith("#") &&
 				   !line.startsWith(";")) {
-					String parts[] = line.split("=");
+					String[] parts = line.split("=");
 					if(parts.length != 2) {
 						log.error("Ignoring bad line in deleted tags file: " + line);
 					}
@@ -1059,10 +1059,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		super.fatalError(e);
 	}
 
-	public long makeFakeId() {
-		return FAKE_ID_BASE + nextFakeId++;
-	}
-
 	public boolean isFakeId(long id) {
 		return id >= FAKE_ID_BASE;
 	}
@@ -1076,7 +1072,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = makeFakeId();
+				fakeIdVal = FakeIdGenerator.makeFakeId();
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
@@ -1085,6 +1081,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	private void generateSeaPolygon(List<Way> shoreline) {
+		
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
@@ -1101,7 +1098,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.info("clipping " + segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = makeFakeId();
+					long id = FakeIdGenerator.makeFakeId();
 					Way shore = new Way(id, pts);
 					toBeAdded.add(shore);
 				}
@@ -1128,7 +1125,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				// polygon so that the tile's background colour will
 				// match the land colour on the tiles that do contain
 				// some sea
-				long landId = makeFakeId();
+				long landId = FakeIdGenerator.makeFakeId();
 				Way land = new Way(landId);
 				land.addPoint(nw);
 				land.addPoint(sw);
@@ -1142,9 +1139,10 @@ class Osm5XmlHandler extends DefaultHandler {
 			return;
 		}
 
-		long multiId = makeFakeId();
+		long multiId = FakeIdGenerator.makeFakeId();
 		Relation seaRelation = null;
 		if(generateSeaUsingMP) {
+			log.debug("Generate seabounds relation "+multiId);
 			seaRelation = new GeneralRelation(multiId);
 			seaRelation.addTag("type", "multipolygon");
 		}
@@ -1178,8 +1176,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				if(!isFakeId(w.getId())) {
-					Way w1 = new Way(makeFakeId());
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
 					w1.getPoints().addAll(w.getPoints());
 					// only copy the name tags
 					for(String tag : w)
@@ -1238,8 +1236,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(generateSeaUsingMP)
 						seaRelation.addElement("inner", w);
 					else {
-						if(!isFakeId(w.getId())) {
-							Way w1 = new Way(makeFakeId());
+						if(!FakeIdGenerator.isFakeId(w.getId())) {
+							Way w1 = new Way(FakeIdGenerator.makeFakeId());
 							w1.getPoints().addAll(w.getPoints());
 							// only copy the name tags
 							for(String tag : w)
@@ -1252,7 +1250,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					}
 				}
 				else if(allowSeaSectors) {
-					seaId = makeFakeId();
+					seaId = FakeIdGenerator.makeFakeId();
 					sea = new Way(seaId);
 					sea.getPoints().addAll(points);
 					sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
@@ -1292,13 +1290,31 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if (generateSeaBackground) {
-			seaId = makeFakeId();
+			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
-			sea.addPoint(nw);
-			sea.addPoint(sw);
-			sea.addPoint(se);
-			sea.addPoint(ne);
-			sea.addPoint(nw);
+			if (generateSeaUsingMP) {
+				// the sea background area must be a little bigger than all
+				// inner land areas. this is a workaround for a mp shortcoming:
+				// mp is not able to combine outer and inner if they intersect
+				// or have overlaying lines
+				// the added area will be clipped later by the style generator
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+				sea.addPoint(new Coord(sw.getLatitude() + 1,
+						sw.getLongitude() - 1));
+				sea.addPoint(new Coord(se.getLatitude() + 1,
+						se.getLongitude() + 1));
+				sea.addPoint(new Coord(ne.getLatitude() - 1,
+						ne.getLongitude() + 1));
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+			} else {
+				sea.addPoint(nw);
+				sea.addPoint(sw);
+				sea.addPoint(se);
+				sea.addPoint(ne);
+				sea.addPoint(nw);
+			}
 			sea.addTag("natural", "sea");
 			log.info("sea: ", sea);
 			wayMap.put(seaId, sea);
@@ -1309,7 +1325,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
 		while (!hits.isEmpty()) {
-			long id = makeFakeId();
+			long id = FakeIdGenerator.makeFakeId();
 			Way w = new Way(id);
 			wayMap.put(id, w);
 
@@ -1369,8 +1385,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			if(generateSeaUsingMP)
 				seaRelation.addElement("inner", w);
 			else {
-				if(!isFakeId(w.getId())) {
-					Way w1 = new Way(makeFakeId());
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
 					w1.getPoints().addAll(w.getPoints());
 					for(String tag : w)
 						if(tag.equals("name") || tag.endsWith(":name"))
@@ -1440,7 +1456,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				return new Coord((int)(a.getMaxLat() - t * (a.getMaxLat()-a.getMinLat())), a.getMinLong());
 
 			default:
-				throw new RuntimeException("illegal state");
+				throw new ExitException("illegal state");
 			}
 		}
 
@@ -1547,8 +1563,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (!isFakeId(w1.getId())) {
-						wm = new Way(makeFakeId());
+					if (!FakeIdGenerator.isFakeId(w1.getId())) {
+						wm = new Way(FakeIdGenerator.makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
