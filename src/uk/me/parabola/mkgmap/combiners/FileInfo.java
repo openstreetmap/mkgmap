@@ -185,9 +185,10 @@ public class FileInfo {
 			log.info("Desc", params.getMapDescription());
 			log.info("Blocksize", params.getBlockSize());
 
-			FileInfo info = new FileInfo(inputName, IMG_KIND);
+			FileInfo info = new FileInfo(inputName, UNKNOWN_KIND);
 			info.setDescription(params.getMapDescription());
 
+			boolean hasTre = false;
 			List<DirectoryEntry> entries = imgFs.list();
 			for (DirectoryEntry ent : entries) {
 				if (ent.isSpecial())
@@ -204,10 +205,12 @@ public class FileInfo {
 					TREFileReader treFile = new TREFileReader(treChan);
 					Area area = treFile.getBounds();
 					info.setBounds(area);
+					assert area != null;
 
 					String[] copyrights = treFile.getCopyrights();
 					info.setCopyrights(copyrights);
 
+					hasTre = true;
 					treFile.close();
 				} else if ("RGN".equals(ext)) {
 					int size = ent.getSize();
@@ -229,6 +232,10 @@ public class FileInfo {
 
 				info.fileSizes.add(ent.getSize());
 			}
+
+			if (info.getKind() == UNKNOWN_KIND && hasTre)
+				info.setKind(IMG_KIND);
+			
 			return info;
 		} finally {
 			imgFs.close();
