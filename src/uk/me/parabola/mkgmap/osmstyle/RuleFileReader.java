@@ -130,15 +130,15 @@ public class RuleFileReader {
 	 * indexable term. If that is not possible then the original expression is
 	 * returned.
 	 */
-	private Op rearrangeExpression(Op op) {
+	private static Op rearrangeExpression(Op op) {
 		if (isFinished(op))
 			return op;
 
 		if (op.isType(AND)) {
-			// If the first term is and EQUALS or EXISTS then this subtree is
+			// If the first term is an EQUALS or EXISTS then this subtree is
 			// already solved and we need to do no more.
 			Op op1 = rearrangeExpression(op.getFirst());
-			Op op2 = rearrangeExpression(((BinaryOp) op).getSecond());
+			Op op2 = rearrangeExpression(((AndOp) op).getSecond());
 
 			if (isSolved(op1)) {
 				return rearrangeAnd((AndOp) op, op1, op2);
@@ -160,15 +160,15 @@ public class RuleFileReader {
 	 * @return A re-arranged expression with an indexable term at the beginning
 	 * or several such expressions ORed together.
 	 */
-	private Op rearrangeAnd(AndOp top, Op op1, Op op2) {
+	private static BinaryOp rearrangeAnd(AndOp top, Op op1, Op op2) {
 		if (isIndexable(op1)) {
 			top.setFirst(op1);
 			top.setSecond(op2);
 			return top;
 		} else if (op1.isType(AND)) {
-			// If the first term is an operation involving an AND,
-			// and the first term of that AND is indexable,
-			// re-arrange the terms so that the indexable term is first.
+			// The first term is AND.
+			// Its first must be indexable (EQUALS or EXIST).
+			// Make that our first term.
 			Op first = op1.getFirst();
 			if (isIndexable(first)) {
 				top.setFirst(first);
@@ -190,7 +190,7 @@ public class RuleFileReader {
 			and1.setSecond(topSecond);
 
 			AndOp and2 = new AndOp();
-			Op second = rearrangeExpression(((BinaryOp) op1).getSecond());
+			Op second = rearrangeExpression(((OrOp) op1).getSecond());
 			and2.setFirst(second);
 			and2.setSecond(topSecond);
 
@@ -208,7 +208,7 @@ public class RuleFileReader {
 	 * True if this operation can be indexed.  It is a plain equality or
 	 * Exists operation.
 	 */
-	private boolean isIndexable(Op op) {
+	private static boolean isIndexable(Op op) {
 		return op.isType(EQUALS) || op.isType(EXISTS);
 	}
 
@@ -216,7 +216,7 @@ public class RuleFileReader {
 	 * True if this expression is 'solved'.  This means that the first term
 	 * is indexable or it is indexable itself.
 	 */
-	private boolean isSolved(Op op) {
+	private static boolean isSolved(Op op) {
 		return isIndexable(op) || isIndexable(op.getFirst());
 	}
 
@@ -224,7 +224,7 @@ public class RuleFileReader {
 	 * True if there is nothing more that we can do to rearrange this expression.
 	 * It is either solved or it cannot be solved.
 	 */
-	private boolean isFinished(Op op) {
+	private static boolean isFinished(Op op) {
 		if (isSolved(op))
 			return true;
 		char type = op.getType();
