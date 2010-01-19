@@ -1059,10 +1059,6 @@ class Osm5XmlHandler extends DefaultHandler {
 		super.fatalError(e);
 	}
 
-	public boolean isFakeId(long id) {
-		return id >= FAKE_ID_BASE;
-	}
-
 	private long idVal(String id) {
 		try {
 			// attempt to parse id as a number
