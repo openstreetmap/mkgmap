@@ -60,6 +60,7 @@ import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineMergeFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
+import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
@@ -882,6 +883,7 @@ public class MapBuilder implements Configurable {
 
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
+			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter());
 			if(reducePointError > 0)
@@ -920,6 +922,7 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
+			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter());
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
