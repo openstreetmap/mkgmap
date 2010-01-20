@@ -93,8 +93,6 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private static final long CYCLEWAY_ID_OFFSET = 0x10000000;
 
-	private static final long FAKE_ID_BASE = 1L << 62;
-
 	private Node currentNode;
 	private Way currentWay;
 	private Node currentNodeInWay;
