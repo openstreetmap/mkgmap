@@ -118,6 +118,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors = false;
+	private int maxCoastlineGap = 0;
 	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
@@ -144,6 +145,8 @@ class Osm5XmlHandler extends DefaultHandler {
 					generateSeaUsingMP = false;
 				else if("multipolygon".equals(o))
 					generateSeaUsingMP = true;
+				else if(o.startsWith("close-gaps="))
+					maxCoastlineGap = (int)Double.parseDouble(o.substring(11));
 				else if("no-sea-sectors".equals(o))
 					allowSeaSectors = false;
 				else if("extend-sea-sectors".equals(o)) {
@@ -161,6 +164,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					System.err.println("  no-sea-sectors      disable use of \"sea sectors\"");
 					System.err.println("  extend-sea-sectors  extend coastline to reach border");
 					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
+					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
 				}
 			}
 		}
@@ -1154,7 +1158,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				it.remove();
 			}
 		}
-		concatenateWays(shoreline);
+		concatenateWays(shoreline, seaBounds);
 		// there may be more islands now
 		it = shoreline.iterator();
 		while (it.hasNext()) {
@@ -1537,7 +1541,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		return new EdgeHit(i, l);
 	} 
 	
-	private void concatenateWays(List<Way> ways) {
+	private void concatenateWays(List<Way> ways, Area bounds) {
 		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
 
 		for (Way w : ways) {
@@ -1578,6 +1582,63 @@ class Osm5XmlHandler extends DefaultHandler {
 					beginMap.remove(points2.get(0));
 					merged++;
 					break;
+				}
+			}
+		}
+
+		// join up coastline segments whose end points are less than
+		// maxCoastlineGap metres apart
+		if(maxCoastlineGap > 0) {
+			boolean changed = true;
+			while(changed) {
+				changed = false;
+				for(Way w1 : ways) {
+					if(w1.isClosed())
+						continue;
+					List<Coord> points1 = w1.getPoints();
+					Coord w1e = points1.get(points1.size() - 1);
+					if(bounds.onBoundary(w1e))
+						continue;
+					Way nearest = null;
+					double smallestGap = Double.MAX_VALUE;
+					for(Way w2 : ways) {
+						if(w1 == w2 || w2.isClosed())
+							continue;
+						List<Coord> points2 = w2.getPoints();
+						Coord w2s = points2.get(0);
+						if(bounds.onBoundary(w2s))
+							continue;
+						double gap = w1e.distance(w2s);
+						if(gap < smallestGap) {
+							nearest = w2;
+							smallestGap = gap;
+						}
+					}
+					if(nearest != null && smallestGap < maxCoastlineGap) {
+						Coord w2s = nearest.getPoints().get(0);
+						log.info("bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
+						Way wm;
+						if (!FakeIdGenerator.isFakeId(w1.getId())) {
+							wm = new Way(FakeIdGenerator.makeFakeId());
+							ways.remove(w1);
+							ways.add(wm);
+							wm.getPoints().addAll(points1);
+							wm.copyTags(w1);
+						}
+						else {
+							wm = w1;
+						}
+						wm.getPoints().addAll(nearest.getPoints());
+						ways.remove(nearest);
+						// make a line that shows the filled gap
+						Way w = new Way(FakeIdGenerator.makeFakeId());
+						w.addTag("natural", "mkgmap:coastline-gap");
+						w.addPoint(w1e);
+						w.addPoint(w2s);
+						wayMap.put(w.getId(), w);
+						changed = true;
+						break;
+					}
 				}
 			}
 		}
