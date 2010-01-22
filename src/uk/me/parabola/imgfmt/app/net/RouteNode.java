@@ -371,6 +371,11 @@ public class RouteNode implements Comparable<RouteNode> {
 
 			for(RouteArc inArc : incomingArcs) {
 
+				if(!inArc.isForward() && inArc.getRoadDef().isOneway()) {
+					// ignore reverse arc if road is oneway
+					continue;
+				}
+
 				int inHeading = inArc.getFinalHeading();
 				// determine the outgoing (continuing) arc that is
 				// likely to be the same road as the incoming arc
@@ -379,7 +384,8 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(ca.getDest() != inArc.getSource()) {
 						// this arc is not going to the same node as
 						// inArc came from
-						if(possiblySameRoad(inArc, ca)) {
+						if((ca.isForward() || !ca.getRoadDef().isOneway()) &&
+						   possiblySameRoad(inArc, ca)) {
 							continuingArc = ca;
 							break;
 						}
@@ -417,6 +423,12 @@ public class RouteNode implements Comparable<RouteNode> {
 					   otherArc == continuingArc) {
 						// we're looking at the incoming or continuing
 						// arc, ignore it
+						continue;
+					}
+
+					if(!otherArc.isForward() &&
+					   otherArc.getRoadDef().isOneway()) {
+						// ignore reverse arc if road is oneway
 						continue;
 					}
 
