@@ -59,10 +59,9 @@ public class RuleFileReaderTest {
 		assertEquals("rough footway", "[0x2 level 2]", type.toString());
 
 		el.addTag("oneway", "true");
-		el.addTag("highway", "primary");
-		rule = ruleMap.get("highway=*");
+		rule = ruleMap.get("oneway=true");
 		type = rule.resolveType(el);
-		assertEquals("oneway primary", "[0x6 level 1]", type.toString());
+		assertEquals("oneway footway", "[0x6 level 1]", type.toString());
 	}
 
 	/**
@@ -390,32 +389,6 @@ public class RuleFileReaderTest {
 
 		rs.resolveType(el);
 		assertEquals("appended name", "A1 long lane foo bar", el.getName());
-	}
-
-	/**
-	 * The main point of this test is to ensure that all the examples compile.
-	 */
-	@Test
-	public void testComplexRegex() {
-		RuleSet rs = makeRuleSet(
-				//"a~b      [0x0]" +
-				"a~b & c=d  [0x1]" +
-				"a~b & c~d & e=f   [0x2]" +
-				"(a~b | c~d) & e=f  [0x3]" +
-				"(a~b | c~d) & e=f & g=h  [0x4]" +
-				"((a~b | c~d) & e=f) & g=h [0x5]" +
-				"e=f & g=h & (a~b | c~'d.*')  [0x6]" +
-				"(e=f & g=h) & (a~b | c~'d.*')  [0x7]" +
-				""
-		);
-
-		Way el = new Way(1);
-		el.addTag("c", "df");
-		el.addTag("g", "h");
-		el.addTag("e", "f");
-
-		GType type = rs.resolveType(el);
-		assertNotNull("matches a rule", type);
 	}
 
 	/**
