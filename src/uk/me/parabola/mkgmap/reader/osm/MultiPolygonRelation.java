@@ -338,7 +338,7 @@ public class MultiPolygonRelation extends Relation {
 				log.info("to", way.getPoints().get(way.getPoints().size() - 1)
 						.toOSMURL());
 				// mark this ways as artificially closed
-				way.closeWayArtificial();
+				way.closeWayArtificially();
 			}
 		}
 	}
@@ -359,7 +359,7 @@ public class MultiPolygonRelation extends Relation {
 				if (first) {
 					log.warn(
 						"Cannot join the following ways to closed polygons. MP-Relation",
-									toBrowseURL());
+						toBrowseURL());
 				}
 				logWayURLs(Level.WARNING, "- way:", tempWay);
 
@@ -406,7 +406,7 @@ public class MultiPolygonRelation extends Relation {
 			for (int otherCandidateIndex = candidates.nextSetBit(0); otherCandidateIndex >= 0; otherCandidateIndex = candidates
 					.nextSetBit(otherCandidateIndex + 1)) {
 				if (contains(otherCandidateIndex, candidateIndex)) {
-					// candidateIndex is not an outmost ring because it is
+					// candidateIndex is not an outermost ring because it is
 					// contained by
 					// the otherCandidateIndex ring
 					isOutmost = false;
@@ -577,7 +577,7 @@ public class MultiPolygonRelation extends Relation {
 				}
 
 				for (Way mpWay : singularOuterPolygons) {
-					// put the cutted out polygons to the
+					// put the cut out polygons to the
 					// final way map
 					tileWayMap.put(mpWay.getId(), mpWay);
 				}
@@ -810,8 +810,9 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private Way singularAreaToWay(Area area, long wayId) {
 		if (area.isSingular() == false) {
-			log.warn("singularAreaToWay called with non singular area. Multipolygon ",
-							toBrowseURL());
+			log.warn(
+				"singularAreaToWay called with non singular area. Multipolygon ",
+				toBrowseURL());
 		}
 		if (area.isEmpty()) {
 			if (log.isDebugEnabled()) {
@@ -870,6 +871,9 @@ public class MultiPolygonRelation extends Relation {
 	/**
 	 * This is a QA method. All ways of the given wayList are checked if they
 	 * they carry the checkRole. If not a warning is logged.
+	 * 
+	 * @param wayList
+	 * @param checkRole
 	 */
 	private void checkRoles(List<Way> wayList, String checkRole) {
 		// QA: check that all ways carry the role "inner" and issue warnings
@@ -886,99 +890,89 @@ public class MultiPolygonRelation extends Relation {
 	 * Creates a matrix which polygon contains which polygon. A polygon does not
 	 * contain itself.
 	 * 
-	 * @param poplygonList
+	 * @param polygonList
 	 *            a list of polygons
 	 */
-	private void createContainsMatrix(List<JoinedWay> poplygonList) {
+	private void createContainsMatrix(List<JoinedWay> polygonList) {
 		containsMatrix = new ArrayList<BitSet>();
-		for (int i = 0; i < poplygonList.size(); i++) {
+		for (int i = 0; i < polygonList.size(); i++) {
 			containsMatrix.add(new BitSet());
 		}
 
-		// mark which ring contains which ring
-		for (int i = 0; i < poplygonList.size(); i++) {
-			JoinedWay tempRing = poplygonList.get(i);
-			BitSet bitSet = containsMatrix.get(i);
+		long t1 = System.currentTimeMillis();
 
-			for (int j = 0; j < poplygonList.size(); j++) {
-				boolean contains;
-				if (i == j) {
-					// this is special: a way does not contain itself for
-					// our usage here
-					contains = false;
+		if (log.isDebugEnabled())
+			log.debug("createContainsMatrix listSize:", polygonList.size());
+
+		// use this matrix to check which matrix element has been
+		// calculated
+		ArrayList<BitSet> finishedMatrix = new ArrayList<BitSet>(polygonList
+				.size());
+
+		for (int i = 0; i < polygonList.size(); i++) {
+			BitSet matrixRow = new BitSet();
+			// a polygon does not contain itself
+			matrixRow.set(i);
+			finishedMatrix.add(matrixRow);
+		}
+
+		for (int rowIndex = 0; rowIndex < polygonList.size(); rowIndex++) {
+			JoinedWay potentialOuterRing = polygonList.get(rowIndex);
+			BitSet containsColumns = containsMatrix.get(rowIndex);
+			BitSet finishedCol = finishedMatrix.get(rowIndex);
+
+			if (log.isDebugEnabled())
+				log.debug("check polygon", rowIndex);
+
+			// get all non calculated columns of the matrix
+			for (int colIndex = finishedCol.nextClearBit(0); colIndex >= 0
+					&& colIndex < polygonList.size(); colIndex = finishedCol
+					.nextClearBit(colIndex + 1)) {
+
+				JoinedWay innerPolygon = polygonList.get(colIndex);
+
+				if (potentialOuterRing.getBounds().intersects(
+						innerPolygon.getBounds()) == false) {
+					// both polygons do not intersect
+					// we can flag both matrix elements as finished
+					finishedMatrix.get(colIndex).set(rowIndex);
+					finishedMatrix.get(rowIndex).set(colIndex);
 				} else {
-					contains = contains(tempRing, poplygonList.get(j));
-				}
+					boolean contains = contains(potentialOuterRing,
+							innerPolygon);
 
-				if (contains) {
-					bitSet.set(j);
+					if (contains) {
+						containsColumns.set(colIndex);
+
+						// we also know that the inner ring does not contain the
+						// outer ring
+						// so we can set the finished bit for this matrix
+						// element
+						finishedMatrix.get(colIndex).set(rowIndex);
+
+						// additionally we know that the outer ring contains all
+						// rings
+						// that are contained by the inner ring
+						containsColumns.or(containsMatrix.get(colIndex));
+						finishedCol.or(containsColumns);
+					}
 				}
+				// this matrix element is calculated now
+				finishedCol.set(colIndex);
 			}
 		}
 
 		if (log.isDebugEnabled()) {
+			long t2 = System.currentTimeMillis();
+			log.debug("createMatrix for", polygonList.size(), "polygons took",
+					(t2 - t1), "ms");
+			
 			log.debug("Containsmatrix");
 			for (BitSet b : containsMatrix) {
 				log.debug(b);
 			}
 		}
 	}
-
-	/*
-	 * this is an alternative createContainsMatrix method seems to speed up only
-	 * if lots of inner ways are in the mulitpolygon
-	 */
-	// private void createContainsMatrix(List<JoinedWay> wayList) {
-	// long t1 = System.currentTimeMillis();
-	//		
-	// for (int i = 0; i < wayList.size(); i++) {
-	// containsMatrix.add(new BitSet());
-	// }
-	//
-	// // use this matrix to check which matrix element has been
-	// // calculated
-	// ArrayList<BitSet> finishedMatrix = new ArrayList<BitSet>(wayList.size());
-	//
-	// for (int i = 0; i < wayList.size(); i++) {
-	// BitSet matrixRow = new BitSet();
-	// // an element does not contain itself
-	// matrixRow.set(i);
-	// finishedMatrix.add(matrixRow);
-	// }
-	//
-	// for (int rowIndex = 0; rowIndex < wayList.size(); rowIndex++) {
-	// Way potentialOuterRing = wayList.get(rowIndex);
-	// BitSet containsColumns = containsMatrix.get(rowIndex);
-	// BitSet finishedCol = finishedMatrix.get(rowIndex);
-	//
-	// // get all non calculated columns of the matrix
-	// for (int colIndex = finishedCol.nextClearBit(0); colIndex >= 0 &&
-	// colIndex < wayList.size(); colIndex = finishedCol
-	// .nextClearBit(colIndex + 1)) {
-	//
-	// boolean contains = contains(potentialOuterRing, wayList.get(colIndex));
-	//
-	// if (contains) {
-	// containsColumns.set(colIndex);
-	//					
-	// // we also know that the inner ring does not contain the outer ring
-	// // so we can set the finished bit for this matrix element
-	// finishedMatrix.get(colIndex).set(rowIndex);
-	//					
-	// // additionally we know that the outer ring contains all rings
-	// // that are contained by the inner ring
-	// containsColumns.or(containsMatrix.get(colIndex));
-	// finishedCol.or(containsColumns);
-	// }
-	//
-	// // this matrix element is calculated now
-	// finishedCol.set(colIndex);
-	// }
-	// }
-	//		
-	// long t2 = System.currentTimeMillis();
-	// log.warn("createMatrix",(t2-t1),"ms");
-	// }
 
 	/**
 	 * Checks if the ring with ringIndex1 contains the ring with ringIndex2.
@@ -994,7 +988,7 @@ public class MultiPolygonRelation extends Relation {
 	 * 
 	 * @param ring1
 	 *            a closed way
-	 * @param ring2 A second closed way.
+	 * @param ring2 a 2nd closed way
 	 * @return true if ring1 contains ring2
 	 */
 	private boolean contains(JoinedWay ring1, JoinedWay ring2) {
@@ -1004,6 +998,7 @@ public class MultiPolygonRelation extends Relation {
 		if (ring1.isClosed() == false) {
 			return false;
 		}
+
 		Polygon p = createPolygon(ring1.getPoints());
 
 		Coord p0 = ring2.getPoints().get(0);
@@ -1012,25 +1007,79 @@ public class MultiPolygonRelation extends Relation {
 			// way2
 			return false;
 		}
+		// TODO check if p0 is on any of the lines of ring2
 
-		// check all lines of way1 and way2 for intersections
-		Iterator<Coord> it2 = ring2.getPoints().iterator();
-		Coord p2_1 = it2.next();
-		while (it2.hasNext()) {
-			Coord p2_2 = p2_1;
-			p2_1 = it2.next();
+		Iterator<Coord> it1 = ring1.getPoints().iterator();
+		Coord p1_1 = it1.next();
+		Coord p1_2 = null;
 
-			Iterator<Coord> it1 = ring1.getPoints().iterator();
-			Coord p1_1 = it1.next();
-			while (it1.hasNext()) {
-				Coord p1_2 = p1_1;
-				p1_1 = it1.next();
+		while (it1.hasNext()) {
+			p1_2 = p1_1;
+			p1_1 = it1.next();
 
-				boolean intersects = Line2D.linesIntersect(p1_1.getLongitude(),
-						p1_1.getLatitude(), p1_2.getLongitude(), p1_2
+			if (ring2.linePossiblyIntersectsWay(p1_1, p1_2) == false) {
+				// don't check it - this segment of the outer polygon
+				// definitely does not intersect the way
+				continue;
+			}
+
+			int lonMin = Math.min(p1_1.getLongitude(), p1_2.getLongitude());
+			int lonMax = Math.max(p1_1.getLongitude(), p1_2.getLongitude());
+			int latMin = Math.min(p1_1.getLatitude(), p1_2.getLatitude());
+			int latMax = Math.max(p1_1.getLatitude(), p1_2.getLatitude());
+
+			// check all lines of way1 and way2 for intersections
+			Iterator<Coord> it2 = ring2.getPoints().iterator();
+			Coord p2_1 = it2.next();
+			Coord p2_2 = null;
+
+			// for speedup we divide the area around the second line into
+			// a 3x3 matrix with lon(-1,0,1) and lat(-1,0,1).
+			// -1 means below min lon/lat of bbox line p1_1-p1_2
+			// 0 means inside the bounding box of the line p1_1-p1_2
+			// 1 means above max lon/lat of bbox line p1_1-p1_2
+			int lonField = p2_1.getLongitude() < lonMin ? -1 : p2_1
+					.getLongitude() > lonMax ? 1 : 0;
+			int latField = p2_1.getLatitude() < latMin ? -1 : p2_1
+					.getLatitude() > latMax ? 1 : 0;
+
+			int prevLonField = lonField;
+			int prevLatField = latField;
+
+			while (it2.hasNext()) {
+				p2_2 = p2_1;
+				p2_1 = it2.next();
+
+				int changes = 0;
+				// check if the field of the 3x3 matrix has changed
+				if ((lonField >= 0 && p1_1.getLongitude() < lonMin)
+						|| (lonField <= 0 && p1_1.getLongitude() > lonMax)) {
+					changes++;
+					lonField = p1_1.getLongitude() < lonMin ? -1 : p1_1
+							.getLongitude() > lonMax ? 1 : 0;
+				}
+				if ((latField >= 0 && p1_1.getLatitude() < latMin)
+						|| (latField <= 0 && p1_1.getLatitude() > latMax)) {
+					changes++;
+					latField = p1_1.getLatitude() < latMin ? -1 : p1_1
+							.getLatitude() > latMax ? 1 : 0;
+				}
+
+				// an intersection is possible if
+				// latField and lonField has changed
+				// or if we come from or go to the inner matrix field
+				boolean intersectionPossible = (changes == 2)
+						|| (latField == 0 && lonField == 0)
+						|| (prevLatField == 0 && prevLonField == 0);
+
+				boolean intersects = intersectionPossible
+						&& Line2D.linesIntersect(p1_1.getLongitude(), p1_1
+								.getLatitude(), p1_2.getLongitude(), p1_2
 								.getLatitude(), p2_1.getLongitude(), p2_1
 								.getLatitude(), p2_2.getLongitude(), p2_2
 								.getLatitude());
+
+				// TODO check if one of the points only touches the other ring
 
 				if (intersects) {
 					if ((ring1.isClosedArtificially() && it1.hasNext() == false)
@@ -1045,6 +1094,9 @@ public class MultiPolygonRelation extends Relation {
 						return false;
 					}
 				}
+
+				prevLonField = lonField;
+				prevLatField = latField;
 			}
 		}
 
@@ -1079,17 +1131,78 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private static class JoinedWay extends Way {
 		private final List<Way> originalWays;
-		private boolean closedArtifical;
+		private boolean closedArtificially = false;
+
+		public int minLat;
+		public int maxLat;
+		public int minLon;
+		public int maxLon;
+		private Rectangle bounds = null;
 
 		public JoinedWay(Way originalWay) {
 			super(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(
 					originalWay.getPoints()));
 			this.originalWays = new ArrayList<Way>();
 			addWay(originalWay);
+
+			// we have to initialize the min/max values
+			Coord c0 = originalWay.getPoints().get(0);
+			minLat = maxLat = c0.getLatitude();
+			minLon = maxLon = c0.getLongitude();
+
+			updateBounds(originalWay.getPoints());
 		}
 
 		public void addPoint(int index, Coord point) {
 			getPoints().add(index, point);
+			updateBounds(point);
+		}
+
+		public void addPoint(Coord point) {
+			super.addPoint(point);
+			updateBounds(point);
+		}
+
+		private void updateBounds(List<Coord> pointList) {
+			for (Coord c : pointList) {
+				updateBounds(c);
+			}
+		}
+
+		private void updateBounds(Coord point) {
+			if (point.getLatitude() < minLat) {
+				minLat = point.getLatitude();
+				bounds = null;
+			} else if (point.getLatitude() > maxLat) {
+				maxLat = point.getLatitude();
+				bounds = null;
+			}
+
+			if (point.getLongitude() < minLon) {
+				minLon = point.getLongitude();
+				bounds = null;
+			} else if (point.getLongitude() > maxLon) {
+				maxLon = point.getLongitude();
+				bounds = null;
+			}
+
+		}
+
+		public Rectangle getBounds() {
+			if (bounds == null) {
+				// note that we increase the rectangle by 1 because intersects
+				// checks
+				// only the interior
+				bounds = new Rectangle(minLat - 1, minLon - 1, maxLat - minLat
+						+ 2, maxLon - minLon + 2);
+			}
+
+			return bounds;
+		}
+
+		public boolean linePossiblyIntersectsWay(Coord p1, Coord p2) {
+			return getBounds().intersectsLine(p1.getLatitude(),
+					p1.getLongitude(), p2.getLatitude(), p2.getLongitude());
 		}
 
 		public void addWay(Way way) {
@@ -1109,13 +1222,13 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		public void closeWayArtificial() {
+		public void closeWayArtificially() {
 			addPoint(getPoints().get(0));
-			closedArtifical = true;
+			closedArtificially = true;
 		}
 
 		public boolean isClosedArtificially() {
-			return closedArtifical;
+			return closedArtificially;
 		}
 
 		private void addTagsOf(Way way) {
@@ -1145,6 +1258,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
+		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(200);
 			sb.append(getId());
@@ -1166,7 +1280,6 @@ public class MultiPolygonRelation extends Relation {
 			sb.append(")");
 			return sb.toString();
 		}
-
 	}
 
 	private static class RingStatus {
