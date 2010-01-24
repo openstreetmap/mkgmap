@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file:///home/steve/src/display/display.iml" filepath="/home/steve/src/display/display.iml" />
       <module fileurl="file://$PROJECT_DIR$/mkgmap.iml" filepath="$PROJECT_DIR$/mkgmap.iml" />
     </modules>
   </component>

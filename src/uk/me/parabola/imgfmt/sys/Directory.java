@@ -85,15 +85,21 @@ class Directory {
 	 *
 	 * @throws IOException If it cannot be read.
 	 */
-	void readInit() throws IOException {
+	void readInit(byte xorByte) throws IOException {
 		assert chan != null;
 
 		ByteBuffer buf = ByteBuffer.allocate(512);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 
 		chan.position(startPos);
-		Dirent current = null;while ((chan.read(buf)) > 0) {
+		Dirent current = null;
+		while ((chan.read(buf)) > 0) {
 			buf.flip();
+			if(xorByte != 0) {
+				byte[] bufBytes = buf.array();
+				for(int i = 0; i < bufBytes.length; ++i)
+					bufBytes[i] ^= xorByte;
+			}
 
 			int used = buf.get(Dirent.OFF_FILE_USED);
 			if (used != 1)

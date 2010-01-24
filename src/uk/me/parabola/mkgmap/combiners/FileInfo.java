@@ -25,12 +25,15 @@ import java.util.Locale;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.CommandArgs;
+
+import static uk.me.parabola.mkgmap.combiners.FileKind.*;
 
 /**
  * Used for holding information about an individual file that will be made into
@@ -41,13 +44,6 @@ import uk.me.parabola.log.Logger;
 public class FileInfo {
 	private static final Logger log = Logger.getLogger(FileInfo.class);
 
-	// The file is an img file ie. it contains several subfiles.
-	public static final int IMG_KIND = 0;
-	// The file is a plain file and it doesn't need to be extracted from a .img
-	public static final int FILE_KIND = 1;
-	// The file is of an unknown or unsupported kind, and so it should be ignored.
-	private static final int UNKNOWN_KIND = 99;
-
 	private static final int ENTRY_SIZE = 240;
 
 	private static final List<String> KNOWN_FILE_TYPE_EXT = Arrays.asList(
@@ -56,10 +52,10 @@ public class FileInfo {
 	);
 
 	// The name of the file.
-	private String filename;
+	private final String filename;
 
 	// The kind of file, see *KIND definitions above.
-	private final int kind;
+	private FileKind kind;
 
 	private String mapname;
 	private String description;
@@ -73,8 +69,10 @@ public class FileInfo {
 
 	private final List<Integer> fileSizes = new ArrayList<Integer>();
 	private String[] copyrights;
+	private CommandArgs args;
+	private String mpsName;
 
-	private FileInfo(String filename, int kind) {
+	private FileInfo(String filename, FileKind kind) {
 		this.filename = filename;
 		this.kind = kind;
 	}
@@ -141,8 +139,10 @@ public class FileInfo {
 
 		if (ext.equals("IMG")) {
 			info = imgInfo(inputName);
+		} else if ("TYP".equals(ext)) {
+			info = fileInfo(inputName, TYP_KIND);
 		} else if (KNOWN_FILE_TYPE_EXT.contains(ext)) {
-			info = fileInfo(inputName);
+			info = fileInfo(inputName, APP_KIND);
 		} else {
 			info = new FileInfo(inputName, UNKNOWN_KIND);
 		}
@@ -151,12 +151,15 @@ public class FileInfo {
 	}
 
 	/**
-	 * A TYP file, perhaps not a special enough case..
+	 * A TYP file or a component file that goes into a .img (a TRE, LBL etc).
+	 * The component files are not usually given on the command line like this
+	 * but you can do.
+	 * 
 	 * @param inputName The input file name.
+	 * @param kind The kind of file being added.
 	 */
-	private static FileInfo fileInfo(String inputName) {
-		FileInfo info = new FileInfo(inputName, FILE_KIND);
-		info.setFilename(inputName);
+	private static FileInfo fileInfo(String inputName, FileKind kind) {
+		FileInfo info = new FileInfo(inputName, kind);
 
 		// Get the size of the file.
 		File f = new File(inputName);
@@ -182,10 +185,10 @@ public class FileInfo {
 			log.info("Desc", params.getMapDescription());
 			log.info("Blocksize", params.getBlockSize());
 
-			FileInfo info = new FileInfo(inputName, IMG_KIND);
-			info.setFilename(inputName);
+			FileInfo info = new FileInfo(inputName, UNKNOWN_KIND);
 			info.setDescription(params.getMapDescription());
 
+			boolean hasTre = false;
 			List<DirectoryEntry> entries = imgFs.list();
 			for (DirectoryEntry ent : entries) {
 				if (ent.isSpecial())
@@ -199,13 +202,15 @@ public class FileInfo {
 					info.setMapname(ent.getName());
 
 					ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
-					TREFile treFile = new TREFile(treChan, false);
+					TREFileReader treFile = new TREFileReader(treChan);
 					Area area = treFile.getBounds();
 					info.setBounds(area);
+					assert area != null;
 
 					String[] copyrights = treFile.getCopyrights();
 					info.setCopyrights(copyrights);
 
+					hasTre = true;
 					treFile.close();
 				} else if ("RGN".equals(ext)) {
 					int size = ent.getSize();
@@ -216,10 +221,21 @@ public class FileInfo {
 					info.setNetsize(ent.getSize());
 				} else if ("NOD".equals(ext)) {
 					info.setNodsize(ent.getSize());
+				} else if ("MDR".equals(ext)) {
+					// It is not actually a regular img file, so change the kind.
+					info.setKind(MDR_KIND);
+				} else if ("MPS".equals(ext)) {
+					// This is a gmapsupp file containing several maps.
+					info.setKind(GMAPSUPP_KIND);
+					info.mpsName = ent.getFullName();
 				}
 
 				info.fileSizes.add(ent.getSize());
 			}
+
+			if (info.getKind() == UNKNOWN_KIND && hasTre)
+				info.setKind(IMG_KIND);
+			
 			return info;
 		} finally {
 			imgFs.close();
@@ -230,10 +246,6 @@ public class FileInfo {
 		this.bounds = area;
 	}
 
-	private void setFilename(String filename) {
-		this.filename = filename;
-	}
-
 	public String getFilename() {
 		return filename;
 	}
@@ -242,7 +254,11 @@ public class FileInfo {
 		return kind == IMG_KIND;
 	}
 
-	public int getKind() {
+	public void setKind(FileKind kind) {
+		this.kind = kind;
+	}
+
+	public FileKind getKind() {
 		return kind;
 	}
 
@@ -310,5 +326,29 @@ public class FileInfo {
 
 	protected void setNodsize(int nodsize) {
 		this.nodsize = nodsize;
+	}
+
+	public void setArgs(CommandArgs args) {
+		this.args = args;
+	}
+
+	public String getFamilyName() {
+		return args.get("family-name", "family name");
+	}
+
+	public String getSeriesName() {
+		return args.get("series-name", "series name");
+	}
+
+	public int getFamilyId() {
+		return args.get("family-id", 0);
+	}
+
+	public int getProductId() {
+		return args.get("product-id", 1);
+	}
+
+	public String getMpsName() {
+		return mpsName;
 	}
 }

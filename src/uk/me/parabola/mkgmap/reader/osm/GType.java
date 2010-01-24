@@ -56,6 +56,15 @@ public class GType {
 	// Linked list of resolved types.
 	private GType next;
 
+	// control flag, whether this element defines
+	// the final conversion, or whether we shall search
+	// for further matching elements
+	private boolean FinalElement = true;
+	// by default, a rule's actions are skipped when searching for
+	// further rules to match - by setting this true, the rule's
+	// actions will always be executed
+	private boolean alwaysExecuteActions = false;
+	
 	public GType(int featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
@@ -176,6 +185,30 @@ public class GType {
 	public boolean isContinueSearch() {
 		return continueSearch;
 	}
+
+	public void setFinal() {
+		FinalElement = true;
+	}
+	
+	public void setContinue() {
+		FinalElement = false;
+	}
+
+	public void alwaysExecuteActions(boolean aea) {
+		alwaysExecuteActions = aea;
+	}
+
+	public boolean alwaysExecuteActions() {
+		return alwaysExecuteActions;
+	}
+	
+	//public boolean isFinal() {
+	//	return FinalElement;
+	//}
+	//
+	//public static void push() {
+	//	nextPriority += PRIORITY_PUSH;
+	//}
 
 	public void setContinueSearch(boolean continueSearch) {
 		this.continueSearch = continueSearch;

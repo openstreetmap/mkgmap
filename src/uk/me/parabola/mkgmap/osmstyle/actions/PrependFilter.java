@@ -16,6 +16,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 
 /**
  * Prepend a Garmin magic-character to the value.
@@ -53,7 +55,6 @@ public class PrependFilter extends ValueFilter {
 	}
 
 	// TODO: runtime select appropriate table
-	private final Map<String, String> symbols = symbols_8bit;
 
 	public PrependFilter(String s) {
 		// First, try the lookup table
@@ -70,7 +71,9 @@ public class PrependFilter extends ValueFilter {
 		prefix = p;
 	}
 
-	public String doFilter(String value) {
+	private final Map<String, String> symbols = symbols_8bit;
+
+	public String doFilter(String value, Element el) {
 		return value == null ? null : prefix + value;
 	}
 }

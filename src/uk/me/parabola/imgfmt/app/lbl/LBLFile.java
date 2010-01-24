@@ -20,20 +20,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
-import uk.me.parabola.imgfmt.app.labelenc.CharacterDecoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * The file that holds all the labels for the map.
@@ -49,7 +45,6 @@ public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
 	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
-	private CharacterDecoder textDecoder = CodeFunctions.getDefaultDecoder();
 
 	private final Map<String, Label> labelCache = new HashMap<String, Label>();
 
@@ -58,27 +53,14 @@ public class LBLFile extends ImgFile {
 	private final PlacesFile places = new PlacesFile();
 
 	public LBLFile(ImgChannel chan) {
-		this(chan, true);
-	}
-
-	public LBLFile(ImgChannel chan, boolean write) {
 		setHeader(lblHeader);
 
-		if (write) {
-			setWriter(new BufferedImgFileWriter(chan));
+		setWriter(new BufferedImgFileWriter(chan));
 
-			position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
+		position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
 
-			// The zero offset is for no label.
-			getWriter().put((byte) 0);
-		} else {
-			setReader(new BufferedImgFileReader(chan));
-			lblHeader.readHeader(getReader());
-			CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
-					lblHeader.getEncodingType());
-			textEncoder = funcs.getEncoder();
-			textDecoder = funcs.getDecoder();
-		}
+		// The zero offset is for no label.
+		getWriter().put((byte) 0);
 
 		places.init(this, lblHeader.getPlaceHeader());
 	}
@@ -113,7 +95,6 @@ public class LBLFile extends ImgFile {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
 			baseEncoder.setUpperCase(true);
 		}
-		textDecoder = cfuncs.getDecoder();
 		if (lblHeader.getCodePage() == 0)
 			setCodePage(cfuncs.getCodepage());
 	}
@@ -122,18 +103,17 @@ public class LBLFile extends ImgFile {
 	 * Add a new label with the given text.  Labels are shared, so that identical
 	 * text is always represented by the same label.
 	 *
-	 * @param text The text of the label, it will be uppercased.
+	 * @param text The text of the label, it will be in uppercase.
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
-		EncodedText etext = textEncoder.encodeText(text);
 		Label l = labelCache.get(text);
 		if (l == null) {
-			l = new Label(etext);
+			l = new Label(text);
 			labelCache.put(text, l);
 
 			l.setOffset(position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
-			l.write(getWriter());
+			l.write(getWriter(), textEncoder);
 		}
 
 		return l;
@@ -185,36 +165,6 @@ public class LBLFile extends ImgFile {
 
 	public void setCodePage(int codePage) {
 		lblHeader.setCodePage(codePage);
-	}
-
-	/**
-	 * Bit of a shortcut to get a text string from the label file given its
-	 * offset.
-	 * @param offset Offset in the file.  These offsets are used in the other
-	 * map files, such as RGN and NET.
-	 * @return The label as a string.  Will be an empty string if there is no
-	 * text for the label.  Note that this is particularly the case when the
-	 * offset is zero.
-	 */
-	public String fetchLableString(int offset) {
-		// Short cut the simple case of no label
-		if (offset == 0)
-			return "";  // or null ???
-
-		ImgFileReader reader = getReader();
-		reader.position(lblHeader.getLabelStart() + offset);
-
-		byte b;
-		do {
-			b = reader.get();
-		} while (!textDecoder.addByte(b)) ;
-
-		EncodedText text = textDecoder.getText();
-		return new String(text.getCtext(), 0, text.getLength());
-	}
-
-	public PlacesHeader getPlaceHeader() {
-		return lblHeader.getPlaceHeader();
 	}
 
 	public int numCities() {

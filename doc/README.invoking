@@ -1,7 +1,35 @@
 $Id$
 
+BASIC INVOCATION
+
 README.invoking for mkgmap
 
-[TODO: This file should either get the relevant parts of README, and
-then be spiffed up, or point to resources/help/en/options.]
+To run mkgmap, the basic invocation is
 
+  java -jar mkgmap.jar
+
+or
+
+  java -jar /path/to/jar/mkgmap.jar
+
+JAVA OPTIONS
+
+There are two java-level options that are often given:
+
+-enableassertions
+	In Java assertions are disabled by default It is generally
+	recommended that assertions be enabled when running mkgmap.
+
+-Xmx2048m
+	The default java heap size is small.  This makes the heap 2G,
+	which is a reasonable value on machines with 3G or more of
+	RAM.  See README.sizes for discussion of how much heap is needed.
+
+BUILTIN HELP
+
+Run
+
+  java -jar mkgmap.jar --help=options
+
+to get a list of options to mkgmap.  This same list is available in
+../resources/help/en/options.

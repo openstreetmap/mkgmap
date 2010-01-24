@@ -89,6 +89,10 @@ public class Area {
 		return maxLat - minLat;
 	}
 
+	public Coord getCenter() {
+		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);
+	}
+
 	public String toString() {
 		return "("
 				+ Utils.toDegrees(minLat) + ','

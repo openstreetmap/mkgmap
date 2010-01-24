@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 /**
  * Provide a default value if there is not one present.
  * Do we really need this?
@@ -28,7 +30,7 @@ public class DefaultFilter extends ValueFilter {
 		def = d;
 	}
 
-	public String doFilter(String value) {
+	public String doFilter(String value, Element el) {
 		return value == null || value.length() == 0 ? def : value;
 	}
 }

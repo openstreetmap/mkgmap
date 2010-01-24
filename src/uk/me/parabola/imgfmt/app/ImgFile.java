@@ -51,7 +51,10 @@ public abstract class ImgFile implements Closeable {
 	}
 
 	public int position() {
-		return writer.position();
+		if (readable)
+			return (int) reader.position();
+		else
+			return writer.position();
 	}
 
 	public CommonHeader getHeader() {

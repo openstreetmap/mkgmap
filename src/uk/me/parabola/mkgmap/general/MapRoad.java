@@ -72,13 +72,25 @@ public class MapRoad extends MapLine {
 		this.roadDef.setToll();
 	}
 
+	public void paved(boolean p) {
+		this.roadDef.paved(p);
+	}
+
+	public void ferry(boolean f) {
+		this.roadDef.ferry(f);
+	}
+
+	public void showOSMBrowseURL() {
+		this.roadDef.showOSMBrowseURL();
+	}
+
+	public void setSynthesised(boolean s) {
+		this.roadDef.setSynthesised(s);
+	}
+
 	// XXX: currently passing PolishMapSource-internal format
 	public void setAccess(boolean[] access) {
 		this.roadDef.setAccess(access);
-	}
-
-	public void setUnknownAccess08() {
-		this.roadDef.setUnknownAccess08();
 	}
 
 	public void setNoThroughRouting() {
@@ -107,5 +119,21 @@ public class MapRoad extends MapLine {
 
 	public void setRoadZip(Zip z) {
 		this.roadDef.setZip(z);
+	}
+
+	public void setRoundabout(boolean r) {
+		this.roadDef.setRoundabout(r);
+	}
+
+	public void doFlareCheck(boolean fc) {
+		this.roadDef.doFlareCheck(fc);
+	}
+
+	public void doDeadEndCheck(boolean dec) {
+		this.roadDef.doDeadEndCheck(dec);
+	}
+
+	public void setLinkRoad(boolean lr) {
+		this.roadDef.setLinkRoad(lr);
 	}
 }

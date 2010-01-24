@@ -59,7 +59,9 @@ public class ActionReader {
 			} else if ("add".equals(cmd)) {
 				actions.add(readTagValue(false, changeableTags));
 			} else if ("apply".equals(cmd)) {
-				actions.add(readAllCmd());
+				actions.add(readAllCmd(false));
+			} else if ("apply_once".equals(cmd)) {
+				actions.add(readAllCmd(true));
 			} else if ("name".equals(cmd)) {
 				actions.add(readNameCmd());
 			} else if ("delete".equals(cmd)) {
@@ -91,7 +93,7 @@ public class ActionReader {
 		return actionList;
 	}
 
-	private Action readAllCmd() {
+	private Action readAllCmd(boolean once) {
 		String role = null;
 		if (scanner.checkToken("role")) {
 			scanner.nextToken();
@@ -100,7 +102,7 @@ public class ActionReader {
 				throw new SyntaxException(scanner, "Expecting '=' after role keyword");
 			role = scanner.nextWord();
 		}
-		SubAction subAction = new SubAction(role);
+		SubAction subAction = new SubAction(role, once);
 
 		List<Action> actionList = readActions().getList();
 		for (Action a : actionList)
@@ -147,7 +149,16 @@ public class ActionReader {
 		// Save the tag as this is potentially set during the operation.
 		changeableTags.add(key);
 
-		return new AddTagAction(key, val, modify);
+		AddTagAction action = new AddTagAction(key, val, modify);
+		while (inActionCmd()) {
+			if (scanner.checkToken("|")) {
+				scanner.nextToken();
+				continue;
+			}
+			val = scanner.nextWord();
+			action.add(val);
+		}
+		return action;
 	}
 
 	private boolean inActionCmd() {

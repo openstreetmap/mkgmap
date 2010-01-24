@@ -35,7 +35,8 @@ public interface ArgumentProcessor  {
 	/**
 	 * Process a filename.
 	 *
-	 * @param args The option arguments.
+	 * @param args A copy of the option arguments in force when this filename
+	 * was specified.
 	 * @param filename The filename.
 	 */
 	public void processFilename(CommandArgs args, String filename);

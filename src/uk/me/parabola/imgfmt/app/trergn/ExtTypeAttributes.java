@@ -22,6 +22,7 @@ import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.log.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,8 +197,8 @@ public class ExtTypeAttributes {
 
 	private final byte FLAGS0_RACON_BIT       = (1 << 0);
 	private final byte FLAGS0_NOTE_BIT        = (1 << 1);
-	private final byte FLAGS0_INT_DESIG_BIT   = (1 << 2);
-	private final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 3);
+	private final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 2);
+	private final byte FLAGS0_INT_DESIG_BIT   = (1 << 3);
 
 	public ExtTypeAttributes(Map<String, String> attributes, String objectName) {
 		this.attributes = attributes;
@@ -252,6 +253,201 @@ public class ExtTypeAttributes {
 
 		int type0to15 = mapObject.getType() & 0xffff;
 		int type8to15 = type0to15 & 0xff00;
+
+		// seamark:light:character = type [[(group)] colour period 's' height 'm' range 'M']
+		if(attributes.get("seamark:light:character") != null) {
+			String[] parts = attributes.get("seamark:light:character").split(" ");
+			String group = attributes.get("seamark:light:group");
+
+			if(parts.length > 0) {
+				String lt = null;
+				int i = 1;
+				if(parts[0].startsWith("Fl"))
+					lt = "flashing";
+				else if(parts[0].startsWith("F"))
+					lt = "fixed";
+				else if(parts[0].startsWith("LFL"))
+					lt = "long flashing";
+				else if(parts[0].startsWith("Q"))
+					lt = "quick";
+				else if(parts[0].startsWith("VQ"))
+					lt = "very quick";
+				else if(parts[0].startsWith("UQ"))
+					lt = "ultra quick";
+				else if(parts[0].startsWith("Iso"))
+					lt = "isophase";
+				else if(parts[0].startsWith("Oc"))
+					lt = "occulting";
+				else if(parts[0].startsWith("IQ"))
+					lt = "interrupted quick";
+				else if(parts[0].startsWith("IVQ "))
+					lt = "interrupted very quick";
+				else if(parts[0].startsWith("UQ"))
+					lt = "interrupted ultra quick";
+				else if(parts[0].startsWith("AI"))
+					lt = "alternating";
+				else if(parts[0].startsWith("Mo")) {
+					if(parts[0].charAt(2) == '(')
+						lt = parts[0].substring(3, 4);
+					else if(parts.length > 1 && parts[i].startsWith("(")) {
+						lt = parts[i].substring(1, 2);
+						++i;
+					}
+				}
+
+				String group2 = null;
+				if(!parts[0].startsWith("Mo") && parts[0].indexOf("(") > 0) {
+					group2 = parts[0].substring(parts[0].indexOf("(") + 1, parts[0].length() - 1);
+				}
+				else if(i < parts.length && parts[i].startsWith("(")) {
+					// should be (group)
+					group2 = parts[i].substring(1, parts[i].length() - 1);
+					++i;
+				}
+
+				if(group2 != null) {
+					if(group != null && !group.equals(group2))
+						log.warn("Inconsistent light description - seamark:light:group = '" + group + "' but seamark:light:character contains '" + parts[0] + "'");
+					else
+						group = group2;
+				}
+
+				if(lt != null) {
+					if(group != null) {
+						attributes.put("group", group); // FIXME - implement?
+						lt = "group " + lt;
+						if(group.split("\\+").length > 1)
+							lt = "composite " + lt;
+					}
+					attributes.put("type", lt);
+				}
+
+				String light = null;
+				if(i < parts.length) {
+					// colour
+					String c = parts[i].toUpperCase();
+					if(c.startsWith("W"))
+						light = "white";
+					else if(c.startsWith("R"))
+						light = "red";
+					else if(c.startsWith("G"))
+						light = "green";
+					else if(c.startsWith("Y"))
+						light = "yellow";
+					++i;
+				}
+
+				String period = null;
+				if((i + 1) < parts.length && parts[i+1].equals("s")) {
+					// period
+					period = parts[i];
+					i += 2;
+				}
+
+				String height = null;
+				if((i + 1) < parts.length && parts[i+1].equals("m")) {
+					// height
+					height = parts[i];
+					i += 2;
+				}
+
+				String range = null;
+				if((i + 1) < parts.length && parts[i+1].equals("M")) {
+					// range
+					range = parts[i];
+					i += 2;
+				}
+
+				if(light != null) {
+					if(range != null)
+						light += "," + range;
+					attributes.put("light", light);
+					if(period != null)
+						attributes.put("period", period);
+					if(height != null)
+						attributes.put("height-above-datum", height + "m");
+				}
+			}
+		}
+
+		// seamark:light:# = colour ':' sectorStart ':' sectorEnd ':' range
+		if(attributes.get("seamark:light:1") != null) {
+			// when multiple lights are defined, they must be ordered
+			// by increasing sector start angle
+			class SeamarkLight implements Comparable {
+				String colour;
+				int sectorStart;
+				int sectorEnd;
+				int range;
+				SeamarkLight(String desc) {
+					String parts[] = desc.split(":");
+					if(parts.length == 4) {
+						colour = parts[0];
+						sectorStart = Double.valueOf(parts[1]).intValue();
+						while(sectorStart >= 360)
+							sectorStart -= 360;
+						sectorEnd = Double.valueOf(parts[2]).intValue();
+						while(sectorEnd >= 360)
+							sectorEnd -= 360;
+						range = Double.valueOf(parts[3]).intValue();
+					}
+				}
+				public int compareTo(Object other) {
+					return sectorStart - ((SeamarkLight)other).sectorStart;
+				}
+			}
+			List<SeamarkLight> lights = new ArrayList<SeamarkLight>();
+			// create a SeamarkLight for each light
+			for(int n = 1; n <= 100; ++n) {
+				String desc = attributes.get("seamark:light:" + n);
+				if(desc != null)
+					lights.add(new SeamarkLight(desc));
+				else
+					break;
+			}
+			// sort the lights by increasing sector start angle
+			Collections.sort(lights);
+			// generate the descriptor string - each light is
+			// specified as color,range,sectorStartAngle
+			String light = null;
+			for(int i = 0; i < lights.size(); ++i) {
+				SeamarkLight sml = lights.get(i);
+				if(light == null)
+					light = "";
+				else
+					light += "/";
+				light += sml.colour + "," + sml.range/10 + "." + sml.range%10 + "," + sml.sectorStart;
+				if((i + 1) < lights.size()) {
+					if(sml.sectorEnd != lights.get(i + 1).sectorStart) {
+						// gap between lit sectors
+						light += "/unlit,0," + sml.sectorEnd;
+					}
+				}
+				else if(sml.sectorEnd != lights.get(0).sectorStart) {
+					// gap to end
+					light += "/unlit,0," + sml.sectorEnd;
+				}
+			}
+			if(light != null) {
+				//System.err.println(light);
+				attributes.put("light", light);
+				if(attributes.get("seamark:light:character") == null)
+					attributes.put("type", "fixed");
+			}
+		}
+
+		String sequence = attributes.get("seamark:light:sequence");
+
+		if(sequence != null) {
+			StringBuffer periods = new StringBuffer();
+			for(String p : sequence.split("[()]")) {
+				if(periods.length() > 0)
+					periods.append(",");
+				periods.append(Double.parseDouble(p));
+			}
+			// FIXME - enable this when flash sequence encoding is right
+			// attributes.put("period", periods.toString());
+		}
 
 		if(mapObject instanceof Point) {
 
@@ -332,6 +528,14 @@ public class ExtTypeAttributes {
 					nob += 2;
 					flags1 |= 0x02; // leading angle present
 				}
+				int period = 0;
+				for(int p : periods)
+					period += p;
+				if(period >= 256)
+					lightType |= 0x40; // 9th bit of period
+				else if(period >= 512)
+					log.warn("Can't encode periods greater than 51.2 seconds");
+
 				extraBytes = new byte[nob + 2];
 				int i = 0;
 				extraBytes[i++] = (byte)(0xe0 | flags0);
@@ -349,9 +553,6 @@ public class ExtTypeAttributes {
 					if(hadi > 255)
 						extraBytes[i++] = (byte)(hadi >> 8);
 				}
-				int period = 0;
-				for(int p : periods)
-					period += p;
 				extraBytes[i++] = (byte)period;
 				if(note != null) {
 					int off = note.getOffset();
@@ -702,7 +903,7 @@ public class ExtTypeAttributes {
 			"green-white"
 		};
 
-		c = c.toLowerCase();
+		c = c.toLowerCase().replaceAll("[;, ]+", "-");
 
 		for(int i = 0; i < colours.length; ++i)
 			if(colours[i].equals(c))

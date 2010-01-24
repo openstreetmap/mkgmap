@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project relativePaths="false" version="4">
+<project version="4">
   <component name="DependencyValidationManager">
     <scope name="general" pattern="file:src/uk/me/parabola/mkgmap/general//*" />
     <scope name="reader" pattern="file:src/uk/me/parabola/mkgmap/reader//*" />
@@ -8,7 +8,7 @@
     <scope name="style" pattern="file:src/uk/me/parabola/mkgmap/osmstyle//*" />
     <scope name="build" pattern="file:src/uk/me/parabola/mkgmap/build//*||file:src/uk/me/parabola/mkgmap/combiners//*||file:src/uk/me/parabola/mkgmap/filters//*" />
     <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
-    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs/*||file:src/uk/me/parabola/imgfmt/mps/*||file:src/uk/me/parabola/imgfmt/sys/*" />
+    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs//*||file:src/uk/me/parabola/imgfmt/sys//*" />
     <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
     <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
     <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*" />
@@ -47,7 +47,6 @@
   <component name="ProjectDetails">
     <option name="projectName" value="mkgmap" />
   </component>
-  <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectKey">
     <option name="state" value="https://svn.parabola.me.uk/svn/mkgmap/trunk/.idea/misc.xml" />
   </component>
@@ -57,7 +56,7 @@
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
-        <entry key="/home/steve/src/display">
+        <entry key="$PROJECT_DIR$/../display">
           <value>
             <SvnBranchConfiguration>
               <option name="trunkUrl" value="https://svn.parabola.me.uk/svn/display/trunk" />
@@ -71,53 +70,17 @@
                 <map>
                   <entry key="https://svn.parabola.me.uk/svn/mkgmap/branches">
                     <value>
-                      <list>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1253270979434" />
-                          <option name="revision" value="1204" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/style" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1252055175332" />
-                          <option name="revision" value="1166" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/multipolygon" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1240156952632" />
-                          <option name="revision" value="1005" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/smoothing" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1236291460415" />
-                          <option name="revision" value="970" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/poi" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1235847564316" />
-                          <option name="revision" value="947" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/tags-bug" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1235349169089" />
-                          <option name="revision" value="926" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/small_img" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1234824657292" />
-                          <option name="revision" value="897" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/nod" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1228044192952" />
-                          <option name="revision" value="740" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/typpoi" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1214047864805" />
-                          <option name="revision" value="616" />
-                          <option name="url" value="https://svn.parabola.me.uk/svn/mkgmap/branches/net" />
-                        </SvnBranchItem>
-                      </list>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/releases">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/tags">
+                    <value>
+                      <list />
                     </value>
                   </entry>
                 </map>

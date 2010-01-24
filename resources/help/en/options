@@ -141,17 +141,39 @@ Product description options:
 	It is often just 1.
 
 --series-name
+	This name will be displayed in MapSource in the map selection
+	drop-down. The default is "OSM map".
+
 --area-name
 
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files. The default map name is OSM_map
-	
+	.img and .tdb files. The default map name is osmmap.
+
+--nsis
+	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
+	(NSIS) to create a Windows Mapsource Installer.
+
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
 	number used in the overview map and tdb file.  The default
 	number is 63240000.
 	
+
+Optimization options:
+
+--reduce-point-density=NUM
+	Simplifies the ways with the Douglas Peucker algorithm.
+	NUM is the maximal allowed error distance, by which the resulting
+	way may differ from the original one.
+	This distance gets shifted with lower zoom levels. 
+	Recommended setting is 10, this should lead to only small differences
+	(Default is 2.6, which should lead to invisible changes) 
+
+--merge-lines
+	Try to merge lines. This helps the simplify filter to straighten out
+	longer chunks at lower zoom levels. Decreases file size more.
+	Increases paint speed at low zoom levels.
 
 Miscellaneous options:
 
@@ -178,6 +200,34 @@ Miscellaneous options:
 	Experimental: Create maps that support routing.  This implies --net
 	(so that --net need not be given if --route is given).
 
+--drive-on-left
+--drive-on-right
+	Explicitly specify which side of the road vehicles are
+	expected to drive on. If neither of these options are
+	specified, it is assumed that vehicles drive on the right
+	unless --check-roundabouts is specified and the first
+	roundabout processed is clockwise.
+
+--check-roundabouts
+	Check that roundabouts have the expected direction (clockwise
+	when vehicles drive on the left). Roundabouts that are complete
+	loops and have the wrong direction are reversed. Also checks
+	that the roundabouts do not fork or overlap other roundabouts.
+
+--check-roundabout-flares
+	Sanity check roundabout flare roads - warn if they don't point
+	in the correct direction or if they are not oneway or if they
+	extend too far.
+
+--max-flare-length-ratio=NUM
+	When checking flare roads, ignore roads whose length is
+	greater than NUM (an integer) times the distance between the
+	nodes on the roundabout that the flare roads connect to. Using
+	this option with a value of at least 5 will cut down the
+	number of legitimate roads that are flagged as flare road
+	problems. Default value is 0 (disabled) because it's not a
+	completely reliable heuristic.
+
 --ignore-maxspeeds
 	When reading OSM files, ignore any "maxspeed" tags.
 
@@ -186,6 +236,8 @@ Miscellaneous options:
 
 --ignore-osm-bounds
 	When reading OSM files, ignore any "bounds" elements.
+	With this option selected generate-sea sometimes works better,
+	but routing accross tiles will not work.
 
 --preserve-element-order
 	Process the map elements (nodes, ways, relations) in the order
@@ -198,19 +250,87 @@ Miscellaneous options:
 	than that length will be removed. If a length is not
 	specified, only zero-length arcs will be removed.
 
+--adjust-turn-headings
+	Where possible, ensure that turns off to side roads change
+	heading sufficiently so that the GPS believes that a turn is
+	required rather than a fork. This also avoids spurious
+	instructions to "keep right/left" when the road doesn't
+	actually fork.
+
+--report-similar-arcs
+	Issue a warning when more than one arc connects two nodes and
+	the ways that the arcs are derived from contain identical
+	points. It doesn't make sense to use this option at the same
+	time as using the cycleway creating options.
+
+--report-dead-ends=LEVEL
+	Set the dead end road warning level. The value of LEVEL (which
+	defaults to 1 if this option is not specified) determines
+	those roads to report: 0 = none, 1 = multiple oneway roads
+	that join together but go nowhere, 2 = individual oneway roads
+	that go nowhere.
+
+--report-undefined-nodes
+	Issue a warning when a way references an undefined node.
+
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code
 	can be specified with this option.  This is a workaround for not
 	being able to search for roads.
+	0x2f15: a blue dot in the middle of the road, and if you select,
+		or 'hover' over it, the streetname appears.
 	
 --add-pois-to-areas
 	Generate a POI for each area. The POIs are created after the
 	style is applied and only for polygon types that have a
 	reasonable point equivalent.
 
+--generate-sea[=ValueList]
+	Generate sea polygons. ValueList is an optional comma
+	separated list of values:
+
+	multipolygon
+		generate the sea using a multipolygon (the default
+		behaviour so this really doesn't need to be specified).
+
+	polygons | no-mp
+		don't generate the sea using a multipolygon - instead,
+		generate a background sea polygon plus individual land
+		polygons with tag natural=land. This requires a
+		suitable land polygon type to be defined in the style
+		file (suggested type is 0x010100) and the polygon must
+		be defined in the TYP file as having a higher drawing
+		level than the sea polygon type.
+
+	no-sea-sectors
+		disable the generation of "sea sectors" when the
+		coastline fails to reach the tile's boundary.
+		
+	extend-sea-sectors
+	  same as no-sea-sectors. Additional adds a point so 
+	  coastline reaches the nearest tile boundary.
+
+	land-tag=TAG=VAL
+		tag to use for land polygons (default natural=land).
+
+	close-gaps=NUM
+		close gaps in coastline that are less than this
+		distance (metres)
+
 --make-poi-index
 	Generate the POI index (not yet useful).
+
+--index
+	Generate a global index that can be used with MapSource.
+	Makes the find places functions in MapSource available.
+	The index consists of two files named osmmap.mdx and osmmap_mdr.img
+	by default.  The overview-mapname can be used to change the name.
+	If the mapset is sent to the device from MapSource, it will enable
+	find by name and address search on the GPS.
+
+	This is an experimental option and there are several unresolved
+	issues.
 
 --make-all-cycleways
 	Turn on all of the options that make cycleways.
@@ -233,6 +353,12 @@ Miscellaneous options:
 	way's properties. Currently supported are POIs that restrict
 	access (e.g. bollards). Their access restrictions are applied
 	to a small region of the way near the POI.
+
+--delete-tags-file=FILENAME
+	Names a file that should contain one or more lines of the form
+	TAG=VALUE or TAG=*. Blank lines and lines that start with
+	# or ; are ignored. All tag/value pairs in the OSM input are
+	compared with these patterns and those that match are deleted.
 
 --tdbfile
 	Write a .tdb file.

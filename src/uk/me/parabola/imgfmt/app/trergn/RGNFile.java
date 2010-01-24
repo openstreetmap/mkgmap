@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * The region file.  Holds actual details of points and lines etc.
@@ -87,7 +87,7 @@ public class RGNFile extends ImgFile {
 
 	public void startDivision(Subdivision sd) {
 
-		sd.setRgnPointer(position() - HEADER_LEN);
+		sd.setStartRgnPointer(position() - HEADER_LEN);
 
 		// We need to reserve space for a pointer for each type of map
 		// element that is supported by this division.  Note that these
@@ -145,7 +145,7 @@ public class RGNFile extends ImgFile {
 		if (currentDivision.needsIndPointPtr()) {
 			long currPos = position();
 			position(indPointPtrOff);
-			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
+			long off = currPos - currentDivision.getStartRgnPointer() - HEADER_LEN;
 			if (off > 0xffff)
 				throw new IllegalStateException("IndPoint offset too large: " + off);
 
@@ -158,7 +158,7 @@ public class RGNFile extends ImgFile {
 		if (currentDivision.needsPolylinePtr()) {
 			long currPos = position();
 			position(polylinePtrOff);
-			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
+			long off = currPos - currentDivision.getStartRgnPointer() - HEADER_LEN;
 			if (off > 0xffff)
 				throw new IllegalStateException("Polyline offset too large: " + off);
 
@@ -173,7 +173,7 @@ public class RGNFile extends ImgFile {
 	public void setPolygonPtr() {
 		if (currentDivision.needsPolygonPtr()) {
 			long currPos = position();
-			long off = currPos - currentDivision.getRgnPointer() - HEADER_LEN;
+			long off = currPos - currentDivision.getStartRgnPointer() - HEADER_LEN;
 			log.debug("currpos=", currPos, ", off=", off);
 			if (off > 0xffff)
 				throw new IllegalStateException("Polygon offset too large: " + off);

@@ -16,17 +16,27 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -36,6 +46,7 @@ import uk.me.parabola.mkgmap.general.MapDetails;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -67,6 +78,8 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Map<Long, Node> nodeMap;
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
+	private final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap =
+		new HashMap<Long, List<Map.Entry<String,Relation>>>();
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private final List<Node> exits = new ArrayList<Node>();
 	private final List<Way> motorways = new ArrayList<Way>();
@@ -82,6 +95,8 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private Node currentNode;
 	private Way currentWay;
+	private Node currentNodeInWay;
+	private boolean currentWayStartsWithFIXME;
 	private Relation currentRelation;
 	private long currentElementId;
 
@@ -90,8 +105,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private Area bbox;
 	private Runnable endTask;
 
-	private long nextFakeId = 1;
-
+	private final boolean reportUndefinedNodes;
 	private final boolean makeOppositeCycleways;
 	private final boolean makeCycleways;
 	private final boolean ignoreBounds;
@@ -99,8 +113,15 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean linkPOIsToWays;
 	private final boolean routing;
 	private final boolean generateSea;
+	private boolean generateSeaUsingMP = true;
+	private boolean allowSeaSectors = true;
+	private boolean extendSeaSectors = false;
+	private int maxCoastlineGap = 0;
+	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
+
+	private HashMap<String,Set<String>> deletedTags;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		if(props.getProperty("make-all-cycleways", false)) {
@@ -112,7 +133,39 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
-		generateSea = props.getProperty("generate-sea", false);
+		String gs = props.getProperty("generate-sea", null);
+		generateSea = gs != null;
+		if(generateSea) {
+			for(String o : gs.split(",")) {
+				if("no-mp".equals(o) ||
+				   "polygon".equals(o) ||
+				   "polygons".equals(o))
+					generateSeaUsingMP = false;
+				else if("multipolygon".equals(o))
+					generateSeaUsingMP = true;
+				else if(o.startsWith("close-gaps="))
+					maxCoastlineGap = (int)Double.parseDouble(o.substring(11));
+				else if("no-sea-sectors".equals(o))
+					allowSeaSectors = false;
+				else if("extend-sea-sectors".equals(o)) {
+					allowSeaSectors = false;
+					extendSeaSectors = true;
+				}
+				else if(o.startsWith("land-tag="))
+					landTag = o.substring(9).split("=");
+				else {
+					if(!"help".equals(o))
+						System.err.println("Unknown sea generation option '" + o + "'");
+					System.err.println("Known sea generation options are:");
+					System.err.println("  multipolygon        use a multipolygon (default)");
+					System.err.println("  polygons | no-mp    use polygons rather than a multipolygon");
+					System.err.println("  no-sea-sectors      disable use of \"sea sectors\"");
+					System.err.println("  extend-sea-sectors  extend coastline to reach border");
+					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
+					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
+				}
+			}
+		}
 		routing = props.containsKey("route");
 		String rsa = props.getProperty("remove-short-arcs", null);
 		if(rsa != null)
@@ -121,6 +174,11 @@ class Osm5XmlHandler extends DefaultHandler {
 			minimumArcLength = null;
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		reportUndefinedNodes = props.getProperty("report-undefined-nodes", false);
+		String deleteTagsFileName = props.getProperty("delete-tags-file");
+		if(deleteTagsFileName != null)
+			readDeleteTagsFile(deleteTagsFileName);
+
 		if (props.getProperty("preserve-element-order", false)) {
 			nodeMap = new LinkedHashMap<Long, Node>(5000);
 			wayMap = new LinkedHashMap<Long, Way>(5000);
@@ -130,6 +188,60 @@ class Osm5XmlHandler extends DefaultHandler {
 			wayMap = new HashMap<Long, Way>(5000);
 			relationMap = new HashMap<Long, Relation>();
 		}
+	}
+
+	private void readDeleteTagsFile(String fileName) {
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(fileName))));
+			String line;
+			deletedTags = new HashMap<String,Set<String>>();
+			while((line = br.readLine()) != null) {
+				line = line.trim();
+				if(line.length() > 0 && 
+				   !line.startsWith("#") &&
+				   !line.startsWith(";")) {
+					String[] parts = line.split("=");
+					if(parts.length != 2) {
+						log.error("Ignoring bad line in deleted tags file: " + line);
+					}
+					else {
+						parts[0] = parts[0].trim();
+						parts[1] = parts[1].trim();
+						if("*".equals(parts[1])) {
+							deletedTags.put(parts[0], new HashSet<String>());
+						}
+						else {
+							Set<String> vals = deletedTags.get(parts[0]);
+							if(vals == null)
+								vals = new HashSet<String>();
+							vals.add(parts[1]);
+							deletedTags.put(parts[0], vals);
+						}
+					}
+				}
+			}
+			br.close();
+		}
+		catch(FileNotFoundException e) {
+			log.error("Could not open delete tags file " + fileName);
+		}
+		catch(IOException e) {
+			log.error("Error reading delete tags file " + fileName);
+		}
+
+		if(deletedTags != null && deletedTags.size() == 0)
+			deletedTags = null;
+	}
+
+	private boolean deleteTag(String key, String val) {
+		if(deletedTags != null) {
+			Set<String> vals = deletedTags.get(key);
+			if(vals != null && (vals.size() == 0 || vals.contains(val))) {
+				//				System.err.println("Deleting " + key + "=" + val);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -210,12 +322,31 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			} else if ("relation".equals(type)) {
 				el = relationMap.get(id);
+				if (el == null) {
+					// The relation may be defined later in the input.
+					// Defer the lookup.
+					Map.Entry<String,Relation> entry =
+						new AbstractMap.SimpleEntry<String,Relation>
+						(attributes.getValue("role"), currentRelation);
+
+					List<Map.Entry<String,Relation>> entries =
+						deferredRelationMap.get(id);
+					if (entries == null) {
+						entries = new ArrayList<Map.Entry<String,Relation>>();
+						deferredRelationMap.put(id, entries);
+					}
+
+					entries.add(entry);
+				}
 			} else
 				el = null;
 			if (el != null) // ignore non existing ways caused by splitting files
 				currentRelation.addElement(attributes.getValue("role"), el);
 		} else if (qName.equals("tag")) {
-			currentRelation.addTag(attributes.getValue("k"), attributes.getValue("v"));
+			String key = attributes.getValue("k");
+			String val = attributes.getValue("v");
+			if(!deleteTag(key, val))
+				currentRelation.addTag(key, val);
 		}
 	}
 
@@ -226,7 +357,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-			currentWay.addTag(key, val);
+			if(!deleteTag(key, val))
+				currentWay.addTag(key, val);
 		}
 	}
 
@@ -234,6 +366,9 @@ class Osm5XmlHandler extends DefaultHandler {
 		if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
+
+			if(deleteTag(key, val))
+				return;
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that
@@ -285,6 +420,18 @@ class Osm5XmlHandler extends DefaultHandler {
 				String highway = currentWay.getTag("highway");
 				if(highway != null ||
 				   "ferry".equals(currentWay.getTag("route"))) {
+					boolean oneway = currentWay.isBoolTag("oneway");
+					// if the first or last Node of the Way has a
+					// FIXME attribute, disable dead-end-check for
+					// oneways
+					if (oneway &&
+						currentWayStartsWithFIXME ||
+						(currentNodeInWay != null &&
+						 (currentNodeInWay.getTag("FIXME") != null ||
+						  currentNodeInWay.getTag("fixme") != null))) {
+						currentWay.addTag("mkgmap:dead-end-check", "false");
+					}
+
 					// if the way is a roundabout but isn't already
 					// flagged as "oneway", flag it here
 					if("roundabout".equals(currentWay.getTag("junction"))) {
@@ -300,7 +447,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if(makeOppositeCycleways &&
 					   cycleway != null &&
 					   !"cycleway".equals(highway) &&
-					   currentWay.isBoolTag("oneway") &&
+					   oneway &&
 					   ("opposite".equals(cycleway) ||
 						"opposite_lane".equals(cycleway) ||
 						"opposite_track".equals(cycleway))) {
@@ -331,6 +478,7 @@ class Osm5XmlHandler extends DefaultHandler {
 						cycleWay.addTag("access", "no");
 						cycleWay.addTag("bicycle", "yes");
 						cycleWay.addTag("foot", "no");
+						cycleWay.addTag("mkgmap:synthesised", "yes");
 						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
 					}
 					else if(makeCycleways &&
@@ -365,14 +513,19 @@ class Osm5XmlHandler extends DefaultHandler {
 						cycleWay.addTag("access", "no");
 						cycleWay.addTag("bicycle", "yes");
 						cycleWay.addTag("foot", "no");
+						cycleWay.addTag("mkgmap:synthesised", "yes");
 						log.info("Making " + cycleway + " cycleway '" + cycleWay.getTag("name") + "'");
 					}
 				}
 				if("motorway".equals(highway) ||
 				   "trunk".equals(highway))
 					motorways.add(currentWay);
-				if(generateSea && "coastline".equals(currentWay.getTag("natural")))
-				    shoreline.add(currentWay);
+				if(generateSea && "coastline".equals(currentWay.getTag("natural"))) {
+					currentWay.deleteTag("natural");
+					shoreline.add(currentWay);
+				}
+				currentNodeInWay = null;
+				currentWayStartsWithFIXME = false;
 				currentWay = null;
 				// ways are processed at the end of the document,
 				// may be changed by a Relation class
@@ -412,8 +565,17 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if(currentRelation != null) {
-			relationMap.put(currentRelation.getId(), currentRelation);
+			long id = currentRelation.getId();
+
+			relationMap.put(id, currentRelation);
 			currentRelation.processElements();
+
+			List<Map.Entry<String,Relation>> entries =
+				deferredRelationMap.remove(id);
+			if (entries != null)
+				for (Map.Entry<String,Relation> entry : entries)
+					entry.getValue().addElement(entry.getKey(), currentRelation);
+
 			currentRelation = null;
 		}
 	}
@@ -432,18 +594,25 @@ class Osm5XmlHandler extends DefaultHandler {
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
+				String ref = null;
+				Way motorway = null;
+				String exitName = e.getTag("name");
+				if(exitName == null)
+					exitName = e.getTag("ref");
 				for (Way w : motorways) {
-					String ref = w.getTag("ref");
 					if (w.getPoints().contains(e.getLocation())) {
-						if(ref != null) {
-							log.info("Adding " + refTag + "=" + ref + " to exit" + e.getTag("ref"));
-							e.addTag(refTag, ref);
-						}
-						else {
-							log.warn("Motorway exit is positioned on a motorway that doesn't have a 'ref' tag");
-						}
-						break;
+						motorway = w;
+						ref = w.getTag("ref");
+						if(ref != null)
+						    break;
 					}
+				}
+				if(ref != null) {
+					log.info("Adding " + refTag + "=" + ref + " to exit " + exitName);
+					e.addTag(refTag, ref);
+				}
+				else if(motorway != null) {
+					log.warn("Motorway exit " + exitName + " is positioned on a motorway that doesn't have a 'ref' tag (" + e.getLocation().toOSMURL() + ")");
 				}
 			}
 		}
@@ -586,7 +755,11 @@ class Osm5XmlHandler extends DefaultHandler {
 				// are only in a single way
 				for(int i = numPoints - 2; i >= 1; --i) {
 					Coord p = points.get(i);
-					if(p.getHighwayCount() > 1)
+					// if this point is a CoordPOI it may become a
+					// node later even if it isn't actually a junction
+					// between ways at this time - so for the purposes
+					// of short arc removal, consider it to be a node
+					if(p.getHighwayCount() > 1 || p instanceof CoordPOI)
 						incArcCount(arcCounts, p, 2);
 				}
 			}
@@ -606,7 +779,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			for (Way way : ways) {
 				List<Coord> points = way.getPoints();
 				if (points.size() < 2) {
-					log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has less than 2 points - deleting it");
+					log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
 					wayMap.remove(way.getId());
 					++numWaysDeleted;
 					continue;
@@ -626,7 +799,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if (replacement != null) {
 						assert !p.getOnBoundary() : "Boundary node replaced";
 						String replacementId = (replacement.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(replacement);
-						log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has node " + nodeIdMap.get(p) + " replaced with node " + replacementId);
 						p = replacement;
 						// replace point in way
 						points.set(i, p);
@@ -637,7 +810,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					if (i > 0) {
 						// this is not the first point in the way
 						if (p == previousPoint) {
-							log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive identical points (" + nodeIdMap.get(p) + ") - deleting the second point");
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
 							points.remove(i);
 							// hack alert! rewind the loop index
 							--i;
@@ -650,6 +823,9 @@ class Osm5XmlHandler extends DefaultHandler {
 						// this point is a node if it has an arc count
 						Integer arcCount = arcCounts.get(p);
 						if (arcCount != null) {
+							// make the point "preserved" so that it
+							// won't get filtered out later
+							p.preserved(true);
 							// merge this node to previous node if the
 							// two points have identical coordinates
 							// or are closer than the minimum distance
@@ -664,9 +840,9 @@ class Osm5XmlHandler extends DefaultHandler {
 									// are on the boundary
 									if(complainedAbout.get(way) == null) {
 										if(p.equals(previousNode))
-											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates but they can't be merged because both are boundary nodes!");
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") but they can't be merged because both are boundary nodes!");
 										else
-											log.warn("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - but it can't be removed because both ends of the arc are boundary nodes!");
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
 										complainedAbout.put(way, way);
 									}
 									break; // give up with this way
@@ -675,9 +851,9 @@ class Osm5XmlHandler extends DefaultHandler {
 								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
 
 								if(p.equals(previousNode))
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has consecutive nodes with the same coordinates - merging node " + thisNodeId + " into " + previousNodeId);
+									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") - merging node " + thisNodeId + " into " + previousNodeId);
 								else
-									log.info("  Way " + way.getTag("name") + " (OSM id " + way.getId() + ") has short arc (" + String.format("%.2f", arcLength) + "m) - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - removing it by merging node " + thisNodeId + " into " + previousNodeId);
 								if(p.getOnBoundary()) {
 									// current point is a boundary node so
 									// we need to merge the previous node into
@@ -797,6 +973,8 @@ class Osm5XmlHandler extends DefaultHandler {
 			long id = idVal(sid);
 			currentWay = new Way(id);
 			wayMap.put(id, currentWay);
+			currentNodeInWay = null;
+			currentWayStartsWithFIXME = false;
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
@@ -804,34 +982,65 @@ class Osm5XmlHandler extends DefaultHandler {
 
 	private void addNodeToWay(long id) {
 		Coord co = coordMap.get(id);
+		currentNodeInWay = nodeMap.get(id);
 		//co.incCount();
 		if (co != null) {
 			if(linkPOIsToWays) {
 				// if this Coord is also a POI, replace it with an
 				// equivalent CoordPOI that contains a reference to
 				// the POI's Node so we can access the POI's tags
-				Node node = nodeMap.get(id);
-				if(node != null) {
-					if(!(co instanceof CoordPOI)) {
-						co = new CoordPOI(co.getLatitude(), co.getLongitude(), node);
-						coordMap.put(id, co);
-						// even if this point isn't actually shared by
-						// multiple ways, as it may well become a node
-						// later, we want to consider it a node now so
-						// that it will be processed by the short arc
-						// removal code
-						co.incHighwayCount();
+				if(!(co instanceof CoordPOI) && currentNodeInWay != null) {
+					// for now, only do this for nodes that have
+					// certain tags otherwise we will end up creating
+					// a CoordPOI for every node in the way
+					final String[] coordPOITags = { "access", "barrier", "highway" };
+					for(String cpt : coordPOITags) {
+						if(currentNodeInWay.getTag(cpt) != null) {
+							// the POI has one of the approved tags so
+							// replace the Coord with a CoordPOI
+							CoordPOI cp = new CoordPOI(co.getLatitude(), co.getLongitude());
+							coordMap.put(id, cp);
+							// we also have to jump through hoops to
+							// make a new version of Node because we
+							// can't replace the Coord that defines
+							// its location
+							Node newNode = new Node(id, cp);
+							newNode.copyTags(currentNodeInWay);
+							nodeMap.put(id, newNode);
+							// tell the CoordPOI what node it's
+							// associated with
+							cp.setNode(newNode);
+							co = cp;
+							// if original node is in exits, replace it
+							if(exits.remove(currentNodeInWay))
+								exits.add(newNode);
+							currentNodeInWay = newNode;
+							break;
+						}
 					}
-					// flag this Way as having a CoordPOI so it will
-					// be processed later
+				}
+				if(co instanceof CoordPOI) {
+					// flag this Way as having a CoordPOI so it
+					// will be processed later
 					currentWay.addTag("mkgmap:way-has-pois", "true");
+					log.info("Linking POI " + currentNodeInWay.toBrowseURL() + " to way at " + co.toOSMURL());
 				}
 			}
+
+			// See if the first Node of the Way has a FIXME attribute
+			if (currentWay.getPoints().size() == 0) {
+				currentWayStartsWithFIXME = (currentNodeInWay != null &&
+											 (currentNodeInWay.getTag("FIXME") != null ||
+											  currentNodeInWay.getTag("fixme") != null));
+			}
+
 			currentWay.addPoint(co);
 			co.incHighwayCount(); // nodes (way joins) will have highwayCount > 1
 			if (minimumArcLength != null || generateSea)
 				nodeIdMap.put(co, id);
 		}
+		else if(reportUndefinedNodes && currentWay != null)
+			log.warn("Way " + currentWay.toBrowseURL() + " references undefined node " + id);
 	}
 
 	public void setConverter(OsmConverter converter) {
@@ -861,7 +1070,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			// if that fails, fake a (hopefully) unique value
 			Long fakeIdVal = fakeIdMap.get(id);
 			if(fakeIdVal == null) {
-				fakeIdVal = (1L << 62) + nextFakeId++;
+				fakeIdVal = FakeIdGenerator.makeFakeId();
 				fakeIdMap.put(id, fakeIdVal);
 			}
 			//System.out.printf("%s = 0x%016x\n", id, fakeIdVal);
@@ -870,10 +1079,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	}
 
 	private void generateSeaPolygon(List<Way> shoreline) {
-		// don't do anything if there is no shoreline
-		if (shoreline.isEmpty())
-			return;
-
+		
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
@@ -890,7 +1096,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.info("clipping " + segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
-					long id = (1L << 62) + nextFakeId++;
+					long id = FakeIdGenerator.makeFakeId();
 					Way shore = new Way(id, pts);
 					toBeAdded.add(shore);
 				}
@@ -910,9 +1116,34 @@ class Osm5XmlHandler extends DefaultHandler {
 		Coord sw = new Coord(maxLat, minLong);
 		Coord se = new Coord(maxLat, maxLong);
 
-		long multiId = (1L << 62) + nextFakeId++;
-		Relation seaRelation = new GeneralRelation(multiId);
-		seaRelation.addTag("type", "multipolygon");
+		if(shoreline.isEmpty()) {
+			// no sea required
+			if(!generateSeaUsingMP) {
+				// even though there is no sea, generate a land
+				// polygon so that the tile's background colour will
+				// match the land colour on the tiles that do contain
+				// some sea
+				long landId = FakeIdGenerator.makeFakeId();
+				Way land = new Way(landId);
+				land.addPoint(nw);
+				land.addPoint(sw);
+				land.addPoint(se);
+				land.addPoint(ne);
+				land.addPoint(nw);
+				land.addTag(landTag[0], landTag[1]);
+				wayMap.put(landId, land);
+			}
+			// nothing more to do
+			return;
+		}
+
+		long multiId = FakeIdGenerator.makeFakeId();
+		Relation seaRelation = null;
+		if(generateSeaUsingMP) {
+			log.debug("Generate seabounds relation "+multiId);
+			seaRelation = new GeneralRelation(multiId);
+			seaRelation.addTag("type", "multipolygon");
+		}
 
 		List<Way> islands = new ArrayList<Way>();
 
@@ -925,7 +1156,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				it.remove();
 			}
 		}
-		concatenateWays(shoreline);
+		concatenateWays(shoreline, seaBounds);
 		// there may be more islands now
 		it = shoreline.iterator();
 		while (it.hasNext()) {
@@ -940,7 +1171,21 @@ class Osm5XmlHandler extends DefaultHandler {
 		// create a "inner" way for each island
 		for (Way w : islands) {
 			log.info("adding island " + w);
-			seaRelation.addElement("inner", w);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("inner", w);
+			else {
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					// only copy the name tags
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
+				w.addTag(landTag[0], landTag[1]);
+				wayMap.put(w.getId(), w);
+			}
 		}
 
 		boolean generateSeaBackground = true;
@@ -986,10 +1231,24 @@ class Osm5XmlHandler extends DefaultHandler {
 				if (nearlyClosed) {
 					// close the way
 					points.add(pStart);
-					seaRelation.addElement("inner", w);
+					if(generateSeaUsingMP)
+						seaRelation.addElement("inner", w);
+					else {
+						if(!FakeIdGenerator.isFakeId(w.getId())) {
+							Way w1 = new Way(FakeIdGenerator.makeFakeId());
+							w1.getPoints().addAll(w.getPoints());
+							// only copy the name tags
+							for(String tag : w)
+								if(tag.equals("name") || tag.endsWith(":name"))
+									w1.addTag(tag, w.getTag(tag));
+							w = w1;
+						}
+						w.addTag(landTag[0], landTag[1]);
+						wayMap.put(w.getId(), w);
+					}
 				}
-				else {
-					seaId = (1L << 62) + nextFakeId++;
+				else if(allowSeaSectors) {
+					seaId = FakeIdGenerator.makeFakeId();
 					sea = new Way(seaId);
 					sea.getPoints().addAll(points);
 					sea.addPoint(new Coord(pEnd.getLatitude(), pStart.getLongitude()));
@@ -997,8 +1256,29 @@ class Osm5XmlHandler extends DefaultHandler {
 					sea.addTag("natural", "sea");
 					log.info("sea: ", sea);
 					wayMap.put(seaId, sea);
-					seaRelation.addElement("outer", sea);
+					if(generateSeaUsingMP)
+						seaRelation.addElement("outer", sea);
 					generateSeaBackground = false;
+				}
+				else if (extendSeaSectors) {
+					// create additional points at next border to prevent triangles from point 2
+					if (null == hStart) {
+						hStart = getNextEdgeHit(seaBounds, pStart);
+						w.getPoints().add(0, hStart.getPoint(seaBounds));
+					}
+					if (null == hEnd) {
+						hEnd = getNextEdgeHit(seaBounds, pEnd);
+						w.getPoints().add(hEnd.getPoint(seaBounds));
+					}
+					log.debug("hits (second try): ", hStart, hEnd);
+					hitMap.put(hStart, w);
+					hitMap.put(hEnd, null);
+				}
+				else {
+					// show the coastline even though we can't produce
+					// a polygon for the land
+					w.addTag("natural", "coastline");
+					wayMap.put(w.getId(), w);
 				}
 			}
 			else {
@@ -1008,23 +1288,42 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 		}
 		if (generateSeaBackground) {
-			seaId = (1L << 62) + nextFakeId++;
+			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
-			sea.addPoint(nw);
-			sea.addPoint(sw);
-			sea.addPoint(se);
-			sea.addPoint(ne);
-			sea.addPoint(nw);
+			if (generateSeaUsingMP) {
+				// the sea background area must be a little bigger than all
+				// inner land areas. this is a workaround for a mp shortcoming:
+				// mp is not able to combine outer and inner if they intersect
+				// or have overlaying lines
+				// the added area will be clipped later by the style generator
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+				sea.addPoint(new Coord(sw.getLatitude() + 1,
+						sw.getLongitude() - 1));
+				sea.addPoint(new Coord(se.getLatitude() + 1,
+						se.getLongitude() + 1));
+				sea.addPoint(new Coord(ne.getLatitude() - 1,
+						ne.getLongitude() + 1));
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+			} else {
+				sea.addPoint(nw);
+				sea.addPoint(sw);
+				sea.addPoint(se);
+				sea.addPoint(ne);
+				sea.addPoint(nw);
+			}
 			sea.addTag("natural", "sea");
 			log.info("sea: ", sea);
 			wayMap.put(seaId, sea);
-			seaRelation.addElement("outer", sea);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("outer", sea);
 		}
 
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
 		while (!hits.isEmpty()) {
-			long id = (1L << 62) + nextFakeId++;
+			long id = FakeIdGenerator.makeFakeId();
 			Way w = new Way(id);
 			wayMap.put(id, w);
 
@@ -1081,12 +1380,27 @@ class Osm5XmlHandler extends DefaultHandler {
 				w.getPoints().add(w.getPoints().get(0));
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
 			//w.addTag("highway", "motorway");
-			seaRelation.addElement("inner", w);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("inner", w);
+			else {
+				if(!FakeIdGenerator.isFakeId(w.getId())) {
+					Way w1 = new Way(FakeIdGenerator.makeFakeId());
+					w1.getPoints().addAll(w.getPoints());
+					for(String tag : w)
+						if(tag.equals("name") || tag.endsWith(":name"))
+							w1.addTag(tag, w.getTag(tag));
+					w = w1;
+				}
+				w.addTag(landTag[0], landTag[1]);
+				wayMap.put(w.getId(), w);
+			}
 		}
 
-		seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
-		relationMap.put(multiId, seaRelation);
-		seaRelation.processElements();
+		if(generateSeaUsingMP) {
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+			relationMap.put(multiId, seaRelation);
+			seaRelation.processElements();
+		}
 	}
 
 	/**
@@ -1140,7 +1454,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				return new Coord((int)(a.getMaxLat() - t * (a.getMaxLat()-a.getMinLat())), a.getMinLong());
 
 			default:
-				throw new RuntimeException("illegal state");
+				throw new ExitException("illegal state");
 			}
 		}
 
@@ -1180,7 +1494,52 @@ class Osm5XmlHandler extends DefaultHandler {
 			return null;
 	}
 
-	private void concatenateWays(List<Way> ways) {
+	/*
+	 * Find the nearest edge for supplied Coord p.
+	 */
+	private EdgeHit getNextEdgeHit(Area a, Coord p)
+	{
+		int lat = p.getLatitude();
+		int lon = p.getLongitude();
+		int minLat = a.getMinLat();
+		int maxLat = a.getMaxLat();
+		int minLong = a.getMinLong();
+		int maxLong = a.getMaxLong();
+
+		log.info(String.format("getNextEdgeHit: (%d %d) (%d %d %d %d)", lat, lon, minLat, minLong, maxLat, maxLong));
+		// shortest distance to border (init with distance to southern border) 
+		int min = lat - minLat;
+		// number of edge as used in getEdgeHit. 
+		// 0 = southern
+		// 1 = eastern
+		// 2 = northern
+		// 3 = western edge of Area a
+		int i = 0;
+		// normalized position at border (0..1)
+		double l = ((double)(lon - minLong))/(maxLong-minLong);
+		// now compare distance to eastern border with already known distance
+		if (maxLong - lon < min) {
+			// update data if distance is shorter
+			min = maxLong - lon;
+			i = 1;
+			l = ((double)(lat - minLat))/(maxLat-minLat);
+		}
+		// same for northern border
+		if (maxLat - lat < min) {
+			min = maxLat - lat;
+			i = 2;
+			l = ((double)(maxLong - lon))/(maxLong-minLong);
+		}
+		// same for western border
+		if (lon - minLong < min) {
+			i = 3;
+			l = ((double)(maxLat - lat))/(maxLat-minLat);
+		}
+		// now created the EdgeHit for found values
+		return new EdgeHit(i, l);
+	} 
+	
+	private void concatenateWays(List<Way> ways, Area bounds) {
 		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
 
 		for (Way w : ways) {
@@ -1202,12 +1561,16 @@ class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (w1.getId() < (1L << 62)) {
-						wm = new Way((1L << 62) + nextFakeId++);
+					if (!FakeIdGenerator.isFakeId(w1.getId())) {
+						wm = new Way(FakeIdGenerator.makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
+						// only copy the name tags
+						for(String tag : w1)
+							if(tag.equals("name") || tag.endsWith(":name"))
+							   wm.addTag(tag, w1.getTag(tag));
 					}
 					else {
 						wm = w1;
@@ -1217,6 +1580,63 @@ class Osm5XmlHandler extends DefaultHandler {
 					beginMap.remove(points2.get(0));
 					merged++;
 					break;
+				}
+			}
+		}
+
+		// join up coastline segments whose end points are less than
+		// maxCoastlineGap metres apart
+		if(maxCoastlineGap > 0) {
+			boolean changed = true;
+			while(changed) {
+				changed = false;
+				for(Way w1 : ways) {
+					if(w1.isClosed())
+						continue;
+					List<Coord> points1 = w1.getPoints();
+					Coord w1e = points1.get(points1.size() - 1);
+					if(bounds.onBoundary(w1e))
+						continue;
+					Way nearest = null;
+					double smallestGap = Double.MAX_VALUE;
+					for(Way w2 : ways) {
+						if(w1 == w2 || w2.isClosed())
+							continue;
+						List<Coord> points2 = w2.getPoints();
+						Coord w2s = points2.get(0);
+						if(bounds.onBoundary(w2s))
+							continue;
+						double gap = w1e.distance(w2s);
+						if(gap < smallestGap) {
+							nearest = w2;
+							smallestGap = gap;
+						}
+					}
+					if(nearest != null && smallestGap < maxCoastlineGap) {
+						Coord w2s = nearest.getPoints().get(0);
+						log.info("bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
+						Way wm;
+						if (!FakeIdGenerator.isFakeId(w1.getId())) {
+							wm = new Way(FakeIdGenerator.makeFakeId());
+							ways.remove(w1);
+							ways.add(wm);
+							wm.getPoints().addAll(points1);
+							wm.copyTags(w1);
+						}
+						else {
+							wm = w1;
+						}
+						wm.getPoints().addAll(nearest.getPoints());
+						ways.remove(nearest);
+						// make a line that shows the filled gap
+						Way w = new Way(FakeIdGenerator.makeFakeId());
+						w.addTag("natural", "mkgmap:coastline-gap");
+						w.addPoint(w1e);
+						w.addPoint(w2s);
+						wayMap.put(w.getId(), w);
+						changed = true;
+						break;
+					}
 				}
 			}
 		}

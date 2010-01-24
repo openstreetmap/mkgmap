@@ -19,8 +19,9 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 public class AddTagActionTest {
@@ -34,7 +35,7 @@ public class AddTagActionTest {
 	@Test
 	public void testNoSub() {
 		String value = "fred";
-		Action act = new AddTagAction("a", value);
+		Action act = new AddTagAction("a", value, false);
 		Element el = stdElement();
 		act.perform(el);
 		assertSame("a not changed", value, el.getTag("a"));
@@ -45,7 +46,7 @@ public class AddTagActionTest {
 	 */
 	@Test
 	public void testBareSubst() {
-		Action act = new AddTagAction("a", "${ref}");
+		Action act = new AddTagAction("a", "${ref}", false);
 
 		Element el = stdElement();
 		act.perform(el);
@@ -58,7 +59,7 @@ public class AddTagActionTest {
 	 */
 	@Test
 	public void testManySubs() {
-		Action act = new AddTagAction("a", "Road ${ref}, name ${name:cy}");
+		Action act = new AddTagAction("a", "Road ${ref}, name ${name:cy}", false);
 		Element el = stdElement();
 		act.perform(el);
 
@@ -86,7 +87,7 @@ public class AddTagActionTest {
 	 */
 	@Test
 	public void testNumberWithUnit() {
-		Action act = new AddTagAction("result", "${ele|conv:m=>ft}");
+		Action act = new AddTagAction("result", "${ele|conv:m=>ft}", false);
 
 		Element el = stdElement();
 		el.addTag("ele", "100");
@@ -116,7 +117,7 @@ public class AddTagActionTest {
 	 */
 	@Test
 	public void testHighwaySymbol() {
-		Action act = new AddTagAction("a", "${ref|highway-symbol:hbox}");
+		Action act = new AddTagAction("a", "${ref|highway-symbol:hbox}", false);
 
 		Element el = stdElement();
 		act.perform(el);
@@ -125,7 +126,59 @@ public class AddTagActionTest {
 		// of the string.
 		assertEquals("subst ref", "\u0004" + REFVAL, el.getTag("a"));
 	}
-	
+
+
+	/**
+	 * The add/set commands now support alternatives just like the name commnad
+	 * has always done.
+	 * Several alternatives, but none match.
+	 */
+	@Test
+	public void testNoMatchingAlternatives() {
+		AddTagAction act = new AddTagAction("a", "${notset}", false);
+		act.add("${hello}");
+		act.add("${world}");
+
+		Element el = stdElement();
+		act.perform(el);
+
+		assertNull("a not set", el.getTag("a"));
+	}
+
+	/**
+	 * Several alternatives and the first one matches.
+	 */
+	@Test
+	public void testFirstAlternativeMatches() {
+		AddTagAction act = new AddTagAction("a", "${val}", false);
+		act.add("${hello}");
+		act.add("${world}");
+
+		Element el = stdElement();
+		el.addTag("val", "has value");
+		el.addTag("hello", "hello");
+		act.perform(el);
+
+		assertEquals("a is set", "has value", el.getTag("a"));
+	}
+
+	/**
+	 * Several alternatives and the second one matches.
+	 */
+	@Test
+	public void testSecondAlternativeMatches() {
+		AddTagAction act = new AddTagAction("a", "${val}", false);
+		act.add("${hello}");
+		act.add("${world}");
+
+		Element el = stdElement();
+		el.addTag("hello", "hello");
+		el.addTag("world", "world");
+		act.perform(el);
+
+		assertEquals("a is set", "hello", el.getTag("a"));
+	}
+
 	private Element stdElement() {
 		Element el1 = new Way(1);
 		el1.addTag("ref", REFVAL);

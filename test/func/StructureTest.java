@@ -19,9 +19,9 @@ package func;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-import uk.me.parabola.imgfmt.app.trergn.RGNFile;
-import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
+import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -44,9 +44,9 @@ import org.junit.Test;
 public class StructureTest {
 	private static FileSystem fs;
 
-	private static LBLFile lblFile;
-	private static TREFile treFile;
-	private static RGNFile rgnFile;
+	private static LBLFileReader lblFile;
+	private static TREFileReader treFile;
+	private static RGNFileReader rgnFile;
 
 	/** Just test is exists. */
 	@Test
@@ -60,7 +60,7 @@ public class StructureTest {
 		TREHeader header = (TREHeader) treFile.getHeader();
 		assertEquals("header length", 188, header.getHeaderLength());
 		
-		assertEquals("display prio", 25, header.getDisplayPriority());
+		assertEquals("display priority", 25, header.getDisplayPriority());
 	}
 
 	/**
@@ -78,13 +78,13 @@ public class StructureTest {
 
 		fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
 		ImgChannel tre = fs.open(Args.DEF_MAP_ID + ".TRE", "r");
-		treFile = new TREFile(tre, false);
+		treFile = new TREFileReader(tre);
 
 		ImgChannel lbl = fs.open(Args.DEF_MAP_ID + ".LBL", "r");
-		lblFile = new LBLFile(lbl, false);
+		lblFile = new LBLFileReader(lbl);
 
 		ImgChannel rgn = fs.open(Args.DEF_MAP_ID + ".RGN", "r");
-		rgnFile = new RGNFile(rgn);
+		rgnFile = new RGNFileReader(rgn);
 	}
 
 	/**

@@ -43,8 +43,8 @@ public class RouteArc {
 
 	private int offset;
 
-	private final byte initialHeading;
-	private byte endDirection;
+	private int initialHeading; // degrees
+	private int finalHeading; // degrees
 
 	private final RoadDef roadDef;
 
@@ -60,8 +60,10 @@ public class RouteArc {
 	private byte flagA;
 	private byte flagB;
 
-	private boolean curve;
+	private boolean haveCurve;
 	private int length;
+	private final int pointsHash;
+	private final boolean curveEnabled;
 
 	/**
 	 * Create a new arc.
@@ -69,34 +71,38 @@ public class RouteArc {
 	 * @param roadDef The road that this arc segment is part of.
 	 * @param source The source node.
 	 * @param dest The destination node.
-	 * @param nextCoord The heading coordinate.
+	 * @param initialHeading The initial heading (signed degrees)
 	 */
-	public RouteArc(RoadDef roadDef, RouteNode source, RouteNode dest,
-				Coord nextCoord, double length) {
+	public RouteArc(RoadDef roadDef,
+					RouteNode source, RouteNode dest,
+					int initialHeading, int finalHeading,
+					double length,
+					boolean curveEnabled,
+					int pointsHash) {
 		this.roadDef = roadDef;
 		this.source = source;
 		this.dest = dest;
-
+		this.initialHeading = initialHeading;
+		this.finalHeading = finalHeading;
 		this.length = convertMeters(length);
-		if(log.isDebugEnabled())
-			log.debug("set length", this.length);
-		// if nextCoord is so close to the source node that the
-		// coordinates are equal, it won't be possible to determine
-		// the heading angle so use the dest node instead
-		if(source.getCoord().equals(nextCoord)) {
-			if(source.getCoord().equals(dest.getCoord())) {
-				log.warn("Can't determine arc heading (using 0) at " + source.getCoord().toOSMURL());
-				this.initialHeading = (byte)0;
-			}
-			else {
-				log.info("Using destination node to determine arc heading at " + source.getCoord().toOSMURL());
-				this.initialHeading = calcAngle(dest.getCoord());
-			}
-		}
-		else
-			this.initialHeading = calcAngle(nextCoord);
-		// too early: dest.nodeClass may still increase
-		//setDestinationClass(dest.getNodeClass());
+		this.curveEnabled = curveEnabled;
+		this.pointsHash = pointsHash;
+	}
+
+	public int getInitialHeading() {
+		return initialHeading;
+	}
+
+	public void setInitialHeading(int ih) {
+		initialHeading = ih;
+	}
+
+	public int getFinalHeading() {
+		return finalHeading;
+	}
+
+	public void setFinalHeading(int fh) {
+		finalHeading = fh;
 	}
 
 	public RouteNode getSource() {
@@ -107,15 +113,26 @@ public class RouteArc {
 		return dest;
 	}
 
+	public int getLength() {
+		return length;
+	}
+
+	public int getPointsHash() {
+		return pointsHash;
+	}
+
 	/**
 	 * Provide an upper bound for the written size in bytes.
 	 */
 	public int boundSize() {
-		// XXX: this could be reduced, and may increase
-		// currently: 1 (flagA) + 1-2 (offset) + 1 (indexA)
-		//          + 2 (length) + 1 (initialHeading)
-		// needs updating when curve data is written
-		return 7;
+
+		int[] lendat = encodeLength();
+
+		// 1 (flagA) + 1-2 (offset) + 1 (indexA) + 1 (initialHeading)
+		int size = 5 + lendat.length;
+		if(haveCurve)
+			size += encodeCurve().length;
+		return size;
 	}
 
 	/**
@@ -167,36 +184,6 @@ public class RouteArc {
 		return indexB;
 	}
 	 
-	private byte calcAngle(Coord end) {
-		Coord start = source.getCoord();
-
-		if(log.isDebugEnabled())
-			log.debug("start", start.toDegreeString(), ", end", end.toDegreeString());
-
-		// Quite possibly too slow...  TODO 
-		double lat1 = Utils.toRadians(start.getLatitude());
-		double lat2 = Utils.toRadians(end.getLatitude());
-		double lon1 = Utils.toRadians(start.getLongitude());
-		double lon2 = Utils.toRadians(end.getLongitude());
-
-		//double dlat = lat2 - lat1;
-		double dlon = lon2 - lon1;
-
-		double y = Math.sin(dlon) * Math.cos(lat2);
-		double x = Math.cos(lat1)*Math.sin(lat2) -
-				Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
-		double angle = Math.atan2(y, x);
-
-		// angle is in radians
-		if(log.isDebugEnabled())
-			log.debug("angle is ", angle, ", deg", angle*57.29);
-
-		byte b = (byte) (256 * (angle / (2 * Math.PI)));
-		if(log.isDebugEnabled())
-			log.debug("deg from ret val", (360 * b) / 256);
-
-		return b;
-	}
 
 	private static int convertMeters(double l) {
 		// XXX: really a constant factor?
@@ -235,9 +222,9 @@ public class RouteArc {
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
-		writer.put(initialHeading);
+		writer.put((byte)(256 * initialHeading / 360));
 
-		if (curve) {
+		if (haveCurve) {
 			int[] curvedat = encodeCurve();
 			for (int aCurvedat : curvedat)
 				writer.put((byte) aCurvedat);
@@ -257,7 +244,7 @@ public class RouteArc {
 		char val = (char) (flagB << 8);
 		int diff = dest.getOffsetNod1() - source.getOffsetNod1();
 		assert diff < 0x2000 && diff >= -0x2000
-			: "relative pointer too large for 14 bits";
+			: "relative pointer too large for 14 bits (source offset = " + source.getOffsetNod1() + ", dest offset = " + dest.getOffsetNod1() + ")";
 		val |= diff & 0x3fff;
 
 		// We write this big endian
@@ -275,18 +262,41 @@ public class RouteArc {
 	 * There's even more different encodings supposedly.
 	 */
 	private int[] encodeLength() {
-		// we'll just use a special encoding with curve=false for
-		// now, 14 bits for length
-		assert !curve : "not writing curve data yet";
+
+		// update haveCurve
+		haveCurve = (curveEnabled && finalHeading != initialHeading);
+
 		if (length >= (1 << 14)) {
-			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length is too big to be encoded so the road will not be routable");
+			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way will not be routable");
 			length = (1 << 14) - 1;
 		}
 
-		flagA |= 0x38; // all three bits set
-		int[] lendat = new int[2]; // two bytes of data
-		lendat[0] = 0x80 | (length & 0x3f); // 0x40 not set, 6 low bits of length
-		lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+		// clear existing bits in case length or final heading have
+		// been changed
+		flagA &= ~0x38;
+		int[] lendat;
+		if(length < 0x200) {
+			// 9 bit length optional curve
+			if(haveCurve)
+				flagA |= 0x20;
+			flagA |= (length >> 5) & 0x08; // top bit of length
+			lendat = new int[1];		   // one byte of data
+			lendat[0] = length;			   // bottom 8 bits of length
+		}
+		else if(haveCurve) {
+			// 15 bit length with curve
+			flagA |= 0x38;				 // all three bits set
+			lendat = new int[2];		 // two bytes of data
+			lendat[0] = (length & 0x7f); // 0x80 not set, 7 low bits of length
+			lendat[1] = (length >> 7) & 0xff; // 8 more bits of length
+		}
+		else {
+			// 14 bit length no curve
+			flagA |= 0x38;		 // all three bits set
+			lendat = new int[2]; // two bytes of data
+			lendat[0] = 0x80 | (length & 0x3f); // 0x80 set, 0x40 not set, 6 low bits of length
+			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+		}
 
 		return lendat;
 	}
@@ -298,8 +308,27 @@ public class RouteArc {
 	 * all well understood yet.
 	 */
 	private int[] encodeCurve() {
-		assert !curve : "not writing curve data yet";
-		return null;
+		// most examples of curve data are a single byte that encodes
+		// the final heading of the arc. The bits appear to be
+		// reorganised into the order 21076543 (i.e. the top 5 bits
+		// are shifted down to the bottom).  Unfortunately, it's not
+		// that simple because sometimes the curve is encoded using 2
+		// bytes. The presence of the 2nd byte is indicated by the top
+		// 3 bits of the first byte all being zero. As the encoding of
+		// the 2-byte variant is not yet understood, for the moment,
+		// if the resulting value would have the top 3 bits all zero,
+		// we set what we hope is the LSB so that it becomes valid
+		// 1-byte curve data
+		int heading = 256 * finalHeading / 360;
+		int encodedHeading = ((heading & 0xf8) >> 3) | ((heading & 0x07) << 5);
+		if((encodedHeading & 0xe0) == 0) {
+			// hack - set a bit (hopefully, the LSB) to force 1-byte
+			// encoding
+			encodedHeading |= 0x20;
+		}
+		int[] curveData = new int[1];
+		curveData[0] = encodedHeading;
+		return curveData;
 	}
 
 	public RoadDef getRoadDef() {
@@ -326,14 +355,5 @@ public class RouteArc {
 		if(log.isDebugEnabled())
 			log.debug("setting destination class", destinationClass);
 		flagA |= (destinationClass & MASK_DESTCLASS);
-	}
-
-	public void setEndDirection(double ang) {
-		endDirection = angleToByte(ang);
-		curve = true;
-	}
-
-	private static byte angleToByte(double ang) {
-		return (byte) (255 * ang / 360);
 	}
 }

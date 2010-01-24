@@ -27,6 +27,7 @@ public class Section {
 	private int size;
 	private int position;
 	private Section link;
+	private int extraValue;
 
 	public Section() {
 	}
@@ -107,6 +108,14 @@ public class Section {
 		return size/ (int) itemSize;
 	}
 
+	public int getExtraValue() {
+		return extraValue;
+	}
+
+	public void setExtraValue(int extraValue) {
+		this.extraValue = extraValue;
+	}
+
 	public void readSectionInfo(ImgFileReader reader, boolean withItemSize) {
 		setPosition(reader.getInt());
 		setSize(reader.getInt());
@@ -115,10 +124,20 @@ public class Section {
 	}
 
 	public void writeSectionInfo(ImgFileWriter writer) {
+		writeSectionInfo(writer, false);
+	}
+
+	public void writeSectionInfo(ImgFileWriter writer, boolean withItemSize) {
+		writeSectionInfo(writer, withItemSize, false);
+	}
+
+	public void writeSectionInfo(ImgFileWriter writer, boolean withItemSize, boolean withExtraValue) {
 		writer.putInt(getPosition());
 		writer.putInt(getSize());
-		if (getItemSize() > 0)
+		if (withItemSize || getItemSize() > 0)
 			writer.putChar(getItemSize());
+		if (withExtraValue)
+			writer.putInt(getExtraValue());
 	}
 
 	public static void close(ImgFileWriter writer) {

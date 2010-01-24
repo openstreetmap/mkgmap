@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
@@ -35,10 +36,21 @@ import uk.me.parabola.mkgmap.general.MapShape;
 public class LineSizeSplitterFilter implements MapFilter {
 	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
 
-	// Half the max size.  Reduce further perhaps.
-	private static final int MAX_SIZE = 0x7fff/2;
+	private static final int MAX_SIZE = 0x7fff;
+
+	private int shift;
 
 	public void init(FilterConfig config) {
+		shift = config.getShift();
+		if (shift > 15)
+			shift = 16;
+	}
+
+	// return the greater of the absolute values of HEIGHT and WIDTH
+	// divided by the maximum allowed size - so if the height and
+	// width are not too large, the result will be <= 1.0
+	public static double testDims(int height, int width) {
+		return (double)Math.max(Math.abs(height), Math.abs(width)) / MAX_SIZE;
 	}
 
 	/**
@@ -52,11 +64,18 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// We do not deal with shapes.
 		assert !(element instanceof MapShape) && element instanceof MapLine;
 
+		int maxSize = MAX_SIZE << shift;
+
 		MapLine line = (MapLine) element;
 
-		if (line.getBounds().getMaxDimention() < MAX_SIZE) {
+		if (line.getBounds().getMaxDimention() < maxSize) {
 			next.doFilter(element);
 			return;
+		}
+
+		if(line instanceof MapRoad) {
+			MapRoad road = ((MapRoad)line);
+			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimention() + " and is about to be split (routing will be broken)");
 		}
 
 		List<Coord> points = line.getPoints();
@@ -115,7 +134,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		for (Coord co : points) {
 			coords.add(co);
 			dim.addToBounds(co);
-			if (dim.getMaxDim() > MAX_SIZE) {
+			if (dim.getMaxDim() > maxSize) {
 				log.debug("bigness saving first part");
 				l.setPoints(coords);
 
@@ -130,13 +149,17 @@ public class LineSizeSplitterFilter implements MapFilter {
 				dim.reset();
 				coords = new ArrayList<Coord>();
 				coords.add(co);
+				dim.addToBounds(co);
 			}
 		}
 
-		if (!coords.isEmpty()) {
+		if (coords.size() > 1) {
 			log.debug("bigness saving a final part");
 			l.setPoints(coords);
-			next.addElement(l);
+			if(first)
+				next.doFilter(l);
+			else
+				next.addElement(l);
 		}
 	}
 }

@@ -36,6 +36,10 @@ public class FixedRule implements Rule {
 		return gtype;
 	}
 
+	public GType resolveType(Element el, GType pre) {
+		return gtype;
+	}
+
 	public String toString() {
 		return gtype.toString();
 	}

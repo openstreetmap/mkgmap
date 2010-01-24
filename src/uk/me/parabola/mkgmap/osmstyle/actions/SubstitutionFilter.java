@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 /**
  * Perform simple string substitution on a value.
  *
@@ -32,7 +34,7 @@ public class SubstitutionFilter extends ValueFilter {
 		}
 	}
 
-	public String doFilter(String value) {
+	public String doFilter(String value, Element el) {
 		if (value == null) return null;
 		if (from == null || to == null)
 			// can't happen!

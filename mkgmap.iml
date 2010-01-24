@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/extra/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/63240005" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/doc/api" />
       <excludeFolder url="file://$MODULE_DIR$/g" />
@@ -16,6 +17,7 @@
       <excludeFolder url="file://$MODULE_DIR$/localtest" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
       <excludeFolder url="file://$MODULE_DIR$/samples" />
+      <excludeFolder url="file://$MODULE_DIR$/test/resources/in" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

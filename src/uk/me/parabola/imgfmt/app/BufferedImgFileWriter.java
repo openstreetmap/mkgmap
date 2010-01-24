@@ -49,6 +49,9 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	// written.
 	private int maxSize;
 
+	// The maximum allowed file size.
+	private long maxAllowedSize = 0xffffff;
+
 	public BufferedImgFileWriter(ImgChannel chan) {
 		this.chan = chan;
 		buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -169,6 +172,10 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 		return maxSize;
 	}
 
+	public ByteBuffer getBuffer() {
+		return buf;
+	}
+
 	/**
 	 * Make sure there is enough room for the data we are about to write.
 	 *
@@ -179,7 +186,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 		if (needed > (bufferSize - GUARD_SIZE)) {
 			while(needed > (bufferSize - GUARD_SIZE))
 				bufferSize += GROW_SIZE;
-			if (bufferSize > 0xffffff) {
+			if (bufferSize > maxAllowedSize) {
 				// Previous message was confusing people, although it is difficult to come
 				// up with something that is strictly true in all situations.
 				throw new ExitException(
@@ -192,5 +199,9 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 			newb.put(buf);
 			buf = newb;
 		}
+	}
+
+	public void setMaxSize(long maxSize) {
+		this.maxAllowedSize = maxSize;
 	}
 }

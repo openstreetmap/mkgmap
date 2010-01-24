@@ -99,7 +99,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 		Area bounds = shape.getBounds();
 		return bounds.getMaxDimention() < maxSize
 				&& bounds.getWidth() < 0x7fff
-				&& bounds.getHeight() < 0xffff
+				&& bounds.getHeight() < 0x7fff
 				;
 	}
 

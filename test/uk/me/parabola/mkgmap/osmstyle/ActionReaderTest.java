@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
@@ -30,8 +31,9 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Test the possible actions that can appear in an action block.
@@ -168,12 +170,12 @@ public class ActionReaderTest {
 		assertNull("Tag not set on relation", rel.getTag("route"));
 
 		// Will be set on all members as there is no role filter.
-		List<Element> elements = rel.getElements();
-		Element el1 = elements.get(0);
+		List<Map.Entry<String,Element>> elements = rel.getElements();
+		Element el1 = elements.get(0).getValue();
 		assertEquals("route tag added to first", "bike", el1.getTag("route"));
 		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
 
-		Element el2 = elements.get(1);
+		Element el2 = elements.get(1).getValue();
 		assertEquals("route tag added to second", "bike", el2.getTag("route"));
 		assertEquals("foo tag set to second", "bar", el2.getTag("foo"));
 	}
@@ -192,13 +194,13 @@ public class ActionReaderTest {
 		Rule rule = new ActionRule(null, actions);
 		rule.resolveType(rel);
 
-		List<Element> elements = rel.getElements();
-		Element el1 = elements.get(0);
+		List<Map.Entry<String,Element>> elements = rel.getElements();
+		Element el1 = elements.get(0).getValue();
 		assertEquals("route tag added to first", "bike", el1.getTag("route"));
 		assertEquals("foo tag set to first", "bar", el1.getTag("foo"));
 
 		// Wrong role, so not applied.
-		Element el2 = elements.get(1);
+		Element el2 = elements.get(1).getValue();
 		assertNull("route tag not added to second element (role=foo)", el2.getTag("route"));
 		assertNull("foo tag not set in second element (role=foo)", el2.getTag("foo"));
 	}
@@ -215,7 +217,7 @@ public class ActionReaderTest {
 
 		Relation rel = makeRelation();
 		rel.addTag("route_no", "66");
-		Element el1 = rel.getElements().get(0);
+		Element el1 = rel.getElements().get(0).getValue();
 		el1.addTag("route_no", "42");
 
 		Rule rule = new ActionRule(null, actions);
@@ -227,6 +229,29 @@ public class ActionReaderTest {
 	public void testEmptyActionList() {
 		List<Action> actions = readActionsFromString("{}");
 		assertEquals("no actions found", 0, actions.size());		
+	}
+
+	@Test
+	public void testAlternatives() {
+		List<Action> actions = readActionsFromString(
+				"{set fred = '${park}' | 'default value'}");
+
+		Element el = makeElement();
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("first alternative", "no", el.getTag("fred"));
+	}
+
+	@Test
+	public void testSecondAlternative() {
+		List<Action> actions = readActionsFromString(
+				"{set fred = '${notset}' | 'default value'}");
+
+		Element el = makeElement();
+		el.addTag("fred", "origvalue");
+		Rule rule = new ActionRule(null, actions);
+		rule.resolveType(el);
+		assertEquals("second alternative", "default value", el.getTag("fred"));
 	}
 
 	private Element stdElementRun(List<Action> actions) {

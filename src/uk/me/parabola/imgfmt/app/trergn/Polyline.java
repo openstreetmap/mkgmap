@@ -16,11 +16,10 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.OutputStream;
-import java.io.IOException;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -81,8 +80,21 @@ public class Polyline extends MapObject {
 
 		// Prepare for writing by doing all the required calculations.
 
-		// Prepare the information that we need.
-		LinePreparer w = new LinePreparer(this);
+		LinePreparer w;
+		try {
+			// Prepare the information that we need.
+			w = new LinePreparer(this);
+		}
+		catch (AssertionError ae) {
+			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
+			log.error("  Subdivision shift is " + getSubdiv().getShift() +
+					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
+			log.error("  " + ae.getMessage());
+			if(roaddef != null)
+				log.error("  Way is " + roaddef);
+			return;
+		}
+
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
 		BitWriter bw = w.makeBitStream(minPointsRequired);
 		if(bw == null) {
@@ -149,8 +161,20 @@ public class Polyline extends MapObject {
 		int labelOff = getLabel().getOffset();
 		byte[] extraBytes = getExtTypeExtraBytes();
 
-		// need to prepare line info before outputing lat/lon
-		LinePreparer w = new LinePreparer(this);
+		LinePreparer w;
+		try {
+			// need to prepare line info before outputing lat/lon
+			w = new LinePreparer(this);
+		}
+		catch (AssertionError ae) {
+			log.error("Problem writing line (" + getClass() + ") of type 0x" + Integer.toHexString(getType()) + " containing " + points.size() + " points and starting at " + points.get(0).toOSMURL());
+			log.error("  Subdivision shift is " + getSubdiv().getShift() +
+					  " and its centre is at " + new Coord(getSubdiv().getLatitude(), getSubdiv().getLongitude()).toOSMURL());
+			log.error("  " + ae.getMessage());
+			if(roaddef != null)
+				log.error("  Way is " + roaddef);
+			return;
+		}
 		int minPointsRequired = (this instanceof Polygon)? 3 : 2;
 		BitWriter bw = w.makeBitStream(minPointsRequired);
 		if(bw == null) {
@@ -225,14 +249,6 @@ public class Polyline extends MapObject {
 
 	public void setRoadDef(RoadDef rd) {
 		this.roaddef = rd;
-	}
-
-	void setNumber(int n) {
-		number = n;
-	}
-
-	public int getNumber() {
-		return number;
 	}
 
 	public boolean sharesNodeWith(Polyline other) {

@@ -23,8 +23,9 @@ import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
 import func.lib.RangeMatcher;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class SimpleRouteTest {
 
@@ -62,10 +63,10 @@ public class SimpleRouteTest {
 				assertEquals("LBL size", 27693, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73118, size);
+				assertEquals("NET size", 73850, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 207418, size);
+				assertEquals("NOD size", 195187, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -81,7 +82,7 @@ public class SimpleRouteTest {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2787));
+				assertThat("RGN size", size, new RangeMatcher(2934));
 			} else if (ext.equals("TRE")) {
 				count++;
 				assertEquals("TRE size", 579, size);
@@ -90,10 +91,10 @@ public class SimpleRouteTest {
 				assertEquals("LBL size", 984, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 1272, size);
+				assertEquals("NET size", 1280, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 3242, size);
+				assertEquals("NOD size", 3114, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);

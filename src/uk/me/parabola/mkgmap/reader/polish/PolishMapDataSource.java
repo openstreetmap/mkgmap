@@ -27,6 +27,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -43,7 +45,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
-
 
 /**
  * Read an data file in Polish format.  This is the format used by a number
@@ -72,6 +73,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private MapLine polyline;
 	private MapShape shape;
 
+	private List<Coord> points;
+
 	private final RoadHelper roadHelper = new RoadHelper();
 
 	private Map<String, String> extraAttributes;
@@ -85,12 +88,14 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 	private int lineNo;
 
+	private boolean havePolygon4B;
+
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
 	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
-		return name.endsWith(".mp") || name.endsWith(".mp.gz");
+		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
 
 	/**
@@ -126,7 +131,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			throw new FormatException("Reading file failed", e);
 		}
 
-		addBackground();
+		addBackground(havePolygon4B);
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -180,6 +185,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			shape = new MapShape();
 			section = S_POLYGON;
 		}
+		else
+			log.info("Ignoring " + name + " section");
 	}
 
 	/**
@@ -188,6 +195,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private void endSection() {
 		switch (section) {
+
+		case S_IMG_ID:
+			break;
+
 		case S_POINT:
 			if(extraAttributes != null && point.hasExtendedType())
 				point.setExtTypeAttributes(makeExtTypeAttributes());
@@ -195,22 +206,52 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			mapper.addPoint(point);
 			break;
 		case S_POLYLINE:
-			if (polyline.getPoints() != null) {
-				if(extraAttributes != null && polyline.hasExtendedType())
-					polyline.setExtTypeAttributes(makeExtTypeAttributes());
-				if (roadHelper.isRoad())
+			if (points != null) {
+				if (roadHelper.isRoad()) {
+					polyline.setPoints(points);
 					mapper.addRoad(roadHelper.makeRoad(polyline));
-				else
-					mapper.addLine(polyline);
+				}
+				else {
+					if(extraAttributes != null && polyline.hasExtendedType())
+						polyline.setExtTypeAttributes(makeExtTypeAttributes());
+					final int maxPointsInLine = LineSplitterFilter.MAX_POINTS_IN_LINE;
+					if(points.size() > maxPointsInLine) {
+						List<Coord> segPoints = new ArrayList<Coord>(maxPointsInLine);
+						for(Coord p : points) {
+							segPoints.add(p);
+							if(segPoints.size() == maxPointsInLine) {
+								MapLine seg = polyline.copy();
+								seg.setPoints(segPoints);
+								mapper.addLine(seg);
+								segPoints = new ArrayList<Coord>(maxPointsInLine);
+								segPoints.add(p);
+							}
+						}
+						if(segPoints.size() > 0) {
+							polyline.setPoints(segPoints);
+							mapper.addLine(polyline);
+						}
+					}
+					else {
+						polyline.setPoints(points);
+						mapper.addLine(polyline);
+					}
+				}
 			}
 			break;
 		case S_POLYGON:
-			if (shape.getPoints() != null) {
+			if (points != null) {
+				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
 					shape.setExtTypeAttributes(makeExtTypeAttributes());
 				mapper.addShape(shape);
 			}
 			break;
+
+		case 0:
+			// ignored section
+			break;
+
 		default:
 			log.warn("unexpected default in switch", section);
 			break;
@@ -219,6 +260,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		// Clear the section state.
 		section = 0;
 		endLevel = 0;
+		points = null;
 	}
 
 	/**
@@ -299,7 +341,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		if (name.equals("Type")) {
 			polyline.setType(Integer.decode(value));
 		} else if (name.startsWith("Data")) {
-			List<Coord> points = coordsFromString(value);
+			List<Coord> newPoints = coordsFromString(value);
 			// If it is a contour line, then fix the elevation if required.
 			if ((polyline.getType() == 0x20) ||
 			    (polyline.getType() == 0x21) ||
@@ -308,7 +350,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			}
 
 			setResolution(polyline, name);
-			polyline.setPoints(points); // XXX: multiple DATA sections?
+			if(points != null) {
+				log.error("Line " + polyline.getName() + " has multiple Data lines - concatenating the points");
+				points.addAll(newPoints);
+			}
+			else
+				points = newPoints;
 		} else if (name.equals("RoadID")) {
 			roadHelper.setRoadId(Integer.parseInt(value));
 		} else if (name.startsWith("Nod")) {
@@ -371,11 +418,17 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private void shape(String name, String value) {
 		if (name.equals("Type")) {
-			shape.setType(Integer.decode(value));
+			int type = Integer.decode(value);
+			shape.setType(type);
+			if(type == 0x4b)
+				havePolygon4B = true;
 		} else if (name.startsWith("Data")) {
-			List<Coord> points = coordsFromString(value);
+			List<Coord> newPoints = coordsFromString(value);
 
-			shape.setPoints(points);
+			if(points != null)
+				points.addAll(newPoints);
+			else
+				points = newPoints;
 			setResolution(shape, name);
 		}
 		else {
@@ -562,6 +615,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				elevUnits = 'm';
 		} else if (name.equals("CodePage")) {
 			dec = Charset.forName("cp" + value).newDecoder();
+			dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		}
 	}
 

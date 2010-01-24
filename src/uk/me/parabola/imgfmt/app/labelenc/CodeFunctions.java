@@ -138,7 +138,7 @@ public class CodeFunctions {
 			// TODO TEMP...
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new AnyCharsetEncoder("cp1252"));
-			funcs.setDecoder(new SimpleDecoder());
+			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
 		}
 
 		return funcs;

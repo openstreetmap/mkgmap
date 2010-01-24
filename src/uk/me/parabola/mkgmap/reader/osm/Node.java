@@ -39,4 +39,8 @@ public class Node extends Element {
 	public String toString() {
 		return "NODE: " + getId() + " @ " + location.toDegreeString();
 	}
+
+	public String kind() {
+		return "node";
+	}
 }

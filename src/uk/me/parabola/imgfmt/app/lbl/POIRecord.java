@@ -18,109 +18,22 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.Exit;
 
 /**
  * @author Steve Ratcliffe
  */
 public class POIRecord {
 
-	class SimpleStreetPhoneNumber // Helper Class to encode Street Phone Numbers
-	{
-		/**
-			Street and Phone numbers can be stored in two different ways in the poi record
-			Simple Number that only contain digits are coded in base 11 coding. 
-			This helper	class tries to code the given number. If the number contains other
-			chars like in 4a the coding fails and the caller has to use a Label instead
-		*/
-	
-		private byte[] encodedNumber;
-		private int  encodedSize;
-		
-		public boolean set(String number)
-		{
-			int i = 0;
-			int j = 0;
-			int val = 0;
-
-			// remove sourounding whitespaces to increase chance for simple encoding
-
-			number = number.trim();  
-
-			encodedNumber  = new byte[(number.length()/2)+2];
-				
-			while(i < number.length())
-			{
-				int c1;
-				int c2;
-
-				c1 = decodeChar(number.charAt(i));
-				i++;
- 
-				if(i < number.length())
-				{
-					c2 = decodeChar(number.charAt(i));
-					i++;
-				}
-				else
-					c2 = 10;
-	
-				if(c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10) // Only 0-9 and - allowed
-				{
-					return false;
-				}
-
-				val = c1 * 11 + c2;  							// Encode as base 11
- 
-				if(i < 3 || i >= number.length())  // first byte needs special marking with 0x80
-					val |= 0x80;							 // If this is not set would be treated as label pointer
-
-				encodedNumber[j++] = (byte)val;	
-			}
-			
-			if((val & 0x80) == 0 || i < 3)  // terminate string with 0x80 if not done 
-			{
-				val = 0xF8;
-				encodedNumber[j++] = (byte)val;
-			}
-			
-			encodedSize  = j;
-			
-			return true;
-		}
-		
-		public void write(ImgFileWriter writer)
-		{
-			for(int i = 0; i < encodedSize; i++)
-				writer.put(encodedNumber[i]);
-		}
-		
-		public boolean isUsed()
-		{
-			return (encodedSize > 0);
-		}
-		
-		public int getSize()	
-		{
-			return encodedSize;
-		}
-		
-		private int decodeChar(char ch)
-		{		
-			return (ch - '0');
-		}
-		
-	}
-
-	private static final byte HAS_STREET_NUM = 0x01;
-	private static final byte HAS_STREET     = 0x02;
-	private static final byte HAS_CITY       = 0x04;
-	private static final byte HAS_ZIP        = 0x08;
-	private static final byte HAS_PHONE      = 0x10;
-	private static final byte HAS_EXIT       = 0x20;
-	private static final byte HAS_TIDE_PREDICTION = 0x40;
+	static final byte HAS_STREET_NUM = 0x01;
+	static final byte HAS_STREET     = 0x02;
+	static final byte HAS_CITY       = 0x04;
+	static final byte HAS_ZIP        = 0x08;
+	static final byte HAS_PHONE      = 0x10;
+	static final byte HAS_EXIT       = 0x20;
+	static final byte HAS_TIDE_PREDICTION = 0x40;
 
 	/* Not used yet
 	private static final AddrAbbr ABBR_HASH = new AddrAbbr(' ', "#");
@@ -252,16 +165,18 @@ public class POIRecord {
 				val |= 0x400000;
 			List<ExitFacility> facilites = exit.getFacilities();
 			ExitFacility ef = null;
-			if(facilites.size() > 0)
+			if(!facilites.isEmpty())
 				ef = facilites.get(0);
 			if(ef != null)
-				val |= 0x800000; // exit facilites defined
+				val |= 0x800000; // exit facilities defined
 			writer.put3(val);
+
 			char highwayIndex = (char)exit.getHighway().getIndex();
 			if(numHighways > 255)
 				writer.putChar(highwayIndex);
 			else
 				writer.put((byte)highwayIndex);
+			
 			if(ef != null) {
 				char exitFacilityIndex = (char)ef.getIndex();
 				if(numExitFacilities > 255)
@@ -291,28 +206,27 @@ public class POIRecord {
 	
 	byte getWrittenPOIFlags(byte POIGlobalFlags) 
 	{
-			int mask;
-			int flag = 0;
-			int j = 0;
+		int flag = 0;
+		int j = 0;
 	
-			int usedFields = getPOIFlags();
+		int usedFields = getPOIFlags();
 	
-			/* the local POI flag is really tricky if a bit is not set in the global mask
+		/* the local POI flag is really tricky if a bit is not set in the global mask
 					we have to skip this bit in the local mask. In other words the meaning of the local bits
 					change influenced by the global bits */
 	
-			for(byte i = 0; i < 6; i++)
-			{
-				mask =  1 << i;
+		for(byte i = 0; i < 6; i++)
+		{
+			int mask = 1 << i;
 
-				if((mask & POIGlobalFlags) == mask)
-				{
-					if((mask & usedFields) == mask)
-						flag |= (1 << j);
-					j++;
-				}
-		
+			if((mask & POIGlobalFlags) == mask)
+			{
+				if((mask & usedFields) == mask)
+					flag |= (1 << j);
+				j++;
 			}
+		
+		}
 
 		flag |= 0x80; // gpsmapedit asserts for this bit set
 	    
@@ -330,7 +244,7 @@ public class POIRecord {
 		if (exit != null) {
 			size += 3;
 			size += (numHighways > 255)? 2 : 1;
-			if(exit.getFacilities().size() > 0)
+			if(!exit.getFacilities().isEmpty())
 				size += (numExitFacilities > 255)? 2 : 1;
 		}
 		if (POIGlobalFlags != getPOIFlags())
@@ -378,24 +292,117 @@ public class POIRecord {
 		return offset;
 	}
 
+	public Label getNameLabel() {
+		return poiName;
+	}
+
+	public City getCity() {
+		return city;
+	}
+
 	/**
 	 * Address abbreviations.
 	 */
-	static class AddrAbbr {
-		private final char code;
-		private final String value;
+	//static class AddrAbbr {
+	//	private final char code;
+	//	private final String value;
+	//
+	//	AddrAbbr(char code, String value) {
+	//		this.code = code;
+	//		this.value = value;
+	//	}
+	//
+	//	public String toString() {
+	//		return value;
+	//	}
+	//
+	//	public char getCode() {
+	//		return code;
+	//	}
+	//}
 
-		AddrAbbr(char code, String value) {
-			this.code = code;
-			this.value = value;
+	/**
+	 * Street and Phone numbers can be stored in two different ways in the poi record
+	 * Simple Number that only contain digits are coded in base 11 coding.
+	 * This helperclass tries to code the given number. If the number contains other
+	 * chars like in 4a the coding fails and the caller has to use a Label instead
+	 */
+	class SimpleStreetPhoneNumber {
+
+		private byte[] encodedNumber;
+		private int  encodedSize;
+
+		/**
+		 * Encode a string as base 11.
+		 * @param str The input string.
+		 * @return If the string is not all numeric (or A) then false is returned
+		 * and the string will be encoded as a label instead.
+		 */
+		public boolean set(String str) {
+
+			// remove surrounding whitespace to increase chance for simple encoding
+			String number = str.trim();
+
+			encodedNumber  = new byte[(number.length()/2)+2];
+
+			int i = 0;
+			int j = 0;
+			while (i < number.length()) {
+
+				int c1 = decodeChar(number.charAt(i++));
+
+				int c2;
+				if (i < number.length()) {
+					c2 = decodeChar(number.charAt(i++));
+				} else
+					c2 = 10;
+
+				// Only 0-9 and - allowed
+				if (c1 < 0 || c1 > 10 || c2 < 0 || c2 > 10)
+					return false;
+
+				// Encode as base 11
+				int val = c1 * 11 + c2;
+
+				// first byte needs special marking with 0x80
+				// If this is not set would be treated as label pointer
+				if (j == 0)
+					val |= 0x80;
+
+				encodedNumber[j++] = (byte)val;
+			}
+			if (j == 0)
+				return false;
+
+			if (j == 1)
+				encodedNumber[j++] = (byte) 0xf8;
+			else
+				encodedNumber[j-1] |= 0x80;
+			encodedSize  = j;
+
+			return true;
 		}
 
-		public String toString() {
-			return value;
+		public void write(ImgFileWriter writer)
+		{
+			for(int i = 0; i < encodedSize; i++)
+				writer.put(encodedNumber[i]);
 		}
 
-		public char getCode() {
-			return code;
+		public boolean isUsed()
+		{
+			return (encodedSize > 0);
 		}
-	}
+
+		public int getSize()
+		{
+			return encodedSize;
+		}
+
+		private int decodeChar(char ch)
+		{
+			return (ch - '0');
+		}
+
+	}	
 }

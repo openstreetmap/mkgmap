@@ -32,9 +32,8 @@ public class RGNHeader extends CommonHeader {
 	private static final int DEF_LEN = 125;
 	public static final int HEADER_LEN = DEF_LEN;
 
-	private int dataOffset;
-	private int dataSize;
-	
+	private final Section data = new Section();
+
 	private int extTypeAreasOffset;
 	private int extTypeAreasSize;
 	private int extTypeLinesOffset;
@@ -44,7 +43,7 @@ public class RGNHeader extends CommonHeader {
 
 	public RGNHeader() {
 		super(HEADER_LEN, "GARMIN RGN");
-		dataOffset = HEADER_LEN;
+		data.setPosition(HEADER_LEN);
 	}
 
 	/**
@@ -55,8 +54,7 @@ public class RGNHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
-		dataOffset = reader.getInt();
-		dataSize = reader.getInt();
+		data.readSectionInfo(reader, false);
 	}
 
 	/**
@@ -66,8 +64,8 @@ public class RGNHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putInt(dataOffset);
-        writer.putInt(getDataSize());
+		data.writeSectionInfo(writer, false);
+
 		if (getHeaderLength() > 29) {
 			writer.putInt(extTypeAreasOffset);
 			writer.putInt(extTypeAreasSize);
@@ -98,12 +96,12 @@ public class RGNHeader extends CommonHeader {
 		}
 	}
 
-	protected int getDataSize() {
-		return dataSize;
+	public int getDataOffset() {
+		return data.getPosition();
 	}
-
+	
 	public void setDataSize(int dataSize) {
-		this.dataSize = dataSize;
+		data.setSize(dataSize);
 	}
 
 	public void setExtTypeAreasInfo(int offset, int size) {

@@ -48,6 +48,8 @@ public class FileNode implements ImgChannel {
 	// The position in this file
 	private long position;
 
+	private byte xorByte;
+
 	/**
 	 * Creates a new file in the file system.  You can treat this just like
 	 * a regular file and write or read from it.
@@ -173,11 +175,18 @@ public class FileNode implements ImgChannel {
 
 			dst.limit(dst.position() + n);
 
+			int pos = dst.position();
 			int nr = file.read(dst);
 			if (nr == -1)
 				return -1;
 			if (nr == 0)
 				throw new IOException("Read nothing");
+
+			if(xorByte != 0) {
+				byte[] bufBytes = dst.array();
+				for(int i = pos + n - 1; i >= pos; --i)
+					bufBytes[i] ^= xorByte;
+			}
 
 			// Update the file positions
 			size -= nr;
@@ -309,5 +318,9 @@ public class FileNode implements ImgChannel {
 
 		buf.flip();
 		file.write(buf);
+	}
+
+	public void setXorByte(byte xorByte) {
+		this.xorByte = xorByte;
 	}
 }

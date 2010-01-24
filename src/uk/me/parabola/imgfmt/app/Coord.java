@@ -39,6 +39,7 @@ public class Coord implements Comparable<Coord> {
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
 	private boolean onBoundary;	// true if point lies on a boundary
+	private boolean preserved; // true if point should not be filtered out
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -88,6 +89,14 @@ public class Coord implements Comparable<Coord> {
 
 	public void setOnBoundary(boolean onBoundary) {
 		this.onBoundary = onBoundary;
+	}
+
+	public boolean preserved() {
+		return preserved;
+	}
+
+	public void preserved(boolean preserved) {
+		this.preserved = preserved;
 	}
 
 	public int hashCode() {
@@ -174,6 +183,22 @@ public class Coord implements Comparable<Coord> {
 						 (int)(longitude + (other.longitude - longitude) * fraction));
 	}
 
+
+	// returns bearing (in degrees) from current point to another point
+	public double bearingTo(Coord point) {
+		double lat1 = Utils.toRadians(latitude);
+		double lat2 = Utils.toRadians(point.latitude);
+		double lon1 = Utils.toRadians(longitude);
+		double lon2 = Utils.toRadians(point.longitude);
+
+		double dlon = lon2 - lon1;
+
+		double y = Math.sin(dlon) * Math.cos(lat2);
+		double x = Math.cos(lat1)*Math.sin(lat2) -
+			Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
+		return Math.atan2(y, x) * 180 / Math.PI;
+	}
+
 	/**
 	 * Sort lexicographically by longitude, then latitude.
 	 *
@@ -204,9 +229,9 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public String toOSMURL(int zoom) {
-		return ("http://www.openstreetmap.org/?lat=" +
+		return ("http://www.openstreetmap.org/?mlat=" +
 			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(latitude)) +
-			"&lon=" +
+			"&mlon=" +
 			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(longitude)) +
 			"&zoom=" +
 			zoom);

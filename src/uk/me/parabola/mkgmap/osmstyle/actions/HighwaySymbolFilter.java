@@ -16,6 +16,8 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.mkgmap.reader.osm.Element;
+
 
 /**
  * Prepend a Garmin magic-character to the value.
@@ -28,6 +30,9 @@ public class HighwaySymbolFilter extends ValueFilter {
 
 	private static final Map<String, String>symbols = new HashMap<String, String>();
 	private static final int MAX_REF_LENGTH = 8; // enough for "A6144(M)" (RIP)
+
+	private int maxAlphaNum = MAX_REF_LENGTH; // Max. length for alphanumeric (e.g., 'A67')
+	private int maxAlpha = MAX_REF_LENGTH; // Max. length for alpha only signs (e.g., 'QEW')
 
 	static {
 		//symbols.put("ele", "\u001f"); // name.height separator
@@ -42,19 +47,35 @@ public class HighwaySymbolFilter extends ValueFilter {
 	}
 
 	public HighwaySymbolFilter(String s) {
+
+		String[] filters = s.split(":");
+
 		// First, try the lookup table
-		String p = symbols.get(s);
+		String p = symbols.get(filters[0]);
 		if (p == null) {
-			p = "[" + s + "]";
+			p = "[" + filters[0] + "]";
 		}
 		prefix = p;
+
+		// Set maximum length for alpha/alphanumeric signs:
+		if ( filters.length == 3 ) {
+			maxAlphaNum = Integer.parseInt(filters[1]);
+			maxAlpha = Integer.parseInt(filters[2]);
+		} else if ( filters.length == 2 ) {
+			maxAlphaNum = Integer.parseInt(filters[1]);
+			maxAlpha = maxAlphaNum; // If only one option specified, use for both
+		} else {
+			maxAlphaNum = MAX_REF_LENGTH; // Ensure use of defaults if none specified
+			maxAlpha = MAX_REF_LENGTH; 
+		}
+
 	}
 
-	public String doFilter(String value) {
-		if (value == null || value.length() > MAX_REF_LENGTH) return value;
+	public String doFilter(String value, Element el) {
+		if (value == null) return value;
 
 		// is it mostly alphabetic?
-		int alpha_balance = 0;
+		/* int alpha_balance = 0;
 		for (char c : value.toCharArray()) {
 			alpha_balance += (Character.isLetter(c)) ? 1 : -1;
 		}
@@ -64,8 +85,29 @@ public class HighwaySymbolFilter extends ValueFilter {
 		int first_space = value.indexOf(" ");
 		if (first_space >= 0 && value.indexOf(" ", first_space + 1) < 0) {
 			value = value.replace(" ", "");
+		} */
+
+
+		// Nuke all spaces
+		String shieldText = value.replace(" ", "");
+
+		// Also replace ";" with "/", to change B3;B4 to B3/B4
+		shieldText = shieldText.replace(";", "/");
+		
+		// Check if value is alphanumeric
+		boolean isAlphaNum = false;
+
+		for (char c : shieldText.toCharArray()) {
+		  	if (Character.isDigit(c)) {
+				isAlphaNum = true; // Consider alphanumeric if we find one or more digits
+			}
 		}
 
-		return prefix + value;
+		// Check if shield exceeds maximum length:
+		if ( (isAlphaNum && shieldText.length() > maxAlphaNum) || (! isAlphaNum) && shieldText.length() > maxAlpha ) {
+			return value; // If so, return original value
+		} else {
+			return prefix + shieldText; // If not, return condensed value with magic code
+		}
 	}
 }

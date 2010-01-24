@@ -17,10 +17,13 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -67,9 +70,22 @@ public class RoadDef implements Comparable {
 		this.name = name;
 	}
 
+	public void showOSMBrowseURL() {
+		showBrowseURL = true;
+	}
+
 	// for diagnostic purposes
 	public String toString() {
-		return "RoadDef(" + name + ", " + id + ")";
+		String browseURL;
+		if(showBrowseURL)
+			browseURL = "http://www.openstreetmap.org/browse/way/" + id;
+		else
+			browseURL = "" + id;
+
+		if(name != null)
+			return "(" + name + ", " + browseURL + ")";
+		else
+			return "(" + browseURL + ")";
 	}
 
 	public String getName() {
@@ -105,6 +121,15 @@ public class RoadDef implements Comparable {
 
 	private City city;
 	private Zip zip;
+	private boolean paved = true;
+	private boolean ferry = false;
+	private boolean roundabout;
+	private boolean linkRoad;
+	private boolean synthesised;
+	private boolean flareCheck;
+	private boolean deadEndCheck;
+	private boolean showBrowseURL;
+	private Set<String> messageIssued;
 
 	/**
 	 * This is for writing to NET1.
@@ -319,7 +344,9 @@ public class RoadDef implements Comparable {
 	 * @param rgn A writer for the rgn file.
 	 */
 	void writeRgnOffsets(ImgFileWriter rgn) {
-		assert offsetNet1 < 0x400000 : "NET 1 offset too large";
+		if (offsetNet1 >= 0x400000)
+			throw new ExitException("Overflow of the NET1. The tile must be split so that there are fewer road in it");
+
 		for (Offset off : rgnOffsets) {
 			rgn.position(off.getPosition());
 			rgn.put3(offsetNet1 | off.getFlags());
@@ -356,9 +383,8 @@ public class RoadDef implements Comparable {
 	// number of nodes in the road
 	private int nnodes;
 
-	public static final int NOD2_MASK_SPEED = 0x0e;
-	public static final int NOD2_MASK_CLASS = 0xf0; // might be less
-	private static final int NOD2_FLAG_UNK = 0x01;
+	private static final int NOD2_FLAG_UNK        = 0x01;
+	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
 
 	// always appears to be set
 	private int nod2Flags = NOD2_FLAG_UNK;
@@ -464,6 +490,7 @@ public class RoadDef implements Comparable {
 		0x0010, // foot
 		0x0020, // bike
 		0x0040, // truck
+		0x0008, // carpool
 	};
 
 	// The data for Table A
@@ -474,16 +501,12 @@ public class RoadDef implements Comparable {
 		tabAInfo |= TABA_FLAG_TOLL;
 	}
 
-	public void setUnknownAccess08() {
-		tabAAccess |= 0x08;
-	}
-
 	public void setNoThroughRouting() {
 		tabAAccess |= 0x80;
 	}
 
 	public void setAccess(boolean[] access) {
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < access.length; i++)
 			if (access[i])
 				tabAAccess |= ACCESS[i];
 	}
@@ -537,6 +560,10 @@ public class RoadDef implements Comparable {
 		netFlags |= NET_FLAG_ONEWAY;
 	}
 
+	public boolean isOneway() {
+		return (netFlags & NET_FLAG_ONEWAY) != 0;
+	}
+
 	public void setCity(City city) {
 		this.city = city;
 		netFlags |= NET_FLAG_ADDRINFO;
@@ -560,5 +587,70 @@ public class RoadDef implements Comparable {
 
 	public City getCity() {
 		return city;
+	}
+
+	public boolean paved() {
+		return paved;
+	}
+
+	public void paved(boolean p) {
+		paved = p;
+	}
+
+	public void ferry(boolean f) {
+		ferry = f;
+	}
+
+	public boolean ferry() {
+		return ferry;
+	}
+
+	public void setRoundabout(boolean r) {
+		roundabout = r;
+	}
+
+	public boolean isRoundabout() {
+		return roundabout;
+	}
+
+	public void setLinkRoad(boolean lr) {
+		linkRoad = lr;
+	}
+
+	public boolean isLinkRoad() {
+		return linkRoad;
+	}
+
+	public void setSynthesised(boolean s) {
+		synthesised = s;
+	}
+
+	public boolean isSynthesised() {
+		return synthesised;
+	}
+
+	public void doFlareCheck(boolean fc) {
+		flareCheck = fc;
+	}
+
+	public boolean doFlareCheck() {
+		return flareCheck;
+	}
+
+	public void doDeadEndCheck(boolean dec) {
+		deadEndCheck = dec;
+	}
+
+	public boolean doDeadEndCheck() {
+		return deadEndCheck;
+	}
+
+	public boolean messagePreviouslyIssued(String key) {
+		boolean previouslyIssued;
+		if(messageIssued == null)
+			messageIssued = new HashSet<String>();
+		previouslyIssued = messageIssued.contains(key);
+		messageIssued.add(key);
+		return previouslyIssued;
 	}
 }

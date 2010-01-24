@@ -2,18 +2,19 @@
 
 <p>This file is similar to the TDB file in that it is a list of maps along with
 	other information describing the set.  It is inserted into the gmapsupp.img
-file.  Maps appear to work without it, so I don't know what effect it has -
-is it informational, or does it help speed operations by providing an index?
-I don't know.</p>
+	file.
 
-<p>It isn't like the other files in the app package, for a start it doesn't
+<p>A map will work without this file, but it is essential when you have maps from different
+				families loaded together as it allows you to see the names of the map
+				families and turn them on and off separately.
+
+<p>It isn't like the other files in the app package, in that it doesn't
 	begin with the common header.  It should perhaps live with the TDB format or
-in a similar top level place.  It is here because it is included inside the
-gmapsupp.img file and doesn't normally have a separate existance.</p>
+	in a similar top level place.  It is here because it is included inside the
+	gmapsupp.img file and doesn't normally have a separate existance.
 
 <p>
 	The names and lengths of the fields were obtained from the program gpsexplorer
 	by the author identified as 'garminmaploader@yahoo.com' and released under
 	GPL2+.
-</p>
 

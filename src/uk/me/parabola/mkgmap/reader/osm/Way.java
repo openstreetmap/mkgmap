@@ -42,6 +42,17 @@ public class Way extends Element {
 		setId(id);
 	}
 
+	// create a new Way that is a duplicate of this one - the new Way
+	// has a shallow copy of the points list so that changes to the
+	// original list don't affect the points in the duplicate
+
+	public Way duplicate() {
+		Way dup = new Way(getId(), new ArrayList<Coord>(points));
+		dup.setName(getName());
+		dup.copyTags(this);
+		return dup;
+	}
+
 	/**
 	 * Get the points that make up the way.  We attempt to re-order the segments
 	 * and return a list of points that traces the route of the way.
@@ -58,6 +69,17 @@ public class Way extends Element {
 			return false;
 
 		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
+			return true;
+
+		return false;
+	}
+
+	public boolean isNotBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
 			return true;
 
 		return false;
@@ -100,5 +122,23 @@ public class Way extends Element {
 		sb.append(' ');
 		sb.append(toTagString());
 		return sb.toString();
+	}
+
+	public Coord getCofG() {
+		int lat = 0;
+		int lon = 0;
+		int numPoints = points.size();
+		if(numPoints < 1)
+			return null;
+		for(Coord p : points) {
+			lat += p.getLatitude();
+			lon += p.getLongitude();
+		}
+		return new Coord((lat + numPoints / 2) / numPoints,
+						 (lon + numPoints / 2) / numPoints);
+	}
+
+	public String kind() {
+		return "way";
 	}
 }

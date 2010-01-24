@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
@@ -49,7 +50,10 @@ public class Subdivision {
 	private final LBLFile lblFile;
 	private final RGNFile rgnFile;
 
-	private int rgnPointer;
+	// The start pointer is set for read and write.  The end pointer is only
+	// set for subdivisions that are read from a file.
+	private int startRgnPointer;
+	private int endRgnPointer;
 
 	private int lastMapElement;
 
@@ -109,15 +113,42 @@ public class Subdivision {
 		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
 
 		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
-		if (w > 0x7fff)
+		if (w > 0x7fff) {
+			log.warn("Subdivision width is " + w + " at " + new Coord(latitude, longitude));
 			w = 0x7fff;
+		}
 
 		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
-		if (h > 0xffff)
+		if (h > 0xffff) {
+			log.warn("Subdivision height is " + h + " at " + new Coord(latitude, longitude));
 			h = 0xffff;
+		}
 
 		this.width = w;
 		this.height = h;
+	}
+
+	private Subdivision(Zoom z, SubdivData data) {
+		lblFile = null;
+		rgnFile = null;
+		zoomLevel = z;
+		latitude = data.getLat();
+		longitude = data.getLon();
+		this.width = data.getWidth();
+		this.height = data.getHeight();
+
+		startRgnPointer = data.getRgnPointer();
+		endRgnPointer = data.getEndRgnOffset();
+
+		int elem = data.getFlags();
+		if ((elem & 0x10) != 0)
+			setHasPoints(true);
+		if ((elem & 0x20) != 0)
+			setHasIndPoints(true);
+		if ((elem & 0x40) != 0)
+			setHasPolylines(true);
+		if ((elem & 0x80) != 0)
+			setHasPolygons(true);
 	}
 
 	/**
@@ -156,6 +187,24 @@ public class Subdivision {
 		Subdivision div = new Subdivision(ifiles, area, zoom);
 		zoom.addSubdivision(div);
 		return div;
+	}
+
+	/**
+	 * Create a subdivision that only contains the number.  This is only
+	 * used when reading cities and similar such usages that do not really
+	 * require the full subdivision to be present.
+	 * @param number The subdivision number.
+	 * @return An empty subdivision.  Any operation other than getting the
+	 * subdiv number is likely to fail.
+	 */
+	public static Subdivision createEmptySubdivision(int number) {
+		Subdivision sd = new Subdivision(null, new SubdivData(0,0,0,0,0,0,0));
+		sd.setNumber(number);
+		return sd;
+	}
+
+	public static Subdivision readSubdivision(Zoom zoom, SubdivData subdivData) {
+		return new Subdivision(zoom, subdivData);
 	}
 
 	public Zoom getZoom() {
@@ -201,7 +250,7 @@ public class Subdivision {
 	 */
 	public void write(ImgFileWriter file) {
 		log.debug("write subdiv", latitude, longitude);
-		file.put3(rgnPointer);
+		file.put3(startRgnPointer);
 		file.put(getType());
 		file.put3(longitude);
 		file.put3(latitude);
@@ -263,12 +312,16 @@ public class Subdivision {
 		this.last = last;
 	}
 
-	public void setRgnPointer(int rgnPointer) {
-		this.rgnPointer = rgnPointer;
+	public void setStartRgnPointer(int startRgnPointer) {
+		this.startRgnPointer = startRgnPointer;
 	}
 
-	public int getRgnPointer() {
-		return rgnPointer;
+	public int getStartRgnPointer() {
+		return startRgnPointer;
+	}
+
+	public int getEndRgnPointer() {
+		return endRgnPointer;
 	}
 
 	public int getLongitude() {
@@ -293,6 +346,22 @@ public class Subdivision {
 
 	public void setHasPolygons(boolean hasPolygons) {
 		this.hasPolygons = hasPolygons;
+	}
+
+	public boolean hasPoints() {
+		return hasPoints;
+	}
+
+	public boolean hasIndPoints() {
+		return hasIndPoints;
+	}
+
+	public boolean hasPolylines() {
+		return hasPolylines;
+	}
+
+	public boolean hasPolygons() {
+		return hasPolygons;
 	}
 
 	/**
@@ -323,7 +392,7 @@ public class Subdivision {
 	}
 
 	public String toString() {
-		return "Sub" + zoomLevel + '(' + latitude + ',' + longitude + ')';
+		return "Sub" + zoomLevel + '(' + new Coord(latitude, longitude).toOSMURL() + ')';
 	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.

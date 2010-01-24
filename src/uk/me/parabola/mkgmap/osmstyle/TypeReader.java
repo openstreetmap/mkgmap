@@ -58,6 +58,12 @@ public class TypeReader {
 				gt.setRoadSpeed(nextIntValue(ts));
 			} else if (w.equals("continue")) {
 				gt.setContinueSearch(true);
+			} else if (w.equals("continue")) {
+				gt.setContinue();
+			} else if (w.equals("stop")) {
+				gt.setFinal();
+			} else if (w.equals("with_actions") || w.equals("withactions")) {
+				gt.alwaysExecuteActions(true);
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}

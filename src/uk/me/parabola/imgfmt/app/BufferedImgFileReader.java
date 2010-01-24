@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * Read from an img file via a buffer.
@@ -122,6 +122,10 @@ public class BufferedImgFileReader implements ImgFileReader {
 				;
 	}
 
+	public int getu3() throws ReadFailedException {
+		return get3() & 0xffffff;
+	}
+
 	/**
 	 * Read in a 4 byte value.
 	 *
@@ -168,6 +172,69 @@ public class BufferedImgFileReader implements ImgFileReader {
 			sb.append((char) b);
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Read in a string of digits in the compressed base 11 format that is used
+	 * for phone numbers in the POI section.
+	 * @param delimiter This will replace all digit 11 characters.  Usually a
+	 * '-' to separate numbers in a telephone.  No doubt there is a different
+	 * standard in each country.
+	 * @return A phone number possibly containing the delimeter character.
+	 */
+	public String getBase11str(byte firstChar, char delimiter) {
+		// NB totally untested.
+		StringBuilder str11 = new StringBuilder();
+		int term = 2;
+
+		int ch = firstChar & 0xff;
+		do {
+			if (str11.length() == 0) {
+				// Not found
+				if (ch < 0x80)
+					return "";
+			}
+
+			if ((ch & 0x80) != 0)
+				--term;
+			str11.append(base(ch & 0x7F, 11, 2));
+			if (term != 0)
+				ch = get();
+		} while (term != 0);
+
+		// Remove any trailing delimiters
+		int idx;
+		if ((idx = str11.lastIndexOf("A")) >= 0)
+			str11.setLength(idx);
+
+		// Convert in-line delimiters to the char delimiter
+		int len = str11.length();
+		for (int i = 0; i < len; i++) {
+			if (str11.charAt(i) == 'A')
+				str11.setCharAt(i, delimiter);
+		}
+
+		return str11.toString();
+	}
+
+	private String base(int inNum, int base, int width) {
+		int num = inNum;
+		StringBuilder val = new StringBuilder();
+
+		if (base < 2 || base > 36 || width < 1)
+			return "";
+
+		String digit = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		while (num != 0) {
+			val.append(digit.charAt(num % base));
+			num /= base;
+		}
+
+		while (val.length() < width)
+			val.append('0');
+
+		val.reverse();
+		return val.toString();
 	}
 
 	/**

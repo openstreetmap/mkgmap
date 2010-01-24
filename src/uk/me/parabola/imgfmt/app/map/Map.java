@@ -49,7 +49,9 @@ import uk.me.parabola.util.EnhancedProperties;
  * It is the interface for all information about the whole map, such as the
  * point overviews etc.  Subdivision will hold the map elements.
  *
- * <p>Needless to say, it has nothing to do with java.util.Map.
+ * <p>Needless to say, it has nothing to do with java.util.Map and given
+ * how it has turned out, with all reading functionality in MapReader
+ * it would have been better named MapWriter.
  *
  * @author Steve Ratcliffe
  */
@@ -96,7 +98,7 @@ public class Map implements InternalFiles, Configurable {
 		m.fileSystem = fs;
 
 		m.rgnFile = new RGNFile(m.fileSystem.create(mapnumber + ".RGN"));
-		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"), true);
+		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"));
 		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"));
 
 		int mapid;
@@ -127,7 +129,7 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	protected void addNet() throws FileExistsException {
-		netFile = new NETFile(fileSystem.create(mapName + ".NET"), true);
+		netFile = new NETFile(fileSystem.create(mapName + ".NET"));
 	}
 
 	protected void addNod() throws FileExistsException {

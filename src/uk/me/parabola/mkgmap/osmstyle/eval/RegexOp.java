@@ -27,6 +27,10 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class RegexOp extends BinaryOp {
 	private Pattern pattern;
 
+	public RegexOp() {
+		setType(REGEX);
+	}
+
 	public boolean eval(Element el) {
 		String tagval = el.getTag(getFirst().value());
 		if (tagval == null)

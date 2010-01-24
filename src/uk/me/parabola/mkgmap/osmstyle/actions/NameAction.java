@@ -46,7 +46,7 @@ public class NameAction implements Action {
 			return;
 		
 		for (ValueBuilder vb : names) {
-			String s = vb.build(el);
+			String s = vb.build(el, el);
 			if (s != null) {
 				el.setName(s);
 				break;
@@ -55,8 +55,7 @@ public class NameAction implements Action {
 	}
 
 	public void add(String val) {
-		ValueBuilder vb = new ValueBuilder(val);
-		names.add(vb);
+		names.add(new ValueBuilder(val));
 	}
 
 	public String toString() {

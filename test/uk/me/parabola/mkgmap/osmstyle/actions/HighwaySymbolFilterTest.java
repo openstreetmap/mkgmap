@@ -13,12 +13,11 @@
 /* Create date: 21-Jul-2009 */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
 
-/**
- * @author Steve Ratcliffe
- */
+import static org.junit.Assert.*;
+
+
 public class HighwaySymbolFilterTest {
 	/**
 	 * Basic test for a mostly numeric ref.
@@ -26,7 +25,7 @@ public class HighwaySymbolFilterTest {
 	@Test
 	public void testDoFilter() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A101");
+		String s = filter.doFilter("A101", null);
 		assertEquals("A101", "\u0002A101", s);
 	}
 
@@ -36,29 +35,29 @@ public class HighwaySymbolFilterTest {
 	@Test
 	public void testOneSpace() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A 101");
+		String s = filter.doFilter("A 101", null);
 		assertEquals("with one space", "\u0002A101", s);
 	}
 
 	/**
-	 * If there are multiple spaces, then none are removed.
-	 * (Not sure why this exists).
+	 * If there are multiple spaces, then all are removed.
 	 */
 	@Test
 	public void testMultipleSpaces() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
-		String s = filter.doFilter("A 1 01");
-		assertEquals("two spaces", "\u0002A 1 01", s);
+		String s = filter.doFilter("A 1 01", null);
+		assertEquals("two spaces", "\u0002A101", s);
 	}
 
 	/**
-	 * Strings that are mostly alphabetic do not get changed.
+	 * Strings that are mostly alphabetic used to be unchanged but now
+	 * are treated exactly the same.
 	 */
 	@Test
 	public void testMostlyAlpha() {
 		HighwaySymbolFilter filter = new HighwaySymbolFilter("shield");
 		String value = "AN1";
-		String s = filter.doFilter(value);
-		assertEquals("mostly alphabetic", value, s);
+		String s = filter.doFilter(value, null);
+		assertEquals("mostly alphabetic", "\002" + value, s);
 	}
 }

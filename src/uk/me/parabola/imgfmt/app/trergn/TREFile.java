@@ -17,17 +17,14 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
-import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -67,17 +64,12 @@ public class TREFile extends ImgFile implements Configurable {
 	private final TREHeader header = new TREHeader();
 
 
-	public TREFile(ImgChannel chan, boolean write) {
+	public TREFile(ImgChannel chan) {
 		setHeader(header);
-		if (write) {
-			setWriter(new BufferedImgFileWriter(chan));
+		setWriter(new BufferedImgFileWriter(chan));
 
-			// Position at the start of the writable area.
-			position(header.getHeaderLength());
-		} else {
-			setReader(new BufferedImgFileReader(chan));
-			header.readHeader(getReader());
-		}
+		// Position at the start of the writable area.
+		position(header.getHeaderLength());
 	}
 
 	public Zoom createZoom(int zoom, int bits) {
@@ -372,43 +364,5 @@ public class TREFile extends ImgFile implements Configurable {
 
 	public void setPoiDisplayFlags(byte b) {
 		header.setPoiDisplayFlags(b);
-	}	
-
-	public String[] getCopyrights() {
-		if (!isReadable())
-			throw new IllegalStateException("not open for reading");
-
-		List<String> msgs = new ArrayList<String>();
-
-		// First do the ones in the TRE header gap
-		ImgFileReader reader = getReader();
-		reader.position(header.getHeaderLength());
-		while (reader.position() < header.getHeaderLength() + header.getMapInfoSize()) {
-			String m = reader.getZString();
-			msgs.add(m);
-		}
-
-		// Now get the copyright messages that are listed in the section.
-		//Section sect = header.getCopyrightSection();
-
-		// TODO This needs the label section to work...
-		//
-		//long pos = sect.getPosition();
-		//while (pos < sect.getEndPos()) {
-		//	reader.position(pos);
-		//	int labelNum = header.getHeaderLength() + reader.get3();
-		//
-		//
-		//	System.out.println("position at " + labelNum);
-		//	reader.position(labelNum);
-		//	String m = reader.getZString();
-		//	System.out.println("C/R msg " + m);
-		//
-		//	msgs.add(m);
-		//
-		//	pos += sect.getItemSize();
-		//}
-
-		return msgs.toArray(new String[msgs.size()]);
 	}
 }

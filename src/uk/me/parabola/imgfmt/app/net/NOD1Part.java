@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 
@@ -77,8 +78,8 @@ public class NOD1Part {
 //	private static final int MAX_TABB = MAX_TABB_UNSAFE / 2;
 	private static final int MAX_TABB = MAX_TABB_UNSAFE - 0x2;
 
-	// Nodes size is bounded due to the byte offset to Tables.
-	private static final int MAX_NODES_SIZE = (1 << NODHeader.DEF_ALIGN) * 0x30;
+	// Nodes size is max 0x2000 to cope with signed 14 bit node offsets
+	private static final int MAX_NODES_SIZE = 0x2000;
 	private int nodesSize;
 
 	public class BBox {
@@ -105,6 +106,10 @@ public class NOD1Part {
 			this.maxLat = maxLat;
 			this.minLon = minLon;
 			this.maxLon = maxLon;
+		}
+
+	    Area toArea() {
+			return new Area(minLat, minLon, maxLat, maxLon);
 		}
 
 		boolean contains(BBox bbox) {
@@ -299,6 +304,6 @@ public class NOD1Part {
 	 * be a legal RouteCenter.
 	 */
 	private RouteCenter toRouteCenter() {
-		return new RouteCenter(bboxActual.center(), nodes, tabA, tabB);
+		return new RouteCenter(bboxActual.toArea(), nodes, tabA, tabB);
 	}
 }

@@ -52,6 +52,13 @@ class MapSplitter {
 
 	private static final int MAX_NUM_POINTS = 0xff;
 
+	// maximum allowed amounts of points/lines/shapes with extended types
+	// real limits are not known but if these values are too large, data
+	// goes missing (lines disappear, etc.)
+	private static final int MAX_XT_POINTS_SIZE = 0xff00;
+	private static final int MAX_XT_LINES_SIZE  = 0xff00;
+	private static final int MAX_XT_SHAPES_SIZE = 0xff00;
+
 	private final Zoom zoom;
 
 	/**
@@ -110,7 +117,7 @@ class MapSplitter {
 		int res = zoom.getResolution();
 		for (MapArea area : areas) {
 			Area bounds = area.getBounds();
-			int[] sizes = area.getSizeAtResolution(res);
+			int[] sizes = area.getEstimatedSizes();
 			if(log.isInfoEnabled()) {
 				String padding = depth + "                                            ";
 				log.info(padding.substring(0, (depth + 1) * 2) + 
@@ -123,11 +130,13 @@ class MapSplitter {
 
 			if (area.getNumLines() > MAX_NUM_LINES ||
 			    area.getNumPoints() > MAX_NUM_POINTS ||
-				(sizes[MapArea.POINT_KIND] > MAX_RGN_SIZE &&
-				 (area.hasIndPoints() || area.hasLines() || area.hasShapes())) ||
-				(((sizes[MapArea.POINT_KIND] + sizes[MapArea.LINE_KIND]) > MAX_RGN_SIZE) &&
-				 area.hasShapes())) {
-				if (area.getBounds().getMaxDimention() > 100) {
+				(sizes[MapArea.POINT_KIND] +
+				 sizes[MapArea.LINE_KIND] +
+				 sizes[MapArea.SHAPE_KIND]) > MAX_RGN_SIZE ||
+				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
+				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
+				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
+				if (area.getBounds().getMaxDimention() > 10) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
 					MapArea[] sublist;
@@ -138,7 +147,7 @@ class MapSplitter {
 					addAreasToList(sublist, alist, depth + 1);
 					continue;
 				} else {
-					log.warn("area too small to split", area);
+					log.error("Area too small to split at " + area.getBounds().getCenter().toOSMURL() + " (reduce the density of points, length of lines, etc.)");
 				}
 			}
 
@@ -172,6 +181,7 @@ class MapSplitter {
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
 		int height = bounds.getHeight() >> shift;
+		log.info("splitMaxSize() bounds = " + bounds + " shift = " + shift + " width = " + width + " height = " + height);
 		if (log.isDebugEnabled())
 			log.debug("shifted width", width, "shifted height", height);
 

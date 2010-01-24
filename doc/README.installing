@@ -24,7 +24,39 @@ receiver UI.)
 
 * MapSource
 
-[TO BE WRITTEN: This needs some registry voodoo.]
+[TO BE reviewed: This needs some registry voodoo.]
+There is 3 methods to install maps to MapSource:
+
+1. Create and execute a *.reg file
+   With a text editor create a file and save it as RegFileName.reg
+   with the following content, where HexID is the hex format of the
+   FID, in little-endian order, FID is the FamilyID and PID is the
+   ProductID;
+
+	REGEDIT4
+
+	[HKEY_LOCAL_MACHINE\SOFTWARE\Garmin\MapSource\families\FID]
+	"ID"= hex:HexFID
+	"IDX"="C:\\Garmin\\path\\to\\maps\\OverviewMapName.mdx"
+	"MDR"="C:\\Garmin\\path\\to\\maps\\OverviewMapName_mdr.img"
+
+	[HKEY_LOCAL_MACHINE\SOFTWARE\Garmin\MapSource\families\FID\PID]
+	"LOC"="C:\\Garmin\\path\\to\\maps\\"
+	"BMAP"="C:\\Garmin\\path\\to\\maps\\OverviewMapName.img"
+	"TDB"="C:\\Garmin\\path\\to\\maps\\OverviewMapName.tdb"
+
+2. Edit the registry by hand
+
+3. Using MapSetToolKit (http://cypherman1.googlepages.com/)
+   - Run MapSetToolKit and click Install button placed at the bottom
+	 right corner. A dialogue will appear with some blank fields:
+
+	   Registry name: introduce any name for your reference.
+	   TDB file: browse to the file osmmap.tdb.
+	   Overview map: browse to the file osmmap.img.
+	   Maps directory: it is filled automatically after giving the path to the files above .
+
+   - Click Install, close the application and you are done. You now have the map in MapSource.
 
 * RoadTrip
 

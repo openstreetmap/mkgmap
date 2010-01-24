@@ -114,6 +114,7 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 
 	public void config(EnhancedProperties props) {
 		configProps = props;
+		mapper.config(props);
 	}
 
 	protected EnhancedProperties getConfig() {
@@ -128,7 +129,11 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 	 * We add the background polygons if the map is not transparent.
 	 */
 	protected void addBackground() {
-		if (!getConfig().getProperty("transparent", false)) {
+		addBackground(false);
+	}
+
+	protected void addBackground(boolean mapHasPolygon4B) {
+		if (!mapHasPolygon4B && !getConfig().getProperty("transparent", false)) {
 			// Make a list of points to trace out the background area.
 			List<Coord> coords = new ArrayList<Coord>();
 			Area bounds = mapper.getBounds();
@@ -155,5 +160,21 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 		if (getConfig().getProperty("contours", false)) {		    
 		    DEM.createContours((LoadableMapDataSource) this, getConfig());
 		}
+	}
+
+	public void addBoundaryLine(Area area, int type, String name) {
+		List<Coord> coords = new ArrayList<Coord>();
+		coords.add(new Coord(area.getMinLat(), area.getMinLong()));
+		coords.add(new Coord(area.getMinLat(), area.getMaxLong()));
+		coords.add(new Coord(area.getMaxLat(), area.getMaxLong()));
+		coords.add(new Coord(area.getMaxLat(), area.getMinLong()));
+		coords.add(new Coord(area.getMinLat() + 1, area.getMinLong()));
+		MapLine boundary = new MapLine();
+		boundary.setType(type);
+		if(name != null)
+			boundary.setName(name);
+		boundary.setMinResolution(0); // On all levels
+		boundary.setPoints(coords);
+		mapper.addLine(boundary);
 	}
 }

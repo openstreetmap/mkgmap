@@ -28,16 +28,12 @@ import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.AND;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EXISTS;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EXISTS;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OR;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.*;
 
 /**
  * Read a rules file.  A rules file contains a list of rules and the
@@ -124,7 +120,7 @@ public class RuleFileReader {
 		}
 
 		if (op instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp(op, actions, gt);
+			optimiseAndSaveBinaryOp((BinaryOp) op, actions, gt);
 		} else {
 			optimiseAndSaveOtherOp(op, actions, gt);
 		}
@@ -143,20 +139,19 @@ public class RuleFileReader {
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
 	 */
-	private void optimiseAndSaveBinaryOp(Op op, ActionList actions, GType gt) {
-		BinaryOp binaryOp = (BinaryOp) op;
-		Op first = binaryOp.getFirst();
-		Op second = binaryOp.getSecond();
+	private void optimiseAndSaveBinaryOp(BinaryOp op, ActionList actions, GType gt) {
+		Op first = op.getFirst();
+		Op second = op.getSecond();
 
 		log.debug("binop", op.getType(), first.getType());
 
 		/*
-         * We allow the following cases:
+		 * We allow the following cases:
 		 * An EQUALS at the top.
 		 * An AND at the top level.
 		 * (The case that there is an OR at the top level has already been
 		 * dealt with)
-         */
+		 */
 		String keystring;
 		Op expr;
 		if (op.isType(EQUALS)) {

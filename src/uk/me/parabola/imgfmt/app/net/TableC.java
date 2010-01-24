@@ -29,25 +29,39 @@ public class TableC {
 	// size of the table, excluding the size field
 	private int size;
 
+	private final TableA tabA;
+
 	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
+
+	public TableC(TableA tabA) {
+		this.tabA = tabA;
+	}
 
 	/**
 	 * Write the table including size field.
 	 */
 	public void write(ImgFileWriter writer, int tablesOffset) {
 		if (restrictions.isEmpty()) {
+			if(tabA.numUnpavedArcs() > 0)
+				writer.put((byte)tabA.numUnpavedArcs());
+			if(tabA.numFerryArcs() > 0)
+				writer.put((byte)tabA.numFerryArcs());
 			writer.put((byte) 0);
-			return;
-		} else {
+		}
+		else {
 			byte b = getSizeBytes();
 			assert size < (1 << 8*b);
 			if (b == 1)
 				writer.put((byte) size);
 			else
 				writer.putChar((char) size);
+			for (RouteRestriction restr : restrictions)
+				restr.write(writer, tablesOffset);
+			if(tabA.numUnpavedArcs() > 0)
+				writer.put((byte)tabA.numUnpavedArcs());
+			if(tabA.numFerryArcs() > 0)
+				writer.put((byte)tabA.numFerryArcs());
 		}
-		for (RouteRestriction restr : restrictions)
-			restr.write(writer, tablesOffset);
 	}
 
 	/**
@@ -84,5 +98,14 @@ public class TableC {
 		byte b = getSizeBytes();
 		for (RouteRestriction restr : restrictions)
 			restr.setOffsetSize(b);
+	}
+
+	public byte getFormat() {
+		byte format = getSizeBytes();
+		if(tabA.numUnpavedArcs() > 0)
+			format |= 0x08;
+		if(tabA.numFerryArcs() > 0)
+			format |= 0x10;
+		return format;
 	}
 }

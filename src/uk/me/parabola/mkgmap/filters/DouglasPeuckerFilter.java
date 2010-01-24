@@ -61,18 +61,10 @@ public class DouglasPeuckerFilter implements MapFilter {
 		MapLine line = (MapLine) element;
 
 		List<Coord> points = line.getPoints();
-		int n = points.size()-1;
 
 		// Create a new list to rewrite the points into. Don't alter the original one
-		List<Coord> coords = new ArrayList<Coord>(n);
+		List<Coord> coords = new ArrayList<Coord>(points.size());
 		coords.addAll(points);
-
-		// If the first point is identic with the last one (a polygon), drop it
-		// Otherwise douglasPeucker will not work!
-		while ((n > 0) && coords.get(0).equals(coords.get(n))) {
-			coords.remove(n);
-			n--;
-		}
 
 //#if (Node version)
 //Dont touch Coords, which are nodes. 
@@ -87,7 +79,8 @@ public class DouglasPeuckerFilter implements MapFilter {
 			
 			// If a node in the line use the douglas peucker algorithm for upper segment
 			// TODO: Should consider only nodes connected to roads visible at current resolution.
-			if (p instanceof CoordNode) {
+			if (p.preserved()) {
+				// point is "preserved", don't remove it
 				douglasPeucker(coords, i, endIndex, maxErrorDistance);
 				endIndex = i;
 			}
@@ -129,16 +122,28 @@ public class DouglasPeuckerFilter implements MapFilter {
 		Coord b = points.get(endIndex);
 		double ab = a.distance(b);
 
-		// Find point with highest distance.
-		for(int i = endIndex-1; i > startIndex; i--) {
-			Coord p = points.get(i);
-			double ap = p.distance(a);
-			double bp = p.distance(b);
-			double abpa = (ab+ap+bp)/2;
-			double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
-			if (distance > maxDistance) {
-				maxDistance = distance;
-				maxIndex = i;
+		if (ab == 0) { // Start- and endpoint are the same
+			// Find point with highest distance to start- and endpoint
+			for (int i = endIndex-1; i > startIndex; i--) {
+				Coord p = points.get(i);
+				double distance = p.distance(a);
+				if (distance > maxDistance) {
+					maxDistance = distance;
+					maxIndex = i;
+				}
+			}
+		} else {
+			// Find point with highest distance to line between start- and endpoint by using herons formula.
+			for(int i = endIndex-1; i > startIndex; i--) {
+				Coord p = points.get(i);
+				double ap = p.distance(a);
+				double bp = p.distance(b);
+				double abpa = (ab+ap+bp)/2;
+				double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
+				if (distance > maxDistance) {
+					maxDistance = distance;
+					maxIndex = i;
+				}
 			}
 		}
 		if (maxDistance > allowedError) {
@@ -148,7 +153,13 @@ public class DouglasPeuckerFilter implements MapFilter {
 		}
 		else {
 			// All points in tolerance, delete all of them.
-			for(int i = endIndex-1; i > startIndex; i--) {
+
+			// Remove the endpoint if it is the same as the startpoint
+			if (ab == 0)
+				points.remove(endIndex);
+
+			// Remove the points in between
+			for (int i = endIndex - 1; i > startIndex; i--) {
 				points.remove(i);
 			}
 		}

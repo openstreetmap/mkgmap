@@ -25,7 +25,6 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Used to remember all the road relavent parameters in a definition which
@@ -37,6 +36,8 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
  */
 class RoadHelper {
 	private static final Logger log = Logger.getLogger(RoadHelper.class);
+
+	private static final int NUM_ACCESS = 8;
 
 	// routing node store, persistent over resets
 	private final Map<Long, CoordNode> nodeCoords = new HashMap<Long, CoordNode>();
@@ -64,7 +65,7 @@ class RoadHelper {
 		roadClass = 0;
 		oneway = false;
 		toll = false;
-		access = new boolean[RoadNetwork.NO_MAX];
+		access = new boolean[NUM_ACCESS];
 	}
 
 	public void setRoadId(int roadId) {
@@ -84,7 +85,7 @@ class RoadHelper {
 		roadClass = Integer.parseInt(f[1]);
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
-		for (int j = 0; j < RoadNetwork.NO_MAX; j++)
+		for (int j = 0; j < f.length - 4; j++)
 			access[j] = Integer.parseInt(f[4+j]) > 0;
 	}
 

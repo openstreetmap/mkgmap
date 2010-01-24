@@ -16,11 +16,11 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
-
-import java.io.OutputStream;
-import java.io.IOException;
 
 /**
  * Represents a particular point object on a map.  A point has a type (town
@@ -115,5 +115,11 @@ public class Point extends MapObject {
 
 	public void setPOIRecord(POIRecord poirecord) {
 		this.poi = poirecord;
+	}
+
+	public POIRecord getPOIRecord() {
+		if (poi == null)
+			return new POIRecord();
+		return poi;
 	}
 }

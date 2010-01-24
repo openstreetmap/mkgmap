@@ -16,11 +16,13 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-
-import java.util.List;
-import java.util.ArrayList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * This file is a description of the map set that is loaded into the
@@ -32,13 +34,9 @@ import java.io.IOException;
  * @author Steve Ratcliffe
  */
 public class MpsFile {
-	private int productId;
-	//private int productVersion = 1;
-	private String seriesName = "OSM map sets";
-	private String familyName = "OSM maps";
+	private String mapsetName = "OSM map set";
 
-	private final ProductBlock product = new ProductBlock();
-	private final MapsetBlock mapset = new MapsetBlock();
+	private final Set<ProductBlock> products = new HashSet<ProductBlock>();
 	private final List<MapBlock> maps = new ArrayList<MapBlock>();
 
 	private final ImgChannel chan;
@@ -48,45 +46,27 @@ public class MpsFile {
 	}
 
 	public void sync() throws IOException {
-		product.setProduct(productId);
-
-		product.setDescription(familyName); // XXX or seriesName
-		mapset.setName(seriesName); // XXX or family
-
-		for (MapBlock map : maps) {
+		for (MapBlock map : maps)
 			map.write(chan);
-		}
 
+		for (ProductBlock block : products)
+			block.write(chan);
+
+		MapsetBlock mapset = new MapsetBlock();
+		mapset.setName(mapsetName);
 		mapset.write(chan);
-		product.write(chan);
 	}
 
 	public void addMap(MapBlock map) {
 		maps.add(map);
 	}
 
-	public void setProductInfo(int productId, String seriesName, String familyName)
-	{
-		this.productId = productId;
-		//this.productVersion = productVersion;
-		this.seriesName = seriesName;
-		this.familyName = familyName;
+	public void addProduct(ProductBlock pb) {
+		products.add(pb);
 	}
 
-	public void setProductId(int productId) {
-		this.productId = productId;
-	}
-
-	//public void setProductVersion(int productVersion) {
-	//	this.productVersion = productVersion;
-	//}
-
-	public void setSeriesName(String seriesName) {
-		this.seriesName = seriesName;
-	}
-
-	public void setFamilyName(String familyName) {
-		this.familyName = familyName;
+	public void setMapsetName(String mapsetName) {
+		this.mapsetName = mapsetName;
 	}
 
 	public void close() throws IOException {

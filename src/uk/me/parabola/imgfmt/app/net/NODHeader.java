@@ -37,6 +37,8 @@ public class NODHeader extends CommonHeader {
 
 	private final char align = DEF_ALIGN;
 
+	private static boolean driveOnLeft;
+
 	public NODHeader() {
 		super(HEADER_LEN, "GARMIN NOD");
 	}
@@ -62,7 +64,10 @@ public class NODHeader extends CommonHeader {
 		nodes.writeSectionInfo(writer);
 
 		// now sets 0x02 (enable turn restrictions?)
-		writer.putInt(0x27);
+		int val = 0x27;
+		if(driveOnLeft)
+			val |= 0x0300;
+		writer.putInt(val);
 
 		writer.putChar(align);
 		writer.putChar((char) (align - 1));
@@ -99,5 +104,9 @@ public class NODHeader extends CommonHeader {
 
 	public Section getBoundarySection() {
 		return boundary;
+	}
+
+	public static void setDriveOnLeft(boolean dol) {
+		driveOnLeft = dol;
 	}
 }

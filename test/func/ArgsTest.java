@@ -18,7 +18,7 @@ package func;
 
 import java.io.FileNotFoundException;
 
-import uk.me.parabola.imgfmt.app.trergn.TREFile;
+import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -87,7 +87,7 @@ public class ArgsTest extends Base {
 
 		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
 		ImgChannel chan = fs.open(Args.DEF_MAP_ID + ".TRE", "r");
-		TREFile treFile = new TREFile(chan, false);
+		TREFileReader treFile = new TREFileReader(chan);
 
 		assertEquals("display priority", pri, ((TREHeader) treFile.getHeader()).getDisplayPriority());
 	}

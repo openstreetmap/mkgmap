@@ -16,9 +16,9 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Section;
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 
 /**
  * This is not a separate header, but rather part of the LBL header.  It is just
@@ -124,19 +124,38 @@ public class PlacesHeader {
 	void readFileHeader(ImgFileReader reader) {
 		reader.position(0x1f);
 
-		country.setPosition(reader.getInt());
-		country.setSize(reader.getInt());
-		country.setItemSize(reader.getChar());
+		country.readSectionInfo(reader, true);
 		reader.getInt();
 
-		region.setPosition(reader.getInt());
-		region.setSize(reader.getInt());
-		region.setItemSize(reader.getChar());
+		region.readSectionInfo(reader, true);
 		reader.getInt();
 
-		city.setPosition(reader.getInt());
-		city.setSize(reader.getInt());
-		city.setItemSize(reader.getChar());
+		city.readSectionInfo(reader, true);
+		reader.getInt();
+
+		poiIndex.readSectionInfo(reader, true);
+		reader.getInt();
+
+		poiProperties.readSectionInfo(reader, false);
+		reader.get(); // offset multiplier
+
+		POIGlobalFlags = reader.get();
+		reader.getChar();
+		reader.get();
+
+		poiTypeIndex.readSectionInfo(reader, true);
+		reader.getInt();
+
+		zip.readSectionInfo(reader, true);
+		reader.getInt();
+
+		highway.readSectionInfo(reader, true);
+		reader.getInt();
+
+		exitFacility.readSectionInfo(reader, true);
+		reader.getInt();
+
+		highwayData.readSectionInfo(reader, true);
 		reader.getInt();
 	}
 
@@ -191,5 +210,47 @@ public class PlacesHeader {
 
 	public int getNumCities() {
 		return city.getNumItems();
+	}
+
+	public int getNumZips() {
+		return zip.getNumItems();
+	}
+	
+	public int getPoiPropertiesStart() {
+		return poiProperties.getPosition();
+	}
+	public int getPoiPropertiesEnd() {
+		return poiProperties.getEndPos();
+	}
+
+	public int getCitiesStart() {
+		return city.getPosition();
+	}
+	public int getCitiesEnd() {
+		return city.getEndPos();
+	}
+	
+	public int getNumExits() {
+		return exitFacility.getNumItems();
+	}
+
+	public int getCountriesStart() {
+		return country.getPosition();
+	}
+
+	public int getCountriesEnd() {
+		return country.getEndPos();
+	}
+
+	public int getRegionsStart() {
+		return region.getPosition();
+	}
+
+	public int getRegionsEnd() {
+		return region.getEndPos();
+	}
+
+	public int getNumHighways() {
+		return highway.getNumItems();
 	}
 }
