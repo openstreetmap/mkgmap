@@ -20,8 +20,10 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * More tests for rule sets. Mostly concentrating on ordering issues and
@@ -251,6 +253,20 @@ public class RuleSetTest {
 
 		GType type = rs.resolveType(el);
 		assertEquals("second marker rule", 2, type.getType());
+	}
+
+	@Test @Ignore
+	public void testContinueChangesTag() {
+		RuleSet rs = makeRuleSet("highway=crossing & crossing=zebra_crossing" +
+				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue]" +
+				"highway=crossing [0x610f resolution 24 continue]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "crossing");
+		el.addTag("crossing", "zebra_crossing");
+
+		GType type = rs.resolveType(el);
+		assertNull("Second rule should not be matched", type.next());
 	}
 
 	/**
