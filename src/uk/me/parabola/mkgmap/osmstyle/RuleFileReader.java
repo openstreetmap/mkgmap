@@ -112,7 +112,7 @@ public class RuleFileReader {
 
 		//System.out.println("From: " + op);
 		Op op2 = rearrangeExpression(op);
-		//System.out.println("RE: " + op2);
+		//System.out.println("TO  : " + op2);
 
 		if (op2 instanceof BinaryOp) {
 			optimiseAndSaveBinaryOp((BinaryOp) op2, actions, gt);
@@ -134,11 +134,16 @@ public class RuleFileReader {
 			return op;
 
 		if (op.isType(AND)) {
+			// Recursively re-arrange the child nodes
+			rearrangeExpression(op.getFirst());
+			rearrangeExpression(((AndOp) op).getSecond());
+
+			swapForSelectivity((AndOp) op);
+			Op op1 = op.getFirst();
+			Op op2 = ((AndOp) op).getSecond();
+			
 			// If the first term is an EQUALS or EXISTS then this subtree is
 			// already solved and we need to do no more.
-			Op op1 = rearrangeExpression(op.getFirst());
-			Op op2 = rearrangeExpression(((AndOp) op).getSecond());
-
 			if (isSolved(op1)) {
 				return rearrangeAnd((AndOp) op, op1, op2);
 			} else if (isSolved(op2)) {
@@ -147,6 +152,22 @@ public class RuleFileReader {
 		}
 
 		return op;
+	}
+
+	/**
+	 * Swap the terms so that the most selective or fastest term to calculate
+	 * is first.
+	 * @param op A AND operation.
+	 */
+	private static void swapForSelectivity(AndOp op) {
+		Op first = op.getFirst();
+		int sel1 = selectivity(first);
+		Op second = op.getSecond();
+		int sel2 = selectivity(second);
+		if (sel1 > sel2) {
+			op.setFirst(second);
+			op.setSecond(first);
+		}
 	}
 
 	/**
@@ -166,12 +187,13 @@ public class RuleFileReader {
 			return top;
 		} else if (op1.isType(AND)) {
 			// The first term is AND.
-			// Its first must be indexable (EQUALS or EXIST).
-			// Make that our first term.
+			// If its first term is indexable (EQUALS or EXIST) then we
+			// re-arrange the tree so that that term is first.
 			Op first = op1.getFirst();
 			if (isIndexable(first)) {
 				top.setFirst(first);
 				op1.setFirst(op2);
+				swapForSelectivity((AndOp) op1);
 				top.setSecond(op1);
 				return top;
 			}
@@ -224,15 +246,48 @@ public class RuleFileReader {
 	 * It is either solved or it cannot be solved.
 	 */
 	private static boolean isFinished(Op op) {
+		// If we can improve the ordering then we are not done just yet
+		if ((op instanceof BinaryOp) && selectivity(op.getFirst()) > selectivity(((BinaryOp) op).getSecond()))
+			return false;
+
 		if (isSolved(op))
 			return true;
+
 		char type = op.getType();
 		switch (type) {
 		case AND:
-		case OR: // possibly not required
+			return false;
+		case OR:
 			return false;
 		default:
 			return true;
+		}
+	}
+
+	/**
+	 * Get a value for how selective this operation is.  We try to bring
+	 * EQUALS to the front followed by EXISTS.  Without knowing tag
+	 * frequency you can only guess at what the most selective operations
+	 * are, so all we do is arrange EQUALS - EXISTS - everything else.
+	 * Note that you must have an EQUALS or EXISTS first, so you can't
+	 * bring anything else earlier than them.
+	 *
+	 * @return An integer, lower values mean the operation should be earlier
+	 * in the expression than operations with higher values.
+	 */
+	private static int selectivity(Op op) {
+		switch (op.getType()) {
+		case EQUALS:
+			return 0;
+		case EXISTS:
+			return 1;
+
+		case AND:
+			case OR:
+			return Math.min(selectivity(op.getFirst()), selectivity(((BinaryOp) op).getSecond()));
+		
+		default:
+			return 1000;
 		}
 	}
 

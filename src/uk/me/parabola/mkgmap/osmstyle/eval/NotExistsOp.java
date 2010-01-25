@@ -22,13 +22,17 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * True of the tag does not exist.
  * @author Steve Ratcliffe
  */
-public class NotExistsOp extends EqualsOp {
+public class NotExistsOp extends Op {
 	public NotExistsOp() {
 		setType(NOT_EXISTS);
 	}
 
 	public boolean eval(Element el) {
 		return el.getTag(first.value()) == null;
+	}
+
+	public int priority() {
+		return 10;
 	}
 
 	public String toString() {

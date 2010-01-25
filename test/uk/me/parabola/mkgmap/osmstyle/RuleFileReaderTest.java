@@ -59,7 +59,7 @@ public class RuleFileReaderTest {
 		assertEquals("rough footway", "[0x2 level 2]", type.toString());
 
 		el.addTag("oneway", "true");
-		rule = rs.getRule("highway=*");
+		rule = rs.getRule("oneway=true");
 		type = rule.resolveType(el);
 		assertEquals("oneway footway", "[0x6 level 1]", type.toString());
 	}
@@ -466,13 +466,15 @@ public class RuleFileReaderTest {
 		RuleSet rs = makeRuleSet(
 				//"a~b      [0x0]" +
 				"a~b & c=d  [0x1]" +
-				"a~b & c~d & e=f   [0x2]" +
-				"(a~b | c~d) & e=f  [0x3]" +
-				"(a~b | c~d) & e=f & g=h  [0x4]" +
-				"((a~b | c~d) & e=f) & g=h [0x5]" +
-				"e=f & g=h & (a~b | c~'d.*')  [0x6]" +
-				"(e=f & g=h) & (a~b | c~'d.*')  [0x7]" +
-				""
+						"a~b & c~d & e=f   [0x2]" +
+						"(a~b | c~d) & e=f  [0x3]" +
+						"(a~b | c~d) & e=f & g=h  [0x4]" +
+						"((a~b | c~d) & e=f) & g=h [0x5]" +
+						"e=f & g=h & (a~b | c~'d.*')  [0x6]" +
+						"(e=f & g=h) & (a~b | c~'d.*')  [0x7]" +
+						"a=* & b=* & c=d" +
+						"a=* & (b=* | c=d)" +
+						""
 		);
 
 		Way el = new Way(1);

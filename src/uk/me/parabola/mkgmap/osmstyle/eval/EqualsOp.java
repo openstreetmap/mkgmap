@@ -45,6 +45,4 @@ public class EqualsOp extends BinaryOp {
 	public String toString() {
 		return getFirst().toString() + '=' + getSecond();
 	}
-
-	
 }
