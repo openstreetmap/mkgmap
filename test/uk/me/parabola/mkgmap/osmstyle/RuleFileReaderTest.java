@@ -459,6 +459,32 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * The main point of this test is to ensure that all the examples compile.
+	 */
+	@Test
+	public void testComplexRegex() {
+		RuleSet rs = makeRuleSet(
+				//"a~b      [0x0]" +
+				"a~b & c=d  [0x1]" +
+				"a~b & c~d & e=f   [0x2]" +
+				"(a~b | c~d) & e=f  [0x3]" +
+				"(a~b | c~d) & e=f & g=h  [0x4]" +
+				"((a~b | c~d) & e=f) & g=h [0x5]" +
+				"e=f & g=h & (a~b | c~'d.*')  [0x6]" +
+				"(e=f & g=h) & (a~b | c~'d.*')  [0x7]" +
+				""
+		);
+
+		Way el = new Way(1);
+		el.addTag("c", "df");
+		el.addTag("g", "h");
+		el.addTag("e", "f");
+
+		GType type = rs.resolveType(el);
+		assertNotNull("matches a rule", type);
+	}
+
+	/**
 	 * Create a rule set out of a string.  The string is processed
 	 * as if it were in a file and the levels spec had been set.
 	 */
