@@ -9,6 +9,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
@@ -269,7 +270,7 @@ public class RestrictionRelation extends Relation {
 		return result;
 	}
 
-	public void addRestriction(RoadNetwork roadNetwork) {
+	public void addRestriction(MapCollector collector) {
 
 		if(restriction == null || viaNode == null || fromNode == null || toNode == null) {
 			// restriction must have some error (reported earlier)
@@ -281,7 +282,7 @@ public class RestrictionRelation extends Relation {
 		   restriction.equals("no_straight_on") ||
 		   restriction.equals("no_u_turn") ||
 		   restriction.startsWith("no_turn")) {
-			roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
+			collector.addRestriction(fromNode, toNode, viaNode, exceptMask);
 			if(restriction.startsWith("no_turn"))
 				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way " + toWay.toBrowseURL());
 			else
@@ -296,7 +297,7 @@ public class RestrictionRelation extends Relation {
 			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.toBrowseURL());
 			for(CoordNode otherNode : otherNodes) {
 				log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
-				roadNetwork.addRestriction(fromNode, otherNode, viaNode, exceptMask);
+				collector.addRestriction(fromNode, otherNode, viaNode, exceptMask);
 			}
 		}
 		else {

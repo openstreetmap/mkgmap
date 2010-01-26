@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Properties;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
@@ -171,6 +172,8 @@ public class StyledConverterTest {
 			public void addShape(MapShape shape) { }
 
 			public void addRoad(MapRoad road) { }
+
+			public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) { }
 		};
 
 		return new StyledConverter(style, coll, new Properties());

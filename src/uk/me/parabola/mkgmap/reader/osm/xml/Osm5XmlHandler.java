@@ -42,8 +42,8 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapDetails;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
@@ -101,7 +101,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long currentElementId;
 
 	private OsmConverter converter;
-	private MapDetails mapper;
+	private MapCollector collector;
 	private Area bbox;
 	private Runnable endTask;
 
@@ -643,23 +643,18 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		wayMap = null;
 
-		RoadNetwork roadNetwork = mapper.getRoadNetwork();
-		for (Relation r : relationMap.values()) {
-			if(r instanceof RestrictionRelation) {
-				((RestrictionRelation)r).addRestriction(roadNetwork);
-			}
-		}
-
+		converter.end();
+		
 		relationMap = null;
 
 		if(bbox != null) {
-			mapper.addToBounds(new Coord(bbox.getMinLat(),
+			collector.addToBounds(new Coord(bbox.getMinLat(),
 						     bbox.getMinLong()));
-			mapper.addToBounds(new Coord(bbox.getMinLat(),
+			collector.addToBounds(new Coord(bbox.getMinLat(),
 						     bbox.getMaxLong()));
-			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+			collector.addToBounds(new Coord(bbox.getMaxLat(),
 						     bbox.getMinLong()));
-			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+			collector.addToBounds(new Coord(bbox.getMaxLat(),
 						     bbox.getMaxLong()));
 		}
 
@@ -962,7 +957,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			coordMap.put(id, co);
 			currentElementId = id;
 			if (bbox == null)
-				mapper.addToBounds(co);
+				collector.addToBounds(co);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
@@ -1047,8 +1042,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		this.converter = converter;
 	}
 
-	public void setMapper(MapDetails mapper) {
-		this.mapper = mapper;
+	public void setCollector(MapDetails collector) {
+		this.collector = collector;
 	}
 
 	public void setEndTask(Runnable endTask) {
@@ -1083,8 +1078,15 @@ class Osm5XmlHandler extends DefaultHandler {
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
-		else
-			seaBounds = mapper.getBounds();
+		else {
+			// This should probably be moved somewhere that is supposed to know
+			// what the bounding box is.
+			if (collector instanceof MapCollector)
+				seaBounds = ((MapDetails) collector).getBounds();
+			else {
+				throw new IllegalArgumentException("Not using MapDetails");
+			}
+		}
 
 		// clip all shoreline segments
 		List<Way> toBeRemoved = new ArrayList<Way>();

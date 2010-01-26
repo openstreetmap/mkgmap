@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -357,6 +358,16 @@ public class StyledConverter implements OsmConverter {
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
 		this.bbox = bbox;
+	}
+
+	public void end() {
+		Collection<List<RestrictionRelation>> lists = restrictions.values();
+		for (List<RestrictionRelation> l : lists) {
+
+			for (RestrictionRelation rr : l) {
+				rr.addRestriction(collector);
+			}
+		}
 	}
 
 	/**

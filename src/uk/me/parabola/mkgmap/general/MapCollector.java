@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.general;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 
 
 /**
@@ -65,4 +66,11 @@ public interface MapCollector {
 	 * segments and to do routing etc.
 	 */
 	public void addRoad(MapRoad road);
+
+	/**
+	 * Add a routing restriction to the map.  This is something such as
+	 * no left turn.
+	 * @param exceptMask For exceptions eg. no-left-turn except for buses.
+	 */
+	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask);
 }
