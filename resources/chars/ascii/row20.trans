@@ -1,272 +1,264 @@
-
-# This is table for transliterating characters in the range
-# from U+2000 to U+20ff
 #
-# The first column is the unicode character and the second
-# column is the transliteration of that character to ascii characters.
-# One or more characters can be used, for example for a character æ which
-# is a combined a and e you could write 'ae' (without the quotes) as the 
-# transliteration.
-#
-# There are languages where this will not work very well, in case
-# another approach should be tried.
-#
-# Any line can be deleted and will default to a '?' character
+# A look up table to transliterate to ascii.
+# Created with the Text::Unidecode module of perl
 #
 
-U+2000   ?        # character  
-U+2001   ?        # character  
-U+2002   ?        # character  
-U+2003   ?        # character  
-U+2004   ?        # character  
-U+2005   ?        # character  
-U+2006   ?        # character  
-U+2007   ?        # character  
-U+2008   ?        # character  
-U+2009   ?        # character  
-U+200a   ?        # character  
-U+200b   ?        # character ​
-U+200c   ?        # character ‌
-U+200d   ?        # character ‍
-U+200e   ?        # character ‎
-U+200f   ?        # character ‏
-U+2010   -        # character ‐
-U+2011   -        # character ‑
-U+2012   -        # character ‒
-U+2013   -        # character –
-U+2014   --       # character —
-U+2015   --       # character ―
-U+2016   ||       # character ‖
-U+2017   ?        # character ‗
-U+2018   '        # character ‘
-U+2019   '        # character ’
-U+201a   ,        # character ‚
-U+201b   '        # character ‛
-U+201c   "        # character “
-U+201d   "        # character ”
-U+201e   "        # character „
-U+201f   "        # character ‟
-U+2020   ?        # character †
-U+2021   ?        # character ‡
-U+2022   ?        # character •
-U+2023   ?        # character ‣
-U+2024   .        # character ․
-U+2025   ..       # character ‥
-U+2026   _        # character …
-U+2027   ?        # character ‧
-U+2028   ?        # character  
-U+2029   ?        # character  
-U+202a   ?        # character ‪
-U+202b   ?        # character ‫
-U+202c   ?        # character ‬
-U+202d   ?        # character ‭
-U+202e   ?        # character ‮
-U+202f   ?        # character  
-U+2030   ?        # character ‰
-U+2031   ?        # character ‱
-U+2032   '        # character ′
-U+2033   "        # character ″
-U+2034   '''      # character ‴
-U+2035   '        # character ‵
-U+2036   "        # character ‶
-U+2037   '''      # character ‷
-U+2038   ?        # character ‸
-U+2039   <        # character ‹
-U+203a   >        # character ›
-U+203b   ?        # character ※
-U+203c   ?        # character ‼
-U+203d   ?        # character ‽
-U+203e   ?        # character ‾
-U+203f   ?        # character ‿
-U+2040   ?        # character ⁀
-U+2041   ?        # character ⁁
-U+2042   ?        # character ⁂
-U+2043   ?        # character ⁃
-U+2044   /        # character ⁄
-U+2045   ?        # character ⁅
-U+2046   ?        # character ⁆
-U+2047   ??       # character ⁇
-U+2048   ?!       # character ⁈
-U+2049   !?       # character ⁉
-U+204a   ?        # character ⁊
-U+204b   ?        # character ⁋
-U+204c   ?        # character ⁌
-U+204d   ?        # character ⁍
-U+204e   ?        # character ⁎
-U+204f   ?        # character ⁏
-U+2050   ?        # character ⁐
-U+2051   ?        # character ⁑
-U+2052   ?        # character ⁒
-U+2053   ?        # character ⁓
-U+2054   ?        # character ⁔
-U+2055   ?        # character ⁕
-U+2056   ?        # character ⁖
-U+2057   ?        # character ⁗
-U+2058   ?        # character ⁘
-U+2059   ?        # character ⁙
-U+205a   ?        # character ⁚
-U+205b   ?        # character ⁛
-U+205c   ?        # character ⁜
-U+205d   ?        # character ⁝
-U+205e   ?        # character ⁞
-U+205f   ?        # character  
-U+2060   ?        # character ⁠
-U+2061   ?        # character ⁡
-U+2062   ?        # character ⁢
-U+2063   ?        # character ⁣
-U+2064   ?        # character ⁤
-U+2065   ?        # character ⁥
-U+2066   ?        # character ⁦
-U+2067   ?        # character ⁧
-U+2068   ?        # character ⁨
-U+2069   ?        # character ⁩
-U+206a   ?        # character ⁪
-U+206b   ?        # character ⁫
-U+206c   ?        # character ⁬
-U+206d   ?        # character ⁭
-U+206e   ?        # character ⁮
-U+206f   ?        # character ⁯
-U+2070   ?        # character ⁰
-U+2071   ?        # character ⁱ
-U+2072   ?        # character ⁲
-U+2073   ?        # character ⁳
-U+2074   ?        # character ⁴
-U+2075   ?        # character ⁵
-U+2076   ?        # character ⁶
-U+2077   ?        # character ⁷
-U+2078   ?        # character ⁸
-U+2079   ?        # character ⁹
-U+207a   ?        # character ⁺
-U+207b   ?        # character ⁻
-U+207c   ?        # character ⁼
-U+207d   ?        # character ⁽
-U+207e   ?        # character ⁾
-U+207f   ?        # character ⁿ
-U+2080   ?        # character ₀
-U+2081   ?        # character ₁
-U+2082   ?        # character ₂
-U+2083   ?        # character ₃
-U+2084   ?        # character ₄
-U+2085   ?        # character ₅
-U+2086   ?        # character ₆
-U+2087   ?        # character ₇
-U+2088   ?        # character ₈
-U+2089   ?        # character ₉
-U+208a   ?        # character ₊
-U+208b   ?        # character ₋
-U+208c   ?        # character ₌
-U+208d   ?        # character ₍
-U+208e   ?        # character ₎
-U+208f   ?        # character ₏
-U+2090   ?        # character ₐ
-U+2091   ?        # character ₑ
-U+2092   ?        # character ₒ
-U+2093   ?        # character ₓ
-U+2094   ?        # character ₔ
-U+2095   ?        # character ₕ
-U+2096   ?        # character ₖ
-U+2097   ?        # character ₗ
-U+2098   ?        # character ₘ
-U+2099   ?        # character ₙ
-U+209a   ?        # character ₚ
-U+209b   ?        # character ₛ
-U+209c   ?        # character ₜ
-U+209d   ?        # character ₝
-U+209e   ?        # character ₞
-U+209f   ?        # character ₟
-U+20a0   ?        # character ₠
-U+20a1   ?        # character ₡
-U+20a2   ?        # character ₢
-U+20a3   ?        # character ₣
-U+20a4   ?        # character ₤
-U+20a5   ?        # character ₥
-U+20a6   ?        # character ₦
-U+20a7   ?        # character ₧
-U+20a8   ?        # character ₨
-U+20a9   ?        # character ₩
-U+20aa   ?        # character ₪
-U+20ab   ?        # character ₫
-U+20ac   ?        # character €
-U+20ad   ?        # character ₭
-U+20ae   ?        # character ₮
-U+20af   ?        # character ₯
-U+20b0   ?        # character ₰
-U+20b1   ?        # character ₱
-U+20b2   ?        # character ₲
-U+20b3   ?        # character ₳
-U+20b4   ?        # character ₴
-U+20b5   ?        # character ₵
-U+20b6   ?        # character ₶
-U+20b7   ?        # character ₷
-U+20b8   ?        # character ₸
-U+20b9   ?        # character ₹
-U+20ba   ?        # character ₺
-U+20bb   ?        # character ₻
-U+20bc   ?        # character ₼
-U+20bd   ?        # character ₽
-U+20be   ?        # character ₾
-U+20bf   ?        # character ₿
-U+20c0   ?        # character ⃀
-U+20c1   ?        # character ⃁
-U+20c2   ?        # character ⃂
-U+20c3   ?        # character ⃃
-U+20c4   ?        # character ⃄
-U+20c5   ?        # character ⃅
-U+20c6   ?        # character ⃆
-U+20c7   ?        # character ⃇
-U+20c8   ?        # character ⃈
-U+20c9   ?        # character ⃉
-U+20ca   ?        # character ⃊
-U+20cb   ?        # character ⃋
-U+20cc   ?        # character ⃌
-U+20cd   ?        # character ⃍
-U+20ce   ?        # character ⃎
-U+20cf   ?        # character ⃏
-U+20d0   ?        # character ⃐
-U+20d1   ?        # character ⃑
-U+20d2   ?        # character ⃒
-U+20d3   ?        # character ⃓
-U+20d4   ?        # character ⃔
-U+20d5   ?        # character ⃕
-U+20d6   ?        # character ⃖
-U+20d7   ?        # character ⃗
-U+20d8   ?        # character ⃘
-U+20d9   ?        # character ⃙
-U+20da   ?        # character ⃚
-U+20db   ?        # character ⃛
-U+20dc   ?        # character ⃜
-U+20dd   ?        # character ⃝
-U+20de   ?        # character ⃞
-U+20df   ?        # character ⃟
-U+20e0   ?        # character ⃠
-U+20e1   ?        # character ⃡
-U+20e2   ?        # character ⃢
-U+20e3   ?        # character ⃣
-U+20e4   ?        # character ⃤
-U+20e5   ?        # character ⃥
-U+20e6   ?        # character ⃦
-U+20e7   ?        # character ⃧
-U+20e8   ?        # character ⃨
-U+20e9   ?        # character ⃩
-U+20ea   ?        # character ⃪
-U+20eb   ?        # character ⃫
-U+20ec   ?        # character ⃬
-U+20ed   ?        # character ⃭
-U+20ee   ?        # character ⃮
-U+20ef   ?        # character ⃯
-U+20f0   ?        # character ⃰
-U+20f1   ?        # character ⃱
-U+20f2   ?        # character ⃲
-U+20f3   ?        # character ⃳
-U+20f4   ?        # character ⃴
-U+20f5   ?        # character ⃵
-U+20f6   ?        # character ⃶
-U+20f7   ?        # character ⃷
-U+20f8   ?        # character ⃸
-U+20f9   ?        # character ⃹
-U+20fa   ?        # character ⃺
-U+20fb   ?        # character ⃻
-U+20fc   ?        # character ⃼
-U+20fd   ?        # character ⃽
-U+20fe   ?        # character ⃾
-U+20ff   ?        # character ⃿
+U+2000              # Character  
+U+2001              # Character  
+U+2002              # Character  
+U+2003              # Character  
+U+2004              # Character  
+U+2005              # Character  
+U+2006              # Character  
+U+2007              # Character  
+U+2008              # Character  
+U+2009              # Character  
+U+200a              # Character  
+U+200b              # Character ​
+U+200c ?            # Character ‌
+U+200d ?            # Character ‍
+U+200e ?            # Character ‎
+U+200f ?            # Character ‏
+U+2010 -            # Character ‐
+U+2011 -            # Character ‑
+U+2012 -            # Character ‒
+U+2013 -            # Character –
+U+2014 --           # Character —
+U+2015 --           # Character ―
+U+2016 ||           # Character ‖
+U+2017 _            # Character ‗
+U+2018 '            # Character ‘
+U+2019 '            # Character ’
+U+201a ,            # Character ‚
+U+201b '            # Character ‛
+U+201c "            # Character “
+U+201d "            # Character ”
+U+201e ,,           # Character „
+U+201f "            # Character ‟
+U+2020 +            # Character †
+U+2021 ++           # Character ‡
+U+2022 *            # Character •
+U+2023 *>           # Character ‣
+U+2024 .            # Character ․
+U+2025 ..           # Character ‥
+U+2026 ...          # Character …
+U+2027 .            # Character ‧
+U+2028 
+            # Character  
+U+2029 
+
+           # Character  
+U+202a ?            # Character ‪
+U+202b ?            # Character ‫
+U+202c ?            # Character ‬
+U+202d ?            # Character ‭
+U+202e ?            # Character ‮
+U+202f              # Character  
+U+2030 %0           # Character ‰
+U+2031 %00          # Character ‱
+U+2032 '            # Character ′
+U+2033 ''           # Character ″
+U+2034 '''          # Character ‴
+U+2035 `            # Character ‵
+U+2036 ``           # Character ‶
+U+2037 ```          # Character ‷
+U+2038 ^            # Character ‸
+U+2039 <            # Character ‹
+U+203a >            # Character ›
+U+203b *            # Character ※
+U+203c !!           # Character ‼
+U+203d ?            # Character ‽
+U+203e -            # Character ‾
+U+203f _            # Character ‿
+U+2040 -            # Character ⁀
+U+2041 ^            # Character ⁁
+U+2042 ***          # Character ⁂
+U+2043 --           # Character ⁃
+U+2044 /            # Character ⁄
+U+2045 -[           # Character ⁅
+U+2046 ]-           # Character ⁆
+U+2047 ?            # Character ⁇
+U+2048 ?            # Character ⁈
+U+2049 ?            # Character ⁉
+U+204a 7            # Character ⁊
+U+204b PP           # Character ⁋
+U+204c (]           # Character ⁌
+U+204d [)           # Character ⁍
+U+204e ?            # Character ⁎
+U+204f ?            # Character ⁏
+U+2050 ?            # Character ⁐
+U+2051 ?            # Character ⁑
+U+2052 ?            # Character ⁒
+U+2053 ?            # Character ⁓
+U+2054 ?            # Character ⁔
+U+2055 ?            # Character ⁕
+U+2056 ?            # Character ⁖
+U+2057 ?            # Character ⁗
+U+2058 ?            # Character ⁘
+U+2059 ?            # Character ⁙
+U+205a ?            # Character ⁚
+U+205b ?            # Character ⁛
+U+205c ?            # Character ⁜
+U+205d ?            # Character ⁝
+U+205e ?            # Character ⁞
+U+205f ?            # Character  
+U+2060 ?            # Character ⁠
+U+2061 ?            # Character ⁡
+U+2062 ?            # Character ⁢
+U+2063 ?            # Character ⁣
+U+2064 ?            # Character ⁤
+U+2065 ?            # Character ⁥
+U+2066 ?            # Character ⁦
+U+2067 ?            # Character ⁧
+U+2068 ?            # Character ⁨
+U+2069 ?            # Character ⁩
+U+206a ?            # Character ⁪
+U+206b ?            # Character ⁫
+U+206c ?            # Character ⁬
+U+206d ?            # Character ⁭
+U+206e ?            # Character ⁮
+U+206f ?            # Character ⁯
+U+2070 ?            # Character ⁰
+U+2071 ?            # Character ⁱ
+U+2072 ?            # Character ⁲
+U+2073 ?            # Character ⁳
+U+2074 4            # Character ⁴
+U+2075 5            # Character ⁵
+U+2076 6            # Character ⁶
+U+2077 7            # Character ⁷
+U+2078 8            # Character ⁸
+U+2079 9            # Character ⁹
+U+207a +            # Character ⁺
+U+207b -            # Character ⁻
+U+207c =            # Character ⁼
+U+207d (            # Character ⁽
+U+207e )            # Character ⁾
+U+207f n            # Character ⁿ
+U+2080 ?            # Character ₀
+U+2081 1            # Character ₁
+U+2082 2            # Character ₂
+U+2083 3            # Character ₃
+U+2084 4            # Character ₄
+U+2085 5            # Character ₅
+U+2086 6            # Character ₆
+U+2087 7            # Character ₇
+U+2088 8            # Character ₈
+U+2089 9            # Character ₉
+U+208a +            # Character ₊
+U+208b -            # Character ₋
+U+208c =            # Character ₌
+U+208d (            # Character ₍
+U+208e )            # Character ₎
+U+208f ?            # Character ₏
+U+2090 ?            # Character ₐ
+U+2091 ?            # Character ₑ
+U+2092 ?            # Character ₒ
+U+2093 ?            # Character ₓ
+U+2094 ?            # Character ₔ
+U+2095 ?            # Character ₕ
+U+2096 ?            # Character ₖ
+U+2097 ?            # Character ₗ
+U+2098 ?            # Character ₘ
+U+2099 ?            # Character ₙ
+U+209a ?            # Character ₚ
+U+209b ?            # Character ₛ
+U+209c ?            # Character ₜ
+U+209d ?            # Character ₝
+U+209e ?            # Character ₞
+U+209f ?            # Character ₟
+U+20a0 ECU          # Character ₠
+U+20a1 CL           # Character ₡
+U+20a2 Cr           # Character ₢
+U+20a3 FF           # Character ₣
+U+20a4 L            # Character ₤
+U+20a5 mil          # Character ₥
+U+20a6 N            # Character ₦
+U+20a7 Pts          # Character ₧
+U+20a8 Rs           # Character ₨
+U+20a9 W            # Character ₩
+U+20aa NS           # Character ₪
+U+20ab D            # Character ₫
+U+20ac EU           # Character €
+U+20ad K            # Character ₭
+U+20ae T            # Character ₮
+U+20af Dr           # Character ₯
+U+20b0 ?            # Character ₰
+U+20b1 ?            # Character ₱
+U+20b2 ?            # Character ₲
+U+20b3 ?            # Character ₳
+U+20b4 ?            # Character ₴
+U+20b5 ?            # Character ₵
+U+20b6 ?            # Character ₶
+U+20b7 ?            # Character ₷
+U+20b8 ?            # Character ₸
+U+20b9 ?            # Character ₹
+U+20ba ?            # Character ₺
+U+20bb ?            # Character ₻
+U+20bc ?            # Character ₼
+U+20bd ?            # Character ₽
+U+20be ?            # Character ₾
+U+20bf ?            # Character ₿
+U+20c0 ?            # Character ⃀
+U+20c1 ?            # Character ⃁
+U+20c2 ?            # Character ⃂
+U+20c3 ?            # Character ⃃
+U+20c4 ?            # Character ⃄
+U+20c5 ?            # Character ⃅
+U+20c6 ?            # Character ⃆
+U+20c7 ?            # Character ⃇
+U+20c8 ?            # Character ⃈
+U+20c9 ?            # Character ⃉
+U+20ca ?            # Character ⃊
+U+20cb ?            # Character ⃋
+U+20cc ?            # Character ⃌
+U+20cd ?            # Character ⃍
+U+20ce ?            # Character ⃎
+U+20cf ?            # Character ⃏
+U+20d0 ?            # Character ⃐
+U+20d1 ?            # Character ⃑
+U+20d2 ?            # Character ⃒
+U+20d3 ?            # Character ⃓
+U+20d4 ?            # Character ⃔
+U+20d5 ?            # Character ⃕
+U+20d6 ?            # Character ⃖
+U+20d7 ?            # Character ⃗
+U+20d8 ?            # Character ⃘
+U+20d9 ?            # Character ⃙
+U+20da ?            # Character ⃚
+U+20db ?            # Character ⃛
+U+20dc ?            # Character ⃜
+U+20dd ?            # Character ⃝
+U+20de ?            # Character ⃞
+U+20df ?            # Character ⃟
+U+20e0 ?            # Character ⃠
+U+20e1 ?            # Character ⃡
+U+20e2 ?            # Character ⃢
+U+20e3 ?            # Character ⃣
+U+20e4 ?            # Character ⃤
+U+20e5 ?            # Character ⃥
+U+20e6 ?            # Character ⃦
+U+20e7 ?            # Character ⃧
+U+20e8 ?            # Character ⃨
+U+20e9 ?            # Character ⃩
+U+20ea ?            # Character ⃪
+U+20eb ?            # Character ⃫
+U+20ec ?            # Character ⃬
+U+20ed ?            # Character ⃭
+U+20ee ?            # Character ⃮
+U+20ef ?            # Character ⃯
+U+20f0 ?            # Character ⃰
+U+20f1 ?            # Character ⃱
+U+20f2 ?            # Character ⃲
+U+20f3 ?            # Character ⃳
+U+20f4 ?            # Character ⃴
+U+20f5 ?            # Character ⃵
+U+20f6 ?            # Character ⃶
+U+20f7 ?            # Character ⃷
+U+20f8 ?            # Character ⃸
+U+20f9 ?            # Character ⃹
+U+20fa ?            # Character ⃺
+U+20fb ?            # Character ⃻
+U+20fc ?            # Character ⃼
+U+20fd ?            # Character ⃽
+U+20fe ?            # Character ⃾
+U+20ff ?            # Character ⃿
