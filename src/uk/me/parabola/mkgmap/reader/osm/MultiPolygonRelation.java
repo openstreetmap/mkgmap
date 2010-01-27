@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -36,6 +37,9 @@ public class MultiPolygonRelation extends Relation {
 	private ArrayList<BitSet> containsMatrix;
 	private ArrayList<JoinedWay> rings;
 
+	private final uk.me.parabola.imgfmt.app.Area bbox;
+
+	
 	/**
 	 * if one of these tags are contained in the multipolygon then the outer
 	 * ways use the mp tags instead of their own tags.
@@ -53,8 +57,10 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayMap
 	 *            Map of all ways.
 	 */
-	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap) {
-		tileWayMap = wayMap;
+	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap, 
+			uk.me.parabola.imgfmt.app.Area bbox) {
+		this.tileWayMap = wayMap;
+		this.bbox = bbox;
 
 		setId(other.getId());
 
@@ -370,6 +376,35 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
+	 * Removes all ways that are completely outside the bounding box. 
+	 * This reduces error messages from problems on the tile bounds.
+	 * @param wayList list of ways
+	 */
+	private void removeWaysOutsideBbox(ArrayList<JoinedWay> wayList) {
+		ListIterator<JoinedWay> wayIter = wayList.listIterator();
+		while (wayIter.hasNext()) {
+			JoinedWay w = wayIter.next();
+			boolean remove = true;
+			// check all points
+			for (Coord c : w.getPoints()) {
+				if (bbox.contains(c)) {
+					// if one point is in the bounding box the way should not be removed
+					remove = false;
+					break;
+				}
+			}
+
+			if (remove) {
+				if (log.isDebugEnabled()) {
+					log.debug("Remove way", w.getId(),
+						"because it is completely outside the bounding box.");
+				}
+				wayIter.remove();
+			}
+		}
+	}
+	
+	/**
 	 * Find all rings that are not contained by any other ring.
 	 * 
 	 * @param candidates
@@ -469,6 +504,15 @@ public class MultiPolygonRelation extends Relation {
 			return;
 		}
 
+		removeWaysOutsideBbox(rings);
+
+		if (rings.isEmpty()) {
+			// do nothing
+			log.info("Multipolygon " + toBrowseURL()
+					+ " is completely outside the bounding box. It is not processed.");
+			return;
+		}
+		
 		createContainsMatrix(rings);
 
 		BitSet unfinishedRings = new BitSet(rings.size());
@@ -586,10 +630,11 @@ public class MultiPolygonRelation extends Relation {
 
 		if (unfinishedRings.isEmpty() == false) {
 			// we have at least one ring that could not be processed
-			// Probably we have intersecting polygons
+			// Probably we have intersecting or overlapping polygons
+			// one possible reason is if the relation overlaps the tile bounds
 			// => issue a warning
-			log.error("Multipolygon " + toBrowseURL()
-					+ " contains intersected ways");
+			log.warn("Multipolygon " + toBrowseURL()
+					+ " contains intersected or overlapping ways");
 			ArrayList<RingStatus> ringList = getRingStatus(unfinishedRings,
 					true);
 			for (RingStatus ring : ringList) {

@@ -554,8 +554,10 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void endRelation() {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
-			if ("multipolygon".equals(type))
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
+			if ("multipolygon".equals(type)) {
+				Area mpBbox = (bbox != null ? bbox : mapper.getBounds());
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
+			}
 			else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
@@ -1397,7 +1399,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 
 		if(generateSeaUsingMP) {
-			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+			Area mpBbox = (bbox != null ? bbox : mapper.getBounds());
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpBbox);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();
 		}
