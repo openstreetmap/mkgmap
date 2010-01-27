@@ -67,7 +67,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * @author Steve Ratcliffe
  */
-class Osm5XmlHandler extends DefaultHandler {
+public class Osm5XmlHandler extends DefaultHandler {
 	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
 
 	private int mode;
@@ -1042,7 +1042,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		this.converter = converter;
 	}
 
-	public void setCollector(MapDetails collector) {
+	public void setCollector(MapCollector collector) {
 		this.collector = collector;
 	}
 

@@ -161,7 +161,7 @@ public class RuleSet implements Rule {
 	 * matches.  If there is no match then null is returned.
 	 */
 	public GType resolveType(Element el) {
-		assert initRun;
+		assert initRun || rules.isEmpty();
 		RuleList combined = new RuleList();
 		for (String tagKey : el) {
 			RuleList rl = rules.get(tagKey);

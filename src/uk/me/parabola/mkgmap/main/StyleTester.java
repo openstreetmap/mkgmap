@@ -14,24 +14,34 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -56,15 +66,24 @@ import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.util.EnhancedProperties;
+
+import org.xml.sax.SAXException;
 
 
 /**
- * Reads in a file that contains a test for the style rules.
+ * Test style rules by converting to a text format, rather than a .img file.
+ * In addition you can specify a .osm file and a style file separately.
  *
+ * <h2>Single test file</h2>
  * The format of the file is as follows
  *
  * <pre>
@@ -88,92 +107,172 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * can include any other style files such as <<<options>>> or <<<info>>> if
  * you like.
  *
- * Everything is jammed into the one file to make it easier to run against
- * different versions.  But this will probably change when applied to the
- * style branch.
+ * <h2>osm file mode</h2>
+ * Takes two arguments, first the style file and then the osm file.
+ *
+ * You can give a --ordered flag and it will run style file in ordered mode,
+ * that is each rule will be applied to the element without any attempt at
+ * optimisation.  Untested, might be slow for large files.
  *
  * @author Steve Ratcliffe
  */
-public class StyleTester {
-	private final List<MapElement> lines = new ArrayList<MapElement>();
-
+public class StyleTester implements OsmConverter {
 	private static final Pattern SPACES_PATTERN = Pattern.compile(" +");
 	private static final Pattern EQUAL_PATTERN = Pattern.compile("=");
 
-	private final List<Way> ways = new ArrayList<Way>();
-	private final PrintStream out = System.out;
+	private static final String STYLETESTER_STYLE = "styletester.style";
+
+	//private Style style;
+	private final OsmConverter converter;
+
+	private static boolean ordered;
+
+	public StyleTester(MapCollector coll) throws FileNotFoundException {
+		this("styletester.style", coll, false);
+	}
+
+	public StyleTester(String stylefile, MapCollector coll, boolean ordered) throws FileNotFoundException {
+		if (ordered)
+			converter = makeStrictStyleConverter(stylefile, coll);
+		else
+			converter = makeStyleConverter(stylefile, coll);
+	}
 
 	public static void main(String[] args) throws IOException {
-		StyleTester sr = new StyleTester();
-		sr.test(args[0]);
+		String[] a = processOptions(args);
+		if (a.length == 1)
+			runSimpleTest(a[0]);
+		else
+			runTest(a[0], a[1]);
 	}
 
-	/**
-	 * Run the test.  Read in the test file that describes the tags and rules
-	 * to be tested and run the rules as implemented and also with a theoretical
-	 * strict ordering.
-	 * @param file The file containing the test information.
-	 */
-	private void test(String file) {
-		try {
-			readFile(file);
-		} catch (IOException e) {
-			System.err.println("Cant open file " + file);
-			return;
+	private static String[] processOptions(String[] args) {
+		List<String> a = new ArrayList<String>();
+		for (String s : args) {
+			if (s.startsWith("--ordered")) {
+				ordered = true;
+			} else
+				a.add(s);
 		}
+		return a.toArray(new String[a.size()]);
+	}
 
+	private static void runTest(String stylefile, String mapfile) {
+		List<MapElement> results = new ArrayList<MapElement>();
 		try {
-			StyledConverter conv = makeStyleConverter();
-			StyledConverter strictConv = makeStrictStyleConverter();
+			MapCollector collector = new PrintingMapCollector();
+			OsmConverter normal = new StyleTester(stylefile, collector, ordered);
 
-			out.println("<<<results>>>");
-			for (Way w : ways) {
-				// Actual results that you get from the code of the version of
-				// mkgmap that you are using.
-				out.printf("WAY %d:\n", w.getId());
-				conv.convertWay(w);
-				String[] actual = formatResults();
+			InputStream is = openFile(mapfile);
+			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			parserFactory.setXIncludeAware(true);
+			parserFactory.setNamespaceAware(true);
+			SAXParser parser = parserFactory.newSAXParser();
 
-				printResult(actual);
-
-				// What would happen if the rules were applied one-by-one from
-				// the top of the file downward in order.
-				strictConv.convertWay(w);
-				String[] expected = formatResults();
-				if (!Arrays.deepEquals(actual, expected)) {
-					out.println("  FAIL. If rules were run strictly in order this would be:");
-					printResult(expected);
-				}
-				out.println();
+			try {
+				Osm5XmlHandler handler = new Osm5XmlHandler(new EnhancedProperties());
+				handler.setCollector(collector);
+				handler.setConverter(normal);
+				handler.setEndTask(new Runnable() {
+					public void run() {
+					}
+				});
+				parser.parse(is, handler);
+			} catch (IOException e) {
+				throw new FormatException("Error reading file", e);
 			}
+		} catch (SAXException e) {
+			throw new FormatException("Error parsing file", e);
+		} catch (ParserConfigurationException e) {
+			throw new FormatException("Internal error configuring xml parser", e);
 		} catch (FileNotFoundException e) {
-			System.err.println("Cant open style: " + e);
+			System.err.println("Cannot open file " + mapfile);
 		}
-
 	}
+	
 
 	/**
-	 * Print out the result obtained from {@link #formatResults()}.
-	 * @param results An array of strings obtained from {@link #formatResults()}.
+	 * Run a simple test with a combined test file.
+	 * @param filename The test file contains text way definitions and a style
+	 * file all in one.
 	 */
-	private void printResult(String[] results) {
+	private static void runSimpleTest(String filename) {
+		try {
+			List<Way> ways = readSimpleTestFile(filename);
+
+			List<MapElement> results = new ArrayList<MapElement>();
+			OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
+
+			List<MapElement> strictResults = new ArrayList<MapElement>();
+			OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+
+			for (Way w : ways) {
+				normal.convertWay(w);
+				String[] actual = formatResults(results);
+				results.clear();
+
+				strict.convertWay(w);
+				String[] expected = formatResults(strictResults);
+				strictResults.clear();
+
+				//if (noStrict)
+				//	continue;
+
+				String prefix = "WAY " + w.getId() + ": ";
+				printResult(prefix, actual);
+
+				if (!Arrays.deepEquals(actual, expected)) {
+					System.out.println("ERROR with strict ordering result would be:");
+					printResult("Expected: " + prefix, actual);
+
+				}
+			}
+		} catch (IOException e) {
+			System.err.println("Cannot open test file " + filename);
+		}
+	}
+
+
+	public void convertWay(Way way) {
+		converter.convertWay(way);
+	}
+
+	public void convertNode(Node node) {
+		converter.convertNode(node);
+	}
+
+	public void convertRelation(Relation relation) {
+		converter.convertRelation(relation);
+	}
+
+	public void setBoundingBox(Area bbox) {
+		converter.setBoundingBox(bbox);
+	}
+
+	public void end() {
+	}
+
+
+	private static void printResult(String prefix, String[] results) {
 		for (String s : results) {
-			out.println("    " + s);
+			System.out.println(prefix + s);
 		}
 	}
 
 	/**
-	 * Read in the test file.
+	 * Read in the combined test file.  This contains some ways and a style.
+	 * The style does not need to include 'version' as this is added for you.
 	 */
-	private void readFile(String filename) throws IOException {
+	private static List<Way> readSimpleTestFile(String filename) throws IOException {
 		FileReader reader = new FileReader(filename);
 		BufferedReader br = new BufferedReader(reader);
+		List<Way> ways = Collections.emptyList();
 
 		String line;
 		while ((line = br.readLine()) != null) {
 			line = line.trim();
 			if (line.toLowerCase(Locale.ENGLISH).startsWith("way")) {
-				readWayTags(br, line);
+				ways = readWayTags(br, line);
 			} else if (line.startsWith("<<<")) {
 				// read the rest of the file
 				readStyles(br, line);
@@ -184,6 +283,8 @@ public class StyleTester {
 			}
 		}
 		br.close();
+
+		return ways;
 	}
 
 	/**
@@ -198,13 +299,12 @@ public class StyleTester {
 	 * the way id will be 1.
 	 * @throws IOException If the file cannot be read.
 	 */
-	private void readWayTags(BufferedReader br, String waydef) throws IOException {
+	private static List<Way> readWayTags(BufferedReader br, String waydef) throws IOException {
+		List<Way> ways = new ArrayList<Way>();
 		int id = 1;
 		String[] strings = SPACES_PATTERN.split(waydef);
 		if (strings.length > 1)
 			id = Integer.parseInt(strings[1]);
-
-		out.printf("WAY %d\n", id);
 
 		Way w = new Way(id);
 		w.addPoint(new Coord(1, 1));
@@ -216,18 +316,18 @@ public class StyleTester {
 			if (line.indexOf('=') < 0)
 				break;
 			String[] tagval = EQUAL_PATTERN.split(line, 2);
-			if (tagval.length == 2) {
+			if (tagval.length == 2)
 				w.addTag(tagval[0], tagval[1]);
-				out.println(line);
-			}
 		}
-		out.println();
+
+		return ways;
 	}
 
 	/**
 	 * Print out the garmin elements that were produced by the rules.
+	 * @param lines The resulting map elements.
 	 */
-	private String[] formatResults() {
+	private static String[] formatResults(List<MapElement> lines) {
 		String[] result = new String[lines.size()];
 		int i = 0;
 		for (MapElement el : lines) {
@@ -239,7 +339,6 @@ public class StyleTester {
 				s = lineToString((MapLine) el);
 			result[i++] = s;
 		}
-		lines.clear();
 		return result;
 	}
 
@@ -247,7 +346,7 @@ public class StyleTester {
 	 * This is so we can run against versions of mkgmap that do not have
 	 * toString methods on MapLine and MapRoad.
 	 */
-	private String lineToString(MapLine el) {
+	private static String lineToString(MapLine el) {
 		Formatter fmt = new Formatter();
 		fmt.format("Line 0x%x, name=<%s>, ref=<%s>, res=%d-%d",
 				el.getType(), el.getName(), el.getRef(),
@@ -266,7 +365,7 @@ public class StyleTester {
 	 * This is so we can run against versions of mkgmap that do not have
 	 * toString methods on MapLine and MapRoad.
 	 */
-	private String roadToString(MapRoad el) {
+	private static String roadToString(MapRoad el) {
 		StringBuffer sb = new StringBuffer(lineToString(el));
 		sb.delete(0, 4);
 		sb.insert(0, "Road");
@@ -279,7 +378,7 @@ public class StyleTester {
 	/**
 	 * Implement a method to get the road speed from RoadDef.
 	 */
-	private int getRoadSpeed(RoadDef roadDef) {
+	private static int getRoadSpeed(RoadDef roadDef) {
 		try {
 			Field field = RoadDef.class.getDeclaredField("tabAInfo");
 			field.setAccessible(true);
@@ -301,49 +400,65 @@ public class StyleTester {
 	 * @param initLine The first line of the style definition that has already been read.
 	 * @throws IOException If writing fails.
 	 */
-	private void readStyles(BufferedReader br, String initLine) throws IOException {
-		FileWriter writer = new FileWriter("styletester.style");
+	private static void readStyles(BufferedReader br, String initLine) throws IOException {
+		FileWriter writer = new FileWriter(STYLETESTER_STYLE);
 		PrintWriter pw = new PrintWriter(writer);
+
 		pw.println("<<<version>>>\n0");
-
 		pw.println(initLine);
-		out.println(initLine);
 
-		boolean copyToOutput = true;
-		String line;
-		while ((line = br.readLine()) != null) {
-			if (line.startsWith("<<<results>>>"))
-				copyToOutput = false;
-			if (copyToOutput)
-				out.println(line);
-			pw.println(line);
+		try {
+			String line;
+			while ((line = br.readLine()) != null)
+				pw.println(line);
+		} finally {
+			pw.close();
 		}
 
-		pw.close();
 	}
 
 	/**
 	 * A styled converter that should work exactly the same as the version of
 	 * mkgmap you are using.
-	 */
-	private StyledConverter makeStyleConverter() throws FileNotFoundException {
-		Style style = new StyleImpl("styletester.style", null);
-		MapCollector coll = new LocalMapCollector();
+	 * @param stylefile The name of the style file to process.
+	 * @param coll A map collecter to receive the created elements.
 
+	 */
+	private StyledConverter makeStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
+		Style style = new StyleImpl(stylefile, null);
 		return new StyledConverter(style, coll, new Properties());
 	}
 
 	/**
 	 * A special styled converted that attempts to produce the correct theoretical
 	 * result of running the style rules in order by literally doing that.
-	 * This should produce the same result as {@link #makeStyleConverter()} and
+	 * This should produce the same result as {@link #makeStyleConverter} and
 	 * can be used as a test of the strict style ordering branch.
+	 * @param stylefile The name of the style file to process.
+	 * @param coll A map collecter to receive the created elements.
 	 */
-	private StyledConverter makeStrictStyleConverter() throws FileNotFoundException {
-		Style style = new StrictOrderingStyle("styletester.style", null);
-		MapCollector coll = new LocalMapCollector();
-
+	private StyledConverter makeStrictStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
+		Style style = new StrictOrderingStyle(stylefile, null);
 		return new StyledConverter(style, coll, new Properties());
+	}
+
+	/**
+	 * Open a file and apply filters necessary to reading it such as decompression.
+	 *
+	 * @param name The file to open.
+	 * @return A stream that will read the file, positioned at the beginning.
+	 * @throws FileNotFoundException If the file cannot be opened for any reason.
+	 */
+	private static InputStream openFile(String name) throws FileNotFoundException {
+		InputStream is = new FileInputStream(name);
+		if (name.endsWith(".gz")) {
+			try {
+				is = new GZIPInputStream(is);
+			} catch (IOException e) {
+				throw new FileNotFoundException( "Could not read as compressed file");
+			}
+		}
+		return is;
 	}
 
 	/**
@@ -425,7 +540,6 @@ public class StyleTester {
 					// have been lost and so we have to start from the beginning
 					// again and keep going if we were at the previous match
 					// point.
-					// XXX TODO implement continue
 					if (type != null && i != prevMatch) {
 						if (type.isContinueSearch())
 							prevMatch = 0;
@@ -516,7 +630,13 @@ public class StyleTester {
 	 * A map collector that just adds any line or road we find to the end of
 	 * a list.
 	 */
-	private class LocalMapCollector implements MapCollector {
+	private static class LocalMapCollector implements MapCollector {
+		private final List<MapElement> lines;
+
+		private LocalMapCollector(List<MapElement> lines) {
+			this.lines = lines;
+		}
+
 		public void addToBounds(Coord p) { }
 
 		// could save points in the same way as lines to test them
@@ -530,6 +650,36 @@ public class StyleTester {
 
 		public void addRoad(MapRoad road) {
 			lines.add(road);
+		}
+
+		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		}
+	}
+
+	/**
+	 * A map collector that just adds any line or road we find to the end of
+	 * a list.
+	 */
+	private static class PrintingMapCollector implements MapCollector {
+
+		public void addToBounds(Coord p) { }
+
+		// could save points in the same way as lines to test them
+		public void addPoint(MapPoint point) { }
+
+		public void addLine(MapLine line) {
+			String[] strings = formatResults(Arrays.<MapElement>asList(line));
+			printResult("", strings);
+		}
+
+		public void addShape(MapShape shape) { }
+
+		public void addRoad(MapRoad road) {
+			String[] strings = formatResults(Collections.<MapElement>singletonList(road));
+			printResult("", strings);
+		}
+
+		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
 		}
 	}
 }
