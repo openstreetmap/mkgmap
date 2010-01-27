@@ -159,9 +159,15 @@ public class StyleTester implements OsmConverter {
 
 	private static void runTest(String stylefile, String mapfile) {
 		List<MapElement> results = new ArrayList<MapElement>();
+		MapCollector collector = new PrintingMapCollector();
+		OsmConverter normal = null;
 		try {
-			MapCollector collector = new PrintingMapCollector();
-			OsmConverter normal = new StyleTester(stylefile, collector, ordered);
+			normal = new StyleTester(stylefile, collector, ordered);
+		} catch (FileNotFoundException e) {
+			System.err.println("Could not open style file " + stylefile);
+			return;
+		}
+		try {
 
 			InputStream is = openFile(mapfile);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
@@ -170,7 +176,9 @@ public class StyleTester implements OsmConverter {
 			SAXParser parser = parserFactory.newSAXParser();
 
 			try {
-				Osm5XmlHandler handler = new Osm5XmlHandler(new EnhancedProperties());
+				EnhancedProperties props = new EnhancedProperties();
+				props.put("preserve-element-order", "1");
+				Osm5XmlHandler handler = new Osm5XmlHandler(props);
 				handler.setCollector(collector);
 				handler.setConverter(normal);
 				handler.setEndTask(new Runnable() {
@@ -214,9 +222,6 @@ public class StyleTester implements OsmConverter {
 				strict.convertWay(w);
 				String[] expected = formatResults(strictResults);
 				strictResults.clear();
-
-				//if (noStrict)
-				//	continue;
 
 				String prefix = "WAY " + w.getId() + ": ";
 				printResult(prefix, actual);
@@ -266,13 +271,14 @@ public class StyleTester implements OsmConverter {
 	private static List<Way> readSimpleTestFile(String filename) throws IOException {
 		FileReader reader = new FileReader(filename);
 		BufferedReader br = new BufferedReader(reader);
-		List<Way> ways = Collections.emptyList();
+		List<Way> ways = new ArrayList<Way>();
 
 		String line;
 		while ((line = br.readLine()) != null) {
 			line = line.trim();
 			if (line.toLowerCase(Locale.ENGLISH).startsWith("way")) {
-				ways = readWayTags(br, line);
+				Way w = readWayTags(br, line);
+				ways.add(w);
 			} else if (line.startsWith("<<<")) {
 				// read the rest of the file
 				readStyles(br, line);
@@ -299,8 +305,7 @@ public class StyleTester implements OsmConverter {
 	 * the way id will be 1.
 	 * @throws IOException If the file cannot be read.
 	 */
-	private static List<Way> readWayTags(BufferedReader br, String waydef) throws IOException {
-		List<Way> ways = new ArrayList<Way>();
+	private static Way readWayTags(BufferedReader br, String waydef) throws IOException {
 		int id = 1;
 		String[] strings = SPACES_PATTERN.split(waydef);
 		if (strings.length > 1)
@@ -309,7 +314,6 @@ public class StyleTester implements OsmConverter {
 		Way w = new Way(id);
 		w.addPoint(new Coord(1, 1));
 		w.addPoint(new Coord(2, 2));
-		ways.add(w);
 
 		String line;
 		while ((line = br.readLine()) != null) {
@@ -320,7 +324,7 @@ public class StyleTester implements OsmConverter {
 				w.addTag(tagval[0], tagval[1]);
 		}
 
-		return ways;
+		return w;
 	}
 
 	/**
@@ -541,7 +545,7 @@ public class StyleTester implements OsmConverter {
 					// again and keep going if we were at the previous match
 					// point.
 					if (type != null && i != prevMatch) {
-						if (type.isContinueSearch())
+						if (!type.isContinueSearch())
 							prevMatch = 0;
 						else
 							prevMatch = i+1;

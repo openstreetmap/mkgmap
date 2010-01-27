@@ -1,0 +1,4 @@
+
+# We are going to test the case where area is not set
+# so this should not be seen.
+highway=pedestrian & area=yes [0x1]

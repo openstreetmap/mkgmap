@@ -32,9 +32,10 @@ import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 /**
@@ -142,6 +143,20 @@ public class StyledConverterTest {
 		assertEquals("derived type", 0x25, lines.get(0).getType());
 	}
 
+	@Test
+	public void testFileConflicts() throws FileNotFoundException {
+		converter = makeConverter("waycombine");
+		Way w = makeWay();
+		w.addTag("highway", "pedestrian");
+		converter.convertWay(w);
+
+		assertEquals("lines converted", 1, lines.size());
+
+		// In particular both 1 and 7 are wrong here.
+		assertEquals("found pedestrian type", 6, lines.get(0).getType());
+	}
+
+
 	private Way makeWay() {
 		Way way = new Way(1);
 		way.addPoint(new Coord(100, 100));
@@ -171,7 +186,9 @@ public class StyledConverterTest {
 
 			public void addShape(MapShape shape) { }
 
-			public void addRoad(MapRoad road) { }
+			public void addRoad(MapRoad road) {
+				lines.add(road);
+			}
 
 			public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) { }
 		};

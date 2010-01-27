@@ -1,0 +1,5 @@
+
+highway=pedestrian & area!=yes [0x06 road_class=0 road_speed=0 resolution 22]
+
+# This would be wrong for this test
+highway=* [0x07 ]

@@ -1,0 +1,20 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+# 
+
+
+# A short one line description of the style
+#
+summary: A test style for polygon/line conflicts
+
+# Version of the style itself
+#
+version=1.0
+
+# A longer description of the style.
+description {
+Contains a highway=pedestrian rule in bot polygon and line
+style sets.  This test ensures that both are picked up
+and that one does not overwrite the other.
+}

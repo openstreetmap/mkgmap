@@ -47,16 +47,6 @@ public class RuleSet implements Rule {
 
 	private boolean initRun;
 
-	public void add(String key, RuleHolder rule) {
-		RuleList rl = rules.get(key);
-		if (rl == null) {
-			rl = new RuleList();
-			rules.put(key, rl);
-		}
-
-		rl.add(rule);
-	}
-
 	/**
 	 * Initialise this rule set before it gets used.  What we do is find all
 	 * the rules that might be needed as a result of tags being set during the
@@ -172,12 +162,26 @@ public class RuleSet implements Rule {
 		return combined.resolveType(el);
 	}
 
+	public void add(String key, RuleHolder rule) {
+		RuleList rl = rules.get(key);
+		if (rl == null) {
+			rl = new RuleList();
+			rules.put(key, rl);
+		}
+
+		rl.add(rule);
+	}
+
 	/**
 	 * Add all rules from the given rule set to this one.
 	 * @param rs The other rule set.
 	 */
 	public void addAll(RuleSet rs) {
-		rules.putAll(rs.rules);
+		for (Map.Entry<String, RuleList> ent : rs.rules.entrySet()) {
+			for (RuleHolder rh : ent.getValue()) {
+				add(ent.getKey(), rh);
+			}
+		}
 	}
 
 	/**
