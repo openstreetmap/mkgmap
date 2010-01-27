@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009.
+ * Copyright (C) 2010.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -116,6 +116,9 @@ public class TableTransliterator implements Transliterator {
 					continue;
 
 				String[] fields = line.split("\\s+");
+				if (fields.length < 2)
+					continue;
+				
 				String upoint = fields[0];
 				String translation = fields[1];
 
