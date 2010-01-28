@@ -348,26 +348,41 @@ public class RouteNode implements Comparable<RouteNode> {
 		return false;
 	}
 
-	public void tweezeArcs() {
+	private static int ATH_OUTGOING = 1;
+	private static int ATH_INCOMING = 2;
+
+	public static final int ATH_DEFAULT_MASK = ATH_OUTGOING | ATH_INCOMING;
+
+	public void tweezeArcs(int mask) {
 		if(arcs.size() >= 3) {
-			final int maxMainRoadHeadingChange = 120;
-			final int minSideRoadHeadingChange = 45; // min change to be a "turn"
 
 			// detect the "shallow turn" scenario where at a junction
-			// on some road, the side road leaves the original road at
-			// a very shallow angle and the GPS says "keep right/left"
-			// when it would be better if it said "turn right/left"
+			// on some "main" road, the side road leaves the main
+			// road at a very shallow angle and the GPS says "keep
+			// right/left" when it would be better if it said "turn
+			// right/left"
+
+			// also helps to produce a turn instruction when the main
+			// road bends sharply but the side road keeps close to the
+			// original heading
 
 			// the code tries to detect a pair of arcs (the "incoming"
-			// arc and the "continuing" arc) that are the "main road"
+			// arc and the "outgoing" arc) that are the "main road"
 			// and the remaining arc (called the "other" arc) which is
 			// the "side road"
 
 			// having worked out the roles for the arcs, the heuristic
 			// applied is that if the main road doesn't change its
 			// heading by more than maxMainRoadHeadingChange, ensure
-			// that the side road heading differs from the continuing
-			// heading by at least minSideRoadHeadingChange
+			// that the side road heading differs from the outgoing
+			// heading by at least
+			// minDiffBetweenOutgoingAndOtherArcs and the side road
+			// heading differs from the incoming heading by at least
+			// minDiffBetweenIncomingAndOtherArcs
+
+			final int maxMainRoadHeadingChange = 120;
+			final int minDiffBetweenOutgoingAndOtherArcs = 45;
+			final int minDiffBetweenIncomingAndOtherArcs = 50;
 
 			for(RouteArc inArc : incomingArcs) {
 
@@ -377,33 +392,33 @@ public class RouteNode implements Comparable<RouteNode> {
 				}
 
 				int inHeading = inArc.getFinalHeading();
-				// determine the outgoing (continuing) arc that is
-				// likely to be the same road as the incoming arc
-				RouteArc continuingArc = null;
-				for(RouteArc ca : arcs) {
-					if(ca.getDest() != inArc.getSource()) {
+				// determine the outgoing arc that is likely to be the
+				// same road as the incoming arc
+				RouteArc outArc = null;
+				for(RouteArc oa : arcs) {
+					if(oa.getDest() != inArc.getSource()) {
 						// this arc is not going to the same node as
 						// inArc came from
-						if((ca.isForward() || !ca.getRoadDef().isOneway()) &&
-						   possiblySameRoad(inArc, ca)) {
-							continuingArc = ca;
+						if((oa.isForward() || !oa.getRoadDef().isOneway()) &&
+						   possiblySameRoad(inArc, oa)) {
+							outArc = oa;
 							break;
 						}
 					}
 				}
-				// if we did not find the continuing arc, give up with
+				// if we did not find the outgoing arc, give up with
 				// this incoming arc
-				if(continuingArc == null) {
+				if(outArc == null) {
 					//log.info("Can't continue road " + inArc.getRoadDef() + " at " + coord.toOSMURL());
 					continue;
 				}
-				int continuingHeading = continuingArc.getInitialHeading();
-				int mainHeadingDelta = continuingHeading - inHeading;
+				int outHeading = outArc.getInitialHeading();
+				int mainHeadingDelta = outHeading - inHeading;
 				while(mainHeadingDelta > 180)
 					mainHeadingDelta -= 360;
 				while(mainHeadingDelta < -180)
 					mainHeadingDelta += 360;
-				//log.info(inArc.getRoadDef() + " continues to " + continuingArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
+				//log.info(inArc.getRoadDef() + " continues to " + outArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
 
 				if(Math.abs(mainHeadingDelta) > maxMainRoadHeadingChange) {
 					// if the continuation road heading change is
@@ -416,12 +431,14 @@ public class RouteNode implements Comparable<RouteNode> {
 
 					// for each other arc leaving this node, tweeze
 					// its heading if its heading change from the
-					// continuation heading is less than
-					// minSideRoadHeadingChange
+					// outgoing heading is less than
+					// minDiffBetweenOutgoingAndOtherArcs or its
+					// heading change from the incoming heading is
+					// less than minDiffBetweenIncomingAndOtherArcs
 
 					if(otherArc.getDest() == inArc.getSource() ||
-					   otherArc == continuingArc) {
-						// we're looking at the incoming or continuing
+					   otherArc == outArc) {
+						// we're looking at the incoming or outgoing
 						// arc, ignore it
 						continue;
 					}
@@ -433,7 +450,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					}
 
 					if(possiblySameRoad(inArc, otherArc) ||
-					   possiblySameRoad(continuingArc, otherArc)) {
+					   possiblySameRoad(outArc, otherArc)) {
 						// not obviously a different road so give up
 						continue;
 					}
@@ -448,29 +465,46 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					}
 
-					int outHeading = otherArc.getInitialHeading();
-					int outHeadingDelta = outHeading - continuingHeading;
-					while(outHeadingDelta > 180)
-						outHeadingDelta -= 360;
-					while(outHeadingDelta < -180)
-						outHeadingDelta += 360;
-						//						log.warn("Found turn ("+ outHeadingDelta + " deg) from " + inArc.getRoadDef() + " to " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
-					if(outHeadingDelta > 0 &&
-					   outHeadingDelta < minSideRoadHeadingChange) {
-						int newHeading = continuingHeading + minSideRoadHeadingChange;
+					int otherHeading = otherArc.getInitialHeading();
+					int outToOtherDelta = otherHeading - outHeading;
+					while(outToOtherDelta > 180)
+						outToOtherDelta -= 360;
+					while(outToOtherDelta < -180)
+						outToOtherDelta += 360;
+					int inToOtherDelta = otherHeading - inHeading;
+					while(inToOtherDelta > 180)
+						inToOtherDelta -= 360;
+					while(inToOtherDelta < -180)
+						inToOtherDelta += 360;
+
+					int newHeading = otherHeading;
+					if(outToOtherDelta > 0) {
+						// side road to the right
+						if((mask & ATH_OUTGOING) != 0 &&
+						   outToOtherDelta < minDiffBetweenOutgoingAndOtherArcs)
+							newHeading = outHeading + minDiffBetweenOutgoingAndOtherArcs;
+						else if((mask & ATH_INCOMING) != 0 &&
+								inToOtherDelta < minDiffBetweenIncomingAndOtherArcs)
+							newHeading = inHeading + minDiffBetweenIncomingAndOtherArcs;
+
 						if(newHeading > 180)
 							newHeading -= 360;
-						otherArc.setInitialHeading(newHeading);
-						log.info("Adjusting turn heading from " + outHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
 					}
-					else if(outHeadingDelta < 0 &&
-							outHeadingDelta > -minSideRoadHeadingChange) {
-						int newHeading = continuingHeading - minSideRoadHeadingChange;
+					else if(outToOtherDelta < 0) {
+						// side road to the left
+						if((mask & ATH_OUTGOING) != 0 &&
+						   outToOtherDelta > -minDiffBetweenOutgoingAndOtherArcs)
+							newHeading = outHeading - minDiffBetweenOutgoingAndOtherArcs;
+						else if((mask & ATH_INCOMING) != 0 &&
+								inToOtherDelta > -minDiffBetweenIncomingAndOtherArcs)
+							newHeading = inHeading - minDiffBetweenIncomingAndOtherArcs;
 
 						if(newHeading < -180)
 							newHeading += 360;
+					}
+					if(newHeading != otherHeading) {
 						otherArc.setInitialHeading(newHeading);
-						log.info("Adjusting turn heading from " + outHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
+						log.info("Adjusting turn heading from " + otherHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
 					}
 				}
 			}
