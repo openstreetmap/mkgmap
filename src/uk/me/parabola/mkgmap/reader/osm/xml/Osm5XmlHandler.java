@@ -1659,7 +1659,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					}
 					if(nearest != null && smallestGap < maxCoastlineGap) {
 						Coord w2s = nearest.getPoints().get(0);
-						log.info("bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
+						log.warn("Bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
 						Way wm;
 						if (!FakeIdGenerator.isFakeId(w1.getId())) {
 							wm = new Way(FakeIdGenerator.makeFakeId());
