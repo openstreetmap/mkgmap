@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,6 +139,10 @@ public class Way extends Element {
 						 (lon + numPoints / 2) / numPoints);
 	}
 
+	public String kind() {
+		return "way";
+	}
+
 	// returns true if the way is a closed polygon with a clockwise
 	// direction
 	public boolean clockwise() {
@@ -158,7 +163,16 @@ public class Way extends Element {
 		return area < 0;
 	}
 
-	public String kind() {
-		return "way";
+	// simplistic check to see if this way "contains" another - for
+	// speed, all we do is check that all of the other way's points
+	// are inside this way's polygon
+	public boolean containsPointsOf(Way other) {
+		Polygon thisPoly = new Polygon();
+		for(Coord p : points)
+			thisPoly.addPoint(p.getLongitude(), p.getLatitude());
+		for(Coord p : other.points)
+			if(!thisPoly.contains(p.getLongitude(), p.getLatitude()))
+				return false;
+		return true;
 	}
 }
