@@ -90,6 +90,11 @@ public class Way extends Element {
 		points.add(co);
 	}
 
+	public void addPointIfNotEqualToLastPoint(Coord co) {
+		if(points.size() == 0 || !co.equals(points.get(points.size() - 1)))
+			points.add(co);
+	}
+
 	public void reverse() {
 		int numPoints = points.size();
 		for(int i = 0; i < numPoints/2; ++i) {
