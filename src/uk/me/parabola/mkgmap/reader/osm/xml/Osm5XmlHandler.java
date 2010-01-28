@@ -1291,7 +1291,7 @@ class Osm5XmlHandler extends DefaultHandler {
 					hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
 				}
 				else {
-					w.addPoint(hit.getPoint(seaBounds));
+					w.addPointIfNotEqualToLastPoint(hit.getPoint(seaBounds));
 					hNext = hits.higher(hit);
 					if (hNext == null)
 						hNext = hFirst;
@@ -1303,7 +1303,7 @@ class Osm5XmlHandler extends DefaultHandler {
 							EdgeHit corner = new EdgeHit(i, 1.0);
 							p = corner.getPoint(seaBounds);
 							log.debug("way: ", corner, p);
-							w.addPoint(p);
+							w.addPointIfNotEqualToLastPoint(p);
 						}
 					}
 					else if (hit.compareTo(hNext) > 0) {
@@ -1312,16 +1312,16 @@ class Osm5XmlHandler extends DefaultHandler {
 							EdgeHit corner = new EdgeHit(i, 1.0);
 							p = corner.getPoint(seaBounds);
 							log.debug("way: ", corner, p);
-							w.addPoint(p);
+							w.addPointIfNotEqualToLastPoint(p);
 						}
 						for (int i=0; i<hNext.edge; i++) {
 							EdgeHit corner = new EdgeHit(i, 1.0);
 							p = corner.getPoint(seaBounds);
 							log.debug("way: ", corner, p);
-							w.addPoint(p);
+							w.addPointIfNotEqualToLastPoint(p);
 						}
 					}
-					w.addPoint(hNext.getPoint(seaBounds));
+					w.addPointIfNotEqualToLastPoint(hNext.getPoint(seaBounds));
 				}
 				hits.remove(hit);
 				hit = hNext;
