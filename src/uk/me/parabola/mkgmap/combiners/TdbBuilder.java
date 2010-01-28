@@ -149,9 +149,9 @@ public class TdbBuilder implements Combiner {
 		//System.out.printf("mask %x\n", overviewMask);
 		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
 
-		int maxLon = roundUp(bounds.getMaxLong(), overviewMask);
+		int maxLon = roundDown(bounds.getMaxLong(), overviewMask);
 		int maxLat = roundUp(bounds.getMaxLat(), overviewMask);
-		int minLat = roundDown(bounds.getMinLat(), overviewMask);
+		int minLat = roundUp(bounds.getMinLat(), overviewMask);
 		int minLon = roundDown(bounds.getMinLong(), overviewMask);
 
 		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
