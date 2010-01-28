@@ -1154,6 +1154,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		while (it.hasNext()) {
 			Way w = it.next();
 			if (w.isClosed()) {
+				log.info("adding island " + w);
 				islands.add(w);
 				it.remove();
 			}
@@ -1167,26 +1168,6 @@ class Osm5XmlHandler extends DefaultHandler {
 				log.debug("island after concatenating\n");
 				islands.add(w);
 				it.remove();
-			}
-		}
-
-		// create a "inner" way for each island
-		for (Way w : islands) {
-			log.info("adding island " + w);
-			if(generateSeaUsingMP)
-				seaRelation.addElement("inner", w);
-			else {
-				if(!FakeIdGenerator.isFakeId(w.getId())) {
-					Way w1 = new Way(FakeIdGenerator.makeFakeId());
-					w1.getPoints().addAll(w.getPoints());
-					// only copy the name tags
-					for(String tag : w)
-						if(tag.equals("name") || tag.endsWith(":name"))
-							w1.addTag(tag, w.getTag(tag));
-					w = w1;
-				}
-				w.addTag(landTag[0], landTag[1]);
-				wayMap.put(w.getId(), w);
 			}
 		}
 
@@ -1289,38 +1270,6 @@ class Osm5XmlHandler extends DefaultHandler {
 				hitMap.put(hEnd, null);
 			}
 		}
-		if (generateSeaBackground) {
-			seaId = FakeIdGenerator.makeFakeId();
-			sea = new Way(seaId);
-			if (generateSeaUsingMP) {
-				// the sea background area must be a little bigger than all
-				// inner land areas. this is a workaround for a mp shortcoming:
-				// mp is not able to combine outer and inner if they intersect
-				// or have overlaying lines
-				// the added area will be clipped later by the style generator
-				sea.addPoint(new Coord(nw.getLatitude() - 1,
-						nw.getLongitude() - 1));
-				sea.addPoint(new Coord(sw.getLatitude() + 1,
-						sw.getLongitude() - 1));
-				sea.addPoint(new Coord(se.getLatitude() + 1,
-						se.getLongitude() + 1));
-				sea.addPoint(new Coord(ne.getLatitude() - 1,
-						ne.getLongitude() + 1));
-				sea.addPoint(new Coord(nw.getLatitude() - 1,
-						nw.getLongitude() - 1));
-			} else {
-				sea.addPoint(nw);
-				sea.addPoint(sw);
-				sea.addPoint(se);
-				sea.addPoint(ne);
-				sea.addPoint(nw);
-			}
-			sea.addTag("natural", "sea");
-			log.info("sea: ", sea);
-			wayMap.put(seaId, sea);
-			if(generateSeaUsingMP)
-				seaRelation.addElement("outer", sea);
-		}
 
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
@@ -1381,21 +1330,114 @@ class Osm5XmlHandler extends DefaultHandler {
 			if (!w.isClosed())
 				w.getPoints().add(w.getPoints().get(0));
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
-			//w.addTag("highway", "motorway");
-			if(generateSeaUsingMP)
-				seaRelation.addElement("inner", w);
-			else {
-				if(!FakeIdGenerator.isFakeId(w.getId())) {
-					Way w1 = new Way(FakeIdGenerator.makeFakeId());
-					w1.getPoints().addAll(w.getPoints());
-					for(String tag : w)
-						if(tag.equals("name") || tag.endsWith(":name"))
-							w1.addTag(tag, w.getTag(tag));
-					w = w1;
-				}
-				w.addTag(landTag[0], landTag[1]);
+			islands.add(w);
+		}
+
+		List<Way> antiIslands = new ArrayList<Way>();
+
+		for (Way w : islands) {
+
+			if(!FakeIdGenerator.isFakeId(w.getId())) {
+				Way w1 = new Way(FakeIdGenerator.makeFakeId());
+				w1.getPoints().addAll(w.getPoints());
+				// only copy the name tags
+				for(String tag : w)
+					if(tag.equals("name") || tag.endsWith(":name"))
+						w1.addTag(tag, w.getTag(tag));
+				w = w1;
+			}
+
+			// determine where the water is
+			if(w.clockwise()) {
+				// water on the inside of the poly, it's an
+				// "anti-island" so tag with natural=water (to
+				// make it visible above the land)
+				w.addTag("natural", "water");
+				antiIslands.add(w);
 				wayMap.put(w.getId(), w);
 			}
+			else {
+				// water on the outside of the poly, it's an island
+				if(generateSeaUsingMP) {
+					// create a "inner" way for each island
+					seaRelation.addElement("inner", w);
+				}
+				else {
+					// tag as land
+					w.addTag(landTag[0], landTag[1]);
+					wayMap.put(w.getId(), w);
+				}
+			}
+		}
+
+		islands.removeAll(antiIslands);
+
+		if(islands.size() == 0) {
+			// the tile doesn't contain any islands so we can assume
+			// that it's showing a land mass that contains some
+			// enclosed sea areas - in which case, we don't want a sea
+			// coloured background
+			generateSeaBackground = false;
+		}
+
+		if (generateSeaBackground) {
+
+			// the background is sea so all anti-islands should be
+			// contained by land otherwise they won't be visible
+
+			for(Way ai : antiIslands) {
+				boolean containedByLand = false;
+				for(Way i : islands) {
+					if(i.containsPointsOf(ai)) {
+						containedByLand = true;
+						break;
+					}
+				}
+				if(!containedByLand) {
+					// found an anti-island that is not contained by
+					// land so convert it back into an island
+					ai.deleteTag("natural");
+					if(generateSeaUsingMP) {
+						// create a "inner" way for the island
+						seaRelation.addElement("inner", ai);
+						wayMap.remove(ai.getId());
+					}
+					else
+						ai.addTag(landTag[0], landTag[1]);
+					log.warn("Converting anti-island starting at " + ai.getPoints().get(0).toOSMURL() + " into an island as it is surrounded by water");
+				}
+			}
+
+			seaId = FakeIdGenerator.makeFakeId();
+			sea = new Way(seaId);
+			if (generateSeaUsingMP) {
+				// the sea background area must be a little bigger than all
+				// inner land areas. this is a workaround for a mp shortcoming:
+				// mp is not able to combine outer and inner if they intersect
+				// or have overlaying lines
+				// the added area will be clipped later by the style generator
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+				sea.addPoint(new Coord(sw.getLatitude() + 1,
+						sw.getLongitude() - 1));
+				sea.addPoint(new Coord(se.getLatitude() + 1,
+						se.getLongitude() + 1));
+				sea.addPoint(new Coord(ne.getLatitude() - 1,
+						ne.getLongitude() + 1));
+				sea.addPoint(new Coord(nw.getLatitude() - 1,
+						nw.getLongitude() - 1));
+			} else {
+				sea.addPoint(nw);
+				sea.addPoint(sw);
+				sea.addPoint(se);
+				sea.addPoint(ne);
+				sea.addPoint(nw);
+			}
+			sea.addTag("natural", "sea");
+			log.info("sea: ", sea);
+			wayMap.put(seaId, sea);
+			if(generateSeaUsingMP)
+				seaRelation.addElement("outer", sea);
 		}
 
 		if(generateSeaUsingMP) {
