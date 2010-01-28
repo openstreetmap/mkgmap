@@ -198,5 +198,16 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		return false;
 	}
 					
+	public Coord getLocation() {
+		if(getType() == 0x4b) {
+			// the map coverage polygon is not split to fit the
+			// subdivision it is located in but its first point has to
+			// be within that subdivision so make the polygon's
+			// location the same as the first point to ensure that it
+			// starts within the subdivision
+			return getPoints().get(0);
+		}
+		return super.getLocation();
+	}
 					
 }
