@@ -13,18 +13,26 @@
 package uk.me.parabola.imgfmt.app.labelenc;
 
 import java.nio.charset.Charset;
+import java.util.Locale;
 
 /**
  * An encoder for latin script
  * @author Steve Ratcliffe
  */
-public class LatinEncoder implements CharacterEncoder {
+public class LatinEncoder extends BaseEncoder implements CharacterEncoder {
 	private final Transliterator trans = new TableTransliterator("latin1");
 	private final Charset latinCharset = Charset.forName("latin1");
 
-	public EncodedText encodeText(String text) {
+	public EncodedText encodeText(String t) {
+		String text = t;
+		if (t != null && isUpperCase())
+			text = t.toUpperCase(Locale.ENGLISH);
+		else
+			text = t;
 		// Need to add a null character at the end of the string for this format.
-		String s = trans.transliterate(text + "\000");
+		String zText = text + "\000";
+
+		String s = trans.transliterate(zText);
 		byte[] chars = s.getBytes(latinCharset);
 		return new EncodedText(chars, chars.length);
 	}
