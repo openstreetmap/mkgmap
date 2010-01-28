@@ -1298,7 +1298,8 @@ class Osm5XmlHandler extends DefaultHandler {
 				if (segment != null) {
 					// add the segment and get the "ending hit"
 					log.info("adding: ", segment);
-					w.getPoints().addAll(segment.getPoints());
+					for(Coord p : segment.getPoints())
+						w.addPointIfNotEqualToLastPoint(p);
 					hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
 				}
 				else {
