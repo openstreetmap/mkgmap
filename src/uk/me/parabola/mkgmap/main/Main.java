@@ -185,8 +185,10 @@ public class Main implements ArgumentProcessor {
 		log.info("Submitting job " + filename);
 		FilenameTask task = new FilenameTask(new Callable<String>() {
 			public String call() {
+				log.threadTag(filename);
 				String output = mp.makeMap(args, filename);
 				log.debug("adding output name", output);
+				log.threadTag(null);
 				return output;
 			}
 		});
