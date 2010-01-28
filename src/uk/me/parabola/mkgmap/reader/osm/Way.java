@@ -138,6 +138,26 @@ public class Way extends Element {
 						 (lon + numPoints / 2) / numPoints);
 	}
 
+	// returns true if the way is a closed polygon with a clockwise
+	// direction
+	public boolean clockwise() {
+
+		if(points.size() < 3 || !points.get(0).equals(points.get(points.size() - 1)))
+			return false;
+
+		long area = 0;
+		Coord p1 = points.get(0);
+		for(int i = 1; i < points.size(); ++i) {
+			Coord p2 = points.get(i);
+			area += ((long)p1.getLongitude() * p2.getLatitude() - 
+					 (long)p2.getLongitude() * p1.getLatitude());
+			p1 = p2;
+		}
+
+		// this test looks to be inverted but gives the expected result!
+		return area < 0;
+	}
+
 	public String kind() {
 		return "way";
 	}
