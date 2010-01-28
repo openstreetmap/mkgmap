@@ -838,16 +838,27 @@ class Osm5XmlHandler extends DefaultHandler {
 								(minArcLength > 0 &&
 								 minArcLength > arcLength))) {
 								if(previousNode.getOnBoundary() && p.getOnBoundary()) {
-									// both the previous node and this node
-									// are on the boundary
-									if(complainedAbout.get(way) == null) {
-										if(p.equals(previousNode))
-											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") but they can't be merged because both are boundary nodes!");
-										else
-											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
-										complainedAbout.put(way, way);
+									if(p.equals(previousNode)) {
+										// the previous node has
+										// identical coordinates to
+										// the current node so it can
+										// be replaced but to avoid
+										// the assertion above we need
+										// to forget that it is on the
+										// boundary
+										previousNode.setOnBoundary(false);
 									}
-									break; // give up with this way
+									else {
+										// both the previous node and
+										// this node are on the
+										// boundary and they don't
+										// have identical coordinates
+										if(complainedAbout.get(way) == null) {
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+											complainedAbout.put(way, way);
+										}
+										break; // give up with this way
+									}
 								}
 								String thisNodeId = (p.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(p);
 								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
