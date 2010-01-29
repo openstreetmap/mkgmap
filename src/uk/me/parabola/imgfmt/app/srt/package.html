@@ -1,0 +1,43 @@
+<body>
+<h3>SRT File</h3>
+<p>This file is used to specify the character sorting order and which
+characters are the 'same' for the purposes of searching. All accented versions
+of a character will have the same code.</p>
+<p>The first section has three byte records that have the following meaning</p>
+<table>
+	<tr>
+		<th>Byte number</th>
+		<th>Description</th>
+	</tr>
+	<tr>
+		<td>1</td>
+		<td>The low nibble is 1 for letters, 2 for digits and zero for everything
+		else.</td>
+	</tr>
+
+	<tr>
+		<td>2</td>
+		<td>This is the sort order for the unaccented form of the character.
+		So a, à, á, ä and å would all have the same code here.  The next byte allows
+		you to put them in order.</td>
+	</tr>
+
+	<tr>
+		<td>3</td>
+		<td>Upper nibble is 2 for uppercase letters, 1 for lowercase letters.
+		It can also have the values 3 or 4 for unknown reasons.
+		<p>The lower nibble is a number that can be added to byte 2 to get the full
+		sorting order.  This sorts the accented versions of the characters</p></td>
+	</tr>
+</table>
+<p>The next section has two byte records with an unknown function.</p>
+<h3>Unknowns</h3>
+At the time of writing Jan 2010 certain things are not known.
+<ul>
+	<li>If it can deal with character pairs that sort as one.</li>
+	<li>What the second section is for.</li>
+	<li>Sorting for scandinavian languages where the accented characters come at
+	the end of the alphabet. Perhaps you just treat them as separate letters and
+	not as a base + accent, or perhaps there is a way of specifying it.</li>
+</ul>
+</body>

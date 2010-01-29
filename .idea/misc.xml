@@ -26,6 +26,10 @@
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
+  <component name="ExportToHTMLSettings">
+    <option name="OPEN_IN_BROWSER" value="true" />
+    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/../../inspections" />
+  </component>
   <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
