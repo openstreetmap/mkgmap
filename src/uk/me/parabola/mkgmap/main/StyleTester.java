@@ -158,9 +158,8 @@ public class StyleTester implements OsmConverter {
 	}
 
 	private static void runTest(String stylefile, String mapfile) {
-		List<MapElement> results = new ArrayList<MapElement>();
 		MapCollector collector = new PrintingMapCollector();
-		OsmConverter normal = null;
+		OsmConverter normal;
 		try {
 			normal = new StyleTester(stylefile, collector, ordered);
 		} catch (FileNotFoundException e) {
@@ -228,7 +227,7 @@ public class StyleTester implements OsmConverter {
 
 				if (!Arrays.deepEquals(actual, expected)) {
 					System.out.println("ERROR with strict ordering result would be:");
-					printResult("Expected: " + prefix, actual);
+					printResult(prefix, expected);
 
 				}
 			}
@@ -545,10 +544,10 @@ public class StyleTester implements OsmConverter {
 					// again and keep going if we were at the previous match
 					// point.
 					if (type != null && i != prevMatch) {
-						if (!type.isContinueSearch())
-							prevMatch = 0;
+						if (type.isContinueSearch())
+							prevMatch = i + 1;
 						else
-							prevMatch = i+1;
+							prevMatch = 0;
 						return type;
 					}
 
