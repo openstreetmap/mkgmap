@@ -93,7 +93,6 @@ public class RuleFileReader {
 			saveRule(expr, actionList, type);
 			scanner.skipSpace();
 		}
-		rules.init();
 	}
 
 	/**
@@ -294,7 +293,7 @@ public class RuleFileReader {
 	private static void optimiseAndSaveOtherOp(RuleFileReader ruleFileReader, Op op, ActionList actions, GType gt) {
 		if (op.isType(EXISTS)) {
 			// The lookup key for the exists operation is 'tag=*'
-			ruleFileReader.createAndSaveRule(op.value() + "=*", null, actions, gt);
+			ruleFileReader.createAndSaveRule(op.value() + "=*", op, actions, gt);
 		} else {
 			throw new SyntaxException(ruleFileReader.scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
@@ -320,21 +319,17 @@ public class RuleFileReader {
 		 * An OR at the top level.
 		 */
 		String keystring;
-		Op expr;
 		if (op.isType(EQUALS)) {
 			if (first.isType(VALUE) && second.isType(VALUE)) {
 				keystring = op.toString();
-				expr = null;
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
 				keystring = first.toString();
-				expr = second;
 			} else if (first.isType(EXISTS)) {
 				keystring = first.value() + "=*";
-				expr = second;
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
 			} else {
@@ -348,10 +343,12 @@ public class RuleFileReader {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 
-		createAndSaveRule(keystring, expr, actions, gt);
+		createAndSaveRule(keystring, op, actions, gt);
 	}
 
 	private void createAndSaveRule(String keystring, Op expr, ActionList actions, GType gt) {
+
+		log.debug(keystring); // TODO This will be used - if not delete it
 		Rule rule;
 		if (!actions.isEmpty())
 			rule = new ActionRule(expr, actions.getList(), gt);
@@ -362,8 +359,8 @@ public class RuleFileReader {
 		}
 
 
-		RuleHolder rh = new RuleHolder(rule, actions.getChangeableTags());
-		rules.add(keystring, rh);
+		RuleHolder rh = new RuleHolder(rule);
+		rules.add(rh);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {

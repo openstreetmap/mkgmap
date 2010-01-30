@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -53,8 +52,6 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.ActionRule;
 import uk.me.parabola.mkgmap.osmstyle.ExpressionRule;
 import uk.me.parabola.mkgmap.osmstyle.FixedRule;
-import uk.me.parabola.mkgmap.osmstyle.RuleList;
-import uk.me.parabola.mkgmap.osmstyle.RuleSet;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
@@ -127,11 +124,7 @@ public class StyleTester implements OsmConverter {
 
 	private static boolean ordered;
 
-	public StyleTester(MapCollector coll) throws FileNotFoundException {
-		this("styletester.style", coll, false);
-	}
-
-	public StyleTester(String stylefile, MapCollector coll, boolean ordered) throws FileNotFoundException {
+	private StyleTester(String stylefile, MapCollector coll, boolean ordered) throws FileNotFoundException {
 		if (ordered)
 			converter = makeStrictStyleConverter(stylefile, coll);
 		else
@@ -522,12 +515,6 @@ public class StyleTester implements OsmConverter {
 		private class StrictOrderingRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
 			private int prevMatch;
-
-			public void addAll(RuleSet lines) {
-				for (Map.Entry<String, RuleList> ent : lines.entrySet()) {
-					add(ent.getValue());
-				}
-			}
 
 			public void add(Rule rule) {
 				rules.add(rule);

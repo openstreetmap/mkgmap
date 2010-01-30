@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
@@ -67,7 +68,7 @@ public class StyleImpl implements Style {
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
 			Arrays.asList("levels"));
 
-	// Options that should not be overriden from the command line if the
+	// Options that should not be overridden from the command line if the
 	// value is empty.
 	private static final Collection<String> DONT_OVERRIDE = new ArrayList<String>(
 			Arrays.asList("levels"));
@@ -78,6 +79,9 @@ public class StyleImpl implements Style {
 	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
 	private static final String FILE_OVERLAYS = "overlays";
+
+	// Patterns
+	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -163,14 +167,14 @@ public class StyleImpl implements Style {
 
 			if (!DONT_OVERRIDE.contains(key))
 				if (key.equals("name-tag-list")) {
-					// The name-tag-list allows you to redifine what you want to use
+					// The name-tag-list allows you to redefine what you want to use
 					// as the name of a feature.  By default this is just 'name', but
 					// you can supply a list of tags to use
 					// instead eg. "name:en,int_name,name" or you could use some
 					// completely different tag...
-					nameTagList = val.split("[,\\s]+");
+					nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 				} else if (OPTION_LIST.contains(key)) {
-					// Simple options that have string value.  Perhaps we should alow
+					// Simple options that have string value.  Perhaps we should allow
 					// anything here?
 					generalOptions.put(key, val);
 				}
@@ -185,7 +189,6 @@ public class StyleImpl implements Style {
 		RuleSet r = new RuleSet();
 		r.addAll(lines);
 		r.addAll(polygons);
-		r.init();
 		return r;
 	}
 
@@ -278,17 +281,17 @@ public class StyleImpl implements Style {
 
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			lines.add(me.getKey(), new RuleHolder(rule, null));
+			lines.add(new RuleHolder(rule, null));
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			polygons.add(me.getKey(), new RuleHolder(rule));
+			polygons.add(new RuleHolder(rule));
 		}
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
 			Rule rule = createRule(me.getKey(), me.getValue());
-			nodes.add(me.getKey(), new RuleHolder(rule));
+			nodes.add(new RuleHolder(rule));
 		}
 	}
 
@@ -307,7 +310,7 @@ public class StyleImpl implements Style {
 		l.add(action);
 
 		Rule rule = new ActionRule(null, l);
-		lines.add("highway=*", new RuleHolder(rule));
+		lines.add(new RuleHolder(rule));
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -316,8 +319,8 @@ public class StyleImpl implements Style {
 		l.add(action);
 
 		rule = new ActionRule(null, l);
-		lines.add("contour=elevation", new RuleHolder(rule));
-		lines.add("contour_ext=elevation", new RuleHolder(rule));
+		lines.add(new RuleHolder(rule));
+		lines.add(new RuleHolder(rule));
 	}
 
 	/**
@@ -348,14 +351,14 @@ public class StyleImpl implements Style {
 					String key = opt.getOption();
 					String val = opt.getValue();
 					if (key.equals("name-tag-list")) {
-						// The name-tag-list allows you to redifine what you want to use
+						// The name-tag-list allows you to redefine what you want to use
 						// as the name of a feature.  By default this is just 'name', but
 						// you can supply a list of tags to use
 						// instead eg. "name:en,int_name,name" or you could use some
 						// completely different tag...
-						nameTagList = val.split("[,\\s]+");
+						nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 					} else if (OPTION_LIST.contains(key)) {
-						// Simple options that have string value.  Perhaps we should alow
+						// Simple options that have string value.  Perhaps we should allow
 						// anything here?
 						generalOptions.put(key, val);
 					}
@@ -437,7 +440,7 @@ public class StyleImpl implements Style {
 		} catch (FileNotFoundException e) {
 			// not found, try on the classpath.  This is the common
 			// case where you have an external style, but want to
-			// base it on a builtin one.
+			// base it on a built in one.
 			log.debug("could not open base style file", e);
 
 			try {
@@ -471,14 +474,14 @@ public class StyleImpl implements Style {
 			String opt = ent.getKey();
 			String val = ent.getValue();
 			if (opt.equals("name-tag-list")) {
-				// The name-tag-list allows you to redifine what you want to use
+				// The name-tag-list allows you to redefine what you want to use
 				// as the name of a feature.  By default this is just 'name', but
 				// you can supply a list of tags to use
 				// instead eg. "name:en,int_name,name" or you could use some
 				// completely different tag...
-				nameTagList = val.split("[,\\s]+");
+				nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 			} else if (OPTION_LIST.contains(opt)) {
-				// Simple options that have string value.  Perhaps we should alow
+				// Simple options that have string value.  Perhaps we should allow
 				// anything here?
 				generalOptions.put(opt, val);
 			}

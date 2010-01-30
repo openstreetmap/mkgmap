@@ -92,9 +92,10 @@ public class StylePrinter {
 
 	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
 		fmt.format("<<<%s>>>\n", name);
-		for (Map.Entry<String, RuleList> ent : set.entrySet()) {
-			RuleList rl = ent.getValue();
-			rl.dumpRules(fmt, ent.getKey());
+		for (RuleHolder rh : set) {
+			rh.format(fmt, "");
+			//RuleList rl = ent.getValue();
+			//rl.dumpRules(fmt, ent.getKey());
 		}
 	}
 

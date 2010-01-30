@@ -259,14 +259,17 @@ public class RuleSetTest {
 	public void testContinueChangesTag() {
 		RuleSet rs = makeRuleSet("highway=crossing & crossing=zebra_crossing" +
 				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue]" +
-				"highway=crossing [0x610f resolution 24 continue]");
+				"highway=crossing [0x610f resolution 24 continue]" +
+				"highway=deleted_crossing [0x6 resolution 24 continue]"
+		);
 
 		Way el = new Way(1);
 		el.addTag("highway", "crossing");
 		el.addTag("crossing", "zebra_crossing");
 
 		GType type = rs.resolveType(el);
-		assertNull("Second rule should not be matched", type.next());
+		assertEquals("first element", 0x4004, type.getType());
+		assertEquals("second element", 0x6, type.next().getType());
 	}
 
 	/**
