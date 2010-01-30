@@ -17,7 +17,6 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
-import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,8 +34,8 @@ import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
  *
  * @author Steve Ratcliffe
  */
-public class RuleSet implements Rule, Iterable<RuleHolder> {
-	private final List<RuleHolder> rules = new ArrayList<RuleHolder>();
+public class RuleSet implements Rule, Iterable<Rule> {
+	private final List<Rule> rules = new ArrayList<Rule>();
 
 	/**
 	 * Resolve the type for this element by running the rules in order.
@@ -53,20 +52,20 @@ public class RuleSet implements Rule, Iterable<RuleHolder> {
 	public void resolveType(Element el, TypeResult result) {
 		WatchableTypeResult a = new WatchableTypeResult(result);
 		// Start by literally running through the rules in order.
-		for (RuleHolder rh : rules) {
+		for (Rule rule : rules) {
 			//System.out.println("R " + rh);
 			a.reset();
-			rh.resolveType(el, a);
+			rule.resolveType(el, a);
 			if (a.isResolved())
 				return;
 		}
 	}
 
-	public Iterator<RuleHolder> iterator() {
+	public Iterator<Rule> iterator() {
 		return rules.iterator();
 	}
 
-	public void add(RuleHolder rule) {
+	public void add(Rule rule) {
 		rules.add(rule);
 	}
 
@@ -75,8 +74,8 @@ public class RuleSet implements Rule, Iterable<RuleHolder> {
 	 * @param rs The other rule set.
 	 */
 	public void addAll(RuleSet rs) {
-		for (RuleHolder rh : rs.rules)
-			add(rh);
+		for (Rule rule : rs.rules)
+			add(rule);
 	}
 
 	/**
@@ -84,15 +83,15 @@ public class RuleSet implements Rule, Iterable<RuleHolder> {
 	 * rule file.
 	 */
 	public String toString() {
-		Formatter fmt = new Formatter();
-		for (RuleHolder rh : rules) {
-			rh.format(fmt, "");
+		StringBuilder sb = new StringBuilder();
+		for (Rule rule : rules) {
+			sb.append(rule.toString());
 		}
-		return fmt.toString();
+		return sb.toString();
 	}
 
 	public void merge(RuleSet rs) {
-		List<RuleHolder> l = new ArrayList<RuleHolder>(rules);
+		List<Rule> l = new ArrayList<Rule>(rules);
 		l.addAll(rs.rules);
 		rules.clear();
 		rules.addAll(l);

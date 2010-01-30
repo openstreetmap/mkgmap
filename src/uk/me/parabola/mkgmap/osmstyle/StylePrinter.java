@@ -4,6 +4,7 @@ import java.io.Writer;
 import java.util.Formatter;
 import java.util.Map;
 
+import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
@@ -92,10 +93,8 @@ public class StylePrinter {
 
 	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
 		fmt.format("<<<%s>>>\n", name);
-		for (RuleHolder rh : set) {
-			rh.format(fmt, "");
-			//RuleList rl = ent.getValue();
-			//rl.dumpRules(fmt, ent.getKey());
+		for (Rule rule : set) {
+			fmt.format("%s", rule.toString());
 		}
 	}
 

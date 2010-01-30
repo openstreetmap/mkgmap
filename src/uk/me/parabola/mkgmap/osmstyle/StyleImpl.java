@@ -41,7 +41,11 @@ import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
+import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -279,20 +283,14 @@ public class StyleImpl implements Style {
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		addBackwardCompatibleRules();
 
-		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			lines.add(new RuleHolder(rule, null));
-		}
+		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
+			lines.add(createRule(me.getKey(), me.getValue()));
 
-		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			polygons.add(new RuleHolder(rule));
-		}
+		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
+			polygons.add(createRule(me.getKey(), me.getValue()));
 
-		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			nodes.add(new RuleHolder(rule));
-		}
+		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
+			nodes.add(createRule(me.getKey(), me.getValue()));
 	}
 
 	/**
@@ -309,8 +307,10 @@ public class StyleImpl implements Style {
 		action.add("${name}");
 		l.add(action);
 
-		Rule rule = new ActionRule(null, l);
-		lines.add(new RuleHolder(rule));
+		Op expr = new ExistsOp();
+		expr.setFirst(new ValueOp("highway"));
+		Rule rule = new ActionRule(expr, l);
+		lines.add(rule);
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -318,9 +318,17 @@ public class StyleImpl implements Style {
 		action.add("${ele|conv:m=>ft}");
 		l.add(action);
 
-		rule = new ActionRule(null, l);
-		lines.add(new RuleHolder(rule));
-		lines.add(new RuleHolder(rule));
+		EqualsOp expr2 = new EqualsOp();
+		expr2.setFirst(new ValueOp("contour"));
+		expr2.setSecond(new ValueOp("elevation"));
+		rule = new ActionRule(expr2, l);
+		lines.add(rule); // "contour=elevation"
+
+		expr2 = new EqualsOp();
+		expr2.setFirst(new ValueOp("contour"));
+		expr2.setSecond(new ValueOp("elevation"));
+		rule = new ActionRule(expr2, l);
+		lines.add(rule); // "contour_ext=elevation"
 	}
 
 	/**
@@ -433,7 +441,6 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
-			RuleHolder.pushPriority();
 			baseStyle = new StyleImpl(location, name);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
@@ -451,8 +458,6 @@ public class StyleImpl implements Style {
 				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
-		} finally {
-			RuleHolder.popPriority();
 		}
 	}
 

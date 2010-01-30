@@ -358,9 +358,7 @@ public class RuleFileReader {
 			rule = new FixedRule(gt);
 		}
 
-
-		RuleHolder rh = new RuleHolder(rule);
-		rules.add(rh);
+		rules.add(rule);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
