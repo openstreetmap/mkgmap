@@ -68,6 +68,8 @@ import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
+import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -520,29 +522,20 @@ public class StyleTester implements OsmConverter {
 				rules.add(rule);
 			}
 
-			public GType resolveType(Element el) {
+			public void resolveType(Element el, TypeResult result) {
+				WatchableTypeResult a = new WatchableTypeResult(result);
 				for (int i = prevMatch; i < rules.size(); i++) {
 					Rule r = rules.get(i);
-					GType type = r.resolveType(el);
+					r.resolveType(el, a);
 
-					// Because (on trunk) we get passed a copy of the way each
-					// time this is called, all the tags that were set previously
-					// have been lost and so we have to start from the beginning
-					// again and keep going if we were at the previous match
-					// point.
-					if (type != null && i != prevMatch) {
-						if (type.isContinueSearch())
-							prevMatch = i + 1;
-						else
-							prevMatch = 0;
-						return type;
-					}
+					if (a.isContinued())
+						prevMatch = i + 1;
 
+					if (a.isFound())
+						break;
 				}
 				prevMatch = 0;
-				return null;
 			}
-
 		}
 
 		/**

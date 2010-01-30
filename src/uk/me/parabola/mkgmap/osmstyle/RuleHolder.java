@@ -16,8 +16,8 @@ import java.util.Formatter;
 import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
 /**
  * Holds a rule and allows a collection of them to be sorted.
@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  *
  * @author Steve Ratcliffe
  */
+@Deprecated // TODO not needed now
 public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	private static final int PRIORITY_INC = 100000;
@@ -34,7 +35,6 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	private final int priority;
 	private final Rule rule;
-	private final Set<String> changeableTags;
 
 	public RuleHolder(Rule rule) {
 		this(rule, null);
@@ -46,12 +46,11 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	private RuleHolder(Rule rule, Set<String> changeableTags, int priority) {
 		this.rule = rule;
-		this.changeableTags = changeableTags;
 		this.priority = priority;
 	}
 
-	public GType resolveType(Element el) {
-		return rule.resolveType(el);
+	public void resolveType(Element el, TypeResult result) {
+		rule.resolveType(el, result);
 	}
 
 	/**
@@ -66,20 +65,6 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 			return -1;
 		else
 			return 1;
-	}
-
-	/**
-	 * The priority value uniquely identifies the rule.  It also used for
-	 * ordering rules; rules with a lower priority value override any
-	 * rule with a higher one.
-	 * @return The rule priority.
-	 */
-	public int priority() {
-		return priority;
-	}
-
-	public Set<String> getChangeableTags() {
-		return changeableTags;
 	}
 
 	public void format(Formatter fmt, String key) {
@@ -108,9 +93,5 @@ public class RuleHolder implements Rule, Comparable<RuleHolder> {
 
 	public static void popPriority() {
 		nextPriority -= PRIORITY_INC;
-	}
-
-	public RuleHolder createCopy(Rule rule) {
-		return new RuleHolder(rule, null, this.priority);
 	}
 }

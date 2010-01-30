@@ -23,6 +23,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
 /**
  * An action rule modifies the tags on the incoming element.
@@ -52,14 +53,13 @@ public class ActionRule implements Rule {
 		this.type = null;
 	}
 
-	public GType resolveType(Element el) {
+	public void resolveType(Element el, TypeResult result) {
 		if (expression == null || expression.eval(el)) {
 			for (Action a : actions)
 				a.perform(el);
 
-			return type;
+			result.add(el, type);
 		}
-		return null;
 	}
 
 	public String toString() {

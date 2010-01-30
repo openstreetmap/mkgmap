@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
 /**
  * A rule that always returns the same gtype.
@@ -32,12 +33,8 @@ public class FixedRule implements Rule {
 		this.gtype = gtype;
 	}
 
-	public GType resolveType(Element el) {
-		return gtype;
-	}
-
-	public GType resolveType(Element el, GType pre) {
-		return gtype;
+	public void resolveType(Element el, TypeResult result) {
+		result.add(el, gtype);
 	}
 
 	public String toString() {

@@ -24,9 +24,10 @@ import java.util.List;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -49,11 +50,11 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("plain footway", "[0x3 level 0]", type.toString());
 
 		el.addTag("type", "rough");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("rough footway", "[0x2 level 2]", type.toString());
 	}
 
@@ -70,7 +71,7 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "primary");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("min level", 1, type.getMinLevel());
 		assertEquals("max level", 3, type.getMaxLevel());
 	}
@@ -88,32 +89,32 @@ public class RuleFileReaderTest {
 		el.addTag("c", "d");
 		el.addTag("x", "11");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("expression ok", 1, type.getType());
 
 		// fails with x less than 10
 		el.addTag("x", "9");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNull("x too low", type);
 
 		// also fails with x equal to 10
 		el.addTag("x", "10");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNull("x too low", type);
 
 		// OK with x > 10
 		el.addTag("x", "100");
 		el.addTag("e", "f");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("c and e set", 1, type.getType());
 
 		el.addTag("c", "");
 		el.addTag("e", "");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNull("none of c and e set", type);
 
 		el.addTag("e", "f");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("e is set to f", 1, type.getType());
 	}
 
@@ -139,22 +140,22 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "null_null");
 		el.addTag("layer", "-1");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("9902 layer = -1", 0x1, type.getType());
 
 		// 9912
 		el.addTag("layer", "0");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("9912 layer = 0", 0x2, type.getType());
 
 		// 9922
 		el.deleteTag("layer");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("9922 no layer tag", 0x8, type.getType());
 
 		// 9932
 		el.addTag("layer", "1");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertEquals("9932 layer is 1", 0x3, type.getType());
 
 		// 9952
@@ -170,7 +171,7 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "footway");
 
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("access set", "no", el.getTag("access"));
 		assertEquals("access set", "yes", el.getTag("foot"));
 	}
@@ -186,7 +187,7 @@ public class RuleFileReaderTest {
 		
 		Element el = new Way(1);
 		el.addTag("highway", "secondary");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("can find match", type);
 		assertEquals("correct type", 1, type.getType());
 		assertEquals("tag set", "fred", el.getTag("a"));
@@ -212,7 +213,7 @@ public class RuleFileReaderTest {
 		// get the a=c chain and look at it more closely
 		Element el = new Way(1);
 		el.addTag("a", "c");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 
 		assertNotNull("match e not existing", type);
 		assertEquals("correct type", 2, type.getType());
@@ -235,12 +236,12 @@ public class RuleFileReaderTest {
 
 		Element el = new Way(1);
 		el.addTag("highway", "secondary");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNull("type not found with no z tag", type);
 
 		// now add z
 		el.addTag("z", "1");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNotNull("found match", type);
 		assertEquals("correct type", 1, type.getType());
 		assertEquals("tag set", "square", el.getTag("a"));
@@ -256,7 +257,7 @@ public class RuleFileReaderTest {
 
 		Element el = new Way(1);
 		el.addTag("highway", "motorway");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 
 		// Check that the correct class and speed are returned.
 		assertEquals("class", 4, type.getRoadClass());
@@ -277,13 +278,13 @@ public class RuleFileReaderTest {
 		Element el = new Way(1);
 		el.addTag("highway", "secondary");
 		el.addTag("name", "blue sq");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("matched regexp", type);
 		assertEquals("matched type", 2, type.getType());
 
 		// change name to one that should not match
 		el.addTag("name", "yellow");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNull("no match for yello", type);
 	}
 
@@ -298,7 +299,7 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("foot", "yes");
 		el.addTag("iii", "xyz");
-		rs.resolveType(el);
+		getFirstType(rs, el);
 	}
 
 	/**
@@ -312,11 +313,11 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("tunnel", "yes");
 		el.addTag("route", "abc");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("without route mtb or bicycle", type);
 
 		el.addTag("route", "mtb");
-		type = rs.resolveType(el);
+		type = getFirstType(rs, el);
 		assertNull("with route mtb", type);
 	}
 
@@ -338,25 +339,25 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("route", "mtb");
 		el.addTag("mtb:scale", "2");
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("mtbrt2.", el.getName());
 
 		el = new Way(1);
 		el.addTag("route", "mtb");
 		el.addTag("mtb:scale:uphill", "3");
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("mtbrt.3", el.getName());
 
 		el = new Way(1);
 		el.addTag("name", "myname");
 		el.addTag("route", "mtb");
 		el.addTag("mtb:scale:uphill", "3");
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("mtbrt.3 myname", el.getName());
 
 		el = new Way(1);
 		el.addTag("mtb:scale:uphill", "3");
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("mtb.3", el.getName());
 	}
 
@@ -380,7 +381,7 @@ public class RuleFileReaderTest {
 		el.addTag("name1", "foo");
 		el.addTag("name2", "bar");
 
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("appended name", "A1 long lane foo bar", el.getName());
 	}
 
@@ -395,7 +396,7 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "primary");
 		el.addTag("maxspeed", "40");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("finds the type", type);
 		assertEquals("resulting type", 2, type.getType());
 	}
@@ -405,7 +406,7 @@ public class RuleFileReaderTest {
 	 * further matches are performed and this might result in more types
 	 * being added.
 	 */
-	@Test @Ignore
+	@Test
 	public void testContinue() {
 		RuleSet rs = makeRuleSet("highway=primary [0x1 continue]" +
 				"highway=primary [0x2 continue]" +
@@ -416,14 +417,17 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("highway", "primary");
 
-		GType type = rs.resolveType(el);
+		final List<GType> list = new ArrayList<GType>();
+
+		rs.resolveType(el, new TypeResult() {
+			public void add(Element el, GType type) {
+				list.add(type);
+			}
+		});
+
+		GType type = list.get(0);
 		assertEquals("first type", 1, type.getType());
 		assertEquals("continue search", true, type.isContinueSearch());
-
-		// Build list of types
-		List<GType> list = new ArrayList<GType>();
-		for (; type != null; type = type.next())
-			list.add(type);
 
 		assertEquals("number of result types", 3, list.size());
 		assertEquals("type of first", 1, list.get(0).getType());
@@ -443,7 +447,7 @@ public class RuleFileReaderTest {
 		el.addTag("highway", "primary");
 
 		for (int i = 0; i < 3; i++) {
-			GType type = rs.resolveType(el);
+			GType type = getFirstType(rs, el);
 			assertEquals("first type", 1, type.getType());
 			assertEquals("continue search", true, type.isContinueSearch());
 		}
@@ -473,8 +477,21 @@ public class RuleFileReaderTest {
 		el.addTag("g", "h");
 		el.addTag("e", "f");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("matches a rule", type);
+	}
+
+	private GType getFirstType(Rule rs, Element el) {
+		final List<GType> types = new ArrayList<GType>();
+		rs.resolveType(el, new TypeResult() {
+			public void add(Element el, GType type) {
+				types.add(type);
+			}
+		});
+		if (types.isEmpty())
+			return null;
+		else
+			return types.get(0);
 	}
 
 	/**

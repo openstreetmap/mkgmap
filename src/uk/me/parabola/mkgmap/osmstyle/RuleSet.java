@@ -22,8 +22,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
+import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 
 /**
  * A group of rules.  Basically just a map of a tag=value strings that is used
@@ -44,18 +45,21 @@ public class RuleSet implements Rule, Iterable<RuleHolder> {
 	 * of the code are run for every tag in the input file.
 	 *
 	 * @param el The element as read from an OSM xml file in 'tag' format.
-	 * @return A GType describing the Garmin type of the first rule that
-	 * matches.  If there is no match then null is returned.
+	 * @param result A GType describing the Garmin type of the first rule that
+	 * matches is returned here.  If continue types are used then more than
+	 * one type may be saved here.  If there are no matches then nothing will
+	 * be saved.
 	 */
-	public GType resolveType(Element el) {
+	public void resolveType(Element el, TypeResult result) {
+		WatchableTypeResult a = new WatchableTypeResult(result);
 		// Start by literally running through the rules in order.
 		for (RuleHolder rh : rules) {
 			//System.out.println("R " + rh);
-			GType type = rh.resolveType(el);
-			if (type != null)
-				return type;
+			a.reset();
+			rh.resolveType(el, a);
+			if (a.isResolved())
+				return;
 		}
-		return null;
 	}
 
 	public Iterator<RuleHolder> iterator() {

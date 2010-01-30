@@ -15,12 +15,16 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -50,7 +54,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("a", "b");
 		el.addTag("c", "d");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("should be found", type);
 		assertEquals("first matching rule wins", 1, type.getType());
 	}
@@ -67,7 +71,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("a", "b");
 		el.addTag("c", "d");
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("should be found", type);
 		assertEquals("first matching rule wins", 1, type.getType());
 	}
@@ -87,7 +91,7 @@ public class RuleSetTest {
 		el.addTag("ref", "A123");
 		el.addTag("name", "Long Lane");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("should match first", 1, type.getType());
 	}
 
@@ -101,7 +105,7 @@ public class RuleSetTest {
 		el.addTag("ref", "A123");
 		el.addTag("name", "Long Lane");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("should match first", 2, type.getType());
 	}
 
@@ -123,7 +127,7 @@ public class RuleSetTest {
 		el.addTag("b", "c");
 		el.addTag("c", "d");
 
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("b=c was first action", "1", el.getTag("fred"));
 	}
 
@@ -139,7 +143,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("highway", "yes");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("type matched on previously set tag", type);
 	}
 
@@ -158,7 +162,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("z", "1");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("chain of commands", type);
 		assertEquals("'destiny' should be selected", 1, type.getType());
 	}
@@ -177,7 +181,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("z", "1");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertNotNull("chain of commands", type);
 	}
 
@@ -198,7 +202,7 @@ public class RuleSetTest {
 		el.addTag("z", "1");
 		el.addTag("a", "1");
 
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		String s = el.getTag("R");
 		assertEquals("appended value", "init a b c d", s);
 	}
@@ -220,7 +224,7 @@ public class RuleSetTest {
 		el.addTag("highway", "primary");
 		el.addTag("result", "0");
 
-		rs.resolveType(el);
+		getFirstType(rs, el);
 		assertEquals("rules run once", "0 1 2", el.getTag("result"));
 	}
 
@@ -237,7 +241,7 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("highway", "motorway");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("first match is on blue", 1, type.getType());
 	}
 
@@ -251,11 +255,11 @@ public class RuleSetTest {
 		Way el = new Way(1);
 		el.addTag("highway", "primary");
 
-		GType type = rs.resolveType(el);
+		GType type = getFirstType(rs, el);
 		assertEquals("second marker rule", 2, type.getType());
 	}
 
-	@Test @Ignore
+	@Test
 	public void testContinueChangesTag() {
 		RuleSet rs = makeRuleSet("highway=crossing & crossing=zebra_crossing" +
 				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue]" +
@@ -267,9 +271,27 @@ public class RuleSetTest {
 		el.addTag("highway", "crossing");
 		el.addTag("crossing", "zebra_crossing");
 
-		GType type = rs.resolveType(el);
-		assertEquals("first element", 0x4004, type.getType());
-		assertEquals("second element", 0x6, type.next().getType());
+		final List<GType> list = new ArrayList<GType>();
+		rs.resolveType(el, new TypeResult() {
+			public void add(Element el, GType type) {
+				list.add(type);
+			}
+		});
+		assertEquals("first element", 0x4004, list.get(0).getType());
+		assertEquals("second element", 0x6, list.get(1).getType());
+	}
+
+	private GType getFirstType(Rule rs, Element el) {
+		final List<GType> types = new ArrayList<GType>();
+		rs.resolveType(el, new TypeResult() {
+			public void add(Element el, GType type) {
+				types.add(type);
+			}
+		});
+		if (types.isEmpty())
+			return null;
+		else
+			return types.get(0);
 	}
 
 	/**
