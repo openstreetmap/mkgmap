@@ -203,7 +203,7 @@ public class Logger {
 	}
 
 	public void log(Level level, Object ... olist) {
-		if (log.isLoggable(Level.INFO))
+		if (log.isLoggable(level))
 			arrayFormat(level, olist);
 	}
 	
