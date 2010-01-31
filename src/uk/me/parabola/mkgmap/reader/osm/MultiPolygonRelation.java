@@ -1,6 +1,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.*;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
@@ -9,11 +10,13 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -36,6 +39,7 @@ public class MultiPolygonRelation extends Relation {
 
 	private ArrayList<BitSet> containsMatrix;
 	private ArrayList<JoinedWay> rings;
+	private Set<JoinedWay> intersectingRings;
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
 
@@ -364,7 +368,7 @@ public class MultiPolygonRelation extends Relation {
 			if (tempWay.isClosed() == false) {
 				if (first) {
 					log.warn(
-						"Cannot join the following ways to closed polygons. MP-Relation",
+						"Cannot join the following ways to closed polygons. Multipolygon",
 						toBrowseURL());
 				}
 				logWayURLs(Level.WARNING, "- way:", tempWay);
@@ -501,6 +505,7 @@ public class MultiPolygonRelation extends Relation {
 			// do nothing
 			log.warn("Multipolygon " + toBrowseURL()
 					+ " does not contain a closed polygon.");
+			cleanup();
 			return;
 		}
 
@@ -510,9 +515,12 @@ public class MultiPolygonRelation extends Relation {
 			// do nothing
 			log.info("Multipolygon " + toBrowseURL()
 					+ " is completely outside the bounding box. It is not processed.");
+			cleanup();
 			return;
 		}
 		
+		// the intersectingRings marks all intersecting/overlapping rings
+		intersectingRings = new HashSet<JoinedWay>();
 		createContainsMatrix(rings);
 
 		BitSet unfinishedRings = new BitSet(rings.size());
@@ -536,15 +544,24 @@ public class MultiPolygonRelation extends Relation {
 			wi++;
 		}
 
+		if (outerRings.isEmpty()) {
+			log.warn("Multipolygon",toBrowseURL(),"does not contain any way tagged with role=outer.");
+			cleanup();
+			return;
+		}
+		
 		Queue<RingStatus> ringWorkingQueue = new LinkedBlockingQueue<RingStatus>();
 
 		BitSet outmostRings = findOutmostRings(unfinishedRings, outerRings);
 		if (outmostRings.isEmpty()) {
-			// there's no outmost outer ring
-			// maybe this is a tile problem
-			// try to continue with the inner ring
-			outmostRings = findOutmostRings(unfinishedRings, innerRings);
-			ringWorkingQueue.addAll(getRingStatus(outmostRings, false));
+			// WanMil: do not process these rings
+			// this would probably cause wrong mps. Issue a warning later in the code
+			
+//			// there's no outmost outer ring
+//			// maybe this is a tile problem
+//			// try to continue with the inner ring
+//			outmostRings = findOutmostRings(unfinishedRings, innerRings);
+//			ringWorkingQueue.addAll(getRingStatus(outmostRings, false));
 		} else {
 			ringWorkingQueue.addAll(getRingStatus(outmostRings, true));
 		}
@@ -603,11 +620,14 @@ public class MultiPolygonRelation extends Relation {
 					// so we remove all tags
 					currentRing.ring.removeAllTagsDeep();
 				} else {
-					// the ring has been composed by several ways
-					// they may contain line tags
-					// however all polygon tags are not processed
-					// because they are only lines and not polygons
-					// so we don't have to remove any tag
+					// remove all polygons tags from the original ways
+					// sometimes the ways seem to be autoclosed later on
+					// in mkgmap
+					for (Way w : currentRing.ring.getOriginalWays()) {
+						for (String polygonTag : polygonTags) {
+							w.deleteTag(polygonTag);
+						}
+					}
 				}
 
 				boolean useRelationTags = currentRing.outer
@@ -628,23 +648,99 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		if (unfinishedRings.isEmpty() == false) {
+		if (log.isLoggable(Level.WARNING) && unfinishedRings.isEmpty() == false) {
+			log.warn("Multipolygon", toBrowseURL(),"contains errors.");
+			
+			runIntersectionCheck(unfinishedRings);
+			runWrongInnerRingCheck(unfinishedRings, innerRings);
+			
 			// we have at least one ring that could not be processed
 			// Probably we have intersecting or overlapping polygons
-			// one possible reason is if the relation overlaps the tile bounds
+			// one possible reason is if the relation overlaps the tile
+			// bounds
 			// => issue a warning
-			log.warn("Multipolygon " + toBrowseURL()
-					+ " contains intersected or overlapping ways");
-			ArrayList<RingStatus> ringList = getRingStatus(unfinishedRings,
-					true);
-			for (RingStatus ring : ringList) {
-				logWayURLs(Level.WARNING, "-", ring.ring);
+			List<JoinedWay> lostWays = getWaysFromRinglist(unfinishedRings);
+			for (JoinedWay w : lostWays) {
+				log.warn("Polygon",w.getId(),"is not processed due to an unknown reason.");
+				logWayURLs(Level.WARNING, "-", w);
 			}
 		}
 
 		cleanup();
 	}
 
+	
+	private void runIntersectionCheck(BitSet unfinishedRings) {
+		if (intersectingRings.isEmpty()) {
+			// nothing to do
+			return;
+		}
+
+		log.warn("Some polygons are intersecting or overlapping. This is not yet supported.");
+
+		boolean oneOufOfBbox = false;
+		for (JoinedWay polygon : intersectingRings) {
+			int pi = rings.indexOf(polygon);
+			unfinishedRings.clear(pi);
+
+			boolean outOfBbox = false;
+			for (Coord c : polygon.getPoints()) {
+				if (bbox.contains(c) == false) {
+					outOfBbox = true;
+					oneOufOfBbox = true;
+					break;
+				}
+			}
+
+			logWayURLs(Level.WARNING, (outOfBbox ? "*" : "-"), polygon);
+		}
+		if (oneOufOfBbox) {
+			log.warn("Some of these intersections/overlaps may be caused by incomplete data on bounding box edges (*).");
+		}
+	}
+	
+	private void runWrongInnerRingCheck(BitSet unfinishedRings, BitSet innerRings) {
+		// find all unfinished inner rings that are not contained by any
+		BitSet wrongInnerRings = findOutmostRings(unfinishedRings, innerRings);
+		if (log.isDebugEnabled()) {
+			log.debug("unfinished", unfinishedRings);
+			log.debug("inner", innerRings);
+			// other ring
+			log.debug("wrong", wrongInnerRings);
+		}
+		if (wrongInnerRings.isEmpty()==false) {
+			// we have an inner ring that is not contained by any outer ring
+			// check if
+			for (int wiIndex = wrongInnerRings.nextSetBit(0); wiIndex >= 0; wiIndex = wrongInnerRings
+					.nextSetBit(wiIndex + 1)) {
+				BitSet containedRings = new BitSet();
+				containedRings.or(unfinishedRings);
+				containedRings.and(containsMatrix.get(wiIndex));
+
+				Way innerWay = rings.get(wiIndex);
+				if (containedRings.isEmpty()) {
+					log.warn("Polygon",	innerWay, "carries role", getRole(innerWay),
+						"but is not inside any outer polygon. Potentially it does not belong to this multipolygon.");
+				} else {
+					log.warn("Polygon",	innerWay, "carries role", getRole(innerWay),
+					    "but is not inside any outer polygon. Potentially the roles are interchanged with the following",
+					    (containedRings.cardinality()>1?"ways":"way"),".");
+					
+					for (int wrIndex = containedRings.nextSetBit(0); wrIndex >= 0; 
+						wrIndex = containedRings.nextSetBit(wrIndex+1)) {
+						logWayURLs(Level.WARNING, "-", rings.get(wrIndex));
+						unfinishedRings.set(wrIndex);
+						wrongInnerRings.set(wrIndex);
+					}
+				}
+				
+				unfinishedRings.clear(wiIndex);
+				wrongInnerRings.clear(wiIndex);
+			}
+		}
+		
+	}
+	
 	private void cleanup() {
 		roleMap.clear();
 		containsMatrix = null;
@@ -671,22 +767,26 @@ public class MultiPolygonRelation extends Relation {
 		List<Area> outerAreas = new ArrayList<Area>();
 
 		// 1st create an Area object of the outerRing and put it to the list
-		Area oa = createArea(outerRing.getPoints());
+		List<Area> oa = createAreas(outerRing);
 
 		// the polygons will be later clipped in the style converter
 		// so it is not necessary to clip it here
-		outerAreas.add(oa);
+		outerAreas.addAll(oa);
+
+		List<Area> innerAreas = new ArrayList<Area>();
+		for (Way innerRing : innerRings) {
+			innerAreas.addAll(createAreas(innerRing));
+		}
 
 		// go through all innerRings (holes) and cut them from the outerRing
-		for (Way innerRing : innerRings) {
-			Area innerArea = createArea(innerRing.getPoints());
+		for (Area innerArea : innerAreas) {
 
 			List<Area> outerAfterThisStep = new ArrayList<Area>();
 			for (Area outerArea : outerAreas) {
 				// check if this outerArea is probably intersected by the inner
 				// area to save computation time in case it is not
-				if (outerArea.getBounds().createIntersection(
-						innerArea.getBounds()).isEmpty()) {
+				if (outerArea.getBounds().intersects(
+						innerArea.getBounds()) == false) {
 					outerAfterThisStep.add(outerArea);
 					continue;
 				}
@@ -834,18 +934,27 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Create an area from a list of points.
+	 * Create the areas that are enclosed by the way. Usually the result should
+	 * only be one area but some ways contain intersecting lines. To handle these
+	 * erroneous cases properly the method might return a list of areas.
 	 * 
-	 * @param points
-	 *            list of points
-	 * @return the area
+	 * @param w a closed way
+	 * @return a list of enclosed ares
 	 */
-	private Area createArea(List<Coord> points) {
-		return new Area(createPolygon(points));
+	private List<Area> createAreas(Way w) {
+		Area area = new Area(createPolygon(w.getPoints()));
+		List<Area> areaList = areaToSingularAreas(area);
+		if (areaList.size() > 1) {
+			log.warn("Polygon", w.getId(), "intersects itself.");
+			log.warn("The polygon is composed of");
+			logWayURLs(Level.WARNING, "-", w);
+		}
+		return areaList;
 	}
 
 	/**
-	 * Convert an area to an mkgmap way
+	 * Convert an area to an mkgmap way. The caller must ensure that the area is singular.
+	 * Otherwise only the first part of the area is converted.
 	 * 
 	 * @param area
 	 *            the area
@@ -854,11 +963,6 @@ public class MultiPolygonRelation extends Relation {
 	 * @return a new mkgmap way
 	 */
 	private Way singularAreaToWay(Area area, long wayId) {
-		if (area.isSingular() == false) {
-			log.warn(
-				"singularAreaToWay called with non singular area. Multipolygon ",
-				toBrowseURL());
-		}
 		if (area.isEmpty()) {
 			if (log.isDebugEnabled()) {
 				log.debug("Empty area.", toBrowseURL());
@@ -925,8 +1029,13 @@ public class MultiPolygonRelation extends Relation {
 		for (Way tempWay : wayList) {
 			String realRole = getRole(tempWay);
 			if (checkRole.equals(realRole) == false) {
-				log.warn("Way", tempWay.getId(), "carries role", realRole,
+				if (tempWay instanceof JoinedWay) {
+					log.warn("Polygon composed of ways", ((JoinedWay) tempWay).getOriginalIds(), "carries role", realRole,
 						"but should carry role", checkRole);
+				} else {
+					log.warn("Way", tempWay.getId(), "carries role", realRole,
+						"but should carry role", checkRole);
+				}
 			}
 		}
 	}
@@ -1132,10 +1241,14 @@ public class MultiPolygonRelation extends Relation {
 						// don't care about this intersection
 						// one of the rings is closed by this mp code and the
 						// closing way causes the intersection
-						log
-								.warn("Way", ring1, "may contain way", ring2,
-										". Ignoring artificial generated intersection.");
+						log.info("Polygon", ring1, "may contain polygon", ring2,
+							". Ignoring artificial generated intersection.");
 					} else {
+						// store them in the intersection rings set
+						// the error message will be printed out in the end of 
+						// the mp handling
+						intersectingRings.add(ring1);
+						intersectingRings.add(ring2);
 						return false;
 					}
 				}
@@ -1150,9 +1263,23 @@ public class MultiPolygonRelation extends Relation {
 		return true;
 	}
 
+	private List<JoinedWay> getWaysFromRinglist(BitSet selection) {
+		if (selection.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<JoinedWay> wayList = new ArrayList<JoinedWay>(selection.cardinality());
+		for (int i = selection.nextSetBit(0); i >= 0; i = selection.nextSetBit(i+1)) {
+			wayList.add(rings.get(i));
+		}
+		return wayList;
+	}
+	
 	private void logWayURLs(Level level, String preMsg, Way way) {
 		if (log.isLoggable(level)) {
 			if (way instanceof JoinedWay) {
+				if (((JoinedWay) way).getOriginalWays().isEmpty()) {
+					log.warn("Way",way,"does not contain any original ways");
+				}
 				for (Way segment : ((JoinedWay) way).getOriginalWays()) {
 					if (preMsg == null || preMsg.length() == 0) {
 						log.log(level, segment.toBrowseURL());
@@ -1301,6 +1428,14 @@ public class MultiPolygonRelation extends Relation {
 					w.removeAllTags();
 				}
 			}
+		}
+		
+		public List<Long> getOriginalIds() {
+			ArrayList<Long> idList = new ArrayList<Long>(getOriginalWays().size());
+			for (Way w : getOriginalWays()) {
+				idList.add(w.getId());
+			}
+			return idList;
 		}
 
 		@Override
