@@ -94,7 +94,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	}
 
 	private boolean isSizeOk(MapShape shape, int maxSize) {
-		if (shape.getType() == 0x4a)
+		if (shape.getType() == 0x4a || shape.getType() == 0x4b)
 			return true;
 		Area bounds = shape.getBounds();
 		return bounds.getMaxDimention() < maxSize

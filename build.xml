@@ -54,10 +54,11 @@
   </path>
 
 	<path id="test">
-		<path refid="main"/>
-		<pathelement location="build/test"/>
 		<pathelement location="test/resources"/>
+		<pathelement location="build/test"/>
 		<pathelement location="${junit.jar}"/>
+		<path refid="main"/>
+		<pathelement location="test"/>
 	</path>
 
 	<!-- Prepare - make all the directories -->

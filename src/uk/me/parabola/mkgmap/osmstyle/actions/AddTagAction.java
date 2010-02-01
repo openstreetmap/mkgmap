@@ -76,6 +76,7 @@ public class AddTagAction implements Action {
 		sb.append(tag);
 		sb.append("=");
 		sb.append(values);
+		sb.append(';');
 		return sb.toString();
 	}
 }

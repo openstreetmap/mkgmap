@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,6 +86,11 @@ public class Way extends Element {
 		points.add(co);
 	}
 
+	public void addPointIfNotEqualToLastPoint(Coord co) {
+		if(points.size() == 0 || !co.equals(points.get(points.size() - 1)))
+			points.add(co);
+	}
+
 	public void reverse() {
 		int numPoints = points.size();
 		for(int i = 0; i < numPoints/2; ++i) {
@@ -136,5 +142,38 @@ public class Way extends Element {
 
 	public String kind() {
 		return "way";
+	}
+
+	// returns true if the way is a closed polygon with a clockwise
+	// direction
+	public boolean clockwise() {
+
+		if(points.size() < 3 || !points.get(0).equals(points.get(points.size() - 1)))
+			return false;
+
+		long area = 0;
+		Coord p1 = points.get(0);
+		for(int i = 1; i < points.size(); ++i) {
+			Coord p2 = points.get(i);
+			area += ((long)p1.getLongitude() * p2.getLatitude() - 
+					 (long)p2.getLongitude() * p1.getLatitude());
+			p1 = p2;
+		}
+
+		// this test looks to be inverted but gives the expected result!
+		return area < 0;
+	}
+
+	// simplistic check to see if this way "contains" another - for
+	// speed, all we do is check that all of the other way's points
+	// are inside this way's polygon
+	public boolean containsPointsOf(Way other) {
+		Polygon thisPoly = new Polygon();
+		for(Coord p : points)
+			thisPoly.addPoint(p.getLongitude(), p.getLatitude());
+		for(Coord p : other.points)
+			if(!thisPoly.contains(p.getLongitude(), p.getLatitude()))
+				return false;
+		return true;
 	}
 }

@@ -531,10 +531,12 @@ public class ExtTypeAttributes {
 				int period = 0;
 				for(int p : periods)
 					period += p;
-				if(period >= 256)
+				if(period > 255)
 					lightType |= 0x40; // 9th bit of period
-				else if(period >= 512)
-					log.warn("Can't encode periods greater than 51.2 seconds");
+				else if(period > 511) {
+					period = 511;
+					log.warn("Can't encode periods greater than 51.1 seconds for lights");
+				}
 
 				extraBytes = new byte[nob + 2];
 				int i = 0;
@@ -682,13 +684,17 @@ public class ExtTypeAttributes {
 					extraBytes[i++] = (byte)(off >> 16);
 				}
 				byte flags2 = 0;
+				int period = 0;
+				for(int p : periods)
+					period += p;
+				if(period > 255) {
+					period = 255;
+					log.warn("Can't encode periods greater than 25.5 seconds for buoy lights");
+				}
 				if(periods.length > 0)
 					flags2 |= (byte)0x80;
 				extraBytes[i++] = (byte)(flags2 | lt);
 				if(periods.length > 0) {
-					int period = 0;
-					for(int p : periods)
-						period += p;
 					extraBytes[i++] = (byte)period;
 					if(periods.length > 1) {
 						if(periods.length > 2)

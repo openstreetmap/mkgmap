@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ThreadLocal;
 import java.util.Properties;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -35,6 +36,8 @@ import java.util.logging.LogManager;
  */
 public class Logger {
 	private final java.util.logging.Logger log;
+
+	private static final ThreadLocal<String> threadTags = new ThreadLocal<String>();
 
 	static {
 		initLogging();
@@ -150,7 +153,7 @@ public class Logger {
 	 */
 	public void debug(Object o) {
 		if (log.isLoggable(Level.FINE))
-			log.fine(o!=null? o.toString(): "null");
+			log.fine(tagMessage(o == null? "null" : o.toString()));
 	}
 
 	/**
@@ -169,7 +172,7 @@ public class Logger {
 
 	public void info(Object o) {
 		if (log.isLoggable(Level.INFO))
-			log.info(o.toString());
+			log.info(tagMessage(o == null? "null" : o.toString()));
 	}
 
 	public void info(Object ... olist) {
@@ -178,8 +181,7 @@ public class Logger {
 	}
 
 	public void warn(Object o) {
-		if (log.isLoggable(Level.WARNING))
-			log.warning(o.toString());
+		log.warning(tagMessage(o == null? "null" : o.toString()));
 	}
 
 	public void warn(Object ... olist) {
@@ -188,20 +190,20 @@ public class Logger {
 	}
 
 	public void error(Object o) {
-		log.severe(o.toString());
+		log.severe(tagMessage(o == null? "null" : o.toString()));
 	}
 
 	public void error(Object o, Throwable e) {
-		log.log(Level.SEVERE, o.toString(), e);
+		log.log(Level.SEVERE, tagMessage(o == null? "null" : o.toString()), e);
 	}
 
 	public void log(Level level, Object o) {
 		if (log.isLoggable(level))
-			log.log(level, o.toString());
+			log.log(level, tagMessage(o == null? "null" : o.toString()));
 	}
 
 	public void log(Level level, Object ... olist) {
-		if (log.isLoggable(Level.INFO))
+		if (log.isLoggable(level))
 			arrayFormat(level, olist);
 	}
 	
@@ -224,6 +226,15 @@ public class Logger {
 		}
 		sb.setLength(sb.length()-1);
 
-		log.log(type, sb.toString());
+		log.log(type, tagMessage(sb.toString()));
+	}
+
+	private String tagMessage(String message) {
+		String threadTag = threadTags.get();
+		return (threadTag != null) ? threadTag + ": " + message : message;
+	}
+
+	public void threadTag(String tag) {
+		threadTags.set(tag);
 	}
 }

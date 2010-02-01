@@ -57,10 +57,12 @@ other: clean
 
 .PHONY: clean
 clean:
-	rm -f 63240001/* gmapsupp/* mkgmap.log out.log
-	rm -f gmapsupp.img 632*
+	rm -f 6324000?/* gmapsupp/* mkgmap.log out.log
+	rm -f gmapsupp.img 632*.img
+	if [ -d 63240001 ]; then rmdir 6324000?; fi
 	rm -f 11112222.img 11112222.tdb
 	rm -f osmmap*
+	rm -f g?.img
 
 load:
 	sleep 2

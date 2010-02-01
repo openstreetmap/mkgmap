@@ -25,6 +25,7 @@
     <orderEntry type="library" name="resource" level="project" />
     <orderEntry type="library" name="jai" level="application" />
     <orderEntry type="library" name="apache-ant" level="application" />
+    <orderEntry type="library" name="icu4j" level="application" />
   </component>
 </module>
 

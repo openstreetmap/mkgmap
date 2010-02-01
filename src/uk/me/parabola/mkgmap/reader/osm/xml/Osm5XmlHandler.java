@@ -554,9 +554,10 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private void endRelation() {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
-			if ("multipolygon".equals(type))
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap);
-			else if("restriction".equals(type)) {
+			if ("multipolygon".equals(type)) {
+				Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
+			} else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
 					currentRelation = null;
@@ -622,6 +623,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
+		long start = System.currentTimeMillis();
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -644,6 +646,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 		wayMap = null;
 
 		converter.end();
+		long end = System.currentTimeMillis();
+		System.err.println("convert time " + (end-start) + "ms");
 		
 		relationMap = null;
 
@@ -831,16 +835,27 @@ public class Osm5XmlHandler extends DefaultHandler {
 								(minArcLength > 0 &&
 								 minArcLength > arcLength))) {
 								if(previousNode.getOnBoundary() && p.getOnBoundary()) {
-									// both the previous node and this node
-									// are on the boundary
-									if(complainedAbout.get(way) == null) {
-										if(p.equals(previousNode))
-											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") but they can't be merged because both are boundary nodes!");
-										else
-											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
-										complainedAbout.put(way, way);
+									if(p.equals(previousNode)) {
+										// the previous node has
+										// identical coordinates to
+										// the current node so it can
+										// be replaced but to avoid
+										// the assertion above we need
+										// to forget that it is on the
+										// boundary
+										previousNode.setOnBoundary(false);
 									}
-									break; // give up with this way
+									else {
+										// both the previous node and
+										// this node are on the
+										// boundary and they don't
+										// have identical coordinates
+										if(complainedAbout.get(way) == null) {
+											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+											complainedAbout.put(way, way);
+										}
+										break; // give up with this way
+									}
 								}
 								String thisNodeId = (p.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(p);
 								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
@@ -1154,6 +1169,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		while (it.hasNext()) {
 			Way w = it.next();
 			if (w.isClosed()) {
+				log.info("adding island " + w);
 				islands.add(w);
 				it.remove();
 			}
@@ -1167,26 +1183,6 @@ public class Osm5XmlHandler extends DefaultHandler {
 				log.debug("island after concatenating\n");
 				islands.add(w);
 				it.remove();
-			}
-		}
-
-		// create a "inner" way for each island
-		for (Way w : islands) {
-			log.info("adding island " + w);
-			if(generateSeaUsingMP)
-				seaRelation.addElement("inner", w);
-			else {
-				if(!FakeIdGenerator.isFakeId(w.getId())) {
-					Way w1 = new Way(FakeIdGenerator.makeFakeId());
-					w1.getPoints().addAll(w.getPoints());
-					// only copy the name tags
-					for(String tag : w)
-						if(tag.equals("name") || tag.endsWith(":name"))
-							w1.addTag(tag, w.getTag(tag));
-					w = w1;
-				}
-				w.addTag(landTag[0], landTag[1]);
-				wayMap.put(w.getId(), w);
 			}
 		}
 
@@ -1289,7 +1285,145 @@ public class Osm5XmlHandler extends DefaultHandler {
 				hitMap.put(hEnd, null);
 			}
 		}
+
+		// now construct inner ways from these segments
+		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
+		while (!hits.isEmpty()) {
+			long id = FakeIdGenerator.makeFakeId();
+			Way w = new Way(id);
+			wayMap.put(id, w);
+
+			EdgeHit hit =  hits.first();
+			EdgeHit hFirst = hit;
+			do {
+				Way segment = hitMap.get(hit);
+				log.info("current hit: " + hit);
+				EdgeHit hNext;
+				if (segment != null) {
+					// add the segment and get the "ending hit"
+					log.info("adding: ", segment);
+					for(Coord p : segment.getPoints())
+						w.addPointIfNotEqualToLastPoint(p);
+					hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
+				}
+				else {
+					w.addPointIfNotEqualToLastPoint(hit.getPoint(seaBounds));
+					hNext = hits.higher(hit);
+					if (hNext == null)
+						hNext = hFirst;
+
+					Coord p;
+					if (hit.compareTo(hNext) < 0) {
+						log.info("joining: ", hit, hNext);
+						for (int i=hit.edge; i<hNext.edge; i++) {
+							EdgeHit corner = new EdgeHit(i, 1.0);
+							p = corner.getPoint(seaBounds);
+							log.debug("way: ", corner, p);
+							w.addPointIfNotEqualToLastPoint(p);
+						}
+					}
+					else if (hit.compareTo(hNext) > 0) {
+						log.info("joining: ", hit, hNext);
+						for (int i=hit.edge; i<4; i++) {
+							EdgeHit corner = new EdgeHit(i, 1.0);
+							p = corner.getPoint(seaBounds);
+							log.debug("way: ", corner, p);
+							w.addPointIfNotEqualToLastPoint(p);
+						}
+						for (int i=0; i<hNext.edge; i++) {
+							EdgeHit corner = new EdgeHit(i, 1.0);
+							p = corner.getPoint(seaBounds);
+							log.debug("way: ", corner, p);
+							w.addPointIfNotEqualToLastPoint(p);
+						}
+					}
+					w.addPointIfNotEqualToLastPoint(hNext.getPoint(seaBounds));
+				}
+				hits.remove(hit);
+				hit = hNext;
+			} while (!hits.isEmpty() && !hit.equals(hFirst));
+
+			if (!w.isClosed())
+				w.getPoints().add(w.getPoints().get(0));
+			log.info("adding non-island landmass, hits.size()=" + hits.size());
+			islands.add(w);
+		}
+
+		List<Way> antiIslands = new ArrayList<Way>();
+
+		for (Way w : islands) {
+
+			if(!FakeIdGenerator.isFakeId(w.getId())) {
+				Way w1 = new Way(FakeIdGenerator.makeFakeId());
+				w1.getPoints().addAll(w.getPoints());
+				// only copy the name tags
+				for(String tag : w)
+					if(tag.equals("name") || tag.endsWith(":name"))
+						w1.addTag(tag, w.getTag(tag));
+				w = w1;
+			}
+
+			// determine where the water is
+			if(w.clockwise()) {
+				// water on the inside of the poly, it's an
+				// "anti-island" so tag with natural=water (to
+				// make it visible above the land)
+				w.addTag("natural", "water");
+				antiIslands.add(w);
+				wayMap.put(w.getId(), w);
+			}
+			else {
+				// water on the outside of the poly, it's an island
+				if(generateSeaUsingMP) {
+					// create a "inner" way for each island
+					seaRelation.addElement("inner", w);
+				}
+				else {
+					// tag as land
+					w.addTag(landTag[0], landTag[1]);
+					wayMap.put(w.getId(), w);
+				}
+			}
+		}
+
+		islands.removeAll(antiIslands);
+
+		if(islands.size() == 0) {
+			// the tile doesn't contain any islands so we can assume
+			// that it's showing a land mass that contains some
+			// enclosed sea areas - in which case, we don't want a sea
+			// coloured background
+			generateSeaBackground = false;
+		}
+
 		if (generateSeaBackground) {
+
+			// the background is sea so all anti-islands should be
+			// contained by land otherwise they won't be visible
+
+			for(Way ai : antiIslands) {
+				boolean containedByLand = false;
+				for(Way i : islands) {
+					if(i.containsPointsOf(ai)) {
+						containedByLand = true;
+						break;
+					}
+				}
+				if(!containedByLand) {
+					// found an anti-island that is not contained by
+					// land so convert it back into an island
+					ai.deleteTag("natural");
+					if(generateSeaUsingMP) {
+						// create a "inner" way for the island
+						seaRelation.addElement("inner", ai);
+						wayMap.remove(ai.getId());
+					}
+					else
+						ai.addTag(landTag[0], landTag[1]);
+					log.warn("Converting anti-island starting at " + ai.getPoints().get(0).toOSMURL() + " into an island as it is surrounded by water");
+				}
+			}
+
 			seaId = FakeIdGenerator.makeFakeId();
 			sea = new Way(seaId);
 			if (generateSeaUsingMP) {
@@ -1322,84 +1456,9 @@ public class Osm5XmlHandler extends DefaultHandler {
 				seaRelation.addElement("outer", sea);
 		}
 
-		// now construct inner ways from these segments
-		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
-		while (!hits.isEmpty()) {
-			long id = FakeIdGenerator.makeFakeId();
-			Way w = new Way(id);
-			wayMap.put(id, w);
-
-			EdgeHit hit =  hits.first();
-			EdgeHit hFirst = hit;
-			do {
-				Way segment = hitMap.get(hit);
-				log.info("current hit: " + hit);
-				EdgeHit hNext;
-				if (segment != null) {
-					// add the segment and get the "ending hit"
-					log.info("adding: ", segment);
-					w.getPoints().addAll(segment.getPoints());
-					hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
-				}
-				else {
-					w.addPoint(hit.getPoint(seaBounds));
-					hNext = hits.higher(hit);
-					if (hNext == null)
-						hNext = hFirst;
-
-					Coord p;
-					if (hit.compareTo(hNext) < 0) {
-						log.info("joining: ", hit, hNext);
-						for (int i=hit.edge; i<hNext.edge; i++) {
-							EdgeHit corner = new EdgeHit(i, 1.0);
-							p = corner.getPoint(seaBounds);
-							log.debug("way: ", corner, p);
-							w.addPoint(p);
-						}
-					}
-					else if (hit.compareTo(hNext) > 0) {
-						log.info("joining: ", hit, hNext);
-						for (int i=hit.edge; i<4; i++) {
-							EdgeHit corner = new EdgeHit(i, 1.0);
-							p = corner.getPoint(seaBounds);
-							log.debug("way: ", corner, p);
-							w.addPoint(p);
-						}
-						for (int i=0; i<hNext.edge; i++) {
-							EdgeHit corner = new EdgeHit(i, 1.0);
-							p = corner.getPoint(seaBounds);
-							log.debug("way: ", corner, p);
-							w.addPoint(p);
-						}
-					}
-					w.addPoint(hNext.getPoint(seaBounds));
-				}
-				hits.remove(hit);
-				hit = hNext;
-			} while (!hits.isEmpty() && !hit.equals(hFirst));
-
-			if (!w.isClosed())
-				w.getPoints().add(w.getPoints().get(0));
-			log.info("adding non-island landmass, hits.size()=" + hits.size());
-			//w.addTag("highway", "motorway");
-			if(generateSeaUsingMP)
-				seaRelation.addElement("inner", w);
-			else {
-				if(!FakeIdGenerator.isFakeId(w.getId())) {
-					Way w1 = new Way(FakeIdGenerator.makeFakeId());
-					w1.getPoints().addAll(w.getPoints());
-					for(String tag : w)
-						if(tag.equals("name") || tag.endsWith(":name"))
-							w1.addTag(tag, w.getTag(tag));
-					w = w1;
-				}
-				w.addTag(landTag[0], landTag[1]);
-				wayMap.put(w.getId(), w);
-			}
-		}
-
 		if(generateSeaUsingMP) {
-			seaRelation = new MultiPolygonRelation(seaRelation, wayMap);
+			Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpBbox);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();
 		}
@@ -1616,7 +1675,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 					}
 					if(nearest != null && smallestGap < maxCoastlineGap) {
 						Coord w2s = nearest.getPoints().get(0);
-						log.info("bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
+						log.warn("Bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
 						Way wm;
 						if (!FakeIdGenerator.isFakeId(w1.getId())) {
 							wm = new Way(FakeIdGenerator.makeFakeId());

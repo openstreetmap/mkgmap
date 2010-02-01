@@ -48,6 +48,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		"xxxxxxxxxx:;<=>?" +	// 0x10-0x1F
 		"xxxxxxxxxxx[\\]^_";	// 0x20-0x2F
 
+	private final Transliterator transliterator = new TableTransliterator("ascii");
 
 	/**
 	 * Encode the text into the 6 bit format.  See the class level notes.
@@ -64,7 +65,8 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 		byte[] buf = new byte[2 * s.length() + 1];
 		int off = 0;
-		for (char c : transliterate(s)) {
+
+		for (char c : transliterator.transliterate(s).toCharArray()) {
 
 			if (c == ' ') {
 				buf = put6(buf, off++, 0);

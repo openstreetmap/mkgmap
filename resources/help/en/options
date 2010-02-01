@@ -250,12 +250,19 @@ Miscellaneous options:
 	than that length will be removed. If a length is not
 	specified, only zero-length arcs will be removed.
 
---adjust-turn-headings
+--adjust-turn-headings[=BITMASK]
 	Where possible, ensure that turns off to side roads change
 	heading sufficiently so that the GPS believes that a turn is
 	required rather than a fork. This also avoids spurious
 	instructions to "keep right/left" when the road doesn't
 	actually fork.
+
+	Optional BITMASK (default value 3) allows you to specify which
+	adjustments are to be made (where necessary):
+
+	1 = increase angle between side road and outgoing main road
+	2 = increase angle between side road and incoming main road
+
 
 --report-similar-arcs
 	Issue a warning when more than one arc connects two nodes and

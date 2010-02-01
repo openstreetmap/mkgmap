@@ -62,7 +62,7 @@ public class RoadNetwork {
 
 	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
-	private boolean adjustTurnHeadings;
+	private int adjustTurnHeadings = 0;
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
 	private int maxFlareLengthRatio = 0;
@@ -71,7 +71,13 @@ public class RoadNetwork {
 	private int reportDeadEnds = 0;
 
 	public void config(EnhancedProperties props) {
-		adjustTurnHeadings = props.getProperty("adjust-turn-headings", false);
+		String ath = props.getProperty("adjust-turn-headings");
+		if(ath != null) {
+			if(ath.length() > 0)
+				adjustTurnHeadings = Integer.decode(ath);
+			else
+				adjustTurnHeadings = RouteNode.ATH_DEFAULT_MASK;
+		}
 		checkRoundabouts = props.getProperty("check-roundabouts", false);
 		checkRoundaboutFlares = props.getProperty("check-roundabout-flares", false);
 		maxFlareLengthRatio = props.getProperty("max-flare-length-ratio", 0);
@@ -239,8 +245,8 @@ public class RoadNetwork {
 				if(reportDeadEnds != 0)
 					node.reportDeadEnds(reportDeadEnds);
 			}
-			if(adjustTurnHeadings)
-				node.tweezeArcs();
+			if(adjustTurnHeadings != 0)
+				node.tweezeArcs(adjustTurnHeadings);
 			nod1.addNode(node);
 		}
 		centers = nod1.subdivide();

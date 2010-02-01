@@ -1,0 +1,121 @@
+
+# This is the transliteration table for the latin language into ascii
+# (characters above U+0080).
+#
+# I've not included symbols that are not likely to be included in the names
+# of streets on maps, they can always be filled in if need be
+#
+
+# The first points are control characters.
+# U+0080            # latin character 
+# etc...
+
+# U+00a0             # latin character  
+
+U+00a1   i           # latin character ¡
+U+00a2   c           # latin character ¢
+U+00a3   #           # latin character £
+U+00a4   $           # latin character ¤
+U+00a5   YEN         # latin character ¥
+U+00a6   |           # latin character ¦
+
+# U+00a7 ?           # latin character §
+
+U+00a8   "           # latin character ¨
+U+00a9   (C)         # latin character ©
+
+# U+00aa ?           # latin character ª
+
+U+00ab   <<          # latin character «
+
+# U+00ac ?           # latin character ¬
+# U+00ad ?           # latin character ­
+
+U+00ae   (R)         # latin character ®
+
+# U+00af ?           # latin character ¯
+# U+00b0 ?           # latin character °
+# U+00b1 ?           # latin character ±
+# U+00b2 ?           # latin character ²
+# U+00b3 ?           # latin character ³
+# U+00b4 ?           # latin character ´
+# U+00b5 ?           # latin character µ
+# U+00b6 ?           # latin character ¶
+# U+00b7 ?           # latin character ·
+# U+00b8 ?           # latin character ¸
+# U+00b9 ?           # latin character ¹
+# U+00ba ?           # latin character º
+
+U+00bb   >>          # latin character »
+
+# U+00bc ?           # latin character ¼
+# U+00bd ?           # latin character ½
+# U+00be ?           # latin character ¾
+# U+00bf ?           # latin character ¿
+
+U+00c0   A           # latin character À
+U+00c1   A           # latin character Á
+U+00c2   A           # latin character Â
+U+00c3   A           # latin character Ã
+U+00c4   A           # latin character Ä
+U+00c5   A           # latin character Å
+U+00c6   AE          # latin character Æ
+U+00c7   C           # latin character Ç
+U+00c8   E           # latin character È
+U+00c9   E           # latin character É
+U+00ca   E           # latin character Ê
+U+00cb   E           # latin character Ë
+U+00cc   I           # latin character Ì
+U+00cd   I           # latin character Í
+U+00ce   I           # latin character Î
+U+00cf   I           # latin character Ï
+U+00d0   D           # latin character Ð
+U+00d1   N           # latin character Ñ
+U+00d2   O           # latin character Ò
+U+00d3   O           # latin character Ó
+U+00d4   O           # latin character Ô
+U+00d5   O           # latin character Õ
+U+00d6   O           # latin character Ö
+U+00d7   x           # latin character ×
+U+00d8   O           # latin character Ø
+U+00d9   U           # latin character Ù
+U+00da   U           # latin character Ú
+U+00db   U           # latin character Û
+U+00dc   U           # latin character Ü
+U+00dd   Y           # latin character Ý
+U+00de   th          # latin character Þ
+U+00df   ss          # latin character ß
+U+00e0   a           # latin character à
+U+00e1   a           # latin character á
+U+00e2   a           # latin character â
+U+00e3   a           # latin character ã
+U+00e4   a           # latin character ä
+U+00e5   a           # latin character å
+U+00e6   ae          # latin character æ
+U+00e7   c           # latin character ç
+U+00e8   e           # latin character è
+U+00e9   e           # latin character é
+U+00ea   e           # latin character ê
+U+00eb   e           # latin character ë
+U+00ec   i           # latin character ì
+U+00ed   i           # latin character í
+U+00ee   i           # latin character î
+U+00ef   i           # latin character ï
+U+00f0   d           # latin character ð
+U+00f1   n           # latin character ñ
+U+00f2   o           # latin character ò
+U+00f3   o           # latin character ó
+U+00f4   o           # latin character ô
+U+00f5   o           # latin character õ
+U+00f6   o           # latin character ö
+
+# U+00f7 ?           # latin character ÷
+# U+00f8 ?           # latin character ø
+
+U+00f9   u           # latin character ù
+U+00fa   u           # latin character ú
+U+00fb   u           # latin character û
+U+00fc   u           # latin character ü
+U+00fd   y           # latin character ý
+U+00fe   TH          # latin character þ
+U+00ff   y           # latin character ÿ
