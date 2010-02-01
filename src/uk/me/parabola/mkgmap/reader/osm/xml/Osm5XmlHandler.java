@@ -623,7 +623,6 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
-		long start = System.currentTimeMillis();
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -646,9 +645,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		wayMap = null;
 
 		converter.end();
-		long end = System.currentTimeMillis();
-		System.err.println("convert time " + (end-start) + "ms");
-		
+
 		relationMap = null;
 
 		if(bbox != null) {

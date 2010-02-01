@@ -129,6 +129,7 @@ public class StyleTester implements OsmConverter {
 	// The file may contain a known good set of results.  They are saved here
 	private final List<String> givenResults = new ArrayList<String>();
 	private static boolean forceUseOfGiven;
+	private static boolean showMatches;
 
 	private StyleTester(String stylefile, MapCollector coll, boolean reference) throws FileNotFoundException {
 		if (reference)
@@ -153,7 +154,13 @@ public class StyleTester implements OsmConverter {
 		List<String> a = new ArrayList<String>();
 		for (String s : args) {
 			if (s.startsWith("--reference")) {
+				System.out.println("# using reference method of calculation");
 				reference = true;
+			} else if (s.startsWith("--show-matches")) {
+				if (!reference)
+					System.out.println("# using reference method of calculation");
+				reference = true;
+				showMatches = true;
 			} else
 				a.add(s);
 		}
@@ -473,6 +480,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private class ReferenceStyle extends StyleImpl {
 		private final StyleFileLoader fileLoader;
+		private LevelInfo[] levels;
 
 		/**
 		 * Create a style from the given location and name.
@@ -488,7 +496,13 @@ public class StyleTester implements OsmConverter {
 			super(loc, name);
 			fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
+			setupReader();
 			readGivenResults();
+		}
+
+		private void setupReader() {
+			String l = LevelInfo.DEFAULT_LEVELS;
+			levels = LevelInfo.createFromString(l);
 		}
 
 		private void readGivenResults() {
@@ -521,14 +535,25 @@ public class StyleTester implements OsmConverter {
 		 */
 		public Rule getWayRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
-			String l = LevelInfo.DEFAULT_LEVELS;
-			LevelInfo[] levels = LevelInfo.createFromString(l);
 
 			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(GType.POLYLINE, levels, r);
 			try {
 				ruleFileReader.load(fileLoader, "lines");
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
+			}
+
+			return r;
+		}
+
+		public Rule getRelationRules() {
+			ReferenceRuleSet r = new ReferenceRuleSet();
+
+			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(0, levels, r);
+			try {
+				ruleFileReader.load(fileLoader, "relations");
+			} catch (FileNotFoundException e) {
+				// its not a problem
 			}
 
 			return r;
@@ -551,15 +576,38 @@ public class StyleTester implements OsmConverter {
 			}
 
 			public void resolveType(Element el, TypeResult result) {
+				String tagsBefore = wayTags(el);
+				if (showMatches) {
+					out.println("# Tags before: " + tagsBefore);
+				}
 				WatchableTypeResult a = new WatchableTypeResult(result);
 				// Start by literally running through the rules in order.
 				for (Rule rule : rules) {
-					//out.println("R " + rh);
 					a.reset();
+					//if (showMatches) out.println("# Trying " + rule);
 					rule.resolveType(el, a);
+
+					if (showMatches) {
+						if (a.isFound()) {
+							out.println("# Matched: " + rule);
+						} else if (a.isActionsOnly())
+							out.println("# Matched for actions: " + rule);
+					}
+
 					if (a.isResolved())
-						return;
+						break;
 				}
+				if (showMatches && !tagsBefore.equals(wayTags(el)))
+					out.println("# Way tags after: " + wayTags(el));
+			}
+
+			private String wayTags(Element el) {
+				StringBuilder sb = new StringBuilder();
+				for (String t : el) {
+					sb.append(t);
+					sb.append(",");
+				}
+				return sb.toString();
 			}
 		}
 

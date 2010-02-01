@@ -66,7 +66,6 @@ public class ActionRule implements Rule {
 			if (type != null && !type.isPropogateActions() && !(element instanceof Relation)) {
 				element = element.copy();
 			}
-
 		}
 
 		for (Action a : actions)

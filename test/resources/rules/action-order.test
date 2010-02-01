@@ -1,0 +1,21 @@
+WAY
+highway=path
+name=coutêaué
+name:translit=couteaue
+mtb:scale=1
+mtb:scale:uphill=4
+route=mtb
+route_name=up_the_hill
+
+#Following action rules:
+<<<lines>>>
+name:translit=* {set name='${name:translit}'}
+mtb:scale=1 & mtb:scale:uphill=4 {set name='${name} mtb14' | 'mtb14'}
+route_name=* {set name='${name} ${route_name}' | '${route_name}' }
+mtb:scale=* {set mkgmap:paved=no}
+
+highway=path & mkgmap:paved=no [0x7]
+highway=path [0x8]
+
+<<<results>>>
+WAY 1: Line 0x7, name=<couteaue mtb14 up_the_hill>, ref=<null>, res=24-24 (1/1),(2/2),

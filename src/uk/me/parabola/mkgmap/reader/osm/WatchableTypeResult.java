@@ -20,6 +20,7 @@ package uk.me.parabola.mkgmap.reader.osm;
  * @author Steve Ratcliffe
  */
 public class WatchableTypeResult implements TypeResult {
+	private boolean actionsOnly;
 	private boolean found;
 	private boolean continued;
 
@@ -30,8 +31,10 @@ public class WatchableTypeResult implements TypeResult {
 	}
 
 	public void add(Element el, GType type) {
-		if (type == null)
+		if (type == null) {
+			actionsOnly = true;
 			return;
+		}
 		
 		if (type.isContinueSearch())
 			continued = true;
@@ -49,15 +52,6 @@ public class WatchableTypeResult implements TypeResult {
 	}
 
 	/**
-	 * Did the added result have a continue.
-	 * @return True if one or more results had continue set since the last
-	 * reset.
-	 */
-	public boolean isContinued() {
-		return continued;
-	}
-
-	/**
 	 * Are we all done for this element?
 	 * @return True if we found a matching type and it did not have the continue
 	 * flag set.
@@ -66,10 +60,15 @@ public class WatchableTypeResult implements TypeResult {
 		return found && !continued;
 	}
 
+	public boolean isActionsOnly() {
+		return actionsOnly;
+	}
+
 	/**
 	 * Reset the watcher for the next element.
 	 */
 	public void reset() {
+		actionsOnly = false;
 		continued = false;
 		found = false;
 	}

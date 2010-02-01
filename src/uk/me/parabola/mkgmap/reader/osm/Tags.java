@@ -151,12 +151,12 @@ public class Tags implements Iterable<String> {
 		return new Iterator<String>() {
 			private int pos;
 			private String wild;
-			private boolean doWild;
+			//private boolean doWild;
 
 			public boolean hasNext() {
 				// After every normal entry there is a wild card entry.
-				if (doWild)
-					return true;
+				//if (doWild)
+				//	return true;
 
 				// Normal entries in the map
 				for (int i = pos; i < capacity; i++) {
@@ -174,13 +174,13 @@ public class Tags implements Iterable<String> {
 			 * entries.
 			 */
 			public String next() {
-				if (doWild) {
+				/*if (doWild) {
 					doWild = false;
 					return wild + "=*";
-				} else if (pos < capacity) {
+				} else*/ if (pos < capacity) {
 					for (int i = pos; i < capacity; i++) {
 						if (values[i] != null) {
-							doWild = true;
+							//doWild = true;
 							wild = keys[i];
 							pos = i+1;
 							return (keys[i] + "=" + values[i]);
