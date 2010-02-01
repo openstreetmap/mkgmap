@@ -12,18 +12,15 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Wrap an a action list allong with information about tags that could be
+ * Wrap an a action list along with information about tags that could be
  * affected by the actions.
  * @author Steve Ratcliffe
  */
 public class ActionList {
 	private final List<Action> list;
-	private Set<String> changeableTags = new HashSet<String>();
 
 	public ActionList(List<Action> list) {
 		this.list = list;
@@ -31,14 +28,6 @@ public class ActionList {
 
 	public List<Action> getList() {
 		return list;
-	}
-
-	public Set<String> getChangeableTags() {
-		return changeableTags;
-	}
-
-	public void setChangeableTags(Set<String> changeableTags) {
-		this.changeableTags = changeableTags;
 	}
 
 	public boolean isEmpty() {

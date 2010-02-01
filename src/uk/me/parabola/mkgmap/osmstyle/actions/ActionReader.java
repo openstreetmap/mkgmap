@@ -72,7 +72,7 @@ public class ActionReader {
 				String to = scanner.nextWord();
 				Action act = new RenameAction(from, to);
 				actions.add(act);
-				// The 'to' tag may come into existance and you may attempt
+				// The 'to' tag may come into existence and you may attempt
 				// to match on it, therefore we have to save it.
 				changeableTags.add(to);
 			} else if ("echo".equals(cmd)) {
@@ -87,10 +87,8 @@ public class ActionReader {
 		if (scanner.checkToken("}"))
 			scanner.nextToken();
 		scanner.skipSpace();
-		
-		ActionList actionList = new ActionList(actions);
-		actionList.setChangeableTags(changeableTags);
-		return actionList;
+
+		return new ActionList(actions);
 	}
 
 	private Action readAllCmd(boolean once) {

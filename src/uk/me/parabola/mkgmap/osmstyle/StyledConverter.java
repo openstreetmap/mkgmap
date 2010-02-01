@@ -112,6 +112,10 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
+	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
+	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
+	private static final Pattern REMOVE_KPH_PATTERN = Pattern.compile("[ \t]*kmh");
+	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
 
 	class AccessMapping {
 		private final String type;
@@ -543,7 +547,7 @@ public class StyledConverter implements OsmConverter {
 
 		if(name == null && refs != null) {
 			// use first ref as name
-			name = refs.split(";")[0].trim();
+			name = SEMI_PATTERN.split(refs)[0].trim();
 		}
 		if(name != null)
 			ms.setName(name);
@@ -1126,11 +1130,11 @@ public class StyledConverter implements OsmConverter {
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
+			wayBBox.addPoint(p);
+
 			// flag that's set true when we back up to a previous node
 			// while finding a good place to split the line
 			boolean splitAtPreviousNode = false;
-
-			wayBBox.addPoint(p);
 
 			// check if we should split the way at this point to limit
 			// the arc length between nodes
@@ -1338,12 +1342,13 @@ public class StyledConverter implements OsmConverter {
 			else {
 				roadClass = Integer.decode(val);
 			}
-			int roadClassMax = 4;
-			int roadClassMin = 0;
 			val = way.getTag("mkgmap:road-class-max");
+			int roadClassMax = 4;
 			if(val != null)
 				roadClassMax = Integer.decode(val);
 			val = way.getTag("mkgmap:road-class-min");
+
+			int roadClassMin = 0;
 			if(val != null)
 				roadClassMin = Integer.decode(val);
 			if(roadClass > roadClassMax)
@@ -1378,12 +1383,13 @@ public class StyledConverter implements OsmConverter {
 			else {
 				roadSpeed = Integer.decode(val);
 			}
-			int roadSpeedMax = 7;
-			int roadSpeedMin = 0;
 			val = way.getTag("mkgmap:road-speed-max");
+			int roadSpeedMax = 7;
 			if(val != null)
 				roadSpeedMax = Integer.decode(val);
 			val = way.getTag("mkgmap:road-speed-min");
+
+			int roadSpeedMin = 0;
 			if(val != null)
 				roadSpeedMin = Integer.decode(val);
 			if(roadSpeed > roadSpeedMax)
@@ -1400,7 +1406,6 @@ public class StyledConverter implements OsmConverter {
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
-		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
 		if(highwayType == null) {
 			// it's a routable way but not a highway (e.g. a ferry)
@@ -1409,6 +1414,7 @@ public class StyledConverter implements OsmConverter {
 			highwayType = way.getTag("route");
 		}
 
+		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		for (AccessMapping anAccessMap : accessMap) {
 			int index = anAccessMap.index;
 			String type = anAccessMap.type;
@@ -1604,9 +1610,9 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		int[] highWayCounts = new int[origNumPoints];
+		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
 		int middleLat = 0;
 		int middleLon = 0;
-		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
 		for(int i = 1; i < origNumPoints; ++i) {
 			Coord p = wayPoints.get(i);
 			middleLat += p.getLatitude();
@@ -1658,12 +1664,12 @@ public class StyledConverter implements OsmConverter {
 		
 		String speedTag = tag.toLowerCase().trim();
 		
-		if (speedTag.matches(".*mph")) {
+		if (ENDS_IN_MPH_PATTERN.matcher(speedTag).matches()) {
 			// Check if it is a limit in mph
-			speedTag = speedTag.replaceFirst("[ \t]*mph", "");
+			speedTag = REMOVE_MPH_PATTERN.matcher(speedTag).replaceFirst("");
 			factor = 1.61;
 		} else
-			speedTag = speedTag.replaceFirst("[ \t]*kmh", "");  // get rid of kmh just in case
+			speedTag = REMOVE_KPH_PATTERN.matcher(speedTag).replaceFirst("");  // get rid of kmh just in case
 
 		double kmh;
 		try {

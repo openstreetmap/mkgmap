@@ -111,12 +111,11 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean linkPOIsToWays;
-	private final boolean routing;
 	private final boolean generateSea;
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
-	private boolean extendSeaSectors = false;
-	private int maxCoastlineGap = 0;
+	private boolean extendSeaSectors;
+	private int maxCoastlineGap;
 	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
@@ -166,7 +165,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 				}
 			}
 		}
-		routing = props.containsKey("route");
+
 		String rsa = props.getProperty("remove-short-arcs", null);
 		if(rsa != null)
 			minimumArcLength = (rsa.length() > 0)? Double.parseDouble(rsa) : 0.0;
@@ -193,30 +192,28 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private void readDeleteTagsFile(String fileName) {
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(fileName))));
-			String line;
 			deletedTags = new HashMap<String,Set<String>>();
+			String line;
 			while((line = br.readLine()) != null) {
 				line = line.trim();
 				if(line.length() > 0 && 
 				   !line.startsWith("#") &&
 				   !line.startsWith(";")) {
 					String[] parts = line.split("=");
-					if(parts.length != 2) {
-						log.error("Ignoring bad line in deleted tags file: " + line);
-					}
-					else {
+					if (parts.length == 2) {
 						parts[0] = parts[0].trim();
 						parts[1] = parts[1].trim();
-						if("*".equals(parts[1])) {
+						if ("*".equals(parts[1])) {
 							deletedTags.put(parts[0], new HashSet<String>());
-						}
-						else {
+						} else {
 							Set<String> vals = deletedTags.get(parts[0]);
-							if(vals == null)
+							if (vals == null)
 								vals = new HashSet<String>();
 							vals.add(parts[1]);
 							deletedTags.put(parts[0], vals);
 						}
+					} else {
+						log.error("Ignoring bad line in deleted tags file: " + line);
 					}
 				}
 			}
@@ -229,14 +226,14 @@ public class Osm5XmlHandler extends DefaultHandler {
 			log.error("Error reading delete tags file " + fileName);
 		}
 
-		if(deletedTags != null && deletedTags.size() == 0)
+		if(deletedTags != null && deletedTags.isEmpty())
 			deletedTags = null;
 	}
 
 	private boolean deleteTag(String key, String val) {
 		if(deletedTags != null) {
 			Set<String> vals = deletedTags.get(key);
-			if(vals != null && (vals.size() == 0 || vals.contains(val))) {
+			if(vals != null && (vals.isEmpty() || vals.contains(val))) {
 				//				System.err.println("Deleting " + key + "=" + val);
 				return true;
 			}
@@ -595,11 +592,12 @@ public class Osm5XmlHandler extends DefaultHandler {
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
-				String ref = null;
-				Way motorway = null;
 				String exitName = e.getTag("name");
 				if(exitName == null)
 					exitName = e.getTag("ref");
+
+				String ref = null;
+				Way motorway = null;
 				for (Way w : motorways) {
 					if (w.getPoints().contains(e.getLocation())) {
 						motorway = w;
@@ -1035,7 +1033,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 			}
 
 			// See if the first Node of the Way has a FIXME attribute
-			if (currentWay.getPoints().size() == 0) {
+			if (currentWay.getPoints().isEmpty()) {
 				currentWayStartsWithFIXME = (currentNodeInWay != null &&
 											 (currentNodeInWay.getTag("FIXME") != null ||
 											  currentNodeInWay.getTag("fixme") != null));
@@ -1385,7 +1383,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 		islands.removeAll(antiIslands);
 
-		if(islands.size() == 0) {
+		if(islands.isEmpty()) {
 			// the tile doesn't contain any islands so we can assume
 			// that it's showing a land mass that contains some
 			// enclosed sea areas - in which case, we don't want a sea

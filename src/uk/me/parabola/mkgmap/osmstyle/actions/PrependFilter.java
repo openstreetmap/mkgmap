@@ -32,7 +32,7 @@ public class PrependFilter extends ValueFilter {
 	private static final Map<String, String> symbols_8bit;
 
 	static {
-		// Firstly, the symbols common to both encodings
+		// Firstly, the symbols common to both encodings.
 		symbols_6bit = new HashMap<String, String>();
 		symbols_6bit.put("ele", "\u001f"); // name.height separator
 
