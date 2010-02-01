@@ -14,12 +14,12 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.lang.reflect.Field;
@@ -31,13 +31,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -51,7 +51,6 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.ActionRule;
 import uk.me.parabola.mkgmap.osmstyle.ExpressionRule;
-import uk.me.parabola.mkgmap.osmstyle.FixedRule;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
@@ -109,9 +108,10 @@ import org.xml.sax.SAXException;
  * <h2>osm file mode</h2>
  * Takes two arguments, first the style file and then the osm file.
  *
- * You can give a --ordered flag and it will run style file in ordered mode,
+ * You can give a --reference flag and it will run style file in reference mode,
  * that is each rule will be applied to the element without any attempt at
- * optimisation.  Untested, might be slow for large files.
+ * optimisation.  This acts as an independent check of the main style code
+ * which may have more optimisations.
  *
  * @author Steve Ratcliffe
  */
@@ -121,13 +121,17 @@ public class StyleTester implements OsmConverter {
 
 	private static final String STYLETESTER_STYLE = "styletester.style";
 
-	//private Style style;
+	private static PrintStream out = System.out;
+	private static boolean reference;
+
 	private final OsmConverter converter;
 
-	private static boolean ordered;
+	// The file may contain a known good set of results.  They are saved here
+	private final List<String> givenResults = new ArrayList<String>();
+	private static boolean forceUseOfGiven;
 
-	private StyleTester(String stylefile, MapCollector coll, boolean ordered) throws FileNotFoundException {
-		if (ordered)
+	private StyleTester(String stylefile, MapCollector coll, boolean reference) throws FileNotFoundException {
+		if (reference)
 			converter = makeStrictStyleConverter(stylefile, coll);
 		else
 			converter = makeStyleConverter(stylefile, coll);
@@ -141,11 +145,15 @@ public class StyleTester implements OsmConverter {
 			runTest(a[0], a[1]);
 	}
 
+	public static void setOut(PrintStream out) {
+		StyleTester.out = out;
+	}
+
 	private static String[] processOptions(String[] args) {
 		List<String> a = new ArrayList<String>();
 		for (String s : args) {
-			if (s.startsWith("--ordered")) {
-				ordered = true;
+			if (s.startsWith("--reference")) {
+				reference = true;
 			} else
 				a.add(s);
 		}
@@ -156,14 +164,14 @@ public class StyleTester implements OsmConverter {
 		MapCollector collector = new PrintingMapCollector();
 		OsmConverter normal;
 		try {
-			normal = new StyleTester(stylefile, collector, ordered);
+			normal = new StyleTester(stylefile, collector, reference);
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not open style file " + stylefile);
 			return;
 		}
 		try {
 
-			InputStream is = openFile(mapfile);
+			InputStream is = Utils.openFile(mapfile);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			parserFactory.setXIncludeAware(true);
 			parserFactory.setNamespaceAware(true);
@@ -198,9 +206,11 @@ public class StyleTester implements OsmConverter {
 	 * @param filename The test file contains text way definitions and a style
 	 * file all in one.
 	 */
-	private static void runSimpleTest(String filename) {
+	public static void runSimpleTest(String filename) {
 		try {
-			List<Way> ways = readSimpleTestFile(filename);
+			FileReader reader = new FileReader(filename);
+			BufferedReader br = new BufferedReader(reader);
+			List<Way> ways = readSimpleTestFile(br);
 
 			List<MapElement> results = new ArrayList<MapElement>();
 			OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
@@ -208,26 +218,38 @@ public class StyleTester implements OsmConverter {
 			List<MapElement> strictResults = new ArrayList<MapElement>();
 			OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
 
+			List<String> all = new ArrayList<String>();
 			for (Way w : ways) {
-				normal.convertWay(w);
-				String[] actual = formatResults(results);
+				String prefix = "WAY " + w.getId() + ": ";
+				normal.convertWay(w.copy());
+				String[] actual = formatResults(prefix, results);
+				all.addAll(Arrays.asList(actual));
 				results.clear();
 
-				strict.convertWay(w);
-				String[] expected = formatResults(strictResults);
+				strict.convertWay(w.copy());
+				String[] expected = formatResults(prefix, strictResults);
 				strictResults.clear();
 
-				String prefix = "WAY " + w.getId() + ": ";
-				printResult(prefix, actual);
+				printResult(actual);
 
 				if (!Arrays.deepEquals(actual, expected)) {
-					System.out.println("ERROR with strict ordering result would be:");
-					printResult(prefix, expected);
-
+					out.println("ERROR expected result is:");
+					printResult(expected);
 				}
+
+				out.println();
 			}
-		} catch (IOException e) {
+
+			List<String> givenList = ((StyleTester) strict).givenResults;
+			String[] given = givenList.toArray(new String[givenList.size()]);
+			if ((given.length > 0 || forceUseOfGiven) && !Arrays.deepEquals(all.toArray(), givenList.toArray())) {
+				out.println("ERROR given results were:");
+				printResult(given);
+			}
+		} catch (FileNotFoundException e) {
 			System.err.println("Cannot open test file " + filename);
+		} catch (IOException e) {
+			System.err.println("Failure while reading test file " + filename);
 		}
 	}
 
@@ -252,9 +274,9 @@ public class StyleTester implements OsmConverter {
 	}
 
 
-	private static void printResult(String prefix, String[] results) {
+	private static void printResult(String[] results) {
 		for (String s : results) {
-			System.out.println(prefix + s);
+			out.println(s);
 		}
 	}
 
@@ -262,9 +284,7 @@ public class StyleTester implements OsmConverter {
 	 * Read in the combined test file.  This contains some ways and a style.
 	 * The style does not need to include 'version' as this is added for you.
 	 */
-	private static List<Way> readSimpleTestFile(String filename) throws IOException {
-		FileReader reader = new FileReader(filename);
-		BufferedReader br = new BufferedReader(reader);
+	private static List<Way> readSimpleTestFile(BufferedReader br) throws IOException {
 		List<Way> ways = new ArrayList<Way>();
 
 		String line;
@@ -323,9 +343,10 @@ public class StyleTester implements OsmConverter {
 
 	/**
 	 * Print out the garmin elements that were produced by the rules.
+	 * @param prefix This string will be prepended to the formatted result.
 	 * @param lines The resulting map elements.
 	 */
-	private static String[] formatResults(List<MapElement> lines) {
+	private static String[] formatResults(String prefix, List<MapElement> lines) {
 		String[] result = new String[lines.size()];
 		int i = 0;
 		for (MapElement el : lines) {
@@ -335,7 +356,7 @@ public class StyleTester implements OsmConverter {
 				s = roadToString((MapRoad) el);
 			else
 				s = lineToString((MapLine) el);
-			result[i++] = s;
+			result[i++] = prefix + s;
 		}
 		return result;
 	}
@@ -436,34 +457,21 @@ public class StyleTester implements OsmConverter {
 	 * @param coll A map collecter to receive the created elements.
 	 */
 	private StyledConverter makeStrictStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
-		Style style = new StrictOrderingStyle(stylefile, null);
+		Style style = new ReferenceStyle(stylefile, null);
 		return new StyledConverter(style, coll, new Properties());
 	}
 
-	/**
-	 * Open a file and apply filters necessary to reading it such as decompression.
-	 *
-	 * @param name The file to open.
-	 * @return A stream that will read the file, positioned at the beginning.
-	 * @throws FileNotFoundException If the file cannot be opened for any reason.
-	 */
-	private static InputStream openFile(String name) throws FileNotFoundException {
-		InputStream is = new FileInputStream(name);
-		if (name.endsWith(".gz")) {
-			try {
-				is = new GZIPInputStream(is);
-			} catch (IOException e) {
-				throw new FileNotFoundException( "Could not read as compressed file");
-			}
-		}
-		return is;
+	public static void forceUseOfGiven(boolean force) {
+		forceUseOfGiven = force;
 	}
 
 	/**
-	 * A style that is based on StyleImpl, except that it literally implements
-	 * running each rule in the order they are defined on each element.
+	 * This is a reference implementation of the style engine which is somewhat
+	 * independent of the main implementation and does not have any kind of
+	 * optimisations.  You can compare the results from the two implementations
+	 * to find bugs and regressions.
 	 */
-	private class StrictOrderingStyle extends StyleImpl {
+	private class ReferenceStyle extends StyleImpl {
 		private final StyleFileLoader fileLoader;
 
 		/**
@@ -476,9 +484,31 @@ public class StyleTester implements OsmConverter {
 		 * @throws FileNotFoundException If the file doesn't exist.  This can include
 		 * the version file being missing.
 		 */
-		public StrictOrderingStyle(String loc, String name) throws FileNotFoundException {
+		public ReferenceStyle(String loc, String name) throws FileNotFoundException {
 			super(loc, name);
 			fileLoader = StyleFileLoader.createStyleLoader(loc, name);
+
+			readGivenResults();
+		}
+
+		private void readGivenResults() {
+			givenResults.clear();
+			BufferedReader br = null;
+			try {
+				Reader reader = fileLoader.open("results");
+				br = new BufferedReader(reader);
+				String line;
+				while ((line = br.readLine()) != null) {
+					line = line.trim();
+					if (line.isEmpty())
+						continue;
+					givenResults.add(line);
+				}
+			} catch (IOException e) {
+				// there are no known good results given, that is OK
+			} finally {
+				Utils.closeFile(br);
+			}
 		}
 
 		/**
@@ -490,7 +520,7 @@ public class StyleTester implements OsmConverter {
 		 * each rule in turn to the element until there is match.
 		 */
 		public Rule getWayRules() {
-			StrictOrderingRuleSet r = new StrictOrderingRuleSet();
+			ReferenceRuleSet r = new ReferenceRuleSet();
 			String l = LevelInfo.DEFAULT_LEVELS;
 			LevelInfo[] levels = LevelInfo.createFromString(l);
 
@@ -508,15 +538,13 @@ public class StyleTester implements OsmConverter {
 		 * Keeps each rule in an orderd list.
 		 *
 		 * Types are resolved by literally applying the rules in order to the
-		 * element.  This would be too slow to do for real in mkgmap, however
-		 * mkgmap should produce the same result as doing this.
+		 * element.
 		 *
 		 * As long as the rules are added in the order they are encountered in
 		 * the file, this should work.
 		 */
-		private class StrictOrderingRuleSet implements Rule {
+		private class ReferenceRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
-			private int prevMatch;
 
 			public void add(Rule rule) {
 				rules.add(rule);
@@ -524,31 +552,31 @@ public class StyleTester implements OsmConverter {
 
 			public void resolveType(Element el, TypeResult result) {
 				WatchableTypeResult a = new WatchableTypeResult(result);
-				for (int i = prevMatch; i < rules.size(); i++) {
-					Rule r = rules.get(i);
-					r.resolveType(el, a);
-
-					if (a.isContinued())
-						prevMatch = i + 1;
-
-					if (a.isFound())
-						break;
+				// Start by literally running through the rules in order.
+				for (Rule rule : rules) {
+					//out.println("R " + rh);
+					a.reset();
+					rule.resolveType(el, a);
+					if (a.isResolved())
+						return;
 				}
-				prevMatch = 0;
 			}
 		}
 
 		/**
 		 * A reimplementation of RuleFileReader that does no optimisation but
 		 * just reads the rules into a list.
+		 *
+		 * Again this can be compared with the main implementation which may
+		 * attempt more optimisations.
 		 */
 		class SimpleRuleFileReader {
 			private final TypeReader typeReader;
 
-			private final StrictOrderingRuleSet rules;
+			private final ReferenceRuleSet rules;
 			private TokenScanner scanner;
 
-			public SimpleRuleFileReader(int kind, LevelInfo[] levels, StrictOrderingRuleSet rules) {
+			public SimpleRuleFileReader(int kind, LevelInfo[] levels, ReferenceRuleSet rules) {
 				this.rules = rules;
 				typeReader = new TypeReader(kind, levels);
 			}
@@ -595,15 +623,11 @@ public class StyleTester implements OsmConverter {
 			 */
 			private void saveRule(Op op, ActionList actions, GType gt) {
 				Rule rule;
-				if (!actions.isEmpty())
-					rule = new ActionRule(op, actions.getList(), gt);
-				else if (op != null) {
+				if (actions.isEmpty())
 					rule = new ExpressionRule(op, gt);
-				} else {
-					rule = new FixedRule(gt);
-				}
+				else
+					rule = new ActionRule(op, actions.getList(), gt);
 
-				//System.out.println("save rule " + null + "/" + rule);
 				rules.add(rule);
 			}
 		}
@@ -640,8 +664,8 @@ public class StyleTester implements OsmConverter {
 	}
 
 	/**
-	 * A map collector that just adds any line or road we find to the end of
-	 * a list.
+	 * A map collector that just prints elements found.
+	 * (lines and roads only at present).
 	 */
 	private static class PrintingMapCollector implements MapCollector {
 
@@ -651,15 +675,15 @@ public class StyleTester implements OsmConverter {
 		public void addPoint(MapPoint point) { }
 
 		public void addLine(MapLine line) {
-			String[] strings = formatResults(Arrays.<MapElement>asList(line));
-			printResult("", strings);
+			String[] strings = formatResults("", Arrays.<MapElement>asList(line));
+			printResult(strings);
 		}
 
 		public void addShape(MapShape shape) { }
 
 		public void addRoad(MapRoad road) {
-			String[] strings = formatResults(Collections.<MapElement>singletonList(road));
-			printResult("", strings);
+			String[] strings = formatResults("", Collections.<MapElement>singletonList(road));
+			printResult(strings);
 		}
 
 		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {

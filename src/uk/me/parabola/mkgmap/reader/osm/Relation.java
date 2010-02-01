@@ -2,7 +2,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,8 +11,7 @@ import java.util.Map;
  * @author Rene_A
  */
 public abstract class Relation extends Element {
-	private final List<Map.Entry<String,Element>> elements =
-		new ArrayList<Map.Entry<String,Element>>();
+	private final List<Map.Entry<String,Element>> elements = new ArrayList<Map.Entry<String,Element>>();
 
 	/**
 	 * Add a (role, Element) pair to this Relation.

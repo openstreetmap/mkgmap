@@ -51,20 +51,14 @@ public class GType {
 
 	private boolean road;
 
+	/** If this is set, then we look for further types after this one is matched */
 	private boolean continueSearch;
 
-	// Linked list of resolved types.
-	private GType next;
-
-	// control flag, whether this element defines
-	// the final conversion, or whether we shall search
-	// for further matching elements
-	private boolean FinalElement = true;
 	// by default, a rule's actions are skipped when searching for
 	// further rules to match - by setting this true, the rule's
 	// actions will always be executed
-	private boolean alwaysExecuteActions = false;
-	
+	private boolean propogateActionsOnContinue;
+
 	public GType(int featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
@@ -186,48 +180,15 @@ public class GType {
 		return continueSearch;
 	}
 
-	public void setFinal() {
-		FinalElement = true;
-	}
-	
-	public void setContinue() {
-		FinalElement = false;
+	public void propagateActions(boolean propagate) {
+		propogateActionsOnContinue = propagate;
 	}
 
-	public void alwaysExecuteActions(boolean aea) {
-		alwaysExecuteActions = aea;
+	public boolean isPropogateActions() {
+		return !continueSearch || propogateActionsOnContinue;
 	}
-
-	public boolean alwaysExecuteActions() {
-		return alwaysExecuteActions;
-	}
-	
-	//public boolean isFinal() {
-	//	return FinalElement;
-	//}
-	//
-	//public static void push() {
-	//	nextPriority += PRIORITY_PUSH;
-	//}
 
 	public void setContinueSearch(boolean continueSearch) {
 		this.continueSearch = continueSearch;
-	}
-
-	public GType next() {
-		return next;
-	}
-
-	public void addType(GType type) {
-		GType end = this;
-		while (end.next != null)
-			end = end.next;
-
-		end.next = type;
-	}
-
-	public void clear() {
-		while (next != null)
-			next = next.next;
 	}
 }

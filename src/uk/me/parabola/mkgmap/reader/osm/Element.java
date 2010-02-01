@@ -128,4 +128,9 @@ public abstract class Element implements Iterable<String> {
 	public String toBrowseURL() {
 		return "http://www.openstreetmap.org/browse/" + kind() + "/" + id;
 	}
+
+	public Element copy() {
+		// Can be implemented in subclasses
+		throw new UnsupportedOperationException("unsupported element copy");
+	}
 }

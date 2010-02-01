@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
 /**
@@ -39,18 +40,35 @@ public class WatchableTypeResult implements TypeResult {
 		result.add(el, type);
 	}
 
+	/**
+	 * Was a result found.
+	 * @return True if one or more results were added since the last reset.
+	 */
 	public boolean isFound() {
 		return found;
 	}
 
+	/**
+	 * Did the added result have a continue.
+	 * @return True if one or more results had continue set since the last
+	 * reset.
+	 */
 	public boolean isContinued() {
 		return continued;
 	}
 
+	/**
+	 * Are we all done for this element?
+	 * @return True if we found a matching type and it did not have the continue
+	 * flag set.
+	 */
 	public boolean isResolved() {
 		return found && !continued;
 	}
 
+	/**
+	 * Reset the watcher for the next element.
+	 */
 	public void reset() {
 		continued = false;
 		found = false;

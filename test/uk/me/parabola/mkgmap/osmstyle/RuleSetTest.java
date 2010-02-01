@@ -260,9 +260,73 @@ public class RuleSetTest {
 	}
 
 	@Test
+	public void testContinueDefault() {
+		RuleSet rs = makeRuleSet("highway=footway {set surface=good;} [0x1 continue]" +
+				"surface=good [0x20]" +
+				"surface=bad [0x30]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "footway");
+		el.addTag("surface", "bad");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("number of lines returned", 2, list.size());
+		assertEquals("surface setting not propagated", "bad", el.getTag("surface"));
+		assertEquals("result type", 0x30, list.get(1).getType());
+	}
+
+	@Test
+	public void testContinuePropagate() {
+		RuleSet rs = makeRuleSet("highway=footway {set surface=good;} [0x1 continue propagate]" +
+				"surface=good [0x20]" +
+				"surface=bad [0x30]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "footway");
+		el.addTag("surface", "bad");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("number of lines returned", 2, list.size());
+		assertEquals("surface setting is propagated", "good", el.getTag("surface"));
+		assertEquals("result type", 0x20, list.get(1).getType());
+	}
+
+	@Test
+	public void testContinueNoPropagate() {
+		RuleSet rs = makeRuleSet("highway=footway {set surface=good;} [0x1 continue no_propagate]" +
+				"surface=good [0x20]" +
+				"surface=bad [0x30]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "footway");
+		el.addTag("surface", "bad");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("number of lines returned", 2, list.size());
+		assertEquals("surface setting is not propagated", "bad", el.getTag("surface"));
+		assertEquals("result type", 0x30, list.get(1).getType());
+	}
+
+	@Test
+	public void testContinueWithActions() {
+		RuleSet rs = makeRuleSet("highway=footway {set surface=good;} [0x1 continue with_actions]" +
+				"surface=good [0x20]" +
+				"surface=bad [0x30]");
+
+		Way el = new Way(1);
+		el.addTag("highway", "footway");
+		el.addTag("surface", "bad");
+
+		List<GType> list = resolveList(rs, el);
+		assertEquals("number of lines returned", 2, list.size());
+		assertEquals("surface setting is propagated", "good", el.getTag("surface"));
+		assertEquals("result type", 0x20, list.get(1).getType());
+	}
+
+	@Test
 	public void testContinueChangesTag() {
 		RuleSet rs = makeRuleSet("highway=crossing & crossing=zebra_crossing" +
-				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue]" +
+				"    {set highway=deleted_crossing} [0x4004 resolution 24 continue propagate]" +
 				"highway=crossing [0x610f resolution 24 continue]" +
 				"highway=deleted_crossing [0x6 resolution 24 continue]"
 		);
@@ -271,14 +335,19 @@ public class RuleSetTest {
 		el.addTag("highway", "crossing");
 		el.addTag("crossing", "zebra_crossing");
 
+		List<GType> list = resolveList(rs, el);
+		assertEquals("first element", 0x4004, list.get(0).getType());
+		assertEquals("second element", 0x6, list.get(1).getType());
+	}
+
+	private List<GType> resolveList(RuleSet rs, Way el) {
 		final List<GType> list = new ArrayList<GType>();
 		rs.resolveType(el, new TypeResult() {
 			public void add(Element el, GType type) {
 				list.add(type);
 			}
 		});
-		assertEquals("first element", 0x4004, list.get(0).getType());
-		assertEquals("second element", 0x6, list.get(1).getType());
+		return list;
 	}
 
 	private GType getFirstType(Rule rs, Element el) {

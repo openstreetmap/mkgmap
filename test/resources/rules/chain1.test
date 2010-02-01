@@ -1,0 +1,14 @@
+# A simple test of the sort of thing that didn't work with the old
+# style engine.
+
+WAY
+highway=primary
+aa=5
+
+<<<lines>>>
+highway=* & aa=5 {set aa=6}
+highway=primary & aa=6 [0x1]
+highway=* & aa=6 [0x2]
+
+<<<results>>>
+WAY 1: Line 0x1, name=<null>, ref=<null>, res=24-24 (1/1),(2/2),

@@ -350,13 +350,10 @@ public class RuleFileReader {
 
 		log.debug(keystring); // TODO This will be used - if not delete it
 		Rule rule;
-		if (!actions.isEmpty())
-			rule = new ActionRule(expr, actions.getList(), gt);
-		else if (expr != null) {
+		if (actions.isEmpty()) 
 			rule = new ExpressionRule(expr, gt);
-		} else {
-			rule = new FixedRule(gt);
-		}
+		else
+			rule = new ActionRule(expr, actions.getList(), gt);
 
 		rules.add(rule);
 	}

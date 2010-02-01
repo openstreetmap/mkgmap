@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
@@ -107,7 +108,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	public void load(String name) throws FileNotFoundException, FormatException {
 		Reader reader;
 		try {
-			reader = new InputStreamReader(openFile(name), READING_CHARSET);
+			reader = new InputStreamReader(Utils.openFile(name), READING_CHARSET);
 		} catch (UnsupportedEncodingException e) {
 			// Java is required to support iso-8859-1 so this is unlikely
 			throw new FormatException("Unrecognised charset " + READING_CHARSET);

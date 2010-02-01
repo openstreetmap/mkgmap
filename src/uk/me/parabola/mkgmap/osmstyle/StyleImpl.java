@@ -86,6 +86,7 @@ public class StyleImpl implements Style {
 
 	// Patterns
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
+	private static final Pattern EQUAL_PATTERN = Pattern.compile("=");
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -335,14 +336,16 @@ public class StyleImpl implements Style {
 	 * Create a rule from a raw gtype. You get raw gtypes when you
 	 * have read the types from a map-features file.
 	 *
-	 * @return A rule that always resolves to the given type.  It will
-	 * also have its priority set so that rules earlier in a file
-	 * will override those later.
+	 * @return A rule that is conditional on the key string given.
 	 */
 	private Rule createRule(String key, GType gt) {
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		return new FixedRule(gt);
+		String[] tagval = EQUAL_PATTERN.split(key);
+		EqualsOp op = new EqualsOp();
+		op.setFirst(new ValueOp(tagval[0]));
+		op.setSecond(new ValueOp(tagval[1]));
+		return new ExpressionRule(op, gt);
 	}
 
 	/**

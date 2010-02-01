@@ -17,11 +17,15 @@
 package uk.me.parabola.imgfmt;
 
 import java.io.Closeable;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Some miscellaneous functions that are used within the .img code.
@@ -183,5 +187,25 @@ public class Utils {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * Open a file and apply filters necessary for reading it such as
+	 * decompression.
+	 *
+	 * @param name The file to open.
+	 * @return A stream that will read the file, positioned at the beginning.
+	 * @throws FileNotFoundException If the file cannot be opened for any reason.
+	 */
+	public static InputStream openFile(String name) throws FileNotFoundException {
+		InputStream is = new FileInputStream(name);
+		if (name.endsWith(".gz")) {
+			try {
+				is = new GZIPInputStream(is);
+			} catch (IOException e) {
+				throw new FileNotFoundException( "Could not read as compressed file");
+			}
+		}
+		return is;
 	}
 }

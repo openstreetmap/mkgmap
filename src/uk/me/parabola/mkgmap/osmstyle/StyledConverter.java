@@ -270,8 +270,16 @@ public class StyledConverter implements OsmConverter {
 
 		wayRules.resolveType(way, new TypeResult() {
 			public void add(Element el, GType type) {
-				postConvertRules(way, type);
-				addConvertedWay(way, type);
+				if (type.isContinueSearch()) {
+					// If not already copied, do so now
+					if (el == way)
+						el = way.copy();
+
+					// Not sure if this is needed as this really is a completely new way.
+					// originalWay.put(el, way);
+				}
+				postConvertRules(el, type);
+				addConvertedWay((Way) el, type);
 			}
 		});
 	}
@@ -309,8 +317,16 @@ public class StyledConverter implements OsmConverter {
 
 		nodeRules.resolveType(node, new TypeResult() {
 			public void add(Element el, GType type) {
-				postConvertRules(node, type);
-				addPoint(node, type);
+				if (type.isContinueSearch()) {
+					// If not already copied, do so now
+					if (el == node)
+						el = node.copy();
+
+					// Not sure if this is needed as this really is a completely new way.
+					// originalWay.put(el, way);
+				}
+				postConvertRules(el, type);
+				addPoint((Node) el, type);
 			}
 		});
 	}

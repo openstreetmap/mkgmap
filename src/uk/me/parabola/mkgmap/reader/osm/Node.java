@@ -43,4 +43,11 @@ public class Node extends Element {
 	public String kind() {
 		return "node";
 	}
+
+	public Node copy() {
+		Node dup = new Node(getId(), location);
+		dup.setName(getName());
+		dup.copyTags(this);
+		return dup;
+	}
 }

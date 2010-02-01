@@ -1,0 +1,12 @@
+
+# This test is meant to fail to check that the tester is working
+# The given results are incorrect.
+
+WAY
+highway=yes
+
+<<<lines>>>
+highway=yes [0x1]
+
+<<<results>>>
+WAY 1: Line 0x10, name=<null>, ref=<null>, res=24-24 (1/1),(2/2),

@@ -22,6 +22,7 @@ import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
@@ -29,8 +30,8 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
  * An action rule modifies the tags on the incoming element.
  *
  * It can also have an expression, and does not need to have a Type.  If
- * there is no type then the resolve method always returns false.  The tags
- * on the element may have been modified however.
+ * there is no type then the resolve method does not send any results.
+ * The tags on the element may have been modified however.
  *
  * @author Steve Ratcliffe
  */
@@ -52,14 +53,26 @@ public class ActionRule implements Rule {
 		this.actions = actions;
 		this.type = null;
 	}
-
 	public void resolveType(Element el, TypeResult result) {
-		if (expression == null || expression.eval(el)) {
-			for (Action a : actions)
-				a.perform(el);
+		Element element = el;
+		if (expression != null) {
+			if (!expression.eval(element))
+				return;
+			// If this is a continue and we are not to propagate the effects
+			// of the action on the element to further rules, then make
+			// a copy of the element so that the original is unsullied.
+			//
+			// There is another reason we need to copy: since there will be
+			if (type != null && !type.isPropogateActions() && !(element instanceof Relation)) {
+				element = element.copy();
+			}
 
-			result.add(el, type);
 		}
+
+		for (Action a : actions)
+			a.perform(element);
+
+		result.add(element, type);
 	}
 
 	public String toString() {
