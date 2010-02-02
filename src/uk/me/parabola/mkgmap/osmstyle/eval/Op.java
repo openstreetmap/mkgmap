@@ -98,6 +98,7 @@ public abstract class Op {
 		this.first = first;
 	}
 
+	// TODO make this return a type name human readable
 	public char getType() {
 		return type;
 	}

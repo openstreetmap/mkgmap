@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 
@@ -106,10 +108,14 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule relationRules;
 
-	private boolean ignoreMaxspeeds;
+	private final boolean ignoreMaxspeeds;
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
-	private boolean checkRoundabouts;
+	private final boolean checkRoundabouts;
+	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
+	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
+	private static final Pattern REMOVE_KPH_PATTERN = Pattern.compile("[ \t]*kmh");
+	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
 
 	class AccessMapping {
 		private final String type;
@@ -162,9 +168,9 @@ public class StyledConverter implements OsmConverter {
 			lineAdder = overlayAdder;
 	}
 
-	private static Pattern commaPattern = Pattern.compile(",");
+	private static final Pattern commaPattern = Pattern.compile(",");
 
-	public GType makeGTypeFromTags(Element element) {
+	private GType makeGTypeFromTags(Element element) {
 		String[] vals = commaPattern.split(element.getTag("mkgmap:gtype"));
 
 		if(vals.length < 3) {
@@ -180,7 +186,7 @@ public class StyledConverter implements OsmConverter {
 		for(int i = 0; i < vals.length; ++i)
 			vals[i] = vals[i].trim();
 
-		int kind = 0;
+		int kind;
 		try {
 			kind = Integer.decode(vals[0]);
 		}
@@ -252,49 +258,46 @@ public class StyledConverter implements OsmConverter {
 	 *
 	 * @param way The OSM way.
 	 */
-	public void convertWay(Way way) {
+	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2)
 			return;
 
-		GType foundType = null;
 		if(way.getTag("mkgmap:gtype") != null) {
-
-			foundType = makeGTypeFromTags(way);
+			GType foundType = makeGTypeFromTags(way);
 			if(foundType == null)
 				return;
-
-			if (foundType.getFeatureKind() == GType.POLYLINE) {
-				if(foundType.isRoad() &&
-				   !MapElement.hasExtendedType(foundType.getType()))
-					addRoad(way, foundType);
-				else
-					addLine(way, foundType);
-			}
-			else
-				addShape(way, foundType);
+			addConvertedWay(way, foundType);
+			return;
 		}
-		else {
-			preConvertRules(way);
 
-			do {
-				Way dupWay = way.duplicate();
-				foundType = wayRules.resolveType(dupWay, foundType);
-				if (foundType == null)
-					return;
+		preConvertRules(way);
 
-				originalWay.put(dupWay, way);
-				postConvertRules(dupWay, foundType);
+		wayRules.resolveType(way, new TypeResult() {
+			public void add(Element el, GType type) {
+				if (type.isContinueSearch()) {
+					// If not already copied, do so now
+					if (el == way)
+						el = way.copy();
 
-				if (foundType.getFeatureKind() == GType.POLYLINE) {
-					if(foundType.isRoad())
-						addRoad(dupWay, foundType);
-					else
-						addLine(dupWay, foundType);
+					// Not sure if this is needed as this really is a completely new way.
+					// originalWay.put(el, way);
 				}
-				else
-					addShape(dupWay, foundType);
-			} while (!foundType.isFinal());
+				postConvertRules(el, type);
+				addConvertedWay((Way) el, type);
+			}
+		});
+	}
+
+	private void addConvertedWay(Way way, GType foundType) {
+		if (foundType.getFeatureKind() == GType.POLYLINE) {
+		    if(foundType.isRoad() &&
+			   !MapElement.hasExtendedType(foundType.getType()))
+				addRoad(way, foundType);
+		    else
+				addLine(way, foundType);
 		}
+		else
+			addShape(way, foundType);
 	}
 
 	/**
@@ -303,28 +306,33 @@ public class StyledConverter implements OsmConverter {
 	 *
 	 * @param node The node to convert.
 	 */
-	public void convertNode(Node node) {
+	public void convertNode(final Node node) {
 
-		GType foundType = null;
 		if(node.getTag("mkgmap:gtype") != null) {
-			foundType = makeGTypeFromTags(node);
+			GType foundType = makeGTypeFromTags(node);
 			if(foundType == null)
 				return;
+
 			addPoint(node, foundType);
+			return;
 		}
-		else {
-			preConvertRules(node);
 
-			do {
-				foundType = nodeRules.resolveType(node, foundType);
-				if (foundType == null)
-					return;
-  
-				postConvertRules(node, foundType);
+		preConvertRules(node);
 
-				addPoint(node, foundType);
-			} while (!foundType.isFinal());
-		}
+		nodeRules.resolveType(node, new TypeResult() {
+			public void add(Element el, GType type) {
+				if (type.isContinueSearch()) {
+					// If not already copied, do so now
+					if (el == node)
+						el = node.copy();
+
+					// Not sure if this is needed as this really is a completely new way.
+					// originalWay.put(el, way);
+				}
+				postConvertRules(el, type);
+				addPoint((Node) el, type);
+			}
+		});
 	}
 
 	/**
@@ -370,6 +378,16 @@ public class StyledConverter implements OsmConverter {
 		this.bbox = bbox;
 	}
 
+	public void end() {
+		Collection<List<RestrictionRelation>> lists = restrictions.values();
+		for (List<RestrictionRelation> l : lists) {
+
+			for (RestrictionRelation rr : l) {
+				rr.addRestriction(collector);
+			}
+		}
+	}
+
 	/**
 	 * Run the rules for this relation.  As this is not an end object, then
 	 * the only useful rules are action rules that set tags on the contained
@@ -380,7 +398,7 @@ public class StyledConverter implements OsmConverter {
 	public void convertRelation(Relation relation) {
 		// Relations never resolve to a GType and so we ignore the return
 		// value.
-		relationRules.resolveType(relation, null);
+		relationRules.resolveType(relation, TypeResult.NULL_RESULT);
 
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
@@ -431,16 +449,18 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addShape(Way way, GType gt) {
-		MapShape shape = new MapShape();
+		final MapShape shape = new MapShape();
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
 
 		clipper.clipShape(shape, collector);
 		
-		GType pointType = nodeRules.resolveType(way, null);
-		
-		if(pointType != null)
-			shape.setPoiType(pointType.getType());
+		nodeRules.resolveType(way, new TypeResult() {
+			public void add(Element el, GType type) {
+				if(type != null)
+			shape.setPoiType(type.getType());
+			}
+		});
 	}
 
 	private void addPoint(Node node, GType gt) {
@@ -527,7 +547,7 @@ public class StyledConverter implements OsmConverter {
 
 		if(name == null && refs != null) {
 			// use first ref as name
-			name = refs.split(";")[0].trim();
+			name = SEMI_PATTERN.split(refs)[0].trim();
 		}
 		if(name != null)
 			ms.setName(name);
@@ -1110,11 +1130,11 @@ public class StyledConverter implements OsmConverter {
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
+			wayBBox.addPoint(p);
+
 			// flag that's set true when we back up to a previous node
 			// while finding a good place to split the line
 			boolean splitAtPreviousNode = false;
-
-			wayBBox.addPoint(p);
 
 			// check if we should split the way at this point to limit
 			// the arc length between nodes
@@ -1259,7 +1279,7 @@ public class StyledConverter implements OsmConverter {
 					assert nodeIndices.contains(i) : debugWayName + " has backed up to point " + i + " but can't find a node for that point " + p.toOSMURL();
 				}
 				else {
-					// add this index to nodeIndices (should not
+					// add this index to node Indexes (should not
 					// already be there)
 					assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i + " new node is " + p.toOSMURL();
 					nodeIndices.add(i);
@@ -1309,7 +1329,7 @@ public class StyledConverter implements OsmConverter {
 
 		// set road parameters 
 
-		// road class (can be overriden by mkgmap:road-class tag)
+		// road class (can be overridden by mkgmap:road-class tag)
 		int roadClass = gt.getRoadClass();
 		String val = way.getTag("mkgmap:road-class");
 		if(val != null) {
@@ -1322,12 +1342,13 @@ public class StyledConverter implements OsmConverter {
 			else {
 				roadClass = Integer.decode(val);
 			}
-			int roadClassMax = 4;
-			int roadClassMin = 0;
 			val = way.getTag("mkgmap:road-class-max");
+			int roadClassMax = 4;
 			if(val != null)
 				roadClassMax = Integer.decode(val);
 			val = way.getTag("mkgmap:road-class-min");
+
+			int roadClassMin = 0;
 			if(val != null)
 				roadClassMin = Integer.decode(val);
 			if(roadClass > roadClassMax)
@@ -1338,7 +1359,7 @@ public class StyledConverter implements OsmConverter {
 		}
 		road.setRoadClass(roadClass);
 
-		// road speed (can be overriden by maxspeed (OSM) tag or
+		// road speed (can be overridden by maxspeed (OSM) tag or
 		// mkgmap:road-speed tag)
 		int roadSpeed = gt.getRoadSpeed();
 		if(!ignoreMaxspeeds) {
@@ -1362,12 +1383,13 @@ public class StyledConverter implements OsmConverter {
 			else {
 				roadSpeed = Integer.decode(val);
 			}
-			int roadSpeedMax = 7;
-			int roadSpeedMin = 0;
 			val = way.getTag("mkgmap:road-speed-max");
+			int roadSpeedMax = 7;
 			if(val != null)
 				roadSpeedMax = Integer.decode(val);
 			val = way.getTag("mkgmap:road-speed-min");
+
+			int roadSpeedMin = 0;
 			if(val != null)
 				roadSpeedMin = Integer.decode(val);
 			if(roadSpeed > roadSpeedMax)
@@ -1384,7 +1406,6 @@ public class StyledConverter implements OsmConverter {
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
-		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		String highwayType = way.getTag("highway");
 		if(highwayType == null) {
 			// it's a routable way but not a highway (e.g. a ferry)
@@ -1393,6 +1414,7 @@ public class StyledConverter implements OsmConverter {
 			highwayType = way.getTag("route");
 		}
 
+		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
 		for (AccessMapping anAccessMap : accessMap) {
 			int index = anAccessMap.index;
 			String type = anAccessMap.type;
@@ -1588,9 +1610,9 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		int[] highWayCounts = new int[origNumPoints];
+		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
 		int middleLat = 0;
 		int middleLon = 0;
-		highWayCounts[0] = wayPoints.get(0).getHighwayCount();
 		for(int i = 1; i < origNumPoints; ++i) {
 			Coord p = wayPoints.get(i);
 			middleLat += p.getLatitude();
@@ -1642,12 +1664,12 @@ public class StyledConverter implements OsmConverter {
 		
 		String speedTag = tag.toLowerCase().trim();
 		
-		if (speedTag.matches(".*mph")) {
+		if (ENDS_IN_MPH_PATTERN.matcher(speedTag).matches()) {
 			// Check if it is a limit in mph
-			speedTag = speedTag.replaceFirst("[ \t]*mph", "");
+			speedTag = REMOVE_MPH_PATTERN.matcher(speedTag).replaceFirst("");
 			factor = 1.61;
 		} else
-			speedTag = speedTag.replaceFirst("[ \t]*kmh", "");  // get rid of kmh just in case
+			speedTag = REMOVE_KPH_PATTERN.matcher(speedTag).replaceFirst("");  // get rid of kmh just in case
 
 		double kmh;
 		try {

@@ -23,14 +23,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 public class ElementTest {
 	/*
-	 * Test the iterator.  It is kind of special in that it iterates over
-	 * strings which are "key=value" and also the wildcard version "key=*".
+	 * Test the iterator.
 	 */
 	@Test
 	public void testIterator() {
@@ -44,11 +44,11 @@ public class ElementTest {
 		for (String s : el) {
 			l.add(s);
 		}
-		assertEquals("list includes wildcards", 6, l.size());
+		assertEquals("list size", 3, l.size());
 
 		Object[] observeds = l.toArray();
 		Arrays.sort(observeds);
-		String[] res = {"a=1", "a=*", "b=2", "b=*", "c=3", "c=*"};
+		String[] res = {"a=1", "b=2", "c=3"};
 		Arrays.sort(res);
 		assertArrayEquals("list includes wildcards", res, observeds);
 	}

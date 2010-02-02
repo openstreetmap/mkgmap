@@ -93,28 +93,12 @@ public class StylePrinter {
 
 	private void dumpRuleSet(Formatter fmt, String name, RuleSet set) {
 		fmt.format("<<<%s>>>\n", name);
-		for (Map.Entry<String, Rule> ent : set.getMap().entrySet()) {
-			Rule rule = ent.getValue();
-			if (rule instanceof SequenceRule) {
-				for (Rule sr : (SequenceRule) rule)
-					dumpRule(fmt, ent.getKey(), sr);
-			} else {
-				dumpRule(fmt, ent.getKey(), rule);
-			}
+		for (Rule rule : set) {
+			fmt.format("%s", rule.toString());
 		}
 	}
 
-	private void dumpRule(Formatter fmt, String s, Rule rule) {
-		if (rule instanceof FixedRule)
-			fmt.format("%s %s\n", s, rule);
-		else {
-			String rulestr = rule.toString();
-			if (rulestr.startsWith("\n") || rulestr.matches("^[ \t\n].*") || rulestr.matches("^[ \t\n].*"))
-				fmt.format("%s %s\n", s, rulestr);
-			else
-				fmt.format("%s & %s\n", s, rulestr);
-		}
-	}
+
 
 	void setGeneralOptions(Map<String, String> generalOptions) {
 		this.generalOptions = generalOptions;

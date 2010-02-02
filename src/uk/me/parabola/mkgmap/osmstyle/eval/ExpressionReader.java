@@ -3,12 +3,9 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.CLOSE_PAREN;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.EQUALS;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.NOT_EQUALS;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.OPEN_PAREN;
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.VALUE;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+
+import static uk.me.parabola.mkgmap.osmstyle.eval.Op.*;
 
 /**
  * Read an expression from a style file.
@@ -73,7 +70,7 @@ public class ExpressionReader {
 		}
 
 		if (op.getType() == CLOSE_PAREN) {
-			// Check that there was an opeing paren and remove it
+			// Check that there was an opening parenthesis and remove it
 			if (opStack.isEmpty() || !opStack.peek().isType(OPEN_PAREN))
 				throw new SyntaxException(scanner, "No matching open parenthesis");
 			opStack.pop();

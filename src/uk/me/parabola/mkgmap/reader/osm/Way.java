@@ -43,11 +43,7 @@ public class Way extends Element {
 		setId(id);
 	}
 
-	// create a new Way that is a duplicate of this one - the new Way
-	// has a shallow copy of the points list so that changes to the
-	// original list don't affect the points in the duplicate
-
-	public Way duplicate() {
+	public Way copy() {
 		Way dup = new Way(getId(), new ArrayList<Coord>(points));
 		dup.setName(getName());
 		dup.copyTags(this);

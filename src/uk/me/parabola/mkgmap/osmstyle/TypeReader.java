@@ -1,5 +1,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.regex.Pattern;
+
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
@@ -16,6 +18,7 @@ public class TypeReader {
 
 	private final int kind;
 	private final LevelInfo[] levels;
+	private static final Pattern HYPHEN_PATTERN = Pattern.compile("-");
 
 	public TypeReader(int kind, LevelInfo[] levels) {
 		this.kind = kind;
@@ -57,13 +60,19 @@ public class TypeReader {
 			} else if (w.equals("road_speed")) {
 				gt.setRoadSpeed(nextIntValue(ts));
 			} else if (w.equals("copy")) {
-				// reserved word.  not currently used
+				// Reserved
 			} else if (w.equals("continue")) {
-				gt.setContinue();
-			} else if (w.equals("stop")) {
-				gt.setFinal();
-			} else if (w.equals("with_actions") || w.equals("withactions")) {
-				gt.alwaysExecuteActions(true);
+				gt.setContinueSearch(true);
+				// By default no propagate of actions on continue 
+				gt.propagateActions(false);
+			} else if (w.equals("propagate") || w.equals("with_actions") || w.equals("withactions")) {
+				gt.propagateActions(true);
+			} else if (w.equals("no_propagate")) {
+				gt.propagateActions(false);
+			} else if (w.equals("oneway")) {
+				// reserved
+			} else if (w.equals("access")) {
+				// reserved
 			} else {
 				throw new SyntaxException(ts, "Unrecognised type command '" + w + '\'');
 			}
@@ -92,12 +101,16 @@ public class TypeReader {
 		return ts.nextWord();
 	}
 
+	/**
+	 * A resolution can be just a single number, in which case that is the
+	 * min resolution and the max defaults to 24.  Or a min to max range.
+	 */
 	private void setResolution(TokenScanner ts, GType gt) {
 		String str = ts.nextWord();
 		log.debug("res word value", str);
 		try {
 			if (str.indexOf('-') >= 0) {
-				String[] minmax = str.split("-", 2);
+				String[] minmax = HYPHEN_PATTERN.split(str, 2);
 				gt.setMaxResolution(Integer.parseInt(minmax[0]));
 				gt.setMinResolution(Integer.parseInt(minmax[1]));
 			} else {
@@ -108,11 +121,15 @@ public class TypeReader {
 		}
 	}
 
+	/**
+	 * Read a level spec, which is either the max level or a min to max range.
+	 * This is immediately converted to resolution(s).
+	 */
 	private void setLevel(TokenScanner ts, GType gt) {
 		String str = ts.nextWord();
 		try {
 			if (str.indexOf('-') >= 0) {
-				String[] minmax = str.split("-", 2);
+				String[] minmax = HYPHEN_PATTERN.split(str, 2);
 				gt.setMaxResolution(toResolution(Integer.parseInt(minmax[0])));
 				gt.setMinResolution(toResolution(Integer.parseInt(minmax[1])));
 			} else {

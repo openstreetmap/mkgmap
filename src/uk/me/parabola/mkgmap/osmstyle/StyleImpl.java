@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
@@ -40,7 +41,11 @@ import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
+import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -67,7 +72,7 @@ public class StyleImpl implements Style {
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
 			Arrays.asList("levels"));
 
-	// Options that should not be overriden from the command line if the
+	// Options that should not be overridden from the command line if the
 	// value is empty.
 	private static final Collection<String> DONT_OVERRIDE = new ArrayList<String>(
 			Arrays.asList("levels"));
@@ -78,6 +83,10 @@ public class StyleImpl implements Style {
 	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
 	private static final String FILE_OVERLAYS = "overlays";
+
+	// Patterns
+	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
+	private static final Pattern EQUAL_PATTERN = Pattern.compile("=");
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -163,14 +172,14 @@ public class StyleImpl implements Style {
 
 			if (!DONT_OVERRIDE.contains(key))
 				if (key.equals("name-tag-list")) {
-					// The name-tag-list allows you to redifine what you want to use
+					// The name-tag-list allows you to redefine what you want to use
 					// as the name of a feature.  By default this is just 'name', but
 					// you can supply a list of tags to use
 					// instead eg. "name:en,int_name,name" or you could use some
 					// completely different tag...
-					nameTagList = val.split("[,\\s]+");
+					nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 				} else if (OPTION_LIST.contains(key)) {
-					// Simple options that have string value.  Perhaps we should alow
+					// Simple options that have string value.  Perhaps we should allow
 					// anything here?
 					generalOptions.put(key, val);
 				}
@@ -275,20 +284,14 @@ public class StyleImpl implements Style {
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		addBackwardCompatibleRules();
 
-		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			lines.add(me.getKey(), rule);
-		}
+		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
+			lines.add(createRule(me.getKey(), me.getValue()));
 
-		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			polygons.add(me.getKey(), rule);
-		}
+		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
+			polygons.add(createRule(me.getKey(), me.getValue()));
 
-		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet()) {
-			Rule rule = createRule(me.getKey(), me.getValue());
-			nodes.add(me.getKey(), rule);
-		}
+		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
+			nodes.add(createRule(me.getKey(), me.getValue()));
 	}
 
 	/**
@@ -305,8 +308,10 @@ public class StyleImpl implements Style {
 		action.add("${name}");
 		l.add(action);
 
-		Rule rule = new ActionRule(null, l);
-		lines.add("highway=*", rule);
+		Op expr = new ExistsOp();
+		expr.setFirst(new ValueOp("highway"));
+		Rule rule = new ActionRule(expr, l);
+		lines.add(rule);
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -314,23 +319,33 @@ public class StyleImpl implements Style {
 		action.add("${ele|conv:m=>ft}");
 		l.add(action);
 
-		rule = new ActionRule(null, l);
-		lines.add("contour=elevation", rule);
-		lines.add("contour_ext=elevation", rule);
+		EqualsOp expr2 = new EqualsOp();
+		expr2.setFirst(new ValueOp("contour"));
+		expr2.setSecond(new ValueOp("elevation"));
+		rule = new ActionRule(expr2, l);
+		lines.add(rule); // "contour=elevation"
+
+		expr2 = new EqualsOp();
+		expr2.setFirst(new ValueOp("contour"));
+		expr2.setSecond(new ValueOp("elevation"));
+		rule = new ActionRule(expr2, l);
+		lines.add(rule); // "contour_ext=elevation"
 	}
 
 	/**
 	 * Create a rule from a raw gtype. You get raw gtypes when you
 	 * have read the types from a map-features file.
 	 *
-	 * @return A rule that always resolves to the given type.  It will
-	 * also have its priority set so that rules earlier in a file
-	 * will override those later.
+	 * @return A rule that is conditional on the key string given.
 	 */
 	private Rule createRule(String key, GType gt) {
 		if (gt.getDefaultName() != null)
 			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		return new FixedRule(gt);
+		String[] tagval = EQUAL_PATTERN.split(key);
+		EqualsOp op = new EqualsOp();
+		op.setFirst(new ValueOp(tagval[0]));
+		op.setSecond(new ValueOp(tagval[1]));
+		return new ExpressionRule(op, gt);
 	}
 
 	/**
@@ -347,14 +362,14 @@ public class StyleImpl implements Style {
 					String key = opt.getOption();
 					String val = opt.getValue();
 					if (key.equals("name-tag-list")) {
-						// The name-tag-list allows you to redifine what you want to use
+						// The name-tag-list allows you to redefine what you want to use
 						// as the name of a feature.  By default this is just 'name', but
 						// you can supply a list of tags to use
 						// instead eg. "name:en,int_name,name" or you could use some
 						// completely different tag...
-						nameTagList = val.split("[,\\s]+");
+						nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 					} else if (OPTION_LIST.contains(key)) {
-						// Simple options that have string value.  Perhaps we should alow
+						// Simple options that have string value.  Perhaps we should allow
 						// anything here?
 						generalOptions.put(key, val);
 					}
@@ -429,14 +444,13 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
-			GType.push();
 			baseStyle = new StyleImpl(location, name);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
 			// not found, try on the classpath.  This is the common
 			// case where you have an external style, but want to
-			// base it on a builtin one.
+			// base it on a built in one.
 			log.debug("could not open base style file", e);
 
 			try {
@@ -447,8 +461,6 @@ public class StyleImpl implements Style {
 				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
-		} finally {
-			GType.pop();
 		}
 	}
 
@@ -470,14 +482,14 @@ public class StyleImpl implements Style {
 			String opt = ent.getKey();
 			String val = ent.getValue();
 			if (opt.equals("name-tag-list")) {
-				// The name-tag-list allows you to redifine what you want to use
+				// The name-tag-list allows you to redefine what you want to use
 				// as the name of a feature.  By default this is just 'name', but
 				// you can supply a list of tags to use
 				// instead eg. "name:en,int_name,name" or you could use some
 				// completely different tag...
-				nameTagList = val.split("[,\\s]+");
+				nameTagList = COMMA_OR_SPACE_PATTERN.split(val);
 			} else if (OPTION_LIST.contains(opt)) {
-				// Simple options that have string value.  Perhaps we should alow
+				// Simple options that have string value.  Perhaps we should allow
 				// anything here?
 				generalOptions.put(opt, val);
 			}
@@ -489,17 +501,10 @@ public class StyleImpl implements Style {
 	 * style's rules are read.
 	 */
 	private void mergeRules(StyleImpl other) {
-		for (Map.Entry<String, Rule> ent : other.lines.entrySet())
-			lines.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String,Rule> ent : other.polygons.entrySet())
-			polygons.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String, Rule> ent : other.nodes.entrySet())
-			nodes.add(ent.getKey(), ent.getValue());
-
-		for (Map.Entry<String, Rule> ent : other.relations.entrySet())
-			relations.add(ent.getKey(), ent.getValue());
+		lines.merge(other.lines);
+		polygons.merge(other.polygons);
+		nodes.merge(other.nodes);
+		relations.merge(other.relations);
 	}
 
 	private void checkVersion() throws FileNotFoundException {

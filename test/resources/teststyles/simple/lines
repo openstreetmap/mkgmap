@@ -1,3 +1,6 @@
+#
+# All types should normally be less than 0x20
+#
 
 highway=primary & x=y [0x2 ]
 highway = primary [0x3]

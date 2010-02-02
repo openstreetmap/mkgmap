@@ -22,14 +22,16 @@ import uk.me.parabola.mkgmap.osmstyle.actions.Action;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
 /**
  * An action rule modifies the tags on the incoming element.
  *
  * It can also have an expression, and does not need to have a Type.  If
- * there is no type then the resolve method always returns false.  The tags
- * on the element may have been modified however.
+ * there is no type then the resolve method does not send any results.
+ * The tags on the element may have been modified however.
  *
  * @author Steve Ratcliffe
  */
@@ -51,30 +53,25 @@ public class ActionRule implements Rule {
 		this.actions = actions;
 		this.type = null;
 	}
-
-	public GType resolveType(Element el) {
-		return resolveType(el, null);
-	}
-
-	public GType resolveType(Element el, GType pre) {
-		if (expression == null || expression.eval(el)) {
-			if (type == null || pre == null || pre.isBetterPriority(type)) {
-				// this is the first (or only) time this rule has
-				// matched so execute the actions associated with the
-				// rule
-				for (Action a : actions)
-					a.perform(el);
-
-				return type;
-			}
-			else if(type.alwaysExecuteActions()) {
-				// this is not the first time the rule has matched but
-				// the user wants the actions executed anyway
-				for (Action a : actions)
-					a.perform(el);
+	public void resolveType(Element el, TypeResult result) {
+		Element element = el;
+		if (expression != null) {
+			if (!expression.eval(element))
+				return;
+			// If this is a continue and we are not to propagate the effects
+			// of the action on the element to further rules, then make
+			// a copy of the element so that the original is unsullied.
+			//
+			// There is another reason we need to copy: since there will be
+			if (type != null && !type.isPropogateActions() && !(element instanceof Relation)) {
+				element = element.copy();
 			}
 		}
-		return null;
+
+		for (Action a : actions)
+			a.perform(element);
+
+		result.add(element, type);
 	}
 
 	public String toString() {

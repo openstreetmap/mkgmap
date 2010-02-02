@@ -19,16 +19,16 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.List;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.osmstyle.actions.Action;
+import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
+import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -81,17 +81,16 @@ public class RuleFileReader {
 		while (!scanner.isEndOfFile()) {
 			Op expr = expressionReader.readConditions();
 
-			// TODO this fails when action list is just empty... although perhaps it should.
-			List<Action> actions = actionReader.readActions();
+			ActionList actionList = actionReader.readActions();
 
 			// If there is an action list, then we don't need a type
 			GType type = null;
 			if (scanner.checkToken("["))
 				type = typeReader.readType(scanner);
-			else if (actions == null)
+			else if (actionList == null)
 				throw new SyntaxException(scanner, "No type definition given");
 
-			saveRule(expr, actions, type);
+			saveRule(expr, actionList, type);
 			scanner.skipSpace();
 		}
 	}
@@ -107,40 +106,207 @@ public class RuleFileReader {
 	 * in a basket we know that the first term is true so we can drop that
 	 * from the expression.
 	 */
-	private void saveRule(Op op, List<Action> actions, GType gt) {
+	private void saveRule(Op op, ActionList actions, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
-		// E1 | E2 {type...} is exactly the same as the two rules:
-		// E1 {type...}
-		// E2 {type...}
-		// so just recurse on each term, throwing away the original OR.
-		if (op.isType(OR)) {
-			saveRule(op.getFirst(), actions, gt);
-			saveRule(((BinaryOp) op).getSecond(), actions, gt);
-			return;
+		//System.out.println("From: " + op);
+		Op op2 = rearrangeExpression(op);
+		//System.out.println("TO  : " + op2);
+
+		if (op2 instanceof BinaryOp) {
+			optimiseAndSaveBinaryOp((BinaryOp) op2, actions, gt);
+		} else {
+			optimiseAndSaveOtherOp(this, op2, actions, gt);
+ 		}
+	}
+
+	/**
+	 * Rearrange the expression so that it is solvable, that is it starts with
+	 * an EQUALS or an EXISTS.
+	 * @param op The expression to be rearranged.
+	 * @return An equivelent expression re-arranged so that it starts with an
+	 * indexable term. If that is not possible then the original expression is
+	 * returned.
+	 */
+	private static Op rearrangeExpression(Op op) {
+		if (isFinished(op))
+			return op;
+
+		if (op.isType(AND)) {
+			// Recursively re-arrange the child nodes
+			rearrangeExpression(op.getFirst());
+			rearrangeExpression(((AndOp) op).getSecond());
+
+			swapForSelectivity((AndOp) op);
+			Op op1 = op.getFirst();
+			Op op2 = ((AndOp) op).getSecond();
+			
+			// If the first term is an EQUALS or EXISTS then this subtree is
+			// already solved and we need to do no more.
+			if (isSolved(op1)) {
+				return rearrangeAnd((AndOp) op, op1, op2);
+			} else if (isSolved(op2)) {
+				return rearrangeAnd((AndOp) op, op2, op1);
+			}
 		}
 
-		if (op instanceof BinaryOp) {
-			optimiseAndSaveBinaryOp((BinaryOp) op, actions, gt);
-		} else {
-			optimiseAndSaveOtherOp(op, actions, gt);
-			//throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+		return op;
+	}
+
+	/**
+	 * Swap the terms so that the most selective or fastest term to calculate
+	 * is first.
+	 * @param op A AND operation.
+	 */
+	private static void swapForSelectivity(AndOp op) {
+		Op first = op.getFirst();
+		int sel1 = selectivity(first);
+		Op second = op.getSecond();
+		int sel2 = selectivity(second);
+		if (sel1 > sel2) {
+			op.setFirst(second);
+			op.setSecond(first);
 		}
 	}
 
-	private void optimiseAndSaveOtherOp(Op op, List<Action> actions, GType gt) {
-		if (op.isType(EXISTS)) {
-			createAndSaveRule(op.value() + "=*", null, actions, gt);
+	/**
+	 * Rearrange an AND expression so that it can be executed with indexable
+	 * terms at the front.
+	 * @param top This will be an AndOp.
+	 * @param op1 This is a child of top that is guaranteed to be
+	 * solved already.
+	 * @param op2 This expression is the other child of top.
+	 * @return A re-arranged expression with an indexable term at the beginning
+	 * or several such expressions ORed together.
+	 */
+	private static BinaryOp rearrangeAnd(AndOp top, Op op1, Op op2) {
+		if (isIndexable(op1)) {
+			top.setFirst(op1);
+			top.setSecond(op2);
+			return top;
+		} else if (op1.isType(AND)) {
+			// The first term is AND.
+			// If its first term is indexable (EQUALS or EXIST) then we
+			// re-arrange the tree so that that term is first.
+			Op first = op1.getFirst();
+			if (isIndexable(first)) {
+				top.setFirst(first);
+				op1.setFirst(op2);
+				swapForSelectivity((AndOp) op1);
+				top.setSecond(op1);
+				return top;
+			}
+		} else if (op1.isType(OR)) {
+			// Transform ((first | second) & topSecond)
+			// into (first & topSecond) | (second & topSecond)
+
+			Op first = op1.getFirst();
+			OrOp orOp = new OrOp();
+
+			Op topSecond = top.getSecond();
+
+			AndOp and1 = new AndOp();
+			and1.setFirst(first);
+			and1.setSecond(topSecond);
+
+			AndOp and2 = new AndOp();
+			Op second = rearrangeExpression(((OrOp) op1).getSecond());
+			and2.setFirst(second);
+			and2.setSecond(topSecond);
+
+			orOp.setFirst(and1);
+			orOp.setSecond(and2);
+			return orOp;
 		} else {
-			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+			// This shouldn't happen
+			throw new SyntaxException("X3" + op1.getType());
+		}
+		return top;
+	}
+
+	/**
+	 * True if this operation can be indexed.  It is a plain equality or
+	 * Exists operation.
+	 */
+	private static boolean isIndexable(Op op) {
+		return op.isType(EQUALS) || op.isType(EXISTS);
+	}
+
+	/**
+	 * True if this expression is 'solved'.  This means that the first term
+	 * is indexable or it is indexable itself.
+	 */
+	private static boolean isSolved(Op op) {
+		return isIndexable(op) || isIndexable(op.getFirst());
+	}
+
+	/**
+	 * True if there is nothing more that we can do to rearrange this expression.
+	 * It is either solved or it cannot be solved.
+	 */
+	private static boolean isFinished(Op op) {
+		// If we can improve the ordering then we are not done just yet
+		if ((op instanceof BinaryOp) && selectivity(op.getFirst()) > selectivity(((BinaryOp) op).getSecond()))
+			return false;
+
+		if (isSolved(op))
+			return true;
+
+		char type = op.getType();
+		switch (type) {
+		case AND:
+			return false;
+		case OR:
+			return false;
+		default:
+			return true;
+		}
+	}
+
+	/**
+	 * Get a value for how selective this operation is.  We try to bring
+	 * EQUALS to the front followed by EXISTS.  Without knowing tag
+	 * frequency you can only guess at what the most selective operations
+	 * are, so all we do is arrange EQUALS - EXISTS - everything else.
+	 * Note that you must have an EQUALS or EXISTS first, so you can't
+	 * bring anything else earlier than them.
+	 *
+	 * @return An integer, lower values mean the operation should be earlier
+	 * in the expression than operations with higher values.
+	 */
+	private static int selectivity(Op op) {
+		switch (op.getType()) {
+		case EQUALS:
+			return 0;
+		case EXISTS:
+			return 1;
+
+		case AND:
+			case OR:
+			return Math.min(selectivity(op.getFirst()), selectivity(((BinaryOp) op).getSecond()));
+		
+		default:
+			return 1000;
+		}
+	}
+
+	private static void optimiseAndSaveOtherOp(RuleFileReader ruleFileReader, Op op, ActionList actions, GType gt) {
+		if (op.isType(EXISTS)) {
+			// The lookup key for the exists operation is 'tag=*'
+			ruleFileReader.createAndSaveRule(op.value() + "=*", op, actions, gt);
+		} else {
+			throw new SyntaxException(ruleFileReader.scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 	}
 
 	/**
 	 * Optimise the expression tree, extract the primary key and
 	 * save it as a rule.
+	 * @param op a binary expression
+	 * @param actions list of actions to execute on match
+	 * @param gt the Garmin type of the element
 	 */
-	private void optimiseAndSaveBinaryOp(BinaryOp op, List<Action> actions, GType gt) {
+	private void optimiseAndSaveBinaryOp(BinaryOp op, ActionList actions, GType gt) {
 		Op first = op.getFirst();
 		Op second = op.getSecond();
 
@@ -150,65 +316,46 @@ public class RuleFileReader {
 		 * We allow the following cases:
 		 * An EQUALS at the top.
 		 * An AND at the top level.
-		 * (The case that there is an OR at the top level has already been
-		 * dealt with)
+		 * An OR at the top level.
 		 */
 		String keystring;
-		Op expr;
 		if (op.isType(EQUALS)) {
 			if (first.isType(VALUE) && second.isType(VALUE)) {
 				keystring = op.toString();
-				expr = null;
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
 				keystring = first.toString();
-				expr = second;
-			} else if (second.isType(EQUALS)) {
-				// Swap the terms and everything will be fine.
-				keystring = second.toString();
-				expr = first;
 			} else if (first.isType(EXISTS)) {
 				keystring = first.value() + "=*";
-				expr = second;
-			} else if (first.isType(OR)) {
-				// (a=b|a=c) & d=f => (a=b&d=f) | (a=c&d=f) => solved
-				BinaryOp and1 = new AndOp();
-				and1.setFirst(first.getFirst());
-				and1.setSecond(second);
-				optimiseAndSaveBinaryOp(and1, actions, gt);
-
-				BinaryOp and2 = new AndOp();
-				and2.setFirst(((BinaryOp) first).getSecond());
-				and2.setSecond(second);
-				optimiseAndSaveBinaryOp(and2, actions, gt);
-				
-				return;
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
+		} else if (op.isType(OR)) {
+			saveRule(first, actions, gt);
+			saveRule(second, actions, gt);
+			return;
 		} else {
 			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 
-		createAndSaveRule(keystring, expr, actions, gt);
+		createAndSaveRule(keystring, op, actions, gt);
 	}
 
-	private void createAndSaveRule(String keystring, Op expr, List<Action> actions, GType gt) {
-		Rule rule;
-		if (!actions.isEmpty())
-			rule = new ActionRule(expr, actions, gt);
-		else if (expr != null) {
-			rule = new ExpressionRule(expr, gt);
-		} else {
-			rule = new FixedRule(gt);
-		}
+	private void createAndSaveRule(String keystring, Op expr, ActionList actions, GType gt) {
 
-		rules.add(keystring, rule);
+		log.debug(keystring); // TODO This will be used - if not delete it
+		Rule rule;
+		if (actions.isEmpty()) 
+			rule = new ExpressionRule(expr, gt);
+		else
+			rule = new ActionRule(expr, actions.getList(), gt);
+
+		rules.add(rule);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
@@ -218,7 +365,7 @@ public class RuleFileReader {
 			RuleFileReader rr = new RuleFileReader(GType.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
 			rr.load(r, "string");
-			log.info("Result: " + rs);
+			System.out.println("Result: " + rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");
 		}

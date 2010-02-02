@@ -31,4 +31,8 @@ public class NotEqualOp extends EqualsOp {
 	public boolean eval(Element el) {
 		return !super.eval(el);
 	}
+
+	public String toString() {
+		return getFirst().toString() + "!=" + getSecond();
+	}
 }

@@ -1,4 +1,9 @@
 
+# All types in this file should be 0x2x
+#
 # This is overridden in this file, all other rules
 # come from the base.
-overridden = xyz [0x12]
+overridden = xyz [0x22]
+
+#highway=other & derived=first [0x25]
+derived=first [0x25]

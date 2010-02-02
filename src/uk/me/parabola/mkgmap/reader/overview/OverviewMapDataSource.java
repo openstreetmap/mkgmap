@@ -22,6 +22,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -137,6 +138,10 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 
 	public void addRoad(MapRoad road) {
 		addLine(road);
+	}
+
+	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		getRoadNetwork().addRestriction(fromNode, toNode, viaNode, exceptMask);
 	}
 
 	public int getShift() {

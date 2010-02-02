@@ -42,8 +42,8 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapDetails;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
@@ -67,7 +67,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * @author Steve Ratcliffe
  */
-class Osm5XmlHandler extends DefaultHandler {
+public class Osm5XmlHandler extends DefaultHandler {
 	private static final Logger log = Logger.getLogger(Osm5XmlHandler.class);
 
 	private int mode;
@@ -101,7 +101,7 @@ class Osm5XmlHandler extends DefaultHandler {
 	private long currentElementId;
 
 	private OsmConverter converter;
-	private MapDetails mapper;
+	private MapCollector collector;
 	private Area bbox;
 	private Runnable endTask;
 
@@ -111,12 +111,11 @@ class Osm5XmlHandler extends DefaultHandler {
 	private final boolean ignoreBounds;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean linkPOIsToWays;
-	private final boolean routing;
 	private final boolean generateSea;
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
-	private boolean extendSeaSectors = false;
-	private int maxCoastlineGap = 0;
+	private boolean extendSeaSectors;
+	private int maxCoastlineGap;
 	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
 	private final String frigRoundabouts;
@@ -166,7 +165,7 @@ class Osm5XmlHandler extends DefaultHandler {
 				}
 			}
 		}
-		routing = props.containsKey("route");
+
 		String rsa = props.getProperty("remove-short-arcs", null);
 		if(rsa != null)
 			minimumArcLength = (rsa.length() > 0)? Double.parseDouble(rsa) : 0.0;
@@ -193,30 +192,28 @@ class Osm5XmlHandler extends DefaultHandler {
 	private void readDeleteTagsFile(String fileName) {
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(fileName))));
-			String line;
 			deletedTags = new HashMap<String,Set<String>>();
+			String line;
 			while((line = br.readLine()) != null) {
 				line = line.trim();
 				if(line.length() > 0 && 
 				   !line.startsWith("#") &&
 				   !line.startsWith(";")) {
 					String[] parts = line.split("=");
-					if(parts.length != 2) {
-						log.error("Ignoring bad line in deleted tags file: " + line);
-					}
-					else {
+					if (parts.length == 2) {
 						parts[0] = parts[0].trim();
 						parts[1] = parts[1].trim();
-						if("*".equals(parts[1])) {
+						if ("*".equals(parts[1])) {
 							deletedTags.put(parts[0], new HashSet<String>());
-						}
-						else {
+						} else {
 							Set<String> vals = deletedTags.get(parts[0]);
-							if(vals == null)
+							if (vals == null)
 								vals = new HashSet<String>();
 							vals.add(parts[1]);
 							deletedTags.put(parts[0], vals);
 						}
+					} else {
+						log.error("Ignoring bad line in deleted tags file: " + line);
 					}
 				}
 			}
@@ -229,14 +226,14 @@ class Osm5XmlHandler extends DefaultHandler {
 			log.error("Error reading delete tags file " + fileName);
 		}
 
-		if(deletedTags != null && deletedTags.size() == 0)
+		if(deletedTags != null && deletedTags.isEmpty())
 			deletedTags = null;
 	}
 
 	private boolean deleteTag(String key, String val) {
 		if(deletedTags != null) {
 			Set<String> vals = deletedTags.get(key);
-			if(vals != null && (vals.size() == 0 || vals.contains(val))) {
+			if(vals != null && (vals.isEmpty() || vals.contains(val))) {
 				//				System.err.println("Deleting " + key + "=" + val);
 				return true;
 			}
@@ -555,10 +552,9 @@ class Osm5XmlHandler extends DefaultHandler {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
 			if ("multipolygon".equals(type)) {
-				Area mpBbox = (bbox != null ? bbox : mapper.getBounds());
+				Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
 				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
-			}
-			else if("restriction".equals(type)) {
+			} else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
 					currentRelation = null;
@@ -596,11 +592,12 @@ class Osm5XmlHandler extends DefaultHandler {
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
-				String ref = null;
-				Way motorway = null;
 				String exitName = e.getTag("name");
 				if(exitName == null)
 					exitName = e.getTag("ref");
+
+				String ref = null;
+				Way motorway = null;
 				for (Way w : motorways) {
 					if (w.getPoints().contains(e.getLocation())) {
 						motorway = w;
@@ -645,23 +642,18 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		wayMap = null;
 
-		RoadNetwork roadNetwork = mapper.getRoadNetwork();
-		for (Relation r : relationMap.values()) {
-			if(r instanceof RestrictionRelation) {
-				((RestrictionRelation)r).addRestriction(roadNetwork);
-			}
-		}
+		converter.end();
 
 		relationMap = null;
 
 		if(bbox != null) {
-			mapper.addToBounds(new Coord(bbox.getMinLat(),
+			collector.addToBounds(new Coord(bbox.getMinLat(),
 						     bbox.getMinLong()));
-			mapper.addToBounds(new Coord(bbox.getMinLat(),
+			collector.addToBounds(new Coord(bbox.getMinLat(),
 						     bbox.getMaxLong()));
-			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+			collector.addToBounds(new Coord(bbox.getMaxLat(),
 						     bbox.getMinLong()));
-			mapper.addToBounds(new Coord(bbox.getMaxLat(),
+			collector.addToBounds(new Coord(bbox.getMaxLat(),
 						     bbox.getMaxLong()));
 		}
 
@@ -975,7 +967,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			coordMap.put(id, co);
 			currentElementId = id;
 			if (bbox == null)
-				mapper.addToBounds(co);
+				collector.addToBounds(co);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data.
 		}
@@ -1041,7 +1033,7 @@ class Osm5XmlHandler extends DefaultHandler {
 			}
 
 			// See if the first Node of the Way has a FIXME attribute
-			if (currentWay.getPoints().size() == 0) {
+			if (currentWay.getPoints().isEmpty()) {
 				currentWayStartsWithFIXME = (currentNodeInWay != null &&
 											 (currentNodeInWay.getTag("FIXME") != null ||
 											  currentNodeInWay.getTag("fixme") != null));
@@ -1060,8 +1052,8 @@ class Osm5XmlHandler extends DefaultHandler {
 		this.converter = converter;
 	}
 
-	public void setMapper(MapDetails mapper) {
-		this.mapper = mapper;
+	public void setCollector(MapCollector collector) {
+		this.collector = collector;
 	}
 
 	public void setEndTask(Runnable endTask) {
@@ -1096,8 +1088,15 @@ class Osm5XmlHandler extends DefaultHandler {
 		Area seaBounds;
 		if (bbox != null)
 			seaBounds = bbox;
-		else
-			seaBounds = mapper.getBounds();
+		else {
+			// This should probably be moved somewhere that is supposed to know
+			// what the bounding box is.
+			if (collector instanceof MapCollector)
+				seaBounds = ((MapDetails) collector).getBounds();
+			else {
+				throw new IllegalArgumentException("Not using MapDetails");
+			}
+		}
 
 		// clip all shoreline segments
 		List<Way> toBeRemoved = new ArrayList<Way>();
@@ -1384,7 +1383,7 @@ class Osm5XmlHandler extends DefaultHandler {
 
 		islands.removeAll(antiIslands);
 
-		if(islands.size() == 0) {
+		if(islands.isEmpty()) {
 			// the tile doesn't contain any islands so we can assume
 			// that it's showing a land mass that contains some
 			// enclosed sea areas - in which case, we don't want a sea
@@ -1453,7 +1452,7 @@ class Osm5XmlHandler extends DefaultHandler {
 		}
 
 		if(generateSeaUsingMP) {
-			Area mpBbox = (bbox != null ? bbox : mapper.getBounds());
+			Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
 			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpBbox);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();

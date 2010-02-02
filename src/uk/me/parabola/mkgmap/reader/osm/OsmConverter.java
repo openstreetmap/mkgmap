@@ -68,4 +68,8 @@ public interface OsmConverter {
 	 */
 	public void setBoundingBox(Area bbox);
 
+	/**
+	 * Called when all conversion has been done.
+	 */
+	public void end();
 }

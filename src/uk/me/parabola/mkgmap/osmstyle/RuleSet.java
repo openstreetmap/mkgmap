@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.Formatter;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
+import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 
 /**
  * A group of rules.  Basically just a map of a tag=value strings that is used
@@ -34,58 +34,48 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  *
  * @author Steve Ratcliffe
  */
-public class RuleSet implements Rule {
-	private final Map<String, Rule> rules = new LinkedHashMap<String, Rule>();
+public class RuleSet implements Rule, Iterable<Rule> {
+	private final List<Rule> rules = new ArrayList<Rule>();
 
-	public void add(String s, Rule rule) {
-		Rule existingRule = rules.get(s);
-		if (existingRule == null) {
-			rules.put(s, rule);
-		} else {
-			if (existingRule instanceof SequenceRule) {
-				((SequenceRule) existingRule).add(rule);
-			} else {
-				// There was already a single rule there.  Create a sequence
-				// rule and add the existing and the new rule to it.
-				SequenceRule sr = new SequenceRule();
-				sr.add(existingRule);
-				sr.add(rule);
-				rules.put(s, sr);
-			}
+	/**
+	 * Resolve the type for this element by running the rules in order.
+	 *
+	 * This is a very performance critical part of the style system as parts
+	 * of the code are run for every tag in the input file.
+	 *
+	 * @param el The element as read from an OSM xml file in 'tag' format.
+	 * @param result A GType describing the Garmin type of the first rule that
+	 * matches is returned here.  If continue types are used then more than
+	 * one type may be saved here.  If there are no matches then nothing will
+	 * be saved.
+	 */
+	public void resolveType(Element el, TypeResult result) {
+		WatchableTypeResult a = new WatchableTypeResult(result);
+		// Start by literally running through the rules in order.
+		for (Rule rule : rules) {
+			//System.out.println("R " + rh);
+			a.reset();
+			rule.resolveType(el, a);
+			if (a.isResolved())
+				return;
 		}
 	}
 
-	public Map<String, Rule> getMap() {
-		return rules;
+	public Iterator<Rule> iterator() {
+		return rules.iterator();
 	}
 
-	public Set<Map.Entry<String,Rule>> entrySet() {
-		return rules.entrySet();
+	public void add(Rule rule) {
+		rules.add(rule);
 	}
 
-	public GType resolveType(Element el) {
-		return resolveType(el, null);
-	}
-
-	public GType resolveType(Element el, GType pre) {
-		GType foundType = null;
-		for (String tagKey : el) {
-			Rule rule = rules.get(tagKey);
-			if (rule != null) {
-				GType type = rule.resolveType(el, pre);
-				if (type != null) {
-					if ((foundType == null || type.isBetterPriority(foundType)) && (pre == null || pre.isBetterPriority(type))) {
-						foundType = type;
-					}
-				}
-			}
-		}
-		return foundType;
-	}
-
+	/**
+	 * Add all rules from the given rule set to this one.
+	 * @param rs The other rule set.
+	 */
 	public void addAll(RuleSet rs) {
-		for (Map.Entry<String, Rule> ent : rs.entrySet())
-			add(ent.getKey(), ent.getValue());
+		for (Rule rule : rs.rules)
+			add(rule);
 	}
 
 	/**
@@ -93,15 +83,17 @@ public class RuleSet implements Rule {
 	 * rule file.
 	 */
 	public String toString() {
-		Formatter fmt = new Formatter();
-		for (Map.Entry<String, Rule> ent: rules.entrySet()) {
-			String first = ent.getKey();
-			Rule r = ent.getValue();
-			if (r instanceof FixedRule)
-				fmt.format("%s %s\n", first, r);
-			else
-				fmt.format("%s & %s\n", first, r);
+		StringBuilder sb = new StringBuilder();
+		for (Rule rule : rules) {
+			sb.append(rule.toString());
 		}
-		return fmt.toString();
+		return sb.toString();
+	}
+
+	public void merge(RuleSet rs) {
+		List<Rule> l = new ArrayList<Rule>(rules);
+		l.addAll(rs.rules);
+		rules.clear();
+		rules.addAll(l);
 	}
 }

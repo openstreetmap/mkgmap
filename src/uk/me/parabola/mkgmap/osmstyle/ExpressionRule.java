@@ -20,6 +20,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 
 /**
  * A rule that contains a condition.  If the condition is matched by the
@@ -36,15 +37,9 @@ public class ExpressionRule implements Rule {
 		this.gtype = gtype;
 	}
 
-	public GType resolveType(Element el) {
-		return resolveType(el, null);
-	}
-
-	public GType resolveType(Element el, GType pre) {
+	public void resolveType(Element el, TypeResult result) {
 		if (expression.eval(el))
-			return gtype;
-
-		return null;
+			result.add(el, gtype);
 	}
 
 	public String toString() {

@@ -27,6 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
@@ -61,7 +62,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 	 */
 	public void load(String name) throws FileNotFoundException, FormatException {
 		try {
-			InputStream is = openFile(name);
+			InputStream is = Utils.openFile(name);
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			parserFactory.setXIncludeAware(true);
 			parserFactory.setNamespaceAware(true);
@@ -69,7 +70,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 
 			try {
 				Osm5XmlHandler handler = new Osm5XmlHandler(getConfig());
-				handler.setMapper(mapper);
+				handler.setCollector(mapper);
 				Runnable task = new Runnable() {
 					public void run() {
 						addBackground();

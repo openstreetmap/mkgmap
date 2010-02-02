@@ -28,6 +28,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
@@ -120,7 +121,7 @@ public class ActionReaderTest {
 		Element el = makeElement();
 		el.addTag("name", "Main St");
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("just name", "Main St", el.getName());
 	}
 
@@ -138,18 +139,18 @@ public class ActionReaderTest {
 		// Something that matches nothing in the first name command.
 		Element el = makeElement();
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("no tags, second action matches", "fred", el.getName());
 
 		el = makeElement();
 		el.addTag("ref", "A1");
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("just a ref tag", "A1", el.getName());
 
 		el = makeElement();
 		el.addTag("ref", "A1");
 		el.addTag("name", "Main St");
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("ref and name", "Main St (A1)", el.getName());
 	}
 
@@ -165,7 +166,7 @@ public class ActionReaderTest {
 
 		Relation rel = makeRelation();
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(rel);
+		rule.resolveType(rel, TypeResult.NULL_RESULT);
 
 		assertNull("Tag not set on relation", rel.getTag("route"));
 
@@ -192,7 +193,7 @@ public class ActionReaderTest {
 
 		Relation rel = makeRelation();
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(rel);
+		rule.resolveType(rel, TypeResult.NULL_RESULT);
 
 		List<Map.Entry<String,Element>> elements = rel.getElements();
 		Element el1 = elements.get(0).getValue();
@@ -221,8 +222,14 @@ public class ActionReaderTest {
 		el1.addTag("route_no", "42");
 
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(rel);
+		rule.resolveType(rel, TypeResult.NULL_RESULT);
 		assertEquals("route_no taken from relation tags", "66", el1.getTag("route"));
+	}
+
+	@Test
+	public void testEmptyActionList() {
+		List<Action> actions = readActionsFromString("{}");
+		assertEquals("no actions found", 0, actions.size());		
 	}
 
 	@Test
@@ -232,7 +239,7 @@ public class ActionReaderTest {
 
 		Element el = makeElement();
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("first alternative", "no", el.getTag("fred"));
 	}
 
@@ -244,14 +251,14 @@ public class ActionReaderTest {
 		Element el = makeElement();
 		el.addTag("fred", "origvalue");
 		Rule rule = new ActionRule(null, actions);
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		assertEquals("second alternative", "default value", el.getTag("fred"));
 	}
 
 	private Element stdElementRun(List<Action> actions) {
 		Rule rule = new ActionRule(null, actions);
 		Element el = makeElement();
-		rule.resolveType(el);
+		rule.resolveType(el, TypeResult.NULL_RESULT);
 		return el;
 	}
 
@@ -278,6 +285,6 @@ public class ActionReaderTest {
 		Reader sr = new StringReader(in);
 		TokenScanner ts = new TokenScanner("string", sr);
 		ActionReader ar = new ActionReader(ts);
-		return ar.readActions();
+		return ar.readActions().getList();
 	}
 }

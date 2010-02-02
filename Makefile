@@ -37,7 +37,7 @@ OPTS= --tdbfile
 OPTS=--tdbfile --family-id=909 --series-name="other map"  --description='A test map'
 
 makemap: clean
-	$(TIME) java -Xmx500m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
+	$(TIME) java -Xmx600m -cp build/classes uk.me.parabola.mkgmap.main.Main $(OPTS) $(OSMDATA)
 	#cp 63240001.img gmapsupp.img
 	#imgdecode gmapsupp.img
 
@@ -57,10 +57,12 @@ other: clean
 
 .PHONY: clean
 clean:
-	rm -f 63240001/* gmapsupp/* mkgmap.log out.log
-	rm -f g?.img gmapsupp.img 632*
+	rm -f 6324000?/* gmapsupp/* mkgmap.log out.log
+	rm -f gmapsupp.img 632*.img
+	if [ -d 63240001 ]; then rmdir 6324000?; fi
 	rm -f 11112222.img 11112222.tdb
 	rm -f osmmap*
+	rm -f g?.img
 
 load:
 	sleep 2
@@ -105,16 +107,13 @@ test_lang10:
 	imgdecode 32860003.img
 
 tests:
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/empty.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63243936
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63247525
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/63253506
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg40.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg71.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/cricklewood-5.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg04.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/reg04b.osm
-	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/rus.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/empty.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg40.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg71.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/cricklewood-5.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg04.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/reg04b.osm
+	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm/rus.osm
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/germany-070823.osm.gz
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main /opt/data/uk-070815.osm.gz
 	java -ea -cp build/classes uk.me.parabola.mkgmap.main.Main localtest/osm5/bit-assert-fail.osm

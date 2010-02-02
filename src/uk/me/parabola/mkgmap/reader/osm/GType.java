@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: Apr 25, 2008
+ * Copyright (c) 2009.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Created: 13 Sep 2009
+ * By: steve
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Formatter;
@@ -26,8 +26,6 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
  * Holds the garmin type of an element and all the information that
  * will be needed to represent it on the map.  So we have a range of
  * resolutions at which it will be present.
- *
- * @author Steve Ratcliffe
  */
 public class GType {
 	private static final Logger log = Logger.getLogger(GType.class);
@@ -35,9 +33,6 @@ public class GType {
 	public static final int POINT = 1;
 	public static final int POLYLINE = 2;
 	public static final int POLYGON = 3;
-
-	private static int nextPriority = 1;
-	private static final int PRIORITY_PUSH = 100000;
 
 	private final int featureKind;
 	private final int type;
@@ -54,21 +49,17 @@ public class GType {
 	private int roadClass;
 	private int roadSpeed;
 
-	private final int priority;
-
 	private boolean road;
 
-	// control flag, whether this element defines
-	// the final conversion, or whether we shall search
-	// for further matching elements
-	private boolean FinalElement = true;
+	/** If this is set, then we look for further types after this one is matched */
+	private boolean continueSearch;
+
 	// by default, a rule's actions are skipped when searching for
 	// further rules to match - by setting this true, the rule's
 	// actions will always be executed
-	private boolean alwaysExecuteActions = false;
-	
+	private boolean propogateActionsOnContinue;
+
 	public GType(int featureKind, String type) {
-		priority = nextPriority();
 		this.featureKind = featureKind;
 		try {
 			this.type = Integer.decode(type);
@@ -78,13 +69,7 @@ public class GType {
 		}
 	}
 
-	private static int nextPriority() {
-		return nextPriority++;
-	}
-
 	public GType(int featureKind, String type, String subtype) {
-		priority = nextPriority();
-
 		this.featureKind = featureKind;
 		try {
 			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
@@ -124,14 +109,6 @@ public class GType {
 
 	public void setDefaultName(String defaultName) {
 		this.defaultName = defaultName;
-	}
-
-	/**
-	 * Is the priority of this type better than that of other?
-	 * Lower priorities are better and win out.
-	 */
-	public boolean isBetterPriority(GType other) {
-		return this.priority < other.priority;
 	}
 
 	/**
@@ -199,31 +176,19 @@ public class GType {
 		return road;
 	}
 
-	public void setFinal() {
-		FinalElement = true;
-	}
-	
-	public void setContinue() {
-		FinalElement = false;
+	public boolean isContinueSearch() {
+		return continueSearch;
 	}
 
-	public void alwaysExecuteActions(boolean aea) {
-		alwaysExecuteActions = aea;
+	public void propagateActions(boolean propagate) {
+		propogateActionsOnContinue = propagate;
 	}
 
-	public boolean alwaysExecuteActions() {
-		return alwaysExecuteActions;
-	}
-	
-	public boolean isFinal() {
-		return FinalElement;
-	}
-	
-	public static void push() {
-		nextPriority += PRIORITY_PUSH;
+	public boolean isPropogateActions() {
+		return !continueSearch || propogateActionsOnContinue;
 	}
 
-	public static void pop() {
-		nextPriority -= PRIORITY_PUSH;
+	public void setContinueSearch(boolean continueSearch) {
+		this.continueSearch = continueSearch;
 	}
 }

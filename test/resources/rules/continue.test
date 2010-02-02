@@ -1,0 +1,26 @@
+# Test of continue with and without with_actions.
+#
+
+WAY 1
+highway=primary
+abc=yes
+
+WAY 2
+highway=secondary
+abc=yes
+
+<<<lines>>>
+highway=primary & abc=yes { set oneway=reverse; } [0x1 road_class=1 continue]
+highway=primary [0x2 road_class=1]
+
+highway=secondary & abc=yes { set oneway=reverse; } [0x1 road_class=1 continue
+with_actions]
+highway=secondary [0x2 road_class=1]
+
+<<<results>>>
+WAY 1: Road 0x1, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
+WAY 1: Road 0x2, name=<null>, ref=<null>, res=24-24 (1/1),(2/2), road class=1 speed=0
+
+WAY 2: Road 0x1, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
+WAY 2: Road 0x2, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
+
