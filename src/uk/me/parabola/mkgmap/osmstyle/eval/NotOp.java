@@ -35,4 +35,8 @@ public class NotOp extends Op {
 	public int priority() {
 		return 50;
 	}
+
+	public String toString() {
+		return "!" + first;
+	}
 }

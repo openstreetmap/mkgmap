@@ -32,6 +32,7 @@ public abstract class BinaryOp extends Op {
 	}
 
 	public String toString() {
-		return "(" + first + getType() + second + ')';
+		String t2 = second.isType(VALUE) ? "'" + second + "'" : second.toString();
+		return "(" + first + getType() + t2 + ')';
 	}
 }

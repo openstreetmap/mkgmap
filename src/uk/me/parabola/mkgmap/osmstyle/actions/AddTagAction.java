@@ -75,7 +75,11 @@ public class AddTagAction implements Action {
 		sb.append(modify ? "set " : "add ");
 		sb.append(tag);
 		sb.append("=");
-		sb.append(values);
+		for (int i = 0; i < values.size(); i++) {
+			sb.append(values.get(i));
+			if (i < values.size() - 1)
+				sb.append(" | ");
+		}
 		sb.append(';');
 		return sb.toString();
 	}

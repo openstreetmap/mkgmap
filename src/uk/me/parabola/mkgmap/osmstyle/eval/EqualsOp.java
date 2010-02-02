@@ -41,8 +41,4 @@ public class EqualsOp extends BinaryOp {
 	public int priority() {
 		return 10;
 	}
-
-	public String toString() {
-		return getFirst().toString() + '=' + getSecond();
-	}
 }
