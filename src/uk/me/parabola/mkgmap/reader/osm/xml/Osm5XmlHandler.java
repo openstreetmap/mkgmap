@@ -552,8 +552,12 @@ public class Osm5XmlHandler extends DefaultHandler {
 		String type = currentRelation.getTag("type");
 		if (type != null) {
 			if ("multipolygon".equals(type)) {
-				Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
+				if (currentRelation.getElements().size() > 1) {
+					Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
+					currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
+				} else {
+					currentRelation = null;
+				}
 			} else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
