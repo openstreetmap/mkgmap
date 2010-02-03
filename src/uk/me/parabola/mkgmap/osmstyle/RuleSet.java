@@ -40,7 +40,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 
 	public static int elements;
 	public static int rulesApplied;
-	public static int rulesMatched;
+	public static int elementsCreated;
 
 	private RuleIndex index = new RuleIndex();
 
@@ -81,8 +81,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 			rulesApplied++;
 			a.reset();
 			rules[i].resolveType(el, a);
-			if (a.isActionsOnly() || a.isResolved())
-				rulesMatched++;
+			elementsCreated += a.getCount();
 			if (a.isResolved())
 				return;
 		}

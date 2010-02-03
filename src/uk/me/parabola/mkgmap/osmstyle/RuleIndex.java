@@ -153,7 +153,6 @@ public class RuleIndex {
 	 * rules that could be run as a result of actions changing tags.
 	 */
 	public void prepare() {
-		long start = System.currentTimeMillis();
 		for (Map.Entry<Integer, List<String>> ent : changeTags.entrySet()) {
 			int ruleNumber = ent.getKey();
 			List<String> changeTagList = ent.getValue();
@@ -177,6 +176,7 @@ public class RuleIndex {
 					}
 
 					if (set != null && !set.isEmpty()) {
+						set = new HashSet<Integer>(set);
 						for (Iterator<Integer> iterator = set.iterator(); iterator.hasNext();) {
 							Integer i = iterator.next();
 							// Only rules after this one can be affected
@@ -204,11 +204,10 @@ public class RuleIndex {
 				}
 
 				newChanged.removeAll(changeTagList);
-				changeTagList = new ArrayList<String>(newChanged);
-			} while (!changeTagList.isEmpty());
+				changeTagList.addAll(newChanged);
+			} while (!newChanged.isEmpty());
 		}
 
-		System.out.println("rule set prep time " + (System.currentTimeMillis() - start) + "ms");
 		inited = true;
 	}
 

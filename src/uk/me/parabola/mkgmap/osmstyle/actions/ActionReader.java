@@ -34,8 +34,6 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ActionReader {
 	private final TokenScanner scanner;
 
-
-
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
@@ -144,8 +142,14 @@ public class ActionReader {
 		scanner.nextToken();
 		String val = scanner.nextWord();
 
-		// Save the tag as this is potentially set during the operation.
-		changeableTags.add(key);
+		// Save the tag as one that is potentially set during the operation.
+		// If the value contains a variable, then we do not know what the
+		// value will be.  Otherwise save the full tag=value
+		if (val.contains("$")) {
+			changeableTags.add(key);
+		} else {
+			changeableTags.add(key + "=" + val);
+		}
 
 		AddTagAction action = new AddTagAction(key, val, modify);
 		while (inActionCmd()) {

@@ -622,6 +622,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
+		long start = System.currentTimeMillis();
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -641,13 +642,14 @@ public class Osm5XmlHandler extends DefaultHandler {
 		for (Way w: wayMap.values())
 			converter.convertWay(w);
 
+		System.out.println("Convert time " + (System.currentTimeMillis() - start) + "ms");
 		wayMap = null;
 
 		converter.end();
 		System.out.println(RuleSet.elements + " elements processed");
 		System.out.println(RuleSet.rulesApplied + " rules applied");
 		System.out.println(RuleSet.rulesApplied*1.0/RuleSet.elements + " rules per element");
-		System.out.println(RuleSet.rulesMatched + " rules matched");
+		System.out.println(RuleSet.elementsCreated + " elements created");
 
 		relationMap = null;
 
