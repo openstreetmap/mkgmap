@@ -130,6 +130,7 @@ public class StyleTester implements OsmConverter {
 	private final List<String> givenResults = new ArrayList<String>();
 	private static boolean forceUseOfGiven;
 	private static boolean showMatches;
+	private static boolean print = true;
 
 	private StyleTester(String stylefile, MapCollector coll, boolean reference) throws FileNotFoundException {
 		if (reference)
@@ -161,6 +162,8 @@ public class StyleTester implements OsmConverter {
 					System.out.println("# using reference method of calculation");
 				reference = true;
 				showMatches = true;
+			} else if (s.startsWith("--no-print")) {
+				print = false;
 			} else
 				a.add(s);
 		}
@@ -168,7 +171,7 @@ public class StyleTester implements OsmConverter {
 	}
 
 	private static void runTest(String stylefile, String mapfile) {
-		MapCollector collector = new PrintingMapCollector();
+		PrintingMapCollector collector = new PrintingMapCollector();
 		OsmConverter normal;
 		try {
 			normal = new StyleTester(stylefile, collector, reference);
@@ -195,6 +198,7 @@ public class StyleTester implements OsmConverter {
 					}
 				});
 				parser.parse(is, handler);
+				System.err.println("Conversion time " + (System.currentTimeMillis() - collector.getStart()) + "ms");
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
 			}
@@ -716,25 +720,41 @@ public class StyleTester implements OsmConverter {
 	 * (lines and roads only at present).
 	 */
 	private static class PrintingMapCollector implements MapCollector {
+		private long start;
 
-		public void addToBounds(Coord p) { }
+		public void addToBounds(Coord p) { if (start == 0) {
+				System.err.println("start collection");
+				start = System.currentTimeMillis();
+			}}
 
 		// could save points in the same way as lines to test them
 		public void addPoint(MapPoint point) { }
 
 		public void addLine(MapLine line) {
-			String[] strings = formatResults("", Arrays.<MapElement>asList(line));
-			printResult(strings);
+			if (start == 0) {
+				System.err.println("start collection");
+				start = System.currentTimeMillis();
+			}
+			if (print) {
+				String[] strings = formatResults("", Arrays.<MapElement>asList(line));
+				printResult(strings);
+			}
 		}
 
 		public void addShape(MapShape shape) { }
 
 		public void addRoad(MapRoad road) {
-			String[] strings = formatResults("", Collections.<MapElement>singletonList(road));
-			printResult(strings);
+			if (print) {
+				String[] strings = formatResults("", Collections.<MapElement>singletonList(road));
+				printResult(strings);
+			}
 		}
 
 		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		}
+
+		public long getStart() {
+			return start;
 		}
 	}
 }

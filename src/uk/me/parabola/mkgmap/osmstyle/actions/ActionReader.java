@@ -42,12 +42,12 @@ public class ActionReader {
 
 	public ActionList readActions() {
 		List<Action> actions = new ArrayList<Action>();
+		Set<String> changeableTags = new HashSet<String>();
 		scanner.skipSpace();
 		if (!scanner.checkToken("{"))
-			return new ActionList(actions);
+			return new ActionList(actions, changeableTags);
 
 		scanner.nextToken();
-	 	Set<String> changeableTags = new HashSet<String>();
 		while (inAction()) {
 			Token tok = scanner.nextToken();
 			if (tok.isValue(";"))
@@ -88,7 +88,7 @@ public class ActionReader {
 			scanner.nextToken();
 		scanner.skipSpace();
 
-		return new ActionList(actions);
+		return new ActionList(actions, changeableTags);
 	}
 
 	private Action readAllCmd(boolean once) {

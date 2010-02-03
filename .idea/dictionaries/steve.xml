@@ -5,10 +5,13 @@
       <w>bbox</w>
       <w>coord</w>
       <w>coords</w>
+      <w>fixme</w>
+      <w>geofabrik</w>
       <w>indexable</w>
       <w>maxspeed</w>
       <w>multipolygon</w>
       <w>oneway</w>
+      <w>oneways</w>
       <w>ratcliffe</w>
       <w>routable</w>
       <w>seamark</w>
