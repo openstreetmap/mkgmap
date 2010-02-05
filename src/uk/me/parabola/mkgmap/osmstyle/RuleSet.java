@@ -38,10 +38,6 @@ import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 public class RuleSet implements Rule, Iterable<Rule> {
 	private Rule[] rules;
 
-	public static int elements;
-	public static int rulesApplied;
-	public static int elementsCreated;
-
 	private RuleIndex index = new RuleIndex();
 
 	/**
@@ -69,8 +65,6 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		}
 		Collections.sort(candidates);
 
-		elements++;
-
 		int lastNum = -1;
 		for (Integer i : candidates) {
 			// Filter any duplicates here
@@ -78,10 +72,8 @@ public class RuleSet implements Rule, Iterable<Rule> {
 				continue;
 			lastNum = i;
 
-			rulesApplied++;
 			a.reset();
 			rules[i].resolveType(el, a);
-			elementsCreated += a.getCount();
 			if (a.isResolved())
 				return;
 		}

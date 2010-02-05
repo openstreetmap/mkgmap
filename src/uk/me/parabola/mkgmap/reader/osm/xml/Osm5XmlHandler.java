@@ -44,7 +44,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
 import uk.me.parabola.mkgmap.general.MapCollector;
 import uk.me.parabola.mkgmap.general.MapDetails;
-import uk.me.parabola.mkgmap.osmstyle.RuleSet;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
@@ -642,14 +641,9 @@ public class Osm5XmlHandler extends DefaultHandler {
 		for (Way w: wayMap.values())
 			converter.convertWay(w);
 
-		System.out.println("Convert time " + (System.currentTimeMillis() - start) + "ms");
 		wayMap = null;
 
 		converter.end();
-		System.out.println(RuleSet.elements + " elements processed");
-		System.out.println(RuleSet.rulesApplied + " rules applied");
-		System.out.println(RuleSet.rulesApplied*1.0/RuleSet.elements + " rules per element");
-		System.out.println(RuleSet.elementsCreated + " elements created");
 
 		relationMap = null;
 
