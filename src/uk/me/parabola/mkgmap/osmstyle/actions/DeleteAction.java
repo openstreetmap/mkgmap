@@ -33,4 +33,8 @@ public class DeleteAction implements Action {
 	public void perform(Element el) {
 		el.deleteTag(tag);
 	}
+
+	public String toString() {
+		return "delete " + tag + ";";
+	}
 }

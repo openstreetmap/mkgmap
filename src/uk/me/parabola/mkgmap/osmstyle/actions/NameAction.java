@@ -63,7 +63,7 @@ public class NameAction implements Action {
 		sb.append("name ");
 		for (ValueBuilder vb : names) {
 			sb.append(vb);
-			sb.append("|");
+			sb.append(" | ");
 		}
 		sb.setLength(sb.length() - 1);
 		return sb.toString();

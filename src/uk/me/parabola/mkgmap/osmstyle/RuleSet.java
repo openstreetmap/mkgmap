@@ -17,8 +17,11 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -26,16 +29,16 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 
 /**
- * A group of rules.  Basically just a map of a tag=value strings that is used
- * as an index and the rule that applies for that tag,value pair.
+ * A list of rules and the logic to select the correct one.
  *
- * The main purpose is to separate out the code to add a new rule
- * which is moderately complex.
+ * A separate {@link RuleIndex} class is used to speed access to the rule list.
  *
  * @author Steve Ratcliffe
  */
 public class RuleSet implements Rule, Iterable<Rule> {
-	private final List<Rule> rules = new ArrayList<Rule>();
+	private Rule[] rules;
+
+	private RuleIndex index = new RuleIndex();
 
 	/**
 	 * Resolve the type for this element by running the rules in order.
@@ -51,22 +54,47 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	 */
 	public void resolveType(Element el, TypeResult result) {
 		WatchableTypeResult a = new WatchableTypeResult(result);
-		// Start by literally running through the rules in order.
-		for (Rule rule : rules) {
-			//System.out.println("R " + rh);
+
+		// Get all the rules that could match from the index.  The list
+		// could contain duplicates.
+		List<Integer> candidates = new ArrayList<Integer>();
+		for (String s : el) {
+			List<Integer> integerSet = index.getRulesForTag(s);
+			if (integerSet != null)
+				candidates.addAll(integerSet);
+		}
+		Collections.sort(candidates);
+
+		int lastNum = -1;
+		for (Integer i : candidates) {
+			// Filter any duplicates here
+			if (i == lastNum)
+				continue;
+			lastNum = i;
+
 			a.reset();
-			rule.resolveType(el, a);
+			rules[i].resolveType(el, a);
 			if (a.isResolved())
 				return;
 		}
 	}
 
 	public Iterator<Rule> iterator() {
-		return rules.iterator();
+		if (rules == null)
+			prepare();
+		return Arrays.asList(rules).iterator();
 	}
 
-	public void add(Rule rule) {
-		rules.add(rule);
+	/**
+	 * Add a rule to this rule set.
+	 * @param keystring The string form of the first term of the rule.  It will
+	 * be A=B or A=*.  (In the future we may allow other forms).
+	 * @param rule The actual rule.
+	 * @param changeableTags The tags that may be changed by the rule.  This
+	 * will be either a plain tag name A, or with a value A=B.
+	 */
+	public void add(String keystring, Rule rule, Set<String> changeableTags) {
+		index.addRuleToIndex(new RuleDetails(keystring, rule, changeableTags));
 	}
 
 	/**
@@ -74,8 +102,8 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	 * @param rs The other rule set.
 	 */
 	public void addAll(RuleSet rs) {
-		for (Rule rule : rs.rules)
-			add(rule);
+		for (RuleDetails rd : rs.index.getRuleDetails())
+			add(rd.getKeystring(), rd.getRule(), rd.getChangingTags());
 	}
 
 	/**
@@ -90,10 +118,31 @@ public class RuleSet implements Rule, Iterable<Rule> {
 		return sb.toString();
 	}
 
+	/**
+	 * Merge the two rulesets together so that they appear to be one.
+	 * @param rs The other rule set, it will have lower priority, that is the
+	 * rules will be tried after the rules of this ruleset.
+	 */
 	public void merge(RuleSet rs) {
-		List<Rule> l = new ArrayList<Rule>(rules);
-		l.addAll(rs.rules);
-		rules.clear();
-		rules.addAll(l);
+		// We have to basically rebuild the index and reset the rule list.
+		RuleIndex newIndex = new RuleIndex();
+
+		for (RuleDetails rd : index.getRuleDetails())
+			newIndex.addRuleToIndex(rd);
+
+		for (RuleDetails rd : rs.index.getRuleDetails())
+			newIndex.addRuleToIndex(rd);
+
+		index = newIndex;
+		rules = newIndex.getRules();
+	}
+
+	/**
+	 * Prepare this rule set for use.  The index is built and and the rules
+	 * are saved to an array for fast access.
+	 */
+	public void prepare() {
+		index.prepare();
+		rules = index.getRules();
 	}
 }

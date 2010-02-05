@@ -142,6 +142,13 @@ public class GType {
 			else
 				fmt.format(" level %d-%d", minLevel, maxLevel);
 		}
+		if (road)
+			fmt.format(" road_class=%d road_speed=%d", roadClass, roadSpeed);
+		
+		if (continueSearch)
+			fmt.format(" continue");
+		if (propogateActionsOnContinue)
+			fmt.format(" propagate");
 		sb.append(']');
 		return sb.toString();
 	}

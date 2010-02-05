@@ -93,6 +93,7 @@ public class RuleFileReader {
 			saveRule(expr, actionList, type);
 			scanner.skipSpace();
 		}
+		rules.prepare();
 	}
 
 	/**
@@ -116,7 +117,7 @@ public class RuleFileReader {
 		if (op2 instanceof BinaryOp) {
 			optimiseAndSaveBinaryOp((BinaryOp) op2, actions, gt);
 		} else {
-			optimiseAndSaveOtherOp(this, op2, actions, gt);
+			optimiseAndSaveOtherOp(op2, actions, gt);
  		}
 	}
 
@@ -290,12 +291,12 @@ public class RuleFileReader {
 		}
 	}
 
-	private static void optimiseAndSaveOtherOp(RuleFileReader ruleFileReader, Op op, ActionList actions, GType gt) {
+	private void optimiseAndSaveOtherOp(Op op, ActionList actions, GType gt) {
 		if (op.isType(EXISTS)) {
 			// The lookup key for the exists operation is 'tag=*'
-			ruleFileReader.createAndSaveRule(op.value() + "=*", op, actions, gt);
+			createAndSaveRule(op.value() + "=*", op, actions, gt);
 		} else {
-			throw new SyntaxException(ruleFileReader.scanner, "Invalid operation '" + op.getType() + "' at top level");
+			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
 		}
 	}
 
@@ -321,13 +322,13 @@ public class RuleFileReader {
 		String keystring;
 		if (op.isType(EQUALS)) {
 			if (first.isType(VALUE) && second.isType(VALUE)) {
-				keystring = op.toString();
+				keystring = op.value();
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
 			}
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
-				keystring = first.toString();
+				keystring = first.value();
 			} else if (first.isType(EXISTS)) {
 				keystring = first.value() + "=*";
 			} else if (first.isType(NOT_EXISTS)) {
@@ -348,14 +349,14 @@ public class RuleFileReader {
 
 	private void createAndSaveRule(String keystring, Op expr, ActionList actions, GType gt) {
 
-		log.debug(keystring); // TODO This will be used - if not delete it
+		//System.out.println(keystring); // TODO This will be used - if not delete it
 		Rule rule;
 		if (actions.isEmpty()) 
 			rule = new ExpressionRule(expr, gt);
 		else
 			rule = new ActionRule(expr, actions.getList(), gt);
 
-		rules.add(rule);
+		rules.add(keystring, rule, actions.getChangeableTags());
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {

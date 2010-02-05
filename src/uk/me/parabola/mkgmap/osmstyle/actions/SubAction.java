@@ -73,16 +73,17 @@ public class SubAction implements Action {
 
 	public String toString() {
 		Formatter fmt = new Formatter();
-		if (role != null)
-			fmt.format("role=%s ", role);
 		fmt.format(once ? "apply_once" : "apply");
+		if (role != null)
+			fmt.format(" role=%s ", role);
+		
 		fmt.format(" {");
 
 		for (Iterator<Action> it = actionList.iterator(); it.hasNext();) {
 			Action a = it.next();
 			fmt.format(a.toString());
 			if (it.hasNext())
-				fmt.format(", ");
+				fmt.format(" ");
 		}
 		
 		fmt.format("}");

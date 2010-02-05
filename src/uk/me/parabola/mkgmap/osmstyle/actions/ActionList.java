@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Wrap an a action list along with information about tags that could be
@@ -21,9 +22,11 @@ import java.util.List;
  */
 public class ActionList {
 	private final List<Action> list;
+	private final Set<String> changeableTags;
 
-	public ActionList(List<Action> list) {
+	public ActionList(List<Action> list, Set<String> changeableTags) {
 		this.list = list;
+		this.changeableTags = changeableTags;
 	}
 
 	public List<Action> getList() {
@@ -32,5 +35,9 @@ public class ActionList {
 
 	public boolean isEmpty() {
 		return list.isEmpty();
+	}
+
+	public Set<String> getChangeableTags() {
+		return changeableTags;
 	}
 }

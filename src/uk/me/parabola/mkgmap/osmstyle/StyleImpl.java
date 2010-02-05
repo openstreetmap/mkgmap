@@ -187,6 +187,7 @@ public class StyleImpl implements Style {
 	}
 
 	public Rule getNodeRules() {
+		nodes.prepare();
 		return nodes;
 	}
 
@@ -194,10 +195,12 @@ public class StyleImpl implements Style {
 		RuleSet r = new RuleSet();
 		r.addAll(lines);
 		r.addAll(polygons);
+		r.prepare();
 		return r;
 	}
 
 	public Rule getRelationRules() {
+		relations.prepare();
 		return relations;
 	}
 
@@ -285,13 +288,13 @@ public class StyleImpl implements Style {
 		addBackwardCompatibleRules();
 
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
-			lines.add(createRule(me.getKey(), me.getValue()));
+			lines.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
-			polygons.add(createRule(me.getKey(), me.getValue()));
+			polygons.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
-			nodes.add(createRule(me.getKey(), me.getValue()));
+			nodes.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
 	}
 
 	/**
@@ -311,7 +314,7 @@ public class StyleImpl implements Style {
 		Op expr = new ExistsOp();
 		expr.setFirst(new ValueOp("highway"));
 		Rule rule = new ActionRule(expr, l);
-		lines.add(rule);
+		lines.add("highway=*", rule, null);
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -323,13 +326,13 @@ public class StyleImpl implements Style {
 		expr2.setFirst(new ValueOp("contour"));
 		expr2.setSecond(new ValueOp("elevation"));
 		rule = new ActionRule(expr2, l);
-		lines.add(rule); // "contour=elevation"
+		lines.add("contour=elevation", rule, null); // "contour=elevation"
 
 		expr2 = new EqualsOp();
-		expr2.setFirst(new ValueOp("contour"));
+		expr2.setFirst(new ValueOp("contour_ext"));
 		expr2.setSecond(new ValueOp("elevation"));
 		rule = new ActionRule(expr2, l);
-		lines.add(rule); // "contour_ext=elevation"
+		lines.add("contour_ext=elevation", rule, null); // "contour_ext=elevation"
 	}
 
 	/**

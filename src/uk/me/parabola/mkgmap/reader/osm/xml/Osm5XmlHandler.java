@@ -369,7 +369,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that
-			// are not in a list of ignorables ones such as 'created_by'
+			// are not in a list of ignorable ones such as 'created_by'
 			if (currentNode != null || !key.equals("created_by")) {
 				if (currentNode == null) {
 					Coord co = coordMap.get(currentElementId);
@@ -450,7 +450,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 						"opposite_track".equals(cycleway))) {
 						// what we have here is a oneway street
 						// that allows bicycle traffic in both
-						// directions -- to enable bicyle routing
+						// directions -- to enable bicycle routing
 						// in the reverse direction, we synthesise
 						// a cycleway that has the same points as
 						// the original way
@@ -488,7 +488,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 							 "right".equals(cycleway))) {
 						// what we have here is a highway with a
 						// separate track for cycles -- to enable
-						// bicyle routing, we synthesise a cycleway
+						// bicycle routing, we synthesise a cycleway
 						// that has the same points as the original
 						// way
 						long cycleWayId = currentWay.getId() + CYCLEWAY_ID_OFFSET;
@@ -621,6 +621,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
+		long start = System.currentTimeMillis();
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -1464,8 +1465,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 	 */
 	private static class EdgeHit implements Comparable<EdgeHit>
 	{
-		int edge;
-		double t;
+		private final int edge;
+		private final double t;
 
 		EdgeHit(int edge, double t) {
 			this.edge = edge;

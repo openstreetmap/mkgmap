@@ -42,7 +42,7 @@ public class EqualsOp extends BinaryOp {
 		return 10;
 	}
 
-	public String toString() {
-		return getFirst().toString() + '=' + getSecond();
+	public String value() {
+		return first.toString() + '=' + getSecond().toString();
 	}
 }

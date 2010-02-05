@@ -23,6 +23,7 @@ public class WatchableTypeResult implements TypeResult {
 	private boolean actionsOnly;
 	private boolean found;
 	private boolean continued;
+	private int count;
 
 	private final TypeResult result;
 
@@ -39,6 +40,7 @@ public class WatchableTypeResult implements TypeResult {
 		if (type.isContinueSearch())
 			continued = true;
 
+		count++;
 		found = true;
 		result.add(el, type);
 	}
@@ -64,10 +66,15 @@ public class WatchableTypeResult implements TypeResult {
 		return actionsOnly;
 	}
 
+	public int getCount() {
+		return count;
+	}
+
 	/**
 	 * Reset the watcher for the next element.
 	 */
 	public void reset() {
+		count = 0;
 		actionsOnly = false;
 		continued = false;
 		found = false;
