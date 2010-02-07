@@ -22,7 +22,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * True of the tag does not exist.
  * @author Steve Ratcliffe
  */
-public class NotExistsOp extends Op {
+public class NotExistsOp extends AbstractOp {
 	public NotExistsOp() {
 		setType(NOT_EXISTS);
 	}

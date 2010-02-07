@@ -22,7 +22,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * An open parenthesis.  This is treated specially.
  * @author Steve Ratcliffe
  */
-public class OpenOp extends Op {
+public class OpenOp extends AbstractOp {
 
 	public OpenOp() {
 		setType(OPEN_PAREN);

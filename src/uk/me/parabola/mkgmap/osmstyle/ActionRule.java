@@ -79,13 +79,13 @@ public class ActionRule implements Rule {
 		if (expression != null)
 			fmt.append(expression);
 
-		fmt.append("\n\t{");
+		fmt.append(" {");
 		for (Action a : actions)
 			fmt.append(a);
-		fmt.append("}\n");
+		fmt.append("}");
 
 		if (type != null) {
-			fmt.append('\t');
+			fmt.append(' ');
 			fmt.append(type);
 		}
 

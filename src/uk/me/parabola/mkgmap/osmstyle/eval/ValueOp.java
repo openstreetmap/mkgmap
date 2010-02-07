@@ -23,7 +23,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * 
  * @author Steve Ratcliffe
  */
-public class ValueOp extends Op {
+public class ValueOp extends AbstractOp {
 	private final String value;
 
 	public ValueOp(String value) {

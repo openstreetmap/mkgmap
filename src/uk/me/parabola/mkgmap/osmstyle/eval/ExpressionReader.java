@@ -5,7 +5,7 @@ import java.util.Stack;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import static uk.me.parabola.mkgmap.osmstyle.eval.Op.*;
+import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
 
 /**
  * Read an expression from a style file.
@@ -60,9 +60,10 @@ public class ExpressionReader {
 			scanner.skipLine();
 			return;
 		}
+
 		Op op;
 		try {
-			op = Op.createOp(value);
+			op = AbstractOp.createOp(value);
 			while (!opStack.isEmpty() && opStack.peek().hasHigherPriority(op))
 				runOp();
 		} catch (SyntaxException e) {

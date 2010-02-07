@@ -23,15 +23,25 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * 
  * @author Steve Ratcliffe
  */
-public class EqualsOp extends BinaryOp {
+public class EqualsOp extends AbstractBinaryOp {
+	private String key;
+	private String value;
+
 	public EqualsOp() {
 		setType(EQUALS);
 	}
 
-	public boolean eval(Element el) {
-		String key = getFirst().toString();
-		String value = getSecond().toString();
+	public void setFirst(Op first) {
+		super.setFirst(first);
+		key = first.value();
+	}
 
+	public void setSecond(Op second) {
+		super.setSecond(second);
+		value = second.value();
+	}
+
+	public boolean eval(Element el) {
 		String s = el.getTag(key);
 		if (s == null)
 			return false;
@@ -43,6 +53,6 @@ public class EqualsOp extends BinaryOp {
 	}
 
 	public String value() {
-		return first.toString() + '=' + getSecond().toString();
+		return key + '=' + value;
 	}
 }

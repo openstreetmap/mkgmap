@@ -19,9 +19,12 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * The AND operation.  The second term is not executed if the first one
+ * fails.
+ *
  * @author Steve Ratcliffe
  */
-public class AndOp extends BinaryOp {
+public class AndOp extends AbstractBinaryOp {
 
 	public AndOp() {
 		setType(AND);

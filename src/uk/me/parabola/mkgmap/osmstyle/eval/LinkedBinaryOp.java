@@ -13,19 +13,22 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 /**
- * Interface for operations with two operands.
+ * The binary version of {@link LinkedOp}, see that class for
+ * a description.
  *
  * @author Steve Ratcliffe
  */
-public interface BinaryOp extends Op {
+public class LinkedBinaryOp extends LinkedOp implements BinaryOp {
 
-	/**
-	 * Get the second operand.
-	 */
-	public Op getSecond();
+	public LinkedBinaryOp(BinaryOp other, boolean first) {
+		super(other, first);
+	}
 
-	/**
-	 * Set the second operand.
-	 */
-	public void setSecond(Op second);
+	public Op getSecond() {
+		return ((BinaryOp) wrapped).getSecond();
+	}
+
+	public void setSecond(Op second) {
+		((BinaryOp) wrapped).setSecond(second);
+	}
 }

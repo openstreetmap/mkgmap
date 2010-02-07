@@ -26,7 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public abstract class NumericOp extends BinaryOp {
+public abstract class NumericOp extends AbstractBinaryOp {
 
 	/**
 	 * This is passed the result of a compareTo and the subclass
@@ -34,7 +34,7 @@ public abstract class NumericOp extends BinaryOp {
 	 */
 	protected abstract boolean doesCompare(int result);
 
-	protected int priority() {
+	public int priority() {
 		return 10;
 	}
 

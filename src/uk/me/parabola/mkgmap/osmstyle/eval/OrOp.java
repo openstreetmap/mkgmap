@@ -19,9 +19,11 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
+ * An OR operation.  The second is only run if the first fails.
+ * 
  * @author Steve Ratcliffe
  */
-public class OrOp extends BinaryOp {
+public class OrOp extends AbstractBinaryOp {
 
 	public OrOp() {
 		setType(OR);

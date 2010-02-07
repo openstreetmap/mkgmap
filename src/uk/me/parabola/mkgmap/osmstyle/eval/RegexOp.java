@@ -24,7 +24,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * Regular expression matching.
  * @author Steve Ratcliffe
  */
-public class RegexOp extends BinaryOp {
+public class RegexOp extends AbstractBinaryOp {
 	private Pattern pattern;
 
 	public RegexOp() {
@@ -39,7 +39,7 @@ public class RegexOp extends BinaryOp {
 		return pattern.matcher(tagval).matches();
 	}
 
-	protected int priority() {
+	public int priority() {
 		return 10;
 	}
 

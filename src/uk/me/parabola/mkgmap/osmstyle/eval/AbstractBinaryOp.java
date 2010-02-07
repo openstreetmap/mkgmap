@@ -12,31 +12,30 @@
  * 
  * 
  * Author: Steve Ratcliffe
- * Create date: 08-Nov-2008
+ * Create date: 03-Nov-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
-
 /**
- * Reverses the sense of the operation it is applied to.
+ * A base class that can be used for binary operations.
+ * It has a second operand.
+ *
  * @author Steve Ratcliffe
  */
-public class NotOp extends AbstractOp {
+public abstract class AbstractBinaryOp extends AbstractOp implements BinaryOp {
 
-	public NotOp() {
-		setType(NOT);
+	private Op second;
+
+	public Op getSecond() {
+		return second;
 	}
 
-	public boolean eval(Element el) {
-		return !first.eval(el);
-	}
-
-	public int priority() {
-		return 50;
+	public void setSecond(Op second) {
+		this.second = second;
 	}
 
 	public String toString() {
-		return "!" + first;
+		String t2 = second.isType(VALUE) ? "'" + second + "'" : second.toString();
+		return "(" + getFirst() + getType() + t2 + ')';
 	}
 }

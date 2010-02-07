@@ -70,7 +70,10 @@ public class ScriptedStyleTest {
 			String result = output.toString();
 
 			// Make sure that the result does not contain an error
-			assertFalse(name, result.contains("ERROR"));
+			if (result.contains("ERROR")) {
+				System.out.println(result);
+				assertFalse(name, true);
+			}
 
 			// make sure that the output was reasonable (and not 'cannot open
 			// file', for example).

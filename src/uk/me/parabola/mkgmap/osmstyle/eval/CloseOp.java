@@ -24,7 +24,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public class CloseOp extends Op {
+public class CloseOp extends AbstractOp {
 	public CloseOp() {
 		setType(CLOSE_PAREN);
 	}
