@@ -65,7 +65,7 @@ natural=marsh [0x51 resolution 20]
 natural=mud [0x51 resolution 20]
 natural=wetland [0x51 resolution 20]
 natural=scrub [0x4f resolution 20]
-natural=water [0x3c resolution 20]
+natural=water [0x3c resolution 18]
 natural=sea [0x32 resolution 10]
 natural=wood [0x50 resolution 18]
 
