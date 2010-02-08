@@ -48,13 +48,13 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
  * </pre>
  *
  * We would select rules 3 and 4.  No other rule can match initially. But there
- * is a problem; rule 3 if matched could set the surface tag.  So we also
+ * is a further issue; if rule 3 matched it could set the surface tag.  So we also
  * need to select rule 5.  Rule 1 can not be matched because it occurs before
  * the rule that sets the tag, so it is not included.  All this is precomputed
  * when the index is created, so we can still do a single lookup.
  *
  * <p>So the full set of rules that we need to match is 3, 4 and 5.
- * If rule 5 itself set a tag, then we might have to add more rules and
+ * If rule 5 itself sets a tag, then we might have to add more rules and
  * so on.
  *
  * @author Steve Ratcliffe
@@ -160,10 +160,10 @@ public class RuleIndex {
 			// When we add new rules, we may, in turn get more changeable tags
 			// which will force us to run again to find more rules that could
 			// be executed.  So save rules that we find here.
-			Set<String> newChanged = new HashSet<String>();
+			Set<String> newChanged = new HashSet<String>(changeTagList);
 			// we have to find all rules that might be now matched
 			do {
-				for (String s : changeTagList) {
+				for (String s : new HashSet<String>(newChanged)) {
 					Set<Integer> set;
 
 					// If we know the value that could be set, then we can restrict to
@@ -188,14 +188,13 @@ public class RuleIndex {
 						}
 
 						// Find every rule number set that contains the rule number that we
-						// examining and add all the newly found rules to each such set.
+						// are examining and add all the newly found rules to each such set.
 						for (Map<String, Set<Integer>> m : Arrays.asList(existKeys, tagVals, tagnames)) {
 							Collection<Set<Integer>> intSets = m.values();
 							for (Set<Integer> si : intSets) {
 								if (si.contains(ruleNumber)) {
 									// contains the rule that we are looking at so we must
 									// also add the rules in the set we found.
-									//System.out.println("adding " + set + " to " + si);
 									si.addAll(set);
 								}
 							}

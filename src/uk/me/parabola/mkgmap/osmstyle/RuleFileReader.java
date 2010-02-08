@@ -93,6 +93,9 @@ public class RuleFileReader {
 			saveRule(expr, actionList, type);
 			scanner.skipSpace();
 		}
+
+		rules.addUsedTags(expressionReader.getUsedTags());
+		rules.addUsedTags(actionReader.getUsedTags());
 		rules.prepare();
 	}
 

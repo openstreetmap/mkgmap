@@ -60,6 +60,10 @@ public class ValueItem {
 			filter.add(f);
 	}
 
+	public String getTagname() {
+		return tagname;
+	}
+
 	public void setTagname(String tagname, boolean local) {
 		this.tagname = tagname;
 		this.tagname_is_local = local;

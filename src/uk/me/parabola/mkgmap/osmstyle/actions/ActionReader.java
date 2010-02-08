@@ -34,6 +34,8 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class ActionReader {
 	private final TokenScanner scanner;
 
+	private final Set<String> usedTags = new HashSet<String>();
+
 	public ActionReader(TokenScanner scanner) {
 		this.scanner = scanner;
 	}
@@ -73,6 +75,8 @@ public class ActionReader {
 				// The 'to' tag may come into existence and you may attempt
 				// to match on it, therefore we have to save it.
 				changeableTags.add(to);
+				// the from tag must not be dropped from the input
+				usedTags.add(from);
 			} else if ("echo".equals(cmd)) {
 				String str = scanner.nextWord();
 				actions.add(new EchoAction(str));
@@ -120,6 +124,7 @@ public class ActionReader {
 			String val = scanner.nextWord();
 			nameAct.add(val);
 		}
+		usedTags.addAll(nameAct.getUsedTags());
 		return nameAct;
 	}
 
@@ -140,26 +145,28 @@ public class ActionReader {
 		if (!scanner.checkToken("="))
 			throw new SyntaxException(scanner, "Expecting tag=value");
 		scanner.nextToken();
-		String val = scanner.nextWord();
 
-		// Save the tag as one that is potentially set during the operation.
-		// If the value contains a variable, then we do not know what the
-		// value will be.  Otherwise save the full tag=value
-		if (val.contains("$")) {
-			changeableTags.add(key);
-		} else {
-			changeableTags.add(key + "=" + val);
-		}
-
-		AddTagAction action = new AddTagAction(key, val, modify);
+		AddTagAction action = null;
 		while (inActionCmd()) {
-			if (scanner.checkToken("|")) {
-				scanner.nextToken();
-				continue;
+
+			String val = scanner.nextWord();
+			if (action == null)
+				action = new AddTagAction(key, val, modify);
+			else
+				action.add(val);
+			// Save the tag as one that is potentially set during the operation.
+			// If the value contains a variable, then we do not know what the
+			// value will be.  Otherwise save the full tag=value
+			if (val.contains("$")) {
+				changeableTags.add(key);
+			} else {
+				changeableTags.add(key + "=" + val);
 			}
-			val = scanner.nextWord();
-			action.add(val);
+			if (scanner.checkToken("|"))
+				scanner.nextToken();
 		}
+		if (action != null)
+			usedTags.addAll(action.getUsedTags());
 		return action;
 	}
 
@@ -170,5 +177,9 @@ public class ActionReader {
 
 	private boolean inAction() {
 		return !scanner.isEndOfFile() && !scanner.checkToken("}");
+	}
+
+	public Set<String> getUsedTags() {
+		return usedTags;
 	}
 }

@@ -18,7 +18,9 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +41,7 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	private Rule[] rules;
 
 	private RuleIndex index = new RuleIndex();
+	private final Set<String> usedTags = new HashSet<String>();
 
 	/**
 	 * Resolve the type for this element by running the rules in order.
@@ -144,5 +147,13 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void prepare() {
 		index.prepare();
 		rules = index.getRules();
+	}
+
+	public Set<String> getUsedTags() {
+		return usedTags;
+	}
+
+	public void addUsedTags(Collection<String> usedTags) {
+		this.usedTags.addAll(usedTags);
 	}
 }

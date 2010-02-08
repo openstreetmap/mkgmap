@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.Polygon;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class Way extends Element {
 	private final List<Coord> points;
 
 	public Way(long id) {
-		points = new ArrayList<Coord>();
+		points = new ArrayList<Coord>(5);
 		setId(id);
 	}
 
@@ -87,7 +87,7 @@ public class Way extends Element {
 	}
 
 	public void addPointIfNotEqualToLastPoint(Coord co) {
-		if(points.size() == 0 || !co.equals(points.get(points.size() - 1)))
+		if(points.isEmpty() || !co.equals(points.get(points.size() - 1)))
 			points.add(co);
 	}
 
@@ -127,11 +127,12 @@ public class Way extends Element {
 	}
 
 	public Coord getCofG() {
-		int lat = 0;
-		int lon = 0;
 		int numPoints = points.size();
 		if(numPoints < 1)
 			return null;
+
+		int lat = 0;
+		int lon = 0;
 		for(Coord p : points) {
 			lat += p.getLatitude();
 			lon += p.getLongitude();

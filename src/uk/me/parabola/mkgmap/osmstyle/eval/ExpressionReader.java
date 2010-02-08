@@ -1,5 +1,7 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
@@ -16,6 +18,8 @@ public class ExpressionReader {
 	private final Stack<Op> stack = new Stack<Op>();
 	private final Stack<Op> opStack = new Stack<Op>();
 	private final TokenScanner scanner;
+
+	private final Set<String> usedTags = new HashSet<String>();
 
 	public ExpressionReader(TokenScanner scanner) {
 		this.scanner = scanner;
@@ -48,6 +52,14 @@ public class ExpressionReader {
 
 		assert stack.size() == 1;
 		return stack.pop();
+	}
+
+	/**
+	 * Tags used in all the expressions in this file.
+	 * @return A set of tag names.
+	 */
+	public Set<String> getUsedTags() {
+		return usedTags;
 	}
 
 	/**
@@ -106,6 +118,10 @@ public class ExpressionReader {
 		} else if (!op.isType(OPEN_PAREN)) {
 			op.setFirst(stack.pop());
 		}
+
+		if (op.getFirst().isType(VALUE))
+			usedTags.add(op.getFirst().value());
+
 		stack.push(op);
 	}
 

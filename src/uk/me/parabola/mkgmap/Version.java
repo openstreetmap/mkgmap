@@ -34,16 +34,17 @@ public class Version {
 
 	// A default version to use.  This will be changed from time to time to
 	// be the then current version number with a 'svn' suffix.  If this shows
-	// up then a more acurate version was not available, but it may be useful
+	// up then a more accurate version was not available, but it may be useful
 	// to know roughly.
 	private static final String DEFAULT_VERSION = "svn";
 
 	/**
-	 * Get the version number if we can find one, else 0.  This looks in
-	 * a file called version.properties on the classpath.  This is created
-	 * outside of the system by the build script.
+	 * Get the version number if we can find one, else a default string.
+	 * This looks in a file called version.properties on the classpath.
+	 * This is created outside of the system by the build script.
 	 *
-	 * @return The version number or zero if a version number cannot be found.
+	 * @return The version number or a default string if a version number
+	 * cannot be found.
 	 */
 	private static String getSvnVersion() {
 		InputStream is = Version.class.getResourceAsStream("/version.properties");

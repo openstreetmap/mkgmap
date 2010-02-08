@@ -12,11 +12,13 @@
       <w>multipolygon</w>
       <w>oneway</w>
       <w>oneways</w>
+      <w>peucker</w>
       <w>ratcliffe</w>
       <w>routable</w>
       <w>seamark</w>
       <w>startup</w>
       <w>subtree</w>
+      <w>usedom</w>
     </words>
   </dictionary>
 </component>

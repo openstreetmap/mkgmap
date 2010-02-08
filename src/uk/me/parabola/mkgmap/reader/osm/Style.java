@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.Properties;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.general.LineAdder;
 
@@ -71,4 +72,9 @@ public interface Style {
 	 * Get the overlay definitions.  Most styles will not use this.
 	 */
 	public LineAdder getOverlays(LineAdder lineAdder);
+
+	/**
+	 * Get the tags that are used by this style.
+	 */
+	public Set<String> getUsedTags();
 }

@@ -30,6 +30,7 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -561,6 +562,10 @@ public class StyleTester implements OsmConverter {
 			}
 
 			return r;
+		}
+
+		public Set<String> getUsedTags() {
+			return null;
 		}
 
 		/**

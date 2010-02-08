@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -77,7 +78,9 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 					}
 				};
 				handler.setEndTask(task);
-				handler.setConverter(createStyler());
+				Osm5MapDataSource.ConverterStuff stuff = createConverter();
+				handler.setConverter(stuff.getConverter());
+				handler.setUsedTags(stuff.getUsedTags());
 				parser.parse(is, handler);
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
@@ -103,7 +106,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 	 *
 	 * @return An OsmConverter based on the command line options passed in.
 	 */
-	private OsmConverter createStyler() {
+	private ConverterStuff createConverter() {
 
 		Properties props = getConfig();
 		String loc = props.getProperty("style-file");
@@ -114,13 +117,14 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 		if (loc == null && name == null)
 			name = "default";
 
+		Set<String> tags;
 		OsmConverter converter;
 		try {
-			// TODO: Move this routine, so that Style implementation reference is outside this package
 			Style style = new StyleImpl(loc, name);
 			style.applyOptionOverride(props);
 			setStyle(style);
 
+			tags = style.getUsedTags();
 			converter = new StyledConverter(style, mapper, props);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
@@ -130,6 +134,24 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			throw new ExitException("Could not open style " + name1);
 		}
 
-		return converter;
+		return new ConverterStuff(converter, tags);
+	}
+
+	public class ConverterStuff {
+		private final OsmConverter converter;
+		private final Set<String> usedTags;
+
+		public ConverterStuff(OsmConverter converter, Set<String> usedTags) {
+			this.converter = converter;
+			this.usedTags = usedTags;
+		}
+
+		public OsmConverter getConverter() {
+			return converter;
+		}
+
+		public Set<String> getUsedTags() {
+			return usedTags;
+		}
 	}
 }
