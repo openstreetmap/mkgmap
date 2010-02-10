@@ -1,7 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.Polygon;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
@@ -398,6 +397,16 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 
+			if (remove) {
+				// check if the polygon contains the complete bounding box
+				Rectangle bboxRect = new Rectangle(bbox.getMinLat(), bbox
+						.getMinLong(), bbox.getMaxLat() - bbox.getMinLat(),
+						bbox.getMaxLong() - bbox.getMinLong());
+				if (w.getBounds().contains(bboxRect)) {
+					remove = false;
+				}
+			}
+			
 			if (remove) {
 				if (log.isDebugEnabled()) {
 					log.debug("Remove way", w.getId(),
