@@ -476,10 +476,7 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addShape(MapShape s) {
 		shapes.add(s);
-		if(s.getType() != 0x4b) {
-			// don't let the porky background polygon bloat the bounds
-			addToBounds(s.getBounds());
-		}
+		addToBounds(s.getBounds());
 		addSize(s, s.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 	}
 
@@ -536,11 +533,11 @@ public class MapArea implements MapDataSource {
 		int ycell = (y - ybase) / dy;
 
 		if (xcell < 0) {
-			log.info("Element of type 0x" + Integer.toHexString(e.getType()) + " xcell was", xcell, "x", x, "xbase", xbase);
+			log.info("xcell was", xcell, "x", x, "xbase", xbase);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.info("Element of type 0x" + Integer.toHexString(e.getType()) + " ycell was", ycell, "y", y, "ybase", ybase);
+			log.info("ycell was", ycell, "y", y, "ybase", ybase);
 			ycell = 0;
 		}
 		
