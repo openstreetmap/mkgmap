@@ -383,25 +383,22 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that
-			// are not in a list of ignorable ones such as 'created_by'
+			// could be used in a POI.
 			key = keepTag(key, val);
-			if (currentNode != null || key != null) {
+			if (key != null) {
 				if (currentNode == null) {
 					Coord co = coordMap.get(currentElementId);
 					currentNode = new Node(currentElementId, co);
 					nodeMap.put(currentElementId, currentNode);
 				}
 
-				if((val.equals("motorway_junction") ||
-						val.equals("services")) &&
-						key.equals("highway"))
-				{
+				if ((val.equals("motorway_junction") || val.equals("services"))
+						&& key.equals("highway")) {
 					exits.add(currentNode);
 					currentNode.addTag("osm:id", "" + currentElementId);
 				}
 
-				if (key != null)
-					currentNode.addTag(key, val);
+				currentNode.addTag(key, val);
 			}
 		}
 	}
