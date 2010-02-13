@@ -212,7 +212,12 @@ public class RouteArc {
 			writer.put(flagB);
 			writer.put((byte) 0);
 		} else {
-			writer.put((byte) (flagB | indexB));
+			if(indexB >= 0x3f) {
+				writer.put((byte) (flagB | 0x3f));
+				writer.put(indexB);
+			}
+			else
+				writer.put((byte) (flagB | indexB));
 		}
 
 		writer.put(indexA);

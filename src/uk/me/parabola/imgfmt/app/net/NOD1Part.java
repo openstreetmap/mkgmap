@@ -73,8 +73,8 @@ public class NOD1Part {
 //	private static final int MAX_TABA = MAX_TABA_UNSAFE / 2;
 	private static final int MAX_TABA = MAX_TABA_UNSAFE - 0x8;
 
-	// Table B has at most 0x40 entries
-	private static final int MAX_TABB_UNSAFE = 0x40;
+	// Table B has at most 0x100 entries
+	private static final int MAX_TABB_UNSAFE = 0x100;
 //	private static final int MAX_TABB = MAX_TABB_UNSAFE / 2;
 	private static final int MAX_TABB = MAX_TABB_UNSAFE - 0x2;
 

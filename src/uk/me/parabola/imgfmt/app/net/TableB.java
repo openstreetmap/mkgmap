@@ -35,7 +35,7 @@ public class TableB {
         /**
          * Retrieve the size of the Table as an int.
          *
-         * While Table B is limited in size (0x40 entries),
+         * While Table B is limited in size (0x100 entries),
          * we temporarily build larger tables while subdividing
          * the network.
          */
@@ -52,7 +52,7 @@ public class TableB {
          * it isn't too large.
          */
 	public byte getNumberOfItems() {
-		assert nodes.size() < 0x40 : "Table B too large.";
+		assert nodes.size() < 0x100 : "Table B too large.";
 		return (byte) nodes.size();
 	}
 
@@ -76,7 +76,7 @@ public class TableB {
 	public byte getIndex(RouteNode node) {
 		int i = nodes.indexOf(node);
 		assert i >= 0 : "Trying to read Table B index for non-registered node.";
-		assert i < 0x40 : "Table B index too large.";
+		assert i < 0x100 : "Table B index too large.";
 		return (byte) i;
 	}
 
