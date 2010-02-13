@@ -49,9 +49,7 @@ public class TableC {
 			writer.put((byte) 0);
 		}
 		else {
-			byte b = getSizeBytes();
-			assert size < (1 << 8*b);
-			if (b == 1)
+			if (size < 0x100)
 				writer.put((byte) size);
 			else
 				writer.putChar((char) size);
@@ -79,13 +77,10 @@ public class TableC {
 	}
 
 	/**
-	 * The size in bytes of the size field. Also the size of
-	 * restriction indices in the nodes area.
+	 * The size of restriction indices in the nodes area.
 	 */
-	public byte getSizeBytes() {
-		if (size == 0)
-			return 0;
-		else if (size < 0x80)
+	private byte getOffsetSize() {
+		if (size < 0x80)
 			return 1; // allows 7 bit index (8th bit is flag)
 		else if (size < 0x8000)
 			return 2; // allows 15 bit index (16th bit is flag)
@@ -95,17 +90,27 @@ public class TableC {
 	}
 
 	public void propagateSizeBytes() {
-		byte b = getSizeBytes();
+		byte b = getOffsetSize();
 		for (RouteRestriction restr : restrictions)
 			restr.setOffsetSize(b);
 	}
 
 	public byte getFormat() {
-		byte format = getSizeBytes();
+		// Table C format bitmask
+		// 0x01 = 1-255 bytes of restrictions
+		// 0x02 = 256-65535 bytes of restrictions
+		// 0x08 = unpaved roads count present
+		// 0x10 = ferry count present
+		int format = 0;
+		if(size > 0) {
+			++format;
+			if(size > 0xff)
+				++format;
+		}
 		if(tabA.numUnpavedArcs() > 0)
 			format |= 0x08;
 		if(tabA.numFerryArcs() > 0)
 			format |= 0x10;
-		return format;
+		return (byte)format;
 	}
 }
