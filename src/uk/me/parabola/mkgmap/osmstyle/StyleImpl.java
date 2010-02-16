@@ -25,6 +25,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -288,13 +289,13 @@ public class StyleImpl implements Style {
 		addBackwardCompatibleRules();
 
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
-			lines.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
+			lines.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
-			polygons.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
+			polygons.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
-			nodes.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), null);
+			nodes.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 	}
 
 	/**
@@ -314,7 +315,7 @@ public class StyleImpl implements Style {
 		Op expr = new ExistsOp();
 		expr.setFirst(new ValueOp("highway"));
 		Rule rule = new ActionRule(expr, l);
-		lines.add("highway=*", rule, null);
+		lines.add("highway=*", rule, Collections.<String>emptySet());
 
 		// Name rule for contour lines
 		l = new ArrayList<Action>();
@@ -326,13 +327,13 @@ public class StyleImpl implements Style {
 		expr2.setFirst(new ValueOp("contour"));
 		expr2.setSecond(new ValueOp("elevation"));
 		rule = new ActionRule(expr2, l);
-		lines.add("contour=elevation", rule, null); // "contour=elevation"
+		lines.add("contour=elevation", rule, Collections.<String>emptySet()); // "contour=elevation"
 
 		expr2 = new EqualsOp();
 		expr2.setFirst(new ValueOp("contour_ext"));
 		expr2.setSecond(new ValueOp("elevation"));
 		rule = new ActionRule(expr2, l);
-		lines.add("contour_ext=elevation", rule, null); // "contour_ext=elevation"
+		lines.add("contour_ext=elevation", rule, Collections.<String>emptySet()); // "contour_ext=elevation"
 	}
 
 	/**
