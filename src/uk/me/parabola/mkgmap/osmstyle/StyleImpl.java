@@ -289,13 +289,13 @@ public class StyleImpl implements Style {
 		addBackwardCompatibleRules();
 
 		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
-			lines.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
+			lines.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
 		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
-			polygons.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
+			polygons.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
 		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
-			nodes.add(me.getKey() + '=' + me.getValue(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
+			nodes.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 	}
 
 	/**
