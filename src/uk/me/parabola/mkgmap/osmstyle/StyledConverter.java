@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -79,6 +80,8 @@ public class StyledConverter implements OsmConverter {
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
 	private final Map<Coord, List<RestrictionRelation>> restrictions = new IdentityHashMap<Coord, List<RestrictionRelation>>();
+
+	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
 	// originalWay associates Ways that have been created due to
 	// splitting or clipping with the Ways that they were derived
@@ -386,6 +389,50 @@ public class StyledConverter implements OsmConverter {
 				rr.addRestriction(collector);
 			}
 		}
+
+		for(Relation relation : throughRouteRelations) {
+			Node node = null;
+			Way w1 = null;
+			Way w2 = null;
+			for(Map.Entry<String,Element> member : relation.getElements()) {
+				if(member.getValue() instanceof Node) {
+					if(node == null)
+						node = (Node)member.getValue();
+					else
+						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 1 node");
+				}
+				else if(member.getValue() instanceof Way) {
+					Way w = (Way)member.getValue();
+					if(w1 == null)
+						w1 = w;
+					else if(w2 == null)
+						w2 = w;
+					else
+						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 2 ways");
+				}
+			}
+
+			Coord junctionPoint = null;
+			Integer nodeId = null;
+			if(node == null)
+				log.warn("Through route relation " + relation.toBrowseURL() + " is missing the junction node");
+			else {
+				junctionPoint = node.getLocation();
+				if(bbox != null && !bbox.contains(junctionPoint)) {
+					// junction is outside of the tile - ignore it
+					continue;
+				}
+				nodeId = nodeIdMap.get(junctionPoint);
+				if(nodeId == null)
+					log.warn("Through route relation " + relation.toBrowseURL() + " junction node at " + junctionPoint.toOSMURL() + " is not a routing node");
+			}
+
+			if(w1 == null || w2 == null)
+				log.warn("Through route relation " + relation.toBrowseURL() + " should reference 2 ways that meet at the junction node");
+
+			if(nodeId != null && w1 != null && w2 != null)
+				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
+		}
 	}
 
 	/**
@@ -410,6 +457,9 @@ public class StyledConverter implements OsmConverter {
 				}
 				lrr.add(rr);
 			}
+		}
+		else if("through_route".equals(relation.getTag("type"))) {
+			throughRouteRelations.add(relation);
 		}
 	}
 

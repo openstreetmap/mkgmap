@@ -285,4 +285,10 @@ public class RoadNetwork {
 		vn.addRestriction(new RouteRestriction(fa, ta, exceptMask));
     }
 
+	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		RouteNode node = nodes.get(junctionNodeId);
+		assert node != null :  "Can't find node with id " + junctionNodeId;
+
+		node.addThroughRoute(roadIdA, roadIdB);
+	}
 }

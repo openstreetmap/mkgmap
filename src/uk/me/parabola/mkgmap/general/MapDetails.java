@@ -119,6 +119,10 @@ public class MapDetails implements MapCollector, MapDataSource {
 		roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
 	}
 
+	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		roadNetwork.addThroughRoute(junctionNodeId, roadIdA, roadIdB);
+	}
+
 	/**
 	 * Add the given point to the total bounds for the map.
 	 *

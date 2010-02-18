@@ -144,6 +144,10 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 		getRoadNetwork().addRestriction(fromNode, toNode, viaNode, exceptMask);
 	}
 
+	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		getRoadNetwork().addThroughRoute(junctionNodeId, roadIdA, roadIdB);
+	}
+
 	public int getShift() {
 		return 24 - (topBits - 1);
 	}

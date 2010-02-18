@@ -713,6 +713,9 @@ public class StyleTester implements OsmConverter {
 
 		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
 		}
+
+		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
+		}
 	}
 
 	/**
@@ -751,6 +754,9 @@ public class StyleTester implements OsmConverter {
 		}
 
 		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		}
+
+		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
 		}
 
 		public long getStart() {

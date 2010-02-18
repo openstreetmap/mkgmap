@@ -67,6 +67,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	private final CoordNode coord;
 	private char latOff;
 	private char lonOff;
+	private List<RouteArc[]> throughRoutes;
 
 	// this is for setting destination class on arcs
 	// we're taking the maximum of roads this node is
@@ -295,18 +296,8 @@ public class RouteNode implements Comparable<RouteNode> {
 
 	private static boolean possiblySameRoad(RouteArc raa, RouteArc rab) {
 
-		if(raa == rab) {
-			// the arcs are the same object
-			return true;
-		}
-
 		RoadDef rda = raa.getRoadDef();
 		RoadDef rdb = rab.getRoadDef();
-		if(rda == rdb) {
-			// the arcs share the same RoadDef
-			return true;
-		}
-
 		boolean bothArcsNamed = false;
 		for(Label laba : rda.getLabels()) {
 			if(laba != null && laba.getOffset() != 0) {
@@ -395,14 +386,46 @@ public class RouteNode implements Comparable<RouteNode> {
 				// determine the outgoing arc that is likely to be the
 				// same road as the incoming arc
 				RouteArc outArc = null;
-				for(RouteArc oa : arcs) {
-					if(oa.getDest() != inArc.getSource()) {
-						// this arc is not going to the same node as
-						// inArc came from
-						if((oa.isForward() || !oa.getRoadDef().isOneway()) &&
-						   possiblySameRoad(inArc, oa)) {
-							outArc = oa;
+
+				if(throughRoutes != null) {
+					// through_route relations have the highest precedence
+					for(RouteArc[] pair : throughRoutes) {
+						if(pair[0] == inArc) {
+							outArc = pair[1];
+							log.info("Found through route from " + inArc.getRoadDef() + " to " + outArc.getRoadDef());
 							break;
+						}
+					}
+				}
+
+				if(outArc == null) {
+					// next, if oa has the same RoadDef as inArc, it's
+					// definitely the same road
+					for(RouteArc oa : arcs) {
+						if(oa.getDest() != inArc.getSource()) {
+							// this arc is not going to the same node as
+							// inArc came from
+							if(oa.getRoadDef() == inArc.getRoadDef()) {
+								outArc = oa;
+								break;
+							}
+						}
+					}
+				}
+
+				if(outArc == null) {
+					// next, although the RoadDefs don't match, use
+					// possiblySameRoad() to see if the road
+					// labels (names/refs) match
+					for(RouteArc oa : arcs) {
+						if(oa.getDest() != inArc.getSource()) {
+							// this arc is not going to the same node as
+							// inArc came from
+							if((oa.isForward() || !oa.getRoadDef().isOneway()) &&
+							   possiblySameRoad(inArc, oa)) {
+								outArc = oa;
+								break;
+							}
 						}
 					}
 				}
@@ -471,12 +494,6 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(!otherArc.isForward() &&
 					   otherArc.getRoadDef().isOneway()) {
 						// ignore reverse arc if road is oneway
-						continue;
-					}
-
-					if(possiblySameRoad(inArc, otherArc) ||
-					   possiblySameRoad(outArc, otherArc)) {
-						// not obviously a different road so give up
 						continue;
 					}
 
@@ -762,5 +779,35 @@ public class RouteNode implements Comparable<RouteNode> {
 				}
 			}
 		}
+	}
+
+	public void addThroughRoute(long roadIdA, long roadIdB) {
+		if(throughRoutes == null)
+			throughRoutes = new ArrayList<RouteArc[]>();
+		boolean success = false;
+		for(RouteArc arc1 : incomingArcs) {
+			if(arc1.getRoadDef().getId() == roadIdA) {
+				for(RouteArc arc2 : arcs) {
+					if(arc2.getRoadDef().getId() == roadIdB) {
+						throughRoutes.add(new RouteArc[] { arc1, arc2 });
+						success = true;
+						break;
+					}
+				}
+			}
+			else if(arc1.getRoadDef().getId() == roadIdB) {
+				for(RouteArc arc2 : arcs) {
+					if(arc2.getRoadDef().getId() == roadIdA) {
+						throughRoutes.add(new RouteArc[] { arc1, arc2 });
+						success = true;
+						break;
+					}
+				}
+			}
+		}
+		if(success)
+			log.info("Added through route between ways " + roadIdA + " and " + roadIdB + " at " + coord.toOSMURL());
+		else
+			log.warn("Failed to add through route between ways " + roadIdA + " and " + roadIdB + " at " + coord.toOSMURL() + " - perhaps they don't meet here?");
 	}
 }
