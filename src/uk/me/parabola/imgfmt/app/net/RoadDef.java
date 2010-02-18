@@ -555,6 +555,10 @@ public class RoadDef implements Comparable {
 		nod2Flags |= (speed << 1);
 	}
 
+	public int getRoadSpeed() {
+		return tabAInfo & 7;
+	}
+
 	public void setOneway() {
 		tabAInfo |= TABA_FLAG_ONEWAY;
 		netFlags |= NET_FLAG_ONEWAY;

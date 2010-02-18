@@ -406,6 +406,31 @@ public class RouteNode implements Comparable<RouteNode> {
 						}
 					}
 				}
+
+				if(outArc == null) {
+					// last ditch attempt to find the outgoing arc -
+					// try and find a single arc that has the same
+					// road class and speed as the incoming arc
+					int inArcClass = inArc.getRoadDef().getRoadClass();
+					int inArcSpeed = inArc.getRoadDef().getRoadSpeed();
+					for(RouteArc oa : arcs) {
+						if(oa.getDest() != inArc.getSource() &&
+						   oa.getRoadDef().getRoadClass() == inArcClass &&
+						   oa.getRoadDef().getRoadSpeed() == inArcSpeed) {
+							if(outArc != null) {
+								// multiple arcs have the same road
+								// class as the incoming arc so don't
+								// use any of them as the outgoing arc
+								outArc = null;
+								break;
+							}
+							outArc = oa;
+						}
+					}
+					if(outArc != null)
+						log.info("Matched outgoing arc " + outArc.getRoadDef() + " to " + inArc.getRoadDef() + " using road class (" + inArcClass + ") and speed (" + inArcSpeed + ")"); 
+				}
+
 				// if we did not find the outgoing arc, give up with
 				// this incoming arc
 				if(outArc == null) {
