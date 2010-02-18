@@ -49,6 +49,8 @@ class HeaderBlock {
 	 */
 	private String familyName;
 
+	private byte enableProfile;
+
 	HeaderBlock(int tdbVersion) {
 		this.tdbVersion = tdbVersion;
 	}
@@ -92,8 +94,12 @@ class HeaderBlock {
 			os.write3(0);
 			os.write4(1252);
 			os.write4(10000);
-			os.write(1);
-			os.write2(0);
+			os.write(1);	// map is routable
+			if (enableProfile == 1)
+				os.write(1);	// map has profile information
+			else
+				os.write(0);
+			os.write(0);	// map has DEM sub files
 		}
 	}
 
@@ -153,5 +159,9 @@ class HeaderBlock {
 
 	public int getTdbVersion() {
 		return tdbVersion;
+	}
+
+	public void setEnableProfile(byte enableProfile) {
+		this.enableProfile = enableProfile;		
 	}
 }

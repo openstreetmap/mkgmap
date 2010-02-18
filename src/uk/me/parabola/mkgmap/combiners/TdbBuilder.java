@@ -84,10 +84,16 @@ public class TdbBuilder implements Combiner {
 		} else {
 			tdbVersion = TdbFile.TDB_V407;
 		}
+		// enable "show profile" button for routes in mapsource 
+		byte enableProfile = 0;
+		if (tdbVersion == TdbFile.TDB_V407) {
+			// this is supported only in version 403 and above 
+			enableProfile = (byte)args.get("show-profiles", 0);
+		}
 
 		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
-				familyName, areaName);
+				familyName, areaName, enableProfile);
 	}
 
 	/**

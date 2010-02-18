@@ -370,6 +370,11 @@ Miscellaneous options:
 --tdbfile
 	Write a .tdb file.
 
+--show-profiles=1
+	Sets a flag in tdb file which marks set mapset as having contour 
+	lines and allows showing profile in MapSource. Default is 0 
+	which means disabled. 
+
 --draw-priority=25
 	When two maps cover the same area, this option controls what
 	order they are drawn in and therefore which map is on top of

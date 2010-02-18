@@ -92,7 +92,8 @@ public class TdbFile {
 	}
 
 	public void setProductInfo(int familyId, int productId,
-			short productVersion, String seriesName, String familyName, String overviewDescription)
+			short productVersion, String seriesName, String familyName, String overviewDescription,
+			byte enableProfile)
 	{
 		headerBlock = new HeaderBlock(tdbVersion);
 		headerBlock.setFamilyId((short) familyId);
@@ -100,6 +101,7 @@ public class TdbFile {
 		headerBlock.setProductVersion(productVersion);
 		headerBlock.setSeriesName(seriesName);
 		headerBlock.setFamilyName(familyName);
+		headerBlock.setEnableProfile(enableProfile);
 		this.overviewDescription = overviewDescription;
 	}
 
