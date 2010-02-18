@@ -483,9 +483,12 @@ public class RouteNode implements Comparable<RouteNode> {
 						if((mask & ATH_OUTGOING) != 0 &&
 						   outToOtherDelta < minDiffBetweenOutgoingAndOtherArcs)
 							newHeading = outHeading + minDiffBetweenOutgoingAndOtherArcs;
-						else if((mask & ATH_INCOMING) != 0 &&
-								inToOtherDelta < minDiffBetweenIncomingAndOtherArcs)
-							newHeading = inHeading + minDiffBetweenIncomingAndOtherArcs;
+						if((mask & ATH_INCOMING) != 0 &&
+						   inToOtherDelta < minDiffBetweenIncomingAndOtherArcs) {
+							int nh = inHeading + minDiffBetweenIncomingAndOtherArcs;
+							if(nh > newHeading)
+								newHeading = nh;
+						}
 
 						if(newHeading > 180)
 							newHeading -= 360;
@@ -495,9 +498,12 @@ public class RouteNode implements Comparable<RouteNode> {
 						if((mask & ATH_OUTGOING) != 0 &&
 						   outToOtherDelta > -minDiffBetweenOutgoingAndOtherArcs)
 							newHeading = outHeading - minDiffBetweenOutgoingAndOtherArcs;
-						else if((mask & ATH_INCOMING) != 0 &&
-								inToOtherDelta > -minDiffBetweenIncomingAndOtherArcs)
-							newHeading = inHeading - minDiffBetweenIncomingAndOtherArcs;
+						if((mask & ATH_INCOMING) != 0 &&
+						   inToOtherDelta > -minDiffBetweenIncomingAndOtherArcs) {
+							int nh = inHeading - minDiffBetweenIncomingAndOtherArcs;
+							if(nh < newHeading)
+								newHeading = nh;
+						}
 
 						if(newHeading < -180)
 							newHeading += 360;
