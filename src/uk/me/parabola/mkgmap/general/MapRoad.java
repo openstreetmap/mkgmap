@@ -80,10 +80,6 @@ public class MapRoad extends MapLine {
 		this.roadDef.ferry(f);
 	}
 
-	public void showOSMBrowseURL() {
-		this.roadDef.showOSMBrowseURL();
-	}
-
 	public void setSynthesised(boolean s) {
 		this.roadDef.setSynthesised(s);
 	}

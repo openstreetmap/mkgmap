@@ -133,14 +133,11 @@ public class RoadNetwork {
 				RouteNode node1 = getNode(lastId, lastCoord);
 				RouteNode node2 = getNode(id, co);
 
-				if(node1 == node2) {
-					log.error("Road " + road.getRoadDef().getName() + " (OSM id " + road.getRoadDef().getId() + ") contains consecutive identical nodes - routing will be broken");
-					log.error("  " + co.toOSMURL());
-				}
-				else if(arcLength == 0) {
-					log.error("Road " + road.getRoadDef().getName() + " (OSM id " + road.getRoadDef().getId() + ") contains zero length arc");
-					log.error("  " + co.toOSMURL());
-				}
+				if(node1 == node2)
+					log.error("Road " + road.getRoadDef() + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
+				else if(arcLength == 0)
+					log.error("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
+
 
 				Coord bearingPoint = coordList.get(lastIndex + 1);
 				if(lastCoord.equals(bearingPoint)) {

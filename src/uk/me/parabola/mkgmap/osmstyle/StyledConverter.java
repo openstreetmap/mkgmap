@@ -1354,7 +1354,6 @@ public class StyledConverter implements OsmConverter {
 		line.setPoints(points);
 
 		MapRoad road = new MapRoad(way.getId(), line);
-		road.showOSMBrowseURL();
 
 		boolean doFlareCheck = true;
 		if("roundabout".equals(way.getTag("junction"))) {
