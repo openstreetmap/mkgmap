@@ -142,7 +142,7 @@ leisure=marina [0x4300 resolution 21]
 leisure=park [0x2c06 resolution 21]
 leisure=pitch [0x2c08 resolution 21]
 leisure=playground [0x2c06 resolution 21]
-#leisure=sports_center | leisure=sports_centre moved after sport=*
+leisure=sports_center | leisure=sports_centre [0x2d0a resolution 20]
 leisure=stadium [0x2c08 resolution 21]
 leisure=track [0x2c08 resolution 21]
 leisure=water_park [0x2b04 resolution 21]
@@ -214,8 +214,6 @@ sport=multi [0x2d0a resolution 20]
 sport=skating [0x2d08 resolution 20]
 sport=skiing [0x2d06 resolution 20]
 sport=swimming [0x2d09 resolution 20]
-#sports centre without matching sport=*
-leisure=sports_center | leisure=sports_centre [0x2d0a resolution 20]
 
 tourism=alpine_hut [0x2b02 resolution 20]
 tourism=attraction & historic=* [0x2c02 resolution 20]
