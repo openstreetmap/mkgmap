@@ -602,6 +602,31 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 	}
 
+	// determine "distance" between two nodes on a roundabout
+	private int roundaboutSegmentLength(final RouteNode n1, final RouteNode n2) {
+		List<RouteNode> seen = new ArrayList<RouteNode>();
+		int len = 0;
+		RouteNode n = n1;
+		for(;;) {
+			seen.add(n);
+			for(RouteArc a : n.arcs) {
+				if(a.isForward() &&
+				   a.getRoadDef().isRoundabout() &&
+				   !a.getRoadDef().isSynthesised()) {
+					len += a.getLength();
+					n = a.getDest();
+					if(n == n2)
+						return len;
+					break;
+				}
+			}
+			if(seen.contains(n)) {
+				// looped around without finding n2 - weird
+				return Integer.MAX_VALUE;
+			}
+		}
+	}
+
 	// sanity check roundabout flare roads - the flare roads connect a
 	// two-way road to a roundabout using short one-way segments so
 	// the resulting sub-junction looks like a triangle with two
@@ -614,12 +639,62 @@ public class RouteNode implements Comparable<RouteNode> {
 			// roundabout
 			if(!r.isForward() || !r.getRoadDef().isRoundabout() || r.getRoadDef().isSynthesised())
 				continue;
-			// now try and find the two arcs that make up the
-			// triangular "flare" connected to both ends of r
+			// follow the arc to find the first node that connects the
+			// roundabout to a non-roundabout segment
 			RouteNode nb = r.getDest();
+			for(;;) {
+				boolean connectsToNonRoundaboutSegment = false;
+				RouteArc nextRoundaboutArc = null;
+				for(RouteArc nba : nb.arcs) {
+					if(!nba.getRoadDef().isSynthesised()) {
+						if(nba.getRoadDef().isRoundabout()) {
+							if(nba.isForward())
+								nextRoundaboutArc = nba;
+						}
+						else
+							connectsToNonRoundaboutSegment = true;
+					}
+				}
+
+				if(nb == this) {
+					// looped back to start - give up
+					if(!connectsToNonRoundaboutSegment) {
+						// FIXME - stop this warning griping about
+						// roundabouts whose ways are tagged
+						// highway=construction
+
+						// log.warn("Roundabout " + r.getRoadDef() + " is not connected to any ways at " + coord.toOSMURL());
+					}
+					nb = null;
+					break;
+				}
+
+				if(connectsToNonRoundaboutSegment) {
+					// great, that's what we're looking for
+					break;
+				}
+
+				if(nextRoundaboutArc == null) {
+					// not so good, the roundabout stops in mid air?
+					nb = null;
+					break;
+				}
+
+				nb = nextRoundaboutArc.getDest();
+			}
+
+			if(nb == null) {
+				// something's not right so give up
+				continue;
+			}
+
+			// now try and find the two arcs that make up the
+			// triangular "flare" connected to both ends of the
+			// roundabout segment
 			for(RouteArc fa : arcs) {
 				if(!fa.getRoadDef().doFlareCheck())
 					continue;
+
 				for(RouteArc fb : nb.arcs) {
 					if(!fb.getRoadDef().doFlareCheck())
 						continue;
@@ -627,32 +702,24 @@ public class RouteNode implements Comparable<RouteNode> {
 						// found the 3rd point of the triangle that
 						// should be connecting the two flare roads
 
-						// first, special test for roundabouts that
-						// have a single flare and no other
-						// connections - only check the flare for the
-						// shorter of the two roundabout segments
+						// first, special test required to cope with
+						// roundabouts that have a single flare and no
+						// other connections - only check the flare
+						// for the shorter of the two roundabout
+						// segments
 
-						boolean isShortest = true;
-						for(RouteArc rb : nb.arcs) {
-							if(rb.getDest() == this &&
-							   rb.isForward() &&
-							   rb.getRoadDef().isRoundabout()) {
-								isShortest = r.getLength() < rb.getLength();
-								break;
-							}
-						}
-
-						if(!isShortest)
+						if(roundaboutSegmentLength(this, nb) >=
+						   roundaboutSegmentLength(nb, this))
 							continue;
 
 						if(maxFlareLengthRatio > 0) {
 							// if both of the flare roads are much
-							// longer than the length of r, they are
-							// probably not flare roads at all but
-							// just two roads that meet up - so ignore
-							// them
-							final int maxFlareLength = r.getLength() * maxFlareLengthRatio;
-							if(r.getLength() > 0 &&
+							// longer than the length of the
+							// roundabout segment, they are probably
+							// not flare roads at all but just two
+							// roads that meet up - so ignore them
+							final int maxFlareLength = roundaboutSegmentLength(this, nb) * maxFlareLengthRatio;
+							if(maxFlareLength > 0 &&
 							   fa.getLength() > maxFlareLength &&
 							   fb.getLength() > maxFlareLength) {
 								continue;
