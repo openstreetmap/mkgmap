@@ -115,6 +115,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private boolean generateSeaUsingMP = true;
 	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors;
+	private boolean roadsReachBoundary;
 	private int maxCoastlineGap;
 	private String[] landTag = { "natural", "land" };
 	private final Double minimumArcLength;
@@ -618,10 +619,12 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 		coordMap = null;
 
+		if(bbox != null && (generateSea || minimumArcLength != null))
+			makeBoundaryNodes();
+
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
-		long start = System.currentTimeMillis();
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -630,11 +633,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 		nodeMap = null;
 
-		if(minimumArcLength != null) {
-			if(bbox != null)
-				makeBoundaryNodes();
+		if(minimumArcLength != null)
 			removeShortArcsByMergingNodes(minimumArcLength);
-		}
 
 		nodeIdMap = null;
 
@@ -691,7 +691,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 						// highway count one
 						clippedPair[1].incHighwayCount();
 						++numBoundaryNodesAdded;
-
+						if(!roadsReachBoundary && way.getTag("highway") != null)
+							roadsReachBoundary = true;
 					}
 					else if(clippedPair[1].getOnBoundary())
 						++numBoundaryNodesDetected;
@@ -712,6 +713,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 						// highway count one
 						clippedPair[0].incHighwayCount();
 						++numBoundaryNodesAdded;
+						if(!roadsReachBoundary && way.getTag("highway") != null)
+							roadsReachBoundary = true;
 					}
 					else if(clippedPair[0].getOnBoundary())
 						++numBoundaryNodesDetected;
@@ -1187,6 +1190,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		// the remaining shoreline segments should intersect the boundary
 		// find the intersection points and store them in a SortedMap
 		SortedMap<EdgeHit, Way> hitMap = new TreeMap<EdgeHit, Way>();
+		boolean shorelineReachesBoundary = false;
 		long seaId;
 		Way sea;
 		for (Way w : shoreline) {
@@ -1343,6 +1347,13 @@ public class Osm5XmlHandler extends DefaultHandler {
 				w.getPoints().add(w.getPoints().get(0));
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
 			islands.add(w);
+			shorelineReachesBoundary = true;
+		}
+
+		if(!shorelineReachesBoundary && roadsReachBoundary) {
+			// try to avoid tiles being flooded by anti-lakes or other
+			// bogus uses of natural=coastline
+			generateSeaBackground = false;
 		}
 
 		List<Way> antiIslands = new ArrayList<Way>();
@@ -1450,6 +1461,23 @@ public class Osm5XmlHandler extends DefaultHandler {
 			wayMap.put(seaId, sea);
 			if(generateSeaUsingMP)
 				seaRelation.addElement("outer", sea);
+		}
+		else {
+			// background is land
+			if(!generateSeaUsingMP) {
+				// generate a land polygon so that the tile's
+				// background colour will match the land colour on the
+				// tiles that do contain some sea
+				long landId = FakeIdGenerator.makeFakeId();
+				Way land = new Way(landId);
+				land.addPoint(nw);
+				land.addPoint(sw);
+				land.addPoint(se);
+				land.addPoint(ne);
+				land.addPoint(nw);
+				land.addTag(landTag[0], landTag[1]);
+				wayMap.put(landId, land);
+			}
 		}
 
 		if(generateSeaUsingMP) {
