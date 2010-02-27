@@ -82,13 +82,15 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	/**
-	 * Copy the tags of the other element.  Only to be used internally
-	 * by subclasses.
+	 * Copy the tags of the other element which replaces all tags of this element.
+	 *   
 	 * @param other The other element.  All its tags will be copied to this
 	 * element.
 	 */
 	public void copyTags(Element other) {
-		if (other.tags != null)
+		if (other.tags == null)
+			tags = null;
+		else
 			tags = other.tags.copy();
 	}
 
@@ -102,6 +104,9 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {
+		if (tags == null) 
+			return Collections.emptyMap();
+		
 		return tags.getTagsWithPrefix(prefix, removePrefix);
 	}
 
