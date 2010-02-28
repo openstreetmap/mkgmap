@@ -300,6 +300,12 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		RoadDef rda = raa.getRoadDef();
 		RoadDef rdb = rab.getRoadDef();
+
+		if(rda.getId() == rdb.getId()) {
+			// roads have the same (OSM) id
+			return true;
+		}
+
 		boolean bothArcsNamed = false;
 		for(Label laba : rda.getLabels()) {
 			if(laba != null && laba.getOffset() != 0) {
@@ -457,7 +463,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
 				if(outArc == null) {
 					// next, although the RoadDefs don't match, use
-					// possiblySameRoad() to see if the road
+					// possiblySameRoad() to see if the roads' id or
 					// labels (names/refs) match
 					for(RouteArc oa : arcs) {
 						if(oa.getDest() != inArc.getSource()) {
