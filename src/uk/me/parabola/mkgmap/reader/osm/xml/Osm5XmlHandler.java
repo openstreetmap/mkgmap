@@ -518,9 +518,33 @@ public class Osm5XmlHandler extends DefaultHandler {
 				if("motorway".equals(highway) ||
 				   "trunk".equals(highway))
 					motorways.add(currentWay);
-				if(generateSea && "coastline".equals(currentWay.getTag("natural"))) {
-					currentWay.deleteTag("natural");
-					shoreline.add(currentWay);
+				if(generateSea) {
+					String natural = currentWay.getTag("natural");
+					if(natural != null) {
+						if("coastline".equals(natural)) {
+							currentWay.deleteTag("natural");
+							shoreline.add(currentWay);
+						}
+						else if(natural.contains(";")) {
+							// cope with compound tag value
+							String others = null;
+							boolean foundCoastline = false;
+							for(String n : natural.split(";")) {
+								if("coastline".equals(n.trim()))
+									foundCoastline = true;
+								else if(others == null)
+									others = n;
+								else
+									others += ";" + n;
+							}
+							if(foundCoastline) {
+								currentWay.deleteTag("natural");
+								if(others != null)
+									currentWay.addTag("natural", others);
+								shoreline.add(currentWay);
+							}
+						}
+					}
 				}
 				currentNodeInWay = null;
 				currentWayStartsWithFIXME = false;
