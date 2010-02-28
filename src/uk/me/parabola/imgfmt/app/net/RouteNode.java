@@ -15,6 +15,8 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -395,7 +397,25 @@ public class RouteNode implements Comparable<RouteNode> {
 			final int minDiffBetweenOutgoingAndOtherArcs = 45;
 			final int minDiffBetweenIncomingAndOtherArcs = 50;
 
-			for(RouteArc inArc : incomingArcs) {
+			// list of outgoing arcs discovered at this node
+			List<RouteArc> outgoingArcs = new ArrayList<RouteArc>();
+
+			// sort incoming arcs by decreasing class/speed
+			List<RouteArc> inArcs = new ArrayList<RouteArc>(incomingArcs);
+
+			Collections.sort(inArcs, new Comparator<RouteArc>() {
+					public int compare(RouteArc ra1, RouteArc ra2) {
+						int c1 = ra1.getRoadDef().getRoadClass();
+						int c2 = ra2.getRoadDef().getRoadClass();
+						if(c1 == c2)
+							return (ra2.getRoadDef().getRoadSpeed() - 
+									ra1.getRoadDef().getRoadSpeed());
+						return c2 - c1;
+					}
+				});
+
+			// look at incoming arcs in order of decreasing class/speed
+			for(RouteArc inArc : inArcs) {
 
 				if(!inArc.isForward() && inArc.getRoadDef().isOneway()) {
 					// ignore reverse arc if road is oneway
@@ -491,6 +511,10 @@ public class RouteNode implements Comparable<RouteNode> {
 					//log.info("Can't continue road " + inArc.getRoadDef() + " at " + coord.toOSMURL());
 					continue;
 				}
+
+				// remember that this arc is an outgoing arc
+				outgoingArcs.add(outArc);
+
 				int outHeading = outArc.getInitialHeading();
 				int mainHeadingDelta = outHeading - inHeading;
 				while(mainHeadingDelta > 180)
@@ -535,6 +559,13 @@ public class RouteNode implements Comparable<RouteNode> {
 						// introducing a time penalty by increasing
 						// the angle (this stops the router using link
 						// roads that "cut the corner" at roundabouts)
+						continue;
+					}
+
+					if(outgoingArcs.contains(otherArc)) {
+						// this arc was previously matched as an
+						// outgoing arc so we don't want to change its
+						// heading now
 						continue;
 					}
 
