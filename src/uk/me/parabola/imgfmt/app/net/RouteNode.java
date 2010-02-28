@@ -339,6 +339,26 @@ public class RouteNode implements Comparable<RouteNode> {
 		return false;
 	}
 
+	private static boolean rightTurnRequired(int inHeading, int outHeading, int sideHeading) {
+		// given the headings of the incoming, outgoing and side
+		// roads, decide whether a side road is to the left or the
+		// right of the main road
+
+		outHeading -= inHeading;
+		while(outHeading < -180)
+			outHeading += 360;
+		while(outHeading > 180)
+			outHeading -= 360;
+
+		sideHeading -= inHeading;
+		while(sideHeading < -180)
+			sideHeading += 360;
+		while(sideHeading > 180)
+			sideHeading -= 360;
+
+		return sideHeading > outHeading;
+	}
+
 	private static int ATH_OUTGOING = 1;
 	private static int ATH_INCOMING = 2;
 
@@ -520,13 +540,13 @@ public class RouteNode implements Comparable<RouteNode> {
 						inToOtherDelta += 360;
 
 					int newHeading = otherHeading;
-					if(outToOtherDelta > 0) {
+					if(rightTurnRequired(inHeading, outHeading, otherHeading)) {
 						// side road to the right
 						if((mask & ATH_OUTGOING) != 0 &&
-						   outToOtherDelta < minDiffBetweenOutgoingAndOtherArcs)
+						   Math.abs(outToOtherDelta) < minDiffBetweenOutgoingAndOtherArcs)
 							newHeading = outHeading + minDiffBetweenOutgoingAndOtherArcs;
 						if((mask & ATH_INCOMING) != 0 &&
-						   inToOtherDelta < minDiffBetweenIncomingAndOtherArcs) {
+						   Math.abs(inToOtherDelta) < minDiffBetweenIncomingAndOtherArcs) {
 							int nh = inHeading + minDiffBetweenIncomingAndOtherArcs;
 							if(nh > newHeading)
 								newHeading = nh;
@@ -535,13 +555,13 @@ public class RouteNode implements Comparable<RouteNode> {
 						if(newHeading > 180)
 							newHeading -= 360;
 					}
-					else if(outToOtherDelta < 0) {
+					else {
 						// side road to the left
 						if((mask & ATH_OUTGOING) != 0 &&
-						   outToOtherDelta > -minDiffBetweenOutgoingAndOtherArcs)
+						   Math.abs(outToOtherDelta) < minDiffBetweenOutgoingAndOtherArcs)
 							newHeading = outHeading - minDiffBetweenOutgoingAndOtherArcs;
 						if((mask & ATH_INCOMING) != 0 &&
-						   inToOtherDelta > -minDiffBetweenIncomingAndOtherArcs) {
+						   Math.abs(inToOtherDelta) < minDiffBetweenIncomingAndOtherArcs) {
 							int nh = inHeading - minDiffBetweenIncomingAndOtherArcs;
 							if(nh < newHeading)
 								newHeading = nh;
