@@ -417,7 +417,9 @@ public class RouteNode implements Comparable<RouteNode> {
 			// look at incoming arcs in order of decreasing class/speed
 			for(RouteArc inArc : inArcs) {
 
-				if(!inArc.isForward() && inArc.getRoadDef().isOneway()) {
+				RoadDef inRoadDef = inArc.getRoadDef();
+
+				if(!inArc.isForward() && inRoadDef.isOneway()) {
 					// ignore reverse arc if road is oneway
 					continue;
 				}
@@ -432,7 +434,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					for(RouteArc[] pair : throughRoutes) {
 						if(pair[0] == inArc) {
 							outArc = pair[1];
-							log.info("Found through route from " + inArc.getRoadDef() + " to " + outArc.getRoadDef());
+							log.info("Found through route from " + inRoadDef + " to " + outArc.getRoadDef());
 							break;
 						}
 					}
@@ -445,7 +447,7 @@ public class RouteNode implements Comparable<RouteNode> {
 						if(oa.getDest() != inArc.getSource()) {
 							// this arc is not going to the same node as
 							// inArc came from
-							if(oa.getRoadDef() == inArc.getRoadDef()) {
+							if(oa.getRoadDef() == inRoadDef) {
 								outArc = oa;
 								break;
 							}
@@ -502,13 +504,13 @@ public class RouteNode implements Comparable<RouteNode> {
 						}
 					}
 					if(outArc != null)
-						log.info("Matched outgoing arc " + outArc.getRoadDef() + " to " + inArc.getRoadDef() + " using road class (" + inArcClass + ") and speed (" + inArcSpeed + ") at " + coord.toOSMURL()); 
+						log.info("Matched outgoing arc " + outArc.getRoadDef() + " to " + inRoadDef + " using road class (" + inArcClass + ") and speed (" + inArcSpeed + ") at " + coord.toOSMURL()); 
 				}
 
 				// if we did not find the outgoing arc, give up with
 				// this incoming arc
 				if(outArc == null) {
-					//log.info("Can't continue road " + inArc.getRoadDef() + " at " + coord.toOSMURL());
+					//log.info("Can't continue road " + inRoadDef + " at " + coord.toOSMURL());
 					continue;
 				}
 
@@ -521,7 +523,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					mainHeadingDelta -= 360;
 				while(mainHeadingDelta < -180)
 					mainHeadingDelta += 360;
-				//log.info(inArc.getRoadDef() + " continues to " + outArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
+				//log.info(inRoadDef + " continues to " + outArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
 
 				if(Math.abs(mainHeadingDelta) > maxMainRoadHeadingChange) {
 					// if the continuation road heading change is
@@ -552,7 +554,7 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					}
 
-					if(inArc.getRoadDef().isLinkRoad() &&
+					if(inRoadDef.isLinkRoad() &&
 					   otherArc.getRoadDef().isLinkRoad()) {
 						// it's a link road leaving a link road so
 						// leave the angle unchanged to avoid
@@ -614,7 +616,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					}
 					if(newHeading != otherHeading) {
 						otherArc.setInitialHeading(newHeading);
-						log.info("Adjusting turn heading from " + otherHeading + " to " + newHeading + " at junction of " + inArc.getRoadDef() + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
+						log.info("Adjusting turn heading from " + otherHeading + " to " + newHeading + " at junction of " + inRoadDef + " and " + otherArc.getRoadDef() + " at " + coord.toOSMURL());
 					}
 				}
 			}
