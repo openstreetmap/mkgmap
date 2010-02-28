@@ -478,7 +478,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					}
 				}
 
-				if(outArc == null) {
+				if(false && outArc == null) {
 					// last ditch attempt to find the outgoing arc -
 					// try and find a single arc that has the same
 					// road class and speed as the incoming arc
