@@ -325,6 +325,22 @@ public class MultiPolygonRelation extends Relation {
 			}
 			Coord p1 = way.getPoints().get(0);
 			Coord p2 = way.getPoints().get(way.getPoints().size() - 1);
+			
+			// check if both endpoints are outside the bounding box 
+			// and if they are on the same side of the bounding box
+			if ((p1.getLatitude() <= bbox.getMinLat() && p2.getLatitude() <= bbox.getMinLat())
+				 || (p1.getLatitude() >= bbox.getMaxLat() && p2.getLatitude() >= bbox.getMaxLat()) 		
+				 || (p1.getLongitude() <= bbox.getMinLong() && p2.getLongitude() <= bbox.getMinLong()) 		
+				 || (p1.getLongitude() >= bbox.getMaxLong() && p2.getLongitude() >= bbox.getMaxLong())) {
+				// they are on the same side outside of the bbox
+				// so just close them without worrying about if
+				// they intersect itself because the intersection also
+				// is outside the bbox
+				way.closeWayArtificially();
+				log.info("Endpoints of way",way,"are both outside the bbox. Closing it directly.");
+				continue;
+			}
+			
 			Line2D closingLine = new Line2D.Float(p1.getLongitude(), p1
 					.getLatitude(), p2.getLongitude(), p2.getLatitude());
 
@@ -792,10 +808,17 @@ public class MultiPolygonRelation extends Relation {
 			.getMinLat(), bbox.getMaxLong() - bbox.getMinLong(),
 			bbox.getMaxLat() - bbox.getMinLat()));
 		
+		// clip the bounding box
 		for (Area outerArea : oa) {
-			// clip all areas to the bounding box
-			outerArea.intersect(bboxArea);
-			outerAreas.add(outerArea);
+			if (bboxArea.contains(outerArea.getBounds())) {
+				// no clipping necessary
+				outerAreas.add(outerArea);
+			} else {
+				// the area might intersect the bounding box
+				// => clip it to the bounding box
+				outerArea.intersect(bboxArea);
+				outerAreas.addAll(areaToSingularAreas(outerArea));
+			}
 		}
 
 		List<Area> innerAreas = new ArrayList<Area>();
