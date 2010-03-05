@@ -806,6 +806,9 @@ public class Osm5XmlHandler extends DefaultHandler {
 					++numWaysDeleted;
 					continue;
 				}
+				// scan through the way's points looking for nodes and
+				// check to see that the nodes are not too close to
+				// each other
 				int previousNodeIndex = 0; // first point will be a node
 				Coord previousPoint = points.get(0);
 				double arcLength = 0;
@@ -829,113 +832,149 @@ public class Osm5XmlHandler extends DefaultHandler {
 							previousPoint = p;
 						anotherPassRequired = true;
 					}
-					if (i > 0) {
-						// this is not the first point in the way
-						if (p == previousPoint) {
-							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
-							points.remove(i);
-							// hack alert! rewind the loop index
-							--i;
-							anotherPassRequired = true;
-							continue;
-						}
-						arcLength += p.distance(previousPoint);
-						previousPoint = p;
-						Coord previousNode = points.get(previousNodeIndex);
-						// this point is a node if it has an arc count
-						Integer arcCount = arcCounts.get(p);
-						if (arcCount != null) {
-							// make the point "preserved" so that it
-							// won't get filtered out later
-							p.preserved(true);
-							// merge this node to previous node if the
-							// two points have identical coordinates
-							// or are closer than the minimum distance
-							// allowed but they are not the same point
-							// object
-							if(p != previousNode &&
-							   (p.equals(previousNode) ||
-								(minArcLength > 0 &&
-								 minArcLength > arcLength))) {
-								if(previousNode.getOnBoundary() && p.getOnBoundary()) {
-									if(p.equals(previousNode)) {
-										// the previous node has
-										// identical coordinates to
-										// the current node so it can
-										// be replaced but to avoid
-										// the assertion above we need
-										// to forget that it is on the
-										// boundary
-										previousNode.setOnBoundary(false);
-									}
-									else {
-										// both the previous node and
-										// this node are on the
-										// boundary and they don't
-										// have identical coordinates
-										if(complainedAbout.get(way) == null) {
-											log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
-											complainedAbout.put(way, way);
-										}
-										break; // give up with this way
-									}
-								}
-								String thisNodeId = (p.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(p);
-								String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
+					if(i == 0) {
+						// first point in way is a node so preserve it
+						// to ensure it won't be filtered out later
+						p.preserved(true);
 
-								if(p.equals(previousNode))
-									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") - merging node " + thisNodeId + " into " + previousNodeId);
-								else
-									log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - removing it by merging node " + thisNodeId + " into " + previousNodeId);
-								if(p.getOnBoundary()) {
-									// current point is a boundary node so
-									// we need to merge the previous node into
-									// this node
-									++numNodesMerged;
-									replacements.put(previousNode, p);
-									// add the previous node's arc
-									// count to this node
-									incArcCount(arcCounts, p, arcCounts.get(previousNode) - 1);
-									// remove the preceding point(s)
-									// back to and including the
-									// previous node
-									for(int j = i - 1; j >= previousNodeIndex; --j) {
-										points.remove(j);
-									}
-									// hack alert! rewind the loop index
-									i = previousNodeIndex;
-									anotherPassRequired = true;
-								}
-								else {
-									// current point is not on a boundary so
-									// merge this node into the previous one
-									++numNodesMerged;
-									replacements.put(p, previousNode);
-									// add this node's arc count to the node
-									// that is replacing it
-									incArcCount(arcCounts, previousNode, arcCount - 1);
-									// reset previous point to be the
-									// previous node
-									previousPoint = previousNode;
-									// remove the point(s) back to the
-									// previous node
-									for(int j = i; j > previousNodeIndex; --j) {
-										points.remove(j);
-									}
-									// hack alert! rewind the loop index
-									i = previousNodeIndex;
-									anotherPassRequired = true;
-								}
-							} else {
-								// the node did not need to be merged so
-								// it now becomes the new previous node
-								previousNodeIndex = i;
-							}
+						// nothing more to do with this point
+						continue;
+					}
 
-							// reset arc length
-							arcLength = 0;
+					// this is not the first point in the way
+
+					if (p == previousPoint) {
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
+						points.remove(i);
+						// hack alert! rewind the loop index
+						--i;
+						anotherPassRequired = true;
+						continue;
+					}
+
+					arcLength += p.distance(previousPoint);
+					previousPoint = p;
+
+					// this point is a node if it has an arc count
+					Integer arcCount = arcCounts.get(p);
+
+					if(arcCount == null) {
+						// it's not a node so go on to next point
+						continue;
+					}
+
+					// preserve the point to stop the node being
+					// filtered out later
+					p.preserved(true);
+
+					Coord previousNode = points.get(previousNodeIndex);
+					if(p == previousNode) {
+						// this node is the same point object as the
+						// previous node - leave it for now and it
+						// will be handled later by the road loop
+						// splitter
+						previousNodeIndex = i;
+						arcLength = 0;
+						continue;
+					}
+
+					boolean mergeNodes = false;
+
+					if(p.equals(previousNode)) {
+						// nodes have identical coordinates and are
+						// candidates for being merged
+
+						// however, to avoid trashing unclosed loops
+						// (e.g. contours) we only want to merge the
+						// nodes when the length of the arc between
+						// the nodes is small
+
+						if(arcLength == 0 || arcLength < minArcLength)
+							mergeNodes = true;
+						else if(complainedAbout.get(way) == null) {
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
+							complainedAbout.put(way, way);
 						}
 					}
+					else if(minArcLength > 0 && minArcLength > arcLength) {
+						// nodes have different coordinates but the
+						// arc length is less than minArcLength so
+						// they will be merged
+						mergeNodes = true;
+					}
+
+					if(!mergeNodes) {
+						// keep this node and go look at the next point
+						previousNodeIndex = i;
+						arcLength = 0;
+						continue;
+					}
+
+					if(previousNode.getOnBoundary() && p.getOnBoundary()) {
+						if(p.equals(previousNode)) {
+							// the previous node has identical
+							// coordinates to the current node so it
+							// can be replaced but to avoid the
+							// assertion above we need to forget that
+							// it is on the boundary
+							previousNode.setOnBoundary(false);
+						}
+						else {
+							// both the previous node and this node
+							// are on the boundary and they don't have
+							// identical coordinates
+							if(complainedAbout.get(way) == null) {
+								log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+								complainedAbout.put(way, way);
+							}
+							break; // give up with this way
+						}
+					}
+					String thisNodeId = (p.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(p);
+					String previousNodeId = (previousNode.getOnBoundary())? "'boundary node'" : "" + nodeIdMap.get(previousNode);
+
+					if(p.equals(previousNode))
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive nodes with the same coordinates (" + p.toOSMURL() + ") - merging node " + thisNodeId + " into " + previousNodeId);
+					else
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - removing it by merging node " + thisNodeId + " into " + previousNodeId);
+					// reset arc length
+					arcLength = 0;
+
+					// do the merge
+					++numNodesMerged;
+					if(p.getOnBoundary()) {
+						// current point is a boundary node so we need
+						// to merge the previous node into this node
+						replacements.put(previousNode, p);
+						// add the previous node's arc count to this
+						// node
+						incArcCount(arcCounts, p, arcCounts.get(previousNode) - 1);
+						// remove the preceding point(s) back to and
+						// including the previous node
+						for(int j = i - 1; j >= previousNodeIndex; --j) {
+							points.remove(j);
+						}
+					}
+					else {
+						// current point is not on a boundary so merge
+						// this node into the previous one
+						replacements.put(p, previousNode);
+						// add this node's arc count to the node that
+						// is replacing it
+						incArcCount(arcCounts, previousNode, arcCount - 1);
+						// reset previous point to be the previous
+						// node
+						previousPoint = previousNode;
+						// remove the point(s) back to the previous
+						// node
+						for(int j = i; j > previousNodeIndex; --j) {
+							points.remove(j);
+						}
+					}
+
+					// hack alert! rewind the loop index
+					i = previousNodeIndex;
+					anotherPassRequired = true;
 				}
 			}
 		}
