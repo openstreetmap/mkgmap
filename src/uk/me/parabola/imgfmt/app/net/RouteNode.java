@@ -677,7 +677,9 @@ public class RouteNode implements Comparable<RouteNode> {
 		List<RouteNode> seen = new ArrayList<RouteNode>();
 		int len = 0;
 		RouteNode n = n1;
-		for(;;) {
+		boolean checkMoreLinks = true;
+		while(checkMoreLinks && !seen.contains(n)) {
+			checkMoreLinks = false;
 			seen.add(n);
 			for(RouteArc a : n.arcs) {
 				if(a.isForward() &&
@@ -687,14 +689,13 @@ public class RouteNode implements Comparable<RouteNode> {
 					n = a.getDest();
 					if(n == n2)
 						return len;
+					checkMoreLinks = true;
 					break;
 				}
 			}
-			if(seen.contains(n)) {
-				// looped around without finding n2 - weird
-				return Integer.MAX_VALUE;
-			}
 		}
+		// didn't find n2
+		return Integer.MAX_VALUE;
 	}
 
 	// sanity check roundabout flare roads - the flare roads connect a
@@ -709,10 +710,24 @@ public class RouteNode implements Comparable<RouteNode> {
 			// roundabout
 			if(!r.isForward() || !r.getRoadDef().isRoundabout() || r.getRoadDef().isSynthesised())
 				continue;
+
 			// follow the arc to find the first node that connects the
 			// roundabout to a non-roundabout segment
 			RouteNode nb = r.getDest();
+			List<RouteNode> seen = new ArrayList<RouteNode>();
+			seen.add(this);
+
 			for(;;) {
+
+				if(seen.contains(nb)) {
+					// looped - give up
+					nb = null;
+					break;
+				}
+
+				// remember we have seen this node
+				seen.add(nb);
+
 				boolean connectsToNonRoundaboutSegment = false;
 				RouteArc nextRoundaboutArc = null;
 				for(RouteArc nba : nb.arcs) {
@@ -724,19 +739,6 @@ public class RouteNode implements Comparable<RouteNode> {
 						else
 							connectsToNonRoundaboutSegment = true;
 					}
-				}
-
-				if(nb == this) {
-					// looped back to start - give up
-					if(!connectsToNonRoundaboutSegment) {
-						// FIXME - stop this warning griping about
-						// roundabouts whose ways are tagged
-						// highway=construction
-
-						// log.warn("Roundabout " + r.getRoadDef() + " is not connected to any ways at " + coord.toOSMURL());
-					}
-					nb = null;
-					break;
 				}
 
 				if(connectsToNonRoundaboutSegment) {
