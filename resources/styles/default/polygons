@@ -40,6 +40,7 @@ landuse=reservoir [0x3f resolution 18]
 landuse=retail [0x08 resolution 20]
 landuse=village_green [0x17 resolution 20]
 landuse=vineyard [0x4e resolution 20]
+landuse=wood [0x50 resolution 18]
 
 leisure=common [0x17 resolution 20]
 leisure=garden [0x17 resolution 20]
