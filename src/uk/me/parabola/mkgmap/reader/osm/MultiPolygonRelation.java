@@ -7,19 +7,15 @@ import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -45,8 +41,7 @@ public class MultiPolygonRelation extends Relation {
 	private Set<JoinedWay> intersectingPolygons;
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
-	private Area bboxArea;
-	
+
 	/** 
 	 * A point that has a lower or equal squared distance from 
 	 * a line is treated as if it lies one the line.<br/>
@@ -428,7 +423,10 @@ public class MultiPolygonRelation extends Relation {
 
 			if (remove) {
 				// check if the polygon contains the complete bounding box
-				if (w.getBounds().contains(bboxArea.getBounds())) {
+				Rectangle bboxRect = new Rectangle(bbox.getMinLat(), bbox
+						.getMinLong(), bbox.getMaxLat() - bbox.getMinLat(),
+						bbox.getMaxLong() - bbox.getMinLong());
+				if (w.getBounds().contains(bboxRect)) {
 					remove = false;
 				}
 			}
@@ -529,11 +527,6 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		// create an Area for the bbox to clip the polygons
-		bboxArea = new Area(new Rectangle(bbox.getMinLong(), bbox
-			.getMinLat(), bbox.getMaxLong() - bbox.getMinLong(),
-			bbox.getMaxLat() - bbox.getMinLat()));
-		
 		polygons = joinWays(allWays);
 		closeWays(polygons);
 		removeUnclosedWays(polygons);
@@ -646,20 +639,15 @@ public class MultiPolygonRelation extends Relation {
 					|| hasPolygonTags(currentPolygon.polygon);
 
 			if (processPolygon) {
-				List<Way> singularOuterPolygons;
-				if (holes.isEmpty()) {
-					singularOuterPolygons = Collections
-							.singletonList((Way) new JoinedWay(currentPolygon.polygon));
-				} else {
-					List<Way> innerWays = new ArrayList<Way>(holes.size());
-					for (PolygonStatus polygonHoleStatus : holes) {
-						innerWays.add(polygonHoleStatus.polygon);
-					}
 
-					singularOuterPolygons = cutOutInnerPolygons(currentPolygon.polygon,
-						innerWays);
+				List<Way> innerWays = new ArrayList<Way>(holes.size());
+				for (PolygonStatus polygonHoleStatus : holes) {
+					innerWays.add(polygonHoleStatus.polygon);
 				}
-				
+
+				List<Way> singularOuterPolygons = cutOutInnerPolygons(
+					currentPolygon.polygon, innerWays);
+
 				if (currentPolygon.polygon.getOriginalWays().size() == 1) {
 					// the original way was a closed polygon which
 					// has been replaced by the new cutted polygon
@@ -701,7 +689,7 @@ public class MultiPolygonRelation extends Relation {
 			runIntersectionCheck(unfinishedPolygons);
 			runWrongInnerPolygonCheck(unfinishedPolygons, innerPolygons);
 
-			// we have at least one polygon that could not be processed
+			// we have at least one ring that could not be processed
 			// Probably we have intersecting or overlapping polygons
 			// one possible reason is if the relation overlaps the tile
 			// bounds
@@ -716,7 +704,8 @@ public class MultiPolygonRelation extends Relation {
 		cleanup();
 	}
 
-	private void runIntersectionCheck(BitSet unfinishedPolys) {
+	
+	private void runIntersectionCheck(BitSet unfinishedRings) {
 		if (intersectingPolygons.isEmpty()) {
 			// nothing to do
 			return;
@@ -727,7 +716,7 @@ public class MultiPolygonRelation extends Relation {
 		boolean oneOufOfBbox = false;
 		for (JoinedWay polygon : intersectingPolygons) {
 			int pi = polygons.indexOf(polygon);
-			unfinishedPolys.clear(pi);
+			unfinishedRings.clear(pi);
 
 			boolean outOfBbox = false;
 			for (Coord c : polygon.getPoints()) {
@@ -747,7 +736,7 @@ public class MultiPolygonRelation extends Relation {
 
 	private void runWrongInnerPolygonCheck(BitSet unfinishedPolygons,
 			BitSet innerPolygons) {
-		// find all unfinished inner polygons that are not contained by any
+		// find all unfinished inner rings that are not contained by any
 		BitSet wrongInnerPolygons = findOutmostPolygons(unfinishedPolygons, innerPolygons);
 		if (log.isDebugEnabled()) {
 			log.debug("unfinished", unfinishedPolygons);
@@ -791,49 +780,6 @@ public class MultiPolygonRelation extends Relation {
 		roleMap.clear();
 		containsMatrix = null;
 		polygons = null;
-		bboxArea = null;
-		intersectingPolygons = null;
-	}
-
-	private CutPoint calcNextCutPoint(AreaCutData areaData) {
-		if (areaData.innerAreas == null || areaData.innerAreas.isEmpty()) {
-			return null;
-		}
-		
-		if (areaData.innerAreas.size() == 1) {
-			// make it short if there is only one inner area
-			Rectangle outerBounds = areaData.outerArea.getBounds();
-			CoordinateAxis axis = (outerBounds.width < outerBounds.height ? CoordinateAxis.LONGITUDE : CoordinateAxis.LATITUDE);
-			CutPoint oneCutPoint = new CutPoint(axis);
-			oneCutPoint.addArea(areaData.innerAreas.get(0));
-			return oneCutPoint;
-		}
-		
-		ArrayList<Area> innerStart = new ArrayList<Area>(
-				areaData.innerAreas);
-		
-		ArrayList<CutPoint> bestCutPoints = new ArrayList<CutPoint>(CoordinateAxis.values().length);
-		
-		for (CoordinateAxis axis : CoordinateAxis.values()) {
-			CutPoint bestCutPoint = new CutPoint(axis);
-			CutPoint currentCutPoint = new CutPoint(axis);
-
-			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START: COMP_LAT_START));
-
-			Iterator<Area> startIter = innerStart.iterator();
-			while (startIter.hasNext()) {
-				Area nextStart = startIter.next();
-				currentCutPoint.addArea(nextStart);
-
-				if (currentCutPoint.compareTo(bestCutPoint) > 0) {
-					bestCutPoint = currentCutPoint.duplicate();
-				}
-			}
-			bestCutPoints.add(bestCutPoint);
-		}
-
-		return Collections.max(bestCutPoints);
-		
 	}
 
 	/**
@@ -848,166 +794,112 @@ public class MultiPolygonRelation extends Relation {
 	 *         polygons
 	 */
 	private List<Way> cutOutInnerPolygons(Way outerPolygon, List<Way> innerPolygons) {
-		if (innerPolygons.isEmpty()) {
-			Way outerWay = new JoinedWay(outerPolygon);
-			if (log.isDebugEnabled()) {
-				log.debug("Way", outerPolygon.getId(), "splitted to way", outerWay.getId());
-			}
-			return Collections.singletonList(outerWay);
-		}
-
-		// use the java.awt.geom.Area class because it's a quick
-		// implementation of what's needed
+		// we use the java.awt.geom.Area class because it's a quick
+		// implementation of what we need
 
 		// this list contains all non overlapping and singular areas
 		// of the outerPolygon
-		Queue<AreaCutData> areasToCut = new LinkedList<AreaCutData>();
-		Collection<Area> finishedAreas = new ArrayList<Area>(innerPolygons.size());
+		List<Area> outerAreas = new ArrayList<Area>();
+
+		// 1st create an Area object of the outerPolygon and put it to the list
+		List<Area> oa = createAreas(outerPolygon);
+
+		Area bboxArea = new Area(new Rectangle(bbox.getMinLong(), bbox
+			.getMinLat(), bbox.getMaxLong() - bbox.getMinLong(),
+			bbox.getMaxLat() - bbox.getMinLat()));
 		
-		// create a list of Area objects from the outerPolygon (clipped to the bounding box)
-		List<Area> outerAreas = createAreas(outerPolygon, true);
-		
-		// create the inner areas
-		List<Area> innerAreas = new ArrayList<Area>(innerPolygons.size()+2);
-		for (Way innerPolygon : innerPolygons) {
-			// don't need to clip to the bounding box because 
-			// these polygons are just used to cut out holes
-			innerAreas.addAll(createAreas(innerPolygon, false));
-		}
-
-		// initialize the cut data queue
-		if (innerAreas.isEmpty()) {
-			// this is a multipolygon without any inner areas
-			// nothing to cut
-			finishedAreas.addAll(outerAreas);
-		} else if (outerAreas.size() == 1) {
-			// there is one outer area only
-			// it is checked before that all inner areas are inside this outer area
-			AreaCutData initialCutData = new AreaCutData();
-			initialCutData.outerArea = outerAreas.get(0);
-			initialCutData.innerAreas = innerAreas;
-			areasToCut.add(initialCutData);
-		} else {
-			// multiple outer areas
-			for (Area outerArea : outerAreas) {
-				AreaCutData initialCutData = new AreaCutData();
-				initialCutData.outerArea = outerArea;
-				initialCutData.innerAreas = new ArrayList<Area>(innerAreas
-						.size());
-				for (Area innerArea : innerAreas) {
-					if (outerArea.getBounds().intersects(
-						innerArea.getBounds())) {
-						initialCutData.innerAreas.add(innerArea);
-					}
-				}
-				
-				if (initialCutData.innerAreas.isEmpty()) {
-					// this is either an error
-					// or the outer area has been cut into pieces on the tile bounds
-					finishedAreas.add(outerArea);
-				} else {
-					areasToCut.add(initialCutData);
-				}
-			}
-		}
-
-		while (areasToCut.isEmpty() == false) {
-			AreaCutData areaCutData = areasToCut.poll();
-			CutPoint cutPoint = calcNextCutPoint(areaCutData);
-			
-			if (cutPoint == null) {
-				finishedAreas.add(areaCutData.outerArea);
-				continue;
-			}
-			
-			assert cutPoint.getNumberOfAreas() > 0 : "Number of cut areas == 0 in mp "+getId();
-			
-			// cut out the holes
-			for (Area cutArea : cutPoint.getAreas()) {
-				areaCutData.outerArea.subtract(cutArea);
-			}
-			
-			if (areaCutData.outerArea.isEmpty()) {
-				// this outer area space can be abandoned
-				continue;
-			} 
-			
-			// the inner areas of the cut point have been processed
-			// they are no longer needed
-			areaCutData.innerAreas.removeAll(cutPoint.getAreas());
-
-			if (areaCutData.outerArea.isSingular()) {
-				// the area is singular
-				// => no further splits necessary
-				if (areaCutData.innerAreas.isEmpty()) {
-					// this area is finished and needs no further cutting
-					finishedAreas.add(areaCutData.outerArea);
-				} else {
-					// readd this area to further processing
-					areasToCut.add(areaCutData);
-				}
+		// clip the bounding box
+		for (Area outerArea : oa) {
+			if (bboxArea.contains(outerArea.getBounds())) {
+				// no clipping necessary
+				outerAreas.add(outerArea);
 			} else {
-				// we need to cut the area into two halfs to get singular areas
-				Rectangle r1 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, true);
-				Rectangle r2 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, false);
+				// the area might intersect the bounding box
+				// => clip it to the bounding box
+				outerArea.intersect(bboxArea);
+				outerAreas.addAll(areaToSingularAreas(outerArea));
+			}
+		}
 
-				// Now find the intersection of these two boxes with the
-				// original polygon. This will make two new areas, and each
-				// area will be one (or more) polygons.
-				Area a1 = areaCutData.outerArea;
-				Area a2 = (Area) a1.clone();
-				a1.intersect(new Area(r1));
-				a2.intersect(new Area(r2));
+		List<Area> innerAreas = new ArrayList<Area>();
+		for (Way innerPolygon : innerPolygons) {
+			innerAreas.addAll(createAreas(innerPolygon));
+		}
 
-				if (areaCutData.innerAreas.isEmpty()) {
-					finishedAreas.addAll(areaToSingularAreas(a1));
-					finishedAreas.addAll(areaToSingularAreas(a2));
+		// go through all innerPolygons (holes) and cut them from the outerPolygon
+		for (Area innerArea : innerAreas) {
+
+			List<Area> outerAfterThisStep = new ArrayList<Area>();
+			for (Area outerArea : outerAreas) {
+				// check if this outerArea is probably intersected by the inner
+				// area to save computation time in case it is not
+				if (outerArea.getBounds().intersects(innerArea.getBounds()) == false) {
+					outerAfterThisStep.add(outerArea);
+					continue;
+				}
+
+				// cut the hole
+				outerArea.subtract(innerArea);
+				if (outerArea.isEmpty()) {
+					// this outer area space can be abandoned
+				} else if (outerArea.isSingular()) {
+					// the area is singular
+					// => no further splits necessary
+					outerAfterThisStep.add(outerArea);
 				} else {
-					ArrayList<Area> cuttedAreas = new ArrayList<Area>();
-					cuttedAreas.addAll(areaToSingularAreas(a1));
-					cuttedAreas.addAll(areaToSingularAreas(a2));
-					
-					for (Area nextOuterArea : cuttedAreas) {
-						ArrayList<Area> nextInnerAreas = null;
-						// go through all remaining inner areas and check if they
-						// must be further processed with the nextOuterArea 
-						for (Area nonProcessedInner : areaCutData.innerAreas) {
-							if (nextOuterArea.intersects(nonProcessedInner.getBounds2D())) {
-								if (nextInnerAreas == null) {
-									nextInnerAreas = new ArrayList<Area>();
-								}
-								nextInnerAreas.add(nonProcessedInner);
-							}
-						}
-						
-						if (nextInnerAreas == null || nextInnerAreas.isEmpty()) {
-							finishedAreas.add(nextOuterArea);
-						} else {
-							AreaCutData outCutData = new AreaCutData();
-							outCutData.outerArea = nextOuterArea;
-							outCutData.innerAreas= nextInnerAreas;
-							areasToCut.add(outCutData);
-						}
+					// 1st cut in two halfs in the middle of the inner area
+
+					// Cut the bounding box into two rectangles
+					Rectangle r1;
+					Rectangle r2;
+
+					// Get the bounds of this polygon
+					Rectangle innerBounds = innerArea.getBounds();
+					Rectangle outerBounds = outerArea.getBounds();
+					if (outerBounds.width > outerBounds.height) {
+						int cutWidth = (innerBounds.x - outerBounds.x)
+								+ innerBounds.width / 2;
+						r1 = new Rectangle(outerBounds.x, outerBounds.y,
+								cutWidth, outerBounds.height);
+						r2 = new Rectangle(outerBounds.x + cutWidth,
+								outerBounds.y, outerBounds.width - cutWidth,
+								outerBounds.height);
+					} else {
+						int cutHeight = (innerBounds.y - outerBounds.y)
+								+ innerBounds.height / 2;
+						r1 = new Rectangle(outerBounds.x, outerBounds.y,
+								outerBounds.width, cutHeight);
+						r2 = new Rectangle(outerBounds.x, outerBounds.y
+								+ cutHeight, outerBounds.width,
+								outerBounds.height - cutHeight);
 					}
+
+					// Now find the intersection of these two boxes with the
+					// original polygon. This will make two new areas, and each
+					// area will be one (or more) polygons.
+					Area a1 = outerArea;
+					Area a2 = (Area) a1.clone();
+					a1.intersect(new Area(r1));
+					a2.intersect(new Area(r2));
+
+					outerAfterThisStep.addAll(areaToSingularAreas(a1));
+					outerAfterThisStep.addAll(areaToSingularAreas(a2));
 				}
 			}
-			
+			outerAreas = outerAfterThisStep;
 		}
-		
+
 		// convert the java.awt.geom.Area back to the mkgmap way
-		List<Way> cuttedOuterPolygon = new ArrayList<Way>(finishedAreas.size());
-		for (Area area : finishedAreas) {
+		List<Way> cutOuterPolygon = new ArrayList<Way>(outerAreas.size());
+		for (Area area : outerAreas) {
 			Way w = singularAreaToWay(area, FakeIdGenerator.makeFakeId());
 			if (w != null) {
 				w.copyTags(outerPolygon);
-				cuttedOuterPolygon.add(w);
-				if (log.isDebugEnabled()) {
-					log.debug("Way", outerPolygon.getId(), "splitted to way", w.getId());
-				}
+				cutOuterPolygon.add(w);
 			}
 		}
 
-		return cuttedOuterPolygon;
+		return cutOuterPolygon;
 	}
 
 	/**
@@ -1094,18 +986,22 @@ public class MultiPolygonRelation extends Relation {
 	 * erroneous cases properly the method might return a list of areas.
 	 * 
 	 * @param w a closed way
-	 * @param clipBbox true if the areas should be clipped to the bounding box; false else
 	 * @return a list of enclosed ares
 	 */
-	private List<Area> createAreas(Way w, boolean clipBbox) {
+	private List<Area> createAreas(Way w) {
 		Area area = new Area(createPolygon(w.getPoints()));
-		if (clipBbox && bboxArea.contains(area.getBounds())==false) {
-			// the area intersects the bounding box => clip it
-			area.intersect(bboxArea);
-		}
 		List<Area> areaList = areaToSingularAreas(area);
-		if (log.isDebugEnabled()) {
-			log.debug("Bbox clipped way",w.getId()+"=>",areaList.size(),"distinct area(s).");
+		if (areaList.size() > 1) {
+			if (bbox.allInsideBoundary(w.getPoints())) {
+				log.warn("Polygon", w.getId(), "intersects itself. It is splitted into", areaList.size(), "polygons.");
+				log.warn("The polygon is composed of");
+				logWayURLs(Level.WARNING, "-", w);
+			} else {
+				log.info("Polygon", w.getId(),
+					"intersects itself and the tile bounds. Maybe the polygon is not completely contained in the tile.");
+				log.info("The polygon is composed of");
+				logWayURLs(Level.INFO, "-", w);
+			}
 		}
 		return areaList;
 	}
@@ -1286,7 +1182,7 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Checks if the polygon with polygonIndex1 contains the polygon with polygonIndex2.
+	 * Checks if the polygon with polygonIndex1 contains the ring with polygonIndex2.
 	 * 
 	 * @return true if polygon(polygonIndex1) contains polygon(polygonIndex2)
 	 */
@@ -1748,7 +1644,7 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
-
+		
 		public List<Long> getOriginalIds() {
 			ArrayList<Long> idList = new ArrayList<Long>(getOriginalWays().size());
 			for (Way w : getOriginalWays()) {
@@ -1757,6 +1653,7 @@ public class MultiPolygonRelation extends Relation {
 			return idList;
 		}
 
+		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(200);
 			sb.append(getId());
@@ -1790,165 +1687,5 @@ public class MultiPolygonRelation extends Relation {
 			this.index = index;
 			this.polygon = polygon;
 		}
-	}
-
-	private static class AreaCutData {
-		Area outerArea;
-		List<Area> innerAreas;
-	}
-
-	private static class CutPoint implements Comparable<CutPoint>{
-		int startPoint = Integer.MAX_VALUE;
-		int stopPoint = Integer.MIN_VALUE;
-		TreeSet<Area> areas;
-		private final CoordinateAxis axis;
-
-		public CutPoint(CoordinateAxis axis) {
-			this.axis = axis;
-			this.areas = new TreeSet<Area>(
-					(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP : COMP_LAT_STOP));
-		}
-		
-		public CutPoint duplicate() {
-			CutPoint newCutPoint = new CutPoint(this.axis);
-			newCutPoint.areas.addAll(areas);
-			newCutPoint.startPoint = startPoint;
-			newCutPoint.stopPoint = stopPoint;
-			return newCutPoint;
-		}
-
-		public int getCutPoint() {
-			return startPoint + (stopPoint - startPoint) / 2;
-		}
-
-		public Rectangle getCutRectangleForArea(Area toCut, boolean firstRect) {
-			Rectangle areaRect = toCut.getBounds();
-			if (axis == CoordinateAxis.LONGITUDE) {
-				int newWidth = getCutPoint()-areaRect.x;
-				if (firstRect) {
-					return new Rectangle(areaRect.x, areaRect.y, newWidth, areaRect.height); 
-				} else {
-					return new Rectangle(areaRect.x+newWidth, areaRect.y, areaRect.width-newWidth, areaRect.height); 
-				}
-			} else {
-				int newHeight = getCutPoint()-areaRect.y;
-				if (firstRect) {
-					return new Rectangle(areaRect.x, areaRect.y, areaRect.width, newHeight); 
-				} else {
-					return new Rectangle(areaRect.x, areaRect.y+newHeight, areaRect.width, areaRect.height-newHeight); 
-				}
-			}
-		}
-		
-		public Collection<Area> getAreas() {
-			return areas;
-		}
-
-		public void addArea(Area area) {
-			// remove all areas that do not overlap with the new area
-			while (areas.isEmpty() == false
-					&& axis.getStop(areas.first()) < axis
-							.getStart(area)) {
-				// remove the first area
-				areas.pollFirst();
-			}
-
-			areas.add(area);
-			startPoint = axis.getStart(Collections.max(areas,
-				(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START
-						: COMP_LAT_START)));
-			stopPoint = axis.getStop(areas.first());
-		}
-
-		public int getNumberOfAreas() {
-			return this.areas.size();
-		}
-
-		public int compareTo(CutPoint o) {
-			if (this == o) {
-				return 0;
-			}
-			int ndiff = getNumberOfAreas()-o.getNumberOfAreas();
-			if (ndiff != 0) {
-				return ndiff;
-			}
-			// prefer the larger area that is splitted
-			return (stopPoint-startPoint)-(o.stopPoint-o.startPoint); 
-		}
-
-		public String toString() {
-			return axis +" "+getNumberOfAreas()+" "+startPoint+" "+stopPoint+" "+getCutPoint();
-		}
-		
-	}
-
-	private static enum CoordinateAxis {
-		LATITUDE(false), LONGITUDE(true);
-
-		private CoordinateAxis(boolean useX) {
-			this.useX = useX;
-		}
-
-		private final boolean useX;
-
-		public int getStart(Area area) {
-			return getStart(area.getBounds());
-		}
-
-		public int getStart(Rectangle rect) {
-			return (useX ? rect.x : rect.y);
-		}
-
-		public int getStop(Area area) {
-			return getStop(area.getBounds());
-		}
-
-		public int getStop(Rectangle rect) {
-			return (useX ? rect.x + rect.width : rect.y + rect.height);
-		}
-
-	}
-
-	private static final AreaComparator COMP_LONG_START = new AreaComparator(
-			true, CoordinateAxis.LONGITUDE);
-	private static final AreaComparator COMP_LONG_STOP = new AreaComparator(
-			false, CoordinateAxis.LONGITUDE);
-	private static final AreaComparator COMP_LAT_START = new AreaComparator(
-			true, CoordinateAxis.LATITUDE);
-	private static final AreaComparator COMP_LAT_STOP = new AreaComparator(
-			false, CoordinateAxis.LATITUDE);
-
-	private static class AreaComparator implements Comparator<Area> {
-
-		private final CoordinateAxis axis;
-		private final boolean startPoint;
-
-		public AreaComparator(boolean startPoint, CoordinateAxis axis) {
-			this.startPoint = startPoint;
-			this.axis = axis;
-		}
-
-		public int compare(Area o1, Area o2) {
-			if (o1 == o2) {
-				return 0;
-			}
-
-			if (startPoint) {
-				int cmp = axis.getStart(o1) - axis.getStart(o2);
-				if (cmp == 0) {
-					return axis.getStop(o1) - axis.getStop(o2);
-				} else {
-					return cmp;
-				}
-			} else {
-				int cmp = axis.getStop(o1) - axis.getStop(o2);
-				if (cmp == 0) {
-					return axis.getStart(o1) - axis.getStart(o2);
-				} else {
-					return cmp;
-				}
-			}
-		}
-
 	}
 }
