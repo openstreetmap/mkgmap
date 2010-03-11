@@ -237,4 +237,8 @@ public class Logger {
 	public void threadTag(String tag) {
 		threadTags.set(tag);
 	}
+
+	public String threadTag() {
+		return threadTags.get();
+	}
 }
