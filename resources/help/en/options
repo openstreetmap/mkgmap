@@ -109,10 +109,10 @@ Style options:
 	List the available styles.
 
 --levels=levels code
-	Change the way that the levels on the map correspond to the
-	zoom levels in the device. See customisation help. The default
-	is the equivalent of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16"
-	although this may change.
+	Change the way that the levels on the map correspond to the zoom
+	levels in the device. See customisation help. The default is:
+	"0=24, 1=22, 2=20, 3=18, 4=16, 5=15", although each style can have
+	its own default.
 
 --name-tag-list
 	Get the tag that will be used to supply the name.  Useful for
