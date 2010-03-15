@@ -191,6 +191,8 @@ public class StyledConverterTest {
 			}
 
 			public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) { }
+
+			public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) { }
 		};
 
 		return new StyledConverter(style, coll, new Properties());
