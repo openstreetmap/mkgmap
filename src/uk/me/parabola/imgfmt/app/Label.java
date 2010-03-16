@@ -64,7 +64,7 @@ public class Label implements Comparable<Label> {
 	 * @return The offset within the LBL file of this string.
 	 */
 	public int getOffset() {
-		if (text == null)
+		if (text == null || text.isEmpty())
 			return 0;
 		else
 			return offset;
