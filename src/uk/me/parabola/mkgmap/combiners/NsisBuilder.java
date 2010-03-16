@@ -160,7 +160,6 @@ public class NsisBuilder implements Combiner {
 			// Un-install files
 			pw.format(Locale.ROOT, "Section \"Uninstall\"\n");
 			pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\${MAPNAME}.img\"\n");
-			pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\Uninstall.exe\"\n");
 			if (hasIndex) {
 				pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\${MAPNAME}_mdr.img\"\n");
 				pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\${MAPNAME}.mdx\"\n");
@@ -171,6 +170,7 @@ public class NsisBuilder implements Combiner {
 			for (String file : mapList) {
 				pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\%s.img\"\n", file);
 			}
+			pw.format(Locale.ROOT, "  Delete \"$INSTDIR\\Uninstall.exe\"\n");
 			pw.println();
 			pw.format(Locale.ROOT, "  RmDir \"$INSTDIR\"\n");
 
