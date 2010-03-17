@@ -18,7 +18,8 @@ amenity=grave_yard [0x1a resolution 18]
 amenity=hospital [0x0b resolution 18]
 amenity=parking [0x05 resolution 21]
 amenity=school [0x0a resolution 20]
-amenity=supermarket [0x08 resolution 21]
+# amenity=supermarket is superceded by shop=supermarket or landuse=retail
+amenity=supermarket [0x08 resolution 20]
 amenity=university [0x0a resolution 18]
 
 landuse=allotments [0x4e resolution 20]
