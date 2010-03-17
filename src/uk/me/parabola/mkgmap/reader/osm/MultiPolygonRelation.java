@@ -497,14 +497,19 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private ArrayList<PolygonStatus> getPolygonStatus(BitSet outmostPolygons,
-			boolean outer) {
+			String defaultRole) {
 		ArrayList<PolygonStatus> polygonStatusList = new ArrayList<PolygonStatus>();
 		for (int polyIndex = outmostPolygons.nextSetBit(0); polyIndex >= 0; polyIndex = outmostPolygons
 				.nextSetBit(polyIndex + 1)) {
 			// polyIndex is the polygon that is not contained by any other
 			// polygon
 			JoinedWay polygon = polygons.get(polyIndex);
-			polygonStatusList.add(new PolygonStatus(outer, polyIndex, polygon));
+			String role = getRole(polygon);
+			// if the role is not explicitly set use the default role
+			if (role == null || "".equals(role)) {
+				role = defaultRole;
+			} 
+			polygonStatusList.add(new PolygonStatus("outer".equals(role), polyIndex, polygon));
 		}
 		return polygonStatusList;
 	}
@@ -533,17 +538,18 @@ public class MultiPolygonRelation extends Relation {
 		bboxArea = new Area(new Rectangle(bbox.getMinLong(), bbox
 			.getMinLat(), bbox.getMaxLong() - bbox.getMinLong(),
 			bbox.getMaxLat() - bbox.getMinLat()));
-		
+
+		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
 		closeWays(polygons);
 		removeUnclosedWays(polygons);
 
-		// now we have closed ways == polygons only
+		// now only closed ways are left => polygons only
 
 		// check if we have at least one polygon left
 		if (polygons.isEmpty()) {
 			// do nothing
-			log.warn("Multipolygon " + toBrowseURL()
+			log.info("Multipolygon " + toBrowseURL()
 					+ " does not contain a closed polygon.");
 			cleanup();
 			return;
@@ -561,21 +567,29 @@ public class MultiPolygonRelation extends Relation {
 
 		// the intersectingPolygons marks all intersecting/overlapping polygons
 		intersectingPolygons = new HashSet<JoinedWay>();
+		
+		// check which polygons lie inside which other polygon 
 		createContainsMatrix(polygons);
 
+		// unfinishedPolygons marks which polygons are not yet processed
 		BitSet unfinishedPolygons = new BitSet(polygons.size());
 		unfinishedPolygons.set(0, polygons.size());
 
 		// create bitsets which polygons belong to the outer and to the inner role
 		BitSet innerPolygons = new BitSet();
+		BitSet taggedInnerPolygons = new BitSet();
 		BitSet outerPolygons = new BitSet();
+		BitSet taggedOuterPolygons = new BitSet();
+		
 		int wi = 0;
 		for (Way w : polygons) {
 			String role = getRole(w);
 			if ("inner".equals(role)) {
 				innerPolygons.set(wi);
+				taggedInnerPolygons.set(wi);
 			} else if ("outer".equals(role)) {
 				outerPolygons.set(wi);
+				taggedOuterPolygons.set(wi);
 			} else {
 				// unknown role => it could be both
 				innerPolygons.set(wi);
@@ -586,37 +600,45 @@ public class MultiPolygonRelation extends Relation {
 
 		if (outerPolygons.isEmpty()) {
 			log.warn("Multipolygon", toBrowseURL(),
-				"does not contain any way tagged with role=outer.");
+				"does not contain any way tagged with role=outer or empty role.");
 			cleanup();
 			return;
 		}
 
 		Queue<PolygonStatus> polygonWorkingQueue = new LinkedBlockingQueue<PolygonStatus>();
+		BitSet nestedOuterPolygons = new BitSet();
+		BitSet nestedInnerPolygons = new BitSet();
 
-		BitSet outmostPolygons = findOutmostPolygons(unfinishedPolygons, outerPolygons);
-		if (outmostPolygons.isEmpty()) {
-			// WanMil: do not process these polygons
-			// this would probably cause wrong mps. Issue a warning later in the
-			// code
+		BitSet outmostPolygons ;
+		BitSet outmostInnerPolygons = new BitSet();
+		boolean outmostInnerFound = false;
+		do {
+			outmostInnerFound = false;
+			outmostPolygons = findOutmostPolygons(unfinishedPolygons);
 
-			// // there's no outmost outer polygon
-			// // maybe this is a tile problem
-			// // try to continue with the inner polygons
-			// outmostPolygons = findOutmostPolygons(unfinishedPolygons, innerPolygons);
-			// polygonWorkingQueue.addAll(getPolygonStatus(outmostPolygons, false));
-		} else {
-			polygonWorkingQueue.addAll(getPolygonStatus(outmostPolygons, true));
+			if (outmostPolygons.intersects(taggedInnerPolygons)) {
+				outmostInnerPolygons.or(outmostPolygons);
+				outmostInnerPolygons.and(taggedInnerPolygons);
+
+				if (log.isDebugEnabled())
+					log.debug("wrong inner polygons: " + outmostInnerPolygons);
+				// do not process polygons tagged with role=inner but which are
+				// not
+				// contained by any other polygon
+				unfinishedPolygons.andNot(outmostInnerPolygons);
+				outmostPolygons.andNot(outmostInnerPolygons);
+				outmostInnerFound = true;
+			}
+		} while (outmostInnerFound);
+		
+		if (outmostPolygons.isEmpty() == false) {
+			polygonWorkingQueue.addAll(getPolygonStatus(outmostPolygons, "outer"));
 		}
 
 		while (polygonWorkingQueue.isEmpty() == false) {
 
 			// the polygon is not contained by any other unfinished polygon
 			PolygonStatus currentPolygon = polygonWorkingQueue.poll();
-
-			// QA: check that all ways carry the role "outer/inner" and
-			// issue warnings
-			checkRoles(currentPolygon.polygon.getOriginalWays(),
-				(currentPolygon.outer ? "outer" : "inner"));
 
 			// this polygon is now processed and should not be used by any
 			// further step
@@ -632,13 +654,44 @@ public class MultiPolygonRelation extends Relation {
 			// get the holes
 			// these are all polygons that are in the main polygon
 			// and that are not contained by any other polygon
-			BitSet holeIndexes = findOutmostPolygons(polygonContains,
-				(currentPolygon.outer ? innerPolygons : outerPolygons));
+			boolean holesOk = true;
+			BitSet holeIndexes;
+			do {
+				holeIndexes = findOutmostPolygons(polygonContains);
+				holesOk = true;
+				if (currentPolygon.outer) {
+					// for role=outer only role=inner is allowed
+					if (holeIndexes.intersects(taggedOuterPolygons)) {
+						BitSet addOuterNestedPolygons = new BitSet();
+						addOuterNestedPolygons.or(holeIndexes);
+						addOuterNestedPolygons.and(taggedOuterPolygons);
+						nestedOuterPolygons.or(addOuterNestedPolygons);
+						holeIndexes.andNot(addOuterNestedPolygons);
+						// do not process them
+						unfinishedPolygons.andNot(addOuterNestedPolygons);
+						polygonContains.andNot(addOuterNestedPolygons);
+						
+						// recalculate the holes again to get all inner polygons 
+						// in the nested outer polygons
+						holesOk = false;
+					}
+				} else {
+					// for role=inner both role=inner and role=outer is supported
+					// although inner in inner is not officially allowed
+					if (holeIndexes.intersects(taggedInnerPolygons)) {
+						// process inner in inner but issue a warning later
+						BitSet addInnerNestedPolygons = new BitSet();
+						addInnerNestedPolygons.or(holeIndexes);
+						addInnerNestedPolygons.and(taggedInnerPolygons);
+						nestedInnerPolygons.or(addInnerNestedPolygons);
+					}
+				}
+			} while (holesOk == false);
 
-			ArrayList<PolygonStatus> holes = getPolygonStatus(holeIndexes,
-				!currentPolygon.outer);
+			ArrayList<PolygonStatus> holes = getPolygonStatus(holeIndexes, 
+				(currentPolygon.outer ? "inner" : "outer"));
 
-			// these polygons must all be checked for inner polygons
+			// these polygons must all be checked for holes
 			polygonWorkingQueue.addAll(holes);
 
 			// check if the polygon has tags and therefore should be processed
@@ -694,11 +747,15 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
-
-		if (log.isLoggable(Level.WARNING) && unfinishedPolygons.isEmpty() == false) {
+		
+		if (log.isLoggable(Level.WARNING) && 
+				(outmostInnerPolygons.cardinality()+unfinishedPolygons.cardinality()+nestedOuterPolygons.cardinality()+nestedInnerPolygons.cardinality() >= 1)) {
 			log.warn("Multipolygon", toBrowseURL(), "contains errors.");
 
 			runIntersectionCheck(unfinishedPolygons);
+			runOutmostInnerPolygonCheck(outmostInnerPolygons);
+			runNestedOuterPolygonCheck(nestedOuterPolygons);
+			runNestedInnerPolygonCheck(nestedInnerPolygons);
 			runWrongInnerPolygonCheck(unfinishedPolygons, innerPolygons);
 
 			// we have at least one polygon that could not be processed
@@ -742,6 +799,36 @@ public class MultiPolygonRelation extends Relation {
 		}
 		if (oneOufOfBbox) {
 			log.warn("Some of these intersections/overlaps may be caused by incomplete data on bounding box edges (*).");
+		}
+	}
+
+	private void runNestedOuterPolygonCheck(BitSet nestedOuterPolygons) {
+		// just print out warnings
+		// the check has been done before
+		for (int wiIndex = nestedOuterPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = nestedOuterPolygons
+				.nextSetBit(wiIndex + 1)) {
+			Way outerWay = polygons.get(wiIndex);
+			log.warn("Polygon",	outerWay, "carries role outer but lies inside an outer polygon. Potentially its role should be inner.");
+		}
+	}
+	
+	private void runNestedInnerPolygonCheck(BitSet nestedInnerPolygons) {
+		// just print out warnings
+		// the check has been done before
+		for (int wiIndex = nestedInnerPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = nestedInnerPolygons
+				.nextSetBit(wiIndex + 1)) {
+			Way innerWay = polygons.get(wiIndex);
+			log.warn("Polygon",	innerWay, "carries role", getRole(innerWay), "but lies inside an inner polygon. Potentially its role should be outer.");
+		}
+	}	
+	
+	private void runOutmostInnerPolygonCheck(BitSet outmostInnerPolygons) {
+		// just print out warnings
+		// the check has been done before
+		for (int wiIndex = outmostInnerPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = outmostInnerPolygons
+				.nextSetBit(wiIndex + 1)) {
+			Way innerWay = polygons.get(wiIndex);
+			log.warn("Polygon",	innerWay, "carries role", getRole(innerWay), "but is not inside any other polygon. Potentially it does not belong to this multipolygon.");
 		}
 	}
 
@@ -1173,29 +1260,6 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * This is a QA method. All ways of the given wayList are checked if they
-	 * they carry the checkRole. If not a warning is logged.
-	 * 
-	 * @param wayList
-	 * @param checkRole
-	 */
-	private void checkRoles(List<Way> wayList, String checkRole) {
-		// QA: check that all ways carry the role "inner" and issue warnings
-		for (Way tempWay : wayList) {
-			String realRole = getRole(tempWay);
-			if (checkRole.equals(realRole) == false && "".equals(realRole) == false) {
-				if (tempWay instanceof JoinedWay) {
-					log.warn("Polygon composed of ways", ((JoinedWay) tempWay).getOriginalIds(), "carries role", realRole,
-						"but should carry role", checkRole);
-				} else {
-					log.warn("Way", tempWay.getId(), "carries role", realRole,
-						"but should carry role", checkRole);
-				}
-			}
-		}
 	}
 
 	/**
@@ -1749,14 +1813,6 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		public List<Long> getOriginalIds() {
-			ArrayList<Long> idList = new ArrayList<Long>(getOriginalWays().size());
-			for (Way w : getOriginalWays()) {
-				idList.add(w.getId());
-			}
-			return idList;
-		}
-
 		public String toString() {
 			StringBuilder sb = new StringBuilder(200);
 			sb.append(getId());
@@ -1781,9 +1837,9 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private static class PolygonStatus {
-		boolean outer;
-		int index;
-		JoinedWay polygon;
+		final boolean outer;
+		final int index;
+		final JoinedWay polygon;
 
 		public PolygonStatus(boolean outer, int index, JoinedWay polygon) {
 			this.outer = outer;
