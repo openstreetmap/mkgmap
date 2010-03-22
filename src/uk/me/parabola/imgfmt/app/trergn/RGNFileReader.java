@@ -145,7 +145,7 @@ public class RGNFileReader extends ImgReader {
 		while (position() < end) {
 			Polyline line = new Polyline(div);
 			byte type = reader.get();
-			line.setType(type & 0x7f);
+			line.setType(type & 0x3f);
 
 			int labelOffset = reader.getu3();
 			Label label;
