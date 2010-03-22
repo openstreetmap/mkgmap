@@ -274,17 +274,42 @@ public class Subdivision {
 	}
 
 	public Polyline createLine(String name, String ref) {
+		// don't be tempted to "trim()" the name as it zaps the highway shields
 		Label label = lblFile.newLabel(name);
+		String nameSansGC = Label.stripGarminCodes(name);
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
+
 		if(ref != null) {
 			// ref may contain multiple ids separated by ";"
-			for(String r : ref.split(";")) {
-				String tr = r.trim();
-				if(tr.length() > 0) {
-					//System.err.println("Adding ref " + tr + " to road " + name);
+			String[] refs = ref.split(";");
+			if(refs.length == 1) {
+				// don't bother to add a single ref that looks the
+				// same as the name (sans shield) because it doesn't
+				// change the routing directions
+				String tr = refs[0].trim();
+				String trSansGC = Label.stripGarminCodes(tr);
+				if(trSansGC.length() > 0 &&
+				   !trSansGC.equalsIgnoreCase(nameSansGC)) {
 					pl.addRefLabel(lblFile.newLabel(tr));
+				}
+			}
+			else {
+				// multiple refs, always add the first so that it will
+				// be used in routing instructions when the name has a
+				// shield prefix
+				pl.addRefLabel(lblFile.newLabel(refs[0].trim()));
+
+				// only add the remaining refs if they differ from the
+				// name (sans shield)
+				for(int i = 1; i < refs.length; ++i) {
+					String tr = refs[i].trim();
+					String trSansGC = Label.stripGarminCodes(tr);
+					if(trSansGC.length() > 0 &&
+					   !trSansGC.equalsIgnoreCase(nameSansGC)) {
+						pl.addRefLabel(lblFile.newLabel(tr));
+					}
 				}
 			}
 		}
