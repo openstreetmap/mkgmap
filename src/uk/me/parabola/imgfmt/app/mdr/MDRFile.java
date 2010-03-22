@@ -148,11 +148,7 @@ public class MDRFile extends ImgFile {
 	 * @return The name as it will go into the index.
 	 */
 	private String cleanUpName(String name) {
-		// TODO Currently just drop an initial shield, but more to do
-		if (name.charAt(0) < ' ')
-			return name.substring(1);
-		
-		return name;
+		return Label.stripGarminCodes(name);
 	}
 
 	public void write() {
