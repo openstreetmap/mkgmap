@@ -41,7 +41,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	public static final String LETTERS =
 		" ABCDEFGHIJKLMNO" +	// 0x00-0x0F
 		"PQRSTUVWXYZxx   " +	// 0x10-0x1F
-		"0123456789xxxxxx";	// 0x20-0x2F
+		"0123456789\u0001\u0002\u0003\u0004\u0005\u0006";	// 0x20-0x2F
 
 	public static final String SYMBOLS =
 		"@!\"#$%&'()*+,-./" +	// 0x00-0x0F
