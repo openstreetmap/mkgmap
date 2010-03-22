@@ -56,6 +56,19 @@ public class Label implements Comparable<Label> {
 		return text;
 	}
 
+	public String getTextSansGarminCodes() {
+		return stripGarminCodes(text);
+	}
+
+	public static String stripGarminCodes(String s) {
+		if(s == null)
+			return null;
+		s = s.replaceAll("[\u0001-\u0006\u001b-\u001c]", ""); // remove highway shields and "thin" separators
+		s = s.replaceAll("[\u001d-\u001f]", " "); // replace "fat" separators with spaces
+		// a leading separator would have turned into a space so trim it
+		return s.trim();
+	}
+
 	/**
 	 * The offset of this label in the LBL file.  The first byte of this file
 	 * is zero and an offset of zero means that the label has a zero length/is

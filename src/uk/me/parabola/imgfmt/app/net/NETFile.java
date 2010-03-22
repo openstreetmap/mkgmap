@@ -18,8 +18,11 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -61,23 +64,44 @@ public class NETFile extends ImgFile {
 
 	public void writePost(ImgFileWriter rgn, boolean sortRoads) {
 		List<Sortable<Label, RoadDef>> sortedRoads = new ArrayList<Sortable<Label, RoadDef>>(roads.size());
+		// cleanedLabels holds "cleaned up" versions of the Label
+		// strings that are used when sorting the road names - the
+		// hope is that retrieving the String from the Map is faster than
+		// cleaning the Label text for each comparison in the sort
+		final Map<Label, String> cleanedLabels = new HashMap<Label, String>();
 
 		for (RoadDef rd : roads) {
 			rd.writeRgnOffsets(rgn);
 			if(sortRoads) {
 				Label[] l = rd.getLabels();
-				for(int i = 0; i < l.length && l[i] != null; ++i)
-					if(l[i].getLength() != 0)
+				for(int i = 0; i < l.length && l[i] != null; ++i) {
+					if(l[i].getLength() != 0) {
+						cleanedLabels.put(l[i], l[i].getTextSansGarminCodes());
+						//	System.err.println("Road " + rd + " has label " + l[i]);
 						sortedRoads.add(new Sortable<Label, RoadDef>(l[i], rd));
+					}
+				}
 			}
 		}
 
 		if(sortedRoads.size() > 0) {
-			Collections.sort(sortedRoads);
+			Collections.sort(sortedRoads, new Comparator<Sortable<Label, RoadDef>>() {
+					public int compare(Sortable<Label, RoadDef> a, Sortable<Label, RoadDef> b) {
+						// sort using cleaned versions of the labels
+						int diff = cleanedLabels.get(a.getKey()).compareToIgnoreCase(cleanedLabels.get(b.getKey()));
+						if(diff != 0)
+							return diff;
+						// the labels were the same, sort on the
+						// RoadDefs
+						return a.getValue().compareTo(b.getValue());
+					}
+				});
 			sortedRoads = simplifySortedRoads(new LinkedList<Sortable<Label, RoadDef>>(sortedRoads));
 			ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
-			for(Sortable<Label, RoadDef> srd : sortedRoads)
+			for(Sortable<Label, RoadDef> srd : sortedRoads) {
+				//System.err.println("Road " + srd.getKey() + " is " + srd.getValue() + " " + srd.getValue().getCity());
 				srd.getValue().putSortedRoadEntry(writer, srd.getKey());
+			}
 			Utils.closeFile(writer);
 		}
 
@@ -95,7 +119,7 @@ public class NETFile extends ImgFile {
 	private List<Sortable<Label, RoadDef>> simplifySortedRoads(LinkedList<Sortable<Label, RoadDef>> in) {
 		List<Sortable<Label, RoadDef>> out = new ArrayList<Sortable<Label, RoadDef>>(in.size());
 		while(in.size() > 0) {
-			Label name0 = in.get(0).getKey();
+			String name0 = in.get(0).getKey().getTextSansGarminCodes();
 			RoadDef road0 = in.get(0).getValue();
 			City city0 = road0.getCity();
 			// transfer the 0'th entry to the output
@@ -104,7 +128,7 @@ public class NETFile extends ImgFile {
 			// firstly determine the entries whose name and city match
 			// name0 and city0
 			for(n = 0; (n < in.size() &&
-						name0 == in.get(n).getKey() &&
+						name0.equalsIgnoreCase(in.get(n).getKey().getTextSansGarminCodes()) &&
 						city0 == in.get(n).getValue().getCity()); ++n) {
 				// relax
 			}
