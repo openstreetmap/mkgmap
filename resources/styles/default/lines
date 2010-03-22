@@ -109,7 +109,7 @@ railway=subway & !(layer<0) [0x14 resolution 17]
 railway=tram & !(layer<0) [0x14 resolution 18]
 railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 
-route=ferry {add mkgmap:ferry=1} [0x1b road_class=0 road_speed=0 resolution 18]
+route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 18]
 
 waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]
