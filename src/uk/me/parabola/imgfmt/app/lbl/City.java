@@ -118,7 +118,7 @@ public class City implements Comparable<City> {
 		if(label != null)
 			result += label.getText();
 		if (subdivision != null)
-			result += subdivision.getNumber() + "/" + pointIndex;
+			result += " " + subdivision.getNumber() + "/" + pointIndex;
 		if(country != null)
 			result += " in country " + (0 + country.getIndex());
 		if(region != null)
