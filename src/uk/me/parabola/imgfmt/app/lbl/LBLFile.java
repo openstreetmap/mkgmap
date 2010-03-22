@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -27,6 +28,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -107,6 +109,13 @@ public class LBLFile extends ImgFile {
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
+		// if required, fold case now so that labelCache doesn't
+		// contain multiple labels that only differ in letter case
+		if(text != null &&
+		   (textEncoder instanceof Format6Encoder ||
+			textEncoder instanceof BaseEncoder &&
+			((BaseEncoder)textEncoder).isUpperCase()))
+			text = text.toUpperCase(Locale.ENGLISH);
 		Label l = labelCache.get(text);
 		if (l == null) {
 			l = new Label(text);
