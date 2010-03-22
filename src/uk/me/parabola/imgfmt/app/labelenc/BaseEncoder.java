@@ -65,7 +65,7 @@ public class BaseEncoder {
 		return new EncodedText(out, out.length);
 	}
 
-	protected boolean isUpperCase() {
+	public boolean isUpperCase() {
 		return upperCase;
 	}
 
