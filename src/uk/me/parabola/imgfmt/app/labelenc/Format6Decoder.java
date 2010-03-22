@@ -11,6 +11,7 @@ public class Format6Decoder implements CharacterDecoder {
 	private boolean needReset;
 
 	private boolean symbol;
+	private boolean lowerCaseOrSeparator;
 
 	private int store;
 	private int nbits;
@@ -77,20 +78,40 @@ public class Format6Decoder implements CharacterDecoder {
 		if (symbol) {
 			symbol = false;
 			c = Format6Encoder.SYMBOLS.charAt(b);
-		} else {
+		}
+		else if(lowerCaseOrSeparator) {
+			lowerCaseOrSeparator = false;
+			if(b == 0x2b || b == 0x2c) {
+				c = (char)(b - 0x10); // "thin" separator
+			}
+			else if(Character.isLetter(b)) {
+				// lower case letter
+				c = Character.toLowerCase(Format6Encoder.LETTERS.charAt(b));
+			}
+			else {
+				// not a letter so just use as is (could be a digit)
+				c = Format6Encoder.LETTERS.charAt(b);
+			}
+		}
+		else {
 			switch(b) {
 			case 0x1B:
-				// perhaps this is "next-char lower case"?
+				// next char is lower case or a separator
+				lowerCaseOrSeparator = true;
 				return;
+
 			case 0x1C:
 				// next char is symbol
 				symbol = true;
 				return;
+
 			case 0x1D:
 			case 0x1E:
 			case 0x1F:
-				// these define abbreviations; fall through to
-				// lookup which returns a space
+				// these are separators - use as is
+				c = (char)b;
+				break;
+
 			default:
 				c = Format6Encoder.LETTERS.charAt(b);
 				break;

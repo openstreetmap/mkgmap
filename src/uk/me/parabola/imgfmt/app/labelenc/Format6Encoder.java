@@ -69,11 +69,14 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 		for (char c : transliterator.transliterate(s).toCharArray()) {
 
 			if (c == ' ') {
-				buf = put6(buf, off++, 0);
+				put6(buf, off++, 0);
 			} else if (c >= 'A' && c <= 'Z') {
-				buf = put6(buf, off++, c - 'A' + 1);
+				put6(buf, off++, c - 'A' + 1);
 			} else if (c >= '0' && c <= '9') {
-				buf = put6(buf, off++, c - '0' + 0x20);
+				put6(buf, off++, c - '0' + 0x20);
+			} else if (c == 0x1b || c == 0x1c) {
+				put6(buf, off++, 0x1b);
+				put6(buf, off++, c + 0x10);
 			} else if (c >= 0x1d && c <= 0x1f) {
 				put6(buf, off++, c);
 			} else if (c >= 1 && c <= 6) {
