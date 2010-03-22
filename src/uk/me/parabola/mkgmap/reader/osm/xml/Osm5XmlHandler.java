@@ -368,6 +368,15 @@ public class Osm5XmlHandler extends DefaultHandler {
 			if(deleteTag(key, val))
 				return;
 
+			if("mkgmap:on-boundary".equals(key)) {
+				if("1".equals(val) || "true".equals(val) || "yes".equals(val)) {
+					Coord co = coordMap.get(currentElementId);
+					co.setOnBoundary(true);
+					co.incHighwayCount();
+				}
+				return;
+			}
+
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that
 			// are not in a list of ignorable ones such as 'created_by'
