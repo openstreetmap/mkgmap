@@ -599,6 +599,24 @@ public class StyledConverter implements OsmConverter {
 			// use first ref as name
 			name = SEMI_PATTERN.split(refs)[0].trim();
 		}
+		else if(name != null) {
+			// remove leading spaces (don't use trim() to avoid zapping
+			// shield codes)
+			char leadingCode = 0;
+			if(name.length() > 1 &&
+			   name.charAt(0) < 0x20 &&
+			   name.charAt(1) == ' ') {
+				leadingCode = name.charAt(0);
+				name = name.substring(2);
+			}
+				
+			while(name.length() > 0 && name.charAt(0) == ' ')
+				name = name.substring(1);
+
+			if(leadingCode != 0)
+				name = new Character(leadingCode) + name;
+		}
+
 		if(name != null)
 			ms.setName(name);
 		if(refs != null)
