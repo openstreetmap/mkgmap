@@ -18,6 +18,8 @@ package uk.me.parabola.imgfmt.app;
 
 import java.nio.charset.Charset;
 
+import java.util.regex.Pattern;
+
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 
@@ -60,11 +62,21 @@ public class Label implements Comparable<Label> {
 		return stripGarminCodes(text);
 	}
 
+	// highway shields and "thin" separators
+	private final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
+
+	// "fat" separators
+	private final static Pattern SEPARATORS = Pattern.compile("[\u001d-\u001f]");
+
+	// two or more whitespace characters
+	private final static Pattern SQUASH_SPACES = Pattern.compile("\\s\\s+");
+
 	public static String stripGarminCodes(String s) {
 		if(s == null)
 			return null;
-		s = s.replaceAll("[\u0001-\u0006\u001b-\u001c]", ""); // remove highway shields and "thin" separators
-		s = s.replaceAll("[\u001d-\u001f]", " "); // replace "fat" separators with spaces
+		s = SHIELDS.matcher(s).replaceAll(""); // remove
+		s = SEPARATORS.matcher(s).replaceAll(" "); // replace with a space
+		s = SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with a space
 		// a leading separator would have turned into a space so trim it
 		return s.trim();
 	}
