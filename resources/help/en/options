@@ -175,6 +175,12 @@ Optimization options:
 	longer chunks at lower zoom levels. Decreases file size more.
 	Increases paint speed at low zoom levels.
 
+--min-line-size=NUM
+--min-polygon-size=NUM
+	Set the minimum size for lines (default 1) and polygons
+	(default 8). Features smaller than the minimum size (at a
+	given zoom level) are dropped.
+
 Miscellaneous options:
 
 --max-jobs[=number]
