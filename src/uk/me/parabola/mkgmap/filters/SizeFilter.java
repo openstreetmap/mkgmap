@@ -24,16 +24,13 @@ import uk.me.parabola.mkgmap.general.MapLine;
  */
 public class SizeFilter implements MapFilter {
 
-	private int size;
+	// Minsize==1 may cause small holes in QLandkarte, but does not at etrex!
+	private static final int MIN_SIZE = 1;
 
 	private int minSize;
-	
-	public SizeFilter(int s) {
-		size = s;
-	}
 
 	public void init(FilterConfig config) {
-		minSize = size * (1<<config.getShift());
+		minSize = MIN_SIZE * (1<<config.getShift());
 	}
 
 	/**

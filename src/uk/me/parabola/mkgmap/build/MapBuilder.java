@@ -92,7 +92,7 @@ import uk.me.parabola.util.EnhancedProperties;
 public class MapBuilder implements Configurable {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
-	
+
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
 
@@ -112,9 +112,6 @@ public class MapBuilder implements Configurable {
 
 	private double reducePointError;
 	private boolean mergeLines;
-
-	private int     minLineSize;
-	private int     minPolygonSize;
 
 	private int		locationAutofillLevel;
 	private boolean	poiAddresses = true;
@@ -136,9 +133,6 @@ public class MapBuilder implements Configurable {
 		regionAbbr = props.getProperty("region-abbr", null);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
 		mergeLines = props.containsKey("merge-lines");
-
-		minLineSize = props.getProperty("min-line-size", 1);
-		minPolygonSize = props.getProperty("min-polygon-size", 8);
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
@@ -891,7 +885,7 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(minLineSize));
+			filters.addFilter(new SizeFilter());
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
@@ -930,7 +924,7 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(minPolygonSize));
+			filters.addFilter(new SizeFilter());
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointError > 0)
