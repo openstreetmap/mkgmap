@@ -81,6 +81,12 @@ public class Label implements Comparable<Label> {
 		return s.trim();
 	}
 
+	public static String squashSpaces(String s) {
+		if(s == null)
+			return null;
+		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
+	}
+
 	/**
 	 * The offset of this label in the LBL file.  The first byte of this file
 	 * is zero and an offset of zero means that the label has a zero length/is

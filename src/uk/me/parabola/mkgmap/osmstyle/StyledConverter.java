@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
@@ -550,22 +551,22 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private String combineRefs(Element element) {
-		String ref = element.getTag("ref");
-		String int_ref = element.getTag("int_ref");
+		String ref = Label.squashSpaces(element.getTag("ref"));
+		String int_ref = Label.squashSpaces(element.getTag("int_ref"));
 		if(int_ref != null) {
 			if(ref == null)
 				ref = int_ref;
 			else
 				ref += ";" + int_ref;
 		}
-		String nat_ref = element.getTag("nat_ref");
+		String nat_ref = Label.squashSpaces(element.getTag("nat_ref"));
 		if(nat_ref != null) {
 			if(ref == null)
 				ref = nat_ref;
 			else
 				ref += ";" + nat_ref;
 		}
-		String reg_ref = element.getTag("reg_ref");
+		String reg_ref = Label.squashSpaces(element.getTag("reg_ref"));
 		if(reg_ref != null) {
 			if(ref == null)
 				ref = reg_ref;
@@ -577,13 +578,13 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void elementSetup(MapElement ms, GType gt, Element element) {
-		String name = element.getName();
+		String name = Label.squashSpaces(element.getName());
 		String refs = combineRefs(element);
 		
 		// Insert display_name as first ref.
 		// This causes display_name to be displayed in routing 
 		// directions, instead of only the ref.
-		String displayName = element.getTag("display_name");
+		String displayName = Label.squashSpaces(element.getTag("display_name"));
 
 		if (displayName != null) {
 			// substitute '/' for ';' in display_name to avoid it
