@@ -723,11 +723,7 @@ public class MultiPolygonRelation extends Relation {
 					// remove all polygons tags from the original ways
 					// sometimes the ways seem to be autoclosed later on
 					// in mkgmap
-					for (Way w : currentPolygon.polygon.getOriginalWays()) {
-						for (String polygonTag : polygonTags) {
-							w.deleteTag(polygonTag);
-						}
-					}
+					currentPolygon.polygon.removePolygonTagsInOrgWays();
 				}
 
 				boolean useRelationTags = currentPolygon.outer
@@ -737,12 +733,15 @@ public class MultiPolygonRelation extends Relation {
 					// tags of the outer polygon
 					for (Way p : singularOuterPolygons) {
 						p.copyTags(this);
+						p.deleteTag("type");
 					}
 				}
 
 				for (Way mpWay : singularOuterPolygons) {
 					// put the cut out polygons to the
 					// final way map
+					if (log.isDebugEnabled())
+						log.debug(mpWay.getId(),mpWay.toTagString());
 					tileWayMap.put(mpWay.getId(), mpWay);
 				}
 			}
@@ -1680,11 +1679,13 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
+	private static final boolean joinWayTagMerge = false;
+	
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
 	 */
-	private static class JoinedWay extends Way {
+	private static final class JoinedWay extends Way {
 		private final List<Way> originalWays;
 		private boolean closedArtificially = false;
 
@@ -1787,10 +1788,26 @@ public class MultiPolygonRelation extends Relation {
 		}
 
 		private void addTagsOf(Way way) {
-			for (Map.Entry<String, String> tag : way.getEntryIteratable()) {
-				if (getTag(tag.getKey()) == null) {
+			boolean merge = (joinWayTagMerge || getOriginalWays().size()<=1);
+			if (merge) {
+				for (Map.Entry<String, String> tag : way.getEntryIteratable()) {
 					addTag(tag.getKey(), tag.getValue());
 				}
+			} else {
+				// only use tags that are in both ways
+				for (Map.Entry<String, String> tag : this.getEntryIteratable()) {
+					String wayTagValue = way.getTag(tag.getKey());
+					if (tag.getValue().equals(wayTagValue)==false) {
+						// the tags are different
+						if (log.isDebugEnabled()) {
+							log.debug("Remove differing tag",tag.getKey(),getId()+"="+tag.getValue(),way.getId()+"="+wayTagValue);
+						}
+						if (wayTagValue!= null) {
+							deleteTag(tag.getKey());
+						}
+					}
+				}
+				
 			}
 		}
 
@@ -1798,6 +1815,14 @@ public class MultiPolygonRelation extends Relation {
 			return originalWays;
 		}
 
+		public void removePolygonTagsInOrgWays() {
+			for (Way w : getOriginalWays()) {
+				for (String polygonTag : polygonTags) {
+					w.deleteTag(polygonTag);
+				}
+			}
+		}
+		
 		public void removeAllTagsDeep() {
 			removeOriginalTags();
 			removeAllTags();
@@ -1808,7 +1833,12 @@ public class MultiPolygonRelation extends Relation {
 				if (w instanceof JoinedWay) {
 					((JoinedWay) w).removeAllTagsDeep();
 				} else {
-					w.removeAllTags();
+					log.info("Before remove",w.toTagString());
+					for (Map.Entry<String, String> wayTag : w
+							.getEntryIteratable()) {
+						w.deleteTag(wayTag.getKey());
+					}
+					log.info("After remove",w.toTagString());
 				}
 			}
 		}
@@ -1818,7 +1848,7 @@ public class MultiPolygonRelation extends Relation {
 			sb.append(getId());
 			sb.append("(");
 			sb.append(getPoints().size());
-			sb.append("P : (");
+			sb.append("P)(");
 			boolean first = true;
 			for (Way w : getOriginalWays()) {
 				if (first) {

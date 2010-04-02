@@ -66,7 +66,7 @@ public abstract class Element implements Iterable<String> {
 		this.id = id;
 	}
 
-	protected String toTagString() {
+	String toTagString() {
 		if (tags == null)
 			return "";
 
