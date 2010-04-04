@@ -20,6 +20,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -481,6 +482,46 @@ public class RuleFileReaderTest {
 		assertNotNull("matches a rule", type);
 	}
 
+	@Test
+	public void testTagsUsed() {
+		RuleSet rs = makeRuleSet("highway=primary & surface=good [0x1]" +
+				"A=B | C=D & E~'f.*' & G!=9 & K=* & L!=* [0x2]");
+
+		Set<String> tags = rs.getUsedTags();
+		assertEquals("number of tags used", 8, tags.size());
+		assertTrue("has highway", tags.contains("highway"));
+		assertTrue("has surface", tags.contains("surface"));
+		assertTrue("has A", tags.contains("A"));
+		assertTrue("has C", tags.contains("C"));
+		assertTrue("has E", tags.contains("E"));
+		assertTrue("has G", tags.contains("G"));
+		assertTrue("has K", tags.contains("K"));
+		assertTrue("has L", tags.contains("L"));
+	}
+
+	/**
+	 * There is a case where a tag is only used in an action but not in any
+	 * expression.  If we dropped the tags it would not be available for the
+	 * action.  A typical example might be name.
+	 */
+	@Test
+	public void testTagsUsedInActions() {
+		RuleSet rs = makeRuleSet("A=B { set t='${C}'; add t='${D} p ${E}'; name '${F} ${G}'; rename K L");
+
+		Set<String> tags = rs.getUsedTags();
+		assertTrue("has A", tags.contains("A"));
+		assertTrue("has C", tags.contains("C"));
+		assertTrue("has D", tags.contains("D"));
+		assertTrue("has E", tags.contains("E"));
+		assertTrue("has F", tags.contains("F"));
+		assertTrue("has G", tags.contains("G"));
+		assertTrue("has K", tags.contains("K"));
+	}
+
+	/**
+	 * Resolve the rule set with the given element and get the first
+	 * resolved type.
+	 */
 	private GType getFirstType(Rule rs, Element el) {
 		final List<GType> types = new ArrayList<GType>();
 		rs.resolveType(el, new TypeResult() {

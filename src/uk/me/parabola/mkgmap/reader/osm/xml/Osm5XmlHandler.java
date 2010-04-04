@@ -122,6 +122,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private final String frigRoundabouts;
 
 	private HashMap<String,Set<String>> deletedTags;
+	private Map<String, String> usedTags;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		if(props.getProperty("make-all-cycleways", false)) {
@@ -231,15 +232,29 @@ public class Osm5XmlHandler extends DefaultHandler {
 			deletedTags = null;
 	}
 
-	private boolean deleteTag(String key, String val) {
+	private String keepTag(String key, String val) {
 		if(deletedTags != null) {
 			Set<String> vals = deletedTags.get(key);
 			if(vals != null && (vals.isEmpty() || vals.contains(val))) {
 				//				System.err.println("Deleting " + key + "=" + val);
-				return true;
+				return key;
 			}
 		}
-		return false;
+
+		if (usedTags != null)
+			return usedTags.get(key);
+		
+		return key;
+	}
+
+	public void setUsedTags(Set<String> used) {
+		if (used == null || used.isEmpty()) {
+			usedTags = null;
+			return;
+		}
+		usedTags = new HashMap<String, String>();
+		for (String s : used)
+			usedTags.put(s, s);
 	}
 
 	/**
@@ -343,7 +358,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-			if(!deleteTag(key, val))
+			key = keepTag(key, val);
+			if (key != null)
 				currentRelation.addTag(key, val);
 		}
 	}
@@ -355,7 +371,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-			if(!deleteTag(key, val))
+			key = keepTag(key, val);
+			if (key != null)
 				currentWay.addTag(key, val);
 		}
 	}
@@ -364,9 +381,6 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-
-			if(deleteTag(key, val))
-				return;
 
 			if("mkgmap:on-boundary".equals(key)) {
 				if("1".equals(val) || "true".equals(val) || "yes".equals(val)) {
@@ -379,17 +393,17 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 			// We only want to create a full node for nodes that are POI's
 			// and not just point of a way.  Only create if it has tags that
-			// are not in a list of ignorable ones such as 'created_by'
-			if (currentNode != null || !key.equals("created_by")) {
+			// could be used in a POI.
+			key = keepTag(key, val);
+			if (key != null) {
 				if (currentNode == null) {
 					Coord co = coordMap.get(currentElementId);
 					currentNode = new Node(currentElementId, co);
 					nodeMap.put(currentElementId, currentNode);
 				}
 
-				if((val.equals("motorway_junction") ||
-				    val.equals("services")) &&
-				   key.equals("highway")) {
+				if ((val.equals("motorway_junction") || val.equals("services"))
+						&& key.equals("highway")) {
 					exits.add(currentNode);
 					currentNode.addTag("osm:id", "" + currentElementId);
 				}
@@ -622,7 +636,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
-
+		System.out.println("END DOCUMENT");
+		
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
 			if(e.getTag(refTag) == null) {
@@ -1718,19 +1733,18 @@ public class Osm5XmlHandler extends DefaultHandler {
 					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
 					List<Coord> points2 = w2.getPoints();
 					Way wm;
-					if (!FakeIdGenerator.isFakeId(w1.getId())) {
+					if (FakeIdGenerator.isFakeId(w1.getId())) {
+						wm = w1;
+					} else {
 						wm = new Way(FakeIdGenerator.makeFakeId());
 						ways.remove(w1);
 						ways.add(wm);
 						wm.getPoints().addAll(points1);
 						beginMap.put(points1.get(0), wm);
 						// only copy the name tags
-						for(String tag : w1)
-							if(tag.equals("name") || tag.endsWith(":name"))
-							   wm.addTag(tag, w1.getTag(tag));
-					}
-					else {
-						wm = w1;
+						for (String tag : w1)
+							if (tag.equals("name") || tag.endsWith(":name"))
+								wm.addTag(tag, w1.getTag(tag));
 					}
 					wm.getPoints().addAll(points2);
 					ways.remove(w2);
@@ -1773,15 +1787,14 @@ public class Osm5XmlHandler extends DefaultHandler {
 						Coord w2s = nearest.getPoints().get(0);
 						log.warn("Bridging " + (int)smallestGap + "m gap in coastline from " + w1e.toOSMURL() + " to " + w2s.toOSMURL());
 						Way wm;
-						if (!FakeIdGenerator.isFakeId(w1.getId())) {
+						if (FakeIdGenerator.isFakeId(w1.getId())) {
+							wm = w1;
+						} else {
 							wm = new Way(FakeIdGenerator.makeFakeId());
 							ways.remove(w1);
 							ways.add(wm);
 							wm.getPoints().addAll(points1);
 							wm.copyTags(w1);
-						}
-						else {
-							wm = w1;
 						}
 						wm.getPoints().addAll(nearest.getPoints());
 						ways.remove(nearest);

@@ -17,7 +17,9 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
@@ -68,6 +70,17 @@ public class AddTagAction implements Action {
 
 	public void setValueTags(Element valueTags) {
 		this.valueTags = valueTags;
+	}
+
+	public Set<String> getUsedTags() {
+		Set<String> set = new HashSet<String>();
+
+		if (values != null) {
+			for (ValueBuilder vb : values) {
+				set.addAll(vb.getUsedTags());
+			}
+		}
+		return set;
 	}
 
 	public String toString() {

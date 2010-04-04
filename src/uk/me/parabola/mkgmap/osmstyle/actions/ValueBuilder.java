@@ -17,7 +17,9 @@
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -181,5 +183,15 @@ public class ValueBuilder {
 		}
 		sb.append("'");
 		return sb.toString();
+	}
+
+	public Set<String> getUsedTags() {
+		Set<String> set = new HashSet<String>();
+		for (ValueItem v : items) {
+			String tagname = v.getTagname();
+			if (tagname != null)
+				set.add(tagname);
+		}
+		return set;
 	}
 }

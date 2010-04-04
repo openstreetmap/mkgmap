@@ -56,12 +56,12 @@ import uk.me.parabola.mkgmap.Version;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
-import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineMergeFilter;
+import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
-import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
+import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
@@ -118,8 +118,8 @@ public class MapBuilder implements Configurable {
 	private int		poiDisplayFlags;
 	private boolean sortRoads = true;
 	private boolean enableLineCleanFilters = true;
-	private boolean makePOIIndex = false;
-	private int routeCenterBoundaryType = 0;
+	private boolean makePOIIndex;
+	private int routeCenterBoundaryType;
 
 	public MapBuilder() {
 		regionName = null;
@@ -373,7 +373,7 @@ public class MapBuilder implements Configurable {
 								{
 									String CityZipStr = nextCity.getZip();
 									
-									// Ignore list of Zips seperated by ;
+									// Ignore list of Zips separated by ;
 									
 									if(CityZipStr != null && CityZipStr.indexOf(',') < 0)
 										ZipStr = CityZipStr; 
@@ -692,7 +692,7 @@ public class MapBuilder implements Configurable {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
 
-		if(poiDisplayFlags != 0)							// POI requested alterate address notation
+		if(poiDisplayFlags != 0)					// POI requested alternate address notation
 			map.setPoiDisplayFlags(poiDisplayFlags);
 
 		// You can add anything here.
@@ -704,7 +704,12 @@ public class MapBuilder implements Configurable {
 		map.addInfo("http://www.openstreetmap.org/");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 		map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
-		map.addInfo("Map created with mkgmap-r" + Version.VERSION);
+
+		// Pad the version number with spaces so that version
+		// strings that are different lengths do not change the size and
+		// offsets of the following sections.
+		map.addInfo("Map created with mkgmap-r"
+				+ String.format("%-10s", Version.VERSION));
 
 		map.addInfo("Program released under the GPL");
 
@@ -1014,15 +1019,14 @@ public class MapBuilder implements Configurable {
 			assert line.getPoints().size() < 255 : "too many points";
 
 			Polyline pl = div.createLine(line.getName(), line.getRef());
-			if(!element.hasExtendedType())
-				div.setPolylineNumber(pl);
-			else {
+			if (element.hasExtendedType()) {
 				ExtTypeAttributes eta = element.getExtTypeAttributes();
-				if(eta != null) {
+				if (eta != null) {
 					eta.processLabels(map.getLblFile());
 					pl.setExtTypeAttributes(eta);
 				}
-			}
+			} else
+				div.setPolylineNumber(pl);
 
 			pl.setDirection(line.isDirection());
 

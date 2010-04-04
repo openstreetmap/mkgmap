@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -158,9 +157,11 @@ public class StyledConverter implements OsmConverter {
 		this.collector = collector;
 
 		nameTagList = style.getNameTagList();
+
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
 		relationRules = style.getRelationRules();
+
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
 		NODHeader.setDriveOnLeft(driveOnLeft);
@@ -171,6 +172,26 @@ public class StyledConverter implements OsmConverter {
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
 	}
+
+	///**
+	// * There may be tags that are not referenced directly in the style file
+	// * that are used.  This includes the name-tag-list option.  Attempt
+	// * to add such tags here.
+	// * @param style
+	// */
+	//private void addExtraUsedTags(Style style) {
+	//	String s = style.getOption("extra-used-tags");
+	//	Collection<String> usedTags = new HashSet<String>();
+	//	if (s != null)
+	//		usedTags.addAll(Arrays.asList(s.split(" ")));
+	//	if (nameTagList != null)
+	//		usedTags.addAll(Arrays.asList(nameTagList));
+	//
+	//	System.out.println("extra " + usedTags);
+	//	((RuleSet) wayRules).addUsedTags(usedTags);
+	//	((RuleSet) nodeRules).addUsedTags(usedTags);
+	//	((RuleSet) relationRules).addUsedTags(usedTags);
+	//}
 
 	private static final Pattern commaPattern = Pattern.compile(",");
 

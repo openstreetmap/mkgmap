@@ -1,0 +1,63 @@
+#
+# There are a large number of tags names that 
+# have become hardwired into mkgmap.  This is list
+# of these tags.
+#
+# It only includes tags that are expected in the input file
+# and not tags that might be added in a style file that are
+# later recognised by mkgmap. In general these begin with the
+# string 'mkgmap:'
+#
+access
+addr:city
+addr:country
+addr:housenumber
+addr:phone
+addr:postcode
+addr:street
+barrier
+bicycle
+carpool
+cycleway
+day_off
+day_on
+delivery
+display_name
+emergency
+except
+exception
+exit:facility
+exit:road_ref
+exit:to
+fixme
+FIXME
+foot
+goods
+hgv
+hour_off
+hour_on
+int_ref
+is_in
+is_in:country
+is_in:county
+junction
+maxspeed
+mkgmap:gtype
+motorcar
+motorcycle
+name
+nat_ref
+natural
+oneway
+openGeoDB:postal_codes
+openGeoDB:sort_name
+osm:id
+phone
+psv
+ref
+reg_ref
+restriction
+route
+taxi
+toll
+type
