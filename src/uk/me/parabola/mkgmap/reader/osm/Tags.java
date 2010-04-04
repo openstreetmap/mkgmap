@@ -70,7 +70,7 @@ public class Tags implements Iterable<String> {
 		String old = values[ind];
 		if (old == null)
 			size++;
-		values[ind] = value;
+		values[ind] = value.intern();
 
 		return old;
 	}
