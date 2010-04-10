@@ -636,7 +636,6 @@ public class Osm5XmlHandler extends DefaultHandler {
 	 * another exception.
 	 */
 	public void endDocument() throws SAXException {
-		System.out.println("END DOCUMENT");
 		
 		for (Node e : exits) {
 			String refTag = Exit.TAG_ROAD_REF;
