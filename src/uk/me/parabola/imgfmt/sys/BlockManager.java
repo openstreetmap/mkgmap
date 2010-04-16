@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -55,7 +55,7 @@ class BlockManager {
 					" Use a larger block size with an option such as" +
 					" --block-size=%d or --block-size=%d",
 					blockSize * 2, blockSize * 4);
-			throw new ExitException(message);
+			throw new MapFailedException(message);
 		}
 		numberAllocated++;
 		return n;

@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -189,7 +189,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 			if (bufferSize > maxAllowedSize) {
 				// Previous message was confusing people, although it is difficult to come
 				// up with something that is strictly true in all situations.
-				throw new ExitException(
+				throw new MapFailedException(
 						"There is not enough room in a single garmin map for all the input data\n" +
 								"   The .osm file should be split into smaller pieces first.");
 			}

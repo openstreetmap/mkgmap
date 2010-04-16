@@ -24,11 +24,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
 import uk.me.parabola.log.Logger;
@@ -101,9 +101,9 @@ public class MapMaker implements MapProcessor {
 			map.close();
 			return outName;
 		} catch (FileExistsException e) {
-			throw new ExitException("File exists already", e);
+			throw new MapFailedException("File exists already", e);
 		} catch (FileNotWritableException e) {
-			throw new ExitException("Could not create or write to file", e);
+			throw new MapFailedException("Could not create or write to file", e);
 		}
 	}
 

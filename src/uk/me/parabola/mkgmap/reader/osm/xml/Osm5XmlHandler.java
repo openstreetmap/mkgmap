@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -1617,7 +1617,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 				return false;
 		}
 
-		Coord getPoint(Area a) {
+		private Coord getPoint(Area a) {
 			log.info("getPoint: ", this, a);
 			switch (edge) {
 			case 0:
@@ -1633,7 +1633,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 				return new Coord((int)(a.getMaxLat() - t * (a.getMaxLat()-a.getMinLat())), a.getMinLong());
 
 			default:
-				throw new ExitException("illegal state");
+				throw new MapFailedException("illegal state");
 			}
 		}
 
