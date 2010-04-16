@@ -109,6 +109,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 	private final boolean makeOppositeCycleways;
 	private final boolean makeCycleways;
 	private final boolean ignoreBounds;
+	private final boolean processBoundaryRelations;
 	private final boolean ignoreTurnRestrictions;
 	private final boolean linkPOIsToWays;
 	private final boolean generateSea;
@@ -175,6 +176,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 			minimumArcLength = null;
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		ignoreTurnRestrictions = props.getProperty("ignore-turn-restrictions", false);
+		processBoundaryRelations = props.getProperty("process-boundary-relations", false);
 		reportUndefinedNodes = props.getProperty("report-undefined-nodes", false);
 		String deleteTagsFileName = props.getProperty("delete-tags-file");
 		if(deleteTagsFileName != null)
@@ -614,7 +616,13 @@ public class Osm5XmlHandler extends DefaultHandler {
 			long id = currentRelation.getId();
 
 			relationMap.put(id, currentRelation);
-			currentRelation.processElements();
+			if (processBoundaryRelations == false &&
+			     currentRelation instanceof MultiPolygonRelation &&
+				 ((MultiPolygonRelation)currentRelation).isBoundaryRelation()) {
+				log.info("Ignore boundary multipolygon "+currentRelation.toBrowseURL());
+			} else {
+				currentRelation.processElements();
+			}
 
 			List<Map.Entry<String,Relation>> entries =
 				deferredRelationMap.remove(id);

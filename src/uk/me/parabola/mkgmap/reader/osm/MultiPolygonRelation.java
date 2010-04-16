@@ -98,6 +98,10 @@ public class MultiPolygonRelation extends Relation {
 		copyTags(other);
 	}
 
+	public boolean isBoundaryRelation() {
+		return getTag("boundary") != null;
+	}
+	
 	/**
 	 * Retrieves the mp role of the given element.
 	 * 
