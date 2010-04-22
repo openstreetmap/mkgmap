@@ -17,7 +17,8 @@ amenity=cafe | amenity=fast_food | amenity=restaurant | amenity=food_court [0x08
 amenity=college [0x0a resolution 18]
 amenity=grave_yard [0x1a resolution 18]
 amenity=hospital [0x0b resolution 18]
-amenity=parking [0x05 resolution 21]
+parking=underground | parking=multi-storey [0x06 resolution 21]
+amenity=parking | parking=surface [0x05 resolution 21]
 amenity=school [0x0a resolution 20]
 # amenity=supermarket is superceded by shop=supermarket or landuse=retail
 amenity=supermarket [0x08 resolution 20]
