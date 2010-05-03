@@ -658,38 +658,38 @@ public class StyledConverter implements OsmConverter {
 		String country      = element.getTag("is_in:country");
 		String region       = element.getTag("is_in:county");
 		
-		if(country != null)
+		if(country == null)
 			country = element.getTag("addr:country");
 
 		if(zip == null)
-		  zip = element.getTag("openGeoDB:postal_codes");
+			zip = element.getTag("openGeoDB:postal_codes");
 		
 		if(city == null)
-		  city = element.getTag("openGeoDB:sort_name");
+			city = element.getTag("openGeoDB:sort_name");
 		
 		if(city != null)
-		  ms.setCity(city);
+			ms.setCity(city);
 		  
 		if(zip != null)
-		  ms.setZip(zip);
+			ms.setZip(zip);
 		  
 		if(street != null)
-		  ms.setStreet(street);		  
+			ms.setStreet(street);
 
 		if(houseNumber != null)
-		  ms.setHouseNumber(houseNumber);
+			ms.setHouseNumber(houseNumber);
 		  
 		if(isIn != null)
-		  ms.setIsIn(isIn);		  
+			ms.setIsIn(isIn);
 			
 		if(phone != null)
-		  ms.setPhone(phone);	
+			ms.setPhone(phone);
 
 		if(country != null)
-		  ms.setCountry(country);	
+			ms.setCountry(country);
 
 		if(region != null)
-		  ms.setRegion(region);			
+			ms.setRegion(region);
 
 		if(MapElement.hasExtendedType(gt.getType())) {
 			// pass attributes with mkgmap:xt- prefix (strip prefix)
