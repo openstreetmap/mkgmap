@@ -63,7 +63,7 @@ junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
 # Ways that may or may not be useable
 
 # Treat ways under construction as highway=path
-highway=construction | highway=* & construction=* {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
+highway=construction | highway=* & construction=* {add access = no; add bicycle = yes; add foot = yes; add mkgmap:dead-end-check = false } [0x16 road_class=0 road_speed=1 resolution 23]
 # Treat disused ways as highway=service, but at lower road_speed.
 highway=* & disused=yes [0x07 road_class=0 road_speed=1 resolution 22]
 
