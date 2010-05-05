@@ -104,6 +104,7 @@ power=line [0x29 resolution 20]
 
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 21]
 railway=light_rail & !(layer<0) [0x14 resolution 17]
+railway=narrow_gauge & !(layer<0) [0x14 resolution 17]
 railway=rail & !(layer<0) [0x14 resolution 17]
 railway=subway & !(layer<0) [0x14 resolution 17]
 railway=tram & !(layer<0) [0x14 resolution 18]
