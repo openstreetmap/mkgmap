@@ -1,0 +1,18 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+#
+
+
+# A short one line description of the style
+#
+summary: A style for public transportation routes
+
+# Version of the style itself
+#
+version=1.0
+
+description {
+A style for public transportation routes.  This is useful for
+highlighting bus, train, tram, subway etc. routes on a separate map layer.
+}

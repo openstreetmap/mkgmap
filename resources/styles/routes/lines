@@ -1,0 +1,3 @@
+railway=* & mkgmap:route=* { name '${mkgmap:route}' } [0x1e resolution 16]
+route=ferry & mkgmap:route=* { name '${mkgmap:route}' } [0x1b resolution 16]
+highway=* & mkgmap:route=* { name '${mkgmap:route}' } [0x1d resolution 16]

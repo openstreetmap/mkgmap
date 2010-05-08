@@ -1,0 +1,12 @@
+# Public transportation routes
+type=route & (route=bus|route=ferry|route=subway|route=train|route=tram) {
+  set name='${name} (${ref})' | '${name}' | '${ref}';
+  apply { set mkgmap:route='$(mkgmap:route),${name}' | '${name}' }
+}
+
+# Other routes
+
+#type=route & (route=foot|route=hiking)
+#type=route & route=bicycle
+#type=route & route=road
+#type=route & route=ski

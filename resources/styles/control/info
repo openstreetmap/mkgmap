@@ -1,0 +1,19 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+#
+
+
+# A short one line description of the style
+#
+summary: A style for traffic control features
+
+# Version of the style itself
+#
+version=0.1
+
+description {
+A style for traffic control features.  This aims to be useful for
+highlighting features such as speed bumps, zebra crossings,
+traffic signals, speed limits and oneway streets on a separate map layer.
+}
