@@ -264,7 +264,7 @@ public class StyledConverter implements OsmConverter {
 
 		if(vals.length >= 6 && vals[5].length() > 0) {
 			try {
-				gt.setRoadClass(Integer.decode(vals[5]));
+				gt.setRoadSpeed(Integer.decode(vals[5]));
 			}
 			catch (NumberFormatException nfe) {
 				log.error("OSM element " + element.getId() + " has bad value for roadspeed: " + vals[5]);
