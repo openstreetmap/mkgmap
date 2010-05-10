@@ -9,6 +9,7 @@
 # for more information.
 
 aeroway=runway [0x27 resolution 20]
+aeroway=taxiway [0x27 resolution 24]
 
 # Contours take their name from the elevation setting.
 contour=elevation & contour_ext=elevation_minor
