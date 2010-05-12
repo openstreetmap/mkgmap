@@ -11,6 +11,7 @@
 #aeroway=airport [0x5900 resolution 20]
 aeroway=airport [0x2f04 resolution 20]
 aeroway=aerodrome [0x2f04 resolution 20]
+aeroway=helipad [0x5904 resolution 20]
 aeroway=terminal [0x2f04 resolution 20]
 
 amenity=atm { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f06 resolution 21]
