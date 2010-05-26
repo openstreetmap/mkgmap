@@ -95,7 +95,7 @@ highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_cla
 highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=track [0x0a road_class=0 road_speed=1 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
-highway=road [0x06 road_class=0 road_speed=1 resolution 21]
+highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
 highway=* & area!=yes [0x07 ]

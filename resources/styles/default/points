@@ -145,7 +145,7 @@ highway=services { name '${ref} ${name}' | '${ref}' | '${name}' }
 highway=services [0x210f resolution 20]
 
 historic=museum [0x2c02 resolution 20]
-historic=archaeological_site [0x2c02 resolution 21]
+historic=archaeological_site | historic=ruins [0x2c02 resolution 21]
 historic=memorial [0x2c02 resolution 20]
 
 leisure=common & name=* [0x2c06 resolution 21]
