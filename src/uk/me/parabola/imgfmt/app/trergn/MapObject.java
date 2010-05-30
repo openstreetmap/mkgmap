@@ -23,7 +23,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.mkgmap.general.MapElement;
 
 /**
  * An object that appears in a map.  One of point, polyline, polygon or indexed
@@ -94,7 +93,11 @@ public abstract class MapObject {
 	}
 
 	public boolean hasExtendedType() {
-		return MapElement.hasExtendedType(type);
+		return hasExtendedType(type);
+	}
+
+	public static boolean hasExtendedType(int type) {
+		return type >= 0x010000;
 	}
 
 	/** 

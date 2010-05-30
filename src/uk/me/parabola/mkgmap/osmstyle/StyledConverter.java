@@ -32,6 +32,7 @@ import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
+import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
@@ -316,7 +317,7 @@ public class StyledConverter implements OsmConverter {
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == GType.POLYLINE) {
 		    if(foundType.isRoad() &&
-			   !MapElement.hasExtendedType(foundType.getType()))
+			   !MapObject.hasExtendedType(foundType.getType()))
 				addRoad(way, foundType);
 		    else
 				addLine(way, foundType);
@@ -691,7 +692,7 @@ public class StyledConverter implements OsmConverter {
 		if(region != null)
 			ms.setRegion(region);
 
-		if(MapElement.hasExtendedType(gt.getType())) {
+		if(MapObject.hasExtendedType(gt.getType())) {
 			// pass attributes with mkgmap:xt- prefix (strip prefix)
 			Map<String,String> xta = element.getTagsWithPrefix("mkgmap:xt-", true);
 			// also pass all attributes with seamark: prefix (no strip prefix)

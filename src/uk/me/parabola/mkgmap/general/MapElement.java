@@ -20,6 +20,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
+import uk.me.parabola.imgfmt.app.trergn.MapObject;
 
 /**
  * A map element is a point, line or shape that appears on the map.  This
@@ -186,11 +187,7 @@ public abstract class MapElement {
 	}
 
 	public boolean hasExtendedType() {
-		return hasExtendedType(type);
-	}
-
-	public final static boolean hasExtendedType(int type) {
-		return type >= 0x010000;
+		return MapObject.hasExtendedType(type);
 	}
 
 	/**
