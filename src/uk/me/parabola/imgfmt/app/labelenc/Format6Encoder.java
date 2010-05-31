@@ -63,7 +63,10 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 
 		String s = text.toUpperCase(Locale.ENGLISH);
 
-		byte[] buf = new byte[2 * s.length() + 1];
+		// Allocate more than enough space on average for the label.
+		// if you overdo it then it will waste a lot of space , but
+		// not enough and there will be an error
+		byte[] buf = new byte[2 * s.length() + 4];
 		int off = 0;
 
 		for (char c : transliterator.transliterate(s).toCharArray()) {
