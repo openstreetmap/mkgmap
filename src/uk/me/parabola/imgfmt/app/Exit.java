@@ -34,16 +34,11 @@ public class Exit {
 	public final static String TAG_FACILITY = "exit:facility";
 
 	private final Highway highway;
-	private Label label;
 	private Label description;
-	private List<ExitFacility> facilities = new ArrayList<ExitFacility>();
+	private final List<ExitFacility> facilities = new ArrayList<ExitFacility>();
 
 	public Exit(Highway highway) {
 		this.highway = highway;
-	}
-
-	public void setLabel(Label label) {
-		this.label = label;
 	}
 
 	public void setDescription(Label description) {

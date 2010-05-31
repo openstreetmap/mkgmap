@@ -126,18 +126,6 @@ public class RouteCenter {
 	}
 
 	/**
-	 * Calculate the offset of the Tables in NOD 1 given the offset
-	 * of a node and its "low byte".
-	 */
-	public static int calcTableOffset(int nodeOffset, int low) {
-		assert low >= 0 && low < 0x100;
-		int align = NODHeader.DEF_ALIGN;
-
-		int off = nodeOffset >> align;
-		return (off + 1 + low) << align;
-	}
-
-	/**
 	 * Inverse of calcTableOffset.
 	 */
 	private static int calcLowByte(int nodeOffset, int tablesOffset) {

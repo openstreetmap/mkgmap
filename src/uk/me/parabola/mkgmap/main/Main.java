@@ -331,8 +331,10 @@ public class Main implements ArgumentProcessor {
 						// Re throw the underlying exception
 						Throwable cause = e.getCause();
 						if (cause instanceof Exception)
+							//noinspection ProhibitedExceptionThrown
 							throw (Exception)cause;
 						else if (cause instanceof Error)
+							//noinspection ProhibitedExceptionThrown
 							throw (Error)cause;
 						else
 							throw e;

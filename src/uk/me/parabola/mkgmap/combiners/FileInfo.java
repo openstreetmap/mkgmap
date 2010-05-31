@@ -254,7 +254,7 @@ public class FileInfo {
 		return kind == IMG_KIND;
 	}
 
-	public void setKind(FileKind kind) {
+	protected void setKind(FileKind kind) {
 		this.kind = kind;
 	}
 

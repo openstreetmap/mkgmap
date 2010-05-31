@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 
@@ -56,9 +57,12 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 
 	private final Map<String, String> files = new HashMap<String, String>();
 	private final String styleName;
+	private static final Pattern STYLE_SUFFIX = Pattern.compile("\\.style$");
+	private static final Pattern FILENAME_START_MARK = Pattern.compile("<<<");
+	private static final Pattern FILENAME_END_MARK = Pattern.compile(">>>.*");
 
 	public CombinedStyleFileLoader(String filename) throws FileNotFoundException {
-		styleName = filename.replaceFirst("\\.style$", "");
+		styleName = STYLE_SUFFIX.matcher(filename).replaceFirst("");
 
 		Reader in = new FileReader(filename);
 
@@ -79,8 +83,8 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 						files.put(currentName, currentFile.toString());
 					}
 
-					line = line.replaceFirst("<<<", "");
-					line = line.replaceFirst(">>>.*", "");
+					line = FILENAME_START_MARK.matcher(line).replaceFirst("");
+					line = FILENAME_END_MARK.matcher(line).replaceFirst("");
 					log.debug("reading file", line);
 					currentName = line;
 					currentFile = new StringBuffer();

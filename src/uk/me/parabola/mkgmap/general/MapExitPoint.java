@@ -35,7 +35,7 @@ public class MapExitPoint extends MapPoint {
 		this.to = to;
 	}
 
-	public MapExitPoint(MapExitPoint p) {
+	private MapExitPoint(MapExitPoint p) {
 		super(p);
 		this.motorwayRef = p.motorwayRef;
 		this.to = p.to;

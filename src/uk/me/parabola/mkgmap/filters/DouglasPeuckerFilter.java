@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 
@@ -28,7 +27,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
  */
 public class DouglasPeuckerFilter implements MapFilter {
 
-	private static final double ERROR_DISTANCE = 5.4 / 2;	//One unit is 5.4 m, so error dist is 2.6m
+	//private static final double ERROR_DISTANCE = 5.4 / 2;	//One unit is 5.4 m, so error dist is 2.6m
 															//Can be increased more, but may lead to artifacts on T-crossings
 	private final double filterDistance;
 	private double maxErrorDistance;
@@ -67,8 +66,8 @@ public class DouglasPeuckerFilter implements MapFilter {
 		coords.addAll(points);
 
 //#if (Node version)
-//Dont touch Coords, which are nodes. 
-//So points at croosings will not be moved
+//Don't touch Coords, which are nodes.
+//So points at crossings will not be moved
 		// For now simplify all points, which are not nodes
 		// and no start and no end point
 		// Loop runs downwards, as the list length gets modified while running
@@ -90,7 +89,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 
 //#else Straight version
 //Do the douglasPeucker on the whole line. 
-//Deletes more points, but may lead to incorrect diplay of crossings at given high error distances 
+//Deletes more points, but may lead to incorrect display of crossings at given high error distances
 /*		
 		douglasPeucker(coords, 0, n, maxErrorDistance);
 	*/	
@@ -110,7 +109,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 	 * @param allowedError Maximal allowed error to be introduced by simplification. 
 	 * returns number of removed points.
 	 */
-	public void douglasPeucker(List<Coord> points, int startIndex, int endIndex, double allowedError) 
+	protected void douglasPeucker(List<Coord> points, int startIndex, int endIndex, double allowedError)
 	{
 		if (startIndex >= endIndex)
 			return;
@@ -154,7 +153,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 		else {
 			// All points in tolerance, delete all of them.
 
-			// Remove the endpoint if it is the same as the startpoint
+			// Remove the endpoint if it is the same as the start point
 			if (ab == 0)
 				points.remove(endIndex);
 

@@ -41,7 +41,7 @@ public class RouteRestriction {
 	// and when it is active
 	private static final int HEADER = 0x004005;
 
-	// To specifiy that a node is given by a relative offset instead
+	// To specify that a node is given by a relative offset instead
 	// of an entry to Table B.
 	private static final int F_INTERNAL = 0x8000;
 
@@ -161,10 +161,6 @@ public class RouteRestriction {
 
 	public void setOffsetSize(byte size) {
 		offsetSize = size;
-	}
-
-	public byte getOffsetSize() {
-		return offsetSize;
 	}
 
 	public void setLast() {

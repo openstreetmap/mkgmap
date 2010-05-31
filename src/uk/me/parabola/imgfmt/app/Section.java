@@ -108,7 +108,7 @@ public class Section {
 		return size/ (int) itemSize;
 	}
 
-	public int getExtraValue() {
+	protected int getExtraValue() {
 		return extraValue;
 	}
 

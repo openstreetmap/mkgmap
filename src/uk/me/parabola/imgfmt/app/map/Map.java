@@ -284,7 +284,7 @@ public class Map implements InternalFiles, Configurable {
 		log.debug("header slots required", headerSlotsRequired);
 
 		// A header slot is always 512 bytes, so we need to calculate the
-		// number of blocks if the blocksize is different.
+		// number of blocks if the block-size is different.
 		// There are 2 slots for the header itself.
 		int blocksRequired = 2 + headerSlotsRequired * 512 / blockSize;
 

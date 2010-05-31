@@ -58,6 +58,7 @@ public class PrependFilter extends ValueFilter {
 
 	public PrependFilter(String s) {
 		// First, try the lookup table
+		Map<String, String> symbols = symbols_8bit;
 		String p = symbols.get(s);
 		if (p == null) {
 			// else, s is a hex constant character number
@@ -70,8 +71,6 @@ public class PrependFilter extends ValueFilter {
 		}
 		prefix = p;
 	}
-
-	private final Map<String, String> symbols = symbols_8bit;
 
 	public String doFilter(String value, Element el) {
 		return value == null ? null : prefix + value;

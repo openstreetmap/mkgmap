@@ -1,6 +1,4 @@
 #
-# File: imgfile.py
-# 
 # Copyright (C) 2006 Steve Ratcliffe
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -51,7 +49,7 @@ class Imgfile:
 
 	def set_time(self):
 		self.fp.seek(0)
-		bl = self.fp.read(self.block_size)
+		self.fp.read(self.block_size)
 		t = time.localtime()
 		s = pack("<HBBBBB", t[0], t[1], t[2], t[3], t[4], t[5])
 		self.fp.seek(0x39)

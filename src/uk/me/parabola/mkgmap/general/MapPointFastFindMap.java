@@ -10,7 +10,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
- * 	This is multimap to store city information for the Address Locator
+ * 	This is multi-map to store city information for the Address Locator
  *  tt provides also a fast tile based nearest point search function
  *
  *
@@ -36,7 +36,7 @@ public class MapPointFastFindMap{
 	private final ArrayList<MapPoint> points  =  new ArrayList<MapPoint>();
 
 	private static final  long POS_HASH_DIV = 8000;  	// the smaller -> more tiles 
-	private static final  long POS_HASH_MUL = 10000;		// multiplicator for latitude to create hash
+	private static final  long POS_HASH_MUL = 10000;	// multiplier for latitude to create hash
 
 	public MapPoint put(String name, MapPoint p)
 	{
@@ -74,12 +74,9 @@ public class MapPointFastFindMap{
 		return p;
 	}
 
-	public MapPoint get(String name)
-	{
-		ArrayList<MapPoint> list;
-		
-		list = map.get(name);
-		
+	public MapPoint get(String name) {
+		ArrayList<MapPoint> list = map.get(name);
+
 		if(list != null)		
 			return list.get(0);
 		else
@@ -103,13 +100,11 @@ public class MapPointFastFindMap{
 			
 		to prevent expensive linear search over all points we put the points
 		into tiles. We just search the tiles the point is in linear and the 
-		sourounding tiles. If we don't find a point we have to search further
-		arround the central tile
+		surrounding tiles. If we don't find a point we have to search further
+		around the central tile
 
 		*/
-			
-		ArrayList<MapPoint> list;
-		double minDist = Double.MAX_VALUE;
+
 		MapPoint nextPoint = null;
 		
 		if(posMap.size() < 1)  // No point in list
@@ -118,17 +113,14 @@ public class MapPointFastFindMap{
 		long centLatitIdx = p.getLocation().getLatitude()  / POS_HASH_DIV ;
 		long centLongiIdx = p.getLocation().getLongitude() / POS_HASH_DIV ;
 		long delta = 1;
-		
-		long latitIdx;
-		long longiIdx;
-		long posHash;
-		
+
+		double minDist = Double.MAX_VALUE;
 		do
 		{
-			// in the first step we only check our tile and the tiles sourinding us
+			// in the first step we only check our tile and the tiles surrounding us
 			
-			for(latitIdx = centLatitIdx - delta; latitIdx <= centLatitIdx + delta; latitIdx++)
-		    for(longiIdx = centLongiIdx - delta; longiIdx <= centLongiIdx + delta; longiIdx++)
+			for(long latitIdx = centLatitIdx - delta; latitIdx <= centLatitIdx + delta; latitIdx++)
+		    for(long longiIdx = centLongiIdx - delta; longiIdx <= centLongiIdx + delta; longiIdx++)
 		    {
 		    	if(delta < 2 
 						|| latitIdx == centLatitIdx - delta 
@@ -136,11 +128,11 @@ public class MapPointFastFindMap{
 						|| longiIdx == centLongiIdx - delta
 						|| longiIdx == centLongiIdx + delta)
 					{
-		    
-						posHash = latitIdx * POS_HASH_MUL + longiIdx; 
-		
-						list = posMap.get(posHash);		
-				
+
+						long posHash = latitIdx * POS_HASH_MUL + longiIdx;
+
+						ArrayList<MapPoint> list = posMap.get(posHash);
+
 						if(list != null)
 						{
 			    
@@ -158,33 +150,30 @@ public class MapPointFastFindMap{
 						}
 					}
 			}
-			delta ++; // We have to look in tiles farer away
+			delta ++; // We have to look in tiles fairer away
 		}
 		while(nextPoint == null); 
 	 
 		return nextPoint;
 	}
 	
-	public MapPoint findPointInShape(MapShape shape, int pointType, String poiName)
-	{
-		ArrayList<MapPoint> list;
+	public MapPoint findPointInShape(MapShape shape, int pointType, String poiName) {
 		List<Coord>	points = shape.getPoints();
 		MapPoint nextPoint = null;
-		long lastHashValue = -1;
-		long posHash;
 				
 		if(posMap.size() < 1)  // No point in list
-		   return nextPoint;
+			return nextPoint;
 
+		long lastHashValue = -1;
 		for (Coord point : points) {
-			posHash = getPosHashVal(point.getLatitude(), point.getLongitude());
+			long posHash = getPosHashVal(point.getLatitude(), point.getLongitude());
 
 			if (posHash == lastHashValue) // Have we already checked this tile ?
 				continue;
 
 			lastHashValue = posHash;
 
-			list = posMap.get(posHash);
+			ArrayList<MapPoint> list = posMap.get(posHash);
 
 			if (list != null) {
 				for (MapPoint actPoint : list) {
@@ -194,7 +183,7 @@ public class MapPointFastFindMap{
 						checkThisPoint = true;
 					
 					if(MapPoint.isCityType(pointType) && actPoint.isCity()	&& 
-						 actPoint.getName() != null && poiName != null)
+							actPoint.getName() != null && poiName != null)
 					{
 						// Check for city name pois in that shape
 						// Since the types might not be exactly the same we
@@ -217,8 +206,6 @@ public class MapPointFastFindMap{
 		long latitIdx  =  lat /  POS_HASH_DIV ;
 		long longiIdx  =  lon /  POS_HASH_DIV ; 
 		
-		//System.out.println("LatIdx " + latitIdx + " LonIdx " + longiIdx);
-	
 		return latitIdx * POS_HASH_MUL + longiIdx;
 	}
 }

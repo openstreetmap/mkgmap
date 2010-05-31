@@ -24,7 +24,7 @@ public class LatinEncoder extends BaseEncoder implements CharacterEncoder {
 	private final Charset latinCharset = Charset.forName("latin1");
 
 	public EncodedText encodeText(String t) {
-		String text = t;
+		String text;
 		if (t != null && isUpperCase())
 			text = t.toUpperCase(Locale.ENGLISH);
 		else

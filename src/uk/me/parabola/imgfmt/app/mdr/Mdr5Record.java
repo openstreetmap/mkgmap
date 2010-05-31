@@ -61,10 +61,6 @@ public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
 		return region;
 	}
 
-	public void setRegion(int region) {
-		this.region = region;
-	}
-
 	public int getLblOffset() {
 		return lblOffset;
 	}

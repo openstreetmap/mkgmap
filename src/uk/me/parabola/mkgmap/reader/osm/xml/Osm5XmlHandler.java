@@ -616,7 +616,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 			long id = currentRelation.getId();
 
 			relationMap.put(id, currentRelation);
-			if (processBoundaryRelations == false &&
+			if (!processBoundaryRelations &&
 			     currentRelation instanceof MultiPolygonRelation &&
 				 ((MultiPolygonRelation)currentRelation).isBoundaryRelation()) {
 				log.info("Ignore boundary multipolygon "+currentRelation.toBrowseURL());
@@ -1284,7 +1284,6 @@ public class Osm5XmlHandler extends DefaultHandler {
 		// the remaining shoreline segments should intersect the boundary
 		// find the intersection points and store them in a SortedMap
 		SortedMap<EdgeHit, Way> hitMap = new TreeMap<EdgeHit, Way>();
-		boolean shorelineReachesBoundary = false;
 		long seaId;
 		Way sea;
 		for (Way w : shoreline) {
@@ -1382,6 +1381,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 		// now construct inner ways from these segments
 		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
+		boolean shorelineReachesBoundary = false;
 		while (!hits.isEmpty()) {
 			long id = FakeIdGenerator.makeFakeId();
 			Way w = new Way(id);

@@ -24,15 +24,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapPointMultiMap{
+public class MapPointMultiMap {
 
 	private final Map<String,ArrayList<MapPoint>> map  = new HashMap<String, ArrayList<MapPoint>>();
 
-	public MapPoint put(String name, MapPoint p)
-	{
-		ArrayList<MapPoint> list;
-		
-		list = map.get(name);
+	public MapPoint put(String name, MapPoint p) {
+		ArrayList<MapPoint> list = map.get(name);
 		
 		if(list == null){
 
@@ -46,11 +43,8 @@ public class MapPointMultiMap{
 		return p;
 	}
 
-	public MapPoint get(String name)
-	{
-		ArrayList<MapPoint> list;
-		
-		list = map.get(name);
+	public MapPoint get(String name) {
+		ArrayList<MapPoint> list = map.get(name);
 		
 		if(list != null)		
 			return list.get(0);

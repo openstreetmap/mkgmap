@@ -21,7 +21,7 @@ import java.nio.charset.Charset;
 public class AnyCharsetDecoder implements CharacterDecoder {
 	private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 	private boolean needReset;
-	private Charset charSet;
+	private final Charset charSet;
 
 	public AnyCharsetDecoder(String charsetName) {
 		charSet = Charset.forName(charsetName);

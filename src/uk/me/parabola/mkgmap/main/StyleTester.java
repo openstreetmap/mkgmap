@@ -593,7 +593,6 @@ public class StyleTester implements OsmConverter {
 				// Start by literally running through the rules in order.
 				for (Rule rule : rules) {
 					a.reset();
-					//if (showMatches) out.println("# Trying " + rule);
 					rule.resolveType(el, a);
 
 					if (showMatches) {

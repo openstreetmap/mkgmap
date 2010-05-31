@@ -1,6 +1,4 @@
 #
-# File: munger.py
-# 
 # Copyright (C) 2006 Steve Ratcliffe
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -29,7 +27,7 @@ def main():
 		ld1 = myimg.get_dirent(dtype)
 		ld2 = workimg.get_dirent(dtype)
 
-		# Get first block of the subfile itself
+		# Get first block of the sub file itself
 		bl = ld1.get_block(0)
 		ld2.write_block(0, bl)
 
@@ -43,7 +41,7 @@ def main():
 	ld1 = myimg.get_dirent(dtype)
 	ld2 = workimg.get_dirent(dtype)
 
-	wrk = ld2.get_block(0)
+	ld2.get_block(0)
 	new = ld1.get_block(0)
 
 	# Works
@@ -57,7 +55,7 @@ def main():
 
 	workimg.set_time()
 	workimg.close()
-	return
+	#return
 
 	# Copy over the directory entries apart from the block numbers
 	for dtype in ('LBL', 'TRE', 'RGN'):

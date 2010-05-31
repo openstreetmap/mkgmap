@@ -35,8 +35,6 @@ public class NODHeader extends CommonHeader {
 	private final Section roads = new Section(nodes);
 	private final Section boundary = new Section(roads, BOUNDARY_ITEM_SIZE);
 
-	private final char align = DEF_ALIGN;
-
 	private static boolean driveOnLeft;
 
 	public NODHeader() {
@@ -69,6 +67,7 @@ public class NODHeader extends CommonHeader {
 			val |= 0x0300;
 		writer.putInt(val);
 
+		char align = DEF_ALIGN;
 		writer.putChar(align);
 		writer.putChar((char) (align - 1));
 

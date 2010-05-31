@@ -17,8 +17,8 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -75,9 +75,7 @@ public class NODFile extends ImgFile {
 	}
 
 	public void writePost() {
-		ImgFileWriter writer;
-
-		writer = new SectionWriter(getWriter(), nodHeader.getNodeSection());
+		ImgFileWriter writer = new SectionWriter(getWriter(), nodHeader.getNodeSection());
 
 		for (RouteCenter rc : centers) {
 			rc.writePost(writer);

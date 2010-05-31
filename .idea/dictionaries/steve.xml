@@ -2,23 +2,66 @@
   <dictionary name="steve">
     <words>
       <w>Garmin</w>
+      <w>andrzej</w>
       <w>bbox</w>
+      <w>bicubic</w>
+      <w>bitmask</w>
+      <w>bitset</w>
+      <w>bitsets</w>
+      <w>checksum</w>
       <w>coord</w>
       <w>coords</w>
+      <w>defs</w>
+      <w>discontiguous</w>
+      <w>endian</w>
+      <w>etrex</w>
       <w>fixme</w>
+      <w>garmin</w>
+      <w>gawron</w>
       <w>geofabrik</w>
+      <w>gmapsupp</w>
+      <w>gpsmapedit</w>
+      <w>hashlist</w>
+      <w>heibler</w>
       <w>indexable</w>
+      <w>isolines</w>
+      <w>isophase</w>
+      <w>locator</w>
+      <w>lußnig</w>
+      <w>mapname</w>
+      <w>mapsource</w>
       <w>maxspeed</w>
+      <w>moveto</w>
+      <w>multi</w>
       <w>multipolygon</w>
+      <w>nonspacing</w>
+      <w>occulting</w>
       <w>oneway</w>
       <w>oneways</w>
+      <w>outputing</w>
       <w>peucker</w>
+      <w>pois</w>
+      <w>polyline</w>
+      <w>polylines</w>
+      <w>popowsk</w>
+      <w>printf</w>
+      <w>println</w>
+      <w>racon</w>
+      <w>racons</w>
       <w>ratcliffe</w>
+      <w>reentrancy</w>
+      <w>rethrown</w>
       <w>routable</w>
       <w>seamark</w>
       <w>startup</w>
+      <w>struct</w>
+      <w>subdiv</w>
       <w>subtree</w>
+      <w>tweeze</w>
       <w>usedom</w>
+      <w>vollmert</w>
+      <w>xcharset</w>
+      <w>xcode</w>
     </words>
   </dictionary>
 </component>

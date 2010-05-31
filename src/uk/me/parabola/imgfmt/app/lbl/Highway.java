@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -30,18 +31,18 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  */
 public class Highway {
 
-	class ExitPoint implements Comparable {
-		String name;
-		byte index;
-		Subdivision div;
+	class ExitPoint implements Comparable<ExitPoint> {
+		final String name;
+		final byte index;
+		final Subdivision div;
 		public ExitPoint(String name, byte index, Subdivision div) {
 			this.name = name;
 			this.index = index;
 			this.div = div;
 		}
 
-	    public int compareTo(Object o) {
-		return name.compareTo(((ExitPoint)o).name);
+	    public int compareTo(ExitPoint o) {
+			return name.compareTo(o.name);
 	    }
 	}
 
@@ -63,8 +64,8 @@ public class Highway {
 	void write(ImgFileWriter writer, boolean extraData) {
 		if(extraData) {
 			writer.put((byte)0);
-			writer.putChar((char)(region == null? 0 : region.getIndex()));
-			java.util.Collections.sort(exits);
+			writer.putChar(region == null? 0 : region.getIndex());
+			Collections.sort(exits);
 			for(ExitPoint ep : exits) {
 			    writer.put(ep.index);
 			    writer.putChar((char)ep.div.getNumber());
@@ -80,10 +81,6 @@ public class Highway {
 
 	public int getIndex() {
 		return index;
-	}
-
-	public Region getRegion() {
-		return region;
 	}
 
 	public void setLabel(Label label) {

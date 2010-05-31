@@ -110,7 +110,7 @@ public abstract class Element implements Iterable<String> {
 		return tags.getTagsWithPrefix(prefix, removePrefix);
 	}
 
-	public void removeAllTags() {
+	protected void removeAllTags() {
 		if (tags != null)
 			tags.removeAll();
 	}
@@ -126,7 +126,7 @@ public abstract class Element implements Iterable<String> {
 		};
 	}
 
-	public String kind() {
+	protected String kind() {
 		return "unknown";
 	}
 

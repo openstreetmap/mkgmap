@@ -130,14 +130,6 @@ public class RouteNode implements Comparable<RouteNode> {
 		return null;
 	}
 
-	public RouteArc getArcFrom(RouteNode otherNode) {
-		for(RouteArc a : arcs)
-			if(a.getSource() == otherNode)
-				return a;
-
-		return null;
-	}
-
 	/**
 	 * Provide an upper bound to the size (in bytes) that
 	 * writing this node will take.
@@ -320,7 +312,7 @@ public class RouteNode implements Comparable<RouteNode> {
 								// same road
 								return true;
 							}
-							// one's a link road and the other isn't
+							// One is a link road and the other isn't
 							// so consider them different roads - this
 							// is because people often give a link
 							// road that's leaving some road the same
@@ -367,8 +359,8 @@ public class RouteNode implements Comparable<RouteNode> {
 		return sideHeading > outHeading;
 	}
 
-	private static int ATH_OUTGOING = 1;
-	private static int ATH_INCOMING = 2;
+	private static final int ATH_OUTGOING = 1;
+	private static final int ATH_INCOMING = 2;
 
 	public static final int ATH_DEFAULT_MASK = ATH_OUTGOING | ATH_INCOMING;
 
@@ -717,9 +709,9 @@ public class RouteNode implements Comparable<RouteNode> {
 			List<RouteNode> seen = new ArrayList<RouteNode>();
 			seen.add(this);
 
-			for(;;) {
+			while (true) {
 
-				if(seen.contains(nb)) {
+				if (seen.contains(nb)) {
 					// looped - give up
 					nb = null;
 					break;
@@ -730,23 +722,22 @@ public class RouteNode implements Comparable<RouteNode> {
 
 				boolean connectsToNonRoundaboutSegment = false;
 				RouteArc nextRoundaboutArc = null;
-				for(RouteArc nba : nb.arcs) {
-					if(!nba.getRoadDef().isSynthesised()) {
-						if(nba.getRoadDef().isRoundabout()) {
-							if(nba.isForward())
+				for (RouteArc nba : nb.arcs) {
+					if (!nba.getRoadDef().isSynthesised()) {
+						if (nba.getRoadDef().isRoundabout()) {
+							if (nba.isForward())
 								nextRoundaboutArc = nba;
-						}
-						else
+						} else
 							connectsToNonRoundaboutSegment = true;
 					}
 				}
 
-				if(connectsToNonRoundaboutSegment) {
+				if (connectsToNonRoundaboutSegment) {
 					// great, that's what we're looking for
 					break;
 				}
 
-				if(nextRoundaboutArc == null) {
+				if (nextRoundaboutArc == null) {
 					// not so good, the roundabout stops in mid air?
 					nb = null;
 					break;
@@ -756,7 +747,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 
 			if(nb == null) {
-				// something's not right so give up
+				// something is not right so give up
 				continue;
 			}
 
@@ -799,7 +790,7 @@ public class RouteNode implements Comparable<RouteNode> {
 						}
 
 						// now check the flare roads for direction and
-						// onewayness
+						// oneway
 
 						// only issue one warning per flare
 						if(!fa.isForward())
@@ -879,7 +870,7 @@ public class RouteNode implements Comparable<RouteNode> {
 				}
 			}
 
-			if(maybeDeadEndArcs.size() == 0) {
+			if(maybeDeadEndArcs.isEmpty()) {
 				// nothing to complain about
 				return;
 			}

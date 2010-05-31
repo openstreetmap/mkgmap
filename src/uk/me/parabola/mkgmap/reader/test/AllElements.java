@@ -46,7 +46,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
  */
 class AllElements {
 
-	// These values are perhaps bias a bit towards places at mid latitues,
+	// These values are perhaps bias a bit towards places at mid latitudes,
 	// adjust as required.
 	private static final double ELEMENT_SPACING = 0.002;
 	private static final double ELEMENT_SIZE = 0.001;

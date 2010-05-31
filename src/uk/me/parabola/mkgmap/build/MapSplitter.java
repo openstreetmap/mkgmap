@@ -155,7 +155,6 @@ class MapSplitter {
 
 			MapArea[] sublist = area.split(1, 1, res);
 			assert sublist.length == 1: sublist.length;
-			//assert sublist[0].getAreaResolution() == res: sublist[0].getAreaResolution();
 			alist.add(sublist[0]);
 		}
 	}

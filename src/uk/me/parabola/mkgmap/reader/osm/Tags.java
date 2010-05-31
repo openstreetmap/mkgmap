@@ -150,8 +150,6 @@ public class Tags implements Iterable<String> {
 	public Iterator<String> iterator() {
 		return new Iterator<String>() {
 			private int pos;
-			private String wild;
-			//private boolean doWild;
 
 			public boolean hasNext() {
 				// After every normal entry there is a wild card entry.
@@ -180,8 +178,6 @@ public class Tags implements Iterable<String> {
 				} else*/ if (pos < capacity) {
 					for (int i = pos; i < capacity; i++) {
 						if (values[i] != null) {
-							//doWild = true;
-							wild = keys[i];
 							pos = i+1;
 							return (keys[i] + "=" + values[i]);
 						}

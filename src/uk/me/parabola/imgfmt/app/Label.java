@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.nio.charset.Charset;
-
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
@@ -141,7 +139,6 @@ public class Label implements Comparable<Label> {
 	public int hashCode() {
 		return offset;
 	}
-	Charset cs = Charset.forName("latin1");
 
 	/**
 	 * Note: this class has a natural ordering that is inconsistent with equals.

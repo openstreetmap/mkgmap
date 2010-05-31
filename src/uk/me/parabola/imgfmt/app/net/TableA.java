@@ -47,7 +47,7 @@ public class TableA {
 
 	private static int count;
 
-	private boolean frozen = false; // true when no more arcs should be added
+	private boolean frozen ; // true when no more arcs should be added
 
 	public TableA() {
 		log.debug("creating TableA", count);

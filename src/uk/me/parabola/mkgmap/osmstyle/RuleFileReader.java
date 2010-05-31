@@ -368,7 +368,6 @@ public class RuleFileReader {
 
 	private void createAndSaveRule(String keystring, Op expr, ActionList actions, GType gt) {
 
-		//System.out.println(keystring); // TODO This will be used - if not delete it
 		Rule rule;
 		if (actions.isEmpty()) 
 			rule = new ExpressionRule(expr, gt);

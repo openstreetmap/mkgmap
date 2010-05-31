@@ -31,11 +31,7 @@ public abstract class ImgReader implements Closeable, Configurable {
 		Utils.closeFile(reader);
 	}
 
-	public long getSize() {
-		throw new UnsupportedOperationException("getSize not implemented yet");
-	}
-
-	public long position() {
+	protected long position() {
 		return reader.position();
 	}
 

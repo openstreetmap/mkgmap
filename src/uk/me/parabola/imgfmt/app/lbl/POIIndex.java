@@ -24,7 +24,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  *
  * @author Mark Burton
  */
-public class POIIndex implements Comparable {
+public class POIIndex implements Comparable<POIIndex> {
 
 	private final String name;
 	private final byte poiIndex;
@@ -42,10 +42,9 @@ public class POIIndex implements Comparable {
 		writer.put(poiIndex);
 		writer.putChar((char)group.getNumber());
 		writer.put(subType);
-		//System.err.println("Writing POI Index " + name + " group = " + group.getNumber());
 	}
 
-	public int compareTo(Object o) {
-		return name.compareTo(((POIIndex)o).name);
+	public int compareTo(POIIndex o) {
+		return name.compareTo(o.name);
 	}
 }

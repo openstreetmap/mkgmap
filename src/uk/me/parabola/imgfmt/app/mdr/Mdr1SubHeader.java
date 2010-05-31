@@ -62,10 +62,6 @@ public class Mdr1SubHeader {
 		}
 	}
 
-	public void setStartSubsection(int sub, int pos) {
-		//sections[sub].setPosition(pos);
-	}
-
 	public void setEndSubsection(int sub, int pos) {
 		sections[sub].setSize(pos - sections[sub].getPosition());
 	}

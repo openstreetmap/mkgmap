@@ -67,7 +67,7 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		return contains(this.getPoints(), co, true);
 	}
 	
-	/* 
+	/**
 	 * Checks if a point is contained within a shape.
 	 * 
 	 * @param points points that define the shape
@@ -80,7 +80,6 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		// http://en.wikipedia.org/wiki/Point_in_polygon
 		// with inspiration from:
 		// http://www.visibone.com/inpoly/
-		boolean inside = false;
 		if (points.size() < 3)
 			return false;
 
@@ -100,7 +99,7 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		int xtarget = target.getLatitude();
 		int ytarget = target.getLongitude();
 
-		for (int i = 0; i < points.size() - 1; i++) {	
+		boolean inside = false;for (int i = 0; i < points.size() - 1; i++) {
 
 			// apply transformation points to change target point to (0,0)
 			int x0 = points.get(i).getLatitude() - xtarget;
@@ -146,7 +145,7 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		return inside;
 	}
 
-	/*
+	/**
 	 * Checks if a point is on a line.
 	 * 
 	 * @param x0 x value of first point in line

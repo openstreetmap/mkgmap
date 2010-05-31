@@ -62,13 +62,13 @@ public class RoadNetwork {
 
 	private final List<RoadDef> roadDefs = new ArrayList<RoadDef>();
 	private List<RouteCenter> centers = new ArrayList<RouteCenter>();
-	private int adjustTurnHeadings = 0;
+	private int adjustTurnHeadings ;
 	private boolean checkRoundabouts;
 	private boolean checkRoundaboutFlares;
-	private int maxFlareLengthRatio = 0;
+	private int maxFlareLengthRatio ;
 	private boolean reportSimilarArcs;
 	private boolean outputCurveData;
-	private int reportDeadEnds = 0;
+	private int reportDeadEnds ;
 
 	public void config(EnhancedProperties props) {
 		String ath = props.getProperty("adjust-turn-headings");

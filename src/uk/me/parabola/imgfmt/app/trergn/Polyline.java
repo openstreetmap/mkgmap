@@ -50,8 +50,6 @@ public class Polyline extends MapObject {
 	private static final int FLAG_DIR = 0x40;
 	private static final int FLAG_2BYTE_LEN = 0x80;
 
-	private int number;
-
 	// Reference to NET section, if any
 	private RoadDef roaddef;
 

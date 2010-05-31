@@ -402,7 +402,7 @@ public class MapArea implements MapDataSource {
 		case POINT_KIND:
 		case XT_POINT_KIND:
 			if(res <= areaResolution) {
-				// Points are predictibly less than 9 bytes.
+				// Points are predictably less than 9 bytes.
 				sizes[kind] += 9;
 				if(!p.hasExtendedType()) {
 					if(((MapPoint) p).isCity())

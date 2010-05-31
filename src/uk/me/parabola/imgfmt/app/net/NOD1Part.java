@@ -142,11 +142,6 @@ public class NOD1Part {
 			extend(new BBox(co));
 		}
 
-		Coord center() {
-			assert !empty : "trying to get center of empty BBox";
-			return new Coord((minLat + maxLat)/2, (minLon + maxLon)/2);
-		}
-
 		BBox[] splitLat() {
 			BBox[] ret = new BBox[2];
 			int midLat = (minLat + maxLat) / 2;
@@ -247,7 +242,7 @@ public class NOD1Part {
 	/**
 	 * Subdivide this part recursively until it satisfies the constraints.
 	 */
-	public List<RouteCenter> subdivideHelper(int depth) {
+	protected List<RouteCenter> subdivideHelper(int depth) {
 		List<RouteCenter> centers = new LinkedList<RouteCenter>();
 
 		if (satisfiesConstraints()) {

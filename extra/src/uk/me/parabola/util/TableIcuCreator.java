@@ -30,13 +30,12 @@ import com.ibm.icu.text.Transliterator;
  */
 public class TableIcuCreator {
 	private static Transliterator trans;
-	private static Transliterator decomposed;
 
 	public static void main(String[] args) {
 		int count = 0;
 		Enumeration<String> targets = Transliterator.getAvailableIDs();
 		while (targets.hasMoreElements()) {
-			String s = (String) targets.nextElement();
+			String s = targets.nextElement();
 			System.out.println(s);
 			count++;
 		}
@@ -46,7 +45,6 @@ public class TableIcuCreator {
 		//trans = Transliterator.getInstance("Any-en_US; nfd; [\u0301\u0302\u0304\u0306\u0307\u0308\u030c\u0328] remove; nfc"); // [:nonspacing mark:] remove; nfc");
 
 		trans = Transliterator.getInstance("Any-Latin"); // [:nonspacing mark:] remove; nfc");
-		decomposed = Transliterator.getInstance("Any-Latin; nfd"); // [:nonspacing mark:] remove; nfc");
 
 		for (int row = 0; row < 256; row++) {
 			String name = String.format("row%02x.trans", row);
@@ -103,20 +101,16 @@ public class TableIcuCreator {
 
 			out.format("U+%02x%02x %-12.12s # Character %s", row, i, result, single);
 
-			//if (!inRange) {
-			//	String s = decomposed.transliterate(single);
-			//	out.format(", %s", s);
-			//	for (char rc : s.toCharArray()) {
-			//		out.format(" %04x", (int) rc);
-			//	}
-			//}
 			out.println();
 		}
 
 		if (count == 0)
-			throw new UselessException();
+			throw new UselessException("count of 0");
 	}
 
 	private static class UselessException extends Exception {
+		private UselessException(String msg) {
+			super(msg);
+		}
 	}
 }

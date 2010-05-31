@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app.lbl;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 
 /**
  * Represent a facility at a motorway exit
@@ -28,11 +27,11 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 public class ExitFacility {
 
 	private final int index;
-	private Label description;
-	private	int type;	// truck stop - 24 hour diesel + food
-	private	int direction;	// undefined
-	private	int facilities;	// none
-	private boolean last;
+	private final Label description;
+	private final	int type;	// truck stop - 24 hour diesel + food
+	private final	int direction;	// undefined
+	private final	int facilities;	// none
+	private final boolean last;
 
 	public ExitFacility(int type, char direction, int facilities, Label description, boolean last, int index) {
 		this.type = type;

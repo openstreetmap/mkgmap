@@ -16,19 +16,16 @@
  */
 package uk.me.parabola.imgfmt.app.trergn;
 
-import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
-
-import uk.me.parabola.log.Logger;
-
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.text.DecimalFormat;
-import java.text.ParsePosition;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.LBLFile;
+import uk.me.parabola.log.Logger;
 
 /*
 Add support for extended type attributes.
@@ -179,10 +176,10 @@ public class ExtTypeAttributes {
 
 	private static final Logger log = Logger.getLogger(ExtTypeAttributes.class);
 
-	private DecimalFormat decimalFormat = new DecimalFormat();
+	private final DecimalFormat decimalFormat = new DecimalFormat();
 
-	private Map<String, String> attributes;
-	private String objectName;
+	private final Map<String, String> attributes;
+	private final String objectName;
 
 	private byte[] extraBytes;
 
@@ -195,10 +192,11 @@ public class ExtTypeAttributes {
 	private final int DISTANCE_FLAG_METRIC_INDEX = 0;
 	private final int DISTANCE_FLAG_TENTHS_INDEX = 1;
 
-	private final byte FLAGS0_RACON_BIT       = (1 << 0);
-	private final byte FLAGS0_NOTE_BIT        = (1 << 1);
-	private final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 2);
-	private final byte FLAGS0_INT_DESIG_BIT   = (1 << 3);
+	private static final byte FLAGS0_RACON_BIT       = (1);
+	private static final byte FLAGS0_NOTE_BIT        = (1 << 1);
+	private static final byte FLAGS0_LOCAL_DESIG_BIT = (1 << 2);
+	private static final byte FLAGS0_INT_DESIG_BIT   = (1 << 3);
+	private static final int[] ZERO_INT_ARRAY = new int[0];
 
 	public ExtTypeAttributes(Map<String, String> attributes, String objectName) {
 		this.attributes = attributes;
@@ -374,13 +372,13 @@ public class ExtTypeAttributes {
 		if(attributes.get("seamark:light:1") != null) {
 			// when multiple lights are defined, they must be ordered
 			// by increasing sector start angle
-			class SeamarkLight implements Comparable {
+			class SeamarkLight implements Comparable<SeamarkLight> {
 				String colour;
 				int sectorStart;
 				int sectorEnd;
 				int range;
 				SeamarkLight(String desc) {
-					String parts[] = desc.split(":");
+					String[] parts = desc.split(":");
 					if(parts.length == 4) {
 						colour = parts[0];
 						sectorStart = Double.valueOf(parts[1]).intValue();
@@ -392,8 +390,8 @@ public class ExtTypeAttributes {
 						range = Double.valueOf(parts[3]).intValue();
 					}
 				}
-				public int compareTo(Object other) {
-					return sectorStart - ((SeamarkLight)other).sectorStart;
+				public int compareTo(SeamarkLight other) {
+					return sectorStart - other.sectorStart;
 				}
 			}
 			List<SeamarkLight> lights = new ArrayList<SeamarkLight>();
@@ -451,16 +449,15 @@ public class ExtTypeAttributes {
 
 		if(mapObject instanceof Point) {
 
-			Light lights[] = parseLights(attributes.get("light"));
+			Light[] lights = parseLights(attributes.get("light"));
 			int[] periods = parsePeriods(attributes.get("period"));
 
 			if(type8to15 == 0x0100) { // lights
-				int nob = 6;
 				byte flags0 = 0;
-				byte flags1 = 0;
 				int lightType = lightType("");
 				if(meansYes(attributes.get("racon")))
 					flags0 |= FLAGS0_RACON_BIT;
+				int nob = 6;
 				if(note != null) {
 					nob += 3;
 					flags0 |= FLAGS0_NOTE_BIT;
@@ -473,6 +470,7 @@ public class ExtTypeAttributes {
 					nob += 3;
 					flags0 |= FLAGS0_LOCAL_DESIG_BIT;
 				}
+				byte flags1 = 0;
 				if(lights.length > 1) {
 					for(Light l : lights)
 						nob += (l.colour != 0)? 3 : 2;
@@ -492,9 +490,9 @@ public class ExtTypeAttributes {
 					flags1 |= 0x01; // further record present?
 				byte lightsDef = 0x22;
 				String hafs = attributes.get("height-above-foundation");
-				boolean[] hafsDistFlags = new boolean[2];
 				Integer hafi = null;
 				if(hafs != null) {
+					boolean[] hafsDistFlags = new boolean[2];
 					hafi = parseDistance(hafs, hafsDistFlags);
 					if(hafsDistFlags[DISTANCE_FLAG_TENTHS_INDEX])
 						hafi /= 10;
@@ -507,9 +505,9 @@ public class ExtTypeAttributes {
 						lightsDef &= ~0x20;
 				}
 				String hads = attributes.get("height-above-datum");
-				boolean[] hadsDistFlags = new boolean[2];
 				Integer hadi = null;
 				if(hads != null) {
+					boolean[] hadsDistFlags = new boolean[2];
 					hadi = parseDistance(hads, hadsDistFlags);
 					if(hadsDistFlags[DISTANCE_FLAG_TENTHS_INDEX])
 						hadi /= 10;
@@ -619,15 +617,14 @@ public class ExtTypeAttributes {
 				return extraBytes;
 			}
 			else if(type8to15 == 0x0200) { // buoys
-				int nob = 4;
 				byte flags0 = 0;
-				byte flags1 = 0;
 				int lt = lightType("");
 				if(meansYes(attributes.get("racon"))) {
 					// this doesn't get reported on mapsource
 					// maybe racons aren't supported for buoys?
 					flags0 |= FLAGS0_RACON_BIT;
 				}
+				int nob = 4;
 				if(note != null) {
 					nob += 3;
 					flags0 |= FLAGS0_NOTE_BIT;
@@ -642,6 +639,7 @@ public class ExtTypeAttributes {
 				}
 				if(periods.length > 0)
 					++nob;		// for total period
+				byte flags1 = 0;
 				if(periods.length > 1) {
 					for(int p : periods) {
 						while(p > 0x3f) {
@@ -683,7 +681,6 @@ public class ExtTypeAttributes {
 					extraBytes[i++] = (byte)(off >> 8);
 					extraBytes[i++] = (byte)(off >> 16);
 				}
-				byte flags2 = 0;
 				int period = 0;
 				for(int p : periods)
 					period += p;
@@ -691,6 +688,7 @@ public class ExtTypeAttributes {
 					period = 255;
 					log.warn("Can't encode periods greater than 25.5 seconds for buoy lights");
 				}
+				byte flags2 = 0;
 				if(periods.length > 0)
 					flags2 |= (byte)0x80;
 				extraBytes[i++] = (byte)(flags2 | lt);
@@ -818,16 +816,15 @@ public class ExtTypeAttributes {
 				String ss = attributes.get("style");
 				if(ss != null) {
 					int style = Integer.decode(ss.trim());
-					if((style & 0xff00) != 0) {
-						// format is 0xSSCC (SS = style, CC = colour)
-						extraBytes = new byte[2];
-						extraBytes[0] = (byte)(0x80 | (style & 0xf));
-						extraBytes[1] = (byte)(((style >> 9) & 0x18) | ((style >> 8) & 0x3));
-					}
-					else {
+					if ((style & 0xff00) == 0) {
 						// format is 0xCC (CC = colour)
 						extraBytes = new byte[1];
-						extraBytes[0] = (byte)(style & 0xf);
+						extraBytes[0] = (byte) (style & 0xf);
+					} else {
+						// format is 0xSSCC (SS = style, CC = colour)
+						extraBytes = new byte[2];
+						extraBytes[0] = (byte) (0x80 | (style & 0xf));
+						extraBytes[1] = (byte) (((style >> 9) & 0x18) | ((style >> 8) & 0x3));
 					}
 					return extraBytes;
 				}
@@ -1009,7 +1006,7 @@ public class ExtTypeAttributes {
 
 	private int[] parsePeriods(String ps) {
 		if(ps == null)
-			return new int[0];
+			return ZERO_INT_ARRAY;
 		String [] psa = ps.split(",");
 		int [] periods = new int[psa.length];
 		for(int i = 0; i < psa.length; ++i)
@@ -1056,7 +1053,7 @@ public class ExtTypeAttributes {
 		private double range;
 		private double angle;
 
-		String[] colours = {
+		final String[] colours = {
 			"unlit",
 			"red",
 			"green",

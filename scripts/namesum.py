@@ -1,6 +1,4 @@
 #
-# File: namesum.py
-# 
 # Copyright (C) 2006 Steve Ratcliffe
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -67,9 +65,6 @@ def main(name):
 	print 'tot', tot, hex(tot)
 	print
 	return
-	print sum1, hex(sum1), sum2, hex(sum2)
-	tot = sum1+sum2
-	print tot, hex(tot)
 
 
 

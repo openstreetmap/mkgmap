@@ -169,8 +169,6 @@ public class PlacesFile {
 		
 		String uniqueCityName = name.toUpperCase() + "_C" + country.getLabel().getOffset();
 		
-		City c = null;
-
 		// if unique is true, make sure that the name really is unique
 		if(unique && cities.get(uniqueCityName) != null) {
 			do {
@@ -179,11 +177,11 @@ public class PlacesFile {
 			} while(cities.get(uniqueCityName) != null);
 		}
 
+		City c = null;
 		if(!unique)
 			c = cities.get(uniqueCityName);
 		
-		if(c == null)
-		{
+		if(c == null) {
 			c = new City(country);
 
 			Label l = lblFile.newLabel(name);
@@ -201,21 +199,19 @@ public class PlacesFile {
 		
 		String uniqueCityName = name.toUpperCase() + "_R" + region.getLabel().getOffset();
 		
-		City c = null;
-
 		// if unique is true, make sure that the name really is unique
 		if(unique && cities.get(uniqueCityName) != null) {
 			do {
-				// add randomish suffix
+				// add semi-random suffix.  TODO should not create a new random each time
 				uniqueCityName += "_" + new Random().nextInt(0x10000);
 			} while(cities.get(uniqueCityName) != null);
 		}
 
+		City c = null;
 		if(!unique)
 			c = cities.get(uniqueCityName);
 		
-		if(c == null)
-		{
+		if(c == null) {
 			c = new City(region);
 
 			Label l = lblFile.newLabel(name);

@@ -187,7 +187,7 @@ public class MapMaker implements MapProcessor {
 
 					copyAddressInformation(shape, newPoint);
 
-					newPoint.setLocation(shape.getLocation()); // TODO use centriod
+					newPoint.setLocation(shape.getLocation()); // TODO use centroid
 
 					src.getPoints().add(newPoint);
 

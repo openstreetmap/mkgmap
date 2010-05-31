@@ -32,7 +32,7 @@ class LinePreparer {
 	private final Polyline polyline;
 
 	private boolean extraBit;
-	private boolean extTypeLine;
+	private final boolean extTypeLine;
 	private boolean xSameSign;
 	private boolean xSignNegative;     // Set if all negative
 
@@ -224,7 +224,7 @@ class LinePreparer {
 
 			// compute normalized differences
 			//   -2^(shift-1) <= dx, dy < 2^(shift-1)
-			// XXX: relies on the fact that java ints are 32 bit signd
+			// XXX: relies on the fact that java ints are 32 bit signed
 			final int offset = 8+shift;
 			int dx = (lon - lastLong) << offset >> offset;
 			int dy = (lat - lastLat) << offset >> offset;

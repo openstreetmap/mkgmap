@@ -59,7 +59,7 @@ public class MapLine extends MapElement {
 		if (this.points != null)
 			log.warn("overwriting points");
 		assert points != null : "trying to set null points";
-		assert points.size() != 0 : "trying to set points with zero length";
+		assert !points.isEmpty() : "trying to set points with zero length";
 
 		this.points = points;
 		testForConsecutivePoints(points);
@@ -98,10 +98,6 @@ public class MapLine extends MapElement {
 	}
 
 	public boolean isRoad() {
-		return false;
-	}
-
-	public boolean isHighway() {
 		return false;
 	}
 

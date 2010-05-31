@@ -14,8 +14,6 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.log.Logger;
 
@@ -44,7 +42,7 @@ public class RouteArc {
 	private int offset;
 
 	private int initialHeading; // degrees
-	private int finalHeading; // degrees
+	private final int finalHeading; // degrees
 
 	private final RoadDef roadDef;
 
@@ -99,10 +97,6 @@ public class RouteArc {
 
 	public int getFinalHeading() {
 		return finalHeading;
-	}
-
-	public void setFinalHeading(int fh) {
-		finalHeading = fh;
 	}
 
 	public RouteNode getSource() {

@@ -56,17 +56,16 @@ public abstract class Overview implements Comparable<Overview> {
 	}
 
 	public void write(ImgFileWriter file) {
-		if(extType != 0) {
-			file.put((byte)type);
-			file.put((byte)maxLevel);
-			file.put((byte)subType);
-			file.put((byte)0);
-		}
-		else {
+		if (extType == 0) {
 			file.put((byte) (type & 0xff));
 			file.put((byte) maxLevel);
 			if (size > 2)
 				file.put((byte) (subType & 0xff));
+		} else {
+			file.put((byte) type);
+			file.put((byte) maxLevel);
+			file.put((byte) subType);
+			file.put((byte) 0);
 		}
 	}
 

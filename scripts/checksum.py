@@ -1,6 +1,4 @@
 #
-# File: checksum.py
-# 
 # Copyright (C) 2006 Steve Ratcliffe
 # 
 #  This program is free software; you can redistribute it and/or modify
@@ -18,7 +16,7 @@
 #
 
 #
-# Sets the checksum for the file.  It is possible that the checksum
+# Sets the check sum for the file.  It is possible that the check sum
 # is not actually checked by anything.
 #
 

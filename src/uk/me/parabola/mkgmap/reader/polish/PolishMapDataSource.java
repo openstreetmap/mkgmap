@@ -228,7 +228,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 								segPoints.add(p);
 							}
 						}
-						if(segPoints.size() > 0) {
+						if(!segPoints.isEmpty()) {
 							polyline.setPoints(segPoints);
 							mapper.addLine(polyline);
 						}
@@ -643,69 +643,69 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		int colour = 0;
 		int style = 0;
 
-		for(String key : extraAttributes.keySet()) {
-			String v = extraAttributes.get(key);
-			if(key.equals("Depth")) {
+		for(Map.Entry<String, String> entry : extraAttributes.entrySet()) {
+			String v = entry.getValue();
+			if(entry.getKey().equals("Depth")) {
 				String u = extraAttributes.get("DepthUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("depth", v);
 			}
-			else if(key.equals("Height")) {
+			else if(entry.getKey().equals("Height")) {
 				String u = extraAttributes.get("HeightUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height", v);
 			}
-			else if(key.equals("HeightAboveFoundation")) {
+			else if(entry.getKey().equals("HeightAboveFoundation")) {
 				String u = extraAttributes.get("HeightAboveFoundationUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-foundation", v);
 			}
-			else if(key.equals("HeightAboveDatum")) {
+			else if(entry.getKey().equals("HeightAboveDatum")) {
 				String u = extraAttributes.get("HeightAboveDatumUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-datum", v);
 			}
-			else if(key.equals("Color")) {
+			else if(entry.getKey().equals("Color")) {
 				colour = Integer.decode(v);
 			}
-			else if(key.equals("Style")) {
+			else if(entry.getKey().equals("Style")) {
 				style = Integer.decode(v);
 			}
-			else if(key.equals("Position")) {
+			else if(entry.getKey().equals("Position")) {
 				eta.put("position", v);
 			}
-			else if(key.equals("FoundationColor")) {
+			else if(entry.getKey().equals("FoundationColor")) {
 				eta.put("color", v);
 			}
-			else if(key.equals("Light")) {
+			else if(entry.getKey().equals("Light")) {
 				eta.put("light", v);
 			}
-			else if(key.equals("LightType")) {
+			else if(entry.getKey().equals("LightType")) {
 				eta.put("type", v);
 			}
-			else if(key.equals("Period")) {
+			else if(entry.getKey().equals("Period")) {
 				eta.put("period", v);
 			}
-			else if(key.equals("Note")) {
+			else if(entry.getKey().equals("Note")) {
 				eta.put("note", v);
 			}
-			else if(key.equals("LocalDesignator")) {
+			else if(entry.getKey().equals("LocalDesignator")) {
 				eta.put("local-desig", v);
 			}
-			else if(key.equals("InternationalDesignator")) {
+			else if(entry.getKey().equals("InternationalDesignator")) {
 				eta.put("int-desig", v);
 			}
-			else if(key.equals("FacilityPoint")) {
+			else if(entry.getKey().equals("FacilityPoint")) {
 				eta.put("facilities", v);
 			}
-			else if(key.equals("Racon")) {
+			else if(entry.getKey().equals("Racon")) {
 				eta.put("racon", v);
 			}
-			else if(key.equals("LeadingAngle")) {
+			else if(entry.getKey().equals("LeadingAngle")) {
 				eta.put("leading-angle", v);
 			}
 		}

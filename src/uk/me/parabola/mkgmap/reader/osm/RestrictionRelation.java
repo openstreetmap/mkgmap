@@ -10,7 +10,6 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
-import uk.me.parabola.mkgmap.general.RoadNetwork;
 
 /**
  * Representation of an OSM turn restriction
@@ -57,9 +56,9 @@ public class RestrictionRelation extends Relation {
 
 			if(viaCoord != null)
 				location = viaCoord;
-			else if(fromWay != null && fromWay.getPoints().size() > 0)
+			else if(fromWay != null && !fromWay.getPoints().isEmpty())
 				location = fromWay.getPoints().get(0);
-			else if(toWay != null && toWay.getPoints().size() > 0)
+			else if(toWay != null && !toWay.getPoints().isEmpty())
 				location = toWay.getPoints().get(0);
 
 			if(location != null)
@@ -160,10 +159,6 @@ public class RestrictionRelation extends Relation {
 
 	public Way getToWay() {
 		return toWay;
-	}
-
-	public Way getViaWay() {
-		return viaWay;
 	}
 
 	public Coord getViaCoord() {

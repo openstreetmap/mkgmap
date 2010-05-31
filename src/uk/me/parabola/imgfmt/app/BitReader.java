@@ -80,8 +80,4 @@ public class BitReader {
 		}
 		return res;
 	}
-
-	public int getBitPosition() {
-		return bitPosition;
-	}
 }

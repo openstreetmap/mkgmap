@@ -97,10 +97,6 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 		this.name = name;
 	}
 
-	public Mdr5Record getCity() {
-		return city;
-	}
-
 	public void setCity(Mdr5Record city) {
 		this.city = city;
 	}

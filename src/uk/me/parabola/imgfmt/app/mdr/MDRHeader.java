@@ -37,7 +37,7 @@ public class MDRHeader extends CommonHeader {
 	// The section lengths that we are going to implement to begin
 	// with.  These lengths are not at all constant so this array will
 	// eventually not be needed. Consider them defaults.
-	private final char[] sectRecLen = {
+	private static final char[] sectRecLen = {
 		0,
 			8, 2, 2, 3,  // 1 - 4
 			11, 5, 7, 4,  // 5 - 8

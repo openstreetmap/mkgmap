@@ -135,10 +135,6 @@ public class City implements Comparable<City> {
 		return pointIndex;
 	}
 
-	public Label getLabel() {
-		return label;
-	}
-
 	public int getRegionNumber() {
 		if (region == null)
 			return 0;

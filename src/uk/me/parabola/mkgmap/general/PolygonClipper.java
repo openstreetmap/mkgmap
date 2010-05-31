@@ -95,7 +95,7 @@ public class PolygonClipper {
 			Coord co = new Coord(Math.round(res[1]), Math.round(res[0]));
 
 			if (type == PathIterator.SEG_MOVETO) {
-				// We get a moveto at the begining and if this area is actually
+				// We get a move to at the beginning and if this area is actually
 				// discontiguous we may get more than one, each one representing
 				// the start of another polygon in the output.
 				if (coords != null)

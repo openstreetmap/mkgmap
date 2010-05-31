@@ -33,7 +33,7 @@ import uk.me.parabola.imgfmt.app.Section;
  */
 public class SRTHeader extends CommonHeader {
 	// The header length we are using for the SRT file
-	public static final int HEADER_LEN = 37;
+	private static final int HEADER_LEN = 37;
 
 	// The section structure of this file is somewhat different to other
 	// files, but I am still going to model it using Section.

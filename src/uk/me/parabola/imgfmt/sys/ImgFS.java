@@ -58,10 +58,10 @@ public class ImgFS implements FileSystem {
 
 	// The filesystem is responsible for allocating blocks
 	private BlockManager fileBlockManager;
-	private static final long BASIC_BLOCK_SIZE = (long) 512;
+	private static final long BASIC_BLOCK_SIZE = 512L;
 	private BlockManager headerBlockManager;
 
-	private byte xorByte = 0;	// if non-zero, all bytes are XORed with this
+	private byte xorByte;	// if non-zero, all bytes are XORed with this
 
 	/**
 	 * Private constructor, use the static {@link #createFs} and {@link #openFs}

@@ -84,7 +84,7 @@ public class NETFile extends ImgFile {
 			}
 		}
 
-		if(sortedRoads.size() > 0) {
+		if(!sortedRoads.isEmpty()) {
 			Collections.sort(sortedRoads, new Comparator<Sortable<Label, RoadDef>>() {
 					public int compare(Sortable<Label, RoadDef> a, Sortable<Label, RoadDef> b) {
 						// sort using cleaned versions of the labels
@@ -118,7 +118,7 @@ public class NETFile extends ImgFile {
 
 	private List<Sortable<Label, RoadDef>> simplifySortedRoads(LinkedList<Sortable<Label, RoadDef>> in) {
 		List<Sortable<Label, RoadDef>> out = new ArrayList<Sortable<Label, RoadDef>>(in.size());
-		while(in.size() > 0) {
+		while(!in.isEmpty()) {
 			String name0 = in.get(0).getKey().getTextSansGarminCodes();
 			RoadDef road0 = in.get(0).getValue();
 			City city0 = road0.getCity();

@@ -10,12 +10,12 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
- *  The Locator tries to fill missing country, region, postal coude information
+ *  The Locator tries to fill missing country, region, postal code information
  *
  *	The algorithm works like this:
  *
  *	1. Step: Go through all cities an check if they have useful country region info
- *	The best case is if the tags is_in:country and is_in:county are present thats easy.
+ *	The best case is if the tags is_in:country and is_in:county are present that's easy.
  *	Some cities have is_in information that can be used. We check for three different 
  *	formats:
  *
@@ -35,8 +35,8 @@
  *	Especially hamlets often have no full is_in information. They only have one entry in 
  *	is_in that points to the city they belong to. I will check if I can find the name 
  *	of this city in the "City" list. If there are more with the same name I use the 
- *	closest one. If we can't find the exact name I use fuzzy name search. Thats a
- *	workaround for german umlaute since sometimes there are used in the tags and 
+ *	closest one. If we can't find the exact name I use fuzzy name search. That's a
+ *	workaround for german umlaut since sometimes there are used in the tags and
  *	sometimes there are written as ue ae oe. 
  *
  *	3. Step: Do the same like in step 2 once again. This is used to support at least
@@ -73,11 +73,11 @@ public class Locator {
 
 	public void addLocation(MapPoint p) 
 	{
-		resolveIsInInfo(p); // Preprocess the is_in field
+		resolveIsInInfo(p); // Pre-process the is_in field
 		
 		if(autoFillLevel < 1 &&  p.getCity() == null)
 		{			
-			// Without autofill city name is the name of the tag
+			// Without auto-fill city name is the name of the tag
 			p.setCity(p.getName());
 		}
 		
@@ -133,7 +133,7 @@ public class Locator {
 	private boolean isOpenGeoDBCountry(String country)
 	{
 		// Countries that have open geo db data in osm
-		// Right now this are only germany, austria and swizerland
+		// Right now this are only germany, austria and switzerland
 		return locConfig.isOpenGeoDBCountry(country);
 	}
 
@@ -170,8 +170,8 @@ public class Locator {
 			if(cityList.length > 1 &&
 				isContinent(cityList[cityList.length-1]))	// Is last a continent ?
 			{
-				// The one before contient should be the country
-	  		p.setCountry(fixCountryString(cityList[cityList.length-2].trim()));				
+				// The one before continent should be the country
+				p.setCountry(fixCountryString(cityList[cityList.length-2].trim()));
 
 				// aks the config which info to use for region info				
 				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
@@ -185,7 +185,7 @@ public class Locator {
 
 			if(cityList.length > 1 && isContinent(cityList[0]))	// Is first a continent ?
 			{
-				// The one before contient should be the country
+				// The one before continent should be the country
 				p.setCountry(fixCountryString(cityList[1].trim()));
 				
 				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
@@ -228,9 +228,7 @@ public class Locator {
 	{
 		long   startTime = System.nanoTime();
 	
-		MapPoint nextPoint;
-	
-		nextPoint = cityMap.findNextPoint(p);
+		MapPoint nextPoint = cityMap.findNextPoint(p);
 		
 		totalFinds++;
 		totalTime += ((System.nanoTime() - startTime) / 1e9);
@@ -239,15 +237,14 @@ public class Locator {
 	
 	public  MapPoint findByCityName(MapPoint p)
 	{
-		MapPoint near   = null;
-		Double minDist  = Double.MAX_VALUE;
-		Collection <MapPoint> nextCityList;
 		
 		if(p.getCity() == null)
 			return null;
-		
-		nextCityList = cityMap.getList(p.getCity());
-				
+
+		Collection<MapPoint> nextCityList = cityMap.getList(p.getCity());
+
+		MapPoint near = null;
+		Double minDist = Double.MAX_VALUE;
 		if(nextCityList != null)
 		{
 			for (MapPoint nextCity: nextCityList)		
@@ -286,9 +283,7 @@ public class Locator {
 	
 	private MapPoint findCity(MapPoint place, boolean fuzzy)
 	{
-		MapPoint near   = null;
-		Double minDist  = Double.MAX_VALUE;
-		Collection <MapPoint> nextCityList = null;	
+		MapPoint near = null;
 
 		String isIn = place.getIsIn();
 			
@@ -299,6 +294,8 @@ public class Locator {
 			// Go through the isIn string and check if we find a city with this name
 			// Lets hope we find the next bigger city 
 
+			Double minDist = Double.MAX_VALUE;
+			Collection<MapPoint> nextCityList = null;
 			for (String aCityList : cityList) {
 				String biggerCityName = aCityList.trim();
 
@@ -320,7 +317,7 @@ public class Locator {
 				}
 			}
 
-			if (autoFillLevel > 3)  // Some debug output to find suspicios relations
+			if (autoFillLevel > 3)  // Some debug output to find suspicious relations
 			{
 			   
 				if(near != null && minDist > 30000)
@@ -345,7 +342,7 @@ public class Locator {
 	public void resolve() {
 
 		if(autoFillLevel < 0)
-			return;			// Nothing to do if autofill is fulli disabled
+			return;			// Nothing to do if auto-fill is fully disabled
 
 		if(autoFillLevel > 2)
 		{
@@ -369,7 +366,7 @@ public class Locator {
 					MapPoint near = findCity(place, false);
 
 
-					// if this didn't worked try to workaround german umlaute 
+					// if this didn't worked try to workaround german umlaut
 
 					if (near == null)
 						near = findCity(place, true);

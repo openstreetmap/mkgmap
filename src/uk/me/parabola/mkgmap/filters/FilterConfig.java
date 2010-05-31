@@ -48,8 +48,4 @@ public class FilterConfig {
 	public void setBounds(Area bounds) {
 		this.bounds = bounds;
 	}
-
-	public Area getBounds() {
-		return bounds;
-	}
 }

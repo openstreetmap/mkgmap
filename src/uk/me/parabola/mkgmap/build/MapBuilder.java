@@ -468,10 +468,7 @@ public class MapBuilder implements Configurable {
 			}
 		}
 
-		//System.out.println(poiAddrCountr + " POIs have address info");
-
 		lbl.allPOIsDone();
-
 	}
 
 	private void processExit(Map map, MapExitPoint mep) {

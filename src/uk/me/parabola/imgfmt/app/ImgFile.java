@@ -57,7 +57,7 @@ public abstract class ImgFile implements Closeable {
 			return writer.position();
 	}
 
-	public CommonHeader getHeader() {
+	protected CommonHeader getHeader() {
 		return header;
 	}
 
@@ -101,9 +101,5 @@ public abstract class ImgFile implements Closeable {
 
 	protected boolean isWritable() {
 		return writable;
-	}
-
-	protected boolean isReadable() {
-		return readable;
 	}
 }

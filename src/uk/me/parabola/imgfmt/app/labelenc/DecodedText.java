@@ -55,8 +55,4 @@ public class DecodedText {
 	public void setOffsetAdjustment(int offsetAdjustment) {
 		this.offsetAdjustment = offsetAdjustment;
 	}
-
-	public byte[] getRawBytes() {
-		return rawBytes;
-	}
 }

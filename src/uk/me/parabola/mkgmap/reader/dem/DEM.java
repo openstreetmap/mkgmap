@@ -17,9 +17,10 @@
 package uk.me.parabola.mkgmap.reader.dem;
 
 import java.io.FileNotFoundException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileSystemParam;
@@ -28,6 +29,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -47,21 +49,19 @@ import uk.me.parabola.util.EnhancedProperties;
  * Adaptive Grid Contouring Algorithm</a> by Downing and Zoraster.
  */
 public abstract class DEM {
-	final static double epsilon = 1e-9;
+	private static final Logger log = Logger.getLogger(DEM.class);
+
+	private final static double epsilon = 1e-9;
 	final protected static double delta = 1.5;
-	final static int maxPoints = 200000;
-	final static double minDist = 15;
-	final static double maxDist = 21;
-	final static double step = 0.01;
-	final static double semiMajorAxis = 6378137.0;
-	final static double inverseFlattening = 298.257223563;
+	private final static int maxPoints = 200000;
+	private final static double minDist = 15;
+	private final static double maxDist = 21;
 
 	protected static int M = 1200;
 	protected static int N = M;
 	protected static double res = 1.0 / N;
-	static int id = -1;
+	private static int id = -1;
 
-	short values[] = null;
 	protected int lat;
 	protected int lon;
 
@@ -81,9 +81,9 @@ public abstract class DEM {
 		DEM data;
 		String demType = config.getProperty("dem-type", "SRTM");
 
-		String dataPath;
-		Class demClass;
 		try {
+			String dataPath;
+			Class demClass;
 			if (demType.equals("ASTER")) {
 				dataPath = config.getProperty("dem-path", "ASTER");
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.optional.GeoTiffDEM$ASTER");
@@ -94,13 +94,13 @@ public abstract class DEM {
 				dataPath = config.getProperty("dem-path", "SRTM");
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.HGTDEM");
 			}
-			java.lang.reflect.Constructor<DEM> constructor = demClass.getConstructor(String.class,
+			Constructor<DEM> constructor = demClass.getConstructor(String.class,
 					Double.TYPE, Double.TYPE,
 					Double.TYPE, Double.TYPE);
 			data = constructor.newInstance(dataPath, minLat, minLon, maxLat, maxLon);
 		}
 		catch (Exception ex) {
-			throw new RuntimeException("failed to create DEM", ex);
+			throw new ExitException("failed to create DEM", ex);
 		}
 
 		Isolines lines = data.new Isolines(data, minLat, minLon, maxLat, maxLon);
@@ -169,19 +169,15 @@ public abstract class DEM {
 				map.close();
 			}
 			catch (Exception ex) {
-				throw new RuntimeException(ex);
+				throw new ExitException("could not open " + mapName, ex);
 			}
 		}
 	}
 
-	private static void debug(String format, Object... args) {
-		//System.out.printf(format + "\n", args);
-	}
+	private int lastXi = -1;
+	private int lastYi = -1;
 
-	int lastXi = -1;
-	int lastYi = -1;
-
-	final static int bcInv[][] = {
+	private final static int[][] bcInv = {
 			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
 			{-3, 0, 0, 3, 0, 0, 0, 0, -2, 0, 0, -1, 0, 0, 0, 0},
@@ -200,64 +196,58 @@ public abstract class DEM {
 			{4, -4, 4, -4, 2, 2, -2, -2, 2, -2, -2, 2, 1, 1, 1, 1}
 	};
 
-	static int lastId = 1000000000;
-	static double lastX = 0;
-	static double lastY = 0;
+	private static int lastId = 1000000000;
+	private static double lastX;
+	private static double lastY;
 
-	static int edge[] = new int[2];
-
-	static int off0[][] = {{0, 0},
+	private static final int[][] off0 = {{0, 0},
 			{0, 0},
 			{0, 1},
 			{1, 1}};
 
-	static int off1[][] = {{1, 0},
+	private static final int[][] off1 = {{1, 0},
 			{0, 1},
 			{1, 1},
 			{1, 0}};
 
-	static int brd[] = {1, 2, 4, 8};
-	static int inv[] = {4, 8, 1, 2};
+	private static final int[] brd = {1, 2, 4, 8};
 
-	static int rev[] = {2, 3, 0, 1};
+	private static final int[] rev = {2, 3, 0, 1};
 
-	static int mov[][] = {{0, -1},
+	private static final int[][] mov = {{0, -1},
 			{-1, 0},
 			{0, 1},
 			{1, 0}};
 
 
-	double bc[][] = new double[4][4];
-	double bc_y[] = new double[4];
-	double bc_y1[] = new double[4];
-	double bc_y2[] = new double[4];
-	double bc_y12[] = new double[4];
-	double bc_Coeff[] = new double[16];
-	double bc_x[] = new double[16];
+	private final double[][] bc = new double[4][4];
+	private final double[] bc_y = new double[4];
+	private final double[] bc_y1 = new double[4];
+	private final double[] bc_y2 = new double[4];
+	private final double[] bc_y12 = new double[4];
+	private final double[] bc_Coeff = new double[16];
+	private final double[] bc_x = new double[16];
 
 	private void recalculateCoefficients(int xi, int yi) {
-		double v00, vp0, v0p, vpp;
-		double vm0, v0m, vpm, vmp, vmm, vmP, vPm;
-		double vP0, v0P, vPp, vpP, vPP;
 
-		v00 = ele(xi, yi);
-		v0p = ele(xi, yi + 1);
-		vpp = ele(xi + 1, yi + 1);
-		vp0 = ele(xi + 1, yi);
+		double v00 = ele(xi, yi);
+		double v0p = ele(xi, yi + 1);
+		double vpp = ele(xi + 1, yi + 1);
+		double vp0 = ele(xi + 1, yi);
 
-		vm0 = ele(xi - 1, yi);
-		v0m = ele(xi, yi - 1);
-		vmp = ele(xi - 1, yi + 1);
-		vpm = ele(xi + 1, yi - 1);
-		vmm = ele(xi - 1, yi - 1);
-		vmP = ele(xi + 2, yi - 1);
-		vPm = ele(xi - 1, yi + 2);
+		double vm0 = ele(xi - 1, yi);
+		double v0m = ele(xi, yi - 1);
+		double vmp = ele(xi - 1, yi + 1);
+		double vpm = ele(xi + 1, yi - 1);
+		double vmm = ele(xi - 1, yi - 1);
+		double vmP = ele(xi + 2, yi - 1);
+		double vPm = ele(xi - 1, yi + 2);
 
-		vP0 = ele(xi + 2, yi);
-		v0P = ele(xi, yi + 2);
-		vPp = ele(xi + 2, yi + 1);
-		vpP = ele(xi + 1, yi + 2);
-		vPP = ele(xi + 2, yi + 2);
+		double vP0 = ele(xi + 2, yi);
+		double v0P = ele(xi, yi + 2);
+		double vPp = ele(xi + 2, yi + 1);
+		double vpP = ele(xi + 1, yi + 2);
+		double vPP = ele(xi + 2, yi + 2);
 
 		bc_y[0] = v00;
 		bc_y[1] = vp0;
@@ -279,8 +269,7 @@ public abstract class DEM {
 		bc_y12[2] = (vPP - vP0 - v0P + v00) / 4;
 		bc_y12[0] = (vpP - vp0 - vmP + vm0) / 4;
 
-		int j, i;
-		double s;
+		int i;
 
 		for (i = 0; i < 4; i++) {
 			bc_x[i] = bc_y[i];
@@ -290,18 +279,18 @@ public abstract class DEM {
 		}
 
 		for (i = 0; i < 16; i++) {
-			s = 0;
+			double s = 0;
 			for (int k = 0; k < 16; k++) s += bcInv[i][k] * bc_x[k];
 			bc_Coeff[i] = s;
 		}
 
 		int l = 0;
 		for (i = 0; i < 4; i++)
-			for (j = 0; j < 4; j++)
+			for (int j = 0; j < 4; j++)
 				bc[i][j] = bc_Coeff[l++];
 	}
 
-	public double gradient(double lat, double lon, double[] grad) {
+	protected double gradient(double lat, double lon, double[] grad) {
 		grad[0] = 0;
 		grad[1] = 0;
 
@@ -312,7 +301,7 @@ public abstract class DEM {
 		int yi = (int) y;
 
 		if (lastXi != xi || lastYi != yi) {
-			debug("new Cell for interpolation: %d %d", xi, yi);
+			log.debug("new Cell for interpolation: %d %d", xi, yi);
 			recalculateCoefficients(xi, yi);
 			lastXi = xi;
 			lastYi = yi;
@@ -334,7 +323,7 @@ public abstract class DEM {
 		return val;
 	}
 
-	public double elevation(double lat, double lon) {
+	protected double elevation(double lat, double lon) {
 		double x = (lon - this.lon) / res;
 		double y = (lat - this.lat) / res;
 
@@ -342,7 +331,7 @@ public abstract class DEM {
 		int yi = (int) y;
 
 		if (lastXi != xi || lastYi != yi) {
-			debug("new Cell for interpolation: %d %d", xi, yi);
+			log.debug("new Cell for interpolation: %d %d", xi, yi);
 			recalculateCoefficients(xi, yi);
 			lastXi = xi;
 			lastYi = yi;
@@ -362,7 +351,7 @@ public abstract class DEM {
 		return val;
 	}
 
-	public double elevation(int x, int y) {
+	protected double elevation(int x, int y) {
 		if (x < 0 || x > N || y < 0 || y > N)
 			throw new IndexOutOfBoundsException(String.format("elevation: %d %d", x, y));
 		return ele(x, y);
@@ -370,32 +359,35 @@ public abstract class DEM {
 
 
 	class Isolines {
-		DEM data;
-		int minX;
-		int maxX;
-		int minY;
-		int maxY;
+		final DEM data;
+		final int minX;
+		final int maxX;
+		final int minY;
+		final int maxY;
 
 		double min;
 		double max;
 
-		Vector<Isoline> isolines = new Vector<Isoline>();
+		final ArrayList<Isoline> isolines = new ArrayList<Isoline>();
 
 		class Isoline {
-			int id;
-			Vector<Coord> points;
-			double level;
-			boolean isClosed;
+			final int id;
+			final ArrayList<Coord> points;
+			final double level;
+			final boolean isClosed;
 
 			private Isoline(double level) {
 				this.level = level;
 				isClosed = false;
 				id = lastId++;
-				points = new Vector<Coord>();
+				points = new ArrayList<Coord>();
 			}
 
 			private class Edge implements Brent.Function {
-				double x0, y0, x1, y1;
+				final double x0;
+				final double y0;
+				final double x1;
+				final double y1;
 
 				Edge(double x0, double y0, double x1, double y1) {
 					this.x0 = x0;
@@ -405,9 +397,7 @@ public abstract class DEM {
 				}
 
 				public double eval(double d) {
-					double f = data.elevation(x0 + d * (x1 - x0), y0 + d * (y1 - y0)) - level;
-					//System.out.printf("evalEdge: %f %f\n", d, f);
-					return f;
+					return data.elevation(x0 + d * (x1 - x0), y0 + d * (y1 - y0)) - level;
 				}
 			}
 
@@ -423,20 +413,19 @@ public abstract class DEM {
 				}
 
 				public double eval(double t) {
-					double f = data.elevation(y0 + t * dy, x0 + t * dx) - level;
-					return f;
+					return data.elevation(y0 + t * dy, x0 + t * dx) - level;
 				}
 			}
 
-			private FN fn = new FN();
+			private final FN fn = new FN();
 
-			double grad[] = new double[2];
-			double px[] = new double[4];
-			double py[] = new double[4];
-			int edges[] = new int[4];
+			final double[] grad = new double[2];
+			final double[] px = new double[4];
+			final double[] py = new double[4];
+			final int[] edges = new int[4];
 
 			boolean addCell(Position p, int direction) {
-				debug("addCell: %f %d %d %d %d", level, p.ix, p.iy, p.edge, direction);
+				log.debug("addCell: %f %d %d %d %d", level, p.ix, p.iy, p.edge, direction);
 
 				int c = 0;
 				for (int k = 0; k < 4; k++) {
@@ -456,13 +445,12 @@ public abstract class DEM {
 
 						Brent.Function f = new Edge(data.lat + y0 * DEM.res, data.lon + x0 * DEM.res, data.lat + y1 * DEM.res, data.lon + x1 * DEM.res);
 						double f0 = elevation(x0, y0) - level;
-						double f1 = elevation(x1, y1) - level;
 						double delta;
 
 						if (Math.abs(1) < epsilon) {
 							delta = 1;
 						} else if (Math.abs(f0) < epsilon)
-							throw new RuntimeException("implementation error!");
+							throw new ExitException("implementation error!");
 						else
 							delta = Brent.zero(f, epsilon, 1 - epsilon);
 
@@ -494,7 +482,7 @@ public abstract class DEM {
 					p.moveCell();
 					return true;
 				} else {
-					debug("addCellByStepping: %d", c);
+					log.debug("addCellByStepping: %d", c);
 					return addCellByStepping(p, direction, c, edges, px, py);
 				}
 			}
@@ -507,18 +495,16 @@ public abstract class DEM {
 				if (dist > maxDist) {
 					double dx = x1 - x0;
 					double dy = y1 - y0;
-					double xm, ym, f0, f1, t0, t1, t;
-					Brent.Function f;
 
-					xm = x0 + 0.5 * dx;
-					ym = y0 + 0.5 * dy;
+					double xm = x0 + 0.5 * dx;
+					double ym = y0 + 0.5 * dy;
 					double n = Math.sqrt(dx * dx + dy * dy);
 					fn.setParameter(xm, ym, -dy / n, dx / n);
-					f = fn;
-					t0 = -0.05 * res;
-					t1 = 0.05 * res;
-					f0 = f.eval(t0);
-					f1 = f.eval(t1);
+					Brent.Function f = fn;
+					double t0 = -0.05 * res;
+					double t1 = 0.05 * res;
+					double f0 = f.eval(t0);
+					double f1 = f.eval(t1);
 
 					int count = 0;
 					while (f0 * f1 > 0 && count++ < 20) {
@@ -528,17 +514,15 @@ public abstract class DEM {
 							t1 += 0.05 * res;
 						f0 = f.eval(t0);
 						f1 = f.eval(t1);
-						debug("refine: %f %f %f %f", t0, t1, f0, f1);
+						log.debug("refine: %f %f %f %f", t0, t1, f0, f1);
 					}
 
 					if (f0 * f1 < 0) {
-						t = Brent.zero(f, t0, t1);
+						double t = Brent.zero(f, t0, t1);
 						xm -= t * dy;
 						ym += t * dx;
 					} else {
-						debug("refine failed: %f %f %f %f", t0, t1, f0, f1);
-						if (false)
-							throw new RuntimeException(String.format("refine failed: %f %f %f %f %f %f %f %f", xMin, yMin, xMax, yMax, x0, y0, x1, y1));
+						log.debug("refine failed: %f %f %f %f", t0, t1, f0, f1);
 						return;
 					}
 
@@ -551,32 +535,15 @@ public abstract class DEM {
 			}
 
 			boolean addCellByStepping(Position p, int direction, int numEdges, int[] edges, double[] px, double[] py) {
-				debug("addCellByStepping: %f %d %d %d %d", level, p.ix, p.iy, p.edge, direction);
+				log.debug("addCellByStepping: %f %d %d %d %d", level, p.ix, p.iy, p.edge, direction);
 
-
-				double xMin = data.lon + p.ix * DEM.res;
-				double xMax = xMin + DEM.res;
-				double yMin = data.lat + p.iy * DEM.res;
-				double yMax = yMin + DEM.res;
-
-				double dt, t0, t1;
-				double f0, f1;
-				boolean edgeHit = false;
-				double h[] = new double[4];
-
-				int dir;
-				double n2 = Math.sqrt(1.0 / (grad[0] * grad[0] + grad[1] * grad[1]));
-				double dx;
-				double dy;
-
-				int count = 0;
 				int iMin = -1;
 				double md = 5000;
 
 				for (int i = 0; i < numEdges; i++) {
 					gradient(p.y, p.x, grad);
 					double dist = quickDistance(p.x, p.y, px[i], py[i]);
-					debug("distance %d: %f", i, dist);
+					log.debug("distance %d: %f", i, dist);
 
 					if (dist < md && (visited[p.iy * (N + 1) + p.ix] & brd[edges[i]]) == 0) {
 						md = dist;
@@ -593,10 +560,10 @@ public abstract class DEM {
 				double px1 = p.x;
 				double py1 = p.y;
 
-				xMin = data.lon + p.ix * DEM.res;
-				xMax = xMin + DEM.res;
-				yMin = data.lat + p.iy * DEM.res;
-				yMax = yMin + DEM.res;
+				double xMin = data.lon + p.ix * DEM.res;
+				double xMax = xMin + DEM.res;
+				double yMin = data.lat + p.iy * DEM.res;
+				double yMax = yMin + DEM.res;
 
 				refineAdaptively(xMin, yMin, xMax, yMax, px0, py0, px1, py1, direction, maxDist);
 
@@ -607,7 +574,7 @@ public abstract class DEM {
 
 			private void addPoint(double x, double y, int direction) {
 				double dist = quickDistance(x, y, lastX, lastY);
-				debug("addPoint: %f %f %f", x, y, dist);
+				log.debug("addPoint: %f %f %f", x, y, dist);
 
 				if (dist > minDist) {
 					if (direction > 0)
@@ -621,62 +588,18 @@ public abstract class DEM {
 
 			private void close() {
 				points.add(points.size(), points.get(0));
-				isClosed = true;
 			}
 
-			private void addMove(int x0, int y0, int x1, int y1, int direction) {
-				double x;
-				double y;
-
-				if (x0 < minX || x0 >= maxX || y0 < minY || y0 >= maxY)
-					return;
-				double l0 = data.elevation(x0, y0);
-				double l1 = data.elevation(x1, y1);
-				debug("addMove: %d %d %d %d %.2f %.2f %d", x0, y0, x1, y1, l0, l1, direction);
-
-				if ((l0 < level && l1 < level) || (l0 > level && l1 > level))
-					throw new RuntimeException("implementation error");
-
-				if (l0 == level) {
-					x = data.lon + x0 * DEM.res;
-					y = data.lat + y0 * DEM.res;
-				} else {
-					double delta = (l0 - level) / (l0 - l1);
-					x = data.lon + (x0 + delta * (x1 - x0)) * DEM.res;
-					y = data.lat + (y0 + delta * (y1 - y0)) * DEM.res;
-				}
-				double dist = quickDistance(x, y, lastX, lastY);
-				debug("levels: %d %d %f, %d %d %f: %f %f %f", x0, y0, l0, x1, y1, l1, x, y, dist);
-
-				if (dist > 1) {
-					if (direction > 0)
-						points.add(0, new Coord(y, x));
-					else
-						points.add(points.size(), new Coord(y, x));
-					lastX = x;
-					lastY = y;
-				}
-			}
-		}
-
-		public Isolines(DEM data, int minX, int maxX, int minY, int maxY) {
-			this.data = data;
-			this.minX = minX;
-			this.maxX = maxX;
-			this.minY = minY;
-			this.maxY = maxY;
-
-			init();
 		}
 
 		public Isolines(DEM data, double minLat, double minLon, double maxLat, double maxLon) {
 			System.out.printf("init: %f %f %f %f\n", minLat, minLon, maxLat, maxLon);
 
 			this.data = data;
-			this.minX = (int) ((minLon - data.lon) / data.res);
-			this.minY = (int) ((minLat - data.lat) / data.res);
-			this.maxX = (int) ((maxLon - data.lon) / data.res);
-			this.maxY = (int) ((maxLat - data.lat) / data.res);
+			this.minX = (int) ((minLon - data.lon) / res);
+			this.minY = (int) ((minLat - data.lat) / res);
+			this.maxX = (int) ((maxLon - data.lon) / res);
+			this.maxY = (int) ((maxLat - data.lat) / res);
 
 			init();
 		}
@@ -693,7 +616,7 @@ public abstract class DEM {
 					if (data.elevation(i, j) > max) max = data.elevation(i, j);
 				}
 
-			debug("min: %f, max: %f\n", min, max);
+			log.debug("min: %f, max: %f\n", min, max);
 		}
 
 		double getMinHeight() {
@@ -704,13 +627,8 @@ public abstract class DEM {
 			return max;
 		}
 
-		public void addLevels(int start, int increment) {
-			for (int level = start; level < max; level += increment)
-				addLevel(level);
-		}
-
 		private class Edge implements Brent.Function {
-			double x0, y0, x1, y1, level;
+			final double x0, y0, x1, y1, level;
 
 			Edge(double x0, double y0, double x1, double y1, double level) {
 				this.x0 = x0;
@@ -721,9 +639,7 @@ public abstract class DEM {
 			}
 
 			public double eval(double d) {
-				double f = data.elevation(x0 + d * (x1 - x0), y0 + d * (y1 - y0)) - level;
-				//System.out.printf("evalEdge: %f %f\n", d, f);
-				return f;
+				return data.elevation(x0 + d * (x1 - x0), y0 + d * (y1 - y0)) - level;
 			}
 		}
 
@@ -749,7 +665,7 @@ public abstract class DEM {
 			}
 
 			void markEdge() {
-				debug("marking edge: %d %d %d %d", ix, iy, edge, brd[edge]);
+				log.debug("marking edge: %d %d %d %d", ix, iy, edge, brd[edge]);
 				visited[iy * (N + 1) + ix] |= brd[edge];
 			}
 
@@ -762,14 +678,14 @@ public abstract class DEM {
 			}
 		}
 
-		byte visited[] = new byte[(N + 1) * (N + 1)];
+		final byte[] visited = new byte[(N + 1) * (N + 1)];
 
 		public void addLevel(double level) {
 			if (level < min || level > max)
 				return;
 
 			System.out.printf("addLevel: %f\n", level);
-			java.util.Arrays.fill(visited, (byte) 0);
+			Arrays.fill(visited, (byte) 0);
 
 			for (int y = minY; y < maxY; y++) {
 				for (int x = minX; x < maxX; x++) {
@@ -829,7 +745,7 @@ public abstract class DEM {
 							isolines.add(traceByStepping(level, p));
 						}
 						catch (RuntimeException ex) {
-							debug("error: %s", ex.toString());
+							log.debug("error: %s", ex.toString());
 							ex.printStackTrace();
 							return;
 						}
@@ -839,7 +755,7 @@ public abstract class DEM {
 		}
 
 		private Isoline traceByStepping(double level, Position p) {
-			debug("traceByStepping: starting contour %f %d %d %f %f %d", level, p.ix, p.iy, p.x, p.y, p.edge);
+			log.debug("traceByStepping: starting contour %f %d %d %f %f %d", level, p.ix, p.iy, p.x, p.y, p.edge);
 			int direction = 1;
 			int n = 0;
 			Position startP = new Position(p);
@@ -848,20 +764,20 @@ public abstract class DEM {
 			Isoline line = new Isoline(level);
 
 			while (true) {
-				debug("traceByStepping: %f %d %d %f %f %d", level, p.ix, p.iy, p.x, p.y, p.edge);
+				log.debug("traceByStepping: %f %d %d %f %f %d", level, p.ix, p.iy, p.x, p.y, p.edge);
 				visited[p.iy * (N + 1) + p.ix] |= brd[p.edge];
 
 				if (n > 0 && p.ix == startP.ix && p.iy == startP.iy && quickDistance(p.x, p.y, startP.x, startP.y) < 5) {
-					debug("closed curve!");
+					log.debug("closed curve!");
 					line.close();
 					break;
 				} else if (p.ix < minX || p.iy < minY || p.ix >= maxX || p.iy >= maxY) {
 					if (foundEnd) // did we already reach one end?
 					{
-						debug("second border reached!");
+						log.debug("second border reached!");
 						break;
 					} else {
-						debug("border reached!");
+						log.debug("border reached!");
 						foundEnd = true;
 						n = 0;
 						direction *= -1;
@@ -872,7 +788,7 @@ public abstract class DEM {
 				}
 				n++;
 				if (!line.addCell(p, direction) || line.points.size() > maxPoints) {
-					debug("ending contour");
+					log.debug("ending contour");
 					isolines.add(line);
 					return line;
 				}
@@ -883,7 +799,7 @@ public abstract class DEM {
 
 	}
 
-	public static double quickDistance(double long1, double lat1, double long2, double lat2) {
+	private static double quickDistance(double long1, double lat1, double long2, double lat2) {
 		double latDiff;
 		if (lat1 < lat2)
 			latDiff = lat2 - lat1;
@@ -910,8 +826,8 @@ public abstract class DEM {
 
 
 	private static class DEMMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
-		LoadableMapDataSource parent;
-		List<String> copyright = new ArrayList<String>();
+		final LoadableMapDataSource parent;
+		final List<String> copyright = new ArrayList<String>();
 
 		DEMMapDataSource(LoadableMapDataSource parent, EnhancedProperties props) {
 			this.parent = parent;

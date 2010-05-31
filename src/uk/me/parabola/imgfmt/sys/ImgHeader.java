@@ -144,7 +144,7 @@ class ImgHeader {
 
 		header.put(OFF_UNK_1, (byte) 0x2);
 
-		// Acutally this may not be the directory start block, I am guessing -
+		// Actually this may not be the directory start block, I am guessing -
 		// always assume it is 2 anyway.
 		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartBlock());
 
@@ -235,7 +235,7 @@ class ImgHeader {
 		header.rewind();
 		file.position(0);
 		file.write(header);
-		file.position(fsParams.getDirectoryStartBlock() * (long) 512);
+		file.position(fsParams.getDirectoryStartBlock() * 512L);
 	}
 
 	/**

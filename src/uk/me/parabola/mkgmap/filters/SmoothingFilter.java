@@ -33,7 +33,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 public class SmoothingFilter implements MapFilter {
 
 	private static final int MIN_SPACING = 5;
-	private static final int MIN_SIZE = 0;
 
 	private int shift;
 

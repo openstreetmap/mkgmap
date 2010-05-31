@@ -13,16 +13,15 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class PreserveHorizontalAndVerticalLinesFilter implements MapFilter {
 
-	int shift;
+	private int shift;
 
 	public void init(FilterConfig config) {
 		shift = config.getShift();

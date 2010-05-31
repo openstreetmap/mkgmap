@@ -178,10 +178,6 @@ public class CommandArgsReader {
 		arglist.add(filename);
 	}
 
-	public Iterator<ArgType> iterator() {
-		return arglist.iterator();
-	}
-
 	/**
 	 * Read a config file that contains more options.  When the number of
 	 * options becomes large it is more convenient to place them in a file.
@@ -305,10 +301,6 @@ public class CommandArgsReader {
 
 		ArgList() {
 			alist = new ArrayList<ArgType>();
-		}
-
-		public ArgList(ArgList args) {
-			alist = new ArrayList<CommandArgsReader.ArgType>(args.alist);
 		}
 
 		protected void add(CommandArgsReader.CommandOption option) {

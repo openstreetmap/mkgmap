@@ -66,10 +66,6 @@ public class WatchableTypeResult implements TypeResult {
 		return actionsOnly;
 	}
 
-	public int getCount() {
-		return count;
-	}
-
 	/**
 	 * Reset the watcher for the next element.
 	 */

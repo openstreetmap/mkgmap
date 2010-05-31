@@ -248,7 +248,7 @@ public class BufferedImgFileReader implements ImgFileReader {
 		// If we are no longer inside the buffer, then re-read it.
 		if (position < bufStart || position >= bufStart + bufSize) {
 
-			// Get channel position on a block boundry.
+			// Get channel position on a block boundary.
 			bufStart = position & ~(BUF_SIZE - 1);
 			chan.position(bufStart);
 			log.debug("reading in a buffer start=", bufStart);

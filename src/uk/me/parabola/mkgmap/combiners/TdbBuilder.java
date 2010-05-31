@@ -77,7 +77,7 @@ public class TdbBuilder implements Combiner {
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		// Versin 4 is the default.  If you really want v3 then the tdb-v3
+		// Version 4 is the default.  If you really want v3 then the tdb-v3
 		// option can be used.
 		if (args.exists("tdb-v3")) {
 			tdbVersion = TdbFile.TDB_V3;
@@ -201,7 +201,6 @@ public class TdbBuilder implements Combiner {
 	}
 
 	private int roundUp(int len, int overviewMask) {
-		//System.out.printf("before up 0x%x\n", len);
 		if (len > 0)
 			return (len + overviewMask) & ~overviewMask;
 		else
@@ -209,7 +208,6 @@ public class TdbBuilder implements Combiner {
 	}
 
 	private int roundDown(int len, int overviewMask) {
-		//System.out.printf("before down 0x%x\n", len);
 		if (len > 0)
 			return len & ~overviewMask;
 		else
@@ -223,7 +221,7 @@ public class TdbBuilder implements Combiner {
 	public void onFinish() {
 		log.debug("finishing overview");
 
-		// We can set the overall bounds easily as it was calcualted as part of
+		// We can set the overall bounds easily as it was calculated as part of
 		// the overview map.
 		tdb.setOverview(overviewMapname, overviewSource.getBounds(), overviewMapnumber);
 

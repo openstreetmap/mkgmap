@@ -13,18 +13,17 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
-
-import uk.me.parabola.mkgmap.general.MapElement;
-import uk.me.parabola.mkgmap.general.MapLine;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapLine;
+
 public class RoundCoordsFilter implements MapFilter {
 
-	int shift;
+	private int shift;
 
 	public void init(FilterConfig config) {
 		shift = config.getShift();
@@ -53,7 +52,7 @@ public class RoundCoordsFilter implements MapFilter {
 				int lon = (p.getLongitude() + half) & mask;
 				Coord newP;
 				if(p instanceof CoordNode)
-					newP = new CoordNode(lat, lon, ((CoordNode)p).getId(), p.getOnBoundary());
+					newP = new CoordNode(lat, lon, p.getId(), p.getOnBoundary());
 				else
 					newP = new Coord(lat, lon);
 				newP.preserved(p.preserved());

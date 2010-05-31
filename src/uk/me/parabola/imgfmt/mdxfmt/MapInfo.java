@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.mdxfmt;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -27,7 +26,7 @@ public class MapInfo {
 	private char familyId;
 	private char productId;
 
-	void write(ByteBuffer os) throws IOException {
+	void write(ByteBuffer os)  {
 		os.putInt(hexMapname);
 		os.putChar(productId);
 		os.putChar(familyId);

@@ -43,7 +43,7 @@ public class LinkedOp implements Op {
 	private LinkedOp link;
 	private Element current;
 
-	public LinkedOp(Op wrapped, boolean first) {
+	protected LinkedOp(Op wrapped, boolean first) {
 		this.wrapped = wrapped;
 		this.first = first;
 	}

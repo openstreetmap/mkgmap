@@ -58,7 +58,7 @@ public class CodeFunctions {
 		return codepage;
 	}
 
-	public void setCodepage(int codepage) {
+	protected void setCodepage(int codepage) {
 		this.codepage = codepage;
 	}
 

@@ -45,7 +45,7 @@ public class Utils {
 		return getGroupForPoi(fullType) != 0;
 	}
 
-	public static int getTypeFromFullType(int fullType) {
+	private static int getTypeFromFullType(int fullType) {
 		if ((fullType & 0xff00) > 0)
 			return (fullType>>8) & 0xff;
 		else

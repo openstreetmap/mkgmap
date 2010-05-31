@@ -95,10 +95,6 @@ public class TREFile extends ImgFile implements Configurable {
 		getWriter().put((byte) 0);
 	}
 
-	public Area getBounds() {
-		return header.getBounds();
-	}
-
 	public void addCopyright(Label cr) {
 		copyrights.add(cr);
 	}

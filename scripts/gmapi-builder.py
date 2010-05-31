@@ -82,7 +82,7 @@ class EndOfFile(IOError):
 class FileFormatError(Exception):
     pass
 
-# Auxillary functions that make life easier to read bytes, shorts, ints and
+# Auxiliary functions that make life easier to read bytes, shorts, int and
 # so on from a file.
 def getX(length, fmt):
     def get(f):

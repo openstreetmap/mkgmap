@@ -36,7 +36,7 @@ public abstract class MdrSection extends ConfigBase {
 	 */
 	public abstract int getItemSize();
 
-	public PointerSizes getSizes() {
+	protected PointerSizes getSizes() {
 		return sizes;
 	}
 

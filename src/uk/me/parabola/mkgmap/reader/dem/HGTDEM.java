@@ -16,22 +16,25 @@
  */
 package uk.me.parabola.mkgmap.reader.dem;
 
-import java.io.*;
-import java.nio.channels.FileChannel;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.Writer;
 import java.nio.MappedByteBuffer;
+
+import uk.me.parabola.imgfmt.ExitException;
 
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 
 public class HGTDEM extends DEM
 {
-    MappedByteBuffer buffer = null;
+    private MappedByteBuffer buffer ;
     
     public HGTDEM(String dataPath, double minLat, double minLon, double maxLat, double maxLon)
     {
 	this.lat = (int) minLat;
 	this.lon = (int) minLon;
 	if (maxLat > lat+1 || maxLon > lon+1)
-	    throw new RuntimeException("Area too large (must not span more than one SRTM file)");
+	    throw new ExitException("Area too large (must not span more than one SRTM file)");
 	
 	String northSouth = lat < 0 ? "S" : "N";
 	String eastWest = lon > 0 ? "E" : "W";
@@ -43,7 +46,7 @@ public class HGTDEM extends DEM
 	    buffer = is.getChannel().map(READ_ONLY, 0, 2*(M+1)*(M+1));
 	}
 	catch (Exception e) {
-	    throw new RuntimeException(e);
+	    throw new ExitException("failed to open " + fileName, e);
 	}
     }
     

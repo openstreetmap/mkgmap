@@ -12,12 +12,12 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	/**
 	* the empty list to be returned when there is key without values.
 	*/
-	private List<V> emptyList = Collections.unmodifiableList(new ArrayList<V>(0));
+	private final List<V> emptyList = Collections.unmodifiableList(new ArrayList<V>(0));
 
 	/**
 	* Returns the list of values associated with the given key.
 	*
-	* @param o the key to get the values for.
+	* @param key the key to get the values for.
 	* @return a list of values for the given keys or the empty list of no such
 	*         value exist.
 	*/
@@ -50,7 +50,7 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	
 	    values.remove(value);
 		
-		if (values.size() == 0)
+		if (values.isEmpty())
 			super.remove(values);
 
 		return value;

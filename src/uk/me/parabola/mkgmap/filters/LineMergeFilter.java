@@ -1,7 +1,8 @@
 package uk.me.parabola.mkgmap.filters;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -12,11 +13,9 @@ import uk.me.parabola.util.MultiHashMap;
 public class LineMergeFilter{
 	private static final Logger log = Logger.getLogger(LineMergeFilter.class);
 
-	List<MapLine> linesMerged;
-	MultiHashMap<Coord, MapLine> startPoints = new MultiHashMap<Coord, MapLine>();
-	MultiHashMap<Coord, MapLine> endPoints = new MultiHashMap<Coord, MapLine>();
-
-	public LineMergeFilter() {}
+	private List<MapLine> linesMerged;
+	private final MultiHashMap<Coord, MapLine> startPoints = new MultiHashMap<Coord, MapLine>();
+	private final MultiHashMap<Coord, MapLine> endPoints = new MultiHashMap<Coord, MapLine>();
 
 	private void addLine(MapLine line) {
 		linesMerged.add(line);

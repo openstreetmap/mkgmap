@@ -57,8 +57,4 @@ public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 	public void setFullType(int fullType) {
 		this.fullType = fullType;
 	}
-
-	public int getFullType() {
-		return fullType;
-	}
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FakeIdGenerator {
 
-	public static final long START_ID = 1L << 62;
+	private static final long START_ID = 1L << 62;
 	
 	private static final AtomicLong fakeId = new AtomicLong(START_ID);
 

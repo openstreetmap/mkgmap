@@ -91,18 +91,18 @@ public class StyledConverter implements OsmConverter {
 
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
-	private final int MAX_LINE_LENGTH = 40000;
+	private static final int MAX_LINE_LENGTH = 40000;
 
 	// limit arc lengths to what can be handled by RouteArc
-	private final int MAX_ARC_LENGTH = 75000;
+	private static final int MAX_ARC_LENGTH = 75000;
 
-	private final int MAX_POINTS_IN_WAY = LineSplitterFilter.MAX_POINTS_IN_LINE;
+	private static final int MAX_POINTS_IN_WAY = LineSplitterFilter.MAX_POINTS_IN_LINE;
 
-	private final int MAX_POINTS_IN_ARC = MAX_POINTS_IN_WAY;
+	private static final int MAX_POINTS_IN_ARC = MAX_POINTS_IN_WAY;
 
-	private final int MAX_NODES_IN_WAY = 64; // possibly could be increased
+	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
-	private final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
+	private static final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
 
 	// nodeIdMap maps a Coord into a nodeId
 	private final Map<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
@@ -173,26 +173,6 @@ public class StyledConverter implements OsmConverter {
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
 	}
-
-	///**
-	// * There may be tags that are not referenced directly in the style file
-	// * that are used.  This includes the name-tag-list option.  Attempt
-	// * to add such tags here.
-	// * @param style
-	// */
-	//private void addExtraUsedTags(Style style) {
-	//	String s = style.getOption("extra-used-tags");
-	//	Collection<String> usedTags = new HashSet<String>();
-	//	if (s != null)
-	//		usedTags.addAll(Arrays.asList(s.split(" ")));
-	//	if (nameTagList != null)
-	//		usedTags.addAll(Arrays.asList(nameTagList));
-	//
-	//	System.out.println("extra " + usedTags);
-	//	((RuleSet) wayRules).addUsedTags(usedTags);
-	//	((RuleSet) nodeRules).addUsedTags(usedTags);
-	//	((RuleSet) relationRules).addUsedTags(usedTags);
-	//}
 
 	private static final Pattern commaPattern = Pattern.compile(",");
 
@@ -435,12 +415,11 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 
-			Coord junctionPoint = null;
 			Integer nodeId = null;
 			if(node == null)
 				log.warn("Through route relation " + relation.toBrowseURL() + " is missing the junction node");
 			else {
-				junctionPoint = node.getLocation();
+				Coord junctionPoint = node.getLocation();
 				if(bbox != null && !bbox.contains(junctionPoint)) {
 					// junction is outside of the tile - ignore it
 					continue;
@@ -637,7 +616,7 @@ public class StyledConverter implements OsmConverter {
 				name = name.substring(1);
 
 			if(leadingCode != 0)
-				name = new Character(leadingCode) + name;
+				name = leadingCode + name;
 		}
 
 		if(name != null)
@@ -748,35 +727,35 @@ public class StyledConverter implements OsmConverter {
 							--dir;
 					}
 				}
-				if(dir != 0) {
+				if (dir == 0)
+					log.info("Roundabout segment " + way.getId() + " direction unknown (see " + points.get(0).toOSMURL() + ")");
+				else {
 					boolean clockwise = dir > 0;
-					if(points.get(0) == points.get(points.size() - 1)) {
+					if (points.get(0) == points.get(points.size() - 1)) {
 						// roundabout is a loop
-						if(!driveOnLeft && !driveOnRight) {
-							if(clockwise) {
+						if (!driveOnLeft && !driveOnRight) {
+							if (clockwise) {
 								log.info("Roundabout " + way.getId() + " is clockwise so assuming vehicles should drive on left side of road (" + centre.toOSMURL() + ")");
 								driveOnLeft = true;
 								NODHeader.setDriveOnLeft(true);
-							}
-							else {
+							} else {
 								log.info("Roundabout " + way.getId() + " is anti-clockwise so assuming vehicles should drive on right side of road (" + centre.toOSMURL() + ")");
 								driveOnRight = true;
 							}
 						}
-						if(driveOnLeft && !clockwise ||
-						   driveOnRight && clockwise) {
+						if (driveOnLeft && !clockwise ||
+								driveOnRight && clockwise)
+						{
 							log.warn("Roundabout " + way.getId() + " direction is wrong - reversing it (see " + centre.toOSMURL() + ")");
 							way.reverse();
 						}
-					}
-					else if(driveOnLeft && !clockwise ||
-							driveOnRight && clockwise) {
+					} else if (driveOnLeft && !clockwise ||
+							driveOnRight && clockwise)
+					{
 						// roundabout is a line
 						log.warn("Roundabout segment " + way.getId() + " direction looks wrong (see " + points.get(0).toOSMURL() + ")");
 					}
 				}
-				else
-					log.info("Roundabout segment " + way.getId() + " direction unknown (see " + points.get(0).toOSMURL() + ")");
 			}
 
 			String frigFactorTag = way.getTag("mkgmap:frig_roundabout");
@@ -1179,6 +1158,7 @@ public class StyledConverter implements OsmConverter {
 		return name + "(OSM id " + way.getId() + ")";
 	}
 
+	@SuppressWarnings({"AssignmentToForLoopParameter"})
 	void addRoadWithoutLoops(Way way, GType gt) {
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();

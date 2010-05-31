@@ -16,17 +16,22 @@
  */
 package uk.me.parabola.mkgmap.reader.dem.optional;
 
+import java.awt.*;
+import java.awt.image.Raster;
+import java.awt.image.renderable.ParameterBlock;
+import java.io.IOException;
+import java.io.Writer;
+
+import javax.media.jai.JAI;
+import javax.media.jai.PlanarImage;
+import javax.media.jai.RenderedOp;
+
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.reader.dem.DEM;
 
-import java.awt.image.renderable.ParameterBlock;
-import java.awt.image.Raster;
-import java.awt.image.DataBuffer;
-import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.MappedByteBuffer;
-
-import com.sun.media.jai.codec.*;
-import javax.media.jai.*;
+import com.sun.media.jai.codec.FileSeekableStream;
+import com.sun.media.jai.codec.SeekableStream;
+import com.sun.media.jai.codec.TIFFDecodeParam;
 
 public abstract class GeoTiffDEM extends DEM
 {
@@ -52,22 +57,21 @@ public abstract class GeoTiffDEM extends DEM
 			      image.getNumXTiles(), image.getNumYTiles());
 	}
 	catch (Exception e) {
-	    throw new RuntimeException(e);
+	    throw new ExitException("Failed to open/process " + fileName, e);
 	}
     }
 
-    public static class CGIAR extends GeoTiffDEM
+    protected static class CGIAR extends GeoTiffDEM
     {
 	public CGIAR(String dataPath, double minLat, double minLon, double maxLat, double maxLon)
 	{
 	    this.lat = ((int) (minLat/5))*5;
 	    this.lon = ((int) (minLon/5))*5;
 	    if (maxLat > lat+5 || maxLon > lon+5)
-		throw new RuntimeException("Area too large (must not span more than one CGIAR GeoTIFF)");
+		throw new ExitException("Area too large (must not span more than one CGIAR GeoTIFF)");
 	    
-	    int tileX, tileY;
-	    tileX = (180 + lon)/5 + 1;
-	    tileY = (60 - lat)/5;
+	    int tileX = (180 + lon) / 5 + 1;
+		int tileY = (60 - lat) / 5;
 	    this.fileName = String.format("%s/srtm_%02d_%02d.tif", dataPath, tileX, tileY);
 	    System.out.printf("CGIAR GeoTIFF: %s\n", fileName);
 	    N = 6000;
@@ -90,27 +94,18 @@ public abstract class GeoTiffDEM extends DEM
 	    this.minLat = minLat;
 	    this.maxLon = maxLon;
 	    this.maxLat = maxLat;
-	    raster = image.getData(new java.awt.Rectangle(minLon, 6000-maxLat-1, maxLon-minLon+1, maxLat-minLat+1));
+	    raster = image.getData(new Rectangle(minLon, 6000-maxLat-1, maxLon-minLon+1, maxLat-minLat+1));
 	    System.out.printf("read: %d %d %d %d\n", minLon, 6000-maxLat-1, maxLon-minLon+1, maxLat-minLat+1);
 	}
 
 	public double ele(int x, int y)
 	{
-	    try {
 		int elevation = raster.getPixel(x, 6000-y-1, (int[])null)[0];
 		return elevation+delta;
-	    }
-	    catch (ArrayIndexOutOfBoundsException ex) {
-		System.out.printf("ele: (%d, %d) (%d, %d, %d, %d)  %s\n", 
-				  x, 6000-y-1, 
-				  raster.getMinX(), raster.getMinY(), 
-				  raster.getWidth(), raster.getHeight(), ex.toString());
-		throw ex;
-	    }
 	}
     }
     
-    public static class ASTER extends GeoTiffDEM
+    protected static class ASTER extends GeoTiffDEM
     {
 	
 	public ASTER(String dataPath, double minLat, double minLon, double maxLat, double maxLon)
@@ -118,7 +113,7 @@ public abstract class GeoTiffDEM extends DEM
 	    this.lat = (int) minLat;
 	    this.lon = (int) minLon;
 	    if (maxLat > lat+1 || maxLon > lon+1)
-		throw new RuntimeException("Area too large (must not span more than one ASTER GeoTIFF)");
+		throw new ExitException("Area too large (must not span more than one ASTER GeoTIFF)");
 	    
 	    String northSouth = lat < 0 ? "S" : "N";
 	    String eastWest = lon > 0 ? "E" : "W";
@@ -146,23 +141,14 @@ public abstract class GeoTiffDEM extends DEM
 	    this.minLat = minLat;
 	    this.maxLon = maxLon;
 	    this.maxLat = maxLat;
-	    raster = image.getData(new java.awt.Rectangle(minLon, 3601-maxLat-1, maxLon-minLon+1, maxLat-minLat+1));
+	    raster = image.getData(new Rectangle(minLon, 3601-maxLat-1, maxLon-minLon+1, maxLat-minLat+1));
 	    System.out.printf("read: %d %d %d %d\n", minLon, 3601-maxLat-1, maxLon-minLon+1, maxLat-minLat+1);
 	}
 
 	public double ele(int x, int y)
 	{
-	    try {
 		int elevation = raster.getPixel(x, 3601-y-1, (int[])null)[0];
 		return elevation+delta;
-	    }
-	    catch (ArrayIndexOutOfBoundsException ex) {
-		System.out.printf("ele: (%d, %d) (%d, %d, %d, %d)  %s\n", 
-				  x, 3601-y-1, 
-				  raster.getMinX(), raster.getMinY(), 
-				  raster.getWidth(), raster.getHeight(), ex.toString());
-		throw ex;
-	    }
 	}
     }
 

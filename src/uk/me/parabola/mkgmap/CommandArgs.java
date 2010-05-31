@@ -84,8 +84,4 @@ public class CommandArgs {
 	public boolean exists(String name) {
 		return currentOptions.containsKey(name);
 	}
-
-	public void setProperty(String option, String value) {
-		currentOptions.setProperty(option, value);
-	}
 }

@@ -10,7 +10,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
- *  The Locator tries to fill missing country, region, postal coude information
+ *  The Locator tries to fill missing country, region, postal code information
  *
  *  To do so we analyse the is_in information and if this doesn't helps us we
  *  try to get info from the next known city
@@ -80,11 +80,10 @@ public class LocatorConfig {
 						if(cNode.getNodeName().equals("continent"))
 						{
 							NamedNodeMap attr = cNode.getAttributes();
-							Node nameTag;
 	
 							if(attr != null)
 							{
-								nameTag = attr.getNamedItem("name");
+								Node nameTag = attr.getNamedItem("name");
 								if(nameTag != null)
 									addContinent(nameTag.getNodeValue());
 							}
@@ -166,8 +165,6 @@ public class LocatorConfig {
 		String cStr = country.toUpperCase().trim();
 		String vStr = variant.toUpperCase().trim();
 
-		//System.out.println(vStr + " -> " + cStr);
-
 		variantMap.put(vStr,cStr);
 	}
 
@@ -176,16 +173,12 @@ public class LocatorConfig {
 		String cStr = country.toUpperCase().trim();
 		String aStr = abr.toUpperCase().trim();
 
-		//System.out.println(cStr + " -> " + aStr);
-
 		abrMap.put(cStr,aStr);
 	}
 
 	private void addRegionOffset(String country, Integer offset)
 	{
 		String cStr = country.toUpperCase().trim();
-
-		//System.out.println(cStr + " -> " + offset);
 
 		regOffsetMap.put(cStr,offset);
 	}
@@ -194,16 +187,12 @@ public class LocatorConfig {
 	{
 		String cStr = country.toUpperCase().trim();
 
-		//System.out.println(cStr + " -> " + flag);
-
 		poiDispFlagMap.put(cStr,flag);
 	}
 
 	private void addOpenGeoDb(String country)
 	{
 		String cStr = country.toUpperCase().trim();
-		
-		//System.out.println(cStr + " openGeoDb");
 		
 		geoDbMap.put(cStr,true);
 		
@@ -212,8 +201,6 @@ public class LocatorConfig {
 	private void addContinent(String continent)
 	{
 		String cStr = continent.toUpperCase().trim();
-		
-		//System.out.println(cStr + " continent");
 		
 		continentMap.put(cStr,true);
 		
@@ -281,7 +268,7 @@ public class LocatorConfig {
 	public boolean isOpenGeoDBCountry(String country)
 	{
 		// Countries that have open geo db data in osm
-		// Right now this are only germany, austria and swizerland
+		// Right now this are only germany, austria and switzerland
 
 		String cStr = country.toUpperCase().trim();
 

@@ -117,7 +117,7 @@ public class Coord implements Comparable<Coord> {
 		return quickDistance(other);
 	}
 
-	public double slowDistance(Coord other) {
+	protected double slowDistance(Coord other) {
 		if (equals(other))
 			return 0;
 
@@ -228,7 +228,7 @@ public class Coord implements Comparable<Coord> {
 			Utils.toDegrees(longitude)).toString();
 	}
 
-	public String toOSMURL(int zoom) {
+	protected String toOSMURL(int zoom) {
 		return ("http://www.openstreetmap.org/?mlat=" +
 			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(latitude)) +
 			"&mlon=" +

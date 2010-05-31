@@ -229,7 +229,7 @@ public class Subdivision {
 	 *
 	 * @return A bit mask with the lower <i>shift</i> bits set.
 	 */
-	public int getMask() {
+	protected int getMask() {
 		return (1 << getShift()) - 1;
 	}
 

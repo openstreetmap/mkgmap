@@ -109,8 +109,6 @@ public class BitWriter {
 		}
 
 		buflen = (bitoff+7)/8;
-
-		//debugPrint(bval, nb);
 	}
 
 	public byte[] getBytes() {
