@@ -138,6 +138,12 @@ public class RuleSet implements Rule, Iterable<Rule> {
 
 		index = newIndex;
 		rules = newIndex.getRules();
+		//System.out.println("Merging used tags: "
+		//		   + getUsedTags().toString()
+		//		   + " + "
+		//		   + rs.getUsedTags());
+		addUsedTags(rs.usedTags);
+		//System.out.println("Result: " + getUsedTags().toString());
 	}
 
 	/**
