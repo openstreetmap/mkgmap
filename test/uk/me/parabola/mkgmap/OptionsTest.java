@@ -13,13 +13,16 @@
 /* Create date: 09-Aug-2009 */
 package uk.me.parabola.mkgmap;
 
+import java.io.File;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class OptionsTest {
 	private static final String[] STD_SINGLE_OPTS = {
@@ -103,6 +106,48 @@ public class OptionsTest {
 		assertArrayEquals("options", STD_SINGLE_OPTS, options.toArray());
 		assertEquals("first value", OPT1.trim(), values.get(0));
 		assertEquals("second value", OPT2.trim(), values.get(1));
+	}
+
+	/**
+	 * Relative input filenames are relative to the directory of the args
+	 * file.
+	 * Note: does test work on windows?
+	 */
+	@Test
+	public void testRelativeFilenamesInFile() {
+		String s = "input-file: foo\n";
+
+		OptionProcessor proc = new MyOptionProcessor();
+		Options opts = new Options(proc);
+		Reader r = new StringReader(s);
+
+		opts.readOptionFile(r, "/bar/string.args");
+		String filename = values.get(0);
+		File file = new File(filename);
+		assertEquals("directory part", "/bar", file.getParent());
+		assertEquals("file part", "foo", file.getName());
+	}
+
+	/**
+	 * Absolute input filenames are unaffected by the directory that the
+	 * args file is in.
+	 * Note: does test work on windows?
+	 */
+	@Test
+	public void testAbsoluteFilenamesInFile() {
+		String s = "input-file: /home/foo\n";
+
+		OptionProcessor proc = new MyOptionProcessor();
+		Options opts = new Options(proc);
+		Reader r = new StringReader(s);
+
+		opts.readOptionFile(r, "/bar/string.args");
+		System.out.println(Arrays.toString(values.toArray()));
+
+		String filename = values.get(0);
+		File file = new File(filename);
+		assertEquals("directory part", "/home", file.getParent());
+		assertEquals("file part", "foo", file.getName());
 	}
 
 	private void checkEmptyValues() {

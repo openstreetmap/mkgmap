@@ -85,6 +85,9 @@ public class Options {
 		TokenScanner ts = new TokenScanner(filename, br);
 		ts.setExtraWordChars("-");
 
+		File file = new File(filename);
+		String parent = file.getParent();
+
 		while (!ts.isEndOfFile()) {
 			Token tok = ts.nextToken();
 			if (tok.isValue("#")) {
@@ -111,6 +114,12 @@ public class Options {
 					ts.skipLine();
 					continue;
 				}
+
+				// Relative file names in the file are taken relative to the
+				// location of the argument file.
+				if (key.equals("input-file") && !new File(val).isAbsolute()) 
+					val = new File(parent, val).getPath();
+
 				proc.processOption(new Option(key, val));
 			} else if (key != null){
 				proc.processOption(new Option(key, ""));
