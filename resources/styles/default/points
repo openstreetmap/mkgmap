@@ -8,6 +8,8 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
+internet_access=* { name '${internet_access|subst:yes=>Internet} ${name|def:}' } [0x2f12 resolution 21 continue]
+
 #aeroway=airport [0x5900 resolution 20]
 aeroway=airport [0x2f04 resolution 20]
 aeroway=aerodrome [0x2f04 resolution 20]
