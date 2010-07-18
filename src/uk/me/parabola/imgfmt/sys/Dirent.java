@@ -73,7 +73,7 @@ class Dirent implements DirectoryEntry {
 	Dirent(String name, BlockManager blockManager) {
 		this.blockManager = blockManager;
 
-		int dot = name.indexOf('.');
+		int dot = name.lastIndexOf('.');
 		if (dot >= 0) {
 			setName(name.substring(0, dot));
 			setExt(name.substring(dot+1));
