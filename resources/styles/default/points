@@ -17,6 +17,7 @@ aeroway=helipad [0x5904 resolution 20]
 aeroway=terminal [0x2f04 resolution 20]
 
 amenity=atm { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f06 resolution 21]
+amenity=arts_centre [0x2c04 resolution 20]
 amenity=bank { name '${name} (${operator})' | '${name}' | '${operator}' } [0x2f06 resolution 21]
 amenity=bar [0x2d02 resolution 21]
 amenity=biergarten [0x2d02 resolution 21]
