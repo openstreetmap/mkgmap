@@ -18,6 +18,7 @@ amenity=cafe | amenity=fast_food | amenity=restaurant | amenity=food_court [0x08
 amenity=college [0x0a resolution 18]
 amenity=grave_yard [0x1a resolution 18]
 amenity=hospital [0x0b resolution 18]
+amenity=nursing_home [0x0b resolution 21]
 parking=underground | parking=multi-storey [0x06 resolution 21]
 amenity=parking | parking=surface [0x05 resolution 21]
 amenity=prison [0x04 resolution 20]
