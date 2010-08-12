@@ -11,7 +11,6 @@
 aeroway=airport [0x07 resolution 18]
 aeroway=aerodrome [0x07 resolution 18]
 aeroway=helipad [0x0e resolution 20]
-aeroway=terminal [0x13 resolution 20]
 
 amenity=kindergarten [0x0a resolution 18]
 amenity=cafe | amenity=fast_food | amenity=restaurant | amenity=food_court [0x08 resolution 20]
@@ -26,6 +25,8 @@ amenity=school [0x0a resolution 20]
 # amenity=supermarket is superceded by shop=supermarket or landuse=retail
 amenity=supermarket [0x08 resolution 20]
 amenity=university [0x0a resolution 18]
+
+healthcare=* [0x0b resolution 21]
 
 landuse=allotments [0x4e resolution 20]
 landuse=basin [0x3f resolution 18]
@@ -96,4 +97,4 @@ historic=museum | historic=memorial [0x1e resolution 20]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
 # building tag should be last
-building=* [0x13 resolution 24]
+building=* | man_made=* | amenity=* | tourism=* [0x13 resolution 24]
