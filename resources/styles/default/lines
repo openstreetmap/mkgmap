@@ -49,9 +49,9 @@ highway=*
 { add mkgmap:unpaved=1 }
 
 # Convert generic path to most specific
-highway=path & bicycle=designated {set highway=cycleway }
-highway=path & horse=designated {set highway=bridleway }
-highway=path & foot=designated {set highway=footway }
+highway=path & (bicycle=designated|bicycle=official) {set highway=cycleway }
+highway=path & (horse=designated|horse=official) {set highway=bridleway }
+highway=path & (foot=designated|foot=official) {set highway=footway }
 
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
@@ -71,9 +71,10 @@ highway=* & disused=yes [0x07 road_class=0 road_speed=1 resolution 22]
 # Ways sorted roughly by descending order of class
 highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 14]
 highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 16]
-highway=trunk  {add bicycle = no; add foot = no} [0x02 road_class=4 road_speed=5 resolution 16]
-highway=trunk_link {add bicycle = no; add foot = no} [0x09 road_class=3 road_speed=2 resolution 18]
-highway=* & motorroad=yes {add bicycle = no; add foot = no} [0x02 road_class=4 road_speed=4 resolution 16]
+highway=* & motorroad=yes {add bicycle = no; add foot = no}
+highway=trunk [0x02 road_class=4 road_speed=5 resolution 16]
+highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 18]
+highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 16]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x08 road_class=3 road_speed=1 resolution 19]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
@@ -91,7 +92,7 @@ highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=2 resolution 22]
 highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
 highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
-highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
+highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=track [0x0a road_class=0 road_speed=1 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
