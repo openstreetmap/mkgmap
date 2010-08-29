@@ -66,9 +66,9 @@ public abstract class Element implements Iterable<String> {
 		this.id = id;
 	}
 
-	String toTagString() {
+	public String toTagString() {
 		if (tags == null)
-			return "";
+			return "[]";
 
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
@@ -76,7 +76,9 @@ public abstract class Element implements Iterable<String> {
 			sb.append(nameval);
 			sb.append(',');
 		}
-		sb.setLength(sb.length()-1);
+		if (sb.length() > 1) {
+			sb.setLength(sb.length()-1);
+		}
 		sb.append(']');
 		return sb.toString();
 	}

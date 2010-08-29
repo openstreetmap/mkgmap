@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
@@ -124,6 +125,8 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 	private HashMap<String,Set<String>> deletedTags;
 	private Map<String, String> usedTags;
+	
+	private final Map<Long,Set<String>> mpWayRemoveTags = new HashMap<Long,Set<String>>();
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		if(props.getProperty("make-all-cycleways", false)) {
@@ -603,7 +606,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (type != null) {
 			if ("multipolygon".equals(type)) {
 				Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
-				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpBbox);
+				currentRelation = new MultiPolygonRelation(currentRelation, wayMap, mpWayRemoveTags, mpBbox);
 			} else if("restriction".equals(type)) {
 
 				if(ignoreTurnRestrictions)
@@ -680,6 +683,20 @@ public class Osm5XmlHandler extends DefaultHandler {
 		if (generateSea)
 		    generateSeaPolygon(shoreline);
 
+		for (Entry<Long,Set<String>> wayTagsRemove : mpWayRemoveTags.entrySet()) {
+			Way w = wayMap.get(wayTagsRemove.getKey());
+			if (w==null) {
+				log.debug("Cannot find way",wayTagsRemove.getKey(),"to remove tags by multipolygon processing.");
+				continue;
+			}
+			log.debug("Remove tags",wayTagsRemove.getValue(),"from way",w.getId(), w.toTagString());
+			for (String tagname : wayTagsRemove.getValue()) {
+				w.deleteTag(tagname);
+			}
+			log.debug("After removal",w.getId(), w.toTagString());
+		}
+		mpWayRemoveTags.clear();		
+		
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
@@ -1253,6 +1270,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 			log.debug("Generate seabounds relation "+multiId);
 			seaRelation = new GeneralRelation(multiId);
 			seaRelation.addTag("type", "multipolygon");
+			seaRelation.addTag("natural", "sea");
 		}
 
 		List<Way> islands = new ArrayList<Way>();
@@ -1576,7 +1594,7 @@ public class Osm5XmlHandler extends DefaultHandler {
 
 		if(generateSeaUsingMP) {
 			Area mpBbox = (bbox != null ? bbox : ((MapDetails) collector).getBounds());
-			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpBbox);
+			seaRelation = new MultiPolygonRelation(seaRelation, wayMap, mpWayRemoveTags, mpBbox);
 			relationMap.put(multiId, seaRelation);
 			seaRelation.processElements();
 		}
