@@ -1,5 +1,7 @@
 package uk.me.parabola.mkgmap;
 
+import java.io.File;
+
 import uk.me.parabola.util.EnhancedProperties;
 
 public class CommandArgs {
@@ -74,6 +76,31 @@ public class CommandArgs {
 		return cp;
 	}
 
+	public String getOutputDir() {
+		String DEFAULT_DIR = "." + File.separatorChar;
+		String fileOutputDir = currentOptions.getProperty("output-dir", DEFAULT_DIR);
+ 
+		// Check for path separator
+		if (fileOutputDir.charAt(fileOutputDir.length() - 1) != File.separatorChar) {
+			fileOutputDir = fileOutputDir.concat(File.separator);
+		}
+		
+		// Test if directory exists
+		File outputDir = new File(fileOutputDir);
+		if (!outputDir.exists()) {
+			System.out.println("Output directory not found. Creating directory '" + fileOutputDir + "'");
+			if (!outputDir.mkdirs()) {
+				System.err.println("Unable to create output directory! Using default directory instead");
+				fileOutputDir = DEFAULT_DIR;
+			}
+		} else if (!outputDir.isDirectory()) {
+			System.err.println("The --output-dir parameter must specify a directory. The parameter is being ignored, writing to default directory instead.");
+			fileOutputDir = DEFAULT_DIR;
+		}
+		
+		return fileOutputDir;
+	}
+	
 	public boolean isForceUpper() {
 		return currentOptions.getProperty("lower-case") == null;
 	}

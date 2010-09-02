@@ -43,13 +43,14 @@ public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
 	private OverviewMap overviewSource;
-
+	
 	private TdbFile tdb;
 
 	private int parent = 63240000;
 	private String overviewMapname;
 	private String overviewMapnumber;
 	private String areaName;
+	private String outputDir;
 	private int tdbVersion;
 
 	/**
@@ -62,6 +63,7 @@ public class TdbBuilder implements Combiner {
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
+		
 		try {
 			parent = Integer.parseInt(overviewMapnumber);
 		} catch (NumberFormatException e) {
@@ -94,6 +96,8 @@ public class TdbBuilder implements Combiner {
 		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
 				familyName, areaName, enableProfile);
+		
+		outputDir = args.getOutputDir();
 	}
 
 	/**
@@ -241,7 +245,7 @@ public class TdbBuilder implements Combiner {
 		params.setMapDescription(areaName);
 
 		try {
-			Map map = Map.createMap(overviewMapname, params, overviewMapnumber);
+			Map map = Map.createMap(overviewMapname, outputDir ,params, overviewMapnumber);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
@@ -256,7 +260,7 @@ public class TdbBuilder implements Combiner {
 	 */
 	private void writeTdbFile() {
 		try {
-			tdb.write(overviewMapname + ".tdb");
+			tdb.write(outputDir + overviewMapname + ".tdb");
 		} catch (IOException e) {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);

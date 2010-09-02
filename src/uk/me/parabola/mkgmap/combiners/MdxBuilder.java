@@ -27,6 +27,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
 public class MdxBuilder implements Combiner {
 	private MdxFile mdx;
 	private String mdxFilename;
+	private String outputDir;
 
 	public void init(CommandArgs args) {
 		int familyId = args.get("family-id", 0);
@@ -34,6 +35,8 @@ public class MdxBuilder implements Combiner {
 
 		mdxFilename = args.get("overview-mapname", "osm") + ".mdx";
 		mdx = new MdxFile(familyId, productId);
+		
+		outputDir = args.getOutputDir();
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -42,7 +45,7 @@ public class MdxBuilder implements Combiner {
 
 	public void onFinish() {
 		try {
-			mdx.write(mdxFilename);
+			mdx.write(outputDir + mdxFilename);
 		} catch (IOException e) {
 			throw new ExitException("Could not create MDX file", e);
 		}

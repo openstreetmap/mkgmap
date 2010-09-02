@@ -72,12 +72,14 @@ public class GmapsuppBuilder implements Combiner {
 	private String mapsetName;
 
 	private String overallDescription = "Combined map";
+	private String outputDir;
 	private MpsFile mpsFile;
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
+		outputDir = args.getOutputDir();
 	}
 
 	/**
@@ -322,7 +324,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setReservedDirectoryBlocks(reserve);
 		log.info("reserved", reserve);
 
-		FileSystem outfs = ImgFS.createFs(GMAPSUPP, params);
+		FileSystem outfs = ImgFS.createFs(outputDir + GMAPSUPP, params);
 		mpsFile = createMpsFile(outfs);
 		mpsFile.setMapsetName(mapsetName);
 

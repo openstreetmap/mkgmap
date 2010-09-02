@@ -28,7 +28,7 @@
   </component>
   <component name="ExportToHTMLSettings">
     <option name="OPEN_IN_BROWSER" value="true" />
-    <option name="OUTPUT_DIRECTORY" value="$PROJECT_DIR$/../../inspections" />
+    <option name="OUTPUT_DIRECTORY" value="$USER_HOME$/inspections" />
   </component>
   <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
   <component name="JavadocGenerationManager">

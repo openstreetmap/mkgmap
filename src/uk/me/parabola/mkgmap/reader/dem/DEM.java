@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.dem;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -159,12 +160,34 @@ public abstract class DEM {
 			MapBuilder builder = new MapBuilder();
 			builder.config(config);
 
+			// Get output directory
+			String DEFAULT_DIR = "." + File.separatorChar;
+			String fileOutputDir = config.getProperty("output-dir", DEFAULT_DIR);
+	 
+			// Check for path separator
+			if (fileOutputDir.charAt(fileOutputDir.length() - 1) != File.separatorChar) {
+				fileOutputDir = fileOutputDir.concat(File.separator);
+			}
+			
+			// Test if directory exists
+			File outputDir = new File(fileOutputDir);
+			if (!outputDir.exists()) {
+				System.out.println("Output directory not found. Creating directory '" + fileOutputDir + "'");
+				if (!outputDir.mkdirs()) {
+					System.err.println("Unable to create output directory! Using default directory instead");
+					fileOutputDir = DEFAULT_DIR;
+				}
+			} else if (!outputDir.isDirectory()) {
+				System.err.println("The --output-dir parameter must specify a directory. The parameter is being ignored, writing to default directory instead.");
+				fileOutputDir = DEFAULT_DIR;
+			}		
+			
 			FileSystemParam params = new FileSystemParam();
 			params.setMapDescription("contour lines");
 			long mapName = Integer.valueOf(config.getProperty("mapname", "63240000"));
 			try {
 				String mapname = String.format("%08d", mapName + 10000000);
-				Map map = Map.createMap(mapname, params, mapname);
+				Map map = Map.createMap(mapname, fileOutputDir, params, mapname);
 				builder.makeMap(map, dest);
 				map.close();
 			}

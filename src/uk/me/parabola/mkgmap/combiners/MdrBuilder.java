@@ -62,17 +62,18 @@ public class MdrBuilder implements Combiner {
 	 */
 	public void init(CommandArgs args) {
 		String name = args.get("overview-mapname", "osmmap");
+		String outputDir = args.getOutputDir();
 
 		ImgChannel mdrChan;
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
 			params.setBlockSize(args.get("block-size", 4096));
-			FileSystem fs = ImgFS.createFs(name + "_mdr.img", params);
+			FileSystem fs = ImgFS.createFs(outputDir + name + "_mdr.img", params);
 			toClose.push(fs);
 
 			// Create the MDR file within the .img
-			mdrChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".MDR");
+			mdrChan = fs.create(outputDir + name.toUpperCase(Locale.ENGLISH) + ".MDR");
 			toClose.push(mdrChan);
 		} catch (IOException e) {
 			throw new ExitException("Could not create global index file");

@@ -57,7 +57,6 @@ import uk.me.parabola.util.EnhancedProperties;
  */
 public class Map implements InternalFiles, Configurable {
 	private static final Logger log = Logger.getLogger(Map.class);
-
 	private String filename;
 	private String mapName;
 	private FileSystem fileSystem;
@@ -86,12 +85,12 @@ public class Map implements InternalFiles, Configurable {
 	 * @throws FileNotWritableException If the file cannot
 	 * be opened for write.
 	 */
-	public static Map createMap(String mapname, FileSystemParam params, String mapnumber)
+	public static Map createMap(String mapname, String outputdir, FileSystemParam params, String mapnumber)
 			throws FileExistsException, FileNotWritableException
 	{
 		Map m = new Map();
 		m.mapName = mapname;
-		String outFilename = mapname + ".img";
+		String outFilename = outputdir + mapname + ".img";
 
 		FileSystem fs = ImgFS.createFs(outFilename, params);
 		m.filename = outFilename;
