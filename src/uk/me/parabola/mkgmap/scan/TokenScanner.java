@@ -79,7 +79,7 @@ public class TokenScanner {
 
 	/**
 	 * Get the value of the next token and consume the token.  You'd
-	 * probably only call this after having peek'ed the type earlier.
+	 * probably only call this after having peeked the type earlier.
 	 */
 	public String nextValue() {
 		skipSpace();
@@ -217,12 +217,12 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Read the tokens up untill the end of the line and combine then
+	 * Read the tokens up until the end of the line and combine then
 	 * into one string.
 	 * 
 	 * @return A single string, not including the newline terminator.  Never
 	 * returns null, returns an empty string if there is nothing there.  The
-	 * end of line is comsumed.
+	 * end of line is consumed.
 	 */
 	public String readLine() {
 		String res = readUntil(TokType.EOL, null);
