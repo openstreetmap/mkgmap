@@ -242,16 +242,18 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Convience routine to get an integer.  Skips space and reads a
+	 * Convenience routine to get an integer.  Skips space and reads a
 	 * token.  This token is converted to an integer if possible.
 	 * @return An integer as read from the next non space token.
 	 * @throws NumberFormatException When the next symbol isn't
 	 * a valid integer.
 	 */
-	public int nextInt() {
+	public int nextInt() throws NumberFormatException {
 		skipSpace();
 		Token t = nextRawToken();
-		// TODO: catch number format exception
+		if (t == null)
+			throw new NumberFormatException("no number");
+
 		return Integer.parseInt(t.getValue());
 	}
 

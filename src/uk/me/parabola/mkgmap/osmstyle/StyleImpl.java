@@ -561,8 +561,14 @@ public class StyleImpl implements Style {
 	private void checkVersion() throws FileNotFoundException {
 		Reader r = fileLoader.open(FILE_VERSION);
 		TokenScanner scan = new TokenScanner(FILE_VERSION, r);
-		int version = scan.nextInt();
-		log.debug("Got version", version);
+		int version = 0;
+		try {
+			version = scan.nextInt();
+			log.debug("Got version", version);
+		} catch (NumberFormatException e) {
+			// default to 0 if no version can be found.
+			version = 0;
+		}
 
 		if (version > VERSION) {
 			System.err.println("Warning: unrecognised style version " + version +
