@@ -72,31 +72,40 @@
             <SvnBranchConfiguration>
               <option name="branchMap">
                 <map>
-                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/branches">
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
                     <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/releases">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="https://svn.parabola.me.uk/svn/mkgmap/tags">
-                    <value>
-                      <list />
+                      <list>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1280572276930" />
+                          <option name="revision" value="1666" />
+                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/overview" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1265918744208" />
+                          <option name="revision" value="1569" />
+                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/style-speed" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1236291460415" />
+                          <option name="revision" value="970" />
+                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/poi" />
+                        </SvnBranchItem>
+                        <SvnBranchItem>
+                          <option name="creationDateMillis" value="1228044192952" />
+                          <option name="revision" value="740" />
+                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/typpoi" />
+                        </SvnBranchItem>
+                      </list>
                     </value>
                   </entry>
                 </map>
               </option>
               <option name="branchUrls">
                 <list>
-                  <option value="https://svn.parabola.me.uk/svn/mkgmap/branches" />
-                  <option value="https://svn.parabola.me.uk/svn/mkgmap/releases" />
-                  <option value="https://svn.parabola.me.uk/svn/mkgmap/tags" />
+                  <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
                 </list>
               </option>
-              <option name="trunkUrl" value="https://svn.parabola.me.uk/svn/mkgmap/trunk" />
+              <option name="trunkUrl" value="https://svn.mkgmap.org.uk/svn/mkgmap/trunk" />
             </SvnBranchConfiguration>
           </value>
         </entry>
