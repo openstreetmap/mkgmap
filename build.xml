@@ -163,8 +163,8 @@
 		<jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
 				manifest="${resources}/MANIFEST.MF">
 			<include name="**/*.class"/>
-			<!--<include name="*.csv"/>-->
-			<!--<include name="*.xml"/>-->
+			<include name="*.csv"/>
+			<include name="*.xml"/>
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
 			<include name="styles/**"/>
