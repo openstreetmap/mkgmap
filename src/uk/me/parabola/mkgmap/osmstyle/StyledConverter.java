@@ -110,6 +110,8 @@ public class StyledConverter implements OsmConverter {
 	
 	private final Rule wayRules;
 	private final Rule nodeRules;
+	private final Rule lineRules;
+	private final Rule polygonRules;
 	private final Rule relationRules;
 
 	private final boolean ignoreMaxspeeds;
@@ -161,6 +163,8 @@ public class StyledConverter implements OsmConverter {
 
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();
+		lineRules = style.getLineRules();
+		polygonRules = style.getPolygonRules();
 		relationRules = style.getRelationRules();
 
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
@@ -278,7 +282,15 @@ public class StyledConverter implements OsmConverter {
 
 		preConvertRules(way);
 
-		wayRules.resolveType(way, new TypeResult() {
+		Rule rules;
+		if ("polyline".equals(way.getTag("mkgmap:stylefilter")))
+			rules = lineRules;
+		else if ("polygon".equals(way.getTag("mkgmap:stylefilter")))
+			rules = polygonRules;
+		else
+			rules = wayRules;
+		
+		rules.resolveType(way, new TypeResult() {
 			public void add(Element el, GType type) {
 				if (type.isContinueSearch()) {
 					// If not already copied, do so now

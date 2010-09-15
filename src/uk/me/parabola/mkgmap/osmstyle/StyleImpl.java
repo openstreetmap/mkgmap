@@ -204,6 +204,16 @@ public class StyleImpl implements Style {
 		return r;
 	}
 
+	public Rule getLineRules() {
+		lines.prepare();
+		return lines;
+	}
+
+	public Rule getPolygonRules() {
+		polygons.prepare();
+		return polygons;
+	}
+	
 	public Rule getRelationRules() {
 		relations.prepare();
 		return relations;

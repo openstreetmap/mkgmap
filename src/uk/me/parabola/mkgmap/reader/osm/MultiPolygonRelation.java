@@ -38,12 +38,19 @@ public class MultiPolygonRelation extends Relation {
 	private static final Logger log = Logger
 			.getLogger(MultiPolygonRelation.class);
 
+	public static final String STYLE_FILTER_TAG = "mkgmap:stylefilter";
+	public static final String STYLE_FILTER_LINE = "polyline";
+	public static final String STYLE_FILTER_POLYGON = "polygon";
+	
 	private final Map<Long, Way> tileWayMap;
 	private final Map<Long, String> roleMap = new HashMap<Long, String>();
 
 	private ArrayList<BitSet> containsMatrix;
 	private ArrayList<JoinedWay> polygons;
 	private Set<JoinedWay> intersectingPolygons;
+	
+	private Set<Way> outerWaysForLineTagging;
+	private Map<String, String> outerTags;
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
 	private Area bboxArea;
@@ -106,10 +113,6 @@ public class MultiPolygonRelation extends Relation {
 			roleMap.put(el.getId(), role);
 		}
 
-	}
-
-	public boolean isBoundaryRelation() {
-		return getTag("boundary") != null;
 	}
 	
 	/**
@@ -458,6 +461,12 @@ public class MultiPolygonRelation extends Relation {
 
 				it.remove();
 				first = false;
+				
+				String role = getRole(tempWay);
+				if (role == null || "".equals(role) || "outer".equals(role)) {
+					// anyhow add the ways to the list for line tagging
+					outerWaysForLineTagging.addAll(tempWay.getOriginalWays());
+				}
 			}
 		}
 	}
@@ -596,6 +605,10 @@ public class MultiPolygonRelation extends Relation {
 
 		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
+		
+		outerWaysForLineTagging = new HashSet<Way>();
+		outerTags = new HashMap<String,String>();
+		
 		closeWays(polygons);
 		removeUnclosedWays(polygons);
 
@@ -678,8 +691,7 @@ public class MultiPolygonRelation extends Relation {
 				if (log.isDebugEnabled())
 					log.debug("wrong inner polygons: " + outmostInnerPolygons);
 				// do not process polygons tagged with role=inner but which are
-				// not
-				// contained by any other polygon
+				// not contained by any other polygon
 				unfinishedPolygons.andNot(outmostInnerPolygons);
 				outmostPolygons.andNot(outmostInnerPolygons);
 				outmostInnerFound = true;
@@ -690,6 +702,8 @@ public class MultiPolygonRelation extends Relation {
 			polygonWorkingQueue.addAll(getPolygonStatus(outmostPolygons, "outer"));
 		}
 
+		boolean outmostPolygonProcessing = true;
+		
 		while (!polygonWorkingQueue.isEmpty()) {
 
 			// the polygon is not contained by any other unfinished polygon
@@ -749,6 +763,12 @@ public class MultiPolygonRelation extends Relation {
 			// these polygons must all be checked for holes
 			polygonWorkingQueue.addAll(holes);
 
+			if (currentPolygon.outer) {
+				// add the original ways to the list of ways that get the line tags of the mp
+				// the joined ways may be changed by the auto closing algorithm
+				outerWaysForLineTagging.addAll(currentPolygon.polygon.getOriginalWays());
+			}
+			
 			// check if the polygon has tags and therefore should be processed
 			boolean processPolygon = currentPolygon.outer
 					|| hasPolygonTags(currentPolygon.polygon);
@@ -788,6 +808,17 @@ public class MultiPolygonRelation extends Relation {
 						p.copyTags(this);
 						p.deleteTag("type");
 					}
+				} 
+					
+				if (currentPolygon.outer && outmostPolygonProcessing) {
+					// this is the outmost polygon - copy its tags. They will be used
+					// later for tagging of the lines
+					assert singularOuterPolygons.size() > 0 : "The list of outmost outer polygons after cutting is empty";
+					// all cutted polygons have the same tags - get the first way to copy them 
+					Way outerWay = singularOuterPolygons.get(0);
+					for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
+						outerTags.put(tag.getKey(), tag.getValue());
+					}
 				}
 
 				for (Way mpWay : singularOuterPolygons) {
@@ -795,15 +826,34 @@ public class MultiPolygonRelation extends Relation {
 					// final way map
 					if (log.isDebugEnabled())
 						log.debug(mpWay.getId(),mpWay.toTagString());
+					
+					// mark this polygons so that only polygon style rules are applied
+					mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
+					
 					tileWayMap.put(mpWay.getId(), mpWay);
 				}
 			}
+			
+			// First polygon is the outmost polygon. This has been processed so set the flag to false
+			outmostPolygonProcessing=false;
 		}
 		
 		if (log.isLoggable(Level.WARNING) && 
 				(outmostInnerPolygons.cardinality()+unfinishedPolygons.cardinality()+nestedOuterPolygons.cardinality()+nestedInnerPolygons.cardinality() >= 1)) {
 			log.warn("Multipolygon", toBrowseURL(), "contains errors.");
 
+			BitSet outerUnusedPolys = new BitSet();
+			outerUnusedPolys.or(unfinishedPolygons);
+			outerUnusedPolys.or(outmostInnerPolygons);
+			outerUnusedPolys.or(nestedOuterPolygons);
+			outerUnusedPolys.or(nestedInnerPolygons);
+			outerUnusedPolys.or(unfinishedPolygons);
+			// use only the outer polygons
+			outerUnusedPolys.and(outerPolygons);
+			for (JoinedWay w : getWaysFromPolygonList(outerUnusedPolys)) {
+				outerWaysForLineTagging.addAll(w.getOriginalWays());
+			}
+			
 			runIntersectionCheck(unfinishedPolygons);
 			runOutmostInnerPolygonCheck(outmostInnerPolygons);
 			runNestedOuterPolygonCheck(nestedOuterPolygons);
@@ -822,6 +872,34 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
+		// Go through all original outer ways, create a copy, tag them
+		// with the mp tags and mark them only to be used for polyline processing
+		// This enables the style file to decide if the polygon information or
+		// the simple line information should be used.
+		for (Way orgOuterWay : outerWaysForLineTagging) {
+			Set<String> tagListToRemove = this.wayRemoveTags.get(orgOuterWay.getId());
+			if (tagListToRemove == null) {
+				tagListToRemove = new TreeSet<String>();
+				wayRemoveTags.put(orgOuterWay.getId(), tagListToRemove);
+			}
+			
+			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
+			lineTagWay.setName(orgOuterWay.getName());
+			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
+			for (Entry<String,String> tag : outerTags.entrySet()) {
+				lineTagWay.addTag(tag.getKey(), tag.getValue());
+				
+				// remove the tag from the original way if it has the same value
+				if (tag.getValue().equals(orgOuterWay.getTag(tag.getKey()))) {
+					tagListToRemove.add(tag.getKey());
+				}
+			}
+			
+			if (log.isDebugEnabled())
+				log.debug("Add line way", lineTagWay.getId(), lineTagWay.toTagString());
+			tileWayMap.put(lineTagWay.getId(), lineTagWay);
+		}
+		
 		cleanup();
 	}
 
@@ -932,6 +1010,8 @@ public class MultiPolygonRelation extends Relation {
 		polygons = null;
 		bboxArea = null;
 		intersectingPolygons = null;
+		outerWaysForLineTagging = null;
+		outerTags = null;
 	}
 
 	private CutPoint calcNextCutPoint(AreaCutData areaData) {

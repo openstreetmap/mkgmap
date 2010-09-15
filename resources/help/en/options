@@ -239,13 +239,6 @@ Miscellaneous options:
 --ignore-turn-restrictions
 	When reading OSM files, ignore any "restriction" relations.
 
---process-boundary-relations
-	When reading OSM files, boundary relations are processed. By default
-	they are not processed because most of the boundary relations are 
-	incomplete due to splitting of OSM files. When processing these
-	incomplete multipolygons additional artificial boundary lines are 
-	created on the tile bounds. 
-
 --ignore-osm-bounds
 	When reading OSM files, ignore any "bounds" elements.
 	With this option selected generate-sea sometimes works better,

@@ -54,7 +54,8 @@ public interface Style {
 
 	/**
 	 * Get the rules that apply to ways.  This includes lines and polygons
-	 * as they are not separate primatives in osm.
+	 * as they are not separate primitives in osm. It is a merge of the line
+	 * rules and the polygon rules.
 	 */
 	public Rule getWayRules();
 
@@ -62,6 +63,16 @@ public interface Style {
 	 * Get the rules that apply to nodes.
 	 */
 	public Rule getNodeRules();
+	
+	/**
+	 * Get the rules that apply to lines.
+	 */
+	public Rule getLineRules();
+
+	/**
+	 * Get the rules that apply to polygons.
+	 */
+	public Rule getPolygonRules();
 
 	/**
 	 * Get the relation rules.

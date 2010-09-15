@@ -540,6 +540,20 @@ public class StyleTester implements OsmConverter {
 		 */
 		public Rule getWayRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
+			r.addAll((ReferenceRuleSet) getLineRules());
+			r.addAll((ReferenceRuleSet) getPolygonRules());
+			return r;
+		}
+
+		/**
+		 * Throws away the existing rules for the lines and re-reads them using
+		 * the SimpleRuleFileReader that does not re-order or optimise the rules in any
+		 * way.
+		 *
+		 * @return A Reference rule set of the lines.
+		 */
+		public Rule getLineRules() {
+			ReferenceRuleSet r = new ReferenceRuleSet();
 
 			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(GType.POLYLINE, levels, r);
 			try {
@@ -551,6 +565,26 @@ public class StyleTester implements OsmConverter {
 			return r;
 		}
 
+		/**
+		 * Throws away the existing rules for the polygons and re-reads them using
+		 * the SimpleRuleFileReader that does not re-order or optimise the rules in any
+		 * way.
+		 *
+		 * @return A Reference rule set of the polygons.
+		 */
+		public Rule getPolygonRules() {
+			ReferenceRuleSet r = new ReferenceRuleSet();
+
+			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(GType.POLYGON, levels, r);
+			try {
+				ruleFileReader.load(fileLoader, "polygons");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			return r;
+		}
+		
 		public Rule getRelationRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
 
@@ -569,7 +603,7 @@ public class StyleTester implements OsmConverter {
 		}
 
 		/**
-		 * Keeps each rule in an orderd list.
+		 * Keeps each rule in an ordered list.
 		 *
 		 * Types are resolved by literally applying the rules in order to the
 		 * element.
@@ -582,6 +616,12 @@ public class StyleTester implements OsmConverter {
 
 			public void add(Rule rule) {
 				rules.add(rule);
+			}
+
+			public void addAll(ReferenceRuleSet rs) {
+				for (Rule r : rs.rules) {
+					add(r);
+				}
 			}
 
 			public void resolveType(Element el, TypeResult result) {
