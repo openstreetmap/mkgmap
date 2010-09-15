@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -207,5 +208,13 @@ public class Utils {
 			}
 		}
 		return is;
+	}
+
+	public static String joinPath(String dir, String basename, String ext) {
+		return joinPath(dir, basename + "." + ext);
+	}
+	public static String joinPath(String dir, String basename) {
+		File file = new File(dir, basename);
+		return file.getAbsolutePath();
 	}
 }

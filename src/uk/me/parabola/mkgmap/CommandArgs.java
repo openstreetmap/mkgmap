@@ -77,14 +77,9 @@ public class CommandArgs {
 	}
 
 	public String getOutputDir() {
-		String DEFAULT_DIR = "." + File.separatorChar;
+		String DEFAULT_DIR = ".";
 		String fileOutputDir = currentOptions.getProperty("output-dir", DEFAULT_DIR);
  
-		// Check for path separator
-		if (fileOutputDir.charAt(fileOutputDir.length() - 1) != File.separatorChar) {
-			fileOutputDir = fileOutputDir.concat(File.separator);
-		}
-		
 		// Test if directory exists
 		File outputDir = new File(fileOutputDir);
 		if (!outputDir.exists()) {

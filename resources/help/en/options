@@ -27,7 +27,6 @@ filename
 	option names with a single '-' cannot be used, simply use the
 	long name instead.
 
--o filename
 --output-dir=filename
     The directory in which all output files are written. It defaults
     to the current working directory, ie. the directory the command is

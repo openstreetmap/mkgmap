@@ -86,7 +86,7 @@ public class NsisBuilder implements Combiner {
 	private void writeNsisFile() {
 		Writer w = null;
 		try {
-			w = new FileWriter(outputDir + nsisFilename);
+			w = new FileWriter(Utils.joinPath(outputDir, nsisFilename));
 			PrintWriter pw = new PrintWriter(w);
 
 			pw.format(Locale.ROOT, "!define DEFAULT_DIR \"C:\\Garmin\\Maps\\%s\"\n", seriesName);
@@ -209,7 +209,7 @@ public class NsisBuilder implements Combiner {
 	private void writeLicenceFile() {
 		Writer w = null;
 		try {
-			w = new FileWriter(outputDir + licenseFilename);
+			w = new FileWriter(Utils.joinPath(outputDir, licenseFilename));
 			PrintWriter pw = new PrintWriter(w);
 
 			pw.format(Locale.ROOT, "OSM Street map\n");

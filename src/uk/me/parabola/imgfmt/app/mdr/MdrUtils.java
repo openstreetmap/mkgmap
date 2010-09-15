@@ -15,7 +15,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 /**
  * A bunch of static routines for use in creating the MDR file.
  */
-public class Utils {
+public class MdrUtils {
 
 	/**
 	 * Get the group number for the poi.  This is the first byte of the records
@@ -29,7 +29,7 @@ public class Utils {
 	 */
 	public static int getGroupForPoi(int fullType) {
 		// We group pois based on their type.  This may not be the final thoughts on this.
-		int type = Utils.getTypeFromFullType(fullType);
+		int type = MdrUtils.getTypeFromFullType(fullType);
 		int group = 0;
 		if (fullType < 0xf)
 			group = 1;

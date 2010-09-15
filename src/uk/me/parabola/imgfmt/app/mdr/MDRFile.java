@@ -115,7 +115,7 @@ public class MDRFile extends ImgFile {
 		assert currentMap > 0;
 
 		int fullType = point.getType();
-		if (!Utils.canBeIndexed(fullType))
+		if (!MdrUtils.canBeIndexed(fullType))
 			return;
 
 		Label label = point.getLabel();

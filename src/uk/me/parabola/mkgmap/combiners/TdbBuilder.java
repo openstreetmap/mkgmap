@@ -24,6 +24,7 @@ import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
@@ -245,7 +246,7 @@ public class TdbBuilder implements Combiner {
 		params.setMapDescription(areaName);
 
 		try {
-			Map map = Map.createMap(overviewMapname, outputDir ,params, overviewMapnumber);
+			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
@@ -260,7 +261,7 @@ public class TdbBuilder implements Combiner {
 	 */
 	private void writeTdbFile() {
 		try {
-			tdb.write(outputDir + overviewMapname + ".tdb");
+			tdb.write(Utils.joinPath(outputDir, overviewMapname, "tdb"));
 		} catch (IOException e) {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);

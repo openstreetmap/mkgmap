@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.combiners;
 import java.io.IOException;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.mdxfmt.MdxFile;
 import uk.me.parabola.mkgmap.CommandArgs;
 
@@ -45,7 +46,7 @@ public class MdxBuilder implements Combiner {
 
 	public void onFinish() {
 		try {
-			mdx.write(outputDir + mdxFilename);
+			mdx.write(Utils.joinPath(outputDir, mdxFilename));
 		} catch (IOException e) {
 			throw new ExitException("Could not create MDX file", e);
 		}

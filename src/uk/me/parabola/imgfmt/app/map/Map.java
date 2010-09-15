@@ -90,7 +90,7 @@ public class Map implements InternalFiles, Configurable {
 	{
 		Map m = new Map();
 		m.mapName = mapname;
-		String outFilename = outputdir + mapname + ".img";
+		String outFilename = Utils.joinPath(outputdir, mapname, "img");
 
 		FileSystem fs = ImgFS.createFs(outFilename, params);
 		m.filename = outFilename;

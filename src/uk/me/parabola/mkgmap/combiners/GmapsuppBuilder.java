@@ -28,6 +28,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -324,7 +325,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setReservedDirectoryBlocks(reserve);
 		log.info("reserved", reserve);
 
-		FileSystem outfs = ImgFS.createFs(outputDir + GMAPSUPP, params);
+		FileSystem outfs = ImgFS.createFs(Utils.joinPath(outputDir, GMAPSUPP), params);
 		mpsFile = createMpsFile(outfs);
 		mpsFile.setMapsetName(mapsetName);
 
