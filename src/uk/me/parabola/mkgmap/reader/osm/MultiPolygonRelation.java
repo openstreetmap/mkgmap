@@ -811,13 +811,16 @@ public class MultiPolygonRelation extends Relation {
 				} 
 					
 				if (currentPolygon.outer && outmostPolygonProcessing) {
-					// this is the outmost polygon - copy its tags. They will be used
+					// this is the outer most polygon - copy its tags. They will be used
 					// later for tagging of the lines
-					assert singularOuterPolygons.size() > 0 : "The list of outmost outer polygons after cutting is empty";
-					// all cutted polygons have the same tags - get the first way to copy them 
-					Way outerWay = singularOuterPolygons.get(0);
-					for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
-						outerTags.put(tag.getKey(), tag.getValue());
+
+					// all cut polygons have the same tags - get the first way to copy them
+					if (singularOuterPolygons.isEmpty()==false) {
+						Way outerWay = singularOuterPolygons.get(0);
+						for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
+							outerTags.put(tag.getKey(), tag.getValue());
+						}
+						outmostPolygonProcessing = false;
 					}
 				}
 
@@ -833,9 +836,6 @@ public class MultiPolygonRelation extends Relation {
 					tileWayMap.put(mpWay.getId(), mpWay);
 				}
 			}
-			
-			// First polygon is the outmost polygon. This has been processed so set the flag to false
-			outmostPolygonProcessing=false;
 		}
 		
 		if (log.isLoggable(Level.WARNING) && 
