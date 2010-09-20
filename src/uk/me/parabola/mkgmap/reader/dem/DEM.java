@@ -708,6 +708,7 @@ public abstract class DEM {
 			for (int y = minY; y < maxY; y++) {
 				for (int x = minX; x < maxX; x++) {
 					byte v = 0;
+					int direction;
 					// Mark the borders of the cell, represented by the four points (i, j), (i+1, j), (i, j+1), (i+1, j+1),
 					// which are intersected by the contour. The values are:
 					// 1: top
@@ -721,6 +722,7 @@ public abstract class DEM {
 						if (data.elevation(x, y + 1) < level) {
 							v |= 2;
 						}
+						direction = 1;
 					} else {
 						if (data.elevation(x + 1, y) > level) {
 							v |= 1;
@@ -728,6 +730,7 @@ public abstract class DEM {
 						if (data.elevation(x, y + 1) > level) {
 							v |= 2;
 						}
+						direction = -1;
 					}
 
 					int k = -1;
@@ -760,7 +763,7 @@ public abstract class DEM {
 
 							Position p = new Position(x, y, data.lon + (x0 + delta * (x1 - x0)) * DEM.res, data.lat + (y0 + delta * (y1 - y0)) * DEM.res, k);
 							p.markEdge();
-							isolines.add(traceByStepping(level, p));
+							isolines.add(traceByStepping(level, p, direction));
 						}
 						catch (RuntimeException ex) {
 							log.debug("error: %s", ex.toString());
@@ -772,9 +775,8 @@ public abstract class DEM {
 			}
 		}
 
-		private Isoline traceByStepping(double level, Position p) {
+		private Isoline traceByStepping(double level, Position p, int direction) {
 			log.debug("traceByStepping: starting contour %f %d %d %f %f %d", level, p.ix, p.iy, p.x, p.y, p.edge);
-			int direction = 1;
 			int n = 0;
 			Position startP = new Position(p);
 			boolean foundEnd = false;
