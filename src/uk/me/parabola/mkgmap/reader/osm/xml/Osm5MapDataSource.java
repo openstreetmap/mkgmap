@@ -19,21 +19,14 @@ package uk.me.parabola.mkgmap.reader.osm.xml;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
-import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
-import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
-import uk.me.parabola.mkgmap.reader.osm.Style;
+import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 
 import org.xml.sax.SAXException;
 
@@ -48,6 +41,7 @@ import org.xml.sax.SAXException;
  * @author Steve Ratcliffe
  */
 public class Osm5MapDataSource extends OsmMapDataSource {
+	//private static final Logger log = Logger.getLogger(Osm5MapDataSource.class);
 
 	public boolean isFileSupported(String name) {
 		// This is the default format so say supported if we get this far,
@@ -71,17 +65,19 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 
 			try {
 				Osm5XmlHandler handler = new Osm5XmlHandler(getConfig());
-				handler.setCollector(mapper);
-				Runnable task = new Runnable() {
-					public void run() {
-						addBackground();
-					}
-				};
-				handler.setEndTask(task);
-				Osm5MapDataSource.ConverterStuff stuff = createConverter();
-				handler.setConverter(stuff.getConverter());
-				handler.setUsedTags(stuff.getUsedTags());
-				parser.parse(is, handler);
+				Osm5XmlHandler.SaxHandler saxHandler = handler.new SaxHandler();
+
+				setupHandler(handler);
+
+				// parse the xml file
+				parser.parse(is, saxHandler);
+				osmReadingHooks.end();
+
+				// now convert the saved elements
+				elementSaver.convert(getConverter());
+
+				addBackground();
+
 			} catch (IOException e) {
 				throw new FormatException("Error reading file", e);
 			}
@@ -89,69 +85,6 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 			throw new FormatException("Error parsing file", e);
 		} catch (ParserConfigurationException e) {
 			throw new FormatException("Internal error configuring xml parser", e);
-		}
-	}
-
-	/**
-	 * Create the appropriate converter from osm to garmin styles.
-	 *
-	 * The option --style-file give the location of an alternate file or
-	 * directory containing styles rather than the default built in ones.
-	 *
-	 * The option --style gives the name of a style, either one of the
-	 * built in ones or selects one from the given style-file.
-	 *
-	 * If there is no name given, but there is a file then the file should
-	 * just contain one style.
-	 *
-	 * @return An OsmConverter based on the command line options passed in.
-	 */
-	private ConverterStuff createConverter() {
-
-		Properties props = getConfig();
-		String loc = props.getProperty("style-file");
-		if (loc == null)
-			loc = props.getProperty("map-features");
-		String name = props.getProperty("style");
-
-		if (loc == null && name == null)
-			name = "default";
-
-		Set<String> tags;
-		OsmConverter converter;
-		try {
-			Style style = new StyleImpl(loc, name);
-			style.applyOptionOverride(props);
-			setStyle(style);
-
-			tags = style.getUsedTags();
-			converter = new StyledConverter(style, mapper, props);
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
-		}
-
-		return new ConverterStuff(converter, tags);
-	}
-
-	public class ConverterStuff {
-		private final OsmConverter converter;
-		private final Set<String> usedTags;
-
-		public ConverterStuff(OsmConverter converter, Set<String> usedTags) {
-			this.converter = converter;
-			this.usedTags = usedTags;
-		}
-
-		public OsmConverter getConverter() {
-			return converter;
-		}
-
-		public Set<String> getUsedTags() {
-			return usedTags;
 		}
 	}
 }

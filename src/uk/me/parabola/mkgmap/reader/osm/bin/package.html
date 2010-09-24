@@ -1,0 +1,25 @@
+<!--
+  ~ Copyright (C) 2010.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License version 3 or
+  ~ version 2 as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but
+  ~ WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  ~ General Public License for more details.
+  -->
+<body>
+<h1>Reader for OSM binary format</h1>
+<p>There are a number of binary formats, this format is Scott Crosby's
+binary format based on Google's protobuf.</p>
+
+<p>To make use of this reader you must have the java protobuf library
+as well as Scott's OSM-binary package http://github.com/scrosby/OSM-binary</p>
+
+<p>The format is a storage format designed to be quicker and smaller than the
+XML format but preserve the element ordering and features of that format.
+We can therefore pretty much re-use most of the code that is used for reading the
+XML format.</p>
+</body>

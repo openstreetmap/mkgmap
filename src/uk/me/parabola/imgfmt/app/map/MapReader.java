@@ -21,6 +21,7 @@ import java.util.Deque;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
@@ -151,5 +152,9 @@ public class MapReader implements Closeable {
 
 	public List<Region> getRegions() {
 		return lblFile.getRegions();
+	}
+
+	public Area getTreBounds() {
+		return treFile.getBounds();
 	}
 }

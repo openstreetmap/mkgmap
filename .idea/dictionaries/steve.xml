@@ -53,6 +53,7 @@
       <w>rethrown</w>
       <w>routable</w>
       <w>seamark</w>
+      <w>slon</w>
       <w>startup</w>
       <w>struct</w>
       <w>subdiv</w>
@@ -63,6 +64,7 @@
       <w>vollmert</w>
       <w>xcharset</w>
       <w>xcode</w>
+      <w>xmlattr</w>
     </words>
   </dictionary>
 </component>

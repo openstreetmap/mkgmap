@@ -58,10 +58,10 @@ public interface OsmConverter {
 	 * Set the bounding box for this map.  This should be set before any other
 	 * elements are converted if you want to use it.
 	 * All elements that are added are clipped to this box, new points are
-	 * added as needed at the boundry.
+	 * added as needed at the boundary.
 	 *
-	 * If a node or a way falls completely outside the boundry then
-	 * it would be ommited.  This would not normally happen in the way this
+	 * If a node or a way falls completely outside the boundary then
+	 * it would be omitted.  This would not normally happen in the way this
 	 * option is typically used however.
 	 *
 	 * @param bbox The bounding area.

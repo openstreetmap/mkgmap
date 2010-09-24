@@ -27,6 +27,10 @@ public class CommandArgs {
 		return currentOptions.getProperty(name, def);
 	}
 
+	public boolean get(String name, boolean def) {
+		return currentOptions.getProperty(name, def);
+	}
+
 	public String getDescription() {
 		return currentOptions.getProperty("description");
 	}

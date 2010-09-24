@@ -20,7 +20,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.map.MapReader;
+import uk.me.parabola.imgfmt.app.trergn.Point;
+import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
@@ -50,7 +53,7 @@ public class SimpleTest {
 	 * though.
 	 */
 	@Test
-	public void testSize() throws FileNotFoundException {
+	public void testBasic() throws FileNotFoundException {
 
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
@@ -62,24 +65,15 @@ public class SimpleTest {
 		//FileSystem fs = ImgFS.openFs(Args.DEF_MAP_ID + ".img");
 		assertNotNull("file exists", mr);
 
-		//List<DirectoryEntry> entries = fs.list();
-		//int count = 0;
-		//for (DirectoryEntry ent : entries) {
-		//	String ext = ent.getExt();
-		//
-		//	int size = ent.getSize();
-		//	if (ext.equals("RGN")) {
-		//		count++;
-		//		assertThat("RGN size", size, new RangeMatcher(138300));
-		//	} else if (ext.equals("TRE")) {
-		//		count++;
-		//		assertEquals("TRE size", 1329, size);
-		//	} else if (ext.equals("LBL")) {
-		//		count++;
-		//		assertEquals("LBL size", 27693, size);
-		//	}
-		//}
-		//assertTrue("enough checks run", count >= 3);
+		Area bounds = mr.getTreBounds();
+		Area expBox = new Area(2402404, -11185, 2407064, -6524);
+		assertEquals("bounds of map", expBox, bounds);
+
+		List<Point> list = mr.pointsForLevel(0);
+		assertEquals("number of points at level 0", list.size(), 204);
+
+		List<Polyline> list1 = mr.linesForLevel(0);
+		assertEquals("number of lines at level 0", list1.size(), 3757);
 	}
 
 	@Test

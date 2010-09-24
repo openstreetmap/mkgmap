@@ -383,10 +383,10 @@ public class StyledConverter implements OsmConverter {
 	/**
 	 * Set the bounding box for this map.  This should be set before any other
 	 * elements are converted if you want to use it. All elements that are added
-	 * are clipped to this box, new points are added as needed at the boundry.
+	 * are clipped to this box, new points are added as needed at the boundary.
 	 *
-	 * If a node or a way falls completely outside the boundry then it would be
-	 * ommited.  This would not normally happen in the way this option is typically
+	 * If a node or a way falls completely outside the boundary then it would be
+	 * omitted.  This would not normally happen in the way this option is typically
 	 * used however.
 	 *
 	 * @param bbox The bounding area.
@@ -394,6 +394,10 @@ public class StyledConverter implements OsmConverter {
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
 		this.bbox = bbox;
+
+		// we calculate our own bounding box, now let the collector know about it.
+		collector.addToBounds(new Coord(bbox.getMinLat(), bbox.getMinLong()));
+		collector.addToBounds(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
 	}
 
 	public void end() {

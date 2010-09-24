@@ -31,6 +31,9 @@
     <orderEntry type="library" name="jai" level="application" />
     <orderEntry type="library" name="apache-ant" level="application" />
     <orderEntry type="library" name="icu4j" level="application" />
+    <orderEntry type="library" name="protobuf" level="application" />
+    <orderEntry type="library" name="osmbinary" level="application" />
+    <orderEntry type="library" name="protobuf" level="application" />
   </component>
 </module>
 

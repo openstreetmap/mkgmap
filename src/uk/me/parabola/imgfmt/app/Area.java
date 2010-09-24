@@ -186,4 +186,26 @@ public class Area {
 		}
 		return true;
 	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Area area = (Area) o;
+
+		if (maxLat != area.maxLat) return false;
+		if (maxLong != area.maxLong) return false;
+		if (minLat != area.minLat) return false;
+		if (minLong != area.minLong) return false;
+
+		return true;
+	}
+
+	public int hashCode() {
+		int result = minLat;
+		result = 31 * result + minLong;
+		result = 31 * result + maxLat;
+		result = 31 * result + maxLong;
+		return result;
+	}
 }

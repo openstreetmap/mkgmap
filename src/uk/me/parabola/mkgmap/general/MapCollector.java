@@ -21,7 +21,10 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 
 
 /**
- * This interface can be used by map sources to collect the information.
+ * This interface can be used by map sources to collect the map elements
+ * in their general form. The general form has garmin types, but the full
+ * detail from the input file.
+ *
  * It consists of all the 'writable' methods on {@link MapDetails}.
  *
  * @author Steve Ratcliffe

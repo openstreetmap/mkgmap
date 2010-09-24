@@ -39,6 +39,8 @@
 
 	<property name="jars" value="/opt/jars"/>
 	<property name="junit.jar" value="${jars}/junit-4.5/junit-4.5.jar"/>
+	<property name="osmprotobuf.jar" value="${jars}/osmprotobuf/osmprotobuf.jar"/>
+	<property name="protobuf.jar" value="${jars}/protobuf-2.3.0/protobuf.jar"/>
 
 	<!-- A place to keep a local copy of the test input data.  The test files
 	 are large and so are not kept in svn.  If you don't set this then they
@@ -51,12 +53,16 @@
 	<!-- For class paths -->
   <path id="main">
     <pathelement location="${build.classes}" />
+		<pathelement location="${osmprotobuf.jar}"/> <!-- TODO should be extras -->
+		<pathelement location="${protobuf.jar}"/>
   </path>
 
 	<path id="test">
 		<pathelement location="test/resources"/>
 		<pathelement location="build/test"/>
 		<pathelement location="${junit.jar}"/>
+		<pathelement location="${osmprotobuf.jar}"/>
+		<pathelement location="${protobuf.jar}"/>
 		<path refid="main"/>
 		<pathelement location="test"/>
 	</path>
