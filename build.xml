@@ -69,7 +69,7 @@
 	<!-- Compile the product itself (no tests). -->
   <target name="compile" depends="prepare" description="main compilation">
 
-    <javac srcdir="${src}" destdir="${build.classes}" target="1.5" debug="true">
+    <javac srcdir="${src}" destdir="${build.classes}" debug="true">
       <include name="**/*.java" />
       <classpath refid="main"/>
       <!-- <compilerarg value="-Xlint:unchecked"/> -->
@@ -98,7 +98,7 @@
 	<!-- Compile the test classes -->
 	<target name="build-test" depends="build">
 		<mkdir dir="${build.test}" />
-		<javac srcdir="${test}" destdir="${build.test}" target="1.5" debug="true">
+		<javac srcdir="${test}" destdir="${build.test}" debug="true">
       <include name="**/*.java" />
       <classpath refid="test"/>
     </javac>
@@ -172,7 +172,7 @@
 		</jar>
 
 		<copy todir="${dist}/doc" >
-			<fileset dir="doc" includes="*.txt, Credits, mkgmap.1"/>
+			<fileset dir="doc" includes="README*, *.txt, Credits, mkgmap.1"/>
 		</copy>
 
 		<!-- misc -->
