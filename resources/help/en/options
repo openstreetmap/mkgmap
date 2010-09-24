@@ -155,15 +155,10 @@ Product description options:
 	If --tdbfile is enabled, this gives the name of the overview
 	.img and .tdb files. The default map name is osmmap.
 
---nsis
-	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
-	(NSIS) to create a Windows Mapsource Installer.
-
 --overview-mapnumber=8 digit number
 	If --tdbfile is enabled, this gives the internal 8 digit
 	number used in the overview map and tdb file.  The default
 	number is 63240000.
-	
 
 Optimization options:
 
@@ -268,7 +263,6 @@ Miscellaneous options:
 	1 = increase angle between side road and outgoing main road
 	2 = increase angle between side road and incoming main road
 
-
 --report-similar-arcs
 	Issue a warning when more than one arc connects two nodes and
 	the ways that the arcs are derived from contain identical
@@ -344,6 +338,10 @@ Miscellaneous options:
 	This is an experimental option and there are several unresolved
 	issues.
 
+--nsis
+	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
+	(NSIS) to create a Windows Mapsource Installer.
+
 --make-all-cycleways
 	Turn on all of the options that make cycleways.
 
@@ -374,6 +372,8 @@ Miscellaneous options:
 
 --tdbfile
 	Write a .tdb file.
+--tdb-v3
+	Write a version 3 tdb file instead of the default v4.
 
 --show-profiles=1
 	Sets a flag in tdb file which marks set mapset as having contour 
@@ -422,3 +422,6 @@ Miscellaneous options:
 		
 	3	Enables debug output about suspicious relations that
 		might cause wrong country region info
+
+--verbose
+	Makes some operations more verbose. Mostly used with --list-styles.

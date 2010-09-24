@@ -25,15 +25,19 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.log.Logger;
@@ -56,7 +60,7 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 
 /**
- * The new main program.  There can be many filenames to process and there can
+ * The new main program.  There can be many file names to process and there can
  * be differing outputs determined by options.  So the actual work is mostly
  * done in other classes.  This one just works out what is wanted.
  *
@@ -119,10 +123,10 @@ public class Main implements ArgumentProcessor {
 		try {
 			// Read the command line arguments and process each filename found.
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
+			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
-			System.exit(1);
 		}
 	}
 
@@ -149,6 +153,33 @@ public class Main implements ArgumentProcessor {
 		} catch (IOException e) {
 			err.println("Could not read the help topic: " + file + ", sorry");
 		}
+	}
+
+	private static Set<String> getValidOptions(PrintStream err) {
+		String path = "/help/en/options";
+		InputStream stream = Main.class.getResourceAsStream(path);
+		if (stream == null)
+			return null;
+
+		Set<String> result = new HashSet<String>();
+		try {
+			BufferedReader r = new BufferedReader(new InputStreamReader(stream, "utf-8"));
+
+			Pattern p = Pattern.compile("^--?([a-zA-Z0-9-]*).*$");
+			String line;
+			while ((line = r.readLine()) != null) {
+				Matcher matcher = p.matcher(line);
+				if (matcher.matches()) {
+					String opt = matcher.group(1);
+					result.add(opt);
+				}
+			}
+		} catch (IOException e) {
+			err.println("Could not read valid optoins");
+			return null;
+		}
+
+		return result;
 	}
 
 	public void startOptions() {

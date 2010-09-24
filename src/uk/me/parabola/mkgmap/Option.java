@@ -17,26 +17,49 @@
 package uk.me.parabola.mkgmap;
 
 /**
- * An option or a key value pair.  Imutable class.
+ * An option or a key value pair.  Immutable class.
  */
 public class Option {
 	private final String option;
 	private final String value;
+	private final boolean experimental;
 
 	protected Option(String optval) {
 		String[] v = optval.split("[=:]", 2);
+
+		String name;
+		String val;
+
 		if (v.length > 1) {
-			option = v[0].trim();
-			value = v[1].trim();
+			name = v[0].trim();
+			val = v[1].trim();
 		} else {
-			option = optval;
-			value = "";
+			name = optval;
+			val = "";
 		}
+
+		boolean exp = false;
+		if (name.startsWith("x-")) {
+			exp = true;
+			name = name.substring(2);
+		}
+
+		option = name;
+		value = val;
+		experimental = exp;
 	}
 
 	protected Option(String option, String value) {
-		this.option = option;
+		boolean exp = false;
+		String name = option;
+		if (name.startsWith("x-")) {
+			exp = true;
+			name = name.substring(2);
+		}
+
+		this.option = name;
 		this.value = value;
+		this.experimental = exp;
 	}
 
 	public String getOption() {
@@ -45,5 +68,9 @@ public class Option {
 
 	public String getValue() {
 		return value;
+	}
+
+	public boolean isExperimental() {
+		return experimental;
 	}
 }

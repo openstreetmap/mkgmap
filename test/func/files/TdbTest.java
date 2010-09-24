@@ -20,8 +20,9 @@ import uk.me.parabola.mkgmap.main.Main;
 import uk.me.parabola.tdbfmt.TdbFile;
 
 import func.lib.Args;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 public class TdbTest {
@@ -77,7 +78,6 @@ public class TdbTest {
 				Args.TEST_STYLE_ARG,
 				"--tdbfile",
 				"--overview-mapname=" + thisMapname,
-				"--overview-description=Test overview map",
 				"--family-id=198",
 				"--product-id=2",
 				"--series-name=Test series",

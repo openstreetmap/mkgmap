@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Unit tests" type="JUnit" factoryName="JUnit">
-    <extension name="coverage" enabled="false" sample_coverage="true" runner="idea" merge="false" />
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <extension name="snapshooter" />
     <module name="mkgmap" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />

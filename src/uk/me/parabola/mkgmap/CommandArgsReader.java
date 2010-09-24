@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ public class CommandArgsReader {
 	private final ArgList arglist = new ArgList();
 
 	private final EnhancedProperties args = new EnhancedProperties();
+	private Set<String> validOptions;
 
 	{
 		// Set some default values.  It is as if these were on the command
@@ -66,7 +68,7 @@ public class CommandArgsReader {
 
 	/**
 	 * Read and interpret the command line arguments.  Most have a double hyphen
-	 * preceeding them and these work just the same if they are in a config
+	 * preceding them and these work just the same if they are in a config
 	 * file.
 	 * <p/>
 	 * There are a few options that consist of a single hyphen followed by a
@@ -154,6 +156,12 @@ public class CommandArgsReader {
 		String option = opt.getOption();
 		String value = opt.getValue();
 
+		if (validOptions != null && !validOptions.contains(option) && !opt.isExperimental()) {
+			Formatter f = new Formatter();
+			f.format("Invalid option: '%s'", option);
+			throw new ExitException(f.toString());
+		}
+
 		log.debug("adding option", option, value);
 
 		// Note if an explicit mapname is set
@@ -196,6 +204,10 @@ public class CommandArgsReader {
 		} catch (IOException e) {
 			throw new ExitException("Failed to read option file", e);
 		}
+	}
+
+	public void setValidOptions(Set<String> validOptions) {
+		this.validOptions = validOptions;
 	}
 
 	/**
@@ -290,7 +302,12 @@ public class CommandArgsReader {
 		public String getValue() {
 			return option.getValue();
 		}
+
+		public boolean isExperimental() {
+			return option.isExperimental();
+		}
 	}
+
 	/**
 	 * The arguments are held in this list.
 	 */
