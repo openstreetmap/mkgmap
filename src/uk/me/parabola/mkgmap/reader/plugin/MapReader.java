@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource;
+//import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource;
 import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
@@ -43,7 +43,7 @@ public class MapReader {
 
 		loaders.add(ElementTestDataSource.class);
 		loaders.add(PolishMapDataSource.class);
-		loaders.add(OsmBinMapDataSource.class);
+		//loaders.add(OsmBinMapDataSource.class);
 		loaders.add(Osm5MapDataSource.class);
 	}
 

@@ -80,6 +80,7 @@
       <classpath refid="main"/>
       <!-- <compilerarg value="-Xlint:unchecked"/> -->
       <exclude name="**/reader/dem/optional/*.java"/>
+			<exclude name="**/reader/osm/bin/*.java"/>
     </javac>
   </target>
 
