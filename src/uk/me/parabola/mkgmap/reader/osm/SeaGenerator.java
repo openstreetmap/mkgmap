@@ -42,7 +42,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private int maxCoastlineGap;
 	private boolean allowSeaSectors;
 	private boolean extendSeaSectors;
-	private String[] landTag;
+	private String[] landTag = { "natural", "land" };
 
 	private ElementSaver saver;
 
