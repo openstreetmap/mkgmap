@@ -216,7 +216,7 @@ public class ElementSaver {
 		if(minimumArcLength != null)
 			removeShortArcsByMergingNodes(minimumArcLength);
 
-		converter.setBoundingBox(boundingBox);
+		converter.setBoundingBox(getBoundingBox());
 		coordMap = null;
 
 		for (Relation r : relationMap.values())
@@ -563,6 +563,8 @@ public class ElementSaver {
 	public Area getBoundingBox() {
 		if (boundingBox != null) {
 			return boundingBox;
+		} else if (minLat == Utils.toMapUnit(180.0) && maxLat == Utils.toMapUnit(-180.0)) {
+			return new Area(0, 0, 0, 0);
 		} else {
 			return new Area(minLat, minLon, maxLat, maxLon);
 		}

@@ -389,7 +389,7 @@ public class StyledConverter implements OsmConverter {
 	 * omitted.  This would not normally happen in the way this option is typically
 	 * used however.
 	 *
-	 * @param bbox The bounding area.
+	 * @param bbox The bounding area, must not be null.
 	 */
 	public void setBoundingBox(Area bbox) {
 		this.clipper = new AreaClipper(bbox);
