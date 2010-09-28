@@ -173,6 +173,8 @@ public class ValueBuilder {
 			item.addFilter(new HeightFilter(arg));
 		} else if (cmd.equals("not-equal")) {
 			item.addFilter(new NotEqualFilter(arg));
+		} else if (cmd.equals("substring")) {
+			item.addFilter(new SubstringFilter(arg));
 		}
 	}
 
