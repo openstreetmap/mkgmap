@@ -315,11 +315,64 @@ public class RuleFileReaderTest {
 		el.addTag("tunnel", "yes");
 		el.addTag("route", "abc");
 		GType type = getFirstType(rs, el);
-		assertNotNull("without route mtb or bicycle", type);
 
-		el.addTag("route", "mtb");
+	}
+
+	@Test
+	public void testGTR() {
+		RuleSet rs = makeRuleSet("z=0 & a >= 10 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("z", "0");
+		el.addTag("a", "9");
+		GType type = getFirstType(rs, el);
+		assertNull("a less that 10, no result", type);
+
+		el.addTag("a", "10");
 		type = getFirstType(rs, el);
-		assertNull("with route mtb", type);
+		assertNotNull(type);
+		assertEquals("Valid type returned", 1, type.getType());
+
+		el.addTag("a", "11");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals("Valid type returned", 1, type.getType());
+	}
+
+	@Test
+	public void testLTE() {
+		RuleSet rs = makeRuleSet("z=0 & a <= 10 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("z", "0");
+		el.addTag("a", "9");
+		GType type = getFirstType(rs, el);
+		assertNotNull("a less that 10", type);
+		assertEquals("found type for a <= 10", 1, type.getType());
+
+		el.addTag("a", "10");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals("Found type for a == 10", 1, type.getType());
+
+		el.addTag("a", "11");
+		type = getFirstType(rs, el);
+		assertNull("a is 11, a <= 10 is false", type);
+	}
+
+	@Test
+	public void testNE() {
+		RuleSet rs = makeRuleSet("z=0 & a != 10 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("z", "0");
+		el.addTag("a", "9");
+		GType type = getFirstType(rs, el);
+		assertNotNull("a is 9 so a!=10 is true", type);
+
+		el.addTag("a", "10");
+		type = getFirstType(rs, el);
+		assertNull("a is 10, so a!=10 is false", type);
 	}
 
 	/**

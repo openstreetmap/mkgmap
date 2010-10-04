@@ -36,7 +36,7 @@ public class ExpressionReader {
 				break;
 
 			String val = scanner.nextWord();
-			if ("&|!=~()><".contains(val))
+			if (val.matches(".*[&|!=~()><]"))
 				saveOp(val);
 			else
 				pushValue(val);
