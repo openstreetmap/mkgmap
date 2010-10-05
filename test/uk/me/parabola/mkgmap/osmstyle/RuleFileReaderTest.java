@@ -289,6 +289,42 @@ public class RuleFileReaderTest {
 		assertNull("no match for yello", type);
 	}
 
+	@Test
+	public void testRegex2() {
+		RuleSet rs = makeRuleSet("a=b & (smoothness ~ '.*(bad|horrible|impassable)' | sac_scale ~ '.*(mountain|alpine)_hiking') [0x1]" +
+				"a = '>=' & b = '>' [0x2]");
+		assertNotNull(rs);
+
+		Element el = new Way(1);
+		el.addTag("a", "b");
+		el.addTag("smoothness", "zzzbad");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		assertEquals("matched .*bad", 1, type.getType());
+
+		el = new Way(1);
+		el.addTag("a", "b");
+		el.addTag("sac_scale", "zzz alpine_hiking");
+
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+
+		el = new Way(1);
+		el.addTag("a", "b");
+		el.addTag("sac_scale", "zzz alp_hiking");
+		type = getFirstType(rs, el);
+		assertNull(type);
+
+		el = new Way(1);
+		el.addTag("a", ">=");
+		el.addTag("b", ">");
+		type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals("match string that is the same as an operator", 2, type.getType());
+	}
+
 	/**
 	 * This simply is to make sure that actions that affect their own
 	 * conditions do not hang. There are no defined semantics for this.

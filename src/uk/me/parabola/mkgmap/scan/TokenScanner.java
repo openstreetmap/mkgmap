@@ -258,6 +258,16 @@ public class TokenScanner {
 	}
 
 	/**
+	 * As {@link #nextWordWithInfo()} but just the string is returned.
+	 * @return The next word as a string.  A quoted entity is regarded as a
+	 * word for the purposes of this scanner.
+	 */
+	public String nextWord() {
+		WordInfo info = nextWordWithInfo();
+		return info.getText();
+	}
+
+	/**
 	 * Read a string that can be quoted.  If it is quoted, then everything
 	 * until the closing quotes is part of the string.  Both single
 	 * and double quotes can be used.
@@ -266,8 +276,11 @@ public class TokenScanner {
 	 * skipping space.
 	 *
 	 * Initial and final space is skipped.
+	 *
+	 * The word string is returned along with a flag to indicate whether it
+	 * was quoted or not.
 	 */
-	public String nextWord() {
+	public WordInfo nextWordWithInfo() {
 		skipSpace();
 		Token tok = peekToken();
 		char quotec = 0;
@@ -292,7 +305,7 @@ public class TokenScanner {
 			}
 		}
 		skipSpace();
-		return sb.toString();
+		return new WordInfo(sb.toString(), quotec != 0);
 	}
 
 	public boolean checkToken(String val) {

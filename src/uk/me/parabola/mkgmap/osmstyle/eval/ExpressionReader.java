@@ -6,6 +6,7 @@ import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.mkgmap.scan.WordInfo;
 
 import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
 
@@ -35,11 +36,11 @@ public class ExpressionReader {
 			if (scanner.checkToken("[") || scanner.checkToken("{"))
 				break;
 
-			String val = scanner.nextWord();
-			if (val.matches(".*[&|!=~()><]"))
-				saveOp(val);
+			WordInfo wordInfo = scanner.nextWordWithInfo();
+			if (isOperation(wordInfo))
+				saveOp(wordInfo.getText());
 			else
-				pushValue(val);
+				pushValue(wordInfo.getText());
 		}
 
 		// Complete building the tree
@@ -52,6 +53,31 @@ public class ExpressionReader {
 
 		assert stack.size() == 1;
 		return stack.pop();
+	}
+
+	/**
+	 * Is this a token representing an operation?
+	 * @param token The string to test.
+	 * @return True if this looks like an operator.
+	 */
+	private boolean isOperation(WordInfo token) {
+		// quick check, has to be one or two characters
+		if (token.isQuoted())
+			return false;
+
+		String text = token.getText();
+		if (text.length() > 2 || text.isEmpty())
+			return false;
+
+		// quoted strings are never operators
+		char first = text.charAt(0);
+		if (first == '\'' || first == '"')
+			return false;
+
+		// If first character is an operation character then it is an operator
+		// (or a syntax error)
+		String chars = "&|!=~()><";
+		return chars.indexOf(first) >= 0;
 	}
 
 	/**
