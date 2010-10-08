@@ -38,9 +38,9 @@ import uk.me.parabola.util.EnhancedProperties;
 public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(SeaGenerator.class);
 
-	private boolean generateSeaUsingMP;
+	private boolean generateSeaUsingMP = true;
 	private int maxCoastlineGap;
-	private boolean allowSeaSectors;
+	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors;
 	private String[] landTag = { "natural", "land" };
 
