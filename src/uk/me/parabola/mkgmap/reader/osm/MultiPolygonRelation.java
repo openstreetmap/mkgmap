@@ -67,13 +67,6 @@ public class MultiPolygonRelation extends Relation {
 	private static final double OVERLAP_TOLERANCE_DISTANCE = 2.0d;
 	
 	/**
-	 * if one of these tags are contained in the multipolygon then the outer
-	 * ways use the mp tags instead of their own tags.
-	 */
-	private static final List<String> polygonTags = Arrays.asList("boundary",
-			"natural", "landuse", "land_area", "building", "waterway");
-
-	/**
 	 * Create an instance based on an existing relation. We need to do this
 	 * because the type of the relation is not known until after all its tags
 	 * are read in.
@@ -771,7 +764,7 @@ public class MultiPolygonRelation extends Relation {
 			
 			// check if the polygon has tags and therefore should be processed
 			boolean processPolygon = currentPolygon.outer
-					|| hasPolygonTags(currentPolygon.polygon);
+					|| hasTags(currentPolygon.polygon);
 
 			if (processPolygon) {
 				List<Way> singularOuterPolygons;
@@ -798,7 +791,7 @@ public class MultiPolygonRelation extends Relation {
 				}
 
 				boolean useRelationTags = currentPolygon.outer
-						&& hasPolygonTags(this);
+						&& hasTags(this);
 				if (useRelationTags) {
 					// the multipolygon contains tags that overwhelm the
 					// tags of the outer polygon
@@ -1374,22 +1367,19 @@ public class MultiPolygonRelation extends Relation {
 		return w;
 	}
 
-	private boolean hasPolygonTags(JoinedWay way) {
+	private boolean hasTags(JoinedWay way) {
 		for (Way segment : way.getOriginalWays()) {
-			if (hasPolygonTags(segment)) {
+			if (hasTags(segment)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean hasPolygonTags(Element element) {
+	private boolean hasTags(Element element) {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
-			if ("natural".equals(tagEntry.getKey()) && "coastline".equals(tagEntry.getValue())) {
-				// ignore natural=coastline because this is not a real polygon tag
-				continue;
-			}
-			if (polygonTags.contains(tagEntry.getKey())) {
+			if ("type".equals(tagEntry.getKey()) == false) {
+				// return true if there is more than one tag other than "type"
 				return true;
 			}
 		}
