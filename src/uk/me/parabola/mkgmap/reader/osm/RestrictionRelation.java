@@ -4,6 +4,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -290,9 +291,12 @@ public class RestrictionRelation extends Relation {
 			if(restriction.startsWith("only_turn"))
 				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way " + toWay.toBrowseURL());
 			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.toBrowseURL());
-			for(CoordNode otherNode : otherNodes) {
-				log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
-				collector.addRestriction(fromNode, otherNode, viaNode, exceptMask);
+			HashSet<CoordNode> otherNodesUnique = new HashSet<CoordNode>(otherNodes);	
+			for(CoordNode otherNode : otherNodesUnique) {
+				if (!otherNode.equals(fromNode) && !otherNode.equals(toNode)) {
+					log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
+					collector.addRestriction(fromNode, otherNode, viaNode, exceptMask);
+				}
 			}
 		}
 		else {
