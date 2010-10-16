@@ -63,6 +63,8 @@ clean:
 	rm -f 11112222.img 11112222.tdb
 	rm -f osmmap*
 	rm -f g?.img
+	rm -f styletester.style
+	rm -f test.*
 
 load:
 	sleep 2
