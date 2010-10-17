@@ -218,8 +218,8 @@
 
 		<copy todir="${dist}/examples">
 			<fileset dir="resources">
-				<include name="styles/default"/>
-				<include name="styles/noname"/>
+				<include name="styles/default/*"/>
+				<include name="styles/noname/*"/>
 				<include name="chars/ascii/row02.trans"/>
 			</fileset>
 		</copy>
