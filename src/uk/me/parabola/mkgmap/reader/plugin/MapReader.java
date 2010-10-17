@@ -20,10 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-//import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource;
-import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
-import uk.me.parabola.mkgmap.reader.test.ElementTestDataSource;
 
 /**
  * Class to find the correct map reader to use, based on the type of the file
@@ -39,12 +36,28 @@ public class MapReader {
 	private static final List<Class<? extends LoadableMapDataSource>> loaders;
 
 	static {
+		String[] sources = {
+				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource",
+				"uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource",
+				"uk.me.parabola.mkgmap.reader.test.ElementTestDataSource",
+
+				// must be last as it is the default
+				"uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource",
+		};
+
 		loaders = new ArrayList<Class<? extends LoadableMapDataSource>>();
 
-		loaders.add(ElementTestDataSource.class);
-		loaders.add(PolishMapDataSource.class);
-		//loaders.add(OsmBinMapDataSource.class);
-		loaders.add(Osm5MapDataSource.class);
+		for (String source : sources) {
+			try {
+				@SuppressWarnings({"unchecked"})
+				Class<? extends LoadableMapDataSource> c = (Class<? extends LoadableMapDataSource>) Class.forName(source);
+				loaders.add(c);
+			} catch (ClassNotFoundException e) {
+				// not available, try the rest
+			} catch (NoClassDefFoundError e) {
+				// not available, try the rest
+			}
+		}
 	}
 
 	/**
@@ -78,5 +91,4 @@ public class MapReader {
 
 		return src;
 	}
-
 }

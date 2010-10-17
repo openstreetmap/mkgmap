@@ -61,7 +61,6 @@ public class OsmBinHandler extends OsmHandler {
 			}
 
 			setBBox(minLat, minLon, maxLat, maxLon);
-			System.out.println("bb" + saver.getBoundingBox());
 		}
 
 		protected void parseNodes(List<Osmformat.Node> nodes) {

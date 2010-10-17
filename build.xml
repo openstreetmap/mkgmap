@@ -22,6 +22,13 @@
 	<!-- Init -->
   <property name="top" value="."/>
 
+	<!-- Instead of modifying external.properties, you can create a file called
+	local.properties instead.  Anything defined in the local.properties file will
+	override properties defined later
+	-->
+	<!--suppress AntResolveInspection,AntMissingPropertiesFileInspection -->
+	<property file="${top}/local.properties"/>
+
 	<property file="${top}/external.properties"/>
 
   <property name="build" value="build"/>
@@ -38,9 +45,12 @@
   <property name="resources" value="resources"/>
 
 	<property name="jars" value="/opt/jars"/>
-	<property name="junit.jar" value="${jars}/junit-4.5/junit-4.5.jar"/>
-	<property name="osmprotobuf.jar" value="${jars}/osmprotobuf/osmprotobuf.jar"/>
-	<property name="protobuf.jar" value="${jars}/protobuf-2.3.0/protobuf.jar"/>
+
+	<!-- the locations of these external jars are set in external.properties
+	and can be overridden in a local.properties file. -->
+	<property name="junit.jar" value="junit-4.5.jar"/>
+	<property name="osmprotobuf.jar" value="osmprotobuf.jar"/>
+	<property name="protobuf.jar" value="protobuf.jar"/>
 
 	<!-- A place to keep a local copy of the test input data.  The test files
 	 are large and so are not kept in svn.  If you don't set this then they
@@ -53,7 +63,7 @@
 	<!-- For class paths -->
   <path id="main">
     <pathelement location="${build.classes}" />
-		<pathelement location="${osmprotobuf.jar}"/> <!-- TODO should be extras -->
+		<pathelement location="${osmprotobuf.jar}"/>
 		<pathelement location="${protobuf.jar}"/>
   </path>
 
@@ -61,11 +71,16 @@
 		<pathelement location="test/resources"/>
 		<pathelement location="build/test"/>
 		<pathelement location="${junit.jar}"/>
-		<pathelement location="${osmprotobuf.jar}"/>
-		<pathelement location="${protobuf.jar}"/>
 		<path refid="main"/>
 		<pathelement location="test"/>
 	</path>
+
+	<condition property="protobuf-available">
+		<and>
+			<available file="${osmprotobuf.jar}"/>
+			<available file="${protobuf.jar}"/>
+		</and>
+	</condition>
 
 	<!-- Prepare - make all the directories -->
 	<target name="prepare">
@@ -78,14 +93,21 @@
     <javac srcdir="${src}" destdir="${build.classes}" debug="true">
       <include name="**/*.java" />
       <classpath refid="main"/>
-      <!-- <compilerarg value="-Xlint:unchecked"/> -->
       <exclude name="**/reader/dem/optional/*.java"/>
 			<exclude name="**/reader/osm/bin/*.java"/>
     </javac>
   </target>
 
+	<target name="compile-pbf" if="protobuf-available">
+		<echo>Protobuf binary format support</echo>
+		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
+			<classpath refid="main"/>
+			<include name="**/reader/osm/bin/*.java"/>
+    </javac>
+	</target>
+
 	<!-- Build into the build direcotory.  All resource files are copied in. -->
-  <target name="build" depends="compile" >
+  <target name="build" depends="compile, compile-pbf" description="Build everything into the build direcotory">
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
@@ -109,7 +131,6 @@
       <include name="**/*.java" />
       <classpath refid="test"/>
     </javac>
-
 	</target>
 
 	<target name="test" depends="build-test" description="Run the junit tests">
@@ -178,6 +199,9 @@
 			<include name="help/**"/>
 		</jar>
 
+		<copy todir="${dist}" file="${osmprotobuf.jar}"/>
+		<copy todir="${dist}" file="${protobuf.jar}"/>
+
 		<copy todir="${dist}/doc" >
 			<fileset dir="doc" includes="README*, *.txt, Credits, mkgmap.1"/>
 		</copy>
@@ -211,16 +235,41 @@
 		</javadoc>
 	</target>
 
+	<target name="macker">
+		<path id="macker.classpath">
+			<fileset dir="${macker.root}/lib"/>
+			<pathelement location="${macker.root}/build/macker.jar"/>
+		</path>
+		<taskdef name="macker"
+						 classname="net.innig.macker.ant.MackerAntTask"
+						 classpathref="macker.classpath"/>
+
+		<property name="macker.report.xml" value="macker.out.xml"/>
+		<property name="macker.report.html" value="macker.out.html"/>
+
+		<macker xmlReportFile="${macker.report.xml}" failOnError="false">
+			<rules dir="." includes="macker.xml"/>
+			<classes dir="${build.classes}">
+				<include name="**/*.class"/>
+			</classes>
+		</macker>
+
+		<taskdef name="macker-report"
+    	classname="net.innig.macker.ant.MackerReportAntTask"
+    	classpathref="macker.classpath"/>
+		<macker-report xmlReportfile="${macker.report.xml}" outputFile="${macker.report.html}" />
+	</target>
+
 	<!-- Clean everything -->
-	<target name="clean">
+	<target name="clean" description="Remove built files">
 		<delete dir="${build}" />
 		<delete dir="tmp"/>
 	</target>
 
 	<!-- Clobber all generated and built files -->
-	<target name="clobber" depends="clean">
+	<target name="clobber" depends="clean" description="Remove all built files">
 		<delete dir="${dist}" />
   </target>
 
-	<target name="rebuild" depends="clean, build" />
+	<target name="rebuild" depends="clean, build" description="Clean existing class files and build from scratch"/>
 </project>
