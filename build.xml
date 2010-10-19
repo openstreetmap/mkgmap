@@ -1,26 +1,26 @@
 <?xml version="1.0"?>
 <!--
-    File: build.xml
-    
-    Copyright (C) 2006 Steve Ratcliffe
-    
-     This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License version 2 as
-     published by the Free Software Foundation.
-    
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-    
-    
-    Author: Steve Ratcliffe
-    Create date: 26 Nov 2006
+		File: build.xml
+		
+		Copyright (C) 2006 Steve Ratcliffe
+		
+		 This program is free software; you can redistribute it and/or modify
+		 it under the terms of the GNU General Public License version 2 as
+		 published by the Free Software Foundation.
+		
+		 This program is distributed in the hope that it will be useful,
+		 but WITHOUT ANY WARRANTY; without even the implied warranty of
+		 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		 GNU General Public License for more details.
+		
+		
+		Author: Steve Ratcliffe
+		Create date: 26 Nov 2006
 -->
 <project name="mkgmap" default="dist" basedir=".">
 
 	<!-- Init -->
-  <property name="top" value="."/>
+	<property name="top" value="."/>
 
 	<!-- Instead of modifying external.properties, you can create a file called
 	local.properties instead.  Anything defined in the local.properties file will
@@ -31,18 +31,18 @@
 
 	<property file="${top}/external.properties"/>
 
-  <property name="build" value="build"/>
-  <property name="dist" value="dist"/>
+	<property name="build" value="build"/>
+	<property name="dist" value="dist"/>
 
-  <property name="build.classes" value="${build}/classes"/>
-  <property name="build.test" value="${build}/test"/>
+	<property name="build.classes" value="${build}/classes"/>
+	<property name="build.test" value="${build}/test"/>
 
-  <property name="src" value="src"/>
-  <property name="test" value="test"/>
+	<property name="src" value="src"/>
+	<property name="test" value="test"/>
 
-  <property name="doc" value="doc"/>
-  <property name="javadoc" value="${doc}/api"/>
-  <property name="resources" value="resources"/>
+	<property name="doc" value="doc"/>
+	<property name="javadoc" value="${doc}/api"/>
+	<property name="resources" value="resources"/>
 
 	<property name="jars" value="/opt/jars"/>
 
@@ -53,7 +53,7 @@
 	<property name="protobuf.jar" value="protobuf.jar"/>
 
 	<!-- A place to keep a local copy of the test input data.  The test files
-	 are large and so are not kept in svn.  If you don't set this then they
+	 are large and so are not kept in svn.	If you don't set this then they
 	 will be downloaded.
 
 	 You can set it in the external.properties file too.
@@ -61,11 +61,11 @@
 	<property name="test.input.cache" value="/opt/data/testinput"/>
 
 	<!-- For class paths -->
-  <path id="main">
-    <pathelement location="${build.classes}" />
+	<path id="main">
+		<pathelement location="${build.classes}" />
 		<pathelement location="${osmprotobuf.jar}"/>
 		<pathelement location="${protobuf.jar}"/>
-  </path>
+	</path>
 
 	<path id="test">
 		<pathelement location="test/resources"/>
@@ -88,26 +88,26 @@
 	</target>
 
 	<!-- Compile the product itself (no tests). -->
-  <target name="compile" depends="prepare" description="main compilation">
+	<target name="compile" depends="prepare" description="main compilation">
 
-    <javac srcdir="${src}" destdir="${build.classes}" debug="true">
-      <include name="**/*.java" />
-      <classpath refid="main"/>
-      <exclude name="**/reader/dem/optional/*.java"/>
+		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
+			<include name="**/*.java" />
+			<classpath refid="main"/>
+			<exclude name="**/reader/dem/optional/*.java"/>
 			<exclude name="**/reader/osm/bin/*.java"/>
-    </javac>
-  </target>
+		</javac>
+	</target>
 
 	<target name="compile-pbf" if="protobuf-available">
 		<echo>Protobuf binary format support</echo>
 		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
 			<classpath refid="main"/>
 			<include name="**/reader/osm/bin/*.java"/>
-    </javac>
+		</javac>
 	</target>
 
 	<!-- Build into the build direcotory.  All resource files are copied in. -->
-  <target name="build" depends="compile, compile-pbf" description="Build everything into the build direcotory">
+	<target name="build" depends="compile, compile-pbf" description="Build everything into the build direcotory">
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
@@ -122,15 +122,15 @@
 				<include name="**/*.properties"/>
 			</fileset>
 		</copy>
-  </target>
+	</target>
 
 	<!-- Compile the test classes -->
 	<target name="build-test" depends="build">
 		<mkdir dir="${build.test}" />
 		<javac srcdir="${test}" destdir="${build.test}" debug="true">
-      <include name="**/*.java" />
-      <classpath refid="test"/>
-    </javac>
+			<include name="**/*.java" />
+			<classpath refid="test"/>
+		</javac>
 	</target>
 
 	<target name="test" depends="build-test" description="Run the junit tests">
@@ -169,16 +169,16 @@
 			ignoreerrors="true"/>
 		<get src="http://www.mkgmap.org.uk/testinput/osm/uk-test-2.osm.gz"
 			dest="test/resources/in/osm/uk-test-2.osm.gz" usetimestamp="true"
-		  ignoreerrors="true"/>
+			ignoreerrors="true"/>
 		<get src="http://www.mkgmap.org.uk/testinput/mp/test1.mp"
 			dest="test/resources/in/mp/test1.mp" usetimestamp="true"
-		  ignoreerrors="true"/>
+			ignoreerrors="true"/>
 		<get src="http://www.mkgmap.org.uk/testinput/img/63240001.img"
 			dest="test/resources/in/img/63240001.img" usetimestamp="true"
-		  ignoreerrors="true"/>
+			ignoreerrors="true"/>
 		<get src="http://www.mkgmap.org.uk/testinput/img/63240002.img"
 			dest="test/resources/in/img/63240002.img" usetimestamp="true"
-		  ignoreerrors="true"/>
+			ignoreerrors="true"/>
 	</target>
 
 	<target name="dist" depends="build"
@@ -199,8 +199,8 @@
 			<include name="help/**"/>
 		</jar>
 
-		<copy todir="${dist}" file="${osmprotobuf.jar}"/>
-		<copy todir="${dist}" file="${protobuf.jar}"/>
+		<copy todir="${dist}" file="${osmprotobuf.jar}" failonerror="false"/>
+		<copy todir="${dist}" file="${protobuf.jar}" failonerror="false"/>
 
 		<copy todir="${dist}/doc" >
 			<fileset dir="doc" includes="README*, *.txt, Credits, mkgmap.1"/>
@@ -255,8 +255,8 @@
 		</macker>
 
 		<taskdef name="macker-report"
-    	classname="net.innig.macker.ant.MackerReportAntTask"
-    	classpathref="macker.classpath"/>
+			classname="net.innig.macker.ant.MackerReportAntTask"
+			classpathref="macker.classpath"/>
 		<macker-report xmlReportfile="${macker.report.xml}" outputFile="${macker.report.html}" />
 	</target>
 
@@ -269,7 +269,7 @@
 	<!-- Clobber all generated and built files -->
 	<target name="clobber" depends="clean" description="Remove all built files">
 		<delete dir="${dist}" />
-  </target>
+	</target>
 
 	<target name="rebuild" depends="clean, build" description="Clean existing class files and build from scratch"/>
 </project>
