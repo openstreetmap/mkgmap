@@ -103,20 +103,28 @@ public class OsmBinHandler extends OsmHandler {
 				saver.addPoint(id, co);
 
 				if (nodes.getKeysValsCount() > 0) {
-					// If there are tags, then we create a proper node for it.
-					Node node = new Node(id, co);
+					int ntags = 0;
+					Node node = null;
 					while (nodes.getKeysVals(kvid) != 0) {
 						int keyid = nodes.getKeysVals(kvid++);
 						int valid = nodes.getKeysVals(kvid++);
 						String key = getStringById(keyid);
 						String val = getStringById(valid);
 						key = keepTag(key, val);
-						if (key != null)
+						if (key != null) {
+							if (node == null)
+								node = new Node(id, co);
 							node.addTag(key, val);
+							ntags++;
+						}
 					}
 					kvid++; // Skip over the '0' delimiter.
-					saver.addNode(node);
-					hooks.onAddNode(node);
+
+					if (ntags > 0) {
+						// If there are tags, then we save a proper node for it.
+						saver.addNode(node);
+						hooks.onAddNode(node);
+					}
 				}
 			}
 		}
