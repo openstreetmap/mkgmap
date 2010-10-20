@@ -148,6 +148,7 @@ public class OsmBinHandler extends OsmHandler {
 					Coord co = saver.getCoord(nid);
 					if (co != null) {
 						hooks.onCoordAddedToWay(way, nid, co);
+						co = saver.getCoord(nid);
 						way.addPoint(co);
 
 						// nodes (way joins) will have highwayCount > 1
