@@ -40,6 +40,8 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private ElementSaver saver;
 	private boolean linkPOIsToWays;
 
+	private Node currentNodeInWay;
+
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
 		if(props.getProperty("make-all-cycleways", false)) {
@@ -51,6 +53,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 		}
 		frigRoundabouts = props.getProperty("frig-roundabouts");
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
+		currentNodeInWay = null;
 
 		return true;
 	}
@@ -64,7 +67,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	}
 
 	public void onCoordAddedToWay(Way way, long id, Coord co) {
-		Node currentNodeInWay = saver.getNode(id);
+		currentNodeInWay = saver.getNode(id);
 
 		if (linkPOIsToWays) {
 			// if this Coord is also a POI, replace it with an
@@ -110,25 +113,33 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			}
 		}
 
-		// See if the first Node of the Way has a FIXME attribute
-		if (way.getPoints().isEmpty()) {
-			boolean currentWayStartsWithFIXME = (currentNodeInWay != null &&
-										 (currentNodeInWay.getTag("FIXME") != null ||
-										  currentNodeInWay.getTag("fixme") != null));
-		}
+		// if the first Node of the Way has a FIXME attribute,
+		// disable dead-end-check for oneways
+		// [Osm5XmlHandler would do way.addTag("oneway","yes") later,
+		// so we set the attribute on all ways that start with FIXME.]
+		if (way.getPoints().isEmpty()/* && way.isBoolTag("oneway")*/)
+			checkDeadEndCheck(way);
+	}
+
+	/** Disable the dead-end-check for oneways
+	 * if currentNodeInWay carries a FIXME attribute.
+	 * @param way	where to possibly disable the dead-end-check
+	 */
+	private void checkDeadEndCheck(Way way) {
+		if (currentNodeInWay != null &&
+				(currentNodeInWay.getTag("FIXME") != null ||
+				 currentNodeInWay.getTag("fixme") != null))
+			way.addTag("mkgmap:dead-end-check", "false");
 	}
 
 	public void onAddWay(Way way) {
 		String highway = way.getTag("highway");
 		if (highway != null || "ferry".equals(way.getTag("route"))) {
 			boolean oneway = way.isBoolTag("oneway");
-			// if the first or last Node of the Way has a
-			// FIXME attribute, disable dead-end-check for
-			// oneways
-			//if (oneway && currentWayStartsWithFIXME ||
-			//		(currentNodeInWay != null && (currentNodeInWay.getTag("FIXME") != null || currentNodeInWay.getTag("fixme") != null))) {
-			//	way.addTag("mkgmap:dead-end-check", "false");
-			//}
+			// if the last Node of the Way has a FIXME attribute,
+			// disable dead-end-check for oneways
+			if (oneway)
+				checkDeadEndCheck(way);
 
 			// if the way is a roundabout but isn't already
 			// flagged as "oneway", flag it here
