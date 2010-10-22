@@ -27,7 +27,7 @@ contour=elevation | contour_ext=elevation
 
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
-& !(foot=yes) & !(bicycle=yes) {delete highway;delete junction}
+& foot!=* & bicycle!=* {delete highway;delete junction}
 # Disable dead-end-checks for unaccessible oneways
 highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
