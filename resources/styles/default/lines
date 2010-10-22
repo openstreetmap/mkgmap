@@ -25,6 +25,13 @@ contour=elevation | contour_ext=elevation
 	{ name '${ele|conv:m=>ft}'; }
 	[0x21 resolution 20]
 
+# Hide unaccessible tunnels
+highway=* & tunnel=yes & (access=private|access=no)
+& !(foot=yes) & !(bicycle=yes) {delete highway;delete junction}
+# Disable dead-end-checks for unaccessible oneways
+highway=* & oneway=yes & (access=private|access=no)
+{add mkgmap:dead-end-check=false}
+
 # Set highway names to include the reference if there is one
 highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; add display_name = '${name} (${ref})' }
@@ -105,11 +112,11 @@ natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 20]
 
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 21]
-railway=light_rail & !(layer<0) [0x14 resolution 17]
-railway=narrow_gauge & !(layer<0) [0x14 resolution 17]
-railway=rail & !(layer<0) [0x14 resolution 17]
-railway=subway & !(layer<0) [0x14 resolution 17]
-railway=tram & !(layer<0) [0x14 resolution 18]
+railway=light_rail & !(tunnel=yes) [0x14 resolution 17]
+railway=narrow_gauge & !(tunnel=yes) [0x14 resolution 17]
+railway=rail & !(tunnel=yes) [0x14 resolution 17]
+railway=subway & !(tunnel=yes) [0x14 resolution 17]
+railway=tram & !(tunnel=yes) [0x14 resolution 18]
 railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 
 route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 18]
