@@ -191,9 +191,9 @@ public class OsmBinHandler extends OsmHandler {
 						if(el == null) {
 							// we didn't make a node for this point earlier,
 							// do it now (if it exists)
-							Coord co = saver.getCoord(id);
+							Coord co = saver.getCoord(mid);
 							if(co != null) {
-								el = new Node(id, co);
+								el = new Node(mid, co);
 								saver.addNode((Node)el);
 							}
 						}
