@@ -762,9 +762,10 @@ public class MultiPolygonRelation extends Relation {
 				outerWaysForLineTagging.addAll(currentPolygon.polygon.getOriginalWays());
 			}
 			
-			// check if the polygon has tags and therefore should be processed
+			// check if the polygon is an outer polygon or 
+			// if there are some holes
 			boolean processPolygon = currentPolygon.outer
-					|| hasTags(currentPolygon.polygon);
+					|| (holes.isEmpty()==false);
 
 			if (processPolygon) {
 				List<Way> singularOuterPolygons;
@@ -781,52 +782,51 @@ public class MultiPolygonRelation extends Relation {
 						innerWays);
 				}
 				
-				if (currentPolygon.polygon.getOriginalWays().size() == 1) {
-					// the original way was a closed polygon which
-					// has been replaced by the new cut polygon
-					// the original way should not appear
-					// so we remove all tags
-					removeTagInOrgWays(currentPolygon.polygon, null, null);
-					currentPolygon.polygon.removeAllTags();
-				}
-
-				boolean useRelationTags = currentPolygon.outer
-						&& hasTags(this);
-				if (useRelationTags) {
-					// the multipolygon contains tags that overwhelm the
-					// tags of the outer polygon
-					removeTagsInOrgWays(this, currentPolygon.polygon);
-
-					for (Way p : singularOuterPolygons) {
-						p.copyTags(this);
-						p.deleteTag("type");
+				if (singularOuterPolygons.isEmpty()==false) {
+					// handle the tagging 
+					if (currentPolygon.outer && hasTags(this)) {
+						// use the tags of the multipolygon
+						for (Way p : singularOuterPolygons) {
+							// overwrite all tags
+							p.copyTags(this);
+							p.deleteTag("type");
+						}
+						// remove the multipolygon tags in the original ways of the current polygon
+						removeTagsInOrgWays(this, currentPolygon.polygon);
+					} else {
+						// use the tags of the original ways
+						currentPolygon.polygon.mergeTagsFromOrgWays();
+						for (Way p : singularOuterPolygons) {
+							// overwrite all tags
+							p.copyTags(currentPolygon.polygon);
+						}
+						// remove the current polygon tags in its original ways
+						removeTagsInOrgWays(currentPolygon.polygon, currentPolygon.polygon);
 					}
-				} 
-					
-				if (currentPolygon.outer && outmostPolygonProcessing) {
-					// this is the outer most polygon - copy its tags. They will be used
-					// later for tagging of the lines
+				
+					if (currentPolygon.outer && outmostPolygonProcessing) {
+						// this is the outer most polygon - copy its tags. They will be used
+						// later for tagging of the lines
 
-					// all cut polygons have the same tags - get the first way to copy them
-					if (singularOuterPolygons.isEmpty()==false) {
+						// all cut polygons have the same tags - get the first way to copy them
 						Way outerWay = singularOuterPolygons.get(0);
 						for (Entry<String, String> tag : outerWay.getEntryIteratable()) {
 							outerTags.put(tag.getKey(), tag.getValue());
 						}
 						outmostPolygonProcessing = false;
 					}
-				}
-
-				for (Way mpWay : singularOuterPolygons) {
-					// put the cut out polygons to the
-					// final way map
-					if (log.isDebugEnabled())
-						log.debug(mpWay.getId(),mpWay.toTagString());
 					
-					// mark this polygons so that only polygon style rules are applied
-					mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
+					for (Way mpWay : singularOuterPolygons) {
+						// put the cut out polygons to the
+						// final way map
+						if (log.isDebugEnabled())
+							log.debug(mpWay.getId(),mpWay.toTagString());
 					
-					tileWayMap.put(mpWay.getId(), mpWay);
+						// mark this polygons so that only polygon style rules are applied
+						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
+					
+						tileWayMap.put(mpWay.getId(), mpWay);
+					}
 				}
 			}
 		}
@@ -1367,15 +1367,6 @@ public class MultiPolygonRelation extends Relation {
 		return w;
 	}
 
-	private boolean hasTags(JoinedWay way) {
-		for (Way segment : way.getOriginalWays()) {
-			if (hasTags(segment)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private boolean hasTags(Element element) {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			if ("type".equals(tagEntry.getKey()) == false) {
@@ -1421,9 +1412,6 @@ public class MultiPolygonRelation extends Relation {
 			BitSet containsColumns = containsMatrix.get(rowIndex);
 			BitSet finishedCol = finishedMatrix.get(rowIndex);
 
-			if (log.isDebugEnabled())
-				log.debug("check polygon", rowIndex);
-
 			// get all non calculated columns of the matrix
 			for (int colIndex = finishedCol.nextClearBit(0); colIndex >= 0
 					&& colIndex < polygonList.size(); colIndex = finishedCol
@@ -1467,9 +1455,18 @@ public class MultiPolygonRelation extends Relation {
 			log.debug("createMatrix for", polygonList.size(), "polygons took",
 				(t2 - t1), "ms");
 
-			log.debug("Containsmatrix");
+			log.debug("Containsmatrix:");
+			int i = 0;
+			boolean noContained = true;
 			for (BitSet b : containsMatrix) {
-				log.debug(b);
+				if (b.isEmpty()==false) {
+					log.debug(i,"contains",b);
+					noContained = false;
+				}
+				i++;
+			}
+			if (noContained) {
+				log.debug("Matrix is empty");
 			}
 		}
 	}
@@ -1890,8 +1887,6 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
-	private static final boolean joinWayTagMerge = false;
-	
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
@@ -1982,10 +1977,6 @@ public class MultiPolygonRelation extends Relation {
 					log.debug("Joined", this.getId(), "with", way.getId());
 				}
 				this.originalWays.add(way);
-				addTagsOf(way);
-				if (getName() == null && way.getName() != null) {
-					setName(way.getName());
-				}
 			}
 		}
 
@@ -1998,27 +1989,38 @@ public class MultiPolygonRelation extends Relation {
 			return closedArtificially;
 		}
 
-		private void addTagsOf(Way way) {
-			boolean merge = (joinWayTagMerge || getOriginalWays().size()<=1);
-			if (merge) {
-				for (Map.Entry<String, String> tag : way.getEntryIteratable()) {
-					addTag(tag.getKey(), tag.getValue());
-				}
-			} else {
-				// only use tags that are in both ways
-				for (Map.Entry<String, String> tag : this.getEntryIteratable()) {
-					String wayTagValue = way.getTag(tag.getKey());
-					if (!tag.getValue().equals(wayTagValue)) {
-						// the tags are different
-						if (log.isDebugEnabled()) {
-							log.debug("Remove differing tag",tag.getKey(),getId()+"="+tag.getValue(),way.getId()+"="+wayTagValue);
-						}
-						if (wayTagValue!= null) {
-							deleteTag(tag.getKey());
+		/**
+		 * Tags this way with a merge of the tags of all original ways.
+		 */
+		public void mergeTagsFromOrgWays() {
+			if (log.isDebugEnabled()) {
+				log.debug("Way",getId(),"merge tags from",getOriginalWays().size(),"ways");
+			}
+			boolean first = true;
+			for (Way way : getOriginalWays()) {
+				if (first) {
+					// the tags of the first way are copied completely 
+					for (Map.Entry<String, String> tag : way.getEntryIteratable()) {
+						addTag(tag.getKey(), tag.getValue());
+					}
+					if (log.isDebugEnabled()) {
+						log.debug("Copy all tags from the first way", way.getId(), toTagString());
+					}
+				} else {
+					// for all other ways all non matching tags are removed
+					for (Map.Entry<String, String> tag : this.getEntryIteratable()) {
+						String wayTagValue = way.getTag(tag.getKey());
+						if (!tag.getValue().equals(wayTagValue)) {
+							// the tags are different
+							if (log.isDebugEnabled()) {
+								log.debug("Remove differing tag",tag.getKey(),getId()+"="+tag.getValue(),way.getId()+"="+wayTagValue);
+							}
+							if (wayTagValue!= null) {
+								deleteTag(tag.getKey());
+							}
 						}
 					}
 				}
-				
 			}
 		}
 
