@@ -441,24 +441,30 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private void removeUnclosedWays(ArrayList<JoinedWay> wayList) {
 		Iterator<JoinedWay> it = wayList.iterator();
-		boolean first = true;
+		boolean firstWarn = true;
 		while (it.hasNext()) {
 			JoinedWay tempWay = it.next();
 			if (!tempWay.isClosed()) {
-				if (first) {
-					log.warn(
-						"Cannot join the following ways to closed polygons. Multipolygon",
-						toBrowseURL());
+				// warn only if the way intersects the bounding box 
+				boolean inBbox = tempWay.intersects(bbox);
+				if (inBbox) {
+					if (firstWarn) {
+						log.warn(
+							"Cannot join the following ways to closed polygons. Multipolygon",
+							toBrowseURL());
+						firstWarn = false;
+					}
+					logWayURLs(Level.WARNING, "- way:", tempWay);
 				}
-				logWayURLs(Level.WARNING, "- way:", tempWay);
 
 				it.remove();
-				first = false;
 				
-				String role = getRole(tempWay);
-				if (role == null || "".equals(role) || "outer".equals(role)) {
-					// anyhow add the ways to the list for line tagging
-					outerWaysForLineTagging.addAll(tempWay.getOriginalWays());
+				if (inBbox) {
+					String role = getRole(tempWay);
+					if (role == null || "".equals(role) || "outer".equals(role)) {
+						// anyhow add the ways to the list for line tagging
+						outerWaysForLineTagging.addAll(tempWay.getOriginalWays());
+					}
 				}
 			}
 		}
@@ -1948,6 +1954,22 @@ public class MultiPolygonRelation extends Relation {
 				bounds = null;
 			}
 
+		}
+		
+		/**
+		 * Checks if this way intersects the given bounding box at least with
+		 * one point.
+		 * 
+		 * @param bbox
+		 *            the bounding box
+		 * @return <code>true</code> if this way intersects or touches the
+		 *         bounding box; <code>false</code> else
+		 */
+		public boolean intersects(uk.me.parabola.imgfmt.app.Area bbox) {
+			return (maxLat >= bbox.getMinLat() && 
+					minLat <= bbox.getMaxLat() && 
+					maxLon >= bbox.getMinLong() && 
+					minLon <= bbox.getMaxLong());
 		}
 
 		public Rectangle getBounds() {
