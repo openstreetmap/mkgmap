@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,9 +47,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 	private ElementSaver saver;
 
-	private final List<Way> shoreline = new ArrayList<Way>();
+	private List<Way> shoreline = new ArrayList<Way>();
 	private boolean roadsReachBoundary; // todo needs setting somehow
 	private boolean generateSeaBackground = true;
+
+	private String[] coastlineFilenames;
 
 	/**
 	 * Sort out options from the command line.
@@ -89,6 +92,17 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
 				}
 			}
+
+			String coastlineFileOpt = props.getProperty("coastlinefile", null);
+			if (coastlineFileOpt != null) {
+				coastlineFilenames = coastlineFileOpt.split(",");
+				CoastlineFileLoader.getCoastlineLoader().setCoastlineFiles(
+						coastlineFilenames);
+				CoastlineFileLoader.getCoastlineLoader().loadCoastlines();
+				log.info("Coastlines loaded");
+			} else {
+				coastlineFilenames = null;
+			}
 		}
 
 		return generateSea;
@@ -104,8 +118,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		if(natural != null) {
 			if("coastline".equals(natural)) {
 				way.deleteTag("natural");
-				shoreline.add(way);
-			} else if(natural.contains(";")) {
+				if (coastlineFilenames == null)
+					shoreline.add(way);
+			} else if (natural.contains(";")) {
 				// cope with compound tag value
 				String others = null;
 				boolean foundCoastline = false;
@@ -122,10 +137,74 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					way.deleteTag("natural");
 					if(others != null)
 						way.addTag("natural", others);
-					shoreline.add(way);
+					if (coastlineFilenames == null)
+						shoreline.add(way);
 				}
 			}
 		}
+	}
+
+	/**
+	 * Joins the given segments to closed ways as good as possible.
+	 * @param segments a list of closed and unclosed ways
+	 * @return a list of ways completely joined
+	 */
+	public static ArrayList<Way> joinWays(Collection<Way> segments) {
+		ArrayList<Way> joined = new ArrayList<Way>((int)Math.ceil(segments.size()*0.5));
+		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
+
+		for (Way w : segments) {
+			if (w.isClosed()) {
+				joined.add(w);
+			} else {
+				List<Coord> points = w.getPoints();
+				beginMap.put(points.get(0), w);
+			}
+		}
+		segments.clear();
+
+		int merged = 1;
+		while (merged > 0) {
+			merged = 0;
+			for (Way w1 : beginMap.values()) {
+				if (w1.isClosed()) {
+					// this should not happen
+					log.error("joinWays2: Way "+w1+" is closed but contained in the begin map");
+					joined.add(w1);
+					beginMap.remove(w1.getPoints().get(0));
+					merged=1;
+					break;
+				}
+
+				List<Coord> points1 = w1.getPoints();
+				Way w2 = beginMap.get(points1.get(points1.size() - 1));
+				if (w2 != null) {
+					log.info("merging: ", beginMap.size(), w1.getId(),
+							w2.getId());
+					List<Coord> points2 = w2.getPoints();
+					Way wm;
+					if (FakeIdGenerator.isFakeId(w1.getId())) {
+						wm = w1;
+					} else {
+						wm = new Way(FakeIdGenerator.makeFakeId());
+						wm.getPoints().addAll(points1);
+						beginMap.put(points1.get(0), wm);
+					}
+					wm.getPoints().addAll(points2.subList(1, points2.size()));
+					beginMap.remove(points2.get(0));
+					merged++;
+					
+					if (wm.isClosed()) {
+						joined.add(wm);
+						beginMap.remove(wm.getPoints().get(0));
+					}
+					break;
+				}
+			}
+		}
+		log.info(joined.size(),"closed ways.",beginMap.size(),"unclosed ways.");
+		joined.addAll(beginMap.values());
+		return joined;
 	}
 
 	/**
@@ -133,6 +212,28 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public void end() {
 		Area seaBounds = saver.getBoundingBox();
+		if (coastlineFilenames != null) {
+			shoreline.addAll(CoastlineFileLoader.getCoastlineLoader()
+					.getCoastlines(seaBounds));
+			log.info("Shorelines:", shoreline.size());
+		}
+
+		log.info("Shorelines before join", shoreline.size());
+		if (coastlineFilenames == null) {
+			shoreline = joinWays(shoreline);
+		}
+		int closedS = 0;
+		int unclosedS = 0;
+		for (Way w : shoreline) {
+			if (w.isClosed()) {
+				closedS++;
+			} else {
+				unclosedS++;
+			}
+		}
+		log.info("Shorelines after join", shoreline.size());
+		log.info("Closed", closedS);
+		log.info("Unclosed", unclosedS);
 
 		// clip all shoreline segments
 		clipShorlineSegments(shoreline, seaBounds);

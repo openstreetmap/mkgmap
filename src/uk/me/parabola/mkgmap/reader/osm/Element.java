@@ -47,8 +47,12 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public void deleteTag(String tagname) {
-		if(tags != null)
+		if(tags != null) {
 			tags.remove(tagname);
+			if (tags.size() == 0) {
+				tags = null;
+			}
+		}
 	}
 
 	public Iterator<String> iterator() {
@@ -113,8 +117,10 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	protected void removeAllTags() {
-		if (tags != null)
+		if (tags != null) {
 			tags.removeAll();
+			tags = null;
+		}
 	}
 
 	public Iterable<Map.Entry<String, String>> getEntryIteratable() {

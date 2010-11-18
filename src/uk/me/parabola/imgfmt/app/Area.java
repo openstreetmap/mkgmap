@@ -174,6 +174,19 @@ public class Area {
 		// return true if co is on the boundary
 		return contains(co) && !insideBoundary(co);
 	}
+	
+	/**
+	 * Checks if this area intersects the given bounding box at least
+	 * in one point.
+	 * 
+	 * @param bbox an area
+	 * @return <code>true</code> if this area intersects the bbox; 
+	 * 		   <code>false</code> else
+	 */
+	public final boolean intersects(Area bbox) {
+		return minLat <= bbox.getMaxLat() && maxLat >= bbox.getMinLat() && 
+			minLong <= bbox.getMaxLong() && maxLong >= bbox.getMinLong();
+	}
 
 	public boolean isEmpty() {
 		return minLat >= maxLat || minLong >= maxLong;

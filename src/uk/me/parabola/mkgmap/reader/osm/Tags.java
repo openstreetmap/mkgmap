@@ -59,6 +59,14 @@ public class Tags implements Iterable<String> {
 
 		return values[ind];
 	}
+	
+	/**
+	 * Retrieves the number of tags.
+	 * @return number of tags
+	 */
+	public int size() {
+		return size;
+	}
 
 	public String put(String key, String value) {
 		ensureSpace();
@@ -83,6 +91,7 @@ public class Tags implements Iterable<String> {
 			// except when resizing.
 			String old = values[k];
 			values[k] = null;
+			size--;
 			return old;
 		}
 		return null;

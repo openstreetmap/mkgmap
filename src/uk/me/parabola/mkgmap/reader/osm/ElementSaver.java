@@ -93,6 +93,13 @@ public class ElementSaver {
 
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
 	}
+	
+	/**
+	 * Signals that the data is completely loaded.
+	 */
+	public void loadFinished() {
+		coordMap = null;
+	}
 
 	/**
 	 * {@inheritDoc}
