@@ -222,6 +222,16 @@ public class CoastlineFileLoader {
 		}
 
 		@Override
+		public void addWay(Way way) {
+			String tag = way.getTag("natural");
+			if (tag != null && tag.contains("coastline")) {
+				// remove all tags => the natural=coastline is implicitly known
+				way.removeAllTags();
+				super.addWay(way);
+			}
+		}
+
+		@Override
 		public void addRelation(Relation rel) {
 			return;
 		}
