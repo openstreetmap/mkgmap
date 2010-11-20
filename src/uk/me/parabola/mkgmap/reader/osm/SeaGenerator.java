@@ -15,10 +15,12 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -52,6 +54,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private boolean generateSeaBackground = true;
 
 	private String[] coastlineFilenames;
+	
+	private Set<Coord> landCoords = new HashSet<Coord>();
+	private Set<Coord> seaCoords = new HashSet<Coord>();
 
 	/**
 	 * Sort out options from the command line.
@@ -142,7 +147,21 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 			}
 		}
-	}
+		
+		
+		if (way.getTag("highway") != null && way.isBoolTag("bridge") == false && way.isBoolTag("tunnel") == false) {
+			// save these coords to check if some sea polygons floods the land
+			landCoords.addAll(way.getPoints());
+		}
+
+		if ("ferry".equals(way.getTag("route"))) {
+			// save these coords to check if some sea polygons floods the land
+			seaCoords.addAll(way.getPoints());
+		}
+		if ("administrative".equals(way.getTag("boundary")) && way.isBoolTag("maritime")) {
+			seaCoords.addAll(way.getPoints());
+		}
+}
 
 	/**
 	 * Joins the given segments to closed ways as good as possible.
@@ -212,16 +231,15 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public void end() {
 		Area seaBounds = saver.getBoundingBox();
-		if (coastlineFilenames != null) {
+		if (coastlineFilenames == null) {
+			log.info("Shorelines before join", shoreline.size());
+			shoreline = joinWays(shoreline);
+		} else {
 			shoreline.addAll(CoastlineFileLoader.getCoastlineLoader()
 					.getCoastlines(seaBounds));
-			log.info("Shorelines:", shoreline.size());
+			log.info("Shorelines from extra file:", shoreline.size());
 		}
 
-		log.info("Shorelines before join", shoreline.size());
-		if (coastlineFilenames == null) {
-			shoreline = joinWays(shoreline);
-		}
 		int closedS = 0;
 		int unclosedS = 0;
 		for (Way w : shoreline) {
@@ -231,9 +249,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				unclosedS++;
 			}
 		}
-		log.info("Shorelines after join", shoreline.size());
-		log.info("Closed", closedS);
-		log.info("Unclosed", unclosedS);
+		log.info("Closed shorelines", closedS);
+		log.info("Unclosed shorelines", unclosedS);
 
 		// clip all shoreline segments
 		clipShorlineSegments(shoreline, seaBounds);
@@ -272,7 +289,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		long multiId = FakeIdGenerator.makeFakeId();
 		Relation seaRelation = null;
 		if(generateSeaUsingMP) {
-			log.debug("Generate seabounds relation "+multiId);
+			log.debug("Generate seabounds relation",multiId);
 			seaRelation = new GeneralRelation(multiId);
 			seaRelation.addTag("type", "multipolygon");
 			seaRelation.addTag("natural", "sea");
@@ -329,7 +346,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						saver.getWays().remove(ai.getId());
 					} else
 						ai.addTag(landTag[0], landTag[1]);
-					log.warn("Converting anti-island starting at " + ai.getPoints().get(0).toOSMURL() + " into an island as it is surrounded by water");
+					log.warn("Converting anti-island starting at", ai.getPoints().get(0).toOSMURL() , "into an island as it is surrounded by water");
 				}
 			}
 
@@ -384,8 +401,12 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 
 		if (generateSeaUsingMP) {
-			seaRelation = saver.createMultiPolyRelation(seaRelation);
-			saver.addRelation(seaRelation);
+			SeaPolygonRelation coastRel = saver.createSeaPolyRelation(seaRelation); 
+			coastRel.setLandCoords(landCoords);
+			landCoords = null;
+			coastRel.setSeaCoords(seaCoords);
+			seaCoords = null;
+			saver.addRelation(coastRel);
 		}
 	}
 
@@ -401,7 +422,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			List<Coord> points = segment.getPoints();
 			List<List<Coord>> clipped = LineClipper.clip(bounds, points);
 			if (clipped != null) {
-				log.info("clipping " + segment);
+				log.info("clipping", segment);
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
 					long id = FakeIdGenerator.makeFakeId();
@@ -429,19 +450,19 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		while (it.hasNext()) {
 			Way w = it.next();
 			if (w.isClosed()) {
-				log.info("adding island " + w);
+				log.info("adding island", w);
 				islands.add(w);
 				it.remove();
 			}
 		}
 
-		concatenateWays(shoreline, seaBounds);
+		closeGaps(shoreline, seaBounds);
 		// there may be more islands now
 		it = shoreline.iterator();
 		while (it.hasNext()) {
 			Way w = it.next();
 			if (w.isClosed()) {
-				log.debug("island after concatenating\n");
+				log.debug("island after concatenating");
 				islands.add(w);
 				it.remove();
 			}
@@ -460,11 +481,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			EdgeHit hFirst = hit;
 			do {
 				Way segment = hitMap.get(hit);
-				log.info("current hit: " + hit);
+				log.info("current hit:", hit);
 				EdgeHit hNext;
 				if (segment != null) {
 					// add the segment and get the "ending hit"
-					log.info("adding: ", segment);
+					log.info("adding:", segment);
 					for(Coord p : segment.getPoints())
 						w.addPointIfNotEqualToLastPoint(p);
 					hNext = getEdgeHit(seaBounds, segment.getPoints().get(segment.getPoints().size()-1));
@@ -788,49 +809,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		return new EdgeHit(i, l);
 	}
 
-	private void concatenateWays(List<Way> ways, Area bounds) {
-		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
-
-		for (Way w : ways) {
-			if (!w.isClosed()) {
-				List<Coord> points = w.getPoints();
-				beginMap.put(points.get(0), w);
-			}
-		}
-
-		int merged = 1;
-		while (merged > 0) {
-			merged = 0;
-			for (Way w1 : ways) {
-				if (w1.isClosed()) continue;
-
-				List<Coord> points1 = w1.getPoints();
-				Way w2 = beginMap.get(points1.get(points1.size()-1));
-				if (w2 != null) {
-					log.info("merging: ", ways.size(), w1.getId(), w2.getId());
-					List<Coord> points2 = w2.getPoints();
-					Way wm;
-					if (FakeIdGenerator.isFakeId(w1.getId())) {
-						wm = w1;
-					} else {
-						wm = new Way(FakeIdGenerator.makeFakeId());
-						ways.remove(w1);
-						ways.add(wm);
-						wm.getPoints().addAll(points1);
-						beginMap.put(points1.get(0), wm);
-						// only copy the name tags
-						for (String tag : w1)
-							if (tag.equals("name") || tag.endsWith(":name"))
-								wm.addTag(tag, w1.getTag(tag));
-					}
-					wm.getPoints().addAll(points2);
-					ways.remove(w2);
-					beginMap.remove(points2.get(0));
-					merged++;
-					break;
-				}
-			}
-		}
+	private void closeGaps(List<Way> ways, Area bounds) {
 
 		// join up coastline segments whose end points are less than
 		// maxCoastlineGap metres apart

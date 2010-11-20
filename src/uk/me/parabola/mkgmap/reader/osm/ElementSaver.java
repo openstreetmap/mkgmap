@@ -152,11 +152,8 @@ public class ElementSaver {
 		String type = rel.getTag("type");
 		if (type != null) {
 			if ("multipolygon".equals(type)) {
-				
-				Area mpBbox = getBoundingBox();
-				rel = new MultiPolygonRelation(rel, getWays(), mpWayRemoveTags, mpBbox);
+				rel = createMultiPolyRelation(rel); 
 			} else if("restriction".equals(type)) {
-
 				if (ignoreTurnRestrictions)
 					rel = null;
 				else
@@ -185,6 +182,10 @@ public class ElementSaver {
 	 */
 	public Relation createMultiPolyRelation(Relation rel) {
 		return new MultiPolygonRelation(rel, wayMap, mpWayRemoveTags, getBoundingBox());
+	}
+	
+	public SeaPolygonRelation createSeaPolyRelation(Relation rel) {
+		return new SeaPolygonRelation(rel, wayMap, mpWayRemoveTags, getBoundingBox());
 	}
 
 	public void setBoundingBox(Area bbox) {

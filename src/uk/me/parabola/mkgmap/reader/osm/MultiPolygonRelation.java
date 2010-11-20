@@ -44,7 +44,9 @@ public class MultiPolygonRelation extends Relation {
 	
 	private final Map<Long, Way> tileWayMap;
 	private final Map<Long, String> roleMap = new HashMap<Long, String>();
-
+	private Map<Long, Way> mpPolygons = new HashMap<Long, Way>();
+	
+	
 	private ArrayList<BitSet> containsMatrix;
 	private ArrayList<JoinedWay> polygons;
 	private Set<JoinedWay> intersectingPolygons;
@@ -831,7 +833,7 @@ public class MultiPolygonRelation extends Relation {
 						// mark this polygons so that only polygon style rules are applied
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
 					
-						tileWayMap.put(mpWay.getId(), mpWay);
+						mpPolygons.put(mpWay.getId(), mpWay);
 					}
 				}
 			}
@@ -899,9 +901,15 @@ public class MultiPolygonRelation extends Relation {
 			tileWayMap.put(lineTagWay.getId(), lineTagWay);
 		}
 		
+		postProcessing();
 		cleanup();
 	}
 
+	protected void postProcessing() {
+		// copy all polygons created by the multipolygon algorithm to the global way map
+		tileWayMap.putAll(mpPolygons);
+	}
+	
 	private void runIntersectionCheck(BitSet unfinishedPolys) {
 		if (intersectingPolygons.isEmpty()) {
 			// nothing to do
@@ -1004,6 +1012,7 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private void cleanup() {
+		mpPolygons = null;
 		roleMap.clear();
 		containsMatrix = null;
 		polygons = null;
@@ -1891,6 +1900,14 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
+	}
+
+	protected Map<Long, Way> getTileWayMap() {
+		return tileWayMap;
+	}
+
+	protected Map<Long, Way> getMpPolygons() {
+		return mpPolygons;
 	}
 
 	/**
