@@ -14,12 +14,12 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -54,8 +54,6 @@ public class ElementSaver {
 	private Map<Long, Way> wayMap;
 	private Map<Long, Relation> relationMap;
 
-	private final Map<Long, Set<String>> mpWayRemoveTags = new HashMap<Long,Set<String>>();
-
 	private final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap = new HashMap<Long, List<Map.Entry<String,Relation>>>();
 
 	// This is an explicitly given bounding box from the input file command line etc.
@@ -73,6 +71,11 @@ public class ElementSaver {
 	private final Double minimumArcLength;
 
 	private boolean roadsReachBoundary;
+
+	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
+	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
+	/** tagvalue of the {@link ElementSaver#MKGMAP_REMOVE_TAG} if all tags should be removed */
+	public static final String MKGMAP_REMOVE_TAG_ALL_KEY = "mkgmap:ALL";
 
 	public ElementSaver(EnhancedProperties args) {
 		if (args.getProperty("preserve-element-order", false)) {
@@ -181,11 +184,11 @@ public class ElementSaver {
 	 * @return A new multi polygon relation, based on the input relation.
 	 */
 	public Relation createMultiPolyRelation(Relation rel) {
-		return new MultiPolygonRelation(rel, wayMap, mpWayRemoveTags, getBoundingBox());
+		return new MultiPolygonRelation(rel, wayMap, getBoundingBox());
 	}
 	
 	public SeaPolygonRelation createSeaPolyRelation(Relation rel) {
-		return new SeaPolygonRelation(rel, wayMap, mpWayRemoveTags, getBoundingBox());
+		return new SeaPolygonRelation(rel, wayMap, getBoundingBox());
 	}
 
 	public void setBoundingBox(Area bbox) {
@@ -247,20 +250,23 @@ public class ElementSaver {
 
 
 	private void finishMultiPolygons() {
-		for (Map.Entry<Long,Set<String>> wayTagsRemove : mpWayRemoveTags.entrySet()) {
-			Way w = getWay(wayTagsRemove.getKey());
-			if (w == null) {
-				log.debug("Cannot find way",wayTagsRemove.getKey(), "to remove tags by multipolygon processing.");
+		for (Way way : wayMap.values()) {
+			String removeTag = way.getTag(MKGMAP_REMOVE_TAG);
+			if (removeTag == null) {
 				continue;
 			}
-
-			log.debug("Remove tags",wayTagsRemove.getValue(),"from way",w.getId(), w.toTagString());
-			for (String tagname : wayTagsRemove.getValue()) {
-				w.deleteTag(tagname);
+			if (MKGMAP_REMOVE_TAG_ALL_KEY.equals(removeTag)) {
+				log.debug("Remove all tags from way",way.getId(),way.toTagString());
+				way.removeAllTags();
+			} else {
+				String[] tagsToRemove = removeTag.split(";");
+				log.debug("Remove tags",Arrays.toString(tagsToRemove),"from way",way.getId(),way.toTagString());
+				for (String rTag : tagsToRemove) {
+					way.deleteTag(rTag);
+				}
+				way.deleteTag(MKGMAP_REMOVE_TAG);
 			}
-			log.debug("After removal",w.getId(), w.toTagString());
 		}
-		mpWayRemoveTags.clear();
 	}
 
 	/**

@@ -57,8 +57,6 @@ public class MultiPolygonRelation extends Relation {
 	private final uk.me.parabola.imgfmt.app.Area bbox;
 	private Area bboxArea;
 
-	private final Map<Long, Set<String>> wayRemoveTags;
-
 	/** 
 	 * A point that has a lower or equal squared distance from 
 	 * a line is treated as if it lies one the line.<br/>
@@ -84,11 +82,9 @@ public class MultiPolygonRelation extends Relation {
 	 *            The bounding box of the tile
 	 */
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap,
-			Map<Long, Set<String>> wayRemoveTags,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		this.tileWayMap = wayMap;
 		this.bbox = bbox;
-		this.wayRemoveTags = wayRemoveTags;
 
 		setId(other.getId());
 		setName(other.getName());
@@ -878,12 +874,6 @@ public class MultiPolygonRelation extends Relation {
 		// This enables the style file to decide if the polygon information or
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
-			Set<String> tagListToRemove = this.wayRemoveTags.get(orgOuterWay.getId());
-			if (tagListToRemove == null) {
-				tagListToRemove = new TreeSet<String>();
-				wayRemoveTags.put(orgOuterWay.getId(), tagListToRemove);
-			}
-			
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
 			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
@@ -892,7 +882,7 @@ public class MultiPolygonRelation extends Relation {
 				
 				// remove the tag from the original way if it has the same value
 				if (tag.getValue().equals(orgOuterWay.getTag(tag.getKey()))) {
-					tagListToRemove.add(tag.getKey());
+					removeTagsInOrgWays(orgOuterWay, tag.getKey());
 				}
 			}
 			
@@ -904,7 +894,7 @@ public class MultiPolygonRelation extends Relation {
 		postProcessing();
 		cleanup();
 	}
-
+	
 	protected void postProcessing() {
 		// copy all polygons created by the multipolygon algorithm to the global way map
 		tileWayMap.putAll(mpPolygons);
@@ -1874,31 +1864,41 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (remove) {
-				Set<String> tagListToRemove = this.wayRemoveTags.get(w.getId());
-				if (tagListToRemove == null) {
-					tagListToRemove = new TreeSet<String>();
-					wayRemoveTags.put(w.getId(), tagListToRemove);
-				}
 				if (tagname == null) {
 					// remove all tags
 					if (log.isDebugEnabled())
 						log.debug("Will remove all tags from", w.getId(), w
 								.toTagString());
-					for (Entry<String, String> tag : w.getEntryIteratable()) {
-						tagListToRemove.add(tag.getKey());
-						if (log.isDebugEnabled())
-							log.debug("Will remove", tag.getKey() + "="
-									+ tag.getValue(), "from way", w.getId(), w
-									.toTagString());
-					}
+					removeTagsInOrgWays(w, tagname);
 				} else {
-					tagListToRemove.add(tagname);
 					if (log.isDebugEnabled())
 						log.debug("Will remove", tagname + "="
 								+ w.getTag(tagname), "from way", w.getId(), w
 								.toTagString());
+					removeTagsInOrgWays(w, tagname);
 				}
 			}
+		}
+	}
+	
+	private void removeTagsInOrgWays(Way way, String tag) {
+		if (tag == null) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY);
+			return;
+		}
+		if (tag.isEmpty()) {
+			return;
+		}
+		String removedTagsTag = way.getTag(ElementSaver.MKGMAP_REMOVE_TAG);
+		if (ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY.equals(removedTagsTag)) {
+			// cannot add more tags to remove
+			return;
+		}
+
+		if (removedTagsTag == null) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, tag);
+		} else if (removedTagsTag.equals(tag) == false) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, removedTagsTag+";"+tag);
 		}
 	}
 

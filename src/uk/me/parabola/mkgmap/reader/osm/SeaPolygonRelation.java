@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -23,9 +22,8 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private final QuadTree seaCoords;
 	
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
-			Map<Long, Set<String>> wayRemoveTags,
 			uk.me.parabola.imgfmt.app.Area bbox) {
-		super(other, wayMap, wayRemoveTags, bbox);
+		super(other, wayMap, bbox);
 		this.landCoords = new QuadTree(bbox);
 		this.seaCoords = new QuadTree(bbox);
 		// set a special type because this is not the OSM common multipolygon
@@ -65,10 +63,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 				if (vetoCoords.isEmpty() == false) {
 					log.warn("Flood blocker for sea polygon with center", p
 							.getCofG().toOSMURL());
-					Way x = getMpPolygons().remove(p.getId());
-					if (x==null) {
-						log.error("Way "+p.getId()+" could not be removed.");
-					}
+					getMpPolygons().remove(p.getId());
 				}
 			} else {
 				List<Coord> vetoCoords = seaCoords.get(p.getPoints());
