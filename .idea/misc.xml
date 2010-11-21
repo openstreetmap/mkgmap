@@ -117,6 +117,45 @@
             </SvnBranchConfiguration>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/.idea">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/releases">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/styles">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/tags">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="branchUrls">
+                <list>
+                  <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
+                  <option value="https://svn.mkgmap.org.uk/svn/mkgmap/releases" />
+                  <option value="https://svn.mkgmap.org.uk/svn/mkgmap/styles" />
+                  <option value="https://svn.mkgmap.org.uk/svn/mkgmap/tags" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="https://svn.mkgmap.org.uk/svn/mkgmap/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
       </map>
     </option>
     <option name="myVersion" value="124" />
