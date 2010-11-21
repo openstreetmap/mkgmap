@@ -76,7 +76,7 @@ public class MapMaker implements MapProcessor {
 	 * @param src The data source to load.
 	 * @return The output filename for the map.
 	 */
-	String makeMap(CommandArgs args, LoadableMapDataSource src) {
+	private String makeMap(CommandArgs args, LoadableMapDataSource src) {
 
 		if (src.getBounds().isEmpty())
 			return null;
@@ -139,16 +139,11 @@ public class MapMaker implements MapProcessor {
 	private LoadableMapDataSource loadFromFile(CommandArgs args, String name) throws
 			FileNotFoundException, FormatException
 	{
-		LoadableMapDataSource src;
-		// work around non-reentrancy of GType priority stuff
-		// by serialising the map reading
-		synchronized(MapMaker.class) {
-			src = MapReader.createMapReader(name);
-			src.config(args.getProperties());
-			log.info("Started loading " + name);
-			src.load(name);
-			log.info("Finished loading " + name);
-		}
+		LoadableMapDataSource src = MapReader.createMapReader(name);
+		src.config(args.getProperties());
+		log.info("Started loading", name);
+		src.load(name);
+		log.info("Finished loading", name);
 		return src;
 	}
 
