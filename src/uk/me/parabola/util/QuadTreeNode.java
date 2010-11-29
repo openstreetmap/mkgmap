@@ -1,6 +1,5 @@
 package uk.me.parabola.util;
 
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +35,7 @@ public class QuadTreeNode {
 		}
 
 		public QuadTreePolygon(List<Coord> points) {
-			this(new java.awt.geom.Area(createPolygon(points)));
+			this(new java.awt.geom.Area(Java2DConverter.createPolygon(points)));
 		}
 
 		public Area getBbox() {
@@ -45,14 +44,6 @@ public class QuadTreeNode {
 
 		public java.awt.geom.Area getArea() {
 			return javaArea;
-		}
-
-		private static Polygon createPolygon(List<Coord> points) {
-			Polygon polygon = new Polygon();
-			for (Coord co : points) {
-				polygon.addPoint(co.getLongitude(), co.getLatitude());
-			}
-			return polygon;
 		}
 	}
 

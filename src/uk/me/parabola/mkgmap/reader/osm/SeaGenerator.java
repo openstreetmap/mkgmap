@@ -55,9 +55,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 	private String[] coastlineFilenames;
 	
-	private Set<Coord> landCoords = new HashSet<Coord>();
-	private Set<Coord> seaCoords = new HashSet<Coord>();
-
 	/**
 	 * Sort out options from the command line.
 	 * Returns true only if the option to generate the sea is active, so that
@@ -146,20 +143,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						shoreline.add(way);
 				}
 			}
-		}
-		
-		
-		if (way.getTag("highway") != null && way.isBoolTag("bridge") == false && way.isBoolTag("tunnel") == false) {
-			// save these coords to check if some sea polygons floods the land
-			landCoords.addAll(way.getPoints());
-		}
-
-		if ("ferry".equals(way.getTag("route"))) {
-			// save these coords to check if some sea polygons floods the land
-			seaCoords.addAll(way.getPoints());
-		}
-		if ("administrative".equals(way.getTag("boundary")) && way.isBoolTag("maritime")) {
-			seaCoords.addAll(way.getPoints());
 		}
 }
 
@@ -402,10 +385,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 		if (generateSeaUsingMP) {
 			SeaPolygonRelation coastRel = saver.createSeaPolyRelation(seaRelation); 
-			coastRel.setLandCoords(landCoords);
-			landCoords = null;
-			coastRel.setSeaCoords(seaCoords);
-			seaCoords = null;
 			saver.addRelation(coastRel);
 		}
 	}

@@ -1,11 +1,10 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.*;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
-import java.awt.geom.PathIterator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +25,7 @@ import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * Representation of an OSM Multipolygon Relation.<br/>
@@ -1175,12 +1175,12 @@ public class MultiPolygonRelation extends Relation {
 				a2.intersect(new Area(r2));
 
 				if (areaCutData.innerAreas.isEmpty()) {
-					finishedAreas.addAll(areaToSingularAreas(a1));
-					finishedAreas.addAll(areaToSingularAreas(a2));
+					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
+					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 				} else {
 					ArrayList<Area> cuttedAreas = new ArrayList<Area>();
-					cuttedAreas.addAll(areaToSingularAreas(a1));
-					cuttedAreas.addAll(areaToSingularAreas(a2));
+					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
+					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 					
 					for (Area nextOuterArea : cuttedAreas) {
 						ArrayList<Area> nextInnerAreas = null;
@@ -1226,84 +1226,6 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Convert an area that may contains multiple areas to a list of singular
-	 * areas
-	 * 
-	 * @param area
-	 *            an area
-	 * @return list of singular areas
-	 */
-	private List<Area> areaToSingularAreas(Area area) {
-		if (area.isEmpty()) {
-			return Collections.emptyList();
-		} else if (area.isSingular()) {
-			return Collections.singletonList(area);
-		} else {
-			List<Area> singularAreas = new ArrayList<Area>();
-
-			// all ways in the area MUST define outer areas
-			// it is not possible that one of the areas define an inner segment
-
-			float[] res = new float[6];
-			PathIterator pit = area.getPathIterator(null);
-			float[] prevPoint = new float[6];
-
-			Polygon p = null;
-			while (!pit.isDone()) {
-				int type = pit.currentSegment(res);
-
-				switch (type) {
-				case PathIterator.SEG_LINETO:
-					if (!Arrays.equals(res, prevPoint)) {
-						p.addPoint(Math.round(res[0]), Math.round(res[1]));
-					}
-					break;
-				case PathIterator.SEG_CLOSE:
-					p.addPoint(p.xpoints[0], p.ypoints[0]);
-					Area a = new Area(p);
-					if (!a.isEmpty()) {
-						singularAreas.add(a);
-					}
-					p = null;
-					break;
-				case PathIterator.SEG_MOVETO:
-					if (p != null) {
-						Area a2 = new Area(p);
-						if (!a2.isEmpty()) {
-							singularAreas.add(a2);
-						}
-					}
-					p = new Polygon();
-					p.addPoint(Math.round(res[0]), Math.round(res[1]));
-					break;
-				default:
-					log.warn(toBrowseURL(), "Unsupported path iterator type"
-							+ type, ". This is an mkgmap error.");
-				}
-
-				System.arraycopy(res, 0, prevPoint, 0, 6);
-				pit.next();
-			}
-			return singularAreas;
-		}
-	}
-
-	/**
-	 * Create a polygon from a list of points.
-	 * 
-	 * @param points
-	 *            list of points
-	 * @return the polygon
-	 */
-	private Polygon createPolygon(List<Coord> points) {
-		Polygon polygon = new Polygon();
-		for (Coord co : points) {
-			polygon.addPoint(co.getLongitude(), co.getLatitude());
-		}
-		return polygon;
-	}
-
-	/**
 	 * Create the areas that are enclosed by the way. Usually the result should
 	 * only be one area but some ways contain intersecting lines. To handle these
 	 * erroneous cases properly the method might return a list of areas.
@@ -1313,12 +1235,12 @@ public class MultiPolygonRelation extends Relation {
 	 * @return a list of enclosed ares
 	 */
 	private List<Area> createAreas(Way w, boolean clipBbox) {
-		Area area = new Area(createPolygon(w.getPoints()));
+		Area area = Java2DConverter.createArea(w.getPoints());
 		if (clipBbox && !bboxArea.contains(area.getBounds())) {
 			// the area intersects the bounding box => clip it
 			area.intersect(bboxArea);
 		}
-		List<Area> areaList = areaToSingularAreas(area);
+		List<Area> areaList = Java2DConverter.areaToSingularAreas(area);
 		if (log.isDebugEnabled()) {
 			log.debug("Bbox clipped way",w.getId()+"=>",areaList.size(),"distinct area(s).");
 		}
@@ -1336,40 +1258,15 @@ public class MultiPolygonRelation extends Relation {
 	 * @return a new mkgmap way
 	 */
 	private Way singularAreaToWay(Area area, long wayId) {
-		if (area.isEmpty()) {
+		List<Coord> points = Java2DConverter.singularAreaToPoints(area);
+		if (points == null || points.isEmpty()) {
 			if (log.isDebugEnabled()) {
 				log.debug("Empty area "+wayId+".", toBrowseURL());
 			}
 			return null;
 		}
 
-		Way w = null;
-
-		float[] res = new float[6];
-		PathIterator pit = area.getPathIterator(null);
-
-		while (!pit.isDone()) {
-			int type = pit.currentSegment(res);
-
-			switch (type) {
-			case PathIterator.SEG_MOVETO:
-				w = new Way(wayId);
-				w.addPoint(new Coord(Math.round(res[1]), Math.round(res[0])));
-				break;
-			case PathIterator.SEG_LINETO:
-				w.addPoint(new Coord(Math.round(res[1]), Math.round(res[0])));
-				break;
-			case PathIterator.SEG_CLOSE:
-				w.addPoint(w.getPoints().get(0));
-				return w;
-			default:
-				log.warn(toBrowseURL(),
-						"Unsupported path iterator type" + type,
-						". This is an mkgmap error.");
-			}
-			pit.next();
-		}
-		return w;
+		return new Way(wayId, points);
 	}
 
 	private boolean hasTags(Element element) {
@@ -1504,7 +1401,7 @@ public class MultiPolygonRelation extends Relation {
 			return false;
 		}
 
-		Polygon p = createPolygon(polygon1.getPoints());
+		Polygon p = Java2DConverter.createPolygon(polygon1.getPoints());
 		// check first if one point of polygon2 is in polygon1
 
 		// ignore intersections outside the bounding box

@@ -143,8 +143,8 @@ public class CoastlineFileLoader {
 						"No support for empty ways. WayId: " + id);
 			}
 
-			log.debug("Create coastline way", id, "with", points.size(),
-					"points");
+			if (log.isDebugEnabled())
+				log.debug("Create coastline way %d with %d points", id, points.size());
 			Coord firstPoint = getPoints().get(0);
 
 			int minLat = firstPoint.getLatitude();

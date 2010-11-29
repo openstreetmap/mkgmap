@@ -1,7 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,21 +30,32 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		addTag("type", "mkgmap:seapolygon");
 	}
 
-	public void setLandCoords(Collection<Coord> landCoords) {
-		this.landCoords.addAll(landCoords);
-	}
-
-	public void setSeaCoords(Collection<Coord> seaCoords) {
-		this.seaCoords.addAll(seaCoords);
-	}
-
 	@Override
 	protected void postProcessing() {
 		removeFloodedAreas();
 		super.postProcessing();
 	}
+	
+	private void createQuadTrees() {
+		for (Way way : getTileWayMap().values()) {
+			if (way.getTag("highway") != null && way.isBoolTag("bridge") == false && way.isBoolTag("tunnel") == false) {
+				// save these coords to check if some sea polygons floods the land
+				landCoords.addAll(way.getPoints());
+			}
+
+			if ("ferry".equals(way.getTag("route"))) {
+				// save these coords to check if some sea polygons floods the land
+				seaCoords.addAll(way.getPoints());
+			}
+			if ("administrative".equals(way.getTag("boundary")) && way.isBoolTag("maritime")) {
+				seaCoords.addAll(way.getPoints());
+			}
+		}
+	}
 
 	private void removeFloodedAreas() {
+		createQuadTrees();
+		
 		// create a copy of all resulting ways - the tile way map contains only
 		// polygons from
 		// the sea generation
@@ -57,10 +67,11 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		for (Way p : polygons) {
 			boolean sea = "sea".equals(p.getTag("natural"));
 			if (sea) {
-				List<Coord> vetoCoords = landCoords.get(p.getPoints());
+				List<Coord> minusCoords = landCoords.get(p.getPoints());
+				List<Coord> positiveCoords = seaCoords.get(p.getPoints());
 				log.info("Sea polygon", p.getId(), "contains",
-						vetoCoords.size(), "land coords.");
-				if (vetoCoords.isEmpty() == false) {
+						minusCoords.size(), "land coords.");
+				if (minusCoords.isEmpty() == false) {
 					log.warn("Flood blocker for sea polygon with center", p
 							.getCofG().toOSMURL());
 					getMpPolygons().remove(p.getId());

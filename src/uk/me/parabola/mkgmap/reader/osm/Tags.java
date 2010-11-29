@@ -40,8 +40,10 @@ import java.util.Map;
 public class Tags implements Iterable<String> {
 	private static final int INIT_SIZE = 8;
 
-	private short size;
+	private short keySize;
 	private short capacity;
+	
+	private short size;
 
 	private String[] keys;
 	private String[] values;
@@ -72,12 +74,14 @@ public class Tags implements Iterable<String> {
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
-			assert false : "keyPos(" + key + ") returns null - size = " + size + ", capacity = " + capacity;
-		keys[ind] = key;
+			assert false : "keyPos(" + key + ") returns null - size = " + keySize + ", capacity = " + capacity;
+		keys[ind] = key.intern();
 
 		String old = values[ind];
-		if (old == null)
+		if (old == null) {
+			keySize++;
 			size++;
+		}
 		values[ind] = value.intern();
 
 		return old;
@@ -103,6 +107,7 @@ public class Tags implements Iterable<String> {
 	 */
 	Tags copy() {
 		Tags cp = new Tags();
+		cp.keySize = keySize;
 		cp.size = size;
 		cp.capacity = capacity;
 
@@ -112,14 +117,14 @@ public class Tags implements Iterable<String> {
 	}
 
 	private void ensureSpace() {
-		while (size + 1 >= capacity) {
+		while (keySize + 1 >= capacity) {
 			short ncap = (short) (capacity*2);
 			String[] okey = keys;
 			String[] oval = values;
 			keys = new String[ncap];
 			values = new String[ncap];
 			capacity = ncap;
-			size = 0;
+			keySize = 0;
 			for (int i = 0; i < okey.length; i++) {
 				String k = okey[i];
 				String v = oval[i]; // null if tag has been removed
@@ -127,7 +132,7 @@ public class Tags implements Iterable<String> {
 					put(k, v);
 			}
 		}
-		assert size < capacity;
+		assert keySize < capacity;
 	}
 
 	private Integer keyPos(String key) {
@@ -251,6 +256,7 @@ public class Tags implements Iterable<String> {
 			keys[i] = null;
 			values[i] = null;
 		}
+		keySize = 0;
 		size = 0;
 	}
 }
