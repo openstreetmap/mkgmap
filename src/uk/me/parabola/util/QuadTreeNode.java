@@ -1,6 +1,7 @@
 package uk.me.parabola.util;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,6 +37,17 @@ public class QuadTreeNode {
 
 		public QuadTreePolygon(List<Coord> points) {
 			this(new java.awt.geom.Area(Java2DConverter.createPolygon(points)));
+		}
+
+		public QuadTreePolygon(Collection<List<Coord>> polygonList) {
+			this.javaArea = new java.awt.geom.Area();
+			for (List<Coord> polygon : polygonList) {
+				javaArea.add(new java.awt.geom.Area(Java2DConverter
+						.createPolygon(polygon)));
+			}
+			Rectangle bboxRect = javaArea.getBounds();
+			bbox = new Area(bboxRect.y, bboxRect.x, bboxRect.y
+					+ bboxRect.height, bboxRect.x + bboxRect.width);
 		}
 
 		public Area getBbox() {
@@ -141,7 +153,7 @@ public class QuadTreeNode {
 		return resultList;
 	}
 
-	public List<Coord> get(QuadTreePolygon polygon, List<Coord> resultList) {
+	public ArrayList<Coord> get(QuadTreePolygon polygon, ArrayList<Coord> resultList) {
 		if (polygon.getBbox().intersects(getBounds())) {
 			if (isLeaf()) {
 				for (Coord c : points) {
