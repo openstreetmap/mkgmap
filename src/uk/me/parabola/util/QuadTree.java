@@ -1,6 +1,5 @@
 package uk.me.parabola.util;
 
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +81,7 @@ public class QuadTree {
 	}
 
 	private boolean isCloseToPolygon(Coord point, List<Coord> polygon,
-			int offset) {
+			int gap) {
 		Iterator<Coord> polyIter = polygon.iterator();
 		Coord c1 = null;
 		Coord c2 = polyIter.next();
@@ -90,42 +89,40 @@ public class QuadTree {
 			c1 = c2;
 			c2 = polyIter.next();
 			double dist = distanceToSegment(c1, c2, point);
-			if (dist <= offset) {
+			if (dist <= gap) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private double distanceToSegment(Coord lp1, Coord lp2, Coord ppoint) {
+	/**
+	 * Calculates the distance to the given segment in meter.
+	 * @param spoint1 segment point 1
+	 * @param spoint2 segment point 2
+	 * @param point point
+	 * @return the distance in meter
+	 */
+	private double distanceToSegment(Coord spoint1, Coord spoint2, Coord point) {
 
-		double dx = lp2.getLongitude() - lp1.getLongitude();
-		double dy = lp2.getLatitude() - lp1.getLatitude();
+		double dx = spoint2.getLongitude() - spoint1.getLongitude();
+		double dy = spoint2.getLatitude() - spoint1.getLatitude();
 
 		if ((dx == 0) && (dy == 0)) {
-			return Double.POSITIVE_INFINITY;
+			return spoint1.distance(point);
 		}
 
-		double frac = ((ppoint.getLongitude() - lp1.getLongitude()) * dx + (ppoint
-				.getLatitude() - lp1.getLatitude()) * dy)
+		double frac = ((point.getLongitude() - spoint1.getLongitude()) * dx + (point
+				.getLatitude() - spoint1.getLatitude()) * dy)
 				/ (dx * dx + dy * dy);
 
-		double pLat = lp1.getLatitude();
-		double pLong = lp1.getLongitude();
-
 		if (frac < 0) {
-			pLat = lp1.getLatitude();
-			pLong = lp1.getLongitude();
+			return spoint1.distance(point);
 		} else if (frac > 1) {
-			pLat = lp2.getLatitude();
-			pLong = lp2.getLongitude();
+			return spoint2.distance(point);
 		} else {
-			pLong = lp1.getLongitude() + frac * dx;
-			pLat = lp1.getLatitude() + frac * dy;
+			return spoint1.makeBetweenPoint(spoint2, frac).distance(point);
 		}
-
-		return Point2D.distance(pLong, pLat, ppoint.getLongitude(),
-				ppoint.getLatitude());
 
 	}
 }

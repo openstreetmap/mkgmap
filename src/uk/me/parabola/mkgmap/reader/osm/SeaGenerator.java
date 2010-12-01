@@ -15,12 +15,10 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -46,6 +44,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors;
 	private String[] landTag = { "natural", "land" };
+	private boolean floodblocker = false;
+	private int fbGap = 40;
+	private double fbRatio = 0.5d;
+	private int fbThreshold = 20;
 
 	private ElementSaver saver;
 
@@ -82,6 +84,14 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 				else if(o.startsWith("land-tag="))
 					landTag = o.substring(9).split("=");
+				else if("floodblocker".equals(o)) 
+					floodblocker = true;
+				else if(o.startsWith("fbgap="))
+					fbGap = (int)Double.parseDouble(o.substring("fbgap=".length()));
+				else if(o.startsWith("fbratio="))
+					fbRatio = Double.parseDouble(o.substring("fbratio=".length()));
+				else if(o.startsWith("fbthres="))
+					fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
 				else {
 					if(!"help".equals(o))
 						System.err.println("Unknown sea generation option '" + o + "'");
@@ -92,6 +102,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					System.err.println("  extend-sea-sectors  extend coastline to reach border");
 					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
 					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
+					System.err.println("  floodblocker        enable the floodblocker (only for multipolgon)");
+					System.err.println("  fbgap=NUM           ignore block points that are closer than this gap to the sea border");
+					System.err.println("  fbthres=NUM         at least so many block points must be contained in the polygon");
+					System.err.println("  fbratio=NUM         a ratio (number of block points/area size)");
 				}
 			}
 
@@ -384,7 +398,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 
 		if (generateSeaUsingMP) {
-			SeaPolygonRelation coastRel = saver.createSeaPolyRelation(seaRelation); 
+			SeaPolygonRelation coastRel = saver.createSeaPolyRelation(seaRelation);
+			coastRel.setFloodBlocker(floodblocker);
+			coastRel.setFloodBlockerGap(fbGap);
+			coastRel.setFloodBlockerRatio(fbRatio);
+			coastRel.setFloodBlockerThreshold(fbThreshold);
 			saver.addRelation(coastRel);
 		}
 	}

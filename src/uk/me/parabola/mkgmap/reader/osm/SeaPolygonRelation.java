@@ -8,6 +8,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.QuadTree;
 
 /**
@@ -22,9 +23,10 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private final QuadTree landCoords;
 	private final QuadTree seaCoords;
 
-	private static final int FLOODBLOCKER_POINT_OFFSET = 40;
-	private static final double FLOODBLOCKER_RATIO = 0.5;
-	private static final int FLOODBLOCKER_MIN_NEGATIVE = 20;
+	private boolean floodBlocker = true;
+	private int floodBlockerGap = 40;
+	private double floodBlockerRatio = 0.5d;
+	private int floodBlockerThreshold = 20;
 
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
@@ -38,7 +40,9 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 	@Override
 	protected void postProcessing() {
-		removeFloodedAreas();
+		if (isFloodBlocker()) {
+			removeFloodedAreas();
+		}
 		super.postProcessing();
 	}
 
@@ -92,24 +96,22 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 			boolean sea = "sea".equals(p.getTag("natural"));
 
 			if (sea) {
-				List<Coord> minusCoords = landCoords.get(p.getPoints(), FLOODBLOCKER_POINT_OFFSET);
+				List<Coord> minusCoords = landCoords.get(p.getPoints(),
+						getFloodBlockerGap());
 				List<Coord> positiveCoords = seaCoords.get(p.getPoints());
 				log.info("Sea polygon", p.getId(), "contains",
 						minusCoords.size(), "land coords and",
 						positiveCoords.size(), "sea coords.");
-				if (minusCoords.size() - positiveCoords.size() >= FLOODBLOCKER_MIN_NEGATIVE) {
+				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()) {
 					double area = calcArea(p.getPoints());
 					double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
 					log.warn("Flood blocker for sea polygon with center", p
 							.getCofG().toOSMURL());
-					log.warn("Area: " + area);
-					log.warn("Positive: " + positiveCoords.size());
-					log.warn("Minus: " + minusCoords.size());
+					log.warn("Area:  " + area);
+					log.warn("Sea:   " + positiveCoords.size());
+					log.warn("Land:  " + minusCoords.size());
 					log.warn("Ratio: " + ratio);
-					if (ratio > FLOODBLOCKER_RATIO) {
-//						GpxCreator.createGpx(baseName + p.getId() + "_sea_"
-//								+ minusCoordsAll.size() + "_" + ratio,
-//								p.getPoints(), minusCoordsAll);
+					if (ratio > getFloodBlockerRatio()) {
 //						GpxCreator.createGpx(baseName + p.getId() + "_sea_off_"
 //								+ minusCoords.size() + "_" + ratio,
 //								p.getPoints(), minusCoords);
@@ -117,13 +119,27 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 					}
 				}
 			} else {
-				List<Coord> vetoCoords = seaCoords.get(p.getPoints(), FLOODBLOCKER_POINT_OFFSET);
+				List<Coord> minusCoords = seaCoords.get(p.getPoints(),
+						getFloodBlockerGap());
+				List<Coord> positiveCoords = landCoords.get(p.getPoints());
 				log.info("Land polygon", p.getId(), "contains",
-						vetoCoords.size(), "sea coords.");
-				if (vetoCoords.isEmpty() == false) {
+						minusCoords.size(), "sea coords and",
+						positiveCoords.size(), "land coords.");
+				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()) {
+					double area = calcArea(p.getPoints());
+					double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
 					log.warn("Flood blocker for land polygon with center", p
 							.getCofG().toOSMURL());
-					getMpPolygons().remove(p.getId());
+					log.warn("Area:  " + area);
+					log.warn("Sea:   " + positiveCoords.size());
+					log.warn("Land:  " + minusCoords.size());
+					log.warn("Ratio: " + ratio);
+					if (ratio > getFloodBlockerRatio()) {
+//						GpxCreator.createGpx(baseName + p.getId() + "_sea_off_"
+//								+ minusCoords.size() + "_" + ratio,
+//								p.getPoints(), minusCoords);
+						getMpPolygons().remove(p.getId());
+					}
 				}
 			}
 		}
@@ -151,4 +167,37 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		area = area / 2.0d;
 		return area;
 	}
+
+	public boolean isFloodBlocker() {
+		return floodBlocker;
+	}
+
+	public void setFloodBlocker(boolean floodBlocker) {
+		this.floodBlocker = floodBlocker;
+	}
+
+	public int getFloodBlockerGap() {
+		return floodBlockerGap;
+	}
+
+	public void setFloodBlockerGap(int floodBlockerGap) {
+		this.floodBlockerGap = floodBlockerGap;
+	}
+
+	public double getFloodBlockerRatio() {
+		return floodBlockerRatio;
+	}
+
+	public void setFloodBlockerRatio(double floodBlockerRatio) {
+		this.floodBlockerRatio = floodBlockerRatio;
+	}
+
+	public int getFloodBlockerThreshold() {
+		return floodBlockerThreshold;
+	}
+
+	public void setFloodBlockerThreshold(int floodBlockerThreshold) {
+		this.floodBlockerThreshold = floodBlockerThreshold;
+	}
+
 }

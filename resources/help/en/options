@@ -329,6 +329,25 @@ Miscellaneous options:
 		close gaps in coastline that are less than this
 		distance (metres)
 
+	floodblocker 
+		enable the flood blocker that prevents a flooding of
+		land by checking if the sea polygons contain streets
+		(works only with multipolygon processing)		
+
+	fbgap=NUM           
+		flood blocker gap in metre
+		highway points that are closer to the sea polygon do
+		not block 
+
+	fbthres=NUM
+		at least so many highway points must be contained in 
+		a sea polygon so that it may be removed by the flood
+		blocker
+
+	fbratio=NUM
+		only sea polygons with a higher ratio 
+		(highway points / polygon size) are removed
+
 --make-poi-index
 	Generate the POI index (not yet useful).
 
