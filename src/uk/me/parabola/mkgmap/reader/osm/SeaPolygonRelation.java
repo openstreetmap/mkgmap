@@ -27,6 +27,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private int floodBlockerGap = 40;
 	private double floodBlockerRatio = 0.5d;
 	private int floodBlockerThreshold = 20;
+	private boolean debug = false;
 
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
@@ -88,7 +89,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		log.info("Starting flood blocker. Polygons to check:", getMpPolygons()
 				.size());
 
-//		String baseName = GpxCreator.getGpxBaseName();
+		String baseName = GpxCreator.getGpxBaseName();
 
 		// go through all polygons and check if it contains too many coords of
 		// the other type
@@ -96,6 +97,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 			boolean sea = "sea".equals(p.getTag("natural"));
 
 			if (sea) {
+				List<Coord> minusCoordsAll = landCoords.get(p.getPoints());
 				List<Coord> minusCoords = landCoords.get(p.getPoints(),
 						getFloodBlockerGap());
 				List<Coord> positiveCoords = seaCoords.get(p.getPoints());
@@ -111,14 +113,34 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 					log.warn("Sea:   " + positiveCoords.size());
 					log.warn("Land:  " + minusCoords.size());
 					log.warn("Ratio: " + ratio);
+					GpxCreator.createGpx(
+							baseName + p.getId() + "_sea_"
+									+ minusCoords.size() + "_"
+									+ positiveCoords.size() + "_" + ratio,
+							p.getPoints());
+					if (positiveCoords.isEmpty() == false) {
+						GpxCreator.createGpx(
+								baseName + p.getId() + "_pos_"
+										+ minusCoords.size() + "_"
+										+ positiveCoords.size() + "_"
+										+ ratio, Collections.EMPTY_LIST,
+								positiveCoords);
+					}
+					GpxCreator.createGpx(
+							baseName + p.getId() + "_minus_"
+									+ minusCoords.size() + "_"
+									+ positiveCoords.size() + "_" + ratio,
+							Collections.EMPTY_LIST, minusCoords);
+					GpxCreator.createGpx(baseName + p.getId()
+							+ "_minusall_" + minusCoordsAll.size() + "_"
+							+ positiveCoords.size() + "_" + ratio,
+							Collections.EMPTY_LIST, minusCoordsAll);
 					if (ratio > getFloodBlockerRatio()) {
-//						GpxCreator.createGpx(baseName + p.getId() + "_sea_off_"
-//								+ minusCoords.size() + "_" + ratio,
-//								p.getPoints(), minusCoords);
 						getMpPolygons().remove(p.getId());
 					}
 				}
 			} else {
+				List<Coord> minusCoordsAll = landCoords.get(p.getPoints());
 				List<Coord> minusCoords = seaCoords.get(p.getPoints(),
 						getFloodBlockerGap());
 				List<Coord> positiveCoords = landCoords.get(p.getPoints());
@@ -134,10 +156,29 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 					log.warn("Sea:   " + positiveCoords.size());
 					log.warn("Land:  " + minusCoords.size());
 					log.warn("Ratio: " + ratio);
+					GpxCreator.createGpx(
+							baseName + p.getId() + "_land_"
+									+ minusCoords.size() + "_"
+									+ positiveCoords.size() + "_" + ratio,
+							p.getPoints());
+					if (positiveCoords.isEmpty() == false) {
+						GpxCreator.createGpx(
+								baseName + p.getId() + "_pos_"
+										+ minusCoords.size() + "_"
+										+ positiveCoords.size() + "_"
+										+ ratio, Collections.EMPTY_LIST,
+								positiveCoords);
+					}
+					GpxCreator.createGpx(
+							baseName + p.getId() + "_minus_"
+									+ minusCoords.size() + "_"
+									+ positiveCoords.size() + "_" + ratio,
+							Collections.EMPTY_LIST, minusCoords);
+					GpxCreator.createGpx(baseName + p.getId()
+							+ "_minusall_" + minusCoordsAll.size() + "_"
+							+ positiveCoords.size() + "_" + ratio,
+							Collections.EMPTY_LIST, minusCoordsAll);
 					if (ratio > getFloodBlockerRatio()) {
-//						GpxCreator.createGpx(baseName + p.getId() + "_sea_off_"
-//								+ minusCoords.size() + "_" + ratio,
-//								p.getPoints(), minusCoords);
 						getMpPolygons().remove(p.getId());
 					}
 				}
@@ -198,6 +239,14 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 	public void setFloodBlockerThreshold(int floodBlockerThreshold) {
 		this.floodBlockerThreshold = floodBlockerThreshold;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 
 }

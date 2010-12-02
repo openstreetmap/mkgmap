@@ -347,6 +347,11 @@ Miscellaneous options:
 	fbratio=NUM
 		only sea polygons with a higher ratio 
 		(highway points / polygon size) are removed
+		
+	fbdebug
+		switches on the debugging of the flood blocker
+		generates GPX files for each polygon blocked by
+		the flood blocker
 
 --make-poi-index
 	Generate the POI index (not yet useful).

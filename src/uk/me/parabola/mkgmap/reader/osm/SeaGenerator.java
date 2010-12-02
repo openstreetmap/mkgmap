@@ -48,6 +48,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private int fbGap = 40;
 	private double fbRatio = 0.5d;
 	private int fbThreshold = 20;
+	private boolean fbDebug = false;
 
 	private ElementSaver saver;
 
@@ -92,6 +93,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					fbRatio = Double.parseDouble(o.substring("fbratio=".length()));
 				else if(o.startsWith("fbthres="))
 					fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
+				else if("fbdebug".equals(o)) 
+					fbDebug = true;
 				else {
 					if(!"help".equals(o))
 						System.err.println("Unknown sea generation option '" + o + "'");
@@ -403,6 +406,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			coastRel.setFloodBlockerGap(fbGap);
 			coastRel.setFloodBlockerRatio(fbRatio);
 			coastRel.setFloodBlockerThreshold(fbThreshold);
+			coastRel.setDebug(fbDebug);
 			saver.addRelation(coastRel);
 		}
 	}
