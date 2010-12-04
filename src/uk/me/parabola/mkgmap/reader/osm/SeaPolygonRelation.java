@@ -1,5 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -28,7 +29,8 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private double floodBlockerRatio = 0.5d;
 	private int floodBlockerThreshold = 20;
 	private boolean debug = false;
-
+	private DecimalFormat format = new DecimalFormat("0.0000");	
+	
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		super(other, wayMap, bbox);
@@ -49,30 +51,37 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 	private void fillQuadTrees() {
 		for (Way way : getTileWayMap().values()) {
-			boolean layer0 = true;
-			try {
-				layer0 = way.getTag("layer") == null
-						|| Integer.valueOf(way.getTag("layer")) == 0;
-			} catch (Exception exp) {
-			}
-
-			if (layer0 && way.getTag("highway") != null
+			if (way.getTag("highway") != null
 					&& "construction".equals(way.getTag("highway")) == false
 					&& way.isBoolTag("bridge") == false
 					&& way.isBoolTag("tunnel") == false
 					&& "dam".equals(way.getTag("waterway")) == false
 					&& "pier".equals(way.getTag("man_made")) == false) {
-				// save these coords to check if some sea polygons floods the
-				// land
-				landCoords.addAll(way.getPoints());
+
+				boolean layer0 = true;
+				try {
+					layer0 = way.getTag("layer") == null
+							|| Integer.valueOf(way.getTag("layer")) == 0;
+				} catch (Exception exp) {
+				}
+
+				if (layer0) {
+					// save these coords to check if some sea polygons floods
+					// the
+					// land
+//					log.info("Land tags:", way.getId(), way.toTagString());
+					landCoords.addAll(way.getPoints());
+				}
 			}
 
 			if ("ferry".equals(way.getTag("route"))) {
 				// save these coords to check if some sea polygons floods the
 				// land
+//				log.info("Sea tags:", way.getId(), way.toTagString());
 				seaCoords.addAll(way.getPoints());
 			} else if ("administrative".equals(way.getTag("boundary"))
 					&& way.isBoolTag("maritime")) {
+//				log.info("Sea tags:", way.getId(), way.toTagString());
 				seaCoords.addAll(way.getPoints());
 			}
 		}
@@ -90,98 +99,73 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 				.size());
 
 		String baseName = GpxCreator.getGpxBaseName();
+		if (debug) {
+			GpxCreator.createAreaGpx(baseName + "bbox", getBbox());
+		}
 
 		// go through all polygons and check if it contains too many coords of
 		// the other type
 		for (Way p : polygons) {
 			boolean sea = "sea".equals(p.getTag("natural"));
 
-			if (sea) {
-				List<Coord> minusCoordsAll = landCoords.get(p.getPoints());
-				List<Coord> minusCoords = landCoords.get(p.getPoints(),
-						getFloodBlockerGap());
-				List<Coord> positiveCoords = seaCoords.get(p.getPoints());
-				log.info("Sea polygon", p.getId(), "contains",
-						minusCoords.size(), "land coords and",
-						positiveCoords.size(), "sea coords.");
-				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()) {
-					double area = calcArea(p.getPoints());
-					double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
-					log.warn("Flood blocker for sea polygon with center", p
-							.getCofG().toOSMURL());
-					log.warn("Area:  " + area);
-					log.warn("Sea:   " + positiveCoords.size());
-					log.warn("Land:  " + minusCoords.size());
-					log.warn("Ratio: " + ratio);
+			QuadTree goodCoords = (sea ? seaCoords : landCoords);
+			QuadTree badCoords = (sea ? landCoords : seaCoords);
+			String polyType = (sea ? "sea" : "land");
+			String otherType = (sea ? "land" : "sea");
+			
+			List<Coord> minusCoordsAll = badCoords.get(p.getPoints());
+			List<Coord> minusCoords = badCoords.get(p.getPoints(),
+					getFloodBlockerGap());
+			List<Coord> positiveCoords = goodCoords.get(p.getPoints());
+			
+			log.info(polyType,"polygon", p.getId(), "contains",
+					minusCoords.size(), otherType,"coords and",
+					positiveCoords.size(), polyType,"coords.");	
+			
+			if (minusCoords.size() > 0) {
+				double area = calcArea(p.getPoints());
+				double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
+				String areaFMT = format.format(area);
+				String ratioFMT = format.format(ratio);
+				log.info("Flood blocker for", polyType, "polygon", p.getId());
+				log.info("area",areaFMT);
+				log.info(polyType, positiveCoords.size());
+				log.info(otherType, minusCoords.size());
+				log.info("ratio", ratioFMT);
+				if (debug) {
 					GpxCreator.createGpx(
-							baseName + p.getId() + "_sea_"
+							baseName + p.getId() + "_"+polyType+"_"
 									+ minusCoords.size() + "_"
-									+ positiveCoords.size() + "_" + ratio,
+									+ positiveCoords.size() + "_" + ratioFMT,
 							p.getPoints());
+					GpxCreator.createGpx(
+							baseName + p.getId() + "_minus_"
+									+ minusCoords.size() + "_"
+									+ positiveCoords.size() + "_" + ratioFMT,
+							Collections.EMPTY_LIST, minusCoords);
+					GpxCreator.createGpx(baseName + p.getId()
+							+ "_minusall_" + minusCoordsAll.size() + "_"
+							+ positiveCoords.size() + "_" + ratioFMT,
+							Collections.EMPTY_LIST, minusCoordsAll);
+
 					if (positiveCoords.isEmpty() == false) {
 						GpxCreator.createGpx(
 								baseName + p.getId() + "_pos_"
 										+ minusCoords.size() + "_"
 										+ positiveCoords.size() + "_"
-										+ ratio, Collections.EMPTY_LIST,
+										+ ratioFMT, Collections.EMPTY_LIST,
 								positiveCoords);
 					}
-					GpxCreator.createGpx(
-							baseName + p.getId() + "_minus_"
-									+ minusCoords.size() + "_"
-									+ positiveCoords.size() + "_" + ratio,
-							Collections.EMPTY_LIST, minusCoords);
-					GpxCreator.createGpx(baseName + p.getId()
-							+ "_minusall_" + minusCoordsAll.size() + "_"
-							+ positiveCoords.size() + "_" + ratio,
-							Collections.EMPTY_LIST, minusCoordsAll);
-					if (ratio > getFloodBlockerRatio()) {
-						getMpPolygons().remove(p.getId());
-					}
 				}
-			} else {
-				List<Coord> minusCoordsAll = landCoords.get(p.getPoints());
-				List<Coord> minusCoords = seaCoords.get(p.getPoints(),
-						getFloodBlockerGap());
-				List<Coord> positiveCoords = landCoords.get(p.getPoints());
-				log.info("Land polygon", p.getId(), "contains",
-						minusCoords.size(), "sea coords and",
-						positiveCoords.size(), "land coords.");
-				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()) {
-					double area = calcArea(p.getPoints());
-					double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
-					log.warn("Flood blocker for land polygon with center", p
-							.getCofG().toOSMURL());
-					log.warn("Area:  " + area);
-					log.warn("Sea:   " + positiveCoords.size());
-					log.warn("Land:  " + minusCoords.size());
-					log.warn("Ratio: " + ratio);
-					GpxCreator.createGpx(
-							baseName + p.getId() + "_land_"
-									+ minusCoords.size() + "_"
-									+ positiveCoords.size() + "_" + ratio,
-							p.getPoints());
-					if (positiveCoords.isEmpty() == false) {
-						GpxCreator.createGpx(
-								baseName + p.getId() + "_pos_"
-										+ minusCoords.size() + "_"
-										+ positiveCoords.size() + "_"
-										+ ratio, Collections.EMPTY_LIST,
-								positiveCoords);
-					}
-					GpxCreator.createGpx(
-							baseName + p.getId() + "_minus_"
-									+ minusCoords.size() + "_"
-									+ positiveCoords.size() + "_" + ratio,
-							Collections.EMPTY_LIST, minusCoords);
-					GpxCreator.createGpx(baseName + p.getId()
-							+ "_minusall_" + minusCoordsAll.size() + "_"
-							+ positiveCoords.size() + "_" + ratio,
-							Collections.EMPTY_LIST, minusCoordsAll);
-					if (ratio > getFloodBlockerRatio()) {
-						getMpPolygons().remove(p.getId());
-					}
+
+				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()
+						&& ratio > getFloodBlockerRatio()) {
+					log.warn("Polygon", p.getId(), "is blocked");
+					getMpPolygons().remove(p.getId());
+				} else {
+					log.info("Polygon",p.getId(), "is not blocked");
 				}
+
 			}
 		}
 		log.info("Flood blocker finished. Resulting polygons:", getMpPolygons()

@@ -1807,6 +1807,10 @@ public class MultiPolygonRelation extends Relation {
 		return mpPolygons;
 	}
 
+	protected uk.me.parabola.imgfmt.app.Area getBbox() {
+		return bbox;
+	}
+	
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
