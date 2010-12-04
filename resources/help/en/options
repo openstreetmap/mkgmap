@@ -15,7 +15,7 @@ filename
 --coastlinefile=filename[,filename]
 	Defines a comma separated list of files that contain coastline 
 	data. The coastline data from the input files are removed if 
-	this option is set. Files must have OSM fileformat.	
+	this option is set. Files must have OSM or PBF fileformat.	
 
 --gmapsupp
 	Write a gmapsupp.img file that can be uploaded to a Garmin or
