@@ -122,7 +122,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * @param handler The file handler.
 	 */
 	protected void setupHandler(OsmHandler handler) {
-		elementSaver = new ElementSaver(getConfig());
+		createElementSaver();
 		osmReadingHooks = pluginChain(elementSaver, getConfig());
 
 		handler.setElementSaver(elementSaver);
@@ -138,11 +138,23 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			handler.setTagsToDelete(deltags);
 		}
 	}
+	
+	protected void createElementSaver() {
+		elementSaver = new ElementSaver(getConfig());
+	}
+	
+	public ElementSaver getElementSaver() {
+		return elementSaver;
+	}
 
-	private OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
+	protected OsmReadingHooks[] getPossibleHooks() {
+		return this.POSSIBLE_HOOKS;
+	}
+	
+	protected OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
 		List<OsmReadingHooks> plugins = new ArrayList<OsmReadingHooks>();
 
-		for (OsmReadingHooks p : this.POSSIBLE_HOOKS) {
+		for (OsmReadingHooks p : getPossibleHooks()) {
 			if (p.init(saver, props))
 				plugins.add(p);
 		}

@@ -1,6 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.InputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,14 +13,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
 public class CoastlineFileLoader {
@@ -28,11 +26,37 @@ public class CoastlineFileLoader {
 	private static final Logger log = Logger
 			.getLogger(CoastlineFileLoader.class);
 
-	private final Set<String> coastlineFiles;
-	private Collection<CoastlineWay> coastlines;
+	private static final List<Class<? extends LoadableMapDataSource>> coastFileLoaders;
 
-	private AtomicBoolean coastlinesLoaded = new AtomicBoolean(false);
-	private AtomicBoolean loadingStarted = new AtomicBoolean(false);
+	static {
+		String[] sources = {
+				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinCoastDataSource",
+				// must be last as it is the default
+				"uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource", };
+
+		coastFileLoaders = new ArrayList<Class<? extends LoadableMapDataSource>>();
+
+		for (String source : sources) {
+			try {
+				@SuppressWarnings({ "unchecked" })
+				Class<? extends LoadableMapDataSource> c = (Class<? extends LoadableMapDataSource>) Class
+						.forName(source);
+				coastFileLoaders.add(c);
+			} catch (ClassNotFoundException e) {
+				// not available, try the rest
+			} catch (NoClassDefFoundError e) {
+				// not available, try the rest
+			}
+		}
+	}
+
+	private final Set<String> coastlineFiles;
+	private final Collection<CoastlineWay> coastlines = new ArrayList<CoastlineWay>();
+
+	private final AtomicBoolean coastlinesLoaded = new AtomicBoolean(false);
+	private final AtomicBoolean loadingStarted = new AtomicBoolean(false);
+
+	private final EnhancedProperties coastConfig = new EnhancedProperties();
 
 	private CoastlineFileLoader() {
 		this.coastlineFiles = new HashSet<String>();
@@ -49,68 +73,84 @@ public class CoastlineFileLoader {
 	}
 
 	public void loadCoastlines() {
-		boolean nowStarted = loadingStarted.compareAndSet(false, true);
-		if (nowStarted) {
+		boolean loadInThisThread = loadingStarted.compareAndSet(false, true);
+		if (loadInThisThread) {
 			// load it
 			loadCoastlinesImpl();
 		} else {
-			log.info("Coastlines already started");
+			log.info("Coastline loading performed by another thread");
 		}
+	}
+
+	private OsmMapDataSource loadFromFile(String name)
+			throws FileNotFoundException, FormatException {
+		OsmMapDataSource src = createMapReader(name);
+		src.config(getConfig());
+		log.info("Started loading coastlines from", name);
+		src.load(name);
+		log.info("Finished loading coastlines from", name);
+		return src;
+	}
+
+	public static OsmMapDataSource createMapReader(String name) {
+		for (Class<? extends LoadableMapDataSource> loader : coastFileLoaders) {
+			try {
+				LoadableMapDataSource src = loader.newInstance();
+				if (name != null && src instanceof OsmMapDataSource
+						&& src.isFileSupported(name))
+					return (OsmMapDataSource) src;
+			} catch (InstantiationException e) {
+				// try the next one.
+			} catch (IllegalAccessException e) {
+				// try the next one.
+			} catch (NoClassDefFoundError e) {
+				// try the next one
+			}
+		}
+
+		// Give up and assume it is in the XML format. If it isn't we will get
+		// an
+		// error soon enough anyway.
+		return new Osm5CoastDataSource();
+	}
+
+	private Collection<Way> loadFile(String filename)
+			throws FileNotFoundException {
+		OsmMapDataSource src = loadFromFile(filename);
+		return src.getElementSaver().getWays().values();
+	}
+
+	private EnhancedProperties getConfig() {
+		return coastConfig;
 	}
 
 	private synchronized void loadCoastlinesImpl() {
 		log.info("Load coastlines");
-		EnhancedProperties coastProps = new EnhancedProperties();
-		Set<String> coastlineTags = new HashSet<String>();
-		coastlineTags.add("natural");
 		for (String coastlineFile : coastlineFiles) {
 			try {
-				InputStream is = Utils.openFile(coastlineFile);
-				SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-				parserFactory.setXIncludeAware(true);
-				parserFactory.setNamespaceAware(true);
-				SAXParser parser = parserFactory.newSAXParser();
+				int nBefore = coastlines.size();
 
-				Osm5XmlHandler handler = new Osm5XmlHandler(coastProps);
-				Osm5XmlHandler.SaxHandler saxHandler = handler.new SaxHandler();
+				Collection<Way> loadedCoastlines = loadFile(coastlineFile);
+				log.info(loadedCoastlines.size(), "coastline ways from",
+						coastlineFile, "loaded.");
 
-				CoastlineElementSaver elementSaver = new CoastlineElementSaver(
-						coastProps);
-				handler.setElementSaver(elementSaver);
-				handler.setHooks(new OsmReadingHooksAdaptor());
-
-				handler.setUsedTags(coastlineTags);
-
-				// parse the xml file
-				parser.parse(is, saxHandler);
-
-				elementSaver.loadFinished();
-				log.info("Coastline ways from",coastlineFile,"loaded.");
-
-				// GC can now garbage the complete load mechanism
-				handler = null;
-				is = null;
-				parser = null;
-				parserFactory = null;
-				saxHandler = null;
-				
-				
-				ArrayList<Way> ways = new ArrayList<Way>(elementSaver.getWays().values());
-				elementSaver = null;
-				ways = SeaGenerator.joinWays(ways);
-				coastlines = new ArrayList<CoastlineWay>(ways.size());
+				ArrayList<Way> ways = SeaGenerator.joinWays(loadedCoastlines);
 				ListIterator<Way> wayIter = ways.listIterator();
 				ways = null;
 				while (wayIter.hasNext()) {
 					Way way = wayIter.next();
 					wayIter.remove();
-					coastlines.add(new CoastlineWay(way.getId(), way.getPoints()));
+					coastlines.add(new CoastlineWay(way.getId(), way
+							.getPoints()));
 				}
 
-				log.info(coastlines.size(), "coastlines loaded from",coastlineFile);
-
+				log.info((coastlines.size() - nBefore),
+						"coastlines loaded from", coastlineFile);
+			} catch (FileNotFoundException exp) {
+				log.error("Coastline file " + coastlineFile + " not found.");
 			} catch (Exception exp) {
-				log.error(exp.toString(), exp);
+				log.error(exp);
+				exp.printStackTrace();
 			}
 		}
 		coastlinesLoaded.set(true);
@@ -144,7 +184,8 @@ public class CoastlineFileLoader {
 			}
 
 			if (log.isDebugEnabled())
-				log.debug("Create coastline way %d with %d points", id, points.size());
+				log.debug("Create coastline way", id, "with", points.size(),
+						"points");
 			Coord firstPoint = getPoints().get(0);
 
 			int minLat = firstPoint.getLatitude();
@@ -207,33 +248,6 @@ public class CoastlineFileLoader {
 
 		public Area getBbox() {
 			return bbox;
-		}
-	}
-
-	private static class CoastlineElementSaver extends ElementSaver {
-
-		public CoastlineElementSaver(EnhancedProperties args) {
-			super(args);
-		}
-
-		@Override
-		public void addNode(Node node) {
-			return;
-		}
-
-		@Override
-		public void addWay(Way way) {
-			String tag = way.getTag("natural");
-			if (tag != null && tag.contains("coastline")) {
-				// remove all tags => the natural=coastline is implicitly known
-				way.removeAllTags();
-				super.addWay(way);
-			}
-		}
-
-		@Override
-		public void addRelation(Relation rel) {
-			return;
 		}
 	}
 

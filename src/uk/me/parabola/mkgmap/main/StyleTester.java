@@ -198,6 +198,7 @@ public class StyleTester implements OsmConverter {
 				SaxHandler saxHandler = handler.new SaxHandler();
 				handler.setElementSaver(saver);
 				parser.parse(is, saxHandler);
+				saver.finishLoading();
 				saver.convert(normal);
 
 				System.err.println("Conversion time " + (System.currentTimeMillis() - collector.getStart()) + "ms");

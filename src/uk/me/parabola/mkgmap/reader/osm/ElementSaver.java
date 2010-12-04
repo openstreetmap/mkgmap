@@ -96,13 +96,6 @@ public class ElementSaver {
 
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
 	}
-	
-	/**
-	 * Signals that the data is completely loaded.
-	 */
-	public void loadFinished() {
-		coordMap = null;
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -210,6 +203,11 @@ public class ElementSaver {
 	public Relation getRelation(long id) {
 		return relationMap.get(id);
 	}
+	
+	public void finishLoading() {
+		coordMap = null;
+		finishMultiPolygons();
+	}
 
 	/**
 	 * After the input file is read, this is called to convert the saved information
@@ -218,7 +216,6 @@ public class ElementSaver {
 	 * @param converter The Converter to use.
 	 */
 	public void convert(OsmConverter converter) {
-		finishMultiPolygons();
 
 		// We only do this if an explicit bounding box was given.
 		if (boundingBox != null && minimumArcLength != null)
@@ -228,7 +225,6 @@ public class ElementSaver {
 			removeShortArcsByMergingNodes(minimumArcLength);
 
 		converter.setBoundingBox(getBoundingBox());
-		coordMap = null;
 
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);

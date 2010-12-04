@@ -66,7 +66,8 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 		}
 
 		osmReadingHooks.end();
-
+		
+		elementSaver.finishLoading();
 		// now convert the saved elements
 		elementSaver.convert(getConverter());
 
