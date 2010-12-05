@@ -15,10 +15,12 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -125,6 +127,29 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 
 		return generateSea;
+	}
+	
+	public Set<String> getUsedTags() {
+		HashSet<String> usedTags = new HashSet<String>();
+		if (coastlineFilenames == null) {
+			usedTags.add("natural");
+		}
+		if (floodblocker) {
+			// add the tags used by the SeaPolygonRelation
+			// this should be configurable in future
+			usedTags.add("highway");
+			usedTags.add("layer");
+			usedTags.add("man_made");
+			usedTags.add("bridge");
+			usedTags.add("tunnel");
+			usedTags.add("waterway");
+			
+			usedTags.add("route");
+			usedTags.add("boundary");
+			usedTags.add("maritime");
+		}
+		
+		return usedTags;
 	}
 
 	/**

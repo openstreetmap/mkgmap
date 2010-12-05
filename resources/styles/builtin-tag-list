@@ -17,8 +17,6 @@ addr:postcode
 addr:street
 barrier
 bicycle
-boundary
-bridge
 carpool
 cycleway
 day_off
@@ -36,7 +34,6 @@ FIXME
 foot
 goods
 hgv
-highway
 hour_off
 hour_on
 int_ref
@@ -44,9 +41,6 @@ is_in
 is_in:country
 is_in:county
 junction
-layer
-man_made
-maritime
 maxspeed
 mkgmap:gtype
 motorcar
@@ -66,6 +60,4 @@ restriction
 route
 taxi
 toll
-tunnel
 type
-waterway

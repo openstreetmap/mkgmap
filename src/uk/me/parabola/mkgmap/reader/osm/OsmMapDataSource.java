@@ -55,7 +55,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			new HighwayHooks(),
 	};
 	private OsmConverter converter;
-	private Set<String> usedTags;
+	private final Set<String> usedTags = new HashSet<String>();
 	protected ElementSaver elementSaver;
 	protected OsmReadingHooks osmReadingHooks;
 
@@ -159,18 +159,23 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 				plugins.add(p);
 		}
 
+		OsmReadingHooks hooks;
 		switch (plugins.size()) {
 		case 0:
-			return new OsmReadingHooksAdaptor();
+			hooks = new OsmReadingHooksAdaptor();
+			break;
 		case 1:
-			return plugins.get(0);
+			hooks = plugins.get(0);
+			break;
 		default:
 			OsmReadingHooksChain chain = new OsmReadingHooksChain();
 			for (OsmReadingHooks p : plugins) {
 				chain.add(p);
 			}
-			return chain;
+			hooks = chain;
 		}
+		getUsedTags().addAll(hooks.getUsedTags());
+		return hooks;
 	}
 
 	private Map<String, Set<String>> readDeleteTagsFile(String fileName) {
@@ -243,7 +248,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			style.applyOptionOverride(props);
 			setStyle(style);
 
-			usedTags = style.getUsedTags();
+			getUsedTags().addAll(style.getUsedTags());
 			converter = new StyledConverter(style, mapper, props);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
