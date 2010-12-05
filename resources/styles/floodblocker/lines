@@ -1,0 +1,26 @@
+# -------------------------------------------------------------------
+# This is the rules file to configure the rules which lines are
+# identified as land or sea
+# Set the type 0x01 for each land line and 0x02 for each sea line
+#
+# Any line prefaced with # is a comment and will not be applied.
+# Each line is a rule, of the generalised format:
+#  OSM_tag(s)_to_match  [Garmin_type_code resolution]
+# See http://wiki.openstreetmap.org/wiki/Mkgmap/help/style_rules
+# and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
+# for more information.
+
+# land rules (set 0x01)
+highway=* 
+& highway!=construction 
+& construction!=*
+& bridge!=yes
+& tunnel!=yes
+& (layer!=* | layer=0)
+& waterway!=dam
+& man_made!=pier [0x01]
+
+
+# sea rules (set 0x02)
+route=ferry [0x02]
+boundary=administrative & maritime=yes [0x02]

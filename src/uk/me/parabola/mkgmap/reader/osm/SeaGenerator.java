@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -59,6 +61,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private boolean generateSeaBackground = true;
 
 	private String[] coastlineFilenames;
+	private StyleImpl fbRules;
 	
 	/**
 	 * Sort out options from the command line.
@@ -113,6 +116,16 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					System.err.println("  fbratio=NUM         a ratio (number of block points/area size)");
 				}
 			}
+			
+			if (floodblocker) {
+				try {
+					fbRules = new StyleImpl(null, "floodblocker");
+				} catch (FileNotFoundException e) {
+					System.err.println("Cannot file floodblocker rules. Continue floodblocking disabled.");
+					log.error("Cannot load file floodblocker rules. Continue floodblocking disabled.");
+					floodblocker = false;
+				}
+			}
 
 			String coastlineFileOpt = props.getProperty("coastlinefile", null);
 			if (coastlineFileOpt != null) {
@@ -135,19 +148,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			usedTags.add("natural");
 		}
 		if (floodblocker) {
-			// add the tags used by the SeaPolygonRelation
-			// this should be configurable in future
-			usedTags.add("highway");
-			usedTags.add("layer");
-			usedTags.add("man_made");
-			usedTags.add("bridge");
-			usedTags.add("tunnel");
-			usedTags.add("waterway");
-			
-			usedTags.add("route");
-			usedTags.add("boundary");
-			usedTags.add("maritime");
+			usedTags.addAll(fbRules.getUsedTags());
 		}
+		
+		if (log.isDebugEnabled())
+			log.debug("Sea generator used tags: "+usedTags);
 		
 		return usedTags;
 	}
@@ -431,6 +436,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			coastRel.setFloodBlockerGap(fbGap);
 			coastRel.setFloodBlockerRatio(fbRatio);
 			coastRel.setFloodBlockerThreshold(fbThreshold);
+			coastRel.setFloodBlockerRules(fbRules.getWayRules());
 			coastRel.setDebug(fbDebug);
 			saver.addRelation(coastRel);
 		}

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -29,8 +30,9 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private double floodBlockerRatio = 0.5d;
 	private int floodBlockerThreshold = 20;
 	private boolean debug = false;
-	private DecimalFormat format = new DecimalFormat("0.0000");	
-	
+	private DecimalFormat format = new DecimalFormat("0.0000");
+	private Rule floodBlockerRules;
+
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		super(other, wayMap, bbox);
@@ -50,39 +52,38 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	}
 
 	private void fillQuadTrees() {
-		for (Way way : getTileWayMap().values()) {
-			if (way.getTag("highway") != null
-					&& "construction".equals(way.getTag("highway")) == false
-					&& way.isBoolTag("bridge") == false
-					&& way.isBoolTag("tunnel") == false
-					&& "dam".equals(way.getTag("waterway")) == false
-					&& "pier".equals(way.getTag("man_made")) == false) {
-
-				boolean layer0 = true;
-				try {
-					layer0 = way.getTag("layer") == null
-							|| Integer.valueOf(way.getTag("layer")) == 0;
-				} catch (Exception exp) {
-				}
-
-				if (layer0) {
-					// save these coords to check if some sea polygons floods
-					// the
-					// land
-//					log.info("Land tags:", way.getId(), way.toTagString());
-					landCoords.addAll(way.getPoints());
+		final AtomicBoolean isLand = new AtomicBoolean(false);
+		final AtomicBoolean isSea = new AtomicBoolean(false);
+		TypeResult fakedType = new TypeResult() {
+			@Override
+			public void add(Element el, GType type) {
+				if (log.isDebugEnabled())
+					log.debug(el.getId(),type);
+				if (type.getType() == 0x01) {
+					isLand.set(true);
+				} else if (type.getType() == 0x02) {
+					isSea.set(true);
 				}
 			}
+		};
+		for (Way way : getTileWayMap().values()) {
+			if (log.isDebugEnabled())
+				log.debug("Check usage of way for floodblocker:", way.getId(), way.toTagString());
+			floodBlockerRules.resolveType(way, fakedType);
 
-			if ("ferry".equals(way.getTag("route"))) {
+			if (isLand.get()) {
+				// save these coords to check if some sea polygons floods
+				// the land
+				log.debug("Way", way.getId(), "identified as land");
+				landCoords.addAll(way.getPoints());
+				isLand.set(false);
+
+			} else if (isSea.get()) {
 				// save these coords to check if some sea polygons floods the
 				// land
-//				log.info("Sea tags:", way.getId(), way.toTagString());
+				log.debug("Way", way.getId(), "identified as sea");
 				seaCoords.addAll(way.getPoints());
-			} else if ("administrative".equals(way.getTag("boundary"))
-					&& way.isBoolTag("maritime")) {
-//				log.info("Sea tags:", way.getId(), way.toTagString());
-				seaCoords.addAll(way.getPoints());
+				isSea.set(false);
 			}
 		}
 	}
@@ -231,6 +232,14 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+
+	public Rule getFloodBlockerRules() {
+		return floodBlockerRules;
+	}
+
+	public void setFloodBlockerRules(Rule floodBlockerRules) {
+		this.floodBlockerRules = floodBlockerRules;
 	}
 
 }
