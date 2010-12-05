@@ -142,18 +142,18 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 							baseName + p.getId() + "_minus_"
 									+ minusCoords.size() + "_"
 									+ positiveCoords.size() + "_" + ratioFMT,
-							Collections.EMPTY_LIST, minusCoords);
+									null, minusCoords);
 					GpxCreator.createGpx(baseName + p.getId()
 							+ "_minusall_" + minusCoordsAll.size() + "_"
 							+ positiveCoords.size() + "_" + ratioFMT,
-							Collections.EMPTY_LIST, minusCoordsAll);
+							null, minusCoordsAll);
 
 					if (positiveCoords.isEmpty() == false) {
 						GpxCreator.createGpx(
 								baseName + p.getId() + "_pos_"
 										+ minusCoords.size() + "_"
 										+ positiveCoords.size() + "_"
-										+ ratioFMT, Collections.EMPTY_LIST,
+										+ ratioFMT, null,
 								positiveCoords);
 					}
 				}
