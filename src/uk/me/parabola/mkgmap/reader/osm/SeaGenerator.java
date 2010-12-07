@@ -297,21 +297,21 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 		if(shoreline.isEmpty()) {
 			// no sea required
-			if(!generateSeaUsingMP) {
-				// even though there is no sea, generate a land
-				// polygon so that the tile's background colour will
-				// match the land colour on the tiles that do contain
-				// some sea
-				long landId = FakeIdGenerator.makeFakeId();
-				Way land = new Way(landId);
-				land.addPoint(nw);
-				land.addPoint(sw);
-				land.addPoint(se);
-				land.addPoint(ne);
-				land.addPoint(nw);
-				land.addTag(landTag[0], landTag[1]);
-				saver.addWay(land);
-			}
+			// even though there is no sea, generate a land
+			// polygon so that the tile's background colour will
+			// match the land colour on the tiles that do contain
+			// some sea
+			long landId = FakeIdGenerator.makeFakeId();
+			Way land = new Way(landId);
+			land.addPoint(nw);
+			land.addPoint(sw);
+			land.addPoint(se);
+			land.addPoint(ne);
+			land.addPoint(nw);
+			land.addTag(landTag[0], landTag[1]);
+			// no matter if the multipolygon option is used it is
+			// only necessary to create a land polygon
+			saver.addWay(land);
 			// nothing more to do
 			return;
 		}
@@ -369,43 +369,35 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					// found an anti-island that is not contained by
 					// land so convert it back into an island
 					ai.deleteTag("natural");
+					ai.addTag(landTag[0], landTag[1]);
 					if (generateSeaUsingMP) {
 						// create a "inner" way for the island
 						assert seaRelation != null;
 						seaRelation.addElement("inner", ai);
-						saver.getWays().remove(ai.getId());
-					} else
-						ai.addTag(landTag[0], landTag[1]);
+					} 
 					log.warn("Converting anti-island starting at", ai.getPoints().get(0).toOSMURL() , "into an island as it is surrounded by water");
 				}
 			}
 
 			long seaId = FakeIdGenerator.makeFakeId();
 			Way sea = new Way(seaId);
-			if (generateSeaUsingMP) {
-				// the sea background area must be a little bigger than all
-				// inner land areas. this is a workaround for a mp shortcoming:
-				// mp is not able to combine outer and inner if they intersect
-				// or have overlaying lines
-				// the added area will be clipped later by the style generator
-				sea.addPoint(new Coord(nw.getLatitude() - 1,
-						nw.getLongitude() - 1));
-				sea.addPoint(new Coord(sw.getLatitude() + 1,
-						sw.getLongitude() - 1));
-				sea.addPoint(new Coord(se.getLatitude() + 1,
-						se.getLongitude() + 1));
-				sea.addPoint(new Coord(ne.getLatitude() - 1,
-						ne.getLongitude() + 1));
-				sea.addPoint(new Coord(nw.getLatitude() - 1,
-						nw.getLongitude() - 1));
-			} else {
-				sea.addPoint(nw);
-				sea.addPoint(sw);
-				sea.addPoint(se);
-				sea.addPoint(ne);
-				sea.addPoint(nw);
-			}
+			// the sea background area must be a little bigger than all
+			// inner land areas. this is a workaround for a mp shortcoming:
+			// mp is not able to combine outer and inner if they intersect
+			// or have overlaying lines
+			// the added area will be clipped later by the style generator
+			sea.addPoint(new Coord(nw.getLatitude() - 1,
+					nw.getLongitude() - 1));
+			sea.addPoint(new Coord(sw.getLatitude() + 1,
+					sw.getLongitude() - 1));
+			sea.addPoint(new Coord(se.getLatitude() + 1,
+					se.getLongitude() + 1));
+			sea.addPoint(new Coord(ne.getLatitude() - 1,
+					ne.getLongitude() + 1));
+			sea.addPoint(new Coord(nw.getLatitude() - 1,
+					nw.getLongitude() - 1));
 			sea.addTag("natural", "sea");
+
 			log.info("sea: ", sea);
 			saver.addWay(sea);
 			if(generateSeaUsingMP) {
@@ -414,19 +406,21 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			}
 		} else {
 			// background is land
-			if (!generateSeaUsingMP) {
-				// generate a land polygon so that the tile's
-				// background colour will match the land colour on the
-				// tiles that do contain some sea
-				long landId = FakeIdGenerator.makeFakeId();
-				Way land = new Way(landId);
-				land.addPoint(nw);
-				land.addPoint(sw);
-				land.addPoint(se);
-				land.addPoint(ne);
-				land.addPoint(nw);
-				land.addTag(landTag[0], landTag[1]);
-				saver.addWay(land);
+
+			// generate a land polygon so that the tile's
+			// background colour will match the land colour on the
+			// tiles that do contain some sea
+			long landId = FakeIdGenerator.makeFakeId();
+			Way land = new Way(landId);
+			land.addPoint(nw);
+			land.addPoint(sw);
+			land.addPoint(se);
+			land.addPoint(ne);
+			land.addPoint(nw);
+			land.addTag(landTag[0], landTag[1]);
+			saver.addWay(land);
+			if (generateSeaUsingMP) {
+				seaRelation.addElement("inner", land);
 			}
 		}
 
@@ -437,6 +431,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			coastRel.setFloodBlockerRatio(fbRatio);
 			coastRel.setFloodBlockerThreshold(fbThreshold);
 			coastRel.setFloodBlockerRules(fbRules.getWayRules());
+			coastRel.setLandTag(landTag[0], landTag[1]);
 			coastRel.setDebug(fbDebug);
 			saver.addRelation(coastRel);
 		}
@@ -598,14 +593,12 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				saver.addWay(w);
 			} else {
 				// water on the outside of the poly, it's an island
+				w.addTag(landTag[0], landTag[1]);
+				saver.addWay(w);
 				if(generateSeaUsingMP) {
 					// create a "inner" way for each island
 					seaRelation.addElement("inner", w);
-				} else {
-					// tag as land
-					w.addTag(landTag[0], landTag[1]);
-					saver.addWay(w);
-				}
+				} 
 			}
 		}
 
@@ -657,20 +650,21 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				if (nearlyClosed) {
 					// close the way
 					points.add(pStart);
+					
+					if(!FakeIdGenerator.isFakeId(w.getId())) {
+						Way w1 = new Way(FakeIdGenerator.makeFakeId());
+						w1.getPoints().addAll(w.getPoints());
+						// only copy the name tags
+						for(String tag : w)
+							if(tag.equals("name") || tag.endsWith(":name"))
+								w1.addTag(tag, w.getTag(tag));
+						w = w1;
+					}
+					w.addTag(landTag[0], landTag[1]);
+					saver.addWay(w);
 					if(generateSeaUsingMP)
+					{						
 						seaRelation.addElement("inner", w);
-					else {
-						if(!FakeIdGenerator.isFakeId(w.getId())) {
-							Way w1 = new Way(FakeIdGenerator.makeFakeId());
-							w1.getPoints().addAll(w.getPoints());
-							// only copy the name tags
-							for(String tag : w)
-								if(tag.equals("name") || tag.endsWith(":name"))
-									w1.addTag(tag, w.getTag(tag));
-							w = w1;
-						}
-						w.addTag(landTag[0], landTag[1]);
-						saver.addWay(w);
 					}
 				} else if(allowSeaSectors) {
 					long seaId = FakeIdGenerator.makeFakeId();

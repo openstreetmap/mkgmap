@@ -32,6 +32,8 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private boolean debug = false;
 	private DecimalFormat format = new DecimalFormat("0.0000");
 	private Rule floodBlockerRules;
+	
+	private String[] landTag = new String[] {"natural","land"};
 
 	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
 			uk.me.parabola.imgfmt.app.Area bbox) {
@@ -161,8 +163,15 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 				if (minusCoords.size() - positiveCoords.size() >= getFloodBlockerThreshold()
 						&& ratio > getFloodBlockerRatio()) {
-					log.warn("Polygon", p.getId(), "is blocked");
-					getMpPolygons().remove(p.getId());
+					log.warn("Polygon", p.getId(), "type",polyType,"seems to be wrong. Changing it to",otherType);
+					if (sea) {
+						p.deleteTag("natural");
+						p.addTag(landTag[0], landTag[1]);
+					} else {
+						p.deleteTag(landTag[0]);
+						p.addTag("natural", "sea");
+					}
+//					getMpPolygons().remove(p.getId());
 				} else {
 					log.info("Polygon",p.getId(), "is not blocked");
 				}
@@ -240,6 +249,11 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 
 	public void setFloodBlockerRules(Rule floodBlockerRules) {
 		this.floodBlockerRules = floodBlockerRules;
+	}
+
+	public void setLandTag(String landTag, String landValue) {
+		this.landTag[0] = landTag;
+		this.landTag[1] = landValue;
 	}
 
 }
