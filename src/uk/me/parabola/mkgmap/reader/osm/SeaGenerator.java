@@ -110,10 +110,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					System.err.println("  extend-sea-sectors  extend coastline to reach border");
 					System.err.println("  land-tag=TAG=VAL    tag to use for land polygons (default natural=land)");
 					System.err.println("  close-gaps=NUM      close gaps in coastline that are less than this distance (metres)");
-					System.err.println("  floodblocker        enable the floodblocker (only for multipolgon)");
-					System.err.println("  fbgap=NUM           ignore block points that are closer than this gap to the sea border");
-					System.err.println("  fbthres=NUM         at least so many block points must be contained in the polygon");
-					System.err.println("  fbratio=NUM         a ratio (number of block points/area size)");
+					System.err.println("  floodblocker        enable the floodblocker (for multipolgon only)");
+					System.err.println("  fbgap=NUM           points closer to the coastline are ignored for flood blocking (default 40)");
+					System.err.println("  fbthres=NUM         min points contained in a polygon to be flood blocked (default 20)");
+					System.err.println("  fbratio=NUM         min ratio (points/area size) for flood blocking (default 0.5)");
 				}
 			}
 			

@@ -335,18 +335,18 @@ Miscellaneous options:
 		(works only with multipolygon processing)		
 
 	fbgap=NUM           
-		flood blocker gap in metre
+		flood blocker gap in metre (default 40)
 		highway points that are closer to the sea polygon do
 		not block 
 
 	fbthres=NUM
 		at least so many highway points must be contained in 
 		a sea polygon so that it may be removed by the flood
-		blocker
+		blocker (default 20)
 
 	fbratio=NUM
 		only sea polygons with a higher ratio 
-		(highway points / polygon size) are removed
+		(highway points / polygon size) are removed (default 0.5)
 		
 	fbdebug
 		switches on the debugging of the flood blocker
