@@ -145,6 +145,9 @@ Product description options:
 	This is an integer that identifies a product within a family.
 	It is often just 1.
 
+--product-version
+	The version of the product.
+
 --series-name
 	This name will be displayed in MapSource in the map selection
 	drop-down. The default is "OSM map".
