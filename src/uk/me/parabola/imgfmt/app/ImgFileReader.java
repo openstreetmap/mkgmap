@@ -77,7 +77,7 @@ public interface ImgFileReader extends Closeable {
 	public int getInt() throws ReadFailedException;
 
 	/**
-	 * Read in an arbitary length sequence of bytes.
+	 * Read in an arbitrary length sequence of bytes.
 	 *
 	 * @param len The number of bytes to read.
 	 */
@@ -96,7 +96,7 @@ public interface ImgFileReader extends Closeable {
 	 * @param delimiter This will replace all digit 11 characters.  Usually a
 	 * '-' to separate numbers in a telephone.  No doubt there is a different
 	 * standard in each country.
-	 * @return A phone number possibly containing the delimeter character.
+	 * @return A phone number possibly containing the delimiter character.
 	 */
 	public String getBase11str(byte firstChar, char delimiter);
 }

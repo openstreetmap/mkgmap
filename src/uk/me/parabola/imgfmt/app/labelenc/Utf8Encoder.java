@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 
 /**
- * Ecoder for labels in utf-8, note that I am not actually sure that this
+ * Encoder for labels in utf-8, note that I am not actually sure that this
  * is in fact used anywhere.
  * 
  * @author Steve Ratcliffe

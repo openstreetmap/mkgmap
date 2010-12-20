@@ -106,7 +106,7 @@ class MapSplitter {
 
 	/**
 	 * Adds map areas to a list.  If an area has too many features, then it
-	 * is split into 4 and this routine is called recusively to add the new
+	 * is split into 4 and this routine is called recursively to add the new
 	 * areas.
 	 *
 	 * @param areas The areas to add to the list (and possibly split up).
@@ -167,7 +167,7 @@ class MapSplitter {
 	 * The size depends on the shift level.
 	 *
 	 * We are choosing a limit smaller than the real max to allow for
-	 * uncertaintly about what happens with features that extend beyond the box.
+	 * uncertainty about what happens with features that extend beyond the box.
 	 *
 	 * If the area is already small enough then it will be returned unchanged.
 	 *

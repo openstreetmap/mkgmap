@@ -32,7 +32,7 @@ import java.util.List;
  * <p>What is important here is that only part of a full block is used to
  * hold block numbers.
  *
- * <p>The entries are 512 bytes regardless of the blocksize.
+ * <p>The entries are 512 bytes regardless of the block size.
  *
  * @author Steve Ratcliffe
  */

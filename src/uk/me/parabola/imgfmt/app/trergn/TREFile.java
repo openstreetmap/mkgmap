@@ -298,7 +298,7 @@ public class TREFile extends ImgFile implements Configurable {
 	 * detailed) that has a resolution less than or equal to the given resolution.
 	 * 
 	 * @param minResolution The minimum resolution.
-	 * @return The level corresponding to the resulution.
+	 * @return The level corresponding to the resolution.
 	 */
 	private int decodeLevel(int minResolution) {
 		Zoom top = null;

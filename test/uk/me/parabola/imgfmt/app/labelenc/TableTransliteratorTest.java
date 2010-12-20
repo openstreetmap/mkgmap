@@ -54,7 +54,7 @@ public class TableTransliteratorTest {
 	}
 
 	/**
-	 * Not overriden by latin, when it is not requested.
+	 * Not overridden by latin, when it is not requested.
 	 */
 	@Test
 	public void testNotOverriden() {

@@ -66,7 +66,7 @@ class LinePreparer {
 	/**
 	 * Write the bit stream to a BitWriter and return it.
 	 *
-	 * @return A class containing the writen byte stream.
+	 * @return A class containing the written byte stream.
 	 */
 	public BitWriter makeBitStream(int minPointsRequired) {
 
@@ -224,7 +224,7 @@ class LinePreparer {
 
 			// compute normalized differences
 			//   -2^(shift-1) <= dx, dy < 2^(shift-1)
-			// XXX: relies on the fact that java ints are 32 bit signed
+			// XXX: relies on the fact that java integers are 32 bit signed
 			final int offset = 8+shift;
 			int dx = (lon - lastLong) << offset >> offset;
 			int dy = (lat - lastLat) << offset >> offset;
@@ -349,7 +349,7 @@ class LinePreparer {
 	/**
 	 * The bits needed to hold a number without truncating it.
 	 *
-	 * @param val The number for bit couting.
+	 * @param val The number for bit counting.
 	 * @return The number of bits required.
 	 */
 	private int bitsNeeded(int val) {

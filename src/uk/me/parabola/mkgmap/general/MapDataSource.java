@@ -60,7 +60,7 @@ public interface MapDataSource {
 	/**
 	 * Get the high level view of the road network.  This is used to write
 	 * the net and nod sections.  Note that information from the net
-	 * section is needed to write the RGN section if routing is wanter.
+	 * section is needed to write the RGN section if routing is wanted.
 	 *
 	 * @return A {@link RoadNetwork} object with all the connections between
 	 * roads.  If this returns null, then the NET and NOD sections should

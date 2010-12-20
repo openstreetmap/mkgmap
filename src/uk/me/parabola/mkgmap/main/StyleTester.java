@@ -101,7 +101,7 @@ import org.xml.sax.SAXException;
  * A way will be created with two points (1,1),(2,2) (so you can see the
  * action of oneway=reverse) and the tags that you specify.  If you give
  * a number after WAY it will be printed on output so that if you have more
- * than one you can tell which is which.  If the number is ommited it will
+ * than one you can tell which is which.  If the number is omitted it will
  * default to 1.
  *
  * You can have as many rules as you like after the <<<lines>>> and you
@@ -451,7 +451,7 @@ public class StyleTester implements OsmConverter {
 	 * A styled converter that should work exactly the same as the version of
 	 * mkgmap you are using.
 	 * @param stylefile The name of the style file to process.
-	 * @param coll A map collecter to receive the created elements.
+	 * @param coll A map collector to receive the created elements.
 
 	 */
 	private StyledConverter makeStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Split polygons so that they have less than the maximum number of points.
  * This is handled by using java built in classes.  Basically I am just taking
- * the bounding box, spliting that in half and getting the intersection of
+ * the bounding box, splitting that in half and getting the intersection of
  * each half-box with the original shape.  Recurse until all are small enough.
  *
  * <p>Cutting things up may make discontiguous shapes, but this is handled by

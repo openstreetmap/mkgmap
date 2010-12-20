@@ -2,12 +2,15 @@
   <dictionary name="steve">
     <words>
       <w>Garmin</w>
+      <w>addr</w>
       <w>andrzej</w>
+      <w>basename</w>
       <w>bbox</w>
       <w>bicubic</w>
       <w>bitmask</w>
       <w>bitset</w>
       <w>bitsets</w>
+      <w>bitstream</w>
       <w>checksum</w>
       <w>coord</w>
       <w>coords</w>
@@ -15,17 +18,24 @@
       <w>discontiguous</w>
       <w>endian</w>
       <w>etrex</w>
+      <w>filenames</w>
       <w>fixme</w>
+      <w>footways</w>
       <w>garmin</w>
+      <w>garmin's</w>
       <w>gawron</w>
       <w>geofabrik</w>
       <w>gmapsupp</w>
       <w>gpsmapedit</w>
+      <w>gtype</w>
       <w>hashlist</w>
       <w>heibler</w>
+      <w>imgfmt</w>
       <w>indexable</w>
+      <w>interspaced</w>
       <w>isolines</w>
       <w>isophase</w>
+      <w>landkarte</w>
       <w>locator</w>
       <w>lußnig</w>
       <w>mapname</w>
@@ -44,12 +54,16 @@
       <w>polyline</w>
       <w>polylines</w>
       <w>popowsk</w>
+      <w>prepended</w>
       <w>printf</w>
       <w>println</w>
+      <w>programmatically</w>
       <w>racon</w>
       <w>racons</w>
       <w>ratcliffe</w>
       <w>reentrancy</w>
+      <w>resize</w>
+      <w>resized</w>
       <w>rethrown</w>
       <w>routable</w>
       <w>seamark</w>
@@ -57,11 +71,17 @@
       <w>startup</w>
       <w>struct</w>
       <w>subdiv</w>
+      <w>subdivsion</w>
+      <w>subfiles</w>
       <w>subtree</w>
       <w>superclass</w>
+      <w>tagname</w>
+      <w>topo</w>
       <w>tweeze</w>
+      <w>unshifted</w>
       <w>usedom</w>
       <w>vollmert</w>
+      <w>wierd</w>
       <w>xcharset</w>
       <w>xcode</w>
       <w>xmlattr</w>

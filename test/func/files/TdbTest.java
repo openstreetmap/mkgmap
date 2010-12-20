@@ -49,7 +49,7 @@ public class TdbTest {
 	}
 
 	/**
-	 * Check versin 3 of the format.  Not very important.
+	 * Check version 3 of the format.  Not very important.
 	 * @throws IOException
 	 */
 	@Test

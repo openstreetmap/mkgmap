@@ -85,7 +85,7 @@ class Dirent implements DirectoryEntry {
 
 	/**
 	 * Write this entry out to disk.  Note that these are 512 bytes, regardless
-	 * of the blocksize.
+	 * of the block size.
 	 *
 	 * @param file The file to write to.
 	 * @throws IOException If writing fails for any reason.

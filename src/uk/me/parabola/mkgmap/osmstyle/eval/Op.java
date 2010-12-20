@@ -17,7 +17,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 /**
  * Interface for an operation in the style expression language.
  * Operations need have only one operand, use {@link BinaryOp} for
- * when they definately have two.
+ * when they definitely have two.
  *
  * @author Steve Ratcliffe
  */

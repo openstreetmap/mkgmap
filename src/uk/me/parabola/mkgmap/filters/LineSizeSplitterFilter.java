@@ -54,7 +54,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 	}
 
 	/**
-	 * Keep track of the max dimentions of a line and split when they get too
+	 * Keep track of the max dimensions of a line and split when they get too
 	 * big.
 	 *
 	 * @param element A map element.
@@ -88,7 +88,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		boolean first = true;
 
 		/**
-		 * Class to keep track of the dimentions.
+		 * Class to keep track of the dimensions.
 		 */
 		class Dim {
 			private int minLat;

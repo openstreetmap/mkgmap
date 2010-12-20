@@ -143,7 +143,7 @@ public class PointInShapeTest {
 	@Test
 	public void testCornerPointsOutsideSquare() {
 		
-		// tests above / below corner points, outside squate
+		// tests above / below corner points, outside square
 		for (Coord cornerpoint : square.getPoints()) {
 			int yadd = cornerpoint.getLongitude() > 0 ? 1 : -1;
 			int x = cornerpoint.getLatitude();

@@ -129,7 +129,7 @@ public class RuleFileReader {
 	 * Rearrange the expression so that it is solvable, that is it starts with
 	 * an EQUALS or an EXISTS.
 	 * @param op The expression to be rearranged.
-	 * @return An equivelent expression re-arranged so that it starts with an
+	 * @return An equivalent expression re-arranged so that it starts with an
 	 * indexable term. If that is not possible then the original expression is
 	 * returned.
 	 */

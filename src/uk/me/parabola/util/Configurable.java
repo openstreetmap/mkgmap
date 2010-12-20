@@ -19,7 +19,7 @@ package uk.me.parabola.util;
 /**
  * A map reader that wants to inspect command line arguments.  A separate
  * interface as its only being used for the test maps at present.  Want
- * to leave open the possiblity of a more self describing interface that
+ * to leave open the possibility of a more self describing interface that
  * might extend this one that would allow for a GUI interface.
  *
  * @author Steve Ratcliffe

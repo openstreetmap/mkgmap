@@ -36,7 +36,7 @@ public class Area {
 	private final int maxLong;
 
 	/**
-	 * Create an area from the given coordinates.  We ensure that no dimention
+	 * Create an area from the given coordinates.  We ensure that no dimension
 	 * is zero.
 	 *
 	 * @param minLat The western latitude.
@@ -143,10 +143,10 @@ public class Area {
 	}
 
 	/**
-	 * Get the largest dimention.  So either the width or heigh, depending
+	 * Get the largest dimension.  So either the width or height, depending
 	 * on which is larger.
 	 *
-	 * @return The largest dimention in map units.
+	 * @return The largest dimension in map units.
 	 */
 	public int getMaxDimention() {
 		return Math.max(getWidth(), getHeight());

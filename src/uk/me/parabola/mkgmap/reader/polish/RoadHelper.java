@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
 
 /**
- * Used to remember all the road relavent parameters in a definition which
+ * Used to remember all the road relevant parameters in a definition which
  * can occur in any order. Also remembers routing nodes and makes sure
  * the generated MapRoads all have the same RoutingNode objects.
  *

@@ -32,7 +32,7 @@ import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Command line arguments for Main.  Arguments consist of options and filenames.
- * You read arguments from left to right and when a filename is encounted
+ * You read arguments from left to right and when a filename is encountered
  * the file is processed with the options that were in force at the time.
  * 
  * Since it is likely that the number of options will become quite large, you
@@ -212,7 +212,7 @@ public class CommandArgsReader {
 
 	/**
 	 * Interface that represents an argument type.  It provides a method for
-	 * the argument to be processed in order.  Options can be intersperced with
+	 * the argument to be processed in order.  Options can be interspersed with
 	 * filenames.  The options take effect where they appear.
 	 */
 	interface ArgType {

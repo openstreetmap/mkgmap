@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 
 /**
- * Common code used for the test maps.  The test maps are programatically
+ * Common code used for the test maps.  The test maps are programmatically
  * constructed to contain examples of each type of point and such like.
  * 
  * @author Steve Ratcliffe

@@ -37,7 +37,7 @@ public abstract class MdrMapSection extends MdrSection {
 
 	/**
 	 * Add a pointer to the reverse index for this section.
-	 * @param recordNumber A record number in this section, beloning to the
+	 * @param recordNumber A record number in this section, belonging to the
 	 * given map.
 	 */
 	public void addIndexPointer(int mapNumber, int recordNumber) {

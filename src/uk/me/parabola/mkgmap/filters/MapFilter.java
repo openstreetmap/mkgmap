@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.filters;
 import uk.me.parabola.mkgmap.general.MapElement;
 
 /**
- * Used for filtering the elements that are added to the levels.  We make serveral
+ * Used for filtering the elements that are added to the levels.  We make several
  * transformations, such as smoothing lines and splitting them so they do not
  * overflow limitations for example.
  *
@@ -28,7 +28,7 @@ import uk.me.parabola.mkgmap.general.MapElement;
 public interface MapFilter {
 
 	/**
-	 * Initiailise the filter and pass in parameters that may be needed for
+	 * Initialise the filter and pass in parameters that may be needed for
 	 * the run.
 	 *
 	 * @param config Configuration information, giving parameters of the map

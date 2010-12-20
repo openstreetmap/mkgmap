@@ -324,7 +324,7 @@ public class POIRecord {
 	/**
 	 * Street and Phone numbers can be stored in two different ways in the poi record
 	 * Simple Number that only contain digits are coded in base 11 coding.
-	 * This helperclass tries to code the given number. If the number contains other
+	 * This helper class tries to code the given number. If the number contains other
 	 * chars like in 4a the coding fails and the caller has to use a Label instead
 	 */
 	class SimpleStreetPhoneNumber {

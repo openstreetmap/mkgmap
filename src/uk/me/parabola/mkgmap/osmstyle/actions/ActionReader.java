@@ -137,7 +137,7 @@ public class ActionReader {
 	 * then a tag can only be added; if it already exists, then it will not
 	 * be changed.
 	 * @param changeableTags Tags that could be changed by the action.  This is
-	 * an output paramater, any such tags should be added to this set.
+	 * an output parameter, any such tags should be added to this set.
 	 * @return The new add tag action.
 	 */
 	private AddTagAction readTagValue(boolean modify, Set<String> changeableTags) {

@@ -415,7 +415,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	/**
 	 * An 'anti-island' is something that has been detected as an island, but the water
 	 * is on the inside.  I think you would call this a lake.
-	 * @param seaRelation The relation holding the sea.  Only set if we are using multipolygons for
+	 * @param seaRelation The relation holding the sea.  Only set if we are using multi-polygons for
 	 * the sea.
 	 * @param islands The island list that was found earlier.
 	 * @return The so-called anti-islands.

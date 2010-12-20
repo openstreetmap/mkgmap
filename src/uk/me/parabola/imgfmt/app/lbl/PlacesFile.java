@@ -58,7 +58,7 @@ public class PlacesFile {
 	 * We need to have links back to the main LBL file and need to be passed
 	 * the part of the header that we manage here.
 	 *
-	 * @param file The main LBL file, used so that we can create lables.
+	 * @param file The main LBL file, used so that we can create labels.
 	 * @param pheader The place header.
 	 */
 	void init(LBLFile file, PlacesHeader pheader) {

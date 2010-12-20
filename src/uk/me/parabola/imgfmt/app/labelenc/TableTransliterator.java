@@ -27,7 +27,7 @@ import uk.me.parabola.log.Logger;
  * always produces the same output character(s), so the results are
  * not very good for languages where that is important.
  *
- * Tabels are only read when needed, so for a typical map only a small
+ * Tables are only read when needed, so for a typical map only a small
  * number of files will actually be read.
  */
 public class TableTransliterator implements Transliterator {

@@ -37,7 +37,7 @@ public class Utils {
 	/**
 	 * Routine to convert a string to bytes and pad with a character up
 	 * to a given length.
-	 * Only to be used for strings that are expressable in latin1.
+	 * Only to be used for strings that are expressible in latin1.
 	 *
 	 * @param s The original string.
 	 * @param len The length to pad to.

@@ -60,7 +60,7 @@ public class RGNFileReader extends ImgReader {
 	 * Get a list of all points for the given subdivision.  This includes
 	 * both the indexed points section and the points section.
 	 *
-	 * The numbering of the points carries through the sectins.
+	 * The numbering of the points carries through the sections.
 	 * @param sd The subdivision that we are interested in.
 	 * @return A list of all points for the subdiv.
 	 */

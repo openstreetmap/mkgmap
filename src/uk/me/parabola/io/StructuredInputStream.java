@@ -34,7 +34,7 @@ public class StructuredInputStream extends InputStream {
 	}
 
 	/**
-	 * Inplementation of read that delegates to the underlying stream.  It however
+	 * Implementation of read that delegates to the underlying stream.  It however
 	 * also keeps track of the end of file status.
 	 *
 	 * @return The next byte, or -1 on eof.

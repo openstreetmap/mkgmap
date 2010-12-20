@@ -23,7 +23,7 @@ public abstract class Relation extends Element {
 	}
 
 	/** Invoked after addElement() has been invoked on all Node and Way
-	 * members of the relations.  Relation members (subrelations) may be
+	 * members of the relations.  Relation members (sub-relations) may be
 	 * added later. */
 	public abstract void processElements();
 

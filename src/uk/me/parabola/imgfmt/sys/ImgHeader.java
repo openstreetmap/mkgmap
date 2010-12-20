@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
 /**
- * The header at the very begining of the .img filesystem.  It has the
+ * The header at the very beginning of the .img filesystem.  It has the
  * same signature as a DOS partition table, although I don't know
  * exactly how much the partition concepts are used.
  *

@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 
 /**
  * Class to calculate the values that occur at offset 9a in the TRE header.
- * As I don't know the purpose of these the naming is a bit arbitary here...
+ * As I don't know the purpose of these the naming is a bit arbitrary here...
  *
  * This was worked out in the display project, so see the TreCalc file
  * there for more history.  This is a cleaned up version of what was

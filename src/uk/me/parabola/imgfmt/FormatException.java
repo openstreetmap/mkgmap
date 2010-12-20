@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt;
 
 /**
- * Thrown for any kind of mallformed input to the mapping program.
+ * Thrown for any kind of malformed input to the mapping program.
  * 
  * @author Steve Ratcliffe
  */

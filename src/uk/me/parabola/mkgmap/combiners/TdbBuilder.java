@@ -59,7 +59,7 @@ public class TdbBuilder implements Combiner {
 	 * args.
 	 *
 	 * @param args The command line arguments as they are at the end of the list.
-	 * In otherwords if the same argument appears more than once, then it will
+	 * In other words if the same argument appears more than once, then it will
 	 */
 	public void init(CommandArgs args) {
 		overviewMapname = args.get("overview-mapname", "osmmap");

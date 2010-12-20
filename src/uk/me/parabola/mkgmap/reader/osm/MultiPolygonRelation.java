@@ -371,7 +371,7 @@ public class MultiPolygonRelation extends Relation {
 				// It works if the lines from the endpoints to the additional point does
 				// not cut the bounding box.
 				// This can be removed when the splitter guarantees to provide logical complete
-				// multipolygons.
+				// multi-polygons.
 				Coord edgePoint1 = new Coord(p1.getLatitude(), p2
 						.getLongitude());
 				Coord edgePoint2 = new Coord(p2.getLatitude(), p1
@@ -528,7 +528,7 @@ public class MultiPolygonRelation extends Relation {
 	 * 
 	 * @param candidates
 	 *            indexes of the polygons that should be used
-	 * @return the bits of all outmost polygons are set to true
+	 * @return the bits of all outermost polygons are set to true
 	 */
 	private BitSet findOutmostPolygons(BitSet candidates) {
 		BitSet outmostPolygons = new BitSet();

@@ -244,7 +244,7 @@ public class MapArea implements MapDataSource {
 
 	/**
 	 * Get the full bounds of this area.  As lines and polylines are
-	 * added then may go outside of the intial area.  Whe this happens
+	 * added then may go outside of the initial area.  Whe this happens
 	 * we need to increase the size of the area.
 	 *
 	 * @return The full size required to hold all the included

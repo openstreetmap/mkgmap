@@ -140,7 +140,7 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 	}
 
 	/**
-	 * Write out an arbitary length sequence of bytes.
+	 * Write out an arbitrary length sequence of bytes.
 	 *
 	 * @param val The values to write.
 	 */

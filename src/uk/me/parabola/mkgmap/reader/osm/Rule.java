@@ -18,7 +18,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 /**
  * A rule takes an element and returns the correct garmin type for it.
- * Immplementations can be simple or complex as needed.
+ * Implementations can be simple or complex as needed.
  *
  * @author Steve Ratcliffe
  */

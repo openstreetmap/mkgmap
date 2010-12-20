@@ -22,7 +22,7 @@ import java.io.FilterOutputStream;
 
 /**
  * An output stream that has methods for writing strings and little endian
- * integers.  Its a bit like DataOuput, but for little endian.
+ * integers.  Its a bit like DataOutput, but for little endian.
  *
  * @author Steve Ratcliffe
  */

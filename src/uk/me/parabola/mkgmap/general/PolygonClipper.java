@@ -36,7 +36,7 @@ public class PolygonClipper {
 	 * Clip the input polygon to the given area.
 	 * @param bbox The bounding box.
 	 * @param coords The coords of the polygon.
-	 * @return Return null if the polygon is already completly inside the
+	 * @return Return null if the polygon is already completely inside the
 	 * bounding box.
 	 */
 	public static List<List<Coord>> clip(Area bbox, List<Coord> coords) {

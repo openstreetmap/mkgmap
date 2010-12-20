@@ -44,8 +44,8 @@ public class EnhancedProperties extends Properties {
 	 * Get a property as an integer value.  If the property does not exist
 	 * or the value is not a valid integer, then the default value is returned
 	 * instead.
-	 * @param key The property name to retreive.
-	 * @param def The Default value to use if the property doesn not exist or
+	 * @param key The property name to retrieve.
+	 * @param def The Default value to use if the property does not exist or
 	 * if the value is not a valid integer.
 	 * @return The value of the property as an integer, or the default value.
 	 */

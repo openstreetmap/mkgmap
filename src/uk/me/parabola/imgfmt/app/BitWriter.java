@@ -130,8 +130,8 @@ public class BitWriter {
 	}
 
 	/**
-	 * Set everything up so that the given size can be accomodated.
-	 * The buffer is resized if necessary.
+	 * Set everything up so that the given size can be accommodated.
+	 * The buffer is re-sized if necessary.
 	 *
 	 * @param newlen The new length of the bit buffer in bits.
 	 */

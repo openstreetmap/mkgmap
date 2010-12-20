@@ -135,7 +135,7 @@ public class ImgFS implements FileSystem {
 	}
 
 	/**
-	 * Create a new file, it must not allready exist.
+	 * Create a new file, it must not already exist.
 	 *
 	 * @param name The file name.
 	 * @return A directory entry for the new file.

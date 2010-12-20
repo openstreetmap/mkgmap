@@ -76,7 +76,7 @@ public class FileImgChannel implements ImgChannel {
 
 	/**
 	 * Get the file position. Note that this is a logical position relative to the
-	 * begining of the file (the file within the .img file, not the begining of the
+	 * beginning of the file (the file within the .img file, not the beginning of the
 	 * .img file itself).
 	 *
 	 * @return The offset in bytes from the beginning of the file.

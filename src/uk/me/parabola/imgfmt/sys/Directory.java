@@ -32,7 +32,7 @@ import uk.me.parabola.log.Logger;
 
 /**
  * The directory.  There is only one directory and it contains the
- * filenames and block information.  On disk each entry is a
+ * file names and block information.  On disk each entry is a
  * multiple of the block size.
  *
  * @author Steve Ratcliffe

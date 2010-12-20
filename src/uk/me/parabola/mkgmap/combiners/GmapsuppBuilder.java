@@ -43,7 +43,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
 
 /**
  * Create the gmapsupp file.  There is nothing much special about this file
- * (as far as I know - theres not a public official spec or anything) it is
+ * (as far as I know - there's not a public official spec or anything) it is
  * just a regular .img file which is why it works to rename a single .img file
  * and send it to the device.
  * <p/>
@@ -261,7 +261,7 @@ public class GmapsuppBuilder implements Combiner {
 	}
 
 	/**
-	 * Add a complete .img file, that is all the consituent files from it.
+	 * Add a complete .img file, that is all the constituent files from it.
 	 *
 	 * @param outfs The gmapsupp file to write to.
 	 * @param filename The input filename.

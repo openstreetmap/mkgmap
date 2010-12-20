@@ -25,8 +25,8 @@ import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * Split polygons for physical size (rather than number of points).  The plan
- * here is simple, if its too big, then cut it in half.  As we alway cut the largest
- * dimention, then we will soon enough have cut it down to be small enough.
+ * here is simple, if its too big, then cut it in half.  As we always cut the largest
+ * dimension, then we will soon enough have cut it down to be small enough.
  *
  * @author Steve Ratcliffe
  */
@@ -34,7 +34,7 @@ public class PolygonSizeSplitterFilter extends PolygonSplitterBase implements Ma
 	private int shift;
 
 	/**
-	 * Get the scale factor so that we don't oversplit.
+	 * Get the scale factor so that we don't over split.
 	 *
 	 * @param config Configuration information, giving parameters of the map level
 	 * that is being produced through this filter.

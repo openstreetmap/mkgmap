@@ -19,7 +19,7 @@ import uk.me.parabola.log.Logger;
 
 /**
  * An arc joins two nodes within a {@link RouteCenter}.  This may be renamed
- * to a Segement.
+ * to a Segment.
  * The arc also references the road that it is a part of.
  *
  * There are also links between nodes in different centers.

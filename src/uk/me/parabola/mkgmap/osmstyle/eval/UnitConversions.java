@@ -43,7 +43,7 @@ public class UnitConversions {
 	//}
 
 	/**
-	 * Get the coversion factor for the given conversion.
+	 * Get the conversion factor for the given conversion.
 	 * @param code A string such as 'm=>ft' which would mean meters
 	 * to feet.
 	 * @return The factor required to convert the first to the second.

@@ -45,7 +45,7 @@ class CopyrightSegment {
 
 	/**
 	 * A code that shows what kind of copyright information is
-	 * contaied in this segment.
+	 * contained in this segment.
 	 * The field {@link #extraProperties} can be used too as extra information.
 	 */
 	private final byte copyrightCode;

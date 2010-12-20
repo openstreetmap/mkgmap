@@ -19,7 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle.eval;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Tests for the existance of a tag.  Return true if the tag exists, regardless
+ * Tests for the existence of a tag.  Return true if the tag exists, regardless
  * of value.
  * 
  * @author Steve Ratcliffe

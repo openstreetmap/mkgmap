@@ -52,7 +52,7 @@ public class TestUtils {
 	}
 
 	/**
-	 * Delelete output files that were created by the tests.
+	 * Delete output files that were created by the tests.
 	 * Used to clean up before/after a test.
 	 */
 	public static void deleteOutputFiles() {

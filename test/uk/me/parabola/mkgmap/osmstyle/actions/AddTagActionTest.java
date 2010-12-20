@@ -129,7 +129,7 @@ public class AddTagActionTest {
 
 
 	/**
-	 * The add/set commands now support alternatives just like the name commnad
+	 * The add/set commands now support alternatives just like the name command
 	 * has always done.
 	 * Several alternatives, but none match.
 	 */

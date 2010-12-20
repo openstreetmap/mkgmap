@@ -33,7 +33,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * prevent the second and/or third terms running if the first (or second) matches.
  * That is what this class does.  It acts in most respects like the operation
  * it is wrapping, but when a successful evaluation is performed on an
- * element, the test is supressed for the subsequent terms in the chain.
+ * element, the test is suppressed for the subsequent terms in the chain.
  *
  * @author Steve Ratcliffe
  */

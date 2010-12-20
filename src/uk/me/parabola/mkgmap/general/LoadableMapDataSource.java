@@ -36,7 +36,7 @@ import uk.me.parabola.util.Configurable;
 public interface LoadableMapDataSource extends MapDataSource, Configurable {
 
 	/**
-	 * Determins if the file (or other resource) is supported by this map
+	 * Determines if the file (or other resource) is supported by this map
 	 * data source.  The implementation may do this however it likes, eg
 	 * by extension or by opening up the file and reading part of it.
 	 *
@@ -68,7 +68,7 @@ public interface LoadableMapDataSource extends MapDataSource, Configurable {
 	 * important to be able to configure the levels separately while creating
 	 * the map.
 	 *
-	 * <p>Note that it does not include the top empty level as we will alway
+	 * <p>Note that it does not include the top empty level as we will always
 	 * generate that in the main program automatically.
 	 *
 	 * @return Array of structures that map the level to the resolution.  Never

@@ -22,7 +22,7 @@ public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 
 	/**
 	 * Sort by map id and then country id like for regions.  We don't have
-	 * any evidence that this is necessary, but it would be suprising if
+	 * any evidence that this is necessary, but it would be surprising if
 	 * it wasn't.
 	 */
 	public int compareTo(Mdr14Record o) {

@@ -174,7 +174,7 @@ public class FileInfo {
 	 * extract several pieces of information from it.
 	 *
 	 * @param inputName The name of the file.
-	 * @return The informaion obtained.
+	 * @return The information obtained.
 	 * @throws FileNotFoundException If the file doesn't exist.
 	 */
 	private static FileInfo imgInfo(String inputName) throws FileNotFoundException {

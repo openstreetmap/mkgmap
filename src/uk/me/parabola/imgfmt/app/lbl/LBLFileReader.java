@@ -219,7 +219,7 @@ public class LBLFileReader extends ImgFile {
 	 * Read and cache all the labels.
 	 *
 	 * Note: It is pretty pointless saving the whole label rather than just
-	 * the text, except that other objects take a Lable.  Perhaps this can
+	 * the text, except that other objects take a Label.  Perhaps this can
 	 * be changed.
 	 */
 	private void readLables() {

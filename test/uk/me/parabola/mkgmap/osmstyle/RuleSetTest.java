@@ -229,7 +229,7 @@ public class RuleSetTest {
 	}
 
 	/**
-	 * The example that was in the checkin comment, make sure it actually
+	 * The example that was in the check in comment, make sure it actually
 	 * does work ;)
 	 */
 	@Test

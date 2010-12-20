@@ -525,7 +525,7 @@ public class MapBuilder implements Configurable {
 	}
 
 	/**
-	 * Drive the map generation by steping through the levels, generating the
+	 * Drive the map generation by stepping through the levels, generating the
 	 * subdivisions for the level and filling in the map elements that should
 	 * go into the area.
 	 *
