@@ -309,10 +309,8 @@ public class StyleTester implements OsmConverter {
 			} else if (line.startsWith("<<<")) {
 				// read the rest of the file
 				readStyles(br, line);
-			} else if ("".equals(line)) {
+			} else if ("".equals(line) || line.startsWith("#")) {
 				// ignore blank lines.
-			} else if (line.startsWith("#")) {
-				// ignore comment lines
 			}
 		}
 		br.close();
@@ -467,7 +465,7 @@ public class StyleTester implements OsmConverter {
 	 * This should produce the same result as {@link #makeStyleConverter} and
 	 * can be used as a test of the strict style ordering branch.
 	 * @param stylefile The name of the style file to process.
-	 * @param coll A map collecter to receive the created elements.
+	 * @param coll A map collector to receive the created elements.
 	 */
 	private StyledConverter makeStrictStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
 		Style style = new ReferenceStyle(stylefile, null);
@@ -580,7 +578,7 @@ public class StyleTester implements OsmConverter {
 			try {
 				ruleFileReader.load(fileLoader, "polygons");
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				// not a problem
 			}
 
 			return r;
