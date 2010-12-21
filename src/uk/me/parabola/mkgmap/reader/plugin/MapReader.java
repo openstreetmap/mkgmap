@@ -68,11 +68,9 @@ public class MapReader {
 	 * @return A LoadableMapDataSource that is capable of reading the resource.
 	 */
 	public static LoadableMapDataSource createMapReader(String name) {
-		LoadableMapDataSource src = null;
-
 		for (Class<? extends LoadableMapDataSource> loader : loaders) {
 			try {
-				src = loader.newInstance();
+				LoadableMapDataSource src = loader.newInstance();
 				if (name != null && src.isFileSupported(name))
 					return src;
 			} catch (InstantiationException e) {
@@ -86,9 +84,6 @@ public class MapReader {
 
 		// Give up and assume it is in the XML format. If it isn't we will get an
 		// error soon enough anyway.
-		if (src == null)
-			src = new Osm5MapDataSource();
-
-		return src;
+		return new Osm5MapDataSource();
 	}
 }

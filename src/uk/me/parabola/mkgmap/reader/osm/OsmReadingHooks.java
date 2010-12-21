@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -52,6 +54,14 @@ public interface OsmReadingHooks {
 	 */
 	public boolean init(ElementSaver saver, EnhancedProperties props);
 
+	/**
+	 * Retrieves the tags that are used by this hook. Tags that are used only if they are referenced
+	 * in the style file should not be added to this list.
+	 * 
+	 * @return the tag names used by this hook
+	 */
+	public Set<String> getUsedTags();
+	
 	/**
 	 * Called on adding a node to the saver and just before it is added. You can modify
 	 * it, create new nodes etc.

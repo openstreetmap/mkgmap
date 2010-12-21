@@ -14,7 +14,9 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.util.EnhancedProperties;
@@ -41,6 +43,13 @@ public class OsmReadingHooksChain implements OsmReadingHooks {
 		List<OsmReadingHooks> readingHooksList = new ArrayList<OsmReadingHooks>(Arrays.asList(readingHooks));
 		readingHooksList.add(hooks);
 		readingHooks = readingHooksList.toArray(new OsmReadingHooks[readingHooksList.size()]);
+	}
+	
+	public Set<String> getUsedTags() {
+		HashSet<String> usedTags = new HashSet<String>();
+		for (int i = 0; i < readingHooks.length; i++)
+			usedTags.addAll(readingHooks[i].getUsedTags());
+		return usedTags;
 	}
 	
 	public boolean init(ElementSaver saver, EnhancedProperties props) {

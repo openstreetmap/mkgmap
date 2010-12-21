@@ -12,6 +12,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.Collections;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -27,6 +30,10 @@ public class OsmReadingHooksAdaptor implements OsmReadingHooks {
 		return true;
 	}
 
+	public Set<String> getUsedTags() {
+		return Collections.emptySet();
+	}
+	
 	public void onAddNode(Node node) {
 	}
 

@@ -54,9 +54,9 @@ public class MapMaker implements MapProcessor {
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
-			log.info("Making Area POIs for " + filename);
+			log.info("Making Area POIs for", filename);
 			makeAreaPOIs(args, src);			
-			log.info("Making Road Name POIs for " + filename);
+			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
 		} catch (FormatException e) {

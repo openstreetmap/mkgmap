@@ -1,11 +1,10 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.*;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
-import java.awt.geom.PathIterator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +25,7 @@ import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * Representation of an OSM Multipolygon Relation.<br/>
@@ -44,7 +44,9 @@ public class MultiPolygonRelation extends Relation {
 	
 	private final Map<Long, Way> tileWayMap;
 	private final Map<Long, String> roleMap = new HashMap<Long, String>();
-
+	private Map<Long, Way> mpPolygons = new HashMap<Long, Way>();
+	
+	
 	private ArrayList<BitSet> containsMatrix;
 	private ArrayList<JoinedWay> polygons;
 	private Set<JoinedWay> intersectingPolygons;
@@ -54,8 +56,6 @@ public class MultiPolygonRelation extends Relation {
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
 	private Area bboxArea;
-
-	private final Map<Long, Set<String>> wayRemoveTags;
 
 	/** 
 	 * A point that has a lower or equal squared distance from 
@@ -82,11 +82,9 @@ public class MultiPolygonRelation extends Relation {
 	 *            The bounding box of the tile
 	 */
 	public MultiPolygonRelation(Relation other, Map<Long, Way> wayMap,
-			Map<Long, Set<String>> wayRemoveTags,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		this.tileWayMap = wayMap;
 		this.bbox = bbox;
-		this.wayRemoveTags = wayRemoveTags;
 
 		setId(other.getId());
 		setName(other.getName());
@@ -831,7 +829,7 @@ public class MultiPolygonRelation extends Relation {
 						// mark this polygons so that only polygon style rules are applied
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
 					
-						tileWayMap.put(mpWay.getId(), mpWay);
+						mpPolygons.put(mpWay.getId(), mpWay);
 					}
 				}
 			}
@@ -876,12 +874,6 @@ public class MultiPolygonRelation extends Relation {
 		// This enables the style file to decide if the polygon information or
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
-			Set<String> tagListToRemove = this.wayRemoveTags.get(orgOuterWay.getId());
-			if (tagListToRemove == null) {
-				tagListToRemove = new TreeSet<String>();
-				wayRemoveTags.put(orgOuterWay.getId(), tagListToRemove);
-			}
-			
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
 			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
@@ -890,7 +882,7 @@ public class MultiPolygonRelation extends Relation {
 				
 				// remove the tag from the original way if it has the same value
 				if (tag.getValue().equals(orgOuterWay.getTag(tag.getKey()))) {
-					tagListToRemove.add(tag.getKey());
+					removeTagsInOrgWays(orgOuterWay, tag.getKey());
 				}
 			}
 			
@@ -899,9 +891,15 @@ public class MultiPolygonRelation extends Relation {
 			tileWayMap.put(lineTagWay.getId(), lineTagWay);
 		}
 		
+		postProcessing();
 		cleanup();
 	}
-
+	
+	protected void postProcessing() {
+		// copy all polygons created by the multipolygon algorithm to the global way map
+		tileWayMap.putAll(mpPolygons);
+	}
+	
 	private void runIntersectionCheck(BitSet unfinishedPolys) {
 		if (intersectingPolygons.isEmpty()) {
 			// nothing to do
@@ -1004,6 +1002,7 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	private void cleanup() {
+		mpPolygons = null;
 		roleMap.clear();
 		containsMatrix = null;
 		polygons = null;
@@ -1176,12 +1175,12 @@ public class MultiPolygonRelation extends Relation {
 				a2.intersect(new Area(r2));
 
 				if (areaCutData.innerAreas.isEmpty()) {
-					finishedAreas.addAll(areaToSingularAreas(a1));
-					finishedAreas.addAll(areaToSingularAreas(a2));
+					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
+					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 				} else {
 					ArrayList<Area> cuttedAreas = new ArrayList<Area>();
-					cuttedAreas.addAll(areaToSingularAreas(a1));
-					cuttedAreas.addAll(areaToSingularAreas(a2));
+					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
+					cuttedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
 					
 					for (Area nextOuterArea : cuttedAreas) {
 						ArrayList<Area> nextInnerAreas = null;
@@ -1227,84 +1226,6 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Convert an area that may contains multiple areas to a list of singular
-	 * areas
-	 * 
-	 * @param area
-	 *            an area
-	 * @return list of singular areas
-	 */
-	private List<Area> areaToSingularAreas(Area area) {
-		if (area.isEmpty()) {
-			return Collections.emptyList();
-		} else if (area.isSingular()) {
-			return Collections.singletonList(area);
-		} else {
-			List<Area> singularAreas = new ArrayList<Area>();
-
-			// all ways in the area MUST define outer areas
-			// it is not possible that one of the areas define an inner segment
-
-			float[] res = new float[6];
-			PathIterator pit = area.getPathIterator(null);
-			float[] prevPoint = new float[6];
-
-			Polygon p = null;
-			while (!pit.isDone()) {
-				int type = pit.currentSegment(res);
-
-				switch (type) {
-				case PathIterator.SEG_LINETO:
-					if (!Arrays.equals(res, prevPoint)) {
-						p.addPoint(Math.round(res[0]), Math.round(res[1]));
-					}
-					break;
-				case PathIterator.SEG_CLOSE:
-					p.addPoint(p.xpoints[0], p.ypoints[0]);
-					Area a = new Area(p);
-					if (!a.isEmpty()) {
-						singularAreas.add(a);
-					}
-					p = null;
-					break;
-				case PathIterator.SEG_MOVETO:
-					if (p != null) {
-						Area a2 = new Area(p);
-						if (!a2.isEmpty()) {
-							singularAreas.add(a2);
-						}
-					}
-					p = new Polygon();
-					p.addPoint(Math.round(res[0]), Math.round(res[1]));
-					break;
-				default:
-					log.warn(toBrowseURL(), "Unsupported path iterator type"
-							+ type, ". This is an mkgmap error.");
-				}
-
-				System.arraycopy(res, 0, prevPoint, 0, 6);
-				pit.next();
-			}
-			return singularAreas;
-		}
-	}
-
-	/**
-	 * Create a polygon from a list of points.
-	 * 
-	 * @param points
-	 *            list of points
-	 * @return the polygon
-	 */
-	private Polygon createPolygon(List<Coord> points) {
-		Polygon polygon = new Polygon();
-		for (Coord co : points) {
-			polygon.addPoint(co.getLongitude(), co.getLatitude());
-		}
-		return polygon;
-	}
-
-	/**
 	 * Create the areas that are enclosed by the way. Usually the result should
 	 * only be one area but some ways contain intersecting lines. To handle these
 	 * erroneous cases properly the method might return a list of areas.
@@ -1314,12 +1235,12 @@ public class MultiPolygonRelation extends Relation {
 	 * @return a list of enclosed ares
 	 */
 	private List<Area> createAreas(Way w, boolean clipBbox) {
-		Area area = new Area(createPolygon(w.getPoints()));
+		Area area = Java2DConverter.createArea(w.getPoints());
 		if (clipBbox && !bboxArea.contains(area.getBounds())) {
 			// the area intersects the bounding box => clip it
 			area.intersect(bboxArea);
 		}
-		List<Area> areaList = areaToSingularAreas(area);
+		List<Area> areaList = Java2DConverter.areaToSingularAreas(area);
 		if (log.isDebugEnabled()) {
 			log.debug("Bbox clipped way",w.getId()+"=>",areaList.size(),"distinct area(s).");
 		}
@@ -1337,40 +1258,15 @@ public class MultiPolygonRelation extends Relation {
 	 * @return a new mkgmap way
 	 */
 	private Way singularAreaToWay(Area area, long wayId) {
-		if (area.isEmpty()) {
+		List<Coord> points = Java2DConverter.singularAreaToPoints(area);
+		if (points == null || points.isEmpty()) {
 			if (log.isDebugEnabled()) {
 				log.debug("Empty area "+wayId+".", toBrowseURL());
 			}
 			return null;
 		}
 
-		Way w = null;
-
-		float[] res = new float[6];
-		PathIterator pit = area.getPathIterator(null);
-
-		while (!pit.isDone()) {
-			int type = pit.currentSegment(res);
-
-			switch (type) {
-			case PathIterator.SEG_MOVETO:
-				w = new Way(wayId);
-				w.addPoint(new Coord(Math.round(res[1]), Math.round(res[0])));
-				break;
-			case PathIterator.SEG_LINETO:
-				w.addPoint(new Coord(Math.round(res[1]), Math.round(res[0])));
-				break;
-			case PathIterator.SEG_CLOSE:
-				w.addPoint(w.getPoints().get(0));
-				return w;
-			default:
-				log.warn(toBrowseURL(),
-						"Unsupported path iterator type" + type,
-						". This is an mkgmap error.");
-			}
-			pit.next();
-		}
-		return w;
+		return new Way(wayId, points);
 	}
 
 	private boolean hasTags(Element element) {
@@ -1505,7 +1401,7 @@ public class MultiPolygonRelation extends Relation {
 			return false;
 		}
 
-		Polygon p = createPolygon(polygon1.getPoints());
+		Polygon p = Java2DConverter.createPolygon(polygon1.getPoints());
 		// check first if one point of polygon2 is in polygon1
 
 		// ignore intersections outside the bounding box
@@ -1865,34 +1761,56 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (remove) {
-				Set<String> tagListToRemove = this.wayRemoveTags.get(w.getId());
-				if (tagListToRemove == null) {
-					tagListToRemove = new TreeSet<String>();
-					wayRemoveTags.put(w.getId(), tagListToRemove);
-				}
 				if (tagname == null) {
 					// remove all tags
 					if (log.isDebugEnabled())
 						log.debug("Will remove all tags from", w.getId(), w
 								.toTagString());
-					for (Entry<String, String> tag : w.getEntryIteratable()) {
-						tagListToRemove.add(tag.getKey());
-						if (log.isDebugEnabled())
-							log.debug("Will remove", tag.getKey() + "="
-									+ tag.getValue(), "from way", w.getId(), w
-									.toTagString());
-					}
+					removeTagsInOrgWays(w, tagname);
 				} else {
-					tagListToRemove.add(tagname);
 					if (log.isDebugEnabled())
 						log.debug("Will remove", tagname + "="
 								+ w.getTag(tagname), "from way", w.getId(), w
 								.toTagString());
+					removeTagsInOrgWays(w, tagname);
 				}
 			}
 		}
 	}
+	
+	private void removeTagsInOrgWays(Way way, String tag) {
+		if (tag == null) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY);
+			return;
+		}
+		if (tag.isEmpty()) {
+			return;
+		}
+		String removedTagsTag = way.getTag(ElementSaver.MKGMAP_REMOVE_TAG);
+		if (ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY.equals(removedTagsTag)) {
+			// cannot add more tags to remove
+			return;
+		}
 
+		if (removedTagsTag == null) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, tag);
+		} else if (removedTagsTag.equals(tag) == false) {
+			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, removedTagsTag+";"+tag);
+		}
+	}
+
+	protected Map<Long, Way> getTileWayMap() {
+		return tileWayMap;
+	}
+
+	protected Map<Long, Way> getMpPolygons() {
+		return mpPolygons;
+	}
+
+	protected uk.me.parabola.imgfmt.app.Area getBbox() {
+		return bbox;
+	}
+	
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.

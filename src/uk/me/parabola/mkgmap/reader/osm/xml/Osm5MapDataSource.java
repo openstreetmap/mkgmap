@@ -41,7 +41,6 @@ import org.xml.sax.SAXException;
  * @author Steve Ratcliffe
  */
 public class Osm5MapDataSource extends OsmMapDataSource {
-	//private static final Logger log = Logger.getLogger(Osm5MapDataSource.class);
 
 	public boolean isFileSupported(String name) {
 		// This is the default format so say supported if we get this far,
@@ -73,6 +72,7 @@ public class Osm5MapDataSource extends OsmMapDataSource {
 				parser.parse(is, saxHandler);
 				osmReadingHooks.end();
 
+				elementSaver.finishLoading();
 				// now convert the saved elements
 				elementSaver.convert(getConverter());
 

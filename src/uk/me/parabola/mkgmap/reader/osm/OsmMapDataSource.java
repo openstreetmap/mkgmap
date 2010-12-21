@@ -55,7 +55,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			new HighwayHooks(),
 	};
 	private OsmConverter converter;
-	private Set<String> usedTags;
+	private final Set<String> usedTags = new HashSet<String>();
 	protected ElementSaver elementSaver;
 	protected OsmReadingHooks osmReadingHooks;
 
@@ -122,7 +122,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * @param handler The file handler.
 	 */
 	protected void setupHandler(OsmHandler handler) {
-		elementSaver = new ElementSaver(getConfig());
+		createElementSaver();
 		osmReadingHooks = pluginChain(elementSaver, getConfig());
 
 		handler.setElementSaver(elementSaver);
@@ -138,27 +138,44 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			handler.setTagsToDelete(deltags);
 		}
 	}
+	
+	protected void createElementSaver() {
+		elementSaver = new ElementSaver(getConfig());
+	}
+	
+	public ElementSaver getElementSaver() {
+		return elementSaver;
+	}
 
-	private OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
+	protected OsmReadingHooks[] getPossibleHooks() {
+		return this.POSSIBLE_HOOKS;
+	}
+	
+	protected OsmReadingHooks pluginChain(ElementSaver saver, EnhancedProperties props) {
 		List<OsmReadingHooks> plugins = new ArrayList<OsmReadingHooks>();
 
-		for (OsmReadingHooks p : this.POSSIBLE_HOOKS) {
+		for (OsmReadingHooks p : getPossibleHooks()) {
 			if (p.init(saver, props))
 				plugins.add(p);
 		}
 
+		OsmReadingHooks hooks;
 		switch (plugins.size()) {
 		case 0:
-			return new OsmReadingHooksAdaptor();
+			hooks = new OsmReadingHooksAdaptor();
+			break;
 		case 1:
-			return plugins.get(0);
+			hooks = plugins.get(0);
+			break;
 		default:
 			OsmReadingHooksChain chain = new OsmReadingHooksChain();
 			for (OsmReadingHooks p : plugins) {
 				chain.add(p);
 			}
-			return chain;
+			hooks = chain;
 		}
+		getUsedTags().addAll(hooks.getUsedTags());
+		return hooks;
 	}
 
 	private Map<String, Set<String>> readDeleteTagsFile(String fileName) {
@@ -231,7 +248,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			style.applyOptionOverride(props);
 			setStyle(style);
 
-			usedTags = style.getUsedTags();
+			getUsedTags().addAll(style.getUsedTags());
 			converter = new StyledConverter(style, mapper, props);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
