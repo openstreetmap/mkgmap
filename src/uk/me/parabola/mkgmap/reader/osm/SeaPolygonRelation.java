@@ -52,7 +52,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		}
 		super.postProcessing();
 	}
-
+	
 	private void fillQuadTrees() {
 		final AtomicBoolean isLand = new AtomicBoolean(false);
 		final AtomicBoolean isSea = new AtomicBoolean(false);
@@ -175,6 +175,9 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		}
 		log.info("Flood blocker finished. Resulting polygons:", getMpPolygons()
 				.size());
+		
+		landCoords.clear();
+		seaCoords.clear();
 	}
 
 	private double calcArea(List<Coord> polygon) {
