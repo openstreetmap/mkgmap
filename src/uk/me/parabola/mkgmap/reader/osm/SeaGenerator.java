@@ -426,12 +426,14 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		if (generateSeaUsingMP) {
 			SeaPolygonRelation coastRel = saver.createSeaPolyRelation(seaRelation);
 			coastRel.setFloodBlocker(floodblocker);
-			coastRel.setFloodBlockerGap(fbGap);
-			coastRel.setFloodBlockerRatio(fbRatio);
-			coastRel.setFloodBlockerThreshold(fbThreshold);
-			coastRel.setFloodBlockerRules(fbRules.getWayRules());
-			coastRel.setLandTag(landTag[0], landTag[1]);
-			coastRel.setDebug(fbDebug);
+			if (floodblocker) {
+				coastRel.setFloodBlockerGap(fbGap);
+				coastRel.setFloodBlockerRatio(fbRatio);
+				coastRel.setFloodBlockerThreshold(fbThreshold);
+				coastRel.setFloodBlockerRules(fbRules.getWayRules());
+				coastRel.setLandTag(landTag[0], landTag[1]);
+				coastRel.setDebug(fbDebug);
+			}
 			saver.addRelation(coastRel);
 		}
 	}
