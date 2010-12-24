@@ -191,7 +191,11 @@ public class TREHeader extends CommonHeader {
 		if (getHeaderLength() > 120) {
 			writer.putInt(0);
 
-			extTypeOffsets.writeSectionInfo(writer);
+			// The record size must be zero if the section is empty for compatibility
+			// with cpreview.
+			if (extTypeOffsets.getSize() == 0)
+				extTypeOffsets.setItemSize((char) 0);
+			extTypeOffsets.writeSectionInfo(writer, true);
 
 			// the second byte value of 6 appears to mean "extended
 			// type info present" - a value of 4 has been seen in some
