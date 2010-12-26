@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 
+import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+
 /**
  * Read a file in terms of word and symbol tokens.
  *
@@ -57,9 +59,9 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Get and remove the next token.
+	 * Get and remove the next token. May return space or newline.
 	 */
-	private Token nextRawToken() {
+	public Token nextRawToken() {
 		ensureTok();
 
 		Token token = tokens.removeFirst();
@@ -316,6 +318,23 @@ public class TokenScanner {
 		return val.equals(tok.getValue());
 	}
 
+	/**
+	 * Validate the next word is the given value.  Space is skipped before
+	 * checking, the checked value is consumed.  Use when you want to
+	 * ensure that a required syntax element is present.
+	 *
+	 * The input will either be positioned after the required word or an
+	 * exception will have been thrown.
+	 * 
+	 * @param val The string value to look for.
+	 * @throws SyntaxException If the required string is not found.
+	 */
+	public void validateNext(String val) {
+		skipSpace();
+		Token tok = nextToken();
+		if (val == null || !val.equals(tok.getValue()))
+			throw new SyntaxException("Expecting " + val);
+	}
 	public int getLinenumber() {
 		return linenumber;
 	}
