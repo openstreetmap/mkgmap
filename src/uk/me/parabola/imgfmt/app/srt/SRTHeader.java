@@ -55,9 +55,6 @@ public class SRTHeader extends CommonHeader {
 		throw new UnsupportedOperationException("not implemented yet");
 	}
 
-	public void positionForBody() {
-	}
-	
 	/**
 	 * Write out the application header.  This is unusual as it just points
 	 * to an area which is itself just a header.
@@ -134,5 +131,6 @@ public class SRTHeader extends CommonHeader {
 	/** Called after the tab2 has been written to record the position. */
 	public void endTab2(int postition) {
 		subheader.setSize(postition - subheader.getPosition());
+		tab2.setSize(postition - tab2.getPosition());
 	}
 }

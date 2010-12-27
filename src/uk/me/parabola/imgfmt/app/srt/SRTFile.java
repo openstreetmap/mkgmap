@@ -12,16 +12,14 @@
  */
 package uk.me.parabola.imgfmt.app.srt;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.FileImgChannel;
-import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * The SRT file. This contains a table showing the sort order of
@@ -32,6 +30,9 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class SRTFile extends ImgFile {
 
 	private final SRTHeader header;
+
+	private Sort sort;
+	
 	private String description;
 
 	public SRTFile(ImgChannel chan) {
@@ -80,10 +81,23 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeCharacterTable(ImgFileWriter writer) {
+		byte[] primary = sort.getPrimary();
+		byte[] secondary = sort.getSecondary();
+		byte[] tertiary = sort.getTertiary();
+		byte[] flags = sort.getFlags();
+		for (int i = 1; i < primary.length; i++) {
+			writer.put(flags[i]);
+			writer.put(primary[i]);
+			writer.put((byte) ((tertiary[i] << 4) | (secondary[i] & 0xf)));
+		}
 		header.endCharTable(writer.position());
 	}
 
 	private void writeTab2(ImgFileWriter writer) {
+		List<Character> tab2 = sort.getTab2();
+		for (Character c : tab2) {
+			writer.putChar(c);
+		}
 		header.endTab2(writer.position());
 	}
 
@@ -95,15 +109,7 @@ public class SRTFile extends ImgFile {
 		header.setCodepage((char) cp);
 	}
 
-	public static void main(String[] args) throws IOException {
-		ImgChannel chan = new FileImgChannel("foo.srt");
-		SRTFile sf = new SRTFile(chan);
-
-		SrtTextReader tr = new SrtTextReader("/opt/data/1252.txt");
-		sf.setCodepage(tr.getCodepage());
-		sf.setDescription(tr.getDescription());
-		sf.write();
-		sf.close();
-		chan.close();
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 }

@@ -17,6 +17,7 @@ import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.List;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
@@ -92,14 +93,52 @@ public class SrtTextReaderTest {
 
 	}
 
+	@Test
+	public void testPunct() throws Exception {
+		char[] sortcodes = getSortcodes("code !");
+		assertEquals(1, major(sortcodes['!']));
+	}
+
+	/**
+	 * Check that 88 is not a letter in 1252.
+	 * @throws Exception
+	 */
+	@Test
+	public void testNotLetter() throws Exception {
+		Sort sort = getSort("code 88");
+		byte[] flags = sort.getFlags();
+
+		assertEquals(0, flags[0x88]);
+	}
+
+	@Test
+	public void testShortCodeSeparator() throws Exception {
+		char[] sortcodes = getSortcodes("code a < b < c");
+		assertEquals(1, major(sortcodes['a']));
+		assertEquals(2, major(sortcodes['b']));
+		assertEquals(3, major(sortcodes['c']));
+	}
+
+	@Test
+	public void testTab2() throws Exception {
+		Sort sort = getSort("tab2 12ab");
+		List<Character> tab2 = sort.getTab2();
+		assertEquals(1, tab2.size());
+		assertEquals((char) 0x12ab, (char) tab2.get(0));
+	}
+
 	private char[] getSortcodes(String text) throws IOException {
+		Sort sort = getSort(text);
+		return sort.getSortPositions();
+	}
+
+	private Sort getSort(String text) throws IOException {
 		String s = BASE + text + "\n";
 
 		Reader r = new StringReader(s);
 
 		SrtTextReader srr = new SrtTextReader(r);
-		Sort sort = srr.getSortcodes();
-		return sort.getSortTable();
+		return srr.getSortcodes();
 	}
 
 	private int major(int code) {

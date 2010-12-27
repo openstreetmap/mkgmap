@@ -25,7 +25,10 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
+import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
@@ -52,6 +55,7 @@ public class SrtTextReader {
 	// States
 	private static final int IN_INITIAL = 0;
 	private static final int IN_CODE = 1;
+	private static final int IN_TAB2 = 2;
 
 	// Data that is read in, the output of the reading operation
 	private int codepage;
@@ -66,6 +70,7 @@ public class SrtTextReader {
 	private int pos2;
 	private int pos3;
 	private int state;
+	private String cflags = "";
 
 	public SrtTextReader(String filename) throws IOException {
 		this(filename, new InputStreamReader(new FileInputStream(filename), "utf-8"));
@@ -108,6 +113,9 @@ public class SrtTextReader {
 			case IN_CODE:
 				codeState(scanner, tok);
 				break;
+			case IN_TAB2:
+				tab2State(scanner, tok);
+				break;
 			}
 		}
 	}
@@ -131,9 +139,13 @@ public class SrtTextReader {
 				description = scanner.nextWord();
 			} else if (val.equals("code")) {
 				if (codepage == 0)
-					throw new SyntaxException("Missing codepage declaration before code");
+					throw new SyntaxException(scanner, "Missing codepage declaration before code");
 				state = IN_CODE;
 				scanner.skipSpace();
+			} else if (val.equals("tab2")) {
+				if (codepage == 0)
+					throw new SyntaxException(scanner, "Missing codepage declaration before code");
+				state = IN_TAB2;
 			}
 		}
 	}
@@ -150,7 +162,7 @@ public class SrtTextReader {
 		if (type == TokType.TEXT) {
 			if (val.equals("flags")) {
 				scanner.validateNext("=");
-				//String flags = scanner.nextWord();
+				cflags = scanner.nextWord();
 				// TODO not yet
 			} else if (val.equals("pos")) {
 				scanner.validateNext("=");
@@ -162,17 +174,7 @@ public class SrtTextReader {
 				scanner.validateNext("=");
 				pos3 = Integer.decode(scanner.nextWord());
 			} else if (val.length() == 1) {
-				CharBuffer cbuf = CharBuffer.wrap(val.toCharArray());
-				try {
-					ByteBuffer out = encoder.encode(cbuf);
-					if (out.remaining() > 1)
-						throw new SyntaxException("more than one character resulter from conversion of " + val);
-					byte b = out.get();
-					char cval = val.charAt(0);
-					setSortcode(b, cval);
-				} catch (CharacterCodingException e) {
-					throw new SyntaxException("Invalid character in the target charset " + val);
-				}
+				addCharacter(scanner, val);
 			} else if (val.length() == 2) {
 				byte bval = (byte) Integer.parseInt(val, 16);
 				ByteBuffer bin = ByteBuffer.allocate(1);
@@ -183,10 +185,10 @@ public class SrtTextReader {
 					CharBuffer out = decoder.decode(bin);
 					setSortcode(bval, out.get());
 				} catch (CharacterCodingException e) {
-					throw new SyntaxException("Character not valid in codepage " + codepage);
+					throw new SyntaxException(scanner, "Character not valid in codepage " + codepage);
 				}
 			} else {
-				throw new SyntaxException("Unexpected word " + val);
+				throw new SyntaxException(scanner, "Unexpected word " + val);
 			}
 		} else if (type == TokType.SYMBOL) {
 			if (val.equals(",")) {
@@ -194,11 +196,45 @@ public class SrtTextReader {
 			} else if (val.equals(";")) {
 				pos3 = 1;
 				pos2++;
+			} else if (val.equals("<")) {
+				advancePos();
+			} else {
+				addCharacter(scanner, val);
 			}
 
 		} else if (type == TokType.EOL) {
 			state = 0;
 			advancePos();
+		}
+	}
+
+	/**
+	 * Unknown section. Two byte records.
+	 */
+	private void tab2State(TokenScanner scanner, Token tok) {
+		TokType type = tok.getType();
+		if (type == TokType.TEXT) {
+			String val = tok.getValue();
+			char tab2 = (char) Integer.parseInt(val, 16);
+			table.add(tab2);
+			scanner.skipLine();
+			state = IN_INITIAL;
+		} else if (type == TokType.EOL) {
+			state = IN_INITIAL;
+		}
+	}
+
+	private void addCharacter(TokenScanner scanner, String val) {
+		CharBuffer cbuf = CharBuffer.wrap(val.toCharArray());
+		try {
+			ByteBuffer out = encoder.encode(cbuf);
+			if (out.remaining() > 1)
+				throw new SyntaxException(scanner, "more than one character resulter from conversion of " + val);
+			byte b = out.get();
+			char cval = val.charAt(0);
+			setSortcode(b, cval);
+		} catch (CharacterCodingException e) {
+			throw new SyntaxException(scanner, "Invalid character in the target charset " + val);
 		}
 	}
 
@@ -209,11 +245,20 @@ public class SrtTextReader {
 	 */
 	private void setSortcode(byte b, char cval) {
 		int flags = 0;
-		if (Character.isLetter(cval))
+		if (Character.isLetter(cval) && (Character.getType(cval) & Character.MODIFIER_LETTER) == 0)
 			flags = 1;
 		if (Character.isDigit(cval))
 			flags = 2;
+		if (cflags.contains("0"))
+			flags = 0;
+		if (cflags.contains("g"))
+			flags |= 0x10;
+		if (cflags.contains("w"))
+			flags |= 0x20;
+
+		//int npos3 = (flags > 0xf)? 0: pos3;
 		table.add(b, pos1, pos2, pos3, flags);
+		this.cflags = "";
 	}
 
 	/**
@@ -244,5 +289,25 @@ public class SrtTextReader {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public static void main(String[] args) throws IOException {
+		String infile = "in.txt";
+		if (args.length > 0)
+			infile = args[0];
+
+		String outfile = "out.srt";
+		if (args.length > 1)
+			outfile = args[1];
+		ImgChannel chan = new FileImgChannel(outfile);
+		SRTFile sf = new SRTFile(chan);
+
+		SrtTextReader tr = new SrtTextReader(infile);
+		sf.setSort(tr.getSortcodes());
+		sf.setCodepage(tr.getCodepage());
+		sf.setDescription(tr.getDescription());
+		sf.write();
+		sf.close();
+		chan.close();
 	}
 }
