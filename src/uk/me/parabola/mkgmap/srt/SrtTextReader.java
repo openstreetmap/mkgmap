@@ -25,6 +25,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
@@ -54,6 +55,7 @@ public class SrtTextReader {
 
 	// Data that is read in, the output of the reading operation
 	private int codepage;
+	private String description;
 	private final Sort table = new Sort();
 
 	private CharsetEncoder encoder;
@@ -125,7 +127,11 @@ public class SrtTextReader {
 				Charset charset = Charset.forName("cp" + codepage);
 				encoder = charset.newEncoder();
 				decoder = charset.newDecoder();
+			} else if (val.equals("description")) {
+				description = scanner.nextWord();
 			} else if (val.equals("code")) {
+				if (codepage == 0)
+					throw new SyntaxException("Missing codepage declaration before code");
 				state = IN_CODE;
 				scanner.skipSpace();
 			}
@@ -230,5 +236,13 @@ public class SrtTextReader {
 
 	public Sort getSortcodes() {
 		return table;
+	}
+
+	public int getCodepage() {
+		return codepage;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 }

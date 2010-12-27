@@ -11,7 +11,7 @@
  * General Public License for more details.
  */
 
-package uk.me.parabola.mkgmap.srt;
+package uk.me.parabola.imgfmt.app.srt;
 
 /**
  * Represents the sorting positions for all the characters in a codepage.

@@ -13,9 +13,12 @@
 
 package uk.me.parabola.mkgmap.srt;
 
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+
+import uk.me.parabola.imgfmt.app.srt.Sort;
 
 import org.junit.Test;
 
@@ -42,6 +45,22 @@ public class SrtTextReaderTest {
 		assertEquals("minor code", 1, minor(sortcodes['A']));
 		assertEquals("subminor code", 1, subminor(sortcodes['a']));
 		assertEquals("subminor code", 2, subminor(sortcodes['A']));
+	}
+
+	@Test
+	public void testCodePage() throws Exception {
+		String s = "codepage 1252\n";
+		SrtTextReader sr = new SrtTextReader(new CharArrayReader(s.toCharArray()));
+		assertEquals(1252, sr.getCodepage());
+	}
+
+	@Test
+	public void testDescription() throws Exception {
+		String val = "Euro Sort";
+		String s = String.format("codepage 1252\n" +
+				"description '%s'\n", val);
+		SrtTextReader sr = new SrtTextReader(new CharArrayReader(s.toCharArray()));
+		assertEquals(val, sr.getDescription());
 	}
 
 	@Test
