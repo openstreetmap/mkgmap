@@ -77,6 +77,12 @@ public class CommandArgs {
 			cp = 0;
 		}
 
+		if (cp == 0) {
+			String prop = currentOptions.getProperty("latin1");
+			if (prop != null)
+				cp = 1252;
+		}
+
 		return cp;
 	}
 

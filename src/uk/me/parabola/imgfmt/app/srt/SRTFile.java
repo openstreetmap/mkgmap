@@ -104,5 +104,6 @@ public class SRTFile extends ImgFile {
 	public void setSort(Sort sort) {
 		this.sort = sort;
 		header.setCodepage((char) sort.getCodepage());
+		description = sort.getDescription();
 	}
 }

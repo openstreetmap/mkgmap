@@ -21,28 +21,21 @@ import uk.me.parabola.imgfmt.app.lbl.City;
  * 
  * @author Steve Ratcliffe
  */
-public class Mdr5Record extends RecordBase implements Comparable<Mdr5Record> {
+public class Mdr5Record extends RecordBase implements NamedRecord {
 	/** The city index within its own map */
-	private int cityIndex;
+	private final int cityIndex;
 
 	/** The index across all maps */
 	private int globalCityIndex;
 
-	private int region;
+	private final int region;
 	private int lblOffset;
 	private int stringOffset;
 	private String name;
 
-	public Mdr5Record() {
-	}
-
 	public Mdr5Record(City c) {
 		cityIndex = c.getIndex();
 		region = c.getRegionNumber();
-	}
-
-	public int compareTo(Mdr5Record o) {
-		return name.compareTo(o.name);
 	}
 
 	public int getCityIndex() {

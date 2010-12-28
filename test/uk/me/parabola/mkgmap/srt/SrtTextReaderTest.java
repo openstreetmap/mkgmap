@@ -52,7 +52,7 @@ public class SrtTextReaderTest {
 	public void testCodePage() throws Exception {
 		String s = "codepage 1252\n";
 		SrtTextReader sr = new SrtTextReader(new CharArrayReader(s.toCharArray()));
-		assertEquals(1252, sr.getCodepage());
+		assertEquals(1252, sr.getSort().getCodepage());
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class SrtTextReaderTest {
 		String s = String.format("codepage 1252\n" +
 				"description '%s'\n", val);
 		SrtTextReader sr = new SrtTextReader(new CharArrayReader(s.toCharArray()));
-		assertEquals(val, sr.getDescription());
+		assertEquals(val, sr.getSort().getDescription());
 	}
 
 	@Test

@@ -19,6 +19,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -49,7 +50,10 @@ public class MDRFile extends ImgFile {
 	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
+		Sort sort = config.getSort();
+		
 		mdrHeader = new MDRHeader(config.getHeaderLen());
+		mdrHeader.setCodepage(sort.getCodepage());
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
 			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);

@@ -45,6 +45,7 @@ public class MDRHeader extends CommonHeader {
 			8, 6, 0, 0,  // 13 - 16
 			0, 0, 0, 0,  // 17 - 20
 	};
+	private int codepage = 1252;
 
 	public MDRHeader(int headerLen) {
 		super(headerLen, "GARMIN MDR");
@@ -66,10 +67,10 @@ public class MDRHeader extends CommonHeader {
 	 * Write out the application header.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar((char) 1252); // XXX code page
-		writer.putChar((char) 1);
-		writer.putChar((char) 1);
-		writer.putChar((char) 14);
+		writer.putChar((char) codepage);
+		writer.putChar((char) 7); // TODO from srt
+		writer.putChar((char) 2); // TODO from srt
+		writer.putChar((char) 23);
 
 		sections[1].writeSectionInfo(writer);
 		writer.putInt(1);
@@ -145,5 +146,9 @@ public class MDRHeader extends CommonHeader {
 	public void setEnd(int sectionNumber, int position) {
 		Section s = sections[sectionNumber];
 		s.setSize(position - s.getPosition());
+	}
+
+	public void setCodepage(int codepage) {
+		this.codepage = codepage;
 	}
 }

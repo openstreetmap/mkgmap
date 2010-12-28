@@ -13,10 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * The MDR 7 section is a list of all streets.  Only street names are saved
@@ -41,10 +41,11 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		Collections.sort(streets);
-
+		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), streets);
+		
 		int recordNumber = 0;
-		for (Mdr7Record s : streets) {
+		for (SortKey<Mdr7Record> sk : sortedStreets) {
+			Mdr7Record s  = sk.getObject();
 			recordNumber++;
 			addIndexPointer(s.getMapIndex(), recordNumber);
 
@@ -53,6 +54,7 @@ public class Mdr7 extends MdrMapSection {
 			putStringOffset(writer, s.getStringOffset());
 		}
 	}
+
 
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();

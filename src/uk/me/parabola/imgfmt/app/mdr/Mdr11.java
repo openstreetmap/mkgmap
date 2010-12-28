@@ -14,10 +14,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 
 /**
@@ -47,10 +47,11 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		Collections.sort(pois);
+		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
 		int count = 1;
-		for (Mdr11Record poi : pois) {
+		for (SortKey<Mdr11Record> k : keys) {
+			Mdr11Record poi = k.getObject();
 			addIndexPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
 

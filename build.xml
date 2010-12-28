@@ -116,6 +116,7 @@
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
 				<include name="help/**"/>
+				<include name="sort/**"/>
 				<exclude name="**/.*"/>
 			</fileset>
 			<fileset dir="src">

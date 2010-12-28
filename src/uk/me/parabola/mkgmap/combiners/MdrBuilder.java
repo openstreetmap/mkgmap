@@ -15,6 +15,8 @@ package uk.me.parabola.mkgmap.combiners;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -23,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
@@ -34,12 +37,15 @@ import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.Mdr5Record;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
+import uk.me.parabola.imgfmt.app.srt.SRTFile;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * Create the global index file.  This consists of an img file containing
@@ -65,11 +71,12 @@ public class MdrBuilder implements Combiner {
 		String outputDir = args.getOutputDir();
 
 		ImgChannel mdrChan;
+		FileSystem fs;
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
 			params.setBlockSize(args.get("block-size", 4096));
-			FileSystem fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
+			fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
 			toClose.push(fs);
 
 			// Create the MDR file within the .img
@@ -85,9 +92,51 @@ public class MdrBuilder implements Combiner {
 		config.setWritable(true);
 		config.setForDevice(false);
 
+		// Create the sort description
+		Sort sort = createSort(args.getCodePage());
+		config.setSort(sort);
+
+		try {
+			ImgChannel srtChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".SRT");
+			SRTFile srtFile = new SRTFile(srtChan);
+			srtFile.setSort(sort);
+			srtFile.write();
+			srtFile.close();
+			//toClose.push(srtFile);
+		} catch (FileExistsException e) {
+			throw new ExitException("Could not create SRT file within index file");
+		}
+
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
 		toClose.push(mdrFile);
+	}
+
+	/**
+	 * Create the sort description for the mdr.  This is converted into a SRT which is included
+	 * in the mdr.img and also it is used to actually sort the text items within the file itself.
+	 *
+	 * We simply use the codepage to locate a sorting description, we could have several for the same
+	 * codepage for different countries for example.
+	 *
+	 * @param codepage The code page which is used to find a suitable sort description.
+	 * @return A sort description object.
+	 */
+	private Sort createSort(int codepage) {
+		String name = "sort/cp" + codepage + ".txt";
+		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
+		if (is == null) {
+			System.err.printf("Warning: sort file %s not found\n", name);
+			return Sort.defaultSort();
+		}
+		try {
+			InputStreamReader r = new InputStreamReader(is, "utf-8");
+			SrtTextReader sr = new SrtTextReader(r);
+			return sr.getSort();
+		} catch (IOException e) {
+			System.err.printf("Warning: sort file %s not found\n", name);
+			return Sort.defaultSort();
+		}
 	}
 
 	/**

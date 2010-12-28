@@ -13,16 +13,13 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
+ * Holds details of a single street.
  * @author Steve Ratcliffe
  */
-public class Mdr7Record extends RecordBase implements Comparable<Mdr7Record> {
+public class Mdr7Record extends RecordBase implements NamedRecord {
 	private int labelOffset;
 	private int stringOffset;
 	private String name;
-
-	public int compareTo(Mdr7Record o) {
-		return name.compareTo(o.name);
-	}
 
 	public int getLabelOffset() {
 		return labelOffset;
@@ -38,6 +35,10 @@ public class Mdr7Record extends RecordBase implements Comparable<Mdr7Record> {
 
 	public void setStringOffset(int stringOffset) {
 		this.stringOffset = stringOffset;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	public void setName(String name) {

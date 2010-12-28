@@ -39,15 +39,15 @@ public class SortTest {
 	public void testSame() throws Exception {
 		String s = "aAbâ";
 		SortKey<Object> k1 = sort.createSortKey(null, s);
-		SrtSortKey<Object> k2 = sort.createSortKey(null, s);
+		SortKey<Object> k2 = sort.createSortKey(null, s);
 
 		assertEquals(0, k1.compareTo(k2));
 	}
 
 	@Test
 	public void testDifferentLengths() throws Exception {
-		SrtSortKey<Object> k1 = sort.createSortKey(null, "aabb");
-		SrtSortKey<Object> k2 = sort.createSortKey(null, "aab");
+		SortKey<Object> k1 = sort.createSortKey(null, "aabb");
+		SortKey<Object> k2 = sort.createSortKey(null, "aab");
 
 		assertEquals(1, k1.compareTo(k2));
 		assertEquals(-1, k2.compareTo(k1));
@@ -87,7 +87,7 @@ public class SortTest {
 	 * @param s1 Second string.
 	 */
 	private void checkOrder(String s, String s1) {
-		SrtSortKey<Object> k1 = sort.createSortKey(null, s);
+		SortKey<Object> k1 = sort.createSortKey(null, s);
 		SortKey<Object> k2 = sort.createSortKey(null, s1);
 
 		assertEquals(1, k2.compareTo(k1));

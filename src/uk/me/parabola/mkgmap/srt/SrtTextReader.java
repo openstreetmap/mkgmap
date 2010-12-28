@@ -81,9 +81,9 @@ public class SrtTextReader {
 	private static final int IN_CODE = 1;
 	private static final int IN_TAB2 = 2;
 
-	// Data that is read in, the output of the reading operation
 	private int codepage;
-	private String description;
+
+	// Data that is read in, the output of the reading operation
 	private final Sort sort = new Sort();
 
 	private CharsetEncoder encoder;
@@ -161,7 +161,7 @@ public class SrtTextReader {
 				encoder = charset.newEncoder();
 				decoder = charset.newDecoder();
 			} else if (val.equals("description")) {
-				description = scanner.nextWord();
+				sort.setDescription(scanner.nextWord());
 			} else if (val.equals("code")) {
 				if (codepage == 0)
 					throw new SyntaxException(scanner, "Missing codepage declaration before code");
@@ -321,14 +321,6 @@ public class SrtTextReader {
 		return sort;
 	}
 
-	public int getCodepage() {
-		return codepage;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
 	/**
 	 * Read in a sort description text file and create a SRT from it.
 	 * @param args First arg is the text input file, the second is the name of the output file. The defaults are
@@ -346,8 +338,9 @@ public class SrtTextReader {
 		SRTFile sf = new SRTFile(chan);
 
 		SrtTextReader tr = new SrtTextReader(infile);
-		sf.setSort(tr.getSort());
-		sf.setDescription(tr.getDescription());
+		Sort sort1 = tr.getSort();
+		sf.setSort(sort1);
+		sf.setDescription(sort1.getDescription());
 		sf.write();
 		sf.close();
 		chan.close();

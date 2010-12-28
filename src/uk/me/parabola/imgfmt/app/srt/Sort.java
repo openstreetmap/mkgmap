@@ -30,6 +30,7 @@ public class Sort {
 	private static final byte[] ZERO_KEY = new byte[0];
 
 	private int codepage;
+	private String description;
 
 	private final byte[] primary = new byte[256];
 	private final byte[] secondary = new byte[256];
@@ -77,7 +78,7 @@ public class Sort {
 	 * the sort key.
 	 * @return A sort key.
 	 */
-	public <T> SrtSortKey<T> createSortKey(T object, String s) {
+	public <T> SortKey<T> createSortKey(T object, String s) {
 		CharBuffer inb = CharBuffer.wrap(s);
 		try {
 			ByteBuffer out = encoder.encode(inb);
@@ -127,5 +128,26 @@ public class Sort {
 		this.codepage = codepage;
 		Charset cs = Charset.forName("cp" + codepage);
 		encoder = cs.newEncoder();
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	/**
+	 * Create a default sort that simply sorts by the values of the characters.
+	 * Note that this is not particularly useful.
+	 * @return A default sort.
+	 */
+	public static Sort defaultSort() {
+		Sort sort = new Sort();
+		for (int i = 1; i < 256; i++) {
+			sort.add(i, i, 0, 0, 0);
+		}
+		return sort;
 	}
 }

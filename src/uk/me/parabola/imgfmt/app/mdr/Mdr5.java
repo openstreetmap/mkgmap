@@ -13,10 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * Section containing cities.
@@ -51,12 +51,15 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public void finishCities() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
-		
-		Collections.sort(cities);
+
+		List<SortKey<Mdr5Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), cities);
 
 		int count = 1;
-		for (Mdr5Record c : cities)
+		for (SortKey<Mdr5Record> key : sortKeys) {
+			Mdr5Record c = key.getObject();
+			cities.set(count - 1, c); // cities is used in writeSectData too, so we must save the sort.
 			c.setGlobalCityIndex(count++);
+		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

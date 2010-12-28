@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import uk.me.parabola.imgfmt.app.srt.Sort;
+
 /**
  * Configuration for the MDR file.
  * Mostly used when creating a file as there are a number of different options
@@ -25,6 +27,7 @@ public class MdrConfig {
 	private boolean writable;
 	private boolean forDevice;
 	private int headerLen = DEFAULT_HEADER_LEN;
+	private Sort sort;
 
 	/**
 	 * True if we are creating the file, rather than reading it.
@@ -62,5 +65,13 @@ public class MdrConfig {
 
 	public void setHeaderLen(int headerLen) {
 		this.headerLen = headerLen;
+	}
+
+	public Sort getSort() {
+		return sort;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 }
