@@ -40,13 +40,37 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * The file is in utf-8, regardless of the target codepage.
  *
  * The file should start with a codepage declaration, which determines the
- * target codepage for the sort.
+ * target codepage for the sort.  This can be followed by a description which is
+ * used if this a SRT file is created.
  *
- * Next there are a number of 'code' commands that list all the characters
- * that have the same major sort code.  These are arranged in groups of
- * secondary sorting order, and finally into groups of tertiary sort order.
+ * The characters are listed in order arranged in a way that shows the strength of the
+ * difference between the characters. These are:
  *
- * For example: a A, â Â
+ * Primary difference - different letters (eg a and b)
+ * Secondary difference - different accents (eg a and a-acute)
+ * Tertiary difference - different case (eg a and A)
+ *
+ * Primary differences are represented by an new 'code' line, or alternatively by the less-than separator.
+ * Secondary differences are represented by the semi-colon separator.
+ * Tertiary differences are represented by the comma separator.
+ *
+ * Characters are represented by a two digit hex number that is the code point in the target code page. Alternatively
+ * you can write the characters as themselves in <emphasis>unicode (utf-8)</emphasis> (the whole file must be in utf-8).
+ *
+ * Example
+ * <pre>
+ * # This is a comment
+ * codepage 1252
+ * description "Example sort"
+ * code a, A; â Â
+ * code b, B
+ * # Last two lines could be written:
+ * # code a, A; â, Â < b, B
+ * </pre>
+ *
+ * NOTE: as we always use upper case in an img file, the upper-lower case sorting differences are untested
+ * and based on guess work. In particular you might expect that upper-case sorts before lowercase, but we
+ * have the opposite.
  *
  * @author Steve Ratcliffe
  */
@@ -60,7 +84,7 @@ public class SrtTextReader {
 	// Data that is read in, the output of the reading operation
 	private int codepage;
 	private String description;
-	private final Sort table = new Sort();
+	private final Sort sort = new Sort();
 
 	private CharsetEncoder encoder;
 	private CharsetDecoder decoder;
@@ -132,6 +156,7 @@ public class SrtTextReader {
 		if (type == TokType.TEXT) {
 			if (val.equals("codepage")) {
 				codepage = scanner.nextInt();
+				sort.setCodepage(codepage);
 				Charset charset = Charset.forName("cp" + codepage);
 				encoder = charset.newEncoder();
 				decoder = charset.newDecoder();
@@ -166,7 +191,14 @@ public class SrtTextReader {
 				// TODO not yet
 			} else if (val.equals("pos")) {
 				scanner.validateNext("=");
-				pos1 = Integer.decode(scanner.nextWord());
+				try {
+					int newPos = Integer.decode(scanner.nextWord());
+					if (newPos < pos1)
+						throw new SyntaxException(scanner, "cannot set primary position backwards, was " + pos1);
+					pos1 = newPos;
+				} catch (NumberFormatException e) {
+					throw new SyntaxException(scanner, "invalid integer for position");
+				}
 			} else if (val.equals("pos2")) {
 				scanner.validateNext("=");
 				pos2 = Integer.decode(scanner.nextWord());
@@ -210,13 +242,15 @@ public class SrtTextReader {
 
 	/**
 	 * Unknown section. Two byte records.
+	 * You usually need to be able to say things like o-umlaut sorts as if it were o followed by e
+	 * so perhaps this section is used for that.
 	 */
 	private void tab2State(TokenScanner scanner, Token tok) {
 		TokType type = tok.getType();
 		if (type == TokType.TEXT) {
 			String val = tok.getValue();
 			char tab2 = (char) Integer.parseInt(val, 16);
-			table.add(tab2);
+			sort.add(tab2);
 			scanner.skipLine();
 			state = IN_INITIAL;
 		} else if (type == TokType.EOL) {
@@ -224,6 +258,11 @@ public class SrtTextReader {
 		}
 	}
 
+	/**
+	 * Add a character to the sort table.
+	 * @param scanner Input scanner, for line number information.
+	 * @param val A single character string containing the character to be added.
+	 */
 	private void addCharacter(TokenScanner scanner, String val) {
 		CharBuffer cbuf = CharBuffer.wrap(val.toCharArray());
 		try {
@@ -256,8 +295,7 @@ public class SrtTextReader {
 		if (cflags.contains("w"))
 			flags |= 0x20;
 
-		//int npos3 = (flags > 0xf)? 0: pos3;
-		table.add(b, pos1, pos2, pos3, flags);
+		sort.add(b, pos1, pos2, pos3, flags);
 		this.cflags = "";
 	}
 
@@ -279,8 +317,8 @@ public class SrtTextReader {
 		pos3 = 1;
 	}
 
-	public Sort getSortcodes() {
-		return table;
+	public Sort getSort() {
+		return sort;
 	}
 
 	public int getCodepage() {
@@ -291,6 +329,11 @@ public class SrtTextReader {
 		return description;
 	}
 
+	/**
+	 * Read in a sort description text file and create a SRT from it.
+	 * @param args First arg is the text input file, the second is the name of the output file. The defaults are
+	 * in.txt and out.srt.
+	 */
 	public static void main(String[] args) throws IOException {
 		String infile = "in.txt";
 		if (args.length > 0)
@@ -303,8 +346,7 @@ public class SrtTextReader {
 		SRTFile sf = new SRTFile(chan);
 
 		SrtTextReader tr = new SrtTextReader(infile);
-		sf.setSort(tr.getSortcodes());
-		sf.setCodepage(tr.getCodepage());
+		sf.setSort(tr.getSort());
 		sf.setDescription(tr.getDescription());
 		sf.write();
 		sf.close();

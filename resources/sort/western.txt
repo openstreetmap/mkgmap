@@ -1,0 +1,165 @@
+#
+# An ordering of characters for a given code page.
+# Characters are represented either as themselves (in unicode) or
+# as two hex digits in the target codepage.
+# Characters later, reading left to right from top to bottom, sort
+# after those that are earlier in the file.
+#
+# There are three ordering strengths represented in this file.
+#
+# These are Primary (different letters), secondary (different
+# accents), tertiary (different case).
+# See the java documentation for the Collator class for some more
+# discussion of the strength concept and examples.
+#
+# Note that primary differences always determine the order even if
+# they are later in the word than secondary differences.
+# ie A-acute B comes after A A, even though A-acute sorts after A.
+#
+# In this file Primary differences are represented by lines begining
+# with the keyword 'code'.  All the letters following are the same
+# letter ignoring case and accents.
+# Characters with secondary differences are separated by semicolons
+# and characters with tertiary differences are separated by commas.
+#
+# You can also separate different letters with '<' instead of starting a new
+# 'code' line.
+#
+# You can split lines after a semi-colon or comma, but otherwise a new
+# line ends the 'code' command.
+
+
+# This must be first before any 'code' lines.
+codepage 1252
+description "Western European Sort"
+
+code pos2=0 pos3=8 01, 02, 03, 04, 05, 06, 07
+code flags=w 85
+code flags=g 8c
+code flags=g 9c
+code flags=w ¼
+code 20,a0,1e,1f; _ ;b4;`;^;a8;98;b8;af
+code flags=w ½; pos2=1 ad
+code -
+code flags=w ¾
+code 96
+code 97
+code flags=g ß
+code 2c
+code 3b
+code :
+code !
+code ¡
+code ?
+code ¿
+code .
+code ·
+code '
+code 91
+code 92
+code 82
+code 8b
+code 9b
+code "
+code 93
+code 94
+code 84
+code «
+code »
+code (
+code )
+code [
+code ]
+code {
+code }
+code §
+code ¶
+code ©
+code ®
+code @
+code *
+code /
+code \
+code &
+code 23
+code %
+code 89
+code 86
+code 87
+code 95
+code ¤
+code ¢
+code $
+code £
+code ¥
+code °
+code +
+code ±
+code ÷
+code 88
+code 3c
+code =
+code >
+code ¬
+code |
+code ¦
+code ~
+code 0
+code 1,¹
+code 2,²
+code 3,³
+code 4
+code 5
+code 6
+code 7
+code 8
+code 9
+code a,A,,ª; á,Á; à,À; â,Â; å,Å; ä,Ä; ã,Ã
+code æ, Æ
+code b,B
+code c,C; ç,Ç
+code d,D;;ð,Ð
+code e,E; é,É; è,È;ê,Ê;ë,Ë
+code f,F
+code 83
+code g,G
+code h,H
+code i,I;í,Í;ì,Ì;î,Î;ï,Ï
+code j,J
+code k,K
+code l,L
+code m,M
+code n,N;ñ,Ñ
+code o,O,,º;;ó,Ó;ò,Ò;ô,Ô;ö,Ö;õ,Õ;;ø,Ø
+code p,P
+code q,Q
+code r,R
+code s,S;;; 9a,8a
+code t,T,,99
+code u,U;ú,Ú;ù,Ù;û,Û;ü,Ü
+code v,V
+code w,W
+code x,X
+code y,Y;ý,Ý;ÿ,9f
+code z,Z
+code þ,Þ
+code flags=0 µ
+
+tab2 2126
+tab2 2126
+tab2 2126
+tab2 58b1
+tab2 519c
+tab2 38b1
+tab2 319c
+tab2 3186
+tab2 3166
+tab2 3189
+tab2 3186
+tab2 3166
+tab2 3187
+tab2 3188
+tab2 3166
+tab2 3189
+tab2 38bd
+tab2 31bd

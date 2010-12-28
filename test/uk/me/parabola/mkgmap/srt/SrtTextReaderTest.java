@@ -106,9 +106,9 @@ public class SrtTextReaderTest {
 	@Test
 	public void testNotLetter() throws Exception {
 		Sort sort = getSort("code 88");
-		byte[] flags = sort.getFlags();
+		byte flags = sort.getFlags(0x88);
 
-		assertEquals(0, flags[0x88]);
+		assertEquals(0, flags);
 	}
 
 	@Test
@@ -138,7 +138,7 @@ public class SrtTextReaderTest {
 		Reader r = new StringReader(s);
 
 		SrtTextReader srr = new SrtTextReader(r);
-		return srr.getSortcodes();
+		return srr.getSort();
 	}
 
 	private int major(int code) {

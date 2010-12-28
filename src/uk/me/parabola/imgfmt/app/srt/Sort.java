@@ -13,6 +13,11 @@
 
 package uk.me.parabola.imgfmt.app.srt;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,11 +27,16 @@ import java.util.List;
  */
 public class Sort {
 
+	private static final byte[] ZERO_KEY = new byte[0];
+
+	private int codepage;
+
 	private final byte[] primary = new byte[256];
 	private final byte[] secondary = new byte[256];
 	private final byte[] tertiary = new byte[256];
 	private final byte[] flags = new byte[256];
 	private final List<Character> tab2 = new ArrayList<Character>();
+	private CharsetEncoder encoder;
 
 	public void add(int ch, int primary, int secondary, int tertiary, int flags) {
 		this.primary[ch & 0xff] = (byte) primary;
@@ -54,30 +64,68 @@ public class Sort {
 		return tab;
 	}
 
-	public SortKey createSortKey(String s) {
-		return null;
+	/**
+	 * Create a sort key for a given unicode string.  The sort key can be compared instead of the original strings
+	 * and will compare based on the sorting represented by this Sort class.
+	 *
+	 * Using a sort key is more efficient if many comparisons are being done (for example if you are sorting a
+	 * list of strings).
+	 *
+	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
+	 * @param s The string for which the sort key is to be created.
+	 * @param <T> object This is saved in the sort key and can be retrieved by the {@link SrtSortKey#getObject()} method of
+	 * the sort key.
+	 * @return A sort key.
+	 */
+	public <T> SrtSortKey<T> createSortKey(T object, String s) {
+		CharBuffer inb = CharBuffer.wrap(s);
+		try {
+			ByteBuffer out = encoder.encode(inb);
+			byte[] bval = out.array();
+			byte[] key = new byte[bval.length * 3 + 3];
+			int length = bval.length;
+			for (int i = 0; i < length; i++) {
+				byte b = bval[i];
+				key[i] = primary[b & 0xff];
+				key[length + 1 + i] = secondary[b & 0xff];
+				key[2*length + 2 + i] = tertiary[b & 0xff];
+			}
+			key[length] = 0;
+			key[2 * length + 1] = 0;
+			key[3 * length + 2] = 0;
+			return new SrtSortKey<T>(object, key);
+		} catch (CharacterCodingException e) {
+			return new SrtSortKey<T>(object, ZERO_KEY);
+		}
 	}
-	byte[] getPrimary() {
-		byte[] tab = new byte[256];
-		System.arraycopy(primary, 0, tab, 0, 256);
-		return tab;
+
+	public byte getPrimary(int ch) {
+		return primary[ch];
 	}
-	byte[] getSecondary() {
-		byte[] tab = new byte[256];
-		System.arraycopy(secondary, 0, tab, 0, 256);
-		return tab;
+
+	public byte getSecondary(int ch) {
+		return secondary[ch];
 	}
-	byte[] getTertiary() {
-		byte[] tab = new byte[256];
-		System.arraycopy(tertiary, 0, tab, 0, 256);
-		return tab;
+
+	public byte getTertiary(int ch) {
+		return tertiary[ch];
 	}
-	
-	public byte[] getFlags() {
-		return flags;
+
+	public byte getFlags(int ch) {
+		return flags[ch];
 	}
 
 	public List<Character> getTab2() {
 		return tab2;
+	}
+
+	public int getCodepage() {
+		return codepage;
+	}
+
+	public void setCodepage(int codepage) {
+		this.codepage = codepage;
+		Charset cs = Charset.forName("cp" + codepage);
+		encoder = cs.newEncoder();
 	}
 }

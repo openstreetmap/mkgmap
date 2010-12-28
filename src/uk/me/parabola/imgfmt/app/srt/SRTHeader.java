@@ -75,7 +75,7 @@ public class SRTHeader extends CommonHeader {
 	 * Section writer to write the character and tab2 sections. These two sections are embedded within another
 	 * section and their offsets are relative to that section.
 	 * @param writer The real underlying writer.
-	 * @return A new writer where offsets are relative to the start of the subheader section.
+	 * @return A new writer where offsets are relative to the start of the sub-header section.
 	 */
 	SectionWriter makeSectionWriter(ImgFileWriter writer) {
 		return new SectionWriter(writer, subheader);

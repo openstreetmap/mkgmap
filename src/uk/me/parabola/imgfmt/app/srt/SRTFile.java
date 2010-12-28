@@ -81,14 +81,10 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeCharacterTable(ImgFileWriter writer) {
-		byte[] primary = sort.getPrimary();
-		byte[] secondary = sort.getSecondary();
-		byte[] tertiary = sort.getTertiary();
-		byte[] flags = sort.getFlags();
-		for (int i = 1; i < primary.length; i++) {
-			writer.put(flags[i]);
-			writer.put(primary[i]);
-			writer.put((byte) ((tertiary[i] << 4) | (secondary[i] & 0xf)));
+		for (int i = 1; i < 256; i++) {
+			writer.put(sort.getFlags(i));
+			writer.put(sort.getPrimary(i));
+			writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
 		}
 		header.endCharTable(writer.position());
 	}
@@ -105,11 +101,8 @@ public class SRTFile extends ImgFile {
 		this.description = description;
 	}
 
-	public void setCodepage(int cp) {
-		header.setCodepage((char) cp);
-	}
-
 	public void setSort(Sort sort) {
 		this.sort = sort;
+		header.setCodepage((char) sort.getCodepage());
 	}
 }
