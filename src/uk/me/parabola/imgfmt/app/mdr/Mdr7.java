@@ -44,13 +44,19 @@ public class Mdr7 extends MdrMapSection {
 		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), streets);
 		
 		int recordNumber = 0;
+		int lastLab = -1;
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record s  = sk.getObject();
 			recordNumber++;
 			addIndexPointer(s.getMapIndex(), recordNumber);
 
 			putMapIndex(writer, s.getMapIndex());
-			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
+			int lab = s.getLabelOffset();
+			if (lab != lastLab) {
+				lastLab = lab;
+				lab |= 0x800000;
+			}
+			writer.put3(lab);
 			putStringOffset(writer, s.getStringOffset());
 		}
 	}
