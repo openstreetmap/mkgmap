@@ -35,7 +35,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	public Mdr5Record(City c) {
 		cityIndex = c.getIndex();
-		region = c.getRegionNumber();
+		region = c.getRegionCountryNumber();
 	}
 
 	public int getCityIndex() {

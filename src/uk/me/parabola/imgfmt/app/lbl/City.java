@@ -135,10 +135,18 @@ public class City implements Comparable<City> {
 		return pointIndex;
 	}
 
-	public int getRegionNumber() {
-		if (region == null)
-			return 0;
-		else
+	/**
+	 * Get the region or country number.
+	 * @return The region number if there is one, else the country number
+	 * with a flag bit set to indicate that it is one.
+	 */
+	public int getRegionCountryNumber() {
+		if (region == null) {
+			if (country != null)
+				return country.getIndex() | 0x4000;
+		} else {
 			return region.getIndex();
+		}
+		return 0;
 	}
 }
