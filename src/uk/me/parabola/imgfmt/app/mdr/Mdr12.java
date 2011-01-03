@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009.
+ * Copyright (C) 2011.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -13,19 +13,13 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
- * Records that belong to a particular map should extend this class.
- * Otherwise they can extend ConfigBase.
+ * This is the index for the POI section (Mdr11).
+ * It works exactly the same way as Mdr8 as far as we know.
  *
  * @author Steve Ratcliffe
  */
-public abstract class RecordBase extends ConfigBase {
-	private int mapIndex;
-
-	public int getMapIndex() {
-		return mapIndex;
-	}
-
-	public void setMapIndex(int mapIndex) {
-		this.mapIndex = mapIndex;
+public class Mdr12 extends Mdr8{
+	public Mdr12(MdrConfig config) {
+		super(config);
 	}
 }

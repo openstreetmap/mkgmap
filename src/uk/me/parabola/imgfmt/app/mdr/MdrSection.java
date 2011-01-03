@@ -15,7 +15,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Super class of all sections
+ * Super class of all sections.
  * @author Steve Ratcliffe
  */
 public abstract class MdrSection extends ConfigBase {

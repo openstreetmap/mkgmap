@@ -20,7 +20,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public abstract class MdrMapSection extends MdrSection {
+public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags {
 	private Mdr1 index;
 
 	public void setMapIndex(Mdr1 index) {
@@ -72,14 +72,4 @@ public abstract class MdrMapSection extends MdrSection {
 		int flag = isNew? getSizes().getPoiFlag(): 0;
 		putN(writer, getSizes().getPoiSize(), poiIndex | flag);
 	}
-
-	/**
-	 * Return the value that is put in the header after the section start, len
-	 * and recsize fields.
-	 * At least in some cases this field controls what fields and/or size
-	 * exist in the section.
-	 * @return The correct value based on the contents of the section.  Zero
-	 * if nothing needs to be done.
-	 */
-	public abstract int getExtraValue();
 }

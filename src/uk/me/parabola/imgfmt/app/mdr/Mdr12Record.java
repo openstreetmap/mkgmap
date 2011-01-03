@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009.
+ * Copyright (C) 2011.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -13,19 +13,10 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
- * Records that belong to a particular map should extend this class.
- * Otherwise they can extend ConfigBase.
- *
+ * This is an index into mdr11 (pois).
  * @author Steve Ratcliffe
  */
-public abstract class RecordBase extends ConfigBase {
-	private int mapIndex;
-
-	public int getMapIndex() {
-		return mapIndex;
-	}
-
-	public void setMapIndex(int mapIndex) {
-		this.mapIndex = mapIndex;
-	}
+@SuppressWarnings({"EmptyClass"})
+public class Mdr12Record extends Mdr8Record {
+	// This is exactly the same as mdr8
 }

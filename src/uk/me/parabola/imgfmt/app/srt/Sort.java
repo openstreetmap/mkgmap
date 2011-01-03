@@ -31,6 +31,7 @@ public class Sort {
 
 	private int codepage;
 	private String description;
+	private Charset charset;
 
 	private final byte[] primary = new byte[256];
 	private final byte[] secondary = new byte[256];
@@ -124,10 +125,14 @@ public class Sort {
 		return codepage;
 	}
 
+	public Charset getCharset() {
+		return charset;
+	}
+
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
-		Charset cs = Charset.forName("cp" + codepage);
-		encoder = cs.newEncoder();
+		charset = Charset.forName("cp" + codepage);
+		encoder = charset.newEncoder();
 	}
 
 	public String getDescription() {

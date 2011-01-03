@@ -39,9 +39,11 @@ public class MDRFile extends ImgFile {
 	private final Mdr4 mdr4;
 	private final Mdr5 mdr5;
 	private final Mdr7 mdr7;
+	private final Mdr8 mdr8;
 	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
+	private final Mdr12 mdr12;
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
@@ -72,9 +74,11 @@ public class MDRFile extends ImgFile {
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
 		mdr7 = new Mdr7(config);
+		mdr8 = new Mdr8(config);
 		mdr9 = new Mdr9(config);
 		mdr10 = new Mdr10(config);
 		mdr11 = new Mdr11(config);
+		mdr12 = new Mdr12(config);
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
@@ -178,6 +182,8 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
+		mdr8.setIndex(mdr7.getIndex());
+		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
 		//writeSection(writer, 6, mdr6);
 
@@ -185,6 +191,8 @@ public class MDRFile extends ImgFile {
 		mdr9.setGroups(mdr10.getGroupSizes());
 		writeSection(writer, 9, mdr9);
 
+		mdr12.setIndex(mdr11.getIndex());
+		writeSection(writer, 12, mdr12);
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
@@ -219,8 +227,10 @@ public class MDRFile extends ImgFile {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.init(sectionNumber);
-			mdrHeader.setExtraValue(sectionNumber, mapSection.getExtraValue());
 		}
+
+		if (section instanceof HasHeaderFlags)
+			mdrHeader.setExtraValue(sectionNumber, ((HasHeaderFlags) section).getExtraValue());
 
 		section.writeSectData(writer);
 

@@ -32,6 +32,8 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff) {
+		if (name.length() < 4)
+			return;
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
 		st.setLabelOffset(lblOffset);
@@ -47,6 +49,7 @@ public class Mdr7 extends MdrMapSection {
 		int lastLab = -1;
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record s  = sk.getObject();
+			streets.set(recordNumber, s);
 			recordNumber++;
 			addIndexPointer(s.getMapIndex(), recordNumber);
 
@@ -86,5 +89,32 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getExtraValue() {
 		return 3;
+	}
+
+	/**
+	 * Must be called after the section data is written so that the streets
+	 * array is already sorted.
+	 * @return List of index records.
+	 */
+	public List<Mdr8Record> getIndex() {
+		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
+		for (int number = 0; number < streets.size(); number += 10240) {
+			Mdr7Record record = streets.get(number);
+			int endIndex = 4;
+			String name = record.getName();
+			if (endIndex > name.length()) {
+				StringBuilder sb = new StringBuilder(name);
+				while (sb.length() < endIndex)
+					sb.append('\0');
+				name = sb.toString();
+			}
+			String prefix = name.substring(0, endIndex);
+
+			Mdr8Record indexRecord = new Mdr8Record();
+			indexRecord.setPrefix(prefix);
+			indexRecord.setRecordNumber(number);
+			list.add(indexRecord);
+		}
+		return list;
 	}
 }

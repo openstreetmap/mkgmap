@@ -101,4 +101,26 @@ public class Mdr11 extends MdrMapSection {
 
 		return mdr11flags;
 	}
+
+	public List<Mdr8Record> getIndex() {
+		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
+		for (int number = 0; number < pois.size(); number += 10240) {
+			Mdr11Record record = pois.get(number);
+			int endIndex = 4;
+			String name = record.getName();
+			if (endIndex > name.length()) {
+				StringBuilder sb = new StringBuilder(name);
+				while (sb.length() < endIndex)
+					sb.append('\0');
+				name = sb.toString();
+			}
+			String prefix = name.substring(0, endIndex);
+
+			Mdr12Record indexRecord = new Mdr12Record();
+			indexRecord.setPrefix(prefix);
+			indexRecord.setRecordNumber(number);
+			list.add(indexRecord);
+		}
+		return list;
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009.
+ * Copyright (C) 2011.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -13,19 +13,27 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
- * Records that belong to a particular map should extend this class.
- * Otherwise they can extend ConfigBase.
+ * This section is a simple index into the streets section (mdr7).
  *
  * @author Steve Ratcliffe
  */
-public abstract class RecordBase extends ConfigBase {
-	private int mapIndex;
+public class Mdr8Record extends ConfigBase {
+	private String prefix;
+	private int recordNumber;
 
-	public int getMapIndex() {
-		return mapIndex;
+	public String getPrefix() {
+		return prefix;
 	}
 
-	public void setMapIndex(int mapIndex) {
-		this.mapIndex = mapIndex;
+	public void setPrefix(String prefix) {
+		this.prefix = prefix;
+	}
+
+	public int getRecordNumber() {
+		return recordNumber;
+	}
+
+	public void setRecordNumber(int recordNumber) {
+		this.recordNumber = recordNumber;
 	}
 }

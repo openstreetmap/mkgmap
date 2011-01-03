@@ -70,7 +70,7 @@ public class MDRHeader extends CommonHeader {
 		writer.putChar((char) codepage);
 		writer.putChar((char) 7); // TODO from srt
 		writer.putChar((char) 2); // TODO from srt
-		writer.putChar((char) 23);
+		writer.putChar((char) 14);
 
 		sections[1].writeSectionInfo(writer);
 		writer.putInt(1);
@@ -91,8 +91,7 @@ public class MDRHeader extends CommonHeader {
 
 		sections[7].writeSectionInfo(writer, true, true);
 
-		sections[8].writeSectionInfo(writer);
-		writer.putInt(0x40a);
+		sections[8].writeSectionInfo(writer, true, true);
 
 		sections[9].writeSectionInfo(writer);
 		writer.putInt(0);
@@ -101,8 +100,7 @@ public class MDRHeader extends CommonHeader {
 
 		sections[11].writeSectionInfo(writer, true, true);
 
-		sections[12].writeSectionInfo(writer);
-		writer.putInt(0x40a);
+		sections[12].writeSectionInfo(writer, true, true);
 
 		sections[13].writeSectionInfo(writer);
 		writer.putInt(0);
