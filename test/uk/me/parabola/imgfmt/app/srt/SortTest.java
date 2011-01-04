@@ -38,16 +38,16 @@ public class SortTest {
 	@Test
 	public void testSame() throws Exception {
 		String s = "aAbâ";
-		SortKey<Object> k1 = sort.createSortKey(null, s);
-		SortKey<Object> k2 = sort.createSortKey(null, s);
+		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
+		SortKey<Object> k2 = sort.createSortKey(null, s, 0);
 
 		assertEquals(0, k1.compareTo(k2));
 	}
 
 	@Test
 	public void testDifferentLengths() throws Exception {
-		SortKey<Object> k1 = sort.createSortKey(null, "aabb");
-		SortKey<Object> k2 = sort.createSortKey(null, "aab");
+		SortKey<Object> k1 = sort.createSortKey(null, "aabb", 0);
+		SortKey<Object> k2 = sort.createSortKey(null, "aab", 0);
 
 		assertEquals(1, k1.compareTo(k2));
 		assertEquals(-1, k2.compareTo(k1));
@@ -81,14 +81,26 @@ public class SortTest {
 		checkOrder("Aaa", "aÂa");
 	}
 
+	@Test
+	public void testSecondarySort() {
+		checkOrder(1, 24);
+	}
+
+	private void checkOrder(int i1, int i2) {
+		String s = "aaa";
+		SortKey<Object> k1 = sort.createSortKey(null, s, i1);
+		SortKey<Object> k2 = sort.createSortKey(null, s, i2);
+		assertEquals(1, k2.compareTo(k1));
+	}
+
 	/**
 	 * Check and assert that the second string is greater than the first.
 	 * @param s First string.
 	 * @param s1 Second string.
 	 */
 	private void checkOrder(String s, String s1) {
-		SortKey<Object> k1 = sort.createSortKey(null, s);
-		SortKey<Object> k2 = sort.createSortKey(null, s1);
+		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
+		SortKey<Object> k2 = sort.createSortKey(null, s1, 0);
 
 		assertEquals(1, k2.compareTo(k1));
 	}

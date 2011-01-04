@@ -44,20 +44,31 @@ public class Mdr7 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), streets);
-		
-		int recordNumber = 0;
-		int lastLab = -1;
+
+		// De-duplicate the street names so that there is only one entry
+		// per map for the same name.
+		streets.clear();
+		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
-			Mdr7Record s  = sk.getObject();
-			streets.set(recordNumber, s);
+			Mdr7Record r = sk.getObject();
+			if (r.getMapIndex() == last.getMapIndex() && r.getLabelOffset() == last.getLabelOffset())
+				continue;
+			last = r;
+			streets.add(r);
+		}
+
+		int recordNumber = 0;
+		String lastName = "";
+		for (Mdr7Record s : streets) {
 			recordNumber++;
 			addIndexPointer(s.getMapIndex(), recordNumber);
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
-			if (lab != lastLab) {
-				lastLab = lab;
+			String name = s.getName();
+			if (!name.equals(lastName)) {
 				lab |= 0x800000;
+				lastName = name;
 			}
 			writer.put3(lab);
 			putStringOffset(writer, s.getStringOffset());

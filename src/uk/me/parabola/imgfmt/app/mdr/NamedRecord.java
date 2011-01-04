@@ -17,5 +17,6 @@ package uk.me.parabola.imgfmt.app.mdr;
  * Marks a record that has a name.
  */
 public interface NamedRecord {
+	public int getMapIndex();
 	public String getName();
 }

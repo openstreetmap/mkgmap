@@ -17,7 +17,7 @@
 
 package uk.me.parabola.util;
 
-public class Sortable<K extends Comparable, V> implements Comparable<Sortable<K, V>> {
+public class Sortable<K extends Comparable<K>, V> implements Comparable<Sortable<K, V>> {
 	private final K key;
 	private final V value;
 
@@ -37,7 +37,7 @@ public class Sortable<K extends Comparable, V> implements Comparable<Sortable<K,
 	public int compareTo(Sortable<K, V> o) {
 		int diff = key.compareTo(o.key);
 		if(diff == 0 && value instanceof Comparable)
-			diff = ((Comparable)value).compareTo(o.value);
+			diff = ((Comparable<V>)value).compareTo(o.value);
 		return diff;
 	}
 }

@@ -73,13 +73,13 @@ public class Sort {
 	 * Using a sort key is more efficient if many comparisons are being done (for example if you are sorting a
 	 * list of strings).
 	 *
+	 *
 	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
 	 * @param s The string for which the sort key is to be created.
-	 * @param <T> object This is saved in the sort key and can be retrieved by the {@link SrtSortKey#getObject()} method of
-	 * the sort key.
+	 * @param second Secondary sort key.
 	 * @return A sort key.
 	 */
-	public <T> SortKey<T> createSortKey(T object, String s) {
+	public <T> SortKey<T> createSortKey(T object, String s, int second) {
 		CharBuffer inb = CharBuffer.wrap(s);
 		try {
 			ByteBuffer out = encoder.encode(inb);
@@ -95,7 +95,7 @@ public class Sort {
 			key[length] = 0;
 			key[2 * length + 1] = 0;
 			key[3 * length + 2] = 0;
-			return new SrtSortKey<T>(object, key);
+			return new SrtSortKey<T>(object, key, second);
 		} catch (CharacterCodingException e) {
 			return new SrtSortKey<T>(object, ZERO_KEY);
 		}

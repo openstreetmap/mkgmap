@@ -74,7 +74,7 @@ public class MdrUtils {
 	public static <T extends NamedRecord> List<SortKey<T>> sortList(Sort sort, List<T> list) {
 		List<SortKey<T>> toSort = new ArrayList<SortKey<T>>(list.size());
 		for (T m : list) {
-			SortKey<T> sortKey = sort.createSortKey(m, m.getName());
+			SortKey<T> sortKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
 			toSort.add(sortKey);
 		}
 		Collections.sort(toSort);

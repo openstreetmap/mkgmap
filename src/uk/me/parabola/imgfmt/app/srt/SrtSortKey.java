@@ -22,10 +22,17 @@ package uk.me.parabola.imgfmt.app.srt;
 class SrtSortKey<T> implements SortKey<T> {
 	private final T orig;
 	private final byte[] key;
+	private int second;
 
 	public SrtSortKey(T orig, byte[] key) {
 		this.orig = orig;
 		this.key = key;
+	}
+
+	public SrtSortKey(T orig, byte[] key, int second) {
+		this.orig = orig;
+		this.key = key;
+		this.second = second;
 	}
 
 	public int compareTo(SortKey<T> o) {
@@ -38,7 +45,13 @@ class SrtSortKey<T> implements SortKey<T> {
 				return 1;
 			}
 		}
-		return 0;
+		
+		if (second == ((SrtSortKey) o).second)
+			return 0;
+		else if (second < ((SrtSortKey) o).second)
+			return -1;
+		else
+			return 1;
 	}
 
 	public T getObject() {
