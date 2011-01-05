@@ -52,4 +52,12 @@ public class Mdr14 extends MdrSection {
 		PointerSizes sizes = getSizes();
 		return sizes.getMapSize() + 2 + sizes.getStrOffSize();
 	}
+
+	/**
+	 * The number of records in this section.
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return countries.size();
+	}
 }

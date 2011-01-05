@@ -53,4 +53,13 @@ public class Mdr13 extends MdrSection {
 	public int getItemSize() {
 		return getSizes().getMapSize() + 4 + getSizes().getStrOffSize();
 	}
+
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return regions.size();
+	}
 }

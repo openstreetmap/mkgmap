@@ -62,4 +62,13 @@ public class Mdr4 extends MdrSection {
 
 		poiTypes.add(r);
 	}
+
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return poiTypes.size();
+	}
 }

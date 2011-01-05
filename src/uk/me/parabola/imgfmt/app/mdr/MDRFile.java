@@ -49,6 +49,8 @@ public class MDRFile extends ImgFile {
 	private final Mdr15 mdr15;
 
 	private int currentMap;
+
+	private MdrSection[] sections;
 	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
@@ -82,6 +84,12 @@ public class MDRFile extends ImgFile {
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
+		this.sections = new MdrSection[]{
+				null,
+				mdr1, null, null, mdr4, mdr5, null,
+				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
+				mdr13, mdr14, mdr15
+		};
 	}
 
 	/**
@@ -172,7 +180,7 @@ public class MDRFile extends ImgFile {
 
 	private void writeSections(ImgFileWriter writer) {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
-		initSizes();
+		sizes = new MdrMapSection.PointerSizes(sections);
 
 		writeSection(writer, 4, mdr4);
 
@@ -182,6 +190,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
+
 		mdr8.setIndex(mdr7.getIndex());
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
@@ -204,14 +213,6 @@ public class MDRFile extends ImgFile {
 		mdr1.writeSectData(writer);
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
-	}
-
-	private void initSizes() {
-		sizes = new MdrMapSection.PointerSizes();
-		sizes.setMapSize(mdr1.getMapPointerSize());
-		sizes.setCitySize(mdr5.getPointerSize());
-		sizes.setPoiSize(mdr11.getPointerSize());
-		sizes.setStrOffSize(mdr15.getPointerSize());
 	}
 
 	/**

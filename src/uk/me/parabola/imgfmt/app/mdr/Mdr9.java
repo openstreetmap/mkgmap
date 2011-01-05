@@ -32,20 +32,30 @@ public class Mdr9 extends MdrSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
+		int poiSize = getSizes().getPoiSize();
 		for (Map.Entry<Integer, Integer> ent : index.entrySet()) {
 			int group = ent.getKey();
 			writer.put((byte) group);
-			writer.put3(ent.getValue());
+			putN(writer, poiSize, ent.getValue());
 		}
 	}
 
 	/**
-	 * The item size is always 4 as far as we know.  For the non-device
-	 * version anyway.
-	 * @return The record size, which is always 4.   // XXX check for the device case
+	 * The item size is one byte for the group and then enough bytes for the
+	 * index into mdr10.
+	 * @return Just return 4 for now.
 	 */
 	public int getItemSize() {
-		return 4;
+		return 1 + getSizes().getPoiSize();
+	}
+
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return index.size();
 	}
 
 	public void setGroups(Map<Integer, Integer> groupSizes) {

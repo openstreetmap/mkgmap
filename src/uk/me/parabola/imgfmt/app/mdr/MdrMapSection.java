@@ -44,21 +44,6 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 		index.addPointer(mapNumber, recordNumber);
 	}
 
-	/**
-	 * The number of records in this section.
-	 * @return The number of items in the section.
-	 */
-	public abstract int getNumberOfItems();
-
-	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.  If the pointer has a flag(s) then this must be
-	 * taken into account too.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public abstract int getPointerSize();
-
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
 		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
 		putN(writer, getSizes().getCitySize(), cityIndex | flag);
@@ -69,7 +54,7 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 	}
 
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
-		int flag = isNew? getSizes().getPoiFlag(): 0;
-		putN(writer, getSizes().getPoiSize(), poiIndex | flag);
+		int flag = isNew? getSizes().getPoiTypeFlag(): 0;
+		putN(writer, getSizes().getPoiTypeSize(), poiIndex | flag);
 	}
 }

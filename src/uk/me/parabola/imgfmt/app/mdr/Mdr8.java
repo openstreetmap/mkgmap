@@ -24,6 +24,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr8 extends MdrSection implements HasHeaderFlags {
+	private static final int STRING_WIDTH = 4;
+
 	private List<Mdr8Record> index = new ArrayList<Mdr8Record>();
 
 	public Mdr8(MdrConfig config) {
@@ -36,13 +38,26 @@ public class Mdr8 extends MdrSection implements HasHeaderFlags {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		int size = getItemSize() - 5;
+		int size = associatedSize();
+		System.out.println("size " + size);
 		Charset charset = getConfig().getSort().getCharset();
 		for (Mdr8Record s : index) {
-			writer.put(s.getPrefix().getBytes(charset), 0, 4);
-			writer.put((byte) 1);
-			putN(writer, size, s.getRecordNumber()/256);
+			writer.put(s.getPrefix().getBytes(charset), 0, STRING_WIDTH);
+			putN(writer, size, s.getRecordNumber());
 		}
+	}
+
+	protected int associatedSize() {
+		return getSizes().getStreetSize();
+	}
+
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return index.size();
 	}
 
 	/**
@@ -53,8 +68,7 @@ public class Mdr8 extends MdrSection implements HasHeaderFlags {
 	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
-		int maxRecord = index.get(index.size() - 1).getRecordNumber();
-		return 4 + 1 + numberToPointerSize(maxRecord/256);
+		return STRING_WIDTH + associatedSize();
 	}
 
 	public void setIndex(List<Mdr8Record> index) {
@@ -70,6 +84,6 @@ public class Mdr8 extends MdrSection implements HasHeaderFlags {
 	 */
 	public int getExtraValue() {
 		// this value is likely to depend on the size of the max record number.
-		return 0x40a;
+		return (STRING_WIDTH << 8) + 0x0a;
 	}
 }

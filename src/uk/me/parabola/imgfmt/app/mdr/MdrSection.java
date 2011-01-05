@@ -71,7 +71,7 @@ public abstract class MdrSection extends ConfigBase {
 		}
 	}
 
-	protected int numberToPointerSize(int n) {
+	protected static int numberToPointerSize(int n) {
 		if (n > 0xffffff)
 			return 4;
 		else if (n > 0xffff)
@@ -83,58 +83,68 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
-	 * A class to save the sizes of various field that depend on the contents
-	 * of the file.
+	 * The number of records in this section.
+	 * @return The number of items in the section.
+	 */
+	public abstract int getNumberOfItems();
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.  If the pointer has a flag(s) then this must be
+	 * taken into account too.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(getNumberOfItems());
+	}
+
+	/**
+	 * Provides the pointer sizes required to hold record of offset values
+	 * in the various sections.
 	 */
 	static class PointerSizes {
-		private int mapSize;
-		private int citySize;
-		private int cityFlag;
-		private int poiSize;
-		private int poiFlag;
-		private int strOffSize;
 
-		public void setMapSize(int mapSize) {
-			this.mapSize = mapSize;
-		}
+		private final MdrSection[] sections;
 
-		public void setCitySize(int citySize) {
-			int size = Math.max(citySize, 2);
-			this.citySize = size;
-			cityFlag = flagForSize(size);
-		}
-
-		public void setStrOffSize(int strOffSize) {
-			this.strOffSize = Math.max(strOffSize, 3);
-		}
-
-		public void setPoiSize(int poiSize) {
-			this.poiSize = poiSize;
-			poiFlag = flagForSize(poiSize);
+		public PointerSizes(MdrSection[] sections) {
+			this.sections = sections;
 		}
 
 		public int getCityFlag() {
-			return cityFlag;
+			return flagForSize(getCitySize());
 		}
 
 		public int getMapSize() {
-			return mapSize;
+			return sections[1].getPointerSize();
 		}
 
 		public int getCitySize() {
-			return citySize;
+			return sections[5].getPointerSize();
+		}
+
+		public int getStreetSize() {
+			return sections[7].getPointerSize();
+		}
+
+		/** size for pointers within mdr10 that point to mdr11.
+		 * I believe that you need to allow an extra bit for the flag in the
+		 * top bit
+		 */
+		public int getPoiTypeSize() {
+			return numberToPointerSize(sections[11].getNumberOfItems() << 1);
+		}
+
+		public int getPoiTypeFlag() {
+			return flagForSize(getPoiTypeSize());
 		}
 
 		public int getPoiSize() {
-			return poiSize;
-		}
-
-		public int getPoiFlag() {
-			return poiFlag;
+			return sections[11].getPointerSize();
 		}
 
 		public int getStrOffSize() {
-			return strOffSize;
+			return sections[15].getPointerSize();
 		}
 
 		private int flagForSize(int size) {

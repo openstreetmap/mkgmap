@@ -86,16 +86,6 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		return numberToPointerSize(streets.size());
-	}
-
-	/**
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
@@ -120,10 +110,11 @@ public class Mdr7 extends MdrMapSection {
 				name = sb.toString();
 			}
 			String prefix = name.substring(0, endIndex);
+			// need to step back to find the first...
 
 			Mdr8Record indexRecord = new Mdr8Record();
 			indexRecord.setPrefix(prefix);
-			indexRecord.setRecordNumber(number);
+			indexRecord.setRecordNumber(number + 1);
 			list.add(indexRecord);
 		}
 		return list;

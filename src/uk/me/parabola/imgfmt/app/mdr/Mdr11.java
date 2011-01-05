@@ -80,16 +80,6 @@ public class Mdr11 extends MdrMapSection {
 		return pois.size();
 	}
 
-	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		return numberToPointerSize(pois.size() << 1);
-	}
-
 	public int getExtraValue() {
 		int mdr11flags = 0x13;
 		PointerSizes sizes = getSizes();

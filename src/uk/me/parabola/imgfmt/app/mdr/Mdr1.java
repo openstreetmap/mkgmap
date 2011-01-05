@@ -109,7 +109,12 @@ public class Mdr1 extends MdrSection {
 		mi.addPointer(recordNumber);
 	}
 
-	public int getMapPointerSize() {
-		return numberToPointerSize(maps.size());
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return maps.size();
 	}
 }
