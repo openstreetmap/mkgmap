@@ -117,10 +117,8 @@ public class Mdr11 extends MdrMapSection {
 				String p = getPrefixForRecord(rec);
 				if (!p.equals(prefix)) {
 					rec++;
-					System.out.println("out now " + p + ", to:"+getPrefixForRecord(rec) + ", rec=" + rec);
 					break;
 				}
-				System.out.println("stepping back " + p + '/' + prefix);
 			}
 
 			Mdr12Record indexRecord = new Mdr12Record();

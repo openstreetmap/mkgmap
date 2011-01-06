@@ -39,7 +39,6 @@ public class Mdr8 extends MdrSection implements HasHeaderFlags {
 	 */
 	public void writeSectData(ImgFileWriter writer) {
 		int size = associatedSize();
-		System.out.println("size " + size);
 		Charset charset = getConfig().getSort().getCharset();
 		for (Mdr8Record s : index) {
 			writer.put(s.getPrefix().getBytes(charset), 0, STRING_WIDTH);
