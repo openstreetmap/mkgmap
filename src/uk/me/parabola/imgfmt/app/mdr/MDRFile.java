@@ -50,7 +50,7 @@ public class MDRFile extends ImgFile {
 
 	private int currentMap;
 
-	private MdrSection[] sections;
+	private final MdrSection[] sections;
 	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
@@ -90,6 +90,8 @@ public class MDRFile extends ImgFile {
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
 				mdr13, mdr14, mdr15
 		};
+
+		mdr11.setMdr10(mdr10);
 	}
 
 	/**
@@ -141,8 +143,7 @@ public class MDRFile extends ImgFile {
 		Mdr11Record poi = mdr11.addPoi(currentMap, point, name, strOff);
 		poi.setCity(city);
 		poi.setIsCity(isCity);
-
-		mdr10.addPoiType(fullType, poi);
+		poi.setType(fullType);
 
 		mdr4.addType(point.getType());
 	}

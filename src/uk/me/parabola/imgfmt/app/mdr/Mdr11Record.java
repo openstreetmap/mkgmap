@@ -26,6 +26,7 @@ public class Mdr11Record extends RecordBase implements NamedRecord {
 	private String name;
 	private Mdr5Record city;
 	private boolean isCity;
+	private int type;
 
 	public boolean isCity() {
 		return isCity;
@@ -95,5 +96,13 @@ public class Mdr11Record extends RecordBase implements NamedRecord {
 
 	public void setCity(Mdr5Record city) {
 		this.city = city;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public int getType() {
+		return type;
 	}
 }

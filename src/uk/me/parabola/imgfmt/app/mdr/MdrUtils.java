@@ -24,6 +24,9 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  */
 public class MdrUtils {
 
+	public static final int STREET_INDEX_PREFIX_LEN = 4;
+	public static final int POI_INDEX_PREFIX_LEN = 4;
+
 	/**
 	 * Get the group number for the poi.  This is the first byte of the records
 	 * in mdr9.

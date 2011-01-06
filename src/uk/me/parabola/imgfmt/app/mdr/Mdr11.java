@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  */
 public class Mdr11 extends MdrMapSection {
 	private final List<Mdr11Record> pois = new ArrayList<Mdr11Record>();
+	private Mdr10 mdr10;
 
 	public Mdr11(MdrConfig config) {
 		setConfig(config);
@@ -49,11 +50,24 @@ public class Mdr11 extends MdrMapSection {
 	public void writeSectData(ImgFileWriter writer) {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
+		// De-duplicate the street names so that there is only one entry
+		// per map for the same name.
+		pois.clear();
+		Mdr11Record last = new Mdr11Record();
+		for (SortKey<Mdr11Record> sk : keys) {
+			Mdr11Record r = sk.getObject();
+			if (r.getMapIndex() == last.getMapIndex() && r.getLblOffset() == last.getLblOffset())
+				continue;
+			last = r;
+			pois.add(r);
+		}
+
 		int count = 1;
-		for (SortKey<Mdr11Record> k : keys) {
-			Mdr11Record poi = k.getObject();
+		for (Mdr11Record poi : pois) {
 			addIndexPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
+
+			mdr10.addPoiType(poi);
 
 			putMapIndex(writer, poi.getMapIndex());
 			writer.put((byte) poi.getPointIndex());
@@ -94,23 +108,49 @@ public class Mdr11 extends MdrMapSection {
 
 	public List<Mdr8Record> getIndex() {
 		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
-		for (int number = 0; number < pois.size(); number += 10240) {
-			Mdr11Record record = pois.get(number);
-			int endIndex = 4;
-			String name = record.getName();
-			if (endIndex > name.length()) {
-				StringBuilder sb = new StringBuilder(name);
-				while (sb.length() < endIndex)
-					sb.append('\0');
-				name = sb.toString();
+		for (int number = 1; number <= pois.size(); number += 10240) {
+			String prefix = getPrefixForRecord(number);
+
+			// need to step back to find the first...
+			int rec = number;
+			while (--rec > 1) {
+				String p = getPrefixForRecord(rec);
+				if (!p.equals(prefix)) {
+					rec++;
+					System.out.println("out now " + p + ", to:"+getPrefixForRecord(rec) + ", rec=" + rec);
+					break;
+				}
+				System.out.println("stepping back " + p + '/' + prefix);
 			}
-			String prefix = name.substring(0, endIndex);
 
 			Mdr12Record indexRecord = new Mdr12Record();
 			indexRecord.setPrefix(prefix);
-			indexRecord.setRecordNumber(number);
+			indexRecord.setRecordNumber(rec);
 			list.add(indexRecord);
 		}
 		return list;
+	}
+
+	/**
+	 * Get the prefix of the name at the given record.
+	 * @param number The record number.
+	 * @return The first 4 (or whatever value is set) characters of the street
+	 * name.
+	 */
+	private String getPrefixForRecord(int number) {
+		Mdr11Record record = pois.get(number-1);
+		int endIndex = MdrUtils.POI_INDEX_PREFIX_LEN;
+		String name = record.getName();
+		if (endIndex > name.length()) {
+			StringBuilder sb = new StringBuilder(name);
+			while (sb.length() < endIndex)
+				sb.append('\0');
+			name = sb.toString();
+		}
+		return name.substring(0, endIndex);
+	}
+
+	public void setMdr10(Mdr10 mdr10) {
+		this.mdr10 = mdr10;
 	}
 }

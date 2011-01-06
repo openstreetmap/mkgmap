@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr12 extends Mdr8{
+public class Mdr12 extends Mdr8 {
 	public Mdr12(MdrConfig config) {
 		super(config);
 	}
