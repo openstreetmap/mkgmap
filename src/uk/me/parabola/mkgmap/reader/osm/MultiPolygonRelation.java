@@ -75,9 +75,6 @@ public class MultiPolygonRelation extends Relation {
 	 *            The relation to base this one on.
 	 * @param wayMap
 	 *            Map of all ways.
-	 * @param wayRemoveTags
-	 *            Marks which tags should be removed from a way after the
-	 *            complete multipolygon processing has finished
 	 * @param bbox
 	 *            The bounding box of the tile
 	 */
@@ -1946,6 +1943,7 @@ public class MultiPolygonRelation extends Relation {
 					if (log.isDebugEnabled()) {
 						log.debug("Copy all tags from the first way", way.getId(), toTagString());
 					}
+					first = false;
 				} else {
 					// for all other ways all non matching tags are removed
 					for (Map.Entry<String, String> tag : this.getEntryIteratable()) {

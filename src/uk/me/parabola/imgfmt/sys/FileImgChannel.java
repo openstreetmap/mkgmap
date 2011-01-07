@@ -35,10 +35,6 @@ public class FileImgChannel implements ImgChannel {
 	private final FileChannel channel;
 	private long position;
 
-	public FileImgChannel(String filename) {
-		this(filename, "rw");
-	}
-
 	public FileImgChannel(String filename, String mode) {
 		RandomAccessFile raf;
 		try {
@@ -47,10 +43,6 @@ public class FileImgChannel implements ImgChannel {
 			throw new ReadFailedException("Couldnot open " + filename, e);
 		}
 		this.channel = raf.getChannel();
-	}
-
-	public FileImgChannel(FileChannel channel) {
-		this.channel = channel;
 	}
 
 	public int read(ByteBuffer dst) throws IOException {

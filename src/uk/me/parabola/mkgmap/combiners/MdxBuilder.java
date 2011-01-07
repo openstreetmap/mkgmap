@@ -40,8 +40,8 @@ public class MdxBuilder implements Combiner {
 		outputDir = args.getOutputDir();
 	}
 
-	public void onMapEnd(FileInfo finfo) {
-		mdx.addMap(finfo.getMapnameAsInt());
+	public void onMapEnd(FileInfo info) {
+		mdx.addMap(info.getMapnameAsInt());
 	}
 
 	public void onFinish() {

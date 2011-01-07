@@ -136,15 +136,7 @@ public class Coord implements Comparable<Coord> {
   	}
 
 	public double quickDistance(Coord other){
-		double qd = 40075000 * Math.sqrt(distanceInDegreesSquared(other)) / 360;
-		final boolean testing = false;
-		if(testing) {
-			double sd = slowDistance(other);
-			double delta = Math.abs(qd - sd);
-			if(delta > sd / 500)
-				System.err.println("quickDistance() = " + qd + " slowDistance() = " + sd + " (" + (100 * delta / sd) + "% difference)");
-		}
-		return qd;
+		return 40075000 * Math.sqrt(distanceInDegreesSquared(other)) / 360;
 	}
 
 	public double distanceInDegreesSquared(Coord other) {
@@ -205,11 +197,11 @@ public class Coord implements Comparable<Coord> {
 	 * This ordering is used for sorting entries in NOD3.
 	 */
 	public int compareTo(Coord other) {
-		int clon = longitude - other.getLongitude();
-		if (clon == 0)
-			return latitude - other.getLatitude();
+		if (longitude == other.getLongitude())
+			if (latitude == other.getLatitude()) return 0;
+			else return latitude > other.getLatitude() ? 1 : -1;
 		else
-			return clon;
+			return longitude > other.getLongitude()? 1: -1;
 	}			
 
 	/**

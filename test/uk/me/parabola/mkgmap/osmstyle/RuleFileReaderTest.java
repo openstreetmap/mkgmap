@@ -350,8 +350,7 @@ public class RuleFileReaderTest {
 		Way el = new Way(1);
 		el.addTag("tunnel", "yes");
 		el.addTag("route", "abc");
-		GType type = getFirstType(rs, el);
-
+		getFirstType(rs, el);
 	}
 
 	@Test

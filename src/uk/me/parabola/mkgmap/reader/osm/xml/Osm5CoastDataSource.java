@@ -10,10 +10,8 @@ public class Osm5CoastDataSource extends Osm5MapDataSource {
 
 	private static final Set<String> coastlineTags = Collections.singleton("natural");
 	
-	@Override
 	protected void addBackground(boolean mapHasPolygon4B) {
 		// do not add a background polygon
-		return;
 	}
 	
 	protected OsmReadingHooks[] getPossibleHooks() {
@@ -21,17 +19,12 @@ public class Osm5CoastDataSource extends Osm5MapDataSource {
 		return new OsmReadingHooks[] {};
 	}
 
-	@Override
 	protected void createElementSaver() {
 		elementSaver = new CoastlineElementSaver(
 				getConfig());
 	}
 
-	@Override
 	public Set<String> getUsedTags() {
 		return coastlineTags;
 	}
-
-	
-	
 }

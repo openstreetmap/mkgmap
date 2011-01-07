@@ -36,8 +36,6 @@ import crosby.binary.Osmformat;
 public class OsmBinHandler extends OsmHandler {
 	private static final Logger log = Logger.getLogger(OsmBinHandler.class);
 
-	private boolean reportUndefinedNodes;
-
 	public OsmBinHandler(EnhancedProperties props) {
 	}
 
@@ -153,7 +151,7 @@ public class OsmBinHandler extends OsmHandler {
 
 						// nodes (way joins) will have highwayCount > 1
 						co.incHighwayCount();
-					} else if(reportUndefinedNodes) {
+					} else {
 						log.warn("Way", way.toBrowseURL(), "references undefined node", nid);
 					}
 				}

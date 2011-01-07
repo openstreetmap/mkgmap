@@ -183,12 +183,4 @@ public class LBLFile extends ImgFile {
 	public int numZips() {
 		return places.numZips();
 	}
-
-	public int numHighways() {
-		return places.numHighways();
-	}
-
-	public int numExitFacilities() {
-		return places.numExitFacilities();
-	}
 }

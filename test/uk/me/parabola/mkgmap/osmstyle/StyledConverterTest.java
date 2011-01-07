@@ -59,7 +59,7 @@ public class StyledConverterTest {
 	}
 
 	@Test
-	public void testNullPointerFromSecondMatch() throws FileNotFoundException {
+	public void testNullPointerFromSecondMatch() {
 		Way way = makeWay();
 		way.addTag("highway", "primary");
 		way.addTag("x", "z");

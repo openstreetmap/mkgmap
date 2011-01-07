@@ -38,9 +38,9 @@ public interface Combiner {
 	/**
 	 * This is called when an individual map is complete.
 	 *
-	 * @param finfo An interface to read the map.
+	 * @param info An interface to read the map.
 	 */
-	public void onMapEnd(FileInfo finfo);
+	public void onMapEnd(FileInfo info);
 
 	/**
 	 * The complete map set has been processed.  Finish off anything that needs

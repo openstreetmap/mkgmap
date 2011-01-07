@@ -571,7 +571,7 @@ public class StyleImpl implements Style {
 	private void checkVersion() throws FileNotFoundException {
 		Reader r = fileLoader.open(FILE_VERSION);
 		TokenScanner scan = new TokenScanner(FILE_VERSION, r);
-		int version = 0;
+		int version;
 		try {
 			version = scan.nextInt();
 			log.debug("Got version", version);

@@ -48,11 +48,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors;
 	private String[] landTag = { "natural", "land" };
-	private boolean floodblocker = false;
+	private boolean floodblocker;
 	private int fbGap = 40;
 	private double fbRatio = 0.5d;
 	private int fbThreshold = 20;
-	private boolean fbDebug = false;
+	private boolean fbDebug;
 
 	private ElementSaver saver;
 
@@ -452,7 +452,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			if (clipped != null) {
 				log.info("clipping", segment);
 				if (clipped.size() > 0) {
-					// the LineClipper sometimes returns unjoined clips
+					// the LineClipper sometimes returns un-joined clips
 					// need to rejoin them here
 					log.info(clipped.size(),"clippings. Try to join them.");
 					List<Way> clippedWays = new ArrayList<Way>(clipped.size());

@@ -61,14 +61,14 @@ public class NsisBuilder implements Combiner {
 		hasIndex = args.exists("index");
 	}
 
-	public void onMapEnd(FileInfo finfo) {
-		switch (finfo.getKind()) {
+	public void onMapEnd(FileInfo info) {
+		switch (info.getKind()) {
 		case IMG_KIND:
-			mapList.add(finfo.getMapname());
+			mapList.add(info.getMapname());
 			break;
 		case TYP_KIND:
 			hasTyp = true;
-			typName = finfo.getFilename();
+			typName = info.getFilename();
 			break;
 		case MDR_KIND:
 			hasIndex = true;

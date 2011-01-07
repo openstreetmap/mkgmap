@@ -7,10 +7,6 @@ import uk.me.parabola.util.EnhancedProperties;
 public class CommandArgs {
 	private final EnhancedProperties currentOptions;
 
-	public CommandArgs() {
-		currentOptions = new EnhancedProperties();
-	}
-
 	public CommandArgs(EnhancedProperties args) {
 		currentOptions = new EnhancedProperties(args);
 	}

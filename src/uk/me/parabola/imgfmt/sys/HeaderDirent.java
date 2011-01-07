@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.sys;
 
 /**
- * This is a special Dirent class for the header.  It makes it easier to bootstrap
+ * This is a special class for the header.  It makes it easier to bootstrap
  * the directory by having a special implementation that starts up by knowing
  * that the blocks in the header start from 0.
  *
@@ -30,7 +30,7 @@ class HeaderDirent extends Dirent {
 
 	/**
 	 * Converts from a logical block to a physical block.  This is a special
-	 * version that returns the logical block number when the Dirent is not
+	 * version that returns the logical block number when the {@link Dirent} is not
 	 * set up.  This allows us to bootstrap the reading of the header blocks.
 	 * The header blocks always logical and physical blocks the same.
 	 *

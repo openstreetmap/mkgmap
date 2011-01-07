@@ -25,6 +25,13 @@
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
+    <list size="5">
+      <item index="0" class="java.lang.String" itemvalue="org.junit.After" />
+      <item index="1" class="java.lang.String" itemvalue="org.junit.AfterClass" />
+      <item index="2" class="java.lang.String" itemvalue="org.junit.Before" />
+      <item index="3" class="java.lang.String" itemvalue="org.junit.BeforeClass" />
+      <item index="4" class="java.lang.String" itemvalue="org.junit.Test" />
+    </list>
   </component>
   <component name="ExportToHTMLSettings">
     <option name="OPEN_IN_BROWSER" value="true" />

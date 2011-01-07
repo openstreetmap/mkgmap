@@ -110,7 +110,12 @@ public class City implements Comparable<City> {
 			return 0;
 		if(label != null && other.label != null)
 			return label.compareTo(other.label);
-		return hashCode() - other.hashCode();
+		if (label != null && other.label == null)
+			return 1;
+		if (label == null && other.label != null)
+			return -1;
+
+		return 0; // both null
 	}
 
 	public String toString() {

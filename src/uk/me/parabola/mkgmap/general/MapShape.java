@@ -179,11 +179,8 @@ public class MapShape extends MapLine {// So top code can link objects from here
 		if (x0 == 0 && x1 == 0) {
 			// ensure that y0 is smaller than y1 so that we can just check if the line intersects the x axis
 			if (y0 > y1) {
-				int xtemp = x0;
 				int ytemp = y0;
-				x0 = x1;
 				y0 = y1;
-				x1 = xtemp;
 				y1 = ytemp;
 			}
 			// test to see if we have a vertical line touches x-axis

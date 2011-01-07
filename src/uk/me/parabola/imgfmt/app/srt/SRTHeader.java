@@ -63,9 +63,6 @@ public class SRTHeader extends CommonHeader {
 		throw new UnsupportedOperationException("not implemented yet");
 	}
 
-	public void positionForBody() {
-	}
-	
 	/**
 	 * Write out the application header.  This is unusual as it just points
 	 * to an area which is itself just a header.

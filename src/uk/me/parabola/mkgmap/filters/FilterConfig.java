@@ -26,7 +26,6 @@ import uk.me.parabola.imgfmt.app.Area;
  */
 public class FilterConfig {
 	private int resolution;
-	private Area bounds;
 
 	protected int getResolution() {
 		return resolution;
@@ -46,6 +45,6 @@ public class FilterConfig {
 	}
 
 	public void setBounds(Area bounds) {
-		this.bounds = bounds;
+		//this.bounds = bounds;
 	}
 }

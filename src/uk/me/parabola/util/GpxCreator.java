@@ -6,7 +6,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 
@@ -38,8 +40,7 @@ public class GpxCreator {
 		pw.print("\"/>");
 	}
 
-	public static void createAreaGpx(String name,
-			uk.me.parabola.imgfmt.app.Area bbox) {
+	public static void createAreaGpx(String name, Area bbox) {
 		List<Coord> points = new ArrayList<Coord>(5);
 		points.add(new Coord(bbox.getMinLat(), bbox.getMinLong()));
 		points.add(new Coord(bbox.getMaxLat(), bbox.getMinLong()));
@@ -69,6 +70,8 @@ public class GpxCreator {
 			pw.print("</trkseg></trk></gpx>");
 			pw.close();
 		} catch (Exception exp) {
+			// only for debugging so just log
+			log.warn("Could not create gpx file ", name);
 		}
 	}
 
@@ -101,6 +104,8 @@ public class GpxCreator {
 			pw.print("</gpx>");
 			pw.close();
 		} catch (Exception exp) {
+			// only for debugging so just log
+			log.warn("Could not create gpx file ", name);
 		}
 	}
 }

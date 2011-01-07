@@ -451,12 +451,12 @@ public class StyleTester implements OsmConverter {
 	/**
 	 * A styled converter that should work exactly the same as the version of
 	 * mkgmap you are using.
-	 * @param stylefile The name of the style file to process.
+	 * @param styleFile The name of the style file to process.
 	 * @param coll A map collector to receive the created elements.
 
 	 */
-	private StyledConverter makeStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
-		Style style = new StyleImpl(stylefile, null);
+	private StyledConverter makeStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
+		Style style = new StyleImpl(styleFile, null);
 		return new StyledConverter(style, coll, new Properties());
 	}
 
@@ -465,11 +465,11 @@ public class StyleTester implements OsmConverter {
 	 * result of running the style rules in order by literally doing that.
 	 * This should produce the same result as {@link #makeStyleConverter} and
 	 * can be used as a test of the strict style ordering branch.
-	 * @param stylefile The name of the style file to process.
+	 * @param styleFile The name of the style file to process.
 	 * @param coll A map collector to receive the created elements.
 	 */
-	private StyledConverter makeStrictStyleConverter(String stylefile, MapCollector coll) throws FileNotFoundException {
-		Style style = new ReferenceStyle(stylefile, null);
+	private StyledConverter makeStrictStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
+		Style style = new ReferenceStyle(styleFile, null);
 		return new StyledConverter(style, coll, new Properties());
 	}
 

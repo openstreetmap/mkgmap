@@ -156,8 +156,8 @@ public class CommandArgsTest {
 	}
 
 	private void createFile(String name, String content) throws IOException {
-		Writer w = null;
 		TestUtils.registerFile(name);
+		Writer w = null;
 		try {
 			w = new FileWriter(name);
 			w.append(content);

@@ -60,7 +60,7 @@ public class QuadTreeNode {
 	}
 
 	public QuadTreeNode(Area bounds) {
-		this(bounds, Collections.EMPTY_LIST);
+		this(bounds, Collections.<Coord>emptyList());
 	}
 
 	public QuadTreeNode(Area bounds, Collection<Coord> points) {

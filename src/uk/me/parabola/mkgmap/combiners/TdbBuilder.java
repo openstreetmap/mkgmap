@@ -105,14 +105,14 @@ public class TdbBuilder implements Combiner {
 	 * Called at the end of every map that is to be combined.  We only deal
 	 * with IMG files and ignore everything else.
 	 *
-	 * @param finfo Information on the file.
+	 * @param info Information on the file.
 	 */
-	public void onMapEnd(FileInfo finfo) {
-		if (!finfo.isImg())
+	public void onMapEnd(FileInfo info) {
+		if (!info.isImg())
 			return;
 		
-		addToTdb(finfo);
-		addToOverviewMap(finfo);
+		addToTdb(info);
+		addToOverviewMap(info);
 	}
 
 	/**

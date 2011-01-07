@@ -94,16 +94,16 @@ public class MdrBuilder implements Combiner {
 	 * Adds a new map to the file.  We need to read in the img file and
 	 * extract all the information that can be indexed from it.
 	 *
-	 * @param finfo An interface to read the map.
+	 * @param info An interface to read the map.
 	 */
-	public void onMapEnd(FileInfo finfo) {
-		if (!finfo.isImg())
+	public void onMapEnd(FileInfo info) {
+		if (!info.isImg())
 			return;
 		
 		// Add the map name
-		mdrFile.addMap(finfo.getMapnameAsInt());
+		mdrFile.addMap(info.getMapnameAsInt());
 
-		String filename = finfo.getFilename();
+		String filename = info.getFilename();
 		MapReader mr = null;
 		try {
 			mr = new MapReader(filename);

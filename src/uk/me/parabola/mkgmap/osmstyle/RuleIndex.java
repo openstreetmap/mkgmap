@@ -77,7 +77,7 @@ public class RuleIndex {
 	/**
 	 * Save the rule and maintains several lists related to it from the other
 	 * information that is supplied.
-	 * @param rd Contains 1) the keystring which is the key into the index.
+	 * @param rd Contains 1) the key string which is the key into the index.
 	 * 2) the rule itself. 3) a list of the tags that might be changed by
 	 * this rule, should it be matched.
 	 */
