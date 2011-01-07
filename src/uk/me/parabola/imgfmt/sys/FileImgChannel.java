@@ -40,9 +40,13 @@ public class FileImgChannel implements ImgChannel {
 		try {
 			raf = new RandomAccessFile(filename, mode);
 		} catch (FileNotFoundException e) {
-			throw new ReadFailedException("Couldnot open " + filename, e);
+			throw new ReadFailedException("Could not open " + filename, e);
 		}
 		this.channel = raf.getChannel();
+	}
+
+	public FileImgChannel(FileChannel channel) {
+		this.channel = channel;
 	}
 
 	public int read(ByteBuffer dst) throws IOException {
