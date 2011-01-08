@@ -126,7 +126,8 @@ public class TdbBuilder implements Combiner {
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
 
-		detail.setMapName(mapname, mapname);
+		detail.setMapName(mapname);
+		detail.setInnername(finfo.getInnername());
 
 		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
@@ -228,7 +229,7 @@ public class TdbBuilder implements Combiner {
 
 		// We can set the overall bounds easily as it was calculated as part of
 		// the overview map.
-		tdb.setOverview(overviewMapname, overviewSource.getBounds(), overviewMapnumber);
+		tdb.setOverview(overviewSource.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
 		writeOverviewMap();

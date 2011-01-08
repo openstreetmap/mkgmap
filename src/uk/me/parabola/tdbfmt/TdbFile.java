@@ -117,13 +117,12 @@ public class TdbFile {
 	/**
 	 * Set the overview information.  Basically the overall size of the map
 	 * set.
-	 * @param name The overview map name.
 	 * @param bounds The bounds for the map.
 	 */
-	public void setOverview(String name, Area bounds, String number) {
+	public void setOverview(Area bounds, String number) {
 		overviewMapBlock = new OverviewMapBlock();
 		overviewMapBlock.setArea(bounds);
-		overviewMapBlock.setMapName(name, number);
+		overviewMapBlock.setMapName(number);
 		overviewMapBlock.setDescription(overviewDescription);
 	}
 

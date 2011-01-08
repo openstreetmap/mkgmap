@@ -150,7 +150,7 @@ public class MdrBuilder implements Combiner {
 			return;
 		
 		// Add the map name
-		mdrFile.addMap(finfo.getMapnameAsInt());
+		mdrFile.addMap(finfo.getHexname());
 
 		String filename = finfo.getFilename();
 		MapReader mr = null;

@@ -51,12 +51,13 @@ public class MdxFile {
 
 	/**
 	 * Add a map with the default family and product id's and with equal
-	 * name and hexname.
-	 * @param name The map name as an integer.
+	 * name and hex name.
+	 * @param name The map name (from the filename of the map) as an integer.
+	 * @param hexname The map id that is inside the TRE header
 	 */
-	public void addMap(int name) {
+	public void addMap(int name, int hexname) {
 		MapInfo info = new MapInfo();
-		info.setHexMapname(name);
+		info.setHexMapname(hexname);
 		info.setMapname(name);
 		info.setFamilyId(familyId);
 		info.setProductId(productId);
@@ -103,15 +104,5 @@ public class MdxFile {
 			buf.flip();
 			chan.write(buf);
 		}
-	}
-
-	/**
-	 * Create a file for testing.  Will probably be removed at some point.
-	 * @throws IOException If file cannot be written.
-	 */
-	public static void main(String[] args) throws IOException {
-		MdxFile mdx = new MdxFile(909, 1);
-		mdx.addMap(63240001);
-		mdx.write("test.mdx");
 	}
 }

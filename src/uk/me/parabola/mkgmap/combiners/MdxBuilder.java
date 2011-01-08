@@ -41,7 +41,7 @@ public class MdxBuilder implements Combiner {
 	}
 
 	public void onMapEnd(FileInfo finfo) {
-		mdx.addMap(finfo.getMapnameAsInt());
+		mdx.addMap(finfo.getMapnameAsInt(), finfo.getHexname());
 	}
 
 	public void onFinish() {

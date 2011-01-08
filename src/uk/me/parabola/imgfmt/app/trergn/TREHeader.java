@@ -363,7 +363,7 @@ public class TREHeader extends CommonHeader {
 		++numExtTypePointTypes;
 	}
 
-	protected int getMapId() {
+	public int getMapId() {
 		return mapId;
 	}
 
