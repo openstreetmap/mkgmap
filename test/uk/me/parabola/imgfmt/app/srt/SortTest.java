@@ -86,6 +86,36 @@ public class SortTest {
 		checkOrder(1, 24);
 	}
 
+	/**
+	 * Test for a bad character in the input.
+	 * Probably want the character to be replaced by a question mark rather
+	 * than give an error.
+	 * Strings with bad characters should not compare equal to other strings
+	 * or throw exceptions.
+	 */
+	@Test
+	public void testBadCharacter() {
+		String s = "a\u063ab";
+		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
+		SortKey<Object> k2 = sort.createSortKey(null, "aa", 0);
+
+		int res = k1.compareTo(k2);
+		assertTrue(res != 0);
+
+		res = k2.compareTo(k1);
+		assertTrue(res != 0);
+
+		// not equal to an empty string.
+		k2 = sort.createSortKey(null, "", 0);
+		res = k1.compareTo(k2);
+		assertTrue(res != 0);
+
+		// character is replaced with '?'
+		k2 = sort.createSortKey(null, "a?b", 0);
+		res = k1.compareTo(k2);
+		assertEquals(0, res);
+	}
+
 	private void checkOrder(int i1, int i2) {
 		String s = "aaa";
 		SortKey<Object> k1 = sort.createSortKey(null, s, i1);

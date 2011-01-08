@@ -18,6 +18,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class Sort {
 
-	private static final byte[] ZERO_KEY = new byte[0];
+	private static final byte[] ZERO_KEY = new byte[3];
 
 	private int codepage;
 	private String description;
@@ -133,6 +134,7 @@ public class Sort {
 		this.codepage = codepage;
 		charset = Charset.forName("cp" + codepage);
 		encoder = charset.newEncoder();
+		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
 	}
 
 	public String getDescription() {
