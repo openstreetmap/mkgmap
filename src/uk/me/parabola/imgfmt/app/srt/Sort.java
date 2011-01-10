@@ -155,6 +155,7 @@ public class Sort {
 		for (int i = 1; i < 256; i++) {
 			sort.add(i, i, 0, 0, 0);
 		}
+		sort.encoder = Charset.defaultCharset().newEncoder();
 		return sort;
 	}
 }

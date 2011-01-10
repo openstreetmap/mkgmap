@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -243,6 +244,12 @@ public class Map implements InternalFiles, Configurable {
 
 	public void setLabelCodePage(int cp) {
 		lblFile.setCodePage(cp);
+	}
+
+	public void setSort(Sort sort) {
+		lblFile.setCodePage(sort.getCodepage());
+		if (netFile != null)
+			netFile.setSort(sort);
 	}
 
 	public void setLabelCharset(String desc, boolean forceUpper) {

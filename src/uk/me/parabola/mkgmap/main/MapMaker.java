@@ -17,6 +17,9 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +34,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
@@ -41,6 +45,7 @@ import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 import uk.me.parabola.util.Sortable;
 
 /**
@@ -115,15 +120,43 @@ public class MapMaker implements MapProcessor {
 	 * @param args The command line arguments.
 	 */
 	private void setOptions(Map map, CommandArgs args) {
+		map.config(args.getProperties());
+
 		String s = args.getCharset();
 		if (s != null)
 			map.setLabelCharset(s, args.isForceUpper());
 
-		int i = args.getCodePage();
-		if (i != 0)
-			map.setLabelCodePage(i);
+		int cp = args.getCodePage();
+		Sort sort = createSort(cp);
+		map.setSort(sort);
+	}
 
-		map.config(args.getProperties());
+	/**
+	 * TODO remove copy from mdrbuilder
+	 * Create the sort description for the map.  This is used to sort items in the files
+	 * and also is converted into a SRT file which is included in the MDR file.
+	 *
+	 * We simply use the codepage to locate a sorting description, we could have several for the same
+	 * codepage for different countries for example.
+	 *
+	 * @param codepage The code page which is used to find a suitable sort description.
+	 * @return A sort description object.
+	 */
+	private Sort createSort(int codepage) {
+		String name = "sort/cp" + codepage + ".txt";
+		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
+		if (is == null) {
+			//System.err.printf("Warning: sort file %s not found\n", name);
+			return Sort.defaultSort();
+		}
+		try {
+			InputStreamReader r = new InputStreamReader(is, "utf-8");
+			SrtTextReader sr = new SrtTextReader(r);
+			return sr.getSort();
+		} catch (IOException e) {
+			//System.err.printf("Warning: sort file %s not found\n", name);
+			return Sort.defaultSort();
+		}
 	}
 
 	/**
