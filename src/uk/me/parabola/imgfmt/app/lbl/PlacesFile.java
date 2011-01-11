@@ -26,6 +26,8 @@ import java.util.Random;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.util.Sortable;
 
@@ -33,6 +35,7 @@ import uk.me.parabola.util.Sortable;
  * This is really part of the LBLFile.  We split out all the parts of the file
  * that are to do with location to here.
  */
+@SuppressWarnings({"RawUseOfParameterizedType"})
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 
@@ -40,7 +43,7 @@ public class PlacesFile {
 	private final List<Sortable<String, Region>> regionList = new ArrayList<Sortable<String, Region>>();
 
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
-	private final List<Sortable<String, City>> cityList = new ArrayList<Sortable<String, City>>();
+	private final List<City> cityList = new ArrayList<City>();
 
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<Highway> highways = new ArrayList<Highway>();
@@ -52,7 +55,7 @@ public class PlacesFile {
 	private PlacesHeader placeHeader;
 	private boolean poisClosed;
 
-	//private Collator collator;
+	private Sort sort;
 
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
@@ -64,7 +67,6 @@ public class PlacesFile {
 	void init(LBLFile file, PlacesHeader pheader) {
 		lblFile = file;
 		placeHeader = pheader;
-		//collator = Collator.getInstance(Locale.US); // TODO work out how this should work
 	}
 
 	void write(ImgFileWriter writer) {
@@ -76,17 +78,24 @@ public class PlacesFile {
 			sr.getValue().write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (Sortable<String, City> sc : cityList)
-			sc.getValue().write(writer);
+		for (City sc : cityList)
+			sc.write(writer);
 
 		placeHeader.endCity(writer.position());
 
 		for (List<POIIndex> pil : poiIndex) {
 			if(pil != null) {
 				// sort entries by POI name
-				Collections.sort(pil);
-				for(POIIndex pi : pil)
-					pi.write(writer);
+				List<SortKey<POIIndex>> sorted = new ArrayList<SortKey<POIIndex>>();
+				for (POIIndex index : pil) {
+					SortKey<POIIndex> sortKey = sort.createSortKey(index, index.getName());
+					sorted.add(sortKey);
+				}
+				Collections.sort(sorted);
+
+				for (SortKey<POIIndex> key : sorted) {
+					key.getObject().write(writer);
+				}
 			}
 		}
 		placeHeader.endPOIIndex(writer.position());
@@ -187,7 +196,7 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new Sortable<String, City>(name, c));
+			cityList.add(c);
 			cities.put(uniqueCityName, c);
 			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
@@ -217,7 +226,7 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new Sortable<String, City>(name, c));
+			cityList.add(c);
 			cities.put(uniqueCityName, c);
 			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
@@ -303,10 +312,19 @@ public class PlacesFile {
 		for (Sortable<String, Region> sr: regionList)
 			sr.getValue().setIndex(index++);
 
+		List<SortKey<City>> sorted = new ArrayList<SortKey<City>>();
+		for (City c : cityList) {
+			SortKey<City> sortKey = sort.createSortKey(c, c.getName());
+			sorted.add(sortKey);
+		}
+		Collections.sort(sorted);
+		cityList.clear();
+		for (SortKey<City> sc: sorted)
+			cityList.add(sc.getObject());
+
 		index = 1;
-		Collections.sort(cityList);
-		for (Sortable<String, City> sc: cityList)
-			sc.getValue().setIndex(index++);
+		for (City sc: cityList)
+			sc.setIndex(index++);
 
 		poisClosed = true;
 
@@ -329,11 +347,7 @@ public class PlacesFile {
 		return postalCodes.size();
 	}
 
-	public int numHighways() {
-		return highways.size();
-	}
-
-	public int numExitFacilities() {
-		return exitFacilities.size();
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 }

@@ -102,6 +102,10 @@ public class Sort {
 		}
 	}
 
+	public <T> SortKey<T> createSortKey(T object, String s) {
+		return createSortKey(object, s, 0);
+	}
+
 	public byte getPrimary(int ch) {
 		return primary[ch];
 	}

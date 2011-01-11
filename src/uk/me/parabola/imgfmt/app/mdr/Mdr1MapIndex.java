@@ -45,6 +45,9 @@ public class Mdr1MapIndex {
 
 	public void addPointer(int recordNumber) {
 		switch (pointerSize) {
+		case 4:
+			subWriter.putInt(recordNumber);
+			break;
 		case 3:
 			subWriter.put3(recordNumber);
 			break;

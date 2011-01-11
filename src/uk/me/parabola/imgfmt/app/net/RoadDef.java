@@ -572,8 +572,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		// roads that have been split into segments
 		if(other == this)
 			return 0;
+
+		// TODO: look at what this is doing...
 		if(city != null && other.city != null)
-			return city.compareTo(other.city);
+			return city.getName().compareTo(other.city.getName());
 		return hashCode() - other.hashCode();
 	}
 

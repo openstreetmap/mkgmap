@@ -73,7 +73,7 @@ public class NETFile extends ImgFile {
 					if(l[i].getLength() != 0) {
 						String cleanName = l[i].getTextSansGarminCodes();
 						assert sort != null;
-						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), cleanName, 0);
+						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), cleanName);
 						sortKeys.add(sortKey);
 					}
 				}

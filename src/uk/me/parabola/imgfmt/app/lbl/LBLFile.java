@@ -29,6 +29,7 @@ import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 import uk.me.parabola.imgfmt.app.labelenc.Format6Encoder;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -97,8 +98,6 @@ public class LBLFile extends ImgFile {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
 			baseEncoder.setUpperCase(true);
 		}
-		if (lblHeader.getCodePage() == 0)
-			setCodePage(cfuncs.getCodepage());
 	}
 	
 	/**
@@ -172,8 +171,9 @@ public class LBLFile extends ImgFile {
 		places.allPOIsDone();
 	}
 
-	public void setCodePage(int codePage) {
-		lblHeader.setCodePage(codePage);
+	public void setSort(Sort sort) {
+		lblHeader.setCodePage(sort.getCodepage());
+		places.setSort(sort);
 	}
 
 	public int numCities() {

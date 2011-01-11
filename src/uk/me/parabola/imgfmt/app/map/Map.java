@@ -242,12 +242,8 @@ public class Map implements InternalFiles, Configurable {
 		rgnFile.addMapObject(item);
 	}
 
-	public void setLabelCodePage(int cp) {
-		lblFile.setCodePage(cp);
-	}
-
 	public void setSort(Sort sort) {
-		lblFile.setCodePage(sort.getCodepage());
+		lblFile.setSort(sort);
 		if (netFile != null)
 			netFile.setSort(sort);
 	}

@@ -38,16 +38,16 @@ public class SortTest {
 	@Test
 	public void testSame() throws Exception {
 		String s = "aAbâ";
-		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
-		SortKey<Object> k2 = sort.createSortKey(null, s, 0);
+		SortKey<Object> k1 = sort.createSortKey(null, s);
+		SortKey<Object> k2 = sort.createSortKey(null, s);
 
 		assertEquals(0, k1.compareTo(k2));
 	}
 
 	@Test
 	public void testDifferentLengths() throws Exception {
-		SortKey<Object> k1 = sort.createSortKey(null, "aabb", 0);
-		SortKey<Object> k2 = sort.createSortKey(null, "aab", 0);
+		SortKey<Object> k1 = sort.createSortKey(null, "aabb");
+		SortKey<Object> k2 = sort.createSortKey(null, "aab");
 
 		assertEquals(1, k1.compareTo(k2));
 		assertEquals(-1, k2.compareTo(k1));
@@ -96,8 +96,8 @@ public class SortTest {
 	@Test
 	public void testBadCharacter() {
 		String s = "a\u063ab";
-		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
-		SortKey<Object> k2 = sort.createSortKey(null, "aa", 0);
+		SortKey<Object> k1 = sort.createSortKey(null, s);
+		SortKey<Object> k2 = sort.createSortKey(null, "aa");
 
 		int res = k1.compareTo(k2);
 		assertTrue(res != 0);
@@ -106,12 +106,12 @@ public class SortTest {
 		assertTrue(res != 0);
 
 		// not equal to an empty string.
-		k2 = sort.createSortKey(null, "", 0);
+		k2 = sort.createSortKey(null, "");
 		res = k1.compareTo(k2);
 		assertTrue(res != 0);
 
 		// character is replaced with '?'
-		k2 = sort.createSortKey(null, "a?b", 0);
+		k2 = sort.createSortKey(null, "a?b");
 		res = k1.compareTo(k2);
 		assertEquals(0, res);
 	}
@@ -129,8 +129,8 @@ public class SortTest {
 	 * @param s1 Second string.
 	 */
 	private void checkOrder(String s, String s1) {
-		SortKey<Object> k1 = sort.createSortKey(null, s, 0);
-		SortKey<Object> k2 = sort.createSortKey(null, s1, 0);
+		SortKey<Object> k1 = sort.createSortKey(null, s);
+		SortKey<Object> k2 = sort.createSortKey(null, s1);
 
 		assertEquals(1, k2.compareTo(k1));
 	}

@@ -55,7 +55,6 @@ public class MakeTestLangMap extends AbstractTestMap {
 		div.startLines();
 
 		map.setLabelCharset("simple8", true);
-		map.setLabelCodePage(1250); // No difference?
 
 		double space = 0.002;
 		double size = 0.006;for (int y = 0; y < 16; y++) {

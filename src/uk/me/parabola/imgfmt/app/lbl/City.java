@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  * 
  * @author Steve Ratcliffe
  */
-public class City implements Comparable<City> {
+public class City {
 	private static final int POINT_REF = 0x8000;
 	private static final int REGION_IS_COUNTRY = 0x4000;
 
@@ -105,12 +105,8 @@ public class City implements Comparable<City> {
 		this.subdivision = subdivision;
 	}
 
-	public int compareTo(City other) {
-		if(other == this)
-			return 0;
-		if(label != null && other.label != null)
-			return label.compareTo(other.label);
-		return hashCode() - other.hashCode();
+	public String getName() {
+		return label.getText();
 	}
 
 	public String toString() {
