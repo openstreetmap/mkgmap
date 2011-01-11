@@ -26,7 +26,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**

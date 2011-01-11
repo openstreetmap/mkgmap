@@ -2,10 +2,12 @@ package uk.me.parabola.mkgmap;
 
 import java.io.File;
 
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.util.EnhancedProperties;
 
 public class CommandArgs {
 	private final EnhancedProperties currentOptions;
+	private Sort sort;
 
 	public CommandArgs() {
 		currentOptions = new EnhancedProperties();
@@ -105,7 +107,16 @@ public class CommandArgs {
 		
 		return fileOutputDir;
 	}
-	
+
+	public Sort getSort() {
+		assert sort != null;
+		return sort;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
+	}
+
 	public boolean isForceUpper() {
 		return currentOptions.getProperty("lower-case") == null;
 	}

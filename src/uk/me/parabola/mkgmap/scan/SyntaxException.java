@@ -14,11 +14,9 @@
  * Author: Steve Ratcliffe
  * Create date: 03-Nov-2008
  */
-package uk.me.parabola.mkgmap.osmstyle.eval;
+package uk.me.parabola.mkgmap.scan;
 
 import java.util.Formatter;
-
-import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
  * A syntax error in a rule file.

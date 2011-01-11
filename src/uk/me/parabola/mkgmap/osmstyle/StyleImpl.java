@@ -49,12 +49,12 @@ import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
 import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**

@@ -29,7 +29,7 @@ import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;

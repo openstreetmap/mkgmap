@@ -34,8 +34,8 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**

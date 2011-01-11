@@ -30,9 +30,9 @@ import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;

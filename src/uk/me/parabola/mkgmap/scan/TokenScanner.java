@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
-
 /**
  * Read a file in terms of word and symbol tokens.
  *
