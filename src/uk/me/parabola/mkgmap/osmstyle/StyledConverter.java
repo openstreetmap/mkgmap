@@ -661,7 +661,7 @@ public class StyledConverter implements OsmConverter {
 			zip = element.getTag("openGeoDB:postal_codes");
 		
 		if(city == null)
-			city = element.getTag("openGeoDB:sort_name");
+			city = element.getTag("openGeoDB:name");
 		
 		if(city != null)
 			ms.setCity(city);

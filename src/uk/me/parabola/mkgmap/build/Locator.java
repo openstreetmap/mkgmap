@@ -451,7 +451,7 @@ public class Locator {
 		String decodeString = stringToDecode.toUpperCase().trim();
 
 		// German umlaut resolution
-		decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
+		//decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
 		
 		//if(decodeString.equals(stringToDecode) == false)
 		//	System.out.println(stringToDecode + " -> " + decodeString);
