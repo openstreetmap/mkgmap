@@ -21,7 +21,7 @@ import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5CoastDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
-public class CoastlineFileLoader {
+public final class CoastlineFileLoader {
 
 	private static final Logger log = Logger
 			.getLogger(CoastlineFileLoader.class);
@@ -62,7 +62,7 @@ public class CoastlineFileLoader {
 		this.coastlineFiles = new HashSet<String>();
 	}
 
-	private static CoastlineFileLoader loader = new CoastlineFileLoader();
+	private static final CoastlineFileLoader loader = new CoastlineFileLoader();
 
 	public static synchronized CoastlineFileLoader getCoastlineLoader() {
 		return loader;

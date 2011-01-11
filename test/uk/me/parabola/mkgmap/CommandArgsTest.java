@@ -23,8 +23,9 @@ import java.util.Properties;
 import uk.me.parabola.imgfmt.Utils;
 
 import func.lib.TestUtils;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the command line argument processing.
@@ -156,8 +157,8 @@ public class CommandArgsTest {
 	}
 
 	private void createFile(String name, String content) throws IOException {
-		Writer w = null;
 		TestUtils.registerFile(name);
+		Writer w = null;
 		try {
 			w = new FileWriter(name);
 			w.append(content);

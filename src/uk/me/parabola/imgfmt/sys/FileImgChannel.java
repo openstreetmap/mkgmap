@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.ReadFailedException;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+
+import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * This is an implementation of ImgChannel that delegates to a regular channel.
@@ -35,16 +35,12 @@ public class FileImgChannel implements ImgChannel {
 	private final FileChannel channel;
 	private long position;
 
-	public FileImgChannel(String filename) {
-		this(filename, "rw");
-	}
-
 	public FileImgChannel(String filename, String mode) {
 		RandomAccessFile raf;
 		try {
 			raf = new RandomAccessFile(filename, mode);
 		} catch (FileNotFoundException e) {
-			throw new ReadFailedException("Couldnot open " + filename, e);
+			throw new ReadFailedException("Could not open " + filename, e);
 		}
 		this.channel = raf.getChannel();
 	}

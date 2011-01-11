@@ -21,9 +21,10 @@ import java.io.OutputStreamWriter;
 
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for reading in a complete style.
@@ -33,7 +34,7 @@ public class StyleImplTest {
 	private static StyleImpl style;
 
 	@Test
-	public void testGetInfo() throws FileNotFoundException {
+	public void testGetInfo() {
 		printStyle(style);
 		StyleInfo info = style.getInfo();
 		assertEquals("version", "2.2", info.getVersion());
@@ -42,14 +43,14 @@ public class StyleImplTest {
 	}
 
 	@Test
-	public void testGetOption() throws FileNotFoundException {
+	public void testGetOption() {
 		String val = style.getOption("levels");
 
 		assertEquals("option levels", "0:24\n1:20", val);
 	}
 
 	@Test
-	public void testGetNameTagList() throws FileNotFoundException {
+	public void testGetNameTagList() {
 		assertArrayEquals("name tag list",
 				new String[] {"name:en", "name"},
 				style.getNameTagList());

@@ -35,9 +35,6 @@ public class Mdr1MapIndex {
 	}
 
 	public void startSection(int n) {
-		//int sn = sectionToSubsection(n);
-		//if (sn != 0)
-		//	subHeader.setStartSubsection(sn, subWriter.position());
 	}
 
 	public void endSection(int n) {

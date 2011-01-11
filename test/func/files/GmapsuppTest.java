@@ -80,6 +80,7 @@ public class GmapsuppTest extends Base {
 
 		MpsFileReader reader = getMpsFile();
 		List<MapBlock> list = reader.getMaps();
+		reader.close();
 		assertEquals("number of map blocks", 2, list.size());
 
 		// All maps will have the same parameters apart from map name here
@@ -138,7 +139,6 @@ public class GmapsuppTest extends Base {
 		List<MapBlock> list = reader.getMaps();
 		assertEquals("number of map blocks", 2, list.size());
 
-		int count = 0;
 		for (MapBlock map : list) {
 			if (map.getMapNumber() == 63240001) {
 				assertEquals("family id", 150, map.getFamilyId());
@@ -181,6 +181,7 @@ public class GmapsuppTest extends Base {
 
 		MpsFileReader reader = getMpsFile();
 		List<MapBlock> list = reader.getMaps();
+		reader.close();
 		assertEquals("number of map blocks", 2, list.size());
 
 		// Directly check the family id's

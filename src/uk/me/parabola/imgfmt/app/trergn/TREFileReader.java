@@ -180,7 +180,7 @@ public class TREFileReader extends ImgReader {
 		//	String m = reader.getZString();
 		//	System.out.println("C/R msg " + m);
 		//
-		//	msgs.add(m);
+		//	messages.add(m);
 		//
 		//	pos += sect.getItemSize();
 		//}

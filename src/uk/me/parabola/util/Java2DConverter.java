@@ -1,6 +1,6 @@
 package uk.me.parabola.util;
 
-import java.awt.Polygon;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
@@ -103,8 +103,6 @@ public class Java2DConverter {
 	 * 
 	 * @param area
 	 *            the area
-	 * @param wayId
-	 *            the wayid for the new way
 	 * @return a new mkgmap way
 	 */
 	public static List<Coord> singularAreaToPoints(Area area) {
@@ -126,9 +124,11 @@ public class Java2DConverter {
 				points.add(new Coord(Math.round(res[1]), Math.round(res[0])));
 				break;
 			case PathIterator.SEG_LINETO:
+				assert points != null;
 				points.add(new Coord(Math.round(res[1]), Math.round(res[0])));
 				break;
 			case PathIterator.SEG_CLOSE:
+				assert points != null;
 				points.add(points.get(0));
 				return points;
 			default:

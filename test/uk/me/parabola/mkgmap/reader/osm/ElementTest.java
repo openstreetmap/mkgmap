@@ -54,7 +54,7 @@ public class ElementTest {
 	}
 
 	@Test
-	public void testEntryIterator() throws Exception {
+	public void testEntryIterator() {
 		Element el = new Way(1);
 
 		el.addTag("a", "1");

@@ -52,10 +52,11 @@ public class RouteNode implements Comparable<RouteNode> {
 	// only used internally in mkgmap
 	private static final int F_DISCARDED = 0x100; // node has been discarded
 
-	private int offsetNod1 = -1;
+	private static final int MAX_MAIN_ROAD_HEADING_CHANGE = 120;
+	private static final int MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS = 45;
+	private static final int MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS = 50;
 
-	@Deprecated
-	private final int nodeId; // XXX not needed at this point?
+	private int offsetNod1 = -1;
 
 	// arcs from this node
 	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
@@ -76,13 +77,8 @@ public class RouteNode implements Comparable<RouteNode> {
 	// on for now -- unsure of precise mechanic
 	private int nodeClass;
 
-	@Deprecated
-	private static int nodeCount;
-
-	@Deprecated
 	public RouteNode(Coord coord) {
 		this.coord = (CoordNode) coord;
-		nodeId = nodeCount++; // XXX: take coord.getId() instead?
 		setBoundary(this.coord.getOnBoundary());
 	}
 
@@ -163,7 +159,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	 */
 	public void write(ImgFileWriter writer) {
 		if(log.isDebugEnabled())
-			log.debug("writing node, first pass, nod1", nodeId);
+			log.debug("writing node, first pass, nod1", coord.getId());
 		offsetNod1 = writer.position();
 		assert offsetNod1 < 0x1000000 : "node offset doesn't fit in 3 bytes";
 
@@ -212,7 +208,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			// return something so that the program can continue
 			return 0;
 		}
-		assert offsetNod1 != -1: "failed for node " + nodeId + " at " + coord.toDegreeString();
+		assert offsetNod1 != -1: "failed for node " + coord.getId() + " at " + coord.toDegreeString();
 		return offsetNod1;
 	}
 
@@ -278,7 +274,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public String toString() {
-		return nodeId + "";
+		return String.valueOf(coord.getId());
 	}
 
 	/*
@@ -390,10 +386,6 @@ public class RouteNode implements Comparable<RouteNode> {
 			// minDiffBetweenOutgoingAndOtherArcs and the side road
 			// heading differs from the incoming heading by at least
 			// minDiffBetweenIncomingAndOtherArcs
-
-			final int maxMainRoadHeadingChange = 120;
-			final int minDiffBetweenOutgoingAndOtherArcs = 45;
-			final int minDiffBetweenIncomingAndOtherArcs = 50;
 
 			// list of outgoing arcs discovered at this node
 			List<RouteArc> outgoingArcs = new ArrayList<RouteArc>();
@@ -523,7 +515,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					mainHeadingDelta += 360;
 				//log.info(inRoadDef + " continues to " + outArc.getRoadDef() + " with a heading change of " + mainHeadingDelta + " at " + coord.toOSMURL());
 
-				if(Math.abs(mainHeadingDelta) > maxMainRoadHeadingChange) {
+				if(Math.abs(mainHeadingDelta) > MAX_MAIN_ROAD_HEADING_CHANGE) {
 					// if the continuation road heading change is
 					// greater than maxMainRoadHeadingChange don't
 					// adjust anything
@@ -585,11 +577,11 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(rightTurnRequired(inHeading, outHeading, otherHeading)) {
 						// side road to the right
 						if((mask & ATH_OUTGOING) != 0 &&
-						   Math.abs(outToOtherDelta) < minDiffBetweenOutgoingAndOtherArcs)
-							newHeading = outHeading + minDiffBetweenOutgoingAndOtherArcs;
+						   Math.abs(outToOtherDelta) < MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS)
+							newHeading = outHeading + MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
-						   Math.abs(inToOtherDelta) < minDiffBetweenIncomingAndOtherArcs) {
-							int nh = inHeading + minDiffBetweenIncomingAndOtherArcs;
+						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
+							int nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh > newHeading)
 								newHeading = nh;
 						}
@@ -600,11 +592,11 @@ public class RouteNode implements Comparable<RouteNode> {
 					else {
 						// side road to the left
 						if((mask & ATH_OUTGOING) != 0 &&
-						   Math.abs(outToOtherDelta) < minDiffBetweenOutgoingAndOtherArcs)
-							newHeading = outHeading - minDiffBetweenOutgoingAndOtherArcs;
+						   Math.abs(outToOtherDelta) < MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS)
+							newHeading = outHeading - MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
-						   Math.abs(inToOtherDelta) < minDiffBetweenIncomingAndOtherArcs) {
-							int nh = inHeading - minDiffBetweenIncomingAndOtherArcs;
+						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
+							int nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh < newHeading)
 								newHeading = nh;
 						}

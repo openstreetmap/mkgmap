@@ -88,12 +88,12 @@ public class GmapsuppBuilder implements Combiner {
 	 * We collect information about the map to be used in the TDB file and
 	 * for preparing the gmapsupp file.
 	 *
-	 * @param finfo Information about the img file.
+	 * @param info Information about the img file.
 	 */
-	public void onMapEnd(FileInfo finfo) {
-		String mapname = finfo.getFilename();
+	public void onMapEnd(FileInfo info) {
+		String mapname = info.getFilename();
 
-		files.put(mapname, finfo);
+		files.put(mapname, info);
 	}
 
 	/**
@@ -190,6 +190,7 @@ public class GmapsuppBuilder implements Combiner {
 
 			for (ProductBlock b : mr.getProducts())
 				mpsFile.addProduct(b);
+			mr.close();
 		} catch (IOException e) {
 			log.error("Could not read MPS file from gmapsupp", e);
 		}

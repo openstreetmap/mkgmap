@@ -1,7 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.Polygon;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
@@ -75,9 +74,6 @@ public class MultiPolygonRelation extends Relation {
 	 *            The relation to base this one on.
 	 * @param wayMap
 	 *            Map of all ways.
-	 * @param wayRemoveTags
-	 *            Marks which tags should be removed from a way after the
-	 *            complete multipolygon processing has finished
 	 * @param bbox
 	 *            The bounding box of the tile
 	 */

@@ -12,9 +12,11 @@
       <w>bitsets</w>
       <w>bitstream</w>
       <w>checksum</w>
+      <w>classname</w>
       <w>coord</w>
       <w>coords</w>
       <w>defs</w>
+      <w>dest</w>
       <w>discontiguous</w>
       <w>endian</w>
       <w>etrex</w>
@@ -32,6 +34,7 @@
       <w>heibler</w>
       <w>imgfmt</w>
       <w>indexable</w>
+      <w>intelli</w>
       <w>interspaced</w>
       <w>isolines</w>
       <w>isophase</w>
@@ -43,6 +46,7 @@
       <w>maxspeed</w>
       <w>moveto</w>
       <w>multi</w>
+      <w>multimap</w>
       <w>multipolygon</w>
       <w>nonspacing</w>
       <w>occulting</w>
@@ -61,6 +65,7 @@
       <w>racon</w>
       <w>racons</w>
       <w>ratcliffe</w>
+      <w>recsize</w>
       <w>reentrancy</w>
       <w>resize</w>
       <w>resized</w>
@@ -76,6 +81,8 @@
       <w>subtree</w>
       <w>superclass</w>
       <w>tagname</w>
+      <w>tagval</w>
+      <w>taskdef</w>
       <w>topo</w>
       <w>tweeze</w>
       <w>unshifted</w>
@@ -85,6 +92,7 @@
       <w>xcharset</w>
       <w>xcode</w>
       <w>xmlattr</w>
+      <w>zoraster</w>
     </words>
   </dictionary>
 </component>

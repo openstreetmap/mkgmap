@@ -391,7 +391,8 @@ public class ExtTypeAttributes {
 					}
 				}
 				public int compareTo(SeamarkLight other) {
-					return sectorStart - other.sectorStart;
+					if (sectorStart == other.sectorStart) return 0;
+					else return sectorStart > other.sectorStart? 1: -1;
 				}
 			}
 			List<SeamarkLight> lights = new ArrayList<SeamarkLight>();

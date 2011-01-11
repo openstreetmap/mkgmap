@@ -27,7 +27,6 @@ package uk.me.parabola.imgfmt.app.mdr;
 public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 	private int subtype;
 	private Mdr11Record mdr11ref;
-	private int fullType; // TODO remove this, just for testing
 
 	public int compareTo(Mdr10Record o) {
 		if (mdr11ref.getRecordNumber() == o.mdr11ref.getRecordNumber())
@@ -52,9 +51,5 @@ public class Mdr10Record extends RecordBase implements Comparable<Mdr10Record> {
 
 	public void setSubtype(int subtype) {
 		this.subtype = subtype;
-	}
-
-	public void setFullType(int fullType) {
-		this.fullType = fullType;
 	}
 }

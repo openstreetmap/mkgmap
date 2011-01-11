@@ -17,7 +17,7 @@ import java.util.Set;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
- * Holds the keystring, rule and tags that can be changed by the rule.
+ * Holds the key string, rule and tags that can be changed by the rule.
  * @author Steve Ratcliffe
  */
 class RuleDetails {

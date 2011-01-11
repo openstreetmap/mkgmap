@@ -96,7 +96,7 @@ public class RuleSetTest {
 	}
 
 	@Test
-	public void testActionVarSetOnExistsRule2() throws Exception {
+	public void testActionVarSetOnExistsRule2() {
 		RuleSet rs = makeRuleSet(MAXSPEED_EXAMPLE);
 
 		Way el = new Way(1);

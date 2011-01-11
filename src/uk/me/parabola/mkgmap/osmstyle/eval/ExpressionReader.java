@@ -102,7 +102,7 @@ public class ExpressionReader {
 
 		Op op;
 		try {
-			op = AbstractOp.createOp(value);
+			op = createOp(value);
 			while (!opStack.isEmpty() && opStack.peek().hasHigherPriority(op))
 				runOp();
 		} catch (SyntaxException e) {

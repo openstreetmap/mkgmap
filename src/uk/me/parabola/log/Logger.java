@@ -132,14 +132,6 @@ public class Logger {
 		return log.isLoggable(Level.INFO);
 	}
 
-	public boolean isWarnEnabled() {
-		return log.isLoggable(Level.WARNING);
-	}
-
-	public boolean isErrorEnabled() {
-		return log.isLoggable(Level.SEVERE);
-	}
-
 	/**
 	 * Debug message.  We are using the j.u.l FINE level for this.  As it is
 	 * possible that the toString method on the logged object is expensive

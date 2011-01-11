@@ -119,7 +119,7 @@ public abstract class Overview implements Comparable<Overview> {
 		}
 
 		if(extType != ov.extType) {
-			return extType - ov.extType;
+			return extType > ov.extType? 1: -1;
 		}
 
 		int res;

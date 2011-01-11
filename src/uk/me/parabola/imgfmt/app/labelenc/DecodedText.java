@@ -30,17 +30,8 @@ public class DecodedText {
 	 */
 	private int offsetAdjustment;
 
-	/**
-	 * The raw bytes as read.  If you are not changing character set you might
-	 * want these to write the label out again.
-	 *
-	 * XXX do we really need this??
-	 */
-	private final byte[] rawBytes;
-
 	public DecodedText(byte[] ba, Charset charSet) {
 		text = new String(ba, 0, ba.length, charSet);
-		rawBytes = ba;
 	}
 
 

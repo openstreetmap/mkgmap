@@ -63,6 +63,7 @@ public class UsefulFormatter extends Formatter {
 
 		sb.append('\n');
 
+		@SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
 		Throwable t = record.getThrown();
 		if (t != null) {
 			StringWriter out = new StringWriter();

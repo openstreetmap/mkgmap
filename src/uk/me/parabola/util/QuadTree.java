@@ -83,10 +83,9 @@ public class QuadTree {
 	private boolean isCloseToPolygon(Coord point, List<Coord> polygon,
 			int gap) {
 		Iterator<Coord> polyIter = polygon.iterator();
-		Coord c1 = null;
 		Coord c2 = polyIter.next();
 		while (polyIter.hasNext()) {
-			c1 = c2;
+			Coord c1 = c2;
 			c2 = polyIter.next();
 			double dist = distanceToSegment(c1, c2, point);
 			if (dist <= gap) {

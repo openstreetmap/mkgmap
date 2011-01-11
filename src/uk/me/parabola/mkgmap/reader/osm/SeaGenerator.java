@@ -48,11 +48,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private boolean allowSeaSectors = true;
 	private boolean extendSeaSectors;
 	private String[] landTag = { "natural", "land" };
-	private boolean floodblocker = false;
+	private boolean floodblocker;
 	private int fbGap = 40;
 	private double fbRatio = 0.5d;
 	private int fbThreshold = 20;
-	private boolean fbDebug = false;
+	private boolean fbDebug;
 
 	private ElementSaver saver;
 
@@ -451,6 +451,23 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			List<List<Coord>> clipped = LineClipper.clip(bounds, points);
 			if (clipped != null) {
 				log.info("clipping", segment);
+				if (clipped.size() > 0) {
+					// the LineClipper sometimes returns un-joined clips
+					// need to rejoin them here
+					log.info(clipped.size(),"clippings. Try to join them.");
+					List<Way> clippedWays = new ArrayList<Way>(clipped.size());
+					for (List<Coord> clippedPoints : clipped) {
+						clippedWays.add(new Way(FakeIdGenerator.makeFakeId(), clippedPoints));
+					}
+					clippedWays = joinWays(clippedWays);
+					if (clippedWays.size() != clipped.size()) {
+						clipped = new ArrayList<List<Coord>>(clippedWays.size());
+						for (Way w : clippedWays) {
+							clipped.add(w.getPoints());
+						}
+					}
+					log.info(clipped.size(),"joined clippings.");
+				}
 				toBeRemoved.add(segment);
 				for (List<Coord> pts : clipped) {
 					long id = FakeIdGenerator.makeFakeId();

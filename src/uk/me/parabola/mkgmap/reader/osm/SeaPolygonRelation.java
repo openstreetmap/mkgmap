@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.GpxCreator;
@@ -29,14 +30,13 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 	private int floodBlockerGap = 40;
 	private double floodBlockerRatio = 0.5d;
 	private int floodBlockerThreshold = 20;
-	private boolean debug = false;
-	private DecimalFormat format = new DecimalFormat("0.0000");
+	private boolean debug;
+	private final DecimalFormat format = new DecimalFormat("0.0000");
 	private Rule floodBlockerRules;
 	
-	private String[] landTag = new String[] {"natural","land"};
+	private final String[] landTag = {"natural","land"};
 
-	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap,
-			uk.me.parabola.imgfmt.app.Area bbox) {
+	public SeaPolygonRelation(Relation other, Map<Long, Way> wayMap, Area bbox) {
 		super(other, wayMap, bbox);
 		this.landCoords = new QuadTree(bbox);
 		this.seaCoords = new QuadTree(bbox);
@@ -189,15 +189,14 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		w = null;
 		double area = 0;
 		Iterator<Coord> polyIter = polygon.iterator();
-		Coord c1 = null;
 		Coord c2 = polyIter.next();
 		while (polyIter.hasNext()) {
-			c1 = c2;
+			Coord c1 = c2;
 			c2 = polyIter.next();
 			area += (double) (c2.getLongitude() + c1.getLongitude())
 					* (c1.getLatitude() - c2.getLatitude());
 		}
-		area = area / 2.0d;
+		area /= 2.0d;
 		return area;
 	}
 

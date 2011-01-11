@@ -392,11 +392,9 @@ public abstract class DEM {
 			final int id;
 			final ArrayList<Coord> points;
 			final double level;
-			final boolean isClosed;
 
 			private Isoline(double level) {
 				this.level = level;
-				isClosed = false;
 				id = lastId++;
 				points = new ArrayList<Coord>();
 			}

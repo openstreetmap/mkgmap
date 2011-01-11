@@ -9,10 +9,6 @@ public class CommandArgs {
 	private final EnhancedProperties currentOptions;
 	private Sort sort;
 
-	public CommandArgs() {
-		currentOptions = new EnhancedProperties();
-	}
-
 	public CommandArgs(EnhancedProperties args) {
 		currentOptions = new EnhancedProperties(args);
 	}

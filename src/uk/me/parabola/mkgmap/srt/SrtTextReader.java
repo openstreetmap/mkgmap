@@ -334,7 +334,7 @@ public class SrtTextReader {
 		String outfile = "out.srt";
 		if (args.length > 1)
 			outfile = args[1];
-		ImgChannel chan = new FileImgChannel(outfile);
+		ImgChannel chan = new FileImgChannel(outfile, "r");
 		SRTFile sf = new SRTFile(chan);
 
 		SrtTextReader tr = new SrtTextReader(infile);

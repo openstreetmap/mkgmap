@@ -74,15 +74,6 @@ public class MapPointFastFindMap{
 		return p;
 	}
 
-	public MapPoint get(String name) {
-		ArrayList<MapPoint> list = map.get(name);
-
-		if(list != null)		
-			return list.get(0);
-		else
-			return null;
-	}
-	   
 	public Collection<MapPoint> getList(String name)
 	{
 		return map.get(name);

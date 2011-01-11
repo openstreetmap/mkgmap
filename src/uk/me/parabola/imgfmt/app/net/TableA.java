@@ -74,6 +74,9 @@ public class TableA {
 		}
 
 		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (obj == null || getClass() != obj.getClass()) return false;
+
 			Arc arc = (Arc) obj;
 			return first.equals(arc.first)
 				&& second.equals(arc.second)

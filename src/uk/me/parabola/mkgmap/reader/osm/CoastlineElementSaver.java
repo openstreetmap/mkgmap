@@ -13,12 +13,9 @@ public class CoastlineElementSaver extends ElementSaver {
 		super(args);
 	}
 
-	@Override
 	public void addNode(Node node) {
-		return;
 	}
 
-	@Override
 	public void addWay(Way way) {
 		String tag = way.getTag("natural");
 		if (tag != null && tag.contains("coastline")) {
@@ -28,15 +25,9 @@ public class CoastlineElementSaver extends ElementSaver {
 		}
 	}
 
-	@Override
 	public void addRelation(Relation rel) {
-		return;
 	}
 
-	@Override
 	public void convert(OsmConverter converter) {
-		return;
 	}
-	
-	
 }

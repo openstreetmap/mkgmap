@@ -1,6 +1,6 @@
 package uk.me.parabola.util;
 
-import java.awt.Rectangle;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,7 +60,7 @@ public class QuadTreeNode {
 	}
 
 	public QuadTreeNode(Area bounds) {
-		this(bounds, Collections.EMPTY_LIST);
+		this(bounds, Collections.<Coord>emptyList());
 	}
 
 	public QuadTreeNode(Area bounds, Collection<Coord> points) {
