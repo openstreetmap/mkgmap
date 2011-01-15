@@ -73,7 +73,7 @@ public class TdbBuilder implements Combiner {
 
 		areaName = args.get("area-name", "Overview Map");
 
-		int familyId = args.get("family-id", 0);
+		int familyId = args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
 		int productId = args.get("product-id", 1);
 		short productVersion = (short)args.get("product-version", 100);
 

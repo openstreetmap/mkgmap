@@ -359,7 +359,7 @@ public class FileInfo {
 	}
 
 	public int getFamilyId() {
-		return args.get("family-id", 0);
+		return args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
 	}
 
 	public int getProductId() {
