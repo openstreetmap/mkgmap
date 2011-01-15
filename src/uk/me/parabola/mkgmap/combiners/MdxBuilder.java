@@ -31,7 +31,7 @@ public class MdxBuilder implements Combiner {
 	private String outputDir;
 
 	public void init(CommandArgs args) {
-		int familyId = args.get("family-id", 0);
+		int familyId = args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
 		int productId = args.get("product-id", 1);
 
 		mdxFilename = args.get("overview-mapname", "osm") + ".mdx";

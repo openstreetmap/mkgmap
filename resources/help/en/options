@@ -136,6 +136,8 @@ Product description options:
 
 --family-id
 	This is an integer that identifies a family of products.
+	Range: [1..9999]
+	Mkgmap default: 6324
 
 --family-name
 	If you build several maps, this option describes the
