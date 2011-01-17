@@ -83,7 +83,7 @@ public class Mdr11 extends MdrMapSection {
 
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + 6 + sizes.getCitySize() + sizes.getStrOffSize();
+		return sizes.getMapSize() + 6 + sizes.getCitySizeFlagged() + sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
@@ -99,7 +99,7 @@ public class Mdr11 extends MdrMapSection {
 		PointerSizes sizes = getSizes();
 
 		// two bit field for city bytes.  minimum size of 2
-		int citySize = sizes.getCitySize();
+		int citySize = sizes.getCitySizeFlagged();
 		if (citySize > 2)
 			mdr11flags |= (citySize-2) << 2;
 

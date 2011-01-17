@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009.
+ * Copyright (C) 2011.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -69,15 +69,6 @@ public class Mdr6 extends MdrMapSection {
 		return zips.size();
 	}
 
-	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		return numberToPointerSize(zips.size());
-	}
 
 	/**
 	 * Known structure:

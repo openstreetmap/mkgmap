@@ -113,17 +113,6 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		// Since the city is flagged in mdr11, you need an extra bit to save them
-		return numberToPointerSize(cities.size() << 1);
-	}
-
-	/**
 	 * Known structure:
 	 * bits 0-1: size of local city index - 1 (all values appear to work)
 	 * bits 2-3: size of label offset (only 0 and 3 appear to work)

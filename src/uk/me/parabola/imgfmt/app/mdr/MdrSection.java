@@ -111,10 +111,6 @@ public abstract class MdrSection extends ConfigBase {
 			this.sections = sections;
 		}
 
-		public int getCityFlag() {
-			return flagForSize(getCitySize());
-		}
-
 		public int getMapSize() {
 			return sections[1].getPointerSize();
 		}
@@ -123,24 +119,38 @@ public abstract class MdrSection extends ConfigBase {
 			return sections[5].getPointerSize();
 		}
 
+		/**
+		 * Get the number of bytes required to represent a city when it is
+		 * flagged.  That is if there is one bit reserved for a flag.
+		 * @return Number of bytes to represent a city record number and a
+		 * one bit flag.
+		 */
+		public int getCitySizeFlagged() {
+			return numberToPointerSize(sections[5].getNumberOfItems() << 1);
+		}
+
+		public int getCityFlag() {
+			return flagForSize(getCitySizeFlagged());
+		}
+
 		public int getStreetSize() {
 			return sections[7].getPointerSize();
 		}
 
-		/** size for pointers within mdr10 that point to mdr11.
-		 * I believe that you need to allow an extra bit for the flag in the
-		 * top bit
+		public int getPoiSize() {
+			return sections[11].getPointerSize();
+		}
+
+		/**
+		 * The number of bytes required to represent a POI (mdr11) record number
+		 * and a flag bit.
 		 */
-		public int getPoiTypeSize() {
+		public int getPoiSizeFlagged() {
 			return numberToPointerSize(sections[11].getNumberOfItems() << 1);
 		}
 
-		public int getPoiTypeFlag() {
-			return flagForSize(getPoiTypeSize());
-		}
-
-		public int getPoiSize() {
-			return sections[11].getPointerSize();
+		public int getPoiFlag() {
+			return flagForSize(getPoiSizeFlagged());
 		}
 
 		public int getStrOffSize() {

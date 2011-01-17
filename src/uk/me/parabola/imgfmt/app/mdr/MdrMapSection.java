@@ -51,15 +51,17 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
 		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
-		putN(writer, getSizes().getCitySize(), cityIndex | flag);
+		putN(writer, getSizes().getCitySizeFlagged(), cityIndex | flag);
 	}
 
 	protected void putRegionIndex(ImgFileWriter writer, int region) {
-		putN(writer, getSizes().getCitySize(), region);
+		// This is only called when putCityIndex might also be called and so has to be
+		// the same size (probably ;)
+		putN(writer, getSizes().getCitySizeFlagged(), region);
 	}
 
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
-		int flag = isNew? getSizes().getPoiTypeFlag(): 0;
-		putN(writer, getSizes().getPoiTypeSize(), poiIndex | flag);
+		int flag = isNew? getSizes().getPoiFlag(): 0;
+		putN(writer, getSizes().getPoiSizeFlagged(), poiIndex | flag);
 	}
 }
