@@ -35,14 +35,14 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * sub2 points into MDR 10 (POI types)
  * sub3 points into MDR 7 (street names)
  * sub4 points into MDR 5 (cities)
- * sub5 points into MDR 6
+ * sub5 points into MDR 6 (zips)
  * sub6 points into MDR 20
  * sub7 points into MDR 21
  * sub8 points into MDR 22
  *
  * @author Steve Ratcliffe
  */
-public class Mdr1 extends MdrSection {
+public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
 
 	public Mdr1(MdrConfig config) {
@@ -116,5 +116,9 @@ public class Mdr1 extends MdrSection {
 	 */
 	public int getNumberOfItems() {
 		return maps.size();
+	}
+
+	public int getExtraValue() {
+		return 0x01;
 	}
 }

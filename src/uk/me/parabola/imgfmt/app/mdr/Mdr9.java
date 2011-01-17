@@ -24,7 +24,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr9 extends MdrSection {
+public class Mdr9 extends MdrSection implements HasHeaderFlags {
 	private final Map<Integer, Integer> index = new LinkedHashMap<Integer, Integer>();
 
 	public Mdr9(MdrConfig config) {
@@ -64,5 +64,9 @@ public class Mdr9 extends MdrSection {
 			index.put(ent.getKey(), offset);
 			offset += ent.getValue();
 		}
+	}
+
+	public int getExtraValue() {
+		return 0x00;
 	}
 }

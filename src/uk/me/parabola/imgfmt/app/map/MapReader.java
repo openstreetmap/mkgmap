@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.NETFileReader;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
@@ -152,6 +153,12 @@ public class MapReader implements Closeable {
 
 	public List<Region> getRegions() {
 		return lblFile.getRegions();
+	}
+	
+	public List<Zip> getZips() {
+		// need to be joined with zip information from the addresses
+		// where are the addresses stored?
+		return lblFile.getZips();
 	}
 
 	public Area getTreBounds() {

@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * 
  * @author Steve Ratcliffe
  */
-public class Mdr4 extends MdrSection {
+public class Mdr4 extends MdrSection implements HasHeaderFlags {
 	private final Set<Mdr4Record> poiTypes = new HashSet<Mdr4Record>();
 
 	public Mdr4(MdrConfig config) {
@@ -70,5 +70,10 @@ public class Mdr4 extends MdrSection {
 	 */
 	public int getNumberOfItems() {
 		return poiTypes.size();
+	}
+
+
+	public int getExtraValue() {
+		return 0x00;
 	}
 }

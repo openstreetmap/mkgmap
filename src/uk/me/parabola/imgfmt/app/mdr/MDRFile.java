@@ -19,6 +19,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
@@ -31,13 +32,13 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * @author Steve Ratcliffe
  */
 public class MDRFile extends ImgFile {
-
 	private final MDRHeader mdrHeader;
 
 	// The sections
 	private final Mdr1 mdr1;
 	private final Mdr4 mdr4;
 	private final Mdr5 mdr5;
+	private final Mdr6 mdr6;
 	private final Mdr7 mdr7;
 	private final Mdr8 mdr8;
 	private final Mdr9 mdr9;
@@ -75,6 +76,7 @@ public class MDRFile extends ImgFile {
 		mdr1 = new Mdr1(config);
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
+		mdr6 = new Mdr6(config);
 		mdr7 = new Mdr7(config);
 		mdr8 = new Mdr8(config);
 		mdr9 = new Mdr9(config);
@@ -86,7 +88,7 @@ public class MDRFile extends ImgFile {
 		mdr15 = new Mdr15(config);
 		this.sections = new MdrSection[]{
 				null,
-				mdr1, null, null, mdr4, mdr5, null,
+				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
 				mdr13, mdr14, mdr15
 		};
@@ -127,6 +129,11 @@ public class MDRFile extends ImgFile {
 			int strOff = createString(name);
 			mdr5.addCity(currentMap, city, labelOffset, name, strOff);
 		}
+	}
+	
+	public void addZip(Zip zip) {
+		int strOff = createString(zip.getLabel().getText());
+		mdr6.addZip(currentMap, zip, strOff);
 	}
 
 	public void addPoint(Point point, Mdr5Record city, boolean isCity) {
@@ -195,8 +202,8 @@ public class MDRFile extends ImgFile {
 		mdr8.setIndex(mdr7.getIndex());
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
-		//writeSection(writer, 6, mdr6);
-
+		writeSection(writer, 6, mdr6);
+		
 		// 9 depends on stuff from 10.
 		mdr9.setGroups(mdr10.getGroupSizes());
 		writeSection(writer, 9, mdr9);
@@ -214,6 +221,7 @@ public class MDRFile extends ImgFile {
 		mdr1.writeSectData(writer);
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
+		mdrHeader.setExtraValue(1, mdr1.getExtraValue());
 	}
 
 	/**

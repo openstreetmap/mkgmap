@@ -72,8 +72,7 @@ public class MDRHeader extends CommonHeader {
 		writer.putChar((char) 2); // TODO from srt
 		writer.putChar((char) 14);
 
-		sections[1].writeSectionInfo(writer);
-		writer.putInt(1);
+		sections[1].writeSectionInfo(writer, true, true);
 
 		sections[2].writeSectionInfo(writer);
 		writer.putInt(0);
@@ -81,20 +80,17 @@ public class MDRHeader extends CommonHeader {
 		sections[3].writeSectionInfo(writer);
 		writer.putInt(0);
 
-		sections[4].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[4].writeSectionInfo(writer, true, true);
 
 		sections[5].writeSectionInfo(writer, true, true);
 
-		sections[6].writeSectionInfo(writer);
-		writer.putInt(2);
+		sections[6].writeSectionInfo(writer, true, true);
 
 		sections[7].writeSectionInfo(writer, true, true);
 
 		sections[8].writeSectionInfo(writer, true, true);
 
-		sections[9].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[9].writeSectionInfo(writer, true, true);
 
 		sections[10].writeSectionInfo(writer, false, true);
 
@@ -102,11 +98,9 @@ public class MDRHeader extends CommonHeader {
 
 		sections[12].writeSectionInfo(writer, true, true);
 
-		sections[13].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[13].writeSectionInfo(writer, true, true);
 
-		sections[14].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[14].writeSectionInfo(writer, true, true);
 
 		sections[15].writeSectionInfo(writer);
 		writer.put((byte) 0);

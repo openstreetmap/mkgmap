@@ -33,6 +33,7 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.Mdr5Record;
@@ -163,6 +164,7 @@ public class MdrBuilder implements Combiner {
 			addPoints(mr, cityMap);
 			addCities(cityMap);
 			addStreets(mr);
+			addZips(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {
@@ -186,6 +188,12 @@ public class MdrBuilder implements Combiner {
 		for (Mdr5Record c : cityMap.values()) {
 			mdrFile.addCity(c);
 		}
+	}
+	
+	private void addZips(MapReader mr) {
+		List<Zip> zips = mr.getZips();
+		for (Zip zip : zips)
+			mdrFile.addZip(zip);
 	}
 
 	/**
