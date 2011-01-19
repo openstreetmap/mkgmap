@@ -45,9 +45,8 @@ public class Mdr7 extends MdrMapSection {
 	/**
 	 * Since we change the number of records by removing some after sorting,
 	 * we sort and de-duplicate here.
-	 * @param sectionNumber The one-based section number.
 	 */
-	public void init(int sectionNumber) {
+	public void finish() {
 		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), streets);
 
 		// De-duplicate the street names so that there is only one entry
@@ -61,8 +60,6 @@ public class Mdr7 extends MdrMapSection {
 			last = r;
 			streets.add(r);
 		}
-
-		super.init(sectionNumber);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

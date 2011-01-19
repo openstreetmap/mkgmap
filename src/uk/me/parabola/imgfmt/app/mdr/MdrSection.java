@@ -100,6 +100,16 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
+	 * This is called after all the sections are read in but before any section is written.
+	 *
+	 * This routine may modify the number of items in the section.  It should also do
+	 * anything that is required before writing out, particularly if another section
+	 * is going to depend on the results.
+	 */
+	public void finish() {
+	}
+
+	/**
 	 * Provides the pointer sizes required to hold record of offset values
 	 * in the various sections.
 	 */

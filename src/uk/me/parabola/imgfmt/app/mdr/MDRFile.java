@@ -176,7 +176,10 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
-		mdr5.finishCities();
+		for (MdrSection s : sections) {
+			if (s != null)
+				s.finish();
+		}
 
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
@@ -236,7 +239,7 @@ public class MDRFile extends ImgFile {
 		if (section instanceof MdrMapSection) {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
-			mapSection.init(sectionNumber);
+			mapSection.initIndex(sectionNumber);
 		}
 
 		if (section instanceof HasHeaderFlags)

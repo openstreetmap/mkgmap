@@ -32,7 +32,7 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 	 * data is read into them.
 	 * @param sectionNumber The one-based section number.
 	 */
-	public void init(int sectionNumber) {
+	public final void initIndex(int sectionNumber) {
 		// Set the size required to store the record numbers for this section.
 		// There are no flags or minimums required here, unlike in setPointerSize()
 		// which does a similar thing.

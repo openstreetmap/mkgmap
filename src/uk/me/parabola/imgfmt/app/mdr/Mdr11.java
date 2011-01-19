@@ -47,11 +47,15 @@ public class Mdr11 extends MdrMapSection {
 		return poi;
 	}
 
-	public void writeSectData(ImgFileWriter writer) {
+	/**
+	 * Sort the section.
+	 */
+	public void finish() {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
-		// De-duplicate the street names so that there is only one entry
+		// De-duplicate the poi names so that there is only one entry
 		// per map for the same name.
+		// XXX we do this for streets, should it be done for POIs too?
 		pois.clear();
 		Mdr11Record last = new Mdr11Record();
 		for (SortKey<Mdr11Record> sk : keys) {
@@ -61,6 +65,9 @@ public class Mdr11 extends MdrMapSection {
 			last = r;
 			pois.add(r);
 		}
+	}
+
+	public void writeSectData(ImgFileWriter writer) {
 
 		int count = 1;
 		for (Mdr11Record poi : pois) {

@@ -49,7 +49,7 @@ public class Mdr5 extends MdrMapSection {
 	/**
 	 * Called after all cities to sort and number them.
 	 */
-	public void finishCities() {
+	public void finish() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
 		List<SortKey<Mdr5Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), cities);
