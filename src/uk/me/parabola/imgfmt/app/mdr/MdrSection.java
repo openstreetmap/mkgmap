@@ -163,8 +163,13 @@ public abstract class MdrSection extends ConfigBase {
 			return flagForSize(getPoiSizeFlagged());
 		}
 
+		/**
+		 * Size of the pointer required to index a byte offset into mdr15 (strings).
+		 * There is a minimum of 3 for this value.
+		 * @return Pointer size required for the string offset value.
+		 */
 		public int getStrOffSize() {
-			return sections[15].getPointerSize();
+			return Math.max(3, sections[15].getPointerSize());
 		}
 
 		private int flagForSize(int size) {
