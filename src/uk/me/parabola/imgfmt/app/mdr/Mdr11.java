@@ -120,12 +120,13 @@ public class Mdr11 extends MdrMapSection {
 
 			// need to step back to find the first...
 			int rec = number;
-			while (--rec > 1) {
+			while (rec > 1) {
 				String p = getPrefixForRecord(rec);
 				if (!p.equals(prefix)) {
 					rec++;
 					break;
 				}
+				rec--;
 			}
 
 			Mdr12Record indexRecord = new Mdr12Record();
