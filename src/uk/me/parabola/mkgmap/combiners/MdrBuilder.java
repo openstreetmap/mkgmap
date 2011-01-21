@@ -236,7 +236,7 @@ public class MdrBuilder implements Combiner {
 
 			Mdr5Record city = null;
 			boolean isCity;
-			if (p.getType() < 0x11) {
+			if (p.getType() <= 0x11) {
 				// This is itself a city, it gets a reference to its own MDR 5 record.
 				// and we also use it to set the name of the city.
 				city = cityMap.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
