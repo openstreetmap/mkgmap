@@ -38,6 +38,10 @@ public class Mdr1Record extends RecordBase {
 			writer.putInt(indexOffset);
 	}
 
+	public int getMapNumber() {
+		return mapNumber;
+	}
+
 	public Mdr1MapIndex getMdrMapIndex() {
 		return mdrMapIndex;
 	}

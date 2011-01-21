@@ -13,6 +13,8 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -62,6 +64,22 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 			Mdr1MapIndex mapIndex = new Mdr1MapIndex();
 			rec.setMdrMapIndex(mapIndex);
 		}
+	}
+
+	/**
+	 * The maps must be sorted in numerical order.
+	 */
+	public void finish() {
+		Collections.sort(maps, new Comparator<Mdr1Record>() {
+			public int compare(Mdr1Record o1, Mdr1Record o2) {
+				if (o1.getMapNumber() == o2.getMapNumber())
+					return 0;
+				else if (o1.getMapNumber() < o2.getMapNumber())
+					return -1;
+				else
+					return 1;
+			}
+		});
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
