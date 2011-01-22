@@ -31,6 +31,8 @@ highway=* & tunnel=yes & (access=private|access=no)
 # Disable dead-end-checks for unaccessible oneways
 highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
+# Validation-like checks (uncomment to enable)
+#highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
 
 # Set highway names to include the reference if there is one
 highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
