@@ -13,9 +13,11 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -52,19 +54,27 @@ public class Mdr5 extends MdrMapSection {
 	public void finish() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
-		List<SortKey<Mdr5Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), cities);
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(cities.size());
+		Sort sort = getConfig().getSort();
+		for (Mdr5Record m : cities) {
+			// Sorted also by map number, city index
+			int second = (m.getMapIndex() << 16) + m.getCityIndex();
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), second);
+			sortKeys.add(sortKey);
+		}
+		Collections.sort(sortKeys);
 
+		cities.clear();
 		int count = 1;
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
-			cities.set(count - 1, c); // cities is used in writeSectData too, so we must save the sort.
 			c.setGlobalCityIndex(count++);
+			cities.add(c);
 		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		int lastMap = 0;
-		int lastName = 0;
+		String lastName = "";
 
 		for (Mdr5Record city : cities) {
 			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
@@ -73,16 +83,18 @@ public class Mdr5 extends MdrMapSection {
 			// the flag if so.
 			int flag = 0x800000;
 			int mapIndex = city.getMapIndex();
-			if (lastMap == mapIndex && lastName == city.getLblOffset())
+			int region = city.getRegion();
+
+			// Set flag only for a name that is different to the previous one
+			if (lastName.equals(city.getName()))
 				flag = 0;
-			lastMap = mapIndex;
+			lastName = city.getName();
 
 			// Write out the record
-			lastName = city.getLblOffset();
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
-			writer.putChar((char) city.getRegion());
+			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
 		}
 	}
@@ -120,6 +132,11 @@ public class Mdr5 extends MdrMapSection {
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
-		return 0x1c | (localCitySize - 1);
+		// 0x4 is region and we always set it
+		int val = 0x04 | (localCitySize - 1);
+		// String offset is only included for a mapsource index.
+		if (!isForDevice())
+			val |= 0x08;
+		return val;
 	}
 }

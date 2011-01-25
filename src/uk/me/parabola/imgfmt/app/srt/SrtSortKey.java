@@ -45,7 +45,7 @@ class SrtSortKey<T> implements SortKey<T> {
 				return 1;
 			}
 		}
-		
+
 		if (second == ((SrtSortKey) o).second)
 			return 0;
 		else if (second < ((SrtSortKey) o).second)
