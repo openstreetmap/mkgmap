@@ -90,7 +90,7 @@ public class Tags implements Iterable<String> {
 	public String remove(Object key) {
 		Integer k = keyPos((String) key);
 
-		if (k != null) {
+		if (k != null && values[k] != null) {
 			// because of the way this works, you can never remove keys
 			// except when resizing.
 			String old = values[k];
