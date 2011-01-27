@@ -77,6 +77,14 @@ public interface ImgFileReader extends Closeable {
 	public int getInt() throws ReadFailedException;
 
 	/**
+	 * Read a variable sized integer.  The size is given.
+	 * @param n The size of the integer to read. Must be 1 to 4.
+	 * @return The integer which will not be sign extended if it is less
+	 * than 4 bytes long.
+	 */
+	public int getUint(int n) throws ReadFailedException;
+
+	/**
 	 * Read in an arbitrary length sequence of bytes.
 	 *
 	 * @param len The number of bytes to read.

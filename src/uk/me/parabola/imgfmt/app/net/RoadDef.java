@@ -74,14 +74,18 @@ public class RoadDef implements Comparable<RoadDef> {
 	public String toString() {
 		// assumes id is an OSM id
 		String browseURL = "http://www.openstreetmap.org/browse/way/" + id;
-		if(name != null)
-			return "(" + name + ", " + browseURL + ")";
+		if(getName() != null)
+			return "(" + getName() + ", " + browseURL + ")";
 		else
 			return "(" + browseURL + ")";
 	}
 
 	public String getName() {
-		return name;
+		if (name != null)
+			return name;
+		if (labels[0] != null)
+			return labels[0].getText();
+		return null;
 	}
 
 	public long getId() {
@@ -92,8 +96,8 @@ public class RoadDef implements Comparable<RoadDef> {
 	 * Everything that's relevant for writing to NET1.
 	 */
 
-	private static final int NET_FLAG_NODINFO  = 0x40;
-	private static final int NET_FLAG_ADDRINFO = 0x10;
+	public static final int NET_FLAG_NODINFO  = 0x40;
+	public static final int NET_FLAG_ADDRINFO = 0x10;
 	private static final int NET_FLAG_UNK1     = 0x04; // lock on road?
 	private static final int NET_FLAG_ONEWAY   = 0x02;
 

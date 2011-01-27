@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.NETFileReader;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
@@ -87,6 +88,9 @@ public class MapReader implements Closeable {
 		try {
 			chan = fs.open(mapname + ".NET", "r");
 			nr = new NETFileReader(chan);
+			nr.setLabels(lblFile);
+			nr.setCities(lblFile.getCities());
+			nr.setZips(lblFile.getZips());
 			saveForClose(nr);
 		} catch (FileNotFoundException e) {
 			nr = null;
@@ -163,5 +167,9 @@ public class MapReader implements Closeable {
 
 	public Area getTreBounds() {
 		return treFile.getBounds();
+	}
+
+	public List<RoadDef> getRoads() {
+		return netFile.getRoads();
 	}
 }
