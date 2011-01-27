@@ -90,9 +90,9 @@ public class NETFileReader extends ImgFile {
 
 			int[] counts = new int[24];
 			int level = 0;
-			for (; level < 24; level++) {
+			while (level < 24) {
 				int n = reader.get();
-				counts[level] = (n & 0x7f);
+				counts[level++] = (n & 0x7f);
 				if ((n & 0x80) != 0)
 					break;
 			}
@@ -112,8 +112,8 @@ public class NETFileReader extends ImgFile {
 				int cityFlag = (flags2 >> 12) & 0x3;
 				int numberFlag = (flags2 >> 14) & 0x3;
 
-				road.setCity(fetchZipCity(reader, cityFlag, cities, citySize));
 				road.setZip(fetchZipCity(reader, zipFlag, zips, zipSize));
+				road.setCity(fetchZipCity(reader, cityFlag, cities, citySize));
 
 				fetchNumber(reader, numberFlag);
 			}
@@ -126,7 +126,6 @@ public class NETFileReader extends ImgFile {
 				}
 			}
 
-			System.out.println(road);
 			roads.add(road);
 		}
 		return roads;
@@ -141,12 +140,11 @@ public class NETFileReader extends ImgFile {
 		T item = null;
 		if (flag == 2) {
 			// fetch city/zip index
-			int ind = (size == 2)? reader.getChar(): reader.get();
-			if (ind == 0)
-				return null;
-			item = list.get(ind-1);
+			int ind = (size == 2)? reader.getChar(): (reader.get() & 0xff);
+			if (ind != 0)
+				item = list.get(ind-1);
 		} else if (flag == 3) {
-			// do nothing - there is nothing
+			// there is no item
 		} else {
 			// other values are possible but we don't know how to deal
 			// with them if they occur here. See NetDisplay

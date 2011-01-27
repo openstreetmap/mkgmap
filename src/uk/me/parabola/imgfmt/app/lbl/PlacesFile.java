@@ -29,7 +29,6 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
-import uk.me.parabola.util.Sortable;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
@@ -40,7 +39,7 @@ public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private final List<Sortable<String, Region>> regionList = new ArrayList<Sortable<String, Region>>();
+	private final List<Region> regionList = new ArrayList<Region>();
 
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
 	private final List<City> cityList = new ArrayList<City>();
@@ -74,8 +73,8 @@ public class PlacesFile {
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
 
-		for (Sortable<String, Region> sr : regionList)
-			sr.getValue().write(writer);
+		for (Region region : regionList)
+			region.write(writer);
 		placeHeader.endRegions(writer.position());
 
 		for (City sc : cityList)
@@ -168,7 +167,7 @@ public class PlacesFile {
 			r = new Region(country);
 			Label l = lblFile.newLabel(s);
 			r.setLabel(l);
-			regionList.add(new Sortable<String, Region>(name, r));
+			regionList.add(r);
 			regions.put(uniqueRegionName, r);
 		}
 		return r;
@@ -307,24 +306,9 @@ public class PlacesFile {
 
 	void allPOIsDone() {
 
-		Collections.sort(regionList);
-		int index = 1;
-		for (Sortable<String, Region> sr: regionList)
-			sr.getValue().setIndex(index++);
+		sortRegions();
 
-		List<SortKey<City>> sorted = new ArrayList<SortKey<City>>();
-		for (City c : cityList) {
-			SortKey<City> sortKey = sort.createSortKey(c, c.getName());
-			sorted.add(sortKey);
-		}
-		Collections.sort(sorted);
-		cityList.clear();
-		for (SortKey<City> sc: sorted)
-			cityList.add(sc.getObject());
-
-		index = 1;
-		for (City sc: cityList)
-			sc.setIndex(index++);
+		sortCities();
 
 		poisClosed = true;
 
@@ -337,6 +321,40 @@ public class PlacesFile {
 		int ofs = 0;
 		for (POIRecord p : pois)
 			ofs += p.calcOffset(ofs, poiFlags, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
+	}
+
+	private void sortRegions() {
+		List<SortKey<Region>> keys = new ArrayList<SortKey<Region>>();
+		for (Region r : regionList) {
+			SortKey<Region> key = sort.createSortKey(r, r.getLabel().getText());
+			keys.add(key);
+		}
+		Collections.sort(keys);
+
+		regionList.clear();
+		int index = 1;
+		for (SortKey<Region> key : keys) {
+			Region r = key.getObject();
+			r.setIndex(index++);
+			regionList.add(r);
+		}
+	}
+
+	private void sortCities() {
+		List<SortKey<City>> keys = new ArrayList<SortKey<City>>();
+		for (City c : cityList) {
+			SortKey<City> sortKey = sort.createSortKey(c, c.getName(), c.getRegionCountryNumber() & 0x3fff);
+			keys.add(sortKey);
+		}
+		Collections.sort(keys);
+
+		cityList.clear();
+		int index = 1;
+		for (SortKey<City> sc: keys) {
+			City city = sc.getObject();
+			city.setIndex(index++);
+			cityList.add(city);
+		}
 	}
 
 	public int numCities() {

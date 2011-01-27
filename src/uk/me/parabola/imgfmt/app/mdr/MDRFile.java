@@ -20,9 +20,9 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
-import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -155,14 +155,11 @@ public class MDRFile extends ImgFile {
 		mdr4.addType(point.getType());
 	}
 
-	public void addStreet(Polyline street) {
-		Label label = street.getLabel();
-		String name = label.getText();
-
-		name = cleanUpName(name);
+	public void addStreet(RoadDef street) {
+		String name = cleanUpName(street.getName());
 		int strOff = createString(name);
 
-		mdr7.addStreet(currentMap, name, label.getOffset(), strOff);
+		mdr7.addStreet(currentMap, name, street.getLabels()[0].getOffset(), strOff);
 	}
 
 	/**

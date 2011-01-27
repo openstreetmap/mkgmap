@@ -38,10 +38,10 @@ import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
 import uk.me.parabola.imgfmt.app.mdr.Mdr5Record;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
-import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
@@ -261,15 +261,14 @@ public class MdrBuilder implements Combiner {
 	}
 
 	private void addStreets(MapReader mr) {
-		List<Polyline> list = mr.linesForLevel(0);
-		for (Polyline l : list) {
-			// Routable street types 0x01-0x13; 0x16; 0x1a; 0x1b
-			int type = l.getType();
-			if (type < 0x13 || type == 0x16 || type == 0x1a || type == 0x1b) {
-				Label label = l.getLabel();
-				if (label != null && label.getText().trim().length() > 0)
-					mdrFile.addStreet(l);
-			}
+		List<RoadDef> roads = mr.getRoads();
+
+		for (RoadDef road : roads) {
+			String name = road.getName();
+			if (name == null || name.length() == 0)
+				continue;
+
+			mdrFile.addStreet(road);
 		}
 	}
 
