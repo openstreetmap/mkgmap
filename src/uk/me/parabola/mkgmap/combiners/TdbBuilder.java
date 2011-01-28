@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
@@ -53,6 +54,8 @@ public class TdbBuilder implements Combiner {
 	private String areaName;
 	private String outputDir;
 	private int tdbVersion;
+
+	private Sort sort;
 
 	/**
 	 * Initialise by saving all the information we require from the command line
@@ -99,6 +102,8 @@ public class TdbBuilder implements Combiner {
 				familyName, areaName, enableProfile);
 		
 		outputDir = args.getOutputDir();
+
+		sort = args.getSort();
 	}
 
 	/**
@@ -248,6 +253,7 @@ public class TdbBuilder implements Combiner {
 
 		try {
 			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber);
+			map.setSort(sort);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {

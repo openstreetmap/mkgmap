@@ -69,7 +69,7 @@ public class PlacesFile {
 	}
 
 	void write(ImgFileWriter writer) {
-		for (Country c : countries.values())
+		for (Country c : sortedCountries())
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
 
@@ -143,8 +143,7 @@ public class PlacesFile {
 			
 		Country c = countries.get(s);
 	
-		if(c == null)
-		{
+		if(c == null) {
 			c = new Country(countries.size()+1);
 
 			Label l = lblFile.newLabel(s);
@@ -162,8 +161,7 @@ public class PlacesFile {
 	
 		Region r = regions.get(uniqueRegionName);
 		
-		if(r == null)
-		{
+		if(r == null) {
 			r = new Region(country);
 			Label l = lblFile.newLabel(s);
 			r.setLabel(l);
@@ -186,10 +184,10 @@ public class PlacesFile {
 		}
 
 		City c = null;
-		if(!unique)
+		if (!unique)
 			c = cities.get(uniqueCityName);
 		
-		if(c == null) {
+		if (c == null) {
 			c = new City(country);
 
 			Label l = lblFile.newLabel(name);
@@ -208,7 +206,7 @@ public class PlacesFile {
 		String uniqueCityName = name.toUpperCase() + "_R" + region.getLabel().getOffset();
 		
 		// if unique is true, make sure that the name really is unique
-		if(unique && cities.get(uniqueCityName) != null) {
+		if (unique && cities.get(uniqueCityName) != null) {
 			do {
 				// add semi-random suffix.  TODO should not create a new random each time
 				uniqueCityName += "_" + new Random().nextInt(0x10000);
@@ -237,8 +235,7 @@ public class PlacesFile {
 	
 		Zip z = postalCodes.get(code);
 		
-		if(z == null)
-		{
+		if(z == null) {
 	  	   z = new Zip(postalCodes.size()+1);
 
 		   Label l = lblFile.newLabel(code);
@@ -305,9 +302,7 @@ public class PlacesFile {
 	}
 
 	void allPOIsDone() {
-
 		sortRegions();
-
 		sortCities();
 
 		poisClosed = true;
@@ -323,6 +318,30 @@ public class PlacesFile {
 			ofs += p.calcOffset(ofs, poiFlags, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 	}
 
+	/**
+	 * I don't know that you have to sort these (after all most tiles will
+	 * only be in one country or at least a very small number).
+	 *
+	 * But why not?
+	 */
+	private List<Country> sortedCountries() {
+		List<SortKey<Country>> keys = new ArrayList<SortKey<Country>>();
+		for (Country c : countries.values()) {
+			SortKey<Country> key = sort.createSortKey(c, c.getLabel().getText());
+			keys.add(key);
+		}
+		Collections.sort(keys);
+
+		List<Country> list = new ArrayList<Country>();
+		for (SortKey<Country> key : keys) {
+			list.add(key.getObject());
+		}
+		return list;
+	}
+
+	/**
+	 * Sort the regions by the defined sort.
+	 */
 	private void sortRegions() {
 		List<SortKey<Region>> keys = new ArrayList<SortKey<Region>>();
 		for (Region r : regionList) {
@@ -340,6 +359,9 @@ public class PlacesFile {
 		}
 	}
 
+	/**
+	 * Sort the cities by the defined sort.
+	 */
 	private void sortCities() {
 		List<SortKey<City>> keys = new ArrayList<SortKey<City>>();
 		for (City c : cityList) {
