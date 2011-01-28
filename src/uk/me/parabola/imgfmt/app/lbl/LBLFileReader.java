@@ -50,6 +50,7 @@ public class LBLFileReader extends ImgFile {
 	private final Map<Integer, POIRecord> pois = new HashMap<Integer, POIRecord>();
 	private final Map<Integer, Country> countries = new HashMap<Integer, Country>();
 	private final Map<Integer, Region> regions = new HashMap<Integer, Region>();
+	private final Map<Integer, Zip> zips = new HashMap<Integer, Zip>();
 	private final List<City> cities = new ArrayList<City>();
 
 
@@ -68,6 +69,7 @@ public class LBLFileReader extends ImgFile {
 		readRegions();
 
 		readCities();
+		readZips();
 		readPoiInfo();
 	}
 
@@ -101,6 +103,10 @@ public class LBLFileReader extends ImgFile {
 
 	public List<Region> getRegions() {
 		return new ArrayList<Region>(regions.values());
+	}
+	
+	public List<Zip> getZips() {
+		return new ArrayList<Zip>(zips.values());
 	}
 
 	/**
@@ -260,6 +266,32 @@ public class LBLFileReader extends ImgFile {
 		return currentOffset + 1 + encText.getOffsetAdjustment();
 	}
 
+	
+	/**
+	 * Reads the zips.
+	 */
+	private void readZips() {
+		ImgFileReader reader = getReader();
+
+		PlacesHeader placeHeader = header.getPlaceHeader();
+		int start = placeHeader.getZipsStart();
+		int end = placeHeader.getZipsEnd();
+
+		reader.position(start);
+
+		int zipIndex = 1;
+		while (reader.position() < end) {
+			int lblOffset = reader.get3();
+			
+			Zip zip = new Zip(zipIndex);
+			zip.setLabel(fetchLabel(lblOffset));
+			
+			zips.put(zip.getIndex(), zip);
+			
+			zipIndex++;
+		}
+	}
+	
 	/**
 	 * Read all the POI information.
 	 * This will create a POIRecord, but we just get the name at the minute.
@@ -359,8 +391,8 @@ public class LBLFileReader extends ImgFile {
 				if (placeHeader.getNumZips() > 0xff)
 					n = reader.getChar();
 				else
-					n = reader.get();
-				// TODO save the zip
+					n = reader.get() & 0xff;
+				poi.setZipIndex(n);
 			}
 			
 			if (hasPhone) {

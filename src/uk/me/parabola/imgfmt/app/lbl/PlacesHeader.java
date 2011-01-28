@@ -253,4 +253,12 @@ public class PlacesHeader {
 	public int getNumHighways() {
 		return highway.getNumItems();
 	}
+	
+	public int getZipsStart() {
+		return zip.getPosition();
+	}
+	
+	public int getZipsEnd() {
+		return zip.getEndPos();
+	}	
 }
