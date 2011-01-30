@@ -86,8 +86,8 @@
                     <value>
                       <list>
                         <SvnBranchItem>
-                          <option name="creationDateMillis" value="1294752876591" />
-                          <option name="revision" value="1779" />
+                          <option name="creationDateMillis" value="1296165315082" />
+                          <option name="revision" value="1800" />
                           <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/index" />
                         </SvnBranchItem>
                         <SvnBranchItem>

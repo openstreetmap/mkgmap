@@ -48,8 +48,12 @@ public class Mdr6 extends MdrMapSection {
 		int zipSize = getPointerSize(); 
 		
 		List<SortKey<Mdr6Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), zips);
+
+		int record = 1;
 		for (SortKey<Mdr6Record> key : sortKeys) {
 			Mdr6Record z = key.getObject();
+			addIndexPointer(z.getMapIndex(), record++);
+
 			putMapIndex(writer, z.getMapIndex());
 			putN(writer, zipSize, z.getZipIndex());
 			putStringOffset(writer, z.getStringOffset());

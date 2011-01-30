@@ -48,6 +48,7 @@ public class MDRFile extends ImgFile {
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
+	private final Mdr20 mdr20;
 
 	private int currentMap;
 
@@ -86,11 +87,14 @@ public class MDRFile extends ImgFile {
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
+		mdr20 = new Mdr20(config);
+
 		this.sections = new MdrSection[]{
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
-				mdr13, mdr14, mdr15
+				mdr13, mdr14, mdr15, null, null, null, null,
+				mdr20,
 		};
 
 		mdr11.setMdr10(mdr10);
@@ -155,11 +159,11 @@ public class MDRFile extends ImgFile {
 		mdr4.addType(point.getType());
 	}
 
-	public void addStreet(RoadDef street) {
+	public void addStreet(RoadDef street, Mdr5Record mdrCity) {
 		String name = cleanUpName(street.getName());
 		int strOff = createString(name);
 
-		mdr7.addStreet(currentMap, name, street.getLabels()[0].getOffset(), strOff);
+		mdr7.addStreet(currentMap, name, street.getLabels()[0].getOffset(), strOff, mdrCity);
 	}
 
 	/**
@@ -186,6 +190,13 @@ public class MDRFile extends ImgFile {
 		getHeader().writeHeader(writer);
 	}
 
+	/**
+	 * Write all the sections out.
+	 *
+	 * The order of all the operations in this method is important. The order
+	 * of the sections in the actual
+	 * @param writer File is written here.
+	 */
 	private void writeSections(ImgFileWriter writer) {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		sizes = new MdrMapSection.PointerSizes(sections);
@@ -199,10 +210,13 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
 
+		mdr20.buildFromStreets(mdr7.getStreets());
+		
 		mdr8.setIndex(mdr7.getIndex());
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
 		writeSection(writer, 6, mdr6);
+		//writeSection(writer, 20, mdr20);
 		
 		// 9 depends on stuff from 10.
 		mdr9.setGroups(mdr10.getGroupSizes());

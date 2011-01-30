@@ -145,6 +145,10 @@ public abstract class MdrSection extends ConfigBase {
 			return sections[7].getPointerSize();
 		}
 
+		public int getStreetSizeFlagged() {
+			return numberToPointerSize(sections[7].getNumberOfItems() << 1);
+		}
+
 		public int getPoiSize() {
 			return sections[11].getPointerSize();
 		}
@@ -168,6 +172,10 @@ public abstract class MdrSection extends ConfigBase {
 		 */
 		public int getStrOffSize() {
 			return Math.max(3, sections[15].getPointerSize());
+		}
+
+		public int getMdr20Size() {
+			return sections[20].getPointerSize();
 		}
 
 		private int flagForSize(int size) {

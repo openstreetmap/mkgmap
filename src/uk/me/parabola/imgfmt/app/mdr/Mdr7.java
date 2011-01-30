@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -31,7 +32,7 @@ public class Mdr7 extends MdrMapSection {
 		setConfig(config);
 	}
 
-	public void addStreet(int mapId, String name, int lblOffset, int strOff) {
+	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		if (name.length() < 4)
 			return;
 		Mdr7Record st = new Mdr7Record();
@@ -39,6 +40,7 @@ public class Mdr7 extends MdrMapSection {
 		st.setLabelOffset(lblOffset);
 		st.setStringOffset(strOff);
 		st.setName(name);
+		st.setCity(mdrCity);
 		streets.add(st);
 	}
 
@@ -63,11 +65,10 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-
 		int recordNumber = 0;
 		String lastName = "";
 		for (Mdr7Record s : streets) {
-			recordNumber++;
+			s.setIndex(++recordNumber);
 			addIndexPointer(s.getMapIndex(), recordNumber);
 
 			putMapIndex(writer, s.getMapIndex());
@@ -145,5 +146,9 @@ public class Mdr7 extends MdrMapSection {
 			name = sb.toString();
 		}
 		return name.substring(0, endIndex);
+	}
+
+	public List<Mdr7Record> getStreets() {
+		return Collections.unmodifiableList(streets);
 	}
 }

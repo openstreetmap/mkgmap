@@ -76,6 +76,7 @@ public class Mdr5 extends MdrMapSection {
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = "";
 
+		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
 			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
 
@@ -96,6 +97,7 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
+			putN(writer, size20, city.getMdr20Index());
 		}
 	}
 
@@ -117,7 +119,11 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + localCitySize + 5 + sizes.getStrOffSize();
+		return sizes.getMapSize()
+				+ localCitySize
+				+ 5
+				+ sizes.getMdr20Size()
+				+ sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
@@ -137,6 +143,7 @@ public class Mdr5 extends MdrMapSection {
 		// String offset is only included for a mapsource index.
 		if (!isForDevice())
 			val |= 0x08;
+		val |= 0x100;
 		return val;
 	}
 }

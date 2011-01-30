@@ -103,6 +103,7 @@
       <option name="questionString" value="is,can,has,should,could,will,shall,check,contains,equals,add,put,remove,startsWith,endsWith" />
     </inspection_tool>
     <inspection_tool class="BoundFieldAssignment" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="BoxingBoxedValue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BreakStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BreakStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BreakStatementWithLabel" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -364,11 +365,13 @@
     <inspection_tool class="DjangoUnresolvedLoadInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DjangoUnresolvedTagInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DjangoUnresolvedTemplateReferenceInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="Django_close_tag" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DocumentWriteJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DollarSignInName" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DoubleCheckedLocking" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreOnVolatileVariables" value="false" />
     </inspection_tool>
+    <inspection_tool class="DoubleLiteralMayBeFloatLiteral" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DoubleNegation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DriverManagerGetConnection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DuplicateBooleanBranch" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -394,6 +397,7 @@
     <inspection_tool class="DuplicatedBlockNamesInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DynamicRegexReplaceableByCompiledPattern" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DynamicallyGeneratedCodeJS" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ELDeferredExpressionsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ELMethodSignatureInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ELSpecValidationInJSP" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ELValidationInJSP" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -887,6 +891,10 @@
     <inspection_tool class="JSImplicitlyInternalDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JSLastCommaInArrayLiteral" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="JSLowercasedConstructorCall" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JSMismatchedCollectionQueryUpdateInspection" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="queries" value="trace,write" />
+      <option name="updates" value="pop,push,shift,splice,unshift" />
+    </inspection_tool>
     <inspection_tool class="JSSuspiciousNameCombinationInspection" enabled="true" level="INFO" enabled_by_default="true">
       <group names="x,width,left,right" />
       <group names="y,height,top,bottom" />
@@ -894,6 +902,7 @@
     <inspection_tool class="JSUndeclaredVariable" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="JSUnnecessarySemicolon" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JSUnresolvedFunction" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="JSUnresolvedLibraryURL" enabled="false" level="WEAK_WARNING" enabled_by_default="false" />
     <inspection_tool class="JSUnresolvedVariable" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="JSUntypedDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JSUnusedGlobalSymbols" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1094,7 +1103,9 @@
     <inspection_tool class="ModuleWithTooManyClasses" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="limit" value="100" />
     </inspection_tool>
-    <inspection_tool class="MultipleDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MultipleDeclaration" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoreForLoopDeclarations" value="true" />
+    </inspection_tool>
     <inspection_tool class="MultipleExceptionsDeclaredOnTestMethod" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MultipleReturnPointsPerMethod" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreGuardClauses" value="false" />
@@ -1215,7 +1226,9 @@
     <inspection_tool class="OnDemandImport" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OneButtonGroup" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="OrredNotEqualExpression" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="OverloadedMethodsWithSameNumberOfParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OverloadedMethodsWithSameNumberOfParameters" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoreLibraryOverrides" value="true" />
+    </inspection_tool>
     <inspection_tool class="OverloadedVarargsMethod" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OverlyComplexArithmeticExpression" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_limit" value="6" />
@@ -1305,7 +1318,11 @@
       <option name="DONT_REPORT_CATCH_EXCEPTION" value="true" />
       <option name="DONT_REPORT_INSIDE_LIST" value="false" />
     </inspection_tool>
-    <inspection_tool class="PhpUnusedParameterInspection" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="PhpUnusedParameterInspection" enabled="true" level="INFO" enabled_by_default="true">
+      <option name="DONT_REPORT_EMPTY_BODY" value="true" />
+      <option name="DONT_REPORT_OVERRIDE" value="true" />
+      <option name="DONT_REPORT_ABSTRACT_CLASS" value="false" />
+    </inspection_tool>
     <inspection_tool class="PhpUnusedPrivateFieldInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PhpWrongCatchClausesOrderInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PhpWrongForeachArgumentTypeInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1390,18 +1407,13 @@
     <inspection_tool class="PyTupleItemAssignmentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyUnboundLocalVariableInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyUnreachableCodeInspection" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false">
-      <option name="ignoredIdentifiers">
-        <value>
-          <list size="0" />
-        </value>
-      </option>
-    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyUnusedLocalInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreTupleUnpacking" value="true" />
       <option name="ignoreLambdaParameters" value="true" />
       <option name="ignoreLoopIterationVariables" value="true" />
     </inspection_tool>
+    <inspection_tool class="PyUnusedLocalVariableInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_bound_parameters" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_index_required" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_restricted" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1515,6 +1527,7 @@
     <inspection_tool class="SillyAssignment" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SillyAssignmentJS" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SimpleDateFormatWithoutLocale" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SimplifiableAnnotation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SimplifiableConditionalExpression" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SimplifiableIfStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SimplifiableJUnitAssertion" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1616,9 +1629,11 @@
       <option name="ignoreSystemOuts" value="false" />
       <option name="ignoreSystemErrs" value="false" />
     </inspection_tool>
+    <inspection_tool class="StringConcatenationInFormatCall" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringConcatenationInLoops" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_ignoreUnlessAssigned" value="true" />
     </inspection_tool>
+    <inspection_tool class="StringConcatenationInMessageFormatCall" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringConcatenationInsideStringBufferAppend" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StringConstructor" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreSubstringArguments" value="false" />

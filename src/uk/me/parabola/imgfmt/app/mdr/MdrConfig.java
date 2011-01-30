@@ -22,7 +22,8 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
  * @author Steve Ratcliffe
  */
 public class MdrConfig {
-	private static final int DEFAULT_HEADER_LEN = 286;
+	//private static final int DEFAULT_HEADER_LEN = 286;
+	private static final int DEFAULT_HEADER_LEN = 568;
 
 	private boolean writable;
 	private boolean forDevice;

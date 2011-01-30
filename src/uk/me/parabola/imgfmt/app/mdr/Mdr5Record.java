@@ -32,6 +32,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	private int lblOffset;
 	private int stringOffset;
 	private String name;
+	private int mdr20Index;
 
 	public Mdr5Record(City c) {
 		cityIndex = c.getIndex();
@@ -76,5 +77,13 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	public String getName() {
 		return name;
+	}
+
+	public int getMdr20Index() {
+		return mdr20Index;
+	}
+
+	public void setMdr20Index(int mdr20Index) {
+		this.mdr20Index = mdr20Index;
 	}
 }

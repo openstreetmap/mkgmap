@@ -31,20 +31,9 @@ import uk.me.parabola.imgfmt.app.Section;
  */
 public class MDRHeader extends CommonHeader {
 
-	private static final int MAX_SECTIONS = 19;
+	private static final int MAX_SECTIONS = 40;
 	private final Section[] sections = new Section[MAX_SECTIONS+1];
 
-	// The section lengths that we are going to implement to begin
-	// with.  These lengths are not at all constant so this array will
-	// eventually not be needed. Consider them defaults.
-	private static final char[] sectRecLen = {
-		0,
-			8, 2, 2, 3,  // 1 - 4
-			11, 5, 7, 4,  // 5 - 8
-			4, 0, 12, 6,  // 9 - 12
-			8, 6, 0, 0,  // 13 - 16
-			0, 0, 0, 0,  // 17 - 20
-	};
 	private int codepage = 1252;
 
 	public MDRHeader(int headerLen) {
@@ -54,7 +43,7 @@ public class MDRHeader extends CommonHeader {
 		// previous one so that all the positions are correct.
 		for (int i = 1; i < sections.length; i++) {
 			Section prev = (i == 0) ? null : sections[i - 1];
-			sections[i] = new Section(prev, sectRecLen[i]);
+			sections[i] = new Section(prev);
 		}
 		sections[1].setPosition(getHeaderLength());
 	}
@@ -74,11 +63,9 @@ public class MDRHeader extends CommonHeader {
 
 		sections[1].writeSectionInfo(writer, true, true);
 
-		sections[2].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[2].writeSectionInfo(writer, true, true);
 
-		sections[3].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[3].writeSectionInfo(writer, true, true);
 
 		sections[4].writeSectionInfo(writer, true, true);
 
@@ -105,20 +92,15 @@ public class MDRHeader extends CommonHeader {
 		sections[15].writeSectionInfo(writer);
 		writer.put((byte) 0);
 
-		sections[16].writeSectionInfo(writer);
-		writer.putChar((char) 0);
-		writer.putInt(0);
+		sections[16].writeSectionInfo(writer, true, true);
 
-		sections[17].writeSectionInfo(writer);
-		writer.putInt(0);
+		sections[17].writeSectionInfo(writer, false, true);
 
-		sections[18].writeSectionInfo(writer);
-		writer.putChar((char) 0);
-		writer.putInt(0);
+		sections[18].writeSectionInfo(writer, true, true);
 
-		sections[19].writeSectionInfo(writer);
-		writer.putChar((char) 0);
-		writer.putInt(0);
+		sections[19].writeSectionInfo(writer, true, true);
+
+		sections[20].writeSectionInfo(writer, true, true);
 	}
 
 	public void setItemSize(int sectionNumber, int itemSize) {

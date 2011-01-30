@@ -20,6 +20,8 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	private int labelOffset;
 	private int stringOffset;
 	private String name;
+	private int index;
+	private Mdr5Record city;
 
 	public int getLabelOffset() {
 		return labelOffset;
@@ -43,5 +45,26 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public void setCity(Mdr5Record city) {
+		this.city = city;
+	}
+
+	public Mdr5Record getCity() {
+		return city;
+	}
+
+	public void setMdr20Index(int record) {
+		if (city.getMdr20Index() == 0)
+			city.setMdr20Index(record);
 	}
 }
