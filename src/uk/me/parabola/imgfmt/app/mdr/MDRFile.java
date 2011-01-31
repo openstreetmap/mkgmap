@@ -49,6 +49,8 @@ public class MDRFile extends ImgFile {
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
 	private final Mdr20 mdr20;
+	private final Mdr21 mdr21;
+	private final Mdr22 mdr22;
 
 	private int currentMap;
 
@@ -88,13 +90,15 @@ public class MDRFile extends ImgFile {
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
 		mdr20 = new Mdr20(config);
+		mdr21 = new Mdr21(config);
+		mdr22 = new Mdr22(config);
 
 		this.sections = new MdrSection[]{
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
 				mdr13, mdr14, mdr15, null, null, null, null,
-				mdr20,
+				mdr20, mdr21, mdr22,
 		};
 
 		mdr11.setMdr10(mdr10);
@@ -216,6 +220,8 @@ public class MDRFile extends ImgFile {
 		// Deal with the dependencies between the sections.
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr20.buildFromStreets(mdr7.getStreets());
+		mdr21.buildFromStreets(mdr7.getStreets());
+		mdr22.buildFromStreets(mdr7.getStreets());
 		mdr8.setIndex(mdr7.getIndex());
 		mdr9.setGroups(mdr10.getGroupSizes());
 		mdr12.setIndex(mdr11.getIndex());
@@ -234,7 +240,9 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 5, mdr5);
 		writeSection(writer, 6, mdr6);
 		writeSection(writer, 20, mdr20);
-		
+		writeSection(writer, 21, mdr21);
+		writeSection(writer, 22, mdr22);
+
 
 		writeSection(writer, 9, mdr9);
 

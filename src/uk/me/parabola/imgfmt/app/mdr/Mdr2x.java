@@ -18,6 +18,9 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
+ * Common code for 20, 21, 22 which are all lists of streets ordered in
+ * different ways.
+ * 
  * @author Steve Ratcliffe
  */
 public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
@@ -51,11 +54,9 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	}
 
 	/**
-	 * The size of a record in the section.  This is not a constant and might vary
-	 * on various factors, such as the file version, if we are preparing for a
-	 * device, the number of maps etc.
-	 *
-	 * @return The size of a record in this section.
+	 * The size of a record in the section. For these sections there is
+	 * one field that is an index into the streets with an extra bit for
+	 * a flag.
 	 */
 	public int getItemSize() {
 		return getSizes().getStreetSizeFlagged();

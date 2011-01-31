@@ -90,7 +90,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 		this.mdr20Index = mdr20Index;
 	}
 
-	public Mdr13Record getRegion() {
+	public Mdr13Record getMdrRegion() {
 		return region;
 	}
 

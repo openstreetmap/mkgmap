@@ -62,45 +62,29 @@ public class MDRHeader extends CommonHeader {
 		writer.putChar((char) 14);
 
 		sections[1].writeSectionInfo(writer, true, true);
-
 		sections[2].writeSectionInfo(writer, true, true);
-
 		sections[3].writeSectionInfo(writer, true, true);
-
 		sections[4].writeSectionInfo(writer, true, true);
-
 		sections[5].writeSectionInfo(writer, true, true);
-
 		sections[6].writeSectionInfo(writer, true, true);
-
 		sections[7].writeSectionInfo(writer, true, true);
-
 		sections[8].writeSectionInfo(writer, true, true);
-
 		sections[9].writeSectionInfo(writer, true, true);
-
 		sections[10].writeSectionInfo(writer, false, true);
-
 		sections[11].writeSectionInfo(writer, true, true);
-
 		sections[12].writeSectionInfo(writer, true, true);
-
 		sections[13].writeSectionInfo(writer, true, true);
-
 		sections[14].writeSectionInfo(writer, true, true);
-
 		sections[15].writeSectionInfo(writer);
 		writer.put((byte) 0);
 
 		sections[16].writeSectionInfo(writer, true, true);
-
 		sections[17].writeSectionInfo(writer, false, true);
-
 		sections[18].writeSectionInfo(writer, true, true);
-
 		sections[19].writeSectionInfo(writer, true, true);
-
 		sections[20].writeSectionInfo(writer, true, true);
+		sections[21].writeSectionInfo(writer, true, true);
+		sections[22].writeSectionInfo(writer, true, true);
 	}
 
 	public void setItemSize(int sectionNumber, int itemSize) {
