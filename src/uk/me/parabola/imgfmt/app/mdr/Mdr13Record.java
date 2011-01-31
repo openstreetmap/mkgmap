@@ -18,8 +18,9 @@ package uk.me.parabola.imgfmt.app.mdr;
  */
 public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
 	private int regionIndex;
-	private int strOffset;
 	private int countryIndex;
+	private int lblOffset;
+	private int strOffset;
 	private String name;
 	private Mdr14Record mdr14;
 
@@ -59,6 +60,14 @@ public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
 
 	public int getCountryIndex() {
 		return countryIndex;
+	}
+
+	public int getLblOffset() {
+		return lblOffset;
+	}
+
+	public void setLblOffset(int lblOffset) {
+		this.lblOffset = lblOffset;
 	}
 
 	public String getName() {

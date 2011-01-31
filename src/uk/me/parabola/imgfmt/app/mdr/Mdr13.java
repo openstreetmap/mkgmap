@@ -62,4 +62,8 @@ public class Mdr13 extends MdrSection implements HasHeaderFlags {
 	public int getExtraValue() {
 		return 0x00;
 	}
+
+	public List<Mdr13Record> getRegions() {
+		return regions;
+	}
 }

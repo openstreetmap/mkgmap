@@ -85,6 +85,7 @@ public class MDRHeader extends CommonHeader {
 		sections[20].writeSectionInfo(writer, true, true);
 		sections[21].writeSectionInfo(writer, true, true);
 		sections[22].writeSectionInfo(writer, true, true);
+		sections[23].writeSectionInfo(writer, true, true);
 	}
 
 	public void setItemSize(int sectionNumber, int itemSize) {
