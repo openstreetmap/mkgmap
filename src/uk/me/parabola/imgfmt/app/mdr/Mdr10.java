@@ -49,8 +49,7 @@ public class Mdr10 extends MdrMapSection {
 
 	public void addPoiType(Mdr11Record poi) {
 		Mdr10Record t = new Mdr10Record();
-		// TODO this may not be totally correct yet as we don't save the fact
-		// that there is a subtype anywhere.
+
 		int type = poi.getType();
 		t.setSubtype(MdrUtils.getSubtypeFromFullType(type));
 		t.setMdr11ref(poi);

@@ -40,12 +40,8 @@ public class Mdr14 extends MdrSection implements HasHeaderFlags {
 		}
 	}
 
-	public void addCountry(int mapIndex, int countryIndex, int strOff) {
-		Mdr14Record c = new Mdr14Record();
-		c.setMapIndex(mapIndex);
-		c.setCountryIndex(countryIndex);
-		c.setStrOff(strOff);
-		countries.add(c);
+	public void addCountry(Mdr14Record country) {
+		countries.add(country);
 	}
 
 	public int getItemSize() {

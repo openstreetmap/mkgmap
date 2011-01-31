@@ -30,12 +30,7 @@ public class Mdr13 extends MdrSection implements HasHeaderFlags {
 		setConfig(config);
 	}
 
-	public void addRegion(int mapIndex, int countryIndex, int regionIndex, int strOff) {
-		Mdr13Record rec = new Mdr13Record();
-		rec.setMapIndex(mapIndex);
-		rec.setCountryIndex(countryIndex);
-		rec.setRegionIndex(regionIndex);
-		rec.setStrOffset(strOff);
+	public void addRegion(Mdr13Record rec) {
 		regions.add(rec);
 	}
 	

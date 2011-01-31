@@ -12,8 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
-import uk.me.parabola.imgfmt.app.lbl.City;
-
 /**
  * Holds information about a city that will make its way into mdr 5.
  * This class is used in several places as the information has to be gathered
@@ -23,24 +21,25 @@ import uk.me.parabola.imgfmt.app.lbl.City;
  */
 public class Mdr5Record extends RecordBase implements NamedRecord {
 	/** The city index within its own map */
-	private final int cityIndex;
+	private int cityIndex;
 
 	/** The index across all maps */
 	private int globalCityIndex;
 
-	private final int region;
+	private int regionIndex;
 	private int lblOffset;
 	private int stringOffset;
 	private String name;
 	private int mdr20Index;
-
-	public Mdr5Record(City c) {
-		cityIndex = c.getIndex();
-		region = c.getRegionCountryNumber();
-	}
+	private Mdr13Record region;
+	private Mdr14Record country;
 
 	public int getCityIndex() {
 		return cityIndex;
+	}
+
+	public void setCityIndex(int cityIndex) {
+		this.cityIndex = cityIndex;
 	}
 
 	public int getGlobalCityIndex() {
@@ -51,8 +50,12 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 		this.globalCityIndex = globalCityIndex;
 	}
 
-	public int getRegion() {
-		return region;
+	public int getRegionIndex() {
+		return regionIndex;
+	}
+
+	public void setRegionIndex(int regionIndex) {
+		this.regionIndex = regionIndex;
 	}
 
 	public int getLblOffset() {
@@ -85,5 +88,21 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	public void setMdr20Index(int mdr20Index) {
 		this.mdr20Index = mdr20Index;
+	}
+
+	public Mdr13Record getRegion() {
+		return region;
+	}
+
+	public void setMdrRegion(Mdr13Record region) {
+		this.region = region;
+	}
+
+	public Mdr14Record getCountry() {
+		return country;
+	}
+
+	public void setMdrCountry(Mdr14Record country) {
+		this.country = country;
 	}
 }

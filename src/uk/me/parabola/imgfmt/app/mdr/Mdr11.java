@@ -48,7 +48,7 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	/**
-	 * Sort the section.
+	 * Sort, de-dupe and fill in the mdr10 information.
 	 */
 	public void finish() {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
@@ -59,22 +59,20 @@ public class Mdr11 extends MdrMapSection {
 		pois.clear();
 		Mdr11Record last = new Mdr11Record();
 		for (SortKey<Mdr11Record> sk : keys) {
-			Mdr11Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex() && r.getLblOffset() == last.getLblOffset())
+			Mdr11Record poi = sk.getObject();
+			if (poi.getMapIndex() == last.getMapIndex() && poi.getLblOffset() == last.getLblOffset())
 				continue;
-			last = r;
-			pois.add(r);
+			last = poi;
+			mdr10.addPoiType(poi);
+			pois.add(poi);
 		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-
 		int count = 1;
 		for (Mdr11Record poi : pois) {
 			addIndexPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
-
-			mdr10.addPoiType(poi);
 
 			putMapIndex(writer, poi.getMapIndex());
 			writer.put((byte) poi.getPointIndex());

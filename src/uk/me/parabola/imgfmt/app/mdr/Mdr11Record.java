@@ -65,7 +65,7 @@ public class Mdr11Record extends RecordBase implements NamedRecord {
 	}
 
 	public int getRegionIndex() {
-		return city == null ? 0 : city.getRegion();
+		return city == null ? 0 : city.getRegionIndex();
 	}
 
 	public int getStrOffset() {

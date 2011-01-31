@@ -110,28 +110,41 @@ public class MDRFile extends ImgFile {
 		mdr1.addMap(mapName);
 	}
 
-	public void addRegion(Region region) {
-		int index = region.getIndex();
-		int countryIndex = region.getCountry().getIndex();
-		String name = region.getLabel().getText();
-		int strOff = createString(name);
+	public Mdr14Record addCountry(Country country) {
+		Mdr14Record record = new Mdr14Record();
 
-		mdr13.addRegion(currentMap, countryIndex, index, strOff);
+		String name = country.getLabel().getText();
+		record.setMapIndex(currentMap);
+		record.setCountryIndex((int) country.getIndex());
+		record.setName(name);
+		record.setStrOff(createString(name));
+
+		mdr14.addCountry(record);
+		return record;
 	}
 
-	public void addCountry(Country country) {
-		String name = country.getLabel().getText();
-		int countryIndex = country.getIndex();
-		int strOff = createString(name);
-		mdr14.addCountry(currentMap, countryIndex, strOff);
+	public Mdr13Record addRegion(Region region, Mdr14Record country) {
+		Mdr13Record record = new Mdr13Record();
+
+		String name = region.getLabel().getText();
+		record.setMapIndex(currentMap);
+		record.setCountryIndex(region.getCountry().getIndex());
+		record.setRegionIndex(region.getIndex());
+		record.setName(name);
+		record.setStrOffset(createString(name));
+		record.setMdr14(country);
+
+		mdr13.addRegion(record);
+		return record;
 	}
 
 	public void addCity(Mdr5Record city) {
 		int labelOffset = city.getLblOffset();
 		if (labelOffset != 0) {
 			String name = city.getName();
-			int strOff = createString(name);
-			mdr5.addCity(currentMap, city, labelOffset, name, strOff);
+			city.setMapIndex(currentMap);
+			city.setStringOffset(createString(name));
+			mdr5.addCity(city);
 		}
 	}
 	
@@ -198,8 +211,14 @@ public class MDRFile extends ImgFile {
 	 * @param writer File is written here.
 	 */
 	private void writeSections(ImgFileWriter writer) {
-		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		sizes = new MdrMapSection.PointerSizes(sections);
+
+		// Deal with the dependencies between the sections.
+		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
+		mdr20.buildFromStreets(mdr7.getStreets());
+		mdr8.setIndex(mdr7.getIndex());
+		mdr9.setGroups(mdr10.getGroupSizes());
+		mdr12.setIndex(mdr11.getIndex());
 
 		writeSection(writer, 4, mdr4);
 
@@ -210,19 +229,15 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
 
-		mdr20.buildFromStreets(mdr7.getStreets());
-		
-		mdr8.setIndex(mdr7.getIndex());
+
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
 		writeSection(writer, 6, mdr6);
-		//writeSection(writer, 20, mdr20);
+		writeSection(writer, 20, mdr20);
 		
-		// 9 depends on stuff from 10.
-		mdr9.setGroups(mdr10.getGroupSizes());
+
 		writeSection(writer, 9, mdr9);
 
-		mdr12.setIndex(mdr11.getIndex());
 		writeSection(writer, 12, mdr12);
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);

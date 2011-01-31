@@ -38,11 +38,7 @@ public class Mdr5 extends MdrMapSection {
 		setConfig(config);
 	}
 
-	public void addCity(int mapIndex, Mdr5Record record, int lblOff, String name, int strOff) {
-		record.setMapIndex(mapIndex);
-		record.setLblOffset(lblOff);
-		record.setName(name);
-		record.setStringOffset(strOff);
+	public void addCity(Mdr5Record record) {
 		cities.add(record);
 		if (record.getCityIndex() > maxCityIndex)
 			maxCityIndex = record.getCityIndex();
@@ -84,7 +80,7 @@ public class Mdr5 extends MdrMapSection {
 			// the flag if so.
 			int flag = 0x800000;
 			int mapIndex = city.getMapIndex();
-			int region = city.getRegion();
+			int region = city.getRegionIndex();
 
 			// Set flag only for a name that is different to the previous one
 			if (lastName.equals(city.getName()))

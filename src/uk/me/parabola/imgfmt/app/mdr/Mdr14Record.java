@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 	private int countryIndex;
 	private int strOff;
+	private String name;
 
 	/**
 	 * Sort by map id and then country id like for regions.  We don't have
@@ -50,5 +51,13 @@ public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 
 	public void setStrOff(int strOff) {
 		this.strOff = strOff;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }

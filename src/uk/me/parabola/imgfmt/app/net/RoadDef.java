@@ -55,11 +55,89 @@ import uk.me.parabola.log.Logger;
 public class RoadDef implements Comparable<RoadDef> {
 	private static final Logger log = Logger.getLogger(RoadDef.class);
 
+	public static final int NET_FLAG_NODINFO  = 0x40;
+	public static final int NET_FLAG_ADDRINFO = 0x10;
+	private static final int NET_FLAG_UNK1     = 0x04; // lock on road?
+	private static final int NET_FLAG_ONEWAY   = 0x02;
+
+	private static final int NOD2_FLAG_UNK        = 0x01;
+	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
+
+	// first byte of Table A info in NOD 1
+	private static final int TABA_FLAG_TOLL = 0x80;
+	private static final int TABA_MASK_CLASS = 0x70;
+	private static final int TABA_FLAG_ONEWAY = 0x08;
+	private static final int TABA_MASK_SPEED = 0x07;
+
+	// second byte: access flags - order must correspond to constants
+	// in RoadNetwork - bits 0x08, 0x80 missing (purpose unknown)
+	private static final int[] ACCESS = {
+		0x8000, // emergency (net pointer bit 31)
+		0x4000, // delivery (net pointer bit 30)
+		0x0001, // car
+		0x0002, // bus
+		0x0004, // taxi
+		0x0010, // foot
+		0x0020, // bike
+		0x0040, // truck
+		0x0008, // carpool
+	};
+
 	// the offset in Nod2 of our Nod2 record
 	private int offsetNod2;
 
 	// the offset in Net1 of our Net1 record
 	private int offsetNet1;
+
+	/*
+	 * Everything that's relevant for writing to NET1.
+	 */
+	private int netFlags = NET_FLAG_UNK1;
+
+	// The road length units may be affected by other flags in the header as
+	// there is doubt as to the formula.
+	private int roadLength;
+
+	// There can be up to 4 labels for the same road.
+	private static final int MAX_LABELS = 4;
+
+	private final Label[] labels = new Label[MAX_LABELS];
+	private int numlabels;
+
+	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+
+	private City city;
+	private Zip zip;
+	private boolean paved = true;
+	private boolean ferry;
+	private boolean roundabout;
+	private boolean linkRoad;
+	private boolean synthesised;
+	private boolean flareCheck;
+	private boolean deadEndCheck;
+	private Set<String> messageIssued;
+
+	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
+
+	/*
+	 * Everything that's relevant for writing out Nod 2.
+	 */
+	// This is the node associated with the road.  I'm not certain about how
+	// this works, but in NOD2 each road has a reference to only one node.
+	// This is that node.
+	private RouteNode node;
+
+	// the first point in the road is a node (the above routing node)
+	private boolean startsWithNode = true;
+	// number of nodes in the road
+	private int nnodes;
+
+	// always appears to be set
+	private int nod2Flags = NOD2_FLAG_UNK;
+
+	// The data for Table A
+	private int tabAInfo;
+	private int tabAAccess;
 
 	// for diagnostic purposes
 	private final long id;
@@ -92,39 +170,6 @@ public class RoadDef implements Comparable<RoadDef> {
 		return id;
 	}
 
-	/*
-	 * Everything that's relevant for writing to NET1.
-	 */
-
-	public static final int NET_FLAG_NODINFO  = 0x40;
-	public static final int NET_FLAG_ADDRINFO = 0x10;
-	private static final int NET_FLAG_UNK1     = 0x04; // lock on road?
-	private static final int NET_FLAG_ONEWAY   = 0x02;
-
-	private int netFlags = NET_FLAG_UNK1;
-
-	// The road length units may be affected by other flags in the header as
-	// there is doubt as to the formula.
-	private int roadLength;
-
-	// There can be up to 4 labels for the same road.
-	private static final int MAX_LABELS = 4;
-
-	private final Label[] labels = new Label[MAX_LABELS];
-	private int numlabels;
-
-	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
-
-	private City city;
-	private Zip zip;
-	private boolean paved = true;
-	private boolean ferry;
-	private boolean roundabout;
-	private boolean linkRoad;
-	private boolean synthesised;
-	private boolean flareCheck;
-	private boolean deadEndCheck;
-	private Set<String> messageIssued;
 
 	/**
 	 * This is for writing to NET1.
@@ -298,7 +343,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	/*
 	 * Everything that's relevant for writing to RGN.
 	 */
-
 	class Offset {
 		final int position;
 		final int flags;
@@ -317,7 +361,6 @@ public class RoadDef implements Comparable<RoadDef> {
 		}
 	}
 
-	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
 
 	/**
 	 * Add a target location in the RGN section where we should write the
@@ -361,26 +404,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	public void setInternalNodes(boolean n) {
 		internalNodes = n;
 	}
-
-	/*
-	 * Everything that's relevant for writing out Nod 2.
-	 */
-
-	// This is the node associated with the road.  I'm not certain about how
-	// this works, but in NOD2 each road has a reference to only one node.
-	// This is that node.
-	private RouteNode node;
-
-	// the first point in the road is a node (the above routing node)
-	private boolean startsWithNode = true;
-	// number of nodes in the road
-	private int nnodes;
-
-	private static final int NOD2_FLAG_UNK        = 0x01;
-	private static final int NOD2_FLAG_EXTRA_DATA = 0x80;
-
-	// always appears to be set
-	private int nod2Flags = NOD2_FLAG_UNK;
 
 	/**
 	 * Set the routing node associated with this road.
@@ -466,29 +489,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	public int getOffsetNet1() {
 		return offsetNet1;
 	}
-
-	// first byte of Table A info in NOD 1
-	private static final int TABA_FLAG_TOLL = 0x80;
-	private static final int TABA_MASK_CLASS = 0x70;
-	private static final int TABA_FLAG_ONEWAY = 0x08;
-	private static final int TABA_MASK_SPEED = 0x07;
-	// second byte: access flags - order must correspond to constants
-	// in RoadNetwork - bits 0x08, 0x80 missing (purpose unknown)
-	private static final int[] ACCESS = {
-		0x8000, // emergency (net pointer bit 31)
-		0x4000, // delivery (net pointer bit 30)
-		0x0001, // car
-		0x0002, // bus
-		0x0004, // taxi
-		0x0010, // foot
-		0x0020, // bike
-		0x0040, // truck
-		0x0008, // carpool
-	};
-
-	// The data for Table A
-	private int tabAInfo; 
-	private int tabAAccess;
 
 	public void setToll() {
 		tabAInfo |= TABA_FLAG_TOLL;
@@ -580,7 +580,12 @@ public class RoadDef implements Comparable<RoadDef> {
 		// TODO: look at what this is doing...
 		if(city != null && other.city != null)
 			return city.getName().compareTo(other.city.getName());
-		return hashCode() - other.hashCode();
+		if (hashCode() == other.hashCode())
+			return 0;
+		else if (hashCode() < other.hashCode())
+			return -1;
+		else
+			return 0;
 	}
 
 	public City getCity() {

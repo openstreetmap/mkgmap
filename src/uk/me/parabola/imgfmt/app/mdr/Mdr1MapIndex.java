@@ -90,7 +90,6 @@ public class Mdr1MapIndex {
 	public void setPointerSize(int sectionNumber, int pointerSize) {
 		this.pointerSize = pointerSize;
 		int sn = sectionToSubsection(sectionNumber);
-		System.out.printf("sn %d, ps %s\n", sectionNumber, pointerSize);
 		if (sn != 0)
 			subHeader.setItemSize(sn, pointerSize);
 	}
