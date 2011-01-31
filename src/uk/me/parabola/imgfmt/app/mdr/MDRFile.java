@@ -52,6 +52,7 @@ public class MDRFile extends ImgFile {
 	private final Mdr21 mdr21;
 	private final Mdr22 mdr22;
 	private final Mdr23 mdr23;
+	private final Mdr24 mdr24;
 
 	private int currentMap;
 
@@ -94,13 +95,14 @@ public class MDRFile extends ImgFile {
 		mdr21 = new Mdr21(config);
 		mdr22 = new Mdr22(config);
 		mdr23 = new Mdr23(config);
+		mdr24 = new Mdr24(config);
 
 		this.sections = new MdrSection[]{
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
 				mdr13, mdr14, mdr15, null, null, null, null,
-				mdr20, mdr21, mdr22,
+				mdr20, mdr21, mdr22, mdr23, mdr24,
 		};
 
 		mdr11.setMdr10(mdr10);
@@ -122,6 +124,7 @@ public class MDRFile extends ImgFile {
 		String name = country.getLabel().getText();
 		record.setMapIndex(currentMap);
 		record.setCountryIndex((int) country.getIndex());
+		record.setLblOffset(country.getLabel().getOffset());
 		record.setName(name);
 		record.setStrOff(createString(name));
 
@@ -229,6 +232,7 @@ public class MDRFile extends ImgFile {
 		mdr9.setGroups(mdr10.getGroupSizes());
 		mdr12.setIndex(mdr11.getIndex());
 		mdr23.sortRegions(mdr13.getRegions());
+		mdr24.sortCountries(mdr14.getCountries());
 
 		writeSection(writer, 4, mdr4);
 
@@ -250,6 +254,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 9, mdr9);
 
 		writeSection(writer, 23, mdr23);
+		writeSection(writer, 24, mdr24);
 
 		writeSection(writer, 12, mdr12);
 		writeSection(writer, 13, mdr13);

@@ -60,4 +60,8 @@ public class Mdr14 extends MdrSection implements HasHeaderFlags {
 	public int getExtraValue() {
 		return 0x00;
 	}
+
+	public List<Mdr14Record> getCountries() {
+		return countries;
+	}
 }

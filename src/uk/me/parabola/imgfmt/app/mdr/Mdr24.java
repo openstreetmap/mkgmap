@@ -21,33 +21,29 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
- * Regions sorted by name. Same number of records as mdr13.
+ * Countries sorted by name.  Same number of entries as 14.
  *
  * @author Steve Ratcliffe
  */
-public class Mdr23 extends MdrSection {
-	private final List<Mdr13Record> regions = new ArrayList<Mdr13Record>();
+public class Mdr24 extends MdrSection {
+	private final List<Mdr14Record> countries = new ArrayList<Mdr14Record>();
 
-	public Mdr23(MdrConfig config) {
+	public Mdr24(MdrConfig config) {
 		setConfig(config);
 	}
 
-	/**
-	 * Takes the region list and sorts it according to the name.
-	 * @param list Original region list.
-	 */
-	public void sortRegions(List<Mdr13Record> list) {
+	public void sortCountries(List<Mdr14Record> list) {
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr13Record>> keys = new ArrayList<SortKey<Mdr13Record>>();
-		for (Mdr13Record reg : list) {
-			SortKey<Mdr13Record> key = sort.createSortKey(reg, reg.getName(), reg.getMapIndex());
-			keys.add(key);
+		List<SortKey<Mdr14Record>> keys = new ArrayList<SortKey<Mdr14Record>>();
+		for (Mdr14Record c : list) {
+			SortKey<Mdr14Record> sortKey = sort.createSortKey(c, c.getName(), c.getMapIndex());
+			keys.add(sortKey);
 		}
 
 		Collections.sort(keys);
 
-		for (SortKey<Mdr13Record> key : keys) {
-			regions.add(key.getObject());
+		for (SortKey<Mdr14Record> key : keys) {
+			countries.add(key.getObject());
 		}
 	}
 
@@ -58,31 +54,31 @@ public class Mdr23 extends MdrSection {
 	 */
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = "";
-		for (Mdr13Record reg : regions) {
-			putMapIndex(writer, reg.getMapIndex());
+		for (Mdr14Record c : countries) {
+			putMapIndex(writer, c.getMapIndex());
 
 			int flag = 0;
-			String name = reg.getName();
+			String name = c.getName();
 			if (!name.equals(lastName)) {
 				flag = 0x800000;
 				lastName = name;
 			}
 
-			writer.putChar((char) reg.getRegionIndex());
-			writer.putChar((char) reg.getCountryIndex());
-			writer.put3(reg.getLblOffset() | flag);
+			writer.putChar((char) c.getCountryIndex());
+			writer.put3(c.getLblOffset() | flag);
 		}
 	}
 
 	/**
-	 * There is a map index followed by file region and country indexes.
-	 * Then there is a label offset for the name, which strangely appears
-	 * to be three bytes always, although that many would rarely (or never?) be
-	 * required.
+	 * The size of a record in the section.  This is not a constant and might vary
+	 * on various factors, such as the file version, if we are preparing for a
+	 * device, the number of maps etc.
+	 *
+	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + 2 + 2 + 3;
+		return sizes.getMapSize() + 2 + 3;
 	}
 
 	/**
@@ -91,6 +87,6 @@ public class Mdr23 extends MdrSection {
 	 * @return The number of items in the section.
 	 */
 	public int getNumberOfItems() {
-		return regions.size();
+		return countries.size();
 	}
 }
