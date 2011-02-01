@@ -142,4 +142,8 @@ public class Mdr5 extends MdrMapSection {
 		val |= 0x100;
 		return val;
 	}
+
+	public List<Mdr5Record> getCities() {
+		return cities;
+	}
 }

@@ -80,18 +80,21 @@ public class MDRHeader extends CommonHeader {
 
 		sections[16].writeSectionInfo(writer, true, true);
 		sections[17].writeSectionInfo(writer, false, true);
-		sections[18].writeSectionInfo(writer, true, true);
-		sections[19].writeSectionInfo(writer, true, true);
-		sections[20].writeSectionInfo(writer, true, true);
-		sections[21].writeSectionInfo(writer, true, true);
-		sections[22].writeSectionInfo(writer, true, true);
-		sections[23].writeSectionInfo(writer, true, true);
-		sections[24].writeSectionInfo(writer, true, true);
-		sections[25].writeSectionInfo(writer, true, true);
-		sections[26].writeSectionInfo(writer, true, true);
-		sections[27].writeSectionInfo(writer, true, true);
-		sections[28].writeSectionInfo(writer, true, true);
-		sections[29].writeSectionInfo(writer, true, true);
+		for (int n = 18; n <= 30; n++)
+			sections[n].writeSectionInfo(writer, true, true);
+		//sections[18].writeSectionInfo(writer, true, true);
+		//sections[19].writeSectionInfo(writer, true, true);
+		//sections[20].writeSectionInfo(writer, true, true);
+		//sections[21].writeSectionInfo(writer, true, true);
+		//sections[22].writeSectionInfo(writer, true, true);
+		//sections[23].writeSectionInfo(writer, true, true);
+		//sections[24].writeSectionInfo(writer, true, true);
+		//sections[25].writeSectionInfo(writer, true, true);
+		//sections[26].writeSectionInfo(writer, true, true);
+		//sections[27].writeSectionInfo(writer, true, true);
+		//sections[28].writeSectionInfo(writer, true, true);
+		//sections[29].writeSectionInfo(writer, true, true);
+		//sections[30].writeSectionInfo(writer, true, true);
 	}
 
 	public void setItemSize(int sectionNumber, int itemSize) {

@@ -50,7 +50,7 @@ public class Mdr22 extends Mdr2x {
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
 
-			Mdr14Record country = city.getCountry();
+			Mdr14Record country = city.getMdrCountry();
 			if (country == null) continue;
 
 			String name = country.getName();

@@ -126,6 +126,10 @@ public abstract class MdrSection extends ConfigBase {
 			return sections[1].getPointerSize();
 		}
 
+		public int getCitySize() {
+			return sections[5].getPointerSize();
+		}
+
 		/**
 		 * Get the number of bytes required to represent a city when there is
 		 * one bit reserved for a flag.

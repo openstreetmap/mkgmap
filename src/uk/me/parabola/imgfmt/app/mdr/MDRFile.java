@@ -53,6 +53,11 @@ public class MDRFile extends ImgFile {
 	private final Mdr22 mdr22;
 	private final Mdr23 mdr23;
 	private final Mdr24 mdr24;
+	private final Mdr25 mdr25;
+	private final Mdr26 mdr26;
+	private final Mdr27 mdr27;
+	private final Mdr28 mdr28;
+	private final Mdr29 mdr29;
 
 	private int currentMap;
 
@@ -96,13 +101,19 @@ public class MDRFile extends ImgFile {
 		mdr22 = new Mdr22(config);
 		mdr23 = new Mdr23(config);
 		mdr24 = new Mdr24(config);
+		mdr25 = new Mdr25(config);
+		mdr26 = new Mdr26(config);
+		mdr27 = new Mdr27(config);
+		mdr28 = new Mdr28(config);
+		mdr29 = new Mdr29(config);
 
 		this.sections = new MdrSection[]{
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
 				mdr13, mdr14, mdr15, null, null, null, null,
-				mdr20, mdr21, mdr22, mdr23, mdr24,
+				mdr20, mdr21, mdr22, mdr23, mdr24, mdr25,
+				mdr26, mdr27, mdr28, mdr29,
 		};
 
 		mdr11.setMdr10(mdr10);
@@ -233,6 +244,8 @@ public class MDRFile extends ImgFile {
 		mdr12.setIndex(mdr11.getIndex());
 		mdr23.sortRegions(mdr13.getRegions());
 		mdr24.sortCountries(mdr14.getCountries());
+		mdr25.sortCities(mdr5.getCities());
+		mdr27.sortCities(mdr5.getCities());
 
 		writeSection(writer, 4, mdr4);
 
@@ -242,24 +255,24 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 11, mdr11);
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
-
-
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
 		writeSection(writer, 6, mdr6);
-		writeSection(writer, 20, mdr20);
-		writeSection(writer, 21, mdr21);
-		writeSection(writer, 22, mdr22);
+		//writeSection(writer, 20, mdr20);
+		//writeSection(writer, 21, mdr21);
+		//writeSection(writer, 22, mdr22);
 
+		// There is no ordering constraint on the following
 		writeSection(writer, 9, mdr9);
-
-		writeSection(writer, 23, mdr23);
-		writeSection(writer, 24, mdr24);
-
 		writeSection(writer, 12, mdr12);
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
+
+		writeSection(writer, 23, mdr23);
+		writeSection(writer, 24, mdr24);
+		writeSection(writer, 25, mdr25);
+		writeSection(writer, 27, mdr27);
 
 		// write the reverse index last.
 		mdr1.writeSubSections(writer);

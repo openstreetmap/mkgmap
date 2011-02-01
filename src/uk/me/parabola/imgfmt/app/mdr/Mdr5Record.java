@@ -98,7 +98,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 		this.region = region;
 	}
 
-	public Mdr14Record getCountry() {
+	public Mdr14Record getMdrCountry() {
 		return country;
 	}
 
