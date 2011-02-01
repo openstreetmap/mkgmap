@@ -21,7 +21,11 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.ExitException;
 
 /**
  * The MDX index file.  Used with the global index.  This is located
@@ -97,7 +101,24 @@ public class MdxFile {
 	}
 
 	private void writeBody(WritableByteChannel chan, ByteBuffer buf) throws IOException {
+		// Sort the maps by the hex number.
+		Collections.sort(maps, new Comparator<MapInfo>() {
+			public int compare(MapInfo o1, MapInfo o2) {
+				if (o1.getHexMapname() == o2.getHexMapname())
+					return 0;
+				else if (o1.getHexMapname() < o2.getHexMapname())
+					return -1;
+				else
+					return 1;
+			}
+		});
+
 		for (MapInfo info : maps) {
+			// Although its not necessarily wrong for them to be zero, it probably
+			// sign that something is wrong.
+			if (info.getHexMapname() == 0 || info.getMapname() == 0)
+				throw new ExitException("Zero mapname. hex=" + info.getHexMapname() + ", map=" + info.getMapname());
+
 			buf.compact();
 			info.write(buf);
 
