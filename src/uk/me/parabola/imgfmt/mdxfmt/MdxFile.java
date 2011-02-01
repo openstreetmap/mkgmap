@@ -58,13 +58,17 @@ public class MdxFile {
 	 * name and hex name.
 	 * @param name The map name (from the filename of the map) as an integer.
 	 * @param hexname The map id that is inside the TRE header
+	 * @param filename
+	 * @param innername
 	 */
-	public void addMap(int name, int hexname) {
+	public void addMap(int name, int hexname, String filename, String innername) {
 		MapInfo info = new MapInfo();
 		info.setHexMapname(hexname);
 		info.setMapname(name);
 		info.setFamilyId(familyId);
 		info.setProductId(productId);
+		info.setFilename(filename);
+		info.setInnername(innername);
 
 		maps.add(info);
 	}
@@ -117,7 +121,8 @@ public class MdxFile {
 			// Although its not necessarily wrong for them to be zero, it probably
 			// sign that something is wrong.
 			if (info.getHexMapname() == 0 || info.getMapname() == 0)
-				throw new ExitException("Zero mapname. hex=" + info.getHexMapname() + ", map=" + info.getMapname());
+				throw new ExitException("Zero mapname. hex=" + info.getHexMapname() + ", map=" + info.getMapname()
+				+ ", filename=" + info.getFilename() + ", innername=" + info.getInnername());
 
 			buf.compact();
 			info.write(buf);
