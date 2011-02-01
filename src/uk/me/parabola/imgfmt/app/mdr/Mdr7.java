@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
+	private final List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
 	public Mdr7(MdrConfig config) {
@@ -41,7 +42,7 @@ public class Mdr7 extends MdrMapSection {
 		st.setStringOffset(strOff);
 		st.setName(name);
 		st.setCity(mdrCity);
-		streets.add(st);
+		allStreets.add(st);
 	}
 
 	/**
@@ -49,11 +50,10 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	public void finish() {
-		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), streets);
+		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
 
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
-		streets.clear();
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
@@ -149,6 +149,6 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public List<Mdr7Record> getStreets() {
-		return Collections.unmodifiableList(streets);
+		return Collections.unmodifiableList(allStreets);
 	}
 }

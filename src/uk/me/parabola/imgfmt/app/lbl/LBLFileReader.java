@@ -208,6 +208,7 @@ public class LBLFileReader extends ImgFile {
 			city.setIndex(index);
 			if ((info & 0x8000) == 0) {
 				city.setSubdivision(Subdivision.createEmptySubdivision(1));
+				city.setLabel(labels.get(label));
 			} else {
 				// Has subdiv/point index
 				int pointIndex = label & 0xff;
