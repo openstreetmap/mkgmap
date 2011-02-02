@@ -60,6 +60,7 @@ public class Mdr23 extends MdrSection {
 				mdr28.setName(name);
 				mdr28.setStrOffset(reg.getStrOffset());
 				mdr28.setMdr23(record);
+				mdr28.setMdr14(reg.getMdr14());
 				reg.setMdr28(mdr28);
 				lastName = name;
 			}

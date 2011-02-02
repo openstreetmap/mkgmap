@@ -252,8 +252,10 @@ public class MDRFile extends ImgFile {
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
 
+
 		mdr28.buildFromRegions(mdr23.getRegions());
 		mdr29.buildFromCountries(mdr24.getCountries());
+		mdr26.sortMdr28(mdr28.getIndex());
 
 		writeSection(writer, 4, mdr4);
 

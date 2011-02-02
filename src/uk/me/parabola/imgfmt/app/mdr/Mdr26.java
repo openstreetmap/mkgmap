@@ -12,14 +12,54 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
+ * An index into mdr28, sorted by country name.
+ *
  * @author Steve Ratcliffe
  */
 public class Mdr26 extends MdrSection {
+	private final List<Mdr28Record> index = new ArrayList<Mdr28Record>();
+
 	public Mdr26(MdrConfig config) {
 		setConfig(config);
+	}
+
+	public void sortMdr28(List<Mdr28Record> in) {
+		Sort sort = getConfig().getSort();
+
+		List<SortKey<Mdr28Record>> sortList = new ArrayList<SortKey<Mdr28Record>>();
+		int record = 0;
+		for (Mdr28Record mdr28 : in) {
+			SortKey<Mdr28Record> key = sort.createSortKey(mdr28, mdr28.getMdr14().getName(), ++record);
+			sortList.add(key);
+		}
+		Collections.sort(sortList);
+
+		addToIndex(sortList);
+	}
+
+	private void addToIndex(List<SortKey<Mdr28Record>> sortList) {
+		int record26 = 0;
+		for (SortKey<Mdr28Record> key : sortList) {
+			record26++;
+			Mdr28Record mdr28 = key.getObject();
+			Mdr14Record mdr14 = mdr28.getMdr14();
+			if (mdr14 != null) {
+				Mdr29Record mdr29 = mdr14.getMdr29();
+				if (mdr29 != null) {
+					mdr29.setMdr26(record26);
+				}
+			}
+			index.add(mdr28);
+		}
 	}
 
 	/**
@@ -28,6 +68,11 @@ public class Mdr26 extends MdrSection {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
+		int size = getSizes().getSize(28);
+		for (Mdr28Record record : index) {
+			System.out.println("26: m28=" + record.getName());
+			putN(writer, size, record.getIndex());
+		}
 	}
 
 	/**
@@ -38,7 +83,7 @@ public class Mdr26 extends MdrSection {
 	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
-		return 0;
+		return getSizes().getSize(28);
 	}
 
 	/**
@@ -47,6 +92,6 @@ public class Mdr26 extends MdrSection {
 	 * @return The number of items in the section.
 	 */
 	public int getNumberOfItems() {
-		return 0;
+		return index.size();
 	}
 }

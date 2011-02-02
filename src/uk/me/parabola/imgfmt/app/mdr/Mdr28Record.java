@@ -19,12 +19,14 @@ package uk.me.parabola.imgfmt.app.mdr;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr28Record extends RecordBase {
+public class Mdr28Record extends ConfigBase {
+	private int index;
 	private String name;
 	private int mdr21;
 	private int mdr23;
 	private int mdr27;
 	private int strOffset;
+	private Mdr14Record mdr14;
 
 	public String getName() {
 		return name;
@@ -64,5 +66,21 @@ public class Mdr28Record extends RecordBase {
 
 	public void setStrOffset(int strOffset) {
 		this.strOffset = strOffset;
+	}
+
+	public Mdr14Record getMdr14() {
+		return mdr14;
+	}
+
+	public void setMdr14(Mdr14Record mdr14) {
+		this.mdr14 = mdr14;
+	}
+
+	public int getIndex() {
+		return index;
+	}
+
+	public void setIndex(int index) {
+		this.index = index;
 	}
 }

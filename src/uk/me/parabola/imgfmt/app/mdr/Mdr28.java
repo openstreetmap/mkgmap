@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -31,10 +32,13 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void buildFromRegions(List<Mdr13Record> regions) {
+		int record = 0;
 		for (Mdr13Record region : regions) {
 			Mdr28Record mdr28 = region.getMdr28();
-			if (mdr28 != null)
+			if (mdr28 != null) {
+				mdr28.setIndex(++record);
 				index.add(mdr28);
+			}
 		}
 	}
 
@@ -48,11 +52,12 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 		int size21 = sizes.getSize(21);
 		int size23 = sizes.getSize(23);
 		int size27 = sizes.getSize(27);
-		for (Mdr28Record record : index) {
-			putN(writer, size23, record.getMdr23());
-			putStringOffset(writer, record.getStrOffset());
-			putN(writer, size21, record.getMdr21());
-			putN(writer, size27, record.getMdr27());
+
+		for (Mdr28Record mdr28 : index) {
+			putN(writer, size23, mdr28.getMdr23());
+			putStringOffset(writer, mdr28.getStrOffset());
+			putN(writer, size21, mdr28.getMdr21());
+			putN(writer, size27, mdr28.getMdr27());
 		}
 	}
 
@@ -86,5 +91,9 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 	 */
 	public int getExtraValue() {
 		return 0x7;
+	}
+
+	public List<Mdr28Record> getIndex() {
+		return Collections.unmodifiableList(index);
 	}
 }
