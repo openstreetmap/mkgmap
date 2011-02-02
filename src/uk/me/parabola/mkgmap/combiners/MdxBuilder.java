@@ -41,8 +41,11 @@ public class MdxBuilder implements Combiner {
 	}
 
 	public void onMapEnd(FileInfo info) {
+		if (!info.isImg())
+			return;
+
 		mdx.addMap(info.getMapnameAsInt(), info.getHexname(),
-				info.getFilename(), info.getInnername());
+				info.getFilename());
 	}
 
 	public void onFinish() {

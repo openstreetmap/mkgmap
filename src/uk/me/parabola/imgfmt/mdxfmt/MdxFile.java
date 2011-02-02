@@ -25,8 +25,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.ExitException;
-
 /**
  * The MDX index file.  Used with the global index.  This is located
  * at the family level in the windows registry and can perhaps index
@@ -58,17 +56,16 @@ public class MdxFile {
 	 * name and hex name.
 	 * @param name The map name (from the filename of the map) as an integer.
 	 * @param hexname The map id that is inside the TRE header
-	 * @param filename
-	 * @param innername
+	 * @param filename The file name of the map being added. Mainly for diagnostics,
+	 * it is not needed for the file.
 	 */
-	public void addMap(int name, int hexname, String filename, String innername) {
+	public void addMap(int name, int hexname, String filename) {
 		MapInfo info = new MapInfo();
 		info.setHexMapname(hexname);
 		info.setMapname(name);
 		info.setFamilyId(familyId);
 		info.setProductId(productId);
 		info.setFilename(filename);
-		info.setInnername(innername);
 
 		maps.add(info);
 	}
@@ -121,8 +118,7 @@ public class MdxFile {
 			// Although its not necessarily wrong for them to be zero, it probably
 			// sign that something is wrong.
 			if (info.getHexMapname() == 0 || info.getMapname() == 0)
-				throw new ExitException("Zero mapname. hex=" + info.getHexMapname() + ", map=" + info.getMapname()
-				+ ", filename=" + info.getFilename() + ", innername=" + info.getInnername());
+				System.err.println("Invalid mapname for " + info.getFilename() + ", perhaps it is not a .img file");
 
 			buf.compact();
 			info.write(buf);

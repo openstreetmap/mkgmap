@@ -30,9 +30,7 @@ public class MapInfo {
 	private char familyId;
 	private char productId;
 
-	// XXX temp
 	private String filename;
-	private String innername;
 
 	void write(ByteBuffer os)  {
 		os.putInt(hexMapname);
@@ -71,13 +69,5 @@ public class MapInfo {
 
 	public void setFilename(String filename) {
 		this.filename = filename;
-	}
-
-	public String getInnername() {
-		return innername;
-	}
-
-	public void setInnername(String innername) {
-		this.innername = innername;
 	}
 }
