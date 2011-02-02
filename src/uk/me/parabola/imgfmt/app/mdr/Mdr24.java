@@ -32,6 +32,10 @@ public class Mdr24 extends MdrSection {
 		setConfig(config);
 	}
 
+	/**
+	 * Sort the countries by name. Duplicates are kept.
+	 * @param list The full list of countries.
+	 */
 	public void sortCountries(List<Mdr14Record> list) {
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr14Record>> keys = new ArrayList<SortKey<Mdr14Record>>();
@@ -42,8 +46,23 @@ public class Mdr24 extends MdrSection {
 
 		Collections.sort(keys);
 
+		String lastName = "";
+		int record = 0;
 		for (SortKey<Mdr14Record> key : keys) {
-			countries.add(key.getObject());
+			record++;
+			Mdr14Record c = key.getObject();
+
+			// If this is a new name, then we prepare a mdr29 record for it.
+			String name = c.getName();
+			if (!name.equals(lastName)) {
+				Mdr29Record mdr29 = new Mdr29Record();
+				mdr29.setName(name);
+				mdr29.setStrOffset(c.getStrOff());
+				mdr29.setMdr24(record);
+				c.setMdr29(mdr29);
+			}
+
+			countries.add(c);
 		}
 	}
 
@@ -88,5 +107,9 @@ public class Mdr24 extends MdrSection {
 	 */
 	public int getNumberOfItems() {
 		return countries.size();
+	}
+
+	public List<Mdr14Record> getCountries() {
+		return Collections.unmodifiableList(countries);
 	}
 }

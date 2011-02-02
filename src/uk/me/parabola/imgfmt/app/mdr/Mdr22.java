@@ -63,8 +63,19 @@ public class Mdr22 extends Mdr2x {
 		}
 		Collections.sort(keys);
 
-		for (SortKey<Mdr7Record> key : keys)
-			streets.add(key.getObject());
+		int record = 0;
+		for (SortKey<Mdr7Record> key : keys) {
+			record++;
+			Mdr7Record street = key.getObject();
+
+			// Include in the mdr29 index if we have one for this record.
+			Mdr14Record mdrCountry = street.getCity().getMdrCountry();
+			Mdr29Record mdr29 = mdrCountry.getMdr29();
+			if (mdr29 != null)
+				mdr29.setMdr22(record);
+
+			streets.add(street);
+		}
 	}
 
 	/**

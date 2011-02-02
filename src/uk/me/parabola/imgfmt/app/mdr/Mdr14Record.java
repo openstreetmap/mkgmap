@@ -21,6 +21,7 @@ public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 	private int lblOffset;
 	private int strOff;
 	private String name;
+	private Mdr29Record mdr29;
 
 	/**
 	 * Sort by map id and then country id like for regions.  We don't have
@@ -68,5 +69,13 @@ public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public Mdr29Record getMdr29() {
+		return mdr29;
+	}
+
+	public void setMdr29(Mdr29Record mdr29) {
+		this.mdr29 = mdr29;
 	}
 }

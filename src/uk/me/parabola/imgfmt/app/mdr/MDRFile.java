@@ -253,6 +253,7 @@ public class MDRFile extends ImgFile {
 		mdr27.sortCities(mdr5.getCities());
 
 		mdr28.buildFromRegions(mdr23.getRegions());
+		mdr29.buildFromCountries(mdr24.getCountries());
 
 		writeSection(writer, 4, mdr4);
 
@@ -279,8 +280,10 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 23, mdr23);
 		writeSection(writer, 24, mdr24);
 		writeSection(writer, 25, mdr25);
+		writeSection(writer, 26, mdr26);
 		writeSection(writer, 27, mdr27);
 		writeSection(writer, 28, mdr28);
+		writeSection(writer, 29, mdr29);
 
 		// write the reverse index last.
 		mdr1.writeSubSections(writer);

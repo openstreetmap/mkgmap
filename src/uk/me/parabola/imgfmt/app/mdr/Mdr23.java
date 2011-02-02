@@ -51,6 +51,9 @@ public class Mdr23 extends MdrSection {
 		for (SortKey<Mdr13Record> key : keys) {
 			record++;
 			Mdr13Record reg = key.getObject();
+
+			// If this is new name, then create a mdr28 record for it. This
+			// will be further filled in when the other sections are prepared.
 			String name = reg.getName();
 			if (!name.equals(lastName)) {
 				Mdr28Record mdr28 = new Mdr28Record();
@@ -60,6 +63,7 @@ public class Mdr23 extends MdrSection {
 				reg.setMdr28(mdr28);
 				lastName = name;
 			}
+
 			regions.add(reg);
 		}
 	}
@@ -108,6 +112,6 @@ public class Mdr23 extends MdrSection {
 	}
 
 	public List<Mdr13Record> getRegions() {
-		return regions;
+		return Collections.unmodifiableList(regions);
 	}
 }

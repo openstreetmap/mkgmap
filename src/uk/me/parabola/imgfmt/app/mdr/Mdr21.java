@@ -64,11 +64,12 @@ public class Mdr21 extends Mdr2x {
 		for (SortKey<Mdr7Record> key : keys) {
 			record++;
 			Mdr7Record street = key.getObject();
+
 			Mdr13Record mdrRegion = street.getCity().getMdrRegion();
 			Mdr28Record mdr28 = mdrRegion.getMdr28();
-			if (mdr28 != null) {
+			if (mdr28 != null)
 				mdr28.setMdr21(record);
-			}
+
 			streets.add(street);
 		}
 	}

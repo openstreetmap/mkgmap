@@ -23,7 +23,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr28 extends MdrSection {
+public class Mdr28 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr28Record> index = new ArrayList<Mdr28Record>();
 
 	public Mdr28(MdrConfig config) {
@@ -78,6 +78,13 @@ public class Mdr28 extends MdrSection {
 	 * @return The number of items in the section.
 	 */
 	public int getNumberOfItems() {
-		return 0;
+		return index.size();
+	}
+
+	/**
+	 * Flag purposes are not known.
+	 */
+	public int getExtraValue() {
+		return 0x7;
 	}
 }
