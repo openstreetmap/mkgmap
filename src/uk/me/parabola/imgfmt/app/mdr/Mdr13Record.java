@@ -23,6 +23,7 @@ public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
 	private int strOffset;
 	private String name;
 	private Mdr14Record mdr14;
+	private Mdr28Record mdr28;
 
 	/**
 	 * We sort first by map id and then by region id.
@@ -84,5 +85,13 @@ public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
 
 	public void setMdr14(Mdr14Record mdr14) {
 		this.mdr14 = mdr14;
+	}
+
+	public Mdr28Record getMdr28() {
+		return mdr28;
+	}
+
+	public void setMdr28(Mdr28Record mdr28) {
+		this.mdr28 = mdr28;
 	}
 }

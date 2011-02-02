@@ -50,8 +50,17 @@ public class Mdr27 extends MdrSection {
 
 		Collections.sort(keys);
 
+		int record = 0;
 		for (SortKey<Mdr5Record> key : keys) {
-			cities.add(key.getObject());
+			record++;
+			Mdr5Record city = key.getObject();
+
+			Mdr13Record mdrRegion = city.getMdrRegion();
+			Mdr28Record mdr28 = mdrRegion.getMdr28();
+			if (mdr28 != null)
+				mdr28.setMdr27(record);
+			
+			cities.add(city);
 		}
 	}
 

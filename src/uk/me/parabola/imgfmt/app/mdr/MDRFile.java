@@ -234,18 +234,25 @@ public class MDRFile extends ImgFile {
 	private void writeSections(ImgFileWriter writer) {
 		sizes = new MdrMapSection.PointerSizes(sections);
 
-		// Deal with the dependencies between the sections.
+		// Deal with the dependencies between the sections. The order of the following
+		// statements is sometimes important.
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
+
+		mdr23.sortRegions(mdr13.getRegions());
+		mdr24.sortCountries(mdr14.getCountries());
+
 		mdr20.buildFromStreets(mdr7.getStreets());
 		mdr21.buildFromStreets(mdr7.getStreets());
 		mdr22.buildFromStreets(mdr7.getStreets());
+
 		mdr8.setIndex(mdr7.getIndex());
 		mdr9.setGroups(mdr10.getGroupSizes());
 		mdr12.setIndex(mdr11.getIndex());
-		mdr23.sortRegions(mdr13.getRegions());
-		mdr24.sortCountries(mdr14.getCountries());
+
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
+
+		mdr28.buildFromRegions(mdr23.getRegions());
 
 		writeSection(writer, 4, mdr4);
 
@@ -258,9 +265,9 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 8, mdr8);
 		writeSection(writer, 5, mdr5);
 		writeSection(writer, 6, mdr6);
-		//writeSection(writer, 20, mdr20);
-		//writeSection(writer, 21, mdr21);
-		//writeSection(writer, 22, mdr22);
+		writeSection(writer, 20, mdr20);
+		writeSection(writer, 21, mdr21);
+		writeSection(writer, 22, mdr22);
 
 		// There is no ordering constraint on the following
 		writeSection(writer, 9, mdr9);
@@ -273,6 +280,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 24, mdr24);
 		writeSection(writer, 25, mdr25);
 		writeSection(writer, 27, mdr27);
+		writeSection(writer, 28, mdr28);
 
 		// write the reverse index last.
 		mdr1.writeSubSections(writer);

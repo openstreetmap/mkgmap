@@ -196,5 +196,9 @@ public abstract class MdrSection extends ConfigBase {
 				flag = 0;
 			return flag;
 		}
+
+		public int getSize(int sect) {
+			return sections[sect].getPointerSize();
+		}
 	}
 }

@@ -46,8 +46,21 @@ public class Mdr23 extends MdrSection {
 
 		Collections.sort(keys);
 
+		String lastName = "";
+		int record = 0;
 		for (SortKey<Mdr13Record> key : keys) {
-			regions.add(key.getObject());
+			record++;
+			Mdr13Record reg = key.getObject();
+			String name = reg.getName();
+			if (!name.equals(lastName)) {
+				Mdr28Record mdr28 = new Mdr28Record();
+				mdr28.setName(name);
+				mdr28.setStrOffset(reg.getStrOffset());
+				mdr28.setMdr23(record);
+				reg.setMdr28(mdr28);
+				lastName = name;
+			}
+			regions.add(reg);
 		}
 	}
 
@@ -92,5 +105,9 @@ public class Mdr23 extends MdrSection {
 	 */
 	public int getNumberOfItems() {
 		return regions.size();
+	}
+
+	public List<Mdr13Record> getRegions() {
+		return regions;
 	}
 }

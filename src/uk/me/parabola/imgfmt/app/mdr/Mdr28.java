@@ -12,14 +12,30 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
+ * One of these per region name. There are pointers into the other sections
+ * that are sorted by region to the first record that has the given name.
+ *
  * @author Steve Ratcliffe
  */
 public class Mdr28 extends MdrSection {
+	private final List<Mdr28Record> index = new ArrayList<Mdr28Record>();
+
 	public Mdr28(MdrConfig config) {
 		setConfig(config);
+	}
+
+	public void buildFromRegions(List<Mdr13Record> regions) {
+		for (Mdr13Record region : regions) {
+			Mdr28Record mdr28 = region.getMdr28();
+			if (mdr28 != null)
+				index.add(mdr28);
+		}
 	}
 
 	/**
@@ -28,6 +44,16 @@ public class Mdr28 extends MdrSection {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
+		PointerSizes sizes = getSizes();
+		int size21 = sizes.getSize(21);
+		int size23 = sizes.getSize(23);
+		int size27 = sizes.getSize(27);
+		for (Mdr28Record record : index) {
+			putN(writer, size23, record.getMdr23());
+			putStringOffset(writer, record.getStrOffset());
+			putN(writer, size21, record.getMdr21());
+			putN(writer, size27, record.getMdr27());
+		}
 	}
 
 	/**
@@ -38,7 +64,12 @@ public class Mdr28 extends MdrSection {
 	 * @return The size of a record in this section.
 	 */
 	public int getItemSize() {
-		return 0;
+		PointerSizes sizes = getSizes();
+
+		return sizes.getSize(23)
+				+ sizes.getStrOffSize()
+				+ sizes.getSize(21)
+				+ sizes.getSize(27);
 	}
 
 	/**
