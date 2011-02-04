@@ -46,4 +46,9 @@ public class AnyCharsetDecoder implements CharacterDecoder {
 		byte[] ba = out.toByteArray();
 		return new DecodedText(ba, charSet);
 	}
+
+	public void reset() {
+		needReset = false;
+		out.reset();
+	}
 }

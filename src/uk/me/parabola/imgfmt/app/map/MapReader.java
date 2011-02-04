@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -170,6 +171,8 @@ public class MapReader implements Closeable {
 	}
 
 	public List<RoadDef> getRoads() {
+		if (netFile == null)
+			return Collections.emptyList();
 		return netFile.getRoads();
 	}
 }

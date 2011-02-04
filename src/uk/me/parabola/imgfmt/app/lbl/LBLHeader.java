@@ -36,6 +36,8 @@ public class LBLHeader extends CommonHeader {
 	private int labelStart; // Start of labels.
 	private int labelSize; // Size of file.
 
+	private int offsetMultiplier;
+
 	// Code page.
 	private int codePage;
 
@@ -61,7 +63,7 @@ public class LBLHeader extends CommonHeader {
 	protected void readFileHeader(ImgFileReader reader) {
 		labelStart = reader.getInt();
 		labelSize = reader.getInt();
-		reader.get();
+		offsetMultiplier = 1 << reader.get();
 		encodingType = reader.get();
 
 		// Read the places part of the header.
@@ -127,6 +129,10 @@ public class LBLHeader extends CommonHeader {
 
 	public int getLabelStart() {
 		return labelStart;
+	}
+
+	public int getOffsetMultiplier() {
+		return offsetMultiplier;
 	}
 
 	public PlacesHeader getPlaceHeader() {

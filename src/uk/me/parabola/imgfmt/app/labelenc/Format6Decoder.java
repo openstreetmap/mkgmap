@@ -62,6 +62,13 @@ public class Format6Decoder implements CharacterDecoder {
 		return text;
 	}
 
+	public void reset() {
+		needReset = false;
+		out.reset();
+		store = 0;
+		nbits = 0;
+	}
+
 
 	/**
 	 * Convert a single 6 bit quantity into a character.

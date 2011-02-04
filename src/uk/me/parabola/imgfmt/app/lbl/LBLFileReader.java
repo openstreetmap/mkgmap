@@ -53,17 +53,17 @@ public class LBLFileReader extends ImgFile {
 	private final Map<Integer, Zip> zips = new HashMap<Integer, Zip>();
 	private final List<City> cities = new ArrayList<City>();
 
-
 	public LBLFileReader(ImgChannel chan) {
 		setHeader(header);
 
 		setReader(new BufferedImgFileReader(chan));
 		header.readHeader(getReader());
+		int offsetMultiplier = header.getOffsetMultiplier();
 		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
 				header.getEncodingType());
 		textDecoder = funcs.getDecoder();
 
-		readLables();
+		readLables(offsetMultiplier);
 
 		readCountries();
 		readRegions();
@@ -229,7 +229,7 @@ public class LBLFileReader extends ImgFile {
 	 * the text, except that other objects take a Label.  Perhaps this can
 	 * be changed.
 	 */
-	private void readLables() {
+	private void readLables(int mult) {
 		ImgFileReader reader = getReader();
 
 		labels.put(0, NULL_LABEL);
@@ -237,29 +237,49 @@ public class LBLFileReader extends ImgFile {
 		int start = header.getLabelStart();
 		int size =  header.getLabelSize();
 
-		reader.position(start + 1);
-		int labelOffset = 1;
-		for (int off = 1; off <= size; off++) {
+		reader.position(start + mult);
+		int labelOffset = mult;
+
+		for (int off = mult; off <= size; off++) {
 			byte b = reader.get();
 			if (textDecoder.addByte(b)) {
-				labelOffset = saveLabel(labelOffset, off);
+				labelOffset = saveLabel(labelOffset, off, mult);
+
+				// If there is an offset multiplier greater than one then padding will be used to
+				// ensure that the labels are on suitable boundaries.  We must skip over any such padding.
+				while ((labelOffset & (mult - 1)) != 0) {
+					textDecoder.reset();
+					if (labelOffset <= off) {
+						// In the 6bit decoder, we may have already read the (first) padding byte and so
+						// we increment the label offset without reading anything more.
+						labelOffset++;
+					} else {
+						reader.get();
+						//noinspection AssignmentToForLoopParameter
+						off++;
+						labelOffset++;
+					}
+				}
 			}
 		}
 	}
 
 	/**
 	 * We have a label and we need to save it.
+	 *
 	 * @param labelOffset The offset of the label we are about to save.
 	 * @param currentOffset The current offset that last read from.
+	 * @param multiplier The label offset multiplier.
 	 * @return The offset of the next label.
 	 */
-	private int saveLabel(int labelOffset, int currentOffset) {
+	private int saveLabel(int labelOffset, int currentOffset, int multiplier) {
 		DecodedText encText = textDecoder.getText();
 		String text = encText.getText();
 
 		Label l = new Label(text);
-		l.setOffset(labelOffset);
-		labels.put(labelOffset, l);
+		assert (labelOffset & (multiplier - 1)) == 0;
+		l.setOffset(labelOffset/multiplier);
+		labels.put(labelOffset/multiplier, l);
 
 		// Calculate the offset of the next label. This is not always
 		// the current offset + 1 because there may be bytes left
@@ -333,7 +353,6 @@ public class LBLFileReader extends ImgFile {
 			boolean hasPhone;
 			boolean hasHighwayExit;
 			boolean hasTides = false;
-			boolean hasUnkn = false;
 
 			if (override) {
 				flags = reader.get();
@@ -412,7 +431,6 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasHighwayExit) {
-
 				int lblinfo = reader.getu3();
 				int highwayLabelOffset = lblinfo & 0x3FFFF;
 				boolean indexed = (lblinfo & 0x800000) != 0;
@@ -425,6 +443,10 @@ public class LBLFileReader extends ImgFile {
 									reader.getChar() :
 									reader.get();
 				}
+			}
+
+			if (hasTides) {
+				System.out.println("Map has tide prediction, please implement!");
 			}
 
 			pois.put(poiOffset, poi);
