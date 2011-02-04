@@ -18,7 +18,8 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * An index of countries with pointers to the other country related sections.
+ * An index of countries sorted by name with pointers to the other country related sections.
+ * There is only one per name, not per name and map.
  *
  * @author Steve Ratcliffe
  */
@@ -30,10 +31,14 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void buildFromCountries(List<Mdr14Record> countries) {
+		String lastName = "";
 		for (Mdr14Record country : countries) {
 			Mdr29Record mdr29 = country.getMdr29();
-			if (mdr29 != null)
+			String name = mdr29.getName();
+			if (!name.equals(lastName)) {
 				index.add(mdr29);
+				lastName = name;
+			}
 		}
 	}
 

@@ -48,6 +48,7 @@ public class Mdr24 extends MdrSection {
 
 		String lastName = "";
 		int record = 0;
+		Mdr29Record mdr29 = null;
 		for (SortKey<Mdr14Record> key : keys) {
 			record++;
 			Mdr14Record c = key.getObject();
@@ -55,13 +56,15 @@ public class Mdr24 extends MdrSection {
 			// If this is a new name, then we prepare a mdr29 record for it.
 			String name = c.getName();
 			if (!name.equals(lastName)) {
-				Mdr29Record mdr29 = new Mdr29Record();
+				mdr29 = new Mdr29Record();
 				mdr29.setName(name);
 				mdr29.setStrOffset(c.getStrOff());
 				mdr29.setMdr24(record);
-				c.setMdr29(mdr29);
 				lastName = name;
 			}
+
+			assert mdr29 != null;
+			c.setMdr29(mdr29);
 
 			countries.add(c);
 		}

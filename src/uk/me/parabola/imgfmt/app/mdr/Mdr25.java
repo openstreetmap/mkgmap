@@ -47,6 +47,7 @@ public class Mdr25 extends MdrSection {
 
 		Collections.sort(keys);
 
+		String lastName = "";
 		int record = 0;
 		for (SortKey<Mdr5Record> key : keys) {
 			record++;
@@ -55,8 +56,11 @@ public class Mdr25 extends MdrSection {
 			// Record in the 29 index if there is one for this record
 			Mdr14Record mdrCountry = city.getMdrCountry();
 			Mdr29Record mdr29 = mdrCountry.getMdr29();
-			if (mdr29 != null)
+			String name = mdr29.getName();
+			if (!name.equals(lastName)) {
 				mdr29.setMdr25(record);
+				lastName = name;
+			}
 
 			cities.add(city);
 		}

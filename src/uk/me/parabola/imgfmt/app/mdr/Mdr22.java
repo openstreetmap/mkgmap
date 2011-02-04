@@ -51,11 +51,11 @@ public class Mdr22 extends Mdr2x {
 			if (city == null) continue;
 
 			Mdr14Record country = city.getMdrCountry();
-			if (country == null) continue;
+			assert country != null;
 
 			String name = country.getName();
-			if (name == null) continue;
-
+			assert name != null;
+			
 			// We are sorting the streets, but we are sorting primarily on the
 			// country name associated with the street.
 			SortKey<Mdr7Record> key = sort.createSortKey(s, name, s.getIndex());
@@ -64,6 +64,7 @@ public class Mdr22 extends Mdr2x {
 		Collections.sort(keys);
 
 		int record = 0;
+		String lastName = "";
 		for (SortKey<Mdr7Record> key : keys) {
 			record++;
 			Mdr7Record street = key.getObject();
@@ -71,8 +72,11 @@ public class Mdr22 extends Mdr2x {
 			// Include in the mdr29 index if we have one for this record.
 			Mdr14Record mdrCountry = street.getCity().getMdrCountry();
 			Mdr29Record mdr29 = mdrCountry.getMdr29();
-			if (mdr29 != null)
+			String name = mdrCountry.getName();
+			if (!name.equals(lastName)) {
 				mdr29.setMdr22(record);
+				lastName = name;
+			}
 
 			streets.add(street);
 		}

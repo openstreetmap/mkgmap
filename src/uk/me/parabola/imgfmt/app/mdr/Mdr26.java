@@ -47,16 +47,20 @@ public class Mdr26 extends MdrSection {
 	}
 
 	private void addToIndex(List<SortKey<Mdr28Record>> sortList) {
+		String lastName = "";
 		int record26 = 0;
 		for (SortKey<Mdr28Record> key : sortList) {
 			record26++;
 			Mdr28Record mdr28 = key.getObject();
 			Mdr14Record mdr14 = mdr28.getMdr14();
-			if (mdr14 != null) {
+			assert mdr14 != null;
+
+			// For each new name, set up the mdr29 record for it.
+			String name = mdr14.getName();
+			if (!name.equals(lastName)) {
 				Mdr29Record mdr29 = mdr14.getMdr29();
-				if (mdr29 != null) {
-					mdr29.setMdr26(record26);
-				}
+				mdr29.setMdr26(record26);
+				lastName = name;
 			}
 			index.add(mdr28);
 		}
