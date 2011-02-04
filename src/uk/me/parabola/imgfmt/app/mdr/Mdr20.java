@@ -68,11 +68,20 @@ public class Mdr20 extends Mdr2x {
 		}
 		Collections.sort(keys);
 
+		String lastName = "";
+		int lastMapid = 0;
 		int record = 1;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 			street.setMdr20Index(record++);
-			streets.add(street);
+
+			int mapid = street.getMapIndex();
+			String name = street.getName();
+			if (mapid != lastMapid || !name.equals(lastName)) {
+				streets.add(street);
+				lastMapid = mapid;
+				lastName = name;
+			}
 		}
 	}
 

@@ -120,8 +120,8 @@ public class MdrBuilder implements Combiner {
 	 * Create the sort description for the mdr.  This is converted into a SRT which is included
 	 * in the mdr.img and also it is used to actually sort the text items within the file itself.
 	 *
-	 * We simply use the codepage to locate a sorting description, we could have several for the same
-	 * codepage for different countries for example.
+	 * We simply use the code page to locate a sorting description, we could have several for the same
+	 * code page for different countries for example.
 	 *
 	 * @param codepage The code page which is used to find a suitable sort description.
 	 * @return A sort description object.
@@ -166,10 +166,11 @@ public class MdrBuilder implements Combiner {
 			maps.countries = addCountries(mr);
 			maps.regions = addRegions(mr, maps);
 			List<Mdr5Record> mdrCityList = fetchCities(mr, maps);
+			maps.cityList = mdrCityList;
 
-			addPoints(mr, maps.cities);
+			addPoints(mr, maps);
 			addCities(mdrCityList);
-			addStreets(mr, maps.cities);
+			addStreets(mr, mdrCityList);
 			addZips(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
@@ -211,9 +212,6 @@ public class MdrBuilder implements Combiner {
 		List<Mdr5Record> cityList = new ArrayList<Mdr5Record>();
 		List<City> cities = mr.getCities();
 		for (City c : cities) {
-			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
-			assert key < 0xffffff;
-
 			int regionCountryNumber = c.getRegionCountryNumber();
 			Mdr13Record mdrRegion = null;
 			Mdr14Record mdrCountry;
@@ -230,6 +228,9 @@ public class MdrBuilder implements Combiner {
 			mdrCity.setMdrCountry(mdrCountry);
 			mdrCity.setLblOffset(c.getLblOffset());
 			mdrCity.setName(c.getName());
+
+			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
+			assert key < 0xffffff;
 			cityMap.put(key, mdrCity);
 			cityList.add(mdrCity);
 		}
@@ -255,9 +256,9 @@ public class MdrBuilder implements Combiner {
 	/**
 	 * Read points from this map and add them to the index.
 	 * @param mr The currently open map.
-	 * @param cityMap Cites indexed by subdiv and point index.
+	 * @param maps Maps of regions, cities countries etc.
 	 */
-	private void addPoints(MapReader mr, Map<Integer, Mdr5Record> cityMap) {
+	private void addPoints(MapReader mr, AreaMaps maps) {
 		List<Point> list = mr.pointsForLevel(0);
 		for (Point p : list) {
 			Label label = p.getLabel();
@@ -269,10 +270,10 @@ public class MdrBuilder implements Combiner {
 
 			Mdr5Record mdrCity = null;
 			boolean isCity;
-			if (p.getType() >= 0x1 && p.getType() <= 0x10) {
+			if (p.getType() >= 0x1 && p.getType() <= 0x11) {
 				// This is itself a city, it gets a reference to its own MDR 5 record.
 				// and we also use it to set the name of the city.
-				mdrCity = cityMap.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
+				mdrCity = maps.cities.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
 				if (mdrCity != null) {
 					mdrCity.setLblOffset(label.getOffset());
 					mdrCity.setName(label.getText());
@@ -284,7 +285,7 @@ public class MdrBuilder implements Combiner {
 				POIRecord poi = p.getPOIRecord();
 				City c = poi.getCity();
 				if (c != null)
-					mdrCity = getMdr5FromCity(cityMap, c);
+					mdrCity = getMdr5FromCity(maps, c);
 				isCity = false;
 			}
 
@@ -293,7 +294,7 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
-	private void addStreets(MapReader mr, Map<Integer, Mdr5Record> cityMap) {
+	private void addStreets(MapReader mr, List<Mdr5Record> cityList) {
 		List<RoadDef> roads = mr.getRoads();
 
 		for (RoadDef road : roads) {
@@ -301,18 +302,28 @@ public class MdrBuilder implements Combiner {
 			if (name == null || name.length() == 0)
 				continue;
 
-			Mdr5Record mdrCity = getMdr5FromCity(cityMap, road.getCity());
+			Mdr5Record mdrCity = null;
+			if (road.getCity() != null) {
+				mdrCity = cityList.get(road.getCity().getIndex() - 1);
+				assert mdrCity.getMapIndex() != 0;
+				//if (mdrCity.getMapIndex() == 0)
+				//	mdrCity = null;
+
+			}
+			
 			mdrFile.addStreet(road, mdrCity);
 		}
 	}
 
-	private Mdr5Record getMdr5FromCity(Map<Integer, Mdr5Record> cityMap, City c) {
+	private Mdr5Record getMdr5FromCity(AreaMaps cityMap, City c) {
 		if (c == null)
 			return null;
-		Mdr5Record mdr5Record = cityMap.get((c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff));
-		if (mdr5Record != null && mdr5Record.getMapIndex() == 0)
-			return null;
-		return mdr5Record;
+
+		if (c.getPointIndex() > 0) {
+			return cityMap.cities.get((c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff));
+		} else {
+			return cityMap.cityList.get(c.getIndex() - 1);
+		}
 	}
 
 	public void onFinish() {
@@ -335,5 +346,6 @@ public class MdrBuilder implements Combiner {
 		private final Map<Integer, Mdr5Record> cities = new HashMap<Integer, Mdr5Record>();
 		private Map<Integer, Mdr13Record> regions;
 		private Map<Integer, Mdr14Record> countries;
+		private List<Mdr5Record> cityList;
 	}
 }
