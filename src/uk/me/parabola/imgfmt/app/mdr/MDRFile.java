@@ -163,6 +163,7 @@ public class MDRFile extends ImgFile {
 		int labelOffset = city.getLblOffset();
 		if (labelOffset != 0) {
 			String name = city.getName();
+			assert name != null : "off=" + labelOffset;
 			city.setMapIndex(currentMap);
 			city.setStringOffset(createString(name));
 			mdr5.addCity(city);

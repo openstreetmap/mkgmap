@@ -70,7 +70,6 @@ public class Mdr26 extends MdrSection {
 	public void writeSectData(ImgFileWriter writer) {
 		int size = getSizes().getSize(28);
 		for (Mdr28Record record : index) {
-			System.out.println("26: m28=" + record.getName());
 			putN(writer, size, record.getIndex());
 		}
 	}

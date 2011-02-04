@@ -68,6 +68,7 @@ public abstract class MdrSection extends ConfigBase {
 			writer.putInt(value);
 			break;
 		default: // Don't write anything.
+			assert false;
 			break;
 		}
 	}

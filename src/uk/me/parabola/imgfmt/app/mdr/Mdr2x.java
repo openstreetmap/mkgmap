@@ -38,10 +38,10 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 
 		int recordNumber = 0;
 		for (Mdr7Record street : streets) {
-//assert street.getMapIndex() == street.getCity().getMapIndex() : street.getMapIndex() + "/" + street.getCity().getMapIndex();
+			assert street.getMapIndex() == street.getCity().getMapIndex() : street.getMapIndex() + "/" + street.getCity().getMapIndex();
 			addIndexPointer(street.getMapIndex(), ++recordNumber);
-			int index = street.getIndex();
 
+			int index = street.getIndex();
 			String name = street.getName();
 			int flag = 1;
 			if (name.equals(lastName)) {

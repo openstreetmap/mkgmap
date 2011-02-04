@@ -39,6 +39,7 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public void addCity(Mdr5Record record) {
+		assert record.getMapIndex() != 0;
 		cities.add(record);
 		if (record.getCityIndex() > maxCityIndex)
 			maxCityIndex = record.getCityIndex();
@@ -71,6 +72,7 @@ public class Mdr5 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = "";
+		int last20 = 0;
 
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
@@ -83,9 +85,13 @@ public class Mdr5 extends MdrMapSection {
 			int region = city.getRegionIndex();
 
 			// Set flag only for a name that is different to the previous one
-			if (lastName.equals(city.getName()))
+			if (lastName.equals(city.getName())) {
 				flag = 0;
+				if (city.getMdr20Index() != last20)
+					city.setMdr20Index(last20);
+			}
 			lastName = city.getName();
+			last20 = city.getMdr20Index();
 
 			// Write out the record
 			putMapIndex(writer, mapIndex);
@@ -129,8 +135,8 @@ public class Mdr5 extends MdrMapSection {
 	/**
 	 * Known structure:
 	 * bits 0-1: size of local city index - 1 (all values appear to work)
-	 * bits 2-3: size of label offset (only 0 and 3 appear to work)
-	 * bit  4    does not appear to have any effect
+	 * bit  3: has region
+	 * bit  4: has string
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
@@ -139,7 +145,8 @@ public class Mdr5 extends MdrMapSection {
 		// String offset is only included for a mapsource index.
 		if (!isForDevice())
 			val |= 0x08;
-		val |= 0x100;
+		val |= 0x10;
+		val |= 0x100; // mdr20 present
 		return val;
 	}
 

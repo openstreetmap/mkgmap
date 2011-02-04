@@ -60,6 +60,7 @@ public class Mdr24 extends MdrSection {
 				mdr29.setStrOffset(c.getStrOff());
 				mdr29.setMdr24(record);
 				c.setMdr29(mdr29);
+				lastName = name;
 			}
 
 			countries.add(c);

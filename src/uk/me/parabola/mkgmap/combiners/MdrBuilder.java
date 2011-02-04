@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -164,10 +165,10 @@ public class MdrBuilder implements Combiner {
 
 			maps.countries = addCountries(mr);
 			maps.regions = addRegions(mr, maps);
-			maps.cities = fetchCities(mr, maps);
-			
+			List<Mdr5Record> mdrCityList = fetchCities(mr, maps);
+
 			addPoints(mr, maps.cities);
-			addCities(maps.cities);
+			addCities(mdrCityList);
 			addStreets(mr, maps.cities);
 			addZips(mr);
 		} catch (FileNotFoundException e) {
@@ -204,9 +205,10 @@ public class MdrBuilder implements Combiner {
 	 * section, it has to be completed from the points section. So we fetch
 	 * and create the mdr5s first before points.
 	 */
-	private Map<Integer, Mdr5Record> fetchCities(MapReader mr, AreaMaps maps) {
-		Map<Integer, Mdr5Record> cityMap = new HashMap<Integer, Mdr5Record>();
+	private List<Mdr5Record> fetchCities(MapReader mr, AreaMaps maps) {
+		Map<Integer, Mdr5Record> cityMap = maps.cities;
 
+		List<Mdr5Record> cityList = new ArrayList<Mdr5Record>();
 		List<City> cities = mr.getCities();
 		for (City c : cities) {
 			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
@@ -226,18 +228,21 @@ public class MdrBuilder implements Combiner {
 			mdrCity.setRegionIndex(c.getRegionCountryNumber());
 			mdrCity.setMdrRegion(mdrRegion);
 			mdrCity.setMdrCountry(mdr14Record);
+			mdrCity.setLblOffset(c.getLblOffset());
+			mdrCity.setName(c.getName());
 			cityMap.put(key, mdrCity);
+			cityList.add(mdrCity);
 		}
 
-		return cityMap;
+		return cityList;
 	}
 
 	/**
 	 * Now really add the cities.
-	 * @param cityMap The previously saved cities.
+	 * @param cityList The previously saved cities.
 	 */
-	private void addCities(Map<Integer, Mdr5Record> cityMap) {
-		for (Mdr5Record c : cityMap.values()) {
+	private void addCities(List<Mdr5Record> cityList) {
+		for (Mdr5Record c : cityList) {
 			mdrFile.addCity(c);
 		}
 	}
@@ -264,7 +269,7 @@ public class MdrBuilder implements Combiner {
 
 			Mdr5Record mdrCity = null;
 			boolean isCity;
-			if (p.getType() <= 0x11) {
+			if (p.getType() >= 0x1 && p.getType() <= 0x10) {
 				// This is itself a city, it gets a reference to its own MDR 5 record.
 				// and we also use it to set the name of the city.
 				mdrCity = cityMap.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
@@ -302,7 +307,12 @@ public class MdrBuilder implements Combiner {
 	}
 
 	private Mdr5Record getMdr5FromCity(Map<Integer, Mdr5Record> cityMap, City c) {
-		return cityMap.get((c.getSubdivNumber()<<8) + (c.getPointIndex() & 0xff));
+		if (c == null)
+			return null;
+		Mdr5Record mdr5Record = cityMap.get((c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff));
+		if (mdr5Record != null && mdr5Record.getMapIndex() == 0)
+			return null;
+		return mdr5Record;
 	}
 
 	public void onFinish() {
@@ -322,7 +332,7 @@ public class MdrBuilder implements Combiner {
 	 * sufficient to link them all up.
 	 */
 	class AreaMaps {
-		private Map<Integer, Mdr5Record> cities;
+		private final Map<Integer, Mdr5Record> cities = new HashMap<Integer, Mdr5Record>();
 		private Map<Integer, Mdr13Record> regions;
 		private Map<Integer, Mdr14Record> countries;
 	}

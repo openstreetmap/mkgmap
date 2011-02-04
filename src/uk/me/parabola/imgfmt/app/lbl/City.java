@@ -106,7 +106,15 @@ public class City {
 	}
 
 	public String getName() {
+		if (label == null)
+			return "";
 		return label.getText();
+	}
+
+	public int getLblOffset() {
+		if (label == null)
+			return 0;
+		return label.getOffset();
 	}
 
 	public String toString() {

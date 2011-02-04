@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
+	// TODO something wrong here I think
 	private final List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
@@ -34,8 +35,6 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
-		if (name.length() < 4)
-			return;
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
 		st.setLabelOffset(lblOffset);
@@ -54,22 +53,24 @@ public class Mdr7 extends MdrMapSection {
 
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.
+		int recordNumber = 0;
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex() && r.getLabelOffset() == last.getLabelOffset())
+			if (r.getMapIndex() == last.getMapIndex() && r.getLabelOffset() == last.getLabelOffset()) {
+				r.setIndex(recordNumber);
 				continue;
+			}
 			last = r;
+			r.setIndex(++recordNumber);
 			streets.add(r);
 		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		int recordNumber = 0;
 		String lastName = "";
 		for (Mdr7Record s : streets) {
-			s.setIndex(++recordNumber);
-			addIndexPointer(s.getMapIndex(), recordNumber);
+			addIndexPointer(s.getMapIndex(), s.getIndex());
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
