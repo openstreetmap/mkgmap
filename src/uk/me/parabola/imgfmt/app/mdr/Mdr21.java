@@ -60,6 +60,7 @@ public class Mdr21 extends Mdr2x {
 
 		Collections.sort(keys);
 
+		String lastName = "";
 		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			record++;
@@ -67,8 +68,11 @@ public class Mdr21 extends Mdr2x {
 
 			Mdr13Record mdrRegion = street.getCity().getMdrRegion();
 			Mdr28Record mdr28 = mdrRegion.getMdr28();
-			if (mdr28 != null)
+			String name = mdrRegion.getName();
+			if (!name.equals(lastName)) {
 				mdr28.setMdr21(record);
+				lastName = name;
+			}
 
 			streets.add(street);
 		}

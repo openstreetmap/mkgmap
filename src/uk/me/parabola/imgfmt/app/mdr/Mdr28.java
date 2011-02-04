@@ -33,11 +33,16 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 
 	public void buildFromRegions(List<Mdr13Record> regions) {
 		int record = 0;
+		String lastName = "";
 		for (Mdr13Record region : regions) {
 			Mdr28Record mdr28 = region.getMdr28();
 			if (mdr28 != null) {
-				mdr28.setIndex(++record);
-				index.add(mdr28);
+				String name = mdr28.getName();
+				if (!name.equals(lastName)) {
+					mdr28.setIndex(++record);
+					index.add(mdr28);
+					lastName = name;
+				}
 			}
 		}
 	}

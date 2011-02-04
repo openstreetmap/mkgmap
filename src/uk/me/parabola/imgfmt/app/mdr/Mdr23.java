@@ -48,6 +48,7 @@ public class Mdr23 extends MdrSection {
 
 		String lastName = "";
 		int record = 0;
+		Mdr28Record mdr28 = null;
 		for (SortKey<Mdr13Record> key : keys) {
 			record++;
 			Mdr13Record reg = key.getObject();
@@ -56,14 +57,16 @@ public class Mdr23 extends MdrSection {
 			// will be further filled in when the other sections are prepared.
 			String name = reg.getName();
 			if (!name.equals(lastName)) {
-				Mdr28Record mdr28 = new Mdr28Record();
+				mdr28 = new Mdr28Record();
 				mdr28.setName(name);
 				mdr28.setStrOffset(reg.getStrOffset());
-				mdr28.setMdr23(record);
 				mdr28.setMdr14(reg.getMdr14());
-				reg.setMdr28(mdr28);
+				mdr28.setMdr23(record);
 				lastName = name;
 			}
+
+			assert mdr28 != null;
+			reg.setMdr28(mdr28);
 
 			regions.add(reg);
 		}
