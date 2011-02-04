@@ -150,6 +150,6 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public List<Mdr7Record> getStreets() {
-		return Collections.unmodifiableList(allStreets);
+		return Collections.unmodifiableList(streets);
 	}
 }

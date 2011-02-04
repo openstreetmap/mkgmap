@@ -216,18 +216,18 @@ public class MdrBuilder implements Combiner {
 
 			int regionCountryNumber = c.getRegionCountryNumber();
 			Mdr13Record mdrRegion = null;
-			Mdr14Record mdr14Record;
+			Mdr14Record mdrCountry;
 			if ((regionCountryNumber & 0x4000) == 0) {
 				mdrRegion = maps.regions.get(regionCountryNumber);
-				mdr14Record = mdrRegion.getMdr14();
+				mdrCountry = mdrRegion.getMdr14();
 			} else {
-				mdr14Record = maps.countries.get(regionCountryNumber & 0x3fff);
+				mdrCountry = maps.countries.get(regionCountryNumber & 0x3fff);
 			}
 			Mdr5Record mdrCity = new Mdr5Record();
 			mdrCity.setCityIndex(c.getIndex());
 			mdrCity.setRegionIndex(c.getRegionCountryNumber());
 			mdrCity.setMdrRegion(mdrRegion);
-			mdrCity.setMdrCountry(mdr14Record);
+			mdrCity.setMdrCountry(mdrCountry);
 			mdrCity.setLblOffset(c.getLblOffset());
 			mdrCity.setName(c.getName());
 			cityMap.put(key, mdrCity);

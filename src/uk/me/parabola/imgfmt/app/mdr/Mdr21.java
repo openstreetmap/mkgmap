@@ -67,9 +67,9 @@ public class Mdr21 extends Mdr2x {
 			Mdr7Record street = key.getObject();
 
 			Mdr13Record mdrRegion = street.getCity().getMdrRegion();
-			Mdr28Record mdr28 = mdrRegion.getMdr28();
 			String name = mdrRegion.getName();
 			if (!name.equals(lastName)) {
+				Mdr28Record mdr28 = mdrRegion.getMdr28();
 				mdr28.setMdr21(record);
 				lastName = name;
 			}

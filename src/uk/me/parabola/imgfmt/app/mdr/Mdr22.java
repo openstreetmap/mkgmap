@@ -50,10 +50,7 @@ public class Mdr22 extends Mdr2x {
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
 
-			Mdr14Record country = city.getMdrCountry();
-			assert country != null;
-
-			String name = country.getName();
+			String name = city.getMdrCountry().getName();
 			assert name != null;
 			
 			// We are sorting the streets, but we are sorting primarily on the
