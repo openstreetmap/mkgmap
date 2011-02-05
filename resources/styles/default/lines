@@ -58,9 +58,16 @@ highway=*
 { add mkgmap:unpaved=1 }
 
 # Convert generic path to most specific
-highway=path & (bicycle=designated|bicycle=official) {set highway=cycleway }
-highway=path & (horse=designated|horse=official) {set highway=bridleway }
-highway=path & (foot=designated|foot=official) {set highway=footway }
+highway=footway & snowplowing!=no
+& (bicycle=yes|bicycle=designated|bicycle=permissive|bicycle=official)
+{set highway=cycleway}
+highway=path & snowplowing!=no
+& (bicycle=designated|bicycle=permissive|bicycle=official)
+{set highway=cycleway}
+highway=path & (horse=designated|horse=official)
+{set highway=bridleway}
+highway=path
+{set highway=footway}
 
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
@@ -93,16 +100,17 @@ highway=tertiary_link [0x08 road_class=1 road_speed=1 resolution 20]
 highway=minor [0x06 road_class=1 road_speed=3 resolution 21]
 highway=unclassified [0x06 road_class=0 road_speed=3 resolution 21]
 
-highway=pedestrian & area!=yes {add access = no; add foot = yes} [0x06 road_class=0 road_speed=0 resolution 22]
+# Some countries allow, others disallow bicycling on pedestrian streets.
+# To allow bicycling, add 'add bicycle=yes'
+highway=pedestrian & area!=yes {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 22]
 highway=living_street [0x06 road_class=0 road_speed=1 resolution 22]
 highway=residential [0x06 road_class=0 road_speed=2 resolution 22]
-highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=2 resolution 22]
-highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=1 resolution 23]
-highway=footway {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
-highway=path {add access = no; add bicycle = yes; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
-highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=1 resolution 23]
+
+highway=footway|highway=path|highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 highway=track [0x0a road_class=0 road_speed=1 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 21]
