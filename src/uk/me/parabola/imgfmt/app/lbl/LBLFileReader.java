@@ -193,7 +193,6 @@ public class LBLFileReader extends ImgFile {
 			// First is either a label offset or a point/subdiv combo, we
 			// don't know until we have read further
 			int label = reader.getu3();
-
 			int info = reader.getChar();
 
 			City city;
@@ -208,7 +207,7 @@ public class LBLFileReader extends ImgFile {
 			city.setIndex(index);
 			if ((info & 0x8000) == 0) {
 				city.setSubdivision(Subdivision.createEmptySubdivision(1));
-				Label label1 = labels.get(label & 0x3fff);
+				Label label1 = labels.get(label & 0x3fffff);
 				city.setLabel(label1);
 			} else {
 				// Has subdiv/point index
@@ -277,10 +276,11 @@ public class LBLFileReader extends ImgFile {
 		DecodedText encText = textDecoder.getText();
 		String text = encText.getText();
 
-		Label l = new Label(text);
+		Label label = new Label(text);
 		assert (labelOffset & (multiplier - 1)) == 0;
-		l.setOffset(labelOffset/multiplier);
-		labels.put(labelOffset/multiplier, l);
+		int adustedOffset = labelOffset / multiplier;
+		label.setOffset(adustedOffset);
+		labels.put(adustedOffset, label);
 
 		// Calculate the offset of the next label. This is not always
 		// the current offset + 1 because there may be bytes left
