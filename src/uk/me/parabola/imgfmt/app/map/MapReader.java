@@ -170,6 +170,10 @@ public class MapReader implements Closeable {
 		return treFile.getBounds();
 	}
 
+	public java.util.Map<Integer, String> getLabels() {
+		return lblFile.getLabels();
+	}
+
 	public List<RoadDef> getRoads() {
 		if (netFile == null)
 			return Collections.emptyList();

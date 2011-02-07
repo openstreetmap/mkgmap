@@ -145,10 +145,16 @@ public class NETFileReader extends ImgFile {
 				item = list.get(ind-1);
 		} else if (flag == 3) {
 			// there is no item
+		} else if (flag == 0) {
+			// Skip over these
+			int n = reader.get();
+			reader.get(n);
+		} else if (flag == 1) {
+			// Skip over these
+			int n = reader.getChar();
+			reader.get(n);
 		} else {
-			// other values are possible but we don't know how to deal
-			// with them if they occur here. See NetDisplay
-			assert false;
+			assert false : "flag is " + flag;
 		}
 		return item;
 	}

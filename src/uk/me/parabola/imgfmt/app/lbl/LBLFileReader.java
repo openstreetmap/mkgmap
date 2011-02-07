@@ -514,6 +514,14 @@ public class LBLFileReader extends ImgFile {
 		return localMask;
 	}
 
+	public Map<Integer, String> getLabels() {
+		Map<Integer, String> m = new HashMap<Integer, String>();
+		for (Map.Entry<Integer, Label> ent : labels.entrySet()) {
+			m.put(ent.getKey(), ent.getValue().getText());
+		}
+		return m;
+	}
+
 	private class PoiMasks {
 		private char streetNumMask;
 		private char streetMask;
