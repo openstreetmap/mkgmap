@@ -72,8 +72,8 @@ public class Mdr5 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = "";
-		int last20 = 0;
 
+		int last20Index = 0;
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
 			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
@@ -87,11 +87,12 @@ public class Mdr5 extends MdrMapSection {
 			// Set flag only for a name that is different to the previous one
 			if (lastName.equals(city.getName())) {
 				flag = 0;
-				if (city.getMdr20Index() != last20)
-					city.setMdr20Index(last20);
+				city.setMdr20Index(last20Index);
 			}
 			lastName = city.getName();
-			last20 = city.getMdr20Index();
+			last20Index = city.getMdr20Index();
+
+			fixMdr20(city);
 
 			// Write out the record
 			putMapIndex(writer, mapIndex);
@@ -99,7 +100,39 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
+			assert city.getMdr20Index() != 0 : "before write";
 			putN(writer, size20, city.getMdr20Index());
+		}
+	}
+
+	/**
+	 * Now check that there are no gaps in the mdr20 sequence. This will happen if a city has no streets.
+	 * We have to find the next non-zero record and fill in all the zero records with that value.
+	 */
+	private void fixMdr20(Mdr5Record city) {
+		int mdr20Index = city.getMdr20Index();
+		if (mdr20Index == 0) {
+			int zeroStart = city.getGlobalCityIndex();
+			// Step forward until we find the next non zero value
+			assert cities.get(zeroStart - 1).getMdr20Index() == 0;
+			System.out.println("zgci=" + zeroStart + ", " + city.getName());
+			for (int i = zeroStart; ; i++) {
+				Mdr5Record next = cities.get(i - 1);
+				System.out.println("next gci=" + next.getGlobalCityIndex() + ", name=" + next.getName() + ", " +
+						"m=" + next.getMdr20Index());
+				int nextMdr20 = next.getMdr20Index();
+				if (nextMdr20 != 0) {
+					System.out.println("next " + nextMdr20);
+
+					// Now we have found it, fill in all the zero entries
+					for (int j = zeroStart; j < next.getGlobalCityIndex(); j++) {
+						Mdr5Record prev = cities.get(j - 1);
+						assert prev.getMdr20Index() == 0 : "should be only setting zero";
+						prev.setMdr20Index(nextMdr20);
+					}
+					break;
+				}
+			}
 		}
 	}
 

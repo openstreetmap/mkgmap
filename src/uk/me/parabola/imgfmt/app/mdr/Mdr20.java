@@ -73,11 +73,11 @@ public class Mdr20 extends Mdr2x {
 		int record = 1;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
-			street.setMdr20Index(record++);
 
 			int mapid = street.getMapIndex();
 			String name = street.getName();
 			if (mapid != lastMapid || !name.equals(lastName)) {
+				street.setMdr20Index(record++);
 				streets.add(street);
 				lastMapid = mapid;
 				lastName = name;

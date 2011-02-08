@@ -58,6 +58,7 @@ public class Mdr7 extends MdrMapSection {
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
 			if (r.getMapIndex() == last.getMapIndex() && r.getLabelOffset() == last.getLabelOffset()) {
+				assert recordNumber != 0;
 				r.setIndex(recordNumber);
 				continue;
 			}
