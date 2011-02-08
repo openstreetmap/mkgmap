@@ -1,18 +1,14 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: Dec 19, 2007
+ * Copyright (C) 2007,2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
 package uk.me.parabola.imgfmt.mps;
 
@@ -35,6 +31,7 @@ public class MapBlock extends Block {
 	private int productId;
 
 	private int mapNumber;
+	private int hexNumber;
 	private String seriesName;
 	private String mapDescription;
 	private String areaName;
@@ -50,7 +47,7 @@ public class MapBlock extends Block {
 		out.writeString(seriesName);
 		out.writeString(mapDescription);
 		out.writeString(areaName);
-		out.write4(mapNumber);
+		out.write4(hexNumber);
 		out.write4(0);
 	}
 
@@ -65,6 +62,10 @@ public class MapBlock extends Block {
 
 	public void setMapNumber(int mapNumber) {
 		this.mapNumber = mapNumber;
+	}
+
+	public void setHexNumber(int hexNumber) {
+		this.hexNumber = hexNumber;
 	}
 
 	public void setMapDescription(String mapDescription) {
@@ -85,6 +86,10 @@ public class MapBlock extends Block {
 
 	public int getMapNumber() {
 		return mapNumber;
+	}
+
+	public int getHexNumber() {
+		return hexNumber;
 	}
 
 	public String getSeriesName() {

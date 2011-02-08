@@ -145,12 +145,14 @@ public class GmapsuppTest extends Base {
 				assertEquals("product id", 24, map.getProductId());
 				assertEquals("series name", "tst series", map.getSeriesName());
 				assertEquals("area name", "tst area", map.getAreaName());
+				assertEquals("hex name", 63240001, map.getHexNumber());
 				assertEquals("map description", "uk test 1", map.getMapDescription());
 			} else if (map.getMapNumber() == 63240002) {
 				assertEquals("family id", 152, map.getFamilyId());
 				assertEquals("product id", 26, map.getProductId());
 				assertEquals("series name", "tst series 2", map.getSeriesName());
 				assertEquals("area name", "tst area 2", map.getAreaName());
+				assertEquals("hex name", 63240002, map.getHexNumber());
 				assertEquals("map description", "uk test 2", map.getMapDescription());
 			} else {
 				assertTrue("Unexpected map found", false);
