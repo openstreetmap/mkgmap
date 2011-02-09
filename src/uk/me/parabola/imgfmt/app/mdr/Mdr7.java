@@ -26,7 +26,6 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
-	// TODO something wrong here I think
 	private final List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
@@ -57,7 +56,7 @@ public class Mdr7 extends MdrMapSection {
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex() && r.getLabelOffset() == last.getLabelOffset()) {
+			if (r.getMapIndex() == last.getMapIndex() && r.getName().equals(last.getName())) {
 				assert recordNumber != 0;
 				r.setIndex(recordNumber);
 				continue;
