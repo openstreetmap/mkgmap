@@ -29,8 +29,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
-
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
+	private int[] mdr20;
 	private int maxCityIndex;
 	private int localCitySize;
 
@@ -62,18 +62,27 @@ public class Mdr5 extends MdrMapSection {
 		Collections.sort(sortKeys);
 
 		cities.clear();
-		int count = 1;
+		int count = 0;
+		int lastMapId = 0;
+		String lastName = "";
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
-			c.setGlobalCityIndex(count++);
-			cities.add(c);
+			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName)) {
+				count++;
+				c.setGlobalCityIndex(count);
+				cities.add(c);
+
+				lastName = c.getName();
+				lastMapId = c.getMapIndex();
+			} else {
+				c.setGlobalCityIndex(count);
+			}
 		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = "";
 
-		int last20Index = 0;
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
 			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
@@ -85,12 +94,10 @@ public class Mdr5 extends MdrMapSection {
 			int region = city.getRegionIndex();
 
 			// Set flag only for a name that is different to the previous one
-			if (lastName.equals(city.getName())) {
+			if (lastName.equals(city.getName()))
 				flag = 0;
-				city.setMdr20Index(last20Index);
-			}
+
 			lastName = city.getName();
-			last20Index = city.getMdr20Index();
 
 			fixMdr20(city);
 
@@ -100,8 +107,9 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
-			assert city.getMdr20Index() != 0 : "before write";
-			putN(writer, size20, city.getMdr20Index());
+			int mdr20index = mdr20[city.getGlobalCityIndex()];
+			assert mdr20index != 0 : "before write";
+			putN(writer, size20, mdr20index);
 		}
 	}
 
@@ -110,25 +118,19 @@ public class Mdr5 extends MdrMapSection {
 	 * We have to find the next non-zero record and fill in all the zero records with that value.
 	 */
 	private void fixMdr20(Mdr5Record city) {
-		int mdr20Index = city.getMdr20Index();
+		int gci = city.getGlobalCityIndex();
+		int mdr20Index = mdr20[gci];
 		if (mdr20Index == 0) {
-			int zeroStart = city.getGlobalCityIndex();
 			// Step forward until we find the next non zero value
-			assert cities.get(zeroStart - 1).getMdr20Index() == 0;
-			System.out.println("zgci=" + zeroStart + ", " + city.getName());
-			for (int i = zeroStart; ; i++) {
-				Mdr5Record next = cities.get(i - 1);
-				System.out.println("next gci=" + next.getGlobalCityIndex() + ", name=" + next.getName() + ", " +
-						"m=" + next.getMdr20Index());
-				int nextMdr20 = next.getMdr20Index();
-				if (nextMdr20 != 0) {
-					System.out.println("next " + nextMdr20);
+			assert mdr20[gci] == 0;
+			for (int i = gci; ; i++) {
+				int next = mdr20[i];
 
+				if (next != 0) {
 					// Now we have found it, fill in all the zero entries
-					for (int j = zeroStart; j < next.getGlobalCityIndex(); j++) {
-						Mdr5Record prev = cities.get(j - 1);
-						assert prev.getMdr20Index() == 0 : "should be only setting zero";
-						prev.setMdr20Index(nextMdr20);
+					for (int j = gci; j < i; j++) {
+						assert mdr20[j] == 0 : "should only be setting zero entries";
+						mdr20[j] = next;
 					}
 					break;
 				}
@@ -185,5 +187,9 @@ public class Mdr5 extends MdrMapSection {
 
 	public List<Mdr5Record> getCities() {
 		return cities;
+	}
+
+	public void setMdr20(int[] mdr20) {
+		this.mdr20 = mdr20;
 	}
 }

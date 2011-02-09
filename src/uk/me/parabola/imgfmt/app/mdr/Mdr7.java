@@ -56,14 +56,16 @@ public class Mdr7 extends MdrMapSection {
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() == last.getMapIndex() && r.getName().equals(last.getName())) {
-				assert recordNumber != 0;
+			if (r.getMapIndex() != last.getMapIndex() || !r.getName().equals(last.getName())) {
+				recordNumber++;
+				last = r;
 				r.setIndex(recordNumber);
-				continue;
+				streets.add(r);
+			} else {
+				// This has the same name (and map number) as the previous one. Save the pointer to that one
+				// which is going into the file.
+				r.setIndex(recordNumber);
 			}
-			last = r;
-			r.setIndex(++recordNumber);
-			streets.add(r);
 		}
 	}
 

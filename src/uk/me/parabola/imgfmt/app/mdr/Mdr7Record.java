@@ -62,9 +62,4 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	public Mdr5Record getCity() {
 		return city;
 	}
-
-	public void setMdr20Index(int record) {
-		if (city.getMdr20Index() == 0)
-			city.setMdr20Index(record);
-	}
 }

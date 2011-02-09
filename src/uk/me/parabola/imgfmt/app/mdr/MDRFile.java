@@ -244,7 +244,7 @@ public class MDRFile extends ImgFile {
 		mdr23.sortRegions(mdr13.getRegions());
 		mdr24.sortCountries(mdr14.getCountries());
 
-		mdr20.buildFromStreets(mdr7.getStreets());
+		mdr20.buildFromStreets(mdr7.getStreets(), mdr5);
 		mdr21.buildFromStreets(mdr7.getStreets());
 		mdr22.buildFromStreets(mdr7.getStreets());
 

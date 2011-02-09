@@ -48,7 +48,7 @@ public class Mdr20 extends Mdr2x {
 	 *
 	 * @param inStreets The list of streets from mdr7.
 	 */
-	public void buildFromStreets(List<Mdr7Record> inStreets) {
+	public void buildFromStreets(List<Mdr7Record> inStreets, Mdr5 mdr5) {
 		Sort sort = getConfig().getSort();
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
@@ -68,21 +68,28 @@ public class Mdr20 extends Mdr2x {
 		}
 		Collections.sort(keys);
 
+		int[] mdr20 = new int[mdr5.getNumberOfItems() + 1];
+
 		String lastName = "";
 		int lastMapid = 0;
-		int record = 1;
+		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 
 			int mapid = street.getMapIndex();
 			String name = street.getName();
 			if (mapid != lastMapid || !name.equals(lastName)) {
-				street.setMdr20Index(record++);
+				record++;
+				int gci = street.getCity().getGlobalCityIndex();
+				if (mdr20[gci] == 0)
+					mdr20[gci] = record;
 				streets.add(street);
 				lastMapid = mapid;
 				lastName = name;
-			}
+			} 
 		}
+
+		mdr5.setMdr20(mdr20);
 	}
 
 	/**
