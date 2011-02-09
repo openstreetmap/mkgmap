@@ -47,6 +47,7 @@ public class Mdr23 extends MdrSection {
 		Collections.sort(keys);
 
 		String lastName = "";
+		int lastMapIndex = 0;
 		int record = 0;
 		Mdr28Record mdr28 = null;
 		for (SortKey<Mdr13Record> key : keys) {
@@ -62,13 +63,17 @@ public class Mdr23 extends MdrSection {
 				mdr28.setStrOffset(reg.getStrOffset());
 				mdr28.setMdr14(reg.getMdr14());
 				mdr28.setMdr23(record);
-				lastName = name;
 			}
 
 			assert mdr28 != null;
 			reg.setMdr28(mdr28);
 
-			regions.add(reg);
+			// Only add if different name or map
+			if (reg.getMapIndex() != lastMapIndex || !name.equals(lastName)) {
+				regions.add(reg);
+				lastName = name;
+				lastMapIndex = reg.getMapIndex();
+			}
 		}
 	}
 

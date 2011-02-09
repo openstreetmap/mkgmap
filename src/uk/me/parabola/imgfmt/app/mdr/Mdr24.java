@@ -47,6 +47,7 @@ public class Mdr24 extends MdrSection {
 		Collections.sort(keys);
 
 		String lastName = "";
+		int lastMapIndex = 0;
 		int record = 0;
 		Mdr29Record mdr29 = null;
 		for (SortKey<Mdr14Record> key : keys) {
@@ -60,13 +61,16 @@ public class Mdr24 extends MdrSection {
 				mdr29.setName(name);
 				mdr29.setStrOffset(c.getStrOff());
 				mdr29.setMdr24(record);
-				lastName = name;
 			}
 
 			assert mdr29 != null;
 			c.setMdr29(mdr29);
 
-			countries.add(c);
+			if (lastMapIndex != c.getMapIndex() || !name.equals(lastName)) {
+				countries.add(c);
+				lastName = name;
+				lastMapIndex = c.getMapIndex();
+			}
 		}
 	}
 
