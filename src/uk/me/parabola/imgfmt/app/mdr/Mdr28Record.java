@@ -41,7 +41,8 @@ public class Mdr28Record extends ConfigBase {
 	}
 
 	public void setMdr21(int mdr21) {
-		this.mdr21 = mdr21;
+		if (this.mdr21 == 0)
+			this.mdr21 = mdr21;
 	}
 
 	public int getMdr23() {

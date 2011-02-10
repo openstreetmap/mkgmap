@@ -60,26 +60,24 @@ public class Mdr21 extends Mdr2x {
 
 		Collections.sort(keys);
 
-		String lastRegName = "";
 		String lastName = "";
 		int lastMapid = 0;
 		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {
-			record++;
 			Mdr7Record street = key.getObject();
-
-			Mdr13Record mdrRegion = street.getCity().getMdrRegion();
-			String regName = mdrRegion.getName();
-			if (!regName.equals(lastRegName)) {
-				Mdr28Record mdr28 = mdrRegion.getMdr28();
-				mdr28.setMdr21(record);
-				lastRegName = regName;
-			}
 
 			String name = street.getName();
 			int mapid = street.getMapIndex();
 			if (mapid != lastMapid || !name.equals(lastName)) {
+				record++;
 				streets.add(street);
+
+				Mdr13Record mdrRegion = street.getCity().getMdrRegion();
+				if (mdrRegion != null) {
+					Mdr28Record mdr28 = mdrRegion.getMdr28();
+					mdr28.setMdr21(record);
+				}
+
 				lastMapid = mapid;
 				lastName = name;
 			}

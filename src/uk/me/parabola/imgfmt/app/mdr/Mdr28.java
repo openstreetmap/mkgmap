@@ -45,7 +45,9 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 
 			String name = region.getName();
 			if (!name.equals(lastName)) {
+				record++;
 				mdr28 = new Mdr28Record();
+				mdr28.setIndex(record);
 				mdr28.setName(name);
 				mdr28.setStrOffset(region.getStrOffset());
 				mdr28.setMdr14(region.getMdr14());

@@ -39,7 +39,8 @@ public class Mdr29Record extends RecordBase {
 	}
 
 	public void setMdr24(int mdr24) {
-		this.mdr24 = mdr24;
+		if (this.mdr24 == 0)
+			this.mdr24 = mdr24;
 	}
 
 	public int getMdr22() {
@@ -47,7 +48,8 @@ public class Mdr29Record extends RecordBase {
 	}
 
 	public void setMdr22(int mdr22) {
-		this.mdr22 = mdr22;
+		if (this.mdr22 == 0)
+			this.mdr22 = mdr22;
 	}
 
 	public int getMdr25() {
@@ -63,7 +65,8 @@ public class Mdr29Record extends RecordBase {
 	}
 
 	public void setMdr26(int mdr26) {
-		this.mdr26 = mdr26;
+		if (this.mdr26 == 0)
+			this.mdr26 = mdr26;
 	}
 
 	public int getStrOffset() {

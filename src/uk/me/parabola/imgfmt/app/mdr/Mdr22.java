@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
@@ -67,22 +68,21 @@ public class Mdr22 extends Mdr2x {
 		int lastMapid = 0;
 		
 		for (SortKey<Mdr7Record> key : keys) {
-			record++;
 			Mdr7Record street = key.getObject();
-
-			// Include in the mdr29 index if we have one for this record.
-			Mdr14Record mdrCountry = street.getCity().getMdrCountry();
-			Mdr29Record mdr29 = mdrCountry.getMdr29();
-			String cname = mdrCountry.getName();
-			if (!cname.equals(lastCName)) {
-				mdr29.setMdr22(record);
-				lastCName = cname;
-			}
 
 			String name = street.getName();
 			int mapid = street.getMapIndex();
 			if (mapid != lastMapid || !name.equals(lastName)) {
+				record++;
 				streets.add(street);
+
+				// Include in the mdr29 index if we have one for this record.
+				Mdr14Record mdrCountry = street.getCity().getMdrCountry();
+				if (mdrCountry != null) {
+					Mdr29Record mdr29 = mdrCountry.getMdr29();
+					mdr29.setMdr22(record);
+				}
+
 				lastMapid = mapid;
 				lastName = name;
 			}
