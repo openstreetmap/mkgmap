@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
@@ -331,7 +332,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 
 		// the remaining shoreline segments should intersect the boundary
 		// find the intersection points and store them in a SortedMap
-		SortedMap<EdgeHit, Way> hitMap = findIntesectionPoints(shoreline, seaBounds, seaRelation);
+		NavigableMap<EdgeHit, Way> hitMap = findIntesectionPoints(shoreline, seaBounds, seaRelation);
 
 		// now construct inner ways from these segments
 		boolean shorelineReachesBoundary = createInnerWays(seaBounds, islands, hitMap);
@@ -514,8 +515,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 	}
 
-	private boolean createInnerWays(Area seaBounds, List<Way> islands, SortedMap<EdgeHit, Way> hitMap) {
-		NavigableSet<EdgeHit> hits = (NavigableSet<EdgeHit>) hitMap.keySet();
+	private boolean createInnerWays(Area seaBounds, List<Way> islands, NavigableMap<EdgeHit, Way> hitMap) {
+		NavigableSet<EdgeHit> hits = hitMap.navigableKeySet();
 		boolean shorelineReachesBoundary = false;
 		while (!hits.isEmpty()) {
 			long id = FakeIdGenerator.makeFakeId();
@@ -633,10 +634,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @param seaRelation If we are using a multi-polygon, this is it. Otherwise it will be null.
 	 * @return A map of the 'hits' where the shore line intersects the boundary.
 	 */
-	private SortedMap<EdgeHit, Way> findIntesectionPoints(List<Way> shoreline, Area seaBounds, Relation seaRelation) {
+	private NavigableMap<EdgeHit, Way> findIntesectionPoints(List<Way> shoreline, Area seaBounds, Relation seaRelation) {
 		assert !generateSeaUsingMP || seaRelation != null;
 
-		SortedMap<EdgeHit, Way> hitMap = new TreeMap<EdgeHit, Way>();
+		NavigableMap<EdgeHit, Way> hitMap = new TreeMap<EdgeHit, Way>();
 		for (Way w : shoreline) {
 			List<Coord> points = w.getPoints();
 			Coord pStart = points.get(0);
