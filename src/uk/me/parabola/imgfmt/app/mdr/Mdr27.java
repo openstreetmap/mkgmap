@@ -21,7 +21,7 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
- * Cities sorted somehow, by region name perhaps.
+ * Cities sorted by region name.
  *
  * @author Steve Ratcliffe
  */

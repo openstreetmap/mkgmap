@@ -68,7 +68,7 @@ public class Mdr20 extends Mdr2x {
 		}
 		Collections.sort(keys);
 
-		int[] mdr20 = new int[mdr5.getNumberOfItems() + 1];
+		int[] mdr20 = new int[mdr5.getNumberOfItems() + 2];
 
 		String lastName = "";
 		int lastMapid = 0;
@@ -89,6 +89,7 @@ public class Mdr20 extends Mdr2x {
 			} 
 		}
 
+		mdr20[mdr5.getNumberOfItems()+1] = streets.size();
 		mdr5.setMdr20(mdr20);
 	}
 

@@ -241,7 +241,10 @@ public class MDRFile extends ImgFile {
 		// statements is sometimes important.
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 
+		mdr28.buildFromRegions(mdr13.getRegions());
+
 		mdr23.sortRegions(mdr13.getRegions());
+		mdr29.buildFromCountries(mdr14.getCountries());
 		mdr24.sortCountries(mdr14.getCountries());
 
 		mdr20.buildFromStreets(mdr7.getStreets(), mdr5);
@@ -256,8 +259,6 @@ public class MDRFile extends ImgFile {
 		mdr27.sortCities(mdr5.getCities());
 
 
-		mdr28.buildFromRegions(mdr23.getRegions());
-		mdr29.buildFromCountries(mdr24.getCountries());
 		mdr26.sortMdr28(mdr28.getIndex());
 
 		writeSection(writer, 4, mdr4);

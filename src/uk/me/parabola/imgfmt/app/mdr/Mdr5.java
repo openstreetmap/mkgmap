@@ -123,7 +123,7 @@ public class Mdr5 extends MdrMapSection {
 		if (mdr20Index == 0) {
 			// Step forward until we find the next non zero value
 			assert mdr20[gci] == 0;
-			for (int i = gci; ; i++) {
+			for (int i = gci; i < mdr20.length-1; i++) {
 				int next = mdr20[i];
 
 				if (next != 0) {
@@ -133,7 +133,7 @@ public class Mdr5 extends MdrMapSection {
 						mdr20[j] = next;
 					}
 					break;
-				}
+				} else System.out.println("missing mdr20 " + i);
 			}
 		}
 	}

@@ -57,11 +57,13 @@ public class Mdr25 extends MdrSection {
 			Mdr14Record mdrCountry = city.getMdrCountry();
 			Mdr29Record mdr29 = mdrCountry.getMdr29();
 			String name = mdr29.getName();
+			assert mdrCountry.getName().equals(name);
 			if (!name.equals(lastName)) {
 				mdr29.setMdr25(record);
 				lastName = name;
 			}
 
+			System.out.println("" + record + " " +mdrCountry.getName());
 			cities.add(city);
 		}
 	}
