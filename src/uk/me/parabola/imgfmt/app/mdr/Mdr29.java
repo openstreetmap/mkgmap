@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * An index of countries sorted by name with pointers to the other country related sections.
@@ -31,14 +33,27 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void buildFromCountries(List<Mdr14Record> countries) {
+		Sort sort = getConfig().getSort();
+		List<SortKey<Mdr14Record>> keys = MdrUtils.sortList(sort, countries);
+
+		// Sorted by name, for every new name we allocate a new 29 record and set the same one in every
+		// country with the same name.
 		String lastName = "";
-		for (Mdr14Record country : countries) {
-			Mdr29Record mdr29 = country.getMdr29();
-			String name = mdr29.getName();
+		Mdr29Record mdr29 = null;
+		for (SortKey<Mdr14Record> key : keys) {
+			Mdr14Record country = key.getObject();
+
+			String name = country.getName();
 			if (!name.equals(lastName)) {
+				mdr29 = new Mdr29Record();
+				mdr29.setName(name);
+				mdr29.setStrOffset(country.getStrOff());
 				index.add(mdr29);
 				lastName = name;
 			}
+
+			assert mdr29 != null;
+			country.setMdr29(mdr29);
 		}
 	}
 

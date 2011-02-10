@@ -16,7 +16,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  * A country record.
  * @author Steve Ratcliffe
  */
-public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
+public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record>, NamedRecord {
 	private int countryIndex;
 	private int lblOffset;
 	private int strOff;

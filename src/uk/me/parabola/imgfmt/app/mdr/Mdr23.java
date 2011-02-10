@@ -38,39 +38,22 @@ public class Mdr23 extends MdrSection {
 	 */
 	public void sortRegions(List<Mdr13Record> list) {
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr13Record>> keys = new ArrayList<SortKey<Mdr13Record>>();
-		for (Mdr13Record reg : list) {
-			SortKey<Mdr13Record> key = sort.createSortKey(reg, reg.getName(), reg.getMapIndex());
-			keys.add(key);
-		}
-
+		List<SortKey<Mdr13Record>> keys = MdrUtils.sortList(sort, list);
 		Collections.sort(keys);
 
 		String lastName = "";
 		int lastMapIndex = 0;
 		int record = 0;
-		Mdr28Record mdr28 = null;
 		for (SortKey<Mdr13Record> key : keys) {
-			record++;
 			Mdr13Record reg = key.getObject();
 
-			// If this is new name, then create a mdr28 record for it. This
-			// will be further filled in when the other sections are prepared.
-			String name = reg.getName();
-			if (!name.equals(lastName)) {
-				mdr28 = new Mdr28Record();
-				mdr28.setName(name);
-				mdr28.setStrOffset(reg.getStrOffset());
-				mdr28.setMdr14(reg.getMdr14());
-				mdr28.setMdr23(record);
-			}
-
-			assert mdr28 != null;
-			reg.setMdr28(mdr28);
-
 			// Only add if different name or map
+			String name = reg.getName();
 			if (reg.getMapIndex() != lastMapIndex || !name.equals(lastName)) {
+				record++;
+				reg.getMdr28().setMdr23(record);
 				regions.add(reg);
+
 				lastName = name;
 				lastMapIndex = reg.getMapIndex();
 			}

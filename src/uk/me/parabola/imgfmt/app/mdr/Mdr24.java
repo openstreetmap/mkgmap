@@ -38,36 +38,24 @@ public class Mdr24 extends MdrSection {
 	 */
 	public void sortCountries(List<Mdr14Record> list) {
 		Sort sort = getConfig().getSort();
-		List<SortKey<Mdr14Record>> keys = new ArrayList<SortKey<Mdr14Record>>();
-		for (Mdr14Record c : list) {
-			SortKey<Mdr14Record> sortKey = sort.createSortKey(c, c.getName(), c.getMapIndex());
-			keys.add(sortKey);
-		}
+		List<SortKey<Mdr14Record>> keys = MdrUtils.sortList(sort, list);
 
 		Collections.sort(keys);
 
 		String lastName = "";
 		int lastMapIndex = 0;
 		int record = 0;
-		Mdr29Record mdr29 = null;
 		for (SortKey<Mdr14Record> key : keys) {
-			record++;
 			Mdr14Record c = key.getObject();
 
 			// If this is a new name, then we prepare a mdr29 record for it.
 			String name = c.getName();
-			if (!name.equals(lastName)) {
-				mdr29 = new Mdr29Record();
-				mdr29.setName(name);
-				mdr29.setStrOffset(c.getStrOff());
-				mdr29.setMdr24(record);
-			}
-
-			assert mdr29 != null;
-			c.setMdr29(mdr29);
 
 			if (lastMapIndex != c.getMapIndex() || !name.equals(lastName)) {
+				record++;
+				c.getMdr29().setMdr24(record);
 				countries.add(c);
+
 				lastName = name;
 				lastMapIndex = c.getMapIndex();
 			}

@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * One of these per region name. There are pointers into the other sections
@@ -32,18 +34,28 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void buildFromRegions(List<Mdr13Record> regions) {
+		Sort sort = getConfig().getSort();
+		List<SortKey<Mdr13Record>> keys = MdrUtils.sortList(sort, regions);
+
 		int record = 0;
+		Mdr28Record mdr28 = null;
 		String lastName = "";
-		for (Mdr13Record region : regions) {
-			Mdr28Record mdr28 = region.getMdr28();
-			if (mdr28 != null) {
-				String name = mdr28.getName();
-				if (!name.equals(lastName)) {
-					mdr28.setIndex(++record);
-					index.add(mdr28);
-					lastName = name;
-				}
+		for (SortKey<Mdr13Record> key : keys) {
+			Mdr13Record region = key.getObject();
+
+			String name = region.getName();
+			if (!name.equals(lastName)) {
+				mdr28 = new Mdr28Record();
+				mdr28.setName(name);
+				mdr28.setStrOffset(region.getStrOffset());
+				mdr28.setMdr14(region.getMdr14());
+
+				index.add(mdr28);
+				lastName = name;
 			}
+
+			assert mdr28 != null;
+			region.setMdr28(mdr28);
 		}
 	}
 

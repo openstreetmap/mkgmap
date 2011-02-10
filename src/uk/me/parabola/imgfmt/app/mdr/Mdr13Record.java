@@ -16,7 +16,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  * Information about a region.
  * @author Steve Ratcliffe
  */
-public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
+public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record>, NamedRecord {
 	private int regionIndex;
 	private int countryIndex;
 	private int lblOffset;
