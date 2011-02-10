@@ -63,7 +63,6 @@ public class Mdr25 extends MdrSection {
 				lastName = name;
 			}
 
-			System.out.println("" + record + " " +mdrCountry.getName());
 			cities.add(city);
 		}
 	}

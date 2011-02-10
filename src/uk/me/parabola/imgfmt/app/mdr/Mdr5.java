@@ -133,7 +133,7 @@ public class Mdr5 extends MdrMapSection {
 						mdr20[j] = next;
 					}
 					break;
-				} else System.out.println("missing mdr20 " + i);
+				}
 			}
 		}
 	}

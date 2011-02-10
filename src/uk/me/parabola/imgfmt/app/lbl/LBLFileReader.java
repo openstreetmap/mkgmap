@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,8 @@ public class LBLFileReader extends ImgFile {
 
 	private final Map<Integer, Label> labels = new HashMap<Integer, Label>();
 	private final Map<Integer, POIRecord> pois = new HashMap<Integer, POIRecord>();
-	private final Map<Integer, Country> countries = new HashMap<Integer, Country>();
-	private final Map<Integer, Region> regions = new HashMap<Integer, Region>();
+	private final List<Country> countries = new ArrayList<Country>();
+	private final List<Region> regions = new ArrayList<Region>();
 	private final Map<Integer, Zip> zips = new HashMap<Integer, Zip>();
 	private final List<City> cities = new ArrayList<City>();
 
@@ -98,11 +99,11 @@ public class LBLFileReader extends ImgFile {
 	}
 
 	public List<Country> getCountries() {
-		return new ArrayList<Country>(countries.values());
+		return Collections.unmodifiableList(countries);
 	}
 
 	public List<Region> getRegions() {
-		return new ArrayList<Region>(regions.values());
+		return Collections.unmodifiableList(regions);
 	}
 	
 	public List<Zip> getZips() {
@@ -127,6 +128,8 @@ public class LBLFileReader extends ImgFile {
 
 		PlacesHeader placeHeader = header.getPlaceHeader();
 
+		countries.add(null); // 1 based indexes
+
 		int start = placeHeader.getCountriesStart();
 		int end = placeHeader.getCountriesEnd();
 
@@ -139,7 +142,7 @@ public class LBLFileReader extends ImgFile {
 			if (label != null) {
 				Country country = new Country(index);
 				country.setLabel(label);
-				countries.put(index, country);
+				countries.add(country);
 			}
 			index++;
 		}
@@ -156,6 +159,8 @@ public class LBLFileReader extends ImgFile {
 		int start = placeHeader.getRegionsStart();
 		int end = placeHeader.getRegionsEnd();
 
+		regions.add(null);
+
 		reader.position(start);
 		int index = 1;
 		while (reader.position() < end) {
@@ -167,7 +172,7 @@ public class LBLFileReader extends ImgFile {
 				region.setIndex(index);
 				region.setLabel(label);
 
-				regions.put(index, region);
+				regions.add(region);
 			}
 
 			index++;
