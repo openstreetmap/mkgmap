@@ -61,8 +61,8 @@ public class Mdr20 extends Mdr2x {
 				continue;
 
 			// We are sorting the streets, but we are sorting primarily on the
-			// city name associated with the street.
-			SortKey<Mdr7Record> key = new IntegerSortKey<Mdr7Record>(s, city.getGlobalCityIndex());
+			// city name associated with the street, then on the street name.
+			SortKey<Mdr7Record> key = new IntegerSortKey<Mdr7Record>(s, city.getGlobalCityIndex(), s.getIndex());
 			keys.add(key);
 		}
 		Collections.sort(keys);

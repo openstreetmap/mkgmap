@@ -20,10 +20,12 @@ package uk.me.parabola.imgfmt.app.srt;
 public class IntegerSortKey<T> implements SortKey<T> {
 	private final T object;
 	private final int val;
+	private final int second;
 
-	public IntegerSortKey(T object, int val) {
+	public IntegerSortKey(T object, int val, int second) {
 		this.object = object;
 		this.val = val;
+		this.second = second;
 	}
 
 	/**
@@ -35,8 +37,14 @@ public class IntegerSortKey<T> implements SortKey<T> {
 
 	public int compareTo(SortKey<T> o) {
 		IntegerSortKey<T> other = (IntegerSortKey<T>) o;
-		if (val == other.val)
-			return 0;
+		if (val == other.val) {
+			if (second == other.second)
+				return 0;
+			else if (second < other.second)
+				return -1;
+			else
+				return 1;
+		}
 		else if (val < other.val)
 			return -1;
 		else
