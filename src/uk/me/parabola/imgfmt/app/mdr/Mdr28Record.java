@@ -50,7 +50,8 @@ public class Mdr28Record extends ConfigBase {
 	}
 
 	public void setMdr23(int mdr23) {
-		this.mdr23 = mdr23;
+		if (this.mdr23 == 0)
+			this.mdr23 = mdr23;
 	}
 
 	public int getMdr27() {

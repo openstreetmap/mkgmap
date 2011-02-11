@@ -61,6 +61,24 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 		}
 	}
 
+
+	private int getNext(int type, int from) {
+		int val = 0;
+		for (int i = from; i < index.size(); i++) {
+			Mdr28Record mdr28 = index.get(i);
+			switch (type) {
+			case 21: val = mdr28.getMdr21(); break;
+			case 23: val = mdr28.getMdr23(); break;
+			case 27: val = mdr28.getMdr27(); break;
+			default: assert false : "invalid arg to getNext";
+			}
+			if (val != 0)
+				break;
+		}
+
+		return val;
+	}
+
 	/**
 	 * Write out the contents of this section.
 	 *
@@ -72,11 +90,26 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 		int size23 = sizes.getSize(23);
 		int size27 = sizes.getSize(27);
 
+		int idx = 0;
 		for (Mdr28Record mdr28 : index) {
-			putN(writer, size23, mdr28.getMdr23());
+			int mdr23 = mdr28.getMdr23();
+			if (mdr23 == 0)
+				mdr23 = getNext(23, idx);
+			putN(writer, size23, mdr23);
+
 			putStringOffset(writer, mdr28.getStrOffset());
-			putN(writer, size21, mdr28.getMdr21());
-			putN(writer, size27, mdr28.getMdr27());
+
+			int mdr21 = mdr28.getMdr21();
+			if (mdr21 == 0)
+				mdr21 = getNext(21, idx);
+			putN(writer, size21, mdr21);
+
+			int mdr27 = mdr28.getMdr27();
+			if (mdr27 == 0)
+				mdr27 = getNext(27, idx);
+			putN(writer, size27, mdr27);
+
+			idx++;
 		}
 	}
 

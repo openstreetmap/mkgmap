@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.IntegerSortKey;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -49,7 +49,6 @@ public class Mdr20 extends Mdr2x {
 	 * @param inStreets The list of streets from mdr7.
 	 */
 	public void buildFromStreets(List<Mdr7Record> inStreets, Mdr5 mdr5) {
-		Sort sort = getConfig().getSort();
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
 		for (Mdr7Record s : inStreets) {
@@ -63,7 +62,7 @@ public class Mdr20 extends Mdr2x {
 
 			// We are sorting the streets, but we are sorting primarily on the
 			// city name associated with the street.
-			SortKey<Mdr7Record> key = sort.createSortKey(s, name, s.getIndex());
+			SortKey<Mdr7Record> key = new IntegerSortKey<Mdr7Record>(s, city.getGlobalCityIndex());
 			keys.add(key);
 		}
 		Collections.sort(keys);
@@ -80,13 +79,15 @@ public class Mdr20 extends Mdr2x {
 			String name = street.getName();
 			if (mapid != lastMapid || !name.equals(lastName)) {
 				record++;
-				int gci = street.getCity().getGlobalCityIndex();
-				if (mdr20[gci] == 0)
-					mdr20[gci] = record;
+
 				streets.add(street);
 				lastMapid = mapid;
 				lastName = name;
-			} 
+			}
+			int gci = street.getCity().getGlobalCityIndex();
+
+			if (mdr20[gci] == 0)
+				mdr20[gci] = record;
 		}
 
 		mdr20[mdr5.getNumberOfItems()+1] = streets.size();
