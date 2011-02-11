@@ -77,19 +77,29 @@ public class Mdr7 extends MdrMapSection {
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
 			String name = s.getName();
+			int trailingFlags = 0;
 			if (!name.equals(lastName)) {
 				lab |= 0x800000;
 				lastName = name;
+				trailingFlags = 1;
 			}
 			writer.put3(lab);
 			putStringOffset(writer, s.getStringOffset());
+			
+			writer.put((byte) trailingFlags);
 		}
 	}
 
-
+	/**
+	 * For the map number, label, string (opt), and trailing flags (opt).
+	 * The trailing flags are variable size. We are just using 1 now.
+	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + 3 + sizes.getStrOffSize();
+		return sizes.getMapSize()
+				+ 3
+				+ sizes.getStrOffSize()
+				+ 1;
 	}
 
 	public int getNumberOfItems() {
@@ -100,7 +110,7 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		return 3;
+		return 0x43;
 	}
 
 	/**
