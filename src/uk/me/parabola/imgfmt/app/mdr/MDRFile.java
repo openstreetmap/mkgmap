@@ -195,12 +195,17 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void addStreet(RoadDef street, Mdr5Record mdrCity) {
-		String name = street.getName();
-		String cleanName = cleanUpName(name);
-		int strOff = createString(cleanName);
+		// Add a separate record for each name
+		for (Label lab : street.getLabels()) {
+			if (lab == null)
+				break;
+			String name = lab.getText();
+			String cleanName = cleanUpName(name);
+			int strOff = createString(cleanName);
 
-		// we sort on the dirty name (ie with the Garmin shield codes).
-		mdr7.addStreet(currentMap, name, street.getLabels()[0].getOffset(), strOff, mdrCity);
+			// XXX not sure: we sort on the dirty name (ie with the Garmin shield codes).
+			mdr7.addStreet(currentMap, name, lab.getOffset(), strOff, mdrCity);
+		}
 	}
 
 	/**

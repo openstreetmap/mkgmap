@@ -99,42 +99,13 @@ public class Mdr5 extends MdrMapSection {
 
 			lastName = city.getName();
 
-			fixMdr20(city);
-
 			// Write out the record
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
-			int mdr20index = mdr20[city.getGlobalCityIndex()];
-			assert mdr20index != 0 : "before write";
-			putN(writer, size20, mdr20index);
-		}
-	}
-
-	/**
-	 * Now check that there are no gaps in the mdr20 sequence. This will happen if a city has no streets.
-	 * We have to find the next non-zero record and fill in all the zero records with that value.
-	 */
-	private void fixMdr20(Mdr5Record city) {
-		int gci = city.getGlobalCityIndex();
-		int mdr20Index = mdr20[gci];
-		if (mdr20Index == 0) {
-			// Step forward until we find the next non zero value
-			assert mdr20[gci] == 0;
-			for (int i = gci; i < mdr20.length-1; i++) {
-				int next = mdr20[i];
-
-				if (next != 0) {
-					// Now we have found it, fill in all the zero entries
-					for (int j = gci; j < i; j++) {
-						assert mdr20[j] == 0 : "should only be setting zero entries";
-						mdr20[j] = next;
-					}
-					break;
-				}
-			}
+			putN(writer, size20, mdr20[city.getGlobalCityIndex()]);
 		}
 	}
 
