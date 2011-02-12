@@ -160,6 +160,7 @@ public class Sort {
 			sort.add(i, i, 0, 0, 0);
 		}
 		sort.encoder = Charset.defaultCharset().newEncoder();
+		sort.setDescription("Default sort");
 		return sort;
 	}
 }

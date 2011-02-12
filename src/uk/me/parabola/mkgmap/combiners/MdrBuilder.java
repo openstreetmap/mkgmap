@@ -130,7 +130,6 @@ public class MdrBuilder implements Combiner {
 		String name = "sort/cp" + codepage + ".txt";
 		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
 		if (is == null) {
-			System.err.printf("Warning: sort file %s not found\n", name);
 			return Sort.defaultSort();
 		}
 		try {
@@ -138,7 +137,6 @@ public class MdrBuilder implements Combiner {
 			SrtTextReader sr = new SrtTextReader(r);
 			return sr.getSort();
 		} catch (IOException e) {
-			System.err.printf("Warning: sort file %s not found\n", name);
 			return Sort.defaultSort();
 		}
 	}
