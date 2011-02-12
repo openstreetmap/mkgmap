@@ -59,7 +59,8 @@ public class Mdr28Record extends ConfigBase {
 	}
 
 	public void setMdr27(int mdr27) {
-		this.mdr27 = mdr27;
+		if (this.mdr27 == 0)
+			this.mdr27 = mdr27;
 	}
 
 	public int getStrOffset() {
