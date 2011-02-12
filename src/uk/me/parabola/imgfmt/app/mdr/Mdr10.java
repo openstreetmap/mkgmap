@@ -68,7 +68,7 @@ public class Mdr10 extends MdrMapSection {
 			
 			Collections.sort(poiGroup);
 
-			String lastName = "";
+			String lastName = null;
 			for (Mdr10Record t : poiGroup) {
 
 				count++;

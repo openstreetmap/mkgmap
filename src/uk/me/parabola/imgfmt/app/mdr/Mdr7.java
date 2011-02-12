@@ -70,7 +70,7 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = "";
+		String lastName = null;
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
 

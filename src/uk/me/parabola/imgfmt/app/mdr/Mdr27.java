@@ -50,7 +50,7 @@ public class Mdr27 extends MdrSection {
 
 		Collections.sort(keys);
 
-		String lastName = "";
+		String lastName = null;
 		int record = 0;
 		for (SortKey<Mdr5Record> key : keys) {
 			record++;

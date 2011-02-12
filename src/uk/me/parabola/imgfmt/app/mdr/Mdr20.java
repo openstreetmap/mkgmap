@@ -69,7 +69,7 @@ public class Mdr20 extends Mdr2x {
 
 		int[] mdr20 = new int[mdr5.getNumberOfItems() + 2];
 
-		String lastName = "";
+		String lastName = null;
 		int lastMapid = 0;
 		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {

@@ -32,7 +32,7 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = "";
+		String lastName = null;
 
 		int size = getSizes().getStreetSizeFlagged();
 

@@ -64,7 +64,7 @@ public class Mdr22 extends Mdr2x {
 		int record = 0;
 
 		String lastCName = "";
-		String lastName = "";
+		String lastName = null;
 		int lastMapid = 0;
 		
 		for (SortKey<Mdr7Record> key : keys) {

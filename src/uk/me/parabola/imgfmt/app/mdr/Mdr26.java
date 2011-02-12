@@ -47,7 +47,7 @@ public class Mdr26 extends MdrSection {
 	}
 
 	private void addToIndex(List<SortKey<Mdr28Record>> sortList) {
-		String lastName = "";
+		String lastName = null;
 		int record26 = 0;
 		for (SortKey<Mdr28Record> key : sortList) {
 			record26++;

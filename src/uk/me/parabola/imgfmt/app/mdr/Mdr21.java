@@ -60,7 +60,7 @@ public class Mdr21 extends Mdr2x {
 
 		Collections.sort(keys);
 
-		String lastName = "";
+		String lastName = null;
 		int lastMapid = 0;
 		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {

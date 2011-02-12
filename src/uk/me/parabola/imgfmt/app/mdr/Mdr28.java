@@ -39,7 +39,7 @@ public class Mdr28 extends MdrSection implements HasHeaderFlags {
 
 		int record = 0;
 		Mdr28Record mdr28 = null;
-		String lastName = "";
+		String lastName = null;
 		for (SortKey<Mdr13Record> key : keys) {
 			Mdr13Record region = key.getObject();
 

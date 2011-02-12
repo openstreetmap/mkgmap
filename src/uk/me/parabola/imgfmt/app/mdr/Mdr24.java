@@ -42,7 +42,7 @@ public class Mdr24 extends MdrSection {
 
 		Collections.sort(keys);
 
-		String lastName = "";
+		String lastName = null;
 		int lastMapIndex = 0;
 		int record = 0;
 		for (SortKey<Mdr14Record> key : keys) {
@@ -68,7 +68,7 @@ public class Mdr24 extends MdrSection {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = "";
+		String lastName = null;
 		for (Mdr14Record c : countries) {
 			putMapIndex(writer, c.getMapIndex());
 

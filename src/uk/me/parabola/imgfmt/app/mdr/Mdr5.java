@@ -64,7 +64,7 @@ public class Mdr5 extends MdrMapSection {
 		cities.clear();
 		int count = 0;
 		int lastMapId = 0;
-		String lastName = "";
+		String lastName = null;
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
 			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName)) {
@@ -81,7 +81,7 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = "";
+		String lastName = null;
 
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
@@ -94,7 +94,7 @@ public class Mdr5 extends MdrMapSection {
 			int region = city.getRegionIndex();
 
 			// Set flag only for a name that is different to the previous one
-			if (lastName.equals(city.getName()))
+			if (lastName == null || lastName.equals(city.getName()))
 				flag = 0;
 
 			lastName = city.getName();

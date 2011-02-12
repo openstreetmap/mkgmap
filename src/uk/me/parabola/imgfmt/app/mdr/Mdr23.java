@@ -41,7 +41,7 @@ public class Mdr23 extends MdrSection {
 		List<SortKey<Mdr13Record>> keys = MdrUtils.sortList(sort, list);
 		Collections.sort(keys);
 
-		String lastName = "";
+		String lastName = null;
 		int lastMapIndex = 0;
 		int record = 0;
 		for (SortKey<Mdr13Record> key : keys) {
@@ -66,7 +66,7 @@ public class Mdr23 extends MdrSection {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = "";
+		String lastName = null;
 		for (Mdr13Record reg : regions) {
 			putMapIndex(writer, reg.getMapIndex());
 

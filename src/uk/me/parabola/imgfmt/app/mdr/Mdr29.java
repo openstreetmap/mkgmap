@@ -38,7 +38,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 
 		// Sorted by name, for every new name we allocate a new 29 record and set the same one in every
 		// country with the same name.
-		String lastName = "";
+		String lastName = null;
 		Mdr29Record mdr29 = null;
 		for (SortKey<Mdr14Record> key : keys) {
 			Mdr14Record country = key.getObject();
