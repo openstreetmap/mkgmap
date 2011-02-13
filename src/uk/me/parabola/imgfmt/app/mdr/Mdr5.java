@@ -85,19 +85,24 @@ public class Mdr5 extends MdrMapSection {
 
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
-			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
+			int gci = city.getGlobalCityIndex();
+			addIndexPointer(city.getMapIndex(), gci);
 
 			// Work out if the name is the same as the previous one and set
 			// the flag if so.
-			int flag = 0x800000;
+			int flag = 0;
 			int mapIndex = city.getMapIndex();
 			int region = city.getRegionIndex();
 
 			// Set flag only for a name that is different to the previous one
-			if (lastName == null || lastName.equals(city.getName()))
-				flag = 0;
-
-			lastName = city.getName();
+			if (lastName == null || !lastName.equals(city.getName())) {
+				flag = 0x800000;
+				lastName = city.getName();
+			} else {
+				// If this is a repeat name then the mdr20 value must
+				// also be repeated.
+				mdr20[gci] = mdr20[gci - 1];
+			}
 
 			// Write out the record
 			putMapIndex(writer, mapIndex);
@@ -105,7 +110,7 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
-			putN(writer, size20, mdr20[city.getGlobalCityIndex()]);
+			putN(writer, size20, mdr20[gci]);
 		}
 	}
 

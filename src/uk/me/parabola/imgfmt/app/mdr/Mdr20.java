@@ -70,6 +70,7 @@ public class Mdr20 extends Mdr2x {
 		int[] mdr20 = new int[mdr5.getNumberOfItems() + 2];
 
 		String lastName = null;
+		String lastCityName = null;
 		int lastMapid = 0;
 		int record = 0;
 		for (SortKey<Mdr7Record> key : keys) {
@@ -77,12 +78,14 @@ public class Mdr20 extends Mdr2x {
 
 			int mapid = street.getMapIndex();
 			String name = street.getName();
-			if (mapid != lastMapid || !name.equals(lastName)) {
+			String cityName = street.getCity().getName();
+			if (mapid != lastMapid || !name.equals(lastName) || !cityName.equals(lastCityName)) {
 				record++;
 
 				streets.add(street);
 				lastMapid = mapid;
 				lastName = name;
+				lastCityName = cityName;
 			}
 			int gci = street.getCity().getGlobalCityIndex();
 
