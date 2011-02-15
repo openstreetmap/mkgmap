@@ -81,7 +81,7 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		String lastName = null;
+		fix20();
 
 		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
@@ -94,15 +94,9 @@ public class Mdr5 extends MdrMapSection {
 			int mapIndex = city.getMapIndex();
 			int region = city.getRegionIndex();
 
-			// Set flag only for a name that is different to the previous one
-			if (lastName == null || !lastName.equals(city.getName())) {
+			// Set the repeat flag from the information we saved during fix20().
+			if ((mdr20[gci] & 0x80000000) == 0)
 				flag = 0x800000;
-				lastName = city.getName();
-			} else {
-				// If this is a repeat name then the mdr20 value must
-				// also be repeated.
-				mdr20[gci] = mdr20[gci - 1];
-			}
 
 			// Write out the record
 			putMapIndex(writer, mapIndex);
@@ -110,8 +104,65 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
-			putN(writer, size20, mdr20[gci]);
+			putN(writer, size20, mdr20[gci] & 0x7fffffff);
 		}
+	}
+
+	/**
+	 * Search for repeated names, and make the mdr20 value for each one the same. The value is the
+	 * lowest non-zero value for any member of the group.
+	 *
+	 * Save the repeat status to avoid having to recalculate it during the write phase.
+	 */
+	private void fix20() {
+		String lastName = null;
+		for (int index = 0; index < cities.size(); index++) {
+			Mdr5Record city = cities.get(index);
+
+			String name = city.getName();
+			if (name.equals(lastName)) {
+				int last = findLastRepeat(index, name);
+				int mdr20val = findMin20(index - 1, last);
+				for (int j = index-1; j < last; j++) {
+					mdr20[j] = mdr20val;
+					// set repeat flag on all except the first
+					if (j != index - 1)
+						mdr20[j] |= 0x80000000;
+				}
+
+				lastName = name;
+			}
+		}
+	}
+
+	/**
+	 * Find the minimum value of mdr20 from the two given city indexes.
+	 * @param start Start from here.
+	 * @param last Until here, exclusive.
+	 * @return The minimum value of mdr20 that is not 0. If all are zero then zero is returned.
+	 */
+	private int findMin20(int start, int last) {
+		int min20 = 0;
+		for (int i = start; i < last; i++) {
+			int val = mdr20[i];
+			if (val > 0 && val < min20)
+				min20 = val;
+		}
+		return min20;
+	}
+
+	/**
+	 * Return the index of the first record after 'index' that has a different name.
+	 * @param start The start index.
+	 * @param name The name to compare against.
+	 * @return The last repeated name index (exclusive).
+	 */
+	private int findLastRepeat(int start, String name) {
+		for (int i = start; i < cities.size(); i++) {
+			if (!name.equals(cities.get(i).getName()))
+				return i;
+		}
+		return cities.size();
 	}
 
 	/**
