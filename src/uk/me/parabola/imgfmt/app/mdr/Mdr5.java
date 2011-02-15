@@ -116,8 +116,9 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	private void fix20() {
 		String lastName = null;
-		for (int index = 0; index < cities.size(); index++) {
-			Mdr5Record city = cities.get(index);
+		for (int index = 1; index < cities.size(); index++) {
+			Mdr5Record city = cities.get(index-1);
+			assert city.getGlobalCityIndex() == index : index + "/" + city.getGlobalCityIndex();
 
 			String name = city.getName();
 			if (name.equals(lastName)) {
@@ -130,8 +131,8 @@ public class Mdr5 extends MdrMapSection {
 						mdr20[j] |= 0x80000000;
 				}
 
-				lastName = name;
 			}
+			lastName = name;
 		}
 	}
 
@@ -145,9 +146,11 @@ public class Mdr5 extends MdrMapSection {
 		int min20 = 0;
 		for (int i = start; i < last; i++) {
 			int val = mdr20[i];
-			if (val > 0 && val < min20)
+			if (min20 == 0 || (val > 0 && val < min20)) {
 				min20 = val;
+			}
 		}
+
 		return min20;
 	}
 
@@ -159,7 +162,7 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	private int findLastRepeat(int start, String name) {
 		for (int i = start; i < cities.size(); i++) {
-			if (!name.equals(cities.get(i).getName()))
+			if (!name.equals(cities.get(i-1).getName()))
 				return i;
 		}
 		return cities.size();
