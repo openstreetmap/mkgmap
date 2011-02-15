@@ -252,7 +252,7 @@ public class TdbBuilder implements Combiner {
 		params.setMapDescription(areaName);
 
 		try {
-			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber);
+			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
 			map.setSort(sort);
 			mb.makeMap(map, overviewSource);
 			map.close();

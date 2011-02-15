@@ -68,7 +68,7 @@ public class MDRFile extends ImgFile {
 		Sort sort = config.getSort();
 		
 		mdrHeader = new MDRHeader(config.getHeaderLen());
-		mdrHeader.setCodepage(sort.getCodepage());
+		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
 			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);

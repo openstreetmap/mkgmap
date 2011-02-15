@@ -24,6 +24,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
@@ -54,13 +55,16 @@ public class LBLFile extends ImgFile {
 	private final LBLHeader lblHeader = new LBLHeader();
 
 	private final PlacesFile places = new PlacesFile();
+	private Sort sort;
 
-	public LBLFile(ImgChannel chan) {
+	public LBLFile(ImgChannel chan, Sort sort) {
+		this.sort = sort;
+		lblHeader.setSort(sort);
 		setHeader(lblHeader);
 
 		setWriter(new BufferedImgFileWriter(chan));
 
-		position(LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN);
+		position(LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength());
 
 		// The zero offset is for no label.
 		getWriter().put((byte) 0);
@@ -75,16 +79,19 @@ public class LBLFile extends ImgFile {
 	public void writePost() {
 		// Now that the body is written all the required offsets will be set up
 		// inside the header, so we can go back and write it.
-		getHeader().writeHeader(getWriter());
+		ImgFileWriter writer = getWriter();
+		getHeader().writeHeader(writer);
 
 		// Text can be put between the header and the body of the file.
-		getWriter().put(Utils.toBytes("mkgmap"));
+		writer.put(Utils.toBytes(sort.getDescription()));
+		writer.put((byte) 0);
+		assert writer.position() == LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength();
 	}
 
 	private void writeBody() {
 		// The label section has already been written, but we need to record
 		// its size before doing anything else.
-		lblHeader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
+		lblHeader.setLabelSize(getWriter().position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
 		places.write(getWriter());
 	}
 
@@ -120,7 +127,7 @@ public class LBLFile extends ImgFile {
 			l = new Label(text);
 			labelCache.put(text, l);
 
-			l.setOffset(position() - (LBLHeader.HEADER_LEN + LBLHeader.INFO_LEN));
+			l.setOffset(position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
 			l.write(getWriter(), textEncoder);
 		}
 
@@ -172,7 +179,8 @@ public class LBLFile extends ImgFile {
 	}
 
 	public void setSort(Sort sort) {
-		lblHeader.setCodePage(sort.getCodepage());
+		this.sort = sort;
+		lblHeader.setSort(sort);
 		places.setSort(sort);
 	}
 

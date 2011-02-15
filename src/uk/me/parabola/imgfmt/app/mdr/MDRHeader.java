@@ -17,6 +17,7 @@ import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 
 /**
  * The header of the MDR file.
@@ -34,7 +35,7 @@ public class MDRHeader extends CommonHeader {
 	private static final int MAX_SECTIONS = 40;
 	private final Section[] sections = new Section[MAX_SECTIONS+1];
 
-	private int codepage = 1252;
+	private Sort sort;
 
 	public MDRHeader(int headerLen) {
 		super(headerLen, "GARMIN MDR");
@@ -56,9 +57,9 @@ public class MDRHeader extends CommonHeader {
 	 * Write out the application header.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		writer.putChar((char) codepage);
-		writer.putChar((char) 7); // TODO from srt
-		writer.putChar((char) 2); // TODO from srt
+		writer.putChar((char) sort.getCodepage());
+		writer.putChar((char) sort.getId1());
+		writer.putChar((char) sort.getId2());
 		writer.putChar((char) 14);
 
 		sections[1].writeSectionInfo(writer, true, true);
@@ -82,19 +83,6 @@ public class MDRHeader extends CommonHeader {
 		sections[17].writeSectionInfo(writer, false, true);
 		for (int n = 18; n <= 30; n++)
 			sections[n].writeSectionInfo(writer, true, true);
-		//sections[18].writeSectionInfo(writer, true, true);
-		//sections[19].writeSectionInfo(writer, true, true);
-		//sections[20].writeSectionInfo(writer, true, true);
-		//sections[21].writeSectionInfo(writer, true, true);
-		//sections[22].writeSectionInfo(writer, true, true);
-		//sections[23].writeSectionInfo(writer, true, true);
-		//sections[24].writeSectionInfo(writer, true, true);
-		//sections[25].writeSectionInfo(writer, true, true);
-		//sections[26].writeSectionInfo(writer, true, true);
-		//sections[27].writeSectionInfo(writer, true, true);
-		//sections[28].writeSectionInfo(writer, true, true);
-		//sections[29].writeSectionInfo(writer, true, true);
-		//sections[30].writeSectionInfo(writer, true, true);
 	}
 
 	public void setItemSize(int sectionNumber, int itemSize) {
@@ -116,7 +104,7 @@ public class MDRHeader extends CommonHeader {
 		s.setSize(position - s.getPosition());
 	}
 
-	public void setCodepage(int codepage) {
-		this.codepage = codepage;
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 }

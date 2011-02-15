@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -182,7 +183,7 @@ public abstract class DEM {
 			long mapName = Integer.valueOf(config.getProperty("mapname", "63240000"));
 			try {
 				String mapname = String.format("%08d", mapName + 10000000);
-				Map map = Map.createMap(mapname, fileOutputDir, params, mapname);
+				Map map = Map.createMap(mapname, fileOutputDir, params, mapname, Sort.defaultSort());
 				builder.makeMap(map, dest);
 				map.close();
 			}

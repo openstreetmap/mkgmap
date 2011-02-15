@@ -83,6 +83,10 @@ public class SrtTextReader {
 
 	private int codepage;
 
+	// Identification (or perhaps has more meaning).
+	private int id1;
+	private int id2;
+
 	// Data that is read in, the output of the reading operation
 	private final Sort sort = new Sort();
 
@@ -162,6 +166,10 @@ public class SrtTextReader {
 				decoder = charset.newDecoder();
 			} else if (val.equals("description")) {
 				sort.setDescription(scanner.nextWord());
+			} else if (val.equals("id1")) {
+				sort.setId1(scanner.nextInt());
+			} else if (val.equals("id2")) {
+				sort.setId2(scanner.nextInt());
 			} else if (val.equals("code")) {
 				if (codepage == 0)
 					throw new SyntaxException(scanner, "Missing codepage declaration before code");

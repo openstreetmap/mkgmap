@@ -41,7 +41,7 @@ public class SRTHeader extends CommonHeader {
 	private final Section chartab = new Section((char) 3);
 	private final Section tab2 = new Section(chartab, (char) 2);
 
-	private char codepage = (char) 1252;
+	private Sort sort;
 
 	public SRTHeader() {
 		super(HEADER_LEN, "GARMIN SRT");
@@ -98,9 +98,9 @@ public class SRTHeader extends CommonHeader {
 	 */
 	protected void writeHeader3(ImgFileWriter writer) {
 		writer.putChar((char) HEADER3_LEN);
-		writer.putChar((char) 7);
-		writer.putChar((char) 2);
-		writer.putChar(codepage);
+		writer.putChar((char) sort.getId1());
+		writer.putChar((char) sort.getId2());
+		writer.putChar((char) sort.getCodepage());
 		writer.putInt(0x2002);
 
 		chartab.writeSectionInfo(writer, true, true);
@@ -113,8 +113,8 @@ public class SRTHeader extends CommonHeader {
 		writer.putInt(0);
 	}
 
-	public void setCodepage(char codepage) {
-		this.codepage = codepage;
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 
 	/** Called after the description has been written to record the position. */

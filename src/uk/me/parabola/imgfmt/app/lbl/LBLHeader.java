@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 
 /**
  * The header for the LBL file.
@@ -29,8 +30,6 @@ import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
 public class LBLHeader extends CommonHeader {
 	public static final int HEADER_LEN = 196; // Other lengths are possible
 
-	static final int INFO_LEN = 28;
-
 	private static final char UNK3_REC_LEN = 0;
 
 	private int labelStart; // Start of labels.
@@ -38,8 +37,10 @@ public class LBLHeader extends CommonHeader {
 
 	private int offsetMultiplier;
 
-	// Code page.
-	private int codePage;
+	// Code page and sorting info.
+	private Sort sort;
+
+	private int sortDescriptionLength;
 
 	// The type of encoding employed.  This is not a length.
 	private int encodingType = CodeFunctions.ENCODING_FORMAT6;
@@ -51,6 +52,10 @@ public class LBLHeader extends CommonHeader {
 	public LBLHeader() {
 		super(HEADER_LEN, "GARMIN LBL");
 		placeHeader = new PlacesHeader();
+	}
+
+	public int getSortDescriptionLength() {
+		return sortDescriptionLength;
 	}
 
 	/**
@@ -81,7 +86,7 @@ public class LBLHeader extends CommonHeader {
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
 		// LBL1 section, these are regular labels
-		writer.putInt(HEADER_LEN + INFO_LEN);
+		writer.putInt(HEADER_LEN + sortDescriptionLength);
 		writer.putInt(getLabelSize());
 
 		writer.put((byte) 0);
@@ -92,13 +97,11 @@ public class LBLHeader extends CommonHeader {
 		writer.putChar((char) getCodePage());
 
 		// Identifying the sort
-		// XXX TODO these come from the sort
-		writer.putChar((char) 7);
-		writer.putChar((char) (2 | 0x8000));
+		writer.putChar((char) sort.getId1());
+		writer.putChar((char) (sort.getId2() | 0x8000));
 
-		// Sort descriptor ??? what does that mean
 		writer.putInt(HEADER_LEN);
-		writer.putInt(INFO_LEN);
+		writer.putInt(sortDescriptionLength);
 
 		writer.putInt(placeHeader.getLastPos());
 		writer.putInt(0);
@@ -120,15 +123,16 @@ public class LBLHeader extends CommonHeader {
 
 	public void setLabelSize(int labelSize) {
 		this.labelSize = labelSize;
-		placeHeader.setLabelEnd(HEADER_LEN + INFO_LEN + labelSize);
+		placeHeader.setLabelEnd(HEADER_LEN + sortDescriptionLength + labelSize);
 	}
 
 	protected int getCodePage() {
-		return codePage;
+		return sort.getCodepage();
 	}
 
-	public void setCodePage(int codePage) {
-		this.codePage = codePage;
+	public void setSort(Sort sort) {
+		sortDescriptionLength = sort.getDescription().length() + 1;
+		this.sort = sort;
 	}
 
 	public int getLabelStart() {

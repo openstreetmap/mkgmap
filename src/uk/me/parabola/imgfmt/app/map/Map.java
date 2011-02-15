@@ -86,7 +86,7 @@ public class Map implements InternalFiles, Configurable {
 	 * @throws FileNotWritableException If the file cannot
 	 * be opened for write.
 	 */
-	public static Map createMap(String mapname, String outputdir, FileSystemParam params, String mapnumber)
+	public static Map createMap(String mapname, String outputdir, FileSystemParam params, String mapnumber, Sort sort)
 			throws FileExistsException, FileNotWritableException
 	{
 		Map m = new Map();
@@ -99,7 +99,7 @@ public class Map implements InternalFiles, Configurable {
 
 		m.rgnFile = new RGNFile(m.fileSystem.create(mapnumber + ".RGN"));
 		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"));
-		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"));
+		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"), sort);
 
 		int mapid;
 		try {

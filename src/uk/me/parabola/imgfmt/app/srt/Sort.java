@@ -31,6 +31,9 @@ public class Sort {
 	private static final byte[] ZERO_KEY = new byte[3];
 
 	private int codepage;
+	private int id1; // Unknown - identifies the sort
+	private int id2; // Unknown - identifies the sort
+
 	private String description;
 	private Charset charset;
 
@@ -134,6 +137,22 @@ public class Sort {
 		return charset;
 	}
 
+	public int getId1() {
+		return id1;
+	}
+
+	public void setId1(int id1) {
+		this.id1 = id1;
+	}
+
+	public int getId2() {
+		return id2;
+	}
+
+	public void setId2(int id2) {
+		this.id2 = id2;
+	}
+
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
 		charset = Charset.forName("cp" + codepage);
@@ -151,7 +170,7 @@ public class Sort {
 
 	/**
 	 * Create a default sort that simply sorts by the values of the characters.
-	 * Note that this is not particularly useful.
+	 *
 	 * @return A default sort.
 	 */
 	public static Sort defaultSort() {
@@ -159,7 +178,8 @@ public class Sort {
 		for (int i = 1; i < 256; i++) {
 			sort.add(i, i, 0, 0, 0);
 		}
-		sort.encoder = Charset.defaultCharset().newEncoder();
+		sort.charset = Charset.forName("ascii");
+		sort.encoder = sort.charset.newEncoder();
 		sort.setDescription("Default sort");
 		return sort;
 	}

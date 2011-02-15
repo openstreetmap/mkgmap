@@ -31,6 +31,8 @@
 
 # This must be first before any 'code' lines.
 codepage 1252
+id1 7
+id2 2
 description "Western European Sort"
 
 code pos2=0 pos3=8 01, 02, 03, 04, 05, 06, 07

@@ -88,7 +88,7 @@ public class MapMaker implements MapProcessor {
 
 		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
-			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname());
+			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname(), args.getSort());
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
