@@ -307,10 +307,8 @@ public class MdrBuilder implements Combiner {
 			Mdr5Record mdrCity = null;
 			if (road.getCity() != null) {
 				mdrCity = cityList.get(road.getCity().getIndex() - 1);
-				assert mdrCity.getMapIndex() != 0;
-				//if (mdrCity.getMapIndex() == 0)
-				//	mdrCity = null;
-
+				if (mdrCity.getMapIndex() == 0)
+					mdrCity = null;
 			}
 			
 			mdrFile.addStreet(road, mdrCity);
