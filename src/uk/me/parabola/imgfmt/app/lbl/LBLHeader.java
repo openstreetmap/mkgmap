@@ -89,8 +89,12 @@ public class LBLHeader extends CommonHeader {
 
 		placeHeader.writeFileHeader(writer);
 
-		writer.putChar((char) getCodePage()); //code
-		writer.putInt(0);
+		writer.putChar((char) getCodePage());
+
+		// Identifying the sort
+		// XXX TODO these come from the sort
+		writer.putChar((char) 7);
+		writer.putChar((char) (2 | 0x8000));
 
 		// Sort descriptor ??? what does that mean
 		writer.putInt(HEADER_LEN);
