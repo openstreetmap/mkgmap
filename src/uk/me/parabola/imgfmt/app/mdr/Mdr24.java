@@ -104,8 +104,4 @@ public class Mdr24 extends MdrSection {
 	public int getNumberOfItems() {
 		return countries.size();
 	}
-
-	public List<Mdr14Record> getCountries() {
-		return Collections.unmodifiableList(countries);
-	}
 }

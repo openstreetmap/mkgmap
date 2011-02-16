@@ -102,8 +102,4 @@ public class Mdr23 extends MdrSection {
 	public int getNumberOfItems() {
 		return regions.size();
 	}
-
-	public List<Mdr13Record> getRegions() {
-		return Collections.unmodifiableList(regions);
-	}
 }
