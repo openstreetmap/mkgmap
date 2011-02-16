@@ -14,6 +14,12 @@
 		<variant>CH</variant>		
 	</country>	
 	<country name="United Kingdom" abr="GBR">
+		<variant>England</variant>
+		<variant>Scotland</variant>
+		<variant>Wales</variant>
+		<variant>Northern Ireland</variant>
+		<variant>Great Britain</variant>
+		<variant>Great Britian</variant>
 		<variant>UK</variant>
 		<variant>GB</variant>		
 	</country>
@@ -31,6 +37,9 @@
 	<country name="España" abr="ESP" poiDispFlag="0xc">
 		<variant>Spain</variant>
 		<variant>ES</variant>
+	</country>
+	<country name="Philippines" abr="PHL">
+		<variant>PHL</variant>
 	</country>
 	<country name="Portugal" abr="POR" poiDispFlag="0xc">
 		<variant>PT</variant>
