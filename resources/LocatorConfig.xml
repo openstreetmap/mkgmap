@@ -7,6 +7,8 @@
 	<country name="Åland Islands" abr="ALA">
 		<variant>AX</variant>
 		<variant>ALA</variant>
+		<variant>Åland</variant>
+		<variant>Ahvenanmaa</variant>
 	</country>
 	<country name="Albania" abr="ALB">
 		<variant>AL</variant>
@@ -243,7 +245,8 @@
 		<variant>CZ</variant>
 		<variant>CZE</variant>
 	</country>
-	<country name="Denmark" abr="DNK">
+	<country name="Danmark" abr="DNK">
+		<variant>Denmark</variant>
 		<variant>DK</variant>
 		<variant>DNK</variant>
 	</country>
@@ -279,7 +282,9 @@
 		<variant>ER</variant>
 		<variant>ERI</variant>
 	</country>
-	<country name="Estonia" abr="EST">
+	<country name="Eesti" abr="EST">
+		<variant>Eesti Vabariik</variant>
+		<variant>Estonia</variant>
 		<variant>EE</variant>
 		<variant>EST</variant>
 	</country>
@@ -299,7 +304,8 @@
 		<variant>FJ</variant>
 		<variant>FJI</variant>
 	</country>
-	<country name="Finland" abr="FIN">
+	<country name="Suomi" abr="FIN">
+		<variant>Finland</variant>
 		<variant>FI</variant>
 		<variant>FIN</variant>
 	</country>
@@ -679,7 +685,9 @@
 		<variant>MP</variant>
 		<variant>MNP</variant>
 	</country>
-	<country name="Norway" abr="NOR">
+	<country name="Norge" abr="NOR">
+		<variant>Norway</variant>
+		<variant>Noreg</variant>
 		<variant>NO</variant>
 		<variant>NOR</variant>
 	</country>
@@ -887,7 +895,8 @@
 		<variant>SZ</variant>
 		<variant>SWZ</variant>
 	</country>
-	<country name="Sweden" abr="SWE">
+	<country name="Sverige" abr="SWE">
+		<variant>Sweden</variant>
 		<variant>SE</variant>
 		<variant>SWE</variant>
 	</country>
