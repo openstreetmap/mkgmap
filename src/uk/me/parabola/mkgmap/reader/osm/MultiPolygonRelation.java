@@ -450,6 +450,7 @@ public class MultiPolygonRelation extends Relation {
 						firstWarn = false;
 					}
 					logWayURLs(Level.WARNING, "- way:", tempWay);
+					logFakeWayDetails(Level.WARNING, tempWay);
 				}
 
 				it.remove();
@@ -921,6 +922,12 @@ public class MultiPolygonRelation extends Relation {
 
 			logWayURLs(Level.WARNING, (outOfBbox ? "*" : "-"), polygon);
 		}
+		
+		for (JoinedWay polygon : intersectingPolygons) {
+			// print out the details of the original ways
+			logFakeWayDetails(Level.WARNING, polygon);
+		}
+		
 		if (oneOufOfBbox) {
 			log.warn("Some of these intersections/overlaps may be caused by incomplete data on bounding box edges (*).");
 		}
@@ -931,8 +938,9 @@ public class MultiPolygonRelation extends Relation {
 		// the check has been done before
 		for (int wiIndex = nestedOuterPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = nestedOuterPolygons
 				.nextSetBit(wiIndex + 1)) {
-			Way outerWay = polygons.get(wiIndex);
+			JoinedWay outerWay = polygons.get(wiIndex);
 			log.warn("Polygon",	outerWay, "carries role outer but lies inside an outer polygon. Potentially its role should be inner.");
+			logFakeWayDetails(Level.WARNING, outerWay);
 		}
 	}
 	
@@ -941,8 +949,9 @@ public class MultiPolygonRelation extends Relation {
 		// the check has been done before
 		for (int wiIndex = nestedInnerPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = nestedInnerPolygons
 				.nextSetBit(wiIndex + 1)) {
-			Way innerWay = polygons.get(wiIndex);
+			JoinedWay innerWay = polygons.get(wiIndex);
 			log.warn("Polygon",	innerWay, "carries role", getRole(innerWay), "but lies inside an inner polygon. Potentially its role should be outer.");
+			logFakeWayDetails(Level.WARNING, innerWay);
 		}
 	}	
 	
@@ -951,8 +960,9 @@ public class MultiPolygonRelation extends Relation {
 		// the check has been done before
 		for (int wiIndex = outmostInnerPolygons.nextSetBit(0); wiIndex >= 0; wiIndex = outmostInnerPolygons
 				.nextSetBit(wiIndex + 1)) {
-			Way innerWay = polygons.get(wiIndex);
+			JoinedWay innerWay = polygons.get(wiIndex);
 			log.warn("Polygon",	innerWay, "carries role", getRole(innerWay), "but is not inside any other polygon. Potentially it does not belong to this multipolygon.");
+			logFakeWayDetails(Level.WARNING, innerWay);
 		}
 	}
 
@@ -975,10 +985,11 @@ public class MultiPolygonRelation extends Relation {
 				containedPolygons.or(unfinishedPolygons);
 				containedPolygons.and(containsMatrix.get(wiIndex));
 
-				Way innerWay = polygons.get(wiIndex);
+				JoinedWay innerWay = polygons.get(wiIndex);
 				if (containedPolygons.isEmpty()) {
 					log.warn("Polygon",	innerWay, "carries role", getRole(innerWay),
 						"but is not inside any outer polygon. Potentially it does not belong to this multipolygon.");
+					logFakeWayDetails(Level.WARNING, innerWay);
 				} else {
 					log.warn("Polygon",	innerWay, "carries role", getRole(innerWay),
 						"but is not inside any outer polygon. Potentially the roles are interchanged with the following",
@@ -990,6 +1001,7 @@ public class MultiPolygonRelation extends Relation {
 						unfinishedPolygons.set(wrIndex);
 						wrongInnerPolygons.set(wrIndex);
 					}
+					logFakeWayDetails(Level.WARNING, innerWay);
 				}
 
 				unfinishedPolygons.clear(wiIndex);
@@ -1708,6 +1720,54 @@ public class MultiPolygonRelation extends Relation {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Logs the details of the original ways of a way with a fake id. This is
+	 * primarily necessary for the sea multipolygon because it consists of 
+	 * faked ways only. In this case logging messages can be improved by the
+	 * start and end points of the faked ways.
+	 * @param logLevel the logging level
+	 * @param fakeWay a way composed by other ways with faked ids
+	 */
+	private void logFakeWayDetails(Level logLevel, JoinedWay fakeWay) {
+		if (log.isLoggable(logLevel) == false) {
+			return;
+		}
+		
+		// only log if this is an artificial multipolygon
+		if (FakeIdGenerator.isFakeId(getId()) == false) {
+			return;
+		}
+		
+		boolean containsOrgFakeWay = false;
+		for (Way orgWay : fakeWay.getOriginalWays()) {
+			if (FakeIdGenerator.isFakeId(orgWay.getId())) {
+				containsOrgFakeWay = true;
+			}
+		}
+		
+		if (containsOrgFakeWay == false) {
+			return;
+		}
+		
+		// the fakeWay consists only of other faked ways
+		// there should be more information about these ways
+		// so that it is possible to retrieve the original
+		// OSM ways
+		// => log the start and end points
+		
+		for (Way orgWay : fakeWay.getOriginalWays()) {
+			log.log(logLevel, " Way",orgWay.getId(),"is composed of other artificial ways. Details:");
+			log.log(logLevel, "  Start:",orgWay.getPoints().get(0).toOSMURL());
+			if (orgWay.isClosed()) {
+				// the way is closed so start==end - log the point in the middle of the way
+				int mid = orgWay.getPoints().size()/2;
+				log.log(logLevel, "  Mid:  ",orgWay.getPoints().get(mid).toOSMURL());
+			} else {
+				log.log(logLevel, "  End:  ",orgWay.getPoints().get(orgWay.getPoints().size()-1).toOSMURL());
+			}
+		}		
 	}
 
 	/**
