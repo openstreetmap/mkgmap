@@ -174,7 +174,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			}
 			hooks = chain;
 		}
-		getUsedTags().addAll(hooks.getUsedTags());
+		usedTags.addAll(hooks.getUsedTags());
 		return hooks;
 	}
 
@@ -248,7 +248,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			style.applyOptionOverride(props);
 			setStyle(style);
 
-			getUsedTags().addAll(style.getUsedTags());
+			usedTags.addAll(style.getUsedTags());
 			converter = new StyledConverter(style, mapper, props);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
