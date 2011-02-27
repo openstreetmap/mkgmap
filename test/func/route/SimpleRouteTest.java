@@ -60,7 +60,7 @@ public class SimpleRouteTest {
 				assertEquals("TRE size", 1336, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 27693, size);
+				assertEquals("LBL size", 27672, size);
 			} else if (ext.equals("NET")) {
 				count++;
 				assertEquals("NET size", 73850, size);
