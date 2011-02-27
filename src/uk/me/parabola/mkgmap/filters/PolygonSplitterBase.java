@@ -16,14 +16,13 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
-import java.awt.geom.PathIterator;
-import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * @author Steve Ratcliffe
@@ -38,14 +37,11 @@ public class PolygonSplitterBase extends BaseFilter {
 	 */
 	protected void split(MapShape shape, List<MapShape> outputs) {
 
-		// Convert to a awt polygon
-		Polygon polygon = new Polygon();
-		for (Coord co : shape.getPoints()) {
-			polygon.addPoint(co.getLongitude(), co.getLatitude());
-		}
+		// Convert to a awt area
+		Area a1 = Java2DConverter.createArea(shape.getPoints());
 
 		// Get the bounds of this polygon
-		Rectangle bounds = polygon.getBounds();
+		Rectangle bounds = a1.getBounds();
 
 		if (bounds.isEmpty())
 			return;  // Drop it
@@ -66,7 +62,6 @@ public class PolygonSplitterBase extends BaseFilter {
 		// Now find the intersection of these two boxes with the original
 		// polygon.  This will make two new areas, and each area will be one
 		// (or more) polygons.
-		Area a1 = new Area(polygon);
 		Area a2 = (Area) a1.clone();
 		a1.intersect(new Area(r1));
 		a2.intersect(new Area(r2));
@@ -86,42 +81,12 @@ public class PolygonSplitterBase extends BaseFilter {
 	 * @param outputs Used to hold output shapes.
 	 */
 	private void areaToShapes(MapShape origShape, Area area, List<MapShape> outputs) {
-		float[] res = new float[6];
-		PathIterator pit = area.getPathIterator(null);
-
-		List<Coord> coords = null;
-		while (!pit.isDone()) {
-			int type = pit.currentSegment(res);
-
-			//System.out.println("T" + type + " " + res[0] + "," + res[1] + " " + res[2] + "," + res[3] + " " + res[4] + "," + res[5]);
-			Coord co = new Coord(Math.round(res[1]), Math.round(res[0]));
-
-			if (type == PathIterator.SEG_MOVETO) {
-				// We get a moveto at the beginning and if this area is actually
-				// discontiguous we may get more than one, each one representing
-				// the start of another polygon in the output.
-				if (coords != null) {
-					MapShape s2 = origShape.copy();
-					s2.setPoints(coords);
-					outputs.add(s2);
-				}
-				coords = new ArrayList<Coord>();
-				coords.add(co);
-			} else if (type == PathIterator.SEG_LINETO) {
-				// Continuing with the path.
-				assert coords != null;
-				coords.add(co);
-			} else if (type == PathIterator.SEG_CLOSE) {
-				// The end of a polygon
-				assert coords != null;
-				coords.add(co);
-
-				MapShape s2 = origShape.copy();
-				s2.setPoints(coords);
-				outputs.add(s2);
-				coords = null;
-			}
-			pit.next();
+		List<List<Coord>> subShapePoints = Java2DConverter.areaToShapes(area);
+		
+		for (List<Coord> subShape : subShapePoints) {
+			MapShape s = origShape.copy();
+			s.setPoints(subShape);
+			outputs.add(s);
 		}
 	}
 }
