@@ -68,7 +68,11 @@ highway=path & (horse=designated|horse=official)
 {set highway=bridleway}
 highway=path
 {set highway=footway}
-leisure=track & area!=yes { add highway=footway; name '${name} (${sport})' | '${name}' }
+
+leisure=track & area!=yes
+{add highway=footway; name '${name} (${sport})' | '${name}'}
+(man_made=pier | man_made=piste:halfpipe) & area!=yes
+{add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
 
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
@@ -138,7 +142,9 @@ waterway=drain [0x1f resolution 22]
 waterway=river [0x1f resolution 18]
 waterway=stream [0x18 resolution 22]
 
-man_made=pipeline {name '${operator}'} [0x28 resolution 23]
+man_made=cable|man_made=pipeline|man_made=pipe|man_made=suspected_pipeline
+{name '${name} (${operator})' | '${name}' | '${operator}' }
+[0x28 resolution 23]
 
 # The following boundary styles are after the highway rules because ways
 # are frequently tagged with both and we want the highway to take priority.
