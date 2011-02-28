@@ -23,19 +23,14 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr13 extends MdrSection {
+public class Mdr13 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr13Record> regions = new ArrayList<Mdr13Record>();
 
 	public Mdr13(MdrConfig config) {
 		setConfig(config);
 	}
 
-	public void addRegion(int mapIndex, int countryIndex, int regionIndex, int strOff) {
-		Mdr13Record rec = new Mdr13Record();
-		rec.setMapIndex(mapIndex);
-		rec.setCountryIndex(countryIndex);
-		rec.setRegionIndex(regionIndex);
-		rec.setStrOffset(strOff);
+	public void addRegion(Mdr13Record rec) {
 		regions.add(rec);
 	}
 	
@@ -52,5 +47,23 @@ public class Mdr13 extends MdrSection {
 
 	public int getItemSize() {
 		return getSizes().getMapSize() + 4 + getSizes().getStrOffSize();
+	}
+
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return regions.size();
+	}
+
+	@Override
+	public int getExtraValue() {
+		return 0x00;
+	}
+
+	public List<Mdr13Record> getRegions() {
+		return regions;
 	}
 }

@@ -15,14 +15,18 @@ package uk.me.parabola.mkgmap.combiners;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
@@ -30,16 +34,22 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.imgfmt.app.mdr.MDRFile;
+import uk.me.parabola.imgfmt.app.mdr.Mdr13Record;
+import uk.me.parabola.imgfmt.app.mdr.Mdr14Record;
 import uk.me.parabola.imgfmt.app.mdr.Mdr5Record;
 import uk.me.parabola.imgfmt.app.mdr.MdrConfig;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.srt.SRTFile;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
-import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * Create the global index file.  This consists of an img file containing
@@ -65,11 +75,12 @@ public class MdrBuilder implements Combiner {
 		String outputDir = args.getOutputDir();
 
 		ImgChannel mdrChan;
+		FileSystem fs;
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
 			params.setBlockSize(args.get("block-size", 4096));
-			FileSystem fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
+			fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
 			toClose.push(fs);
 
 			// Create the MDR file within the .img
@@ -81,13 +92,53 @@ public class MdrBuilder implements Combiner {
 
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig();
-		config.setHeaderLen(286);
+		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(false);
+
+		// Create the sort description
+		Sort sort = createSort(args.getCodePage());
+		config.setSort(sort);
+
+		try {
+			ImgChannel srtChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".SRT");
+			SRTFile srtFile = new SRTFile(srtChan);
+			srtFile.setSort(sort);
+			srtFile.write();
+			srtFile.close();
+			//toClose.push(srtFile);
+		} catch (FileExistsException e) {
+			throw new ExitException("Could not create SRT file within index file");
+		}
 
 		// Wrap the MDR channel with the MDRFile object
 		mdrFile = new MDRFile(mdrChan, config);
 		toClose.push(mdrFile);
+	}
+
+	/**
+	 * Create the sort description for the mdr.  This is converted into a SRT which is included
+	 * in the mdr.img and also it is used to actually sort the text items within the file itself.
+	 *
+	 * We simply use the code page to locate a sorting description, we could have several for the same
+	 * code page for different countries for example.
+	 *
+	 * @param codepage The code page which is used to find a suitable sort description.
+	 * @return A sort description object.
+	 */
+	private Sort createSort(int codepage) {
+		String name = "sort/cp" + codepage + ".txt";
+		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
+		if (is == null) {
+			return Sort.defaultSort(codepage);
+		}
+		try {
+			InputStreamReader r = new InputStreamReader(is, "utf-8");
+			SrtTextReader sr = new SrtTextReader(r);
+			return sr.getSort();
+		} catch (IOException e) {
+			return Sort.defaultSort(codepage);
+		}
 	}
 
 	/**
@@ -101,19 +152,24 @@ public class MdrBuilder implements Combiner {
 			return;
 		
 		// Add the map name
-		mdrFile.addMap(info.getMapnameAsInt());
+		mdrFile.addMap(info.getHexname());
 
 		String filename = info.getFilename();
 		MapReader mr = null;
 		try {
 			mr = new MapReader(filename);
 
-			addCountries(mr);
-			addRegions(mr);
-			Map<Integer, Mdr5Record> cityMap = makeCityMap(mr);
-			addPoints(mr, cityMap);
-			addCities(cityMap);
-			addStreets(mr);
+			AreaMaps maps = new AreaMaps();
+
+			maps.countries = addCountries(mr);
+			maps.regions = addRegions(mr, maps);
+			List<Mdr5Record> mdrCityList = fetchCities(mr, maps);
+			maps.cityList = mdrCityList;
+
+			addPoints(mr, maps);
+			addCities(mdrCityList);
+			addStreets(mr, mdrCityList);
+			addZips(mr);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating mdr file");
 		} finally {
@@ -121,53 +177,90 @@ public class MdrBuilder implements Combiner {
 		}
 	}
 
-	private void addCountries(MapReader mr) {
+	private Map<Integer, Mdr14Record> addCountries(MapReader mr) {
+		Map<Integer, Mdr14Record> countryMap = new HashMap<Integer, Mdr14Record>();
 		List<Country> countries = mr.getCountries();
-		for (Country c : countries)
-			mdrFile.addCountry(c);
-	}
-
-	private void addRegions(MapReader mr) {
-		List<Region> regions = mr.getRegions();
-		for (Region region : regions)
-			mdrFile.addRegion(region);
-	}
-
-	private void addCities(Map<Integer, Mdr5Record> cityMap) {
-		for (Mdr5Record c : cityMap.values()) {
-			mdrFile.addCity(c);
+		for (Country c : countries) {
+			if (c != null) {
+				Mdr14Record record = mdrFile.addCountry(c);
+				countryMap.put((int) c.getIndex(), record);
+			}
 		}
+		return countryMap;
+	}
+
+	private Map<Integer, Mdr13Record> addRegions(MapReader mr, AreaMaps maps) {
+		Map<Integer, Mdr13Record> regionMap = new HashMap<Integer, Mdr13Record>();
+
+		List<Region> regions = mr.getRegions();
+		for (Region region : regions) {
+			if (region != null) {
+				Mdr14Record mdr14 = maps.countries.get((int) region.getCountry().getIndex());
+				Mdr13Record record = mdrFile.addRegion(region, mdr14);
+				regionMap.put((int) region.getIndex(), record);
+			}
+		}
+		return regionMap;
 	}
 
 	/**
-	 * Make a map from the subdivision and point index of the city within
-	 * its own map to the MDR city record.
-	 *
-	 * This is used to link the city to its name when we read the points.
-	 *
-	 * @param mr The reader for the map.
-	 * @return Map with subdiv<<8 + point-index as the key and a newly created
-	 * MDR city record as the value.
+	 * There is not complete information that we need about a city in the city
+	 * section, it has to be completed from the points section. So we fetch
+	 * and create the mdr5s first before points.
 	 */
-	private Map<Integer, Mdr5Record> makeCityMap(MapReader mr) {
-		List<City> cities = mr.getCities();
+	private List<Mdr5Record> fetchCities(MapReader mr, AreaMaps maps) {
+		Map<Integer, Mdr5Record> cityMap = maps.cities;
 
-		Map<Integer, Mdr5Record> cityMap = new LinkedHashMap<Integer, Mdr5Record>();
+		List<Mdr5Record> cityList = new ArrayList<Mdr5Record>();
+		List<City> cities = mr.getCities();
 		for (City c : cities) {
+			int regionCountryNumber = c.getRegionCountryNumber();
+			Mdr13Record mdrRegion = null;
+			Mdr14Record mdrCountry;
+			if ((regionCountryNumber & 0x4000) == 0) {
+				mdrRegion = maps.regions.get(regionCountryNumber);
+				mdrCountry = mdrRegion.getMdr14();
+			} else {
+				mdrCountry = maps.countries.get(regionCountryNumber & 0x3fff);
+			}
+			Mdr5Record mdrCity = new Mdr5Record();
+			mdrCity.setCityIndex(c.getIndex());
+			mdrCity.setRegionIndex(c.getRegionCountryNumber());
+			mdrCity.setMdrRegion(mdrRegion);
+			mdrCity.setMdrCountry(mdrCountry);
+			mdrCity.setLblOffset(c.getLblOffset());
+			mdrCity.setName(c.getName());
+
 			int key = (c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff);
 			assert key < 0xffffff;
-			cityMap.put(key, new Mdr5Record(c));
+			cityMap.put(key, mdrCity);
+			cityList.add(mdrCity);
 		}
 
-		return cityMap;
+		return cityList;
+	}
+
+	/**
+	 * Now really add the cities.
+	 * @param cityList The previously saved cities.
+	 */
+	private void addCities(List<Mdr5Record> cityList) {
+		for (Mdr5Record c : cityList) {
+			mdrFile.addCity(c);
+		}
+	}
+	private void addZips(MapReader mr) {
+		List<Zip> zips = mr.getZips();
+		for (Zip zip : zips)
+			mdrFile.addZip(zip);
 	}
 
 	/**
 	 * Read points from this map and add them to the index.
 	 * @param mr The currently open map.
-	 * @param cityMap Cites indexed by subdiv and point index.
+	 * @param maps Maps of regions, cities countries etc.
 	 */
-	private void addPoints(MapReader mr, Map<Integer, Mdr5Record> cityMap) {
+	private void addPoints(MapReader mr, AreaMaps maps) {
 		List<Point> list = mr.pointsForLevel(0);
 		for (Point p : list) {
 			Label label = p.getLabel();
@@ -177,15 +270,15 @@ public class MdrBuilder implements Combiner {
 				continue;
 			}
 
-			Mdr5Record city = null;
+			Mdr5Record mdrCity = null;
 			boolean isCity;
-			if (p.getType() < 0x11) {
+			if (p.getType() >= 0x1 && p.getType() <= 0x11) {
 				// This is itself a city, it gets a reference to its own MDR 5 record.
 				// and we also use it to set the name of the city.
-				city = cityMap.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
-				if (city != null) {
-					city.setLblOffset(label.getOffset());
-					city.setName(label.getText());
+				mdrCity = maps.cities.get((p.getSubdiv().getNumber() << 8) + p.getNumber());
+				if (mdrCity != null) {
+					mdrCity.setLblOffset(label.getOffset());
+					mdrCity.setName(label.getText());
 				}
 				isCity = true;
 			} else {
@@ -194,25 +287,42 @@ public class MdrBuilder implements Combiner {
 				POIRecord poi = p.getPOIRecord();
 				City c = poi.getCity();
 				if (c != null)
-					city = cityMap.get((c.getSubdivNumber()<<8) + (c.getPointIndex() & 0xff));
+					mdrCity = getMdr5FromCity(maps, c);
 				isCity = false;
 			}
 
 			if (label != null && label.getText().trim().length() > 0)
-				mdrFile.addPoint(p, city, isCity);
+				mdrFile.addPoint(p, mdrCity, isCity);
 		}
 	}
 
-	private void addStreets(MapReader mr) {
-		List<Polyline> list = mr.linesForLevel(0);
-		for (Polyline l : list) {
-			// Routable street types 0x01-0x13; 0x16; 0x1a; 0x1b
-			int type = l.getType();
-			if (type < 0x13 || type == 0x16 || type == 0x1a || type == 0x1b) {
-				Label label = l.getLabel();
-				if (label != null && label.getText().trim().length() > 0)
-					mdrFile.addStreet(l);
+	private void addStreets(MapReader mr, List<Mdr5Record> cityList) {
+		List<RoadDef> roads = mr.getRoads();
+
+		for (RoadDef road : roads) {
+			String name = road.getName();
+			if (name == null || name.length() == 0)
+				continue;
+
+			Mdr5Record mdrCity = null;
+			if (road.getCity() != null) {
+				mdrCity = cityList.get(road.getCity().getIndex() - 1);
+				if (mdrCity.getMapIndex() == 0)
+					mdrCity = null;
 			}
+			
+			mdrFile.addStreet(road, mdrCity);
+		}
+	}
+
+	private Mdr5Record getMdr5FromCity(AreaMaps cityMap, City c) {
+		if (c == null)
+			return null;
+
+		if (c.getPointIndex() > 0) {
+			return cityMap.cities.get((c.getSubdivNumber() << 8) + (c.getPointIndex() & 0xff));
+		} else {
+			return cityMap.cityList.get(c.getIndex() - 1);
 		}
 	}
 
@@ -223,5 +333,19 @@ public class MdrBuilder implements Combiner {
 		// Close everything
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
+	}
+
+	/**
+	 * Holds lookup maps for cities, regions and countries.  Used to
+	 * link streets, pois to cities, regions and countries.
+	 *
+	 * These are only held for a single map at a time, which is
+	 * sufficient to link them all up.
+	 */
+	class AreaMaps {
+		private final Map<Integer, Mdr5Record> cities = new HashMap<Integer, Mdr5Record>();
+		private Map<Integer, Mdr13Record> regions;
+		private Map<Integer, Mdr14Record> countries;
+		private List<Mdr5Record> cityList;
 	}
 }

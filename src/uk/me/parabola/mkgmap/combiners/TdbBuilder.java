@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
@@ -53,6 +54,8 @@ public class TdbBuilder implements Combiner {
 	private String areaName;
 	private String outputDir;
 	private int tdbVersion;
+
+	private Sort sort;
 
 	/**
 	 * Initialise by saving all the information we require from the command line
@@ -99,6 +102,8 @@ public class TdbBuilder implements Combiner {
 				familyName, areaName, enableProfile);
 		
 		outputDir = args.getOutputDir();
+
+		sort = args.getSort();
 	}
 
 	/**
@@ -126,7 +131,8 @@ public class TdbBuilder implements Combiner {
 		String mapname = finfo.getMapname();
 		String mapdesc = finfo.getDescription();
 
-		detail.setMapName(mapname, mapname);
+		detail.setMapName(mapname);
+		detail.setInnername(finfo.getInnername());
 
 		String desc = mapdesc + " (" + mapname + ')';
 		detail.setDescription(desc);
@@ -228,7 +234,7 @@ public class TdbBuilder implements Combiner {
 
 		// We can set the overall bounds easily as it was calculated as part of
 		// the overview map.
-		tdb.setOverview(overviewMapname, overviewSource.getBounds(), overviewMapnumber);
+		tdb.setOverview(overviewSource.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
 		writeOverviewMap();
@@ -246,7 +252,8 @@ public class TdbBuilder implements Combiner {
 		params.setMapDescription(areaName);
 
 		try {
-			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber);
+			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
+			map.setSort(sort);
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {

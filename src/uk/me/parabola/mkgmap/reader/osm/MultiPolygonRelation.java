@@ -1,7 +1,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.Polygon;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;

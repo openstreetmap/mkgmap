@@ -16,10 +16,10 @@
  */
 package uk.me.parabola.tdbfmt;
 
+import java.io.IOException;
+
 import uk.me.parabola.io.StructuredInputStream;
 import uk.me.parabola.io.StructuredOutputStream;
-
-import java.io.IOException;
 
 /**
  * Details of a single .img file that is part of the map set.  There will be
@@ -30,6 +30,8 @@ import java.io.IOException;
 public class DetailMapBlock extends OverviewMapBlock {
 
 	private int tdbVersion;
+
+	private String innername;
 
 	// Sizes of the regions.  It is possible that rgn and tre are reversed?
 	private int rgnDataSize;
@@ -107,7 +109,7 @@ public class DetailMapBlock extends OverviewMapBlock {
 			os.write(0);
 			os.write(0);
 
-			String mn = getMapName();
+			String mn = getInnername();
 			os.writeString(mn + ".TRE");
 			os.writeString(mn + ".RGN");
 			os.writeString(mn + ".LBL");
@@ -116,6 +118,14 @@ public class DetailMapBlock extends OverviewMapBlock {
 		} else {
 			os.write(1);
 		}
+	}
+
+	public String getInnername() {
+		return innername;
+	}
+
+	public void setInnername(String innername) {
+		this.innername = innername;
 	}
 
 	public void setRgnDataSize(int rgnDataSize) {

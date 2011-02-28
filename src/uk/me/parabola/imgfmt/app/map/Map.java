@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 import uk.me.parabola.imgfmt.app.net.NETFile;
 import uk.me.parabola.imgfmt.app.net.NODFile;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.InternalFiles;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
@@ -85,7 +86,7 @@ public class Map implements InternalFiles, Configurable {
 	 * @throws FileNotWritableException If the file cannot
 	 * be opened for write.
 	 */
-	public static Map createMap(String mapname, String outputdir, FileSystemParam params, String mapnumber)
+	public static Map createMap(String mapname, String outputdir, FileSystemParam params, String mapnumber, Sort sort)
 			throws FileExistsException, FileNotWritableException
 	{
 		Map m = new Map();
@@ -98,7 +99,7 @@ public class Map implements InternalFiles, Configurable {
 
 		m.rgnFile = new RGNFile(m.fileSystem.create(mapnumber + ".RGN"));
 		m.treFile = new TREFile(m.fileSystem.create(mapnumber + ".TRE"));
-		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"));
+		m.lblFile = new LBLFile(m.fileSystem.create(mapnumber + ".LBL"), sort);
 
 		int mapid;
 		try {
@@ -241,8 +242,10 @@ public class Map implements InternalFiles, Configurable {
 		rgnFile.addMapObject(item);
 	}
 
-	public void setLabelCodePage(int cp) {
-		lblFile.setCodePage(cp);
+	public void setSort(Sort sort) {
+		lblFile.setSort(sort);
+		if (netFile != null)
+			netFile.setSort(sort);
 	}
 
 	public void setLabelCharset(String desc, boolean forceUpper) {

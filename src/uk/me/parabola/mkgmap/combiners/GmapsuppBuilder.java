@@ -137,6 +137,7 @@ public class GmapsuppBuilder implements Combiner {
 	private MapBlock makeMapBlock(FileInfo info) {
 		MapBlock mb = new MapBlock();
 		mb.setMapNumber(info.getMapnameAsInt());
+		mb.setHexNumber(info.getHexname());
 		mb.setMapDescription(info.getDescription());
 		mb.setAreaName(areaName != null ? areaName : "Area " + info.getMapname());
 

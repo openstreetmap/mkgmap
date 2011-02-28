@@ -74,4 +74,13 @@ public class Mdr15 extends MdrSection {
 	public int getPointerSize() {
 		return numberToPointerSize(buffer.size());
 	}
+
+	/**
+	 * There is no use for this as the records are not fixed length.
+	 *
+	 * @return Always zero, could return the number of strings.
+	 */
+	public int getNumberOfItems() {
+		return 0;
+	}
 }

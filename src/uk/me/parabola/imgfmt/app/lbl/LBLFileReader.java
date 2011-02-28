@@ -13,6 +13,7 @@
 package uk.me.parabola.imgfmt.app.lbl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,22 +49,22 @@ public class LBLFileReader extends ImgFile {
 
 	private final Map<Integer, Label> labels = new HashMap<Integer, Label>();
 	private final Map<Integer, POIRecord> pois = new HashMap<Integer, POIRecord>();
-	private final Map<Integer, Country> countries = new HashMap<Integer, Country>();
-	private final Map<Integer, Region> regions = new HashMap<Integer, Region>();
+	private final List<Country> countries = new ArrayList<Country>();
+	private final List<Region> regions = new ArrayList<Region>();
 	private final Map<Integer, Zip> zips = new HashMap<Integer, Zip>();
 	private final List<City> cities = new ArrayList<City>();
-
 
 	public LBLFileReader(ImgChannel chan) {
 		setHeader(header);
 
 		setReader(new BufferedImgFileReader(chan));
 		header.readHeader(getReader());
+		int offsetMultiplier = header.getOffsetMultiplier();
 		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
 				header.getEncodingType());
 		textDecoder = funcs.getDecoder();
 
-		readLables();
+		readLables(offsetMultiplier);
 
 		readCountries();
 		readRegions();
@@ -98,11 +99,11 @@ public class LBLFileReader extends ImgFile {
 	}
 
 	public List<Country> getCountries() {
-		return new ArrayList<Country>(countries.values());
+		return Collections.unmodifiableList(countries);
 	}
 
 	public List<Region> getRegions() {
-		return new ArrayList<Region>(regions.values());
+		return Collections.unmodifiableList(regions);
 	}
 	
 	public List<Zip> getZips() {
@@ -127,6 +128,8 @@ public class LBLFileReader extends ImgFile {
 
 		PlacesHeader placeHeader = header.getPlaceHeader();
 
+		countries.add(null); // 1 based indexes
+
 		int start = placeHeader.getCountriesStart();
 		int end = placeHeader.getCountriesEnd();
 
@@ -139,7 +142,7 @@ public class LBLFileReader extends ImgFile {
 			if (label != null) {
 				Country country = new Country(index);
 				country.setLabel(label);
-				countries.put(index, country);
+				countries.add(country);
 			}
 			index++;
 		}
@@ -156,6 +159,8 @@ public class LBLFileReader extends ImgFile {
 		int start = placeHeader.getRegionsStart();
 		int end = placeHeader.getRegionsEnd();
 
+		regions.add(null);
+
 		reader.position(start);
 		int index = 1;
 		while (reader.position() < end) {
@@ -167,7 +172,7 @@ public class LBLFileReader extends ImgFile {
 				region.setIndex(index);
 				region.setLabel(label);
 
-				regions.put(index, region);
+				regions.add(region);
 			}
 
 			index++;
@@ -193,7 +198,6 @@ public class LBLFileReader extends ImgFile {
 			// First is either a label offset or a point/subdiv combo, we
 			// don't know until we have read further
 			int label = reader.getu3();
-
 			int info = reader.getChar();
 
 			City city;
@@ -208,6 +212,8 @@ public class LBLFileReader extends ImgFile {
 			city.setIndex(index);
 			if ((info & 0x8000) == 0) {
 				city.setSubdivision(Subdivision.createEmptySubdivision(1));
+				Label label1 = labels.get(label & 0x3fffff);
+				city.setLabel(label1);
 			} else {
 				// Has subdiv/point index
 				int pointIndex = label & 0xff;
@@ -228,7 +234,7 @@ public class LBLFileReader extends ImgFile {
 	 * the text, except that other objects take a Label.  Perhaps this can
 	 * be changed.
 	 */
-	private void readLables() {
+	private void readLables(int mult) {
 		ImgFileReader reader = getReader();
 
 		labels.put(0, NULL_LABEL);
@@ -236,29 +242,50 @@ public class LBLFileReader extends ImgFile {
 		int start = header.getLabelStart();
 		int size =  header.getLabelSize();
 
-		reader.position(start + 1);
-		int labelOffset = 1;
-		for (int off = 1; off <= size; off++) {
+		reader.position(start + mult);
+		int labelOffset = mult;
+
+		for (int off = mult; off <= size; off++) {
 			byte b = reader.get();
 			if (textDecoder.addByte(b)) {
-				labelOffset = saveLabel(labelOffset, off);
+				labelOffset = saveLabel(labelOffset, off, mult);
+
+				// If there is an offset multiplier greater than one then padding will be used to
+				// ensure that the labels are on suitable boundaries.  We must skip over any such padding.
+				while ((labelOffset & (mult - 1)) != 0) {
+					textDecoder.reset();
+					if (labelOffset <= off) {
+						// In the 6bit decoder, we may have already read the (first) padding byte and so
+						// we increment the label offset without reading anything more.
+						labelOffset++;
+					} else {
+						reader.get();
+						//noinspection AssignmentToForLoopParameter
+						off++;
+						labelOffset++;
+					}
+				}
 			}
 		}
 	}
 
 	/**
 	 * We have a label and we need to save it.
+	 *
 	 * @param labelOffset The offset of the label we are about to save.
 	 * @param currentOffset The current offset that last read from.
+	 * @param multiplier The label offset multiplier.
 	 * @return The offset of the next label.
 	 */
-	private int saveLabel(int labelOffset, int currentOffset) {
+	private int saveLabel(int labelOffset, int currentOffset, int multiplier) {
 		DecodedText encText = textDecoder.getText();
 		String text = encText.getText();
 
-		Label l = new Label(text);
-		l.setOffset(labelOffset);
-		labels.put(labelOffset, l);
+		Label label = new Label(text);
+		assert (labelOffset & (multiplier - 1)) == 0;
+		int adustedOffset = labelOffset / multiplier;
+		label.setOffset(adustedOffset);
+		labels.put(adustedOffset, label);
 
 		// Calculate the offset of the next label. This is not always
 		// the current offset + 1 because there may be bytes left
@@ -332,7 +359,6 @@ public class LBLFileReader extends ImgFile {
 			boolean hasPhone;
 			boolean hasHighwayExit;
 			boolean hasTides = false;
-			boolean hasUnkn = false;
 
 			if (override) {
 				flags = reader.get();
@@ -411,7 +437,6 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasHighwayExit) {
-
 				int lblinfo = reader.getu3();
 				int highwayLabelOffset = lblinfo & 0x3FFFF;
 				boolean indexed = (lblinfo & 0x800000) != 0;
@@ -424,6 +449,10 @@ public class LBLFileReader extends ImgFile {
 									reader.getChar() :
 									reader.get();
 				}
+			}
+
+			if (hasTides) {
+				System.out.println("Map has tide prediction, please implement!");
 			}
 
 			pois.put(poiOffset, poi);
@@ -488,6 +517,14 @@ public class LBLFileReader extends ImgFile {
 		}
 
 		return localMask;
+	}
+
+	public Map<Integer, String> getLabels() {
+		Map<Integer, String> m = new HashMap<Integer, String>();
+		for (Map.Entry<Integer, Label> ent : labels.entrySet()) {
+			m.put(ent.getKey(), ent.getValue().getText());
+		}
+		return m;
 	}
 
 	private class PoiMasks {

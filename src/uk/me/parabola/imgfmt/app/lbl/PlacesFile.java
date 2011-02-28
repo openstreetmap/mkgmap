@@ -26,21 +26,23 @@ import java.util.Random;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
-import uk.me.parabola.util.Sortable;
 
 /**
  * This is really part of the LBLFile.  We split out all the parts of the file
  * that are to do with location to here.
  */
+@SuppressWarnings({"RawUseOfParameterizedType"})
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
 
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private final List<Sortable<String, Region>> regionList = new ArrayList<Sortable<String, Region>>();
+	private final List<Region> regionList = new ArrayList<Region>();
 
 	private final Map<String, City> cities = new LinkedHashMap<String, City>();
-	private final List<Sortable<String, City>> cityList = new ArrayList<Sortable<String, City>>();
+	private final List<City> cityList = new ArrayList<City>();
 
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
 	private final List<Highway> highways = new ArrayList<Highway>();
@@ -52,7 +54,7 @@ public class PlacesFile {
 	private PlacesHeader placeHeader;
 	private boolean poisClosed;
 
-	//private Collator collator;
+	private Sort sort;
 
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
@@ -64,29 +66,35 @@ public class PlacesFile {
 	void init(LBLFile file, PlacesHeader pheader) {
 		lblFile = file;
 		placeHeader = pheader;
-		//collator = Collator.getInstance(Locale.US); // TODO work out how this should work
 	}
 
 	void write(ImgFileWriter writer) {
-		for (Country c : countries.values())
+		for (Country c : sortedCountries())
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
 
-		for (Sortable<String, Region> sr : regionList)
-			sr.getValue().write(writer);
+		for (Region region : regionList)
+			region.write(writer);
 		placeHeader.endRegions(writer.position());
 
-		for (Sortable<String, City> sc : cityList)
-			sc.getValue().write(writer);
+		for (City sc : cityList)
+			sc.write(writer);
 
 		placeHeader.endCity(writer.position());
 
 		for (List<POIIndex> pil : poiIndex) {
 			if(pil != null) {
 				// sort entries by POI name
-				Collections.sort(pil);
-				for(POIIndex pi : pil)
-					pi.write(writer);
+				List<SortKey<POIIndex>> sorted = new ArrayList<SortKey<POIIndex>>();
+				for (POIIndex index : pil) {
+					SortKey<POIIndex> sortKey = sort.createSortKey(index, index.getName());
+					sorted.add(sortKey);
+				}
+				Collections.sort(sorted);
+
+				for (SortKey<POIIndex> key : sorted) {
+					key.getObject().write(writer);
+				}
 			}
 		}
 		placeHeader.endPOIIndex(writer.position());
@@ -135,8 +143,7 @@ public class PlacesFile {
 			
 		Country c = countries.get(s);
 	
-		if(c == null)
-		{
+		if(c == null) {
 			c = new Country(countries.size()+1);
 
 			Label l = lblFile.newLabel(s);
@@ -154,12 +161,11 @@ public class PlacesFile {
 	
 		Region r = regions.get(uniqueRegionName);
 		
-		if(r == null)
-		{
+		if(r == null) {
 			r = new Region(country);
 			Label l = lblFile.newLabel(s);
 			r.setLabel(l);
-			regionList.add(new Sortable<String, Region>(name, r));
+			regionList.add(r);
 			regions.put(uniqueRegionName, r);
 		}
 		return r;
@@ -178,16 +184,16 @@ public class PlacesFile {
 		}
 
 		City c = null;
-		if(!unique)
+		if (!unique)
 			c = cities.get(uniqueCityName);
 		
-		if(c == null) {
+		if (c == null) {
 			c = new City(country);
 
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new Sortable<String, City>(name, c));
+			cityList.add(c);
 			cities.put(uniqueCityName, c);
 			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
@@ -200,7 +206,7 @@ public class PlacesFile {
 		String uniqueCityName = name.toUpperCase() + "_R" + region.getLabel().getOffset();
 		
 		// if unique is true, make sure that the name really is unique
-		if(unique && cities.get(uniqueCityName) != null) {
+		if (unique && cities.get(uniqueCityName) != null) {
 			do {
 				// add semi-random suffix.  TODO should not create a new random each time
 				uniqueCityName += "_" + new Random().nextInt(0x10000);
@@ -217,7 +223,7 @@ public class PlacesFile {
 			Label l = lblFile.newLabel(name);
 			c.setLabel(l);
 
-			cityList.add(new Sortable<String, City>(name, c));
+			cityList.add(c);
 			cities.put(uniqueCityName, c);
 			assert cityList.size() == cities.size() : " cityList and cities are different lengths after inserting " + name + " and " + uniqueCityName;
 		}
@@ -229,8 +235,7 @@ public class PlacesFile {
 	
 		Zip z = postalCodes.get(code);
 		
-		if(z == null)
-		{
+		if(z == null) {
 	  	   z = new Zip(postalCodes.size()+1);
 
 		   Label l = lblFile.newLabel(code);
@@ -297,16 +302,8 @@ public class PlacesFile {
 	}
 
 	void allPOIsDone() {
-
-		Collections.sort(regionList);
-		int index = 1;
-		for (Sortable<String, Region> sr: regionList)
-			sr.getValue().setIndex(index++);
-
-		index = 1;
-		Collections.sort(cityList);
-		for (Sortable<String, City> sc: cityList)
-			sc.getValue().setIndex(index++);
+		sortRegions();
+		sortCities();
 
 		poisClosed = true;
 
@@ -321,6 +318,67 @@ public class PlacesFile {
 			ofs += p.calcOffset(ofs, poiFlags, cityList.size(), postalCodes.size(), highways.size(), exitFacilities.size());
 	}
 
+	/**
+	 * I don't know that you have to sort these (after all most tiles will
+	 * only be in one country or at least a very small number).
+	 *
+	 * But why not?
+	 */
+	private List<Country> sortedCountries() {
+		List<SortKey<Country>> keys = new ArrayList<SortKey<Country>>();
+		for (Country c : countries.values()) {
+			SortKey<Country> key = sort.createSortKey(c, c.getLabel().getText());
+			keys.add(key);
+		}
+		Collections.sort(keys);
+
+		List<Country> list = new ArrayList<Country>();
+		for (SortKey<Country> key : keys) {
+			list.add(key.getObject());
+		}
+		return list;
+	}
+
+	/**
+	 * Sort the regions by the defined sort.
+	 */
+	private void sortRegions() {
+		List<SortKey<Region>> keys = new ArrayList<SortKey<Region>>();
+		for (Region r : regionList) {
+			SortKey<Region> key = sort.createSortKey(r, r.getLabel().getText());
+			keys.add(key);
+		}
+		Collections.sort(keys);
+
+		regionList.clear();
+		int index = 1;
+		for (SortKey<Region> key : keys) {
+			Region r = key.getObject();
+			r.setIndex(index++);
+			regionList.add(r);
+		}
+	}
+
+	/**
+	 * Sort the cities by the defined sort.
+	 */
+	private void sortCities() {
+		List<SortKey<City>> keys = new ArrayList<SortKey<City>>();
+		for (City c : cityList) {
+			SortKey<City> sortKey = sort.createSortKey(c, c.getName(), c.getRegionCountryNumber() & 0x3fff);
+			keys.add(sortKey);
+		}
+		Collections.sort(keys);
+
+		cityList.clear();
+		int index = 1;
+		for (SortKey<City> sc: keys) {
+			City city = sc.getObject();
+			city.setIndex(index++);
+			cityList.add(city);
+		}
+	}
+
 	public int numCities() {
 		return cityList.size();
 	}
@@ -329,11 +387,7 @@ public class PlacesFile {
 		return postalCodes.size();
 	}
 
-	public int numHighways() {
-		return highways.size();
-	}
-
-	public int numExitFacilities() {
-		return exitFacilities.size();
+	public void setSort(Sort sort) {
+		this.sort = sort;
 	}
 }

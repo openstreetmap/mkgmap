@@ -19,8 +19,10 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
-import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -30,26 +32,43 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  * @author Steve Ratcliffe
  */
 public class MDRFile extends ImgFile {
-
 	private final MDRHeader mdrHeader;
 
 	// The sections
 	private final Mdr1 mdr1;
 	private final Mdr4 mdr4;
 	private final Mdr5 mdr5;
+	private final Mdr6 mdr6;
 	private final Mdr7 mdr7;
+	private final Mdr8 mdr8;
 	private final Mdr9 mdr9;
 	private final Mdr10 mdr10;
 	private final Mdr11 mdr11;
+	private final Mdr12 mdr12;
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
+	private final Mdr20 mdr20;
+	private final Mdr21 mdr21;
+	private final Mdr22 mdr22;
+	private final Mdr23 mdr23;
+	private final Mdr24 mdr24;
+	private final Mdr25 mdr25;
+	private final Mdr26 mdr26;
+	private final Mdr27 mdr27;
+	private final Mdr28 mdr28;
+	private final Mdr29 mdr29;
 
 	private int currentMap;
+
+	private final MdrSection[] sections;
 	private MdrSection.PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
+		Sort sort = config.getSort();
+		
 		mdrHeader = new MDRHeader(config.getHeaderLen());
+		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
 			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);
@@ -67,13 +86,37 @@ public class MDRFile extends ImgFile {
 		mdr1 = new Mdr1(config);
 		mdr4 = new Mdr4(config);
 		mdr5 = new Mdr5(config);
+		mdr6 = new Mdr6(config);
 		mdr7 = new Mdr7(config);
+		mdr8 = new Mdr8(config);
 		mdr9 = new Mdr9(config);
 		mdr10 = new Mdr10(config);
 		mdr11 = new Mdr11(config);
+		mdr12 = new Mdr12(config);
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
+		mdr20 = new Mdr20(config);
+		mdr21 = new Mdr21(config);
+		mdr22 = new Mdr22(config);
+		mdr23 = new Mdr23(config);
+		mdr24 = new Mdr24(config);
+		mdr25 = new Mdr25(config);
+		mdr26 = new Mdr26(config);
+		mdr27 = new Mdr27(config);
+		mdr28 = new Mdr28(config);
+		mdr29 = new Mdr29(config);
+
+		this.sections = new MdrSection[]{
+				null,
+				mdr1, null, null, mdr4, mdr5, mdr6,
+				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
+				mdr13, mdr14, mdr15, null, null, null, null,
+				mdr20, mdr21, mdr22, mdr23, mdr24, mdr25,
+				mdr26, mdr27, mdr28, mdr29,
+		};
+
+		mdr11.setMdr10(mdr10);
 	}
 
 	/**
@@ -86,29 +129,50 @@ public class MDRFile extends ImgFile {
 		mdr1.addMap(mapName);
 	}
 
-	public void addRegion(Region region) {
-		int index = region.getIndex();
-		int countryIndex = region.getCountry().getIndex();
-		String name = region.getLabel().getText();
-		int strOff = createString(name);
+	public Mdr14Record addCountry(Country country) {
+		Mdr14Record record = new Mdr14Record();
 
-		mdr13.addRegion(currentMap, countryIndex, index, strOff);
+		String name = country.getLabel().getText();
+		record.setMapIndex(currentMap);
+		record.setCountryIndex((int) country.getIndex());
+		record.setLblOffset(country.getLabel().getOffset());
+		record.setName(name);
+		record.setStrOff(createString(name));
+
+		mdr14.addCountry(record);
+		return record;
 	}
 
-	public void addCountry(Country country) {
-		String name = country.getLabel().getText();
-		int countryIndex = country.getIndex();
-		int strOff = createString(name);
-		mdr14.addCountry(currentMap, countryIndex, strOff);
+	public Mdr13Record addRegion(Region region, Mdr14Record country) {
+		Mdr13Record record = new Mdr13Record();
+
+		String name = region.getLabel().getText();
+		record.setMapIndex(currentMap);
+		record.setLblOffset(region.getLabel().getOffset());
+		record.setCountryIndex(region.getCountry().getIndex());
+		record.setRegionIndex(region.getIndex());
+		record.setName(name);
+		record.setStrOffset(createString(name));
+		record.setMdr14(country);
+
+		mdr13.addRegion(record);
+		return record;
 	}
 
 	public void addCity(Mdr5Record city) {
 		int labelOffset = city.getLblOffset();
 		if (labelOffset != 0) {
 			String name = city.getName();
-			int strOff = createString(name);
-			mdr5.addCity(currentMap, city, labelOffset, name, strOff);
+			assert name != null : "off=" + labelOffset;
+			city.setMapIndex(currentMap);
+			city.setStringOffset(createString(name));
+			mdr5.addCity(city);
 		}
+	}
+	
+	public void addZip(Zip zip) {
+		int strOff = createString(zip.getLabel().getText());
+		mdr6.addZip(currentMap, zip, strOff);
 	}
 
 	public void addPoint(Point point, Mdr5Record city, boolean isCity) {
@@ -125,20 +189,23 @@ public class MDRFile extends ImgFile {
 		Mdr11Record poi = mdr11.addPoi(currentMap, point, name, strOff);
 		poi.setCity(city);
 		poi.setIsCity(isCity);
-
-		mdr10.addPoiType(fullType, poi);
+		poi.setType(fullType);
 
 		mdr4.addType(point.getType());
 	}
 
-	public void addStreet(Polyline street) {
-		Label label = street.getLabel();
-		String name = label.getText();
+	public void addStreet(RoadDef street, Mdr5Record mdrCity) {
+		// Add a separate record for each name
+		for (Label lab : street.getLabels()) {
+			if (lab == null)
+				break;
+			String name = lab.getText();
+			String cleanName = cleanUpName(name);
+			int strOff = createString(cleanName);
 
-		name = cleanUpName(name);
-		int strOff = createString(name);
-
-		mdr7.addStreet(currentMap, name, label.getOffset(), strOff);
+			// XXX not sure: we sort on the dirty name (ie with the Garmin shield codes).
+			mdr7.addStreet(currentMap, name, lab.getOffset(), strOff, mdrCity);
+		}
 	}
 
 	/**
@@ -152,7 +219,10 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
-		mdr5.finishCities();
+		for (MdrSection s : sections) {
+			if (s != null)
+				s.finish();
+		}
 
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
@@ -162,9 +232,39 @@ public class MDRFile extends ImgFile {
 		getHeader().writeHeader(writer);
 	}
 
+	/**
+	 * Write all the sections out.
+	 *
+	 * The order of all the operations in this method is important. The order
+	 * of the sections in the actual
+	 * @param writer File is written here.
+	 */
 	private void writeSections(ImgFileWriter writer) {
+		sizes = new MdrMapSection.PointerSizes(sections);
+
+		// Deal with the dependencies between the sections. The order of the following
+		// statements is sometimes important.
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
-		initSizes();
+
+		mdr28.buildFromRegions(mdr13.getRegions());
+
+		mdr23.sortRegions(mdr13.getRegions());
+		mdr29.buildFromCountries(mdr14.getCountries());
+		mdr24.sortCountries(mdr14.getCountries());
+
+		mdr20.buildFromStreets(mdr7.getStreets(), mdr5);
+		mdr21.buildFromStreets(mdr7.getStreets());
+		mdr22.buildFromStreets(mdr7.getStreets());
+
+		mdr8.setIndex(mdr7.getIndex());
+		mdr9.setGroups(mdr10.getGroupSizes());
+		mdr12.setIndex(mdr11.getIndex());
+
+		mdr25.sortCities(mdr5.getCities());
+		mdr27.sortCities(mdr5.getCities());
+
+
+		mdr26.sortMdr28(mdr28.getIndex());
 
 		writeSection(writer, 4, mdr4);
 
@@ -175,15 +275,26 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 10, mdr10);
 		writeSection(writer, 7, mdr7);
 		writeSection(writer, 5, mdr5);
-		//writeSection(writer, 6, mdr6);
+		writeSection(writer, 6, mdr6);
+		writeSection(writer, 20, mdr20);
+		writeSection(writer, 21, mdr21);
+		writeSection(writer, 22, mdr22);
 
-		// 9 depends on stuff from 10.
-		mdr9.setGroups(mdr10.getGroupSizes());
+		// There is no ordering constraint on the following
+		//writeSection(writer, 8, mdr8);
 		writeSection(writer, 9, mdr9);
-
+		writeSection(writer, 12, mdr12);
 		writeSection(writer, 13, mdr13);
 		writeSection(writer, 14, mdr14);
 		writeSection(writer, 15, mdr15);
+
+		writeSection(writer, 23, mdr23);
+		writeSection(writer, 24, mdr24);
+		writeSection(writer, 25, mdr25);
+		writeSection(writer, 26, mdr26);
+		writeSection(writer, 27, mdr27);
+		writeSection(writer, 28, mdr28);
+		writeSection(writer, 29, mdr29);
 
 		// write the reverse index last.
 		mdr1.writeSubSections(writer);
@@ -192,14 +303,7 @@ public class MDRFile extends ImgFile {
 		mdr1.writeSectData(writer);
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
-	}
-
-	private void initSizes() {
-		sizes = new MdrMapSection.PointerSizes();
-		sizes.setMapSize(mdr1.getMapPointerSize());
-		sizes.setCitySize(mdr5.getPointerSize());
-		sizes.setPoiSize(mdr11.getPointerSize());
-		sizes.setStrOffSize(mdr15.getPointerSize());
+		mdrHeader.setExtraValue(1, mdr1.getExtraValue());
 	}
 
 	/**
@@ -214,9 +318,11 @@ public class MDRFile extends ImgFile {
 		if (section instanceof MdrMapSection) {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
-			mapSection.init(sectionNumber);
-			mdrHeader.setExtraValue(sectionNumber, mapSection.getExtraValue());
+			mapSection.initIndex(sectionNumber);
 		}
+
+		if (section instanceof HasHeaderFlags)
+			mdrHeader.setExtraValue(sectionNumber, ((HasHeaderFlags) section).getExtraValue());
 
 		section.writeSectData(writer);
 

@@ -16,9 +16,12 @@ package uk.me.parabola.imgfmt.app.mdr;
  * A country record.
  * @author Steve Ratcliffe
  */
-public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
+public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record>, NamedRecord {
 	private int countryIndex;
+	private int lblOffset;
 	private int strOff;
+	private String name;
+	private Mdr29Record mdr29;
 
 	/**
 	 * Sort by map id and then country id like for regions.  We don't have
@@ -44,11 +47,35 @@ public class Mdr14Record extends RecordBase implements Comparable<Mdr14Record> {
 		this.countryIndex = countryIndex;
 	}
 
+	public int getLblOffset() {
+		return lblOffset;
+	}
+
+	public void setLblOffset(int lblOffset) {
+		this.lblOffset = lblOffset;
+	}
+
 	public int getStrOff() {
 		return strOff;
 	}
 
 	public void setStrOff(int strOff) {
 		this.strOff = strOff;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Mdr29Record getMdr29() {
+		return mdr29;
+	}
+
+	public void setMdr29(Mdr29Record mdr29) {
+		this.mdr29 = mdr29;
 	}
 }

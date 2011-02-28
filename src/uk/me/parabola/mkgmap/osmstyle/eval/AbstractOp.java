@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.mkgmap.scan.SyntaxException;
+
 /**
  * A base class that can be used as the superclass of an operation.
  *

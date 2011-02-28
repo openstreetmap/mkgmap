@@ -16,14 +16,14 @@
  */
 package uk.me.parabola.imgfmt.sys;
 
-import uk.me.parabola.imgfmt.ReadFailedException;
-import uk.me.parabola.imgfmt.fs.ImgChannel;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+
+import uk.me.parabola.imgfmt.ReadFailedException;
+import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
  * This is an implementation of ImgChannel that delegates to a regular channel.

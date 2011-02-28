@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Area;
 import java.util.List;
 

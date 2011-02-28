@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.mkgmap.scan.WordInfo;
 

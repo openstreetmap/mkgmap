@@ -26,6 +26,7 @@ import java.util.Locale;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
+import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -58,6 +59,8 @@ public class FileInfo {
 	private FileKind kind;
 
 	private String mapname;
+	private int hexname;
+	private String innername;
 	private String description;
 
 	// If this is an img file, the size of various sections.
@@ -188,6 +191,20 @@ public class FileInfo {
 			FileInfo info = new FileInfo(inputName, UNKNOWN_KIND);
 			info.setDescription(params.getMapDescription());
 
+			File f = new File(inputName);
+			String name = f.getName();
+			int dot = name.lastIndexOf('.');
+			if (dot < 0) {
+				name = "0";
+			} else {
+				if (dot > name.length())
+					dot = name.length();
+				if (dot > 8)
+					dot = 8;
+				name = name.substring(0, dot);
+			}
+			info.setMapname(name);
+
 			boolean hasTre = false;
 			List<DirectoryEntry> entries = imgFs.list();
 			for (DirectoryEntry ent : entries) {
@@ -199,17 +216,18 @@ public class FileInfo {
 
 				if ("TRE".equals(ext)) {
 					info.setTresize(ent.getSize());
-					info.setMapname(ent.getName());
+					info.setInnername(ent.getName());
 
 					ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
 					TREFileReader treFile = new TREFileReader(treChan);
 					Area area = treFile.getBounds();
-					info.setBounds(area);
 					assert area != null;
+					info.setBounds(area);
 
 					String[] copyrights = treFile.getCopyrights();
 					info.setCopyrights(copyrights);
 
+					info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
 					hasTre = true;
 					treFile.close();
 				} else if ("RGN".equals(ext)) {
@@ -350,5 +368,21 @@ public class FileInfo {
 
 	public String getMpsName() {
 		return mpsName;
+	}
+
+	public String getInnername() {
+		return innername;
+	}
+
+	public void setInnername(String name) {
+		this.innername = name;
+	}
+
+	public void setHexname(int hexname) {
+		this.hexname = hexname;
+	}
+
+	public int getHexname() {
+		return hexname;
 	}
 }

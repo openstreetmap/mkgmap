@@ -21,9 +21,10 @@ import java.io.OutputStreamWriter;
 
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for reading in a complete style.

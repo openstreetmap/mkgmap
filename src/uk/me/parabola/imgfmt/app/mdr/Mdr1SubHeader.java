@@ -27,13 +27,13 @@ public class Mdr1SubHeader {
 	private static final int MAX_SECTION = 9;
 
 	// Each sub header requires 8 bytes apart from sub2 which only needs 4.
-	private static final int HEADER_SIZE = 62;
+	private static final int HEADER_SIZE = 70;
 
-	private final Section[] sections = new Section[MAX_SECTION];
+	private final Section[] sections = new Section[MAX_SECTION+1];
 
 	public Mdr1SubHeader() {
 		// Initialise the sections.
-		for (int n = 1; n < MAX_SECTION; n++) {
+		for (int n = 1; n <= MAX_SECTION; n++) {
 			Section prev = sections[n - 1];
 			sections[n] = new Section(prev);
 		}
@@ -43,7 +43,7 @@ public class Mdr1SubHeader {
 
 	protected void writeFileHeader(ImgFileWriter writer) {
 		writer.putChar((char) HEADER_SIZE);
-		for (int n = 1; n < MAX_SECTION; n++) {
+		for (int n = 1; n <= MAX_SECTION; n++) {
 			Section section = sections[n];
 
 			// The second subsection does not have a length, because it always

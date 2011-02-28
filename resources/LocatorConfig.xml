@@ -1,53 +1,1065 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <locator>
-	<country name="Deutschland" abr="DEU" geodb="1" regionOffset="3" poiDispFlag="0xc">
-		<variant>Bundesrepublik Deutschland</variant>
-		<variant>Germany</variant>
-		<variant>DE</variant>		
+	<country name="Afghanistan" abr="AFG">
+		<variant>AF</variant>
+		<variant>AFG</variant>
+	</country>
+	<country name="Åland Islands" abr="ALA">
+		<variant>AX</variant>
+		<variant>ALA</variant>
+		<variant>Åland</variant>
+		<variant>Ahvenanmaa</variant>
+	</country>
+	<country name="Albania" abr="ALB">
+		<variant>AL</variant>
+		<variant>ALB</variant>
+	</country>
+	<country name="Algeria" abr="DZA">
+		<variant>DZ</variant>
+		<variant>DZA</variant>
+	</country>
+	<country name="American Samoa" abr="ASM">
+		<variant>AS</variant>
+		<variant>ASM</variant>
+	</country>
+	<country name="Andorra" abr="AND">
+		<variant>AD</variant>
+		<variant>AND</variant>
+	</country>
+	<country name="Angola" abr="AGO">
+		<variant>AO</variant>
+		<variant>AGO</variant>
+	</country>
+	<country name="Anguilla" abr="AIA">
+		<variant>AI</variant>
+		<variant>AIA</variant>
+	</country>
+	<country name="Antarctica" abr="ATA">
+		<variant>AQ</variant>
+		<variant>ATA</variant>
+	</country>
+	<country name="Antigua and Barbuda" abr="ATG">
+		<variant>AG</variant>
+		<variant>ATG</variant>
+	</country>
+	<country name="Argentina" abr="ARG">
+		<variant>AR</variant>
+		<variant>ARG</variant>
+	</country>
+	<country name="Armenia" abr="ARM">
+		<variant>AM</variant>
+		<variant>ARM</variant>
+	</country>
+	<country name="Aruba" abr="ABW">
+		<variant>AW</variant>
+		<variant>ABW</variant>
+	</country>
+	<country name="Australia" abr="AUS">
+		<variant>AU</variant>
+		<variant>AUS</variant>
 	</country>
 	<country name="Österreich" abr="AUT" geodb="1" poiDispFlag="0xc">
 		<variant>Austria</variant>
-		<variant>AT</variant>		
+		<variant>AT</variant>
+		<variant>AUT</variant>
 	</country>
-	<country name="Schweiz" abr="CHE" geodb="1" poiDispFlag="0xc">
-		<variant>Switzerland</variant>
-		<variant>CH</variant>		
-	</country>	
-	<country name="United Kingdom" abr="GBR">
-		<variant>UK</variant>
-		<variant>GB</variant>		
+	<country name="Azerbaijan" abr="AZE">
+		<variant>AZ</variant>
+		<variant>AZE</variant>
 	</country>
-	<country name="Ísland" abr="ICE" poiDispFlag="0xc">
+	<country name="Bahamas" abr="BHS">
+		<variant>BS</variant>
+		<variant>BHS</variant>
+	</country>
+	<country name="Bahrain" abr="BHR">
+		<variant>BH</variant>
+		<variant>BHR</variant>
+	</country>
+	<country name="Bangladesh" abr="BGD">
+		<variant>BD</variant>
+		<variant>BGD</variant>
+	</country>
+	<country name="Barbados" abr="BRB">
+		<variant>BB</variant>
+		<variant>BRB</variant>
+	</country>
+	<country name="Belarus" abr="BLR">
+		<variant>BY</variant>
+		<variant>BLR</variant>
+	</country>
+	<country name="Belgium" abr="BEL">
+		<variant>BE</variant>
+		<variant>BEL</variant>
+	</country>
+	<country name="Belize" abr="BLZ">
+		<variant>BZ</variant>
+		<variant>BLZ</variant>
+	</country>
+	<country name="Benin" abr="BEN">
+		<variant>BJ</variant>
+		<variant>BEN</variant>
+	</country>
+	<country name="Bermuda" abr="BMU">
+		<variant>BM</variant>
+		<variant>BMU</variant>
+	</country>
+	<country name="Bhutan" abr="BTN">
+		<variant>BT</variant>
+		<variant>BTN</variant>
+	</country>
+	<country name="Bolivia" abr="BOL">
+		<variant>Plurinational State of Bolivia</variant>
+		<variant>BO</variant>
+		<variant>BOL</variant>
+	</country>
+	<country name="Bonaire" abr="BES">
+		<variant>BQ</variant>
+		<variant>BES</variant>
+	</country>
+	<country name="Bosnia and Herzegovina" abr="BIH">
+		<variant>BA</variant>
+		<variant>BIH</variant>
+	</country>
+	<country name="Botswana" abr="BWA">
+		<variant>BW</variant>
+		<variant>BWA</variant>
+	</country>
+	<country name="Bouvet Island" abr="BVT">
+		<variant>BV</variant>
+		<variant>BVT</variant>
+	</country>
+	<country name="Brazil" abr="BRA">
+		<variant>BR</variant>
+		<variant>BRA</variant>
+	</country>
+	<country name="British Indian Ocean Territory" abr="IOT">
+		<variant>IO</variant>
+		<variant>IOT</variant>
+	</country>
+	<country name="Brunei Darussalam" abr="BRN">
+		<variant>BN</variant>
+		<variant>BRN</variant>
+	</country>
+	<country name="Bulgaria" abr="BGR">
+		<variant>BG</variant>
+		<variant>BGR</variant>
+	</country>
+	<country name="Burkina Faso" abr="BFA">
+		<variant>BF</variant>
+		<variant>BFA</variant>
+	</country>
+	<country name="Burundi" abr="BDI">
+		<variant>BI</variant>
+		<variant>BDI</variant>
+	</country>
+	<country name="Cambodia" abr="KHM">
+		<variant>KH</variant>
+		<variant>KHM</variant>
+	</country>
+	<country name="Cameroon" abr="CMR">
+		<variant>CM</variant>
+		<variant>CMR</variant>
+	</country>
+	<country name="Canada" abr="CAN">
+		<variant>CA</variant>
+		<variant>CAN</variant>
+	</country>
+	<country name="Cape Verde" abr="CPV">
+		<variant>CV</variant>
+		<variant>CPV</variant>
+	</country>
+	<country name="Cayman Islands" abr="CYM">
+		<variant>KY</variant>
+		<variant>CYM</variant>
+	</country>
+	<country name="Central African Republic" abr="CAF">
+		<variant>CF</variant>
+		<variant>CAF</variant>
+	</country>
+	<country name="Chad" abr="TCD">
+		<variant>TD</variant>
+		<variant>TCD</variant>
+	</country>
+	<country name="Chile" abr="CHL">
+		<variant>CL</variant>
+		<variant>CHL</variant>
+	</country>
+	<country name="China" abr="CHN">
+		<variant>CN</variant>
+		<variant>CHN</variant>
+	</country>
+	<country name="Christmas Island" abr="CXR">
+		<variant>CX</variant>
+		<variant>CXR</variant>
+	</country>
+	<country name="Cocos (Keeling) Islands" abr="CCK">
+		<variant>CC</variant>
+		<variant>CCK</variant>
+	</country>
+	<country name="Colombia" abr="COL">
+		<variant>CO</variant>
+		<variant>COL</variant>
+	</country>
+	<country name="Comoros" abr="COM">
+		<variant>KM</variant>
+		<variant>COM</variant>
+	</country>
+	<country name="Congo" abr="COG">
+		<variant>CG</variant>
+		<variant>COG</variant>
+	</country>
+	<country name="Congo" abr="COD">
+		<variant>The Democratic Republic of the Congo</variant>
+		<variant>CD</variant>
+		<variant>COD</variant>
+	</country>
+	<country name="Cook Islands" abr="COK">
+		<variant>CK</variant>
+		<variant>COK</variant>
+	</country>
+	<country name="Costa Rica" abr="CRI">
+		<variant>CR</variant>
+		<variant>CRI</variant>
+	</country>
+	<country name="Côte d'Ivoire" abr="CIV">
+		<variant>CI</variant>
+		<variant>CIV</variant>
+	</country>
+	<country name="Croatia" abr="HRV">
+		<variant>HR</variant>
+		<variant>HRV</variant>
+	</country>
+	<country name="Cuba" abr="CUB">
+		<variant>CU</variant>
+		<variant>CUB</variant>
+	</country>
+	<country name="Curaçao" abr="CUW">
+		<variant>CW</variant>
+		<variant>CUW</variant>
+	</country>
+	<country name="Cyprus" abr="CYP">
+		<variant>CY</variant>
+		<variant>CYP</variant>
+	</country>
+	<country name="Czech Republic" abr="CZE">
+		<variant>CZ</variant>
+		<variant>CZE</variant>
+	</country>
+	<country name="Danmark" abr="DNK">
+		<variant>Denmark</variant>
+		<variant>DK</variant>
+		<variant>DNK</variant>
+	</country>
+	<country name="Djibouti" abr="DJI">
+		<variant>DJ</variant>
+		<variant>DJI</variant>
+	</country>
+	<country name="Dominica" abr="DMA">
+		<variant>DM</variant>
+		<variant>DMA</variant>
+	</country>
+	<country name="Dominican Republic" abr="DOM">
+		<variant>DO</variant>
+		<variant>DOM</variant>
+	</country>
+	<country name="Ecuador" abr="ECU">
+		<variant>EC</variant>
+		<variant>ECU</variant>
+	</country>
+	<country name="Egypt" abr="EGY">
+		<variant>EG</variant>
+		<variant>EGY</variant>
+	</country>
+	<country name="El Salvador" abr="SLV">
+		<variant>SV</variant>
+		<variant>SLV</variant>
+	</country>
+	<country name="Equatorial Guinea" abr="GNQ">
+		<variant>GQ</variant>
+		<variant>GNQ</variant>
+	</country>
+	<country name="Eritrea" abr="ERI">
+		<variant>ER</variant>
+		<variant>ERI</variant>
+	</country>
+	<country name="Eesti" abr="EST">
+		<variant>Eesti Vabariik</variant>
+		<variant>Estonia</variant>
+		<variant>EE</variant>
+		<variant>EST</variant>
+	</country>
+	<country name="Ethiopia" abr="ETH">
+		<variant>ET</variant>
+		<variant>ETH</variant>
+	</country>
+	<country name="Falkland Islands (Malvinas)" abr="FLK">
+		<variant>FK</variant>
+		<variant>FLK</variant>
+	</country>
+	<country name="Faroe Islands" abr="FRO">
+		<variant>FO</variant>
+		<variant>FRO</variant>
+	</country>
+	<country name="Fiji" abr="FJI">
+		<variant>FJ</variant>
+		<variant>FJI</variant>
+	</country>
+	<country name="Suomi" abr="FIN">
+		<variant>Finland</variant>
+		<variant>FI</variant>
+		<variant>FIN</variant>
+	</country>
+	<country name="France" abr="FRA">
+		<variant>FR</variant>
+		<variant>FRA</variant>
+	</country>
+	<country name="French Guiana" abr="GUF">
+		<variant>GF</variant>
+		<variant>GUF</variant>
+	</country>
+	<country name="French Polynesia" abr="PYF">
+		<variant>PF</variant>
+		<variant>PYF</variant>
+	</country>
+	<country name="French Southern Territories" abr="ATF">
+		<variant>TF</variant>
+		<variant>ATF</variant>
+	</country>
+	<country name="Gabon" abr="GAB">
+		<variant>GA</variant>
+		<variant>GAB</variant>
+	</country>
+	<country name="Gambia" abr="GMB">
+		<variant>GM</variant>
+		<variant>GMB</variant>
+	</country>
+	<country name="Georgia" abr="GEO">
+		<variant>GE</variant>
+		<variant>GEO</variant>
+	</country>
+	<country name="Deutschland" abr="DEU" geodb="1" regionOffset="3" poiDispFlag="0xc">
+		<variant>Bundesrepublik Deutschland</variant>
+		<variant>Germany</variant>
+		<variant>DE</variant>
+		<variant>DEU</variant>
+	</country>
+	<country name="Ghana" abr="GHA">
+		<variant>GH</variant>
+		<variant>GHA</variant>
+	</country>
+	<country name="Gibraltar" abr="GIB">
+		<variant>GI</variant>
+		<variant>GIB</variant>
+	</country>
+	<country name="Greece" abr="GRC">
+		<variant>GR</variant>
+		<variant>GRC</variant>
+	</country>
+	<country name="Greenland" abr="GRL">
+		<variant>GL</variant>
+		<variant>GRL</variant>
+	</country>
+	<country name="Grenada" abr="GRD">
+		<variant>GD</variant>
+		<variant>GRD</variant>
+	</country>
+	<country name="Guadeloupe" abr="GLP">
+		<variant>GP</variant>
+		<variant>GLP</variant>
+	</country>
+	<country name="Guam" abr="GUM">
+		<variant>GU</variant>
+		<variant>GUM</variant>
+	</country>
+	<country name="Guatemala" abr="GTM">
+		<variant>GT</variant>
+		<variant>GTM</variant>
+	</country>
+	<country name="Guernsey" abr="GGY">
+		<variant>GG</variant>
+		<variant>GGY</variant>
+	</country>
+	<country name="Guinea" abr="GIN">
+		<variant>GN</variant>
+		<variant>GIN</variant>
+	</country>
+	<country name="Guinea-Bissau" abr="GNB">
+		<variant>GW</variant>
+		<variant>GNB</variant>
+	</country>
+	<country name="Guyana" abr="GUY">
+		<variant>GY</variant>
+		<variant>GUY</variant>
+	</country>
+	<country name="Haiti" abr="HTI">
+		<variant>HT</variant>
+		<variant>HTI</variant>
+	</country>
+	<country name="Heard Island and McDonald Islands" abr="HMD">
+		<variant>HM</variant>
+		<variant>HMD</variant>
+	</country>
+	<country name="Vatican" abr="VAT">
+		<variant>Holy See</variant>
+		<variant>VA</variant>
+		<variant>VAT</variant>
+	</country>
+	<country name="Honduras" abr="HND">
+		<variant>HN</variant>
+		<variant>HND</variant>
+	</country>
+	<country name="Hong Kong" abr="HKG">
+		<variant>HK</variant>
+		<variant>HKG</variant>
+	</country>
+	<country name="Hungary" abr="HUN">
+		<variant>HU</variant>
+		<variant>HUN</variant>
+	</country>
+	<country name="Ísland" abr="ISL" poiDispFlag="0xc">
 		<variant>Lýðveldið Ísland</variant>
 		<variant>Iceland</variant>
 		<variant>IS</variant>
+		<variant>ICE</variant>
+		<variant>ISL</variant>
+	</country>
+	<country name="India" abr="IND">
+		<variant>IN</variant>
+		<variant>IND</variant>
+	</country>
+	<country name="Indonesia" abr="IDN">
+		<variant>ID</variant>
+		<variant>IDN</variant>
+	</country>
+	<country name="Iran" abr="IRN">
+		<variant>Islamic Republic of Iran</variant>
+		<variant>IR</variant>
+		<variant>IRN</variant>
+	</country>
+	<country name="Iraq" abr="IRQ">
+		<variant>IQ</variant>
+		<variant>IRQ</variant>
+	</country>
+	<country name="Ireland" abr="IRL" regionOffset="3">
+		<variant>Republic of Ireland</variant>
+		<variant>Éire</variant>
+		<variant>IE</variant>		
+		<variant>IRL</variant>		
+	</country>
+	<country name="Isle of Man" abr="IMN">
+		<variant>IM</variant>
+		<variant>IMN</variant>
+	</country>
+	<country name="Israel" abr="ISR">
+		<variant>IL</variant>
+		<variant>ISR</variant>
 	</country>
 	<country name="Italia" abr="ITA" regionOffset="2">
 		<variant>Italy</variant>
-		<variant>IT</variant>		
-	</country>	
-	<country name="France" abr="FRA">
+		<variant>IT</variant>
+		<variant>ITA</variant>
+	</country>
+	<country name="Jamaica" abr="JAM">
+		<variant>JM</variant>
+		<variant>JAM</variant>
+	</country>
+	<country name="Japan" abr="JPN">
+		<variant>JP</variant>
+		<variant>JPN</variant>
+	</country>
+	<country name="Jersey" abr="JEY">
+		<variant>JE</variant>
+		<variant>JEY</variant>
+	</country>
+	<country name="Jordan" abr="JOR">
+		<variant>JO</variant>
+		<variant>JOR</variant>
+	</country>
+	<country name="Kazakhstan" abr="KAZ">
+		<variant>KZ</variant>
+		<variant>KAZ</variant>
+	</country>
+	<country name="Kenya" abr="KEN">
+		<variant>KE</variant>
+		<variant>KEN</variant>
+	</country>
+	<country name="Kiribati" abr="KIR">
+		<variant>KI</variant>
+		<variant>KIR</variant>
+	</country>
+	<country name="North Korea" abr="PRK">
+		<variant>Democratic People's Republic of Korea</variant>
+		<variant>KP</variant>
+		<variant>PRK</variant>
+	</country>
+	<country name="South Korea" abr="KOR">
+		<variant>Republic of Korea</variant>
+		<variant>KR</variant>
+		<variant>KOR</variant>
+	</country>
+	<country name="Kuwait" abr="KWT">
+		<variant>KW</variant>
+		<variant>KWT</variant>
+	</country>
+	<country name="Kyrgyzstan" abr="KGZ">
+		<variant>KG</variant>
+		<variant>KGZ</variant>
+	</country>
+	<country name="Laos" abr="LAO">
+		<variant>Lao People's Democratic Republic</variant>
+		<variant>LA</variant>
+		<variant>LAO</variant>
+	</country>
+	<country name="Latvia" abr="LVA">
+		<variant>LV</variant>
+		<variant>LVA</variant>
+	</country>
+	<country name="Lebanon" abr="LBN">
+		<variant>LB</variant>
+		<variant>LBN</variant>
+	</country>
+	<country name="Lesotho" abr="LSO">
+		<variant>LS</variant>
+		<variant>LSO</variant>
+	</country>
+	<country name="Liberia" abr="LBR">
+		<variant>LR</variant>
+		<variant>LBR</variant>
+	</country>
+	<country name="Libya" abr="LBY">
+		<variant>Libyan Arab Jamahiriya</variant>
+		<variant>LY</variant>
+		<variant>LBY</variant>
+	</country>
+	<country name="Liechtenstein" abr="LIE">
+		<variant>LI</variant>
+		<variant>LIE</variant>
+	</country>
+	<country name="Lithuania" abr="LTU">
+		<variant>LT</variant>
+		<variant>LTU</variant>
+	</country>
+	<country name="Luxembourg" abr="LUX">
+		<variant>LU</variant>
+		<variant>LUX</variant>
+	</country>
+	<country name="Macao" abr="MAC">
+		<variant>MO</variant>
+		<variant>MAC</variant>
+	</country>
+	<country name="Macedonia" abr="MKD">
+		<variant>MK</variant>
+		<variant>MKD</variant>
+	</country>
+	<country name="Madagascar" abr="MDG">
+		<variant>MG</variant>
+		<variant>MDG</variant>
+	</country>
+	<country name="Malawi" abr="MWI">
+		<variant>MW</variant>
+		<variant>MWI</variant>
+	</country>
+	<country name="Malaysia" abr="MYS">
+		<variant>MY</variant>
+		<variant>MYS</variant>
+	</country>
+	<country name="Maldives" abr="MDV">
+		<variant>MV</variant>
+		<variant>MDV</variant>
+	</country>
+	<country name="Mali" abr="MLI">
+		<variant>ML</variant>
+		<variant>MLI</variant>
+	</country>
+	<country name="Malta" abr="MLT">
+		<variant>MT</variant>
+		<variant>MLT</variant>
+	</country>
+	<country name="Marshall Islands" abr="MHL">
+		<variant>MH</variant>
+		<variant>MHL</variant>
+	</country>
+	<country name="Martinique" abr="MTQ">
+		<variant>MQ</variant>
+		<variant>MTQ</variant>
+	</country>
+	<country name="Mauritania" abr="MRT">
+		<variant>MR</variant>
+		<variant>MRT</variant>
+	</country>
+	<country name="Mauritius" abr="MUS">
+		<variant>MU</variant>
+		<variant>MUS</variant>
+	</country>
+	<country name="Mayotte" abr="MYT">
+		<variant>YT</variant>
+		<variant>MYT</variant>
+	</country>
+	<country name="Mexico" abr="MEX">
+		<variant>MX</variant>
+		<variant>MEX</variant>
+	</country>
+	<country name="Micronesia" abr="FSM">
+		<variant>Federated States of Micronesia</variant>
+		<variant>FM</variant>
+		<variant>FSM</variant>
+	</country>
+	<country name="Moldova" abr="MDA">
+		<variant>Republic of Moldova</variant>
+		<variant>MD</variant>
+		<variant>MDA</variant>
+	</country>
+	<country name="Monaco" abr="MCO">
+		<variant>MC</variant>
+		<variant>MCO</variant>
+	</country>
+	<country name="Mongolia" abr="MNG">
+		<variant>MN</variant>
+		<variant>MNG</variant>
+	</country>
+	<country name="Montenegro" abr="MNE">
+		<variant>ME</variant>
+		<variant>MNE</variant>
+	</country>
+	<country name="Montserrat" abr="MSR">
+		<variant>MS</variant>
+		<variant>MSR</variant>
+	</country>
+	<country name="Morocco" abr="MAR">
+		<variant>MA</variant>
+		<variant>MAR</variant>
+	</country>
+	<country name="Mozambique" abr="MOZ">
+		<variant>MZ</variant>
+		<variant>MOZ</variant>
+	</country>
+	<country name="Myanmar" abr="MMR">
+		<variant>MM</variant>
+		<variant>MMR</variant>
+	</country>
+	<country name="Namibia" abr="NAM">
+		<variant>NA</variant>
+		<variant>NAM</variant>
+	</country>
+	<country name="Nauru" abr="NRU">
+		<variant>NR</variant>
+		<variant>NRU</variant>
+	</country>
+	<country name="Nepal" abr="NPL">
+		<variant>NP</variant>
+		<variant>NPL</variant>
+	</country>
+	<country name="Netherlands" abr="NLD">
+		<variant>NL</variant>
+		<variant>NLD</variant>
+	</country>
+	<country name="New Caledonia" abr="NCL">
+		<variant>NC</variant>
+		<variant>NCL</variant>
+	</country>
+	<country name="New Zealand" abr="NZL">
+		<variant>NZ</variant>
+		<variant>NZL</variant>
+	</country>
+	<country name="Nicaragua" abr="NIC">
+		<variant>NI</variant>
+		<variant>NIC</variant>
+	</country>
+	<country name="Niger" abr="NER">
+		<variant>NE</variant>
+		<variant>NER</variant>
+	</country>
+	<country name="Nigeria" abr="NGA">
+		<variant>NG</variant>
+		<variant>NGA</variant>
+	</country>
+	<country name="Niue" abr="NIU">
+		<variant>NU</variant>
+		<variant>NIU</variant>
+	</country>
+	<country name="Norfolk Island" abr="NFK">
+		<variant>NF</variant>
+		<variant>NFK</variant>
+	</country>
+	<country name="Northern Mariana Islands" abr="MNP">
+		<variant>MP</variant>
+		<variant>MNP</variant>
+	</country>
+	<country name="Norge" abr="NOR">
+		<variant>Norway</variant>
+		<variant>Noreg</variant>
+		<variant>NO</variant>
+		<variant>NOR</variant>
+	</country>
+	<country name="Oman" abr="OMN">
+		<variant>OM</variant>
+		<variant>OMN</variant>
+	</country>
+	<country name="Pakistan" abr="PAK">
+		<variant>PK</variant>
+		<variant>PAK</variant>
+	</country>
+	<country name="Palau" abr="PLW">
+		<variant>PW</variant>
+		<variant>PLW</variant>
+	</country>
+	<country name="Palestinian Territory" abr="PSE">
+		<variant>PS</variant>
+		<variant>PSE</variant>
+	</country>
+	<country name="Panama" abr="PAN">
+		<variant>PA</variant>
+		<variant>PAN</variant>
+	</country>
+	<country name="Papua New Guinea" abr="PNG">
+		<variant>PG</variant>
+		<variant>PNG</variant>
+	</country>
+	<country name="Paraguay" abr="PRY">
+		<variant>PY</variant>
+		<variant>PRY</variant>
+	</country>
+	<country name="Peru" abr="PER">
+		<variant>PE</variant>
+		<variant>PER</variant>
+	</country>
+	<country name="Philippines" abr="PHL">
+		<variant>PH</variant>
+		<variant>PHL</variant>
+	</country>
+	<country name="Pitcairn" abr="PCN">
+		<variant>PN</variant>
+		<variant>PCN</variant>
+	</country>
+	<country name="Poland" abr="POL">
+		<variant>PL</variant>
+		<variant>POL</variant>
+	</country>
+	<country name="Portugal" abr="PRT" poiDispFlag="0xc">
+		<variant>PT</variant>
+		<variant>PRT</variant>
+		<variant>POR</variant>
+	</country>
+	<country name="Puerto Rico" abr="PRI">
+		<variant>PR</variant>
+		<variant>PRI</variant>
+	</country>
+	<country name="Qatar" abr="QAT">
+		<variant>QA</variant>
+		<variant>QAT</variant>
+	</country>
+	<country name="Réunion" abr="REU">
+		<variant>RE</variant>
+		<variant>REU</variant>
+	</country>
+	<country name="Romania" abr="ROU">
+		<variant>RO</variant>
+		<variant>ROU</variant>
+	</country>
+	<country name="Russian Federation" abr="RUS">
+		<variant>RU</variant>
+		<variant>RUS</variant>
+	</country>
+	<country name="Rwanda" abr="RWA">
+		<variant>RW</variant>
+		<variant>RWA</variant>
+	</country>
+	<country name="Saint Barthélemy" abr="BLM">
+		<variant>BL</variant>
+		<variant>BLM</variant>
+	</country>
+	<country name="Saint Helena" abr="SHN">
+		<variant>Ascension</variant>
+		<variant>Tristan da Cunha</variant>
+		<variant>SH</variant>
+		<variant>SHN</variant>
+	</country>
+	<country name="Saint Kitts and Nevis" abr="KNA">
+		<variant>Saint Kitts</variant>
+		<variant>Nevis</variant>
+		<variant>KN</variant>
+		<variant>KNA</variant>
+	</country>
+	<country name="Saint Lucia" abr="LCA">
+		<variant>LC</variant>
+		<variant>LCA</variant>
+	</country>
+	<country name="Saint Martin" abr="MAF">
+		<variant>MF</variant>
+		<variant>MAF</variant>
+	</country>
+	<country name="Saint Pierre and Miquelon" abr="SPM">
+		<variant>Saint Pierre</variant>
+		<variant>Miquelon</variant>
+		<variant>PM</variant>
+		<variant>SPM</variant>
+	</country>
+	<country name="Saint Vincent and the Grenadines" abr="VCT">
+		<variant>Saint Vincent</variant>
+		<variant>Grenadines</variant>
+		<variant>VC</variant>
+		<variant>VCT</variant>
+	</country>
+	<country name="Samoa" abr="WSM">
+		<variant>WS</variant>
+		<variant>WSM</variant>
+	</country>
+	<country name="San Marino" abr="SMR">
+		<variant>SM</variant>
+		<variant>SMR</variant>
+	</country>
+	<country name="Sao Tome and Principe" abr="STP">
+		<variant>Sao Tome</variant>
+		<variant>Principe</variant>
+		<variant>ST</variant>
+		<variant>STP</variant>
+	</country>
+	<country name="Saudi Arabia" abr="SAU">
+		<variant>SA</variant>
+		<variant>SAU</variant>
+	</country>
+	<country name="Senegal" abr="SEN">
+		<variant>SN</variant>
+		<variant>SEN</variant>
+	</country>
+	<country name="Serbia" abr="SRB">
+		<variant>RS</variant>
+		<variant>SRB</variant>
+	</country>
+	<country name="Seychelles" abr="SYC">
+		<variant>SC</variant>
+		<variant>SYC</variant>
+	</country>
+	<country name="Sierra Leone" abr="SLE">
+		<variant>SL</variant>
+		<variant>SLE</variant>
+	</country>
+	<country name="Singapore" abr="SGP">
+		<variant>SG</variant>
+		<variant>SGP</variant>
+	</country>
+	<country name="Sint Maarten" abr="SXM">
+		<variant>SX</variant>
+		<variant>SXM</variant>
+	</country>
+	<country name="Slovakia" abr="SVK">
+		<variant>SK</variant>
+		<variant>SVK</variant>
+	</country>
+	<country name="Slovenia" abr="SVN">
+		<variant>SI</variant>
+		<variant>SVN</variant>
+	</country>
+	<country name="Solomon Islands" abr="SLB">
+		<variant>SB</variant>
+		<variant>SLB</variant>
+	</country>
+	<country name="Somalia" abr="SOM">
+		<variant>SO</variant>
+		<variant>SOM</variant>
+	</country>
+	<country name="South Africa" abr="ZAF">
+		<variant>ZA</variant>
+		<variant>ZAF</variant>
+	</country>
+	<country name="South Georgia and the South Sandwich Islands" abr="SGS">
+		<variant>South Georgia</variant>
+		<variant>South Sandwich Islands</variant>
+		<variant>GS</variant>
+		<variant>SGS</variant>
 	</country>
 	<country name="España" abr="ESP" poiDispFlag="0xc">
 		<variant>Spain</variant>
 		<variant>ES</variant>
+		<variant>ESP</variant>
 	</country>
-	<country name="Portugal" abr="POR" poiDispFlag="0xc">
-		<variant>PT</variant>
-	</country>	
+	<country name="Sri Lanka" abr="LKA">
+		<variant>LK</variant>
+		<variant>LKA</variant>
+	</country>
+	<country name="Sudan" abr="SDN">
+		<variant>SD</variant>
+		<variant>SDN</variant>
+	</country>
+	<country name="Suriname" abr="SUR">
+		<variant>SR</variant>
+		<variant>SUR</variant>
+	</country>
+	<country name="Svalbard and Jan Mayen" abr="SJM">
+		<variant>Svalbard</variant>
+		<variant>Jan Mayen</variant>
+		<variant>SJ</variant>
+		<variant>SJM</variant>
+	</country>
+	<country name="Swaziland" abr="SWZ">
+		<variant>SZ</variant>
+		<variant>SWZ</variant>
+	</country>
+	<country name="Sverige" abr="SWE">
+		<variant>Sweden</variant>
+		<variant>SE</variant>
+		<variant>SWE</variant>
+	</country>
+	<country name="Schweiz" abr="CHE" geodb="1" poiDispFlag="0xc">
+		<variant>Switzerland</variant>
+		<variant>CH</variant>
+		<variant>CHE</variant>
+	</country>
+	<country name="Syria" abr="SYR">
+		<variant>Syrian Arab Republic</variant>
+		<variant>SY</variant>
+		<variant>SYR</variant>
+	</country>
+	<country name="Taiwan" abr="TWN">
+		<variant>TW</variant>
+		<variant>TWN</variant>
+	</country>
+	<country name="Tajikistan" abr="TJK">
+		<variant>TJ</variant>
+		<variant>TJK</variant>
+	</country>
+	<country name="Tanzania" abr="TZA">
+		<variant>United Republic of Tanzania</variant>
+		<variant>TZ</variant>
+		<variant>TZA</variant>
+	</country>
+	<country name="Thailand" abr="THA">
+		<variant>TH</variant>
+		<variant>THA</variant>
+	</country>
+	<country name="Timor-Leste" abr="TLS">
+		<variant>TL</variant>
+		<variant>TLS</variant>
+	</country>
+	<country name="Togo" abr="TGO">
+		<variant>TG</variant>
+		<variant>TGO</variant>
+	</country>
+	<country name="Tokelau" abr="TKL">
+		<variant>TK</variant>
+		<variant>TKL</variant>
+	</country>
+	<country name="Tonga" abr="TON">
+		<variant>TO</variant>
+		<variant>TON</variant>
+	</country>
+	<country name="Trinidad and Tobago" abr="TTO">
+		<variant>Trinidad</variant>
+		<variant>Tobago</variant>
+		<variant>TT</variant>
+		<variant>TTO</variant>
+	</country>
+	<country name="Tunisia" abr="TUN">
+		<variant>TN</variant>
+		<variant>TUN</variant>
+	</country>
+	<country name="Turkey" abr="TUR">
+		<variant>TR</variant>
+		<variant>TUR</variant>
+	</country>
+	<country name="Turkmenistan" abr="TKM">
+		<variant>TM</variant>
+		<variant>TKM</variant>
+	</country>
+	<country name="Turks and Caicos Islands" abr="TCA">
+		<variant>TC</variant>
+		<variant>TCA</variant>
+	</country>
+	<country name="Tuvalu" abr="TUV">
+		<variant>TV</variant>
+		<variant>TUV</variant>
+	</country>
+	<country name="Uganda" abr="UGA">
+		<variant>UG</variant>
+		<variant>UGA</variant>
+	</country>
+	<country name="Ukraine" abr="UKR">
+		<variant>UA</variant>
+		<variant>UKR</variant>
+	</country>
+	<country name="United Arab Emirates" abr="ARE">
+		<variant>AE</variant>
+		<variant>ARE</variant>
+	</country>
+	<country name="United Kingdom" abr="GBR">
+		<variant>England</variant>
+		<variant>Scotland</variant>
+		<variant>Wales</variant>
+		<variant>Northern Ireland</variant>
+		<variant>Great Britain</variant>
+		<variant>Great Britian</variant>
+		<variant>UK</variant>
+		<variant>GB</variant>
+		<variant>GBR</variant>
+	</country>
 	<country name="United States" abr="USA">
+		<variant>US</variant>
 		<variant>USA</variant>
-	</country>	
+	</country>
+
+	<country name="United States Minor Outlying Islands" abr="UMI">
+		<variant>UM</variant>
+		<variant>UMI</variant>
+	</country>
+	<country name="Uruguay" abr="URY">
+		<variant>UY</variant>
+		<variant>URY</variant>
+	</country>
+	<country name="Uzbekistan" abr="UZB">
+		<variant>UZ</variant>
+		<variant>UZB</variant>
+	</country>
+	<country name="Vanuatu" abr="VUT">
+		<variant>VU</variant>
+		<variant>VUT</variant>
+	</country>
+	<country name="Venezuela" abr="VEN">
+		<variant>Bolivarian Republic of Venezuela</variant>
+		<variant>VE</variant>
+		<variant>VEN</variant>
+	</country>
+	<country name="Vietnam" abr="VNM">
+		<variant>VN</variant>
+		<variant>VNM</variant>
+	</country>
+	<country name="Virgin Islands, British" abr="VGB">
+		<variant>VG</variant>
+		<variant>VGB</variant>
+	</country>
+	<country name="Virgin Islands, U.S." abr="VIR">
+		<variant>VI</variant>
+		<variant>VIR</variant>
+	</country>
+	<country name="Wallis and Futuna" abr="WLF">
+		<variant>WF</variant>
+		<variant>WLF</variant>
+	</country>
+	<country name="Western Sahara" abr="ESH">
+		<variant>EH</variant>
+		<variant>ESH</variant>
+	</country>
+	<country name="Yemen" abr="YEM">
+		<variant>YE</variant>
+		<variant>YEM</variant>
+	</country>
+	<country name="Zambia" abr="ZMB">
+		<variant>ZM</variant>
+		<variant>ZMB</variant>
+	</country>
+	<country name="Zimbabwe" abr="ZWE">
+		<variant>ZW</variant>
+		<variant>ZWE</variant>
+	</country>
 	<continent name="Europe">
 	</continent>
 	<continent name="Africa">
 	</continent>
 	<continent name="Asia">
-	</continent>		
+	</continent>
 	<continent name="North America">
-	</continent>		
+	</continent>
 	<continent name="South America">
-	</continent>			
+	</continent>
 	<continent name="Oceania">
-	</continent>		
+	</continent>
 </locator>

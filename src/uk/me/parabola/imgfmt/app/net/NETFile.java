@@ -18,11 +18,8 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -30,8 +27,9 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.util.Sortable;
 
 /**
  * The NET file.  This consists of information about roads.  It is not clear
@@ -43,6 +41,7 @@ import uk.me.parabola.util.Sortable;
 public class NETFile extends ImgFile {
 	private final NETHeader netHeader = new NETHeader();
 	private List<RoadDef> roads;
+	private Sort sort;
 
 	public NETFile(ImgChannel chan) {
 		setHeader(netHeader);
@@ -63,44 +62,31 @@ public class NETFile extends ImgFile {
 	}
 
 	public void writePost(ImgFileWriter rgn, boolean sortRoads) {
-		List<Sortable<Label, RoadDef>> sortedRoads = new ArrayList<Sortable<Label, RoadDef>>(roads.size());
-		// cleanedLabels holds "cleaned up" versions of the Label
-		// strings that are used when sorting the road names - the
-		// hope is that retrieving the String from the Map is faster than
-		// cleaning the Label text for each comparison in the sort
-		final Map<Label, String> cleanedLabels = new HashMap<Label, String>();
+		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
 
+		// Create sort keys for each Label,RoadDef pair
 		for (RoadDef rd : roads) {
 			rd.writeRgnOffsets(rgn);
 			if(sortRoads) {
 				Label[] l = rd.getLabels();
 				for(int i = 0; i < l.length && l[i] != null; ++i) {
 					if(l[i].getLength() != 0) {
-						cleanedLabels.put(l[i], l[i].getTextSansGarminCodes());
-						//	System.err.println("Road " + rd + " has label " + l[i]);
-						sortedRoads.add(new Sortable<Label, RoadDef>(l[i], rd));
+						String cleanName = l[i].getTextSansGarminCodes();
+						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), cleanName);
+						sortKeys.add(sortKey);
 					}
 				}
 			}
 		}
 
-		if(!sortedRoads.isEmpty()) {
-			Collections.sort(sortedRoads, new Comparator<Sortable<Label, RoadDef>>() {
-					public int compare(Sortable<Label, RoadDef> a, Sortable<Label, RoadDef> b) {
-						// sort using cleaned versions of the labels
-						int diff = cleanedLabels.get(a.getKey()).compareToIgnoreCase(cleanedLabels.get(b.getKey()));
-						if(diff != 0)
-							return diff;
-						// the labels were the same, sort on the
-						// RoadDefs
-						return a.getValue().compareTo(b.getValue());
-					}
-				});
-			sortedRoads = simplifySortedRoads(new LinkedList<Sortable<Label, RoadDef>>(sortedRoads));
+		if(!sortKeys.isEmpty()) {
+			Collections.sort(sortKeys);
+
+			List<LabeledRoadDef> sortedRoadDefs = simplifySortedRoads(new LinkedList<SortKey<LabeledRoadDef>>(sortKeys));
+
 			ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
-			for(Sortable<Label, RoadDef> srd : sortedRoads) {
-				//System.err.println("Road " + srd.getKey() + " is " + srd.getValue() + " " + srd.getValue().getCity());
-				srd.getValue().putSortedRoadEntry(writer, srd.getKey());
+			for(LabeledRoadDef labeledRoadDef : sortedRoadDefs) {
+				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
 			}
 			Utils.closeFile(writer);
 		}
@@ -112,27 +98,33 @@ public class NETFile extends ImgFile {
 		this.roads = roads;
 	}
 
-	// given a list of roads sorted by name and city, build a new list
-	// that only contains one entry for each group of roads that have
-	// the same name and city and are directly connected
-
-	private List<Sortable<Label, RoadDef>> simplifySortedRoads(LinkedList<Sortable<Label, RoadDef>> in) {
-		List<Sortable<Label, RoadDef>> out = new ArrayList<Sortable<Label, RoadDef>>(in.size());
+	/**
+	 * Given a list of roads sorted by name and city, build a new list
+	 * that only contains one entry for each group of roads that have
+	 * the same name and city and are directly connected
+	 */
+	private List<LabeledRoadDef> simplifySortedRoads(LinkedList<SortKey<LabeledRoadDef>> in) {
+		List<LabeledRoadDef> out = new ArrayList<LabeledRoadDef>(in.size());
 		while(!in.isEmpty()) {
-			String name0 = in.get(0).getKey().getTextSansGarminCodes();
-			RoadDef road0 = in.get(0).getValue();
+			LabeledRoadDef firstLabeledRoadDef = in.get(0).getObject();
+			String name0 = firstLabeledRoadDef.label.getTextSansGarminCodes();
+			RoadDef road0 = firstLabeledRoadDef.roadDef;
+
 			City city0 = road0.getCity();
 			// transfer the 0'th entry to the output
-			out.add(in.remove(0));
+			out.add(in.remove(0).getObject());
+
 			int n;
+
 			// firstly determine the entries whose name and city match
 			// name0 and city0
 			for(n = 0; (n < in.size() &&
-						name0.equalsIgnoreCase(in.get(n).getKey().getTextSansGarminCodes()) &&
-						city0 == in.get(n).getValue().getCity()); ++n) {
+						name0.equalsIgnoreCase(in.get(n).getObject().label.getTextSansGarminCodes()) &&
+						city0 == in.get(n).getObject().roadDef.getCity()); ++n) {
 				// relax
 			}
-			if(n > 0) {
+
+			if (n > 0) {
 				// now determine which of those roads are connected to
 				// road0 and throw them away
 				List<RoadDef> connectedRoads = new ArrayList<RoadDef>();
@@ -146,7 +138,7 @@ public class NETFile extends ImgFile {
 					// loop over the roads with the same
 					// name and city
 					for(int i = 0; i < n; ++i) {
-						RoadDef roadI = in.get(i).getValue();
+						RoadDef roadI = in.get(i).getObject().roadDef;
 						// see if this road is connected to any of the
 						// roads connected to road0
 						for(int j = 0; !lookAgain && j < connectedRoads.size(); ++j) {
@@ -167,5 +159,23 @@ public class NETFile extends ImgFile {
 		}
 
 		return out;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
+	}
+
+	/**
+	 * A road can have several names. Keep an association between a road def
+	 * and one of its names.
+	 */
+	class LabeledRoadDef {
+		private final Label label;
+		private final RoadDef roadDef;
+
+		LabeledRoadDef(Label label, RoadDef roadDef) {
+			this.label = label;
+			this.roadDef = roadDef;
+		}
 	}
 }

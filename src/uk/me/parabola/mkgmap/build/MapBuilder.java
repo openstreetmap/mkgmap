@@ -342,18 +342,16 @@ public class MapBuilder implements Configurable {
 					doAutofill = false;
 				
 				
-				String CountryStr = p.getCountry();
-				String RegionStr  = p.getRegion();		
-				String ZipStr     = p.getZip();
-				String CityStr    = p.getCity();
+				String countryStr = p.getCountry();
+				String regionStr  = p.getRegion();
+				String zipStr     = p.getZip();
+				String cityStr    = p.getCity();
 
-				if(CityStr != null || ZipStr != null ||RegionStr != null || CountryStr != null)
-
-				if(CountryStr != null)
-					CountryStr = locator.fixCountryString(CountryStr);
+				if(countryStr != null)
+					countryStr = locator.fixCountryString(countryStr);
 
 				boolean guessed = false;
-				if(CountryStr == null || RegionStr == null || (ZipStr == null && CityStr == null))
+				if(countryStr == null || regionStr == null || (zipStr == null && cityStr == null))
 				{
 						MapPoint nextCity = locator.findByCityName(p);
 						
@@ -364,74 +362,74 @@ public class MapBuilder implements Configurable {
 						{
 							guessed = true;
 
-							if (CountryStr == null)	CountryStr = nextCity.getCountry();
-							if (RegionStr == null)  RegionStr  = nextCity.getRegion();
+							if (countryStr == null)	countryStr = nextCity.getCountry();
+							if (regionStr == null)  regionStr  = nextCity.getRegion();
 
 							if(doAutofill)
 							{
-								if(ZipStr == null)
+								if(zipStr == null)
 								{
 									String CityZipStr = nextCity.getZip();
 									
 									// Ignore list of Zips separated by ;
 									
 									if(CityZipStr != null && CityZipStr.indexOf(',') < 0)
-										ZipStr = CityZipStr; 
+										zipStr = CityZipStr;
 								}
 								
-								if(CityStr == null) CityStr = nextCity.getCity();								
+								if(cityStr == null) cityStr = nextCity.getCity();
 							}
 						
 						}
 				}
 				
 	
-				if(CountryStr != null && !checkedForPoiDispFlag)
+				if(countryStr != null && !checkedForPoiDispFlag)
 				{
 					// Different countries require different address notation
 
-					poiDisplayFlags = locator.getPOIDispFlag(CountryStr);
+					poiDisplayFlags = locator.getPOIDispFlag(countryStr);
 					checkedForPoiDispFlag = true;
 				}
 
 
-				if(p.isRoadNamePOI() && CityStr != null)					
+				if(p.isRoadNamePOI() && cityStr != null)
 				{
 						// If it is road POI add city name and street name into address info
 						p.setStreet(p.getName());
-						p.setName(p.getName() + "/" + CityStr);
+						p.setName(p.getName() + "/" + cityStr);
 				}
 
 				POIRecord r = lbl.createPOI(p.getName());	
 
-				if(CityStr != null)
+				if(cityStr != null)
 				{
 					Country thisCountry;
 
-					if(CountryStr != null)
-						thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
+					if(countryStr != null)
+						thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
 					else
 						thisCountry = country;
 
 					Region thisRegion;
-					if(RegionStr != null)
-						thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
+					if(regionStr != null)
+						thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 					else
 						thisRegion = region;
 
 					City city;
 					if(thisRegion != null)
-						city = lbl.createCity(thisRegion, CityStr, false);
+						city = lbl.createCity(thisRegion, cityStr, false);
 					else
-						city = lbl.createCity(thisCountry, CityStr, false);
+						city = lbl.createCity(thisCountry, cityStr, false);
 
-	  			r.setCity(city);
+					r.setCity(city);
 
 				}
 
-				if (ZipStr != null)
+				if (zipStr != null)
 				{
-					Zip zip = lbl.createZip(ZipStr);
+					Zip zip = lbl.createZip(zipStr);
 					r.setZipIndex(zip.getIndex());
 				}
 

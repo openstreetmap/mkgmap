@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * The MDR 7 section is a list of all streets.  Only street names are saved
@@ -25,38 +26,80 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
+	private final List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
 	}
 
-	public void addStreet(int mapId, String name, int lblOffset, int strOff) {
+	public void addStreet(int mapId, String name, int lblOffset, int strOff, Mdr5Record mdrCity) {
 		Mdr7Record st = new Mdr7Record();
 		st.setMapIndex(mapId);
 		st.setLabelOffset(lblOffset);
 		st.setStringOffset(strOff);
 		st.setName(name);
-		streets.add(st);
+		st.setCity(mdrCity);
+		allStreets.add(st);
 	}
 
-	public void writeSectData(ImgFileWriter writer) {
-		Collections.sort(streets);
+	/**
+	 * Since we change the number of records by removing some after sorting,
+	 * we sort and de-duplicate here.
+	 */
+	public void finish() {
+		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
 
+		// De-duplicate the street names so that there is only one entry
+		// per map for the same name.
 		int recordNumber = 0;
-		for (Mdr7Record s : streets) {
-			recordNumber++;
-			addIndexPointer(s.getMapIndex(), recordNumber);
-
-			putMapIndex(writer, s.getMapIndex());
-			writer.put3(s.getLabelOffset() | 0x800000); // TODO set flag correctly
-			putStringOffset(writer, s.getStringOffset());
+		Mdr7Record last = new Mdr7Record();
+		for (SortKey<Mdr7Record> sk : sortedStreets) {
+			Mdr7Record r = sk.getObject();
+			if (r.getMapIndex() != last.getMapIndex() || !r.getName().equals(last.getName())) {
+				recordNumber++;
+				last = r;
+				r.setIndex(recordNumber);
+				streets.add(r);
+			} else {
+				// This has the same name (and map number) as the previous one. Save the pointer to that one
+				// which is going into the file.
+				r.setIndex(recordNumber);
+			}
 		}
 	}
 
+	public void writeSectData(ImgFileWriter writer) {
+		String lastName = null;
+		for (Mdr7Record s : streets) {
+			addIndexPointer(s.getMapIndex(), s.getIndex());
+
+			putMapIndex(writer, s.getMapIndex());
+			int lab = s.getLabelOffset();
+			String name = s.getName();
+			int trailingFlags = 0;
+			if (!name.equals(lastName)) {
+				lab |= 0x800000;
+				lastName = name;
+				trailingFlags = 1;
+			}
+			writer.put3(lab);
+			putStringOffset(writer, s.getStringOffset());
+			
+			writer.put((byte) trailingFlags);
+		}
+	}
+
+	/**
+	 * For the map number, label, string (opt), and trailing flags (opt).
+	 * The trailing flags are variable size. We are just using 1 now.
+	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + 3 + sizes.getStrOffSize();
+		return sizes.getMapSize()
+				+ 3
+				+ sizes.getStrOffSize()
+				+ 1;
 	}
 
 	public int getNumberOfItems() {
@@ -64,19 +107,61 @@ public class Mdr7 extends MdrMapSection {
 	}
 
 	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		return numberToPointerSize(streets.size());
-	}
-
-	/**
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		return 3;
+		return 0x43;
+	}
+
+	/**
+	 * Must be called after the section data is written so that the streets
+	 * array is already sorted.
+	 * @return List of index records.
+	 */
+	public List<Mdr8Record> getIndex() {
+		List<Mdr8Record> list = new ArrayList<Mdr8Record>();
+		for (int number = 1; number <= streets.size(); number += 10240) {
+			String prefix = getPrefixForRecord(number);
+
+			// need to step back to find the first...
+			int rec = number;
+			while (rec > 1) {
+				String p = getPrefixForRecord(rec);
+				if (!p.equals(prefix)) {
+					rec++;
+					break;
+				}
+				rec--;
+			}
+
+			Mdr8Record indexRecord = new Mdr8Record();
+			indexRecord.setPrefix(prefix);
+			indexRecord.setRecordNumber(rec);
+			list.add(indexRecord);
+		}
+		return list;
+	}
+
+	/**
+	 * Get the prefix of the name at the given record.
+	 * @param number The record number.
+	 * @return The first 4 (or whatever value is set) characters of the street
+	 * name.
+	 */
+	private String getPrefixForRecord(int number) {
+		Mdr7Record record = streets.get(number-1);
+		int endIndex = MdrUtils.STREET_INDEX_PREFIX_LEN;
+		String name = record.getName();
+		if (endIndex > name.length()) {
+			StringBuilder sb = new StringBuilder(name);
+			while (sb.length() < endIndex)
+				sb.append('\0');
+			name = sb.toString();
+		}
+		return name.substring(0, endIndex);
+	}
+
+	public List<Mdr7Record> getStreets() {
+		return Collections.unmodifiableList(allStreets);
 	}
 }

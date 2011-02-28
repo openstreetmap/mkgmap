@@ -50,5 +50,5 @@ public interface CharacterDecoder {
 	 * jumping to a new place in the file and cannot guarantee that the
 	 * previous label was fully read.
 	 */
-	//public void reset();
+	public void reset();
 }

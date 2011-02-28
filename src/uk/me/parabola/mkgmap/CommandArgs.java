@@ -2,12 +2,14 @@ package uk.me.parabola.mkgmap;
 
 import java.io.File;
 
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.util.EnhancedProperties;
 
 public class CommandArgs {
 	public static final int DEFAULT_FAMILYID = 6324;
 	
 	private final EnhancedProperties currentOptions;
+	private Sort sort;
 
 	public CommandArgs(EnhancedProperties args) {
 		currentOptions = new EnhancedProperties(args);
@@ -75,6 +77,12 @@ public class CommandArgs {
 			cp = 0;
 		}
 
+		if (cp == 0) {
+			String prop = currentOptions.getProperty("latin1");
+			if (prop != null)
+				cp = 1252;
+		}
+
 		return cp;
 	}
 
@@ -97,7 +105,16 @@ public class CommandArgs {
 		
 		return fileOutputDir;
 	}
-	
+
+	public Sort getSort() {
+		assert sort != null;
+		return sort;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
+	}
+
 	public boolean isForceUpper() {
 		return currentOptions.getProperty("lower-case") == null;
 	}

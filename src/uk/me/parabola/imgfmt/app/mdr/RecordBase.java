@@ -13,6 +13,9 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 /**
+ * Records that belong to a particular map should extend this class.
+ * Otherwise they can extend ConfigBase.
+ *
  * @author Steve Ratcliffe
  */
 public abstract class RecordBase extends ConfigBase {

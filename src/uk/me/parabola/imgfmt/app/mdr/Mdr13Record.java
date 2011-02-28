@@ -16,10 +16,14 @@ package uk.me.parabola.imgfmt.app.mdr;
  * Information about a region.
  * @author Steve Ratcliffe
  */
-public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
+public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record>, NamedRecord {
 	private int regionIndex;
-	private int strOffset;
 	private int countryIndex;
+	private int lblOffset;
+	private int strOffset;
+	private String name;
+	private Mdr14Record mdr14;
+	private Mdr28Record mdr28;
 
 	/**
 	 * We sort first by map id and then by region id.
@@ -57,5 +61,37 @@ public class Mdr13Record extends RecordBase implements Comparable<Mdr13Record> {
 
 	public int getCountryIndex() {
 		return countryIndex;
+	}
+
+	public int getLblOffset() {
+		return lblOffset;
+	}
+
+	public void setLblOffset(int lblOffset) {
+		this.lblOffset = lblOffset;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Mdr14Record getMdr14() {
+		return mdr14;
+	}
+
+	public void setMdr14(Mdr14Record mdr14) {
+		this.mdr14 = mdr14;
+	}
+
+	public Mdr28Record getMdr28() {
+		return mdr28;
+	}
+
+	public void setMdr28(Mdr28Record mdr28) {
+		this.mdr28 = mdr28;
 	}
 }

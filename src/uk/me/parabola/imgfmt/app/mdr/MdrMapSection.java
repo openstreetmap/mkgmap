@@ -20,14 +20,19 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public abstract class MdrMapSection extends MdrSection {
+public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags {
 	private Mdr1 index;
 
 	public void setMapIndex(Mdr1 index) {
 		this.index = index;
 	}
 
-	public void init(int sectionNumber) {
+	/**
+	 * This is called before the sections are written out, but after all the
+	 * data is read into them.
+	 * @param sectionNumber The one-based section number.
+	 */
+	public final void initIndex(int sectionNumber) {
 		// Set the size required to store the record numbers for this section.
 		// There are no flags or minimums required here, unlike in setPointerSize()
 		// which does a similar thing.
@@ -44,42 +49,19 @@ public abstract class MdrMapSection extends MdrSection {
 		index.addPointer(mapNumber, recordNumber);
 	}
 
-	/**
-	 * The number of records in this section.
-	 * @return The number of items in the section.
-	 */
-	public abstract int getNumberOfItems();
-
-	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.  If the pointer has a flag(s) then this must be
-	 * taken into account too.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public abstract int getPointerSize();
-
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
 		int flag = (isNew && cityIndex > 0)? getSizes().getCityFlag(): 0;
-		putN(writer, getSizes().getCitySize(), cityIndex | flag);
+		putN(writer, getSizes().getCitySizeFlagged(), cityIndex | flag);
 	}
 
 	protected void putRegionIndex(ImgFileWriter writer, int region) {
-		putN(writer, getSizes().getCitySize(), region);
+		// This is only called when putCityIndex might also be called and so has to be
+		// the same size (probably ;)
+		putN(writer, getSizes().getCitySizeFlagged(), region);
 	}
 
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
 		int flag = isNew? getSizes().getPoiFlag(): 0;
-		putN(writer, getSizes().getPoiSize(), poiIndex | flag);
+		putN(writer, getSizes().getPoiSizeFlagged(), poiIndex | flag);
 	}
-
-	/**
-	 * Return the value that is put in the header after the section start, len
-	 * and recsize fields.
-	 * At least in some cases this field controls what fields and/or size
-	 * exist in the section.
-	 * @return The correct value based on the contents of the section.  Zero
-	 * if nothing needs to be done.
-	 */
-	public abstract int getExtraValue();
 }

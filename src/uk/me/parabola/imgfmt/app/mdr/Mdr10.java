@@ -47,10 +47,10 @@ public class Mdr10 extends MdrMapSection {
 		}
 	}
 
-	public void addPoiType(int type, Mdr11Record poi) {
+	public void addPoiType(Mdr11Record poi) {
 		Mdr10Record t = new Mdr10Record();
-		// TODO this may not be totally correct yet as we don't save the fact
-		// that there is a subtype anywhere.
+
+		int type = poi.getType();
 		t.setSubtype(MdrUtils.getSubtypeFromFullType(type));
 		t.setMdr11ref(poi);
 
@@ -68,7 +68,7 @@ public class Mdr10 extends MdrMapSection {
 			
 			Collections.sort(poiGroup);
 
-			String lastName = "";
+			String lastName = null;
 			for (Mdr10Record t : poiGroup) {
 
 				count++;
@@ -119,16 +119,6 @@ public class Mdr10 extends MdrMapSection {
 
 	public void setNumberOfPois(int numberOfPois) {
 		this.numberOfPois = numberOfPois;
-	}
-
-	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		return numberToPointerSize(numberOfPois << 1);
 	}
 
 	public int getExtraValue() {

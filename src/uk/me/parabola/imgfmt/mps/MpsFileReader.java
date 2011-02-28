@@ -76,7 +76,7 @@ public class MpsFileReader {
 		block.setSeriesName(reader.getZString());
 		block.setMapDescription(reader.getZString());
 		block.setAreaName(reader.getZString());
-		reader.getInt();
+		block.setHexNumber(reader.getInt());
 		reader.getInt();
 		maps.add(block);
 	}

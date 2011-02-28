@@ -21,6 +21,10 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 
 /**
@@ -31,6 +35,14 @@ public class NETFileReader extends ImgFile {
 
 	// To begin with we only need LBL offsets.
 	private final Map<Integer, Integer> offsetLabelMap = new HashMap<Integer, Integer>();
+	private List<Integer> offsets;
+
+	private List<City> cities;
+	private int citySize;
+
+	private List<Zip> zips;
+	private int zipSize;
+	private LBLFileReader labels;
 
 	public NETFileReader(ImgChannel chan) {
 		setHeader(netHeader);
@@ -56,19 +68,143 @@ public class NETFileReader extends ImgFile {
 	}
 
 	/**
+	 * Get the list of roads from the net section.
+	 *
+	 * Saving the bare minimum that is needed, please improve.
+	 * @return A list of RoadDefs. Note that currently not everything is
+	 * populated in the road def so it can't be written out as is.
+	 */
+	public List<RoadDef> getRoads() {
+		ImgFileReader reader = getReader();
+		int start = netHeader.getRoadDefinitionsStart();
+
+		List<RoadDef> roads = new ArrayList<RoadDef>();
+		int record = 0;
+		for (int off : offsets) {
+			reader.position(start + off);
+
+			RoadDef road = new RoadDef(++record, null);
+			readLabels(reader, road);
+			byte netFlags = reader.get();
+			/*int len =*/ reader.getu3();
+
+			int[] counts = new int[24];
+			int level = 0;
+			while (level < 24) {
+				int n = reader.get();
+				counts[level++] = (n & 0x7f);
+				if ((n & 0x80) != 0)
+					break;
+			}
+
+			for (int i = 0; i < level; i++) {
+				int c = counts[i];
+				for (int j = 0; j < c; j++) {
+					/*byte b =*/ reader.get();
+					/*char sub =*/ reader.getChar();
+				}
+			}
+
+			if ((netFlags & RoadDef.NET_FLAG_ADDRINFO) != 0) {
+				char flags2 = reader.getChar();
+
+				int zipFlag = (flags2 >> 10) & 0x3;
+				int cityFlag = (flags2 >> 12) & 0x3;
+				int numberFlag = (flags2 >> 14) & 0x3;
+
+				road.setZip(fetchZipCity(reader, zipFlag, zips, zipSize));
+				road.setCity(fetchZipCity(reader, cityFlag, cities, citySize));
+
+				fetchNumber(reader, numberFlag);
+			}
+
+			if ((netFlags & RoadDef.NET_FLAG_NODINFO) != 0) {
+				int nodFlags = reader.get();
+				int nbytes = nodFlags & 0x3;
+				if (nbytes > 0) {
+					/*int nod = */reader.getUint(nbytes+1);
+				}
+			}
+
+			roads.add(road);
+		}
+		return roads;
+	}
+
+	/**
+	 * Fetch a zip or a city.
+	 * @param <T> Can be city or zip.
+	 * @return The found City or Zip.
+	 */
+	private <T> T fetchZipCity(ImgFileReader reader, int flag, List<T> list, int size) {
+		T item = null;
+		if (flag == 2) {
+			// fetch city/zip index
+			int ind = (size == 2)? reader.getChar(): (reader.get() & 0xff);
+			if (ind != 0)
+				item = list.get(ind-1);
+		} else if (flag == 3) {
+			// there is no item
+		} else if (flag == 0) {
+			// Skip over these
+			int n = reader.get();
+			reader.get(n);
+		} else if (flag == 1) {
+			// Skip over these
+			int n = reader.getChar();
+			reader.get(n);
+		} else {
+			assert false : "flag is " + flag;
+		}
+		return item;
+	}
+
+	/**
+	 * Fetch a block of numbers.
+	 * @param reader The reader.
+	 * @param numberFlag The flag that says how the block is formatted.
+	 */
+	private void fetchNumber(ImgFileReader reader, int numberFlag) {
+		int n = 0;
+		if (numberFlag == 0) {
+			n = reader.get();
+		} else if (numberFlag == 1) {
+			n = reader.getChar();
+		} else if (numberFlag == 3) {
+			// There is no block
+			return;
+		} else {
+			// Possible but don't know what to do in this context
+			assert false;
+		}
+		if (n > 0)
+			reader.get(n);
+	}
+
+	private void readLabels(ImgFileReader reader, RoadDef road) {
+		for (int i = 0; i < 4; i++) {
+			int lab = reader.getu3();
+			Label label = labels.fetchLabel(lab & 0x7fffff);
+			road.addLabel(label);
+			if ((lab & 0x800000) != 0)
+				break;
+		}
+	}
+
+	/**
 	 * The first field in NET 1 is a label offset in LBL.  Currently we
 	 * are only interested in that to convert between a NET 1 offset and
 	 * a LBL offset.
 	 */
 	private  void readLabelOffsets() {
 		ImgFileReader reader = getReader();
-		List<Integer> offsets = readOffsets();
+		offsets = readOffsets();
 		int start = netHeader.getRoadDefinitionsStart();
 		for (int off : offsets) {
 			reader.position(start + off);
 			int labelOffset = reader.getu3();
-			//System.out.printf("l off %x\n" , labelOffset);
-			offsetLabelMap.put(off, labelOffset & 0x7fffff); // TODO what if top bit is not set?
+			// TODO what if top bit is not set?, there can be more than one name and we will miss them
+			offsetLabelMap.put(off, labelOffset & 0x7fffff);
 		}
 	}
 
@@ -93,5 +229,19 @@ public class NETFileReader extends ImgFile {
 		// Sort in address order in the hope of speeding up reading.
 		Collections.sort(offsets);
 		return offsets;
+	}
+
+	public void setCities(List<City> cities) {
+		this.cities = cities;
+		this.citySize = cities.size() > 255? 2: 1;
+	}
+
+	public void setZips(List<Zip> zips) {
+		this.zips = zips;
+		this.zipSize = zips.size() > 255? 2: 1;
+	}
+
+	public void setLabels(LBLFileReader labels) {
+		this.labels = labels;
 	}
 }

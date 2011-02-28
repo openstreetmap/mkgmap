@@ -23,8 +23,9 @@ import java.util.Properties;
 import uk.me.parabola.imgfmt.Utils;
 
 import func.lib.TestUtils;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the command line argument processing.

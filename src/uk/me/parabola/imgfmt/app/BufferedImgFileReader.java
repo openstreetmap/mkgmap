@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.ReadFailedException;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -142,6 +143,17 @@ public class BufferedImgFileReader implements ImgFileReader {
 				| ((b3 & 0xff) << 16)
 				| ((b4 & 0xff) << 24)
 				;
+	}
+
+	public int getUint(int n) throws ReadFailedException {
+		switch (n) {
+		case 1: return get() & 0xff;
+		case 2: return getChar();
+		case 3: return getu3();
+		case 4: return getInt();
+		default: // this is a programming error so exit
+			throw new MapFailedException("bad integer size " + n);
+		}
 	}
 
 	/**

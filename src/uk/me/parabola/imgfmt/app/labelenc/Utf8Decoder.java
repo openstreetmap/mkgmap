@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Decoder for labels in utf-8, note that I am not actually sure that this
- * is in fact used anywhere.
+ * Decoder for labels in utf-8, note that I am not actually sure that any
+ * map uses utf-8.
  *
  * @author Steve Ratcliffe
  */
@@ -48,7 +48,7 @@ public class Utf8Decoder implements CharacterDecoder {
 
 		if (needreset) {
 			out.reset();
-			needreset = true;
+			needreset = false;
 		}
 
 		out.write(b);
@@ -63,5 +63,15 @@ public class Utf8Decoder implements CharacterDecoder {
 	public DecodedText getText() {
 		byte[] ba = out.toByteArray();
 		return new DecodedText(ba, charset);
+	}
+
+	/**
+	 * Resets the state.  This should be called for example if the reader is
+	 * jumping to a new place in the file and cannot guarantee that the previous
+	 * label was fully read.
+	 */
+	public void reset() {
+		needreset = false;
+		out.reset();
 	}
 }

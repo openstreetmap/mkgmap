@@ -40,6 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
 import uk.me.parabola.mkgmap.CommandArgs;
@@ -54,10 +55,11 @@ import uk.me.parabola.mkgmap.combiners.NsisBuilder;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * The new main program.  There can be many file names to process and there can
@@ -213,6 +215,8 @@ public class Main implements ArgumentProcessor {
 			threadPool = Executors.newFixedThreadPool(maxJobs);
 		}
 
+		args.setSort(getSort(args));
+
 		log.info("Submitting job " + filename);
 		FilenameTask task = new FilenameTask(new Callable<String>() {
 			public String call() {
@@ -356,7 +360,7 @@ public class Main implements ArgumentProcessor {
 							filenames.add(future);
 						}
 						else
-							Thread.sleep(10);
+							Thread.sleep(100);
 					}
 					catch (ExecutionException e) {
 						// Re throw the underlying exception
@@ -387,6 +391,8 @@ public class Main implements ArgumentProcessor {
 			return;
 
 		log.info("Combining maps");
+		
+		args.setSort(getSort(args));
 
 		// Get them all set up.
 		for (Combiner c : combiners)
@@ -430,6 +436,36 @@ public class Main implements ArgumentProcessor {
 				return ext;
 		}
 		return "";
+	}
+
+	/**
+	 * Create the sort description for the map.  This is used to sort items in the files
+	 * and also is converted into a SRT file which is included in the MDR file.
+	 *
+	 * We simply use the code page to locate a sorting description, but it would be possible to
+	 * specify the sort separately.
+	 *
+	 * @return A sort description object.
+	 */
+	public Sort getSort(CommandArgs args) {
+		int codepage = args.getCodePage();
+
+		String name = "sort/cp" + codepage + ".txt";
+		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
+		if (is == null) {
+			if (args.get("index", false))
+				System.err.printf("Warning: using default sort\n");
+			return Sort.defaultSort(codepage);
+		}
+		try {
+			InputStreamReader r = new InputStreamReader(is, "utf-8");
+			SrtTextReader sr = new SrtTextReader(r);
+			return sr.getSort();
+		} catch (IOException e) {
+			if (args.get("index", false))
+				System.err.printf("Warning: using default sort\n");
+			return Sort.defaultSort(codepage);
+		}
 	}
 
 	/**

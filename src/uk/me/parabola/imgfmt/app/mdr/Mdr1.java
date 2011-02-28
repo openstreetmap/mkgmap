@@ -13,6 +13,8 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -35,14 +37,14 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * sub2 points into MDR 10 (POI types)
  * sub3 points into MDR 7 (street names)
  * sub4 points into MDR 5 (cities)
- * sub5 points into MDR 6
+ * sub5 points into MDR 6 (zips)
  * sub6 points into MDR 20
  * sub7 points into MDR 21
  * sub8 points into MDR 22
  *
  * @author Steve Ratcliffe
  */
-public class Mdr1 extends MdrSection {
+public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
 
 	public Mdr1(MdrConfig config) {
@@ -62,6 +64,22 @@ public class Mdr1 extends MdrSection {
 			Mdr1MapIndex mapIndex = new Mdr1MapIndex();
 			rec.setMdrMapIndex(mapIndex);
 		}
+	}
+
+	/**
+	 * The maps must be sorted in numerical order.
+	 */
+	public void finish() {
+		Collections.sort(maps, new Comparator<Mdr1Record>() {
+			public int compare(Mdr1Record o1, Mdr1Record o2) {
+				if (o1.getMapNumber() == o2.getMapNumber())
+					return 0;
+				else if (o1.getMapNumber() < o2.getMapNumber())
+					return -1;
+				else
+					return 1;
+			}
+		});
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
@@ -109,7 +127,16 @@ public class Mdr1 extends MdrSection {
 		mi.addPointer(recordNumber);
 	}
 
-	public int getMapPointerSize() {
-		return numberToPointerSize(maps.size());
+	/**
+	 * The number of records in this section.
+	 *
+	 * @return The number of items in the section.
+	 */
+	public int getNumberOfItems() {
+		return maps.size();
+	}
+
+	public int getExtraValue() {
+		return 0x01;
 	}
 }

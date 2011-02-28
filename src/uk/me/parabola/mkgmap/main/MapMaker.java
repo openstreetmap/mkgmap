@@ -31,6 +31,8 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
@@ -41,7 +43,6 @@ import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
-import uk.me.parabola.util.Sortable;
 
 /**
  * Main routine for the command line map-making utility.
@@ -50,10 +51,13 @@ import uk.me.parabola.util.Sortable;
  */
 public class MapMaker implements MapProcessor {
 	private static final Logger log = Logger.getLogger(MapMaker.class);
+	private Sort sort;
 
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
+			sort = args.getSort();
+
 			log.info("Making Area POIs for", filename);
 			makeAreaPOIs(args, src);			
 			log.info("Making Road Name POIs for", filename);
@@ -87,7 +91,7 @@ public class MapMaker implements MapProcessor {
 
 		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
-			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname());
+			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname(), sort);
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
@@ -115,15 +119,14 @@ public class MapMaker implements MapProcessor {
 	 * @param args The command line arguments.
 	 */
 	private void setOptions(Map map, CommandArgs args) {
+		map.config(args.getProperties());
+
 		String s = args.getCharset();
 		if (s != null)
 			map.setLabelCharset(s, args.isForceUpper());
 
-		int i = args.getCodePage();
-		if (i != 0)
-			map.setLabelCodePage(i);
-
-		map.config(args.getProperties());
+		Sort sort = args.getSort();
+		map.setSort(sort);
 	}
 
 	/**
@@ -252,7 +255,7 @@ public class MapMaker implements MapProcessor {
 
 			// sort by name and coordinate of first point so that
 			// the order is always the same for the same input
-			List<Sortable<String, MapRoad>> rnpRoads = new ArrayList<Sortable<String, MapRoad>>();
+			List<SortKey<MapRoad>> rnpRoads = new ArrayList<SortKey<MapRoad>>();
 			for(List<MapRoad> lr : findConnectedRoadsWithSameName(namedRoads)) {
 				// connected roads are not ordered so just use first in list
 				MapRoad r = lr.get(0);
@@ -260,11 +263,11 @@ public class MapMaker implements MapProcessor {
 				List<Coord> points = r.getPoints();
 				if(!points.isEmpty())
 					key += "_" + points.get(0);
-				rnpRoads.add(new Sortable<String, MapRoad>(key, r));
+				rnpRoads.add(sort.createSortKey(r, key));
 			}
 			Collections.sort(rnpRoads);
-			for(Sortable<String, MapRoad> sr : rnpRoads)
-				src.getPoints().add(makeRoadNamePOI(sr.getValue(), rnpt));
+			for(SortKey<MapRoad> sr : rnpRoads)
+				src.getPoints().add(makeRoadNamePOI(sr.getObject(), rnpt));
 		}
 	}
 

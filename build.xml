@@ -116,6 +116,7 @@
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
 				<include name="help/**"/>
+				<include name="sort/**"/>
 				<exclude name="**/.*"/>
 			</fileset>
 			<fileset dir="src">
@@ -179,6 +180,9 @@
 		<get src="http://www.mkgmap.org.uk/testinput/img/63240002.img"
 			dest="test/resources/in/img/63240002.img" usetimestamp="true"
 			ignoreerrors="true"/>
+		<get src="http://www.mkgmap.org.uk/testinput/img/63240003.img"
+			dest="test/resources/in/img/63240003.img" usetimestamp="true"
+			ignoreerrors="true"/>
 	</target>
 
 	<target name="dist" depends="build"
@@ -196,6 +200,7 @@
 			<include name="*.properties"/>
 			<include name="**/*.trans"/>
 			<include name="styles/**"/>
+			<include name="sort/**"/>
 			<include name="help/**"/>
 		</jar>
 

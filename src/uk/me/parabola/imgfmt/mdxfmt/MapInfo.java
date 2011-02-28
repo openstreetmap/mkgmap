@@ -19,6 +19,10 @@ import java.nio.ByteBuffer;
  *
  * I don't really understand the difference between what I call hex mapname
  * and mapname.  We shall always make them equal.
+ *
+ * There is no good reason to call it 'hexMapname' its just a name that stuck
+ * I still don't know what the difference is. We always make them the same
+ * but they can differ.
  */
 public class MapInfo {
 	private int hexMapname;
@@ -26,11 +30,17 @@ public class MapInfo {
 	private char familyId;
 	private char productId;
 
+	private String filename;
+
 	void write(ByteBuffer os)  {
 		os.putInt(hexMapname);
 		os.putChar(productId);
 		os.putChar(familyId);
 		os.putInt(mapname);
+	}
+
+	public int getHexMapname() {
+		return hexMapname;
 	}
 
 	public void setHexMapname(int hexMapname) {
@@ -47,5 +57,17 @@ public class MapInfo {
 
 	public void setProductId(char productId) {
 		this.productId = productId;
+	}
+
+	public int getMapname() {
+		return mapname;
+	}
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public void setFilename(String filename) {
+		this.filename = filename;
 	}
 }

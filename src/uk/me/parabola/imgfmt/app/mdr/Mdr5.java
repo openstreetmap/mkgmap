@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
  * Section containing cities.
@@ -27,8 +29,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
-
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
+	private int[] mdr20;
 	private int maxCityIndex;
 	private int localCitySize;
 
@@ -36,11 +38,8 @@ public class Mdr5 extends MdrMapSection {
 		setConfig(config);
 	}
 
-	public void addCity(int mapIndex, Mdr5Record record, int lblOff, String name, int strOff) {
-		record.setMapIndex(mapIndex);
-		record.setLblOffset(lblOff);
-		record.setName(name);
-		record.setStringOffset(strOff);
+	public void addCity(Mdr5Record record) {
+		assert record.getMapIndex() != 0;
 		cities.add(record);
 		if (record.getCityIndex() > maxCityIndex)
 			maxCityIndex = record.getCityIndex();
@@ -49,39 +48,124 @@ public class Mdr5 extends MdrMapSection {
 	/**
 	 * Called after all cities to sort and number them.
 	 */
-	public void finishCities() {
+	public void finish() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
-		
-		Collections.sort(cities);
 
-		int count = 1;
-		for (Mdr5Record c : cities)
-			c.setGlobalCityIndex(count++);
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(cities.size());
+		Sort sort = getConfig().getSort();
+		for (Mdr5Record m : cities) {
+			// Sorted also by map number, city index
+			int second = (m.getMapIndex() << 16) + m.getCityIndex();
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), second);
+			sortKeys.add(sortKey);
+		}
+		Collections.sort(sortKeys);
+
+		cities.clear();
+		int count = 0;
+		int lastMapId = 0;
+		String lastName = null;
+		for (SortKey<Mdr5Record> key : sortKeys) {
+			Mdr5Record c = key.getObject();
+			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName)) {
+				count++;
+				c.setGlobalCityIndex(count);
+				cities.add(c);
+
+				lastName = c.getName();
+				lastMapId = c.getMapIndex();
+			} else {
+				c.setGlobalCityIndex(count);
+			}
+		}
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		int lastMap = 0;
-		int lastName = 0;
+		fix20();
 
+		int size20 = getSizes().getMdr20Size();
 		for (Mdr5Record city : cities) {
-			addIndexPointer(city.getMapIndex(), city.getGlobalCityIndex());
+			int gci = city.getGlobalCityIndex();
+			addIndexPointer(city.getMapIndex(), gci);
 
 			// Work out if the name is the same as the previous one and set
 			// the flag if so.
-			int flag = 0x800000;
+			int flag = 0;
 			int mapIndex = city.getMapIndex();
-			if (lastMap == mapIndex && lastName == city.getLblOffset())
-				flag = 0;
-			lastMap = mapIndex;
+			int region = city.getRegionIndex();
+
+			// Set the repeat flag from the information we saved during fix20().
+			if ((mdr20[gci] & 0x80000000) == 0)
+				flag = 0x800000;
 
 			// Write out the record
-			lastName = city.getLblOffset();
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
-			writer.putChar((char) city.getRegion());
+			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
+			putN(writer, size20, mdr20[gci] & 0x7fffffff);
 		}
+	}
+
+	/**
+	 * Search for repeated names, and make the mdr20 value for each one the same. The value is the
+	 * lowest non-zero value for any member of the group.
+	 *
+	 * Save the repeat status to avoid having to recalculate it during the write phase.
+	 */
+	private void fix20() {
+		String lastName = null;
+		for (int index = 1; index < cities.size(); index++) {
+			Mdr5Record city = cities.get(index-1);
+			assert city.getGlobalCityIndex() == index : index + "/" + city.getGlobalCityIndex();
+
+			String name = city.getName();
+			if (name.equals(lastName)) {
+				int last = findLastRepeat(index, name);
+				int mdr20val = findMin20(index - 1, last);
+				for (int j = index-1; j < last; j++) {
+					mdr20[j] = mdr20val;
+					// set repeat flag on all except the first
+					if (j != index - 1)
+						mdr20[j] |= 0x80000000;
+				}
+
+			}
+			lastName = name;
+		}
+	}
+
+	/**
+	 * Find the minimum value of mdr20 from the two given city indexes.
+	 * @param start Start from here.
+	 * @param last Until here, exclusive.
+	 * @return The minimum value of mdr20 that is not 0. If all are zero then zero is returned.
+	 */
+	private int findMin20(int start, int last) {
+		int min20 = 0;
+		for (int i = start; i < last; i++) {
+			int val = mdr20[i];
+			if (min20 == 0 || (val > 0 && val < min20)) {
+				min20 = val;
+			}
+		}
+
+		return min20;
+	}
+
+	/**
+	 * Return the index of the first record after 'index' that has a different name.
+	 * @param start The start index.
+	 * @param name The name to compare against.
+	 * @return The last repeated name index (exclusive).
+	 */
+	private int findLastRepeat(int start, String name) {
+		for (int i = start; i < cities.size(); i++) {
+			if (!name.equals(cities.get(i-1).getName()))
+				return i;
+		}
+		return cities.size();
 	}
 
 	/**
@@ -102,7 +186,11 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + localCitySize + 5 + sizes.getStrOffSize();
+		return sizes.getMapSize()
+				+ localCitySize
+				+ 5
+				+ sizes.getMdr20Size()
+				+ sizes.getStrOffSize();
 	}
 
 	public int getNumberOfItems() {
@@ -110,24 +198,28 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	/**
-	 * Get the size of an integer that is sufficient to store a record number
-	 * from this section.
-	 * @return A number between 1 and 4 giving the number of bytes required
-	 * to store the largest record number in this section.
-	 */
-	public int getPointerSize() {
-		// Since the city is flagged in mdr11, you need an extra bit to save them
-		return numberToPointerSize(cities.size() << 1);
-	}
-
-	/**
 	 * Known structure:
 	 * bits 0-1: size of local city index - 1 (all values appear to work)
-	 * bits 2-3: size of label offset (only 0 and 3 appear to work)
-	 * bit  4    does not appear to have any effect
+	 * bit  3: has region
+	 * bit  4: has string
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
-		return 0x1c | (localCitySize - 1);
+		// 0x4 is region and we always set it
+		int val = 0x04 | (localCitySize - 1);
+		// String offset is only included for a mapsource index.
+		if (!isForDevice())
+			val |= 0x08;
+		val |= 0x10;
+		val |= 0x100; // mdr20 present
+		return val;
+	}
+
+	public List<Mdr5Record> getCities() {
+		return cities;
+	}
+
+	public void setMdr20(int[] mdr20) {
+		this.mdr20 = mdr20;
 	}
 }

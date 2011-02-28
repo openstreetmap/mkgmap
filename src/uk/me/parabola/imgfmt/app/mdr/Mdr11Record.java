@@ -17,7 +17,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  * The details required to write a POI record to mdr 11.
  * @author Steve Ratcliffe
  */
-public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
+public class Mdr11Record extends RecordBase implements NamedRecord {
 	private int pointIndex;
 	private int subdiv;
 	private int lblOffset;
@@ -26,6 +26,7 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	private String name;
 	private Mdr5Record city;
 	private boolean isCity;
+	private int type;
 
 	public boolean isCity() {
 		return isCity;
@@ -33,10 +34,6 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 
 	public void setIsCity(boolean isCity) {
 		this.isCity = isCity;
-	}
-
-	public int compareTo(Mdr11Record o) {
-		return name.compareTo(o.name);
 	}
 
 	public int getPointIndex() {
@@ -68,7 +65,7 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 	}
 
 	public int getRegionIndex() {
-		return city == null ? 0 : city.getRegion();
+		return city == null ? 0 : city.getRegionIndex();
 	}
 
 	public int getStrOffset() {
@@ -99,5 +96,13 @@ public class Mdr11Record extends RecordBase implements Comparable<Mdr11Record> {
 
 	public void setCity(Mdr5Record city) {
 		this.city = city;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public int getType() {
+		return type;
 	}
 }

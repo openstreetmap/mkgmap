@@ -21,6 +21,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -51,15 +53,19 @@ public class MdxFile {
 
 	/**
 	 * Add a map with the default family and product id's and with equal
-	 * name and hexname.
-	 * @param name The map name as an integer.
+	 * name and hex name.
+	 * @param name The map name (from the filename of the map) as an integer.
+	 * @param hexname The map id that is inside the TRE header
+	 * @param filename The file name of the map being added. Mainly for diagnostics,
+	 * it is not needed for the file.
 	 */
-	public void addMap(int name) {
+	public void addMap(int name, int hexname, String filename) {
 		MapInfo info = new MapInfo();
-		info.setHexMapname(name);
+		info.setHexMapname(hexname);
 		info.setMapname(name);
 		info.setFamilyId(familyId);
 		info.setProductId(productId);
+		info.setFilename(filename);
 
 		maps.add(info);
 	}
@@ -96,22 +102,29 @@ public class MdxFile {
 	}
 
 	private void writeBody(WritableByteChannel chan, ByteBuffer buf) throws IOException {
+		// Sort the maps by the hex number.
+		Collections.sort(maps, new Comparator<MapInfo>() {
+			public int compare(MapInfo o1, MapInfo o2) {
+				if (o1.getHexMapname() == o2.getHexMapname())
+					return 0;
+				else if (o1.getHexMapname() < o2.getHexMapname())
+					return -1;
+				else
+					return 1;
+			}
+		});
+
 		for (MapInfo info : maps) {
+			// Although its not necessarily wrong for them to be zero, it probably
+			// sign that something is wrong.
+			if (info.getHexMapname() == 0 || info.getMapname() == 0)
+				System.err.println("Invalid mapname for " + info.getFilename() + ", perhaps it is not a .img file");
+
 			buf.compact();
 			info.write(buf);
 
 			buf.flip();
 			chan.write(buf);
 		}
-	}
-
-	/**
-	 * Create a file for testing.  Will probably be removed at some point.
-	 * @throws IOException If file cannot be written.
-	 */
-	public static void main(String[] args) throws IOException {
-		MdxFile mdx = new MdxFile(909, 1);
-		mdx.addMap(63240001);
-		mdx.write("test.mdx");
 	}
 }

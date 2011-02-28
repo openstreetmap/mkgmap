@@ -22,6 +22,7 @@ import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.map.Map;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
@@ -54,7 +55,7 @@ public abstract class AbstractTestMap {
 
 		Map map;
 		try {
-			map = Map.createMap("32860003", ".", params, "32860003");
+			map = Map.createMap("32860003", ".", params, "32860003", Sort.defaultSort(1252));
 		} catch (FileExistsException e) {
 			throw new ExitException("File exists already", e);
 		} catch (FileNotWritableException e) {

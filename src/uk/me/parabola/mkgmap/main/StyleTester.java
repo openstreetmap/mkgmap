@@ -60,7 +60,6 @@ import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
-import uk.me.parabola.mkgmap.osmstyle.eval.SyntaxException;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.ElementSaver;
 import uk.me.parabola.mkgmap.reader.osm.GType;
@@ -74,6 +73,7 @@ import uk.me.parabola.mkgmap.reader.osm.WatchableTypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler.SaxHandler;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.util.EnhancedProperties;
 

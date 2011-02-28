@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
  * An open parenthesis.  This is treated specially.

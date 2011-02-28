@@ -15,7 +15,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Super class of all sections
+ * Super class of all sections.
  * @author Steve Ratcliffe
  */
 public abstract class MdrSection extends ConfigBase {
@@ -49,7 +49,8 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	protected void putStringOffset(ImgFileWriter writer, int strOff) {
-		putN(writer, sizes.getStrOffSize(), strOff);
+		if (!isForDevice())
+			putN(writer, sizes.getStrOffSize(), strOff);
 	}
 
 	protected void putN(ImgFileWriter writer, int n, int value) {
@@ -67,11 +68,12 @@ public abstract class MdrSection extends ConfigBase {
 			writer.putInt(value);
 			break;
 		default: // Don't write anything.
+			assert false;
 			break;
 		}
 	}
 
-	protected int numberToPointerSize(int n) {
+	protected static int numberToPointerSize(int n) {
 		if (n > 0xffffff)
 			return 4;
 		else if (n > 0xffff)
@@ -83,58 +85,102 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
-	 * A class to save the sizes of various field that depend on the contents
-	 * of the file.
+	 * The number of records in this section.
+	 * @return The number of items in the section.
+	 */
+	public abstract int getNumberOfItems();
+
+	/**
+	 * Get the size of an integer that is sufficient to store a record number
+	 * from this section.  If the pointer has a flag(s) then this must be
+	 * taken into account too.
+	 * @return A number between 1 and 4 giving the number of bytes required
+	 * to store the largest record number in this section.
+	 */
+	public int getPointerSize() {
+		return numberToPointerSize(getNumberOfItems());
+	}
+
+	/**
+	 * This is called after all the sections are read in but before any section is written.
+	 *
+	 * This routine may modify the number of items in the section.  It should also do
+	 * anything that is required before writing out, particularly if another section
+	 * is going to depend on the results.
+	 */
+	public void finish() {
+	}
+
+	/**
+	 * Provides the pointer sizes required to hold record of offset values
+	 * in the various sections.
 	 */
 	static class PointerSizes {
-		private int mapSize;
-		private int citySize;
-		private int cityFlag;
-		private int poiSize;
-		private int poiFlag;
-		private int strOffSize;
 
-		public void setMapSize(int mapSize) {
-			this.mapSize = mapSize;
-		}
+		private final MdrSection[] sections;
 
-		public void setCitySize(int citySize) {
-			int size = Math.max(citySize, 2);
-			this.citySize = size;
-			cityFlag = flagForSize(size);
-		}
-
-		public void setStrOffSize(int strOffSize) {
-			this.strOffSize = Math.max(strOffSize, 3);
-		}
-
-		public void setPoiSize(int poiSize) {
-			this.poiSize = poiSize;
-			poiFlag = flagForSize(poiSize);
-		}
-
-		public int getCityFlag() {
-			return cityFlag;
+		public PointerSizes(MdrSection[] sections) {
+			this.sections = sections;
 		}
 
 		public int getMapSize() {
-			return mapSize;
+			return sections[1].getPointerSize();
 		}
 
 		public int getCitySize() {
-			return citySize;
+			return sections[5].getPointerSize();
+		}
+
+		/**
+		 * Get the number of bytes required to represent a city when there is
+		 * one bit reserved for a flag.
+		 * There is a minimum size of 2.
+		 * @return Number of bytes to represent a city record number and a
+		 * one bit flag.
+		 */
+		public int getCitySizeFlagged() {
+			return Math.max(2, numberToPointerSize(sections[5].getNumberOfItems() << 1));
+		}
+
+		public int getCityFlag() {
+			return flagForSize(getCitySizeFlagged());
+		}
+
+		public int getStreetSize() {
+			return sections[7].getPointerSize();
+		}
+
+		public int getStreetSizeFlagged() {
+			return numberToPointerSize(sections[7].getNumberOfItems() << 1);
 		}
 
 		public int getPoiSize() {
-			return poiSize;
+			return sections[11].getPointerSize();
+		}
+
+		/**
+		 * The number of bytes required to represent a POI (mdr11) record number
+		 * and a flag bit.
+		 */
+		public int getPoiSizeFlagged() {
+			return numberToPointerSize(sections[11].getNumberOfItems() << 1);
 		}
 
 		public int getPoiFlag() {
-			return poiFlag;
+			return flagForSize(getPoiSizeFlagged());
 		}
 
+		/**
+		 * Size of the pointer required to index a byte offset into mdr15 (strings).
+		 * There is a minimum of 3 for this value.
+		 * @return Pointer size required for the string offset value.
+		 */
 		public int getStrOffSize() {
-			return strOffSize;
+			return Math.max(3, sections[15].getPointerSize());
+		}
+
+		public int getMdr20Size() {
+			return sections[20].getPointerSize();
 		}
 
 		private int flagForSize(int size) {
@@ -150,6 +196,10 @@ public abstract class MdrSection extends ConfigBase {
 			else
 				flag = 0;
 			return flag;
+		}
+
+		public int getSize(int sect) {
+			return sections[sect].getPointerSize();
 		}
 	}
 }

@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -26,7 +27,9 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.Region;
+import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.NETFileReader;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.app.trergn.RGNFileReader;
@@ -86,6 +89,9 @@ public class MapReader implements Closeable {
 		try {
 			chan = fs.open(mapname + ".NET", "r");
 			nr = new NETFileReader(chan);
+			nr.setLabels(lblFile);
+			nr.setCities(lblFile.getCities());
+			nr.setZips(lblFile.getZips());
 			saveForClose(nr);
 		} catch (FileNotFoundException e) {
 			nr = null;
@@ -153,8 +159,24 @@ public class MapReader implements Closeable {
 	public List<Region> getRegions() {
 		return lblFile.getRegions();
 	}
+	
+	public List<Zip> getZips() {
+		// need to be joined with zip information from the addresses
+		// where are the addresses stored?
+		return lblFile.getZips();
+	}
 
 	public Area getTreBounds() {
 		return treFile.getBounds();
+	}
+
+	public java.util.Map<Integer, String> getLabels() {
+		return lblFile.getLabels();
+	}
+
+	public List<RoadDef> getRoads() {
+		if (netFile == null)
+			return Collections.emptyList();
+		return netFile.getRoads();
 	}
 }

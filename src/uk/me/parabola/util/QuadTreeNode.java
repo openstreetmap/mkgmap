@@ -1,6 +1,6 @@
 package uk.me.parabola.util;
 
-import java.awt.Rectangle;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
