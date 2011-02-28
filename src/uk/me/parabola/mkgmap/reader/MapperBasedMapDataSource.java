@@ -121,7 +121,7 @@ public abstract class MapperBasedMapDataSource implements MapDataSource, Configu
 			coords.add(co);
 			co = new Coord(bounds.getMaxLat(), bounds.getMinLong());
 			coords.add(co);
-			//coords.add(start);
+			coords.add(start);
 
 			// Now add the background area
 			MapShape background = new MapShape();

@@ -63,7 +63,7 @@ leisure=playground [0x17 resolution 20]
 leisure=recreation_ground [0x19 resolution 18]
 leisure=sports_center | leisure=sports_centre { name '${name} (${sport})' | '${name}' } [0x19 resolution 20]
 leisure=stadium { name '${name} (${sport})' | '${name}' } [0x19 resolution 19]
-leisure=track { name '${name} (${sport})' | '${name}' } [0x19 resolution 18]
+leisure=track & area=yes { name '${name} (${sport})' | '${name}' } [0x19 resolution 18]
 leisure=water_park [0x09 resolution 18]
 
 military=airfield [0x04 resolution 18]
