@@ -455,7 +455,7 @@ public class Main implements ArgumentProcessor {
 		if (is == null) {
 			if (args.get("index", false))
 				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort();
+			return Sort.defaultSort(codepage);
 		}
 		try {
 			InputStreamReader r = new InputStreamReader(is, "utf-8");
@@ -464,7 +464,7 @@ public class Main implements ArgumentProcessor {
 		} catch (IOException e) {
 			if (args.get("index", false))
 				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort();
+			return Sort.defaultSort(codepage);
 		}
 	}
 

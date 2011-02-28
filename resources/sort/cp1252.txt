@@ -14,7 +14,7 @@
 #
 # Note that primary differences always determine the order even if
 # they are later in the word than secondary differences.
-# ie A-acute B comes after A A, even though A-acute sorts after A.
+# ie A B comes after A-acute A, even though A-acute sorts after A.
 #
 # In this file Primary differences are represented by lines begining
 # with the keyword 'code'.  All the letters following are the same

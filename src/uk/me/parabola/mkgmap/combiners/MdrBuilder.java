@@ -130,14 +130,14 @@ public class MdrBuilder implements Combiner {
 		String name = "sort/cp" + codepage + ".txt";
 		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
 		if (is == null) {
-			return Sort.defaultSort();
+			return Sort.defaultSort(codepage);
 		}
 		try {
 			InputStreamReader r = new InputStreamReader(is, "utf-8");
 			SrtTextReader sr = new SrtTextReader(r);
 			return sr.getSort();
 		} catch (IOException e) {
-			return Sort.defaultSort();
+			return Sort.defaultSort(codepage);
 		}
 	}
 

@@ -183,7 +183,7 @@ public abstract class DEM {
 			long mapName = Integer.valueOf(config.getProperty("mapname", "63240000"));
 			try {
 				String mapname = String.format("%08d", mapName + 10000000);
-				Map map = Map.createMap(mapname, fileOutputDir, params, mapname, Sort.defaultSort());
+				Map map = Map.createMap(mapname, fileOutputDir, params, mapname, Sort.defaultSort(1252));
 				builder.makeMap(map, dest);
 				map.close();
 			}
