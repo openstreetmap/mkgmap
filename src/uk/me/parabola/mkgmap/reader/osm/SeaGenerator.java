@@ -204,9 +204,11 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		for (Way w : segments) {
 			if (w.isClosed()) {
 				joined.add(w);
-			} else {
+			} else if (w.getPoints() != null && w.getPoints().size() > 1){
 				List<Coord> points = w.getPoints();
 				beginMap.put(points.get(0), w);
+			} else {
+				log.info("Discard coastline way",w.getId(),"because consists of less than 2 points");
 			}
 		}
 		segments.clear();
