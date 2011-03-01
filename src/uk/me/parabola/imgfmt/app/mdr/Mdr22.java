@@ -63,7 +63,6 @@ public class Mdr22 extends Mdr2x {
 
 		int record = 0;
 
-		String lastCName = "";
 		String lastName = null;
 		int lastMapid = 0;
 		

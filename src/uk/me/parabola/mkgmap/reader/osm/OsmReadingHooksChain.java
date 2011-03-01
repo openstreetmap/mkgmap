@@ -29,6 +29,7 @@ import uk.me.parabola.util.EnhancedProperties;
  *
  * @author Steve Ratcliffe
  */ 
+@SuppressWarnings({"ForLoopReplaceableByForEach"})
 public class OsmReadingHooksChain implements OsmReadingHooks {
 
 	private static final OsmReadingHooks[] NO_HOOKS = new OsmReadingHooks[0];

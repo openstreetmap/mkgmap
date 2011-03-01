@@ -358,7 +358,7 @@ public class LBLFileReader extends ImgFile {
 			boolean hasZip;
 			boolean hasPhone;
 			boolean hasHighwayExit;
-			boolean hasTides = false;
+			boolean hasTides;
 
 			if (override) {
 				flags = reader.get();

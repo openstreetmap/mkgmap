@@ -19,8 +19,12 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.text.CollationKey;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
+
+import uk.me.parabola.imgfmt.ExitException;
 
 /**
  * Represents the sorting positions for all the characters in a codepage.
@@ -91,10 +95,10 @@ public class Sort {
 			byte[] key = new byte[bval.length * 3 + 3];
 			int length = bval.length;
 			for (int i = 0; i < length; i++) {
-				byte b = bval[i];
-				key[i] = primary[b & 0xff];
-				key[length + 1 + i] = secondary[b & 0xff];
-				key[2*length + 2 + i] = tertiary[b & 0xff];
+				int b = bval[i] & 0xff;
+				key[i] = primary[b];
+				key[length + 1 + i] = secondary[b];
+				key[2*length + 2 + i] = tertiary[b];
 			}
 			key[length] = 0;
 			key[2 * length + 1] = 0;
@@ -168,6 +172,10 @@ public class Sort {
 		this.description = description;
 	}
 
+	public Collator getCollator() {
+		return new SrtCollator(codepage);
+	}
+
 	/**
 	 * Create a default sort that simply sorts by the values of the characters.
 	 * It has to pretend to be associated with a particular code page, otherwise
@@ -189,5 +197,85 @@ public class Sort {
 		sort.setDescription("Default sort");
 		sort.setCodepage(codepage == 0? 1252: codepage);
 		return sort;
+	}
+
+	private class SrtCollator extends Collator {
+		private final int codepage;
+
+		private SrtCollator(int codepage) {
+			this.codepage = codepage;
+		}
+
+		public int compare(String source, String target) {
+			CharBuffer in1 = CharBuffer.wrap(source);
+			CharBuffer in2 = CharBuffer.wrap(target);
+			byte[] bytes1;
+			byte[] bytes2;
+			try {
+				bytes1 = encoder.encode(in1).array();
+				bytes2 = encoder.encode(in2).array();
+			} catch (CharacterCodingException e) {
+				throw new ExitException("character encoding failed unexpectedly", e);
+			}
+
+			int strength = getStrength();
+			int res = compareOneStrength(bytes1, bytes2, primary);
+
+			if (res == 0 && strength != PRIMARY) {
+				res = compareOneStrength(bytes1, bytes2, secondary);
+				if (res == 0 && strength != SECONDARY) {
+					res = compareOneStrength(bytes1, bytes2, tertiary);
+				}
+			}
+
+			if (res == 0) {
+				if (source.length() < target.length())
+					res = -1;
+				else if (source.length() > target.length())
+					res = 1;
+			}
+			return res;
+		}
+
+		/**
+		 * Compare the bytes against primary, secondary or tertiary arrays.
+		 * @param bytes1 Bytes for the first string in the codepage encoding.
+		 * @param bytes2 Bytes for the second string in the codepage encoding.
+		 * @param type The strength array to use in the comparison.
+		 * @return Comparison result -1, 0 or 1.
+		 */
+		private int compareOneStrength(byte[] bytes1, byte[] bytes2, byte[] type) {
+			int res = 0;
+			int length = Math.min(bytes1.length, bytes2.length);
+			for (int i = 0; i < length; i++) {
+
+				byte p1 = type[bytes1[i] & 0xff];
+				byte p2 = type[bytes2[i] & 0xff];
+				if (p1 < p2) {
+					res = -1;
+				} else if (p1 > p2) {
+					res = 1;
+				}
+			}
+			return res;
+		}
+
+		public CollationKey getCollationKey(String source) {
+			throw new UnsupportedOperationException("use Sort.createSortKey() instead");
+		}
+
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+
+			SrtCollator that = (SrtCollator) o;
+
+			if (codepage != that.codepage) return false;
+			return true;
+		}
+
+		public int hashCode() {
+			return codepage;
+		}
 	}
 }

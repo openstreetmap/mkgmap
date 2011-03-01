@@ -100,15 +100,15 @@ public class SrtTextReader {
 	private int state;
 	private String cflags = "";
 
-	public SrtTextReader(String filename) throws IOException {
-		this(filename, new InputStreamReader(new FileInputStream(filename), "utf-8"));
-	}
-
 	public SrtTextReader(Reader r) throws IOException {
 		this("stream", r);
 	}
 
-	public SrtTextReader(String filename, Reader r) throws IOException {
+	private SrtTextReader(String filename) throws IOException {
+		this(filename, new InputStreamReader(new FileInputStream(filename), "utf-8"));
+	}
+
+	private SrtTextReader(String filename, Reader r) throws IOException {
 		read(filename, r);
 	}
 
@@ -118,10 +118,9 @@ public class SrtTextReader {
 	 * @param filename The name of the file, used for display purposes. It need
 	 * not refer to a file that actually exists.
 	 * @param r The opened file or other readable source.
-	 * @throws IOException If the file cannot be read.
 	 * @throws SyntaxException If the format of the file is incorrect.
 	 */
-	public void read(String filename, Reader r) throws IOException {
+	public void read(String filename, Reader r) {
 		TokenScanner scanner = new TokenScanner(filename, r);
 		resetPos();
 		state = IN_INITIAL;
