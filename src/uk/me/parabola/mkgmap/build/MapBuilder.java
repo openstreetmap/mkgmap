@@ -92,6 +92,9 @@ import uk.me.parabola.util.EnhancedProperties;
 public class MapBuilder implements Configurable {
 	private static final Logger log = Logger.getLogger(MapBuilder.class);
 	private static final int CLEAR_TOP_BITS = (32 - 15);
+	
+	private static final int MIN_SIZE_LINE = 1;
+	private static final int MIN_SIZE_POLYGON = 8;
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
@@ -885,7 +888,7 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter());
+			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
@@ -924,7 +927,7 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter());
+			filters.addFilter(new SizeFilter(MIN_SIZE_POLYGON));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointError > 0)
