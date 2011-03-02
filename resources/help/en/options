@@ -177,8 +177,12 @@ Optimization options:
 	NUM is the maximal allowed error distance, by which the resulting
 	way may differ from the original one.
 	This distance gets shifted with lower zoom levels. 
-	Recommended setting is 10, this should lead to only small differences
-	(Default is 2.6, which should lead to invisible changes) 
+	Recommended setting is 4, this should lead to only small differences
+	(Default is 2.6, which should lead to invisible changes)
+
+--reduce-point-density-polygon=NUM
+	Allows to set the maximal allowed error distance for the DP algorythm
+	to be applied against polygons. Recommended setting is 8.
 
 --merge-lines
 	Try to merge lines. This helps the simplify filter to straighten out

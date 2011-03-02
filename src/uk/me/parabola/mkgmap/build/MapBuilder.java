@@ -114,6 +114,7 @@ public class MapBuilder implements Configurable {
 	private String regionAbbr;
 
 	private double reducePointError;
+	private double reducePointErrorPolygon;
 	private boolean mergeLines;
 
 	private int		locationAutofillLevel;
@@ -135,6 +136,9 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
+ 		reducePointErrorPolygon = props.getProperty("reduce-point-density-polygon", -1);
+		if (reducePointErrorPolygon == -1)
+			reducePointErrorPolygon = reducePointError;
 		mergeLines = props.containsKey("merge-lines");
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
@@ -930,8 +934,8 @@ public class MapBuilder implements Configurable {
 			filters.addFilter(new SizeFilter(MIN_SIZE_POLYGON));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
-			if(reducePointError > 0)
-				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
+			if(reducePointErrorPolygon > 0)
+				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
