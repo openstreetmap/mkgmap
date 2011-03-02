@@ -879,7 +879,7 @@ public class MapBuilder implements Configurable {
 
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
-		if (mergeLines && res < 24) {
+		if (mergeLines && res < 22) {
 			LineMergeFilter merger = new LineMergeFilter();
 			lines = merger.merge(lines);
 		}
