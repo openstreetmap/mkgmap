@@ -147,7 +147,7 @@ public class ElementSaver {
 	public void addRelation(Relation rel) {
 		String type = rel.getTag("type");
 		if (type != null) {
-			if ("multipolygon".equals(type)) {
+			if ("multipolygon".equals(type) || "boundary".equals(type)) {
 				rel = createMultiPolyRelation(rel); 
 			} else if("restriction".equals(type)) {
 				if (ignoreTurnRestrictions)
