@@ -26,7 +26,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class Country {
 	// The country number.  This is not recorded in the file
-	private final char index;
+	private char index;
 	private Label label;
 
 	public Country(int index) {
@@ -47,5 +47,9 @@ public class Country {
 
 	public Label getLabel() {
 		return label;
+	}
+
+	public void setIndex(int index) {
+		this.index = (char) index;
 	}
 }

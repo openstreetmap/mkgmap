@@ -333,8 +333,11 @@ public class PlacesFile {
 		Collections.sort(keys);
 
 		List<Country> list = new ArrayList<Country>();
+		int index = 1;
 		for (SortKey<Country> key : keys) {
-			list.add(key.getObject());
+			Country c = key.getObject();
+			c.setIndex(index++);
+			list.add(c);
 		}
 		return list;
 	}
