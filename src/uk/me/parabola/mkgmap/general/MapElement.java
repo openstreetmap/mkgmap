@@ -50,6 +50,7 @@ public abstract class MapElement {
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
 		extTypeAttributes = orig.extTypeAttributes;
+		attributes.putAll(orig.attributes);
 	}
 
 	/**
