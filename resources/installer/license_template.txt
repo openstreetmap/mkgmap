@@ -1,0 +1,6 @@
+OSM Street map
+http://www.openstreetmap.org/
+
+Map data licenced under Creative Commons Attribution ShareAlike 2.0
+http://creativecommons.org/licenses/by-sa/2.0/
+
