@@ -13,6 +13,7 @@
 	<country name="Albania" abr="ALB">
 		<variant>AL</variant>
 		<variant>ALB</variant>
+		<variant>Shqipëria</variant>
 	</country>
 	<country name="Algeria" abr="DZA">
 		<variant>DZ</variant>
@@ -86,10 +87,13 @@
 	<country name="Belarus" abr="BLR">
 		<variant>BY</variant>
 		<variant>BLR</variant>
+		<variant>Réspublíka Belarus'</variant>
 	</country>
-	<country name="Belgium" abr="BEL">
+	<country name="Belgique" abr="BEL">
 		<variant>BE</variant>
 		<variant>BEL</variant>
+		<variant>Belgium</variant>
+		<variant>Belgien</variant>
 	</country>
 	<country name="Belize" abr="BLZ">
 		<variant>BZ</variant>
@@ -116,9 +120,10 @@
 		<variant>BQ</variant>
 		<variant>BES</variant>
 	</country>
-	<country name="Bosnia and Herzegovina" abr="BIH">
+	<country name="Bosna I Hercegovina" abr="BIH">
 		<variant>BA</variant>
 		<variant>BIH</variant>
+		<variant>Bosnia and Herzegovina</variant>		
 	</country>
 	<country name="Botswana" abr="BWA">
 		<variant>BW</variant>
@@ -225,9 +230,10 @@
 		<variant>CI</variant>
 		<variant>CIV</variant>
 	</country>
-	<country name="Croatia" abr="HRV">
+	<country name="Hrvatska" abr="HRV">
 		<variant>HR</variant>
 		<variant>HRV</variant>
+		<variant>Croatia</variant>
 	</country>
 	<country name="Cuba" abr="CUB">
 		<variant>CU</variant>
@@ -241,9 +247,11 @@
 		<variant>CY</variant>
 		<variant>CYP</variant>
 	</country>
-	<country name="Czech Republic" abr="CZE">
+	<country name="Ceská Republika" abr="CZE">
 		<variant>CZ</variant>
 		<variant>CZE</variant>
+		<variant>Czech Republic</variant>
+		<variant>Česká republika</variant>
 	</country>
 	<country name="Danmark" abr="DNK">
 		<variant>Denmark</variant>
@@ -299,6 +307,7 @@
 	<country name="Faroe Islands" abr="FRO">
 		<variant>FO</variant>
 		<variant>FRO</variant>
+		<variant>Føroyar</variant>
 	</country>
 	<country name="Fiji" abr="FJI">
 		<variant>FJ</variant>
@@ -312,6 +321,7 @@
 	<country name="France" abr="FRA">
 		<variant>FR</variant>
 		<variant>FRA</variant>
+		<variant>Metropolitan France</variant>
 	</country>
 	<country name="French Guiana" abr="GUF">
 		<variant>GF</variant>
@@ -354,6 +364,7 @@
 	<country name="Greece" abr="GRC">
 		<variant>GR</variant>
 		<variant>GRC</variant>
+		<variant>Elláda</variant>
 	</country>
 	<country name="Greenland" abr="GRL">
 		<variant>GL</variant>
@@ -415,6 +426,7 @@
 	<country name="Hungary" abr="HUN">
 		<variant>HU</variant>
 		<variant>HUN</variant>
+		<variant>Magyarország</variant>
 	</country>
 	<country name="Ísland" abr="ISL" poiDispFlag="0xc">
 		<variant>Lýðveldið Ísland</variant>
@@ -510,9 +522,10 @@
 		<variant>LA</variant>
 		<variant>LAO</variant>
 	</country>
-	<country name="Latvia" abr="LVA">
+	<country name="Latvija" abr="LVA">
 		<variant>LV</variant>
 		<variant>LVA</variant>
+		<variant>Latvia</variant>
 	</country>
 	<country name="Lebanon" abr="LBN">
 		<variant>LB</variant>
@@ -535,21 +548,24 @@
 		<variant>LI</variant>
 		<variant>LIE</variant>
 	</country>
-	<country name="Lithuania" abr="LTU">
+	<country name="Lietuva" abr="LTU">
 		<variant>LT</variant>
 		<variant>LTU</variant>
+		<variant>Lithuania</variant>
 	</country>
 	<country name="Luxembourg" abr="LUX">
 		<variant>LU</variant>
 		<variant>LUX</variant>
+		<variant>Groussherzogtum Lëtzebuerg</variant>
 	</country>
 	<country name="Macao" abr="MAC">
 		<variant>MO</variant>
 		<variant>MAC</variant>
 	</country>
-	<country name="Macedonia" abr="MKD">
+	<country name="Makedonija" abr="MKD">
 		<variant>MK</variant>
 		<variant>MKD</variant>
+		<variant>Macedonia</variant>
 	</country>
 	<country name="Madagascar" abr="MDG">
 		<variant>MG</variant>
@@ -649,9 +665,11 @@
 		<variant>NP</variant>
 		<variant>NPL</variant>
 	</country>
-	<country name="Netherlands" abr="NLD">
+	<country name="Nederland" abr="NLD">
 		<variant>NL</variant>
 		<variant>NLD</variant>
+		<variant>Netherlands</variant>
+		<variant>The Netherlands</variant>
 	</country>
 	<country name="New Caledonia" abr="NCL">
 		<variant>NC</variant>
@@ -731,9 +749,10 @@
 		<variant>PN</variant>
 		<variant>PCN</variant>
 	</country>
-	<country name="Poland" abr="POL">
+	<country name="Polska" abr="POL">
 		<variant>PL</variant>
 		<variant>POL</variant>
+		<variant>Poland</variant>
 	</country>
 	<country name="Portugal" abr="PRT" poiDispFlag="0xc">
 		<variant>PT</variant>
@@ -752,13 +771,17 @@
 		<variant>RE</variant>
 		<variant>REU</variant>
 	</country>
-	<country name="Romania" abr="ROU">
+	<country name="România" abr="ROU">
 		<variant>RO</variant>
 		<variant>ROU</variant>
+		<variant>Romania</variant>
 	</country>
 	<country name="Russian Federation" abr="RUS">
 		<variant>RU</variant>
 		<variant>RUS</variant>
+		<variant>Russia</variant>
+		<variant>Rossiâ</variant>
+		<variant>Rossijskaâ Federaciâ</variant>
 	</country>
 	<country name="Rwanda" abr="RWA">
 		<variant>RW</variant>
@@ -822,9 +845,10 @@
 		<variant>SN</variant>
 		<variant>SEN</variant>
 	</country>
-	<country name="Serbia" abr="SRB">
+	<country name="Srbija" abr="SRB">
 		<variant>RS</variant>
 		<variant>SRB</variant>
+		<variant>Serbia</variant>
 	</country>
 	<country name="Seychelles" abr="SYC">
 		<variant>SC</variant>
@@ -845,10 +869,12 @@
 	<country name="Slovakia" abr="SVK">
 		<variant>SK</variant>
 		<variant>SVK</variant>
+		<variant>Slovensko</variant>
 	</country>
-	<country name="Slovenia" abr="SVN">
+	<country name="Slovenija" abr="SVN">
 		<variant>SI</variant>
 		<variant>SVN</variant>
+		<variant>Slovenia</variant>
 	</country>
 	<country name="Solomon Islands" abr="SLB">
 		<variant>SB</variant>
@@ -956,6 +982,7 @@
 	<country name="Turkey" abr="TUR">
 		<variant>TR</variant>
 		<variant>TUR</variant>
+		<variant>Türkiye</variant>
 	</country>
 	<country name="Turkmenistan" abr="TKM">
 		<variant>TM</variant>
@@ -973,9 +1000,10 @@
 		<variant>UG</variant>
 		<variant>UGA</variant>
 	</country>
-	<country name="Ukraine" abr="UKR">
+	<country name="Ukrayina" abr="UKR">
 		<variant>UA</variant>
 		<variant>UKR</variant>
+		<variant>Ukraine</variant>
 	</country>
 	<country name="United Arab Emirates" abr="ARE">
 		<variant>AE</variant>
@@ -988,6 +1016,7 @@
 		<variant>Northern Ireland</variant>
 		<variant>Great Britain</variant>
 		<variant>Great Britian</variant>
+		<variant>Gibraltar / United Kingdom</variant>
 		<variant>UK</variant>
 		<variant>GB</variant>
 		<variant>GBR</variant>
@@ -996,7 +1025,6 @@
 		<variant>US</variant>
 		<variant>USA</variant>
 	</country>
-
 	<country name="United States Minor Outlying Islands" abr="UMI">
 		<variant>UM</variant>
 		<variant>UMI</variant>
