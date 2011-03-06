@@ -116,6 +116,7 @@
 				<include name="**/*.trans"/>
 				<include name="styles/**"/>
 				<include name="help/**"/>
+				<include name="installer/**"/>
 				<include name="sort/**"/>
 				<exclude name="**/.*"/>
 			</fileset>
@@ -202,6 +203,7 @@
 			<include name="styles/**"/>
 			<include name="sort/**"/>
 			<include name="help/**"/>
+			<include name="installer/**"/>
 		</jar>
 
 		<copy todir="${dist}/doc" >
