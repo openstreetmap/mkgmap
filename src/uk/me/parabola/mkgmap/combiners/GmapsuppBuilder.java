@@ -29,6 +29,8 @@ import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.srt.SRTFile;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -75,12 +77,14 @@ public class GmapsuppBuilder implements Combiner {
 	private String overallDescription = "Combined map";
 	private String outputDir;
 	private MpsFile mpsFile;
+	private Sort sort;
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
+		sort = args.getSort();
 	}
 
 	/**
@@ -109,6 +113,7 @@ public class GmapsuppBuilder implements Combiner {
 
 			addAllFiles(imgFs);
 
+			writeSrtFile(imgFs);
 			writeMpsFile();
 
 		} catch (FileNotWritableException e) {
@@ -118,6 +123,33 @@ public class GmapsuppBuilder implements Combiner {
 			if (imgFs != null)
 				imgFs.close();
 		}
+	}
+
+	/**
+	 * Write the SRT file.
+	 * @param imgFs The filesystem to create the SRT file in.
+	 * @throws FileNotWritableException If it cannot be created.
+	 */
+	private void writeSrtFile(FileSystem imgFs) throws FileNotWritableException {
+		if (sort.getId1() == 0 && sort.getId2() == 0)
+			return;
+		
+		SRTFile srtFile;
+		ImgChannel channel;
+		try {
+			channel = imgFs.create("MAKEGMAP.SRT");
+			srtFile = new SRTFile(channel);
+		} catch (FileExistsException e) {
+			// well it shouldn't exist!
+			log.error("could not create SRT file as it exists already");
+			throw new FileNotWritableException("already existed", e);
+		}
+
+		srtFile.setSort(sort);
+		srtFile.write();
+		srtFile.close();
+
+		Utils.closeFile(channel);
 	}
 
 	/**
