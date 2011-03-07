@@ -63,7 +63,7 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
 
-	private static final String READING_CHARSET = "UTF-8";
+	private static final String READING_CHARSET = "iso-8859-1";
 
 	private static final int S_IMG_ID = 1;
 	private static final int S_POINT = 2;
@@ -113,6 +113,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			// Java is required to support iso-8859-1 so this is unlikely
 			throw new FormatException("Unrecognised charset " + READING_CHARSET);
 		}
+
+		// If no code page is given then we read labels in utf-8
+		dec = Charset.forName("utf-8").newDecoder();
+		dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
 
 		BufferedReader in = new BufferedReader(reader);
 		try {
