@@ -702,8 +702,8 @@ public class MapBuilder implements Configurable {
 		//
 		// We use it to add copyright information that there is no room for
 		// elsewhere.
-		map.addInfo("OSM Street map");
-		map.addInfo("http://www.openstreetmap.org/");
+		map.addInfo("OpenStreetMap and contributors");
+		map.addInfo("www.openstreetmap.org");
 		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
 		map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
 
