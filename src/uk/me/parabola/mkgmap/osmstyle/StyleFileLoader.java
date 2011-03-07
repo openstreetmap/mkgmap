@@ -54,8 +54,11 @@ public abstract class StyleFileLoader {
 		File file = new File(loc);
 		if (file.isDirectory()) {
 			File dir = file;
-			if (name != null)
+			if (name != null) {
 				dir = new File(file, name);
+				if (!dir.isDirectory())
+					dir = file;
+			}
 
 			log.debug("style directory", dir);
 			loader = new DirectoryFileLoader(dir);
