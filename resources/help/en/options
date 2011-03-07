@@ -18,11 +18,11 @@ filename
 	this option is set. Files must have OSM or PBF fileformat.	
 
 --gmapsupp
-	Write a gmapsupp.img file that can be uploaded to a Garmin or
+	Create a gmapsupp.img file that can be uploaded to a Garmin or
 	placed in "/Garmin" in a microSD card (such as by mounting the
-	device in USB mass storage mode).
-	TODO: explain if this is in addition to or instead of the
-	per-input files.
+	device in USB mass storage mode).  It can be used on ready
+	compiled img files, if the input files are not already compiled
+	then they are compiled first and then the gmapsupp is created.
 
 -c filename
 --read-config=filename
@@ -68,35 +68,31 @@ filename
 
 Label options:
 
---charset=name
-	This option allows the use of non-ascii characters in street
-	names. It is hardware dependant what is actually supported on
-	a particular device. Some devices can only do ascii characters
-	for example.
-
-	Mkgmap goes to some length to convert un-displayable characters
-	however and by default (without this option) it will transliterate
-	characters to unaccented ascii characters where possible.
-
 --latin1
-	This is equivalent to --charset=latin1.
+	This is equivalent to --code-page=1252.
 
 --code-page=number
-	TODO: is one really supposed to give two single quotes?
-	Write the given code page number to the header of the LBL file. 
-	Some examples on the mailing list use --code-page=1252.
-	TODO: explain what this does, and why one would or would not want
-	to do it.
+  This option enables the use of international characters. Only 8 bit
+  character sets are supported and so you have to specify which code page
+  you want to use.
+
+	It is entirely dependant on the device firmware which code pages are
+	supported.
+	
+--charset=name
+	This option is obsolete. Change the character set with the --code-page
+	option.
 
 --lower-case
-	Allow labels to contain lower case letters.  Note that this
-	doesn't work on many (most, all?) Garmin devices.
+	Allow labels to contain lower case letters.  Note that most or all
+	Garmin devices are not able to display lower case letters at an angle
+	so this option is not generally useful.
 
 Style options:
 
 --style=name
 	Specify a different style name, rather than the default value
-	(which is the word default).
+	(which is the name default).
 
 --style-file=file
 	Specify an external file to obtain the style from.  "file" can
@@ -105,18 +101,24 @@ Style options:
 	path must be absolute or relative to the current working
 	directory when mkgmap is invoked.
 
-	The file can be a zip file instead of a directory.  TODO-check
-	this: In this case, the zip file should contain directories
-	with styles, and the style 'default' will be used, unless the
-	--style option is also given to select a different one.
+	The file can be a zip file containing the files instead of a
+	directory.
 
-	The argument can also be a URL, in which case TODO.
+	The files can be at the top level or contained in a folder within
+	the zip file.  If the zip file contains more than one top level
+	folder then each folder is the name of a style that can be selected
+	with the --style option.
+
+	The argument can also be a URL that specifies the location of a
+	style file.
 
 	For backward compatibility, you can also supply a
-	map-features.csv file here.  See the customisation help.
+	map-features.csv file here.  Support for that format is likely
+	to be dropped in the future.
 
 --list-styles
-	List the available styles.
+	List the available styles. If this option is preceeded by a style-file
+	option then it lists the styles available within that file.
 
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
@@ -144,16 +146,13 @@ Product description options:
 	family name of all of your maps. Garmin will display this
 	in the map selection screen.
 	Example: --family-name="OpenStreetmap mkgmap XL 2019"
-	TODO: at least the "-" character seems to have a strange
-	effect on the family name; latin-alphabet and digits seem
-	safe, but other characters should be checked.
 
 --product-id
 	This is an integer that identifies a product within a family.
-	It is often just 1.
+	It is often just 1, which is the default.
 
 --product-version
-	The version of the product.
+	The version of the product. Default value is 1.
 
 --series-name
 	This name will be displayed in MapSource in the map selection
@@ -203,12 +202,13 @@ Miscellaneous options:
 	processing a job - continue to process the other jobs.
 
 --block-size=number
-	Changes the block size that is used in the generated map.
-	TODO: explain what this meant
-	Use of this option is not recommended.
+	Changes the block size that is used in the generated map. This
+	option is not usually needed, but sometimes an error message
+	will ask you to try a value for this option.
 
 --net
-	Create maps that supports the "lock to road" option.
+	Create maps that supports the "lock to road" option. Not required
+	if --route is also given.
 
 --route
 	Experimental: Create maps that support routing.  This implies --net
@@ -411,7 +411,7 @@ Miscellaneous options:
 --tdbfile
 	Write a .tdb file.
 --tdb-v3
-	Write a version 3 tdb file instead of the default v4.
+	Write a version 3 tdb file instead of the default v4. Not useful.
 
 --show-profiles=1
 	Sets a flag in tdb file which marks set mapset as having contour 
