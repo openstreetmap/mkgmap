@@ -216,11 +216,10 @@
 				<include name="README"/>
 				<include name="LICENCE*"/>
 			</fileset>
-
-			<resources>
-				<file file="${protobuf.jar}"/>
-				<file file="${osmprotobuf.jar}"/>
-			</resources>
+			<files>
+				<include name="${protobuf.jar}"/>
+				<include name="${osmprotobuf.jar}"/>
+			</files>
 		</copy>
 
 		<mkdir dir="${dist}/examples"/>
