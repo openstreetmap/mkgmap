@@ -94,7 +94,6 @@ public class MapBuilder implements Configurable {
 	private static final int CLEAR_TOP_BITS = (32 - 15);
 	
 	private static final int MIN_SIZE_LINE = 1;
-	private static final int MIN_SIZE_POLYGON = 8;
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
@@ -113,6 +112,7 @@ public class MapBuilder implements Configurable {
 	private String regionName;
 	private String regionAbbr;
 
+	private int minSizePolygon;
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
@@ -135,6 +135,7 @@ public class MapBuilder implements Configurable {
 		countryAbbr = props.getProperty("country-abbr", countryAbbr);
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
+ 		minSizePolygon = props.getProperty("min-size-polygon", 8);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
  		reducePointErrorPolygon = props.getProperty("reduce-point-density-polygon", -1);
 		if (reducePointErrorPolygon == -1)
@@ -931,7 +932,8 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(MIN_SIZE_POLYGON));
+			if (minSizePolygon > 0)
+				filters.addFilter(new SizeFilter(minSizePolygon));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)

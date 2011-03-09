@@ -1498,6 +1498,7 @@
     <inspection_tool class="SameReturnValue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SecondUnsafeCall" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SelfIncludingJspFiles" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="Semicolon_end_problem" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="SerialPersistentFieldsWithWrongSignature" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SerialVersionUIDNotStaticFinal" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SerializableClassInSecureContext" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1963,5 +1964,11 @@
       </option>
     </inspection_tool>
     <inspection_tool class="gwtRawAsyncCallback" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="inspection_null_to_primary_type_variable" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="inspection_parametermap_in_statement" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="inspection_resultmap_in_select" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="inspection_select_result_absent" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="inspection_sqlmap_not_in_configuration" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="inspection_symbol_in_sql" enabled="false" level="ERROR" enabled_by_default="false" />
   </profile>
 </component>
