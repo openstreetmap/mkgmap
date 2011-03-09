@@ -52,7 +52,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	private Style style;
 	private final OsmReadingHooks[] POSSIBLE_HOOKS = {
 			new SeaGenerator(),
+			new MultiPolygonFinishHook(),
 			new HighwayHooks(),
+			new LocationHook(),
 	};
 	private OsmConverter converter;
 	private final Set<String> usedTags = new HashSet<String>();

@@ -663,23 +663,20 @@ public class StyledConverter implements OsmConverter {
 		
 		// Now try to get some address info for POIs
 		
-		String city         = element.getTag("addr:city");
-		String zip          = element.getTag("addr:postcode");
+		String country      = element.getTag("mkgmap:country");
+		String region       = element.getTag("mkgmap:region");
+		String city         = element.getTag("mkgmap:city");
+		String zip          = element.getTag("mkgmap:postal_code");
 		String street 	    = element.getTag("addr:street");
 		String houseNumber  = element.getTag("addr:housenumber");
 		String phone        = element.getTag("phone");
 		String isIn         = element.getTag("is_in");
-		String country      = element.getTag("is_in:country");
-		String region       = element.getTag("is_in:county");
-		
-		if(country == null)
-			country = element.getTag("addr:country");
 
-		if(zip == null)
-			zip = element.getTag("openGeoDB:postal_codes");
-		
-		if(city == null)
-			city = element.getTag("openGeoDB:name");
+		if(country != null)
+			ms.setCountry(country);
+
+		if(region != null)
+			ms.setRegion(region);
 		
 		if(city != null)
 			ms.setCity(city);
@@ -699,12 +696,8 @@ public class StyledConverter implements OsmConverter {
 		if(phone != null)
 			ms.setPhone(phone);
 
-		if(country != null)
-			ms.setCountry(country);
 
-		if(region != null)
-			ms.setRegion(region);
-
+		
 		if(MapObject.hasExtendedType(gt.getType())) {
 			// pass attributes with mkgmap:xt- prefix (strip prefix)
 			Map<String,String> xta = element.getTagsWithPrefix("mkgmap:xt-", true);

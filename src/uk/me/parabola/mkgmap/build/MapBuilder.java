@@ -258,18 +258,22 @@ public class MapBuilder implements Configurable {
 			{
 				Country thisCountry;
 
-				String CountryStr = p.getCountry();
-				String RegionStr  = p.getRegion();
+				String countryStr = p.getCountry();
+				if (countryStr != null) {
+					countryStr = locator.fixCountryString(countryStr);
+					p.setCountry(countryStr);
+				}
 
-				if(CountryStr != null)
-					thisCountry = lbl.createCountry(CountryStr, locator.getCountryCode(CountryStr));
-				else
+				if(countryStr != null) {
+					thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
+				} else
 					thisCountry = country;
 
+				String regionStr  = p.getRegion();
 				Region thisRegion;
-				if(RegionStr != null)
+				if(regionStr != null)
 				{
-					thisRegion = lbl.createRegion(thisCountry,RegionStr, null);
+					thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 				}
 				else
 					thisRegion = region;
@@ -290,25 +294,29 @@ public class MapBuilder implements Configurable {
 			if(line.isRoad()) {
 				String cityName = line.getCity();
 				String cityCountryName = line.getCountry();
+				if (cityCountryName != null) {
+					cityCountryName = locator.fixCountryString(cityCountryName);
+					line.setCountry(cityCountryName);
+				}
 				String cityRegionName  = line.getRegion();
 				String zipStr = line.getZip();
 
-				if(cityName == null) {
-					// Get name of next city if untagged
-
-					tempPoint.setLocation(line.getLocation());
-					MapPoint nextCity = locator.findNextPoint(tempPoint);
-
-					if(nextCity != null) {
-						cityName = nextCity.getCity();
-						if(cityCountryName == null)
-							cityCountryName = nextCity.getCountry();
-						if(cityRegionName == null)
-							cityRegionName = nextCity.getRegion();
-						if(zipStr == null)
-							zipStr = nextCity.getZip();
-					}
-				}
+//				if(cityName == null) {
+//					// Get name of next city if untagged
+//
+//					tempPoint.setLocation(line.getLocation());
+//					MapPoint nextCity = locator.findNextPoint(tempPoint);
+//
+//					if(nextCity != null) {
+//						cityName = nextCity.getCity();
+//						if(cityCountryName == null)
+//							cityCountryName = nextCity.getCountry();
+//						if(cityRegionName == null)
+//							cityRegionName = nextCity.getRegion();
+//						if(zipStr == null)
+//							zipStr = nextCity.getZip();
+//					}
+//				}
 
 				if(cityName != null) {
 
@@ -341,12 +349,15 @@ public class MapBuilder implements Configurable {
 			if(p.isExit()) {
 				processExit(map, (MapExitPoint)p);
 			}
-			else if(!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses)) {
+			else if (!p.isCity())
+//				if(!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses)) 
+				{
+				
 				boolean doAutofill;
-				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
+//				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
 					doAutofill = true;
-				else
-					doAutofill = false;
+//				else
+//					doAutofill = false;
 				
 				
 				String countryStr = p.getCountry();

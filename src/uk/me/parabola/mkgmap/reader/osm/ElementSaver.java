@@ -14,7 +14,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -206,7 +205,6 @@ public class ElementSaver {
 	
 	public void finishLoading() {
 		coordMap = null;
-		finishMultiPolygons();
 	}
 
 	/**
@@ -242,29 +240,6 @@ public class ElementSaver {
 		converter.end();
 
 		relationMap = null;
-	}
-
-
-	private void finishMultiPolygons() {
-		for (Way way : wayMap.values()) {
-			String removeTag = way.getTag(MKGMAP_REMOVE_TAG);
-			if (removeTag == null) {
-				continue;
-			}
-			if (MKGMAP_REMOVE_TAG_ALL_KEY.equals(removeTag)) {
-				if (log.isDebugEnabled())
-					log.debug("Remove all tags from way",way.getId(),way.toTagString());
-				way.removeAllTags();
-			} else {
-				String[] tagsToRemove = removeTag.split(";");
-				if (log.isDebugEnabled())
-					log.debug("Remove tags",Arrays.toString(tagsToRemove),"from way",way.getId(),way.toTagString());
-				for (String rTag : tagsToRemove) {
-					way.deleteTag(rTag);
-				}
-				way.deleteTag(MKGMAP_REMOVE_TAG);
-			}
-		}
 	}
 
 	/**
@@ -564,6 +539,10 @@ public class ElementSaver {
 		map.put(p, inc);
 	}
 
+	public Map<Long, Node> getNodes() {
+		return nodeMap;
+	}
+	
 	public Map<Long, Way> getWays() {
 		return wayMap;
 	}

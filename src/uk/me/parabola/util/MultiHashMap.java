@@ -21,7 +21,7 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	* @return a list of values for the given keys or the empty list of no such
 	*         value exist.
 	*/
-	public List<V> get(K key) {
+	public List<V> get(Object key) {
 		List<V> result = super.get(key);
 		return result == null ? emptyList : result;
 	}

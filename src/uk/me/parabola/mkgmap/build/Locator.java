@@ -55,14 +55,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
-import uk.me.parabola.mkgmap.general.MapPointMultiMap;
 
 public class Locator {
+	private static final Logger log = Logger.getLogger(Locator.class);
 
 	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
-	private final MapPointMultiMap  	fuzzyCityMap			= new MapPointMultiMap();
+//	private final MapPointMultiMap  	fuzzyCityMap			= new MapPointMultiMap();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
 	private final LocatorConfig locConfig = new LocatorConfig();
@@ -74,21 +75,24 @@ public class Locator {
 	public void addLocation(MapPoint p) 
 	{
 		resolveIsInInfo(p); // Pre-process the is_in field
-		
-		if(autoFillLevel < 1 &&  p.getCity() == null)
-		{			
-			// Without auto-fill city name is the name of the tag
-			p.setCity(p.getName());
-		}
+
+
+//		if(autoFillLevel < 1 &&  p.getCity() == null)
+//		{			
+//			// Without auto-fill city name is the name of the tag
+//			p.setCity(p.getName());
+//		}
 		
 		if(p.getCity() != null)
 		{
+			if (log.isDebugEnabled())
+			log.debug(p.getCity()+" "+p.getRegion()+" "+p.getCountry());
 			cityMap.put(p.getCity(), p);
 			
-			fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
-
-			if(p.getName() != null && !p.getCity().equals(p.getName())) // Name variants ?
-				fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
+//			fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
+//
+//			if(p.getName() != null && !p.getCity().equals(p.getName())) // Name variants ?
+//				fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
 		}
 		else
 		{
@@ -170,13 +174,15 @@ public class Locator {
 			if(cityList.length > 1 &&
 				isContinent(cityList[cityList.length-1]))	// Is last a continent ?
 			{
-				// The one before continent should be the country
-				p.setCountry(fixCountryString(cityList[cityList.length-2].trim()));
-
+				if (p.getCountry() == null) {
+					// The one before continent should be the country
+					p.setCountry(fixCountryString(cityList[cityList.length-2].trim()));
+				}
+				
 				// aks the config which info to use for region info				
 				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
 
-				if(cityList.length > offset)
+				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[cityList.length-(offset+1)].trim());
 
 			}
@@ -185,12 +191,14 @@ public class Locator {
 
 			if(cityList.length > 1 && isContinent(cityList[0]))	// Is first a continent ?
 			{
-				// The one before continent should be the country
-				p.setCountry(fixCountryString(cityList[1].trim()));
+				if (p.getCountry() == null) {
+					// The one before continent should be the country
+					p.setCountry(fixCountryString(cityList[1].trim()));
+				}
 				
 				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
 
-				if(cityList.length > offset)
+				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[offset].trim());
 			}	
 
@@ -208,8 +216,8 @@ public class Locator {
 
 					int offset = locConfig.getRegionOffset(countryStr) + 1;
 
-					if(cityList.length > offset)
-		     		p.setRegion(cityList[cityList.length-(offset+1)].trim());	
+					if(cityList.length > offset && p.getRegion() == null)
+						p.setRegion(cityList[cityList.length-(offset+1)].trim());	
 				}
 			}
 		}
@@ -259,21 +267,21 @@ public class Locator {
 			}
 	 	}
 		
-		nextCityList = fuzzyCityMap.getList(fuzzyDecode(p.getCity()));
-		
-		if(nextCityList != null)
-		{
-			for (MapPoint nextCity: nextCityList)		
-			{
-				Double dist = p.getLocation().distance(nextCity.getLocation());
-
-				if(dist < minDist)
-				{
-					minDist = dist;
-					near = nextCity;
-				}
-			}
-	 	}
+//		nextCityList = fuzzyCityMap.getList(fuzzyDecode(p.getCity()));
+//		
+//		if(nextCityList != null)
+//		{
+//			for (MapPoint nextCity: nextCityList)		
+//			{
+//				Double dist = p.getLocation().distance(nextCity.getLocation());
+//
+//				if(dist < minDist)
+//				{
+//					minDist = dist;
+//					near = nextCity;
+//				}
+//			}
+//	 	}
 		
 		if(near != null && minDist < 30000) // Wrong hit more the 30 km away ?
 			return near;
@@ -300,9 +308,9 @@ public class Locator {
 				String biggerCityName = aCityList.trim();
 
 
-				if (fuzzy)
-					nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
-				else
+//				if (fuzzy)
+//					nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
+//				else
 					nextCityList = cityMap.getList(biggerCityName);
 
 				if (nextCityList != null) {
@@ -380,8 +388,10 @@ public class Locator {
 
 
 					if (near != null) {
-						place.setCity(near.getCity());
-						place.setZip(near.getZip());
+						if (place.getCity()==null)
+							place.setCity(near.getCity());
+						if (place.getZip() == null)
+							place.setZip(near.getZip());
 					} else if (autoFillLevel > 1 && (runCount + 1) == maxRuns) {
 						// In the last resolve run just take info from the next known city
 						near = cityMap.findNextPoint(place);
@@ -390,7 +400,7 @@ public class Locator {
 							// In OpenGeoDB Countries I don't want to mess up the info which city is a
 							// real independent Community in all other countries I just have to do it
 
-							if(!isOpenGeoDBCountry(near.getCountry()))
+							if(!isOpenGeoDBCountry(near.getCountry()) && place.getCity() == null)
 								place.setCity(place.getName());
 						}
 					}
@@ -420,7 +430,7 @@ public class Locator {
 					if( place.getCity() != null)
 					{
 						cityMap.put(place.getName(),place);
-						fuzzyCityMap.put(fuzzyDecode(place.getName()),place);
+//						fuzzyCityMap.put(fuzzyDecode(place.getName()),place);
 						placesMap.set(i, null);
 					}
 					else if(autoFillLevel < 2 && (runCount + 1) == maxRuns)
@@ -442,21 +452,21 @@ public class Locator {
 		
 	}
 
-	private String fuzzyDecode(String stringToDecode)
-	{
-
-		if(stringToDecode == null)
-			return stringToDecode;
-
-		String decodeString = stringToDecode.toUpperCase().trim();
-
-		// German umlaut resolution
-		//decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
-		
-		//if(decodeString.equals(stringToDecode) == false)
-		//	System.out.println(stringToDecode + " -> " + decodeString);
-
-		return (decodeString);
-	}
+//	private String fuzzyDecode(String stringToDecode)
+//	{
+//
+//		if(stringToDecode == null)
+//			return stringToDecode;
+//
+//		String decodeString = stringToDecode.toUpperCase().trim();
+//
+//		// German umlaut resolution
+//		//decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
+//		
+//		//if(decodeString.equals(stringToDecode) == false)
+//		//	System.out.println(stringToDecode + " -> " + decodeString);
+//
+//		return (decodeString);
+//	}
 }
 
