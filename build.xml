@@ -226,6 +226,7 @@
 
 		<copy todir="${dist}/examples">
 			<fileset dir="resources">
+				<include name="installer/*"/>
 				<include name="styles/default/*"/>
 				<include name="styles/noname/*"/>
 				<include name="chars/ascii/row02.trans"/>

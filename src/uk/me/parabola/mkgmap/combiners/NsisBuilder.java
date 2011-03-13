@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,13 +88,23 @@ public class NsisBuilder implements Combiner {
 
 	private void writeNsisFile() {
 		Writer w = null;
-		InputStream is = getClass().getResourceAsStream("/installer/installer_template.nsi");		
-		if (is == null) {
+		InputStream inStream = null;
+
+		try {
+			inStream = new FileInputStream("resources/installer_template.nsi");
+		} catch (Exception ex) {
+			inStream = null;
+		}
+
+		if(inStream == null)	// If not loaded from disk use from jar file
+			inStream = this.getClass().getResourceAsStream("/installer/installer_template.nsi");
+		
+		if (inStream == null) {
 			System.err.println("Could not find the installer template.");
 			return;
 		}
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
 			w = new FileWriter(Utils.joinPath(outputDir, nsisFilename));
 			PrintWriter pw = new PrintWriter(w);
 			
@@ -124,6 +135,10 @@ public class NsisBuilder implements Combiner {
 			pw.format(Locale.ROOT, "!define MAPNAME \"%s\"\n", baseFilename);
 			pw.format(Locale.ROOT, "!define PRODUCT_ID \"%s\"\n", productId);
 			pw.format(Locale.ROOT, "!define REG_KEY \"%s\"\n", familyName);
+			if (hasIndex)
+				pw.format(Locale.ROOT, "!define INDEX\n");
+			if (hasTyp)
+				pw.format(Locale.ROOT, "!define TYPNAME \"%s\"\n", typName);
 	}
 
 	private void writeRegBin(PrintWriter pw) {
@@ -168,13 +183,22 @@ public class NsisBuilder implements Combiner {
 	 */
 	private void writeLicenceFile() {
 		Writer w = null;
-		InputStream is = getClass().getResourceAsStream("/installer/license_template.txt");
-		if (is == null) {
+		InputStream inStream = null;
+		try {
+			inStream = new FileInputStream("resources/license_template.txt");
+		} catch (Exception ex) {
+			inStream = null;
+		}
+
+		if(inStream == null)	// If not loaded from disk use from jar file
+			inStream = this.getClass().getResourceAsStream("/installer/license_template.txt");
+		
+		if (inStream == null) {
 			System.err.println("Could not find the license template.");
 			return;
 		}
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
 			w = new FileWriter(Utils.joinPath(outputDir, licenseFilename));
 			PrintWriter pw = new PrintWriter(w);
 			
