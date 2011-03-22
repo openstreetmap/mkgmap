@@ -117,10 +117,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	protected void removeAllTags() {
-		if (tags != null) {
-			tags.removeAll();
-			tags = null;
-		}
+		tags = null;
 	}
 
 	public Iterable<Map.Entry<String, String>> getEntryIteratable() {

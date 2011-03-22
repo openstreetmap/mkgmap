@@ -148,7 +148,7 @@ public class Area {
 	 *
 	 * @return The largest dimension in map units.
 	 */
-	public int getMaxDimention() {
+	public int getMaxDimension() {
 		return Math.max(getWidth(), getHeight());
 	}
 
