@@ -120,11 +120,12 @@ historic=museum | historic=memorial [0x1e resolution 20]
 historic=archaeological_site | historic=ruins [0x1e resolution 21]
 
 # building tag should be last
-(building=* | amenity=* | tourism=*) & area!=no [0x13 resolution 24]
+(building=* | amenity=*) & area!=no [0x13 resolution 24]
+tourism=* & area!=no & waterway!=* [0x13 resolution 24]
 # man_made can be used on areas or lines
 man_made=* & area!=no
 & (man_made!=door & man_made!=embankment & man_made!=breakwater
-   & man_made!=cutline & man_made!=cutting)
+   & man_made!=cutline & man_made!=cutting & man_made!=levee)
 [0x13 resolution 24]
 man_made=* & area=yes
 [0x13 resolution 24]

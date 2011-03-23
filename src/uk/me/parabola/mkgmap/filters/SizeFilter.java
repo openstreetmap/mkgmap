@@ -47,7 +47,7 @@ public class SizeFilter implements MapFilter {
 		MapLine line = (MapLine) element;
 
 		// Drop things that are too small to get displayed
-		if (line.getBounds().getMaxDimention() < minSize)
+		if (line.getBounds().getMaxDimension() < minSize)
 			return;
 
 		next.doFilter(line);

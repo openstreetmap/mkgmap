@@ -68,14 +68,14 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		MapLine line = (MapLine) element;
 
-		if (line.getBounds().getMaxDimention() < maxSize) {
+		if (line.getBounds().getMaxDimension() < maxSize) {
 			next.doFilter(element);
 			return;
 		}
 
 		if(line instanceof MapRoad) {
 			MapRoad road = ((MapRoad)line);
-			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimention() + " and is about to be split (routing will be broken)");
+			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split (routing will be broken)");
 		}
 
 		List<Coord> points = line.getPoints();

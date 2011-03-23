@@ -987,7 +987,7 @@ public class MapBuilder implements Configurable {
 	 *         whole map.
 	 */
 	private int getMaxBits(MapDataSource src) {
-		int topshift = Integer.numberOfLeadingZeros(src.getBounds().getMaxDimention());
+		int topshift = Integer.numberOfLeadingZeros(src.getBounds().getMaxDimension());
 		int minShift = Math.max(CLEAR_TOP_BITS - topshift, 0);
 		return 24 - minShift;
 	}
