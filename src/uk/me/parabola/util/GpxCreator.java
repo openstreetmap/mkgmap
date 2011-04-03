@@ -4,20 +4,33 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 public class GpxCreator {
 	private static final Logger log = Logger.getLogger(GpxCreator.class);
 
 	public static String getGpxBaseName() {
-		return log.threadTag().substring(log.threadTag().lastIndexOf("/") + 1,
-				log.threadTag().indexOf(".osm.gz"))
-				+ "/";
+		String tilePath = (log.threadTag() == null ? "unknown" : log.threadTag());
+		
+		int tilenameStart = tilePath.lastIndexOf("/");
+		// check the case if the tiles are defined without path
+		tilenameStart = (tilenameStart < 0 ? 0 : tilenameStart+1);
+		
+		int tilenameEnd = tilePath.lastIndexOf(".osm");
+		if (tilenameEnd < tilenameStart) {
+			// the tiles do not end with .osm*
+			// do not cut the file ending
+			tilenameEnd = tilePath.length();
+		}
+		
+		return tilePath.substring(tilenameStart,tilenameEnd) + "/";
 	}
 
 	private static void addTrkPoint(PrintWriter pw, int latitude, int longitude) {
@@ -48,6 +61,18 @@ public class GpxCreator {
 		points.add(new Coord(bbox.getMinLat(), bbox.getMinLong()));
 
 		GpxCreator.createGpx(name, points);
+	}
+	
+	/**
+	 * Creates a gpx file for each way. The filename is the baseDir plus the id
+	 * of the way.
+	 * @param baseDir the base directory name
+	 * @param ways list of ways
+	 */
+	public static void createGpx(String baseDir, Collection<Way> ways) {
+		for (Way w : ways) {
+			GpxCreator.createGpx(baseDir+w.getId(), w.getPoints());
+		}
 	}
 
 	public static void createGpx(String name, List<Coord> points) {
