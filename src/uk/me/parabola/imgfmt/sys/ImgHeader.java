@@ -155,7 +155,7 @@ class ImgHeader {
 		header.putShort(OFF_SECTORS, (short) sectors);
 		int heads = 0x20;     // 0x20 appears to be max
 		header.putShort(OFF_HEADS, (short) heads);
-		int cylinders = 0x100;   // gives 128M will try more later
+		int cylinders = 0x400;   // gives 512M
 		header.putShort(OFF_CYLINDERS, (short) cylinders);
 		header.putShort(OFF_HEADS2, (short) heads);
 		header.putShort(OFF_SECTORS2, (short) sectors);
@@ -177,7 +177,7 @@ class ImgHeader {
 		header.put(OFF_START_CYLINDER, (byte) 0);
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
 		header.put(OFF_END_HEAD, (byte) (heads - 1));
-		header.put(OFF_END_SECTOR, (byte) sectors);
+		header.put(OFF_END_SECTOR, (byte) (sectors + (((cylinders-1) & 0x300) >> 2)));
 		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
 		header.putInt(OFF_REL_SECTORS, 0);
 		header.putInt(OFF_NUMBER_OF_SECTORS, (blocks * (1 << (exp - 9))));
