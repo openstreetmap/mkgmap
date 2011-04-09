@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -1159,7 +1158,18 @@ public class MultiPolygonRelation extends Relation {
 			
 			// the inner areas of the cut point have been processed
 			// they are no longer needed
-			areaCutData.innerAreas.removeAll(cutPoint.getAreas());
+			for (Area cutArea : cutPoint.getAreas()) {
+				ListIterator<Area> areaIter = areaCutData.innerAreas.listIterator();
+				while (areaIter.hasNext()) {
+					Area a = areaIter.next();
+					if (a == cutArea) {
+						areaIter.remove();
+						break;
+					}
+				}
+			}
+			// remove all does not seem to work. It removes more than the identical areas.
+//			areaCutData.innerAreas.removeAll(cutPoint.getAreas());
 
 			if (areaCutData.outerArea.isSingular()) {
 				// the area is singular
@@ -2120,13 +2130,14 @@ public class MultiPolygonRelation extends Relation {
 	private static class CutPoint implements Comparable<CutPoint>{
 		int startPoint = Integer.MAX_VALUE;
 		int stopPoint = Integer.MIN_VALUE;
-		final TreeSet<Area> areas;
+		final LinkedList<Area> areas;
+		private final Comparator<Area> comparator;
 		private final CoordinateAxis axis;
 
 		public CutPoint(CoordinateAxis axis) {
 			this.axis = axis;
-			this.areas = new TreeSet<Area>(
-					(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP : COMP_LAT_STOP));
+			this.areas = new LinkedList<Area>();
+			this.comparator = (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP : COMP_LAT_STOP);
 		}
 		
 		public CutPoint duplicate() {
@@ -2137,8 +2148,34 @@ public class MultiPolygonRelation extends Relation {
 			return newCutPoint;
 		}
 
+		private boolean isGoodCutPoint() {
+			// It is better if the cutting line is on a multiple of 2048. 
+			// Otherwise MapSource and QLandkarteGT paints gaps between the cuts
+			return getCutPoint() % 2048 == 0;
+		}
+		
 		public int getCutPoint() {
-			return startPoint + (stopPoint - startPoint) / 2;
+			int cutPoint = startPoint + (stopPoint - startPoint) / 2;
+			
+			// try to find a cut point that is a multiple of 2048 to 
+			// avoid that gaps are painted by MapSource and QLandkarteGT
+			// between the cutting lines
+			int cutMod = cutPoint % 2048;
+			if (cutMod == 0) {
+				return cutPoint;
+			}
+			
+			int cut1 = (cutMod > 0 ? cutPoint-cutMod : cutPoint  - 2048- cutMod);
+			if (cut1 >= startPoint && cut1 <= stopPoint) {
+				return cut1;
+			}
+			
+			int cut2 = (cutMod > 0 ? cutPoint + 2048 -cutMod : cutPoint - cutMod);
+			if (cut2 >= startPoint && cut2 <= stopPoint) {
+				return cut2;
+			}
+			
+			return cutPoint;
 		}
 
 		public Rectangle getCutRectangleForArea(Area toCut, boolean firstRect) {
@@ -2166,16 +2203,17 @@ public class MultiPolygonRelation extends Relation {
 
 		public void addArea(Area area) {
 			// remove all areas that do not overlap with the new area
-			while (!areas.isEmpty() && axis.getStop(areas.first()) < axis.getStart(area)) {
+			while (!areas.isEmpty() && axis.getStop(areas.getFirst()) < axis.getStart(area)) {
 				// remove the first area
-				areas.pollFirst();
+				areas.removeFirst();
 			}
 
 			areas.add(area);
+			Collections.sort(areas, comparator);
 			startPoint = axis.getStart(Collections.max(areas,
 				(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START
 						: COMP_LAT_START)));
-			stopPoint = axis.getStop(areas.first());
+			stopPoint = axis.getStop(areas.getFirst());
 		}
 
 		public int getNumberOfAreas() {
@@ -2186,6 +2224,14 @@ public class MultiPolygonRelation extends Relation {
 			if (this == o) {
 				return 0;
 			}
+			
+			if (isGoodCutPoint() != o.isGoodCutPoint()) {
+				if (isGoodCutPoint())
+					return 1;
+				else
+					return -1;
+			}
+			
 			int ndiff = getNumberOfAreas()-o.getNumberOfAreas();
 			if (ndiff != 0) {
 				return ndiff;

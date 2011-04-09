@@ -62,8 +62,8 @@ highway=* & oneway=yes & (access=private|access=no)
 highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; add display_name = '${name} (${ref})' }
 highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; add display_name = '${name} (${ref})' }
-highway=secondary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; add display_name = '${name} (${ref})' }
-highway=* {name '${ref} ${name}' | '${ref}' | '${name}' }
+highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; add display_name = '${name} (${ref})' }
+highway=* {name '${name}' | '${ref}' }
 
 # Flag unpaved roads.
 highway=*
@@ -104,7 +104,7 @@ junction=roundabout & highway=primary [0x0c road_class=3 road_speed=2 resolution
 junction=roundabout & highway=secondary [0x0c road_class=2 road_speed=2 resolution 20]
 junction=roundabout & highway=tertiary [0x0c road_class=1 road_speed=1 resolution 21]
 junction=roundabout & highway=unclassified [0x0c road_class=1 road_speed=1 resolution 21]
-junction=roundabout [0x0c road_class=0 road_speed=1 resolution 21]
+junction=roundabout [0x0c road_class=0 road_speed=1 resolution 22]
 
 # Ways that may or may not be useable
 
@@ -114,18 +114,18 @@ highway=construction | highway=* & construction=* {add access = no; add bicycle 
 highway=* & disused=yes [0x07 road_class=0 road_speed=1 resolution 22]
 
 # Ways sorted roughly by descending order of class
-highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 14]
-highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 16]
+highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 16]
+highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & motorroad=yes {add bicycle = no; add foot = no}
-highway=trunk [0x02 road_class=4 road_speed=5 resolution 16]
-highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 18]
-highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 16]
+highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
+highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
+highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
-highway=primary_link [0x08 road_class=3 road_speed=1 resolution 19]
+highway=primary_link [0x08 road_class=3 road_speed=1 resolution 21]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
-highway=secondary_link [0x08 road_class=2 road_speed=1 resolution 20]
+highway=secondary_link [0x08 road_class=2 road_speed=1 resolution 22]
 highway=tertiary [0x05 road_class=1 road_speed=3 resolution 20]
-highway=tertiary_link [0x08 road_class=1 road_speed=1 resolution 20]
+highway=tertiary_link [0x08 road_class=1 road_speed=1 resolution 22]
 highway=minor [0x06 road_class=1 road_speed=3 resolution 21]
 highway=unclassified [0x06 road_class=0 road_speed=3 resolution 21]
 
@@ -136,30 +136,36 @@ highway=living_street [0x06 road_class=0 road_speed=1 resolution 22]
 highway=residential [0x06 road_class=0 road_speed=2 resolution 22]
 highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
+
+highway=service & service=parking_aisle
+[0x07 road_class=0 road_speed=1 resolution 24]
+highway=service & (service=alley|service=driveway)
+[0x07 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=2 resolution 22]
+
 highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=1 resolution 23]
 
 highway=footway|highway=path|highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
-highway=track [0x0a road_class=0 road_speed=1 resolution 21]
-highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
-highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 21]
+highway=track [0x0a road_class=0 road_speed=1 resolution 22]
+highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 22]
+highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 22]
 
 # Mop up any unrecognised highway types
 highway=* & area!=yes [0x07 ]
 
 natural=coastline [0x15 resolution 12]
-power=line [0x29 resolution 20]
+power=line [0x29 resolution 21]
 
-railway=abandoned [0x0a road_class=0 road_speed=1 resolution 21]
-railway=light_rail & !(tunnel=yes) [0x14 resolution 17]
-railway=narrow_gauge & !(tunnel=yes) [0x14 resolution 17]
-railway=preserved & !(tunnel=yes) [0x14 resolution 17]
-railway=rail & !(tunnel=yes) [0x14 resolution 17]
-railway=subway & !(tunnel=yes) [0x14 resolution 17]
-railway=tram & !(tunnel=yes) [0x14 resolution 18]
+railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
+railway=light_rail & !(tunnel=yes) [0x14 resolution 22]
+railway=narrow_gauge & !(tunnel=yes) [0x14 resolution 22]
+railway=preserved & !(tunnel=yes) [0x14 resolution 22]
+railway=rail & !(tunnel=yes) [0x14 resolution 21]
+railway=subway & !(tunnel=yes) [0x14 resolution 21]
+railway=tram & !(tunnel=yes) [0x14 resolution 22]
 railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 
-route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 18]
+route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 19]
 
 waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]
@@ -175,9 +181,9 @@ man_made=cable|man_made=pipeline|man_made=pipe|man_made=suspected_pipeline
 # are frequently tagged with both and we want the highway to take priority.
 boundary=administrative { name '${mkgmap:boundary_name}' }
 boundary=administrative & admin_level<3 [0x1e resolution 16]
-boundary=administrative & admin_level<5 [0x1d resolution 18]
-boundary=administrative & admin_level<7 [0x1c resolution 20]
-boundary=administrative & admin_level<9 [0x1c resolution 21]
+boundary=administrative & admin_level<5 [0x1d resolution 19]
+boundary=administrative & admin_level<7 [0x1c resolution 21]
+boundary=administrative & admin_level<9 [0x1c resolution 22]
 boundary=administrative [0x1c resolution 22]
 boundary=national [0x1e resolution 17]
-boundary=political [0x1c resolution 17]
+boundary=political [0x1c resolution 19]
