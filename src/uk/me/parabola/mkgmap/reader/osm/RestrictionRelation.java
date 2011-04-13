@@ -119,6 +119,7 @@ public class RestrictionRelation extends Relation {
 
 		restriction = getTag("restriction");
 
+		// These tags are not loaded by default but if they exist issue a warning
 		String[] unsupportedTags = {
 		    "day_on",
 		    "day_off",

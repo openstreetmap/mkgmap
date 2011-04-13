@@ -13,7 +13,9 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -42,6 +44,27 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 
 	private Node currentNodeInWay;
 
+	
+	private final Set<String> usedTags = new HashSet<String>() {
+		{
+			add("highway");
+			add("access");
+			add("barrier");
+		    add("FIXME");
+		    add("fixme");
+		    add("route");
+		    add("oneway");
+		    add("junction");
+		    add("name");
+		    add(Exit.TAG_ROAD_REF);
+		    add("ref");
+		    
+// the following two tags are only added if the cycleway options are set 
+//		    add("cycleway");
+//		    add("bicycle");
+		}
+	};
+	
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
 		if(props.getProperty("make-all-cycleways", false)) {
@@ -55,9 +78,20 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		currentNodeInWay = null;
 
+		if (makeCycleways || makeOppositeCycleways) {
+			// need the additional two tags 
+			usedTags.add("cycleway");
+			usedTags.add("bicycle");
+		}
+		
 		return true;
 	}
 
+	
+	public Set<String> getUsedTags() {
+		return usedTags;
+	}
+	
 	public void onAddNode(Node node) {
 		String val = node.getTag("highway");
 		if (val != null && (val.equals("motorway_junction") || val.equals("services"))) {
