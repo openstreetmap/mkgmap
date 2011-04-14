@@ -590,6 +590,22 @@ public class MultiPolygonRelation extends Relation {
 						"in multipolygon", getId());
 			}
 		}
+		
+		// check if the multipolygon itself or the non inner member ways have a tag
+		// if not it does not make sense to process it and we could save the time
+		boolean shouldProcess = hasStyleRelevantTags(this);
+		if (shouldProcess == false) {
+			for (Way w : allWays) {
+				shouldProcess = hasStyleRelevantTags(w);
+				if (shouldProcess) {
+					break;
+				}
+			}
+		}
+		if (shouldProcess==false) {
+			log.info("Do not process multipolygon",getId(),"because it has no style relevant tags.");
+			return;
+		}
 
 		// create an Area for the bbox to clip the polygons
 		bboxArea = new Area(new Rectangle(bbox.getMinLong(), bbox
@@ -1293,6 +1309,18 @@ public class MultiPolygonRelation extends Relation {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			if ("type".equals(tagEntry.getKey()) == false) {
 				// return true if there is more than one tag other than "type"
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean hasStyleRelevantTags(Element element) {
+		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
+			String tagName = tagEntry.getKey();
+			boolean isStyleRelevant = tagName.equals("type") == false
+					&& tagName.startsWith("name") == false;
+			if (isStyleRelevant) {
 				return true;
 			}
 		}

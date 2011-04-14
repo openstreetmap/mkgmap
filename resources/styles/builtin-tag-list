@@ -15,12 +15,8 @@ addr:housenumber
 addr:phone
 addr:postcode
 addr:street
-barrier
 bicycle
 carpool
-cycleway
-day_off
-day_on
 delivery
 display_name
 emergency
@@ -29,13 +25,9 @@ exception
 exit:facility
 exit:road_ref
 exit:to
-fixme
-FIXME
 foot
 goods
 hgv
-hour_off
-hour_on
 int_ref
 is_in
 is_in:country
@@ -47,10 +39,8 @@ motorcar
 motorcycle
 name
 nat_ref
-natural
 oneway
 openGeoDB:postal_codes
-openGeoDB:sort_name
 osm:id
 phone
 psv
