@@ -6,13 +6,12 @@
 
 # A short one line description of the style
 #
-summary: A style for public transportation routes
+summary: A style for route relations
 
 # Version of the style itself
 #
 version=1.0
 
 description {
-A style for public transportation routes.  This is useful for
-highlighting bus, train, tram, subway etc. routes on a separate map layer.
+This style is useful for highlighting route relations on a separate map layer.
 }
