@@ -48,7 +48,7 @@ class ImgHeader {
 	// If this was a real boot sector these would be the meanings
 	private static final int OFF_SECTORS = 0x18;
 	private static final int OFF_HEADS = 0x1a;
-	private static final int OFF_CYLINDERS = 0x1c;
+	private static final int OFF_UNK_2 = 0x1c; // Previously cylinders, but no longer thought to be that
 
 	private static final int OFF_CREATION_YEAR = 0x39;
 	//	private static final int OFF_CREATION_MONTH = 0x3b;
@@ -151,21 +151,26 @@ class ImgHeader {
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
-		int sectors = 0x20;   // 0x20 appears to be a max
+		int sectors = 0x20;   // 0x3f is the max
 		header.putShort(OFF_SECTORS, (short) sectors);
-		int heads = 0x20;     // 0x20 appears to be max
+		int heads = 0x80;
 		header.putShort(OFF_HEADS, (short) heads);
-		int cylinders = 0x400;   // gives 512M
-		header.putShort(OFF_CYLINDERS, (short) cylinders);
+		int unknown = 0x400; // not known, doesn't appear to be related to fs size
+		header.putShort(OFF_UNK_2, (short) unknown);
 		header.putShort(OFF_HEADS2, (short) heads);
 		header.putShort(OFF_SECTORS2, (short) sectors);
 
 		header.position(OFF_CREATION_YEAR);
 		Utils.setCreationTime(header, creationTime);
 
+		// The last LBA number in the partition. We always claim a large partition without
+		// regard to what is actually stored.  Total number of sectors is this plus one
+		// as sector numbers start at zero.
+		int endBlock = 0x3fffff;
+
 		// Since there are only 2 bytes here but it can easily overflow, if it
 		// does we replace it with 0xffff, it doesn't work to set it to say zero
-		int blocks = heads * sectors * cylinders / (1 << exp - 9);
+		int blocks = endBlock / (1 << exp - 9);
 		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
 		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
 
@@ -176,11 +181,16 @@ class ImgHeader {
 		header.put(OFF_START_SECTOR, (byte) 1);
 		header.put(OFF_START_CYLINDER, (byte) 0);
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
-		header.put(OFF_END_HEAD, (byte) (heads - 1));
-		header.put(OFF_END_SECTOR, (byte) (sectors + (((cylinders-1) & 0x300) >> 2)));
-		header.put(OFF_END_CYLINDER, (byte) (cylinders - 1));
+
+		int h = (endBlock / sectors) % heads;
+		int s = (endBlock % sectors) + 1;
+		int c = endBlock / (sectors * heads);
+		header.put(OFF_END_HEAD, (byte) (h));
+		header.put(OFF_END_SECTOR, (byte) ((s) | ((c>>2) & 0xc0)));
+		header.put(OFF_END_CYLINDER, (byte) (c & 0xff));
+
 		header.putInt(OFF_REL_SECTORS, 0);
-		header.putInt(OFF_NUMBER_OF_SECTORS, (blocks * (1 << (exp - 9))));
+		header.putInt(OFF_NUMBER_OF_SECTORS, endBlock+1);
 		log.info("number of blocks " + blocks);
 
 		setDirectoryStartBlock(params.getDirectoryStartBlock());
