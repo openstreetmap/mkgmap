@@ -1,0 +1,17 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+#
+
+
+# A short one line description of the style
+#
+summary: A style for ski routes
+
+# Version of the style itself
+#
+version=1.0
+
+description {
+This style is useful for highlighting ski routes on a separate map layer.
+}

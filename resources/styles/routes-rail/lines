@@ -1,0 +1,1 @@
+mkgmap:route=* { name '${mkgmap:route}' } [0x19 resolution 20]
