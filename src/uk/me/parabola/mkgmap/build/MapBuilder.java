@@ -369,37 +369,34 @@ public class MapBuilder implements Configurable {
 				if(countryStr != null)
 					countryStr = locator.fixCountryString(countryStr);
 
-				boolean guessed = false;
 				if(countryStr == null || regionStr == null || (zipStr == null && cityStr == null))
 				{
-						MapPoint nextCity = locator.findByCityName(p);
+					MapPoint nextCity = locator.findByCityName(p);
 						
-						if(doAutofill && nextCity == null)
-							nextCity = locator.findNextPoint(p);
+					if(doAutofill && nextCity == null)
+						nextCity = locator.findNextPoint(p);
 
-						if(nextCity != null)
+					if(nextCity != null)
+					{
+						if (countryStr == null)	countryStr = nextCity.getCountry();
+						if (regionStr == null)  regionStr  = nextCity.getRegion();
+
+						if(doAutofill)
 						{
-							guessed = true;
-
-							if (countryStr == null)	countryStr = nextCity.getCountry();
-							if (regionStr == null)  regionStr  = nextCity.getRegion();
-
-							if(doAutofill)
+							if(zipStr == null)
 							{
-								if(zipStr == null)
-								{
-									String CityZipStr = nextCity.getZip();
-									
-									// Ignore list of Zips separated by ;
-									
-									if(CityZipStr != null && CityZipStr.indexOf(',') < 0)
-										zipStr = CityZipStr;
-								}
+								String cityZipStr = nextCity.getZip();
 								
-								if(cityStr == null) cityStr = nextCity.getCity();
+								// Ignore list of Zips separated by ;
+								
+								if(cityZipStr != null && cityZipStr.indexOf(',') < 0)
+									zipStr = cityZipStr;
 							}
-						
+							
+							if(cityStr == null) cityStr = nextCity.getCity();
 						}
+					
+					}
 				}
 				
 	
@@ -456,11 +453,6 @@ public class MapBuilder implements Configurable {
 				{
 					Label streetName = lbl.newLabel(p.getStreet());
 					r.setStreetName(streetName);			  
-				}
-				else if (guessed && locationAutofillLevel > 0)
-				{
-					Label streetName = lbl.newLabel("FIX MY ADDRESS");
-					r.setStreetName(streetName);		
 				}
 
 				if(p.getHouseNumber() != null)
