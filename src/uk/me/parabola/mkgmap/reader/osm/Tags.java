@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ import java.util.Map;
  *
  * @author Steve Ratcliffe
  */
-public class Tags implements Iterable<String> {
+public class Tags implements Iterable<String>, Serializable {
 	private static final int INIT_SIZE = 8;
 
 	private short keySize;

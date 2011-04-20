@@ -17,6 +17,10 @@ filename
 	data. The coastline data from the input files are removed if 
 	this option is set. Files must have OSM or PBF fileformat.	
 
+--createboundsfile=filename
+
+--boundsdirectory=directory
+
 --gmapsupp
 	Create a gmapsupp.img file that can be uploaded to a Garmin or
 	placed in "/Garmin" in a microSD card (such as by mounting the

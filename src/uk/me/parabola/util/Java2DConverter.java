@@ -30,14 +30,9 @@ public class Java2DConverter {
 	 * @return the converted Java2D area
 	 */
 	public static Area createBoundsArea(uk.me.parabola.imgfmt.app.Area bbox) {
-		Polygon bboxPoints = new Polygon();
-		bboxPoints.addPoint(bbox.getMinLong(), bbox.getMinLat());
-		bboxPoints.addPoint(bbox.getMinLong(), bbox.getMaxLat());
-		bboxPoints.addPoint(bbox.getMaxLong(), bbox.getMaxLat());
-		bboxPoints.addPoint(bbox.getMaxLong(), bbox.getMinLat());
-		bboxPoints.addPoint(bbox.getMinLong(), bbox.getMinLat());
-		
-		return new Area(bboxPoints);
+		return new Area(new Rectangle(bbox.getMinLong(), bbox.getMinLat(),
+				bbox.getMaxLong() - bbox.getMinLong(), bbox.getMaxLat()
+						- bbox.getMinLat()));
 	}
 	
 	/**
@@ -221,4 +216,6 @@ public class Java2DConverter {
 		}
 		return outputs;
 	}
+	
+	
 }

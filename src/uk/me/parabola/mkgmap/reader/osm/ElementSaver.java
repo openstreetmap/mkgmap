@@ -47,13 +47,13 @@ import uk.me.parabola.util.EnhancedProperties;
 public class ElementSaver {
 	private static final Logger log = Logger.getLogger(ElementSaver.class);
 
-	private Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
+	protected Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
 
-	private Map<Long, Node> nodeMap;
-	private Map<Long, Way> wayMap;
-	private Map<Long, Relation> relationMap;
+	protected Map<Long, Node> nodeMap;
+	protected Map<Long, Way> wayMap;
+	protected Map<Long, Relation> relationMap;
 
-	private final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap = new HashMap<Long, List<Map.Entry<String,Relation>>>();
+	protected final Map<Long, List<Map.Entry<String,Relation>>> deferredRelationMap = new HashMap<Long, List<Map.Entry<String,Relation>>>();
 
 	// This is an explicitly given bounding box from the input file command line etc.
 	private Area boundingBox;

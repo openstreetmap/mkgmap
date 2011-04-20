@@ -45,16 +45,16 @@ public class MultiPolygonRelation extends Relation {
 	private Map<Long, Way> mpPolygons = new HashMap<Long, Way>();
 	
 	
-	private ArrayList<BitSet> containsMatrix;
-	private ArrayList<JoinedWay> polygons;
-	private Set<JoinedWay> intersectingPolygons;
+	protected ArrayList<BitSet> containsMatrix;
+	protected ArrayList<JoinedWay> polygons;
+	protected Set<JoinedWay> intersectingPolygons;
 	
-	private Set<Way> outerWaysForLineTagging;
-	private Map<String, String> outerTags;
+	protected Set<Way> outerWaysForLineTagging;
+	protected Map<String, String> outerTags;
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
-	private Area bboxArea;
-
+	protected Area bboxArea;
+	
 	/** 
 	 * A point that has a lower or equal squared distance from 
 	 * a line is treated as if it lies one the line.<br/>
@@ -98,8 +98,9 @@ public class MultiPolygonRelation extends Relation {
 			addElement(role, el);
 			roleMap.put(el.getId(), role);
 		}
-
 	}
+	
+
 	
 	/**
 	 * Retrieves the mp role of the given element.
@@ -108,7 +109,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            the element
 	 * @return the role of the element
 	 */
-	private String getRole(Element element) {
+	protected String getRole(Element element) {
 		String role = roleMap.get(element.getId());
 		if (role != null) {
 			return role;
@@ -192,7 +193,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            a list of closed or unclosed ways
 	 * @return a list of closed ways
 	 */
-	private ArrayList<JoinedWay> joinWays(List<Way> segments) {
+	protected ArrayList<JoinedWay> joinWays(List<Way> segments) {
 		// TODO check if the closed polygon is valid and implement a
 		// backtracking algorithm to get other combinations
 
@@ -323,7 +324,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayList
 	 *            a list of ways
 	 */
-	private void closeWays(ArrayList<JoinedWay> wayList) {
+	protected void closeWays(ArrayList<JoinedWay> wayList) {
 		// this is a VERY simple algorithm to close the ways
 		// need to be improved
 
@@ -432,7 +433,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param wayList
 	 *            list of ways
 	 */
-	private void removeUnclosedWays(ArrayList<JoinedWay> wayList) {
+	protected void removeUnclosedWays(ArrayList<JoinedWay> wayList) {
 		Iterator<JoinedWay> it = wayList.iterator();
 		boolean firstWarn = true;
 		while (it.hasNext()) {
@@ -469,7 +470,7 @@ public class MultiPolygonRelation extends Relation {
 	 * This reduces error messages from problems on the tile bounds.
 	 * @param wayList list of ways
 	 */
-	private void removeWaysOutsideBbox(ArrayList<JoinedWay> wayList) {
+	protected void removeWaysOutsideBbox(ArrayList<JoinedWay> wayList) {
 		ListIterator<JoinedWay> wayIter = wayList.listIterator();
 		while (wayIter.hasNext()) {
 			JoinedWay w = wayIter.next();
@@ -524,7 +525,7 @@ public class MultiPolygonRelation extends Relation {
 	 *            indexes of the polygons that should be used
 	 * @return the bits of all outermost polygons are set to true
 	 */
-	private BitSet findOutmostPolygons(BitSet candidates) {
+	protected BitSet findOutmostPolygons(BitSet candidates) {
 		BitSet outmostPolygons = new BitSet();
 
 		// go through all candidates and check if they are contained by any
@@ -553,7 +554,7 @@ public class MultiPolygonRelation extends Relation {
 		return outmostPolygons;
 	}
 
-	private ArrayList<PolygonStatus> getPolygonStatus(BitSet outmostPolygons,
+	protected ArrayList<PolygonStatus> getPolygonStatus(BitSet outmostPolygons,
 			String defaultRole) {
 		ArrayList<PolygonStatus> polygonStatusList = new ArrayList<PolygonStatus>();
 		for (int polyIndex = outmostPolygons.nextSetBit(0); polyIndex >= 0; polyIndex = outmostPolygons
@@ -572,14 +573,10 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Process the ways in this relation. Joins way with the role "outer" Adds
-	 * ways with the role "inner" to the way with the role "outer"
+	 * Creates a list of all original ways of the multipolygon. 
+	 * @return all source ways
 	 */
-	public void processElements() {
-		log.info("Processing multipolygon", toBrowseURL());
-
-		// don't care about outer and inner declaration
-		// because this is a first try
+	protected List<Way> getSourceWays() {
 		ArrayList<Way> allWays = new ArrayList<Way>();
 
 		for (Map.Entry<String, Element> r_e : getElements()) {
@@ -590,6 +587,27 @@ public class MultiPolygonRelation extends Relation {
 						"in multipolygon", getId());
 			}
 		}
+		return allWays;
+	}
+	
+	
+	// unfinishedPolygons marks which polygons are not yet processed
+	protected BitSet unfinishedPolygons;
+
+	// create bitsets which polygons belong to the outer and to the inner role
+	protected BitSet innerPolygons;
+	protected BitSet taggedInnerPolygons;
+	protected BitSet outerPolygons;
+	protected BitSet taggedOuterPolygons;
+
+	/**
+	 * Process the ways in this relation. Joins way with the role "outer" Adds
+	 * ways with the role "inner" to the way with the role "outer"
+	 */
+	public void processElements() {
+		log.info("Processing multipolygon", toBrowseURL());
+		
+		List<Way> allWays = getSourceWays();
 		
 		// check if the multipolygon itself or the non inner member ways have a tag
 		// if not it does not make sense to process it and we could save the time
@@ -607,10 +625,9 @@ public class MultiPolygonRelation extends Relation {
 			return;
 		}
 
+		
 		// create an Area for the bbox to clip the polygons
-		bboxArea = new Area(new Rectangle(bbox.getMinLong(), bbox
-			.getMinLat(), bbox.getMaxLong() - bbox.getMinLong(),
-			bbox.getMaxLat() - bbox.getMinLat()));
+		bboxArea = Java2DConverter.createBoundsArea(getBbox()); 
 
 		// join all single ways to polygons, try to close ways and remove non closed ways 
 		polygons = joinWays(allWays);
@@ -651,14 +668,14 @@ public class MultiPolygonRelation extends Relation {
 		createContainsMatrix(polygons);
 
 		// unfinishedPolygons marks which polygons are not yet processed
-		BitSet unfinishedPolygons = new BitSet(polygons.size());
+		unfinishedPolygons = new BitSet(polygons.size());
 		unfinishedPolygons.set(0, polygons.size());
 
 		// create bitsets which polygons belong to the outer and to the inner role
-		BitSet innerPolygons = new BitSet();
-		BitSet taggedInnerPolygons = new BitSet();
-		BitSet outerPolygons = new BitSet();
-		BitSet taggedOuterPolygons = new BitSet();
+		innerPolygons = new BitSet();
+		taggedInnerPolygons = new BitSet();
+		outerPolygons = new BitSet();
+		taggedOuterPolygons = new BitSet();
 		
 		int wi = 0;
 		for (Way w : polygons) {
@@ -715,6 +732,7 @@ public class MultiPolygonRelation extends Relation {
 
 		boolean outmostPolygonProcessing = true;
 		
+	
 		while (!polygonWorkingQueue.isEmpty()) {
 
 			// the polygon is not contained by any other unfinished polygon
@@ -739,6 +757,7 @@ public class MultiPolygonRelation extends Relation {
 			do {
 				holeIndexes = findOutmostPolygons(polygonContains);
 				holesOk = true;
+
 				if (currentPolygon.outer) {
 					// for role=outer only role=inner is allowed
 					if (holeIndexes.intersects(taggedOuterPolygons)) {
@@ -843,7 +862,7 @@ public class MultiPolygonRelation extends Relation {
 						// mark this polygons so that only polygon style rules are applied
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
 					
-						mpPolygons.put(mpWay.getId(), mpWay);
+						getMpPolygons().put(mpWay.getId(), mpWay);
 					}
 				}
 			}
@@ -1026,7 +1045,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
-	private void cleanup() {
+	protected void cleanup() {
 		mpPolygons = null;
 		roleMap.clear();
 		containsMatrix = null;
@@ -1035,6 +1054,13 @@ public class MultiPolygonRelation extends Relation {
 		intersectingPolygons = null;
 		outerWaysForLineTagging = null;
 		outerTags = null;
+		
+		unfinishedPolygons = null;
+		innerPolygons = null;
+		taggedInnerPolygons = null;
+		outerPolygons = null;
+		taggedOuterPolygons = null;
+
 	}
 
 	private CutPoint calcNextCutPoint(AreaCutData areaData) {
@@ -1305,7 +1331,7 @@ public class MultiPolygonRelation extends Relation {
 		return new Way(wayId, points);
 	}
 
-	private boolean hasTags(Element element) {
+	protected boolean hasTags(Element element) {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			if ("type".equals(tagEntry.getKey()) == false) {
 				// return true if there is more than one tag other than "type"
@@ -1334,7 +1360,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @param polygonList
 	 *            a list of polygons
 	 */
-	private void createContainsMatrix(List<JoinedWay> polygonList) {
+	protected void createContainsMatrix(List<JoinedWay> polygonList) {
 		containsMatrix = new ArrayList<BitSet>();
 		for (int i = 0; i < polygonList.size(); i++) {
 			containsMatrix.add(new BitSet());
@@ -1809,7 +1835,7 @@ public class MultiPolygonRelation extends Relation {
 		}		
 	}
 
-	private void tagOuterWays() {
+	protected void tagOuterWays() {
 		Map<String, String> tags;
 		if (hasTags(this)) {
 			tags = new HashMap<String, String>();
@@ -1910,7 +1936,7 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 	
-	private void removeTagsInOrgWays(Way way, String tag) {
+	protected void removeTagsInOrgWays(Way way, String tag) {
 		if (tag == null) {
 			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, ElementSaver.MKGMAP_REMOVE_TAG_ALL_KEY);
 			return;
@@ -1947,7 +1973,7 @@ public class MultiPolygonRelation extends Relation {
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
 	 */
-	private static final class JoinedWay extends Way {
+	public static final class JoinedWay extends Way {
 		private final List<Way> originalWays;
 		private boolean closedArtificially;
 
@@ -2138,10 +2164,10 @@ public class MultiPolygonRelation extends Relation {
 		}
 	}
 
-	private static class PolygonStatus {
-		final boolean outer;
-		final int index;
-		final JoinedWay polygon;
+	public static class PolygonStatus {
+		public final boolean outer;
+		public final int index;
+		public final JoinedWay polygon;
 
 		public PolygonStatus(boolean outer, int index, JoinedWay polygon) {
 			this.outer = outer;
