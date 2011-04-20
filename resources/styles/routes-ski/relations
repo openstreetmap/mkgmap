@@ -1,0 +1,6 @@
+type=route & route=ski
+{
+  add ref='${name}'; # if ref is missing, use name
+  set ref='${network} ${ref}' | '${ref}' | '${network}';
+  apply { set mkgmap:route='$(mkgmap:route),${ref}' | '${ref}' }
+}
