@@ -125,6 +125,7 @@ public class Tags implements Iterable<String> {
 			values = new String[ncap];
 			capacity = ncap;
 			keySize = 0;
+			size = 0;
 			for (int i = 0; i < okey.length; i++) {
 				String k = okey[i];
 				String v = oval[i]; // null if tag has been removed
