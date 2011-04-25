@@ -1,7 +1,5 @@
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
-import java.util.List;
-
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
@@ -11,10 +9,9 @@ import uk.me.parabola.util.Java2DConverter;
 
 public class BoundaryConverter implements OsmConverter {
 
-	private final List<Boundary> boundaries;
-	
-	public BoundaryConverter(List<Boundary> boundaries) {
-		this.boundaries = boundaries;
+	private final BoundarySaver saver;
+	public BoundaryConverter(BoundarySaver saver) {
+		this.saver= saver;
 	}
 	
 	@Override
@@ -22,7 +19,8 @@ public class BoundaryConverter implements OsmConverter {
 		if (way.isClosed() && BoundaryElementSaver.isBoundary(way)) {
 			java.awt.geom.Area boundArea = new java.awt.geom.Area(Java2DConverter.createArea(way.getPoints()));
 			Boundary boundary = new Boundary(boundArea, way.getEntryIteratable());
-			boundaries.add(boundary);
+			boundary.getTags().put("mkgmap:boundaryid", "w"+way.getId());
+			saver.addBoundary(boundary);
 		}
 	}
 
@@ -35,7 +33,7 @@ public class BoundaryConverter implements OsmConverter {
 		if (relation instanceof BoundaryRelation) {
 			Boundary boundary = ((BoundaryRelation)relation).getBoundary();
 			if (boundary!=null)
-				boundaries.add(boundary);
+				saver.addBoundary(boundary);
 		}
 	}
 
@@ -46,8 +44,6 @@ public class BoundaryConverter implements OsmConverter {
 
 	@Override
 	public void end() {
-		// TODO Auto-generated method stub
-
 	}
 
 }

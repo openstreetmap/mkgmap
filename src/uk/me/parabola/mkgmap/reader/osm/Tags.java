@@ -16,12 +16,12 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Store the tags that belong to an Element.
@@ -38,7 +38,7 @@ import java.util.Map;
  *
  * @author Steve Ratcliffe
  */
-public class Tags implements Iterable<String>, Serializable {
+public class Tags implements Iterable<String> {
 	private static final int INIT_SIZE = 8;
 
 	private short keySize;
@@ -72,6 +72,8 @@ public class Tags implements Iterable<String>, Serializable {
 	}
 
 	public String put(String key, String value) {
+		assert key != null : "key is null";
+		assert value != null : "value is null";
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
@@ -126,6 +128,7 @@ public class Tags implements Iterable<String>, Serializable {
 			values = new String[ncap];
 			capacity = ncap;
 			keySize = 0;
+			size = 0;
 			for (int i = 0; i < okey.length; i++) {
 				String k = okey[i];
 				String v = oval[i]; // null if tag has been removed
@@ -259,5 +262,22 @@ public class Tags implements Iterable<String>, Serializable {
 		}
 		keySize = 0;
 		size = 0;
+	}
+	
+	public String toString() {
+		StringBuilder s =new StringBuilder();
+		s.append("[");
+		Iterator<Entry<String,String>> tagIter = entryIterator();
+		while (tagIter.hasNext()) {
+			Entry<String,String> tag = tagIter.next();
+			if (s.length() > 1) {
+				s.append("; ");
+			}
+			s.append(tag.getKey());
+			s.append("=");
+			s.append(tag.getValue());
+		}
+		s.append("]");
+		return s.toString();
 	}
 }

@@ -1,7 +1,12 @@
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.ElementSaver;
+import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
@@ -13,9 +18,12 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author WanMil
  */
 public class BoundaryElementSaver extends ElementSaver {
+
+	private final BoundarySaver saver;
 	
-	public BoundaryElementSaver(EnhancedProperties args) {
+	public BoundaryElementSaver(EnhancedProperties args, BoundarySaver saver) {
 		super(args);
+		this.saver = saver;
 	}
 
 	public static boolean isBoundary(Element element) {
@@ -36,18 +44,50 @@ public class BoundaryElementSaver extends ElementSaver {
 		}
 	}
 
-	@Override
 	public void addRelation(Relation rel) {
 		if (isBoundary(rel)) {
-			super.addRelation(rel);
+			BoundaryRelation bRel = (BoundaryRelation) createMultiPolyRelation(rel);
+			bRel.processElements();
+			Boundary b = bRel.getBoundary();
+			if (b != null)
+				saver.addBoundary(b);
 		}
 	}
-
-	@Override
+	
+	public void deferRelation(long id, Relation rel, String role) {
+		return;
+	}
+	
 	public Relation createMultiPolyRelation(Relation rel) {
 		return new BoundaryRelation(rel, wayMap, getBoundingBox());
 	}
-	
-	
 
+	public void addNode(Node node) {
+		return;
+	}
+
+	public void convert(OsmConverter converter) {
+		nodeMap = null;
+
+		converter.setBoundingBox(getBoundingBox());
+
+		ArrayList<Relation> relations = new ArrayList<Relation>(
+				relationMap.values());
+		relationMap = null;
+		Collections.reverse(relations);
+		for (int i = relations.size() - 1; i >= 0; i--) {
+			converter.convertRelation(relations.get(i));
+			relations.remove(i);
+		}
+
+
+		for (Way w : wayMap.values())
+			converter.convertWay(w);
+
+		wayMap = null;
+
+		converter.end();
+
+		relationMap = null;
+	}
 }

@@ -57,7 +57,7 @@ import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
-import uk.me.parabola.mkgmap.reader.osm.boundary.BoundarySplitter;
+import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -345,7 +345,7 @@ public class Main implements ArgumentProcessor {
 	public void endOptions(CommandArgs args) {
 
 		if (args.exists("createboundsfile")) {
-			addPreparer(new BoundarySplitter(args.getProperties()));
+			addPreparer(new BoundaryPreparer(args.getProperties()));
 		}
 		
 		log.info("Start preparers");

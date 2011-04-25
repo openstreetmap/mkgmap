@@ -13,7 +13,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
@@ -34,11 +33,14 @@ public class BoundaryRelation extends MultiPolygonRelation {
 	}
 	
 	public Boundary getBoundary() {
-		if (outerResultArea == null) {
-			return null;
-		}
-		if (boundary==null) {
-			boundary=new Boundary(outerResultArea, this.getEntryIteratable());
+		if (boundary == null) {
+			if (outerResultArea == null) {
+				return null;
+			}
+			boundary = new Boundary(outerResultArea, this.getEntryIteratable());
+			
+			boundary.getTags().put("mkgmap:boundaryid", "r"+this.getId());
+			outerResultArea = null;
 		}
 		return boundary;
 	}
@@ -49,7 +51,8 @@ public class BoundaryRelation extends MultiPolygonRelation {
 	 */
 	public void processElements() {
 		log.info("Processing multipolygon", toBrowseURL());
-		
+		log.threadTag("r"+getId());
+	
 		List<Way> allWays = getSourceWays();
 		
 //		// check if the multipolygon itself or the non inner member ways have a tag
@@ -78,9 +81,9 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		outerWaysForLineTagging = new HashSet<Way>();
 		outerTags = new HashMap<String,String>();
 		
+		removeOutOfBbox(polygons);
 		closeWays(polygons);
 		removeUnclosedWays(polygons);
-		removeArtificialClosedWays(polygons);
 		
 		// now only closed ways are left => polygons only
 
@@ -104,7 +107,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 			cleanup();
 			return;
 		}
-
+		
 		// the intersectingPolygons marks all intersecting/overlapping polygons
 		intersectingPolygons = new HashSet<JoinedWay>();
 		
@@ -324,11 +327,11 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		// This enables the style file to decide if the polygon information or
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
-			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
-			lineTagWay.setName(orgOuterWay.getName());
-			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
+//			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
+//			lineTagWay.setName(orgOuterWay.getName());
+//			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			for (Entry<String,String> tag : outerTags.entrySet()) {
-				lineTagWay.addTag(tag.getKey(), tag.getValue());
+//				lineTagWay.addTag(tag.getKey(), tag.getValue());
 				
 				// remove the tag from the original way if it has the same value
 				if (tag.getValue().equals(orgOuterWay.getTag(tag.getKey()))) {
@@ -336,22 +339,40 @@ public class BoundaryRelation extends MultiPolygonRelation {
 				}
 			}
 			
-			if (log.isDebugEnabled())
-				log.debug("Add line way", lineTagWay.getId(), lineTagWay.toTagString());
+//			if (log.isDebugEnabled())
+//				log.debug("Add line way", lineTagWay.getId(), lineTagWay.toTagString());
 //			tileWayMap.put(lineTagWay.getId(), lineTagWay);
 		}
 		
 		postProcessing();
 		cleanup();
+		
+		if (getTag("name") == null)
+			outerResultArea = null;
+		
 	}
-	
-	private void removeArtificialClosedWays(List<JoinedWay> polygons) {
-		ListIterator<JoinedWay> wayIter = polygons.listIterator();
-		while (wayIter.hasNext()) {
-			JoinedWay w = wayIter.next();
-			if (w.isClosedArtificially()) {
-				wayIter.remove();
+
+	private void removeOutOfBbox(List<JoinedWay> polygons) {
+		ListIterator<JoinedWay> pIter = polygons.listIterator();
+		while (pIter.hasNext()) {
+			JoinedWay w = pIter.next();
+			if (w.isClosed() == false) {
+				// the way is not closed
+				// check if one of start/endpoint is out of the bounding box
+				// in this case it is too risky to close it
+				if (getBbox().contains(w.getPoints().get(0)) == false
+						|| getBbox().contains(
+								w.getPoints().get(w.getPoints().size() - 1)) == false) {
+					pIter.remove();
+				}
 			}
 		}
+
+	}
+
+	protected void cleanup() {
+		super.cleanup();
+		this.getElements().clear();
+		((ArrayList<?>)this.getElements()).trimToSize();
 	}
 }
