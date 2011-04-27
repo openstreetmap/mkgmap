@@ -56,10 +56,6 @@ public class Label implements Comparable<Label> {
 		return text;
 	}
 
-	public String getTextSansGarminCodes() {
-		return stripGarminCodes(text);
-	}
-
 	// highway shields and "thin" separators
 	private final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
 

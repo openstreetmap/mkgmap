@@ -47,7 +47,7 @@ public class SortTest {
 
 	@Test
 	public void testDifferentLengths() {
-		SortKey<Object> k1 = sort.createSortKey(null, "aabb");
+		SortKey<Object> k1 = sort.createSortKey(null, "aabbbb");
 		SortKey<Object> k2 = sort.createSortKey(null, "aab");
 
 		assertEquals(1, k1.compareTo(k2));
@@ -156,6 +156,11 @@ public class SortTest {
 
 		assertEquals(1, collator.compare("AAA", "AA"));
 		assertEquals(-1, collator.compare("AA", "AAA"));
+	}
+
+	@Test
+	public void testIgnorableCharacters() {
+		checkOrder("aa", "\004aa");
 	}
 
 	private void checkOrder(int i1, int i2) {

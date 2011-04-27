@@ -36,9 +36,11 @@ class SrtSortKey<T> implements SortKey<T> {
 	}
 
 	public int compareTo(SortKey<T> o) {
-		for (int i = 0; i < this.key.length; i++) {
+		SrtSortKey<T> other = (SrtSortKey<T>) o;
+		int length = Math.min(this.key.length, other.key.length);
+		for (int i = 0; i < length; i++) {
 			int k1 = this.key[i] & 0xff;
-			int k2 = ((SrtSortKey) o).key[i] & 0xff;
+			int k2 = other.key[i] & 0xff;
 			if (k1 < k2) {
 				return -1;
 			} else if (k1 > k2) {
@@ -46,9 +48,14 @@ class SrtSortKey<T> implements SortKey<T> {
 			}
 		}
 
-		if (second == ((SrtSortKey) o).second)
+		if (this.key.length < other.key.length)
+			return -1;
+		else if (this.key.length > other.key.length)
+			return 1;
+
+		if (second == other.second)
 			return 0;
-		else if (second < ((SrtSortKey) o).second)
+		else if (second < other.second)
 			return -1;
 		else
 			return 1;
