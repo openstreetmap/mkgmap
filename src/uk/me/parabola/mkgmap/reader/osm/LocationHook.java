@@ -116,7 +116,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		String nameTagProp = props.getProperty("name-tag-list", "name");
 		nameTags.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp)));
 
-		boundaryDir = new File(props.getProperty("boundsdirectory", "boundary"));
+		boundaryDir = new File(props.getProperty("boundsdirectory", "bounds"));
 		if (boundaryDir.exists() == false) {
 			log.error("Disable LocationHook because boundary directory does not exist. Dir: "
 					+ boundaryDir);
