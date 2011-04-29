@@ -98,7 +98,7 @@ public class BoundaryUtil {
 							minLat, minLong, maxLat, maxLon);
 					int bSize = inpStream.readInt();
 
-					if (bbox.intersects(rBbox)) {
+					if (bbox == null || bbox.intersects(rBbox)) {
 						Tags tags = new Tags();
 						int noOfTags = inpStream.readInt();
 						for (int i = 0; i < noOfTags; i++) {
