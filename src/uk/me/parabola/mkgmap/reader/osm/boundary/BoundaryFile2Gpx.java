@@ -44,6 +44,7 @@ public class BoundaryFile2Gpx {
 						gpxFile = "i_" + i;
 					}
 					GpxCreator.createGpx(gpxFile, be.getPoints());
+					i++;
 				}
 			}
 			System.out.println("Finished " + boundaryFile);
