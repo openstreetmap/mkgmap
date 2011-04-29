@@ -181,7 +181,7 @@ public class Java2DConverter {
 				break;
 			case PathIterator.SEG_CLOSE:
 				assert points != null;
-				if (points.get(0).equals(points.size() - 1))
+				if (points.get(0).equals(points.size() - 1) == false)
 					points.add(points.get(0));
 				return points;
 			default:
