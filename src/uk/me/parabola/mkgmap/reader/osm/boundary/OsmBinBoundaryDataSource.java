@@ -4,11 +4,11 @@ import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonFinishHook;
 import uk.me.parabola.mkgmap.reader.osm.OsmReadingHooks;
-import uk.me.parabola.mkgmap.reader.osm.xml.Osm5MapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
-public class Osm5BoundaryDataSource 
-	extends Osm5MapDataSource 
+public class OsmBinBoundaryDataSource 
+	extends OsmBinMapDataSource 
 	implements LoadableBoundaryDataSource {
 
 	private BoundarySaver saver;

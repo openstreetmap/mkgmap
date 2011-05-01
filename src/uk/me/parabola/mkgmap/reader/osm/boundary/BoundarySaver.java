@@ -62,9 +62,9 @@ public class BoundarySaver {
 		Rectangle areaBounds = areaToSplit.getBounds();
 
 		for (int latSplit = BoundaryUtil.getSplitBegin(areaBounds.y); latSplit <= BoundaryUtil
-				.getSplitEnd(areaBounds.y + areaBounds.height); latSplit += BoundaryUtil.RASTER) {
+				.getSplitBegin(areaBounds.y + areaBounds.height); latSplit += BoundaryUtil.RASTER) {
 			for (int lonSplit = BoundaryUtil.getSplitBegin(areaBounds.x); lonSplit <= BoundaryUtil
-					.getSplitEnd(areaBounds.x + areaBounds.width); lonSplit += BoundaryUtil.RASTER) {
+					.getSplitBegin(areaBounds.x + areaBounds.width); lonSplit += BoundaryUtil.RASTER) {
 				Area tileCover = getSplitArea(latSplit, lonSplit);
 				tileCover.intersect(areaToSplit);
 				if (tileCover.isEmpty() == false) {
