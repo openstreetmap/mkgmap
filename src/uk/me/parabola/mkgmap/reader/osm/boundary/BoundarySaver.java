@@ -143,7 +143,9 @@ public class BoundarySaver {
 				// is it an outer element?
 				dos.writeBoolean(bElem.isOuter());
 				// number of coords
-				dos.writeInt(bElem.getPoints().size());
+				int eSize = bElem.getPoints().size();
+				assert eSize > 0 : "eSize not greater 0 "+bElem.getPoints().size();
+				dos.writeInt(eSize);
 				for (Coord c : bElem.getPoints()) {
 					dos.writeInt(c.getLatitude());
 					dos.writeInt(c.getLongitude());
@@ -167,11 +169,13 @@ public class BoundarySaver {
 
 			// write the size of the boundary block so that it is possible to
 			// skip it
-			dOutStream.writeInt(oneItemStream.size());
+			int bSize = oneItemStream.size();
+			assert bSize > 0 : "bSize is not > 0 : "+oneItemStream.size();
+			dOutStream.writeInt(bSize);
 
 			// write the boundary block
 			dOutStream.write(oneItemStream.toByteArray());
-			// dOutStream.flush();
+			dOutStream.flush();
 
 		} catch (IOException exp) {
 
