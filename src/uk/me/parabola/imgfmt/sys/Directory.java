@@ -44,13 +44,15 @@ class Directory {
 	private ImgChannel chan;
 
 	private final BlockManager headerBlockManager;
+	private final int startEntry;
 	private long startPos;
 
 	// The list of files themselves.
 	private final Map<String, DirectoryEntry> entries = new LinkedHashMap<String, DirectoryEntry>();
 
-	Directory(BlockManager headerBlockManager) {
+	Directory(BlockManager headerBlockManager, int startEntry) {
 		this.headerBlockManager = headerBlockManager;
+		this.startEntry = startEntry;
 	}
 
 	/**
@@ -140,19 +142,23 @@ class Directory {
 		// The first entry can't really be written until the rest of the directory is
 		// so we have to step through once to calculate the size and then again
 		// to write it out.
-		int blocks = 0;
+		int headerEntries = 0;
 		for (DirectoryEntry dir : entries.values()) {
 			Dirent ent = (Dirent) dir;
 			log.debug("ent size", ent.getSize());
 			int n = ent.numberHeaderBlocks();
-			blocks += n;
+			headerEntries += n;
 		}
 
 		// Save the current position
 		long dirPosition = chan.position();
 		int blockSize = headerBlockManager.getBlockSize();
 
-		int forHeader = (blocks + Dirent.ENTRY_SIZE - 1)/Dirent.ENTRY_SIZE;
+		// Get the number of blocks required for the directory entry representing the header.
+		// First calculate the number of blocks required for the directory entries.
+		int headerBlocks = (int) Math.ceil((startEntry + 1.0 + headerEntries) * Dirent.ENTRY_SIZE / blockSize);
+		int forHeader = (headerBlocks + Dirent.ENTRY_SIZE - 1)/Dirent.ENTRY_SIZE;
+
 		log.debug("header blocks needed", forHeader);
 
 		// There is nothing really wrong with larger values (perhaps, I don't

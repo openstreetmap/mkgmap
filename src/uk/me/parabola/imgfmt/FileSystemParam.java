@@ -1,18 +1,14 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 02-Dec-2006
+ * Copyright (C) 2006, 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
 package uk.me.parabola.imgfmt;
 
@@ -25,7 +21,7 @@ package uk.me.parabola.imgfmt;
 public class FileSystemParam {
 	private String mapDescription = "Open Street Map";
 	private int blockSize = 512;
-	private int directoryStartBlock = 2;
+	private int directoryStartEntry = 2; // Always in terms of entries of 512 bytes
 	private int reservedDirectoryBlocks = 202;
 
 	public String getMapDescription() {
@@ -44,12 +40,12 @@ public class FileSystemParam {
 		this.blockSize = blockSize;
 	}
 
-	public int getDirectoryStartBlock() {
-		return directoryStartBlock;
+	public int getDirectoryStartEntry() {
+		return directoryStartEntry;
 	}
 
-	public void setDirectoryStartBlock(int directoryStartBlock) {
-		this.directoryStartBlock = directoryStartBlock;
+	public void setDirectoryStartEntry(int directoryStartBlock) {
+		this.directoryStartEntry = directoryStartBlock;
 	}
 
 	public int getReservedDirectoryBlocks() {

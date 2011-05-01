@@ -24,6 +24,7 @@
       <w>filenames</w>
       <w>fixme</w>
       <w>footways</w>
+      <w>fout</w>
       <w>garmin</w>
       <w>garmin's</w>
       <w>gawron</w>
@@ -35,6 +36,7 @@
       <w>heibler</w>
       <w>imgfmt</w>
       <w>indexable</w>
+      <w>infs</w>
       <w>intelli</w>
       <w>interspaced</w>
       <w>isolines</w>
@@ -53,7 +55,9 @@
       <w>occulting</w>
       <w>oneway</w>
       <w>oneways</w>
+      <w>outfs</w>
       <w>outputing</w>
+      <w>pathname</w>
       <w>peucker</w>
       <w>pois</w>
       <w>polyline</w>

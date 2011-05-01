@@ -146,7 +146,7 @@ class ImgHeader {
 
 		// Actually this may not be the directory start block, I am guessing -
 		// always assume it is 2 anyway.
-		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartBlock());
+		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartEntry());
 
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
@@ -193,7 +193,7 @@ class ImgHeader {
 		header.putInt(OFF_NUMBER_OF_SECTORS, endBlock+1);
 		log.info("number of blocks " + blocks);
 
-		setDirectoryStartBlock(params.getDirectoryStartBlock());
+		setDirectoryStartEntry(params.getDirectoryStartEntry());
 
 		// Set the times.
 		Date date = new Date();
@@ -216,7 +216,7 @@ class ImgHeader {
 
 		fsParams = new FileSystemParam();
 		fsParams.setBlockSize(1 << (exp1 + exp2));
-		fsParams.setDirectoryStartBlock(header.get(OFF_DIRECTORY_START_BLOCK));
+		fsParams.setDirectoryStartEntry(header.get(OFF_DIRECTORY_START_BLOCK));
 
 		StringBuffer sb = new StringBuffer();
 		sb.append(Utils.bytesToString(buf, OFF_MAP_DESCRIPTION, LEN_MAP_DESCRIPTION));
@@ -245,7 +245,7 @@ class ImgHeader {
 		header.rewind();
 		file.position(0);
 		file.write(header);
-		file.position(fsParams.getDirectoryStartBlock() * 512L);
+		file.position(fsParams.getDirectoryStartEntry() * 512L);
 	}
 
 	/**
@@ -312,9 +312,9 @@ class ImgHeader {
 		return (byte) (y - 1900);
 	}
 
-	protected void setDirectoryStartBlock(int directoryStartBlock) {
-		header.put(OFF_DIRECTORY_START_BLOCK, (byte) directoryStartBlock);
-		fsParams.setDirectoryStartBlock(directoryStartBlock);
+	protected void setDirectoryStartEntry(int directoryStartEntry) {
+		header.put(OFF_DIRECTORY_START_BLOCK, (byte) directoryStartEntry);
+		fsParams.setDirectoryStartEntry(directoryStartEntry);
 	}
 
 	protected void setCreationTime(Date date) {

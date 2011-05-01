@@ -58,7 +58,9 @@ public class ImgFS implements FileSystem {
 
 	// The filesystem is responsible for allocating blocks
 	private BlockManager fileBlockManager;
-	private static final long BASIC_BLOCK_SIZE = 512L;
+
+	// The header entries are written in 512 blocks, regardless of the block size of the file itself.
+	private static final long ENTRY_BLOCK_SIZE = 512L;
 	private BlockManager headerBlockManager;
 
 	private byte xorByte;	// if non-zero, all bytes are XORed with this
@@ -268,7 +270,7 @@ public class ImgFS implements FileSystem {
 		// to the header and directory, but to create one normally would involve
 		// it already existing, so it is created by hand.
 		try {
-			directory = new Directory(headerBlockManager);
+			directory = new Directory(headerBlockManager, params.getDirectoryStartEntry());
 
 			Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
 			ent.setSpecial(true);
@@ -313,8 +315,8 @@ public class ImgFS implements FileSystem {
 		BlockManager headerBlockManager = new BlockManager(params.getBlockSize(), 0);
 		headerBlockManager.setMaxBlock(params.getReservedDirectoryBlocks());
 
-		directory = new Directory(headerBlockManager);
-		directory.setStartPos(params.getDirectoryStartBlock() * BASIC_BLOCK_SIZE);
+		directory = new Directory(headerBlockManager, params.getDirectoryStartEntry());
+		directory.setStartPos(params.getDirectoryStartEntry() * ENTRY_BLOCK_SIZE);
 
 		Dirent ent = directory.create(DIRECTORY_FILE_NAME, headerBlockManager);
 		FileNode f = new FileNode(chan, ent, "r");

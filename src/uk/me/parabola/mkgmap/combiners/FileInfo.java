@@ -281,15 +281,16 @@ public class FileInfo {
 	}
 
 	/**
-	 * Get the number of blocks required at a particular block size.
-	 * Each subfile will need at least one block and so we go through each
+	 * Get the number header slots (512 byte entry) required to represent this file
+	 * at the given block size.
+	 * Each sub-file will need at least one block and so we go through each
 	 * separately and round up for each and return the total.
 	 *
 	 * @param blockSize The block size.
-	 * @return The number of blocks that would be needed for all the subfiles
+	 * @return The number of 512 byte header entries that are needed for all the subfiles
 	 * in this .img file.
 	 */
-	public int getNumHeaderSlots(int blockSize) {
+	public int getNumHeaderEntries(int blockSize) {
 		int totHeaderSlots = 0;
 		for (int size : fileSizes) {
 			// You use up one header slot for every 240 blocks with a minimum
@@ -301,9 +302,14 @@ public class FileInfo {
 	}
 
 	/**
-	 * Get the number of blocks at the given block size.  Note that a complete block is
-	 * always used for a file.
+	 * Get the number of blocks for all the sub-files of this file at the given block size.
+	 * Note that a complete block is always used for a file.
+	 *
+	 * For TYP files and other files that do not have sub-files, then it is just the number of blocks
+	 * for the complete file.
+	 * 
 	 * @param bs The block size at which to calculate the value.
+	 * @return The number of blocks at the given size required to save all the sub-files of this file.
 	 */
 	public int getNumBlocks(int bs) {
 		int totBlocks = 0;
