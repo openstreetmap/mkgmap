@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2006, 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.awt.Rectangle;
@@ -113,10 +125,8 @@ public class BoundarySaver {
 		}
 	}
 
-	private final ByteArrayOutputStream oneItemStream = new ByteArrayOutputStream();
-
 	private void write(OutputStream stream, Boundary boundary) {
-		oneItemStream.reset();
+		ByteArrayOutputStream oneItemStream = new ByteArrayOutputStream();
 		DataOutputStream dos = new DataOutputStream(oneItemStream);
 		try {
 
@@ -154,6 +164,7 @@ public class BoundarySaver {
 
 			// all items of the boundary element have been written
 			dos.flush();
+			dos.close();
 
 			// now start to write into the real stream
 
@@ -169,16 +180,16 @@ public class BoundarySaver {
 
 			// write the size of the boundary block so that it is possible to
 			// skip it
-			int bSize = oneItemStream.size();
-			assert bSize > 0 : "bSize is not > 0 : "+oneItemStream.size();
-			dOutStream.writeInt(bSize);
+			byte[] data = oneItemStream.toByteArray();
+			assert data.length > 0 : "bSize is not > 0 : "+data.length;
+			dOutStream.writeInt(data.length);
 
 			// write the boundary block
-			dOutStream.write(oneItemStream.toByteArray());
+			dOutStream.write(data);
 			dOutStream.flush();
 
 		} catch (IOException exp) {
-
+			log.error(exp.toString());
 		}
 
 	}

@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2006, 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.awt.geom.Area;
@@ -5,7 +17,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
@@ -82,6 +92,7 @@ public class BoundaryUtil {
 	public static List<Boundary> loadBoundaryFile(File boundaryFile,
 			uk.me.parabola.imgfmt.app.Area bbox) throws IOException
 	{
+		log.debug("Load boundary file",boundaryFile,"within",bbox);
 		List<Boundary> boundaryList = new ArrayList<Boundary>();
 		FileInputStream stream = new FileInputStream(boundaryFile);
 		try {
@@ -93,12 +104,15 @@ public class BoundaryUtil {
 					int minLat = inpStream.readInt();
 					int minLong = inpStream.readInt();
 					int maxLat = inpStream.readInt();
-					int maxLon = inpStream.readInt();
+					int maxLong = inpStream.readInt();
+					log.debug("Next boundary. Lat min:",minLat,"max:",maxLat,"Long min:",minLong,"max:",maxLong);
 					uk.me.parabola.imgfmt.app.Area rBbox = new uk.me.parabola.imgfmt.app.Area(
-							minLat, minLong, maxLat, maxLon);
+							minLat, minLong, maxLat, maxLong);
 					int bSize = inpStream.readInt();
+					log.debug("Size:",bSize);
 
 					if (bbox == null || bbox.intersects(rBbox)) {
+						log.debug("Bbox intersects. Load the boundary");
 						Tags tags = new Tags();
 						int noOfTags = inpStream.readInt();
 						for (int i = 0; i < noOfTags; i++) {
@@ -112,6 +126,7 @@ public class BoundaryUtil {
 						for (int i = 0; i < noBElems; i++) {
 							boolean outer = inpStream.readBoolean();
 							int noCoords = inpStream.readInt();
+							log.debug("No of coords",noCoords);
 							List<Coord> points = new ArrayList<Coord>(noCoords);
 							for (int c = 0; c < noCoords; c++) {
 								int lat = inpStream.readInt();
@@ -131,7 +146,8 @@ public class BoundaryUtil {
 						boundaryList.add(boundary);
 
 					} else {
-						inpStream.skip(bSize);
+						log.debug("Bbox does not intersect. Skip",bSize);
+						inpStream.skipBytes(bSize);
 					}
 				}
 			} catch (EOFException exp) {
@@ -150,9 +166,9 @@ public class BoundaryUtil {
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		List<File> boundaryFiles = new ArrayList<File>();
 		for (int latSplit = BoundaryUtil.getSplitBegin(bbox.getMinLat()); latSplit <= BoundaryUtil
-				.getSplitEnd(bbox.getMaxLat()); latSplit += BoundaryUtil.RASTER) {
+				.getSplitBegin(bbox.getMaxLat()); latSplit += BoundaryUtil.RASTER) {
 			for (int lonSplit = BoundaryUtil.getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
-					.getSplitEnd(bbox.getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
+					.getSplitBegin(bbox.getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
 				boundaryFiles.add(new File(boundaryDir, "bounds_"
 						+ getKey(latSplit, lonSplit) + ".bnd"));
 			}
@@ -233,29 +249,4 @@ public class BoundaryUtil {
 		return lat + "_" + lon;
 	}
 	
-	public static void main(String[] args) {
-		File bdir = new File(args[0]);
-		File[] bFiles = bdir.listFiles(new FileFilter() {
-			
-			public boolean accept(File pathname) {
-				return pathname.getName().endsWith(".bnd");
-			}
-		});
-		
-		uk.me.parabola.imgfmt.app.Area allArea = new uk.me.parabola.imgfmt.app.Area(Utils.toMapUnit(-180.0d), Utils.toMapUnit(-180.0d), Utils.toMapUnit(180.0d), Utils.toMapUnit(180.0d));
-		for (File bFile : bFiles) {
-			try {
-				System.out.println(bFile);
-				List<Boundary> boundaries = loadBoundaryFile(bFile, allArea);
-				for (Boundary b : boundaries) {
-					uk.me.parabola.imgfmt.app.Area bbox = b.getBbox();
-					System.out.println(b.getTags()+" "+bbox.getMinLat()+" "+bbox.getMinLong()+" "+bbox.getMaxLat()+" "+bbox.getMaxLong());
-				}
-			} catch (IOException exp) {
-				System.out.println(exp);
-				exp.printStackTrace(System.out);
-			}
-		}
-	}
-
 }
