@@ -93,20 +93,40 @@ public class Sort {
 			ByteBuffer out = encoder.encode(inb);
 			byte[] bval = out.array();
 			byte[] key = new byte[bval.length * 3 + 3];
-			int length = bval.length;
-			for (int i = 0; i < length; i++) {
-				int b = bval[i] & 0xff;
-				key[i] = primary[b];
-				key[length + 1 + i] = secondary[b];
-				key[2*length + 2 + i] = tertiary[b];
-			}
-			key[length] = 0;
-			key[2 * length + 1] = 0;
-			key[3 * length + 2] = 0;
+
+			int start = fillKey(primary, bval, key, 0);
+			start = fillKey(secondary, bval, key, start);
+			fillKey(tertiary, bval, key, start);
+
 			return new SrtSortKey<T>(object, key, second);
 		} catch (CharacterCodingException e) {
 			return new SrtSortKey<T>(object, ZERO_KEY);
 		}
+	}
+
+	/**
+	 * Fill in the output key for a given strength.
+	 *
+	 * @param sortPositions An array giving the sort position for each of the 256 characters.
+	 * @param input The input string in a particular 8 bit codepage.
+	 * @param outKey The output sort key.
+	 * @param start The index into the output key to start at.
+	 * @return The next position in the output key.
+	 */
+	private int fillKey(byte[] sortPositions, byte[] input, byte[] outKey, int start) {
+		int index = start;
+		for (byte inb : input) {
+			int b = inb & 0xff;
+
+			// I am guessing that a sort position of 0 means that the character is ignorable at this
+			// strength. In other words it is as if it is not present in the string.  This appears to
+			// be true for shield symbols, but perhaps not for other kinds of control characters.
+			if (sortPositions[b] != 0)
+				outKey[index++] = sortPositions[b];
+		}
+
+		outKey[index++] = '\0';
+		return index;
 	}
 
 	public <T> SortKey<T> createSortKey(T object, String s) {

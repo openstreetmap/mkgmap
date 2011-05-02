@@ -71,8 +71,7 @@ public class NETFile extends ImgFile {
 				Label[] l = rd.getLabels();
 				for(int i = 0; i < l.length && l[i] != null; ++i) {
 					if(l[i].getLength() != 0) {
-						String cleanName = l[i].getTextSansGarminCodes();
-						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), cleanName);
+						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), l[i].getText());
 						sortKeys.add(sortKey);
 					}
 				}
@@ -107,7 +106,7 @@ public class NETFile extends ImgFile {
 		List<LabeledRoadDef> out = new ArrayList<LabeledRoadDef>(in.size());
 		while(!in.isEmpty()) {
 			LabeledRoadDef firstLabeledRoadDef = in.get(0).getObject();
-			String name0 = firstLabeledRoadDef.label.getTextSansGarminCodes();
+			String name0 = firstLabeledRoadDef.label.getText();
 			RoadDef road0 = firstLabeledRoadDef.roadDef;
 
 			City city0 = road0.getCity();
@@ -119,7 +118,7 @@ public class NETFile extends ImgFile {
 			// firstly determine the entries whose name and city match
 			// name0 and city0
 			for(n = 0; (n < in.size() &&
-						name0.equalsIgnoreCase(in.get(n).getObject().label.getTextSansGarminCodes()) &&
+						name0.equalsIgnoreCase(in.get(n).getObject().label.getText()) &&
 						city0 == in.get(n).getObject().roadDef.getCity()); ++n) {
 				// relax
 			}

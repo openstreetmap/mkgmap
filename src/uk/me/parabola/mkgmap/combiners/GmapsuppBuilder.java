@@ -66,7 +66,7 @@ public class GmapsuppBuilder implements Combiner {
 	 * The number of block numbers that will fit into one entry block
 	 */
 	private static final int ENTRY_SIZE = 240;
-	private static final int DIRECTORY_OFFSET_BLOCK = 2;
+	private static final int DIRECTORY_OFFSET_ENTRY = 2;
 
 	private final Map<String, FileInfo> files = new LinkedHashMap<String, FileInfo>();
 
@@ -350,14 +350,10 @@ public class GmapsuppBuilder implements Combiner {
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
-		params.setDirectoryStartBlock(DIRECTORY_OFFSET_BLOCK);
+		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
 
-		int reserved = DIRECTORY_OFFSET_BLOCK + bi.reserveBlocks + bi.headerSlots;
-		log.info("bs of", blockSize, "reserving", reserved);
-
-		int reserve = (int) Math.ceil(reserved * 512.0 / blockSize);
-		params.setReservedDirectoryBlocks(reserve);
-		log.info("reserved", reserve);
+		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
+		params.setReservedDirectoryBlocks(reserveBlocks);
 
 		FileSystem outfs = ImgFS.createFs(Utils.joinPath(outputDir, GMAPSUPP), params);
 		mpsFile = createMpsFile(outfs);
@@ -370,25 +366,25 @@ public class GmapsuppBuilder implements Combiner {
 	 * Copy an individual file with the given name from the first archive/filesystem
 	 * to the second.
 	 *
-	 * @param inname The name of the file.
+	 * @param inName The name of the file.
 	 * @param infs The filesystem to copy from.
 	 * @param outfs The filesystem to copy to.
 	 * @throws IOException If the copy fails.
 	 */
-	private void copyFile(String inname, FileSystem infs, FileSystem outfs) throws IOException {
-		ImgChannel fin = infs.open(inname, "r");
-		copyFile(fin, outfs, inname);
+	private void copyFile(String inName, FileSystem infs, FileSystem outfs) throws IOException {
+		ImgChannel fin = infs.open(inName, "r");
+		copyFile(fin, outfs, inName);
 	}
 
 	/**
-	 * Copy a given open file to the a new file in outfs with the name inname.
+	 * Copy a given open file to the a new file in outfs with the name inName.
 	 * @param fin The file to copy from.
 	 * @param outfs The file system to copy to.
-	 * @param inname The name of the file to create on the destination file system.
+	 * @param inName The name of the file to create on the destination file system.
 	 * @throws IOException If a file cannot be read or written.
 	 */
-	private void copyFile(ImgChannel fin, FileSystem outfs, String inname) throws IOException {
-		ImgChannel fout = outfs.create(inname);
+	private void copyFile(ImgChannel fin, FileSystem outfs, String inName) throws IOException {
+		ImgChannel fout = outfs.create(inName);
 
 		copyFile(fin, fout);
 	}
@@ -432,25 +428,32 @@ public class GmapsuppBuilder implements Combiner {
 
 		for (int bs : ints) {
 			int totBlocks = 0;
-			int totHeaderSlots = 0;
+			int totHeaderEntries = 0;
 			for (FileInfo info : files.values()) {
 				totBlocks += info.getNumBlocks(bs);
 				// Each file will take up at least one directory block.
 				// Each directory block can hold 480 block-references
-				int slots = info.getNumHeaderSlots(bs);
+				int slots = info.getNumHeaderEntries(bs);
 				log.info("adding", slots, "slots for", info.getFilename());
-				totHeaderSlots += slots;
+				totHeaderEntries += slots;
 			}
 
-			totHeaderSlots += 2;
-			int totHeaderBlocks = totHeaderSlots * 512 / bs;
+			// Estimate the number of blocks needed for the MPS file
+			int mpsSize = files.size() * 80 + 100;
+			int mpsBlocks = (mpsSize + (bs - 1)) / bs;
+			int mpsSlots = (mpsBlocks + ENTRY_SIZE-1) / ENTRY_SIZE;
 
-			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderSlots);
+			totBlocks += mpsBlocks;
+			totHeaderEntries += mpsSlots;
 
-			if (totBlocks < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
-				// Add one for the MPS file
-				totHeaderSlots += 1;
-				return new BlockInfo(bs, totHeaderSlots, totHeaderSlots / bs + 1);
+			totHeaderEntries += 2;
+			int totHeaderBlocks = totHeaderEntries * 512 / bs;
+
+			log.info("total blocks for", bs, "is", totHeaderBlocks, "based on slots=", totHeaderEntries);
+
+			int reserveEntries = (int) Math.ceil(DIRECTORY_OFFSET_ENTRY + 1 + totHeaderEntries);
+			if (totBlocks + reserveEntries < 0xfffe && totHeaderBlocks <= ENTRY_SIZE) {
+				return new BlockInfo(bs, reserveEntries);
 			}
 		}
 
@@ -462,13 +465,11 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private static class BlockInfo {
 		private final int blockSize;
-		private final int headerSlots;
-		private final int reserveBlocks;
+		private final int reserveEntries;
 
-		private BlockInfo(int blockSize, int headerSlots, int reserveBlocks) {
+		private BlockInfo(int blockSize, int reserveEntries) {
 			this.blockSize = blockSize;
-			this.headerSlots = headerSlots;
-			this.reserveBlocks = reserveBlocks;
+			this.reserveEntries = reserveEntries;
 		}
 	}
 }
