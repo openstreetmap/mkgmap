@@ -24,11 +24,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.Java2DConverter;
 
 public class BoundaryUtil {
@@ -187,6 +189,13 @@ public class BoundaryUtil {
 			} catch (IOException exp) {
 				log.error("Cannot load boundary file " + boundaryFile + ": "
 						+ exp);
+//				String basename = "missingbounds/";
+//				String[] bParts = boundaryFile.getName().substring(0,boundaryFile.getName().length()-4).split("_");
+//				int minLat = Integer.valueOf(bParts[1]);
+//				int minLong = Integer.valueOf(bParts[2]);
+//				uk.me.parabola.imgfmt.app.Area bBbox = new uk.me.parabola.imgfmt.app.Area(minLat, minLong, minLat+RASTER, minLong+RASTER);
+//				GpxCreator.createAreaGpx(basename+boundaryFile.getName(), bBbox);
+//				log.error("GPX created "+basename+boundaryFile.getName());
 			}
 		}
 		if (boundaryFiles.size() > 1) {
@@ -247,6 +256,23 @@ public class BoundaryUtil {
 
 	public static String getKey(int lat, int lon) {
 		return lat + "_" + lon;
+	}
+	
+	/**
+	 * Retrieve the bounding box of the given boundary file.
+	 * @param boundaryFile the boundary file
+	 * @return the bounding box
+	 */
+	public static uk.me.parabola.imgfmt.app.Area getBbox(File boundaryFile) {
+		String filename = boundaryFile.getName();
+		// cut off the extension
+		filename = filename.substring(0,filename.length()-4);
+		String[] fParts = filename.split(Pattern.quote("_"));
+		
+		int lat = Integer.valueOf(fParts[1]);
+		int lon = Integer.valueOf(fParts[2]);
+		
+		return new uk.me.parabola.imgfmt.app.Area(lat, lon, lat+RASTER, lon+RASTER);
 	}
 	
 }
