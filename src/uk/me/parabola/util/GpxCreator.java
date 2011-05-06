@@ -78,7 +78,9 @@ public class GpxCreator {
 	public static void createGpx(String name, List<Coord> points) {
 		try {
 			File f = new File(name);
-			f.getParentFile().mkdirs();
+			if (f.getParentFile() != null) {
+				f.getParentFile().mkdirs();
+			}
 			PrintWriter pw = new PrintWriter(new FileWriter(name + ".gpx"));
 			pw.print("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" ");
 			pw.print("xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" version=\"1.1\" ");
