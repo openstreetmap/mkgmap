@@ -31,11 +31,14 @@ class BlockManager {
 	
 	private int currentBlock;
 	private int maxBlock = 0xfffe;
-	private int numberAllocated;
+	private int maxBlockAllocated;
+	private final int initialBlock;
 
 	BlockManager(int blockSize, int initialBlock) {
 		this.blockSize = blockSize;
 		this.currentBlock = initialBlock;
+		this.initialBlock = initialBlock;
+		this.maxBlockAllocated = initialBlock;
 	}
 
 	/**
@@ -57,7 +60,7 @@ class BlockManager {
 					blockSize * 2, blockSize * 4);
 			throw new MapFailedException(message);
 		}
-		numberAllocated++;
+		maxBlockAllocated++;
 		return n;
 	}
 
@@ -74,8 +77,13 @@ class BlockManager {
 	}
 
 	public void setCurrentBlock(int n) {
-		if (numberAllocated != 0)
+		if (maxBlockAllocated != initialBlock)
 			throw new IllegalStateException("Blocks already allocated");
 		currentBlock = n;
+		maxBlockAllocated = n;
+	}
+
+	public int getMaxBlockAllocated() {
+		return maxBlockAllocated;
 	}
 }
