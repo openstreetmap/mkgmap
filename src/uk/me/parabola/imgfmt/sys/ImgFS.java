@@ -228,6 +228,7 @@ public class ImgFS implements FileSystem {
 		if (readOnly)
 			return;
 
+		header.setNumBlocks(fileBlockManager.getMaxBlockAllocated());
 		header.sync();
 		directory.sync();
 	}

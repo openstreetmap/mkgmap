@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.sys;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -48,7 +49,7 @@ class ImgHeader {
 	// If this was a real boot sector these would be the meanings
 	private static final int OFF_SECTORS = 0x18;
 	private static final int OFF_HEADS = 0x1a;
-	private static final int OFF_UNK_2 = 0x1c; // Previously cylinders, but no longer thought to be that
+	private static final int OFF_CYLINDERS = 0x1c;
 
 	private static final int OFF_CREATION_YEAR = 0x39;
 	//	private static final int OFF_CREATION_MONTH = 0x3b;
@@ -104,6 +105,8 @@ class ImgHeader {
 	private static final byte[] SIGNATURE = {
 			'D', 'S', 'K', 'I', 'M', 'G', '\0'};
 
+	private int numBlocks;
+
 	ImgHeader(ImgChannel chan) {
 		this.file = chan;
 		header.order(ByteOrder.LITTLE_ENDIAN);
@@ -148,50 +151,8 @@ class ImgHeader {
 		// always assume it is 2 anyway.
 		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartEntry());
 
-		// This sectors, head, cylinders stuff appears to be used by mapsource
-		// and they have to be larger than the actual size of the map.  It
-		// doesn't appear to have any effect on a garmin device or other software.
-		int sectors = 0x20;   // 0x3f is the max
-		header.putShort(OFF_SECTORS, (short) sectors);
-		int heads = 0x80;
-		header.putShort(OFF_HEADS, (short) heads);
-		int unknown = 0x400; // not known, doesn't appear to be related to fs size
-		header.putShort(OFF_UNK_2, (short) unknown);
-		header.putShort(OFF_HEADS2, (short) heads);
-		header.putShort(OFF_SECTORS2, (short) sectors);
-
 		header.position(OFF_CREATION_YEAR);
 		Utils.setCreationTime(header, creationTime);
-
-		// The last LBA number in the partition. We always claim a large partition without
-		// regard to what is actually stored.  Total number of sectors is this plus one
-		// as sector numbers start at zero.
-		int endBlock = 0x3fffff;
-
-		// Since there are only 2 bytes here but it can easily overflow, if it
-		// does we replace it with 0xffff, it doesn't work to set it to say zero
-		int blocks = endBlock / (1 << exp - 9);
-		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
-		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
-
-		header.put(OFF_PARTITION_SIG, (byte) 0x55);
-		header.put(OFF_PARTITION_SIG+1, (byte) 0xaa);
-
-		header.put(OFF_START_HEAD, (byte) 0);
-		header.put(OFF_START_SECTOR, (byte) 1);
-		header.put(OFF_START_CYLINDER, (byte) 0);
-		header.put(OFF_SYSTEM_TYPE, (byte) 0);
-
-		int h = (endBlock / sectors) % heads;
-		int s = (endBlock % sectors) + 1;
-		int c = endBlock / (sectors * heads);
-		header.put(OFF_END_HEAD, (byte) (h));
-		header.put(OFF_END_SECTOR, (byte) ((s) | ((c>>2) & 0xc0)));
-		header.put(OFF_END_CYLINDER, (byte) (c & 0xff));
-
-		header.putInt(OFF_REL_SECTORS, 0);
-		header.putInt(OFF_NUMBER_OF_SECTORS, endBlock+1);
-		log.info("number of blocks " + blocks);
 
 		setDirectoryStartEntry(params.getDirectoryStartEntry());
 
@@ -204,6 +165,82 @@ class ImgHeader {
 		// Checksum is not checked.
 		int check = 0;
 		header.put(OFF_CHECKSUM, (byte) check);
+	}
+
+	/**
+	 * Write out the values associated with the partition sizes.
+	 *
+	 * @param blockSize Block size.
+	 */
+	private void writeSizeValues(int blockSize) {
+		int endSector = (int) ((long) ((numBlocks+1) * blockSize + 511) / 512);
+
+		// We have three maximum values for sectors, heads and cylinders.  We attempt to find values
+		// for them that are larger than the 
+		int sectors = 32;   // 6 bit value
+		int heads = 128;
+		int cyls = 0x400;
+
+		// Try out various values of h, s and c until we find a combination that is large enough.
+		// I'm not entirely sure about the valid values, and this is perhaps a bit overly complex. In general
+		// though the partition size can be much larger than the file size without ill effects, there
+		// are some very large sizes that appear to not work in some circumstances however.
+		out:
+		for (int h : Arrays.asList(16, 32, 64, 128)) {
+			for (int s : Arrays.asList(4, 8, 16, 32)) {
+				for (int c : Arrays.asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x400)) {
+					log.info("shc=", s + "," + h + "," + c, "end=", endSector);
+					if (s * h * c > endSector) {
+						heads = h;
+						sectors = s;
+						cyls = c;
+						break out;
+					}
+				}
+			}
+		}
+
+		endSector = heads * sectors * cyls;
+		int lastSector = endSector - 1;
+		
+		// This sectors, head, cylinders stuff appears to be used by mapsource
+		// and they have to be larger than the actual size of the map.  It
+		// doesn't appear to have any effect on a garmin device or other software.
+		header.putShort(OFF_SECTORS, (short) sectors);
+		header.putShort(OFF_HEADS, (short) heads);
+		header.putShort(OFF_HEADS2, (short) heads);
+		header.putShort(OFF_SECTORS2, (short) sectors);
+		header.putShort(OFF_CYLINDERS, (short) cyls);
+
+		// Since there are only 2 bytes here but it can easily overflow, if it
+		// does we replace it with 0xffff, it doesn't work to set it to say zero
+		int blocks = (int) (endSector * 512L / blockSize);
+		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
+		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
+
+		header.put(OFF_PARTITION_SIG, (byte) 0x55);
+		header.put(OFF_PARTITION_SIG + 1, (byte) 0xaa);
+
+		// Partition starts at zero. This is 0,0,1 in CHS terms.
+		header.put(OFF_START_HEAD, (byte) 0);
+		header.put(OFF_START_SECTOR, (byte) 1);
+		header.put(OFF_START_CYLINDER, (byte) 0);
+
+		header.put(OFF_SYSTEM_TYPE, (byte) 0);
+
+		// Now calculate the CHS address of the last sector of the partition.
+		int h = (lastSector / sectors) % heads;
+		int s = (lastSector % sectors) + 1;
+		int c = lastSector / (sectors * heads);
+		
+		header.put(OFF_END_HEAD, (byte) (h));
+		header.put(OFF_END_SECTOR, (byte) ((s) | ((c >> 2) & 0xc0)));
+		header.put(OFF_END_CYLINDER, (byte) (c & 0xff));
+
+		// Write the LBA block address of the beginning and end of the partition.
+		header.putInt(OFF_REL_SECTORS, 0);
+		header.putInt(OFF_NUMBER_OF_SECTORS, endSector);
+		log.info("number of blocks " + lastSector);
 	}
 
 	void setHeader(ByteBuffer buf)  {
@@ -242,6 +279,8 @@ class ImgHeader {
 	public void sync() throws IOException {
 		setUpdateTime(new Date());
 
+		writeSizeValues(fsParams.getBlockSize());
+		
 		header.rewind();
 		file.position(0);
 		file.write(header);
@@ -319,5 +358,9 @@ class ImgHeader {
 
 	protected void setCreationTime(Date date) {
 		this.creationTime = date;
+	}
+
+	public void setNumBlocks(int numBlocks) {
+		this.numBlocks = numBlocks;
 	}
 }
