@@ -261,12 +261,12 @@ public class BoundarySaver {
 	}
 
 	public void setBbox(uk.me.parabola.imgfmt.app.Area bbox) {
-		// check if this is a "real" bounding box 
-		if (new uk.me.parabola.imgfmt.app.Area(-180.0d, -180.0d, 180.0d, 180.0d)
-				.equals(bbox)) {
-			log.warn("Do not use bonding box because it covers the complete world");
+		if (bbox.isEmpty()) {
+			log.warn("Do not use bonding box because it's empty");
+			this.bbox = null;
 		} else {
 			this.bbox = bbox;
+			log.info("Set bbox: "+bbox.getMinLat()+" "+bbox.getMinLong()+" "+bbox.getMaxLat()+" "+bbox.getMaxLong());
 		}
 	}
 }
