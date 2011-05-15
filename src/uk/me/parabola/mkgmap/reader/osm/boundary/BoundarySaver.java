@@ -26,15 +26,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.Version;
 
 public class BoundarySaver {
 	private static final Logger log = Logger.getLogger(BoundarySaver.class);
 
 	private final File boundaryDir;
+	private uk.me.parabola.imgfmt.app.Area bbox;
 
+	private int minLat = Integer.MAX_VALUE;
+	private int minLong= Integer.MAX_VALUE;
+	private int maxLat= Integer.MIN_VALUE;
+	private int maxLong= Integer.MIN_VALUE;
+
+	
 	/** keeps the open streams */
 	private final Map<String, OutputStream> streams;
 
@@ -52,6 +61,26 @@ public class BoundarySaver {
 	}
 
 	public void end() {
+		if (getBbox() != null) {
+			// a bounding box is set => fill the gaps with empty files
+			for (int latSplit = BoundaryUtil.getSplitBegin(getBbox().getMinLat()); latSplit <= BoundaryUtil
+					.getSplitBegin(getBbox().getMaxLat()); latSplit += BoundaryUtil.RASTER) {
+				for (int lonSplit = BoundaryUtil.getSplitBegin(getBbox()
+						.getMinLong()); lonSplit <= BoundaryUtil
+						.getSplitBegin(getBbox().getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
+					String key = BoundaryUtil.getKey(latSplit, lonSplit);
+					OutputStream stream = getStream(key);
+					try {
+						stream.close();
+					} catch (IOException exp) {
+						log.error("Problems closing stream: " + exp);
+					}
+					streams.remove(key);
+				}
+			}
+		}
+		
+		// close the rest of the streams
 		for (OutputStream stream : streams.values()) {
 			try {
 				stream.close();
@@ -88,7 +117,7 @@ public class BoundarySaver {
 
 		return splittedAreas;
 	}
-
+	
 	private OutputStream getStream(String filekey) {
 		OutputStream stream = streams.get(filekey);
 		if (stream == null) {
@@ -99,20 +128,49 @@ public class BoundarySaver {
 			try {
 				fileStream = new FileOutputStream(file);
 				stream = new BufferedOutputStream(fileStream);
+				writeDefaultInfos(stream);
 				streams.put(filekey, stream);
+				
+				String[] keyParts = filekey.split(Pattern.quote("_"));
+				int lat = Integer.valueOf(keyParts[0]);
+				int lon = Integer.valueOf(keyParts[1]);
+				if (lat < minLat) {
+					minLat = lat;
+					log.debug("New min Lat:",minLat);
+				}
+				if (lat > maxLat) {
+					maxLat = lat;
+					log.debug("New max Lat:",maxLat);
+				}
+				if (lon < minLong) {
+					minLong = lon;
+					log.debug("New min Lon:",minLong);
+				}
+				if (lon > maxLong) {
+					maxLong = lon;
+					log.debug("New max Long:",maxLong);
+				}
+				
 			} catch (IOException exp) {
 				log.error("Cannot save boundary: " + exp);
 				if (fileStream != null) {
 					try {
 						fileStream.close();
 					} catch (Throwable thr) {
-
 					}
 				}
+				return null;
 			} finally {
 			}
 		}
 		return stream;
+	}
+	
+	private void writeDefaultInfos(OutputStream stream) throws IOException {
+		DataOutputStream dos = new DataOutputStream(stream);
+		dos.writeUTF(Version.VERSION);
+		dos.writeLong(System.currentTimeMillis());
+		dos.flush();
 	}
 
 	private void saveToFile(String filekey, Boundary boundary) {
@@ -194,4 +252,21 @@ public class BoundarySaver {
 
 	}
 
+	public uk.me.parabola.imgfmt.app.Area getBbox() {
+		if (bbox == null) {
+			bbox = new uk.me.parabola.imgfmt.app.Area(minLat, minLong, maxLat, maxLong);
+			log.error("Calculate bbox to "+bbox);
+		}
+		return bbox;
+	}
+
+	public void setBbox(uk.me.parabola.imgfmt.app.Area bbox) {
+		// check if this is a "real" bounding box 
+		if (new uk.me.parabola.imgfmt.app.Area(-180.0d, -180.0d, 180.0d, 180.0d)
+				.equals(bbox)) {
+			log.warn("Do not use bonding box because it covers the complete world");
+		} else {
+			this.bbox = bbox;
+		}
+	}
 }

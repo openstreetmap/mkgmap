@@ -94,6 +94,7 @@ public class BoundaryPreparer extends Thread {
 			dataSource.setBoundarySaver(saver);
 			log.info("Started loading", boundaryFilename);
 			dataSource.load(boundaryFilename);
+			saver.setBbox(dataSource.getBounds());
 			log.info("Finished loading", boundaryFilename);
 			saver.end();
 		} catch (FileNotFoundException exp) {

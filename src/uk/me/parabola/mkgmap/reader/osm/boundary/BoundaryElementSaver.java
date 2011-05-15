@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.reader.osm.boundary;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.ElementSaver;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -30,6 +31,8 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author WanMil
  */
 public class BoundaryElementSaver extends ElementSaver {
+	private static final Logger log = Logger
+	.getLogger(BoundaryElementSaver.class);
 
 	private final BoundarySaver saver;
 	
@@ -44,13 +47,15 @@ public class BoundaryElementSaver extends ElementSaver {
 			if ("boundary".equals(type)) {
 				return true;
 			}
+			String boundaryVal = element.getTag("boundary");
 			if ("multipolygon".equals(type)
-					&& "administrative".equals(element.getTag("boundary"))) {
+					&& ("administrative".equals(boundaryVal) || "postal_code".equals(boundaryVal))) {
 				return true;
 			}
 			return false;
 		} else if (element instanceof Way) {
-			return "administrative".equals(element.getTag("boundary"));
+			String boundaryVal = element.getTag("boundary");
+			return ("administrative".equals(boundaryVal) || "postal_code".equals(boundaryVal));
 		} else {
 			return false;
 		}
@@ -63,6 +68,8 @@ public class BoundaryElementSaver extends ElementSaver {
 			Boundary b = bRel.getBoundary();
 			if (b != null)
 				saver.addBoundary(b);
+		} else {
+			log.error("Relation is not processed due to missing tags: "+rel.getId()+" "+rel.toTagString());
 		}
 	}
 	

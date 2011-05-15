@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.Java2DConverter;
 
 public class BoundaryUtil {
@@ -102,6 +102,14 @@ public class BoundaryUtil {
 					new BufferedInputStream(stream, 1024 * 1024));
 
 			try {
+				// 1st read the mkgmap release the boundary file is created by
+				String mkgmapRel = inpStream.readUTF();
+				long createTime = inpStream.readLong();
+				
+				if (log.isDebugEnabled()) {
+					log.debug("File created by mkgmap release",mkgmapRel,"at",new Date(createTime));
+				}
+				
 				while (true) {
 					int minLat = inpStream.readInt();
 					int minLong = inpStream.readInt();
@@ -181,8 +189,7 @@ public class BoundaryUtil {
 	public static List<Boundary> loadBoundaries(File boundaryDir,
 			uk.me.parabola.imgfmt.app.Area bbox) {
 		List<File> boundaryFiles = getBoundaryFiles(boundaryDir, bbox);
-		List<Boundary> boundaries = new ArrayList<Boundary>(
-				boundaryFiles.size());
+		List<Boundary> boundaries = new ArrayList<Boundary>();
 		for (File boundaryFile : boundaryFiles) {
 			try {
 				boundaries.addAll(loadBoundaryFile(boundaryFile, bbox));
