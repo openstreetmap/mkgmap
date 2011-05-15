@@ -149,7 +149,7 @@ waterway=river [0x1f resolution 18]
 waterway=rapids|waterway=waterfall [0x1f resolution 22]
 waterway=stream [0x18 resolution 22]
 
-man_made=cable|man_made=pipeline|man_made=pipe|man_made=suspected_pipeline
+man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
 {name '${name} (${operator})' | '${name}' | '${operator}' }
 [0x28 resolution 23]
 
