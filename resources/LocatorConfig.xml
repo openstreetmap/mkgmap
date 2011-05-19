@@ -63,6 +63,9 @@
 		<variant>Austria</variant>
 		<variant>AT</variant>
 		<variant>AUT</variant>
+		<variant>Oesterreich</variant>
+		<variant>Oestereich</variant>
+		<variant>Östereich</variant>
 	</country>
 	<country name="Azerbaijan" abr="AZE">
 		<variant>AZ</variant>
@@ -928,6 +931,7 @@
 	</country>
 	<country name="Schweiz" abr="CHE" geodb="1" poiDispFlag="0xc">
 		<variant>Switzerland</variant>
+		<variant>Suisse</variant>
 		<variant>CH</variant>
 		<variant>CHE</variant>
 	</country>
