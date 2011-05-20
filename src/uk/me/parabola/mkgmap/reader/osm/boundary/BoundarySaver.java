@@ -347,7 +347,7 @@ public class BoundarySaver {
 
 	public void setBbox(uk.me.parabola.imgfmt.app.Area bbox) {
 		if (bbox.isEmpty()) {
-			log.warn("Do not use bonding box because it's empty");
+			log.warn("Do not use bounding box because it's empty");
 			this.bbox = null;
 		} else {
 			this.bbox = bbox;
