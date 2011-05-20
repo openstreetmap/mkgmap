@@ -21,6 +21,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,17 +42,44 @@ public class BoundarySaver {
 	private uk.me.parabola.imgfmt.app.Area bbox;
 
 	private int minLat = Integer.MAX_VALUE;
-	private int minLong= Integer.MAX_VALUE;
-	private int maxLat= Integer.MIN_VALUE;
-	private int maxLong= Integer.MIN_VALUE;
+	private int minLong = Integer.MAX_VALUE;
+	private int maxLat = Integer.MIN_VALUE;
+	private int maxLong = Integer.MIN_VALUE;
 
-	
+	private static final class StreamInfo {
+		File file;
+		String boundsKey;
+		OutputStream stream;
+		int lastAccessNo;
+
+		public StreamInfo() {
+			this.lastAccessNo= 0;
+		}
+
+		public boolean isOpen() {
+			return stream != null;
+		}
+
+		public void close() {
+			if (stream != null) {
+				try {
+					stream.close();
+				} catch (IOException exp) {
+					log.error(exp);
+				}
+			}
+			stream = null;
+		}
+	}
+
+	private int lastAccessNo = 0;
+	private final List<StreamInfo> openStreams = new ArrayList<StreamInfo>();
 	/** keeps the open streams */
-	private final Map<String, OutputStream> streams;
+	private final Map<String, StreamInfo> streams;
 
 	public BoundarySaver(File boundaryDir) {
 		this.boundaryDir = boundaryDir;
-		this.streams = new HashMap<String, OutputStream>();
+		this.streams = new HashMap<String, StreamInfo>();
 	}
 
 	public void addBoundary(Boundary boundary) {
@@ -63,34 +93,60 @@ public class BoundarySaver {
 	public void end() {
 		if (getBbox() != null) {
 			// a bounding box is set => fill the gaps with empty files
-			for (int latSplit = BoundaryUtil.getSplitBegin(getBbox().getMinLat()); latSplit <= BoundaryUtil
+			for (int latSplit = BoundaryUtil.getSplitBegin(getBbox()
+					.getMinLat()); latSplit <= BoundaryUtil
 					.getSplitBegin(getBbox().getMaxLat()); latSplit += BoundaryUtil.RASTER) {
 				for (int lonSplit = BoundaryUtil.getSplitBegin(getBbox()
 						.getMinLong()); lonSplit <= BoundaryUtil
 						.getSplitBegin(getBbox().getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
 					String key = BoundaryUtil.getKey(latSplit, lonSplit);
-					OutputStream stream = getStream(key);
-					try {
-						stream.close();
-					} catch (IOException exp) {
-						log.error("Problems closing stream: " + exp);
+					
+					// check if the stream already exist but do no open it
+					StreamInfo stream = getStream(key, false);
+					if (stream == null) {
+						// it does not exist => create a new one to write out the common header of the boundary file
+						stream = getStream(key);
 					}
+					
+					// close the stream if it is open
+					if (stream.isOpen())
+						stream.close();
 					streams.remove(key);
 				}
 			}
 		}
-		
+
 		// close the rest of the streams
-		for (OutputStream stream : streams.values()) {
-			try {
-				stream.close();
-			} catch (IOException exp) {
-				log.error("Problems closing stream: " + exp);
-			}
+		for (StreamInfo streamInfo : streams.values()) {
+			streamInfo.close();
 		}
 		streams.clear();
+		openStreams.clear();
 	}
 
+	private void tidyStreams() {
+		if (openStreams.size() < 100) {
+			return;
+		}
+		
+		Collections.sort(openStreams, new Comparator<StreamInfo>(){
+
+			public int compare(StreamInfo o1, StreamInfo o2) {
+				return o1.lastAccessNo-o2.lastAccessNo;
+			}
+		});
+		
+		log.debug(openStreams.size(),"open streams.");
+		List<StreamInfo> closingStreams = openStreams.subList(0, openStreams.size()-80);
+		// close and remove the streams from the open list
+		for (StreamInfo streamInfo : closingStreams) {
+			log.debug("Closing",streamInfo.file);
+			streamInfo.close();
+		}
+		closingStreams.clear();
+		log.debug("Remaining",openStreams.size(),"open streams.");
+	}
+	
 	private Area getSplitArea(int lat, int lon) {
 		Rectangle splitRect = new Rectangle(lon, lat, BoundaryUtil.RASTER,
 				BoundaryUtil.RASTER);
@@ -117,55 +173,78 @@ public class BoundarySaver {
 
 		return splittedAreas;
 	}
-	
-	private OutputStream getStream(String filekey) {
-		OutputStream stream = streams.get(filekey);
-		if (stream == null) {
-			File file = new File(boundaryDir, "bounds_" + filekey + ".bnd");
-			if (file.getParentFile().exists() == false)
-				file.getParentFile().mkdirs();
-			FileOutputStream fileStream = null;
-			try {
-				fileStream = new FileOutputStream(file);
-				stream = new BufferedOutputStream(fileStream);
-				writeDefaultInfos(stream);
-				streams.put(filekey, stream);
-				
-				String[] keyParts = filekey.split(Pattern.quote("_"));
+
+	private void openStream(StreamInfo streamInfo, boolean newFile) {
+		if (streamInfo.file.getParentFile().exists() == false
+				&& streamInfo.file.getParentFile() != null)
+			streamInfo.file.getParentFile().mkdirs();
+		FileOutputStream fileStream = null;
+		try {
+			fileStream = new FileOutputStream(streamInfo.file, !newFile);
+			streamInfo.stream = new BufferedOutputStream(fileStream);
+			openStreams.add(streamInfo);
+			if (newFile) {
+				writeDefaultInfos(streamInfo.stream);
+
+				String[] keyParts = streamInfo.boundsKey.split(Pattern
+						.quote("_"));
 				int lat = Integer.valueOf(keyParts[0]);
 				int lon = Integer.valueOf(keyParts[1]);
 				if (lat < minLat) {
 					minLat = lat;
-					log.debug("New min Lat:",minLat);
+					log.debug("New min Lat:", minLat);
 				}
 				if (lat > maxLat) {
 					maxLat = lat;
-					log.debug("New max Lat:",maxLat);
+					log.debug("New max Lat:", maxLat);
 				}
 				if (lon < minLong) {
 					minLong = lon;
-					log.debug("New min Lon:",minLong);
+					log.debug("New min Lon:", minLong);
 				}
 				if (lon > maxLong) {
 					maxLong = lon;
-					log.debug("New max Long:",maxLong);
+					log.debug("New max Long:", maxLong);
 				}
-				
-			} catch (IOException exp) {
-				log.error("Cannot save boundary: " + exp);
-				if (fileStream != null) {
-					try {
-						fileStream.close();
-					} catch (Throwable thr) {
-					}
-				}
-				return null;
-			} finally {
 			}
+
+		} catch (IOException exp) {
+			log.error("Cannot save boundary: " + exp);
+			if (fileStream != null) {
+				try {
+					fileStream.close();
+				} catch (Throwable thr) {
+				}
+			}
+		}
+	}
+
+	private StreamInfo getStream(String filekey) {
+		return getStream(filekey, true);
+	}
+	
+	private StreamInfo getStream(String filekey, boolean autoopen) {
+		StreamInfo stream = streams.get(filekey);
+		if (autoopen) {
+			if (stream == null) {
+				log.debug("Create stream for",filekey);
+				stream = new StreamInfo();
+				stream.boundsKey = filekey;
+				stream.file = new File(boundaryDir, "bounds_" + filekey
+						+ ".bnd");
+				streams.put(filekey, stream);
+				openStream(stream, true);
+			} else if (stream.isOpen() == false) {
+				openStream(stream, false);
+			}
+		}
+		
+		if (stream != null) {
+			stream.lastAccessNo = ++lastAccessNo;
 		}
 		return stream;
 	}
-	
+
 	private void writeDefaultInfos(OutputStream stream) throws IOException {
 		DataOutputStream dos = new DataOutputStream(stream);
 		dos.writeUTF(Version.VERSION);
@@ -175,12 +254,14 @@ public class BoundarySaver {
 
 	private void saveToFile(String filekey, Boundary boundary) {
 		try {
-			OutputStream stream = getStream(filekey);
-			if (stream != null)
-				write(stream, boundary);
+			StreamInfo streamInfo = getStream(filekey);
+			if (streamInfo != null && streamInfo.isOpen())
+				write(streamInfo.stream, boundary);
 		} catch (Exception exp) {
 			log.error("Cannot write boundary: " + exp, exp);
 		}
+		
+		tidyStreams();
 	}
 
 	private void write(OutputStream stream, Boundary boundary) {
@@ -199,7 +280,9 @@ public class BoundarySaver {
 				dos.writeUTF(tag.getValue());
 				noOfTags--;
 			}
-			assert noOfTags==0 : "Remaining tags: "+noOfTags+" size: "+boundary.getTags().size()+" "+boundary.getTags().toString();
+			assert noOfTags == 0 : "Remaining tags: " + noOfTags + " size: "
+					+ boundary.getTags().size() + " "
+					+ boundary.getTags().toString();
 
 			// write the number of boundary elements to create the multipolygon
 			List<BoundaryElement> boundaryElements = boundary
@@ -212,7 +295,8 @@ public class BoundarySaver {
 				dos.writeBoolean(bElem.isOuter());
 				// number of coords
 				int eSize = bElem.getPoints().size();
-				assert eSize > 0 : "eSize not greater 0 "+bElem.getPoints().size();
+				assert eSize > 0 : "eSize not greater 0 "
+						+ bElem.getPoints().size();
 				dos.writeInt(eSize);
 				for (Coord c : bElem.getPoints()) {
 					dos.writeInt(c.getLatitude());
@@ -239,7 +323,7 @@ public class BoundarySaver {
 			// write the size of the boundary block so that it is possible to
 			// skip it
 			byte[] data = oneItemStream.toByteArray();
-			assert data.length > 0 : "bSize is not > 0 : "+data.length;
+			assert data.length > 0 : "bSize is not > 0 : " + data.length;
 			dOutStream.writeInt(data.length);
 
 			// write the boundary block
@@ -254,8 +338,9 @@ public class BoundarySaver {
 
 	public uk.me.parabola.imgfmt.app.Area getBbox() {
 		if (bbox == null) {
-			bbox = new uk.me.parabola.imgfmt.app.Area(minLat, minLong, maxLat, maxLong);
-			log.error("Calculate bbox to "+bbox);
+			bbox = new uk.me.parabola.imgfmt.app.Area(minLat, minLong, maxLat,
+					maxLong);
+			log.error("Calculate bbox to " + bbox);
 		}
 		return bbox;
 	}
@@ -266,7 +351,8 @@ public class BoundarySaver {
 			this.bbox = null;
 		} else {
 			this.bbox = bbox;
-			log.info("Set bbox: "+bbox.getMinLat()+" "+bbox.getMinLong()+" "+bbox.getMaxLat()+" "+bbox.getMaxLong());
+			log.info("Set bbox: " + bbox.getMinLat() + " " + bbox.getMinLong()
+					+ " " + bbox.getMaxLat() + " " + bbox.getMaxLong());
 		}
 	}
 }
