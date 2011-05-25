@@ -409,7 +409,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 		// try to connect ways lying outside or on the bbox
-		if (unclosed.size() >= 2) {
+		if (unclosed.isEmpty()== false) {
 			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
 			Map<Coord, JoinedWay> outOfBboxPoints = new HashMap<Coord, JoinedWay>();
 			
@@ -442,6 +442,16 @@ public class MultiPolygonRelation extends Relation {
 					cd.c2 = coords.get(j);
 					cd.w1 = outOfBboxPoints.get(cd.c1);					
 					cd.w2 = outOfBboxPoints.get(cd.c2);					
+					
+					// do not connect ways with different role
+					if (cd.w1 != cd.w2) {
+						String role1 = getRole(cd.w1);
+						String role2 = getRole(cd.w2);
+						if (role1 != null && role1.equals(role2)==false) {
+							log.debug("Do not connect way",cd.w1,"with",cd.w2,". The roles are different:",role1,"!=",role2);
+							continue;
+						}
+					}
 					
 					if (lineCutsBbox(cd.c1, cd.c2 )) {
 						// Check if the way can be closed with one additional point
@@ -493,6 +503,7 @@ public class MultiPolygonRelation extends Relation {
 					if (minCon.imC != null)
 						minCon.w1.getPoints().add(minCon.imC);
 					minCon.w1.closeWayArtificially();
+					return true;
 				} else {
 					log.debug("Connect", minCon.w1, "with", minCon.w2);
 
