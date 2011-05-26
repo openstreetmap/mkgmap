@@ -95,6 +95,11 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		
 		removeOutOfBbox(polygons);
 		closeWays(polygons);
+
+		while (connectUnclosedWays(polygons)) {
+			closeWays(polygons);
+		}		
+		
 		removeUnclosedWays(polygons);
 		
 		// now only closed ways are left => polygons only

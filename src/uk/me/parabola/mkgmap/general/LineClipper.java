@@ -78,9 +78,27 @@ public class LineClipper {
 		// lines from it.
 		for (int i = 0; i <= coords.size() - 2; i++) {
 			Coord[] pair = {coords.get(i), coords.get(i+1)};
+			if (pair[0].equals(pair[1])) {
+				continue;
+			}
 			Coord[] clippedPair = clip(a, pair);
 			seg.add(clippedPair);
 		}
+		
+		// in case the coords build a closed way the first and the last clipped line 
+		// might have to be joined
+		if (seg.ret.size() >= 2 && coords.get(0).equals(coords.get(coords.size()-1))) {
+			List<Coord> firstSeg = seg.ret.get(0);
+			List<Coord> lastSeg = seg.ret.get(seg.ret.size()-1);
+			// compare the first point of the first segment with the last point of 
+			// the last segment
+			if (firstSeg.get(0).equals(lastSeg.get(lastSeg.size()-1))) {
+				// they are the same so the two segments should be joined
+				lastSeg.addAll(firstSeg.subList(1, firstSeg.size()));
+				seg.ret.remove(0);
+			}
+		}
+		
 		return seg.ret;
 	}
 
@@ -100,6 +118,10 @@ public class LineClipper {
 	public static Coord[] clip(Area a, Coord[] ends) {
 		assert ends.length == 2;
 
+		if (a.insideBoundary(ends[0]) && a.insideBoundary(ends[1])) {
+			return ends;
+		}
+		
 		int x0 = ends[0].getLongitude();
 		int y0 = ends[0].getLatitude();
 
