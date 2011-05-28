@@ -363,10 +363,6 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		
 		postProcessing();
 		cleanup();
-		
-		if (getTag("name") == null)
-			outerResultArea = null;
-		
 	}
 
 	private void removeOutOfBbox(List<JoinedWay> polygons) {
