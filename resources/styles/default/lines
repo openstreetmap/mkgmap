@@ -67,7 +67,7 @@ mkgmap:city!=* & openGeoDB:name=* { set mkgmap:city='${openGeoDB:name}' }
 mkgmap:city!=* & is_in:city=* { set mkgmap:city='${is_in:city}' }
 mkgmap:city!=* & addr:city=* { set mkgmap:city='${addr:city}' }
 
-mkgmap:postal_code!=* & mkgmap:postcode=* { set mkgmap:postal_code='${mkgmap:postalcode}' } 
+mkgmap:postal_code!=* & mkgmap:postcode=* { set mkgmap:postal_code='${mkgmap:postcode}' } 
 mkgmap:postal_code!=* & addr:postcode=* { set mkgmap:postal_code='${addr:postcode}' } 
 mkgmap:postal_code!=* & openGeoDB:postal_codes=* { set mkgmap:postal_code='${openGeoDB:postal_codes}' } 
 

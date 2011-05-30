@@ -127,7 +127,11 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			Boundary b = bIter.next();
 			
 			String name = getName(b.getTags());
-			String zip = getZip(b.getTags());
+			
+			String zip =null;
+			if (b.getTags().get("postal_code") != null || "postal_code".equals(b.getTags().get("boundary")))
+				zip = getZip(b.getTags());
+			
 			if (name == null && zip == null) {
 				log.warn("Cannot process boundary element because it contains no name and no zip tag. "+b.getTags());
 
