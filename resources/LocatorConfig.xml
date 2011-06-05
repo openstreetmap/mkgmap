@@ -18,6 +18,7 @@
 	<country name="Algeria" abr="DZA">
 		<variant>DZ</variant>
 		<variant>DZA</variant>
+		<variant>ALGÉRIE</variant>
 	</country>
 	<country name="American Samoa" abr="ASM">
 		<variant>AS</variant>
@@ -167,6 +168,7 @@
 	<country name="Cameroon" abr="CMR">
 		<variant>CM</variant>
 		<variant>CMR</variant>
+		<variant>CAMEROUN</variant>
 	</country>
 	<country name="Canada" abr="CAN">
 		<variant>CA</variant>
@@ -175,6 +177,7 @@
 	<country name="Cape Verde" abr="CPV">
 		<variant>CV</variant>
 		<variant>CPV</variant>
+		<variant>CABO VERDE</variant>
 	</country>
 	<country name="Cayman Islands" abr="CYM">
 		<variant>KY</variant>
@@ -211,6 +214,7 @@
 	<country name="Comoros" abr="COM">
 		<variant>KM</variant>
 		<variant>COM</variant>
+		<variant>KOMORI</variant>
 	</country>
 	<country name="Congo" abr="COG">
 		<variant>CG</variant>
@@ -288,6 +292,7 @@
 	<country name="Equatorial Guinea" abr="GNQ">
 		<variant>GQ</variant>
 		<variant>GNQ</variant>
+		<variant>GUINEA ECUATORIAL</variant>
 	</country>
 	<country name="Eritrea" abr="ERI">
 		<variant>ER</variant>
@@ -537,6 +542,7 @@
 	<country name="Lesotho" abr="LSO">
 		<variant>LS</variant>
 		<variant>LSO</variant>
+		<variant>MUSO OA LESOTHO</variant>
 	</country>
 	<country name="Liberia" abr="LBR">
 		<variant>LR</variant>
@@ -573,6 +579,7 @@
 	<country name="Madagascar" abr="MDG">
 		<variant>MG</variant>
 		<variant>MDG</variant>
+		<variant>MADAGASIKARA</variant>
 	</country>
 	<country name="Malawi" abr="MWI">
 		<variant>MW</variant>
@@ -613,6 +620,7 @@
 	<country name="Mayotte" abr="MYT">
 		<variant>YT</variant>
 		<variant>MYT</variant>
+		<variant>MAYOTTE - EAUX TERRITORIALES</variant>
 	</country>
 	<country name="Mexico" abr="MEX">
 		<variant>MX</variant>
@@ -651,6 +659,7 @@
 	<country name="Mozambique" abr="MOZ">
 		<variant>MZ</variant>
 		<variant>MOZ</variant>
+		<variant>MOÇAMBIQUE</variant>
 	</country>
 	<country name="Myanmar" abr="MMR">
 		<variant>MM</variant>
@@ -839,6 +848,7 @@
 		<variant>Principe</variant>
 		<variant>ST</variant>
 		<variant>STP</variant>
+		<variant>SÃO TOMÉ E PRÍNCIPE</variant>
 	</country>
 	<country name="Saudi Arabia" abr="SAU">
 		<variant>SA</variant>
@@ -856,6 +866,7 @@
 	<country name="Seychelles" abr="SYC">
 		<variant>SC</variant>
 		<variant>SYC</variant>
+		<variant>SESEL</variant>
 	</country>
 	<country name="Sierra Leone" abr="SLE">
 		<variant>SL</variant>
@@ -886,6 +897,7 @@
 	<country name="Somalia" abr="SOM">
 		<variant>SO</variant>
 		<variant>SOM</variant>
+		<variant>SOOMAALIYA</variant>
 	</country>
 	<country name="South Africa" abr="ZAF">
 		<variant>ZA</variant>
@@ -923,6 +935,7 @@
 	<country name="Swaziland" abr="SWZ">
 		<variant>SZ</variant>
 		<variant>SWZ</variant>
+		<variant>SWATINI</variant>
 	</country>
 	<country name="Sverige" abr="SWE">
 		<variant>Sweden</variant>
@@ -964,6 +977,7 @@
 	<country name="Togo" abr="TGO">
 		<variant>TG</variant>
 		<variant>TGO</variant>
+		<variant>RÉPUBLIQUE TOGOLAISE</variant>
 	</country>
 	<country name="Tokelau" abr="TKL">
 		<variant>TK</variant>
