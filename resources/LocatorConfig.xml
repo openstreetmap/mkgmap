@@ -18,7 +18,7 @@
 	<country name="Algeria" abr="DZA">
 		<variant>DZ</variant>
 		<variant>DZA</variant>
-		<variant>ALGÉRIE</variant>
+		<variant>Algérie</variant>
 	</country>
 	<country name="American Samoa" abr="ASM">
 		<variant>AS</variant>
@@ -79,6 +79,7 @@
 	<country name="Bahrain" abr="BHR">
 		<variant>BH</variant>
 		<variant>BHR</variant>
+		<variant>الإسلامية</variant>
 	</country>
 	<country name="Bangladesh" abr="BGD">
 		<variant>BD</variant>
@@ -127,7 +128,7 @@
 	<country name="Bosna I Hercegovina" abr="BIH">
 		<variant>BA</variant>
 		<variant>BIH</variant>
-		<variant>Bosnia and Herzegovina</variant>		
+		<variant>Bosnia and Herzegovina</variant>
 	</country>
 	<country name="Botswana" abr="BWA">
 		<variant>BW</variant>
@@ -170,7 +171,7 @@
 	<country name="Cameroon" abr="CMR">
 		<variant>CM</variant>
 		<variant>CMR</variant>
-		<variant>CAMEROUN</variant>
+		<variant>Cameroun</variant>
 	</country>
 	<country name="Canada" abr="CAN">
 		<variant>CA</variant>
@@ -179,7 +180,7 @@
 	<country name="Cape Verde" abr="CPV">
 		<variant>CV</variant>
 		<variant>CPV</variant>
-		<variant>CABO VERDE</variant>
+		<variant>Cabo Verde</variant>
 	</country>
 	<country name="Cayman Islands" abr="CYM">
 		<variant>KY</variant>
@@ -188,10 +189,12 @@
 	<country name="Central African Republic" abr="CAF">
 		<variant>CF</variant>
 		<variant>CAF</variant>
+		<variant>Ködrö tî Bê-Afrika</variant>
 	</country>
 	<country name="Chad" abr="TCD">
 		<variant>TD</variant>
 		<variant>TCD</variant>
+		<variant>جمهوريّة تشاد</variant>
 	</country>
 	<country name="Chile" abr="CHL">
 		<variant>CL</variant>
@@ -216,16 +219,18 @@
 	<country name="Comoros" abr="COM">
 		<variant>KM</variant>
 		<variant>COM</variant>
-		<variant>KOMORI</variant>
+		<variant>Komori</variant>
 	</country>
-	<country name="Congo" abr="COG">
+	<country name="Republic of the Congo" abr="COG">
 		<variant>CG</variant>
 		<variant>COG</variant>
+		<variant>Congo-Brazzaville</variant>
 	</country>
-	<country name="Congo" abr="COD">
+	<country name="Democratic Republic of the Congo" abr="COD">
 		<variant>The Democratic Republic of the Congo</variant>
 		<variant>CD</variant>
 		<variant>COD</variant>
+		<variant>Congo-Kinshasa</variant>
 	</country>
 	<country name="Cook Islands" abr="COK">
 		<variant>CK</variant>
@@ -286,6 +291,7 @@
 	<country name="Egypt" abr="EGY">
 		<variant>EG</variant>
 		<variant>EGY</variant>
+		<variant>جمهورية مصر العربية</variant>
 	</country>
 	<country name="El Salvador" abr="SLV">
 		<variant>SV</variant>
@@ -294,7 +300,7 @@
 	<country name="Equatorial Guinea" abr="GNQ">
 		<variant>GQ</variant>
 		<variant>GNQ</variant>
-		<variant>GUINEA ECUATORIAL</variant>
+		<variant>Guinea Ecuatorial</variant>
 	</country>
 	<country name="Eritrea" abr="ERI">
 		<variant>ER</variant>
@@ -353,6 +359,7 @@
 	<country name="Gambia" abr="GMB">
 		<variant>GM</variant>
 		<variant>GMB</variant>
+		<variant>The Gambia</variant>
 	</country>
 	<country name="Georgia" abr="GEO">
 		<variant>GE</variant>
@@ -408,6 +415,7 @@
 	<country name="Guinea-Bissau" abr="GNB">
 		<variant>GW</variant>
 		<variant>GNB</variant>
+		<variant>Guiné-Bissau</variant>
 	</country>
 	<country name="Guyana" abr="GUY">
 		<variant>GY</variant>
@@ -466,8 +474,8 @@
 	<country name="Ireland" abr="IRL" regionOffset="3">
 		<variant>Republic of Ireland</variant>
 		<variant>Éire</variant>
-		<variant>IE</variant>		
-		<variant>IRL</variant>		
+		<variant>IE</variant>
+		<variant>IRL</variant>
 	</country>
 	<country name="Isle of Man" abr="IMN">
 		<variant>IM</variant>
@@ -545,7 +553,8 @@
 	<country name="Lesotho" abr="LSO">
 		<variant>LS</variant>
 		<variant>LSO</variant>
-		<variant>MUSO OA LESOTHO</variant>
+		<variant>Kingdom of Lesotho</variant>
+		<variant>Muso oa Lesotho</variant>
 	</country>
 	<country name="Liberia" abr="LBR">
 		<variant>LR</variant>
@@ -555,6 +564,7 @@
 		<variant>Libyan Arab Jamahiriya</variant>
 		<variant>LY</variant>
 		<variant>LBY</variant>
+		<variant>الجماهيرية الليبية</variant>
 	</country>
 	<country name="Liechtenstein" abr="LIE">
 		<variant>LI</variant>
@@ -582,11 +592,12 @@
 	<country name="Madagascar" abr="MDG">
 		<variant>MG</variant>
 		<variant>MDG</variant>
-		<variant>MADAGASIKARA</variant>
+		<variant>Madagasikara</variant>
 	</country>
 	<country name="Malawi" abr="MWI">
 		<variant>MW</variant>
 		<variant>MWI</variant>
+		<variant>Republic of Malawi</variant>
 	</country>
 	<country name="Malaysia" abr="MYS">
 		<variant>MY</variant>
@@ -624,7 +635,7 @@
 	<country name="Mayotte" abr="MYT">
 		<variant>YT</variant>
 		<variant>MYT</variant>
-		<variant>MAYOTTE - EAUX TERRITORIALES</variant>
+		<variant>Mayotte - Eaux territoriales</variant>
 	</country>
 	<country name="Mexico" abr="MEX">
 		<variant>MX</variant>
@@ -663,7 +674,7 @@
 	<country name="Mozambique" abr="MOZ">
 		<variant>MZ</variant>
 		<variant>MOZ</variant>
-		<variant>MOÇAMBIQUE</variant>
+		<variant>Moçambique</variant>
 	</country>
 	<country name="Myanmar" abr="MMR">
 		<variant>MM</variant>
@@ -856,7 +867,8 @@
 		<variant>Principe</variant>
 		<variant>ST</variant>
 		<variant>STP</variant>
-		<variant>SÃO TOMÉ E PRÍNCIPE</variant>
+		<variant>São Tomé and Príncipe</variant>
+		<variant>São Tomé e Príncipe</variant>
 	</country>
 	<country name="Saudi Arabia" abr="SAU">
 		<variant>SA</variant>
@@ -906,7 +918,7 @@
 	<country name="Somalia" abr="SOM">
 		<variant>SO</variant>
 		<variant>SOM</variant>
-		<variant>SOOMAALIYA</variant>
+		<variant>Soomaaliya</variant>
 	</country>
 	<country name="South Africa" abr="ZAF">
 		<variant>ZA</variant>
@@ -930,6 +942,7 @@
 	<country name="Sudan" abr="SDN">
 		<variant>SD</variant>
 		<variant>SDN</variant>
+		<variant>جمهورية السودان</variant>
 	</country>
 	<country name="Suriname" abr="SUR">
 		<variant>SR</variant>
@@ -944,7 +957,7 @@
 	<country name="Swaziland" abr="SWZ">
 		<variant>SZ</variant>
 		<variant>SWZ</variant>
-		<variant>SWATINI</variant>
+		<variant>Swatini</variant>
 	</country>
 	<country name="Sverige" abr="SWE">
 		<variant>Sweden</variant>
@@ -989,7 +1002,7 @@
 	<country name="Togo" abr="TGO">
 		<variant>TG</variant>
 		<variant>TGO</variant>
-		<variant>RÉPUBLIQUE TOGOLAISE</variant>
+		<variant>République Togolaise</variant>
 	</country>
 	<country name="Tokelau" abr="TKL">
 		<variant>TK</variant>
@@ -1095,10 +1108,13 @@
 	<country name="Western Sahara" abr="ESH">
 		<variant>EH</variant>
 		<variant>ESH</variant>
+		<variant>Sahrawi Arab Democratic Republic</variant>
+		<variant>الجمهورية العربية الصحراوية الديمقراطية</variant>
 	</country>
 	<country name="Yemen" abr="YEM">
 		<variant>YE</variant>
 		<variant>YEM</variant>
+		<variant>‏اليمن‎</variant>
 	</country>
 	<country name="Zambia" abr="ZMB">
 		<variant>ZM</variant>
