@@ -148,6 +148,8 @@
 	<country name="Brunei Darussalam" abr="BRN">
 		<variant>BN</variant>
 		<variant>BRN</variant>
+		<variant>برني دارالسلام‎</variant>
+		<variant>Brunei</variant>
 	</country>
 	<country name="Bulgaria" abr="BGR">
 		<variant>BG</variant>
@@ -320,6 +322,7 @@
 	<country name="Fiji" abr="FJI">
 		<variant>FJ</variant>
 		<variant>FJI</variant>
+		<variant>VITI</variant>
 	</country>
 	<country name="Suomi" abr="FIN">
 		<variant>Finland</variant>
@@ -604,6 +607,7 @@
 	<country name="Marshall Islands" abr="MHL">
 		<variant>MH</variant>
 		<variant>MHL</variant>
+		<variant>Aolepān Aorōkin M̧ajeļ</variant>
 	</country>
 	<country name="Martinique" abr="MTQ">
 		<variant>MQ</variant>
@@ -672,6 +676,7 @@
 	<country name="Nauru" abr="NRU">
 		<variant>NR</variant>
 		<variant>NRU</variant>
+		<variant>NAOERO</variant>
 	</country>
 	<country name="Nepal" abr="NPL">
 		<variant>NP</variant>
@@ -690,6 +695,7 @@
 	<country name="New Zealand" abr="NZL">
 		<variant>NZ</variant>
 		<variant>NZL</variant>
+		<variant>AOTEAROA NEW ZEALAND</variant>
 	</country>
 	<country name="Nicaragua" abr="NIC">
 		<variant>NI</variant>
@@ -732,6 +738,7 @@
 	<country name="Palau" abr="PLW">
 		<variant>PW</variant>
 		<variant>PLW</variant>
+		<variant>BELAU</variant>
 	</country>
 	<country name="Palestinian Territory" abr="PSE">
 		<variant>PS</variant>
@@ -744,6 +751,7 @@
 	<country name="Papua New Guinea" abr="PNG">
 		<variant>PG</variant>
 		<variant>PNG</variant>
+		<variant>PAPUA NIUGINI</variant>
 	</country>
 	<country name="Paraguay" abr="PRY">
 		<variant>PY</variant>
@@ -875,6 +883,7 @@
 	<country name="Singapore" abr="SGP">
 		<variant>SG</variant>
 		<variant>SGP</variant>
+		<variant>SINGAPURA</variant>
 	</country>
 	<country name="Sint Maarten" abr="SXM">
 		<variant>SX</variant>
@@ -969,10 +978,13 @@
 	<country name="Thailand" abr="THA">
 		<variant>TH</variant>
 		<variant>THA</variant>
+		<variant>ราชอาณาจักรไทย</variant>
 	</country>
 	<country name="Timor-Leste" abr="TLS">
 		<variant>TL</variant>
 		<variant>TLS</variant>
+		<variant>Timór Loro Sa'e</variant>
+		<variant>East Timor</variant>
 	</country>
 	<country name="Togo" abr="TGO">
 		<variant>TG</variant>
