@@ -12,8 +12,11 @@
  */
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +27,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.MultiPolygonRelation;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
@@ -94,11 +98,15 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		outerTags = new HashMap<String,String>();
 		
 		removeOutOfBbox(polygons);
-		closeWays(polygons);
 
-		while (connectUnclosedWays(polygons)) {
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+			while (connectUnclosedWays(polygons)) {
+				changed = true;
+			}		
 			closeWays(polygons);
-		}		
+		}
 		
 		removeUnclosedWays(polygons);
 		
@@ -363,6 +371,194 @@ public class BoundaryRelation extends MultiPolygonRelation {
 		
 		postProcessing();
 		cleanup();
+	}
+	protected boolean connectUnclosedWays(List<JoinedWay> allWays) {
+		List<JoinedWay> unclosed = new ArrayList<JoinedWay>();
+
+		for (JoinedWay w : allWays) {
+			if (w.isClosed() == false) {
+				unclosed.add(w);
+			}
+		}
+		// try to connect ways lying outside or on the bbox
+		if (unclosed.size() >= 2) {
+			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
+			Map<Coord, JoinedWay> outOfBboxPoints = new HashMap<Coord, JoinedWay>();
+			
+			// check all ways for endpoints outside or on the bbox
+			for (JoinedWay w : unclosed) {
+				Coord c1 = w.getPoints().get(0);
+//				if (bbox.insideBoundary(c1)==false) {
+//					log.debug("Point",c1,"of way",w.getId(),"outside bbox");
+					outOfBboxPoints.put(c1, w);
+//				}
+
+				Coord c2 = w.getPoints().get(w.getPoints().size()-1);
+//				if (bbox.insideBoundary(c2)==false) {
+//					log.debug("Point",c2,"of way",w.getId(),"outside bbox");
+					outOfBboxPoints.put(c2, w);
+//				}
+			}
+			
+			if (outOfBboxPoints.size() < 2) {
+				log.debug(outOfBboxPoints.size(),"point outside the bbox. No connection possible.");
+				return false;
+			}
+			
+			List<ConnectionData> coordPairs = new ArrayList<ConnectionData>();
+			ArrayList<Coord> coords = new ArrayList<Coord>(outOfBboxPoints.keySet());
+			for (int i = 0; i < coords.size(); i++) {
+				for (int j = i + 1; j < coords.size(); j++) {
+					ConnectionData cd = new ConnectionData();
+					cd.c1 = coords.get(i);
+					cd.c2 = coords.get(j);
+					cd.w1 = outOfBboxPoints.get(cd.c1);					
+					cd.w2 = outOfBboxPoints.get(cd.c2);					
+					
+//					if (lineCutsBbox(cd.c1, cd.c2 )) {
+//						// Check if the way can be closed with one additional point
+//						// outside the bounding box.
+//						// The additional point is combination of the coords of both endpoints.
+//						// It works if the lines from the endpoints to the additional point does
+//						// not cut the bounding box.
+//						// This can be removed when the splitter guarantees to provide logical complete
+//						// multi-polygons.
+//						Coord edgePoint1 = new Coord(cd.c1.getLatitude(), cd.c2
+//								.getLongitude());
+//						Coord edgePoint2 = new Coord(cd.c2.getLatitude(), cd.c1
+//								.getLongitude());
+//
+//						if (lineCutsBbox(cd.c1, edgePoint1) == false
+//								&& lineCutsBbox(edgePoint1, cd.c2) == false) {
+//							cd.imC = edgePoint1;
+//						} else if (lineCutsBbox(cd.c1, edgePoint2) == false
+//								&& lineCutsBbox(edgePoint2, cd.c2) == false) {
+//							cd.imC = edgePoint1;
+//						} else {
+//							// both endpoints are on opposite sides of the bounding box
+//							// automatically closing such points would create wrong polygons in most cases
+//							continue;
+//						}
+//						cd.distance = cd.c1.distance(cd.imC) + cd.imC.distance(cd.c2);
+//					} else {
+						cd.distance = cd.c1.distance(cd.c2);
+//					}
+					coordPairs.add(cd);
+				}
+			}
+			
+			if (coordPairs.isEmpty()) {
+				log.debug("All potential connections cross the bbox. No connection possible.");
+				return false;
+			} else {
+				// retrieve the connection with the minimum distance
+				ConnectionData minCon = Collections.min(coordPairs,
+						new Comparator<ConnectionData>() {
+							public int compare(ConnectionData o1,
+									ConnectionData o2) {
+								return Double.compare(o1.distance, o2.distance);
+							}
+						});
+				
+				if (minCon.distance < 1000) {
+
+					if (minCon.w1 == minCon.w2) {
+						log.debug("Close a gap in way", minCon.w1);
+						if (minCon.imC != null)
+							minCon.w1.getPoints().add(minCon.imC);
+						minCon.w1.closeWayArtificially();
+					} else {
+						log.debug("Connect", minCon.w1, "with", minCon.w2);
+
+						if (minCon.w1.getPoints().get(0).equals(minCon.c1)) {
+							Collections.reverse(minCon.w1.getPoints());
+						}
+						if (minCon.w2.getPoints().get(0).equals(minCon.c2) == false) {
+							Collections.reverse(minCon.w2.getPoints());
+						}
+
+						minCon.w1.getPoints().addAll(minCon.w2.getPoints());
+						minCon.w1.addWay(minCon.w2);
+						allWays.remove(minCon.w2);
+					}
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	protected void closeWays(ArrayList<JoinedWay> wayList) {
+		for (JoinedWay way : wayList) {
+			if (way.isClosed() || way.getPoints().size() < 3) {
+				continue;
+			}
+			Coord p1 = way.getPoints().get(0);
+			Coord p2 = way.getPoints().get(way.getPoints().size() - 1);
+
+			if (getBbox().insideBoundary(p1) == false
+					&& getBbox().insideBoundary(p2) == false) {
+				// both points lie outside the bbox or on the bbox
+
+				// check if both points are on the same side of the bounding box
+				if ((p1.getLatitude() <= getBbox().getMinLat() && p2.getLatitude() <= getBbox()
+						.getMinLat())
+						|| (p1.getLatitude() >= getBbox().getMaxLat() && p2
+								.getLatitude() >= getBbox().getMaxLat())
+						|| (p1.getLongitude() <= getBbox().getMinLong() && p2
+								.getLongitude() <= getBbox().getMinLong())
+						|| (p1.getLongitude() >= getBbox().getMaxLong() && p2
+								.getLongitude() >= getBbox().getMaxLong())) {
+					// they are on the same side outside of the bbox
+					// so just close them without worrying about if
+					// they intersect itself because the intersection also
+					// is outside the bbox
+					way.closeWayArtificially();
+					log.info("Endpoints of way", way,
+							"are both outside the bbox. Closing it directly.");
+					continue;
+				}
+			}
+			
+			Line2D closingLine = new Line2D.Float(p1.getLongitude(), p1
+					.getLatitude(), p2.getLongitude(), p2.getLatitude());
+
+			boolean intersects = false;
+			Coord lastPoint = null;
+			// don't use the first and the last point
+			// the closing line can intersect only in one point or complete.
+			// Both isn't interesting for this check
+			for (Coord thisPoint : way.getPoints().subList(1,
+					way.getPoints().size() - 1)) {
+				if (lastPoint != null) {
+					if (closingLine.intersectsLine(lastPoint.getLongitude(),
+							lastPoint.getLatitude(), thisPoint.getLongitude(),
+							thisPoint.getLatitude())) {
+						intersects = true;
+						break;
+					}
+				}
+				lastPoint = thisPoint;
+			}
+
+			if (!intersects) {
+				// close the polygon
+				// the new way segment does not intersect the rest of the
+				// polygon
+				
+				// calc the distance to close
+				double closeDist = way.getPoints().get(0).distance(way.getPoints().get(way.getPoints().size()-1));
+				
+				if (closeDist <= 1000) {
+					log.info("Closing way", way);
+					log.info("from", way.getPoints().get(0).toOSMURL());
+					log.info("to", way.getPoints().get(way.getPoints().size() - 1)
+							.toOSMURL());
+					// mark this ways as artificially closed
+					way.closeWayArtificially();
+				}
+			}
+		}
 	}
 
 	private void removeOutOfBbox(List<JoinedWay> polygons) {

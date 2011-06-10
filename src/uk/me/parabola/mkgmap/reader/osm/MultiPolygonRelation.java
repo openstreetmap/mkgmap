@@ -392,7 +392,7 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	
-	private static class ConnectionData {
+	protected static class ConnectionData {
 		public Coord c1;
 		public Coord c2;
 		public JoinedWay w1;
@@ -400,6 +400,10 @@ public class MultiPolygonRelation extends Relation {
 		// sometimes the connection of both points cannot be done directly but with an intermediate point 
 		public Coord imC;
 		public double distance;
+		
+		public ConnectionData() {
+			
+		}
 	}
 	
 	protected boolean connectUnclosedWays(List<JoinedWay> allWays) {
