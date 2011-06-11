@@ -111,15 +111,10 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	protected String getRole(Element element) {
 		String role = roleMap.get(element.getId());
-		if (role != null) {
+		if (role != null && ("outer".equals(role) || "inner".equals(role))) {
 			return role;
 		}
 
-		for (Map.Entry<String, Element> r_e : getElements()) {
-			if (r_e.getValue() == element) {
-				return r_e.getKey();
-			}
-		}
 		return null;
 	}
 
@@ -2272,6 +2267,10 @@ public class MultiPolygonRelation extends Relation {
 			this.outer = outer;
 			this.index = index;
 			this.polygon = polygon;
+		}
+		
+		public String toString() {
+			return polygon+"_"+outer;
 		}
 	}
 
