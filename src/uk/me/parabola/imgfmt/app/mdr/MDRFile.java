@@ -342,6 +342,6 @@ public class MDRFile extends ImgFile {
 	 * @return An offset value.
 	 */
 	private int createString(String str) {
-		return mdr15.createString(str.toUpperCase());
+		return mdr15.createString(str);
 	}
 }
