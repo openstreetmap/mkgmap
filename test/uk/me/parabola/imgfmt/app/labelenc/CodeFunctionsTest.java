@@ -58,7 +58,8 @@ public class CodeFunctionsTest {
 		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6);
 
 		CharacterEncoder encoder = functions.getEncoder();
-		EncodedText text = encoder.encodeText("Körnerstraße, Velkomezeříčská, Skólavörðustigur");
+		Transliterator transliterator = functions.getTransliterator();
+		EncodedText text = encoder.encodeText(transliterator.transliterate("Körnerstraße, Velkomezeříčská, Skólavörðustigur"));
 
 		CharacterDecoder decoder = functions.getDecoder();
 		byte[] ctext = text.getCtext();
@@ -79,7 +80,8 @@ public class CodeFunctionsTest {
 		CodeFunctions functions = CodeFunctions.createEncoderForLBL("latin1");
 
 		CharacterEncoder encoder = functions.getEncoder();
-		EncodedText text = encoder.encodeText("Körnerstraße, Velkomezeříčská, Skólavörðustigur");
+		Transliterator transliterator = functions.getTransliterator();
+		EncodedText text = encoder.encodeText(transliterator.transliterate("Körnerstraße, Velkomezeříčská, Skólavörðustigur"));
 
 		CharacterDecoder decoder = functions.getDecoder();
 		byte[] ctext = text.getCtext();

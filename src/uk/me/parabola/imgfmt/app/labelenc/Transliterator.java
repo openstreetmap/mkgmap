@@ -19,11 +19,18 @@ package uk.me.parabola.imgfmt.app.labelenc;
  */
 public interface Transliterator {
 	/**
-	 * Convert a string into a string that uses only ascii characters.
+	 * Convert a string into a string that uses only ascii or latin1 characters.
 	 *
-	 * @param s The original string.  It can use any unicode character.
+	 * @param s The original string.  It can use any unicode character. Can be null in which
+	 * case null will be returned.
 	 * @return A string that uses a restricted subset of characters (ascii or
 	 * latin) that is a transliterated form of the input string.
 	 */
 	public String transliterate(String s);
+
+	/**
+	 * Force the use of uppercase in this transliterator.
+	 * Note that it is normal to set this.
+	 */
+	public void forceUppercase(boolean uc);
 }
