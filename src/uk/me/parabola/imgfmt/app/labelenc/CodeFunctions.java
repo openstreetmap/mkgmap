@@ -29,6 +29,7 @@ public class CodeFunctions {
 	private int encodingType;
 	private CharacterEncoder encoder;
 	private CharacterDecoder decoder;
+	private Transliterator transliterator = new TableTransliterator("ascii");
 
 	protected void setEncoder(CharacterEncoder encoder) {
 		this.encoder = encoder;
@@ -62,6 +63,14 @@ public class CodeFunctions {
 		this.codepage = codepage;
 	}
 
+	public Transliterator getTransliterator() {
+		return transliterator;
+	}
+
+	public void setTransliterator(Transliterator transliterator) {
+		this.transliterator = transliterator;
+	}
+
 	/**
 	 * Create a CharacterEncoder for the given charset option.  Note that this
 	 * routine also writes to the lblHeader parameter to set the encoding type.
@@ -74,10 +83,12 @@ public class CodeFunctions {
 		if ("ascii".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
+			funcs.setTransliterator(getDefaultTransliterator());
 			funcs.setDecoder(new Format6Decoder());
 		} else if ("latin1".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new LatinEncoder());
+			funcs.setTransliterator(new TableTransliterator("latin1"));
 			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
 			funcs.setCodepage(1252);
 		} else if ("unicode".equals(charset)) {
@@ -89,6 +100,7 @@ public class CodeFunctions {
 			funcs.setEncoder(new Simple8Encoder());
 		} else {
 			funcs.setEncodingType(ENCODING_FORMAT9);
+			funcs.setDecoder(new AnyCharsetDecoder(charset));
 			funcs.setEncoder(new AnyCharsetEncoder(charset));
 			guessCodepage(funcs, charset);
 		}
@@ -104,6 +116,7 @@ public class CodeFunctions {
 	 */
 	private static void guessCodepage(CodeFunctions funcs, String charset) {
 		String cs = charset.toLowerCase();
+		Transliterator transliterator = new NullTransliterator();
 		if (cs.startsWith("cp")) {
 			try {
 				funcs.setCodepage(Integer.parseInt(charset.substring(2)));
@@ -118,7 +131,9 @@ public class CodeFunctions {
 			}
 		} else if (cs.equals("latin1")) {
 			funcs.setCodepage(1252);
+			transliterator = new TableTransliterator("latin1");
 		}
+		funcs.setTransliterator(transliterator);
 	}
 
 	/**
@@ -151,5 +166,11 @@ public class CodeFunctions {
 
 	public static CharacterDecoder getDefaultDecoder() {
 		return new Format6Decoder();
+	}
+
+	public static Transliterator getDefaultTransliterator() {
+		TableTransliterator ascii = new TableTransliterator("ascii");
+		ascii.forceUppercase(true);
+		return ascii;
 	}
 }

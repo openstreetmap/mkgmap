@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Locale;
 
 import uk.me.parabola.log.Logger;
 
@@ -35,6 +36,7 @@ public class TableTransliterator implements Transliterator {
 
 	private final String[][] rows = new String[256][];
 	private final boolean useLatin;
+	private boolean forceUppercase;
 
 	public TableTransliterator(String targetCharset) {
 		if (targetCharset.equals("latin1"))
@@ -46,11 +48,15 @@ public class TableTransliterator implements Transliterator {
 	/**
 	 * Convert a string into a string that uses only ascii characters.
 	 *
-	 * @param s The original string.  It can use any unicode character.
+	 * @param s The original string.  It can use any unicode character. Can be null in which case null will
+	 * be returned.
 	 * @return A string that uses only ascii characters that is a transcription or
 	 *         transliteration of the original string.
 	 */
 	public String transliterate(String s) {
+		if (s == null)
+			return null;
+
 		StringBuilder sb = new StringBuilder(s.length() + 5);
 		for (char c : s.toCharArray()) {
 			if (c <= (useLatin? 0xff: 0x7f)) {
@@ -65,7 +71,14 @@ public class TableTransliterator implements Transliterator {
 			}
 		}
 
-		return sb.toString();
+		String text = sb.toString();
+		if (forceUppercase)
+			text = text.toUpperCase(Locale.ENGLISH);
+		return text;
+	}
+
+	public void forceUppercase(boolean uc) {
+		forceUppercase = uc;
 	}
 
 	/**
@@ -127,8 +140,12 @@ public class TableTransliterator implements Transliterator {
 
 				// The first field must look like 'U+RRXX', we extract the XX part
 				int index = Integer.parseInt(upoint.substring(4), 16);
-				if (newRow[index].equals("?"))
-					newRow[index] = translation;
+				if (newRow[index].equals("?")) {
+					if (forceUppercase)
+						newRow[index] = translation.toUpperCase(Locale.ENGLISH);
+					else
+						newRow[index] = translation;
+				}
 			}
 		} catch (IOException e) {
 			log.error("Could not read character translation table");

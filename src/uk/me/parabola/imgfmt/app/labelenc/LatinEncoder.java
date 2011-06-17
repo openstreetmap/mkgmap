@@ -20,7 +20,6 @@ import java.util.Locale;
  * @author Steve Ratcliffe
  */
 public class LatinEncoder extends BaseEncoder implements CharacterEncoder {
-	private final Transliterator trans = new TableTransliterator("latin1");
 	private final Charset latinCharset = Charset.forName("latin1");
 
 	public EncodedText encodeText(String t) {
@@ -32,8 +31,7 @@ public class LatinEncoder extends BaseEncoder implements CharacterEncoder {
 		// Need to add a null character at the end of the string for this format.
 		String zText = text + "\000";
 
-		String s = trans.transliterate(zText);
-		byte[] chars = s.getBytes(latinCharset);
+		byte[] chars = zText.getBytes(latinCharset);
 		return new EncodedText(chars, chars.length);
 	}
 }
