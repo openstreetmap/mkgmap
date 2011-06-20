@@ -11,6 +11,7 @@
 access
 addr:city
 addr:country
+addr:housename
 addr:housenumber
 addr:phone
 addr:postcode

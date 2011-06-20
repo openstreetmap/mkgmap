@@ -666,6 +666,7 @@ public class StyledConverter implements OsmConverter {
 		String city         = element.getTag("addr:city");
 		String zip          = element.getTag("addr:postcode");
 		String street 	    = element.getTag("addr:street");
+		String housename    = element.getTag("addr:housename");
 		String houseNumber  = element.getTag("addr:housenumber");
 		String phone        = element.getTag("phone");
 		String isIn         = element.getTag("is_in");
@@ -689,6 +690,8 @@ public class StyledConverter implements OsmConverter {
 		  
 		if(street != null)
 			ms.setStreet(street);
+		else if (housename != null)
+			ms.setStreet(housename);
 
 		if(houseNumber != null)
 			ms.setHouseNumber(houseNumber);
