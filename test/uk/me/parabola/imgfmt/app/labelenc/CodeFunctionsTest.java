@@ -24,7 +24,7 @@ public class CodeFunctionsTest {
 	 */
 	@Test
 	public void testFormat6() {
-		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6);
+		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6, 0);
 		assertEquals("code page", 0, functions.getCodepage());
 		assertEquals("encoding type", 6, functions.getEncodingType());
 		CharacterEncoder enc = functions.getEncoder();
@@ -55,7 +55,7 @@ public class CodeFunctionsTest {
 	 */
 	@Test
 	public void testTransliterate6() {
-		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6);
+		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6, 0);
 
 		CharacterEncoder encoder = functions.getEncoder();
 		Transliterator transliterator = functions.getTransliterator();

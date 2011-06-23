@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.Country;
 import uk.me.parabola.imgfmt.app.lbl.Region;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.imgfmt.app.mdr.MdrSection.PointerSizes;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
@@ -62,7 +63,7 @@ public class MDRFile extends ImgFile {
 	private int currentMap;
 
 	private final MdrSection[] sections;
-	private MdrSection.PointerSizes sizes;
+	private PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();

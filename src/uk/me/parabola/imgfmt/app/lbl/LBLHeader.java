@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
+import java.io.UnsupportedEncodingException;
+
 import uk.me.parabola.imgfmt.app.CommonHeader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -74,6 +76,27 @@ public class LBLHeader extends CommonHeader {
 		// Read the places part of the header.
 		placeHeader.readFileHeader(reader);
 
+		int codepage = reader.getChar();
+		int id1 = reader.getChar();
+		int id2 = reader.getChar();
+		int descOff = reader.getInt();
+		int descLen = reader.getInt();
+
+		reader.position(descOff);
+		byte[] bytes = reader.get(descLen);
+		String description;
+		try {
+			description = new String(bytes, "ascii");
+		} catch (UnsupportedEncodingException e) {
+			description = "Unknown";
+		}
+
+		sort = new Sort();
+		sort.setCodepage(codepage);
+		sort.setId1(id1);
+		sort.setId2(id2);
+		sort.setDescription(description);
+		
 		// more to do but not needed yet...  Just set position
 		reader.position(labelStart);
 	}
@@ -97,8 +120,13 @@ public class LBLHeader extends CommonHeader {
 		writer.putChar((char) getCodePage());
 
 		// Identifying the sort
-		writer.putChar((char) sort.getId1());
-		writer.putChar((char) (sort.getId2() | 0x8000));
+		char id1 = (char) sort.getId1();
+		writer.putChar(id1);
+		
+		char id2 = (char) sort.getId2();
+		if (id1 != 0 && id2 != 0)
+			id2 |= 0x8000;
+		writer.putChar(id2);
 
 		writer.putInt(HEADER_LEN);
 		writer.putInt(sortDescriptionLength);
