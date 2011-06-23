@@ -3,6 +3,7 @@
 	<country name="Afghanistan" abr="AFG">
 		<variant>AF</variant>
 		<variant>AFG</variant>
+		<variant>‏افغانستان‎</variant>
 	</country>
 	<country name="Åland Islands" abr="ALA">
 		<variant>AX</variant>
@@ -71,6 +72,7 @@
 	<country name="Azerbaijan" abr="AZE">
 		<variant>AZ</variant>
 		<variant>AZE</variant>
+		<variant>Azərbaycan</variant>
 	</country>
 	<country name="Bahamas" abr="BHS">
 		<variant>BS</variant>
@@ -85,6 +87,7 @@
 	<country name="Bangladesh" abr="BGD">
 		<variant>BD</variant>
 		<variant>BGD</variant>
+		<variant>বাংলাদেশ</variant>
 	</country>
 	<country name="Barbados" abr="BRB">
 		<variant>BB</variant>
@@ -172,6 +175,7 @@
 	<country name="Cambodia" abr="KHM">
 		<variant>KH</variant>
 		<variant>KHM</variant>
+		<variant>ព្រះរាជាណាចក្រកម្ពុជា</variant>
 	</country>
 	<country name="Cameroon" abr="CMR">
 		<variant>CM</variant>
@@ -208,6 +212,7 @@
 	<country name="China" abr="CHN">
 		<variant>CN</variant>
 		<variant>CHN</variant>
+		<variant>People's Republic of China</variant>
 	</country>
 	<country name="Christmas Island" abr="CXR">
 		<variant>CX</variant>
@@ -485,6 +490,7 @@
 	<country name="Iraq" abr="IRQ">
 		<variant>IQ</variant>
 		<variant>IRQ</variant>
+		<variant>جمهورية العراق</variant>
 	</country>
 	<country name="Ireland" abr="IRL" regionOffset="3">
 		<variant>Republic of Ireland</variant>
@@ -499,6 +505,7 @@
 	<country name="Israel" abr="ISR">
 		<variant>IL</variant>
 		<variant>ISR</variant>
+		<variant>מדינת ישראל</variant>
 	</country>
 	<country name="Italia" abr="ITA" regionOffset="2">
 		<variant>Italy</variant>
@@ -512,6 +519,7 @@
 	<country name="Japan" abr="JPN">
 		<variant>JP</variant>
 		<variant>JPN</variant>
+		<variant>日本</variant>
 	</country>
 	<country name="Jersey" abr="JEY">
 		<variant>JE</variant>
@@ -524,6 +532,7 @@
 	<country name="Kazakhstan" abr="KAZ">
 		<variant>KZ</variant>
 		<variant>KAZ</variant>
+		<variant>Казахстан</variant>
 	</country>
 	<country name="Kenya" abr="KEN">
 		<variant>KE</variant>
@@ -537,11 +546,13 @@
 		<variant>Democratic People's Republic of Korea</variant>
 		<variant>KP</variant>
 		<variant>PRK</variant>
+		<variant>조선민주주의인민공화국</variant>
 	</country>
 	<country name="South Korea" abr="KOR">
 		<variant>Republic of Korea</variant>
 		<variant>KR</variant>
 		<variant>KOR</variant>
+		<variant>대한민국</variant>
 	</country>
 	<country name="Kuwait" abr="KWT">
 		<variant>KW</variant>
@@ -550,6 +561,7 @@
 	<country name="Kyrgyzstan" abr="KGZ">
 		<variant>KG</variant>
 		<variant>KGZ</variant>
+		<variant>Кыргызстан</variant>
 	</country>
 	<country name="Laos" abr="LAO">
 		<variant>Lao People's Democratic Republic</variant>
@@ -564,6 +576,7 @@
 	<country name="Lebanon" abr="LBN">
 		<variant>LB</variant>
 		<variant>LBN</variant>
+		<variant>الجمهورية اللبنانية</variant>
 	</country>
 	<country name="Lesotho" abr="LSO">
 		<variant>LS</variant>
@@ -623,6 +636,7 @@
 	<country name="Maldives" abr="MDV">
 		<variant>MV</variant>
 		<variant>MDV</variant>
+		<variant>ދިވެހިރާއްޖޭގެ ޖުމުހޫރިއްޔާ</variant>
 	</country>
 	<country name="Mali" abr="MLI">
 		<variant>ML</variant>
@@ -710,6 +724,7 @@
 	<country name="Nepal" abr="NPL">
 		<variant>NP</variant>
 		<variant>NPL</variant>
+		<variant>नेपाल</variant>
 	</country>
 	<country name="Nederland" abr="NLD">
 		<variant>NL</variant>
@@ -760,10 +775,12 @@
 	<country name="Oman" abr="OMN">
 		<variant>OM</variant>
 		<variant>OMN</variant>
+		<variant>‏سلطنة عمان‎</variant>
 	</country>
 	<country name="Pakistan" abr="PAK">
 		<variant>PK</variant>
 		<variant>PAK</variant>
+		<variant>‏پاکستان‎</variant>
 	</country>
 	<country name="Palau" abr="PLW">
 		<variant>PW</variant>
@@ -773,6 +790,7 @@
 	<country name="Palestinian Territory" abr="PSE">
 		<variant>PS</variant>
 		<variant>PSE</variant>
+		<variant>Palestinian National Authority</variant>
 	</country>
 	<country name="Panama" abr="PAN">
 		<variant>PA</variant>
@@ -817,6 +835,7 @@
 	<country name="Qatar" abr="QAT">
 		<variant>QA</variant>
 		<variant>QAT</variant>
+		<variant>‏قطر‎</variant>
 	</country>
 	<country name="Réunion" abr="REU">
 		<variant>RE</variant>
@@ -961,6 +980,7 @@
 	<country name="Sri Lanka" abr="LKA">
 		<variant>LK</variant>
 		<variant>LKA</variant>
+		<variant>ශ්‍රී ලංකා</variant>
 	</country>
 	<country name="Sudan" abr="SDN">
 		<variant>SD</variant>
@@ -1006,6 +1026,7 @@
 	<country name="Tajikistan" abr="TJK">
 		<variant>TJ</variant>
 		<variant>TJK</variant>
+		<variant>Тоҷикистон</variant>
 	</country>
 	<country name="Tanzania" abr="TZA">
 		<variant>United Republic of Tanzania</variant>
@@ -1054,6 +1075,7 @@
 	<country name="Turkmenistan" abr="TKM">
 		<variant>TM</variant>
 		<variant>TKM</variant>
+		<variant>Türkmenistan</variant>
 	</country>
 	<country name="Turks and Caicos Islands" abr="TCA">
 		<variant>TC</variant>
@@ -1076,6 +1098,7 @@
 	<country name="United Arab Emirates" abr="ARE">
 		<variant>AE</variant>
 		<variant>ARE</variant>
+		<variant>الإمارات العربيّة المتّحدة</variant>
 	</country>
 	<country name="United Kingdom" abr="GBR">
 		<variant>England</variant>
@@ -1105,6 +1128,7 @@
 	<country name="Uzbekistan" abr="UZB">
 		<variant>UZ</variant>
 		<variant>UZB</variant>
+		<variant>Oʻzbekiston</variant>
 	</country>
 	<country name="Vanuatu" abr="VUT">
 		<variant>VU</variant>
@@ -1118,6 +1142,7 @@
 	<country name="Vietnam" abr="VNM">
 		<variant>VN</variant>
 		<variant>VNM</variant>
+		<variant>Việt Nam</variant>
 	</country>
 	<country name="Virgin Islands, British" abr="VGB">
 		<variant>VG</variant>
