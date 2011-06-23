@@ -69,7 +69,7 @@ public class GpxCreator {
 	 * @param baseDir the base directory name
 	 * @param ways list of ways
 	 */
-	public static void createGpx(String baseDir, Collection<Way> ways) {
+	public static void createGpx(String baseDir, Collection<? extends Way> ways) {
 		for (Way w : ways) {
 			GpxCreator.createGpx(baseDir+w.getId(), w.getPoints());
 		}
