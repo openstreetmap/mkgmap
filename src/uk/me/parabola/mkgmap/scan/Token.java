@@ -46,5 +46,12 @@ public class Token {
 	public boolean isValue(String val) {
 		return val.equals(value);
 	}
+
+	/**
+	 * True if we are at the end of a line. End of file counts as the end of a line.
+	 */
+	public boolean isEol() {
+		return type == TokType.EOL || type == TokType.EOF;
+	}
 }
 

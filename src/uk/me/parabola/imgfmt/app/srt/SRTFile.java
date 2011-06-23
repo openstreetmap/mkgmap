@@ -13,7 +13,6 @@
 package uk.me.parabola.imgfmt.app.srt;
 
 import java.nio.charset.Charset;
-import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
@@ -59,7 +58,7 @@ public class SRTFile extends ImgFile {
 		SectionWriter subWriter = header.makeSectionWriter(writer);
 		subWriter.position(SRTHeader.HEADER3_LEN);
 		writeCharacterTable(subWriter);
-		writeTab2(subWriter);
+		writeExpansions(subWriter);
 		subWriter.close();
 
 		// Header 2 is just after the real header
@@ -83,17 +82,29 @@ public class SRTFile extends ImgFile {
 	private void writeCharacterTable(ImgFileWriter writer) {
 		for (int i = 1; i < 256; i++) {
 			writer.put(sort.getFlags(i));
-			writer.put(sort.getPrimary(i));
-			writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+			writeWeights(writer, i);
 		}
 		header.endCharTable(writer.position());
 	}
 
-	private void writeTab2(ImgFileWriter writer) {
-		List<Character> tab2 = sort.getTab2();
-		for (Character c : tab2) {
-			writer.putChar(c);
+	private void writeWeights(ImgFileWriter writer, int i) {
+		writer.put(sort.getPrimary(i));
+		writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
+	}
+
+	/**
+	 * Write out the expansion table. This is referenced from the character table, when
+	 * the top nibble of the type is set via the primary position value.
+	 */
+	private void writeExpansions(ImgFileWriter writer) {
+
+		int size = sort.getExpansionSize();
+		for (int j = 1; j <= size; j++) {
+			CodePosition b = sort.getExpansion(j);
+			writer.put(b.getPrimary());
+			writer.put((byte) ((b.getTertiary() << 4) | (b.getSecondary() & 0xf)));
 		}
+
 		header.endTab2(writer.position());
 	}
 

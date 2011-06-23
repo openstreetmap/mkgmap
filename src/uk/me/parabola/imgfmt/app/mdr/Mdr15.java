@@ -14,6 +14,7 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,9 +32,12 @@ public class Mdr15 extends MdrSection {
 	private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
 	private final Map<String, Integer> strings = new HashMap<String, Integer>();
+	private final Charset charset;
 
 	public Mdr15(MdrConfig config) {
 		setConfig(config);
+
+		charset = config.getSort().getCharset();
 
 		// reserve the string at offset 0 to be the empty string.
 		buffer.write(0);
@@ -55,7 +59,7 @@ public class Mdr15 extends MdrSection {
 
 		int off = buffer.size();
 		try {
-			buffer.write(str.getBytes("latin1"));
+			buffer.write(str.getBytes(charset));
 			buffer.write(0);
 		} catch (IOException e) {
 			// Can't convert, return empty string instead.

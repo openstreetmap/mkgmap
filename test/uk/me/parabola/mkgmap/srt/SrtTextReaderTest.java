@@ -17,7 +17,6 @@ import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.List;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
@@ -117,14 +116,6 @@ public class SrtTextReaderTest {
 		assertEquals(1, major(sortcodes['a']));
 		assertEquals(2, major(sortcodes['b']));
 		assertEquals(3, major(sortcodes['c']));
-	}
-
-	@Test
-	public void testTab2() throws Exception {
-		Sort sort = getSort("tab2 12ab");
-		List<Character> tab2 = sort.getTab2();
-		assertEquals(1, tab2.size());
-		assertEquals((char) 0x12ab, (char) tab2.get(0));
 	}
 
 	private char[] getSortcodes(String text) throws IOException {

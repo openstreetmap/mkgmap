@@ -73,19 +73,23 @@ public class Mdr20 extends Mdr2x {
 		String lastCityName = null;
 		int lastMapid = 0;
 		int record = 0;
+		int lastRegion = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 
 			int mapid = street.getMapIndex();
 			String name = street.getName();
 			String cityName = street.getCity().getName();
-			if (mapid != lastMapid || !name.equals(lastName) || !cityName.equals(lastCityName)) {
+			int region = street.getCity().getRegionIndex();
+
+			if (mapid != lastMapid || !name.equals(lastName) || !cityName.equals(lastCityName) || region != lastRegion) {
 				record++;
 
 				streets.add(street);
 				lastMapid = mapid;
 				lastName = name;
 				lastCityName = cityName;
+				lastRegion = region;
 			}
 			int gci = street.getCity().getGlobalCityIndex();
 

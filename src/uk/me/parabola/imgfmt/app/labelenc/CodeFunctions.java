@@ -140,16 +140,23 @@ public class CodeFunctions {
 	 * Sets encoding functions for a given format and code page.  This is used
 	 * when reading from an existing file.
 	 *
+	 *
 	 * @param format The format from the lbl header.
+	 * @param codePage The codepage found in the header.
 	 * @return The various character set parameters that will be needed.
 	 */
-	public static CodeFunctions createEncoderForLBL(int format) {
+	public static CodeFunctions createEncoderForLBL(int format, int codePage) {
 		CodeFunctions funcs = new CodeFunctions();
 
 		if (format == ENCODING_FORMAT6) {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
 			funcs.setDecoder(new Format6Decoder());
+		} else if (format == ENCODING_FORMAT9) {
+			funcs.setEncodingType(ENCODING_FORMAT9);
+			String cpName = "cp" + codePage;
+			funcs.setEncoder(new AnyCharsetEncoder(cpName));
+			funcs.setDecoder(new AnyCharsetDecoder(cpName));
 		} else {
 			// TODO TEMP...
 			funcs.setEncodingType(ENCODING_FORMAT9);

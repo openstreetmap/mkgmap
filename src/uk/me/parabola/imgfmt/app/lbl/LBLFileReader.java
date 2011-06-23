@@ -61,7 +61,7 @@ public class LBLFileReader extends ImgFile {
 		header.readHeader(getReader());
 		int offsetMultiplier = header.getOffsetMultiplier();
 		CodeFunctions funcs = CodeFunctions.createEncoderForLBL(
-				header.getEncodingType());
+				header.getEncodingType(), header.getCodePage());
 		textDecoder = funcs.getDecoder();
 
 		readLables(offsetMultiplier);
