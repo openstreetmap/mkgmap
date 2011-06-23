@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -55,8 +56,8 @@ public class Mdr5 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		for (Mdr5Record m : cities) {
 			// Sorted also by map number, city index
-			int second = (m.getMapIndex() << 16) + m.getCityIndex();
-			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), second);
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
+			sortKey = new CombinedSortKey<Mdr5Record>(sortKey, m.getCityIndex(), m.getRegionIndex());
 			sortKeys.add(sortKey);
 		}
 		Collections.sort(sortKeys);
@@ -64,16 +65,18 @@ public class Mdr5 extends MdrMapSection {
 		cities.clear();
 		int count = 0;
 		int lastMapId = 0;
+		int lastRegion = 0;
 		String lastName = null;
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
-			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName)) {
+			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName) || c.getRegionIndex() != lastRegion) {
 				count++;
 				c.setGlobalCityIndex(count);
 				cities.add(c);
 
 				lastName = c.getName();
 				lastMapId = c.getMapIndex();
+				lastRegion = c.getRegionIndex();
 			} else {
 				c.setGlobalCityIndex(count);
 			}
@@ -116,12 +119,14 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	private void fix20() {
 		String lastName = null;
+		int lastRegion = 0;
 		for (int index = 1; index < cities.size(); index++) {
 			Mdr5Record city = cities.get(index-1);
+			int region = city.getRegionIndex();
 			assert city.getGlobalCityIndex() == index : index + "/" + city.getGlobalCityIndex();
 
 			String name = city.getName();
-			if (name.equals(lastName)) {
+			if (name.equals(lastName) && region == lastRegion) {
 				int last = findLastRepeat(index, name);
 				int mdr20val = findMin20(index - 1, last);
 				for (int j = index-1; j < last; j++) {
@@ -133,6 +138,7 @@ public class Mdr5 extends MdrMapSection {
 
 			}
 			lastName = name;
+			lastRegion = region;
 		}
 	}
 
