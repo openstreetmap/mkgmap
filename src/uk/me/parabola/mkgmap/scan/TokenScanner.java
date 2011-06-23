@@ -78,8 +78,9 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Get the value of the next token and consume the token.  You'd
+	 * Get the value of the next non-space token and consume the token.  You'd
 	 * probably only call this after having peeked the type earlier.
+	 * Any initial space is skipped.
 	 */
 	public String nextValue() {
 		skipSpace();

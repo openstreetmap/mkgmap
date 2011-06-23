@@ -1,0 +1,115 @@
+
+codepage 1256
+id1 7
+id2 2
+description "Arabic"
+
+code pos2=0 pos3=8 01, 02, 03, 04, 05, 06, 07
+
+
+code 85
+code 20 < a0 < 09 < 0a < 0b < 0c < 0d
+code !
+code "
+code 23
+code $
+code %
+code &
+code (
+code )
+code *
+code ,
+code .
+code /
+code :
+code ;
+code ?
+code @
+code [
+code \
+code ]
+code ^ 88
+code `
+code {
+code |
+code }
+code ~
+code a6
+code a8
+code af
+code b4
+code b8
+code a1
+code ba
+code bf
+code 91
+code 92
+code 82
+code 93
+code 94
+code 84
+code 8b
+code 9b
+code _
+code <
+code =
+code >
+code ±
+code ab
+code bb
+code d7
+code f7
+code a2
+code a3
+code a4
+code a5
+code a7
+code a9 < ac < ae < b0 < b5 < b6 < b7 < 86 < 87 < 95 < 85 < 89
+code 80
+code 0 < bc < bd < be 
+code 1,¹
+code 2,²
+code 3,³
+code 4
+code 5
+code 6
+code 7
+code 8
+code 9
+code a,A; e0; e2
+code b,B
+code c,C; e7
+code d,D
+code e,E; e9; e8; ea; eb
+code f,F; 83
+code g,G
+code h,H
+code i,I; ee; ef
+code j,J
+code k,K
+code l,L
+code m,M
+code n,N
+code o,O; f4
+code 9c,8c
+code p,P
+code q,Q
+code r,R
+code s,S
+code t,T
+code 99
+code u,U; f9; fb; fc
+code v,V
+code w,W
+code x,X
+code y,Y
+code z,Z
+code c1; c4; c6
+code c7; c2; c3; c5
+code c8 < 81
+code c9, ca
+code cb < cc < 8d < cd < ce < cf < d0 < d1 < d2 < 8e < d3 < d4
+code d5 < d6 < d8 < d9 < da < db < dd < de < df < 90 < e1 < e3
+code e4 < e5 < e6
+code ec; ed
+code 8a < 8f < 9a < 98 < 9f < aa < c0 < ff < f8

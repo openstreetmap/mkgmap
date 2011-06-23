@@ -26,6 +26,7 @@ import static org.junit.Assert.*;
 
 public class SortTest {
 	private Sort sort;
+	private Collator collator;
 
 	@Before
 	public void setUp() throws Exception {
@@ -34,6 +35,8 @@ public class SortTest {
 				"code a, A; â, Â < b, B;\n");
 		SrtTextReader srr = new SrtTextReader(r);
 		sort = srr.getSort();
+		collator = sort.getCollator();
+		collator.setStrength(Collator.TERTIARY);
 	}
 
 	@Test
@@ -180,5 +183,6 @@ public class SortTest {
 		SortKey<Object> k2 = sort.createSortKey(null, s1);
 
 		assertEquals(1, k2.compareTo(k1));
+		assertEquals(-1, collator.compare(s, s1));
 	}
 }

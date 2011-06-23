@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010.
+ * Copyright (C) 2010, 2011.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -22,6 +22,7 @@ import java.nio.charset.CodingErrorAction;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.ExitException;
@@ -45,18 +46,20 @@ public class Sort {
 	private final byte[] secondary = new byte[256];
 	private final byte[] tertiary = new byte[256];
 	private final byte[] flags = new byte[256];
-	private final List<Character> tab2 = new ArrayList<Character>();
+
+	private final List<CodePosition> expansions = new ArrayList<CodePosition>();
+	private int maxExpSize = 1;
+
 	private CharsetEncoder encoder;
 
 	public void add(int ch, int primary, int secondary, int tertiary, int flags) {
+		if (this.primary[ch & 0xff] != 0)
+			throw new ExitException(String.format("Repeated primary index 0x%x", ch & 0xff));
 		this.primary[ch & 0xff] = (byte) primary;
-		this.secondary[ch & 0xff] = flags > 0xf? 0: (byte) secondary;
-		this.tertiary[ch & 0xff] = flags > 0xf? 0: (byte) tertiary;
-		this.flags[ch & 0xff] = (byte) flags;
-	}
+		this.secondary[ch & 0xff] = (byte) secondary;
+		this.tertiary[ch & 0xff] = (byte) tertiary;
 
-	public void add(char tab2) {
-		this.tab2.add(tab2);
+		this.flags[ch & 0xff] = (byte) flags;
 	}
 
 	/**
@@ -92,11 +95,11 @@ public class Sort {
 		try {
 			ByteBuffer out = encoder.encode(inb);
 			byte[] bval = out.array();
-			byte[] key = new byte[bval.length * 3 + 3];
+			byte[] key = new byte[bval.length * 3 * maxExpSize + 3];
 
-			int start = fillKey(primary, bval, key, 0);
-			start = fillKey(secondary, bval, key, start);
-			fillKey(tertiary, bval, key, start);
+			int start = fillKey(Collator.PRIMARY, primary, bval, key, 0);
+			start = fillKey(Collator.SECONDARY, secondary, bval, key, start);
+			fillKey(Collator.TERTIARY, tertiary, bval, key, start);
 
 			return new SrtSortKey<T>(object, key, second);
 		} catch (CharacterCodingException e) {
@@ -113,16 +116,30 @@ public class Sort {
 	 * @param start The index into the output key to start at.
 	 * @return The next position in the output key.
 	 */
-	private int fillKey(byte[] sortPositions, byte[] input, byte[] outKey, int start) {
+	private int fillKey(int type, byte[] sortPositions, byte[] input, byte[] outKey, int start) {
 		int index = start;
 		for (byte inb : input) {
 			int b = inb & 0xff;
 
-			// I am guessing that a sort position of 0 means that the character is ignorable at this
-			// strength. In other words it is as if it is not present in the string.  This appears to
-			// be true for shield symbols, but perhaps not for other kinds of control characters.
-			if (sortPositions[b] != 0)
-				outKey[index++] = sortPositions[b];
+			int exp = (flags[b] >> 4) & 0x3;
+			if (exp == 0) {
+				// I am guessing that a sort position of 0 means that the character is ignorable at this
+				// strength. In other words it is as if it is not present in the string.  This appears to
+				// be true for shield symbols, but perhaps not for other kinds of control characters.
+				byte pos = sortPositions[b];
+				if (pos != 0)
+					outKey[index++] = pos;
+			} else {
+				// now have to redirect to a list of input chars, get the list via the primary value always.
+				byte idx = primary[b];
+				//List<CodePosition> list = expansions.get(idx-1);
+
+				for (int i = idx - 1; i < idx + exp; i++) {
+					byte pos = expansions.get(i).getPosition(type);
+					if (pos != 0)
+						outKey[index++] = pos;
+				}
+			}
 		}
 
 		outKey[index++] = '\0';
@@ -147,10 +164,6 @@ public class Sort {
 
 	public byte getFlags(int ch) {
 		return flags[ch];
-	}
-
-	public List<Character> getTab2() {
-		return tab2;
 	}
 
 	public int getCodepage() {
@@ -179,7 +192,10 @@ public class Sort {
 
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
-		charset = Charset.forName("cp" + codepage);
+		if (codepage == 0)
+			charset = Charset.forName("cp1252");
+		else
+			charset = Charset.forName("cp" + codepage);
 		encoder = charset.newEncoder();
 		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
 	}
@@ -190,6 +206,47 @@ public class Sort {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	/**
+	 * Add an expansion to the sort.
+	 * An expansion is a letter that sorts as if it were two separate letters.
+	 *
+	 * The case were two letters sort as if the were just one (and more complex cases) are
+	 * not supported or are unknown to us.
+	 *
+	 * @param bval The code point of this letter in the code page.
+	 * @param inFlags The initial flags, eg if it is a letter or not.
+	 * @param expansionList The letters that this letter sorts as, as code points in the codepage.
+	 */
+	public void addExpansion(byte bval, int inFlags, List<Byte> expansionList) {
+		int idx = bval & 0xff;
+		flags[idx] = (byte) ((inFlags & 0xf) | (((expansionList.size()-1) << 4) & 0x30));
+
+		// Check for repeated definitions
+		if (primary[idx] != 0)
+			throw new ExitException(String.format("repeated code point %x", idx));
+
+		primary[idx] = (byte) (expansions.size() + 1);
+		secondary[idx] = 0;
+		tertiary[idx] = 0;
+		maxExpSize = Math.max(maxExpSize, expansionList.size());
+
+		for (Byte b : expansionList) {
+			CodePosition cp = new CodePosition();
+			cp.setPrimary(primary[b & 0xff]);
+			cp.setSecondary(secondary[b & 0xff]);
+			cp.setTertiary((byte) (tertiary[b & 0xff] + 2));
+			expansions.add(cp);
+		}
+	}
+
+	/**
+	 * Get the expansion with the given index, one based.
+	 * @param val The one-based index number of the extension.
+	 */
+	public CodePosition getExpansion(int val) {
+		return expansions.get(val - 1);
 	}
 
 	public Collator getCollator() {
@@ -219,6 +276,16 @@ public class Sort {
 		return sort;
 	}
 
+	public int getExpansionSize() {
+		return expansions.size();
+	}
+
+	/**
+	 * A collator that works with this sort. This should be used if you just need to compare two
+	 * strings against each other once.
+	 *
+	 * The sort key is better when the comparison must be done several times as in a sort operation.
+	 */
 	private class SrtCollator extends Collator {
 		private final int codepage;
 
@@ -239,12 +306,12 @@ public class Sort {
 			}
 
 			int strength = getStrength();
-			int res = compareOneStrength(bytes1, bytes2, primary);
+			int res = compareOneStrength(bytes1, bytes2, primary, Collator.PRIMARY);
 
 			if (res == 0 && strength != PRIMARY) {
-				res = compareOneStrength(bytes1, bytes2, secondary);
+				res = compareOneStrength(bytes1, bytes2, secondary, Collator.SECONDARY);
 				if (res == 0 && strength != SECONDARY) {
-					res = compareOneStrength(bytes1, bytes2, tertiary);
+					res = compareOneStrength(bytes1, bytes2, tertiary, Collator.TERTIARY);
 				}
 			}
 
@@ -261,20 +328,26 @@ public class Sort {
 		 * Compare the bytes against primary, secondary or tertiary arrays.
 		 * @param bytes1 Bytes for the first string in the codepage encoding.
 		 * @param bytes2 Bytes for the second string in the codepage encoding.
-		 * @param type The strength array to use in the comparison.
+		 * @param typePositions The strength array to use in the comparison.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		private int compareOneStrength(byte[] bytes1, byte[] bytes2, byte[] type) {
+		@SuppressWarnings({"AssignmentToForLoopParameter"})
+		private int compareOneStrength(byte[] bytes1, byte[] bytes2, byte[] typePositions, int type) {
 			int res = 0;
-			int length = Math.min(bytes1.length, bytes2.length);
-			for (int i = 0; i < length; i++) {
 
-				byte p1 = type[bytes1[i] & 0xff];
-				byte p2 = type[bytes2[i] & 0xff];
+			PositionIterator it1 = new PositionIterator(bytes1, typePositions, type);
+			PositionIterator it2 = new PositionIterator(bytes2, typePositions, type);
+
+			while (it1.hasNext() && it2.hasNext()) {
+				int p1 = it1.next();
+				int p2 = it2.next();
+				
 				if (p1 < p2) {
 					res = -1;
+					break;
 				} else if (p1 > p2) {
 					res = 1;
+					break;
 				}
 			}
 			return res;
@@ -296,6 +369,63 @@ public class Sort {
 
 		public int hashCode() {
 			return codepage;
+		}
+
+		class PositionIterator implements Iterator<Integer> {
+			private final byte[] bytes;
+			private final byte[] sortPositions;
+			private final int len;
+			private final int type;
+
+			private int pos;
+
+			private int expStart;
+			private int expEnd;
+			private int expPos;
+
+			PositionIterator(byte[] bytes, byte[] sortPositions, int type) {
+				this.bytes = bytes;
+				this.sortPositions = sortPositions;
+				this.len = bytes.length;
+				this.type = type;
+			}
+
+			public boolean hasNext() {
+				return pos < len || expPos != 0;
+			}
+
+			public Integer next() {
+				int next;
+				if (expPos == 0) {
+					int in = pos++ & 0xff;
+					byte b = bytes[in];
+					int n = (flags[b & 0xff] >> 4) & 0x3;
+					if (n > 0) {
+						expStart = primary[b & 0xff] - 1;
+						expEnd = expStart + n;
+						expPos = expStart;
+						next = expansions.get(expPos).getPosition(type);
+
+						if (++expPos > expEnd)
+							expPos = 0;
+
+					} else {
+						for (next = sortPositions[bytes[in] & 0xff]; next == 0 && pos < len; ) {
+							next = sortPositions[bytes[pos++ & 0xff]];
+						}
+					}
+				} else {
+					next = expansions.get(expPos).getPosition(type);
+					if (++expPos > expEnd)
+						expPos = 0;
+
+				}
+				return next;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException("remove not supported");
+			}
 		}
 	}
 }
