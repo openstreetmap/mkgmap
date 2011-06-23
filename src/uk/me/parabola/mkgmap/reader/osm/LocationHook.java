@@ -1,6 +1,7 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,7 +52,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		if (props.containsKey("index") == false) {
-			log.info("Disable LocationHook because no index is created.");
+			log.info("Disable LocationHook because index option is not set.");
 			return false;
 		}
 
@@ -63,6 +64,17 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		boundaryDir = new File(props.getProperty("boundsdirectory", "bounds"));
 		if (boundaryDir.exists() == false) {
 			log.error("Disable LocationHook because boundary directory does not exist. Dir: "
+					+ boundaryDir);
+			return false;
+		}
+		File[] boundaryFiles = boundaryDir.listFiles(new FileFilter() {
+			public boolean accept(File pathname) {
+				return (pathname.isFile() && pathname.getName().endsWith(".bnd"));
+			}
+			
+		});
+		if (boundaryFiles == null || boundaryFiles.length == 0) {
+			log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
 					+ boundaryDir);
 			return false;
 		}
@@ -141,13 +153,14 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 
 			if ("2".equals(b.getTags().get("admin_level"))) {
 				log.info("Input country: " + name);
+				String lowercaseName = name;
 				name = locator.fixCountryString(name);
 				log.info("Fixed country: " + name);
 				String cCode = locator.getCountryCode(name);
 				if (cCode != null) {
 					name = cCode;
 				} else {
-					log.error("Ccode == null name="+name);
+					log.error("Country name "+lowercaseName+" not in locator config. Country may not be assigned correctly.");
 				}
 				log.info("Coded: " + name);
 			}
@@ -158,14 +171,13 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				b.getTags().put("mkgmap:bzip", zip);
 		}
 
-		log.error("Element lists created after "
-				+ (System.currentTimeMillis() - t1) + " ms");
+		log.info("Element lists created after",
+				(System.currentTimeMillis() - t1), "ms");
 
 		log.info("Creating quadtree for", allElements.size(), "elements");
 		ElementQuadTree quadTree = new ElementQuadTree(allElements);
-		log.error("Quadtree created after " + (System.currentTimeMillis() - t1)
-				+ " ms");
-
+		log.info("Quadtree created after", (System.currentTimeMillis() - t1),
+				"ms");
 
 
 		bIter = boundaries.listIterator();
@@ -203,8 +215,8 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 
 
-		log.error("Location hook finished in "
-				+ (System.currentTimeMillis() - t1) + " ms");
+		log.info("Location hook finished in",
+				(System.currentTimeMillis() - t1), "ms");
 	}
 
 

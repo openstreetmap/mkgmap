@@ -194,8 +194,7 @@ public class BoundaryUtil {
 			try {
 				boundaries.addAll(loadBoundaryFile(boundaryFile, bbox));
 			} catch (IOException exp) {
-				log.error("Cannot load boundary file " + boundaryFile + ": "
-						+ exp);
+				log.warn("Cannot load boundary file", boundaryFile + ".",exp);
 //				String basename = "missingbounds/";
 //				String[] bParts = boundaryFile.getName().substring(0,boundaryFile.getName().length()-4).split("_");
 //				int minLat = Integer.valueOf(bParts[1]);
