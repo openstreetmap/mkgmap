@@ -153,4 +153,12 @@ public class City {
 		}
 		return 0;
 	}
+
+	public int getRegionNumber() {
+		return region == null? 0: region.getIndex();
+	}
+	
+	public int getCountryNumber() {
+		return country != null ? country.getIndex() : 0;
+	}
 }

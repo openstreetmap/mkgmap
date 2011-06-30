@@ -96,4 +96,31 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	public void setMdrCountry(Mdr14Record country) {
 		this.country = country;
 	}
+
+	/**
+	 * Is this the same city, by the rules segregating the cities in mdr5 and 20.
+	 */
+	public boolean isSameCity(Mdr5Record other) {
+		if (other == null)
+			return false;
+
+		return this.getName().equals(other.getName())
+				&& this.getMapIndex() == other.getMapIndex();
+				//&& this.getRegionIndex() == other.getRegionIndex();
+	}
+
+	public String toString() {
+		return String.format("%d: %s r=%s c=%s", globalCityIndex, name, getRegionName(), country.getName());
+	}
+
+	public String getRegionName() {
+		if (region == null)
+			return "";
+		else
+			return region.getName();
+	}
+
+	public boolean isSameName(Mdr5Record other) {
+		return this.name.equals(other.getName());
+	}
 }

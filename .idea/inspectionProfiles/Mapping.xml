@@ -45,7 +45,7 @@
     <inspection_tool class="AroundAdviceStyleInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ArrayEquality" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ArrayEquals" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="ArrayHashCode" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ArrayHashCode" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ArrayLengthInLoopCondition" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AssertAsName" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AssertEqualsBetweenInconvertibleTypes" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -770,7 +770,7 @@
     <inspection_tool class="HtmlExtraClosingTag" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="HtmlFormInputWithoutLabel" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlPresentationalElement" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="HtmlTagCanBeJavadocTag" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="HtmlTagCanBeJavadocTag" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
@@ -797,7 +797,7 @@
       <option name="ignoredTypesString" value="java.io.ByteArrayOutputStream,java.io.ByteArrayInputStream,java.io.StringBufferInputStream,java.io.CharArrayWriter,java.io.CharArrayReader,java.io.StringWriter,java.io.StringReader" />
       <option name="insideTryAllowed" value="false" />
     </inspection_tool>
-    <inspection_tool class="IfCanBeSwitch" enabled="false" level="WARNING" enabled_by_default="false">
+    <inspection_tool class="IfCanBeSwitch" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="minimumBranches" value="3" />
       <option name="suggestIntSwitches" value="false" />
       <option name="suggestEnumSwitches" value="false" />
@@ -1075,7 +1075,7 @@
     <inspection_tool class="ManualArrayToCollectionCopy" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MapReplaceableByEnumMap" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MarkerInterface" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="MathRandomCastToInt" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MathRandomCastToInt" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MethodCallInLoopCondition" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MethodCanBeVariableArityMethod" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MethodCount" enabled="false" level="WARNING" enabled_by_default="false">
@@ -1119,7 +1119,7 @@
         <value />
       </option>
     </inspection_tool>
-    <inspection_tool class="MismatchedStringBuilderQueryUpdate" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MismatchedStringBuilderQueryUpdate" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MisorderedAssertEqualsParameters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MissingAspectjAutoproxyInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MissingDeprecatedAnnotation" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1411,6 +1411,7 @@
     </inspection_tool>
     <inspection_tool class="PublicStaticArrayField" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PublicStaticCollectionField" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyArgumentEqualDefaultInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyArgumentListInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyAugmentAssignmentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyBroadExceptionInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1424,6 +1425,7 @@
       <option name="fromVersion" value="2.4" />
       <option name="toVersion" value="2.7" />
     </inspection_tool>
+    <inspection_tool class="PyDecoratorInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyDefaultArgumentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyDeprecatedModulesInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyDictCreationInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1434,9 +1436,11 @@
     <inspection_tool class="PyFromFutureImportInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyInconsistentIndentationInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyInitNewSignatureInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyListCreationInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyMethodFirstArgAssignmentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyMethodOverridingInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyMethodParametersInspection" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="PyMissingConstructorInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyNestedDecoratorsInspection" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="PyOldStyleClassesInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyPropertyAccessInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1448,7 +1452,9 @@
       <option name="myIgnoreTupleInReturn" value="false" />
     </inspection_tool>
     <inspection_tool class="PyReturnFromInitInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PySetFunctionToLiteralInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PySimplifyBooleanCheckInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PySingleQuotedDocstringInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyStatementEffectInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyStringExceptionInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyStringFormatInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1457,8 +1463,15 @@
     <inspection_tool class="PyTupleAssignmentBalanceInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyTupleItemAssignmentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyUnboundLocalVariableInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyUnnecessaryBackslashInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyUnreachableCodeInspection" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoredIdentifiers">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="PyUnusedLocalInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreTupleUnpacking" value="true" />
       <option name="ignoreLambdaParameters" value="true" />
@@ -1526,6 +1539,13 @@
     </inspection_tool>
     <inspection_tool class="RequiredBeanTypeInspection" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="ReservedWordUsedAsNameJS" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="RestRoleInspection" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoredRoles">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="Restricted_Python_calls" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ResultOfObjectAllocationIgnored" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ResultSetIndexZero" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1859,7 +1879,7 @@
     <inspection_tool class="UnhandledExceptionInJSP" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UnknownGuard" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnknownLanguage" enabled="true" level="ERROR" enabled_by_default="true" />
-    <inspection_tool class="UnnecessarilyQualifiedInnerClassAccess" enabled="false" level="WARNING" enabled_by_default="false">
+    <inspection_tool class="UnnecessarilyQualifiedInnerClassAccess" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreReferencesToForeignInnerClasses" value="false" />
     </inspection_tool>
     <inspection_tool class="UnnecessarilyQualifiedStaticUsage" enabled="false" level="WARNING" enabled_by_default="false">

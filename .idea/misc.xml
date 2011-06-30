@@ -37,6 +37,25 @@
     <option name="OPEN_IN_BROWSER" value="true" />
     <option name="OUTPUT_DIRECTORY" value="$USER_HOME$/inspections" />
   </component>
+  <component name="FacetAutodetectingManager">
+    <autodetection-disabled>
+      <facet-type id="Python">
+        <modules>
+          <module name="mkgmap">
+            <files>
+              <file url="file://$PROJECT_DIR$/scripts/checksum.py" />
+              <file url="file://$PROJECT_DIR$/scripts/gmapi-builder.py" />
+              <file url="file://$PROJECT_DIR$/scripts/imgfile.py" />
+              <file url="file://$PROJECT_DIR$/scripts/mk_map_table.py" />
+              <file url="file://$PROJECT_DIR$/scripts/munger.py" />
+              <file url="file://$PROJECT_DIR$/scripts/namesum.py" />
+              <file url="file://$PROJECT_DIR$/scripts/new_style.py" />
+            </files>
+          </module>
+        </modules>
+      </facet-type>
+    </autodetection-disabled>
+  </component>
   <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
