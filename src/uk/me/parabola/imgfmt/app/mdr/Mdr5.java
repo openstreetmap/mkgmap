@@ -30,6 +30,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
+	private final List<Mdr5Record> allCities = new ArrayList<Mdr5Record>();
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
 	private int[] mdr20;
 	private int maxCityIndex;
@@ -41,7 +42,7 @@ public class Mdr5 extends MdrMapSection {
 
 	public void addCity(Mdr5Record record) {
 		assert record.getMapIndex() != 0;
-		cities.add(record);
+		allCities.add(record);
 		if (record.getCityIndex() > maxCityIndex)
 			maxCityIndex = record.getCityIndex();
 	}
@@ -52,9 +53,9 @@ public class Mdr5 extends MdrMapSection {
 	public void finish() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
-		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(cities.size());
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(allCities.size());
 		Sort sort = getConfig().getSort();
-		for (Mdr5Record m : cities) {
+		for (Mdr5Record m : allCities) {
 			// Sorted also by map number, city index
 			if (m.getName() == null)
 				continue;
@@ -64,7 +65,6 @@ public class Mdr5 extends MdrMapSection {
 		}
 		Collections.sort(sortKeys);
 
-		cities.clear();
 		int count = 0;
 		Mdr5Record lastCity = null;
 		for (SortKey<Mdr5Record> key : sortKeys) {
@@ -222,7 +222,7 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public List<Mdr5Record> getCities() {
-		return cities;
+		return Collections.unmodifiableList(allCities);
 	}
 
 	public void setMdr20(int[] mdr20) {
