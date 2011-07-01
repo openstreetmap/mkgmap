@@ -32,6 +32,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	private String name;
 	private Mdr13Record region;
 	private Mdr14Record country;
+	private int mdr20;
 
 	public int getCityIndex() {
 		return cityIndex;
@@ -95,6 +96,14 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	public void setMdrCountry(Mdr14Record country) {
 		this.country = country;
+	}
+
+	public int getMdr20() {
+		return mdr20;
+	}
+
+	public void setMdr20(int mdr20) {
+		this.mdr20 = mdr20;
 	}
 
 	/**

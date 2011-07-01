@@ -48,7 +48,7 @@ public class Mdr20 extends Mdr2x {
 	 *
 	 * @param inStreets The list of streets from mdr7.
 	 */
-	public void buildFromStreets(List<Mdr7Record> inStreets, Mdr5 mdr5) {
+	public void buildFromStreets(List<Mdr7Record> inStreets) {
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
 		for (Mdr7Record s : inStreets) {
@@ -68,8 +68,6 @@ public class Mdr20 extends Mdr2x {
 		}
 		Collections.sort(keys);
 
-		int[] mdr20 = new int[mdr5.getNumberOfItems() + 2];
-
 		String lastName = null;
 		Mdr5Record lastCity = null;
 		int record = 0;
@@ -79,7 +77,6 @@ public class Mdr20 extends Mdr2x {
 
 			String name = street.getName();
 			Mdr5Record city = street.getCity();
-			int gci = city.getGlobalCityIndex();
 
 			if (!name.equals(lastName)) {
 				record++;
@@ -89,16 +86,14 @@ public class Mdr20 extends Mdr2x {
 			}
 
 			if (city.isSameName(lastCity)) {
-				mdr20[gci] = cityRecord;
+				//mdr20[gci] = cityRecord;
+				city.setMdr20(cityRecord);
 			} else {
 				cityRecord = record;
-				mdr20[gci] = cityRecord;
+				city.setMdr20(cityRecord);
 				lastCity = city;
 			}
 		}
-
-		mdr20[mdr5.getNumberOfItems()+1] = cityRecord;
-		mdr5.setMdr20(mdr20);
 	}
 
 	/**
