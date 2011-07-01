@@ -105,8 +105,8 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 			return false;
 
 		return this.getName().equals(other.getName())
-				&& this.getMapIndex() == other.getMapIndex();
-				//&& this.getRegionIndex() == other.getRegionIndex();
+				&& this.getMapIndex() == other.getMapIndex()
+				&& this.getRegionIndex() == other.getRegionIndex();
 	}
 
 	public String toString() {
@@ -121,6 +121,8 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	}
 
 	public boolean isSameName(Mdr5Record other) {
-		return this.name.equals(other.getName());
+		if (other == null)
+			return false;
+		return name.equals(other.getName()) && getRegionName().equals(other.getRegionName());
 	}
 }
