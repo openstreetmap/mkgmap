@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -55,19 +55,29 @@ public class Mdr5 extends MdrMapSection {
 		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(allCities.size());
 		Sort sort = getConfig().getSort();
 		for (Mdr5Record m : allCities) {
-			// Sorted also by map number, city index
 			if (m.getName() == null)
 				continue;
-			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
-			sortKey = new CombinedSortKey<Mdr5Record>(sortKey, m.getCityIndex(), m.getRegionIndex());
+
+			// Sort by city name, region name.
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName());
+			SortKey<Mdr5Record> regionKey = sort.createSortKey(null, m.getRegionName());
+			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName());
+			sortKey = new MultiSortKey<Mdr5Record>(sortKey, regionKey, countryKey);
 			sortKeys.add(sortKey);
 		}
 		Collections.sort(sortKeys);
 
 		int count = 0;
 		Mdr5Record lastCity = null;
+
+		// We need a common area to save the mdr20 values, since there can be multiple
+		// city records with the same global city index
+		int[] mdr20s = new int[sortKeys.size()+1];
+
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
+			c.setMdr20set(mdr20s);
+
 			if (c.isSameCity(lastCity)) {
 				c.setGlobalCityIndex(count);
 			} else {
@@ -93,11 +103,8 @@ public class Mdr5 extends MdrMapSection {
 			int mapIndex = city.getMapIndex();
 			int region = city.getRegionIndex();
 
-			// Set the no-repeat flag if the name is the different
-			if (lastCity == null ||
-					(!city.getName().equals(lastCity.getName())
-							|| city.getMdr20() != lastCity.getMdr20()))
-			{
+			// Set the no-repeat flag if the name/region is different
+			if (!city.isSameCity(lastCity)) {
 				flag = 0x800000;
 				lastCity = city;
 			}

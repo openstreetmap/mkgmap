@@ -200,6 +200,10 @@ public class MDRFile extends ImgFile {
 		for (Label lab : street.getLabels()) {
 			if (lab == null)
 				break;
+
+			if (lab.getOffset() == 0)
+				continue;
+			
 			String name = lab.getText();
 			String cleanName = cleanUpName(name);
 			int strOff = createString(cleanName);

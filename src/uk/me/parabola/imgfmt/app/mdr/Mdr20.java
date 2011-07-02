@@ -56,10 +56,6 @@ public class Mdr20 extends Mdr2x {
 			if (city == null)
 				continue;
 
-			String cityName = city.getName();
-			if (cityName == null)
-				continue;
-
 			// We are sorting the streets, but we are sorting primarily on the
 			// city name associated with the street, then on the street name.
 			// Since the cities are already sorted, we can use the city index.
@@ -78,6 +74,7 @@ public class Mdr20 extends Mdr2x {
 			String name = street.getName();
 			Mdr5Record city = street.getCity();
 
+			// Only save a single copy of each name.
 			if (!name.equals(lastName)) {
 				record++;
 
@@ -85,10 +82,10 @@ public class Mdr20 extends Mdr2x {
 				lastName = name;
 			}
 
-			if (city.isSameName(lastCity)) {
-				//mdr20[gci] = cityRecord;
+			if (city.isSameCity(lastCity)) {
 				city.setMdr20(cityRecord);
 			} else {
+				// New city name, this marks the start of a new section in mdr20
 				cityRecord = record;
 				city.setMdr20(cityRecord);
 				lastCity = city;
