@@ -82,7 +82,7 @@ public class Mdr20 extends Mdr2x {
 				lastName = name;
 			}
 
-			if (city.isSameCity(lastCity)) {
+			if (city.isSameByName(lastCity)) {
 				city.setMdr20(cityRecord);
 			} else {
 				// New city name, this marks the start of a new section in mdr20

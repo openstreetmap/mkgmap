@@ -73,12 +73,17 @@ public class Mdr5 extends MdrMapSection {
 		// We need a common area to save the mdr20 values, since there can be multiple
 		// city records with the same global city index
 		int[] mdr20s = new int[sortKeys.size()+1];
+		int mdr20count = 0;
 
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
 			c.setMdr20set(mdr20s);
 
-			if (c.isSameCity(lastCity)) {
+			if (!c.isSameByName(lastCity))
+				mdr20count++;
+			c.setMdr20Index(mdr20count);
+
+			if (c.isSameByMapAndName(lastCity)) {
 				c.setGlobalCityIndex(count);
 			} else {
 				count++;
@@ -87,6 +92,8 @@ public class Mdr5 extends MdrMapSection {
 
 				lastCity = c;
 			}
+
+
 		}
 	}
 
@@ -104,7 +111,7 @@ public class Mdr5 extends MdrMapSection {
 			int region = city.getRegionIndex();
 
 			// Set the no-repeat flag if the name/region is different
-			if (!city.isSameCity(lastCity)) {
+			if (!city.isSameByName(lastCity)) {
 				flag = 0x800000;
 				lastCity = city;
 			}
