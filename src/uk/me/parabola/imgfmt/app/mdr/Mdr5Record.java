@@ -129,7 +129,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 		if (other == null)
 			return false;
 
-		return getName().equals(other.getName())
+		return getMapIndex() == other.getMapIndex() && getName().equals(other.getName())
 				&& getRegionName().equals(other.getRegionName())
 				&& getCountryName().equals(other.getCountryName());
 	}

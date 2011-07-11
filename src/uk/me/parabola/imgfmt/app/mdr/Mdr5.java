@@ -61,7 +61,7 @@ public class Mdr5 extends MdrMapSection {
 			// Sort by city name, region name.
 			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName());
 			SortKey<Mdr5Record> regionKey = sort.createSortKey(null, m.getRegionName());
-			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName());
+			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName(), m.getMapIndex());
 			sortKey = new MultiSortKey<Mdr5Record>(sortKey, regionKey, countryKey);
 			sortKeys.add(sortKey);
 		}
