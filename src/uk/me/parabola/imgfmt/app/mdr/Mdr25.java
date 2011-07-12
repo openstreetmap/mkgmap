@@ -48,6 +48,7 @@ public class Mdr25 extends MdrSection {
 		Collections.sort(keys);
 
 		String lastName = null;
+		Mdr5Record lastCity = null;
 		int record = 0;
 		for (SortKey<Mdr5Record> key : keys) {
 			record++;
@@ -63,7 +64,10 @@ public class Mdr25 extends MdrSection {
 				lastName = name;
 			}
 
-			cities.add(city);
+			if (lastCity == null || !city.getName().equals(lastCity.getName())) {
+				cities.add(city);
+				lastCity = city;
+			}
 		}
 	}
 

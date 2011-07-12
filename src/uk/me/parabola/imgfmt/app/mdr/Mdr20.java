@@ -56,12 +56,13 @@ public class Mdr20 extends Mdr2x {
 			if (city == null)
 				continue;
 
-			String name = city.getName();
-			if (name == null)
+			String cityName = city.getName();
+			if (cityName == null)
 				continue;
 
 			// We are sorting the streets, but we are sorting primarily on the
 			// city name associated with the street, then on the street name.
+			// Since the cities are already sorted, we can use the city index.
 			SortKey<Mdr7Record> key = new IntegerSortKey<Mdr7Record>(s, city.getGlobalCityIndex(), s.getIndex());
 			keys.add(key);
 		}
@@ -71,33 +72,33 @@ public class Mdr20 extends Mdr2x {
 
 		String lastName = null;
 		String lastCityName = null;
-		int lastMapid = 0;
 		int record = 0;
-		int lastRegion = 0;
+		int cityRecord = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 
-			int mapid = street.getMapIndex();
 			String name = street.getName();
-			String cityName = street.getCity().getName();
-			int region = street.getCity().getRegionIndex();
+			Mdr5Record city = street.getCity();
+			String cityName = city.getName();
+			int gci = city.getGlobalCityIndex();
 
-			if (mapid != lastMapid || !name.equals(lastName) || !cityName.equals(lastCityName) || region != lastRegion) {
+			if (!name.equals(lastName)) {
 				record++;
 
 				streets.add(street);
-				lastMapid = mapid;
 				lastName = name;
-				lastCityName = cityName;
-				lastRegion = region;
 			}
-			int gci = street.getCity().getGlobalCityIndex();
 
-			if (mdr20[gci] == 0)
-				mdr20[gci] = record;
+			if (cityName.equals(lastCityName)) {
+				mdr20[gci] = cityRecord;
+			} else {
+				cityRecord = record;
+				mdr20[gci] = cityRecord;
+				lastCityName = cityName;
+			}
 		}
 
-		mdr20[mdr5.getNumberOfItems()+1] = streets.size();
+		mdr20[mdr5.getNumberOfItems()+1] = cityRecord;
 		mdr5.setMdr20(mdr20);
 	}
 

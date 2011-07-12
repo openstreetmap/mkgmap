@@ -56,6 +56,8 @@ public class Mdr5 extends MdrMapSection {
 		Sort sort = getConfig().getSort();
 		for (Mdr5Record m : cities) {
 			// Sorted also by map number, city index
+			if (m.getName() == null)
+				continue;
 			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
 			sortKey = new CombinedSortKey<Mdr5Record>(sortKey, m.getCityIndex(), m.getRegionIndex());
 			sortKeys.add(sortKey);
@@ -64,21 +66,17 @@ public class Mdr5 extends MdrMapSection {
 
 		cities.clear();
 		int count = 0;
-		int lastMapId = 0;
-		int lastRegion = 0;
-		String lastName = null;
+		Mdr5Record lastCity = null;
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
-			if (c.getMapIndex() != lastMapId || !c.getName().equals(lastName) || c.getRegionIndex() != lastRegion) {
+			if (c.isSameCity(lastCity)) {
+				c.setGlobalCityIndex(count);
+			} else {
 				count++;
 				c.setGlobalCityIndex(count);
 				cities.add(c);
 
-				lastName = c.getName();
-				lastMapId = c.getMapIndex();
-				lastRegion = c.getRegionIndex();
-			} else {
-				c.setGlobalCityIndex(count);
+				lastCity = c;
 			}
 		}
 	}
@@ -87,6 +85,7 @@ public class Mdr5 extends MdrMapSection {
 		fix20();
 
 		int size20 = getSizes().getMdr20Size();
+		String lastName = null;
 		for (Mdr5Record city : cities) {
 			int gci = city.getGlobalCityIndex();
 			addIndexPointer(city.getMapIndex(), gci);
@@ -97,9 +96,11 @@ public class Mdr5 extends MdrMapSection {
 			int mapIndex = city.getMapIndex();
 			int region = city.getRegionIndex();
 
-			// Set the repeat flag from the information we saved during fix20().
-			if ((mdr20[gci] & 0x80000000) == 0)
+			// Set the repeat (non)-flag if the name is the same
+			if (!city.getName().equals(lastName)) {
 				flag = 0x800000;
+				lastName = city.getName();
+			}
 
 			// Write out the record
 			putMapIndex(writer, mapIndex);
@@ -118,15 +119,14 @@ public class Mdr5 extends MdrMapSection {
 	 * Save the repeat status to avoid having to recalculate it during the write phase.
 	 */
 	private void fix20() {
-		String lastName = null;
-		int lastRegion = 0;
+		Mdr5Record lastCity = null;
+
 		for (int index = 1; index < cities.size(); index++) {
-			Mdr5Record city = cities.get(index-1);
-			int region = city.getRegionIndex();
+			Mdr5Record city = cities.get(index - 1);
 			assert city.getGlobalCityIndex() == index : index + "/" + city.getGlobalCityIndex();
 
 			String name = city.getName();
-			if (name.equals(lastName) && region == lastRegion) {
+			if (lastCity != null && city.isSameName(lastCity)) {
 				int last = findLastRepeat(index, name);
 				int mdr20val = findMin20(index - 1, last);
 				for (int j = index-1; j < last; j++) {
@@ -137,8 +137,7 @@ public class Mdr5 extends MdrMapSection {
 				}
 
 			}
-			lastName = name;
-			lastRegion = region;
+			lastCity = city;
 		}
 	}
 
@@ -168,7 +167,8 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	private int findLastRepeat(int start, String name) {
 		for (int i = start; i < cities.size(); i++) {
-			if (!name.equals(cities.get(i-1).getName()))
+			Mdr5Record city = cities.get(i-1);
+			if (!name.equals(city.getName()))
 				return i;
 		}
 		return cities.size();

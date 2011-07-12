@@ -26,6 +26,7 @@ import java.util.Random;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
@@ -368,7 +369,8 @@ public class PlacesFile {
 	private void sortCities() {
 		List<SortKey<City>> keys = new ArrayList<SortKey<City>>();
 		for (City c : cityList) {
-			SortKey<City> sortKey = sort.createSortKey(c, c.getName(), c.getRegionCountryNumber() & 0x3fff);
+			SortKey<City> sortKey = sort.createSortKey(c, c.getName());
+			sortKey = new CombinedSortKey<City>(sortKey, c.getRegionNumber(), c.getCountryNumber());
 			keys.add(sortKey);
 		}
 		Collections.sort(keys);

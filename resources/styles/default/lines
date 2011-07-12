@@ -89,6 +89,15 @@ contour=elevation | contour_ext=elevation
 	{ name '${ele|conv:m=>ft}'; }
 	[0x21 resolution 20]
 
+# Remove access=yes from highways.
+highway=* & access=yes { delete access }
+# By default, ways are accessible by the highest allowed mode of
+# transportation, and thus access=yes should be redundant.
+# However, sometimes cycleways may be tagged access=destination or similar,
+# to allow cars and motorcycles. In mkgmap, 'access' specifies the
+# generic access rule, and it can be overridden by more specific tags:
+# foot, bicycle, motorcar, motorcycle.
+
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
 & foot!=* & bicycle!=* {delete highway;delete junction}
