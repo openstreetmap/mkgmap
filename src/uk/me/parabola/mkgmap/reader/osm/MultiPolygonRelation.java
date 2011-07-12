@@ -748,8 +748,8 @@ public class MultiPolygonRelation extends Relation {
 
 		if (polygons.isEmpty()) {
 			// do nothing
-			log.info("Multipolygon " + toBrowseURL()
-					+ " is completely outside the bounding box. It is not processed.");
+			log.info("Multipolygon", toBrowseURL(),
+					 "is completely outside the bounding box. It is not processed.");
 			tagOuterWays();
 			cleanup();
 			return;
@@ -799,7 +799,7 @@ public class MultiPolygonRelation extends Relation {
 		BitSet nestedOuterPolygons = new BitSet();
 		BitSet nestedInnerPolygons = new BitSet();
 
-		BitSet outmostPolygons ;
+		BitSet outmostPolygons;
 		BitSet outmostInnerPolygons = new BitSet();
 		boolean outmostInnerFound;
 		do {
@@ -1417,7 +1417,7 @@ public class MultiPolygonRelation extends Relation {
 		List<Coord> points = Java2DConverter.singularAreaToPoints(area);
 		if (points == null || points.isEmpty()) {
 			if (log.isDebugEnabled()) {
-				log.debug("Empty area "+wayId+".", toBrowseURL());
+				log.debug("Empty area", wayId + ".", toBrowseURL());
 			}
 			return null;
 		}

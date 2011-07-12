@@ -52,8 +52,13 @@
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
@@ -63,50 +68,94 @@ public class Locator {
 	private static final Logger log = Logger.getLogger(Locator.class);
 
 	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
-//	private final MapPointMultiMap  	fuzzyCityMap			= new MapPointMultiMap();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
-	private final LocatorConfig locConfig = new LocatorConfig();
+	private final LocatorConfig locConfig = LocatorConfig.get();
 
 	private static double totalTime;
 	private static long totalFinds;
-	private int autoFillLevel;
+	
+	private final Set<String> locationAutofill = new HashSet<String>();
+	
+	private static final double MAX_CITY_DIST = 30000;
 
-	public void addLocation(MapPoint p) 
+	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
+	
+	/**
+	 * Parses the parameters of the location-autofill option. Establishes also downwards
+	 * compatibility with the old integer values of location-autofill. 
+	 * @param optionStr the value of location-autofill
+	 * @return the options
+	 */
+	public static Set<String> parseAutofillOption(String optionStr) {
+		if (optionStr == null) {
+			return Collections.emptySet();
+		}
+
+		Set<String> autofillOptions = new HashSet<String>(Arrays.asList(COMMA_OR_SPACE_PATTERN
+				.split(optionStr)));
+
+		// convert the old autofill options to the new parameters
+		if (autofillOptions.contains("0")) {
+			autofillOptions.add("is_in");
+			autofillOptions.remove("0");
+		}
+		if (autofillOptions.contains("1")) {
+			autofillOptions.add("is_in");
+			// PENDING: fuzzy search
+			autofillOptions.remove("1");
+		}
+		if (autofillOptions.contains("2")) {
+			autofillOptions.add("is_in");
+			// PENDING: fuzzy search
+			autofillOptions.add("nearest");
+			autofillOptions.remove("2");
+		}		
+		if (autofillOptions.contains("3")) {
+			autofillOptions.add("is_in");
+			// PENDING: fuzzy search
+			autofillOptions.add("nearest");
+			autofillOptions.remove("3");
+		}	
+		return autofillOptions;
+	}
+	
+	
+	public void addCityOrPlace(MapPoint p) 
 	{
+		if (p.isCity() == false) 
+		{
+			log.warn("MapPoint has no city type id: 0x"+Integer.toHexString(p.getType()));
+			return;
+		}
+		
+		log.debug("S City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
+
+		// correct the country name
+		// usually this is the translation from 3letter ISO code to country name
+		if(p.getCountry() != null)
+			p.setCountry(fixCountryString(p.getCountry()));
+
 		resolveIsInInfo(p); // Pre-process the is_in field
 
-
-//		if(autoFillLevel < 1 &&  p.getCity() == null)
-//		{			
-//			// Without auto-fill city name is the name of the tag
-//			p.setCity(p.getName());
-//		}
-		
 		if(p.getCity() != null)
 		{
 			if (log.isDebugEnabled())
-			log.debug(p.getCity()+" "+p.getRegion()+" "+p.getCountry());
-			cityMap.put(p.getCity(), p);
-			
-//			fuzzyCityMap.put(fuzzyDecode(p.getCity()),p);
-//
-//			if(p.getName() != null && !p.getCity().equals(p.getName())) // Name variants ?
-//				fuzzyCityMap.put(fuzzyDecode(p.getName()),p);
+				log.debug(p.getCity(),p.getRegion(),p.getCountry());
+			// Must use p.getName() here because p.getCity() contains the city name of the preprocessed cities
+			cityMap.put(p.getName(), p);
 		}
 		else
 		{
 			// All other places which do not seam to be a real city has to resolved later
 			placesMap.add(p);		
 		}
-			
+		log.debug("E City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
 	}
 
 			
-
-	public void setAutoFillLevel(int level)
-	{
-		autoFillLevel = level;
+	public void setLocationAutofill(Collection<String> autofillOptions) {
+		this.locationAutofill.addAll(autofillOptions);
 	}
 
 	public void setDefaultCountry(String country, String abbr)
@@ -134,13 +183,6 @@ public class Locator {
 		return locConfig.getPoiDispFlag(country);
 	}
 
-	private boolean isOpenGeoDBCountry(String country)
-	{
-		// Countries that have open geo db data in osm
-		// Right now this are only germany, austria and switzerland
-		return locConfig.isOpenGeoDBCountry(country);
-	}
-
 	private boolean isContinent(String continent)
 	{
 		return locConfig.isContinent(continent);
@@ -153,9 +195,10 @@ public class Locator {
 	 */
 	private void resolveIsInInfo(MapPoint p)
 	{
-		if(p.getCountry() != null)
-			p.setCountry(fixCountryString(p.getCountry()));
-
+		if (locationAutofill.contains("is_in") == false) {
+			return;
+		}
+		
 		if(p.getCountry() != null && p.getRegion() != null && p.getCity() == null)
 		{		
 			p.setCity(p.getName());
@@ -185,7 +228,7 @@ public class Locator {
 				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[cityList.length-(offset+1)].trim());
 
-			}
+			} else
 
 			// Format 2 other way round: "Continent,Country,State,County"	
 
@@ -200,7 +243,7 @@ public class Locator {
 
 				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[offset].trim());
-			}	
+			} else
 
 			// Format like this "County,State,Country"
 
@@ -224,11 +267,7 @@ public class Locator {
 
 		if(p.getCountry() != null && p.getRegion() != null && p.getCity() == null)
 		{	
-			// In OpenGeoDB Countries I don't want to mess up the info which city is a real independent
-			// Community in all other countries I just have to do it
-
-			if(!isOpenGeoDBCountry(p.getCountry()))
-				p.setCity(p.getName());
+			p.setCity(p.getName());
 		}
 	}
 	
@@ -243,168 +282,134 @@ public class Locator {
 		return nextPoint;
 	}
 	
-	public  MapPoint findByCityName(MapPoint p)
-	{
-		
-		if(p.getCity() == null)
+	public MapPoint findNearbyCityByName(MapPoint p) {
+
+		if (p.getCity() == null)
 			return null;
 
 		Collection<MapPoint> nextCityList = cityMap.getList(p.getCity());
+		if (nextCityList == null) {
+			return null;
+		}
 
 		MapPoint near = null;
-		Double minDist = Double.MAX_VALUE;
-		if(nextCityList != null)
-		{
-			for (MapPoint nextCity: nextCityList)		
-			{
-				Double dist = p.getLocation().distance(nextCity.getLocation());
+		double minDist = Double.MAX_VALUE;
+		for (MapPoint nextCity : nextCityList) {
+			double dist = p.getLocation().distance(nextCity.getLocation());
 
-				if(dist < minDist)
-				{
-					minDist = dist;
-					near = nextCity;
-				}
+			if (dist < minDist) {
+				minDist = dist;
+				near = nextCity;
 			}
-	 	}
-		
-//		nextCityList = fuzzyCityMap.getList(fuzzyDecode(p.getCity()));
-//		
-//		if(nextCityList != null)
-//		{
-//			for (MapPoint nextCity: nextCityList)		
-//			{
-//				Double dist = p.getLocation().distance(nextCity.getLocation());
-//
-//				if(dist < minDist)
-//				{
-//					minDist = dist;
-//					near = nextCity;
-//				}
-//			}
-//	 	}
-		
-		if(near != null && minDist < 30000) // Wrong hit more the 30 km away ?
+		}
+
+		if (minDist <= MAX_CITY_DIST) // Wrong hit more the 30 km away ?
 			return near;
 		else
 			return null;
 	}
 	
-	private MapPoint findCity(MapPoint place, boolean fuzzy)
-	{
-		MapPoint near = null;
-
-		String isIn = place.getIsIn();
-			
-		if(isIn != null)
-		{
-			String[] cityList = isIn.split(",");
- 
-			// Go through the isIn string and check if we find a city with this name
-			// Lets hope we find the next bigger city 
-
-			Double minDist = Double.MAX_VALUE;
-			Collection<MapPoint> nextCityList = null;
-			for (String aCityList : cityList) {
-				String biggerCityName = aCityList.trim();
-
-
-//				if (fuzzy)
-//					nextCityList = fuzzyCityMap.getList(fuzzyDecode(biggerCityName));
-//				else
-					nextCityList = cityMap.getList(biggerCityName);
-
-				if (nextCityList != null) {
-					for (MapPoint nextCity : nextCityList) {
-						Double dist = place.getLocation().distance(nextCity.getLocation());
-
-						if (dist < minDist) {
-							minDist = dist;
-							near = nextCity;
-						}
-					}
-				}
-			}
-
-			if (autoFillLevel > 3)  // Some debug output to find suspicious relations
-			{
-			   
-				if(near != null && minDist > 30000)
-				{
-					System.out.println("Locator: " + place.getName() + " is far away from " +
-							near.getName() + 	" " + (minDist/1000.0) + " km is_in" +	place.getIsIn());
-					if(nextCityList != null)
-						System.out.println("Number of cities with this name: " + nextCityList.size());
-				}
-			   
-				//if(near != null && fuzzy)
-				//{
-				// System.out.println("Locator: " + place.getName() + " may belong to " +
-				//			 near.getName() + " is_in" + place.getIsIn());
-				//}
-			}
-		}
-
-		return near;
-	}
-
-	public void resolve() {
-
-		if(autoFillLevel < 0)
-			return;			// Nothing to do if auto-fill is fully disabled
-
-		if(autoFillLevel > 2)
-		{
-			System.out.println("\nLocator City   Map contains " + cityMap.size() + " entries");
-			System.out.println("Locator Places Map contains " + placesMap.size() + " entries");
+	private MapPoint findCityByIsIn(MapPoint place) {
+		
+		if (locationAutofill.contains("is_in") == false) {
+			return null;
 		}
 		
+		String isIn = place.getIsIn();
+
+		if (isIn == null) {
+			return null;
+		}
+
+		String[] cityList = isIn.split(",");
+
+		// Go through the isIn string and check if we find a city with this name
+		// Lets hope we find the next bigger city
+
+		double minDist = Double.MAX_VALUE;
+		Collection<MapPoint> nextCityList = null;
+		for (String cityCandidate : cityList) {
+			cityCandidate = cityCandidate.trim();
+
+			Collection<MapPoint> candidateCityList = cityMap
+					.getList(cityCandidate);
+			if (candidateCityList != null) {
+				if (nextCityList == null) {
+					nextCityList = new ArrayList<MapPoint>();
+				}
+				nextCityList.addAll(candidateCityList);
+			}
+		}
+
+		if (nextCityList == null) {
+			// no city name found in the is_in tag
+			return null;
+		}
+
+		MapPoint nearbyCity = null;
+		for (MapPoint nextCity : nextCityList) {
+			double dist = place.getLocation().distance(nextCity.getLocation());
+
+			if (dist < minDist) {
+				minDist = dist;
+				nearbyCity = nextCity;
+			}
+		}
+
+		// Check if the city is closer than MAX_CITY_DIST
+		// otherwise don't use it but issue a warning
+		if (minDist > MAX_CITY_DIST) {
+			log.warn("is_in of", place.getName(), "is far away from",
+					nearbyCity.getName(), (minDist / 1000.0), "km is_in",
+					place.getIsIn());
+			log.warn("Number of cities with this name:", nextCityList.size());
+		}
+
+		return nearbyCity;
+	}
+
+	public void autofillCities() {
+		if (locationAutofill.contains("nearest") == false && locationAutofill.contains("is_in") == false) {
+			return;
+		}
+		
+		log.info("Locator City   Map contains", cityMap.size(), "entries");
+		log.info("Locator Places Map contains", placesMap.size(), "entries");
+
 		int runCount = 0;
 		int maxRuns = 2;
 		int unresCount;
-		
-		do
-		{
-			unresCount=0;
+
+		do {
+			unresCount = 0;
 
 			for (MapPoint place : placesMap) {
 				if (place != null) {
 
 					// first lets try exact name
 
-					MapPoint near = findCity(place, false);
-
+					MapPoint near = findCityByIsIn(place);
 
 					// if this didn't worked try to workaround german umlaut
 
-					if (near == null)
-						near = findCity(place, true);
-
-					if (autoFillLevel > 3 && near == null && (runCount + 1) == maxRuns) {
-						// TODO re-enable on merge
-						//if(place.getIsIn() != null)
-						//System.out.println("Locator: CAN't locate " + place.getName() + " is_in " +	place.getIsIn()
-						//		+ " " + place.getLocation().toOSMURL());
+					if (near == null) {
+						// TODO perform a soundslike search
 					}
 
-
 					if (near != null) {
-						if (place.getCity()==null)
+						if (place.getCity() == null)
 							place.setCity(near.getCity());
 						if (place.getZip() == null)
 							place.setZip(near.getZip());
-					} else if (autoFillLevel > 1 && (runCount + 1) == maxRuns) {
-						// In the last resolve run just take info from the next known city
+					} else if (locationAutofill.contains("nearest") && (runCount + 1) == maxRuns) {
+						// In the last resolve run just take info from the next
+						// known city
 						near = cityMap.findNextPoint(place);
-						if(near != null && near.getCountry() != null)
-						{
-							// In OpenGeoDB Countries I don't want to mess up the info which city is a
-							// real independent Community in all other countries I just have to do it
-
-							if(!isOpenGeoDBCountry(near.getCountry()) && place.getCity() == null)
+						if (near != null && near.getCountry() != null) {
+							if (place.getCity() == null)
 								place.setCity(place.getName());
 						}
 					}
-
 
 					if (near != null) {
 						if (place.getRegion() == null)
@@ -417,56 +422,31 @@ public class Locator {
 
 					if (near == null)
 						unresCount++;
-
 				}
 			}
 
-			for (int i = 0; i < placesMap.size(); i++)
-			{
+			for (int i = 0; i < placesMap.size(); i++) {
 				MapPoint place = placesMap.get(i);
 
-				if (place != null)
-				{
-					if( place.getCity() != null)
-					{
-						cityMap.put(place.getName(),place);
-//						fuzzyCityMap.put(fuzzyDecode(place.getName()),place);
+				if (place != null) {
+					if (place.getCity() != null) {
+						cityMap.put(place.getName(), place);
 						placesMap.set(i, null);
-					}
-					else if(autoFillLevel < 2 && (runCount + 1) == maxRuns)
-					{
+					} else if ((runCount + 1) == maxRuns) {
 						place.setCity(place.getName());
-						cityMap.put(place.getName(),place);
+						cityMap.put(place.getName(), place);
 					}
-				}				
+				}
 			}
-			
+
 			runCount++;
 
-			if(autoFillLevel > 2)
-				System.out.println("Locator City   Map contains " + cityMap.size() + 
-				" entries after resolver run " + runCount + " Still unresolved " + unresCount);
-			
-		} 
-		while(unresCount > 0 && runCount < maxRuns);
-		
-	}
+			log.info("Locator City   Map contains", cityMap.size(),
+					 "entries after resolver run", runCount,
+					 "Still unresolved", unresCount);
 
-//	private String fuzzyDecode(String stringToDecode)
-//	{
-//
-//		if(stringToDecode == null)
-//			return stringToDecode;
-//
-//		String decodeString = stringToDecode.toUpperCase().trim();
-//
-//		// German umlaut resolution
-//		//decodeString = decodeString.replaceAll("Ä","AE").replaceAll("Ü","UE").replaceAll("Ö","OE");
-//		
-//		//if(decodeString.equals(stringToDecode) == false)
-//		//	System.out.println(stringToDecode + " -> " + decodeString);
-//
-//		return (decodeString);
-//	}
+		} while (unresCount > 0 && runCount < maxRuns);
+
+	}
 }
 

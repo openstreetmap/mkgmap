@@ -36,13 +36,17 @@ public class LocatorConfig {
 
 	private final Map<String,String>  variantMap = new HashMap<String,String>();
 	private final Map<String,String>  abrMap = new HashMap<String,String>();
-	private final Map<String,Boolean> geoDbMap = new HashMap<String,Boolean>();
 	private final Map<String,Integer>  regOffsetMap = new HashMap<String,Integer>();
 	private final Map<String,Integer>  poiDispFlagMap = new HashMap<String,Integer>();
 	private final Map<String,Boolean> continentMap = new HashMap<String,Boolean>();
 
+	private final static LocatorConfig instance = new LocatorConfig();
+	
+	public static LocatorConfig get() {
+		return instance;
+	}
 
-	public LocatorConfig()
+	private LocatorConfig()
 	{
 		loadConfig("/LocatorConfig.xml");
 	}
@@ -106,14 +110,6 @@ public class LocatorConfig {
 								
 								if(abrTag == null && nameTag != null)					
 									addAbr(nameTag.getNodeValue(),"");
-
-								Node geoTag = attr.getNamedItem("geodb");
-
-								if(nameTag != null && geoTag != null)
-								{
-									if(geoTag.getNodeValue().equals("1"))
-										addOpenGeoDb(nameTag.getNodeValue());
-								}
 
 								Node regionOffsetTag = attr.getNamedItem("regionOffset");
 
@@ -190,29 +186,20 @@ public class LocatorConfig {
 		poiDispFlagMap.put(cStr,flag);
 	}
 
-	private void addOpenGeoDb(String country)
-	{
-		String cStr = country.toUpperCase().trim();
-		
-		geoDbMap.put(cStr,true);
-		
-	}
-
 	private void addContinent(String continent)
 	{
 		String cStr = continent.toUpperCase().trim();
 		
 		continentMap.put(cStr,true);
-		
 	}
 
 
-	public void setDefaultCountry(String country, String abbr)
+	public synchronized void setDefaultCountry(String country, String abbr)
 	{
 		addAbr(country, abbr);
 	}
 
-	public String fixCountryString(String country)
+	public synchronized String fixCountryString(String country)
 	{
 		String cStr = country.toUpperCase().trim();
 		
@@ -224,7 +211,7 @@ public class LocatorConfig {
 			return(cStr);
 	}
 
-	public String isCountry(String country)
+	public synchronized String isCountry(String country)
 	{
 		String cStr = fixCountryString(country);
 
@@ -235,13 +222,13 @@ public class LocatorConfig {
 	
 	}
 
-	public String getCountryCode(String country)
+	public synchronized String getCountryCode(String country)
 	{
 		String cStr = country.toUpperCase().trim();
 		return abrMap.get(cStr);
 	}
 
-	public int getRegionOffset(String country)
+	public synchronized int getRegionOffset(String country)
 	{
 		String cStr = country.toUpperCase().trim();
 		
@@ -253,7 +240,7 @@ public class LocatorConfig {
 			return 1; // Default is 1 the next string after before country
 	}
 
-	public int getPoiDispFlag(String country)
+	public synchronized int getPoiDispFlag(String country)
 	{
 		String cStr = country.toUpperCase().trim();
 		
@@ -265,20 +252,7 @@ public class LocatorConfig {
 			return 0; // Default is 1 the next string after before country
 	}
 
-	public boolean isOpenGeoDBCountry(String country)
-	{
-		// Countries that have open geo db data in osm
-		// Right now this are only germany, austria and switzerland
-
-		String cStr = country.toUpperCase().trim();
-
-		if(geoDbMap.get(cStr) != null)
-			return true;
-		
-		return false;
-	}
-
-	public boolean isContinent(String continent)
+	public synchronized boolean isContinent(String continent)
 	{
 		String s = continent.toUpperCase().trim();
 

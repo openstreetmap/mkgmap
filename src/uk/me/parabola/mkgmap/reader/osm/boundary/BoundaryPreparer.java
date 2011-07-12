@@ -81,7 +81,7 @@ public class BoundaryPreparer extends Thread {
 	public BoundaryPreparer(EnhancedProperties properties) {
 		this.boundaryFilename = properties
 				.getProperty("createboundsfile", null);
-		this.boundsDir = properties.getProperty("boundsdirectory", "bounds");
+		this.boundsDir = properties.getProperty("bounds", "bounds");
 	}
 
 	public void run() {

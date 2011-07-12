@@ -147,26 +147,12 @@ public class MapBuilder implements Configurable {
 		if(props.getProperty("no-poi-address", null) != null)
 			poiAddresses = false;
 
-		String autoFillPar = props.getProperty("location-autofill", null);
-
-		if(autoFillPar != null)
-		{
-			try
-			{
-				locationAutofillLevel = Integer.parseInt(autoFillPar);
-			}
-			catch (Exception e)
-			{
-				locationAutofillLevel = 1;
-			}
-		}
-
-		locator.setAutoFillLevel(locationAutofillLevel);
-
 		if(props.getProperty("no-sorted-roads", null) != null)
 			sortRoads = false;
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
+		
+		locator.setLocationAutofill(Locator.parseAutofillOption(props.getProperty("location-autofill", "bounds")));
 	}
 
 	/**
@@ -196,13 +182,11 @@ public class MapBuilder implements Configurable {
 		}
 
 		processCities(map, src);
+		processRoads(map,src);
 		processPOIs(map, src);
-		//preProcessRoads(map, src);
 		processOverviews(map, src);
 		processInfo(map, src);
 		makeMapAreas(map, src);
-		//processRoads(map, src);
-		//postProcessRoads(map, src);
 
 		treFile.setLastRgnPos(rgnFile.position() - RGNHeader.HEADER_LEN);
 
@@ -247,11 +231,11 @@ public class MapBuilder implements Configurable {
 		// collect the names of the cities
 		for (MapPoint p : src.getPoints()) {
 			if(p.isCity() && p.getName() != null)
-				locator.addLocation(p); // Put the city info the map for missing info 
+				locator.addCityOrPlace(p); // Put the city info the map for missing info 
 		}
 
 		if(locationAutofillLevel > 0)
-			locator.resolve(); // Try to fill missing information that include search of next city
+			locator.autofillCities(); // Try to fill missing information that include search of next city
 
 		for (MapPoint p : src.getPoints()) 
 		{
@@ -289,8 +273,11 @@ public class MapBuilder implements Configurable {
 			}
 		}
 
-		MapPoint tempPoint = new MapPoint();
-
+	}
+	
+	private void processRoads(Map map, MapDataSource src) {
+		LBLFile lbl = map.getLblFile();
+		MapPoint searchPoint = new MapPoint();
 		for (MapLine line : src.getLines()) {
 			if(line.isRoad()) {
 				String cityName = line.getCity();
@@ -302,22 +289,25 @@ public class MapBuilder implements Configurable {
 				String cityRegionName  = line.getRegion();
 				String zipStr = line.getZip();
 
-//				if(cityName == null) {
-//					// Get name of next city if untagged
-//
-//					tempPoint.setLocation(line.getLocation());
-//					MapPoint nextCity = locator.findNextPoint(tempPoint);
-//
-//					if(nextCity != null) {
-//						cityName = nextCity.getCity();
-//						if(cityCountryName == null)
-//							cityCountryName = nextCity.getCountry();
-//						if(cityRegionName == null)
-//							cityRegionName = nextCity.getRegion();
-//						if(zipStr == null)
-//							zipStr = nextCity.getZip();
-//					}
-//				}
+				if(cityName == null) {
+					// Get name of next city if untagged
+
+					searchPoint.setLocation(line.getLocation());
+					MapPoint nextCity = locator.findNextPoint(searchPoint);
+
+					if(nextCity != null) {
+						cityName = nextCity.getCity();
+						// city/region/country fields should match to the found city
+//						if(nextCity.getCountry() != null)
+							cityCountryName = nextCity.getCountry();
+//						if(nextCity.getRegion() != null)
+							cityRegionName = nextCity.getRegion();
+							
+						// use the zip code only if no zip code is known
+						if(zipStr == null)
+							zipStr = nextCity.getZip();
+					}
+				}
 
 				if(cityName != null) {
 
@@ -338,7 +328,7 @@ public class MapBuilder implements Configurable {
 				}
 
 			}
-		}
+		}	
 	}
 
 	private void processPOIs(Map map, MapDataSource src) {
@@ -371,7 +361,7 @@ public class MapBuilder implements Configurable {
 
 				if(countryStr == null || regionStr == null || (zipStr == null && cityStr == null))
 				{
-					MapPoint nextCity = locator.findByCityName(p);
+					MapPoint nextCity = locator.findNearbyCityByName(p);
 						
 					if(doAutofill && nextCity == null)
 						nextCity = locator.findNextPoint(p);
@@ -750,7 +740,7 @@ public class MapBuilder implements Configurable {
 		int pointIndex = 1;
 
 		// although the non-indexed points are output first,
-		// pointIndex must be initialised to the number of indexed
+		// pointIndex must be initialized to the number of indexed
 		// points (not 1)
 		for (MapPoint point : points) {
 			if (point.isCity() &&

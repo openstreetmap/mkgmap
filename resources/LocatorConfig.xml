@@ -61,7 +61,7 @@
 		<variant>AU</variant>
 		<variant>AUS</variant>
 	</country>
-	<country name="Österreich" abr="AUT" geodb="1" poiDispFlag="0xc">
+	<country name="Österreich" abr="AUT" poiDispFlag="0xc">
 		<variant>Austria</variant>
 		<variant>AT</variant>
 		<variant>AUT</variant>
@@ -351,6 +351,7 @@
 		<variant>FR</variant>
 		<variant>FRA</variant>
 		<variant>Metropolitan France</variant>
+		<variant>France métropolitaine</variant>
 	</country>
 	<country name="French Guiana" abr="GUF">
 		<variant>GF</variant>
@@ -378,7 +379,7 @@
 		<variant>GEO</variant>
 		<variant>საქართველო</variant>
 	</country>
-	<country name="Deutschland" abr="DEU" geodb="1" regionOffset="3" poiDispFlag="0xc">
+	<country name="Deutschland" abr="DEU" regionOffset="3" poiDispFlag="0xc">
 		<variant>Bundesrepublik Deutschland</variant>
 		<variant>Germany</variant>
 		<variant>Federal Republic of Germany</variant>
@@ -1007,7 +1008,7 @@
 		<variant>SE</variant>
 		<variant>SWE</variant>
 	</country>
-	<country name="Schweiz" abr="CHE" geodb="1" poiDispFlag="0xc">
+	<country name="Schweiz" abr="CHE" poiDispFlag="0xc">
 		<variant>Switzerland</variant>
 		<variant>Suisse</variant>
 		<variant>CH</variant>

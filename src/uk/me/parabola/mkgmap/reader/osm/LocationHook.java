@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2006, 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.io.File;
@@ -25,13 +37,16 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	private ElementSaver saver;
 	private final List<String> nameTags = new ArrayList<String>();
 	private final Locator locator = new Locator();
-
+	private final Set<String> autofillOptions = new HashSet<String>();
+	
 	private File boundaryDir;
 
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern
 			.compile("[,\\s]+");
 	private static final Pattern COMMA_OR_SEMICOLON_PATTERN = Pattern
 			.compile("[,;]+");
+	
+	public static final String BOUNDS_OPTION = "bounds";
 
 	private final static Hashtable<String, String> mkgmapTags = new Hashtable<String, String>() {
 		{
@@ -58,33 +73,42 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 
 		this.saver = saver;
 
+		autofillOptions.addAll(Locator.parseAutofillOption(props.getProperty("location-autofill", "bounds")));
+
+		if (autofillOptions.isEmpty()) {
+			log.info("Disable LocationHook because no location-autofill option set.");
+			return false;
+		}
+		
 		String nameTagProp = props.getProperty("name-tag-list", "name");
 		nameTags.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp)));
 
-		boundaryDir = new File(props.getProperty("boundsdirectory", "bounds"));
-		if (boundaryDir.exists() == false) {
-			log.error("Disable LocationHook because boundary directory does not exist. Dir: "
-					+ boundaryDir);
-			return false;
-		}
-		File[] boundaryFiles = boundaryDir.listFiles(new FileFilter() {
-			public boolean accept(File pathname) {
-				return (pathname.isFile() && pathname.getName().endsWith(".bnd"));
+		if (autofillOptions.contains(BOUNDS_OPTION)) {
+
+			boundaryDir = new File(props.getProperty("bounds", "bounds"));
+			if (boundaryDir.exists() == false) {
+				log.error("Disable LocationHook because boundary directory does not exist. Dir: "
+						+ boundaryDir);
+				return false;
 			}
-			
-		});
-		if (boundaryFiles == null || boundaryFiles.length == 0) {
-			log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
-					+ boundaryDir);
-			return false;
+			File[] boundaryFiles = boundaryDir.listFiles(new FileFilter() {
+				public boolean accept(File pathname) {
+					return (pathname.isFile() && pathname.getName().endsWith(
+							".bnd"));
+				}
+
+			});
+			if (boundaryFiles == null || boundaryFiles.length == 0) {
+				log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
+						+ boundaryDir);
+				return false;
+			}
 		}
 		return true;
 	}
-
-	public void end() {
+	
+	private void assignPreprocBounds() {
 		long t1 = System.currentTimeMillis();
-		log.info("Starting with location hook");
-
 		List<Element> allElements = new ArrayList<Element>(saver.getWays()
 				.size() + saver.getNodes().size());
 
@@ -215,6 +239,16 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 
 
+	}
+
+	public void end() {
+		long t1 = System.currentTimeMillis();
+		log.info("Starting with location hook");
+
+		if (autofillOptions.contains(BOUNDS_OPTION)) {
+			assignPreprocBounds();
+		}
+
 		log.info("Location hook finished in",
 				(System.currentTimeMillis() - t1), "ms");
 	}
@@ -250,7 +284,6 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		return zip;
 	}
 
-	@Override
 	public Set<String> getUsedTags() {
 		Set<String> tags = new HashSet<String>();
 		tags.add("boundary");
