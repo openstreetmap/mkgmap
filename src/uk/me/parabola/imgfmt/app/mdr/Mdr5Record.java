@@ -32,6 +32,8 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	private String name;
 	private Mdr13Record region;
 	private Mdr14Record country;
+	private int[] mdr20;
+	private int mdr20Index;
 
 	public int getCityIndex() {
 		return cityIndex;
@@ -98,15 +100,60 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 	}
 
 	/**
-	 * Is this the same city, by the rules segregating the cities in mdr5 and 20.
+	 * Every mdr5 record contains the same array of values. It is only
+	 * allowed to access the one at the index globalCityIndex. Since
+	 * the array is shared, every record with the same global city index
+	 * knows the correct mdr20 value, regardless of where it was set.
+	 *
+	 * @param mdr20 An array large enough to hold all the cities (one based index).
+	 * This must be the same array for all mdr5records (in the same map set).
 	 */
-	public boolean isSameCity(Mdr5Record other) {
+	public void setMdr20set(int[] mdr20) {
+		this.mdr20 = mdr20;
+	}
+
+	/**
+	 * Set the index into the mdr20 array that we use to get/set the value.
+	 * @see {@link #setMdr20set(int[])}
+	 */
+	public void setMdr20Index(int mdr20Index) {
+		this.mdr20Index = mdr20Index;
+	}
+
+	public int getMdr20() {
+		return mdr20[mdr20Index];
+	}
+
+	public void setMdr20(int n) {
+		int prev = mdr20[mdr20Index];
+		assert prev == 0 || prev == n : "mdr20 value changed f=" + prev + " t=" + n + " count=" + mdr20Index;
+
+		mdr20[mdr20Index] = n;
+	}
+
+	/**
+	 * Is this the same city, by the rules segregating the cities in mdr5 and 20.
+	 * @return True if in the same tile and has the same name for city/region/country.
+	 */
+	public boolean isSameByMapAndName(Mdr5Record other) {
 		if (other == null)
 			return false;
 
-		return this.getName().equals(other.getName())
-				&& this.getMapIndex() == other.getMapIndex();
-				//&& this.getRegionIndex() == other.getRegionIndex();
+		return getMapIndex() == other.getMapIndex() && isSameByName(other);
+	}
+
+	/**
+	 * Same city by the name of the city/region/country combination.
+	 * @param other The other city to compare with.
+	 * @return True if is the same city, maybe in a different tile.
+	 */
+	public boolean isSameByName(Mdr5Record other) {
+		if (other == null)
+			return false;
+
+		return getName().equals(other.getName())
+				&& getRegionName().equals(other.getRegionName())
+				&& getCountryName().equals(other.getCountryName());
 	}
 
 	public String toString() {
@@ -120,7 +167,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 			return region.getName();
 	}
 
-	public boolean isSameName(Mdr5Record other) {
-		return this.name.equals(other.getName());
+	public String getCountryName() {
+		return country.getName();
 	}
 }

@@ -38,6 +38,7 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 @SuppressWarnings({"RawUseOfParameterizedType"})
 public class PlacesFile {
 	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
+	private final List<Country> countryList = new ArrayList<Country>();
 
 	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
 	private final List<Region> regionList = new ArrayList<Region>();
@@ -57,6 +58,8 @@ public class PlacesFile {
 
 	private Sort sort;
 
+	private final Random random = new Random();
+
 	/**
 	 * We need to have links back to the main LBL file and need to be passed
 	 * the part of the header that we manage here.
@@ -70,7 +73,7 @@ public class PlacesFile {
 	}
 
 	void write(ImgFileWriter writer) {
-		for (Country c : sortedCountries())
+		for (Country c : countryList)
 			c.write(writer);
 		placeHeader.endCountries(writer.position());
 
@@ -209,8 +212,8 @@ public class PlacesFile {
 		// if unique is true, make sure that the name really is unique
 		if (unique && cities.get(uniqueCityName) != null) {
 			do {
-				// add semi-random suffix.  TODO should not create a new random each time
-				uniqueCityName += "_" + new Random().nextInt(0x10000);
+				// add semi-random suffix.
+				uniqueCityName += "_" + random.nextInt(0x10000);
 			} while(cities.get(uniqueCityName) != null);
 		}
 
@@ -303,6 +306,7 @@ public class PlacesFile {
 	}
 
 	void allPOIsDone() {
+		sortCountries();
 		sortRegions();
 		sortCities();
 
@@ -325,7 +329,7 @@ public class PlacesFile {
 	 *
 	 * But why not?
 	 */
-	private List<Country> sortedCountries() {
+	private void sortCountries() {
 		List<SortKey<Country>> keys = new ArrayList<SortKey<Country>>();
 		for (Country c : countries.values()) {
 			SortKey<Country> key = sort.createSortKey(c, c.getLabel().getText());
@@ -333,14 +337,13 @@ public class PlacesFile {
 		}
 		Collections.sort(keys);
 
-		List<Country> list = new ArrayList<Country>();
+		countryList.clear();
 		int index = 1;
 		for (SortKey<Country> key : keys) {
 			Country c = key.getObject();
 			c.setIndex(index++);
-			list.add(c);
+			countryList.add(c);
 		}
-		return list;
 	}
 
 	/**
@@ -349,7 +352,7 @@ public class PlacesFile {
 	private void sortRegions() {
 		List<SortKey<Region>> keys = new ArrayList<SortKey<Region>>();
 		for (Region r : regionList) {
-			SortKey<Region> key = sort.createSortKey(r, r.getLabel().getText());
+			SortKey<Region> key = sort.createSortKey(r, r.getLabel().getText(), r.getCountry().getIndex());
 			keys.add(key);
 		}
 		Collections.sort(keys);

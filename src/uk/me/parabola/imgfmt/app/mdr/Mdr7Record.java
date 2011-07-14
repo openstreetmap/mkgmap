@@ -62,4 +62,8 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 	public Mdr5Record getCity() {
 		return city;
 	}
+
+	public String toString() {
+		return name + " in " + city.getName();
+	}
 }

@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -30,8 +30,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
+	private final List<Mdr5Record> allCities = new ArrayList<Mdr5Record>();
 	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
-	private int[] mdr20;
 	private int maxCityIndex;
 	private int localCitySize;
 
@@ -41,7 +41,7 @@ public class Mdr5 extends MdrMapSection {
 
 	public void addCity(Mdr5Record record) {
 		assert record.getMapIndex() != 0;
-		cities.add(record);
+		allCities.add(record);
 		if (record.getCityIndex() > maxCityIndex)
 			maxCityIndex = record.getCityIndex();
 	}
@@ -52,24 +52,38 @@ public class Mdr5 extends MdrMapSection {
 	public void finish() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
-		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(cities.size());
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(allCities.size());
 		Sort sort = getConfig().getSort();
-		for (Mdr5Record m : cities) {
-			// Sorted also by map number, city index
+		for (Mdr5Record m : allCities) {
 			if (m.getName() == null)
 				continue;
-			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName(), m.getMapIndex());
-			sortKey = new CombinedSortKey<Mdr5Record>(sortKey, m.getCityIndex(), m.getRegionIndex());
+
+			// Sort by city name, region name, country name and map index.
+			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName());
+			SortKey<Mdr5Record> regionKey = sort.createSortKey(null, m.getRegionName());
+			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName(), m.getMapIndex());
+			sortKey = new MultiSortKey<Mdr5Record>(sortKey, regionKey, countryKey);
 			sortKeys.add(sortKey);
 		}
 		Collections.sort(sortKeys);
 
-		cities.clear();
 		int count = 0;
 		Mdr5Record lastCity = null;
+
+		// We need a common area to save the mdr20 values, since there can be multiple
+		// city records with the same global city index
+		int[] mdr20s = new int[sortKeys.size()+1];
+		int mdr20count = 0;
+
 		for (SortKey<Mdr5Record> key : sortKeys) {
 			Mdr5Record c = key.getObject();
-			if (c.isSameCity(lastCity)) {
+			c.setMdr20set(mdr20s);
+
+			if (!c.isSameByName(lastCity))
+				mdr20count++;
+			c.setMdr20Index(mdr20count);
+
+			if (c.isSameByMapAndName(lastCity)) {
 				c.setGlobalCityIndex(count);
 			} else {
 				count++;
@@ -82,10 +96,8 @@ public class Mdr5 extends MdrMapSection {
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
-		fix20();
-
 		int size20 = getSizes().getMdr20Size();
-		String lastName = null;
+		Mdr5Record lastCity = null;
 		for (Mdr5Record city : cities) {
 			int gci = city.getGlobalCityIndex();
 			addIndexPointer(city.getMapIndex(), gci);
@@ -96,10 +108,10 @@ public class Mdr5 extends MdrMapSection {
 			int mapIndex = city.getMapIndex();
 			int region = city.getRegionIndex();
 
-			// Set the repeat (non)-flag if the name is the same
-			if (!city.getName().equals(lastName)) {
+			// Set the no-repeat flag if the name/region is different
+			if (!city.isSameByName(lastCity)) {
 				flag = 0x800000;
-				lastName = city.getName();
+				lastCity = city;
 			}
 
 			// Write out the record
@@ -108,70 +120,8 @@ public class Mdr5 extends MdrMapSection {
 			writer.put3(flag | city.getLblOffset());
 			writer.putChar((char) region);
 			putStringOffset(writer, city.getStringOffset());
-			putN(writer, size20, mdr20[gci] & 0x7fffffff);
+			putN(writer, size20, city.getMdr20());
 		}
-	}
-
-	/**
-	 * Search for repeated names, and make the mdr20 value for each one the same. The value is the
-	 * lowest non-zero value for any member of the group.
-	 *
-	 * Save the repeat status to avoid having to recalculate it during the write phase.
-	 */
-	private void fix20() {
-		Mdr5Record lastCity = null;
-
-		for (int index = 1; index < cities.size(); index++) {
-			Mdr5Record city = cities.get(index - 1);
-			assert city.getGlobalCityIndex() == index : index + "/" + city.getGlobalCityIndex();
-
-			String name = city.getName();
-			if (lastCity != null && city.isSameName(lastCity)) {
-				int last = findLastRepeat(index, name);
-				int mdr20val = findMin20(index - 1, last);
-				for (int j = index-1; j < last; j++) {
-					mdr20[j] = mdr20val;
-					// set repeat flag on all except the first
-					if (j != index - 1)
-						mdr20[j] |= 0x80000000;
-				}
-
-			}
-			lastCity = city;
-		}
-	}
-
-	/**
-	 * Find the minimum value of mdr20 from the two given city indexes.
-	 * @param start Start from here.
-	 * @param last Until here, exclusive.
-	 * @return The minimum value of mdr20 that is not 0. If all are zero then zero is returned.
-	 */
-	private int findMin20(int start, int last) {
-		int min20 = 0;
-		for (int i = start; i < last; i++) {
-			int val = mdr20[i];
-			if (min20 == 0 || (val > 0 && val < min20)) {
-				min20 = val;
-			}
-		}
-
-		return min20;
-	}
-
-	/**
-	 * Return the index of the first record after 'index' that has a different name.
-	 * @param start The start index.
-	 * @param name The name to compare against.
-	 * @return The last repeated name index (exclusive).
-	 */
-	private int findLastRepeat(int start, String name) {
-		for (int i = start; i < cities.size(); i++) {
-			Mdr5Record city = cities.get(i-1);
-			if (!name.equals(city.getName()))
-				return i;
-		}
-		return cities.size();
 	}
 
 	/**
@@ -221,11 +171,11 @@ public class Mdr5 extends MdrMapSection {
 		return val;
 	}
 
+	/**
+	 * Get a list of all the cities, including duplicate named ones.
+	 * @return All cities.
+	 */
 	public List<Mdr5Record> getCities() {
-		return cities;
-	}
-
-	public void setMdr20(int[] mdr20) {
-		this.mdr20 = mdr20;
+		return Collections.unmodifiableList(allCities);
 	}
 }
