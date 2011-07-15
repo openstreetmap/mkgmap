@@ -67,7 +67,6 @@ public class BoundaryRelation extends MultiPolygonRelation {
 	 */
 	public void processElements() {
 		log.info("Processing multipolygon", toBrowseURL());
-		log.threadTag("r"+getId());
 	
 		List<Way> allWays = getSourceWays();
 		
@@ -460,7 +459,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 							}
 						});
 				
-				if (minCon.distance < 1000) {
+				if (minCon.distance < getMaxCloseDist()) {
 
 					if (minCon.w1 == minCon.w2) {
 						log.debug("Close a gap in way", minCon.w1);
@@ -486,6 +485,20 @@ public class BoundaryRelation extends MultiPolygonRelation {
 			}
 		}
 		return false;
+	}
+	
+	private double getMaxCloseDist() {
+		double dist = 1000;
+		String admString= getTag("admin_level");
+		
+		if ("2".equals(admString)) {
+			dist = 50000;
+		} else if ("3".equals(admString)) {
+			dist = 20000;
+		}else if ("4".equals(admString)) {
+			dist = 4000;
+		}
+		return dist;
 	}
 	
 	protected void closeWays(ArrayList<JoinedWay> wayList) {
@@ -549,7 +562,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 				// calc the distance to close
 				double closeDist = way.getPoints().get(0).distance(way.getPoints().get(way.getPoints().size()-1));
 				
-				if (closeDist <= 1000) {
+				if (closeDist <= getMaxCloseDist()) {
 					log.info("Closing way", way);
 					log.info("from", way.getPoints().get(0).toOSMURL());
 					log.info("to", way.getPoints().get(way.getPoints().size() - 1)
