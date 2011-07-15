@@ -76,10 +76,17 @@ public class BoundarySaver {
 	private final List<StreamInfo> openStreams = new ArrayList<StreamInfo>();
 	/** keeps the open streams */
 	private final Map<String, StreamInfo> streams;
+	private boolean createEmptyFiles = false;
 
 	public BoundarySaver(File boundaryDir) {
 		this.boundaryDir = boundaryDir;
 		this.streams = new HashMap<String, StreamInfo>();
+	}
+	
+	public void addBoundaries(List<Boundary> boundaryList) {
+		for (Boundary b : boundaryList) {
+			addBoundary(b);
+		}
 	}
 
 	public void addBoundary(Boundary boundary) {
@@ -91,7 +98,7 @@ public class BoundarySaver {
 	}
 
 	public void end() {
-		if (getBbox() != null) {
+		if (getBbox() != null && isCreateEmptyFiles()) {
 			// a bounding box is set => fill the gaps with empty files
 			for (int latSplit = BoundaryUtil.getSplitBegin(getBbox()
 					.getMinLat()); latSplit <= BoundaryUtil
@@ -354,5 +361,23 @@ public class BoundarySaver {
 			log.info("Set bbox: " + bbox.getMinLat() + " " + bbox.getMinLong()
 					+ " " + bbox.getMaxLat() + " " + bbox.getMaxLong());
 		}
+	}
+
+	public boolean isCreateEmptyFiles() {
+		return createEmptyFiles;
+	}
+
+	/**
+	 * Sets if empty bounds files should be created for areas without any
+	 * boundary. Typically these are sea areas or areas not included in the OSM
+	 * file.
+	 * 
+	 * @param createEmptyFiles
+	 *            <code>true</code> create bounds files for uncovered areas;
+	 *            <code>false</code> create bounds files only for areas
+	 *            containing boundary information
+	 */
+	public void setCreateEmptyFiles(boolean createEmptyFiles) {
+		this.createEmptyFiles = createEmptyFiles;
 	}
 }

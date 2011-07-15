@@ -14,7 +14,6 @@ package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.awt.geom.Area;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil.BoundaryFileFilter;
 import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.Java2DConverter;
 
@@ -51,12 +51,7 @@ public class BoundaryDiff {
 		if (boundaryDir.isFile() && boundaryDir.getName().endsWith(".bnd")) {
 			boundaryFiles.add(boundaryDir);
 		} else {
-			File[] bFiles = boundaryDir.listFiles(new FileFilter() {
-
-				public boolean accept(File pathname) {
-					return pathname.getName().endsWith(".bnd");
-				}
-			});
+			File[] bFiles = boundaryDir.listFiles(new BoundaryFileFilter());
 			boundaryFiles.addAll(Arrays.asList(bFiles));
 		}
 		return boundaryFiles;

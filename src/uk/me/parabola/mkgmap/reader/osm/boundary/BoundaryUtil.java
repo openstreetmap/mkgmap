@@ -17,6 +17,7 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +37,12 @@ import uk.me.parabola.util.Java2DConverter;
 public class BoundaryUtil {
 	private static final Logger log = Logger.getLogger(BoundaryUtil.class);
 
+	public static class BoundaryFileFilter implements FileFilter {
+		public boolean accept(File pathname) {
+			return pathname.isFile() && pathname.getName().endsWith(".bnd");
+		}
+	}
+	
 	public static List<BoundaryElement> splitToElements(Area area) {
 		if (area.isEmpty()) {
 			return Collections.emptyList();
@@ -179,8 +186,10 @@ public class BoundaryUtil {
 				.getSplitBegin(bbox.getMaxLat()); latSplit += BoundaryUtil.RASTER) {
 			for (int lonSplit = BoundaryUtil.getSplitBegin(bbox.getMinLong()); lonSplit <= BoundaryUtil
 					.getSplitBegin(bbox.getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
-				boundaryFiles.add(new File(boundaryDir, "bounds_"
-						+ getKey(latSplit, lonSplit) + ".bnd"));
+				File bndFile = new File(boundaryDir, "bounds_"
+						+ getKey(latSplit, lonSplit) + ".bnd");
+				if (bndFile.exists())
+					boundaryFiles.add(bndFile);
 			}
 		}
 		return boundaryFiles;
