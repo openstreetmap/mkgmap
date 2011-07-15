@@ -200,6 +200,10 @@ public class MDRFile extends ImgFile {
 		for (Label lab : street.getLabels()) {
 			if (lab == null)
 				break;
+
+			if (lab.getOffset() == 0)
+				continue;
+			
 			String name = lab.getText();
 			String cleanName = cleanUpName(name);
 			int strOff = createString(cleanName);
@@ -254,7 +258,7 @@ public class MDRFile extends ImgFile {
 		mdr29.buildFromCountries(mdr14.getCountries());
 		mdr24.sortCountries(mdr14.getCountries());
 
-		mdr20.buildFromStreets(mdr7.getStreets(), mdr5);
+		mdr20.buildFromStreets(mdr7.getStreets());
 		mdr21.buildFromStreets(mdr7.getStreets());
 		mdr22.buildFromStreets(mdr7.getStreets());
 

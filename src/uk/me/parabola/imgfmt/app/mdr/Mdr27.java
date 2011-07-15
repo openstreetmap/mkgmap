@@ -63,7 +63,7 @@ public class Mdr27 extends MdrSection {
 				mdr28.setMdr27(record);
 				lastName = name;
 			}
-			
+
 			cities.add(city);
 		}
 	}
