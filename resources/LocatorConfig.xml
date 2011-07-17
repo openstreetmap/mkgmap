@@ -100,9 +100,11 @@
 		<variant>Republic of Belarus</variant>
 		<variant>Рэспубліка Беларусь</variant>
 	</country>
-	<country name="Belgique" abr="BEL">
+	<country name="België - Belgique" abr="BEL">
 		<variant>BE</variant>
 		<variant>BEL</variant>
+		<variant>België</variant>
+		<variant>Belgique</variant>
 		<variant>Belgium</variant>
 		<variant>Belgien</variant>
 		<variant>België - Belgique - Belgien</variant>
