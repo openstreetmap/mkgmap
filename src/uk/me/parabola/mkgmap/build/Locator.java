@@ -72,9 +72,6 @@ public class Locator {
 
 	private final LocatorConfig locConfig = LocatorConfig.get();
 
-	private static double totalTime;
-	private static long totalFinds;
-	
 	private final Set<String> locationAutofill = new HashSet<String>();
 	
 	private static final double MAX_CITY_DIST = 30000;
@@ -273,13 +270,7 @@ public class Locator {
 	
 	public MapPoint findNextPoint(MapPoint p)
 	{
-		long   startTime = System.nanoTime();
-	
-		MapPoint nextPoint = cityMap.findNextPoint(p);
-		
-		totalFinds++;
-		totalTime += ((System.nanoTime() - startTime) / 1e9);
-		return nextPoint;
+		return cityMap.findNextPoint(p);
 	}
 	
 	public MapPoint findNearbyCityByName(MapPoint p) {
