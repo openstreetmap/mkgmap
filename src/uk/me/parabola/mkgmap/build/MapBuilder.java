@@ -345,10 +345,15 @@ public class MapBuilder implements Configurable {
 		boolean checkedForPoiDispFlag = false;
 
 		for (MapPoint p : src.getPoints()) {
+			// special handling for highway exits
 			if(p.isExit()) {
 				processExit(map, (MapExitPoint)p);
 			}
-			else if (!p.isCity() && (p.isRoadNamePOI() || poiAddresses))
+			// do not process:
+			// * cities (already processed)
+			// * extended types (address information not shown in MapSource and on GPS)
+			// * all POIs except roads in case the no-poi-address option is set
+			else if (!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses))
 			{
 				
 				String countryStr = p.getCountry();
