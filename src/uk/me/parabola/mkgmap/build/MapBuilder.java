@@ -104,8 +104,8 @@ public class MapBuilder implements Configurable {
 
 	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
 
-	private Country country;
-	private Region  region;
+	private Country defaultCountry;
+	private Region  defaultRegion;
 
 	private String countryName = "COUNTRY";
 	private String countryAbbr = "ABC";
@@ -117,13 +117,14 @@ public class MapBuilder implements Configurable {
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
 
-	private int		locationAutofillLevel;
 	private boolean	poiAddresses = true;
 	private int		poiDisplayFlags;
 	private boolean sortRoads = true;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex;
 	private int routeCenterBoundaryType;
+	
+	private LBLFile lblFile;
 
 	public MapBuilder() {
 		regionName = null;
@@ -166,12 +167,8 @@ public class MapBuilder implements Configurable {
 
 		RGNFile rgnFile = map.getRgnFile();
 		TREFile treFile = map.getTreFile();
-		LBLFile lblFile = map.getLblFile();
+		lblFile = map.getLblFile();
 		NETFile netFile = map.getNetFile();
-
-		country = lblFile.createCountry(countryName, countryAbbr);
-		if(regionName != null)
-			region = lblFile.createRegion(country, regionName, regionAbbr);
 
 		if(routeCenterBoundaryType != 0 &&
 		   netFile != null &&
@@ -212,6 +209,20 @@ public class MapBuilder implements Configurable {
 			netFile.writePost(rgnFile.getWriter(), sortRoads);
 		}
 	}
+	
+	private Country getDefaultCountry() {
+		if (defaultCountry == null && lblFile != null) {
+			defaultCountry = lblFile.createCountry(countryName, countryAbbr);
+		}
+		return defaultCountry;
+	}
+	
+	private Region getDefaultRegion() {
+		if(defaultRegion == null && regionName != null && getDefaultCountry() != null && lblFile != null) {
+			defaultRegion = lblFile.createRegion(getDefaultCountry(), regionName, regionAbbr);
+		}
+		return defaultRegion;
+	}
 
 	/**
 	 * Processing of Cities
@@ -234,8 +245,7 @@ public class MapBuilder implements Configurable {
 				locator.addCityOrPlace(p); // Put the city info the map for missing info 
 		}
 
-		if(locationAutofillLevel > 0)
-			locator.autofillCities(); // Try to fill missing information that include search of next city
+		locator.autofillCities(); // Try to fill missing information that include search of next city
 
 		for (MapPoint p : src.getPoints()) 
 		{
@@ -252,7 +262,7 @@ public class MapBuilder implements Configurable {
 				if(countryStr != null) {
 					thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
 				} else
-					thisCountry = country;
+					thisCountry = getDefaultCountry();
 
 				String regionStr  = p.getRegion();
 				Region thisRegion;
@@ -261,7 +271,7 @@ public class MapBuilder implements Configurable {
 					thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 				}
 				else
-					thisRegion = region;
+					thisRegion = getDefaultRegion();
 
 				City thisCity;
 				if(thisRegion != null)
@@ -298,10 +308,8 @@ public class MapBuilder implements Configurable {
 					if(nextCity != null) {
 						cityName = nextCity.getCity();
 						// city/region/country fields should match to the found city
-//						if(nextCity.getCountry() != null)
-							cityCountryName = nextCity.getCountry();
-//						if(nextCity.getRegion() != null)
-							cityRegionName = nextCity.getRegion();
+						cityCountryName = nextCity.getCountry();
+						cityRegionName = nextCity.getRegion();
 							
 						// use the zip code only if no zip code is known
 						if(zipStr == null)
@@ -311,9 +319,9 @@ public class MapBuilder implements Configurable {
 
 				if(cityName != null) {
 
-					Country cc = (cityCountryName == null)? country : lbl.createCountry(cityCountryName, locator.getCountryCode(cityCountryName));
+					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryCode(cityCountryName));
 
-					Region cr = (cityRegionName == null)? region : lbl.createRegion(cc, cityRegionName, null);
+					Region cr = (cityRegionName == null)? getDefaultRegion() : lbl.createRegion(cc, cityRegionName, null);
 
 					if(cr != null) {
 						((MapRoad)line).setRoadCity(lbl.createCity(cr, cityName, false));
@@ -344,13 +352,6 @@ public class MapBuilder implements Configurable {
 //				if(!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses)) 
 				{
 				
-				boolean doAutofill;
-//				if(locationAutofillLevel > 0 || p.isRoadNamePOI())
-					doAutofill = true;
-//				else
-//					doAutofill = false;
-				
-				
 				String countryStr = p.getCountry();
 				String regionStr  = p.getRegion();
 				String zipStr     = p.getZip();
@@ -363,7 +364,7 @@ public class MapBuilder implements Configurable {
 				{
 					MapPoint nextCity = locator.findNearbyCityByName(p);
 						
-					if(doAutofill && nextCity == null)
+					if(nextCity == null)
 						nextCity = locator.findNextPoint(p);
 
 					if(nextCity != null)
@@ -371,20 +372,17 @@ public class MapBuilder implements Configurable {
 						if (countryStr == null)	countryStr = nextCity.getCountry();
 						if (regionStr == null)  regionStr  = nextCity.getRegion();
 
-						if(doAutofill)
+						if(zipStr == null)
 						{
-							if(zipStr == null)
-							{
-								String cityZipStr = nextCity.getZip();
-								
-								// Ignore list of Zips separated by ;
-								
-								if(cityZipStr != null && cityZipStr.indexOf(',') < 0)
-									zipStr = cityZipStr;
-							}
+							String cityZipStr = nextCity.getZip();
 							
-							if(cityStr == null) cityStr = nextCity.getCity();
+							// Ignore list of Zips separated by ;
+							
+							if(cityZipStr != null && cityZipStr.indexOf(',') < 0)
+								zipStr = cityZipStr;
 						}
+							
+						if(cityStr == null) cityStr = nextCity.getCity();
 					
 					}
 				}
@@ -401,9 +399,9 @@ public class MapBuilder implements Configurable {
 
 				if(p.isRoadNamePOI() && cityStr != null)
 				{
-						// If it is road POI add city name and street name into address info
-						p.setStreet(p.getName());
-						p.setName(p.getName() + "/" + cityStr);
+					// If it is road POI add city name and street name into address info
+					p.setStreet(p.getName());
+					p.setName(p.getName() + "/" + cityStr);
 				}
 
 				POIRecord r = lbl.createPOI(p.getName());	
@@ -415,13 +413,13 @@ public class MapBuilder implements Configurable {
 					if(countryStr != null)
 						thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
 					else
-						thisCountry = country;
+						thisCountry = getDefaultCountry();
 
 					Region thisRegion;
 					if(regionStr != null)
 						thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 					else
-						thisRegion = region;
+						thisRegion = getDefaultRegion();
 
 					City city;
 					if(thisRegion != null)
@@ -945,14 +943,14 @@ public class MapBuilder implements Configurable {
 	}
 
 	Highway makeHighway(Map map, String ref) {
-		if(region == null) {
+		if(getDefaultRegion() == null) {
 			log.warn("Highway " + ref + " has no region (define a default region to zap this warning)");
 		}
 		Highway hw = highways.get(ref);
 		if(hw == null) {
 			LBLFile lblFile = map.getLblFile();
 			log.info("creating highway " + ref);
-			hw = lblFile.createHighway(region, ref);
+			hw = lblFile.createHighway(getDefaultRegion(), ref);
 			highways.put(ref, hw);
 		}
 
