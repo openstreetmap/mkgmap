@@ -348,9 +348,8 @@ public class MapBuilder implements Configurable {
 			if(p.isExit()) {
 				processExit(map, (MapExitPoint)p);
 			}
-			else if (!p.isCity())
-//				if(!p.isCity() && !p.hasExtendedType() && (p.isRoadNamePOI() || poiAddresses)) 
-				{
+			else if (!p.isCity() && (p.isRoadNamePOI() || poiAddresses))
+			{
 				
 				String countryStr = p.getCountry();
 				String regionStr  = p.getRegion();
