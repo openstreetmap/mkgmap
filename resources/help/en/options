@@ -65,16 +65,16 @@ filename
 --region-abbr=abbreviation
 	Sets the map's abbreviated region name. By default, the map has
 	no abbreviated region name.
-
+	
 Label options:
 
 --latin1
 	This is equivalent to --code-page=1252.
 
 --code-page=number
-  This option enables the use of international characters. Only 8 bit
-  character sets are supported and so you have to specify which code page
-  you want to use.
+    This option enables the use of international characters. Only 8 bit
+    character sets are supported and so you have to specify which code page
+    you want to use.
 
 	It is entirely dependant on the device firmware which code pages are
 	supported.
@@ -87,6 +87,63 @@ Label options:
 	Allow labels to contain lower case letters.  Note that most or all
 	Garmin devices are not able to display lower case letters at an angle
 	so this option is not generally useful.
+
+Address search options:
+--index
+	Generate a global address search index that can be used with MapSource.
+	Makes the find places functions in MapSource available.
+	The index consists of two files named osmmap.mdx and osmmap_mdr.img
+	by default. The overview-mapname can be used to change the name.
+	If the mapset is sent to the device from MapSource, it will enable
+	find by name and address search on the GPS.
+	
+	The fields city, zip, region and country are assigned by special address
+	tags using the style file:
+	  mkgmap:country
+	  mkgmap:region
+	  mkgmap:city
+	  mkgmap:postal_code
+
+	This is an experimental option and there are several unresolved
+	issues.
+
+--createboundsfile=filename
+    In case this option is set the given file is read and all boundary
+    data in it is stored in preprocessed bounds files which are stored 
+    in the directory given as bounds parameter. The preprocessed bounds files
+    are required to run the option location-autofill=bounds.
+    The input file with the given filename must contain the boundaries that 
+    should be preprocessed. It can have OSM or PBF fileformat. It is 
+    recommended that it contains the boundary data only to avoid very high
+    memory usage. 
+
+--bounds=directory
+    The directory that contains the preprocessed bounds files. 
+    Default: bounds
+
+--location-autofill=[option1,[option2]]
+	Controls how country, region, city and zip info is gathered for 
+	cities, streets and pois.
+	Default: bounds
+
+    bounds    The preprocessed boundaries are used to mark all points,  
+              lines and polygons within a boundary with the special tag:
+              mkgmap:admin_level2 : Name of the admin_level=2 boundary 
+              mkgmap:admin_level3 : Name of the admin_level=3 boundary
+              ..
+              mkgmap:admin_level11
+              mkgmap:postcode : the postal_code value
+    
+              The style file can be used to assign the address tags mkgmap:country,
+              mkgmap:region etc. with these values.
+    
+    is_in     The is_in tag is analyzed for country and region information.
+    		  This is done only for address tags that are not defined by the 
+    		  style rules.               
+              
+    nearest   If all methods before fail the city/hamlet points that are 
+              closest to the element are used to assign the missing address tags.
+              Warning: elements may end up in the wrong country/region/city.
 
 Style options:
 
@@ -372,17 +429,6 @@ Miscellaneous options:
 --make-poi-index
 	Generate the POI index (not yet useful).
 
---index
-	Generate a global index that can be used with MapSource.
-	Makes the find places functions in MapSource available.
-	The index consists of two files named osmmap.mdx and osmmap_mdr.img
-	by default.  The overview-mapname can be used to change the name.
-	If the mapset is sent to the device from MapSource, it will enable
-	find by name and address search on the GPS.
-
-	This is an experimental option and there are several unresolved
-	issues.
-
 --nsis
 	Write a .nsi file that can be used with the Nullsoft Scriptable Install System
 	(NSIS) to create a Windows Mapsource Installer.
@@ -447,26 +493,6 @@ Miscellaneous options:
 	Suppress the normal generation of sorted road data. This will
 	make the map quicker to build but the find address or
 	intersection functions will be lost.
-
---location-autofill=''number''
-	Controls how country region info is gathered for cities /
-	streets and pois
-
-	0 	(Default) The country region info is gathered by
-		analysis of the cities is_in tags.
-
-		If no country region info is present the default
-		passed default country region is used.
-		 
-	1	Additional analysis of partial is_in info to get
-		relations between hamlets and cities
-	
-	2	Brute force search for nearest city with info if all
-		methods before failed. Warning cities my end up in the
-		wrong country/region.
-		
-	3	Enables debug output about suspicious relations that
-		might cause wrong country region info
 
 --verbose
 	Makes some operations more verbose. Mostly used with --list-styles.

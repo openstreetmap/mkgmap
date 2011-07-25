@@ -18,6 +18,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -92,12 +93,7 @@ public class Way extends Element {
 	}
 
 	public void reverse() {
-		int numPoints = points.size();
-		for(int i = 0; i < numPoints/2; ++i) {
-			Coord t = points.get(i);
-			points.set(i, points.get(numPoints - 1 - i));
-			points.set(numPoints - 1 - i, t);
-		}
+		Collections.reverse(points);
 	}
 
 	public boolean isClosed() {

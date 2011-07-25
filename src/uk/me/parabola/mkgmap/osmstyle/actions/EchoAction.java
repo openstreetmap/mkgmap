@@ -26,7 +26,7 @@ public class EchoAction implements Action {
 	private final ValueBuilder value;
 
 	public EchoAction(String str) {
-		this.value = new ValueBuilder(str);
+		this.value = new ValueBuilder(str, false);
 	}
 
 	public void perform(Element el) {

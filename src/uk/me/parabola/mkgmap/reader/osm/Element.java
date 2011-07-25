@@ -27,6 +27,10 @@ public abstract class Element implements Iterable<String> {
 	private String name;
 	private long id;
 
+	public int getTagCount() {
+		return (tags == null ? 0 : tags.size());
+	}
+	
 	/**
 	 * Add a tag to the way.  Some tags are recognised separately and saved in
 	 * separate fields.

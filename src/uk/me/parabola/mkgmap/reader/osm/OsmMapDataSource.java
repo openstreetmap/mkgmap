@@ -52,9 +52,11 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	private Style style;
 	private final OsmReadingHooks[] POSSIBLE_HOOKS = {
 			new SeaGenerator(),
+			new MultiPolygonFinishHook(),
 			new HighwayHooks(),
+			new LocationHook(),
 	};
-	private OsmConverter converter;
+	protected OsmConverter converter;
 	private final Set<String> usedTags = new HashSet<String>();
 	protected ElementSaver elementSaver;
 	protected OsmReadingHooks osmReadingHooks;
@@ -232,7 +234,7 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * just contain one style.
 	 *
 	 */
-	private void createConverter() {
+	protected void createConverter() {
 
 		Properties props = getConfig();
 		String loc = props.getProperty("style-file");

@@ -57,6 +57,7 @@ import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
+import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -73,6 +74,8 @@ public class Main implements ArgumentProcessor {
 
 	private final MapProcessor maker = new MapMaker();
 
+	private final List<Thread> preparers = new ArrayList<Thread>();
+	
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
 
@@ -210,11 +213,6 @@ public class Main implements ArgumentProcessor {
 
 		final MapProcessor mp = mapMaker(ext);
 
-		if(threadPool == null) {
-			log.info("Creating thread pool with " + maxJobs + " threads");
-			threadPool = Executors.newFixedThreadPool(maxJobs);
-		}
-
 		args.setSort(getSort(args));
 
 		log.info("Submitting job " + filename);
@@ -229,7 +227,6 @@ public class Main implements ArgumentProcessor {
 		});
 		task.setArgs(args);
 		futures.add(task);
-		threadPool.execute(task);
 	}
 
 	private MapProcessor mapMaker(String ext) {
@@ -340,9 +337,32 @@ public class Main implements ArgumentProcessor {
 	private void addCombiner(Combiner combiner) {
 		combiners.add(combiner);
 	}
+	
+	private void addPreparer(Thread preparer) {
+		this.preparers.add(preparer);
+	}
 
 	public void endOptions(CommandArgs args) {
 
+		if (args.exists("createboundsfile")) {
+			addPreparer(new BoundaryPreparer(args.getProperties()));
+		}
+		
+		log.info("Start preparers");
+		for (Thread preparer : preparers) {
+			preparer.run();
+		}
+		
+		log.info("Start tile processors");
+		if(threadPool == null) {
+			log.info("Creating thread pool with " + maxJobs + " threads");
+			threadPool = Executors.newFixedThreadPool(maxJobs);
+		}
+		for (FilenameTask task : futures) {
+			threadPool.execute(task);
+		}
+		
+		
 		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
 
 		if(threadPool != null) {

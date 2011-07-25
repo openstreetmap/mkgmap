@@ -34,8 +34,14 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class ValueBuilder {
 
 	private final List<ValueItem> items = new ArrayList<ValueItem>();
-
+	private final boolean completeCheck;
+	
 	public ValueBuilder(String pattern) {
+		this (pattern, true);
+	}
+	
+	public ValueBuilder(String pattern, boolean completeCheck) {
+		this.completeCheck =completeCheck;
 		compile(pattern);
 	}
 
@@ -51,10 +57,12 @@ public class ValueBuilder {
 	 * are missing then it returns null.
 	 */
 	public String build(Element el, Element lel) {
-		// Check early for no match and return early
-		for (ValueItem item : items) {
-			if (item.getValue(el, lel) == null)
-				return null;
+		if (completeCheck) {
+			// Check early for no match and return early
+			for (ValueItem item : items) {
+				if (item.getValue(el, lel) == null)
+					return null;
+			}
 		}
 
 		// If we get here we can build the final string.  A common case

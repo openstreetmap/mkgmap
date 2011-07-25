@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Store the tags that belong to an Element.
@@ -71,6 +72,8 @@ public class Tags implements Iterable<String> {
 	}
 
 	public String put(String key, String value) {
+		assert key != null : "key is null";
+		assert value != null : "value is null";
 		ensureSpace();
 		Integer ind = keyPos(key);
 		if (ind == null)
@@ -259,5 +262,22 @@ public class Tags implements Iterable<String> {
 		}
 		keySize = 0;
 		size = 0;
+	}
+	
+	public String toString() {
+		StringBuilder s =new StringBuilder();
+		s.append("[");
+		Iterator<Entry<String,String>> tagIter = entryIterator();
+		while (tagIter.hasNext()) {
+			Entry<String,String> tag = tagIter.next();
+			if (s.length() > 1) {
+				s.append("; ");
+			}
+			s.append(tag.getKey());
+			s.append("=");
+			s.append(tag.getValue());
+		}
+		s.append("]");
+		return s.toString();
 	}
 }
