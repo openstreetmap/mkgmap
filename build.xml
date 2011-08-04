@@ -95,6 +95,7 @@
 			<classpath refid="main"/>
 			<exclude name="**/reader/dem/optional/*.java"/>
 			<exclude name="**/reader/osm/bin/*.java"/>
+			<exclude name="**/OsmBinBoundaryDataSource.java"/>
 		</javac>
 	</target>
 
@@ -103,6 +104,7 @@
 		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
 			<classpath refid="main"/>
 			<include name="**/reader/osm/bin/*.java"/>
+			<include name="**/OsmBinBoundaryDataSource.java"/>
 		</javac>
 	</target>
 
