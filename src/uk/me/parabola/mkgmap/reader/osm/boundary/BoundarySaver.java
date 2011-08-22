@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class BoundarySaver {
 		int lastAccessNo;
 
 		public StreamInfo() {
-			this.lastAccessNo= 0;
+			this.lastAccessNo = 0;
 		}
 
 		public boolean isOpen() {
@@ -82,7 +83,25 @@ public class BoundarySaver {
 		this.boundaryDir = boundaryDir;
 		this.streams = new HashMap<String, StreamInfo>();
 	}
-	
+
+	/**
+	 * Saves the given boundaries to the given file without splitting them
+	 * into the grid.
+	 * @param boundaryList boundaries
+	 * @param boundsFile the file
+	 */
+	public void saveBoundaries(List<Boundary> boundaryList, File boundsFile) {
+		String fName = boundsFile.getName();
+		String[] parts = fName.split("[_"+Pattern.quote(".")+"]");
+		String key = fName;
+		if (parts.length >= 3) {
+			key = parts[1] + "_" + parts[2];
+		}
+		for (Boundary b : boundaryList) {
+			saveToFile(key, b);
+		}
+	}
+
 	public void addBoundaries(List<Boundary> boundaryList) {
 		for (Boundary b : boundaryList) {
 			addBoundary(b);
@@ -107,14 +126,15 @@ public class BoundarySaver {
 						.getMinLong()); lonSplit <= BoundaryUtil
 						.getSplitBegin(getBbox().getMaxLong()); lonSplit += BoundaryUtil.RASTER) {
 					String key = BoundaryUtil.getKey(latSplit, lonSplit);
-					
+
 					// check if the stream already exist but do no open it
 					StreamInfo stream = getStream(key, false);
 					if (stream == null) {
-						// it does not exist => create a new one to write out the common header of the boundary file
+						// it does not exist => create a new one to write out
+						// the common header of the boundary file
 						stream = getStream(key);
 					}
-					
+
 					// close the stream if it is open
 					if (stream.isOpen())
 						stream.close();
@@ -135,25 +155,26 @@ public class BoundarySaver {
 		if (openStreams.size() < 100) {
 			return;
 		}
-		
-		Collections.sort(openStreams, new Comparator<StreamInfo>(){
+
+		Collections.sort(openStreams, new Comparator<StreamInfo>() {
 
 			public int compare(StreamInfo o1, StreamInfo o2) {
-				return o1.lastAccessNo-o2.lastAccessNo;
+				return o1.lastAccessNo - o2.lastAccessNo;
 			}
 		});
-		
-		log.debug(openStreams.size(),"open streams.");
-		List<StreamInfo> closingStreams = openStreams.subList(0, openStreams.size()-80);
+
+		log.debug(openStreams.size(), "open streams.");
+		List<StreamInfo> closingStreams = openStreams.subList(0,
+				openStreams.size() - 80);
 		// close and remove the streams from the open list
 		for (StreamInfo streamInfo : closingStreams) {
-			log.debug("Closing",streamInfo.file);
+			log.debug("Closing", streamInfo.file);
 			streamInfo.close();
 		}
 		closingStreams.clear();
-		log.debug("Remaining",openStreams.size(),"open streams.");
+		log.debug("Remaining", openStreams.size(), "open streams.");
 	}
-	
+
 	private Area getSplitArea(int lat, int lon) {
 		Rectangle splitRect = new Rectangle(lon, lat, BoundaryUtil.RASTER,
 				BoundaryUtil.RASTER);
@@ -229,12 +250,12 @@ public class BoundarySaver {
 	private StreamInfo getStream(String filekey) {
 		return getStream(filekey, true);
 	}
-	
+
 	private StreamInfo getStream(String filekey, boolean autoopen) {
 		StreamInfo stream = streams.get(filekey);
 		if (autoopen) {
 			if (stream == null) {
-				log.debug("Create stream for",filekey);
+				log.debug("Create stream for", filekey);
 				stream = new StreamInfo();
 				stream.boundsKey = filekey;
 				stream.file = new File(boundaryDir, "bounds_" + filekey
@@ -245,7 +266,7 @@ public class BoundarySaver {
 				openStream(stream, false);
 			}
 		}
-		
+
 		if (stream != null) {
 			stream.lastAccessNo = ++lastAccessNo;
 		}
@@ -267,7 +288,7 @@ public class BoundarySaver {
 		} catch (Exception exp) {
 			log.error("Cannot write boundary: " + exp, exp);
 		}
-		
+
 		tidyStreams();
 	}
 

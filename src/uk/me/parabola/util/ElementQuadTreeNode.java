@@ -24,6 +24,7 @@ public final class ElementQuadTreeNode {
 	private MultiHashMap<Coord, Element> points;
 	private final Area bounds;
 	private Area coveredBounds;
+	private long items = -1;
 
 	public Area getCoveredBounds() {
 		return coveredBounds;
@@ -120,6 +121,20 @@ public final class ElementQuadTreeNode {
 		} 
 	}
 	
+	public long getSize() {
+		if (isLeaf()) {
+			return points.size();
+		} else {
+			if (items < 0) {
+				items = 0;
+				for (ElementQuadTreeNode child : children) {
+					items += child.getSize();
+				}
+			}
+			return items;
+		}
+	}
+	
 	public int getDepth() {
 		if (isLeaf()) {
 			return 1;
@@ -212,6 +227,7 @@ public final class ElementQuadTreeNode {
 	}
 
 	private boolean add(Coord c, Element element) {
+		items = -1;
 		if (coveredBounds == null) {
 			coveredBounds = new Area(c.getLatitude(), c.getLongitude(),
 					c.getLatitude(), c.getLongitude());
@@ -238,6 +254,7 @@ public final class ElementQuadTreeNode {
 	}
 
 	public boolean add(Element c) {
+		items = -1;
 		if (c instanceof Relation) {
 			log.error("Relations are not supported by this quadtree implementation. Skipping relation "
 					+ c.toBrowseURL());
@@ -265,7 +282,53 @@ public final class ElementQuadTreeNode {
 		}
 	}
 
+	public boolean remove(Element c) {
+		items = -1;
+		if (c instanceof Relation) {
+			log.error("Relations are not supported by this quadtree implementation. Skipping relation "
+					+ c.toBrowseURL());
+			return false;
+		} else if (c instanceof Way) {
+			// add all points to the tree
+			Way w = (Way) c;
+			List<Coord> points;
+			if (w.isClosed()) {
+				points = w.getPoints().subList(0, w.getPoints().size()-1);	
+			} else {
+				points = w.getPoints();
+			}
+			
+			boolean allOk = true;
+			for (Coord cp : points) {
+				allOk = remove(cp, c) && allOk;
+			}
+			return allOk;
+		} else if (c instanceof Node) {
+			return remove(((Node) c).getLocation(), c);
+		} else {
+			log.error("Unsupported element type: "+c);
+			return false;
+		}		
+	}
+	
+	private boolean remove(Coord c, Element elem) {
+		items = -1;
+		if (isLeaf()) {
+			return points.remove(c, elem) != null;
+		} else {
+			for (ElementQuadTreeNode child : children) {
+				if (child.getCoveredBounds().contains(c)) {
+					return child.remove(c, elem);
+				}
+			}
+			return false;
+		}
+	}
+	
 	public Set<Element> get(Area bbox, Set<Element> resultList) {
+		if (getSize() == 0) {
+			return resultList;
+		}
 		if (isLeaf()) {
 			if (bbox.getMinLat() <= coveredBounds.getMinLat()
 					&& bbox.getMaxLat() >= coveredBounds.getMaxLat()
@@ -296,7 +359,7 @@ public final class ElementQuadTreeNode {
 
 	public Set<Element> get(ElementQuadTreePolygon polygon,
 			Set<Element> resultList) {
-		if (polygon.getBbox().intersects(getBounds())) {
+		if (getSize() > 0 && polygon.getBbox().intersects(getBounds())) {
 			if (isLeaf()) {
 				for (Entry<Coord, List<Element>> e : points.entrySet()) {
 					if (polygon.getArea().contains(e.getKey().getLongitude(),
@@ -306,7 +369,7 @@ public final class ElementQuadTreeNode {
 				}
 			} else {
 				for (ElementQuadTreeNode child : children) {
-					if (polygon.getArea().intersects(child. getRectBounds())) {
+					if (child.getSize() > 0 && polygon.getArea().intersects(child.getRectBounds())) {
 						java.awt.geom.Area subArea = (java.awt.geom.Area) polygon
 								.getArea().clone();
 						subArea.intersect(createArea(child.getBounds()));

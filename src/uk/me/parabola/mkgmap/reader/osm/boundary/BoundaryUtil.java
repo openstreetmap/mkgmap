@@ -21,11 +21,14 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -235,6 +238,33 @@ public class BoundaryUtil {
 					log.info("Merge boundaries " + existingBoundary.getTags()
 							+ " with " + toMerge.getTags());
 					existingBoundary.getArea().add(toMerge.getArea());
+					
+					// Merge the mkgmap:lies_in tag
+					// They should be the same but better to check that...
+					String liesInTagExist = existingBoundary.getTags().get("mkgmap:lies_in");
+					String liesInTagMerge = toMerge.getTags().get("mkgmap:lies_in");
+					if (liesInTagExist != null && liesInTagExist.equals(liesInTagMerge)==false) {
+						if (liesInTagMerge == null) {
+							existingBoundary.getTags().remove("mkgmap:lies_in");
+						} else {
+							// there is a difference in the lies_in tag => keep the equal ids
+							Set<String> existIds = new HashSet<String>(Arrays.asList(liesInTagExist.split(";")));
+							Set<String> mergeIds = new HashSet<String>(Arrays.asList(liesInTagMerge.split(";")));
+							existIds.retainAll(mergeIds);
+							if (existIds.isEmpty()) {
+								existingBoundary.getTags().remove("mkgmap:lies_in");
+							} else {
+								StringBuilder newLiesIn = new StringBuilder();
+								for (String liesInEntry : existIds) {
+									if (newLiesIn.length() > 0) {
+										newLiesIn.append(";");
+									}
+									newLiesIn.append(liesInEntry);
+								}
+								existingBoundary.getTags().put("mkgmap:lies_in", newLiesIn.toString());
+							}
+						}
+					}
 				}
 			}
 		}

@@ -2,7 +2,6 @@ package uk.me.parabola.util;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -26,10 +25,6 @@ public class ElementQuadTree {
 		this.itemCount = 0;
 	}
 	
-//	public void outputBounds(String basename) {
-//		root.outputBounds(basename, 0);
-//	}
-	
 	public boolean addAll(Collection<Element> elements) {
 		boolean oneAdded = false;
 		for (Element element : elements) {
@@ -45,6 +40,14 @@ public class ElementQuadTree {
 			itemCount++;
 		}
 		return added;
+	}
+	
+	public boolean remove(Element element) {
+		boolean removed = root.remove(element);
+		if (removed) {
+			itemCount--;
+		}
+		return removed;
 	}
 
 	public Set<Element> get(Area bbox) {
@@ -74,78 +77,13 @@ public class ElementQuadTree {
 		return root.get(new ElementQuadTreePolygon(polygon),
 				new HashSet<Element>());
 	}
-
-//	public Set<Element> get(List<Coord> polygon, int offset) {
-//		if (polygon.size() < 3) {
-//			return new HashSet<Element>();
-//		}
-//		if (polygon.get(0).equals(polygon.get(polygon.size() - 1)) == false) {
-//			return null;
-//		}
-//		Set<Element> points = root.get(new QuadTreePolygon(polygon),
-//				new HashSet<Element>());
-//		if (offset > 0) {
-//			for (Coord c : new ArrayList<Coord>(points.keySet())) {
-//				if (isCloseToPolygon(c, polygon, offset)) {
-//					points.remove(c);
-//				}
-//			}
-//		}
-//		return points;
-//	}
+	
+	public long getCoordSize() {
+		return root.getSize();
+	}
 
 	public void clear() {
 		itemCount = 0;
 		root.clear();
-	}
-
-	// TODO itemCount is not a good counter (coords or elements?)
-	private long getSize() {
-		return itemCount;
-	}
-
-	private boolean isCloseToPolygon(Coord point, List<Coord> polygon,
-			int gap) {
-		Iterator<Coord> polyIter = polygon.iterator();
-		Coord c2 = polyIter.next();
-		while (polyIter.hasNext()) {
-			Coord c1 = c2;
-			c2 = polyIter.next();
-			double dist = distanceToSegment(c1, c2, point);
-			if (dist <= gap) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Calculates the distance to the given segment in meter.
-	 * @param spoint1 segment point 1
-	 * @param spoint2 segment point 2
-	 * @param point point
-	 * @return the distance in meter
-	 */
-	private double distanceToSegment(Coord spoint1, Coord spoint2, Coord point) {
-
-		double dx = spoint2.getLongitude() - spoint1.getLongitude();
-		double dy = spoint2.getLatitude() - spoint1.getLatitude();
-
-		if ((dx == 0) && (dy == 0)) {
-			return spoint1.distance(point);
-		}
-
-		double frac = ((point.getLongitude() - spoint1.getLongitude()) * dx + (point
-				.getLatitude() - spoint1.getLatitude()) * dy)
-				/ (dx * dx + dy * dy);
-
-		if (frac < 0) {
-			return spoint1.distance(point);
-		} else if (frac > 1) {
-			return spoint2.distance(point);
-		} else {
-			return spoint1.makeBetweenPoint(spoint2, frac).distance(point);
-		}
-
 	}
 }

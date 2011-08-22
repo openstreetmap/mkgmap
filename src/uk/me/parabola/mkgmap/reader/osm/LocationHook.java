@@ -16,16 +16,23 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
+import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer.BoundaryCollator;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil;
 import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
@@ -155,9 +162,16 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 		}
 
+		// Load the boundaries that intersect with the bounding box of the tile
 		List<Boundary> boundaries = BoundaryUtil.loadBoundaries(boundaryDir,
 				saver.getBoundingBox());
-
+		// Sort them by the admin level
+		Collections.sort(boundaries, new BoundaryCollator());
+		// Reverse the sorting because we want to start with the lowest admin level
+		Collections.reverse(boundaries);
+		
+		// go through all boundaries, check if the necessary tags are available
+		// and standardize the country name to the 3 letter ISO code
 		ListIterator<Boundary> bIter = boundaries.listIterator();
 		while (bIter.hasNext()) {
 			Boundary b = bIter.next();
@@ -194,6 +208,11 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			if (zip != null)
 				b.getTags().put("mkgmap:bzip", zip);
 		}
+		
+		if (boundaries.isEmpty()) {
+			log.info("Do not continue with LocationHook because no valid boundaries are available.");
+			return;
+		}
 
 		log.info("Element lists created after",
 				(System.currentTimeMillis() - t1), "ms");
@@ -203,7 +222,43 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		log.info("Quadtree created after", (System.currentTimeMillis() - t1),
 				"ms");
 
+		// Map the boundaryid to the boundary for fast access
+		Map<String, Boundary> boundaryById = new HashMap<String, Boundary>();
+		
+		Set<String> availableLevels = new TreeSet<String>();
+		for (Boundary b : boundaries) {
+			boundaryById.put(b.getTags().get("mkgmap:boundaryid"), b);
 
+			String admin_level = b.getTags().get("admin_level");
+			String admMkgmapTag = mkgmapTags.get("admin_level=" + admin_level);
+			String zipMkgmapTag = mkgmapTags.get("postal_code");
+
+			String admName = b.getTags().get("mkgmap:bname");
+			String zip = b.getTags().get("mkgmap:bzip");
+			
+			if (admName != null && admMkgmapTag != null) {
+				availableLevels.add(admMkgmapTag);
+			}
+			if (zip != null && zipMkgmapTag!=null)
+			{
+				availableLevels.add(zipMkgmapTag);
+			}
+		}
+		
+		// put all available levels into a list with inverted sort order
+		// this contains all levels that are not fully processed
+		List<String> remainingLevels = new ArrayList<String>();
+		if (availableLevels.contains(mkgmapTags.get("postal_code"))) {
+			remainingLevels.add(mkgmapTags.get("postal_code"));
+		}
+		for (int level = 11; level >= 1; level--) {
+			if (availableLevels.contains(mkgmapTags.get("admin_level="+level))) {
+				remainingLevels.add(mkgmapTags.get("admin_level="+level));
+			}			
+		}		
+
+		String currLevel = remainingLevels.remove(0);
+		
 		bIter = boundaries.listIterator();
 		while (bIter.hasNext()) {
 			Boundary boundary = bIter.next();
@@ -219,26 +274,117 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				continue;
 			}
 
+			// check if the list of remaining levels is still up to date
+			while ((admName != null && currLevel.equals(admMkgmapTag) == false) || (zip != null && currLevel.equals(zipMkgmapTag))) {
+				availableLevels.remove(currLevel);
+				if (availableLevels.isEmpty()) {
+					log.error("All levels are finished. Remaining boundaries "+boundaries.size());
+					return;
+				} else {
+					currLevel = availableLevels.iterator().next();
+				}
+			}
+
+			// defines which tags can be assigned by this boundary
+			Map<String, String> boundarySetTags = new HashMap<String,String>();
+			if (admName != null && admMkgmapTag != null) {
+				boundarySetTags.put(admMkgmapTag, admName);
+			}
+			if (zip != null && zipMkgmapTag != null) {
+				boundarySetTags.put(zipMkgmapTag, zip);
+			}
+			
+			// check in which other boundaries this boundary lies in
+			String liesIn = boundary.getTags().get("mkgmap:lies_in");
+			if (liesIn != null) {
+				// the common format of mkgmap:lies_in is:
+				// mkgmap:lies_in=2:r19884;4:r20039;6:r998818
+				String[] relBounds = liesIn.split(Pattern.quote(";"));
+				for (String relBound : relBounds) {
+					String[] relParts = relBound.split(Pattern.quote(":"));
+					if (relParts.length != 2) {
+						log.error("Wrong mkgmap:lies_in format. Value: " +liesIn);
+						continue;
+					}
+					Boundary bAdditional = boundaryById.get(relParts[1]);
+					if (bAdditional == null) {
+						log.error("Referenced boundary not available: "+boundary.getTags()+" refs "+relParts[1]);
+						continue;
+					}
+					String addAdmin_level = bAdditional.getTags().get("admin_level");
+					String addAdmMkgmapTag = mkgmapTags.get("admin_level=" + addAdmin_level);
+					String addZipMkgmapTag = mkgmapTags.get("postal_code");
+
+					String addAdmName = bAdditional.getTags().get("mkgmap:bname");
+					String addZip = bAdditional.getTags().get("mkgmap:bzip");
+					
+					if (addAdmMkgmapTag != null
+							&& addAdmName != null
+							&& boundarySetTags.containsKey(addAdmMkgmapTag) == false) {
+						boundarySetTags.put(addAdmMkgmapTag, addAdmName);
+					}
+					if (addZipMkgmapTag != null
+							&& addZip != null
+							&& boundarySetTags.containsKey(addZipMkgmapTag) == false) {
+						boundarySetTags.put(addZipMkgmapTag, addZip);
+					}
+				}
+			}
+			
+			// search for all elements in the boundary area
 			Set<Element> elemsInLocation = quadTree.get(boundary.getArea());
 
 			for (Element elem : elemsInLocation) {
-				if (admName != null && admMkgmapTag != null && elem.getTag(admMkgmapTag) == null) {
-					elem.addTag(admMkgmapTag, admName);
-					if (log.isDebugEnabled())
-						log.debug("Added tag", admMkgmapTag, "=", admName, "to",
-								elem.toTagString());
+				// tag the element with all tags referenced by the boundary
+				for (Entry<String,String> bTag : boundarySetTags.entrySet()) {
+					if (elem.getTag(bTag.getKey()) == null) {
+						elem.addTag(bTag.getKey(), bTag.getValue());
+						if (log.isDebugEnabled()) {
+							log.debug("Add tag", admMkgmapTag, "=", admName, "to",
+									elem.toTagString());
+						}
+					}
 				}
-				if (zip != null && zipMkgmapTag != null && elem.getTag(zipMkgmapTag) == null) {
-					elem.addTag(zipMkgmapTag, zip);
-					if (log.isDebugEnabled())
-						log.debug("Added tag", zipMkgmapTag, "=", zip, "to",
-								elem.toTagString());
+				
+				// check if the element is already tagged with all remaining boundary levels
+				// in this case the element can be removed from further processing 
+				Set<String> locTags = getUsedLocationTags(elem);
+				if (locTags.containsAll(availableLevels)) {
+					if (log.isDebugEnabled()) {
+						log.debug("Elem finish: "+elem.kind()+elem.getId()+" "+elem.toTagString());
+					}
+					quadTree.remove(elem);
 				}
 			}
 			bIter.remove();
+			
+			if (quadTree.getCoordSize() <= 0) {
+				log.error("Finish Location Hook: Remaining boundaries: "+boundaries.size());
+				return;
+			}
 		}
-
-
+	}
+	
+	/**
+	 * Retrieves which of the location tags are already set in this element.
+	 * @param element the OSM element
+	 * @return a set of location tags
+	 */
+	private Set<String> getUsedLocationTags(Element element) {
+		Set<String> usedTags = null;
+		for (String locTag : mkgmapTags.values()) {
+			if (element.getTag(locTag) != null) {
+				if (usedTags == null) {
+					usedTags = new HashSet<String>();
+				}
+				usedTags.add(locTag);
+			}
+		}
+		if (usedTags == null) {
+			return Collections.emptySet();
+		} else {
+			return usedTags;
+		}
 	}
 
 	public void end() {
