@@ -349,7 +349,7 @@ public final class ElementQuadTreeNode {
 			}
 		} else {
 			for (ElementQuadTreeNode child : children) {
-				if (bbox.intersects(child.getCoveredBounds())) {
+				if (child.getSize() > 0 && bbox.intersects(child.getCoveredBounds())) {
 					resultList = child.get(bbox, resultList);
 				}
 			}

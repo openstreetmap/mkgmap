@@ -16,11 +16,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
@@ -36,6 +38,7 @@ import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer.BoundaryCollat
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil;
 import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 public class LocationHook extends OsmReadingHooksAdaptor {
@@ -258,6 +261,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}		
 
 		String currLevel = remainingLevels.remove(0);
+		log.debug("First level:",currLevel);
 		
 		bIter = boundaries.listIterator();
 		while (bIter.hasNext()) {
@@ -275,13 +279,19 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 
 			// check if the list of remaining levels is still up to date
-			while ((admName != null && currLevel.equals(admMkgmapTag) == false) || (zip != null && currLevel.equals(zipMkgmapTag))) {
-				availableLevels.remove(currLevel);
-				if (availableLevels.isEmpty()) {
-					log.error("All levels are finished. Remaining boundaries "+boundaries.size());
+			while ((admName == null || currLevel.equals(admMkgmapTag) == false) && (zip == null || currLevel.equals(zipMkgmapTag) == false)) {
+				if (log.isDebugEnabled()) {
+					log.debug("Finish current level:",currLevel);
+					log.debug("admname:",admName,"admMkgmapTag:",admMkgmapTag);
+					log.debug("zip:",zip,"zipMkgmapTag:",zipMkgmapTag);
+					log.debug("Next boundary:",boundary.getTags());
+				}
+				if (remainingLevels.isEmpty()) {
+					log.error("All levels are finished. Remaining boundaries "+boundaries.size()+". Remaining coords: "+quadTree.getCoordSize());
 					return;
 				} else {
-					currLevel = availableLevels.iterator().next();
+					currLevel = remainingLevels.remove(0);
+					log.debug("Next level:",currLevel," Remaining:",remainingLevels);
 				}
 			}
 
@@ -349,7 +359,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				// check if the element is already tagged with all remaining boundary levels
 				// in this case the element can be removed from further processing 
 				Set<String> locTags = getUsedLocationTags(elem);
-				if (locTags.containsAll(availableLevels)) {
+				if (locTags.containsAll(remainingLevels)) {
 					if (log.isDebugEnabled()) {
 						log.debug("Elem finish: "+elem.kind()+elem.getId()+" "+elem.toTagString());
 					}
@@ -359,9 +369,23 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			bIter.remove();
 			
 			if (quadTree.getCoordSize() <= 0) {
-				log.error("Finish Location Hook: Remaining boundaries: "+boundaries.size());
+				log.info("Finish Location Hook: Remaining boundaries: "+boundaries.size());
 				return;
 			}
+		}
+		if (log.isDebugEnabled()) {
+			Collection<Element> unassigned =  quadTree.get(new Area(-90.0d, -180.0d, 90.0d, 180.0d));
+			Set<Coord> unCoords = new HashSet<Coord>();
+			for (Element e : unassigned) {
+				log.debug(e.getId()+" "+e.toTagString());
+				if (e instanceof Node)
+					unCoords.add(((Node) e).getLocation());
+				else if ( e instanceof Way) {
+					unCoords.addAll(((Way) e).getPoints());
+				}
+			}
+			GpxCreator.createGpx(GpxCreator.getGpxBaseName()+"unassigned", new ArrayList<Coord>(), new ArrayList<Coord>(unCoords));
+			log.debug("Finish Location Hook. Unassigned elements: "+unassigned.size());
 		}
 	}
 	
