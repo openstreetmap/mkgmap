@@ -51,7 +51,7 @@ public class MultiHashMap<K,V> extends HashMap<K,List<V>> {
 	    values.remove(value);
 		
 		if (values.isEmpty())
-			super.remove(values);
+			super.remove(key);
 
 		return value;
 	}
