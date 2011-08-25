@@ -372,7 +372,8 @@ public final class ElementQuadTreeNode {
 					if (child.getSize() > 0 && polygon.getArea().intersects(child.getRectBounds())) {
 						java.awt.geom.Area subArea = (java.awt.geom.Area) polygon
 								.getArea().clone();
-						subArea.intersect(createArea(child.getBounds()));
+						
+						subArea.intersect(createArea(new Area(child.getBounds().getMinLat()-1,child.getBounds().getMinLong()-1,child.getBounds().getMaxLat()+1, child.getBounds().getMaxLong()+1)));
 						if (subArea.isEmpty() == false)
 							child.get(new ElementQuadTreePolygon(subArea), resultList);
 					}
