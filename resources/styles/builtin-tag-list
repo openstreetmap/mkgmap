@@ -9,12 +9,9 @@
 # string 'mkgmap:'
 #
 access
-addr:city
-addr:country
 addr:housename
 addr:housenumber
 addr:phone
-addr:postcode
 addr:street
 bicycle
 carpool
@@ -31,8 +28,6 @@ goods
 hgv
 int_ref
 is_in
-is_in:country
-is_in:county
 junction
 maxspeed
 mkgmap:gtype
