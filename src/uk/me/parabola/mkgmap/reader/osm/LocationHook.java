@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -34,12 +35,10 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
-import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer.BoundaryCollator;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil;
 import uk.me.parabola.util.ElementQuadTree;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.GpxCreator;
-import uk.me.parabola.util.MultiHashMap;
 
 public class LocationHook extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(LocationHook.class);
@@ -119,15 +118,12 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	
 	private void assignPreprocBounds() {
 		long t1 = System.currentTimeMillis();
-		List<Element> allElements = new ArrayList<Element>(saver.getWays()
-				.size() + saver.getNodes().size());
-
-		MultiHashMap<String, Way> locationElements = new MultiHashMap<String, Way>();
+		ElementQuadTree quadTree = new ElementQuadTree(saver.getBoundingBox());
 
 		// add all nodes that might be converted to a garmin node (tagcount > 0)
 		for (Node node : saver.getNodes().values()) {
 			if (node.getTagCount() > 0) {
-				allElements.add(node);
+				quadTree.add(node);
 			}
 		}
 
@@ -139,39 +135,15 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 
 			// in any case add it to the element list
-			allElements.add(way);
-
-			if (way.isClosed()
-					&& "polyline".equals(way.getTag("mkgmap:stylefilter")) == false) {
-				// it is a polygon - check if it contains location relevant
-				// information
-
-				if ("administrative".equals(way.getTag("boundary"))
-						&& way.getTag("admin_level") != null) {
-					try {
-						int adminlevel = Integer.valueOf(way
-								.getTag("admin_level"));
-						if (adminlevel >= 1 && adminlevel <= 11) {
-							locationElements.add("admin_level=" + adminlevel,
-									way);
-						}
-					} catch (NumberFormatException nfe) {
-						log.warn("Wrong admin_level format in way "
-								+ way.getId() + " " + way.toTagString());
-					}
-				} else if ("postal_code".equals(way.getTag("boundary"))) {
-					locationElements.add("postal_code", way);
-				}
-			}
+			quadTree.add(way);
 		}
 
+		long tb1 = System.currentTimeMillis();
 		// Load the boundaries that intersect with the bounding box of the tile
 		List<Boundary> boundaries = BoundaryUtil.loadBoundaries(boundaryDir,
 				saver.getBoundingBox());
-		// Sort them by the admin level
-		Collections.sort(boundaries, new BoundaryCollator());
-		// Reverse the sorting because we want to start with the lowest admin level
-		Collections.reverse(boundaries);
+		long tb2 = System.currentTimeMillis();
+		log.info("Loading boundaries took "+(tb2-tb1)+" ms");
 		
 		// go through all boundaries, check if the necessary tags are available
 		// and standardize the country name to the 3 letter ISO code
@@ -217,13 +189,17 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			return;
 		}
 
-		log.info("Element lists created after",
+		// Sort them by the admin level
+		Collections.sort(boundaries, new BoundaryLevelCollator());
+		// Reverse the sorting because we want to start with the lowest admin level
+		Collections.reverse(boundaries);
+
+		
+		log.info("LocationHook prepared after",
 				(System.currentTimeMillis() - t1), "ms");
 
-		log.info("Creating quadtree for", allElements.size(), "elements");
-		ElementQuadTree quadTree = new ElementQuadTree(allElements);
-		log.info("Quadtree created after", (System.currentTimeMillis() - t1),
-				"ms");
+		log.info("Quadtree depth: "+quadTree.getDepth());
+		log.info("Quadtree coords: "+quadTree.getCoordSize());
 
 		// Map the boundaryid to the boundary for fast access
 		Map<String, Boundary> boundaryById = new HashMap<String, Boundary>();
@@ -279,7 +255,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 
 			// check if the list of remaining levels is still up to date
-			while ((admName == null || currLevel.equals(admMkgmapTag) == false) && (zip == null || currLevel.equals(zipMkgmapTag) == false)) {
+			while (((admName != null && currLevel.equals(admMkgmapTag)) || (zip != null && currLevel.equals(zipMkgmapTag)))==false) {
 				if (log.isDebugEnabled()) {
 					log.debug("Finish current level:",currLevel);
 					log.debug("admname:",admName,"admMkgmapTag:",admMkgmapTag);
@@ -461,6 +437,69 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		tags.add("postal_code");
 		tags.addAll(nameTags);
 		return tags;
+	}
+	
+	private class BoundaryLevelCollator implements Comparator<Boundary> {
+
+		public int compare(Boundary o1, Boundary o2) {
+			if (o1 == o2) {
+				return 0;
+			}
+
+			String adminLevel1 = o1.getTags().get("admin_level");
+			String adminLevel2 = o2.getTags().get("admin_level");
+
+			if (getName(o1.getTags()) == null) {
+				// admin_level tag is set but no valid name available
+				adminLevel1= null;
+			}
+			if (getName(o2.getTags()) == null) {
+				// admin_level tag is set but no valid name available
+				adminLevel2= null;
+			}
+			
+			int admCmp =  compareAdminLevels(adminLevel1, adminLevel2);
+			if (admCmp != 0) {
+				return admCmp;
+			}
+			boolean post1set = getZip(o1.getTags()) != null;
+			boolean post2set = getZip(o2.getTags()) != null;
+			
+			if (post1set) {
+				return (post2set ? 0 : 1);
+			} else {
+				return (post2set ? -1 : 0);
+			}
+		}
+
+		public int compareAdminLevels(String level1, String level2) {
+			if (level1 == null) {
+				level1 = "100";
+			}
+			if (level2 == null) {
+				level2 = "100";
+			}
+
+			int l1 = 100;
+			try {
+				l1 = Integer.valueOf(level1);
+			} catch (NumberFormatException nfe) {
+			}
+
+			int l2 = 100;
+			try {
+				l2 = Integer.valueOf(level2);
+			} catch (NumberFormatException nfe) {
+			}
+
+			if (l1 == l2) {
+				return 0;
+			} else if (l1 > l2) {
+				return 1;
+			} else {
+				return -1;
+			}
+		}
 	}
 
 }
