@@ -96,7 +96,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 		String val = node.getTag("highway");
 		if (val != null && (val.equals("motorway_junction") || val.equals("services"))) {
 			exits.add(node);
-			node.addTag("osm:id", String.valueOf(node.getId()));
+			node.addTag("mkgmap:osmid", String.valueOf(node.getId()));
 		}
 	}
 

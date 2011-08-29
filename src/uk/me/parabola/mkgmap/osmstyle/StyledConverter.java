@@ -271,6 +271,11 @@ public class StyledConverter implements OsmConverter {
 	public void convertWay(final Way way) {
 		if (way.getPoints().size() < 2)
 			return;
+		
+		if (way.getTagCount() == 0) {
+			// no tags => nothing to convert
+			return;
+		}
 
 		if(way.getTag("mkgmap:gtype") != null) {
 			GType foundType = makeGTypeFromTags(way);
@@ -325,6 +330,10 @@ public class StyledConverter implements OsmConverter {
 	 * @param node The node to convert.
 	 */
 	public void convertNode(final Node node) {
+		if (node.getTagCount() == 0) {
+			// no tags => nothing to convert
+			return;
+		}
 
 		if(node.getTag("mkgmap:gtype") != null) {
 			GType foundType = makeGTypeFromTags(node);
@@ -461,6 +470,11 @@ public class StyledConverter implements OsmConverter {
 	 * @param relation The relation to convert.
 	 */
 	public void convertRelation(Relation relation) {
+		if (relation.getTagCount() == 0) {
+			// no tags => nothing to convert
+			return;
+		}
+
 		// Relations never resolve to a GType and so we ignore the return
 		// value.
 		relationRules.resolveType(relation, TypeResult.NULL_RESULT);
@@ -560,7 +574,7 @@ public class StyledConverter implements OsmConverter {
 		int type = gt.getType();
 		if(type >= 0x2000 && type < 0x2800) {
 			String ref = node.getTag(Exit.TAG_ROAD_REF);
-			String id = node.getTag("osm:id");
+			String id = node.getTag("mkgmap:osmid");
 			if(ref != null) {
 				String to = node.getTag(Exit.TAG_TO);
 				MapExitPoint mep = new MapExitPoint(ref, to);
@@ -667,11 +681,10 @@ public class StyledConverter implements OsmConverter {
 		String region       = element.getTag("mkgmap:region");
 		String city         = element.getTag("mkgmap:city");
 		String zip          = element.getTag("mkgmap:postal_code");
-		String street 	    = element.getTag("addr:street");
-		String housename    = element.getTag("addr:housename");
-		String houseNumber  = element.getTag("addr:housenumber");
-		String phone        = element.getTag("phone");
-		String isIn         = element.getTag("is_in");
+		String street 	    = element.getTag("mkgmap:street");
+		String houseNumber  = element.getTag("mkgmap:housenumber");
+		String phone        = element.getTag("mkgmap:phone");
+		String isIn         = element.getTag("mkgmap:is_in");
 
 		if(country != null)
 			ms.setCountry(country);
@@ -687,8 +700,6 @@ public class StyledConverter implements OsmConverter {
 		  
 		if(street != null)
 			ms.setStreet(street);
-		else if (housename != null)
-			ms.setStreet(housename);
 
 		if(houseNumber != null)
 			ms.setHouseNumber(houseNumber);

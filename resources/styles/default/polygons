@@ -69,6 +69,18 @@ mkgmap:city!=* & addr:city=* { set mkgmap:city='${addr:city}' }
 mkgmap:postal_code!=* & mkgmap:postcode=* { set mkgmap:postal_code='${mkgmap:postcode}' } 
 mkgmap:postal_code!=* & addr:postcode=* { set mkgmap:postal_code='${addr:postcode}' } 
 
+mkgmap:postal_code!=* & mkgmap:postcode=* { set mkgmap:postal_code='${mkgmap:postcode}' } 
+mkgmap:postal_code!=* & addr:postcode=* { set mkgmap:postal_code='${addr:postcode}' } 
+
+mkgmap:street!=* & addr:street=* { set mkgmap:street='${addr:street}' }
+mkgmap:street!=* & addr:housename=* { set mkgmap:street='${addr:housename}' }
+
+mkgmap:housenumber!=* & addr:housenumber=* { set mkgmap:housenumber='${addr:housenumber}' }
+
+mkgmap:phone!=* & phone=* { set mkgmap:phone='${phone}' }
+
+mkgmap:is_in!=* & is_in=* { set mkgmap:is_in='${is_in}' }
+
 
 aeroway=airport [0x07 resolution 20]
 aeroway=aerodrome [0x07 resolution 20]

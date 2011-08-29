@@ -97,12 +97,16 @@ Address search options:
 	If the mapset is sent to the device from MapSource, it will enable
 	find by name and address search on the GPS.
 	
-	The fields city, zip, region and country are assigned by special address
+	The address fields are assigned by special mkgmap address
 	tags using the style file:
 	  mkgmap:country
 	  mkgmap:region
 	  mkgmap:city
 	  mkgmap:postal_code
+	  mkgmap:street
+	  mkgmap:housenumber
+	  mkgmap:phone
+	  (mkgmap:is_in - used by location-autofill=is_in)
 
 	This is an experimental option and there are several unresolved
 	issues.
