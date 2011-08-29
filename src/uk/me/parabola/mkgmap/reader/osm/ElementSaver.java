@@ -66,6 +66,7 @@ public class ElementSaver {
 	private int maxLon = Utils.toMapUnit(-180.0);
 
 	// Options
+	private final boolean ignoreBuiltinRelations;
 	private final boolean ignoreTurnRestrictions;
 	private final Double minimumArcLength;
 
@@ -93,6 +94,7 @@ public class ElementSaver {
 		else
 			minimumArcLength = null;
 
+		ignoreBuiltinRelations = args.getProperty("ignore-builtin-relations", false);
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
 	}
 
@@ -144,9 +146,10 @@ public class ElementSaver {
 	 * @param rel The osm relation.
 	 */
 	public void addRelation(Relation rel) {
-		String type = rel.getTag("type");
-		if (type != null) {
-			if ("multipolygon".equals(type) || "boundary".equals(type)) {
+		if (!ignoreBuiltinRelations) {
+			String type = rel.getTag("type");
+			if (type == null) {
+			} else if ("multipolygon".equals(type) || "boundary".equals(type)) {
 				rel = createMultiPolyRelation(rel); 
 			} else if("restriction".equals(type)) {
 				if (ignoreTurnRestrictions)
