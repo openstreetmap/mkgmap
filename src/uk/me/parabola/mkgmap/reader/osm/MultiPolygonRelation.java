@@ -534,7 +534,7 @@ public class MultiPolygonRelation extends Relation {
 					if (firstWarn) {
 						log.warn(
 							"Cannot join the following ways to closed polygons. Multipolygon",
-							toBrowseURL());
+							toBrowseURL(), toTagString());
 						firstWarn = false;
 					}
 					logWayURLs(Level.WARNING, "- way:", tempWay);
