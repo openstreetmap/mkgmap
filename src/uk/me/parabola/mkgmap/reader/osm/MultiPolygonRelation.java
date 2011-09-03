@@ -672,8 +672,8 @@ public class MultiPolygonRelation extends Relation {
 			if (r_e.getValue() instanceof Way) {
 				allWays.add((Way) r_e.getValue());
 			} else {
-				log.warn("Non way element", r_e.getValue().getId(),
-						"in multipolygon", getId());
+				log.warn("Non way member in role", r_e.getKey(), r_e.getValue().toBrowseURL(),
+						"in multipolygon", toBrowseURL(), toTagString());
 			}
 		}
 		return allWays;
@@ -964,7 +964,7 @@ public class MultiPolygonRelation extends Relation {
 		
 		if (log.isLoggable(Level.WARNING) && 
 				(outmostInnerPolygons.cardinality()+unfinishedPolygons.cardinality()+nestedOuterPolygons.cardinality()+nestedInnerPolygons.cardinality() >= 1)) {
-			log.warn("Multipolygon", toBrowseURL(), "contains errors.");
+			log.warn("Multipolygon", toBrowseURL(), toTagString(), "contains errors.");
 
 			BitSet outerUnusedPolys = new BitSet();
 			outerUnusedPolys.or(unfinishedPolygons);
