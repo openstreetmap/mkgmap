@@ -215,6 +215,14 @@ public abstract class MapElement {
 		this.minResolution = minResolution;
 	}
 
+	/**
+	 * The maximum resolution at which the element will be visible. This is normally
+	 * 24, in other words the element is visible at all resolutions above the minimum.
+	 * You can however set this lower, so that it will disappear as you zoom in, presumably to be
+	 * replaced by another element.
+	 * 
+	 * @return The max resolution (<= 24), default is 24.
+	 */
 	public int getMaxResolution() {
 		return maxResolution;
 	}

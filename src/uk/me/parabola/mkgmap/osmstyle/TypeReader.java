@@ -111,8 +111,18 @@ public class TypeReader {
 		try {
 			if (str.indexOf('-') >= 0) {
 				String[] minmax = HYPHEN_PATTERN.split(str, 2);
-				gt.setMaxResolution(Integer.parseInt(minmax[0]));
-				gt.setMinResolution(Integer.parseInt(minmax[1]));
+				// Previously there was a bug where the order was reversed, so we swap the numbers if they are
+				// the wrong way round.
+				// This is not done for level as that never had the bug.
+				int val1 = Integer.parseInt(minmax[0]);
+				int val2 = Integer.parseInt(minmax[1]);
+				if (val1 <= val2) {
+					gt.setMinResolution(val1);
+					gt.setMaxResolution(val2);
+				} else {
+					gt.setMinResolution(val2);
+					gt.setMaxResolution(val1);
+				}
 			} else {
 				gt.setMinResolution(Integer.parseInt(str));
 			}
