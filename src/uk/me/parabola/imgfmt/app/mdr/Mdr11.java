@@ -71,6 +71,7 @@ public class Mdr11 extends MdrMapSection {
 			mdr10.addPoiType(poi);
 			pois.add(poi);
 		}
+		MDRFile.printMem("finish 11");
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

@@ -126,6 +126,8 @@ public class MDRFile extends ImgFile {
 	 * @param mapName The numeric name of the map.
 	 */
 	public void addMap(int mapName) {
+		if (currentMap == 0)
+			printMem("Before first map");
 		currentMap++;
 		mdr1.addMap(mapName);
 	}
@@ -225,6 +227,8 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
+		printMem("begin write");
+
 		for (MdrSection s : sections) {
 			if (s != null)
 				s.finish();
@@ -233,6 +237,8 @@ public class MDRFile extends ImgFile {
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
 
+		System.out.printf("Max used %dM\n", maxUsed/(1024*1024));
+		
 		// Now refresh the header
 		position(0);
 		getHeader().writeHeader(writer);
@@ -272,6 +278,8 @@ public class MDRFile extends ImgFile {
 
 		mdr26.sortMdr28(mdr28.getIndex());
 
+		printMem("dependancies");
+
 		writeSection(writer, 4, mdr4);
 
 		// We write the following sections that contain per-map data, in the
@@ -304,9 +312,11 @@ public class MDRFile extends ImgFile {
 
 		// write the reverse index last.
 		mdr1.writeSubSections(writer);
+		printMem("write subsections");
 		mdrHeader.setPosition(1, writer.position());
 
 		mdr1.writeSectData(writer);
+		printMem("write 1");
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
 		mdrHeader.setExtraValue(1, mdr1.getExtraValue());
@@ -338,6 +348,7 @@ public class MDRFile extends ImgFile {
 		
 		mdrHeader.setEnd(sectionNumber, writer.position());
 		mdr1.setEndPosition(sectionNumber);
+		printMem("write " + sectionNumber);
 	}
 
 	/**
@@ -348,5 +359,34 @@ public class MDRFile extends ImgFile {
 	 */
 	private int createString(String str) {
 		return mdr15.createString(str);
+	}
+
+	static long maxUsed;
+
+	/**
+	 * Print out the memory used. For the effort to reduce memory usage of the index generation.
+	 * Call from interesting points in the code, call at the end of routines to better catch peak
+	 * usage before local variables are released.
+	 * @param msg A message to print to identify the call point.
+	 */
+	static void printMem(String msg) {
+		//noinspection CallToSystemGC
+		System.gc();
+		try {
+			Thread.sleep(400);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		Runtime runtime = Runtime.getRuntime();
+		final int MB = 1024*1024;
+		long used = runtime.totalMemory() - runtime.freeMemory();
+		System.out.printf("%-20.20s %dM %dM %dM\n", msg,
+				used / MB,
+				runtime.totalMemory() / MB,
+				runtime.maxMemory() / MB
+		);
+
+		if (used > maxUsed)
+			maxUsed = used;
 	}
 }

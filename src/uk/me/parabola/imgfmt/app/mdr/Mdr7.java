@@ -67,6 +67,7 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 			}
 		}
+		MDRFile.printMem("finish 7");
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
