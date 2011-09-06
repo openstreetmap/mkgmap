@@ -18,7 +18,7 @@ package uk.me.parabola.imgfmt.app.mdr;
  *
  * @author Steve Ratcliffe
  */
-public class Mdr29Record extends RecordBase {
+public class Mdr29Record {
 	private String name;
 	private int mdr24;
 	private int mdr22;
