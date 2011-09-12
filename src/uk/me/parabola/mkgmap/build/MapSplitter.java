@@ -32,32 +32,32 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
  *
  * @author Steve Ratcliffe
  */
-class MapSplitter {
+public class MapSplitter {
 	private static final Logger log = Logger.getLogger(MapSplitter.class);
 
 	private final MapDataSource mapSource;
 
 	// There is an absolute largest size as offsets are in 16 bits, we are
 	//  staying safely inside it however.
-	private static final int MAX_DIVISION_SIZE = 0x7fff;
+	public static final int MAX_DIVISION_SIZE = 0x7fff;
 
 	// The maximum region size.  Note that the offset to the start of a section
 	// has to fit into 16 bits, the end of the last section could be beyond the
 	// 16 bit limit. Leave a little room for the region pointers
-	private static final int MAX_RGN_SIZE = 0xfff8;
+	public static final int MAX_RGN_SIZE = 0xfff8;
 
 	// The maximum number of lines. NET points to lines in subdivision
 	// using bytes.
-	private static final int MAX_NUM_LINES = 0xff;
+	public static final int MAX_NUM_LINES = 0xff;
 
-	private static final int MAX_NUM_POINTS = 0xff;
+	public static final int MAX_NUM_POINTS = 0xff;
 
 	// maximum allowed amounts of points/lines/shapes with extended types
 	// real limits are not known but if these values are too large, data
 	// goes missing (lines disappear, etc.)
-	private static final int MAX_XT_POINTS_SIZE = 0xff00;
-	private static final int MAX_XT_LINES_SIZE  = 0xff00;
-	private static final int MAX_XT_SHAPES_SIZE = 0xff00;
+	public static final int MAX_XT_POINTS_SIZE = 0xff00;
+	public static final int MAX_XT_LINES_SIZE  = 0xff00;
+	public static final int MAX_XT_SHAPES_SIZE = 0xff00;
 
 	private final Zoom zoom;
 

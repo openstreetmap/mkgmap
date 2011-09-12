@@ -26,8 +26,8 @@ import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
-import uk.me.parabola.mkgmap.filters.PolygonSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
+import uk.me.parabola.mkgmap.filters.PolygonSubdivSizeSplitterFilter;
 import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -133,7 +133,7 @@ public class MapArea implements MapDataSource {
 			}
 		};
 
-		PolygonSizeSplitterFilter filter = new PolygonSizeSplitterFilter();
+		PolygonSubdivSizeSplitterFilter filter = new PolygonSubdivSizeSplitterFilter();
 		FilterConfig config = new FilterConfig();
 		config.setResolution(resolution);
 		config.setBounds(bounds);
