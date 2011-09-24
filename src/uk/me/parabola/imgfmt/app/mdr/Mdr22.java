@@ -86,6 +86,7 @@ public class Mdr22 extends Mdr2x {
 				lastName = name;
 			}
 		}
+		MDRFile.printMem("from streets 22", keys);
 	}
 
 	/**

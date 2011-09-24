@@ -92,6 +92,7 @@ public class Mdr20 extends Mdr2x {
 				lastCity = city;
 			}
 		}
+		MDRFile.printMem("from streets 20", keys);
 	}
 
 	/**

@@ -227,7 +227,7 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
-		printMem("begin write");
+		printMem("begin finish");
 
 		for (MdrSection s : sections) {
 			if (s != null)
@@ -257,6 +257,8 @@ public class MDRFile extends ImgFile {
 	 * @param writer File is written here.
 	 */
 	private void writeSections(ImgFileWriter writer) {
+		printMem("begin write");
+
 		sizes = new MdrMapSection.PointerSizes(sections);
 
 		// Deal with the dependencies between the sections. The order of the following
@@ -395,11 +397,18 @@ public class MDRFile extends ImgFile {
 			maxUsed = used;
 	}
 
+	private static int keep;
+	static void printMem(String msg, Object keep) {
+		printMem(msg);
+		MDRFile.keep = keep.hashCode();
+	}
+
 	public static void sleep(int sec) {
-		System.out.printf("Sleeping for %d...\n", sec);
+		System.out.printf("Sleeping for %d...", sec);
 
 		try {
 			Thread.sleep(sec * 1000);
+			System.out.println(" done");
 		} catch (InterruptedException e) {
 			// ignore
 		}
