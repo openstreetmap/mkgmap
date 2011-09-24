@@ -99,7 +99,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 *
 	 * @return The number of items in the section.
 	 */
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return index.size();
 	}
 

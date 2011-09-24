@@ -24,7 +24,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
-	protected final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
+	protected List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
 	/**
 	 * Write out the contents of this section.
@@ -68,7 +68,11 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	 *
 	 * @return The number of items in the section.
 	 */
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return streets.size();
+	}
+
+	protected void releaseMemory() {
+		streets = null;
 	}
 }

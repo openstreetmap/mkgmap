@@ -35,7 +35,7 @@ public class Mdr22 extends Mdr2x {
 	}
 
 	/**
-	 * We need to sort the streets by the name of the city. Within a city
+	 * We need to sort the streets by the name of the country. Within a city
 	 * group the streets are ordered by their own index.
 	 *
 	 * Also have to set the record number of the first record in this section
@@ -86,6 +86,7 @@ public class Mdr22 extends Mdr2x {
 				lastName = name;
 			}
 		}
+		//MDRFile.sleep(15);
 		MDRFile.printMem("from streets 22", keys);
 	}
 

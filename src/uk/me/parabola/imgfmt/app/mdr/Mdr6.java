@@ -70,7 +70,7 @@ public class Mdr6 extends MdrMapSection {
 		return sizes.getMapSize() + getPointerSize() + sizes.getStrOffSize();
 	}
 
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return zips.size();
 	}
 

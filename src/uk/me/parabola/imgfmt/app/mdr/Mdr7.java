@@ -26,8 +26,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
-	private final List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
-	private final List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
+	private List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
+	private List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
@@ -103,7 +103,7 @@ public class Mdr7 extends MdrMapSection {
 				+ 1;
 	}
 
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return streets.size();
 	}
 
@@ -112,6 +112,11 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getExtraValue() {
 		return 0x43;
+	}
+
+	protected void releaseMemory() {
+		allStreets = null;
+		streets = null;
 	}
 
 	/**

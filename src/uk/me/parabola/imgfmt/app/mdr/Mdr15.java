@@ -12,10 +12,12 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -37,7 +39,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr15 extends MdrSection {
-	private final FileOutputStream stringFile;
+	private final OutputStream stringFile;
 	private int nextOffset;
 
 	private Map<String, Integer> strings = new HashMap<String, Integer>();
@@ -53,7 +55,7 @@ public class Mdr15 extends MdrSection {
 			tempFile = File.createTempFile("strings", null, new File("."));
 			tempFile.deleteOnExit();
 
-			stringFile = new FileOutputStream(tempFile);
+			stringFile = new BufferedOutputStream(new FileOutputStream(tempFile));
 
 			// reserve the string at offset 0 to be the empty string.
 			stringFile.write(0);
@@ -93,7 +95,7 @@ public class Mdr15 extends MdrSection {
 	 * Close the temporary file, and release the string table which is no longer
 	 * needed.
 	 */
-	public void finishFirst() {
+	public void releaseMemory() {
 		strings = null;
 		try {
 			stringFile.close();
@@ -135,7 +137,7 @@ public class Mdr15 extends MdrSection {
 	 *
 	 * @return Always zero, could return the number of strings.
 	 */
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return 0;
 	}
 }

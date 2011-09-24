@@ -20,6 +20,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public abstract class MdrSection extends ConfigBase {
 	private PointerSizes sizes;
+	private boolean released;
+	protected int nItems;
 
 	/**
 	 * Write out the contents of this section.
@@ -88,7 +90,19 @@ public abstract class MdrSection extends ConfigBase {
 	 * The number of records in this section.
 	 * @return The number of items in the section.
 	 */
-	public abstract int getNumberOfItems();
+	public final int getNumberOfItems() {
+		if (released)
+			return nItems;
+		else
+			return numberOfItems();
+	}
+
+	/**
+	 * Method to be implemented by subclasses to return the number of items in the section.
+	 * This will only be valid after the section is completely finished etc.
+	 * @return The number of items in the section.
+	 */
+	protected abstract int numberOfItems();
 
 	/**
 	 * Get the size of an integer that is sufficient to store a record number
@@ -102,15 +116,6 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
-	 * This is called after all the sections are read in.
-	 * It is called before {@link #finish}. It should be used to release
-	 * any memory that was held during the reading process that is not needed
-	 * any more.
-	 */
-	public void finishFirst() {
-	}
-
-	/**
 	 * This is called after all the sections are read in but before any section is written.
 	 *
 	 * This routine may modify the number of items in the section.  It should also do
@@ -118,6 +123,16 @@ public abstract class MdrSection extends ConfigBase {
 	 * is going to depend on the results.
 	 */
 	public void finish() {
+	}
+
+	public final void release() {
+		nItems = numberOfItems();
+		releaseMemory();
+		released = true;
+	}
+
+	protected void releaseMemory() {
+		throw new UnsupportedOperationException();
 	}
 
 	/**

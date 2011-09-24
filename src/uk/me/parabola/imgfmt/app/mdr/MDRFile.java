@@ -229,10 +229,7 @@ public class MDRFile extends ImgFile {
 	public void write() {
 		printMem("begin finish");
 
-		for (MdrSection s : sections) {
-			if (s != null)
-				s.finishFirst();
-		}
+		mdr15.release();
 
 		for (MdrSection s : sections) {
 			if (s != null)
@@ -263,17 +260,11 @@ public class MDRFile extends ImgFile {
 
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
-		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
-
 		mdr28.buildFromRegions(mdr13.getRegions());
 
 		mdr23.sortRegions(mdr13.getRegions());
 		mdr29.buildFromCountries(mdr14.getCountries());
 		mdr24.sortCountries(mdr14.getCountries());
-
-		mdr20.buildFromStreets(mdr7.getStreets());
-		mdr21.buildFromStreets(mdr7.getStreets());
-		mdr22.buildFromStreets(mdr7.getStreets());
 
 		mdr8.setIndex(mdr7.getIndex());
 		mdr9.setGroups(mdr10.getGroupSizes());
@@ -281,7 +272,6 @@ public class MDRFile extends ImgFile {
 
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
-
 
 		mdr26.sortMdr28(mdr28.getIndex());
 
@@ -293,13 +283,31 @@ public class MDRFile extends ImgFile {
 		// order of the subsections of the reverse index that they are associated
 		// with.
 		writeSection(writer, 11, mdr11);
+		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
+		mdr11.release();
+
 		writeSection(writer, 10, mdr10);
+		mdr10.release();
+
+		// mdr7 depends on the size of mdr20, so mdr20 must be built first
+		mdr20.buildFromStreets(mdr7.getStreets());
 		writeSection(writer, 7, mdr7);
+
 		writeSection(writer, 5, mdr5);
+		mdr5.release();
 		writeSection(writer, 6, mdr6);
+
 		writeSection(writer, 20, mdr20);
+		mdr20.release();
+
+		mdr21.buildFromStreets(mdr7.getStreets());
 		writeSection(writer, 21, mdr21);
+		mdr21.release();
+		
+		mdr22.buildFromStreets(mdr7.getStreets());
+		mdr7.release();
 		writeSection(writer, 22, mdr22);
+		mdr22.release();
 
 		// There is no ordering constraint on the following
 		//writeSection(writer, 8, mdr8);

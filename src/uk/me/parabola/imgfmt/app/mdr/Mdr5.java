@@ -30,8 +30,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
-	private final List<Mdr5Record> allCities = new ArrayList<Mdr5Record>();
-	private final List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
+	private List<Mdr5Record> allCities = new ArrayList<Mdr5Record>();
+	private List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
 	private int maxCityIndex;
 	private int localCitySize;
 
@@ -150,7 +150,7 @@ public class Mdr5 extends MdrMapSection {
 				+ sizes.getStrOffSize();
 	}
 
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return cities.size();
 	}
 
@@ -170,6 +170,11 @@ public class Mdr5 extends MdrMapSection {
 		val |= 0x10;
 		val |= 0x100; // mdr20 present
 		return val;
+	}
+
+	protected void releaseMemory() {
+		allCities = null;
+		cities = null;
 	}
 
 	/**
