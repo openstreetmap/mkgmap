@@ -95,16 +95,38 @@ public class Sort {
 		try {
 			ByteBuffer out = encoder.encode(inb);
 			byte[] bval = out.array();
-			byte[] key = new byte[bval.length * 3 * maxExpSize + 3];
 
-			int start = fillKey(Collator.PRIMARY, primary, bval, key, 0);
-			start = fillKey(Collator.SECONDARY, secondary, bval, key, start);
-			fillKey(Collator.TERTIARY, tertiary, bval, key, start);
+			// In theory you could have a string where every character expands into maxExpSize separate characters
+			// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
+			// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
+			// maximum amount.
+			//
+			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
+			// german map this was always enough in tests.
+			byte[] key = new byte[(bval.length + 1 + 2) * 3];
+			try {
+				fillCompleteKey(bval, key);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				// Ok try again with the max possible key size allocated.
+				key = new byte[bval.length * 3 * maxExpSize + 3];
+			}
 
 			return new SrtSortKey<T>(object, key, second);
 		} catch (CharacterCodingException e) {
 			return new SrtSortKey<T>(object, ZERO_KEY);
 		}
+	}
+
+	/**
+	 * Fill in the key from the given byte string.
+	 *
+	 * @param bval The string for which we are creating the sort key.
+	 * @param key The sort key. This will be filled in.
+	 */
+	private void fillCompleteKey(byte[] bval, byte[] key) {
+		int start = fillKey(Collator.PRIMARY, primary, bval, key, 0);
+		start = fillKey(Collator.SECONDARY, secondary, bval, key, start);
+		fillKey(Collator.TERTIARY, tertiary, bval, key, start);
 	}
 
 	/**
