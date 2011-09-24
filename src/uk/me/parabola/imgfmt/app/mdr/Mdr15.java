@@ -55,7 +55,7 @@ public class Mdr15 extends MdrSection {
 			tempFile = File.createTempFile("strings", null, new File("."));
 			tempFile.deleteOnExit();
 
-			stringFile = new BufferedOutputStream(new FileOutputStream(tempFile));
+			stringFile = new BufferedOutputStream(new FileOutputStream(tempFile), 64 * 1024);
 
 			// reserve the string at offset 0 to be the empty string.
 			stringFile.write(0);

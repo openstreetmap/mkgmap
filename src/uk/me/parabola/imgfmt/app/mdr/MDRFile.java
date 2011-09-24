@@ -13,7 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -72,8 +72,7 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
-			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);
-			fileWriter.setMaxSize(Long.MAX_VALUE);
+			ImgFileWriter fileWriter = new FileBackedImgFileWriter(chan);
 			setWriter(fileWriter);
 
 			// Position at the start of the writable area.

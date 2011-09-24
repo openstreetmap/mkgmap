@@ -21,12 +21,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * I want to be able to experiment with different schemes to write out.
+ * Interface for writing structured data to an img file.
  *
- * I am hoping that you do not need to write files with contiguous blocks,
- * however since all maps seem to do that it may not be possible.  Having a block
- * list is then a bit strange.  Perhaps you can but it performs worse so no one
- * does it?
+ * Implementations will have a constructor that passes in a file channel that will eventually
+ * be written to.  If the output is being buffered, then it should be written on a call to sync().
  *
  * @author Steve Ratcliffe
  */
