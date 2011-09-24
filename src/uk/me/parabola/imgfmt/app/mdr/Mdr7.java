@@ -67,6 +67,7 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 			}
 		}
+		//MDRFile.sleep(15);
 		MDRFile.printMem("finish 7", sortedStreets);
 	}
 
