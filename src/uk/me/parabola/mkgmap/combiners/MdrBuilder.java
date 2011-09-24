@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,6 +64,10 @@ public class MdrBuilder implements Combiner {
 	// Push things onto this stack to have them closed in the reverse order.
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
 
+	// We write to a temporary file name, and then rename once all is OK.
+	private File tmpName;
+	private String outputName;
+
 	/**
 	 * Create the mdr file and initialise.
 	 * It has a name that is based on the overview-mapname option, as does
@@ -74,13 +79,19 @@ public class MdrBuilder implements Combiner {
 		String name = args.get("overview-mapname", "osmmap");
 		String outputDir = args.getOutputDir();
 
+		outputName = Utils.joinPath(outputDir, name + "_mdr.img");
+
 		ImgChannel mdrChan;
 		FileSystem fs;
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
 			params.setBlockSize(args.get("block-size", 16384));
-			fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
+
+			tmpName = File.createTempFile("mdr", null, new File(outputDir));
+			tmpName.deleteOnExit();
+
+			fs = ImgFS.createFs(tmpName.getPath(), params);
 			toClose.push(fs);
 
 			// Create the MDR file within the .img
@@ -333,6 +344,8 @@ public class MdrBuilder implements Combiner {
 		// Close everything
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
+
+		tmpName.renameTo(new File(outputName));
 	}
 
 	/**

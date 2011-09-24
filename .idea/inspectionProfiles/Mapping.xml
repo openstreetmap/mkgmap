@@ -372,6 +372,7 @@
     <inspection_tool class="DjangoCloseTagInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DjangoUnresolvedFilterInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DjangoUnresolvedLoadInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="DjangoUnresolvedStaticReferenceInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DjangoUnresolvedTagInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DjangoUnresolvedTemplateReferenceInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Django_close_tag" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -927,13 +928,18 @@
       <group names="y,height,top,bottom" />
       <exclude classes="Math" />
     </inspection_tool>
-    <inspection_tool class="JSUndeclaredVariable" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="JSUndeclaredVariable" enabled="true" level="INFO" enabled_by_default="true">
+      <option name="myCheckGlobalDefinitions" value="false" />
+    </inspection_tool>
     <inspection_tool class="JSUnnecessarySemicolon" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JSUnresolvedFunction" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="JSUnresolvedLibraryURL" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JSUnresolvedVariable" enabled="true" level="INFO" enabled_by_default="true" />
     <inspection_tool class="JSUntypedDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="JSUnusedGlobalSymbols" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JSUnusedGlobalSymbols" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myReportUnusedDefinitions" value="false" />
+      <option name="myReportUnusedProperties" value="true" />
+    </inspection_tool>
     <inspection_tool class="JSUnusedLocalSymbols" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JSValidateJSON" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="JSValidateTypes" enabled="true" level="INFO" enabled_by_default="true" />
