@@ -102,6 +102,15 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
+	 * This is called after all the sections are read in.
+	 * It is called before {@link #finish}. It should be used to release
+	 * any memory that was held during the reading process that is not needed
+	 * any more.
+	 */
+	public void finishFirst() {
+	}
+
+	/**
 	 * This is called after all the sections are read in but before any section is written.
 	 *
 	 * This routine may modify the number of items in the section.  It should also do

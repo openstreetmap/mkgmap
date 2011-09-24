@@ -19,6 +19,7 @@
       <excludeFolder url="file://$MODULE_DIR$/doc" />
       <excludeFolder url="file://$MODULE_DIR$/g" />
       <excludeFolder url="file://$MODULE_DIR$/gmapsupp" />
+      <excludeFolder url="file://$MODULE_DIR$/hprof" />
       <excludeFolder url="file://$MODULE_DIR$/localtest" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
       <excludeFolder url="file://$MODULE_DIR$/samples" />

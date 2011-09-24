@@ -68,6 +68,8 @@ public class Mdr7 extends MdrMapSection {
 			}
 		}
 		MDRFile.printMem("finish 7");
+		//MDRFile.sleep(15);
+		System.out.println("sorted len " + sortedStreets.size()); // XXX Only to keep the variable active
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

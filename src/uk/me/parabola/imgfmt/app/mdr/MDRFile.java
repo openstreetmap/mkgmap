@@ -231,6 +231,11 @@ public class MDRFile extends ImgFile {
 
 		for (MdrSection s : sections) {
 			if (s != null)
+				s.finishFirst();
+		}
+
+		for (MdrSection s : sections) {
+			if (s != null)
 				s.finish();
 		}
 
@@ -373,7 +378,7 @@ public class MDRFile extends ImgFile {
 		//noinspection CallToSystemGC
 		System.gc();
 		try {
-			Thread.sleep(400);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -388,5 +393,15 @@ public class MDRFile extends ImgFile {
 
 		if (used > maxUsed)
 			maxUsed = used;
+	}
+
+	public static void sleep(int sec) {
+		System.out.printf("Sleeping for %d...\n", sec);
+
+		try {
+			Thread.sleep(sec * 1000);
+		} catch (InterruptedException e) {
+			// ignore
+		}
 	}
 }
