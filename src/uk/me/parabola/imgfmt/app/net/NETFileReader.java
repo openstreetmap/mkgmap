@@ -222,8 +222,14 @@ public class NETFileReader extends ImgFile {
 
 		List<Integer> offsets = new ArrayList<Integer>();
 		while (reader.position() < end) {
-			int off = reader.getu3();
-			offsets.add(off);
+			int net1 = reader.getu3();
+
+			// The offset is stored in the bottom 22 bits. The top 2 bits are an index into the list
+			// of lbl pointers in the net1 entry. Since we pick up all the labels at a particular net1
+			// entry we only need one of the offsets so pick the first one.
+			int idx = (net1 >> 22) & 0x3;
+			if (idx == 0)
+				offsets.add(net1 & 0x3fffff);
 		}
 
 		// Sort in address order in the hope of speeding up reading.
