@@ -49,7 +49,7 @@ public class Mdr5 extends MdrMapSection {
 	/**
 	 * Called after all cities to sort and number them.
 	 */
-	public void finish() {
+	public void preWriteImpl() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
 		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(allCities.size());
@@ -93,7 +93,7 @@ public class Mdr5 extends MdrMapSection {
 				lastCity = c;
 			}
 		}
-		MDRFile.printMem("finish 5", sortKeys);
+		MDRFile.printMem("pre write 5", sortKeys);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

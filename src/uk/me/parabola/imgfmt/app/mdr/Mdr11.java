@@ -50,7 +50,7 @@ public class Mdr11 extends MdrMapSection {
 	/**
 	 * Sort, de-dupe and fill in the mdr10 information.
 	 */
-	public void finish() {
+	protected void preWriteImpl() {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
 		// De-duplicate the poi names so that there is only one entry
@@ -71,7 +71,7 @@ public class Mdr11 extends MdrMapSection {
 			mdr10.addPoiType(poi);
 			pois.add(poi);
 		}
-		MDRFile.printMem("finish 11");
+		MDRFile.printMem("pre write 11");
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

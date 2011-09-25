@@ -47,7 +47,7 @@ public class Mdr7 extends MdrMapSection {
 	 * Since we change the number of records by removing some after sorting,
 	 * we sort and de-duplicate here.
 	 */
-	public void finish() {
+	protected void preWriteImpl() {
 		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
 
 		// De-duplicate the street names so that there is only one entry
@@ -68,7 +68,7 @@ public class Mdr7 extends MdrMapSection {
 			}
 		}
 		//MDRFile.sleep(15);
-		MDRFile.printMem("finish 7", sortedStreets);
+		MDRFile.printMem("pre write 7", sortedStreets);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

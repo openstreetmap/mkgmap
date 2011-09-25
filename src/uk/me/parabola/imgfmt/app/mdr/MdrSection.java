@@ -22,6 +22,7 @@ public abstract class MdrSection extends ConfigBase {
 	private PointerSizes sizes;
 	private boolean released;
 	protected int nItems;
+	private boolean sizeValid;
 
 	/**
 	 * Write out the contents of this section.
@@ -91,6 +92,7 @@ public abstract class MdrSection extends ConfigBase {
 	 * @return The number of items in the section.
 	 */
 	public final int getNumberOfItems() {
+		assert sizeValid;
 		if (released)
 			return nItems;
 		else
@@ -118,11 +120,34 @@ public abstract class MdrSection extends ConfigBase {
 	/**
 	 * This is called after all the sections are read in but before any section is written.
 	 *
-	 * This routine may modify the number of items in the section.  It should also do
-	 * anything that is required before writing out, particularly if another section
-	 * is going to depend on the results.
+	 * This is now pretty much redundant and could be replaced with direct calls for sections
+	 * that need it.
 	 */
 	public void finish() {
+	}
+
+	/**
+	 * Called before the section is written and before the actual size of the section
+	 * is required.
+	 *
+	 * Calling it more than once is ok.
+	 *
+	 * The actual work is implemented in the subclass via the {@link #preWriteImpl()} method.
+	 */
+	public final void preWrite() {
+		if (!sizeValid)
+			preWriteImpl();
+		sizeValid = true;
+	}
+
+	/**
+	 * Prepare the final list of items to be written.
+	 * Used to de-duplicate or remove invalid entries from the raw data that was
+	 * saved.
+	 * 
+	 * In particular after this call the number of items must not change.
+	 */
+	protected void preWriteImpl() {
 	}
 
 	public final void release() {
