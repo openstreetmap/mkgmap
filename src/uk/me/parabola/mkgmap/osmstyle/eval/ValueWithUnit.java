@@ -16,8 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 /**
  * Represents a number and the units it is in. We want ultimately to be
@@ -30,9 +32,10 @@ import java.util.regex.Pattern;
  */
 public class ValueWithUnit implements Comparable<ValueWithUnit> {
 	private static final Pattern EXTRACT_NUMBER_UNIT
-			= Pattern.compile("[ \t]*(-?[0-9]+)[ \t]*(.*)");
+			= Pattern.compile("[ \t]*(-?[0-9.]+)[ \t]*(.*)");
+	private static final BigDecimal ZERO = new BigDecimal(0);
 
-	private final int value;
+	private final BigDecimal value;
 	private final String unit;
 
 	private final boolean valid;
@@ -41,13 +44,11 @@ public class ValueWithUnit implements Comparable<ValueWithUnit> {
 		Matcher m = EXTRACT_NUMBER_UNIT.matcher(val);
 		boolean found = m.find();
 		if (found) {
-			// If found is true, then the first group is an integer, so no need
-			// to check.
-			value = Integer.parseInt(m.group(1));
+			value = new BigDecimal(m.group(1));
 			unit = m.group(2).trim();
 			valid = true;
 		} else {
-			value = 0;
+			value = ZERO;
 			unit = val;
 			valid = false;
 		}
@@ -61,8 +62,7 @@ public class ValueWithUnit implements Comparable<ValueWithUnit> {
 	 * To start with, just compare the value and ignore the unit.
 	 */
 	public int compareTo(ValueWithUnit o) {
-		if (value == o.value) return 0;
-		else return value < o.value ? -1 : 1;
+		return value.compareTo(o.value);
 	}
 
 	public boolean isValid() {

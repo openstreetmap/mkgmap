@@ -72,7 +72,7 @@ public class RuleFileReader {
 
 	void load(Reader r, String name) {
 		scanner = new TokenScanner(name, r);
-		scanner.setExtraWordChars("-:");
+		scanner.setExtraWordChars("-:.");
 
 		ExpressionReader expressionReader = new ExpressionReader(scanner);
 		ActionReader actionReader = new ActionReader(scanner);

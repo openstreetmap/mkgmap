@@ -411,6 +411,44 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Test values such as 3.5 in comparisons.
+	 * Originally non-integer values were not allowed and were not even recognised.
+	 */
+	@Test
+	public void testDecimalValues() {
+		RuleSet rs = makeRuleSet("z=yes & a < 3.5 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("z", "yes");
+
+		// Is less than so
+		el.addTag("a", "2");
+		GType type = getFirstType(rs, el);
+		assertNotNull("a is less than 3.5", type);
+
+		el.addTag("a", "4");
+		type = getFirstType(rs, el);
+		assertNull("a is greater than 3.5", type);
+	}
+
+	@Test
+	public void testDecimalAndDecimalCompare() {
+		RuleSet rs = makeRuleSet("z=yes & a < 3.5 [0x1]");
+
+		Way el = new Way(1);
+		el.addTag("z", "yes");
+
+		// Is less than so
+		el.addTag("a", "3.49");
+		GType type = getFirstType(rs, el);
+		assertNotNull("a is less than 3.5", type);
+
+		el.addTag("a", "3.55");
+		type = getFirstType(rs, el);
+		assertNull("a is greater than 3.5", type);
+	}
+
+	/**
 	 * A moderately complex set of conditions and substitutions.
 	 */
 	@Test
