@@ -31,11 +31,7 @@ public class MultiSortKey<T> implements SortKey<T> {
 	}
 
 	public T getObject() {
-		T first = key1.getObject();
-		if (first == null)
-			return key2.getObject();
-		else
-			return first;
+		return key1.getObject();
 	}
 
 	public int compareTo(SortKey<T> o) {

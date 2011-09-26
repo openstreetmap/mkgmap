@@ -24,6 +24,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
 
@@ -84,13 +85,23 @@ public class Sort {
 	 * Using a sort key is more efficient if many comparisons are being done (for example if you are sorting a
 	 * list of strings).
 	 *
-	 *
 	 * @param object This is saved in the sort key for later retrieval and plays no part in the sorting.
 	 * @param s The string for which the sort key is to be created.
 	 * @param second Secondary sort key.
+	 * @param cache A cache for the created keys. This is for saving memory so it is essential that this
+	 * is managed by the caller.
 	 * @return A sort key.
 	 */
-	public <T> SortKey<T> createSortKey(T object, String s, int second) {
+	public <T> SortKey<T> createSortKey(T object, String s, int second, Map<String, byte[]> cache) {
+		// If there is a cache then look up and return the key.
+		// This is primarily for memory management, not for speed.
+		byte[] key;
+		if (cache != null) {
+			key = cache.get(s);
+			if (key != null)
+				return new SrtSortKey<T>(object, key, second);
+		}
+
 		CharBuffer inb = CharBuffer.wrap(s);
 		try {
 			ByteBuffer out = encoder.encode(inb);
@@ -103,7 +114,7 @@ public class Sort {
 			//
 			// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
 			// german map this was always enough in tests.
-			byte[] key = new byte[(bval.length + 1 + 2) * 3];
+			key = new byte[(bval.length + 1 + 2) * 3];
 			try {
 				fillCompleteKey(bval, key);
 			} catch (ArrayIndexOutOfBoundsException e) {
@@ -111,10 +122,21 @@ public class Sort {
 				key = new byte[bval.length * 3 * maxExpSize + 3];
 			}
 
+			if (cache != null)
+				cache.put(s, key);
+
 			return new SrtSortKey<T>(object, key, second);
 		} catch (CharacterCodingException e) {
 			return new SrtSortKey<T>(object, ZERO_KEY);
 		}
+	}
+
+	public <T> SortKey<T> createSortKey(T object, String s, int second) {
+		return createSortKey(object, s, second, null);
+	}
+
+	public <T> SortKey<T> createSortKey(T object, String s) {
+		return createSortKey(object, s, 0, null);
 	}
 
 	/**
@@ -166,10 +188,6 @@ public class Sort {
 
 		outKey[index++] = '\0';
 		return index;
-	}
-
-	public <T> SortKey<T> createSortKey(T object, String s) {
-		return createSortKey(object, s, 0);
 	}
 
 	public byte getPrimary(int ch) {

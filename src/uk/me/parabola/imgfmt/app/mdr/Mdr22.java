@@ -19,8 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.app.srt.IntegerSortKey;
-import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
@@ -51,7 +49,7 @@ public class Mdr22 extends Mdr2x {
 		Sort sort = getConfig().getSort();
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
-		Map<String, SortKey<Mdr7Record>> countryMap = new HashMap<String, SortKey<Mdr7Record>>();
+		Map<String, byte[]> cache = new HashMap<String, byte[]>();
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
@@ -62,16 +60,7 @@ public class Mdr22 extends Mdr2x {
 			// We are sorting the streets, but we are sorting primarily on the
 			// country name associated with the street.
 			// For memory use, we re-use country name part of the key.
-			SortKey<Mdr7Record> key1 = countryMap.get(name);
-			if (key1 == null) {
-				key1 = sort.createSortKey(null, name, 0);
-				countryMap.put(name, key1);
-			}
-
-			SortKey<Mdr7Record> key2 = new IntegerSortKey<Mdr7Record>(s, s.getIndex(), 0);
-
-			MultiSortKey<Mdr7Record> key = new MultiSortKey<Mdr7Record>(key1, key2, null);
-			keys.add(key);
+			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
 		}
 		Collections.sort(keys);
 
@@ -100,8 +89,7 @@ public class Mdr22 extends Mdr2x {
 				lastName = name;
 			}
 		}
-		//MDRFile.sleep(15);
-		MDRFile.printMem("from streets 22", keys);
+		MDRFile.printMem("from streets 22", new Object[] {keys, cache});
 	}
 
 	/**
