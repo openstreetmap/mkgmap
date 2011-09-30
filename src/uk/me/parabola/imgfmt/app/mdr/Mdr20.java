@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.srt.IntegerSortKey;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -46,9 +47,10 @@ public class Mdr20 extends Mdr2x {
 	 * Also have to set the record number of the first record in this section
 	 * on the city.
 	 *
-	 * @param inStreets The list of streets from mdr7.
+	 * @param inStreets The list of streets from mdr7, must have Mdr7.index set.
 	 */
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
+		Sort sort = getConfig().getSort();
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
 		for (Mdr7Record s : inStreets) {
@@ -56,10 +58,18 @@ public class Mdr20 extends Mdr2x {
 			if (city == null)
 				continue;
 
+			String name = city.getName();
+			if (name == null || name.isEmpty())
+				assert false;
+
 			// We are sorting the streets, but we are sorting primarily on the
 			// city name associated with the street, then on the street name.
-			// Since the cities are already sorted, we can use the city index.
-			SortKey<Mdr7Record> key = new IntegerSortKey<Mdr7Record>(s, city.getGlobalCityIndex(), s.getIndex());
+			// The streets are already sorted, with the getIndex() method revealing the sort order
+			SortKey<Mdr7Record> cityKey = sort.createSortKey(s, city.getName());
+			SortKey<Mdr7Record> regionKey = sort.createSortKey(null, city.getRegionName());
+			SortKey<Mdr7Record> countryStreetKey = sort.createSortKey(null, city.getCountryName(), s.getIndex());
+			SortKey<Mdr7Record> key = new MultiSortKey<Mdr7Record>(cityKey, regionKey, countryStreetKey);
+
 			keys.add(key);
 		}
 		Collections.sort(keys);
