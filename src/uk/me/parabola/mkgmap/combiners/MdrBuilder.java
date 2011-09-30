@@ -29,6 +29,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -345,7 +346,13 @@ public class MdrBuilder implements Combiner {
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
 
-		tmpName.renameTo(new File(outputName));
+		// Rename from the temporary file to the proper name.
+		// On windows the target file can not exist, so we are forced to remove it first.
+		File outputName = new File(this.outputName);
+		outputName.delete();
+		boolean ok = tmpName.renameTo(outputName);
+		if (!ok)
+			throw new MapFailedException("Could not create mdr.img file");
 	}
 
 	/**

@@ -19,7 +19,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
@@ -59,15 +58,17 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 */
 	public void sync() throws IOException {
 		file.close();
+
 		FileInputStream is = null;
 		try {
 			is = new FileInputStream(tmpFile);
 			FileChannel channel = is.getChannel();
-			ByteBuffer buffer = channel.map(MapMode.READ_ONLY, 0, channel.size());
-			outputChan.write(buffer);
+			channel.transferTo(0, channel.size(), outputChan);
+			channel.close();
 		} finally {
 			Utils.closeFile(is);
-			tmpFile.delete();
+			if (!tmpFile.delete())
+				System.err.println("Could not delete mdr img temporary file");
 		}
 	}
 
@@ -212,6 +213,7 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 */
 	public long getSize() {
 		try {
+			file.flush();
 			return tmpChannel.size();
 		} catch (IOException e) {
 			throw new MapFailedException("could not get size of mdr tmp file");
