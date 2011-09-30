@@ -36,11 +36,11 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	private final BufferedOutputStream file;
 	private final FileChannel tmpChannel;
 
-	public FileBackedImgFileWriter(ImgChannel chan) {
+	public FileBackedImgFileWriter(ImgChannel chan, File outputDir) {
 		this.outputChan = chan;
 
 		try {
-			tmpFile = File.createTempFile("img", null, new File("."));
+			tmpFile = File.createTempFile("img", null, outputDir);
 			tmpFile.deleteOnExit();
 
 			FileOutputStream out = new FileOutputStream(tmpFile);

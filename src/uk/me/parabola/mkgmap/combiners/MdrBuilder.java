@@ -107,6 +107,7 @@ public class MdrBuilder implements Combiner {
 		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(false);
+		config.setOutputDir(outputDir);
 
 		// Create the sort description
 		Sort sort = createSort(args.getCodePage());

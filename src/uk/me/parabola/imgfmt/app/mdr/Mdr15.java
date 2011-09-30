@@ -52,7 +52,7 @@ public class Mdr15 extends MdrSection {
 		charset = config.getSort().getCharset();
 
 		try {
-			tempFile = File.createTempFile("strings", null, new File("."));
+			tempFile = File.createTempFile("strings", null, config.getOutputDir());
 			tempFile.deleteOnExit();
 
 			stringFile = new BufferedOutputStream(new FileOutputStream(tempFile), 64 * 1024);

@@ -72,7 +72,7 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
-			ImgFileWriter fileWriter = new FileBackedImgFileWriter(chan);
+			ImgFileWriter fileWriter = new FileBackedImgFileWriter(chan, config.getOutputDir());
 			setWriter(fileWriter);
 
 			// Position at the start of the writable area.
