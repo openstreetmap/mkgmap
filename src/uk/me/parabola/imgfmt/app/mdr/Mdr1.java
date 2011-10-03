@@ -80,7 +80,6 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 					return 1;
 			}
 		});
-		MDRFile.printMem("finish 1");
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
