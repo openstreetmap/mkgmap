@@ -93,7 +93,6 @@ public class Mdr5 extends MdrMapSection {
 				lastCity = c;
 			}
 		}
-		MDRFile.printMem("pre write 5", sortKeys);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

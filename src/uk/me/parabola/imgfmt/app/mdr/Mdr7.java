@@ -67,8 +67,6 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 			}
 		}
-		//MDRFile.sleep(15);
-		MDRFile.printMem("pre write 7", sortedStreets);
 	}
 
 	public void writeSectData(ImgFileWriter writer) {
