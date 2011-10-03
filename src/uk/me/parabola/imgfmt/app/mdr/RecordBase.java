@@ -18,14 +18,14 @@ package uk.me.parabola.imgfmt.app.mdr;
  *
  * @author Steve Ratcliffe
  */
-public abstract class RecordBase extends ConfigBase {
-	private int mapIndex;
+public abstract class RecordBase {
+	private short mapIndex;
 
 	public int getMapIndex() {
 		return mapIndex;
 	}
 
 	public void setMapIndex(int mapIndex) {
-		this.mapIndex = mapIndex;
+		this.mapIndex = (short) mapIndex;
 	}
 }

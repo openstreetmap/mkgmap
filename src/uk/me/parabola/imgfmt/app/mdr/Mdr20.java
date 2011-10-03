@@ -15,7 +15,9 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
@@ -52,6 +54,11 @@ public class Mdr20 extends Mdr2x {
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
 		Sort sort = getConfig().getSort();
 
+		// Use a key cache because there are a large number of street names but a much smaller number
+		// of city, region and country names. Therefore we can reuse the memory needed for the keys
+		// most of the time, particularly for the country and region names.
+		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
@@ -64,10 +71,13 @@ public class Mdr20 extends Mdr2x {
 
 			// We are sorting the streets, but we are sorting primarily on the
 			// city name associated with the street, then on the street name.
+			SortKey<Mdr7Record> cityKey = sort.createSortKey(s, city.getName(), 0, cache);
+			SortKey<Mdr7Record> regionKey = sort.createSortKey(null, city.getRegionName(), 0, cache);
 			// The streets are already sorted, with the getIndex() method revealing the sort order
-			SortKey<Mdr7Record> cityKey = sort.createSortKey(s, city.getName());
-			SortKey<Mdr7Record> regionKey = sort.createSortKey(null, city.getRegionName());
-			SortKey<Mdr7Record> countryStreetKey = sort.createSortKey(null, city.getCountryName(), s.getIndex());
+			SortKey<Mdr7Record> countryStreetKey = sort.createSortKey(null, city.getCountryName(), s.getIndex(),
+					cache);
+
+			// Combine all together so we can sort on it.
 			SortKey<Mdr7Record> key = new MultiSortKey<Mdr7Record>(cityKey, regionKey, countryStreetKey);
 
 			keys.add(key);

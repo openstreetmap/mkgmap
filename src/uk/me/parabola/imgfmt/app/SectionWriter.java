@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * A section writer wraps a regular writer so that all the offsets
@@ -79,6 +80,10 @@ public class SectionWriter implements ImgFileWriter {
 
 	public void put(byte[] src, int start, int length) {
 		writer.put(src, start, length);
+	}
+
+	public void put(ByteBuffer src) {
+		writer.put(src);
 	}
 
 	public long getSize() {

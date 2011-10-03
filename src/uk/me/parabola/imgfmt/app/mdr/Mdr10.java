@@ -35,7 +35,7 @@ public class Mdr10 extends MdrMapSection {
 	private static final int MAX_GROUP_NUMBER = 9;
 
 	@SuppressWarnings({"unchecked"})
-	private final List<Mdr10Record>[] poiTypes = new ArrayList[MAX_GROUP_NUMBER+1];
+	private List<Mdr10Record>[] poiTypes = new ArrayList[MAX_GROUP_NUMBER+1];
 
 	private int numberOfPois;
 
@@ -113,12 +113,16 @@ public class Mdr10 extends MdrMapSection {
 		return 0;
 	}
 
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return numberOfPois;
 	}
 
 	public void setNumberOfPois(int numberOfPois) {
 		this.numberOfPois = numberOfPois;
+	}
+
+	protected void releaseMemory() {
+		poiTypes = null;
 	}
 
 	public int getExtraValue() {

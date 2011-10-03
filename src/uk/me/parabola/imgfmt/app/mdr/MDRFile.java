@@ -13,7 +13,7 @@
 package uk.me.parabola.imgfmt.app.mdr;
 
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
-import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
+import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -72,8 +72,7 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
 		if (config.isWritable()) {
-			BufferedImgFileWriter fileWriter = new BufferedImgFileWriter(chan);
-			fileWriter.setMaxSize(Long.MAX_VALUE);
+			ImgFileWriter fileWriter = new FileBackedImgFileWriter(chan, config.getOutputDir());
 			setWriter(fileWriter);
 
 			// Position at the start of the writable area.
@@ -225,6 +224,8 @@ public class MDRFile extends ImgFile {
 	}
 
 	public void write() {
+		mdr15.release();
+		
 		for (MdrSection s : sections) {
 			if (s != null)
 				s.finish();
@@ -242,7 +243,12 @@ public class MDRFile extends ImgFile {
 	 * Write all the sections out.
 	 *
 	 * The order of all the operations in this method is important. The order
-	 * of the sections in the actual
+	 * of the sections in the actual output file doesn't matter at all, so
+	 * they can be re-ordered to suit.
+	 *
+	 * Most of the complexity here is arranging the order of things so that the smallest
+	 * amount of temporary memory is required.
+	 *
 	 * @param writer File is written here.
 	 */
 	private void writeSections(ImgFileWriter writer) {
@@ -250,43 +256,55 @@ public class MDRFile extends ImgFile {
 
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
-		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
-
 		mdr28.buildFromRegions(mdr13.getRegions());
-
 		mdr23.sortRegions(mdr13.getRegions());
 		mdr29.buildFromCountries(mdr14.getCountries());
 		mdr24.sortCountries(mdr14.getCountries());
-
-		mdr20.buildFromStreets(mdr7.getStreets());
-		mdr21.buildFromStreets(mdr7.getStreets());
-		mdr22.buildFromStreets(mdr7.getStreets());
-
-		mdr8.setIndex(mdr7.getIndex());
-		mdr9.setGroups(mdr10.getGroupSizes());
-		mdr12.setIndex(mdr11.getIndex());
-
-		mdr25.sortCities(mdr5.getCities());
-		mdr27.sortCities(mdr5.getCities());
-
-
 		mdr26.sortMdr28(mdr28.getIndex());
 
 		writeSection(writer, 4, mdr4);
+
+		mdr1.preWrite();
+		mdr5.preWrite();
+		mdr20.preWrite();
 
 		// We write the following sections that contain per-map data, in the
 		// order of the subsections of the reverse index that they are associated
 		// with.
 		writeSection(writer, 11, mdr11);
-		writeSection(writer, 10, mdr10);
-		writeSection(writer, 7, mdr7);
-		writeSection(writer, 5, mdr5);
-		writeSection(writer, 6, mdr6);
-		writeSection(writer, 20, mdr20);
-		writeSection(writer, 21, mdr21);
-		writeSection(writer, 22, mdr22);
+		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
+		mdr12.setIndex(mdr11.getIndex());
+		mdr11.release();
 
-		// There is no ordering constraint on the following
+		writeSection(writer, 10, mdr10);
+		mdr9.setGroups(mdr10.getGroupSizes());
+		mdr10.release();
+
+		// mdr7 depends on the size of mdr20, so mdr20 must be built first
+		mdr7.preWrite();
+		mdr20.buildFromStreets(mdr7.getStreets());
+		writeSection(writer, 7, mdr7);
+
+		writeSection(writer, 5, mdr5);
+		mdr25.sortCities(mdr5.getCities());
+		mdr27.sortCities(mdr5.getCities());
+		mdr5.release();
+		writeSection(writer, 6, mdr6);
+
+		writeSection(writer, 20, mdr20);
+		mdr20.release();
+
+		mdr21.buildFromStreets(mdr7.getStreets());
+		writeSection(writer, 21, mdr21);
+		mdr21.release();
+		
+		mdr22.buildFromStreets(mdr7.getStreets());
+		mdr8.setIndex(mdr7.getIndex());
+		mdr7.release();
+		writeSection(writer, 22, mdr22);
+		mdr22.release();
+
+		// The following do not have mdr1 subsections
 		//writeSection(writer, 8, mdr8);
 		writeSection(writer, 9, mdr9);
 		writeSection(writer, 12, mdr12);
@@ -297,6 +315,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 23, mdr23);
 		writeSection(writer, 24, mdr24);
 		writeSection(writer, 25, mdr25);
+		mdr28.preWrite(); // TODO reorder writes below so this is not needed. Changes the output file though
 		writeSection(writer, 26, mdr26);
 		writeSection(writer, 27, mdr27);
 		writeSection(writer, 28, mdr28);
@@ -321,6 +340,7 @@ public class MDRFile extends ImgFile {
 		mdrHeader.setPosition(sectionNumber, writer.position());
 		mdr1.setStartPosition(sectionNumber);
 
+		section.preWrite();
 		if (section instanceof MdrMapSection) {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);

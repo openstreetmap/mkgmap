@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -63,6 +65,10 @@ public class MdrBuilder implements Combiner {
 	// Push things onto this stack to have them closed in the reverse order.
 	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
 
+	// We write to a temporary file name, and then rename once all is OK.
+	private File tmpName;
+	private String outputName;
+
 	/**
 	 * Create the mdr file and initialise.
 	 * It has a name that is based on the overview-mapname option, as does
@@ -74,13 +80,19 @@ public class MdrBuilder implements Combiner {
 		String name = args.get("overview-mapname", "osmmap");
 		String outputDir = args.getOutputDir();
 
+		outputName = Utils.joinPath(outputDir, name + "_mdr.img");
+
 		ImgChannel mdrChan;
 		FileSystem fs;
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
 			params.setBlockSize(args.get("block-size", 16384));
-			fs = ImgFS.createFs(Utils.joinPath(outputDir, name + "_mdr.img"), params);
+
+			tmpName = File.createTempFile("mdr", null, new File(outputDir));
+			tmpName.deleteOnExit();
+
+			fs = ImgFS.createFs(tmpName.getPath(), params);
 			toClose.push(fs);
 
 			// Create the MDR file within the .img
@@ -95,6 +107,7 @@ public class MdrBuilder implements Combiner {
 		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(false);
+		config.setOutputDir(outputDir);
 
 		// Create the sort description
 		Sort sort = createSort(args.getCodePage());
@@ -333,6 +346,14 @@ public class MdrBuilder implements Combiner {
 		// Close everything
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
+
+		// Rename from the temporary file to the proper name.
+		// On windows the target file can not exist, so we are forced to remove it first.
+		File outputName = new File(this.outputName);
+		outputName.delete();
+		boolean ok = tmpName.renameTo(outputName);
+		if (!ok)
+			throw new MapFailedException("Could not create mdr.img file");
 	}
 
 	/**

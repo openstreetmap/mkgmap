@@ -23,7 +23,6 @@ public class Mdr1Record extends RecordBase {
 	private int indexOffset;
 
 	public Mdr1Record(int mapNumber, MdrConfig config) {
-		setConfig(config);
 		this.mapNumber = mapNumber;
 	}
 
@@ -34,8 +33,7 @@ public class Mdr1Record extends RecordBase {
 	 */
 	public void write(ImgFileWriter writer) {
 		writer.putInt(mapNumber);
-		if (!isForDevice())
-			writer.putInt(indexOffset);
+		writer.putInt(indexOffset);
 	}
 
 	public int getMapNumber() {

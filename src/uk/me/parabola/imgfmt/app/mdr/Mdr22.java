@@ -15,7 +15,9 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
@@ -35,7 +37,7 @@ public class Mdr22 extends Mdr2x {
 	}
 
 	/**
-	 * We need to sort the streets by the name of the city. Within a city
+	 * We need to sort the streets by the name of the country. Within a city
 	 * group the streets are ordered by their own index.
 	 *
 	 * Also have to set the record number of the first record in this section
@@ -47,17 +49,18 @@ public class Mdr22 extends Mdr2x {
 		Sort sort = getConfig().getSort();
 
 		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
+		Map<String, byte[]> cache = new HashMap<String, byte[]>();
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
 			if (city == null) continue;
 
 			String name = city.getMdrCountry().getName();
 			assert name != null;
-			
+
 			// We are sorting the streets, but we are sorting primarily on the
 			// country name associated with the street.
-			SortKey<Mdr7Record> key = sort.createSortKey(s, name, s.getIndex());
-			keys.add(key);
+			// For memory use, we re-use country name part of the key.
+			keys.add(sort.createSortKey(s, name, s.getIndex(), cache));
 		}
 		Collections.sort(keys);
 

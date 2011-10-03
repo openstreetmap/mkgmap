@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
  * @author Steve Ratcliffe
  */
 public class Mdr11 extends MdrMapSection {
-	private final List<Mdr11Record> pois = new ArrayList<Mdr11Record>();
+	private List<Mdr11Record> pois = new ArrayList<Mdr11Record>();
 	private Mdr10 mdr10;
 
 	public Mdr11(MdrConfig config) {
@@ -50,7 +50,7 @@ public class Mdr11 extends MdrMapSection {
 	/**
 	 * Sort, de-dupe and fill in the mdr10 information.
 	 */
-	public void finish() {
+	protected void preWriteImpl() {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
 		// De-duplicate the poi names so that there is only one entry
@@ -96,12 +96,12 @@ public class Mdr11 extends MdrMapSection {
 		return sizes.getMapSize() + 6 + sizes.getCitySizeFlagged() + sizes.getStrOffSize();
 	}
 
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return pois.size();
 	}
 
 	public int getNumberOfPois() {
-		return pois.size();
+		return getNumberOfItems();
 	}
 
 	public int getExtraValue() {
@@ -161,5 +161,10 @@ public class Mdr11 extends MdrMapSection {
 
 	public void setMdr10(Mdr10 mdr10) {
 		this.mdr10 = mdr10;
+	}
+
+	public void releaseMemory() {
+		pois = null;
+		mdr10 = null;
 	}
 }

@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.io.File;
+
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
 /**
@@ -29,6 +31,7 @@ public class MdrConfig {
 	private boolean forDevice;
 	private int headerLen = DEFAULT_HEADER_LEN;
 	private Sort sort;
+	private File outputDir;
 
 	/**
 	 * True if we are creating the file, rather than reading it.
@@ -74,5 +77,13 @@ public class MdrConfig {
 
 	public void setSort(Sort sort) {
 		this.sort = sort;
+	}
+
+	public File getOutputDir() {
+		return outputDir;
+	}
+
+	public void setOutputDir(String outputDir) {
+		this.outputDir = new File(outputDir);
 	}
 }

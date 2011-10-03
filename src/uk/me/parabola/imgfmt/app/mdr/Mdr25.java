@@ -95,7 +95,7 @@ public class Mdr25 extends MdrSection {
 	 *
 	 * @return The number of items in the section.
 	 */
-	public int getNumberOfItems() {
+	protected int numberOfItems() {
 		return cities.size();
 	}
 }

@@ -161,6 +161,11 @@ public class BufferedImgFileWriter implements ImgFileWriter {
 		buf.put(src, start, length);
 	}
 
+	public void put(ByteBuffer src) {
+		ensureSize(src.limit());
+		buf.put(src);
+	}
+
 	/**
 	 * Get the size of the file as written.
 	 *

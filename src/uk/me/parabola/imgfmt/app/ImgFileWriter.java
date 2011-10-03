@@ -18,14 +18,13 @@ package uk.me.parabola.imgfmt.app;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
- * I want to be able to experiment with different schemes to write out.
+ * Interface for writing structured data to an img file.
  *
- * I am hoping that you do not need to write files with contiguous blocks,
- * however since all maps seem to do that it may not be possible.  Having a block
- * list is then a bit strange.  Perhaps you can but it performs worse so no one
- * does it?
+ * Implementations will have a constructor that passes in a file channel that will eventually
+ * be written to.  If the output is being buffered, then it should be written on a call to sync().
  *
  * @author Steve Ratcliffe
  */
@@ -93,6 +92,13 @@ public interface ImgFileWriter extends Closeable {
 	 * @param length The number of bytes to write.
 	 */
 	public void put(byte[] src, int start, int length);
+
+	/**
+	 * Write out a complete byte buffer.
+	 *
+	 * @param src The buffer to write.
+	 */
+	public void put(ByteBuffer src);
 
 	/**
 	 * Returns the size of the file.
