@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,8 +108,12 @@ public class Mdr15 extends MdrSection {
 		try {
 			stream = new FileInputStream(tempFile);
 			FileChannel channel = stream.getChannel();
-			ByteBuffer byteBuffer = channel.map(MapMode.READ_ONLY, 0, channel.size());
-			writer.put(byteBuffer);
+			ByteBuffer buf = ByteBuffer.allocate(32 * 1024);
+			while (channel.read(buf) > 0) {
+				buf.flip();
+				writer.put(buf);
+				buf.compact();
+			}
 		} catch (IOException e) {
 			throw new ExitException("Could not write string section of index");
 		} finally {

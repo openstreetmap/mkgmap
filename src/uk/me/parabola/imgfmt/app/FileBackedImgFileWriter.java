@@ -195,12 +195,8 @@ public class FileBackedImgFileWriter implements ImgFileWriter{
 	 */
 	public void put(ByteBuffer src) {
 		try {
-			if (src.hasArray()) {
-				file.write(src.array());
-			} else {
-				file.flush();
-				tmpChannel.write(src);
-			}
+			file.flush();
+			tmpChannel.write(src);
 		} catch (IOException e) {
 			throw new MapFailedException("could not write buffer to mdr tmp file");
 		}
