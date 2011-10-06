@@ -43,15 +43,24 @@ public class ValueWithUnit implements Comparable<ValueWithUnit> {
 	public ValueWithUnit(String val) {
 		Matcher m = EXTRACT_NUMBER_UNIT.matcher(val);
 		boolean found = m.find();
+
+		BigDecimal value = ZERO;
+		String unit = "";
+		boolean ok = false;
+
 		if (found) {
-			value = new BigDecimal(m.group(1));
-			unit = m.group(2).trim();
-			valid = true;
-		} else {
-			value = ZERO;
-			unit = val;
-			valid = false;
+			try {
+				value = new BigDecimal(m.group(1));
+				unit = m.group(2).trim();
+				ok = true;
+			} catch (NumberFormatException e) {
+				ok = false;
+			}
 		}
+		
+		this.value = value;
+		this.unit = unit;
+		this.valid = ok;
 	}
 
 	/**

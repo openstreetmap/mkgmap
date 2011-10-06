@@ -80,4 +80,16 @@ public class ValueWithUnitTest {
 		assertEquals(0, val1.compareTo(val2));
 		assertEquals(0, val2.compareTo(val1));
 	}
+
+	/**
+	 * Test something that looks like a number but has two decimal points.
+	 * Used to cause an exception.
+	 */
+	@Test
+	public void testTwoDPs() {
+		ValueWithUnit val = new ValueWithUnit("de.08315102.reistenhofweg");
+		ValueWithUnit zero = new ValueWithUnit("0");
+		assertEquals(0, val.compareTo(zero));
+		assertFalse(val.isValid());
+	}
 }
