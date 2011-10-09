@@ -98,6 +98,14 @@ public class CodeFunctions {
 		} else if ("simple8".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Simple8Encoder());
+		} else if ("cp932".equals(charset) || "ms932".equals(charset)) {
+			funcs.setEncodingType(ENCODING_FORMAT10);
+			funcs.setEncoder(new AnyCharsetEncoder("ms932"));
+			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
+			Transliterator transliterator = new NullTransliterator();
+			funcs.setTransliterator(transliterator);
+			funcs.setCodepage(932);
+
 		} else {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setDecoder(new AnyCharsetDecoder(charset));
@@ -152,6 +160,10 @@ public class CodeFunctions {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
 			funcs.setDecoder(new Format6Decoder());
+		} else if (codePage == 932) {
+			funcs.setEncodingType(ENCODING_FORMAT10);
+			funcs.setEncoder(new AnyCharsetEncoder("ms932"));
+			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
 		} else if (format == ENCODING_FORMAT9) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			String cpName = "cp" + codePage;
