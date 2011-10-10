@@ -39,9 +39,7 @@ import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
 import uk.me.parabola.mkgmap.general.MapRoad;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 
 /**
@@ -58,8 +56,6 @@ public class MapMaker implements MapProcessor {
 			LoadableMapDataSource src = loadFromFile(args, filename);
 			sort = args.getSort();
 
-			log.info("Making Area POIs for", filename);
-			makeAreaPOIs(args, src);			
 			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
 			return makeMap(args, src);
@@ -149,80 +145,6 @@ public class MapMaker implements MapProcessor {
 		log.info("Finished loading", name);
 		return src;
 	}
-
-	private void makeAreaPOIs(CommandArgs args, LoadableMapDataSource src) {
-		String s = args.get("add-pois-to-areas", null);
-		if (s != null) {
-			
-			MapPointFastFindMap poiMap = new MapPointFastFindMap();
-
-			for (MapPoint point : src.getPoints()) 
-			{
-				if(!point.isRoadNamePOI()) // Don't put road pois in this list
-					poiMap.put(null, point);
-			}
-			
-			for (MapShape shape : src.getShapes()) {
-				String shapeName = shape.getName();
-
-				int pointType = shape.getPoiType();
-				
-				// only make a point if the shape has a name and we know what type of point to make
-				if (pointType == 0)
-					continue;
-
-				
-				// We don't want to add unnamed cities !!
-				if(MapPoint.isCityType(pointType) && shapeName == null)
-					continue;
-				
-				// check if there is not already a poi in that shape 
-							
-				if(poiMap.findPointInShape(shape, pointType, shapeName) == null) {
-					MapPoint newPoint = new MapPoint();
-					
-					newPoint.setName(shapeName);
-					newPoint.setType(pointType);
-
-					copyAddressInformation(shape, newPoint);
-
-					newPoint.setLocation(shape.getLocation()); // TODO use centroid
-
-					src.getPoints().add(newPoint);
-
-					log.info("created POI ", shapeName, "from shape");
-				}
-			}
-		}
-
-	}
-
-	/**
-	 * Copy the address information from a shape to a POI.  Used when creating
-	 * POIs from areas.
-	 *
-	 * @param shape The shape which contains the address information.
-	 * @param newPoint The new point that will receive the address information.
-	 */
-	private void copyAddressInformation(MapShape shape, MapPoint newPoint) {
-		if (shape.getStreet() != null)
-			newPoint.setStreet(shape.getStreet());
-		if (shape.getCity() != null)
-			newPoint.setCity(shape.getCity());
-		if (shape.getZip() != null)
-			newPoint.setZip(shape.getZip());
-		if (shape.getCountry() != null)
-			newPoint.setCountry(shape.getCountry());
-		if (shape.getRegion() != null)
-			newPoint.setRegion(shape.getRegion());
-		if (shape.getPhone() != null)
-			newPoint.setPhone(shape.getPhone());
-		if (shape.getHouseNumber() != null)
-			newPoint.setHouseNumber(shape.getHouseNumber());
-		if (shape.getIsIn() != null)
-			newPoint.setIsIn(shape.getIsIn());
-	}
-
 
 	void makeRoadNamePOIS(CommandArgs args, LoadableMapDataSource src) {
 		String rnp = args.get("road-name-pois", null);

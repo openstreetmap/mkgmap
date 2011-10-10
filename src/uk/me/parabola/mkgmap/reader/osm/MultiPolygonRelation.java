@@ -1,6 +1,20 @@
+/*
+ * Copyright (C) 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.awt.*;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
@@ -15,9 +29,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -40,6 +54,9 @@ public class MultiPolygonRelation extends Relation {
 	public static final String STYLE_FILTER_LINE = "polyline";
 	public static final String STYLE_FILTER_POLYGON = "polygon";
 	
+	/** A tag that is set with value true on each polygon that is created by the mp processing */
+	public static final String MP_CREATED_TAG = "mkgmap:mp_created";
+	
 	private final Map<Long, Way> tileWayMap;
 	private final Map<Long, String> roleMap = new HashMap<Long, String>();
 	private Map<Long, Way> mpPolygons = new HashMap<Long, Way>();
@@ -49,11 +66,16 @@ public class MultiPolygonRelation extends Relation {
 	protected ArrayList<JoinedWay> polygons;
 	protected Set<JoinedWay> intersectingPolygons;
 	
+	protected double largestSize;
+	protected JoinedWay largestOuterPolygon;
+	
 	protected Set<Way> outerWaysForLineTagging;
 	protected Map<String, String> outerTags;
 
 	private final uk.me.parabola.imgfmt.app.Area bbox;
 	protected Area bboxArea;
+	
+	private Coord cOfG = null;
 	
 	/** 
 	 * A point that has a lower or equal squared distance from 
@@ -101,6 +123,19 @@ public class MultiPolygonRelation extends Relation {
 	}
 	
 
+	/**
+	 * Retrieves the center point of this multipolygon. This is set in the 
+	 * {@link #processElements()} methods so it returns <code>null</code> 
+	 * before that. It can also return <code>null</code> in case the 
+	 * multipolygon could not be processed.<br/>
+	 * The returned point may lie outside the multipolygon area. It is just
+	 * the center point of it.
+	 * 
+	 * @return the center point of this multipolygon (maybe <code>null</code>)
+	 */
+	public Coord getCofG() {
+		return cOfG;
+	}
 	
 	/**
 	 * Retrieves the mp role of the given element.
@@ -893,6 +928,20 @@ public class MultiPolygonRelation extends Relation {
 				outerWaysForLineTagging.addAll(currentPolygon.polygon.getOriginalWays());
 			}
 			
+			// calculate the size of the polygon
+			double outerAreaSize = currentPolygon.polygon.getSizeOfArea();
+			if (outerAreaSize > largestSize) {
+				// subtract the holes
+				for (PolygonStatus hole : holes) {
+					outerAreaSize -= hole.polygon.getSizeOfArea();
+				}
+				// is it still larger than the largest known polygon?
+				if (outerAreaSize > largestSize) {
+					largestOuterPolygon = currentPolygon.polygon;
+					largestSize = outerAreaSize;
+				}
+			}
+			
 			// check if the polygon is an outer polygon or 
 			// if there are some holes
 			boolean processPolygon = currentPolygon.outer
@@ -955,7 +1004,8 @@ public class MultiPolygonRelation extends Relation {
 					
 						// mark this polygons so that only polygon style rules are applied
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
-					
+						mpWay.addTag(MP_CREATED_TAG, "true");
+						
 						getMpPolygons().put(mpWay.getId(), mpWay);
 					}
 				}
@@ -996,6 +1046,14 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
+		if (hasTags(this) == false) {
+			// add tags to the multipolygon that are taken from the outer ways
+			// they may be required by some hooks (e.g. Area2POIHook)
+			for (Entry<String, String> tags : outerTags.entrySet()) {
+				addTag(tags.getKey(), tags.getValue());
+			}
+		}
+		
 		// Go through all original outer ways, create a copy, tag them
 		// with the mp tags and mark them only to be used for polyline processing
 		// This enables the style file to decide if the polygon information or
@@ -1004,6 +1062,7 @@ public class MultiPolygonRelation extends Relation {
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
 			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
+			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : outerTags.entrySet()) {
 				lineTagWay.addTag(tag.getKey(), tag.getValue());
 				
@@ -1025,6 +1084,22 @@ public class MultiPolygonRelation extends Relation {
 	protected void postProcessing() {
 		// copy all polygons created by the multipolygon algorithm to the global way map
 		tileWayMap.putAll(mpPolygons);
+		
+		if (largestOuterPolygon != null) {
+			// check if the mp contains a node with role "label" 
+			for (Map.Entry<String, Element> r_e : getElements()) {
+				if (r_e.getValue() instanceof Node && "label".equals(r_e.getKey())) {
+					// yes => use the label node as reference point
+					cOfG = ((Node)r_e.getValue()).getLocation();
+					break;
+				} 
+			}
+			
+			if (cOfG == null) {
+				// use the center of the largest polygon as reference point
+				cOfG = largestOuterPolygon.getCofG();
+			}
+		}
 	}
 	
 	private void runIntersectionCheck(BitSet unfinishedPolys) {
@@ -1154,7 +1229,8 @@ public class MultiPolygonRelation extends Relation {
 		taggedInnerPolygons = null;
 		outerPolygons = null;
 		taggedOuterPolygons = null;
-
+		
+		largestOuterPolygon = null;
 	}
 
 	private CutPoint calcNextCutPoint(AreaCutData areaData) {
@@ -1949,6 +2025,7 @@ public class MultiPolygonRelation extends Relation {
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
 			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
+			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : tags.entrySet()) {
 				lineTagWay.addTag(tag.getKey(), tag.getValue());
 				
@@ -2063,6 +2140,36 @@ public class MultiPolygonRelation extends Relation {
 		return bbox;
 	}
 	
+	/**
+	 * Calculates a unitless number that gives a value for the size
+	 * of the area. The calculation does not correct to any earth 
+	 * coordinate system. It uses the simple rectangular coordinate
+	 * system of garmin coordinates. 
+	 * 
+	 * @param polygon the points of the area
+	 * @return the size of the area (unitless)
+	 */
+	public static double calcAreaSize(List<Coord> polygon) {
+		Way w = new Way(0, polygon);
+		if (w.clockwise() == false) {
+			polygon = new ArrayList<Coord>(polygon);
+			Collections.reverse(polygon);
+		}
+		w = null;
+		double area = 0;
+		Iterator<Coord> polyIter = polygon.iterator();
+		Coord c2 = polyIter.next();
+		while (polyIter.hasNext()) {
+			Coord c1 = c2;
+			c2 = polyIter.next();
+			area += (double) (c2.getLongitude() + c1.getLongitude())
+					* (c1.getLatitude() - c2.getLatitude());
+		}
+		area /= 2.0d;
+		return area;
+	}
+
+
 	/**
 	 * This is a helper class that stores that gives access to the original
 	 * segments of a joined way.
@@ -2233,6 +2340,20 @@ public class MultiPolygonRelation extends Relation {
 
 		public List<Way> getOriginalWays() {
 			return originalWays;
+		}
+		
+		/**
+		 * Retrieves a measurement of the area covered by this polygon. The 
+		 * returned value has no unit. It is just a rough comparable value
+		 * because it uses a rectangular coordinate system without correction.
+		 * @return size of the covered areas (0 if the way is not closed)
+		 */
+		public double getSizeOfArea() {
+			if (isClosed()==false) {
+				return 0;
+			}
+
+			return MultiPolygonRelation.calcAreaSize(getPoints());
 		}
 
 		public String toString() {

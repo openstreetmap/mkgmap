@@ -28,8 +28,6 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class MapShape extends MapLine {// So top code can link objects from here
 
-	private int poiType;
-	
 	public MapShape() {
 	}
 
@@ -44,16 +42,6 @@ public class MapShape extends MapLine {// So top code can link objects from here
 	public void setDirection(boolean direction) {
 		throw new IllegalArgumentException(
 				"can't set a direction on a polygon");
-	}
-	
-	public void setPoiType(int type)
-	{
-		this.poiType = type;
-	}
-	
-	public int getPoiType()
-	{
-		return this.poiType;
 	}
 	
 	/**

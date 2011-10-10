@@ -2,8 +2,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -125,7 +123,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 					positiveCoords.size(), polyType,"coords.");	
 			
 			if (minusCoords.size() > 0) {
-				double area = calcArea(p.getPoints());
+				double area = MultiPolygonRelation.calcAreaSize(p.getPoints());
 				double ratio = ((minusCoords.size() - positiveCoords.size()) * 100000.0d / area);
 				String areaFMT = format.format(area);
 				String ratioFMT = format.format(ratio);
@@ -178,26 +176,6 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		
 		landCoords.clear();
 		seaCoords.clear();
-	}
-
-	private double calcArea(List<Coord> polygon) {
-		Way w = new Way(0, polygon);
-		if (w.clockwise() == false) {
-			polygon = new ArrayList<Coord>(polygon);
-			Collections.reverse(polygon);
-		}
-		w = null;
-		double area = 0;
-		Iterator<Coord> polyIter = polygon.iterator();
-		Coord c2 = polyIter.next();
-		while (polyIter.hasNext()) {
-			Coord c1 = c2;
-			c2 = polyIter.next();
-			area += (double) (c2.getLongitude() + c1.getLongitude())
-					* (c1.getLatitude() - c2.getLatitude());
-		}
-		area /= 2.0d;
-		return area;
 	}
 
 	public boolean isFloodBlocker() {

@@ -554,13 +554,6 @@ public class StyledConverter implements OsmConverter {
 		shape.setPoints(way.getPoints());
 
 		clipper.clipShape(shape, collector);
-		
-		nodeRules.resolveType(way, new TypeResult() {
-			public void add(Element el, GType type) {
-				if(type != null)
-			shape.setPoiType(type.getType());
-			}
-		});
 	}
 
 	private void addPoint(Node node, GType gt) {

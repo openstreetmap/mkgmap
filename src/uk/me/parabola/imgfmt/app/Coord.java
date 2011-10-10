@@ -100,7 +100,11 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public int hashCode() {
-		return latitude+longitude;
+		// Use a factor for latitude to span over the whole integer range:
+		// max lat: 4194304
+		// max lon: 8388608
+		// max hashCode: 2118123520 < 2147483647 (Integer.MAX_VALUE)
+		return 503 * latitude + longitude;
 	}
 
 	public boolean equals(Object obj) {

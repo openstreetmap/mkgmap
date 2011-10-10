@@ -550,6 +550,10 @@ public class ElementSaver {
 		return wayMap;
 	}
 
+	public Map<Long, Relation> getRelations() {
+		return relationMap;
+	}
+	
 	/**
 	 * Get the bounding box.  This is either the one that was explicitly included in the input
 	 * file, or if none was given, the calculated one.
