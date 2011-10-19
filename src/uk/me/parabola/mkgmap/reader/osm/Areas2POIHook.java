@@ -13,7 +13,13 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -40,6 +46,8 @@ import uk.me.parabola.util.EnhancedProperties;
 public class Areas2POIHook extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(Areas2POIHook.class);
 
+	private List<Entry<String,String>> poiPlacementTags; 
+	
 	private ElementSaver saver;
 	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
@@ -51,9 +59,71 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 			return false;
 		}
 		
+		this.poiPlacementTags = getPoiPlacementTags(props);
+		
 		this.saver = saver;
 		
 		return true;
+	}
+	
+	/**
+	 * Reads the tag definitions of the option poi2area-placement-tags from the given properties.
+	 * @param props mkgmap options
+	 * @return the parsed tag definition list
+	 */
+	private List<Entry<String,String>> getPoiPlacementTags(EnhancedProperties props) {
+		List<Entry<String,String>> tagList = new ArrayList<Entry<String,String>>();
+		
+		String placementDefs = props.getProperty("pois-to-areas-placement", "entrance=main;entrance=yes;building=entrance");
+		placementDefs = placementDefs.trim();
+		
+		if (placementDefs.length() == 0) {
+			// the POIs should be placed in the center only
+			// => return an empty list
+			return tagList;
+		}
+		
+		String[] placementDefsParts = placementDefs.split(";");
+		for (String placementDef : placementDefsParts) {
+			int ind = placementDef.indexOf('=');
+			String tagName = null;
+			String tagValue = null;
+			if (ind < 0) {
+				// only the tag is defined => interpret it as tag=*
+				tagName = placementDef;
+				tagValue = null;
+			} else if (ind > 0) {
+				tagName = placementDef.substring(0,ind);
+				tagValue = placementDef.substring(ind+1);
+			} else {
+				log.error("Option pois-to-areas-placement contains a tag that starts with '='. This is not allowed. Ignoring it.");
+				continue;
+			}
+			tagName = tagName.trim();
+			if (tagName.length() == 0) {
+				log.error("Option pois-to-areas-placement contains a whitespace tag  '='. This is not allowed. Ignoring it.");
+				continue;
+			}
+			if (tagValue != null) {
+				tagValue = tagValue.trim();
+				if (tagValue.length() == 0 || "*".equals(tagValue)) {
+					tagValue = null;
+				} 
+			}
+			Entry<String,String> tag = new AbstractMap.SimpleImmutableEntry<String,String>(tagName, tagValue);
+			tagList.add(tag);
+		}
+		return tagList;
+	}
+	
+
+	public Set<String> getUsedTags() {
+		// return all tags defined in the poiPlacementTags
+		Set<String> tags = new HashSet<String>();
+		for (Entry<String,String> poiTag : poiPlacementTags) {
+			tags.add(poiTag.getValue());
+		}
+		return tags;
 	}
 	
 	public void end() {
@@ -63,14 +133,33 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 		log.info("Areas2POIHook finished");
 	}
 	
+	private int getPlacementOrder(Element elem) {
+		for (int order = 0; order < poiPlacementTags.size(); order++) {
+			Entry<String,String> poiTagDef = poiPlacementTags.get(order);
+			String tagValue = elem.getTag(poiTagDef.getKey());
+			if (tagValue != null) {
+				if (poiTagDef.getValue() == null || poiTagDef.getValue().equals(tagValue)) {
+					return order;
+				}
+			}
+		}
+		// no poi tag match
+		return -1;
+	}
+	
 	private void addPOIsToWays() {
-		Set<Coord> labelCoords = new HashSet<Coord>(); 
+		Map<Coord, Integer> labelCoords = new HashMap<Coord, Integer>(); 
 		
-		// save all coords with building=entrance to a map
+		// save all coords with one of the placement tags to a map
 		// so that ways use this coord as its labeling point
-		for (Node n : saver.getNodes().values()) {
-			if ("entrance".equals(n.getTag("building"))) {
-				labelCoords.add(n.getLocation());
+		if (poiPlacementTags.isEmpty() == false) {
+			for (Node n : saver.getNodes().values()) {
+				int order = getPlacementOrder(n);
+				if (order >= 0) {
+					Integer prevOrder = labelCoords.get(n.getLocation());
+					if (prevOrder == null || order < prevOrder.intValue())
+						labelCoords.put(n.getLocation(), order);
+				}
 			}
 		}
 		
@@ -98,14 +187,20 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 			Coord poiCoord = null;
 			// do we have some labeling coords?
 			if (labelCoords.size() > 0) {
+				int poiOrder = Integer.MAX_VALUE;
 				// go through all points of the way and check if one of the coords
 				// is a labeling coord
 				for (Coord c : w.getPoints()) {
-					if (labelCoords.contains(c)) {
+					Integer cOrder = labelCoords.get(c);
+					if (cOrder != null && cOrder.intValue() < poiOrder) {
 						// this coord is a labeling coord
 						// use it for the current way
 						poiCoord = c;
-						break;
+						poiOrder = cOrder;
+						if (poiOrder == 0) {
+							// there is no higher order
+							break;
+						}
 					}
 				}
 			}
@@ -152,5 +247,6 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 		}
 		log.info(mps2POI, "POIs from multipolygons created");
 	}
+
 
 }

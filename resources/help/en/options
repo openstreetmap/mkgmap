@@ -383,11 +383,21 @@ Miscellaneous options:
 	file. Artifical polygons created by multipolyon processing are not used.
 	The POIs are created at the following positions (first rule that applies):
 	   polygons: 
-	       * the first node tagged with building=entrance
+	       * the first node tagged with a tag defined by the pois-to-areas-placement 
+	         option
 	       * the center point  
 	   multipolygons:
 	       * the node with role=label
 	       * the center point of the biggest area
+
+--pois-to-areas-placement[=taglist]
+    A semicolon separated list of tag=value definitions. A POI is placed at the first
+    node of the polygon tagged with the first tag/value pair. If none of the nodes are
+    tagged with the first tag-value pair the first node tagged with the second tag-value
+    pair is used and so on. If none of the tag-value pairs matches or the taglist is empty 
+    the center of the polygon is used.
+    It is possible to define wildcards for tag values like entrance=*.
+    Default: entrance=main;entrance=yes;building=entrance
 
 --generate-sea[=ValueList]
 	Generate sea polygons. ValueList is an optional comma
