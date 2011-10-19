@@ -28,7 +28,7 @@ public class BoundaryConverter implements OsmConverter {
 	
 	@Override
 	public void convertWay(Way way) {
-		if (way.isClosed() && BoundaryElementSaver.isBoundary(way)) {
+		if (BoundaryElementSaver.isBoundary(way)) {
 			java.awt.geom.Area boundArea = new java.awt.geom.Area(Java2DConverter.createArea(way.getPoints()));
 			Boundary boundary = new Boundary(boundArea, way.getEntryIteratable());
 			boundary.getTags().put("mkgmap:boundaryid", "w"+way.getId());

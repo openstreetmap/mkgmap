@@ -1,68 +1,28 @@
 /*
- * Copyright (C) 2009 Bernhard Heibler
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- *  The Locator tries to fill missing country, region, postal code information
+ * Copyright (C) 2006, 2011.
  *
- *	The algorithm works like this:
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
  *
- *	1. Step: Go through all cities an check if they have useful country region info
- *	The best case is if the tags is_in:country and is_in:county are present that's easy.
- *	Some cities have is_in information that can be used. We check for three different 
- *	formats:
- *
- *	County, State, Country, Continent
- *	County, State, Country
- *	Continent, Country, State, County, ...
- *
- *	In "openGeoDb countries" this info is pretty reliable since it was imported from a 
- *	external db into osm. Other countries have very sparse is_in info.
- *
- *	All this cities that have such info will end up in "city" list. All which lack 
- *	such information in "location" list.
- *
- * 	2. Step: Go through the "location" list and check if the is_in info has some relations 
- *	to the cities we have info about.
- *
- *	Especially hamlets often have no full is_in information. They only have one entry in 
- *	is_in that points to the city they belong to. I will check if I can find the name 
- *	of this city in the "City" list. If there are more with the same name I use the 
- *	closest one. If we can't find the exact name I use fuzzy name search. That's a
- *	workaround for german umlaut since sometimes there are used in the tags and
- *	sometimes there are written as ue ae oe. 
- *
- *	3. Step: Do the same like in step 2 once again. This is used to support at least
- *	one level of recursion in is_in relations.
- *
- *  If there is still no info found I use brute force and use the information from the
- *	next city. Has to be used for countries with poor is_in tagging.
- *
- * Author: Bernhard Heibler
- * Create date: 02-Jan-2009
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
-
 package uk.me.parabola.mkgmap.build;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.reader.osm.Tags;
+import uk.me.parabola.util.EnhancedProperties;
 
 public class Locator {
 	private static final Logger log = Logger.getLogger(Locator.class);
@@ -70,53 +30,23 @@ public class Locator {
 	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
+	/** Contains the tags defined by the option name-tag-list */
+	private final List<String> nameTags;
+
 	private final LocatorConfig locConfig = LocatorConfig.get();
 
-	private final Set<String> locationAutofill = new HashSet<String>();
+	private final Set<String> locationAutofill;
 	
 	private static final double MAX_CITY_DIST = 30000;
 
-	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
-	
-	/**
-	 * Parses the parameters of the location-autofill option. Establishes also downwards
-	 * compatibility with the old integer values of location-autofill. 
-	 * @param optionStr the value of location-autofill
-	 * @return the options
-	 */
-	public static Set<String> parseAutofillOption(String optionStr) {
-		if (optionStr == null) {
-			return Collections.emptySet();
-		}
-
-		Set<String> autofillOptions = new HashSet<String>(Arrays.asList(COMMA_OR_SPACE_PATTERN
-				.split(optionStr)));
-
-		// convert the old autofill options to the new parameters
-		if (autofillOptions.contains("0")) {
-			autofillOptions.add("is_in");
-			autofillOptions.remove("0");
-		}
-		if (autofillOptions.contains("1")) {
-			autofillOptions.add("is_in");
-			// PENDING: fuzzy search
-			autofillOptions.remove("1");
-		}
-		if (autofillOptions.contains("2")) {
-			autofillOptions.add("is_in");
-			// PENDING: fuzzy search
-			autofillOptions.add("nearest");
-			autofillOptions.remove("2");
-		}		
-		if (autofillOptions.contains("3")) {
-			autofillOptions.add("is_in");
-			// PENDING: fuzzy search
-			autofillOptions.add("nearest");
-			autofillOptions.remove("3");
-		}	
-		return autofillOptions;
+	public Locator() {
+		this(new EnhancedProperties());
 	}
 	
+	public Locator(EnhancedProperties props) {
+		this.nameTags = LocatorUtil.getNameTags(props);
+		this.locationAutofill = new HashSet<String>(LocatorUtil.parseAutofillOption(props));
+	}
 	
 	public void addCityOrPlace(MapPoint p) 
 	{
@@ -131,7 +61,7 @@ public class Locator {
 		// correct the country name
 		// usually this is the translation from 3letter ISO code to country name
 		if(p.getCountry() != null)
-			p.setCountry(fixCountryString(p.getCountry()));
+			p.setCountry(normalizeCountry(p.getCountry()));
 
 		resolveIsInInfo(p); // Pre-process the is_in field
 
@@ -150,34 +80,80 @@ public class Locator {
 		log.debug("E City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
 	}
 
-			
-	public void setLocationAutofill(Collection<String> autofillOptions) {
-		this.locationAutofill.addAll(autofillOptions);
-	}
-
 	public void setDefaultCountry(String country, String abbr)
 	{
 		locConfig.setDefaultCountry(country, abbr);
 	}
-
-	public String fixCountryString(String country)
+	
+	public String normalizeCountry(String country)
 	{
-		return locConfig.fixCountryString(country);
+		if (country == null) {
+			return null;
+		}
+		
+		String iso = locConfig.getCountryISOCode(country);
+		if (iso != null) {
+			String normedCountryName = locConfig.getCountryName(iso, nameTags);
+			if (normedCountryName != null) {
+				log.debug("Country:",country,"ISO:",iso,"Norm:",normedCountryName);
+				return normedCountryName;
+			}
+		}
+		
+		// cannot find the country in our config => return the country itself
+		log.debug("Country:",country,"ISO:",iso,"Norm:",country);
+		return country;
 	}
 
-	private String isCountry(String country)
-	{
-		return locConfig.isCountry(country);
+	/**
+	 * Checks if the country given by attached tags is already known, adds or completes
+	 * the Locator information about this country and return the three letter ISO code
+	 * (in case the country is known in the LocatorConfig.xml) or the country name.
+	 * 
+	 * @param tags the countries tags
+	 * @return the three letter ISO code or <code>null</code> if ISO code is unknown
+	 */
+	public String addCountry(Tags tags) {
+		synchronized (locConfig) {
+			String iso = getCountryISOCode(tags);
+			if (iso == null) {
+				log.warn("Cannot find iso code for country with tags", tags);
+			} else {
+				locConfig.addCountryWithTags(iso, tags);
+			}
+			return iso;
+		}
 	}
+	
+	private final static String[] PREFERRED_NAME_TAGS = {"name","name:en","int_name"};
+	
+	public String getCountryISOCode(Tags countryTags) {
+		for (String nameTag : PREFERRED_NAME_TAGS) {
+			String nameValue = countryTags.get(nameTag);
+			String isoCode = getCountryISOCode(nameValue);
+			if (isoCode != null) {
+				return isoCode;
+			}
+		}
 
-	public String getCountryCode(String country)
+		for (String countryStr : countryTags.getTagsWithPrefix("name:", false)
+				.values()) {
+			String isoCode = getCountryISOCode(countryStr);
+			if (isoCode != null) {
+				return isoCode;
+			}
+		}
+		return null;
+	}
+	
+	public String getCountryISOCode(String country)
 	{
-		return locConfig.getCountryCode(country);
+		return locConfig.getCountryISOCode(country);
 	}
 
 	public int getPOIDispFlag(String country)
 	{
-		return locConfig.getPoiDispFlag(country);
+		return locConfig.getPoiDispFlag(getCountryISOCode(country));
 	}
 
 	private boolean isContinent(String continent)
@@ -216,11 +192,11 @@ public class Locator {
 			{
 				if (p.getCountry() == null) {
 					// The one before continent should be the country
-					p.setCountry(fixCountryString(cityList[cityList.length-2].trim()));
+					p.setCountry(normalizeCountry(cityList[cityList.length-2].trim()));
 				}
 				
 				// aks the config which info to use for region info				
-				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
+				int offset = locConfig.getRegionOffset(getCountryISOCode(p.getCountry())) + 1;
 
 				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[cityList.length-(offset+1)].trim());
@@ -233,10 +209,10 @@ public class Locator {
 			{
 				if (p.getCountry() == null) {
 					// The one before continent should be the country
-					p.setCountry(fixCountryString(cityList[1].trim()));
+					p.setCountry(normalizeCountry(cityList[1].trim()));
 				}
 				
-				int offset = locConfig.getRegionOffset(p.getCountry()) + 1;
+				int offset = locConfig.getRegionOffset(getCountryISOCode(p.getCountry())) + 1;
 
 				if(cityList.length > offset && p.getRegion() == null)
 					p.setRegion(cityList[offset].trim());
@@ -247,14 +223,12 @@ public class Locator {
 			if(p.getCountry() == null && cityList.length > 0)
 			{
 				// I don't like to check for a list of countries but I don't want other stuff in country field
-
-				String countryStr = isCountry(cityList[cityList.length-1]);
-
-				if(countryStr != null)
+				String isoCode = locConfig.getCountryISOCode(cityList[cityList.length-1]);
+				if (isoCode != null)
 				{	
-					p.setCountry(countryStr);
+					p.setCountry(normalizeCountry(isoCode));
 
-					int offset = locConfig.getRegionOffset(countryStr) + 1;
+					int offset = locConfig.getRegionOffset(isoCode) + 1;
 
 					if(cityList.length > offset && p.getRegion() == null)
 						p.setRegion(cityList[cityList.length-(offset+1)].trim());	

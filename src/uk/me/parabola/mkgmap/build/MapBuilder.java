@@ -100,7 +100,7 @@ public class MapBuilder implements Configurable {
 
 	private boolean doRoads;
 
-	private final Locator locator = new Locator();
+	private Locator locator;
 
 	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
 
@@ -128,6 +128,7 @@ public class MapBuilder implements Configurable {
 
 	public MapBuilder() {
 		regionName = null;
+		locator = new Locator();
 	}
 
 	public void config(EnhancedProperties props) {
@@ -153,7 +154,7 @@ public class MapBuilder implements Configurable {
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
 		
-		locator.setLocationAutofill(Locator.parseAutofillOption(props.getProperty("location-autofill", "bounds")));
+		locator = new Locator(props);
 	}
 
 	/**
@@ -255,12 +256,12 @@ public class MapBuilder implements Configurable {
 
 				String countryStr = p.getCountry();
 				if (countryStr != null) {
-					countryStr = locator.fixCountryString(countryStr);
+					countryStr = locator.normalizeCountry(countryStr);
 					p.setCountry(countryStr);
 				}
 
 				if(countryStr != null) {
-					thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
+					thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
 				} else
 					thisCountry = getDefaultCountry();
 
@@ -293,7 +294,7 @@ public class MapBuilder implements Configurable {
 				String cityName = line.getCity();
 				String cityCountryName = line.getCountry();
 				if (cityCountryName != null) {
-					cityCountryName = locator.fixCountryString(cityCountryName);
+					cityCountryName = locator.normalizeCountry(cityCountryName);
 					line.setCountry(cityCountryName);
 				}
 				String cityRegionName  = line.getRegion();
@@ -319,7 +320,7 @@ public class MapBuilder implements Configurable {
 
 				if(cityName != null) {
 
-					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryCode(cityCountryName));
+					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryISOCode(cityCountryName));
 
 					Region cr = (cityRegionName == null)? getDefaultRegion() : lbl.createRegion(cc, cityRegionName, null);
 
@@ -362,7 +363,7 @@ public class MapBuilder implements Configurable {
 				String cityStr    = p.getCity();
 
 				if(countryStr != null)
-					countryStr = locator.fixCountryString(countryStr);
+					countryStr = locator.normalizeCountry(countryStr);
 
 				if(countryStr == null || regionStr == null || (zipStr == null && cityStr == null))
 				{
@@ -415,7 +416,7 @@ public class MapBuilder implements Configurable {
 					Country thisCountry;
 
 					if(countryStr != null)
-						thisCountry = lbl.createCountry(countryStr, locator.getCountryCode(countryStr));
+						thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
 					else
 						thisCountry = getDefaultCountry();
 

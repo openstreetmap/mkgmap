@@ -15,7 +15,6 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,6 +33,7 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.Locator;
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.reader.osm.boundary.Boundary;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil;
 import uk.me.parabola.util.ElementQuadTree;
@@ -45,13 +45,11 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 
 	private ElementSaver saver;
 	private final List<String> nameTags = new ArrayList<String>();
-	private final Locator locator = new Locator();
+	private Locator locator;
 	private final Set<String> autofillOptions = new HashSet<String>();
 	
 	private File boundaryDir;
 
-	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern
-			.compile("[,\\s]+");
 	private static final Pattern COMMA_OR_SEMICOLON_PATTERN = Pattern
 			.compile("[,;]+");
 	
@@ -80,17 +78,18 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			return false;
 		}
 
+		this.locator = new Locator(props);
+		
 		this.saver = saver;
 
-		autofillOptions.addAll(Locator.parseAutofillOption(props.getProperty("location-autofill", "bounds")));
+		autofillOptions.addAll(LocatorUtil.parseAutofillOption(props));
 
 		if (autofillOptions.isEmpty()) {
 			log.info("Disable LocationHook because no location-autofill option set.");
 			return false;
 		}
 		
-		String nameTagProp = props.getProperty("name-tag-list", "name");
-		nameTags.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp)));
+		nameTags.addAll(LocatorUtil.getNameTags(props));
 
 		if (autofillOptions.contains(BOUNDS_OPTION)) {
 
@@ -165,17 +164,13 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 
 			if ("2".equals(b.getTags().get("admin_level"))) {
-				log.info("Input country: " + name);
-				String lowercaseName = name;
-				name = locator.fixCountryString(name);
-				log.info("Fixed country: " + name);
-				String cCode = locator.getCountryCode(name);
-				if (cCode != null) {
-					name = cCode;
+				String isoCode = locator.addCountry(b.getTags());
+				if (isoCode != null) {
+					name = isoCode;
 				} else {
-					log.error("Country name "+lowercaseName+" not in locator config. Country may not be assigned correctly.");
+					log.warn("Country name",name,"not in locator config. Country may not be assigned correctly.");
 				}
-				log.info("Coded: " + name);
+				log.debug("Coded:",name);
 			}
 			if (name != null)
 				b.getTags().put("mkgmap:bname", name);
@@ -400,7 +395,30 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	}
 
 
+	/** 
+	 * These tags are used to retrieve the name of admin_level=2 boundaries. They need to
+	 * be handled special because their name is changed to the 3 letter ISO code using
+	 * the Locator class and the LocatorConfig.xml file. 
+	 */
+	private static final String[] LEVEL2_NAMES = new String[]{"name","name:en","int_name"};
+	
 	private String getName(Tags tags) {
+		if ("2".equals(tags.get("admin_level"))) {
+			for (String enNameTag : LEVEL2_NAMES)
+			{
+				String nameTagValue = tags.get(enNameTag);
+				if (nameTagValue == null) {
+					continue;
+				}
+
+				String[] nameParts = COMMA_OR_SEMICOLON_PATTERN.split(nameTagValue);
+				if (nameParts.length == 0) {
+					continue;
+				}
+				return nameParts[0].trim().intern();
+			}
+		}
+		
 		for (String nameTag : nameTags) {
 			String nameTagValue = tags.get(nameTag);
 			if (nameTagValue == null) {
@@ -419,7 +437,10 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	private String getZip(Tags tags) {
 		String zip = tags.get("postal_code");
 		if (zip == null) {
-			String name = getName(tags);
+			String name = tags.get("name"); 
+			if (name == null) {
+				name = getName(tags);
+			}
 			if (name != null) {
 				String[] nameParts = name.split(Pattern.quote(" "));
 				if (nameParts.length > 0) {
@@ -462,6 +483,18 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			if (admCmp != 0) {
 				return admCmp;
 			}
+			
+			if (getAdminLevel(adminLevel1) == 2) {
+				// prefer countries that are known by the Locator
+				String iso1 = locator.getCountryISOCode(o1.getTags());
+				String iso2 = locator.getCountryISOCode(o2.getTags());
+				if (iso1 != null && iso2 == null) {
+					return 1;
+				} else if (iso1==null && iso2 != null) {
+					return -1;
+				}
+			}
+			
 			boolean post1set = getZip(o1.getTags()) != null;
 			boolean post2set = getZip(o2.getTags()) != null;
 			
@@ -471,27 +504,23 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				return (post2set ? -1 : 0);
 			}
 		}
+		
+		private static final int UNSET_ADMIN_LEVEL = 100;
+		
+		private int getAdminLevel(String level) {
+			if (level == null) {
+				return UNSET_ADMIN_LEVEL;
+			}
+			try {
+				return Integer.valueOf(level);
+			} catch (NumberFormatException nfe) {
+				return UNSET_ADMIN_LEVEL;
+			}
+		}
 
 		public int compareAdminLevels(String level1, String level2) {
-			if (level1 == null) {
-				level1 = "100";
-			}
-			if (level2 == null) {
-				level2 = "100";
-			}
-
-			int l1 = 100;
-			try {
-				l1 = Integer.valueOf(level1);
-			} catch (NumberFormatException nfe) {
-			}
-
-			int l2 = 100;
-			try {
-				l2 = Integer.valueOf(level2);
-			} catch (NumberFormatException nfe) {
-			}
-
+			int l1 = getAdminLevel(level1);
+			int l2 = getAdminLevel(level2);
 			if (l1 == l2) {
 				return 0;
 			} else if (l1 > l2) {
