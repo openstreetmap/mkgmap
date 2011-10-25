@@ -199,6 +199,9 @@ public class OsmBinHandler extends OsmHandler {
 						el = saver.getWay(mid);
 					} else if (binRel.getTypes(j) == Osmformat.Relation.MemberType.RELATION) {
 						el = saver.getRelation(mid);
+						if (el == null) {
+							saver.deferRelation(mid, rel, role);
+						}
 					} else {
 						assert false;
 					}
