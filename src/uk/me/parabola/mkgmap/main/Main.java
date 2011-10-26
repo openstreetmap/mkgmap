@@ -72,8 +72,6 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
-	private final MapProcessor maker = new MapMaker();
-
 	private final List<Thread> preparers = new ArrayList<Thread>();
 	
 	// Final .img file combiners.
@@ -232,7 +230,7 @@ public class Main implements ArgumentProcessor {
 	private MapProcessor mapMaker(String ext) {
 		MapProcessor mp = processMap.get(ext);
 		if (mp == null)
-			mp = maker;
+			mp = new MapMaker();
 		return mp;
 	}
 
