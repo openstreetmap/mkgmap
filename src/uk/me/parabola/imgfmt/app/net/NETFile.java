@@ -95,7 +95,6 @@ public class NETFile extends ImgFile {
 	}
 
 	private List<LabeledRoadDef> sortRoads2(ImgFileWriter rgn) {
-		// Create sort keys for each Label,RoadDef pair
 		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
 
 		Map<String, byte[]> cache = new HashMap<String, byte[]>();
@@ -131,22 +130,59 @@ public class NETFile extends ImgFile {
 		String lastName = null;
 		City lastCity = null;
 		RoadDef lastRoad = null;
+		List<LabeledRoadDef> same = new ArrayList<LabeledRoadDef>();
 		for (SortKey<LabeledRoadDef> key : sortKeys) {
 			LabeledRoadDef lrd = key.getObject();
 
 			String name = lrd.label.getText();
 			RoadDef road = lrd.roadDef;
 			City city = road.getCity();
+
 			if (!name.equals(lastName) || city != lastCity || !road.sameDiv(lastRoad)) {
+
+				addDisconnected(same, out);
+				same = new ArrayList<LabeledRoadDef>();
+				same.add(lrd);
+
 				out.add(lrd);
 
 				lastName = name;
 				lastCity = city;
 				lastRoad = road;
+			} else {
+				same.add(lrd);
 			}
 		}
 
+		addDisconnected(same, out);
+
 		return out;
+	}
+
+	private void addDisconnected(List<LabeledRoadDef> same, List<LabeledRoadDef> out) {
+		int[] cons = new int[same.size()];
+		for (int i = 0; i < cons.length; i++)
+			cons[i] = i;
+		
+		for (int current = 0; current < cons.length; current++) {
+			LabeledRoadDef first = same.get(current);
+
+			for (int i = 0; i < cons.length; i++) {
+				if (i == current ) continue;
+				RoadDef other = same.get(i).roadDef;
+				if (first.roadDef.connectedTo(other, 0))
+					cons[current] = cons[i] = Math.min(cons[current], cons[i]);
+			}
+		}
+
+		int last = 0;
+		for (int i = 1; i < cons.length; i++) {
+			if (cons[i] > last) {
+				LabeledRoadDef lrd = same.get(i);
+				out.add(lrd);
+				last = cons[i];
+			}
+		}
 	}
 
 	private List<LabeledRoadDef> sortRoads(ImgFileWriter rgn) {

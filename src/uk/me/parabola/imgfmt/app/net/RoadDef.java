@@ -317,7 +317,6 @@ public class RoadDef implements Comparable<RoadDef> {
 		return roadIndexes.lastKey();
 	}
 
-	@Deprecated // TODO remove
 	public boolean connectedTo(RoadDef other, int level) {
 		List<RoadIndex> l = roadIndexes.get(level);
 		if(l == null)
