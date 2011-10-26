@@ -61,32 +61,30 @@ public class NETFile extends ImgFile {
 		}
 	}
 
-	public void writePost(ImgFileWriter rgn, boolean sortRoads) {
+	public void writePost(ImgFileWriter rgn) {
 		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
 
 		// Create sort keys for each Label,RoadDef pair
 		for (RoadDef rd : roads) {
 			rd.writeRgnOffsets(rgn);
-			if(sortRoads) {
-				Label[] l = rd.getLabels();
-				for(int i = 0; i < l.length && l[i] != null; ++i) {
-					if(l[i].getLength() != 0) {
-						SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), l[i].getText());
-						sortKeys.add(sortKey);
-					}
+			Label[] l = rd.getLabels();
+			for(int i = 0; i < l.length && l[i] != null; ++i) {
+				if(l[i].getLength() != 0) {
+					SortKey<LabeledRoadDef> sortKey = sort.createSortKey(new LabeledRoadDef(l[i], rd), l[i].getText());
+					sortKeys.add(sortKey);
 				}
 			}
 		}
 
-		if(!sortKeys.isEmpty()) {
-			Collections.sort(sortKeys);
+		Collections.sort(sortKeys);
 
-			List<LabeledRoadDef> sortedRoadDefs = simplifySortedRoads(new LinkedList<SortKey<LabeledRoadDef>>(sortKeys));
+		List<LabeledRoadDef> sortedRoadDefs = simplifySortedRoads(new LinkedList<SortKey<LabeledRoadDef>>(sortKeys));
 
-			ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
-			for(LabeledRoadDef labeledRoadDef : sortedRoadDefs) {
+		ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
+		try {
+			for(LabeledRoadDef labeledRoadDef : sortedRoadDefs)
 				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
-			}
+		} finally {
 			Utils.closeFile(writer);
 		}
 

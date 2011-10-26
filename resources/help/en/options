@@ -518,10 +518,5 @@ Miscellaneous options:
 	filling of missing information could be enabled using the
 	"location-autofill" option.
 
---no-sorted-roads
-	Suppress the normal generation of sorted road data. This will
-	make the map quicker to build but the find address or
-	intersection functions will be lost.
-
 --verbose
 	Makes some operations more verbose. Mostly used with --list-styles.

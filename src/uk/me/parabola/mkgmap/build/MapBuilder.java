@@ -119,7 +119,6 @@ public class MapBuilder implements Configurable {
 
 	private boolean	poiAddresses = true;
 	private int		poiDisplayFlags;
-	private boolean sortRoads = true;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex;
 	private int routeCenterBoundaryType;
@@ -148,9 +147,6 @@ public class MapBuilder implements Configurable {
 
 		if(props.getProperty("no-poi-address", null) != null)
 			poiAddresses = false;
-
-		if(props.getProperty("no-sorted-roads", null) != null)
-			sortRoads = false;
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
 		
@@ -207,7 +203,7 @@ public class MapBuilder implements Configurable {
 			if (nodFile != null) {
 				nodFile.writePost();
 			}
-			netFile.writePost(rgnFile.getWriter(), sortRoads);
+			netFile.writePost(rgnFile.getWriter());
 		}
 	}
 	
@@ -252,7 +248,6 @@ public class MapBuilder implements Configurable {
 		{
 			if(p.isCity() && p.getName() != null)
 			{
-				Country thisCountry;
 
 				String countryStr = p.getCountry();
 				if (countryStr != null) {
@@ -260,6 +255,7 @@ public class MapBuilder implements Configurable {
 					p.setCountry(countryStr);
 				}
 
+				Country thisCountry;
 				if(countryStr != null) {
 					thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
 				} else
