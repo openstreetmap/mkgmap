@@ -18,8 +18,10 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -27,6 +29,8 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
+import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
+import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -62,11 +66,94 @@ public class NETFile extends ImgFile {
 	}
 
 	public void writePost(ImgFileWriter rgn) {
+		for (RoadDef rd : roads)
+			rd.writeRgnOffsets(rgn);
+
+		long start;
+
+		start = System.currentTimeMillis();
+		List<LabeledRoadDef> r2 = sortRoads2(rgn);
+		System.out.printf("Time 2: %.2fs, nroads=%d/%d\n", (System.currentTimeMillis() - start)/1000.0, roads.size(),
+				r2.size());
+
+		start = System.currentTimeMillis();
+		List<LabeledRoadDef> sortedRoadDefs = sortRoads(rgn);
+		System.out.printf("Time 1: %.2fs, nroads=%d/%d\n", (System.currentTimeMillis() - start)/1000.0, roads.size(),
+				sortedRoadDefs.size());
+
+		sortedRoadDefs =r2;
+		
+		ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
+		try {
+			for(LabeledRoadDef labeledRoadDef : sortedRoadDefs)
+				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
+		} finally {
+			Utils.closeFile(writer);
+		}
+
+		getHeader().writeHeader(getWriter());
+	}
+
+	private List<LabeledRoadDef> sortRoads2(ImgFileWriter rgn) {
+		// Create sort keys for each Label,RoadDef pair
+		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
+
+		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+
+		for (RoadDef rd : roads) {
+			Label[] labels = rd.getLabels();
+			for (int i = 0; i < labels.length && labels[i] != null; ++i) {
+				Label label = labels[i];
+				if (label.getLength() != 0) {
+					LabeledRoadDef lrd = new LabeledRoadDef(label, rd);
+					SortKey<LabeledRoadDef> sortKey = sort.createSortKey(lrd, label.getText(), 0, cache);
+
+					// If there is a city add it to the sort.
+					City city = rd.getCity();
+					if (city != null) {
+						int region = city.getRegionNumber();
+						int country = city.getCountryNumber();
+						SortKey<LabeledRoadDef> cityKey = sort.createSortKey(null, city.getName(),
+								(region & 0xffff) << 16 | (country & 0xffff), cache);
+						sortKey = new MultiSortKey<LabeledRoadDef>(sortKey, cityKey, null);
+					}
+
+					sortKey = new CombinedSortKey<LabeledRoadDef>(sortKey, rd.getStartSubdivNumber(), 0);
+					sortKeys.add(sortKey);
+				}
+			}
+		}
+
+		Collections.sort(sortKeys);
+
+		List<LabeledRoadDef> out = new ArrayList<LabeledRoadDef>(sortKeys.size());
+
+		String lastName = null;
+		City lastCity = null;
+		RoadDef lastRoad = null;
+		for (SortKey<LabeledRoadDef> key : sortKeys) {
+			LabeledRoadDef lrd = key.getObject();
+
+			String name = lrd.label.getText();
+			RoadDef road = lrd.roadDef;
+			City city = road.getCity();
+			if (!name.equals(lastName) || city != lastCity || !road.sameDiv(lastRoad)) {
+				out.add(lrd);
+
+				lastName = name;
+				lastCity = city;
+				lastRoad = road;
+			}
+		}
+
+		return out;
+	}
+
+	private List<LabeledRoadDef> sortRoads(ImgFileWriter rgn) {
 		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
 
 		// Create sort keys for each Label,RoadDef pair
 		for (RoadDef rd : roads) {
-			rd.writeRgnOffsets(rgn);
 			Label[] l = rd.getLabels();
 			for(int i = 0; i < l.length && l[i] != null; ++i) {
 				if(l[i].getLength() != 0) {
@@ -78,17 +165,7 @@ public class NETFile extends ImgFile {
 
 		Collections.sort(sortKeys);
 
-		List<LabeledRoadDef> sortedRoadDefs = simplifySortedRoads(new LinkedList<SortKey<LabeledRoadDef>>(sortKeys));
-
-		ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
-		try {
-			for(LabeledRoadDef labeledRoadDef : sortedRoadDefs)
-				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
-		} finally {
-			Utils.closeFile(writer);
-		}
-
-		getHeader().writeHeader(getWriter());
+		return simplifySortedRoads(new LinkedList<SortKey<LabeledRoadDef>>(sortKeys));
 	}
 
 	public void setNetwork(List<RoadDef> roads) {

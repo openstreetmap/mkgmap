@@ -317,6 +317,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		return roadIndexes.lastKey();
 	}
 
+	@Deprecated // TODO remove
 	public boolean connectedTo(RoadDef other, int level) {
 		List<RoadIndex> l = roadIndexes.get(level);
 		if(l == null)
@@ -330,6 +331,14 @@ public class RoadDef implements Comparable<RoadDef> {
 				if(ri.getLine().sharesNodeWith(ori.getLine()))
 					return true;
 		return false;
+	}
+
+	public boolean sameDiv(RoadDef other) {
+		return getStartSubdivNumber() == other.getStartSubdivNumber();
+	}
+
+	public int getStartSubdivNumber() {
+		return roadIndexes.get(0).get(0).getLine().getSubdiv().getNumber();
 	}
 
 	/**
