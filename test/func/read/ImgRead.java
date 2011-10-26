@@ -32,6 +32,6 @@ public class ImgRead {
 		MapReader mr = new MapReader(Utils.joinPath(Args.TEST_RESOURCE_IMG, Args.DEF_MAP_FILENAME3));
 		List<RoadDef> roads = mr.getRoads();
 
-		assertEquals("number of roads", 1538, roads.size());
+		assertEquals("number of roads", 1355, roads.size());
 	}
 }
