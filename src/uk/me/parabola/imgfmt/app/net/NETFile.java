@@ -82,7 +82,10 @@ public class NETFile extends ImgFile {
 
 		ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
 		try {
-			for(LabeledRoadDef labeledRoadDef : sortRoads())
+			long start = System.currentTimeMillis();
+			List<LabeledRoadDef> labeledRoadDefs = sortRoads();
+			System.out.printf("Time: %.2fs %d", (System.currentTimeMillis() - start)/1000.0, labeledRoadDefs.size());
+			for (LabeledRoadDef labeledRoadDef : labeledRoadDefs)
 				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
 		} finally {
 			Utils.closeFile(writer);
@@ -187,7 +190,9 @@ public class NETFile extends ImgFile {
 	 * Take a set of roads with the same name/city etc and find sets of roads that do not
 	 * connect with each other. One of the members of each set is added to the road list.
 	 *
-	 * This is not perfect, but it creates extra entries rather than too few.
+	 * Although this is much faster than the previous method, it is still slow for large
+	 * numbers of roads. The real key is to limit by subdivision, since subdivisions can
+	 * only have a limited number of roads in them.
 	 *
 	 * @param in A list of duplicate roads.
 	 * @param out The list of sorted roads. Any new road is added to this.
@@ -200,16 +205,27 @@ public class NETFile extends ImgFile {
 			groups[i] = i;
 
 		// Go through pairs of roads, any that are connected we mark with the same (lowest) group number.
-		for (int current = 0; current < groups.length; current++) {
-			LabeledRoadDef first = in.get(current);
+		boolean done;
+		int count = 0;
+		do {
+			count++;
+			System.out.println("count " + count);
+			done = true;
+			for (int current = 0; current < groups.length; current++) {
+				RoadDef first = in.get(current).roadDef;
 
-			for (int i = 0; i < groups.length; i++) {
-				if (i == current ) continue;
-				RoadDef other = in.get(i).roadDef;
-				if (first.roadDef.connectedTo(other, 0))
-					groups[current] = groups[i] = Math.min(groups[current], groups[i]);
+				for (int i = current; i < groups.length; i++) {
+					// If the groups are already the same, then no need to test
+					if (groups[current] == groups[i])
+						continue;
+
+					if (first.connectedTo(in.get(i).roadDef)) {
+						groups[current] = groups[i] = Math.min(groups[current], groups[i]);
+						done = false;
+					}
+				}
 			}
-		}
+		} while (!done);
 
 		// Output the first road in each group
 		int last = 0;

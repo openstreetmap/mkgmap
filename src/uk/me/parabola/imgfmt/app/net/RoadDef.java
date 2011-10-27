@@ -317,11 +317,12 @@ public class RoadDef implements Comparable<RoadDef> {
 		return roadIndexes.lastKey();
 	}
 
-	public boolean connectedTo(RoadDef other, int level) {
-		List<RoadIndex> l = roadIndexes.get(level);
+	public boolean connectedTo(RoadDef other) {
+		List<RoadIndex> l = roadIndexes.get(0);
 		if(l == null)
 			return false;
-		List<RoadIndex> ol = other.roadIndexes.get(level);
+
+		List<RoadIndex> ol = other.roadIndexes.get(0);
 		if(ol == null)
 			return false;
 

@@ -250,13 +250,12 @@ public class Polyline extends MapObject {
 	}
 
 	public boolean sharesNodeWith(Polyline other) {
-		for(Coord p1 : points) {
-			long p1Id = p1.getId();
-			if(p1Id != 0) {
+		for (Coord p1 : points) {
+			if (p1.getId() != 0) {
 				// point is a node, see if the other line contain the
 				// same node
-				for(Coord p2 : other.points)
-					if(p2.getId() == p1Id)
+				for (Coord p2 : other.points)
+					if (p1.getId() == p2.getId())
 						return true;
 			}
 		}
