@@ -102,10 +102,8 @@ public class CodeFunctions {
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new AnyCharsetEncoder("ms932"));
 			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
-			Transliterator transliterator = new NullTransliterator();
-			funcs.setTransliterator(transliterator);
+			funcs.setTransliterator(new SparseTransliterator("nomacron"));
 			funcs.setCodepage(932);
-
 		} else {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setDecoder(new AnyCharsetDecoder(charset));
