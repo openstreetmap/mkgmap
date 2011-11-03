@@ -375,9 +375,21 @@ Miscellaneous options:
 	0x2f15: a blue dot in the middle of the road, and if you select,
 		or 'hover' over it, the streetname appears.
 	
+--add-pois-to-lines
+	Generate POIs for lines. For each line (must not be closed) POIs are
+	created at several points of the line. Each POI is tagged with the
+	same tags like the line and additional tags added by mkgmap:
+	mkgmap:line2poi=true and tag mkgmap:line2poitype having
+	the following values:
+	   * start  - The first point of the line
+	   * end    - The last point of the line
+	   * inner  - Each point of the line except the first and the last 
+	   * mid    - The middle point
+
 --add-pois-to-areas
 	Generate a POI for each polygon and multipolygon. The POIs are created 
-	before the style is applied. Each POI is tagged with the same tags of 
+	after the relation style but before the other styles are applied. Each 
+	POI is tagged with the same tags of 
 	the area/multipolygon. Additionally the tag mkgmap:area2poi=true is 
 	set so that it is possible to use that information in the points style
 	file. Artifical polygons created by multipolyon processing are not used.

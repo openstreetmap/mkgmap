@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +28,11 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
- * Adds a POI for each area and multipolygon with the same tags. Artificial areas created by 
+ * Adds a POI for each area and multipolygon with the same tags in case the add-pois-to-areas option
+ * is set. Adds multiple POIs to each line if the add-pois-to-lines option is set.<br/>
+ * <br/>
+ * <code>add-pois-to-areas</code><br/>
+ * Artificial areas created by 
  * multipolygon relation processing are not used for POI creation. The location of the POI 
  * is determined in different ways.<br/>
  * Element is of type {@link Way}:
@@ -40,22 +45,40 @@ import uk.me.parabola.util.EnhancedProperties;
  * <li>the node with role=label</li>
  * <li>the center point of the biggest area</li>
  * </ul>
- * Each node created by this hook is tagged with mkgmap:area2poi=true.
+ * Each node created is tagged with mkgmap:area2poi=true.<br/>
+ * <br/>
+ * <code>add-pois-to-lines</code><br/>
+ * Adds POIs to lines. Each POI is tagged with mkgmap:line2poi=true.<br/>
+ * The following POIs are created for each line:
+ * <ul>
+ * <li>mkgmap:line2poitype=start: The first point of the line</li>
+ * <li>mkgmap:line2poitype=end: The last point of the line</li>
+ * <li>mkgmap:line2poitype=inner: Each inner point of the line</li>
+ * <li>mkgmap:line2poitype=mid: POI at the middle distance of the line</li>
+ * </ul>
  * @author WanMil
  */
-public class Areas2POIHook extends OsmReadingHooksAdaptor {
-	private static final Logger log = Logger.getLogger(Areas2POIHook.class);
+public class POIGeneratorHook extends OsmReadingHooksAdaptor {
+	private static final Logger log = Logger.getLogger(POIGeneratorHook.class);
 
 	private List<Entry<String,String>> poiPlacementTags; 
 	
 	private ElementSaver saver;
 	
+	private boolean poisToAreas = false;
+	private boolean poisToLines = false;
+	
 	/** Name of the bool tag that is set to true if a POI is created from an area */
 	public static final String AREA2POI_TAG = "mkgmap:area2poi";
+	public static final String LINE2POI_TAG = "mkgmap:line2poi";
+	public static final String LINE2POI_TYPE_TAG  = "mkgmap:line2poitype";
 	
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
-		if (props.containsKey("add-pois-to-areas") == false) {
-			log.info("Disable Areas2POIHook because add-pois-to-areas option is not set.");
+		poisToAreas = props.containsKey("add-pois-to-areas");
+		poisToLines = props.containsKey("add-pois-to-lines");
+		
+		if ((poisToAreas || poisToLines) == false) {
+			log.info("Disable Areas2POIHook because add-pois-to-areas and add-pois-to-lines option is not set.");
 			return false;
 		}
 		
@@ -72,6 +95,10 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 	 * @return the parsed tag definition list
 	 */
 	private List<Entry<String,String>> getPoiPlacementTags(EnhancedProperties props) {
+		if (poisToAreas==false) {
+			return Collections.emptyList();
+		}
+		
 		List<Entry<String,String>> tagList = new ArrayList<Entry<String,String>>();
 		
 		String placementDefs = props.getProperty("pois-to-areas-placement", "entrance=main;entrance=yes;building=entrance");
@@ -152,7 +179,7 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 		
 		// save all coords with one of the placement tags to a map
 		// so that ways use this coord as its labeling point
-		if (poiPlacementTags.isEmpty() == false) {
+		if (poiPlacementTags.isEmpty() == false && poisToAreas) {
 			for (Node n : saver.getNodes().values()) {
 				int order = getPlacementOrder(n);
 				if (order >= 0) {
@@ -166,60 +193,142 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 		log.debug("Found", labelCoords.size(), "label coords");
 		
 		int ways2POI = 0;
+		int lines2POI = 0;
 		
 		for (Way w : saver.getWays().values()) {
-			// check if it is an area
-			if (w.isClosed() == false) {
-				continue;
-			}
-
+			// check if way has any tags
 			if (w.getTagCount() == 0) {
 				continue;
 			}
-			
+
 			// do not add POIs for polygons created by multipolygon processing
 			if (w.isBoolTag(MultiPolygonRelation.MP_CREATED_TAG)) {
 				log.debug("MP processed: Do not create POI for", w.toTagString());
 				continue;
 			}
 			
-			// get the coord where the poi is placed
-			Coord poiCoord = null;
-			// do we have some labeling coords?
-			if (labelCoords.size() > 0) {
-				int poiOrder = Integer.MAX_VALUE;
-				// go through all points of the way and check if one of the coords
-				// is a labeling coord
-				for (Coord c : w.getPoints()) {
-					Integer cOrder = labelCoords.get(c);
-					if (cOrder != null && cOrder.intValue() < poiOrder) {
-						// this coord is a labeling coord
-						// use it for the current way
-						poiCoord = c;
-						poiOrder = cOrder;
-						if (poiOrder == 0) {
-							// there is no higher order
-							break;
-						}
+			
+			// check if it is an area
+			if (w.isClosed()) {
+				if (poisToAreas) {
+					addPOItoPolygon(w, labelCoords);
+					ways2POI++;
+				}
+			} else {
+				if (poisToLines) {
+					lines2POI += addPOItoLine(w);
+				}
+			}
+		}
+		
+		if (poisToAreas)
+			log.info(ways2POI, "POIs from single areas created");
+		if (poisToLines)
+			log.info(lines2POI, "POIs from lines created");
+	}
+	
+	private void addPOItoPolygon(Way polygon, Map<Coord, Integer> labelCoords) {
+		if (poisToAreas == false) {
+			return;
+		}
+
+		// get the coord where the poi is placed
+		Coord poiCoord = null;
+		// do we have some labeling coords?
+		if (labelCoords.size() > 0) {
+			int poiOrder = Integer.MAX_VALUE;
+			// go through all points of the way and check if one of the coords
+			// is a labeling coord
+			for (Coord c : polygon.getPoints()) {
+				Integer cOrder = labelCoords.get(c);
+				if (cOrder != null && cOrder.intValue() < poiOrder) {
+					// this coord is a labeling coord
+					// use it for the current way
+					poiCoord = c;
+					poiOrder = cOrder;
+					if (poiOrder == 0) {
+						// there is no higher order
+						break;
 					}
 				}
 			}
-			if (poiCoord == null) {
-				// did not find any label coord
-				// use the common center point of the area
-				poiCoord = w.getCofG();
-			}
-			
-			Node poi = new Node(FakeIdGenerator.makeFakeId(), poiCoord);
-			poi.copyTags(w);
-			poi.deleteTag(MultiPolygonRelation.STYLE_FILTER_TAG);
-			poi.addTag(AREA2POI_TAG, "true");
-			log.debug("Create POI",poi.toTagString(),"from",w.getId(),w.toTagString());
-			saver.addNode(poi);
-			ways2POI++;
+		}
+		if (poiCoord == null) {
+			// did not find any label coord
+			// use the common center point of the area
+			poiCoord = polygon.getCofG();
 		}
 		
-		log.info(ways2POI, "POIs from single areas created");
+		Node poi = createPOI(polygon, poiCoord, AREA2POI_TAG); 
+		saver.addNode(poi);
+	}
+	
+	private int addPOItoLine(Way line) {
+		Node startNode = createPOI(line, line.getPoints().get(0), LINE2POI_TAG);
+		startNode.addTag(LINE2POI_TYPE_TAG,"start");
+		saver.addNode(startNode);
+
+		Node endNode = createPOI(line, line.getPoints().get(line.getPoints().size()-1), LINE2POI_TAG);
+		endNode.addTag(LINE2POI_TYPE_TAG,"end");
+		saver.addNode(endNode);
+
+		int noPOIs = 2;
+		
+		if (line.getPoints().size() > 2) {
+			for (Coord inPoint : line.getPoints().subList(1, line.getPoints().size()-1)) {
+				Node innerNode = createPOI(line, inPoint, LINE2POI_TAG);
+				innerNode.addTag(LINE2POI_TYPE_TAG,"inner");
+				saver.addNode(innerNode);
+				noPOIs++;
+			}
+		}
+		
+		
+		// calculate the middle of the line
+		Coord prevC = null;
+		double sumDist = 0.0;
+		ArrayList<Double> dists = new ArrayList<Double>(line.getPoints().size()-1);
+		for (Coord c : line.getPoints()) {
+			if (prevC != null) {
+				double dist = prevC.distance(c);
+				dists.add(dist);
+				sumDist+=dist;
+			}
+			prevC = c;
+		}
+		
+		Coord midPoint = null;
+		double remMidDist = sumDist/2;
+		for (int midPos =0; midPos < dists.size(); midPos++) {
+			double nextDist = dists.get(midPos);
+			if (remMidDist <= nextDist) {
+				double frac = remMidDist/nextDist;
+				midPoint = line.getPoints().get(midPos).makeBetweenPoint(line.getPoints().get(midPos+1), frac);
+				break;
+			} 
+			remMidDist -= nextDist;
+		}
+		Node midNode = createPOI(line, midPoint, LINE2POI_TAG);
+		midNode.addTag(LINE2POI_TYPE_TAG,"mid");
+		saver.addNode(midNode);
+		noPOIs++;
+
+		return noPOIs;
+
+	}
+
+	private Node createPOI(Element source, Coord poiCoord, String poiTypeTag) {
+		Node poi = new Node(FakeIdGenerator.makeFakeId(), poiCoord);
+		poi.copyTags(source);
+		poi.deleteTag(MultiPolygonRelation.STYLE_FILTER_TAG);
+		poi.addTag(poiTypeTag, "true");
+		log.debug("Create POI",poi.toTagString(),"from",source.getId(),source.toTagString());
+		if (source.getTag("mkgmap:aname") != null) {
+			log.error(source.getId()
+					+" "+source.toTagString());
+		}
+		return poi;
+		
 	}
 
 	private void addPOIsToMPs() {
@@ -236,16 +345,13 @@ public class Areas2POIHook extends OsmReadingHooksAdaptor {
 				continue;
 			}
 			
-			Node poi = new Node(FakeIdGenerator.makeFakeId(), point);
-			poi.copyTags(r);
+			Node poi = createPOI(r, point, AREA2POI_TAG);
 			// remove the type tag which makes only sense for relations
 			poi.deleteTag("type");
-			poi.addTag(AREA2POI_TAG, "true");
-			log.debug("Create POI",poi.toTagString(),"from mp",r.getId(),r.toTagString());
 			saver.addNode(poi);
 			mps2POI++;
 		}
-		log.info(mps2POI, "POIs from multipolygons created");
+		log.info(mps2POI,"POIs from multipolygons created");
 	}
 
 

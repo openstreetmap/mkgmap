@@ -112,7 +112,6 @@ public class StyledConverter implements OsmConverter {
 	private final Rule nodeRules;
 	private final Rule lineRules;
 	private final Rule polygonRules;
-	private final Rule relationRules;
 
 	private final boolean ignoreMaxspeeds;
 	private boolean driveOnLeft;
@@ -165,7 +164,6 @@ public class StyledConverter implements OsmConverter {
 		nodeRules = style.getNodeRules();
 		lineRules = style.getLineRules();
 		polygonRules = style.getPolygonRules();
-		relationRules = style.getRelationRules();
 
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
@@ -475,10 +473,9 @@ public class StyledConverter implements OsmConverter {
 			return;
 		}
 
-		// Relations never resolve to a GType and so we ignore the return
-		// value.
-		relationRules.resolveType(relation, TypeResult.NULL_RESULT);
-
+		// relation rules are not applied here because they are applied
+		// earlier by the RelationStyleHook
+		
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
 			if(rr.isValid()) {
