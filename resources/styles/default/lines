@@ -140,12 +140,12 @@ highway=*
 # Convert generic path to most specific
 highway=footway & snowplowing!=no
 & (bicycle=yes|bicycle=designated|bicycle=permissive|bicycle=official)
-{set highway=cycleway}
+{set highway=cycleway; set bicycle=yes}
 highway=path & snowplowing!=no
 & (bicycle=designated|bicycle=permissive|bicycle=official)
-{set highway=cycleway}
-highway=path & (horse=designated|horse=official)
-{set highway=bridleway}
+{set highway=cycleway; set bicycle=yes}
+highway=path & (horse=designated|horse=permissive|horse=official)
+{set highway=bridleway; set horse=yes}
 highway=path
 {set highway=footway}
 
