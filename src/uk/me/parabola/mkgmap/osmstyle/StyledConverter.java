@@ -1803,7 +1803,8 @@ public class StyledConverter implements OsmConverter {
 
 		return (val.equalsIgnoreCase("yes") ||
 			val.equalsIgnoreCase("designated") ||
-			val.equalsIgnoreCase("permissive"));
+			val.equalsIgnoreCase("permissive") ||
+			val.equalsIgnoreCase("official"));
 	}
 
 	protected boolean accessExplicitlyDenied(String val) {
