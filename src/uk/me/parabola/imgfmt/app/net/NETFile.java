@@ -18,6 +18,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,9 +83,7 @@ public class NETFile extends ImgFile {
 
 		ImgFileWriter writer = netHeader.makeSortedRoadWriter(getWriter());
 		try {
-			long start = System.currentTimeMillis();
 			List<LabeledRoadDef> labeledRoadDefs = sortRoads();
-			System.out.printf("Time: %.2fs %d", (System.currentTimeMillis() - start)/1000.0, labeledRoadDefs.size());
 			for (LabeledRoadDef labeledRoadDef : labeledRoadDefs)
 				labeledRoadDef.roadDef.putSortedRoadEntry(writer, labeledRoadDef.label);
 		} finally {
@@ -115,7 +114,6 @@ public class NETFile extends ImgFile {
 	 */
 	private List<LabeledRoadDef> sortRoads() {
 		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
-
 		Map<String, byte[]> cache = new HashMap<String, byte[]>();
 
 		for (RoadDef rd : roads) {
@@ -150,7 +148,6 @@ public class NETFile extends ImgFile {
 
 		String lastName = null;
 		City lastCity = null;
-		RoadDef lastRoad = null;
 		List<LabeledRoadDef> dupes = new ArrayList<LabeledRoadDef>();
 
 		// Since they are sorted we can easily remove the duplicates.
@@ -162,22 +159,16 @@ public class NETFile extends ImgFile {
 			RoadDef road = lrd.roadDef;
 			City city = road.getCity();
 
-			if (!name.equals(lastName) || city != lastCity || !road.sameDiv(lastRoad)) {
+			if (!name.equals(lastName) || city != lastCity) {
 
-				// process any previously collected duplicate road names.
+				// process any previously collected duplicate road names and reset.
 				addDisconnected(dupes, out);
 				dupes = new ArrayList<LabeledRoadDef>();
-				dupes.add(lrd);
-
-				// Save this name
-				out.add(lrd);
 
 				lastName = name;
 				lastCity = city;
-				lastRoad = road;
-			} else {
-				dupes.add(lrd);
 			}
+			dupes.add(lrd);
 		}
 
 		// Finish off the final set of duplicates.
@@ -190,15 +181,29 @@ public class NETFile extends ImgFile {
 	 * Take a set of roads with the same name/city etc and find sets of roads that do not
 	 * connect with each other. One of the members of each set is added to the road list.
 	 *
-	 * Although this is much faster than the previous method, it is still slow for large
-	 * numbers of roads. The real key is to limit by subdivision, since subdivisions can
-	 * only have a limited number of roads in them.
-	 *
 	 * @param in A list of duplicate roads.
 	 * @param out The list of sorted roads. Any new road is added to this.
 	 */
 	private void addDisconnected(List<LabeledRoadDef> in, List<LabeledRoadDef> out) {
-		
+		// switch out to different routines depending on the input size. A normal number of
+		// roads with the same name in the same city is a few tens.
+		if (in.size() > 200) {
+			addDisconnectedLarge(in, out);
+		} else {
+			addDisconnectedSmall(in, out);
+		}
+	}
+
+	/**
+	 * Split the input set of roads into disconnected groups and output one member from each group.
+	 *
+	 * This is done in an accurate manner which is slow for large numbers (eg thousands) of items in the
+	 * input.
+	 *
+	 * @param in Input set of roads with the same name.
+	 * @param out List to add the discovered groups.
+	 */
+	private void addDisconnectedSmall(List<LabeledRoadDef> in, List<LabeledRoadDef> out) {
 		// Each road starts out with a different group number
 		int[] groups = new int[in.size()];
 		for (int i = 0; i < groups.length; i++)
@@ -206,10 +211,7 @@ public class NETFile extends ImgFile {
 
 		// Go through pairs of roads, any that are connected we mark with the same (lowest) group number.
 		boolean done;
-		int count = 0;
 		do {
-			count++;
-			System.out.println("count " + count);
 			done = true;
 			for (int current = 0; current < groups.length; current++) {
 				RoadDef first = in.get(current).roadDef;
@@ -228,14 +230,52 @@ public class NETFile extends ImgFile {
 		} while (!done);
 
 		// Output the first road in each group
-		int last = 0;
-		for (int i = 1; i < groups.length; i++) {
+		int last = -1;
+		for (int i = 0; i < groups.length; i++) {
 			if (groups[i] > last) {
 				LabeledRoadDef lrd = in.get(i);
 				out.add(lrd);
 				last = groups[i];
 			}
 		}
+	}
+
+	/**
+	 * Split the input set of roads into disconnected groups and output one member from each group.
+	 *
+	 * This is an modified algorithm for large numbers in the input set (eg thousands).
+	 * First sort into groups by subdivision and then call {@link #addDisconnectedSmall} on each
+	 * one. Since roads in the same subdivision are near each other this finds most connected roads, but
+	 * since there is a maximum number of roads in a subdivision, the test can be done very quickly.
+	 * You will get a few extra duplicate entries in the index.
+	 *
+	 * In normal cases this routine gives almost the same results as {@link #addDisconnectedSmall}.
+	 *
+	 * @param in Input set of roads with the same name.
+	 * @param out List to add the discovered groups.
+	 */
+	private void addDisconnectedLarge(List<LabeledRoadDef> in, List<LabeledRoadDef> out) {
+		Collections.sort(in, new Comparator<LabeledRoadDef>() {
+			public int compare(LabeledRoadDef o1, LabeledRoadDef o2) {
+				Integer i1 = o1.roadDef.getStartSubdivNumber();
+				Integer i2 = o2.roadDef.getStartSubdivNumber();
+				return i1.compareTo(i2);
+			}
+		});
+
+		int lastDiv = 0;
+		List<LabeledRoadDef> dupes = new ArrayList<LabeledRoadDef>();
+		for (LabeledRoadDef lrd : in) {
+			int sd = lrd.roadDef.getStartSubdivNumber();
+			if (sd != lastDiv) {
+				addDisconnectedSmall(dupes, out);
+				dupes = new ArrayList<LabeledRoadDef>();
+				lastDiv = sd;
+			}
+			dupes.add(lrd);
+		}
+
+		addDisconnectedSmall(dupes, out);
 	}
 
 	public void setNetwork(List<RoadDef> roads) {
