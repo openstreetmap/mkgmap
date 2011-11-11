@@ -36,9 +36,11 @@ public class TYPHeader extends CommonHeader {
 	private final Section pointData = new Section();
 	private final Section lineData = new Section(pointData);
 	private final Section polygonData = new Section(lineData);
+
 	private final Section pointIndex = new Section(polygonData, (char) 4);
 	private final Section lineIndex = new Section(pointIndex, (char) 3);
 	private final Section polygonIndex = new Section(lineIndex, (char) 3);
+
 	private final Section shapeStacking = new Section(polygonIndex, (char) 5);
 
 	public TYPHeader() {
@@ -92,39 +94,30 @@ public class TYPHeader extends CommonHeader {
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
-		System.out.println("in file header write");
 		writer.putChar(codePage);
-		writer.putInt(pointData.getPosition());
-		writer.putInt(pointData.getSize());
 
-		writer.putInt(lineData.getPosition());
-		writer.putInt(lineData.getSize());
-
-		writer.putInt(polygonData.getPosition());
-		writer.putInt(polygonData.getSize());
+		pointData.writeSectionInfo(writer);
+		lineData.writeSectionInfo(writer);
+		polygonData.writeSectionInfo(writer);
 
 		writer.putChar(familyId);
 		writer.putChar(productId);
 
-		writer.putInt(pointIndex.getPosition());
-		writer.putChar(pointIndex.getItemSize());
-		writer.putInt(pointIndex.getSize());
-
-		writer.putInt(lineIndex.getPosition());
-		writer.putChar(lineIndex.getItemSize());
-		writer.putInt(lineIndex.getSize());
-
-		writer.putInt(polygonIndex.getPosition());
-		writer.putChar(polygonIndex.getItemSize());
-		writer.putInt(polygonIndex.getSize());
-
-		writer.putInt(shapeStacking.getPosition());
-		writer.putChar(shapeStacking.getItemSize());
-		writer.putInt(shapeStacking.getSize());
+		// Can't use Section.writeSectionInfo here as there is an unusual layout.
+		writeSectionInfo(writer, pointIndex);
+		writeSectionInfo(writer, lineIndex);
+		writeSectionInfo(writer, polygonIndex);
+		writeSectionInfo(writer, shapeStacking);
 	}
 
-	char getCodePage() {
-		return codePage;
+	/**
+	 * There is an unusual layout of the section pointers in the TYP file for the sections
+	 * that have an item size.
+	 */
+	private void writeSectionInfo(ImgFileWriter writer, Section section) {
+		writer.putInt(section.getPosition());
+		writer.putChar(section.getItemSize());
+		writer.putInt(section.getSize());
 	}
 
 	void setCodePage(char codePage) {
@@ -135,16 +128,8 @@ public class TYPHeader extends CommonHeader {
 		return pointData;
 	}
 
-	char getFamilyId() {
-		return familyId;
-	}
-
 	void setFamilyId(char familyId) {
 		this.familyId = familyId;
-	}
-
-	char getProductId() {
-		return productId;
 	}
 
 	void setProductId(char productId) {

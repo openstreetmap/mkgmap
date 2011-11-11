@@ -26,9 +26,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.app.Writeable;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
@@ -46,59 +48,56 @@ public class TYPFile extends ImgFile {
 	private final List<BitmapImage> images = new LinkedList<BitmapImage>();
 	private final List<PointInfo> pointInfo = new LinkedList<PointInfo>();
 	private final List<DrawOrder> drawOrder = new LinkedList<DrawOrder>();
+	private ShapeStacking stacking;
 
-	public TYPFile(ImgChannel chan, boolean write) {
+	public TYPFile(ImgChannel chan) {
 		setHeader(header);
-		if (write) {
-			setWriter(new BufferedImgFileWriter(chan));
-			position(TYPHeader.HEADER_LEN);
-		} else {
-			setReader(new BufferedImgFileReader(chan));
-			header.readHeader(getReader());
-		}
+		setWriter(new BufferedImgFileWriter(chan));
+		position(TYPHeader.HEADER_LEN);
 	}
 
-	public void setCodePage(char code) {
-		header.setCodePage(code);
+	public void setCodePage(int code) {
+		header.setCodePage((char) code);
 	}
 
-	public void setFamilyId(char code) {
-		header.setFamilyId(code);
+	public void setFamilyId(int code) {
+		header.setFamilyId((char) code);
 	}
 
-	public void setProductId(char code) {
-		header.setProductId(code);
+	public void setProductId(int code) {
+		header.setProductId((char) code);
 	}
 
 	public void write() {
 		// HEADER_LEN => 1. Image
 		Collections.sort(images, BitmapImage.comperator());
 
-		getWriter().position(TYPHeader.HEADER_LEN);
+		ImgFileWriter writer = getWriter();
+		writer.position(TYPHeader.HEADER_LEN);
 
-		int pos = getWriter().position();
+		int pos = writer.position();
 		header.getPointData().setPosition(pos);
 
 		for (Writeable w : images)
-			w.write(getWriter());
-		int len = getWriter().position() - pos;
+			w.write(writer);
+		int len = writer.position() - pos;
 		header.getPointData().setSize(len);
 
 		if (len < 0x100)
 			header.getPointIndex().setItemSize((char) 3);
-		pos = getWriter().position();
+		pos = writer.position();
 		for (PointInfo w : pointInfo)
-			w.write(getWriter(), header.getPointData().getSize());
-		header.getPointIndex().setSize(getWriter().position() - pos);
+			w.write(writer, header.getPointData().getSize());
+		header.getPointIndex().setSize(writer.position() - pos);
 
-		pos = getWriter().position();
-		for (Writeable w : drawOrder)
-			w.write(getWriter());
-		header.getShapeStacking().setSize(getWriter().position() - pos);
+		SectionWriter subWriter = null;
+		try {
+			subWriter = header.getShapeStacking().makeSectionWriter(writer);
+			stacking.write(subWriter);
+		} finally {
+			Utils.closeFile(subWriter);
+		}
 
-	}
-
-	public void writePost() {
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
@@ -134,19 +133,13 @@ public class TYPFile extends ImgFile {
 		}
 	}
 
-	public void createDrawOrder(byte typ, byte sub) {
-		drawOrder.add(new DrawOrder((char) (typ | sub << 8), (char) 0, (byte) 0));
+	public void setTypParam(TypParam param) {
+		setFamilyId(param.getFamilyId());
+		setProductId(param.getProductId());
+		setCodePage(param.getCodePage());
 	}
 
-	public List<BitmapImage> getImages() {
-		return images;
-	}
-
-	public List<PointInfo> getPointInfo() {
-		return pointInfo;
-	}
-
-	public List<DrawOrder> getDrawOrder() {
-		return drawOrder;
+	public void setStacking(ShapeStacking stacking) {
+		this.stacking = stacking;
 	}
 }

@@ -16,23 +16,23 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.FileNotWritableException;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 public class TYPFileTest {
+	
 	@Test
-	public void testWrite() throws FileNotWritableException, FileExistsException {
+	public void testWrite() throws Exception {
 		FileSystemParam params = new FileSystemParam();
 		FileSystem fs = ImgFS.createFs("test.typ", params);
 		ImgChannel channel = fs.create("XXX.TYP");
-		TYPFile typFile = new TYPFile(channel, true);
+		TYPFile typFile = new TYPFile(channel);
 		assertNotNull("typ file is created", typFile);
 	}
 }

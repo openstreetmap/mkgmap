@@ -16,9 +16,49 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
+
 /**
+ * Holds the shape stacking section.
+ *
+ * Deals with sorting everything correctly, so no need to sort in the input file.
+ * 
  * @author Steve Ratcliffe
  */
 public class ShapeStacking {
-	// TODO give in content
+	private final SortedMap<Integer, DrawOrder> bar = new TreeMap<Integer, DrawOrder>();
+
+	public void addPolygon(int level, int type, int subtype) {
+		int levelType = (level << 16) + type;
+		DrawOrder order = bar.get(levelType);
+		if (order == null) {
+			order = new DrawOrder((byte) type);
+			bar.put(levelType, order);
+		}
+		
+		order.addSubtype(subtype);
+	}
+
+	public void write(ImgFileWriter writer) {
+		int lastLevel = 1;
+
+		DrawOrder empty = new DrawOrder(0);
+
+		for (Map.Entry<Integer, DrawOrder> ent : bar.entrySet()) {
+			int level = (ent.getKey() >> 16) & 0xffff;
+			DrawOrder order = ent.getValue();
+
+			if (level != lastLevel) {
+				empty.write(writer);
+				lastLevel = level;
+			}
+
+			order.write(writer);
+		}
+	}
+
 }

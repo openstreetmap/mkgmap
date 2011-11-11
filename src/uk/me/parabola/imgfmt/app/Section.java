@@ -123,6 +123,11 @@ public class Section {
 			setItemSize(reader.getChar());
 	}
 
+	public SectionWriter makeSectionWriter(ImgFileWriter writer) {
+		setPosition(writer.position());
+		return new SectionWriter(writer, this);
+	}
+
 	public void writeSectionInfo(ImgFileWriter writer) {
 		writeSectionInfo(writer, false);
 	}

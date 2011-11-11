@@ -3,20 +3,27 @@ package uk.me.parabola.imgfmt.app.typ;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Writeable;
 
+/**
+ * The drawing order for a type and a set of subtypes.
+ *
+ * The drawing order is specified by the order of these within the file, rather than anything
+ * actually in the item.
+ */
 public class DrawOrder implements Writeable {
-	private final char typ;
-	private final char unk1;
-	private final byte unk2;
+	private final byte typ;
+	private int subTypes;
 
-	public DrawOrder(char typ, char unk1, byte unk2) {
-		this.typ = typ;
-		this.unk1 = unk1;
-		this.unk2 = unk2;
+	public DrawOrder(int typ) {
+		this.typ = (byte) typ;
 	}
 
 	public void write(ImgFileWriter writer) {
-		writer.putChar(typ);
-		writer.putChar(unk1);
-		writer.put(unk2);
+		writer.put(typ);
+		writer.putInt(subTypes);
+	}
+
+	public void addSubtype(int subtype) {
+		if (subtype > 0)
+			subTypes |= 1 << subtype;
 	}
 }
