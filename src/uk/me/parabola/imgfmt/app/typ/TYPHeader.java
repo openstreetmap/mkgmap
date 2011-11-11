@@ -38,7 +38,7 @@ public class TYPHeader extends CommonHeader {
 	private final Section polygonData = new Section(lineData);
 
 	private final Section pointIndex = new Section(polygonData, (char) 4);
-	private final Section lineIndex = new Section(pointIndex, (char) 3);
+	private final Section lineIndex = new Section(pointIndex, (char) 4);
 	private final Section polygonIndex = new Section(lineIndex, (char) 4);
 
 	private final Section shapeStacking = new Section(polygonIndex, (char) 5);
@@ -150,5 +150,13 @@ public class TYPHeader extends CommonHeader {
 
 	public Section getPolygonIndex() {
 		return polygonIndex;
+	}
+
+	public Section getLineData() {
+		return lineData;
+	}
+
+	public Section getLineIndex() {
+		return lineIndex;
 	}
 }

@@ -18,34 +18,62 @@ import java.nio.charset.CharsetEncoder;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Holds the data for a polygon style.
+ * A line as read from a typ.txt file.
  *
  * @author Steve Ratcliffe
  */
-public class TypPolygon extends TypElement {
+public class TypLine extends TypElement {
+	private static final int F_LABEL = 0x1;
+	private static final int F_USE_ROTATION = 0x2;
+	private static final int F_EXTENDED = 0x4;
 
-	private static final int F_LABEL = 0x10;
-	private static final int F_EXTENDED = 0x20;
+	private boolean useOrientation;
+	private byte lineWidth;
 
+	/**
+	 * This is slightly different to the polygon case, but not much.
+	 *
+	 * The line width is held in the first byte along with the type.
+	 * The colour scheme does not have a bit to say if a bitmap is used,
+	 * as you can always have one.
+	 *
+	 * There is a border width that can be specified.
+	 *
+	 * @param encoder For the labels.
+	 */
 	public void write(ImgFileWriter writer, CharsetEncoder encoder) {
 		offset = writer.position();
 
-		int scheme = colourInfo.getColourScheme();
-		if (!labels.isEmpty())
-			scheme |= F_LABEL;
-		if (fontStyle != 0 || dayFontColour != null)
-			scheme |= F_EXTENDED;
+		byte flags = 0;
 
-		writer.put((byte) scheme);
+		if (!labels.isEmpty())
+			flags |= F_LABEL;
+		if (fontStyle != 0 || dayFontColour != null)
+			flags |= F_EXTENDED;
+		if (!useOrientation)
+			flags |= F_USE_ROTATION;
+
+		int width = 0;
+		if (image != null)
+			width = image.getHeight();
+
+		int scheme = colourInfo.getColourScheme() & 0x7;
+
+		writer.put((byte) ((scheme & 0x7) | (width << 3)));
+		writer.put(flags);
 
 		colourInfo.write(writer);
 		if (image != null)
 			image.write(writer);
 
+		if (width == 0 /* && scheme != 6*/) {
+			writer.put(lineWidth);
+		}
+
 		// The labels have a length byte to show the number of bytes following. There is
 		// also a flag in the length. The strings have a language number proceeding them.
 		// The strings themselves are null terminated.
-		if ((scheme & F_LABEL) != 0) {
+		if ((flags & F_LABEL) != 0) {
 			ByteBuffer out = makeLabelBlock(encoder);
 			int flag = 1; // XXX What is this?
 
@@ -59,7 +87,7 @@ public class TypPolygon extends TypElement {
 		}
 
 		// The extension section hold font style and colour information for the labels.
-		if ((scheme & F_EXTENDED) != 0) {
+		if ((flags & F_EXTENDED) != 0) {
 			byte fontExt = (byte) fontStyle;
 			if (dayFontColour != null)
 				fontExt |= 0x8;
@@ -69,5 +97,13 @@ public class TypPolygon extends TypElement {
 			if (dayFontColour != null)
 				dayFontColour.write(writer, (byte) 0x10);
 		}
+	}
+
+	public void setUseOrientation(boolean useOrientation) {
+		this.useOrientation = useOrientation;
+	}
+
+	public void setLineWidth(int val) {
+		lineWidth = (byte) val;
 	}
 }

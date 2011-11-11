@@ -5,7 +5,6 @@ import java.util.Comparator;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Writeable;
-import uk.me.parabola.log.Logger;
 
 /**
  * Holds a bitmap image for the typ file.
@@ -16,14 +15,13 @@ import uk.me.parabola.log.Logger;
  * deals with more than just points.
  */
 public class BitmapImage implements Writeable, Comparator<BitmapImage> {
-	private static final Logger log = Logger.getLogger(BitmapImage.class);
 
-	private byte width;
-	private byte height;
-	private int cpp;
+	private final byte width;
+	private final byte height;
+	private final int cpp;
 
-	private ColourInfo colourInfo;
-	private String image;
+	private final ColourInfo colourInfo;
+	private final String image;
 
 	public BitmapImage(int width, int height, int cpp, ColourInfo colourInfo, String image) {
 		this.width = (byte) width;
@@ -33,41 +31,6 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 		this.image = image;
 	}
 
-	//public final byte getTyp() {
-	//	return typ;
-	//}
-	//
-	//public final byte getSubtype() {
-	//	return subtype;
-	//}
-
-	//private BitmapImage() { /*for compare*/ }
-
-	protected static BitmapImage comperator() {
-		throw new UnsupportedOperationException();
-		//return new BitmapImage();
-	}
-
-	//public BitmapImage(byte typ, byte subtype, byte dayNight, int width,
-	//		Map<String, Rgb> colours, int cpp, String image)
-	//{
-	//	if (image == null)
-	//		throw new FormatException("NULL Image");
-	//	height = (byte) (image.length() / width);
-	//	colors = colours;
-	//	if (width != 16)
-	//		throw new FormatException("Only 16 pixel with supported");
-	//	if (height * width != image.length())
-	//		throw new FormatException("Only 16 pixel with supported");
-	//	this.cpp = cpp;
-	//	this.dayNight = dayNight;
-	//	this.width = (byte) width;
-	//	this.image = image;
-	//	this.typ = typ;
-	//	this.subtype = subtype;
-	//}
-
-	@Override
 	public void write(ImgFileWriter writer) {
 		//throw new UnsupportedOperationException();
 		BitWriter bitWriter = new BitWriter();
@@ -131,11 +94,6 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 		throw new UnsupportedOperationException();
 	}
 
-	public int getSize() {
-		throw new UnsupportedOperationException();
-		//return 5 + colors.size() * 3 + width * height / 2;
-	}
-
 	public int compare(BitmapImage a, BitmapImage b) {
 		throw new UnsupportedOperationException();
 		//if (a == null)
@@ -151,5 +109,9 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 		//if (a.dayNight > b.dayNight)
 		//	return 1;
 		//return 0;
+	}
+
+	public byte getHeight() {
+		return height;
 	}
 }

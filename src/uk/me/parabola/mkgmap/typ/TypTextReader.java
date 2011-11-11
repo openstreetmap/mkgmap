@@ -103,14 +103,7 @@ public class TypTextReader {
 			};
 
 		} else if ("_line".equals(sectionName)) {
-			return new ProcessSection() {
-				public void processLine(TokenScanner scanner, String name, String value) {
-					lineSection(scanner, name, value);
-				}
-
-				public void finish() {
-				}
-			};
+			return new LineSection(data);
 
 		} else if ("_polygon".equals(sectionName)) {
 			return new PolygonSection(data);
@@ -124,17 +117,8 @@ public class TypTextReader {
 	}
 
 	private void pointSection(TokenScanner scanner, String name, String value) {
-		if (commonKey(scanner, name, value))
-			return;
-	}
-
-	private void lineSection(TokenScanner scanner, String name, String value) {
-		if (commonKey(scanner, name, value))
-			return;
-	}
-
-	private boolean commonKey(TokenScanner scanner, String name, String value) {
-		return false;
+		//if (commonKey(scanner, name, value))
+		//	return;
 	}
 
 	public TypData getData() {
@@ -179,4 +163,5 @@ public class TypTextReader {
 		typ.write();
 		typ.close();
 	}
+
 }

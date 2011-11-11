@@ -26,6 +26,8 @@ public class TypData {
 	private final ShapeStacking stacking = new ShapeStacking();
 	private final TypParam param = new TypParam();
 	private final List<TypPolygon> polygons = new ArrayList<TypPolygon>();
+	private final List<TypLine> lines = new ArrayList<TypLine>();
+
 	private CharsetEncoder encoder;
 
 	public void addPolygonStackOrder(int level, int type, int subtype) {
@@ -64,5 +66,13 @@ public class TypData {
 
 	public List<TypPolygon> getPolygons() {
 		return polygons;
+	}
+
+	public void addLine(TypLine current) {
+		lines.add(current);
+	}
+
+	public List<TypLine> getLines() {
+		return lines;
 	}
 }

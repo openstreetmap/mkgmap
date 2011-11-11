@@ -13,21 +13,19 @@
 package uk.me.parabola.mkgmap.typ;
 
 import uk.me.parabola.imgfmt.app.typ.TypData;
-import uk.me.parabola.imgfmt.app.typ.TypPolygon;
+import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
- * Process lines from the polygon section of a typ.txt file.
- *
- * This is the simplest, so all the work is done in the superclass.
+ * Process lines from a line definition in the typ.txt file.
  *
  * @author Steve Ratcliffe
  */
-class PolygonSection extends CommonSection implements ProcessSection {
+class LineSection extends CommonSection implements ProcessSection {
 
-	private TypPolygon current = new TypPolygon();
+	private TypLine current = new TypLine();
 
-	PolygonSection(TypData data) {
+	LineSection(TypData data) {
 		super(data);
 	}
 
@@ -35,14 +33,17 @@ class PolygonSection extends CommonSection implements ProcessSection {
 		if (commonKey(scanner, current, name, value))
 			return;
 
-		warnUnknown(name);
+		if (name.equals("UseOrientation")) {
+			current.setUseOrientation(value.charAt(0) == 'Y');
+		} else if (name.equals("LineWidth")) {
+			int ival = Integer.decode(value);
+			current.setLineWidth(ival);
+		} else
+			warnUnknown(name);
 	}
 
-	/**
-	 * Add the polygon to the data and reset for the next.
-	 */
 	public void finish() {
-		data.addPolygon(current);
-		current = new TypPolygon();
+		data.addLine(current);
+		current = new TypLine();
 	}
 }

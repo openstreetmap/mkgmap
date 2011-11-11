@@ -17,6 +17,7 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
+import java.nio.charset.CharsetEncoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,22 +52,10 @@ public class TYPFile extends ImgFile {
 		position(TYPHeader.HEADER_LEN);
 	}
 
-	public void setCodePage(int code) {
-		header.setCodePage((char) code);
-	}
-
-	public void setFamilyId(int code) {
-		header.setFamilyId((char) code);
-	}
-
-	public void setProductId(int code) {
-		header.setProductId((char) code);
-	}
-
 	public void write() {
 		// HEADER_LEN => 1. Image
-		//Collections.sort(images, BitmapImage.comperator());
-		// TODO we will probably have to sort somthing.
+		//Collections.sort(images, BitmapImage.comparator());
+		// TODO we will probably have to sort something.
 
 		ImgFileWriter writer = getWriter();
 		writer.position(TYPHeader.HEADER_LEN);
@@ -87,10 +76,37 @@ public class TYPFile extends ImgFile {
 		header.getPointIndex().setSize(writer.position() - pos);
 
 		writePolygons(writer);
+		writeLines(writer);
 		
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
+	}
+
+	/**
+	 * Write out the line sections.
+	 */
+	private void writeLines(ImgFileWriter writer) {
+		SectionWriter subWriter = header.getLineData().makeSectionWriter(writer);
+		try {
+			CharsetEncoder encoder = data.getEncoder();
+			for (TypLine l : data.getLines())
+				l.write(subWriter, encoder);
+		} finally {
+			Utils.closeFile(subWriter);
+		}
+
+		subWriter = header.getLineIndex().makeSectionWriter(writer);
+		try {
+			for (TypLine l : data.getLines()) {
+				int offset = l.getOffset();
+				int type = (l.getType() << 5) | (l.getSubType() & 0x1f);
+				subWriter.putChar((char) type);
+				subWriter.putChar((char) offset);
+			}
+		} finally {
+			Utils.closeFile(subWriter);
+		}
 	}
 
 	/**
@@ -107,8 +123,9 @@ public class TYPFile extends ImgFile {
 		Section polygonData = header.getPolygonData();
 		subWriter = polygonData.makeSectionWriter(writer);
 		try {
+			CharsetEncoder encoder = data.getEncoder();
 			for (TypPolygon poly : data.getPolygons())
-				poly.write(subWriter, data.getEncoder());
+				poly.write(subWriter, encoder);
 
 		} finally {
 			Utils.closeFile(subWriter);
