@@ -17,19 +17,14 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.SectionWriter;
 import uk.me.parabola.imgfmt.app.Writeable;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -47,8 +42,8 @@ public class TYPFile extends ImgFile {
 
 	private final List<BitmapImage> images = new LinkedList<BitmapImage>();
 	private final List<PointInfo> pointInfo = new LinkedList<PointInfo>();
-	private final List<DrawOrder> drawOrder = new LinkedList<DrawOrder>();
-	private ShapeStacking stacking;
+
+	private TypData data;
 
 	public TYPFile(ImgChannel chan) {
 		setHeader(header);
@@ -70,7 +65,8 @@ public class TYPFile extends ImgFile {
 
 	public void write() {
 		// HEADER_LEN => 1. Image
-		Collections.sort(images, BitmapImage.comperator());
+		//Collections.sort(images, BitmapImage.comperator());
+		// TODO we will probably have to sort somthing.
 
 		ImgFileWriter writer = getWriter();
 		writer.position(TYPHeader.HEADER_LEN);
@@ -90,56 +86,53 @@ public class TYPFile extends ImgFile {
 			w.write(writer, header.getPointData().getSize());
 		header.getPointIndex().setSize(writer.position() - pos);
 
-		SectionWriter subWriter = null;
-		try {
-			subWriter = header.getShapeStacking().makeSectionWriter(writer);
-			stacking.write(subWriter);
-		} finally {
-			Utils.closeFile(subWriter);
-		}
-
+		writePolygons(writer);
+		
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
 	}
 
-	public static BitmapImage parseXpm(int type, int subtype, int day, String xpm) {
+	/**
+	 * Write out all the polygon sections.
+	 */
+	private void writePolygons(ImgFileWriter writer) {
+		SectionWriter subWriter = header.getShapeStacking().makeSectionWriter(writer);
 		try {
-			BufferedReader br = new BufferedReader(new StringReader(xpm));
-			String[] header = br.readLine().split(" ");
+			data.getStacking().write(subWriter);
+		} finally {
+			Utils.closeFile(subWriter);
+		}
 
-			int w = Integer.parseInt(header[0]);
-			int h = Integer.parseInt(header[1]);
-			int c = Integer.parseInt(header[2]);
-			int cpp = Integer.parseInt(header[3]);
+		Section polygonData = header.getPolygonData();
+		subWriter = polygonData.makeSectionWriter(writer);
+		try {
+			for (TypPolygon poly : data.getPolygons())
+				poly.write(subWriter, data.getEncoder());
 
-			Map<String, Rgb> colors = new HashMap<String, Rgb>();
-			for (int i = 0; i < c; i++) {
-				String l = br.readLine();
-				String[] ci = l.split("\t");
-				int r = Integer.parseInt(ci[1].substring(3, 5), 16);
-				int g = Integer.parseInt(ci[1].substring(5, 7), 16);
-				int b = Integer.parseInt(ci[1].substring(7, 9), 16);
-				colors.put(ci[0], new Rgb(r, g, b, (byte) i));
+		} finally {
+			Utils.closeFile(subWriter);
+		}
+
+		Section polygonIndex = header.getPolygonIndex();
+		subWriter = polygonIndex.makeSectionWriter(writer);
+		try {
+			for (TypPolygon poly : data.getPolygons()) {
+				int offset = poly.getOffset();
+				int type = (poly.getType() << 5) | (poly.getSubType() & 0x1f);
+				subWriter.putChar((char) type);
+				subWriter.putChar((char) offset);
 			}
-			
-			StringBuffer sb = new StringBuffer();
-			for (int i = 0; i < h; i++) sb.append(br.readLine());
-			return new BitmapImage((byte) type, (byte) subtype, (byte) day, w, colors, cpp,
-					sb.toString());
-		} catch (IOException e) {
-			log.error("failed to parse bitmap", e);
-			return null;
+		} finally {
+			Utils.closeFile(subWriter);
 		}
 	}
 
-	public void setTypParam(TypParam param) {
-		setFamilyId(param.getFamilyId());
-		setProductId(param.getProductId());
-		setCodePage(param.getCodePage());
-	}
-
-	public void setStacking(ShapeStacking stacking) {
-		this.stacking = stacking;
+	public void setData(TypData data) {
+		this.data = data;
+		TypParam param = data.getParam();
+		header.setCodePage((char) param.getCodePage());
+		header.setFamilyId((char) param.getFamilyId());
+		header.setProductId((char) param.getProductId());
 	}
 }

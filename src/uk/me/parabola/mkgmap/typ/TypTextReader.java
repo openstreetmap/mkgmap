@@ -19,9 +19,8 @@ import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.nio.channels.FileChannel;
 
-import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
 import uk.me.parabola.imgfmt.app.typ.TYPFile;
-import uk.me.parabola.imgfmt.app.typ.TypParam;
+import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
@@ -35,13 +34,13 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  */
 public class TypTextReader {
 
-	private final TypParam param = new TypParam();
-	private final ShapeStacking stacking = new ShapeStacking();
+	// As the file is read in, the information is saved into this data structure.
+	private final TypData data = new TypData();
 
 	public void read(String filename, Reader r) {
 		TokenScanner scanner = new TokenScanner(filename, r);
 
-		ProcessMethod currentSection = null;
+		ProcessSection currentSection = null;
 
 		while (!scanner.isEndOfFile()) {
 			Token tok = scanner.nextToken();
@@ -58,10 +57,10 @@ public class TypTextReader {
 					scanner.skipLine();
 					break;
 				case '[':
-					ProcessMethod newMethod = readSectionType(scanner);
+					ProcessSection newSection = readSectionType(scanner);
 					if (currentSection != null)
 						currentSection.finish();
-					currentSection = newMethod;
+					currentSection = newSection;
 					break;
 				case '"':
 					scanner.skipLine();
@@ -86,32 +85,15 @@ public class TypTextReader {
 		}
 	}
 
-	private ProcessMethod readSectionType(TokenScanner scanner) {
+	private ProcessSection readSectionType(TokenScanner scanner) {
 		String sectionName = scanner.nextValue().toLowerCase();
 		scanner.validateNext("]"); // Check for closing bracket
 
-		if ("_id".equals(sectionName)) {
-			return new ProcessMethod() {
-				public void processLine(TokenScanner scanner, String name, String value) {
-					idSection(scanner, name, value);
-				}
-
-				public void finish() {
-				}
-			};
-
-		} else if ("_draworder".equals(sectionName)) {
-			return new ProcessMethod() {
-				public void processLine(TokenScanner scanner, String name, String value) {
-					drawOrderSection(scanner, name, value);
-				}
-
-				public void finish() {
-				}
-			};
+		if ("end".equals(sectionName)) {
+			return null;
 
 		} else if ("_point".equals(sectionName)) {
-			return new ProcessMethod() {
+			return new ProcessSection() {
 				public void processLine(TokenScanner scanner, String name, String value) {
 					pointSection(scanner, name, value);
 				}
@@ -121,7 +103,7 @@ public class TypTextReader {
 			};
 
 		} else if ("_line".equals(sectionName)) {
-			return new ProcessMethod() {
+			return new ProcessSection() {
 				public void processLine(TokenScanner scanner, String name, String value) {
 					lineSection(scanner, name, value);
 				}
@@ -131,63 +113,14 @@ public class TypTextReader {
 			};
 
 		} else if ("_polygon".equals(sectionName)) {
-			return new ProcessMethod() {
-				public void processLine(TokenScanner scanner, String name, String value) {
-					polygonSection(scanner, name, value);
-				}
-
-				public void finish() {
-				}
-			};
-
-		} else if ("end".equals(sectionName)) {
-			return null;
+			return new PolygonSection(data);
+		} else if ("_draworder".equals(sectionName)) {
+			return new DrawOrderSection(data);
+		} else if ("_id".equals(sectionName)) {
+			return new IdSection(data);
 		}
 
 		throw new SyntaxException(scanner, "Unrecognised section name: " + sectionName);
-	}
-
-	private void idSection(TokenScanner scanner, String name, String value) {
-		int ival;
-		try {
-			ival = Integer.parseInt(value);
-		} catch (NumberFormatException e) {
-			throw new SyntaxException(scanner, "Bad integer " + value);
-		}
-
-		if (name.equals("FID")) {
-			param.setFamilyId(ival);
-		} else if (name.equals("ProductCode")) {
-			param.setProductId(ival);
-		} else if (name.equals("CodePage")) {
-			param.setCodePage(ival);
-		} else {
-			throw new SyntaxException(scanner, "Unrecognised keyword in id section: " + name);
-		}
-
-	}
-
-	private void drawOrderSection(TokenScanner scanner, String name, String value) {
-		if (!name.equals("Type"))
-			throw new SyntaxException(scanner, "Unrecognised keyword in draw order section: " + name);
-
-		String[] foo = value.split(",");
-		if (foo.length != 2)
-			throw new SyntaxException(scanner, "Unrecognised drawOrder type " + value);
-
-		int fulltype = Integer.decode(foo[0]);
-		int type;
-		int subtype = 0;
-
-		if (fulltype > 0x10000) {
-			type = (fulltype >> 8) & 0xff;
-			subtype = fulltype & 0xff;
-		} else {
-			type = fulltype & 0xff;
-		}
-
-		int level = Integer.parseInt(foo[1]);
-		stacking.addPolygon(level, type, subtype);
 	}
 
 	private void pointSection(TokenScanner scanner, String name, String value) {
@@ -200,29 +133,24 @@ public class TypTextReader {
 			return;
 	}
 
-	private void polygonSection(TokenScanner scanner, String name, String value) {
-		if (commonKey(scanner, name, value))
-			return;
-	}
-
 	private boolean commonKey(TokenScanner scanner, String name, String value) {
 		return false;
 	}
 
-	public TypParam getParam() {
-		return param;
+	public TypData getData() {
+		return data;
 	}
 
-	public ShapeStacking getStacking() {
-		return stacking;
-	}
-
-	interface ProcessMethod {
-		public void processLine(TokenScanner scanner, String name, String value);
-
-		public void finish();
-	}
-
+	/**
+	 * Simple main program to demonstrate compiling a typ.txt file.
+	 *
+	 * Usage: TypTextReader [in-file] [out-file]
+	 *
+	 * in-file defaults to 'default.txt'
+	 * out-file defaults to 'OUT.TYP'
+	 *
+	 * @param args Command line arguments.
+	 */
 	public static void main(String[] args) throws IOException {
 		String in = "default.txt";
 		if (args.length > 0)
@@ -246,8 +174,7 @@ public class TypTextReader {
 		
 		FileImgChannel w = new FileImgChannel(channel);
 		TYPFile typ = new TYPFile(w);
-		typ.setTypParam(tr.param);
-		typ.setStacking(tr.stacking);
+		typ.setData(tr.data);
 
 		typ.write();
 		typ.close();

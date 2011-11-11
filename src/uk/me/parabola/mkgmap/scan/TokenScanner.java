@@ -332,7 +332,7 @@ public class TokenScanner {
 		skipSpace();
 		Token tok = nextToken();
 		if (val == null || !val.equals(tok.getValue()))
-			throw new SyntaxException(this, "Expecting " + val);
+			throw new SyntaxException(this, "Expecting " + val + ", instead saw " + tok.getValue());
 	}
 
 	public int getLinenumber() {
