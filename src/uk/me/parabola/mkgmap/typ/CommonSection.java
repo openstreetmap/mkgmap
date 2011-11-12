@@ -59,16 +59,24 @@ public class CommonSection {
 		parseXpmHeader(scanner, colourInfo, header);
 
 		for (int i = 0; i < colourInfo.getNumberOfColours(); i++) {
-			// TODO: don't want to change TokenScanner while working on trunk
-			// Read whole line, since even a space is significant.
+			// Tricky to do this with TokenScanner, since even spaces are significant sometimes.
+			// TODO: change scanner maybe?
 			String line = scanner.readLine();
 
 			int cpp = colourInfo.getCharsPerPixel();
-			String colourTag = line.substring(1, cpp);
+			String colourTag = line.substring(1, 1+cpp);
+			System.out.printf("tag '%s'\n", colourTag);
 
 			int ind = cpp+1;
 			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
 				ind++;
+
+			if (line.charAt(ind++) != 'c')
+				throw new SyntaxException(scanner, "Expecting 'c' in colour definition: " + line);
+
+			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
+				ind++;
+
 			if (line.charAt(ind) == '#') {
 				int start = ++ind;
 				while (Character.isLetterOrDigit(line.charAt(ind))) {
@@ -77,28 +85,15 @@ public class CommonSection {
 				int end = ind;
 
 				String colour = line.substring(start, end);
-				sout
-			} else if (line.charAt(ind) == 'n') {
+				colourInfo.addColour(colourTag, new Rgb(colour));
 
+			} else if (line.charAt(ind) == 'n') {
+				if (line.substring(ind, ind + 4).equals("none"))
+					colourInfo.addTransparent(colourTag);
+				else
+					throw new SyntaxException(scanner, "Unrecognised colour in: " + line);
 			} else {
 				throw new SyntaxException(scanner, "Cannot recognise colour definition: " + line);
-			}
-
-			if (line.length() < 8)
-				throw new SyntaxException(scanner, "Short colour definition \"" + line);
-			if (line.charAt(cpp + 3) == 'n'
-					&& line.substring(cpp +3, cpp +7).equals("none"))
-			{
-				colourInfo.addTransparent(colourTag);
-
-			} else {
-				if (line.charAt(cpp + 3) != '#')
-					throw new SyntaxException(scanner, "Expecting colour beginning with '#'");
-
-				// The colour value as RRGGBB
-				String colourValue = line.substring(5, 11);
-
-				colourInfo.addColour(colourTag, new Rgb(colourValue));
 			}
 		}
 		return colourInfo;
