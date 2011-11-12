@@ -31,7 +31,7 @@ class IdSection implements ProcessSection {
 	public void processLine(TokenScanner scanner, String name, String value) {
 		int ival;
 		try {
-			ival = Integer.parseInt(value);
+			ival = Integer.decode(value);
 		} catch (NumberFormatException e) {
 			throw new SyntaxException(scanner, "Bad integer " + value);
 		}
@@ -45,7 +45,6 @@ class IdSection implements ProcessSection {
 		} else {
 			throw new SyntaxException(scanner, "Unrecognised keyword in id section: " + name);
 		}
-
 	}
 
 	public void finish() {

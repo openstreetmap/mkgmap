@@ -103,16 +103,24 @@ public class CommonSection {
 
 	protected boolean commonKey(TokenScanner scanner, TypElement current, String name, String value) {
 		if (name.equals("Type")) {
-			int ival = Integer.decode(value);
-			if (ival > 0x10000) {
-				current.setType((ival >> 8) & 0x1ff);
-				current.setSubType(ival & 0xff);
-			} else {
-				current.setType(ival & 0xff);
+			try {
+				int ival = Integer.decode(value);
+				if (ival > 0x10000) {
+					current.setType((ival >> 8) & 0x1ff);
+					current.setSubType(ival & 0xff);
+				} else {
+					current.setType(ival & 0xff);
+				}
+			} catch (NumberFormatException e) {
+				throw new SyntaxException(scanner, "Bad number " + value);
 			}
 
 		} else if (name.startsWith("String")) {
-			current.addLabel(value);
+			try {
+				current.addLabel(value);
+			} catch (Exception e) {
+				throw new SyntaxException(scanner, "Bad number in " + value);
+			}
 
 		} else if (name.equals("Xpm")) {
 			readXpm(scanner, current, value);
@@ -121,8 +129,8 @@ public class CommonSection {
 			int font = decodeFontStyle(value);
 			current.setFontStyle(font);
 
-		} else if (name.equals("CustomColor")) {
-			// I don't think we need to look at this, just use DayCustomColor etc.
+		} else if (name.equals("CustomColor") || name.equals("ExtendedLabels")) {
+			// These are just noise, the appropriate flag is set if any feature is used.
 
 		} else if (name.equals("DaycustomColor")) {
 			current.setDayCustomColor(value);
@@ -130,7 +138,7 @@ public class CommonSection {
 		} else {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -148,25 +156,33 @@ public class CommonSection {
 	 * Note that this is sometimes used just for colours so need to deal with
 	 * different cases.
 	 */
-	private void readXpm(TokenScanner scanner, TypElement current, String heading) {
-		String first = heading.substring(1, heading.length() - 1);
-		String[] header = first.split(" +");
+	private void readXpm(TokenScanner scanner, TypElement current, String header) {
+		String first = header.substring(1, header.length() - 1);
+		String[] headingItems = first.split(" +");
 
-		int w = Integer.parseInt(header[0]);
-		int h = Integer.parseInt(header[1]);
-		int c = Integer.parseInt(header[2]);
-		int cpp = Integer.parseInt(header[3]);
+		int width;
+		int height;
+		int nColours;
+		int charsPerPixel;
+		try {
+			width = Integer.parseInt(headingItems[0]);
+			height = Integer.parseInt(headingItems[1]);
+			nColours = Integer.parseInt(headingItems[2]);
+			charsPerPixel = Integer.parseInt(headingItems[3]);
+		} catch (NumberFormatException e) {
+			throw new SyntaxException(scanner, "Bad number in XPM header " + header);
+		}
 
 		// Files do not set this if there is no actual bitmap
-		if (cpp == 0)
-			cpp = 1;
+		if (charsPerPixel == 0)
+			charsPerPixel = 1;
 
-		ColourInfo colourInfo = readColourInfo(scanner, c, cpp);
+		ColourInfo colourInfo = readColourInfo(scanner, nColours, charsPerPixel);
 		current.setColourInfo(colourInfo);
 
-		if (h > 0 && w > 0) {
+		if (height > 0 && width > 0) {
 			colourInfo.setHasBitmap(true);
-			BitmapImage image = readImage(scanner, w, h, cpp, colourInfo);
+			BitmapImage image = readImage(scanner, width, height, charsPerPixel, colourInfo);
 			current.setImage(image);
 		}
 	}

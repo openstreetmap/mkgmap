@@ -14,6 +14,7 @@ package uk.me.parabola.mkgmap.typ;
 
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypLine;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -36,7 +37,12 @@ class LineSection extends CommonSection implements ProcessSection {
 		if (name.equals("UseOrientation")) {
 			current.setUseOrientation(value.charAt(0) == 'Y');
 		} else if (name.equals("LineWidth")) {
-			int ival = Integer.decode(value);
+			int ival = 0;
+			try {
+				ival = Integer.decode(value);
+			} catch (NumberFormatException e) {
+				throw new SyntaxException(scanner, "Bad number for line width: " + value);
+			}
 			current.setLineWidth(ival);
 		} else
 			warnUnknown(name);
