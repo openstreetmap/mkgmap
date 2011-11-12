@@ -33,15 +33,16 @@ public class ColourInfo implements Writeable {
 	private static final int S_NIGHT_TRANSPARENT = 0x4;
 	private static final int S_HAS_BITMAP = 0x8;
 
-	private final int numberOfColours;
+	private int numberOfColours;
 
 	private boolean hasBitmap;
 	private final List<Rgb> colours = new ArrayList<Rgb>();
 	private final Map<String, Integer> indexMap = new HashMap<String, Integer>();
 
-	public ColourInfo(int numberOfColours) {
-		this.numberOfColours = numberOfColours;
-	}
+	private int width;
+	private int height;
+	private int charsPerPixel;
+
 
 	public void addColour(String tag, Rgb rgb) {
 		indexMap.put(tag, colours.size());
@@ -91,5 +92,37 @@ public class ColourInfo implements Writeable {
 
 	public int getIndex(String idx) {
 		return indexMap.get(idx);
+	}
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
+	public void setNumberOfColours(int numberOfColours) {
+		this.numberOfColours = numberOfColours;
+	}
+
+	public void setCharsPerPixel(int charsPerPixel) {
+		this.charsPerPixel = charsPerPixel == 0 ? 1 : charsPerPixel;
+	}
+
+	public int getNumberOfColours() {
+		return numberOfColours;
+	}
+
+	public int getCharsPerPixel() {
+		return charsPerPixel;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public int getWidth() {
+		return width;
 	}
 }

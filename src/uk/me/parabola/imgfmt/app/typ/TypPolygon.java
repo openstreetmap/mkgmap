@@ -30,6 +30,7 @@ public class TypPolygon extends TypElement {
 	public void write(ImgFileWriter writer, CharsetEncoder encoder) {
 		offset = writer.position();
 
+		ColourInfo colourInfo = xpm.getColourInfo();
 		int scheme = colourInfo.getColourScheme();
 		if (!labels.isEmpty())
 			scheme |= F_LABEL;
@@ -39,8 +40,8 @@ public class TypPolygon extends TypElement {
 		writer.put((byte) scheme);
 
 		colourInfo.write(writer);
-		if (image != null)
-			image.write(writer);
+		if (xpm.hasImage())
+			xpm.writeImage(writer);
 
 		// The labels have a length byte to show the number of bytes following. There is
 		// also a flag in the length. The strings have a language number proceeding them.
@@ -60,14 +61,7 @@ public class TypPolygon extends TypElement {
 
 		// The extension section hold font style and colour information for the labels.
 		if ((scheme & F_EXTENDED) != 0) {
-			byte fontExt = (byte) fontStyle;
-			if (dayFontColour != null)
-				fontExt |= 0x8;
-
-			writer.put(fontExt);
-
-			if (dayFontColour != null)
-				dayFontColour.write(writer, (byte) 0x10);
+			writeExtendedFontInfo(writer);
 		}
 	}
 }

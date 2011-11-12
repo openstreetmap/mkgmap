@@ -53,20 +53,21 @@ public class TypLine extends TypElement {
 		if (!useOrientation)
 			flags |= F_USE_ROTATION;
 
-		int width = 0;
-		if (image != null)
-			width = image.getHeight();
+		int height = 0;
+		if (xpm.hasImage())
+			height = xpm.getImage().getHeight();
 
+		ColourInfo colourInfo = xpm.getColourInfo();
 		int scheme = colourInfo.getColourScheme() & 0x7;
 
-		writer.put((byte) ((scheme & 0x7) | (width << 3)));
+		writer.put((byte) ((scheme & 0x7) | (height << 3)));
 		writer.put(flags);
 
 		colourInfo.write(writer);
-		if (image != null)
-			image.write(writer);
+		if (xpm.hasImage())
+			xpm.writeImage(writer);
 
-		if (width == 0 /* && scheme != 6*/) {
+		if (height == 0 /* && scheme != 6*/) {
 			writer.put(lineWidth);
 		}
 
@@ -87,16 +88,9 @@ public class TypLine extends TypElement {
 		}
 
 		// The extension section hold font style and colour information for the labels.
-		if ((flags & F_EXTENDED) != 0) {
-			byte fontExt = (byte) fontStyle;
-			if (dayFontColour != null)
-				fontExt |= 0x8;
+		if ((flags & F_EXTENDED) != 0)
+			writeExtendedFontInfo(writer);
 
-			writer.put(fontExt);
-
-			if (dayFontColour != null)
-				dayFontColour.write(writer, (byte) 0x10);
-		}
 	}
 
 	public void setUseOrientation(boolean useOrientation) {

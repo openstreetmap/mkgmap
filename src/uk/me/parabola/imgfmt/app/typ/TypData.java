@@ -27,6 +27,7 @@ public class TypData {
 	private final TypParam param = new TypParam();
 	private final List<TypPolygon> polygons = new ArrayList<TypPolygon>();
 	private final List<TypLine> lines = new ArrayList<TypLine>();
+	private final List<TypPoint> points = new ArrayList<TypPoint>();
 
 	private CharsetEncoder encoder;
 
@@ -56,8 +57,8 @@ public class TypData {
 		return param;
 	}
 
-	public void addPolygon(TypPolygon current) {
-		polygons.add(current);
+	public void addPolygon(TypPolygon polygon) {
+		polygons.add(polygon);
 	}
 
 	public CharsetEncoder getEncoder() {
@@ -68,11 +69,19 @@ public class TypData {
 		return polygons;
 	}
 
-	public void addLine(TypLine current) {
-		lines.add(current);
+	public void addLine(TypLine line) {
+		lines.add(line);
 	}
 
 	public List<TypLine> getLines() {
 		return lines;
+	}
+
+	public void addPoint(TypPoint point) {
+		points.add(point);
+	}
+
+	public List<TypPoint> getPoints() {
+		return points;
 	}
 }

@@ -93,18 +93,9 @@ public class TypTextReader {
 			return null;
 
 		} else if ("_point".equals(sectionName)) {
-			return new ProcessSection() {
-				public void processLine(TokenScanner scanner, String name, String value) {
-					pointSection(scanner, name, value);
-				}
-
-				public void finish() {
-				}
-			};
-
+			return new PointSection(data);
 		} else if ("_line".equals(sectionName)) {
 			return new LineSection(data);
-
 		} else if ("_polygon".equals(sectionName)) {
 			return new PolygonSection(data);
 		} else if ("_draworder".equals(sectionName)) {
@@ -114,11 +105,6 @@ public class TypTextReader {
 		}
 
 		throw new SyntaxException(scanner, "Unrecognised section name: " + sectionName);
-	}
-
-	private void pointSection(TokenScanner scanner, String name, String value) {
-		//if (commonKey(scanner, name, value))
-		//	return;
 	}
 
 	public TypData getData() {

@@ -29,13 +29,16 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 public abstract class TypElement {
 	private int type;
 	private int subType;
+
 	protected final List<TypLabel> labels = new ArrayList<TypLabel>();
-	protected ColourInfo colourInfo;
-	protected BitmapImage image;
+
+	protected Xpm xpm;
+
 	protected int fontStyle;
 	protected Rgb dayFontColour;
+	protected Rgb nightFontColour;
+
 	protected int offset;
-	private Rgb nightFontColour;
 
 	public void setType(int type) {
 		this.type = type;
@@ -57,12 +60,8 @@ public abstract class TypElement {
 		labels.add(new TypLabel(text));
 	}
 
-	public void setColourInfo(ColourInfo colourInfo) {
-		this.colourInfo = colourInfo;
-	}
-
-	public void setImage(BitmapImage image) {
-		this.image = image;
+	public void setXpm(Xpm xpm) {
+		this.xpm = xpm;
 	}
 
 	public void setFontStyle(int font) {
@@ -81,6 +80,10 @@ public abstract class TypElement {
 
 	public void setNightCustomColor(String value) {
 		nightFontColour = new Rgb(value);
+	}
+
+	public Rgb getNightFontColour() {
+		return nightFontColour;
 	}
 
 	/**
@@ -105,5 +108,22 @@ public abstract class TypElement {
 		}
 
 		return out;
+	}
+
+	protected void writeExtendedFontInfo(ImgFileWriter writer) {
+		byte fontExt = (byte) fontStyle;
+		if (dayFontColour != null)
+			fontExt |= 0x8;
+
+		if (nightFontColour != null)
+			fontExt |= 0x10;
+
+		writer.put(fontExt);
+
+		if (dayFontColour != null)
+			dayFontColour.write(writer, (byte) 0x10);
+
+		if (nightFontColour != null)
+			nightFontColour.write(writer, (byte) 0x10);
 	}
 }

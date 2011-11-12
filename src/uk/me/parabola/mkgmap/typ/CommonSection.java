@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.typ;
 
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import uk.me.parabola.imgfmt.app.typ.ColourInfo;
 import uk.me.parabola.imgfmt.app.typ.Rgb;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypElement;
+import uk.me.parabola.imgfmt.app.typ.Xpm;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
@@ -50,26 +52,47 @@ public class CommonSection {
 
 	/**
 	 * Read the colour lines from the XPM format image.
-	 * @param numberColours Number of colours to read.
-	 * @param charsPerPixel Number of characters for each pixel.
 	 */
-	protected ColourInfo readColourInfo(TokenScanner scanner, int numberColours, int charsPerPixel) {
-		ColourInfo colourInfo = new ColourInfo(numberColours);
-		for (int i = 0; i < numberColours; i++) {
+	protected ColourInfo readColourInfo(TokenScanner scanner, String header) {
+
+		ColourInfo colourInfo = new ColourInfo();
+		parseXpmHeader(scanner, colourInfo, header);
+
+		for (int i = 0; i < colourInfo.getNumberOfColours(); i++) {
+			// TODO: don't want to change TokenScanner while working on trunk
+			// Read whole line, since even a space is significant.
 			String line = scanner.readLine();
 
-			// Strip the quotes
-			line = line.substring(1, line.length() - 1);
-			String colourTag = line.substring(0, charsPerPixel);
+			int cpp = colourInfo.getCharsPerPixel();
+			String colourTag = line.substring(1, cpp);
+
+			int ind = cpp+1;
+			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
+				ind++;
+			if (line.charAt(ind) == '#') {
+				int start = ++ind;
+				while (Character.isLetterOrDigit(line.charAt(ind))) {
+					ind++;
+				}
+				int end = ind;
+
+				String colour = line.substring(start, end);
+				sout
+			} else if (line.charAt(ind) == 'n') {
+
+			} else {
+				throw new SyntaxException(scanner, "Cannot recognise colour definition: " + line);
+			}
+
 			if (line.length() < 8)
 				throw new SyntaxException(scanner, "Short colour definition \"" + line);
-			if (line.charAt(charsPerPixel + 3) == 'n'
-					&& line.substring(charsPerPixel+3, charsPerPixel+7).equals("none"))
+			if (line.charAt(cpp + 3) == 'n'
+					&& line.substring(cpp +3, cpp +7).equals("none"))
 			{
 				colourInfo.addTransparent(colourTag);
 
 			} else {
-				if (line.charAt(charsPerPixel + 3) != '#')
+				if (line.charAt(cpp + 3) != '#')
 					throw new SyntaxException(scanner, "Expecting colour beginning with '#'");
 
 				// The colour value as RRGGBB
@@ -82,23 +105,56 @@ public class CommonSection {
 	}
 
 	/**
+	 * Parse the XPM header in a typ file.
+	 *
+	 * There are extensions compared to a regular XPM file.
+	 *
+	 * @param scanner Only for reporting syntax errors.
+	 * @param info Information read from the string is stored here.
+	 * @param header The string containing the xpm header and other extended data provided on the
+	 * same line.
+	 */
+	private void parseXpmHeader(TokenScanner scanner, ColourInfo info, String header) {
+		TokenScanner s2 = new TokenScanner("string", new StringReader(header));
+
+		if (s2.checkToken("\""))
+			s2.nextToken();
+
+		try {
+			info.setWidth(s2.nextInt());
+			info.setHeight(s2.nextInt());
+			info.setNumberOfColours(s2.nextInt());
+			info.setCharsPerPixel(s2.nextInt());
+		} catch (NumberFormatException e) {
+			throw new SyntaxException(scanner, "Bad number in XPM header " + header);
+		}
+	}
+
+	/**
 	 * Read the bitmap part of a XPM image.
 	 *
 	 * In the TYP file, XPM is used when there is not really an image, so this is not
 	 * always called.
 	 */
-	protected BitmapImage readImage(TokenScanner scanner, int w, int h, int cpp, ColourInfo colourInfo) {
+	protected BitmapImage readImage(TokenScanner scanner, ColourInfo colourInfo) {
 		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < h; i++) {
+		int width = colourInfo.getWidth();
+		int height = colourInfo.getHeight();
+
+		for (int i = 0; i < height; i++) {
 			String line = scanner.readLine();
 			if (line.charAt(0) != '"' || line.charAt(line.length()-1) != '"')
 				throw new SyntaxException(scanner, "xpm bitmap line not surrounded by quotes: " + line);
 			sb.append(line.substring(1, line.length() - 1));
 		}
-		if (sb.length() != w*h*cpp)
-			throw new SyntaxException(scanner, "Got " + sb.length() + " of image data, expected " + w * h * cpp);
 
-		return new BitmapImage(w, h, cpp, colourInfo, sb.toString());
+		int cpp = colourInfo.getCharsPerPixel();
+		if (sb.length() != width * height * cpp) {
+			throw new SyntaxException(scanner, "Got " + sb.length() + " of image data, " +
+					"expected " + width * height * cpp);
+		}
+
+		return new BitmapImage(width, height, cpp, colourInfo, sb.toString());
 	}
 
 	protected boolean commonKey(TokenScanner scanner, TypElement current, String name, String value) {
@@ -123,7 +179,8 @@ public class CommonSection {
 			}
 
 		} else if (name.equals("Xpm")) {
-			readXpm(scanner, current, value);
+			Xpm xpm = readXpm(scanner, value);
+			current.setXpm(xpm);
 
 		} else if (name.equals("FontStyle")) {
 			int font = decodeFontStyle(value);
@@ -134,6 +191,9 @@ public class CommonSection {
 
 		} else if (name.equals("DaycustomColor")) {
 			current.setDayCustomColor(value);
+
+		} else if (name.equals("NightcustomColor")) {
+			current.setNightCustomColor(value);
 
 		} else {
 			return false;
@@ -156,34 +216,22 @@ public class CommonSection {
 	 * Note that this is sometimes used just for colours so need to deal with
 	 * different cases.
 	 */
-	private void readXpm(TokenScanner scanner, TypElement current, String header) {
-		String first = header.substring(1, header.length() - 1);
-		String[] headingItems = first.split(" +");
+	protected Xpm readXpm(TokenScanner scanner, String header) {
 
-		int width;
-		int height;
-		int nColours;
-		int charsPerPixel;
-		try {
-			width = Integer.parseInt(headingItems[0]);
-			height = Integer.parseInt(headingItems[1]);
-			nColours = Integer.parseInt(headingItems[2]);
-			charsPerPixel = Integer.parseInt(headingItems[3]);
-		} catch (NumberFormatException e) {
-			throw new SyntaxException(scanner, "Bad number in XPM header " + header);
-		}
 
-		// Files do not set this if there is no actual bitmap
-		if (charsPerPixel == 0)
-			charsPerPixel = 1;
+		ColourInfo colourInfo = readColourInfo(scanner, header);
 
-		ColourInfo colourInfo = readColourInfo(scanner, nColours, charsPerPixel);
-		current.setColourInfo(colourInfo);
+		Xpm xpm = new Xpm();
+		xpm.setColourInfo(colourInfo);
 
+		int height = colourInfo.getHeight();
+		int width = colourInfo.getWidth();
 		if (height > 0 && width > 0) {
 			colourInfo.setHasBitmap(true);
-			BitmapImage image = readImage(scanner, width, height, charsPerPixel, colourInfo);
-			current.setImage(image);
+			BitmapImage image = readImage(scanner, colourInfo);
+			xpm.setImage(image);
 		}
+
+		return xpm;
 	}
 }
