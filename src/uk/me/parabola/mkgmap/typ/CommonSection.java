@@ -44,6 +44,11 @@ public class CommonSection {
 			return 1;
 		} else if (value.startsWith("SmallFont")) {
 			return 2;
+		// TODO: correct tag names not known yet
+		//} else if (value.startsWith("NormalFont")) {
+		//	return 3;
+		//} else if (value.startsWith("LargeFont")) {
+		//	return 4;
 		} else {
 			warnUnknown("font value " + value);
 			return 0;
@@ -65,7 +70,6 @@ public class CommonSection {
 
 			int cpp = colourInfo.getCharsPerPixel();
 			String colourTag = line.substring(1, 1+cpp);
-			System.out.printf("tag '%s'\n", colourTag);
 
 			int ind = cpp+1;
 			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
@@ -149,15 +153,15 @@ public class CommonSection {
 					"expected " + width * height * cpp);
 		}
 
-		return new BitmapImage(width, height, cpp, colourInfo, sb.toString());
+		return new BitmapImage(colourInfo, sb.toString());
 	}
 
 	protected boolean commonKey(TokenScanner scanner, TypElement current, String name, String value) {
 		if (name.equals("Type")) {
 			try {
 				int ival = Integer.decode(value);
-				if (ival > 0x10000) {
-					current.setType((ival >> 8) & 0x1ff);
+				if (ival >= 0x10000) {
+					current.setType(ival >>> 8);
 					current.setSubType(ival & 0xff);
 				} else {
 					current.setType(ival & 0xff);
@@ -185,7 +189,7 @@ public class CommonSection {
 			// These are just noise, the appropriate flag is set if any feature is used.
 
 		} else if (name.equals("DaycustomColor")) {
-			current.setDayCustomColor(value);
+			current.setDayFontColor(value);
 
 		} else if (name.equals("NightcustomColor")) {
 			current.setNightCustomColor(value);
@@ -212,8 +216,6 @@ public class CommonSection {
 	 * different cases.
 	 */
 	protected Xpm readXpm(TokenScanner scanner, String header) {
-
-
 		ColourInfo colourInfo = readColourInfo(scanner, header);
 
 		Xpm xpm = new Xpm();

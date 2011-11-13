@@ -20,6 +20,9 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 /**
  * Process lines from a line definition in the typ.txt file.
  *
+ * Most of the work is done in the superclass since all the element types
+ * are very similar.
+ *
  * @author Steve Ratcliffe
  */
 class LineSection extends CommonSection implements ProcessSection {
@@ -37,13 +40,19 @@ class LineSection extends CommonSection implements ProcessSection {
 		if (name.equals("UseOrientation")) {
 			current.setUseOrientation(value.charAt(0) == 'Y');
 		} else if (name.equals("LineWidth")) {
-			int ival = 0;
 			try {
-				ival = Integer.decode(value);
+				int ival = Integer.decode(value);
+				current.setLineWidth(ival);
 			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Bad number for line width: " + value);
 			}
-			current.setLineWidth(ival);
+		} else if (name.equals("BorderWidth")) {
+			try {
+				int ival = Integer.decode(value);
+				current.setBorderWidth(ival);
+			} catch (NumberFormatException e) {
+				throw new SyntaxException(scanner, "Bad number for line width: " + value);
+			}
 		} else
 			warnUnknown(name);
 	}

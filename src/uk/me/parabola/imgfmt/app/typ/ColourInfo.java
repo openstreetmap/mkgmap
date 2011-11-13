@@ -43,10 +43,15 @@ public class ColourInfo implements Writeable {
 	private int height;
 	private int charsPerPixel;
 
+	private boolean simple = true;
+	private int colourMode;
+	private int numberOfSolidColours;
 
 	public void addColour(String tag, Rgb rgb) {
 		indexMap.put(tag, colours.size());
 		colours.add(rgb);
+		if (!rgb.isTransparent())
+			numberOfSolidColours++;
 	}
 
 	public void addTransparent(String colourTag) {
@@ -83,6 +88,39 @@ public class ColourInfo implements Writeable {
 		return scheme;
 	}
 
+	public int getBitsPerPixel() {
+		if (simple) {
+			return 1;
+		}
+
+		int nc = numberOfSolidColours; // XXX may depend on colour mode
+
+		int nbits = 8;
+		if (colourMode == 0) {
+			if (nc < 2)
+				nbits = 1;
+			else if (nc < 4)
+				nbits = 2;
+			else if (nc < 16)
+				nbits = 4;
+		} else if (colourMode == 0x10) {
+			if (nc < 3)
+				nbits = 2;
+			else if (nc < 15) {
+				nbits = 4;
+			}
+		} else if (colourMode == 0x20) {
+			if (nc < 2)
+				nbits = 1;
+			else if (nc < 4)
+				nbits = 2;
+			else if (nc < 16)
+				nbits = 4;
+		}
+
+		return nbits;
+	}
+
 	public void write(ImgFileWriter writer) {
 		for (Rgb rgb : colours) {
 			if (!rgb.isTransparent())
@@ -91,7 +129,14 @@ public class ColourInfo implements Writeable {
 	}
 
 	public int getIndex(String idx) {
-		return indexMap.get(idx);
+		Integer ind = indexMap.get(idx);
+
+		// If this is a simple bitmap (for line or polygon), then the foreground colour is
+		// first and so has index 0, but we want the foreground to have index 1, so reverse.
+		if (simple)
+			ind = ~ind;
+
+		return ind;
 	}
 
 	public void setWidth(int width) {
@@ -114,6 +159,10 @@ public class ColourInfo implements Writeable {
 		return numberOfColours;
 	}
 
+	public int getNumberOfSolidColours() {
+		return numberOfSolidColours;
+	}
+
 	public int getCharsPerPixel() {
 		return charsPerPixel;
 	}
@@ -124,5 +173,21 @@ public class ColourInfo implements Writeable {
 
 	public int getWidth() {
 		return width;
+	}
+
+	public int getColourMode() {
+		return colourMode;
+	}
+
+	public void setColourMode(int colourMode) {
+		this.colourMode = colourMode;
+	}
+
+	public boolean isSimple() {
+		return simple;
+	}
+
+	public void setSimple(boolean simple) {
+		this.simple = simple;
 	}
 }

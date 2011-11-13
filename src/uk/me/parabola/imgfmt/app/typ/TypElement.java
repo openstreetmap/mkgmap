@@ -22,8 +22,9 @@ import java.util.List;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Base routines used by points, lines and polygons.
+ * Base routines and data used by points, lines and polygons.
  *
+ * If fact they are all very similar, so there is 
  * @author Steve Ratcliffe
  */
 public abstract class TypElement {
@@ -68,22 +69,18 @@ public abstract class TypElement {
 		this.fontStyle = font;
 	}
 
-	public void setDayCustomColor(String value) {
+	public void setDayFontColor(String value) {
 		dayFontColour = new Rgb(value);
-	}
-
-	public abstract void write(ImgFileWriter writer, CharsetEncoder encoder);
-
-	public int getOffset() {
-		return offset;
 	}
 
 	public void setNightCustomColor(String value) {
 		nightFontColour = new Rgb(value);
 	}
 
-	public Rgb getNightFontColour() {
-		return nightFontColour;
+	public abstract void write(ImgFileWriter writer, CharsetEncoder encoder);
+
+	public int getOffset() {
+		return offset;
 	}
 
 	/**
@@ -110,6 +107,28 @@ public abstract class TypElement {
 		return out;
 	}
 
+	/**
+	 * Write the label block, this is the same for all element types.
+	 * @param encoder To properly encode the labels.
+	 */
+	protected void writeLabelBlock(ImgFileWriter writer, CharsetEncoder encoder) {
+		ByteBuffer out = makeLabelBlock(encoder);
+		int flag = 1; // XXX What is this?
+
+		// write out the length byte
+		byte len = (byte) ((out.position() << 1) + flag);
+		writer.put(len);
+
+		// Prepare and write buffer
+		out.flip();
+		writer.put(out);
+	}
+
+	/**
+	 * Write out extended font information, colour and size.
+	 *
+	 * This is the same for each element type.
+	 */
 	protected void writeExtendedFontInfo(ImgFileWriter writer) {
 		byte fontExt = (byte) fontStyle;
 		if (dayFontColour != null)

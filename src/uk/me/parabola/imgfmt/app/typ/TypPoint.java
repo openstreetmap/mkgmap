@@ -23,9 +23,42 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  */
 public class TypPoint extends TypElement {
 	private Xpm nightXpm;
+	private static final byte F_BITMAP = 0x1;
+	private static final byte F_NIGHT_XPM = 0x2;
+	private static final byte F_LABEL = 0x4;
+	private static final byte F_EXTENDED_FONT = 0x8;
 
 	public void write(ImgFileWriter writer, CharsetEncoder encoder) {
-		throw new UnsupportedOperationException();
+		offset = writer.position();
+
+		byte flags = F_BITMAP;
+
+		if (nightXpm != null)
+			flags |= F_NIGHT_XPM;
+		
+		if (!labels.isEmpty())
+			flags |= F_LABEL;
+
+		if (fontStyle != 0 || dayFontColour != null || nightFontColour != null)
+			flags |= F_EXTENDED_FONT;
+
+		writer.put(flags);
+
+		ColourInfo colourInfo = xpm.getColourInfo();
+		writer.put((byte) colourInfo.getWidth());
+		writer.put((byte) colourInfo.getHeight());
+		writer.put((byte) colourInfo.getNumberOfSolidColours());
+		writer.put((byte) colourInfo.getColourMode());
+		
+		colourInfo.write(writer);
+		if (xpm.hasImage())
+			xpm.writeImage(writer);
+
+		if ((flags & F_LABEL) != 0)
+			writeLabelBlock(writer, encoder);
+
+		if ((flags & F_EXTENDED_FONT) != 0)
+			writeExtendedFontInfo(writer);
 	}
 
 	public void setNightXpm(Xpm nightXpm) {

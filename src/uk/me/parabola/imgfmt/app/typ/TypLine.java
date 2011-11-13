@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.CharsetEncoder;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -29,6 +28,7 @@ public class TypLine extends TypElement {
 
 	private boolean useOrientation;
 	private byte lineWidth;
+	private byte borderWidth;
 
 	/**
 	 * This is slightly different to the polygon case, but not much.
@@ -55,7 +55,7 @@ public class TypLine extends TypElement {
 
 		int height = 0;
 		if (xpm.hasImage())
-			height = xpm.getImage().getHeight();
+			height = xpm.getColourInfo().getHeight();
 
 		ColourInfo colourInfo = xpm.getColourInfo();
 		int scheme = colourInfo.getColourScheme() & 0x7;
@@ -67,25 +67,17 @@ public class TypLine extends TypElement {
 		if (xpm.hasImage())
 			xpm.writeImage(writer);
 
-		if (height == 0 /* && scheme != 6*/) {
+		if (height == 0) {
 			writer.put(lineWidth);
+			if ((scheme&~1) != 6)
+				writer.put(borderWidth);
 		}
 
 		// The labels have a length byte to show the number of bytes following. There is
 		// also a flag in the length. The strings have a language number proceeding them.
 		// The strings themselves are null terminated.
-		if ((flags & F_LABEL) != 0) {
-			ByteBuffer out = makeLabelBlock(encoder);
-			int flag = 1; // XXX What is this?
-
-			// write out the length byte
-			byte len = (byte) ((out.position() << 1) + flag);
-			writer.put(len);
-
-			// Prepare and write buffer
-			out.flip();
-			writer.put(out);
-		}
+		if ((flags & F_LABEL) != 0)
+			writeLabelBlock(writer, encoder);
 
 		// The extension section hold font style and colour information for the labels.
 		if ((flags & F_EXTENDED) != 0)
@@ -99,5 +91,9 @@ public class TypLine extends TypElement {
 
 	public void setLineWidth(int val) {
 		lineWidth = (byte) val;
+	}
+
+	public void setBorderWidth(int borderWidth) {
+		this.borderWidth = (byte) borderWidth;
 	}
 }

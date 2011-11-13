@@ -18,7 +18,6 @@
 package uk.me.parabola.imgfmt.app.typ;
 
 import java.nio.charset.CharsetEncoder;
-import java.util.LinkedList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -27,7 +26,6 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.SectionWriter;
-import uk.me.parabola.imgfmt.app.Writeable;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -40,9 +38,6 @@ public class TYPFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(TYPFile.class);
 
 	private final TYPHeader header = new TYPHeader();
-
-	private final List<BitmapImage> images = new LinkedList<BitmapImage>();
-	private final List<PointInfo> pointInfo = new LinkedList<PointInfo>();
 
 	private TypData data;
 
@@ -60,89 +55,36 @@ public class TYPFile extends ImgFile {
 		ImgFileWriter writer = getWriter();
 		writer.position(TYPHeader.HEADER_LEN);
 
-		int pos = writer.position();
-		header.getPointData().setPosition(pos);
+		writeSection(writer, header.getPolygonData(), header.getPolygonIndex(), data.getPolygons());
+		writeSection(writer, header.getLineData(), header.getLineIndex(), data.getLines());
+		writeSection(writer, header.getPointData(), header.getPointIndex(), data.getPoints());
 
-		for (Writeable w : images)
-			w.write(writer);
-		int len = writer.position() - pos;
-		header.getPointData().setSize(len);
+		SectionWriter subWriter = header.getShapeStacking().makeSectionWriter(writer);
+		data.getStacking().write(subWriter);
+		Utils.closeFile(subWriter);
 
-		if (len < 0x100)
-			header.getPointIndex().setItemSize((char) 3);
-		pos = writer.position();
-		for (PointInfo w : pointInfo)
-			w.write(writer, header.getPointData().getSize());
-		header.getPointIndex().setSize(writer.position() - pos);
-
-		writePolygons(writer);
-		writeLines(writer);
-		
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
 	}
 
-	/**
-	 * Write out the line sections.
-	 */
-	private void writeLines(ImgFileWriter writer) {
-		SectionWriter subWriter = header.getLineData().makeSectionWriter(writer);
-		try {
-			CharsetEncoder encoder = data.getEncoder();
-			for (TypLine l : data.getLines())
-				l.write(subWriter, encoder);
-		} finally {
-			Utils.closeFile(subWriter);
-		}
+	private void writeSection(ImgFileWriter writer, Section dataSection, Section indexSection,
+			List<? extends TypElement> elementData)
+	{
+		SectionWriter subWriter = dataSection.makeSectionWriter(writer);
+		CharsetEncoder encoder = data.getEncoder();
+		for (TypElement elem : elementData)
+			elem.write(subWriter, encoder);
+		Utils.closeFile(subWriter);
 
-		subWriter = header.getLineIndex().makeSectionWriter(writer);
-		try {
-			for (TypLine l : data.getLines()) {
-				int offset = l.getOffset();
-				int type = (l.getType() << 5) | (l.getSubType() & 0x1f);
-				subWriter.putChar((char) type);
-				subWriter.putChar((char) offset);
-			}
-		} finally {
-			Utils.closeFile(subWriter);
+		subWriter = indexSection.makeSectionWriter(writer);
+		for (TypElement elem : elementData) {
+			int offset = elem.getOffset();
+			int type = (elem.getType() << 5) | (elem.getSubType() & 0x1f);
+			subWriter.putChar((char) type);
+			subWriter.putChar((char) offset);
 		}
-	}
-
-	/**
-	 * Write out all the polygon sections.
-	 */
-	private void writePolygons(ImgFileWriter writer) {
-		SectionWriter subWriter = header.getShapeStacking().makeSectionWriter(writer);
-		try {
-			data.getStacking().write(subWriter);
-		} finally {
-			Utils.closeFile(subWriter);
-		}
-
-		Section polygonData = header.getPolygonData();
-		subWriter = polygonData.makeSectionWriter(writer);
-		try {
-			CharsetEncoder encoder = data.getEncoder();
-			for (TypPolygon poly : data.getPolygons())
-				poly.write(subWriter, encoder);
-
-		} finally {
-			Utils.closeFile(subWriter);
-		}
-
-		Section polygonIndex = header.getPolygonIndex();
-		subWriter = polygonIndex.makeSectionWriter(writer);
-		try {
-			for (TypPolygon poly : data.getPolygons()) {
-				int offset = poly.getOffset();
-				int type = (poly.getType() << 5) | (poly.getSubType() & 0x1f);
-				subWriter.putChar((char) type);
-				subWriter.putChar((char) offset);
-			}
-		} finally {
-			Utils.closeFile(subWriter);
-		}
+		Utils.closeFile(subWriter);
 	}
 
 	public void setData(TypData data) {
