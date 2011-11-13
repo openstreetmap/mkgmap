@@ -197,5 +197,8 @@
     <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
   </component>
+  <component name="TaskProjectConfiguration">
+    <server type="Tintrak" url="http://track.itinken.com" />
+  </component>
 </project>
 

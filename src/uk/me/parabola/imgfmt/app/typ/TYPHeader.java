@@ -109,10 +109,12 @@ public class TYPHeader extends CommonHeader {
 		writeSectionInfo(writer, polygonIndex);
 		writeSectionInfo(writer, shapeStacking);
 
-		writer.putInt(0);
-		writer.putInt(0);
-		writer.putChar((char) 0);
-		writer.put((byte) 0x1f);
+		if (getHeaderLength() > 0x5b) {
+			writer.putInt(0);
+			writer.putInt(0);
+			writer.putChar((char) 0);
+			writer.put((byte) 0x1f);
+		}
 	}
 
 	/**
