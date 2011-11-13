@@ -29,7 +29,7 @@ public class TypData {
 	private final List<TypLine> lines = new ArrayList<TypLine>();
 	private final List<TypPoint> points = new ArrayList<TypPoint>();
 
-	private CharsetEncoder encoder;
+	private CharsetEncoder encoder = Charset.forName("latin1").newEncoder();
 
 	public void addPolygonStackOrder(int level, int type, int subtype) {
 		stacking.addPolygon(level, type, subtype);

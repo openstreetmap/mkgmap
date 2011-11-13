@@ -23,6 +23,8 @@ import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypElement;
 import uk.me.parabola.imgfmt.app.typ.Xpm;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -71,20 +73,18 @@ public class CommonSection {
 			String colourTag = line.substring(1, 1+cpp);
 
 			int ind = cpp+1;
-			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
-				ind++;
+			ind = skipSpace(line, ind);
 
 			if (line.charAt(ind++) != 'c')
 				throw new SyntaxException(scanner, "Expecting 'c' in colour definition: " + line);
 
-			while (line.charAt(ind) == ' ' || line.charAt(ind) == '\t')
-				ind++;
+			ind = skipSpace(line, ind);
 
 			if (line.charAt(ind) == '#') {
 				int start = ++ind;
-				while (Character.isLetterOrDigit(line.charAt(ind))) {
+				while (Character.isLetterOrDigit(line.charAt(ind)))
 					ind++;
-				}
+
 				int end = ind;
 
 				String colour = line.substring(start, end);
@@ -95,11 +95,56 @@ public class CommonSection {
 					colourInfo.addTransparent(colourTag);
 				else
 					throw new SyntaxException(scanner, "Unrecognised colour in: " + line);
+				ind += 4;
 			} else {
 				throw new SyntaxException(scanner, "Cannot recognise colour definition: " + line);
 			}
+
+			ind = skipSpace(line, ind);
+			char c;
+			do {
+				c = line.charAt(ind++);
+				if (ind >= line.length())
+					break;
+			} while (c == ',' || c == '"' || c == ' ' || c == '\t');
+
+			int start = ind-1;
+			if (ind < line.length() && Character.isLetter(line.charAt(ind))) {
+				while (Character.isLetter(line.charAt(ind)))
+					ind++;
+				String tag = line.substring(start, ind);
+				if (tag.endsWith("alpha")) {
+					ind = skipSpace(line, ind);
+					if (line.charAt(ind++) != '=')
+						throw new SyntaxException(scanner, "Expecting '=' after alpha keyword");
+					ind = skipSpace(line, ind);
+					start = ind;
+					while (ind < line.length() && Character.isLetterOrDigit(line.charAt(ind)))
+						ind++;
+
+					String aval = line.substring(start, ind);
+					int alpha = 0;
+					try {
+						alpha = Integer.decode(aval);
+					} catch (NumberFormatException e) {
+						throw new SyntaxException(scanner, "Bad number for alpha value " + alpha);
+					}
+
+					// Convert to rgba format
+					alpha = 255 - ((alpha<<4) + alpha);
+					colourInfo.addAlpha(alpha);
+				}
+			}
+
 		}
 		return colourInfo;
+	}
+
+	private int skipSpace(String line, int in) {
+		int ind = in;
+		while (ind < line.length() && (line.charAt(ind) == ' ' || line.charAt(ind) == '\t'))
+			ind++;
+		return ind;
 	}
 
 	/**
@@ -125,6 +170,17 @@ public class CommonSection {
 			info.setCharsPerPixel(s2.nextInt());
 		} catch (NumberFormatException e) {
 			throw new SyntaxException(scanner, "Bad number in XPM header " + header);
+		}
+
+		s2.validateNext("\"");
+		Token tok = s2.nextToken();
+		if (tok.getType() == TokType.TEXT) {
+			if (tok.isValue("Colormode")) {
+				s2.validateNext("=");
+				String val = s2.nextValue();
+				int cm = Integer.decode(val);
+				info.setColourMode(cm);
+			}
 		}
 	}
 

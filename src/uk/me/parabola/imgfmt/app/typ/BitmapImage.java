@@ -28,13 +28,25 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 		BitWriter bitWriter = new BitWriter();
 
 		final int bitSize = colourInfo.getBitsPerPixel();
-		int len = image.length();
 		int cpp = colourInfo.getCharsPerPixel();
-		for (int i = 0; i < len; i += cpp) {
-			String idx = image.substring(i, i + cpp);
 
-			int val = colourInfo.getIndex(idx);
-			bitWriter.putn(val, bitSize);
+		int width = colourInfo.getWidth();
+		int height = colourInfo.getHeight();
+		int adjwidth = (width&1)==1? width+1: width;
+
+		int i = 0;
+		for (int h = 0; h < height; h++) {
+			for (int w = 0; w < adjwidth; w++) {
+				if (w >= width) {
+					bitWriter.putn(0, bitSize);
+				} else {
+					String idx = image.substring(i, i + cpp);
+					i += cpp;
+
+					int val = colourInfo.getIndex(idx);
+					bitWriter.putn(val, bitSize);
+				}
+			}
 		}
 
 		writer.put(bitWriter.getBytes(), 0, bitWriter.getLength());

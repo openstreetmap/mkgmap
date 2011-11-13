@@ -40,7 +40,14 @@ public class Rgb {
 		if (colour.length() > 6)
 			a = Integer.parseInt(colour.substring(6, 8), 16);
 		else
-			a = ~0;
+			a = 0xff;
+	}
+
+	/**
+	 * Create a new Rgb from the given one, adding the given alpha channel value.
+	 */
+	public Rgb(Rgb rgb, int alpha) {
+		this(rgb.r, rgb.g, rgb.b, alpha);
 	}
 
 	public void write(ImgFileWriter writer, byte type) {
@@ -56,9 +63,25 @@ public class Rgb {
 	}
 
 	public String toString() {
-		if (isTransparent())
-			return "none";
-		else
+		if (a == 0xff)
 			return String.format("#%02x%02x%02x", r, g, b);
+		else
+			return String.format("#%02x%02x%02x%02x", r, g, b, a);
+	}
+
+	public int getB() {
+		return b;
+	}
+
+	public int getG() {
+		return g;
+	}
+
+	public int getR() {
+		return r;
+	}
+
+	public int getA() {
+		return a;
 	}
 }

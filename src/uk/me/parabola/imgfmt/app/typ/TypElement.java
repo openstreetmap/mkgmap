@@ -24,7 +24,9 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 /**
  * Base routines and data used by points, lines and polygons.
  *
- * If fact they are all very similar, so there is 
+ * If fact they are all very similar, so there is very little extra in the
+ * subclasses apart from the write routine.
+ *
  * @author Steve Ratcliffe
  */
 public abstract class TypElement {

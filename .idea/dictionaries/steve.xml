@@ -14,6 +14,7 @@
       <w>checksum</w>
       <w>classname</w>
       <w>codepage</w>
+      <w>colormode</w>
       <w>coord</w>
       <w>coords</w>
       <w>defs</w>
@@ -75,6 +76,7 @@
       <w>resize</w>
       <w>resized</w>
       <w>rethrown</w>
+      <w>rgba</w>
       <w>routable</w>
       <w>seamark</w>
       <w>slon</w>

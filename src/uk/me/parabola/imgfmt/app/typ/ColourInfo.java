@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Writeable;
 
@@ -48,6 +49,11 @@ public class ColourInfo implements Writeable {
 	private boolean simple = true;
 	private char colourMode;
 
+	/**
+	 * Add a colour for this element.
+	 * @param tag The xpm tag that represents the colour.
+	 * @param rgb The actual colour.
+	 */
 	public void addColour(String tag, Rgb rgb) {
 		indexMap.put(tag, colours.size());
 		colours.add(rgb);
@@ -55,6 +61,9 @@ public class ColourInfo implements Writeable {
 			numberOfSolidColours++;
 	}
 
+	/**
+	 * Add a transparent colour. Convenience routine.
+	 */
 	public void addTransparent(String colourTag) {
 		addColour(colourTag, new Rgb(0,0,0,0));
 	}
@@ -63,6 +72,19 @@ public class ColourInfo implements Writeable {
 		this.hasBitmap = hasBitmap;
 	}
 
+	/**
+	 * The colour scheme in use. This is a bitmask that has the following bits:
+	 * 0 - Has night colour
+	 * 1 - day background colour is transparent
+	 * 2 - night background colour is transparent
+	 * 3 - has bitmap
+	 *
+	 * If there is no night colour, then set the night background colour bit to be the same as
+	 * the day one.
+	 *
+	 * @return The colour scheme bitmask. The term colour scheme is historical, it doesn't really
+	 * describe it.
+	 */
 	public int getColourScheme() {
 		if (numberOfColours == 0)
 			numberOfColours = colours.size();
@@ -89,6 +111,11 @@ public class ColourInfo implements Writeable {
 		return scheme;
 	}
 
+	/**
+	 * Get the number of bits per pixel that will be used in the written bitmap.
+	 *
+	 * This depends on the colour mode and number of colours to be represented.
+	 */
 	public int getBitsPerPixel() {
 		if (simple)
 			return 1;
@@ -96,20 +123,13 @@ public class ColourInfo implements Writeable {
 		int nc = numberOfSolidColours; // XXX may depend on colour mode
 
 		int nbits = 8;
-		if (colourMode == 0) {
-			if (nc < 2)
-				nbits = 1;
-			else if (nc < 4)
-				nbits = 2;
-			else if (nc < 16)
-				nbits = 4;
-		} else if (colourMode == 0x10) {
+		if (colourMode == 0x10) {
 			if (nc < 3)
 				nbits = 2;
 			else if (nc < 15) {
 				nbits = 4;
 			}
-		} else if (colourMode == 0x20) {
+		} else {
 			if (nc < 2)
 				nbits = 1;
 			else if (nc < 4)
@@ -117,15 +137,62 @@ public class ColourInfo implements Writeable {
 			else if (nc < 16)
 				nbits = 4;
 		}
+		
+		if (colourMode == 0) {
+			if (nc == 0)
+				nbits = 16;
+		}
 
 		return nbits;
 	}
 
+	/**
+	 * Write out the colours only.
+	 */
 	public void write(ImgFileWriter writer) {
-		for (Rgb rgb : colours) {
-			if (!rgb.isTransparent())
-				rgb.write(writer, (byte) 0x10);
+		if (colourMode == 0x20) {
+			writeColours20(writer);
+		} else {
+			for (Rgb rgb : colours) {
+				if (!rgb.isTransparent())
+					rgb.write(writer, (byte) 0x10);
+			}
 		}
+	}
+
+	/**
+	 * Write out the colours in the colormode=x20 case.
+	 */
+	private void writeColours20(ImgFileWriter writer) {
+		BitWriter bw = new BitWriter();
+		for (Rgb rgb : colours) {
+			bw.putn(rgb.getB(), 8);
+			bw.putn(rgb.getG(), 8);
+			bw.putn(rgb.getR(), 8);
+
+			int alpha = 0xff - rgb.getA();
+			alpha = alphaRound4(alpha);
+
+			bw.putn(alpha, 4);
+		}
+		writer.put(bw.getBytes(), 0, bw.getLength());
+	}
+
+	/**
+	 * Round alpha value to four bits.
+	 * @param alpha The original alpha value eg 0xf0.
+	 * @return Rounded alpha to four bits eg 0xe.
+	 */
+	private int alphaRound4(int alpha) {
+		int top = (alpha >> 4) & 0xf;
+		int low = alpha & 0xf;
+
+		int diff = low-top;
+		if (diff > 8)
+			top++;
+		else if (diff < -8)
+			top--;
+		return top;
 	}
 
 	public int getIndex(String idx) {
@@ -159,8 +226,11 @@ public class ColourInfo implements Writeable {
 		return numberOfColours;
 	}
 
-	public int getNumberOfSolidColours() {
-		return numberOfSolidColours;
+	public int getNumberOfSColoursForCM() {
+		if (colourMode == 0x10)
+			return numberOfSolidColours;
+		else
+			return numberOfColours;
 	}
 
 	public int getCharsPerPixel() {
@@ -189,5 +259,14 @@ public class ColourInfo implements Writeable {
 
 	public void setHasBorder(boolean hasBorder) {
 		this.hasBorder = hasBorder;
+	}
+
+	public void addAlpha(int alpha) {
+		int last = colours.size();
+		Rgb rgb = colours.get(last - 1);
+		rgb = new Rgb(rgb, alpha);
+		colours.set(last - 1, rgb);
+
+		colourMode = 0x20;
 	}
 }

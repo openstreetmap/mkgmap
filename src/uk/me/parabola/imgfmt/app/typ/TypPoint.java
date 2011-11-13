@@ -47,7 +47,7 @@ public class TypPoint extends TypElement {
 		ColourInfo colourInfo = xpm.getColourInfo();
 		writer.put((byte) colourInfo.getWidth());
 		writer.put((byte) colourInfo.getHeight());
-		writer.put((byte) colourInfo.getNumberOfSolidColours());
+		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
 		writer.put((byte) colourInfo.getColourMode());
 		
 		colourInfo.write(writer);
