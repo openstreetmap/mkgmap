@@ -16,6 +16,10 @@ public class Rgb {
 		this.a = a;
 	}
 
+	public Rgb(int r, int g, int b) {
+		this(r, g, b, 0xff);
+	}
+
 	/**
 	 * Initialise from a string.
 	 *

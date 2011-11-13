@@ -70,7 +70,7 @@ public class TypLine extends TypElement {
 		if (height == 0) {
 			writer.put(lineWidth);
 			if ((scheme&~1) != 6)
-				writer.put(borderWidth);
+				writer.put((byte) (lineWidth + 2*borderWidth));
 		}
 
 		// The labels have a length byte to show the number of bytes following. There is

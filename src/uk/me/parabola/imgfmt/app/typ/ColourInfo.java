@@ -64,39 +64,34 @@ public class ColourInfo implements Writeable {
 	}
 
 	public int getColourScheme() {
-		assert numberOfColours == colours.size();
+		if (numberOfColours == 0)
+			numberOfColours = colours.size();
 		
 		int scheme = 0;
-		if (hasBitmap) {
+		if (hasBitmap)
 			scheme |= S_HAS_BITMAP;
-		}
-		if (hasBitmap || hasBorder) {
-			if (numberOfColours == 4) {
-				scheme |= S_NIGHT;
-				if (colours.get(3).isTransparent())
-					scheme |= S_NIGHT_TRANSPARENT;
-			}
-			if (colours.get(1).isTransparent())
-				scheme |= S_DAY_TRANSPARENT;
-		} else {
-			if (numberOfColours == 2)
-				scheme |= S_NIGHT;
-			scheme |= S_DAY_TRANSPARENT | S_NIGHT_TRANSPARENT;
-		}
 
-		// 0xa or 0xc may not work
-		if (scheme == 0xa)
-			scheme = 0xe;
-		if (scheme == 0xc)
-			scheme = 0x80;
+		if (numberOfColours == 4)
+			scheme |= S_NIGHT;
+
+		if (!hasBitmap && !hasBorder && numberOfColours == 2)
+			scheme |= S_NIGHT | S_DAY_TRANSPARENT | S_NIGHT_TRANSPARENT;
+		
+		if (numberOfColours < 2 || colours.get(1).isTransparent())
+			scheme |= S_DAY_TRANSPARENT;
+		if (numberOfColours == 4 && colours.get(3).isTransparent())
+			scheme |= S_NIGHT_TRANSPARENT;
+
+		if ((scheme & S_NIGHT) == 0)
+			if ((scheme & S_DAY_TRANSPARENT) != 0)
+				scheme |= S_NIGHT_TRANSPARENT;
 
 		return scheme;
 	}
 
 	public int getBitsPerPixel() {
-		if (simple) {
+		if (simple)
 			return 1;
-		}
 
 		int nc = numberOfSolidColours; // XXX may depend on colour mode
 
