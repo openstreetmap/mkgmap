@@ -44,11 +44,10 @@ public class CommonSection {
 			return 1;
 		} else if (value.startsWith("SmallFont")) {
 			return 2;
-		// TODO: correct tag names not known yet
-		//} else if (value.startsWith("NormalFont")) {
-		//	return 3;
-		//} else if (value.startsWith("LargeFont")) {
-		//	return 4;
+		} else if (value.startsWith("Default")) {
+			return 3;
+		} else if (value.startsWith("LargeFont")) {
+			return 4;
 		} else {
 			warnUnknown("font value " + value);
 			return 0;

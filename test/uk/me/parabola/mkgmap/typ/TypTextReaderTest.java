@@ -16,8 +16,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
 import uk.me.parabola.imgfmt.app.typ.TypData;
+import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.imgfmt.app.typ.TypParam;
 import uk.me.parabola.imgfmt.app.typ.TypPolygon;
 
@@ -143,6 +145,30 @@ public class TypTextReaderTest {
 
 		byte[] bytes = out.getBytes();
 		assertEquals(135, bytes.length);
+	}
+
+	@Test
+	public void testLineTwoColours() {
+		TypTextReader tr = makeTyp("[_line]\n" +
+				"Type=0x00\n" +
+				"UseOrientation=Y\n" +
+				"LineWidth=2\n" +
+				"BorderWidth=1\n" +
+				"Xpm=\"0 0 2 0\"\n" +
+				"\"1 c #DDDDDD\"\n" +
+				"\"2 c #999999\"\n" +
+				"String1=0x04,Road\n" +
+				"String2=0x01,Route non-définie\n" +
+				"String3=0x03,Weg\n" +
+				"ExtendedLabels=Y\n" +
+				"FontStyle=SmallFont\n" +
+				"CustomColor=No\n" +
+				"[end]");
+
+		TypData data = tr.getData();
+		TypLine line = data.getLines().get(0);
+		ImgFileWriter w = new ArrayImgWriter();
+		line.write(w, data.getEncoder());
 	}
 
 	private TypTextReader makeTyp(String in) {

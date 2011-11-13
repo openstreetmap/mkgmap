@@ -34,18 +34,19 @@ public class ColourInfo implements Writeable {
 	private static final int S_HAS_BITMAP = 0x8;
 
 	private int numberOfColours;
+	private int numberOfSolidColours;
 
 	private boolean hasBitmap;
+	private boolean hasBorder;
 	private final List<Rgb> colours = new ArrayList<Rgb>();
 	private final Map<String, Integer> indexMap = new HashMap<String, Integer>();
 
-	private int width;
-	private int height;
-	private int charsPerPixel;
+	private char width;
+	private char height;
+	private char charsPerPixel;
 
 	private boolean simple = true;
-	private int colourMode;
-	private int numberOfSolidColours;
+	private char colourMode;
 
 	public void addColour(String tag, Rgb rgb) {
 		indexMap.put(tag, colours.size());
@@ -68,6 +69,8 @@ public class ColourInfo implements Writeable {
 		int scheme = 0;
 		if (hasBitmap) {
 			scheme |= S_HAS_BITMAP;
+		}
+		if (hasBitmap || hasBorder) {
 			if (numberOfColours == 4) {
 				scheme |= S_NIGHT;
 				if (colours.get(3).isTransparent())
@@ -84,6 +87,8 @@ public class ColourInfo implements Writeable {
 		// 0xa or 0xc may not work
 		if (scheme == 0xa)
 			scheme = 0xe;
+		if (scheme == 0xc)
+			scheme = 0x80;
 
 		return scheme;
 	}
@@ -140,11 +145,11 @@ public class ColourInfo implements Writeable {
 	}
 
 	public void setWidth(int width) {
-		this.width = width;
+		this.width = (char) width;
 	}
 
 	public void setHeight(int height) {
-		this.height = height;
+		this.height = (char) height;
 	}
 
 	public void setNumberOfColours(int numberOfColours) {
@@ -152,7 +157,7 @@ public class ColourInfo implements Writeable {
 	}
 
 	public void setCharsPerPixel(int charsPerPixel) {
-		this.charsPerPixel = charsPerPixel == 0 ? 1 : charsPerPixel;
+		this.charsPerPixel = (char) (charsPerPixel == 0 ? 1 : charsPerPixel);
 	}
 
 	public int getNumberOfColours() {
@@ -180,14 +185,14 @@ public class ColourInfo implements Writeable {
 	}
 
 	public void setColourMode(int colourMode) {
-		this.colourMode = colourMode;
-	}
-
-	public boolean isSimple() {
-		return simple;
+		this.colourMode = (char) colourMode;
 	}
 
 	public void setSimple(boolean simple) {
 		this.simple = simple;
+	}
+
+	public void setHasBorder(boolean hasBorder) {
+		this.hasBorder = hasBorder;
 	}
 }

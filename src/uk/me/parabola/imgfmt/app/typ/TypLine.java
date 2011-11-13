@@ -96,4 +96,9 @@ public class TypLine extends TypElement {
 	public void setBorderWidth(int borderWidth) {
 		this.borderWidth = (byte) borderWidth;
 	}
+
+	public void finish() {
+		if (borderWidth != 0)
+			xpm.getColourInfo().setHasBorder(true);
+	}
 }

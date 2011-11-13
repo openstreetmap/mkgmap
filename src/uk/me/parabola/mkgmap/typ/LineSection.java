@@ -58,6 +58,7 @@ class LineSection extends CommonSection implements ProcessSection {
 	}
 
 	public void finish() {
+		current.finish();
 		data.addLine(current);
 		current = new TypLine();
 	}

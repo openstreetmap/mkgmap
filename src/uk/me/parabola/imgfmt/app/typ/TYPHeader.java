@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Thomas Lußnig
  */
 public class TYPHeader extends CommonHeader {
-	public static final int HEADER_LEN = 0x6e;
+	public static final int HEADER_LEN = 0x5b; // 0x6e;
 
 	private char familyId;
 	private char productId;
