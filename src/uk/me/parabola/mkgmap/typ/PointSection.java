@@ -49,7 +49,8 @@ class PointSection extends CommonSection implements ProcessSection {
 		}
 	}
 
-	public void finish() {
+	public void finish(TokenScanner scanner) {
+		validate(scanner);
 		data.addPoint(current);
 	}
 }

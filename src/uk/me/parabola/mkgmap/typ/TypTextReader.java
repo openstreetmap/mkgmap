@@ -60,7 +60,7 @@ public class TypTextReader {
 				case '[':
 					ProcessSection newSection = readSectionType(scanner);
 					if (currentSection != null)
-						currentSection.finish();
+						currentSection.finish(scanner);
 					currentSection = newSection;
 					break;
 				case '"':

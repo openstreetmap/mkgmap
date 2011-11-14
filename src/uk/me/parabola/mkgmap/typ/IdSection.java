@@ -47,6 +47,6 @@ class IdSection implements ProcessSection {
 		}
 	}
 
-	public void finish() {
+	public void finish(TokenScanner scanner) {
 	}
 }

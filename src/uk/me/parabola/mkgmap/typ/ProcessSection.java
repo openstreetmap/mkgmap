@@ -33,6 +33,7 @@ interface ProcessSection {
 
 	/**
 	 * Called at the end of a section. The item will have been fully defined and so can be saved.
+	 * @param scanner
 	 */
-	public void finish();
+	public void finish(TokenScanner scanner);
 }

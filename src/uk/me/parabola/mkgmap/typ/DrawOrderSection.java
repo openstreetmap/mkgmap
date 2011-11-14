@@ -65,7 +65,8 @@ class DrawOrderSection implements ProcessSection {
 
 	/**
 	 * Nothing to do, each line stands by itself.
+	 * @param scanner
 	 */
-	public void finish() {
+	public void finish(TokenScanner scanner) {
 	}
 }

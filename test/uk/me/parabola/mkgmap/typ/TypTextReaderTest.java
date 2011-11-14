@@ -12,19 +12,27 @@
  */
 package uk.me.parabola.mkgmap.typ;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.channels.FileChannel;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
+import uk.me.parabola.imgfmt.app.typ.TYPFile;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.imgfmt.app.typ.TypParam;
 import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.TypPolygon;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 
 import func.lib.ArrayImgWriter;
+import func.lib.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -210,6 +218,27 @@ public class TypTextReaderTest {
 		ArrayImgWriter w = new ArrayImgWriter();
 		point.write(w, data.getEncoder());
 		assertEquals(342, w.getBytes().length);
+	}
+
+	/**
+	 * Basic test, reading from a file using most features.
+	 */
+	@Test
+	public void testFromFile() throws IOException {
+		Reader r = new BufferedReader(new FileReader("test/resources/typ/test.txt"));
+		TypTextReader tr = new TypTextReader();
+		tr.read("test.typ", r);
+
+		TestUtils.registerFile("ts__test.typ");
+		RandomAccessFile raf = new RandomAccessFile("ts__test.typ", "rw");
+		FileChannel channel = raf.getChannel();
+		channel.truncate(0);
+		FileImgChannel w = new FileImgChannel(channel);
+		TYPFile typ = new TYPFile(w);
+
+		typ.setData(tr.getData());
+		typ.write();
+		typ.close();
 	}
 
 	private TypTextReader makeTyp(String in) {

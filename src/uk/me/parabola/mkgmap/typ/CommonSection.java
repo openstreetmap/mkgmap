@@ -35,6 +35,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class CommonSection {
 	private static final Set<String> seen = new HashSet<String>();
 	protected final TypData data;
+	private boolean hasXpm;
 
 	protected CommonSection(TypData data) {
 		this.data = data;
@@ -157,7 +158,6 @@ public class CommonSection {
 			String colourTag = token.getValue();
 			while (colourTag.length() < cpp)
 				colourTag += scanner.nextRawToken().getValue();
-			System.out.printf("tag '%s' cpp=%d\n", colourTag, cpp);
 			colourTag = colourTag.substring(0, cpp);
 
 			scanner.validateNext("c");
@@ -269,6 +269,12 @@ public class CommonSection {
 			xpm.setImage(image);
 		}
 
+		hasXpm = true;
 		return xpm;
+	}
+
+	protected void validate(TokenScanner scanner) {
+		if (!hasXpm)
+			throw new SyntaxException(scanner, "No XPM tag in section");
 	}
 }

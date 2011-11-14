@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  */
 class LineSection extends CommonSection implements ProcessSection {
 
-	private TypLine current = new TypLine();
+	private final TypLine current = new TypLine();
 
 	LineSection(TypData data) {
 		super(data);
@@ -57,9 +57,9 @@ class LineSection extends CommonSection implements ProcessSection {
 			warnUnknown(name);
 	}
 
-	public void finish() {
+	public void finish(TokenScanner scanner) {
+		validate(scanner);
 		current.finish();
 		data.addLine(current);
-		current = new TypLine();
 	}
 }
