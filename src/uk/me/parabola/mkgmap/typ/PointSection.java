@@ -15,7 +15,6 @@ package uk.me.parabola.mkgmap.typ;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.Xpm;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -35,17 +34,7 @@ class PointSection extends CommonSection implements ProcessSection {
 		if (commonKey(scanner, current, name, value))
 			return;
 
-		if (name.equals("SubType")) {
-			int ival;
-			try {
-				ival = Integer.decode(value);
-			} catch (NumberFormatException e) {
-				throw new SyntaxException(scanner, "Bad number for sub type " + value);
-			}
-
-			current.setSubType(ival);
-
-		} else if (name.equals("DayXpm")) {
+		if (name.equals("DayXpm")) {
 			Xpm xpm = readXpm(scanner, value);
 			xpm.getColourInfo().setSimple(false);
 			current.setXpm(xpm);

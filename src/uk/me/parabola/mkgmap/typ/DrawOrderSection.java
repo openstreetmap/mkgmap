@@ -35,7 +35,7 @@ class DrawOrderSection implements ProcessSection {
 		if (!name.equals("Type"))
 			throw new SyntaxException(scanner, "Unrecognised keyword in draw order section: " + name);
 
-		String[] typeDrawOrder = value.split(",");
+		String[] typeDrawOrder = value.split(",",-1);
 		if (typeDrawOrder.length != 2)
 			throw new SyntaxException(scanner, "Unrecognised drawOrder type " + value);
 
@@ -55,8 +55,12 @@ class DrawOrderSection implements ProcessSection {
 			type = fulltype & 0xff;
 		}
 
-		int level = Integer.parseInt(typeDrawOrder[1]);
-		data.addPolygonStackOrder(level, type, subtype);
+		try {
+			int level = Integer.parseInt(typeDrawOrder[1]);
+			data.addPolygonStackOrder(level, type, subtype);
+		} catch (NumberFormatException e) {
+			throw new SyntaxException(scanner, "Bad number '" + typeDrawOrder[1] + "'");
+		}
 	}
 
 	/**

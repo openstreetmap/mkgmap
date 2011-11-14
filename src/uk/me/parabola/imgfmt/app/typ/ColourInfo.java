@@ -66,6 +66,8 @@ public class ColourInfo implements Writeable {
 	 */
 	public void addTransparent(String colourTag) {
 		addColour(colourTag, new Rgb(0,0,0,0));
+		if (colourMode == 0)
+			colourMode = 0x10;
 	}
 
 	public void setHasBitmap(boolean hasBitmap) {
@@ -99,9 +101,9 @@ public class ColourInfo implements Writeable {
 		if (!hasBitmap && !hasBorder && numberOfColours == 2)
 			scheme |= S_NIGHT | S_DAY_TRANSPARENT | S_NIGHT_TRANSPARENT;
 		
-		if (numberOfColours < 2 || colours.get(1).isTransparent())
+		if (numberOfColours < 2 || colours.get(1).isTransparent() || colours.get(0).isTransparent())
 			scheme |= S_DAY_TRANSPARENT;
-		if (numberOfColours == 4 && colours.get(3).isTransparent())
+		if (numberOfColours == 4 && (colours.get(3).isTransparent() || colours.get(2).isTransparent()))
 			scheme |= S_NIGHT_TRANSPARENT;
 
 		if ((scheme & S_NIGHT) == 0)
@@ -120,7 +122,11 @@ public class ColourInfo implements Writeable {
 		if (simple)
 			return 1;
 
-		int nc = numberOfSolidColours; // XXX may depend on colour mode
+		int nc;
+		if (colourMode == 0x10)
+			nc = numberOfSolidColours;
+		else
+			nc = numberOfColours;
 
 		int nbits = 8;
 		if (colourMode == 0x10) {
@@ -247,10 +253,6 @@ public class ColourInfo implements Writeable {
 
 	public int getColourMode() {
 		return colourMode;
-	}
-
-	public void setColourMode(int colourMode) {
-		this.colourMode = (char) colourMode;
 	}
 
 	public void setSimple(boolean simple) {

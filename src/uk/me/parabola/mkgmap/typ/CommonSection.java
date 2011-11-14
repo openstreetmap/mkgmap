@@ -23,8 +23,6 @@ import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypElement;
 import uk.me.parabola.imgfmt.app.typ.Xpm;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
-import uk.me.parabola.mkgmap.scan.TokType;
-import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -48,7 +46,7 @@ public class CommonSection {
 			return 2;
 		} else if (value.equalsIgnoreCase("Default") || value.equals("NormalFont")) {
 			return 3;
-		} else if (value.equalsIgnoreCase("LargeFont")) {
+		} else if (value.equalsIgnoreCase("LargeFont") || value.equals("Large")) {
 			return 4;
 		} else {
 			warnUnknown("font value " + value);
@@ -171,17 +169,6 @@ public class CommonSection {
 		} catch (NumberFormatException e) {
 			throw new SyntaxException(scanner, "Bad number in XPM header " + header);
 		}
-
-		s2.validateNext("\"");
-		Token tok = s2.nextToken();
-		if (tok.getType() == TokType.TEXT) {
-			if (tok.isValue("Colormode")) {
-				s2.validateNext("=");
-				String val = s2.nextValue();
-				int cm = Integer.decode(val);
-				info.setColourMode(cm);
-			}
-		}
 	}
 
 	/**
@@ -197,8 +184,12 @@ public class CommonSection {
 
 		for (int i = 0; i < height; i++) {
 			String line = scanner.readLine();
+			if (line.isEmpty())
+				throw new SyntaxException(scanner, "Invalid blank line in bitmap.");
+
 			if (line.charAt(0) != '"' || line.charAt(line.length()-1) != '"')
 				throw new SyntaxException(scanner, "xpm bitmap line not surrounded by quotes: " + line);
+
 			sb.append(line.substring(1, line.length() - 1));
 		}
 
@@ -225,10 +216,18 @@ public class CommonSection {
 				throw new SyntaxException(scanner, "Bad number " + value);
 			}
 
+		} else if (name.equals("SubType")) {
+			try {
+				int ival = Integer.decode(value);
+				current.setSubType(ival);
+			} catch (NumberFormatException e) {
+				throw new SyntaxException(scanner, "Bad number for sub type " + value);
+			}
+
 		} else if (name.startsWith("String")) {
 			try {
 				current.addLabel(value);
-			} catch (Exception e) {
+			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Bad number in " + value);
 			}
 

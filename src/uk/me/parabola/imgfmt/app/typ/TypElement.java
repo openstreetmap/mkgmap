@@ -100,8 +100,10 @@ public abstract class TypElement {
 				ByteBuffer buffer = encoder.encode(cb);
 				out.put(buffer);
 			} catch (CharacterCodingException ignore) {
-				System.out.println("WARNING: failed to encode string: " + tl.getText() +
-						". File should be in unicode");
+				String name = encoder.charset().name();
+				//System.out.println("cs " + name);
+				throw new TypLabelException(name);
+				//System.out.println("WARNING: failed to encode string: " + tl.getText() + ". File should be in unicode");
 			}
 			out.put((byte) 0);
 		}

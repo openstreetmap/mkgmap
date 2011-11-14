@@ -120,7 +120,9 @@ public class TypTextReader {
 	 * out-file defaults to 'OUT.TYP'
 	 *
 	 * @param args Command line arguments.
+	 * @deprecated Use uk.me.parabola.mkgmap.main.TypCompiler until it is integrated with mkgmap.
 	 */
+	@Deprecated
 	public static void main(String[] args) throws IOException {
 		String in = "default.txt";
 		if (args.length > 0)
