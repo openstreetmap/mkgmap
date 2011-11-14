@@ -21,6 +21,7 @@ import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.imgfmt.app.typ.TypParam;
+import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.TypPolygon;
 
 import func.lib.ArrayImgWriter;
@@ -169,6 +170,46 @@ public class TypTextReaderTest {
 		TypLine line = data.getLines().get(0);
 		ImgFileWriter w = new ArrayImgWriter();
 		line.write(w, data.getEncoder());
+	}
+
+	@Test
+	public void testPointWithAlpha() {
+		TypTextReader tr = makeTyp("[_point]\n" +
+				"Type=0x12\n" +
+				"SubType=0x01\n" +
+				";23E6\n" +
+				";size: 45\n" +
+				"String1=0x4,Mini round\n" +
+				"String2=0x1,Mini rond-point\n" +
+				"ExtendedLabels=N\n" +
+				"DayXpm=\"9 9 10 1\"\n" +
+				"\"$  c none\"\n" +
+				"\"%  c #808080\"  alpha=14\n" +
+				"\"&  c #808080\"\n" +
+				"\"'  c #808080\"  alpha=15\n" +
+				"\"(  c #808080\"  alpha=8\n" +
+				"\")  c #F0F7FF\"\n" +
+				"\"*  c #808080\"  alpha=4\n" +
+				"\"+  c #808080\"  alpha=11\n" +
+				"\",  c #808080\"  alpha=12\n" +
+				"\"-  c #808080\"  alpha=13\n" +
+				"\"$%&&&&&'$\"\n" +
+				"\"(&&&)&&&*\"\n" +
+				"\"&&)))))&&\"\n" +
+				"\"&&)&&&)&&\"\n" +
+				"\"&))&)&))&\"\n" +
+				"\"&&)&&&)&&\"\n" +
+				"\"&&)))))&&\"\n" +
+				"\"+&&&)&&&,\"\n" +
+				"\"$-&&&&&-$\"\n" +
+				"[end]"
+				);
+
+		TypData data = tr.getData();
+		TypPoint point = data.getPoints().get(0);
+		ArrayImgWriter w = new ArrayImgWriter();
+		point.write(w, data.getEncoder());
+		assertEquals(342, w.getBytes().length);
 	}
 
 	private TypTextReader makeTyp(String in) {

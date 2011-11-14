@@ -39,6 +39,7 @@ public class TypTextReader {
 
 	public void read(String filename, Reader r) {
 		TokenScanner scanner = new TokenScanner(filename, r);
+		scanner.setCommentChar(null); // the '#' comment character is not appropriate for this file
 
 		ProcessSection currentSection = null;
 
