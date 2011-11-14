@@ -44,21 +44,38 @@ public class TypPoint extends TypElement {
 
 		writer.put(flags);
 
+		// Width and height is the same for day and night images, so it is written once only.
 		ColourInfo colourInfo = xpm.getColourInfo();
 		writer.put((byte) colourInfo.getWidth());
 		writer.put((byte) colourInfo.getHeight());
-		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
-		writer.put((byte) colourInfo.getColourMode());
-		
-		colourInfo.write(writer);
-		if (xpm.hasImage())
-			xpm.writeImage(writer);
+
+		// Day or only image
+		writeImage(writer, xpm);
+
+		if ((flags & F_NIGHT_XPM) != 0)
+			writeImage(writer, nightXpm);
 
 		if ((flags & F_LABEL) != 0)
 			writeLabelBlock(writer, encoder);
 
 		if ((flags & F_EXTENDED_FONT) != 0)
 			writeExtendedFontInfo(writer);
+	}
+
+	/**
+	 * Write out an image. The width and height are written separately, because they are not
+	 * repeated for the night image.
+	 * 
+	 * @param xpm Either the day or night XPM.
+	 */
+	private void writeImage(ImgFileWriter writer, Xpm xpm) {
+		ColourInfo colourInfo = xpm.getColourInfo();
+
+		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
+		writer.put((byte) colourInfo.getColourMode());
+
+		colourInfo.write(writer);
+		xpm.writeImage(writer);
 	}
 
 	public void setNightXpm(Xpm nightXpm) {

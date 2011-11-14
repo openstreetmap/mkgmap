@@ -42,13 +42,13 @@ public class CommonSection {
 	}
 
 	protected int decodeFontStyle(String value) {
-		if (value.startsWith("NoLabel")) {
+		if (value.startsWith("NoLabel") || value.equalsIgnoreCase("nolabel")) {
 			return 1;
-		} else if (value.startsWith("SmallFont")) {
+		} else if (value.equalsIgnoreCase("SmallFont")) {
 			return 2;
-		} else if (value.startsWith("Default")) {
+		} else if (value.equalsIgnoreCase("Default") || value.equals("NormalFont")) {
 			return 3;
-		} else if (value.startsWith("LargeFont")) {
+		} else if (value.equalsIgnoreCase("LargeFont")) {
 			return 4;
 		} else {
 			warnUnknown("font value " + value);
