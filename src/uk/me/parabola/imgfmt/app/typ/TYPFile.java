@@ -71,6 +71,10 @@ public class TYPFile extends ImgFile {
 	private void writeSection(ImgFileWriter writer, Section dataSection, Section indexSection,
 			List<? extends TypElement> elementData)
 	{
+		int size = dataSection.getSize();
+		if (size > 0xffff)
+			indexSection.setItemSize((char) 5);
+
 		SectionWriter subWriter = dataSection.makeSectionWriter(writer);
 		CharsetEncoder encoder = data.getEncoder();
 		for (TypElement elem : elementData)
