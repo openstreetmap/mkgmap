@@ -201,8 +201,8 @@ public class ColourInfo implements Writeable {
 		return top;
 	}
 
-	public int getIndex(String idx) {
-		Integer ind = indexMap.get(idx);
+	public int getIndex(String tag) {
+		Integer ind = indexMap.get(tag);
 
 		// If this is a simple bitmap (for line or polygon), then the foreground colour is
 		// first and so has index 0, but we want the foreground to have index 1, so reverse.

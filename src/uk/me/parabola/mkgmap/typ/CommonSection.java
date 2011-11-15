@@ -214,11 +214,16 @@ public class CommonSection {
 	 *
 	 * In the TYP file, XPM is used when there is not really an image, so this is not
 	 * always called.
+	 *
+	 * Almost all of this routine is checking that the strings are valid. They have the
+	 * correct length, there are quotes at the beginning and end at that each pixel tag
+	 * is listed in the colours section.
 	 */
 	protected BitmapImage readImage(TokenScanner scanner, ColourInfo colourInfo) {
 		StringBuffer sb = new StringBuffer();
 		int width = colourInfo.getWidth();
 		int height = colourInfo.getHeight();
+		int cpp = colourInfo.getCharsPerPixel();
 
 		for (int i = 0; i < height; i++) {
 			String line = scanner.readLine();
@@ -228,10 +233,21 @@ public class CommonSection {
 			if (line.charAt(0) != '"' || line.charAt(line.length()-1) != '"')
 				throw new SyntaxException(scanner, "xpm bitmap line not surrounded by quotes: " + line);
 
-			sb.append(line.substring(1, line.length() - 1));
+			line = line.substring(1, line.length() - 1);
+			sb.append(line);
+
+			// Do the syntax check, to avoid an error later when we don't have the line number any more
+			for (int cidx = 0; cidx < width * cpp; cidx += cpp) {
+				String tag = line.substring(cidx, cidx + cpp);
+				try {
+					colourInfo.getIndex(tag);
+				} catch (Exception e) {
+					throw new SyntaxException(scanner,
+							String.format("Tag '%s' is not one of the defined colour pixels", tag));
+				}
+			}
 		}
 
-		int cpp = colourInfo.getCharsPerPixel();
 		if (sb.length() != width * height * cpp) {
 			throw new SyntaxException(scanner, "Got " + sb.length() + " of image data, " +
 					"expected " + width * height * cpp);
