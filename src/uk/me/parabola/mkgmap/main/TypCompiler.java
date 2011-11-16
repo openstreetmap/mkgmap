@@ -87,7 +87,8 @@ public class TypCompiler implements MapProcessor {
 				param.setCodePage(cp);
 		}
 
-		String out = String.format("MKG%05d.TYP", param.getFamilyId());
+		String base = args.get("overview-mapname", "osmmap");
+		String out = base + ".typ";
 		
 		try {
 			writeTyp(data, out);
