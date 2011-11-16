@@ -55,8 +55,11 @@ public abstract class TypElement {
 		return type;
 	}
 
-	public int getSubType() {
-		return subType;
+	/**
+	 * Get the type in the format required for writing in the typ file sections.
+	 */
+	public int getTypeForFile() {
+		return (type << 5) | (subType & 0x1f);
 	}
 
 	public void addLabel(String text) {

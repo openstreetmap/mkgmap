@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.typ;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * Process lines from the id section of a typ.txt file.
@@ -41,7 +42,7 @@ class IdSection implements ProcessSection {
 		} else if (name.equals("ProductCode")) {
 			data.setProductId(ival);
 		} else if (name.equals("CodePage")) {
-			data.setCodePage(ival);
+			data.setSort(SrtTextReader.sortForCodepage(ival));
 		} else {
 			throw new SyntaxException(scanner, "Unrecognised keyword in id section: " + name);
 		}

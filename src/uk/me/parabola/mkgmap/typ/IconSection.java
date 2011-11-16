@@ -25,12 +25,18 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class IconSection extends CommonSection implements ProcessSection {
 	private final TypIconSet current = new TypIconSet();
 
-
 	protected IconSection(TypData data) {
 		super(data);
 	}
 
 	public void processLine(TokenScanner scanner, String name, String value) {
+		if (name.equals("String")) {
+			// There is only one string and it doesn't have a language prefix.
+			// But if it does we will just ignore it.
+			current.addLabel(value);
+			return;
+		}
+
 		if (commonKey(scanner, current, name, value))
 			return;
 

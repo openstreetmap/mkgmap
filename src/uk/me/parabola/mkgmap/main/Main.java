@@ -453,24 +453,7 @@ public class Main implements ArgumentProcessor {
 	 * @return A sort description object.
 	 */
 	public Sort getSort(CommandArgs args) {
-		int codepage = args.getCodePage();
-
-		String name = "sort/cp" + codepage + ".txt";
-		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
-		if (is == null) {
-			if (args.get("index", false))
-				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort(codepage);
-		}
-		try {
-			InputStreamReader r = new InputStreamReader(is, "utf-8");
-			SrtTextReader sr = new SrtTextReader(r);
-			return sr.getSort();
-		} catch (IOException e) {
-			if (args.get("index", false))
-				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort(codepage);
-		}
+		return SrtTextReader.sortForCodepage(args.getCodePage());
 	}
 
 	/**

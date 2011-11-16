@@ -17,8 +17,15 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
@@ -26,6 +33,8 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
 import uk.me.parabola.imgfmt.app.SectionWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
+import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
@@ -40,6 +49,9 @@ public class TYPFile extends ImgFile {
 	private final TYPHeader header = new TYPHeader();
 
 	private TypData data;
+
+	private final Map<Integer, Integer> strToType = new TreeMap<Integer, Integer>();
+	private final Map<Integer, Integer> typeToStr = new TreeMap<Integer, Integer>();
 
 	public TYPFile(ImgChannel chan) {
 		setHeader(header);
@@ -65,9 +77,75 @@ public class TYPFile extends ImgFile {
 
 		writeSection(writer, header.getIconData(), header.getIconIndex(), data.getIcons());
 
+		writeLabels(writer);
+		writeStrIndex(writer);
+		writerTypeIndex(writer);
+
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
+	}
+
+	private void writeLabels(ImgFileWriter in) {
+		SectionWriter writer = header.getLabels().makeSectionWriter(in);
+
+		writer.put((byte) 0);
+
+		List<SortKey<TypIconSet>> keys = new ArrayList<SortKey<TypIconSet>>();
+		Sort sort = data.getSort();
+		for (TypIconSet icon : data.getIcons()) {
+			SortKey<TypIconSet> key = sort.createSortKey(icon, icon.getLabel());
+			keys.add(key);
+		}
+		Collections.sort(keys);
+
+		for (SortKey<TypIconSet> key : keys) {
+			int off = writer.position();
+			TypIconSet icon = key.getObject();
+			int type = icon.getTypeForFile();
+
+			String label = icon.getLabel();
+			if (label != null) {
+				CharBuffer cb = CharBuffer.wrap(label);
+				CharsetEncoder encoder = data.getEncoder();
+				try {
+					ByteBuffer buffer = encoder.encode(cb);
+					writer.put(buffer);
+
+					// If we succeeded then note offsets for indexes
+					strToType.put(off, type);
+					typeToStr.put(type, off);
+
+				} catch (CharacterCodingException ignore) {
+					String name = encoder.charset().name();
+					throw new TypLabelException(name);
+				}
+				writer.put((byte) 0);
+			}
+		}
+		Utils.closeFile(writer);
+	}
+
+	private void writeStrIndex(ImgFileWriter in) {
+		SectionWriter writer = header.getStringIndex().makeSectionWriter(in);
+		int psize = ptrSize(header.getLabels().getSize());
+
+		for (Map.Entry<Integer, Integer> ent : strToType.entrySet()) {
+			putN(writer, psize, ent.getKey());
+			putN(writer, 3, ent.getValue());
+		}
+		Utils.closeFile(writer);
+	}
+
+	private void writerTypeIndex(ImgFileWriter in) {
+		SectionWriter writer = header.getTypeIndex().makeSectionWriter(in);
+		int psize = ptrSize(header.getLabels().getSize());
+
+		for (Map.Entry<Integer, Integer> ent : typeToStr.entrySet()) {
+			putN(writer, 3, ent.getKey());
+			putN(writer, psize, ent.getValue());
+		}
+		Utils.closeFile(writer);
 	}
 
 	private void writeSection(ImgFileWriter writer, Section dataSection, Section indexSection,
@@ -81,6 +159,20 @@ public class TYPFile extends ImgFile {
 
 		int size = dataSection.getSize();
 		int typeSize = indexSection.getItemSize();
+		int psize = ptrSize(size);
+		indexSection.setItemSize((char) (typeSize + psize));
+
+		subWriter = indexSection.makeSectionWriter(writer);
+		for (TypElement elem : elementData) {
+			int offset = elem.getOffset();
+			int type = elem.getTypeForFile();
+			putN(writer, typeSize, type);
+			putN(writer, psize, offset);
+		}
+		Utils.closeFile(subWriter);
+	}
+
+	private int ptrSize(int size) {
 		int psize = 1;
 		if (size > 0xffffff)
 			psize = 4;
@@ -88,16 +180,7 @@ public class TYPFile extends ImgFile {
 			psize = 3;
 		else if (size > 0xff)
 			psize = 2;
-		indexSection.setItemSize((char) (typeSize + psize));
-
-		subWriter = indexSection.makeSectionWriter(writer);
-		for (TypElement elem : elementData) {
-			int offset = elem.getOffset();
-			int type = (elem.getType() << 5) | (elem.getSubType() & 0x1f);
-			putN(writer, typeSize, type);
-			putN(writer, psize, offset);
-		}
-		Utils.closeFile(subWriter);
+		return psize;
 	}
 
 	protected void putN(ImgFileWriter writer, int n, int value) {

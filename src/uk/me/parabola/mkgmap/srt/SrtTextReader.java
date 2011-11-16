@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.srt;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.ByteBuffer;
@@ -108,6 +109,24 @@ public class SrtTextReader {
 
 	private SrtTextReader(String filename, Reader r) throws IOException {
 		read(filename, r);
+	}
+
+	/**
+	 * Find and read in the sort description for the given codepage.
+	 */
+	public static Sort sortForCodepage(int codepage) {
+		String name = "sort/cp" + codepage + ".txt";
+		InputStream is = Sort.class.getClassLoader().getResourceAsStream(name);
+		if (is == null)
+			return Sort.defaultSort(codepage);
+
+		try {
+			InputStreamReader r = new InputStreamReader(is, "utf-8");
+			SrtTextReader sr = new SrtTextReader(r);
+			return sr.getSort();
+		} catch (IOException e) {
+			return Sort.defaultSort(codepage);
+		}
 	}
 
 	/**

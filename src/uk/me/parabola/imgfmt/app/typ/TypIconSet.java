@@ -59,4 +59,10 @@ public class TypIconSet extends TypElement {
 	public void addIcon(Xpm xpm) {
 		icons.add(xpm);
 	}
+
+	public String getLabel() {
+		if (labels.isEmpty())
+			return null;
+		return labels.get(0).getText();
+	}
 }

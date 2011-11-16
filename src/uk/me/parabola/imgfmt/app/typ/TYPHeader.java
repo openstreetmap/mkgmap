@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Thomas Lußnig
  */
 public class TYPHeader extends CommonHeader {
-	public static final int HEADER_LEN = 0x6e;
+	public static final int HEADER_LEN = 0x9c; // 0x6e;
 
 	private char familyId;
 	private char productId;
@@ -45,6 +45,10 @@ public class TYPHeader extends CommonHeader {
 
 	private final Section iconData = new Section(polygonIndex);
 	private final Section iconIndex = new Section(iconData, (char) 3);
+
+	private final Section labels = new Section(iconIndex);
+	private final Section stringIndex = new Section(labels);
+	private final Section typeIndex = new Section(stringIndex);
 
 	public TYPHeader() {
 		super(HEADER_LEN, "GARMIN TYP");
@@ -116,6 +120,21 @@ public class TYPHeader extends CommonHeader {
 			writeSectionInfo(writer, iconIndex);
 			writer.put((byte) 0x13);
 			iconData.writeSectionInfo(writer);
+			writer.putInt(0);
+		}
+
+		if (getHeaderLength() > 0x6e) {
+			labels.writeSectionInfo(writer);
+
+			writer.putInt(0);
+			writer.putInt(0);
+
+			stringIndex.writeSectionInfo(writer);
+			writer.putInt(0);
+			writer.putInt(0);
+
+			typeIndex.writeSectionInfo(writer);
+			writer.putChar((char) 0);
 		}
 	}
 
@@ -175,5 +194,17 @@ public class TYPHeader extends CommonHeader {
 
 	public Section getIconIndex() {
 		return iconIndex;
+	}
+
+	public Section getLabels() {
+		return labels;
+	}
+
+	public Section getStringIndex() {
+		return stringIndex;
+	}
+
+	public Section getTypeIndex() {
+		return typeIndex;
 	}
 }

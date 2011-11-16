@@ -21,8 +21,17 @@ public class TypLabel {
 
 	public TypLabel(String in) {
 		String[] split = in.split(",", 2);
-		lang = Integer.decode(split[0]);
-		this.text = split[1];
+		int l;
+		String s;
+		try {
+			l = Integer.decode(split[0]);
+			s = split[1];
+		} catch (NumberFormatException e) {
+			l = 0;
+			s = in;
+		}
+		this.lang = l;
+		this.text = s;
 	}
 
 	public TypLabel(int lang, String text) {
