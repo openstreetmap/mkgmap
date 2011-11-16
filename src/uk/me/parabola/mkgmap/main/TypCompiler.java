@@ -67,6 +67,8 @@ public class TypCompiler implements MapProcessor {
 		TypData data;
 		try {
 			data = compile(filename, readCharset);
+		} catch (SyntaxException e) {
+			throw new MapFailedException("Compiling TYP txt file: " + e.getMessage());
 		} catch (FileNotFoundException e) {
 			throw new MapFailedException("Could not open TYP file " + filename + " to read");
 		}
@@ -160,6 +162,9 @@ public class TypCompiler implements MapProcessor {
 		TypData data;
 		try {
 			data = compile(in, readCharset);
+		} catch (SyntaxException e) {
+			System.out.println(e.getMessage());
+			return;
 		} catch (FileNotFoundException e) {
 			throw new MapFailedException("Could not open TYP file " + in + " to read");
 		}
@@ -167,7 +172,7 @@ public class TypCompiler implements MapProcessor {
 		try {
 			writeTyp(data, out);
 		} catch (IOException e) {
-			throw new MapFailedException("Error while writing typ file", e);
+			System.out.println("Error writing file: " + e.getMessage());
 		}
 	}
 

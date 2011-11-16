@@ -40,6 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
@@ -109,6 +110,8 @@ public class Main implements ArgumentProcessor {
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
+		} catch (MapFailedException e) {
+			System.err.println(e.getMessage());
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
 		}
@@ -378,8 +381,9 @@ public class Main implements ArgumentProcessor {
 				}
 				catch (ExitException ee) {
 					throw ee;
-				}
-				catch (Throwable t) {
+				} catch (MapFailedException mfe) {
+					System.err.println(mfe.getMessage());
+				} catch (Throwable t) {
 					t.printStackTrace();
 					if(!args.getProperties().getProperty("keep-going", false)) {
 						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
