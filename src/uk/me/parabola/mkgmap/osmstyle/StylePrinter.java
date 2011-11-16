@@ -3,6 +3,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.Writer;
 import java.util.Formatter;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -59,7 +60,7 @@ public class StylePrinter {
 			fmt.format("name-tag-list: %s\n", fmtArray(style.getNameTagList()));
 
 		if (generalOptions != null) {
-			for (Map.Entry<String, String> entry : generalOptions.entrySet())
+			for (Entry<String, String> entry : generalOptions.entrySet())
 				fmt.format("%s: %s\n", entry.getKey(), entry.getValue());
 		}
 	}
@@ -69,8 +70,12 @@ public class StylePrinter {
 		StyleInfo styleInfo = style.getInfo();
 		fmt.format("version %s\n", dumpInfoVal(styleInfo.getVersion()));
 		fmt.format("summary %s\n", dumpInfoVal(styleInfo.getSummary()));
-		if (styleInfo.getBaseStyleName() != null)
-			fmt.format("base-style %s\n", dumpInfoVal(styleInfo.getBaseStyleName()));
+
+		// The base styles are combined already, so should not be output. Retained as comments for
+		// documentation/testing purposes.
+		for (String name : styleInfo.baseStyles())
+			fmt.format("# base-style %s\n", dumpInfoVal(name));
+
 		fmt.format("description %s\n", dumpInfoVal(styleInfo.getLongDescription()));
 	}
 

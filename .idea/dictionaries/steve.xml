@@ -32,6 +32,7 @@
       <w>gmapsupp</w>
       <w>gpsmapedit</w>
       <w>gtype</w>
+      <w>gtypes</w>
       <w>hashlist</w>
       <w>heibler</w>
       <w>imgfmt</w>
@@ -76,6 +77,7 @@
       <w>resized</w>
       <w>rethrown</w>
       <w>routable</w>
+      <w>rrggbb</w>
       <w>seamark</w>
       <w>slon</w>
       <w>startup</w>
@@ -97,6 +99,7 @@
       <w>xcharset</w>
       <w>xcode</w>
       <w>xmlattr</w>
+      <w>zip'ed</w>
       <w>zoraster</w>
     </words>
   </dictionary>

@@ -16,6 +16,9 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Information about a style.  This is so style authors can include
  * descriptions of their styles within the style itself.
@@ -27,7 +30,7 @@ public class StyleInfo {
 	private String version;
 	private String summary;
 	private String longDescription;
-	private String baseStyleName;
+	private final List<String> baseStyleNames = new ArrayList<String>();
 
 
 	public String getSummary() {
@@ -54,11 +57,11 @@ public class StyleInfo {
 		this.longDescription = longDescription;
 	}
 
-	public String getBaseStyleName() {
-		return baseStyleName;
+	public Iterable<String> baseStyles() {
+		return baseStyleNames;
 	}
 
-	public void setBaseStyleName(String value) {
-		this.baseStyleName = value.trim();
+	public void addBaseStyleName(String name) {
+		baseStyleNames.add(name.trim());
 	}
 }

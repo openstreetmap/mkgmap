@@ -144,6 +144,44 @@ public class StyledConverterTest {
 	}
 
 	@Test
+	public void testMultipleBase() throws FileNotFoundException {
+		converter = makeConverter("d");
+
+		convertTag("a", "a");
+		assertEquals(1, lines.get(0).getType());
+
+		convertTag("b", "b");
+		assertEquals(1, lines.get(0).getType());
+
+		convertTag("c", "c");
+		assertEquals(1, lines.get(0).getType());
+
+		convertTag("d", "d");
+		assertEquals(1, lines.get(0).getType());
+
+		convertTag("override", "ab");
+		assertEquals(2, lines.get(0).getType());
+
+		for (String s : new String[]{"ac", "bc"}) {
+			convertTag("override", s);
+			assertEquals(3, lines.get(0).getType());
+		}
+
+		for (String s : new String[]{"ad", "bd", "cd"}) {
+			convertTag("override", s);
+			assertEquals(4, lines.get(0).getType());
+		}
+	}
+
+	private Way convertTag(String key, String value) {
+		lines.clear();
+		Way way = makeWay();
+		way.addTag(key, value);
+		converter.convertWay(way);
+		return way;
+	}
+
+	@Test
 	public void testFileConflicts() throws FileNotFoundException {
 		converter = makeConverter("waycombine");
 		Way w = makeWay();

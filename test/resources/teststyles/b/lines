@@ -1,0 +1,11 @@
+
+b=b [0x1]
+
+override=yes [0x2]
+override=b [0x2]
+override=c [0x2]
+override=d [0x2]
+
+override=ab [0x2]
+override=bc [0x2]
+override=bd [0x2]

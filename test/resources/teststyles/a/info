@@ -1,0 +1,8 @@
+
+version: 1
+summary: Base style test a
+
+description {
+Base style for b.
+b and c are the base styles for d.
+}

@@ -31,7 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -101,7 +103,7 @@ public class StyleImpl implements Style {
 	private StyleInfo info = new StyleInfo();
 
 	// Set if this style is based on another one.
-	private StyleImpl baseStyle;
+	private final List<StyleImpl> baseStyles = new ArrayList<StyleImpl>();
 
 	// A list of tag names to be used as the element name
 	private String[] nameTagList;
@@ -134,9 +136,11 @@ public class StyleImpl implements Style {
 
 		readInfo();
 
-		readBaseStyle();
-		if (baseStyle != null)
-			mergeStyle(baseStyle);
+		for (String baseName : info.baseStyles())
+			readBaseStyle(baseName);
+
+		for (StyleImpl baseStyle : baseStyles)
+			mergeOptions(baseStyle);
 
 		readOptions();
 		readRules();
@@ -144,8 +148,14 @@ public class StyleImpl implements Style {
 		readOverlays();
 
 		readMapFeatures();
-		if (baseStyle != null)
-			mergeRules(baseStyle);
+
+		ListIterator<StyleImpl> listIterator = baseStyles.listIterator(baseStyles.size());
+		while (listIterator.hasPrevious())
+			mergeRules(listIterator.previous());
+
+		// OR: other way
+		//for (StyleImpl s : baseStyles)
+		//	mergeRules(s);
 	}
 
 	public String[] getNameTagList() {
@@ -170,8 +180,8 @@ public class StyleImpl implements Style {
 	 * @param config The command line options.
 	 */
 	public void applyOptionOverride(Properties config) {
-		Set<Map.Entry<Object,Object>> entries = config.entrySet();
-		for (Map.Entry<Object,Object> ent : entries) {
+		Set<Entry<Object,Object>> entries = config.entrySet();
+		for (Entry<Object,Object> ent : entries) {
 			String key = (String) ent.getKey();
 			String val = (String) ent.getValue();
 
@@ -345,13 +355,13 @@ public class StyleImpl implements Style {
 	private void initFromMapFeatures(MapFeatureReader mfr) {
 		addBackwardCompatibleRules();
 
-		for (Map.Entry<String, GType> me : mfr.getLineFeatures().entrySet())
+		for (Entry<String, GType> me : mfr.getLineFeatures().entrySet())
 			lines.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
-		for (Map.Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
+		for (Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
 			polygons.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 
-		for (Map.Entry<String, GType> me : mfr.getPointFeatures().entrySet())
+		for (Entry<String, GType> me : mfr.getPointFeatures().entrySet())
 			nodes.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
 	}
 
@@ -463,7 +473,7 @@ public class StyleImpl implements Style {
 					else if (word.equals("version")) {
 						info.setVersion(value);
 					} else if (word.equals("base-style")) {
-						info.setBaseStyleName(value);
+						info.addBaseStyleName(value);
 					} else if (word.equals("description")) {
 						info.setLongDescription(value);
 					}
@@ -498,14 +508,14 @@ public class StyleImpl implements Style {
 	 * the current styles 'info' section and any option or rule specified
 	 * in the current style will override any corresponding item in the
 	 * base style.
+	 * @param name The name of the base style
 	 */
-	private void readBaseStyle() {
-		String name = info.getBaseStyleName();
+	private void readBaseStyle(String name) {
 		if (name == null)
 			return;
 
 		try {
-			baseStyle = new StyleImpl(location, name);
+			baseStyles.add(new StyleImpl(location, name));
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
@@ -515,31 +525,28 @@ public class StyleImpl implements Style {
 			log.debug("could not open base style file", e);
 
 			try {
-				baseStyle = new StyleImpl(null, name);
+				baseStyles.add(new StyleImpl(null, name));
 			} catch (SyntaxException se) {
 				System.err.println("Error in style: " + se.getMessage());
 			} catch (FileNotFoundException e1) {
-				baseStyle = null;
 				log.error("Could not find base style", e);
 			}
 		}
 	}
 
 	/**
-	 * Merge another style into this one.  The style will have a lower
-	 * priority, in other words if rules in the current style match the
-	 * 'other' one, then the current rule wins.
+	 * Merge another style's options into this one.  The style will have a lower
+	 * priority, in other words any option set in 'other' and this style will
+	 * take the value given in this style.
 	 *
-	 * This is called from the options file, and options from the other
-	 * file are processed as if they were included in the current option
-	 * file at the point of inclusion.
-	 * 
 	 * This is used to base styles on other ones, without having to repeat
 	 * everything.
+	 *
+	 * @see #mergeRules(StyleImpl)
 	 */
-	private void mergeStyle(StyleImpl other) {
+	private void mergeOptions(StyleImpl other) {
 		this.nameTagList = other.nameTagList;
-		for (Map.Entry<String, String> ent : other.generalOptions.entrySet()) {
+		for (Entry<String, String> ent : other.generalOptions.entrySet()) {
 			String opt = ent.getKey();
 			String val = ent.getValue();
 			if (opt.equals("name-tag-list")) {
@@ -560,6 +567,11 @@ public class StyleImpl implements Style {
 	/**
 	 * Merge rules from the base style.  This has to called after this
 	 * style's rules are read.
+	 *
+	 * The other rules have a lower priority than the rules in this file; it is as if they
+	 * were appended to the rule files of this style.
+	 *
+	 * @see #mergeOptions(StyleImpl) 
 	 */
 	private void mergeRules(StyleImpl other) {
 		lines.merge(other.lines);
