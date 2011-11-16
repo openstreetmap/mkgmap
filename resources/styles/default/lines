@@ -98,6 +98,10 @@ contour=elevation | contour_ext=elevation
 
 # Remove access=yes from highways.
 highway=* & access=yes { delete access }
+# Translate motor_vehicle and vehicle access rules.
+highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
+highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
+
 # By default, ways are accessible by the highest allowed mode of
 # transportation, and thus access=yes should be redundant.
 # However, sometimes cycleways may be tagged access=destination or similar,
