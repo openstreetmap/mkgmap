@@ -18,7 +18,9 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.typ.BitmapImage;
 import uk.me.parabola.imgfmt.app.typ.ColourInfo;
+import uk.me.parabola.imgfmt.app.typ.Image;
 import uk.me.parabola.imgfmt.app.typ.Rgb;
+import uk.me.parabola.imgfmt.app.typ.TrueImage;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypElement;
 import uk.me.parabola.imgfmt.app.typ.Xpm;
@@ -257,12 +259,34 @@ public class CommonSection {
 	}
 
 
-	protected void warnUnknown(String name) {
-		if (seen.contains(name))
-			return;
+	private Image readTrueImage(TokenScanner scanner, ColourInfo colourInfo) {
+		int width = colourInfo.getWidth();
+		int height = colourInfo.getHeight();
+		int[] image = new int[width * height];
 
-		seen.add(name);
-		System.out.printf("Warning: tag '%s' not known\n", name);
+		int nPixels = width * height;
+
+		int count = 0;
+		while (count < nPixels) {
+			scanner.validateNext("\"");
+			scanner.validateNext("#");
+
+			do {
+				String col = scanner.nextValue();
+				try {
+					int val = Integer.parseInt(col, 16);
+					if (col.length() <= 6)
+						val = (val << 8) + 0xff;
+
+					image[count++] = val;
+				} catch (NumberFormatException e) {
+					throw new SyntaxException(scanner, "Not a valid colour value " + col);
+				}
+			} while (scanner.checkToken("#"));
+			scanner.validateNext("\"");
+		}
+
+		return new TrueImage(colourInfo, image);
 	}
 
 	/**
@@ -281,12 +305,24 @@ public class CommonSection {
 		int width = colourInfo.getWidth();
 		if (height > 0 && width > 0) {
 			colourInfo.setHasBitmap(true);
-			BitmapImage image = readImage(scanner, colourInfo);
+			Image image;
+			if (colourInfo.getNumberOfColours() == 0)
+				image = readTrueImage(scanner, colourInfo);
+			else
+				image = readImage(scanner, colourInfo);
 			xpm.setImage(image);
 		}
 
 		hasXpm = true;
 		return xpm;
+	}
+
+	protected void warnUnknown(String name) {
+		if (seen.contains(name))
+			return;
+
+		seen.add(name);
+		System.out.printf("Warning: tag '%s' not known\n", name);
 	}
 
 	protected void validate(TokenScanner scanner) {

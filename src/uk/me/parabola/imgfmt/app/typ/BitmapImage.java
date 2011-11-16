@@ -1,10 +1,7 @@
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.util.Comparator;
-
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Writeable;
 
 /**
  * Holds a bitmap image for the typ file.
@@ -14,7 +11,7 @@ import uk.me.parabola.imgfmt.app.Writeable;
  * Based on code by Thomas Lußnig, but type and colour information separated out and
  * deals with more than just points.
  */
-public class BitmapImage implements Writeable, Comparator<BitmapImage> {
+public class BitmapImage implements Image {
 
 	private final ColourInfo colourInfo;
 	private final String image;

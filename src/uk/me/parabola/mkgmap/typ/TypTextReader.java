@@ -101,6 +101,8 @@ public class TypTextReader {
 			return new PolygonSection(data);
 		} else if ("_draworder".equals(sectionName)) {
 			return new DrawOrderSection(data);
+		} else if ("_icons".equals(sectionName)) {
+			return new IconSection(data);
 		} else if ("_id".equals(sectionName)) {
 			return new IdSection(data);
 		}

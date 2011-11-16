@@ -12,34 +12,12 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Writeable;
 
 /**
- * Holds everything read from an XPM value in the typ txt file.
+ * Interface for the different image types.
  *
  * @author Steve Ratcliffe
  */
-public class Xpm {
-	private ColourInfo colourInfo;
-	private Image image;
-
-	public ColourInfo getColourInfo() {
-		return colourInfo;
-	}
-
-	public void setColourInfo(ColourInfo colourInfo) {
-		this.colourInfo = colourInfo;
-	}
-
-	public void setImage(Image image) {
-		this.image = image;
-	}
-
-	public boolean hasImage() {
-		return image != null;
-	}
-
-	public void writeImage(ImgFileWriter writer) {
-		image.write(writer);
-	}
+public interface Image extends Writeable {
 }

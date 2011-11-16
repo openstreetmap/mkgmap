@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Thomas Lußnig
  */
 public class TYPHeader extends CommonHeader {
-	public static final int HEADER_LEN = 0x5b; // 0x6e;
+	public static final int HEADER_LEN = 0x6e;
 
 	private char familyId;
 	private char productId;
@@ -37,11 +37,14 @@ public class TYPHeader extends CommonHeader {
 	private final Section lineData = new Section(pointData);
 	private final Section polygonData = new Section(lineData);
 
-	private final Section pointIndex = new Section(polygonData, (char) 4);
-	private final Section lineIndex = new Section(pointIndex, (char) 4);
-	private final Section polygonIndex = new Section(lineIndex, (char) 4);
+	private final Section pointIndex = new Section(polygonData, (char) 2);
+	private final Section lineIndex = new Section(pointIndex, (char) 2);
+	private final Section polygonIndex = new Section(lineIndex, (char) 2);
 
 	private final Section shapeStacking = new Section(polygonIndex, (char) 5);
+
+	private final Section iconData = new Section(polygonIndex);
+	private final Section iconIndex = new Section(iconData, (char) 3);
 
 	public TYPHeader() {
 		super(HEADER_LEN, "GARMIN TYP");
@@ -110,10 +113,9 @@ public class TYPHeader extends CommonHeader {
 		writeSectionInfo(writer, shapeStacking);
 
 		if (getHeaderLength() > 0x5b) {
-			writer.putInt(0);
-			writer.putInt(0);
-			writer.putChar((char) 0);
-			writer.put((byte) 0x1f);
+			writeSectionInfo(writer, iconIndex);
+			writer.put((byte) 0x13);
+			iconData.writeSectionInfo(writer);
 		}
 	}
 
@@ -165,5 +167,13 @@ public class TYPHeader extends CommonHeader {
 
 	public Section getLineIndex() {
 		return lineIndex;
+	}
+
+	public Section getIconData() {
+		return iconData;
+	}
+
+	public Section getIconIndex() {
+		return iconIndex;
 	}
 }

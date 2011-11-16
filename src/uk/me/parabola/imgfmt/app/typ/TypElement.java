@@ -149,4 +149,20 @@ public abstract class TypElement {
 		if (nightFontColour != null)
 			nightFontColour.write(writer, (byte) 0x10);
 	}
+
+	/**
+	 * Write out an image. The width and height are written separately, because they are not
+	 * repeated for the night image.
+	 *
+	 * @param xpm Either the day or night XPM.
+	 */
+	protected void writeImage(ImgFileWriter writer, Xpm xpm) {
+		ColourInfo colourInfo = xpm.getColourInfo();
+
+		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
+		writer.put((byte) colourInfo.getColourMode());
+
+		colourInfo.write(writer);
+		xpm.writeImage(writer);
+	}
 }

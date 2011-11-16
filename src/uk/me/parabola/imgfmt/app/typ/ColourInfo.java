@@ -144,10 +144,8 @@ public class ColourInfo implements Writeable {
 				nbits = 4;
 		}
 		
-		if (colourMode == 0) {
-			if (nc == 0)
-				nbits = 16;
-		}
+		if (nc == 0)
+			nbits = 24;
 
 		return nbits;
 	}

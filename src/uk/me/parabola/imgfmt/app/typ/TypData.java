@@ -28,6 +28,7 @@ public class TypData {
 	private final List<TypPolygon> polygons = new ArrayList<TypPolygon>();
 	private final List<TypLine> lines = new ArrayList<TypLine>();
 	private final List<TypPoint> points = new ArrayList<TypPoint>();
+	private final List<TypIconSet> icons = new ArrayList<TypIconSet>();
 
 	private CharsetEncoder encoder = Charset.forName("latin1").newEncoder();
 
@@ -83,5 +84,13 @@ public class TypData {
 
 	public List<TypPoint> getPoints() {
 		return points;
+	}
+
+	public void addIcon(TypIconSet current) {
+		icons.add(current);
+	}
+
+	public List<TypIconSet> getIcons() {
+		return icons;
 	}
 }
