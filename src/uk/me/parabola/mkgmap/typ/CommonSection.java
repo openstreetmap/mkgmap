@@ -50,7 +50,7 @@ public class CommonSection {
 	 * @return True if this routine has processed the tag.
 	 */
 	protected boolean commonKey(TokenScanner scanner, TypElement current, String name, String value) {
-		if (name.equals("Type")) {
+		if (name.equalsIgnoreCase("Type")) {
 			try {
 				int ival = Integer.decode(value);
 				if (ival >= 0x10000) {
@@ -63,7 +63,7 @@ public class CommonSection {
 				throw new SyntaxException(scanner, "Bad number " + value);
 			}
 
-		} else if (name.equals("SubType")) {
+		} else if (name.equalsIgnoreCase("SubType")) {
 			try {
 				int ival = Integer.decode(value);
 				current.setSubType(ival);
@@ -71,28 +71,28 @@ public class CommonSection {
 				throw new SyntaxException(scanner, "Bad number for sub type " + value);
 			}
 
-		} else if (name.startsWith("String")) {
+		} else if (name.toLowerCase().startsWith("string")) {
 			try {
 				current.addLabel(value);
 			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Bad number in " + value);
 			}
 
-		} else if (name.equals("Xpm")) {
+		} else if (name.equalsIgnoreCase("Xpm")) {
 			Xpm xpm = readXpm(scanner, value);
 			current.setXpm(xpm);
 
-		} else if (name.equals("FontStyle")) {
+		} else if (name.equalsIgnoreCase("FontStyle")) {
 			int font = decodeFontStyle(value);
 			current.setFontStyle(font);
 
-		} else if (name.equals("CustomColor") || name.equals("ExtendedLabels")) {
+		} else if (name.equalsIgnoreCase("CustomColor") || name.equals("ExtendedLabels")) {
 			// These are just noise, the appropriate flag is set if any feature is used.
 
-		} else if (name.equals("DaycustomColor")) {
+		} else if (name.equalsIgnoreCase("DaycustomColor")) {
 			current.setDayFontColor(value);
 
-		} else if (name.equals("NightcustomColor")) {
+		} else if (name.equalsIgnoreCase("NightcustomColor")) {
 			current.setNightCustomColor(value);
 
 		} else {
@@ -232,10 +232,12 @@ public class CommonSection {
 			if (line.isEmpty())
 				throw new SyntaxException(scanner, "Invalid blank line in bitmap.");
 
-			if (line.charAt(0) != '"' || line.charAt(line.length()-1) != '"')
-				throw new SyntaxException(scanner, "xpm bitmap line not surrounded by quotes: " + line);
+			if (line.charAt(0) != '"')
+				throw new SyntaxException(scanner, "xpm bitmap line must start with a quote: " + line);
+			if (line.length() < 1 + width * cpp)
+				throw new SyntaxException(scanner, "short image line: " + line);
 
-			line = line.substring(1, line.length() - 1);
+			line = line.substring(1, 1+width*cpp);
 			sb.append(line);
 
 			// Do the syntax check, to avoid an error later when we don't have the line number any more
@@ -269,9 +271,9 @@ public class CommonSection {
 		int count = 0;
 		while (count < nPixels) {
 			scanner.validateNext("\"");
-			scanner.validateNext("#");
 
 			do {
+				scanner.validateNext("#");
 				String col = scanner.nextValue();
 				try {
 					int val = Integer.parseInt(col, 16);

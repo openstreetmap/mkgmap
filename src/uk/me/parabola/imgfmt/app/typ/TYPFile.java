@@ -42,6 +42,7 @@ import uk.me.parabola.log.Logger;
  * The TYP file.
  *
  * @author Thomas Lußnig
+ * @author Steve Ratcliffe
  */
 public class TYPFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(TYPFile.class);
@@ -81,23 +82,32 @@ public class TYPFile extends ImgFile {
 		writeStrIndex(writer);
 		writerTypeIndex(writer);
 
+		zapZero(header.getShapeStacking(), header.getLabels(), header.getStringIndex(), header.getTypeIndex());
+
 		log.debug("syncing TYP file");
 		position(0);
 		getHeader().writeHeader(getWriter());
 	}
 
 	private void writeLabels(ImgFileWriter in) {
+		if (data.getIcons().isEmpty())
+			return;
+		
 		SectionWriter writer = header.getLabels().makeSectionWriter(in);
-
-		writer.put((byte) 0);
 
 		List<SortKey<TypIconSet>> keys = new ArrayList<SortKey<TypIconSet>>();
 		Sort sort = data.getSort();
 		for (TypIconSet icon : data.getIcons()) {
-			SortKey<TypIconSet> key = sort.createSortKey(icon, icon.getLabel());
-			keys.add(key);
+			String label = icon.getLabel();
+			if (label != null) {
+				SortKey<TypIconSet> key = sort.createSortKey(icon, label);
+				keys.add(key);
+			}
 		}
 		Collections.sort(keys);
+
+		// Offset 0 is reserved to mean no label.
+		writer.put((byte) 0);
 
 		for (SortKey<TypIconSet> key : keys) {
 			int off = writer.position();
@@ -160,6 +170,8 @@ public class TYPFile extends ImgFile {
 		int size = dataSection.getSize();
 		int typeSize = indexSection.getItemSize();
 		int psize = ptrSize(size);
+		//if (psize == 1)
+		//	psize = 2;
 		indexSection.setItemSize((char) (typeSize + psize));
 
 		subWriter = indexSection.makeSectionWriter(writer);
@@ -170,6 +182,17 @@ public class TYPFile extends ImgFile {
 			putN(writer, psize, offset);
 		}
 		Utils.closeFile(subWriter);
+
+		zapZero(dataSection, indexSection);
+	}
+
+	private void zapZero(Section... sect) {
+		for (Section s : sect) {
+			if (s.getSize() == 0) {
+				s.setPosition(0);
+				s.setItemSize((char) 0);
+			}
+		}
 	}
 
 	private int ptrSize(int size) {

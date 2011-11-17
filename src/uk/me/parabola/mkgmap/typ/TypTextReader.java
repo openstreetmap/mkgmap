@@ -45,6 +45,8 @@ public class TypTextReader {
 
 		while (!scanner.isEndOfFile()) {
 			Token tok = scanner.nextToken();
+			if (tok.getType() == TokType.EOF)
+				break;
 
 			// We deal with whole line comments here
 			if (tok.isValue(";")) {

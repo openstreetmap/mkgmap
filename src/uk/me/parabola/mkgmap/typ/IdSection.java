@@ -37,11 +37,11 @@ class IdSection implements ProcessSection {
 			throw new SyntaxException(scanner, "Bad integer " + value);
 		}
 
-		if (name.equals("FID")) {
+		if (name.equalsIgnoreCase("FID")) {
 			data.setFamilyId(ival);
-		} else if (name.equals("ProductCode")) {
+		} else if (name.equalsIgnoreCase("ProductCode")) {
 			data.setProductId(ival);
-		} else if (name.equals("CodePage")) {
+		} else if (name.equalsIgnoreCase("CodePage")) {
 			data.setSort(SrtTextReader.sortForCodepage(ival));
 		} else {
 			throw new SyntaxException(scanner, "Unrecognised keyword in id section: " + name);
