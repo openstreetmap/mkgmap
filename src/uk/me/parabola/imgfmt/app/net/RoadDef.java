@@ -338,7 +338,8 @@ public class RoadDef implements Comparable<RoadDef> {
 	}
 
 	public int getStartSubdivNumber() {
-		return roadIndexes.get(0).get(0).getLine().getSubdiv().getNumber();
+		Integer key = roadIndexes.firstKey();
+		return roadIndexes.get(key).get(0).getLine().getSubdiv().getNumber();
 	}
 
 	/**
