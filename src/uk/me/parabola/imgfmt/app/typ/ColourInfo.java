@@ -39,7 +39,7 @@ public class ColourInfo implements Writeable {
 
 	private boolean hasBitmap;
 	private boolean hasBorder;
-	private final List<Rgb> colours = new ArrayList<Rgb>();
+	private final List<RgbWithTag> colours = new ArrayList<RgbWithTag>();
 	private final Map<String, Integer> indexMap = new HashMap<String, Integer>();
 
 	private char width;
@@ -55,19 +55,15 @@ public class ColourInfo implements Writeable {
 	 * @param rgb The actual colour.
 	 */
 	public void addColour(String tag, Rgb rgb) {
-		indexMap.put(tag, colours.size());
-		colours.add(rgb);
-		if (!rgb.isTransparent())
-			numberOfSolidColours++;
+		RgbWithTag cwt = new RgbWithTag(tag, rgb);
+		colours.add(cwt);
 	}
 
 	/**
 	 * Add a transparent colour. Convenience routine.
 	 */
 	public void addTransparent(String colourTag) {
-		addColour(colourTag, new Rgb(0,0,0,0));
-		if (colourMode == 0)
-			colourMode = 0x10;
+		addColour(colourTag, new Rgb(0, 0, 0, 0));
 	}
 
 	public void setHasBitmap(boolean hasBitmap) {
@@ -101,9 +97,9 @@ public class ColourInfo implements Writeable {
 		if (!hasBitmap && !hasBorder && numberOfColours == 2)
 			scheme |= S_NIGHT | S_DAY_TRANSPARENT | S_NIGHT_TRANSPARENT;
 		
-		if (numberOfColours < 2 || colours.get(1).isTransparent() || colours.get(0).isTransparent())
+		if (numberOfColours < 2 || colours.get(1).isTransparent())
 			scheme |= S_DAY_TRANSPARENT;
-		if (numberOfColours == 4 && (colours.get(3).isTransparent() || colours.get(2).isTransparent()))
+		if (numberOfColours == 4 && (colours.get(3).isTransparent()))
 			scheme |= S_NIGHT_TRANSPARENT;
 
 		if ((scheme & S_NIGHT) == 0)
@@ -122,32 +118,19 @@ public class ColourInfo implements Writeable {
 		if (simple)
 			return 1;
 
-		int nc;
-		if (colourMode == 0x10)
-			nc = numberOfSolidColours;
-		else
-			nc = numberOfColours;
-
-		int nbits = 8;
-		if (colourMode == 0x10) {
-			if (nc < 3)
-				nbits = 2;
-			else if (nc < 15) {
-				nbits = 4;
-			}
-		} else {
-			if (nc < 2)
-				nbits = 1;
-			else if (nc < 4)
-				nbits = 2;
-			else if (nc < 16)
-				nbits = 4;
-		}
-		
+		// number of colours includes the transparent pixel in colormode=0x10 so this
+		// works for all colour modes.
+		int nc = numberOfColours;
 		if (nc == 0)
-			nbits = 24;
-
-		return nbits;
+			return 24;
+		else if (nc < 2)
+			return 1;
+		else if (nc < 4)
+			return 2;
+		else if (nc < 16)
+			return 4;
+		else
+			return 8;
 	}
 
 	/**
@@ -261,12 +244,104 @@ public class ColourInfo implements Writeable {
 		this.hasBorder = hasBorder;
 	}
 
+	/**
+	 * Replace the last pixel with a pixel with the same colour components and the given
+	 * alpha.
+	 *
+	 * This is used when the alpha value is specified separately to the colour values in the
+	 * input file.
+	 * @param alpha The alpha value to be added to the pixel. This is a real alpha, not a transparency.
+	 */
 	public void addAlpha(int alpha) {
 		int last = colours.size();
-		Rgb rgb = colours.get(last - 1);
-		rgb = new Rgb(rgb, alpha);
+		RgbWithTag rgb = colours.get(last - 1);
+		rgb = new RgbWithTag(rgb, alpha);
 		colours.set(last - 1, rgb);
+	}
 
-		colourMode = 0x20;
+	/**
+	 * Analyse the colour pallet and normalise it.
+	 *
+	 * Try to work out what is required from the supplied colour pallet and set the colour mode
+	 * and rearrange transparent pixels if necessary to be in the proper place.
+	 *
+	 * At the end we build the index from colour tag to pixel index.
+	 *
+	 * @param simple If this is a line or polygon.
+	 * @return A string describing the validation failure.
+	 */
+	public String analyseColours(boolean simple) {
+		setSimple(simple);
+		
+		if (simple) {
+			// There can be up to four colours, no partial transparency, and a max of one transparent pixel
+			// in each of the day/night sections.
+
+			if (numberOfColours > 4)
+				return ("Too many colours for a line or polygon");
+			if (numberOfColours == 0)
+				return "Line or polygon cannot have zero colours";
+
+			// Putting the transparent pixel first is common, so reverse if found
+			if (colours.get(0).isTransparent()) {
+				if (numberOfColours < 2)
+					return "Only colour cannot be transparent for line or polygon";
+				swapColour(0, 1);
+			}
+			if (numberOfColours > 2 && colours.get(2).isTransparent()) {
+				if (numberOfColours < 4)
+					return "Only colour cannot be transparent for line or polygon";
+				swapColour(2, 3);
+			}
+
+			// There can only be one transparent pixel per colour pair
+			if (numberOfColours > 1 && colours.get(0).isTransparent())
+				return "Both day foreground and background are transparent";
+			if (numberOfColours > 3 && colours.get(2).isTransparent())
+				return "Both night foreground and background are transparent";
+
+		} else {
+			int transIndex = 0;
+			int nTrans = 0;
+			int nAlpha = 0;
+
+			int count = 0;
+			for (RgbWithTag rgb : colours) {
+				if (rgb.isTransparent()) {
+					nTrans++;
+					transIndex = count;
+				}
+
+				if (rgb.getA() != 0xff && rgb.getA() != 0)
+					nAlpha++;
+				count++;
+			}
+
+			if (nAlpha > 0) {
+				colourMode = 0x20;
+
+			} else if (nTrans == 1) {
+				colourMode = 0x10;
+
+				// Ensure the transparent pixel is at the end
+				RgbWithTag rgb = colours.remove(transIndex);
+				colours.add(rgb);
+			} 
+		}
+
+		int count = 0;
+		for (RgbWithTag rgb : colours) {
+			indexMap.put(rgb.getTag(), count++);
+			if (!rgb.isTransparent())
+				numberOfSolidColours++;
+		}
+
+		return null;
+	}
+
+	private void swapColour(int c1, int c2) {
+		RgbWithTag tmp = colours.get(c1);
+		colours.set(c1, colours.get(c2));
+		colours.set(c2, tmp);
 	}
 }

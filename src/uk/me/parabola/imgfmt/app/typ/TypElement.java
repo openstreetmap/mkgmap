@@ -89,6 +89,15 @@ public abstract class TypElement {
 	}
 
 	/**
+	 * Does this element have two colour bitmaps, with possible automatic night colours. For lines and polygons.
+	 *
+	 * Overridden for points and icons.
+	 */
+	public boolean simpleBitmap() {
+		return true;
+	}
+
+	/**
 	 * Make the label block separately as we need its length before we write it out properly.
 	 *
 	 * @param encoder For encoding the strings as bytes.

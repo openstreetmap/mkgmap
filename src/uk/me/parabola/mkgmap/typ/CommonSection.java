@@ -79,7 +79,7 @@ public class CommonSection {
 			}
 
 		} else if (name.equalsIgnoreCase("Xpm")) {
-			Xpm xpm = readXpm(scanner, value);
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.setXpm(xpm);
 
 		} else if (name.equalsIgnoreCase("FontStyle")) {
@@ -297,8 +297,11 @@ public class CommonSection {
 	 * Note that this is sometimes used just for colours so need to deal with
 	 * different cases.
 	 */
-	protected Xpm readXpm(TokenScanner scanner, String header) {
+	protected Xpm readXpm(TokenScanner scanner, String header, boolean simple) {
 		ColourInfo colourInfo = readColourInfo(scanner, header);
+		String msg = colourInfo.analyseColours(simple);
+		if (msg != null)
+			throw new SyntaxException(scanner, msg);
 
 		Xpm xpm = new Xpm();
 		xpm.setColourInfo(colourInfo);

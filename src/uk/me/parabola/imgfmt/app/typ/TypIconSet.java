@@ -65,4 +65,11 @@ public class TypIconSet extends TypElement {
 			return null;
 		return labels.get(0).getText();
 	}
+
+	/**
+	 * Icon sets can have full colour pixmaps.
+	 */
+	public boolean simpleBitmap() {
+		return false;
+	}
 }

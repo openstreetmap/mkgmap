@@ -65,4 +65,11 @@ public class TypPoint extends TypElement {
 	public void setNightXpm(Xpm nightXpm) {
 		this.nightXpm = nightXpm;
 	}
+
+	/**
+	 * Points have full pixmaps with multiple colours, including 24 full colour images.
+	 */
+	public boolean simpleBitmap() {
+		return false;
+	}
 }

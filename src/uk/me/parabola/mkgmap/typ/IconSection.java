@@ -41,8 +41,7 @@ public class IconSection extends CommonSection implements ProcessSection {
 			return;
 
 		if (name.equalsIgnoreCase("IconXpm")) {
-			Xpm xpm = readXpm(scanner, value);
-			xpm.getColourInfo().setSimple(false);
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.addIcon(xpm);
 		} else {
 			warnUnknown(name);

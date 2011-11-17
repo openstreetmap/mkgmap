@@ -35,13 +35,11 @@ class PointSection extends CommonSection implements ProcessSection {
 			return;
 
 		if (name.equalsIgnoreCase("DayXpm")) {
-			Xpm xpm = readXpm(scanner, value);
-			xpm.getColourInfo().setSimple(false);
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.setXpm(xpm);
 
 		} else if (name.equalsIgnoreCase("NightXpm")) {
-			Xpm xpm = readXpm(scanner, value);
-			xpm.getColourInfo().setSimple(false);
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.setNightXpm(xpm);
 
 		} else {
