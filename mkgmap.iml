@@ -2,7 +2,7 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="" />
+      <configuration sdkName="Python 2.7.1 (/usr/bin/python2.7)" />
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
@@ -34,6 +34,7 @@
     <orderEntry type="library" name="icu4j" level="application" />
     <orderEntry type="library" name="protobuf" level="application" />
     <orderEntry type="library" name="osmbinary" level="application" />
+    <orderEntry type="library" name="Python 2.7.1 (/usr/bin/python2.7) interpreter library" level="application" />
   </component>
 </module>
 

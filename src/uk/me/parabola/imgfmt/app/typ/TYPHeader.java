@@ -98,6 +98,8 @@ public class TYPHeader extends CommonHeader {
 	 * Write the rest of the header.  It is guaranteed that the writer will be set
 	 * to the correct position before calling.
 	 *
+	 * This header appears to have a different layout to most other headers.
+	 *
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
@@ -126,14 +128,17 @@ public class TYPHeader extends CommonHeader {
 		if (getHeaderLength() > 0x6e) {
 			labels.writeSectionInfo(writer);
 
-			writer.putInt(0);
-			writer.putInt(0);
+			// not known, guessing. Different layout to other files.
+			writer.putInt(stringIndex.getItemSize());
+			writer.putInt(0x1b);
+			writer.putInt(stringIndex.getPosition());
+			writer.putInt(stringIndex.getSize());
 
-			stringIndex.writeSectionInfo(writer);
-			writer.putInt(0);
-			writer.putInt(0);
+			writer.putInt(typeIndex.getItemSize());
+			writer.putInt(0x1b);
+			writer.putInt(typeIndex.getPosition());
+			writer.putInt(typeIndex.getSize());
 
-			typeIndex.writeSectionInfo(writer);
 			writer.putChar((char) 0);
 		}
 	}

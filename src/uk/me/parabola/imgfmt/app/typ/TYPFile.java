@@ -139,6 +139,7 @@ public class TYPFile extends ImgFile {
 	private void writeStrIndex(ImgFileWriter in) {
 		SectionWriter writer = header.getStringIndex().makeSectionWriter(in);
 		int psize = ptrSize(header.getLabels().getSize());
+		header.getStringIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : strToType.entrySet()) {
 			putN(writer, psize, ent.getKey());
@@ -150,6 +151,7 @@ public class TYPFile extends ImgFile {
 	private void writerTypeIndex(ImgFileWriter in) {
 		SectionWriter writer = header.getTypeIndex().makeSectionWriter(in);
 		int psize = ptrSize(header.getLabels().getSize());
+		header.getTypeIndex().setItemSize((char) (3 + psize));
 
 		for (Map.Entry<Integer, Integer> ent : typeToStr.entrySet()) {
 			putN(writer, 3, ent.getKey());
