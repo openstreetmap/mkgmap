@@ -168,10 +168,14 @@ junction=roundabout [0x0c road_class=0 road_speed=1 resolution 22]
 
 # Ways that may or may not be useable
 
-# Treat ways under construction as highway=path
-highway=construction | highway=* & construction=* {add access = no; add bicycle = yes; add foot = yes; add mkgmap:dead-end-check = false } [0x16 road_class=0 road_speed=1 resolution 23]
-# Treat disused ways as highway=service, but at lower road_speed.
-highway=* & disused=yes [0x07 road_class=0 road_speed=1 resolution 22]
+# Treat ways under construction almost as highway=path
+highway=construction { add mkgmap:dead-end-check = false; }
+[0x16 road_class=0 road_speed=0 resolution 23]
+
+# Lower the road speed of ways under some construction.
+highway=* & construction=* { add mkgmap:road-speed = '-1' }
+# Lower the road speed of disused ways.
+highway=* & disused=yes { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
 highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 16]
@@ -179,7 +183,7 @@ highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09
 highway=* & motorroad=yes {add bicycle = no; add foot = no}
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
 highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
-highway=* & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
+highway=* & highway!=proposed & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x08 road_class=3 road_speed=1 resolution 21]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
@@ -211,7 +215,7 @@ highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 22]
 highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 22]
 
 # Mop up any unrecognised highway types
-highway=* & area!=yes [0x07 ]
+highway=* & highway!=proposed & area!=yes [0x07]
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 21]
