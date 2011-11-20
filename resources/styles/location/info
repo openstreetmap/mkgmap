@@ -6,17 +6,14 @@
 
 # A short one line description of the style
 #
-summary: The default style
+summary: The rules for setting location information
 
 # Version of the style itself
 #
 version=1.0
 
-base-style=location
-
 # A longer description of the style.
 description {
-The default style.  This is a heavyweight style that is
-designed for use when mapping and especially in lightly covered
-areas.
+The location information style.  Sets the location information
+for address search.
 }
