@@ -29,7 +29,7 @@ import uk.me.parabola.imgfmt.app.ImgFile;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
-import uk.me.parabola.imgfmt.app.srt.CombinedSortKey;
+import uk.me.parabola.imgfmt.app.srt.IntegerSortKey;
 import uk.me.parabola.imgfmt.app.srt.MultiSortKey;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
@@ -125,19 +125,21 @@ public class NETFile extends ImgFile {
 
 				// Sort by name, city, region/country and subdivision number.
 				LabeledRoadDef lrd = new LabeledRoadDef(label, rd);
-				SortKey<LabeledRoadDef> sortKey = sort.createSortKey(lrd, label.getText(), 0, cache);
+				SortKey<LabeledRoadDef> nameKey = sort.createSortKey(lrd, label.getText(), 0, cache);
 
 				// If there is a city add it to the sort.
 				City city = rd.getCity();
+				SortKey<LabeledRoadDef> cityKey;
 				if (city != null) {
 					int region = city.getRegionNumber();
 					int country = city.getCountryNumber();
-					SortKey<LabeledRoadDef> cityKey = sort.createSortKey(null, city.getName(),
-							(region & 0xffff) << 16 | (country & 0xffff), cache);
-					sortKey = new MultiSortKey<LabeledRoadDef>(sortKey, cityKey, null);
+					cityKey = sort.createSortKey(null, city.getName(), (region & 0xffff) << 16 | (country & 0xffff), cache);
+				} else {
+					cityKey = sort.createSortKey(null, "", 0, cache);
 				}
 
-				sortKey = new CombinedSortKey<LabeledRoadDef>(sortKey, rd.getStartSubdivNumber(), 0);
+				SortKey<LabeledRoadDef> sortKey = new MultiSortKey<LabeledRoadDef>(nameKey, cityKey,
+						new IntegerSortKey<LabeledRoadDef>(null, rd.getStartSubdivNumber(), 0));
 				sortKeys.add(sortKey);
 			}
 		}
