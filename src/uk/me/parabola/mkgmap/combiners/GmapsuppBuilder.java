@@ -77,6 +77,7 @@ public class GmapsuppBuilder implements Combiner {
 	private String overallDescription = "Combined map";
 	private String outputDir;
 	private MpsFile mpsFile;
+	private MdrBuilder mdrBuilder;
 	private Sort sort;
 
 	public void init(CommandArgs args) {
@@ -458,6 +459,10 @@ public class GmapsuppBuilder implements Combiner {
 		}
 
 		throw new IllegalArgumentException("hmm");
+	}
+
+	public void setMdrBuilder(MdrBuilder mdrBuilder) {
+		this.mdrBuilder = mdrBuilder;
 	}
 
 	/**

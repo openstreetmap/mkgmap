@@ -347,8 +347,8 @@ public class MdrBuilder implements Combiner {
 		for (Closeable file : toClose)
 			Utils.closeFile(file);
 
-		// Rename from the temporary file to the proper name.
-		// On windows the target file can not exist, so we are forced to remove it first.
+		// Rename from the temporary file to the proper name. On windows the target file must
+		// not exist for rename to work, so we are forced to remove it first.
 		File outputName = new File(this.outputName);
 		outputName.delete();
 		boolean ok = tmpName.renameTo(outputName);

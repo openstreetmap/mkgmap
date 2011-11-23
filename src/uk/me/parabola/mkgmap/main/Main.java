@@ -248,11 +248,6 @@ public class Main implements ArgumentProcessor {
 
 		} else if (opt.equals("tdbfile")) {
 			addTdbBuilder();
-		} else if (opt.equals("gmapsupp")) {
-			addCombiner(new GmapsuppBuilder());
-		} else if (opt.equals("index")) {
-			addCombiner(new MdxBuilder());
-			addCombiner(new MdrBuilder());
 		} else if (opt.equals("nsis")) {
 			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
@@ -341,64 +336,72 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void endOptions(CommandArgs args) {
+		boolean index = args.exists("index");
+		if (args.exists("gmapsupp")) {
+			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
+			if (index) {
+				MdrBuilder mdrBuilder = new MdrBuilder();
+				gmapBuilder.setMdrBuilder(mdrBuilder);
+			} 
+			addCombiner(gmapBuilder);
+		} else if (index) {
+			addCombiner(new MdrBuilder());
+			addCombiner(new MdxBuilder());
+		}
 
 		if (args.exists("createboundsfile")) {
 			addPreparer(new BoundaryPreparer(args.getProperties()));
 		}
-		
+
 		log.info("Start preparers");
 		for (Thread preparer : preparers) {
 			preparer.run();
 		}
-		
+
 		log.info("Start tile processors");
-		if(threadPool == null) {
+		if (threadPool == null) {
 			log.info("Creating thread pool with " + maxJobs + " threads");
 			threadPool = Executors.newFixedThreadPool(maxJobs);
 		}
 		for (FilenameTask task : futures) {
 			threadPool.execute(task);
 		}
-		
-		
+
+
 		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
 
-		if(threadPool != null) {
+		if (threadPool != null) {
 			threadPool.shutdown();
-			while(!futures.isEmpty()) {
+			while (!futures.isEmpty()) {
 				try {
 					try {
 						// don't call get() until a job has finished
-						if(futures.get(0).isDone()) {
+						if (futures.get(0).isDone()) {
 							FilenameTask future = futures.remove(0);
 
 							// Provoke any exceptions by calling get and then
 							// save the result for later use
 							future.setFilename(future.get());
 							filenames.add(future);
-						}
-						else
+						} else
 							Thread.sleep(100);
-					}
-					catch (ExecutionException e) {
+					} catch (ExecutionException e) {
 						// Re throw the underlying exception
 						Throwable cause = e.getCause();
 						if (cause instanceof Exception)
 							//noinspection ProhibitedExceptionThrown
-							throw (Exception)cause;
+							throw (Exception) cause;
 						else if (cause instanceof Error)
 							//noinspection ProhibitedExceptionThrown
-							throw (Error)cause;
+							throw (Error) cause;
 						else
 							throw e;
 					}
-				}
-				catch (ExitException ee) {
+				} catch (ExitException ee) {
 					throw ee;
-				}
-				catch (Throwable t) {
+				} catch (Throwable t) {
 					t.printStackTrace();
-					if(!args.getProperties().getProperty("keep-going", false)) {
+					if (!args.getProperties().getProperty("keep-going", false)) {
 						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
 					}
 				}
@@ -409,7 +412,7 @@ public class Main implements ArgumentProcessor {
 			return;
 
 		log.info("Combining maps");
-		
+
 		args.setSort(getSort(args));
 
 		// Get them all set up.
