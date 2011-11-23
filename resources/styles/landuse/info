@@ -1,0 +1,11 @@
+summary: The landuse style. Most natural=*, landuse=* except water features
+
+# Version of the style itself
+#
+version=1.0
+
+# A longer description of the style.
+description {
+The landuse style.  This generates polygons and points for most other features
+than water features and man-made structures, such as buildings.
+}

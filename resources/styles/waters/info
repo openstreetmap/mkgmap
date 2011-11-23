@@ -1,0 +1,11 @@
+summary: Water features
+
+# Version of the style itself
+#
+version=1.0
+
+# A longer description of the style.
+description {
+The water features style. Generates lines for rivers and the like,
+and polygons for seas, lakes, reservoirs, swamps and similar.
+}

@@ -1,0 +1,8 @@
+summary: Elevation contour lines in feet
+
+version=1.0
+
+# A longer description of the style.
+description {
+Contour lines, with elevation above sea level represented in feet.
+}

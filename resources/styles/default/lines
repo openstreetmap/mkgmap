@@ -11,20 +11,6 @@
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
-# Contours take their name from the elevation setting.
-contour=elevation & contour_ext=elevation_minor
-	{ name '${ele|conv:m=>ft}'; }
-	[0x20 resolution 23]
-contour=elevation & contour_ext=elevation_medium
-	{ name '${ele|conv:m=>ft}'; }
-	[0x21 resolution 21]
-contour=elevation & contour_ext=elevation_major
-	{ name '${ele|conv:m=>ft}'; }
-	[0x22 resolution 20]
-contour=elevation | contour_ext=elevation
-	{ name '${ele|conv:m=>ft}'; }
-	[0x21 resolution 20]
-
 # Remove access=yes from highways.
 highway=* & access=yes { delete access }
 # Translate motor_vehicle and vehicle access rules.
@@ -152,14 +138,6 @@ power=line [0x29 resolution 21]
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
 railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
 railway=* & !(tunnel=yes) [0x14 resolution 22]
-
-route=ferry {add mkgmap:ferry=1} [0x1b road_class=3 road_speed=0 resolution 19]
-
-waterway=canal [0x1f resolution 21]
-waterway=drain [0x1f resolution 22]
-waterway=river [0x1f resolution 18]
-waterway=rapids|waterway=waterfall [0x1f resolution 22]
-waterway=stream [0x18 resolution 22]
 
 man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
 {name '${name} (${operator})' | '${name}' | '${operator}' }
