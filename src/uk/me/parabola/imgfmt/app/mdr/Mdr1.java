@@ -83,6 +83,8 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
+		if (getConfig().isForDevice())
+			return;
 		for (Mdr1Record rec : maps) {
 			rec.setIndexOffset(writer.position());
 			Mdr1MapIndex mapIndex = rec.getMdrMapIndex();

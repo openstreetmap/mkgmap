@@ -135,7 +135,7 @@ public class MdrBuilder implements Combiner {
 		MdrConfig config = new MdrConfig();
 		config.setHeaderLen(568);
 		config.setWritable(true);
-		config.setForDevice(false);
+		config.setForDevice(true);
 		config.setSort(sort);
 
 		// Wrap the MDR channel with the MDRFile object

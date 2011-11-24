@@ -62,12 +62,16 @@ public class MDRFile extends ImgFile {
 
 	private int currentMap;
 
+	private final boolean forDevice;
+
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();
-		
+
+		forDevice = config.isForDevice();
+
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
@@ -272,6 +276,7 @@ public class MDRFile extends ImgFile {
 		// order of the subsections of the reverse index that they are associated
 		// with.
 		writeSection(writer, 11, mdr11);
+		if (!forDevice)
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
 		mdr11.release();
@@ -325,6 +330,7 @@ public class MDRFile extends ImgFile {
 		mdr1.writeSubSections(writer);
 		mdrHeader.setPosition(1, writer.position());
 
+		if (!forDevice)
 		mdr1.writeSectData(writer);
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());
@@ -335,6 +341,9 @@ public class MDRFile extends ImgFile {
 	 * Write out the given single section.
 	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
+		if (forDevice && sectionNumber != 0)
+			return;
+		
 		section.setSizes(sizes);
 		
 		mdrHeader.setPosition(sectionNumber, writer.position());
