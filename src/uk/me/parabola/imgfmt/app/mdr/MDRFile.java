@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.util.Arrays;
+
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
@@ -340,16 +342,17 @@ public class MDRFile extends ImgFile {
 	 * Write out the given single section.
 	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
-		if (forDevice && sectionNumber != 0)
+		// TODO: this is temporary to prevent sections that we have not done being written.
+		if (forDevice && !Arrays.asList(4, /*9,10,*/24, 25).contains(sectionNumber))
 			return;
-		
+
 		section.setSizes(sizes);
-		
+
 		mdrHeader.setPosition(sectionNumber, writer.position());
 		mdr1.setStartPosition(sectionNumber);
 
 		section.preWrite();
-		if (section instanceof MdrMapSection) {
+		if (!forDevice && section instanceof MdrMapSection) {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.initIndex(sectionNumber);
@@ -363,7 +366,7 @@ public class MDRFile extends ImgFile {
 		int itemSize = section.getItemSize();
 		if (itemSize > 0)
 			mdrHeader.setItemSize(sectionNumber, itemSize);
-		
+
 		mdrHeader.setEnd(sectionNumber, writer.position());
 		mdr1.setEndPosition(sectionNumber);
 	}

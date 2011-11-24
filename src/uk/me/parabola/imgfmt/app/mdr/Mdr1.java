@@ -111,11 +111,17 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void setStartPosition(int sectionNumber) {
+		if (isForDevice())
+			return;
+
 		for (Mdr1Record mi : maps)
 			mi.getMdrMapIndex().startSection(sectionNumber);
 	}
 
 	public void setEndPosition(int sectionNumber) {
+		if (isForDevice())
+			return;
+
 		for (Mdr1Record mi : maps) {
 			mi.getMdrMapIndex().endSection(sectionNumber);
 	}
