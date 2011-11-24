@@ -84,6 +84,7 @@ public class MdrConfig {
 	}
 
 	public void setOutputDir(String outputDir) {
-		this.outputDir = new File(outputDir);
+		if (outputDir != null)
+			this.outputDir = new File(outputDir);
 	}
 }

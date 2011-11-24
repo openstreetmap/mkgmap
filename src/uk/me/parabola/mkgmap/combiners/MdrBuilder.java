@@ -49,6 +49,7 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -82,8 +83,9 @@ public class MdrBuilder implements Combiner {
 
 		outputName = Utils.joinPath(outputDir, name + "_mdr.img");
 
-		ImgChannel mdrChan;
 		FileSystem fs;
+		ImgChannel mdrChan;
+
 		try {
 			// Create the .img file system/archive
 			FileSystemParam params = new FileSystemParam();
@@ -94,7 +96,6 @@ public class MdrBuilder implements Combiner {
 
 			fs = ImgFS.createFs(tmpName.getPath(), params);
 			toClose.push(fs);
-
 			// Create the MDR file within the .img
 			mdrChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".MDR");
 			toClose.push(mdrChan);
@@ -102,16 +103,20 @@ public class MdrBuilder implements Combiner {
 			throw new ExitException("Could not create global index file");
 		}
 
+		// Create the sort description
+		Sort sort = createSort(args.getCodePage());
+
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig();
 		config.setHeaderLen(568);
 		config.setWritable(true);
 		config.setForDevice(false);
 		config.setOutputDir(outputDir);
-
-		// Create the sort description
-		Sort sort = createSort(args.getCodePage());
 		config.setSort(sort);
+
+		// Wrap the MDR channel with the MDRFile object
+		mdrFile = new MDRFile(mdrChan, config);
+		toClose.push(mdrFile);
 
 		try {
 			ImgChannel srtChan = fs.create(name.toUpperCase(Locale.ENGLISH) + ".SRT");
@@ -123,10 +128,26 @@ public class MdrBuilder implements Combiner {
 		} catch (FileExistsException e) {
 			throw new ExitException("Could not create SRT file within index file");
 		}
+	}
+
+	void initForDevice(Sort sort, String outputDir) {
+		// Set the options that we are using for the mdr.
+		MdrConfig config = new MdrConfig();
+		config.setHeaderLen(568);
+		config.setWritable(true);
+		config.setForDevice(false);
+		config.setSort(sort);
 
 		// Wrap the MDR channel with the MDRFile object
-		mdrFile = new MDRFile(mdrChan, config);
-		toClose.push(mdrFile);
+		try {
+			tmpName = File.createTempFile("mdr", null, new File(outputDir));
+			tmpName.deleteOnExit();
+			ImgChannel channel = new FileImgChannel(tmpName.getPath(), "rw");
+			mdrFile = new MDRFile(channel, config);
+			toClose.push(mdrFile);
+		} catch (IOException e) {
+			throw new ExitException("Could not create temporary index file");
+		}
 	}
 
 	/**
@@ -354,6 +375,23 @@ public class MdrBuilder implements Combiner {
 		boolean ok = tmpName.renameTo(outputName);
 		if (!ok)
 			throw new MapFailedException("Could not create mdr.img file");
+	}
+
+	void onFinishForDevice() {
+		// Write out the mdr file
+		mdrFile.write();
+
+		// Close everything
+		for (Closeable file : toClose)
+			Utils.closeFile(file);
+	}
+
+	public int getSize() {
+		return (int) tmpName.length();
+	}
+
+	public String getFileName() {
+		return tmpName.getPath();
 	}
 
 	/**
