@@ -330,7 +330,6 @@ public class MDRFile extends ImgFile {
 		mdr1.writeSubSections(writer);
 		mdrHeader.setPosition(1, writer.position());
 
-		if (!forDevice)
 		mdr1.writeSectData(writer);
 		mdrHeader.setItemSize(1, mdr1.getItemSize());
 		mdrHeader.setEnd(1, writer.position());

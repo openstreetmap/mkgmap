@@ -83,7 +83,7 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
-		if (getConfig().isForDevice())
+		if (isForDevice())
 			return;
 		for (Mdr1Record rec : maps) {
 			rec.setIndexOffset(writer.position());
@@ -98,8 +98,12 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	 * @param writer The mdr 1 records are written out to this writer.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
-		for (Mdr1Record rec : maps)
-			rec.write(writer);
+		boolean revIndex = (getExtraValue() & 1) != 0;
+		for (Mdr1Record rec : maps) {
+			writer.putInt(rec.getMapNumber());
+			if (revIndex)
+				writer.putInt(rec.getIndexOffset());
+		}
 	}
 
 	public int getItemSize() {
@@ -139,6 +143,9 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public int getExtraValue() {
-		return 0x01;
+		int magic = 0;
+		if (!isForDevice())
+			magic |= 1;
+		return magic;
 	}
 }

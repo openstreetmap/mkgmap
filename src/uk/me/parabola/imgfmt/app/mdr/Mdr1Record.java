@@ -26,16 +26,6 @@ public class Mdr1Record extends RecordBase {
 		this.mapNumber = mapNumber;
 	}
 
-	/**
-	 * Write out this record.  If for the device, this is just a list of
-	 * maps.
-	 * @param writer Where to write to.
-	 */
-	public void write(ImgFileWriter writer) {
-		writer.putInt(mapNumber);
-		writer.putInt(indexOffset);
-	}
-
 	public int getMapNumber() {
 		return mapNumber;
 	}
@@ -46,6 +36,10 @@ public class Mdr1Record extends RecordBase {
 
 	public void setMdrMapIndex(Mdr1MapIndex mdrMapIndex) {
 		this.mdrMapIndex = mdrMapIndex;
+	}
+
+	public int getIndexOffset() {
+		return indexOffset;
 	}
 
 	public void setIndexOffset(int indexOffset) {
