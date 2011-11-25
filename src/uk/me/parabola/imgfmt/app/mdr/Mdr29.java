@@ -70,7 +70,8 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		int size26 = sizes.getSize(26);
 		for (Mdr29Record record : index) {
 			putN(writer, size24, record.getMdr24());
-			putStringOffset(writer, record.getStrOffset());
+			if (!isForDevice())
+				putStringOffset(writer, record.getStrOffset());
 			putN(writer, size22, record.getMdr22());
 			putN(writer, size25, record.getMdr25());
 			putN(writer, size26, record.getMdr26());
@@ -86,12 +87,13 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getSize(24)
-				+ sizes.getStrOffSize()
+		int size = sizes.getSize(24)
 				+ sizes.getSize(22)
 				+ sizes.getSize(25)
-				+ sizes.getSize(26)
-				;
+				+ sizes.getSize(26);
+		if (!isForDevice())
+			size += sizes.getStrOffSize();
+		return size;
 	}
 
 	/**
@@ -110,6 +112,9 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 * to mdr28 where there are 3 extra fields and 3 bits set. Just a guess...
 	 */
 	public int getExtraValue() {
-		return 0xf;
+		if (isForDevice())
+			return 0xe; // more to do here
+		else
+			return 0xf;
 	}
 }
