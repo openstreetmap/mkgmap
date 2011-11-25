@@ -75,6 +75,7 @@ public class Mdr11 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		int count = 1;
+		boolean hasStrings = hasFlag(2);
 		for (Mdr11Record poi : pois) {
 			addIndexPointer(poi.getMapIndex(), count);
 			poi.setRecordNumber(count++);
@@ -87,13 +88,17 @@ public class Mdr11 extends MdrMapSection {
 				putRegionIndex(writer, poi.getRegionIndex());
 			else
 				putCityIndex(writer, poi.getCityIndex(), true);
-			putStringOffset(writer, poi.getStrOffset());
+			if (hasStrings)
+				putStringOffset(writer, poi.getStrOffset());
 		}
 	}
 
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + 6 + sizes.getCitySizeFlagged() + sizes.getStrOffSize();
+		int size = sizes.getMapSize() + 6 + sizes.getCitySizeFlagged();
+		if (!isForDevice())
+			size += sizes.getStrOffSize();
+		return size;
 	}
 
 	protected int numberOfItems() {
@@ -105,7 +110,7 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	public int getExtraValue() {
-		int mdr11flags = 0x13;
+		int mdr11flags = 0x11;
 		PointerSizes sizes = getSizes();
 
 		// two bit field for city bytes.  minimum size of 2
@@ -113,6 +118,11 @@ public class Mdr11 extends MdrMapSection {
 		if (citySize > 2)
 			mdr11flags |= (citySize-2) << 2;
 
+		if (isForDevice()) 
+			mdr11flags |= 0x80;
+		else 
+			mdr11flags |= 0x2;
+		
 		return mdr11flags;
 	}
 

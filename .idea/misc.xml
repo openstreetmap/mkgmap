@@ -1,28 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DependencyValidationManager">
-    <scope name="general" pattern="file:src/uk/me/parabola/mkgmap/general//*" />
-    <scope name="reader" pattern="file:src/uk/me/parabola/mkgmap/reader//*" />
-    <scope name="imgfmt" pattern="file:src/uk/me/parabola/imgfmt//*" />
-    <scope name="mkgmap" pattern="file:src/uk/me/parabola/mkgmap//*" />
-    <scope name="style" pattern="file:src/uk/me/parabola/mkgmap/osmstyle//*" />
-    <scope name="build" pattern="file:src/uk/me/parabola/mkgmap/build//*||file:src/uk/me/parabola/mkgmap/combiners//*||file:src/uk/me/parabola/mkgmap/filters//*" />
-    <scope name="imgapp" pattern="file:src/uk/me/parabola/imgfmt/app//*" />
-    <scope name="img base" pattern="file:src/uk/me/parabola/imgfmt/*||file:src/uk/me/parabola/imgfmt/fs//*||file:src/uk/me/parabola/imgfmt/sys//*" />
-    <scope name="util" pattern="file:src/uk/me/parabola/io//*||file:src/uk/me/parabola/log//*" />
-    <scope name="styleok" pattern="file:src/uk/me/parabola/mkgmap/reader/osm/xml/Osm5MapDataSource.java" />
-    <scope name="reader_no_style" pattern="file:src/uk/me/parabola/mkgmap/reader//*&amp;&amp;!file:src/uk/me/parabola/mkgmap/reader/osm/xml/*||uk.me.parabola.mkgmap.reader.osm.*||uk.me.parabola.mkgmap.reader.osm.xml.*||uk.me.parabola.mkgmap.reader.osm..*" />
-    <option name="SKIP_IMPORT_STATEMENTS" value="true" />
-    <deny_rule from_scope="reader_no_style" to_scope="style" is_deny="true" />
-    <deny_rule from_scope="general" to_scope="style" is_deny="true" />
-    <deny_rule from_scope="general" to_scope="reader" is_deny="true" />
-    <deny_rule from_scope="build" to_scope="style" is_deny="true" />
-    <deny_rule from_scope="build" to_scope="reader" is_deny="true" />
-    <deny_rule from_scope="imgfmt" to_scope="mkgmap" is_deny="true" />
-    <deny_rule from_scope="img base" to_scope="imgapp" is_deny="true" />
-    <deny_rule from_scope="util" to_scope="mkgmap" is_deny="true" />
-    <deny_rule from_scope="util" to_scope="imgfmt" is_deny="true" />
-  </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
     <list size="5">
@@ -99,51 +76,6 @@
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>
-              <option name="branchMap">
-                <map>
-                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
-                    <value>
-                      <list>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1298897039571" />
-                          <option name="revision" value="1868" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/index" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1292094280542" />
-                          <option name="revision" value="1748" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/coast" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1284564663444" />
-                          <option name="revision" value="1698" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/binfmt" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1280572276930" />
-                          <option name="revision" value="1666" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/overview" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1265918744208" />
-                          <option name="revision" value="1569" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/style-speed" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1236291460415" />
-                          <option name="revision" value="970" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/poi" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1228044192952" />
-                          <option name="revision" value="740" />
-                          <option name="url" value="https://svn.mkgmap.org.uk/svn/mkgmap/branches/typpoi" />
-                        </SvnBranchItem>
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
@@ -156,30 +88,6 @@
         <entry key="$PROJECT_DIR$/.idea">
           <value>
             <SvnBranchConfiguration>
-              <option name="branchMap">
-                <map>
-                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/releases">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/styles">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/tags">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                </map>
-              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
@@ -196,9 +104,6 @@
     </option>
     <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
-  </component>
-  <component name="TaskProjectConfiguration">
-    <server type="Tintrak" url="http://track.itinken.com" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
 </project>

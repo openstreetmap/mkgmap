@@ -65,4 +65,8 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 		int flag = isNew? getSizes().getPoiFlag(): 0;
 		putN(writer, getSizes().getPoiSizeFlagged(), poiIndex | flag);
 	}
+
+	protected boolean hasFlag(int val) {
+		return (getExtraValue() & val) != 0;
+	}
 }

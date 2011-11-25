@@ -181,10 +181,6 @@ public class Mdr5 extends MdrMapSection {
 		return val;
 	}
 
-	protected boolean hasFlag(int val) {
-		return (getExtraValue() & val) != 0;
-	}
-
 	protected void releaseMemory() {
 		allCities = null;
 		cities = null;
