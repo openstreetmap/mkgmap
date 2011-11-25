@@ -63,18 +63,28 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 * @param writer Where to write it.
 	 */
 	public void writeSectData(ImgFileWriter writer) {
+		int magic = getExtraValue();
+
+		boolean hasString = (magic & 1) != 0;
+		boolean has26 = (magic & 0x8) != 0;
+		boolean has17 = (magic & 0x20) != 0;
+
 		PointerSizes sizes = getSizes();
 		int size24 = sizes.getSize(24);
 		int size22 = sizes.getSize(22);
 		int size25 = sizes.getSize(25);
-		int size26 = sizes.getSize(26);
+		int size26 = has26 ? sizes.getSize(26) : 0;
+		int size17 = 2; // XXX TEMP
 		for (Mdr29Record record : index) {
 			putN(writer, size24, record.getMdr24());
-			if (!isForDevice())
+			if (hasString)
 				putStringOffset(writer, record.getStrOffset());
 			putN(writer, size22, record.getMdr22());
 			putN(writer, size25, record.getMdr25());
-			putN(writer, size26, record.getMdr26());
+			if (has26)
+				putN(writer, size26, record.getMdr26());
+			if (has17)
+				putN(writer, size17, 0); // XXX
 		}
 	}
 
@@ -90,9 +100,13 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		int size = sizes.getSize(24)
 				+ sizes.getSize(22)
 				+ sizes.getSize(25)
-				+ sizes.getSize(26);
-		if (!isForDevice())
+				;
+		if (isForDevice()) {
+			size += 2; //XXX
+		} else {
 			size += sizes.getStrOffSize();
+			size += sizes.getSize(26);
+		}
 		return size;
 	}
 
@@ -113,8 +127,8 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 */
 	public int getExtraValue() {
 		if (isForDevice())
-			return 0xe; // more to do here
+			return 0x26; // +17, -26, -strings
 		else
-			return 0xf;
+			return 0xf;  // strings, 22, 25 and 26
 	}
 }

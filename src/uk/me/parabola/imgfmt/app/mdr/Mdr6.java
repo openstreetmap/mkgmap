@@ -49,6 +49,7 @@ public class Mdr6 extends MdrMapSection {
 		
 		List<SortKey<Mdr6Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), zips);
 
+		boolean hasString = hasFlag(0x4);
 		int record = 1;
 		for (SortKey<Mdr6Record> key : sortKeys) {
 			Mdr6Record z = key.getObject();
@@ -56,7 +57,8 @@ public class Mdr6 extends MdrMapSection {
 
 			putMapIndex(writer, z.getMapIndex());
 			putN(writer, zipSize, z.getZipIndex());
-			putStringOffset(writer, z.getStringOffset());
+			if (hasString)
+				putStringOffset(writer, z.getStringOffset());
 		}
 	}
 
@@ -67,13 +69,15 @@ public class Mdr6 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize() + getPointerSize() + sizes.getStrOffSize();
+		int size = sizes.getMapSize() + getPointerSize();
+		if (hasFlag(0x4))
+			size += sizes.getStrOffSize();
+		return size;
 	}
 
 	protected int numberOfItems() {
 		return zips.size();
 	}
-
 
 	/**
 	 * Known structure:
@@ -82,6 +86,6 @@ public class Mdr6 extends MdrMapSection {
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
-		return  ((getPointerSize()-1)&0x03) | 0x04;
+		return  ((getPointerSize()-1)&0x03) | (isForDevice() ? 0 : 0x04);
 	}
 }
