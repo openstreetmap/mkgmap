@@ -343,11 +343,11 @@ public class MDRFile extends ImgFile {
 	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
 		// TODO: this is temporary to prevent sections that we have not done being written.
-		if (forDevice && !Arrays.asList(4, 5, 9, 10, 11, 15, 24, 25).contains(sectionNumber))
+		if (forDevice && !Arrays.asList(4, 5, 7, 9, 10, 11, 15, 20, 22, 24, 25).contains(sectionNumber))
 			return;
 
 		// Some sections are just not written in the device config
-		if (forDevice && sectionNumber == 15)
+		if (forDevice && Arrays.asList(15, 21).contains(sectionNumber))
 			return;
 
 		section.setSizes(sizes);

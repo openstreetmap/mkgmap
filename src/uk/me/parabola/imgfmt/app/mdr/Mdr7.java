@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -71,12 +72,13 @@ public class Mdr7 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
+		boolean hasStrings = hasFlag(0x1);
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
 
 			putMapIndex(writer, s.getMapIndex());
 			int lab = s.getLabelOffset();
-			String name = s.getName();
+			String name = Label.stripGarminCodes(s.getName());
 			int trailingFlags = 0;
 			if (!name.equals(lastName)) {
 				lab |= 0x800000;
@@ -84,7 +86,8 @@ public class Mdr7 extends MdrMapSection {
 				trailingFlags = 1;
 			}
 			writer.put3(lab);
-			putStringOffset(writer, s.getStringOffset());
+			if (hasStrings)
+				putStringOffset(writer, s.getStringOffset());
 			
 			writer.put((byte) trailingFlags);
 		}
@@ -96,10 +99,10 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize()
-				+ 3
-				+ sizes.getStrOffSize()
-				+ 1;
+		int size = sizes.getMapSize() + 3 + 1;
+		if (!isForDevice())
+			size += sizes.getStrOffSize();
+		return size;
 	}
 
 	protected int numberOfItems() {
@@ -110,7 +113,14 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		return 0x43;
+		int magic = 0x42;
+		if (isForDevice()) {
+			magic |= 0x4;
+		} else {
+			magic |= 0x1; //strings
+		}
+
+		return magic;
 	}
 
 	protected void releaseMemory() {

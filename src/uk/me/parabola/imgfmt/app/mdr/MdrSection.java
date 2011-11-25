@@ -52,8 +52,7 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	protected void putStringOffset(ImgFileWriter writer, int strOff) {
-		if (!isForDevice())
-			putN(writer, sizes.getStrOffSize(), strOff);
+		putN(writer, sizes.getStrOffSize(), strOff);
 	}
 
 	protected void putN(ImgFileWriter writer, int n, int value) {
