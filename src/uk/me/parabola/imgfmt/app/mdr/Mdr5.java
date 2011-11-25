@@ -98,6 +98,8 @@ public class Mdr5 extends MdrMapSection {
 	public void writeSectData(ImgFileWriter writer) {
 		int size20 = getSizes().getMdr20Size();
 		Mdr5Record lastCity = null;
+		boolean hasString = hasFlag(0x8);
+		boolean hasRegion = hasFlag(0x4);
 		for (Mdr5Record city : cities) {
 			int gci = city.getGlobalCityIndex();
 			addIndexPointer(city.getMapIndex(), gci);
@@ -118,8 +120,10 @@ public class Mdr5 extends MdrMapSection {
 			putMapIndex(writer, mapIndex);
 			putLocalCityIndex(writer, city.getCityIndex());
 			writer.put3(flag | city.getLblOffset());
-			writer.putChar((char) region);
-			putStringOffset(writer, city.getStringOffset());
+			if (hasRegion)
+				writer.putChar((char) region);
+			if (hasString)
+				putStringOffset(writer, city.getStringOffset());
 			putN(writer, size20, city.getMdr20());
 		}
 	}
@@ -142,11 +146,15 @@ public class Mdr5 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		return sizes.getMapSize()
+		int size = sizes.getMapSize()
 				+ localCitySize
-				+ 5
-				+ sizes.getMdr20Size()
-				+ sizes.getStrOffSize();
+				+ 3
+				+ sizes.getMdr20Size();
+		if (hasFlag(0x4))
+			size += 2;
+		if (hasFlag(0x8))
+			size += sizes.getStrOffSize();
+		return size;
 	}
 
 	protected int numberOfItems() {
@@ -161,14 +169,20 @@ public class Mdr5 extends MdrMapSection {
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
-		// 0x4 is region and we always set it
-		int val = 0x04 | (localCitySize - 1);
+		int val = (localCitySize - 1);
 		// String offset is only included for a mapsource index.
-		if (!isForDevice())
-			val |= 0x08;
-		val |= 0x10;
+		if (isForDevice()) {
+			val |= 0x10 | 0x40; // not yet, probably refers to mdr17 etc.
+		} else {
+			val |= 0x04;  // region
+			val |= 0x08; // string
+		}
 		val |= 0x100; // mdr20 present
 		return val;
+	}
+
+	protected boolean hasFlag(int val) {
+		return (getExtraValue() & val) != 0;
 	}
 
 	protected void releaseMemory() {
