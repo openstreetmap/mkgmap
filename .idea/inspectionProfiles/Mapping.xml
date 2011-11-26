@@ -281,6 +281,7 @@
       <option name="CHECK_ACTIONS" value="true" />
       <option name="IGNORE_NON_PUBLIC" value="true" />
     </inspection_tool>
+    <inspection_tool class="ComponentRegistrationProblems" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="ConditionSignal" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ConditionalExpression" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSimpleAssignmentsAndReturns" value="false" />
@@ -394,6 +395,7 @@
     <inspection_tool class="Deprecation" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DeserializableClassInSecureContext" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DesignForExtension" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DialogTitleCapitalization" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DisjointPackage" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DivideByZero" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DivideByZeroJS" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -921,6 +923,8 @@
     </inspection_tool>
     <inspection_tool class="InnerHTMLJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InspectionDescriptionNotFoundInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="InspectionMappingConsistency" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="InspectionUsingGrayColors" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InstanceGuardedByStatic" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InstanceMethodNamingConvention" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_regex" value="[a-z][A-Za-z\d]*" />

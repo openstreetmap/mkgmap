@@ -177,4 +177,8 @@ public class Mdr11 extends MdrMapSection {
 		pois = null;
 		mdr10 = null;
 	}
+
+	public List<Mdr11Record> getPois() {
+		return new ArrayList<Mdr11Record>(pois);
+	}
 }

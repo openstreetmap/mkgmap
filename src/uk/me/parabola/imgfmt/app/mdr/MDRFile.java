@@ -51,6 +51,9 @@ public class MDRFile extends ImgFile {
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
+	private final Mdr17 mdr17;
+	private final Mdr18 mdr18;
+	private final Mdr19 mdr19;
 	private final Mdr20 mdr20;
 	private final Mdr21 mdr21;
 	private final Mdr22 mdr22;
@@ -102,6 +105,9 @@ public class MDRFile extends ImgFile {
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
+		mdr17 = new Mdr17(config);
+		mdr18 = new Mdr18(config);
+		mdr19 = new Mdr19(config);
 		mdr20 = new Mdr20(config);
 		mdr21 = new Mdr21(config);
 		mdr22 = new Mdr22(config);
@@ -117,7 +123,7 @@ public class MDRFile extends ImgFile {
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
-				mdr13, mdr14, mdr15, null, null, null, null,
+				mdr13, mdr14, mdr15, null, mdr17, mdr18, mdr19,
 				mdr20, mdr21, mdr22, mdr23, mdr24, mdr25,
 				mdr26, mdr27, mdr28, mdr29,
 		};
@@ -278,10 +284,18 @@ public class MDRFile extends ImgFile {
 		// order of the subsections of the reverse index that they are associated
 		// with.
 		writeSection(writer, 11, mdr11);
-		if (!forDevice)
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
+		mdr19.setPois(mdr11.getPois());
 		mdr11.release();
+
+		if (forDevice) {
+			mdr19.preWrite();
+			writeSection(writer, 19, mdr19);
+			mdr18.setPoiTypes(mdr19.getPoiTypes());
+			mdr19.release();
+			writeSection(writer, 18, mdr18);
+		}
 
 		writeSection(writer, 10, mdr10);
 		mdr9.setGroups(mdr10.getGroupSizes());
