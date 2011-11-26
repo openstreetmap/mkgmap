@@ -193,4 +193,8 @@ public class Mdr5 extends MdrMapSection {
 	public List<Mdr5Record> getCities() {
 		return Collections.unmodifiableList(allCities);
 	}
+
+	public List<Mdr5Record> getSortedCities() {
+		return Collections.unmodifiableList(cities);
+	}
 }

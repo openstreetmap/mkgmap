@@ -179,4 +179,8 @@ public class Mdr7 extends MdrMapSection {
 	public List<Mdr7Record> getStreets() {
 		return Collections.unmodifiableList(allStreets);
 	}
+	
+	public List<Mdr7Record> getSortedStreets() {
+		return Collections.unmodifiableList(streets);
+	}
 }

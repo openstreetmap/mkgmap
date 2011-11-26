@@ -20,9 +20,11 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 /**
  * This is an index into 19 showing the start of each new type.
  *
+ * Section 19 creates the data for this, we just write it out here.
+ *
  * @author Steve Ratcliffe
  */
-public class Mdr18 extends MdrSection {
+public class Mdr18 extends MdrSection implements HasHeaderFlags {
 	private List<Mdr18Record> poiTypes = new ArrayList<Mdr18Record>();
 
 	public Mdr18(MdrConfig config) {
@@ -38,14 +40,18 @@ public class Mdr18 extends MdrSection {
 	}
 
 	public int getItemSize() {
-		return 0;
+		return 2 + getSizes().getSize(19);
 	}
 
 	protected int numberOfItems() {
-		return 0;
+		return poiTypes.size();
 	}
 
 	public void setPoiTypes(List<Mdr18Record> poiTypes) {
 		this.poiTypes = poiTypes;
+	}
+
+	public int getExtraValue() {
+		return 5;
 	}
 }

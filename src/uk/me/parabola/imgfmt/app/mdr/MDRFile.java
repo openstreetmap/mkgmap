@@ -287,6 +287,7 @@ public class MDRFile extends ImgFile {
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
 		mdr19.setPois(mdr11.getPois());
+		mdr17.addPois(mdr11.getPois());
 		mdr11.release();
 
 		if (forDevice) {
@@ -309,6 +310,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 5, mdr5);
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
+		mdr17.addCities(mdr5.getSortedCities());
 		mdr5.release();
 		writeSection(writer, 6, mdr6);
 
@@ -321,9 +323,17 @@ public class MDRFile extends ImgFile {
 		
 		mdr22.buildFromStreets(mdr7.getStreets());
 		mdr8.setIndex(mdr7.getIndex());
+		mdr17.addStreets(mdr7.getSortedStreets());
+
 		mdr7.release();
 		writeSection(writer, 22, mdr22);
+		mdr17.addStreetsByCountry(mdr22.getStreets());
 		mdr22.release();
+
+		if (forDevice) {
+			writeSection(writer, 17, mdr17);
+			mdr17.release();
+		}
 
 		// The following do not have mdr1 subsections
 		//writeSection(writer, 8, mdr8);

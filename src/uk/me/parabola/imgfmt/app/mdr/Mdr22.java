@@ -91,6 +91,10 @@ public class Mdr22 extends Mdr2x {
 		}
 	}
 
+	public List<Mdr7Record> getStreets() {
+		return Collections.unmodifiableList(streets);
+	}
+
 	/**
 	 * Unknown flag
 	 */
