@@ -17,7 +17,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
-import uk.me.parabola.imgfmt.app.lbl.LBLFile;
 
 /**
  * Common code for 20, 21, 22 which are all lists of streets ordered in
@@ -47,9 +46,6 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 			int index = street.getIndex();
 			String name = Label.stripGarminCodes(street.getName());
 			
-			if (street.getLabelOffset() == 0x00bcc3 || street.getLabelOffset() == 0x00bab3 ) {
-				System.out.println("" + street.getLabelOffset() + ": hmm " + name + ", last " + lastName);
-			}
 			int flag = 1;
 			if (name.equals(lastName)) {
 				flag = 0;

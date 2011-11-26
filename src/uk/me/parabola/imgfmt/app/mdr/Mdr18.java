@@ -52,6 +52,6 @@ public class Mdr18 extends MdrSection implements HasHeaderFlags {
 	}
 
 	public int getExtraValue() {
-		return 5;
+		return 4 + getSizes().getSize(19)-1;
 	}
 }

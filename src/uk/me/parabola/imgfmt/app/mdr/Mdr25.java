@@ -64,7 +64,9 @@ public class Mdr25 extends MdrSection {
 				lastName = name;
 			}
 
-			if (lastCity == null || !city.getName().equals(lastCity.getName())) {
+			if (lastCity == null ||
+					(!city.getName().equals(lastCity.getName()) || !(city.getRegionName().equals(lastCity.getRegionName()))))
+			{
 				cities.add(city);
 				lastCity = city;
 			}
