@@ -45,8 +45,8 @@ public class Mdr6 extends MdrMapSection {
 	
 
 	public void writeSectData(ImgFileWriter writer) {
-		int zipSize = getSizeForRecord();
-		
+		int zipSize = getSizes().getZipSize();
+
 		List<SortKey<Mdr6Record>> sortKeys = MdrUtils.sortList(getConfig().getSort(), zips);
 
 		boolean hasString = hasFlag(0x4);
@@ -69,7 +69,7 @@ public class Mdr6 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		int size = sizes.getMapSize() + getSizeForRecord();
+		int size = sizes.getMapSize() + sizes.getZipSize();
 		if (hasFlag(0x4))
 			size += sizes.getStrOffSize();
 		return size;
@@ -86,6 +86,6 @@ public class Mdr6 extends MdrMapSection {
 	 * @return The value to be placed in the header.
 	 */
 	public int getExtraValue() {
-		return  ((getSizeForRecord()-1)&0x03) | (isForDevice() ? 0 : 0x04);
+		return  ((getSizes().getZipSize()-1)&0x03) | (isForDevice() ? 0 : 0x04);
 	}
 }

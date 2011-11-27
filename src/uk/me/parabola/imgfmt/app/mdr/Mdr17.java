@@ -52,6 +52,8 @@ public class Mdr17 extends MdrSection {
 	private void writeSubSect(ImgFileWriter writer, PrefixIndex index) {
 		index.preWrite();
 		int len = index.getItemSize() * index.getNumberOfItems() + 2;
+		if (len == 2)
+			return; // nothing to do
 
 		// The length is a variable length integer with the length indicated by a suffix.
 		len = (len << 1) + 1;
@@ -91,7 +93,7 @@ public class Mdr17 extends MdrSection {
 	}
 
 	public void addStreetsByCountry(List<Mdr7Record> streets) {
-		streetsByCountry.createFromList(streets);
+		streetsByCountry.createFromList(streets, true);
 	}
 
 	public void addPois(List<Mdr11Record> poiList) {

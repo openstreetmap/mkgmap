@@ -206,6 +206,11 @@ public abstract class MdrSection extends ConfigBase {
 			return sections[11].getSizeForRecord();
 		}
 
+		public int getZipSize() {
+			//return Math.max(2, sections[6].getSizeForRecord());
+			return sections[6].getSizeForRecord();
+		}
+
 		/**
 		 * The number of bytes required to represent a POI (mdr11) record number
 		 * and a flag bit.

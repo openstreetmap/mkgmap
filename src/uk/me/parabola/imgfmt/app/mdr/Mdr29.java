@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  */
 public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	private final List<Mdr29Record> index = new ArrayList<Mdr29Record>();
+	private int max17;
 
 	public Mdr29(MdrConfig config) {
 		setConfig(config);
@@ -57,6 +58,11 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 		}
 	}
 
+	protected void preWriteImpl() {
+		Mdr29Record r = index.get(index.size() - 1);
+		this.max17 = r.getMdr17();
+	}
+	
 	/**
 	 * Write out the contents of this section.
 	 *
@@ -67,14 +73,14 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 
 		boolean hasString = (magic & 1) != 0;
 		boolean has26 = (magic & 0x8) != 0;
-		boolean has17 = (magic & 0x20) != 0;
+		boolean has17 = (magic & 0x30) != 0;
 
 		PointerSizes sizes = getSizes();
 		int size24 = sizes.getSize(24);
 		int size22 = sizes.getSize(22);
 		int size25 = sizes.getSize(25);
-		int size26 = has26 ? sizes.getSize(26) : 0;
-		int size17 = 2; // XXX TEMP
+		int size26 = has26? sizes.getSize(26): 0;
+		int size17 = numberToPointerSize(max17);
 		for (Mdr29Record record : index) {
 			putN(writer, size24, record.getMdr24());
 			if (hasString)
@@ -84,7 +90,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 			if (has26)
 				putN(writer, size26, record.getMdr26());
 			if (has17)
-				putN(writer, size17, 0); // XXX
+				putN(writer, size17, record.getMdr17());
 		}
 	}
 
@@ -102,7 +108,7 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 				+ sizes.getSize(25)
 				;
 		if (isForDevice()) {
-			size += 2; //XXX
+			size += numberToPointerSize(max17);
 		} else {
 			size += sizes.getStrOffSize();
 			size += sizes.getSize(26);
@@ -126,8 +132,11 @@ public class Mdr29 extends MdrSection implements HasHeaderFlags {
 	 * to mdr28 where there are 3 extra fields and 3 bits set. Just a guess...
 	 */
 	public int getExtraValue() {
-		if (isForDevice())
-			return 0x26; // +17, -26, -strings
+		if (isForDevice()) {
+			int magic = 0x6; // 22 and 25
+			magic |= numberToPointerSize(max17) << 4;
+			return magic; // +17, -26, -strings
+		}
 		else
 			return 0xf;  // strings, 22, 25 and 26
 	}

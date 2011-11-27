@@ -81,6 +81,11 @@ public class Mdr19 extends MdrSection implements HasHeaderFlags {
 			}
 			record++;
 		}
+
+		Mdr18Record m18 = new Mdr18Record();
+		m18.setRecord(record);
+		m18.setType(~0);
+		poiTypes.add(m18);
 	}
 
 	/**

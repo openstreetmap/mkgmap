@@ -62,11 +62,13 @@ public class MdrUtils {
 			return fullType & 0xff;
 	}
 
-	public static int getSubtypeFromFullType(int fullType) {
-		if ((fullType & 0xfff00) > 0)
-			return fullType & 0xff;
-		else
-			return 0;
+	/**
+	 * Gets the subtype if there is one, else the type.
+	 * @param fullType The type in the so-called 'full' format.
+	 * @return If there is a subtype, then it is returned. Otherwise the type is returned.
+	 */
+	public static int getSubtypeOrTypeFromFullType(int fullType) {
+		return fullType & 0xff;
 	}
 
 	/**
@@ -99,7 +101,9 @@ public class MdrUtils {
 	 */
 	public static int fullTypeToNaturalType(int ftype) {
 		int type = getTypeFromFullType(ftype);
-		int sub = getSubtypeFromFullType(ftype);
+		int sub = 0;
+		if ((ftype & ~0xff) != 0)
+			sub = ftype & 0x1f;
 
 		return type << 5 | sub;
 	}

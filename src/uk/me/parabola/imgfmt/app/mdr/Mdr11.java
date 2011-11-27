@@ -96,7 +96,7 @@ public class Mdr11 extends MdrMapSection {
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
 		int size = sizes.getMapSize() + 6 + sizes.getCitySizeFlagged();
-		if (!isForDevice())
+		if (hasFlag(0x2))
 			size += sizes.getStrOffSize();
 		return size;
 	}

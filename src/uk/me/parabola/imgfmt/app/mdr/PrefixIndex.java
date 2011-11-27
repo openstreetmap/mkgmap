@@ -53,7 +53,7 @@ public class PrefixIndex extends MdrSection {
 	 * We can create an index for any type that has a name.
 	 * @param list A list of items that have a name.
 	 */
-	public void createFromList(List<? extends NamedRecord> list) {
+	public void createFromList(List<? extends NamedRecord> list, boolean grouped) {
 		maxIndex = list.size();
 
 		// Prefixes are equal based on the primary unaccented character, so
@@ -62,21 +62,38 @@ public class PrefixIndex extends MdrSection {
 		Collator collator = sort.getCollator();
 		collator.setStrength(Collator.PRIMARY);
 
+		String lastCountryName = null;
 		String lastPrefix = "";
 		int record = 0;
 		for (NamedRecord r : list) {
 			record++;
-			
+
 			String prefix = getPrefix(r.getName());
 			if (collator.compare(prefix, lastPrefix) != 0) {
 				Mdr8Record ind = new Mdr8Record();
 				ind.setPrefix(prefix);
 				ind.setRecordNumber(record);
 				index.add(ind);
-				
+
 				lastPrefix = prefix;
+				
+				if (grouped) {
+					// Peek into the real type to support the mdr17 feature of indexes sorted on country.
+					Mdr5Record city = ((Mdr7Record) r).getCity();
+					if (city != null) {
+						String countryName = city.getCountryName();
+						if (!countryName.equals(lastCountryName)) {
+							city.getMdrCountry().getMdr29().setMdr17(record);
+							lastCountryName = countryName;
+						}
+					}
+				}
 			}
 		}
+	}
+	
+	public void createFromList(List<? extends NamedRecord> list) {
+		createFromList(list, false);
 	}
 
 	/**
