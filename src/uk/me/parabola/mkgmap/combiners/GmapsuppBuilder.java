@@ -121,7 +121,8 @@ public class GmapsuppBuilder implements Combiner {
 
 			addAllFiles(imgFs);
 
-			addFile(imgFs, mdrBuilder.getFileName(), "00MKGMAP.MDR");
+			if (mdrBuilder != null)
+				addFile(imgFs, mdrBuilder.getFileName(), "MAKEGMAP.MDR");
 			writeSrtFile(imgFs);
 			writeMpsFile();
 
