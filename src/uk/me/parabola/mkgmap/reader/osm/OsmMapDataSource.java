@@ -112,10 +112,9 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * @return A list of copyright messages as a String array.
 	 */
 	public String[] copyrightMessages() {
-		return new String[] {
-				"OpenStreetMap.org contributors",
-				"See: http://wiki.openstreetmap.org/index.php/Attribution"
-		};
+		String note = getConfig().getProperty("copyright-message", 
+				"OpenStreetMap.org contributors. See: http://wiki.openstreetmap.org/index.php/Attribution");
+		return new String[] { note };
 	}
 
 	protected void setStyle(Style style) {

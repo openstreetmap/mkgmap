@@ -230,6 +230,14 @@ Product description options:
 	number used in the overview map and tdb file.  The default
 	number is 63240000.
 
+--copyright-message=note
+	Specify a copyright message for files that do not contain one.
+
+--license-file=file
+	Specify a file which content will be added as license. Every
+	line is one entry. All entrys of all maps will be merged, unified
+	and shown in random order.
+
 Optimization options:
 
 --reduce-point-density=NUM

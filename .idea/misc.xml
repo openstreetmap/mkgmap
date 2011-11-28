@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
     <list size="5">
@@ -76,6 +79,15 @@
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                </map>
+              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
@@ -88,6 +100,30 @@
         <entry key="$PROJECT_DIR$/.idea">
           <value>
             <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/branches">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/releases">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/styles">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="https://svn.mkgmap.org.uk/svn/mkgmap/tags">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                </map>
+              </option>
               <option name="branchUrls">
                 <list>
                   <option value="https://svn.mkgmap.org.uk/svn/mkgmap/branches" />
