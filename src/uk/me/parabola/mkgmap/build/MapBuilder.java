@@ -16,12 +16,18 @@
  */
 package uk.me.parabola.mkgmap.build;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
@@ -125,6 +131,8 @@ public class MapBuilder implements Configurable {
 	
 	private LBLFile lblFile;
 
+	private String licenseFileName;
+
 	public MapBuilder() {
 		regionName = null;
 		locator = new Locator();
@@ -149,6 +157,8 @@ public class MapBuilder implements Configurable {
 			poiAddresses = false;
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
+
+		licenseFileName = props.getProperty("license-file", null);
 		
 		locator = new Locator(props);
 	}
@@ -695,19 +705,42 @@ public class MapBuilder implements Configurable {
 		//
 		// We use it to add copyright information that there is no room for
 		// elsewhere.
-		map.addInfo("OpenStreetMap and contributors");
-		map.addInfo("www.openstreetmap.org");
-		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-		map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
+		if (licenseFileName != null) {
+			File file = new File(licenseFileName);
+			StringBuffer contents = new StringBuffer();
+			BufferedReader reader = null;
 
-		// Pad the version number with spaces so that version
-		// strings that are different lengths do not change the size and
-		// offsets of the following sections.
-		map.addInfo("Map created with mkgmap-r"
-				+ String.format("%-10s", Version.VERSION));
+			try {
+				reader = new BufferedReader(new FileReader(file));
+				String text = null;
 
-		map.addInfo("Program released under the GPL");
+				// repeat until all lines is read
+				while ((text = reader.readLine()) != null) {
+					if (text.length() > 0) {
+						map.addInfo(text);
+					}
+				}
 
+				reader.close();
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open license file " + licenseFileName);
+			} catch (IOException e) {
+				throw new ExitException("Error reading license file " + licenseFileName);
+			}
+		} else {
+			map.addInfo("OpenStreetMap and contributors");
+			map.addInfo("www.openstreetmap.org");
+			map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
+			map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
+
+			// Pad the version number with spaces so that version
+			// strings that are different lengths do not change the size and
+			// offsets of the following sections.
+			map.addInfo("Map created with mkgmap-r"
+					+ String.format("%-10s", Version.VERSION));
+
+			map.addInfo("Program released under the GPL");
+		}
 		// There has to be (at least) two copyright messages or else the map
 		// does not show up.  The second one will be displayed at startup,
 		// although the conditions where that happens are not known.
