@@ -12,16 +12,27 @@
  */
 package uk.me.parabola.mkgmap.typ;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.channels.FileChannel;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
+import uk.me.parabola.imgfmt.app.typ.TYPFile;
 import uk.me.parabola.imgfmt.app.typ.TypData;
+import uk.me.parabola.imgfmt.app.typ.TypLine;
 import uk.me.parabola.imgfmt.app.typ.TypParam;
+import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.TypPolygon;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 
 import func.lib.ArrayImgWriter;
+import func.lib.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -143,6 +154,91 @@ public class TypTextReaderTest {
 
 		byte[] bytes = out.getBytes();
 		assertEquals(135, bytes.length);
+	}
+
+	@Test
+	public void testLineTwoColours() {
+		TypTextReader tr = makeTyp("[_line]\n" +
+				"Type=0x00\n" +
+				"UseOrientation=Y\n" +
+				"LineWidth=2\n" +
+				"BorderWidth=1\n" +
+				"Xpm=\"0 0 2 0\"\n" +
+				"\"1 c #DDDDDD\"\n" +
+				"\"2 c #999999\"\n" +
+				"String1=0x04,Road\n" +
+				"String2=0x01,Route non-définie\n" +
+				"String3=0x03,Weg\n" +
+				"ExtendedLabels=Y\n" +
+				"FontStyle=SmallFont\n" +
+				"CustomColor=No\n" +
+				"[end]");
+
+		TypData data = tr.getData();
+		TypLine line = data.getLines().get(0);
+		ImgFileWriter w = new ArrayImgWriter();
+		line.write(w, data.getEncoder());
+	}
+
+	@Test
+	public void testPointWithAlpha() {
+		TypTextReader tr = makeTyp("[_point]\n" +
+				"Type=0x12\n" +
+				"SubType=0x01\n" +
+				";23E6\n" +
+				";size: 45\n" +
+				"String1=0x4,Mini round\n" +
+				"String2=0x1,Mini rond-point\n" +
+				"ExtendedLabels=N\n" +
+				"DayXpm=\"9 9 10 1\"\n" +
+				"\"$  c none\"\n" +
+				"\"%  c #808080\"  alpha=14\n" +
+				"\"&  c #808080\"\n" +
+				"\"'  c #808080\"  alpha=15\n" +
+				"\"(  c #808080\"  alpha=8\n" +
+				"\")  c #F0F7FF\"\n" +
+				"\"*  c #808080\"  alpha=4\n" +
+				"\"+  c #808080\"  alpha=11\n" +
+				"\",  c #808080\"  alpha=12\n" +
+				"\"-  c #808080\"  alpha=13\n" +
+				"\"$%&&&&&'$\"\n" +
+				"\"(&&&)&&&*\"\n" +
+				"\"&&)))))&&\"\n" +
+				"\"&&)&&&)&&\"\n" +
+				"\"&))&)&))&\"\n" +
+				"\"&&)&&&)&&\"\n" +
+				"\"&&)))))&&\"\n" +
+				"\"+&&&)&&&,\"\n" +
+				"\"$-&&&&&-$\"\n" +
+				"[end]"
+				);
+
+		TypData data = tr.getData();
+		TypPoint point = data.getPoints().get(0);
+		ArrayImgWriter w = new ArrayImgWriter();
+		point.write(w, data.getEncoder());
+		assertEquals(342, w.getBytes().length);
+	}
+
+	/**
+	 * Basic test, reading from a file using most features.
+	 */
+	@Test
+	public void testFromFile() throws IOException {
+		Reader r = new BufferedReader(new FileReader("test/resources/typ/test.txt"));
+		TypTextReader tr = new TypTextReader();
+		tr.read("test.typ", r);
+
+		TestUtils.registerFile("ts__test.typ");
+		RandomAccessFile raf = new RandomAccessFile("ts__test.typ", "rw");
+		FileChannel channel = raf.getChannel();
+		channel.truncate(0);
+		FileImgChannel w = new FileImgChannel(channel);
+		TYPFile typ = new TYPFile(w);
+
+		typ.setData(tr.getData());
+		typ.write();
+		typ.close();
 	}
 
 	private TypTextReader makeTyp(String in) {

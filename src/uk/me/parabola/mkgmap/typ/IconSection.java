@@ -13,41 +13,42 @@
 package uk.me.parabola.mkgmap.typ;
 
 import uk.me.parabola.imgfmt.app.typ.TypData;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.imgfmt.app.typ.TypIconSet;
+import uk.me.parabola.imgfmt.app.typ.Xpm;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
-import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
- * Process lines from the id section of a typ.txt file.
- *
+ * The new icon type. There are several icons at different resolutions.
+ * 
  * @author Steve Ratcliffe
  */
-class IdSection implements ProcessSection {
-	private final TypData data;
+public class IconSection extends CommonSection implements ProcessSection {
+	private final TypIconSet current = new TypIconSet();
 
-	public IdSection(TypData data) {
-		this.data = data;
+	protected IconSection(TypData data) {
+		super(data);
 	}
 
 	public void processLine(TokenScanner scanner, String name, String value) {
-		int ival;
-		try {
-			ival = Integer.decode(value);
-		} catch (NumberFormatException e) {
-			throw new SyntaxException(scanner, "Bad integer " + value);
+		if (name.equalsIgnoreCase("String")) {
+			// There is only one string and it doesn't have a language prefix.
+			// But if it does we will just ignore it.
+			current.addLabel(value);
+			return;
 		}
 
-		if (name.equalsIgnoreCase("FID")) {
-			data.setFamilyId(ival);
-		} else if (name.equalsIgnoreCase("ProductCode")) {
-			data.setProductId(ival);
-		} else if (name.equalsIgnoreCase("CodePage")) {
-			data.setSort(SrtTextReader.sortForCodepage(ival));
+		if (commonKey(scanner, current, name, value))
+			return;
+
+		if (name.equalsIgnoreCase("IconXpm")) {
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
+			current.addIcon(xpm);
 		} else {
-			throw new SyntaxException(scanner, "Unrecognised keyword in id section: " + name);
+			warnUnknown(name);
 		}
 	}
 
 	public void finish(TokenScanner scanner) {
+		data.addIcon(current);
 	}
 }

@@ -17,6 +17,8 @@ import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.app.srt.Sort;
+
 /**
  * Holds all the data for a typ file.
  *
@@ -28,17 +30,23 @@ public class TypData {
 	private final List<TypPolygon> polygons = new ArrayList<TypPolygon>();
 	private final List<TypLine> lines = new ArrayList<TypLine>();
 	private final List<TypPoint> points = new ArrayList<TypPoint>();
+	private final List<TypIconSet> icons = new ArrayList<TypIconSet>();
 
-	private CharsetEncoder encoder;
+	private Sort sort = Sort.defaultSort(1252);
+	private CharsetEncoder encoder = Charset.forName("latin1").newEncoder();
 
 	public void addPolygonStackOrder(int level, int type, int subtype) {
 		stacking.addPolygon(level, type, subtype);
 	}
 
-	public void setCodePage(int val) {
-		param.setCodePage(val);
-		Charset charset = Charset.forName("cp" + val);
-		encoder = charset.newEncoder();
+	public Sort getSort() {
+		return sort;
+	}
+
+	public void setSort(Sort sort) {
+		this.sort = sort;
+		encoder = sort.getCharset().newEncoder();
+		param.setCodePage(sort.getCodepage());
 	}
 
 	public void setFamilyId(int val) {
@@ -83,5 +91,13 @@ public class TypData {
 
 	public List<TypPoint> getPoints() {
 		return points;
+	}
+
+	public void addIcon(TypIconSet current) {
+		icons.add(current);
+	}
+
+	public List<TypIconSet> getIcons() {
+		return icons;
 	}
 }

@@ -44,15 +44,16 @@ public class TypPoint extends TypElement {
 
 		writer.put(flags);
 
+		// Width and height is the same for day and night images, so it is written once only.
 		ColourInfo colourInfo = xpm.getColourInfo();
 		writer.put((byte) colourInfo.getWidth());
 		writer.put((byte) colourInfo.getHeight());
-		writer.put((byte) colourInfo.getNumberOfSolidColours());
-		writer.put((byte) colourInfo.getColourMode());
-		
-		colourInfo.write(writer);
-		if (xpm.hasImage())
-			xpm.writeImage(writer);
+
+		// Day or only image
+		writeImage(writer, xpm);
+
+		if ((flags & F_NIGHT_XPM) != 0)
+			writeImage(writer, nightXpm);
 
 		if ((flags & F_LABEL) != 0)
 			writeLabelBlock(writer, encoder);
@@ -63,5 +64,12 @@ public class TypPoint extends TypElement {
 
 	public void setNightXpm(Xpm nightXpm) {
 		this.nightXpm = nightXpm;
+	}
+
+	/**
+	 * Points have full pixmaps with multiple colours, including 24 full colour images.
+	 */
+	public boolean simpleBitmap() {
+		return false;
 	}
 }

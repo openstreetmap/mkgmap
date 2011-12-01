@@ -15,31 +15,31 @@ package uk.me.parabola.imgfmt.app.typ;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 
 /**
- * Holds everything read from an XPM value in the typ txt file.
+ * A true colour image.
+ *
+ * This represented by an array of int.
  *
  * @author Steve Ratcliffe
  */
-public class Xpm {
-	private ColourInfo colourInfo;
-	private Image image;
+public class TrueImage implements Image {
+	private final ColourInfo colourInfo;
+	private final int[] image;
 
-	public ColourInfo getColourInfo() {
-		return colourInfo;
-	}
-
-	public void setColourInfo(ColourInfo colourInfo) {
+	public TrueImage(ColourInfo colourInfo, int[] image) {
 		this.colourInfo = colourInfo;
-	}
-
-	public void setImage(Image image) {
 		this.image = image;
 	}
 
-	public boolean hasImage() {
-		return image != null;
-	}
+	public void write(ImgFileWriter writer) {
+		int width = colourInfo.getWidth();
+		int height = colourInfo.getHeight();
 
-	public void writeImage(ImgFileWriter writer) {
-		image.write(writer);
+		int n = width * height;
+		for (int count = 0; count < n; count++) {
+			int col = image[count];
+			writer.put((byte) ((col>>8) & 0xff));
+			writer.put((byte) ((col>>16) & 0xff));
+			writer.put((byte) ((col>>24) & 0xff));
+		}
 	}
 }

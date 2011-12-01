@@ -39,11 +39,14 @@ public class TypTextReader {
 
 	public void read(String filename, Reader r) {
 		TokenScanner scanner = new TokenScanner(filename, r);
+		scanner.setCommentChar(null); // the '#' comment character is not appropriate for this file
 
 		ProcessSection currentSection = null;
 
 		while (!scanner.isEndOfFile()) {
 			Token tok = scanner.nextToken();
+			if (tok.getType() == TokType.EOF)
+				break;
 
 			// We deal with whole line comments here
 			if (tok.isValue(";")) {
@@ -59,7 +62,7 @@ public class TypTextReader {
 				case '[':
 					ProcessSection newSection = readSectionType(scanner);
 					if (currentSection != null)
-						currentSection.finish();
+						currentSection.finish(scanner);
 					currentSection = newSection;
 					break;
 				case '"':
@@ -100,6 +103,8 @@ public class TypTextReader {
 			return new PolygonSection(data);
 		} else if ("_draworder".equals(sectionName)) {
 			return new DrawOrderSection(data);
+		} else if ("_icons".equals(sectionName)) {
+			return new IconSection(data);
 		} else if ("_id".equals(sectionName)) {
 			return new IdSection(data);
 		}
@@ -120,7 +125,9 @@ public class TypTextReader {
 	 * out-file defaults to 'OUT.TYP'
 	 *
 	 * @param args Command line arguments.
+	 * @deprecated Use uk.me.parabola.mkgmap.main.TypCompiler until it is integrated with mkgmap.
 	 */
+	@Deprecated
 	public static void main(String[] args) throws IOException {
 		String in = "default.txt";
 		if (args.length > 0)

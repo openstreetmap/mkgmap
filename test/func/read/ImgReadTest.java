@@ -25,7 +25,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 
-public class ImgRead {
+public class ImgReadTest {
 
 	@Test
 	public void testNet() throws FileNotFoundException {

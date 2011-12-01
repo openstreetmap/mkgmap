@@ -24,7 +24,9 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 /**
  * Base routines and data used by points, lines and polygons.
  *
- * If fact they are all very similar, so there is 
+ * If fact they are all very similar, so there is very little extra in the
+ * subclasses apart from the write routine.
+ *
  * @author Steve Ratcliffe
  */
 public abstract class TypElement {
@@ -53,8 +55,11 @@ public abstract class TypElement {
 		return type;
 	}
 
-	public int getSubType() {
-		return subType;
+	/**
+	 * Get the type in the format required for writing in the typ file sections.
+	 */
+	public int getTypeForFile() {
+		return (type << 5) | (subType & 0x1f);
 	}
 
 	public void addLabel(String text) {
@@ -84,6 +89,15 @@ public abstract class TypElement {
 	}
 
 	/**
+	 * Does this element have two colour bitmaps, with possible automatic night colours. For lines and polygons.
+	 *
+	 * Overridden for points and icons.
+	 */
+	public boolean simpleBitmap() {
+		return true;
+	}
+
+	/**
 	 * Make the label block separately as we need its length before we write it out properly.
 	 *
 	 * @param encoder For encoding the strings as bytes.
@@ -98,8 +112,10 @@ public abstract class TypElement {
 				ByteBuffer buffer = encoder.encode(cb);
 				out.put(buffer);
 			} catch (CharacterCodingException ignore) {
-				System.out.println("WARNING: failed to encode string: " + tl.getText() +
-						". File should be in unicode");
+				String name = encoder.charset().name();
+				//System.out.println("cs " + name);
+				throw new TypLabelException(name);
+				//System.out.println("WARNING: failed to encode string: " + tl.getText() + ". File should be in unicode");
 			}
 			out.put((byte) 0);
 		}
@@ -144,5 +160,21 @@ public abstract class TypElement {
 
 		if (nightFontColour != null)
 			nightFontColour.write(writer, (byte) 0x10);
+	}
+
+	/**
+	 * Write out an image. The width and height are written separately, because they are not
+	 * repeated for the night image.
+	 *
+	 * @param xpm Either the day or night XPM.
+	 */
+	protected void writeImage(ImgFileWriter writer, Xpm xpm) {
+		ColourInfo colourInfo = xpm.getColourInfo();
+
+		writer.put((byte) colourInfo.getNumberOfSColoursForCM());
+		writer.put((byte) colourInfo.getColourMode());
+
+		colourInfo.write(writer);
+		xpm.writeImage(writer);
 	}
 }
