@@ -47,6 +47,11 @@ public class IndexTest {
 		);
 		outputs.checkNoError();
 
+		TestUtils.registerFile(MDR_IMG);
+		TestUtils.registerFile(OVERVIEW_NAME+".tdb");
+		TestUtils.registerFile(OVERVIEW_NAME+".mdx");
+		TestUtils.registerFile(OVERVIEW_NAME+".img");
+
 		assertTrue(MDR_IMG + " is created", f.exists());
 
 		FileSystem fs = ImgFS.openFs(MDR_IMG);

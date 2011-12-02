@@ -111,7 +111,6 @@ public class MapBuilder implements Configurable {
 	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
 
 	private Country defaultCountry;
-	private Region  defaultRegion;
 
 	private String countryName = "COUNTRY";
 	private String countryAbbr = "ABC";
@@ -224,11 +223,24 @@ public class MapBuilder implements Configurable {
 		return defaultCountry;
 	}
 	
-	private Region getDefaultRegion() {
-		if(defaultRegion == null && regionName != null && getDefaultCountry() != null && lblFile != null) {
-			defaultRegion = lblFile.createRegion(getDefaultCountry(), regionName, regionAbbr);
+	/**
+	 * Retrieves the region with the default name in the given country.
+	 * @param country the country (<code>null</code> = use default country)
+	 * @return the default region in the given country (<code>null</code> if not available)
+	 */
+	private Region getDefaultRegion(Country country) {
+		if (lblFile==null || regionName == null) {
+			return null;
 		}
-		return defaultRegion;
+		if (country == null) {
+			if (getDefaultCountry() == null) {
+				return null;
+			} else {
+				return lblFile.createRegion(getDefaultCountry(), regionName, regionAbbr);
+			}
+		} else {
+			return lblFile.createRegion(country, regionName, regionAbbr);
+		}
 	}
 
 	/**
@@ -278,7 +290,7 @@ public class MapBuilder implements Configurable {
 					thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 				}
 				else
-					thisRegion = getDefaultRegion();
+					thisRegion = getDefaultRegion(thisCountry);
 
 				City thisCity;
 				if(thisRegion != null)
@@ -328,7 +340,7 @@ public class MapBuilder implements Configurable {
 
 					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryISOCode(cityCountryName));
 
-					Region cr = (cityRegionName == null)? getDefaultRegion() : lbl.createRegion(cc, cityRegionName, null);
+					Region cr = (cityRegionName == null)? getDefaultRegion(cc) : lbl.createRegion(cc, cityRegionName, null);
 
 					if(cr != null) {
 						((MapRoad)line).setRoadCity(lbl.createCity(cr, cityName, false));
@@ -430,7 +442,7 @@ public class MapBuilder implements Configurable {
 					if(regionStr != null)
 						thisRegion = lbl.createRegion(thisCountry,regionStr, null);
 					else
-						thisRegion = getDefaultRegion();
+						thisRegion = getDefaultRegion(thisCountry);
 
 					City city;
 					if(thisRegion != null)
@@ -707,7 +719,6 @@ public class MapBuilder implements Configurable {
 		// elsewhere.
 		if (licenseFileName != null) {
 			File file = new File(licenseFileName);
-			StringBuffer contents = new StringBuffer();
 			BufferedReader reader = null;
 
 			try {
@@ -977,14 +988,14 @@ public class MapBuilder implements Configurable {
 	}
 
 	Highway makeHighway(Map map, String ref) {
-		if(getDefaultRegion() == null) {
+		if(getDefaultRegion(null) == null) {
 			log.warn("Highway " + ref + " has no region (define a default region to zap this warning)");
 		}
 		Highway hw = highways.get(ref);
 		if(hw == null) {
 			LBLFile lblFile = map.getLblFile();
 			log.info("creating highway " + ref);
-			hw = lblFile.createHighway(getDefaultRegion(), ref);
+			hw = lblFile.createHighway(getDefaultRegion(null), ref);
 			highways.put(ref, hw);
 		}
 

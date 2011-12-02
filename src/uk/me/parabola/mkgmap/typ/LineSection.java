@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  */
 class LineSection extends CommonSection implements ProcessSection {
 
-	private TypLine current = new TypLine();
+	private final TypLine current = new TypLine();
 
 	LineSection(TypData data) {
 		super(data);
@@ -37,7 +37,7 @@ class LineSection extends CommonSection implements ProcessSection {
 		if (commonKey(scanner, current, name, value))
 			return;
 
-		if (name.equals("UseOrientation")) {
+		if (name.equalsIgnoreCase("UseOrientation")) {
 			current.setUseOrientation(value.charAt(0) == 'Y');
 		} else if (name.equals("LineWidth")) {
 			try {
@@ -46,7 +46,7 @@ class LineSection extends CommonSection implements ProcessSection {
 			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Bad number for line width: " + value);
 			}
-		} else if (name.equals("BorderWidth")) {
+		} else if (name.equalsIgnoreCase("BorderWidth")) {
 			try {
 				int ival = Integer.decode(value);
 				current.setBorderWidth(ival);
@@ -57,8 +57,9 @@ class LineSection extends CommonSection implements ProcessSection {
 			warnUnknown(name);
 	}
 
-	public void finish() {
+	public void finish(TokenScanner scanner) {
+		validate(scanner);
+		current.finish();
 		data.addLine(current);
-		current = new TypLine();
 	}
 }

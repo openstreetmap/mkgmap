@@ -25,7 +25,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  */
 class PolygonSection extends CommonSection implements ProcessSection {
 
-	private TypPolygon current = new TypPolygon();
+	private final TypPolygon current = new TypPolygon();
 
 	PolygonSection(TypData data) {
 		super(data);
@@ -41,8 +41,8 @@ class PolygonSection extends CommonSection implements ProcessSection {
 	/**
 	 * Add the polygon to the data and reset for the next.
 	 */
-	public void finish() {
+	public void finish(TokenScanner scanner) {
+		validate(scanner);
 		data.addPolygon(current);
-		current = new TypPolygon();
 	}
 }

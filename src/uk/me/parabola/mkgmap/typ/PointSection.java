@@ -15,7 +15,6 @@ package uk.me.parabola.mkgmap.typ;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.Xpm;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 /**
@@ -35,26 +34,12 @@ class PointSection extends CommonSection implements ProcessSection {
 		if (commonKey(scanner, current, name, value))
 			return;
 
-		if (name.equals("SubType")) {
-			int ival;
-			try {
-				ival = Integer.decode(value);
-			} catch (NumberFormatException e) {
-				throw new SyntaxException(scanner, "Bad number for sub type " + value);
-			}
-
-			current.setSubType(ival);
-
-		} else if (name.equals("DayXpm")) {
-			Xpm xpm = readXpm(scanner, value);
-			xpm.getColourInfo().setColourMode(16); // XXX temporary
-			xpm.getColourInfo().setSimple(false);
+		if (name.equalsIgnoreCase("DayXpm")) {
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.setXpm(xpm);
 
-		} else if (name.equals("NightXpm")) {
-			Xpm xpm = readXpm(scanner, value);
-			xpm.getColourInfo().setColourMode(16); // XXX temporary
-			xpm.getColourInfo().setSimple(false);
+		} else if (name.equalsIgnoreCase("NightXpm")) {
+			Xpm xpm = readXpm(scanner, value, current.simpleBitmap());
 			current.setNightXpm(xpm);
 
 		} else {
@@ -62,7 +47,8 @@ class PointSection extends CommonSection implements ProcessSection {
 		}
 	}
 
-	public void finish() {
+	public void finish(TokenScanner scanner) {
+		validate(scanner);
 		data.addPoint(current);
 	}
 }

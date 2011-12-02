@@ -1,10 +1,7 @@
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.util.Comparator;
-
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.Writeable;
 
 /**
  * Holds a bitmap image for the typ file.
@@ -14,7 +11,7 @@ import uk.me.parabola.imgfmt.app.Writeable;
  * Based on code by Thomas Lußnig, but type and colour information separated out and
  * deals with more than just points.
  */
-public class BitmapImage implements Writeable, Comparator<BitmapImage> {
+public class BitmapImage implements Image {
 
 	private final ColourInfo colourInfo;
 	private final String image;
@@ -25,19 +22,28 @@ public class BitmapImage implements Writeable, Comparator<BitmapImage> {
 	}
 
 	public void write(ImgFileWriter writer) {
-		BitWriter bitWriter = new BitWriter();
 
 		final int bitSize = colourInfo.getBitsPerPixel();
-		int len = image.length();
 		int cpp = colourInfo.getCharsPerPixel();
-		for (int i = 0; i < len; i += cpp) {
-			String idx = image.substring(i, i + cpp);
 
-			int val = colourInfo.getIndex(idx);
-			bitWriter.putn(val, bitSize);
+		int width = colourInfo.getWidth();
+		int height = colourInfo.getHeight();
+
+		int i = 0;
+		for (int h = 0; h < height; h++) {
+			// Each row is padded to a byte boundary, creating a new bit writer for every
+			// row ensures that happens.
+			BitWriter bitWriter = new BitWriter();
+
+			for (int w = 0; w < width; w++) {
+				String idx = image.substring(i, i + cpp);
+				i += cpp;
+
+				int val = colourInfo.getIndex(idx);
+				bitWriter.putn(val, bitSize);
+			}
+			writer.put(bitWriter.getBytes(), 0, bitWriter.getLength());
 		}
-
-		writer.put(bitWriter.getBytes(), 0, bitWriter.getLength());
 	}
 
 	public int compare(BitmapImage a, BitmapImage b) {

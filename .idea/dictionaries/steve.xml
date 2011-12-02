@@ -14,6 +14,7 @@
       <w>checksum</w>
       <w>classname</w>
       <w>codepage</w>
+      <w>colormode</w>
       <w>coord</w>
       <w>coords</w>
       <w>defs</w>
@@ -60,6 +61,7 @@
       <w>outputing</w>
       <w>pathname</w>
       <w>peucker</w>
+      <w>pixmaps</w>
       <w>pois</w>
       <w>polyline</w>
       <w>polylines</w>
@@ -76,6 +78,7 @@
       <w>resize</w>
       <w>resized</w>
       <w>rethrown</w>
+      <w>rgba</w>
       <w>routable</w>
       <w>rrggbb</w>
       <w>seamark</w>

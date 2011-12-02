@@ -40,6 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.ArgumentProcessor;
@@ -95,25 +96,6 @@ public class Main implements ArgumentProcessor {
 	 */
 	public static void main(String[] args) {
 
-		// Temporary test for version 1.6.  During a transition period we are
-		// compiling with target 1.5 so that it will run with 1.5 long enough
-		// to give an error message.
-		//
-		// TODO This can be removed after stable release has been made.  At that time
-		// remove the target=1.5 from the build file.
-		//noinspection ErrorNotRethrown
-		try {
-			// Use a method that was introduced in 1.6
-			"".isEmpty();
-		} catch (NoSuchMethodError e) {
-			// Doesn't exist so we do not have a useful 1.6
-			String version = System.getProperty("java.version");
-
-			System.err.println("Error: mkgmap now requires java 1.6 to run");
-			System.err.printf("You have version %s of java, and mkgmap requires at least version 1.6.0\n", version);
-			System.exit(1);
-		}
-
 		// We need at least one argument.
 		if (args.length < 1) {
 			System.err.println("Usage: mkgmap [options...] <file.osm>");
@@ -128,6 +110,8 @@ public class Main implements ArgumentProcessor {
 			CommandArgsReader commandArgs = new CommandArgsReader(mm);
 			commandArgs.setValidOptions(getValidOptions(System.err));
 			commandArgs.readArgs(args);
+		} catch (MapFailedException e) {
+			System.err.println(e.getMessage());
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
 		}
@@ -200,6 +184,8 @@ public class Main implements ArgumentProcessor {
 		processMap.put("lbl", saver);
 		processMap.put("net", saver);
 		processMap.put("nod", saver);
+
+		processMap.put("txt", new TypCompiler());
 	}
 
 	/**
@@ -399,6 +385,8 @@ public class Main implements ArgumentProcessor {
 					}
 				} catch (ExitException ee) {
 					throw ee;
+				} catch (MapFailedException mfe) {
+					System.err.println(mfe.getMessage());
 				} catch (Throwable t) {
 					t.printStackTrace();
 					if (!args.getProperties().getProperty("keep-going", false)) {
@@ -469,24 +457,7 @@ public class Main implements ArgumentProcessor {
 	 * @return A sort description object.
 	 */
 	public Sort getSort(CommandArgs args) {
-		int codepage = args.getCodePage();
-
-		String name = "sort/cp" + codepage + ".txt";
-		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
-		if (is == null) {
-			if (args.get("index", false))
-				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort(codepage);
-		}
-		try {
-			InputStreamReader r = new InputStreamReader(is, "utf-8");
-			SrtTextReader sr = new SrtTextReader(r);
-			return sr.getSort();
-		} catch (IOException e) {
-			if (args.get("index", false))
-				System.err.printf("Warning: using default sort\n");
-			return Sort.defaultSort(codepage);
-		}
+		return SrtTextReader.sortForCodepage(args.getCodePage());
 	}
 
 	/**

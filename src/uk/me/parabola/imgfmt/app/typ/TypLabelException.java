@@ -13,37 +13,19 @@
 package uk.me.parabola.imgfmt.app.typ;
 
 /**
+ * Used when a label cannot be converted. An error is thrown indicating a charset to try
+ * instead of the default system one.
+ * 
  * @author Steve Ratcliffe
  */
-public class TypLabel {
-	private final int lang;
-	private final String text;
+public class TypLabelException extends RuntimeException {
+	private String charsetName;
 
-	public TypLabel(String in) {
-		String[] split = in.split(",", 2);
-		int l;
-		String s;
-		try {
-			l = Integer.decode(split[0]);
-			s = split[1];
-		} catch (NumberFormatException e) {
-			l = 0;
-			s = in;
-		}
-		this.lang = l;
-		this.text = s;
+	public TypLabelException(String charsetName) {
+		this.charsetName = charsetName;
 	}
 
-	public TypLabel(int lang, String text) {
-		this.lang = lang;
-		this.text = text;
-	}
-
-	public int getLang() {
-		return lang;
-	}
-
-	public String getText() {
-		return text;
+	public String getCharsetName() {
+		return charsetName;
 	}
 }

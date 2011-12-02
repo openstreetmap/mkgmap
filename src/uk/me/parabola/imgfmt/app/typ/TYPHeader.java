@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.app.Section;
  * @author Thomas Lußnig
  */
 public class TYPHeader extends CommonHeader {
-	public static final int HEADER_LEN = 0x6e;
+	public static final int HEADER_LEN = 0x9c; // 0x6e;
 
 	private char familyId;
 	private char productId;
@@ -37,11 +37,18 @@ public class TYPHeader extends CommonHeader {
 	private final Section lineData = new Section(pointData);
 	private final Section polygonData = new Section(lineData);
 
-	private final Section pointIndex = new Section(polygonData, (char) 4);
-	private final Section lineIndex = new Section(pointIndex, (char) 4);
-	private final Section polygonIndex = new Section(lineIndex, (char) 4);
+	private final Section pointIndex = new Section(polygonData, (char) 2);
+	private final Section lineIndex = new Section(pointIndex, (char) 2);
+	private final Section polygonIndex = new Section(lineIndex, (char) 2);
 
 	private final Section shapeStacking = new Section(polygonIndex, (char) 5);
+
+	private final Section iconData = new Section(polygonIndex);
+	private final Section iconIndex = new Section(iconData, (char) 3);
+
+	private final Section labels = new Section(iconIndex);
+	private final Section stringIndex = new Section(labels);
+	private final Section typeIndex = new Section(stringIndex);
 
 	public TYPHeader() {
 		super(HEADER_LEN, "GARMIN TYP");
@@ -91,6 +98,8 @@ public class TYPHeader extends CommonHeader {
 	 * Write the rest of the header.  It is guaranteed that the writer will be set
 	 * to the correct position before calling.
 	 *
+	 * This header appears to have a different layout to most other headers.
+	 *
 	 * @param writer The header is written here.
 	 */
 	protected void writeFileHeader(ImgFileWriter writer) {
@@ -109,10 +118,29 @@ public class TYPHeader extends CommonHeader {
 		writeSectionInfo(writer, polygonIndex);
 		writeSectionInfo(writer, shapeStacking);
 
-		writer.putInt(0);
-		writer.putInt(0);
-		writer.putChar((char) 0);
-		writer.put((byte) 0x1f);
+		if (getHeaderLength() > 0x5b) {
+			writeSectionInfo(writer, iconIndex);
+			writer.put((byte) 0x13);
+			iconData.writeSectionInfo(writer);
+			writer.putInt(0);
+		}
+
+		if (getHeaderLength() > 0x6e) {
+			labels.writeSectionInfo(writer);
+
+			// not known, guessing. Different layout to other files.
+			writer.putInt(stringIndex.getItemSize());
+			writer.putInt(0x1b);
+			writer.putInt(stringIndex.getPosition());
+			writer.putInt(stringIndex.getSize());
+
+			writer.putInt(typeIndex.getItemSize());
+			writer.putInt(0x1b);
+			writer.putInt(typeIndex.getPosition());
+			writer.putInt(typeIndex.getSize());
+
+			writer.putChar((char) 0);
+		}
 	}
 
 	/**
@@ -163,5 +191,25 @@ public class TYPHeader extends CommonHeader {
 
 	public Section getLineIndex() {
 		return lineIndex;
+	}
+
+	public Section getIconData() {
+		return iconData;
+	}
+
+	public Section getIconIndex() {
+		return iconIndex;
+	}
+
+	public Section getLabels() {
+		return labels;
+	}
+
+	public Section getStringIndex() {
+		return stringIndex;
+	}
+
+	public Section getTypeIndex() {
+		return typeIndex;
 	}
 }

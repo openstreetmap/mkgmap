@@ -33,12 +33,14 @@ public class TokenScanner {
 	private boolean isEOF;
 
 	private final String fileName;
-	private int linenumber = 1;
+	private int linenumber;
 
 	// Extra word characters.
 	private String extraWordChars = "";
 
 	private final LinkedList<Token> tokens = new LinkedList<Token>();
+	private boolean bol = true;
+	private String commentChar = "#";
 
 	public TokenScanner(String filename, Reader reader) {
 		if (reader instanceof BufferedReader)
@@ -57,14 +59,21 @@ public class TokenScanner {
 	}
 
 	/**
-	 * Get and remove the next token. May return space or newline.
+	 * Get and remove the next token. May return space or newline. This is the
+	 * only place that a token is removed from the tokens queue.
 	 */
 	public Token nextRawToken() {
 		ensureTok();
 
+		if (bol) {
+			bol = false;
+			linenumber++;
+		}
+
 		Token token = tokens.removeFirst();
 		if (token.getType() == TokType.EOL)
-			linenumber++;
+			bol = true;
+
 		return token;
 	}
 
@@ -102,7 +111,7 @@ public class TokenScanner {
 	public void skipSpace() {
 		while (!isEndOfFile()) {
 			ensureTok();
-			if (tokens.peek().isValue("#")) {
+			if (tokens.peek().isValue(commentChar)) {
 				skipLine();
 				continue;
 			}
@@ -345,5 +354,19 @@ public class TokenScanner {
 
 	public void setExtraWordChars(String extraWordChars) {
 		this.extraWordChars = extraWordChars;
+	}
+
+	/**
+	 * The skip space routine, will skip all characters after a '#' until the end of the
+	 * line as part of its skip white space functionality.
+	 *
+	 * This is a mis-feature if your comment character is not '#' or that character is
+	 * sometimes important. Therefore you can turn this off by passing in an empty string here.
+	 */
+	public void setCommentChar(String commentChar) {
+		if (commentChar == null)
+			this.commentChar = "";
+		else
+			this.commentChar = commentChar;
 	}
 }
