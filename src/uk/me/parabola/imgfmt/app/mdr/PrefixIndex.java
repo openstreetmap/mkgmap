@@ -64,15 +64,18 @@ public class PrefixIndex extends MdrSection {
 
 		String lastCountryName = null;
 		String lastPrefix = "";
-		int record = 0;
+		int inRecord = 0;  // record number of the input list
+		int outRecord = 0; // record number of the index
 		for (NamedRecord r : list) {
-			record++;
+			inRecord++;
 
 			String prefix = getPrefix(r.getName());
 			if (collator.compare(prefix, lastPrefix) != 0) {
+				outRecord++;
+
 				Mdr8Record ind = new Mdr8Record();
 				ind.setPrefix(prefix);
-				ind.setRecordNumber(record);
+				ind.setRecordNumber(inRecord);
 				index.add(ind);
 
 				lastPrefix = prefix;
@@ -83,7 +86,7 @@ public class PrefixIndex extends MdrSection {
 					if (city != null) {
 						String countryName = city.getCountryName();
 						if (!countryName.equals(lastCountryName)) {
-							city.getMdrCountry().getMdr29().setMdr17(record);
+							city.getMdrCountry().getMdr29().setMdr17(outRecord);
 							lastCountryName = countryName;
 						}
 					}

@@ -58,7 +58,8 @@ public class Mdr29Record {
 	}
 
 	public void setMdr25(int mdr25) {
-		this.mdr25 = mdr25;
+		if (this.mdr25 == 0)
+			this.mdr25 = mdr25;
 	}
 
 	public int getMdr26() {
@@ -83,6 +84,7 @@ public class Mdr29Record {
 	}
 
 	public void setMdr17(int mdr17) {
-		this.mdr17 = mdr17;
+		if (this.mdr17 == 0)
+			this.mdr17 = mdr17;
 	}
 }
