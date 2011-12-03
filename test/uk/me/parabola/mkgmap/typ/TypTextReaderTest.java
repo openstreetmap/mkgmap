@@ -220,6 +220,35 @@ public class TypTextReaderTest {
 		assertEquals(342, w.getBytes().length);
 	}
 
+	@Test
+	public void testZeroColourBug() {
+		String s = "[_point]\n" +
+				"Type=0x01e\n" +
+				"SubType=0x00\n" +
+				"String1=0x04,island\n" +
+				"DayXpm=\"5 5 1 1\"   Colormode=32\n" +
+				"\"!      c #000000\"  canalalpha=15\n" +
+				"\"!!!!!\"\n" +
+				"\"!!!!!\"\n" +
+				"\"!!!!!\"\n" +
+				"\"!!!!!\"\n" +
+				"\"!!!!!\"\n" +
+				"[end]";
+
+		tr = makeTyp(s);
+		TypData data = tr.getData();
+		TypPoint point = data.getPoints().get(0);
+
+		ArrayImgWriter w = new ArrayImgWriter();
+		point.write(w, data.getEncoder());
+
+		byte[] out = w.getBytes();
+
+		assertEquals("width", 5, out[1]);
+		assertEquals("height", 5, out[2]);
+		assertEquals("number of colours", 1, out[3]);
+	}
+
 	/**
 	 * Basic test, reading from a file using most features.
 	 */
