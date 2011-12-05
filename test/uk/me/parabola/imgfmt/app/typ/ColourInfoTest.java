@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.imgfmt.app.typ;
 
 import org.junit.Before;

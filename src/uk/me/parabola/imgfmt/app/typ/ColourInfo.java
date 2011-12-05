@@ -301,11 +301,10 @@ public class ColourInfo implements Writeable {
 				return "Both night foreground and background are transparent";
 
 		} else {
-			int transIndex = 0;
-			int nTrans = 0;
-			int nAlpha = 0;
-
-			int count = 0;
+			int transIndex = 0; // index of last transparent pixel, only used when there is only one
+			int nTrans = 0; // completely transparent
+			int nAlpha = 0; // partially transparent
+			int count = 0;  // total number of colours
 			for (RgbWithTag rgb : colours) {
 				if (rgb.isTransparent()) {
 					nTrans++;
@@ -317,7 +316,10 @@ public class ColourInfo implements Writeable {
 				count++;
 			}
 
-			if (nAlpha > 0) {
+			if (nAlpha > 0 || count == nTrans) {
+				// If there is any partial transparency we need colour mode 0x20
+				// Also if there is only one pixel and it is transparent, since otherwise there would be zero
+				// solid colours and that is a special case used to indicate a true colour pixmap.
 				colourMode = 0x20;
 
 			} else if (nTrans == 1) {
