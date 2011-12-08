@@ -245,7 +245,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			String zip = boundary.getTags().get("mkgmap:bzip");
 			
 			if (admMkgmapTag == null && zip == null) {
-				log.error("Cannot find any mkgmap tag for " + boundary.getTags());
+				log.error("Cannot find any location relevant tag for " + boundary.getTags());
 				continue;
 			}
 
@@ -289,7 +289,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 					}
 					Boundary bAdditional = boundaryById.get(relParts[1]);
 					if (bAdditional == null) {
-						log.error("Referenced boundary not available: "+boundary.getTags()+" refs "+relParts[1]);
+						log.warn("Referenced boundary not available: "+boundary.getTags()+" refs "+relParts[1]);
 						continue;
 					}
 					String addAdmin_level = bAdditional.getTags().get("admin_level");
