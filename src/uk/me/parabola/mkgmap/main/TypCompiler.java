@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -87,16 +88,23 @@ public class TypCompiler implements MapProcessor {
 				param.setCodePage(cp);
 		}
 
-		String base = args.get("overview-mapname", "osmmap");
-		String out = base + ".typ";
-		
+		File outFile = new File(filename);
+		String outName = outFile.getName();
+
+		int last;
+		if (outName.length() > 4 && (last = outName.lastIndexOf('.')) > 0)
+			outName = outName.substring(0, last);
+
+		outName += ".typ";
+		outFile = new File(args.getOutputDir(), outName);
+
 		try {
-			writeTyp(data, out);
+			writeTyp(data, outFile);
 		} catch (IOException e) {
 			throw new MapFailedException("Error while writing typ file", e);
 		}
 
-		return out;
+		return outName;
 	}
 
 	/**
@@ -125,8 +133,8 @@ public class TypCompiler implements MapProcessor {
 	/**
 	 * Write the type file out from the compiled form to the given name.
 	 */
-	private void writeTyp(TypData data, String filename) throws IOException {
-		RandomAccessFile raf = new RandomAccessFile(filename, "rw");
+	private void writeTyp(TypData data, File file) throws IOException {
+		RandomAccessFile raf = new RandomAccessFile(file, "rw");
 		FileChannel channel = raf.getChannel();
 		channel.truncate(0);
 
@@ -171,7 +179,7 @@ public class TypCompiler implements MapProcessor {
 		}
 
 		try {
-			writeTyp(data, out);
+			writeTyp(data, new File(out));
 		} catch (IOException e) {
 			System.out.println("Error writing file: " + e.getMessage());
 		}
