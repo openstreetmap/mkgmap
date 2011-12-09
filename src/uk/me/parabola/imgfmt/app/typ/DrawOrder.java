@@ -10,20 +10,23 @@ import uk.me.parabola.imgfmt.app.Writeable;
  * actually in the item.
  */
 public class DrawOrder implements Writeable {
-	private final byte typ;
+	private final byte type;
 	private int subTypes;
+	private boolean hasSubtypes;
 
-	public DrawOrder(int typ) {
-		this.typ = (byte) typ;
+	public DrawOrder(int type) {
+		this.type = (byte) (type & 0xff);
+		if (type >= 0x100)
+			hasSubtypes = true;
 	}
 
 	public void write(ImgFileWriter writer) {
-		writer.put(typ);
+		writer.put(type);
 		writer.putInt(subTypes);
 	}
 
 	public void addSubtype(int subtype) {
-		if (subtype > 0)
+		if (hasSubtypes)
 			subTypes |= 1 << subtype;
 	}
 }

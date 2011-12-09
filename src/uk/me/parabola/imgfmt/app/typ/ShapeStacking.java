@@ -36,7 +36,7 @@ public class ShapeStacking {
 		int levelType = (level << 16) + type;
 		DrawOrder order = bar.get(levelType);
 		if (order == null) {
-			order = new DrawOrder((byte) type);
+			order = new DrawOrder(type);
 			bar.put(levelType, order);
 		}
 		

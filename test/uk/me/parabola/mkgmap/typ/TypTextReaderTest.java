@@ -83,7 +83,9 @@ public class TypTextReaderTest {
 		assertEquals(0, buf[ORDER_SIZE]);
 		assertEquals(2, buf[2 * ORDER_SIZE]);
 		assertEquals(4, buf[3 * ORDER_SIZE]);
-		assertEquals((1<<2) + (1<<5), buf[3 * ORDER_SIZE + 1]);
+		assertEquals(0, buf[3 * ORDER_SIZE + 1]);
+		assertEquals(4, buf[4 * ORDER_SIZE]);
+		assertEquals((1<<2) + (1<<5), buf[4 * ORDER_SIZE + 1]);
 	}
 
 	@Test
