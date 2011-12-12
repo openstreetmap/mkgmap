@@ -104,7 +104,7 @@ public class TypCompiler implements MapProcessor {
 			throw new MapFailedException("Error while writing typ file", e);
 		}
 
-		return outName;
+		return outFile.getPath();
 	}
 
 	/**
