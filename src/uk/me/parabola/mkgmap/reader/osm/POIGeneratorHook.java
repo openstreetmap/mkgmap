@@ -148,7 +148,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		// return all tags defined in the poiPlacementTags
 		Set<String> tags = new HashSet<String>();
 		for (Entry<String,String> poiTag : poiPlacementTags) {
-			tags.add(poiTag.getValue());
+			tags.add(poiTag.getKey());
 		}
 		return tags;
 	}
