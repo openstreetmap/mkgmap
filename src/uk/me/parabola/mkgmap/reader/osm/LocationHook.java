@@ -329,8 +329,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				
 				// check if the element is already tagged with all remaining boundary levels
 				// in this case the element can be removed from further processing 
-				Set<String> locTags = getUsedLocationTags(elem);
-				if (locTags.containsAll(remainingLevels)) {
+				if (hasAllTags(elem, remainingLevels)){
 					if (log.isDebugEnabled()) {
 						log.debug("Elem finish: "+elem.kind()+elem.getId()+" "+elem.toTagString());
 					}
@@ -360,27 +359,19 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 	}
 	
-	/**
-	 * Retrieves which of the location tags are already set in this element.
-	 * @param element the OSM element
-	 * @return a set of location tags
-	 */
-	private Set<String> getUsedLocationTags(Element element) {
-		Set<String> usedTags = null;
-		for (String locTag : mkgmapTags.values()) {
-			if (element.getTag(locTag) != null) {
-				if (usedTags == null) {
-					usedTags = new HashSet<String>();
-				}
-				usedTags.add(locTag);
-			}
-		}
-		if (usedTags == null) {
-			return Collections.emptySet();
-		} else {
-			return usedTags;
-		}
-	}
+ 	/**
+	 * Check if all tags listed in tags are already set in this element.
+ 	 * @param element the OSM element
+	 * @param tags a list of tags 
+	 * @return true if all tags are set
+ 	 */
+	private boolean hasAllTags(Element element, List<String> tags) {
+		for (String locTag : tags) {
+			if (element.getTag(locTag) == null) 
+				return false;
+ 		}
+		return true;
+ 	}
 
 	public void end() {
 		long t1 = System.currentTimeMillis();
