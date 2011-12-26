@@ -75,7 +75,7 @@ public class OsmBinHandler extends OsmHandler {
 						String val = getStringById(binNode.getVals(tid));
 						key = keepTag(key, val);
 						if (key != null)
-							node.addTag(key, val);
+							node.addTag(key, val.intern());
 					}
 
 					saver.addNode(node);
@@ -112,7 +112,7 @@ public class OsmBinHandler extends OsmHandler {
 						if (key != null) {
 							if (node == null)
 								node = new Node(id, co);
-							node.addTag(key, val);
+							node.addTag(key, val.intern());
 							ntags++;
 						}
 					}
@@ -137,7 +137,7 @@ public class OsmBinHandler extends OsmHandler {
 					String val = getStringById(binWay.getVals(j));
 					key = keepTag(key, val);
 					if (key != null)
-						way.addTag(key, val);
+						way.addTag(key, val.intern());
 				}
 
 				long nid = 0;
@@ -172,7 +172,7 @@ public class OsmBinHandler extends OsmHandler {
 					String val = getStringById(binRel.getVals(j));
 					key = keepTag(key, val);
 					if (key != null)
-						rel.addTag(key, val);
+						rel.addTag(key, val.intern());
 				}
 
 

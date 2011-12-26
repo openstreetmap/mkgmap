@@ -225,7 +225,7 @@ public class Osm5XmlHandler extends OsmHandler {
 					currentNode = new Node(currentElementId, co);
 				}
 
-				currentNode.addTag(key, val);
+				currentNode.addTag(key, val.intern());
 			}
 		}
 	}
@@ -244,7 +244,7 @@ public class Osm5XmlHandler extends OsmHandler {
 			String val = attributes.getValue("v");
 			key = keepTag(key, val);
 			if (key != null)
-				currentWay.addTag(key, val);
+				currentWay.addTag(key, val.intern());
 		}
 	}
 
@@ -285,7 +285,7 @@ public class Osm5XmlHandler extends OsmHandler {
 			String val = attributes.getValue("v");
 			key = keepTag(key, val);
 			if (key != null)
-				currentRelation.addTag(key, val);
+				currentRelation.addTag(key, val.intern());
 		}
 	}
 

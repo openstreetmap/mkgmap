@@ -78,14 +78,14 @@ public class Tags implements Iterable<String> {
 		Integer ind = keyPos(key);
 		if (ind == null)
 			assert false : "keyPos(" + key + ") returns null - size = " + keySize + ", capacity = " + capacity;
-		keys[ind] = key.intern();
+		keys[ind] = key;
 
 		String old = values[ind];
 		if (old == null) {
 			keySize++;
 			size++;
 		}
-		values[ind] = value.intern();
+		values[ind] = value;
 
 		return old;
 	}
