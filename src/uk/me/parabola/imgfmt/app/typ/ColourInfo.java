@@ -316,7 +316,7 @@ public class ColourInfo implements Writeable {
 				count++;
 			}
 
-			if (nAlpha > 0 || count == nTrans) {
+			if (nAlpha > 0 || (count > 0 && count == nTrans)) {
 				// If there is any partial transparency we need colour mode 0x20
 				// Also if there is only one pixel and it is transparent, since otherwise there would be zero
 				// solid colours and that is a special case used to indicate a true colour pixmap.
