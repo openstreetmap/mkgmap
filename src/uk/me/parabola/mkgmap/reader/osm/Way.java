@@ -122,6 +122,17 @@ public class Way extends Element {
 		return sb.toString();
 	}
 
+	public int hashCode() {
+		return (int) getId();
+	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		return getId() == ((Way) o).getId();
+	}
+
 	public Coord getCofG() {
 		int numPoints = points.size();
 		if(numPoints < 1)
