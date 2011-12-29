@@ -105,12 +105,14 @@ public class CommonSection {
 	protected int decodeFontStyle(String value) {
 		if (value.startsWith("NoLabel") || value.equalsIgnoreCase("nolabel")) {
 			return 1;
-		} else if (value.equalsIgnoreCase("SmallFont")) {
+		} else if (value.equalsIgnoreCase("SmallFont") || value.equalsIgnoreCase("Small")) {
 			return 2;
-		} else if (value.equalsIgnoreCase("Default") || value.equals("NormalFont")) {
+		} else if (value.equalsIgnoreCase("NormalFont") || value.equalsIgnoreCase("Normal")) {
 			return 3;
-		} else if (value.equalsIgnoreCase("LargeFont") || value.equals("Large")) {
+		} else if (value.equalsIgnoreCase("LargeFont") || value.equalsIgnoreCase("Large")) {
 			return 4;
+		} else if (value.equalsIgnoreCase("Default")) {
+			return 0;
 		} else {
 			warnUnknown("font value " + value);
 			return 0;
