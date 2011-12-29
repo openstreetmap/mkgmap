@@ -53,7 +53,7 @@ public class CommonSection {
 		if (name.equalsIgnoreCase("Type")) {
 			try {
 				int ival = Integer.decode(value);
-				if (ival >= 0x10000) {
+				if (ival >= 0x100) {
 					current.setType(ival >>> 8);
 					current.setSubType(ival & 0xff);
 				} else {
