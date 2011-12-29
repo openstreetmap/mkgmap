@@ -13,8 +13,11 @@
 package uk.me.parabola.mkgmap.typ;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
@@ -219,7 +222,18 @@ public class TypTextReaderTest {
 		TypPoint point = data.getPoints().get(0);
 		ArrayImgWriter w = new ArrayImgWriter();
 		point.write(w, data.getEncoder());
-		assertEquals(342, w.getBytes().length);
+		System.out.println("size " + w.getSize());
+		try {
+			OutputStream os = new FileOutputStream("hello");
+			os.write(w.getBytes());
+			os.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		assertEquals(115, w.getBytes().length);
+
 	}
 
 	@Test

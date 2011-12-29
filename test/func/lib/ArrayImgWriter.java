@@ -69,7 +69,7 @@ public class ArrayImgWriter implements ImgFileWriter {
 
 	public void put(ByteBuffer src) {
 		byte[] array = src.array();
-		out.write(array, 0, array.length);
+		out.write(array, 0, src.limit());
 	}
 
 	public long getSize() {
