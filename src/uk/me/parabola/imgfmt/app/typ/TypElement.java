@@ -104,7 +104,7 @@ public abstract class TypElement {
 	 * @return A byte buffer with position set to the length of the block.
 	 */
 	protected ByteBuffer makeLabelBlock(CharsetEncoder encoder) {
-		ByteBuffer out = ByteBuffer.allocate(256);
+		ByteBuffer out = ByteBuffer.allocate(256 * labels.size());
 		for (TypLabel tl : labels) {
 			out.put((byte) tl.getLang());
 			CharBuffer cb = CharBuffer.wrap(tl.getText());
@@ -115,7 +115,6 @@ public abstract class TypElement {
 				String name = encoder.charset().name();
 				//System.out.println("cs " + name);
 				throw new TypLabelException(name);
-				//System.out.println("WARNING: failed to encode string: " + tl.getText() + ". File should be in unicode");
 			}
 			out.put((byte) 0);
 		}
@@ -129,11 +128,22 @@ public abstract class TypElement {
 	 */
 	protected void writeLabelBlock(ImgFileWriter writer, CharsetEncoder encoder) {
 		ByteBuffer out = makeLabelBlock(encoder);
-		int flag = 1; // XXX What is this?
 
-		// write out the length byte
-		byte len = (byte) ((out.position() << 1) + flag);
-		writer.put(len);
+		int len = out.position();
+
+		// The length is encoded as a variable length integer with the length indicated by a suffix.
+		len = (len << 1) + 1;
+		int mask = ~0xff;
+		while ((len & mask) != 0) {
+			mask <<= 8;
+			len <<= 1;
+		}
+
+		// write out the length, I'm assuming that it will be 1 or 2 bytes
+		if (len > 0xff)
+			writer.putChar((char) len);
+		else
+			writer.put((byte) len);
 
 		// Prepare and write buffer
 		out.flip();

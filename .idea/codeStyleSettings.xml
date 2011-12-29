@@ -145,6 +145,10 @@
           <option name="WRAP_COMMENTS" value="true" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
         </codeStyleSettings>
+        <codeStyleSettings language="Python">
+          <option name="ALIGN_MULTILINE_PARAMETERS" value="false" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
         <codeStyleSettings language="XML">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />

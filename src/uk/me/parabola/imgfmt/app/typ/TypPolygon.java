@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.CharsetEncoder;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -46,18 +45,8 @@ public class TypPolygon extends TypElement {
 		// The labels have a length byte to show the number of bytes following. There is
 		// also a flag in the length. The strings have a language number proceeding them.
 		// The strings themselves are null terminated.
-		if ((scheme & F_LABEL) != 0) {
-			ByteBuffer out = makeLabelBlock(encoder);
-			int flag = 1; // XXX What is this?
-
-			// write out the length byte
-			byte len = (byte) ((out.position() << 1) + flag);
-			writer.put(len);
-
-			// Prepare and write buffer
-			out.flip();
-			writer.put(out);
-		}
+		if ((scheme & F_LABEL) != 0)
+			writeLabelBlock(writer, encoder);
 
 		// The extension section hold font style and colour information for the labels.
 		if ((scheme & F_EXTENDED) != 0) {
