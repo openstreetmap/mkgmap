@@ -203,7 +203,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 
 			// do not add POIs for polygons created by multipolygon processing
 			if (w.isBoolTag(MultiPolygonRelation.MP_CREATED_TAG)) {
-				log.debug("MP processed: Do not create POI for", w.toTagString());
+				if (log.isDebugEnabled())
+					log.debug("MP processed: Do not create POI for", w.toTagString());
 				continue;
 			}
 			
@@ -322,10 +323,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		poi.copyTags(source);
 		poi.deleteTag(MultiPolygonRelation.STYLE_FILTER_TAG);
 		poi.addTag(poiTypeTag, "true");
-		log.debug("Create POI",poi.toTagString(),"from",source.getId(),source.toTagString());
-		if (source.getTag("mkgmap:aname") != null) {
-			log.error(source.getId()
-					+" "+source.toTagString());
+		if (log.isDebugEnabled()) {
+			log.debug("Create POI",poi.toTagString(),"from",source.getId(),source.toTagString());
 		}
 		return poi;
 		
