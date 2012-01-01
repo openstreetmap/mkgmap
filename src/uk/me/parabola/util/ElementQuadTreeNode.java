@@ -170,7 +170,7 @@ public final class ElementQuadTreeNode {
 					bounds.getWidth(), bounds.getHeight());
 		this.children = null;
 
-		this.elementMap = new HashMap<Element, List<Coord>>();
+		this.elementMap = new HashMap<Element, List<Coord>>(elements.size()*4/3+10);
 		
 		for (Element el : elements) {
 			if (el instanceof Way) {
@@ -203,42 +203,72 @@ public final class ElementQuadTreeNode {
 	}
 
 	/**
-	 * Removes the element from this quadtree node and all subnodes.
+	 * Removes the element with the given bounding box from this quadtree node and all subnodes.
 	 * @param elem the element to be removed
+	 * @param bbox the bounding box of the element
 	 */
-	public void remove(Element elem) {
+	private void remove(Element elem, Area bbox) {
+		if (bbox == null || isEmpty()) {
+			return;
+		}
 		if (isLeaf()) {
 			elementMap.remove(elem);
 			empty = elementMap.isEmpty();
 		} else {
-			if (elem instanceof Node) {
-				Node n = (Node) elem;
-				for (ElementQuadTreeNode child : children) {
-					if (child.getBounds().contains(n.getLocation())) {
-						child.remove(elem);
-						if (child.isEmpty()) {
-							// update the empty flag
-							empty = null;
-						}
-						break;
-					}
-				}
-			} else if (elem instanceof Way) {
-				for (ElementQuadTreeNode child : children) {
-					for (Coord c : ((Way) elem).getPoints()) {
-						if (child.getBounds().contains(c)) {
-							// found one point covered by the child
-							// => remove the element and check the next child
-							child.remove(elem);
-							if (empty != null && child.isEmpty()) {
-								empty = null;
-							}
-							break;
-						}
+			for (ElementQuadTreeNode child : children) {
+				if (child.getBounds().intersects(bbox)) {
+					child.remove(elem, bbox);
+					if (child.isEmpty()) {
+						// update the empty flag
+						empty = null;
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Calculates the bounding box of the given element.
+	 * @param elem an element
+	 * @return the bounding box of the element
+	 */
+	private Area getBbox(Element elem) {
+		if (elem instanceof Node) {
+			Coord c = ((Node) elem).getLocation();
+			return new Area(c.getLatitude(), c.getLongitude(), c.getLatitude(),c.getLongitude());
+		} else if (elem instanceof Way) {
+			List<Coord> points = ((Way) elem).getPoints();
+			if (points.isEmpty()) {
+				return null;
+			}
+			Coord c = points.get(0);
+			int minLat = c.getLatitude();
+			int maxLat = c.getLatitude();
+			int minLong = c.getLongitude();
+			int maxLong = c.getLongitude();
+			for (Coord co : points) {
+				if (co.getLatitude() < minLat) {
+					minLat = co.getLatitude();
+				} else if (co.getLatitude() > maxLat) {
+					maxLat = co.getLatitude();
+				}
+				if (co.getLongitude() < minLong) {
+					minLong = co.getLongitude();
+				} else if (co.getLongitude() > maxLong) {
+					maxLong = co.getLongitude();
+				}
+			}
+			return new Area(minLat,minLong, maxLat, maxLong);
+		}
+		return null;
+	}
+	
+	/**
+	 * Removes the element from this quadtree node and all subnodes.
+	 * @param elem the element to be removed
+	 */
+	public void remove(Element elem) {
+		remove(elem, getBbox(elem));
 	}
 
 	/**
