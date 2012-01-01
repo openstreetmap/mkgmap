@@ -13,41 +13,13 @@ import uk.me.parabola.util.ElementQuadTreeNode.ElementQuadTreePolygon;
 public class ElementQuadTree {
 
 	private final ElementQuadTreeNode root;
-	private long itemCount;
-
-	public ElementQuadTree(Area bbox) {
-		this.root = new ElementQuadTreeNode(bbox);
-		this.itemCount = 0;
-	}
-
-	public ElementQuadTree(Collection<Element> elements) {
-		this.root = new ElementQuadTreeNode(elements);
-		this.itemCount = 0;
-	}
 	
-	public boolean addAll(Collection<Element> elements) {
-		boolean oneAdded = false;
-		for (Element element : elements) {
-			oneAdded = add(element) | oneAdded;
-		}
-		return oneAdded;
+	public ElementQuadTree(Area bbox, Collection<Element> elements) {
+		this.root = new ElementQuadTreeNode(bbox, elements);
 	}
 
-	public boolean add(Element element) {
-
-		boolean added = root.add(element);
-		if (added) {
-			itemCount++;
-		}
-		return added;
-	}
-	
-	public boolean remove(Element element) {
-		boolean removed = root.remove(element);
-		if (removed) {
-			itemCount--;
-		}
-		return removed;
+	public void remove(Element element) {
+		root.remove(element);
 	}
 
 	public Set<Element> get(Area bbox) {
@@ -81,9 +53,13 @@ public class ElementQuadTree {
 	public long getCoordSize() {
 		return root.getSize();
 	}
+	
+	public boolean isEmpty() {
+		return root.isEmpty();
+	}
+	
 
 	public void clear() {
-		itemCount = 0;
 		root.clear();
 	}
 }

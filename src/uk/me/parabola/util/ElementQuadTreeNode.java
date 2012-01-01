@@ -1,9 +1,24 @@
+/*
+ * Copyright (C) 2006, 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.util;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -12,24 +27,32 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Node;
-import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 public final class ElementQuadTreeNode {
 
 	private static final Logger log = Logger.getLogger(ElementQuadTreeNode.class);
 
+	/**
+	 * A static empty list used for node objects. They have one coord only and
+	 * it is too costly to create a list for each node
+	 */
+	private static final List<Coord> EMPTY_LIST = Collections.emptyList();
+	
+	/** The maximum number of coords in the quadtree node. */
 	private static final int MAX_POINTS = 1000;
 
-	private MultiHashMap<Coord, Element> points;
+	/** Maps elements to its coords located in this quadtree node. */ 
+	private Map<Element, List<Coord>>  elementMap;
+
+	/** The bounds of this quadtree node */
 	private final Area bounds;
-	private Area coveredBounds;
-	private long items = -1;
+	private final Rectangle boundsRect;
 
-	public Area getCoveredBounds() {
-		return coveredBounds;
-	}
+	/** Flag if this node and all subnodes are empty */
+	private Boolean empty;
 
+	/** The subnodes in case this node is not a leaf */
 	private ElementQuadTreeNode[] children;
 
 	public static final class ElementQuadTreePolygon {
@@ -67,289 +90,202 @@ public final class ElementQuadTreeNode {
 		}
 	}
 
-	public ElementQuadTreeNode(Area bounds) {
-		this(bounds, Collections.<Element> emptyList());
-	}
-	
-	
-	public ElementQuadTreeNode(Collection<Element> elements) {
-		this.children = null;
-
-		int minLat = Integer.MAX_VALUE;
-		int maxLat = Integer.MIN_VALUE;
-		int minLong = Integer.MAX_VALUE;
-		int maxLong = Integer.MIN_VALUE;
-
-		this.points = new MultiHashMap<Coord, Element>();
-		for (Element el : elements) {
-			Collection<Coord> coords = null;
-			if (el instanceof Relation) {
-				continue;
-			} else if (el instanceof Way) {
-				Way w = (Way) el;
-				if (w.isClosed()) {
-					coords = w.getPoints().subList(0, w.getPoints().size()-1);	
-				} else {
-					coords = w.getPoints();
+	/**
+	 * Retrieves if this quadtree node (and all subnodes) contains any elements.
+	 * @return <code>true</code> this quadtree node does not contain any elements; <code>false</code> else
+	 */
+	public boolean isEmpty() {
+		if (empty == null) {
+			if (isLeaf()) {
+				empty = elementMap.isEmpty();
+			} else {
+				empty = true;
+				for (ElementQuadTreeNode child : children) {
+					if (child.isEmpty()==false) {
+						empty = false;
+						break;
+					}
 				}
-			} else if (el instanceof Node) {
-				coords = Collections.singleton(((Node) el).getLocation());
 			}
-			
-			for (Coord c : coords) {
-				if (c.getLatitude() < minLat) {
-					minLat = c.getLatitude();
-				}
-				if (c.getLatitude() > maxLat) {
-					maxLat = c.getLatitude();
-				}
-				if (c.getLongitude() < minLong) {
-					minLong = c.getLongitude();
-				}
-				if (c.getLongitude() > maxLong) {
-					maxLong = c.getLongitude();
-				}
-				points.add(c, el);
-			}
-
 		}
-		coveredBounds = new Area(minLat, minLong, maxLat, maxLong);
-		this.bounds = coveredBounds;
-		
-		if (points.size() > MAX_POINTS) {
-			split();
-		} 
+		return empty;
 	}
 	
+	
+	/**
+	 * Retrieves the number of coords hold by this quadtree node and all subnodes.
+	 * @return the number of coords
+	 */
 	public long getSize() {
 		if (isLeaf()) {
-			return points.size();
-		} else {
-			if (items < 0) {
-				items = 0;
-				for (ElementQuadTreeNode child : children) {
-					items += child.getSize();
+			int items = 0;
+			for (List<Coord> points : elementMap.values()) {
+				if (points == EMPTY_LIST) {
+					items++;
+				} else {
+					items += points.size();
 				}
+			}
+			return items;
+		} else {
+			int items = 0;
+			for (ElementQuadTreeNode child : children) {
+					items += child.getSize();
 			}
 			return items;
 		}
 	}
-	
+
+	/**
+	 * Retrieves the depth of this quadtree node. Leaves have depth 1.
+	 * @return the depth of this quadtree node
+	 */
 	public int getDepth() {
 		if (isLeaf()) {
 			return 1;
 		} else {
 			int maxDepth = 0;
-			for (ElementQuadTreeNode node :children) {
+			for (ElementQuadTreeNode node : children) {
 				maxDepth = Math.max(node.getDepth(), maxDepth);
 			}
-			return maxDepth+1;
+			return maxDepth + 1;
 		}
 	}
-	
-//	public void outputBounds(String basename, int level) {
-////		if (level > 8 ) {
-////			return;
-////		}
-//		
-//		if (isLeaf()) {
-//			GpxCreator.createAreaGpx(basename+level+"_"+points.keySet().size(), coveredBounds);
-////			GpxCreator.createGpx(basename+level+"p"+points.keySet().size(), new ArrayList<Coord>(), new ArrayList<Coord>(points.keySet()));
-//		} else {
-////			GpxCreator.createAreaGpx(basename+level, coveredBounds);
-//			int i = 0;
-//			for (ElementQuadTreeNode node : children) {
-//				i++;
-//				node.outputBounds(basename+i+"_", level+1);
-//			}
-//		}
-//	}
 
+	private ElementQuadTreeNode(Area bounds, Map<Element, List<Coord>> elements) {
+		this.bounds = bounds;
+		boundsRect = new Rectangle(bounds.getMinLong(), bounds.getMinLat(),
+				bounds.getWidth(), bounds.getHeight());
+		this.children = null;
+		elementMap =elements;
+		empty = elementMap.isEmpty();
+		
+		checkSplit();		
+	}
+	
+	
 	public ElementQuadTreeNode(Area bounds, Collection<Element> elements) {
 		this.bounds = bounds;
+		boundsRect = new Rectangle(bounds.getMinLong(), bounds.getMinLat(),
+					bounds.getWidth(), bounds.getHeight());
 		this.children = null;
 
-		int minLat = Integer.MAX_VALUE;
-		int maxLat = Integer.MIN_VALUE;
-		int minLong = Integer.MAX_VALUE;
-		int maxLong = Integer.MIN_VALUE;
-
-		this.points = new MultiHashMap<Coord, Element>();
+		this.elementMap = new HashMap<Element, List<Coord>>();
+		
 		for (Element el : elements) {
-			Collection<Coord> coords = null;
-			if (el instanceof Relation) {
-				continue;
-			} else if (el instanceof Way) {
-				Way w = (Way) el;
-				if (w.isClosed()) {
-					coords = w.getPoints().subList(0, w.getPoints().size()-1);	
-				} else {
-					coords = w.getPoints();
-				}
+			if (el instanceof Way) {
+				List<Coord> points = ((Way) el).getPoints();
+				// no need to create a copy of the points because the list is never changed
+				elementMap.put(el, points);
 			} else if (el instanceof Node) {
-				coords = Collections.singleton(((Node) el).getLocation());
+				elementMap.put(el, EMPTY_LIST);
 			}
-			
-			for (Coord c : coords) {
-				if (c.getLatitude() < minLat) {
-					minLat = c.getLatitude();
-				}
-				if (c.getLatitude() > maxLat) {
-					maxLat = c.getLatitude();
-				}
-				if (c.getLongitude() < minLong) {
-					minLong = c.getLongitude();
-				}
-				if (c.getLongitude() > maxLong) {
-					maxLong = c.getLongitude();
-				}
-				points.add(c, el);
-			}
-
 		}
-		if (minLat > maxLat || minLong > maxLong) {
-			coveredBounds = new Area(bounds.getMinLat(), bounds.getMinLong(), bounds.getMinLat()+1, bounds.getMinLong()+1);
-		} else {
-			coveredBounds = new Area(minLat, minLong, maxLat, maxLong);
-		}
-
-		if (points.size() > MAX_POINTS) {
-			split();
-		} 
+		empty = elementMap.isEmpty();
+		checkSplit();
 	}
 
 	public Area getBounds() {
 		return this.bounds;
 	}
-	
-	public Rectangle getRectBounds() {
-		return new Rectangle(bounds.getMinLong(), bounds.getMinLat(), bounds.getWidth(), bounds.getHeight());
+
+	public Rectangle getBoundsAsRectangle() {
+		return boundsRect;
 	}
 
-	private boolean add(Coord c, Element element) {
-		items = -1;
-		if (coveredBounds == null) {
-			coveredBounds = new Area(c.getLatitude(), c.getLongitude(),
-					c.getLatitude(), c.getLongitude());
-		} else if (coveredBounds.contains(c) == false) {
-			coveredBounds = new Area(Math.min(coveredBounds.getMinLat(),
-					c.getLatitude()), Math.min(coveredBounds.getMinLong(),
-					c.getLongitude()), Math.max(coveredBounds.getMaxLat(),
-					c.getLatitude()), Math.max(coveredBounds.getMaxLong(),
-					c.getLongitude()));
+	/**
+	 * Checks if this quadtree node exceeds the maximum size and splits it in such a case.
+	 */
+	private void checkSplit() {
+		if (getSize() > MAX_POINTS) {
+			split();
 		}
+	}
+
+	/**
+	 * Removes the element from this quadtree node and all subnodes.
+	 * @param elem the element to be removed
+	 */
+	public void remove(Element elem) {
 		if (isLeaf()) {
-			points.add(c,element);
-			if (points.size() > MAX_POINTS)
-				split();
-			return true;
+			elementMap.remove(elem);
+			empty = elementMap.isEmpty();
 		} else {
-			for (ElementQuadTreeNode nodes : children) {
-				if (nodes.getBounds().contains(c)) {
-					return nodes.add(c, element);
+			if (elem instanceof Node) {
+				Node n = (Node) elem;
+				for (ElementQuadTreeNode child : children) {
+					if (child.getBounds().contains(n.getLocation())) {
+						child.remove(elem);
+						if (child.isEmpty()) {
+							// update the empty flag
+							empty = null;
+						}
+						break;
+					}
+				}
+			} else if (elem instanceof Way) {
+				for (ElementQuadTreeNode child : children) {
+					for (Coord c : ((Way) elem).getPoints()) {
+						if (child.getBounds().contains(c)) {
+							// found one point covered by the child
+							// => remove the element and check the next child
+							child.remove(elem);
+							if (empty != null && child.isEmpty()) {
+								empty = null;
+							}
+							break;
+						}
+					}
 				}
 			}
-			return false;
 		}
 	}
 
-	public boolean add(Element c) {
-		items = -1;
-		if (c instanceof Relation) {
-			log.error("Relations are not supported by this quadtree implementation. Skipping relation "
-					+ c.toBrowseURL());
-			return false;
-		} else if (c instanceof Way) {
-			// add all points to the tree
-			Way w = (Way) c;
-			List<Coord> points;
-			if (w.isClosed()) {
-				points = w.getPoints().subList(0, w.getPoints().size()-1);	
-			} else {
-				points = w.getPoints();
-			}
-			
-			boolean allOk = true;
-			for (Coord cp : points) {
-				allOk = add(cp, c) && allOk;
-			}
-			return allOk;
-		} else if (c instanceof Node) {
-			return add(((Node) c).getLocation(), c);
-		} else {
-			log.error("Unsupported element type: "+c);
-			return false;
-		}
-	}
-
-	public boolean remove(Element c) {
-		items = -1;
-		if (c instanceof Relation) {
-			log.error("Relations are not supported by this quadtree implementation. Skipping relation "
-					+ c.toBrowseURL());
-			return false;
-		} else if (c instanceof Way) {
-			// add all points to the tree
-			Way w = (Way) c;
-			List<Coord> points;
-			if (w.isClosed()) {
-				points = w.getPoints().subList(0, w.getPoints().size()-1);	
-			} else {
-				points = w.getPoints();
-			}
-			
-			boolean allOk = true;
-			for (Coord cp : points) {
-				allOk = remove(cp, c) && allOk;
-			}
-			return allOk;
-		} else if (c instanceof Node) {
-			return remove(((Node) c).getLocation(), c);
-		} else {
-			log.error("Unsupported element type: "+c);
-			return false;
-		}		
-	}
-	
-	private boolean remove(Coord c, Element elem) {
-		items = -1;
-		if (isLeaf()) {
-			return points.remove(c, elem) != null;
-		} else {
-			for (ElementQuadTreeNode child : children) {
-				if (child.getCoveredBounds().contains(c)) {
-					return child.remove(c, elem);
-				}
-			}
-			return false;
-		}
-	}
-	
+	/**
+	 * Retrieves all elements that intersects the given bounding box.
+	 * @param bbox the bounding box
+	 * @param resultList results are stored in this collection
+	 * @return the resultList
+	 */
 	public Set<Element> get(Area bbox, Set<Element> resultList) {
-		if (getSize() == 0) {
+		if (isEmpty()) {
 			return resultList;
 		}
 		if (isLeaf()) {
-			if (bbox.getMinLat() <= coveredBounds.getMinLat()
-					&& bbox.getMaxLat() >= coveredBounds.getMaxLat()
-					&& bbox.getMinLong() <= coveredBounds.getMinLong()
-					&& bbox.getMaxLong() >= coveredBounds.getMaxLong()) {
+			if (bbox.getMinLat() <= bounds.getMinLat()
+					&& bbox.getMaxLat() >= bounds.getMaxLat()
+					&& bbox.getMinLong() <= bounds.getMinLong()
+					&& bbox.getMaxLong() >= bounds.getMaxLong()) {
 
 				// the bounding box is contained completely in the bbox
 				// => add all points without further check
-				for (List<Element> elem : points.values())
-					resultList.addAll(elem);
+				resultList.addAll(elementMap.keySet());
 			} else {
 				// check each point
-				for (Entry<Coord, List<Element>> e : points.entrySet()) {
-					if (bbox.contains(e.getKey())) {
-						resultList.addAll(e.getValue());
+				for (Entry<Element, List<Coord>> elem : elementMap.entrySet()) {
+					if (elem.getKey() instanceof Node) {
+						Node n = (Node) elem.getKey();
+						if (bbox.contains(n.getLocation())) {
+							resultList.add(n);
+						}
+					} else if (elem.getKey() instanceof Way) {
+						// no need to check - the element is already in the result list
+						if (resultList.contains(elem.getKey())) {
+							continue;
+						}
+						for (Coord c : elem.getValue()) {
+							if (bbox.contains(c)) {
+								resultList.add(elem.getKey());
+								break;
+							}
+						}
 					}
 				}
 			}
 		} else {
 			for (ElementQuadTreeNode child : children) {
-				if (child.getSize() > 0 && bbox.intersects(child.getCoveredBounds())) {
+				if (child.isEmpty() == false
+						&& bbox.intersects(child.getBounds())) {
 					resultList = child.get(bbox, resultList);
 				}
 			}
@@ -357,25 +293,56 @@ public final class ElementQuadTreeNode {
 		return resultList;
 	}
 
+	/**
+	 * Retrieves all elements that intersects the given polygon.
+	 * @param polygon the polygon
+	 * @param resultList results are stored in this collection
+	 * @return the resultList
+	 */
 	public Set<Element> get(ElementQuadTreePolygon polygon,
 			Set<Element> resultList) {
-		if (getSize() > 0 && polygon.getBbox().intersects(getBounds())) {
+		if (isEmpty()) {
+			return resultList;
+		}
+		if (polygon.getBbox().intersects(getBounds())) {
 			if (isLeaf()) {
-				for (Entry<Coord, List<Element>> e : points.entrySet()) {
-					if (polygon.getArea().contains(e.getKey().getLongitude(),
-							e.getKey().getLatitude())) {
-						resultList.addAll(e.getValue());
+				for (Entry<Element, List<Coord>> elem : elementMap.entrySet()) {
+					if (resultList.contains(elem.getKey())) {
+						continue;
+					}
+					if (elem.getKey() instanceof Node) {
+						Node n = (Node)elem.getKey();
+						Coord c = n.getLocation();
+						if (polygon.getArea().contains(c.getLongitude(),
+								c.getLatitude())) {
+							resultList.add(n);
+						}
+					} else if (elem.getKey() instanceof Way) {
+						for (Coord c : elem.getValue()) {
+							if (polygon.getArea().contains(c.getLongitude(),
+									c.getLatitude())) {
+								resultList.add(elem.getKey());
+								break;
+							}
+						}
 					}
 				}
 			} else {
 				for (ElementQuadTreeNode child : children) {
-					if (child.getSize() > 0 && polygon.getArea().intersects(child.getRectBounds())) {
+					if (child.isEmpty()==false 
+							&& polygon.getArea().intersects(
+									child.getBoundsAsRectangle())) {
 						java.awt.geom.Area subArea = (java.awt.geom.Area) polygon
 								.getArea().clone();
-						
-						subArea.intersect(createArea(new Area(child.getBounds().getMinLat()-1,child.getBounds().getMinLong()-1,child.getBounds().getMaxLat()+1, child.getBounds().getMaxLong()+1)));
-						if (subArea.isEmpty() == false)
-							child.get(new ElementQuadTreePolygon(subArea), resultList);
+
+						subArea.intersect(Java2DConverter.createBoundsArea(new Area(child.getBounds()
+								.getMinLat() - 1, child.getBounds()
+								.getMinLong() - 1, child.getBounds()
+								.getMaxLat() + 1, child.getBounds()
+								.getMaxLong() + 1))
+								);
+						child.get(new ElementQuadTreePolygon(subArea),
+									resultList);
 					}
 				}
 			}
@@ -384,51 +351,83 @@ public final class ElementQuadTreeNode {
 
 	}
 
-	private java.awt.geom.Area createArea(Area bbox) {
-		return new java.awt.geom.Area(new Rectangle(bbox.getMinLong(),
-				bbox.getMinLat(), bbox.getWidth(), bbox.getHeight()));
-	}
-
+	/**
+	 * Retrieves if this quadtree node is a leaf.
+	 * @return <code>true</code> this node is a leaf
+	 */
 	public boolean isLeaf() {
-		return points != null;
+		return elementMap != null;
 	}
 
+	/**
+	 * Splits this quadtree node into 4 subnodes.
+	 */
 	private void split() {
 		if (bounds.getHeight() <= 5 || bounds.getWidth() <= 5) {
-			log.error("Do not split more due to too small bounds: "+bounds);
+			log.error("Do not split more due to too small bounds: " + bounds);
 			return;
 		}
 
 		int halfLat = (bounds.getMinLat() + bounds.getMaxLat()) / 2;
 		int halfLong = (bounds.getMinLong() + bounds.getMaxLong()) / 2;
 		children = new ElementQuadTreeNode[4];
-
-		Area swBounds = new Area(bounds.getMinLat(), bounds.getMinLong(),
+		Area[] childBounds = new Area[4];
+		
+		childBounds[0] = new Area(bounds.getMinLat(), bounds.getMinLong(),
 				halfLat, halfLong);
-		Area nwBounds = new Area(halfLat, bounds.getMinLong(),
+		childBounds[1] = new Area(halfLat, bounds.getMinLong(),
 				bounds.getMaxLat(), halfLong);
-		Area seBounds = new Area(bounds.getMinLat(), halfLong, halfLat,
+		childBounds[2] = new Area(bounds.getMinLat(), halfLong, halfLat,
 				bounds.getMaxLong());
-		Area neBounds = new Area(halfLat, halfLong, bounds.getMaxLat(),
+		childBounds[3] = new Area(halfLat, halfLong, bounds.getMaxLat(),
 				bounds.getMaxLong());
-		
-		children[0] = new ElementQuadTreeNode(swBounds);
-		children[1] = new ElementQuadTreeNode(nwBounds);
-		children[2] = new ElementQuadTreeNode(seBounds);
-		children[3] = new ElementQuadTreeNode(neBounds);
-		
-		MultiHashMap<Coord, Element> copyPoints = points;
-		points = null;
-		for (Entry<Coord, List<Element>> c : copyPoints.entrySet()) {
-			for (Element el : c.getValue())
-				add(c.getKey(), el);
+
+		List<Map<Element, List<Coord>>> childElems = new ArrayList<Map<Element, List<Coord>>>(4);
+		for (int i = 0; i < 4; i++) {
+			childElems.add(new HashMap<Element, List<Coord>>());
 		}
+		for (Entry<Element,List<Coord>> elem : elementMap.entrySet()) {
+			if (elem.getKey() instanceof Node) {
+				Node node = (Node) elem.getKey();
+				for (int i = 0; i < childBounds.length; i++) {
+					if (childBounds[i].contains(node.getLocation())) {
+						childElems.get(i).put(node, EMPTY_LIST);
+						break;
+					}
+				}
+			} else if (elem.getKey() instanceof Way) {
+				List<List<Coord>> points = new ArrayList<List<Coord>>(4);
+				for (int i = 0; i < 4; i++) {
+					// usually ways are quite local
+					// therefore there is a high probability that only one child is covered
+					// dim the new list as the old list
+					points.add(new ArrayList<Coord>(elem.getValue().size()));
+				}
+				for (Coord c : elem.getValue()) {
+					for (int i = 0; i < childBounds.length; i++) {
+						if (childBounds[i].contains(c)) {
+							points.get(i).add(c);
+							break;
+						}
+					}				
+				}
+				for (int i = 0; i< 4; i++) {
+					if (points.get(i).isEmpty()==false) {
+						childElems.get(i).put(elem.getKey(), points.get(i));
+					}
+				}
+			}
+		}
+		
+		for (int i = 0; i < 4; i++) {
+			children[i] = new ElementQuadTreeNode(childBounds[i], childElems.get(i));
+		}
+		
+		elementMap = null;
 	}
 
 	public void clear() {
 		this.children = null;
-		points = new MultiHashMap<Coord, Element>();
-		coveredBounds = new Area(Integer.MAX_VALUE, Integer.MAX_VALUE,
-				Integer.MIN_VALUE, Integer.MIN_VALUE);
+		elementMap = new HashMap<Element, List<Coord>>();
 	}
 }

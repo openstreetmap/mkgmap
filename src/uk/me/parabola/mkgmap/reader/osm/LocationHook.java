@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2011.
+ * Copyright (C) 2006, 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -13,7 +13,6 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +53,10 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			.compile("[,;]+");
 	
 	public static final String BOUNDS_OPTION = "bounds";
-
+	
+	private static File checkedBoundaryDir;
+	private static boolean checkBoundaryDirOk;
+	
 	private final static Hashtable<String, String> mkgmapTags = new Hashtable<String, String>() {
 		{
 			put("admin_level=1", "mkgmap:admin_level1");
@@ -92,55 +94,92 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		nameTags.addAll(LocatorUtil.getNameTags(props));
 
 		if (autofillOptions.contains(BOUNDS_OPTION)) {
-
 			boundaryDir = new File(props.getProperty("bounds", "bounds"));
-			if (boundaryDir.exists() == false) {
-				log.error("Disable LocationHook because boundary directory does not exist. Dir: "
-						+ boundaryDir);
-				return false;
-			}
-			File[] boundaryFiles = boundaryDir.listFiles(new FileFilter() {
-				public boolean accept(File pathname) {
-					return (pathname.isFile() && pathname.getName().endsWith(
-							".bnd"));
-				}
+			long t1 = System.currentTimeMillis();
 
-			});
-			if (boundaryFiles == null || boundaryFiles.length == 0) {
-				log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
-						+ boundaryDir);
-				return false;
+			synchronized (BOUNDS_OPTION) {
+				// checking of the boundary dir is expensive
+				// check once only and reuse the result
+				if (boundaryDir.equals(checkedBoundaryDir)) {
+					if (checkBoundaryDirOk == false) {
+						log.error("Disable LocationHook because boundary directory is unusable. Dir: "+boundaryDir);
+						return false;
+					}
+				} else {
+					checkedBoundaryDir = boundaryDir;
+					checkBoundaryDirOk = false;
+					
+					if (boundaryDir.exists() == false) {
+						log.error("Disable LocationHook because boundary directory does not exist. Dir: "
+								+ boundaryDir);
+						return false;
+					}
+					
+					// boundaryDir.list() is much quicker than boundaryDir.listFiles(FileFilter)
+					String[] boundaryFiles = boundaryDir.list();
+					if (boundaryFiles == null || boundaryFiles.length == 0) {
+						log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
+								+ boundaryDir);
+						return false;
+					}
+					boolean boundsFileFound = false;
+					for (String boundsFile : boundaryFiles) {
+						if (boundsFile.endsWith(".bnd")) {
+							boundsFileFound = true;
+							break;
+						}
+					}
+					if (boundsFileFound == false) {
+						log.error("Disable LocationHook because boundary directory contains no boundary files. Dir: "
+								+ boundaryDir);
+						return false;						
+					}
+					
+					// passed all checks => boundaries are ok
+					checkBoundaryDirOk = true;
+				}
 			}
+			log.info("Checking bounds dir took "
+					+ (System.currentTimeMillis() - t1) + " ms");
 		}
 		return true;
 	}
 	
-	private void assignPreprocBounds() {
-		long t1 = System.currentTimeMillis();
-		ElementQuadTree quadTree = new ElementQuadTree(saver.getBoundingBox());
+	/**
+	 * Retrieve a list of all elements for which the boundary assignment should be performed.
+	 * @return a list of elements (points + ways + shapes)
+	 */
+	private List<Element> getLocationRelevantElements() {
+		List<Element> elemList = new ArrayList<Element>(saver.getNodes().size()+saver.getWays().size());
 
 		// add all nodes that might be converted to a garmin node (tagcount > 0)
 		for (Node node : saver.getNodes().values()) {
 			if (node.getTagCount() > 0) {
-				quadTree.add(node);
+				elemList.add(node);
 			}
 		}
 
 		// add all ways that might be converted to a garmin way (tagcount > 0)
 		// and save all polygons that contains location information
 		for (Way way : saver.getWays().values()) {
-			if (way.getTagCount() == 0) {
-				continue;
+			if (way.getTagCount() > 0) {
+				elemList.add(way);
 			}
-
-			// in any case add it to the element list
-			quadTree.add(way);
 		}
-
+		return elemList;
+	}
+	
+	/**
+	 * Loads the preprocessed boundaries that intersects the bounding box of the tile.
+	 * The bounds are sorted in descending order of admin_levels.
+	 * @return the preprocessed bounds
+	 */
+	private List<Boundary> loadBoundaries() {
 		long tb1 = System.currentTimeMillis();
 		// Load the boundaries that intersect with the bounding box of the tile
 		List<Boundary> boundaries = BoundaryUtil.loadBoundaries(boundaryDir,
 				saver.getBoundingBox());
+		
 		long tb2 = System.currentTimeMillis();
 		log.info("Loading boundaries took "+(tb2-tb1)+" ms");
 		
@@ -178,23 +217,37 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			if (zip != null)
 				b.getTags().put("mkgmap:bzip", zip);
 		}
+
+		// Sort them by the admin level
+		Collections.sort(boundaries, new BoundaryLevelCollator());
+		// Reverse the sorting because we want to start with the highest admin level (11)
+		Collections.reverse(boundaries);
+		
+		return boundaries;
+	}
+	
+	private void assignPreprocBounds() {
+		long t1 = System.currentTimeMillis();
+		
+		// create the quadtree
+		List<Element> elemList = getLocationRelevantElements();
+		log.info("Creating quadlist took "+(System.currentTimeMillis()-t1)+" ms");
+
+		ElementQuadTree quadTree = new ElementQuadTree(saver.getBoundingBox(), elemList);
+		elemList = null;
+
+		long tb1 = System.currentTimeMillis();
+		log.info("Creating quadtree took "+(tb1-t1)+" ms");
+		
+		List<Boundary> boundaries = loadBoundaries();
 		
 		if (boundaries.isEmpty()) {
 			log.info("Do not continue with LocationHook because no valid boundaries are available.");
 			return;
 		}
 
-		// Sort them by the admin level
-		Collections.sort(boundaries, new BoundaryLevelCollator());
-		// Reverse the sorting because we want to start with the lowest admin level
-		Collections.reverse(boundaries);
-
-		
-		log.info("LocationHook prepared after",
-				(System.currentTimeMillis() - t1), "ms");
-
-		log.info("Quadtree depth: "+quadTree.getDepth());
-		log.info("Quadtree coords: "+quadTree.getCoordSize());
+//		log.info("Quadtree depth: "+quadTree.getDepth());
+//		log.info("Quadtree coords: "+quadTree.getCoordSize());
 
 		// Map the boundaryid to the boundary for fast access
 		Map<String, Boundary> boundaryById = new HashMap<String, Boundary>();
@@ -234,7 +287,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		String currLevel = remainingLevels.remove(0);
 		log.debug("First level:",currLevel);
 		
-		bIter = boundaries.listIterator();
+		ListIterator<Boundary> bIter = boundaries.listIterator();
 		while (bIter.hasNext()) {
 			Boundary boundary = bIter.next();
 			String admin_level = boundary.getTags().get("admin_level");
@@ -314,7 +367,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			
 			// search for all elements in the boundary area
 			Set<Element> elemsInLocation = quadTree.get(boundary.getArea());
-
+			
 			for (Element elem : elemsInLocation) {
 				// tag the element with all tags referenced by the boundary
 				for (Entry<String,String> bTag : boundarySetTags.entrySet()) {
@@ -338,8 +391,10 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			}
 			bIter.remove();
 			
-			if (quadTree.getCoordSize() <= 0) {
-				log.info("Finish Location Hook: Remaining boundaries: "+boundaries.size());
+			if (quadTree.isEmpty()) {
+				if (log.isInfoEnabled()) {
+					log.info("Finish Location Hook: Remaining boundaries: "+boundaries.size());
+				}
 				return;
 			}
 		}
@@ -381,8 +436,9 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			assignPreprocBounds();
 		}
 
-		log.info("Location hook finished in",
-				(System.currentTimeMillis() - t1), "ms");
+		long dt = (System.currentTimeMillis() - t1);
+		log.info("Location hook finished in "+
+				dt+ " ms");
 	}
 
 
