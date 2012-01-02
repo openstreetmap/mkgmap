@@ -16,15 +16,12 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
@@ -58,23 +55,15 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void resolveType(Element el, TypeResult result) {
 		WatchableTypeResult a = new WatchableTypeResult(result);
 
-		// Get all the rules that could match from the index.  The list
-		// could contain duplicates.
-		List<Integer> candidates = new ArrayList<Integer>();
-		for (String s : el) {
-			List<Integer> integerSet = index.getRulesForTag(s);
-			if (integerSet != null)
-				candidates.addAll(integerSet);
+		// Get all the rules that could match from the index.  
+		BitSet candidates = new BitSet();
+		for (String tag : el) {
+			BitSet rules = index.getRulesForTag(tag);
+			if (rules != null)
+				candidates.or(rules);
 		}
-		Collections.sort(candidates);
 
-		int lastNum = -1;
-		for (Integer i : candidates) {
-			// Filter any duplicates here
-			if (i == lastNum)
-				continue;
-			lastNum = i;
-
+		for (int i = candidates.nextSetBit(0); i >= 0; i = candidates.nextSetBit(i + 1)) {			
 			a.reset();
 			rules[i].resolveType(el, a);
 			if (a.isResolved())

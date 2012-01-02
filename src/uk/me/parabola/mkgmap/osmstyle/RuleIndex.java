@@ -14,15 +14,13 @@ package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
-
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
@@ -63,11 +61,11 @@ public class RuleIndex {
 	private final List<RuleDetails> ruleDetails = new ArrayList<RuleDetails>();
 
 	// This is an index of all rules that start with EQUALS (A=B)
-	private final Map<String, Set<Integer>> existKeys = new HashMap<String, Set<Integer>>();
+	private final Map<String, BitSet> existKeys = new HashMap<String, BitSet>();
 	// This is an index of all rules that start with EXISTS (A=*)
-	private final Map<String, Set<Integer>> tagVals = new HashMap<String, Set<Integer>>();
+	private final Map<String, BitSet> tagVals = new HashMap<String, BitSet>();
 	// This is an index of all rules by the tag name (A).
-	private final Map<String, Set<Integer>> tagnames = new HashMap<String, Set<Integer>>();
+	private final Map<String, BitSet> tagnames = new HashMap<String, BitSet>();
 
 	// Maps a rule number to the tags that might be changed by that rule
 	private final Map<Integer, List<String>> changeTags = new HashMap<Integer, List<String>>();
@@ -122,30 +120,23 @@ public class RuleIndex {
 	/**
 	 * Get a list of rules that might be matched by this tag.
 	 * @param tagval The tag and its value eg highway=primary.
-	 * @return A list of rules, it may contain duplicates.  It appears to be
-	 * faster just to skip duplicates, rather than using sets to ensure that
-	 * there are none for example.
+	 * @return A BitSet of rules numbers.
 	 * If there are no rules then null will be returned.
 	 */
-	public List<Integer> getRulesForTag(String tagval) {
-		List<Integer> set = null;
-		Set<Integer> integers = tagVals.get(tagval);
-		if (integers != null) {
-			set = new ArrayList<Integer>();
-			set.addAll(integers);
-		}
+	public BitSet getRulesForTag(String tagval) {
+		BitSet set = tagVals.get(tagval);
 
 		// Need to also look up all rules that might match highway=*
 		int i = tagval.indexOf('=');
 		String s2 = tagval.substring(0, i);
-		Set<Integer> integerSet = existKeys.get(s2);
-		if (integerSet != null) {
-			if (set == null)
-				set = new ArrayList<Integer>();
-			set.addAll(integerSet);
-		}
-
-		return set;
+		BitSet set2 = existKeys.get(s2);
+		
+		BitSet res = new BitSet();
+		if (set != null)
+			res.or(set);
+		if (set2 != null) 
+			res.or(set2);
+		return res;
 	}
 
 	/**
@@ -163,8 +154,8 @@ public class RuleIndex {
 			Set<String> newChanged = new HashSet<String>(changeTagList);
 			// we have to find all rules that might be now matched
 			do {
-				for (String s : new HashSet<String>(newChanged)) {
-					Set<Integer> set;
+				for (String s : new ArrayList<String>(newChanged)) {
+					BitSet set;
 
 					// If we know the value that could be set, then we can restrict to
 					// rules that would match that value.  Otherwise we look for any
@@ -176,26 +167,29 @@ public class RuleIndex {
 					}
 
 					if (set != null && !set.isEmpty()) {
-						set = new HashSet<Integer>(set);
-						for (Iterator<Integer> iterator = set.iterator(); iterator.hasNext();) {
-							Integer i = iterator.next();
+						// create copy that can be safely modified
+						BitSet tmp  = new BitSet();
+						tmp.or(set);
+						set = tmp;
+						
+						for (int i = set.nextSetBit(0); i >= 0; i = set.nextSetBit(i + 1)) {
 							// Only rules after this one can be affected
 							if (i > ruleNumber) {
 								newChanged.addAll(ruleDetails.get(i).getChangingTags());
 							} else {
-								iterator.remove();
+								set.clear(i);
 							}
 						}
 
 						// Find every rule number set that contains the rule number that we
 						// are examining and add all the newly found rules to each such set.
-						for (Map<String, Set<Integer>> m : Arrays.asList(existKeys, tagVals, tagnames)) {
-							Collection<Set<Integer>> intSets = m.values();
-							for (Set<Integer> si : intSets) {
-								if (si.contains(ruleNumber)) {
+						for (Map<String, BitSet> m : Arrays.asList(existKeys, tagVals, tagnames)) {
+							Collection<BitSet> bitSets = m.values();
+							for (BitSet bi : bitSets) {
+								if (bi.get(ruleNumber)) {
 									// contains the rule that we are looking at so we must
 									// also add the rules in the set we found.
-									si.addAll(set);
+									bi.or(set);
 								}
 							}
 						}
@@ -223,13 +217,13 @@ public class RuleIndex {
 		addNumberToMap(tagnames, keystring, ruleNumber);
 	}
 
-	private void addNumberToMap(Map<String, Set<Integer>> map, String key, int ruleNumber) {
-		Set<Integer> set = map.get(key);
+	private void addNumberToMap(Map<String, BitSet> map, String key, int ruleNumber) {
+		BitSet set = map.get(key);
 		if (set == null) {
-			set = new TreeSet<Integer>();
+			set = new BitSet();
 			map.put(key, set);
 		}
-		set.add(ruleNumber);
+		set.set(ruleNumber);
 	}
 
 	/**
