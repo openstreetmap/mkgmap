@@ -35,11 +35,14 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Coord implements Comparable<Coord> {
+	private final static byte ON_BOUNDARY_MASK = 0x01; // bit in flags is true if point lies on a boundary
+	private final static byte PRESERVED_MASK = 0x02; // bit in flags is true if point should not be filtered out
+	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
+	private final static byte TREAT_AS_NODE_MASK = 0x08; // bit in flags is true if point should be treated as a node
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
-	private boolean onBoundary;	// true if point lies on a boundary
-	private boolean preserved; // true if point should not be filtered out
+	private byte flags; // further attributes
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -84,19 +87,64 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public boolean getOnBoundary() {
-		return onBoundary;
+		return (flags & ON_BOUNDARY_MASK) != 0;
 	}
 
 	public void setOnBoundary(boolean onBoundary) {
-		this.onBoundary = onBoundary;
+		if (onBoundary) 
+			this.flags |= ON_BOUNDARY_MASK;
+		else 
+			this.flags &= ~ON_BOUNDARY_MASK; 
 	}
 
 	public boolean preserved() {
-		return preserved;
+		return (flags & PRESERVED_MASK) != 0;
 	}
 
 	public void preserved(boolean preserved) {
-		this.preserved = preserved;
+		if (preserved) 
+			this.flags |= PRESERVED_MASK;
+		else 
+			this.flags &= ~PRESERVED_MASK; 
+	}
+
+	/**
+	 * Returns if this coord was marked to be replaced in short arc removal.
+	 * @return True means the replacement has to be looked up.
+	 */
+	public boolean isReplaced() {
+		return (flags & REPLACED_MASK) != 0;
+	}
+
+	/**
+	 * Mark a point as replaced in short arc removal process.
+	 * @param replaced true or false
+	 */
+	public void setReplaced(boolean replaced) {
+		if (replaced) 
+			this.flags |= REPLACED_MASK;
+		else 
+			this.flags &= ~REPLACED_MASK; 
+	}
+
+	/** 
+	 * Should this Coord be treated like a Node in short arc removal?
+	 * The value has no meaning outside of short arc removal.
+	 * @return 
+	 */
+	public boolean isTreatAsNode() {
+		return (flags & TREAT_AS_NODE_MASK) != 0;
+	}
+
+	/**
+	 * Mark the Coord to be treated like a Node in short arc removal 
+	 * @param treatAsNode true or false
+	 */
+	public void setTreatAsNode(boolean treatAsNode) {
+		if (treatAsNode) 
+			this.flags |= TREAT_AS_NODE_MASK;
+		else 
+			this.flags &= ~TREAT_AS_NODE_MASK; 
 	}
 
 	public int hashCode() {

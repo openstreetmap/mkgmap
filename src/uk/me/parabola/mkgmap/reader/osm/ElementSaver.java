@@ -317,17 +317,15 @@ public class ElementSaver {
 	}
 
 	private void removeShortArcsByMergingNodes(double minArcLength) {
-		// keep track of how many arcs reach a given point
-		Map<Coord, Integer> arcCounts = new IdentityHashMap<Coord, Integer>();
 		log.info("Removing short arcs (min arc length = " + minArcLength + "m)");
-		log.info("Removing short arcs - counting arcs");
+		log.info("Removing short arcs - marking points as node-alike");
 		for (Way w : wayMap.values()) {
 			List<Coord> points = w.getPoints();
 			int numPoints = points.size();
 			if (numPoints >= 2) {
-				// all end points have 1 arc
-				incArcCount(arcCounts, points.get(0), 1);
-				incArcCount(arcCounts, points.get(numPoints - 1), 1);
+				// all end points should be treated as nodes
+				points.get(0).setTreatAsNode(true);
+				points.get(numPoints - 1).setTreatAsNode(true);
 				// non-end points have 2 arcs but ignore points that
 				// are only in a single way
 				for (int i = numPoints - 2; i >= 1; --i) {
@@ -337,7 +335,7 @@ public class ElementSaver {
 					// between ways at this time - so for the purposes
 					// of short arc removal, consider it to be a node
 					if (p.getHighwayCount() > 1 || p instanceof CoordPOI)
-						incArcCount(arcCounts, p, 2);
+						p.setTreatAsNode(true);
 				}
 			}
 		}
@@ -369,27 +367,29 @@ public class ElementSaver {
 				int previousNodeIndex = 0; // first point will be a node
 				Coord previousPoint = points.get(0);
 				double arcLength = 0;
+
 				for (int i = 0; i < points.size(); ++i) {
 					Coord p = points.get(i);
 
 					// check if this point is to be replaced because
 					// it was previously merged into another point
-					Coord replacement = null;
-					Coord r = p;
-					while ((r = replacements.get(r)) != null) {
-						replacement = r;
-					}
+					if (p.isReplaced()){
+						Coord replacement = null;
+						Coord r = p;
+						while ((r = replacements.get(r)) != null) {
+							replacement = r;
+						}
 
-					if (replacement != null) {
-						assert !p.getOnBoundary() : "Boundary node replaced";
-						p = replacement;
-						// replace point in way
-						points.set(i, p);
-						if (i == 0)
-							previousPoint = p;
-						anotherPassRequired = true;
+						if (replacement != null) {
+							assert !p.getOnBoundary() : "Boundary node replaced";
+							p = replacement;
+							// replace point in way
+							points.set(i, p);
+							if (i == 0)
+								previousPoint = p;
+							anotherPassRequired = true;
+						}
 					}
-
 					if (i == 0) {
 						// first point in way is a node so preserve it
 						// to ensure it won't be filtered out later
@@ -410,13 +410,20 @@ public class ElementSaver {
 						continue;
 					}
 
-					arcLength += p.distance(previousPoint);
+					if (minArcLength > 0){
+						// we have to calculate the length of the arc
+						arcLength += p.distance(previousPoint);
+					}
+					else {
+						// if the points are not equal, the arc length is > 0
+						if (!p.equals(previousPoint)){
+							arcLength = 1; // just a value > 0	
+						}
+					}
 					previousPoint = p;
 
-					// this point is a node if it has an arc count
-					Integer arcCount = arcCounts.get(p);
-
-					if (arcCount == null) {
+					// do we treat this point as a node ?
+					if (!p.isTreatAsNode()) {
 						// it's not a node so go on to next point
 						continue;
 					}
@@ -497,9 +504,8 @@ public class ElementSaver {
 						// current point is a boundary node so we need
 						// to merge the previous node into this node
 						replacements.put(previousNode, p);
-						// add the previous node's arc count to this
-						// node
-						incArcCount(arcCounts, p, arcCounts.get(previousNode) - 1);
+						previousNode.setReplaced(true);
+						p.setTreatAsNode(true);
 						// remove the preceding point(s) back to and
 						// including the previous node
 						for(int j = i - 1; j >= previousNodeIndex; --j) {
@@ -509,9 +515,8 @@ public class ElementSaver {
 						// current point is not on a boundary so merge
 						// this node into the previous one
 						replacements.put(p, previousNode);
-						// add this node's arc count to the node that
-						// is replacing it
-						incArcCount(arcCounts, previousNode, arcCount - 1);
+						p.setReplaced(true);
+						previousNode.setTreatAsNode(true);
 						// reset previous point to be the previous
 						// node
 						previousPoint = previousNode;
@@ -533,13 +538,6 @@ public class ElementSaver {
 			log.error("Removing short arcs - didn't finish in " + pass + " passes, giving up!");
 		else
 			log.info("Removing short arcs - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)");
-	}
-
-	private void incArcCount(Map<Coord, Integer> map, Coord p, int inc) {
-		Integer i = map.get(p);
-		if(i != null)
-			inc += i;
-		map.put(p, inc);
 	}
 
 	public Map<Long, Node> getNodes() {
