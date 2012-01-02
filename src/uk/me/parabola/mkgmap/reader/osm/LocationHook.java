@@ -368,6 +368,13 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			// search for all elements in the boundary area
 			Set<Element> elemsInLocation = quadTree.get(boundary.getArea());
 			
+			// create list of required tags that are not set by this boundary 
+			List<String> requiredTags = new ArrayList<String>();
+			for (String requiredTag : remainingLevels){
+				if (boundarySetTags.containsKey(requiredTag) == false)
+					requiredTags.add(requiredTag);
+			}
+			
 			for (Element elem : elemsInLocation) {
 				// tag the element with all tags referenced by the boundary
 				for (Entry<String,String> bTag : boundarySetTags.entrySet()) {
@@ -381,8 +388,8 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				}
 				
 				// check if the element is already tagged with all remaining boundary levels
-				// in this case the element can be removed from further processing 
-				if (hasAllTags(elem, remainingLevels)){
+				// in this case the element can be removed from further processing
+				if (hasAllTags(elem, requiredTags)){
 					if (log.isDebugEnabled()) {
 						log.debug("Elem finish: "+elem.kind()+elem.getId()+" "+elem.toTagString());
 					}
@@ -420,7 +427,9 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	 * @param tags a list of tags 
 	 * @return true if all tags are set
  	 */
-	private boolean hasAllTags(Element element, List<String> tags) {
+	private boolean hasAllTags(Element element, Collection<String> tags) {
+		if (tags.isEmpty()) 
+			return true;
 		for (String locTag : tags) {
 			if (element.getTag(locTag) == null) 
 				return false;
