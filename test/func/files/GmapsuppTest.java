@@ -31,6 +31,7 @@ import uk.me.parabola.mkgmap.main.Main;
 
 import func.Base;
 import func.lib.Args;
+import func.lib.TestUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -103,6 +104,7 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testCombiningSupps() throws IOException {
+		TestUtils.registerFile("g1.img", "g2.img");
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",
@@ -270,6 +272,7 @@ public class GmapsuppTest extends Base {
 		assertEquals("number of map blocks", 2, reader.getMaps().size());
 		assertEquals("number of product blocks", 1, reader.getProducts().size());
 	}
+
 	@Test
 	public void testWithIndex() throws IOException {
 		Main.main(new String[]{
@@ -286,6 +289,8 @@ public class GmapsuppTest extends Base {
 				Args.TEST_RESOURCE_IMG + "63240002.img"
 		});
 
+		assertFalse(new File("osmmap_mdr.img").exists());
+
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
 		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
@@ -293,6 +298,43 @@ public class GmapsuppTest extends Base {
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		
+		int read = r.read(buf);
+		assertEquals(1024, read);
+
+		buf.flip();
+		byte[] b = new byte[3];
+		buf.get(b, 0, 3);
+		assertEquals('G', b[0]);
+	}
+
+	@Test
+	public void testWithTwoIndexes() throws IOException {
+		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--index",
+				"--tdbfile",
+				"--latin1",
+
+				"--family-id=101",
+				"--product-id=1",
+				"--family-name=tst family1",
+				"--series-name=tst series1",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
+		});
+
+		assertTrue(new File("osmmap_mdr.img").exists());
+
+		// All we are doing here is checking that the file was created and that it is
+		// not completely empty.
+		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		ImgChannel r = fs.open("MAKEGMAP.MDR", "r");
+		r.position(2);
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+
 		int read = r.read(buf);
 		assertEquals(1024, read);
 

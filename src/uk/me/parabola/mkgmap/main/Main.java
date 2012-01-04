@@ -237,7 +237,7 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("nsis")) {
 			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
-			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
+			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
 		} else if (opt.equals("verbose")) {
@@ -245,10 +245,10 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("list-styles")) {
 			listStyles();
 		} else if (opt.equals("max-jobs")) {
-			if(val.length() > 0)
-				maxJobs = Integer.parseInt(val);
-			else
+			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
+			else
+				maxJobs = Integer.parseInt(val);
 			if(maxJobs < 1) {
 				log.warn("max-jobs has to be at least 1");
 				maxJobs = 1;
@@ -322,18 +322,7 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void endOptions(CommandArgs args) {
-		boolean index = args.exists("index");
-		if (args.exists("gmapsupp")) {
-			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
-			if (index) {
-				MdrBuilder mdrBuilder = new MdrBuilder();
-				gmapBuilder.setMdrBuilder(mdrBuilder);
-			} 
-			addCombiner(gmapBuilder);
-		} else if (index) {
-			addCombiner(new MdrBuilder());
-			addCombiner(new MdxBuilder());
-		}
+		fileOptions(args);
 
 		if (args.exists("createboundsfile")) {
 			addPreparer(new BoundaryPreparer(args.getProperties()));
@@ -426,6 +415,26 @@ public class Main implements ArgumentProcessor {
 		// All done, allow tidy up or file creation to happen
 		for (Combiner c : combiners)
 			c.onFinish();
+	}
+
+	private void fileOptions(CommandArgs args) {
+		boolean indexOpt = args.exists("index");
+		boolean gmapOpt = args.exists("gmapsupp");
+		boolean tdbOpt = args.exists("tdbfile");
+
+		if (gmapOpt) {
+			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
+			if (indexOpt) {
+				MdrBuilder mdrBuilder = new MdrBuilder();
+				gmapBuilder.setMdrBuilder(mdrBuilder);
+			}
+			addCombiner(gmapBuilder);
+		}
+
+		if (indexOpt && (tdbOpt || !gmapOpt)) {
+			addCombiner(new MdrBuilder());
+			addCombiner(new MdxBuilder());
+		}
 	}
 
 	/**

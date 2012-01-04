@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.mkgmap.main.Main;
@@ -64,8 +65,8 @@ public class TestUtils {
 		}
 	}
 
-	public static void registerFile(String name) {
-		files.add(name);
+	public static void registerFile(String ... names) {
+		Collections.addAll(files, names);
 	}
 
 	/**

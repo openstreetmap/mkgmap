@@ -21,6 +21,7 @@ import java.io.PrintStream;
 
 import uk.me.parabola.mkgmap.main.StyleTester;
 
+import func.lib.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +39,7 @@ public class ScriptedStyleTest {
 	 */
 	@Test
 	public void failureTest() {
+		TestUtils.registerFile("styletester.style");
 		StyleTester.runSimpleTest("test/resources/rules/fails-on-purpose.fail");
 		String result = output.toString();
 		assertTrue("failure check", result.contains("ERROR"));

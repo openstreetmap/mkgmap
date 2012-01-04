@@ -254,6 +254,7 @@ public class TypTextReaderTest {
 	 */
 	@Test
 	public void testFromFile() throws IOException {
+		TestUtils.registerFile("test.typ");
 		Reader r = new BufferedReader(new FileReader("test/resources/typ/test.txt"));
 		TypTextReader tr = new TypTextReader();
 		tr.read("test.typ", r);
