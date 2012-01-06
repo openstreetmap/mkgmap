@@ -94,8 +94,8 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	 * @param props mkgmap options
 	 * @return the parsed tag definition list
 	 */
-	private List<Entry<String,String>> getPoiPlacementTags(EnhancedProperties props) {
-		if (poisToAreas==false) {
+	public static List<Entry<String,String>> getPoiPlacementTags(EnhancedProperties props) {
+		if (props.containsKey("add-pois-to-areas") == false) {
 			return Collections.emptyList();
 		}
 		
