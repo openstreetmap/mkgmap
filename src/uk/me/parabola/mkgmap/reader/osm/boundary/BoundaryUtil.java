@@ -56,7 +56,7 @@ public class BoundaryUtil {
 		if (areaElements.isEmpty()) {
 			// this may happen if a boundary overlaps a raster tile in a very small area
 			// so that it is has no dimension
-			log.debug("Area has no dimension. Area: ",area.getBounds());
+			log.debug("Area has no dimension. Area:",area.getBounds());
 			return Collections.emptyList();
 		}
 		
@@ -142,7 +142,11 @@ public class BoundaryUtil {
 						}
 
 						int noBElems = inpStream.readInt();
-						Area area = new Area();
+						assert noBElems > 0;
+						
+						// the first area is always an outer area and will be assigned to the variable
+						Area area = null;
+						
 						for (int i = 0; i < noBElems; i++) {
 							boolean outer = inpStream.readBoolean();
 							int noCoords = inpStream.readInt();
@@ -156,7 +160,11 @@ public class BoundaryUtil {
 
 							Area elemArea = Java2DConverter.createArea(points);
 							if (outer) {
-								area.add(elemArea);
+								if (area == null) {
+									area = elemArea;
+								} else {
+									area.add(elemArea);
+								}
 							} else {
 								area.subtract(elemArea);
 							}
@@ -235,8 +243,8 @@ public class BoundaryUtil {
 				if (existingBoundary == null) {
 					mergeMap.put(bId, toMerge);
 				} else {
-					log.info("Merge boundaries " + existingBoundary.getTags()
-							+ " with " + toMerge.getTags());
+					if (log.isInfoEnabled())
+						log.info("Merge boundaries", existingBoundary.getTags(), "with", toMerge.getTags());
 					existingBoundary.getArea().add(toMerge.getArea());
 					
 					// Merge the mkgmap:lies_in tag
