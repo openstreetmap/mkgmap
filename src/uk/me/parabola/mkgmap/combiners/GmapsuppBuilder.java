@@ -77,6 +77,7 @@ public class GmapsuppBuilder implements Combiner {
 	private String overallDescription = "Combined map";
 	private String outputDir;
 	private MpsFile mpsFile;
+	private MdrBuilder mdrBuilder;
 	private Sort sort;
 
 	public void init(CommandArgs args) {
@@ -85,6 +86,9 @@ public class GmapsuppBuilder implements Combiner {
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
 		sort = args.getSort();
+
+		if (mdrBuilder != null)
+			mdrBuilder.initForDevice(sort, outputDir);
 	}
 
 	/**
@@ -95,9 +99,10 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param info Information about the img file.
 	 */
 	public void onMapEnd(FileInfo info) {
-		String mapname = info.getFilename();
+		files.put(info.getFilename(), info);
 
-		files.put(mapname, info);
+		if (mdrBuilder != null)
+			mdrBuilder.onMapEnd(info);
 	}
 
 	/**
@@ -106,13 +111,18 @@ public class GmapsuppBuilder implements Combiner {
 	 * file, reading all the sub files and copying them into the gmapsupp file.
 	 */
 	public void onFinish() {
-		FileSystem imgFs = null;
 
+		if (mdrBuilder != null)
+			mdrBuilder.onFinishForDevice();
+
+		FileSystem imgFs = null;
 		try {
 			imgFs = createGmapsupp();
 
 			addAllFiles(imgFs);
 
+			if (mdrBuilder != null)
+				addFile(imgFs, mdrBuilder.getFileName(), "MAKEGMAP.MDR");
 			writeSrtFile(imgFs);
 			writeMpsFile();
 
@@ -258,12 +268,16 @@ public class GmapsuppBuilder implements Combiner {
 	 * @param filename The input filename.
 	 */
 	private void addFile(FileSystem outfs, String filename) {
+		String imgname = createImgFilename(filename);
+		addFile(outfs, filename, imgname);
+	}
+
+	private void addFile(FileSystem outfs, String filename, String imgname) {
 		ImgChannel chan = new FileImgChannel(filename, "r");
 		try {
-			String imgname = createImgFilename(filename);
 			copyFile(chan, outfs, imgname);
 		} catch (IOException e) {
-			log.error("Could not open file " + filename);
+			log.error("Could not write file " + filename);
 		}
 	}
 
@@ -446,6 +460,17 @@ public class GmapsuppBuilder implements Combiner {
 			totBlocks += mpsBlocks;
 			totHeaderEntries += mpsSlots;
 
+			// Add in number of block for mdr
+			if (mdrBuilder != null) {
+				int sz = mdrBuilder.getSize();
+				int mdrBlocks = (sz + (bs - 1)) / bs;
+				int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
+
+				totBlocks += mdrBlocks;
+				totHeaderEntries += mdrSlots;
+			}
+			
+			// There are 2 entries for the header itself.
 			totHeaderEntries += 2;
 			int totHeaderBlocks = totHeaderEntries * 512 / bs;
 
@@ -458,6 +483,10 @@ public class GmapsuppBuilder implements Combiner {
 		}
 
 		throw new IllegalArgumentException("hmm");
+	}
+
+	public void setMdrBuilder(MdrBuilder mdrBuilder) {
+		this.mdrBuilder = mdrBuilder;
 	}
 
 	/**

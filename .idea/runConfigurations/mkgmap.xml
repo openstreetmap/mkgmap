@@ -3,8 +3,8 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="uk.me.parabola.mkgmap.main.Main" />
     <option name="VM_PARAMETERS" value="-ea -Xmx1000m" />
-    <option name="PROGRAM_PARAMETERS" value="twmapnik.txt" />
-    <option name="WORKING_DIRECTORY" value="" />
+    <option name="PROGRAM_PARAMETERS" value="--gmapsupp --index --latin1 /opt/data/uk/63240001.img /opt/data/uk/63240006.img" />
+    <option name="WORKING_DIRECTORY" value="file://$USER_HOME$/build/net" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" value="" />
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
@@ -12,6 +12,7 @@
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="mkgmap" />
     <envs />
+    <RunnerSettings RunnerId="Cover" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="48865" />
       <option name="TRANSPORT" value="0" />
@@ -21,6 +22,7 @@
       <option name="myExternalizedOptions" value="&#10;additional-options2=onexit\=snapshot&#10;" />
     </RunnerSettings>
     <RunnerSettings RunnerId="Run" />
+    <ConfigurationWrapper RunnerId="Cover" />
     <ConfigurationWrapper RunnerId="Debug" />
     <ConfigurationWrapper RunnerId="Profile " />
     <ConfigurationWrapper RunnerId="Run" />

@@ -104,8 +104,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 			type = shape.getType();
 		else
 			type = shape.getType() << 8;
-		if (type != 0x4b00)
-			updateOverview(shapeOverviews, type, shape.getMinResolution());
+
+		updateOverview(shapeOverviews, type, shape.getMinResolution());
 
 		shapes.add(shape);
 	}

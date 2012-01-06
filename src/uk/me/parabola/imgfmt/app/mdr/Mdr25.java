@@ -51,20 +51,22 @@ public class Mdr25 extends MdrSection {
 		Mdr5Record lastCity = null;
 		int record = 0;
 		for (SortKey<Mdr5Record> key : keys) {
-			record++;
 			Mdr5Record city = key.getObject();
 
-			// Record in the 29 index if there is one for this record
-			Mdr14Record mdrCountry = city.getMdrCountry();
-			Mdr29Record mdr29 = mdrCountry.getMdr29();
-			String name = mdr29.getName();
-			assert mdrCountry.getName().equals(name);
-			if (!name.equals(lastName)) {
-				mdr29.setMdr25(record);
-				lastName = name;
-			}
+			if (lastCity == null ||
+					(!city.getName().equals(lastCity.getName()) || !(city.getRegionName().equals(lastCity.getRegionName()))))
+			{
+				record++;
 
-			if (lastCity == null || !city.getName().equals(lastCity.getName())) {
+				// Record in the 29 index if there is one for this record
+				Mdr14Record mdrCountry = city.getMdrCountry();
+				Mdr29Record mdr29 = mdrCountry.getMdr29();
+				String name = mdr29.getName();
+				assert mdrCountry.getName().equals(name);
+				if (!name.equals(lastName)) {
+					mdr29.setMdr25(record);
+					lastName = name;
+				}
 				cities.add(city);
 				lastCity = city;
 			}

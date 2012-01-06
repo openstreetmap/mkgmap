@@ -234,15 +234,10 @@ public class Main implements ArgumentProcessor {
 
 		} else if (opt.equals("tdbfile")) {
 			addTdbBuilder();
-		} else if (opt.equals("gmapsupp")) {
-			addCombiner(new GmapsuppBuilder());
-		} else if (opt.equals("index")) {
-			addCombiner(new MdxBuilder());
-			addCombiner(new MdrBuilder());
 		} else if (opt.equals("nsis")) {
 			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
-			printHelp(System.out, getLang(), (val.length() > 0) ? val : "help");
+			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
 		} else if (opt.equals("verbose")) {
@@ -250,10 +245,10 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("list-styles")) {
 			listStyles();
 		} else if (opt.equals("max-jobs")) {
-			if(val.length() > 0)
-				maxJobs = Integer.parseInt(val);
-			else
+			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
+			else
+				maxJobs = Integer.parseInt(val);
 			if(maxJobs < 1) {
 				log.warn("max-jobs has to be at least 1");
 				maxJobs = 1;
@@ -327,65 +322,63 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void endOptions(CommandArgs args) {
+		fileOptions(args);
 
 		if (args.exists("createboundsfile")) {
 			addPreparer(new BoundaryPreparer(args.getProperties()));
 		}
-		
+
 		log.info("Start preparers");
 		for (Thread preparer : preparers) {
 			preparer.run();
 		}
-		
+
 		log.info("Start tile processors");
-		if(threadPool == null) {
+		if (threadPool == null) {
 			log.info("Creating thread pool with " + maxJobs + " threads");
 			threadPool = Executors.newFixedThreadPool(maxJobs);
 		}
 		for (FilenameTask task : futures) {
 			threadPool.execute(task);
 		}
-		
-		
+
+
 		List<FilenameTask> filenames = new ArrayList<FilenameTask>();
 
-		if(threadPool != null) {
+		if (threadPool != null) {
 			threadPool.shutdown();
-			while(!futures.isEmpty()) {
+			while (!futures.isEmpty()) {
 				try {
 					try {
 						// don't call get() until a job has finished
-						if(futures.get(0).isDone()) {
+						if (futures.get(0).isDone()) {
 							FilenameTask future = futures.remove(0);
 
 							// Provoke any exceptions by calling get and then
 							// save the result for later use
 							future.setFilename(future.get());
 							filenames.add(future);
-						}
-						else
+						} else
 							Thread.sleep(100);
-					}
-					catch (ExecutionException e) {
+					} catch (ExecutionException e) {
 						// Re throw the underlying exception
 						Throwable cause = e.getCause();
 						if (cause instanceof Exception)
 							//noinspection ProhibitedExceptionThrown
-							throw (Exception)cause;
+							throw (Exception) cause;
 						else if (cause instanceof Error)
 							//noinspection ProhibitedExceptionThrown
-							throw (Error)cause;
+							throw (Error) cause;
 						else
 							throw e;
 					}
-				}
-				catch (ExitException ee) {
+				} catch (ExitException ee) {
 					throw ee;
 				} catch (MapFailedException mfe) {
 					System.err.println(mfe.getMessage());
 				} catch (Throwable t) {
 					t.printStackTrace();
-					if(!args.getProperties().getProperty("keep-going", false)) {
+					if (!args.getProperties().getProperty("keep-going", false)) {
 						throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
 					}
 				}
@@ -396,7 +389,7 @@ public class Main implements ArgumentProcessor {
 			return;
 
 		log.info("Combining maps");
-		
+
 		args.setSort(getSort(args));
 
 		// Get them all set up.
@@ -422,6 +415,26 @@ public class Main implements ArgumentProcessor {
 		// All done, allow tidy up or file creation to happen
 		for (Combiner c : combiners)
 			c.onFinish();
+	}
+
+	private void fileOptions(CommandArgs args) {
+		boolean indexOpt = args.exists("index");
+		boolean gmapOpt = args.exists("gmapsupp");
+		boolean tdbOpt = args.exists("tdbfile");
+
+		if (gmapOpt) {
+			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
+			if (indexOpt) {
+				MdrBuilder mdrBuilder = new MdrBuilder();
+				gmapBuilder.setMdrBuilder(mdrBuilder);
+			}
+			addCombiner(gmapBuilder);
+		}
+
+		if (indexOpt && (tdbOpt || !gmapOpt)) {
+			addCombiner(new MdrBuilder());
+			addCombiner(new MdxBuilder());
+		}
 	}
 
 	/**

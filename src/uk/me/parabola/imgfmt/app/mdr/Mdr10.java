@@ -51,7 +51,7 @@ public class Mdr10 extends MdrMapSection {
 		Mdr10Record t = new Mdr10Record();
 
 		int type = poi.getType();
-		t.setSubtype(MdrUtils.getSubtypeFromFullType(type));
+		t.setSubtype(MdrUtils.getSubtypeOrTypeFromFullType(type));
 		t.setMdr11ref(poi);
 
 		int group = MdrUtils.getGroupForPoi(type);

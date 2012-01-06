@@ -118,6 +118,6 @@ public class Mdr20 extends Mdr2x {
 	 * Unknown.
 	 */
 	public int getExtraValue() {
-		return 0x8800;
+		return isForDevice() ? 0xa : 0x8800;
 	}
 }

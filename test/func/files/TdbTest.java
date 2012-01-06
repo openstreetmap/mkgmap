@@ -19,13 +19,15 @@ import java.io.IOException;
 import uk.me.parabola.mkgmap.main.Main;
 import uk.me.parabola.tdbfmt.TdbFile;
 
+import func.Base;
 import func.lib.Args;
+import func.lib.TestUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 
-public class TdbTest {
+public class TdbTest extends Base {
 	private static final String TDBNAME = "osmmap.tdb";
 
 	/**
@@ -74,6 +76,7 @@ public class TdbTest {
 	@Test
 	public void testOptions() {
 		int thisMapname = 11112222;
+		TestUtils.registerFile(thisMapname + ".img", thisMapname + ".tdb");
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--tdbfile",

@@ -131,7 +131,7 @@ public class Mdr15 extends MdrSection {
 	 * offset possible.  We are taking the total size of the string section
 	 * for this.
 	 */
-	public int getPointerSize() {
+	public int getSizeForRecord() {
 		return numberToPointerSize(nextOffset);
 	}
 

@@ -90,11 +90,22 @@ Label options:
 
 Address search options:
 --index
-	Generate a global address search index that can be used with MapSource.
-	Makes the find places functions in MapSource available.
-	The index consists of two files named osmmap.mdx and osmmap_mdr.img
-	by default. The overview-mapname can be used to change the name.
-	If the mapset is sent to the device from MapSource, it will enable
+	Generate a global address search index. If the --gmapsupp option is
+	also given, then the index is generated within the resulting
+	gmapsupp.img file so that address search will work on a GPS
+	device.
+
+	If instead the --tdbfile option is given then the index consists
+	of two files named osmmap.mdx and osmmap_mdr.img which can be used
+	with mapsource. (For compatibility, you do not need the tdbfile
+	option if gmapsupp is not given).
+
+	If both the --gmapsupp and --tdbfile options are given alongside
+	the --index option, then both indexes will be created. Note that
+	this will require roughtly twice as much memory.
+
+	The --overview-mapname option can be used to change these names.  If
+	the mapset is sent to the device from MapSource, it will enable
 	find by name and address search on the GPS.
 	
 	The address fields are assigned by special mkgmap address
@@ -107,9 +118,6 @@ Address search options:
 	  mkgmap:housenumber
 	  mkgmap:phone
 	  (mkgmap:is_in - used by location-autofill=is_in)
-
-	This is an experimental option and there are several unresolved
-	issues.
 
 --createboundsfile=filename
     In case this option is set the given file is read and all boundary

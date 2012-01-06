@@ -21,7 +21,7 @@ import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
- * An index into mdr28, sorted by country name.
+ * An index into mdr28 (region names), sorted by country name.
  *
  * @author Steve Ratcliffe
  */

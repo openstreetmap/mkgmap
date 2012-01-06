@@ -46,7 +46,8 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 	 * given map.
 	 */
 	public void addIndexPointer(int mapNumber, int recordNumber) {
-		index.addPointer(mapNumber, recordNumber);
+		if (!isForDevice())
+			index.addPointer(mapNumber, recordNumber);
 	}
 
 	protected void putCityIndex(ImgFileWriter writer, int cityIndex, boolean isNew) {
@@ -63,5 +64,9 @@ public abstract class MdrMapSection extends MdrSection implements HasHeaderFlags
 	protected void putPoiIndex(ImgFileWriter writer, int poiIndex, boolean isNew) {
 		int flag = isNew? getSizes().getPoiFlag(): 0;
 		putN(writer, getSizes().getPoiSizeFlagged(), poiIndex | flag);
+	}
+
+	protected boolean hasFlag(int val) {
+		return (getExtraValue() & val) != 0;
 	}
 }

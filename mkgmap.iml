@@ -2,7 +2,7 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="Python 2.7.1 (/usr/bin/python2.7)" />
+      <configuration sdkName="" />
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
@@ -21,6 +21,7 @@
       <excludeFolder url="file://$MODULE_DIR$/gmapsupp" />
       <excludeFolder url="file://$MODULE_DIR$/localtest" />
       <excludeFolder url="file://$MODULE_DIR$/maps" />
+      <excludeFolder url="file://$MODULE_DIR$/ref" />
       <excludeFolder url="file://$MODULE_DIR$/samples" />
       <excludeFolder url="file://$MODULE_DIR$/test/resources/in" />
     </content>

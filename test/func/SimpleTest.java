@@ -105,7 +105,7 @@ public class SimpleTest {
 				assertThat("RGN size", size, new RangeMatcher(2901));
 			} else if (ext.equals("TRE")) {
 				count++;
-				assertEquals("TRE size", 594, size);
+				assertEquals("TRE size", 596, size);
 			} else if (ext.equals("LBL")) {
 				count++;
 				assertEquals("LBL size", 957, size);

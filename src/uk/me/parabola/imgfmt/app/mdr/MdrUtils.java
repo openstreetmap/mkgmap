@@ -56,13 +56,18 @@ public class MdrUtils {
 	}
 
 	private static int getTypeFromFullType(int fullType) {
-		if ((fullType & 0xff00) > 0)
-			return (fullType>>8) & 0xff;
+		if ((fullType & 0xfff00) > 0)
+			return (fullType>>8) & 0xfff;
 		else
 			return fullType & 0xff;
 	}
 
-	public static int getSubtypeFromFullType(int fullType) {
+	/**
+	 * Gets the subtype if there is one, else the type.
+	 * @param fullType The type in the so-called 'full' format.
+	 * @return If there is a subtype, then it is returned. Otherwise the type is returned.
+	 */
+	public static int getSubtypeOrTypeFromFullType(int fullType) {
 		return fullType & 0xff;
 	}
 
@@ -82,5 +87,24 @@ public class MdrUtils {
 		}
 		Collections.sort(toSort);
 		return toSort;
+	}
+
+	/**
+	 * The 'natural' type is always a combination of the type and subtype with the type
+	 * shifted 5 bits and the sub type in the low 5 bits.
+	 *
+	 * For various reasons, we use 'fullType' in which the type is shifted up a full byte
+	 * or is in the lower byte.
+	 *
+	 * @param ftype The so-called full type of the object.
+	 * @return The natural type as defined above.
+	 */
+	public static int fullTypeToNaturalType(int ftype) {
+		int type = getTypeFromFullType(ftype);
+		int sub = 0;
+		if ((ftype & ~0xff) != 0)
+			sub = ftype & 0x1f;
+
+		return type << 5 | sub;
 	}
 }

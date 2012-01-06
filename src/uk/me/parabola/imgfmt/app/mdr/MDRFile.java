@@ -12,6 +12,8 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.util.Arrays;
+
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.FileBackedImgFileWriter;
 import uk.me.parabola.imgfmt.app.ImgFile;
@@ -49,6 +51,9 @@ public class MDRFile extends ImgFile {
 	private final Mdr13 mdr13;
 	private final Mdr14 mdr14;
 	private final Mdr15 mdr15;
+	private final Mdr17 mdr17;
+	private final Mdr18 mdr18;
+	private final Mdr19 mdr19;
 	private final Mdr20 mdr20;
 	private final Mdr21 mdr21;
 	private final Mdr22 mdr22;
@@ -62,12 +67,16 @@ public class MDRFile extends ImgFile {
 
 	private int currentMap;
 
+	private final boolean forDevice;
+
 	private final MdrSection[] sections;
 	private PointerSizes sizes;
 
 	public MDRFile(ImgChannel chan, MdrConfig config) {
 		Sort sort = config.getSort();
-		
+
+		forDevice = config.isForDevice();
+
 		mdrHeader = new MDRHeader(config.getHeaderLen());
 		mdrHeader.setSort(sort);
 		setHeader(mdrHeader);
@@ -96,6 +105,9 @@ public class MDRFile extends ImgFile {
 		mdr13 = new Mdr13(config);
 		mdr14 = new Mdr14(config);
 		mdr15 = new Mdr15(config);
+		mdr17 = new Mdr17(config);
+		mdr18 = new Mdr18(config);
+		mdr19 = new Mdr19(config);
 		mdr20 = new Mdr20(config);
 		mdr21 = new Mdr21(config);
 		mdr22 = new Mdr22(config);
@@ -111,7 +123,7 @@ public class MDRFile extends ImgFile {
 				null,
 				mdr1, null, null, mdr4, mdr5, mdr6,
 				mdr7, mdr8, mdr9, mdr10, mdr11, mdr12,
-				mdr13, mdr14, mdr15, null, null, null, null,
+				mdr13, mdr14, mdr15, null, mdr17, mdr18, mdr19,
 				mdr20, mdr21, mdr22, mdr23, mdr24, mdr25,
 				mdr26, mdr27, mdr28, mdr29,
 		};
@@ -274,7 +286,17 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 11, mdr11);
 		mdr10.setNumberOfPois(mdr11.getNumberOfPois());
 		mdr12.setIndex(mdr11.getIndex());
+		mdr19.setPois(mdr11.getPois());
+		mdr17.addPois(mdr11.getPois());
 		mdr11.release();
+
+		if (forDevice) {
+			mdr19.preWrite();
+			writeSection(writer, 19, mdr19);
+			mdr18.setPoiTypes(mdr19.getPoiTypes());
+			mdr19.release();
+			writeSection(writer, 18, mdr18);
+		}
 
 		writeSection(writer, 10, mdr10);
 		mdr9.setGroups(mdr10.getGroupSizes());
@@ -288,6 +310,7 @@ public class MDRFile extends ImgFile {
 		writeSection(writer, 5, mdr5);
 		mdr25.sortCities(mdr5.getCities());
 		mdr27.sortCities(mdr5.getCities());
+		mdr17.addCities(mdr5.getSortedCities());
 		mdr5.release();
 		writeSection(writer, 6, mdr6);
 
@@ -300,9 +323,17 @@ public class MDRFile extends ImgFile {
 		
 		mdr22.buildFromStreets(mdr7.getStreets());
 		mdr8.setIndex(mdr7.getIndex());
+		mdr17.addStreets(mdr7.getSortedStreets());
+
 		mdr7.release();
 		writeSection(writer, 22, mdr22);
+		mdr17.addStreetsByCountry(mdr22.getStreets());
 		mdr22.release();
+
+		if (forDevice) {
+			writeSection(writer, 17, mdr17);
+			mdr17.release();
+		}
 
 		// The following do not have mdr1 subsections
 		//writeSection(writer, 8, mdr8);
@@ -335,13 +366,18 @@ public class MDRFile extends ImgFile {
 	 * Write out the given single section.
 	 */
 	private void writeSection(ImgFileWriter writer, int sectionNumber, MdrSection section) {
+
+		// Some sections are just not written in the device config
+		if (forDevice && Arrays.asList(12, 13, 14, 15, 21, 23, 26, 27, 28).contains(sectionNumber))
+			return;
+
 		section.setSizes(sizes);
-		
+
 		mdrHeader.setPosition(sectionNumber, writer.position());
 		mdr1.setStartPosition(sectionNumber);
 
 		section.preWrite();
-		if (section instanceof MdrMapSection) {
+		if (!forDevice && section instanceof MdrMapSection) {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.initIndex(sectionNumber);
@@ -355,7 +391,7 @@ public class MDRFile extends ImgFile {
 		int itemSize = section.getItemSize();
 		if (itemSize > 0)
 			mdrHeader.setItemSize(sectionNumber, itemSize);
-		
+
 		mdrHeader.setEnd(sectionNumber, writer.position());
 		mdr1.setEndPosition(sectionNumber);
 	}

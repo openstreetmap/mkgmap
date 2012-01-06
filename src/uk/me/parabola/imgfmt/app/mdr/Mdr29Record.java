@@ -25,6 +25,7 @@ public class Mdr29Record {
 	private int mdr25;
 	private int mdr26;
 	private int strOffset;
+	private int mdr17;
 
 	public String getName() {
 		return name;
@@ -57,7 +58,8 @@ public class Mdr29Record {
 	}
 
 	public void setMdr25(int mdr25) {
-		this.mdr25 = mdr25;
+		if (this.mdr25 == 0)
+			this.mdr25 = mdr25;
 	}
 
 	public int getMdr26() {
@@ -75,5 +77,14 @@ public class Mdr29Record {
 
 	public void setStrOffset(int strOffset) {
 		this.strOffset = strOffset;
+	}
+
+	public int getMdr17() {
+		return mdr17;
+	}
+
+	public void setMdr17(int mdr17) {
+		if (this.mdr17 == 0)
+			this.mdr17 = mdr17;
 	}
 }

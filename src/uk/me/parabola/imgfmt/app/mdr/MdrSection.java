@@ -52,8 +52,7 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	protected void putStringOffset(ImgFileWriter writer, int strOff) {
-		if (!isForDevice())
-			putN(writer, sizes.getStrOffSize(), strOff);
+		putN(writer, sizes.getStrOffSize(), strOff);
 	}
 
 	protected void putN(ImgFileWriter writer, int n, int value) {
@@ -113,7 +112,7 @@ public abstract class MdrSection extends ConfigBase {
 	 * @return A number between 1 and 4 giving the number of bytes required
 	 * to store the largest record number in this section.
 	 */
-	public int getPointerSize() {
+	public int getSizeForRecord() {
 		return numberToPointerSize(getNumberOfItems());
 	}
 
@@ -173,11 +172,11 @@ public abstract class MdrSection extends ConfigBase {
 		}
 
 		public int getMapSize() {
-			return sections[1].getPointerSize();
+			return sections[1].getSizeForRecord();
 		}
 
 		public int getCitySize() {
-			return sections[5].getPointerSize();
+			return sections[5].getSizeForRecord();
 		}
 
 		/**
@@ -196,7 +195,7 @@ public abstract class MdrSection extends ConfigBase {
 		}
 
 		public int getStreetSize() {
-			return sections[7].getPointerSize();
+			return sections[7].getSizeForRecord();
 		}
 
 		public int getStreetSizeFlagged() {
@@ -204,7 +203,12 @@ public abstract class MdrSection extends ConfigBase {
 		}
 
 		public int getPoiSize() {
-			return sections[11].getPointerSize();
+			return sections[11].getSizeForRecord();
+		}
+
+		public int getZipSize() {
+			//return Math.max(2, sections[6].getSizeForRecord());
+			return sections[6].getSizeForRecord();
 		}
 
 		/**
@@ -225,11 +229,11 @@ public abstract class MdrSection extends ConfigBase {
 		 * @return Pointer size required for the string offset value.
 		 */
 		public int getStrOffSize() {
-			return Math.max(3, sections[15].getPointerSize());
+			return Math.max(3, sections[15].getSizeForRecord());
 		}
 
 		public int getMdr20Size() {
-			return sections[20].getPointerSize();
+			return sections[20].getSizeForRecord();
 		}
 
 		private int flagForSize(int size) {
@@ -248,7 +252,7 @@ public abstract class MdrSection extends ConfigBase {
 		}
 
 		public int getSize(int sect) {
-			return sections[sect].getPointerSize();
+			return sections[sect].getSizeForRecord();
 		}
 	}
 }
