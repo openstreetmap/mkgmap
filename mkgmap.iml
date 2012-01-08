@@ -35,7 +35,6 @@
     <orderEntry type="library" name="icu4j" level="application" />
     <orderEntry type="library" name="protobuf" level="application" />
     <orderEntry type="library" name="osmbinary" level="application" />
-    <orderEntry type="library" name="Python 2.7.1 (/usr/bin/python2.7) interpreter library" level="application" />
   </component>
 </module>
 

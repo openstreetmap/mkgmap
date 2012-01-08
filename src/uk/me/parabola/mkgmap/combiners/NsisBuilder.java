@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -71,7 +72,8 @@ public class NsisBuilder implements Combiner {
 			break;
 		case TYP_KIND:
 			hasTyp = true;
-			typName = info.getFilename();
+			File typFile = new File(info.getFilename());
+			typName = typFile.getName();
 			break;
 		case MDR_KIND:
 			hasIndex = true;
@@ -87,8 +89,7 @@ public class NsisBuilder implements Combiner {
 	}
 
 	private void writeNsisFile() {
-		Writer w = null;
-		InputStream inStream = null;
+		InputStream inStream;
 
 		try {
 			inStream = new FileInputStream("resources/installer_template.nsi");
@@ -103,6 +104,7 @@ public class NsisBuilder implements Combiner {
 			System.err.println("Could not find the installer template.");
 			return;
 		}
+		Writer w = null;
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
 			w = new FileWriter(Utils.joinPath(outputDir, nsisFilename));
@@ -182,8 +184,7 @@ public class NsisBuilder implements Combiner {
 	 * We write out a license file that is included in the installer.
 	 */
 	private void writeLicenceFile() {
-		Writer w = null;
-		InputStream inStream = null;
+		InputStream inStream;
 		try {
 			inStream = new FileInputStream("resources/license_template.txt");
 		} catch (Exception ex) {
@@ -197,6 +198,7 @@ public class NsisBuilder implements Combiner {
 			System.err.println("Could not find the license template.");
 			return;
 		}
+		Writer w = null;
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(inStream));
 			w = new FileWriter(Utils.joinPath(outputDir, licenseFilename));
