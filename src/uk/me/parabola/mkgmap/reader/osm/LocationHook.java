@@ -139,8 +139,8 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 					checkBoundaryDirOk = true;
 				}
 			}
-			log.info("Checking bounds dir took "
-					+ (System.currentTimeMillis() - t1) + " ms");
+			log.info("Checking bounds dir took", 
+					 (System.currentTimeMillis() - t1), "ms");
 		}
 		return true;
 	}
@@ -181,7 +181,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				saver.getBoundingBox());
 		
 		long tb2 = System.currentTimeMillis();
-		log.info("Loading boundaries took "+(tb2-tb1)+" ms");
+		log.info("Loading boundaries took", (tb2-tb1), "ms");
 		
 		// go through all boundaries, check if the necessary tags are available
 		// and standardize the country name to the 3 letter ISO code
@@ -196,7 +196,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				zip = getZip(b.getTags());
 			
 			if (name == null && zip == null) {
-				log.warn("Cannot process boundary element because it contains no name and no zip tag. "+b.getTags());
+				log.warn("Cannot process boundary element because it contains no name and no zip tag.", b.getTags());
 
 				bIter.remove();
 				continue;
@@ -231,13 +231,13 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		
 		// create the quadtree
 		List<Element> elemList = getLocationRelevantElements();
-		log.info("Creating quadlist took "+(System.currentTimeMillis()-t1)+" ms");
+		log.info("Creating quadlist took", (System.currentTimeMillis()-t1), "ms");
 
 		ElementQuadTree quadTree = new ElementQuadTree(saver.getBoundingBox(), elemList);
 		elemList = null;
 
 		long tb1 = System.currentTimeMillis();
-		log.info("Creating quadtree took "+(tb1-t1)+" ms");
+		log.info("Creating quadtree took", (tb1-t1), "ms");
 		
 		List<Boundary> boundaries = loadBoundaries();
 		
@@ -337,12 +337,12 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				for (String relBound : relBounds) {
 					String[] relParts = relBound.split(Pattern.quote(":"));
 					if (relParts.length != 2) {
-						log.error("Wrong mkgmap:lies_in format. Value: " +liesIn);
+						log.error("Wrong mkgmap:lies_in format. Value: " + liesIn);
 						continue;
 					}
 					Boundary bAdditional = boundaryById.get(relParts[1]);
 					if (bAdditional == null) {
-						log.warn("Referenced boundary not available: "+boundary.getTags()+" refs "+relParts[1]);
+						log.warn("Referenced boundary not available:", boundary.getTags(), "refs", relParts[1]);
 						continue;
 					}
 					String addAdmin_level = bAdditional.getTags().get("admin_level");
@@ -381,8 +381,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 					if (elem.getTag(bTag.getKey()) == null) {
 						elem.addTag(bTag.getKey(), bTag.getValue());
 						if (log.isDebugEnabled()) {
-							log.debug("Add tag", admMkgmapTag, "=", admName, "to",
-									elem.toTagString());
+							log.debug("Add tag", bTag, "to", elem.toTagString());
 						}
 					}
 				}
@@ -391,7 +390,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				// in this case the element can be removed from further processing
 				if (hasAllTags(elem, requiredTags)){
 					if (log.isDebugEnabled()) {
-						log.debug("Elem finish: "+elem.kind()+elem.getId()+" "+elem.toTagString());
+						log.debug("Elem finish:", elem.kind()+elem.getId(), elem.toTagString());
 					}
 					quadTree.remove(elem);
 				}
@@ -400,7 +399,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			
 			if (quadTree.isEmpty()) {
 				if (log.isInfoEnabled()) {
-					log.info("Finish Location Hook: Remaining boundaries: "+boundaries.size());
+					log.info("Finish Location Hook: Remaining boundaries:", boundaries.size());
 				}
 				return;
 			}
@@ -409,7 +408,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 			Collection<Element> unassigned =  quadTree.get(new Area(-90.0d, -180.0d, 90.0d, 180.0d));
 			Set<Coord> unCoords = new HashSet<Coord>();
 			for (Element e : unassigned) {
-				log.debug(e.getId()+" "+e.toTagString());
+				log.debug(e.getId(), e.toTagString());
 				if (e instanceof Node)
 					unCoords.add(((Node) e).getLocation());
 				else if ( e instanceof Way) {
@@ -417,7 +416,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 				}
 			}
 			GpxCreator.createGpx(GpxCreator.getGpxBaseName()+"unassigned", new ArrayList<Coord>(), new ArrayList<Coord>(unCoords));
-			log.debug("Finish Location Hook. Unassigned elements: "+unassigned.size());
+			log.debug("Finish Location Hook. Unassigned elements:", unassigned.size());
 		}
 	}
 	
@@ -446,8 +445,7 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 
 		long dt = (System.currentTimeMillis() - t1);
-		log.info("Location hook finished in "+
-				dt+ " ms");
+		log.info("Location hook finished in", dt, "ms");
 	}
 
 
