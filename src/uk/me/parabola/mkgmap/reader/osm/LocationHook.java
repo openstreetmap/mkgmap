@@ -504,15 +504,6 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		}
 		return zip;
 	}
-
-	public Set<String> getUsedTags() {
-		Set<String> tags = new HashSet<String>();
-		tags.add("boundary");
-		tags.add("admin_level");
-		tags.add("postal_code");
-		tags.addAll(nameTags);
-		return tags;
-	}
 	
 	private class BoundaryLevelCollator implements Comparator<Boundary> {
 
