@@ -88,14 +88,19 @@ public class Mdr20 extends Mdr2x {
 		Mdr5Record lastCity = null;
 		int record = 0;
 		int cityRecord = 0;
+		int lastMapNumber = 0;
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 
 			String name = street.getName();
 			Mdr5Record city = street.getCity();
 
+			boolean citySameByName = city.isSameByName(lastCity);
+
+			int mapNumber = city.getMapIndex();
+
 			// Only save a single copy of each street name.
-			if (!name.equals(lastName)) {
+			if (!name.equals(lastName) || !citySameByName || mapNumber != lastMapNumber) {
 				record++;
 
 				streets.add(street);
@@ -103,7 +108,7 @@ public class Mdr20 extends Mdr2x {
 			}
 
 			// The mdr20 value changes for each new city name
-			if (city.isSameByName(lastCity)) {
+			if (citySameByName) {
 				city.setMdr20(cityRecord);
 			} else {
 				// New city name, this marks the start of a new section in mdr20
@@ -111,6 +116,7 @@ public class Mdr20 extends Mdr2x {
 				city.setMdr20(cityRecord);
 				lastCity = city;
 			}
+			lastMapNumber = mapNumber;
 		}
 	}
 
