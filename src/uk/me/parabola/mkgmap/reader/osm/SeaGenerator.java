@@ -100,6 +100,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
 				else if("fbdebug".equals(o)) 
 					fbDebug = true;
+				else if(o.isEmpty())
+					continue;
 				else {
 					if(!"help".equals(o))
 						System.err.println("Unknown sea generation option '" + o + "'");
