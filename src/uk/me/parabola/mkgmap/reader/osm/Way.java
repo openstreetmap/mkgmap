@@ -169,7 +169,8 @@ public class Way extends Element {
 		}
 
 		// this test looks to be inverted but gives the expected result!
-		return area < 0;
+		// empty linear areas are defined as clockwise 
+		return area <= 0;
 	}
 
 	// simplistic check to see if this way "contains" another - for
