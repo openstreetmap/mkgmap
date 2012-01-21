@@ -2150,12 +2150,9 @@ public class MultiPolygonRelation extends Relation {
 	 * @return the size of the area (unitless)
 	 */
 	public static double calcAreaSize(List<Coord> polygon) {
-		Way w = new Way(0, polygon);
-		if (w.clockwise() == false) {
-			polygon = new ArrayList<Coord>(polygon);
-			Collections.reverse(polygon);
+		if (polygon.size() < 4 || polygon.get(0).equals(polygon.get(polygon.size()-1)) == false) {
+			return 0;
 		}
-		w = null;
 		double area = 0;
 		Iterator<Coord> polyIter = polygon.iterator();
 		Coord c2 = polyIter.next();
@@ -2166,7 +2163,7 @@ public class MultiPolygonRelation extends Relation {
 					* (c1.getLatitude() - c2.getLatitude());
 		}
 		area /= 2.0d;
-		return area;
+		return Math.abs(area);
 	}
 
 
@@ -2349,10 +2346,6 @@ public class MultiPolygonRelation extends Relation {
 		 * @return size of the covered areas (0 if the way is not closed)
 		 */
 		public double getSizeOfArea() {
-			if (isClosed()==false) {
-				return 0;
-			}
-
 			return MultiPolygonRelation.calcAreaSize(getPoints());
 		}
 
