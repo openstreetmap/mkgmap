@@ -1,0 +1,160 @@
+codepage 1251
+id1 7
+id2 2
+description "Cyrillic Sort"
+code 01
+code 02
+code 03
+code 04
+code 05
+code 06
+code 07
+code 08
+code 09, 0a, 0b, 0c, 0d, 20, a0
+code 0e
+code 0f
+code 10
+code 11
+code 12
+code 13
+code 14
+code 15
+code 16
+code 17
+code 18
+code 19
+code 1a
+code 1b
+code 1c
+code 1d
+code 1e
+code 1f
+code !
+code "
+code “
+code ”
+code «
+code »
+code „
+code '
+code ‘
+code ’
+code ‚
+code 2c
+code 3b
+code :
+code .
+code …
+code $
+code ¤
+code €
+code %
+code ‰
+code &
+code 23
+code (
+code )
+code ‹, 3c
+code ›, 3e
+code [
+code ]
+code {
+code }
+code *
+code +
+code -, –, —
+code ±
+code =
+code ad
+code /
+code \
+code ?
+code @
+code ^
+code ~
+code ¬
+code _
+code `
+code |
+code 7f
+code †
+code ‡
+# code 98
+code ¦
+code §
+code ™
+code ©
+code ®
+code °
+code ¶
+code •
+code ·
+code №
+code 0
+code 1
+code 2
+code 3
+code 4
+code 5
+code 6
+code 7
+code 8
+code 9
+code a, A
+code b, B
+code c, C
+code d, D
+code e, E
+code f, F
+code g, G
+code h, H
+code i, I; і, І; ї, Ї
+code j, J; ј, Ј
+code k, K
+code l, L
+code m, M
+code n, N
+code o, O
+code p, P
+code q, Q
+code r, R
+code s, S; ѕ, Ѕ
+code t, T
+code u, U
+code v, V
+code w, W
+code x, X
+code y, Y
+code z, Z
+code а, А
+code б, Б
+code в, В
+code г, Г; ґ, Ґ; ћ, Ћ; ѓ, Ѓ
+code д, Д; ђ, Ђ
+code е, Е; ё, Ё; є, Є
+code ж, Ж
+code з, З
+code и, И
+code й, Й
+code к, К; ќ, Ќ
+code л, Л; љ, Љ
+code м, М; µ
+code н, Н; њ, Њ
+code о, О
+code п, П
+code р, Р
+code с, С
+code т, Т
+code у, У; ў, Ў
+code ф, Ф
+code х, Х
+code ц, Ц
+code ч, Ч; џ, Џ
+code ш, Ш
+code щ, Щ
+code ъ, Ъ
+code ы, Ы
+code ь, Ь
+code э, Э
+code ю, Ю
+code я, Я
