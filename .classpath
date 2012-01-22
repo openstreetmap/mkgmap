@@ -7,5 +7,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/junit"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/resource"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/compile/protobuf-java-2.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/compile/osmpbf-1.1.1-754a33af.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -17,7 +17,8 @@
 		Author: Steve Ratcliffe
 		Create date: 26 Nov 2006
 -->
-<project name="mkgmap" default="dist" basedir=".">
+<project name="mkgmap" default="dist" basedir="."
+	 xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<!-- Init -->
 	<property name="top" value="."/>
@@ -44,14 +45,6 @@
 	<property name="javadoc" value="${doc}/api"/>
 	<property name="resources" value="resources"/>
 
-	<property name="jars" value="/opt/jars"/>
-
-	<!-- the locations of these external jars are set in external.properties
-	and can be overridden in a local.properties file. -->
-	<property name="junit.jar" value="junit-4.5.jar"/>
-	<property name="osmprotobuf.jar" value="osmprotobuf.jar"/>
-	<property name="protobuf.jar" value="protobuf.jar"/>
-
 	<!-- A place to keep a local copy of the test input data.  The test files
 	 are large and so are not kept in svn.	If you don't set this then they
 	 will be downloaded.
@@ -60,31 +53,48 @@
 	 -->
 	<property name="test.input.cache" value="/opt/data/testinput"/>
 
+	<!-- mkgmap's version number -->
+	<!-- todo: programmatically get the svn revision and put it in
+	     project.version -->
+	<property name="project.version" value="svn" />
+
+	<!-- ivy dependency support -->
+	<property name="build-support.dir" location="build-support"/>
+	<property name="dependency.version.ivy" value="2.2.0"/>
+	<property name="ivy.lib.dir" value="${basedir}/lib" />
+	<import file="${build-support.dir}/script/build-ivy-base.xml"/>
+	<import file="${build-support.dir}/script/build-ivy.xml"/>
+
 	<!-- For class paths -->
+	<path id="compile.classpath">
+		<fileset dir="${ivy.lib.dir}/compile" />
+	</path>
+	<path id="test.classpath">
+		<fileset dir="${ivy.lib.dir}/test" />
+	</path>
+	<path id="macker.classpath">
+		<fileset dir="${ivy.lib.dir}/macker" />
+	</path>
+
 	<path id="main">
 		<pathelement location="${build.classes}" />
-		<pathelement location="${osmprotobuf.jar}"/>
-		<pathelement location="${protobuf.jar}"/>
+		<path refid="compile.classpath" />
 	</path>
 
 	<path id="test">
 		<pathelement location="test/resources"/>
 		<pathelement location="build/test"/>
-		<pathelement location="${junit.jar}"/>
-		<path refid="main"/>
+		<path refid="test.classpath" />
+		<pathelement location="${build.classes}" />
 		<pathelement location="test"/>
 	</path>
 
-	<condition property="protobuf-available">
-		<and>
-			<available file="${osmprotobuf.jar}"/>
-			<available file="${protobuf.jar}"/>
-		</and>
-	</condition>
-
 	<!-- Prepare - make all the directories -->
-	<target name="prepare">
+	<target name="prepare" depends="resolve-compile">
 		<mkdir dir="${build.classes}" />
+		<propertyfile file="${build.classes}/version.properties">
+			<entry key="svn.version" value="${project.version}" />
+		</propertyfile>
 	</target>
 
 	<!-- Compile the product itself (no tests). -->
@@ -94,22 +104,11 @@
 			<include name="**/*.java" />
 			<classpath refid="main"/>
 			<exclude name="**/reader/dem/optional/*.java"/>
-			<exclude name="**/reader/osm/bin/*.java"/>
-			<exclude name="**/OsmBinBoundaryDataSource.java"/>
-		</javac>
-	</target>
-
-	<target name="compile-pbf" if="protobuf-available">
-		<echo>Protobuf binary format support</echo>
-		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
-			<classpath refid="main"/>
-			<include name="**/reader/osm/bin/*.java"/>
-			<include name="**/OsmBinBoundaryDataSource.java"/>
 		</javac>
 	</target>
 
 	<!-- Build into the build direcotory.  All resource files are copied in. -->
-	<target name="build" depends="compile, compile-pbf" description="Build everything into the build direcotory">
+	<target name="build" depends="compile" description="Build everything into the build direcotory">
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
@@ -129,7 +128,7 @@
 	</target>
 
 	<!-- Compile the test classes -->
-	<target name="build-test" depends="build">
+	<target name="build-test" depends="build, resolve-test">
 		<mkdir dir="${build.test}" />
 		<javac srcdir="${test}" destdir="${build.test}" debug="true">
 			<include name="**/*.java" />
@@ -192,11 +191,28 @@
 					description="Make the distribution area">
 
 		<mkdir dir="${dist}"/>
+		<mkdir dir="${dist}/lib"/>
 		<mkdir dir="${dist}/doc/api"/>
 
+		<copy todir="${dist}/lib" >
+			<path refid="compile.classpath" />
+		</copy>
+
+		<manifestclasspath property="manifest_cp" jarfile="${dist}/mkgmap.jar">
+			<classpath>
+				<fileset dir="${dist}/lib">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</manifestclasspath>
+
 		<!-- Make the jar -->
-		<jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
-				manifest="${resources}/MANIFEST.MF">
+		<jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar">
+			<manifest>
+				<attribute name="Main-Class" value="uk.me.parabola.mkgmap.main.Main" />
+				<attribute name="Class-Path" value="${manifest_cp}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
 			<include name="**/*.class"/>
 			<include name="*.csv"/>
 			<include name="*.xml"/>
@@ -246,11 +262,7 @@
 		</javadoc>
 	</target>
 
-	<target name="macker">
-		<path id="macker.classpath">
-			<fileset dir="${macker.root}/lib"/>
-			<pathelement location="${macker.root}/build/macker.jar"/>
-		</path>
+	<target name="macker" depends="build, resolve-macker">
 		<taskdef name="macker"
 						 classname="net.innig.macker.ant.MackerAntTask"
 						 classpathref="macker.classpath"/>

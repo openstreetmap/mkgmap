@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="mkgmap.Build.Ivy" default="init-ivy" basedir="."
+	xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<description>Ivy-specific tasks</description>
+
+	<!-- Include common build components. -->
+	<property name="build-support.dir" location="../"/>
+	<import file="${build-support.dir}/script/build-ivy-base.xml"/>
+	<property name="ivy.retrieve.pattern" value="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]" />
+
+	<target name="resolve-compile" depends="init-ivy" description="Downloads compile dependencies using ivy.">
+		<ivy:retrieve conf="compile" />
+	</target>
+	<target name="resolve-test" depends="init-ivy" description="Downloads test program dependencies using ivy.">
+		<ivy:retrieve conf="test" />
+	</target>
+	<target name="resolve-macker" depends="init-ivy" description="Downloads macker program dependencies using ivy.">
+		<ivy:retrieve conf="macker" />
+	</target>
+	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
+
+	<property name="ivy.distrib.dir" value="${ivy.project.dir}/dist" />
+	<property name="ivy.publish.src.artifacts.pattern" value="${ivy.distrib.dir}/[artifact].[ext]" />
+	<target name="publish" depends="dist">
+		<ivy:deliver pubrevision="${project.version}"/>
+		<ivy:publish resolver="local" pubrevision="${project.version}" overwrite="true"/>
+	</target>
+</project>
