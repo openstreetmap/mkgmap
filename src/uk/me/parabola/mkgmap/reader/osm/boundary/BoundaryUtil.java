@@ -166,7 +166,13 @@ public class BoundaryUtil {
 									area.add(elemArea);
 								}
 							} else {
-								area.subtract(elemArea);
+								if (area == null) {
+									log.warn("Boundary: "+tags);
+									log.warn("Outer way is tagged incosistently as inner way. Ignoring it.");
+									log.warn("Points: "+points);
+								} else {
+									area.subtract(elemArea);
+								}
 							}
 						}
 
