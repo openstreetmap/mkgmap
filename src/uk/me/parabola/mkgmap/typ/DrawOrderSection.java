@@ -48,7 +48,7 @@ class DrawOrderSection implements ProcessSection {
 		int type;
 		int subtype = 0;
 
-		if (fulltype >= 0x10000) {
+		if (fulltype >= 0x100) {
 			type = (fulltype >>> 8) & 0x3fff;
 			subtype = fulltype & 0xff;
 		} else {
