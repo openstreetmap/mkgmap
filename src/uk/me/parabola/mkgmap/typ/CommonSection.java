@@ -16,6 +16,7 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 
+import uk.me.parabola.imgfmt.app.typ.AlphaAdder;
 import uk.me.parabola.imgfmt.app.typ.BitmapImage;
 import uk.me.parabola.imgfmt.app.typ.ColourInfo;
 import uk.me.parabola.imgfmt.app.typ.Image;
@@ -188,7 +189,7 @@ public class CommonSection {
 	 * Get any keywords that are on the end of the colour line. Must not step
 	 * over the new line boundary.
 	 */
-	private void readExtraColourInfo(TokenScanner scanner, ColourInfo colourInfo) {
+	private void readExtraColourInfo(TokenScanner scanner, AlphaAdder colour) {
 		while (!scanner.isEndOfFile()) {
 			Token tok = scanner.nextRawToken();
 			if (tok.isEol())
@@ -196,6 +197,7 @@ public class CommonSection {
 
 			String word = tok.getValue();
 
+			// TypWiz uses alpha, TypViewer uses "canalalpha"
 			if (word.endsWith("alpha")) {
 				scanner.validateNext("=");
 				String aval = scanner.nextValue();
@@ -204,7 +206,7 @@ public class CommonSection {
 					// Convert to rgba format
 					int alpha = Integer.decode(aval);
 					alpha = 255 - ((alpha<<4) + alpha);
-					colourInfo.addAlpha(alpha);
+					colour.addAlpha(alpha);
 				} catch (NumberFormatException e) {
 					throw new SyntaxException(scanner, "Bad number for alpha value " + aval);
 				}
@@ -263,34 +265,98 @@ public class CommonSection {
 	}
 
 
+	/**
+	 * The true image format is represented by one colour value for each pixel in the
+	 * image.
+	 *
+	 * The colours are on several lines surrounded by double quotes.
+	 * <pre>
+	 * "#ff9900 #ffaa11 #feab10 #feab10"
+	 * "#f79900 #f7aa11 #feab10 #feab20"
+	 * ...
+	 * </pre>
+	 * There can be any number of colours on the same line, and the spaces are not needed.
+	 *
+	 * Transparency is represented by using RGBA values "#ffeeff00" or by appending alpha=N
+	 * to the end of the colour line. If using the 'alpha=N' method, then there can be only one
+	 * colour per line (well it is only the last colour value that is affected if more than one).
+	 *
+	 * <pre>
+	 * "#ff8801" alpha=2
+	 * </pre>
+	 *
+	 * The alpha values go from 0 to 15 where 0 is opaque and 15 transparent.
+	 */
 	private Image readTrueImage(TokenScanner scanner, ColourInfo colourInfo) {
 		int width = colourInfo.getWidth();
 		int height = colourInfo.getHeight();
-		int[] image = new int[width * height];
+		final int[] image = new int[width * height];
 
 		int nPixels = width * height;
 
 		int count = 0;
 		while (count < nPixels) {
 			scanner.validateNext("\"");
+			count = readTrueImageLine(scanner, image, count);
+		}
 
-			do {
-				scanner.validateNext("#");
-				String col = scanner.nextValue();
-				try {
-					int val = Integer.parseInt(col, 16);
-					if (col.length() <= 6)
-						val = (val << 8) + 0xff;
+		if (scanner.checkToken("\"")) {
+			// An extra colour, so this is probably meant to be a mode=16 image.
+			// Remove the first pixel and shuffle the rest down, unset the alpha
+			// on all the transparent pixels.
+			int transPixel = image[0];
+			for (int i = 1; i < nPixels; i++) {
+				int pix = image[i];
+				if (pix == transPixel)
+					pix &= ~0xff;
+				image[i-1] = pix;
+			}
 
-					image[count++] = val;
-				} catch (NumberFormatException e) {
-					throw new SyntaxException(scanner, "Not a valid colour value " + col);
-				}
-			} while (scanner.checkToken("#"));
+			// Add the final pixel
 			scanner.validateNext("\"");
+			readTrueImageLine(scanner, image, nPixels-1);
 		}
 
 		return new TrueImage(colourInfo, image);
+	}
+
+	/**
+	 * Read a single line of pixel colours.
+	 *
+	 * There can be one or more colours on the line and the colours are surrounded
+	 * by quotes.  The can be trailing attribute that sets the opacity of
+	 * the final pixel.
+	 */
+	private int readTrueImageLine(TokenScanner scanner, final int[] image, int count) {
+		do {
+			scanner.validateNext("#");
+			String col = scanner.nextValue();
+			try {
+				int val = (int) Long.parseLong(col, 16);
+				if (col.length() <= 6)
+					val = (val << 8) + 0xff;
+
+				image[count++] = val;
+			} catch (NumberFormatException e) {
+				throw new SyntaxException(scanner, "Not a valid colour value ");
+			}
+		} while (scanner.checkToken("#"));
+		scanner.validateNext("\"");
+
+		// Look for any trailing alpha=N stuff.
+		final int lastColourIndex = count - 1;
+		readExtraColourInfo(scanner, new AlphaAdder() {
+			/**
+			 * Add the alpha value to the last colour that was read in.
+			 *
+			 * @param alpha A true alpha value ie 0 is transparent, 255 opaque.
+			 */
+			public void addAlpha(int alpha) {
+				image[lastColourIndex] = (image[lastColourIndex] & ~0xff) | (alpha & 0xff);
+			}
+		});
+
+		return count;
 	}
 
 	/**

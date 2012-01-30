@@ -318,6 +318,12 @@ public class TokenScanner {
 		return new WordInfo(sb.toString(), quotec != 0);
 	}
 
+	/**
+	 * Check the value of the next token without consuming it.
+	 *
+	 * @param val String value to compare against.
+	 * @return True if the next token has the same value as the argument.
+	 */
 	public boolean checkToken(String val) {
 		skipSpace();
 		Token tok = peekToken();

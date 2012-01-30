@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.app.Writeable;
  *
  * @author Steve Ratcliffe
  */
-public class ColourInfo implements Writeable {
+public class ColourInfo implements Writeable, AlphaAdder {
 	private static final int S_NIGHT = 1;
 	private static final int S_DAY_TRANSPARENT = 0x2;
 	private static final int S_NIGHT_TRANSPARENT = 0x4;
@@ -170,7 +170,7 @@ public class ColourInfo implements Writeable {
 	 * @param alpha The original alpha value eg 0xf0.
 	 * @return Rounded alpha to four bits eg 0xe.
 	 */
-	private int alphaRound4(int alpha) {
+	static int alphaRound4(int alpha) {
 		int top = (alpha >> 4) & 0xf;
 		int low = alpha & 0xf;
 
@@ -234,6 +234,10 @@ public class ColourInfo implements Writeable {
 
 	public int getColourMode() {
 		return colourMode;
+	}
+
+	public void setColourMode(int colourMode) {
+		this.colourMode = (char) colourMode;
 	}
 
 	public void setSimple(boolean simple) {
