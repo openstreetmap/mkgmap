@@ -18,7 +18,7 @@
 		Create date: 26 Nov 2006
 -->
 <project name="mkgmap" default="dist" basedir="."
-		>
+		xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<!-- Init -->
 	<property name="top" value="."/>
@@ -77,11 +77,11 @@
 	<property name="project.version" value="${project.version.default}" />
 
 	<!-- ivy dependency support -->
-	<property name="build-support.dir" location="build-support"/>
-	<property name="dependency.version.ivy" value="2.2.0"/>
+	<property name="ivy.version" value="2.2.0"/>
 	<property name="ivy.lib.dir" value="${basedir}/lib" />
-	<import file="${build-support.dir}/script/build-ivy-base.xml"/>
-	<import file="${build-support.dir}/script/build-ivy.xml"/>
+	<property name="ivy.jar.dir" value="${ivy.lib.dir}/build" />
+	<property name="ivy.retrieve.pattern" value="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]" />
+	<property name="ivy.publish.src.artifacts.pattern" value="${dist}/[artifact].[ext]" />
 
 	<!-- For class paths -->
 	<path id="compile.classpath">
@@ -106,6 +106,55 @@
 		<pathelement location="${build.classes}" />
 		<pathelement location="test"/>
 	</path>
+
+	<!-- ******************** TARGETS ******************** -->
+
+	<!-- targets for downloading and registering ivy -->
+	<target name="ivy-availability" description="Checks if the ivy library is available">
+		<property name="ivy.jar.file" value="${ivy.jar.dir}/ivy-${ivy.version}.jar" />
+		<available property="ivy.available" file="${ivy.jar.file}" />
+	</target>
+	<target name="download-ivy" unless="ivy.available" description="Downloads the ivy library from public repositories.">
+		<delete dir="${ivy.jar.dir}"/>
+		<mkdir dir="${ivy.jar.dir}" />
+		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
+		     dest="${ivy.jar.file}" usetimestamp="true"/>
+	</target>
+	<target name="init-ivy" depends="ivy-availability, download-ivy" description="Registers ivy with ant and initializes it." unless="ivy.initialized">
+		<path id="ivy.lib.path">
+			<fileset dir="${ivy.jar.dir}" includes="*.jar" />
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml"
+			 uri="antlib:org.apache.ivy.ant"
+			 classpathref="ivy.lib.path" />
+		<ivy:configure />
+		<ivy:info />
+		<property name="ivy.initialized" value="true"/>
+	</target>
+	<target name="clean-cache" depends="init-ivy" description="Clean the ivy cache.">
+		<ivy:cleancache />
+	</target>
+	<target name="clean-ivy" description="Clean the ivy installation.">
+		<delete dir="${ivy.jar.dir}"/>
+	</target>
+
+	<!-- targets for fetching dependencies via ivy -->
+	<target name="resolve-compile" depends="init-ivy" description="Downloads compile dependencies using ivy.">
+		<ivy:retrieve conf="compile" />
+	</target>
+	<target name="resolve-test" depends="init-ivy" description="Downloads test program dependencies using ivy.">
+		<ivy:retrieve conf="test" />
+	</target>
+	<target name="resolve-macker" depends="init-ivy" description="Downloads macker program dependencies using ivy.">
+		<ivy:retrieve conf="macker" />
+	</target>
+	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
+
+	<!-- targets for publishing mkgmap (locally) via ivy -->
+	<target name="publish" depends="dist">
+		<ivy:deliver pubrevision="${project.version}"/>
+		<ivy:publish resolver="local" pubrevision="${project.version}" overwrite="true"/>
+	</target>
 
 	<!-- Prepare - make all the directories -->
 	<target name="prepare">
