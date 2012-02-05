@@ -108,7 +108,7 @@
 	</path>
 
 	<!-- Prepare - make all the directories -->
-	<target name="prepare" depends="resolve-compile">
+	<target name="prepare">
 		<mkdir dir="${build.classes}" />
 		<propertyfile file="${build.classes}/version.properties">
 			<entry key="svn.version" value="${project.version}" />
@@ -116,7 +116,7 @@
 	</target>
 
 	<!-- Compile the product itself (no tests). -->
-	<target name="compile" depends="prepare" description="main compilation">
+	<target name="compile" depends="prepare, resolve-compile" description="main compilation">
 
 		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
 			<include name="**/*.java" />
