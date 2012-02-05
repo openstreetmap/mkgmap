@@ -301,10 +301,6 @@
 				<include name="README"/>
 				<include name="LICENCE*"/>
 			</fileset>
-			<files>
-				<include name="${protobuf.jar}"/>
-				<include name="${osmprotobuf.jar}"/>
-			</files>
 		</copy>
 
 		<mkdir dir="${dist}/examples"/>

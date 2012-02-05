@@ -4,6 +4,13 @@
     <facet type="Python" name="Python">
       <configuration sdkName="" />
     </facet>
+    <facet type="IvyIDEA" name="IvyIDEA">
+      <configuration ivyFile="$MODULE_DIR$/ivy.xml" useProjectSettings="true" useCustomIvySettings="true" ivySettingsFile="" onlyResolveSelectedConfigs="false">
+        <propertiesSettings>
+          <propertiesFiles includeProjectLevelPropertiesFiles="true" />
+        </propertiesSettings>
+      </configuration>
+    </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes" />
@@ -33,8 +40,23 @@
     <orderEntry type="library" name="jai" level="application" />
     <orderEntry type="library" name="apache-ant" level="application" />
     <orderEntry type="library" name="icu4j" level="application" />
-    <orderEntry type="library" name="protobuf" level="application" />
-    <orderEntry type="library" name="osmbinary" level="application" />
+    <orderEntry type="module-library">
+      <library name="IvyIDEA">
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.ivy2/cache/com.google.protobuf/protobuf-java/jars/protobuf-java-2.4.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/crosby/osmpbf/jars/osmpbf-1.1.1-754a33af.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/junit/junit/jars/junit-4.5.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/innig/macker/jars/macker-0.4.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/commons-lang/commons-lang/jars/commons-lang-1.0.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/innig/innig-util/jars/innig-util-0.4.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/bcel/bcel/jars/bcel-5.1.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/regexp/regexp/jars/regexp-1.2.jar!/" />
+          <root url="jar://$USER_HOME$/.ivy2/cache/jdom/jdom/jars/jdom-b9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
