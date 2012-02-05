@@ -85,7 +85,7 @@
 	<property name="ivy.lib.dir" value="${basedir}/lib" />
 	<property name="ivy.jar.dir" value="${ivy.lib.dir}/build" />
 	<property name="ivy.retrieve.pattern" value="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]" />
-	<property name="ivy.publish.src.artifacts.pattern" value="${dist}/[artifact].[ext]" />
+	<property name="ivy.distrib.dir" value="ivy-distrib" />
 
 	<!-- For class paths -->
 	<path id="compile.classpath">
@@ -156,6 +156,8 @@
 
 	<!-- targets for publishing the project (locally) via ivy -->
 	<target name="publish" depends="dist">
+		<copy file="${project.jar}"
+		      tofile="${ivy.distrib.dir}/jars/${project.name}-${project.version}.jar"/>
 		<ivy:deliver pubrevision="${project.version}"/>
 		<ivy:publish resolver="local" pubrevision="${project.version}" overwrite="true"/>
 	</target>
