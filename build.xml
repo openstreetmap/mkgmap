@@ -20,6 +20,8 @@
 <project name="mkgmap" default="dist" basedir="."
 		xmlns:ivy="antlib:org.apache.ivy.ant">
 
+	<property name="project.name" value="${ant.project.name}"/>
+
 	<!-- Init -->
 	<property name="top" value="."/>
 
@@ -45,6 +47,8 @@
 	<property name="javadoc" value="${doc}/api"/>
 	<property name="resources" value="resources"/>
 
+	<property name="project.jar" value="${dist}/${project.name}.jar"/>
+
 	<!-- A place to keep a local copy of the test input data.  The test files
 	 are large and so are not kept in svn.	If you don't set this then they
 	 will be downloaded.
@@ -53,7 +57,7 @@
 	 -->
 	<property name="test.input.cache" value="/opt/data/testinput"/>
 
-	<!-- mkgmap's version number -->
+	<!-- the project's version number -->
 	<tstamp>
 		<format property="tstamp.iso8601" pattern="yyyy-MM-dd'T'HH:mm:ssZ" />
 	</tstamp>
@@ -150,7 +154,7 @@
 	</target>
 	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
 
-	<!-- targets for publishing mkgmap (locally) via ivy -->
+	<!-- targets for publishing the project (locally) via ivy -->
 	<target name="publish" depends="dist">
 		<ivy:deliver pubrevision="${project.version}"/>
 		<ivy:publish resolver="local" pubrevision="${project.version}" overwrite="true"/>
@@ -265,7 +269,7 @@
 			<path refid="compile.classpath" />
 		</copy>
 
-		<manifestclasspath property="manifest_cp" jarfile="${dist}/mkgmap.jar">
+		<manifestclasspath property="manifest_cp" jarfile="${project.jar}">
 			<classpath>
 				<fileset dir="${dist}/lib">
 					<include name="**/*.jar" />
@@ -274,7 +278,7 @@
 		</manifestclasspath>
 
 		<!-- Make the jar -->
-		<jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar">
+		<jar basedir="${build.classes}" jarfile="${project.jar}">
 			<manifest>
 				<attribute name="Main-Class" value="uk.me.parabola.mkgmap.main.Main" />
 				<attribute name="Class-Path" value="${manifest_cp}" />
