@@ -361,6 +361,9 @@
 	<!-- Clobber all generated and built files -->
 	<target name="clobber" depends="clean" description="Remove all built files">
 		<delete dir="${dist}" />
+		<delete dir="${ivy.lib.dir}"/>
+		<delete dir="${javadoc}"/>
+		<delete dir="${ivy.distrib.dir}"/>
 	</target>
 
 	<target name="rebuild" depends="clean, build" description="Clean existing class files and build from scratch"/>
