@@ -212,7 +212,7 @@
 		<mkdir dir="${dist}/lib"/>
 		<mkdir dir="${dist}/doc/api"/>
 
-		<copy todir="${dist}/lib" >
+		<copy todir="${dist}/lib" flatten="true">
 			<path refid="compile.classpath" />
 		</copy>
 
