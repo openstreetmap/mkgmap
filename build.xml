@@ -78,6 +78,18 @@
 			<not><equals arg1="${svn.version}" arg2="" /></not>
 		</and>
 	</condition>
+	<exec executable="git" dir="${top}" logError="true"
+	      outputproperty="git.version" resultproperty="gitdescribe.result"
+	      failifexecutionfails="false">
+		<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
+	</exec>
+	<condition property="project.version" value="${git.version}">
+		<and>
+			<isset property="git.version" />
+			<equals arg1="${gitdescribe.result}" arg2="0" />
+			<not><equals arg1="${git.version}" arg2="" /></not>
+		</and>
+	</condition>
 	<property name="project.version" value="${project.version.default}" />
 
 	<!-- ivy dependency support -->

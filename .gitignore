@@ -5,4 +5,6 @@
 bin
 build/classes
 dist
+ivy-distrib/
+lib/
 mkgmap.log.*
