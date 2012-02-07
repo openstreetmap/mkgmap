@@ -176,8 +176,12 @@ public class BoundaryUtil {
 							}
 						}
 
-						Boundary boundary = new Boundary(area, tags);
-						boundaryList.add(boundary);
+						if (area != null) {
+							Boundary boundary = new Boundary(area, tags);
+							boundaryList.add(boundary);
+						} else {
+							log.warn("Boundary "+tags+" does not contain any valid area in file "+boundaryFile);
+						}
 
 					} else {
 						log.debug("Bbox does not intersect. Skip",bSize);
