@@ -985,6 +985,11 @@
 		<variant>LKA</variant>
 		<variant>ශ්‍රී ලංකා</variant>
 	</country>
+	<country name="South Sudan" abr="SSD">
+		<variant>SS</variant>
+		<variant>SSD</variant>
+		<variant>جمهورية السودان</variant>
+	</country>
 	<country name="Sudan" abr="SDN">
 		<variant>SD</variant>
 		<variant>SDN</variant>
