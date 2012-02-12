@@ -22,6 +22,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
  * This is a tool class that provides static methods to convert between mkgmap
@@ -224,51 +225,110 @@ public class Java2DConverter {
 
 		float[] res = new float[6];
 		PathIterator pit = area.getPathIterator(null);
+		
+		// store float precision coords to check if the direction (cw/ccw)
+		// of a polygon changes due to conversion to int precision 
+		List<Float> floatLat = null;
+		List<Float>	floatLon = null;
+
 		List<Coord> coords = null;
 
-		int prevLat = Integer.MIN_VALUE;
-		int prevLong = Integer.MIN_VALUE;
+		int iPrevLat = Integer.MIN_VALUE;
+		int iPrevLong = Integer.MIN_VALUE;
 
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
 
-			int lat = Math.round(res[1]);
-			int lon = Math.round(res[0]);
-
+			float fLat = res[1];
+			float fLon = res[0];
+			int iLat = Math.round(fLat);
+			int iLon = Math.round(fLon);
+			
 			switch (type) {
 			case PathIterator.SEG_LINETO:
-				if (prevLat != lat || prevLong != lon) {
-					coords.add(new Coord(lat, lon));
-				}
-				prevLat = lat;
-				prevLong = lon;
-				break;
-			case PathIterator.SEG_MOVETO:
-				if (coords != null) {
-					if (coords.size() > 2) {
-						if (coords.get(0).equals(coords.get(coords.size() - 1)) == false)
-							coords.add(coords.get(0));
+				floatLat.add(fLat);
+				floatLon.add(fLon);
 
-						if (coords.size() > 3)
-							outputs.add(coords);
+				if (iPrevLat != iLat || iPrevLong != iLon) 
+					coords.add(new Coord(iLat,iLon));
+
+				iPrevLat = iLat;
+				iPrevLong = iLon;
+				break;
+			case PathIterator.SEG_MOVETO: 
+			case PathIterator.SEG_CLOSE:
+				if ((type == PathIterator.SEG_MOVETO && coords != null) || type == PathIterator.SEG_CLOSE) {
+					if (coords.size() > 2 && coords.get(0).equals(coords.get(coords.size() - 1)) == false) {
+						coords.add(coords.get(0));
+					}
+					if (coords.size() > 3){
+						// use float values to verify area size calculations with higher precision
+						if (floatLat.size() > 2) {
+							if (floatLat.get(0).equals(floatLat.get(floatLat.size() - 1)) == false
+									|| floatLon.get(0).equals(floatLon.get(floatLon.size() - 1)) == false){ 
+								floatLat.add(floatLat.get(0));
+								floatLon.add(floatLon.get(0));
+							}
+						}
+
+						// calculate area size with float values 
+						double realAreaSize = 0;
+						float pf1Lat = floatLat.get(0);
+						float pf1Lon = floatLon.get(0);
+						for(int i = 1; i < floatLat.size(); i++) {
+							float pf2Lat = floatLat.get(i);
+							float pf2Lon = floatLon.get(i);
+							realAreaSize += ((double)pf1Lon * pf2Lat - 
+									(double)pf2Lon * pf1Lat);
+							pf1Lat = pf2Lat;
+							pf1Lon = pf2Lon;
+						}
+						
+					
+						// Check if the polygon with float precision has the same direction
+						// than the polygon with int precision. If not reverse the int precision
+						// polygon. Its direction has changed artificially by the int conversion.
+						Way w = new Way(0, coords);
+						boolean floatPrecClockwise = (realAreaSize <= 0);
+						if (w.clockwise() != floatPrecClockwise) {
+							
+							if (log.isInfoEnabled()) {
+								log.info("Converting area to int precision changes direction. Will correct that.");
+								StringBuilder sb = new StringBuilder("[");
+								for (int i = 0; i < floatLat.size(); i++) {
+									if (i > 0) {
+										sb.append(", ");
+									}
+									sb.append(floatLat.get(i));
+									sb.append("/");
+									sb.append(floatLon.get(i));
+								}
+								sb.append("]");
+								log.info("Float area: ", sb);
+								log.info("Int area: ", coords);
+							}
+							
+							Collections.reverse(coords);
+						}
+						outputs.add(coords);
 					}
 				}
-				coords = new ArrayList<Coord>();
-				coords.add(new Coord(lat, lon));
-				prevLat = lat;
-				prevLong = lon;
-				break;
-			case PathIterator.SEG_CLOSE:
-				if (coords.size() > 2) {
-					if (coords.get(0).equals(coords.get(coords.size() - 1)) == false)
-						coords.add(coords.get(0));
-
-					if (coords.size() > 3)
-						outputs.add(coords);
+				if (type == PathIterator.SEG_MOVETO){
+					floatLat= new ArrayList<Float>();
+					floatLon= new ArrayList<Float>();
+					floatLat.add(fLat);
+					floatLon.add(fLon);
+					coords = new ArrayList<Coord>();
+					coords.add(new Coord(iLat,iLon));
+					iPrevLat = iLat;
+					iPrevLong = iLon;
+				} else {
+					floatLat= null;
+					floatLon= null;
+					coords = null;
+					iPrevLat = Integer.MIN_VALUE;
+					iPrevLong = Integer.MIN_VALUE;
 				}
-				coords = null;
-				prevLat = Integer.MIN_VALUE;
-				prevLong = Integer.MIN_VALUE;
 				break;
 			default:
 				log.error("Unsupported path iterator type " + type
@@ -280,5 +340,4 @@ public class Java2DConverter {
 
 		return outputs;
 	}
-
 }

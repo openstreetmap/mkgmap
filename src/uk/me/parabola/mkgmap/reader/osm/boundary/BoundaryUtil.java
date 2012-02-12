@@ -84,10 +84,7 @@ public class BoundaryUtil {
 		// we need the other way round
 		Collections.reverse(bElements);
 
-// Disable this assertion until the Java2DConverter can ensure
-// that the first element does not change the direction due to
-// rounding errors
-//		assert bElements.get(0).isOuter() : log.threadTag()+" first element is not outer. "+ bElements;
+		assert bElements.get(0).isOuter() : log.threadTag()+" first element is not outer. "+ bElements;
 		return bElements;
 	}
 
