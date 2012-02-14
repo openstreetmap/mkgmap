@@ -439,13 +439,14 @@ public class ExtTypeAttributes {
 
 		if(sequence != null) {
 			StringBuffer periods = new StringBuffer();
-			for(String p : sequence.split("[()]")) {
+			for(String p : sequence.split("[+()]")) {
+				if (p.isEmpty())
+					continue;
 				if(periods.length() > 0)
 					periods.append(",");
 				periods.append(Double.parseDouble(p));
 			}
-			// FIXME - enable this when flash sequence encoding is right
-			// attributes.put("period", periods.toString());
+			attributes.put("period", periods.toString());
 		}
 
 		if(mapObject instanceof Point) {
@@ -598,16 +599,22 @@ public class ExtTypeAttributes {
 					extraBytes[i++] = (byte)((lc << 5) | lr);
 				}
 				if(periods.length > 1) {
-					if(periods.length > 2)
-						extraBytes[i++] = (byte)0x82;
-					else
-						extraBytes[i++] = (byte)0x81;
-					for(int p : periods) {
-						while(p > 0x3f) {
+					extraBytes[i++] = (byte)(0x80 + periods.length / 2);
+					// first all lights
+					for (int pi = 0; pi < periods.length; pi+=2) {
+						while(periods[pi] > 0x3f) {
 							extraBytes[i++] = (byte)0x3f;
-							p -= 0x3f;
+							periods[pi] -= 0x3f;
 						}
-						extraBytes[i++] = (byte)p;
+						extraBytes[i++] = (byte)periods[pi];
+					}
+					// second all pause
+					for (int pi = 1; pi < periods.length; pi+=2) {
+						while(periods[pi] > 0x3f) {
+							extraBytes[i++] = (byte)0x3f;
+							periods[pi] -= 0x3f;
+						}
+						extraBytes[i++] = (byte)periods[pi];
 					}
 				}
 				else if(morseLetter != null)
