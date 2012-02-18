@@ -48,26 +48,18 @@ public class Mdr11 extends MdrMapSection {
 	}
 
 	/**
-	 * Sort, de-dupe and fill in the mdr10 information.
+	 * Sort and fill in the mdr10 information.
+	 *
+	 * The POI index contains individual references to POI by subdiv and index, so they are not
+	 * de-duplicated in the index in the same way that streets and cities are.
 	 */
 	protected void preWriteImpl() {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
-		// De-duplicate the poi names so that there is only one entry
-		// per map for the same name/region/country.
 		pois.clear();
-		Mdr11Record last = new Mdr11Record();
 		for (SortKey<Mdr11Record> sk : keys) {
 			Mdr11Record poi = sk.getObject();
 
-			// Since this is per-map, we do not have to compare names, just index numbers will do.
-			// Not totally sure that it is per-map however.
-			if (poi.getMapIndex() == last.getMapIndex() && poi.getLblOffset() == last.getLblOffset()
-					&& poi.getRegionIndex() == last.getRegionIndex()) {
-				continue;
-			}
-
-			last = poi;
 			mdr10.addPoiType(poi);
 			pois.add(poi);
 		}
