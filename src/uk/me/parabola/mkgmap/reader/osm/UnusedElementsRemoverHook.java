@@ -132,6 +132,17 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 			// check if the way is completely outside the tile bounding box
 			boolean coordInBbox = false;
 			Coord prevC = null;
+			
+			// It is possible that the way is larger than the bounding box and therefore 
+			// contains the bbox completely. Especially this is true for the sea polygon
+			// when using --generate-sea=polygon
+			// So need the calc the bbox of the way
+			Coord firstC = way.getPoints().get(0);
+			int minLat = firstC.getLatitude();
+			int maxLat = firstC.getLatitude();
+			int minLong = firstC.getLongitude();
+			int maxLong = firstC.getLongitude();
+			
 			for (Coord c : way.getPoints()) {
 				if (bbox.contains(c)) {
 					coordInBbox = true;
@@ -148,10 +159,29 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 						break;
 					}
 				}
+				
+				if (minLat > c.getLatitude()) {
+					minLat = c.getLatitude();
+				} else if (maxLat < c.getLatitude()) {
+					maxLat = c.getLatitude();
+				}
+				if (minLong > c.getLongitude()) {
+					minLong = c.getLongitude();
+				} else if (maxLong < c.getLongitude()) {
+					maxLong = c.getLongitude();
+				}
+				
 				prevC = c;
 			}
 			if (coordInBbox==false) {
-				saver.getWays().remove(way.getId());
+				// no coord of the way is within the bounding box
+				// check if the way possibly covers the bounding box completely
+				Area wayBbox = new Area(minLat, minLong, maxLat, maxLong);
+				if (wayBbox.intersects(saver.getBoundingBox())) {
+					log.debug(way, "possibly covers the bbox completely. Keep it.", way.toTagString());
+				} else {
+					saver.getWays().remove(way.getId());
+				}
 			} 
 		}
 		
