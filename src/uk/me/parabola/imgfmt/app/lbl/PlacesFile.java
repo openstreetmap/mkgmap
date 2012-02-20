@@ -47,6 +47,8 @@ public class PlacesFile {
 	private final List<City> cityList = new ArrayList<City>();
 
 	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
+	private final List<Zip> zipList = new ArrayList<Zip>();
+
 	private final List<Highway> highways = new ArrayList<Highway>();
 	private final List<ExitFacility> exitFacilities = new ArrayList<ExitFacility>();
 	private final List<POIRecord> pois = new ArrayList<POIRecord>();
@@ -120,7 +122,7 @@ public class PlacesFile {
 		}
 		placeHeader.endPOITypeIndex(writer.position());
 
-		for (Zip z : postalCodes.values())
+		for (Zip z : zipList)
 			z.write(writer);
 		placeHeader.endZip(writer.position());
 
@@ -236,16 +238,16 @@ public class PlacesFile {
 	}
 
 	Zip createZip(String code) {
-	
 		Zip z = postalCodes.get(code);
-		
+
 		if(z == null) {
-	  	   z = new Zip(postalCodes.size()+1);
+			z = new Zip(postalCodes.size()+1);
 
-		   Label l = lblFile.newLabel(code);
-		   z.setLabel(l);
+			Label l = lblFile.newLabel(code);
+			z.setLabel(l);
 
-		   postalCodes.put(code, z);
+			zipList.add(z);
+			postalCodes.put(code, z);
 		}
 		return z;
 	}
@@ -309,6 +311,7 @@ public class PlacesFile {
 		sortCountries();
 		sortRegions();
 		sortCities();
+		sortZips();
 
 		poisClosed = true;
 
@@ -384,6 +387,21 @@ public class PlacesFile {
 			City city = sc.getObject();
 			city.setIndex(index++);
 			cityList.add(city);
+		}
+	}
+
+	private void sortZips() {
+		List<SortKey<Zip>> keys = new ArrayList<SortKey<Zip>>();
+		for (Zip c : postalCodes.values()) {
+			SortKey<Zip> sortKey = sort.createSortKey(c, c.getLabel().getText());
+			keys.add(sortKey);
+		}
+		Collections.sort(keys);
+
+		zipList.clear();
+		for (SortKey<Zip> sc: keys) {
+			Zip zip = sc.getObject();
+			zipList.add(zip);
 		}
 	}
 
