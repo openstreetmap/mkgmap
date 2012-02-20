@@ -16,8 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.lbl;
 
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * A zip or postal code record.
@@ -27,12 +27,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 public class Zip {
 	// The index is not stored in the file, you just use the index of it in
 	// the section.
-	private final int index;
+	private int index;
 	private Label label;
-
-	public Zip(int index) {
-		this.index = index;
-	}
 
 	public void write(ImgFileWriter writer) {
 		writer.put3(label.getOffset());
@@ -50,4 +46,7 @@ public class Zip {
 		return index;
 	}
 
+	public void setIndex(int index) {
+		this.index = index;
+	}
 }

@@ -57,7 +57,7 @@ public class POIRecord {
 	private Label complexPhoneNumber; // Used for numbers such as 221b
 	
 	private City city;
-	private char zipIndex;
+	private Zip zip;
 	private Exit exit;
 
 	//private String phoneNumber;
@@ -91,11 +91,10 @@ public class POIRecord {
 	}
 	
 	
-	public void setZipIndex(int zipIndex)
-	{
-		this.zipIndex =  (char) zipIndex;
+	public void setZip(Zip zip) {
+		this.zip = zip;
 	}
-	
+
 	public void setCity(City city)
 	{
 		this.city = city;
@@ -137,12 +136,12 @@ public class POIRecord {
 				writer.put((byte)cityIndex);
 		}
 
-		if (zipIndex > 0)
-		{
+		if (zip != null) {
+			char zipIndex = (char) zip.getIndex();
 			if(numZips > 255)
 				writer.putChar(zipIndex);
 			else
-				writer.put((byte)zipIndex);
+				writer.put((byte) zipIndex);
 		}
 
 		if (complexPhoneNumber != null)
@@ -195,7 +194,7 @@ public class POIRecord {
 			b |= HAS_STREET_NUM;
 		if (city != null)
 		        b |= HAS_CITY;
-		if (zipIndex > 0)
+		if (zip != null)
 		        b |= HAS_ZIP;
 		if (simplePhoneNumber.isUsed() || complexPhoneNumber != null)
 			b |= HAS_PHONE;
@@ -271,13 +270,8 @@ public class POIRecord {
 			else
 				size += 1;
 		}
-		if (zipIndex > 0)
-		{
-			/*
-			  depending on how many zips are in the LBL block we have
-			  to write one or two bytes 
-			*/
-		
+		if (zip != null) {
+			// depending on how many zips are in the LBL block we have to write one or two bytes
 			if(numZips > 255)
 			   size += 2;						
 			else

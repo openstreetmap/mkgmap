@@ -225,8 +225,8 @@ public class MapBuilder implements Configurable {
 	
 	/**
 	 * Retrieves the region with the default name in the given country.
-	 * @param country the country (<code>null</code> = use default country)
-	 * @return the default region in the given country (<code>null</code> if not available)
+	 * @param country the country ({@code null} = use default country)
+	 * @return the default region in the given country ({@code null} if not available)
 	 */
 	private Region getDefaultRegion(Country country) {
 		if (lblFile==null || regionName == null) {
@@ -457,7 +457,7 @@ public class MapBuilder implements Configurable {
 				if (zipStr != null)
 				{
 					Zip zip = lbl.createZip(zipStr);
-					r.setZipIndex(zip.getIndex());
+					r.setZip(zip);
 				}
 
 				if(p.getStreet() != null)
@@ -719,15 +719,14 @@ public class MapBuilder implements Configurable {
 		// elsewhere.
 		if (licenseFileName != null) {
 			File file = new File(licenseFileName);
-			BufferedReader reader = null;
 
 			try {
-				reader = new BufferedReader(new FileReader(file));
-				String text = null;
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				String text;
 
 				// repeat until all lines is read
 				while ((text = reader.readLine()) != null) {
-					if (text.length() > 0) {
+					if (!text.isEmpty()) {
 						map.addInfo(text);
 					}
 				}

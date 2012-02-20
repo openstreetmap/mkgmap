@@ -241,7 +241,7 @@ public class PlacesFile {
 		Zip z = postalCodes.get(code);
 
 		if(z == null) {
-			z = new Zip(postalCodes.size()+1);
+			z = new Zip();
 
 			Label l = lblFile.newLabel(code);
 			z.setLabel(l);
@@ -399,8 +399,10 @@ public class PlacesFile {
 		Collections.sort(keys);
 
 		zipList.clear();
+		int index = 1;
 		for (SortKey<Zip> sc: keys) {
 			Zip zip = sc.getObject();
+			zip.setIndex(index++);
 			zipList.add(zip);
 		}
 	}

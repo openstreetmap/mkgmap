@@ -310,8 +310,9 @@ public class LBLFileReader extends ImgFile {
 		while (reader.position() < end) {
 			int lblOffset = reader.get3();
 			
-			Zip zip = new Zip(zipIndex);
+			Zip zip = new Zip();
 			zip.setLabel(fetchLabel(lblOffset));
+			zip.setIndex(zipIndex);
 			
 			zips.put(zip.getIndex(), zip);
 			
@@ -413,12 +414,12 @@ public class LBLFileReader extends ImgFile {
 			}
 
 			if (hasZip) {
-				int n;
+				int zipIndex;
 				if (placeHeader.getNumZips() > 0xff)
-					n = reader.getChar();
+					zipIndex = reader.getChar();
 				else
-					n = reader.get() & 0xff;
-				poi.setZipIndex(n);
+					zipIndex = reader.get() & 0xff;
+				poi.setZip(zips.get(zipIndex-1));
 			}
 			
 			if (hasPhone) {
