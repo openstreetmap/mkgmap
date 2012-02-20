@@ -287,6 +287,30 @@ public class TypTextReaderTest {
 		typ.close();
 	}
 
+	/**
+	 * Check that unknown sections don't throw an exception and are ignored without
+	 * affecting anything else.
+	 */
+	@Test
+	public void testIgnoreUnknownSections() {
+		tr = makeTyp("[_unknown_section_name]\n" +
+				"Type=0x2\n" +
+				"String1=0x04,Parking\n" +
+				"String2=0x03,Parkeergarage\n" +
+				"OtherStuff=Unknown\n" +
+				"[End]\n" +
+				"[_id]\n" +
+				"FID=4455\n" +
+				"ProductCode=2\n" +
+				"CodePage=1251\n" +
+				"[End]"
+		);
+
+		TypData data = tr.getData();
+		System.out.println(data);
+		assertEquals(4455, data.getParam().getFamilyId());
+	}
+
 	private TypTextReader makeTyp(String in) {
 		Reader r = new StringReader(in);
 
