@@ -1,0 +1,32 @@
+cd /etc/httpd/logs
+
+MIN=8
+
+while getopts "n:" c
+do
+	case $c in
+	n) MIN=$OPTARG;;
+	esac
+done
+shift $[$OPTIND-1]
+
+for PRODUCT in mkgmap splitter
+do
+tail -12000 mkgmap.org.uk | egrep $PRODUCT-'(r|latest).* 200 ' | awk "{
+	s = match(\$7, /[^/]*\$/);
+	s = substr(\$7, s);
+	sub(\"$PRODUCT-r\", \"\", s);
+	sub(\"-src\", \"\", s);
+	sub(\".tar.gz\", \"\", s);
+	sub(\".zip\", \"\", s);
+	print s;
+}" | sort -n | uniq -c | awk "
+	/oute-/ {next;}
+	/$PRODUCT/ {next;}
+	{
+		if (\$1 > $MIN)
+			printf \"$PRODUCT-r%s.zip %d\n\", \$2, \$1
+	}
+" > /tmp/$PRODUCT-used
+
+done

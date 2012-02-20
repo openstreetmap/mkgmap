@@ -1,0 +1,15 @@
+
+mksnap_setdate() {
+(
+	# Must pass the .tar.gz form of the name
+	file=$1
+	version=$2
+
+	cd $SNAPDIR
+	set $(svn log --xml -r $version $SVN 2> /dev/null \
+			| sed -n -e 's/<date>\(.*\)<\/date>/\1/p')
+	date=$1
+	touch -d "${date%T*} ${date#*T}" ${file}
+)
+}
+
