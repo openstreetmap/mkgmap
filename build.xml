@@ -32,8 +32,6 @@
 	<!--suppress AntResolveInspection,AntMissingPropertiesFileInspection -->
 	<property file="${top}/local.properties"/>
 
-	<property file="${top}/external.properties"/>
-
 	<property name="build" value="build"/>
 	<property name="dist" value="dist"/>
 
@@ -156,13 +154,13 @@
 
 	<!-- targets for fetching dependencies via ivy -->
 	<target name="resolve-compile" depends="init-ivy" description="Downloads compile dependencies using ivy.">
-		<ivy:retrieve conf="compile" />
+		<ivy:retrieve conf="compile" log="download-only" />
 	</target>
 	<target name="resolve-test" depends="init-ivy" description="Downloads test program dependencies using ivy.">
-		<ivy:retrieve conf="test" />
+		<ivy:retrieve conf="test" log="download-only"/>
 	</target>
 	<target name="resolve-macker" depends="init-ivy" description="Downloads macker program dependencies using ivy.">
-		<ivy:retrieve conf="macker" />
+		<ivy:retrieve conf="macker" log="download-only"/>
 	</target>
 	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
 
