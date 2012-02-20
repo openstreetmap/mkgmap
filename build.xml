@@ -76,7 +76,7 @@
 			<not><equals arg1="${svn.version}" arg2="" /></not>
 		</and>
 	</condition>
-	<exec executable="git" dir="${top}" logError="true"
+	<exec executable="git" dir="${top}" logError="false"
 	      outputproperty="git.version" resultproperty="gitdescribe.result"
 	      failifexecutionfails="false">
 		<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
