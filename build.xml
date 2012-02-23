@@ -2,19 +2,17 @@
 <!--
 		File: build.xml
 		
-		Copyright (C) 2006 Steve Ratcliffe
+		Copyright (C) 2006, 2012 mkgmap contributors
 		
 		 This program is free software; you can redistribute it and/or modify
-		 it under the terms of the GNU General Public License version 2 as
-		 published by the Free Software Foundation.
+		 it under the terms of the GNU General Public License version 2 or
+		 version 3 as published by the Free Software Foundation.
 		
 		 This program is distributed in the hope that it will be useful,
 		 but WITHOUT ANY WARRANTY; without even the implied warranty of
 		 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 		 GNU General Public License for more details.
 		
-		
-		Author: Steve Ratcliffe
 		Create date: 26 Nov 2006
 -->
 <project name="mkgmap" default="dist" basedir="."
@@ -57,38 +55,8 @@
 
 	<!-- the project's version number -->
 	<tstamp>
-		<format property="tstamp.iso8601" pattern="yyyy-MM-dd'T'HH:mm:ssZ" />
+		<format property="build.timestamp" pattern="yyyy-MM-dd'T'HH:mm:ssZ" />
 	</tstamp>
-	<property name="project.version.default" value="${tstamp.iso8601}" />
-	<exec executable="svnversion" dir="${top}" logError="true"
-	      outputproperty="svn.version" resultproperty="svnversion.result"
-	      failifexecutionfails="false">
-		<arg value="-n" /><arg value="-c" />
-		<redirector><outputfilterchain><tokenfilter>
-			<replaceregex pattern="^([0-9]*:)?" replace="" />
-			<replaceregex pattern="^exported$" replace="" />
-		</tokenfilter></outputfilterchain></redirector>
-	</exec>
-	<condition property="project.version" value="${svn.version}">
-		<and>
-			<isset property="svn.version" />
-			<equals arg1="${svnversion.result}" arg2="0" />
-			<not><equals arg1="${svn.version}" arg2="" /></not>
-		</and>
-	</condition>
-	<exec executable="git" dir="${top}" logError="false"
-	      outputproperty="git.version" resultproperty="gitdescribe.result"
-	      failifexecutionfails="false">
-		<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
-	</exec>
-	<condition property="project.version" value="${git.version}">
-		<and>
-			<isset property="git.version" />
-			<equals arg1="${gitdescribe.result}" arg2="0" />
-			<not><equals arg1="${git.version}" arg2="" /></not>
-		</and>
-	</condition>
-	<property name="project.version" value="${project.version.default}" />
 
 	<!-- ivy dependency support -->
 	<property name="ivy.version" value="2.2.0"/>
@@ -128,12 +96,14 @@
 		<property name="ivy.jar.file" value="${ivy.jar.dir}/ivy-${ivy.version}.jar" />
 		<available property="ivy.available" file="${ivy.jar.file}" />
 	</target>
+
 	<target name="download-ivy" unless="ivy.available" description="Downloads the ivy library from public repositories.">
 		<delete dir="${ivy.jar.dir}"/>
 		<mkdir dir="${ivy.jar.dir}" />
 		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
 		     dest="${ivy.jar.file}" usetimestamp="true"/>
 	</target>
+
 	<target name="init-ivy" depends="ivy-availability, download-ivy" description="Registers ivy with ant and initializes it." unless="ivy.initialized">
 		<path id="ivy.lib.path">
 			<fileset dir="${ivy.jar.dir}" includes="*.jar" />
@@ -145,9 +115,11 @@
 		<ivy:info />
 		<property name="ivy.initialized" value="true"/>
 	</target>
+
 	<target name="clean-cache" depends="init-ivy" description="Clean the ivy cache.">
 		<ivy:cleancache />
 	</target>
+
 	<target name="clean-ivy" description="Clean the ivy installation.">
 		<delete dir="${ivy.jar.dir}"/>
 	</target>
@@ -175,13 +147,80 @@
 	<!-- Prepare - make all the directories -->
 	<target name="prepare">
 		<mkdir dir="${build.classes}" />
+
+		<condition property="have.svn">
+			<available file="${top}/.svn"/>
+		</condition>
+		<condition property="have.git">
+			<available file="${top}/.git"/>
+		</condition>
+	</target>
+
+	<target name="svn-version" if="have.svn">
+		<exec executable="svnversion" dir="${top}" logError="false"
+					outputproperty="svn.version.tmp" resultproperty="svnversion.result"
+					failifexecutionfails="false">
+			<arg value="-n" /><arg value="-c" />
+			<redirector><outputfilterchain><tokenfilter>
+				<replaceregex pattern="^([0-9]*:)?" replace="" />
+				<replaceregex pattern="^exported$" replace="" />
+			</tokenfilter></outputfilterchain></redirector>
+		</exec>
+		<condition property="svn.version.build" value="${svn.version.tmp}" else="unknown">
+			<and>
+				<isset property="svn.version.tmp" />
+				<equals arg1="${svnversion.result}" arg2="0" />
+				<not><equals arg1="${svn.version.tmp}" arg2="" /></not>
+			</and>
+		</condition>
+		
+		<property name="project.version" value="${svn.version.build}" />
+	</target>
+
+	<target name="git-version" if="have.git">
+		<echo>doign git</echo>
+		<exec executable="git" dir="${top}" logError="false"
+					outputproperty="git.version.tmp" resultproperty="gitdescribe.result"
+					failifexecutionfails="false">
+			<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
+		</exec>
+		<echo>git version '${git.version}'</echo>
+		<condition property="git.version.build" value="${git.version.tmp}">
+			<and>
+				<isset property="git.version.tmp" />
+				<equals arg1="${gitdescribe.result}" arg2="0" />
+				<not><equals arg1="${git.version.tmp}" arg2="" /></not>
+			</and>
+		</condition>
+		<property name="project.version" value="${git.version.build}" />
+	</target>
+
+	<target name="check-version" depends="svn-version, git-version">
+		<property file="${build.classes}/version.properties"/>
+		<condition property="have.version">
+			<or>
+				<and>
+					<isset property="have.svn"/>
+					<equals arg1="${svn.version.build}" arg2="${svn.version}"/>
+				</and>
+				<isset property="svn.version"/>
+			</or>
+		</condition>
+	</target>
+
+	<target name="version-file" unless="have.version">
+		<property name="project.version" value="${build.timestamp}" />
+		<property name="svn.version.build" value="unknown-${build.timestamp}"/>
+
 		<propertyfile file="${build.classes}/version.properties">
-			<entry key="svn.version" value="${project.version}" />
+			<entry key="svn.version" value="${svn.version.build}" />
+			<entry key="build.timestamp" value="${build.timestamp}" />
 		</propertyfile>
 	</target>
 
 	<!-- Compile the product itself (no tests). -->
-	<target name="compile" depends="prepare, resolve-compile" description="main compilation">
+	<target name="compile" depends="prepare, resolve-compile"
+					description="main compilation">
 
 		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
 			<include name="**/*.java" />
@@ -270,7 +309,7 @@
 			ignoreerrors="true"/>
 	</target>
 
-	<target name="dist" depends="build"
+	<target name="dist" depends="build, check-version, version-file"
 					description="Make the distribution area">
 
 		<mkdir dir="${dist}"/>
