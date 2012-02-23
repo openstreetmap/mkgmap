@@ -116,14 +116,6 @@
 		<property name="ivy.initialized" value="true"/>
 	</target>
 
-	<target name="clean-cache" depends="init-ivy" description="Clean the ivy cache.">
-		<ivy:cleancache />
-	</target>
-
-	<target name="clean-ivy" description="Clean the ivy installation.">
-		<delete dir="${ivy.jar.dir}"/>
-	</target>
-
 	<!-- targets for fetching dependencies via ivy -->
 	<target name="resolve-compile" depends="init-ivy" description="Downloads compile dependencies using ivy.">
 		<ivy:retrieve conf="compile" log="download-only" />
@@ -401,6 +393,10 @@
 		<macker-report xmlReportfile="${macker.report.xml}" outputFile="${macker.report.html}" />
 	</target>
 
+	<target name="clean-ivy" description="Clean the ivy installation.">
+		<delete dir="${ivy.jar.dir}"/>
+	</target>
+
 	<!-- Clean everything -->
 	<target name="clean" description="Remove built files">
 		<delete dir="${build}" />
@@ -413,6 +409,10 @@
 		<delete dir="${ivy.lib.dir}"/>
 		<delete dir="${javadoc}"/>
 		<delete dir="${ivy.distrib.dir}"/>
+	</target>
+
+	<target name="clean-cache" depends="init-ivy" description="Clean the ivy cache.">
+		<ivy:cleancache />
 	</target>
 
 	<target name="rebuild" depends="clean, build" description="Clean existing class files and build from scratch"/>
