@@ -439,21 +439,32 @@ public class ExtTypeAttributes {
 
 		if(sequence != null) {
 			StringBuffer periods = new StringBuffer();
-			for(String p : sequence.split("[+()]")) {
-				if (p.isEmpty())
-					continue;
-				if(periods.length() > 0)
-					periods.append(",");
-				periods.append(Double.parseDouble(p));
+			StringBuffer eclipse = new StringBuffer();
+			for(String p : sequence.split("[+,]")) {
+				if (p.startsWith("(") && p.endsWith(")")) {
+					// phases of eclipse are enclosed in (), remove them
+					p = p.substring(1, p.length()-1);
+					if(eclipse.length() > 0)
+						eclipse.append(",");
+					eclipse.append(Double.parseDouble(p));
+				} else {
+					if(periods.length() > 0)
+						periods.append(",");
+					periods.append(Double.parseDouble(p));
+				}
 			}
 			attributes.put("period", periods.toString());
+			attributes.put("eclipse", eclipse.toString());
 		}
 
 		if(mapObject instanceof Point) {
 
 			Light[] lights = parseLights(attributes.get("light"));
 			int[] periods = parsePeriods(attributes.get("period"));
-
+			int[] eclipse = parsePeriods(attributes.get("eclipse"));
+			if (1 != periods.length && periods.length != eclipse.length)
+				log.error("number of light and eclipse phases has to be equal");
+			
 			if(type8to15 == 0x0100) { // lights
 				byte flags0 = 0;
 				int lightType = lightType("");
@@ -480,6 +491,13 @@ public class ExtTypeAttributes {
 				}
 				if(periods.length > 1) {
 					for(int p : periods) {
+						while(p > 0x3f) {
+							++nob;
+							p -= 0x3f;
+						}
+						++nob;
+					}
+					for(int p : eclipse) {
 						while(p > 0x3f) {
 							++nob;
 							p -= 0x3f;
@@ -530,6 +548,8 @@ public class ExtTypeAttributes {
 				}
 				int period = 0;
 				for(int p : periods)
+					period += p;
+				for(int p : eclipse)
 					period += p;
 				if(period > 255)
 					lightType |= 0x40; // 9th bit of period
@@ -599,22 +619,22 @@ public class ExtTypeAttributes {
 					extraBytes[i++] = (byte)((lc << 5) | lr);
 				}
 				if(periods.length > 1) {
-					extraBytes[i++] = (byte)(0x80 + periods.length / 2);
+					extraBytes[i++] = (byte)(0x80 + periods.length);
 					// first all lights
-					for (int pi = 0; pi < periods.length; pi+=2) {
-						while(periods[pi] > 0x3f) {
+					for (int p : periods) {
+						while(p > 0x3f) {
 							extraBytes[i++] = (byte)0x3f;
-							periods[pi] -= 0x3f;
+							p -= 0x3f;
 						}
-						extraBytes[i++] = (byte)periods[pi];
+						extraBytes[i++] = (byte)p;
 					}
 					// second all pause
-					for (int pi = 1; pi < periods.length; pi+=2) {
-						while(periods[pi] > 0x3f) {
+					for (int p : eclipse) {
+						while(p > 0x3f) {
 							extraBytes[i++] = (byte)0x3f;
-							periods[pi] -= 0x3f;
+							p -= 0x3f;
 						}
-						extraBytes[i++] = (byte)periods[pi];
+						extraBytes[i++] = (byte)p;
 					}
 				}
 				else if(morseLetter != null)
