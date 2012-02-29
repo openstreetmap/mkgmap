@@ -15,9 +15,6 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
@@ -37,8 +34,8 @@ public abstract class MapElement {
 	private int maxResolution = 24;
 
 	private ExtTypeAttributes extTypeAttributes;
-	
-	private final Map<String, String> attributes = new HashMap<String, String>();
+	// other attributes
+	private String zip,country,region,city,street,phone,houseNumber,isIn;
 
 	protected MapElement() {
 	}
@@ -50,7 +47,14 @@ public abstract class MapElement {
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
 		extTypeAttributes = orig.extTypeAttributes;
-		attributes.putAll(orig.attributes);
+		zip = orig.zip;
+		country = orig.country;
+		region = orig.region;
+		city = orig.city;
+		street = orig.street;
+		phone = orig.phone;
+		houseNumber = orig.houseNumber;
+		isIn = orig.isIn;
 	}
 
 	/**
@@ -86,47 +90,47 @@ public abstract class MapElement {
 	}
 
 	public String getCity() {
-		return attributes.get("city");
+		return city;
 	}
 
 	public void setCity(String city) {
-		attributes.put("city", city);
+		this.city = city;
 	}
 	
 	public String getZip() {
-		return attributes.get("zip");
+		return zip;
 	}
 
 	public void setZip(String zip) {
-		attributes.put("zip", zip);
+		this.zip = zip;
 	}
 
 	public String getCountry() {
-		return attributes.get("country");
+		return country;
 	}
 
 	public void setCountry(String country) {
-		attributes.put("country", country);
+		this.country = country;
 	}
 	
 	public String getRegion() {
-		return attributes.get("region");
+		return region;
 	}
 
 	public void setRegion(String region) {
-		attributes.put("region", region);
+		this.region= region;
 	}	
 	
 	public String getStreet() {
-		return attributes.get("street");
+		return street;
 	}
 
 	public void setStreet(String street) {
-		attributes.put("street", street);	
+		this.street = street;	
 	}
 
 	public String getPhone() {
-		return attributes.get("phone");
+		return phone;
 	}
 
 	public void setPhone(String phone) {
@@ -134,24 +138,24 @@ public abstract class MapElement {
 		if(phone.startsWith("00")) {
 			phone = phone.replaceFirst("00","+");
 		}
-		attributes.put("phone", phone);	
+		this.phone = phone;	
 	}
 
 	public String getHouseNumber() {
-		return attributes.get("houseNumber");
+		return houseNumber;
 	}
 
 	public void setHouseNumber(String houseNumber) {
-		attributes.put("houseNumber", houseNumber);		
+		this.houseNumber = houseNumber;		
 	}
 	
 	public String getIsIn() {
-		return attributes.get("isIn");
+		return isIn;
 	}
 
 	public void setIsIn(String isIn) {
 	  if(isIn != null)
-		attributes.put("isIn", isIn.toUpperCase());
+		this.isIn = isIn.toUpperCase();
 	}	
 
 
