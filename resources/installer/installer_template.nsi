@@ -20,10 +20,16 @@ SetCompressor /SOLID lzma
 !define MUI_LANGDLL_ALLLANGUAGES
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "French"
+!insertmacro MUI_LANGUAGE "Spanish"
+!insertmacro MUI_LANGUAGE "German"
+!insertmacro MUI_LANGUAGE "Dutch"
 
-LangString AlreadyInstalled ${LANG_ENGLISH} "${INSTALLER_NAME} is already installed. $\n$\nClick `OK` to remove the previous version or `Cancel` to cancel this upgrade."
-LangString AlreadyInstalled ${LANG_FRENCH} "${INSTALLER_NAME} est déjà installé. $\n$\nAppuyez sur `OK` pour retirer la version précédente ou sur `Annuler` pour annuler cette mise à jour."
 
+LangString AlreadyInstalled ${LANG_ENGLISH} "${INSTALLER_NAME} is already installed. $\n$\nClick `OK` to remove the previous version and continue installation or `Cancel` to cancel this upgrade."
+LangString AlreadyInstalled ${LANG_FRENCH} "${INSTALLER_NAME} est déjà installé. $\n$\nAppuyez sur `OK` pour retirer la version précédente et continuer avec l'installation ou sur `Annuler` pour annuler cette mise à jour."
+LangString AlreadyInstalled ${LANG_SPANISH} "${INSTALLER_NAME} ya está instalado. $\n$\nPulse `Aceptar` para eliminar la versión anterior y continuar la instalación o `Cancelar` para cancelar esta actualización."
+LangString AlreadyInstalled ${LANG_GERMAN} "${INSTALLER_NAME} ist bereits installiert. $\n$\nKlick `OK` um die alte Version zu deinstallieren oder `Abbrechen` um die Installation abzubrechen."
+LangString AlreadyInstalled ${LANG_DUTCH} "${INSTALLER_NAME} is reeds geinstalleerd. $\n$\nKlik op `OK` om de oude versie te verwijderen of `Annuleren` om deze update te onderbreken."
 
 ; Reservefiles
 !insertmacro MUI_RESERVEFILE_LANGDLL ;Language selection dialog
