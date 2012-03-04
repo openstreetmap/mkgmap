@@ -462,8 +462,8 @@ public class ExtTypeAttributes {
 			Light[] lights = parseLights(attributes.get("light"));
 			int[] periods = parsePeriods(attributes.get("period"));
 			int[] eclipse = parsePeriods(attributes.get("eclipse"));
-			if (1 != periods.length && periods.length != eclipse.length)
-				log.error("number of light and eclipse phases has to be equal");
+			if (!(periods.length == eclipse.length || 1 == periods.length)) 
+				log.error(mapObject + "number of light and eclipse phases has to be equal");
 			
 			if(type8to15 == 0x0100) { // lights
 				byte flags0 = 0;
@@ -489,7 +489,7 @@ public class ExtTypeAttributes {
 						nob += (l.colour != 0)? 3 : 2;
 					flags1 |= 0x08; // multiple lights
 				}
-				if(periods.length > 1) {
+				if(0 != eclipse.length) {
 					for(int p : periods) {
 						while(p > 0x3f) {
 							++nob;
