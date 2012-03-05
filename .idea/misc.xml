@@ -34,6 +34,22 @@
     </autodetection-disabled>
   </component>
   <component name="IdProvider" IDEtalkID="4895EF755ED348E86177D69FBFDA6A74" />
+  <component name="IvyIDEA.ProjectSettings">
+    <option name="artifactTypeSettings">
+      <ArtifactTypeSettings>
+        <option name="classesTypes" value="jar, mar, sar, war, ear, ejb, bundle, test-jar" />
+        <option name="javadocTypes" value="javadoc, doc, docs, apidoc, apidocs, documentation, documents" />
+        <option name="sourcesTypes" value="source, src, sources, srcs" />
+      </ArtifactTypeSettings>
+    </option>
+    <option name="ivySettingsFile" value="$PROJECT_DIR$/ivysettings.xml" />
+    <option name="propertiesSettings">
+      <PropertiesSettings />
+    </option>
+  </component>
+  <component name="IvyProjectSettings">
+    <dependencies />
+  </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
     <option name="OPTION_SCOPE" value="protected" />
@@ -126,9 +142,6 @@
     </option>
     <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
-  </component>
-  <component name="TaskProjectConfiguration">
-    <server type="Tintrak" url="http://track.itinken.com" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
 </project>

@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="http://www.mkgmap.org.uk/css/main.css">
+	<title>mkgmap</title>
+
+  
+  <link rel="alternate" type="application/atom+xml" title="mkgmap - Atom" href="http://www.mkgmap.org.uk/feed/atom">
+  <link rel="alternate" type="application/rss+xml" title="mkgmap - Rss" href="http://www.mkgmap.org.uk/feed/rss">
+  <style>
+  .file-type {text-align: center;}
+  </style>
+</head>
+<body>
+<div class="heading">
+	<img src="http://www.mkgmap.org.uk/images/logo.png" alt="logo">
+	<img src="http://www.mkgmap.org.uk/images/separator.png" alt="separator">
+</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td valign="top" class="sidenav">
+			<ul>
+				<li><a href="/page/main">Home</a></li>
+				<li><a href="http://www.mkgmap.org.uk/index.html">News/blog</a></li>
+				<li><a href="http://www.mkgmap.org.uk/snapshots/">Download</a></li>
+				<li><a href="/page/contact">Contact</a></li>
+			</ul>
+		</td>
+		<td valign="top" class="maincontent">
+<h1>Download mkgmap</h1>
+<p>
+These snapshots are created automatically each night when there are changes.
+Each version can be downloaded in tar or zip format as well as its source code.
+The dates are the time that the version was created and can be used to
+judge the freshness of the release, you would normally download the top
+one unless you know it has a problem.
+<table>
+<col span="2">
+<col width="20px">

@@ -1,0 +1,80 @@
+#!/bin/bash
+
+typeset -i VERSION
+typeset -i MIN_VERSION
+
+while getopts "d:" c
+do
+	case $c in
+	d) SNAPDIR=$OPTARG;;
+	esac
+done
+shift $[OPTIND-1]
+
+PRODUCT=$1
+if [ "$PRODUCT" = "" ]; then
+	echo Usage: "mksnap [-d dir] [-r vers] <product>"
+	exit
+fi
+
+source mksnapfuncs
+
+export LANG=en_GB.UTF-8
+
+export JAVA_HOME=/opt/java
+PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin
+
+SVN=http://svn.parabola.me.uk/$PRODUCT
+((MIN_VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
+            -n 's/revision="\([0-9]*\)".*/\1/p') - 100))
+
+SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/snapshots}
+
+BRANCHES=$(svn ls $SVN/branches)
+
+for branch in $BRANCHES
+do
+	branch=${branch%/}
+	cd /usr/tmp
+
+	RELNAME=$PRODUCT-$branch
+	BUILD_DIR=/usr/tmp/build-$PRODUCT/$RELNAME
+
+	SVN_PATH=$SVN/branches/$branch 
+	VERSION=$(svn log --xml --limit 1 $SVN_PATH 2> /dev/null | sed \
+			-n 's/revision="\([0-9]*\)".*/\1/p')
+	TARGET=$SNAPDIR/${PRODUCT}-${branch}-r$VERSION.jar
+
+	if [ $VERSION -lt $MIN_VERSION ]; then
+		rm -f $SNAPDIR/${PRODUCT}-${branch}-r*.jar
+		continue
+	fi
+
+	if [ ! -f $TARGET ]; then
+		echo Rebuilding $branch
+		rm -rf $BUILD_DIR
+		mkdir -p $(dirname $BUILD_DIR)
+		svn export -q -r$VERSION $SVN_PATH $BUILD_DIR
+
+		(
+		cd $BUILD_DIR
+		trap "rm -rf $BUILD_DIR" 0 2
+		if [ -d resources ]; then
+			echo "svn.version: ${branch}.${VERSION}" > resources/version.properties
+		fi
+		ant dist || exit 1
+
+		rm -f $SNAPDIR/${PRODUCT}-${branch}-r*.jar
+		cp dist/$PRODUCT.jar $TARGET
+		)
+
+		# Set the time to the time of commit.
+		(
+			cd $SNAPDIR
+			mksnap_setdate $TARGET $VERSION
+		)
+	fi
+done
+
+
+$HOME/cmd/mksnapindex -d $SNAPDIR $PRODUCT

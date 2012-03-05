@@ -1,0 +1,78 @@
+#!/bin/bash
+
+PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:/home/steve/cmd
+
+typeset -i VERSION
+while getopts "r:d:" c
+do
+	case $c in
+	r) VERSION=$OPTARG;;
+	d) SNAPDIR=$OPTARG;;
+	esac
+done
+shift $[OPTIND-1]
+
+PRODUCT=$1
+if [ "$PRODUCT" = "" ]; then
+	echo Usage: "mksnap [-d dir] [-r vers] <product>"
+	exit
+fi
+
+source mksnapfuncs
+
+export LANG=en_GB.UTF-8
+
+export JAVA_HOME=/opt/java
+
+SVN=http://svn.parabola.me.uk/$PRODUCT
+if [ "$VERSION" = "" ]; then
+VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
+	-n 's/revision="\([0-9]*\)".*/\1/p' | head -1)
+fi
+SPACE='&nbsp;&nbsp;&nbsp;'
+
+SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/snapshots}
+RELNAME=$PRODUCT-r$VERSION
+TARGET=$SNAPDIR/$RELNAME.tar.gz
+TARGET_SRC=$SNAPDIR/$RELNAME-src.tar.gz
+TARGET_ZIP=$SNAPDIR/$RELNAME.zip
+
+if [ ! -f $TARGET ]; then
+	echo Rebuilding
+	cd /usr/tmp
+
+	BUILD_DIR=/usr/tmp/build-mkgmap/$RELNAME
+	mkdir -p $(dirname $BUILD_DIR)
+	trap "rm -rf $BUILD_DIR" 0
+
+	svn export -q -r$VERSION $SVN/trunk $BUILD_DIR
+
+	# Create a pure source distribution
+	tar czCf $(dirname $BUILD_DIR) $TARGET_SRC $RELNAME
+
+	cd $BUILD_DIR
+	if [ -d resources ]; then
+		echo "svn.version: $VERSION" > resources/version.properties
+	fi
+	ant dist || exit 1
+
+	mv dist $RELNAME
+	tar czf $TARGET $RELNAME
+	zip -r $TARGET_ZIP $RELNAME
+fi
+
+cd $SNAPDIR
+rm -f $PRODUCT-latest.tar.gz
+
+cat <<-EOF > .htaccess.new
+# hi
+RewriteEngine on
+RewriteRule   $PRODUCT-latest.tar.gz $RELNAME.tar.gz
+RewriteRule   $PRODUCT-latest.zip $RELNAME.zip
+RewriteRule   $PRODUCT-latest-src.tar.gz ${RELNAME}-src.tar.gz
+EOF
+mv .htaccess.new .htaccess
+
+mksnap_setdate $RELNAME.tar.gz $VERSION
+
+mksnapindex -d $SNAPDIR $PRODUCT

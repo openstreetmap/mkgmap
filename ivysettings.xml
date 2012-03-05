@@ -1,0 +1,26 @@
+<ivysettings>
+	<property name="mkgmap.ivy.repo" value="http://ivy.mkgmap.org.uk/repo" />
+	<settings defaultResolver="custom" />
+
+	<include url="${ivy.default.settings.dir}/ivysettings-public.xml"/>
+	<include url="${ivy.default.settings.dir}/ivysettings-shared.xml"/>
+	<include url="${ivy.default.settings.dir}/ivysettings-local.xml"/>
+	<include url="${ivy.default.settings.dir}/ivysettings-main-chain.xml"/>
+	<include url="${ivy.default.settings.dir}/ivysettings-default-chain.xml"/>
+
+	<resolvers>
+		<chain name="custom" returnFirst="true">
+			<resolver ref="default" />
+
+			<url name="mkgmap">
+				<ivy pattern="${mkgmap.ivy.repo}/[organisation]/[module]/[revision]/ivys/ivy.xml" />
+				<artifact pattern="${mkgmap.ivy.repo}/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]" />
+			</url>
+
+			<url name="com.springsource.repository.bundles.external">
+				<ivy pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
+				<artifact pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
+			</url>
+		</chain>
+	</resolvers>
+</ivysettings>

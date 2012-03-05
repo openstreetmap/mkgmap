@@ -1,0 +1,58 @@
+#!/bin/bash
+
+PATH=/bin:/usr/bin:/usr/local/bin:/home/steve/cmd
+SNAPDIR=/home/steve/www/mkgmap.org.uk/snapshots
+
+while getopts "d:" c
+do
+	case $c in
+	d) SNAPDIR=$OPTARG;;
+	esac
+done
+shift $[OPTIND-1]
+
+PRODUCT=$1
+USEFILE=/tmp/$PRODUCT-used
+SVN=http://svn.mkgmap.org.uk/$PRODUCT
+
+if [ $PRODUCT = "" ]; then
+	echo Usage: $0 [-d snapshot-dir] product
+	exit 1
+fi
+
+source mksnapfuncs
+
+# Check file exists and has some lines in it
+if [ ! -f $USEFILE ]; then
+	echo No usage file $USEFILE
+	exit 1
+fi
+if [ $(wc -l < $USEFILE) -lt 1 ]; then
+	echo Not enough lines in usage file
+	exit 1
+fi
+
+# Check that we are not working with old data
+if (( $(stat -c %Y $USEFILE) < $(date +%s) - 1060 )); then
+	echo The $USEFILE was generated too long ago
+	exit 1
+fi
+
+cd $SNAPDIR
+for f in $(ls *.zip)
+do
+	base=${f%.zip}
+	echo $base ' '
+	grep -q $f $USEFILE
+
+	case $? in
+	0)
+		version=${base#*-r}
+		mksnap_setdate ${f%.zip}.tar.gz $version
+		;;
+	1) rm ${base}[.-]*
+		;;
+	esac
+done
+
+mksnapindex -d $SNAPDIR $PRODUCT

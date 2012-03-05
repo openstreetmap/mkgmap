@@ -2,22 +2,23 @@
 <!--
 		File: build.xml
 		
-		Copyright (C) 2006 Steve Ratcliffe
+		Copyright (C) 2006, 2012 mkgmap contributors
 		
 		 This program is free software; you can redistribute it and/or modify
-		 it under the terms of the GNU General Public License version 2 as
-		 published by the Free Software Foundation.
+		 it under the terms of the GNU General Public License version 2 or
+		 version 3 as published by the Free Software Foundation.
 		
 		 This program is distributed in the hope that it will be useful,
 		 but WITHOUT ANY WARRANTY; without even the implied warranty of
 		 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 		 GNU General Public License for more details.
 		
-		
-		Author: Steve Ratcliffe
 		Create date: 26 Nov 2006
 -->
-<project name="mkgmap" default="dist" basedir=".">
+<project name="mkgmap" default="dist" basedir="."
+		xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property name="project.name" value="${ant.project.name}"/>
 
 	<!-- Init -->
 	<property name="top" value="."/>
@@ -28,8 +29,6 @@
 	-->
 	<!--suppress AntResolveInspection,AntMissingPropertiesFileInspection -->
 	<property file="${top}/local.properties"/>
-
-	<property file="${top}/external.properties"/>
 
 	<property name="build" value="build"/>
 	<property name="dist" value="dist"/>
@@ -44,13 +43,7 @@
 	<property name="javadoc" value="${doc}/api"/>
 	<property name="resources" value="resources"/>
 
-	<property name="jars" value="/opt/jars"/>
-
-	<!-- the locations of these external jars are set in external.properties
-	and can be overridden in a local.properties file. -->
-	<property name="junit.jar" value="junit-4.5.jar"/>
-	<property name="osmprotobuf.jar" value="osmprotobuf.jar"/>
-	<property name="protobuf.jar" value="protobuf.jar"/>
+	<property name="project.jar" value="${dist}/${project.name}.jar"/>
 
 	<!-- A place to keep a local copy of the test input data.  The test files
 	 are large and so are not kept in svn.	If you don't set this then they
@@ -60,56 +53,176 @@
 	 -->
 	<property name="test.input.cache" value="/opt/data/testinput"/>
 
+	<!-- the project's version number -->
+	<tstamp>
+		<format property="build.timestamp" pattern="yyyy-MM-dd'T'HH:mm:ssZ" />
+	</tstamp>
+
+	<!-- ivy dependency support -->
+	<property name="ivy.version" value="2.2.0"/>
+	<property name="ivy.lib.dir" value="${basedir}/lib" />
+	<property name="ivy.jar.dir" value="${ivy.lib.dir}/build" />
+	<property name="ivy.retrieve.pattern" value="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]" />
+	<property name="ivy.distrib.dir" value="ivy-distrib" />
+
 	<!-- For class paths -->
+	<path id="compile.classpath">
+		<fileset dir="${ivy.lib.dir}/compile" />
+	</path>
+	<path id="test.classpath">
+		<fileset dir="${ivy.lib.dir}/test" />
+	</path>
+	<path id="macker.classpath">
+		<fileset dir="${ivy.lib.dir}/macker" />
+	</path>
+
 	<path id="main">
 		<pathelement location="${build.classes}" />
-		<pathelement location="${osmprotobuf.jar}"/>
-		<pathelement location="${protobuf.jar}"/>
+		<path refid="compile.classpath" />
 	</path>
 
 	<path id="test">
 		<pathelement location="test/resources"/>
 		<pathelement location="build/test"/>
-		<pathelement location="${junit.jar}"/>
-		<path refid="main"/>
+		<path refid="test.classpath" />
+		<pathelement location="${build.classes}" />
 		<pathelement location="test"/>
 	</path>
 
-	<condition property="protobuf-available">
-		<and>
-			<available file="${osmprotobuf.jar}"/>
-			<available file="${protobuf.jar}"/>
-		</and>
-	</condition>
+	<!-- ******************** TARGETS ******************** -->
+
+	<!-- targets for downloading and registering ivy -->
+	<target name="ivy-availability" description="Checks if the ivy library is available">
+		<property name="ivy.jar.file" value="${ivy.jar.dir}/ivy-${ivy.version}.jar" />
+		<available property="ivy.available" file="${ivy.jar.file}" />
+	</target>
+
+	<target name="download-ivy" unless="ivy.available" description="Downloads the ivy library from public repositories.">
+		<delete dir="${ivy.jar.dir}"/>
+		<mkdir dir="${ivy.jar.dir}" />
+		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"
+		     dest="${ivy.jar.file}" usetimestamp="true"/>
+	</target>
+
+	<target name="init-ivy" depends="ivy-availability, download-ivy" description="Registers ivy with ant and initializes it." unless="ivy.initialized">
+		<path id="ivy.lib.path">
+			<fileset dir="${ivy.jar.dir}" includes="*.jar" />
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml"
+			 uri="antlib:org.apache.ivy.ant"
+			 classpathref="ivy.lib.path" />
+		<ivy:configure />
+		<ivy:info />
+		<property name="ivy.initialized" value="true"/>
+	</target>
+
+	<!-- targets for fetching dependencies via ivy -->
+	<target name="resolve-compile" depends="init-ivy" description="Downloads compile dependencies using ivy.">
+		<ivy:retrieve conf="compile" log="download-only" />
+	</target>
+	<target name="resolve-test" depends="init-ivy" description="Downloads test program dependencies using ivy.">
+		<ivy:retrieve conf="test" log="download-only"/>
+	</target>
+	<target name="resolve-macker" depends="init-ivy" description="Downloads macker program dependencies using ivy.">
+		<ivy:retrieve conf="macker" log="download-only"/>
+	</target>
+	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
+
+	<!-- targets for publishing the project (locally) via ivy -->
+	<target name="publish" depends="dist">
+		<copy file="${project.jar}"
+		      tofile="${ivy.distrib.dir}/jars/${project.name}-${project.version}.jar"/>
+		<ivy:deliver pubrevision="${project.version}"/>
+		<ivy:publish resolver="local" pubrevision="${project.version}" overwrite="true"/>
+	</target>
 
 	<!-- Prepare - make all the directories -->
 	<target name="prepare">
 		<mkdir dir="${build.classes}" />
+
+		<condition property="have.svn">
+			<available file="${top}/.svn"/>
+		</condition>
+		<condition property="have.git">
+			<available file="${top}/.git"/>
+		</condition>
+	</target>
+
+	<target name="svn-version" if="have.svn">
+		<exec executable="svnversion" dir="${top}" logError="false"
+					outputproperty="svn.version.tmp" resultproperty="svnversion.result"
+					failifexecutionfails="false">
+			<arg value="-n" /><arg value="-c" />
+			<redirector><outputfilterchain><tokenfilter>
+				<replaceregex pattern="^([0-9]*:)?" replace="" />
+				<replaceregex pattern="^exported$" replace="" />
+			</tokenfilter></outputfilterchain></redirector>
+		</exec>
+		<condition property="svn.version.build" value="${svn.version.tmp}" else="unknown">
+			<and>
+				<isset property="svn.version.tmp" />
+				<equals arg1="${svnversion.result}" arg2="0" />
+				<not><equals arg1="${svn.version.tmp}" arg2="" /></not>
+			</and>
+		</condition>
+		
+		<property name="project.version" value="${svn.version.build}" />
+	</target>
+
+	<target name="git-version" if="have.git">
+		<echo>doign git</echo>
+		<exec executable="git" dir="${top}" logError="false"
+					outputproperty="git.version.tmp" resultproperty="gitdescribe.result"
+					failifexecutionfails="false">
+			<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
+		</exec>
+		<echo>git version '${git.version}'</echo>
+		<condition property="git.version.build" value="${git.version.tmp}">
+			<and>
+				<isset property="git.version.tmp" />
+				<equals arg1="${gitdescribe.result}" arg2="0" />
+				<not><equals arg1="${git.version.tmp}" arg2="" /></not>
+			</and>
+		</condition>
+		<property name="project.version" value="${git.version.build}" />
+	</target>
+
+	<target name="check-version" depends="svn-version, git-version">
+		<property file="${build.classes}/version.properties"/>
+		<condition property="have.version">
+			<or>
+				<and>
+					<isset property="have.svn"/>
+					<equals arg1="${svn.version.build}" arg2="${svn.version}"/>
+				</and>
+				<isset property="svn.version"/>
+			</or>
+		</condition>
+	</target>
+
+	<target name="version-file" unless="have.version">
+		<property name="project.version" value="${build.timestamp}" />
+		<property name="svn.version.build" value="unknown-${build.timestamp}"/>
+
+		<propertyfile file="${build.classes}/version.properties">
+			<entry key="svn.version" value="${svn.version.build}" />
+			<entry key="build.timestamp" value="${build.timestamp}" />
+		</propertyfile>
 	</target>
 
 	<!-- Compile the product itself (no tests). -->
-	<target name="compile" depends="prepare" description="main compilation">
+	<target name="compile" depends="prepare, resolve-compile"
+					description="main compilation">
 
 		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
 			<include name="**/*.java" />
 			<classpath refid="main"/>
 			<exclude name="**/reader/dem/optional/*.java"/>
-			<exclude name="**/reader/osm/bin/*.java"/>
-			<exclude name="**/OsmBinBoundaryDataSource.java"/>
-		</javac>
-	</target>
-
-	<target name="compile-pbf" if="protobuf-available">
-		<echo>Protobuf binary format support</echo>
-		<javac srcdir="${src}" destdir="${build.classes}" debug="true">
-			<classpath refid="main"/>
-			<include name="**/reader/osm/bin/*.java"/>
-			<include name="**/OsmBinBoundaryDataSource.java"/>
 		</javac>
 	</target>
 
 	<!-- Build into the build direcotory.  All resource files are copied in. -->
-	<target name="build" depends="compile, compile-pbf" description="Build everything into the build direcotory">
+	<target name="build" depends="compile" description="Build everything into the build direcotory">
 		<copy todir="${build.classes}">
 			<fileset dir="${resources}">
 				<include name="*.csv"/>
@@ -129,7 +242,7 @@
 	</target>
 
 	<!-- Compile the test classes -->
-	<target name="build-test" depends="build">
+	<target name="build-test" depends="build, resolve-test">
 		<mkdir dir="${build.test}" />
 		<javac srcdir="${test}" destdir="${build.test}" debug="true">
 			<include name="**/*.java" />
@@ -188,15 +301,32 @@
 			ignoreerrors="true"/>
 	</target>
 
-	<target name="dist" depends="build"
+	<target name="dist" depends="build, check-version, version-file"
 					description="Make the distribution area">
 
 		<mkdir dir="${dist}"/>
+		<mkdir dir="${dist}/lib"/>
 		<mkdir dir="${dist}/doc/api"/>
 
+		<copy todir="${dist}/lib" flatten="true">
+			<path refid="compile.classpath" />
+		</copy>
+
+		<manifestclasspath property="manifest_cp" jarfile="${project.jar}">
+			<classpath>
+				<fileset dir="${dist}/lib">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</manifestclasspath>
+
 		<!-- Make the jar -->
-		<jar basedir="${build.classes}" jarfile="${dist}/mkgmap.jar"
-				manifest="${resources}/MANIFEST.MF">
+		<jar basedir="${build.classes}" jarfile="${project.jar}">
+			<manifest>
+				<attribute name="Main-Class" value="uk.me.parabola.mkgmap.main.Main" />
+				<attribute name="Class-Path" value="${manifest_cp}" />
+				<attribute name="Implementation-Version" value="${project.version}" />
+			</manifest>
 			<include name="**/*.class"/>
 			<include name="*.csv"/>
 			<include name="*.xml"/>
@@ -218,10 +348,6 @@
 				<include name="README"/>
 				<include name="LICENCE*"/>
 			</fileset>
-			<files>
-				<include name="${protobuf.jar}"/>
-				<include name="${osmprotobuf.jar}"/>
-			</files>
 		</copy>
 
 		<mkdir dir="${dist}/examples"/>
@@ -246,11 +372,7 @@
 		</javadoc>
 	</target>
 
-	<target name="macker">
-		<path id="macker.classpath">
-			<fileset dir="${macker.root}/lib"/>
-			<pathelement location="${macker.root}/build/macker.jar"/>
-		</path>
+	<target name="macker" depends="build, resolve-macker">
 		<taskdef name="macker"
 						 classname="net.innig.macker.ant.MackerAntTask"
 						 classpathref="macker.classpath"/>
@@ -271,6 +393,10 @@
 		<macker-report xmlReportfile="${macker.report.xml}" outputFile="${macker.report.html}" />
 	</target>
 
+	<target name="clean-ivy" description="Clean the ivy installation.">
+		<delete dir="${ivy.jar.dir}"/>
+	</target>
+
 	<!-- Clean everything -->
 	<target name="clean" description="Remove built files">
 		<delete dir="${build}" />
@@ -280,6 +406,13 @@
 	<!-- Clobber all generated and built files -->
 	<target name="clobber" depends="clean" description="Remove all built files">
 		<delete dir="${dist}" />
+		<delete dir="${ivy.lib.dir}"/>
+		<delete dir="${javadoc}"/>
+		<delete dir="${ivy.distrib.dir}"/>
+	</target>
+
+	<target name="clean-cache" depends="init-ivy" description="Clean the ivy cache.">
+		<ivy:cleancache />
 	</target>
 
 	<target name="rebuild" depends="clean, build" description="Clean existing class files and build from scratch"/>
