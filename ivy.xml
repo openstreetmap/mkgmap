@@ -22,7 +22,6 @@
 
 		<dependency org="crosby" name="osmpbf"
 			    rev="1.1.1-754a33af"
-			    changing="true"
 			    conf="compile->compile(*),master(*)" />
 
 		<dependency org="junit" name="junit"
