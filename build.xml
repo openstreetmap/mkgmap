@@ -140,8 +140,17 @@
 	<target name="prepare">
 		<mkdir dir="${build.classes}" />
 
+		<property environment="env"/>
+
 		<condition property="have.svn">
-			<available file="${top}/.svn"/>
+			<and>
+				<available file="${top}/.svn"/>
+				<or>
+					<available file="svnversion" filepath="${env.PATH}"/>
+					<available file="svnversion.exe" filepath="${env.PATH}"/>
+					<available file="svnversion.exe" filepath="${env.Path}"/>
+				</or>
+			</and>
 		</condition>
 		<condition property="have.git">
 			<available file="${top}/.git"/>
@@ -170,13 +179,11 @@
 	</target>
 
 	<target name="git-version" if="have.git">
-		<echo>doign git</echo>
 		<exec executable="git" dir="${top}" logError="false"
 					outputproperty="git.version.tmp" resultproperty="gitdescribe.result"
 					failifexecutionfails="false">
 			<arg value="describe" /><arg value="--dirty" /><arg value="--tags" /><arg value="--always" />
 		</exec>
-		<echo>git version '${git.version}'</echo>
 		<condition property="git.version.build" value="${git.version.tmp}">
 			<and>
 				<isset property="git.version.tmp" />
@@ -195,14 +202,17 @@
 					<isset property="have.svn"/>
 					<equals arg1="${svn.version.build}" arg2="${svn.version}"/>
 				</and>
-				<isset property="svn.version"/>
+				<and>
+					<not><isset property="have.svn"/></not>
+					<available file="${build}/classes/version.properties"/>
+				</and>
 			</or>
 		</condition>
 	</target>
 
 	<target name="version-file" unless="have.version">
 		<property name="project.version" value="${build.timestamp}" />
-		<property name="svn.version.build" value="unknown-${build.timestamp}"/>
+		<property name="svn.version.build" value="unknown"/>
 
 		<propertyfile file="${build.classes}/version.properties">
 			<entry key="svn.version" value="${svn.version.build}" />
