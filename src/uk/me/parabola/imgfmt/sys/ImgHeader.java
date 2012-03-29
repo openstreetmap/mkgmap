@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.sys;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -27,6 +26,8 @@ import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+
+import static java.util.Arrays.*;
 
 /**
  * The header at the very beginning of the .img filesystem.  It has the
@@ -51,12 +52,7 @@ class ImgHeader {
 	private static final int OFF_HEADS = 0x1a;
 	private static final int OFF_CYLINDERS = 0x1c;
 
-	private static final int OFF_CREATION_YEAR = 0x39;
-	//	private static final int OFF_CREATION_MONTH = 0x3b;
-	//	private static final int OFF_CREATION_DAY = 0x3c;
-	//	private static final int OFF_CREATION_HOUR = 0x3d;
-	//	private static final int OFF_CREATION_MINUTE = 0x3e;
-	//	private static final int OFF_CREATION_SECOND = 0x3f;
+	private static final int OFF_CREATION_DATE = 0x39;
 
 	// The block number where the directory starts.
 	private static final int OFF_DIRECTORY_START_BLOCK = 0x40;
@@ -97,6 +93,9 @@ class ImgHeader {
 
 	private ImgChannel file;
 	private Date creationTime;
+
+	private int sectorsPerTrack;
+	private int headsPerCylinder;
 
 	// Signatures.
 	private static final byte[] FILE_ID = {
@@ -151,7 +150,7 @@ class ImgHeader {
 		// always assume it is 2 anyway.
 		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartEntry());
 
-		header.position(OFF_CREATION_YEAR);
+		header.position(OFF_CREATION_DATE);
 		Utils.setCreationTime(header, creationTime);
 
 		setDirectoryStartEntry(params.getDirectoryStartEntry());
@@ -173,27 +172,28 @@ class ImgHeader {
 	 * @param blockSize Block size.
 	 */
 	private void writeSizeValues(int blockSize) {
-		long endSector = ((numBlocks+1L) * blockSize + 511) / 512;
+		int endSector = (int) (((numBlocks+1L) * blockSize + 511) / 512);
+		//System.out.printf("end sector %d %x\n", endSector, endSector);
 
 		// We have three maximum values for sectors, heads and cylinders.  We attempt to find values
 		// for them that are larger than the 
-		int sectors = 32;   // 6 bit value
-		int heads = 128;
+		sectorsPerTrack = 32;   // 6 bit value
+		headsPerCylinder = 128;
 		int cyls = 0x400;
 
 		// Try out various values of h, s and c until we find a combination that is large enough.
-		// I'm not entirely sure about the valid values, and this is perhaps a bit overly complex. In general
-		// though the partition size can be much larger than the file size without ill effects, there
-		// are some very large sizes that appear to not work in some circumstances however.
+		// I'm not entirely sure about the valid values, but it seems that only certain values work
+		// which is why we use values from a list.
+		// See: http://www.win.tue.nl/~aeb/partitions/partition_types-2.html for justification for the h list
 		out:
-		for (int h : Arrays.asList(16, 32, 64, /*128,*/ 256)) {
-			for (int s : Arrays.asList(4, 8, 16, 32)) {
-				for (int c : Arrays.asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x400)) {
+		for (int h : asList(16, 32, 64, 128, 256)) {
+			for (int s : asList(4, 8, 16, 32)) {
+				for (int c : asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x3ff)) {
 					log.info("shc=", s + "," + h + "," + c, "end=", endSector);
-					System.out.println("shc="+s + "," + h + "," + c + "end="+ endSector);
+					//System.out.println("shc=" + s + "," + h + "," + c + "end=" + endSector);
 					if (s * h * c > endSector) {
-						heads = h;
-						sectors = s;
+						headsPerCylinder = h;
+						sectorsPerTrack = s;
 						cyls = c;
 						break out;
 					}
@@ -201,16 +201,16 @@ class ImgHeader {
 			}
 		}
 
-		endSector = heads * sectors * cyls;
-		long lastSector = endSector - 1;
+		//endSector = headsPerCylinder * sectorsPerTrack * cyls;
+		int lastSector = endSector - 1;
 		
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
-		header.putShort(OFF_SECTORS, (short) sectors);
-		header.putShort(OFF_HEADS, (short) heads);
-		header.putShort(OFF_HEADS2, (short) heads);
-		header.putShort(OFF_SECTORS2, (short) sectors);
+		header.putShort(OFF_SECTORS, (short) sectorsPerTrack);
+		header.putShort(OFF_SECTORS2, (short) sectorsPerTrack);
+		header.putShort(OFF_HEADS, (short) headsPerCylinder);
+		header.putShort(OFF_HEADS2, (short) headsPerCylinder);
 		header.putShort(OFF_CYLINDERS, (short) cyls);
 
 		// Since there are only 2 bytes here but it can easily overflow, if it
@@ -230,17 +230,15 @@ class ImgHeader {
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
 
 		// Now calculate the CHS address of the last sector of the partition.
-		long h = (lastSector / sectors) % heads;
-		long s = (lastSector % sectors) + 1;
-		long c = lastSector / (sectors * heads);
-		
-		header.put(OFF_END_HEAD, (byte) (h));
-		header.put(OFF_END_SECTOR, (byte) ((s) | ((c >> 2) & 0xc0)));
-		header.put(OFF_END_CYLINDER, (byte) (c & 0xff));
+		CHS chs = new CHS(lastSector);
+
+		header.put(OFF_END_HEAD, (byte) (chs.h));
+		header.put(OFF_END_SECTOR, (byte) ((chs.s) | ((chs.c >> 2) & 0xc0)));
+		header.put(OFF_END_CYLINDER, (byte) (chs.c & 0xff));
 
 		// Write the LBA block address of the beginning and end of the partition.
 		header.putInt(OFF_REL_SECTORS, 0);
-		header.putInt(OFF_NUMBER_OF_SECTORS, (int) endSector);
+		header.putInt(OFF_NUMBER_OF_SECTORS, endSector);
 		log.info("number of blocks " + lastSector);
 	}
 
@@ -363,5 +361,25 @@ class ImgHeader {
 
 	public void setNumBlocks(int numBlocks) {
 		this.numBlocks = numBlocks;
+	}
+
+	private class CHS {
+		private int h;
+		private int s;
+		private int c;
+
+		public CHS(int lba) {
+			toCHS(lba);
+		}
+
+		public void toCHS(int lba) {
+			h = (lba / sectorsPerTrack) % headsPerCylinder;
+			s = (lba % sectorsPerTrack) + 1;
+			c = lba / (sectorsPerTrack * headsPerCylinder);
+		}
+		
+		public int toLba() {
+			return (c * headsPerCylinder + h) * sectorsPerTrack + (s - 1);
+		}
 	}
 }
