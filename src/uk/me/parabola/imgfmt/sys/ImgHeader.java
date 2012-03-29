@@ -173,7 +173,7 @@ class ImgHeader {
 	 * @param blockSize Block size.
 	 */
 	private void writeSizeValues(int blockSize) {
-		int endSector = (int) ((long) ((numBlocks+1) * blockSize + 511) / 512);
+		long endSector = ((numBlocks+1L) * blockSize + 511) / 512;
 
 		// We have three maximum values for sectors, heads and cylinders.  We attempt to find values
 		// for them that are larger than the 
@@ -186,10 +186,11 @@ class ImgHeader {
 		// though the partition size can be much larger than the file size without ill effects, there
 		// are some very large sizes that appear to not work in some circumstances however.
 		out:
-		for (int h : Arrays.asList(16, 32, 64, 128)) {
+		for (int h : Arrays.asList(16, 32, 64, /*128,*/ 256)) {
 			for (int s : Arrays.asList(4, 8, 16, 32)) {
 				for (int c : Arrays.asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x400)) {
 					log.info("shc=", s + "," + h + "," + c, "end=", endSector);
+					System.out.println("shc="+s + "," + h + "," + c + "end="+ endSector);
 					if (s * h * c > endSector) {
 						heads = h;
 						sectors = s;
@@ -201,7 +202,7 @@ class ImgHeader {
 		}
 
 		endSector = heads * sectors * cyls;
-		int lastSector = endSector - 1;
+		long lastSector = endSector - 1;
 		
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
@@ -229,9 +230,9 @@ class ImgHeader {
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
 
 		// Now calculate the CHS address of the last sector of the partition.
-		int h = (lastSector / sectors) % heads;
-		int s = (lastSector % sectors) + 1;
-		int c = lastSector / (sectors * heads);
+		long h = (lastSector / sectors) % heads;
+		long s = (lastSector % sectors) + 1;
+		long c = lastSector / (sectors * heads);
 		
 		header.put(OFF_END_HEAD, (byte) (h));
 		header.put(OFF_END_SECTOR, (byte) ((s) | ((c >> 2) & 0xc0)));
@@ -239,7 +240,7 @@ class ImgHeader {
 
 		// Write the LBA block address of the beginning and end of the partition.
 		header.putInt(OFF_REL_SECTORS, 0);
-		header.putInt(OFF_NUMBER_OF_SECTORS, endSector);
+		header.putInt(OFF_NUMBER_OF_SECTORS, (int) endSector);
 		log.info("number of blocks " + lastSector);
 	}
 
