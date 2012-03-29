@@ -201,9 +201,6 @@ class ImgHeader {
 			}
 		}
 
-		//endSector = headsPerCylinder * sectorsPerTrack * cyls;
-		int lastSector = endSector - 1;
-		
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
@@ -213,8 +210,8 @@ class ImgHeader {
 		header.putShort(OFF_HEADS2, (short) headsPerCylinder);
 		header.putShort(OFF_CYLINDERS, (short) cyls);
 
-		// Since there are only 2 bytes here but it can easily overflow, if it
-		// does we replace it with 0xffff, it doesn't work to set it to say zero
+		// Since there are only 2 bytes here it can overflow, if it
+		// does we replace it with 0xffff.
 		int blocks = (int) (endSector * 512L / blockSize);
 		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
 		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
@@ -230,7 +227,7 @@ class ImgHeader {
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
 
 		// Now calculate the CHS address of the last sector of the partition.
-		CHS chs = new CHS(lastSector);
+		CHS chs = new CHS(endSector - 1);
 
 		header.put(OFF_END_HEAD, (byte) (chs.h));
 		header.put(OFF_END_SECTOR, (byte) ((chs.s) | ((chs.c >> 2) & 0xc0)));
@@ -239,7 +236,7 @@ class ImgHeader {
 		// Write the LBA block address of the beginning and end of the partition.
 		header.putInt(OFF_REL_SECTORS, 0);
 		header.putInt(OFF_NUMBER_OF_SECTORS, endSector);
-		log.info("number of blocks " + lastSector);
+		log.info("number of blocks", endSector - 1);
 	}
 
 	void setHeader(ByteBuffer buf)  {
@@ -260,6 +257,13 @@ class ImgHeader {
 
 		fsParams.setMapDescription(sb.toString().trim());
 
+		byte h = header.get(OFF_END_HEAD);
+		byte sc1 = header.get(OFF_END_SECTOR);
+		byte sc2 = header.get(OFF_END_CYLINDER);
+		CHS chs = new CHS();
+		chs.setFromPartition(h, sc1, sc2);
+		int lba = chs.toLba();
+		log.info("partition sectors", lba);
 		// ... more to do
 	}
 
@@ -363,21 +367,52 @@ class ImgHeader {
 		this.numBlocks = numBlocks;
 	}
 
+	/**
+	 * Represent a block number in the chs format.
+	 *
+	 * Note that this class uses the headsPerCylinder and sectorsPerTrack values
+	 * from the enclosing class.
+	 *
+	 * @see "http://en.wikipedia.org/wiki/Logical_Block_Addressing"
+	 */
 	private class CHS {
 		private int h;
 		private int s;
 		private int c;
 
-		public CHS(int lba) {
-			toCHS(lba);
+		private CHS() {
 		}
 
-		public void toCHS(int lba) {
+		public CHS(int lba) {
+			toChs(lba);
+		}
+
+		/**
+		 * Calculate the CHS values from the the given logical block address.
+		 * @param lba Input logical block address.
+		 */
+		private void toChs(int lba) {
 			h = (lba / sectorsPerTrack) % headsPerCylinder;
 			s = (lba % sectorsPerTrack) + 1;
 			c = lba / (sectorsPerTrack * headsPerCylinder);
 		}
-		
+
+		/**
+		 * Set from a partition table entry.
+		 *
+		 * The cylinder is 10 bits and is split between the top 2 bit of the sector
+		 * value and its own byte.
+		 *
+		 * @param h The h value.
+		 * @param sc1 The s value (6 bits) and top 2 bits of c.
+		 * @param sc2 The bottom 8 bits of c.
+		 */
+		public void setFromPartition(byte h, byte sc1, byte sc2) {
+			this.h = h;
+			this.s = (sc1 & 0x3f) + ((sc2 >> 2) & 0xc0);
+			this.c = sc2 & 0xff;
+		}
+
 		public int toLba() {
 			return (c * headsPerCylinder + h) * sectorsPerTrack + (s - 1);
 		}
