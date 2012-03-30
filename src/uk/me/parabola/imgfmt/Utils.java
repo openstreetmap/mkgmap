@@ -103,7 +103,7 @@ public class Utils {
 		cal.setTime(d);
 
 		buf.putChar((char) cal.get(Calendar.YEAR));
-		buf.put((byte) (cal.get(Calendar.MONTH)));
+		buf.put((byte) (cal.get(Calendar.MONTH)+1));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
 		buf.put((byte) cal.get(Calendar.HOUR_OF_DAY));
 		buf.put((byte) cal.get(Calendar.MINUTE));
