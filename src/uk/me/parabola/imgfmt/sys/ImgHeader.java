@@ -19,7 +19,6 @@ package uk.me.parabola.imgfmt.sys;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -27,6 +26,8 @@ import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
+
+import static java.util.Arrays.asList;
 
 /**
  * The header at the very beginning of the .img filesystem.  It has the
@@ -51,12 +52,7 @@ class ImgHeader {
 	private static final int OFF_HEADS = 0x1a;
 	private static final int OFF_CYLINDERS = 0x1c;
 
-	private static final int OFF_CREATION_YEAR = 0x39;
-	//	private static final int OFF_CREATION_MONTH = 0x3b;
-	//	private static final int OFF_CREATION_DAY = 0x3c;
-	//	private static final int OFF_CREATION_HOUR = 0x3d;
-	//	private static final int OFF_CREATION_MINUTE = 0x3e;
-	//	private static final int OFF_CREATION_SECOND = 0x3f;
+	private static final int OFF_CREATION_DATE = 0x39;
 
 	// The block number where the directory starts.
 	private static final int OFF_DIRECTORY_START_BLOCK = 0x40;
@@ -97,6 +93,9 @@ class ImgHeader {
 
 	private ImgChannel file;
 	private Date creationTime;
+
+	private int sectorsPerTrack;
+	private int headsPerCylinder;
 
 	// Signatures.
 	private static final byte[] FILE_ID = {
@@ -151,7 +150,7 @@ class ImgHeader {
 		// always assume it is 2 anyway.
 		header.put(OFF_DIRECTORY_START_BLOCK, (byte) fsParams.getDirectoryStartEntry());
 
-		header.position(OFF_CREATION_YEAR);
+		header.position(OFF_CREATION_DATE);
 		Utils.setCreationTime(header, creationTime);
 
 		setDirectoryStartEntry(params.getDirectoryStartEntry());
@@ -173,26 +172,28 @@ class ImgHeader {
 	 * @param blockSize Block size.
 	 */
 	private void writeSizeValues(int blockSize) {
-		int endSector = (int) ((long) ((numBlocks+1) * blockSize + 511) / 512);
+		int endSector = (int) (((numBlocks+1L) * blockSize + 511) / 512);
+		//System.out.printf("end sector %d %x\n", endSector, endSector);
 
 		// We have three maximum values for sectors, heads and cylinders.  We attempt to find values
 		// for them that are larger than the 
-		int sectors = 32;   // 6 bit value
-		int heads = 128;
+		sectorsPerTrack = 32;   // 6 bit value
+		headsPerCylinder = 128;
 		int cyls = 0x400;
 
 		// Try out various values of h, s and c until we find a combination that is large enough.
-		// I'm not entirely sure about the valid values, and this is perhaps a bit overly complex. In general
-		// though the partition size can be much larger than the file size without ill effects, there
-		// are some very large sizes that appear to not work in some circumstances however.
+		// I'm not entirely sure about the valid values, but it seems that only certain values work
+		// which is why we use values from a list.
+		// See: http://www.win.tue.nl/~aeb/partitions/partition_types-2.html for justification for the h list
 		out:
-		for (int h : Arrays.asList(16, 32, 64, 128)) {
-			for (int s : Arrays.asList(4, 8, 16, 32)) {
-				for (int c : Arrays.asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x400)) {
+		for (int h : asList(16, 32, 64, 128, 256)) {
+			for (int s : asList(4, 8, 16, 32)) {
+				for (int c : asList(0x20, 0x40, 0x80, 0x100, 0x200, 0x3ff)) {
 					log.info("shc=", s + "," + h + "," + c, "end=", endSector);
+					//System.out.println("shc=" + s + "," + h + "," + c + "end=" + endSector);
 					if (s * h * c > endSector) {
-						heads = h;
-						sectors = s;
+						headsPerCylinder = h;
+						sectorsPerTrack = s;
 						cyls = c;
 						break out;
 					}
@@ -200,20 +201,17 @@ class ImgHeader {
 			}
 		}
 
-		endSector = heads * sectors * cyls;
-		int lastSector = endSector - 1;
-		
 		// This sectors, head, cylinders stuff appears to be used by mapsource
 		// and they have to be larger than the actual size of the map.  It
 		// doesn't appear to have any effect on a garmin device or other software.
-		header.putShort(OFF_SECTORS, (short) sectors);
-		header.putShort(OFF_HEADS, (short) heads);
-		header.putShort(OFF_HEADS2, (short) heads);
-		header.putShort(OFF_SECTORS2, (short) sectors);
+		header.putShort(OFF_SECTORS, (short) sectorsPerTrack);
+		header.putShort(OFF_SECTORS2, (short) sectorsPerTrack);
+		header.putShort(OFF_HEADS, (short) headsPerCylinder);
+		header.putShort(OFF_HEADS2, (short) headsPerCylinder);
 		header.putShort(OFF_CYLINDERS, (short) cyls);
 
-		// Since there are only 2 bytes here but it can easily overflow, if it
-		// does we replace it with 0xffff, it doesn't work to set it to say zero
+		// Since there are only 2 bytes here it can overflow, if it
+		// does we replace it with 0xffff.
 		int blocks = (int) (endSector * 512L / blockSize);
 		char shortBlocks = blocks > 0xffff ? 0xffff : (char) blocks;
 		header.putChar(OFF_BLOCK_SIZE, shortBlocks);
@@ -229,18 +227,16 @@ class ImgHeader {
 		header.put(OFF_SYSTEM_TYPE, (byte) 0);
 
 		// Now calculate the CHS address of the last sector of the partition.
-		int h = (lastSector / sectors) % heads;
-		int s = (lastSector % sectors) + 1;
-		int c = lastSector / (sectors * heads);
-		
-		header.put(OFF_END_HEAD, (byte) (h));
-		header.put(OFF_END_SECTOR, (byte) ((s) | ((c >> 2) & 0xc0)));
-		header.put(OFF_END_CYLINDER, (byte) (c & 0xff));
+		CHS chs = new CHS(endSector - 1);
+
+		header.put(OFF_END_HEAD, (byte) (chs.h));
+		header.put(OFF_END_SECTOR, (byte) ((chs.s) | ((chs.c >> 2) & 0xc0)));
+		header.put(OFF_END_CYLINDER, (byte) (chs.c & 0xff));
 
 		// Write the LBA block address of the beginning and end of the partition.
 		header.putInt(OFF_REL_SECTORS, 0);
 		header.putInt(OFF_NUMBER_OF_SECTORS, endSector);
-		log.info("number of blocks " + lastSector);
+		log.info("number of blocks", endSector - 1);
 	}
 
 	void setHeader(ByteBuffer buf)  {
@@ -261,6 +257,13 @@ class ImgHeader {
 
 		fsParams.setMapDescription(sb.toString().trim());
 
+		byte h = header.get(OFF_END_HEAD);
+		byte sc1 = header.get(OFF_END_SECTOR);
+		byte sc2 = header.get(OFF_END_CYLINDER);
+		CHS chs = new CHS();
+		chs.setFromPartition(h, sc1, sc2);
+		int lba = chs.toLba();
+		log.info("partition sectors", lba);
 		// ... more to do
 	}
 
@@ -362,5 +365,56 @@ class ImgHeader {
 
 	public void setNumBlocks(int numBlocks) {
 		this.numBlocks = numBlocks;
+	}
+
+	/**
+	 * Represent a block number in the chs format.
+	 *
+	 * Note that this class uses the headsPerCylinder and sectorsPerTrack values
+	 * from the enclosing class.
+	 *
+	 * @see <a href="http://en.wikipedia.org/wiki/Logical_Block_Addressing">Logical block addressing</a>
+	 */
+	private class CHS {
+		private int h;
+		private int s;
+		private int c;
+
+		private CHS() {
+		}
+
+		public CHS(int lba) {
+			toChs(lba);
+		}
+
+		/**
+		 * Calculate the CHS values from the the given logical block address.
+		 * @param lba Input logical block address.
+		 */
+		private void toChs(int lba) {
+			h = (lba / sectorsPerTrack) % headsPerCylinder;
+			s = (lba % sectorsPerTrack) + 1;
+			c = lba / (sectorsPerTrack * headsPerCylinder);
+		}
+
+		/**
+		 * Set from a partition table entry.
+		 *
+		 * The cylinder is 10 bits and is split between the top 2 bit of the sector
+		 * value and its own byte.
+		 *
+		 * @param h The h value.
+		 * @param sc1 The s value (6 bits) and top 2 bits of c.
+		 * @param sc2 The bottom 8 bits of c.
+		 */
+		public void setFromPartition(byte h, byte sc1, byte sc2) {
+			this.h = h;
+			this.s = (sc1 & 0x3f) + ((sc2 >> 2) & 0xc0);
+			this.c = sc2 & 0xff;
+		}
+
+		public int toLba() {
+			return (c * headsPerCylinder + h) * sectorsPerTrack + (s - 1);
+		}
 	}
 }
