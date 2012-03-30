@@ -27,7 +27,7 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.log.Logger;
 
-import static java.util.Arrays.*;
+import static java.util.Arrays.asList;
 
 /**
  * The header at the very beginning of the .img filesystem.  It has the
@@ -373,7 +373,7 @@ class ImgHeader {
 	 * Note that this class uses the headsPerCylinder and sectorsPerTrack values
 	 * from the enclosing class.
 	 *
-	 * @see "http://en.wikipedia.org/wiki/Logical_Block_Addressing"
+	 * @see <a href="http://en.wikipedia.org/wiki/Logical_Block_Addressing">Logical block addressing</a>
 	 */
 	private class CHS {
 		private int h;

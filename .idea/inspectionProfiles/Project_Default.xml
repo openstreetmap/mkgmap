@@ -34,6 +34,7 @@
         <value />
       </option>
       <option name="ignoreClassWithParameterization" value="false" />
+      <option name="ignoreThrowables" value="true" />
     </inspection_tool>
     <inspection_tool class="ErrorRethrown" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="FallthruInSwitchStatement" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -106,7 +107,6 @@
       <option name="m_ignoreWeakCollections" value="false" />
     </inspection_tool>
     <inspection_tool class="StringBufferField" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="StringBufferReplaceableByString" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SubstringZero" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SubtractionInCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
