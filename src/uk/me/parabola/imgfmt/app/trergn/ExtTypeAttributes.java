@@ -285,7 +285,7 @@ public class ExtTypeAttributes {
 				else if(parts[0].startsWith("AI"))
 					lt = "alternating";
 				else if(parts[0].startsWith("Mo")) {
-					if(parts[0].charAt(2) == '(')
+					if(parts[0].indexOf("(") == 2)
 						lt = parts[0].substring(3, 4);
 					else if(parts.length > 1 && parts[i].startsWith("(")) {
 						lt = parts[i].substring(1, 2);
@@ -333,6 +333,8 @@ public class ExtTypeAttributes {
 					else if(c.startsWith("Y"))
 						light = "yellow";
 					++i;
+				} else {
+					light = attributes.get("light");
 				}
 
 				String period = null;
@@ -354,6 +356,8 @@ public class ExtTypeAttributes {
 					// range
 					range = parts[i];
 					i += 2;
+				} else {
+					range = attributes.get("seamark:light:range");
 				}
 
 				if(light != null) {
@@ -381,13 +385,17 @@ public class ExtTypeAttributes {
 					String[] parts = desc.split(":");
 					if(parts.length == 4) {
 						colour = parts[0];
-						sectorStart = Double.valueOf(parts[1]).intValue();
-						while(sectorStart >= 360)
-							sectorStart -= 360;
-						sectorEnd = Double.valueOf(parts[2]).intValue();
-						while(sectorEnd >= 360)
-							sectorEnd -= 360;
-						range = Double.valueOf(parts[3]).intValue();
+						if (parts[1].equalsIgnoreCase("shore") || parts[2].equalsIgnoreCase("shore")) {
+							log.error(objectName + ": shore is no valid sector bound, please annotate a numeric value");
+						} else {
+							sectorStart = Double.valueOf(parts[1]).intValue();
+							while(sectorStart >= 360)
+								sectorStart -= 360;
+							sectorEnd = Double.valueOf(parts[2]).intValue();
+							while(sectorEnd >= 360)
+								sectorEnd -= 360;
+							range = Double.valueOf(parts[3]).intValue();
+						}
 					}
 				}
 				public int compareTo(SeamarkLight other) {
@@ -415,7 +423,8 @@ public class ExtTypeAttributes {
 					light = "";
 				else
 					light += "/";
-				light += sml.colour + "," + sml.range/10 + "." + sml.range%10 + "," + sml.sectorStart;
+				light += sml.colour + "," + sml.range + "," + sml.sectorStart;
+				//light += sml.colour + "," + sml.range/10 + "." + sml.range%10 + "," + sml.sectorStart;
 				if((i + 1) < lights.size()) {
 					if(sml.sectorEnd != lights.get(i + 1).sectorStart) {
 						// gap between lit sectors
@@ -463,7 +472,7 @@ public class ExtTypeAttributes {
 			int[] periods = parsePeriods(attributes.get("period"));
 			int[] eclipse = parsePeriods(attributes.get("eclipse"));
 			if (!(periods.length == eclipse.length || 1 == periods.length)) 
-				log.error(mapObject + "number of light and eclipse phases has to be equal");
+				log.error(objectName + ": number of light and eclipse phases has to be equal");
 			
 			if(type8to15 == 0x0100) { // lights
 				byte flags0 = 0;

@@ -12,20 +12,21 @@ seamark:buoy_lateral:ref=* { add mkgmap:xt-int-desig='${seamark:buoy_lateral:ref
 seamark:light:height=* { add mkgmap:xt-height-above-datum='${seamark:light:height}'; }
 seamark:light:colour=* { add mkgmap:xt-light='${seamark:light:colour}'; }
 seamark:light:period=* { add mkgmap:xt-period='${seamark:light:period}'; }
-seamark:light:sequence=* { add mkgmap:xt-note='Sequence: ${seamark:light:sequence}'; }
 seamark:light:group=* { add mkgmap:xt-note='Group: ${seamark:light:group}'; }
 
 # deprecated
 seamark:light:signal:period=* { add mkgmap:xt-period='${seamark:light:signal:period}'; }
 seamark:light:signal:sequence=* { add mkgmap:xt-note='${seamark:light:signal:sequence}'; }
+light:signal_sequence=* & seamark:light:sequence!=* { add seamark:light:sequence='${light:signal_sequence}'; }
+light:character=* & seamark:light:character!=* { add seamark:light:character='${light:character}'; }
+light:range=* & seamark:light:range!=* { add seamark:light:range='${light:range}'; }
+light:colour=* { add mkgmap:xt-light='${light:colour}'; }
+light:ele=* { add mkgmap:xt-height-above-datum='${light:ele}'; }
+light:signal_group=* { add mkgmap:xt-note='Group: ${light:signal_group}'; }
+light:signal_period=* { add mkgmap:xt-period='${light:signal_period}'; }
 
 seamark:buoy_special_purpose:colour=* { add mkgmap:xt-colour='${seamark:buoy_special_purpose:colour}'; }
 seamark:buoy_lateral:colour=* { add mkgmap:xt-colour='${seamark:buoy_lateral:colour}'; }
-seamark:buoy_lateral:category=port { add mkgmap:xt-colour='red'; }
-seamark:buoy_lateral:category=starboard { add mkgmap:xt-colour='green'; }
-
-seamark:buoy_lateral:category=preferred_channel_port { add mkgmap:xt-colour='green-red-green'; }
-seamark:buoy_lateral:category=preferred_channel_starboard { add mkgmap:xt-colour='red-green-red'; }
 
 seamark:buoy_safe_water:colour='red,white,red' { add mkgmap:xt-colour='red-white'; }
 seamark:buoy_safe_water:colour=* { add mkgmap:xt-colour='${seamark:buoy_safe_water:colour}'; }
@@ -37,14 +38,93 @@ seamark:beacon_special_purpose:colour=* { add mkgmap:xt-colour='${seamark:beacon
 seamark:beacon_safe_water:colour=* { add mkgmap:xt-colour='${seamark:beacon_safe_water:colour}'; }
 seamark:beacon_lateral:colour=* { add mkgmap:xt-colour='${seamark:beacon_lateral:colour}'; }
 
+# sectors
+seamark:light:1!=* & seamark:light:1:sector_start=* 
+& seamark:light:1:sector_end=* & seamark:light:1:colour=*
+& seamark:light:1:range=* 
+{add seamark:light:1='${seamark:light:1:colour}:${seamark:light:1:sector_start}:${seamark:light:1:sector_end}:${seamark:light:1:range}'}
+
+seamark:light:2!=* & seamark:light:2:sector_start=* 
+& seamark:light:2:sector_end=* & seamark:light:2:colour=*
+& seamark:light:2:range=* 
+{add seamark:light:2='${seamark:light:2:colour}:${seamark:light:2:sector_start}:${seamark:light:2:sector_end}:${seamark:light:2:range}'}
+
+seamark:light:3!=* & seamark:light:3:sector_start=* 
+& seamark:light:3:sector_end=* & seamark:light:3:colour=*
+& seamark:light:3:range=* 
+{add seamark:light:3='${seamark:light:3:colour}:${seamark:light:3:sector_start}:${seamark:light:3:sector_end}:${seamark:light:3:range}'}
+
+seamark:light:4!=* & seamark:light:4:sector_start=* 
+& seamark:light:4:sector_end=* & seamark:light:4:colour=*
+& seamark:light:4:range=* 
+{add seamark:light:4='${seamark:light:4:colour}:${seamark:light:4:sector_start}:${seamark:light:4:sector_end}:${seamark:light:4:range}'}
+
+seamark:light:5!=* & seamark:light:5:sector_start=* 
+& seamark:light:5:sector_end=* & seamark:light:5:colour=*
+& seamark:light:5:range=* 
+{add seamark:light:5='${seamark:light:5:colour}:${seamark:light:5:sector_start}:${seamark:light:5:sector_end}:${seamark:light:5:range}'}
+
+seamark:light:6!=* & seamark:light:6:sector_start=* 
+& seamark:light:6:sector_end=* & seamark:light:6:colour=*
+& seamark:light:6:range=* 
+{add seamark:light:6='${seamark:light:6:colour}:${seamark:light:6:sector_start}:${seamark:light:6:sector_end}:${seamark:light:6:range}'}
+
+seamark:light:7!=* & seamark:light:7:sector_start=* 
+& seamark:light:7:sector_end=* & seamark:light:7:colour=*
+& seamark:light:7:range=* 
+{add seamark:light:7='${seamark:light:7:colour}:${seamark:light:7:sector_start}:${seamark:light:7:sector_end}:${seamark:light:7:range}'}
+
+seamark:light:8!=* & seamark:light:8:sector_start=* 
+& seamark:light:8:sector_end=* & seamark:light:8:colour=*
+& seamark:light:8:range=* 
+{add seamark:light:8='${seamark:light:8:colour}:${seamark:light:8:sector_start}:${seamark:light:8:sector_end}:${seamark:light:8:range}'}
+
+seamark:light:9!=* & seamark:light:9:sector_start=* 
+& seamark:light:9:sector_end=* & seamark:light:9:colour=*
+& seamark:light:9:range=* 
+{add seamark:light:9='${seamark:light:9:colour}:${seamark:light:9:sector_start}:${seamark:light:9:sector_end}:${seamark:light:9:range}'}
+
+seamark:light:10!=* & seamark:light:10:sector_start=* 
+& seamark:light:10:sector_end=* & seamark:light:10:colour=*
+& seamark:light:10:range=* 
+{add seamark:light:10='${seamark:light:10:colour}:${seamark:light:10:sector_start}:${seamark:light:10:sector_end}:${seamark:light:10:range}'}
+
+seamark:light:11!=* & seamark:light:11:sector_start=* 
+& seamark:light:11:sector_end=* & seamark:light:11:colour=*
+& seamark:light:11:range=* 
+{add seamark:light:11='${seamark:light:11:colour}:${seamark:light:11:sector_start}:${seamark:light:11:sector_end}:${seamark:light:11:range}'}
+
+seamark:light:12!=* & seamark:light:12:sector_start=* 
+& seamark:light:12:sector_end=* & seamark:light:12:colour=*
+& seamark:light:12:range=* 
+{add seamark:light:12='${seamark:light:12:colour}:${seamark:light:12:sector_start}:${seamark:light:12:sector_end}:${seamark:light:12:range}'}
+
+seamark:light:13!=* & seamark:light:13:sector_start=* 
+& seamark:light:13:sector_end=* & seamark:light:13:colour=*
+& seamark:light:13:range=* 
+{add seamark:light:13='${seamark:light:13:colour}:${seamark:light:13:sector_start}:${seamark:light:13:sector_end}:${seamark:light:13:range}'}
+
+seamark:light:14!=* & seamark:light:14:sector_start=* 
+& seamark:light:14:sector_end=* & seamark:light:14:colour=*
+& seamark:light:14:range=* 
+{add seamark:light:14='${seamark:light:14:colour}:${seamark:light:14:sector_start}:${seamark:light:14:sector_end}:${seamark:light:14:range}'}
+
+seamark:light:15!=* & seamark:light:15:sector_start=* 
+& seamark:light:15:sector_end=* & seamark:light:15:colour=*
+& seamark:light:15:range=* 
+{add seamark:light:15='${seamark:light:15:colour}:${seamark:light:15:sector_start}:${seamark:light:15:sector_end}:${seamark:light:15:range}'}
+
+
 ######
 # define types
 
+# buoys
 seamark:buoy_lateral:shape=spar [0x010207 resolution 22]
-seamark:buoy_lateral:category=port [0x010209 resolution 22]
-seamark:buoy_lateral:category=starboard [0x01020a resolution 22]
-seamark:buoy_lateral:shape=* [0x010200 resolution 22]
-seamark:buoy_lateral:category=* [0x010200 resolution 22]
+seamark:buoy_lateral:category=port { add mkgmap:xt-colour='red'; } [0x010209 resolution 22]
+seamark:buoy_lateral:category=starboard { add mkgmap:xt-colour='green'; } [0x01020a resolution 22]
+seamark:buoy_lateral:category=preferred_channel_port { add mkgmap:xt-colour='green-red-green'; } [0x010209 resolution 22]
+seamark:buoy_lateral:category=preferred_channel_starboard { add mkgmap:xt-colour='red-green-red'; } [0x01020a resolution 22]
+seamark:type=buoy_lateral [0x010200 resolution 22]
 
 seamark:buoy_cardinal:category=north { add mkgmap:xt-colour='black-yellow'; } [0x010202 resolution 22]
 seamark:buoy_cardinal:category=south { add mkgmap:xt-colour='yellow-black'; } [0x010203 resolution 22]
@@ -54,12 +134,15 @@ seamark:buoy_cardinal:category=west { add mkgmap:xt-colour='yellow-black-yellow'
 seamark:buoy_special_purpose:shape=pillar [0x010207 resolution 22]
 seamark:buoy_special_purpose:shape=spar [0x010207 resolution 22]
 seamark:buoy_special_purpose:shape=barrel [0x01020d resolution 22]
-seamark:buoy_special_purpose:shape=* [0x01020b resolution 22]
+seamark:type=buoy_special_purpose [0x01020b resolution 22]
 
-seamark:buoy_safe_water:shape=* [0x01020c resolution 22]
+seamark:type=buoy_isolated_danger { add mkgmap:xt-colour='black-red-black'; } [0x010208 resolution 22]
+
+seamark:type=buoy_safe_water [0x01020c resolution 22]
 
 seamark:buoy_race:shape=* { add mkgmap:xt-note='Race Buoy' } [0x010200 resolution 22]
 
+#lights
 seamark=lighthouse & seamark:light:colour='red' [0x010107 resolution 20]
 seamark=lighthouse & seamark:light:colour='green' [0x010108 resolution 20]
 # approved?
@@ -67,25 +150,31 @@ seamark:lighthouse:colour='red,white,red' & seamark:lighthouse:light='yes' { add
 seamark:lighthouse:colour='green,white,green' & seamark:lighthouse:light='yes' { add mkgmap:xt-light='green'; } [0x010108 resolution 20]
 
 seamark=lighthouse [0x010100 resolution 20]
+seamark:type=landmark [0x010100 resolution 20]
+seamark:type=light_major [0x010100 resolution 20]
+seamark:type=light_minor [0x010100 resolution 22]
+seamark:type=light_vessel [0x010100 resolution 20]
+seamark:type=light_float [0x010100 resolution 20]
 
-seamark:beacon_cardinal:category=north { add mkgmap:xt-colour='black-yellow'; } [0x01020e resolution 20]
-seamark:beacon_cardinal:category=south { add mkgmap:xt-colour='yellow-black'; } [0x01020f resolution 20]
-seamark:beacon_cardinal:category=east { add mkgmap:xt-colour='black-yellow-black'; } [0x010210 resolution 20]
-seamark:beacon_cardinal:category=west { add mkgmap:xt-colour='yellow-black-yellow'; } [0x010211 resolution 20]
+#beacons
+seamark:beacon_lateral:category=port [0x010213 resolution 22]
+seamark:beacon_lateral:category=starboard [0x010214 resolution 22]
+seamark:beacon_lateral:category=preferred_channel_port [0x010206 resolution 22]
+seamark:beacon_lateral:category=preferred_channel_starboard [0x010206 resolution 22]
+seamark:type:beacon_lateral=* [0x010206 resolution 22]
 
-seamark:beacon:category=port [0x010213 resolution 20]
-seamark:beacon:category=starboard [0x010214 resolution 20]
-seamark:beacon:category=* [0x010206 resolution 20]
-seamark:beacon_lateral:category=* [0x010206 resolution 20]
-seamark:beacon_lateral:shape=* [0x010206 resolution 20]
-seamark:beacon_special_purpose:colour=* [0x010215 resolution 20]
-seamark:beacon_safe_water:shape=* [0x010206 resolution 20]
-seamark:beacon_safe_water:colour=* [0x010206 resolution 20]
-seamark:beacon_isolated_danger:shape=* [0x010206 resolution 20]
-seamark:beacon_isolated_danger:colour=* [0x010206 resolution 20]
+seamark:beacon_cardinal:category=north { add mkgmap:xt-colour='black-yellow'; } [0x01020e resolution 22]
+seamark:beacon_cardinal:category=south { add mkgmap:xt-colour='yellow-black'; } [0x01020f resolution 22]
+seamark:beacon_cardinal:category=east { add mkgmap:xt-colour='black-yellow-black'; } [0x010210 resolution 22]
+seamark:beacon_cardinal:category=west { add mkgmap:xt-colour='yellow-black-yellow'; } [0x010211 resolution 22]
+
+seamark:type=beacon_special_purpose [0x010215 resolution 22]
+seamark:type=beacon_safe_water [0x010206 resolution 22]
+seamark:type=beacon_isolated_danger [0x010212 resolution 22]
 
 seamark:light:1=* [0x010100 resolution 20]
 
+#other
 waterway=depth & name=* { name '${name|subst:,=>.}' } [ 0x6200 resolution 22]
 waterway=fuel { add mkgmap:xt-facilities='0x40'; }[ 0x010903 resolution 22 ]
 waterway=wreck [ 0x010402 resolution 22 ]
@@ -94,19 +183,3 @@ historic=wreck [ 0x010402 resolution 22 ]
 # end seamark marine objects
 ############################################################################
 
-################################################
-# alternative tag set
-
-#light:character=Fl { add mkgmap:xt-type='flashing'; }
-#light:character=VQ { add mkgmap:xt-type='very quick'; }
-#light:colour=* { add mkgmap:xt-light='${light:colour}'; }
-#buoy:colour=* { add mkgmap:xt-colour='${buoy:colour}'; }
-
-#buoy=cardinal_north { add mkgmap:xt-colour='black-yellow'; } [0x010202 resolution 20]
-#buoy=cardinal_south { add mkgmap:xt-colour='yellow-black'; } [0x010203 resolution 20]
-#buoy=cardinal_east { add mkgmap:xt-colour='black-yellow-black'; } [0x010204 resolution 20]
-#buoy=cardinal_west { add mkgmap:xt-colour='yellow-black-yellow'; } [0x010205 resolution 20]
-
-#buoy=special_purpose [0x01020b resolution 20]
-
-####################
