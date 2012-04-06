@@ -118,6 +118,12 @@ public class UnusedElementsRemoverHook extends OsmReadingHooksAdaptor {
 		long relWays = 0;
 		long ways = saver.getWays().size();
 		for (Way way : new ArrayList<Way>(saver.getWays().values())) {
+			if (way.getPoints().isEmpty()) {
+				// empty way will not appear in the map => remove it
+				saver.getWays().remove(way.getId());
+				continue;
+			}
+			
 			// check if a way has no tags and is not a member of a relation
 			// a relation might be used to add tags to the way using the style file
 			if (way.getTagCount() == 0) {
