@@ -40,14 +40,15 @@ public class Version {
 
 	/**
 	 * Get the version number if we can find one, else a default string.
-	 * This looks in a file called version.properties on the classpath.
+	 * This looks in a file called mkgmap-version.properties on the
+	 * classpath.
 	 * This is created outside of the system by the build script.
 	 *
 	 * @return The version number or a default string if a version number
 	 * cannot be found.
 	 */
 	private static String getSvnVersion() {
-		InputStream is = Version.class.getResourceAsStream("/version.properties");
+		InputStream is = Version.class.getResourceAsStream("/mkgmap-version.properties");
 
 		if (is == null)
 			return DEFAULT_VERSION;

@@ -60,7 +60,7 @@ do
 		cd $BUILD_DIR
 		trap "rm -rf $BUILD_DIR" 0 2
 		if [ -d resources ]; then
-			echo "svn.version: ${branch}.${VERSION}" > resources/version.properties
+			echo "svn.version: ${branch}.${VERSION}" > resources/mkgmap-version.properties
 		fi
 		ant dist || exit 1
 

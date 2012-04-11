@@ -195,7 +195,7 @@
 	</target>
 
 	<target name="check-version" depends="svn-version, git-version">
-		<property file="${build.classes}/version.properties"/>
+		<property file="${build.classes}/mkgmap-version.properties"/>
 		<condition property="have.version">
 			<or>
 				<and>
@@ -204,7 +204,7 @@
 				</and>
 				<and>
 					<not><isset property="have.svn"/></not>
-					<available file="${build}/classes/version.properties"/>
+					<available file="${build}/classes/mkgmap-version.properties"/>
 				</and>
 			</or>
 		</condition>
@@ -214,7 +214,7 @@
 		<property name="project.version" value="${build.timestamp}" />
 		<property name="svn.version.build" value="unknown"/>
 
-		<propertyfile file="${build.classes}/version.properties">
+		<propertyfile file="${build.classes}/mkgmap-version.properties">
 			<entry key="svn.version" value="${svn.version.build}" />
 			<entry key="build.timestamp" value="${build.timestamp}" />
 		</propertyfile>
