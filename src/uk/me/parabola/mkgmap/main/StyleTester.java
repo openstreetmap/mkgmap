@@ -310,9 +310,10 @@ public class StyleTester implements OsmConverter {
 			} else if (line.startsWith("<<<")) {
 				// read the rest of the file
 				readStyles(br, line);
-			} else if ("".equals(line) || line.startsWith("#")) {
+			} 
+			/*else if ("".equals(line) || line.startsWith("#")) {
 				// ignore blank lines.
-			}
+			}*/
 		}
 		br.close();
 

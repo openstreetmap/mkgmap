@@ -194,6 +194,9 @@ public class MapMaker implements MapProcessor {
 	}
 
 	private boolean roadsAreJoined(MapLine r1, MapLine r2) {
+		if (r1.getBounds().intersects(r2.getBounds()) == false)  {
+			return false;
+		}
 
 		if(r1 != r2) {
 			for(Coord c1 : r1.getPoints()) {

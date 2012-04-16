@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -73,7 +74,7 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
-	private final List<Thread> preparers = new ArrayList<Thread>();
+	private final List<Preparer> preparers = new ArrayList<Preparer>();
 	
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
@@ -95,7 +96,8 @@ public class Main implements ArgumentProcessor {
 	 * @param args The command line arguments.
 	 */
 	public static void main(String[] args) {
-
+		long start = System.currentTimeMillis();
+		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
 		if (args.length < 1) {
 			System.err.println("Usage: mkgmap [options...] <file.osm>");
@@ -115,6 +117,8 @@ public class Main implements ArgumentProcessor {
 		} catch (ExitException e) {
 			System.err.println(e.getMessage());
 		}
+		System.out.println("Time finished: " + new Date());
+		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms"); 
 	}
 
 	/**
@@ -317,27 +321,46 @@ public class Main implements ArgumentProcessor {
 		combiners.add(combiner);
 	}
 	
-	private void addPreparer(Thread preparer) {
+	private void addPreparer(Preparer preparer) {
 		this.preparers.add(preparer);
 	}
 
 	public void endOptions(CommandArgs args) {
 		fileOptions(args);
 
-		if (args.exists("createboundsfile")) {
-			addPreparer(new BoundaryPreparer(args.getProperties()));
-		}
-
-		log.info("Start preparers");
-		for (Thread preparer : preparers) {
-			preparer.run();
-		}
+		addPreparer(new BoundaryPreparer());
 
 		log.info("Start tile processors");
 		if (threadPool == null) {
 			log.info("Creating thread pool with " + maxJobs + " threads");
 			threadPool = Executors.newFixedThreadPool(maxJobs);
 		}
+
+		log.info("Start preparers");
+		long pt1 = System.currentTimeMillis();
+		for (Preparer preparer : preparers) {
+
+			boolean usePreparer = preparer.init(args.getProperties(), threadPool);
+			if (usePreparer == false) {
+				continue;
+			}
+
+			try {
+				preparer.runPreparer();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				if (!args.getProperties().getProperty("keep-going", false)) {
+					throw new ExitException(
+							"Exiting - if you want to carry on regardless, use the --keep-going option");
+				}
+			}
+		}
+
+		preparers.clear();
+		long pt2 = System.currentTimeMillis();
+		log.info("All preparers finished after " + (pt2-pt1) + " ms");
+
+		// process all input files
 		for (FilenameTask task : futures) {
 			threadPool.execute(task);
 		}

@@ -16,10 +16,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -104,26 +102,26 @@ public class LocatorConfig {
 
 						}
 
-						if(cNode.getNodeName().equals("country"))
-						{
+						if (cNode.getNodeName().equals("country")) {
 							NamedNodeMap attr = cNode.getAttributes();
-							Node nameTag = null;
-							Node abrTag = attr.getNamedItem("abr");
 							String iso = null;
-							if (abrTag != null) {
-								iso = abrTag.getNodeValue().toUpperCase().trim().intern();
-								if (iso.length() != 3) {
-									log.error("ISO code (abr) must have three characters: "+iso);
-								}
-							}
-							
-							if(attr != null)
-							{
+							if (attr != null) {
+								Node nameTag = null;
+								Node abrTag = attr.getNamedItem("abr");
+								if (abrTag != null) {
+									iso = abrTag.getNodeValue().toUpperCase().trim().intern();
+									if (iso.length() != 3) {
+										log.error("ISO code (abr) must have three characters: "
+											+ iso);
+									}
+								}	
+
 								nameTag = attr.getNamedItem("name");
-								
-								if(iso != null && nameTag != null) {
-									addISO(nameTag.getNodeValue(),iso);
-									defaultCountryNames.put(iso, nameTag.getNodeValue().trim());
+
+								if (iso != null && nameTag != null) {
+									addISO(nameTag.getNodeValue(), iso);
+									defaultCountryNames.put(iso, nameTag
+										.getNodeValue().trim());
 								}
 								
 								if (iso != null)
@@ -233,13 +231,7 @@ public class LocatorConfig {
 		}
 		
 		// add it as new country to the tag map
-		Tags cTagsCopy = new Tags();
-		Iterator<Entry<String,String>> tagIter = countryTags.entryIterator();
-		while (tagIter.hasNext()) {
-			Entry<String,String> nextTag = tagIter.next();
-			cTagsCopy.put(nextTag.getKey(), nextTag.getValue());
-		}
-		countryTagMap.put(isoCode, cTagsCopy);
+		countryTagMap.put(isoCode, countryTags.copy());
 		
 		String name = countryTags.get("name");
 		if (name != null) {
@@ -266,7 +258,14 @@ public class LocatorConfig {
 		if (country == null) {
 			return null;
 		}
-		return isoMap.get(country.toUpperCase().trim());
+		String res = isoMap.get(country);
+		if (res == null){
+			res = isoMap.get(country.toUpperCase().trim());
+			if (res != null) {
+				isoMap.put(country, res);
+			}
+		}
+		return res;
 	}
 	
 	/**

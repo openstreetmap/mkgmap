@@ -169,51 +169,57 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private boolean joinWays(JoinedWay joinWay, JoinedWay tempWay,
 			boolean checkOnly) {
+		boolean reverseTempWay = false;
+		int insIdx = -1;
+		int firstTmpIdx = 1;
+		boolean joinable = false;
+		
 		// use == or equals as comparator??
 		if (joinWay.getPoints().get(0) == tempWay.getPoints().get(0)) {
-			if (!checkOnly) {
-				for (Coord point : tempWay.getPoints().subList(1,
-						tempWay.getPoints().size())) {
-					joinWay.addPoint(0, point);
-				}
-				joinWay.addWay(tempWay);
-			}
-			return true;
+			insIdx = 0;
+			reverseTempWay = true;
+			firstTmpIdx = 1;
+			joinable = true;
 		} else if (joinWay.getPoints().get(joinWay.getPoints().size() - 1) == tempWay
 				.getPoints().get(0)) {
-			if (!checkOnly) {
-				for (Coord point : tempWay.getPoints().subList(1,
-						tempWay.getPoints().size())) {
-					joinWay.addPoint(point);
-				}
-				joinWay.addWay(tempWay);
-			}
-			return true;
+			insIdx = joinWay.getPoints().size();
+			reverseTempWay = false;
+			firstTmpIdx = 1;
+			joinable = true;
 		} else if (joinWay.getPoints().get(0) == tempWay.getPoints().get(
 				tempWay.getPoints().size() - 1)) {
-			if (!checkOnly) {
-				int insertIndex = 0;
-				for (Coord point : tempWay.getPoints().subList(0,
-						tempWay.getPoints().size() - 1)) {
-					joinWay.addPoint(insertIndex, point);
-					insertIndex++;
-				}
-				joinWay.addWay(tempWay);
-			}
-			return true;
+			insIdx = 0; 
+			reverseTempWay = false;
+			firstTmpIdx = 0;
+			joinable = true;
 		} else if (joinWay.getPoints().get(joinWay.getPoints().size() - 1) == tempWay
 				.getPoints().get(tempWay.getPoints().size() - 1)) {
-			if (!checkOnly) {
-				int insertIndex = joinWay.getPoints().size();
-				for (Coord point : tempWay.getPoints().subList(0,
-						tempWay.getPoints().size() - 1)) {
-					joinWay.addPoint(insertIndex, point);
-				}
-				joinWay.addWay(tempWay);
-			}
-			return true;
+			insIdx = joinWay.getPoints().size();
+			reverseTempWay = true;
+			firstTmpIdx = 0;
+			joinable = true;
 		}
-		return false;
+		
+		if (!checkOnly && joinable){
+			int lastIdx = tempWay.getPoints().size();
+			if (firstTmpIdx == 0) {
+				// the last temp point is already contained in the joined way - do not copy it
+				lastIdx--;
+			}
+					
+			List<Coord> tempCoords = tempWay.getPoints().subList(firstTmpIdx,lastIdx);
+			
+			if (reverseTempWay) {
+				// the remp coords need to be reversed so copy the list
+				tempCoords = new ArrayList<Coord>(tempCoords);
+				// and reverse it
+				Collections.reverse(tempCoords);
+			}
+			
+			joinWay.getPoints().addAll(insIdx, tempCoords);
+			joinWay.addWay(tempWay);
+		}
+		return joinable;
 	}
 
 	/**
@@ -2168,7 +2174,7 @@ public class MultiPolygonRelation extends Relation {
 
 
 	/**
-	 * This is a helper class that stores that gives access to the original
+	 * This is a helper class that gives access to the original
 	 * segments of a joined way.
 	 */
 	public static final class JoinedWay extends Way {
@@ -2207,27 +2213,36 @@ public class MultiPolygonRelation extends Relation {
 
 		private void updateBounds(List<Coord> pointList) {
 			for (Coord c : pointList) {
-				updateBounds(c);
+				updateBounds(c.getLatitude(),c.getLongitude());
 			}
 		}
 
+		private void updateBounds (JoinedWay other){
+			updateBounds(other.minLat,other.minLon);
+			updateBounds(other.maxLat,other.maxLon);
+		}
+
+		private void updateBounds(int lat, int lon) {
+			if (lat < minLat) {
+				minLat = lat;
+				bounds = null;
+			} else if (lat > maxLat) {
+				maxLat = lat;
+				bounds = null;
+			}
+
+			if (lon < minLon) {
+				minLon = lon;
+				bounds = null;
+			} else if (lon > maxLon) {
+				maxLon = lon;
+				bounds = null;
+			}
+
+			
+		}
 		private void updateBounds(Coord point) {
-			if (point.getLatitude() < minLat) {
-				minLat = point.getLatitude();
-				bounds = null;
-			} else if (point.getLatitude() > maxLat) {
-				maxLat = point.getLatitude();
-				bounds = null;
-			}
-
-			if (point.getLongitude() < minLon) {
-				minLon = point.getLongitude();
-				bounds = null;
-			} else if (point.getLongitude() > maxLon) {
-				maxLon = point.getLongitude();
-				bounds = null;
-			}
-
+			updateBounds(point.getLatitude(), point.getLongitude());
 		}
 		
 		/**
@@ -2268,6 +2283,7 @@ public class MultiPolygonRelation extends Relation {
 				for (Way w : ((JoinedWay) way).getOriginalWays()) {
 					addWay(w);
 				}
+				updateBounds((JoinedWay)way);
 			} else {
 				if (log.isDebugEnabled()) {
 					log.debug("Joined", this.getId(), "with", way.getId());

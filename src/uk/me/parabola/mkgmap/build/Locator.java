@@ -20,14 +20,18 @@ import java.util.Set;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapPointFastFindMap;
+import uk.me.parabola.mkgmap.general.MapPointKdTree;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.MultiHashMap;
 
 public class Locator {
 	private static final Logger log = Logger.getLogger(Locator.class);
 
-	private final MapPointFastFindMap cityMap  					= new MapPointFastFindMap();
+    /** hash map to collect equally named MapPoints*/ 
+	private final MultiHashMap<String, MapPoint> cityMap = new MultiHashMap<String, MapPoint>();
+	
+	private final MapPointKdTree cityFinder = new MapPointKdTree();
 	private final List<MapPoint> placesMap  =  new ArrayList<MapPoint>();
 
 	/** Contains the tags defined by the option name-tag-list */
@@ -56,7 +60,8 @@ public class Locator {
 			return;
 		}
 		
-		log.debug("S City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
+		if (log.isDebugEnabled())
+			log.debug("S City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
 
 		// correct the country name
 		// usually this is the translation from 3letter ISO code to country name
@@ -70,14 +75,16 @@ public class Locator {
 			if (log.isDebugEnabled())
 				log.debug(p.getCity(),p.getRegion(),p.getCountry());
 			// Must use p.getName() here because p.getCity() contains the city name of the preprocessed cities
-			cityMap.put(p.getName(), p);
+			addCity(p.getName(), p);
 		}
 		else
 		{
 			// All other places which do not seam to be a real city has to resolved later
 			placesMap.add(p);		
 		}
-		log.debug("E City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
+		
+		if (log.isDebugEnabled())
+			log.debug("E City 0x"+Integer.toHexString(p.getType()), p.getName(), "|", p.getCity(), "|", p.getRegion(), "|", p.getCountry());
 	}
 
 	public void setDefaultCountry(String country, String abbr)
@@ -244,7 +251,7 @@ public class Locator {
 	
 	public MapPoint findNextPoint(MapPoint p)
 	{
-		return cityMap.findNextPoint(p);
+		return cityFinder.findNextPoint(p);
 	}
 	
 	public MapPoint findNearbyCityByName(MapPoint p) {
@@ -252,8 +259,8 @@ public class Locator {
 		if (p.getCity() == null)
 			return null;
 
-		Collection<MapPoint> nextCityList = cityMap.getList(p.getCity());
-		if (nextCityList == null) {
+		Collection<MapPoint> nextCityList = cityMap.get(p.getCity());
+		if (nextCityList.isEmpty()) {
 			return null;
 		}
 
@@ -296,11 +303,10 @@ public class Locator {
 		for (String cityCandidate : cityList) {
 			cityCandidate = cityCandidate.trim();
 
-			Collection<MapPoint> candidateCityList = cityMap
-					.getList(cityCandidate);
-			if (candidateCityList != null) {
+			Collection<MapPoint> candidateCityList = cityMap.get(cityCandidate);
+			if (candidateCityList.isEmpty() == false) {
 				if (nextCityList == null) {
-					nextCityList = new ArrayList<MapPoint>();
+					nextCityList = new ArrayList<MapPoint>(candidateCityList.size());
 				}
 				nextCityList.addAll(candidateCityList);
 			}
@@ -340,6 +346,7 @@ public class Locator {
 		
 		log.info("Locator City   Map contains", cityMap.size(), "entries");
 		log.info("Locator Places Map contains", placesMap.size(), "entries");
+		log.info("Locator Finder KdTree contains", cityFinder.size(), "entries");
 
 		int runCount = 0;
 		int maxRuns = 2;
@@ -369,7 +376,7 @@ public class Locator {
 					} else if (locationAutofill.contains("nearest") && (runCount + 1) == maxRuns) {
 						// In the last resolve run just take info from the next
 						// known city
-						near = cityMap.findNextPoint(place);
+						near = cityFinder.findNextPoint(place);
 						if (near != null && near.getCountry() != null) {
 							if (place.getCity() == null)
 								place.setCity(place.getName());
@@ -395,11 +402,11 @@ public class Locator {
 
 				if (place != null) {
 					if (place.getCity() != null) {
-						cityMap.put(place.getName(), place);
+						addCity(place.getName(), place);
 						placesMap.set(i, null);
 					} else if ((runCount + 1) == maxRuns) {
 						place.setCity(place.getName());
-						cityMap.put(place.getName(), place);
+						addCity(place.getName(), place);
 					}
 				}
 			}
@@ -412,6 +419,23 @@ public class Locator {
 
 		} while (unresCount > 0 && runCount < maxRuns);
 
+	}
+	
+	/**
+	 * Add MapPoint to cityMap and cityFinder
+	 *  
+	 * @param name Name that is used to find the city
+	 * @param p the MapPoint
+	 */
+	private void addCity(String name, MapPoint p){
+		if(name != null)
+		{
+			cityMap.add(name, p);
+			
+			// add point to the kd-tree
+			cityFinder.add(p);
+		}
+		
 	}
 }
 

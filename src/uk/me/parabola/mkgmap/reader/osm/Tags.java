@@ -108,7 +108,7 @@ public class Tags implements Iterable<String> {
 	 * Make a deep copy of this object.
 	 * @return A copy of this object.
 	 */
-	Tags copy() {
+	public Tags copy() {
 		Tags cp = new Tags();
 		cp.keySize = keySize;
 		cp.size = size;
