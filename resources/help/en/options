@@ -123,6 +123,10 @@ Address search options:
 	  mkgmap:phone
 	  (mkgmap:is_in - used by location-autofill=is_in)
 
+  If the index is created from previously compiled .img files, then the
+  same code page and sorting options (eg. --code-page, --latin1 etc) must
+  be used as were used to compile the individual map tiles.
+
 --createboundsfile=filename
     In case this option is set the given file is read and all boundary
     data in it is stored in preprocessed bounds files which are stored 
