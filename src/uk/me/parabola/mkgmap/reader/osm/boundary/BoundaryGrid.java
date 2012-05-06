@@ -13,6 +13,9 @@
 package uk.me.parabola.mkgmap.reader.osm.boundary;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
@@ -30,6 +33,7 @@ public class BoundaryGrid {
 
 	private final uk.me.parabola.imgfmt.app.Area searchBbox;
 	private final BoundaryQuadTree[][] grid;
+	private final boolean [][]emptyMessagePrinted;
 	private final int minLat;
 	private final int minLon;
 	private final EnhancedProperties props;
@@ -55,6 +59,7 @@ public class BoundaryGrid {
 		int dimLat = (gridMaxLat - minLat) / BoundaryUtil.RASTER + 1;
 		int dimLon = (gridMaxLon - minLon) / BoundaryUtil.RASTER + 1;
 		grid = new BoundaryQuadTree[dimLat][dimLon];
+		emptyMessagePrinted = new boolean[dimLat][dimLon];
 		this.searchBbox = bbox;
 
 		this.props = props;
@@ -72,15 +77,22 @@ public class BoundaryGrid {
 			return null;
 		int gridLat = (co.getLatitude() - minLat) / BoundaryUtil.RASTER;
 		int gridLon = (co.getLongitude() - minLon) / BoundaryUtil.RASTER;
-		if (grid[gridLat][gridLon] == null)
+		if (grid[gridLat][gridLon] == null){
+			if (emptyMessagePrinted[gridLat][gridLon] == false){
+				emptyMessagePrinted[gridLat][gridLon] = true;
+				int keyLat = BoundaryUtil.getSplitBegin(co.getLatitude());
+				int keyLon = BoundaryUtil.getSplitBegin(co.getLongitude());
+				log.warn("no precompiled boundary information available for raster tile", BoundaryUtil.getKey(keyLat,keyLon));
+			}
 			return null;
+		}
 		else
 			return grid[gridLat][gridLon].get(co);
 	}
 
 	/**
 	 * Fill the grid. Calculate the names of the *.bnd files that 
-	 * must be loaded. For each file, try to create a BoundaryQuadTree.
+	 * may be needed. For each file, try to create a BoundaryQuadTree.
 	 * Save each tree to its place in the grid. 
 	 * 
 	 * @param boundaryDir
@@ -88,13 +100,12 @@ public class BoundaryGrid {
 	 */
 	private void init(String boundaryDirName){
 		List<String> requiredFileNames = BoundaryUtil.getRequiredBoundaryFileNames(searchBbox);
-		for (String boundaryFileName : requiredFileNames) {
-			log.info("loading boundary file:", boundaryFileName);
-			BoundaryQuadTree bqt = BoundaryUtil.loadQuadTree(boundaryDirName, boundaryFileName, searchBbox, props);
-			uk.me.parabola.imgfmt.app.Area fileBbox = BoundaryUtil.getBbox(boundaryFileName);
+		Map<String,BoundaryQuadTree> trees = BoundaryUtil.loadQuadTrees(boundaryDirName, requiredFileNames, searchBbox, props);
+		for (Entry<String,BoundaryQuadTree> entry: trees.entrySet()) {
+			uk.me.parabola.imgfmt.app.Area fileBbox = BoundaryUtil.getBbox(entry.getKey());
 			int gridLat = (fileBbox.getMinLat() - minLat) / BoundaryUtil.RASTER;
 			int gridLon = (fileBbox.getMinLong() - minLon) / BoundaryUtil.RASTER;
-			grid[gridLat][gridLon] = bqt;
+			grid[gridLat][gridLon] = entry.getValue();
 		}
 	}
 }

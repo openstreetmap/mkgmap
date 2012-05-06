@@ -27,7 +27,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -115,68 +117,73 @@ public class BoundaryUtil {
 	}
 
 	/**
-	 * Wrapper for {@link #loadQuadTree(String, String, uk.me.parabola.imgfmt.app.Area, EnhancedProperties)}
+	 * Wrapper for {@link #loadQuadTrees(String, String, uk.me.parabola.imgfmt.app.Area, EnhancedProperties)}
 	 * @param boundaryDirName a directory name or zip file containing the *.bnd file
 	 * @param boundaryFileName the *.bnd file name
 	 * @return
 	 */
 	public static BoundaryQuadTree loadQuadTree (String boundaryDirName, 
-			String boundaryFileName){ 
-		return (loadQuadTree (boundaryDirName, boundaryFileName, null, null));
+			String boundaryFileName){
+		Map<String,BoundaryQuadTree> trees = loadQuadTrees (boundaryDirName, Collections.singletonList(boundaryFileName), null, null);
+		return trees.get(boundaryFileName);
 	}
 	
 	/**
-	 * create a BoundaryQuadTree with the data in the given file. 
-	 * The routine opens the file and reads only the header 
-	 * to decide what format was used to write it
-	 * and calls the appropriate method to read the rest.
+	 * Create a BoundaryQuadTree for each file listed in boundaryFileNames. 
 	 * @param boundaryDirName a directory name or zip file containing the *.bnd file
-	 * @param boundaryFileName the *.bnd file name
+	 * @param boundaryFileNames the list of *.bnd file names
 	 * @param searchBbox null or a bounding box. Data outside of this box is ignored.
 	 * @param props null or the properties to be used for the locator
 	 * @return
 	 */
-	public static BoundaryQuadTree loadQuadTree (String boundaryDirName, 
-			String boundaryFileName, 
+	public static Map<String,BoundaryQuadTree> loadQuadTrees (String boundaryDirName, 
+			List<String> boundaryFileNames, 
 			uk.me.parabola.imgfmt.app.Area searchBbox, EnhancedProperties props){
-		BoundaryQuadTree bqt = null;
+		Map<String,BoundaryQuadTree>  trees = new HashMap<String,BoundaryQuadTree>();
 		File boundaryDir = new File(boundaryDirName);
-		try {
-			if (boundaryDir.isDirectory()) {
-				// no support for nested directories
-				File boundaryFile = new File(boundaryDir, boundaryFileName);
-				if (boundaryFile.exists()) {
-					InputStream stream = new FileInputStream(boundaryFile);
-					bqt = BoundaryUtil.loadQuadTreeFromStream(stream, boundaryFileName, searchBbox, props);
+		BoundaryQuadTree bqt;
+			if (boundaryDir.isDirectory()){
+				for (String boundaryFileName: boundaryFileNames){
+					log.info("loading boundary file:", boundaryFileName);
+					// no support for nested directories
+					File boundaryFile = new File(boundaryDir, boundaryFileName);
+					try {
+						if (boundaryFile.exists()){
+							InputStream stream = new FileInputStream(boundaryFile);
+							bqt = BoundaryUtil.loadQuadTreeFromStream(stream, boundaryFileName, searchBbox, props);
+							if (bqt != null)
+								trees.put(boundaryFileName,bqt);
+						}
+					} catch (IOException exp) {
+						log.error("Cannot load boundary file " +  boundaryFileName + "." + exp);
+					}
+					
 				}
 			} else if (boundaryDirName.endsWith(".zip")) {
-				ZipFile zipFile = new ZipFile(boundaryDirName);
-				// try direct access
-				ZipEntry entry = zipFile.getEntry(boundaryFileName);
-				if (entry == null){
-					// a zip file can contain a directory structure, so we 
-					// parse the complete directory until we find a matching entry
-					Enumeration<? extends ZipEntry> entries = zipFile.entries();
-					while (entries.hasMoreElements()) {
-						ZipEntry testEntry = entries.nextElement();
-						if (testEntry.getName().endsWith(boundaryFileName)) {
-							entry = testEntry;
-							break; // found
+				String  currentFileName = "";
+				try{
+					ZipFile zipFile = new ZipFile(boundaryDir);
+
+					for (String boundaryFileName : boundaryFileNames){
+						log.info("loading boundary file:", boundaryFileName);
+						currentFileName = boundaryFileName;
+						// direct access  
+						ZipEntry entry = zipFile.getEntry(boundaryFileName);
+						if (entry != null){ 
+							bqt = BoundaryUtil.loadQuadTreeFromStream(zipFile.getInputStream(entry), 
+									boundaryFileName, searchBbox, props);
+							if (bqt != null)
+								trees.put(boundaryFileName,bqt);
 						}
 					}
+					zipFile.close();
+				} catch (IOException exp) {
+					log.error("Cannot load boundary file " + currentFileName + "." + exp);
 				}
-				if (entry != null) {
-					bqt = BoundaryUtil.loadQuadTreeFromStream(zipFile.getInputStream(entry), 
-							boundaryFileName, searchBbox, props);
-				}
-				zipFile.close();
 			} else{ 
-				log.error("Cannot read " + boundaryDir);
+				log.error("Cannot read " + boundaryDirName);
 			}
-		} catch (IOException exp) {
-			log.error("Cannot load boundary file" + boundaryFileName + "." + exp);
-		}
-		return bqt;
+		return trees;
 	}
 	
 	
@@ -430,7 +437,7 @@ public class BoundaryUtil {
 		List<String> names = new ArrayList<String>();
 		File boundaryDir = new File(dirName);
 		if (!boundaryDir.exists())
-			log.error("boundary directory/zip does not exist. " + dirName);
+			log.error("boundary directory/zip does not exist: " + dirName);
 		else{		
 			if (boundaryDir.isDirectory()){
 				String[] allNames = boundaryDir.list();
@@ -441,14 +448,21 @@ public class BoundaryUtil {
 			}
 			else if (boundaryDir.getName().endsWith(".zip")){
 				try {
-					ZipFile zipFile = new ZipFile(dirName);
+					ZipFile zipFile = new ZipFile(boundaryDir);
 					Enumeration<? extends ZipEntry> entries = zipFile.entries();
+					boolean isFlat = true;
 					while(entries.hasMoreElements()) {
 						ZipEntry entry = entries.nextElement();
+						if (entry.isDirectory()){
+							isFlat = false;
+						}
 						if (entry.getName().endsWith(".bnd"))
 							names.add(entry.getName());
 					}
 					zipFile.close();
+					if (!isFlat){
+						log.error("boundary zip file contains directories. Files in directories will be ignored." + dirName);			
+					}
 				} catch (IOException ioe) {
 					System.err.println("Unhandled exception:");
 					ioe.printStackTrace();
@@ -687,5 +701,5 @@ public class BoundaryUtil {
 		}
 		return Double.longBitsToDouble(res);
 	}
-	
-}
+
+		}
