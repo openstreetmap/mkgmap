@@ -129,21 +129,21 @@ public class MapSplitter {
 			}
 
 			if (area.getNumLines() > MAX_NUM_LINES ||
-			    area.getNumPoints() > MAX_NUM_POINTS ||
+				area.getNumPoints() > MAX_NUM_POINTS ||
 				(sizes[MapArea.POINT_KIND] +
 				 sizes[MapArea.LINE_KIND] +
 				 sizes[MapArea.SHAPE_KIND]) > MAX_RGN_SIZE ||
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
-				if (area.getBounds().getMaxDimension() > 10) {
+				if (bounds.getMaxDimension() > 10) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
 					MapArea[] sublist;
 					if(bounds.getWidth() > bounds.getHeight())
-						sublist = area.split(2, 1, res);
+						sublist = area.split(2, 1, res, bounds);
 					else
-						sublist = area.split(1, 2, res);
+						sublist = area.split(1, 2, res, bounds);
 					addAreasToList(sublist, alist, depth + 1);
 					continue;
 				} else {
@@ -152,10 +152,7 @@ public class MapSplitter {
 			}
 
 			log.debug("adding area unsplit", ",has points" + area.hasPoints());
-
-			MapArea[] sublist = area.split(1, 1, res);
-			assert sublist.length == 1: sublist.length;
-			alist.add(sublist[0]);
+			alist.add(area);
 		}
 	}
 
@@ -175,7 +172,7 @@ public class MapSplitter {
 	 * @return An array of map areas.  Each will be below the max size.
 	 */
 	private MapArea[] splitMaxSize(MapArea mapArea) {
-		Area bounds = mapArea.getBounds();
+		Area bounds = mapArea.getFullBounds();
 
 		int shift = zoom.getShiftValue();
 		int width = bounds.getWidth() >> shift;
@@ -194,7 +191,7 @@ public class MapSplitter {
 		if (height > MAX_DIVISION_SIZE)
 			ysplit = height / MAX_DIVISION_SIZE + 1;
 
-		return mapArea.split(xsplit, ysplit, zoom.getResolution());
+		return mapArea.split(xsplit, ysplit, zoom.getResolution(), bounds);
 	}
 
 	/**

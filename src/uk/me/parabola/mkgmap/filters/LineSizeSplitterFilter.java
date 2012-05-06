@@ -34,7 +34,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
  * @author Steve Ratcliffe
  */
 public class LineSizeSplitterFilter implements MapFilter {
-	private static final Logger log = Logger.getLogger(LineSplitterFilter.class);
+	private static final Logger log = Logger.getLogger(LineSizeSplitterFilter.class);
 
 	private static final int MAX_SIZE = 0x7fff;
 
@@ -77,8 +77,11 @@ public class LineSizeSplitterFilter implements MapFilter {
 			MapRoad road = ((MapRoad)line);
 			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split (routing will be broken)");
 		}
-
-		List<Coord> points = line.getPoints();
+		
+		// ensure that all single lines do not exceed the maximum size
+		// use a slightly decreased max size (-10) to get better results 
+		// in the subdivision creation
+		List<Coord> points = splitLinesToMaxSize(line.getPoints(), maxSize-10);
 
 		log.debug("line too big, splitting");
 
@@ -129,10 +132,10 @@ public class LineSizeSplitterFilter implements MapFilter {
 		}
 
 		Dim dim = new Dim();
-
-		// Add points until too big and then start again with a fresh line.
-		for (Coord co : points) {
-			coords.add(co);
+		Coord prev = null;
+		
+		// Add points while not too big and then start again with a fresh line.
+		for (Coord co: points){
 			dim.addToBounds(co);
 			if (dim.getMaxDim() > maxSize) {
 				log.debug("bigness saving first part");
@@ -148,11 +151,14 @@ public class LineSizeSplitterFilter implements MapFilter {
 				first = false;
 				dim.reset();
 				coords = new ArrayList<Coord>();
-				coords.add(co);
+				coords.add(prev);
+				dim.addToBounds(prev);
 				dim.addToBounds(co);
 			}
+			coords.add(co);
+			prev = co;
 		}
-
+		assert coords.size() > 1;
 		if (coords.size() > 1) {
 			log.debug("bigness saving a final part");
 			l.setPoints(coords);
@@ -161,5 +167,33 @@ public class LineSizeSplitterFilter implements MapFilter {
 			else
 				next.addElement(l);
 		}
+	}
+	
+	/**
+	 * If two points of a line are too far from each other, add points between them
+	 * so that the bounding box of each pair of points is smaller than the allowed
+	 * maximum.
+	 * @param coords the list of points 
+	 * @param maxSize the allowed bounding box height and width 
+	 * @return a reference to a new list of points 
+	 */
+	private static List<Coord> splitLinesToMaxSize(List<Coord> coords, int maxSize){
+		List<Coord> testedCoords = new ArrayList<Coord>(coords);
+		int posToTest = coords.size() -2;
+		while (posToTest >= 0){
+			Coord p1 = testedCoords.get(posToTest);
+			Coord p2 = testedCoords.get(posToTest+1);
+			int width = Math.abs( p1.getLongitude() - p2.getLongitude());
+			int height = Math.abs( p1.getLatitude() - p2.getLatitude());
+			if (width > maxSize || height > maxSize){
+				int midLon = (p1.getLongitude() + p2.getLongitude())/2;
+				int midLat = (p1.getLatitude() + p2.getLatitude())/2;
+				testedCoords.add(posToTest+1, new Coord(midLat,midLon));
+				++posToTest;
+			}
+			else
+				--posToTest;
+		}
+		return testedCoords;
 	}
 }

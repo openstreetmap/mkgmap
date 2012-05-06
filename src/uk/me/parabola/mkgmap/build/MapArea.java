@@ -122,6 +122,7 @@ public class MapArea implements MapDataSource {
 				   bounds.contains(element.getLocation()) ||
 				   element.getType() == 0x4b) {
 					shapes.add(shape);
+					addToBounds(shape.getBounds());
 					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 				}
 				else
@@ -160,6 +161,7 @@ public class MapArea implements MapDataSource {
 				if(true ||
 				   bounds.contains(element.getLocation())) {
 					lines.add(line);
+					addToBounds(line.getBounds());
 					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 				}
 				else
@@ -202,9 +204,10 @@ public class MapArea implements MapDataSource {
 	 * @param nx The number of pieces in the x (longitude) direction.
 	 * @param ny The number of pieces in the y direction.
 	 * @param resolution The resolution of the level.
+	 * @param bounds the bounding box that is used to create the areas.  
 	 * @return An array of the new MapArea's.
 	 */
-	public MapArea[] split(int nx, int ny, int resolution) {
+	public MapArea[] split(int nx, int ny, int resolution, Area bounds) {
 		Area[] areas = bounds.split(nx, ny);
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
@@ -244,7 +247,7 @@ public class MapArea implements MapDataSource {
 
 	/**
 	 * Get the full bounds of this area.  As lines and polylines are
-	 * added then may go outside of the initial area.  Whe this happens
+	 * added then may go outside of the initial area.  When this happens
 	 * we need to increase the size of the area.
 	 *
 	 * @return The full size required to hold all the included
