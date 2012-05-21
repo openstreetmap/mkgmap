@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2012.
+ * Copyright (C) 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -10,32 +10,33 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-package uk.me.parabola.mkgmap.reader.osm.xml;
+package uk.me.parabola.mkgmap.reader.osm.bin;
 
 import java.util.Collections;
 import java.util.Set;
 
-import uk.me.parabola.mkgmap.reader.osm.CoastlineElementSaver;
 import uk.me.parabola.mkgmap.reader.osm.OsmReadingHooks;
+import uk.me.parabola.mkgmap.reader.osm.PrecompSeaElementSaver;
 
-public class Osm5CoastDataSource extends Osm5MapDataSource {
-
-	private static final Set<String> coastlineTags = Collections.singleton("natural");
+public class OsmBinPrecompSeaDataSource extends OsmBinMapDataSource {
 	
+	private static final Set<String> coastlineTags = Collections.singleton("natural");
+
 	protected void addBackground(boolean mapHasPolygon4B) {
 		// do not add a background polygon
 	}
-	
+
 	protected OsmReadingHooks[] getPossibleHooks() {
 		// no hooks
 		return new OsmReadingHooks[] {};
 	}
 
-	protected void createElementSaver() {
-		elementSaver = new CoastlineElementSaver(getConfig());
-	}
-
 	public Set<String> getUsedTags() {
 		return coastlineTags;
 	}
+
+	protected void createElementSaver() {
+		elementSaver = new PrecompSeaElementSaver(getConfig());
+	}
+
 }

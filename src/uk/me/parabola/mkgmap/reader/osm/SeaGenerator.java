@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010.
+ * Copyright (C) 2010-2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -12,7 +12,13 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,13 +30,17 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LineClipper;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -63,6 +73,40 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private String[] coastlineFilenames;
 	private StyleImpl fbRules;
 	
+	/** The size (lat and long) of the precompiled sea tiles */
+	private final static int PRECOMP_RASTER = 1 << 15;
+	/**
+	 * The directory of the precompiled sea tiles or <code>null</code> if
+	 * precompiled sea should not be used.
+	 */
+	private File precompSeaDir;
+	private static ThreadLocal<Map<String,String>> precompIndex = new ThreadLocal<Map<String,String>>();
+
+	private static final List<Class<? extends LoadableMapDataSource>> precompSeaLoader;
+
+	static {
+		String[] sources = {
+				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinPrecompSeaDataSource",
+				// must be last as it is the default
+				"uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource", };
+
+		precompSeaLoader = new ArrayList<Class<? extends LoadableMapDataSource>>();
+
+		for (String source : sources) {
+			try {
+				@SuppressWarnings({ "unchecked" })
+				Class<? extends LoadableMapDataSource> c = (Class<? extends LoadableMapDataSource>) Class
+						.forName(source);
+				precompSeaLoader.add(c);
+			} catch (ClassNotFoundException e) {
+				// not available, try the rest
+			} catch (NoClassDefFoundError e) {
+				// not available, try the rest
+			}
+		}
+	}
+	
+	
 	/**
 	 * Sort out options from the command line.
 	 * Returns true only if the option to generate the sea is active, so that
@@ -70,9 +114,74 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
+
+		// check if the precomp-sea option is set
+		String precompSea = props.getProperty("precomp-sea", null);
+		if (precompSea != null) {
+			precompSeaDir = new File(precompSea);
+			if (precompSeaDir.exists()) {
+				if (precompIndex.get() == null) {
+					File indexFile = new File(precompSeaDir, "index.txt.gz");
+					if (indexFile.exists() == false) {
+						// check if the unzipped index file exists
+						indexFile = new File(precompSeaDir, "index.txt");
+					}
+					
+					if (indexFile.exists()) {
+						try {
+							InputStream fileStream = new FileInputStream(indexFile);
+							if (indexFile.getName().endsWith(".gz")) {
+								fileStream = new GZIPInputStream(fileStream);
+							}
+							LineNumberReader indexReader = new LineNumberReader(
+									new InputStreamReader(fileStream));
+							Pattern csvSplitter = Pattern.compile(Pattern
+									.quote(";"));
+							String indexLine = null;
+							Map<String, String> indexItems = new HashMap<String, String>();
+							while ((indexLine = indexReader.readLine()) != null) {
+								String[] items = csvSplitter.split(indexLine);
+								if (items.length != 2) {
+									log.warn("Invalid format in index file: "
+											+ indexLine);
+									continue;
+								}
+								if (items[0].startsWith("#")) {
+									// comment
+									continue;
+								}
+								indexItems.put(items[0].trim().intern(),
+										items[1].trim().intern());
+							}
+							indexReader.close();
+							precompIndex.set(indexItems);
+						} catch (IOException exp) {
+							log.error("Cannot read index file " + indexFile,
+									exp);
+							precompIndex.set(null);
+							precompSea = null;
+						}
+					} else {
+						log.error("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
+							+ precompSeaDir);
+						System.err.println("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
+							+ precompSeaDir);
+						precompIndex.set(null);
+						precompSeaDir = null;
+					}
+				}
+			} else {
+				log.error("Directory with precompiled sea does not exist: "
+						+ precompSeaDir);
+				System.err.println("Directory with precompiled sea does not exist: "
+						+ precompSeaDir);
+				precompSeaDir = null;
+			}
+		}
+		
 		String gs = props.getProperty("generate-sea", null);
-		boolean generateSea = gs != null;
-		if(generateSea) {
+		boolean generateSea = gs != null || precompSea != null;
+		if (gs != null) {
 			for(String o : gs.split(",")) {
 				if("no-mp".equals(o) ||
 						"polygon".equals(o) ||
@@ -80,26 +189,29 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					generateSeaUsingMP = false;
 				else if("multipolygon".equals(o))
 					generateSeaUsingMP = true;
-				else if(o.startsWith("close-gaps="))
-					maxCoastlineGap = (int)Double.parseDouble(o.substring(11));
-				else if("no-sea-sectors".equals(o))
-					allowSeaSectors = false;
-				else if("extend-sea-sectors".equals(o)) {
-					allowSeaSectors = false;
-					extendSeaSectors = true;
-				}
 				else if(o.startsWith("land-tag="))
 					landTag = o.substring(9).split("=");
-				else if("floodblocker".equals(o)) 
-					floodblocker = true;
-				else if(o.startsWith("fbgap="))
-					fbGap = (int)Double.parseDouble(o.substring("fbgap=".length()));
-				else if(o.startsWith("fbratio="))
-					fbRatio = Double.parseDouble(o.substring("fbratio=".length()));
-				else if(o.startsWith("fbthres="))
-					fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
-				else if("fbdebug".equals(o)) 
-					fbDebug = true;
+				else if (precompSea == null) {
+					// the other options are valid only if not using precompiled sea data
+					if(o.startsWith("close-gaps="))
+						maxCoastlineGap = (int)Double.parseDouble(o.substring(11));
+					else if("no-sea-sectors".equals(o))
+						allowSeaSectors = false;
+					else if("extend-sea-sectors".equals(o)) {
+						allowSeaSectors = false;
+						extendSeaSectors = true;
+					}
+					else if("floodblocker".equals(o)) 
+						floodblocker = true;
+					else if(o.startsWith("fbgap="))
+						fbGap = (int)Double.parseDouble(o.substring("fbgap=".length()));
+					else if(o.startsWith("fbratio="))
+						fbRatio = Double.parseDouble(o.substring("fbratio=".length()));
+					else if(o.startsWith("fbthres="))
+						fbThreshold = (int)Double.parseDouble(o.substring("fbthres=".length()));
+					else if("fbdebug".equals(o)) 
+						fbDebug = true;
+				}
 				else if(o.isEmpty())
 					continue;
 				else {
@@ -119,24 +231,28 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 			}
 			
-			if (floodblocker) {
-				try {
-					fbRules = new StyleImpl(null, "floodblocker");
-				} catch (FileNotFoundException e) {
-					log.error("Cannot load file floodblocker rules. Continue floodblocking disabled.");
-					floodblocker = false;
+			// init floodblocker and coastlinefile loader only 
+			// if precompSea is not set
+			if (precompSea == null) {
+				if (floodblocker) {
+					try {
+						fbRules = new StyleImpl(null, "floodblocker");
+					} catch (FileNotFoundException e) {
+						log.error("Cannot load file floodblocker rules. Continue floodblocking disabled.");
+						floodblocker = false;
+					}
 				}
-			}
 
-			String coastlineFileOpt = props.getProperty("coastlinefile", null);
-			if (coastlineFileOpt != null) {
-				coastlineFilenames = coastlineFileOpt.split(",");
-				CoastlineFileLoader.getCoastlineLoader().setCoastlineFiles(
-						coastlineFilenames);
-				CoastlineFileLoader.getCoastlineLoader().loadCoastlines();
-				log.info("Coastlines loaded");
-			} else {
-				coastlineFilenames = null;
+				String coastlineFileOpt = props.getProperty("coastlinefile", null);
+				if (coastlineFileOpt != null) {
+					coastlineFilenames = coastlineFileOpt.split(",");
+					CoastlineFileLoader.getCoastlineLoader().setCoastlineFiles(
+							coastlineFilenames);
+					CoastlineFileLoader.getCoastlineLoader().loadCoastlines();
+					log.info("Coastlines loaded");
+				} else {
+					coastlineFilenames = null;
+				}
 			}
 		}
 
@@ -168,7 +284,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		if(natural != null) {
 			if("coastline".equals(natural)) {
 				way.deleteTag("natural");
-				if (coastlineFilenames == null)
+				if (coastlineFilenames == null && precompSeaDir == null)
 					shoreline.add(way);
 			} else if (natural.contains(";")) {
 				// cope with compound tag value
@@ -187,13 +303,210 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					way.deleteTag("natural");
 					if(others != null)
 						way.addTag("natural", others);
-					if (coastlineFilenames == null)
+					if (coastlineFilenames == null && precompSeaDir == null)
 						shoreline.add(way);
 				}
 			}
 		}
-}
+	}
 
+	/**
+	 * Creates a reader for the given filename of the precomiled sea tile.
+	 * @param filename precompiled sea tile 
+	 * @return the reader for the tile
+	 */
+	private static OsmMapDataSource createTileReader(String filename) {
+		for (Class<? extends LoadableMapDataSource> loader : precompSeaLoader) {
+			try {
+				LoadableMapDataSource src = loader.newInstance();
+				if (filename != null && src instanceof OsmMapDataSource
+						&& src.isFileSupported(filename))
+					return (OsmMapDataSource) src;
+			} catch (InstantiationException e) {
+				// try the next one.
+			} catch (IllegalAccessException e) {
+				// try the next one.
+			} catch (NoClassDefFoundError e) {
+				// try the next one
+			}
+		}
+
+		// Give up and assume it is in the XML format. If it isn't we will get
+		// an error soon enough anyway.
+		return new Osm5PrecompSeaDataSource();
+	}
+	
+	/**
+	 * Loads the precomp sea tile with the given filename.
+	 * @param filename the filename of the precomp sea tile
+	 * @return all ways of the tile
+	 * @throws FileNotFoundException if the tile could not be found
+	 */
+	private Collection<Way> loadPrecompTile(String filename)
+			throws FileNotFoundException {
+		OsmMapDataSource src = createTileReader(filename);
+		src.config(new EnhancedProperties());
+		log.info("Started loading coastlines from", filename);
+		src.load(filename);
+		log.info("Finished loading coastlines from", filename);
+		return src.getElementSaver().getWays().values();
+	}
+
+	private int getPrecompTileStart(int value) {
+		int rem = value % PRECOMP_RASTER;
+		if (rem == 0) {
+			return value;
+		} else if (value >= 0) {
+			return value - rem;
+		} else {
+			return value - PRECOMP_RASTER - rem;
+		}
+	}
+
+	private int getPrecompTileEnd(int value) {
+		int rem = value % PRECOMP_RASTER;
+		if (rem == 0) {
+			return value;
+		} else if (value >= 0) {
+			return value + PRECOMP_RASTER - rem;
+		} else {
+			return value - rem;
+		}
+	}
+	
+	/**
+	 * Calculates the key names of the precompiled sea tiles for the bounding box.
+	 * The key names are compiled of {@code lat+"_"+lon}.
+	 * @return the key names for the bounding box
+	 */
+	private List<String> getPrecompKeyNames() {
+		Area bounds = saver.getBoundingBox();
+		List<String> precompKeys = new ArrayList<String>();
+		for (int lat = getPrecompTileStart(bounds.getMinLat()); lat < getPrecompTileEnd(bounds
+				.getMaxLat()); lat += PRECOMP_RASTER) {
+			for (int lon = getPrecompTileStart(bounds.getMinLong()); lon < getPrecompTileEnd(bounds
+					.getMaxLong()); lon += PRECOMP_RASTER) {
+				precompKeys.add(lat+"_"+lon);
+			}
+		}
+		return precompKeys;
+	}
+	
+	/**
+	 * Loads the precompiled sea tiles and adds the data to the 
+	 * element saver.
+	 */
+	private void addPrecompSea() {
+		log.info("Load precompiled sea tiles");
+
+		// flag if all tiles contains sea or way only
+		// this is important for polygon processing
+		boolean distinctTilesOnly = true;
+		
+		List<Way> landWays = new ArrayList<Way>();
+		List<Way> seaWays = new ArrayList<Way>();
+		
+		// get the index with assignment key => sea/land/tilename
+		Map<String,String> index = precompIndex.get();
+		for (String precompKey : getPrecompKeyNames()) {
+			String tileName = index.get(precompKey);
+			
+			if (tileName == null) {
+				log.error("Precompile sea tile "+tileName+" is missing in the index. Skipping.");
+				continue;
+			}
+			
+			if ("sea".equals(tileName) || "land".equals(tileName)) {
+				// the whole precompiled tile is filled with either land or sea
+				// => create a rectangle that covers the whole precompiled tile 
+				Way w = new Way(FakeIdGenerator.makeFakeId());
+				w.addTag("natural", tileName);
+				
+				String[] tileCoords = precompKey.split(Pattern.quote("_"));
+				int minLat = Integer.valueOf(tileCoords[0]);
+				int minLon = Integer.valueOf(tileCoords[1]);
+				int maxLat = minLat + PRECOMP_RASTER;
+				int maxLon = minLon + PRECOMP_RASTER;
+				w.addPoint(new Coord(minLat,minLon));
+				w.addPoint(new Coord(minLat,maxLon));
+				w.addPoint(new Coord(maxLat,maxLon));
+				w.addPoint(new Coord(maxLat,minLon));
+				w.addPoint(new Coord(minLat,minLon));
+				
+				if ("sea".equals(tileName)) {
+					seaWays.add(w);
+				} else {
+					landWays.add(w);
+				}
+				
+			} else {
+				distinctTilesOnly = false;
+				String precompTile = new File(precompSeaDir,tileName).getAbsolutePath();
+				try {
+					Collection<Way> seaPrecompWays = loadPrecompTile(precompTile);
+					
+					if (log.isDebugEnabled())
+						log.debug(seaPrecompWays.size(), "precomp sea ways from",
+							precompTile, "loaded.");
+
+					for (Way w : seaPrecompWays) {
+						// set a new id to be sure that the precompiled ids do not
+						// interfere with the ids of this run
+						w.setId(FakeIdGenerator.makeFakeId());
+					
+						if ("land".equals(w.getTag("natural"))) {
+							landWays.add(w);
+						} else {
+							seaWays.add(w);
+						}
+					}
+				} catch (FileNotFoundException exp) {
+					log.error("Preompiled sea tile " + precompTile + " not found.");
+				} catch (Exception exp) {
+					log.error(exp);
+					exp.printStackTrace();
+				}
+			}
+		}
+		
+		// check if the land tags need to be changed
+		if (landTag != null && ("natural".equals(landTag[0]) && "land".equals(landTag[1])) == false) {
+			for (Way w : landWays) {
+				w.deleteTag("natural");
+				w.addTag(landTag[0], landTag[1]);
+			}
+		}
+		
+		if (generateSeaUsingMP || distinctTilesOnly) {
+			// when using multipolygons use the data directly from the precomp files 
+			// also with polygons if all tiles are using either sea or land only
+			for (Way w : landWays) {
+				saver.addWay(w);
+			}
+			for (Way w : seaWays) {
+				saver.addWay(w);
+			}
+		} else {
+			// using polygons
+			
+			Area bounds = saver.getBoundingBox();
+			// first add the complete bounding box as sea
+			Way sea = new Way(FakeIdGenerator.makeFakeId());
+			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
+			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMaxLong()));
+			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMaxLong()));
+			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMinLong()));
+			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
+			sea.addTag("natural", "sea");
+			
+			for (Way w : landWays) {
+				saver.addWay(w);
+			}
+		}
+	}
+
+	
+	
 	/**
 	 * Joins the given segments to closed ways as good as possible.
 	 * @param segments a list of closed and unclosed ways
@@ -263,6 +576,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * All done, process the saved shoreline information and construct the polygons.
 	 */
 	public void end() {
+		// precompiled sea has highest priority
+		// if it is set do not perform any other algorithm
+		if (precompSeaDir != null) {
+			addPrecompSea();
+			return;
+		}
+
 		Area seaBounds = saver.getBoundingBox();
 		if (coastlineFilenames == null) {
 			log.info("Shorelines before join", shoreline.size());

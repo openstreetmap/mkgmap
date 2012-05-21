@@ -16,11 +16,6 @@ filename
 	Read input data from the give file.  This option (or just a
 	filename) may be given more than once.
 
---coastlinefile=filename[,filename]
-	Defines a comma separated list of files that contain coastline 
-	data. The coastline data from the input files are removed if 
-	this option is set. Files must have OSM or PBF fileformat.	
-
 --gmapsupp
 	Create a gmapsupp.img file that can be uploaded to a Garmin or
 	placed in "/Garmin" in a microSD card (such as by mounting the
@@ -434,6 +429,19 @@ Miscellaneous options:
     the center of the polygon is used.
     It is possible to define wildcards for tag values like entrance=*.
     Default: entrance=main;entrance=yes;building=entrance
+
+--precomp-sea=directoryname
+    Defines the directory that contains the precompiled sea tiles.
+	When this option is defined all natural=coastline tags from the
+	input OSM tiles are removed and the precompiled data is used instead. 
+	This option can be combined with the generate-sea options 
+	multipolygon, polygons and land-tag. The coastlinefile option
+	is ignored if precomp-sea is set.     
+
+--coastlinefile=filename[,filename]
+	Defines a comma separated list of files that contain coastline 
+	data. The coastline data from the input files is removed if 
+	this option is set. Files must have OSM or PBF fileformat.	
 
 --generate-sea[=ValueList]
 	Generate sea polygons. ValueList is an optional comma

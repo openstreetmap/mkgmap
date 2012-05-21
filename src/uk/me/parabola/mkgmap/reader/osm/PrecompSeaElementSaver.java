@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, 2012.
+ * Copyright (C) 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -15,29 +15,14 @@ package uk.me.parabola.mkgmap.reader.osm;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
- * This saver only keeps ways with <code>natural=coastline</code> tags. 
- * This is used for loading of extra coastline files. 
+ * This saver stores elements loaded from precompiled sea tiles.
+ * It does not convert so the data is still available after loading.
  * @author WanMil
  */
-public class CoastlineElementSaver extends ElementSaver {
+public class PrecompSeaElementSaver extends ElementSaver {
 
-	public CoastlineElementSaver(EnhancedProperties args) {
+	public PrecompSeaElementSaver(EnhancedProperties args) {
 		super(args);
-	}
-
-	public void addNode(Node node) {
-	}
-
-	public void addWay(Way way) {
-		String tag = way.getTag("natural");
-		if (tag != null && tag.contains("coastline")) {
-			// remove all tags => the natural=coastline is implicitly known
-			way.removeAllTags();
-			super.addWay(way);
-		}
-	}
-
-	public void addRelation(Relation rel) {
 	}
 
 	public void convert(OsmConverter converter) {
