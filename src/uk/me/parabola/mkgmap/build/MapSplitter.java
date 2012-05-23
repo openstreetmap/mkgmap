@@ -119,7 +119,7 @@ public class MapSplitter {
 			Area bounds = area.getBounds();
 			int[] sizes = area.getEstimatedSizes();
 			if(log.isInfoEnabled()) {
-				String padding = depth + "                                            ";
+				String padding = depth + "                                                                      ";
 				log.info(padding.substring(0, (depth + 1) * 2) + 
 						 bounds.getWidth() + "x" + bounds.getHeight() +
 						 ", res = " + res +
