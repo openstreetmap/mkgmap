@@ -32,8 +32,13 @@ public abstract class ValueFilter {
 
 	public final String filter(String value, Element el) {
 		String res = doFilter(value, el);
-		if (next != null)
-			res = next.doFilter(res, el);
+
+		ValueFilter current = next;
+		while (current != null) {
+			res = current.doFilter(res, el);
+			current = current.next;
+		}
+
 		return res;
 	}
 
