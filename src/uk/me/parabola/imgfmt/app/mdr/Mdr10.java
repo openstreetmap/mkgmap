@@ -69,21 +69,24 @@ public class Mdr10 extends MdrMapSection {
 			Collections.sort(poiGroup);
 
 			String lastName = null;
+			int lastSub = -1;
 			for (Mdr10Record t : poiGroup) {
 
 				count++;
-				addIndexPointer(t.getMdr11ref().getMapIndex(), count);
+				Mdr11Record mdr11ref = t.getMdr11ref();
+				addIndexPointer(mdr11ref.getMapIndex(), count);
 				
 				writer.put((byte) t.getSubtype());
-				int offset = t.getMdr11ref().getRecordNumber();
+				int offset = mdr11ref.getRecordNumber();
 
 				// Top bit actually represents a non-repeated name.  ie if
 				// the bit is not set, then the name is the same as the previous
 				// record.
-				String name = t.getMdr11ref().getName();
-				boolean isNew = !name.equals(lastName);
-				lastName = name;
+				String name = mdr11ref.getName();
+				boolean isNew = !(name.equals(lastName) && (t.getSubtype() == lastSub));
 				putPoiIndex(writer, offset, isNew);
+				lastName = name;
+				lastSub = t.getSubtype();
 			}
 		}
 	}
