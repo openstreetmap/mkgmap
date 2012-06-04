@@ -295,7 +295,7 @@ public class GmapsuppTest extends Base {
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
 		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
-		ImgChannel r = fs.open("MAKEGMAP.MDR", "r");
+		ImgChannel r = fs.open("00000101.MDR", "r");
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		
@@ -332,7 +332,7 @@ public class GmapsuppTest extends Base {
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
 		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
-		ImgChannel r = fs.open("MAKEGMAP.MDR", "r");
+		ImgChannel r = fs.open("00000101.MDR", "r");
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 
@@ -383,9 +383,18 @@ public class GmapsuppTest extends Base {
 		fs = ImgFS.openFs(GMAPSUPP_IMG);
 		r = fs.open("00000202.MDR", "r");
 		r.position(2);
-		buf = ByteBuffer.allocate(1024);
+		buf.clear();
 		read = r.read(buf);
 		assertEquals(1024, read);
+
+		r = fs.open("00000202.SRT", "r");
+		buf = ByteBuffer.allocate(512);
+		read = r.read(buf);
+		assertEquals(512, read);
+		r = fs.open("00000101.SRT", "r");
+		buf.clear();
+		read = r.read(buf);
+		assertEquals(512, read);
 	}
 
 	/**
@@ -413,7 +422,7 @@ public class GmapsuppTest extends Base {
 		assertFalse(new File("osmmap_mdr.img").exists());
 
 		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
-		ImgChannel r = fs.open("00000101.MDR", "r");
+		ImgChannel r = fs.open("00006324.MDR", "r");
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		int read = r.read(buf);
 		assertEquals(1024, read);

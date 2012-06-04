@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
@@ -405,6 +406,14 @@ public class FileInfo {
 
 	public int getProductId() {
 		return args.get("product-id", 1);
+	}
+
+	public Sort getSort() {
+		return args.getSort();
+	}
+
+	public String getOutputDir() {
+		return args.getOutputDir();
 	}
 
 	public String getMpsName() {
