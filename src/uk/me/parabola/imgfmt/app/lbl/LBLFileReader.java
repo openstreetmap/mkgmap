@@ -528,6 +528,14 @@ public class LBLFileReader extends ImgFile {
 		return m;
 	}
 
+	public int getCodePage() {
+		return header.getCodePage();
+	}
+
+	public int getSortOrderId() {
+		return header.getSortOrderId();
+	}
+
 	private class PoiMasks {
 		private char streetNumMask;
 		private char streetMask;

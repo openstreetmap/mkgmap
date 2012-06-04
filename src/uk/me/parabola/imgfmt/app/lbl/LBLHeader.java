@@ -163,6 +163,10 @@ public class LBLHeader extends CommonHeader {
 		this.sort = sort;
 	}
 
+	public int getSortOrderId() {
+		return sort.getSortOrderId();
+	}
+
 	public int getLabelStart() {
 		return labelStart;
 	}

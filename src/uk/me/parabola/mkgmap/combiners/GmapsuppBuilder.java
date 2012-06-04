@@ -130,8 +130,7 @@ public class GmapsuppBuilder implements Combiner {
 			log.warn("Could not create gmapsupp file");
 			System.err.println("Could not create gmapsupp file");
 		} finally {
-			if (imgFs != null)
-				imgFs.close();
+			Utils.closeFile(imgFs);
 		}
 	}
 

@@ -31,6 +31,7 @@ import uk.me.parabola.mkgmap.main.Main;
 
 import func.Base;
 import func.lib.Args;
+import func.lib.Outputs;
 import func.lib.TestUtils;
 import org.junit.Test;
 
@@ -342,6 +343,107 @@ public class GmapsuppTest extends Base {
 		byte[] b = new byte[3];
 		buf.get(b, 0, 3);
 		assertEquals('G', b[0]);
+	}
+
+	/**
+	 * If there are files in two (or more) families then there should be a MDR and SRT for each.
+	 */
+	@Test
+	public void testTwoFamilyIndex() throws IOException {
+		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--index",
+				"--latin1",
+
+				"--family-id=101",
+				"--product-id=1",
+				"--family-name=tst family1",
+				"--series-name=tst series1",
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				"--family-id=202",
+				"--family-name=tst family2",
+				"--series-name=tst series2",
+				Args.TEST_RESOURCE_IMG + "63240002.img"
+		});
+
+		assertFalse(new File("osmmap_mdr.img").exists());
+
+		// All we are doing here is checking that the file was created and that it is
+		// not completely empty.
+		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		ImgChannel r = fs.open("00000101.MDR", "r");
+		r.position(2);
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+		int read = r.read(buf);
+		assertEquals(1024, read);
+
+		fs = ImgFS.openFs(GMAPSUPP_IMG);
+		r = fs.open("00000202.MDR", "r");
+		r.position(2);
+		buf = ByteBuffer.allocate(1024);
+		read = r.read(buf);
+		assertEquals(1024, read);
+	}
+
+	/**
+	 * If no code page is given for the index, it is taken from the input files.
+	 */
+	@Test
+	public void testImplicitCodePageIndex() throws IOException {
+		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--code-page=1256",
+
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
+		});
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--index",
+
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+		});
+
+		assertFalse(new File("osmmap_mdr.img").exists());
+
+		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		ImgChannel r = fs.open("00000101.MDR", "r");
+		ByteBuffer buf = ByteBuffer.allocate(1024);
+		int read = r.read(buf);
+		assertEquals(1024, read);
+		assertTrue(false);
+	}
+
+	/**
+	 * If there are mis-matching code-pages in the input files there should be a warning.
+	 */
+	@Test
+	public void testWarningOnMismatchedCodePages() throws IOException {
+		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
+
+		Main.main(new String[]{
+				Args.TEST_STYLE_ARG,
+				"--code-page=1256",
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
+
+				"--latin1",
+				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz",
+		});
+
+		Outputs outputs = TestUtils.run(Args.TEST_STYLE_ARG,
+				"--gmapsupp",
+				"--index",
+
+				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_IMG + "63240002.img");
+
+		outputs.checkOutput("more than one code-page in input files");
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {
