@@ -52,7 +52,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
  * Effectively we just 'unzip' the constituent .img files and then 'zip' them
  * back into the gmapsupp.img file.
  * <p/>
- * In addition we need to create and add the TDB file, if we don't already
+ * In addition we need to create and add the MPS file, if we don't already
  * have one.
  *
  * @author Steve Ratcliffe
@@ -365,6 +365,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
 		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
+		params.setGmapsupp(true);
 
 		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserveBlocks);
