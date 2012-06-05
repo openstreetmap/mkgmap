@@ -187,6 +187,7 @@ public class TypTextReaderTest {
 
 	@Test
 	public void testPointWithAlpha() {
+		TestUtils.registerFile("hello");
 		TypTextReader tr = makeTyp("[_point]\n" +
 				"Type=0x12\n" +
 				"SubType=0x01\n" +
