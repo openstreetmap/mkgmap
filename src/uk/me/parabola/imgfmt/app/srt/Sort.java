@@ -237,7 +237,7 @@ public class Sort {
 	 * @return id1 and id2 as if they were a little endian 2 byte integer.
 	 */
 	public int getSortOrderId() {
-		return (this.id2 << 8) + (this.id1 & 0xff);
+		return (this.id2 << 16) + (this.id1 & 0xff);
 	}
 
 	public void setCodepage(int codepage) {

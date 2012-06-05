@@ -186,7 +186,7 @@ public class MdrBuilder implements Combiner {
 			return;
 		
 		// Add the map name
-		mdrFile.addMap(info.getHexname());
+		mdrFile.addMap(info.getHexname(), info.getCodePage());
 
 		String filename = info.getFilename();
 		MapReader mr = null;
@@ -325,7 +325,7 @@ public class MdrBuilder implements Combiner {
 				isCity = false;
 			}
 
-			if (label != null && label.getText().trim().length() > 0)
+			if (label != null && !label.getText().trim().isEmpty())
 				mdrFile.addPoint(p, mdrCity, isCity);
 		}
 	}
@@ -335,7 +335,7 @@ public class MdrBuilder implements Combiner {
 
 		for (RoadDef road : roads) {
 			String name = road.getName();
-			if (name == null || name.length() == 0)
+			if (name == null || name.isEmpty())
 				continue;
 
 			Mdr5Record mdrCity = null;
