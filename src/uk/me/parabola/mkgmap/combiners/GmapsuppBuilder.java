@@ -516,6 +516,16 @@ public class GmapsuppBuilder implements Combiner {
 				}
 			}
 
+			for (int i = 0; i < sortMap.size(); i++) {
+				// These files are less than 1k
+				int sz = 1024;
+				int mdrBlocks = (sz + (bs - 1)) / bs;
+				int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
+
+				totBlocks += mdrBlocks;
+				totHeaderEntries += mdrSlots;
+			}
+
 			// There are 2 entries for the header itself.
 			totHeaderEntries += 2;
 			int totHeaderBlocks = totHeaderEntries * 512 / bs;
