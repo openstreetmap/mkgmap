@@ -64,4 +64,22 @@ public class Outputs {
 			}
 		}
 	}
+
+	/**
+	 * Check that the output contains the given strings.  You can specify
+	 * any number of strings.
+	 * @param strings The list of strings to check.
+	 */
+	public void checkError(String... strings) {
+		String err = getErr();
+		for (String s : strings) {
+			if (!err.contains(s)) {
+				// Test has failed.  Construct an assertion that will print
+				// something that is useful to show the problem.
+				assertEquals("contains '" + s + "'",
+						"..." + s + "...",
+						err);
+			}
+		}
+	}
 }

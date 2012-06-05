@@ -16,6 +16,7 @@ package func.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -416,17 +417,20 @@ public class GmapsuppTest extends Base {
 				"--gmapsupp",
 				"--index",
 
-				Args.TEST_RESOURCE_IMG + "63240001.img",
+				"63240001.img",
 		});
 
 		assertFalse(new File("osmmap_mdr.img").exists());
 
 		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
 		ImgChannel r = fs.open("00006324.MDR", "r");
+
 		ByteBuffer buf = ByteBuffer.allocate(1024);
-		int read = r.read(buf);
-		assertEquals(1024, read);
-		assertTrue(false);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+
+		r.read(buf);
+		assertEquals(1256, buf.getChar(0x15));
+		assertEquals(0x010009, buf.getInt(0x17));
 	}
 
 	/**
@@ -434,10 +438,11 @@ public class GmapsuppTest extends Base {
 	 */
 	@Test
 	public void testWarningOnMismatchedCodePages() throws IOException {
-		TestUtils.registerFile("osmmap_mdr.img", "osmmap.img", "osmmap.tbd", "osmmap.mdx");
+		TestUtils.registerFile("osmmap.img");
 
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
+				"--route",
 				"--code-page=1256",
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
 
@@ -449,10 +454,11 @@ public class GmapsuppTest extends Base {
 				"--gmapsupp",
 				"--index",
 
-				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240002.img");
+				"63240001.img",
+				"63240002.img"
+		);
 
-		outputs.checkOutput("more than one code-page in input files");
+		outputs.checkError("differing code page");
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {

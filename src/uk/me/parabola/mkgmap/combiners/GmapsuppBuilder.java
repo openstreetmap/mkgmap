@@ -78,24 +78,18 @@ public class GmapsuppBuilder implements Combiner {
 	private String outputDir;
 	private MpsFile mpsFile;
 
-	private boolean createIndex;
+	private boolean createIndex;	// True if we should create and add an index file
 
 	// There is a separate MDR and SRT file for each family id in the gmapsupp
 	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<Integer, MdrBuilder>();
 	private final Map<Integer, Sort> sortMap = new LinkedHashMap<Integer, Sort>();
+
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
-		Sort sort = args.getSort();
-
-		int familyId = args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
-		if (createIndex)
-			addMdrFile(familyId, sort, outputDir);
-
-		addSrtFile(familyId, sort);
 	}
 
 	/**
@@ -117,14 +111,19 @@ public class GmapsuppBuilder implements Combiner {
 		return mdrBuilder;
 	}
 
-	private Sort addSrtFile(int familyId, Sort sort) {
+	/**
+	 * Add the sort file for the given family id.
+	 */
+	private void addSrtFile(int familyId, Sort sort) {
 		Sort s = sortMap.get(familyId);
-		// TODO check that it is the same sort as the one passed in
-		if (s != null)
-			return s;
-
-		sortMap.put(familyId, sort);
-		return sort;
+		if (s == null)
+			sortMap.put(familyId, sort);
+		else {
+			if (s.getCodepage() != sort.getCodepage())
+				System.err.println("WARNING: input files have differing code pages");
+			if (s.getSortOrderId() != sort.getSortOrderId())
+				System.err.println("WARNING: input files have differing sort orders");
+		}
 	}
 
 	/**

@@ -36,6 +36,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 import static uk.me.parabola.mkgmap.combiners.FileKind.*;
 
@@ -409,7 +410,10 @@ public class FileInfo {
 	}
 
 	public Sort getSort() {
-		return args.getSort();
+		Sort sort = SrtTextReader.sortForCodepage(codePage);
+		if (sort == null)
+			sort = args.getSort();
+		return sort;
 	}
 
 	public String getOutputDir() {
