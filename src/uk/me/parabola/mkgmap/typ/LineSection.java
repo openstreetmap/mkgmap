@@ -39,7 +39,7 @@ class LineSection extends CommonSection implements ProcessSection {
 
 		if (name.equalsIgnoreCase("UseOrientation")) {
 			current.setUseOrientation(value.charAt(0) == 'Y');
-		} else if (name.equals("LineWidth")) {
+		} else if (name.equalsIgnoreCase("LineWidth")) {
 			try {
 				int ival = Integer.decode(value);
 				current.setLineWidth(ival);
