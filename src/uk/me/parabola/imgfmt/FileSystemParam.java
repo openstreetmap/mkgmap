@@ -19,10 +19,19 @@ package uk.me.parabola.imgfmt;
  * @author Steve Ratcliffe
  */
 public class FileSystemParam {
+	private String filename;
 	private String mapDescription = "Open Street Map";
 	private int blockSize = 512;
 	private int directoryStartEntry = 2; // Always in terms of entries of 512 bytes
 	private int reservedDirectoryBlocks = 202;
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public void setFilename(String filename) {
+		this.filename = filename;
+	}
 
 	public String getMapDescription() {
 		return mapDescription;

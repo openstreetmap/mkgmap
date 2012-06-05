@@ -84,11 +84,12 @@ public class ImgFS implements FileSystem {
 	 * @throws FileNotWritableException If the file can not be written to.
 	 */
 	public static FileSystem createFs(String filename, FileSystemParam params) throws FileNotWritableException {
+		params.setFilename(filename);
 		try {
 			RandomAccessFile rafile = new RandomAccessFile(filename, "rw");
 			return createFs(rafile.getChannel(), params);
 		} catch (FileNotFoundException e) {
-			throw new FileNotWritableException("Could not create file", e);
+			throw new FileNotWritableException("Could not create file: " + params.getFilename(), e);
 		}
 	}
 
@@ -121,16 +122,16 @@ public class ImgFS implements FileSystem {
 	 */
 	public static FileSystem openFs(String name) throws FileNotFoundException {
 		RandomAccessFile rafile = new RandomAccessFile(name, "r");
-		return openFs(rafile.getChannel());
+		return openFs(name, rafile.getChannel());
 	}
 
-	private static FileSystem openFs(FileChannel chan) throws FileNotFoundException {
+	private static FileSystem openFs(String name, FileChannel chan) throws FileNotFoundException {
 		ImgFS fs = new ImgFS(chan);
 
 		try {
 			fs.readInitFS(chan);
 		} catch (IOException e) {
-			throw new FileNotFoundException("Failed to read header");
+			throw new FileNotFoundException(name + ": " + e.getMessage());
 		}
 
 		return fs;
@@ -288,7 +289,7 @@ public class ImgFS implements FileSystem {
 
 		fileBlockManager = new BlockManager(params.getBlockSize(), params.getReservedDirectoryBlocks());
 
-		assert directory != null && header != null;
+		assert header != null;
 	}
 
 	/**
@@ -308,6 +309,9 @@ public class ImgFS implements FileSystem {
 			for(int i = 0; i < headerBytes.length; ++i)
 				headerBytes[i] ^= xorByte;
 		}
+
+		if (headerBuf.position() < 512)
+			throw new IOException("File too short or corrupted");
 
 		header = new ImgHeader(null);
 		header.setHeader(headerBuf);

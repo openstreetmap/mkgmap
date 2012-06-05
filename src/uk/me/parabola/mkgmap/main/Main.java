@@ -431,7 +431,7 @@ public class Main implements ArgumentProcessor {
 				for (Combiner c : combiners)
 					c.onMapEnd(fileInfo);
 			} catch (FileNotFoundException e) {
-				log.error("could not open file", e);
+				throw new MapFailedException("could not open file " + e.getMessage());
 			}
 		}
 
