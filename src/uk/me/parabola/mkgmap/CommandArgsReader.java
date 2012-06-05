@@ -173,6 +173,8 @@ public class CommandArgsReader {
 			add(new Filename(value));
 		} else if (option.equals("read-config")) {
 			readConfigFile(value);
+		} else if (option.equals("latin1")) {
+			add(new CommandOption("code-page", "1252"));
 		} else {
 			add(opt);
 		}
