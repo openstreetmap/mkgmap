@@ -57,9 +57,17 @@ public class Mdr11 extends MdrMapSection {
 		List<SortKey<Mdr11Record>> keys = MdrUtils.sortList(getConfig().getSort(), pois);
 
 		pois.clear();
+		Mdr11Record last = new Mdr11Record();
 		for (SortKey<Mdr11Record> sk : keys) {
 			Mdr11Record poi = sk.getObject();
 
+			if (isForDevice() &&
+					poi.getMapIndex() == last.getMapIndex() &&
+					poi.getRegionIndex() == last.getRegionIndex() &&
+					poi.getLblOffset() == last.getLblOffset())
+				continue;
+
+			last = poi;
 			mdr10.addPoiType(poi);
 			pois.add(poi);
 		}
