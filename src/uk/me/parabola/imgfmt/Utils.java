@@ -97,17 +97,10 @@ public class Utils {
 	public static void setCreationTime(ByteBuffer buf, Date date) {
 		Calendar cal = Calendar.getInstance();
 
-		Date d = date;
-		if (d == null)
-			d = new Date();
-		cal.setTime(d);
+		if (date != null)
+			cal.setTime(date);
 
-		buf.putChar((char) cal.get(Calendar.YEAR));
-		buf.put((byte) (cal.get(Calendar.MONTH)+1));
-		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
-		buf.put((byte) cal.get(Calendar.HOUR_OF_DAY));
-		buf.put((byte) cal.get(Calendar.MINUTE));
-		buf.put((byte) cal.get(Calendar.SECOND));
+		fillBufFromTime(buf, cal);
 	}
 
 	/**
@@ -134,22 +127,25 @@ public class Utils {
 	public static byte[] makeCreationTime(Date date) {
 		Calendar cal = Calendar.getInstance();
 
-		Date d = date;
-		if (d == null)
-			d = new Date();
-		cal.setTime(d);
+		if (date != null)
+			cal.setTime(date);
 
 		byte[] ret = new byte[7];
+
 		ByteBuffer buf = ByteBuffer.wrap(ret);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
-		buf.putChar((char) (cal.get(Calendar.YEAR)));
-		buf.put((byte) (cal.get(Calendar.MONTH)));
+		fillBufFromTime(buf, cal);
+		
+		return ret;
+	}
+
+	private static void fillBufFromTime(ByteBuffer buf, Calendar cal) {
+		buf.putChar((char) cal.get(Calendar.YEAR));
+		buf.put((byte) (cal.get(Calendar.MONTH)+1));
 		buf.put((byte) cal.get(Calendar.DAY_OF_MONTH));
 		buf.put((byte) cal.get(Calendar.HOUR_OF_DAY));
 		buf.put((byte) cal.get(Calendar.MINUTE));
 		buf.put((byte) cal.get(Calendar.SECOND));
-		
-		return ret;
 	}
 
 	/**
@@ -161,7 +157,7 @@ public class Utils {
 		Calendar cal = Calendar.getInstance();
 
 		int y = ((date[1] & 0xff) << 8) + (date[0] & 0xff);
-		cal.set(y, date[2], date[3], date[4], date[5], date[6]);
+		cal.set(y, date[2]-1, date[3], date[4], date[5], date[6]);
 
 		return cal.getTime();
 	}
