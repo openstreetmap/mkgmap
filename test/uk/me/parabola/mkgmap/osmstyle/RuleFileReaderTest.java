@@ -326,6 +326,43 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Some operations could not originally be used by themselves but now they are converted
+	 * into expressions that can be handled automatically. The following few tests verify this.
+	 */
+	@Test
+	public void testRegexAtTop() {
+		RuleSet rs = makeRuleSet("QUOTA ~ ' [05]00\\.0+' [0x2]");
+		Element el = new Way(1);
+		el.addTag("QUOTA", " 500.0");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testNEAtTop() {
+		RuleSet rs = makeRuleSet("QUOTA != 'fred' [0x2]");
+		Element el = new Way(1);
+		el.addTag("QUOTA", "tom");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testNumberOpAtTop() {
+		RuleSet rs = makeRuleSet("QUOTA > 10 [0x1] QUOTA < 6 [0x2]");
+		Element el = new Way(1);
+		el.addTag("QUOTA", "2");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+	}
+
+	/**
 	 * This simply is to make sure that actions that affect their own
 	 * conditions do not hang. There are no defined semantics for this.
 	 */

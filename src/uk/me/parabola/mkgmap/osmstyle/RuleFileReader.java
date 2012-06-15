@@ -26,10 +26,12 @@ import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.AndOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
@@ -347,7 +349,15 @@ public class RuleFileReader {
 			saveRestOfOr(actions, gt, second, op1);
 			return;
 		} else {
-			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+			// We can make every other binary op work by converting to AND(EXISTS, op)
+			Op existsOp = new ExistsOp();
+			existsOp.setFirst(new ValueOp(op.getFirst().value()));
+
+			AndOp andOp = new AndOp();
+			andOp.setFirst(existsOp);
+			andOp.setSecond(op);
+			optimiseAndSaveBinaryOp(andOp, actions, gt);
+			return;
 		}
 
 		createAndSaveRule(keystring, op, actions, gt);
