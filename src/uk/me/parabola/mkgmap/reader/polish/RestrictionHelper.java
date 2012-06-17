@@ -33,21 +33,18 @@ public class RestrictionHelper {
     private static final Logger log = Logger.getLogger(RestrictionHelper.class);
 
     // Holds all collected restrictions.
-    private List<PolishTurnRestriction> allRestrictions = new ArrayList<PolishTurnRestriction>();
+    private final List<PolishTurnRestriction> allRestrictions = new ArrayList<PolishTurnRestriction>();
 
     public void processAndAddRestrictions(RoadHelper roadHelper, MapDetails mapper) {
         Map<Long, CoordNode> allNodes = roadHelper.getNodeCoords();
-        CoordNode from;
-        CoordNode to;
-        CoordNode via;
 
-        for (PolishTurnRestriction tr : allRestrictions) {
+		for (PolishTurnRestriction tr : allRestrictions) {
             if (tr.isValid()) { // Process only the restrictions marked as valid.
-                from = allNodes.get(tr.getFromNodId());
-                to = allNodes.get(tr.getToNodId());
-                via = allNodes.get(tr.getNodId());
+				CoordNode from = allNodes.get(tr.getFromNodId());
+				CoordNode to = allNodes.get(tr.getToNodId());
+				CoordNode via = allNodes.get(tr.getNodId());
 
-                if (from != null && to != null && via != null) {            // All nodes participating in the
+				if (from != null && to != null && via != null) {            // All nodes participating in the
                     mapper.addRestriction(from, to, via, tr.getExceptMask()); // restriction should be part of the map
                 } else {
                     log.error("");

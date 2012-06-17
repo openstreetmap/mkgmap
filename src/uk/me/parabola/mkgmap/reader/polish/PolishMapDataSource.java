@@ -53,8 +53,6 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
  * <p>
  * Now will place elements at the level specified in the file and not at the
  * automatic level that is used in eg. the OSM reader.
- *
- * @author Steve Ratcliffe
  */
 public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
@@ -65,21 +63,18 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private static final int S_POINT = 2;
 	private static final int S_POLYLINE = 3;
 	private static final int S_POLYGON = 4;
-    //Supun
     private static final int S_RESTRICTION = 5;
 
 	private MapPoint point;
 	private MapLine polyline;
 	private MapShape shape;
 
-    //Supun
     private PolishTurnRestriction restriction;
 
 	private List<Coord> points;
 
 	private final RoadHelper roadHelper = new RoadHelper();
-    // Supun
-    private RestrictionHelper restrictionHelper = new RestrictionHelper();
+    private final RestrictionHelper restrictionHelper = new RestrictionHelper();
 
 	private Map<String, String> extraAttributes;
 
@@ -126,7 +121,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			String line;
 			while ((line = in.readLine()) != null) {
 				++lineNo;
-				if (line.trim().length() == 0 || line.charAt(0) == ';')
+				if (line.trim().isEmpty() || line.charAt(0) == ';')
 					continue;
 				if (line.startsWith("[END"))
 					endSection();
@@ -198,7 +193,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
 			section = S_POLYGON;
-		}//Supun
+		}
         else if (name.equals("Restrict")) {
             restriction = new PolishTurnRestriction();
             section = S_RESTRICTION;
@@ -265,7 +260,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				mapper.addShape(shape);
 			}
 			break;
-        //Supun - Handle turn restrictions
         case S_RESTRICTION:
             restrictionHelper.addRestriction(restriction);
             break;
@@ -317,7 +311,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (!isCommonValue(shape, name, value))
 				shape(name, value);
 			break;
-        //Supun
         case S_RESTRICTION:
             restriction(name, value);
             break;
@@ -659,7 +652,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		String[] fields = value.split("[(,)]");
 
 		int i = 0;
-		if (fields[0].length() == 0)
+		if (fields[0].isEmpty())
 			i = 1;
 
 		Double f1 = Double.valueOf(fields[i]);
@@ -674,67 +667,51 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		for(Map.Entry<String, String> entry : extraAttributes.entrySet()) {
 			String v = entry.getValue();
-			if(entry.getKey().equals("Depth")) {
+			if (entry.getKey().equals("Depth")) {
 				String u = extraAttributes.get("DepthUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("depth", v);
-			}
-			else if(entry.getKey().equals("Height")) {
+			} else if(entry.getKey().equals("Height")) {
 				String u = extraAttributes.get("HeightUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height", v);
-			}
-			else if(entry.getKey().equals("HeightAboveFoundation")) {
+			} else if(entry.getKey().equals("HeightAboveFoundation")) {
 				String u = extraAttributes.get("HeightAboveFoundationUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-foundation", v);
-			}
-			else if(entry.getKey().equals("HeightAboveDatum")) {
+			} else if(entry.getKey().equals("HeightAboveDatum")) {
 				String u = extraAttributes.get("HeightAboveDatumUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-datum", v);
-			}
-			else if(entry.getKey().equals("Color")) {
+			} else if(entry.getKey().equals("Color")) {
 				colour = Integer.decode(v);
-			}
-			else if(entry.getKey().equals("Style")) {
+			} else if(entry.getKey().equals("Style")) {
 				style = Integer.decode(v);
-			}
-			else if(entry.getKey().equals("Position")) {
+			} else if(entry.getKey().equals("Position")) {
 				eta.put("position", v);
-			}
-			else if(entry.getKey().equals("FoundationColor")) {
+			} else if(entry.getKey().equals("FoundationColor")) {
 				eta.put("color", v);
-			}
-			else if(entry.getKey().equals("Light")) {
+			} else if(entry.getKey().equals("Light")) {
 				eta.put("light", v);
-			}
-			else if(entry.getKey().equals("LightType")) {
+			} else if(entry.getKey().equals("LightType")) {
 				eta.put("type", v);
-			}
-			else if(entry.getKey().equals("Period")) {
+			} else if(entry.getKey().equals("Period")) {
 				eta.put("period", v);
-			}
-			else if(entry.getKey().equals("Note")) {
+			} else if(entry.getKey().equals("Note")) {
 				eta.put("note", v);
-			}
-			else if(entry.getKey().equals("LocalDesignator")) {
+			} else if(entry.getKey().equals("LocalDesignator")) {
 				eta.put("local-desig", v);
-			}
-			else if(entry.getKey().equals("InternationalDesignator")) {
+			} else if(entry.getKey().equals("InternationalDesignator")) {
 				eta.put("int-desig", v);
-			}
-			else if(entry.getKey().equals("FacilityPoint")) {
+			} else if(entry.getKey().equals("FacilityPoint")) {
 				eta.put("facilities", v);
-			}
-			else if(entry.getKey().equals("Racon")) {
+			} else if(entry.getKey().equals("Racon")) {
 				eta.put("racon", v);
-			}
-			else if(entry.getKey().equals("LeadingAngle")) {
+			} else if(entry.getKey().equals("LeadingAngle")) {
 				eta.put("leading-angle", v);
 			}
 		}
@@ -745,12 +722,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		return new ExtTypeAttributes(eta, "Line " + lineNo);
 	}
 
-    //Supun
     /**
      * Construct the restrictions object.
-     *
-     * @param name
-     * @param value
      */
     private void restriction(String name, String value) {
         try {
@@ -830,30 +803,30 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
             for (int i=0; i<params.length; i++) {
                 if ("1".equals(params[i])) {
                     switch(i) {
-                        case 0:
-                            // Mask is not known for Emergency.
-                            break;
-                        case 1:
-                            exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
-                            break;
-                        case 2:
-                            exceptMask |= RouteRestriction.EXCEPT_CAR;
-                            break;
-                        case 3:
-                            exceptMask |= RouteRestriction.EXCEPT_BUS;
-                            break;
-                        case 4:
-                            exceptMask |= RouteRestriction.EXCEPT_TAXI;
-                            break;
-                        case 5:
-                            // Mask is not known for Pedestrian.
-                            break;
-                        case 6:
-                            exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
-                            break;
-                        case 7:
-                            exceptMask |= RouteRestriction.EXCEPT_TRUCK;
-                            break;
+					case 0:
+						// Mask is not known for Emergency.
+						break;
+					case 1:
+						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+						break;
+					case 2:
+						exceptMask |= RouteRestriction.EXCEPT_CAR;
+						break;
+					case 3:
+						exceptMask |= RouteRestriction.EXCEPT_BUS;
+						break;
+					case 4:
+						exceptMask |= RouteRestriction.EXCEPT_TAXI;
+						break;
+					case 5:
+						// Mask is not known for Pedestrian.
+						break;
+					case 6:
+						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+						break;
+					case 7:
+						exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+						break;
                     }
                 }
             }
