@@ -36,15 +36,11 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
-import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapElement;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.*;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 /**
@@ -69,14 +65,21 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private static final int S_POINT = 2;
 	private static final int S_POLYLINE = 3;
 	private static final int S_POLYGON = 4;
+    //Supun
+    private static final int S_RESTRICTION = 5;
 
 	private MapPoint point;
 	private MapLine polyline;
 	private MapShape shape;
 
+    //Supun
+    private PolishTurnRestriction restriction;
+
 	private List<Coord> points;
 
 	private final RoadHelper roadHelper = new RoadHelper();
+    // Supun
+    private RestrictionHelper restrictionHelper = new RestrictionHelper();
 
 	private Map<String, String> extraAttributes;
 
@@ -94,7 +97,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
-	public boolean isFileSupported(String name) {
+    public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
@@ -118,7 +121,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		dec = Charset.forName("utf-8").newDecoder();
 		dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
 
-		BufferedReader in = new BufferedReader(reader);
+        BufferedReader in = new BufferedReader(reader);
 		try {
 			String line;
 			while ((line = in.readLine()) != null) {
@@ -132,6 +135,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				else
 					processLine(line);
 			}
+
+            // Add all restrictions to the map after reading the full map.
+            // The reason being, the restrictions section appear in the beginning of the map.
+            // All the nodes will only be read later on.
+            // Required to pass the road helper instance as it contains all node data.
+            restrictionHelper.processAndAddRestrictions(roadHelper, mapper);
 		} catch (IOException e) {
 			throw new FormatException("Reading file failed", e);
 		}
@@ -189,7 +198,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("POLYGON") || name.equals("RGN80")) {
 			shape = new MapShape();
 			section = S_POLYGON;
-		}
+		}//Supun
+        else if (name.equals("Restrict")) {
+            restriction = new PolishTurnRestriction();
+            section = S_RESTRICTION;
+        }
 		else
 			log.info("Ignoring " + name + " section");
 	}
@@ -252,7 +265,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				mapper.addShape(shape);
 			}
 			break;
-
+        //Supun - Handle turn restrictions
+        case S_RESTRICTION:
+            restrictionHelper.addRestriction(restriction);
+            break;
 		case 0:
 			// ignored section
 			break;
@@ -301,6 +317,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (!isCommonValue(shape, name, value))
 				shape(name, value);
 			break;
+        //Supun
+        case S_RESTRICTION:
+            restriction(name, value);
+            break;
 		default:
 			log.debug("line ignored");
 			break;
@@ -724,4 +744,123 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		return new ExtTypeAttributes(eta, "Line " + lineNo);
 	}
+
+    //Supun
+    /**
+     * Construct the restrictions object.
+     *
+     * @param name
+     * @param value
+     */
+    private void restriction(String name, String value) {
+        try {
+            // Proceed only if the restriction is not already marked as invalid.
+            if (restriction.isValid()) {
+                if (name.equals("Nod")) {
+                    restriction.setNodId(Long.valueOf(value));
+                } else if (name.equals("TraffPoints")) {
+                    String[] traffPoints = value.split(",");
+
+                    // Supported restriction type.
+                    /*
+                        [RESTRICT]
+                        TraffPoints=16968,25008,25009
+                        TraffRoads=520763,532674
+                        [END-RESTRICT]
+                    */
+                    if (traffPoints.length == 3) {
+                        restriction.setFromNodId(Long.valueOf(traffPoints[0]));
+                        restriction.setToNodId(Long.valueOf(traffPoints[2]));
+                    } else if (traffPoints.length < 3) {
+                        restriction.setValid(false);
+                        log.error("Invalid restriction definition. " + restriction);
+                    } else { // More than 3 nodes are participating in the restriction
+                        // Not supported.
+                        /*
+                            [RESTRICT]
+                            TraffPoints=25009,25008,16968,16967
+                            TraffRoads=532674,520763,520763
+                            [END-RESTRICT]
+                         */
+                        restriction.setValid(false);
+                        log.info("Restrictions composed\n" +
+                                "from 3 roads are not yet supported\n");
+                    }
+                } else if (name.equals("TraffRoads")) {
+                    String[] traffRoads = value.split(",");
+                    restriction.setRoadIdA(Long.valueOf(traffRoads[0]));
+                    restriction.setRoadIdB(Long.valueOf(traffRoads[1]));
+                } else if (name.equals("RestrParam")) {
+                    restriction.setExceptMask(getRestrictionExceptionMask(value));
+                } else if (name.equals("Time")) {
+                    // Do nothing for now
+                }
+            }
+        } catch (NumberFormatException ex) { // This exception means that this restriction is not properly defined.
+            restriction.setValid(false); // Mark this as an invalid restriction.
+            log.error("Invalid restriction definition. " + restriction);
+        }
+    }
+
+    /**
+     * Constructs the vehicle exception mask from the restriction params.
+     * From cGPSMapper manual :-
+     * <p>
+     * By default restrictions apply to all kind of vehicles, if
+     * RestrParam is used, then restriction will be ignored by
+     * specified types of vehicles.
+     * </p>
+     * <p>
+     * [Emergency],[delivery],[car],[bus],[taxi],[pedestrian],[bicycle],[truck]
+     * </p>
+     * <p>
+     * Example:
+     * RestrParam=0,1,1,0
+     * </p>
+     * Above definition will set the restriction to be applied for
+     * Emergency, Bus, Taxi, Pedestrian and Bicycle. Restriction
+     * will NOT apply for Delivery and Car.
+     *
+     * @param value Tag value
+     */
+    private byte getRestrictionExceptionMask(String value) {
+        String[] params = value.split(",");
+        byte exceptMask = 0x00;
+        if (params.length > 0 && params.length <=8) { // Got to have at least one param but not more than 8.
+            for (int i=0; i<params.length; i++) {
+                if ("1".equals(params[i])) {
+                    switch(i) {
+                        case 0:
+                            // Mask is not known for Emergency.
+                            break;
+                        case 1:
+                            exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+                            break;
+                        case 2:
+                            exceptMask |= RouteRestriction.EXCEPT_CAR;
+                            break;
+                        case 3:
+                            exceptMask |= RouteRestriction.EXCEPT_BUS;
+                            break;
+                        case 4:
+                            exceptMask |= RouteRestriction.EXCEPT_TAXI;
+                            break;
+                        case 5:
+                            // Mask is not known for Pedestrian.
+                            break;
+                        case 6:
+                            exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+                            break;
+                        case 7:
+                            exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+                            break;
+                    }
+                }
+            }
+        } else {
+            log.error("Invalid RestrParam definition. -> " + value);
+        }
+
+        return exceptMask;
+    }
 }
