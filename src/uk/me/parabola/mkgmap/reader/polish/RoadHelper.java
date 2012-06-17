@@ -141,6 +141,10 @@ class RoadHelper {
 		return roadId != 0;
 	}
 
+	public Map<Long, CoordNode> getNodeCoords() {
+		return nodeCoords;
+	}
+
 	private static class NodeIndex {
 		private final int index;
 		private final int nodeId;
