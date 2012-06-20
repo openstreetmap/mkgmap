@@ -39,7 +39,7 @@ public class TableTransliterator implements Transliterator {
 	private boolean forceUppercase;
 
 	public TableTransliterator(String targetCharset) {
-		if (targetCharset.equals("latin1"))
+		if (targetCharset.equals("latin1") || targetCharset.equals("cp1252"))
 			useLatin = true;
 		else
 			useLatin = false;

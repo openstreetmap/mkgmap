@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
+import uk.me.parabola.imgfmt.ExitException;
+
 /**
  * @author Steve Ratcliffe
  */
@@ -126,8 +128,11 @@ public class CodeFunctions {
 		if (cs.startsWith("cp")) {
 			try {
 				funcs.setCodepage(Integer.parseInt(charset.substring(2)));
+				if (cs.equals("cp1252"))
+					transliterator = new TableTransliterator("latin1");
 			} catch (NumberFormatException e) {
 				// wasn't in the right form
+				throw new ExitException("Invalid character set: " + cs);
 			}
 		} else if (cs.startsWith("windows-")) {
 			try {

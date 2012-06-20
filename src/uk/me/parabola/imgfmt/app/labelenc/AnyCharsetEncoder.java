@@ -16,7 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 /**
@@ -27,11 +27,14 @@ import java.util.Locale;
  */
 public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 
-	private final String charSet;
+	private final Charset charSet;
 
 	public AnyCharsetEncoder(String cs) {
 		prepareForCharacterSet(cs);
-		charSet = cs;
+		if (isCharsetSupported())
+			charSet = Charset.forName(cs);
+		else
+			charSet = null;
 	}
 
 	public EncodedText encodeText(String text) {
@@ -47,16 +50,10 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		else
 			ucText = text;
 
-		try {
-			byte[] bytes = ucText.getBytes(charSet);
-			byte[] res = new byte[bytes.length + 1];
-			System.arraycopy(bytes, 0, res, 0, bytes.length);
+		byte[] bytes = ucText.getBytes(charSet);
+		byte[] res = new byte[bytes.length + 1];
+		System.arraycopy(bytes, 0, res, 0, bytes.length);
 
-			return new EncodedText(res, res.length);
-		} catch (UnsupportedEncodingException e) {
-			// This can't really happen as we have already checked.
-			return simpleEncode(text);
-		}
-
+		return new EncodedText(res, res.length);
 	}
 }
