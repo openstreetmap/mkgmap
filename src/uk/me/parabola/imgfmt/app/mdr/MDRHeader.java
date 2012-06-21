@@ -104,6 +104,10 @@ public class MDRHeader extends CommonHeader {
 		s.setSize(position - s.getPosition());
 	}
 
+	public Sort getSort() {
+		return sort;
+	}
+
 	public void setSort(Sort sort) {
 		this.sort = sort;
 	}

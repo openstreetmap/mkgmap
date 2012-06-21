@@ -24,6 +24,7 @@ public class FileSystemParam {
 	private int blockSize = 512;
 	private int directoryStartEntry = 2; // Always in terms of entries of 512 bytes
 	private int reservedDirectoryBlocks = 202;
+	private boolean gmapsupp;
 
 	public String getFilename() {
 		return filename;
@@ -63,5 +64,13 @@ public class FileSystemParam {
 
 	public void setReservedDirectoryBlocks(int blocks) {
 		this.reservedDirectoryBlocks = blocks;
+	}
+
+	public boolean isGmapsupp() {
+		return gmapsupp;
+	}
+
+	public void setGmapsupp(boolean gmapsupp) {
+		this.gmapsupp = gmapsupp;
 	}
 }

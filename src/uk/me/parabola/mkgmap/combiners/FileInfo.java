@@ -24,7 +24,10 @@ import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.FileSystemParam;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
@@ -33,6 +36,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 import static uk.me.parabola.mkgmap.combiners.FileKind.*;
 
@@ -74,6 +78,8 @@ public class FileInfo {
 	private String[] copyrights;
 	private CommandArgs args;
 	private String mpsName;
+	private int codePage;
+	private int sortOrderId;
 
 	private FileInfo(String filename, FileKind kind) {
 		this.filename = filename;
@@ -218,23 +224,14 @@ public class FileInfo {
 					info.setTresize(ent.getSize());
 					info.setInnername(ent.getName());
 
-					ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
-					TREFileReader treFile = new TREFileReader(treChan);
-					Area area = treFile.getBounds();
-					assert area != null;
-					info.setBounds(area);
-
-					String[] copyrights = treFile.getCopyrights();
-					info.setCopyrights(copyrights);
-
-					info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
+					treInfo(imgFs, ent, info);
 					hasTre = true;
-					treFile.close();
 				} else if ("RGN".equals(ext)) {
 					int size = ent.getSize();
 					info.setRgnsize(size);
 				} else if ("LBL".equals(ext)) {
 					info.setLblsize(ent.getSize());
+					lblInfo(imgFs, ent, info);
 				} else if ("NET".equals(ext)) {
 					info.setNetsize(ent.getSize());
 				} else if ("NOD".equals(ext)) {
@@ -257,6 +254,46 @@ public class FileInfo {
 			return info;
 		} finally {
 			imgFs.close();
+		}
+	}
+
+	/**
+	 * Obtain the information that we need from the TRE section.
+	 * @param imgFs The filesystem
+	 * @param ent The filename within the filesystem of the TRE file.
+	 * @param info This is where the information will be saved.
+	 * @throws FileNotFoundException If the file is not found in the filesystem.
+	 */
+	private static void treInfo(FileSystem imgFs, DirectoryEntry ent, FileInfo info) throws FileNotFoundException {
+		TREFileReader treFile = null;
+		try {
+			ImgChannel treChan = imgFs.open(ent.getFullName(), "r");
+			treFile = new TREFileReader(treChan);
+
+			info.setBounds(treFile.getBounds());
+
+			info.setCopyrights(treFile.getCopyrights());
+
+			info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
+		} finally {
+			Utils.closeFile(treFile);
+		}
+	}
+
+	/**
+	 * Obtain the information we need from a LBL file.
+	 */
+	private static void lblInfo(FileSystem imgFs, DirectoryEntry ent, FileInfo info) throws FileNotFoundException {
+		LBLFileReader lblFile = null;
+		try {
+			ImgChannel chan = imgFs.open(ent.getFullName(), "r");
+			lblFile = new LBLFileReader(chan);
+
+			info.setCodePage(lblFile.getCodePage());
+			info.setSortOrderId(lblFile.getSortOrderId());
+
+		} finally {
+			Utils.closeFile(lblFile);
 		}
 	}
 
@@ -372,6 +409,17 @@ public class FileInfo {
 		return args.get("product-id", 1);
 	}
 
+	public Sort getSort() {
+		Sort sort = SrtTextReader.sortForCodepage(codePage);
+		if (sort == null)
+			sort = args.getSort();
+		return sort;
+	}
+
+	public String getOutputDir() {
+		return args.getOutputDir();
+	}
+
 	public String getMpsName() {
 		return mpsName;
 	}
@@ -390,5 +438,21 @@ public class FileInfo {
 
 	public int getHexname() {
 		return hexname;
+	}
+
+	public int getCodePage() {
+		return codePage;
+	}
+
+	public void setCodePage(int codePage) {
+		this.codePage = codePage;
+	}
+
+	public int getSortOrderId() {
+		return sortOrderId;
+	}
+
+	public void setSortOrderId(int sortOrderId) {
+		this.sortOrderId = sortOrderId;
 	}
 }

@@ -447,10 +447,8 @@ public class Main implements ArgumentProcessor {
 
 		if (gmapOpt) {
 			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
-			if (indexOpt) {
-				MdrBuilder mdrBuilder = new MdrBuilder();
-				gmapBuilder.setMdrBuilder(mdrBuilder);
-			}
+			gmapBuilder.setCreateIndex(indexOpt);
+
 			addCombiner(gmapBuilder);
 		}
 

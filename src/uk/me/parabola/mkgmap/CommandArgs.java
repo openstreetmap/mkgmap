@@ -50,12 +50,8 @@ public class CommandArgs {
 	}
 
 	public String getCharset() {
-		String charset = currentOptions.getProperty("latin1");
-		if (charset != null)
-			return "latin1";
 
-		// xcharset is the old value, use charset instead.
-		charset = currentOptions.getProperty("charset", currentOptions.getProperty("xcharset"));
+		String charset = currentOptions.getProperty("charset");
 		if (charset != null)
 			return charset;
 
@@ -69,18 +65,11 @@ public class CommandArgs {
 	public int getCodePage() {
 		int cp;
 
-		// xcode-page is the old name
-		String s = currentOptions.getProperty("code-page", currentOptions.getProperty("xcode-page", "0"));
+		String s = currentOptions.getProperty("code-page");
 		try {
 			cp = Integer.parseInt(s);
 		} catch (NumberFormatException e) {
 			cp = 0;
-		}
-
-		if (cp == 0) {
-			String prop = currentOptions.getProperty("latin1");
-			if (prop != null)
-				cp = 1252;
 		}
 
 		return cp;

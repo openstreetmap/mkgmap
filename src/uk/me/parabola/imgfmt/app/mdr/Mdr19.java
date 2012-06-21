@@ -38,14 +38,14 @@ public class Mdr19 extends MdrSection implements HasHeaderFlags {
 	public void preWriteImpl() {
 		Collections.sort(pois, new Comparator<Mdr11Record>() {
 			public int compare(Mdr11Record o1, Mdr11Record o2) {
-				int t1 = o1.getType();
-				int t2 = o2.getType();
-				if (t1 == t2)
-					return 0;
-				else if (t1 < t2)
-					return -1;
-				else
-					return 1;
+				// For mainly historical reasons, we keep the element type in a number of different
+				// formats. Need to normalise it before sorting.
+				int t1 = MdrUtils.fullTypeToNaturalType(o1.getType());
+				int t2 = MdrUtils.fullTypeToNaturalType(o2.getType());
+
+				if (t1 == t2) return 0;
+				else if (t1 < t2) return -1;
+				else return 1;
 			}
 		});
 	}

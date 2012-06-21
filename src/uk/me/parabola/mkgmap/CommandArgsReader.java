@@ -173,6 +173,8 @@ public class CommandArgsReader {
 			add(new Filename(value));
 		} else if (option.equals("read-config")) {
 			readConfigFile(value);
+		} else if (option.equals("latin1")) {
+			add(new CommandOption("code-page", "1252"));
 		} else {
 			add(opt);
 		}
@@ -311,7 +313,7 @@ public class CommandArgsReader {
 	/**
 	 * The arguments are held in this list.
 	 */
-	class ArgList implements Iterable<CommandArgsReader.ArgType> {
+	class ArgList implements Iterable<ArgType> {
 		private final List<ArgType> alist;
 
 		private int filenameCount;
@@ -320,11 +322,11 @@ public class CommandArgsReader {
 			alist = new ArrayList<ArgType>();
 		}
 
-		protected void add(CommandArgsReader.CommandOption option) {
+		protected void add(CommandOption option) {
 			alist.add(option);
 		}
 
-		public void add(CommandArgsReader.Filename name) {
+		public void add(Filename name) {
 			filenameCount++;
 			alist.add(name);
 		}

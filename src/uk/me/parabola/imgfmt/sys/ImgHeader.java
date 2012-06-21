@@ -43,6 +43,7 @@ class ImgHeader {
 	private static final int OFF_XOR = 0x0;
 	private static final int OFF_UPDATE_MONTH = 0xa;
 	private static final int OFF_UPDATE_YEAR = 0xb; // +1900 for val >= 0x63, +2000 for less
+	private static final int OFF_SUPP = 0xe;		// Appears to be set for gmapsupp files
 	private static final int OFF_CHECKSUM = 0xf;
 	private static final int OFF_SIGNATURE = 0x10;
 	private static final int OFF_UNK_1 = 0x17;
@@ -161,9 +162,10 @@ class ImgHeader {
 		setUpdateTime(date);
 		setDescription(params.getMapDescription());
 
+		header.put(OFF_SUPP, (byte) (fsParams.isGmapsupp()? 1: 0));
+
 		// Checksum is not checked.
-		int check = 0;
-		header.put(OFF_CHECKSUM, (byte) check);
+		header.put(OFF_CHECKSUM, (byte) 0);
 	}
 
 	/**

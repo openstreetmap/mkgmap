@@ -27,6 +27,7 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * The MDR file.  This is embedded into a .img file, either its own
@@ -135,10 +136,20 @@ public class MDRFile extends ImgFile {
 	 * Add a map to the index.  You must add the map, then all of the items
 	 * that belong to it, before adding the next map.
 	 * @param mapName The numeric name of the map.
+	 * @param codePage The code page of the map.
 	 */
-	public void addMap(int mapName) {
+	public void addMap(int mapName, int codePage) {
 		currentMap++;
 		mdr1.addMap(mapName);
+		Sort sort = mdrHeader.getSort();
+		if (sort.getSortOrderId() == 0) {
+			sort = SrtTextReader.sortForCodepage(codePage);
+			mdrHeader.setSort(sort);
+		} else {
+			if (sort.getCodepage() != codePage)
+				System.err.println("WARNING: input files have different code pages");
+		}
+
 	}
 
 	public Mdr14Record addCountry(Country country) {

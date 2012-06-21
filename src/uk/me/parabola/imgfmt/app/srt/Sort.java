@@ -230,6 +230,16 @@ public class Sort {
 		this.id2 = id2;
 	}
 
+	/**
+	 * Get the sort order as a single integer.
+	 * A combination of id1 and id2. I think that they are arbitrary so may as well treat them as one.
+	 *
+	 * @return id1 and id2 as if they were a little endian 2 byte integer.
+	 */
+	public int getSortOrderId() {
+		return (this.id2 << 16) + (this.id1 & 0xff);
+	}
+
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
 		if (codepage == 0)

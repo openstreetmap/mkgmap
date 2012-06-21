@@ -52,7 +52,7 @@ import uk.me.parabola.mkgmap.CommandArgs;
  * Effectively we just 'unzip' the constituent .img files and then 'zip' them
  * back into the gmapsupp.img file.
  * <p/>
- * In addition we need to create and add the TDB file, if we don't already
+ * In addition we need to create and add the MPS file, if we don't already
  * have one.
  *
  * @author Steve Ratcliffe
@@ -77,43 +77,82 @@ public class GmapsuppBuilder implements Combiner {
 	private String overallDescription = "Combined map";
 	private String outputDir;
 	private MpsFile mpsFile;
-	private MdrBuilder mdrBuilder;
-	private Sort sort;
+
+	private boolean createIndex;	// True if we should create and add an index file
+
+	// There is a separate MDR and SRT file for each family id in the gmapsupp
+	private final Map<Integer, MdrBuilder> mdrBuilderMap = new LinkedHashMap<Integer, MdrBuilder>();
+	private final Map<Integer, Sort> sortMap = new LinkedHashMap<Integer, Sort>();
+
 
 	public void init(CommandArgs args) {
 		areaName = args.get("area-name", null);
 		mapsetName = args.get("mapset-name", "OSM map set");
 		overallDescription = args.getDescription();
 		outputDir = args.getOutputDir();
-		sort = args.getSort();
-
-		if (mdrBuilder != null)
-			mdrBuilder.initForDevice(sort, outputDir);
 	}
 
 	/**
-	 * This is called when the map is complete.
-	 * We collect information about the map to be used in the TDB file and
-	 * for preparing the gmapsupp file.
+	 * Add or retrieve the MDR file for the given familyId.
+	 * @param familyId The family id to create the mdr file for.
+	 * @param sort The sort for this family id.
+	 * @param outputDir The place to write the file.
+	 * @return If there is already an mdr file for this family then it is returned, else the newly created
+	 * one.
+	 */
+	private MdrBuilder addMdrFile(int familyId, Sort sort, String outputDir) {
+		MdrBuilder mdrBuilder = mdrBuilderMap.get(familyId);
+		if (mdrBuilder != null)
+			return mdrBuilder;
+
+		mdrBuilder = new MdrBuilder();
+		mdrBuilder.initForDevice(sort, outputDir);
+		mdrBuilderMap.put(familyId, mdrBuilder);
+		return mdrBuilder;
+	}
+
+	/**
+	 * Add the sort file for the given family id.
+	 */
+	private void addSrtFile(int familyId, Sort sort) {
+		Sort s = sortMap.get(familyId);
+		if (s == null)
+			sortMap.put(familyId, sort);
+		else {
+			if (s.getCodepage() != sort.getCodepage())
+				System.err.println("WARNING: input files have differing code pages");
+			if (s.getSortOrderId() != sort.getSortOrderId())
+				System.err.println("WARNING: input files have differing sort orders");
+		}
+	}
+
+	/**
+	 * This is called when the map is complete. We collect information about the map to be used in the TDB file and for
+	 * preparing the gmapsupp file.
 	 *
 	 * @param info Information about the img file.
 	 */
 	public void onMapEnd(FileInfo info) {
 		files.put(info.getFilename(), info);
 
-		if (mdrBuilder != null)
+		int familyId = info.getFamilyId();
+		if (createIndex) {
+			MdrBuilder mdrBuilder = addMdrFile(familyId, info.getSort(), info.getOutputDir());
 			mdrBuilder.onMapEnd(info);
+		}
+
+		addSrtFile(familyId, info.getSort());
 	}
 
 	/**
-	 * The complete map set has been processed.
-	 * Creates the gmapsupp file.  This is done by stepping through each img
-	 * file, reading all the sub files and copying them into the gmapsupp file.
+	 * The complete map set has been processed. Creates the gmapsupp file.  This is done by stepping through each img file,
+	 * reading all the sub files and copying them into the gmapsupp file.
 	 */
 	public void onFinish() {
 
-		if (mdrBuilder != null)
+		for (MdrBuilder mdrBuilder : mdrBuilderMap.values()) {
 			mdrBuilder.onFinishForDevice();
+		}
 
 		FileSystem imgFs = null;
 		try {
@@ -121,8 +160,10 @@ public class GmapsuppBuilder implements Combiner {
 
 			addAllFiles(imgFs);
 
-			if (mdrBuilder != null)
-				addFile(imgFs, mdrBuilder.getFileName(), "MAKEGMAP.MDR");
+			// Add all the MDR files (one for each family)
+			for (Map.Entry<Integer, MdrBuilder> ent : mdrBuilderMap.entrySet())
+				addFile(imgFs, ent.getValue().getFileName(), String.format("%08d.MDR", ent.getKey()));
+
 			writeSrtFile(imgFs);
 			writeMpsFile();
 
@@ -130,42 +171,44 @@ public class GmapsuppBuilder implements Combiner {
 			log.warn("Could not create gmapsupp file");
 			System.err.println("Could not create gmapsupp file");
 		} finally {
-			if (imgFs != null)
-				imgFs.close();
+			Utils.closeFile(imgFs);
 		}
 	}
 
 	/**
 	 * Write the SRT file.
+	 *
 	 * @param imgFs The filesystem to create the SRT file in.
 	 * @throws FileNotWritableException If it cannot be created.
 	 */
 	private void writeSrtFile(FileSystem imgFs) throws FileNotWritableException {
-		if (sort.getId1() == 0 && sort.getId2() == 0)
-			return;
-		
-		SRTFile srtFile;
-		ImgChannel channel;
-		try {
-			channel = imgFs.create("MAKEGMAP.SRT");
-			srtFile = new SRTFile(channel);
-		} catch (FileExistsException e) {
-			// well it shouldn't exist!
-			log.error("could not create SRT file as it exists already");
-			throw new FileNotWritableException("already existed", e);
+		for (Map.Entry<Integer, Sort> ent : sortMap.entrySet()) {
+			Sort sort = ent.getValue();
+			int familyId = ent.getKey();
+
+			if (sort.getId1() == 0 && sort.getId2() == 0)
+				return;
+
+			ImgChannel channel = null;
+			try {
+				channel = imgFs.create(String.format("%08d.SRT", familyId));
+				SRTFile srtFile = new SRTFile(channel);
+				srtFile.setSort(sort);
+				srtFile.write();
+				srtFile.close();
+			} catch (FileExistsException e) {
+				// well it shouldn't exist!
+				log.error("could not create SRT file as it exists already");
+				throw new FileNotWritableException("already existed", e);
+			} finally {
+				Utils.closeFile(channel);
+			}
 		}
-
-		srtFile.setSort(sort);
-		srtFile.write();
-		srtFile.close();
-
-		Utils.closeFile(channel);
 	}
 
 	/**
-	 * Write the MPS file.  The gmapsupp file will work without this, but it
-	 * important if you want to include more than one map family and be able
-	 * to turn them on and off separately.
+	 * Write the MPS file.  The gmapsupp file will work without this, but it important if you want to include more than one
+	 * map family and be able to turn them on and off separately.
 	 */
 	private void writeMpsFile() throws FileNotWritableException {
 		try {
@@ -299,7 +342,7 @@ public class GmapsuppBuilder implements Combiner {
 		int dot = name.lastIndexOf('.');
 
 		String base = name.substring(0, dot);
-		String ext = name.substring(dot+1);
+		String ext = name.substring(dot + 1);
 		if (base.length() > 8)
 			base = base.substring(0, 8);
 		if (ext.length() > 3)
@@ -365,6 +408,7 @@ public class GmapsuppBuilder implements Combiner {
 		params.setBlockSize(blockSize);
 		params.setMapDescription(overallDescription);
 		params.setDirectoryStartEntry(DIRECTORY_OFFSET_ENTRY);
+		params.setGmapsupp(true);
 
 		int reserveBlocks = (int) Math.ceil(bi.reserveEntries * 512.0 / blockSize);
 		params.setReservedDirectoryBlocks(reserveBlocks);
@@ -455,21 +499,33 @@ public class GmapsuppBuilder implements Combiner {
 			// Estimate the number of blocks needed for the MPS file
 			int mpsSize = files.size() * 80 + 100;
 			int mpsBlocks = (mpsSize + (bs - 1)) / bs;
-			int mpsSlots = (mpsBlocks + ENTRY_SIZE-1) / ENTRY_SIZE;
+			int mpsSlots = (mpsBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
 
 			totBlocks += mpsBlocks;
 			totHeaderEntries += mpsSlots;
 
 			// Add in number of block for mdr
-			if (mdrBuilder != null) {
-				int sz = mdrBuilder.getSize();
+			if (createIndex) {
+				for (MdrBuilder mdrBuilder : mdrBuilderMap.values()) {
+					int sz = mdrBuilder.getSize();
+					int mdrBlocks = (sz + (bs - 1)) / bs;
+					int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
+
+					totBlocks += mdrBlocks;
+					totHeaderEntries += mdrSlots;
+				}
+			}
+
+			for (int i = 0; i < sortMap.size(); i++) {
+				// These files are less than 1k
+				int sz = 1024;
 				int mdrBlocks = (sz + (bs - 1)) / bs;
 				int mdrSlots = (mdrBlocks + ENTRY_SIZE - 1) / ENTRY_SIZE;
 
 				totBlocks += mdrBlocks;
 				totHeaderEntries += mdrSlots;
 			}
-			
+
 			// There are 2 entries for the header itself.
 			totHeaderEntries += 2;
 			int totHeaderBlocks = totHeaderEntries * 512 / bs;
@@ -485,8 +541,8 @@ public class GmapsuppBuilder implements Combiner {
 		throw new IllegalArgumentException("hmm");
 	}
 
-	public void setMdrBuilder(MdrBuilder mdrBuilder) {
-		this.mdrBuilder = mdrBuilder;
+	public void setCreateIndex(boolean create) {
+		this.createIndex = create;
 	}
 
 	/**
