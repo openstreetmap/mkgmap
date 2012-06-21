@@ -277,6 +277,7 @@ public class GmapsuppTest extends Base {
 
 	@Test
 	public void testWithIndex() throws IOException {
+		new File("osmmap_mdr.img").delete();
 		Main.main(new String[]{
 				Args.TEST_STYLE_ARG,
 				"--gmapsupp",

@@ -43,7 +43,7 @@ public class IndexTest {
 				"--family-id=1002",
 				"--overview-mapname=" + OVERVIEW_NAME,
 				Args.TEST_RESOURCE_IMG + "63240001.img",
-				Args.TEST_RESOURCE_IMG + "63240003.img"
+				Args.TEST_RESOURCE_IMG + "63240002.img"
 		);
 		outputs.checkNoError();
 
