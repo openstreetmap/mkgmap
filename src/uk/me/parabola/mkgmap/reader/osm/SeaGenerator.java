@@ -74,7 +74,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	private StyleImpl fbRules;
 	
 	/** The size (lat and long) of the precompiled sea tiles */
-	private final static int PRECOMP_RASTER = 1 << 15;
+	public final static int PRECOMP_RASTER = 1 << 15;
+	
 	/**
 	 * The directory of the precompiled sea tiles or <code>null</code> if
 	 * precompiled sea should not be used.

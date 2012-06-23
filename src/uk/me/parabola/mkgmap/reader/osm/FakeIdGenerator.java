@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010.
+ * Copyright (C) 2010-2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -21,6 +21,18 @@ public class FakeIdGenerator {
 	
 	private static final AtomicLong fakeId = new AtomicLong(START_ID);
 
+	private static long startId = START_ID;
+	
+	/**
+	 * Change the first id that is returned by this generator. The method must 
+	 * be called <b>before</b> the first call of {@link #makeFakeId()}.
+	 * @param firstFakeId the first id returned by this generator 
+	 */
+	public static void setStartId(long firstFakeId) {
+		fakeId.set(firstFakeId);
+		startId = firstFakeId;
+	}
+	
 	/**
 	 * Retrieves a unique id that can be used to fake OSM ids.
 	 * 
@@ -31,7 +43,7 @@ public class FakeIdGenerator {
 	}
 
 	public static boolean isFakeId(long id) {
-		return id >= START_ID;
+		return id >= startId;
 	}
 	
 }
