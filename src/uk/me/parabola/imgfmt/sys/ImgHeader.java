@@ -162,8 +162,6 @@ class ImgHeader {
 		setUpdateTime(date);
 		setDescription(params.getMapDescription());
 
-		header.put(OFF_SUPP, (byte) (fsParams.isGmapsupp()? 1: 0));
-
 		// Checksum is not checked.
 		header.put(OFF_CHECKSUM, (byte) 0);
 	}
