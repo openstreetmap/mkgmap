@@ -36,15 +36,11 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
-import uk.me.parabola.mkgmap.general.LevelInfo;
-import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
-import uk.me.parabola.mkgmap.general.MapElement;
-import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapPoint;
-import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.general.*;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 /**
@@ -57,8 +53,6 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
  * <p>
  * Now will place elements at the level specified in the file and not at the
  * automatic level that is used in eg. the OSM reader.
- *
- * @author Steve Ratcliffe
  */
 public class PolishMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 	private static final Logger log = Logger.getLogger(PolishMapDataSource.class);
@@ -69,14 +63,18 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private static final int S_POINT = 2;
 	private static final int S_POLYLINE = 3;
 	private static final int S_POLYGON = 4;
+    private static final int S_RESTRICTION = 5;
 
 	private MapPoint point;
 	private MapLine polyline;
 	private MapShape shape;
 
+    private PolishTurnRestriction restriction;
+
 	private List<Coord> points;
 
 	private final RoadHelper roadHelper = new RoadHelper();
+    private final RestrictionHelper restrictionHelper = new RestrictionHelper();
 
 	private Map<String, String> extraAttributes;
 
@@ -94,7 +92,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
-	public boolean isFileSupported(String name) {
+    public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
@@ -118,12 +116,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		dec = Charset.forName("utf-8").newDecoder();
 		dec.onUnmappableCharacter(CodingErrorAction.REPLACE);
 
-		BufferedReader in = new BufferedReader(reader);
+        BufferedReader in = new BufferedReader(reader);
 		try {
 			String line;
 			while ((line = in.readLine()) != null) {
 				++lineNo;
-				if (line.trim().length() == 0 || line.charAt(0) == ';')
+				if (line.trim().isEmpty() || line.charAt(0) == ';')
 					continue;
 				if (line.startsWith("[END"))
 					endSection();
@@ -132,6 +130,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				else
 					processLine(line);
 			}
+
+            // Add all restrictions to the map after reading the full map.
+            // The reason being, the restrictions section appear in the beginning of the map.
+            // All the nodes will only be read later on.
+            // Required to pass the road helper instance as it contains all node data.
+            restrictionHelper.processAndAddRestrictions(roadHelper, mapper);
 		} catch (IOException e) {
 			throw new FormatException("Reading file failed", e);
 		}
@@ -190,6 +194,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			shape = new MapShape();
 			section = S_POLYGON;
 		}
+        else if (name.equals("Restrict")) {
+            restriction = new PolishTurnRestriction();
+            section = S_RESTRICTION;
+        }
 		else
 			log.info("Ignoring " + name + " section");
 	}
@@ -252,7 +260,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				mapper.addShape(shape);
 			}
 			break;
-
+        case S_RESTRICTION:
+            restrictionHelper.addRestriction(restriction);
+            break;
 		case 0:
 			// ignored section
 			break;
@@ -301,6 +311,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (!isCommonValue(shape, name, value))
 				shape(name, value);
 			break;
+        case S_RESTRICTION:
+            restriction(name, value);
+            break;
 		default:
 			log.debug("line ignored");
 			break;
@@ -639,7 +652,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		String[] fields = value.split("[(,)]");
 
 		int i = 0;
-		if (fields[0].length() == 0)
+		if (fields[0].isEmpty())
 			i = 1;
 
 		Double f1 = Double.valueOf(fields[i]);
@@ -654,67 +667,51 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		for(Map.Entry<String, String> entry : extraAttributes.entrySet()) {
 			String v = entry.getValue();
-			if(entry.getKey().equals("Depth")) {
+			if (entry.getKey().equals("Depth")) {
 				String u = extraAttributes.get("DepthUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("depth", v);
-			}
-			else if(entry.getKey().equals("Height")) {
+			} else if(entry.getKey().equals("Height")) {
 				String u = extraAttributes.get("HeightUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height", v);
-			}
-			else if(entry.getKey().equals("HeightAboveFoundation")) {
+			} else if(entry.getKey().equals("HeightAboveFoundation")) {
 				String u = extraAttributes.get("HeightAboveFoundationUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-foundation", v);
-			}
-			else if(entry.getKey().equals("HeightAboveDatum")) {
+			} else if(entry.getKey().equals("HeightAboveDatum")) {
 				String u = extraAttributes.get("HeightAboveDatumUnit");
 				if("f".equals(u))
 					v += "ft";
 				eta.put("height-above-datum", v);
-			}
-			else if(entry.getKey().equals("Color")) {
+			} else if(entry.getKey().equals("Color")) {
 				colour = Integer.decode(v);
-			}
-			else if(entry.getKey().equals("Style")) {
+			} else if(entry.getKey().equals("Style")) {
 				style = Integer.decode(v);
-			}
-			else if(entry.getKey().equals("Position")) {
+			} else if(entry.getKey().equals("Position")) {
 				eta.put("position", v);
-			}
-			else if(entry.getKey().equals("FoundationColor")) {
+			} else if(entry.getKey().equals("FoundationColor")) {
 				eta.put("color", v);
-			}
-			else if(entry.getKey().equals("Light")) {
+			} else if(entry.getKey().equals("Light")) {
 				eta.put("light", v);
-			}
-			else if(entry.getKey().equals("LightType")) {
+			} else if(entry.getKey().equals("LightType")) {
 				eta.put("type", v);
-			}
-			else if(entry.getKey().equals("Period")) {
+			} else if(entry.getKey().equals("Period")) {
 				eta.put("period", v);
-			}
-			else if(entry.getKey().equals("Note")) {
+			} else if(entry.getKey().equals("Note")) {
 				eta.put("note", v);
-			}
-			else if(entry.getKey().equals("LocalDesignator")) {
+			} else if(entry.getKey().equals("LocalDesignator")) {
 				eta.put("local-desig", v);
-			}
-			else if(entry.getKey().equals("InternationalDesignator")) {
+			} else if(entry.getKey().equals("InternationalDesignator")) {
 				eta.put("int-desig", v);
-			}
-			else if(entry.getKey().equals("FacilityPoint")) {
+			} else if(entry.getKey().equals("FacilityPoint")) {
 				eta.put("facilities", v);
-			}
-			else if(entry.getKey().equals("Racon")) {
+			} else if(entry.getKey().equals("Racon")) {
 				eta.put("racon", v);
-			}
-			else if(entry.getKey().equals("LeadingAngle")) {
+			} else if(entry.getKey().equals("LeadingAngle")) {
 				eta.put("leading-angle", v);
 			}
 		}
@@ -724,4 +721,119 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		return new ExtTypeAttributes(eta, "Line " + lineNo);
 	}
+
+    /**
+     * Construct the restrictions object.
+     */
+    private void restriction(String name, String value) {
+        try {
+            // Proceed only if the restriction is not already marked as invalid.
+            if (restriction.isValid()) {
+                if (name.equals("Nod")) {
+                    restriction.setNodId(Long.valueOf(value));
+                } else if (name.equals("TraffPoints")) {
+                    String[] traffPoints = value.split(",");
+
+                    // Supported restriction type.
+                    /*
+                        [RESTRICT]
+                        TraffPoints=16968,25008,25009
+                        TraffRoads=520763,532674
+                        [END-RESTRICT]
+                    */
+                    if (traffPoints.length == 3) {
+                        restriction.setFromNodId(Long.valueOf(traffPoints[0]));
+                        restriction.setToNodId(Long.valueOf(traffPoints[2]));
+                    } else if (traffPoints.length < 3) {
+                        restriction.setValid(false);
+                        log.error("Invalid restriction definition. " + restriction);
+                    } else { // More than 3 nodes are participating in the restriction
+                        // Not supported.
+                        /*
+                            [RESTRICT]
+                            TraffPoints=25009,25008,16968,16967
+                            TraffRoads=532674,520763,520763
+                            [END-RESTRICT]
+                         */
+                        restriction.setValid(false);
+                        log.info("Restrictions composed\n" +
+                                "from 3 roads are not yet supported\n");
+                    }
+                } else if (name.equals("TraffRoads")) {
+                    String[] traffRoads = value.split(",");
+                    restriction.setRoadIdA(Long.valueOf(traffRoads[0]));
+                    restriction.setRoadIdB(Long.valueOf(traffRoads[1]));
+                } else if (name.equals("RestrParam")) {
+                    restriction.setExceptMask(getRestrictionExceptionMask(value));
+                } else if (name.equals("Time")) {
+                    // Do nothing for now
+                }
+            }
+        } catch (NumberFormatException ex) { // This exception means that this restriction is not properly defined.
+            restriction.setValid(false); // Mark this as an invalid restriction.
+            log.error("Invalid restriction definition. " + restriction);
+        }
+    }
+
+    /**
+     * Constructs the vehicle exception mask from the restriction params.
+     * From cGPSMapper manual :-
+     * <p>
+     * By default restrictions apply to all kind of vehicles, if
+     * RestrParam is used, then restriction will be ignored by
+     * specified types of vehicles.
+     * </p>
+     * <p>
+     * [Emergency],[delivery],[car],[bus],[taxi],[pedestrian],[bicycle],[truck]
+     * </p>
+     * <p>
+     * Example:
+     * RestrParam=0,1,1,0
+     * </p>
+     * Above definition will set the restriction to be applied for
+     * Emergency, Bus, Taxi, Pedestrian and Bicycle. Restriction
+     * will NOT apply for Delivery and Car.
+     *
+     * @param value Tag value
+     */
+    private byte getRestrictionExceptionMask(String value) {
+        String[] params = value.split(",");
+        byte exceptMask = 0x00;
+        if (params.length > 0 && params.length <=8) { // Got to have at least one param but not more than 8.
+            for (int i=0; i<params.length; i++) {
+                if ("1".equals(params[i])) {
+                    switch(i) {
+					case 0:
+						// Mask is not known for Emergency.
+						break;
+					case 1:
+						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+						break;
+					case 2:
+						exceptMask |= RouteRestriction.EXCEPT_CAR;
+						break;
+					case 3:
+						exceptMask |= RouteRestriction.EXCEPT_BUS;
+						break;
+					case 4:
+						exceptMask |= RouteRestriction.EXCEPT_TAXI;
+						break;
+					case 5:
+						// Mask is not known for Pedestrian.
+						break;
+					case 6:
+						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+						break;
+					case 7:
+						exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+						break;
+                    }
+                }
+            }
+        } else {
+            log.error("Invalid RestrParam definition. -> " + value);
+        }
+
+        return exceptMask;
+    }
 }
