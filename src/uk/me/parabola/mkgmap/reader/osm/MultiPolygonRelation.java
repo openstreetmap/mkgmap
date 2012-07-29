@@ -711,7 +711,11 @@ public class MultiPolygonRelation extends Relation {
 
 		for (Map.Entry<String, Element> r_e : getElements()) {
 			if (r_e.getValue() instanceof Way) {
-				allWays.add((Way) r_e.getValue());
+				if (((Way)r_e.getValue()).getPoints().isEmpty()) {
+					log.warn("Way",r_e.getValue(),"has no points and cannot be used for the multipolygon",toBrowseURL());
+				} else {
+					allWays.add((Way) r_e.getValue());
+				}
 			} else {
 				log.warn("Non way member in role", r_e.getKey(), r_e.getValue().toBrowseURL(),
 						"in multipolygon", toBrowseURL(), toTagString());
