@@ -96,6 +96,10 @@ public class LinkedOp implements Op {
 		return wrapped.getType();
 	}
 
+	public String getTypeString() {
+		return wrapped.getTypeString();
+	}
+
 	public String value() {
 		return wrapped.value();
 	}

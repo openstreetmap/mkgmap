@@ -44,6 +44,10 @@ public class ExistsOp extends AbstractOp {
 		return 10;
 	}
 
+	public String getTypeString() {
+		return "=*";
+	}
+
 	public String toString() {
 		return key + "=*";
 	}

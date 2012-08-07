@@ -3,8 +3,8 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="uk.me.parabola.mkgmap.main.Main" />
     <option name="VM_PARAMETERS" value="-ea -Xmx1000m" />
-    <option name="PROGRAM_PARAMETERS" value="--gmapsupp --index --latin1 /opt/data/uk/63240001.img /opt/data/uk/63240006.img" />
-    <option name="WORKING_DIRECTORY" value="file://$USER_HOME$/build/net" />
+    <option name="PROGRAM_PARAMETERS" value="--style-file=lines.style --list-styles" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" value="" />
     <option name="ENABLE_SWING_INSPECTOR" value="false" />

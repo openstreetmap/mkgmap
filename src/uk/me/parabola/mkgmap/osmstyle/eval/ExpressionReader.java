@@ -46,7 +46,7 @@ public class ExpressionReader {
 
 		// Complete building the tree
 		while (!opStack.isEmpty())
-			runOp();
+			runOp(scanner);
 
 		// The stack should contain one entry which is the complete tree
 		if (stack.size() != 1)
@@ -104,7 +104,7 @@ public class ExpressionReader {
 		try {
 			op = createOp(value);
 			while (!opStack.isEmpty() && opStack.peek().hasHigherPriority(op))
-				runOp();
+				runOp(scanner);
 		} catch (SyntaxException e) {
 			throw new SyntaxException(scanner, e.getRawMessage());
 		}
@@ -121,12 +121,18 @@ public class ExpressionReader {
 
 	/**
 	 * Combine the operation at the top of its stack with its values.
+	 * @param scanner The token scanner; used for line numbers.
 	 */
-	private void runOp() {
+	private void runOp(TokenScanner scanner) {
 		Op op = opStack.pop();
 		log.debug("Running op...", op.getType());
 
 		if (op instanceof BinaryOp) {
+			if (stack.size() < 2) {
+				throw new SyntaxException(scanner, String.format("Not enough arguments for '%s' operator",
+						op.getTypeString()));
+			}
+
 			Op arg2 = stack.pop();
 			Op arg1 = stack.pop();
 			BinaryOp binaryOp = (BinaryOp) op;
@@ -144,8 +150,14 @@ public class ExpressionReader {
 				op.setFirst(arg1);
 			}
 		} else if (!op.isType(OPEN_PAREN)) {
+			if (stack.size() < 1)
+				throw new SyntaxException(scanner, String.format("Missing argument for %s operator",
+						op.getTypeString()));
 			op.setFirst(stack.pop());
 		}
+
+		if (op.getFirst() == null)
+			throw new SyntaxException(scanner, "Invalid expression");
 
 		if (op.getFirst().isType(VALUE))
 			usedTags.add(op.getFirst().value());

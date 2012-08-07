@@ -70,5 +70,7 @@ public interface Op {
 
 	public boolean isType(char value);
 
-	int priority();
+	public int priority();
+
+	public String getTypeString();
 }

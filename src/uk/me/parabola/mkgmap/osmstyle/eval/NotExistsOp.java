@@ -35,6 +35,10 @@ public class NotExistsOp extends AbstractOp {
 		return 10;
 	}
 
+	public String getTypeString() {
+		return "!=*";
+	}
+
 	public String toString() {
 		return getFirst().toString() + "!=*";
 	}

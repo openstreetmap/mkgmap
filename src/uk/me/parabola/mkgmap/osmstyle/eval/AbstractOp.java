@@ -82,6 +82,10 @@ public abstract class AbstractOp implements Op {
 		return type;
 	}
 
+	public String getTypeString() {
+		return String.valueOf(getType());
+	}
+
 	void setType(char type) {
 		this.type = type;
 	}

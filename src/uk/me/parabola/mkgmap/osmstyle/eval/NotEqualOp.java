@@ -32,6 +32,10 @@ public class NotEqualOp extends EqualsOp {
 		return !super.eval(el);
 	}
 
+	public String getTypeString() {
+		return "!=";
+	}
+
 	public String toString() {
 		return getFirst().toString() + "!=" + getSecond();
 	}
