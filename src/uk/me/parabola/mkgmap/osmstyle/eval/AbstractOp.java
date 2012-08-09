@@ -33,8 +33,16 @@ public abstract class AbstractOp implements Op {
 		Op op;
 		switch (c) {
 		case EQUALS: op = new EqualsOp(); break;
-		case AND: op = new AndOp(); break;
-		case OR: op = new OrOp(); break;
+		case AND:
+			if (value.length() > 1)
+				throw new SyntaxException(String.format("Use '&' instead of '%s'", value));
+			op = new AndOp();
+			break;
+		case OR:
+			if (value.length() > 1)
+				throw new SyntaxException(String.format("Use '|' instead of '%s'", value));
+			op = new OrOp();
+			break;
 		case REGEX: op = new RegexOp(); break;
 		case OPEN_PAREN: op = new OpenOp(); break;
 		case CLOSE_PAREN: op = new CloseOp(); break;

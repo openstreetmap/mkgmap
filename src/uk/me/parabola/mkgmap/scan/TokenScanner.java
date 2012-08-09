@@ -189,6 +189,13 @@ public class TokenScanner {
 					val.append('=');
 				else
 					pushback = c;
+			} else if (c == '&' || c == '|') {
+				// Allow && and || as single symbols
+				int c2 = readChar();
+				if (c2 == c)
+					val.append((char) c2);
+				else
+					pushback = c2;
 			}
 			tt = TokType.SYMBOL;
 		}
