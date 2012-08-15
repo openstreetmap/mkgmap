@@ -87,7 +87,7 @@ aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
 # Remove access=yes from highways.
-highway=* & access=yes { delete access }
+highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.
 highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
 highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
