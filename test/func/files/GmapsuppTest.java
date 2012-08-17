@@ -459,7 +459,7 @@ public class GmapsuppTest extends Base {
 				"63240002.img"
 		);
 
-		outputs.checkError("differing code page");
+		outputs.checkError("different code page");
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {

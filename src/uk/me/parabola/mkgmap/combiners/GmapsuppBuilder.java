@@ -114,15 +114,18 @@ public class GmapsuppBuilder implements Combiner {
 	/**
 	 * Add the sort file for the given family id.
 	 */
-	private void addSrtFile(int familyId, Sort sort) {
-		Sort s = sortMap.get(familyId);
-		if (s == null)
+	private void addSrtFile(int familyId, FileInfo info) {
+		Sort prevSort = sortMap.get(familyId);
+		Sort sort = info.getSort();
+		if (prevSort == null) {
 			sortMap.put(familyId, sort);
-		else {
-			if (s.getCodepage() != sort.getCodepage())
-				System.err.println("WARNING: input files have differing code pages");
-			if (s.getSortOrderId() != sort.getSortOrderId())
-				System.err.println("WARNING: input files have differing sort orders");
+		} else {
+			if (prevSort.getCodepage() != sort.getCodepage())
+				System.err.printf("WARNING: input file '%s' has a different code page (%d rather than %d)\n",
+						info.getFilename(), sort.getCodepage(), prevSort.getCodepage());
+			if (info.hasSortOrder() && prevSort.getSortOrderId() != sort.getSortOrderId())
+				System.err.printf("WARNING: input file '%s' has a different sort order (%x rather than %x\n",
+						info.getFilename(), sort.getSortOrderId(), prevSort.getSortOrderId());
 		}
 	}
 
@@ -141,7 +144,7 @@ public class GmapsuppBuilder implements Combiner {
 			mdrBuilder.onMapEnd(info);
 		}
 
-		addSrtFile(familyId, info.getSort());
+		addSrtFile(familyId, info);
 	}
 
 	/**

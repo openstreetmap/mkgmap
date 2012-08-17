@@ -26,6 +26,7 @@ import java.util.Locale;
 import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
@@ -33,6 +34,7 @@ import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
+import uk.me.parabola.imgfmt.sys.FileImgChannel;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
@@ -172,10 +174,31 @@ public class FileInfo {
 
 		// Get the size of the file.
 		File f = new File(inputName);
-		long length = f.length();
-		info.fileSizes.add((int) length);
+		info.fileSizes.add((int) f.length());
+
+		if (inputName.toLowerCase().endsWith(".lbl")) {
+			lblInfo(inputName, info);
+		} else if (inputName.toLowerCase().endsWith(".typ")) {
+			typInfo(inputName, info);
+		}
 
 		return info;
+	}
+
+	/**
+	 * Read information from the TYP file that we might need when combining it with other files.
+	 * @param filename The name of the file.
+	 * @param info The information will be stored here.
+	 */
+	private static void typInfo(String filename, FileInfo info) {
+		ImgChannel chan = new FileImgChannel(filename, "r");
+		try {
+			BufferedImgFileReader fr = new BufferedImgFileReader(chan);
+			fr.position(0x15);
+			info.setCodePage(fr.getChar());
+		} finally {
+			Utils.closeFile(chan);
+		}
 	}
 
 	/**
@@ -284,17 +307,24 @@ public class FileInfo {
 	 * Obtain the information we need from a LBL file.
 	 */
 	private static void lblInfo(FileSystem imgFs, DirectoryEntry ent, FileInfo info) throws FileNotFoundException {
-		LBLFileReader lblFile = null;
+		ImgChannel chan = imgFs.open(ent.getFullName(), "r");
+		lblInfo(chan, info);
+	}
+
+	private static void lblInfo(String filename, FileInfo info) {
+		FileImgChannel r = new FileImgChannel(filename, "r");
 		try {
-			ImgChannel chan = imgFs.open(ent.getFullName(), "r");
-			lblFile = new LBLFileReader(chan);
-
-			info.setCodePage(lblFile.getCodePage());
-			info.setSortOrderId(lblFile.getSortOrderId());
-
+			lblInfo(r, info);
 		} finally {
-			Utils.closeFile(lblFile);
+			Utils.closeFile(r);
 		}
+	}
+
+	private static void lblInfo(ImgChannel chan, FileInfo info) {
+		LBLFileReader lblFile = new LBLFileReader(chan);
+
+		info.setCodePage(lblFile.getCodePage());
+		info.setSortOrderId(lblFile.getSortOrderId());
 	}
 
 	private void setBounds(Area area) {
@@ -448,11 +478,11 @@ public class FileInfo {
 		this.codePage = codePage;
 	}
 
-	public int getSortOrderId() {
-		return sortOrderId;
-	}
-
 	public void setSortOrderId(int sortOrderId) {
 		this.sortOrderId = sortOrderId;
+	}
+
+	public boolean hasSortOrder() {
+		return sortOrderId != 0;
 	}
 }
