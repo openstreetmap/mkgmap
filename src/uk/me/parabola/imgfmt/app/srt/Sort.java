@@ -465,7 +465,7 @@ public class Sort {
 
 					} else {
 						for (next = sortPositions[bytes[in] & 0xff]; next == 0 && pos < len; ) {
-							next = sortPositions[bytes[pos++ & 0xff]];
+							next = sortPositions[bytes[pos++ & 0xff] & 0xff];
 						}
 					}
 				} else {
