@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.scan;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Deque;
 import java.util.LinkedList;
 
 /**
@@ -28,18 +29,24 @@ import java.util.LinkedList;
  */
 public class TokenScanner {
 	private static final int NO_PUSHBACK = 0;
-	private final Reader reader;
+
+	// Reading state
+	private Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
-	private final String fileName;
+	private String fileName;
 	private int linenumber;
+
+	private LinkedList<Token> tokens = new LinkedList<Token>();
+
+	private boolean bol = true;
+
+	// Included file state
+	private final Deque<ScanState> states = new LinkedList<ScanState>();
 
 	// Extra word characters.
 	private String extraWordChars = "";
-
-	private final LinkedList<Token> tokens = new LinkedList<Token>();
-	private boolean bol = true;
 	private String commentChar = "#";
 
 	public TokenScanner(String filename, Reader reader) {
@@ -84,6 +91,14 @@ public class TokenScanner {
 	public Token nextToken() {
 		skipSpace();
 		return nextRawToken();
+	}
+
+	/**
+	 * Push a token back to the beginning of the token queue.
+	 * @param tok The token to add to the beginning of the queue.
+	 */
+	public void pushToken(Token tok) {
+		tokens.push(tok);
 	}
 
 	/**
@@ -213,12 +228,28 @@ public class TokenScanner {
 			return c;
 		}
 
-		try {
-			c = reader.read();
-		} catch (IOException e) {
-			isEOF = true;
-			c = -1;
-		}
+		do {
+			try {
+				c = reader.read();
+				if (c == -1)
+					isEOF = true;
+			} catch (IOException e) {
+				if (states.isEmpty()) {
+					isEOF = true;
+					c = -1;
+				} else {
+					ScanState state = states.removeFirst();
+					reader = state.reader;
+					pushback = state.pushback;
+					fileName = state.fileName;
+					linenumber = state.linenumber;
+					bol = state.bol;
+					tokens = state.tokens;
+					isEOF = false;
+					c = -1;
+				}
+			}
+		} while (!isEOF && c == -1);
 
 		return c;
 	}
@@ -381,5 +412,36 @@ public class TokenScanner {
 			this.commentChar = "";
 		else
 			this.commentChar = commentChar;
+	}
+
+	public void includeFile(String filename, Reader r) {
+		ScanState state = new ScanState();
+		state.reader = reader;
+		state.pushback = pushback;
+		state.fileName = fileName;
+		state.linenumber = linenumber;
+		state.tokens = tokens;
+		state.bol = bol;
+		states.addFirst(state);
+
+		reader = r;
+		pushback = NO_PUSHBACK;
+		isEOF = false;
+		fileName = filename;
+		linenumber = 1;
+		tokens = new LinkedList<Token>();
+		bol = true;
+	}
+
+	private class ScanState {
+		private Reader reader;
+		private int pushback;
+
+		private String fileName;
+		private int linenumber;
+
+		private LinkedList<Token> tokens;
+
+		private boolean bol;
 	}
 }

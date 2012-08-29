@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
- * 
+ * Copyright (C) 2008, 2012 Steve Ratcliffe
+ *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
+ *  it under the terms of the GNU General Public License version 3 or version 2
+ *  as published by the Free Software Foundation.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
- * 
+ *
+ *
  * Author: Steve Ratcliffe
  * Create date: 02-Nov-2008
  */
@@ -35,6 +35,8 @@ import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.TokType;
+import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
 import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
@@ -43,9 +45,6 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
  * Read a rules file.  A rules file contains a list of rules and the
  * resulting garmin type, should the rule match.
  *
- * <pre>
- * 
- * </pre>
  * @author Steve Ratcliffe
  */
 public class RuleFileReader {
@@ -55,6 +54,7 @@ public class RuleFileReader {
 
 	private final RuleSet rules;
 	private TokenScanner scanner;
+	private StyleFileLoader loader;
 
 	public RuleFileReader(int kind, LevelInfo[] levels, RuleSet rules) {
 		this.rules = rules;
@@ -68,11 +68,11 @@ public class RuleFileReader {
 	 * @throws FileNotFoundException If the given file does not exist.
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
-		Reader r = loader.open(name);
-		load(r, name);
+		this.loader = loader;
+		load(loader.open(name), name);
 	}
 
-	void load(Reader r, String name) {
+	private void load(Reader r, String name) {
 		scanner = new TokenScanner(name, r);
 		scanner.setExtraWordChars("-:.");
 
@@ -82,6 +82,10 @@ public class RuleFileReader {
 		// Read all the rules in the file.
 		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
+			checkCommand();
+			if (scanner.isEndOfFile())
+				break;
+
 			Op expr = expressionReader.readConditions();
 
 			ActionList actionList = actionReader.readActions();
@@ -100,6 +104,53 @@ public class RuleFileReader {
 		rules.addUsedTags(expressionReader.getUsedTags());
 		rules.addUsedTags(actionReader.getUsedTags());
 		rules.prepare();
+	}
+
+	/**
+	 * Check for a keyword that introduces a command.
+	 *
+	 * Commands are context sensitive, if a keyword is used is part of an expression, then it must still
+	 * work. In other words the following is valid:
+	 * <pre>
+	 *     include 'filename';
+	 *
+	 *     include=yes [0x02 ...]
+	 * </pre>
+	 * To achieve this the keyword is a) not quoted, b) is followed by text or quoted text or some symbol that cannot
+	 * be part of an expression.
+	 *
+	 * Called before reading an expression, must put back any token (apart from whitespace) if there is
+	 * not a command.
+	 */
+	private void checkCommand() {
+		scanner.skipSpace();
+		if (scanner.isEndOfFile())
+			return;
+
+		if (scanner.checkToken("include")) {
+			// Consume the 'include' token and skip spaces
+			Token token = scanner.nextToken();
+			scanner.skipSpace();
+
+			// If include is being used as a keyword then it is followed by a word or a quoted word.
+			Token next = scanner.peekToken();
+			if (next.getType() == TokType.TEXT
+					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
+			{
+				String filename = "include/" + scanner.nextWord();
+				scanner.validateNext(";");
+
+				try {
+					scanner.includeFile(filename, loader.open(filename));
+				} catch (FileNotFoundException e) {
+					throw new SyntaxException("Cannot open included file: " + filename);
+				}
+			} else {
+				// Wrong syntax for include statement, so push back token to allow a possible expression to be read
+				scanner.pushToken(token);
+			}
+		}
+		scanner.skipSpace();
 	}
 
 	/**

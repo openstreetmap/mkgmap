@@ -27,7 +27,6 @@ import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import func.lib.StringStyleFileLoader;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static func.lib.TestUtils.makeRuleSet;
@@ -703,7 +702,7 @@ public class RuleFileReaderTest {
 		assertEquals(2, type.getType());
 	}
 
-	@Test @Ignore
+	@Test
 	public void testIncludeFile() {
 		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
 				{"lines", "include incfile;"},
@@ -719,10 +718,10 @@ public class RuleFileReaderTest {
 		assertEquals(3, type.getType());
 	}
 
-	@Test @Ignore
+	@Test
 	public void testIncludeFileQuoted() {
 		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
-				{"lines", "include incfile;"},
+				{"lines", "include \n 'inc file' \n;"},
 				{"include/inc file", "highway=secondary [0x3]"},
 		});
 
