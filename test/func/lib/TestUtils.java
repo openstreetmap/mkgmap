@@ -18,6 +18,7 @@ package func.lib;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -25,7 +26,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.main.Main;
+import uk.me.parabola.mkgmap.osmstyle.RuleFileReader;
+import uk.me.parabola.mkgmap.osmstyle.RuleSet;
+import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 
 import static org.junit.Assert.*;
 
@@ -109,4 +115,36 @@ public class TestUtils {
 
 		return new Outputs(outsink.toString(), errsink.toString());
 	}
+
+	/**
+	 * Create a rule set out of a string.  The string is processed
+	 * as if it were in a file and the levels spec had been set.
+	 */
+	public static RuleSet makeRuleSet(String in) {
+		StringStyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", in}
+		});
+
+		return makeRuleSet(loader);
+	}
+
+	/**
+	 * Make a rule set from the "lines" file of the given StyleFileLoader.
+	 *
+	 * @param loader This will be used to load the file 'lines'. If that file includes any other file, then it
+	 * should accessible from the loader too.
+	 *
+	 * @return A rule set for lines.
+	 */
+	public static RuleSet makeRuleSet(StyleFileLoader loader) {
+		RuleSet rs = new RuleSet();
+		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+		try {
+			rr.load(loader, "lines");
+		} catch (FileNotFoundException e) {
+			throw new AssertionError("Failed to open file: lines");
+		}
+		return rs;
+	}
+
 }

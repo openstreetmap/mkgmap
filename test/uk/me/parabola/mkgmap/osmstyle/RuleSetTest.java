@@ -13,12 +13,9 @@
 
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -27,6 +24,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 
 import org.junit.Test;
 
+import static func.lib.TestUtils.makeRuleSet;
 import static org.junit.Assert.*;
 
 /**
@@ -361,18 +359,5 @@ public class RuleSetTest {
 			return null;
 		else
 			return types.get(0);
-	}
-
-	/**
-	 * Create a rule set out of a string.  The string is processed
-	 * as if it were in a file and the levels spec had been set.
-	 */
-	private RuleSet makeRuleSet(String in) {
-		Reader r = new StringReader(in);
-
-		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-		rr.load(r, "string");
-		return rs;
 	}
 }
