@@ -706,7 +706,7 @@ public class RuleFileReaderTest {
 	public void testIncludeFile() {
 		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
 				{"lines", "include incfile;"},
-				{"include/incfile", "highway=secondary [0x3]"},
+				{"incfile", "highway=secondary [0x3]"},
 		});
 
 		RuleSet rs = makeRuleSet(loader);
@@ -722,7 +722,7 @@ public class RuleFileReaderTest {
 	public void testIncludeFileQuoted() {
 		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
 				{"lines", "include \n 'inc file' \n;"},
-				{"include/inc file", "highway=secondary [0x3]"},
+				{"inc file", "highway=secondary [0x3]"},
 		});
 
 		RuleSet rs = makeRuleSet(loader);
@@ -732,6 +732,37 @@ public class RuleFileReaderTest {
 		GType type = getFirstType(rs, el);
 		assertNotNull(type);
 		assertEquals(3, type.getType());
+	}
+
+	/**
+	 * Test an include file within an include file.
+	 */
+	@Test
+	public void testNestedIncludes() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "a=1 [0x1] include 'first'; a=2 [0x2]"},
+				{"first", "b=1 [0x1] include 'second'; b=2 [0x2 ]"},
+				{"second", "c=1 [0x1] c=2 [0x2 ]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+
+		el.addTag("a", "2");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "1");
+		type = getFirstType(rs, el);
+		assertEquals(1, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "2");
+		type = getFirstType(rs, el);
+		assertEquals(2, type.getType());
 	}
 
 	/**

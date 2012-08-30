@@ -137,7 +137,7 @@ public class RuleFileReader {
 			if (next.getType() == TokType.TEXT
 					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
 			{
-				String filename = "include/" + scanner.nextWord();
+				String filename = scanner.nextWord();
 				scanner.validateNext(";");
 
 				try {
