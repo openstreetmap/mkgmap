@@ -22,6 +22,8 @@ import java.io.Reader;
 import java.util.Deque;
 import java.util.LinkedList;
 
+import uk.me.parabola.io.EndOfFileException;
+
 /**
  * Read a file in terms of word and symbol tokens.
  *
@@ -232,20 +234,14 @@ public class TokenScanner {
 			try {
 				c = reader.read();
 				if (c == -1)
-					isEOF = true;
+					throw new EndOfFileException();
 			} catch (IOException e) {
 				if (states.isEmpty()) {
 					isEOF = true;
 					c = -1;
 				} else {
 					ScanState state = states.removeFirst();
-					reader = state.reader;
-					pushback = state.pushback;
-					fileName = state.fileName;
-					linenumber = state.linenumber;
-					bol = state.bol;
-					tokens = state.tokens;
-					isEOF = false;
+					state.copyTo(this);
 					c = -1;
 				}
 			}
@@ -415,13 +411,7 @@ public class TokenScanner {
 	}
 
 	public void includeFile(String filename, Reader r) {
-		ScanState state = new ScanState();
-		state.reader = reader;
-		state.pushback = pushback;
-		state.fileName = fileName;
-		state.linenumber = linenumber;
-		state.tokens = tokens;
-		state.bol = bol;
+		ScanState state = new ScanState(this);
 		states.addFirst(state);
 
 		reader = r;
@@ -434,14 +424,38 @@ public class TokenScanner {
 	}
 
 	private class ScanState {
-		private Reader reader;
-		private int pushback;
+		private final Reader reader;
+		private final int pushback;
 
-		private String fileName;
-		private int linenumber;
+		private final String fileName;
+		private final int linenumber;
 
-		private LinkedList<Token> tokens;
+		private final LinkedList<Token> tokens;
 
-		private boolean bol;
+		private final boolean bol;
+
+		/**
+		 * Create this state with the state of the token scanner.
+		 */
+		public ScanState(TokenScanner ts) {
+			reader = ts.reader;
+			pushback = ts.pushback;
+			fileName = ts.fileName;
+			linenumber = ts.linenumber;
+			tokens = ts.tokens;
+			bol = ts.bol;
+		}
+
+		/**
+		 * Copy this state to the given token scanner.
+		 */
+		public void copyTo(TokenScanner ts) {
+			ts.reader = reader;
+			ts.pushback = pushback;
+			ts.fileName = fileName;
+			ts.linenumber = linenumber;
+			ts.tokens = tokens;
+			ts.bol = bol;
+		}
 	}
 }
