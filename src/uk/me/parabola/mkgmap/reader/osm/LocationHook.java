@@ -145,6 +145,30 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 					resultLog.debug("W", way.getId(), locationTagsToString(way));
 			}
 		}
+		
+		// process all multipolygons - the add-pois-to-area function uses its
+		// center point and its tags so the mp must be tagged itself with the bounds
+		// tags
+		for (Relation r : saver.getRelations().values()) {
+			if (r instanceof MultiPolygonRelation) {
+				// check if the mp could be processed
+				Coord mpCenter = ((MultiPolygonRelation) r).getCofG();
+				if (mpCenter != null && saver.getBoundingBox().contains(mpCenter)){
+					// create a fake node for which the bounds information is collected
+					Node mpNode = new Node(FakeIdGenerator.makeFakeId(), mpCenter);
+					processElem(mpNode);
+					// copy the bounds tags back to the multipolygon
+					for (String boundsTag : BoundaryQuadTree.mkgmapTagsArray) {
+						String tagValue = mpNode.getTag(boundsTag);
+						if (tagValue != null) {
+							r.addTag(boundsTag, tagValue);
+						}
+					}
+					if (resultLog.isDebugEnabled())
+						resultLog.debug("R", r.getId(), locationTagsToString(r));
+				}
+			}
+		}
 	}
 
 	/**
