@@ -138,12 +138,36 @@ public class RuleFileReader {
 					|| (next.getType() == TokType.SYMBOL && (next.isValue("'") || next.isValue("\""))))
 			{
 				String filename = scanner.nextWord();
+				String displayName = filename;
+
+				StyleFileLoader styleLoader = loader;
+				scanner.skipSpace();
+
+				// The include can be followed by an optional 'from' clause. The file is read from the given
+				// style-name in that case.
+				if (scanner.checkToken("from")) {
+					scanner.nextToken();
+					String styleName = scanner.nextWord();
+					if (styleName.equals(";"))
+						throw new SyntaxException(scanner, "No style name after 'from'");
+
+					try {
+						// Note: this style loader is never explicitly closed and so if the style loader opens
+						// a file it will not be explicitly closed either. The only loader where this happens has
+						// a finalise() method that closes its underlying file.
+						styleLoader = StyleFileLoader.createStyleLoader(null, styleName);
+						displayName = String.format("%s/%s", styleName, filename);
+					} catch (FileNotFoundException e) {
+						throw new SyntaxException(scanner, "Cannot find style: " + styleName);
+					}
+				}
+
 				scanner.validateNext(";");
 
 				try {
-					scanner.includeFile(filename, loader.open(filename));
+					scanner.includeFile(displayName, styleLoader.open(filename));
 				} catch (FileNotFoundException e) {
-					throw new SyntaxException("Cannot open included file: " + filename);
+					throw new SyntaxException(scanner, "Cannot open included file: " + filename);
 				}
 			} else {
 				// Wrong syntax for include statement, so push back token to allow a possible expression to be read

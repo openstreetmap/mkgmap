@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -66,7 +67,11 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 
 		Reader in = new FileReader(filename);
 
-		loadFiles(in);
+		try {
+			loadFiles(in);
+		} finally {
+			Utils.closeFile(in);
+		}
 	}
 
 	private void loadFiles(Reader in) {
@@ -225,7 +230,7 @@ public class CombinedStyleFileLoader extends StyleFileLoader {
 
 	private static class NoHiddenFilter implements FilenameFilter {
 		public boolean accept(File dir, String name) {
-			return !(name.length() == 0 || name.charAt(0) == '.');
+			return !(name.isEmpty() || name.charAt(0) == '.');
 		}
 	}
 }
