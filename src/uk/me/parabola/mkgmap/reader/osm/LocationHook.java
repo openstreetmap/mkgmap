@@ -15,11 +15,11 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryGrid;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryQuadTree;
 import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryUtil;
@@ -44,7 +44,6 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	private String boundaryDirName;
 
 	
-	public static final String BOUNDS_OPTION = "bounds";
 	/** this static object is used to synchronize the check if the bounds directory contains any bounds */
 	private static final Object BOUNDS_CHECK_LOCK = new Object();
 	
@@ -56,51 +55,41 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	private EnhancedProperties props;
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
-		if (props.containsKey("index") == false) {
-			log.info("Disable LocationHook because index option is not set.");
+		boundaryDirName = props.getProperty("bounds");
+		
+		if (boundaryDirName == null) {
+			// bounds property not set
 			return false;
 		}
-
+		
 		this.props = props;
 		this.saver = saver;
 
-		autofillOptions.addAll(LocatorUtil.parseAutofillOption(props));
+		long t1 = System.currentTimeMillis();
 
-		if (autofillOptions.isEmpty()) {
-			log.info("Disable LocationHook because no location-autofill option set.");
-			return false;
-		}
-
-		if (autofillOptions.contains(BOUNDS_OPTION)) {
-			boundaryDirName = props.getProperty("bounds", "bounds");
-			long t1 = System.currentTimeMillis();
-
-			synchronized (BOUNDS_CHECK_LOCK) {
-				// checking of the boundary dir is expensive
-				// check once only and reuse the result
-				if (boundaryDirName.equals(checkedBoundaryDirName)) {
-					if (checkBoundaryDirOk == false) {
-						log.error("Disable LocationHook because boundary directory is unusable. Dir: "+boundaryDirName);
-						return false;
-					}
-				} else {
-					checkedBoundaryDirName = boundaryDirName;
-					checkBoundaryDirOk = false;
-
-					// boundaryDir.list() is much quicker than boundaryDir.listFiles(FileFilter)
-					List<String> boundaryFiles = BoundaryUtil.getBoundaryDirContent(boundaryDirName);
-					if (boundaryFiles == null || boundaryFiles.size() == 0) {
-						log.error("LocationHook is disabled because no boundary files are available. Dir: "
-								+ boundaryDirName);
-						return false;
-					}
-
-					// passed all checks => boundaries are okay
-					checkBoundaryDirOk = true;
+		synchronized (BOUNDS_CHECK_LOCK) {
+			// checking of the boundary dir is expensive
+			// check once only and reuse the result
+			if (boundaryDirName.equals(checkedBoundaryDirName)) {
+				if (checkBoundaryDirOk == false) {
+					log.error("Disable LocationHook because bounds directory is unusable. Dir: "+boundaryDirName);
+					return false;
 				}
+			} else {
+				checkedBoundaryDirName = boundaryDirName;
+				checkBoundaryDirOk = false;
+
+				List<String> boundaryFiles = BoundaryUtil.getBoundaryDirContent(boundaryDirName);
+				if (boundaryFiles == null || boundaryFiles.size() == 0) {
+					log.error("LocationHook is disabled because no bounds files are available. Dir: "
+							+ boundaryDirName);
+					return false;
+				}
+					// passed all checks => boundaries are okay
+				checkBoundaryDirOk = true;
 			}
-			log.info("Checking bounds dir took", (System.currentTimeMillis() - t1), "ms");
 		}
+		log.info("Checking bounds dir took", (System.currentTimeMillis() - t1), "ms");
 		return true;
 	}
 
@@ -108,10 +97,8 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		long t1 = System.currentTimeMillis();
 		log.info("Starting with location hook");
 
-		if (autofillOptions.contains(BOUNDS_OPTION)) {
-			boundaryGrid = new BoundaryGrid(boundaryDirName, saver.getBoundingBox(), props);
-			processLocationRelevantElements();
-		}
+		boundaryGrid = new BoundaryGrid(boundaryDirName, saver.getBoundingBox(), props);
+		processLocationRelevantElements();
 
 		long dt = (System.currentTimeMillis() - t1);
 		log.info("======= LocationHook Stats =====");             

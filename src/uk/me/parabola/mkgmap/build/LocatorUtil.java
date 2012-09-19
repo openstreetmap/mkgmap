@@ -38,7 +38,7 @@ public class LocatorUtil {
 	 * @return the options
 	 */
 	public static Set<String> parseAutofillOption(EnhancedProperties props) {
-		String optionStr = props.getProperty("location-autofill", "bounds");
+		String optionStr = props.getProperty("location-autofill", null);
 		if (optionStr == null) {
 			return Collections.emptySet();
 		}

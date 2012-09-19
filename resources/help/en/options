@@ -101,7 +101,7 @@ Address search options:
 
 	If both the --gmapsupp and --tdbfile options are given alongside
 	the --index option, then both indexes will be created. Note that
-	this will require roughtly twice as much memory.
+	this will require roughly twice as much memory.
 
 	The --overview-mapname option can be used to change these names.  If
 	the mapset is sent to the device from MapSource, it will enable
@@ -125,40 +125,40 @@ Address search options:
 --createboundsfile=filename
     In case this option is set the given file is read and all boundary
     data in it is stored in preprocessed bounds files which are stored 
-    in the directory given as bounds parameter. The preprocessed bounds files
-    are required to run the option location-autofill=bounds.
+    in the directory given as bounds parameter. 
     The input file with the given filename must contain the boundaries that 
     should be preprocessed. It can have OSM or PBF fileformat. It is 
     recommended that it contains the boundary data only to avoid very high
     memory usage. 
 
---bounds=directory
-    The directory that contains the preprocessed bounds files. 
-    Default: bounds
+--bounds=directory|zipfile
+    A directory or a zipfile containing the preprocessed bounds files. 
+    Bounds files in a zipfile must be located in the zipfiles root directory.
 
---location-autofill=[option1,[option2]]
-	Controls how country, region, city and zip info is gathered for 
-	cities, streets and pois.
-	Default: bounds
-
-    bounds    The preprocessed boundaries are used to mark all points,  
-              lines and polygons within a boundary with the special tag:
+    The preprocessed boundaries are used to add special tags to all elements 
+    (points, lines and polygons) containing the elements location information.
+    The style file can be used to assign the address tags mkgmap:country,
+    mkgmap:region etc. using these values.
+    
+    The following special tags are added:          
               mkgmap:admin_level2 : Name of the admin_level=2 boundary 
               mkgmap:admin_level3 : Name of the admin_level=3 boundary
               ..
               mkgmap:admin_level11
               mkgmap:postcode : the postal_code value
     
-              The style file can be used to assign the address tags mkgmap:country,
-              mkgmap:region etc. with these values.
-    
+--location-autofill=[option1,[option2]]
+	Controls how the address fields for country, region, city and zip info 
+	are gathered automatically if the fields are not set by using the special 
+	mkgmap address tags (e.g. mkgmap:city - see option index).
+	Warning: automatic assignment of address fields is somehow a best guess.
+
     is_in     The is_in tag is analyzed for country and region information.
-    		  This is done only for address tags that are not defined by the 
-    		  style rules.               
               
-    nearest   If all methods before fail the city/hamlet points that are 
-              closest to the element are used to assign the missing address tags.
-              Warning: elements may end up in the wrong country/region/city.
+    nearest   The city/hamlet points that are closest to the element are used 
+              to assign the missing address fields. Beware that cities located 
+              in the same tile are used only. So the results close to a tile 
+              border have less quality.  
 
 Style options:
 

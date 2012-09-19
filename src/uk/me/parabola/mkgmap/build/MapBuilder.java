@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -110,12 +111,16 @@ public class MapBuilder implements Configurable {
 
 	private final java.util.Map<String, Highway> highways = new HashMap<String, Highway>();
 
-	private Country defaultCountry;
+	/** name that is used for cities which name are unknown */
+	private final static String UNKNOWN_CITY_NAME = "";
 
+	private Country defaultCountry;
 	private String countryName = "COUNTRY";
 	private String countryAbbr = "ABC";
 	private String regionName;
 	private String regionAbbr;
+	
+	private Set<String> locationAutofill;
 
 	private int minSizePolygon;
 	private double reducePointError;
@@ -134,6 +139,7 @@ public class MapBuilder implements Configurable {
 
 	public MapBuilder() {
 		regionName = null;
+		locationAutofill = Collections.emptySet();
 		locator = new Locator();
 	}
 
@@ -159,7 +165,10 @@ public class MapBuilder implements Configurable {
 
 		licenseFileName = props.getProperty("license-file", null);
 		
+		locationAutofill = LocatorUtil.parseAutofillOption(props);
+		
 		locator = new Locator(props);
+		locator.setDefaultCountry(countryName, countryAbbr);
 	}
 
 	/**
@@ -184,6 +193,8 @@ public class MapBuilder implements Configurable {
 			}
 		}
 
+		normalizeCountries(src);
+		
 		processCities(map, src);
 		processRoads(map,src);
 		processPOIs(map, src);
@@ -244,6 +255,41 @@ public class MapBuilder implements Configurable {
 	}
 
 	/**
+	 * Process the country names of all elements and normalize them
+	 * so that one consistent country name is used for the same country 
+	 * instead of different spellings.
+	 * @param src the source of elements
+	 */
+	private void normalizeCountries(MapDataSource src) {
+		for (MapPoint p : src.getPoints()) {
+			String countryStr = p.getCountry();
+			if (countryStr != null) {
+				countryStr = locator.normalizeCountry(countryStr);
+				p.setCountry(countryStr);
+			}			
+		}
+		
+		for (MapLine l : src.getLines()) {
+			String countryStr = l.getCountry();
+			if (countryStr != null) {
+				countryStr = locator.normalizeCountry(countryStr);
+				l.setCountry(countryStr);
+			}			
+		}		
+
+		// shapes do not have address information
+		// untag the following lines if this is wrong
+//		for (MapShape s : src.getShapes()) {
+//			String countryStr = s.getCountry();
+//			if (countryStr != null) {
+//				countryStr = locator.normalizeCountry(countryStr);
+//				s.setCountry(countryStr);
+//			}			
+//		}		
+
+	}
+	
+	/**
 	 * Processing of Cities
 	 *
 	 * Fills the city list in lbl block that is required for find by name
@@ -255,28 +301,22 @@ public class MapBuilder implements Configurable {
 	 */
 	private void processCities(Map map, MapDataSource src) {
 		LBLFile lbl = map.getLblFile();
-
-		locator.setDefaultCountry(countryName, countryAbbr);
 		
-		// collect the names of the cities
-		for (MapPoint p : src.getPoints()) {
-			if(p.isCity() && p.getName() != null)
-				locator.addCityOrPlace(p); // Put the city info the map for missing info 
+		if (locationAutofill.isEmpty() == false) {
+			// collect the names of the cities
+			for (MapPoint p : src.getPoints()) {
+				if(p.isCity() && p.getName() != null)
+					locator.addCityOrPlace(p); // Put the city info the map for missing info 
+			}
+
+			locator.autofillCities(); // Try to fill missing information that include search of next city
 		}
-
-		locator.autofillCities(); // Try to fill missing information that include search of next city
-
+		
 		for (MapPoint p : src.getPoints()) 
 		{
 			if(p.isCity() && p.getName() != null)
 			{
-
 				String countryStr = p.getCountry();
-				if (countryStr != null) {
-					countryStr = locator.normalizeCountry(countryStr);
-					p.setCountry(countryStr);
-				}
-
 				Country thisCountry;
 				if(countryStr != null) {
 					thisCountry = lbl.createCountry(countryStr, locator.getCountryISOCode(countryStr));
@@ -311,14 +351,10 @@ public class MapBuilder implements Configurable {
 			if(line.isRoad()) {
 				String cityName = line.getCity();
 				String cityCountryName = line.getCountry();
-				if (cityCountryName != null) {
-					cityCountryName = locator.normalizeCountry(cityCountryName);
-					line.setCountry(cityCountryName);
-				}
 				String cityRegionName  = line.getRegion();
 				String zipStr = line.getZip();
 
-				if(cityName == null) {
+				if(cityName == null && locationAutofill.contains("nearest")) {
 					// Get name of next city if untagged
 
 					searchPoint.setLocation(line.getLocation());
@@ -336,6 +372,12 @@ public class MapBuilder implements Configurable {
 					}
 				}
 
+				if (cityName == null && (cityCountryName != null || cityRegionName != null)) {
+					// if city name is unknown and region and/or country is known 
+					// use empty name for the city
+					cityName = UNKNOWN_CITY_NAME;
+				}
+				
 				if(cityName != null) {
 
 					Country cc = (cityCountryName == null)? getDefaultCountry() : lbl.createCountry(cityCountryName, locator.getCountryISOCode(cityCountryName));
@@ -380,10 +422,7 @@ public class MapBuilder implements Configurable {
 				String zipStr     = p.getZip();
 				String cityStr    = p.getCity();
 
-				if(countryStr != null)
-					countryStr = locator.normalizeCountry(countryStr);
-
-				if(countryStr == null || regionStr == null || (zipStr == null && cityStr == null))
+				if(locationAutofill.contains("nearest") && (countryStr == null || regionStr == null || (zipStr == null && cityStr == null)))
 				{
 					MapPoint nextCity = locator.findNearbyCityByName(p);
 						
@@ -429,6 +468,12 @@ public class MapBuilder implements Configurable {
 
 				POIRecord r = lbl.createPOI(p.getName());	
 
+				if (cityStr == null && (countryStr != null || regionStr != null)) {
+					// if city name is unknown and region and/or country is known 
+					// use empty name for the city
+					cityStr = UNKNOWN_CITY_NAME;
+				}
+				
 				if(cityStr != null)
 				{
 					Country thisCountry;
@@ -500,14 +545,14 @@ public class MapBuilder implements Configurable {
 			if(hw == null)
 				hw = makeHighway(map, ref);
 			if(hw == null) {
-			    log.warn("Can't create exit " + mep.getName() + " (OSM id " + OSMId + ") on unknown highway " + ref);
+			    log.warn("Can't create exit", mep.getName(), "(OSM id", OSMId, ") on unknown highway", ref);
 			    return;
 			}
 			String exitName = mep.getName();
 			String exitTo = mep.getTo();
 			Exit exit = new Exit(hw);
 			String facilityDescription = mep.getFacilityDescription();
-			log.info("Creating " + ref + " exit " + exitName + " (OSM id " + OSMId +") to " + exitTo + " with facility " + ((facilityDescription == null)? "(none)" : facilityDescription));
+			log.info("Creating", ref, "exit", exitName, "(OSM id", OSMId +") to", exitTo, "with facility", ((facilityDescription == null)? "(none)" : facilityDescription));
 			if(facilityDescription != null) {
 				// description is TYPE,DIR,FACILITIES,LABEL
 				// (same as Polish Format)
@@ -597,7 +642,7 @@ public class MapBuilder implements Configurable {
 
 				MapSplitter splitter = new MapSplitter(srcDivPair.getSource(), zoom);
 				MapArea[] areas = splitter.split();
-				log.info("Map region " + srcDivPair.getSource().getBounds() + " split into " + areas.length + " areas at resolution " + zoom.getResolution());
+				log.info("Map region", srcDivPair.getSource().getBounds(), "split into", areas.length, "areas at resolution", zoom.getResolution());
 
 				for (MapArea area : areas) {
 					Subdivision parent = srcDivPair.getSubdiv();

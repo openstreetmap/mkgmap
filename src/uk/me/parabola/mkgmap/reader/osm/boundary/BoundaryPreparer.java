@@ -109,9 +109,9 @@ public class BoundaryPreparer extends Preparer {
 		if (workoutOnly)
 			return true;
 		this.boundaryFilename = props.getProperty("createboundsfile", null);
-		this.inDir = props.getProperty("bounds", "bounds");
-		this.outDir = props.getProperty("bounds", "bounds");
-		return boundaryFilename != null;
+		this.inDir = props.getProperty("bounds", null);
+		this.outDir = props.getProperty("bounds", null);
+		return boundaryFilename != null && this.inDir != null && this.outDir != null;
 	}
 
 	public void run() {

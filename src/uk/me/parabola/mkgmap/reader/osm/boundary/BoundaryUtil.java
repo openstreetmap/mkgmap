@@ -440,6 +440,7 @@ public class BoundaryUtil {
 			log.error("boundary directory/zip does not exist: " + dirName);
 		else{		
 			if (boundaryDir.isDirectory()){
+				// boundaryDir.list() is much quicker than boundaryDir.listFiles(FileFilter)
 				String[] allNames = boundaryDir.list();
 				for (String name: allNames){
 					if (name.endsWith(".bnd"))
