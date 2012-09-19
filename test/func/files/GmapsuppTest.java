@@ -364,11 +364,11 @@ public class GmapsuppTest extends Base {
 				"--product-id=1",
 				"--family-name=tst family1",
 				"--series-name=tst series1",
-				Args.TEST_RESOURCE_IMG + "63240001.img",
+				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz",
 				"--family-id=202",
 				"--family-name=tst family2",
 				"--series-name=tst series2",
-				Args.TEST_RESOURCE_IMG + "63240002.img"
+				Args.TEST_RESOURCE_OSM + "uk-test-2.osm.gz"
 		});
 
 		assertFalse(new File("osmmap_mdr.img").exists());
