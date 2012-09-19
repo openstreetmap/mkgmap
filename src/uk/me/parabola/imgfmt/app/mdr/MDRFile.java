@@ -27,7 +27,6 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * The MDR file.  This is embedded into a .img file, either its own
@@ -142,14 +141,9 @@ public class MDRFile extends ImgFile {
 		currentMap++;
 		mdr1.addMap(mapName);
 		Sort sort = mdrHeader.getSort();
-		if (sort.getSortOrderId() == 0) {
-			sort = SrtTextReader.sortForCodepage(codePage);
-			mdrHeader.setSort(sort);
-		} else {
-			if (sort.getCodepage() != codePage)
-				System.err.println("WARNING: input files have different code pages");
-		}
 
+		if (sort.getCodepage() != codePage)
+			System.err.println("WARNING: input files have different code pages");
 	}
 
 	public Mdr14Record addCountry(Country country) {

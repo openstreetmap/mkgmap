@@ -227,7 +227,7 @@ public class Sort {
 	}
 
 	public void setId2(int id2) {
-		this.id2 = id2;
+		this.id2 = id2 & 0x7fff;
 	}
 
 	/**
@@ -237,7 +237,16 @@ public class Sort {
 	 * @return id1 and id2 as if they were a little endian 2 byte integer.
 	 */
 	public int getSortOrderId() {
-		return (this.id2 << 16) + (this.id1 & 0xff);
+		return (this.id2 << 16) + (this.id1 & 0xffff);
+	}
+
+	/**
+	 * Set the sort order as a single integer.
+	 * @param id The sort order id.
+	 */
+	public void setSortOrderId(int id) {
+		id1 = id & 0xffff;
+		id2 = (id >>> 16) & 0x7fff;
 	}
 
 	public void setCodepage(int codepage) {
@@ -332,6 +341,10 @@ public class Sort {
 
 	public int getExpansionSize() {
 		return expansions.size();
+	}
+
+	public String toString() {
+		return String.format("sort cp=%d order=%08x", codepage, getSortOrderId());
 	}
 
 	/**

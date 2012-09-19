@@ -443,6 +443,7 @@ public class FileInfo {
 		Sort sort = SrtTextReader.sortForCodepage(codePage);
 		if (sort == null)
 			sort = args.getSort();
+		sort.setSortOrderId(sortOrderId);
 		return sort;
 	}
 
