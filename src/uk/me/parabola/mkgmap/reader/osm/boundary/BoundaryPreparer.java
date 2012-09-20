@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2011.
+ * Copyright (C) 2006, 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -108,9 +108,18 @@ public class BoundaryPreparer extends Preparer {
 		
 		if (workoutOnly)
 			return true;
+		
+		// check for a common mistake - when createboundsfile is set the bounds parameter is mandatory
+		if (props.getProperty("createboundsfile", null) != null && props.getProperty("bounds", null) == null) {
+			System.err.println("Cannot create preprocessed boundary files because the parameter 'bounds' is not set.");
+			System.err.println("Please specify both parameters 'createboundsfile' and 'bounds'.");
+			return false;
+		}
+		
 		this.boundaryFilename = props.getProperty("createboundsfile", null);
 		this.inDir = props.getProperty("bounds", null);
 		this.outDir = props.getProperty("bounds", null);
+		
 		return boundaryFilename != null && this.inDir != null && this.outDir != null;
 	}
 
