@@ -62,21 +62,18 @@ public class ExpressionReader {
 	 * @return True if this looks like an operator.
 	 */
 	private boolean isOperation(WordInfo token) {
-		// quick check, has to be one or two characters
+		// A quoted word is not an operator eg: '=' is a string.
 		if (token.isQuoted())
 			return false;
 
+		// Quick check, operators are 1 or 2 characters long.
 		String text = token.getText();
 		if (text.length() > 2 || text.isEmpty())
 			return false;
 
-		// quoted strings are never operators
-		char first = text.charAt(0);
-		if (first == '\'' || first == '"')
-			return false;
-
 		// If first character is an operation character then it is an operator
 		// (or a syntax error)
+		char first = text.charAt(0);
 		String chars = "&|!=~()><";
 		return chars.indexOf(first) >= 0;
 	}
@@ -138,6 +135,15 @@ public class ExpressionReader {
 			BinaryOp binaryOp = (BinaryOp) op;
 			binaryOp.setFirst(arg1);
 			binaryOp.setSecond(arg2);
+
+			// Deal with the case where you have: a & b=2.  The 'a' is a syntax error in this case.
+			if (op.isType(OR) || op.isType(AND)) {
+				if (arg1.isType(VALUE))
+					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg1.value()));
+
+				if (arg2.isType(VALUE))
+					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg2.value()));
+			}
 
 			// The combination foo=* is converted to exists(foo).
 			if (op.isType(EQUALS) && arg2.isType(VALUE) && ((ValueOp) arg2).isValue("*")) {
