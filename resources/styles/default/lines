@@ -163,9 +163,9 @@ highway=construction { add mkgmap:dead-end-check = false; }
 [0x16 road_class=0 road_speed=0 resolution 23]
 
 # Lower the road speed of ways under some construction.
-highway=* & construction=* { add mkgmap:road-speed = '-1' }
+highway=* & construction=* & maxspeed!=* { add mkgmap:road-speed = '-1' }
 # Lower the road speed of disused ways.
-highway=* & disused=yes { add mkgmap:road-speed = '-2' }
+highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
 highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 16]
