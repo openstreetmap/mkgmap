@@ -152,7 +152,7 @@ public class OsmBinHandler extends OsmHandler {
 						// nodes (way joins) will have highwayCount > 1
 						co.incHighwayCount();
 					} else {
-						log.info("Way", way.toBrowseURL(), "references undefined node", nid);
+						log.error("Way references undefined node" + nid);
 					}
 				}
 

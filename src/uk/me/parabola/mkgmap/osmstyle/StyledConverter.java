@@ -286,12 +286,27 @@ public class StyledConverter implements OsmConverter {
 		preConvertRules(way);
 
 		Rule rules;
+		way.addTag("mkgmap:closed",String.valueOf(way.isClosed()));
+		way.addTag("mkgmap:autoclosing", "false");
 		if ("polyline".equals(way.getTag("mkgmap:stylefilter")))
 			rules = lineRules;
 		else if ("polygon".equals(way.getTag("mkgmap:stylefilter")))
 			rules = polygonRules;
-		else
+		else if (way.isClosed()==false) {
+			// check if start or end point lie within the bbox
+			if (bbox.insideBoundary(way.getPoints().get(0)) || 
+				bbox.insideBoundary(way.getPoints().get(way.getPoints().size()-1))) {
+				rules = lineRules;
+			} else {
+				// the way may be closed automatically because both endpoints are outside the bbox
+				// set a tag so that these ways can be ignored in the style rules
+				way.addTag("mkgmap:autoclosing", "true");
+				rules = wayRules;
+			}
+		}
+		else {
 			rules = wayRules;
+		}
 		
 		rules.resolveType(way, new TypeResult() {
 			public void add(Element el, GType type) {
@@ -532,8 +547,9 @@ public class StyledConverter implements OsmConverter {
 			// check if start or end point lie within the bbox
 			if (bbox.insideBoundary(way.getPoints().get(0)) || 
 				bbox.insideBoundary(way.getPoints().get(way.getPoints().size()-1))) {
-				log.warn("Unclosed way",way.toBrowseURL(),way.toTagString(),
-						"should be converted as shape but the start or end point lies inside the bbox. Skip it.");
+				// this should not happen because it is checked before the style processing
+				log.error("Unclosed way "+way.toBrowseURL()+" "+way.toTagString()+
+						" should be converted as shape but the start or end point lies inside the bbox. Skip it.");
 				return;
 			}
 
