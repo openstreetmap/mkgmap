@@ -36,7 +36,8 @@ public abstract class StyleFileLoader {
 	 * Open a style that is contained in a file.  This is expected to be a
 	 * directory or zip file containing the files that make up the style.
 	 *
-	 * @param loc The file or directory containing the style(s).
+	 * @param loc The file or directory containing the style(s). If this is null then the location "classpath:styles"
+	 * is used.
 	 * @param name If the name is given then we look for a directory with the
 	 * given name.  If there is no name, then the style is assumed to be at
 	 * the top level and/or the only file.
@@ -47,7 +48,7 @@ public abstract class StyleFileLoader {
 			throws FileNotFoundException
 	{
 		if (loc == null)
-			return createStyleLoaderByName(name);
+			return createStyleLoader("classpath:styles", name);
 		
 		StyleFileLoader loader;
 
@@ -90,21 +91,6 @@ public abstract class StyleFileLoader {
 		}
 
 		return loader;
-	}
-
-	/**
-	 * Load a style by name only.  This implies that it will loaded from the
-	 * classpath.
-	 *
-	 * @param name The style name.  It will be a built in one, or otherwise
-	 * on the classpath.
-	 *
-	 * @return The loader.
-	 */
-	private static StyleFileLoader createStyleLoaderByName(String name)
-			throws FileNotFoundException
-	{
-		return createStyleLoader("classpath:styles", name);
 	}
 
 	/**

@@ -73,7 +73,7 @@ public class StyleImpl implements Style {
 	private static final Logger log = Logger.getLogger(StyleImpl.class);
 
 	// This is max the version that we understand
-	private static final int VERSION = 0;
+	private static final int VERSION = 1;
 
 	// General options just have a value and don't need any special processing.
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(

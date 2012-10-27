@@ -16,21 +16,20 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
+import func.lib.StringStyleFileLoader;
 import org.junit.Test;
 
+import static func.lib.TestUtils.makeRuleSet;
 import static org.junit.Assert.*;
 
 
@@ -681,6 +680,91 @@ public class RuleFileReaderTest {
 		assertTrue("has K", tags.contains("K"));
 	}
 
+	@Test
+	public void testIncludeAsTagName() {
+		RuleSet rs = makeRuleSet("include=yes [0x2]");
+
+		Way way = new Way(1);
+		way.addTag("include", "yes");
+
+		GType type = getFirstType(rs, way);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testIncludeAsTagName2() {
+		RuleSet rs = makeRuleSet("include = yes [0x2]");
+
+		Way way = new Way(1);
+		way.addTag("include", "yes");
+
+		GType type = getFirstType(rs, way);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testIncludeFile() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "include incfile;"},
+				{"incfile", "highway=secondary [0x3]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+		el.addTag("highway", "secondary");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(3, type.getType());
+	}
+
+	@Test
+	public void testIncludeFileQuoted() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "include \n 'inc file' \n;"},
+				{"inc file", "highway=secondary [0x3]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+		el.addTag("highway", "secondary");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(3, type.getType());
+	}
+
+	/**
+	 * Test an include file within an include file.
+	 */
+	@Test
+	public void testNestedIncludes() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "a=1 [0x1] include 'first'; a=2 [0x2]"},
+				{"first", "b=1 [0x1] include 'second'; b=2 [0x2 ]"},
+				{"second", "c=1 [0x1] c=2 [0x2 ]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+
+		el.addTag("a", "2");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "1");
+		type = getFirstType(rs, el);
+		assertEquals(1, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "2");
+		type = getFirstType(rs, el);
+		assertEquals(2, type.getType());
+	}
+
 	/**
 	 * Resolve the rule set with the given element and get the first
 	 * resolved type.
@@ -698,16 +782,4 @@ public class RuleFileReaderTest {
 			return types.get(0);
 	}
 
-	/**
-	 * Create a rule set out of a string.  The string is processed
-	 * as if it were in a file and the levels spec had been set.
-	 */
-	private RuleSet makeRuleSet(String in) {
-		Reader r = new StringReader(in);
-
-		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-		rr.load(r, "string");
-		return rs;
-	}
 }

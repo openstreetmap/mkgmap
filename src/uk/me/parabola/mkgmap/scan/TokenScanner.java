@@ -19,7 +19,10 @@ package uk.me.parabola.mkgmap.scan;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Deque;
 import java.util.LinkedList;
+
+import uk.me.parabola.imgfmt.Utils;
 
 /**
  * Read a file in terms of word and symbol tokens.
@@ -28,18 +31,24 @@ import java.util.LinkedList;
  */
 public class TokenScanner {
 	private static final int NO_PUSHBACK = 0;
-	private final Reader reader;
+
+	// Reading state
+	private Reader reader;
 	private int pushback = NO_PUSHBACK;
 	private boolean isEOF;
 
-	private final String fileName;
+	private String fileName;
 	private int linenumber;
+
+	private LinkedList<Token> tokens = new LinkedList<Token>();
+
+	private boolean bol = true;
+
+	// Included file state
+	private final Deque<ScanState> states = new LinkedList<ScanState>();
 
 	// Extra word characters.
 	private String extraWordChars = "";
-
-	private final LinkedList<Token> tokens = new LinkedList<Token>();
-	private boolean bol = true;
 	private String commentChar = "#";
 
 	public TokenScanner(String filename, Reader reader) {
@@ -84,6 +93,14 @@ public class TokenScanner {
 	public Token nextToken() {
 		skipSpace();
 		return nextRawToken();
+	}
+
+	/**
+	 * Push a token back to the beginning of the token queue.
+	 * @param tok The token to add to the beginning of the queue.
+	 */
+	public void pushToken(Token tok) {
+		tokens.push(tok);
 	}
 
 	/**
@@ -205,6 +222,10 @@ public class TokenScanner {
 		return t;
 	}
 
+	/**
+	 * Read a single character.
+	 * @return The next character, or -1 if at EOF. The isEOF field will also be set to true at end of file.
+	 */
 	private int readChar() {
 		int c;
 		if (pushback != NO_PUSHBACK) {
@@ -213,14 +234,39 @@ public class TokenScanner {
 			return c;
 		}
 
-		try {
-			c = reader.read();
-		} catch (IOException e) {
-			isEOF = true;
-			c = -1;
-		}
+		do {
+			try {
+				c = reader.read();
+			} catch (IOException e) {
+				c = -1;
+			}
+
+			// Finished a file, return to the including file if there was one.
+			if (c == -1)
+				popState();
+		} while (!isEOF && c == -1);
 
 		return c;
+	}
+
+	/**
+	 * Finish the currently included file and return the state to start reading from the parent
+	 * file.
+	 *
+	 * This is called when at the end of the current input file.
+	 * If there are no more parent files then the end of file flag is set.
+	 */
+	private void popState() {
+		// Close the current reader that is finished.
+		Utils.closeFile(reader);
+
+		if (states.isEmpty()) {
+			isEOF = true;
+			return;
+		}
+
+		ScanState state = states.removeFirst();
+		state.copyTo(this);
 	}
 
 	private boolean isSpace(int nextch) {
@@ -247,6 +293,14 @@ public class TokenScanner {
 		return res;
 	}
 
+	/**
+	 * Read tokens until one of the given type and value is found and return the result as a single string.
+	 * The searched token is not consumed from the input.
+	 *
+	 * @param type The token type to search for.
+	 * @param value The string value of the token to search for.
+	 * @return A single string of all the tokens preceding the searched token.
+	 */
 	public String readUntil(TokType type, String value) {
 		StringBuffer sb = new StringBuffer();
 		while (!isEndOfFile()) {
@@ -365,6 +419,11 @@ public class TokenScanner {
 		return fileName;
 	}
 
+	/**
+	 * Extra word characters are characters that should be considered as part of a word in addition
+	 * to alphanumerics and underscore.
+	 * @param extraWordChars A string containing all the characters to be considered part of a word.
+	 */
 	public void setExtraWordChars(String extraWordChars) {
 		this.extraWordChars = extraWordChars;
 	}
@@ -381,5 +440,67 @@ public class TokenScanner {
 			this.commentChar = "";
 		else
 			this.commentChar = commentChar;
+	}
+
+	/**
+	 * Include a new file in the token stream.
+	 *
+	 * Stop reading from the current file and save all the details about the file. Sets up to read from
+	 * the included file.
+	 *
+	 * @param filename The name of the file that is being read. This is only used for messages and so doesn't
+	 * have to be a name that can be directly opened for example.
+	 * @param r The input reader for the file.
+	 */
+	public void includeFile(String filename, Reader r) {
+		ScanState state = new ScanState(this);
+		states.addFirst(state);
+
+		reader = r;
+		pushback = NO_PUSHBACK;
+		isEOF = false;
+		fileName = filename;
+		linenumber = 1;
+		tokens = new LinkedList<Token>();
+		bol = true;
+	}
+
+	/**
+	 * Saved state of scanning and individual file. Used when including files.
+	 */
+	private class ScanState {
+		private final Reader reader;
+		private final int pushback;
+
+		private final String fileName;
+		private final int linenumber;
+
+		private final LinkedList<Token> tokens;
+
+		private final boolean bol;
+
+		/**
+		 * Create this state with the state of the token scanner.
+		 */
+		public ScanState(TokenScanner ts) {
+			reader = ts.reader;
+			pushback = ts.pushback;
+			fileName = ts.fileName;
+			linenumber = ts.linenumber;
+			tokens = ts.tokens;
+			bol = ts.bol;
+		}
+
+		/**
+		 * Copy this state to the given token scanner.
+		 */
+		public void copyTo(TokenScanner ts) {
+			ts.reader = reader;
+			ts.pushback = pushback;
+			ts.fileName = fileName;
+			ts.linenumber = linenumber;
+			ts.tokens = tokens;
+			ts.bol = bol;
+		}
 	}
 }
