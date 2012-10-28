@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008-2012 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -16,6 +16,10 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
+import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
+import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 /**
@@ -24,6 +28,8 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
  * @author Steve Ratcliffe
  */
 public abstract class AbstractOp implements Op {
+	
+	private static final Logger log = Logger.getLogger(AbstractOp.class);
 
 	protected Op first;
 	private char type;
@@ -70,6 +76,20 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
+	protected String getTagValue(Element el, String key) {
+		if (key.endsWith("()")) {
+			String functionName = key.substring(0, key.length()-2);
+			StyleFunction function = FunctionFactory.getCachedFunction(functionName);
+			if (function==null) {
+				log.error("Unknown style function "+ functionName);
+				return null;
+			}
+			return function.calcValue(el);
+		} else {
+			return el.getTag(key);
+		}
+	}
+	
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.

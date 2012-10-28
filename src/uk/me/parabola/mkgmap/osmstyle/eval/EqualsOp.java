@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008-2012 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -42,7 +42,7 @@ public class EqualsOp extends AbstractBinaryOp {
 	}
 
 	public boolean eval(Element el) {
-		String s = el.getTag(key);
+		String s = getTagValue(el, key);
 		if (s == null)
 			return false;
 		return s.equals(value);

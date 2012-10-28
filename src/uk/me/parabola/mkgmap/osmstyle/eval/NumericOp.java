@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008-2012 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -44,7 +44,7 @@ public abstract class NumericOp extends AbstractBinaryOp {
 	 */
 	public final boolean eval(Element el) {
 		// get the value of the tag, if it doesn't exist then false.
-		String val = el.getTag(getFirst().value());
+		String val = getTagValue(el,getFirst().value());
 		if (val == null)
 			return false;
 

@@ -40,8 +40,15 @@ public class ExpressionReader {
 			WordInfo wordInfo = scanner.nextWordWithInfo();
 			if (isOperation(wordInfo))
 				saveOp(wordInfo.getText());
-			else
+			else if (scanner.checkToken("(")) {
+				// it is a function
+				// this requires a () after the function name
+				scanner.validateNext("(");
+				scanner.validateNext(")");
+				saveFunction(wordInfo.getText());
+			} else {
 				pushValue(wordInfo.getText());
+			}
 		}
 
 		// Complete building the tree
@@ -169,6 +176,11 @@ public class ExpressionReader {
 			usedTags.add(op.getFirst().value());
 
 		stack.push(op);
+	}
+	
+	private void saveFunction(String functionName) {
+		// TODO implement a function operator
+		stack.push(new ValueOp(functionName+"()"));
 	}
 
 	private void pushValue(String value) {

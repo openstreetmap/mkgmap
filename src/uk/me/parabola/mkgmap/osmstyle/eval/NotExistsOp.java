@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008-2012 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -28,7 +28,7 @@ public class NotExistsOp extends AbstractOp {
 	}
 
 	public boolean eval(Element el) {
-		return el.getTag(first.value()) == null;
+		return getTagValue(el, first.value()) == null;
 	}
 
 	public int priority() {
