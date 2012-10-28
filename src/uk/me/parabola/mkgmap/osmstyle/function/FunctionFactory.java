@@ -33,7 +33,7 @@ public class FunctionFactory {
 	/**
 	 * Retrieves a style function with the given name. The cache stores one instance
 	 * per thread only to ensure thread safety. 
-	 * @param name the style function name (without mkgmap::)
+	 * @param name the style function name 
 	 * @return the style function instance or <code>null</code> if there is no such function
 	 */
 	public static StyleFunction getCachedFunction(String name) {
@@ -56,7 +56,7 @@ public class FunctionFactory {
 	
 	/**
 	 * Returns a new instance of a style function with the given name.
-	 * @param name the style function name (without mkgmap::)
+	 * @param name the style function name 
 	 * @return the style function instance or <code>null</code> if there is no such function
 	 */
 	public static StyleFunction createFunction(String name) {

@@ -25,6 +25,12 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
+/**
+ * Calculates the length of a way or a relation in meter. The length of a
+ * relation is defined as the sum of its member lengths.
+ * 
+ * @author WanMil
+ */
 public class LengthFunction extends AbstractFunction {
 	private static final Logger log = Logger
 			.getLogger(LengthFunction.class);
@@ -76,12 +82,6 @@ public class LengthFunction extends AbstractFunction {
 	public boolean supportsWay() {
 		return true;
 	}
-
-
-	public boolean supportsShape() {
-		return true;
-	}
-
 
 	public boolean supportsRelation() {
 		return true;
