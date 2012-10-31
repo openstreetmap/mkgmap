@@ -92,6 +92,10 @@ public class LinkedOp implements Op {
 		wrapped.setFirst(first);
 	}
 
+	public Op getSecond() {
+		return null;
+	}
+
 	public char getType() {
 		return wrapped.getType();
 	}
@@ -100,8 +104,12 @@ public class LinkedOp implements Op {
 		return wrapped.getTypeString();
 	}
 
-	public String value() {
-		return wrapped.value();
+	public String value(Element el) {
+		return wrapped.value(el);
+	}
+
+	public String getKeyValue() {
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean isType(char value) {

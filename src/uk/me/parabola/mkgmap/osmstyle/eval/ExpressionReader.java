@@ -5,6 +5,9 @@ import java.util.Set;
 import java.util.Stack;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
+import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
+import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.mkgmap.scan.WordInfo;
@@ -139,6 +142,10 @@ public class ExpressionReader {
 
 			Op arg2 = stack.pop();
 			Op arg1 = stack.pop();
+
+			if (arg1.isType(VALUE) && arg2.isType(VALUE))
+				arg1 = new GetTagFunction(arg1.getKeyValue());
+
 			BinaryOp binaryOp = (BinaryOp) op;
 			binaryOp.setFirst(arg1);
 			binaryOp.setSecond(arg2);
@@ -146,10 +153,10 @@ public class ExpressionReader {
 			// Deal with the case where you have: a & b=2.  The 'a' is a syntax error in this case.
 			if (op.isType(OR) || op.isType(AND)) {
 				if (arg1.isType(VALUE))
-					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg1.value()));
+					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg1));
 
 				if (arg2.isType(VALUE))
-					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg2.value()));
+					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg2));
 			}
 
 			// The combination foo=* is converted to exists(foo).
@@ -169,18 +176,19 @@ public class ExpressionReader {
 			op.setFirst(stack.pop());
 		}
 
-		if (op.getFirst() == null)
+		Op first = op.getFirst();
+		if (first == null)
 			throw new SyntaxException(scanner, "Invalid expression");
 
-		if (op.getFirst().isType(VALUE))
-			usedTags.add(op.getFirst().value());
+		if (first.isType(FUNCTION))
+			usedTags.add(first.getKeyValue());
 
 		stack.push(op);
 	}
 	
 	private void saveFunction(String functionName) {
-		// TODO implement a function operator
-		stack.push(new ValueOp(functionName+"()"));
+		StyleFunction function = FunctionFactory.createFunction(functionName);
+		stack.push(function);
 	}
 
 	private void pushValue(String value) {

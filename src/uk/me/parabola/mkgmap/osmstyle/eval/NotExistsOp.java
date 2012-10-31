@@ -28,7 +28,7 @@ public class NotExistsOp extends AbstractOp {
 	}
 
 	public boolean eval(Element el) {
-		return getTagValue(el, first.value()) == null;
+		return first.value(el) == null;
 	}
 
 	public int priority() {

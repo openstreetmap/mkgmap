@@ -39,14 +39,31 @@ public class ValueOp extends AbstractOp {
 		return 0;
 	}
 
-	public String value() {
+	public String value(Element el) {
+		return value;
+	}
+
+	/**
+	 * Get the saved value.
+	 * For a base ValueOp this returns the same as {@link #value} but in classes where value is
+	 * overridden it returns the base value.
+	 */
+	public final String getKeyValue() {
 		return value;
 	}
 
 	public boolean isValue(String val) {
 		return value.equals(val);
 	}
-	
+
+	/**
+	 * Returns true if you can index the rule from this value.
+	 * This should almost always return false, override in subclasses where it is the case.
+	 */
+	public boolean isIndexable() {
+		return false;
+	}
+
 	public String toString() {
 		return value;
 	}

@@ -24,8 +24,6 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class EqualsOp extends AbstractBinaryOp {
-	private String key;
-	private String value;
 
 	public EqualsOp() {
 		setType(EQUALS);
@@ -33,26 +31,20 @@ public class EqualsOp extends AbstractBinaryOp {
 
 	public void setFirst(Op first) {
 		super.setFirst(first);
-		key = first.value();
 	}
 
 	public void setSecond(Op second) {
 		super.setSecond(second);
-		value = second.value();
 	}
 
 	public boolean eval(Element el) {
-		String s = getTagValue(el, key);
+		String s = first.value(el);
 		if (s == null)
 			return false;
-		return s.equals(value);
+		return s.equals(getSecond().value(el));
 	}
 
 	public int priority() {
 		return 10;
-	}
-
-	public String value() {
-		return key + '=' + value;
 	}
 }

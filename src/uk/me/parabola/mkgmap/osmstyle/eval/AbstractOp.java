@@ -16,9 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
-import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
@@ -29,8 +26,6 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
  */
 public abstract class AbstractOp implements Op {
 	
-	private static final Logger log = Logger.getLogger(AbstractOp.class);
-
 	protected Op first;
 	private char type;
 
@@ -76,20 +71,6 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
-	protected String getTagValue(Element el, String key) {
-		if (key.endsWith("()")) {
-			String functionName = key.substring(0, key.length()-2);
-			StyleFunction function = FunctionFactory.getCachedFunction(functionName);
-			if (function==null) {
-				log.error("Unknown style function "+ functionName);
-				return null;
-			}
-			return function.calcValue(el);
-		} else {
-			return el.getTag(key);
-		}
-	}
-	
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.
@@ -106,6 +87,14 @@ public abstract class AbstractOp implements Op {
 		this.first = first;
 	}
 
+	/**
+	 * Only supported on Binary operations, but useful to return null to make code simpler, rather than
+	 * defaulting to UnsupportedOperation.
+	 */
+	public Op getSecond() {
+		return null;
+	}
+
 	public char getType() {
 		return type;
 	}
@@ -114,12 +103,22 @@ public abstract class AbstractOp implements Op {
 		return String.valueOf(getType());
 	}
 
-	void setType(char type) {
+	protected void setType(char type) {
 		this.type = type;
 	}
 
-	public String value() {
-		return first.toString();
+	/**
+	 * Only supported on value nodes.
+	 */
+	public String value(Element el) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * This is only supported on value nodes.
+	 */
+	public String getKeyValue() {
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean isType(char value) {

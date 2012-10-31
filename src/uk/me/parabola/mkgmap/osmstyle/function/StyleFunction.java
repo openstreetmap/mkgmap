@@ -13,8 +13,10 @@
 
 package uk.me.parabola.mkgmap.osmstyle.function;
 
-import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
  * The interface for all functions that can be used within a style file.<br>
@@ -22,37 +24,47 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
  * string which can carry number values.
  * @author WanMil
  */
-public interface StyleFunction {
-	
-    /**
-     * Retrieves if the function accepts {@link Node} objects as input parameter.
-     * @return <code>true</code> {@link Node} objects are supported; <code>false</code> .. are not supported
-     */
-    public boolean supportsNode();
+public abstract class StyleFunction extends ValueOp {
 
-    /**
-     * Retrieves if the function accepts {@link Way} objects as input parameter.
-     * @return <code>true</code> {@link Way} objects are supported; <code>false</code> .. are not supported
-     */
-    public boolean supportsWay();
+	public StyleFunction(String value) {
+		super(value);
+		setType(FUNCTION);
+	}
 
-    /**
-     * Retrieves if the function accepts {@link Relation} objects as input parameter.
-     * @return <code>true</code> {@link Relation} objects are supported; <code>false</code> .. are not supported
-     */
-    public boolean supportsRelation();
-    
-    /**
-     * Calculates the function value for the given element. 
-     * @param el an element
-     * @return the function value (<code>null</code> if it cannot be calculated)
-     */
-    public String calcValue(Element el);
-    
 	/**
-	 * Retrieves the function name. This is the part without function brackets (). It is 
-	 * case sensitive but should be lower case.
+	 * Retrieves if the function accepts {@link Node} objects as input parameter.
+	 *
+	 * @return {@code true} {@link Node} objects are supported; {@code false} .. are not supported
+	 */
+	public boolean supportsNode() {
+		return false;
+	}
+
+	/**
+	 * Retrieves if the function accepts {@link Way} objects as input parameter.
+	 *
+	 * @return {@code true} {@link Way} objects are supported; {@code false} .. are not supported
+	 */
+	public boolean supportsWay() {
+		return false;
+	}
+
+	/**
+	 * Retrieves if the function accepts {@link Relation} objects as input parameter.
+	 *
+	 * @return {@code true} {@link Relation} objects are supported; {@code false} .. are not supported
+	 */
+	public boolean supportsRelation() {
+		return false;
+	}
+
+	/**
+	 * Retrieves the function name. This is the part without function brackets (). It is case sensitive but should be lower
+	 * case.
+	 *
 	 * @return the function name (e.g. length for length())
 	 */
-	public String getName();
+	public String getName() {
+		return getKeyValue();
+	}
 }

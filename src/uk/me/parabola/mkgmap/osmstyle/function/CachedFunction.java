@@ -23,21 +23,13 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
  * to cache the function values.
  * @author WanMil
  */
-public abstract class AbstractFunction implements StyleFunction {
+public abstract class CachedFunction extends StyleFunction {
 
-	public boolean supportsNode() {
-		return false;
+	public CachedFunction(String value) {
+		super(value);
 	}
 
-	public boolean supportsWay() {
-		return false;
-	}
-
-	public boolean supportsRelation() {
-		return false;
-	}
-
-	public final String calcValue(Element el) {
+	public final String value(Element el) {
 		// check if the element type is supported by this function
 		if (el instanceof Node ) {
 			if (supportsNode() == false) {
@@ -55,21 +47,17 @@ public abstract class AbstractFunction implements StyleFunction {
 		
 		// if caching is supported check if the value has already
 		// been calculated
-		if (supportsCaching()) {
-			String cachedValue = el.getTag(getCacheTag());
-			if (cachedValue != null) {
-				return cachedValue;
-			}
+		String cachedValue = el.getTag(getCacheTag());
+		if (cachedValue != null) {
+			return cachedValue;
 		}
-		
+
 		// calculate the function value
 		String functionResult = calcImpl(el);
 		
 		// if caching is supported save the value for later usage
-		if (supportsCaching()) {
-			el.addTag(getCacheTag(), functionResult);
-		}
-		
+		el.addTag(getCacheTag(), functionResult);
+
 		return functionResult;
 	}
 	
@@ -81,16 +69,6 @@ public abstract class AbstractFunction implements StyleFunction {
 	 */
 	protected abstract String calcImpl(Element el);
 
-	/**
-	 * Retrieves if the function value for an element can be cached (<code>true</code>) or
-	 * if it should be recalculated each time (<code>false</code>) the function is called. 
-	 * @return <code>true</code> cache is used; 
-	 * <code>false</code> function value is calculated each time the function is called
-	 */
-	protected boolean supportsCaching() {
-		return true;
-	}
-	
 	/**
 	 * Retrieves the tag name that is used to cache the function value to 
 	 * avoid multiple calculations for the same element. 

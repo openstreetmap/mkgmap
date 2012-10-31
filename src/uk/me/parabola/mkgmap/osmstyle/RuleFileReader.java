@@ -32,6 +32,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
+import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
@@ -217,11 +218,11 @@ public class RuleFileReader {
 		if (op.isType(AND)) {
 			// Recursively re-arrange the child nodes
 			rearrangeExpression(op.getFirst());
-			rearrangeExpression(((BinaryOp) op).getSecond());
+			rearrangeExpression(op.getSecond());
 
 			swapForSelectivity((BinaryOp) op);
 			Op op1 = op.getFirst();
-			Op op2 = ((BinaryOp) op).getSecond();
+			Op op2 = op.getSecond();
 			
 			// If the first term is an EQUALS or EXISTS then this subtree is
 			// already solved and we need to do no more.
@@ -292,7 +293,7 @@ public class RuleFileReader {
 			and1.setSecond(topSecond);
 
 			AndOp and2 = new AndOp();
-			Op second = rearrangeExpression(((OrOp) op1).getSecond());
+			Op second = rearrangeExpression(op1.getSecond());
 			and2.setFirst(second);
 			and2.setSecond(topSecond);
 
@@ -311,7 +312,8 @@ public class RuleFileReader {
 	 * Exists operation.
 	 */
 	private static boolean isIndexable(Op op) {
-		return op.isType(EQUALS) || op.isType(EXISTS);
+		return (op.isType(EQUALS) && ((ValueOp) op.getFirst()).isIndexable())
+				|| (op.isType(EXISTS) && ((ValueOp) op.getFirst()).isIndexable());
 	}
 
 	/**
@@ -328,7 +330,7 @@ public class RuleFileReader {
 	 */
 	private static boolean isFinished(Op op) {
 		// If we can improve the ordering then we are not done just yet
-		if (op.isType(AND) && selectivity(op.getFirst()) > selectivity(((BinaryOp) op).getSecond()))
+		if (op.isType(AND) && selectivity(op.getFirst()) > selectivity(op.getSecond()))
 			return false;
 
 		if (isSolved(op))
@@ -361,11 +363,11 @@ public class RuleFileReader {
 		case EQUALS:
 			return 0;
 		case EXISTS:
-			return 1;
+			return 10;
 
 		case AND:
 		case OR:
-			return Math.min(selectivity(op.getFirst()), selectivity(((BinaryOp) op).getSecond()));
+			return Math.min(selectivity(op.getFirst()), selectivity(op.getSecond()));
 		
 		default:
 			return 1000;
@@ -375,9 +377,9 @@ public class RuleFileReader {
 	private void optimiseAndSaveOtherOp(Op op, ActionList actions, GType gt) {
 		if (op.isType(EXISTS)) {
 			// The lookup key for the exists operation is 'tag=*'
-			createAndSaveRule(op.value() + "=*", op, actions, gt);
+			createAndSaveRule(op.getFirst().getKeyValue() + "=*", op, actions, gt);
 		} else {
-			throw new SyntaxException(scanner, "Invalid operation '" + op.getType() + "' at top level");
+			throw new SyntaxException(scanner, "Cannot start expression with: " + op);
 		}
 	}
 
@@ -402,20 +404,20 @@ public class RuleFileReader {
 		 */
 		String keystring;
 		if (op.isType(EQUALS)) {
-			if (first.isType(VALUE) && second.isType(VALUE)) {
-				keystring = op.value();
+			if (first.isType(FUNCTION) && second.isType(VALUE)) {
+				keystring = first.getKeyValue() + "=" + second.getKeyValue();
 			} else {
-				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
+				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
 			}
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
-				keystring = first.value();
+				keystring = first.getFirst().getKeyValue() + "=" + first.getSecond().getKeyValue();
 			} else if (first.isType(EXISTS)) {
-				keystring = first.value() + "=*";
+				keystring = first.getFirst().getKeyValue() + "=*";
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
 			} else {
-				throw new SyntaxException(scanner, "Invalid rule file (expr " + op.getType() +')');
+				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
 			}
 		} else if (op.isType(OR)) {
 			LinkedOp op1 = LinkedOp.create(first, true);
@@ -424,9 +426,13 @@ public class RuleFileReader {
 			saveRestOfOr(actions, gt, second, op1);
 			return;
 		} else {
-			// We can make every other binary op work by converting to AND(EXISTS, op)
+			if (!first.isType(FUNCTION) || !((StyleFunction) first).isIndexable())
+				throw new SyntaxException("Cannot use " + first + " without tag matches");
+
+			// We can make every other binary op work by converting to AND(EXISTS, op), as long as it does
+			// not involve an un-indexable function.
 			Op existsOp = new ExistsOp();
-			existsOp.setFirst(new ValueOp(op.getFirst().value()));
+			existsOp.setFirst(first);
 
 			AndOp andOp = new AndOp();
 			andOp.setFirst(existsOp);
@@ -443,7 +449,7 @@ public class RuleFileReader {
 			LinkedOp nl = LinkedOp.create(second.getFirst(), false);
 			op1.setLink(nl);
 			saveRule(nl, actions, gt);
-			saveRestOfOr(actions, gt, ((BinaryOp)second).getSecond(), op1);
+			saveRestOfOr(actions, gt, second.getSecond(), op1);
 		} else {
 			LinkedOp op2 = LinkedOp.create(second, false);
 			op1.setLink(op2);
