@@ -811,6 +811,14 @@ public class RuleFileReaderTest {
 		assertTrue("Function with parameters are not allowed", false);
 	}
 
+	/** You can't use length as the only term */
+	@Test(expected=SyntaxException.class)
+	public void testStandAloneLength() {
+		// a parameter in a function is not allowed for the length() function
+		// this should throw a SyntaxException
+		makeRuleSet("length() > 91 [0x5]");
+	}
+
 	/**
 	 * Get a way with a few points for testing length.
 	 *
