@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 import func.lib.StringStyleFileLoader;
 import org.junit.Test;
@@ -800,6 +801,14 @@ public class RuleFileReaderTest {
 
 		GType type = getFirstType(rs, el);
 		assertNotNull(type);
+	}
+
+	@Test(expected=SyntaxException.class)
+	public void testNoFunctionParameters() {
+		// a parameter in a function is not allowed for the length() function
+		// this should throw a SyntaxException
+		makeRuleSet("A=B & length(a) > 91 [0x5]");
+		assertTrue("Function with parameters are not allowed", false);
 	}
 
 	/**

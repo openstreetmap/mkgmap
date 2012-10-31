@@ -64,7 +64,10 @@ public class ExpressionReader {
 			throw new SyntaxException(scanner, "Stack size is "+stack.size());
 
 		assert stack.size() == 1;
-		return stack.pop();
+		Op op = stack.pop();
+		if (op instanceof ValueOp)
+			throw new SyntaxException(scanner, "Incomplete expression, just a single symbol: " + op);
+		return op;
 	}
 
 	/**
@@ -153,10 +156,10 @@ public class ExpressionReader {
 
 			// Deal with the case where you have: a & b=2.  The 'a' is a syntax error in this case.
 			if (op.isType(OR) || op.isType(AND)) {
-				if (arg1.isType(VALUE))
+				if (arg1.isType(VALUE) || arg1.isType(FUNCTION))
 					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg1));
 
-				if (arg2.isType(VALUE))
+				if (arg2.isType(VALUE) || arg2.isType(FUNCTION))
 					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg2));
 			}
 
