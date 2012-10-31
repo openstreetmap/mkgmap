@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
@@ -763,6 +764,55 @@ public class RuleFileReaderTest {
 		el.addTag("c", "2");
 		type = getFirstType(rs, el);
 		assertEquals(2, type.getType());
+	}
+
+	@Test
+	public void testLengthFunction() {
+		// Its less than 92m
+		RuleSet rs = makeRuleSet("A=B & length() < 92 [0x5]");
+
+		Way el = getWayWithLength();
+		el.addTag("A", "B");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+	}
+
+	@Test
+	public void testLengthFunction2() {
+		// Its more than 91m
+		RuleSet rs = makeRuleSet("A=B & length() > 91 [0x5]");
+
+		Way el = getWayWithLength();
+		el.addTag("A", "B");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+	}
+
+	@Test
+	public void testFunctionWithSpaces() {
+		RuleSet rs = makeRuleSet("A=B & length ( \n) > 91 & length\n()\n < 92 [0x5]");
+		Way el = getWayWithLength();
+		el.addTag("A", "B");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+	}
+
+	/**
+	 * Get a way with a few points for testing length.
+	 *
+	 * The length of this segment was independently confirmed to be around 91m.
+	 */
+	private Way getWayWithLength() {
+		Way el = new Way(1);
+		el.addPoint(new Coord(51.6124376, -0.1777185));
+		el.addPoint(new Coord(51.6127816, -0.1775029));
+		el.addPoint(new Coord(51.6132048, -0.1772467));
+		return el;
 	}
 
 	/**
