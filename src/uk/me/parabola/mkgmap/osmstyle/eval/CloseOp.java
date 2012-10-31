@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
 /**
  * A closing parenthesis.  It has a lower priority than anything

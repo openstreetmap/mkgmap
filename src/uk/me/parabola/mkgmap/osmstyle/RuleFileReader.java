@@ -29,6 +29,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.BinaryOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.LinkedOp;
+import uk.me.parabola.mkgmap.osmstyle.eval.NodeType;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
@@ -40,7 +41,7 @@ import uk.me.parabola.mkgmap.scan.TokType;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
-import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 
 /**
  * Read a rules file.  A rules file contains a list of rules and the
@@ -302,7 +303,7 @@ public class RuleFileReader {
 			return orOp;
 		} else {
 			// This shouldn't happen
-			throw new SyntaxException("X3" + op1.getType());
+			throw new SyntaxException("X3:" + op1.getType());
 		}
 		return top;
 	}
@@ -336,7 +337,7 @@ public class RuleFileReader {
 		if (isSolved(op))
 			return true;
 
-		char type = op.getType();
+		NodeType type = op.getType();
 		switch (type) {
 		case AND:
 			return false;

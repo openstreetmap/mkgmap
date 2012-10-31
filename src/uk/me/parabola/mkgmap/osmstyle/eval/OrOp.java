@@ -26,7 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class OrOp extends AbstractBinaryOp {
 
 	public OrOp() {
-		setType(OR);
+		setType(NodeType.OR);
 	}
 
 	public boolean eval(Element el) {

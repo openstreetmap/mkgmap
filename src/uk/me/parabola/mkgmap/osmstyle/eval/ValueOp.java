@@ -27,7 +27,7 @@ public class ValueOp extends AbstractOp {
 	private final String value;
 
 	public ValueOp(String value) {
-		setType(VALUE);
+		setType(NodeType.VALUE);
 		this.value = value;
 	}
 

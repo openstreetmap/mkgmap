@@ -58,19 +58,6 @@ public abstract class NumericOp extends AbstractBinaryOp {
 	}
 
 	public String toString() {
-		return "(" + first + getTypeString() + getSecond() + ')';
-	}
-
-	@SuppressWarnings({"MethodWithMultipleReturnPoints"})
-	public String getTypeString() {
-		switch (getType()) {
-		case EQUALS: return "=";
-		case NOT_EQUALS: return "!=";
-		case GT: return ">";
-		case GTE: return ">=";
-		case LT: return "<";
-		case LTE: return "<=";
-		default: return "?";
-		}
+		return "(" + first + getType().toSymbol() + getSecond() + ')';
 	}
 }

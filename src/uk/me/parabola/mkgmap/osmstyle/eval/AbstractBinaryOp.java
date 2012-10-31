@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.VALUE;
+
 /**
  * A base class that can be used for binary operations.
  * It has a second operand.
@@ -36,6 +38,6 @@ public abstract class AbstractBinaryOp extends AbstractOp implements BinaryOp {
 
 	public String toString() {
 		String t2 = second.isType(VALUE) ? "'" + second + "'" : second.toString();
-		return "(" + getFirst() + getType() + t2 + ')';
+		return "(" + getFirst() + getType().toSymbol() + t2 + ')';
 	}
 }

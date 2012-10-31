@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class AndOp extends AbstractBinaryOp {
 
 	public AndOp() {
-		setType(AND);
+		setType(NodeType.AND);
 	}
 
 	public boolean eval(Element el) {

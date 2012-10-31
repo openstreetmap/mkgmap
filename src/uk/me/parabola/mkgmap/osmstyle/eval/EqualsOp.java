@@ -26,7 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class EqualsOp extends AbstractBinaryOp {
 
 	public EqualsOp() {
-		setType(EQUALS);
+		setType(NodeType.EQUALS);
 	}
 
 	public void setFirst(Op first) {

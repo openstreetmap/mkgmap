@@ -17,12 +17,12 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 /**
- * Less than.  For population speeds etc.
+ * Less than.  For population, speeds etc.
  * @author Steve Ratcliffe
  */
 public class LTOp extends NumericOp {
 	public LTOp() {
-		setType(LT);
+		setType(NodeType.LT);
 	}
 
 	protected boolean doesCompare(int result) {

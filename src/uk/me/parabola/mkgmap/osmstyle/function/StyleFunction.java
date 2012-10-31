@@ -18,6 +18,8 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.FUNCTION;
+
 /**
  * The interface for all functions that can be used within a style file.<br>
  * The input parameter of a function is one element. The resulting value is a

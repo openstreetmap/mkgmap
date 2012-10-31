@@ -24,24 +24,6 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public interface Op {
-	// The operation types.  They are represented by a mildly mnemonic character.
-	// TODO use an emum
-	public char EQUALS = '=';
-	public char GT = 'g';
-	public char GTE = 'G';
-	public char LT = 'l';
-	public char LTE = 'L';
-	public char NOT_EQUALS = 'N';
-	public char EXISTS = 'E';
-	public char NOT_EXISTS = 'n';
-	public char AND = '&';
-	public char OR = '|';
-	public char VALUE = 'V';
-	public char FUNCTION = 'f';
-	public char OPEN_PAREN = '(';
-	public char CLOSE_PAREN = ')';
-	public char NOT = '!';
-	public char REGEX = '~';
 
 	/**
 	 * Evaluate the expression.
@@ -74,7 +56,7 @@ public interface Op {
 	public Op getSecond();
 
 	/** Get the operation type */
-	public char getType();
+	public NodeType getType();
 
 	/**
 	 * For operations that are value types this is the string value.
@@ -95,7 +77,7 @@ public interface Op {
 	/**
 	 * Test the node type and return true if it matches the given argument.
 	 */
-	public boolean isType(char value);
+	public boolean isType(NodeType value);
 
 	/**
 	 * For an operation this is a number that determines the precedence of this operation.
@@ -103,10 +85,4 @@ public interface Op {
 	 */
 	public int priority();
 
-	/**
-	 * Get the type as a human readable string.
-	 *
-	 * Will not be needed when an enum is used.
-	 */
-	public String getTypeString();
 }

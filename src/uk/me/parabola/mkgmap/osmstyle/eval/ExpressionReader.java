@@ -12,7 +12,8 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.mkgmap.scan.WordInfo;
 
-import static uk.me.parabola.mkgmap.osmstyle.eval.AbstractOp.*;
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
+
 
 /**
  * Read an expression from a style file.
@@ -109,7 +110,7 @@ public class ExpressionReader {
 
 		Op op;
 		try {
-			op = createOp(value);
+			op = AbstractOp.createOp(value);
 			while (!opStack.isEmpty() && opStack.peek().hasHigherPriority(op))
 				runOp(scanner);
 		} catch (SyntaxException e) {
@@ -137,7 +138,7 @@ public class ExpressionReader {
 		if (op instanceof BinaryOp) {
 			if (stack.size() < 2) {
 				throw new SyntaxException(scanner, String.format("Not enough arguments for '%s' operator",
-						op.getTypeString()));
+						op.getType().toSymbol()));
 			}
 
 			Op arg2 = stack.pop();
@@ -172,7 +173,7 @@ public class ExpressionReader {
 		} else if (!op.isType(OPEN_PAREN)) {
 			if (stack.size() < 1)
 				throw new SyntaxException(scanner, String.format("Missing argument for %s operator",
-						op.getTypeString()));
+						op.getType().toSymbol()));
 			op.setFirst(stack.pop());
 		}
 

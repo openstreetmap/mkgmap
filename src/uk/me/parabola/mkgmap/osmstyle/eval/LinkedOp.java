@@ -96,12 +96,8 @@ public class LinkedOp implements Op {
 		return null;
 	}
 
-	public char getType() {
+	public NodeType getType() {
 		return wrapped.getType();
-	}
-
-	public String getTypeString() {
-		return wrapped.getTypeString();
 	}
 
 	public String value(Element el) {
@@ -112,7 +108,7 @@ public class LinkedOp implements Op {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isType(char value) {
+	public boolean isType(NodeType value) {
 		return wrapped.isType(value);
 	}
 

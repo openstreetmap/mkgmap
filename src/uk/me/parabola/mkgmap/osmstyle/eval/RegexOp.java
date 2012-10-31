@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
+
 /**
  * Regular expression matching.
  * @author Steve Ratcliffe

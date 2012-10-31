@@ -25,15 +25,11 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  */
 public class NotEqualOp extends EqualsOp {
 	public NotEqualOp() {
-		setType(NOT_EQUALS);
+		setType(NodeType.NOT_EQUALS);
 	}
 
 	public boolean eval(Element el) {
 		return !super.eval(el);
-	}
-
-	public String getTypeString() {
-		return "!=";
 	}
 
 	public String toString() {

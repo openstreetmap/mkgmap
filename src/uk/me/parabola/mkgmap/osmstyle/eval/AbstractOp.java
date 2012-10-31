@@ -27,26 +27,26 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
 public abstract class AbstractOp implements Op {
 	
 	protected Op first;
-	private char type;
+	private NodeType type;
 
 	public static Op createOp(String value) {
 		char c = value.charAt(0);
 		Op op;
 		switch (c) {
-		case EQUALS: op = new EqualsOp(); break;
-		case AND:
+		case '=': op = new EqualsOp(); break;
+		case '&':
 			if (value.length() > 1)
 				throw new SyntaxException(String.format("Use '&' instead of '%s'", value));
 			op = new AndOp();
 			break;
-		case OR:
+		case '|':
 			if (value.length() > 1)
 				throw new SyntaxException(String.format("Use '|' instead of '%s'", value));
 			op = new OrOp();
 			break;
-		case REGEX: op = new RegexOp(); break;
-		case OPEN_PAREN: op = new OpenOp(); break;
-		case CLOSE_PAREN: op = new CloseOp(); break;
+		case '~': op = new RegexOp(); break;
+		case '(': op = new OpenOp(); break;
+		case ')': op = new CloseOp(); break;
 		case '>':
 			if (value.equals(">="))
 				op = new GTEOp();
@@ -95,15 +95,11 @@ public abstract class AbstractOp implements Op {
 		return null;
 	}
 
-	public char getType() {
+	public NodeType getType() {
 		return type;
 	}
 
-	public String getTypeString() {
-		return String.valueOf(getType());
-	}
-
-	protected void setType(char type) {
+	protected void setType(NodeType type) {
 		this.type = type;
 	}
 
@@ -121,7 +117,7 @@ public abstract class AbstractOp implements Op {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isType(char value) {
+	public boolean isType(NodeType value) {
 		return type == value;
 	}
 }

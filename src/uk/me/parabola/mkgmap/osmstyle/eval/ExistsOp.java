@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class ExistsOp extends AbstractOp {
 
 	public ExistsOp() {
-		setType(EXISTS);
+		setType(NodeType.EXISTS);
 	}
 
 	public void setFirst(Op first) {
@@ -40,10 +40,6 @@ public class ExistsOp extends AbstractOp {
 
 	public int priority() {
 		return 10;
-	}
-
-	public String getTypeString() {
-		return "=*";
 	}
 
 	public String toString() {
