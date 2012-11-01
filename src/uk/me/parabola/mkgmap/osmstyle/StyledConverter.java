@@ -528,24 +528,15 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addShape(Way way, GType gt) {
-		if (way.isClosed()==false) {
-			// check if start or end point lie within the bbox
-			if (bbox.insideBoundary(way.getPoints().get(0)) || 
-				bbox.insideBoundary(way.getPoints().get(way.getPoints().size()-1))) {
-				log.warn("Unclosed way",way.toBrowseURL(),way.toTagString(),
-						"should be converted as shape but the start or end point lies inside the bbox. Skip it.");
-				return;
-			}
+		// This is deceptively simple. At the time of writing, splitter only retains points that are within
+		// the tile and some distance around it.  Therefore a way that is closed in reality may not be closed
+		// as we see it in its incomplete state.
+		//
+		// Here isClosed means that it is really closed in OSM, and therefore it is safe to clip the line
+		// segment to the tile boundaries.
+		if (!way.isClosed())
+			return;
 
-			log.info("Add unclosed way as shape. Close it automatically.",way.toBrowseURL());
-			// it is handled as shape so the way should be closed
-			// reasons for this are:
-			// * OSM data failures
-			// * the way cuts the tile bounds and the splitter did not close it
-			// * the way should be a line but the style has a polygon rule only
-			way.addPoint(way.getPoints().get(0));
-		}
-		
 		final MapShape shape = new MapShape();
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());

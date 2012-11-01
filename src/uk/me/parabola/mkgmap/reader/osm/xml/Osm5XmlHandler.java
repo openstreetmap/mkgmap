@@ -55,19 +55,16 @@ public class Osm5XmlHandler extends OsmHandler {
 	private static final int MODE_RELATION = 4;
 	private static final int MODE_BOUNDS = 5;
 
-	// Current state.
-	private Node currentNode;
-	private Way currentWay;
-	private Relation currentRelation;
-	private long currentElementId;
-
 	// Options
-	private final boolean reportUndefinedNodes;
 	private final boolean ignoreBounds;
+	// Current state.
+	protected Node currentNode;
+	protected Way currentWay;
+	protected Relation currentRelation;
+	protected long currentElementId;
 
 	public Osm5XmlHandler(EnhancedProperties props) {
 		ignoreBounds = props.getProperty("ignore-osm-bounds", false);
-		reportUndefinedNodes = props.getProperty("report-undefined-nodes", false);
 	}
 
 	/**
@@ -163,8 +160,8 @@ public class Osm5XmlHandler extends OsmHandler {
 			} else if (mode == MODE_WAY) {
 				if (qName.equals("way")) {
 					mode = 0;
-					saver.addWay(currentWay);
-					hooks.onAddWay(currentWay);
+
+					endWay(currentWay);
 					currentWay = null;
 				}
 
@@ -238,7 +235,7 @@ public class Osm5XmlHandler extends OsmHandler {
 	private void startInWay(String qName, Attributes attributes) {
 		if (qName.equals("nd")) {
 			long id = idVal(attributes.getValue("ref"));
-			addCoordToWay(id);
+			addCoordToWay(currentWay, id);
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
@@ -353,28 +350,9 @@ public class Osm5XmlHandler extends OsmHandler {
 	private void startWay(String sid) {
 		try {
 			long id = idVal(sid);
-			currentWay = new Way(id);
+			currentWay = startWay(id);
 		} catch (NumberFormatException e) {
 			// ignore bad numeric data. The way will be discarded
-		}
-	}
-
-	/**
-	 * Add a coordinate point to the way.
-	 * @param id The coordinate id.
-	 */
-	private void addCoordToWay(long id) {
-		Coord co = saver.getCoord(id);
-
-		if (co != null) {
-			hooks.onCoordAddedToWay(currentWay, id, co);
-			co = saver.getCoord(id);
-			currentWay.addPoint(co);
-
-			// nodes (way joins) will have highwayCount > 1
-			co.incHighwayCount();
-		} else if(reportUndefinedNodes && currentWay != null) {
-			log.warn("Way", currentWay.toBrowseURL(), "references undefined node", id);
 		}
 	}
 }

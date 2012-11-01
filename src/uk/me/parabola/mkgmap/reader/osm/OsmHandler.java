@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 
 /**
  * Base class for OSM file handlers.
@@ -31,6 +32,11 @@ public class OsmHandler {
 	private final Map<String, Long> fakeIdMap = new HashMap<String, Long>();
 	private Map<String,Set<String>> deletedTags;
 	private Map<String, String> usedTags;
+
+	// Node references within a way
+	protected long firstNodeRef;
+	protected long lastNodeRef;
+	protected boolean missingNodeRef;
 
 	/**
 	 * Set a set of tags with values that are to be deleted on input.
@@ -129,5 +135,54 @@ public class OsmHandler {
 
 	public void setHooks(OsmReadingHooks plugin) {
 		this.hooks = plugin;
+	}
+
+	/**
+	 * Common actions to take when creating a new way.
+	 * Reset some state and create the Way object.
+	 * @param id The osm id of the new way.
+	 * @return The new Way itself.
+	 */
+	protected Way startWay(long id) {
+		firstNodeRef = 0;
+		lastNodeRef = 0;
+		missingNodeRef = false;
+		return new Way(id);
+	}
+
+	/**
+	 * Common actions to take when a way has been completely read by the parser.
+	 * It is saved
+	 * @param way The way that was read.
+	 */
+	protected void endWay(Way way) {
+		way.setClosed(firstNodeRef == lastNodeRef);
+		way.setComplete(!missingNodeRef);
+
+		saver.addWay(way);
+		hooks.onAddWay(way);
+	}
+
+	/**
+	 * Add a coordinate point to the way.
+	 * @param way The Way.
+	 * @param id The coordinate id.
+	 */
+	protected void addCoordToWay(Way way, long id) {
+		lastNodeRef = id;
+		if (firstNodeRef == 0) firstNodeRef = id;
+
+		Coord co = saver.getCoord(id);
+
+		if (co != null) {
+			hooks.onCoordAddedToWay(way, id, co);
+			co = saver.getCoord(id);
+			way.addPoint(co);
+
+			// nodes (way joins) will have highwayCount > 1
+			co.incHighwayCount();
+		} else {
+			missingNodeRef = true;
+		}
 	}
 }

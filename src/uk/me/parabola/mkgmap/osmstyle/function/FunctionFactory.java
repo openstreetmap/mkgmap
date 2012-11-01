@@ -63,6 +63,12 @@ public class FunctionFactory {
 		if ("length".equals(name)) {
 			return new LengthFunction();
 		}
+		if ("is_closed".equals(name)) {
+			return new IsClosedFunction();
+		}
+		if ("is_complete".equals(name)) {
+			return new IsCompleteFunction();
+		}
 		return null;
 	}
 }

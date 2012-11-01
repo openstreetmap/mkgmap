@@ -16,7 +16,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -34,7 +33,6 @@ import crosby.binary.Osmformat;
  * @author Steve Ratcliffe
  */
 public class OsmBinHandler extends OsmHandler {
-	private static final Logger log = Logger.getLogger(OsmBinHandler.class);
 
 	public OsmBinHandler(EnhancedProperties props) {
 	}
@@ -129,7 +127,7 @@ public class OsmBinHandler extends OsmHandler {
 
 		protected void parseWays(List<Osmformat.Way> ways) {
 			for (Osmformat.Way binWay : ways) {
-				Way way = new Way(binWay.getId());
+				Way way = startWay(binWay.getId());
 
 				for (int j = 0; j < binWay.getKeysCount(); j++) {
 
@@ -143,21 +141,10 @@ public class OsmBinHandler extends OsmHandler {
 				long nid = 0;
 				for (long idDelta : binWay.getRefsList()) {
 					nid += idDelta;
-					Coord co = saver.getCoord(nid);
-					if (co != null) {
-						hooks.onCoordAddedToWay(way, nid, co);
-						co = saver.getCoord(nid);
-						way.addPoint(co);
-
-						// nodes (way joins) will have highwayCount > 1
-						co.incHighwayCount();
-					} else {
-						log.info("Way", way.toBrowseURL(), "references undefined node", nid);
-					}
+					addCoordToWay(way, nid);
 				}
 
-				saver.addWay(way);
-				hooks.onAddWay(way);
+				endWay(way);
 			}
 		}
 

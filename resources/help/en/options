@@ -383,9 +383,6 @@ Miscellaneous options:
 	that join together but go nowhere, 2 = individual oneway roads
 	that go nowhere.
 
---report-undefined-nodes
-	Issue a warning when a way references an undefined node.
-
 --road-name-pois[=GarminCode]
 	Generate a POI for each named road. By default, the POIs'
 	Garmin type code is 0x640a. If desired, a different type code

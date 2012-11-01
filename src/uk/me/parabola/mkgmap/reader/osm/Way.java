@@ -34,6 +34,16 @@ public class Way extends Element {
 
 	private final List<Coord> points;
 
+	// This will be set if a way is read from an OSM file and the first node is the same node as the last
+	// one in the way. This can be set to true even if there are missing nodes and so the nodes that we
+	// have do not form a closed loop.
+	// Note: this is not always set, you must use isClosed()
+	private boolean closed;
+
+	// This is set to false if, we know that there are nodes missing from this way.
+	// If you set this to false, then you *must* also set closed to the correct value.
+	private boolean complete  = true;
+
 	public Way(long id) {
 		points = new ArrayList<Coord>(5);
 		setId(id);
@@ -48,6 +58,8 @@ public class Way extends Element {
 		Way dup = new Way(getId(), new ArrayList<Coord>(points));
 		dup.setName(getName());
 		dup.copyTags(this);
+		dup.closed = this.closed;
+		dup.complete = this.complete;
 		return dup;
 	}
 
@@ -96,8 +108,37 @@ public class Way extends Element {
 		Collections.reverse(points);
 	}
 
+	/**
+	 * Returns true if the way is really closed in OSM.
+	 *
+	 * Will return true even if the way is incomplete in the tile that we are reading, but the way is
+	 * really closed in OSM.
+	 *
+	 * @return True if the way is really closed.
+	 */
 	public boolean isClosed() {
+		if (!isComplete())
+			return closed;
+
 		return !points.isEmpty() && points.get(0).equals(points.get(points.size()-1));
+	}
+
+	public void setClosed(boolean closed) {
+		this.closed = closed;
+	}
+
+	public boolean isComplete() {
+		return complete;
+	}
+
+	/**
+	 * Set this to false if you know that the way does not have its complete set of nodes.
+	 *
+	 * If you do set this to false, then you must also call {@link #setClosed} to indicate if the way
+	 * is really closed or not.
+	 */
+	public void setComplete(boolean complete) {
+		this.complete = complete;
 	}
 
 	/**

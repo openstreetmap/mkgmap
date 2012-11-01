@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011.
+ * Copyright (C) 2011-2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -29,9 +29,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -245,6 +245,13 @@ public class MultiPolygonRelation extends Relation {
 			JoinedWay jw = new JoinedWay(orgSegment);
 			roleMap.put(jw.getId(), getRole(orgSegment));
 			if (orgSegment.isClosed()) {
+				if (orgSegment.isComplete() == false) {
+					// the way is complete in planet but some points are missing in this tile
+					// we can close it artificially
+					if (log.isDebugEnabled())
+						log.debug("Close incomplete but closed polygon:",orgSegment);
+					jw.closeWayArtificially();
+				}
 				joinedWays.add(jw);
 			} else {
 				unclosedWays.add(jw);
