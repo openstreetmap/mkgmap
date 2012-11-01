@@ -753,7 +753,7 @@ public class MultiPolygonRelation extends Relation {
 		// check if the multipolygon itself or the non inner member ways have a tag
 		// if not it does not make sense to process it and we could save the time
 		boolean shouldProcess = hasStyleRelevantTags(this);
-		if (shouldProcess == false) {
+		if (hasTags(this) == false && shouldProcess == false) {
 			for (Way w : allWays) {
 				shouldProcess = hasStyleRelevantTags(w);
 				if (shouldProcess) {
@@ -1518,7 +1518,21 @@ public class MultiPolygonRelation extends Relation {
 		return new Way(wayId, points);
 	}
 
+	/**
+	 * Retrieves if an element has tags beside the common administrative tags
+	 * (like type for multipolygons). 
+	 * @param element the OSM element
+	 * @return <code>true</code> if the element has tags
+	 */
 	protected boolean hasTags(Element element) {
+		if (element instanceof MultiPolygonRelation) {
+			// if a multipolygon has had tags that were removed during load
+			// it has relevant tags although they cannot be evaluated
+			if ("true".equals(element.getTag(OsmHandler.TAGS_INCOMPLETE_TAG))) {
+				return true;
+			}
+		}
+
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			if ("type".equals(tagEntry.getKey()) == false) {
 				// return true if there is more than one tag other than "type"
@@ -1528,11 +1542,22 @@ public class MultiPolygonRelation extends Relation {
 		return false;
 	}
 	
+	/**
+	 * Retrieves if the given element contains tags that may be relevant
+	 * for style processing. If it has no relevant tag it will probably be 
+	 * dropped by the style.
+	 * 
+	 * @param element the OSM element
+	 * @return <code>true</code> has style relevant tags
+	 */
 	private boolean hasStyleRelevantTags(Element element) {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			String tagName = tagEntry.getKey();
+			// all tags are style relevant
+			// except: type, name* and mgkmap:tagsincomplete
 			boolean isStyleRelevant = tagName.equals("type") == false
-					&& tagName.startsWith("name") == false;
+					&& tagName.startsWith("name") == false 
+					&& tagName.equals(OsmHandler.TAGS_INCOMPLETE_TAG) == false;
 			if (isStyleRelevant) {
 				return true;
 			}

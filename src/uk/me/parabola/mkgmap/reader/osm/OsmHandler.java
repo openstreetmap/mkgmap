@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
- * 
+ * Copyright (C) 2006 - 2012.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
  * version 2 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.HashMap;
@@ -38,6 +39,12 @@ public class OsmHandler {
 	protected long lastNodeRef;
 	protected boolean missingNodeRef;
 
+	/** 
+	 * Tag that is set to <code>true</code> if one or more tags are not loaded. 
+	 * Only used for multipolygons yet. 
+	 */
+	public static final String TAGS_INCOMPLETE_TAG = "mkgmap:tagsincomplete";
+	
 	/**
 	 * Set a set of tags with values that are to be deleted on input.
 	 * For each key there is a set of values.  If the value set is empty then

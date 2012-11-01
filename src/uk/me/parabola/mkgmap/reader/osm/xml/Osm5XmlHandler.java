@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 16-Dec-2006
+ * Copyright (C) 2006 - 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm.xml;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -176,6 +173,15 @@ public class Osm5XmlHandler extends OsmHandler {
 			} else if (mode == MODE_RELATION) {
 				if (qName.equals("relation")) {
 					mode = 0;
+					
+					// remove the mkgmap:tagsincomplete tags which is used in multipolygons only
+					if (currentRelation.getTag(TAGS_INCOMPLETE_TAG) != null) {
+						String type = currentRelation.getTag("type");
+						if ("multipolygon".equals(type) == false && "boundary".equals(type) == false) {
+							currentRelation.deleteTag(TAGS_INCOMPLETE_TAG);
+						}
+					}
+					
 					saver.addRelation(currentRelation);
 				}
 			}
@@ -281,8 +287,11 @@ public class Osm5XmlHandler extends OsmHandler {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
 			key = keepTag(key, val);
-			if (key != null)
+			if (key == null) {
+				currentRelation.addTag(TAGS_INCOMPLETE_TAG, "true");
+			} else {
 				currentRelation.addTag(key, val.intern());
+			}
 		}
 	}
 
