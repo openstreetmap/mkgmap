@@ -15,6 +15,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.StringReader;
 
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 
@@ -72,7 +73,7 @@ public class TypeReaderTest {
 	private GType makeType(String in) {
 		LevelInfo[] levels = LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14");
 
-		TypeReader tr = new TypeReader(GType.POLYLINE, levels);
+		TypeReader tr = new TypeReader(FeatureKind.POLYLINE, levels);
 		TokenScanner ts = new TokenScanner("string", new StringReader(in));
 		ts.setExtraWordChars("-:");
 

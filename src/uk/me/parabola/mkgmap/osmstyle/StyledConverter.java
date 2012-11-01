@@ -50,6 +50,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
@@ -183,7 +184,7 @@ public class StyledConverter implements OsmConverter {
 
 		if(vals.length < 3) {
 			log.error("OSM element " + element.getId() + " has bad mkgmap:gtype value (should be 'kind,code,minres,[maxres],[roadclass],[roadspeed])");
-			log.error("  where kind is " + GType.POINT + "=point, " + GType.POLYLINE + "=polyline, " + GType.POLYGON + "=polygon");
+			log.error("  where kind is 1=point, 2=polyline, 3=polygon");
 			return null;
 		}
 
@@ -194,19 +195,17 @@ public class StyledConverter implements OsmConverter {
 		for(int i = 0; i < vals.length; ++i)
 			vals[i] = vals[i].trim();
 
-		int kind;
-		try {
-			kind = Integer.decode(vals[0]);
-		}
-		catch (NumberFormatException nfe) {
-			log.error("OSM element " + element.getId() + " has bad value for kind: " + vals[0]);
-			return null;
-		}
-
-		if(kind != GType.POINT &&
-		   kind != GType.POLYLINE &&
-		   kind != GType.POLYGON) {
-			log.error("OSM element " + element.getId() + " has bad value for kind, is " + kind + " but should be " + GType.POINT + ", " + GType.POLYLINE + " or " + GType.POLYGON);
+		FeatureKind kind;
+		if (vals[0].equals("1"))
+			kind = FeatureKind.POINT;
+		else if (vals[1].equals("2"))
+			kind = FeatureKind.POLYLINE;
+		else if (vals[1].equals("3"))
+			kind = FeatureKind.POLYGON;
+		else {
+			log.error("OSM element " + element.getId() + " has bad value for kind, is " + vals[0] + " but should be " +
+					"1, "
+					+ "2 or 3");
 			return null;
 		}
 
@@ -227,7 +226,7 @@ public class StyledConverter implements OsmConverter {
 			log.error("OSM element " + element.getId() + " has bad value for minres: " + vals[2]);
 		}
 
-		if(vals.length >= 4 && vals[3].length() > 0) {
+		if(vals.length >= 4 && !vals[3].isEmpty()) {
 			try {
 				gt.setMaxResolution(Integer.decode(vals[3]));
 			}
@@ -236,7 +235,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
-		if(vals.length >= 5 && vals[4].length() > 0) {
+		if(vals.length >= 5 && !vals[4].isEmpty()) {
 			try {
 				gt.setRoadClass(Integer.decode(vals[4]));
 			}
@@ -245,7 +244,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
-		if(vals.length >= 6 && vals[5].length() > 0) {
+		if(vals.length >= 6 && !vals[5].isEmpty()) {
 			try {
 				gt.setRoadSpeed(Integer.decode(vals[5]));
 			}
@@ -310,7 +309,7 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addConvertedWay(Way way, GType foundType) {
-		if (foundType.getFeatureKind() == GType.POLYLINE) {
+		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 		    if(foundType.isRoad() &&
 			   !MapObject.hasExtendedType(foundType.getType()))
 				addRoad(way, foundType);
@@ -650,7 +649,7 @@ public class StyledConverter implements OsmConverter {
 				name = name.substring(2);
 			}
 				
-			while(name.length() > 0 && name.charAt(0) == ' ')
+			while(!name.isEmpty() && name.charAt(0) == ' ')
 				name = name.substring(1);
 
 			if(leadingCode != 0)

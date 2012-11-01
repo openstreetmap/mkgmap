@@ -34,6 +34,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.OrOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
@@ -58,7 +59,7 @@ public class RuleFileReader {
 	private TokenScanner scanner;
 	private StyleFileLoader loader;
 
-	public RuleFileReader(int kind, LevelInfo[] levels, RuleSet rules) {
+	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules) {
 		this.rules = rules;
 		typeReader = new TypeReader(kind, levels);
 	}
@@ -473,7 +474,7 @@ public class RuleFileReader {
 		if (args.length > 0) {
 			Reader r = new FileReader(args[0]);
 			RuleSet rs = new RuleSet();
-			RuleFileReader rr = new RuleFileReader(GType.POLYLINE,
+			RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
 			rr.load(r, "string");
 			System.out.println("Result: " + rs);

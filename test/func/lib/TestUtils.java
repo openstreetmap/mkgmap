@@ -31,7 +31,7 @@ import uk.me.parabola.mkgmap.main.Main;
 import uk.me.parabola.mkgmap.osmstyle.RuleFileReader;
 import uk.me.parabola.mkgmap.osmstyle.RuleSet;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
-import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 
 import static org.junit.Assert.*;
 
@@ -138,7 +138,8 @@ public class TestUtils {
 	 */
 	public static RuleSet makeRuleSet(StyleFileLoader loader) {
 		RuleSet rs = new RuleSet();
-		RuleFileReader rr = new RuleFileReader(GType.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+		RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"),
+				rs);
 		try {
 			rr.load(loader, "lines");
 		} catch (FileNotFoundException e) {

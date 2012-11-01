@@ -62,6 +62,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.ExpressionReader;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.ElementSaver;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
@@ -556,7 +557,7 @@ public class StyleTester implements OsmConverter {
 		public Rule getLineRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
 
-			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(GType.POLYLINE, levels, r);
+			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(FeatureKind.POLYLINE, levels, r);
 			try {
 				ruleFileReader.load(fileLoader, "lines");
 			} catch (FileNotFoundException e) {
@@ -576,7 +577,7 @@ public class StyleTester implements OsmConverter {
 		public Rule getPolygonRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
 
-			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(GType.POLYGON, levels, r);
+			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(FeatureKind.POLYGON, levels, r);
 			try {
 				ruleFileReader.load(fileLoader, "polygons");
 			} catch (FileNotFoundException e) {
@@ -589,7 +590,7 @@ public class StyleTester implements OsmConverter {
 		public Rule getRelationRules() {
 			ReferenceRuleSet r = new ReferenceRuleSet();
 
-			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(0, levels, r);
+			SimpleRuleFileReader ruleFileReader = new SimpleRuleFileReader(FeatureKind.RELATION, levels, r);
 			try {
 				ruleFileReader.load(fileLoader, "relations");
 			} catch (FileNotFoundException e) {
@@ -673,7 +674,7 @@ public class StyleTester implements OsmConverter {
 			private final ReferenceRuleSet rules;
 			private TokenScanner scanner;
 
-			public SimpleRuleFileReader(int kind, LevelInfo[] levels, ReferenceRuleSet rules) {
+			public SimpleRuleFileReader(FeatureKind kind, LevelInfo[] levels, ReferenceRuleSet rules) {
 				this.rules = rules;
 				typeReader = new TypeReader(kind, levels);
 			}
