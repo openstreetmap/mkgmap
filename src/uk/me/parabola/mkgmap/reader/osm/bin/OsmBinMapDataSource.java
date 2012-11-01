@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2010 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * Copyright (C) 2010 - 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm.bin;
 
 import java.io.FileNotFoundException;
@@ -57,6 +58,7 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 
 		try {
 			BinParser reader = handler.new BinParser();
+			handler = null;
 			BlockInputStream stream = new BlockInputStream(is, reader);
 			stream.process();
 		} catch (NoClassDefFoundError e) {
@@ -64,10 +66,11 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 		} catch (IOException e) {
 			throw new FormatException("Failed to read binary file " + name);
 		}
+		elementSaver.finishLoading();
 
 		osmReadingHooks.end();
+		osmReadingHooks = null;
 		
-		elementSaver.finishLoading();
 		// now convert the saved elements
 		elementSaver.convert(getConverter());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010.
+ * Copyright (C) 2010 - 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
@@ -263,6 +264,8 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 
 	public void end() {
 		finishExits();
+		exits.clear();
+		motorways.clear();
 	}
 
 	private void finishExits() {

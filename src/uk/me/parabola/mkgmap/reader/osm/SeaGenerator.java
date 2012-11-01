@@ -761,6 +761,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			}
 			saver.addRelation(coastRel);
 		}
+		
+		shoreline = null;
 	}
 
 	/**

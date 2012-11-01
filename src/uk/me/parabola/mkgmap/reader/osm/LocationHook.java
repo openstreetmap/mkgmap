@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2012.
+ * Copyright (C) 2011 - 2012.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -10,13 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -39,7 +38,6 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 	private BoundaryGrid boundaryGrid;
 
 	private ElementSaver saver;
-	private final Set<String> autofillOptions = new HashSet<String>();
 	
 	private String boundaryDirName;
 
@@ -100,6 +98,8 @@ public class LocationHook extends OsmReadingHooksAdaptor {
 		boundaryGrid = new BoundaryGrid(boundaryDirName, saver.getBoundingBox(), props);
 		processLocationRelevantElements();
 
+		boundaryGrid = null;
+		
 		long dt = (System.currentTimeMillis() - t1);
 		log.info("======= LocationHook Stats =====");             
 		log.info("QuadTree searches    :", cntQTSearch);             
