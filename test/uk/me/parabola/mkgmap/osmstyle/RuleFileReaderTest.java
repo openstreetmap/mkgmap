@@ -26,6 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.scan.SyntaxException;
 
 import func.lib.StringStyleFileLoader;
 import org.junit.Test;
@@ -802,6 +803,50 @@ public class RuleFileReaderTest {
 		assertNotNull(type);
 	}
 
+
+	@Test
+	public void testFunctionWithParameters() {
+		// a parameter in a function is not allowed yet
+		try {
+			// this should throw a SyntaxException
+			makeRuleSet("A=B & length(a) > 91 [0x5]");
+			assertTrue("Function with parameters are not allowed", false);
+		} catch (SyntaxException exp) {
+		}
+	}
+	
+	@Test
+	public void testIsClosedFunction() {
+		RuleSet rs = makeRuleSet("A=B & is_closed() = true [0x5]");
+		Way el = getWayForClosedCompleteCheck(true, true);
+		
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+		
+		Way el2 = getWayForClosedCompleteCheck(false, true);
+		RuleSet rs2 = makeRuleSet("A=B & is_closed() = false [0x5]");
+		GType type2 = getFirstType(rs2, el2);
+		assertNotNull(type2);
+		assertEquals(5, type2.getType());
+	}
+	
+	@Test
+	public void testIsCompleteFunction() {
+		RuleSet rs = makeRuleSet("A=B & is_complete() = true [0x5]");
+		Way el = getWayForClosedCompleteCheck(false, true);
+		
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+		
+		Way el2 = getWayForClosedCompleteCheck(false, false);
+		RuleSet rs2 = makeRuleSet("A=B & is_complete() = false [0x5]");
+		GType type2 = getFirstType(rs2, el2);
+		assertNotNull(type2);
+		assertEquals(5, type2.getType());
+	}
+	
 	/**
 	 * Get a way with a few points for testing length.
 	 *
@@ -815,6 +860,27 @@ public class RuleFileReaderTest {
 		return el;
 	}
 
+	/**
+	 * Get a way with a few points for testing the closed and complete flag.
+	 * @param closed way should be closed
+	 * @param complete way should not be complete
+	 */
+	private Way getWayForClosedCompleteCheck(boolean closed, boolean complete) {
+		Way el = new Way(1);
+		el.addTag("A","B");
+		el.addPoint(new Coord(1000,1000));
+		el.addPoint(new Coord(1000,2000));
+		el.addPoint(new Coord(2000,2000));
+		el.addPoint(new Coord(2000,1000));
+		if (closed)
+			el.addPoint(new Coord(1000,1000));
+		el.setComplete(complete);
+		el.setClosed(true);
+		return el;
+	}
+	
+
+	
 	/**
 	 * Resolve the rule set with the given element and get the first
 	 * resolved type.
