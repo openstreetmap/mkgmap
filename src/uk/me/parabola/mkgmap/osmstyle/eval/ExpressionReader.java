@@ -8,6 +8,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
 import uk.me.parabola.mkgmap.osmstyle.function.GetTagFunction;
 import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.mkgmap.scan.WordInfo;
@@ -24,11 +25,13 @@ public class ExpressionReader {
 	private final Stack<Op> stack = new Stack<Op>();
 	private final Stack<Op> opStack = new Stack<Op>();
 	private final TokenScanner scanner;
+	private final FeatureKind kind;
 
 	private final Set<String> usedTags = new HashSet<String>();
 
-	public ExpressionReader(TokenScanner scanner) {
+	public ExpressionReader(TokenScanner scanner, FeatureKind kind) {
 		this.scanner = scanner;
+		this.kind = kind;
 	}
 
 	/**
@@ -189,9 +192,38 @@ public class ExpressionReader {
 
 		stack.push(op);
 	}
-	
+
+	/**
+	 * Lookup a function by its name and check that it is allowed for the kind of features that we
+	 * are reading.
+	 *
+	 * @param functionName A name to look up.
+	 */
 	private void saveFunction(String functionName) {
 		StyleFunction function = FunctionFactory.createFunction(functionName);
+		if (function == null)
+			throw new SyntaxException(String.format("No function with name '%s()'", functionName));
+
+		// TODO: supportsWay split into supportsPoly{line,gon}, or one function supports(kind)
+		boolean supported = false;
+		switch (kind) {
+		case POINT:
+			if (function.supportsNode()) supported = true;
+			break;
+		case POLYLINE:
+			if (function.supportsWay()) supported = true;
+			break;
+		case POLYGON:
+			if (function.supportsWay()) supported = true;
+			break;
+		case RELATION:
+			if (function.supportsNode()) supported = true;
+			break;
+		}
+
+		if (!supported)
+			throw new SyntaxException(String.format("Function '%s()' not supported for %s", functionName, kind));
+
 		stack.push(function);
 	}
 

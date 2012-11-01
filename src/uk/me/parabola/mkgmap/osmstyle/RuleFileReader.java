@@ -53,6 +53,7 @@ import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
 public class RuleFileReader {
 	private static final Logger log = Logger.getLogger(RuleFileReader.class);
 
+	private final FeatureKind kind;
 	private final TypeReader typeReader;
 
 	private final RuleSet rules;
@@ -60,6 +61,7 @@ public class RuleFileReader {
 	private StyleFileLoader loader;
 
 	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules) {
+		this.kind = kind;
 		this.rules = rules;
 		typeReader = new TypeReader(kind, levels);
 	}
@@ -79,7 +81,7 @@ public class RuleFileReader {
 		scanner = new TokenScanner(name, r);
 		scanner.setExtraWordChars("-:.");
 
-		ExpressionReader expressionReader = new ExpressionReader(scanner);
+		ExpressionReader expressionReader = new ExpressionReader(scanner, kind);
 		ActionReader actionReader = new ActionReader(scanner);
 
 		// Read all the rules in the file.

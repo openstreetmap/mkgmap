@@ -694,7 +694,7 @@ public class StyleTester implements OsmConverter {
 				scanner = new TokenScanner(name, r);
 				scanner.setExtraWordChars("-:");
 
-				ExpressionReader expressionReader = new ExpressionReader(scanner);
+				ExpressionReader expressionReader = new ExpressionReader(scanner, FeatureKind.POLYLINE);
 				ActionReader actionReader = new ActionReader(scanner);
 
 				// Read all the rules in the file.

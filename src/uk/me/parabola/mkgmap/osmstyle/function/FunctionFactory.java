@@ -21,7 +21,8 @@ public class FunctionFactory {
 
 	/**
 	 * Returns a new instance of a style function with the given name.
-	 * @param name the style function name 
+	 *
+	 * @param name the style function name
 	 * @return the style function instance or {@code null} if there is no such function
 	 */
 	public static StyleFunction createFunction(String name) {

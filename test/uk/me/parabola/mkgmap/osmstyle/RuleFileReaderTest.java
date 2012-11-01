@@ -16,12 +16,15 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
@@ -817,6 +820,30 @@ public class RuleFileReaderTest {
 		// a parameter in a function is not allowed for the length() function
 		// this should throw a SyntaxException
 		makeRuleSet("length() > 91 [0x5]");
+	}
+
+	@Test(expected = SyntaxException.class)
+	public void testFunctionDoesNotExist() {
+		makeRuleSet("A=B & non_existing_function() > 10 [0x5]");
+	}
+
+	/**
+	 * Functions can be restricted to certain files. Eg length() does not make sense on a point.
+	 */
+	@Test(expected = SyntaxException.class)
+	public void testLengthInPoints() {
+		StringStyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"points", "A=B & length() < 100"}
+		});
+
+		RuleSet rs = new RuleSet();
+				RuleFileReader rr = new RuleFileReader(FeatureKind.POINT,
+						LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+		try {
+			rr.load(loader, "points");
+		} catch (FileNotFoundException e) {
+			throw new AssertionError("Failed to open file: lines");
+		}
 	}
 
 	/**
