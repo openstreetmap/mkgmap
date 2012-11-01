@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 30-Sep-2007
+ * Copyright (C) 2007 - 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.build;
 
 import java.io.BufferedReader;
@@ -1114,8 +1111,7 @@ public class MapBuilder implements Configurable {
 
 			pl.setDirection(line.isDirection());
 
-			for (Coord co : line.getPoints())
-				pl.addCoord(co);
+			pl.addCoords(line.getPoints());
 
 			pl.setType(line.getType());
 
@@ -1147,8 +1143,7 @@ public class MapBuilder implements Configurable {
 
 			Polygon pg = div.createPolygon(shape.getName());
 
-			for (Coord co : shape.getPoints())
-				pg.addCoord(co);
+			pg.addCoords(shape.getPoints());
 
 			pg.setType(shape.getType());
 			if(element.hasExtendedType()) {
