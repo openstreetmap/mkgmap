@@ -102,6 +102,10 @@ public class LineClipper {
 		return seg.ret;
 	}
 
+	public static Coord[] clip(Area a, Coord[] ends) {
+		return clip(a,ends,false);
+	}
+	
 	/**
 	 * A straight forward implementation of the Liang-Barsky algorithm as described
 	 * in the referenced web page.
@@ -109,17 +113,18 @@ public class LineClipper {
 	 * @param ends The start and end of the line the contents of this will
 	 * be changed if the line is clipped to contain the new start and end
 	 * points.  A point that was inside the box will not be changed.
+	 * @param nullIfInside true: returns null if all points are within the given area
 	 * @return An array of the new start and end points if any of the line is
 	 * within the box.  If the line is wholly outside then null is returned.
 	 * If a point is within the box then the same coordinate object will
 	 * be returned as was passed in.
 	 * @see <a href="http://www.skytopia.com/project/articles/compsci/clipping.html">Liang-Barsky algorithm</a>
 	 */
-	public static Coord[] clip(Area a, Coord[] ends) {
+	public static Coord[] clip(Area a, Coord[] ends, boolean nullIfInside) {
 		assert ends.length == 2;
 
 		if (a.insideBoundary(ends[0]) && a.insideBoundary(ends[1])) {
-			return ends;
+			return (nullIfInside ? null : ends);
 		}
 		
 		int x0 = ends[0].getLongitude();

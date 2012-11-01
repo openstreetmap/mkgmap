@@ -19,6 +19,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -262,7 +263,7 @@ public class ElementSaver {
 			// backwards so we can safely insert points into way
 			for (int i = points.size() - 1; i >= 1; --i) {
 				Coord[] pair = { points.get(i - 1), points.get(i) };
-				Coord[] clippedPair = LineClipper.clip(getBoundingBox(), pair);
+				Coord[] clippedPair = LineClipper.clip(getBoundingBox(), pair, true);
 				// we're only interested in segments that touch the
 				// boundary
 				if (clippedPair != null) {
@@ -356,7 +357,8 @@ public class ElementSaver {
 			for (Way way : ways) {
 				List<Coord> points = way.getPoints();
 				if (points.size() < 2) {
-					log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+					if (log.isInfoEnabled())
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
 					wayMap.remove(way.getId());
 					++numWaysDeleted;
 					continue;
@@ -402,7 +404,8 @@ public class ElementSaver {
 					// this is not the first point in the way
 
 					if (p == previousPoint) {
-						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
+						if (log.isInfoEnabled())
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
 						points.remove(i);
 						// hack alert! rewind the loop index
 						--i;
@@ -457,7 +460,8 @@ public class ElementSaver {
 						if(arcLength == 0 || arcLength < minArcLength)
 							mergeNodes = true;
 						else if(complainedAbout.get(way) == null) {
-							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
+							if (log.isInfoEnabled())
+								log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
 							complainedAbout.put(way, way);
 						}
 					}
@@ -488,7 +492,8 @@ public class ElementSaver {
 							// are on the boundary and they don't have
 							// identical coordinates
 							if(complainedAbout.get(way) == null) {
-								log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+								if (log.isLoggable(Level.WARNING))
+									log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
 								complainedAbout.put(way, way);
 							}
 							break; // give up with this way
