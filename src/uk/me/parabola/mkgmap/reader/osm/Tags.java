@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 08-Dec-2008
+ * Copyright (C) 2008 - 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
+
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.AbstractMap;
@@ -55,9 +52,9 @@ public class Tags implements Iterable<String> {
 		capacity = INIT_SIZE;
 	}
 
-	public String get(Object key) {
-		Integer ind = keyPos((String) key);
-		if (ind == null)
+	public String get(String key) {
+		int ind = keyPos(key);
+		if (ind < 0)
 			return null;
 
 		return values[ind];
@@ -75,8 +72,8 @@ public class Tags implements Iterable<String> {
 		assert key != null : "key is null";
 		assert value != null : "value is null";
 		ensureSpace();
-		Integer ind = keyPos(key);
-		if (ind == null)
+		int ind = keyPos(key);
+		if (ind < 0)
 			assert false : "keyPos(" + key + ") returns null - size = " + keySize + ", capacity = " + capacity;
 		keys[ind] = key;
 
@@ -90,10 +87,10 @@ public class Tags implements Iterable<String> {
 		return old;
 	}
 
-	public String remove(Object key) {
-		Integer k = keyPos((String) key);
+	public String remove(String key) {
+		int k = keyPos(key);
 
-		if (k != null && values[k] != null) {
+		if (k >= 0 && values[k] != null) {
 			// because of the way this works, you can never remove keys
 			// except when resizing.
 			String old = values[k];
@@ -139,7 +136,7 @@ public class Tags implements Iterable<String> {
 		assert keySize < capacity;
 	}
 
-	private Integer keyPos(String key) {
+	private int keyPos(String key) {
 		int h = key.hashCode();
 		int k = h & (capacity - 1);
 
@@ -152,7 +149,7 @@ public class Tags implements Iterable<String> {
 			if (i >= capacity)
 				i = 0;
 		} while (i != k);
-		return null;
+		return -1;
 	}
 
 	/**
