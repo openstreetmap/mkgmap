@@ -525,6 +525,17 @@ Miscellaneous options:
 	access (e.g. bollards). Their access restrictions are applied
 	to a small region of the way near the POI.
 
+--process-destination
+	When using the Garmin Types 0x08 and 0x09 (Ramp) Garmin is
+	evaluating the first way after all the *_link ways to display
+	the destination of the link. But in the OSM data only the _link 
+	ways are tagged with destination. When this option is set the 
+	destination tags of motorway_link and trunk_link ways are copied 
+	to the first non link way so that the Garmin can show the 
+	destination. 
+	Note: There must be a rule in the lines	style file that uses the
+	      destination tag to set the display_name tag 
+	
 --delete-tags-file=FILENAME
 	Names a file that should contain one or more lines of the form
 	TAG=VALUE or TAG=*. Blank lines and lines that start with
