@@ -58,6 +58,10 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	private void retrieveWays() {
 		// collect all ways tagged with highway 
 		for (Way w : saver.getWays().values()) {
+			if (w.getPoints().size() < 2) {
+				// ignore one-node or zero-node ways
+				continue;
+			}
 			String highwayTag = w.getTag("highway");
 			if (highwayTag != null) {
 				// the points of the way are kept so that it is easy to get
@@ -93,7 +97,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		}
 	}
 	
-	private void processDestionations() {
+	private void processDestinations() {
 		// process all links with a destination tag
 		// while checking new ways can be added to the list
 		while (destinationLinkWays.isEmpty() == false) {
@@ -206,7 +210,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 		retrieveWays();
 		
-		processDestionations();
+		processDestinations();
 
 		cleanup();
 
