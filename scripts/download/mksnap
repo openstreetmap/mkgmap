@@ -52,7 +52,8 @@ if [ ! -f $TARGET ]; then
 
 	cd $BUILD_DIR
 	if [ -d resources ]; then
-		echo "svn.version: $VERSION" > resources/mkgmap-version.properties
+		echo "svn.version: $VERSION" > resources/$PRODUCT-version.properties
+		echo "build.timestamp: $(date -Iseconds)" >> resources/$PRODUCT-version.properties
 	fi
 	ant dist || exit 1
 
