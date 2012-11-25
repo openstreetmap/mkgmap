@@ -126,7 +126,11 @@
 	<target name="resolve-macker" depends="init-ivy" description="Downloads macker program dependencies using ivy.">
 		<ivy:retrieve conf="macker" log="download-only"/>
 	</target>
-	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker" description="Downloads all program dependencies using ivy." />
+	<target name="resolve-optional" depends="init-ivy" description="Downloads optional program dependencies using ivy.">
+		<ivy:retrieve conf="optional" log="download-only"/>
+	</target>
+	<target name="resolve" depends="resolve-compile, resolve-test, resolve-macker, resolve-optional"
+					description="Downloads all program dependencies using ivy." />
 
 	<!-- targets for publishing the project (locally) via ivy -->
 	<target name="publish" depends="dist">

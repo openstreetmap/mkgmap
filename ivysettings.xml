@@ -10,6 +10,7 @@
 
 	<resolvers>
 		<chain name="custom" returnFirst="true">
+
 			<resolver ref="default" />
 
 			<url name="mkgmap">
@@ -17,10 +18,21 @@
 				<artifact pattern="${mkgmap.ivy.repo}/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]" />
 			</url>
 
-			<url name="com.springsource.repository.bundles.external">
-				<ivy pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
-				<artifact pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
-			</url>
 		</chain>
+
+		<ibiblio name="geotools-resolver" m2compatible="true" root="http://repo.opengeo.org/" />
+
+		<url name="spring-resolver" >
+			<ivy pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
+			<artifact pattern="http://repository.springsource.com/ivy/bundles/external/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" />
+		</url>
+
 	</resolvers>
+
+	<modules>
+		<module organisation="org.geotools" resolver="geotools-resolver"/>
+		<module organisation="java3d" resolver="geotools-resolver"/>
+		<module organisation="javax.media.jai" resolver="spring-resolver"/>
+	</modules>
+
 </ivysettings>
