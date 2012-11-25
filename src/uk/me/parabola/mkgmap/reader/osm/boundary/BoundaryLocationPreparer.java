@@ -181,7 +181,11 @@ public class BoundaryLocationPreparer {
 			return UNSET_ADMIN_LEVEL;
 		}
 		try {
-			return Integer.valueOf(level);
+			Integer res = Integer.valueOf(level);
+			if (res < 2 || res > 11)
+				return UNSET_ADMIN_LEVEL;
+			else
+				return res;
 		} catch (NumberFormatException nfe) {
 			return UNSET_ADMIN_LEVEL;
 		}
