@@ -89,9 +89,9 @@ public class ElementSaver {
 			relationMap = new HashMap<Long, Relation>();
 		}
 
-		String rsa = args.getProperty("remove-short-arcs", null);
+		String rsa = args.getProperty("remove-short-arcs", "5");
 		if(rsa != null)
-			minimumArcLength = (rsa.length() > 0)? Double.parseDouble(rsa) : 0.0;
+			minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
 		else
 			minimumArcLength = null;
 
