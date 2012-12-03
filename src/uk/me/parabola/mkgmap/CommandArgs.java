@@ -7,7 +7,8 @@ import uk.me.parabola.util.EnhancedProperties;
 
 public class CommandArgs {
 	public static final int DEFAULT_FAMILYID = 6324;
-	
+	public static final int DEFAULT_PRODUCTID = 1;
+
 	private final EnhancedProperties currentOptions;
 	private Sort sort;
 

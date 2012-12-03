@@ -178,9 +178,7 @@ public class Main implements ArgumentProcessor {
 		processMap.put("img", saver);
 		processMap.put("mdx", saver);
 
-		// Todo: instead of the direct saver, modify the file with the correct
-		// family-id etc.
-		processMap.put("typ", saver);
+		processMap.put("typ", new TypSaver());
 
 		// Normal map files.
 		processMap.put("rgn", saver);
@@ -341,9 +339,8 @@ public class Main implements ArgumentProcessor {
 		for (Preparer preparer : preparers) {
 
 			boolean usePreparer = preparer.init(args.getProperties(), threadPool);
-			if (usePreparer == false) {
+			if (!usePreparer)
 				continue;
-			}
 
 			try {
 				preparer.runPreparer();
