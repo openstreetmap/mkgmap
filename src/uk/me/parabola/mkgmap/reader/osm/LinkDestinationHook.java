@@ -34,8 +34,7 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author WanMil
  */
 public class LinkDestinationHook extends OsmReadingHooksAdaptor {
-	private static final Logger log = Logger
-			.getLogger(LinkDestinationHook.class);
+	private static final Logger log = Logger.getLogger(LinkDestinationHook.class);
 
 	private ElementSaver saver;
 
@@ -71,7 +70,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					// oneway => don't need the last point because the
 					// way cannot be driven standing at the last point
 					points = w.getPoints().subList(0, w.getPoints().size() - 1);
-				} else if (isOnewayReverseDirection(w)) {
+				} else if (isOnewayOppositeDirection(w)) {
 					// reverse oneway => don't need the first point because the
 					// way cannot be driven standing at the first point
 					points = w.getPoints().subList(1, w.getPoints().size());
@@ -97,6 +96,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		}
 	}
 	
+	/**
+	 * Copies the destination tags of all motorway_link and trunk_link ways to the adjacent ways.
+	 */
 	private void processDestinations() {
 		// process all links with a destination tag
 		// while checking new ways can be added to the list
@@ -112,7 +114,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 			// get the last point of the link to retrieve all connected ways
 			Coord connectPoint = link.getPoints().get(link.getPoints().size() - 1);
-			if (isOnewayReverseDirection(link)) {
+			if (isOnewayOppositeDirection(link)) {
 				// for reverse oneway ways it's the first point
 				connectPoint = link.getPoints().get(0);
 			}
@@ -144,7 +146,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				List<Coord> pointsToCheck;
 				if (isOnewayInDirection(connection)) {
 					pointsToCheck = connection.getPoints();
-				} else if (isOnewayReverseDirection(connection)) {
+				} else if (isOnewayOppositeDirection(connection)) {
 					pointsToCheck = new ArrayList<Coord>(
 							connection.getPoints());
 					Collections.reverse(pointsToCheck);
@@ -162,7 +164,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					}
 					Set<Way> furtherConnects = adjacentWays.get(c);
 					for (Way fc : furtherConnects) {
-						String fcDest = fc.getTag("destionation");
+						String fcDest = fc.getTag("destination");
 						if (fcDest != null
 								&& destinationTag.equals(fcDest) == false) {
 							if (log.isInfoEnabled())
@@ -191,6 +193,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 	
 
+	/**
+	 * Cleans all internal data that is no longer used after the hook has been processed.
+	 */
 	private void cleanup() {
 		adjacentWays = null;
 		destinationLinkWays = null;
@@ -217,26 +222,44 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		log.info("LinkDestinationHook finished");
 	}
 
+	/**
+	 * Retrieves if the given way is tagged as oneway in the direction of the way.
+	 * @param w the way
+	 * @return <code>true</code> way is oneway
+	 */
 	private boolean isOnewayInDirection(Way w) {
 		if (w.isBoolTag("oneway")) {
 			return true;
 		}
+		
+		// check if oneway is set implicitly by the highway type (motorway and motorway_link)
 		String onewayTag = w.getTag("oneway");
 		String highwayTag = w.getTag("highway");
 		if (onewayTag == null && highwayTag != null
-				&& highwayTag.endsWith("_link")) {
+				&& (highwayTag.equals("motorway") || highwayTag.equals("motorway_link"))) {
 			return true;
 		}
 		return false;
 	}
 
-	private boolean isOnewayReverseDirection(Way w) {
+	/**
+	 * Retrieves if the given way is tagged as oneway but in opposite direction of the way.
+	 * @param w the way
+	 * @return <code>true</code> way is oneway in opposite direction
+	 */
+	private boolean isOnewayOppositeDirection(Way w) {
 		return "-1".equals(w.getTag("oneway"));
 	}
 
+	/**
+	 * Retrieves if the given way is not oneway.
+	 * @param w the way
+	 * @return <code>true</code> way is not oneway
+	 */
 	private boolean isNotOneway(Way w) {
-		return isOnewayInDirection(w) == false
-				&& isOnewayReverseDirection(w) == false;
+		return "no".equals(w.getTag("oneway")) || 
+				(isOnewayInDirection(w) == false
+				 && isOnewayOppositeDirection(w) == false);
 	}
 
 }
