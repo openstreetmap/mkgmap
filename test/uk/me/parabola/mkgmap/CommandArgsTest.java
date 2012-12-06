@@ -85,7 +85,7 @@ public class CommandArgsTest {
 		String SETNAME1 = "11110000";
 		String SETNAME2 = "22220000";
 
-		carg.readArgs(new String[] {
+		carg.readArgs(new String[]{
 				"--mapname=" + SETNAME1, FILE1,
 				"--mapname=" + SETNAME2, FILE2
 		});
@@ -156,17 +156,6 @@ public class CommandArgsTest {
 		assertEquals("description", "OSM-AU New South Wales", arg.getProperty("description"));
 	}
 
-	private void createFile(String name, String content) throws IOException {
-		TestUtils.registerFile(name);
-		Writer w = null;
-		try {
-			w = new FileWriter(name);
-			w.append(content);
-		} finally {
-			Utils.closeFile(w);
-		}
-	}
-
 	/**
 	 * Combinations of all mapname possibilities.
 	 */
@@ -188,6 +177,38 @@ public class CommandArgsTest {
 		assertEquals("with mapname", SETNAME, proc.getProperty(2, "mapname"));
 		assertEquals("continue after set", "12345679", proc.getProperty(3, "mapname"));
 		assertEquals("continue after set", "12345680", proc.getProperty(4, "mapname"));
+	}
+
+	/**
+	 * Options can be switched off by prefixing them with 'no-'.
+	 */
+	@Test
+	public void testArgReset() {
+		carg.readArgs(new String[] {
+				"--keep-going",
+				FILE1,
+				"--no-keep-going",
+				FILE2,
+				"--keep-going",
+				FILE3,
+		});
+		
+		assertEquals("first file has keep-going", "", proc.getProperty(0, "keep-going"));
+		assertEquals("second file does not have keep-going", null, proc.getProperty(1, "keep-going"));
+		assertEquals("third file does has keep-going", "", proc.getProperty(2, "keep-going"));
+		assertEquals("any option that was not present is null", null, proc.getProperty(1,
+				"invalid-option-does-not-exist"));
+	}
+
+	private void createFile(String name, String content) throws IOException {
+		TestUtils.registerFile(name);
+		Writer w = null;
+		try {
+			w = new FileWriter(name);
+			w.append(content);
+		} finally {
+			Utils.closeFile(w);
+		}
 	}
 
 	/**
@@ -213,8 +234,11 @@ public class CommandArgsTest {
 		public void processOption(String opt, String val) {
 		}
 
+		public void removeOption(String opt) {
+		}
+
 		public void processFilename(CommandArgs args, String filename) {
-			ArgCollector.FileArgs fa = new FileArgs();
+			FileArgs fa = new FileArgs();
 			fa.name = filename;
 
 			fa.props = new Properties();

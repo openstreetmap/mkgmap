@@ -261,6 +261,9 @@ public class Main implements ArgumentProcessor {
 		}
 	}
 
+	public void removeOption(String opt) {
+	}
+
 	private void addTdbBuilder() {
 		TdbBuilder builder = new TdbBuilder();
 		builder.setOverviewSource(new OverviewMapDataSource());

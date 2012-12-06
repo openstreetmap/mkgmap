@@ -60,4 +60,17 @@ public class OptionTest {
 		assertEquals("value", "world", o.getValue());
 		assertTrue("experimental", o.isExperimental());
 	}
+
+	/**
+	 * Test for an negative option eg: no-route. These begin with the prefix 'no-'.
+	 * The option name is without the prefix and a flag is set to show that the option
+	 * is being reset.
+	 */
+	@Test
+	public void testOptionReset() {
+		Option o = new Option("no-hello");
+		assertEquals("name", "hello", o.getOption());
+		assertEquals("value", null, o.getValue());
+		assertTrue("reset", o.isReset());
+	}
 }

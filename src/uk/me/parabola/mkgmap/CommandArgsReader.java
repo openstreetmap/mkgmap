@@ -293,8 +293,13 @@ public class CommandArgsReader {
 		}
 
 		public void processArg() {
-			args.setProperty(option.getOption(), option.getValue());
-			proc.processOption(option.getOption(), option.getValue());
+			if (option.isReset()) {
+				args.remove(option.getOption());
+				proc.removeOption(option.getOption());
+			} else {
+				args.setProperty(option.getOption(), option.getValue());
+				proc.processOption(option.getOption(), option.getValue());
+			}
 		}
 
 		public String getOption() {

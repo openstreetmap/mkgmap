@@ -24,13 +24,23 @@ package uk.me.parabola.mkgmap;
 public interface ArgumentProcessor  {
 
 	/**
-	 * Process an option.  This is intended for options that change state or
-	 * that say how the next filename is to be operated upon.
+	 * Process an option. In general you do not do anything in this callback for most options.
+	 * Options that determine how a particular file are processed are saved into a map that
+	 * is handed to the map building process.
+	 *
+	 * Options that are processed here are things like --help or --list-styles that have an
+	 * actual effect by themselves.
 	 *
 	 * @param opt The option name.
 	 * @param val The option value.
 	 */
 	public void processOption(String opt, String val);
+
+	/**
+	 * Called when an option is reset, eg --no-tdbfile.
+	 * @param opt The option name.
+	 */
+	public void removeOption(String opt);
 
 	/**
 	 * Process a filename.

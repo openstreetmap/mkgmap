@@ -40,6 +40,8 @@ public class FileSystemParam {
 
 	public void setMapDescription(String mapDescription) {
 		this.mapDescription = mapDescription;
+		if (this.mapDescription == null)
+			this.mapDescription = "";
 	}
 
 	public int getBlockSize() {
