@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:/home/steve/cmd
+PROGDIR=$(dirname $(readlink -f $0))
+PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
 
 typeset -i VERSION
 while getopts "r:d:" c
@@ -28,14 +29,22 @@ SVN=http://svn.parabola.me.uk/$PRODUCT
 if [ "$VERSION" = "" ]; then
 VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
 	-n 's/revision="\([0-9]*\)".*/\1/p' | head -1)
+LATEST=1
 fi
 SPACE='&nbsp;&nbsp;&nbsp;'
 
-SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/snapshots}
+SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/docroot/download}
 RELNAME=$PRODUCT-r$VERSION
 TARGET=$SNAPDIR/$RELNAME.tar.gz
 TARGET_SRC=$SNAPDIR/$RELNAME-src.tar.gz
+TARGET_SRC_LATEST_TAR=$SNAPDIR/$PRODUCT-src.tar.gz
+TARGET_SRC_LATEST_ZIP=$SNAPDIR/$PRODUCT-src.zip
 TARGET_ZIP=$SNAPDIR/$RELNAME.zip
+
+BUILD_DIST=1
+if [ "$PRODUCT" = display ]; then
+	BUILD_DIST=0
+fi
 
 if [ ! -f $TARGET ]; then
 	echo Rebuilding
@@ -49,31 +58,35 @@ if [ ! -f $TARGET ]; then
 
 	# Create a pure source distribution
 	tar czCf $(dirname $BUILD_DIR) $TARGET_SRC $RELNAME
+	ln -f $TARGET_SRC $TARGET_SRC_LATEST_TAR
+	rm -f $TARGET_SRC_LATEST_ZIP
+	(cd $(dirname $BUILD_DIR); zip -r $TARGET_SRC_LATEST_ZIP $RELNAME) > /dev/null
 
 	cd $BUILD_DIR
 	if [ -d resources ]; then
 		echo "svn.version: $VERSION" > resources/$PRODUCT-version.properties
 		echo "build.timestamp: $(date -Iseconds)" >> resources/$PRODUCT-version.properties
 	fi
-	ant dist || exit 1
 
-	mv dist $RELNAME
-	tar czf $TARGET $RELNAME
-	zip -r $TARGET_ZIP $RELNAME
+	if [ "$BUILD_DIST" = 1 ]; then
+		echo BUILDING TARGET
+		ant dist || exit 1
+
+		mv dist $RELNAME
+		tar czf $TARGET $RELNAME
+		zip -r $TARGET_ZIP $RELNAME
+	fi
 fi
 
 cd $SNAPDIR
 rm -f $PRODUCT-latest.tar.gz
 
-cat <<-EOF > .htaccess.new
-# hi
-RewriteEngine on
-RewriteRule   $PRODUCT-latest.tar.gz $RELNAME.tar.gz
-RewriteRule   $PRODUCT-latest.zip $RELNAME.zip
-RewriteRule   $PRODUCT-latest-src.tar.gz ${RELNAME}-src.tar.gz
-EOF
-mv .htaccess.new .htaccess
+if [ "$LATEST" = 1 -a "$BUILD_DIST" = 1 ]; then
+	ln $RELNAME.tar.gz $PRODUCT-latest.tar.gz
+fi
 
-mksnap_setdate $RELNAME.tar.gz $VERSION
+if [ "$BUILD_DIST" = 1 ]; then
+	mksnap_setdate $RELNAME.tar.gz $VERSION
+fi
 
 mksnapindex -d $SNAPDIR $PRODUCT

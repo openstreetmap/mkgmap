@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PROGDIR=$(dirname $(readlink -f $0))
+
 while getopts "r:d:" c
 do
 	case $c in
@@ -14,7 +16,7 @@ if [ "$PRODUCT" = "" ]; then
 	exit
 fi
 
-SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/snapshots}
+SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/docroot/download}
 
 print_product_line() {
 	file=$1
@@ -34,29 +36,31 @@ print_product_line() {
 	name=${file%.tar.gz}
 	refbase=${fileref%.tar.gz}
 
-	echo '<tr>'
-	echo "<td>$name</td>"
-	case $name in
-	*.jar)
-		echo "<td>&nbsp;<a href='$fileref'>[.jar]</a>&nbsp;"
-		;;
-	*)
-		echo "<td>&nbsp;<a href='$fileref'>[.tar.gz]</a>&nbsp;"
-		echo "<a href='$refbase.zip'>[.zip]</a>&nbsp;"
-		echo "<a href='${refbase}-src.tar.gz'>[src]</a> </td>"
-		;;
-	esac
-	echo "<td>&nbsp;</td>"
-	echo "<td>$3 $4</td>"
-	echo "<td>$5</td>"
-	echo "<td>&nbsp;</td>"
-	echo "<td>$2</td>"
-	echo '</tr>'
+	if [ -f $file ]; then
+		echo '<tr>'
+		echo "<td>$name</td>"
+		case $name in
+		*.jar)
+			echo "<td>&nbsp;<a href='$fileref'>[.jar]</a>&nbsp;"
+			;;
+		*)
+			echo "<td>&nbsp;<a href='$fileref'>[.tar.gz]</a>&nbsp;"
+			echo "<a href='$refbase.zip'>[.zip]</a>&nbsp;"
+			echo "<a href='${refbase}-src.tar.gz'>[src]</a> </td>"
+			;;
+		esac
+		echo "<td>&nbsp;</td>"
+		echo "<td>$3 $4</td>"
+		echo "<td>$5</td>"
+		echo "<td>&nbsp;</td>"
+		echo "<td>$2</td>"
+		echo '</tr>'
+	fi
 }
 
 cd $SNAPDIR
 
-sed -e 's/$PRODUCT/'"$PRODUCT"'/' $(dirname $0)/$PRODUCT-skel-top > index.html
+sed -e "s/%(PRODUCT)s/$PRODUCT/" $PROGDIR/skel-top > $PRODUCT.html
 
 (
 #print_product_line $PRODUCT-latest.tar.gz
@@ -70,7 +74,7 @@ do
 		;;
 	esac
 done
-) >> index.html
+) >> $PRODUCT.html
 
 if [ $(echo *.jar | wc -c) -gt 6 ] ; then
 	echo '</table><h1>Branch builds</h1>
@@ -81,7 +85,7 @@ if [ $(echo *.jar | wc -c) -gt 6 ] ; then
 	already merged with the main line, or abandoned and of course they
 	may not work.
 	<table>
-	' >> index.html
+	' >> $PRODUCT.html
 
 	for file in $(ls -t)
 	do
@@ -92,9 +96,15 @@ if [ $(echo *.jar | wc -c) -gt 6 ] ; then
 		*)
 			;;
 		esac
-	done >> index.html
+	done >> $PRODUCT.html
 else
-	echo '<tr><td></td></tr>' >> index.html
+	echo '<tr><td></td></tr>' >> $PRODUCT.html
 fi
 
-cat $(dirname $0)/$PRODUCT-skel-bot >> index.html
+if [ $PRODUCT = mkgmap ]; then
+	PRODUCT_AD=9104507573
+else
+	PRODUCT_AD=0835769470
+fi
+
+sed -e "s/%(PRODUCT_AD)s/$PRODUCT_AD/" $PROGDIR/skel-bot >> $PRODUCT.html

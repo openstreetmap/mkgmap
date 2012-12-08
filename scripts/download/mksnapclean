@@ -1,7 +1,9 @@
 #!/bin/bash
 
-PATH=/bin:/usr/bin:/usr/local/bin:/home/steve/cmd
-SNAPDIR=/home/steve/www/mkgmap.org.uk/snapshots
+PROGDIR=$(dirname $(readlink -f $0))
+PATH=/bin:/usr/bin:/usr/local/bin:$PROGDIR
+
+SNAPDIR=/home/steve/www/mkgmap.org.uk/docroot/download
 
 while getopts "d:" c
 do
@@ -39,18 +41,20 @@ if (( $(stat -c %Y $USEFILE) < $(date +%s) - 1060 )); then
 fi
 
 cd $SNAPDIR
-for f in $(ls *.zip)
+for f in $(ls ${PRODUCT}-r*.zip)
 do
 	base=${f%.zip}
-	echo $base ' '
+	echo -n $base ' '
 	grep -q $f $USEFILE
 
 	case $? in
 	0)
+		echo 'ok'
 		version=${base#*-r}
-		mksnap_setdate ${f%.zip}.tar.gz $version
+		mksnap_setdate ${base}.tar.gz $version
 		;;
 	1) rm ${base}[.-]*
+		echo 'removed'
 		;;
 	esac
 done

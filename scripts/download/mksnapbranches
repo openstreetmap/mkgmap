@@ -1,5 +1,10 @@
 #!/bin/bash
 
+PROGDIR=$(dirname $(readlink -f $0))
+
+export JAVA_HOME=/opt/java
+PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
+
 typeset -i VERSION
 typeset -i MIN_VERSION
 
@@ -13,7 +18,7 @@ shift $[OPTIND-1]
 
 PRODUCT=$1
 if [ "$PRODUCT" = "" ]; then
-	echo Usage: "mksnap [-d dir] [-r vers] <product>"
+	echo Usage: "mksnapbranches [-d dir] [-r vers] <product>"
 	exit
 fi
 
@@ -21,14 +26,11 @@ source mksnapfuncs
 
 export LANG=en_GB.UTF-8
 
-export JAVA_HOME=/opt/java
-PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin
-
 SVN=http://svn.parabola.me.uk/$PRODUCT
 ((MIN_VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
             -n 's/revision="\([0-9]*\)".*/\1/p') - 100))
 
-SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/snapshots}
+SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/docroot/download}
 
 BRANCHES=$(svn ls $SVN/branches)
 
@@ -78,4 +80,4 @@ do
 done
 
 
-$HOME/cmd/mksnapindex -d $SNAPDIR $PRODUCT
+mksnapindex -d $SNAPDIR $PRODUCT

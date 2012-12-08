@@ -1,4 +1,4 @@
-cd /etc/httpd/logs
+cd /var/log/nginx
 
 MIN=8
 

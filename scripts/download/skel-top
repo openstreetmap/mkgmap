@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> mkgmap </title>
+	<link rel="stylesheet" type="text/css" href="/static/css/bundle.css">
+	<script src="/static/js/bundle.js" type="text/javascript"></script>
+	<link rel="alternate" type="application/atom+xml" title="mkgmap - Atom" href="http://www.mkgmap.org.uk/feed/atom">
+	<link rel="alternate" type="application/rss+xml" title="mkgmap - Rss" href="http://www.mkgmap.org.uk/feed/rss">
+	
+</head>
+<body>
+<div id="heading">
+	<img src="/static/img/logo.png" alt="logo">
+	<img src="/static/img/separator.png" alt="separator">
+</div>
+
+<div id="page">
+
+<div id="sidenav">
+
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/doc/index.html">Documentation</a></li>
+<li><a href="/download/mkgmap.html">Download</a></li>
+<li class="subnav"><a href="/download/mkgmap.html">mkgmap</a></li>
+<li class="subnav"><a href="/download/splitter.html">splitter</a></li>
+<li><a href="/">Development</a></li>
+<li class="subnav"><a href="/svn/list">source code</a></li>
+<li class="subnav"><a href="/">mailing lists</a></li>
+
+</ul>
+
+</div>
+
+<div id="maincontent" >
+<div id="main-inner">
+	
+
+<h1>Download %(PRODUCT)s</h1>
+<p>
+These snapshots are created automatically each night when there are changes.
+Each version can be downloaded in tar or zip format as well as its source code.
+The dates are the time that the version was created and can be used to
+judge the freshness of the release, you would normally download the top
+one unless you know it has a problem.
+<table>
+<col span="2">
+<col width="20px">
