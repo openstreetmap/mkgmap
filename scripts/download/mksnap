@@ -70,7 +70,7 @@ if [ ! -f $TARGET ]; then
 
 	if [ "$BUILD_DIST" = 1 ]; then
 		echo BUILDING TARGET
-		ant dist || exit 1
+		ant dist obtain-test-input-files test || exit 1
 
 		mv dist $RELNAME
 		tar czf $TARGET $RELNAME
