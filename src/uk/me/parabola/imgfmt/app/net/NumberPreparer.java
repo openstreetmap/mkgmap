@@ -12,14 +12,14 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitReader;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.log.Logger;
 
-import static uk.me.parabola.imgfmt.app.net.NumberStyle.EVEN;
-import static uk.me.parabola.imgfmt.app.net.NumberStyle.ODD;
+import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
 
 /**
  * Class to prepare the bit stream of the house numbering information.
@@ -41,6 +41,7 @@ public class NumberPreparer {
 
 	private final State state;
 	private BitWriter bw;
+	private boolean swappedDefaultStyle;
 
 	public NumberPreparer(List<Numbers> numbers) {
 		this.numbers = numbers;
@@ -119,8 +120,16 @@ public class NumberPreparer {
 				fail("reversed numbers (R)");
 		}
 		Numbers first = numbers.get(0);
-		if (first.getLeftNumberStyle() != ODD || first.getRightNumberStyle() != EVEN)
-			fail("initial even/odd");
+
+		if (first.getNodeNumber() != 0)
+			fail("first node not 0");
+
+		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
+			setSwappedDefaultStyle();
+
+		EnumSet<NumberStyle> notyet = EnumSet.of(NONE, BOTH);
+		if (notyet.contains(first.getLeftNumberStyle()) || notyet.contains(first.getRightNumberStyle()))
+			fail("NONE or BOTH numbering styles");
 
 		state.setInitialValue(Math.min(first.getLeftStart(), first.getRightStart()));
 
@@ -132,6 +141,12 @@ public class NumberPreparer {
 		vbw = new VarBitWriter(bw, END_WIDTH_MIN);
 		vbw.bitWidth = 3;
 		state.savedEndWriter = state.endWriter = vbw;
+	}
+
+	private void setSwappedDefaultStyle() {
+		swappedDefaultStyle = true;
+		state.left.style = EVEN;
+		state.right.style = ODD;
 	}
 
 	/**
@@ -180,8 +195,8 @@ public class NumberPreparer {
 	 * should be swapped.
 	 * @return True to signify swapped default, ie bit 0x20 in the net flags should be set.
 	 */
-	public boolean getSwaped() {
-		return false;
+	public boolean getSwapped() {
+		return swappedDefaultStyle;
 	}
 
 	/**

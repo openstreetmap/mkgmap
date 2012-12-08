@@ -194,7 +194,7 @@ public class RoadDef implements Comparable<RoadDef> {
 
 		writeLabels(writer);
 		if (numbers != null) { // TODO combine if
-			if (numbers.getSwaped())
+			if (numbers.getSwapped())
 				netFlags |= 0x20; // swapped default; left=even, right=odd
 		}
 		writer.put((byte) netFlags);

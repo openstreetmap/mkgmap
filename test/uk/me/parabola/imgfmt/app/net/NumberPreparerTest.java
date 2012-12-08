@@ -71,6 +71,13 @@ public class NumberPreparerTest {
 	}
 
 	@Test
+	public void testSwappedDefaultStyles() {
+		List<Numbers> numbers = createList(new String[]{"0,E,2,12,O,1,11"});
+		List<Numbers> output = writeAndRead(numbers);
+		assertEquals(numbers, output);
+	}
+
+	@Test
 	public void testIncreasingHighStarts() {
 		String[] tests = {
 				"0,O,1,5,E,2,6",
@@ -87,16 +94,24 @@ public class NumberPreparerTest {
 		}
 	}
 
+	@Test
+	public void testLargeDifferentStarts() {
+		// "0,O,91,103,E,2,8",
+		// "0,E,90,102,O,3,9",
+	}
+
 	private List<Numbers> writeAndRead(List<Numbers> numbers) {
 		NumberPreparer preparer = new NumberPreparer(numbers);
 		BitWriter bw = preparer.fetchBitStream();
 		assertTrue(preparer.isValid());
 
+		boolean swapped = preparer.getSwapped();
+
 		// Now read it all back in again
 		byte[] bytes = bw.getBytes();
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
-		return nr.readNumbers(false);
+		return nr.readNumbers(swapped);
 	}
 
 	private List<Numbers> createList(String[] specs) {
