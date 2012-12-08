@@ -33,6 +33,12 @@ public class Numbering {
 	public Numbering() {
 	}
 
+	/**
+	 * This constructor takes a comma separated list as in the polish format. Also used in testing as
+	 * it is an easy way to set all the parameters at once.
+	 *
+	 * @param spec Node number, followed by left and then right parameters as in the polish format.
+	 */
 	public Numbering(String spec) {
 		String[] strings = spec.split(",");
 		nodeNumber = Integer.valueOf(strings[0]);

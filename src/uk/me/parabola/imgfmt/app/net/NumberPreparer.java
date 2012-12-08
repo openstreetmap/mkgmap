@@ -47,7 +47,15 @@ public class NumberPreparer {
 		state = new State();
 	}
 
+	/**
+	 * Make the bit stream and return it. This is only done once, if you call this several times
+	 * the same bit writer is returned every time.
+	 * @return A bit writer containing the computed house number stream.
+	 */
 	public BitWriter makeBitStream() {
+		if (bw != null)
+			return bw;
+
 		// Write the bitstream
 		bw = new BitWriter();
 

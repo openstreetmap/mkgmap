@@ -77,6 +77,7 @@ public class NumberPreparerTest {
 				"0,O,3,7,E,4,8",
 				"0,O,7,7,E,8,8",
 				"0,O,91,99,E,92,98",
+				"0,O,1,15,E,4,8",
 		};
 
 		for (String t : tests) {

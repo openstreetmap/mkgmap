@@ -40,7 +40,12 @@ import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
-import uk.me.parabola.mkgmap.general.*;
+import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 /**
@@ -388,9 +393,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			roadHelper.setParam(value);
 		} else if (name.equals("DirIndicator")) {
 			polyline.setDirection(Integer.parseInt(value) > 0);
-		}
-		else {
-			if(extraAttributes == null)
+		} else if (name.startsWith("Numbers")) {
+			roadHelper.addNumbers(value);
+		} else {
+			if (extraAttributes == null)
 				extraAttributes = new HashMap<String, String>();
 			extraAttributes.put(name, value);
 		}

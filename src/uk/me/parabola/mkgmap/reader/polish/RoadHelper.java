@@ -16,12 +16,14 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.Numbering;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
@@ -52,6 +54,7 @@ class RoadHelper {
 	private boolean toll;
 
 	private boolean[] access;
+	private final List<Numbering> numbers = new ArrayList<Numbering>();
 
 	public RoadHelper() {
 		clear();
@@ -134,6 +137,10 @@ class RoadHelper {
 		}
 		road.setStartsWithNode(starts);
 		road.setInternalNodes(intern);
+
+		if (!numbers.isEmpty())
+			road.setNumbers(numbers);
+
 		return road;
 	}
 
@@ -143,6 +150,11 @@ class RoadHelper {
 
 	public Map<Long, CoordNode> getNodeCoords() {
 		return nodeCoords;
+	}
+
+	public void addNumbers(String value) {
+		Numbering num = new Numbering(value);
+		numbers.add(num);
 	}
 
 	private static class NodeIndex {
