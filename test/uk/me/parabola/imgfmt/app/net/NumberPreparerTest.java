@@ -38,7 +38,7 @@ public class NumberPreparerTest {
 	public void testNumberConstructor() {
 		// A simple test with all numbers increasing.
 		String spec = "0,O,1,7,E,2,12";
-		Numbering n = new Numbering(spec);
+		Numbers n = new Numbers(spec);
 
 		assertEquals(spec, n.toString());
 	}
@@ -52,10 +52,10 @@ public class NumberPreparerTest {
 		byte[] buf = {0x41, 0x13, 0x27, 0x49, 0x60};
 		BitReader br = new BitReader(buf);
 		NumberReader nr = new NumberReader(br);
-		List<Numbering> numberings = nr.readNumbers(true);
+		List<Numbers> numbers = nr.readNumbers(true);
 
-		assertEquals(1, numberings.size());
-		assertEquals("0,E,24,8,O,23,13", numberings.get(0).toString());
+		assertEquals(1, numbers.size());
+		assertEquals("0,E,24,8,O,23,13", numbers.get(0).toString());
 	}
 
 	/**
@@ -63,9 +63,9 @@ public class NumberPreparerTest {
 	 */
 	@Test
 	public void testIncreasingNumbers() {
-		List<Numbering> numbers = createList(new String[]{"0,O,1,11,E,2,12"});
+		List<Numbers> numbers = createList(new String[]{"0,O,1,11,E,2,12"});
 
-		List<Numbering> output = writeAndRead(numbers);
+		List<Numbers> output = writeAndRead(numbers);
 
 		assertEquals(numbers, output);
 	}
@@ -81,13 +81,13 @@ public class NumberPreparerTest {
 		};
 
 		for (String t : tests) {
-			List<Numbering> numbers = createList(new String[]{t});
-			List<Numbering> output = writeAndRead(numbers);
+			List<Numbers> numbers = createList(new String[]{t});
+			List<Numbers> output = writeAndRead(numbers);
 			assertEquals(numbers, output);
 		}
 	}
 
-	private List<Numbering> writeAndRead(List<Numbering> numbers) {
+	private List<Numbers> writeAndRead(List<Numbers> numbers) {
 		NumberPreparer preparer = new NumberPreparer(numbers);
 		BitWriter bw = preparer.fetchBitStream();
 		assertTrue(preparer.isValid());
@@ -99,10 +99,10 @@ public class NumberPreparerTest {
 		return nr.readNumbers(false);
 	}
 
-	private List<Numbering> createList(String[] specs) {
-		List<Numbering> numbers = new ArrayList<Numbering>();
+	private List<Numbers> createList(String[] specs) {
+		List<Numbers> numbers = new ArrayList<Numbers>();
 		for (String s : specs) {
-			Numbering n = new Numbering(s);
+			Numbers n = new Numbers(s);
 			numbers.add(n);
 		}
 		return numbers;

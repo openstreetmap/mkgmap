@@ -20,7 +20,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
-import uk.me.parabola.imgfmt.app.net.Numbering;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 
 /**
@@ -108,7 +108,7 @@ public class MapRoad extends MapLine {
 		roadDef.setNumNodes(n);
 	}
 
-	public void setNumbers(List<Numbering> numbers) {
+	public void setNumbers(List<Numbers> numbers) {
 		roadDef.setNumbersList(numbers);
 	}
 

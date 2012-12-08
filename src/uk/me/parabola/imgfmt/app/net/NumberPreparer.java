@@ -32,7 +32,7 @@ import static uk.me.parabola.imgfmt.app.net.NumberStyle.ODD;
 public class NumberPreparer {
 	private static final Logger log = Logger.getLogger(NumberPreparer.class);
 
-	private final List<Numbering> numbers;
+	private final List<Numbers> numbers;
 	private boolean valid;
 
 	// The minimum values of the start and end bit widths.
@@ -42,7 +42,7 @@ public class NumberPreparer {
 	private final State state;
 	private BitWriter bw;
 
-	public NumberPreparer(List<Numbering> numbers) {
+	public NumberPreparer(List<Numbers> numbers) {
 		this.numbers = numbers;
 		state = new State();
 	}
@@ -67,7 +67,7 @@ public class NumberPreparer {
 			writeWidths();
 			writeInitialValue();
 
-			for (Numbering n : numbers) {
+			for (Numbers n : numbers) {
 				state.setTarget(n);
 
 				state.writeNumberingStyle();
@@ -112,13 +112,13 @@ public class NumberPreparer {
 		if (numbers.size() > 1)
 			fail("more than one node");
 
-		for (Numbering n : numbers) {
+		for (Numbers n : numbers) {
 			if (n.getLeftStart() > n.getLeftEnd())
 				fail("reversed numbers (L)");
 			if (n.getRightStart() > n.getRightEnd())
 				fail("reversed numbers (R)");
 		}
-		Numbering first = numbers.get(0);
+		Numbers first = numbers.get(0);
 		if (first.getLeftNumberStyle() != ODD || first.getRightNumberStyle() != EVEN)
 			fail("initial even/odd");
 
@@ -170,7 +170,7 @@ public class NumberPreparer {
 	 */
 	private void fail(String msg) {
 		System.out.println("NOT YET: " + msg);
-		for (Numbering n : numbers)
+		for (Numbers n : numbers)
 			System.out.println(n);
 		throw new Abandon();
 	}
@@ -232,7 +232,7 @@ public class NumberPreparer {
 		 * transform the current state into the target state.
 		 * @param numbers The target numbers.
 		 */
-		public void setTarget(Numbering numbers) {
+		public void setTarget(Numbers numbers) {
 			left.setTargets(numbers.getLeftNumberStyle(), numbers.getLeftStart(), numbers.getLeftEnd());
 			right.setTargets(numbers.getRightNumberStyle(), numbers.getRightStart(), numbers.getRightEnd());
 		}

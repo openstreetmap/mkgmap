@@ -23,7 +23,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
-import uk.me.parabola.imgfmt.app.net.Numbering;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
@@ -54,7 +54,7 @@ class RoadHelper {
 	private boolean toll;
 
 	private boolean[] access;
-	private List<Numbering> numbers;
+	private List<Numbers> numbers;
 
 	public RoadHelper() {
 		clear();
@@ -155,8 +155,8 @@ class RoadHelper {
 
 	public void addNumbers(String value) {
 		if (numbers == null)
-			numbers = new ArrayList<Numbering>();
-		Numbering num = new Numbering(value);
+			numbers = new ArrayList<Numbers>();
+		Numbers num = new Numbers(value);
 		numbers.add(num);
 	}
 

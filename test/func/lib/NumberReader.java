@@ -17,7 +17,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitReader;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
-import uk.me.parabola.imgfmt.app.net.Numbering;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 
 import static uk.me.parabola.imgfmt.app.net.NumberStyle.*;
 
@@ -76,11 +76,11 @@ public class NumberReader {
 	}
 
 	/**
-	 * Read the numbers into a list of Numbering classes.
+	 * Read the numbers into a list of Numbers classes.
 	 * @param swap If the default starting position of left=ODD right=EVEN should be swapped.
 	 * @return A list of the numbers that the input stream represents.
 	 */
-	public List<Numbering> readNumbers(boolean swap) {
+	public List<Numbers> readNumbers(boolean swap) {
 		if (swap) {
 			leftStyle = EVEN;
 			rightStyle = ODD;
@@ -90,7 +90,7 @@ public class NumberReader {
 
 		getInitialBase();
 
-		List<Numbering> numbers = new ArrayList<Numbering>();
+		List<Numbers> numbers = new ArrayList<Numbers>();
 
 		// To do this properly we need to know the number of nodes I think, this is the
 		// best we can do: if there are more than 8 bits left, there must be another command
@@ -118,7 +118,7 @@ public class NumberReader {
 	 * Decode the next command in the stream and run it.
 	 * @param numbers When numbers are read, they are saved here.
 	 */
-	private void runCommand(List<Numbering> numbers) throws NumberException {
+	private void runCommand(List<Numbers> numbers) throws NumberException {
 		int cmd = readCommand(); // fetch 1, 3 skip, 2 reload, 0 style
 
 		switch (cmd) {
@@ -202,7 +202,7 @@ public class NumberReader {
 	 * The differences to the last point are stored. It is also possible to
 	 * @param numbers When numbers are read, they are saved here.
 	 */
-	private void fetchNumbers(List<Numbering> numbers) {
+	private void fetchNumbers(List<Numbers> numbers) {
 
 		// If one side has no numbers, then there is only one set of numbers to calculate, but
 		// changes to base are applied to both sides.
@@ -282,7 +282,7 @@ public class NumberReader {
 
 		adjustValues();
 
-		Numbering n = new Numbering();
+		Numbers n = new Numbers();
 		n.setNodeNumber(nodeCounter);
 
 		n.setLeftNumberStyle(leftStyle);
@@ -322,7 +322,7 @@ public class NumberReader {
 		rightLastEndDiff = leftLastEndDiff;
 		adjustValues();
 
-		Numbering n = new Numbering();
+		Numbers n = new Numbers();
 		if (leftStyle == NONE) {
 			n.setNodeNumber(nodeCounter);
 			n.setRightNumberStyle(rightStyle);

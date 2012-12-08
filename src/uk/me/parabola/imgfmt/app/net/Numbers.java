@@ -16,7 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
  * Describes the house numbering from a node in the road.
  * @author Steve Ratcliffe
  */
-public class Numbering {
+public class Numbers {
 	// The node in the road where these numbers apply.
 	private int nodeNumber;
 
@@ -30,7 +30,7 @@ public class Numbering {
 	private int rightStart;
 	private int rightEnd;
 
-	public Numbering() {
+	public Numbers() {
 	}
 
 	/**
@@ -39,7 +39,7 @@ public class Numbering {
 	 *
 	 * @param spec Node number, followed by left and then right parameters as in the polish format.
 	 */
-	public Numbering(String spec) {
+	public Numbers(String spec) {
 		String[] strings = spec.split(",");
 		nodeNumber = Integer.valueOf(strings[0]);
 		leftNumberStyle = NumberStyle.fromChar(strings[1]);
@@ -119,10 +119,10 @@ public class Numbering {
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Numbering))
+		if (!(obj instanceof Numbers))
 			return false;
 
-		Numbering other = (Numbering) obj;
+		Numbers other = (Numbers) obj;
 		return leftNumberStyle == other.leftNumberStyle
 				&& leftStart == other.leftStart
 				&& leftEnd == other.leftEnd

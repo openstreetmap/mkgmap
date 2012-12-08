@@ -143,7 +143,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	// for diagnostic purposes
 	private final long id;
 	private final String name;
-	private List<Numbering> numbersList;
+	private List<Numbers> numbersList;
 
 	public RoadDef(long id, String name) {
 		this.id = id;
@@ -466,7 +466,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		nnodes = n;
 	}
 
-	public void setNumbersList(List<Numbering> numbersList) {
+	public void setNumbersList(List<Numbers> numbersList) {
 		this.numbersList = numbersList;
 		netFlags |= NET_FLAG_ADDRINFO;
 	}
