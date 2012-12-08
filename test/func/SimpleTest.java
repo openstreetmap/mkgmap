@@ -70,10 +70,10 @@ public class SimpleTest {
 		assertEquals("bounds of map", expBox, bounds);
 
 		List<Point> list = mr.pointsForLevel(0);
-		assertEquals("number of points at level 0", list.size(), 204);
+		assertEquals("number of points at level 0", 204, list.size());
 
 		List<Polyline> list1 = mr.linesForLevel(0);
-		assertEquals("number of lines at level 0", list1.size(), 3757);
+		assertEquals("number of lines at level 0", 3752, list1.size());
 	}
 
 	@Test

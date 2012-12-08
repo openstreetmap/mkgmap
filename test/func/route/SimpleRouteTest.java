@@ -60,13 +60,13 @@ public class SimpleRouteTest {
 				assertEquals("TRE size", 1445, size);
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 27691, size);
+				assertEquals("LBL size", 27680, size);
 			} else if (ext.equals("NET")) {
 				count++;
-				assertEquals("NET size", 73850, size);
+				assertEquals("NET size", 73791, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 195187, size);
+				assertEquals("NOD size", 194966, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);

@@ -266,10 +266,10 @@
 
 	<target name="test" depends="build-test" description="Run the junit tests">
 		<mkdir dir="tmp/report"/>
-		<junit printsummary="yes">
-			<formatter type="plain"/>
+		<junit printsummary="yes" failureproperty="junit.failure">
 
 			<classpath refid="test"/>
+			<formatter type="xml"/>
 			
 			<assertions>
 				<enable/>
@@ -281,6 +281,11 @@
 				</fileset>
 			</batchtest>
 		</junit>
+		<junitreport todir="tmp">
+      <fileset dir="tmp/report"/>
+      <report todir="test-reports"/>
+    </junitreport>
+    <fail if="junit.failure" message="Test failed.  See test-reports/index.html"/>
 	</target>
 
 	<target name="obtain-test-input-files" description="download the input files for the functional tests">
