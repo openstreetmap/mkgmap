@@ -286,7 +286,7 @@ Miscellaneous options:
 
 --keep-going
 	Don't quit whole application if an exception occurs while
-	processing a job - continue to process the other jobs.
+	processing a map - continue to process the other maps.
 
 --block-size=number
 	Changes the block size that is used in the generated map. This
@@ -294,12 +294,10 @@ Miscellaneous options:
 	will ask you to try a value for this option.
 
 --net
-	Create maps that supports the "lock to road" option. Not required
-	if --route is also given.
+	Obsolete, use --route instead.
 
 --route
-	Experimental: Create maps that support routing.  This implies --net
-	(so that --net need not be given if --route is given).
+	Create maps that support routing.
 
 --drive-on-left
 --drive-on-right
