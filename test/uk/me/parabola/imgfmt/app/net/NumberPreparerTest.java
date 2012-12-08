@@ -71,7 +71,7 @@ public class NumberPreparerTest {
 	}
 
 	@Test
-	public void testIncreaseMatchedStart() {
+	public void testIncreasingHighStarts() {
 		String[] tests = {
 				"0,O,1,5,E,2,6",
 				"0,O,3,7,E,4,8",
@@ -89,7 +89,7 @@ public class NumberPreparerTest {
 
 	private List<Numbering> writeAndRead(List<Numbering> numbers) {
 		NumberPreparer preparer = new NumberPreparer(numbers);
-		BitWriter bw = preparer.makeBitStream();
+		BitWriter bw = preparer.fetchBitStream();
 		assertTrue(preparer.isValid());
 
 		// Now read it all back in again

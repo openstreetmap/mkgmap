@@ -530,6 +530,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 				try {
 					int inum = Integer.decode(num.toString());
+
+					// Convert any that are in 6-bit format
+					if (inum == 0x1b2c) inum = 0x1c;
+					if (inum >= 0x2a)
+						inum -= 0x29;
 					sb.append((char) inum);
 				} catch (NumberFormatException e) {
 					// Input is malformed so lets just ignore it.
@@ -609,6 +614,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private int extractResolution(int level) {
 		int nlevels = levels.length;
+
+		// Some maps use EndLevel=9 to mean the highest level
+		if (level >= nlevels)
+			level = nlevels - 1;
 
 		LevelInfo li = levels[nlevels - level - 1];
 		return li.getBits();

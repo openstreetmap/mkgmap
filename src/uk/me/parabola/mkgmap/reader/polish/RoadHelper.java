@@ -54,7 +54,7 @@ class RoadHelper {
 	private boolean toll;
 
 	private boolean[] access;
-	private final List<Numbering> numbers = new ArrayList<Numbering>();
+	private List<Numbering> numbers;
 
 	public RoadHelper() {
 		clear();
@@ -69,6 +69,7 @@ class RoadHelper {
 		oneway = false;
 		toll = false;
 		access = new boolean[NUM_ACCESS];
+		numbers = null;
 	}
 
 	public void setRoadId(int roadId) {
@@ -138,7 +139,7 @@ class RoadHelper {
 		road.setStartsWithNode(starts);
 		road.setInternalNodes(intern);
 
-		if (!numbers.isEmpty())
+		if (numbers != null)
 			road.setNumbers(numbers);
 
 		return road;
@@ -153,6 +154,8 @@ class RoadHelper {
 	}
 
 	public void addNumbers(String value) {
+		if (numbers == null)
+			numbers = new ArrayList<Numbering>();
 		Numbering num = new Numbering(value);
 		numbers.add(num);
 	}

@@ -185,8 +185,12 @@ public class RoadDef implements Comparable<RoadDef> {
 		offsetNet1 = writer.position();
 
 		NumberPreparer numbers = null;
-		if (numbersList != null)
+		if (numbersList != null) {
 			numbers = new NumberPreparer(numbersList);
+			numbers.fetchBitStream();
+			if (!numbers.isValid())
+				numbers = null;
+		}
 
 		writeLabels(writer);
 		if (numbers != null) { // TODO combine if
@@ -208,8 +212,8 @@ public class RoadDef implements Comparable<RoadDef> {
 			if(zip == null)
 				code |= 0x04; // no zip
 			if (numbers != null) {
-				code &= 0xc0;
-				if (numbers.makeBitStream().getLength() > 255)
+				code &= ~0xc0;
+				if (numbers.fetchBitStream().getLength() > 255)
 					code |= 1;
 			}
 			writer.put((byte)code);
@@ -228,7 +232,12 @@ public class RoadDef implements Comparable<RoadDef> {
 					writer.put((byte)cityIndex);
 			}
 			if (numbers != null) {
-				BitWriter bw = numbers.makeBitStream();
+				BitWriter bw = numbers.fetchBitStream();
+				System.out.println("bw len " + bw.getLength());
+				if (bw.getLength() > 255)
+					writer.putChar((char) bw.getLength());
+				else
+					writer.put((byte) bw.getLength());
 				writer.put(bw.getBytes(), 0, bw.getLength());
 			}
 		}
@@ -459,6 +468,7 @@ public class RoadDef implements Comparable<RoadDef> {
 
 	public void setNumbersList(List<Numbering> numbersList) {
 		this.numbersList = numbersList;
+		netFlags |= NET_FLAG_ADDRINFO;
 	}
 
 	/**

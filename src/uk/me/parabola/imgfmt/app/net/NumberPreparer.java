@@ -52,7 +52,7 @@ public class NumberPreparer {
 	 * the same bit writer is returned every time.
 	 * @return A bit writer containing the computed house number stream.
 	 */
-	public BitWriter makeBitStream() {
+	public BitWriter fetchBitStream() {
 		if (bw != null)
 			return bw;
 
@@ -109,6 +109,15 @@ public class NumberPreparer {
 	 *
 	 */
 	private void analyze() {
+		if (numbers.size() > 1)
+			fail("more than one node");
+
+		for (Numbering n : numbers) {
+			if (n.getLeftStart() > n.getLeftEnd())
+				fail("reversed numbers (L)");
+			if (n.getRightStart() > n.getRightEnd())
+				fail("reversed numbers (R)");
+		}
 		Numbering first = numbers.get(0);
 		if (first.getLeftNumberStyle() != ODD || first.getRightNumberStyle() != EVEN)
 			fail("initial even/odd");
@@ -159,8 +168,10 @@ public class NumberPreparer {
 	/**
 	 * Temporary routine to bail out on an unimplemented condition.
 	 */
-	private static void fail(String msg) {
+	private void fail(String msg) {
 		System.out.println("NOT YET: " + msg);
+		for (Numbering n : numbers)
+			System.out.println(n);
 		throw new Abandon();
 	}
 
@@ -237,6 +248,10 @@ public class NumberPreparer {
 				fail("right numbering");
 		}
 
+		public void fail(String msg) {
+			System.out.println(msg);
+			throw new Abandon();
+		}
 		/**
 		 * If we need a larger bit width for this node, then write out a command to
 		 * change it. Changes are temporary and it reverts to the default after the
@@ -433,6 +448,10 @@ public class NumberPreparer {
 			bw.put1(negative);
 			bw.put1(signed);
 			bw.putn(bitWidth, 4);
+		}
+		public void fail(String msg) {
+			System.out.println(msg);
+			throw new Abandon();
 		}
 	}
 }
