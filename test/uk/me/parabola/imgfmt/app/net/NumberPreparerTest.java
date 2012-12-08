@@ -12,9 +12,11 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitReader;
+import uk.me.parabola.imgfmt.app.BitWriter;
 
 import func.lib.NumberReader;
 import org.junit.Before;
@@ -56,4 +58,52 @@ public class NumberPreparerTest {
 		assertEquals("0,E,24,8,O,23,13", numberings.get(0).toString());
 	}
 
+	/**
+	 * Simple test of numbers that increase on both sides.
+	 */
+	@Test
+	public void testIncreasingNumbers() {
+		List<Numbering> numbers = createList(new String[]{"0,O,1,11,E,2,12"});
+
+		List<Numbering> output = writeAndRead(numbers);
+
+		assertEquals(numbers, output);
+	}
+
+	@Test
+	public void testIncreaseMatchedStart() {
+		String[] tests = {
+				"0,O,1,5,E,2,6",
+				"0,O,3,7,E,4,8",
+				"0,O,7,7,E,8,8",
+				"0,O,91,99,E,92,98",
+		};
+
+		for (String t : tests) {
+			List<Numbering> numbers = createList(new String[]{t});
+			List<Numbering> output = writeAndRead(numbers);
+			assertEquals(numbers, output);
+		}
+	}
+
+	private List<Numbering> writeAndRead(List<Numbering> numbers) {
+		NumberPreparer preparer = new NumberPreparer(numbers);
+		BitWriter bw = preparer.makeBitStream();
+		assertTrue(preparer.isValid());
+
+		// Now read it all back in again
+		byte[] bytes = bw.getBytes();
+		BitReader br = new BitReader(bytes);
+		NumberReader nr = new NumberReader(br);
+		return nr.readNumbers(false);
+	}
+
+	private List<Numbering> createList(String[] specs) {
+		List<Numbering> numbers = new ArrayList<Numbering>();
+		for (String s : specs) {
+			Numbering n = new Numbering(s);
+			numbers.add(n);
+		}
+		return numbers;
+	}
 }
