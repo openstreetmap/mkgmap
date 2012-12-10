@@ -39,13 +39,11 @@ public class NumberPreparer {
 	private static final int START_WIDTH_MIN = 5;
 	private static final int END_WIDTH_MIN = 2;
 
-	private final State state;
 	private BitWriter bw;
 	private boolean swappedDefaultStyle;
 
 	public NumberPreparer(List<Numbers> numbers) {
 		this.numbers = numbers;
-		state = new State();
 	}
 
 	/**
@@ -57,27 +55,35 @@ public class NumberPreparer {
 		if (bw != null)
 			return bw;
 
+		// Calculate some initial things, if we should use the swapped default numbering style EVEN/ODD rather than
+		// ODD/EVEN and the initialValue.
+		Numbers first = numbers.get(0);
+		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
+			swappedDefaultStyle = true;
+
+		int leftStart = first.getLeftStart();
+		int rightStart = first.getRightStart();
+		if (first.getLeftStart() > first.getLeftEnd())
+			leftStart = Math.max(leftStart, rightStart);
+		else
+			leftStart = Math.min(leftStart, rightStart);
+
 		// Write the bitstream
 		bw = new BitWriter();
 
 		try {
+
 			// Look at the numbers and calculate some optimal values for the bit field widths etc.
-			analyze();
+			State state = new GatheringState(leftStart);
+			checkSupported(state); // XXX to be removed.
+			process(bw, state);
 
 			// Write the initial values.
-			writeWidths();
-			writeInitialValue();
+			writeWidths(state);
+			writeInitialValue(state);
 
-			for (Numbers n : numbers) {
-				state.setTarget(n);
-
-				state.writeNumberingStyle();
-				state.writeBitWidths();
-				if (state.needSkip(n))
-					state.writeSkip();
-				else
-				state.writeNumbers(bw);
-			}
+			state = new WritingState(state);
+			process(bw, state);
 
 			// TODO remove, just for debugging
 			System.out.println(numbers.get(0));
@@ -94,6 +100,25 @@ public class NumberPreparer {
 		return bw;
 	}
 
+	private void process(BitWriter bw, State state) {
+		if (swappedDefaultStyle)
+			state.swapDefaults();
+
+		for (Numbers n : numbers) {
+			if (state.needSkip(n)) {
+				state.writeSkip(n);
+				continue;
+			}
+
+			state.setTarget(n);
+
+			state.writeNumberingStyle();
+			state.writeBitWidths();
+			state.calcNumbers();
+			state.writeNumbers(bw);
+		}
+	}
+
 	/** For debugging */
 	private void printBits(BitWriter bw) {
 		StringBuilder sb = new StringBuilder();
@@ -104,14 +129,8 @@ public class NumberPreparer {
 		System.out.println(sb.toString());
 	}
 
-	/**
-	 * Analyse the numbers to work out the best way of writing it. Need to obtain the optimal bit widths to
-	 * use and note if the numbers are always positive or negative, or vary.
-	 *
-	 * Will probably have to do all the steps required to write without actually writing.
-	 *
-	 */
-	private void analyze() {
+	/** Temporary routine to check for supported cases, will be removed. */
+	private void checkSupported(State state) {
 		//if (numbers.size() > 1)
 		//	fail("more than one node");
 
@@ -127,26 +146,14 @@ public class NumberPreparer {
 			fail("first node not 0");
 
 		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
-			setSwappedDefaultStyle();
+			swapDefaults(state);
 
 		EnumSet<NumberStyle> notyet = EnumSet.of(NONE, BOTH);
 		if (notyet.contains(first.getLeftNumberStyle()) || notyet.contains(first.getRightNumberStyle()))
 			fail("NONE or BOTH numbering styles");
-
-		state.setInitialValue(Math.min(first.getLeftStart(), first.getRightStart()));
-
-		// For now ignore actual numbers and just create some default writers.
-		VarBitWriter vbw = new VarBitWriter(bw, START_WIDTH_MIN);
-		vbw.bitWidth = 0;
-		state.savedStartWriter = state.startWriter = vbw;
-
-		vbw = new VarBitWriter(bw, END_WIDTH_MIN);
-		vbw.bitWidth = 3;
-		state.savedEndWriter = state.endWriter = vbw;
 	}
 
-	private void setSwappedDefaultStyle() {
-		swappedDefaultStyle = true;
+	private void swapDefaults(State state) {
 		state.left.style = EVEN;
 		state.right.style = ODD;
 	}
@@ -154,8 +161,9 @@ public class NumberPreparer {
 	/**
 	 * The initial base value is written out separately before anything else.
 	 * All numbers are derived from differences from this value.
+	 * @param state Holds the initial value to write.
 	 */
-	private void writeInitialValue() {
+	private void writeInitialValue(State state) {
 		int width = calcWidth(state.initialValue);
 		if (width > 5) {
 			bw.put1(false);
@@ -172,10 +180,11 @@ public class NumberPreparer {
 	 * either all positive or all negative, or they can be signed and each bit field
 	 * also has an extra sign bit. This is like how lines are encoded. See the LinePreparer
 	 * class.
+	 * @param state Holds the width information.
 	 */
-	private void writeWidths() {
-		state.startWriter.writeFormat();
-		state.endWriter.writeFormat();
+	private void writeWidths(State state) {
+		state.getStartWriter().writeFormat();
+		state.getEndWriter().writeFormat();
 	}
 
 	private int calcWidth(int n) {
@@ -225,16 +234,10 @@ public class NumberPreparer {
 	/**
 	 * The current state of the writing process.
 	 */
-	static class State {
-		private VarBitWriter startWriter;
-		private VarBitWriter endWriter;
+	static abstract class State {
 
-		private boolean restoreBitWriters;
-		private VarBitWriter savedStartWriter;
-		private VarBitWriter savedEndWriter;
-
-		private final Side left = new Side();
-		private final Side right = new Side();
+		protected final Side left = new Side();
+		protected final Side right = new Side();
 		private int initialValue;
 
 		State() {
@@ -266,92 +269,57 @@ public class NumberPreparer {
 		 * the command to change it.
 		 */
 		public void writeNumberingStyle() {
-			if (left.targetStyle != left.style)
-				fail("left numbering");
-			if (right.targetStyle != right.style)
-				fail("right numbering");
 		}
 
-		public void fail(String msg) {
-			throw new Abandon(msg);
-		}
 		/**
 		 * If we need a larger bit width for this node, then write out a command to
 		 * change it. Changes are temporary and it reverts to the default after the
 		 * next number output command.
 		 */
 		public void writeBitWidths() {
-			// TODO
 		}
 
 		private int lastNode;
 		public boolean needSkip(Numbers n) {
 			if (n.getNodeNumber() > 0 && n.getNodeNumber() != lastNode + 1)
-				fail("need skip");
+				throw new Abandon("need skip");
 			lastNode = n.getNodeNumber();
 			return false;
 		}
 
-		public void writeSkip() {
+		public void writeSkip(Numbers n) {
 		}
 
-		public void writeNumbers(BitWriter bw) {
-			// write the number command sequence
-			bw.put1(true);
-
-			boolean equalizedBases = equalizeBases(bw);
+		public void calcNumbers() {
+			equalizeBases();
 
 			left.calcLeft(right);
-			int startDiff = left.getStartDiff();
-			int endDiff = left.getEndDiff();
-
 			right.calcRight(left);
-			boolean doRightOverride = right.needOverride();
-
-			bw.put1(!doRightOverride);
-			bw.put1(startDiff == 0);
-			bw.put1(endDiff == 0);
-
-			if (startDiff > 0)
-				startWriter.write(startDiff);
-
-			if (endDiff > 0)
-				endWriter.write(endDiff);
-
-			left.finish();
-
-			startDiff = right.getStartDiff();
-			endDiff = right.getEndDiff();
-
-			if (!equalizedBases)
-				bw.put1(startDiff == 0);
-			if (doRightOverride)
-				bw.put1(endDiff == 0);
-
-			if (startDiff > 0)
-				startWriter.write(startDiff);
-
-			if (endDiff > 0)
-				endWriter.write(endDiff);
-
-			right.finish();
-
-			if (restoreBitWriters)
-				fail("restore bit writers");
 		}
 
-		private boolean equalizeBases(BitWriter bw) {
-			bw.put1(false); // Not yet
+		private boolean equalizeBases() {
+			left.equalized = false;
+			right.equalized = false;
 			return false;
+		}
+
+		public abstract void writeNumbers(BitWriter bw);
+
+		public abstract VarBitWriter getStartWriter();
+		public abstract VarBitWriter getEndWriter();
+
+		public void swapDefaults() {
+			left.style = EVEN;
+			right.style = ODD;
 		}
 	}
 
 	static class Side {
+		private NumberStyle style;
 		private int base;
 
 		// The calculated start and end numbers for the node. These might be different to the actual numbers
 		// that are wanted that are in targetStart and End.
-		private NumberStyle style;
 		private int start;
 		private int end;
 
@@ -361,23 +329,24 @@ public class NumberPreparer {
 		private int targetStart;
 		private int targetEnd;
 
+		private int startDiff;
+		private int endDiff;
+		private int lastEndDiff;
+
 		private int endAdj;
 		private int roundDirection = 1;
 
-		private int lastEndDiff;
-		private int otherEndDiff;
+		// Bases equalised to this side.
+		private boolean equalized;
 
-		public void init() { // XXX incorrect?
+		public void init() {
 			if (targetStart > targetEnd)
 				endAdj = 1;
 			else if (targetEnd < targetStart) {
 				endAdj = -1;
 				roundDirection = -1;
-			}
-			else
+			} else
 				endAdj = 0;
-
-			otherEndDiff = -1;
 		}
 
 		public void setTargets(NumberStyle style, int start, int end) {
@@ -387,15 +356,12 @@ public class NumberPreparer {
 			init();
 		}
 
-		/**
-		 * Returns true if the start is equal to the base taking account the odd/even adjustment that will be
-		 * made in the reading process.
-		 * @return True if the start is the 'same' as the base after any adjustment.
-		 */
-		private boolean startCompatibleBase() {
-			if (targetStart == base || targetStart == round(base))
-				return true;
-			return false;
+		private boolean tryStart(int value) {
+			return value == targetStart || round(value) == targetStart;
+		}
+
+		private boolean tryEnd(int value) {
+			return (value + endAdj) == targetEnd || round(value + endAdj) == targetEnd;
 		}
 
 		private int round(int value) {
@@ -415,35 +381,31 @@ public class NumberPreparer {
 		 * side has not been calculated yet, so you can only use the target values.
 		 */
 		public void calcLeft(Side right) {
-			System.out.printf("lstart %d, %d\n", base, targetStart);
-			if (targetStart == round(base))
-				start = base;
-			else start = targetStart;
-
-			end = targetEnd + 1;
+			calcCommon();
 		}
 
 		public void calcRight(Side left) {
-			if (targetStart == round(base))
-				start = base;
-			else start = targetStart;
-			end = targetEnd + 1;
+			calcCommon();
 		}
 
-		public int getStartDiff() {
-			if (start < base)
-				throw new Abandon("reverse number");
-			return start - base;
-		}
+		private void calcCommon() {
+			if (targetStart == targetEnd) {
+				startDiff = targetStart - base;
+				endDiff = 0;
+			}
+			if (tryStart(base))
+				startDiff = 0;
+			else
+				startDiff = targetStart - base;
 
-		public int getEndDiff() {
-			return end - start;
+			endDiff = targetEnd - (base + startDiff) + 1;
 		}
 
 		public void finish() {
-			lastEndDiff = getEndDiff();
+			lastEndDiff = endDiff;
+			start = base + startDiff;
+			end = start + endDiff;
 			base = end;
-			System.out.println("base " + base);
 		}
 	}
 
@@ -485,4 +447,175 @@ public class NumberPreparer {
 			throw new Abandon(msg);
 		}
 	}
+
+	private class GatheringState extends State {
+		private boolean negative;
+		private boolean positive;
+		private int maxStartVal;
+		private int maxEndVal;
+
+		public GatheringState(int initialValue) {
+			setInitialValue(initialValue);
+		}
+
+		public void writeNumbers(BitWriter bw) {
+			int val = left.base + left.startDiff;
+			val = testSign(val);
+			if (val > maxStartVal)
+				maxStartVal = val;
+
+			val = right.base + right.startDiff;
+			val = testSign(val);
+			if (val > maxStartVal)
+				maxStartVal = val;
+
+			val = left.base + left.startDiff + left.endDiff;
+			val = testSign(val);
+			if (val > maxEndVal)
+				maxEndVal = val;
+
+			val = right.base + right.startDiff + right.endDiff;
+			val = testSign(val);
+			if (val > maxEndVal)
+				maxEndVal = val;
+		}
+
+		private int testSign(int val) {
+			if (val > 0) {
+				positive = true;
+			} else if (val < 0) {
+				negative = true;
+				return -val;
+			}
+			return val;
+		}
+
+		public VarBitWriter getStartWriter() {
+			return getVarBitWriter(0, START_WIDTH_MIN);
+		}
+
+		public VarBitWriter getEndWriter() {
+			return getVarBitWriter(3, END_WIDTH_MIN);
+		}
+
+		private VarBitWriter getVarBitWriter(int width, int minWidth) {
+			VarBitWriter writer = new VarBitWriter(bw, minWidth);
+			if (negative && positive)
+				writer.signed = true;
+			else if (negative)
+				writer.negative = true;
+			writer.bitWidth = width;
+			return writer;
+		}
+	}
+
+	static class WritingState extends State {
+
+		private VarBitWriter startWriter;
+		private VarBitWriter endWriter;
+		private boolean restoreBitWriters;
+		private final VarBitWriter savedStartWriter;
+		private final VarBitWriter savedEndWriter;
+
+		public WritingState(State state) {
+			setInitialValue(state.initialValue);
+			left.base = state.initialValue;
+			right.base = state.initialValue;
+
+			startWriter = state.getStartWriter();
+			endWriter = state.getEndWriter();
+			this.savedStartWriter = startWriter;
+			this.savedEndWriter = endWriter;
+		}
+
+		public void writeNumbers(BitWriter bw) {
+			boolean doSingleSide = left.style == NONE || right.style == NONE;
+			if (left.style == NONE) {
+				left.base = right.base;
+			}
+
+			// Output the command that a number follows.
+			bw.put1(true);
+
+			boolean equalized = false;
+			if (!doSingleSide) {
+				equalized = left.equalized || right.equalized;
+				bw.put1(equalized);
+				if (equalized)
+					bw.put1(left.equalized);
+			}
+
+			if (!doSingleSide) {
+				bw.put1(!right.needOverride());
+			}
+			boolean doStart = left.startDiff != 0;
+			boolean doEnd = left.endDiff != 0;
+			bw.put1(!doStart);
+			bw.put1(!doEnd);
+
+			if (doStart)
+				startWriter.write(left.startDiff);
+			if (doEnd)
+				endWriter.write(left.endDiff);
+
+			left.finish();
+
+			if (doSingleSide) {
+				writeSingleSide(bw);
+				restoreWriters();
+				return;
+			}
+
+			doStart = right.startDiff != 0;
+			doEnd = right.endDiff != 0;
+
+			if (!equalized)
+				bw.put1(!doStart);
+			if (right.needOverride())
+				bw.put1(!doEnd);
+
+			if (doStart)
+				startWriter.write(right.startDiff);
+			if (doEnd)
+				endWriter.write(right.endDiff);
+
+			right.finish();
+			restoreWriters();
+		}
+
+		public void writeNumberingStyle() {
+			if (left.targetStyle != left.style)
+				throw new Abandon("left numbering");
+			if (right.targetStyle != right.style)
+				throw new Abandon("right numbering");
+		}
+
+		public void writeBitWidths() {
+			// TODO
+		}
+
+		public void writeSkip(Numbers n) {
+		}
+
+		private void writeSingleSide(BitWriter bw) {
+			throw new Abandon("single side");
+		}
+
+		public VarBitWriter getStartWriter() {
+			return startWriter;
+		}
+
+		public VarBitWriter getEndWriter() {
+			return endWriter;
+		}
+
+		private void restoreWriters() {
+			if (restoreBitWriters) {
+				startWriter = savedStartWriter;
+				endWriter = savedEndWriter;
+				restoreBitWriters = false;
+			}
+		}
+	}
+
 }
