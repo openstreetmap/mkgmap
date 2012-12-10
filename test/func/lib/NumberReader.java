@@ -363,14 +363,14 @@ public class NumberReader {
 		if (leftStyle == EVEN) {
 			if ((leftStart & 1) == 1) leftStart += ldirection;
 			if ((leftEnd & 1) == 1) leftEnd -= ldirection;
-		} else {
+		} else if (leftStyle == ODD) {
 			if ((leftStart & 1) == 0) leftStart+=ldirection;
 			if ((leftEnd & 1) == 0) leftEnd-=ldirection;
 		}
 		if (rightStyle == EVEN) {
 			if ((rightStart & 1) == 1) rightStart+=rdirection;
 			if ((rightEnd & 1) == 1) rightEnd-=rdirection;
-		} else {
+		} else if (rightStyle == ODD) {
 			if ((rightStart & 1) == 0) rightStart+=rdirection;
 			if ((rightEnd & 1) == 0) rightEnd-=rdirection;
 		}

@@ -73,19 +73,21 @@ public class NumberPreparer {
 
 				state.writeNumberingStyle();
 				state.writeBitWidths();
-				if (state.needSkip())
+				if (state.needSkip(n))
 					state.writeSkip();
 				else
 				state.writeNumbers(bw);
 			}
 
 			// TODO remove, just for debugging
+			System.out.println(numbers.get(0));
 			printBits(bw);
 
 			// If we get this far and there is something there, the stream might be valid!
 			if (bw.getLength() > 1)
 				valid = true;
 		} catch (Abandon e) {
+			System.out.println(e.getMessage());
 			valid = false;
 		}
 
@@ -110,8 +112,8 @@ public class NumberPreparer {
 	 *
 	 */
 	private void analyze() {
-		if (numbers.size() > 1)
-			fail("more than one node");
+		//if (numbers.size() > 1)
+		//	fail("more than one node");
 
 		for (Numbers n : numbers) {
 			if (n.getLeftStart() > n.getLeftEnd())
@@ -184,10 +186,9 @@ public class NumberPreparer {
 	 * Temporary routine to bail out on an unimplemented condition.
 	 */
 	private void fail(String msg) {
-		System.out.println("NOT YET: " + msg);
 		for (Numbers n : numbers)
 			System.out.println(n);
-		throw new Abandon();
+		throw new Abandon(msg);
 	}
 
 	/**
@@ -211,7 +212,15 @@ public class NumberPreparer {
 		return valid;
 	}
 
-	static class Abandon extends RuntimeException {}
+	static class Abandon extends RuntimeException {
+		Abandon(String message) {
+			super("NOT YET " + message);
+		}
+
+		public Abandon() {
+
+		}
+	}
 
 	/**
 	 * The current state of the writing process.
@@ -264,8 +273,7 @@ public class NumberPreparer {
 		}
 
 		public void fail(String msg) {
-			System.out.println(msg);
-			throw new Abandon();
+			throw new Abandon(msg);
 		}
 		/**
 		 * If we need a larger bit width for this node, then write out a command to
@@ -276,7 +284,11 @@ public class NumberPreparer {
 			// TODO
 		}
 
-		public boolean needSkip() {
+		private int lastNode;
+		public boolean needSkip(Numbers n) {
+			if (n.getNodeNumber() > 0 && n.getNodeNumber() != lastNode + 1)
+				fail("need skip");
+			lastNode = n.getNodeNumber();
 			return false;
 		}
 
@@ -289,12 +301,13 @@ public class NumberPreparer {
 
 			boolean equalizedBases = equalizeBases(bw);
 
+			left.calcLeft(right);
 			int startDiff = left.getStartDiff();
 			int endDiff = left.getEndDiff();
 
-			right.setOtherEndDiff(endDiff);
-
+			right.calcRight(left);
 			boolean doRightOverride = right.needOverride();
+
 			bw.put1(!doRightOverride);
 			bw.put1(startDiff == 0);
 			bw.put1(endDiff == 0);
@@ -320,6 +333,8 @@ public class NumberPreparer {
 
 			if (endDiff > 0)
 				endWriter.write(endDiff);
+
+			right.finish();
 
 			if (restoreBitWriters)
 				fail("restore bit writers");
@@ -349,8 +364,6 @@ public class NumberPreparer {
 		private int endAdj;
 		private int roundDirection = 1;
 
-		private int startDiff;
-		private int endDiff;
 		private int lastEndDiff;
 		private int otherEndDiff;
 
@@ -380,14 +393,8 @@ public class NumberPreparer {
 		 * @return True if the start is the 'same' as the base after any adjustment.
 		 */
 		private boolean startCompatibleBase() {
-			if (targetStart == base)
+			if (targetStart == base || targetStart == round(base))
 				return true;
-
-			// Otherwise apply the rounding rules.
-			int adjBase = round(base);
-			if (targetStart == adjBase)
-				return true;
-
 			return false;
 		}
 
@@ -402,31 +409,41 @@ public class NumberPreparer {
 			return true;
 		}
 
+		/**
+		 * Calculate the start and end.  The right hand side details are given
+		 * to help pick good values that will optimise the right hand side. The right hand
+		 * side has not been calculated yet, so you can only use the target values.
+		 */
+		public void calcLeft(Side right) {
+			System.out.printf("lstart %d, %d\n", base, targetStart);
+			if (targetStart == round(base))
+				start = base;
+			else start = targetStart;
+
+			end = targetEnd + 1;
+		}
+
+		public void calcRight(Side left) {
+			if (targetStart == round(base))
+				start = base;
+			else start = targetStart;
+			end = targetEnd + 1;
+		}
+
 		public int getStartDiff() {
-			int diff;
-			if (startCompatibleBase())
-				diff = 0;
-			else
-				diff = targetStart - base;
-			startDiff = diff;
-			return diff;
+			if (start < base)
+				throw new Abandon("reverse number");
+			return start - base;
 		}
 
 		public int getEndDiff() {
-			int diff = targetEnd - (base + startDiff) + 1;
-			endDiff = diff;
-			return diff;
-		}
-
-		public void setOtherEndDiff(int otherEndDiff) {
-			this.otherEndDiff = otherEndDiff;
+			return end - start;
 		}
 
 		public void finish() {
-			start = base + startDiff;
-			end = start + endDiff;
+			lastEndDiff = getEndDiff();
 			base = end;
-			lastEndDiff = endDiff;
+			System.out.println("base " + base);
 		}
 	}
 
@@ -465,8 +482,7 @@ public class NumberPreparer {
 			bw.putn(bitWidth, 4);
 		}
 		public void fail(String msg) {
-			System.out.println(msg);
-			throw new Abandon();
+			throw new Abandon(msg);
 		}
 	}
 }

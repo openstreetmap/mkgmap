@@ -20,6 +20,7 @@ import uk.me.parabola.imgfmt.app.BitWriter;
 
 import func.lib.NumberReader;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -63,11 +64,7 @@ public class NumberPreparerTest {
 	 */
 	@Test
 	public void testIncreasingNumbers() {
-		List<Numbers> numbers = createList(new String[]{"0,O,1,11,E,2,12"});
-
-		List<Numbers> output = writeAndRead(numbers);
-
-		assertEquals(numbers, output);
+		run("0,O,1,11,E,2,12");
 	}
 
 	@Test
@@ -94,10 +91,42 @@ public class NumberPreparerTest {
 		}
 	}
 
-	@Test
+	@Test @Ignore
 	public void testLargeDifferentStarts() {
-		// "0,O,91,103,E,2,8",
-		// "0,E,90,102,O,3,9",
+		runSeparate("0,O,91,103,E,2,8", "0,E,90,102,O,3,9");
+	}
+
+	@Test
+	public void testMultipleNodes() {
+		List<Numbers> numbers = createList(new String[]{
+				"0,O,1,9,E,2,12",
+				"1,O,11,17,E,14,20",
+				"2,O,21,31,E,26,36",
+		});
+		List<Numbers> output = writeAndRead(numbers);
+		assertEquals(numbers, output);
+	}
+
+	@Test @Ignore
+	public void testMultipleWithReverse() {
+		List<Numbers> numbers = createList(new String[]{
+				"0,E,2,2,O,1,5",
+				"1,E,2,10,O,5,17"});
+		List<Numbers> output = writeAndRead(numbers);
+		assertEquals(numbers, output);
+
+	}
+
+
+	private void runSeparate(String... numbers) {
+		for (String s : numbers)
+			run(s);
+	}
+
+	private void run(String ... numbers) {
+		List<Numbers> nList = createList(numbers);
+		List<Numbers> output = writeAndRead(nList);
+		assertEquals(nList, output);
 	}
 
 	private List<Numbers> writeAndRead(List<Numbers> numbers) {
