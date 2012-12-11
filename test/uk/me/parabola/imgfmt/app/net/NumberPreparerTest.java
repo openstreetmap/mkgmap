@@ -122,7 +122,7 @@ public class NumberPreparerTest {
 
 	@Test
 	public void testMixedStyles() {
-		run("0,O,1,9,E,6,12", "1,E,14,22,O,9,17");
+		run("0,O,1,9,E,6,12", "1,E,14,22,O,9,17", "2,O,17,21,E,26,36");
 	}
 
 	@Test

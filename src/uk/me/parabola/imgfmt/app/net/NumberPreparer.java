@@ -113,7 +113,7 @@ public class NumberPreparer {
 			state.setTarget(n);
 
 			state.calcNumbers();
-			state.writeNumberingStyle();
+			state.writeNumberingStyle(bw);
 			state.writeBitWidths(bw);
 			state.writeNumbers(bw);
 		}
@@ -245,8 +245,9 @@ public class NumberPreparer {
 		/**
 		 * If the target numbering style is different to the current one, then write out
 		 * the command to change it.
+		 * @param bw
 		 */
-		public void writeNumberingStyle() {
+		public void writeNumberingStyle(BitWriter bw) {
 		}
 
 		/**
@@ -374,6 +375,8 @@ public class NumberPreparer {
 		private void calcCommon(Side side, boolean left) {
 
 			if (targetStart == targetEnd) {
+				// Deal with the case where the range is a single number. This makes it easier for
+				// the general case below. Perhaps this special casing can be removed later.
 				if (tryStart(base))
 					startDiff = 0;
 				else
@@ -417,6 +420,11 @@ public class NumberPreparer {
 
 		public GatheringState(int initialValue) {
 			setInitialValue(initialValue);
+		}
+
+		public void writeNumberingStyle(BitWriter bw) {
+			left.style = left.targetStyle;
+			right.style = right.targetStyle;
 		}
 
 		public void writeNumbers(BitWriter bw) {
@@ -555,11 +563,14 @@ public class NumberPreparer {
 			restoreWriters();
 		}
 
-		public void writeNumberingStyle() {
-			if (left.targetStyle != left.style)
-				throw new Abandon("left numbering");
-			if (right.targetStyle != right.style)
-				throw new Abandon("right numbering");
+		public void writeNumberingStyle(BitWriter bw) {
+			if (left.targetStyle != left.style || right.targetStyle != right.style) {
+				bw.putn(0, 2);
+				bw.putn(left.targetStyle.getVal(), 2);
+				bw.putn(right.targetStyle.getVal(), 2);
+				left.style = left.targetStyle;
+				right.style = right.targetStyle;
+			}
 		}
 
 		/**
