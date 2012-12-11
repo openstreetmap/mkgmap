@@ -112,9 +112,9 @@ public class NumberPreparer {
 
 			state.setTarget(n);
 
-			state.writeNumberingStyle();
-			state.writeBitWidths();
 			state.calcNumbers();
+			state.writeNumberingStyle();
+			state.writeBitWidths(bw);
 			state.writeNumbers(bw);
 		}
 	}
@@ -254,7 +254,7 @@ public class NumberPreparer {
 		 * change it. Changes are temporary and it reverts to the default after the
 		 * next number output command.
 		 */
-		public void writeBitWidths() {
+		public void writeBitWidths(BitWriter bw) {
 		}
 
 		private int lastNode;
@@ -562,8 +562,49 @@ public class NumberPreparer {
 				throw new Abandon("right numbering");
 		}
 
-		public void writeBitWidths() {
-			// TODO
+		/**
+		 * You can change the number of bits and the sign properties of the writers before writing a nodes
+		 * numbers.  We don't try and work out the optimum sequence, but use this for tricky cases where
+		 * we fail to work out the correct sizes in advance.
+		 *
+		 * This routine means that we will always be using writers that will deal with the next node numbers.
+		 *
+		 * @param bw The output stream writer.
+		 */
+		public void writeBitWidths(BitWriter bw) {
+			newWriter(bw, startWriter, left.startDiff, right.startDiff, true);
+			newWriter(bw, endWriter, left.endDiff, right.endDiff, false);
+		}
+
+		/**
+		 * Common code for writeBitWidths.
+		 */
+		private void newWriter(BitWriter bw, VarBitWriter writer, int leftDiff, int rightDiff, boolean start) {
+			if (!writer.checkFit(leftDiff) || !writer.checkFit(rightDiff)) {
+				int min = Math.min(leftDiff, rightDiff);
+				int max = Math.max(leftDiff, rightDiff);
+				boolean signed = false;
+				boolean negative = false;
+				if (max < 0)
+					negative = true;
+				else if (min < 0)
+					signed = true;
+
+				int val = Math.max(Math.abs(min), Math.abs(max));
+				int width = 32 - Integer.numberOfLeadingZeros(val);
+				if (signed) width++;
+
+				restoreBitWriters = true;
+				VarBitWriter nw;
+				if (start) {
+					startWriter = nw = new VarBitWriter(bw, START_WIDTH_MIN, negative, signed, width);
+					bw.putn(2, 4); // change width start
+				} else {
+					endWriter = nw = new VarBitWriter(bw, END_WIDTH_MIN, negative, signed, width);
+					bw.putn(0xa, 4); // change width end (0x8 | 0x2)
+				}
+				nw.writeFormat();
+			}
 		}
 
 		public void writeSkip(Numbers n) {
@@ -604,6 +645,14 @@ class VarBitWriter {
 		this.minWidth = minWidth;
 	}
 
+	public VarBitWriter(BitWriter bw, int minWidth, boolean negative, boolean signed, int width) {
+		this(bw, minWidth);
+		this.negative = negative;
+		this.signed = signed;
+		if (width > minWidth)
+			this.bitWidth = width - minWidth;
+	}
+
 	public void write(int n) {
 		if (!checkFit(n))
 					throw new Abandon("number does not fit bit space available");
@@ -619,7 +668,7 @@ class VarBitWriter {
 		bw.putn(n, minWidth+bitWidth + ((signed)?1:0));
 	}
 
-	private boolean checkFit(int n) {
+	boolean checkFit(int n) {
 		if (negative) {
 			if (n > 0)
 				return false;

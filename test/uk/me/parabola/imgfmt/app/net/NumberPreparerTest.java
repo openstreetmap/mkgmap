@@ -121,6 +121,11 @@ public class NumberPreparerTest {
 	}
 
 	@Test
+	public void testMixedStyles() {
+		run("0,O,1,9,E,6,12", "1,E,14,22,O,9,17");
+	}
+
+	@Test
 	public void testOneSide() {
 		runSeparate("0,E,2,8,N,-1,-1", "0,N,-1,-1,O,9,3");
 	}
