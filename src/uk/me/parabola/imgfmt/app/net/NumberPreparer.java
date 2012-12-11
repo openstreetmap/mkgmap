@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitReader;
@@ -55,18 +54,7 @@ public class NumberPreparer {
 		if (bw != null)
 			return bw;
 
-		// Calculate some initial things, if we should use the swapped default numbering style EVEN/ODD rather than
-		// ODD/EVEN and the initialValue.
-		Numbers first = numbers.get(0);
-		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
-			swappedDefaultStyle = true;
-
-		int leftStart = first.getLeftStart();
-		int rightStart = first.getRightStart();
-		if (first.getLeftStart() > first.getLeftEnd())
-			leftStart = Math.max(leftStart, rightStart);
-		else
-			leftStart = Math.min(leftStart, rightStart);
+		int initialValue = setup();
 
 		// Write the bitstream
 		bw = new BitWriter();
@@ -74,7 +62,7 @@ public class NumberPreparer {
 		try {
 
 			// Look at the numbers and calculate some optimal values for the bit field widths etc.
-			State state = new GatheringState(leftStart);
+			State state = new GatheringState(initialValue);
 			checkSupported(state); // XXX to be removed.
 			process(bw, state);
 
@@ -100,6 +88,37 @@ public class NumberPreparer {
 		return bw;
 	}
 
+	/**
+	 * Do some initial calculation and sanity checking of the numbers that we are to
+	 * write.
+	 * @return The initial base value that all other values are derived from.
+	 */
+	private int setup() {
+		// Should we use the swapped default numbering style EVEN/ODD rather than
+		// ODD/EVEN and the initialValue.
+		Numbers first = numbers.get(0);
+		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
+			swappedDefaultStyle = true;
+
+		// Calculate the initial value we want to use
+		int initial = 0;
+		if (first.getLeftNumberStyle() != NONE)
+			initial = first.getLeftStart();
+
+		int rightStart = 0;
+		if (first.getRightNumberStyle() != NONE)
+			rightStart = first.getRightStart();
+
+		if (initial == 0)
+			initial = rightStart;
+
+		if (first.getLeftStart() > first.getLeftEnd() || first.getRightStart() > first.getRightEnd())
+			initial = Math.max(initial, rightStart);
+		else if (rightStart > 0)
+			initial = Math.min(initial, rightStart);
+		return initial;
+	}
+
 	private void process(BitWriter bw, State state) {
 		if (swappedDefaultStyle)
 			state.swapDefaults();
@@ -112,8 +131,8 @@ public class NumberPreparer {
 
 			state.setTarget(n);
 
-			state.calcNumbers();
 			state.writeNumberingStyle(bw);
+			state.calcNumbers();
 			state.writeBitWidths(bw);
 			state.writeNumbers(bw);
 		}
@@ -136,12 +155,7 @@ public class NumberPreparer {
 		if (first.getNodeNumber() != 0)
 			fail("first node not 0");
 
-		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
-			swapDefaults(state);
 
-		EnumSet<NumberStyle> notyet = EnumSet.of(NONE, BOTH);
-		if (notyet.contains(first.getLeftNumberStyle()) || notyet.contains(first.getRightNumberStyle()))
-			fail("NONE or BOTH numbering styles");
 	}
 
 	private void swapDefaults(State state) {
@@ -155,6 +169,7 @@ public class NumberPreparer {
 	 * @param state Holds the initial value to write.
 	 */
 	private void writeInitialValue(State state) {
+		assert state.initialValue > 0 : "initial value is not positive: " + state.initialValue;
 		int width = 32 - Integer.numberOfLeadingZeros(state.initialValue);
 		if (width > 5) {
 			bw.put1(false);
@@ -270,6 +285,9 @@ public class NumberPreparer {
 		}
 
 		public void calcNumbers() {
+			if (left.style == NONE)
+				left.base = right.base;
+
 			equalizeBases();
 
 			left.calcLeft(right);
@@ -373,6 +391,8 @@ public class NumberPreparer {
 		}
 
 		private void calcCommon(Side side, boolean left) {
+			if (style == NONE)
+				return;
 
 			if (targetStart == targetEnd) {
 				// Deal with the case where the range is a single number. This makes it easier for
@@ -510,9 +530,6 @@ public class NumberPreparer {
 
 		public void writeNumbers(BitWriter bw) {
 			boolean doSingleSide = left.style == NONE || right.style == NONE;
-			if (left.style == NONE) {
-				left.base = right.base;
-			}
 
 			// Output the command that a number follows.
 			bw.put1(true);
@@ -528,20 +545,26 @@ public class NumberPreparer {
 			if (!doSingleSide) {
 				bw.put1(!right.needOverride());
 			}
-			boolean doStart = left.startDiff != 0;
-			boolean doEnd = left.endDiff != 0;
+
+			Side firstSide = left;
+			if (doSingleSide && left.style == NONE)
+				firstSide = right;
+
+			boolean doStart = firstSide.startDiff != 0;
+			boolean doEnd = firstSide.endDiff != 0;
 			bw.put1(!doStart);
 			bw.put1(!doEnd);
 
 			if (doStart)
-				startWriter.write(left.startDiff);
+				startWriter.write(firstSide.startDiff);
 			if (doEnd)
-				endWriter.write(left.endDiff);
+				endWriter.write(firstSide.endDiff);
 
-			left.finish();
+			firstSide.finish();
 
 			if (doSingleSide) {
-				writeSingleSide(bw);
+				left.base = right.base = firstSide.base;
+				left.lastEndDiff = right.lastEndDiff = firstSide.lastEndDiff;
 				restoreWriters();
 				return;
 			}
@@ -588,7 +611,11 @@ public class NumberPreparer {
 		}
 
 		/**
-		 * Common code for writeBitWidths.
+		 * Common code for writeBitWidths. Calculate the width and the sign properties required to
+		 * represent the two numbers.
+		 * @param leftDiff One of the numbers to be represented.
+		 * @param rightDiff The other number to be represented.
+		 * @param start Set to true if this is the start writer, else it is for the end writer.
 		 */
 		private void newWriter(BitWriter bw, VarBitWriter writer, int leftDiff, int rightDiff, boolean start) {
 			if (!writer.checkFit(leftDiff) || !writer.checkFit(rightDiff)) {
@@ -621,10 +648,6 @@ public class NumberPreparer {
 		public void writeSkip(Numbers n) {
 		}
 
-		private void writeSingleSide(BitWriter bw) {
-			throw new Abandon("single side");
-		}
-
 		public VarBitWriter getStartWriter() {
 			return startWriter;
 		}
@@ -633,6 +656,10 @@ public class NumberPreparer {
 			return endWriter;
 		}
 
+		/**
+		 * If we used an alternate writer for a node's numbers then we restore the default
+		 * writer afterwards.
+		 */
 		private void restoreWriters() {
 			if (restoreBitWriters) {
 				startWriter = savedStartWriter;
@@ -644,6 +671,17 @@ public class NumberPreparer {
 
 }
 
+/**
+ * A bit writer that can be configured with different bit width and sign properties.
+ *
+ * The sign choices are:
+ * negative: all numbers are negative and so can be represented without a sign bit. (or all positive
+ * if this is false).
+ * signed: numbers are positive and negative, and so have sign bit.
+ *
+ * The bit width is composed of two parts since it is represented as a difference between
+ * a well known minimum value and a the actual value.
+ */
 class VarBitWriter {
 	private final BitWriter bw;
 	private final int minWidth;
@@ -664,9 +702,17 @@ class VarBitWriter {
 			this.bitWidth = width - minWidth;
 	}
 
+	/**
+	 * Write the number to the bit stream. If the number cannot be written
+	 * correctly with this bit writer then an exception is thrown. This shouldn't
+	 * happen since we check before hand and create a new writer if the numbers are not
+	 * going to fit.
+	 *
+	 * @param n The number to be written.
+	 */
 	public void write(int n) {
 		if (!checkFit(n))
-					throw new Abandon("number does not fit bit space available");
+			throw new Abandon("number does not fit bit space available");
 
 		if (n < 0 && negative)
 			n = -n;
@@ -679,6 +725,11 @@ class VarBitWriter {
 		bw.putn(n, minWidth+bitWidth + ((signed)?1:0));
 	}
 
+	/**
+	 * Checks to see if the number that we want to write can be written by this writer.
+	 * @param n The number we would like to write.
+	 * @return True if all is OK for writing it.
+	 */
 	boolean checkFit(int n) {
 		if (negative) {
 			if (n > 0)
@@ -688,12 +739,9 @@ class VarBitWriter {
 		} else if (signed && n < 0)
 			n = -1 - n;
 
-		int w = minWidth + bitWidth;
-		int mask = (1 << w) - 1;
-		if (n == (n & mask))
-			return true;
-		else return false;
+		int mask = (1 << minWidth + bitWidth) - 1;
 
+		return n == (n & mask);
 	}
 
 	/**

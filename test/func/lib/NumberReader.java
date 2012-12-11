@@ -71,6 +71,9 @@ public class NumberReader {
 	// Numbers are a range between nodes. Keep count of them here
 	private int nodeCounter;
 
+	// Track if the last thing we read were numbers, help to determine end of stream.
+	private boolean lastReadNumbers;
+
 	public NumberReader(BitReader br) {
 		this.br = br;
 	}
@@ -95,7 +98,7 @@ public class NumberReader {
 		// To do this properly we need to know the number of nodes I think, this is the
 		// best we can do: if there are more than 8 bits left, there must be another command
 		// left.  We could leave a short command at the end.
-		while (br.getBitPosition() < br.getNumberOfBits() - 8) {
+		while ((br.getBitPosition() < br.getNumberOfBits() - 8) || !lastReadNumbers) {
 			runCommand(numbers);
 		}
 
@@ -182,7 +185,9 @@ public class NumberReader {
 		int cmd = 0;
 		if (br.get1()) {
 			cmd |= 0x1;
+			lastReadNumbers = true;
 		} else {
+			lastReadNumbers = false;
 			if (br.get1()) {
 				cmd |= 0x2;
 				if (br.get1()) {
@@ -244,7 +249,7 @@ public class NumberReader {
 		leftLastEndDiff = endDiff;
 
 		if (doSingleSide) {
-			printSingleSide();
+			printSingleSide(numbers);
 			restoreReaders();
 			return;
 		}
@@ -314,8 +319,9 @@ public class NumberReader {
 	 * If the road has numbers on just one side, then there is a shortened reading routine.
 	 * The left variables are mostly used during reading regardless of which side of the
 	 * road has numbers. Make everything work here.
+	 * @param numbers The output list that the number record should be added to.
 	 */
-	private void printSingleSide() {
+	private void printSingleSide(List<Numbers> numbers) {
 		rightBase = leftBase;
 		rightStart = leftStart;
 		rightEnd = leftEnd;
@@ -328,13 +334,22 @@ public class NumberReader {
 			n.setRightNumberStyle(rightStyle);
 			n.setRightStart(rightStart);
 			n.setRightEnd(rightEnd);
+
+			n.setLeftNumberStyle(NONE);
+			n.setLeftStart(-1);
+			n.setLeftEnd(-1);
 		}
 		else {
 			n.setNodeNumber(nodeCounter);
 			n.setLeftNumberStyle(leftStyle);
 			n.setLeftStart(leftStart);
 			n.setLeftEnd(leftEnd);
+
+			n.setRightNumberStyle(NONE);
+			n.setRightStart(-1);
+			n.setRightEnd(-1);
 		}
+		numbers.add(n);
 		nodeCounter++;
 	}
 

@@ -23,6 +23,7 @@ import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -139,7 +140,7 @@ class RoadHelper {
 		road.setStartsWithNode(starts);
 		road.setInternalNodes(intern);
 
-		if (numbers != null)
+		if (numbers != null && !numbers.isEmpty())
 			road.setNumbers(numbers);
 
 		return road;
@@ -157,7 +158,8 @@ class RoadHelper {
 		if (numbers == null)
 			numbers = new ArrayList<Numbers>();
 		Numbers num = new Numbers(value);
-		numbers.add(num);
+		if (num.getLeftNumberStyle() != NumberStyle.NONE || num.getRightNumberStyle() != NumberStyle.NONE)
+			numbers.add(num);
 	}
 
 	private static class NodeIndex {

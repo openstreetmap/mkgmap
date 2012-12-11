@@ -467,8 +467,10 @@ public class RoadDef implements Comparable<RoadDef> {
 	}
 
 	public void setNumbersList(List<Numbers> numbersList) {
-		this.numbersList = numbersList;
-		netFlags |= NET_FLAG_ADDRINFO;
+		if (numbersList != null && !numbersList.isEmpty()) {
+			this.numbersList = numbersList;
+			netFlags |= NET_FLAG_ADDRINFO;
+		}
 	}
 
 	/**

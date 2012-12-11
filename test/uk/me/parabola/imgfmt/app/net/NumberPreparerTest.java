@@ -127,6 +127,7 @@ public class NumberPreparerTest {
 
 	@Test
 	public void testOneSide() {
+		runSeparate("0,N,-1,-1,O,9,3");
 		runSeparate("0,E,2,8,N,-1,-1", "0,N,-1,-1,O,9,3");
 	}
 
@@ -160,7 +161,9 @@ public class NumberPreparerTest {
 		boolean swapped = preparer.getSwapped();
 
 		// Now read it all back in again
-		byte[] bytes = bw.getBytes();
+		byte[] b1 = bw.getBytes();
+		byte[] bytes = new byte[bw.getLength()];
+		System.arraycopy(b1, 0, bytes, 0, bw.getLength());
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
 		return nr.readNumbers(swapped);
