@@ -20,7 +20,6 @@ import uk.me.parabola.imgfmt.app.BitWriter;
 
 import func.lib.NumberReader;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -79,7 +78,6 @@ public class NumberPreparerTest {
 		String[] tests = {
 				"0,O,1,5,E,2,6",
 				"0,O,3,7,E,4,8",
-				"0,O,7,7,E,8,8",
 				"0,O,91,99,E,92,98",
 				"0,O,1,15,E,4,8",
 		};
@@ -91,7 +89,12 @@ public class NumberPreparerTest {
 		}
 	}
 
-	@Test @Ignore
+	@Test
+	public void testSingleNumbers() {
+		runSeparate("0,O,7,7,E,8,8", "0,O,7,7,E,6,6");
+	}
+
+	@Test
 	public void testLargeDifferentStarts() {
 		runSeparate("0,O,91,103,E,2,8", "0,E,90,102,O,3,9");
 	}
@@ -107,17 +110,32 @@ public class NumberPreparerTest {
 		assertEquals(numbers, output);
 	}
 
-	@Test @Ignore
+	@Test
 	public void testMultipleWithReverse() {
-		List<Numbers> numbers = createList(new String[]{
-				"0,E,2,2,O,1,5",
-				"1,E,2,10,O,5,17"});
-		List<Numbers> output = writeAndRead(numbers);
-		assertEquals(numbers, output);
-
+		run("0,E,2,2,O,1,5", "1,E,2,10,O,5,17");
 	}
 
+	@Test
+	public void testDecreasing() {
+		run("0,O,25,11,E,24,20");
+	}
 
+	@Test
+	public void testOneSide() {
+		runSeparate("0,E,2,8,N,-1,-1", "0,N,-1,-1,O,9,3");
+	}
+
+	@Test
+	public void testBoth() {
+		runSeparate("0,B,1,10,B,11,20");
+	}
+
+	@Test
+	public void testLargeRunsAndGaps() {
+		run("0,E,100,200,O,111,211", "1,E,400,500,O,421,501", "2,E,600,650,O,601,691");
+	}
+
+	// Helper routines
 	private void runSeparate(String... numbers) {
 		for (String s : numbers)
 			run(s);
@@ -132,7 +150,7 @@ public class NumberPreparerTest {
 	private List<Numbers> writeAndRead(List<Numbers> numbers) {
 		NumberPreparer preparer = new NumberPreparer(numbers);
 		BitWriter bw = preparer.fetchBitStream();
-		assertTrue(preparer.isValid());
+		assertTrue("check valid flag", preparer.isValid());
 
 		boolean swapped = preparer.getSwapped();
 

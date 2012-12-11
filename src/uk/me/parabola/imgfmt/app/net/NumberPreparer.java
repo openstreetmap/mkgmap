@@ -131,15 +131,6 @@ public class NumberPreparer {
 
 	/** Temporary routine to check for supported cases, will be removed. */
 	private void checkSupported(State state) {
-		//if (numbers.size() > 1)
-		//	fail("more than one node");
-
-		for (Numbers n : numbers) {
-			if (n.getLeftStart() > n.getLeftEnd())
-				fail("reversed numbers (L)");
-			if (n.getRightStart() > n.getRightEnd())
-				fail("reversed numbers (R)");
-		}
 		Numbers first = numbers.get(0);
 
 		if (first.getNodeNumber() != 0)
@@ -164,7 +155,7 @@ public class NumberPreparer {
 	 * @param state Holds the initial value to write.
 	 */
 	private void writeInitialValue(State state) {
-		int width = calcWidth(state.initialValue);
+		int width = 32 - Integer.numberOfLeadingZeros(state.initialValue);
 		if (width > 5) {
 			bw.put1(false);
 			bw.putn(width - 5, 4);
@@ -185,10 +176,6 @@ public class NumberPreparer {
 	private void writeWidths(State state) {
 		state.getStartWriter().writeFormat();
 		state.getEndWriter().writeFormat();
-	}
-
-	private int calcWidth(int n) {
-		return 32 - Integer.numberOfLeadingZeros(n);
 	}
 
 	/**
@@ -221,15 +208,6 @@ public class NumberPreparer {
 		return valid;
 	}
 
-	static class Abandon extends RuntimeException {
-		Abandon(String message) {
-			super("NOT YET " + message);
-		}
-
-		public Abandon() {
-
-		}
-	}
 
 	/**
 	 * The current state of the writing process.
@@ -340,7 +318,7 @@ public class NumberPreparer {
 		private boolean equalized;
 
 		public void init() {
-			if (targetStart > targetEnd)
+			if (targetStart < targetEnd)
 				endAdj = 1;
 			else if (targetEnd < targetStart) {
 				endAdj = -1;
@@ -381,24 +359,46 @@ public class NumberPreparer {
 		 * side has not been calculated yet, so you can only use the target values.
 		 */
 		public void calcLeft(Side right) {
-			calcCommon();
+			// default left start diff is 0
+			// default left end diff is the previous one
+			calcCommon(right, true);
 		}
 
 		public void calcRight(Side left) {
-			calcCommon();
+			// The default right start diff is 0
+			// the default right end diff is the left end diff, unless we have doRightOverride or
+			// a left end diff was not read, in which case it defaults to the last right end diff.
+			calcCommon(left, false);
 		}
 
-		private void calcCommon() {
+		private void calcCommon(Side side, boolean left) {
+
 			if (targetStart == targetEnd) {
-				startDiff = targetStart - base;
-				endDiff = 0;
+				if (tryStart(base))
+					startDiff = 0;
+				else
+					startDiff = targetStart - base;
+
+				if (left) {
+					if (base == targetStart && lastEndDiff == 0)
+						endDiff = 0;
+					else
+						endDiff = 2;
+				} else {
+					if (base == targetStart && lastEndDiff == 0 && side.endDiff == 0)
+						endDiff = 0;
+					else
+						endDiff = 2;
+				}
+				return;
 			}
+
 			if (tryStart(base))
 				startDiff = 0;
 			else
 				startDiff = targetStart - base;
 
-			endDiff = targetEnd - (base + startDiff) + 1;
+			endDiff = targetEnd - (base + startDiff) + endAdj;
 		}
 
 		public void finish() {
@@ -409,75 +409,36 @@ public class NumberPreparer {
 		}
 	}
 
-	static class VarBitWriter {
-		private final BitWriter bw;
-		private final int minWidth;
-		private int bitWidth;
-		private boolean negative;
-		private boolean signed;
-
-		VarBitWriter(BitWriter bw, int minWidth) {
-			this.bw = bw;
-			this.minWidth = minWidth;
-		}
-
-		public void write(int n) {
-			if (n == 0)
-				fail("zero");
-			if (Integer.signum(n) != 1)
-				fail("negative and zero not yet");
-
-			int neededWidth = 32 - Integer.numberOfLeadingZeros(n);
-			if (neededWidth > bitWidth + minWidth)
-				fail("number too large " + n + ", (w=" + neededWidth); // when complete this will be a real error
-
-			bw.putn(n, minWidth+bitWidth);
-		}
-
-		/**
-		 * Write the format of this bit writer to the output stream. Used at the beginning and
-		 * when changing the bit widths.
-		 */
-		public void writeFormat() {
-			bw.put1(negative);
-			bw.put1(signed);
-			bw.putn(bitWidth, 4);
-		}
-		public void fail(String msg) {
-			throw new Abandon(msg);
-		}
-	}
-
 	private class GatheringState extends State {
 		private boolean negative;
 		private boolean positive;
-		private int maxStartVal;
-		private int maxEndVal;
+		private int maxStartDiff;
+		private int maxEndDiff;
 
 		public GatheringState(int initialValue) {
 			setInitialValue(initialValue);
 		}
 
 		public void writeNumbers(BitWriter bw) {
-			int val = left.base + left.startDiff;
+			int val = left.startDiff;
 			val = testSign(val);
-			if (val > maxStartVal)
-				maxStartVal = val;
+			if (val > maxStartDiff)
+				maxStartDiff = val;
 
-			val = right.base + right.startDiff;
+			val = right.startDiff;
 			val = testSign(val);
-			if (val > maxStartVal)
-				maxStartVal = val;
+			if (val > maxStartDiff)
+				maxStartDiff = val;
 
-			val = left.base + left.startDiff + left.endDiff;
+			val = left.endDiff;
 			val = testSign(val);
-			if (val > maxEndVal)
-				maxEndVal = val;
+			if (val > maxEndDiff)
+				maxEndDiff = val;
 
-			val = right.base + right.startDiff + right.endDiff;
+			val = right.endDiff;
 			val = testSign(val);
-			if (val > maxEndVal)
-				maxEndVal = val;
+			if (val > maxEndDiff)
+				maxEndDiff = val;
 		}
 
 		private int testSign(int val) {
@@ -491,20 +452,31 @@ public class NumberPreparer {
 		}
 
 		public VarBitWriter getStartWriter() {
-			return getVarBitWriter(0, START_WIDTH_MIN);
+			return getVarBitWriter(calcWidth(maxStartDiff), START_WIDTH_MIN);
 		}
 
 		public VarBitWriter getEndWriter() {
-			return getVarBitWriter(3, END_WIDTH_MIN);
+			return getVarBitWriter(calcWidth(maxEndDiff), END_WIDTH_MIN);
+		}
+
+		private int calcWidth(int n) {
+			if (isSigned())
+				n++;
+			return 32 - Integer.numberOfLeadingZeros(n);
+		}
+
+		private boolean isSigned() {
+			return positive && negative;
 		}
 
 		private VarBitWriter getVarBitWriter(int width, int minWidth) {
 			VarBitWriter writer = new VarBitWriter(bw, minWidth);
-			if (negative && positive)
+			if (isSigned())
 				writer.signed = true;
 			else if (negative)
 				writer.negative = true;
-			writer.bitWidth = width;
+			if (width > minWidth)
+				writer.bitWidth = width - minWidth;
 			return writer;
 		}
 	}
@@ -618,4 +590,65 @@ public class NumberPreparer {
 		}
 	}
 
+}
+
+class VarBitWriter {
+	private final BitWriter bw;
+	private final int minWidth;
+	int bitWidth;
+	boolean negative;
+	boolean signed;
+
+	VarBitWriter(BitWriter bw, int minWidth) {
+		this.bw = bw;
+		this.minWidth = minWidth;
+	}
+
+	public void write(int n) {
+		if (!checkFit(n))
+					throw new Abandon("number does not fit bit space available");
+
+		if (n < 0 && negative)
+			n = -n;
+
+		if (signed) {
+			int mask = (1 << (minWidth + bitWidth+2)) - 1;
+			n &= mask;
+		}
+
+		bw.putn(n, minWidth+bitWidth + ((signed)?1:0));
+	}
+
+	private boolean checkFit(int n) {
+		if (negative) {
+			if (n > 0)
+				return false;
+			else
+				n = -n;
+		} else if (signed && n < 0)
+			n = -1 - n;
+
+		int w = minWidth + bitWidth;
+		int mask = (1 << w) - 1;
+		if (n == (n & mask))
+			return true;
+		else return false;
+
+	}
+
+	/**
+	 * Write the format of this bit writer to the output stream. Used at the beginning and
+	 * when changing the bit widths.
+	 */
+	public void writeFormat() {
+		bw.put1(negative);
+		bw.put1(signed);
+		bw.putn(bitWidth, 4);
+	}
+}
+
+class Abandon extends RuntimeException {
+	Abandon(String message) {
+		super("NOT YET " + message);
+	}
 }
