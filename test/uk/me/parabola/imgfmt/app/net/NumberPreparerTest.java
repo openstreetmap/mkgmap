@@ -141,6 +141,21 @@ public class NumberPreparerTest {
 		run("0,E,100,200,O,111,211", "1,E,400,500,O,421,501", "2,E,600,650,O,601,691");
 	}
 
+	@Test
+	public void testSkip() {
+		run("0,E,2,20,O,1,9", "3,O,3,9,E,2,2");
+	}
+
+	@Test
+	public void testSkipFirst() {
+		run("2,O,1,5,E,2,2");
+	}
+
+	@Test
+	public void testLargeSkip() {
+		run("0,N,-1,-1,E,2,4", "100,O,1,9,E,8,16");
+	}
+
 	// Helper routines
 	private void runSeparate(String... numbers) {
 		for (String s : numbers)

@@ -63,7 +63,6 @@ public class NumberPreparer {
 
 			// Look at the numbers and calculate some optimal values for the bit field widths etc.
 			State state = new GatheringState(initialValue);
-			checkSupported(state); // XXX to be removed.
 			process(bw, state);
 
 			// Write the initial values.
@@ -123,18 +122,22 @@ public class NumberPreparer {
 		if (swappedDefaultStyle)
 			state.swapDefaults();
 
+		int lastNode = -1;
 		for (Numbers n : numbers) {
-			if (state.needSkip(n)) {
-				state.writeSkip(n);
-				continue;
-			}
+			// See if we need to skip some nodes
+			if (n.getNodeNumber() != lastNode + 1)
+				//state.writeSkip(bw, n.getNodeNumber() - lastNode - 2);
+				throw new Abandon("skipped node");
 
+			// Normal case write out the next node.
 			state.setTarget(n);
 
 			state.writeNumberingStyle(bw);
 			state.calcNumbers();
 			state.writeBitWidths(bw);
 			state.writeNumbers(bw);
+
+			lastNode = n.getNodeNumber();
 		}
 	}
 
@@ -146,21 +149,6 @@ public class NumberPreparer {
 			sb.insert(0, br.get1() ? "1" : "0");
 		}
 		System.out.println(sb.toString());
-	}
-
-	/** Temporary routine to check for supported cases, will be removed. */
-	private void checkSupported(State state) {
-		Numbers first = numbers.get(0);
-
-		if (first.getNodeNumber() != 0)
-			fail("first node not 0");
-
-
-	}
-
-	private void swapDefaults(State state) {
-		state.left.style = EVEN;
-		state.right.style = ODD;
 	}
 
 	/**
@@ -191,15 +179,6 @@ public class NumberPreparer {
 	private void writeWidths(State state) {
 		state.getStartWriter().writeFormat();
 		state.getEndWriter().writeFormat();
-	}
-
-	/**
-	 * Temporary routine to bail out on an unimplemented condition.
-	 */
-	private void fail(String msg) {
-		for (Numbers n : numbers)
-			System.out.println(n);
-		throw new Abandon(msg);
 	}
 
 	/**
@@ -260,7 +239,6 @@ public class NumberPreparer {
 		/**
 		 * If the target numbering style is different to the current one, then write out
 		 * the command to change it.
-		 * @param bw
 		 */
 		public void writeNumberingStyle(BitWriter bw) {
 		}
@@ -273,15 +251,7 @@ public class NumberPreparer {
 		public void writeBitWidths(BitWriter bw) {
 		}
 
-		private int lastNode;
-		public boolean needSkip(Numbers n) {
-			if (n.getNodeNumber() > 0 && n.getNodeNumber() != lastNode + 1)
-				throw new Abandon("need skip");
-			lastNode = n.getNodeNumber();
-			return false;
-		}
-
-		public void writeSkip(Numbers n) {
+		public void writeSkip(BitWriter bw, int n) {
 		}
 
 		public void calcNumbers() {
@@ -645,7 +615,18 @@ public class NumberPreparer {
 			}
 		}
 
-		public void writeSkip(Numbers n) {
+		public void writeSkip(BitWriter bw, int n) {
+			bw.putn(6, 3);
+
+			int width = 32 - Integer.numberOfLeadingZeros(n);
+			if (width > 5) {
+				bw.put1(true);
+				width = 10;
+			} else {
+				bw.put1(false);
+				width = 5;
+			}
+			bw.putn(n, width);
 		}
 
 		public VarBitWriter getStartWriter() {

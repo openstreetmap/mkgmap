@@ -43,6 +43,9 @@ public enum NumberStyle {
 		case 'E': return EVEN;
 		case 'O': return ODD;
 		case 'B': return BOTH;
+		case '0':
+			System.err.println("zero instead of capital O in number spec");
+			return ODD;
 		default: return NONE;
 		}
 	}
