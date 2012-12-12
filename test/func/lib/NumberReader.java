@@ -70,12 +70,14 @@ public class NumberReader {
 
 	// Numbers are a range between nodes. Keep count of them here
 	private int nodeCounter;
-
-	// Track if the last thing we read were numbers, help to determine end of stream.
-	private boolean lastReadNumbers;
+	private int numberOfNodes;
 
 	public NumberReader(BitReader br) {
 		this.br = br;
+	}
+
+	public void setNumberOfNodes(int numberOfNodes) {
+		this.numberOfNodes = numberOfNodes;
 	}
 
 	/**
@@ -98,7 +100,7 @@ public class NumberReader {
 		// To do this properly we need to know the number of nodes I think, this is the
 		// best we can do: if there are more than 8 bits left, there must be another command
 		// left.  We could leave a short command at the end.
-		while ((br.getBitPosition() < br.getNumberOfBits() - 8) || !lastReadNumbers) {
+		while (br.getBitPosition() < br.getNumberOfBits() && numbers.size() < numberOfNodes) {
 			runCommand(numbers);
 		}
 
@@ -185,9 +187,7 @@ public class NumberReader {
 		int cmd = 0;
 		if (br.get1()) {
 			cmd |= 0x1;
-			lastReadNumbers = true;
 		} else {
-			lastReadNumbers = false;
 			if (br.get1()) {
 				cmd |= 0x2;
 				if (br.get1()) {
@@ -249,7 +249,7 @@ public class NumberReader {
 		leftLastEndDiff = endDiff;
 
 		if (doSingleSide) {
-			printSingleSide(numbers);
+			readSingleSide(numbers);
 			restoreReaders();
 			return;
 		}
@@ -321,7 +321,7 @@ public class NumberReader {
 	 * road has numbers. Make everything work here.
 	 * @param numbers The output list that the number record should be added to.
 	 */
-	private void printSingleSide(List<Numbers> numbers) {
+	private void readSingleSide(List<Numbers> numbers) {
 		rightBase = leftBase;
 		rightStart = leftStart;
 		rightEnd = leftEnd;
@@ -473,7 +473,7 @@ class VarBitReader {
 	public int read() {
 		int val;
 		if (signed) {
-			val = br.sget2(width + off + 1);
+			val = br.sget(width + off + 1);
 		} else {
 			val = br.get(width + off);
 		}

@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
@@ -90,6 +91,14 @@ public class NumberPreparer {
 	private int setup() {
 		// Should we use the swapped default numbering style EVEN/ODD rather than
 		// ODD/EVEN and the initialValue.
+		for (Iterator<Numbers> iterator = numbers.listIterator(); iterator.hasNext(); ) {
+			Numbers n = iterator.next();
+			if (n.getLeftNumberStyle() == NONE && n.getRightNumberStyle() == NONE)
+				iterator.remove();
+		}
+		if (numbers.isEmpty())
+			throw new Abandon("no numbers");
+
 		Numbers first = numbers.get(0);
 		if (first.getLeftNumberStyle() == EVEN && first.getRightNumberStyle() == ODD)
 			swappedDefaultStyle = true;
@@ -247,8 +256,8 @@ public class NumberPreparer {
 
 			equalizeBases();
 
-			left.calcLeft(right);
-			right.calcRight(left);
+			left.calcCommon(right, true);
+			right.calcCommon(left, false);
 		}
 
 		private boolean equalizeBases() {
@@ -294,13 +303,16 @@ public class NumberPreparer {
 		private boolean equalized;
 
 		public void init() {
-			if (targetStart < targetEnd)
+			if (targetStart < targetEnd) {
 				endAdj = 1;
-			else if (targetEnd < targetStart) {
+				roundDirection = 1;
+			} else if (targetEnd < targetStart) {
 				endAdj = -1;
 				roundDirection = -1;
-			} else
+			} else {
 				endAdj = 0;
+				roundDirection = 1;
+			}
 		}
 
 		public void setTargets(NumberStyle style, int start, int end) {
@@ -329,24 +341,6 @@ public class NumberPreparer {
 			return true;
 		}
 
-		/**
-		 * Calculate the start and end.  The right hand side details are given
-		 * to help pick good values that will optimise the right hand side. The right hand
-		 * side has not been calculated yet, so you can only use the target values.
-		 */
-		public void calcLeft(Side right) {
-			// default left start diff is 0
-			// default left end diff is the previous one
-			calcCommon(right, true);
-		}
-
-		public void calcRight(Side left) {
-			// The default right start diff is 0
-			// the default right end diff is the left end diff, unless we have doRightOverride or
-			// a left end diff was not read, in which case it defaults to the last right end diff.
-			calcCommon(left, false);
-		}
-
 		private void calcCommon(Side side, boolean left) {
 			if (style == NONE)
 				return;
@@ -360,11 +354,16 @@ public class NumberPreparer {
 					startDiff = targetStart - base;
 
 				if (left) {
+					// default left start diff is 0
+					// default left end diff is the previous one
 					if (base == targetStart && lastEndDiff == 0)
 						endDiff = 0;
 					else
 						endDiff = (style==BOTH)? 1: 2;
 				} else {
+					// The default right start diff is 0
+					// the default right end diff is the left end diff, unless we have doRightOverride or
+					// a left end diff was not read, in which case it defaults to the last right end diff.
 					if (base == targetStart && lastEndDiff == 0 && side.endDiff == 0)
 						endDiff = 0;
 					else

@@ -50,6 +50,7 @@ public class NumberPreparerTest {
 		byte[] buf = {0x41, 0x13, 0x27, 0x49, 0x60};
 		BitReader br = new BitReader(buf);
 		NumberReader nr = new NumberReader(br);
+		nr.setNumberOfNodes(1);
 		List<Numbers> numbers = nr.readNumbers(true);
 
 		assertEquals(1, numbers.size());
@@ -157,6 +158,8 @@ public class NumberPreparerTest {
 	@Test
 	public void testRegression() {
 		String[][] tests = {
+				{"0,N,-1,-1,B,6,5", "1,O,3,11,O,3,3"},
+				{"0,O,7,1,O,9,5", "1,O,27,23,O,3,5"},
 				{"0,B,5,5,E,12,8"},
 		};
 
@@ -170,22 +173,23 @@ public class NumberPreparerTest {
 
 		for (int iter = 0; iter < 10000000; iter++) {
 			List<String> sl = new ArrayList<String>();
-			for (int i = 0; i < 2; i++) {
-				String r1 = getRange(rand);
-				String r2 = getRange(rand);
+			for (int i = 0; i < 5; i++) {
+				String n;
+				do {
+					String r1 = getRange(rand);
+					String r2 = getRange(rand);
 
-				String n = String.format("%d,%s,%s", i, r1, r2);
+					n = String.format("%d,%s,%s", i, r1, r2);
+				} while (i == 0 && n.contains("N,-1,-1,N"));
+
 				sl.add(n);
 				if (rand.nextInt(3) > 1)
 					break;
 			}
 
-			if (sl.size() == 1 && sl.get(0).contains("N,-1,-1,N")) {
-				iter--;
-				continue;
-			}
 			if ((iter % 500000) == 0)
 				System.out.println("Done " + iter);
+			//System.out.println(sl);
 			run(sl.toArray(new String[sl.size()]));
 		}
 	}
@@ -236,8 +240,10 @@ public class NumberPreparerTest {
 		byte[] b1 = bw.getBytes();
 		byte[] bytes = new byte[bw.getLength()];
 		System.arraycopy(b1, 0, bytes, 0, bw.getLength());
+
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
+		nr.setNumberOfNodes(numbers.size());
 		List<Numbers> list = nr.readNumbers(swapped);
 		for (Numbers n : list) 
 			n.setNodeNumber(n.getRnodNumber());
