@@ -233,7 +233,6 @@ public class RoadDef implements Comparable<RoadDef> {
 			}
 			if (numbers != null) {
 				BitWriter bw = numbers.fetchBitStream();
-				System.out.println("bw len " + bw.getLength());
 				if (bw.getLength() > 255)
 					writer.putChar((char) bw.getLength());
 				else

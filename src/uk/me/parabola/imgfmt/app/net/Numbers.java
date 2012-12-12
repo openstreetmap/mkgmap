@@ -12,13 +12,19 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import uk.me.parabola.log.Logger;
+
 /**
  * Describes the house numbering from a node in the road.
  * @author Steve Ratcliffe
  */
 public class Numbers {
-	// The node in the road where these numbers apply.
-	private int nodeNumber;
+	private static final Logger log = Logger.getLogger(Numbers.class);
+
+	// The node in the road where these numbers apply.  In the polish notation it is the
+	// node in the road, whereas in the NET file it is the number of the routing node.
+	private int nodeNumber; // node in road index
+	private Integer rnodNumber; // routing node index
 
 	// On the left hand side of the road.
 	private NumberStyle leftNumberStyle;
@@ -56,6 +62,22 @@ public class Numbers {
 
 	public void setNodeNumber(int nodeNumber) {
 		this.nodeNumber = nodeNumber;
+	}
+
+	public int getRnodNumber() {
+		if (rnodNumber == null) {
+			log.error("WARNING: rnod not set!!");
+			return nodeNumber;
+		}
+		return rnodNumber;
+	}
+
+	public boolean hasRnodNumber() {
+		return rnodNumber != null;
+	}
+
+	public void setRnodNumber(int rnodNumber) {
+		this.rnodNumber = rnodNumber;
 	}
 
 	public NumberStyle getLeftNumberStyle() {
@@ -106,10 +128,15 @@ public class Numbers {
 		this.rightEnd = rightEnd;
 	}
 
-	@Override
 	public String toString() {
-		return String.format("%d,%s,%d,%d,%s,%d,%d",
-				nodeNumber,
+		String nodeStr = "0";
+		if (nodeNumber > 0)
+			nodeStr = String.valueOf(nodeNumber);
+		else if (getRnodNumber() > 0)
+			nodeStr = String.format("(n%d)", getRnodNumber());
+
+		return String.format("%s,%s,%d,%d,%s,%d,%d",
+				nodeStr,
 				leftNumberStyle,
 				leftStart,
 				leftEnd,
@@ -123,20 +150,10 @@ public class Numbers {
 			return false;
 
 		Numbers other = (Numbers) obj;
-		return leftNumberStyle == other.leftNumberStyle
-				&& leftStart == other.leftStart
-				&& leftEnd == other.leftEnd
-				&& rightNumberStyle == other.rightNumberStyle
-				&& rightStart == other.rightStart
-				&& rightEnd == other.rightEnd;
+		return toString().equals(other.toString());
 	}
 
 	public int hashCode() {
-		return leftNumberStyle.hashCode()
-				+ leftStart
-				+ leftEnd
-				+ rightNumberStyle.hashCode()
-				+ rightStart
-				+ rightEnd;
+		return toString().hashCode();
 	}
 }

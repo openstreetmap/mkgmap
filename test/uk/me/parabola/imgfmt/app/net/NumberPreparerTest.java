@@ -14,12 +14,13 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import uk.me.parabola.imgfmt.app.BitReader;
 import uk.me.parabola.imgfmt.app.BitWriter;
 
 import func.lib.NumberReader;
-import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -30,9 +31,6 @@ import static org.junit.Assert.*;
  * the input ones.
  */
 public class NumberPreparerTest {
-	@Before
-	public void setUp() {
-	}
 
 	@Test
 	public void testNumberConstructor() {
@@ -156,6 +154,65 @@ public class NumberPreparerTest {
 		run("0,N,-1,-1,E,2,4", "100,O,1,9,E,8,16");
 	}
 
+	@Test
+	public void testRegression() {
+		String[][] tests = {
+				{"0,B,5,5,E,12,8"},
+		};
+
+		for (String[] sarr : tests)
+			run(sarr);
+	}
+
+	@Test @Ignore(value = "long running test")
+	public void testRandom() {
+		Random rand = new Random(8866029);
+
+		for (int iter = 0; iter < 10000000; iter++) {
+			List<String> sl = new ArrayList<String>();
+			for (int i = 0; i < 2; i++) {
+				String r1 = getRange(rand);
+				String r2 = getRange(rand);
+
+				String n = String.format("%d,%s,%s", i, r1, r2);
+				sl.add(n);
+				if (rand.nextInt(3) > 1)
+					break;
+			}
+
+			if (sl.size() == 1 && sl.get(0).contains("N,-1,-1,N")) {
+				iter--;
+				continue;
+			}
+			if ((iter % 500000) == 0)
+				System.out.println("Done " + iter);
+			run(sl.toArray(new String[sl.size()]));
+		}
+	}
+
+	private String getRange(Random rand) {
+		char style = "NEEEOOOBB".charAt(rand.nextInt(9));
+		//if (style == 'N') style = 'B';
+		int max = 10;
+		int r = rand.nextInt(20);
+		if (r > 19) max = 200;
+		if (r > 17) max = 30;
+
+		int start = rand.nextInt(max)+1;
+		int end = rand.nextInt(max)+1;
+		if (style == 'O') {
+			start |= 1;
+			end |= 1;
+		} else if (style == 'E') {
+			start++; end++;
+			start &= ~1;
+			end &= ~1;
+		} else if (style == 'N') {
+			start = end = -1;
+		}
+		return String.format("%c,%d,%d", style, start, end);
+	}
+
 	// Helper routines
 	private void runSeparate(String... numbers) {
 		for (String s : numbers)
@@ -181,13 +238,18 @@ public class NumberPreparerTest {
 		System.arraycopy(b1, 0, bytes, 0, bw.getLength());
 		BitReader br = new BitReader(bytes);
 		NumberReader nr = new NumberReader(br);
-		return nr.readNumbers(swapped);
+		List<Numbers> list = nr.readNumbers(swapped);
+		for (Numbers n : list) 
+			n.setNodeNumber(n.getRnodNumber());
+
+		return list;
 	}
 
 	private List<Numbers> createList(String[] specs) {
 		List<Numbers> numbers = new ArrayList<Numbers>();
 		for (String s : specs) {
 			Numbers n = new Numbers(s);
+			n.setRnodNumber(n.getNodeNumber());
 			numbers.add(n);
 		}
 		return numbers;

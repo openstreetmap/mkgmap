@@ -14,7 +14,6 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.BitReader;
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.log.Logger;
 
@@ -72,10 +71,6 @@ public class NumberPreparer {
 			state = new WritingState(state);
 			process(bw, state);
 
-			// TODO remove, just for debugging
-			System.out.println(numbers.get(0));
-			printBits(bw);
-
 			// If we get this far and there is something there, the stream might be valid!
 			if (bw.getLength() > 1)
 				valid = true;
@@ -124,10 +119,12 @@ public class NumberPreparer {
 
 		int lastNode = -1;
 		for (Numbers n : numbers) {
+			if (!n.hasRnodNumber())
+				throw new Abandon("no r node set");
+
 			// See if we need to skip some nodes
-			if (n.getNodeNumber() != lastNode + 1)
-				//state.writeSkip(bw, n.getNodeNumber() - lastNode - 2);
-				throw new Abandon("skipped node");
+			if (n.getRnodNumber() != lastNode + 1)
+				state.writeSkip(bw, n.getRnodNumber() - lastNode - 2);
 
 			// Normal case write out the next node.
 			state.setTarget(n);
@@ -137,18 +134,8 @@ public class NumberPreparer {
 			state.writeBitWidths(bw);
 			state.writeNumbers(bw);
 
-			lastNode = n.getNodeNumber();
+			lastNode = n.getRnodNumber();
 		}
-	}
-
-	/** For debugging */
-	private void printBits(BitWriter bw) {
-		StringBuilder sb = new StringBuilder();
-		BitReader br = new BitReader(bw.getBytes());
-		for (int i = 0; i < bw.getLength() * 8; i++) {
-			sb.insert(0, br.get1() ? "1" : "0");
-		}
-		System.out.println(sb.toString());
 	}
 
 	/**
@@ -376,12 +363,12 @@ public class NumberPreparer {
 					if (base == targetStart && lastEndDiff == 0)
 						endDiff = 0;
 					else
-						endDiff = 2;
+						endDiff = (style==BOTH)? 1: 2;
 				} else {
 					if (base == targetStart && lastEndDiff == 0 && side.endDiff == 0)
 						endDiff = 0;
 					else
-						endDiff = 2;
+						endDiff = (style==BOTH)?1: 2;
 				}
 				return;
 			}
@@ -616,6 +603,9 @@ public class NumberPreparer {
 		}
 
 		public void writeSkip(BitWriter bw, int n) {
+			if (n < 0)
+				throw new Abandon("bad skip value:" + n);
+
 			bw.putn(6, 3);
 
 			int width = 32 - Integer.numberOfLeadingZeros(n);
