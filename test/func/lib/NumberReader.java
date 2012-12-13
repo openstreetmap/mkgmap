@@ -256,8 +256,10 @@ public class NumberReader {
 
 		// *** Now for the right hand side numbers ***
 
-		// Note that endDiff falls through to this part, but startDiff doesn't
-		startDiff = 0;
+		// Note that endDiff falls through to this part
+		// start diff falls through at least when doSameBase is in force
+		if (!doSameBase)
+			startDiff = 0;
 
 		// If we didn't read an endDiff value for the left side or right is different then
 		// default to the saved value.

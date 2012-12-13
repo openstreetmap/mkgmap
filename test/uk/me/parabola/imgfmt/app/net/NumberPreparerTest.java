@@ -158,6 +158,10 @@ public class NumberPreparerTest {
 	@Test
 	public void testRegression() {
 		String[][] tests = {
+				{"0,E,8,6,B,6,2", "1,O,5,5,E,4,8"},
+				{"0,B,16,1,B,10,5", "1,O,3,7,E,2,8"},
+				{"0,B,10,5,E,22,10", "1,O,3,1,O,3,5"},
+				{"0,B,10,10,N,-1,-1", "1,O,11,9,O,1,11", "2,O,3,3,E,8,4", "3,O,7,19,E,6,2", "4,E,10,6,E,4,4"},
 				{"0,N,-1,-1,B,6,5", "1,O,3,11,O,3,3"},
 				{"0,O,7,1,O,9,5", "1,O,27,23,O,3,5"},
 				{"0,B,5,5,E,12,8"},
@@ -171,7 +175,7 @@ public class NumberPreparerTest {
 	public void testRandom() {
 		Random rand = new Random(8866029);
 
-		for (int iter = 0; iter < 10000000; iter++) {
+		for (int iter = 0; iter < 1000000; iter++) {
 			List<String> sl = new ArrayList<String>();
 			for (int i = 0; i < 5; i++) {
 				String n;
@@ -192,6 +196,7 @@ public class NumberPreparerTest {
 			//System.out.println(sl);
 			run(sl.toArray(new String[sl.size()]));
 		}
+		System.out.println("bytes used: " + bytesUsed);
 	}
 
 	private String getRange(Random rand) {
@@ -229,9 +234,13 @@ public class NumberPreparerTest {
 		assertEquals(nList, output);
 	}
 
+	private int bytesUsed;
+
 	private List<Numbers> writeAndRead(List<Numbers> numbers) {
 		NumberPreparer preparer = new NumberPreparer(numbers);
 		BitWriter bw = preparer.fetchBitStream();
+		bytesUsed += bw.getLength();
+
 		assertTrue("check valid flag", preparer.isValid());
 
 		boolean swapped = preparer.getSwapped();
