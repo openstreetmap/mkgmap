@@ -377,6 +377,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		roadLength = (int) l / 2;
 	}
 
+	public boolean hasHouseNumbers() {
+		return numbersList != null && !numbersList.isEmpty();
+	}
+
 	/*
 	 * Everything that's relevant for writing to RGN.
 	 */
