@@ -14,13 +14,14 @@ package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import uk.me.parabola.imgfmt.app.BitReader;
 import uk.me.parabola.imgfmt.app.BitWriter;
 
 import func.lib.NumberReader;
-import org.junit.Ignore;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -156,8 +157,27 @@ public class NumberPreparerTest {
 	}
 
 	@Test
+	public void testRepeatingRun() {
+		run("0,O,1,9,E,2,10",
+				"1,O,11,19,E,12,20",
+				"2,O,21,29,E,22,30",
+				"3,O,31,39,E,32,40"
+				);
+		assertThat(bytesUsed, lessThanOrEqual(8));
+	}
+
+	/**
+	 * Tests sequences of number ranges that have previously been discovered to fail using the
+	 * random range generator test.
+	 */
+	@Test
 	public void testRegression() {
 		String[][] tests = {
+				{"0,E,4,2,E,2,2", "1,E,10,8,O,3,1", "2,B,8,6,B,3,3", "3,E,8,2,E,2,2"},
+				{"0,O,5,7,O,9,5", "1,N,-1,-1,O,3,7", "2,N,-1,-1,O,3,5"},
+				{"0,N,-1,-1,O,3,5", "1,O,1,3,N,-1,-1", "2,E,4,4,E,6,8"},
+				{"0,N,-1,-1,E,4,4", "1,E,4,4,O,3,11"},
+				{"0,B,4,8,O,5,9", "1,O,5,3,O,7,7", "2,O,3,3,E,4,20"},
 				{"0,E,8,6,B,6,2", "1,O,5,5,E,4,8"},
 				{"0,B,16,1,B,10,5", "1,O,3,7,E,2,8"},
 				{"0,B,10,5,E,22,10", "1,O,3,1,O,3,5"},
@@ -169,57 +189,6 @@ public class NumberPreparerTest {
 
 		for (String[] sarr : tests)
 			run(sarr);
-	}
-
-	@Test @Ignore(value = "long running test")
-	public void testRandom() {
-		Random rand = new Random(8866029);
-
-		for (int iter = 0; iter < 1000000; iter++) {
-			List<String> sl = new ArrayList<String>();
-			for (int i = 0; i < 5; i++) {
-				String n;
-				do {
-					String r1 = getRange(rand);
-					String r2 = getRange(rand);
-
-					n = String.format("%d,%s,%s", i, r1, r2);
-				} while (i == 0 && n.contains("N,-1,-1,N"));
-
-				sl.add(n);
-				if (rand.nextInt(3) > 1)
-					break;
-			}
-
-			if ((iter % 500000) == 0)
-				System.out.println("Done " + iter);
-			//System.out.println(sl);
-			run(sl.toArray(new String[sl.size()]));
-		}
-		System.out.println("bytes used: " + bytesUsed);
-	}
-
-	private String getRange(Random rand) {
-		char style = "NEEEOOOBB".charAt(rand.nextInt(9));
-		//if (style == 'N') style = 'B';
-		int max = 10;
-		int r = rand.nextInt(20);
-		if (r > 19) max = 200;
-		if (r > 17) max = 30;
-
-		int start = rand.nextInt(max)+1;
-		int end = rand.nextInt(max)+1;
-		if (style == 'O') {
-			start |= 1;
-			end |= 1;
-		} else if (style == 'E') {
-			start++; end++;
-			start &= ~1;
-			end &= ~1;
-		} else if (style == 'N') {
-			start = end = -1;
-		}
-		return String.format("%c,%d,%d", style, start, end);
 	}
 
 	// Helper routines
@@ -254,7 +223,7 @@ public class NumberPreparerTest {
 		NumberReader nr = new NumberReader(br);
 		nr.setNumberOfNodes(numbers.size());
 		List<Numbers> list = nr.readNumbers(swapped);
-		for (Numbers n : list) 
+		for (Numbers n : list)
 			n.setNodeNumber(n.getRnodNumber());
 
 		return list;
@@ -268,5 +237,17 @@ public class NumberPreparerTest {
 			numbers.add(n);
 		}
 		return numbers;
+	}
+
+	private Matcher<Integer> lessThanOrEqual(final int val) {
+		return new BaseMatcher<Integer>() {
+			public boolean matches(Object o) {
+				return (Integer) o <= val;
+			}
+
+			public void describeTo(Description description) {
+				description.appendText("value is less than ").appendValue(val);
+			}
+		};
 	}
 }
