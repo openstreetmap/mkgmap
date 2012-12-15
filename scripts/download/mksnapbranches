@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 PROGDIR=$(dirname $(readlink -f $0))
 
@@ -65,7 +66,7 @@ do
 			echo "svn.version: ${branch}.${VERSION}" > resources/$PRODUCT-version.properties
 			echo "build.timestamp: $(date -Iseconds)" >> resources/$PRODUCT-version.properties
 		fi
-		ant dist || exit 1
+		ant -Dhave.version=1 dist || exit 1
 
 		rm -f $SNAPDIR/${PRODUCT}-${branch}-r*.jar
 		cp dist/$PRODUCT.jar $TARGET
