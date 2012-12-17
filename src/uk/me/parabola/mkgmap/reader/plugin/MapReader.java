@@ -38,6 +38,7 @@ public class MapReader {
 	static {
 		String[] sources = {
 				"uk.me.parabola.mkgmap.reader.osm.bin.OsmBinMapDataSource",
+				"uk.me.parabola.mkgmap.reader.osm.o5m.O5mBinMapDataSource",
 				"uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource",
 				"uk.me.parabola.mkgmap.reader.test.ElementTestDataSource",
 

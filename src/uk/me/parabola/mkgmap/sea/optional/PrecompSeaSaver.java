@@ -74,10 +74,10 @@ class PrecompSeaSaver implements Runnable {
 		int lon = Integer.valueOf(parts[1]);
 		uk.me.parabola.splitter.Area bounds = new uk.me.parabola.splitter.Area(
 				lat, lon, lat + SeaGenerator.PRECOMP_RASTER, lon + SeaGenerator.PRECOMP_RASTER);
-		OSMWriter writer = (usePbf ? new BinaryMapWriter(bounds, outputDir)
-				: new OSMXMLWriter(bounds, outputDir));
+		OSMWriter writer = (usePbf ? new BinaryMapWriter(bounds, outputDir, nextId, 0)
+				: new OSMXMLWriter(bounds, outputDir, nextId, 0));
 		idMapping.put(id, key);
-		writer.initForWrite(nextId, 0);
+		writer.initForWrite();
 		return writer;
 	}
 	
