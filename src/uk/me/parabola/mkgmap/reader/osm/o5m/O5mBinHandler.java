@@ -16,10 +16,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-
-import crosby.binary.Osmformat;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
@@ -313,17 +309,7 @@ public class O5mBinHandler extends OsmHandler{
 			if (el != null) // ignore non existing ways caused by splitting files
 				rel.addElement(role, el);
 		}
-		// tags
-		boolean tagsIncomplete = false;
-		while (bytesToRead > 0){
-			readStringPair();
-			String key = keepTag(stringPair[0],stringPair[1]);
-			if (key == null)
-				tagsIncomplete = true;
-			else
-				rel.addTag(key, stringPair[1].intern());
-		}
-		assert bytesToRead == 0;
+		boolean tagsIncomplete = readTags(rel);
 		if (tagsIncomplete) {
 			String relType = rel.getTag("type");
 			if ("multipolygon".equals(relType) || "boundary".equals(relType)) {
@@ -332,72 +318,22 @@ public class O5mBinHandler extends OsmHandler{
 			}
 		}
 		saver.addRelation(rel);
-
-		
-		/*
-		boolean tagsIncomplete = false;
-		for (int j = 0; j < binRel.getKeysCount(); j++) {
-			String key = getStringById(binRel.getKeys(j));
-			String val = getStringById(binRel.getVals(j));
-			key = keepTag(key, val);
-			if (key == null)
-				tagsIncomplete = true;
-			else
-				rel.addTag(key, val.intern());
-		}
-
-		if (tagsIncomplete) {
-			String relType = rel.getTag("type");
-			if ("multipolygon".equals(relType) || "boundary".equals(relType)) {
-				// mark the multipolygons if there are some tags that are not loaded
-				rel.addTag(TAGS_INCOMPLETE_TAG, "true");
-			}
-		}
-		
-		long lastMid = 0;
-
-		for (int j = 0; j < binRel.getMemidsCount(); j++) {
-			long mid = lastMid + binRel.getMemids(j);
-			lastMid = mid;
-			String role = getStringById(binRel.getRolesSid(j));
-			Element el = null;
-
-			if (binRel.getTypes(j) == Osmformat.Relation.MemberType.NODE) {
-				el = saver.getNode(mid);
-				if(el == null) {
-					// we didn't make a node for this point earlier,
-					// do it now (if it exists)
-					Coord co = saver.getCoord(mid);
-					if(co != null) {
-						el = new Node(mid, co);
-						saver.addNode((Node)el);
-					}
-				}
-			} else if (binRel.getTypes(j) == Osmformat.Relation.MemberType.WAY) {
-				el = saver.getWay(mid);
-			} else if (binRel.getTypes(j) == Osmformat.Relation.MemberType.RELATION) {
-				el = saver.getRelation(mid);
-				if (el == null) {
-					saver.deferRelation(mid, rel, role);
-				}
-			} else {
-				assert false;
-			}
-
-			if (el != null) // ignore non existing ways caused by splitting files
-				rel.addElement(role, el);
-		}
-		saver.addRelation(rel);
-		*/
-		
 	}
 	
-	private void readTags(Element elem) throws IOException{
+	private boolean readTags(Element elem) throws IOException{
+		boolean tagsIncomplete = false;
 		while (bytesToRead > 0){
 			readStringPair();
-			elem.addTag(stringPair[0],stringPair[1]);
+			String key = stringPair[0];
+			String val = stringPair[1];
+			key = keepTag(key, val);
+			if (key != null)
+				elem.addTag(key, val.intern());
+			else 
+				tagsIncomplete = true;
 		}
 		assert bytesToRead == 0;
+		return tagsIncomplete;
 		
 	}
 	/**

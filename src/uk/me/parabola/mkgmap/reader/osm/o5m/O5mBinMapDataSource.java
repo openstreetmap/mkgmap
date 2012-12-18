@@ -14,15 +14,11 @@
 package uk.me.parabola.mkgmap.reader.osm.o5m;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
-import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinHandler.BinParser;
-
-import crosby.binary.file.BlockInputStream;
 
 /**
  * Read an OpenStreetMap data file in .o5m format.  It is converted
