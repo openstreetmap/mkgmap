@@ -248,7 +248,7 @@ public class O5mBinHandler extends OsmHandler{
 		readVersionTsAuthor();
 		if (bytesToRead == 0)
 			return; // only wayId + version: this is a delete action, we ignore it 
-		Way way = new Way(lastWayId);
+		Way way = startWay(lastWayId);
 		long refSize = readUnsignedNum32();
 		long stop = bytesToRead - refSize;
 		
@@ -334,7 +334,6 @@ public class O5mBinHandler extends OsmHandler{
 		}
 		assert bytesToRead == 0;
 		return tagsIncomplete;
-		
 	}
 	/**
 	 * Store a new string pair (length check must be performed by caller)
