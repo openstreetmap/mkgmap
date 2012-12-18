@@ -63,6 +63,12 @@
 			<!-- A broken version of this is in the main repo which causes problems. Since we already depend on it, just ignore it here -->
 			<exclude module="jai_core"/>
 		</dependency>
+		<dependency org="org.geotools" name="gt-cql" rev="2.7.5" conf="optional->default,compile">
+			<exclude module="jai_core"/>
+		</dependency>
+		<dependency org="org.geotools" name="gt-shapefile" rev="2.7.5" conf="optional->default,compile">
+			<exclude module="jai_core"/>
+		</dependency>
 		<dependency org="org.geotools" name="geotools" rev="2.7.5" conf="optional->default,compile"/>
 
 	</dependencies>

@@ -72,13 +72,14 @@
 	<path id="test.classpath">
 		<fileset dir="${ivy.lib.dir}/test" />
 	</path>
-	<path id="macker.classpath">
-		<fileset dir="${ivy.lib.dir}/macker" />
+	<path id="optional.classpath">
+		<fileset dir="${ivy.lib.dir}/optional" />
 	</path>
 
 	<path id="main">
 		<pathelement location="${build.classes}" />
 		<path refid="compile.classpath" />
+		<path refid="optional.classpath" />
 	</path>
 
 	<path id="test">
@@ -143,6 +144,7 @@
 	<!-- Prepare - make all the directories -->
 	<target name="prepare">
 		<mkdir dir="${build.classes}" />
+		<mkdir dir="${ivy.lib.dir}/optional"/>
 
 		<property environment="env"/>
 
