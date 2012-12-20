@@ -127,7 +127,7 @@ Address search options:
     data in it is stored in preprocessed bounds files which are stored 
     in the directory given as bounds parameter. 
     The input file with the given filename must contain the boundaries that 
-    should be preprocessed. It can have OSM or PBF fileformat. It is 
+    should be preprocessed. It can have OSM, PBF or O5M fileformat. It is 
     recommended that it contains the boundary data only to avoid very high
     memory usage. 
 

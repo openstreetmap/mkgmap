@@ -32,6 +32,7 @@ public class BoundaryPreparer extends Preparer {
 	static {
 		String[] sources = {
 				"uk.me.parabola.mkgmap.reader.osm.boundary.OsmBinBoundaryDataSource",
+				"uk.me.parabola.mkgmap.reader.osm.boundary.O5mBinBoundaryDataSource",
 				// must be last as it is the default
 				"uk.me.parabola.mkgmap.reader.osm.boundary.Osm5BoundaryDataSource", };
 
