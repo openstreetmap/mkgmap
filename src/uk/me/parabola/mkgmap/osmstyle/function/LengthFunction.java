@@ -70,7 +70,7 @@ public class LengthFunction extends AbstractFunction {
 			}
 			return length;
 		} else {
-			throw new SyntaxException("mkgmap::length cannot calculate elements of type "+el.getClass().getName());
+			throw new SyntaxException("length() cannot calculate elements of type "+el.getClass().getName());
 		}
 	}
 	
