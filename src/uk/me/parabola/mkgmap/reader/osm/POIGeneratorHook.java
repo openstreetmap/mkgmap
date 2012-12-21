@@ -309,10 +309,13 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			} 
 			remMidDist -= nextDist;
 		}
-		Node midNode = createPOI(line, midPoint, LINE2POI_TAG);
-		midNode.addTag(LINE2POI_TYPE_TAG,"mid");
-		saver.addNode(midNode);
-		noPOIs++;
+
+		if (midPoint != null) {
+			Node midNode = createPOI(line, midPoint, LINE2POI_TAG);
+			midNode.addTag(LINE2POI_TYPE_TAG,"mid");
+			saver.addNode(midNode);
+			noPOIs++;
+		}
 
 		return noPOIs;
 
