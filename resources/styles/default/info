@@ -13,7 +13,6 @@ summary: The default style
 version=1.0
 
 base-style=contours_ft
-#base-style=location
 base-style=landuse
 base-style=waters
 
