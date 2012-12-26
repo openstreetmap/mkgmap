@@ -1,18 +1,14 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 as
- *  published by the Free Software Foundation.
- * 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 24-Sep-2007
+ * Copyright (C) 2007 - 2012.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  */
 package uk.me.parabola.mkgmap.main;
 
@@ -59,7 +55,6 @@ import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
-import uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -74,8 +69,6 @@ import uk.me.parabola.mkgmap.srt.SrtTextReader;
 public class Main implements ArgumentProcessor {
 	private static final Logger log = Logger.getLogger(Main.class);
 
-	private final List<Preparer> preparers = new ArrayList<Preparer>();
-	
 	// Final .img file combiners.
 	private final List<Combiner> combiners = new ArrayList<Combiner>();
 
@@ -321,44 +314,15 @@ public class Main implements ArgumentProcessor {
 	private void addCombiner(Combiner combiner) {
 		combiners.add(combiner);
 	}
-	
-	private void addPreparer(Preparer preparer) {
-		this.preparers.add(preparer);
-	}
 
 	public void endOptions(CommandArgs args) {
 		fileOptions(args);
-
-		addPreparer(new BoundaryPreparer());
 
 		log.info("Start tile processors");
 		if (threadPool == null) {
 			log.info("Creating thread pool with " + maxJobs + " threads");
 			threadPool = Executors.newFixedThreadPool(maxJobs);
 		}
-
-		log.info("Start preparers");
-		long pt1 = System.currentTimeMillis();
-		for (Preparer preparer : preparers) {
-
-			boolean usePreparer = preparer.init(args.getProperties(), threadPool);
-			if (!usePreparer)
-				continue;
-
-			try {
-				preparer.runPreparer();
-			} catch (Throwable t) {
-				t.printStackTrace();
-				if (!args.getProperties().getProperty("keep-going", false)) {
-					throw new ExitException(
-							"Exiting - if you want to carry on regardless, use the --keep-going option");
-				}
-			}
-		}
-
-		preparers.clear();
-		long pt2 = System.currentTimeMillis();
-		log.info("All preparers finished after " + (pt2-pt1) + " ms");
 
 		// process all input files
 		for (FilenameTask task : futures) {

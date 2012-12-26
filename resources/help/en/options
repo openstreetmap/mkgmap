@@ -122,15 +122,6 @@ Address search options:
   same code page and sorting options (eg. --code-page, --latin1 etc) must
   be used as were used to compile the individual map tiles.
 
---createboundsfile=filename
-    In case this option is set the given file is read and all boundary
-    data in it is stored in preprocessed bounds files which are stored 
-    in the directory given as bounds parameter. 
-    The input file with the given filename must contain the boundaries that 
-    should be preprocessed. It can have OSM, PBF or O5M fileformat. It is 
-    recommended that it contains the boundary data only to avoid very high
-    memory usage. 
-
 --bounds=directory|zipfile
     A directory or a zipfile containing the preprocessed bounds files. 
     Bounds files in a zipfile must be located in the zipfiles root directory.
@@ -146,6 +137,17 @@ Address search options:
               ..
               mkgmap:admin_level11
               mkgmap:postcode : the postal_code value
+              
+    Preprocessed bounds can be created with the following command:
+       java -cp mkgmap.jar 
+          uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor
+          <inputfile> <boundsdir>
+    
+    The input file must contain the boundaries that should be preprocessed. 
+    It can have OSM, PBF or O5M fileformat. It is recommended that it 
+    contains the boundary data only to avoid very high memory usage.
+    The boundsdir gives the directory where the processed files are stored.
+    This directory can be used as --bounds parameter with mkgmap.               
     
 --location-autofill=[option1,[option2]]
 	Controls how the address fields for country, region, city and zip info 

@@ -16,18 +16,25 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.main.Preparer;
-import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.mkgmap.reader.osm.LocationHook;
 
-public class BoundaryPreparer extends Preparer {
-	private static final Logger log = Logger.getLogger(BoundaryPreparer.class);
+/**
+ * Preprocesses the boundary information to be used by the {@link LocationHook} class.
+ * @author WanMil
+ */
+public class BoundaryPreprocessor implements Runnable {
+	private static final Logger log = Logger.getLogger(BoundaryPreprocessor.class);
 	private static final List<Class<? extends LoadableBoundaryDataSource>> loaders;
 	static {
 		String[] sources = {
@@ -83,59 +90,51 @@ public class BoundaryPreparer extends Preparer {
 	}
 
 	
-	private boolean workoutOnly = false;
 	private String boundaryFilename;
-	private String inDir;
 	private String outDir;
-
-	public BoundaryPreparer() {
-		
-	}
+	private ExecutorService threadPool;
+	private final BlockingQueue<Future<Object>> remainingTasks = new LinkedBlockingQueue<Future<Object>>();
 
 	/**
 	 * constructor for stand-alone usage (workout only)
 	 * @param in source directory or zip file 
 	 * @param out target directory
 	 */
-	private BoundaryPreparer(String in, String out){
-		this.inDir = in;
+	private BoundaryPreprocessor(String boundaryFilename, String out){
+		this.boundaryFilename = boundaryFilename;
 		this.outDir = out;
-		this.workoutOnly = true;
+
+		int maxJobs = Runtime.getRuntime().availableProcessors();
+		if (maxJobs > 1)
+			this.threadPool = Executors.newFixedThreadPool(maxJobs);
+		else
+			this.threadPool = null;
 	}
 	
-	public boolean init(EnhancedProperties props,
-			ExecutorService additionalThreadPool) {
-		super.init(props, additionalThreadPool);
-		
-		if (workoutOnly)
-			return true;
-		
-		// check for a common mistake - when createboundsfile is set the bounds parameter is mandatory
-		if (props.getProperty("createboundsfile", null) != null && props.getProperty("bounds", null) == null) {
-			System.err.println("Cannot create preprocessed boundary files because the parameter 'bounds' is not set.");
-			System.err.println("Please specify both parameters 'createboundsfile' and 'bounds'.");
-			return false;
-		}
-		
-		this.boundaryFilename = props.getProperty("createboundsfile", null);
-		this.inDir = props.getProperty("bounds", null);
-		this.outDir = props.getProperty("bounds", null);
-		
-		return boundaryFilename != null && this.inDir != null && this.outDir != null;
+	/**
+	 * Sets the number of threads that is used as maximum by the boundary
+	 * preparer.
+	 *
+	 * @param maxThreads the maximum number of threads
+	 */
+	public void setMaxThreads(int maxThreads) {
+		if (maxThreads > 1)
+			this.threadPool = Executors.newFixedThreadPool(maxThreads);
+		else
+			this.threadPool = null;
 	}
 
 	public void run() {
-		if (workoutOnly == false && boundaryFilename != null) {
-			long t1 = System.currentTimeMillis();
-			boolean prepOK = createRawData();
-			long t2 = System.currentTimeMillis();
-			log.info("BoundaryPreparer pass 1 took", (t2-t1), "ms");
+		long t1 = System.currentTimeMillis();
+		boolean prepOK = createRawData();
+		long t2 = System.currentTimeMillis();
+		log.info("BoundaryPreparer pass 1 took", (t2-t1), "ms");
 
-			if (!prepOK){
-				return;
-			}
+		if (!prepOK){
+			System.err.println("Boundary creation failed.");
+			return;
 		}
-		workoutBoundaryRelations(inDir, outDir);
+		workoutBoundaryRelations();
 	}
 
 	/**
@@ -166,45 +165,29 @@ public class BoundaryPreparer extends Preparer {
 	
 	
 	public static void main(String[] args) {
-		if (args[0].equals("--help")) {
+		if (args[0].equals("--help") || args.length != 2) {
 			System.err.println("Usage:");
-			System.err
-					.println("java -cp mkgmap.jar uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreparer [<boundsdir1>] [<boundsdir2>]");
-			System.err.println(" <boundsdir1>: optional directory name or zip file with *.bnd files, default is bounds");
-			System.err
-			.println(" <boundsdir2>: optional output directory, if not specified, files in input are overwritten.");
-			System.err
-			.println("               If input is a zip file, output directory must be specified");
+			System.err.println("java -cp mkgmap.jar uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor <inputfile> <boundsdir>");
+			System.err.println(" <inputfile>: File containing boundary data (OSM, PBF or O5M format)");
+			System.err.println(" <boundsdir>: Directory in which the preprocessed bounds files are created");
 
 			System.exit(-1);
-		} 
-		String in = "bounds";
-		String out = "bounds";
-		if (args.length >= 1)
-			in = args[0];
-		if (args.length >= 2)
-			out = args[1];
-		else
-			out = in;
+		}
+		
+		String inputFile = args[0];
+		String outputDir = args[1];
+		
 		long t1 = System.currentTimeMillis();
 		
-		int maxJobs = Runtime.getRuntime().availableProcessors();
-		ExecutorService threadPool = Executors.newFixedThreadPool(maxJobs);
-
-		EnhancedProperties props = new EnhancedProperties();
-		
-		BoundaryPreparer p = new BoundaryPreparer(in, out);
-		p.init(props, threadPool);
+		BoundaryPreprocessor p = new BoundaryPreprocessor(inputFile, outputDir);
 		try {
-			p.runPreparer();
+			p.runPreprocessing();
 		} catch (InterruptedException exp) {
 			exp.printStackTrace();
 		} catch (ExecutionException exp) {
 			System.err.println(exp);
 			exp.printStackTrace();
 		}
-		
-		threadPool.shutdown();
 		
 		log.info("Bnd files converted in", (System.currentTimeMillis()-t1), "ms");
 	}
@@ -214,47 +197,92 @@ public class BoundaryPreparer extends Preparer {
 	 * are applied with the information with which boundary they intersect.<br/>
 	 * The files are rewritten in the QUADTREE_DATA_FORMAT which is used in the 
 	 * LocationHook.
-	 * 
-	 * @param inputDirName the directory or zip file name that identifies the input
-	 * @param outputDirName a directory name for the rewritten bnd files
 	 */
-	public void workoutBoundaryRelations(String inputDirName, String outputDirName) {
-		List<String> boundsFileNames = BoundaryUtil.getBoundaryDirContent(inputDirName);
+	private void workoutBoundaryRelations() {
+		List<String> boundsFileNames = BoundaryUtil.getBoundaryDirContent(this.outDir);
 				
 		for (String boundsFileName : boundsFileNames) {
 			// start workers that rework the boundary files and add the 
 			// quadtree information
-			addWorker(new QuadTreeWorker(inputDirName, outputDirName, boundsFileName));
+			addWorker(new QuadTreeWorker(this.outDir, boundsFileName));
+		}
+	}
+
+
+
+	@SuppressWarnings("unchecked")
+	protected <V> Future<V> addWorker(Callable<V> worker) {
+		if (threadPool == null) {
+			// only one thread available for the preparer
+			// so execute the task directly
+			FutureTask<V> future = new FutureTask<V>(worker);
+			future.run();
+			return future;
+		} else {
+			Future<Object> task = threadPool.submit((Callable<Object>) worker);
+			remainingTasks.add(task);
+			return (Future<V>) task;
+		}
+	}
+
+	/**
+	 * Starts the preprocessing 
+	 */
+	public void runPreprocessing() throws InterruptedException, ExecutionException {
+		if (threadPool == null) {
+			// there is no thread pool so run it in the same thread and wait for
+			// its completion
+			run();
+		} else {
+
+			// start the preparer
+			Future<Object> prepTask = threadPool.submit(this, new Object());
+
+			// first wait for the main preparer task to finish
+			prepTask.get();
+
+			// then wait for all workers started by the preparer to finish
+			while (true) {
+				Future<Object> task = remainingTasks.poll();
+				if (task == null) {
+					// no more remaining tasks
+					// preparer has finished completely
+					break;
+				}
+				// wait for the task to finish
+				task.get();
+			}
+			
+			// stop thread pool
+			threadPool.shutdown();
 		}
 	}
 
 	class QuadTreeWorker implements Callable<String> {
-		private final String inputDirName;
-		private final String outputDirName;
-		private final String boundsFileName;
+		private final String boundsDir;
+		private final String boundsFilename;
 		
-		public QuadTreeWorker(String inputDirName, String outputDirName, String boundsFileName) {
-			this.inputDirName = inputDirName;
-			this.outputDirName = outputDirName;
-			this.boundsFileName = boundsFileName;
+		public QuadTreeWorker(String boundsDir, String boundsFilename) {
+			this.boundsDir = boundsDir;
+			this.boundsFilename = boundsFilename;
 		}
 		
 		@Override
 		public String call() throws Exception {
-			log.info("Workout boundary relations in", inputDirName, boundsFileName);
+			log.info("Workout boundary relations in", boundsDir, boundsFilename);
 			long t1 = System.currentTimeMillis();
-			BoundaryQuadTree bqt = BoundaryUtil.loadQuadTree(inputDirName, boundsFileName);
+			BoundaryQuadTree bqt = BoundaryUtil.loadQuadTree(boundsDir, boundsFilename);
 			long dt = System.currentTimeMillis() - t1;
-			log.info("splitting", boundsFileName, "took", dt, "ms");
+			log.info("splitting", boundsFilename, "took", dt, "ms");
 			if (bqt != null){
-				File outDir = new File(outputDirName);
+				File outDir = new File(boundsDir);
 				BoundarySaver saver = new BoundarySaver(outDir, BoundarySaver.QUADTREE_DATA_FORMAT);
 				saver.setCreateEmptyFiles(false);
 
-				saver.saveQuadTree(bqt, boundsFileName); 		
+				saver.saveQuadTree(bqt, boundsFilename); 		
 				saver.end();
 			}
-			return boundsFileName;
+			return boundsFilename;
 		}
 
 	}
