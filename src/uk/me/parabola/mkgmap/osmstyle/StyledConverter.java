@@ -59,7 +59,6 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.mkgmap.reader.polish.PolishMapDataSource;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -176,87 +175,6 @@ public class StyledConverter implements OsmConverter {
 			lineAdder = overlayAdder;
 	}
 
-	private static final Pattern commaPattern = Pattern.compile(",");
-
-	private GType makeGTypeFromTags(Element element) {
-		String[] vals = commaPattern.split(element.getTag("mkgmap:gtype"));
-
-		if(vals.length < 3) {
-			log.error("OSM element " + element.getId() + " has bad mkgmap:gtype value (should be 'kind,code,minres,[maxres],[roadclass],[roadspeed])");
-			log.error("  where kind is " + GType.POINT + "=point, " + GType.POLYLINE + "=polyline, " + GType.POLYGON + "=polygon");
-			return null;
-		}
-
-		String name = element.getTag("name");
-		if(name != null)
-			element.setName(PolishMapDataSource.unescape(name));
-
-		for(int i = 0; i < vals.length; ++i)
-			vals[i] = vals[i].trim();
-
-		int kind;
-		try {
-			kind = Integer.decode(vals[0]);
-		}
-		catch (NumberFormatException nfe) {
-			log.error("OSM element " + element.getId() + " has bad value for kind: " + vals[0]);
-			return null;
-		}
-
-		if(kind != GType.POINT &&
-		   kind != GType.POLYLINE &&
-		   kind != GType.POLYGON) {
-			log.error("OSM element " + element.getId() + " has bad value for kind, is " + kind + " but should be " + GType.POINT + ", " + GType.POLYLINE + " or " + GType.POLYGON);
-			return null;
-		}
-
-		try {
-			Integer.decode(vals[1]);
-		}
-		catch (NumberFormatException nfe) {
-			log.error("OSM element " + element.getId() + " has bad value for type: " + vals[1]);
-			return null;
-		}
-
-		GType gt = new GType(kind, vals[1]);
-
-		try {
-			gt.setMinResolution(Integer.decode(vals[2]));
-		}
-		catch (NumberFormatException nfe) {
-			log.error("OSM element " + element.getId() + " has bad value for minres: " + vals[2]);
-		}
-
-		if(vals.length >= 4 && vals[3].length() > 0) {
-			try {
-				gt.setMaxResolution(Integer.decode(vals[3]));
-			}
-			catch (NumberFormatException nfe) {
-				log.error("OSM element " + element.getId() + " has bad value for maxres tag: " + vals[3]);
-			}
-		}
-
-		if(vals.length >= 5 && vals[4].length() > 0) {
-			try {
-				gt.setRoadClass(Integer.decode(vals[4]));
-			}
-			catch (NumberFormatException nfe) {
-				log.error("OSM element " + element.getId() + " has bad value for roadclass: " + vals[4]);
-			}
-		}
-
-		if(vals.length >= 6 && vals[5].length() > 0) {
-			try {
-				gt.setRoadSpeed(Integer.decode(vals[5]));
-			}
-			catch (NumberFormatException nfe) {
-				log.error("OSM element " + element.getId() + " has bad value for roadspeed: " + vals[5]);
-			}
-		}
-
-		return gt;
-	}
-
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
@@ -272,14 +190,6 @@ public class StyledConverter implements OsmConverter {
 		
 		if (way.getTagCount() == 0) {
 			// no tags => nothing to convert
-			return;
-		}
-
-		if(way.getTag("mkgmap:gtype") != null) {
-			GType foundType = makeGTypeFromTags(way);
-			if(foundType == null)
-				return;
-			addConvertedWay(way, foundType);
 			return;
 		}
 
@@ -330,15 +240,6 @@ public class StyledConverter implements OsmConverter {
 	public void convertNode(final Node node) {
 		if (node.getTagCount() == 0) {
 			// no tags => nothing to convert
-			return;
-		}
-
-		if(node.getTag("mkgmap:gtype") != null) {
-			GType foundType = makeGTypeFromTags(node);
-			if(foundType == null)
-				return;
-
-			addPoint(node, foundType);
 			return;
 		}
 

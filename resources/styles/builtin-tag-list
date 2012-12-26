@@ -15,7 +15,6 @@ exit:to
 int_ref
 junction
 maxspeed
-mkgmap:gtype
 name
 nat_ref
 oneway
