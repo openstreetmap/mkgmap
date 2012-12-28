@@ -118,7 +118,9 @@ public class GmapsuppBuilder implements Combiner {
 		Sort prevSort = sortMap.get(familyId);
 		Sort sort = info.getSort();
 		if (prevSort == null) {
-			sortMap.put(familyId, sort);
+			if (info.getKind() == FileKind.IMG_KIND) {
+				sortMap.put(familyId, sort);
+			}
 		} else {
 			if (prevSort.getCodepage() != sort.getCodepage())
 				System.err.printf("WARNING: input file '%s' has a different code page (%d rather than %d)\n",
@@ -138,13 +140,15 @@ public class GmapsuppBuilder implements Combiner {
 	public void onMapEnd(FileInfo info) {
 		files.put(info.getFilename(), info);
 
-		int familyId = info.getFamilyId();
-		if (createIndex) {
-			MdrBuilder mdrBuilder = addMdrFile(familyId, info.getSort(), info.getOutputDir());
-			mdrBuilder.onMapEnd(info);
-		}
+		if (info.isImg()) {
+			int familyId = info.getFamilyId();
+			if (createIndex) {
+				MdrBuilder mdrBuilder = addMdrFile(familyId, info.getSort(), info.getOutputDir());
+				mdrBuilder.onMapEnd(info);
+			}
 
-		addSrtFile(familyId, info);
+			addSrtFile(familyId, info);
+		}
 	}
 
 	/**
