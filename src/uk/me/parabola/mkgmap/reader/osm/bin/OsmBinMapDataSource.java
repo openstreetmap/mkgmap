@@ -36,11 +36,11 @@ import crosby.binary.file.BlockInputStream;
 public class OsmBinMapDataSource extends OsmMapDataSource {
 
 	public boolean isFileSupported(String name) {
-		// The extension for the protobuf format is now fixed at .osm.pbf
+		// The extension for the protobuf format is now fixed at .pbf
 		// Previously we temporarily used the .bin extension to
 		// indicate Scott's format. The .bin extension remains here for the
 		// time being, but may be removed.  Please use .pbf.
-		return name.endsWith(".osm.pbf") || name.endsWith(".bin");
+		return name.endsWith(".pbf") || name.endsWith(".bin");
 	}
 
 	/**
