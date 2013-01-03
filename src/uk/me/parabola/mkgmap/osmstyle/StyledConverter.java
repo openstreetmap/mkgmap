@@ -508,17 +508,32 @@ public class StyledConverter implements OsmConverter {
 		return ref;
 	}
 
+	private boolean displayNameWarning = true;
+	
 	private void elementSetup(MapElement ms, GType gt, Element element) {
 		String name = Label.squashSpaces(element.getName());
 		String refs = combineRefs(element);
 		
-		// Insert display_name as first ref.
-		// This causes display_name to be displayed in routing 
+		// Insert mkgmap:display_name as first ref.
+		// This causes mkgmap:display_name to be displayed in routing 
 		// directions, instead of only the ref.
-		String displayName = Label.squashSpaces(element.getTag("display_name"));
-
+		String displayName = Label.squashSpaces(element.getTag("mkgmap:display_name"));
+		
+		// be downward compatible if old tag display_name is used
+		if (displayName == null) {
+			// get the old tag display_name which should not be used any more (Dec 2012)
+			displayName = Label.squashSpaces(element.getTag("display_name"));
+			if (displayName != null && displayNameWarning) {
+				System.err.println("WARNING: Style uses tag 'display_name' which is deprecated " +
+						"and will be removed soon. Please use the new tag 'mkgmap:display_name' instead.");
+				log.warn("Style uses tag 'display_name' which is deprecated",
+						"and will be removed soon. Please use the new tag 'mkgmap:display_name' instead.");
+				displayNameWarning = false;
+			}
+		}
+		
 		if (displayName != null) {
-			// substitute '/' for ';' in display_name to avoid it
+			// substitute '/' for ';' in mkgmap:display_name to avoid it
 			// getting split below
 			displayName = displayName.replace(";","/");
 			if (refs == null)

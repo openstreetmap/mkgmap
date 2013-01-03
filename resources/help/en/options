@@ -534,7 +534,7 @@ Miscellaneous options:
 	to the first non link way so that the Garmin can show the 
 	destination. 
 	Note: There must be a rule in the lines	style file that uses the
-	      destination tag to set the display_name tag 
+	      destination tag to set the mkgmap:display_name tag 
 	
 --delete-tags-file=FILENAME
 	Names a file that should contain one or more lines of the form
