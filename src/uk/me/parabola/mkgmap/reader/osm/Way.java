@@ -50,12 +50,12 @@ public class Way extends Element {
 	}
 
 	public Way(long id, List<Coord> points) {
-		this.points = points;
+		this.points = new ArrayList<Coord>(points);
 		setId(id);
 	}
 
 	public Way copy() {
-		Way dup = new Way(getId(), new ArrayList<Coord>(points));
+		Way dup = new Way(getId(), points);
 		dup.setName(getName());
 		dup.copyTags(this);
 		dup.closed = this.closed;

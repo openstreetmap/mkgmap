@@ -2224,8 +2224,7 @@ public class MultiPolygonRelation extends Relation {
 		private Rectangle bounds;
 
 		public JoinedWay(Way originalWay) {
-			super(FakeIdGenerator.makeFakeId(), new ArrayList<Coord>(
-					originalWay.getPoints()));
+			super(FakeIdGenerator.makeFakeId(), originalWay.getPoints());
 			this.originalWays = new ArrayList<Way>();
 			addWay(originalWay);
 

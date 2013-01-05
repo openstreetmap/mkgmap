@@ -160,13 +160,12 @@ class PrecompSeaMerger implements Runnable {
 				landWays.put(landWay.getId(), landWay);
 			}
 
-			List<Coord> seaCoords = new ArrayList<Coord>(5);
-			seaCoords.add(new Coord(-90.0d, -180.0d));
-			seaCoords.add(new Coord(90.0d, -180.0d));
-			seaCoords.add(new Coord(90.0d, 180.0d));
-			seaCoords.add(new Coord(-90.0d, 180.0d));
-			seaCoords.add(new Coord(-90.0d, -180.0d));
-			Way seaWay = new Way(FakeIdGenerator.makeFakeId(), seaCoords);
+			Way seaWay = new Way(FakeIdGenerator.makeFakeId());
+			seaWay.addPoint(new Coord(-90.0d, -180.0d));
+			seaWay.addPoint(new Coord(90.0d, -180.0d));
+			seaWay.addPoint(new Coord(90.0d, 180.0d));
+			seaWay.addPoint(new Coord(-90.0d, 180.0d));
+			seaWay.addPoint(new Coord(-90.0d, -180.0d));
 			landWays.put(seaWay.getId(), seaWay);
 
 			Relation rel = new GeneralRelation(FakeIdGenerator.makeFakeId());
