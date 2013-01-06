@@ -29,7 +29,7 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  *
  * @author Steve Ratcliffe
  */
-public abstract class TypElement {
+public abstract class TypElement implements Comparable<TypElement> {
 	private int type;
 	private int subType;
 
@@ -53,6 +53,24 @@ public abstract class TypElement {
 
 	public int getType() {
 		return type;
+	}
+
+	/**
+	 * We sort these by type.
+	 * Only the index needs to be sorted (probably) but we don't create the index separately.
+	 *
+	 * @param o The other object to compare against.
+	 * @return The usual -1, 0, 1 for the other object being less than, equal, greater than than this.
+	 */
+	public int compareTo(TypElement o) {
+		int t1 = getTypeForFile();
+		int t2 = o.getTypeForFile();
+		if (t1 == t2)
+			return 0;
+		else if (t1 < t2)
+			return -1;
+		else
+			return 1;
 	}
 
 	/**

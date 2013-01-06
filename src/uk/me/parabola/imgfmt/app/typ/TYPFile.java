@@ -61,9 +61,6 @@ public class TYPFile extends ImgFile {
 	}
 
 	public void write() {
-		// HEADER_LEN => 1. Image
-		//Collections.sort(images, BitmapImage.comparator());
-		// TODO we will probably have to sort something.
 
 		ImgFileWriter writer = getWriter();
 		writer.position(TYPHeader.HEADER_LEN);
@@ -163,6 +160,8 @@ public class TYPFile extends ImgFile {
 	private void writeSection(ImgFileWriter writer, Section dataSection, Section indexSection,
 			List<? extends TypElement> elementData)
 	{
+		Collections.sort(elementData);
+
 		SectionWriter subWriter = dataSection.makeSectionWriter(writer);
 		CharsetEncoder encoder = data.getEncoder();
 		for (TypElement elem : elementData)
@@ -172,16 +171,15 @@ public class TYPFile extends ImgFile {
 		int size = dataSection.getSize();
 		int typeSize = indexSection.getItemSize();
 		int psize = ptrSize(size);
-		//if (psize == 1)
-		//	psize = 2;
+
 		indexSection.setItemSize((char) (typeSize + psize));
 
 		subWriter = indexSection.makeSectionWriter(writer);
 		for (TypElement elem : elementData) {
 			int offset = elem.getOffset();
 			int type = elem.getTypeForFile();
-			putN(writer, typeSize, type);
-			putN(writer, psize, offset);
+			putN(subWriter, typeSize, type);
+			putN(subWriter, psize, offset);
 		}
 		Utils.closeFile(subWriter);
 
