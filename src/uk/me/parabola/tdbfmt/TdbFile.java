@@ -40,7 +40,6 @@ import uk.me.parabola.log.Logger;
 public class TdbFile {
 	private static final Logger log = Logger.getLogger(TdbFile.class);
 
-	public static final int TDB_V3 = 300;
 	public static final int TDB_V407 = 407;
 
 	private static final int BLOCK_OVERVIEW = 0x42;

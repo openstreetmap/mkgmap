@@ -50,25 +50,6 @@ public class TdbTest extends Base {
 		assertEquals("tdb version", 407, tdb.getTdbVersion());
 	}
 
-	/**
-	 * Check version 3 of the format.  Not very important.
-	 * @throws IOException
-	 */
-	@Test
-	public void testVersion3() throws IOException {
-		Main.main(new String[]{
-				Args.TEST_STYLE_ARG,
-				"--tdbfile",
-				"--tdb-v3",
-				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz"
-		});
-
-		File f = new File(TDBNAME);
-		assertTrue("TDB was created", f.exists());
-
-		TdbFile tdb = TdbFile.read(TDBNAME);
-		assertEquals("tdb version", 300, tdb.getTdbVersion());
-	}
 
 	/**
 	 * Check for each possible option.

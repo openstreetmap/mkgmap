@@ -83,19 +83,11 @@ public class TdbBuilder implements Combiner {
 		String seriesName = args.get("series-name", "OSM map");
 		String familyName = args.get("family-name", "OSM map");
 
-		// Version 4 is the default.  If you really want v3 then the tdb-v3
-		// option can be used.
-		if (args.exists("tdb-v3")) {
-			tdbVersion = TdbFile.TDB_V3;
-		} else {
-			tdbVersion = TdbFile.TDB_V407;
-		}
+		tdbVersion = TdbFile.TDB_V407;
+
 		// enable "show profile" button for routes in mapsource 
-		byte enableProfile = 0;
-		if (tdbVersion == TdbFile.TDB_V407) {
-			// this is supported only in version 403 and above 
-			enableProfile = (byte)args.get("show-profiles", 0);
-		}
+		// this is supported only in version 403 and above
+		byte enableProfile = (byte) args.get("show-profiles", 0);
 
 		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, productVersion, seriesName,

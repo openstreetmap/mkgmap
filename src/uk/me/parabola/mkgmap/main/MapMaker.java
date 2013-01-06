@@ -62,10 +62,10 @@ public class MapMaker implements MapProcessor {
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
 			System.err.println(e.getMessage());
-			return null;
+			return filename;
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not open file: " + filename);
-			return null;
+			return filename;
 		}
 	}
 

@@ -30,7 +30,9 @@
       <excludeFolder url="file://$MODULE_DIR$/maps" />
       <excludeFolder url="file://$MODULE_DIR$/ref" />
       <excludeFolder url="file://$MODULE_DIR$/samples" />
+      <excludeFolder url="file://$MODULE_DIR$/test-reports" />
       <excludeFolder url="file://$MODULE_DIR$/test/resources/in" />
+      <excludeFolder url="file://$MODULE_DIR$/tmp" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" name="resource" level="project" />

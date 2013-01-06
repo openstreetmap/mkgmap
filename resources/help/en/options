@@ -543,9 +543,8 @@ Miscellaneous options:
 	compared with these patterns and those that match are deleted.
 
 --tdbfile
-	Write a .tdb file.
---tdb-v3
-	Write a version 3 tdb file instead of the default v4. Not useful.
+	Write files that are essential to running with MapSource, a .tdb file and
+	an overview map.
 
 --show-profiles=1
 	Sets a flag in tdb file which marks set mapset as having contour 

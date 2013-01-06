@@ -224,7 +224,7 @@ public class Main implements ArgumentProcessor {
 			// generation of the overview files if there is only one file
 			// to process.
 			int n = Integer.valueOf(val);
-			if (n > 1)
+			if (n > 0) // TODO temporary, this option will become properly default of on.
 				addTdbBuilder();
 
 		} else if (opt.equals("tdbfile")) {
