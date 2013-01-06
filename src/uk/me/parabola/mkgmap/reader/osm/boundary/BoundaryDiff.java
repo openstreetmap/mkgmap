@@ -201,7 +201,7 @@ public class BoundaryDiff {
 
 		int i = 0;
 		for (List<Coord> polyPart : singlePolys) {
-			String attr = new Way(0, polyPart).clockwise() ? "o" : "i";
+			String attr = Way.clockwise(polyPart) ? "o" : "i";
 			GpxCreator.createGpx(gpxBasename + i + "_" + attr, polyPart);
 			i++;
 		}

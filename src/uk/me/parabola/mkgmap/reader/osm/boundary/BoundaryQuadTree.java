@@ -1217,7 +1217,7 @@ public class BoundaryQuadTree {
 
 				int cntPoly = 0;
 				for (List<Coord> polyPart : singlePolys) {
-					String attr = new Way(0, polyPart).clockwise() ? "o" : "i";
+					String attr = Way.clockwise(polyPart) ? "o" : "i";
 					String fname = "gpx/" + treePath+ "/" +  desc + "_" + area.getBounds().x + "_" + area.getBounds().y + "_" + boundaryId+ "_" + cntPoly + "_"+attr;
 					GpxCreator.createGpx(fname, polyPart);
 					++cntPoly;

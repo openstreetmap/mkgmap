@@ -288,9 +288,8 @@ public class Java2DConverter {
 						// Check if the polygon with float precision has the same direction
 						// than the polygon with int precision. If not reverse the int precision
 						// polygon. Its direction has changed artificially by the int conversion.
-						Way w = new Way(0, coords);
 						boolean floatPrecClockwise = (realAreaSize <= 0);
-						if (w.clockwise() != floatPrecClockwise) {
+						if (Way.clockwise(coords) != floatPrecClockwise) {
 							
 							if (log.isInfoEnabled()) {
 								log.info("Converting area to int precision changes direction. Will correct that.");

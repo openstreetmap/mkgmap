@@ -65,8 +65,7 @@ public class BoundaryFile2Gpx {
 
 			int i = 0;
 			for (List<Coord> emptyPart : emptyPolys) {
-				Way w = new Way(0, emptyPart);
-				String attr = w.clockwise() ? "o" : "i";
+				String attr = Way.clockwise(emptyPart) ? "o" : "i";
 				GpxCreator.createGpx(gpxBasename + i + "_" + attr, emptyPart);
 				i++;
 			}

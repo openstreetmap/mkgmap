@@ -54,8 +54,7 @@ public class BoundaryCoverageUtil {
 		Collections.reverse(coveredPolys);
 		int i = 0;
 		for (List<Coord> coveredPart : coveredPolys) {
-			Way w = new Way(0, coveredPart);
-			String attr = w.clockwise() ? "o" : "i";
+			String attr = Way.clockwise(coveredPart) ? "o" : "i";
 			GpxCreator.createGpx(gpxBasename + "/" + i + "_" + attr, coveredPart);
 			i++;
 		}

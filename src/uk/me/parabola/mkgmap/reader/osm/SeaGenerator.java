@@ -912,7 +912,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			}
 
 			// determine where the water is
-			if (w.clockwise()) {
+			if (Way.clockwise(w.getPoints())) {
 				// water on the inside of the poly, it's an
 				// "anti-island" so tag with natural=water (to
 				// make it visible above the land)

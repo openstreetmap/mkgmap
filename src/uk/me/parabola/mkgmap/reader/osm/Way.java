@@ -195,7 +195,7 @@ public class Way extends Element {
 
 	// returns true if the way is a closed polygon with a clockwise
 	// direction
-	public boolean clockwise() {
+	public static boolean clockwise(List<Coord> points) {
 
 		if(points.size() < 3 || !points.get(0).equals(points.get(points.size() - 1)))
 			return false;

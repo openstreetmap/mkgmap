@@ -79,8 +79,7 @@ public class BoundaryUtil {
 					// need at least 4 items to describe a polygon
 					continue;
 				}
-				Way w = new Way(0, singleElement);
-				boolean outer = w.clockwise();
+				boolean outer = Way.clockwise(singleElement);
 				bElements.add(new BoundaryElement(outer, singleElement));
 			}
 
