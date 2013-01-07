@@ -10,6 +10,11 @@
 
 include 'inc/address';
 
+leisure=* & sport=* & name=* { set name='${name} (${sport})' }
+leisure=* & sport=* & name!=* { add name='${sport}' }
+
+include 'inc/name';
+
 aeroway=airport [0x07 resolution 20]
 aeroway=aerodrome [0x07 resolution 20]
 aeroway=helipad [0x0e resolution 22]
@@ -36,12 +41,12 @@ leisure=ice_rink [0x19 resolution 22]
 leisure=marina [0x09 resolution 20]
 leisure=nature_reserve [0x16 resolution 19]
 leisure=park [0x17 resolution 20]
-leisure=pitch { name '${name} (${sport})' | '${name}' } [0x19 resolution 21]
+leisure=pitch [0x19 resolution 21]
 leisure=playground [0x17 resolution 22]
 leisure=recreation_ground [0x19 resolution 21]
-leisure=sports_center | leisure=sports_centre { name '${name} (${sport})' | '${name}' } [0x19 resolution 20]
-leisure=stadium { name '${name} (${sport})' | '${name}' } [0x19 resolution 20]
-leisure=track & area=yes { name '${name} (${sport})' | '${name}' } [0x19 resolution 21]
+leisure=sports_center | leisure=sports_centre [0x19 resolution 20]
+leisure=stadium [0x19 resolution 20]
+leisure=track & area=yes [0x19 resolution 21]
 leisure=water_park [0x09 resolution 21]
 
 place=village [0x03 resolution 19]

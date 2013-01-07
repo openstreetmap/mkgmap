@@ -13,15 +13,37 @@ include 'inc/address';
 internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]
 internet_access=* & internet_access!=no & internet_access!=yes { name 'Internet(${internet_access}) ${name|def:}' } [0x2f12 resolution 24 continue]
 
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& (ref=* | route_ref=*) {
+  set ref='${ref|def:}(${route_ref})';
+}
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& lit=yes & (shelter=yes | covered=yes)
+{
+  set ref='${ref|def:}*';
+}
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& lit!=yes & (shelter=yes | covered=yes)
+{
+  set ref='${ref|def:}+';
+}
+(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
+& (shelter=no | covered=no)
+{
+  set ref='${ref|def:}-';
+}
+
+include 'inc/name';
+
 #aeroway=airport [0x5900 resolution 22]
 aeroway=airport [0x2f04 resolution 22]
 aeroway=aerodrome [0x2f04 resolution 22]
 aeroway=helipad [0x5904 resolution 23]
 aeroway=terminal [0x2f04 resolution 24]
 
-amenity=atm { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f06 resolution 24]
+amenity=atm [0x2f06 resolution 24]
 amenity=arts_centre [0x2c04 resolution 24]
-amenity=bank { name '${name} (${operator})' | '${name}' | '${operator}' } [0x2f06 resolution 24]
+amenity=bank [0x2f06 resolution 24]
 amenity=bar [0x2d02 resolution 24]
 amenity=biergarten [0x2d02 resolution 24]
 amenity=border_control | barrier=border_control [0x3006 resolution 20]
@@ -41,7 +63,7 @@ amenity=community_centre [0x3005 resolution 24]
 amenity=community_center [0x3005 resolution 24]
 amenity=courthouse [0x3004 resolution 24]
 amenity=drinking_water [0x5000 resolution 24 default_name 'Water']
-amenity=embassy & country=* { name '${country} ${name|def:}' } [0x3003 resolution 24]
+amenity=embassy & country=* { set name='${country} ${name|def:}' } [0x3003 resolution 24]
 amenity=embassy & country!=* [0x3003 resolution 24 default_name 'Embassy']
 amenity=emergency_phone [0x2f12 resolution 24 default_name 'Emergency Phone']
 amenity=ferry_terminal [0x2f08 resolution 22]
@@ -52,7 +74,7 @@ amenity=fire_station [0x3008 resolution 24]
 amenity=food_court [0x2a13 resolution 24]
 amenity=fuel & fuel:HGV_diesel=yes [ 0x2f16 resolution 23]
 amenity=fuel & shop=convenience [ 0x2e06 resolution 24]
-amenity=fuel { name '${operator}: ${name}' | '${name}' | '${operator}' } [0x2f01 resolution 24]
+amenity=fuel [0x2f01 resolution 24]
 amenity=kindergarten [0x2c05 resolution 24]
 amenity=library [0x2c03 resolution 24]
 amenity=nightclub [0x2d02 resolution 24]
@@ -65,7 +87,6 @@ amenity=post_office [0x2f05 resolution 24]
 amenity=prison [0x3007 resolution 24]
 amenity=pub [0x2d02 resolution 24]
 amenity=public_building [0x3007 resolution 24]
-amenity=recycling { name '${name} (${operator})' | '${name}' | '${operator}' }
 amenity=recycling [0x2f15 resolution 24]
 amenity=restaurant & cuisine=american [0x2a01 resolution 24]
 amenity=restaurant & cuisine=asian [0x2a02 resolution 24]
@@ -114,37 +135,10 @@ landuse=village_green & name=* [0x2c06 resolution 24]
 healthcare=hospital | amenity=hospital [0x3002 resolution 22]
 healthcare=* | amenity=dentist | amenity=doctors [0x3002 resolution 24]
 
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& lit=yes & (shelter=yes | covered=yes)
-{
-  set ref='${ref|def:}(${route_ref})';
-  name '${name|def:} ${ref|def:}*${operator|def:}';
-}
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (shelter=yes | covered=yes)
-{
-  set ref='${ref|def:}(${route_ref})';
-  name '${name|def:} ${ref|def:}+${operator|def:}';
-}
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (shelter=no | covered=no)
-{
-  set ref='${ref|def:}(${route_ref})';
-  name '${name|def:} ${ref|def:}-${operator|def:}';
-}
-(highway=bus_stop | railway=tram_stop | railway=halt | railway=station)
-& (name=*|ref=*|operator=*|route_ref=*)
-{
-  set ref='${ref|def:}(${route_ref})';
-  name '${name|def:} ${ref|def:} ${operator|def:}';
-}
-
 highway=bus_stop [0x2f17 resolution 24]
 
-highway=motorway_junction { name '${ref} ${name}' | '${ref}' | '${name}' }
 highway=motorway_junction [0x2000 resolution 24]
 
-highway=services { name '${ref} ${name}' | '${ref}' | '${name}' }
 highway=services & mkgmap:area2poi!=true [0x210f resolution 24 default_name 'Services']
 
 historic=museum [0x2c02 resolution 24]
@@ -234,13 +228,11 @@ tourism=artwork [0x2c04 resolution 24]
 tourism=aquarium [0x2c07 resolution 24]
 tourism=camp_site [0x2b03 resolution 24]
 tourism=caravan_site [0x2b03 resolution 24]
-tourism=chalet { name '${name}' | '${ref}' } [0x2b02 resolution 24]
+tourism=chalet [0x2b02 resolution 24]
 tourism=guest_house [0x2b02 resolution 24]
 tourism=hostel [0x2b02 resolution 24]
-tourism=hotel | tourism=motel { name '${name|def:}(${stars}*)${operator|def:}' | '${name} ${operator}' | '${name}' | '${operator}' } [0x2b01 resolution 24]
-tourism=information {name '${name} - ${description} (${operator})'|
-'${name} - (${description})' | '${name}' | '${description}' |
-'${operator}' | '${ref}'} [0x2f0c resolution 24]
+tourism=hotel | tourism=motel [0x2b01 resolution 24]
+tourism=information [0x2f0c resolution 24]
 # tourism=lean_to replaces some uses of amenity=shelter
 tourism=lean_to [0x2b05 resolution 24 default_name 'lean-to']
 tourism=wilderness_hut [0x2b07 resolution 24 default_name 'wilderness hut']
