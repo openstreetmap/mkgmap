@@ -176,8 +176,6 @@ public class ExtTypeAttributes {
 
 	private static final Logger log = Logger.getLogger(ExtTypeAttributes.class);
 
-	private final DecimalFormat decimalFormat = new DecimalFormat();
-
 	private final Map<String, String> attributes;
 	private final String objectName;
 
@@ -880,7 +878,7 @@ public class ExtTypeAttributes {
 
 	private Integer parseDistance(String ds, boolean[] flags) {
 		ParsePosition pp = new ParsePosition(0);
-		Number dn = decimalFormat.parse(ds, pp);
+		Number dn = new DecimalFormat().parse(ds, pp);
 		if(dn != null) {
 			double dd = dn.doubleValue();
 			int di = dn.intValue();
