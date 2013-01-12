@@ -155,8 +155,8 @@ public class PrecompSeaGenerator {
 		int maxLon = wholeArea.getMaxLong();
 
 		List<uk.me.parabola.imgfmt.app.Area> tiles = new ArrayList<uk.me.parabola.imgfmt.app.Area>();
-		for (int lon = getTileStart(minLon); lon < maxLon; lon += SeaGenerator.PRECOMP_RASTER) {
-			for (int lat = getTileStart(minLat); lat < maxLat; lat += SeaGenerator.PRECOMP_RASTER) {
+		for (int lon = SeaGenerator.getPrecompTileStart(minLon); lon < maxLon; lon += SeaGenerator.PRECOMP_RASTER) {
+			for (int lat = SeaGenerator.getPrecompTileStart(minLat); lat < maxLat; lat += SeaGenerator.PRECOMP_RASTER) {
 				uk.me.parabola.imgfmt.app.Area tile = new uk.me.parabola.imgfmt.app.Area(
 						Math.max(lat, minLat), Math.max(lon, minLon), Math.min(
 								lat + SeaGenerator.PRECOMP_RASTER, maxLat),
@@ -210,22 +210,6 @@ public class PrecompSeaGenerator {
 		return new Area(path);
 	}
 
-	/**
-	 * Retrieves the start value of the precompiled tile.
-	 * @param value the value for which the start value is calculated
-	 * @return the tile start value
-	 */
-	private int getTileStart(int value) {
-		int rem = value % SeaGenerator.PRECOMP_RASTER;
-		if (rem == 0) {
-			return value;
-		} else if (value >= 0) {
-			return value - rem;
-		} else {
-			return value - SeaGenerator.PRECOMP_RASTER - rem;
-		}
-	}
-	
 	
 	/**
 	 * Creates the merger threads for the given tiles.

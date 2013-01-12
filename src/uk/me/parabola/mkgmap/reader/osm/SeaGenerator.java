@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.MapFailedException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -81,7 +82,25 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * precompiled sea should not be used.
 	 */
 	private File precompSeaDir;
-	private static ThreadLocal<Map<String,String>> precompIndex = new ThreadLocal<Map<String,String>>();
+
+	private static final byte SEA_TILE = 's';
+	private static final byte LAND_TILE = 'l';
+	private static final byte MIXED_TILE = 'm';
+	
+	/**
+	 * The index is a grid [lon][lat]. Each element defines the content of one precompiled 
+	 * sea tile which are {@link #SEA_TYPE}, {@link #LAND_TYPE}, or {@link #MIXED_TYPE}, or 0 for unknown
+	 */
+	private static ThreadLocal<byte[][]> precompIndex = new ThreadLocal<byte[][]>();
+	private static ThreadLocal<String> precompSeaExt = new ThreadLocal<String>();
+	private static ThreadLocal<String> precompSeaPrefix = new ThreadLocal<String>();
+	// useful constants defining the min/max map units of the precompiled sea tiles
+	private static final int MIN_LAT = Utils.toMapUnit(-90.0);
+	private static final int MAX_LAT = Utils.toMapUnit(90.0);
+	private static final int MIN_LON = Utils.toMapUnit(-180.0);
+	private static final int MAX_LON = Utils.toMapUnit(180.0);
+	private final static Pattern keySplitter = Pattern.compile(Pattern.quote("_"));
+	
 
 	private static final List<Class<? extends LoadableMapDataSource>> precompSeaLoader;
 
@@ -129,6 +148,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					}
 					
 					if (indexFile.exists()) {
+						int indexWidth = (getPrecompTileStart(MAX_LON) - getPrecompTileStart(MIN_LON)) / PRECOMP_RASTER;
+						int indexHeight = (getPrecompTileStart(MAX_LAT) - getPrecompTileStart(MIN_LAT)) / PRECOMP_RASTER;
+						
 						try {
 							InputStream fileStream = new FileInputStream(indexFile);
 							if (indexFile.getName().endsWith(".gz")) {
@@ -139,23 +161,56 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 							Pattern csvSplitter = Pattern.compile(Pattern
 									.quote(";"));
 							String indexLine = null;
-							Map<String, String> indexItems = new HashMap<String, String>();
+							
+							byte[][] indexGrid = new byte[indexWidth+1][indexHeight+1];
+							boolean detectExt = true; 
+							String prefix = null;
+							String ext = null;
+							
 							while ((indexLine = indexReader.readLine()) != null) {
-								String[] items = csvSplitter.split(indexLine);
-								if (items.length != 2) {
-									log.warn("Invalid format in index file: "
-											+ indexLine);
-									continue;
-								}
-								if (items[0].startsWith("#")) {
+								if (indexLine.startsWith("#")) {
 									// comment
 									continue;
 								}
-								indexItems.put(items[0].trim().intern(),
-										items[1].trim().intern());
+								String[] items = csvSplitter.split(indexLine);
+								if (items.length != 2) {
+									log.warn("Invalid format in index file name:",
+											indexLine);
+									continue;
+								}
+								String precompKey = items[0];
+								byte type = updatePrecompSeaTileIndex(precompKey, items[1], indexGrid);
+								if (type == '?'){
+									log.warn("Invalid format in index file name:",
+											indexLine);
+									continue;
+								}
+								if (type == MIXED_TILE){
+									// make sure that all file names are using the same name scheme
+									int prePos = items[1].indexOf(items[0]);
+									if (prePos >= 0){
+										if (detectExt){
+											prefix = items[1].substring(0, prePos);
+											ext = items[1].substring(prePos+items[0].length());
+											detectExt = false;
+										} else {
+											StringBuilder sb = new StringBuilder(prefix);
+											sb.append(precompKey);
+											sb.append(ext);												
+											if (items[1].equals(sb.toString()) == false){
+												log.warn("Unexpected file name in index file:",
+													 indexLine);
+											}
+										}
+									}
+								}
+
 							}
 							indexReader.close();
-							precompIndex.set(indexItems);
+							precompIndex.set(indexGrid);
+							precompSeaPrefix.set(prefix);
+							precompSeaExt.set(ext);
+							
 						} catch (IOException exp) {
 							log.error("Cannot read index file " + indexFile,
 									exp);
@@ -260,6 +315,38 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		return generateSea;
 	}
 	
+	/**
+	 * Retrieves the start value of the precompiled tile.
+	 * @param value the value for which the start value is calculated
+	 * @return the tile start value
+	 */
+	public static int getPrecompTileStart(int value) {
+		int rem = value % PRECOMP_RASTER;
+		if (rem == 0) {
+			return value;
+		} else if (value >= 0) {
+			return value - rem;
+		} else {
+			return value - PRECOMP_RASTER - rem;
+		}
+	}
+
+	/**
+	 * Retrieves the end value of the precompiled tile.
+	 * @param value the value for which the end value is calculated
+	 * @return the tile end value
+	 */
+	public static int getPrecompTileEnd(int value) {
+		int rem = value % PRECOMP_RASTER;
+		if (rem == 0) {
+			return value;
+		} else if (value >= 0) {
+			return value + PRECOMP_RASTER - rem;
+		} else {
+			return value - rem;
+		}
+	}	
+	
 	public Set<String> getUsedTags() {
 		HashSet<String> usedTags = new HashSet<String>();
 		if (coastlineFilenames == null) {
@@ -352,28 +439,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		log.info("Finished loading coastlines from", filename);
 		return src.getElementSaver().getWays().values();
 	}
-
-	private int getPrecompTileStart(int value) {
-		int rem = value % PRECOMP_RASTER;
-		if (rem == 0) {
-			return value;
-		} else if (value >= 0) {
-			return value - rem;
-		} else {
-			return value - PRECOMP_RASTER - rem;
-		}
-	}
-
-	private int getPrecompTileEnd(int value) {
-		int rem = value % PRECOMP_RASTER;
-		if (rem == 0) {
-			return value;
-		} else if (value >= 0) {
-			return value + PRECOMP_RASTER - rem;
-		} else {
-			return value - rem;
-		}
-	}
 	
 	/**
 	 * Calculates the key names of the precompiled sea tiles for the bounding box.
@@ -394,6 +459,56 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	}
 	
 	/**
+	 * Get the tile name from the index. 
+	 * @param precompKey The key name is compiled of {@code lat+"_"+lon}. 
+	 * @return either "land" or "sea" or a file name or null
+	 */
+	private String getTileName(String precompKey){
+		byte[][] index = precompIndex.get();
+		String[] tileCoords = keySplitter.split(precompKey);
+		int lat = Integer.valueOf(tileCoords[0]); 
+		int lon = Integer.valueOf(tileCoords[1]); 
+		int latIndex = (MAX_LAT-lat) / PRECOMP_RASTER;
+		int lonIndex = (MAX_LON-lon) / PRECOMP_RASTER;
+		byte type = index[lonIndex][latIndex]; 
+		switch (type){
+		case SEA_TILE: return "sea"; 
+		case LAND_TILE: return "land"; 
+		case MIXED_TILE: return precompSeaPrefix.get() + precompKey + precompSeaExt.get(); 
+		default:  return null;
+		}
+	}
+	
+
+	/**
+	 * Update the index grid for the element identified by precompKey. 
+	 * @param precompKey The key name is compiled of {@code lat+"_"+lon}. 
+	 * @param fileName either "land", "sea", or a file name containing OSM data
+	 * @param indexGrid the previously allocated index grid  
+	 * @return the byte that was saved in the index grid 
+	 */
+	private byte updatePrecompSeaTileIndex (String precompKey, String fileName, byte[][] indexGrid){
+		String[] tileCoords = keySplitter.split(precompKey);
+		byte type = '?';
+		if (tileCoords.length == 2){
+			int lat = Integer.valueOf(tileCoords[0]); 
+			int lon = Integer.valueOf(tileCoords[1]); 
+			int latIndex = (MAX_LAT - lat) / PRECOMP_RASTER;
+			int lonIndex = (MAX_LON - lon) / PRECOMP_RASTER;
+
+			if ("sea".equals(fileName))
+				type = SEA_TILE;
+			else if ("land".equals(fileName))
+				type = LAND_TILE;
+			else 
+				type = MIXED_TILE;
+
+			indexGrid[lonIndex][latIndex] = type;
+		}
+		return type;
+	}
+	
+	/**
 	 * Loads the precompiled sea tiles and adds the data to the 
 	 * element saver.
 	 */
@@ -406,14 +521,14 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		
 		List<Way> landWays = new ArrayList<Way>();
 		List<Way> seaWays = new ArrayList<Way>();
-		
 		// get the index with assignment key => sea/land/tilename
-		Map<String,String> index = precompIndex.get();
+		
+		
 		for (String precompKey : getPrecompKeyNames()) {
-			String tileName = index.get(precompKey);
+			String tileName = getTileName(precompKey);
 			
-			if (tileName == null) {
-				log.error("Precompile sea tile "+tileName+" is missing in the index. Skipping.");
+			if (tileName == null ) {
+				log.error("Precompile sea tile "+precompKey+" is missing in the index. Skipping.");
 				continue;
 			}
 			
@@ -422,8 +537,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				// => create a rectangle that covers the whole precompiled tile 
 				Way w = new Way(FakeIdGenerator.makeFakeId());
 				w.addTag("natural", tileName);
-				
-				String[] tileCoords = precompKey.split(Pattern.quote("_"));
+				String[] tileCoords = keySplitter.split(precompKey);
 				int minLat = Integer.valueOf(tileCoords[0]);
 				int minLon = Integer.valueOf(tileCoords[1]);
 				int maxLat = minLat + PRECOMP_RASTER;
