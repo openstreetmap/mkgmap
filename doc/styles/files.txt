@@ -1,0 +1,156 @@
+
+[[FILES]]
+= The structure of a style =
+
+A style consists of a number of files in a single directory. The best way
+is to start out with an existing style that is close to what you want and
+then work from there.
+
+A style can be packed into a single file using the standard zip utilities
+that are available on every operating system, or it can be written as one
+large text file using the single file style format. These alternatives
+are explained in <<style-packaging,making a style package>>.
+
+== Files ==
+This files are read in the order that they are listed here. In general files that are read first take priority over files read later.
+The only one of these files that is actually required is the +version+
+file as that is used to recognise the style.
+At least one of the +points+, +lines+ or +polygons+ files must be present
+or else the resulting maps will be empty.
+
+=== Top level folder ===
+Choose a short name for your style, it should be one word or a couple of words joined by an underscore or hyphen.  This is how people will refer to the style when it is finished.
+Create a directory or folder with that name.  Then you must create one or
+more files in this directory as detailed below.  Only the _version_ file is required.
+
+== The version file
+This file _must_ exist as it is used to recognise a valid style.
+It contains the version number of the style language itself, (not the
+version number of your style, which you can specify in the +info+ file
+if you so wish).
+The current version number of the style language is 1.
+Make sure that there is a new line after the number, place an empty line afterwards to be sure.
+
+== The info file
+This file contains information about your style.
+It is all optional information, and there is only really any point
+adding this information if you are going to distribute your style, or
+you have more than one style that you maintain.
+
+The file consists of key=value pairs in the same syntax as the
+command line option file. To summarise you can use either an equal sign
+'=' or a colon ':' to separate the key from the value. You can also
+surround the value with curly braces '{ }' and this allows you to
+write the value over several lines.
+
+[horizontal]
+version:: The version number of your style.
+
+summary:: A short description of your style in one line.
+
+description:: A longer description of your style.
+
+base-style:: Do not use anymore. This is was used to base a style on
+another one. However it is bug prone and behaves in a way that is not
+intuitive without a good understanding of how things work.
+The preferred way to do this is to use the include mechanism.
+
+.An example info file
+====
+Here is an example based on the +info+ file from the default style.
+You can see it uses both equal and colon as separators, normally you
+would just pick one and use it consistently but it doesn't make any
+difference which one you use.
+The description is written over several lines surrounded in curly
+brackets.
+Lines beginning with a hash symbol '#' are comments and are ignored.
+----
+#
+# This file contains information about the style.
+# 
+
+summary: The default style
+
+version=1.0
+
+description {
+The default style.  This is a heavyweight style that is
+designed for use when mapping and especially in lightly covered
+areas.
+}
+----
+====
+
+
+== The options file
+This file contains a number of options that should be set for this style as if they were set on the command line.
+Only command line options that affect the style will have any effect.
+The current list is +name-tag-list+, +levels+ and +extra-used-tags+.
+
+It is advisable to set up the levels that you want as the default is not
+suitable for all kinds of maps and may change in the future.  Ideally,
+you should set the same levels as are used in your style files.  For
+example, if your style files use levels 12,16,20,22,23,24 then it's a
+good idea to make sure your options style file declares these levels
+explicitly.
+
+.An example options file
+====
+ name-tag-list = name:en, int_name, name
+ levels = 0:24, 1:22, 2:20, 3:18, 4:16
+ extra-used-tags=
+====
+
+== The points file
+This files contains a set of rules for converting
+OSM nodes to Garmin POIs (restaurants, bars, ATMs etc).
+
+If this file is not present or empty then there will be no POI's in the
+final map.
+
+The syntax of the file is described in the <<RULES,style rules section>>.
+Like all other files, a hash symbol '#' introduces a comment.
+
+== The lines file
+This file contains a set of rules for converting OSM ways to Garmin lines (roads, rivers, barriers etc).
+The syntax of the file is described in the <<RULES,style rules section>>.
+
+== The polygons file
+This file contains a set of rules for converting polygons to Garmin
+areas (fields, buildings, residential areas etc).
+The syntax of the file is described in the <<RULES,style rules section>>.
+
+== The relations file
+This file contains a set of rules to convert OSM relations.
+Unlike the +points+, +lines+ and +polygons+ files this file does not lead
+directly to a Garmin object.
+Instead it is used to modify the ways or nodes that are contained in the
+relation.
+
+So for example if the relation represents a route, then you might add one
+or more tags to all the ways that make up the route so that they can be
+processed in the +lines+ file specially.
+
+The syntax of the file is also described in the <<RULES,style rules section>>
+but the rules can only have an action part, they must not have a type
+description part.
+
+////
+== The overlays file
+The idea of this file
+Used where you want a single way to be converted to two ways in the output map (for example a road might be rendered as normal but an additional line is created if the road is oneway - this then allows you to use a TYP file to add oneway arrows to the road).  An example of use might be:
+
+In the lines file:
+-----
+highway=trunk & oneway=yes [0x123 road_class=3 road_speed=5 resolution 16]
+-----
+
+In the overlays file:
+----
+0x123:  0x02, 0x23
+----
+
+Then set the TYP file contain arrows for code 0x23. 
+
+Note that only the first way in the overlays file is routable.
+////

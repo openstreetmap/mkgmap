@@ -1,0 +1,604 @@
+
+[[RULES]]
+= Style rules =
+
+Rules allow you to take a map feature in the OSM format, which uses a set of tags to describe the feature into the format required by Garmin maps, where features are identified by a number.
+
+The rules for converting points, lines and polygons are held in
+correspondingly named files, as described in <<FILES,the structure of a style>>.
+
+Each file contains a number of rules where you test the values of the tags of an OSM node or way and select a specific Garmin type based on the result of those tests.
+
+== Introduction ==
+Each rule starts off with an expression to test the value of one or more
+tags.
+
+A rule is made up of two or three parts. 
+The three possible parts are: 
+
+* The first part is *required*: this is a set of <<Tag_tests,tests>> that are performed on the tags of the item to be converted. 
+* The second part is the <<Action_block,action block>> that can be used to do things with the tags of objects that match the tests and is contained in curly brackets `{...}`.
+* The third part is the <<Element_type,element type definition>> and sets
+the Garmin type and sometimes other parameters that will be used if the tests match. This part is contained
+in square brackets `[...]`.
+
+As a general point, space and newlines don't matter. There is no need to have rules all on the same line (although most of the examples here are shown in one line), and you can spread them out over several lines and add extra spaces wherever you like if it helps to make them easier to read.  Here is an example of a rule containing all three sections:
+
+----
+natural=cliff { name '${name} cliff' | 'cliff' } [0x10501 resolution 22]
+----
+
+* The tests section is +natural=cliff+
+* The action block is `{ name '${name} cliff' | 'cliff' }`
+* The element type definition is +[0x10501 resolution 22]+
+
+[[Tag_tests]]
+== Tag tests ==
+The most common test is that a particular OSM tag has a given value.
+So for example if we have
+
+----
+highway=motorway
+----
+
+This means that we look up the highway tag in the OSM input file and if it exists and has the value
+'motorway' then this test has matched.
+
+You can also compare numeric quantities:
+----
+population > 10000
+maxspeed >= 30
+population < 10000000
+----
+
+Respectively, these mean: a population greater than ten thousand, a max speed greater than or equal
+to 30 and a population less than one million.
+You will be able to compare quantities that have units too, for example
+----
+max_speed > 30mph
+----
+
+If a different unit is given in the tag (say km/h) then it will be
+removed before comparison.
+Conversion of units is not implemented at the time of writing.
+
+You may also use regular expressions:
+----
+ele ~ '\d*00'
+----
+This checks whether ele is a multiple of 100.
+
+=== Allowed operations
+The following table describes the operations that may be used.
+
+.Full list of operations
+[width="80%",cols="1,4",frame="topbot",grid="rows",options="header"]
+|====
+|Operation | description and examples
+
+| tag=value | This matches when a tag has the given value.
+
+| tag!=value | The tag exists and does not have the given value.
+
+|tag=* | Matches when the tag exists, regardless of its value.
+
+|tag!=* | Matches when the tag does _not_ exist.
+
+|tag < value |
+Matches when the tag when converted as a number is less than the given value.
+If the value is not numeric then this is always false. A unit is removed
+before comparison however so +max_speed < 100+ will work if +max_speed+
+is +80kmh+ for example.
+
+|tag \<= value,
+tag > value,
+tag >= value |
+As above, for less than or equal, greater than and greater than or equal.
+
+|tag ~ REGEX| This is true when the value of the tag matches the given
+regular expression.
+The link::http://docs.oracle.com/javase/1.4.2/docs/api/java/util/regex/Pattern.html[Java
+regular expression] syntax is recognised.
+For example `name ~ '.*[Ll]ane'` would match every name that ended in
+'Lane' or 'lane'.
+
+| ! (expr) |
+The 'not' operator ('!') reverses the truth of the expression following.
+That expression must be in brackets.
+
+|====
+
+
+=== Combining tag tests ===
+Although it is possible to convert many OSM nodes and ways just using one
+tag, it is also often necessary to use more than one.
+
+For example, say you want to take roads that are tagged both as
++highway=unclassified+ and +maxspeed>60+ differently to roads that are
+just +highway=unclassified+.  In this type of case, you might create two
+separate rules as follows:
+
+----
+highway=unclassified & maxspeed>60 [0x06]
+highway=unclassified [0x05] 
+----
+
+This means that roads that are unclassified and have a maxspeed of
+greater than 60 would use Garmin element type 0x06, whereas unclassified
+roads without a maxspeed tag, or where it is less than 60
+would use type 0x05.
+
+It is important to note that the order of the rules is important here. The rules are
+matched in the order that they occur in the style file and mkgmap stops trying to apply them after
+the first one that matches.
+If you had the rules above in the reverse order, then the
++highway=unclassified+ rule would match first to any OSM way with that tag/key pair,
+and the second rule would never get applied.
+Therefore, in general you want the most specific rules first and simpler, more
+general rules later on to catch the cases that are not caught by the more
+complex rules.
+
+You can also combine alternatives into the one rule using a logical or, represented
+with a pipe (|) symbol.  For example
+----
+highway=footway | highway=path [0x07]
+----
+
+This means if the road has either the *highway=footway* tag or the
+*highway=path* tags (or both), then the condition matches and mkgmap would
+use type 0x07 for the map. This works exactly the same as if you had written
+two separate rules - one for footway and one for path - and indeed is converted
+to two separate rules internally when mkgmap runs.
+
+You are not limited to two tests for a given rule... you can combine and group tests
+in almost whatever way you like.
+So for a slightly forced example the following would be possible:
+----
+place=town & (population > 1000000 | capital=true) | place=city
+----
+
+This would match if there was a +place+ tag which had the value +town+
+and either the population was over a million or it was tagged a capital,
+or there was a +place+ tag with the value +city+.
+
+[NOTE]
+There used to be some restrictions on the kind of expression you could
+use. Now the only restriction is you must have at least one test that
+depends on a tag existing. So you cannot match on everything, regardless
+of tags, or test for an object that does _not_ have a tag.
+
+=== Functions ===
+Functions calculate a specific property of an OSM element.
+
+.Style functions
+[width="100%",cols="2,1,1,1,5",options="header"]
+|=====
+|Function |Node |Way |Relation |Description
+|length()      |  | x  | x  |
+Calculates the length in m. For relations its the sum of all member length (including sub relations).
+
+|is_complete() |  | x  |  |
++true+ if all nodes of a way are contained in the tile. +false+ if some nodes of the way are missing in the tile.
+
+|is_closed() |  | x  |  |
++true+ the way is closed. +false+ the way is not closed and cannot be processed as polygon.
+|====
+
+The following rule matches for all service ways longer than 50m.
+-----
+highway=service & length()>50 
+-----
+
+[[Action_block]]
+== Action block ==
+An action block is enclosed in braces +{ ... }+ and contains one or more
+statements that can alter the element being displayed; multiple
+statements are separated by `;' symbol.  When there is an action block, the
+<<Element_type,element type definition>> is optional, but if used it must come after the action block.
+
+=== name ===
+This sets the final name of the element, that is, the name that will be used in the Garmin map.
+It is distinct from any 'name' tag on the element.
+You can give a list of alternatives separated by '|' pipe symbols.  The first alternative that matches
+will be used.  Once the name is set it cannot be overridden, so if more than one 'name' command matches then 
+only the first to set the name will take effect.
+
+.Setting the name
+====
+ {name '${name} (${ref})' | '${ref}' | '${name}'}
+====
+
+If both +name+ and +ref+ are set, then the first alternative would be
+completed and the resulting name might be _Main St (A1)_.
+If just +name+ was set, then the first two alternatives can not be fully
+substituted and so are ignored, leaving the last alternative +'${name}'+
+and so the final name might in that case be _Main St_.
+
+For highway shields, you can use the notation
++${tagname|highway-symbol:box}+.
+Valid symbols are +interstate+, +shield+, +round+, +hbox+, +box+ and
++oval+.
+
+=== add ===
+The add command adds a tag if it does not already exist.
+This is often used if you want to set the value of a tag as a default but
+do not want to overwrite any existing tag.
+
+For example, motorways are one way by default so we need to add the
++oneway=yes+ tag in the style so that is treated as one way by the
+device. But there are some stretches of motorway that are one-way and
+these will be tagged as +oneway=no+. If we used +set+ then that tagging
+would be lost, so we use +add+.
+----
+ highway=motorway { add oneway=yes }
+----
+
+The other use is in in relations with the 'apply' command.
+
+All the same you can set any tag you want, it might be useful so you can match
+on it elsewhere in the rules.
+
+You can also use substitutions.
+----
+{set name='${ele}'; set name='${ref}';}
+----
+
+These two commands would set the 'name' tag to the value of the 'ele' tag if it exists, or to the value of the 'ref' tag if that exists.
+
+You can also give a list of alternative expressions separated with a
+vertical bar in the same way as on the name command.  The first
+one that is fully defined will be used.
+
+----
+{set key123 = '${name:en}' | '${name}'; } 
+----
+
+Will set 'key123' to the value of the 'name:en' tag if it exists and to the 'name' tag if not.
+
+=== set ===
+The 'set' command is just like the 'add' command, except that it sets the tag, even if the tag
+already exists.
+
+=== delete ===
+The delete command deletes a tag.
+
+ { delete key123 }
+
+The same result can be achieved by setting the value of the key to an empty string.
+
+ {set key123 = '' }
+
+=== apply ===
+The "apply" action only makes sense in relations.
+Say you have a relation marking a bus route, but none of the ways that are in the relation have any special tags
+to indicate that they form part of that bus route, and you want to be able to tell from looking at the map which buses go where.  You can write a rule
+in the *relations file* such as:
+
+[listing]
+--
+type=route & route=bus {
+	apply {
+		set route=bus;
+		set route_ref='${route_ref}';
+	}
+}
+--
+
+
+Then in the *lines file* you will need to write a rule to match _route=bus_.
+All the relation rules are run before any others so that this works.
+
+The substitution '${route_ref}' takes the value of the tag on the *relation* and applies it to each of the
+ways in the relation.
+
+The substitution '$(route_ref)' (with parenthesis, rather than curly
+brackets) can be used for accessing the value of the tag on
+the actually processed *member* of the relation, e.g.
+
+[listing]
+--
+type=route & route=bus {
+	apply {
+		set route=bus;
+		set name='$(name) ${route_ref}';
+	}
+}
+--
+
+=== apply_once ===
+The apply_once action is like +apply+, but it will apply the action once
+per relation member. A round-trip route relation may include the same
+ways multiple times, unless all member ways have been defined as parallel
+oneway streets.
+
+== Useful tags for routing and address search ==
+For general routing, using avoid options, and address search, the use of
+some special tags is necessary.
+// see [[Mkgmap/help/Tags]]
+
+[[Element_type]]
+== Element type definition ==
+As noted above this is contained in square brackets and if used must be the *last part of the rule*.
+
+The first and only mandatory part of this section is the Garmin type code
+which must always be written in hexadecimal.  Following this the element
+type definition rule can contain a number of optional keywords and
+values.
+
+=== level (see also _resolution_) ===
+This is the highest zoom level that this element should appear at (like
+EndLevel in the mp format).
+The lower the level the detailed the view.
+The most detailed, most zoomed in, level is level 0.
+A map will usually have between three and five levels. 
+If the level for an object is not given then
+it defaults to 0 and so the specified feature will only appear at the
+most detailed level.
+
+In the following example, we set highways to appear from zoom level 4 down to zoom level 0:
+-----
+highway=motorway [0x01 level 4]
+-----
+
+[WARNING]
+--
+You can use +level+ to place elements into the layers of the map that you
+want but you can't force the device to actually display them.
+
+Some pieces of software (such as QLandkarteGT, I believe) will honour
+your selections, but actual GPS devices have their own ideas about
+which POI's can be shown at which resolutions.
+--
+
+==== Level ranges ====
+You can also give a range (e.g. 1-3) and the map will then contain the
+object only between the specified levels.
+
+----
+highway=motorway [0x01 level 3-5]
+-----
+
+In this example, motorways will appear at zoom level 5, which is most
+zoomed out, and continue to be visible until zoom level 3, which is
+moderately zoomed in, and then will not be shown in zoom levels 2, 1 and
+0 (most zoomed-in).
+
+[TIP]
+Of course you are unlikely to want a feature to disappear as you zoom in,
+but this can be used for interesting effects where a different
+representation takes over at the lower zoom levels. For example a
+building may be a point at high levels and then become a polygon at lower
+levels.
+
+=== resolution (see also _level_) ===
+
+This is an alternative way of specifying the zoom level at which an
+object appears.  It is specified as a number from 1-24, which corresponds
+to one of the zoom levels that Garmin hardware recognises.  You should
+not use resolution if you have used level as they achieve the same
+outcome.
+
+In either case, the mapping between level and resolution is given in the
+options style file, where you will see something like this:
+
+-----
+# The levels specification for this style
+#
+levels = 0:24, 1:23, 2:22, 3:20, 4:18, 5:16
+-----
+This sets level zero equal to resolution 24, level 1 to resolution 23 and so on.
+
+Although the default style uses +resolution+ rather than +level+ it is on
+the whole much easier to use +level+ as it is immediately clear where the
+element will end up. If you use a +resolution+ that is `between' two
+levels for example it will only show up in the lower one.
+
+==== Resolution ranges ====
+
+Just as with levels, you can specify a range of resolutions at which an
+object should appear. Here is an example.
+
+----
+highway=residential [0x06 resolution 16-22 continue]
+highway=residential [0x07 resolution 23-24]
+----
+
+This example creates motorways of type 0x08 between resolutions 16 and
+22, then motorways of type 0x09 between resolutions 23 and 24.  This
+example makes use of the continue statement, which is discussed in more
+detail below.
+
+[TIP]
+Since 24 is the default upper bound for a range, that second range could
+just have been written as the single number `23'.
+
+=== default_name ===
+If the element has not already had a name defined elsewhere in the rule,
+it will be given the name specified by +default_name+.  This might be
+useful for things that usually don't have names and don't have a
+recognisable separate Garmin symbol. You could give a default name of
+`bus stop' for example and all bus stops that didn't have their own name
+would now be labelled as such.
+
+[TIP]
+Be careful to use this sparingly and not overwhelm the map or the search.
+
+=== road_class ===
+Setting this makes the line a "road" and it will be routable and can be
+part of an address search.
+It gives the class of the road where class 4 is used for major roads that
+connect different parts of the country, class 3 is used for roads that
+connect different regions, down to class 0 which is used for residential
+streets and other roads that you would only use for local travel.
+
+It is important for routing to work well that most roads are class 0 and
+there are fewer and fewer roads in each of the higher classes.
+
+.Road classes
+[width="40%",frame="topbot",grid="rows",cols="<1,<4",options="header"]
+|=====
+| Class | Used as
+| 4 | Major HW/Ramp
+| 3 | Principal HW
+| 2 | Arterial St / Other HW
+| 1 | Roundabout / Collector
+| 0 | Residential Street / Unpaved road / Trail
+|=====
+
+=== road_speed ===
+
+This keyword is used along with +road_class+ to indicate that the line is
+a "road" that can be used for routing and for address searches.
+It is an indication of how fast traffic on the road is. 0 is the slowest and 7 the fastest.
+This is *not* a speed limit and does not activate the maximum speed
+symbol on the newer Garmin car navigation systems.
+The speed limits that Garmin knows are shown in the following table:
+
+.Road Speeds
+[width="40%",frame="topbot",grid="rows",cols="<1,<2",options="header"]
+|======
+| road_speed | highest speed
+| 7 | No speed limit
+| 6 | 70 mph / 110 kmh
+| 5 | 60 mph / 90 kmh
+| 4 | 50 mph / 80 kmh
+| 3 | 35 mph / 60 kmh
+| 2 | 25 mph / 40 kmh
+| 1 | 15 mph / 20 kmh
+| 0 | 3 mph / 5 kmh
+|======
+
+=== continue ===
+
+As discussed above, style rules are matched in the order that they occur
+in the style file. By default, for any given OSM object mkgmap will try
+each rule in turn until one rule wth a _element type definition_ matches;
+it will then stop trying to match further rules against the current OSM
+object. If the rule only has an _action block_ mkgmap will continue to
+find other matches.
+
+However, if you add a _continue_ statement to the definition block of a
+rule, mkgmap will not stop processing the object but will instead carry
+on trying to match subsequent rules until it either runs out of rules or
+finds a matching rule that does not include a _continue_ statement.
+
+This feature is used when you want more than one symbol to result from
+a single OSM element. This could be for clever effects created by
+stacking two lines on top of each other.
+For example if you want to mark a bridge in a distinctive way you
+could match on +bridge=yes+, you would then almost always use +continue+ so
+that the +highway+ tag could be matched later. If you failed to do this
+then there might be a break in the road for routing purposes.
+
+Note that by default when using the _continue_ statement the action block
+of the rule (if there is one) will only be applied _within this rule_ and
+not during any following rule matches.  Use the _continue with_actions_
+statement if you want to change this behaviour (see next section).
+
+=== continue with_actions ===
+The with_actions statement modifies the continue behaviour in such a way,
+that the action block of this rule is also applied, when this element is
+checked for additional conversions. 
+
+Example of a full element type definition: 
+----
+[0x2 road_class=3 road_speed=5 level 2 default_name 'example street' continue with_actions]
+----
+
+== Some examples ==
+The following are some examples of style rules, with explanations of what they do.
+
+=== Points style file ===
+
+.Internet cafes 
+====
+ amenity=cafe & internet_access=wlan {name '${name} (wifi)'} [0x2a14 resolution 23]
+====
+Checks to see if an OSM object has both the amenity=cafe and internet_access=wlan key/tag pairs.
+If name=Joe's Coffee Shop, then the Garmin object will be named _Joe's Coffee Shop (wifi)_.
+The Garmin object used will be 0x2a14 and the object will only appear at resolutions 23 and 24
+
+.Guideposts
+====
+ information=guidepost
+     { name '${name} - ${operator} - ${description} '
+       | '${name} - ${description}'
+       | '${name}'
+       | '${description}'
+       | '${operator}'
+       | '${ref}'
+      }
+     [0x4c02 resolution 23 default_name 'Infopost']
+
+Checks to see if an OSM object has the information=guidepost key/tag pair.  
+If so then the name will be set depending on the available +name+,
++operator+ and +description+ tags as follows.
+
+1. If for example we have the tags `name="Route 7"`, `operator="Kizomba
+National Parks"` and `description="Trail signpost"`, then the Garmin object will be named
+_Route 7 - Kizomba National Parks - Trail signpost_.
+2. If the OSM object just has the +name+ and +description+ tags set, the Garmin object will be named _Route 7 - Trail signpost_
+3. If just the +name+ tag is available, the Garmin object will be named _Route 7_
+4. If just the +description+ tag is available, the Garmin object will be named _Trail signpost_;
+5. and if just the +operator+ tag is available, the Garmin object will be named _Kizomba National Parks_.
+
+The Garmin object used will be 0x4c02 and will only appear at resolutions 23 and 24
+====
+
+.Car sales rooms
+====
+ shop=car {name '${name} (${operator})' | '${name}' |'${operator}'} [0x2f07 resolution 23]
+
+If name="Alice's Car Salesroom" and operator=Nissan, the Garmin object
+will be named _Alice's Car Salesroom (Nissan)_
+====
+
+.Opening hours in postcode field
+====
+This is a trick to get opening hours to show up in the postcode field of
+a POI. Tricks like this can enhance the map for certain uses, but of
+course may prevent the proper use of the postcode field.
+
+ opening_hours=* {set addr:postcode = '${addr:postcode} open ${opening_hours}' | 'open ${opening_hours}'}
+
+For _any_ OSM object which has the opening_hours key set to a value, this
+sets the postcode to include the opening hours.  For example, if
+addr:postcode=90210, addr:street=Alya Street, addr:city=Lagos and
+addr:housenumber=7 and opening_hours=09.00-17.00, the address field of
+the Garmin POI will be _7, Alya Street, Lagos, 90210 open 09.00-17.00_.
+
+====
+
+== Troubleshooting ==
+
+For each node/way/relation, mkgmap goes through the tags exactly once in
+order from the top of the file downward.
+For each rule that matches, any action block will be run.
+As soon as a rule that ends with a type definition is found then
+processing stops and that is the Garmin symbol that is produced.
+
+The only exception is if the Type Definition contains the
++continue+ statement.  In that case _mkgmap_ will continue
+looking for further matches.
+
+* Where possible always have the same tag on the left.  This will make things more predictable.
+* Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
+
+== Including files ==
+TBW
+
+== Simple example ==
+In the majority of cases everything is very simple. Say you want roads that are tagged as *highway=motorway* to have the Garmin type 0x01 ("motorway") and for it to appear up until the zoom level 3.
+
+Then you would write the following rule.
+----
+highway=motorway [0x01 level 3]
+----
+
+Nodes that have an id and a subid are referenced by concatenating both ids.
+----
+amenity=bank [0x2f06 level 3]
+----
+
+This will be explained in more detail in the following sections along with how to use more than one tag to make the choice.
+However with that one form of rule, you can do everything that the old map-features file could do.

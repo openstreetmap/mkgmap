@@ -1,0 +1,59 @@
+= Conversion Style manual
+The mkgmap team
+v1.0, December 2012
+:toc:
+:numbered:
+:doctype: book
+:website: http://www.mkgmap.org.uk
+:email: mkgmap-dev@lists.mkgmap.org.uk
+:description: Describes the style language that converts from OSM tags to Garmin types.
+:max-width: 58em
+
+:frame: topbot
+
+Introduction
+------------
+
+This manual explains how to write a mkgmap style to convert
+between OSM tags and features on a Garmin GPS device.
+
+A style is used to choose which OSM map features appear in the
+Garmin map and which Garmin symbols are used.
+
+There are a few styles built into mkgmap, but
+as there are many different purposes a map may used for, the default
+styles in mkgmap will not be ideal for everyone, so
+you can create and use styles external to mkgmap.
+
+The term _style_ could mean the actual way that the features appear on
+a GPS device, the colour, thickness of the line and so on. This manual
+does not cover such issues, and if that is what you are looking for, then you
+need the documentation for *TYP files*.
+
+Few people will want to write their own style from scratch, most people
+will use the built in conversion style, or at most make a few changes
+to the default style to add or remove a small number of features.
+For general information about running and using mkgmap see the
+*Tutorial document*.
+
+To be clear this is only needed for converting OSM tags, if you are
+starting with a Polish format file, there is no style involved as the
+garmin types are already fully specified in the input file.
+
+For general information about the Open Street Map project see the
+link:http://wiki.openstreetmap.org[Open Street Map wiki].
+
+
+:leveloffset: 1
+
+////
+include::design.txt[]
+////
+
+include::files.txt[]
+
+include::rules.txt[]
+
+include::creating.txt[]
+
+include::about.txt[]

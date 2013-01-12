@@ -1,0 +1,119 @@
+
+= Creating a style =
+
+== Testing a style ==
+You can test your style by calling mkgmap with the
+++--style-file=++__path-to-style__ and the `--list-styles` option. If you see your style listed, then your style is recognized by mkgmap. Then you can test if your style is valid by using it when creating a map.
+
+A style can be used just as it was created, but if you want to make it available to others it will be easier if you make a zip file out of it and then you just have the one file to distribute. You just can zip all files of the style. Several different styles can be placed into the same zip archive file.
+
+To use a zipped style, you can use ++--style-file=++__stylename__++.zip++. If
+there is more than one style in the zip file, then you can
+use ++--style-file=++__zipname__`.zip` `--style=`__stylename__.
+
+
+[[style-packaging]]
+== Making a style package ==
+
+A style can be used just as it was created, but if you want to make it
+available to others it will be easier if you
+combine all the individual files into a single archive file.
+make a zip file out of it
+and then you just have the one file to distribute. You just can zip all
+files of the style.
+
+To use a zipped style, you can use
+ --style-file=stylename.zip
+
+If there is more than one style in the zip file, then you can use
+ --style-file=zipname.zip --style=stylename.
+
+////
+== Examples ==
+
+Examples of mkgmap conversion style rules.
+
+=== Alternatives ===
+Two or more osm tags resolve to the same element in the garmin map.
+----
+highway=footway | highway=path [0x16 level 1]
+----
+
+This is exactly the same as writing the two lines:
+----
+highway=footway [0x16 level 1]
+highway=path [0x16 level 1]
+----
+
+=== White space ===
+Space and new lines don't matter except to separate words that have to be
+separate.
+You can add as much space and as many newlines to the rule to make
+it look good.  Or remove them depending on taste.  For example the following two rules
+are exactly the same:
+----
+highway = primary 
+   | highway=primary_link
+      [
+ 	0x2
+        level 3
+      ]
+
+highway=primary|highway=primary_link[0x2 level 3]
+----
+
+=== The Garmin Map ===
+Each Garmin map may contain several separate maps which are prepared at different 'levels' of detail, the most appropriate of these is displayed depending on the zoom selected by the user. 
+
+When creating the map, the map maker will choose which of these 'level' maps is displayed according to the 'resolution' (or zoom) selected. For example, a map might contain three levels (0, 1 & 2); On the level 2 map (showing the largest area) a town might just be represented by a named dot; as the user zooms in, the display might switch to the level 1 map showing an outline of the town. Zooming in further might switch to the level 0 map, with the individual streets of the town shown.
+
+''In addition the GPS itself might decide when to show or hide individual features in each of the 'level' maps, especially with POIs. This is also affected by the 'detail' setting in the map config menu.''
+
+=== Resolution ===
+The first is 'resolution' this is a number between 1 and 24 with 24 being the most detailed resolution and each number less is half as detailed. So for example if a road was 12 units long at resolution 24 it would be only 6 at resolution 23 and just 3 at resolution 22.
+
+On a Legend Cx the resolution corresponds the these scales on the device:
+
+.Resolutions
+[width="40%",cols="1,2",frame="topbot",grid="rows"]
+|=====
+| Resolution | Scale on device
+| 16 | 30km-12km
+| 18 | 8km-3km
+| 20 | 2km-800m
+| 22 | 500m-200m
+| 23 | 300m-80m
+| 24 | 120m-50m
+|=====
+
+It may be slightly different on different devices.  There is an option
+to increase or decrease the detail and if you change that from 'Normal'
+then it will change the values above too.
+
+=== Level ===
+The next is 'level'.  This is a number between 0 and 16 (although perhaps numbers above 10 are not usable), with 0 corresponding to the most detailed view.  The map consists of a number of levels starting (usually) with 0.  For example 0, 1, 2, 3 and a different amount of detail is added at each level.
+
+The map also contains a table to link the level to the resolution.  So you can say that level 0 corresponds to resolution 24.
+
+This mapping is specified in the file 'options' within the style directory in use. You can also specify it on the command line, for example:
+
+  --levels=0:24,1:22,2:20
+
+This means that the map will have three levels.  Level 0 in the map will correspond to resolution 24 (the most detailed), level 1 will show at
+resolution 22 (between scales of 500m and 200m) and so on. The lowest level needs to include at least an object, therefore the default lowest level of 16 will create a broken map, if your osm input file has no information at zoom level 16 or lower included.
+
+==== Watch out with levels when building topographical maps ====
+According to the principle that a map is never allowed to have an empty layer, if you have two input files for mkgmap, you have to specify --levels for each input file. This is especially important when one of the input files consists exclusively of contour lines. Take the following command as example on how to create such a map. (Attention the line wrap is only here for the wiki, this has to be one command in cmd.exe or terminal)
+-----
+ java -jar mkgmap.jar --style-file=D:\path\to\mkgmap\resources\styles\style_name\ 
+ --levels=0:24,1:22,2:20,3:18,4:16,5:14,6:12,7:10 data.osm 
+ --levels=0:24,1:22,2:20 srtm.osm
+-----
+This would assume that your contour lines are in layer 24 (minor), 22 (medium) and 20 (major) and your normal osm data spread between 24 and 10. If you don't adhere to proper levels you will get problems with the map not displaying at lower zoom levels, not displaying at higher zoom levels or not displaying at all (you'll only see the background polygon 0x4c).
+
+There are 2 alternatives to circumvent having to assign different levels on compile.
+ a) Introduce dummy objects at the lowest level into your map. A POI in the lowest level per input file is enough.
+ b) Merge your osm files (either by script or in text editor (text editor may crash though on opening huge .osm files), and then use the lowest resulting level.
+Concluding the easiest is to include dummy objects at lowest level. (it should be thought about mkgmap doing this by default). The lower your lowest level the later the basemap will exchange your osm map.
+Your lowest level object is the defined by the object with the lowest level (as defined in your style) actually present in your osm input file.
+////

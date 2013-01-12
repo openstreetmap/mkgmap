@@ -1,0 +1,40 @@
+
+= About =
+== Licence ==
+This manual is released under the
+link:http://creativecommons.org/licenses/by-sa/2.0/[Creative Commons Attribution-ShareAlike 2.0 license].
+It makes use of some material that was added to the OSM Wiki which is
+release under the same licence.
+
+== Authors and acknowledgments ==
+This manual is created from material that originated from the mkgmap doc
+files and added to OSM wiki. While on the OSM wiki modifications were
+made by many people.
+
+The list of nicknames of everyone that had modified the wiki pages at the time that
+this manual was created is as follows:
+Brogo,
+Christian Gawron,
+Csdf,
+De muur,
+Derstefan,
+DirkS,
+Extremecarver,
+Gernot,
+!i!,
+Jinx1971,
+Katpatuka,
+MarkS,
+Master,
+Mezzanine,
+Nakor,
+Nop,
+Richard,
+Skela,
+SomeoneElse,
+Tommybgoode,
+Ulfl,
+Walterschloegl,
+WanMil,
+Willem1,
+Yggdrasil
