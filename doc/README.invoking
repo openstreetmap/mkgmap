@@ -14,16 +14,10 @@ or
 
 JAVA OPTIONS
 
-There are two java-level options that are often given:
+If your computer has 2Gb or less of memory, then you may have to give
+the option "-Xmx900m" to java.
 
--enableassertions
-	In Java assertions are disabled by default It is generally
-	recommended that assertions be enabled when running mkgmap.
-
--Xmx2048m
-	The default java heap size is small.  This makes the heap 2G,
-	which is a reasonable value on machines with 3G or more of
-	RAM.  See README.sizes for discussion of how much heap is needed.
+  java -Xmx900m -jar /path/to/jar/mkgmap.jar
 
 BUILTIN HELP
 
@@ -31,5 +25,4 @@ Run
 
   java -jar mkgmap.jar --help=options
 
-to get a list of options to mkgmap.  This same list is available in
-../resources/help/en/options.
+to get a list of options to mkgmap.

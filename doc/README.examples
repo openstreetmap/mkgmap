@@ -29,11 +29,8 @@ java -enableassertions \
   --region-abbr="MA" \
   --region-name="Massachusetts" \
   --description="OSM gdt" \
-  --ignore-osm-bounds \
-  --net \
   --route \
   --add-pois-to-areas \
-  --remove-short-arcs \
   -c template.args > OUT.02.mkgmap 2>&1
 
 # Create a gmapi format map given the above map, overview map, and tdb.

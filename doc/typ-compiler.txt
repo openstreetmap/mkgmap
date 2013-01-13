@@ -275,7 +275,7 @@ Here are example of the input and the effect that is achieved.
  "aaa.....aa"
  "aaaaaaaaaa"
 the first two colours are completely solid (if the alpha value is omitted it defaults to FF as usual), the third is slightly transparent, down to the last which is completely transparent.
-
+<p>
 An alternate notation is supported where the transparency value is appended to the line in the form "alpha=13", this is a transparency value that goes from 0 to 15, with 15 being completely transparent. As such it works the opposite way to the alpha value of the normal RGBa values in the previous example. The required conversions are made by mkgmap which ever one you use.
 
 * Image with up to 16 million different colours
@@ -304,8 +304,8 @@ An [_icons] section holds a set of images at different resolutions. The images a
 
 Only a few tags are valid in this section.
 
-*The <code>Type</code> tag is required. It identifies the point type that this image set will be used for.
-*The <code>String</code> tag is also allowed, but it does not take a language code at the beginning. Therefore there can only be one of them.
+* The <code>Type</code> tag is required. It identifies the point type that this image set will be used for.
+* The <code>String</code> tag is also allowed, but it does not take a language code at the beginning. Therefore there can only be one of them.
 
 The other tag that can be present is IconXpm.
 There can be several of these tags, each one is a different

@@ -10,120 +10,16 @@ This manual page documents briefly the
 .B mkgmap
 command.
 .PP
-\fBmkgmap\fP is a program that converts OpenStreetMap (OSM) data into a map that can be loaded onto 
-a Garmin GPS device. 
-.br
-The mapping between OSM features and the features in the map can be customized with a file.
+\fBmkgmap\fP is a program that converts OpenStreetMap (OSM) data into a map that can be
+loaded onto a Garmin GPS device. 
+The mapping between OSM features and the features in the map can be
+completly customized by writing what we term a "style".
 .SH OPTIONS
 .TP
-.B \-c <filename>
-The given file is opened and each line is an option setting of the form
-option=value, just like on the command line except that there is no leading '--'.
-.TP
-.B \-n, \-\-mapname=name
-Change the name of the map. Garmin maps are named by 8 digit numbers.
-The default is 63240001. It is best to change the name if you are going 
-to be making a map for others to use so that it is unique and does not
-clash with others.
-.TP
-.B \-\-description=text
-Sets the descriptive text for the map. This may be displayed in 
-QLandkarte, MapSource or on a GPS etc.
-.TP
-.B \-\-style-file=file
-Use your own map features file. You can totally change which features
-are shown and at what levels. See 
-.SM 
-.B CUSTOMISING THE MAP
-below.
-.TP
-.B \-\-levels=levels code
-Change the way that the levels on the map correspond to the zoom levels
-in the device. See 
-.SM
-.B CUSTOMISING THE MAP
-below. The default is the equivalent of: "0=24, 1=22, 2=21, 3=19, 4=18, 5=16" although this may change.
-.TP
-.B \-\-latin1
-This option allows the use of non-ascii characters in street names. It 
-is hardware dependant what is actually supported on a particular
-device. Some devices can only do ascii characters for example.
-.br
-Mkgmap goes to some length to convert un-displayable characters however. It
-will convert accented characters that cannot be displayed in the chosen
-character set into unaccented characters.
-.SH CUSTOMISING THE MAP
-You can completely change which features are displayed and at what zoom levels.
-.PP
-There are two concepts 'resolution' and 'level'.
-.PP
-.SS Resolution
-is a number between 1 and 24 with 24 being the most detailed resolution and each number
-less is half as detailed.
-.br
-So for example if a road was 12 units long at resolution 24 it would be only 6 at resolution
-23 and just 3 at resolution 22.
-.br
-On a Garmin Legend Cx the resolution corresponds to these scales on the device:
-.RS
-16 30km-12km
-.br
-18 8km-3km
-.br
-20 2km-800m
-.br
-22 500m-200m
-.br
-23 300m-80m
-.br
-24 120m-50m
-.RE
-.br
-It may be slightly different on different devices.
-.SS Level
-.br
-is a number between 0 and 16 (although perhaps numbers above 10 are not usable), with
-0 corresponding to the most detailed view. The map consists of a number of levels starting
-(usually) with 0. For example 0, 1, 2, 3 and a different amount of detail is added 
-at each level.
-.br
-The map also contains a table to link the level to the resolution. So you can say
-that level 0 corresponds to resolution 24.
-.br
-You can specify this mapping on the command line, for example:
-.RS
-\-\-levels=0:24,1:22,2:20
-.RE
-This means that the map will have three levels. Level 0 in the map will
-correspond to resolution 24 (the most detailed), level 1 will show at
-resolution 22 (between scales of 500m and 200m) and so on.
-.SS Map features
-Custom map features can be applied using a delimited file among with 
-the 
-.IR --style-file
-command line option.
-.br
-A typical line may look like this:
-.RS
-.PP
-point|amenity|grave_yard|0x64|0x03|23
-.RE
-.PP
-Column 1 is point, polyline or polygon, depending on whether the feature is a point of interest, 
-a line feature such as a road or an area such as a park.
-.br
-Column 2 and 3 are taken exactly from the key and value columns from the OSM map features.
-.br
-Column 4 is the garmin code that you want to use.
-.br
-Column 5 only applies to points and also determines the type of the object.
-.br
-Column 6 is the minimum resolution at which this feature will appear.
-.PP
-The file 
-.IR /usr/share/doc/mkgmap/garmin_features_list.csv
-has a list of known type values used by Garmin.
-
+.B \-\-help <filename>
+Use this option to get alist of the built in help topics.
+In particular calling --help=options will list all the available
+options and is always up to date.
 .SH ACKNOWLEDGEMENTS
 This project is almost entirely based on the file format specification
 document written by John Mechalas at the SourceForge project at
@@ -132,7 +28,8 @@ http://sourceforge.net/projects/garmin-img.
 .BR josm (1),
 .BR qlandkarte (1).
 .SH AUTHOR
-mkgmap was written by Steve Ratcliffe <sr@parabola.me.uk>.
+mkgmap was originally written by Steve Ratcliffe <sr@parabola.me.uk>
+and has been improved by many other people since.
 .PP
 This manual page was written by Andreas Putzo <andreas@putzo.net>,
 for the Debian project (but may be used by others).
