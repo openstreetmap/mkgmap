@@ -59,11 +59,11 @@ public class RouteNode implements Comparable<RouteNode> {
 	private int offsetNod1 = -1;
 
 	// arcs from this node
-	private final List<RouteArc> arcs = new ArrayList<RouteArc>();
+	private final List<RouteArc> arcs = new ArrayList<RouteArc>(4);
 	// restrictions at (via) this node
-	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>();
+	private final List<RouteRestriction> restrictions = new ArrayList<RouteRestriction>(4);
 	// arcs to this node
-	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>();
+	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>(4);
 
 	private int flags = F_UNK_NEEDED;
 

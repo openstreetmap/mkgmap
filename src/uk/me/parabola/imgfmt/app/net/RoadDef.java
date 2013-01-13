@@ -304,7 +304,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		int level = pl.getSubdiv().getZoom().getLevel();
 		List<RoadIndex> l = roadIndexes.get(level);
 		if (l == null) {
-			l = new ArrayList<RoadIndex>();
+			l = new ArrayList<RoadIndex>(4);
 			roadIndexes.put(level, l);
 		}
 		int s = l.size();
