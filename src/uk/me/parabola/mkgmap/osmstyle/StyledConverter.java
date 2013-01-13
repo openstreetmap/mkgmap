@@ -23,6 +23,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -104,7 +105,12 @@ public class StyledConverter implements OsmConverter {
 	private static final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
 
 	// nodeIdMap maps a Coord into a nodeId
-	private final Map<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
+	private IdentityHashMap<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
+	
+	private List<Way> roads = new ArrayList<Way>();
+	private List<GType> roadTypes = new ArrayList<GType>();
+	private double minimumArcLength;
+	
 	private int nextNodeId = 1;
 	
 	private final Rule wayRules;
@@ -173,6 +179,9 @@ public class StyledConverter implements OsmConverter {
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
+		String rsa = props.getProperty("remove-short-arcs", "5");
+		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
+		
 	}
 
 	/**
@@ -222,8 +231,10 @@ public class StyledConverter implements OsmConverter {
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == GType.POLYLINE) {
 		    if(foundType.isRoad() &&
-			   !MapObject.hasExtendedType(foundType.getType()))
-				addRoad(way, foundType);
+			   !MapObject.hasExtendedType(foundType.getType())){
+		    	roads.add(way);
+		    	roadTypes.add(new GType(foundType));
+		    }
 		    else
 				addLine(way, foundType);
 		}
@@ -309,6 +320,16 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	public void end() {
+		removeShortArcsByMergingNodes(minimumArcLength);
+		for (int i = 0; i < roads.size(); i++){
+			Way road = roads.get(i);
+			if (road == null)
+				continue;
+			GType gt = roadTypes.get(i);
+			addRoad(road, gt);
+		}
+		roads = null;
+		roadTypes = null;
 		Collection<List<RestrictionRelation>> lists = restrictions.values();
 		for (List<RestrictionRelation> l : lists) {
 
@@ -359,6 +380,11 @@ public class StyledConverter implements OsmConverter {
 			if(nodeId != null && w1 != null && w2 != null)
 				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
 		}
+		// return memory to GC
+		nodeIdMap = null;
+		originalWay.clear();
+		throughRouteRelations.clear();
+		restrictions.clear();
 	}
 
 	/**
@@ -1708,4 +1734,236 @@ public class StyledConverter implements OsmConverter {
 		return (val.equalsIgnoreCase("no") ||
 			val.equalsIgnoreCase("private"));
 	}
+	
+	private void removeShortArcsByMergingNodes(double minArcLength) {
+		log.info("Removing short arcs (min arc length = " + minArcLength + "m)");
+		log.info("Removing short arcs - marking points as node-alike");
+		for (Way w : roads) {
+			List<Coord> points = w.getPoints();
+			int numPoints = points.size();
+			if (numPoints >= 2) {
+				// all end points should be treated as nodes
+				points.get(0).setTreatAsNode(true);
+				points.get(numPoints - 1).setTreatAsNode(true);
+				// non-end points have 2 arcs but ignore points that
+				// are only in a single way
+				for (int i = numPoints - 2; i >= 1; --i) {
+					Coord p = points.get(i);
+					// if this point is a CoordPOI it may become a
+					// node later even if it isn't actually a junction
+					// between ways at this time - so for the purposes
+					// of short arc removal, consider it to be a node
+					if (p.getHighwayCount() > 1 || p instanceof CoordPOI)
+						p.setTreatAsNode(true);
+				}
+			}
+		}
+
+		// replacements maps those nodes that have been replaced to
+		// the node that replaces them
+		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+		Map<Way, Way> complainedAbout = new HashMap<Way, Way>();
+		boolean anotherPassRequired = true;
+		int pass = 0;
+		int numWaysDeleted = 0;
+		int numNodesMerged = 0;
+
+		while (anotherPassRequired && pass < 10) {
+			anotherPassRequired = false;
+			log.info("Removing short arcs - PASS " + ++pass);
+			for (int w = 0; w < roads.size(); w++){
+				Way way = roads.get(w);
+				if (way == null)
+					continue;
+				List<Coord> points = way.getPoints();
+				if (points.size() < 2) {
+					if (log.isInfoEnabled())
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+					roads.set(w, null);
+					++numWaysDeleted;
+					continue;
+				}
+				// scan through the way's points looking for nodes and
+				// check to see that the nodes are not too close to
+				// each other
+				int previousNodeIndex = 0; // first point will be a node
+				Coord previousPoint = points.get(0);
+				double arcLength = 0;
+
+				for (int i = 0; i < points.size(); ++i) {
+					Coord p = points.get(i);
+
+					// check if this point is to be replaced because
+					// it was previously merged into another point
+					if (p.isReplaced()){
+						Coord replacement = null;
+						Coord r = p;
+						while ((r = replacements.get(r)) != null) {
+							replacement = r;
+						}
+
+						if (replacement != null) {
+							assert !p.getOnBoundary() : "Boundary node replaced";
+							p = replacement;
+							// replace point in way
+							points.set(i, p);
+							if (i == 0)
+								previousPoint = p;
+							anotherPassRequired = true;
+						}
+					}
+					if (i == 0) {
+						// first point in way is a node so preserve it
+						// to ensure it won't be filtered out later
+						p.preserved(true);
+
+						// nothing more to do with this point
+						continue;
+					}
+
+					// this is not the first point in the way
+
+					if (p == previousPoint) {
+						if (log.isInfoEnabled())
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
+						points.remove(i);
+						// hack alert! rewind the loop index
+						--i;
+						anotherPassRequired = true;
+						continue;
+					}
+
+					if (minArcLength > 0){
+						// we have to calculate the length of the arc
+						arcLength += p.distance(previousPoint);
+					}
+					else {
+						// if the points are not equal, the arc length is > 0
+						if (!p.equals(previousPoint)){
+							arcLength = 1; // just a value > 0	
+						}
+					}
+					previousPoint = p;
+
+					// do we treat this point as a node ?
+					if (!p.isTreatAsNode()) {
+						// it's not a node so go on to next point
+						continue;
+					}
+
+					// preserve the point to stop the node being
+					// filtered out later
+					p.preserved(true);
+
+					Coord previousNode = points.get(previousNodeIndex);
+					if (p == previousNode) {
+						// this node is the same point object as the
+						// previous node - leave it for now and it
+						// will be handled later by the road loop
+						// splitter
+						previousNodeIndex = i;
+						arcLength = 0;
+						continue;
+					}
+
+					boolean mergeNodes = false;
+
+					if (p.equals(previousNode)) {
+						// nodes have identical coordinates and are
+						// candidates for being merged
+
+						// however, to avoid trashing unclosed loops
+						// (e.g. contours) we only want to merge the
+						// nodes when the length of the arc between
+						// the nodes is small
+
+						if(arcLength == 0 || arcLength < minArcLength)
+							mergeNodes = true;
+						else if(complainedAbout.get(way) == null) {
+							if (log.isInfoEnabled())
+								log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
+							complainedAbout.put(way, way);
+						}
+					}
+					else if(minArcLength > 0 && minArcLength > arcLength) {
+						// nodes have different coordinates but the
+						// arc length is less than minArcLength so
+						// they will be merged
+						mergeNodes = true;
+					}
+
+					if (!mergeNodes) {
+						// keep this node and go look at the next point
+						previousNodeIndex = i;
+						arcLength = 0;
+						continue;
+					}
+
+					if (previousNode.getOnBoundary() && p.getOnBoundary()) {
+						if (p.equals(previousNode)) {
+							// the previous node has identical
+							// coordinates to the current node so it
+							// can be replaced but to avoid the
+							// assertion above we need to forget that
+							// it is on the boundary
+							previousNode.setOnBoundary(false);
+						} else {
+							// both the previous node and this node
+							// are on the boundary and they don't have
+							// identical coordinates
+							if(complainedAbout.get(way) == null) {
+								if (log.isLoggable(Level.WARNING))
+									log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+								complainedAbout.put(way, way);
+							}
+							break; // give up with this way
+						}
+					}
+
+					// reset arc length
+					arcLength = 0;
+
+					// do the merge
+					++numNodesMerged;
+					if (p.getOnBoundary()) {
+						// current point is a boundary node so we need
+						// to merge the previous node into this node
+						replacements.put(previousNode, p);
+						previousNode.setReplaced(true);
+						p.setTreatAsNode(true);
+						// remove the preceding point(s) back to and
+						// including the previous node
+						for(int j = i - 1; j >= previousNodeIndex; --j) {
+							points.remove(j);
+						}
+					} else {
+						// current point is not on a boundary so merge
+						// this node into the previous one
+						replacements.put(p, previousNode);
+						p.setReplaced(true);
+						previousNode.setTreatAsNode(true);
+						// reset previous point to be the previous
+						// node
+						previousPoint = previousNode;
+						// remove the point(s) back to the previous
+						// node
+						for (int j = i; j > previousNodeIndex; --j) {
+							points.remove(j);
+						}
+					}
+
+					// hack alert! rewind the loop index
+					i = previousNodeIndex;
+					anotherPassRequired = true;
+				}
+			}
+		}
+
+		if (anotherPassRequired)
+			log.error("Removing short arcs - didn't finish in " + pass + " passes, giving up!");
+		else
+			log.info("Removing short arcs - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)");
+	}
+	
 }
+

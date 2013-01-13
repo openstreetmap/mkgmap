@@ -79,6 +79,21 @@ public class GType {
 		}
 	}
 
+	public GType(GType other) {
+		this.continueSearch = other.continueSearch;
+		this.defaultName = other.defaultName;
+		this.featureKind = other.featureKind;
+		this.maxLevel = other.maxLevel;
+		this.maxResolution = other.maxResolution;
+		this.minLevel = other.minLevel;
+		this.minResolution = other.minResolution;
+		this.propogateActionsOnContinue = other.propogateActionsOnContinue;
+		this.road = other.road;
+		this.roadClass = other.roadClass;
+		this.roadSpeed = other.roadSpeed;
+		this.type = other.type;
+	}
+
 	public int getFeatureKind() {
 		return featureKind;
 	}
