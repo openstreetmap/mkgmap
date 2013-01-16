@@ -7,7 +7,7 @@ SOURCES= about.txt creating.txt design.txt files.txt main.txt rules.txt \
 STYLE_MAIN=style-manual.txt
 
 ATTRS=-a data-uri
-COMMON_OPTS=--icons --icon-dir=../common-images
+COMMON_OPTS=--icons --icons-dir=../common-images/icons
 
 build: html
 

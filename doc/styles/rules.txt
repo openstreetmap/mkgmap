@@ -217,7 +217,9 @@ and so the final name might in that case be _Main St_.
 For highway shields, you can use the notation
 +${tagname|highway-symbol:box}+.
 Valid symbols are +interstate+, +shield+, +round+, +hbox+, +box+ and
-+oval+.
++oval+. The appropriate kind of highway shield will be added to the value
+of +tagname+. The exact result of the way it looks is dependant on where
+you view the map.
 
 === add ===
 The add command adds a tag if it does not already exist.
@@ -288,10 +290,10 @@ type=route & route=bus {
 Then in the *lines file* you will need to write a rule to match _route=bus_.
 All the relation rules are run before any others so that this works.
 
-The substitution '${route_ref}' takes the value of the tag on the *relation* and applies it to each of the
-ways in the relation.
+The substitution `${route_ref}` takes the value of the tag on the *relation* and applies
+it to each of the ways in the relation.
 
-The substitution '$(route_ref)' (with parenthesis, rather than curly
+The substitution `$(route_ref)` (with parenthesis, rather than curly
 brackets) can be used for accessing the value of the tag on
 the actually processed *member* of the relation, e.g.
 
@@ -309,7 +311,7 @@ type=route & route=bus {
 The apply_once action is like +apply+, but it will apply the action once
 per relation member. A round-trip route relation may include the same
 ways multiple times, unless all member ways have been defined as parallel
-oneway streets.
+one way streets.
 
 == Useful tags for routing and address search ==
 For general routing, using avoid options, and address search, the use of
@@ -403,8 +405,8 @@ highway=residential [0x06 resolution 16-22 continue]
 highway=residential [0x07 resolution 23-24]
 ----
 
-This example creates motorways of type 0x08 between resolutions 16 and
-22, then motorways of type 0x09 between resolutions 23 and 24.  This
+This example creates roads of type 0x08 between resolutions 16 and
+22, then roads of type 0x09 between resolutions 23 and 24.  This
 example makes use of the continue statement, which is discussed in more
 detail below.
 
@@ -559,7 +561,8 @@ This is a trick to get opening hours to show up in the postcode field of
 a POI. Tricks like this can enhance the map for certain uses, but of
 course may prevent the proper use of the postcode field.
 
- opening_hours=* {set addr:postcode = '${addr:postcode} open ${opening_hours}' | 'open ${opening_hours}'}
+ opening_hours=* {set addr:postcode = '${addr:postcode} open ${opening_hours}'
+    | 'open ${opening_hours}'}
 
 For _any_ OSM object which has the opening_hours key set to a value, this
 sets the postcode to include the opening hours.  For example, if

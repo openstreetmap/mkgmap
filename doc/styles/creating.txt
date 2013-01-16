@@ -18,15 +18,79 @@ use ++--style-file=++__zipname__`.zip` `--style=`__stylename__.
 A style can be used just as it was created, but if you want to make it
 available to others it will be easier if you
 combine all the individual files into a single archive file.
-make a zip file out of it
-and then you just have the one file to distribute. You just can zip all
-files of the style.
+
+=== Zip archive
+The first way of doing this is to combine the files into a zip file 
+and then you just have the one file to distribute.
 
 To use a zipped style, you can use
  --style-file=stylename.zip
 
-If there is more than one style in the zip file, then you can use
+It does not matter if you include the directory holding the files or not
+in the archive. The style is found by searching for the +version+ file.
+
+You can have more than one style in the zip file, each in their own
+directory. In this case you must include the top level directories of the
+style (and you can include other parent directories as well if you like).
+If there is more than one style in the zip file, then you can use the
++--style+ option alongside the +--style-file+ option.
  --style-file=zipname.zip --style=stylename.
+
+.Style package layout
+[example]
+--
+----
+.
+`-- mystyles
+    |-- cycle
+    |   |-- lines
+    |   |-- points
+    |   |-- polygons
+    |   `-- version
+    `-- hiking
+        |-- lines
+        |-- points
+        |-- polygons
+        `-- version
+----
+
+Here there are two styles named _cycle_ and _hiking_. You can select the `hiking'
+style with the options
+ --style-file=mystyles.zip --style=hiking 
+--
+
+=== Simple file archive
+This is formed by appending all of the files of a style into a single
+file separated by lines that contain the file name in triple angled
+brackets.
+
+.Single file archive
+-------
+<<<version>>>
+0
+
+<<<points>>>
+amenity=doctor [0x2a2a level 0]
+# More point definitions here...
+
+<<<lines>>>
+# All the line definitions here...
+------
+
+The file must have a name ending in +.style+ to be recognised.
+
+This file can be easily created in its entirity in a text editor, but you
+can also convert between the files-in-a-directory format and the
+single-file format using the following command:
+
+-----
+ # (to be typed all on one line)
+ java -cp mkgmap.jar uk.me.parabola.mkgmap.osmstyle.CombinedStyleFile
+      mystyle > mystyle.style
+-----
+
+To convert back then supply the file as the argument, rather than the
+directory.
 
 ////
 == Examples ==

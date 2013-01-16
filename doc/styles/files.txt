@@ -83,7 +83,8 @@ areas.
 
 
 == The options file
-This file contains a number of options that should be set for this style as if they were set on the command line.
+This file contains a number of options that should be set for this style
+as if they were set on the command line.
 Only command line options that affect the style will have any effect.
 The current list is +name-tag-list+, +levels+ and +extra-used-tags+.
 
@@ -100,6 +101,17 @@ explicitly.
  levels = 0:24, 1:22, 2:20, 3:18, 4:16
  extra-used-tags=
 ====
+
+=== Non command line options
+Most of the options are the same as the command line option of the same
+name and so you should see its description in the option help.
+There are however some options that can only be set in this file
+(just the currently).
+
+extra-used-tags:: A list of tags used by the style. You do not normally
+need to set this, as mkgmap can work out which tags are used by a style
+automatically in most cases. It exists only to work around cases where
+this doesn't work properly.
 
 == The points file
 This files contains a set of rules for converting

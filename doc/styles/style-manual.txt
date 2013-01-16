@@ -11,6 +11,12 @@ v1.0, December 2012
 
 :frame: topbot
 
+// Used for conditional compiles for a unix/windows version. Expect to
+// use this more for the tutorial
+:windows: 1
+:unix: 1
+:max: 1
+
 Introduction
 ------------
 
