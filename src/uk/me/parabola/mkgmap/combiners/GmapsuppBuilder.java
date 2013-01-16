@@ -275,8 +275,9 @@ public class GmapsuppBuilder implements Combiner {
 	 */
 	private void addMpsFile(FileInfo info) {
 		String name = info.getFilename();
+		FileSystem fs = null;
 		try {
-			FileSystem fs = ImgFS.openFs(name);
+			fs = ImgFS.openFs(name);
 			MpsFileReader mr = new MpsFileReader(fs.open(info.getMpsName(), "r"));
 			for (MapBlock block : mr.getMaps())
 				mpsFile.addMap(block);
@@ -286,6 +287,8 @@ public class GmapsuppBuilder implements Combiner {
 			mr.close();
 		} catch (IOException e) {
 			log.error("Could not read MPS file from gmapsupp", e);
+		} finally {
+			Utils.closeFile(fs);
 		}
 	}
 

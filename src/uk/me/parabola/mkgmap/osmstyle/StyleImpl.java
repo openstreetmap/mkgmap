@@ -451,8 +451,6 @@ public class StyleImpl implements Style {
 		} catch (FileNotFoundException e) {
 			// the file is optional, so ignore if not present, or causes error
 			log.debug("no options file");
-		} catch (IOException e) {
-			log.warn("error reading options file");
 		}
 	}
 
@@ -486,8 +484,6 @@ public class StyleImpl implements Style {
 		} catch (FileNotFoundException e) {
 			// optional file..
 			log.debug("no info file");
-		} catch (IOException e) {
-			log.debug("failed reading info file");
 		}
 	}
 

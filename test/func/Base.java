@@ -17,11 +17,17 @@
 package func;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+
+import uk.me.parabola.imgfmt.fs.FileSystem;
+import uk.me.parabola.imgfmt.sys.ImgFS;
 
 import func.lib.Args;
 import func.lib.TestUtils;
-import static org.junit.Assert.*;
+import org.junit.After;
 import org.junit.Before;
+
+import static org.junit.Assert.*;
 
 /**
  * Base class for tests with some useful routines.  It ensures that created
@@ -35,6 +41,10 @@ public class Base {
 		TestUtils.deleteOutputFiles();
 	}
 
+	@After
+	public void baseTeardown() {
+		TestUtils.closeFiles();
+	}
 
 	protected void checkStdFile() {
 		assertTrue("std output file exists", new File(Args.DEF_MAP_FILENAME).exists());
@@ -42,5 +52,11 @@ public class Base {
 
 	protected void checkNoStdFile() {
 		assertFalse("std output file exists", new File(Args.DEF_MAP_FILENAME).exists());
+	}
+
+	protected FileSystem openFs(String filename) throws FileNotFoundException {
+		FileSystem fs = ImgFS.openFs(filename);
+		TestUtils.registerFile(fs);
+		return fs;
 	}
 }

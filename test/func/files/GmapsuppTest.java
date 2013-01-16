@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -55,7 +56,7 @@ public class GmapsuppTest extends Base {
 
 		assertTrue("gmapsupp.img is created", f.exists());
 
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		FileSystem fs = openFs(GMAPSUPP_IMG);
 		DirectoryEntry entry = fs.lookup("63240001.TRE");
 		assertNotNull("first file TRE", entry);
 		assertEquals("first file TRE size", getFileSize(Args.TEST_RESOURCE_IMG + "63240001.img", "63240001.TRE"), entry.getSize());
@@ -296,7 +297,7 @@ public class GmapsuppTest extends Base {
 
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		FileSystem fs = openFs(GMAPSUPP_IMG);
 		ImgChannel r = fs.open("00000101.MDR", "r");
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -333,7 +334,7 @@ public class GmapsuppTest extends Base {
 
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		FileSystem fs = openFs(GMAPSUPP_IMG);
 		ImgChannel r = fs.open("00000101.MDR", "r");
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -375,14 +376,14 @@ public class GmapsuppTest extends Base {
 
 		// All we are doing here is checking that the file was created and that it is
 		// not completely empty.
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		FileSystem fs = openFs(GMAPSUPP_IMG);
 		ImgChannel r = fs.open("00000101.MDR", "r");
 		r.position(2);
 		ByteBuffer buf = ByteBuffer.allocate(1024);
 		int read = r.read(buf);
 		assertEquals(1024, read);
 
-		fs = ImgFS.openFs(GMAPSUPP_IMG);
+		fs = openFs(GMAPSUPP_IMG);
 		r = fs.open("00000202.MDR", "r");
 		r.position(2);
 		buf.clear();
@@ -423,7 +424,7 @@ public class GmapsuppTest extends Base {
 
 		assertFalse(new File("osmmap_mdr.img").exists());
 
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
+		FileSystem fs = openFs(GMAPSUPP_IMG);
 		ImgChannel r = fs.open("00006324.MDR", "r");
 
 		ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -463,12 +464,18 @@ public class GmapsuppTest extends Base {
 	}
 
 	private MpsFileReader getMpsFile() throws IOException {
-		FileSystem fs = ImgFS.openFs(GMAPSUPP_IMG);
-		return new MpsFileReader(fs.open("MAKEGMAP.MPS", "r"));
+		FileSystem fs = openFs(GMAPSUPP_IMG);
+		MpsFileReader reader = new MpsFileReader(fs.open("MAKEGMAP.MPS", "r"));
+		TestUtils.registerFile(reader);
+		return reader;
 	}
 
 	private int getFileSize(String imgName, String fileName) throws IOException {
 		FileSystem fs = ImgFS.openFs(imgName);
-		return fs.lookup(fileName).getSize();
+		try {
+			return fs.lookup(fileName).getSize();
+		} finally {
+			Utils.closeFile(fs);
+		}
 	}
 }

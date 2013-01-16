@@ -17,15 +17,19 @@
 package func.lib;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.main.Main;
 import uk.me.parabola.mkgmap.osmstyle.RuleFileReader;
@@ -42,6 +46,7 @@ import static org.junit.Assert.*;
  */
 public class TestUtils {
 	private static final List<String> files = new ArrayList<String>();
+	private static final Deque<Closeable> open = new ArrayDeque<Closeable>();
 
 	static {
 		files.add(Args.DEF_MAP_FILENAME);
@@ -67,12 +72,21 @@ public class TestUtils {
 			File f = new File(fname);
 
 			if (f.exists())
-				assertTrue("delete existing file", f.delete());
+				assertTrue("delete existing file: " + f.getName(), f.delete());
 		}
+	}
+
+	public static void closeFiles() {
+		while (!open.isEmpty())
+			Utils.closeFile(open.remove());
 	}
 
 	public static void registerFile(String ... names) {
 		Collections.addAll(files, names);
+	}
+
+	public static void registerFile(Closeable... files) {
+		Collections.addAll(open, files);
 	}
 
 	/**

@@ -22,13 +22,13 @@ import uk.me.parabola.imgfmt.app.trergn.TREFileReader;
 import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
-import uk.me.parabola.imgfmt.sys.ImgFS;
 
 import func.lib.Args;
 import func.lib.Outputs;
 import func.lib.TestUtils;
-import static org.junit.Assert.*;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * A basic check of various arguments that can be passed in.
@@ -85,7 +85,7 @@ public class ArgsTest extends Base {
 				Args.TEST_RESOURCE_OSM + "uk-test-1.osm.gz");
 		op.checkNoError();
 
-		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
+		FileSystem fs = openFs(Args.DEF_MAP_FILENAME);
 		ImgChannel chan = fs.open(Args.DEF_MAP_ID + ".TRE", "r");
 		TREFileReader treFile = new TREFileReader(chan);
 

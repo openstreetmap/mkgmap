@@ -17,8 +17,8 @@ import java.io.IOException;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
-import uk.me.parabola.imgfmt.sys.ImgFS;
 
+import func.Base;
 import func.lib.Args;
 import func.lib.Outputs;
 import func.lib.TestUtils;
@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class IndexTest {
+public class IndexTest extends Base {
 	private static final String OVERVIEW_NAME = "testname";
 	private static final String MDR_IMG = OVERVIEW_NAME + "_mdr.img";
 
@@ -54,11 +54,12 @@ public class IndexTest {
 
 		assertTrue(MDR_IMG + " is created", f.exists());
 
-		FileSystem fs = ImgFS.openFs(MDR_IMG);
+		FileSystem fs = openFs(MDR_IMG);
 		DirectoryEntry entry = fs.lookup(OVERVIEW_NAME.toUpperCase() + ".MDR");
 		assertNotNull("Contains the MDR file", entry);
 
 		entry = fs.lookup(OVERVIEW_NAME.toUpperCase() + ".SRT");
 		assertNotNull("contains the SRT file", entry);
+		fs.close();
 	}
 }

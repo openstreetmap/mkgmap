@@ -26,13 +26,11 @@ import uk.me.parabola.imgfmt.app.trergn.Point;
 import uk.me.parabola.imgfmt.app.trergn.Polyline;
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
-import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
 import func.lib.Args;
 import func.lib.RangeMatcher;
 import func.lib.TestUtils;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -42,7 +40,7 @@ import static org.junit.Assert.*;
  * 
  * @author Steve Ratcliffe
  */
-public class SimpleTest {
+public class SimpleTest extends Base {
 
 	/**
 	 * A very basic check that the size of all the sections has not changed.
@@ -62,6 +60,7 @@ public class SimpleTest {
 		});
 
 		MapReader mr = new MapReader(Args.DEF_MAP_ID + ".img");
+		TestUtils.registerFile(mr);
 		//FileSystem fs = ImgFS.openFs(Args.DEF_MAP_ID + ".img");
 		assertNotNull("file exists", mr);
 
@@ -91,7 +90,7 @@ public class SimpleTest {
 				Args.TEST_RESOURCE_MP + "test1.mp"
 		});
 
-		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_FILENAME);
+		FileSystem fs = openFs(Args.DEF_MAP_FILENAME);
 		assertNotNull("file exists", fs);
 
 		List<DirectoryEntry> entries = fs.list();
@@ -113,10 +112,4 @@ public class SimpleTest {
 		}
 		assertTrue("enough checks run", count >= 3);
 	}
-
-	@Before
-	public void setUp() {
-		TestUtils.deleteOutputFiles();
-	}
-
 }

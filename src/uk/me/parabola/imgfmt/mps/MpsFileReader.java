@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.mps;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,7 @@ import uk.me.parabola.imgfmt.fs.ImgChannel;
  *
  * @author Steve Ratcliffe
  */
-public class MpsFileReader {
+public class MpsFileReader implements Closeable {
 
 	private final List<MapBlock> maps = new ArrayList<MapBlock>();
 	private final List<ProductBlock> products = new ArrayList<ProductBlock>();

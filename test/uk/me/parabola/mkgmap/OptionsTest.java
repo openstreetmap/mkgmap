@@ -29,6 +29,8 @@ public class OptionsTest {
 		"pool", "ocean"
 	};
 
+	String PATH_SEP = System.getProperty("file.separator");
+
 	private final List<Option> found = new ArrayList<Option>();
 	private final List<String> options = new ArrayList<String>();
 	private final List<String> values = new ArrayList<String>();
@@ -124,7 +126,7 @@ public class OptionsTest {
 		opts.readOptionFile(r, "/bar/string.args");
 		String filename = values.get(0);
 		File file = new File(filename);
-		assertEquals("directory part", "/bar", file.getParent());
+		assertEquals("directory part", PATH_SEP + "bar", file.getParent());
 		assertEquals("file part", "foo", file.getName());
 	}
 
@@ -135,7 +137,15 @@ public class OptionsTest {
 	 */
 	@Test
 	public void testAbsoluteFilenamesInFile() {
-		String s = "input-file: /home/foo\n";
+		String s, exp_dir;
+		if (PATH_SEP.equals("\\")) {
+			s = "input-file: c:\\home\\foo\n";
+			exp_dir = "c:\\home";
+		}
+		else {
+			s = "input-file: /home/foo\n";
+			exp_dir = "/home";
+		}
 
 		OptionProcessor proc = new MyOptionProcessor();
 		Options opts = new Options(proc);
@@ -146,7 +156,7 @@ public class OptionsTest {
 
 		String filename = values.get(0);
 		File file = new File(filename);
-		assertEquals("directory part", "/home", file.getParent());
+		assertEquals("directory part", exp_dir, file.getParent());
 		assertEquals("file part", "foo", file.getName());
 	}
 

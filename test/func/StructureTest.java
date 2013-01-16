@@ -31,9 +31,10 @@ import uk.me.parabola.mkgmap.main.Main;
 import func.lib.Args;
 import func.lib.TestUtils;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Creates a single img file and runs several tests on it to verify
@@ -92,12 +93,12 @@ public class StructureTest {
 	 */
 	@AfterClass
 	public static void cleanup() {
-		TestUtils.deleteOutputFiles();
 		if (fs != null) {
 			fs.close();
 			treFile.close();
 			lblFile.close();
 			rgnFile.close();
 		}
+		TestUtils.deleteOutputFiles();
 	}
 }

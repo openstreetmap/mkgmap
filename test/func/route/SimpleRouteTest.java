@@ -18,16 +18,16 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
-import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.mkgmap.main.Main;
 
+import func.Base;
 import func.lib.Args;
 import func.lib.RangeMatcher;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class SimpleRouteTest {
+public class SimpleRouteTest extends Base {
 
 	/**
 	 * Simple test to ensure that nothing has changed.  Of course
@@ -43,7 +43,7 @@ public class SimpleRouteTest {
 				Args.TEST_RESOURCE_MP + "test1.mp"
 		});
 
-		FileSystem fs = ImgFS.openFs(Args.DEF_MAP_ID + ".img");
+		FileSystem fs = openFs(Args.DEF_MAP_ID + ".img");
 		assertNotNull("file exists", fs);
 
 		List<DirectoryEntry> entries = fs.list();
@@ -71,7 +71,7 @@ public class SimpleRouteTest {
 		}
 		assertTrue("enough checks run", count == 5);
 
-		fs = ImgFS.openFs(Args.DEF_MAP_FILENAME2);
+		fs = openFs(Args.DEF_MAP_FILENAME2);
 		assertNotNull("file exists", fs);
 
 		entries = fs.list();
