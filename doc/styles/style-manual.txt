@@ -21,7 +21,7 @@ A style is used to choose which OSM map features appear in the
 Garmin map and which Garmin symbols are used.
 
 There are a few styles built into mkgmap, but
-as there are many different purposes a map may used for, the default
+as there are many different purposes a map may be used for, the default
 styles in mkgmap will not be ideal for everyone, so
 you can create and use styles external to mkgmap.
 
@@ -40,8 +40,8 @@ To be clear this is only needed for converting OSM tags, if you are
 starting with a Polish format file, there is no style involved as the
 garmin types are already fully specified in the input file.
 
-For general information about the Open Street Map project see the
-link:http://wiki.openstreetmap.org[Open Street Map wiki].
+For general information about the OpenStreetMap project see the
+link:http://wiki.openstreetmap.org[OpenStreetMap wiki].
 
 
 :leveloffset: 1
