@@ -42,19 +42,19 @@ public class RemoveEmpty implements MapFilter {
 	 * @param next	This is used to pass the possibly transformed element onward.
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
-		if (element instanceof MapLine) {
-			MapLine mapLine = (MapLine) element;
-			if (mapLine.getPoints().size() <= 1) {
+		if (element instanceof MapShape) {
+			MapShape mapShape = (MapShape) element;
+			if (mapShape.getPoints().size() <= 3) {
 				if (log.isDebugEnabled())
-					log.debug("dropping degenerate element");
+					log.debug("dropping degenerated shape");
 				return;
 			}
 		}
-		if (element instanceof MapShape) {
-			MapShape mapLine = (MapShape) element;
-			if (mapLine.getPoints().size() <= 2) {
+		else if (element instanceof MapLine) {
+			MapLine mapLine = (MapLine) element;
+			if (mapLine.getPoints().size() <= 1) {
 				if (log.isDebugEnabled())
-					log.debug("dropping degenerate element");
+					log.debug("dropping degenerated line");
 				return;
 			}
 		}
