@@ -187,6 +187,7 @@ public class StyledConverterTest {
 		Way w = makeWay();
 		w.addTag("highway", "pedestrian");
 		converter.convertWay(w);
+		converter.end();
 
 		assertEquals("lines converted", 1, lines.size());
 

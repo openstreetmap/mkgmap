@@ -236,11 +236,13 @@ public class StyleTester implements OsmConverter {
 			for (Way w : ways) {
 				String prefix = "WAY " + w.getId() + ": ";
 				normal.convertWay(w.copy());
+				normal.end();
 				String[] actual = formatResults(prefix, results);
 				all.addAll(Arrays.asList(actual));
 				results.clear();
 
 				strict.convertWay(w.copy());
+				strict.end();
 				String[] expected = formatResults(prefix, strictResults);
 				strictResults.clear();
 
@@ -285,6 +287,7 @@ public class StyleTester implements OsmConverter {
 	}
 
 	public void end() {
+		converter.end();
 	}
 
 
@@ -340,7 +343,7 @@ public class StyleTester implements OsmConverter {
 
 		Way w = new Way(id);
 		w.addPoint(new Coord(1, 1));
-		w.addPoint(new Coord(2, 2));
+		w.addPoint(new Coord(20, 20));
 
 		String line;
 		while ((line = br.readLine()) != null) {
