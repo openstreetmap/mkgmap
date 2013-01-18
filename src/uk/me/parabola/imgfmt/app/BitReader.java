@@ -17,6 +17,8 @@
 package uk.me.parabola.imgfmt.app;
 
 /**
+ * Read quantities from a bit stream.
+ *
  * @author Steve Ratcliffe
  */
 public class BitReader {
@@ -59,6 +61,25 @@ public class BitReader {
 	}
 
 	/**
+	 * Get a signed quantity.
+	 *
+	 * The sign bit is the last bit in the field.
+	 *
+	 * @param n The field width, including the sign bit.
+	 * @return A signed number.
+	 */
+	public int sget(int n) {
+		int res = get(n);
+		int top = 1 << (n - 1);
+
+		if ((res & top) != 0) {
+			int mask = top - 1;
+			res = ~mask | res;
+		}
+		return res;
+	}
+
+	/**
 	 * Get a signed n-bit value, treating 1 << (n-1) as a
 	 * flag to read another signed n-bit value for extended
 	 * range (mysteriously only in the negative direction).
@@ -83,5 +104,22 @@ public class BitReader {
 
 	public int getBitPosition() {
 		return bitPosition;
+	}
+
+	/**
+	 * Debugging routine that returns the remainder of the stream as a string.
+	 * The bits are in little endian order, so that numbers can be read from left
+	 * to right, although the whole string has to read from right to left.
+	 *
+	 * @return A string in binary.
+	 */
+	public String remainder() {
+		int save = bitPosition;
+		StringBuilder sb = new StringBuilder();
+		while (bitPosition < buf.length * 8) {
+			sb.insert(0, get1() ? "1" : "0");
+		}
+		bitPosition = save;
+		return sb.toString();
 	}
 }
