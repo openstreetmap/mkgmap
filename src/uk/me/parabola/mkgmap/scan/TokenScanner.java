@@ -270,7 +270,7 @@ public class TokenScanner {
 	}
 
 	private boolean isSpace(int nextch) {
-		return Character.isWhitespace(nextch);
+		return Character.isWhitespace(nextch) || nextch == '\uFEFF';
 	}
 
 	private boolean isWordChar(int ch) {
