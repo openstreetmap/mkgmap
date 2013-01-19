@@ -1,0 +1,102 @@
+//
+// This is the list of variable filters.
+//
+.List of all substitution filters
+[width="100%",grid="rows",cols="<1,<1,3a",options="header"]
+|=======
+| Name | Arguments | Description
+| def | `default` |
+If the variable is not set, then use the argument as a default value.
+This means that the variable will never be `unset' in places where that
+matters. 
+
+`${oneway\|def:no}`
+
+| conv | `factor` |
+Use for conversions between units. The only supported version is from meters to feet
+number. It is multiplied by the argument.
+
+`${height\|conv:m=>ft}`
+
+| subst | `from=>to` |
+Substitutes all occurrences of the string +from+ with the string +to+ in
+the value of the tag.
+There isn't a large number of uses for this, perhaps you can use it to
+correct mistakes.
+The +to+ can be empty to remove the +from+ string altogether and this is
+probably the most popular use.
+
+`${name\|ref:A=>}`
+
+| highway-symbol | `symbol max-num max-alpha` |
+Prepares the value as a highway reference such as "A21" "I-80" and so
+on.
+A code is added to the front of the string so that a highway shield is
+displayed, spaces are removed and the text is truncated so as not to overflow the
+symbol.
+
+`${ref\|highway-symbol:box:4:8}`
+
+See below for a list of the +highway-symbol+ values.
+
+The first number is the maximum number of characters to allow for
+references that contain numbers and letters.
+The second is the maximum length of references that do not contain numbers.
+If there is just the one number then it is used in both cases.
+
+| height | `m=>ft` |
+This is the same as the +conv+ filter, except that it prepends a special
+separation character before the value which is intended for elevations.
+As with +conv+ the only supported conversion currently is from meters to feet.
+
+`${ele\|m=>ft}`
+
+| not-equal | `tag` |
+Used to check for duplicate tags. If the value of this tag is equal to
+the value of the tag named as the argument to +not-equal+, then value
+of this tag is set to undefined.
+
+[literal]
+--
+place=* {
+   name '${name} (${int_name\|not-equal:name})'
+       \| '${name}'
+   }
+--
+In that example, if the international name is different to the name then it will be placed
+in parenthesis after the name. Otherwise there will just be the name as given in the "name" tag.
+
+| substring | `start:end` |
+Extract part of the string. The start and end positions
+are counted starting from zero and the end position is not included.
+
+`${name\|2:5}`
+If the "name" was "Dorset Lane", then the result is "rse".  If there is just the one number,
+then the substring starts from that character until the end of the string.
+|=====
+
+=== Symbol codes
+Here is a list of all the symbols that can be created with images to give an
+idea of where they should be used.
+The actual symbol will depend on the device that it is displayed on.
+
+.Highway symbol codes
+[width="60%",cols="1,1,2",options="header"]
+|=====
+| Shield name | Symbol | Description
+| interstate | image:img/sym-interstate.png[] | US Interstate, digits only
+| shield  | image:img/sym-shield.png[]        | US Highway shield, digits only
+| round   | image:img/sym-round.png[]         | US Highway round, digits only
+| hbox    | image:img/sym-hbox.png[]          | Box for major roads
+| box     | image:img/sym-box.png[]           | Box for medium roads
+| oval    | image:img/sym-oval.png[]          | Box for smaller roads
+|====
+
+
+////
+| prefix | symbol code |
+hello
+| `${ref\|prefix:box}`
+////
+
+

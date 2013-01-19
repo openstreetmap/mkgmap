@@ -194,7 +194,14 @@ highway=service & length()>50
 An action block is enclosed in braces +{ ... }+ and contains one or more
 statements that can alter the element being displayed; multiple
 statements are separated by `;' symbol.  When there is an action block, the
-<<Element_type,element type definition>> is optional, but if used it must come after the action block.
+<<Element_type,element type definition>> is optional, but if used it must
+come after the action block.
+
+A list of all the command that can be used in the action block follows.
+In the examples you will see notation of the form `${name}`, this is how
+tag values can be substituted into strings, in a similar way to many
+computer languages. For full details see
+the section on <<VARS,variable substitution>>.
 
 === name ===
 This sets the final name of the element, that is, the name that will be used in the Garmin map.
@@ -208,7 +215,7 @@ only the first to set the name will take effect.
  {name '${name} (${ref})' | '${ref}' | '${name}'}
 ====
 
-If both +name+ and +ref+ are set, then the first alternative would be
+If both the +name+ and +ref+ tags are are set, then the first alternative would be
 completed and the resulting name might be _Main St (A1)_.
 If just +name+ was set, then the first two alternatives can not be fully
 substituted and so are ignored, leaving the last alternative +'${name}'+
@@ -258,23 +265,20 @@ one that is fully defined will be used.
 Will set 'key123' to the value of the 'name:en' tag if it exists and to the 'name' tag if not.
 
 === set ===
-The 'set' command is just like the 'add' command, except that it sets the tag, even if the tag
-already exists.
+The 'set' command is just like the 'add' command, except that it sets the
+tag, replacing any existing value it had.
 
 === delete ===
 The delete command deletes a tag.
 
  { delete key123 }
 
-The same result can be achieved by setting the value of the key to an empty string.
-
- {set key123 = '' }
-
 === apply ===
-The "apply" action only makes sense in relations.
-Say you have a relation marking a bus route, but none of the ways that are in the relation have any special tags
-to indicate that they form part of that bus route, and you want to be able to tell from looking at the map which buses go where.  You can write a rule
-in the *relations file* such as:
+The "apply" action only makes sense in relations.  Say you have a
+relation marking a bus route, but none of the ways that are in the
+relation have any special tags to indicate that they form part of that
+bus route, and you want to be able to tell from looking at the map which
+buses go where.  You can write a rule in the *relations file* such as:
 
 [listing]
 --
@@ -313,6 +317,51 @@ per relation member. A round-trip route relation may include the same
 ways multiple times, unless all member ways have been defined as parallel
 one way streets.
 
+[[VARS]]
+== Variables
+You can substitute the value of tags within strings in an action.
+A dollar sign (+$+) introduces the substitution followed by the tag name
+surrounded by curly braces like so `${name}`.
+
+The most obvious use for variables is in setting the name of the element.
+You are able to use any combination of tags to make the name from.
+Here we name a fuel station by its brand and the name in brackets following.
+
+ amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
+
+If the operator tag was not set, then the name would not be set because *all*
+substitutions in a string must exist for the result to be valid.
+This is why the "name" command takes a list of possibilities, if operator
+was simply replaced with a blank, then you would have an empty pair of brackets.
+So you would fix the previous rule by adding another name option.
+
+----
+ amenity=fuel
+    { name '${brand} (${operator})' | '${brand}' }
+    [ 0x2f01 ]
+----
+
+If only the brand tag exists, then the first option will be skipped and the second
+will be used.
+
+=== Variable filters
+The value of a variable can be modified by `filters'.
+The value of the tag can be transformed in various ways before being
+substituted.
+
+A filter is added by adding a vertical bar symbol "|" after the tag name, followed
+by the filter name, then a colon ":" and an argument. If there is more than
+one argument required then they are usually separated by colons too, but
+that is not a rule.
+
+ ${tagname|filter:arg1:arg2}
+
+You can apply as many filter expressions to a substitution as you like.
+
+ ${tagname|filter1:arg|filter2:arg}
+
+include::rules-filters.txt[]
+
 == Useful tags for routing and address search ==
 For general routing, using avoid options, and address search, the use of
 some special tags is necessary.
@@ -327,15 +376,13 @@ which must always be written in hexadecimal.  Following this the element
 type definition rule can contain a number of optional keywords and
 values.
 
-=== level (see also _resolution_) ===
+=== level ===
 This is the highest zoom level that this element should appear at (like
-EndLevel in the mp format).
-The lower the level the detailed the view.
-The most detailed, most zoomed in, level is level 0.
-A map will usually have between three and five levels. 
-If the level for an object is not given then
-it defaults to 0 and so the specified feature will only appear at the
-most detailed level.
+EndLevel in the mp format).  The lower the level the detailed the view.
+The most detailed, most zoomed in, level is level 0.  A map will usually
+have between three and five levels.  If the level for an object is not
+given then it defaults to 0 and so the specified feature will only appear
+at the most detailed level.
 
 In the following example, we set highways to appear from zoom level 4 down to zoom level 0:
 -----
@@ -352,7 +399,7 @@ your selections, but actual GPS devices have their own ideas about
 which POI's can be shown at which resolutions.
 --
 
-==== Level ranges ====
+.Level ranges
 You can also give a range (e.g. 1-3) and the map will then contain the
 object only between the specified levels.
 
@@ -372,7 +419,7 @@ representation takes over at the lower zoom levels. For example a
 building may be a point at high levels and then become a polygon at lower
 levels.
 
-=== resolution (see also _level_) ===
+=== resolution ===
 
 This is an alternative way of specifying the zoom level at which an
 object appears.  It is specified as a number from 1-24, which corresponds
@@ -395,7 +442,7 @@ the whole much easier to use +level+ as it is immediately clear where the
 element will end up. If you use a +resolution+ that is `between' two
 levels for example it will only show up in the lower one.
 
-==== Resolution ranges ====
+.Resolution ranges
 
 Just as with levels, you can specify a range of resolutions at which an
 object should appear. Here is an example.
@@ -502,7 +549,7 @@ The with_actions statement modifies the continue behaviour in such a way,
 that the action block of this rule is also applied, when this element is
 checked for additional conversions. 
 
-Example of a full element type definition: 
+.Example of a full element type definition
 ----
 [0x2 road_class=3 road_speed=5 level 2 default_name 'example street' continue with_actions]
 ----
@@ -605,3 +652,4 @@ amenity=bank [0x2f06 level 3]
 
 This will be explained in more detail in the following sections along with how to use more than one tag to make the choice.
 However with that one form of rule, you can do everything that the old map-features file could do.
+

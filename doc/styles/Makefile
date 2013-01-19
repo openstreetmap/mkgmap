@@ -1,8 +1,8 @@
 
 XSL=../docbook-xsl/fo.xsl
 
-SOURCES= about.txt creating.txt design.txt files.txt main.txt rules.txt \
-	style-manual.txt $(XSL)
+SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt \
+	style-manual.txt $(XSL) 
 
 STYLE_MAIN=style-manual.txt
 
