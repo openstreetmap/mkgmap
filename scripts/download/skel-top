@@ -20,14 +20,13 @@
 
 <ul>
 <li><a href="/">Home</a></li>
+<li><a href="/news/">News</a></li>
 <li><a href="/doc/index.html">Documentation</a></li>
-<li><a href="/download/mkgmap.html">Download</a></li>
+<li class="active"><a href="/download/mkgmap.html">Download</a></li>
 <li class="subnav"><a href="/download/mkgmap.html">mkgmap</a></li>
 <li class="subnav"><a href="/download/splitter.html">splitter</a></li>
-<li><a href="/">Development</a></li>
-<li class="subnav"><a href="/svn/list">source code</a></li>
-<li class="subnav"><a href="/">mailing lists</a></li>
-
+<li><a href="/develop.html">Development</a></li>
+<li> <hr> </li>
 </ul>
 
 </div>

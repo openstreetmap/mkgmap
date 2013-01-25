@@ -42,9 +42,18 @@ TARGET_SRC_LATEST_ZIP=$SNAPDIR/$PRODUCT-src.zip
 TARGET_ZIP=$SNAPDIR/$RELNAME.zip
 
 BUILD_DIST=1
-if [ "$PRODUCT" = display ]; then
+BUILD_TARGETS='dist'
+case "$PRODUCT" in
+display)
 	BUILD_DIST=0
-fi
+	;;
+mkgmap)
+	BUILD_TARGETS='dist obtain-test-input-files test'
+	;;
+splitter)
+	BUILD_TARGETS='dist run.tests'
+	;;
+esac
 
 if [ ! -f $TARGET ]; then
 	echo Rebuilding
@@ -70,7 +79,7 @@ if [ ! -f $TARGET ]; then
 
 	if [ "$BUILD_DIST" = 1 ]; then
 		echo BUILDING TARGET
-		ant -Dhave.version=1 dist obtain-test-input-files test || exit 1
+		ant -Dhave.version=1 $BUILD_TARGETS || exit 1
 
 		mv dist $RELNAME
 		tar czf $TARGET $RELNAME
