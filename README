@@ -4,11 +4,11 @@ Making maps for Garmin GPS units
 
 The goal of the project is to take the map data from
 OpenStreetMap <http://www.openstreetmap.org>
-and to generate a map in the Garmin .img file format so
-that it can be loaded onto GPS units.
+and to generate a map in the Garmin file format so
+that it can be loaded onto Garmin GPS units.
 
-The original motivation was to help plan mapping sessions, but now the
-maps are becoming useful in their own right.
+The original motivation was to help plan mapping sessions,
+but now the maps are becoming useful in their own right.
 
 Using
 =====
@@ -25,18 +25,29 @@ Run the command:
 
 This will produce a file called 63240001.img.
 
-You can copy the map to your Garmin GPS unit in any way you know how. On my
-Legend Cx connected to a Linux system I put the unit into USB mass storage
-mode, mount the filesystem on the memory card, and copy the map to
-Garmin/gmapsupp.img  Note that this will replace any other map you have on
-there.  Another way would be to use a USB memory card writer.
-Another convenient way is to use the sendmap program.
+You can copy the map to your Garmin GPS unit in any way you know how.
+It is best to use a SD card, since then if anything goes wrong you
+can remove it from the unit and all should be well again.
+
+Copy it to the file "Garmin/gmapsupp.img" on the card.
+On many modern Garmin devices, you can use a different
+name so that you can have more than one set of maps.
+
+*NOTE* this will overwrite any other map you have on
+there, make sure that you are not overwriting a valuable map.
+
+Another way would be to use a USB memory card writer and
+for a large map this is quicker as many GPS's have a slow USB
+connection.
+
+There are also various programs that can send a map to the
+device.
 
 You should (depending on the particular Garmin model) see a OSM
 copyright message on starting up, and the map name 'OSM Street map'
 should appear in the map setup section.
 
-For more help see: http://wiki.openstreetmap.org/index.php/Mkgmap/help
+For more help see: http://www.mkgmap.org.uk/doc/index.html
 
 
 Invoking mkgmap
@@ -47,27 +58,20 @@ by suitable options.  Run
 
  java -jar mkgmap.jar --help=options
 
-to obtain a comprehensive listing of options, or see
-resources/help/en/options.  See doc/README.examples for examples of
-invocation details that others have found useful.
-
+to obtain an up to date and complete listing of options.
 
 Processing more than one file at a time
 ---------------------------------------
 
-It is usual to split Garmin maps up into smaller tiles.  This is
-because older GPS units (before large SD cards were cheap) had a
-limited amount of memory for maps, because there are limits within the
-map format itself, and because mkgmap uses a significant amount of
-memory to process each tile.
+The Garmin map format was designed so that a map is made of a number
+of tiles, and if your map has more data than can fit into a single
+tile, you will have to split the map.
 
-You can give more than one .osm file on the command line at a time and they
-will each be converted to a separate garmin map tile.  There will also
-be two other files created: 1) a file ending in .tdb and an overview .img
-map.
+See: http://www.mkgmap.org.uk/doc/splitter.html for a program that
+can do this.
 
-See also doc/README.splitter.
-
+You can compile all of the map tiles that are created by splitter
+all at once, by simply listing them all on the command line.
 
 Acknowledgements
 ================
@@ -78,4 +82,4 @@ http://sourceforge.net/projects/garmin-img.  The 'imgdecode' program
 from the same source was also very important in checking that I was
 on the right lines to producing a good file.  Thanks.
 
-Steve <sr at parabola me uk>
+Steve

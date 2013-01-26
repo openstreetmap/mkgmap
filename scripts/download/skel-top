@@ -23,8 +23,8 @@
 <li><a href="/news/">News</a></li>
 <li><a href="/doc/index.html">Documentation</a></li>
 <li class="active"><a href="/download/mkgmap.html">Download</a></li>
-<li class="subnav"><a href="/download/mkgmap.html">mkgmap</a></li>
-<li class="subnav"><a href="/download/splitter.html">splitter</a></li>
+<li class="active subnav"><a href="/download/mkgmap.html">mkgmap</a></li>
+<li class="active subnav"><a href="/download/splitter.html">splitter</a></li>
 <li><a href="/develop.html">Development</a></li>
 <li> <hr> </li>
 </ul>

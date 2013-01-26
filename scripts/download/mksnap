@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROGDIR=$(dirname $(readlink -f $0))
-PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
+PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.8.2/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
 
 typeset -i VERSION
 while getopts "r:d:" c
@@ -80,6 +80,10 @@ if [ ! -f $TARGET ]; then
 	if [ "$BUILD_DIST" = 1 ]; then
 		echo BUILDING TARGET
 		ant -Dhave.version=1 $BUILD_TARGETS || exit 1
+
+		if [ -x $PROGDIR/mkdoc ]; then
+			mkdoc $PRODUCT
+		fi
 
 		mv dist $RELNAME
 		tar czf $TARGET $RELNAME

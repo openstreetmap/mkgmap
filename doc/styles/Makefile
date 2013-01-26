@@ -1,5 +1,12 @@
 
-XSL=../docbook-xsl/fo.xsl
+ASCIIDOC=asciidoc
+A2X=a2x
+
+DEST=../../dist/doc
+
+RES=../resources
+XSL=$(RES)/docbook-xsl/fo.xsl
+ICONSDIR=$(RES)/common-images/icons
 
 SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt \
 	style-manual.txt $(XSL) 
@@ -7,7 +14,7 @@ SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt
 STYLE_MAIN=style-manual.txt
 
 ATTRS=-a data-uri
-COMMON_OPTS=--icons --icons-dir=../common-images/icons
+COMMON_OPTS=--icons --icons-dir=$(ICONSDIR)
 
 build: html
 
@@ -18,14 +25,20 @@ pdf: style-manual.pdf
 epub: style-manual.epub
 
 style-manual.html: $(SOURCES)
-	asciidoc $(ATTRS) -a icons -a iconsdir=../common-images/icons -b html5 $(STYLE_MAIN)
+	$(ASCIIDOC) $(ATTRS) -a icons -a iconsdir=$(ICONSDIR) -b html5 $(STYLE_MAIN)
 
 style-manual.pdf: $(SOURCES)
-	a2x --xsl-file=$(XSL) --fop $(COMMON_OPTS) $(STYLE_MAIN)
+	$(A2X) --xsl-file=$(XSL) --fop $(COMMON_OPTS) $(STYLE_MAIN)
 
 style-manual.epub: $(SOURCES)
-	a2x --format epub $(COMMON_OPTS) $(STYLE_MAIN)
+	mkdir -p build
+	cp -ru $(RES)/common-images build
+	$(A2X) --format epub --icons --icons-dir=build/common-images/icons $(STYLE_MAIN)
 
+
+install: pdf
+	cp -u style-manual.pdf $(DEST)
 
 clean:
 	rm -f style-manual.{pdf,epub,html}
+	rm -rf build

@@ -327,7 +327,6 @@
 
 		<mkdir dir="${dist}"/>
 		<mkdir dir="${dist}/lib"/>
-		<mkdir dir="${dist}/doc/api"/>
 
 		<copy todir="${dist}/lib" flatten="true">
 			<path refid="compile.classpath" />
@@ -360,7 +359,10 @@
 		</jar>
 
 		<copy todir="${dist}/doc" >
-			<fileset dir="doc" includes="README*, *.txt, Credits, mkgmap.1"/>
+			<fileset dir="doc">
+				<include name="README"/>
+				<include name="mkgmap.1"/>
+			</fileset>
 		</copy>
 
 		<!-- misc to be copied to the top level -->
