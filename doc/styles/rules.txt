@@ -635,7 +635,36 @@ looking for further matches.
 * Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
 
 == Including files ==
-TBW
+Its often convenient to split a file into smaller parts or to use the
+same rules in two different files.  In these cases you can include
+one rule file within another.
+
+ include "inc/common";
+
+Here some common rules have been included in a rule file from a directory
+called "inc" within the style. Note that the line ends in a semi-colon
+which is easy to forget.
+
+[NOTE]
+--
+The included files don't have to be located within the style and can be
+anywhere else.
+--
+
+When you include a file, the effect is exactly as if you had replaced the
+include line with the contents of the file.  An +include+ directive can
+occur anywhere that a rule could start, and it is possible to include
+another file from with in the file that is included.
+
+.Including from another style
+It is also possible to include a file from another style.
+To do this you simply add +from +_stylename_ to the end of the include
+statement.
+
+ include "points" from default;
+
+That will include the +points+ file from the default style. This might be
+useful if you want to only change a few things about the default style.
 
 == Simple example ==
 In the majority of cases everything is very simple. Say you want roads that are tagged as *highway=motorway* to have the Garmin type 0x01 ("motorway") and for it to appear up until the zoom level 3.
