@@ -1,0 +1,47 @@
+
+The mkgmap Tutorial
+===================
+The mkgmap team
+:pubdate: January 2013
+:toc:
+:numbered:
+:doctype: book
+:website: http://www.mkgmap.org.uk
+:email: mkgmap-dev@lists.mkgmap.org.uk
+:description: A tutorial that starts with creating your first map and in a series of steps shows how to create a map of a whole country.
+:max-width: 58em
+
+:frame: topbot
+:grid: rows
+
+// Used for conditional compiles for a unix/windows version.
+:windows: 1
+:linux: 1
+:max: 1
+
+
+Introduction
+------------
+This tutorial starts with simple instructions to create a first map of
+you local area and then gradually shows you how to build this into a
+complete map of a country or region that is suitable for distribution to
+others should you wish.
+
+
+:leveloffset: 1
+
+include::starting.txt[]
+
+include::first_map.txt[]
+
+// Some ideas for the sections, order to be decided 
+// I'm assuming that this will not be published before the great
+// option defaulting process is complete.
+
+// installing to device, mapsource, basecamp, qlandkartegt etc
+
+// adding sea areas
+
+// using a bounds file to improve addresses
+
+// splitting large area

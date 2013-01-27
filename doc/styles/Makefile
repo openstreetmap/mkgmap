@@ -1,20 +1,11 @@
 
-ASCIIDOC=asciidoc
-A2X=a2x
+include ../resources/make.param
 
-DEST=../../dist/doc
-
-RES=../resources
-XSL=$(RES)/docbook-xsl/fo.xsl
-ICONSDIR=$(RES)/common-images/icons
 
 SOURCES= about.txt creating.txt design.txt files.txt rules.txt rules-filters.txt \
 	style-manual.txt $(XSL) 
-
 STYLE_MAIN=style-manual.txt
-
-ATTRS=-a data-uri
-COMMON_OPTS=--icons --icons-dir=$(ICONSDIR)
+TARGET_PDF=style-manual.pdf
 
 build: html
 
@@ -25,10 +16,10 @@ pdf: style-manual.pdf
 epub: style-manual.epub
 
 style-manual.html: $(SOURCES)
-	$(ASCIIDOC) $(ATTRS) -a icons -a iconsdir=$(ICONSDIR) -b html5 $(STYLE_MAIN)
+	$(ASCIIDOC) $(HTML_ATTRS) -a icons -a iconsdir=$(ICONSDIR) -b html5 $(STYLE_MAIN)
 
-style-manual.pdf: $(SOURCES)
-	$(A2X) --xsl-file=$(XSL) --fop $(COMMON_OPTS) $(STYLE_MAIN)
+$(TARGET_PDF): $(SOURCES)
+	$(A2X) --xsl-file=$(XSL) --fop $(PDF_OPTS) $(STYLE_MAIN)
 
 style-manual.epub: $(SOURCES)
 	mkdir -p build
@@ -36,8 +27,10 @@ style-manual.epub: $(SOURCES)
 	$(A2X) --format epub --icons --icons-dir=build/common-images/icons $(STYLE_MAIN)
 
 
-install: pdf
-	cp -u style-manual.pdf $(DEST)
+install: $(DEST)/$(TARGET_PDF)
+	cp -u $(TARGET_PDF) $(DEST)
+
+$(DEST)/$(TARGET_PDF): pdf
 
 clean:
 	rm -f style-manual.{pdf,epub,html}

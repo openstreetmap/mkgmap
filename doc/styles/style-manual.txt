@@ -1,6 +1,6 @@
 = Conversion Style manual
 The mkgmap team
-v1.0, December 2012
+:pubdate: January 2013
 :toc:
 :numbered:
 :doctype: book
@@ -15,7 +15,7 @@ v1.0, December 2012
 // Used for conditional compiles for a unix/windows version. Expect to
 // use this more for the tutorial
 :windows: 1
-:unix: 1
+:linux: 1
 :max: 1
 
 Introduction

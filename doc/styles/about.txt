@@ -11,6 +11,12 @@ This manual is created from material that originated from the mkgmap doc
 files and added to OSM wiki. While on the OSM wiki modifications were
 made by many people.
 
+People who have contributed suggestions and corrections to this document
+are:
+Carlos Dávila,
+Geoff Sherlock
+
+
 The list of nicknames of everyone that had modified the wiki pages at the time that
 this manual was created is as follows:
 Brogo,

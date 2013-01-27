@@ -153,13 +153,6 @@
 <xsl:attribute-set name="section.title.level3.properties">
   <xsl:attribute name="font-size">12.2pt</xsl:attribute>
 </xsl:attribute-set>
-<!--
-<xsl:attribute-set name="section.title.properties">
-	<xsl:attribute name="space-after.minimum">0.2em</xsl:attribute>
-	<xsl:attribute name="space-after.optimum">0.5em</xsl:attribute>
-	<xsl:attribute name="space-after.maximum">0.6em</xsl:attribute>
-</xsl:attribute-set>
--->
 <xsl:attribute-set name="normal.para.spacing">
 	<xsl:attribute name="space-before.optimum">0.4em</xsl:attribute>
 	<xsl:attribute name="space-before.minimum">0.5em</xsl:attribute>
