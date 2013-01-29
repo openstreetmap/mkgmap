@@ -161,7 +161,7 @@ public class NETFile extends ImgFile {
 			RoadDef road = lrd.roadDef;
 			City city = road.getCity();
 
-			if (!name.equals(lastName) || city != lastCity) {
+			if (road.hasHouseNumbers() || !name.equals(lastName) || city != lastCity) {
 
 				// process any previously collected duplicate road names and reset.
 				addDisconnected(dupes, out);

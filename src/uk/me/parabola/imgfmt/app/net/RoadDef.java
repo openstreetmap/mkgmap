@@ -24,6 +24,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.MapFailedException;
+import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -142,6 +143,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	// for diagnostic purposes
 	private final long id;
 	private final String name;
+	private List<Numbers> numbersList;
 
 	public RoadDef(long id, String name) {
 		this.id = id;
@@ -182,7 +184,19 @@ public class RoadDef implements Comparable<RoadDef> {
 
 		offsetNet1 = writer.position();
 
+		NumberPreparer numbers = null;
+		if (numbersList != null) {
+			numbers = new NumberPreparer(numbersList);
+			numbers.fetchBitStream();
+			if (!numbers.isValid())
+				numbers = null;
+		}
+
 		writeLabels(writer);
+		if (numbers != null) { // TODO combine if
+			if (numbers.getSwapped())
+				netFlags |= 0x20; // swapped default; left=even, right=odd
+		}
 		writer.put((byte) netFlags);
 		writer.put3(roadLength);
 
@@ -197,6 +211,11 @@ public class RoadDef implements Comparable<RoadDef> {
 				code |= 0x10; // no city
 			if(zip == null)
 				code |= 0x04; // no zip
+			if (numbers != null) {
+				code &= ~0xc0;
+				if (numbers.fetchBitStream().getLength() > 255)
+					code |= 1;
+			}
 			writer.put((byte)code);
 			if(zip != null) {
 				char zipIndex = (char)zip.getIndex();
@@ -211,6 +230,14 @@ public class RoadDef implements Comparable<RoadDef> {
 					writer.putChar(cityIndex);
 				else
 					writer.put((byte)cityIndex);
+			}
+			if (numbers != null) {
+				BitWriter bw = numbers.fetchBitStream();
+				if (bw.getLength() > 255)
+					writer.putChar((char) bw.getLength());
+				else
+					writer.put((byte) bw.getLength());
+				writer.put(bw.getBytes(), 0, bw.getLength());
 			}
 		}
 
@@ -350,6 +377,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		roadLength = (int) l / 2;
 	}
 
+	public boolean hasHouseNumbers() {
+		return numbersList != null && !numbersList.isEmpty();
+	}
+
 	/*
 	 * Everything that's relevant for writing to RGN.
 	 */
@@ -436,6 +467,13 @@ public class RoadDef implements Comparable<RoadDef> {
 
 	public void setNumNodes(int n) {
 		nnodes = n;
+	}
+
+	public void setNumbersList(List<Numbers> numbersList) {
+		if (numbersList != null && !numbersList.isEmpty()) {
+			this.numbersList = numbersList;
+			netFlags |= NET_FLAG_ADDRINFO;
+		}
 	}
 
 	/**

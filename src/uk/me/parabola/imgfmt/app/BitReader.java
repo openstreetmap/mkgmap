@@ -17,7 +17,7 @@
 package uk.me.parabola.imgfmt.app;
 
 /**
- * Read quantities from a bit stream.
+ * Read an array as a bit stream.
  *
  * @author Steve Ratcliffe
  */
@@ -104,6 +104,10 @@ public class BitReader {
 
 	public int getBitPosition() {
 		return bitPosition;
+	}
+
+	public int getNumberOfBits() {
+		return buf.length * 8;
 	}
 
 	/**

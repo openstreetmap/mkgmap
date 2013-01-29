@@ -115,6 +115,11 @@ public class BitWriter {
 		return buf;
 	}
 
+	/**
+	 * Get the number of bytes actually used to hold the bit stream. This therefore can be and usually
+	 * is less than the length of the buffer returned by {@link #getBytes()}.
+	 * @return Number of bytes required to hold the output.
+	 */
 	public int getLength() {
 		return buflen;
 	}

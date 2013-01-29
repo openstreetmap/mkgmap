@@ -40,7 +40,12 @@ import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
-import uk.me.parabola.mkgmap.general.*;
+import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
+import uk.me.parabola.mkgmap.general.MapElement;
+import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 
 /**
@@ -382,15 +387,15 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		} else if (name.equals("RoadID")) {
 			roadHelper.setRoadId(Integer.parseInt(value));
 		} else if (name.startsWith("Nod")) {
-			int nodIndex = Integer.parseInt(name.substring(3));
-			roadHelper.addNode(nodIndex, value);
+			roadHelper.addNode(value);
 		} else if (name.equals("RouteParam") || name.equals("RouteParams")) {
 			roadHelper.setParam(value);
 		} else if (name.equals("DirIndicator")) {
 			polyline.setDirection(Integer.parseInt(value) > 0);
-		}
-		else {
-			if(extraAttributes == null)
+		} else if (name.startsWith("Numbers")) {
+			roadHelper.addNumbers(value);
+		} else {
+			if (extraAttributes == null)
 				extraAttributes = new HashMap<String, String>();
 			extraAttributes.put(name, value);
 		}
@@ -524,6 +529,11 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 				try {
 					int inum = Integer.decode(num.toString());
+
+					// Convert any that are in 6-bit format
+					if (inum == 0x1b2c) inum = 0x1c;
+					if (inum >= 0x2a)
+						inum -= 0x29;
 					sb.append((char) inum);
 				} catch (NumberFormatException e) {
 					// Input is malformed so lets just ignore it.
@@ -603,6 +613,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	 */
 	private int extractResolution(int level) {
 		int nlevels = levels.length;
+
+		// Some maps use EndLevel=9 to mean the highest level
+		if (level >= nlevels)
+			level = nlevels - 1;
 
 		LevelInfo li = levels[nlevels - level - 1];
 		return li.getBits();

@@ -39,7 +39,7 @@ filename
 -n name
 --mapname=name
 	Set the name of the map. Garmin maps are named by 8 digit
-	numbers.  The default is 63240001.  It is best to use a different
+	numbersList.  The default is 63240001.  It is best to use a different
 	name if you are going to be making a map for others to use so
 	that it is unique and does not clash with others.
 

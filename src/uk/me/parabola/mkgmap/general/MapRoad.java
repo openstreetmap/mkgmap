@@ -16,8 +16,11 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
+import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 
 /**
@@ -40,12 +43,12 @@ public class MapRoad extends MapLine {
 	public MapRoad(long id, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());
-		this.roadDef = new RoadDef(id, getName());
+		roadDef = new RoadDef(id, getName());
 	}
 
 	private MapRoad(MapRoad r) {
 		super(r);
-		this.roadDef = r.roadDef;
+		roadDef = r.roadDef;
 	}
 
 	public MapRoad copy() {
@@ -57,52 +60,56 @@ public class MapRoad extends MapLine {
 	}
 
 	public void setRoadClass(int roadClass) {
-		this.roadDef.setRoadClass(roadClass);
+		roadDef.setRoadClass(roadClass);
 	}
 
 	public void setSpeed(int speed) {
-		this.roadDef.setSpeed(speed);
+		roadDef.setSpeed(speed);
 	}
 
 	public void setOneway() {
-		this.roadDef.setOneway();
+		roadDef.setOneway();
 	}
 
 	public void setToll() {
-		this.roadDef.setToll();
+		roadDef.setToll();
 	}
 
 	public void paved(boolean p) {
-		this.roadDef.paved(p);
+		roadDef.paved(p);
 	}
 
 	public void ferry(boolean f) {
-		this.roadDef.ferry(f);
+		roadDef.ferry(f);
 	}
 
 	public void setSynthesised(boolean s) {
-		this.roadDef.setSynthesised(s);
+		roadDef.setSynthesised(s);
 	}
 
 	// XXX: currently passing PolishMapSource-internal format
 	public void setAccess(boolean[] access) {
-		this.roadDef.setAccess(access);
+		roadDef.setAccess(access);
 	}
 
 	public void setNoThroughRouting() {
-		this.roadDef.setNoThroughRouting();
+		roadDef.setNoThroughRouting();
 	}
 
 	public void setStartsWithNode(boolean s) {
-		this.roadDef.setStartsWithNode(s);
+		roadDef.setStartsWithNode(s);
 	}
 
 	public void setInternalNodes(boolean s) {
-		this.roadDef.setInternalNodes(s);
+		roadDef.setInternalNodes(s);
 	}
 
 	public void setNumNodes(int n) {
-		this.roadDef.setNumNodes(n);
+		roadDef.setNumNodes(n);
+	}
+
+	public void setNumbers(List<Numbers> numbers) {
+		roadDef.setNumbersList(numbers);
 	}
 
 	public RoadDef getRoadDef() {
@@ -110,26 +117,26 @@ public class MapRoad extends MapLine {
 	}
 
 	public void setRoadCity(City c) {
-		this.roadDef.setCity(c);
+		roadDef.setCity(c);
 	}
 
 	public void setRoadZip(Zip z) {
-		this.roadDef.setZip(z);
+		roadDef.setZip(z);
 	}
 
 	public void setRoundabout(boolean r) {
-		this.roadDef.setRoundabout(r);
+		roadDef.setRoundabout(r);
 	}
 
 	public void doFlareCheck(boolean fc) {
-		this.roadDef.doFlareCheck(fc);
+		roadDef.doFlareCheck(fc);
 	}
 
 	public void doDeadEndCheck(boolean dec) {
-		this.roadDef.doDeadEndCheck(dec);
+		roadDef.doDeadEndCheck(dec);
 	}
 
 	public void setLinkRoad(boolean lr) {
-		this.roadDef.setLinkRoad(lr);
+		roadDef.setLinkRoad(lr);
 	}
 }
