@@ -4,6 +4,7 @@ import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.TokType;
@@ -16,11 +17,11 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class TypeReader {
 	private static final Logger log = Logger.getLogger(TypeReader.class);
 
-	private final int kind;
+	private final FeatureKind kind;
 	private final LevelInfo[] levels;
 	private static final Pattern HYPHEN_PATTERN = Pattern.compile("-");
 
-	public TypeReader(int kind, LevelInfo[] levels) {
+	public TypeReader(FeatureKind kind, LevelInfo[] levels) {
 		this.kind = kind;
 		this.levels = levels;
 	}

@@ -10,34 +10,37 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
  */
-
 package uk.me.parabola.mkgmap.osmstyle.function;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
- * Checks if a way has been loaded completely or if some points are missing.
- * @author WanMil
+ * Get the value of a tag from the element.
+ *
+ * In the style language: highway = primary
+ * This is effectively a shorthand for: get_tag(highway) = primary
+ *
+ * @author Steve Ratcliffe
  */
-public class IsCompleteFunction extends StyleFunction {
+public class GetTagFunction extends StyleFunction {
 
-	public IsCompleteFunction() {
-		super(null);
+	public GetTagFunction(String value) {
+		super(value);
 	}
 
-	public boolean supportsWay() {
+	public String value(Element el) {
+		return el.getTag(getKeyValue());
+	}
+
+	/**
+	 * Since this contains a tag value it can potentially be used to index the whole rule,
+	 * so return true here.
+	 */
+	public boolean isIndexable() {
 		return true;
 	}
-	
-	public String value(Element el) {
-		if (el instanceof Way) {
-			return String.valueOf(((Way) el).isComplete());
-		}
-		return null;
-	}
 
-	public String getName() {
-		return "is_complete";
+	public String toString() {
+		return getKeyValue();
 	}
 }

@@ -30,11 +30,7 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
 public class GType {
 	private static final Logger log = Logger.getLogger(GType.class);
 
-	public static final int POINT = 1;
-	public static final int POLYLINE = 2;
-	public static final int POLYGON = 3;
-
-	private final int featureKind;
+	private final FeatureKind featureKind;
 	private final int type;
 
 	private int minResolution = 24;
@@ -59,7 +55,7 @@ public class GType {
 	// actions will always be executed
 	private boolean propogateActionsOnContinue;
 
-	public GType(int featureKind, String type) {
+	public GType(FeatureKind featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
 			this.type = Integer.decode(type);
@@ -69,7 +65,7 @@ public class GType {
 		}
 	}
 
-	public GType(int featureKind, String type, String subtype) {
+	public GType(FeatureKind featureKind, String type, String subtype) {
 		this.featureKind = featureKind;
 		try {
 			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
@@ -94,7 +90,7 @@ public class GType {
 		this.type = other.type;
 	}
 
-	public int getFeatureKind() {
+	public FeatureKind getFeatureKind() {
 		return featureKind;
 	}
 

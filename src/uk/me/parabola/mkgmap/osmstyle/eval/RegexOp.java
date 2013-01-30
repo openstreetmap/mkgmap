@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
+import static uk.me.parabola.mkgmap.osmstyle.eval.NodeType.*;
+
 /**
  * Regular expression matching.
  * @author Steve Ratcliffe
@@ -32,7 +34,7 @@ public class RegexOp extends AbstractBinaryOp {
 	}
 
 	public boolean eval(Element el) {
-		String tagval = getTagValue(el, getFirst().value());
+		String tagval = first.value(el);
 		if (tagval == null)
 			return false;
 
@@ -46,6 +48,6 @@ public class RegexOp extends AbstractBinaryOp {
 	public void setSecond(Op second) {
 		assert second.isType(VALUE);
 		super.setSecond(second);
-		pattern = Pattern.compile(second.value());
+		pattern = Pattern.compile(second.getKeyValue());
 	}
 }

@@ -31,17 +31,19 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
  * 
  * @author WanMil
  */
-public class LengthFunction extends AbstractFunction {
-	private static final Logger log = Logger
-			.getLogger(LengthFunction.class);
+public class LengthFunction extends CachedFunction {
+	private static final Logger log = Logger.getLogger(LengthFunction.class);
 
-	private final DecimalFormat nf = new DecimalFormat("0.0#####################", DecimalFormatSymbols.getInstance(Locale.US)); 
+	private final DecimalFormat nf = new DecimalFormat("0.0#####################", DecimalFormatSymbols.getInstance(Locale.US));
+
+	public LengthFunction() {
+		super(null);
+	}
 
 	protected String calcImpl(Element el) {
 		double length = calcLength(el);
 		return nf.format(length);
 	}
-
 	
 	private double calcLength(Element el) {
 		if (el instanceof Way) {
@@ -78,6 +80,9 @@ public class LengthFunction extends AbstractFunction {
 		return "length";
 	}
 
+	public String toString() {
+		return getName() + "()";
+	}
 
 	public boolean supportsWay() {
 		return true;
@@ -86,5 +91,4 @@ public class LengthFunction extends AbstractFunction {
 	public boolean supportsRelation() {
 		return true;
 	}
-
 }

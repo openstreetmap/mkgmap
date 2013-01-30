@@ -51,6 +51,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
@@ -229,7 +230,7 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void addConvertedWay(Way way, GType foundType) {
-		if (foundType.getFeatureKind() == GType.POLYLINE) {
+		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 		    if(foundType.isRoad() &&
 			   !MapObject.hasExtendedType(foundType.getType())){
 		    	roads.add(way);
@@ -583,7 +584,7 @@ public class StyledConverter implements OsmConverter {
 				name = name.substring(2);
 			}
 				
-			while(name.length() > 0 && name.charAt(0) == ' ')
+			while(!name.isEmpty() && name.charAt(0) == ' ')
 				name = name.substring(1);
 
 			if(leadingCode != 0)

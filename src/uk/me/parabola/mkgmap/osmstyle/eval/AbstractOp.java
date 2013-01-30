@@ -16,9 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
-import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.osmstyle.function.FunctionFactory;
-import uk.me.parabola.mkgmap.osmstyle.function.StyleFunction;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 
@@ -29,29 +26,27 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
  */
 public abstract class AbstractOp implements Op {
 	
-	private static final Logger log = Logger.getLogger(AbstractOp.class);
-
 	protected Op first;
-	private char type;
+	private NodeType type;
 
 	public static Op createOp(String value) {
 		char c = value.charAt(0);
 		Op op;
 		switch (c) {
-		case EQUALS: op = new EqualsOp(); break;
-		case AND:
+		case '=': op = new EqualsOp(); break;
+		case '&':
 			if (value.length() > 1)
 				throw new SyntaxException(String.format("Use '&' instead of '%s'", value));
 			op = new AndOp();
 			break;
-		case OR:
+		case '|':
 			if (value.length() > 1)
 				throw new SyntaxException(String.format("Use '|' instead of '%s'", value));
 			op = new OrOp();
 			break;
-		case REGEX: op = new RegexOp(); break;
-		case OPEN_PAREN: op = new OpenOp(); break;
-		case CLOSE_PAREN: op = new CloseOp(); break;
+		case '~': op = new RegexOp(); break;
+		case '(': op = new OpenOp(); break;
+		case ')': op = new CloseOp(); break;
 		case '>':
 			if (value.equals(">="))
 				op = new GTEOp();
@@ -76,20 +71,6 @@ public abstract class AbstractOp implements Op {
 		return op;
 	}
 
-	protected String getTagValue(Element el, String key) {
-		if (key.endsWith("()")) {
-			String functionName = key.substring(0, key.length()-2);
-			StyleFunction function = FunctionFactory.getCachedFunction(functionName);
-			if (function==null) {
-				log.error("Unknown style function "+ functionName);
-				return null;
-			}
-			return function.calcValue(el);
-		} else {
-			return el.getTag(key);
-		}
-	}
-	
 	/**
 	 * Does this operation have a higher priority that the other one?
 	 * @param other The other operation.
@@ -106,23 +87,37 @@ public abstract class AbstractOp implements Op {
 		this.first = first;
 	}
 
-	public char getType() {
+	/**
+	 * Only supported on Binary operations, but useful to return null to make code simpler, rather than
+	 * defaulting to UnsupportedOperation.
+	 */
+	public Op getSecond() {
+		return null;
+	}
+
+	public NodeType getType() {
 		return type;
 	}
 
-	public String getTypeString() {
-		return String.valueOf(getType());
-	}
-
-	void setType(char type) {
+	protected void setType(NodeType type) {
 		this.type = type;
 	}
 
-	public String value() {
-		return first.toString();
+	/**
+	 * Only supported on value nodes.
+	 */
+	public String value(Element el) {
+		throw new UnsupportedOperationException();
 	}
 
-	public boolean isType(char value) {
+	/**
+	 * This is only supported on value nodes.
+	 */
+	public String getKeyValue() {
+		throw new UnsupportedOperationException();
+	}
+
+	public boolean isType(NodeType value) {
 		return type == value;
 	}
 }

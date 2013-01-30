@@ -17,12 +17,12 @@
 package uk.me.parabola.mkgmap.osmstyle.eval;
 
 /**
- * Greater than.  For population speeds etc.
+ * Greater than.  For population, speeds etc.
  * @author Steve Ratcliffe
  */
 public class GTOp extends NumericOp {
 	public GTOp() {
-		setType(GT);
+		setType(NodeType.GT);
 	}
 
 	protected boolean doesCompare(int result) {

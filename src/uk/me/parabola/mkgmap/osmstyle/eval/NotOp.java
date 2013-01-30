@@ -25,7 +25,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class NotOp extends AbstractOp {
 
 	public NotOp() {
-		setType(NOT);
+		setType(NodeType.NOT);
 	}
 
 	public boolean eval(Element el) {

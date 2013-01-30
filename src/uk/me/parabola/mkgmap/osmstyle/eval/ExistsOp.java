@@ -25,30 +25,24 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  * @author Steve Ratcliffe
  */
 public class ExistsOp extends AbstractOp {
-	private String key;
 
 	public ExistsOp() {
-		setType(EXISTS);
+		setType(NodeType.EXISTS);
 	}
 
 	public void setFirst(Op first) {
 		super.setFirst(first);
-		key = first.value();
 	}
 
 	public boolean eval(Element el) {
-		return getTagValue(el, key) != null;
+		return first.value(el) != null;
 	}
 
 	public int priority() {
 		return 10;
 	}
 
-	public String getTypeString() {
-		return "=*";
-	}
-
 	public String toString() {
-		return key + "=*";
+		return first + "=*";
 	}
 }

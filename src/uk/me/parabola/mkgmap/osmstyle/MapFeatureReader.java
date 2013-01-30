@@ -20,6 +20,7 @@ import java.util.Map;
 
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 
 /**
@@ -65,19 +66,19 @@ public class MapFeatureReader {
 			log.debug("feature kind", type);
 			if (type.equals("point")) {
 				log.debug("point type found");
-				saveFeature(GType.POINT, fields, pointFeatures);
+				saveFeature(FeatureKind.POINT, fields, pointFeatures);
 
 			} else if (type.equals("polyline")) {
 				log.debug("polyline type found");
 				// Lines only have types and not subtypes on
 				// the garmin side
-				assert fields[F_GARMIN_SUBTYPE].length() == 0;
-				saveFeature(GType.POLYLINE, fields, lineFeatures);
+				assert fields[F_GARMIN_SUBTYPE].isEmpty();
+				saveFeature(FeatureKind.POLYLINE, fields, lineFeatures);
 
 			} else if (type.equals("polygon")) {
 				log.debug("polygon type found");
-				assert fields[F_GARMIN_SUBTYPE].length() == 0;
-				saveFeature(GType.POLYGON, fields, shapeFeatures);
+				assert fields[F_GARMIN_SUBTYPE].isEmpty();
+				saveFeature(FeatureKind.POLYGON, fields, shapeFeatures);
 
 			} else {
 				// Unknown type
@@ -92,13 +93,13 @@ public class MapFeatureReader {
 	 * @param fields The fields from the map-features file.
 	 * @param features This is where the GarminType is put.
 	 */
-	private void saveFeature(int featureKind, String[] fields, Map<String, GType> features) {
+	private void saveFeature(FeatureKind featureKind, String[] fields, Map<String, GType> features) {
 		String osm = makeKey(fields[F_OSM_TYPE], fields[F_OSM_SUBTYPE]);
 
 		GType gt;
 		String gsubtype = fields[F_GARMIN_SUBTYPE];
 
-		if (gsubtype == null || gsubtype.length() == 0) {
+		if (gsubtype == null || gsubtype.isEmpty()) {
 			gt = new GType(featureKind, fields[F_GARMIN_TYPE]);
 		} else {
 			gt = new GType(featureKind, fields[F_GARMIN_TYPE], gsubtype);
@@ -107,7 +108,7 @@ public class MapFeatureReader {
 		if (fields.length > F_MIN_RESOLUTION) {
 			String field = fields[F_MIN_RESOLUTION];
 			int res = DEFAULT_RESOLUTION;
-			if (field != null && field.length() > 0) {
+			if (field != null && !field.isEmpty()) {
 				res = Integer.valueOf(field);
 				if (res < 0 || res > 24) {
 					System.err.println("Warning: map feature resolution out of range");

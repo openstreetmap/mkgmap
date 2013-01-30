@@ -44,12 +44,12 @@ public abstract class NumericOp extends AbstractBinaryOp {
 	 */
 	public final boolean eval(Element el) {
 		// get the value of the tag, if it doesn't exist then false.
-		String val = getTagValue(el,getFirst().value());
+		String val = first.value(el);
 		if (val == null)
 			return false;
 
 		ValueWithUnit result = new ValueWithUnit(val);
-		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value());  // TODO optimise
+		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value(el));
 
 		if (!result.isValid() || !ourVal.isValid())
 			return false;
@@ -58,19 +58,6 @@ public abstract class NumericOp extends AbstractBinaryOp {
 	}
 
 	public String toString() {
-		return "(" + first + getTypeString() + getSecond() + ')';
-	}
-
-	@SuppressWarnings({"MethodWithMultipleReturnPoints"})
-	public String getTypeString() {
-		switch (getType()) {
-		case EQUALS: return "=";
-		case NOT_EQUALS: return "!=";
-		case GT: return ">";
-		case GTE: return ">=";
-		case LT: return "<";
-		case LTE: return "<=";
-		default: return "?";
-		}
+		return "(" + first + getType().toSymbol() + getSecond() + ')';
 	}
 }

@@ -92,19 +92,23 @@ public class LinkedOp implements Op {
 		wrapped.setFirst(first);
 	}
 
-	public char getType() {
+	public Op getSecond() {
+		return null;
+	}
+
+	public NodeType getType() {
 		return wrapped.getType();
 	}
 
-	public String getTypeString() {
-		return wrapped.getTypeString();
+	public String value(Element el) {
+		return wrapped.value(el);
 	}
 
-	public String value() {
-		return wrapped.value();
+	public String getKeyValue() {
+		throw new UnsupportedOperationException();
 	}
 
-	public boolean isType(char value) {
+	public boolean isType(NodeType value) {
 		return wrapped.isType(value);
 	}
 

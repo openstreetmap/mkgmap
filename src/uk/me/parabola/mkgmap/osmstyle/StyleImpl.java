@@ -52,6 +52,7 @@ import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
 import uk.me.parabola.mkgmap.osmstyle.eval.Op;
 import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
+import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
@@ -292,7 +293,7 @@ public class StyleImpl implements Style {
 		LevelInfo[] levels = LevelInfo.createFromString(l);
 
 		try {
-			RuleFileReader reader = new RuleFileReader(0, levels, relations);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);
 			reader.load(fileLoader, "relations");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
@@ -300,7 +301,7 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POINT, levels, nodes);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes);
 			reader.load(fileLoader, "points");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
@@ -308,14 +309,14 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYLINE, levels, lines);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines);
 			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(GType.POLYGON, levels, polygons);
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons);
 			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");

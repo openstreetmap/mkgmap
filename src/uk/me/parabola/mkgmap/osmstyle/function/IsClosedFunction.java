@@ -33,21 +33,24 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
  * Checks if a way is closed.
  * @author WanMil
  */
-public class IsClosedFunction extends AbstractFunction {
+public class IsClosedFunction extends StyleFunction {
 
-	public String getName() {
-		return "is_closed";
+	public IsClosedFunction() {
+		super(null);
 	}
 
 	public boolean supportsWay() {
 		return true;
 	}
 	
-	protected String calcImpl(Element el) {
+	public String value(Element el) {
 		if (el instanceof Way) {
 			return String.valueOf(((Way)el).isClosed());
 		}
 		return null;
 	}
 
+	public String getName() {
+		return "is_closed";
+	}
 }

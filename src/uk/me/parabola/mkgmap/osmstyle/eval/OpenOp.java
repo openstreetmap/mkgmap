@@ -26,7 +26,7 @@ import uk.me.parabola.mkgmap.scan.SyntaxException;
 public class OpenOp extends AbstractOp {
 
 	public OpenOp() {
-		setType(OPEN_PAREN);
+		setType(NodeType.OPEN_PAREN);
 	}
 
 	public boolean eval(Element el) {
