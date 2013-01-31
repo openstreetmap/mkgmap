@@ -374,6 +374,15 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				way.deleteTag("natural");
 				if (coastlineFilenames == null && precompSeaDir == null)
 					shoreline.add(way);
+				
+				if (precompSeaDir != null) {
+					// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
+					Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
+					coastlineWay.addTag("natural", "coastline");
+					// tag that this way is used as line only
+					coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+					saver.addWay(coastlineWay);
+				}
 			} else if (natural.contains(";")) {
 				// cope with compound tag value
 				String others = null;
@@ -393,6 +402,15 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						way.addTag("natural", others);
 					if (coastlineFilenames == null && precompSeaDir == null)
 						shoreline.add(way);
+					
+					if (precompSeaDir != null) {
+						// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
+						Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
+						coastlineWay.addTag("natural", "coastline");
+						// tag that this way is used as line only
+						coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+						saver.addWay(coastlineWay);
+					}
 				}
 			}
 		}
