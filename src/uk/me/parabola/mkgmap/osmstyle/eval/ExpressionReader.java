@@ -217,7 +217,7 @@ public class ExpressionReader {
 			if (function.supportsWay()) supported = true;
 			break;
 		case RELATION:
-			if (function.supportsNode()) supported = true;
+			if (function.supportsRelation()) supported = true;
 			break;
 		}
 
