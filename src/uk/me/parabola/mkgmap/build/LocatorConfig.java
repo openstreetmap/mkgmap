@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import uk.me.parabola.imgfmt.app.trergn.TREHeader;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.Tags;
 
@@ -138,11 +139,19 @@ public class LocatorConfig {
 									addRegionOffset(iso,Integer.parseInt(regionOffsetTag.getNodeValue()));
 								}
 
-								Node poiDispTag = attr.getNamedItem("poiDispFlag");
+								int poiDispTag = 0x0;
+								Node streetBeforeHousenumber = attr.getNamedItem("streetBeforeHousenumber");
+								if (streetBeforeHousenumber != null && "true".equals(streetBeforeHousenumber.getNodeValue())) {
+									poiDispTag |= TREHeader.POI_FLAG_STREET_BEFORE_HOUSENUMBER;
+								}
 
-								if(poiDispTag != null && iso != null)
-								{
-									addPoiDispTag(iso,Integer.decode(poiDispTag.getNodeValue()));
+								Node postalcodeBeforeCity = attr.getNamedItem("postalcodeBeforeCity");
+								if (postalcodeBeforeCity != null && "true".equals(postalcodeBeforeCity.getNodeValue())) {
+									poiDispTag |= TREHeader.POI_FLAG_POSTALCODE_BEFORE_CITY;
+								}
+								
+								if (poiDispTag != 0x0 && iso != null) {
+									setPoiDispTag(iso, poiDispTag);
 								}
 							}
 
@@ -189,9 +198,10 @@ public class LocatorConfig {
 		regOffsetMap.put(iso,offset);
 	}
 
-	private void addPoiDispTag(String iso, Integer flag)
+	private void setPoiDispTag(String iso, int flag)
 	{
-		poiDispFlagMap.put(iso,flag);
+		// only two flags are allowed to be configured
+		poiDispFlagMap.put(iso, flag & (TREHeader.POI_FLAG_STREET_BEFORE_HOUSENUMBER | TREHeader.POI_FLAG_POSTALCODE_BEFORE_CITY));
 	}
 
 	private void addContinent(String continent)

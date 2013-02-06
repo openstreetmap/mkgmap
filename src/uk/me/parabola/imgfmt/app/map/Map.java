@@ -231,11 +231,11 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	/**
-	 * Set the point of interest flags.
+	 * Adds the bits to the point of interest flags.
 	 * @param flags The POI flags.
 	 */
-	public void setPoiDisplayFlags(int flags) {
-		treFile.setPoiDisplayFlags((byte) flags);
+	public void addPoiDisplayFlags(int flags) {
+		treFile.addPoiDisplayFlags((byte) flags);
 	}
 
 	public void addMapObject(MapObject item) {

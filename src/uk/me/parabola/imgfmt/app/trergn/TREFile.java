@@ -358,7 +358,7 @@ public class TREFile extends ImgFile implements Configurable {
 		header.setBounds(area);
 	}
 
-	public void setPoiDisplayFlags(byte b) {
-		header.setPoiDisplayFlags(b);
+	public void addPoiDisplayFlags(byte b) {
+		header.addPoiDisplayFlags(b);
 	}
 }

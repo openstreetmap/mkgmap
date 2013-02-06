@@ -55,7 +55,9 @@ public class TREHeader extends CommonHeader {
 	static final int SUBDIV_REC_SIZE = 14;
 	static final int SUBDIV_REC_SIZE2 = 16;
 
-	private static final int POI_FLAG_TRANSPARENT = 0x2;
+	public static final int POI_FLAG_TRANSPARENT = 0x2;
+	public static final int POI_FLAG_STREET_BEFORE_HOUSENUMBER = 0x4;
+	public static final int POI_FLAG_POSTALCODE_BEFORE_CITY = 0x8;
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -255,8 +257,8 @@ public class TREHeader extends CommonHeader {
 		mapId = id;
 	}
 	
-	public void setPoiDisplayFlags(byte poiDisplayFlags) {
-		this.poiDisplayFlags = poiDisplayFlags;
+	public void addPoiDisplayFlags(byte poiDisplayFlags) {
+		this.poiDisplayFlags |= poiDisplayFlags;
 	}	
 
 	public int getMapInfoSize() {

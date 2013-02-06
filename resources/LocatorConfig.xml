@@ -61,7 +61,7 @@
 		<variant>AU</variant>
 		<variant>AUS</variant>
 	</country>
-	<country name="Österreich" abr="AUT" poiDispFlag="0xc">
+	<country name="Österreich" abr="AUT" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Austria</variant>
 		<variant>AT</variant>
 		<variant>AUT</variant>
@@ -381,7 +381,7 @@
 		<variant>GEO</variant>
 		<variant>საქართველო</variant>
 	</country>
-	<country name="Deutschland" abr="DEU" regionOffset="3" poiDispFlag="0xc">
+	<country name="Deutschland" abr="DEU" regionOffset="3" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Bundesrepublik Deutschland</variant>
 		<variant>Germany</variant>
 		<variant>Federal Republic of Germany</variant>
@@ -469,7 +469,7 @@
 		<variant>HUN</variant>
 		<variant>Magyarország</variant>
 	</country>
-	<country name="Ísland" abr="ISL" poiDispFlag="0xc">
+	<country name="Ísland" abr="ISL" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Lýðveldið Ísland</variant>
 		<variant>Iceland</variant>
 		<variant>IS</variant>
@@ -826,7 +826,7 @@
 		<variant>POL</variant>
 		<variant>Poland</variant>
 	</country>
-	<country name="Portugal" abr="PRT" poiDispFlag="0xc">
+	<country name="Portugal" abr="PRT" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>PT</variant>
 		<variant>PRT</variant>
 		<variant>POR</variant>
@@ -975,7 +975,7 @@
 		<variant>GS</variant>
 		<variant>SGS</variant>
 	</country>
-	<country name="España" abr="ESP" poiDispFlag="0xc">
+	<country name="España" abr="ESP" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Spain</variant>
 		<variant>ES</variant>
 		<variant>ESP</variant>
@@ -1015,7 +1015,7 @@
 		<variant>SE</variant>
 		<variant>SWE</variant>
 	</country>
-	<country name="Schweiz" abr="CHE" poiDispFlag="0xc">
+	<country name="Schweiz" abr="CHE" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Switzerland</variant>
 		<variant>Suisse</variant>
 		<variant>CH</variant>

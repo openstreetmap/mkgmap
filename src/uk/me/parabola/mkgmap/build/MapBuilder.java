@@ -753,7 +753,7 @@ public class MapBuilder implements Configurable {
 		map.setBounds(src.getBounds());
 
 		if(poiDisplayFlags != 0)					// POI requested alternate address notation
-			map.setPoiDisplayFlags(poiDisplayFlags);
+			map.addPoiDisplayFlags(poiDisplayFlags);
 
 		// You can add anything here.
 		// But there has to be something, otherwise the map does not show up.
