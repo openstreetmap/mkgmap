@@ -1255,23 +1255,65 @@ public class MultiPolygonRelation extends Relation {
 			return null;
 		}
 		
+		Rectangle outerBounds = areaData.outerArea.getBounds();
+		
 		if (areaData.innerAreas.size() == 1) {
 			// make it short if there is only one inner area
-			Rectangle outerBounds = areaData.outerArea.getBounds();
-			CoordinateAxis axis = (outerBounds.width < outerBounds.height ? CoordinateAxis.LONGITUDE : CoordinateAxis.LATITUDE);
-			CutPoint oneCutPoint = new CutPoint(axis);
-			oneCutPoint.addArea(areaData.innerAreas.get(0));
-			return oneCutPoint;
+			CutPoint cutPoint1 = new CutPoint(CoordinateAxis.LATITUDE, outerBounds);
+			cutPoint1.addArea(areaData.innerAreas.get(0));
+			CutPoint cutPoint2 = new CutPoint(CoordinateAxis.LONGITUDE, outerBounds);
+			cutPoint2.addArea(areaData.innerAreas.get(0));
+			if (cutPoint1.compareTo(cutPoint2) > 0) {
+				return cutPoint1;
+			} else {
+				return cutPoint2;
+			}
+			
 		}
 		
-		ArrayList<Area> innerStart = new ArrayList<Area>(
-				areaData.innerAreas);
+		ArrayList<Area> innerStart = new ArrayList<Area>(areaData.innerAreas);
+		
+		// first try to cut out all polygons that intersect the boundaries of the outer polygon
+		// this has the advantage that the outer polygon need not be split into two halves
+		for (CoordinateAxis axis : CoordinateAxis.values()) {
+			CutPoint edgeCutPoint = new CutPoint(axis, outerBounds);
+
+			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the start
+			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START: COMP_LAT_START));
+			for (Area anInnerStart : innerStart) {
+				if (axis.getStart(anInnerStart) <= axis.getStart(outerBounds)) {
+					// found a touching area
+					edgeCutPoint.addArea(anInnerStart);
+				} else {
+					break;
+				}
+			}
+			if (edgeCutPoint.getNumberOfAreas() > 0) {
+				// there at least one intersecting inner polygon
+				return edgeCutPoint;
+			}
+			
+			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP: COMP_LAT_STOP));
+			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the stop
+			for (Area anInnerStart : innerStart) {
+				if (axis.getStop(anInnerStart) >= axis.getStop(outerBounds)) {
+					// found a touching area
+					edgeCutPoint.addArea(anInnerStart);
+				} else {
+					break;
+				}
+			}
+			if (edgeCutPoint.getNumberOfAreas() > 0) {
+				// there at least one intersecting inner polygon
+				return edgeCutPoint;
+			}
+		}
+		
 		
 		ArrayList<CutPoint> bestCutPoints = new ArrayList<CutPoint>(CoordinateAxis.values().length);
-		
 		for (CoordinateAxis axis : CoordinateAxis.values()) {
-			CutPoint bestCutPoint = new CutPoint(axis);
-			CutPoint currentCutPoint = new CutPoint(axis);
+			CutPoint bestCutPoint = new CutPoint(axis, outerBounds);
+			CutPoint currentCutPoint = new CutPoint(axis, outerBounds);
 
 			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START: COMP_LAT_START));
 
@@ -2444,21 +2486,28 @@ public class MultiPolygonRelation extends Relation {
 		List<Area> innerAreas;
 	}
 
+	private static final int CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD = 1<<11;
+	private static final int CUT_POINT_CLASSIFICATION_BAD_THRESHOLD = 1<<8;
 	private static class CutPoint implements Comparable<CutPoint>{
-		int startPoint = Integer.MAX_VALUE;
-		int stopPoint = Integer.MIN_VALUE;
-		final LinkedList<Area> areas;
+		private int startPoint = Integer.MAX_VALUE;
+		private int stopPoint = Integer.MIN_VALUE;
+		private Integer cutPoint = null;
+		private final LinkedList<Area> areas;
 		private final Comparator<Area> comparator;
 		private final CoordinateAxis axis;
+		private Rectangle bounds;
+		private final Rectangle outerBounds;
+		private Double minAspectRatio;
 
-		public CutPoint(CoordinateAxis axis) {
+		public CutPoint(CoordinateAxis axis, Rectangle outerBounds) {
 			this.axis = axis;
+			this.outerBounds = outerBounds;
 			this.areas = new LinkedList<Area>();
 			this.comparator = (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP : COMP_LAT_STOP);
 		}
 		
 		public CutPoint duplicate() {
-			CutPoint newCutPoint = new CutPoint(this.axis);
+			CutPoint newCutPoint = new CutPoint(this.axis, this.outerBounds);
 			newCutPoint.areas.addAll(areas);
 			newCutPoint.startPoint = startPoint;
 			newCutPoint.stopPoint = stopPoint;
@@ -2468,35 +2517,103 @@ public class MultiPolygonRelation extends Relation {
 		private boolean isGoodCutPoint() {
 			// It is better if the cutting line is on a multiple of 2048. 
 			// Otherwise MapSource and QLandkarteGT paints gaps between the cuts
-			return getCutPoint() % 2048 == 0;
+			return getCutPoint() % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD == 0;
 		}
 		
+		private boolean isBadCutPoint() {
+			int d1 = getCutPoint() - startPoint;
+			int d2 = stopPoint - getCutPoint();
+			return Math.min(d1, d2) < CUT_POINT_CLASSIFICATION_BAD_THRESHOLD;
+		}
+		
+		private boolean isStartCut() {
+			return (startPoint <= axis.getStart(outerBounds));
+		}
+		
+		private boolean isStopCut() {
+			return (stopPoint >= axis.getStop(outerBounds));
+		}
+		
+		/**
+		 * Calculates the point where the cut should be applied.
+		 * @return the point of cut
+		 */
 		public int getCutPoint() {
-			int cutPoint = startPoint + (stopPoint - startPoint) / 2;
+			if (cutPoint != null) {
+				// already calculated => just return it
+				return cutPoint;
+			}
+			
+			if (startPoint == stopPoint) {
+				// there is no choice => return the one possible point 
+				cutPoint = startPoint;
+				return cutPoint;
+			}
+			
+			if (isStartCut()) {
+				// the polygons can be cut out at the start of the sector
+				// thats good because the big polygon need not to be cut into two halves
+				cutPoint = startPoint;
+				return cutPoint;
+			}
+			
+			if (isStopCut()) {
+				// the polygons can be cut out at the end of the sector
+				// thats good because the big polygon need not to be cut into two halves
+				cutPoint = startPoint;
+				return cutPoint;
+			}
+			
+			// try to cut with a good aspect ratio so try the middle of the polygon to be cut
+			int midOuter = axis.getStart(outerBounds)+(axis.getStop(outerBounds) - axis.getStart(outerBounds)) / 2;
+			cutPoint = midOuter;
+
+			if (midOuter < startPoint) {
+				// not possible => the start point is greater than the middle so correct to the startPoint
+				cutPoint = startPoint;
+				
+				if (((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD) <= stopPoint) {
+					cutPoint = ((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD);
+				}
+				
+			} else if (midOuter > stopPoint) {
+				// not possible => the stop point is smaller than the middle so correct to the stopPoint
+				cutPoint = stopPoint;
+
+				if ((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1))  >= startPoint) {
+					cutPoint = (cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1));
+				}
+			}
+			
 			
 			// try to find a cut point that is a multiple of 2048 to 
 			// avoid that gaps are painted by MapSource and QLandkarteGT
 			// between the cutting lines
-			int cutMod = cutPoint % 2048;
+			int cutMod = cutPoint % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD;
 			if (cutMod == 0) {
 				return cutPoint;
 			}
 			
-			int cut1 = (cutMod > 0 ? cutPoint-cutMod : cutPoint  - 2048- cutMod);
+			int cut1 = (cutMod > 0 ? cutPoint-cutMod : cutPoint  - CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD- cutMod);
 			if (cut1 >= startPoint && cut1 <= stopPoint) {
-				return cut1;
+				cutPoint = cut1;
+				return cutPoint;
 			}
 			
-			int cut2 = (cutMod > 0 ? cutPoint + 2048 -cutMod : cutPoint - cutMod);
+			int cut2 = (cutMod > 0 ? cutPoint + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD -cutMod : cutPoint - cutMod);
 			if (cut2 >= startPoint && cut2 <= stopPoint) {
-				return cut2;
+				cutPoint = cut2;
+				return cutPoint;
 			}
 			
 			return cutPoint;
 		}
 
 		public Rectangle getCutRectangleForArea(Area toCut, boolean firstRect) {
-			Rectangle areaRect = toCut.getBounds();
+			return getCutRectangleForArea(toCut.getBounds(), firstRect);
+		}
+		
+		public Rectangle getCutRectangleForArea(Rectangle areaRect, boolean firstRect) {
 			if (axis == CoordinateAxis.LONGITUDE) {
 				int newWidth = getCutPoint()-areaRect.x;
 				if (firstRect) {
@@ -2531,15 +2648,89 @@ public class MultiPolygonRelation extends Relation {
 				(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START
 						: COMP_LAT_START)));
 			stopPoint = axis.getStop(areas.getFirst());
+			
+			// reset the cached value => need to be recalculated the next time they are needed
+			bounds = null;
+			cutPoint = null;
+			minAspectRatio = null;
 		}
 
 		public int getNumberOfAreas() {
 			return this.areas.size();
 		}
 
+		/**
+		 * Retrieves the minimum aspect ratio of the outer bounds after cutting.
+		 * 
+		 * @return minimum aspect ratio of outer bound after cutting
+		 */
+		public double getMinAspectRatio() {
+			if (minAspectRatio == null) {
+				// first get the left/upper cut
+				Rectangle r1 = getCutRectangleForArea(outerBounds, true);
+				double s1_1 = CoordinateAxis.LATITUDE.getSizeOfSide(r1);
+				double s1_2 = CoordinateAxis.LONGITUDE.getSizeOfSide(r1);
+				double ar1 = Math.min(s1_1, s1_2) / Math.max(s1_1, s1_2);
+
+				// second get the right/lower cut
+				Rectangle r2 = getCutRectangleForArea(outerBounds, false);
+				double s2_1 = CoordinateAxis.LATITUDE.getSizeOfSide(r2);
+				double s2_2 = CoordinateAxis.LONGITUDE.getSizeOfSide(r2);
+				double ar2 = Math.min(s2_1, s2_2) / Math.max(s2_1, s2_2);
+
+				// get the minimum
+				minAspectRatio = Math.min(ar1, ar2);
+			}
+			return minAspectRatio;
+		}
+		
 		public int compareTo(CutPoint o) {
 			if (this == o) {
 				return 0;
+			}
+			
+			// prefer a cut at the boundaries
+			boolean startStopCut = isStartCut() | isStopCut();
+			boolean oStartStopCut = o.isStartCut() | o.isStopCut();
+			
+			if (startStopCut != oStartStopCut) {
+				if (startStopCut) {
+					return 1;
+				} else {
+					return -1;
+				}
+			} else if (startStopCut) {
+				// both are boundary cuts
+				// that means that they have equal importance
+				// prefer the one with the lower hashcode...
+				int dS = hashCode()-o.hashCode();
+				if (dS != 0) {
+					return dS;
+				}
+				
+			}
+			
+			// handle the special case that a cut has no area
+			if (getNumberOfAreas() == 0) {
+				if (o.getNumberOfAreas() == 0) {
+					return 0;
+				} else {
+					return -1;
+				}
+			} else if (o.getNumberOfAreas() == 0) {
+				return 1;
+			}
+			
+			if (isBadCutPoint() != o.isBadCutPoint()) {
+				if (isBadCutPoint()) {
+					return -1;
+				} else
+					return 1;
+			}
+			
+			double dAR = getMinAspectRatio() - o.getMinAspectRatio();
+			if (dAR != 0) {
+				return (dAR > 0 ? 1 : -1);
 			}
 			
 			if (isGoodCutPoint() != o.isGoodCutPoint()) {
@@ -2549,18 +2740,30 @@ public class MultiPolygonRelation extends Relation {
 					return -1;
 			}
 			
-			int ndiff = getNumberOfAreas()-o.getNumberOfAreas();
-			if (ndiff != 0) {
-				return ndiff;
-			}
 			// prefer the larger area that is split
-			return (stopPoint-startPoint)-(o.stopPoint-o.startPoint); 
+			double ss1 = axis.getSizeOfSide(getBounds());
+			double ss2 = o.axis.getSizeOfSide(o.getBounds());
+			if (ss1-ss2 != 0)
+				return Double.compare(ss1,ss2); 
+
+			int ndiff = getNumberOfAreas()-o.getNumberOfAreas();
+			return ndiff;
+
+		}
+
+		private Rectangle getBounds() {
+			if (bounds == null) {
+				// lazy init
+				bounds = new Rectangle();
+				for (Area a : areas)
+					bounds.add(a.getBounds());
+			}
+			return bounds;
 		}
 
 		public String toString() {
 			return axis +" "+getNumberOfAreas()+" "+startPoint+" "+stopPoint+" "+getCutPoint();
 		}
-		
 	}
 
 	private static enum CoordinateAxis {
@@ -2587,9 +2790,20 @@ public class MultiPolygonRelation extends Relation {
 		public int getStop(Rectangle rect) {
 			return (useX ? rect.x + rect.width : rect.y + rect.height);
 		}
-
+		
+		public double getSizeOfSide(Rectangle rect) {
+			if (useX) {
+				Coord c1 = new Coord(rect.y, getStart(rect));
+				Coord c2 = new Coord(rect.y, getStop(rect));
+				return c1.distance(c2);
+			} else {
+				Coord c1 = new Coord(getStart(rect), rect.x );
+				Coord c2 = new Coord(getStop(rect), rect.x );
+				return c1.distance(c2);
+			}
+		}
 	}
-
+	
 	private static final AreaComparator COMP_LONG_START = new AreaComparator(
 			true, CoordinateAxis.LONGITUDE);
 	private static final AreaComparator COMP_LONG_STOP = new AreaComparator(
