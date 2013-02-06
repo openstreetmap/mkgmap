@@ -80,15 +80,10 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 		}
 
 		// Now add all to the chain.
-		boolean first = true;
 		for (MapShape s : outputs) {
 			if (s == null)
 				continue;
-			if (first) {
-				first = false;
-				next.doFilter(s);
-			} else
-				next.addElement(s);
+			next.doFilter(s);
 		}
 	}
 

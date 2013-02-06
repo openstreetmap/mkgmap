@@ -138,13 +138,12 @@ public class LineSizeSplitterFilter implements MapFilter {
 		for (Coord co: points){
 			dim.addToBounds(co);
 			if (dim.getMaxDim() > maxSize) {
-				log.debug("bigness saving first part");
-				l.setPoints(coords);
-
 				if (first)
-					next.doFilter(l);
-				else
-					next.addElement(l);
+					log.debug("bigness saving first part");
+				else 
+					log.debug("bigness saving next part");
+				l.setPoints(coords);
+				next.doFilter(l);
 
 				l = line.copy();
 
@@ -162,10 +161,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		if (coords.size() > 1) {
 			log.debug("bigness saving a final part");
 			l.setPoints(coords);
-			if(first)
-				next.doFilter(l);
-			else
-				next.addElement(l);
+			next.doFilter(l);
 		}
 	}
 	

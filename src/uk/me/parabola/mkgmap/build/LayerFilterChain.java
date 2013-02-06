@@ -55,15 +55,8 @@ public class LayerFilterChain implements MapFilterChain {
 		
 		MapFilter f = filters.get(position++);
 		f.doFilter(element, this);
-	}
-
-	public void addElement(MapElement element) {
-		LayerFilterChain newChain = new LayerFilterChain(config);
-		newChain.position = this.position - 1;
-		newChain.filters = this.filters;
-
-		log.debug("new chain filtering");
-		newChain.doFilter(element);
+		// maintain chain position for repeated calls in the split filters 
+		position--; 
 	}
 
 	/**

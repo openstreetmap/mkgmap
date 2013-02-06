@@ -128,10 +128,6 @@ public class MapArea implements MapDataSource {
 				else
 					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 			}
-
-			public void addElement(MapElement element) {
-				doFilter(element);
-			}
 		};
 
 		PolygonSubdivSizeSplitterFilter filter = new PolygonSubdivSizeSplitterFilter();
@@ -167,10 +163,6 @@ public class MapArea implements MapDataSource {
 				else
 					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
 
-			}
-
-			public void addElement(MapElement element) {
-				doFilter(element);
 			}
 		};
 

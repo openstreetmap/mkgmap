@@ -80,13 +80,10 @@ public class LineSplitterFilter implements MapFilter {
 			if (++count >= wantedSize) {
 				if (first)
 					log.debug("saving first part");
-				l.setPoints(coords);
-
-				if (first)
-					next.doFilter(l);
 				else
-					next.addElement(l);
-
+					log.debug("saving next part");
+				l.setPoints(coords);
+				next.doFilter(l);
 				l = new MapLine(line);
 
 				count = 0;
@@ -102,7 +99,7 @@ public class LineSplitterFilter implements MapFilter {
 		if (count != 0) {
 			log.debug("saving a final part");
 			l.setPoints(coords);
-			next.addElement(l);
+			next.doFilter(l);
 		}
 	}
 }

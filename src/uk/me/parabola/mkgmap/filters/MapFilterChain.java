@@ -23,10 +23,7 @@ import uk.me.parabola.mkgmap.general.MapElement;
  * at a given level.
  *
  * <p>Although this is based on servlet filters, there is a complication in
- * that we want to be able to split up an element, this lead to the
- * {@link #addElement(MapElement)} method which in effect creates a new chain
- * that is at the same stage as the current one and with the same final
- * destination.
+ * that we want to be able to split up an element.
  * 
  * @author Steve Ratcliffe
  */
@@ -40,10 +37,4 @@ public interface MapFilterChain {
 	 */
 	public void doFilter(MapElement element);
 
-	/**
-	 * Add an extra element and pass it down a copy of the chain.  The element
-	 * (if not filtered out) will end up being added to the map area too.
-	 * @param element The element to add.
-	 */
-	public void addElement(MapElement element);
 }
