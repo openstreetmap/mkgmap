@@ -335,7 +335,7 @@ public class BoundaryRelation extends MultiPolygonRelation {
 //
 		
 		
-		if (hasTags(this)) {
+		if (hasStyleRelevantTags(this)) {
 			outerTags.clear();
 			for (Entry<String,String> mpTags : getEntryIteratable()) {
 				if ("type".equals(mpTags.getKey())==false) {

@@ -750,18 +750,8 @@ public class MultiPolygonRelation extends Relation {
 		
 		List<Way> allWays = getSourceWays();
 		
-		// check if the multipolygon itself or the non inner member ways have a tag
-		// if not it does not make sense to process it and we could save the time
-		boolean shouldProcess = hasStyleRelevantTags(this);
-		if (hasTags(this) == false && shouldProcess == false) {
-			for (Way w : allWays) {
-				shouldProcess = hasStyleRelevantTags(w);
-				if (shouldProcess) {
-					break;
-				}
-			}
-		}
-		if (shouldProcess==false) {
+		// check if it makes sense to process the mp 
+		if (isMpProcessable(allWays) == false) {
 			log.info("Do not process multipolygon",getId(),"because it has no style relevant tags.");
 			return;
 		}
@@ -981,7 +971,7 @@ public class MultiPolygonRelation extends Relation {
 				
 				if (singularOuterPolygons.isEmpty()==false) {
 					// handle the tagging 
-					if (currentPolygon.outer && hasTags(this)) {
+					if (currentPolygon.outer && hasStyleRelevantTags(this)) {
 						// use the tags of the multipolygon
 						for (Way p : singularOuterPolygons) {
 							// overwrite all tags
@@ -1063,7 +1053,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 
-		if (hasTags(this) == false) {
+		if (hasStyleRelevantTags(this) == false) {
 			// add tags to the multipolygon that are taken from the outer ways
 			// they may be required by some hooks (e.g. Area2POIHook)
 			for (Entry<String, String> tags : outerTags.entrySet()) {
@@ -1561,30 +1551,6 @@ public class MultiPolygonRelation extends Relation {
 	}
 
 	/**
-	 * Retrieves if an element has tags beside the common administrative tags
-	 * (like type for multipolygons). 
-	 * @param element the OSM element
-	 * @return <code>true</code> if the element has tags
-	 */
-	protected boolean hasTags(Element element) {
-		if (element instanceof MultiPolygonRelation) {
-			// if a multipolygon has had tags that were removed during load
-			// it has relevant tags although they cannot be evaluated
-			if ("true".equals(element.getTag(OsmHandler.TAGS_INCOMPLETE_TAG))) {
-				return true;
-			}
-		}
-
-		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
-			if ("type".equals(tagEntry.getKey()) == false) {
-				// return true if there is more than one tag other than "type"
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
 	 * Retrieves if the given element contains tags that may be relevant
 	 * for style processing. If it has no relevant tag it will probably be 
 	 * dropped by the style.
@@ -1592,15 +1558,38 @@ public class MultiPolygonRelation extends Relation {
 	 * @param element the OSM element
 	 * @return <code>true</code> has style relevant tags
 	 */
-	private boolean hasStyleRelevantTags(Element element) {
+	protected boolean hasStyleRelevantTags(Element element) {
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			String tagName = tagEntry.getKey();
 			// all tags are style relevant
-			// except: type, name* and mgkmap:tagsincomplete
-			boolean isStyleRelevant = tagName.equals("type") == false
-					&& tagName.startsWith("name") == false 
-					&& tagName.equals(OsmHandler.TAGS_INCOMPLETE_TAG) == false;
+			// except: type (for relations), mkgmap:* and name*
+			boolean isStyleRelevant = (element instanceof Relation && tagName.equals("type")) == false
+					&& tagName.startsWith("mkgmap:") == false
+					&& tagName.startsWith("name") == false;
 			if (isStyleRelevant) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks if this mp should be processed or if it is needless to process it
+	 * because there is no result.
+	 * @param ways the list of ways of the mp
+	 * @return <code>true</code> the mp processing will have a result; 
+	 * 		   <code>false</code> the mp processing will fail 
+	 */
+	private boolean isMpProcessable(Collection<Way> ways) {
+		// Check if the multipolygon itself or the member ways have a
+		// tag. If not it does not make sense to process the mp because 
+		// the output will not change anything
+		if (hasStyleRelevantTags(this)) {
+			return true;
+		}
+
+		for (Way w : ways) {
+			if (hasStyleRelevantTags(w)) {
 				return true;
 			}
 		}
@@ -2091,7 +2080,7 @@ public class MultiPolygonRelation extends Relation {
 
 	protected void tagOuterWays() {
 		Map<String, String> tags;
-		if (hasTags(this)) {
+		if (hasStyleRelevantTags(this)) {
 			tags = new HashMap<String, String>();
 			for (Entry<String, String> relTag : getEntryIteratable()) {
 				tags.put(relTag.getKey(), relTag.getValue());
