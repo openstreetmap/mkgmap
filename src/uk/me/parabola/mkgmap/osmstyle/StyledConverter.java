@@ -426,6 +426,8 @@ public class StyledConverter implements OsmConverter {
 		double lineLength = 0;
 		Coord lastP = null;
 		for(Coord p : wayPoints) {
+			if (lastP != null && p.equals(lastP) && p instanceof CoordPOI == false && p instanceof CoordNode == false)
+				continue;
 			points.add(p);
 			if(lastP != null) {
 				lineLength += p.distance(lastP);

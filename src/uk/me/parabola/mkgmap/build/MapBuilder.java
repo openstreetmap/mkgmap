@@ -61,6 +61,7 @@ import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
 import uk.me.parabola.mkgmap.filters.LineMergeFilter;
+import uk.me.parabola.mkgmap.filters.LinePreparerFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.filters.MapFilter;
 import uk.me.parabola.mkgmap.filters.MapFilterChain;
@@ -976,6 +977,7 @@ public class MapBuilder implements Configurable {
 		}
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
 		for (MapLine line : lines) {
@@ -1018,6 +1020,7 @@ public class MapBuilder implements Configurable {
 		}
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
 
 		for (MapShape shape : shapes) {
