@@ -23,7 +23,6 @@
       <sourceFolder url="file://$MODULE_DIR$/extra/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/63240005" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/doc" />
       <excludeFolder url="file://$MODULE_DIR$/g" />
       <excludeFolder url="file://$MODULE_DIR$/gmapsupp" />
       <excludeFolder url="file://$MODULE_DIR$/localtest" />

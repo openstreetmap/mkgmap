@@ -150,6 +150,19 @@ public class RoadDef implements Comparable<RoadDef> {
 		this.name = name;
 	}
 
+	/**
+	 * A constructor that is used when reading a file and you know the NET1 offset. When writing
+	 * the offsetNet1 field is filled in during the writing process.
+	 * @param id Road id
+	 * @param net1offset The offset in the road defs section of the NET file.
+	 * @param name The main of the road.
+	 */
+	public RoadDef(long id, int net1offset, String name) {
+		this.id = id;
+		this.offsetNet1 = net1offset;
+		this.name = name;
+	}
+
 	// for diagnostic purposes
 	public String toString() {
 		// assumes id is an OSM id

@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 import uk.me.parabola.imgfmt.app.net.NETFileReader;
+import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -152,8 +153,11 @@ public class RGNFileReader extends ImgReader {
 			if ((labelOffset & 0x800000) == 0) {
 				label = lblFile.fetchLabel(labelOffset & 0x7fffff);
 			} else {
-				labelOffset = netFile.getLabelOffset(labelOffset & 0x3fffff);
+				int netoff = labelOffset & 0x3fffff;
+				labelOffset = netFile.getLabelOffset(netoff);
 				label = lblFile.fetchLabel(labelOffset);
+				RoadDef roadDef = new RoadDef(0, netoff, label.getText());
+				line.setRoadDef(roadDef);
 			}
 			line.setLabel(label);
 

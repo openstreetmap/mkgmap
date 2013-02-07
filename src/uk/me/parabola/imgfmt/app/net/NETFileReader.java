@@ -83,7 +83,7 @@ public class NETFileReader extends ImgFile {
 		for (int off : offsets) {
 			reader.position(start + off);
 
-			RoadDef road = new RoadDef(++record, null);
+			RoadDef road = new RoadDef(++record, off, null);
 			readLabels(reader, road);
 			byte netFlags = reader.get();
 			/*int len =*/ reader.getu3();

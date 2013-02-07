@@ -250,6 +250,12 @@ public class Polyline extends MapObject {
 		this.roaddef = rd;
 	}
 
+	public int getOffsetNet1() {
+		if (!isRoad())
+			return 0;
+		return roaddef.getOffsetNet1();
+	}
+
 	public boolean sharesNodeWith(Polyline other) {
 		for (Coord p1 : points) {
 			if (p1.getId() != 0) {
