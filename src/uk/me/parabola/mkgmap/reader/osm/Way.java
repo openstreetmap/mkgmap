@@ -73,28 +73,6 @@ public class Way extends Element {
 		return points;
 	}
 
-	public boolean isBoolTag(String s) {
-		String val = getTag(s);
-		if (val == null)
-			return false;
-
-		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
-			return true;
-
-		return false;
-	}
-
-	public boolean isNotBoolTag(String s) {
-		String val = getTag(s);
-		if (val == null)
-			return false;
-
-		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
-			return true;
-
-		return false;
-	}
-
 	public void addPoint(Coord co) {
 		points.add(co);
 	}

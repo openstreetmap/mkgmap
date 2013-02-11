@@ -1559,13 +1559,20 @@ public class MultiPolygonRelation extends Relation {
 	 * @return <code>true</code> has style relevant tags
 	 */
 	protected boolean hasStyleRelevantTags(Element element) {
+		if (element instanceof MultiPolygonRelation) {
+			// in case it is a multipolygon the TAGS_INCOMPLETE_TAG declares
+			// that the mp has additional tags removed by the file loader
+			if (element.isBoolTag(OsmHandler.TAGS_INCOMPLETE_TAG)) {
+				return true;
+			}
+		}
+		
 		for (Map.Entry<String, String> tagEntry : element.getEntryIteratable()) {
 			String tagName = tagEntry.getKey();
 			// all tags are style relevant
-			// except: type (for relations), mkgmap:* and name*
+			// except: type (for relations), mkgmap:* 
 			boolean isStyleRelevant = (element instanceof Relation && tagName.equals("type")) == false
-					&& tagName.startsWith("mkgmap:") == false
-					&& tagName.startsWith("name") == false;
+					&& tagName.startsWith("mkgmap:") == false;
 			if (isStyleRelevant) {
 				return true;
 			}

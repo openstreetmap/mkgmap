@@ -66,6 +66,50 @@ public abstract class Element implements Iterable<String> {
 		return tags.iterator();
 	}
 
+	/**
+	 * Retrieves if the given tag has a "positive" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>true</code></li>
+	 * <li><code>yes</code></li>
+	 * <li><code>1</code></li>
+	 * </ul>
+	 * @param s tag name
+	 * @return <code>true</code> if the tag value is a boolean tag with a "positive" value
+	 */
+	public boolean isBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
+			return true;
+
+		return false;
+	}
+
+	/**
+	 * Retrieves if the given tag has a "negative" boolean value which means its value is
+	 * one of
+	 * <ul>
+	 * <li><code>false</code></li>
+	 * <li><code>no</code></li>
+	 * <li><code>0</code></li>
+	 * </ul>
+	 * @param s tag name
+	 * @return <code>true</code> if the tag value is a boolean tag with a "negative" value
+	 */
+	public boolean isNotBoolTag(String s) {
+		String val = getTag(s);
+		if (val == null)
+			return false;
+
+		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
+			return true;
+
+		return false;
+	}
+	
 	public long getId() {
 		return id;
 	}
