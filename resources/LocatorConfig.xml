@@ -45,7 +45,7 @@
 		<variant>AG</variant>
 		<variant>ATG</variant>
 	</country>
-	<country name="Argentina" abr="ARG">
+	<country name="Argentina" abr="ARG" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>AR</variant>
 		<variant>ARG</variant>
 	</country>
@@ -125,7 +125,7 @@
 		<variant>BT</variant>
 		<variant>BTN</variant>
 	</country>
-	<country name="Bolivia" abr="BOL">
+	<country name="Bolivia" abr="BOL" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Plurinational State of Bolivia</variant>
 		<variant>BO</variant>
 		<variant>BOL</variant>
@@ -207,7 +207,7 @@
 		<variant>TCD</variant>
 		<variant>جمهوريّة تشاد</variant>
 	</country>
-	<country name="Chile" abr="CHL">
+	<country name="Chile" abr="CHL" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>CL</variant>
 		<variant>CHL</variant>
 	</country>
@@ -805,7 +805,7 @@
 		<variant>PNG</variant>
 		<variant>PAPUA NIUGINI</variant>
 	</country>
-	<country name="Paraguay" abr="PRY">
+	<country name="Paraguay" abr="PRY" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>PY</variant>
 		<variant>PRY</variant>
 	</country>
@@ -1129,7 +1129,7 @@
 		<variant>UM</variant>
 		<variant>UMI</variant>
 	</country>
-	<country name="Uruguay" abr="URY">
+	<country name="Uruguay" abr="URY" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>UY</variant>
 		<variant>URY</variant>
 	</country>
