@@ -68,6 +68,7 @@ import uk.me.parabola.mkgmap.filters.MapFilterChain;
 import uk.me.parabola.mkgmap.filters.PolygonSplitterFilter;
 import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
+import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -1020,6 +1021,7 @@ public class MapBuilder implements Configurable {
 		}
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new RemoveObsoletePointsFilter());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new ShapeAddFilter(div, map));
 
