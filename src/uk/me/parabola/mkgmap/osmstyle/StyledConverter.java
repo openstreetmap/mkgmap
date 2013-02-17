@@ -49,6 +49,7 @@ import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
+import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
@@ -114,6 +115,8 @@ public class StyledConverter implements OsmConverter {
 	
 	private int nextNodeId = 1;
 	
+	private HousenumberGenerator housenumberGenerator;
+	
 	private final Rule wayRules;
 	private final Rule nodeRules;
 	private final Rule lineRules;
@@ -170,6 +173,8 @@ public class StyledConverter implements OsmConverter {
 		nodeRules = style.getNodeRules();
 		lineRules = style.getLineRules();
 		polygonRules = style.getPolygonRules();
+		
+		housenumberGenerator = new HousenumberGenerator(props);
 
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
@@ -205,6 +210,8 @@ public class StyledConverter implements OsmConverter {
 
 		preConvertRules(way);
 
+		housenumberGenerator.addWay(way);
+		
 		Rule rules;
 		if ("polyline".equals(way.getTag("mkgmap:stylefilter")))
 			rules = lineRules;
@@ -257,6 +264,8 @@ public class StyledConverter implements OsmConverter {
 
 		preConvertRules(node);
 
+		housenumberGenerator.addNode(node);
+		
 		nodeRules.resolveType(node, new TypeResult() {
 			public void add(Element el, GType type) {
 				if (type.isContinueSearch()) {
@@ -331,6 +340,9 @@ public class StyledConverter implements OsmConverter {
 		}
 		roads = null;
 		roadTypes = null;
+		
+		housenumberGenerator.generate(lineAdder);
+		
 		Collection<List<RestrictionRelation>> lists = restrictions.values();
 		for (List<RestrictionRelation> l : lists) {
 
@@ -400,6 +412,8 @@ public class StyledConverter implements OsmConverter {
 			// no tags => nothing to convert
 			return;
 		}
+
+		housenumberGenerator.addRelation(relation);
 
 		// relation rules are not applied here because they are applied
 		// earlier by the RelationStyleHook
@@ -1584,7 +1598,10 @@ public class StyledConverter implements OsmConverter {
 			road.setInternalNodes(hasInternalNodes);
 		}
 
-		lineAdder.add(road);
+		// add the road to the housenumber generator
+		// it will add the road later on to the lineAdder
+		housenumberGenerator.addRoad(road);
+		//		lineAdder.add(road);
 
 		if(trailingWay != null)
 			addRoadWithoutLoops(trailingWay, gt);
