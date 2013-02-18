@@ -61,8 +61,8 @@ public class HousenumberMatch {
 	private void parseHousenumber() {
 		String housenumberString = element.getTag("mkgmap:housenumber");
 		
-		// the housenumber must match against the pattern <anything>number<anything>
-		Pattern p = Pattern.compile("\\D*(\\d+)\\D*");
+		// the housenumber must match against the pattern <anything>number<notnumber><anything>
+		Pattern p = Pattern.compile("\\D*(\\d+)\\D?.*");
 		Matcher m = p.matcher(housenumberString);
 		if (m.matches() == false) {
 			throw new IllegalArgumentException("No housenumber: "+housenumberString);
