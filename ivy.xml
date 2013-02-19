@@ -24,6 +24,11 @@
 			    rev="1.1.1-754a33af"
 			    conf="compile->compile(*),master(*)" />
 
+		<dependency org="it.unimi.dsi" name="fastutil"
+				rev="6.5.1-mkg.1"
+				conf="compile->default(*)"
+				/>
+
 		<dependency org="junit" name="junit"
 			    rev="4.5"
 			    conf="test->runtime(*),master(*)" />
