@@ -635,8 +635,8 @@ public class RuleFileReaderTest {
 						"((a~b | c~d) & e=f) & g=h [0x5]" +
 						"e=f & g=h & (a~b | c~'d.*')  [0x6]" +
 						"(e=f & g=h) & (a~b | c~'d.*')  [0x7]" +
-						"a=* & b=* & c=d" +
-						"a=* & (b=* | c=d)" +
+						"a=* & b=* & c=d [0x8]" +
+						"a=* & (b=* | c=d) [0x9]" +
 						""
 		);
 
@@ -887,6 +887,26 @@ public class RuleFileReaderTest {
 		} catch (FileNotFoundException e) {
 			throw new AssertionError("Failed to open file: lines");
 		}
+	}
+
+	/**
+	 * A test between something that is not not a value should be caught as a syntax
+	 * error.
+	 */
+	@Test(expected = SyntaxException.class)
+	public void testWithNonValue() {
+		RuleSet rs = makeRuleSet("c=b & a=!* [0x5]");
+		Way w = getWayWithLength();
+		w.addTag("c", "b");
+		getFirstType(rs, w);
+	}
+
+	@Test(expected = SyntaxException.class)
+	public void testLessThanWithNonValue() {
+		RuleSet rs = makeRuleSet("c=b & a<!* [0x5]");
+		Way w = getWayWithLength();
+		w.addTag("c", "b");
+		getFirstType(rs, w);
 	}
 
 	/**

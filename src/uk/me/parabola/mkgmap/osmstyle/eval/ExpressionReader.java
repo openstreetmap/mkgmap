@@ -164,6 +164,17 @@ public class ExpressionReader {
 
 				if (arg2.isType(VALUE) || arg2.isType(FUNCTION))
 					throw new SyntaxException(scanner, String.format("Value '%s' is not part of an expression", arg2));
+			} else {
+				// All binary ops other than OR and AND take two values. A function is a value
+				// type too.
+				if (!(arg1.isType(VALUE) || arg1.isType(FUNCTION))
+						|| !(arg2.isType(VALUE) || arg2.isType(FUNCTION)))
+				{
+					String msg = String.format("Invalid arguments to %s: %s (%s) and %s (%s)",
+							op.getType(), arg1.getType(), arg1, arg2.getType(), arg2);
+					throw new SyntaxException(scanner, msg);
+				}
+
 			}
 
 			// The combination foo=* is converted to exists(foo).
