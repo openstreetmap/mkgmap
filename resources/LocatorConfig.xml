@@ -100,7 +100,7 @@
 		<variant>Republic of Belarus</variant>
 		<variant>Рэспубліка Беларусь</variant>
 	</country>
-	<country name="België - Belgique" abr="BEL">
+	<country name="België - Belgique" abr="BEL" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>BE</variant>
 		<variant>BEL</variant>
 		<variant>België</variant>
@@ -729,7 +729,7 @@
 		<variant>NPL</variant>
 		<variant>नेपाल</variant>
 	</country>
-	<country name="Nederland" abr="NLD">
+	<country name="Nederland" abr="NLD" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>NL</variant>
 		<variant>NLD</variant>
 		<variant>Netherlands</variant>
