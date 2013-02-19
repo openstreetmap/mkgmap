@@ -93,7 +93,7 @@
 		<variant>BB</variant>
 		<variant>BRB</variant>
 	</country>
-	<country name="Belarus" abr="BLR">
+	<country name="Belarus" abr="BLR" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>BY</variant>
 		<variant>BLR</variant>
 		<variant>Réspublíka Belarus'</variant>
@@ -147,7 +147,7 @@
 		<variant>BV</variant>
 		<variant>BVT</variant>
 	</country>
-	<country name="Brazil" abr="BRA">
+	<country name="Brazil" abr="BRA" streetBeforeHousenumber="true">
 		<variant>BR</variant>
 		<variant>BRA</variant>
 	</country>
@@ -256,7 +256,7 @@
 		<variant>CI</variant>
 		<variant>CIV</variant>
 	</country>
-	<country name="Hrvatska" abr="HRV">
+	<country name="Hrvatska" abr="HRV" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>HR</variant>
 		<variant>HRV</variant>
 		<variant>Croatia</variant>
@@ -274,13 +274,13 @@
 		<variant>CYP</variant>
 		<variant>Κυπριακή Δημοκρατία</variant>
 	</country>
-	<country name="Ceská Republika" abr="CZE">
+	<country name="Ceská Republika" abr="CZE" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>CZ</variant>
 		<variant>CZE</variant>
 		<variant>Czech Republic</variant>
 		<variant>Česká republika</variant>
 	</country>
-	<country name="Danmark" abr="DNK">
+	<country name="Danmark" abr="DNK" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Denmark</variant>
 		<variant>DK</variant>
 		<variant>DNK</variant>
@@ -344,12 +344,12 @@
 		<variant>FJI</variant>
 		<variant>VITI</variant>
 	</country>
-	<country name="Suomi" abr="FIN">
+	<country name="Suomi" abr="FIN" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Finland</variant>
 		<variant>FI</variant>
 		<variant>FIN</variant>
 	</country>
-	<country name="France" abr="FRA">
+	<country name="France" abr="FRA" postalcodeBeforeCity="true">
 		<variant>FR</variant>
 		<variant>FRA</variant>
 		<variant>Metropolitan France</variant>
@@ -396,7 +396,7 @@
 		<variant>GI</variant>
 		<variant>GIB</variant>
 	</country>
-	<country name="Greece" abr="GRC">
+	<country name="Greece" abr="GRC" streetBeforeHousenumber="true">
 		<variant>GR</variant>
 		<variant>GRC</variant>
 		<variant>Elláda</variant>
@@ -464,7 +464,7 @@
 		<variant>HK</variant>
 		<variant>HKG</variant>
 	</country>
-	<country name="Hungary" abr="HUN">
+	<country name="Hungary" abr="HUN" streetBeforeHousenumber="true">
 		<variant>HU</variant>
 		<variant>HUN</variant>
 		<variant>Magyarország</variant>
@@ -480,7 +480,7 @@
 		<variant>IN</variant>
 		<variant>IND</variant>
 	</country>
-	<country name="Indonesia" abr="IDN">
+	<country name="Indonesia" abr="IDN" streetBeforeHousenumber="true">
 		<variant>ID</variant>
 		<variant>IDN</variant>
 	</country>
@@ -505,12 +505,12 @@
 		<variant>IM</variant>
 		<variant>IMN</variant>
 	</country>
-	<country name="Israel" abr="ISR">
+	<country name="Israel" abr="ISR" streetBeforeHousenumber="true">
 		<variant>IL</variant>
 		<variant>ISR</variant>
 		<variant>מדינת ישראל</variant>
 	</country>
-	<country name="Italia" abr="ITA" regionOffset="2">
+	<country name="Italia" abr="ITA" regionOffset="2" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Italy</variant>
 		<variant>IT</variant>
 		<variant>ITA</variant>
@@ -571,7 +571,7 @@
 		<variant>LA</variant>
 		<variant>LAO</variant>
 	</country>
-	<country name="Latvija" abr="LVA">
+	<country name="Latvija" abr="LVA" streetBeforeHousenumber="true">
 		<variant>LV</variant>
 		<variant>LVA</variant>
 		<variant>Latvia</variant>
@@ -671,7 +671,7 @@
 		<variant>MYT</variant>
 		<variant>Mayotte - Eaux territoriales</variant>
 	</country>
-	<country name="Mexico" abr="MEX">
+	<country name="Mexico" abr="MEX" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>MX</variant>
 		<variant>MEX</variant>
 		<variant>México</variant>
@@ -694,7 +694,7 @@
 		<variant>MN</variant>
 		<variant>MNG</variant>
 	</country>
-	<country name="Montenegro" abr="MNE">
+	<country name="Montenegro" abr="MNE" streetBeforeHousenumber="true">
 		<variant>ME</variant>
 		<variant>MNE</variant>
 	</country>
@@ -768,14 +768,14 @@
 		<variant>MP</variant>
 		<variant>MNP</variant>
 	</country>
-	<country name="Norge" abr="NOR">
+	<country name="Norge" abr="NOR" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Norway</variant>
 		<variant>Noreg</variant>
 		<variant>NO</variant>
 		<variant>NOR</variant>
 		<variant>Norge/Noreg</variant>
 	</country>
-	<country name="Oman" abr="OMN">
+	<country name="Oman" abr="OMN" streetBeforeHousenumber="true">
 		<variant>OM</variant>
 		<variant>OMN</variant>
 		<variant>‏سلطنة عمان‎</variant>
@@ -809,7 +809,7 @@
 		<variant>PY</variant>
 		<variant>PRY</variant>
 	</country>
-	<country name="Peru" abr="PER">
+	<country name="Peru" abr="PER" streetBeforeHousenumber="true">
 		<variant>PE</variant>
 		<variant>PER</variant>
 	</country>
@@ -821,7 +821,7 @@
 		<variant>PN</variant>
 		<variant>PCN</variant>
 	</country>
-	<country name="Polska" abr="POL">
+	<country name="Polska" abr="POL" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>PL</variant>
 		<variant>POL</variant>
 		<variant>Poland</variant>
@@ -844,12 +844,12 @@
 		<variant>RE</variant>
 		<variant>REU</variant>
 	</country>
-	<country name="România" abr="ROU">
+	<country name="România" abr="ROU" streetBeforeHousenumber="true">
 		<variant>RO</variant>
 		<variant>ROU</variant>
 		<variant>Romania</variant>
 	</country>
-	<country name="Russian Federation" abr="RUS">
+	<country name="Russian Federation" abr="RUS" streetBeforeHousenumber="true">
 		<variant>RU</variant>
 		<variant>RUS</variant>
 		<variant>Russia</variant>
@@ -946,12 +946,12 @@
 		<variant>SX</variant>
 		<variant>SXM</variant>
 	</country>
-	<country name="Slovakia" abr="SVK">
+	<country name="Slovakia" abr="SVK" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>SK</variant>
 		<variant>SVK</variant>
 		<variant>Slovensko</variant>
 	</country>
-	<country name="Slovenija" abr="SVN">
+	<country name="Slovenija" abr="SVN" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>SI</variant>
 		<variant>SVN</variant>
 		<variant>Slovenia</variant>
@@ -1010,7 +1010,7 @@
 		<variant>SWZ</variant>
 		<variant>Swatini</variant>
 	</country>
-	<country name="Sverige" abr="SWE">
+	<country name="Sverige" abr="SWE" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Sweden</variant>
 		<variant>SE</variant>
 		<variant>SWE</variant>
@@ -1075,7 +1075,7 @@
 		<variant>TN</variant>
 		<variant>TUN</variant>
 	</country>
-	<country name="Turkey" abr="TUR">
+	<country name="Turkey" abr="TUR" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>TR</variant>
 		<variant>TUR</variant>
 		<variant>Türkiye</variant>
@@ -1097,7 +1097,7 @@
 		<variant>UG</variant>
 		<variant>UGA</variant>
 	</country>
-	<country name="Ukrayina" abr="UKR">
+	<country name="Ukrayina" abr="UKR" streetBeforeHousenumber="true">
 		<variant>UA</variant>
 		<variant>UKR</variant>
 		<variant>Ukraine</variant>
