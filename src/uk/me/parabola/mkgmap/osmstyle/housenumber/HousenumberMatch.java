@@ -65,18 +65,18 @@ public class HousenumberMatch {
 		Pattern p = Pattern.compile("\\D*(\\d+)\\D?.*");
 		Matcher m = p.matcher(housenumberString);
 		if (m.matches() == false) {
-			throw new IllegalArgumentException("No housenumber: "+housenumberString);
+			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
 		}
 		try {
 			// get the number part and parse it
 			housenumber = Integer.parseInt(m.group(1));
 		} catch (NumberFormatException exp) {
-			throw new IllegalArgumentException("No housenumber: "+housenumberString);
+			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
 		}
 
 		// a housenumber must be > 0
 		if (housenumber <= 0) {
-			throw new IllegalArgumentException("No housenumber: "+housenumberString);
+			throw new IllegalArgumentException("No housenumber ("+element.toBrowseURL()+"): "+housenumberString);
 		}
 	}
 
