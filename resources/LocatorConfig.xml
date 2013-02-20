@@ -5,7 +5,7 @@
 		<variant>AFG</variant>
 		<variant>‏افغانستان‎</variant>
 	</country>
-	<country name="Åland Islands" abr="ALA">
+	<country name="Åland Islands" abr="ALA" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>AX</variant>
 		<variant>ALA</variant>
 		<variant>Åland</variant>
@@ -320,7 +320,7 @@
 		<variant>ER</variant>
 		<variant>ERI</variant>
 	</country>
-	<country name="Eesti" abr="EST">
+	<country name="Eesti" abr="EST" streetBeforeHousenumber="true" postalcodeBeforeCity="true">
 		<variant>Eesti Vabariik</variant>
 		<variant>Estonia</variant>
 		<variant>EE</variant>
