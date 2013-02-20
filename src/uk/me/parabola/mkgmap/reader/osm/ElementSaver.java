@@ -46,7 +46,7 @@ import uk.me.parabola.util.EnhancedProperties;
 public class ElementSaver {
 	private static final Logger log = Logger.getLogger(ElementSaver.class);
 
-	protected Map<Long, Coord> coordMap = new HashMap<Long, Coord>(50000);
+	protected OSMId2ObjectMap<Coord> coordMap = new OSMId2ObjectMap<Coord>();
 
 	protected Map<Long, Node> nodeMap;
 	protected Map<Long, Way> wayMap;
