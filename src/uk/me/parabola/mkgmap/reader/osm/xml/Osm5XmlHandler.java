@@ -213,7 +213,6 @@ public class Osm5XmlHandler extends OsmHandler {
 				if("1".equals(val) || "true".equals(val) || "yes".equals(val)) {
 					Coord co = saver.getCoord(currentElementId);
 					co.setOnBoundary(true);
-					co.incHighwayCount();
 				}
 				return;
 			}

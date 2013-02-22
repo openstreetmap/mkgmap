@@ -69,8 +69,6 @@ public class ElementSaver {
 	private final boolean ignoreTurnRestrictions;
 	private final Double minimumArcLength;
 
-	private boolean roadsReachBoundary;
-
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
 	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
 	/** tagvalue of the {@link ElementSaver#MKGMAP_REMOVE_TAG} if all tags should be removed */
@@ -274,20 +272,10 @@ public class ElementSaver {
 						assert clippedPair[1].getOnBoundary();
 						// insert boundary point before the second point
 						points.add(i, clippedPair[1]);
-						// it's a newly created point so make its
-						// highway count one
-						clippedPair[1].incHighwayCount();
 						++numBoundaryNodesAdded;
-						if(!roadsReachBoundary && way.getTag("highway") != null)
-							roadsReachBoundary = true;
 					} else if(clippedPair[1].getOnBoundary())
 						++numBoundaryNodesDetected;
 
-					if (clippedPair[1].getOnBoundary()) {
-						// the point is on the boundary so make sure
-						// it becomes a node
-						clippedPair[1].incHighwayCount();
-					}
 
 					if (clippedPair[0] != points.get(i - 1)) {
 						// the first point in the segment is outside
@@ -295,20 +283,9 @@ public class ElementSaver {
 						assert clippedPair[0].getOnBoundary();
 						// insert boundary point after the first point
 						points.add(i, clippedPair[0]);
-						// it's a newly created point so make its
-						// highway count one
-						clippedPair[0].incHighwayCount();
 						++numBoundaryNodesAdded;
-						if(!roadsReachBoundary && way.getTag("highway") != null)
-							roadsReachBoundary = true;
 					} else if (clippedPair[0].getOnBoundary())
 						++numBoundaryNodesDetected;
-
-					if (clippedPair[0].getOnBoundary()) {
-						// the point is on the boundary so make sure
-						// it becomes a node
-						clippedPair[0].incHighwayCount();
-					}
 				}
 			}
 		}

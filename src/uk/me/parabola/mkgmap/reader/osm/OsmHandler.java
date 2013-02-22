@@ -185,9 +185,6 @@ public class OsmHandler {
 			hooks.onCoordAddedToWay(way, id, co);
 			co = saver.getCoord(id);
 			way.addPoint(co);
-
-			// nodes (way joins) will have highwayCount > 1
-			co.incHighwayCount();
 		} else {
 			missingNodeRef = true;
 		}

@@ -330,6 +330,7 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	public void end() {
+		setHighwayCounts();
 		removeShortArcsByMergingNodes(minimumArcLength);
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -1755,11 +1756,30 @@ public class StyledConverter implements OsmConverter {
 			val.equalsIgnoreCase("private"));
 	}
 	
+	/**
+	 * Increment the highway counter for each coord of each road.
+	 * As a result, all road junctions have a count > 1. 
+	 */
+	private void setHighwayCounts(){
+		log.info("Maintaining highway counters");
+		long lastId = 0;
+		for (Way way :roads){
+			if (way.getId() == lastId)
+				continue;
+			lastId = way.getId();
+			List<Coord> points = way.getPoints();
+			for (Coord p:points){
+				p.incHighwayCount();
+			}
+		}
+		return;
+	}
+	
 	private void removeShortArcsByMergingNodes(double minArcLength) {
 		log.info("Removing short arcs (min arc length = " + minArcLength + "m)");
 		log.info("Removing short arcs - marking points as node-alike");
-		for (Way w : roads) {
-			List<Coord> points = w.getPoints();
+		for (Way way : roads) {
+			List<Coord> points = way.getPoints();
 			int numPoints = points.size();
 			if (numPoints >= 2) {
 				// all end points should be treated as nodes
@@ -1770,10 +1790,11 @@ public class StyledConverter implements OsmConverter {
 				for (int i = numPoints - 2; i >= 1; --i) {
 					Coord p = points.get(i);
 					// if this point is a CoordPOI it may become a
-					// node later even if it isn't actually a junction
-					// between ways at this time - so for the purposes
+					// node later even if it isn't actually a connection
+					// between roads at this time - so for the purposes
 					// of short arc removal, consider it to be a node
-					if (p.getHighwayCount() > 1 || p instanceof CoordPOI)
+					// if it is on a boundary it will become a node later
+					if (p.getHighwayCount() > 1 || p instanceof CoordPOI || p.getOnBoundary())
 						p.setTreatAsNode(true);
 				}
 			}
@@ -1833,16 +1854,11 @@ public class StyledConverter implements OsmConverter {
 						}
 					}
 					if (i == 0) {
-						// first point in way is a node so preserve it
-						// to ensure it won't be filtered out later
-						p.preserved(true);
-
 						// nothing more to do with this point
 						continue;
 					}
 
 					// this is not the first point in the way
-
 					if (p == previousPoint) {
 						if (log.isInfoEnabled())
 							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
@@ -1870,11 +1886,6 @@ public class StyledConverter implements OsmConverter {
 						// it's not a node so go on to next point
 						continue;
 					}
-
-					// preserve the point to stop the node being
-					// filtered out later
-					p.preserved(true);
-
 					Coord previousNode = points.get(previousNodeIndex);
 					if (p == previousNode) {
 						// this node is the same point object as the
