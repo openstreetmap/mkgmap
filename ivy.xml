@@ -25,7 +25,7 @@
 			    conf="compile->compile(*),master(*)" />
 
 		<dependency org="it.unimi.dsi" name="fastutil"
-				rev="6.5.1-mkg.1"
+				rev="6.5.2-mkg.1"
 				conf="compile->default(*)"
 				/>
 
