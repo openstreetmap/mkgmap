@@ -162,7 +162,7 @@ public class NumberPreparer {
 	 * @param state Holds the initial value to write.
 	 */
 	private void writeInitialValue(State state) {
-		assert state.initialValue > 0 : "initial value is not positive: " + state.initialValue;
+		assert state.initialValue >= 0 : "initial value is not positive: " + state.initialValue;
 		int width = 32 - Integer.numberOfLeadingZeros(state.initialValue);
 		if (width > 5) {
 			bw.put1(false);

@@ -167,6 +167,17 @@ public class NumberPreparerTest {
 	}
 
 	/**
+	 * What to do about the number zero.
+	 */
+	@Test
+	public void testZero() {
+		// Includes invalid cases where the numbers are the same down both sides.
+		runSeparate("0,E,0,10,N,-1,-1",
+				"1,B,0,4,B,0,8"
+		);
+	}
+
+	/**
 	 * Tests sequences of number ranges that have previously been discovered to fail using the
 	 * random range generator test.
 	 */
