@@ -618,6 +618,8 @@ public class NumberPreparer {
 			int width = bs.calcWidth();
 			if (width > minWidth)
 				writer.bitWidth = width - minWidth;
+			if (writer.bitWidth > 15)
+				throw new Abandon("Difference too large");
 			return writer;
 		}
 	}
@@ -760,7 +762,7 @@ public class NumberPreparer {
  * signed: numbers are positive and negative, and so have sign bit.
  *
  * The bit width is composed of two parts since it is represented as a difference between
- * a well known minimum value and a the actual value.
+ * a well known minimum value and the actual value.
  */
 class VarBitWriter {
 	private final BitWriter bw;

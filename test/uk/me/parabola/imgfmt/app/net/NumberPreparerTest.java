@@ -196,9 +196,18 @@ public class NumberPreparerTest {
 		run("0,O,1,10001,E,2,12000",
 				"1,O,10003,10301,E,12002,12060",
 				"2,E,1047000,1048000,N,-1,-1");
+		runSeparate("3,E,131000,2,N,-1,-1");
+	}
 
-		//runSeparate("3,E,1047000,2,N,-1,-1");
-		//runSeparate("3,E,510000,2,N,-1,-1");
+	/**
+	 * Range with differences that are too large. The difference between the start and end
+	 * of a range has a lower range than from initial-or-end to start.
+	 */
+	@Test
+	public void testLargeDifferenceError() {
+		String[] numbers = {"3,E,131080,2,N,-1,-1"};
+		NumberPreparer preparer = new NumberPreparer(createList(numbers));
+		assertFalse(preparer.isValid());
 	}
 
 	/**
