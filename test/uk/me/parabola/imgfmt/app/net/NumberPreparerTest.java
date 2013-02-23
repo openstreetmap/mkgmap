@@ -177,6 +177,30 @@ public class NumberPreparerTest {
 		);
 	}
 
+	@Test
+	public void testVeryLargeNumber() {
+		String[] numbers = {"0,E,55892490,55892500,N,-1,-1"};
+
+		// Number is way too big, no exception, result just marked invalid.
+		NumberPreparer preparer = new NumberPreparer(createList(numbers));
+		assertFalse(preparer.isValid());
+
+		numbers = new String[] {"0,E,10,55892500,N,-1,-1"};
+		// The difference is too big.
+		preparer = new NumberPreparer(createList(numbers));
+		assertFalse(preparer.isValid());
+	}
+
+	@Test
+	public void testLargeButOK() {
+		run("0,O,1,10001,E,2,12000",
+				"1,O,10003,10301,E,12002,12060",
+				"2,E,1047000,1048000,N,-1,-1");
+
+		//runSeparate("3,E,1047000,2,N,-1,-1");
+		//runSeparate("3,E,510000,2,N,-1,-1");
+	}
+
 	/**
 	 * Tests sequences of number ranges that have previously been discovered to fail using the
 	 * random range generator test.

@@ -164,6 +164,9 @@ public class NumberPreparer {
 	private void writeInitialValue(State state) {
 		assert state.initialValue >= 0 : "initial value is not positive: " + state.initialValue;
 		int width = 32 - Integer.numberOfLeadingZeros(state.initialValue);
+		if (width > 20)
+			throw new Abandon("Initial value too large: " + state.initialValue);
+
 		if (width > 5) {
 			bw.put1(false);
 			bw.putn(width - 5, 4);
