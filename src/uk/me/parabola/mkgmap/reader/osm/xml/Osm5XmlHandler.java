@@ -209,14 +209,6 @@ public class Osm5XmlHandler extends OsmHandler {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
 
-			if("mkgmap:on-boundary".equals(key)) { // FIXME checking tag value
-				if("1".equals(val) || "true".equals(val) || "yes".equals(val)) {
-					Coord co = saver.getCoord(currentElementId);
-					co.setOnBoundary(true);
-				}
-				return;
-			}
-
 			// We only want to create a full node for nodes that are POI's
 			// and not just one point of a way.  Only create if it has tags that
 			// could be used in a POI.
