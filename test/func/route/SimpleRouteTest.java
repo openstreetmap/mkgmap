@@ -66,7 +66,7 @@ public class SimpleRouteTest extends Base {
 				assertEquals("NET size", 73791, size);
 			} else if (ext.equals("NOD")) {
 				count++;
-				assertEquals("NOD size", 194966, size);
+				assertEquals("NOD size", 191874, size);
 			}
 		}
 		assertTrue("enough checks run", count == 5);
