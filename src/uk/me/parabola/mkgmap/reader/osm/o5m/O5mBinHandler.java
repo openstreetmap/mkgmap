@@ -213,26 +213,13 @@ public class O5mBinHandler extends OsmHandler{
 		Coord co = new Coord(flat, flon);
 		saver.addPoint(lastNodeId, co);
 		if (bytesToRead > 0){
-			int ntags = 0;
-			Node node = null;
-			while (bytesToRead > 0){
-				readStringPair();
-				String key = stringPair[0];
-				String val = stringPair[1];
-				key = keepTag(key, val);
-				if (key != null){
-					if (node == null)
-						node = new Node(lastNodeId, co);
-					node.addTag(key, val.intern());
-					ntags++;
-				}
-				if (ntags > 0) {
-					// If there are tags, then we save a proper node for it.
-					saver.addNode(node);
-					hooks.onAddNode(node);
-				}
+			Node node = new Node(lastNodeId,co);
+			readTags(node);
+			if (node.getTagCount() > 0){
+				// If there are tags, then we save a proper node for it.
+				saver.addNode(node);
+				hooks.onAddNode(node);
 			}
-			assert bytesToRead == 0;
 		}
 	}
 	
