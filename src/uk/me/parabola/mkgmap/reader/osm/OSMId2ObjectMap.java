@@ -13,11 +13,8 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 
-import java.util.Iterator;
-
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 
 /**
  * A basic memory efficient Map implementation that stores an OSM id with an Object.

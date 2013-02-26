@@ -19,6 +19,7 @@ import java.awt.geom.Path2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,8 +39,8 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.feature.FeatureIterator;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
@@ -70,7 +71,7 @@ public class PrecompSeaGenerator {
 	private final File outputDir;
 
 	private SimpleFeatureCollection shapeCollection;
-	private FeatureIterator shapeIterator;
+	private SimpleFeatureIterator shapeIterator;
 
 	/** transforms the projection of the shapefile to WGS84 ({@code null} if shape file uses WGS84) */
 	private final MathTransform transformation;
@@ -239,8 +240,8 @@ public class PrecompSeaGenerator {
 	}
 
 	private void createShapefileAccess() throws IOException {
-		Map map = new HashMap();
-		map.put("url", shapeFile.toURL());
+		Map<String,URL> map = new HashMap<String, URL>();
+		map.put("url", shapeFile.toURI().toURL());
 		DataStore dataStore = DataStoreFinder.getDataStore(map);
 		String typeName = dataStore.getTypeNames()[0];
 
