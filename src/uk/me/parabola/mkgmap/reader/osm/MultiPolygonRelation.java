@@ -34,6 +34,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.LinkedHashMap;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
@@ -59,7 +60,8 @@ public class MultiPolygonRelation extends Relation {
 	
 	private final Map<Long, Way> tileWayMap;
 	private final Map<Long, String> roleMap = new HashMap<Long, String>();
-	private Map<Long, Way> mpPolygons = new HashMap<Long, Way>();
+ 
+	private Map<Long, Way> mpPolygons = new LinkedHashMap<Long, Way>();
 	
 	
 	protected ArrayList<BitSet> containsMatrix;
@@ -2684,26 +2686,18 @@ public class MultiPolygonRelation extends Relation {
 			if (this == o) {
 				return 0;
 			}
-			
 			// prefer a cut at the boundaries
-			boolean startStopCut = isStartCut() | isStopCut();
-			boolean oStartStopCut = o.isStartCut() | o.isStopCut();
-			
-			if (startStopCut != oStartStopCut) {
-				if (startStopCut) {
-					return 1;
-				} else {
-					return -1;
-				}
-			} else if (startStopCut) {
-				// both are boundary cuts
-				// that means that they have equal importance
-				// prefer the one with the lower hashcode...
-				int dS = hashCode()-o.hashCode();
-				if (dS != 0) {
-					return dS;
-				}
-				
+			if (isStartCut() && o.isStartCut() == false) {
+				return 1;
+			} 
+			else if (isStartCut() == false && o.isStartCut()) {
+				return -1;
+			}
+			else if (isStopCut() && o.isStopCut() == false) {
+				return 1;
+			}
+			else if (isStopCut() == false && o.isStopCut()) {
+				return -1;
 			}
 			
 			// handle the special case that a cut has no area
