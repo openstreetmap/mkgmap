@@ -57,6 +57,8 @@ public abstract class StyleFileLoader {
 			File dir = file;
 			if (name != null) {
 				dir = new File(file, name);
+				if (dir.exists() == false)
+					throw new FileNotFoundException("style " + name + " not found in " + dir);
 				if (!dir.isDirectory())
 					dir = file;
 			}
