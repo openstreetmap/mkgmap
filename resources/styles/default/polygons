@@ -10,6 +10,7 @@
 
 include 'inc/address';
 
+
 leisure=* & sport=* & name=* { set name='${name} (${sport})' }
 leisure=* & sport=* & name!=* { add name='${sport}' }
 
@@ -74,3 +75,6 @@ man_made=* & area!=no
 [0x13 resolution 24]
 man_made=* & area=yes
 [0x13 resolution 24]
+
+include 'inc/water_polygons';
+include 'inc/landuse_polygons';

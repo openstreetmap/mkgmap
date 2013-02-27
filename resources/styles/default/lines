@@ -10,6 +10,7 @@
 
 include 'inc/address';
 
+
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
@@ -167,3 +168,6 @@ boundary=administrative & admin_level<9 [0x1c resolution 22]
 boundary=administrative [0x1c resolution 22]
 boundary=national [0x1e resolution 17]
 boundary=political [0x1c resolution 19]
+
+include 'inc/water_lines';
+include 'inc/contour_lines';
