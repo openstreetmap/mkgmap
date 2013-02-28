@@ -1149,7 +1149,7 @@ public class StyledConverter implements OsmConverter {
 
 			boolean tooBig() {
 				return LineSizeSplitterFilter.testDims(maxLat - minLat,
-													   maxLon - minLon) > 1.0;
+													   maxLon - minLon) >= 1.0;
 			}
 		}
 
@@ -1177,7 +1177,7 @@ public class StyledConverter implements OsmConverter {
 																 p.getLatitude(),
 																 nextP.getLongitude() -
 																 p.getLongitude());
-				if(arcProp > 1.0 || d > MAX_ARC_LENGTH) {
+				if(arcProp >= 1.0 || d > MAX_ARC_LENGTH) {
 					nextP = p.makeBetweenPoint(nextP, 0.95 * Math.min(1 / arcProp, MAX_ARC_LENGTH / d));
 					nextP.incHighwayCount();
 					points.add(i + 1, nextP);
