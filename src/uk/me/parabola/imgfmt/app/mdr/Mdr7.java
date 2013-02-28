@@ -27,6 +27,13 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr7 extends MdrMapSection {
+	public static final int MDR7_HAS_STRING = 0x01;
+	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
+	public static final int MDR7_PARTIAL_FIELD = 0x1c0;
+	public static final int MDR7_PARTIAL_SHIFT = 6;
+	public static final int MDR7_U1 = 0x2;
+	public static final int MDR7_U2 = 0x4;
+
 	private List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
@@ -72,7 +79,9 @@ public class Mdr7 extends MdrMapSection {
 
 	public void writeSectData(ImgFileWriter writer) {
 		String lastName = null;
-		boolean hasStrings = hasFlag(0x1);
+		boolean hasStrings = hasFlag(MDR7_HAS_STRING);
+		boolean hasNameOffset = hasFlag(MDR7_HAS_NAME_OFFSET);
+
 		for (Mdr7Record s : streets) {
 			addIndexPointer(s.getMapIndex(), s.getIndex());
 
@@ -88,7 +97,10 @@ public class Mdr7 extends MdrMapSection {
 			writer.put3(lab);
 			if (hasStrings)
 				putStringOffset(writer, s.getStringOffset());
-			
+
+			if (hasNameOffset)
+				writer.put((byte) s.getNameOffset());
+
 			writer.put((byte) trailingFlags);
 		}
 	}
@@ -102,6 +114,8 @@ public class Mdr7 extends MdrMapSection {
 		int size = sizes.getMapSize() + 3 + 1;
 		if (!isForDevice())
 			size += sizes.getStrOffSize();
+		if ((getExtraValue() & MDR7_HAS_NAME_OFFSET) != 0)
+			size += 1;
 		return size;
 	}
 
@@ -113,11 +127,12 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		int magic = 0x42;
+		int magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (1 << MDR7_PARTIAL_SHIFT);
+
 		if (isForDevice()) {
-			magic |= 0x4;
+			magic |= MDR7_U2;
 		} else {
-			magic |= 0x1; //strings
+			magic |= MDR7_HAS_STRING;
 		}
 
 		return magic;
