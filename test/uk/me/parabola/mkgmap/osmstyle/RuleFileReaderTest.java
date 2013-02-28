@@ -770,6 +770,39 @@ public class RuleFileReaderTest {
 		assertEquals(2, type.getType());
 	}
 
+	/**
+	 * Bug when the first statement of an include file is itself an include statement.
+	 * As luck would have the test tested the supposedly more difficult case of an
+	 * include statement in the middle of the file.
+	 */
+	@Test
+	public void testNestedIncludeAndImmediateInclude() {
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "a=1 [0x1] include 'first'; a=2 [0x2]"},
+				{"first", "include 'second'; b=2 [0x2 ]"},
+				{"second", "c=1 [0x1] c=2 [0x2 ]"},
+		});
+
+		RuleSet rs = makeRuleSet(loader);
+		Element el = new Way(1);
+
+		el.addTag("a", "2");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "1");
+		type = getFirstType(rs, el);
+		assertEquals(1, type.getType());
+
+		el = new Way(2);
+		el.addTag("c", "2");
+		type = getFirstType(rs, el);
+		assertEquals(2, type.getType());
+	}
+
 	@Test
 	public void testLengthFunction() {
 		// Its less than 92m

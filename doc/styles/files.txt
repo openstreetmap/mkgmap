@@ -54,6 +54,7 @@ base-style:: Do not use anymore. This was used to base a style on
 another one. However, it is bug prone and behaves in a way that is not
 intuitive without a good understanding of how things work.
 The preferred way to do this is to use the include mechanism.
+This command will be removed altogether at some point in the future.
 
 .An example info file
 ====

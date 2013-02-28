@@ -87,7 +87,9 @@ public class RuleFileReader {
 		// Read all the rules in the file.
 		scanner.skipSpace();
 		while (!scanner.isEndOfFile()) {
-			checkCommand();
+			if (checkCommand())
+				continue;
+
 			if (scanner.isEndOfFile())
 				break;
 
@@ -126,11 +128,12 @@ public class RuleFileReader {
 	 *
 	 * Called before reading an expression, must put back any token (apart from whitespace) if there is
 	 * not a command.
+	 * @return true if a command was found. The caller should check again for a command.
 	 */
-	private void checkCommand() {
+	private boolean checkCommand() {
 		scanner.skipSpace();
 		if (scanner.isEndOfFile())
-			return;
+			return false;
 
 		if (scanner.checkToken("include")) {
 			// Consume the 'include' token and skip spaces
@@ -171,6 +174,7 @@ public class RuleFileReader {
 
 				try {
 					scanner.includeFile(displayName, styleLoader.open(filename));
+					return true;
 				} catch (FileNotFoundException e) {
 					throw new SyntaxException(scanner, "Cannot open included file: " + filename);
 				}
@@ -180,6 +184,7 @@ public class RuleFileReader {
 			}
 		}
 		scanner.skipSpace();
+		return false;
 	}
 
 	/**
