@@ -253,6 +253,8 @@ public class Sort {
 		this.codepage = codepage;
 		if (codepage == 0)
 			charset = Charset.forName("cp1252");
+		else if (codepage == 65001)
+			charset = Charset.forName("UTF-8");
 		else if (codepage == 932)
 			// Java uses "ms932" for code page 932
 			// (Windows-31J, Shift-JIS + MS extensions)

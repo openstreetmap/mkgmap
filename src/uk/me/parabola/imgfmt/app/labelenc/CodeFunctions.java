@@ -97,6 +97,12 @@ public class CodeFunctions {
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new Utf8Encoder());
 			funcs.setDecoder(new Utf8Decoder());
+		} else if ("cp65001".equals(charset)) {
+			funcs.setEncodingType(ENCODING_FORMAT10);
+			funcs.setEncoder(new Utf8Encoder());
+			funcs.setDecoder(new Utf8Decoder());
+			funcs.setTransliterator(new NullTransliterator());
+			funcs.setCodepage(65001);
 		} else if ("simple8".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Simple8Encoder());
