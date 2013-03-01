@@ -18,6 +18,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 
 /**
@@ -29,7 +30,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
 public class Mdr7 extends MdrMapSection {
 	public static final int MDR7_HAS_STRING = 0x01;
 	public static final int MDR7_HAS_NAME_OFFSET = 0x20;
-	public static final int MDR7_PARTIAL_FIELD = 0x1c0;
+	//public static final int MDR7_PARTIAL_FIELD = 0x1c0;
 	public static final int MDR7_PARTIAL_SHIFT = 6;
 	public static final int MDR7_U1 = 0x2;
 	public static final int MDR7_U2 = 0x4;
@@ -51,6 +52,19 @@ public class Mdr7 extends MdrMapSection {
 		st.setName(name);
 		st.setCity(mdrCity);
 		allStreets.add(st);
+
+		// XXX Quick test...
+		int nameOffset = name.indexOf(' ');
+		if (nameOffset > 0) {
+			st = new Mdr7Record();
+			st.setMapIndex(mapId);
+			st.setLabelOffset(lblOffset);
+			st.setStringOffset(strOff);
+			st.setName(name);
+			st.setCity(mdrCity);
+			st.setNameOffset(nameOffset+1);
+			allStreets.add(st);
+		}
 	}
 
 	/**
@@ -58,7 +72,16 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	protected void preWriteImpl() {
-		List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
+		//List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
+
+		Sort sort = getConfig().getSort();
+		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
+		for (Mdr7Record m : allStreets) {
+			SortKey<Mdr7Record> sortKey = sort.createSortKey(m, m.getPartialName(),
+					m.getMapIndex());
+			sortedStreets.add(sortKey);
+		}
+		Collections.sort(sortedStreets);
 
 		// De-duplicate the street names so that there is only one entry
 		// per map for the same name.

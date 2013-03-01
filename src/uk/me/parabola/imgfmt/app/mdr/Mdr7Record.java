@@ -70,11 +70,15 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		return nameOffset;
 	}
 
-	public void setNameOffset(short nameOffset) {
-		this.nameOffset = nameOffset;
+	public void setNameOffset(int nameOffset) {
+		this.nameOffset = (short) nameOffset;
 	}
 
 	public String toString() {
 		return name + " in " + city.getName();
+	}
+
+	public String getPartialName() {
+		return name.substring(nameOffset);
 	}
 }
