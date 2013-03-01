@@ -37,6 +37,8 @@ public class Mdr7 extends MdrMapSection {
 	private List<Mdr7Record> allStreets = new ArrayList<Mdr7Record>();
 	private List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
 
+	private final int u2size = 1;
+
 	public Mdr7(MdrConfig config) {
 		setConfig(config);
 	}
@@ -101,7 +103,7 @@ public class Mdr7 extends MdrMapSection {
 			if (hasNameOffset)
 				writer.put((byte) s.getNameOffset());
 
-			writer.put((byte) trailingFlags);
+			putN(writer, u2size, trailingFlags);
 		}
 	}
 
@@ -111,7 +113,7 @@ public class Mdr7 extends MdrMapSection {
 	 */
 	public int getItemSize() {
 		PointerSizes sizes = getSizes();
-		int size = sizes.getMapSize() + 3 + 1;
+		int size = sizes.getMapSize() + 3 + u2size;
 		if (!isForDevice())
 			size += sizes.getStrOffSize();
 		if ((getExtraValue() & MDR7_HAS_NAME_OFFSET) != 0)
@@ -127,7 +129,7 @@ public class Mdr7 extends MdrMapSection {
 	 * Value of 3 possibly the existence of the lbl field.
 	 */
 	public int getExtraValue() {
-		int magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (1 << MDR7_PARTIAL_SHIFT);
+		int magic = MDR7_U1 | MDR7_HAS_NAME_OFFSET | (u2size << MDR7_PARTIAL_SHIFT);
 
 		if (isForDevice()) {
 			magic |= MDR7_U2;
