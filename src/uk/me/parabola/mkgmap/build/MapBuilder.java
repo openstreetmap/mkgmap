@@ -126,7 +126,7 @@ public class MapBuilder implements Configurable {
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
 
-	private boolean	poiAddresses = true;
+	private boolean	poiAddresses;
 	private int		poiDisplayFlags;
 	private boolean enableLineCleanFilters = true;
 	private boolean makePOIIndex;
@@ -157,8 +157,8 @@ public class MapBuilder implements Configurable {
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
-		if(props.getProperty("no-poi-address", null) != null)
-			poiAddresses = false;
+		if(props.getProperty("poi-address") != null)
+			poiAddresses = true;
 
 		routeCenterBoundaryType = props.getProperty("route-center-boundary", 0);
 

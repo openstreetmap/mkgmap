@@ -578,11 +578,12 @@ Miscellaneous options:
 	lower map too.  Useful for contour line maps among other
 	things.
 
---no-poi-address
-	Disable address / phone information to POIs. Address info is
+--poi-address
+	Enable address / phone information to POIs. Address info is
 	read according to the "Karlsruhe" tagging schema. Automatic
 	filling of missing information could be enabled using the
 	"location-autofill" option.
+	Default is enabled, use --no-poi-address to disable.
 
 --verbose
 	Makes some operations more verbose. Mostly used with --list-styles.
