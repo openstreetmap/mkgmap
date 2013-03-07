@@ -400,7 +400,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 	
 	/**
-	 * Cuts motorway_link ways connected to an exit node
+	 * Cuts motorway_link and trunk_link ways connected to an exit node
 	 * (highway=motorway_junction) into three parts to be able to get a hint on
 	 * Garmin GPS. The mid part way is tagged additionally with the following
 	 * tags:
@@ -417,12 +417,17 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	 * mkgmap:exit_hint_name.
 	 */
 	private void createExitHints() {
-		// collect all nodes of highway=motorway ways so that we can check if an exit node
-		// belongs to a motorway or is a "subexit" within a motorway junction
-		Set<Coord> highwayCoords = new HashSet<Coord>();
+		// collect all nodes of highway=motorway/trunk ways so that we can check if an exit node
+		// belongs to a motorway/trunk or is a "subexit" within a motorway/trunk junction
+		Set<Coord> motorwayCoords = new HashSet<Coord>();
+		Set<Coord> trunkCoords = new HashSet<Coord>();
 		for (Way w : saver.getWays().values()) {
-			if ("motorway".equals(w.getTag("highway"))) {
-				highwayCoords.addAll(w.getPoints());
+			String motorwayTag = w.getTag("highway");
+			if (motorwayTag != null) {
+				if (motorwayTag.equals("motorway"))
+					motorwayCoords.addAll(w.getPoints());
+				else if (motorwayTag.equals("trunk"))
+					trunkCoords.addAll(w.getPoints());
 			}
 		}	
 		
@@ -430,7 +435,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		for (Node exitNode : saver.getNodes().values()) {
 			if (isTaggedAsExit(exitNode) && saver.getBoundingBox().contains(exitNode.getLocation())) {
 				
-				boolean isHighwayExit = highwayCoords.contains(exitNode.getLocation());
+				boolean isMotorwayExit = motorwayCoords.contains(exitNode.getLocation());
+				boolean isTrunkExit = trunkCoords.contains(exitNode.getLocation());
+				boolean isHighwayExit = isMotorwayExit || isTrunkExit;
 				// use exits only if they are located on a motorway
 				if (onlyMotorwayExitHint && isHighwayExit == false) {
 					if (log.isDebugEnabled())
@@ -445,54 +452,23 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 					continue;
 				}
 				
-				// if the exit is on a motorway_link it must be ensured that the hint is 
-				// created on the right / left link only
-				if (onlyMotorwayExitHint == false && isHighwayExit == false) {
-//					List<Entry<Coord, Way>> prevNodes = getNextNodes(exitNode.getLocation(), false);
-//					log.error("Prev nodes: "+prevNodes);
-//					if (prevNodes.isEmpty()) {
-//						log.error("Node "+exitNode+" has no predecessor way. Cannot create exit hint for it.");
-//						continue;
-//					}
-//					if (prevNodes.size() > 1) {
-//						log.error("Node "+exitNode+" has multiple predecessor ways. Cannot create exit hint for it.");
-//						continue;
-//					}
-//					
-//					// there is one predecessor way 
-//					Coord predecessorNode = prevNodes.get(0).getKey();
-					
-//					List<Entry<Coord, Way>> nextNodes = getNextNodes(exitNode.getLocation(), true);
-//					log.error("Next nodes: "+nextNodes);
-//					
-//					// TODO: differ drive-on-left and drive-on-right
-//					// at the moment select the rightmost way
-//					Entry<Coord, Way> possibleExit = null;
-//					for (Entry<Coord, Way> checkWay : nextNodes) {
-//						if (possibleExit == null) {
-//							possibleExit = checkWay;
-//						} else {
-//							
-//						}
-//					}
-					
-				}
-
 				// retrieve the next node on the highway to be able to check if 
 				// the inserted node has the correct orientation 
 				List<Entry<Coord, Way>> nextNodes = getNextNodes(exitNode.getLocation(), true);
 				Coord nextHighwayNode = null;
+				String expectedHighwayTag = (isMotorwayExit ? "motorway" : "trunk");
 				for (Entry<Coord, Way> nextNode : nextNodes) {
-					if ("motorway".equals(nextNode.getValue().getTag("highway"))) {
+					if (expectedHighwayTag.equals(nextNode.getValue().getTag("highway"))) {
 						nextHighwayNode = nextNode.getKey();
 						break;
-					}
+					} 
 				}
 				
-				// use the motorway_link ways only
+				// use link ways only
 				for (Way w : exitWays) {
-					if ("motorway_link".equals(w.getTag("highway"))) {
-						log.debug("Try to cut motorway_link", w, "into three parts for giving hint to exit", exitNode);
+					String highwayLinkTag = w.getTag("highway");
+					if (highwayLinkTag.endsWith("_link")) {
+						log.debug("Try to cut",highwayLinkTag, w, "into three parts for giving hint to exit", exitNode);
 
 						// now create three parts:
 						// wayPart1: 10m having the original tags only
@@ -524,7 +500,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 							if (log.isInfoEnabled())
 								log.info("Cut off exit hint way", hintWay, hintWay.toTagString());
 						}
-
 					}
 				}
 			}

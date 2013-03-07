@@ -539,17 +539,17 @@ Miscellaneous options:
 --process-exits
     Usual Garmin devices do not tell the name of the exit on motorways 
     while routing with mkgmap created maps. This option splits the each
-    motorway_link into three parts. All parts are tagged with the 
-    original tags of the motorway_link. Additionally the middle part is 
+    motorway_link and trunk_link into three parts. All parts are tagged 
+    with the original tags of the link. Additionally the middle part is 
     tagged with the following tags:
       mkgmap:exit_hint=true
-      mkgmap:exit_hint_ref=<ref tag value of the motorway exit>
-      mkgmap:exit_hint_name=<name tag value of the motorway exit>
-      mkgmap:exit_hint_exit_to=<exit_to tag value of the motorway exit>
+      mkgmap:exit_hint_ref=<ref tag value of the exit>
+      mkgmap:exit_hint_name=<name tag value of the exit>
+      mkgmap:exit_hint_exit_to=<exit_to tag value of the exit>
     Adding a rule checking the mkgmap:exit_hint=true makes it possible
     to use Garmin type 0x01 (motorway) for the middle part so that the 
     Garmin device tells the name of this middle part as hint where to 
-    leave the motorway. 
+    leave the motorway/trunk. 
 	
 --delete-tags-file=FILENAME
 	Names a file that should contain one or more lines of the form
