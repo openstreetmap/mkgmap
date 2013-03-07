@@ -32,7 +32,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -82,18 +85,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * precompiled sea should not be used.
 	 */
 	private File precompSeaDir;
-
+	
 	private static final byte SEA_TILE = 's';
 	private static final byte LAND_TILE = 'l';
 	private static final byte MIXED_TILE = 'm';
 	
-	/**
-	 * The index is a grid [lon][lat]. Each element defines the content of one precompiled 
-	 * sea tile which are {@link #SEA_TYPE}, {@link #LAND_TYPE}, or {@link #MIXED_TYPE}, or 0 for unknown
-	 */
-	private static ThreadLocal<byte[][]> precompIndex = new ThreadLocal<byte[][]>();
-	private static ThreadLocal<String> precompSeaExt = new ThreadLocal<String>();
-	private static ThreadLocal<String> precompSeaPrefix = new ThreadLocal<String>();
+	private static ThreadLocal<PrecompData> precompIndex = new ThreadLocal<PrecompData>();
+	
 	// useful constants defining the min/max map units of the precompiled sea tiles
 	private static final int MIN_LAT = Utils.toMapUnit(-90.0);
 	private static final int MAX_LAT = Utils.toMapUnit(90.0);
@@ -126,7 +124,6 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 	}
 	
-	
 	/**
 	 * Sort out options from the command line.
 	 * Returns true only if the option to generate the sea is active, so that
@@ -134,107 +131,81 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
-
-		// check if the precomp-sea option is set
+		
 		String precompSea = props.getProperty("precomp-sea", null);
 		if (precompSea != null) {
 			precompSeaDir = new File(precompSea);
-			if (precompSeaDir.exists()) {
+			if (precompSeaDir.exists()){
 				if (precompIndex.get() == null) {
-					File indexFile = new File(precompSeaDir, "index.txt.gz");
-					if (indexFile.exists() == false) {
-						// check if the unzipped index file exists
-						indexFile = new File(precompSeaDir, "index.txt");
-					}
-					
-					if (indexFile.exists()) {
-						int indexWidth = (getPrecompTileStart(MAX_LON) - getPrecompTileStart(MIN_LON)) / PRECOMP_RASTER;
-						int indexHeight = (getPrecompTileStart(MAX_LAT) - getPrecompTileStart(MIN_LAT)) / PRECOMP_RASTER;
-						
-						try {
-							InputStream fileStream = new FileInputStream(indexFile);
-							if (indexFile.getName().endsWith(".gz")) {
-								fileStream = new GZIPInputStream(fileStream);
+					PrecompData precompData = null;
+					String internalPath = null;    	
+					InputStream indexStream = null;
+					String indexFileName = "index.txt.gz";
+					ZipFile zipFile = null;
+					try{
+						if (precompSeaDir.isDirectory()){
+							File indexFile = new File(precompSeaDir, indexFileName);
+							if (indexFile.exists() == false) {
+								// check if the unzipped index file exists
+								indexFileName = "index.txt";
+								indexFile = new File(precompSeaDir, indexFileName);
 							}
-							LineNumberReader indexReader = new LineNumberReader(
-									new InputStreamReader(fileStream));
-							Pattern csvSplitter = Pattern.compile(Pattern
-									.quote(";"));
-							String indexLine = null;
-							
-							byte[][] indexGrid = new byte[indexWidth+1][indexHeight+1];
-							boolean detectExt = true; 
-							String prefix = null;
-							String ext = null;
-							
-							while ((indexLine = indexReader.readLine()) != null) {
-								if (indexLine.startsWith("#")) {
-									// comment
-									continue;
-								}
-								String[] items = csvSplitter.split(indexLine);
-								if (items.length != 2) {
-									log.warn("Invalid format in index file name:",
-											indexLine);
-									continue;
-								}
-								String precompKey = items[0];
-								byte type = updatePrecompSeaTileIndex(precompKey, items[1], indexGrid);
-								if (type == '?'){
-									log.warn("Invalid format in index file name:",
-											indexLine);
-									continue;
-								}
-								if (type == MIXED_TILE){
-									// make sure that all file names are using the same name scheme
-									int prePos = items[1].indexOf(items[0]);
-									if (prePos >= 0){
-										if (detectExt){
-											prefix = items[1].substring(0, prePos);
-											ext = items[1].substring(prePos+items[0].length());
-											detectExt = false;
-										} else {
-											StringBuilder sb = new StringBuilder(prefix);
-											sb.append(precompKey);
-											sb.append(ext);												
-											if (items[1].equals(sb.toString()) == false){
-												log.warn("Unexpected file name in index file:",
-													 indexLine);
-											}
-										}
-									}
-								}
-
+							if (indexFile.exists()) {
+								indexStream = new FileInputStream(indexFile);
 							}
-							indexReader.close();
-							precompIndex.set(indexGrid);
-							precompSeaPrefix.set(prefix);
-							precompSeaExt.set(ext);
-							
-						} catch (IOException exp) {
-							log.error("Cannot read index file " + indexFile,
-									exp);
-							precompIndex.set(null);
-							precompSea = null;
+						} else if (precompSea.endsWith(".zip")){
+							zipFile = new ZipFile(precompSeaDir);
+							internalPath = "sea";
+							ZipEntry entry = zipFile.getEntry(internalPath);
+							if (entry == null)
+								internalPath = "";
+							else 
+								internalPath = internalPath + "/";
+							entry = zipFile.getEntry(internalPath + indexFileName);
+							if (entry == null){
+								indexFileName = "index.txt";
+								entry = zipFile.getEntry(internalPath + indexFileName);
+							}
+							if (entry != null){
+								indexStream = zipFile.getInputStream(entry);
+							}
+						} else {
+							log.error("Don't know how to read " + precompSeaDir);
 						}
-					} else {
-						log.error("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
-							+ precompSeaDir);
-						System.err.println("Disable precompiled sea due to missing index.txt file in precompiled sea directory "
-							+ precompSeaDir);
-						precompIndex.set(null);
-						precompSeaDir = null;
+						if (indexStream != null){
+							if (indexFileName.endsWith(".gz")) {
+								indexStream = new GZIPInputStream(indexStream);
+							}
+							try{
+								precompData = loadIndex(indexStream);
+							} catch (IOException exp) {
+								log.error("Cannot read index file " + indexFileName,
+										exp);
+							}
+							
+							if (precompData != null){
+								if (zipFile != null){
+									precompData.precompZipFileInternalPath = internalPath;
+									precompData.zipFile = zipFile;
+								}
+								precompIndex.set(precompData);
+							}
+							indexStream.close();
+						}
+					} catch (IOException exp) {
+						log.error("Cannot read index file " + indexFileName,
+								exp);
+
 					}
+					precompIndex.set(precompData);
 				}
 			} else {
-				log.error("Directory with precompiled sea does not exist: "
-						+ precompSeaDir);
-				System.err.println("Directory with precompiled sea does not exist: "
-						+ precompSeaDir);
-				precompSeaDir = null;
+				log.error("Directory or zip file with precompiled sea does not exist: "
+						+ precompSea);
+				System.err.println("Directory or zip file with precompiled sea does not exist: "
+						+ precompSea);
 			}
 		}
-		
 		String gs = props.getProperty("generate-sea", null);
 		boolean generateSea = gs != null || precompSea != null;
 		if (gs != null) {
@@ -315,21 +286,87 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		return generateSea;
 	}
 	
-	/**
-	 * Retrieves the start value of the precompiled tile.
-	 * @param value the value for which the start value is calculated
-	 * @return the tile start value
-	 */
-	public static int getPrecompTileStart(int value) {
-		int rem = value % PRECOMP_RASTER;
-		if (rem == 0) {
-			return value;
-		} else if (value >= 0) {
-			return value - rem;
-		} else {
-			return value - PRECOMP_RASTER - rem;
+    /**
+     * Read the index from stream and populate the index grid. 
+     * @param fileStream already opened stream
+     */
+    private PrecompData loadIndex(InputStream fileStream) throws IOException{
+		int indexWidth = (SeaGenerator.getPrecompTileStart(MAX_LON) - SeaGenerator.getPrecompTileStart(MIN_LON)) / SeaGenerator.PRECOMP_RASTER;
+		int indexHeight = (SeaGenerator.getPrecompTileStart(MAX_LAT) - SeaGenerator.getPrecompTileStart(MIN_LAT)) / SeaGenerator.PRECOMP_RASTER;
+		PrecompData pi = null;
+		LineNumberReader indexReader = new LineNumberReader(
+				new InputStreamReader(fileStream));
+		Pattern csvSplitter = Pattern.compile(Pattern
+				.quote(";"));
+		String indexLine = null;
+
+		byte[][] indexGrid = new byte[indexWidth+1][indexHeight+1];
+		boolean detectExt = true; 
+		String prefix = null;
+		String ext = null;
+
+		while ((indexLine = indexReader.readLine()) != null) {
+			if (indexLine.startsWith("#")) {
+				// comment
+				continue;
+			}
+			String[] items = csvSplitter.split(indexLine);
+			if (items.length != 2) {
+				log.warn("Invalid format in index file name:",
+						indexLine);
+				continue;
+			}
+			String precompKey = items[0];
+			byte type = updatePrecompSeaTileIndex(precompKey, items[1], indexGrid);
+			if (type == '?'){
+				log.warn("Invalid format in index file name:",
+						indexLine);
+				continue;
+			}
+			if (type == MIXED_TILE){
+				// make sure that all file names are using the same name scheme
+				int prePos = items[1].indexOf(items[0]);
+				if (prePos >= 0){
+					if (detectExt){
+						prefix = items[1].substring(0, prePos);
+						ext = items[1].substring(prePos+items[0].length());
+						detectExt = false;
+					} else {
+						StringBuilder sb = new StringBuilder(prefix);
+						sb.append(precompKey);
+						sb.append(ext);												
+						if (items[1].equals(sb.toString()) == false){
+							log.warn("Unexpected file name in index file:",
+									indexLine);
+						}
+					}
+				}
+			}
+
 		}
-	}
+		// 
+		pi = new PrecompData();
+		pi.precompIndex = indexGrid;
+		pi.precompSeaPrefix = prefix;
+		pi.precompSeaExt = ext;
+		return pi;
+    }
+
+    /**
+     * Retrieves the start value of the precompiled tile.
+     * @param value the value for which the start value is calculated
+     * @return the tile start value
+     */
+    public static int getPrecompTileStart(int value) {
+    	int rem = value % PRECOMP_RASTER;
+    	if (rem == 0) {
+    		return value;
+    	} else if (value >= 0) {
+    		return value - rem;
+    	} else {
+    		return value - PRECOMP_RASTER - rem;
+    	}
+    }
 
 	/**
 	 * Retrieves the end value of the precompiled tile.
@@ -448,12 +485,16 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @return all ways of the tile
 	 * @throws FileNotFoundException if the tile could not be found
 	 */
-	private Collection<Way> loadPrecompTile(String filename)
-			throws FileNotFoundException {
+	private Collection<Way> loadPrecompTile(InputStream is, String filename) {
 		OsmMapDataSource src = createTileReader(filename);
 		src.config(new EnhancedProperties());
 		log.info("Started loading coastlines from", filename);
-		src.load(filename);
+		try{
+			src.load(is);
+		} catch (FormatException e) {
+			log.error("Failed to read " + filename);
+			log.error(e);
+		}
 		log.info("Finished loading coastlines from", filename);
 		return src.getElementSaver().getWays().values();
 	}
@@ -482,17 +523,17 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 * @return either "land" or "sea" or a file name or null
 	 */
 	private String getTileName(String precompKey){
-		byte[][] index = precompIndex.get();
+		PrecompData pi = precompIndex.get();
 		String[] tileCoords = keySplitter.split(precompKey);
 		int lat = Integer.valueOf(tileCoords[0]); 
 		int lon = Integer.valueOf(tileCoords[1]); 
 		int latIndex = (MAX_LAT-lat) / PRECOMP_RASTER;
 		int lonIndex = (MAX_LON-lon) / PRECOMP_RASTER;
-		byte type = index[lonIndex][latIndex]; 
+		byte type = pi.precompIndex[lonIndex][latIndex]; 
 		switch (type){
 		case SEA_TILE: return "sea"; 
 		case LAND_TILE: return "land"; 
-		case MIXED_TILE: return precompSeaPrefix.get() + precompKey + precompSeaExt.get(); 
+		case MIXED_TILE: return pi.precompSeaPrefix + precompKey + pi.precompSeaExt; 
 		default:  return null;
 		}
 	}
@@ -541,15 +582,20 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		List<Way> seaWays = new ArrayList<Way>();
 		// get the index with assignment key => sea/land/tilename
 		
-		
+		ZipFile zipFile = null;
+		PrecompData pd = precompIndex.get();
+		if (precompSeaDir.getName().endsWith(".zip")){
+			zipFile = pd.zipFile;
+		}
+
 		for (String precompKey : getPrecompKeyNames()) {
 			String tileName = getTileName(precompKey);
-			
+
 			if (tileName == null ) {
 				log.error("Precompile sea tile "+precompKey+" is missing in the index. Skipping.");
 				continue;
 			}
-			
+
 			if ("sea".equals(tileName) || "land".equals(tileName)) {
 				// the whole precompiled tile is filled with either land or sea
 				// => create a rectangle that covers the whole precompiled tile 
@@ -565,43 +611,55 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				w.addPoint(new Coord(maxLat,maxLon));
 				w.addPoint(new Coord(maxLat,minLon));
 				w.addPoint(new Coord(minLat,minLon));
-				
+
 				if ("sea".equals(tileName)) {
 					seaWays.add(w);
 				} else {
 					landWays.add(w);
 				}
-				
+
 			} else {
 				distinctTilesOnly = false;
-				String precompTile = new File(precompSeaDir,tileName).getAbsolutePath();
 				try {
-					Collection<Way> seaPrecompWays = loadPrecompTile(precompTile);
-					
-					if (log.isDebugEnabled())
-						log.debug(seaPrecompWays.size(), "precomp sea ways from",
-							precompTile, "loaded.");
-
-					for (Way w : seaPrecompWays) {
-						// set a new id to be sure that the precompiled ids do not
-						// interfere with the ids of this run
-						w.setId(FakeIdGenerator.makeFakeId());
-					
-						if ("land".equals(w.getTag("natural"))) {
-							landWays.add(w);
+					InputStream is = null;
+					if (zipFile != null){
+						ZipEntry entry = zipFile.getEntry(pd.precompZipFileInternalPath + tileName);
+						if (entry != null){
+							is = zipFile.getInputStream(entry);
 						} else {
-							seaWays.add(w);
+							log.error("Preompiled sea tile " + tileName + " not found."); 								
+						}
+					} else {
+						File precompTile = new File(precompSeaDir,tileName);
+						is = new FileInputStream(precompTile);
+					}
+					if (is != null){
+						Collection<Way> seaPrecompWays = loadPrecompTile(is, tileName);
+						if (log.isDebugEnabled())
+							log.debug(seaPrecompWays.size(), "precomp sea ways from",
+									tileName, "loaded.");
+
+						for (Way w : seaPrecompWays) {
+							// set a new id to be sure that the precompiled ids do not
+							// interfere with the ids of this run
+							w.setId(FakeIdGenerator.makeFakeId());
+
+							if ("land".equals(w.getTag("natural"))) {
+								landWays.add(w);
+							} else {
+								seaWays.add(w);
+							}
 						}
 					}
 				} catch (FileNotFoundException exp) {
-					log.error("Preompiled sea tile " + precompTile + " not found.");
+					log.error("Preompiled sea tile " + tileName + " not found."); 
 				} catch (Exception exp) {
 					log.error(exp);
 					exp.printStackTrace();
 				}
 			}
 		}
-		
+ 		
 		// check if the land tags need to be changed
 		if (landTag != null && ("natural".equals(landTag[0]) && "land".equals(landTag[1])) == false) {
 			for (Way w : landWays) {
@@ -1352,5 +1410,23 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Helper class for threadlocal vars
+	 * 
+	 *
+	 */
+	class PrecompData {
+		/**
+		 * The index is a grid [lon][lat]. Each element defines the content of one precompiled 
+		 * sea tile which are {@link #SEA_TYPE}, {@link #LAND_TYPE}, or {@link #MIXED_TYPE}, or 0 for unknown
+		 */
+		private byte[][] precompIndex;
+		private String precompSeaExt;
+		private String precompSeaPrefix;
+		private String precompZipFileInternalPath;
+		private ZipFile zipFile;
+		
 	}
 }

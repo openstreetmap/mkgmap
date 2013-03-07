@@ -13,12 +13,10 @@
 
 package uk.me.parabola.mkgmap.reader.osm.bin;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 import uk.me.parabola.imgfmt.FormatException;
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.mkgmap.reader.osm.OsmMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.bin.OsmBinHandler.BinParser;
 
@@ -43,14 +41,8 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 		return name.endsWith(".pbf") || name.endsWith(".bin");
 	}
 
-	/**
-	 * Load the .osm file and produce the intermediate format.
-	 *
-	 * @param name The filename to read.
-	 * @throws FileNotFoundException If the file does not exist.
-	 */
-	public void load(String name) throws FileNotFoundException, FormatException {
-		InputStream is = Utils.openFile(name);
+	@Override
+	public void load(InputStream is) throws FormatException {
 
 		OsmBinHandler handler = new OsmBinHandler(getConfig());
 
@@ -64,7 +56,7 @@ public class OsmBinMapDataSource extends OsmMapDataSource {
 		} catch (NoClassDefFoundError e) {
 			throw new FormatException("Failed to read binary file, probably missing protobuf.jar");
 		} catch (IOException e) {
-			throw new FormatException("Failed to read binary file " + name);
+			throw new FormatException("Failed to read binary file");
 		}
 		elementSaver.finishLoading();
 

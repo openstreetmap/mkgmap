@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.FormatException;
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -45,7 +48,7 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public abstract class OsmMapDataSource extends MapperBasedMapDataSource
-		implements LoadableMapDataSource
+		implements LoadableMapDataSource, LoadableOsmDataSource
 {
 	private static final Logger log = Logger.getLogger(OsmMapDataSource.class);
 
@@ -104,6 +107,12 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
 		return LevelInfo.createFromString(levelSpec);
+	}
+
+	@Override
+	public void load(String name) throws FileNotFoundException, FormatException {
+		InputStream is = Utils.openFile(name);
+		load(is);
 	}
 
 	/**
