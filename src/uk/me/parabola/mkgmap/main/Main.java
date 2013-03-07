@@ -98,6 +98,8 @@ public class Main implements ArgumentProcessor {
 			return;
 		}
 
+		checkJREVersion();
+		
 		Main mm = new Main();
 
 		try {
@@ -112,6 +114,27 @@ public class Main implements ArgumentProcessor {
 		}
 		System.out.println("Time finished: " + new Date());
 		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms"); 
+	}
+	
+	/**
+	 * Check if a JRE 1.7.x or higher is installed.
+	 */
+	private static void checkJREVersion() {
+		String version = System.getProperty("java.version");
+		if (version != null) {
+			String[] versionParts =version.split(Pattern.quote(".")); 
+			if (versionParts.length >= 2) {
+				int major = Integer.valueOf(versionParts[1]);
+				if (major < 7) {
+					System.err.println("===========================================================");
+					System.err.println("You are using an old Java runtime environment "+version);
+					System.err.println("mkgmap support for JRE 1.6.x will be discontinued");
+					System.err.println("after June 2013.");
+					System.err.println("Please update the JRE to the latest release.");
+					System.err.println("===========================================================");
+				}
+			}
+		}
 	}
 
 	/**
