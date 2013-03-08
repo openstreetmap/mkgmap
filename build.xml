@@ -18,6 +18,10 @@
 <project name="mkgmap" default="dist" basedir="."
 		xmlns:ivy="antlib:org.apache.ivy.ant">
 
+	<!-- Set default javac target value -->
+	<property name="ant.build.javac.target" value="1.6"/>
+	<property name="ant.build.javac.source" value="1.6"/>
+
 	<property name="project.name" value="${ant.project.name}"/>
 
 	<!-- Init -->
