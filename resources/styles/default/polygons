@@ -8,7 +8,10 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
+# polygons do not have address information in the Garmin map format
+# so as long as the address information is not required in a stlye rule
+# it is not required to include the address rules 
+# include 'inc/address';
 
 
 leisure=* & sport=* & name=* { set name='${name} (${sport})' }
