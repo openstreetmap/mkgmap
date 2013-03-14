@@ -28,8 +28,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -41,6 +43,7 @@ import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.Java2DConverter;
+import uk.me.parabola.util.MultiHashMap;
 
 public class BoundaryUtil {
 	private static final Logger log = Logger.getLogger(BoundaryUtil.class);
@@ -593,6 +596,7 @@ public class BoundaryUtil {
 						boundaryList = readStreamLegacyFormat(inpStream, fname,searchBbox);
 					if (boundaryList == null || boundaryList.isEmpty())
 						return null;
+					boundaryList = mergePostalCodes(boundaryList);
 					bqt = new BoundaryQuadTree(qtBbox, boundaryList, props);
 				}
 			} catch (EOFException exp) {
@@ -610,7 +614,143 @@ public class BoundaryUtil {
 		return bqt;
 	}
 	
+	/**
+	 * Merges boundaries with the same postal code.
+	 * @param boundaries a list of boundaries
+	 * @return the boundary list with postal code areas merged
+	 */
+	private static List<Boundary> mergePostalCodes(List<Boundary> boundaries) {
+		List<Boundary> mergedList = new ArrayList<Boundary>(boundaries.size());
+		
+		MultiHashMap<String, Boundary> equalPostalCodes = new MultiHashMap<String, Boundary>();
+		for (Boundary boundary : boundaries) {
+			String postalCode = getPostalCode(boundary.getTags());
+			if (postalCode == null) {
+				// no postal code boundary
+				mergedList.add(boundary);
+			} else {
+				// postal code boundary => merge it later
+				equalPostalCodes.add(postalCode, boundary);
+			}
+		}
+
+		for (Entry<String, List<Boundary>> postCodeBoundary : equalPostalCodes
+				.entrySet()) {
+			if (postCodeBoundary.getValue().size() == 1) {
+				// nothing to merge
+				mergedList.addAll(postCodeBoundary.getValue());
+				continue;
+			}
+			
+			// there are more than 2 boundaries with the same post code
+			// => merge them
+			Area newPostCodeArea = new Area();
+			for (Boundary b : postCodeBoundary.getValue()) {
+				newPostCodeArea.add(b.getArea());
+				
+				// remove the post code tags from the original boundary
+				if (b.getTags().get("postal_code") != null) {
+					b.getTags().remove("postal_code");
+				} else if ("postal_code".equals(b.getTags().get("boundary"))) {
+					b.getTags().remove("boundary");
+					b.getTags().remove("name");
+				}
+				
+				// check if the boundary contains other boundary information
+				if (isAdministrativeBoundary(b)) {
+					mergedList.add(b);
+				} else {
+					log.info("Boundary", b.getId(), b.getTags(), "contains no more boundary tags. Skipping it.");
+				}
+			}
+			
+			Tags postalCodeTags = new Tags();
+			postalCodeTags.put("postal_code", postCodeBoundary.getKey());
+			Boundary postalCodeBoundary = new Boundary(newPostCodeArea, postalCodeTags, "p"+postCodeBoundary.getKey());
+
+			log.info("Merged", postCodeBoundary.getValue().size(), "postal code boundaries for postal code", postCodeBoundary.getKey());
+			mergedList.add(postalCodeBoundary);
+		}
+		
+		return mergedList;
+	}
 	
+	/**
+	 * Checks if the given boundary contains tags for an administrative boundary.
+	 * @param b a boundary
+	 * @return <code>true</code> administrative boundary or postal code; 
+	 * <code>false</code> element cannot be used for precompiled bounds 
+	 */
+	public static boolean isAdministrativeBoundary(Boundary b) {
+		
+		if (b.getId().startsWith("r")) {
+			String type = b.getTags().get("type");
+			
+			if ("boundary".equals(type) || "multipolygon".equals(type)) {
+				String boundaryVal = b.getTags().get("boundary");
+				if ("administrative".equals(boundaryVal)) {
+					// for boundary=administrative the admin_level must be set
+					if (b.getTags().get("admin_level") == null) {
+						return false;
+					}
+					// and a name must be set (check only for a tag containing name
+					Iterator<Entry<String,String>> tagIterator = b.getTags().entryIterator();
+					while (tagIterator.hasNext()) {
+						Entry<String,String> tag  = tagIterator.next();
+						if (tag.getKey().contains("name")) {
+							return true;
+						}
+					}
+					// does not contain a name tag => do not use it
+					return false;					
+				}  else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		} else if (b.getId().startsWith("w")) {
+			// the boundary tag must be "administrative" or "postal_code"
+			String boundaryVal = b.getTags().get("boundary");
+			if ("administrative".equals(boundaryVal)) {
+				// for boundary=administrative the admin_level must be set
+				if (b.getTags().get("admin_level") == null) {
+					return false;
+				}
+				// and a name must be set (check only for a tag containing name)
+				Iterator<Entry<String,String>> tagIterator = b.getTags().entryIterator();
+				while (tagIterator.hasNext()) {
+					Entry<String,String> tag  = tagIterator.next();
+					if (tag.getKey().contains("name")) {
+						return true;
+					}
+				}
+				// does not contain a name tag => do not use it
+				return false;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	
+	private static String getPostalCode(Tags tags) {
+		String zip = tags.get("postal_code");
+		if (zip == null) {
+			if ("postal_code".equals(tags.get("boundary"))){
+				String name = tags.get("name"); 
+				if (name != null) {
+					String[] nameParts = name.split(Pattern.quote(" "));
+					if (nameParts.length > 0) {
+						zip = nameParts[0].trim();
+					}
+				}
+			}
+		}
+		return zip;
+	}
 	/**
 	 * Helper to ease the reporting of errors. Creates a java code snippet 
 	 * that can be compiled to have the same area.
