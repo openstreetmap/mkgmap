@@ -17,11 +17,13 @@ import java.util.Collections;
 import java.util.Map.Entry;
 
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.build.Locator;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.ElementSaver;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
+import uk.me.parabola.mkgmap.reader.osm.Tags;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -34,6 +36,8 @@ import uk.me.parabola.util.EnhancedProperties;
 public class BoundaryElementSaver extends ElementSaver {
 	private static final Logger log = Logger.getLogger(BoundaryElementSaver.class);
 
+	private final static Locator locator = new Locator();
+	
 	private final BoundarySaver saver;
 	
 	public BoundaryElementSaver(EnhancedProperties args, BoundarySaver saver) {
@@ -58,6 +62,20 @@ public class BoundaryElementSaver extends ElementSaver {
 					// for boundary=administrative the admin_level must be set
 					if (element.getTag("admin_level") == null) {
 						return false;
+					}
+					
+					// Check for admin_level==2 if the name is known in the LocatorConfig.xml.
+					// This should abandon all non country admin_level 2 boundaries
+					if (element.getTag("admin_level").equals("2")) {
+						Tags copyTags = new Tags();
+						for (Entry<String,String> tag : element.getEntryIteratable()) {
+							copyTags.put(tag.getKey(), tag.getValue());
+						}
+						String iso = locator.getCountryISOCode(copyTags);
+						if (iso == null) {
+							log.warn("Ignore admin_level 2 element:", element.toBrowseURL(), element.toTagString());
+							return false;
+						}
 					}
 					// and a name must be set (check only for a tag containing name
 					for (Entry<String,String> tag : element.getEntryIteratable()) {
@@ -102,6 +120,20 @@ public class BoundaryElementSaver extends ElementSaver {
 				// for boundary=administrative the admin_level must be set
 				if (element.getTag("admin_level") == null) {
 					return false;
+				}
+
+				// Check for admin_level==2 if the name is known in the LocatorConfig.xml.
+				// This should abandon all non country admin_level 2 boundaries
+				if (element.getTag("admin_level").equals("2")) {
+					Tags copyTags = new Tags();
+					for (Entry<String,String> tag : element.getEntryIteratable()) {
+						copyTags.put(tag.getKey(), tag.getValue());
+					}
+					String iso = locator.getCountryISOCode(copyTags);
+					if (iso == null) {
+						log.warn("Ignore admin_level 2 element:", element.toBrowseURL(), element.toTagString());
+						return false;
+					}
 				}
 				
 				// and a name must be set (check only for a tag containing name)
