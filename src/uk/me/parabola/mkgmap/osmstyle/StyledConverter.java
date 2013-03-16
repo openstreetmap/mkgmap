@@ -19,6 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -326,6 +327,7 @@ public class StyledConverter implements OsmConverter {
 
 	public void end() {
 		setHighwayCounts();
+		findUnconnectedRoads();
 		removeShortArcsByMergingNodes(minimumArcLength);
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -1750,13 +1752,70 @@ public class StyledConverter implements OsmConverter {
 				p.incHighwayCount();
 			}
 		}
-		return;
+	}
+
+	/**
+	 * Detect roads that do not share any node with another road.
+	 * If such a road has the mkgmap:check_connected=true tag, add it as line, not as a road. 
+	 */
+	private void findUnconnectedRoads(){
+		
+		Map<Coord, HashSet<Way>> connectors = new IdentityHashMap<Coord, HashSet<Way>>(roads.size()*2);
+		// collect nodes that might connect roads
+		long lastId = 0;
+		for (Way way :roads){
+			if (way.getId() == lastId)
+				continue;
+			lastId = way.getId();
+			for (Coord p:way.getPoints()){
+				if (p.getHighwayCount() > 1){
+					HashSet<Way> ways = connectors.get(p);
+					if (ways == null){
+						ways = new HashSet<Way>(4);
+						connectors.put(p, ways);
+					}
+					ways.add(way);
+				}
+			}
+		}
+		
+		// find roads that are not connected
+		for (int i = 0; i < roads.size(); i++){
+			Way way = roads.get(i);
+			if ("true".equals(way.getTag("mkgmap:check_connected"))){
+				boolean isConnected = false;
+				boolean onBoundary = false;
+				for (Coord p:way.getPoints()){
+					if (p.getOnBoundary())
+						onBoundary = true;
+					if (p.getHighwayCount() > 1){
+						HashSet<Way> ways = connectors.get(p);
+						if (ways != null && ways.size() > 1){
+							isConnected = true;
+							break;
+						}
+					}
+				}
+				if (!isConnected){
+					if (onBoundary){
+						log.info("road not connected to other roads but is on boundary: " + way.toBrowseURL());
+						
+					} else {
+						log.info("road not connected to other roads, added as line: " + way.toBrowseURL());
+						addLine(way, roadTypes.get(i));
+						roads.set(i, null);
+					}
+				}
+			}
+		}
 	}
 	
 	private void removeShortArcsByMergingNodes(double minArcLength) {
 		log.info("Removing short arcs (min arc length = " + minArcLength + "m)");
 		log.info("Removing short arcs - marking points as node-alike");
 		for (Way way : roads) {
+			if (way == null)
+				continue;
 			List<Coord> points = way.getPoints();
 			int numPoints = points.size();
 			if (numPoints >= 2) {
