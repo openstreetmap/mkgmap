@@ -224,8 +224,12 @@ public class ElementSaver {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
-		for (Node n : nodeMap.values())
+		for (Node n : nodeMap.values()){
 			converter.convertNode(n);
+			if (n.getTag("fixme") != null || n.getTag("FIXME") != null){
+				n.getLocation().setFixme(true);
+			}
+		}
 
 		nodeMap = null;
 

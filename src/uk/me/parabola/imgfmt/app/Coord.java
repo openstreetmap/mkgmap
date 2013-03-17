@@ -39,6 +39,7 @@ public class Coord implements Comparable<Coord> {
 	private final static byte PRESERVED_MASK = 0x02; // bit in flags is true if point should not be filtered out
 	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
 	private final static byte TREAT_AS_NODE_MASK = 0x08; // bit in flags is true if point should be treated as a node
+	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
@@ -147,6 +148,22 @@ public class Coord implements Comparable<Coord> {
 			this.flags &= ~TREAT_AS_NODE_MASK; 
 	}
 
+	/**
+	 * Does this coordinate belong to a node with a fixme tag?
+	 * Note that the value is set after evaluating the points style. 
+	 * @return
+	 */
+	public boolean isFixme() {
+		return (flags & FIXME_NODE_MASK) != 0;
+	}
+	
+	public void setFixme(boolean b) {
+		if (b) 
+			this.flags |= FIXME_NODE_MASK;
+		else 
+			this.flags &= ~FIXME_NODE_MASK; 
+	}
+	
 	public int hashCode() {
 		// Use a factor for latitude to span over the whole integer range:
 		// max lat: 4194304
@@ -284,4 +301,5 @@ public class Coord implements Comparable<Coord> {
 	public String toOSMURL() {
 		return toOSMURL(17);
 	}
+
 }

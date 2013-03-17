@@ -147,34 +147,12 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				log.info("Linking POI " + currentNodeInWay.toBrowseURL() + " to way at " + co.toOSMURL());
 			}
 		}
-
-		// if the first Node of the Way has a FIXME attribute,
-		// disable dead-end-check for oneways
-		// [Osm5XmlHandler would do way.addTag("oneway","yes") later,
-		// so we set the attribute on all ways that start with FIXME.]
-		if (way.getPoints().isEmpty()/* && way.isBoolTag("oneway")*/)
-			checkDeadEndCheck(way);
-	}
-
-	/** Disable the dead-end-check for oneways
-	 * if currentNodeInWay carries a FIXME attribute.
-	 * @param way	where to possibly disable the dead-end-check
-	 */
-	private void checkDeadEndCheck(Way way) {
-		if (currentNodeInWay != null &&
-				(currentNodeInWay.getTag("FIXME") != null ||
-				 currentNodeInWay.getTag("fixme") != null))
-			way.addTag("mkgmap:dead-end-check", "false");
 	}
 
 	public void onAddWay(Way way) {
 		String highway = way.getTag("highway");
 		if (highway != null || "ferry".equals(way.getTag("route"))) {
 			boolean oneway = way.isBoolTag("oneway");
-			// if the last Node of the Way has a FIXME attribute,
-			// disable dead-end-check for oneways
-			if (oneway)
-				checkDeadEndCheck(way);
 
 			// if the way is a roundabout but isn't already
 			// flagged as "oneway", flag it here

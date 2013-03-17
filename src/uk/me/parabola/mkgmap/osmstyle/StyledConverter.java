@@ -1432,6 +1432,8 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
+			if (checkFixmeCoords(way))
+				way.addTag("mkgmap:dead-end-check", "false");
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
@@ -1592,6 +1594,19 @@ public class StyledConverter implements OsmConverter {
 
 		if(trailingWay != null)
 			addRoadWithoutLoops(trailingWay, gt);
+	}
+
+	/**
+	 * Check if the first or last of the coords of the way has the fixme flag set
+	 * @param way the way to check 
+	 * @return true if fixme flag was found
+	 */
+	private boolean checkFixmeCoords(Way way) {
+		if (way.getPoints().get(0).isFixme())
+			return true;
+		if (way.getPoints().get(way.getPoints().size()-1).isFixme())
+			return true;
+		return false;
 	}
 
 	// split a Way at the specified point and return the new Way (the
