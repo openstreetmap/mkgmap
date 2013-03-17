@@ -58,6 +58,8 @@ public class MapSplitter {
 	public static final int MAX_XT_POINTS_SIZE = 0xff00;
 	public static final int MAX_XT_LINES_SIZE  = 0xff00;
 	public static final int MAX_XT_SHAPES_SIZE = 0xff00;
+	
+	public static final int MIN_DIMENSION = 10; // just a reasonable value 
 
 	private final Zoom zoom;
 
@@ -136,7 +138,7 @@ public class MapSplitter {
 				sizes[MapArea.XT_POINT_KIND] > MAX_XT_POINTS_SIZE ||
 				sizes[MapArea.XT_LINE_KIND] > MAX_XT_LINES_SIZE ||
 				sizes[MapArea.XT_SHAPE_KIND] > MAX_XT_SHAPES_SIZE) {
-				if (bounds.getMaxDimension() > 10) {
+				if (bounds.getMaxDimension() > MIN_DIMENSION) {
 					if (log.isDebugEnabled())
 						log.debug("splitting area", area);
 					MapArea[] sublist;

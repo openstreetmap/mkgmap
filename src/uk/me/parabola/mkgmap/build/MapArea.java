@@ -117,16 +117,9 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapShape shape = (MapShape) element;
-
-				if(true ||
-				   bounds.contains(element.getLocation()) ||
-				   element.getType() == 0x4b) {
-					shapes.add(shape);
-					addToBounds(shape.getBounds());
-					addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
-				}
-				else
-					log.error("Polygon with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
+				shapes.add(shape);
+				addToBounds(shape.getBounds());
+				addSize(element, shape.hasExtendedType()? XT_SHAPE_KIND : SHAPE_KIND);
 			}
 		};
 
@@ -153,16 +146,9 @@ public class MapArea implements MapDataSource {
 		MapFilterChain chain = new MapFilterChain() {
 			public void doFilter(MapElement element) {
 				MapLine line = (MapLine) element;
-
-				if(true ||
-				   bounds.contains(element.getLocation())) {
-					lines.add(line);
-					addToBounds(line.getBounds());
-					addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
-				}
-				else
-					log.error("Line with type 0x" + Integer.toHexString(element.getType()) + " at " + element.getLocation().toOSMURL() + " is outside of the map area centred on " + bounds.getCenter().toOSMURL() + " width = " + bounds.getWidth() + " height = " + bounds.getHeight() + " resolution = " + resolution);
-
+				lines.add(line);
+				addToBounds(line.getBounds());
+				addSize(element, line.hasExtendedType()? XT_LINE_KIND : LINE_KIND);
 			}
 		};
 
@@ -203,40 +189,65 @@ public class MapArea implements MapDataSource {
 		Area[] areas = bounds.split(nx, ny);
 		MapArea[] mapAreas = new MapArea[nx * ny];
 		log.info("Splitting area " + bounds + " into " + nx + "x" + ny + " pieces at resolution " + resolution);
-		for (int i = 0; i < nx * ny; i++) {
-			mapAreas[i] = new MapArea(areas[i], resolution);
-			if (log.isDebugEnabled())
-				log.debug("area before", mapAreas[i].getBounds());
-		}
+		boolean useNormalSplit = true;
+		while (true){
+			for (int i = 0; i < nx * ny; i++) {
+				mapAreas[i] = new MapArea(areas[i], resolution);
+				if (log.isDebugEnabled())
+					log.debug("area before", mapAreas[i].getBounds());
+			}
 
-		int xbase = areas[0].getMinLong();
-		int ybase = areas[0].getMinLat();
-		int dx = areas[0].getWidth();
-		int dy = areas[0].getHeight();
+			int xbase = areas[0].getMinLong();
+			int ybase = areas[0].getMinLat();
+			int dx = areas[0].getWidth();
+			int dy = areas[0].getHeight();
+			
+			boolean[] used = new boolean[nx * ny];
+			// Now sprinkle each map element into the correct map area.
+			for (MapPoint p : this.points) {
+				int pos = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
+				mapAreas[pos].addPoint(p);
+				used[pos] = true;
+			}
 
-		// Now sprinkle each map element into the correct map area.
-		for (MapPoint p : this.points) {
-			MapArea area1 = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
-			area1.addPoint(p);
-		}
+			
+			int areaIndex = 0;
+			for (MapLine l : this.lines) {
+				// Drop any zero sized lines.
+				if (l.getBounds().getMaxDimension() <= 0)
+					continue;
+				if (useNormalSplit)
+					areaIndex = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
+				else 
+					areaIndex = ++areaIndex % mapAreas.length;
+				mapAreas[areaIndex].addLine(l);
+				used[areaIndex] = true;
+			}
 
-		for (MapLine l : this.lines) {
-			// Drop any zero sized lines.
-			if (l.getBounds().getMaxDimension() <= 0)
+			for (MapShape e : this.shapes) {
+				if (useNormalSplit)
+					areaIndex = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
+				else 
+					areaIndex = ++areaIndex % mapAreas.length;
+				mapAreas[areaIndex].addShape(e);
+				used[areaIndex] = true;
+			}
+			// detect special case  
+			if (useNormalSplit && mapAreas.length == 2 && bounds.getMaxDimension() < 2 * (MapSplitter.MIN_DIMENSION + 1)
+					&& used[0] != used[1]
+					&& (this.lines.size() > 1 || this.shapes.size() > 1)) {
+				/* if we get here we probably have two or more identical long ways or
+				 * big shapes with the same center point. We can safely distribute
+				 * them equally to the two areas.  
+				 */
+				useNormalSplit = false;
 				continue;
-
-			MapArea area1 = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
-			area1.addLine(l);
+			} 
+			return mapAreas;
 		}
-
-		for (MapShape e : this.shapes) {
-			MapArea area1 = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
-			area1.addShape(e);
-		}
-
-		return mapAreas;
 	}
 
+	
 	/**
 	 * Get the full bounds of this area.  As lines and polylines are
 	 * added then may go outside of the initial area.  When this happens
@@ -514,9 +525,9 @@ public class MapArea implements MapDataSource {
 	 * @param ny number of divisions in y.
 	 * @param dx The size of each division (x direction)
 	 * @param dy The size of each division (y direction)
-	 * @return The area from areas where the map element fits.
+	 * @return The index to areas where the map element fits.
 	 */
-	private MapArea pickArea(MapArea[] areas, MapElement e,
+	private int pickArea(MapArea[] areas, MapElement e,
 			int xbase, int ybase,
 			int nx, int ny,
 			int dx, int dy)
@@ -545,6 +556,6 @@ public class MapArea implements MapDataSource {
 			log.debug("adding", e.getLocation(), "to", xcell, "/", ycell,
 					areas[xcell * ny + ycell].getBounds());
 		}
-		return areas[xcell * ny + ycell];
+		return xcell * ny + ycell;
 	}
 }
