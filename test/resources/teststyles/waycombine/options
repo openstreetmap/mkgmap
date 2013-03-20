@@ -10,7 +10,7 @@
 # used
 #
 # Example:
-# name_tag = name:en, int_name, name
+# name-tag-list = name:en, int_name, name
 
 # The levels specification for this style
 #
