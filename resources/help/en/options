@@ -427,13 +427,13 @@ Miscellaneous options:
     It is possible to define wildcards for tag values like entrance=*.
     Default: entrance=main;entrance=yes;building=entrance
 
---precomp-sea=directoryname
-    Defines the directory that contains the precompiled sea tiles.
-	When this option is defined all natural=coastline tags from the
-	input OSM tiles are removed and the precompiled data is used instead. 
-	This option can be combined with the generate-sea options 
-	multipolygon, polygons and land-tag. The coastlinefile option
-	is ignored if precomp-sea is set.     
+--precomp-sea=directory|zipfile
+    Defines the directory or a zip file that contains precompiled sea tiles. 
+    Sea files in a zipfile must be located in the zipfiles root directory or in 
+    a sub directory sea. When this option is defined all natural=coastline tags 
+    from the input OSM tiles are removed and the precompiled data is used instead. 
+    This option can be combined with the generate-sea options multipolygon, polygons 
+    and land-tag. The coastlinefile option is ignored if precomp-sea is set.      
 
 --coastlinefile=filename[,filename]
 	Defines a comma separated list of files that contain coastline 
