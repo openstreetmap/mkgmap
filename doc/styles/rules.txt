@@ -78,7 +78,8 @@ The following table describes the operations that may be used.
 
 | tag=value | This matches when a tag has the given value.
 
-| tag!=value | The tag exists and does not have the given value.
+| tag!=value | This is true when the tag does not have the given value,
+or the tag is not present at all.
 
 |tag=* | Matches when the tag exists, regardless of its value.
 
