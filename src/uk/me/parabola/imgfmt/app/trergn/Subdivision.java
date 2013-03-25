@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -109,16 +110,22 @@ public class Subdivision {
 		int shift = getShift();
 		int mask = getMask();
 
-		this.latitude = (area.getMinLat() + area.getMaxLat())/2;
-		this.longitude = (area.getMinLong() + area.getMaxLong())/2;
-
-		int w = ((area.getWidth() + 1)/2 + mask) >> shift;
+		// Calculate the center, move it right and up so that it lies on a point
+		// which is divisible by 2 ^shift
+		this.latitude = Utils.roundUp((area.getMinLat() + area.getMaxLat())/2, shift);
+		this.longitude = Utils.roundUp((area.getMinLong() + area.getMaxLong())/2, shift);
+		int w = 2 * (longitude - area.getMinLong());
+		int h = 2 * (latitude - area.getMinLat());
+		
+		// encode the values for the img format
+		w = ((w + 1)/2 + mask) >> shift;
+		h = ((h + 1)/2 + mask) >> shift;
+		
 		if (w > 0x7fff) {
 			log.warn("Subdivision width is " + w + " at " + new Coord(latitude, longitude));
 			w = 0x7fff;
 		}
 
-		int h = ((area.getHeight() + 1)/2 + mask) >> shift;
 		if (h > 0xffff) {
 			log.warn("Subdivision height is " + h + " at " + new Coord(latitude, longitude));
 			h = 0xffff;
@@ -563,4 +570,5 @@ public class Subdivision {
 		val += ((1 << shift) / 2);
 		return (val >> shift);
 	}
+	
 }

@@ -213,4 +213,18 @@ public class Utils {
 		File file = new File(dir, basename);
 		return file.getAbsolutePath();
 	}
+
+	/**
+	 * Rounds an integer up to the nearest multiple of {@code 2^shift}.
+	 * Works with both positive and negative integers.
+	 * @param val the integer to round up.
+	 * @param shift the power of two to round up to.
+	 * @return the rounded integer.
+	 */
+	public static int roundUp(int val, int shift) {
+		return (val + (1 << shift) - 1) >>> shift << shift;
+	} 
+	
+	
 }
+
