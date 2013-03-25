@@ -153,24 +153,10 @@ public class TdbBuilder implements Combiner {
 	private void addToOverviewMap(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
 
-		//System.out.printf("overview shift %d\n", overviewSource.getShift());
-		int overviewMask = ((1 << overviewSource.getShift()) - 1);
-		//System.out.printf("mask %x\n", overviewMask);
-		//System.out.println("overviewSource.getShift() = " + overviewSource.getShift());
-
-		int maxLon = roundDown(bounds.getMaxLong(), overviewMask);
-		int maxLat = roundUp(bounds.getMaxLat(), overviewMask);
-		int minLat = roundUp(bounds.getMinLat(), overviewMask);
-		int minLon = roundDown(bounds.getMinLong(), overviewMask);
-
-		//System.out.printf("maxLat 0x%x, modified=0x%x\n", bounds.getMaxLat(), maxLat);
-		//System.out.printf("maxLat %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLat()), Utils.toDegrees(maxLat));
-		//System.out.printf("minLat 0x%x, modified=0x%x\n", bounds.getMinLat(), minLat);
-		//System.out.printf("minLat %f, modified=%f\n", Utils.toDegrees(bounds.getMinLat()), Utils.toDegrees(minLat));
-		//System.out.printf("maxLon 0x%x, modified=0x%x\n", bounds.getMaxLong(), maxLon);
-		//System.out.printf("maxLon %f, modified=%f\n", Utils.toDegrees(bounds.getMaxLong()), Utils.toDegrees(maxLon));
-		//System.out.printf("minLon 0x%x, modified=0x%x\n", bounds.getMinLong(), minLon);
-		//System.out.printf("minLon %f, modified=%f\n", Utils.toDegrees(bounds.getMinLong()), Utils.toDegrees(minLon));
+		int maxLon = bounds.getMaxLong();
+		int maxLat = bounds.getMaxLat();
+		int minLat = bounds.getMinLat();
+		int minLon = bounds.getMinLong();
 
 		// Add a background polygon for this map.
 		List<Coord> points = new ArrayList<Coord>();
@@ -201,20 +187,6 @@ public class TdbBuilder implements Combiner {
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
 		overviewSource.addShape(bg);
-	}
-
-	private int roundUp(int len, int overviewMask) {
-		if (len > 0)
-			return (len + overviewMask) & ~overviewMask;
-		else
-			return len & ~overviewMask;
-	}
-
-	private int roundDown(int len, int overviewMask) {
-		if (len > 0)
-			return len & ~overviewMask;
-		else
-			return -(-len +overviewMask & ~overviewMask);
 	}
 
 	/**
