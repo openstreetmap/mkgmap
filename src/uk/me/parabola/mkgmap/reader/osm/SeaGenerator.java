@@ -204,6 +204,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 						+ precompSea);
 				System.err.println("Directory or zip file with precompiled sea does not exist: "
 						+ precompSea);
+				precompSeaDir = null;
 			}
 		}
 		String gs = props.getProperty("generate-sea", null);
