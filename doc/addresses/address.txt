@@ -1,4 +1,5 @@
 = Address information =
+
 Each POI (in the range 0x?? to 0x??) and street in mkgmap generated maps can have some additional attributes. They can be assigned in the style file by setting mkgmap special tags.
 
 == POIs ==
@@ -103,7 +104,75 @@ mkgmap uses so called preprocessed bounds files to provide a quick method assign
 TODO: Parameter, mkgmap tags
  
 === Creating preprocessed bounds ===
-TODO
+Preprocessing bounds is a procedure to extract and prepare all boundary and zip code data with from a large
+OSM extract (like europe extract or asia extract). The data is prepared in such a format that mkgmap 
+can read and process in a fast way while compiling maps.
+
+Preprocessing consists of two (or three) steps:
+
+. Extracting the required data from the large OSM extract
+. Preprocessing the extract
+. Eventually merge multiple preprocessed extracts 
+
+==== Extracting data ====
+The boundary and zip code data must be extracted from a large OSM extract to avoid excessive memory
+requirements in the preprocessing step.
+
+NOTE: This manual describes the usage of the two tools +osmconvert+ and +osmfilter+. The same can be achieved
+with other tools like +osmosis+. 
+
+[TIP] 
+==========
++osmconvert+ http://wiki.openstreetmap.org/wiki/Osmconvert
+
++osmfilter+ http://wiki.openstreetmap.org/wiki/Osmfilter
+==========
+
+
+.Extract data from europe.osm.pbf
+=================================
+After download the OSM extract (europe.osm.pbf in this example) the extract must be converted
+to o5m format. This o5m file is then filtered. 
+
+ osmconvert europe.osm.pbf --out-o5m >europe.o5m
+ osmfilter europe.o5m --keep-nodes= --keep-ways-relations="boundary=administrative =postal_code postal_code=" --out-o5m > europe-boundaries.o5m
+
+=================================
+
+==== Preprocessing data ====
+The tool for preprocessing the boundary and zip code data is contained in the common mkgmap download.
+
+.Preprocessing bounds data
+=================================
+ # The following should be all one line
+ java -cp mkgmap.jar
+      uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryPreprocessor
+      europe-boundaries.o5m
+      europe_bounds
+=================================
+
+This will create a directory called europe_bounds containing multiple files with preprocessed bounds.
+This directory can be used with the bounds option on the mkgmap command line.
+
+
+==== Merging preprocessed data ====
+Preprocessing requires a quite high amount of memory, e.g. north- and south-america requires around 3 GB. So on many systems
+it is not possible to preprocess the whole planet at once. It is possible to divide the planet into several parts where each country
+must be contained completely in one of the parts. Parts should overlap.
+
+Each part is preprocessed in its own directory which are merged as a third step.
+
+.Merging preprocessed data
+=================================
+ # The following should be all one line
+ java -cp mkgmap.jar 
+     uk.me.parabola.mkgmap.reader.osm.boundary.BoundaryMerger 
+     part1
+     part2 
+     merged
+=================================
+
+This command merges the preprocessed bounds from directory +part1+ and +part2+ into the new directory +merged+.
 
 === index parameter === 
 TODO
