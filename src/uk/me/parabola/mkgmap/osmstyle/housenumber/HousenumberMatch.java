@@ -58,8 +58,23 @@ public class HousenumberMatch {
 		return (element instanceof Node ? ((Node)element).getLocation() : ((Way)element).getCofG());
 	}
 	
+	/**
+	 * Retrieves the house number of this element.
+	 * @param e an OSM element
+	 * @return the house number (or {@code null} if no house number set)
+	 */
+	private String getHousenumber(Element e) {
+		if (e.getTag("mkgmap:housenumber") != null) {
+			return e.getTag("mkgmap:housenumber");
+		}
+		if (e.getTag("addr:housenumber") != null) {
+			return e.getTag("addr:housenumber");
+		}	
+		return null;
+	}
+	
 	private void parseHousenumber() {
-		String housenumberString = element.getTag("mkgmap:housenumber");
+		String housenumberString = getHousenumber(element);
 		
 		// the housenumber must match against the pattern <anything>number<notnumber><anything>
 		Pattern p = Pattern.compile("\\D*(\\d+)\\D?.*");

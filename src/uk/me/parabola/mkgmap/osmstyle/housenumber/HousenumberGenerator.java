@@ -33,6 +33,12 @@ import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.MultiHashMap;
 
+/**
+ * Collects all data required for OSM house number handling and adds the
+ * house number information to the roads.
+ * 
+ * @author WanMil
+ */
 public class HousenumberGenerator {
 
 	private static final Logger log = Logger
@@ -52,42 +58,72 @@ public class HousenumberGenerator {
 		numbersEnabled=props.containsKey("housenumbers");
 	}
 
-	private void checkTags(Element e) {
-		if (e.getTag("addr:housenumber") != null && e.getTag("mkgmap:housenumber") == null){
-			e.addTag("mkgmap:housenumber", e.getTag("addr:housenumber"));
+	/**
+	 * Retrieves the street name of this element.
+	 * @param e an OSM element
+	 * @return the street name (or {@code null} if no street name set)
+	 */
+	private String getStreetname(Element e) {
+		if (e.getTag("mkgmap:street") != null) {
+			return e.getTag("mkgmap:street");
 		}
-		if (e.getTag("addr:street") != null && e.getTag("mkgmap:street") == null){
-			e.addTag("mkgmap:street", e.getTag("addr:street"));
-		}
-		
+		if (e.getTag("addr:street") != null) {
+			return e.getTag("addr:street");
+		}	
+		return null;
 	}
 	
+	/**
+	 * Retrieves the house number of this element.
+	 * @param e an OSM element
+	 * @return the house number (or {@code null} if no house number set)
+	 */
+	private String getHousenumber(Element e) {
+		if (e.getTag("mkgmap:housenumber") != null) {
+			return e.getTag("mkgmap:housenumber");
+		}
+		if (e.getTag("addr:housenumber") != null) {
+			return e.getTag("addr:housenumber");
+		}	
+		return null;
+	}
+	
+	/**
+	 * Adds a node for house number processing.
+	 * @param n an OSM node
+	 */
 	public void addNode(Node n) {
 		if (numbersEnabled == false) {
 			return;
 		}
-		checkTags(n);
-		if (n.getTag("mkgmap:housenumber") != null) {
-			String streetname = n.getTag("mkgmap:street");
+		if (getHousenumber(n) != null) {
+			String streetname = getStreetname(n);
 			if (streetname != null) {
 				houseNumbers.add(streetname, n);
 			}
 		}
 	}
 	
+	/**
+	 * Adds a way for house number processing.
+	 * @param w a way
+	 */
 	public void addWay(Way w) {
 		if (numbersEnabled == false) {
 			return;
 		}
-		checkTags(w);
-		if (w.getTag("mkgmap:housenumber") != null) {
-			String streetname = w.getTag("mkgmap:street");
+		if (getHousenumber(w) != null) {
+			String streetname = getStreetname(w);
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);
 			}
 		}
 	}
 	
+	/**
+	 * Adds a road to be processed by the house number generator.
+	 * @param road a road
+	 */
 	public void addRoad(MapRoad road) {
 		roads.add(road);
 		if (numbersEnabled &&  road.getName() != null) {
@@ -121,6 +157,10 @@ public class HousenumberGenerator {
 		roads.clear();
 	}
 	
+	/**
+	 * Sorts house numbers by roads, road segments and position of the house number.
+	 * @author WanMil
+	 */
 	private static class HousenumberMatchComparator implements Comparator<HousenumberMatch> {
 
 		public int compare(HousenumberMatch o1, HousenumberMatch o2) {
@@ -152,14 +192,20 @@ public class HousenumberGenerator {
 		
 	}
 	
-	private void match(String streetname, List<Element> nodes, List<MapRoad> roads) {
+	/**
+	 * Matches the house numbers of one street name to its OSM elements and roads. 
+	 * @param streetname name of street
+	 * @param elements a list of OSM elements belonging to this street name
+	 * @param roads a list of roads with the given street name
+	 */
+	private void match(String streetname, List<Element> elements, List<MapRoad> roads) {
 		List<HousenumberMatch> numbersList = new ArrayList<HousenumberMatch>(
-				nodes.size());
-		for (Element node : nodes) {
+				elements.size());
+		for (Element node : elements) {
 			try {
 				numbersList.add(new HousenumberMatch(node));
 			} catch (IllegalArgumentException exp) {
-				log.error(exp);
+				log.debug(exp);
 			}
 		}
 		
