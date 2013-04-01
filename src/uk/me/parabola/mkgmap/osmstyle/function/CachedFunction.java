@@ -45,18 +45,22 @@ public abstract class CachedFunction extends StyleFunction {
 			}
 		}
 		
-		// if caching is supported check if the value has already
-		// been calculated
-		String cachedValue = el.getTag(getCacheTag());
-		if (cachedValue != null) {
-			return cachedValue;
+		if (isCached()) {
+			// if caching is supported check if the value has already
+			// been calculated
+			String cachedValue = el.getTag(getCacheTag());
+			if (cachedValue != null) {
+				return cachedValue;
+			}
 		}
 
 		// calculate the function value
 		String functionResult = calcImpl(el);
 		
-		// if caching is supported save the value for later usage
-		el.addTag(getCacheTag(), functionResult);
+		if (isCached()) {
+			// if caching is supported save the value for later usage
+			el.addTag(getCacheTag(), functionResult);
+		}
 
 		return functionResult;
 	}
@@ -76,6 +80,10 @@ public abstract class CachedFunction extends StyleFunction {
 	 */
 	protected String getCacheTag() {
 		return "mkgmap:cache_"+getName();
+	}
+	
+	public boolean isCached() {
+		return true;
 	}
 	
 }

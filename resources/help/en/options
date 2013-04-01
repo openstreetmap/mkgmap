@@ -526,15 +526,12 @@ Miscellaneous options:
 	to a small region of the way near the POI.
 
 --process-destination
-	When using the Garmin Types 0x08 and 0x09 (Ramp) Garmin is
-	evaluating the first way after all the *_link ways to display
-	the destination of the link. But in the OSM data only the _link 
-	ways are tagged with destination. When this option is set the 
-	destination tags of motorway_link and trunk_link ways are copied 
-	to the first non link way so that the Garmin can show the 
-	destination. 
-	Note: There must be a rule in the lines	style file that uses the
-	      destination tag to set the mkgmap:display_name tag 
+	Splits all motorway_link and trunk_link ways tagged with 
+	destination	into two or three parts where the second part
+	is additionally tagged with mkgmap:dest_hint=true. This 
+	allows to use any routable Garmin type (except 0x08 and 0x09)
+	for that part so that the Garmin device tells the name of
+	this part as hint which destination to follow.
 	
 --process-exits
     Usual Garmin devices do not tell the name of the exit on motorways 
@@ -547,9 +544,9 @@ Miscellaneous options:
       mkgmap:exit_hint_name=<name tag value of the exit>
       mkgmap:exit_hint_exit_to=<exit_to tag value of the exit>
     Adding a rule checking the mkgmap:exit_hint=true makes it possible
-    to use Garmin type 0x01 (motorway) for the middle part so that the 
-    Garmin device tells the name of this middle part as hint where to 
-    leave the motorway/trunk. 
+    to use any routable Garmin type (except 0x08 and 0x09) for the middle 
+    part so that the Garmin device tells the name of this middle part as 
+    hint where to leave the motorway/trunk. 
 	
 --delete-tags-file=FILENAME
 	Names a file that should contain one or more lines of the form

@@ -14,10 +14,6 @@ include 'inc/address';
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
-# Set the routing direction
-(highway=motorway|highway=trunk ) & ref=* & destination=* { add mkgmap:display_name =
-'${ref|subst: =>}(${destination|subst:;=> |subst:/=> })' }
-
 # Remove access=yes from highways.
 highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.
@@ -42,13 +38,35 @@ highway=* & oneway=yes & (access=private|access=no)
 
 # Set highway names to include the reference if there is one
 highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
-(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true 
+
+(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
+  { delete mkgmap:display_name; 
+    name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
+         '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
+         '${destination|subst:;=> |subst:/=> }' |
+         'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
+         'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
+         'Exit ${mkgmap:exit_hint_exit_to}' |
+         'Exit ${mkgmap:exit_hint_name}' |
+         'Exit ${mkgmap:exit_hint_ref}'
+       }
+
+(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint!=* & mkgmap:dest_hint=true
+  { delete mkgmap:display_name; 
+    name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
+         '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
+         '${destination|subst:;=> |subst:/=> }'
+       }
+
+(highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint!=*
   { delete mkgmap:display_name; 
     name 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
          'Exit ${mkgmap:exit_hint_exit_to}' |
          'Exit ${mkgmap:exit_hint_name}' |
-         'Exit ${mkgmap:exit_hint_ref}' }
+         'Exit ${mkgmap:exit_hint_ref}'
+       }
+              
 highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
 highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
 highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
@@ -108,11 +126,11 @@ highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
 highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 16]
-highway=motorway_link & mkgmap:exit_hint=true { add oneway = yes; add bicycle = no; add foot = no; } [0x01 road_class=3 road_speed=2 resolution 20]
+highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) { add oneway = yes; add bicycle = no; add foot = no; } [0x06 road_class=3 road_speed=2 resolution 20]
 highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & motorroad=yes {add bicycle = no; add foot = no}
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
-highway=trunk_link & mkgmap:exit_hint=true [0x02 road_class=3 road_speed=2 resolution 20]
+highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
 highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & highway!=proposed & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
