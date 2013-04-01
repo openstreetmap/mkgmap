@@ -305,6 +305,13 @@ public class HousenumberGenerator {
 		}
 	}
 	
+	/**
+	 * Apply the given house numbers to the numbers object.
+	 * @param numbers the numbers object to be configured
+	 * @param housenumbers a list of house numbers
+	 * @param maxSegment the highest segment number to use
+	 * @param left {@code true} the left side of the street; {@code false} the right side of the street
+	 */
 	private void applyNumbers(Numbers numbers, List<HousenumberMatch> housenumbers, int maxSegment, boolean left) {
 		NumberStyle style = NumberStyle.NONE;
 
@@ -357,7 +364,14 @@ public class HousenumberGenerator {
 		
 	}
 	
-	public boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
+	/**
+	 * Evaluates if the given point lies on the left side of the line spanned by spoint1 and spoint2.
+	 * @param spoint1 first point of line
+	 * @param spoint2 second point of line
+	 * @param point the point to check
+	 * @return {@code true} point lies on the left side; {@code false} point lies on the right side
+	 */
+	private boolean isLeft(Coord spoint1, Coord spoint2, Coord point) {
 		
 		boolean left =  ((spoint2.getLongitude() - spoint1.getLongitude())
 				* (point.getLatitude() - spoint1.getLatitude()) - (spoint2.getLatitude() - spoint1
