@@ -22,6 +22,7 @@ import java.util.List;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.LBLFile;
@@ -456,6 +457,30 @@ public class Subdivision {
 		return !divisions.isEmpty();
 	}
 
+	public int getExtTypeAreasOffset() {
+		return extTypeAreasOffset;
+	}
+
+	public int getExtTypeLinesOffset() {
+		return extTypeLinesOffset;
+	}
+
+	public int getExtTypePointsOffset() {
+		return extTypePointsOffset;
+	}
+
+	public int getExtTypeAreasSize() {
+		return extTypeAreasSize;
+	}
+
+	public int getExtTypeLinesSize() {
+		return extTypeLinesSize;
+	}
+
+	public int getExtTypePointsSize() {
+		return extTypePointsSize;
+	}
+
 	public void startDivision() {
 		rgnFile.startDivision(this);
 		extTypeAreasOffset = rgnFile.getExtTypeAreasSize();
@@ -490,6 +515,36 @@ public class Subdivision {
 		file.put((byte)0);
 	}
 
+	/**
+	 * Read offsets for extended type data and set sizes for predecessor sub-div.
+	 * Corresponds to {@link #writeExtTypeOffsetsRecord(ImgFileWriter)} 
+	 * @param reader the reader
+	 * @param sdPrev the pred. sub-div or null
+	 */
+	public void readExtTypeOffsetsRecord(ImgFileReader reader,
+			Subdivision sdPrev) {
+		extTypeAreasOffset = reader.getInt();
+		extTypeLinesOffset = reader.getInt();
+		extTypePointsOffset = reader.getInt();
+		reader.get();
+		if (sdPrev != null){
+			sdPrev.extTypeAreasSize = extTypeAreasOffset - sdPrev.extTypeAreasOffset;
+			sdPrev.extTypeLinesSize = extTypeLinesOffset - sdPrev.extTypeLinesOffset;
+			sdPrev.extTypePointsSize = extTypePointsOffset - sdPrev.extTypePointsOffset;
+		}
+	}
+	/**
+	 * Set the sizes for the extended type data. See {@link #writeLastExtTypeOffsetsRecord(ImgFileWriter)} 
+	 * @param reader
+	 */
+	public void readLastExtTypeOffsetsRecord(ImgFileReader reader) {
+		extTypeAreasSize = reader.getInt() - extTypeAreasOffset;
+		extTypeLinesSize = reader.getInt() - extTypeLinesOffset;
+		extTypePointsSize = reader.getInt() - extTypePointsOffset;
+		byte test = reader.get();
+		assert test == 0;
+	}
+	
 	/**
 	 * Add this subdivision as our child at the next level.  Each subdivision
 	 * can be further divided into smaller divisions.  They form a tree like
@@ -570,5 +625,6 @@ public class Subdivision {
 		val += ((1 << shift) / 2);
 		return (val >> shift);
 	}
+
 	
 }

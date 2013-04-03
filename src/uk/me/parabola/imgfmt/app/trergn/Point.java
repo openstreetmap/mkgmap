@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.trergn;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.lbl.POIRecord;
 
@@ -121,5 +122,12 @@ public class Point extends MapObject {
 		if (poi == null)
 			return new POIRecord();
 		return poi;
+	}
+
+	public Coord getLocation() {
+		int shift = getSubdiv().getShift();
+		Coord co = new Coord(getSubdiv().getLatitude() + (getDeltaLat() << shift), 
+				getSubdiv().getLongitude() + (getDeltaLong() << shift) );
+		return co;
 	}
 }

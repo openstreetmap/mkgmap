@@ -50,6 +50,8 @@ import uk.me.parabola.mkgmap.combiners.GmapsuppBuilder;
 import uk.me.parabola.mkgmap.combiners.MdrBuilder;
 import uk.me.parabola.mkgmap.combiners.MdxBuilder;
 import uk.me.parabola.mkgmap.combiners.NsisBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewMap;
 import uk.me.parabola.mkgmap.combiners.TdbBuilder;
 import uk.me.parabola.mkgmap.osmstyle.StyleFileLoader;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
@@ -280,10 +282,18 @@ public class Main implements ArgumentProcessor {
 	public void removeOption(String opt) {
 	}
 
+	/**
+	 * Add the builders for the TDB and overview map.  These are always
+	 * generated together as we use some info that is calculated when constructing
+	 * the overview map in the TDB file.
+	 */
 	private void addTdbBuilder() {
-		TdbBuilder builder = new TdbBuilder();
-		builder.setOverviewSource(new OverviewMapDataSource());
-		addCombiner(builder);
+		OverviewMap overviewSource = new OverviewMapDataSource();
+		OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
+		addCombiner(overviewBuilder);
+		
+		TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
+		addCombiner(tdbBuilder);
 	}
 
 	private void listStyles() {

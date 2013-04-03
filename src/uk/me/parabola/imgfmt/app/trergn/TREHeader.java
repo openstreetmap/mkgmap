@@ -148,6 +148,10 @@ public class TREHeader extends CommonHeader {
 			reader.position(116);
 			mapId = reader.getInt();
 		}
+		if (getHeaderLength() > 120) {
+			reader.getInt();
+			extTypeOffsets.readSectionInfo(reader, true);
+		}
 	}
 
 	/**
@@ -375,5 +379,15 @@ public class TREHeader extends CommonHeader {
 
 	public int getDisplayPriority() {
 		return displayPriority;
+	}
+
+	public int getExtTypeOffsetsPos() {
+		return extTypeOffsets.getPosition();
+	}
+	public int getExtTypeOffsetsSize() {
+		return extTypeOffsets.getSize();
+	}
+	public int getExtTypeSectionSize() {
+		return extTypeOffsets.getItemSize();
 	}
 }

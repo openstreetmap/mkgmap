@@ -17,22 +17,10 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import uk.me.parabola.imgfmt.ExitException;
-import uk.me.parabola.imgfmt.FileExistsException;
-import uk.me.parabola.imgfmt.FileNotWritableException;
-import uk.me.parabola.imgfmt.FileSystemParam;
 import uk.me.parabola.imgfmt.Utils;
-import uk.me.parabola.imgfmt.app.Area;
-import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.map.Map;
-import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.build.MapBuilder;
-import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -44,18 +32,20 @@ import uk.me.parabola.tdbfmt.TdbFile;
 public class TdbBuilder implements Combiner {
 	private static final Logger log = Logger.getLogger(TdbBuilder.class);
 
-	private OverviewMap overviewSource;
+	private final OverviewBuilder overviewBuilder;
 	
 	private TdbFile tdb;
 
 	private int parent = 63240000;
 	private String overviewMapname;
 	private String overviewMapnumber;
-	private String areaName;
 	private String outputDir;
 	private int tdbVersion;
 
-	private Sort sort;
+	public TdbBuilder(OverviewBuilder ovb) {
+		overviewBuilder = ovb;
+	}
+
 
 	/**
 	 * Initialise by saving all the information we require from the command line
@@ -74,7 +64,7 @@ public class TdbBuilder implements Combiner {
 			log.debug("overview map number not an integer", overviewMapnumber);
 		}
 
-		areaName = args.get("area-name", "Overview Map");
+		String areaName = args.get("area-name", "Overview Map");
 
 		int familyId = args.get("family-id", CommandArgs.DEFAULT_FAMILYID);
 		int productId = args.get("product-id", 1);
@@ -94,8 +84,6 @@ public class TdbBuilder implements Combiner {
 				familyName, areaName, enableProfile);
 		
 		outputDir = args.getOutputDir();
-
-		sort = args.getSort();
 	}
 
 	/**
@@ -109,7 +97,6 @@ public class TdbBuilder implements Combiner {
 			return;
 		
 		addToTdb(info);
-		addToOverviewMap(info);
 	}
 
 	/**
@@ -146,50 +133,6 @@ public class TdbBuilder implements Combiner {
 	}
 
 	/**
-	 * Add an individual .img file to the overview map.
-	 *
-	 * @param finfo Information about an individual map.
-	 */
-	private void addToOverviewMap(FileInfo finfo) {
-		Area bounds = finfo.getBounds();
-
-		int maxLon = bounds.getMaxLong();
-		int maxLat = bounds.getMaxLat();
-		int minLat = bounds.getMinLat();
-		int minLon = bounds.getMinLong();
-
-		// Add a background polygon for this map.
-		List<Coord> points = new ArrayList<Coord>();
-
-		Coord start = new Coord(minLat, minLon);
-		points.add(start);
-		overviewSource.addToBounds(start);
-
-		Coord co = new Coord(maxLat, minLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		co = new Coord(maxLat, maxLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		co = new Coord(minLat, maxLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		points.add(start);
-
-		// Create the background rectangle
-		MapShape bg = new MapShape();
-		bg.setType(0x4a);
-		bg.setPoints(points);
-		bg.setMinResolution(10);
-		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
-
-		overviewSource.addShape(bg);
-	}
-
-	/**
 	 * Called when all the .img files have been processed.  We finish up and
 	 * create the TDB file and the overview map.
 	 */
@@ -198,33 +141,9 @@ public class TdbBuilder implements Combiner {
 
 		// We can set the overall bounds easily as it was calculated as part of
 		// the overview map.
-		tdb.setOverview(overviewSource.getBounds(), overviewMapnumber);
+		tdb.setOverview(overviewBuilder.getBounds(), overviewMapnumber);
 
 		writeTdbFile();
-		writeOverviewMap();
-	}
-
-	/**
-	 * Write out the overview map.
-	 */
-	private void writeOverviewMap() {
-		MapBuilder mb = new MapBuilder();
-		mb.setEnableLineCleanFilters(false);
-
-		FileSystemParam params = new FileSystemParam();
-		params.setBlockSize(512);
-		params.setMapDescription(areaName);
-
-		try {
-			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
-			map.setSort(sort);
-			mb.makeMap(map, overviewSource);
-			map.close();
-		} catch (FileExistsException e) {
-			throw new ExitException("Could not create overview map", e);
-		} catch (FileNotWritableException e) {
-			throw new ExitException("Could not write to overview map", e);
-		}
 	}
 
 	/**
@@ -237,9 +156,5 @@ public class TdbBuilder implements Combiner {
 			log.error("tdb write", e);
 			throw new ExitException("Could not write the TDB file", e);
 		}
-	}
-
-	public void setOverviewSource(OverviewMap overviewSource) {
-		this.overviewSource = overviewSource;
 	}
 }
