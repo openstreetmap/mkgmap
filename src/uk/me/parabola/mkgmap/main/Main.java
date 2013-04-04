@@ -83,6 +83,8 @@ public class Main implements ArgumentProcessor {
 	// default number of threads
 	private int maxJobs = 1;
 
+	private boolean tdbBuilderAdded = false;
+
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
 	 * first going through the arguments and make any maps and collect names
@@ -288,12 +290,14 @@ public class Main implements ArgumentProcessor {
 	 * the overview map in the TDB file.
 	 */
 	private void addTdbBuilder() {
-		OverviewMap overviewSource = new OverviewMapDataSource();
-		OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
-		addCombiner(overviewBuilder);
-		
-		TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
-		addCombiner(tdbBuilder);
+		if (!tdbBuilderAdded ){
+			OverviewMap overviewSource = new OverviewMapDataSource();
+			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
+			addCombiner(overviewBuilder);
+			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
+			addCombiner(tdbBuilder);
+			tdbBuilderAdded = true;
+		}
 	}
 
 	private void listStyles() {
