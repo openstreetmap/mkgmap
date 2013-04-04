@@ -290,7 +290,8 @@ public class OverviewBuilder implements Combiner {
 				continue;
 
 			ms.setType(shape.getType());
-			ms.setName(shape.getLabel().getText());
+			if (shape.getLabel() != null)
+				ms.setName(shape.getLabel().getText());
 			ms.setMaxResolution(24); // TODO
 			ms.setMinResolution(5);  // TODO
 			ms.setPoints(points);
