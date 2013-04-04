@@ -305,7 +305,8 @@ public class RGNFileReader extends ImgReader {
 	 * @param line The line or shape that is to be populated.
 	 */
 	private void readLineCommonExtType(ImgFileReader reader, Subdivision div, Polyline line) {
-		int type = reader.get() << 8 ;
+		int type = reader.get();
+		type = (type & 0xff) << 8;
 		byte b1 = reader.get();
 		boolean hasExtraBytes = (b1 & 0x80) != 0;
 		boolean hasLabel = (b1 & 0x20) != 0;
@@ -313,7 +314,6 @@ public class RGNFileReader extends ImgReader {
 		line.setType(type);
 		line.setDeltaLong((short)reader.getChar());
 		line.setDeltaLat((short)reader.getChar());
-		System.out.println(line.getType() + " " + line.getDeltaLat() + " " + line.getDeltaLong());
 		b1 = reader.get();
 		int len;
 		// one byte or two byte length field?
