@@ -68,7 +68,7 @@ public class SimpleTest extends Base {
 		Area expBox = new Area(2402404, -11185, 2407064, -6524);
 		assertEquals("bounds of map", expBox, bounds);
 
-		List<Point> list = mr.pointsForLevel(0);
+		List<Point> list = mr.pointsForLevel(0, true);
 		assertEquals("number of points at level 0", 204, list.size());
 
 		List<Polyline> list1 = mr.linesForLevel(0);
