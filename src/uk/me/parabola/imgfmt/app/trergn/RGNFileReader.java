@@ -236,7 +236,7 @@ public class RGNFileReader extends ImgReader {
 			readLineCommon(getReader(), div, line);
 			list.add(line);
 		}
-		if (div.getExtTypeLinesSize() > 0){
+		if (div.getExtTypeAreasSize() > 0){
 			start = rgnHeader.getExtTypeAreasOffset() + div.getExtTypeAreasOffset();
 			end = start + div.getExtTypeAreasSize();
 			position(start);
