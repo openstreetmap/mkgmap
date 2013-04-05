@@ -63,6 +63,32 @@ public class GType {
 			log.error("not numeric " + type);
 			throw new ExitException("non-numeric type in map-features file");
 		}
+		if (this.type >= 0x010000){
+			if ((this.type & 0xff) > 0x1f){
+				log.error("invalid type: " + type);
+				throw new ExitException("invalid type: " + type);
+				
+			}
+			return;
+		}
+		if (featureKind == FeatureKind.POLYLINE){
+			if (this.type > 0x3f){
+				log.error("invalid type for line: " + type);
+				throw new ExitException("invalid type for line: " + type);
+			}
+		}
+		else if (featureKind == FeatureKind.POLYGON){
+			if (this.type > 0x7f){
+				log.error("invalid type for polygon: " + type);
+				throw new ExitException("invalid type for polygon: " + type);
+			}
+		}
+		else if (featureKind == FeatureKind.POINT){
+			if (this.type < 0x0100 || (this.type & 0x00ff) > 0x1f) {
+				log.error("invalid type for point: " + type);
+				throw new ExitException("invalid type for polygon: " + type);
+			}
+		}
 	}
 
 	public GType(FeatureKind featureKind, String type, String subtype) {
