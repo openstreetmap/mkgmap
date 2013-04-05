@@ -73,7 +73,7 @@ public class RGNFileReader extends ImgReader {
 	 */
 	public List<Point> pointsForSubdiv(Subdivision sd, boolean withExtType) {
 		ArrayList<Point> list = new ArrayList<Point>();
-		if (sd.hasIndPoints() || !sd.hasPoints()){
+		if (sd.hasIndPoints() || sd.hasPoints()){
 
 			RgnOffsets rgnOffsets = getOffsets(sd);
 
@@ -132,7 +132,7 @@ public class RGNFileReader extends ImgReader {
 				p.setType(((t & 0xff) << 8) | (st & 0xff));
 				//p.setHasSubtype(true);
 			} else {
-				p.setType(t & 0xff);
+				p.setType((t & 0xff) << 8);
 			}
 
 			p.setNumber(number++);
