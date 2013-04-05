@@ -245,7 +245,7 @@ public class OverviewBuilder implements Combiner {
 
 		int min = levels[1].getLevel();
 		List<Polyline> lineList = mapReader.linesForLevel(min);
-		System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
+		//System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
 		for (Polyline line : lineList) {
 			log.debug("got line", line);
 			if (!addAll){

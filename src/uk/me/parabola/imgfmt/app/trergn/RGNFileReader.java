@@ -72,20 +72,20 @@ public class RGNFileReader extends ImgReader {
 	 * @return A list of all points for the subdiv.
 	 */
 	public List<Point> pointsForSubdiv(Subdivision sd, boolean withExtType) {
-		if (!sd.hasIndPoints() && !sd.hasPoints())
-			return Collections.emptyList();
-
-		RgnOffsets rgnOffsets = getOffsets(sd);
 		ArrayList<Point> list = new ArrayList<Point>();
+		if (sd.hasIndPoints() || !sd.hasPoints()){
 
-		// Even though the indexed points are after the points, the numbering
-		// starts with 1 for the first indexed point and carries on into the
-		// points section.
-		fetchPointsCommon(sd, rgnOffsets.getIndPointStart(), rgnOffsets.getIndPointEnd(), list);
-		fetchPointsCommon(sd, rgnOffsets.getPointStart(), rgnOffsets.getPointEnd(), list);
+			RgnOffsets rgnOffsets = getOffsets(sd);
+
+			// Even though the indexed points are after the points, the numbering
+			// starts with 1 for the first indexed point and carries on into the
+			// points section.
+			fetchPointsCommon(sd, rgnOffsets.getIndPointStart(), rgnOffsets.getIndPointEnd(), list);
+			fetchPointsCommon(sd, rgnOffsets.getPointStart(), rgnOffsets.getPointEnd(), list);
+		}
 		if (withExtType)
 			fetchPointsCommonExtType(sd, rgnHeader.getExtTypePointsOffset() + sd.getExtTypePointsOffset(), sd.getExtTypePointsSize(), list);
-		
+
 		return list;
 	}
 
@@ -188,24 +188,24 @@ public class RGNFileReader extends ImgReader {
 	 * @return A list of lines.
 	 */
 	public List<Polyline> linesForSubdiv(Subdivision div) {
-		if (!div.hasPolylines())
-			return Collections.emptyList();
-
-		RgnOffsets rgnOffsets = getOffsets(div);
 		ArrayList<Polyline> list = new ArrayList<Polyline>();
+		
+		if (div.hasPolylines()){
+			RgnOffsets rgnOffsets = getOffsets(div);
 
-		int start = rgnOffsets.getLineStart();
-		int end = rgnOffsets.getLineEnd();
+			int start = rgnOffsets.getLineStart();
+			int end = rgnOffsets.getLineEnd();
 
-		position(start);
-		while (position() < end) {
-			Polyline line = new Polyline(div);
-			readLineCommon(getReader(), div, line);
-			list.add(line);
+			position(start);
+			while (position() < end) {
+				Polyline line = new Polyline(div);
+				readLineCommon(getReader(), div, line);
+				list.add(line);
+			}
 		}
 		if (div.getExtTypeLinesSize() > 0){
-			start = rgnHeader.getExtTypeLinesOffset() + div.getExtTypeLinesOffset();
-			end = start + div.getExtTypeLinesSize();
+			int start = rgnHeader.getExtTypeLinesOffset() + div.getExtTypeLinesOffset();
+			int end = start + div.getExtTypeLinesSize();
 			position(start);
 			while (position() < end) {
 				Polyline line = new Polyline(div);
@@ -220,25 +220,25 @@ public class RGNFileReader extends ImgReader {
 	 * Get all the polygons for a given subdivision.
 	 */
 	public List<Polygon> shapesForSubdiv(Subdivision div) {
-		if (!div.hasPolygons())
-			return Collections.emptyList();
-
-		RgnOffsets rgnOffsets = getOffsets(div);
 		ArrayList<Polygon> list = new ArrayList<Polygon>();
+		if (div.hasPolygons()){
 
-		int start = rgnOffsets.getPolygonStart();
-		int end = rgnOffsets.getPolygonEnd();
+			RgnOffsets rgnOffsets = getOffsets(div);
 
-		position(start);
+			int start = rgnOffsets.getPolygonStart();
+			int end = rgnOffsets.getPolygonEnd();
 
-		while (position() < end) {
-			Polygon line = new Polygon(div);
-			readLineCommon(getReader(), div, line);
-			list.add(line);
+			position(start);
+
+			while (position() < end) {
+				Polygon line = new Polygon(div);
+				readLineCommon(getReader(), div, line);
+				list.add(line);
+			}
 		}
 		if (div.getExtTypeAreasSize() > 0){
-			start = rgnHeader.getExtTypeAreasOffset() + div.getExtTypeAreasOffset();
-			end = start + div.getExtTypeAreasSize();
+			int start = rgnHeader.getExtTypeAreasOffset() + div.getExtTypeAreasOffset();
+			int end = start + div.getExtTypeAreasSize();
 			position(start);
 			while (position() < end) {
 				Polygon line = new Polygon(div);
