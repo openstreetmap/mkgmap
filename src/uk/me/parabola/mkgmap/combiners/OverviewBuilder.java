@@ -177,16 +177,24 @@ public class OverviewBuilder implements Combiner {
 	private void readFileIntoOverview(FileInfo finfo) throws FileNotFoundException {
 		addMapCoverageArea(finfo);
 
-		MapReader mapReader = new MapReader(finfo.getFilename());
+		MapReader mapReader = null;
+		String filename = finfo.getFilename();
+		try{
+			mapReader = new MapReader(filename);
 
-		levels = mapReader.getLevels();
+			levels = mapReader.getLevels();
 
-		if (addPoints || typeFilterMap.containsKey("point"))
-			readPoints(mapReader);
-		if (addLines || typeFilterMap.containsKey("line"))
-			readLines(mapReader);
-		if (addPolygons || typeFilterMap.containsKey("polygon"))
-			readShapes(mapReader);
+			if (addPoints || typeFilterMap.containsKey("point"))
+				readPoints(mapReader);
+			if (addLines || typeFilterMap.containsKey("line"))
+				readLines(mapReader);
+			if (addPolygons || typeFilterMap.containsKey("polygon"))
+				readShapes(mapReader);
+		} catch (FileNotFoundException e) {
+			throw new ExitException("Could not open " + filename + " when creating overview file");
+		} finally {
+			Utils.closeFile(mapReader);
+		}
 	}
 
 	/**
@@ -237,6 +245,7 @@ public class OverviewBuilder implements Combiner {
 
 		int min = levels[1].getLevel();
 		List<Polyline> lineList = mapReader.linesForLevel(min);
+		System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
 		for (Polyline line : lineList) {
 			log.debug("got line", line);
 			if (!addAll){
