@@ -27,6 +27,8 @@ highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
 # generic access rule, and it can be overridden by more specific tags:
 # foot, bicycle, motorcar, motorcycle.
 
+# Hide proposed ways
+highway=proposed {delete highway;delete junction}
 # Hide unaccessible tunnels
 highway=* & tunnel=yes & (access=private|access=no)
 & foot!=* & bicycle!=* {delete highway;delete junction}
