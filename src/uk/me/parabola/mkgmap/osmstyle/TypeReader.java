@@ -42,7 +42,25 @@ public class TypeReader {
 			throw new SyntaxException(ts, "Garmin type number must be first.  Saw '" + type + '\'');
 
 		log.debug("gtype", type);
+		
 		GType gt = new GType(kind, type);
+		boolean isOk = true;
+		if (gt.getType()>= 0x010000){
+			if ((gt.getType()& 0xff) > 0x1f)
+				isOk = false;
+		} else {
+			if (kind == FeatureKind.POLYLINE && gt.getType() > 0x3f)
+				isOk = false;
+			else if (kind == FeatureKind.POLYGON && gt.getType()> 0x7f)
+				isOk = false;
+			else if (kind == FeatureKind.POINT){
+				if (gt.getType()< 0x0100 || (gt.getType()& 0x00ff) > 0x1f) 
+					isOk = false;
+			}
+		}
+		if (!isOk){
+			log.error("Warning: invalid type " + type + " in style file " + ts.getFileName() + ", line " + ts.getLinenumber());
+		}
 
 		while (!ts.isEndOfFile()) {
 			ts.skipSpace();

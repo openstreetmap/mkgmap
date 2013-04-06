@@ -132,7 +132,7 @@ public class RGNFileReader extends ImgReader {
 				p.setType(((t & 0xff) << 8) | (st & 0xff));
 				//p.setHasSubtype(true);
 			} else {
-				p.setType((t & 0xff) << 8);
+				p.setType(t & 0xff);
 			}
 
 			p.setNumber(number++);

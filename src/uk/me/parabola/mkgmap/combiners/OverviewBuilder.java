@@ -118,6 +118,8 @@ public class OverviewBuilder implements Combiner {
 							}
 							else {
 								Integer type = Integer.decode(items[1]);
+								if (type < 0x010000 && (type & 0xff) == 0 &&  "point".equals(object))
+									type >>= 8;
 								set.add(type);
 							}
 						}
