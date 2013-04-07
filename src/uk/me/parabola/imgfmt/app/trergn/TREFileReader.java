@@ -13,7 +13,6 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;

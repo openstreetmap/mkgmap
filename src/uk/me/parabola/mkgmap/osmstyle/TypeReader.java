@@ -1,5 +1,8 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.log.Logger;
@@ -26,7 +29,11 @@ public class TypeReader {
 		this.levels = levels;
 	}
 
-	public GType readType(TokenScanner ts) {
+	public GType readType(TokenScanner ts){
+		return readType(ts, false, null);
+	}
+	
+	public GType readType(TokenScanner ts, boolean performChecks, Map<Integer, List<Integer>> overlays) {
 		// We should have a '[' to start with
 		Token t = ts.nextToken();
 		if (t == null || t.getType() == TokType.EOF)
@@ -42,8 +49,8 @@ public class TypeReader {
 			throw new SyntaxException(ts, "Garmin type number must be first.  Saw '" + type + '\'');
 
 		log.debug("gtype", type);
-		GType gt = new GType(kind, type);
 
+		GType gt = new GType(kind, type);
 		while (!ts.isEndOfFile()) {
 			ts.skipSpace();
 			String w = ts.nextValue();
@@ -80,6 +87,48 @@ public class TypeReader {
 		}
 
 		gt.fixLevels(levels);
+		if (performChecks){
+			boolean fromOverlays = false;
+			List<Integer> usedTypes = null;
+			if (overlays != null){
+				usedTypes = overlays.get(gt.getType());
+				if (usedTypes != null)
+					fromOverlays = true;
+			}
+			if (usedTypes == null)
+				usedTypes = Arrays.asList(gt.getType());
+			for (Integer usedType: usedTypes){
+				boolean isOk = true;
+				if (usedType >= 0x010000){
+					if ((usedType & 0xff) > 0x1f)
+						isOk = false;
+				} else {
+					if (kind == FeatureKind.POLYLINE && usedType > 0x3f)
+						isOk = false;
+					else if (kind == FeatureKind.POLYGON && usedType> 0x7f)
+						isOk = false;
+					else if (kind == FeatureKind.POINT){
+						if (usedType < 0x0100 || (usedType & 0x00ff) > 0x1f) 
+							isOk = false;
+					}
+				}
+				if (!isOk){
+					String msg = "Warning: invalid type " + type + " for " + kind + " in style file " + ts.getFileName() + ", line " + ts.getLinenumber();
+					if (fromOverlays)
+						msg += ". Type is overlaid with " + String.format("0x%x", usedType);
+					System.err.println(msg);
+				}
+				if (kind == FeatureKind.POLYLINE && gt.getMaxResolution() == 24 && usedType >= 0x01 && usedType <= 0x13){
+					if (gt.isRoad() == false){
+						String msg = "Warning: routable type " + type  + " is used for non-routable line with resolution 24. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
+						if (fromOverlays)
+							msg += ". Type is overlaid with " + String.format("0x%x", usedType);
+						System.err.println(msg);
+					}
+				}
+			}
+		}
+		
 		return gt;
 	}
 
