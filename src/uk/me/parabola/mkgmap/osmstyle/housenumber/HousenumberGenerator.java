@@ -74,21 +74,6 @@ public class HousenumberGenerator {
 	}
 	
 	/**
-	 * Retrieves the house number of this element.
-	 * @param e an OSM element
-	 * @return the house number (or {@code null} if no house number set)
-	 */
-	private String getHousenumber(Element e) {
-		if (e.getTag("mkgmap:housenumber") != null) {
-			return e.getTag("mkgmap:housenumber");
-		}
-		if (e.getTag("addr:housenumber") != null) {
-			return e.getTag("addr:housenumber");
-		}	
-		return null;
-	}
-	
-	/**
 	 * Adds a node for house number processing.
 	 * @param n an OSM node
 	 */
@@ -96,7 +81,7 @@ public class HousenumberGenerator {
 		if (numbersEnabled == false) {
 			return;
 		}
-		if (getHousenumber(n) != null) {
+		if (HousenumberMatch.getHousenumber(n) != null) {
 			String streetname = getStreetname(n);
 			if (streetname != null) {
 				houseNumbers.add(streetname, n);
@@ -112,7 +97,7 @@ public class HousenumberGenerator {
 		if (numbersEnabled == false) {
 			return;
 		}
-		if (getHousenumber(w) != null) {
+		if (HousenumberMatch.getHousenumber(w) != null) {
 			String streetname = getStreetname(w);
 			if (streetname != null) {
 				houseNumbers.add(streetname, w);

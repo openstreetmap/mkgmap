@@ -63,7 +63,7 @@ public class HousenumberMatch {
 	 * @param e an OSM element
 	 * @return the house number (or {@code null} if no house number set)
 	 */
-	private String getHousenumber(Element e) {
+	public static String getHousenumber(Element e) {
 		if (e.getTag("mkgmap:housenumber") != null) {
 			return e.getTag("mkgmap:housenumber");
 		}
@@ -115,6 +115,10 @@ public class HousenumberMatch {
 	 */
 	private void parseHousenumber() {
 		String housenumberString = getHousenumber(element);
+		
+		if (housenumberString == null) {
+			throw new IllegalArgumentException("No housenumber found in "+element.toBrowseURL());
+		}
 		
 		// the housenumber must match against the pattern <anything>number<notnumber><anything>
 		Pattern p = Pattern.compile("\\D*(\\d+)\\D?.*");
