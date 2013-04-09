@@ -61,11 +61,9 @@ public class OverviewBuilder implements Combiner {
 	private Zoom[] levels;
 	private String outputDir;		
 	private Sort sort;
-	private boolean addPoints = false;
-	private boolean addLines = false;
-	private boolean addPolygons = false;
 	HashMap<String, HashSet<Integer>> typeFilterMap = new HashMap<String, HashSet<Integer>>();
 	private String overviewConfig;
+
 
 	public OverviewBuilder(OverviewMap overviewSource) {
 		this.overviewSource = overviewSource;
@@ -77,16 +75,15 @@ public class OverviewBuilder implements Combiner {
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
 		sort = args.getSort();
-		addPoints = args.getProperties().containsKey("overview-add-points");
-		addLines = args.getProperties().containsKey("overview-add-lines");
-		addPolygons = args.getProperties().containsKey("overview-add-polygons");
 		overviewConfig = args.get("overview-cfg", null);
 		if (overviewConfig != null)
 			readConfig();
 	}
 
+	/**
+	 * Read configuration for filters from file.
+	 */
 	private void readConfig() {
-		String[] objects = {"point","line","polygon"}; 
 		try {
 			LineNumberReader cfgReader = new LineNumberReader(new InputStreamReader(Utils.openFile(overviewConfig)));
 					
@@ -94,6 +91,8 @@ public class OverviewBuilder implements Combiner {
 			String cfgLine = null;
 
 			try {
+				String[] objects = {"point","line","polygon"}; 
+
 				while ((cfgLine = cfgReader.readLine()) != null) {
 					if (cfgLine.startsWith("#")) {
 						// comment
@@ -102,12 +101,14 @@ public class OverviewBuilder implements Combiner {
 					String[] items = csvSplitter.split(cfgLine); 
 					//System.out.println(items.length + " " + cfgLine);
 					if (items.length < 2){
-						log.warn("Invalid format in ",
+						log.warn("Invalid format in overview-cfg file:",
 								cfgLine);
 						continue; 					
 					}
+					boolean matched = false;
 					for (String object :objects){
 						if (object.equals(items[0])){
+							matched = true;
 							HashSet<Integer> set = typeFilterMap.get(object);
 							if (set == null){
 								set = new HashSet<Integer>();
@@ -118,11 +119,16 @@ public class OverviewBuilder implements Combiner {
 							}
 							else {
 								Integer type = Integer.decode(items[1]);
+								// special case: handle points with sub type 00  
 								if (type < 0x010000 && (type & 0xff) == 0 &&  "point".equals(object))
 									type >>= 8;
 								set.add(type);
 							}
+							break;
 						}
+					}
+					if (!matched){
+						log.warn("Don't know how to handle line in overview-cfg file:",cfgLine);
 					}
 				}
 				cfgReader.close();
@@ -186,11 +192,11 @@ public class OverviewBuilder implements Combiner {
 
 			levels = mapReader.getLevels();
 
-			if (addPoints || typeFilterMap.containsKey("point"))
+			if (overviewConfig == null || typeFilterMap.containsKey("point"))
 				readPoints(mapReader);
-			if (addLines || typeFilterMap.containsKey("line"))
+			if (overviewConfig == null || typeFilterMap.containsKey("line"))
 				readLines(mapReader);
-			if (addPolygons || typeFilterMap.containsKey("polygon"))
+			if (overviewConfig == null || typeFilterMap.containsKey("polygon"))
 				readShapes(mapReader);
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating overview file");
@@ -216,7 +222,8 @@ public class OverviewBuilder implements Combiner {
 		int min = levels[1].getLevel();
 		List<Point> pointList = mapReader.pointsForLevel(min, MapReader.WITH_EXT_TYPE_DATA);
 		for (Point point: pointList) {
-			log.debug("got point", point);
+			if (log.isDebugEnabled())
+				log.debug("got point", point);
 			if (!addAll){
 				if (filterSet.contains(point.getType()) == false)
 					continue;
@@ -224,8 +231,8 @@ public class OverviewBuilder implements Combiner {
 			MapPoint mp = new MapPoint();
 			mp.setType(point.getType());
 			mp.setName(point.getLabel().getText());
-			mp.setMaxResolution(24); // TODO
-			mp.setMinResolution(5);  // TODO
+			mp.setMaxResolution(24); 
+			mp.setMinResolution(5);  
 			mp.setLocation(point.getLocation());
 			overviewSource.addPoint(mp);
 		}
@@ -249,7 +256,8 @@ public class OverviewBuilder implements Combiner {
 		List<Polyline> lineList = mapReader.linesForLevel(min);
 		//System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
 		for (Polyline line : lineList) {
-			log.debug("got line", line);
+			if (log.isDebugEnabled())
+				log.debug("got line", line);
 			if (!addAll){
 				if (filterSet.contains(line.getType()) == false)
 					continue;
@@ -257,17 +265,18 @@ public class OverviewBuilder implements Combiner {
 			
 			MapLine ml = new MapLine();
 
-			List<Coord> list = line.getPoints();
-			log.debug("line point list", list);
-			if (list.size() < 2)
+			List<Coord> points = line.getPoints();
+			if (log.isDebugEnabled())			
+				log.debug("line point list", points);
+			if (points.size() < 2)
 				continue;
 
 			ml.setType(line.getType());
 			if (line.getLabel() != null)
 				ml.setName(line.getLabel().getText());
-			ml.setMaxResolution(24); // TODO
-			ml.setMinResolution(5);  // TODO
-			ml.setPoints(list);
+			ml.setMaxResolution(24); 
+			ml.setMinResolution(5);  
+			ml.setPoints(points);
 			
 			overviewSource.addLine(ml);
 		}
@@ -290,6 +299,9 @@ public class OverviewBuilder implements Combiner {
 		int min = levels[1].getLevel();
 		List<Polygon> list = mapReader.shapesForLevel(min);
 		for (Polygon shape : list) {
+			if (log.isDebugEnabled())
+				log.debug("got polygon", shape);
+			
 			if (!addAll){
 				if (filterSet.contains(shape.getType()) == false)
 					continue;
@@ -297,14 +309,17 @@ public class OverviewBuilder implements Combiner {
 			MapShape ms = new MapShape();
 
 			List<Coord> points = shape.getPoints();
+			if (log.isDebugEnabled())			
+				log.debug("polygon point list", points);
+			
 			if (points.size() < 3)
 				continue;
 
 			ms.setType(shape.getType());
 			if (shape.getLabel() != null)
 				ms.setName(shape.getLabel().getText());
-			ms.setMaxResolution(24); // TODO
-			ms.setMinResolution(5);  // TODO
+			ms.setMaxResolution(24); 
+			ms.setMinResolution(5);  
 			ms.setPoints(points);
 
 			overviewSource.addShape(ms);

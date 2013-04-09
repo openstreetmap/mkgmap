@@ -83,7 +83,7 @@ public class RGNFileReader extends ImgReader {
 			fetchPointsCommon(sd, rgnOffsets.getIndPointStart(), rgnOffsets.getIndPointEnd(), list);
 			fetchPointsCommon(sd, rgnOffsets.getPointStart(), rgnOffsets.getPointEnd(), list);
 		}
-		if (withExtType)
+		if (withExtType && sd.getExtTypePointsSize() > 0)
 			fetchPointsCommonExtType(sd, rgnHeader.getExtTypePointsOffset() + sd.getExtTypePointsOffset(), sd.getExtTypePointsSize(), list);
 
 		return list;
