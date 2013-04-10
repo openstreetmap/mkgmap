@@ -725,7 +725,8 @@ public class MultiPolygonRelation extends Relation {
 				} else {
 					allWays.add((Way) r_e.getValue());
 				}
-			} else {
+			} else if (r_e.getValue() instanceof Node == false || 
+					("admin_centre".equals(r_e.getKey()) == false && "label".equals(r_e.getKey()) == false)) {
 				log.warn("Non way member in role", r_e.getKey(), r_e.getValue().toBrowseURL(),
 						"in multipolygon", toBrowseURL(), toTagString());
 			}
