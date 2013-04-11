@@ -32,6 +32,7 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -212,18 +213,23 @@ public class MapArea implements MapDataSource {
 
 			
 			int areaIndex = 0;
-			for (MapLine l : this.lines) {
-				// Drop any zero sized lines.
-				if (l.getBounds().getMaxDimension() <= 0)
-					continue;
-				if (useNormalSplit)
-					areaIndex = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
-				else 
-					areaIndex = ++areaIndex % mapAreas.length;
-				mapAreas[areaIndex].addLine(l);
-				used[areaIndex] = true;
+			for (int pass = 0; pass < 2; pass++){
+				for (MapLine l : this.lines) {
+					if (pass == 0 && l instanceof MapRoad == false)
+						continue;
+					if (pass == 1 && l instanceof MapRoad == true)
+						continue;
+					// Drop any zero sized lines.
+					if (l.getBounds().getMaxDimension() <= 0)
+						continue;
+					if (useNormalSplit)
+						areaIndex = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
+					else 
+						areaIndex = ++areaIndex % mapAreas.length;
+					mapAreas[areaIndex].addLine(l);
+					used[areaIndex] = true;
+				}
 			}
-
 			for (MapShape e : this.shapes) {
 				if (useNormalSplit)
 					areaIndex = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
