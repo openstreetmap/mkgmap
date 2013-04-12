@@ -782,10 +782,14 @@ public class MapBuilder implements Configurable {
 				throw new ExitException("Error reading license file " + licenseFileName);
 			}
 		} else {
-			map.addInfo("OpenStreetMap and contributors");
-			map.addInfo("www.openstreetmap.org");
-			map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-			map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
+			map.addInfo("Map data (c) OpenStreetMap and its contributors");
+			map.addInfo("http://www.openstreetmap.org/copyright");
+			map.addInfo("");
+			map.addInfo("This map data is made available under the Open Database License:");
+			map.addInfo("http://opendatacommons.org/licenses/odbl/1.0/");
+			map.addInfo("Any rights in individual contents of the database are licensed under the");
+			map.addInfo("Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/");
+			map.addInfo("");
 
 			// Pad the version number with spaces so that version
 			// strings that are different lengths do not change the size and
