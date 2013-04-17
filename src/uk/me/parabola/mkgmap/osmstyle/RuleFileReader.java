@@ -19,8 +19,7 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.List;
-import java.util.Map;
+
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.osmstyle.actions.ActionList;
@@ -75,25 +74,10 @@ public class RuleFileReader {
 	 */
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
 		this.loader = loader;
-		load(loader.open(name), name, false, null);
+		load(loader.open(name), name);
 	}
 
-	
-	/**
-	 * Read a rules file.
-	 * @param loader A file loader.
-	 * @param name The name of the file to open.
-	 * @param performChecks if true, report potential errors 
-	 * @param overlays a map with overlays or null
-	 * @throws FileNotFoundException If the given file does not exist.
-	 */
-	public void load(StyleFileLoader loader, String name, boolean performChecks, Map<Integer, List<Integer>> overlays) throws FileNotFoundException {
-		this.loader = loader;
-		load(loader.open(name), name, performChecks, overlays);
-	}
-
-	
-	private void load(Reader r, String name, boolean performChecks, Map<Integer, List<Integer>> overlays) {
+	private void load(Reader r, String name) {
 		scanner = new TokenScanner(name, r);
 		scanner.setExtraWordChars("-:.");
 
@@ -116,7 +100,7 @@ public class RuleFileReader {
 			// If there is an action list, then we don't need a type
 			GType type = null;
 			if (scanner.checkToken("["))
-				type = typeReader.readType(scanner, performChecks, overlays);
+				type = typeReader.readType(scanner);
 			else if (actionList == null)
 				throw new SyntaxException(scanner, "No type definition given");
 
@@ -499,7 +483,7 @@ public class RuleFileReader {
 			RuleSet rs = new RuleSet();
 			RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE,
 					LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
-			rr.load(r, "string", true,null);
+			rr.load(r, "string");
 			System.out.println("Result: " + rs);
 		} else {
 			System.err.println("Usage: RuleFileReader <file>");

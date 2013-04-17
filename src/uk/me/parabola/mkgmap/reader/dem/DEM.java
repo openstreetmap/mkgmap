@@ -41,7 +41,6 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 
@@ -114,33 +113,14 @@ public abstract class DEM {
 		while ((maxHeight - minHeight) / increment > maxLevels)
 			increment *= 2;
 
-		String loc = config.getProperty("style-file");
-		if (loc == null)
-			loc = config.getProperty("map-features");
-		String name = config.getProperty("style");
-
-		if (loc == null && name == null)
-			name = "default";
+		Style style = StyleImpl.readStyle(config);
 
 		LoadableMapDataSource dest = mapData;
 		if (config.getProperty("dem-separate-img", false)) {
 			dest = new DEMMapDataSource(mapData, config);
 		}
 
-
-		OsmConverter converter;
-		try {
-			Style style = new StyleImpl(loc, name);
-			style.applyOptionOverride(config);
-
-			converter = new StyledConverter(style, ((MapperBasedMapDataSource) dest).getMapper(), config);
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null) ? name : loc;
-			throw new ExitException("Could not open style " + name1);
-		}
+		OsmConverter converter = new StyledConverter(style, ((MapperBasedMapDataSource) dest).getMapper(), config);
 
 		for (int level = 0; level < maxHeight; level += increment) {
 			if (level < minHeight) continue;

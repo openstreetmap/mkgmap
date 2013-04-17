@@ -43,6 +43,8 @@ import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
+import uk.me.parabola.mkgmap.reader.osm.Style;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -76,6 +78,12 @@ public class OverviewBuilder implements Combiner {
 		outputDir = args.getOutputDir();
 		sort = args.getSort();
 		overviewConfig = args.get("overview-cfg", null);
+		if (overviewConfig == null){
+			//TODO: place default configuration in style
+			//TODO: add possibility to configure multiple levels 
+			//Style style = StyleImpl.readStyle(args.getProperties());
+			
+		}
 		if (overviewConfig != null)
 			readConfig();
 	}

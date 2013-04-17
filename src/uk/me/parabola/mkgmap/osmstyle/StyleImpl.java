@@ -38,6 +38,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Option;
@@ -73,9 +74,6 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
 public class StyleImpl implements Style {
 	private static final Logger log = Logger.getLogger(StyleImpl.class);
 
-	public static final boolean WITH_CHECKS = true; 
-	public static final boolean WITHOUT_CHECKS = false;
-	
 	// This is max the version that we understand
 	private static final int VERSION = 1;
 
@@ -121,9 +119,7 @@ public class StyleImpl implements Style {
 	private final RuleSet relations = new RuleSet();
 
 	private OverlayReader overlays;
-	private final boolean performChecks;
-	
-	
+
 	/**
 	 * Create a style from the given location and name.
 	 * @param loc The location of the style. Can be null to mean just check
@@ -133,25 +129,10 @@ public class StyleImpl implements Style {
 	 * @throws FileNotFoundException If the file doesn't exist.  This can
 	 * include the version file being missing.
 	 */
-	public StyleImpl(String styleFile, String name) throws FileNotFoundException {
-		this(styleFile,name,WITHOUT_CHECKS);
-	}
-	
-	/**
-	 * Create a style from the given location and name.
-	 * @param loc The location of the style. Can be null to mean just check
-	 * the classpath.
-	 * @param name The name.  Can be null if the location isn't.  If it is
-	 * null then we just check for the first version file that can be found.
-	 * @throws FileNotFoundException If the file doesn't exist.  This can
-	 * include the version file being missing.
-	 */
-	public StyleImpl(String loc, String name, boolean performChecks) throws FileNotFoundException {
+	public StyleImpl(String loc, String name) throws FileNotFoundException {
 		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
 
-		this.performChecks = performChecks;
-		
 		// There must be a version file, if not then we don't create the style.
 		checkVersion();
 
@@ -164,11 +145,9 @@ public class StyleImpl implements Style {
 			mergeOptions(baseStyle);
 
 		readOptions();
-		// read overlays before the style rules to be able to ignore overlaid "wrong" types. 
-		readOverlays(); 
-		
 		readRules();
 
+		readOverlays();
 
 		readMapFeatures();
 
@@ -316,7 +295,7 @@ public class StyleImpl implements Style {
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);
-			reader.load(fileLoader, "relations", performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "relations");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
 			log.debug("no relations file");
@@ -324,7 +303,7 @@ public class StyleImpl implements Style {
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes);
-			reader.load(fileLoader, "points", performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "points");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
 			log.debug("no points file");
@@ -332,14 +311,14 @@ public class StyleImpl implements Style {
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines);
-			reader.load(fileLoader, "lines", performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons);
-			reader.load(fileLoader, "polygons", performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");
 		}
@@ -534,7 +513,7 @@ public class StyleImpl implements Style {
 			return;
 
 		try {
-			baseStyles.add(new StyleImpl(location, name, performChecks));
+			baseStyles.add(new StyleImpl(location, name));
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
@@ -544,7 +523,7 @@ public class StyleImpl implements Style {
 			log.debug("could not open base style file", e);
 
 			try {
-				baseStyles.add(new StyleImpl(null, name, performChecks));
+				baseStyles.add(new StyleImpl(null, name));
 			} catch (SyntaxException se) {
 				System.err.println("Error in style: " + se.getMessage());
 			} catch (FileNotFoundException e1) {
@@ -633,13 +612,41 @@ public class StyleImpl implements Style {
 	}
 
 	/**
+	 * Evaluate the style options and try to read the style.
 	 * 
-	 * @return null or the map that was read from the overlays file
+	 * The option --style-file give the location of an alternate file or
+	 * directory containing styles rather than the default built in ones.
+	 *
+	 * The option --style gives the name of a style, either one of the
+	 * built in ones or selects one from the given style-file.
+	 *
+	 * If there is no name given, but there is a file then the file should
+	 * just contain one style.
+	 *
+	 * @param props the program properties
+	 * @return A style instance or null in case of error. 
 	 */
-	private Map<Integer, List<Integer>> getOverlaidTypeMap() {
-		if (overlays != null)
-			return overlays.getOverlays();
-		return Collections.emptyMap();
+	public static Style readStyle(Properties props) {
+		String loc = props.getProperty("style-file");
+		if (loc == null)
+			loc = props.getProperty("map-features");
+		String name = props.getProperty("style");
+
+		if (loc == null && name == null)
+			name = "default";
+
+		Style style = null;
+		try {
+			style = new StyleImpl(loc, name);
+			style.applyOptionOverride(props);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+			throw new ExitException("Could not open style " + name);
+		} catch (FileNotFoundException e) {
+			String name1 = (name != null)? name: loc;
+			throw new ExitException("Could not open style " + name1);
+		}
+		return style;
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
@@ -647,7 +654,7 @@ public class StyleImpl implements Style {
 		String name = null;
 		if (args.length > 1)
 			name = args[1];
-		StyleImpl style = new StyleImpl(file, name, WITH_CHECKS);
+		StyleImpl style = new StyleImpl(file, name);
 
 		style.dumpToFile(new OutputStreamWriter(System.out));
 	}

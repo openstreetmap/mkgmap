@@ -237,41 +237,14 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	/**
 	 * Create the appropriate converter from osm to garmin styles.
 	 *
-	 * The option --style-file give the location of an alternate file or
-	 * directory containing styles rather than the default built in ones.
-	 *
-	 * The option --style gives the name of a style, either one of the
-	 * built in ones or selects one from the given style-file.
-	 *
-	 * If there is no name given, but there is a file then the file should
-	 * just contain one style.
-	 *
 	 */
 	protected void createConverter() {
-
 		Properties props = getConfig();
-		String loc = props.getProperty("style-file");
-		if (loc == null)
-			loc = props.getProperty("map-features");
-		String name = props.getProperty("style");
+		Style style = StyleImpl.readStyle(props);
+		setStyle(style);
 
-		if (loc == null && name == null)
-			name = "default";
-
-		try {
-			Style style = new StyleImpl(loc, name);
-			style.applyOptionOverride(props);
-			setStyle(style);
-
-			usedTags.addAll(style.getUsedTags());
-			converter = new StyledConverter(style, mapper, props);
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
-		}
+		usedTags.addAll(style.getUsedTags());
+		converter = new StyledConverter(style, mapper, props);
 	}
 
 	public OsmConverter getConverter() {

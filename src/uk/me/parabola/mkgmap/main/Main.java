@@ -316,16 +316,15 @@ public class Main implements ArgumentProcessor {
 		System.out.println("The following styles are available:");
 		for (String name : names) {
 			Style style;
-			boolean performChecks = "classpath:styles".equals(styleFile) && ("default".equals(name) == false) ? false : true;
 			try {
-				style = new StyleImpl(styleFile, name, performChecks);
+				style = new StyleImpl(styleFile, name);
 			} catch (SyntaxException e) {
 				System.err.println("Error in style: " + e.getMessage());
 				continue;
 			} catch (FileNotFoundException e) {
 				log.debug("could not find style", name);
 				try {
-					style = new StyleImpl(styleFile, null, StyleImpl.WITH_CHECKS);
+					style = new StyleImpl(styleFile, null);
 				} catch (SyntaxException e1) {
 					System.err.println("Error in style: " + e1.getMessage());
 					continue;
