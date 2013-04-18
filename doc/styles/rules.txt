@@ -312,6 +312,19 @@ type=route & route=bus {
 }
 --
 
+The "apply" action can be limited to members with a special role by adding
+_role=rolevalue_ after the _apply_ keyword.
+
+[listing]
+--
+type=route & route=bus {
+	apply role=forward {
+		set route=bus;
+		set name='$(name) ${route_ref}';
+	}
+}
+--
+
 === apply_once ===
 The apply_once action is like +apply+, but it will apply the action once
 per relation member. A round-trip route relation may include the same
