@@ -1771,7 +1771,7 @@ public class StyledConverter implements OsmConverter {
 
 	/**
 	 * Detect roads that do not share any node with another road.
-	 * If such a road has the mkgmap:check_connected=true tag, add it as line, not as a road. 
+	 * If such a road has the mkgmap:set_unconnected_type tag, add it as line, not as a road. 
 	 */
 	private void findUnconnectedRoads(){
 		
@@ -1797,7 +1797,8 @@ public class StyledConverter implements OsmConverter {
 		// find roads that are not connected
 		for (int i = 0; i < roads.size(); i++){
 			Way way = roads.get(i);
-			if ("true".equals(way.getTag("mkgmap:check_connected"))){
+			String check_type = way.getTag("mkgmap:set_unconnected_type");
+			if (check_type != null){
 				boolean isConnected = false;
 				boolean onBoundary = false;
 				for (Coord p:way.getPoints()){
@@ -1814,11 +1815,30 @@ public class StyledConverter implements OsmConverter {
 				if (!isConnected){
 					if (onBoundary){
 						log.info("road not connected to other roads but is on boundary: " + way.toBrowseURL());
-						
 					} else {
-						log.info("road not connected to other roads, added as line: " + way.toBrowseURL());
-						addLine(way, roadTypes.get(i));
+						if ("none".equals(check_type)) 
+							log.info("road not connected to other roads, is ignored: " + way.toBrowseURL());
+						else {
+							int type = -1;
+							try{
+								type = Integer.decode(check_type);
+								if (GType.isRoutableLineType(type)){
+									type = -1;
+									log.error("type value in mkgmap:set_unconnected_type should not be a routable type: " + check_type);
+								}
+							} catch (NumberFormatException e){
+								log.warn("invalid type value in mkgmap:set_unconnected_type: " + check_type);
+							}
+							if (type != -1 ){
+								log.info("road not connected to other roads, added as line with type " + check_type + ": " + way.toBrowseURL());
+								GType gt = new GType(roadTypes.get(i), check_type); 
+								addLine(way, gt);
+							} else {
+								log.warn("road not connected to other roads, but replacement type is invalid. Dropped: " + way.toBrowseURL());
+							}
+						}
 						roads.set(i, null);
+						roadTypes.set(i, null);
 					}
 				}
 			}

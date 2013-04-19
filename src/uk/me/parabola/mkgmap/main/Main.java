@@ -261,7 +261,9 @@ public class Main implements ArgumentProcessor {
 		} else if (opt.equals("verbose")) {
 			verbose = true;
 		} else if (opt.equals("list-styles")) {
-			listStyles();
+			listStyles(false);
+		} else if (opt.equals("check-styles")) {
+			listStyles(true);
 		} else if (opt.equals("max-jobs")) {
 			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
@@ -286,7 +288,7 @@ public class Main implements ArgumentProcessor {
 		addCombiner(builder);
 	}
 
-	private void listStyles() {
+	private void listStyles(boolean check) {
 
 		String[] names;
 		try {
@@ -302,15 +304,20 @@ public class Main implements ArgumentProcessor {
 		System.out.println("The following styles are available:");
 		for (String name : names) {
 			Style style;
+			
+			boolean performChecks = check;
+			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false) 
+					performChecks = false;
+			
 			try {
-				style = new StyleImpl(styleFile, name);
+				style = new StyleImpl(styleFile, name, performChecks);
 			} catch (SyntaxException e) {
 				System.err.println("Error in style: " + e.getMessage());
 				continue;
 			} catch (FileNotFoundException e) {
 				log.debug("could not find style", name);
 				try {
-					style = new StyleImpl(styleFile, null);
+					style = new StyleImpl(styleFile, null, performChecks);
 				} catch (SyntaxException e1) {
 					System.err.println("Error in style: " + e1.getMessage());
 					continue;
