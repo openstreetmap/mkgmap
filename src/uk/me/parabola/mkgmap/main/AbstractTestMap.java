@@ -62,7 +62,7 @@ public abstract class AbstractTestMap {
 			throw new ExitException("Could not create or write file", e);
 		}
 		map.addInfo("Program released under the GPL");
-		map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
+		map.addInfo("This map data is made available under the Open Database License:");
 
 		// There has to be (at least) two copyright messages or else the map
 		// does not show up.  The second one will be displayed at startup,

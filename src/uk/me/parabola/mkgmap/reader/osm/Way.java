@@ -157,14 +157,13 @@ public class Way extends Element {
 		if(numPoints < 1)
 			return null;
 
-		int lat = 0;
-		int lon = 0;
+		double lat = 0;
+		double lon = 0;
 		for(Coord p : points) {
-			lat += p.getLatitude();
-			lon += p.getLongitude();
+			lat += (double)p.getLatitude()/numPoints;
+			lon += (double)p.getLongitude()/numPoints;
 		}
-		return new Coord((lat + numPoints / 2) / numPoints,
-						 (lon + numPoints / 2) / numPoints);
+		return new Coord((int)Math.round(lat), (int)Math.round(lon));
 	}
 
 	public String kind() {

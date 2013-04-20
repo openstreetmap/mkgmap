@@ -223,6 +223,11 @@ Style options:
 	List the available styles. If this option is preceeded by a style-file
 	option then it lists the styles available within that file.
 
+--check-styles
+	Perform some checks on the available styles. If this option is 
+  preceeded by a style-file option then it checks the styles 
+  available within that file.
+
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
 	levels in the device. See customisation help. The default is:

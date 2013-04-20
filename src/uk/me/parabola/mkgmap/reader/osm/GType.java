@@ -61,7 +61,7 @@ public class GType {
 			this.type = Integer.decode(type);
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type);
-			throw new ExitException("non-numeric type in map-features file");
+			throw new ExitException("non-numeric type in style file");
 		}
 	}
 
@@ -88,6 +88,31 @@ public class GType {
 		this.roadClass = other.roadClass;
 		this.roadSpeed = other.roadSpeed;
 		this.type = other.type;
+	}
+	
+	/**
+	 * Copy all attributes and replace type to a non-routable one.
+	 * @param other
+	 * @param nonRoutableType
+	 */
+	public GType(GType other, String nonRoutableType) {
+		assert other.featureKind == FeatureKind.POLYLINE;
+		
+		this.continueSearch = other.continueSearch;
+		this.defaultName = other.defaultName;
+		this.featureKind = other.featureKind;
+		this.maxLevel = other.maxLevel;
+		this.maxResolution = other.maxResolution;
+		this.minLevel = other.minLevel;
+		this.minResolution = other.minResolution;
+		this.propogateActionsOnContinue = other.propogateActionsOnContinue;
+		this.road = false;
+		try {
+			this.type = Integer.decode(nonRoutableType);
+		} catch (NumberFormatException e) {
+			log.error("not numeric " + nonRoutableType);
+			throw new ExitException("non-numeric type in style file");
+		}
 	}
 
 	public FeatureKind getFeatureKind() {
@@ -209,4 +234,24 @@ public class GType {
 	public void setContinueSearch(boolean continueSearch) {
 		this.continueSearch = continueSearch;
 	}
+	
+	/**
+	 * 
+	 * @param type the type value
+	 * @return true if the type is known as routable.
+	 */
+	public static boolean isRoutableLineType(int type){
+		return type >= 0x01 && type <= 0x13 || type == 0x1a || type == 0x1b;
+	}
+	
+	/**
+	 * Return a type value in the commonly used hex format 
+	 * @param type the integer value
+	 * @return a hex string with even number of digits 
+	 */
+	public static String formatType(int type){
+		String s = String.format("%x", type);
+		return (s.length() % 2 == 1 ? "0x0":"0x") + s;
+	}
+	
 }

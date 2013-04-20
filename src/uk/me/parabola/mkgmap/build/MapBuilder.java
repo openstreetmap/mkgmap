@@ -82,6 +82,7 @@ import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -105,6 +106,7 @@ public class MapBuilder implements Configurable {
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
 
 	private boolean doRoads;
+	private boolean routingErrorMsgPrinted;
 
 	private Locator locator;
 
@@ -782,10 +784,14 @@ public class MapBuilder implements Configurable {
 				throw new ExitException("Error reading license file " + licenseFileName);
 			}
 		} else {
-			map.addInfo("OpenStreetMap and contributors");
-			map.addInfo("www.openstreetmap.org");
-			map.addInfo("Map data licenced under Creative Commons Attribution ShareAlike 2.0");
-			map.addInfo("http://creativecommons.org/licenses/by-sa/2.0/");
+			map.addInfo("Map data (c) OpenStreetMap and its contributors");
+			map.addInfo("http://www.openstreetmap.org/copyright");
+			map.addInfo("");
+			map.addInfo("This map data is made available under the Open Database License:");
+			map.addInfo("http://opendatacommons.org/licenses/odbl/1.0/");
+			map.addInfo("Any rights in individual contents of the database are licensed under the");
+			map.addInfo("Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/");
+			map.addInfo("");
 
 			// Pad the version number with spaces so that version
 			// strings that are different lengths do not change the size and
@@ -1119,16 +1125,21 @@ public class MapBuilder implements Configurable {
 			pl.addCoords(line.getPoints());
 
 			pl.setType(line.getType());
+			if (doRoads){
+				if (line.isRoad()) {
+					if (log.isDebugEnabled())
+						log.debug("adding road def: " + line.getName());
+					RoadDef roaddef = ((MapRoad) line).getRoadDef();
 
-			if (doRoads && line.isRoad()) {
-				if (log.isDebugEnabled())
-					log.debug("adding road def: " + line.getName());
-				RoadDef roaddef = ((MapRoad) line).getRoadDef();
-
-				pl.setRoadDef(roaddef);
-				roaddef.addPolylineRef(pl);
+					pl.setRoadDef(roaddef);
+					roaddef.addPolylineRef(pl);
+				} else if (routingErrorMsgPrinted == false){
+					if (line.getMaxResolution() == 24 && GType.isRoutableLineType(line.getType())){
+						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+						routingErrorMsgPrinted = true;
+					}
+				}
 			}
-
 			map.addMapObject(pl);
 		}
 	}
