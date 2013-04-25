@@ -183,6 +183,8 @@ public class ValueBuilder {
 			item.addFilter(new NotEqualFilter(arg));
 		} else if (cmd.equals("substring")) {
 			item.addFilter(new SubstringFilter(arg));
+		}  else if (cmd.equals("part")) {
+			item.addFilter(new PartFilter(arg));
 		}
 	}
 

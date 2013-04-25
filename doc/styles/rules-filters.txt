@@ -28,6 +28,27 @@ probably the most popular use.
 
 `${name\|ref:A=>}`
 
+| part | `separator partnumber` |
+Retrieves a part of a value list.
+
+The value is cut into parts at every occurance of the +separator+ (default +;+)
+
+The the desired part of the value is returned (default +partnumber+ is +1+)
+
+Especially useful for tags like ref, exit_to and destination.
+
+`${name\|part:}`
+
+returns "Munich" if name="Munich;Augsburg;Landsberg"
+
+`${name\|part:#}`
+
+returns "Munich" if name="Munich#Augsburg#Landsberg"
+
+`${name\|part:/:2}`
+
+returns "Augsburg" if name="Munich/Augsburg/Landsberg"
+
 | highway-symbol | `symbol max-num max-alpha` |
 Prepares the value as a highway reference such as "A21" "I-80" and so
 on.
