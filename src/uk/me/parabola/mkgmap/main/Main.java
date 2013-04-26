@@ -301,14 +301,20 @@ public class Main implements ArgumentProcessor {
 		}
 
 		Arrays.sort(names);
-		System.out.println("The following styles are available:");
+		if (names.length > 1)
+			System.out.println("The following styles are available:");
+		else 
+			System.out.println("Found one style in " + styleFile);
 		for (String name : names) {
+			if (check && names.length > 1){
+				System.out.println("style: " + name);
+			}
 			Style style;
 			
 			boolean performChecks = check;
-			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false) 
+			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false){ 
 					performChecks = false;
-			
+			}
 			try {
 				style = new StyleImpl(styleFile, name, performChecks);
 			} catch (SyntaxException e) {
@@ -326,15 +332,17 @@ public class Main implements ArgumentProcessor {
 					continue;
 				}
 			}
-
-			StyleInfo info = style.getInfo();
-			System.out.format("%-15s %6s: %s\n",
-					name,info.getVersion(), info.getSummary());
-			if (verbose) {
-				for (String s : info.getLongDescription().split("\n"))
-					System.out.printf("\t%s\n", s.trim());
+			if (!check){
+				StyleInfo info = style.getInfo();
+				System.out.format("%-15s %6s: %s\n",
+						name,info.getVersion(), info.getSummary());
+				if (verbose) {
+					for (String s : info.getLongDescription().split("\n"))
+						System.out.printf("\t%s\n", s.trim());
+				}
 			}
 		}
+		System.out.println("");
 	}
 
 	private static String getLang() {

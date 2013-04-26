@@ -125,7 +125,7 @@ public class TypeReader {
 						String msg = "Warning: routable type " + type  + " is used for non-routable line with resolution 24. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
 						if (fromOverlays)
 							msg += typeOverlaidMsg;
-						System.err.println(msg);
+						System.out.println(msg);
 					}
 					else if (i > 0){
 						System.out.println("Warning: routable type " + type + " is used for non-routable line with resolution 24. " +
