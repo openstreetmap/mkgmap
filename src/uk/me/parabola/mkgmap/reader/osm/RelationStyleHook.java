@@ -13,11 +13,7 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.io.FileNotFoundException;
-
-import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -34,27 +30,7 @@ public class RelationStyleHook extends OsmReadingHooksAdaptor {
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
 		this.saver = saver;
-		
-		String loc = props.getProperty("style-file");
-		if (loc == null)
-			loc = props.getProperty("map-features");
-		String name = props.getProperty("style");
-
-		if (loc == null && name == null)
-			name = "default";
-
-		try {
-			this.style = new StyleImpl(loc, name);
-			this.style.applyOptionOverride(props);
-
-		} catch (SyntaxException e) {
-			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
-		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
-		}
-
+		style = StyleImpl.readStyle(props);
 		return super.init(saver, props);
 	}
 
