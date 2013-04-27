@@ -90,7 +90,7 @@ public class TypeReader {
 		if (performChecks){
 			boolean fromOverlays = false;
 			List<Integer> usedTypes = null;
-			if (overlays != null){
+			if (overlays != null && kind == FeatureKind.POLYLINE){
 				usedTypes = overlays.get(gt.getType());
 				if (usedTypes != null)
 					fromOverlays = true;
