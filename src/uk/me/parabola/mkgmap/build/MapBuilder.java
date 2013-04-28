@@ -1135,7 +1135,11 @@ public class MapBuilder implements Configurable {
 					roaddef.addPolylineRef(pl);
 				} else if (routingErrorMsgPrinted == false){
 					if (line.getMaxResolution() == 24 && GType.isRoutableLineType(line.getType())){
-						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+						Coord start = line.getPoints().get(0);
+						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " starting at " +
+					start.toOSMURL() + 
+					" is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+						
 						routingErrorMsgPrinted = true;
 					}
 				}
