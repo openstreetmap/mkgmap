@@ -621,6 +621,17 @@ public class StyleImpl implements Style {
 		if (loc == null && name == null)
 			name = "default";
 
+		if (name == null){
+			StyleFileLoader loader;
+			try {
+				loader = StyleFileLoader.createStyleLoader(loc, null);
+				int numEntries = loader.list().length;
+				if (numEntries > 1)
+					throw new ExitException("Style file " + loc + " contains multiple styles, use option --style to select one.");
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open style file " + loc);
+			}
+		}
 		Style style = null;
 		try {
 			style = new StyleImpl(loc, name, props, WITHOUT_CHECKS);
@@ -628,8 +639,15 @@ public class StyleImpl implements Style {
 			System.err.println("Error in style: " + e.getMessage());
 			throw new ExitException("Could not open style " + name);
 		} catch (FileNotFoundException e) {
-			String name1 = (name != null)? name: loc;
-			throw new ExitException("Could not open style " + name1);
+			String msg = "Could not open style ";
+			if (name != null){
+				msg += name;
+				if (loc != null)
+					msg += " in " + loc;
+			}
+			else 
+				msg += loc + " . Make sure that it points to a style or add the --style option.";
+			throw new ExitException(msg);
 		}
 		return style;
 	}

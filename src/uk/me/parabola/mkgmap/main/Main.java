@@ -328,13 +328,14 @@ public class Main implements ArgumentProcessor {
 	 */
 	private void checkStyles() {
 		String[] names;
+		int checked = 0;
 		try {
 			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
 			names = loader.list();
 			loader.close();
 		} catch (FileNotFoundException e) {
 			log.debug("didn't find style file", e);
-			throw new ExitException("Could not list style file " + styleFile);
+			throw new ExitException("Could not check style file " + styleFile);
 		}
 
 		Arrays.sort(names);
@@ -351,7 +352,7 @@ public class Main implements ArgumentProcessor {
 			if (names.length > 1){
 				System.out.println("checking style: " + name);
 			}
-			
+			++checked;
 			boolean performChecks = true;
 			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false){ 
 					performChecks = false;
@@ -361,6 +362,8 @@ public class Main implements ArgumentProcessor {
 				System.out.println("could not open style " + name);
 			}
 		}
+		if (checked == 0)
+			System.out.println("could not open style " + styleOption + " in " + styleFile );
 		System.out.println("finished check-styles");
 	}
 
