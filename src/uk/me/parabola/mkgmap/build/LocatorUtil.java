@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,8 +27,8 @@ public class LocatorUtil {
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern
 			.compile("[,\\s]+");
 	
-	public static List<String> getNameTags(EnhancedProperties props) {
-		String nameTagProp = props.getProperty("name-tag-list", "name");
+	public static List<String> getNameTags(Properties props) {
+		String nameTagProp= props.getProperty("name-tag-list", "name");
 		return Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp));
 	}
 

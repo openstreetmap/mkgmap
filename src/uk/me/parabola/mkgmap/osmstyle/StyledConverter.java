@@ -36,6 +36,7 @@ import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.AreaClipper;
@@ -74,7 +75,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
 
-	private final String[] nameTagList;
+	private final List<String> nameTagList;
 
 	private final MapCollector collector;
 
@@ -163,7 +164,7 @@ public class StyledConverter implements OsmConverter {
 	public StyledConverter(Style style, MapCollector collector, Properties props) {
 		this.collector = collector;
 
-		nameTagList = style.getNameTagList();
+		nameTagList = LocatorUtil.getNameTags(props);
 
 		wayRules = style.getWayRules();
 		nodeRules = style.getNodeRules();

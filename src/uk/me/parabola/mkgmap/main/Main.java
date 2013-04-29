@@ -59,6 +59,7 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * The new main program.  There can be many file names to process and there can
@@ -373,14 +374,14 @@ public class Main implements ArgumentProcessor {
 		Style style = null;
 		searchedStyleName = name;
 		try {
-			style = new StyleImpl(styleFile, name, performChecks);
+			style = new StyleImpl(styleFile, name, new EnhancedProperties(), performChecks);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
 		} catch (FileNotFoundException e) {
 			log.debug("could not find style", name);
 			try {
 				searchedStyleName = new File(styleFile).getName();
-				style = new StyleImpl(styleFile, null, performChecks);
+				style = new StyleImpl(styleFile, null, new EnhancedProperties(), performChecks);
 			} catch (SyntaxException e1) {
 				System.err.println("Error in style: " + e1.getMessage());
 			} catch (FileNotFoundException e1) {
