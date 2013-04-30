@@ -1134,7 +1134,7 @@ public class MapBuilder implements Configurable {
 					pl.setRoadDef(roaddef);
 					roaddef.addPolylineRef(pl);
 				} else if (routingErrorMsgPrinted == false){
-					if (line.getMaxResolution() == 24 && GType.isRoutableLineType(line.getType())){
+					if (div.getResolution() == 24 && GType.isRoutableLineType(line.getType())){
 						Coord start = line.getPoints().get(0);
 						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " starting at " +
 					start.toOSMURL() + 
