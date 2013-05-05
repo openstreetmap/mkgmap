@@ -61,6 +61,7 @@ public class CommandArgsReader {
 		add(new CommandOption("overview-mapname", "osmmap"));
 		add(new CommandOption("overview-mapnumber", "63240000"));
 		add(new CommandOption("poi-address", ""));
+		add(new CommandOption("merge-lines", ""));
 	}
 
 	public CommandArgsReader(ArgumentProcessor proc) {

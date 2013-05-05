@@ -275,8 +275,7 @@ Optimization options:
 	Try to merge lines. This helps the simplify filter to straighten out
 	longer chunks at lower zoom levels. Decreases file size more.
 	Increases paint speed at low zoom levels.
-	At the moment this option causes routing errors. Use only if routing 
-	is not needed in your map.
+  Default is enabled, use --no-merge-lines to disable.
 	
 --min-size-polygon=NUM
   Removes all polygons smaller than NUM from the map.

@@ -23,6 +23,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
@@ -38,8 +39,10 @@ public class LineSplitterFilter implements MapFilter {
 	// Not sure of the value, probably 255.  Say 250 here.
 	public static final int MAX_POINTS_IN_LINE = 250;
 	public static final int MIN_POINTS_IN_LINE = 50;
+	private int resolution;
 
 	public void init(FilterConfig config) {
+		this.resolution = config.getResolution();
 	}
 
 	/**
@@ -64,6 +67,10 @@ public class LineSplitterFilter implements MapFilter {
 		}
 
 		log.debug("line too long, splitting");
+		if(line.isRoad() && resolution == 24) {
+			MapRoad road = ((MapRoad)line);
+			log.error("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split (routing will be broken)");
+		} 
 
 		MapLine l = line.copy();
 
