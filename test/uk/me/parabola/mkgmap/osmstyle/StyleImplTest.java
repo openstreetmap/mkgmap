@@ -50,13 +50,6 @@ public class StyleImplTest {
 	}
 
 	@Test
-	public void testGetNameTagList() {
-		assertArrayEquals("name tag list",
-				new String[] {"name:en", "name"},
-				style.getNameTagList());
-	}
-
-	@Test
 	public void testEmptyFiles() throws FileNotFoundException {
 		style = new StyleImpl(STYLE_LOC, "empty");
 		assertNotNull("read style ok", style);

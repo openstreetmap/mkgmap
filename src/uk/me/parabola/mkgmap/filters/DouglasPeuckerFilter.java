@@ -154,7 +154,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 			// All points in tolerance, delete all of them.
 
 			// Remove the endpoint if it is the same as the start point
-			if (ab == 0)
+			if (ab == 0 && points.get(endIndex).preserved() == false)
 				points.remove(endIndex);
 
 			// Remove the points in between

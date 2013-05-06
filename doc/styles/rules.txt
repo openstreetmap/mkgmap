@@ -381,6 +381,38 @@ For general routing, using avoid options, and address search, the use of
 some special tags is necessary.
 // see [[Mkgmap/help/Tags]]
 
+=== Address search tags ===
+POIs and street cans be assigned with additional mkgmap special tags that
+define the address attributes. Searching for addresses can be enabled by 
+using the +index+ option.
+
+.POI address tags
+[options="header"]
+|=========================================================
+| Attribute   | mkgmap tag     | Example | Notes
+| Name        | name           | Pizza Express | Name of the POI
+| Country     | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
+| Region      | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
+| City        | mkgmap:city    | Nottingham |
+| Street      | mkgmap:street  | King Street |
+| Housenumber | mkgmap:housenumber | 20 |
+| Zipcode     | mkgmap:postal_code | NG1 2AS |
+| Phone       | mkgmap:phone   | +44 115 999999 | Phone number in any format
+|=========================================================
+
+.Street naming tags
+[options="header"]
+|=========================================================
+| Attribute | mkgmap tag | Example |Notes
+| Name    | name           | King Street | Street name
+| Country | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
+| Region  | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
+| City    | mkgmap:city    | Nottingham |
+| Zipcode | mkgmap:postal_code | NG1 2AS |
+|=========================================================
+
+TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
+
 [[Element_type]]
 == Element type definition ==
 As noted above this is contained in square brackets and if used must be the *last part of the rule*.

@@ -69,10 +69,10 @@ public class SimpleTest extends Base {
 		assertEquals("bounds of map", expBox, bounds);
 
 		List<Point> list = mr.pointsForLevel(0, MapReader.WITH_EXT_TYPE_DATA);
-    assertEquals("number of points at level 0", 204, list.size());
+		assertEquals("number of points at level 0", 204, list.size());
 
 		List<Polyline> list1 = mr.linesForLevel(0);
-    assertEquals("number of lines at level 0", 3752, list1.size());
+		assertEquals("number of lines at level 0", 3327, list1.size());
 	}
 
 	@Test

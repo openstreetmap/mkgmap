@@ -192,11 +192,6 @@ Overview map options:
 
 
 Style options:
-
---style=name
-	Specify a different style name, rather than the default value
-	(which is the name default).
-
 --style-file=file
 	Specify an external file to obtain the style from.  "file" can
 	be a directory containing files such as info, lines, options
@@ -219,6 +214,11 @@ Style options:
 	map-features.csv file here.  Support for that format is likely
 	to be dropped in the future.
 
+--style=name
+	Specify a style name. Must be used if --style-file points to a 
+  directory or zip file containing multiple styles. If --style-file 
+  is not used, it selects one of the builtin styles. 
+
 --list-styles
 	List the available styles. If this option is preceeded by a style-file
 	option then it lists the styles available within that file.
@@ -226,7 +226,8 @@ Style options:
 --check-styles
 	Perform some checks on the available styles. If this option is 
   preceeded by a style-file option then it checks the styles 
-  available within that file.
+  available within that file. If it is also preceded by the style
+  option it will only check that style.
 
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
@@ -294,8 +295,7 @@ Optimization options:
 	Try to merge lines. This helps the simplify filter to straighten out
 	longer chunks at lower zoom levels. Decreases file size more.
 	Increases paint speed at low zoom levels.
-	At the moment this option causes routing errors. Use only if routing 
-	is not needed in your map.
+  Default is enabled, use --no-merge-lines to disable.
 	
 --min-size-polygon=NUM
   Removes all polygons smaller than NUM from the map.

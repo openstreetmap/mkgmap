@@ -27,6 +27,7 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -969,9 +970,10 @@ public class MapBuilder implements Configurable {
 
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
-		if (mergeLines && res < 22) {
+		
+		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
-			lines = merger.merge(lines);
+			lines = merger.merge(lines, doRoads && res == 24);
 		}
 
 		LayerFilterChain filters = new LayerFilterChain(config);
@@ -1133,9 +1135,19 @@ public class MapBuilder implements Configurable {
 
 					pl.setRoadDef(roaddef);
 					roaddef.addPolylineRef(pl);
+					List<Coord> points = line.getPoints();
+					if (div.getResolution() == 24
+							&& (points.get(0) instanceof CoordNode == false
+							|| points.get(points.size() - 1) instanceof CoordNode == false)) {
+						log.error("possible routing problem: road end-points not both coordNodes: " + roaddef);
+					}
 				} else if (routingErrorMsgPrinted == false){
-					if (line.getMaxResolution() == 24 && GType.isRoutableLineType(line.getType())){
-						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+					if (div.getResolution() == 24 && GType.isRoutableLineType(line.getType())){
+						Coord start = line.getPoints().get(0);
+						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " starting at " +
+					start.toOSMURL() + 
+					" is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+						
 						routingErrorMsgPrinted = true;
 					}
 				}

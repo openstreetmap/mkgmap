@@ -13,6 +13,7 @@
 package uk.me.parabola.mkgmap.main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,6 +61,7 @@ import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * The new main program.  There can be many file names to process and there can
@@ -76,6 +78,7 @@ public class Main implements ArgumentProcessor {
 
 	private final Map<String, MapProcessor> processMap = new HashMap<String, MapProcessor>();
 	private String styleFile = "classpath:styles";
+	private String styleOption;
 	private boolean verbose;
 
 	private final List<FilenameTask> futures = new LinkedList<FilenameTask>();
@@ -84,6 +87,9 @@ public class Main implements ArgumentProcessor {
 	private int maxJobs = 1;
 
 	private boolean tdbBuilderAdded = false;
+
+	// used for messages in listStyles and checkStyles
+	private String searchedStyleName;
 
 	/**
 	 * The main program to make or combine maps.  We now use a two pass process,
@@ -262,12 +268,14 @@ public class Main implements ArgumentProcessor {
 			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
 			styleFile = val;
+		} else if (opt.equals("style")) {
+			styleOption = val;
 		} else if (opt.equals("verbose")) {
 			verbose = true;
 		} else if (opt.equals("list-styles")) {
-			listStyles(false);
+			listStyles();
 		} else if (opt.equals("check-styles")) {
-			listStyles(true);
+			checkStyles();
 		} else if (opt.equals("max-jobs")) {
 			if (val.isEmpty())
 				maxJobs = Runtime.getRuntime().availableProcessors();
@@ -302,8 +310,7 @@ public class Main implements ArgumentProcessor {
 		}
 	}
 
-	private void listStyles(boolean check) {
-
+	private void listStyles() {
 		String[] names;
 		try {
 			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
@@ -317,40 +324,90 @@ public class Main implements ArgumentProcessor {
 		Arrays.sort(names);
 		System.out.println("The following styles are available:");
 		for (String name : names) {
-			Style style;
-			
-			boolean performChecks = check;
-			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false) 
-					performChecks = false;
-			
-			try {
-				style = new StyleImpl(styleFile, name, performChecks);
-			} catch (SyntaxException e) {
-				System.err.println("Error in style: " + e.getMessage());
+			Style style = readOneStyle(name, false);
+			if (style == null)
 				continue;
-			} catch (FileNotFoundException e) {
-				log.debug("could not find style", name);
-				try {
-					style = new StyleImpl(styleFile, null, performChecks);
-				} catch (SyntaxException e1) {
-					System.err.println("Error in style: " + e1.getMessage());
-					continue;
-				} catch (FileNotFoundException e1) {
-					log.debug("could not find style", styleFile);
-					continue;
-				}
-			}
-
 			StyleInfo info = style.getInfo();
 			System.out.format("%-15s %6s: %s\n",
-					name,info.getVersion(), info.getSummary());
+					searchedStyleName,info.getVersion(), info.getSummary());
 			if (verbose) {
 				for (String s : info.getLongDescription().split("\n"))
 					System.out.printf("\t%s\n", s.trim());
 			}
 		}
 	}
+ 
+	/**
+	 * Check one or all styles in the path given in styleFile. 
+	 */
+	private void checkStyles() {
+		String[] names;
+		int checked = 0;
+		try {
+			StyleFileLoader loader = StyleFileLoader.createStyleLoader(styleFile, null);
+			names = loader.list();
+			loader.close();
+		} catch (FileNotFoundException e) {
+			log.debug("didn't find style file", e);
+			throw new ExitException("Could not check style file " + styleFile);
+		}
 
+		Arrays.sort(names);
+		
+		if (styleOption == null){
+			if (names.length > 1)
+				System.out.println("The following styles are available:");
+			else 
+				System.out.println("Found one style in " + styleFile);
+		}
+		for (String name : names) {
+			if (styleOption != null && name.equals(styleOption) == false)
+				continue;
+			if (names.length > 1){
+				System.out.println("checking style: " + name);
+			}
+			++checked;
+			boolean performChecks = true;
+			if ("classpath:styles".equals(styleFile) && "default".equals(name) == false){ 
+					performChecks = false;
+			}
+			Style style = readOneStyle(name, performChecks);
+			if (style == null){
+				System.out.println("could not open style " + name);
+			}
+		}
+		if (checked == 0)
+			System.out.println("could not open style " + styleOption + " in " + styleFile );
+		System.out.println("finished check-styles");
+	}
+
+	/**
+	 * Try to read a style from styleFile directory
+	 * @param name name of the style
+	 * @param performChecks perform checks?
+	 * @return the style or null in case of errors
+	 */
+	private Style readOneStyle(String name, boolean performChecks){
+		Style style = null;
+		searchedStyleName = name;
+		try {
+			style = new StyleImpl(styleFile, name, new EnhancedProperties(), performChecks);
+		} catch (SyntaxException e) {
+			System.err.println("Error in style: " + e.getMessage());
+		} catch (FileNotFoundException e) {
+			log.debug("could not find style", name);
+			try {
+				searchedStyleName = new File(styleFile).getName();
+				style = new StyleImpl(styleFile, null, new EnhancedProperties(), performChecks);
+			} catch (SyntaxException e1) {
+				System.err.println("Error in style: " + e1.getMessage());
+			} catch (FileNotFoundException e1) {
+				log.debug("could not find style", styleFile);
+			}
+		}
+		return style;
+	}
+	
 	private static String getLang() {
 		return "en";
 	}
