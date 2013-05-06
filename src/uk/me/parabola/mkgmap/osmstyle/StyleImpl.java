@@ -83,7 +83,7 @@ public class StyleImpl implements Style {
 
 	// General options just have a value and don't need any special processing.
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
-			Arrays.asList("levels", "extra-used-tags"));
+			Arrays.asList("levels", "overview-levels", "extra-used-tags"));
 
 	// File names
 	private static final String FILE_VERSION = "version";
@@ -277,6 +277,15 @@ public class StyleImpl implements Style {
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
+		l = generalOptions.get("overview-levels");
+		if (l != null){
+			LevelInfo[] ovLevels = LevelInfo.createFromString(l);
+			// TODO: make sure that the combination of the two level strings makes sense
+			LevelInfo[] tmp = new LevelInfo[levels.length+ ovLevels.length];
+			System.arraycopy(ovLevels, 0, tmp, 0, ovLevels.length);
+			System.arraycopy(levels, 0, tmp, ovLevels.length, levels.length);
+			levels = tmp;
+		}
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);

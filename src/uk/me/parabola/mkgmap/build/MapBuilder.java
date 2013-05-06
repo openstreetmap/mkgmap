@@ -84,6 +84,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -605,7 +606,17 @@ public class MapBuilder implements Configurable {
 	private void makeMapAreas(Map map, LoadableMapDataSource src) {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
-		LevelInfo[] levels = src.mapLevels();
+		LevelInfo[] levels = null; 
+		if (src instanceof OverviewMapDataSource)
+			levels = src.mapLevels();
+		else {
+			if (map.getFilename().endsWith("_ovm.img")) {
+				levels = src.overviewMapLevels();
+			} else {
+				levels = src.mapLevels();
+			}
+		}
+		
 		LevelInfo levelInfo = levels[0];
 
 		// If there is already a top level zoom, then we shouldn't add our own
@@ -984,7 +995,7 @@ public class MapBuilder implements Configurable {
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
-		filters.addFilter(new LineSplitterFilter());
+		filters.addFilter(new LineSplitterFilter(doRoads && res == 24));
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));

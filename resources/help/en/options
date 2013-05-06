@@ -172,24 +172,9 @@ Overview map options:
 	number used in the overview map and tdb file.  The default
 	number is 63240000.
 
---overview-cfg=file
-  Specify an external file to obtain the filters for the overview map.
-  By default, mkgmap adds all elements that are found in the lowest 
-  non-empty resolution of the *.img files to the overview map.
-  
-  The configuration file can be used to filter specific types.
-  
-  A sample configuration file looks like this:
-  # filter for overview map
-  # all points
-  point:*
-  # boundary lines and rivers
-  line:0x1e
-  line:0x1f
-  # sea polygons
-  polygon:0x32  
-  
-
+--overview-levels
+  like levels, specifies additional levels that are to be written to the
+  overview map.   
 
 Style options:
 --style-file=file

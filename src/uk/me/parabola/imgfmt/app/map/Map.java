@@ -114,17 +114,19 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	public void config(EnhancedProperties props) {
-		try {
-			if (props.containsKey("route")) {
-				addNet();
-				addNod();
-			} else if (props.containsKey("net")) {
-				addNet();
+		// we don't want routing infos in the overview map (for now)
+		if (mapName.endsWith("_ovm") == false){
+			try {
+				if (props.containsKey("route")) {
+					addNet();
+					addNod();
+				} else if (props.containsKey("net")) {
+					addNet();
+				}
+			} catch (FileExistsException e) {
+				log.warn("Could not add NET and/or NOD sections");
 			}
-		} catch (FileExistsException e) {
-			log.warn("Could not add NET and/or NOD sections");
 		}
-
 		treFile.config(props);
 	}
 

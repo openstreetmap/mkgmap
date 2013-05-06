@@ -76,6 +76,12 @@ public interface LoadableMapDataSource extends MapDataSource, Configurable {
 	 * must include at least one level.
 	 */
 	public LevelInfo[] mapLevels();
+	
+	/**
+	 * Levels for the overview map.
+	 * @return
+	 */
+	public LevelInfo[] overviewMapLevels();
 
 	/**
 	 * Get a suitable copyright message for this map source.  You can get

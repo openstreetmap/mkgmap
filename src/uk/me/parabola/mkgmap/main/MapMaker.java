@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,10 +56,18 @@ public class MapMaker implements MapProcessor {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
 			sort = args.getSort();
-
 			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
-			return makeMap(args, src);
+			if (src.overviewMapLevels() != null){
+				makeMap(args,src,"_ovm");
+			} else {
+				String fname = args.getMapname() + "_ovm.img";
+				File f = new File(fname);
+				if (f.exists() && f.isFile())
+					f.delete();
+			}
+			
+			return makeMap(args, src, "");
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
 			System.err.println(e.getMessage());
@@ -74,9 +83,10 @@ public class MapMaker implements MapProcessor {
 	 *
 	 * @param args User supplied arguments.
 	 * @param src The data source to load.
+	 * @param mapNameExt 
 	 * @return The output filename for the map.
 	 */
-	private String makeMap(CommandArgs args, LoadableMapDataSource src) {
+	private String makeMap(CommandArgs args, LoadableMapDataSource src, String mapNameExt) {
 
 		if (src.getBounds().isEmpty())
 			return null;
@@ -84,16 +94,17 @@ public class MapMaker implements MapProcessor {
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
-
 		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
-			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname(), sort);
+			Map map = Map.createMap(args.getMapname() + mapNameExt, args.getOutputDir(), params, args.getMapname(), sort);
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
 			builder.config(args.getProperties());
-			if (args.getProperties().getProperty("route", false))
-				builder.setDoRoads(true);
+			if(! "_ovm".equals(mapNameExt)){
+				if (args.getProperties().getProperty("route", false))
+					builder.setDoRoads(true);
+			}
 			builder.makeMap(map, src);
 
 			// Collect information on map complete.

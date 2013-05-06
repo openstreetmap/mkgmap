@@ -87,7 +87,7 @@ public class Main implements ArgumentProcessor {
 	private int maxJobs = 1;
 
 	private boolean tdbBuilderAdded = false;
-
+	private boolean overviewBuilderAdded = false;
 	// used for messages in listStyles and checkStyles
 	private String searchedStyleName;
 
@@ -303,6 +303,7 @@ public class Main implements ArgumentProcessor {
 		if (!tdbBuilderAdded ){
 			OverviewMap overviewSource = new OverviewMapDataSource();
 			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
+			overviewBuilderAdded = true;
 			addCombiner(overviewBuilder);
 			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
 			addCombiner(tdbBuilder);
@@ -483,8 +484,34 @@ public class Main implements ArgumentProcessor {
 		// Get them all set up.
 		for (Combiner c : combiners)
 			c.init(args);
+		
+		boolean useSpecialFilesForOverview = true;
+		// try OverviewBuilder with special files  
+		if (overviewBuilderAdded){
+			for (FilenameTask file : filenames) {
+				if (file == null || file.isCancelled())
+					continue;
 
-		// Tell them about each filename
+				try {
+					String fileName = file.getFilename();
+					if (fileName.endsWith(".img") == false)
+						continue;
+					fileName = fileName.substring(0,fileName.length()-4) + "_ovm.img";
+					log.info("  " + fileName);
+					FileInfo fileInfo = FileInfo.getFileInfo(fileName);
+					fileInfo.setArgs(file.getArgs());
+					for (Combiner c : combiners){
+						if (c instanceof OverviewBuilder)
+							c.onMapEnd(fileInfo);
+					}
+				} catch (FileNotFoundException e) {
+					useSpecialFilesForOverview = false;
+					break;
+				}
+			} 
+		}
+		
+		// Tell them about each filename (OverviewBuilder excluded) 
 		for (FilenameTask file : filenames) {
 			if (file == null || file.isCancelled())
 				continue;
@@ -493,12 +520,16 @@ public class Main implements ArgumentProcessor {
 				log.info("  " + file);
 				FileInfo fileInfo = FileInfo.getFileInfo(file.getFilename());
 				fileInfo.setArgs(file.getArgs());
-				for (Combiner c : combiners)
+				for (Combiner c : combiners){
+					if (c instanceof OverviewBuilder && useSpecialFilesForOverview)
+						continue;
 					c.onMapEnd(fileInfo);
+				}
 			} catch (FileNotFoundException e) {
 				throw new MapFailedException("could not open file " + e.getMessage());
 			}
-		}
+		} 
+		
 
 		// All done, allow tidy up or file creation to happen
 		for (Combiner c : combiners)

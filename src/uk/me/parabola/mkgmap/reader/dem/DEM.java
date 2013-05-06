@@ -847,8 +847,13 @@ public abstract class DEM {
 			return parent.mapLevels();
 		}
 
+		public LevelInfo[] overviewMapLevels() {
+			return parent.overviewMapLevels();
+		}
+
 		public String[] copyrightMessages() {
 			return copyright.toArray(new String[1]);
 		}
+
 	}
 }

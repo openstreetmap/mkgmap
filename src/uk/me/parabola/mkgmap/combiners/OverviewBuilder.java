@@ -13,15 +13,8 @@
 package uk.me.parabola.mkgmap.combiners;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Pattern;
-
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
 import uk.me.parabola.imgfmt.FileNotWritableException;
@@ -40,11 +33,10 @@ import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
-import uk.me.parabola.mkgmap.reader.osm.Style;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -63,8 +55,6 @@ public class OverviewBuilder implements Combiner {
 	private Zoom[] levels;
 	private String outputDir;		
 	private Sort sort;
-	HashMap<String, HashSet<Integer>> typeFilterMap = new HashMap<String, HashSet<Integer>>();
-	private String overviewConfig;
 
 
 	public OverviewBuilder(OverviewMap overviewSource) {
@@ -77,75 +67,6 @@ public class OverviewBuilder implements Combiner {
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
 		sort = args.getSort();
-		overviewConfig = args.get("overview-cfg", null);
-		if (overviewConfig == null){
-			//TODO: place default configuration in style
-			//TODO: add possibility to configure multiple levels 
-			//Style style = StyleImpl.readStyle(args.getProperties());
-			
-		}
-		if (overviewConfig != null)
-			readConfig();
-	}
-
-	/**
-	 * Read configuration for filters from file.
-	 */
-	private void readConfig() {
-		try {
-			LineNumberReader cfgReader = new LineNumberReader(new InputStreamReader(Utils.openFile(overviewConfig)));
-					
-			Pattern csvSplitter = Pattern.compile(Pattern.quote(":"));
-			String cfgLine = null;
-
-			try {
-				String[] objects = {"point","line","polygon"}; 
-
-				while ((cfgLine = cfgReader.readLine()) != null) {
-					if (cfgLine.startsWith("#")) {
-						// comment
-						continue; 
-					}
-					String[] items = csvSplitter.split(cfgLine); 
-					//System.out.println(items.length + " " + cfgLine);
-					if (items.length < 2){
-						log.warn("Invalid format in overview-cfg file:",
-								cfgLine);
-						continue; 					
-					}
-					boolean matched = false;
-					for (String object :objects){
-						if (object.equals(items[0])){
-							matched = true;
-							HashSet<Integer> set = typeFilterMap.get(object);
-							if (set == null){
-								set = new HashSet<Integer>();
-								typeFilterMap.put(object, set);
-							}
-							if ("*".equals(items[1])){
-								set.add(Integer.MAX_VALUE);
-							}
-							else {
-								Integer type = Integer.decode(items[1]);
-								// special case: handle points with sub type 00  
-								if (type < 0x010000 && (type & 0xff) == 0 &&  "point".equals(object))
-									type >>= 8;
-								set.add(type);
-							}
-							break;
-						}
-					}
-					if (!matched){
-						log.warn("Don't know how to handle line in overview-cfg file:",cfgLine);
-					}
-				}
-				cfgReader.close();
-			} catch (IOException e) {
-				log.error("Can't read file " + overviewConfig);
-			}
-		} catch (FileNotFoundException e1) {
-			log.error("Can't open file " + overviewConfig);
-		}
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -199,13 +120,22 @@ public class OverviewBuilder implements Combiner {
 			mapReader = new MapReader(filename);
 
 			levels = mapReader.getLevels();
-
-			if (overviewConfig == null || typeFilterMap.containsKey("point"))
+			LevelInfo[] mapLevels;
+			if (filename.endsWith("_ovm.img")){
+				mapLevels = new LevelInfo[levels.length-1]; 
+				for (int i = 1; i < levels.length; i++){
+					mapLevels[i-1] = new LevelInfo(levels[i].getLevel(), levels[i].getResolution());
+				}
+			} else {
+				mapLevels = new LevelInfo[1];
+				mapLevels[0] = new LevelInfo(levels[1].getLevel(), levels[1].getResolution());
+			}
+			overviewSource.setMapLevels(mapLevels);
+			if (filename.endsWith("_ovm.img")){
 				readPoints(mapReader);
-			if (overviewConfig == null || typeFilterMap.containsKey("line"))
 				readLines(mapReader);
-			if (overviewConfig == null || typeFilterMap.containsKey("polygon"))
 				readShapes(mapReader);
+			}
 		} catch (FileNotFoundException e) {
 			throw new ExitException("Could not open " + filename + " when creating overview file");
 		} finally {
@@ -220,29 +150,21 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readPoints(MapReader mapReader) {
-		HashSet<Integer> filterSet = typeFilterMap.get("point");
-		boolean addAll;
-		if (filterSet!= null) 
-			addAll = (filterSet.contains(Integer.MAX_VALUE));
-		else 
-			addAll = true;
-
-		int min = levels[1].getLevel();
-		List<Point> pointList = mapReader.pointsForLevel(min, MapReader.WITH_EXT_TYPE_DATA);
-		for (Point point: pointList) {
-			if (log.isDebugEnabled())
-				log.debug("got point", point);
-			if (!addAll){
-				if (filterSet.contains(point.getType()) == false)
-					continue;
+		for (int l = 1; l < levels.length; l++){
+			int min = levels[l].getLevel();
+			int res = levels[l].getResolution();
+			List<Point> pointList = mapReader.pointsForLevel(min, MapReader.WITH_EXT_TYPE_DATA);
+			for (Point point: pointList) {
+				if (log.isDebugEnabled())
+					log.debug("got point", point);
+				MapPoint mp = new MapPoint();
+				mp.setType(point.getType());
+				mp.setName(point.getLabel().getText());
+				mp.setMaxResolution(res); 
+				mp.setMinResolution(res);  
+				mp.setLocation(point.getLocation());
+				overviewSource.addPoint(mp);
 			}
-			MapPoint mp = new MapPoint();
-			mp.setType(point.getType());
-			mp.setName(point.getLabel().getText());
-			mp.setMaxResolution(24); 
-			mp.setMinResolution(5);  
-			mp.setLocation(point.getLocation());
-			overviewSource.addPoint(mp);
 		}
 	}
 
@@ -253,40 +175,31 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readLines(MapReader mapReader) {
-		HashSet<Integer> filterSet = typeFilterMap.get("line");
-		boolean addAll;
-		if (filterSet!= null) 
-			addAll = (filterSet.contains(Integer.MAX_VALUE));
-		else 
-			addAll = true;
+		for (int l = 1; l < levels.length; l++){
+			int min = levels[l].getLevel();
+			int res = levels[l].getResolution();
+			List<Polyline> lineList = mapReader.linesForLevel(min);
+			//System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
+			for (Polyline line : lineList) {
+				if (log.isDebugEnabled())
+					log.debug("got line", line);
+				MapLine ml = new MapLine();
 
-		int min = levels[1].getLevel();
-		List<Polyline> lineList = mapReader.linesForLevel(min);
-		//System.out.println(lineList.size() + " lines in lowest resolution " + levels[1].getResolution());
-		for (Polyline line : lineList) {
-			if (log.isDebugEnabled())
-				log.debug("got line", line);
-			if (!addAll){
-				if (filterSet.contains(line.getType()) == false)
+				List<Coord> points = line.getPoints();
+				if (log.isDebugEnabled())			
+					log.debug("line point list", points);
+				if (points.size() < 2)
 					continue;
+
+				ml.setType(line.getType());
+				if (line.getLabel() != null)
+					ml.setName(line.getLabel().getText());
+				ml.setMaxResolution(res); 
+				ml.setMinResolution(res);  
+				ml.setPoints(points);
+
+				overviewSource.addLine(ml);
 			}
-			
-			MapLine ml = new MapLine();
-
-			List<Coord> points = line.getPoints();
-			if (log.isDebugEnabled())			
-				log.debug("line point list", points);
-			if (points.size() < 2)
-				continue;
-
-			ml.setType(line.getType());
-			if (line.getLabel() != null)
-				ml.setName(line.getLabel().getText());
-			ml.setMaxResolution(24); 
-			ml.setMinResolution(5);  
-			ml.setPoints(points);
-			
-			overviewSource.addLine(ml);
 		}
 	}
 
@@ -297,40 +210,32 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readShapes(MapReader mapReader) {
-		HashSet<Integer> filterSet = typeFilterMap.get("polygon");
-		boolean addAll;
-		if (filterSet!= null) 
-			addAll = (filterSet.contains(Integer.MAX_VALUE));
-		else 
-			addAll = true;
-		
-		int min = levels[1].getLevel();
-		List<Polygon> list = mapReader.shapesForLevel(min);
-		for (Polygon shape : list) {
-			if (log.isDebugEnabled())
-				log.debug("got polygon", shape);
-			
-			if (!addAll){
-				if (filterSet.contains(shape.getType()) == false)
+		for (int l = 1; l < levels.length; l++){
+			int min = levels[l].getLevel();
+			int res = levels[l].getResolution();
+			List<Polygon> list = mapReader.shapesForLevel(min);
+			for (Polygon shape : list) {
+				if (log.isDebugEnabled())
+					log.debug("got polygon", shape);
+
+				MapShape ms = new MapShape();
+
+				List<Coord> points = shape.getPoints();
+				if (log.isDebugEnabled())			
+					log.debug("polygon point list", points);
+
+				if (points.size() < 3)
 					continue;
+
+				ms.setType(shape.getType());
+				if (shape.getLabel() != null)
+					ms.setName(shape.getLabel().getText());
+				ms.setMaxResolution(res); 
+				ms.setMinResolution(res);  
+				ms.setPoints(points);
+
+				overviewSource.addShape(ms);
 			}
-			MapShape ms = new MapShape();
-
-			List<Coord> points = shape.getPoints();
-			if (log.isDebugEnabled())			
-				log.debug("polygon point list", points);
-			
-			if (points.size() < 3)
-				continue;
-
-			ms.setType(shape.getType());
-			if (shape.getLabel() != null)
-				ms.setName(shape.getLabel().getText());
-			ms.setMaxResolution(24); 
-			ms.setMinResolution(5);  
-			ms.setPoints(points);
-
-			overviewSource.addShape(ms);
 		}
 	}
 
