@@ -984,7 +984,7 @@ public class MapBuilder implements Configurable {
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
-		filters.addFilter(new LineSplitterFilter());
+		filters.addFilter(new LineSplitterFilter(doRoads && res == 24));
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
