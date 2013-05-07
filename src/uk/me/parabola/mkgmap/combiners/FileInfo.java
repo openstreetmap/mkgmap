@@ -222,6 +222,8 @@ public class FileInfo {
 
 			File f = new File(inputName);
 			String name = f.getName();
+			if (OverviewBuilder.isOverviewImg(name))
+				name = OverviewBuilder.getMapName(name);
 			int dot = name.lastIndexOf('.');
 			if (dot < 0) {
 				name = "0";
@@ -325,6 +327,7 @@ public class FileInfo {
 
 		info.setCodePage(lblFile.getCodePage());
 		info.setSortOrderId(lblFile.getSortOrderId());
+		lblFile.close();
 	}
 
 	private void setBounds(Area area) {

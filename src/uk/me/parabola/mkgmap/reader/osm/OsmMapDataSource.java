@@ -102,7 +102,10 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 		
 		if (levelSpec == null)
 			return null;
-		return LevelInfo.createFromString(levelSpec);
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec); 
+		for (int i = 0; i < levels.length; i++)
+			levels[i] = new LevelInfo(levels.length-i-1,levels[i].getBits());
+		return levels;
 	}
 		
 	private String getLevelSpec (String optionName){

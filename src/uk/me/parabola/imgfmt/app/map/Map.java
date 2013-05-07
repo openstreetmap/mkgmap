@@ -40,6 +40,7 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -115,7 +116,7 @@ public class Map implements InternalFiles, Configurable {
 
 	public void config(EnhancedProperties props) {
 		// we don't want routing infos in the overview map (for now)
-		if (mapName.endsWith("_ovm") == false){
+		if (OverviewBuilder.isOverviewImg(mapName) == false){
 			try {
 				if (props.containsKey("route")) {
 					addNet();

@@ -37,6 +37,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
@@ -59,12 +60,17 @@ public class MapMaker implements MapProcessor {
 			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
 			if (src.overviewMapLevels() != null){
-				makeMap(args,src,"_ovm");
+				makeMap(args, src, OverviewBuilder.OVERVIEW_PREFIX);
 			} else {
-				String fname = args.getMapname() + "_ovm.img";
+				String fname = OverviewBuilder.getOverviewImgName(args.getMapname());
 				File f = new File(fname);
-				if (f.exists() && f.isFile())
-					f.delete();
+				if (f.exists()) {
+					if (f.isFile() )
+						f.delete();
+					else {
+						// TODO: error message ?
+					}
+				}
 			}
 			
 			return makeMap(args, src, "");
@@ -86,7 +92,7 @@ public class MapMaker implements MapProcessor {
 	 * @param mapNameExt 
 	 * @return The output filename for the map.
 	 */
-	private String makeMap(CommandArgs args, LoadableMapDataSource src, String mapNameExt) {
+	private String makeMap(CommandArgs args, LoadableMapDataSource src, String mapNamePrefix) {
 
 		if (src.getBounds().isEmpty())
 			return null;
@@ -96,13 +102,13 @@ public class MapMaker implements MapProcessor {
 		params.setMapDescription(args.getDescription());
 		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
-			Map map = Map.createMap(args.getMapname() + mapNameExt, args.getOutputDir(), params, args.getMapname(), sort);
+			Map map = Map.createMap(mapNamePrefix + args.getMapname(), args.getOutputDir(), params, args.getMapname(), sort);
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
 			builder.config(args.getProperties());
-			if(! "_ovm".equals(mapNameExt)){
-				if (args.getProperties().getProperty("route", false))
+			if (args.getProperties().getProperty("route", false)){
+				if(! OverviewBuilder.OVERVIEW_PREFIX.equals(mapNamePrefix))
 					builder.setDoRoads(true);
 			}
 			builder.makeMap(map, src);

@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
  */
 public class OverviewBuilder implements Combiner {
 	Logger log = Logger.getLogger(OverviewBuilder.class);
-
+	public static final String OVERVIEW_PREFIX = "ovm_";
 	private final OverviewMap overviewSource;
 	private String areaName;
 	private String overviewMapname;
@@ -88,6 +89,8 @@ public class OverviewBuilder implements Combiner {
 	 * Write out the overview map.
 	 */
 	private void writeOverviewMap() {
+		if (overviewSource.mapLevels() == null)
+			return;
 		MapBuilder mb = new MapBuilder();
 		mb.setEnableLineCleanFilters(false);
 
@@ -120,18 +123,20 @@ public class OverviewBuilder implements Combiner {
 			mapReader = new MapReader(filename);
 
 			levels = mapReader.getLevels();
-			LevelInfo[] mapLevels;
-			if (filename.endsWith("_ovm.img")){
-				mapLevels = new LevelInfo[levels.length-1]; 
-				for (int i = 1; i < levels.length; i++){
-					mapLevels[i-1] = new LevelInfo(levels[i].getLevel(), levels[i].getResolution());
+			if (overviewSource.mapLevels() == null){
+				LevelInfo[] mapLevels;
+				if (isOverviewImg(filename)){
+					mapLevels = new LevelInfo[levels.length-1]; 
+					for (int i = 1; i < levels.length; i++){
+						mapLevels[i-1] = new LevelInfo(levels[i].getLevel(), levels[i].getResolution());
+					}
+				} else {
+					mapLevels = new LevelInfo[1];
+					mapLevels[0] = new LevelInfo(levels[1].getLevel(), levels[1].getResolution());
 				}
-			} else {
-				mapLevels = new LevelInfo[1];
-				mapLevels[0] = new LevelInfo(levels[1].getLevel(), levels[1].getResolution());
+				overviewSource.setMapLevels(mapLevels);
 			}
-			overviewSource.setMapLevels(mapLevels);
-			if (filename.endsWith("_ovm.img")){
+			if (isOverviewImg(filename)){
 				readPoints(mapReader);
 				readLines(mapReader);
 				readShapes(mapReader);
@@ -287,4 +292,30 @@ public class OverviewBuilder implements Combiner {
 	public Area getBounds() {
 		return overviewSource.getBounds();
 	}
+
+	/**
+	 * Check if the the file name points to a partly overview img file  
+	 * @param name full path or just a name 
+	 * @return true if the name points to a partly overview img file
+	 */
+	public static boolean isOverviewImg (String name){
+		return new File(name).getName().startsWith(OVERVIEW_PREFIX);
+	}
+	/**
+	 * Add the prefix to the file name.
+	 * @param name filename 
+	 * @return filename of the corresponding overview img file
+	 */
+	public static String getOverviewImgName (String name){
+		File f = new File(name);
+		return new File(f.getParent(),OverviewBuilder.OVERVIEW_PREFIX + f.getName()).getAbsolutePath();
+	}
+
+	public static String getMapName(String name) {
+		String fname = new File(name).getName();
+		if (fname.startsWith(OVERVIEW_PREFIX))
+			return fname.substring(OVERVIEW_PREFIX.length());
+		else return name;
+	}
+	
 }

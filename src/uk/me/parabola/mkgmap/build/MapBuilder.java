@@ -58,6 +58,7 @@ import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -610,13 +611,15 @@ public class MapBuilder implements Configurable {
 		if (src instanceof OverviewMapDataSource)
 			levels = src.mapLevels();
 		else {
-			if (map.getFilename().endsWith("_ovm.img")) {
+			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
 				levels = src.overviewMapLevels();
 			} else {
 				levels = src.mapLevels();
 			}
 		}
-		
+		if (levels == null){
+			throw new ExitException("no info about levels available.");
+		}
 		LevelInfo levelInfo = levels[0];
 
 		// If there is already a top level zoom, then we shouldn't add our own

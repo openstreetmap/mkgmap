@@ -103,7 +103,7 @@ public class Main implements ArgumentProcessor {
 		System.out.println("Time started: " + new Date());
 		// We need at least one argument.
 		if (args.length < 1) {
-			System.err.println("Usage: mkgmap [options...] <file.osm>");
+			printUsage();
 			printHelp(System.err, getLang(), "options");
 			return;
 		}
@@ -124,6 +124,10 @@ public class Main implements ArgumentProcessor {
 		}
 		System.out.println("Time finished: " + new Date());
 		System.out.println("Total time taken: " + (System.currentTimeMillis() - start) + "ms"); 
+	}
+	
+	private static void printUsage (){
+		System.err.println("Usage: mkgmap [options...] <file.osm>");
 	}
 	
 	/**
@@ -220,6 +224,7 @@ public class Main implements ArgumentProcessor {
 	 * Switch out to the appropriate class to process the filename.
 	 */
 	public void processFilename(final CommandArgs args, final String filename) {
+		
 		final String ext = extractExtension(filename);
 		log.debug("file", filename, ", extension is", ext);
 
@@ -231,10 +236,15 @@ public class Main implements ArgumentProcessor {
 		FilenameTask task = new FilenameTask(new Callable<String>() {
 			public String call() {
 				log.threadTag(filename);
-				String output = mp.makeMap(args, filename);
-				log.debug("adding output name", output);
-				log.threadTag(null);
-				return output;
+				if (filename.startsWith("test-map:") || new File(filename).exists()){
+					String output = mp.makeMap(args, filename);
+					log.debug("adding output name", output);
+					log.threadTag(null);
+					return output;
+				} else {
+					log.error("file " + filename + " doesn't exist");
+					return null;
+				}
 			}
 		});
 		task.setArgs(args);
@@ -476,7 +486,20 @@ public class Main implements ArgumentProcessor {
 
 		if (combiners.isEmpty())
 			return;
-
+		boolean hasFiles = false;
+		for (FilenameTask file : filenames) {
+			if (file == null || file.isCancelled() || file.getFilename() == null){
+				if (args.getProperties().getProperty("keep-going", false))
+					continue;
+				else 
+					throw new ExitException("Exiting - if you want to carry on regardless, use the --keep-going option");
+			}
+			hasFiles = true;
+		}
+		if (!hasFiles){
+			log.warn("nothing to do for combiners.");
+			return;
+		}
 		log.info("Combining maps");
 
 		args.setSort(getSort(args));
@@ -485,7 +508,7 @@ public class Main implements ArgumentProcessor {
 		for (Combiner c : combiners)
 			c.init(args);
 		
-		boolean useSpecialFilesForOverview = true;
+		HashSet<String> ovmFiles = new HashSet<String>();
 		// try OverviewBuilder with special files  
 		if (overviewBuilderAdded){
 			for (FilenameTask file : filenames) {
@@ -496,17 +519,16 @@ public class Main implements ArgumentProcessor {
 					String fileName = file.getFilename();
 					if (fileName.endsWith(".img") == false)
 						continue;
-					fileName = fileName.substring(0,fileName.length()-4) + "_ovm.img";
+					fileName = OverviewBuilder.getOverviewImgName(fileName);
 					log.info("  " + fileName);
 					FileInfo fileInfo = FileInfo.getFileInfo(fileName);
 					fileInfo.setArgs(file.getArgs());
+					ovmFiles.add(file.getFilename());
 					for (Combiner c : combiners){
 						if (c instanceof OverviewBuilder)
 							c.onMapEnd(fileInfo);
 					}
 				} catch (FileNotFoundException e) {
-					useSpecialFilesForOverview = false;
-					break;
 				}
 			} 
 		}
@@ -521,7 +543,7 @@ public class Main implements ArgumentProcessor {
 				FileInfo fileInfo = FileInfo.getFileInfo(file.getFilename());
 				fileInfo.setArgs(file.getArgs());
 				for (Combiner c : combiners){
-					if (c instanceof OverviewBuilder && useSpecialFilesForOverview)
+					if (c instanceof OverviewBuilder && ovmFiles.contains(file.getFilename()))
 						continue;
 					c.onMapEnd(fileInfo);
 				}
