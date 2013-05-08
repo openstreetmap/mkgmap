@@ -507,8 +507,9 @@ public class Main implements ArgumentProcessor {
 		// Get them all set up.
 		for (Combiner c : combiners)
 			c.init(args);
-		
-		HashSet<String> ovmFiles = new HashSet<String>();
+
+		// will contain img files for which an additional ovm file was found  
+		HashSet<String> foundOvmFiles = new HashSet<String>();
 		// try OverviewBuilder with special files  
 		if (overviewBuilderAdded){
 			for (FilenameTask file : filenames) {
@@ -523,7 +524,7 @@ public class Main implements ArgumentProcessor {
 					log.info("  " + fileName);
 					FileInfo fileInfo = FileInfo.getFileInfo(fileName);
 					fileInfo.setArgs(file.getArgs());
-					ovmFiles.add(file.getFilename());
+					foundOvmFiles.add(file.getFilename());
 					for (Combiner c : combiners){
 						if (c instanceof OverviewBuilder)
 							c.onMapEnd(fileInfo);
@@ -543,7 +544,7 @@ public class Main implements ArgumentProcessor {
 				FileInfo fileInfo = FileInfo.getFileInfo(file.getFilename());
 				fileInfo.setArgs(file.getArgs());
 				for (Combiner c : combiners){
-					if (c instanceof OverviewBuilder && ovmFiles.contains(file.getFilename()))
+					if (c instanceof OverviewBuilder && foundOvmFiles.contains(file.getFilename()))
 						continue;
 					c.onMapEnd(fileInfo);
 				}
@@ -556,6 +557,14 @@ public class Main implements ArgumentProcessor {
 		// All done, allow tidy up or file creation to happen
 		for (Combiner c : combiners)
 			c.onFinish();
+		
+		if (args.getProperties().getProperty("remove-ovm-work-files", false)){
+			for (String fName:foundOvmFiles){
+				String ovmFile = OverviewBuilder.getOverviewImgName(fName);
+				log.info("removing " + ovmFile);
+				new File(ovmFile).delete();
+			}
+		}
 	}
 
 	private void fileOptions(CommandArgs args) {
