@@ -127,16 +127,20 @@ highway=* & construction=* & maxspeed!=* { add mkgmap:road-speed = '-1' }
 highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
-highway=motorway {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 16]
+highway=motorway & network=e-road [0x01 resolution 14-14 continue]
+highway=motorway  {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 15]
 highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) { add oneway = yes; add bicycle = no; add foot = no; } [0x06 road_class=3 road_speed=2 resolution 20]
 highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & motorroad=yes {add bicycle = no; add foot = no}
+highway=trunk & ( network=e-road | int_ref=* ) [0x02 resolution 15-17 continue]
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
 highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
 highway=trunk_link [0x09 road_class=3 road_speed=2 resolution 20]
 highway=* & highway!=proposed & motorroad=yes [0x02 road_class=4 road_speed=4 resolution 18]
+highway=primary & ( network=e-road | int_ref=* ) [0x03 resolution 17-18 continue]
 highway=primary [0x03 road_class=3 road_speed=4 resolution 19]
 highway=primary_link [0x08 road_class=3 road_speed=1 resolution 21]
+highway=secondary & ( network=e-road | int_ref=* ) [0x04 resolution 18-19 continue]
 highway=secondary [0x04 road_class=2 road_speed=3 resolution 20]
 highway=secondary_link [0x08 road_class=2 road_speed=1 resolution 22]
 highway=tertiary [0x05 road_class=1 road_speed=3 resolution 20]
@@ -182,7 +186,7 @@ man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
 # The following boundary styles are after the highway rules because ways
 # are frequently tagged with both and we want the highway to take priority.
 boundary=administrative { name '${mkgmap:boundary_name}' }
-boundary=administrative & admin_level<3 [0x1e resolution 16]
+boundary=administrative & admin_level<3 [0x1e resolution 12]
 boundary=administrative & admin_level<5 [0x1d resolution 19]
 boundary=administrative & admin_level<7 [0x1c resolution 21]
 boundary=administrative & admin_level<9 [0x1c resolution 22]
