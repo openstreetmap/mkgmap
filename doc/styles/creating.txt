@@ -3,8 +3,9 @@
 
 == Testing a style ==
 You can test your style by calling mkgmap with the
-++--style-file=++__path-to-style__ and the `--list-styles` option. If you see your style listed, then your style is recognized by mkgmap. If you plan to create routable maps, you can use `--list-styles` to perform some special tests regarding routable types. Then you can test if your style is valid by using it when creating a map.
-
+++--style-file=++__path-to-style__ and the `--list-styles` option. If you see your style listed, then your style is recognized by mkgmap.
+Additional tests are performed if you use the `--check-styles` option. The type values are verified to make sure that they are valid. Additional checks are performed to find rules which assign a routable type to a line without making it a road by assigning road_class or road_speed. This is known to cause problems with routing in routable maps. 
+Then you can test if your style is valid by using it when creating a map.
 A style can be used just as it was created, but if you want to make it available to others it will be easier if you make a zip file out of it and then you just have the one file to distribute. You just can zip all files of the style. Several different styles can be placed into the same zip archive file.
 
 To use a zipped style, you can use ++--style-file=++__stylename__++.zip++. If
