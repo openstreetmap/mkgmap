@@ -33,6 +33,7 @@ public class MapLine extends MapElement {
 
 	private List<Coord> points;
 	private boolean direction; // set if direction is important.
+	private boolean skipSizeFilter;
 	private int minLat = Integer.MAX_VALUE;
 	private int minLong = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
@@ -44,6 +45,7 @@ public class MapLine extends MapElement {
 	public MapLine(MapLine orig) {
 		super(orig);
 		direction = orig.direction;
+		skipSizeFilter = orig.skipSizeFilter;
 		//roadDef = orig.roadDef;
 	}
 
@@ -100,6 +102,15 @@ public class MapLine extends MapElement {
 	public boolean isRoad() {
 		return false;
 	}
+
+	public boolean isSkipSizeFilter() {
+		return skipSizeFilter;
+	}
+
+	public void setSkipSizeFilter(boolean skipSizeFilter) {
+		this.skipSizeFilter = skipSizeFilter;
+	}
+
 
 	/**
 	 * Get the mid-point of the bounding box for this element.  This is as good
