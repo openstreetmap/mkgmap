@@ -108,6 +108,11 @@ public class StyledConverter implements OsmConverter {
 	
 	private List<Way> roads = new ArrayList<Way>();
 	private List<GType> roadTypes = new ArrayList<GType>();
+	private List<Way> lines = new ArrayList<Way>();
+	private List<GType> lineTypes = new ArrayList<GType>();
+	HashMap<Long, Way> modifiedRoads = new HashMap<Long, Way>();
+	HashSet<Long> deletedRoads = new HashSet<Long>();
+
 	private double minimumArcLength;
 	
 	private int nextNodeId = 1;
@@ -240,8 +245,10 @@ public class StyledConverter implements OsmConverter {
 		    	roads.add(way);
 		    	roadTypes.add(new GType(foundType));
 		    }
-		    else
-				addLine(way, foundType);
+		    else {
+		    	lines.add(way);
+		    	lineTypes.add(new GType(foundType));
+		    }
 		}
 		else
 			addShape(way, foundType);
@@ -330,6 +337,33 @@ public class StyledConverter implements OsmConverter {
 		setHighwayCounts();
 		findUnconnectedRoads();
 		removeShortArcsByMergingNodes(minimumArcLength);
+		// make sure that copies of modified roads are have equal points 
+		for (int i = 0; i < lines.size(); i++){
+			Way line = lines.get(i);
+			if (deletedRoads.contains(line.getId())){
+				lines.set(i, null);
+				continue;
+			}
+			Way modWay = modifiedRoads.get(line.getId());
+			if (modWay != null){
+				List<Coord> points = line.getPoints();
+				points.clear();
+				points.addAll(modWay.getPoints());
+			}
+		}
+		deletedRoads = null;
+		modifiedRoads = null;
+		
+		for (int i = 0; i < lines.size(); i++){
+			Way line = lines.get(i);
+			if (line == null)
+				continue;
+			GType gt = lineTypes.get(i);
+			addLine(line, gt);
+		}
+		lines = null;
+		lineTypes = null;
+		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
 			if (road == null)
@@ -1840,6 +1874,7 @@ public class StyledConverter implements OsmConverter {
 						}
 						roads.set(i, null);
 						roadTypes.set(i, null);
+						deletedRoads.add(way.getId()); // XXX Maybe not if road is changed to a line?
 					}
 				}
 			}
@@ -1894,6 +1929,7 @@ public class StyledConverter implements OsmConverter {
 					if (log.isInfoEnabled())
 						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
 					roads.set(w, null);
+					deletedRoads.add(way.getId());
 					++numWaysDeleted;
 					continue;
 				}
@@ -1923,6 +1959,7 @@ public class StyledConverter implements OsmConverter {
 							points.set(i, p);
 							if (i == 0)
 								previousPoint = p;
+							modifiedRoads.put(way.getId(), way);
 							anotherPassRequired = true;
 						}
 					}
@@ -1938,6 +1975,7 @@ public class StyledConverter implements OsmConverter {
 						points.remove(i);
 						// hack alert! rewind the loop index
 						--i;
+						modifiedRoads.put(way.getId(), way);
 						anotherPassRequired = true;
 						continue;
 					}
@@ -2058,11 +2096,11 @@ public class StyledConverter implements OsmConverter {
 
 					// hack alert! rewind the loop index
 					i = previousNodeIndex;
+					modifiedRoads.put(way.getId(), way);
 					anotherPassRequired = true;
 				}
 			}
 		}
-
 		if (anotherPassRequired)
 			log.error("Removing short arcs - didn't finish in " + pass + " passes, giving up!");
 		else
