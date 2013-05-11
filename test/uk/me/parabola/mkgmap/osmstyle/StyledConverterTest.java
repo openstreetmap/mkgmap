@@ -32,7 +32,6 @@ import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -48,23 +47,26 @@ public class StyledConverterTest {
 	private final List<MapLine> lines = new ArrayList<MapLine>();
 
 	@Test
-	public void testConvertWay() {
+	public void testConvertWay() throws FileNotFoundException {
+		converter = makeConverter("simple");
 		Way way = makeWay();
 		way.addTag("highway", "primary");
 		way.addTag("x", "y");
 		converter.convertWay(way);
-
+		converter.end();
+		
 		assertEquals("line converted", 1, lines.size());
 		assertEquals("line from highway", 0x2, lines.get(0).getType());
 	}
 
 	@Test
-	public void testNullPointerFromSecondMatch() {
+	public void testNullPointerFromSecondMatch() throws FileNotFoundException {
+		converter = makeConverter("simple");
 		Way way = makeWay();
 		way.addTag("highway", "primary");
 		way.addTag("x", "z");
 		converter.convertWay(way);
-
+		converter.end();
 		assertEquals("line converted", 1, lines.size());
 		assertEquals("line from x=y", 0x3, lines.get(0).getType());
 	}
@@ -76,7 +78,9 @@ public class StyledConverterTest {
 		way.addTag("highway", "other");
 		way.addTag("a", "z");
 		way.addTag("z", "z");
+		converter = makeConverter("simple");
 		converter.convertWay(way);
+		converter.end();
 
 		assertEquals("line converted", 1, lines.size());
 		assertEquals("line", 0x12, lines.get(0).getType());
@@ -87,10 +91,12 @@ public class StyledConverterTest {
 	 * types.
 	 */
 	@Test
-	public void testOverlay() {
+	public void testOverlay() throws FileNotFoundException {
 		Way way = makeWay();
 		way.addTag("highway", "overlay");
+		converter = makeConverter("simple");
 		converter.convertWay(way);
+		converter.end();
 
 		assertEquals("lines produced", 3, lines.size());
 		assertEquals("first line is 1", 1, lines.get(0).getType());
@@ -112,15 +118,15 @@ public class StyledConverterTest {
 		Way way = makeWay();
 		way.addTag("overridden", "xyz");
 		converter.convertWay(way);
-
-		assertEquals("lines converted", 1, lines.size());
-		assertEquals("derived type", 0x22, lines.get(0).getType());
+		
 
 		// Now try a rule that is only in the base 'simple' file.
 		way = makeWay();
 		way.addTag("highway", "primary");
 		converter.convertWay(way); 
-		assertEquals("new line converted from base", 2, lines.size());
+		converter.end();
+		assertEquals("lines converted", 2, lines.size());
+		assertEquals("derived type", 0x22, lines.get(0).getType());
 		assertEquals("from base style", 0x3, lines.get(1).getType());
 	}
 
@@ -138,14 +144,14 @@ public class StyledConverterTest {
 		way.addTag("highway", "other"); // this would match in the base
 		way.addTag("derived", "first"); // this matches in the derived style
 		converter.convertWay(way);
-
+		converter.end();
+		
 		assertEquals("lines converted", 1, lines.size());
 		assertEquals("derived type", 0x25, lines.get(0).getType());
 	}
 
 	@Test
 	public void testMultipleBase() throws FileNotFoundException {
-		converter = makeConverter("d");
 
 		convertTag("a", "a");
 		assertEquals(1, lines.get(0).getType());
@@ -173,11 +179,13 @@ public class StyledConverterTest {
 		}
 	}
 
-	private Way convertTag(String key, String value) {
+	private Way convertTag(String key, String value) throws FileNotFoundException {
 		lines.clear();
 		Way way = makeWay();
 		way.addTag(key, value);
+		converter = makeConverter("d");
 		converter.convertWay(way);
+		converter.end();
 		return way;
 	}
 
@@ -202,11 +210,6 @@ public class StyledConverterTest {
 		way.addPoint(new Coord(100, 102));
 		way.addPoint(new Coord(100, 103));
 		return way;
-	}
-
-	@Before
-	public void setUp() throws FileNotFoundException {
-		converter = makeConverter("simple");
 	}
 
 	private StyledConverter makeConverter(String name) throws FileNotFoundException {
