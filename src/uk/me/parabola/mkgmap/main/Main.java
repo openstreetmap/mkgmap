@@ -86,8 +86,8 @@ public class Main implements ArgumentProcessor {
 	// default number of threads
 	private int maxJobs = 1;
 
+	private boolean createTdbFiles = false;
 	private boolean tdbBuilderAdded = false;
-	private boolean overviewBuilderAdded = false;
 	// used for messages in listStyles and checkStyles
 	private String searchedStyleName;
 
@@ -254,7 +254,7 @@ public class Main implements ArgumentProcessor {
 	private MapProcessor mapMaker(String ext) {
 		MapProcessor mp = processMap.get(ext);
 		if (mp == null)
-			mp = new MapMaker();
+			mp = new MapMaker(createTdbFiles);
 		return mp;
 	}
 
@@ -268,12 +268,8 @@ public class Main implements ArgumentProcessor {
 			// to process.
 			int n = Integer.valueOf(val);
 			if (n > 0) // TODO temporary, this option will become properly default of on.
-				addTdbBuilder();
+				createTdbFiles = true;
 
-		} else if (opt.equals("tdbfile")) {
-			addTdbBuilder();
-		} else if (opt.equals("nsis")) {
-			addCombiner(new NsisBuilder());
 		} else if (opt.equals("help")) {
 			printHelp(System.out, getLang(), (!val.isEmpty()) ? val : "help");
 		} else if (opt.equals("style-file") || opt.equals("map-features")) {
@@ -302,6 +298,8 @@ public class Main implements ArgumentProcessor {
 	}
 
 	public void removeOption(String opt) {
+		if ("tdbfile".equals(opt))
+			createTdbFiles = false;
 	}
 
 	/**
@@ -313,7 +311,6 @@ public class Main implements ArgumentProcessor {
 		if (!tdbBuilderAdded ){
 			OverviewMap overviewSource = new OverviewMapDataSource();
 			OverviewBuilder overviewBuilder = new OverviewBuilder(overviewSource);
-			overviewBuilderAdded = true;
 			addCombiner(overviewBuilder);
 			TdbBuilder tdbBuilder = new TdbBuilder(overviewBuilder);
 			addCombiner(tdbBuilder);
@@ -511,7 +508,7 @@ public class Main implements ArgumentProcessor {
 		// will contain img files for which an additional ovm file was found  
 		HashSet<String> foundOvmFiles = new HashSet<String>();
 		// try OverviewBuilder with special files  
-		if (overviewBuilderAdded){
+		if (tdbBuilderAdded){
 			for (FilenameTask file : filenames) {
 				if (file == null || file.isCancelled())
 					continue;
@@ -558,7 +555,7 @@ public class Main implements ArgumentProcessor {
 		for (Combiner c : combiners)
 			c.onFinish();
 		
-		if (args.getProperties().getProperty("remove-ovm-work-files", false)){
+		if (tdbBuilderAdded && args.getProperties().getProperty("remove-ovm-work-files", false)){
 			for (String fName:foundOvmFiles){
 				String ovmFile = OverviewBuilder.getOverviewImgName(fName);
 				log.info("removing " + ovmFile);
@@ -571,7 +568,12 @@ public class Main implements ArgumentProcessor {
 		boolean indexOpt = args.exists("index");
 		boolean gmapOpt = args.exists("gmapsupp");
 		boolean tdbOpt = args.exists("tdbfile");
-
+		if (tdbOpt || createTdbFiles){ 
+			addTdbBuilder();
+		}
+		if (args.exists("nsis")) {
+			addCombiner(new NsisBuilder());
+		}
 		if (gmapOpt) {
 			GmapsuppBuilder gmapBuilder = new GmapsuppBuilder();
 			gmapBuilder.setCreateIndex(indexOpt);

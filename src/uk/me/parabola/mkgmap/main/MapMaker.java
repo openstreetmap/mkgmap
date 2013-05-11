@@ -52,6 +52,11 @@ import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 public class MapMaker implements MapProcessor {
 	private static final Logger log = Logger.getLogger(MapMaker.class);
 	private Sort sort;
+	private final boolean createOverviewFiles;
+
+	public MapMaker(boolean createOverviewFiles) {
+		this.createOverviewFiles = createOverviewFiles;
+	}
 
 	public String makeMap(CommandArgs args, String filename) {
 		try {
@@ -59,20 +64,21 @@ public class MapMaker implements MapProcessor {
 			sort = args.getSort();
 			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
-			if (src.overviewMapLevels() != null){
-				makeMap(args, src, OverviewBuilder.OVERVIEW_PREFIX);
-			} else {
-				String fname = OverviewBuilder.getOverviewImgName(args.getMapname());
-				File f = new File(fname);
-				if (f.exists()) {
-					if (f.isFile() )
-						f.delete();
-					else {
-						// TODO: error message ?
+			if (createOverviewFiles){
+				if (src.overviewMapLevels() != null){
+					makeMap(args, src, OverviewBuilder.OVERVIEW_PREFIX);
+				} else {
+					String fname = OverviewBuilder.getOverviewImgName(args.getMapname());
+					File f = new File(fname);
+					if (f.exists()) {
+						if (f.isFile() )
+							f.delete();
+						else {
+							// TODO: error message ?
+						}
 					}
 				}
 			}
-			
 			return makeMap(args, src, "");
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
