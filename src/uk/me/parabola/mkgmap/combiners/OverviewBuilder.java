@@ -119,6 +119,9 @@ public class OverviewBuilder implements Combiner {
 
 		MapReader mapReader = null;
 		String filename = finfo.getFilename();
+		if (sort.getCodepage() != finfo.getCodePage())
+			System.err.println("WARNING: input file " + filename + " has different code page " + finfo.getCodePage());
+
 		try{
 			mapReader = new MapReader(filename);
 
