@@ -87,7 +87,7 @@ areas.
 This file contains a number of options that should be set for this style
 as if they were set on the command line.
 Only command line options that affect the style will have any effect.
-The current list is +levels+ and +extra-used-tags+.
+The current list is +levels+, +overview-levels+, and +extra-used-tags+.
 
 It is advisable to set up the levels that you want, as the default is not
 suitable for all kinds of maps and may change in the future.  Ideally,
@@ -98,7 +98,8 @@ explicitly.
 
 .An example options file
 ====
- levels = 0:24, 1:22, 2:20, 3:18, 4:16
+ levels = 0:24, 1:22, 2:20, 3:18 
+ overview-levels = 4:17, 5:16, 6:15, 7:14, 8:12  
  extra-used-tags=
 ====
 
