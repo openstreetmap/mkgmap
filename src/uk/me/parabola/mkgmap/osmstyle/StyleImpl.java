@@ -241,7 +241,7 @@ public class StyleImpl implements Style {
 		// around situations that we haven't thought of - the style is expected
 		// to get it right for itself.
 		String s = getOption("extra-used-tags");
-		if (s != null)
+		if (s != null && s.trim().isEmpty() == false)
 			set.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(s)));
 
 		// These tags are passed on the command line and so must be added
