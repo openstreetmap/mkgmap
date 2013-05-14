@@ -202,10 +202,6 @@ Style options:
 	The argument can also be a URL that specifies the location of a
 	style file.
 
-	For backward compatibility, you can also supply a
-	map-features.csv file here.  Support for that format is likely
-	to be dropped in the future.
-
 --style=name
 	Specify a style name. Must be used if --style-file points to a 
   directory or zip file containing multiple styles. If --style-file 
