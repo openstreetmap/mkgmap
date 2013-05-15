@@ -289,7 +289,18 @@ Optimization options:
   Removes all polygons smaller than NUM from the map.
   This reduces map size and speeds up redrawing of maps. 
   Recommended value is 8 to 15, default is 8.
-
+  See also polygon-size-limits.
+   
+--polygon-size-limits=limits code
+  Allows to specify different min-size-polygon values for each resolution.
+  Sample:  
+  --polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 10:0"
+  If a resolution is not given, mkgmap uses the value for the next higher 
+  one. For the given sample, resolutions 19 to 24 will use value 12,
+  resolution 17 and 18 will use 10, and so on.
+  Value 0 means to skip the size filter. 
+  Note that in resolution 24 the filter is not used.  
+   
 Miscellaneous options:
 
 --max-jobs[=number]

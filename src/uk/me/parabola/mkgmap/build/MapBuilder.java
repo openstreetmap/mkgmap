@@ -127,6 +127,8 @@ public class MapBuilder implements Configurable {
 	private Set<String> locationAutofill;
 
 	private int minSizePolygon;
+	private String polygonSizeLimitsOpt;
+	private HashMap<Integer,Integer> polygonSizeLimits = null;
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
@@ -154,6 +156,7 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
  		minSizePolygon = props.getProperty("min-size-polygon", 8);
+ 		polygonSizeLimitsOpt = props.getProperty("polygon-size-limits", null);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
  		reducePointErrorPolygon = props.getProperty("reduce-point-density-polygon", -1);
 		if (reducePointErrorPolygon == -1)
@@ -1034,8 +1037,9 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			if (minSizePolygon > 0)
-				filters.addFilter(new SizeFilter(minSizePolygon));
+			int sizefilterVal =  getMinSizePolygonForResolution(res);
+			if (sizefilterVal > 0)
+				filters.addFilter(new SizeFilter(sizefilterVal));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
@@ -1091,6 +1095,57 @@ public class MapBuilder implements Configurable {
 
 	public void setEnableLineCleanFilters(boolean enable) {
 		this.enableLineCleanFilters = enable;
+	}
+
+	/**
+	 * Determine the minimum size for a polygon for the given level.
+	 * @param res the resolution
+	 * @return the size filter value
+	 */
+	private int getMinSizePolygonForResolution(int res) {
+	
+		if (polygonSizeLimitsOpt == null)
+			return minSizePolygon;
+	
+		if (polygonSizeLimits == null){
+			polygonSizeLimits = new HashMap<Integer, Integer>();
+			String[] desc = polygonSizeLimitsOpt.split("[, \\t\\n]+");
+	
+			int count = 0;
+			for (String s : desc) {
+				String[] keyVal = s.split("[=:]");
+				if (keyVal == null || keyVal.length < 2) {
+					System.err.println("incorrect polygon-size-limits specification " + polygonSizeLimitsOpt);
+					continue;
+				}
+	
+				try {
+					int key = Integer.parseInt(keyVal[0]);
+					int value = Integer.parseInt(keyVal[1]);
+					Integer testDup = polygonSizeLimits.put(key, value);
+					if (testDup != null){
+						System.err.println("duplicate resolution value in polygon-size-limits specification " + polygonSizeLimitsOpt);
+						continue;
+					}
+				} catch (NumberFormatException e) {
+					System.err.println("polygon-size-limits specification not all numbers " + keyVal[count]);
+				}
+				count++;
+			}
+		}
+		if (polygonSizeLimits != null){
+			// return the value for the desired resolution or the next higher one
+			for (int r = res; r <= 24; r++){
+				Integer limit = polygonSizeLimits.get(r);
+				if (limit != null){
+					if (r != res)
+						polygonSizeLimits.put(res, limit);
+					return limit;
+				}
+			}
+			return 0;
+		}
+		return minSizePolygon;
 	}
 
 	private static class SourceSubdiv {
