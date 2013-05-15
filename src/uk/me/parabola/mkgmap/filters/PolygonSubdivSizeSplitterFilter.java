@@ -109,7 +109,7 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 			return false;
 		}
 	
-		return shape.getBounds().getMaxDimension() < Math.min(maxSize, 0x7fff);
+		return shape.getBounds().getMaxDimension() < maxSize;
 	}
 
 }
