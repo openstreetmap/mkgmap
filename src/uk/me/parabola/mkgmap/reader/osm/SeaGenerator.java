@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -583,8 +584,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		
 		List<Way> landWays = new ArrayList<Way>();
 		List<Way> seaWays = new ArrayList<Way>();
-		java.awt.geom.Area seaOnlyAreas = new java.awt.geom.Area();
-		java.awt.geom.Area landOnlyAreas = new java.awt.geom.Area();
+		List<java.awt.geom.Area> seaOnlyAreas = new ArrayList<java.awt.geom.Area>();
+		List<java.awt.geom.Area> landOnlyAreas = new ArrayList<java.awt.geom.Area>();
 		
 		// get the index with assignment key => sea/land/tilename
 		
@@ -611,9 +612,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				Rectangle r = new Rectangle(minLon,minLat,PRECOMP_RASTER,PRECOMP_RASTER);
 				
 				if ("sea".equals(tileName)) {
-					seaOnlyAreas.add(new java.awt.geom.Area(r));
+					seaOnlyAreas = addWithoutCreatingHoles(seaOnlyAreas, new java.awt.geom.Area(r));
 				} else {
-					landOnlyAreas.add(new java.awt.geom.Area(r));
+					landOnlyAreas = addWithoutCreatingHoles(landOnlyAreas, new java.awt.geom.Area(r));
 				}
 			} else {
 				distinctTilesOnly = false;
@@ -658,6 +659,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
  		landWays.addAll(areaToWays(landOnlyAreas,"land"));
  		seaWays.addAll(areaToWays(seaOnlyAreas,"sea"));
+ 		landOnlyAreas = null;
+ 		seaOnlyAreas = null;
  		
 		// check if the land tags need to be changed
 		if (landTag != null && ("natural".equals(landTag[0]) && "land".equals(landTag[1])) == false) {
@@ -696,14 +699,59 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	}
 
 	 
-	
-	private List<Way> areaToWays(java.awt.geom.Area area, String type) {
-		List<List<Coord>> shapes = Java2DConverter.areaToShapes(area);
+	/**
+	 * Try to merge an area with one or more other areas without creating holes.
+	 * If it cannot be merged, it is added to the list.
+	 * @param areas known areas 
+	 * @param toAdd area to add
+	 * @return new list of areas
+	 */
+	private List<java.awt.geom.Area> addWithoutCreatingHoles(List<java.awt.geom.Area> areas,
+			final java.awt.geom.Area toAdd) {
+		List<java.awt.geom.Area> result = new LinkedList<java.awt.geom.Area>();
+		java.awt.geom.Area toMerge = new java.awt.geom.Area(toAdd);
+		
+		for (java.awt.geom.Area area:areas ){
+			java.awt.geom.Area mergedArea = new java.awt.geom.Area(area);
+			mergedArea.add(toMerge);
+			if (mergedArea.isSingular() == false){
+				result.add(area);
+				continue;
+			}
+			toMerge = mergedArea;
+		}
+		// create a sorted list with "smallest" area at the beginning
+		int dimNew = Math.max(toMerge.getBounds().width,toMerge.getBounds().height);
+		boolean added = false;
+		for (int i = 0; i < result.size(); i++){
+			java.awt.geom.Area area = result.get(i);
+			if (dimNew < Math.max(area.getBounds().width,area.getBounds().height)){
+				result.add(i,toMerge);
+				added = true;
+				break;
+			}
+		}
+		if (!added)
+			result.add(toMerge);
+		return result;
+	}
+
+	/**
+	 * @param area
+	 * @param type
+	 * @return
+	 */
+	private List<Way> areaToWays(List<java.awt.geom.Area> areas, String type) {
 		List<Way> ways = new ArrayList<Way>();
-		for (List<Coord> points : shapes){
-			Way w = new Way(FakeIdGenerator.makeFakeId(), points);
-			w.addTag("natural", type);
-			ways.add(w);
+//		int count = 0;
+		for (java.awt.geom.Area area : areas) {
+			List<List<Coord>> shapes = Java2DConverter.areaToShapes(area);
+			for (List<Coord> points : shapes) {
+//				uk.me.parabola.util.GpxCreator.createGpx(type + "_" + count++, points);
+				Way w = new Way(FakeIdGenerator.makeFakeId(), points);
+				w.addTag("natural", type);
+				ways.add(w);
+			}
 		}
 		return ways;
 	}

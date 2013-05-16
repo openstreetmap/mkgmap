@@ -109,7 +109,8 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 			return false;
 		}
 	
-		return shape.getBounds().getMaxDimension() < maxSize;
+		// allow a size of 0x8000 to avoid splitting of generated precomp-sea polygons
+		return shape.getBounds().getMaxDimension() <= Math.max(maxSize, 0x8000);
 	}
 
 }
