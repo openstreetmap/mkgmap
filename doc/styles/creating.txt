@@ -17,12 +17,12 @@ The `--check-styles` option verfies that your style uses type values which can p
 
 The following rules are verified:
 
-. If a type is >= 0x0100 (means it has more than one byte), the rightmost byte
+. If a type is &ge; 0x0100 (means it has more than one byte), the rightmost byte
 must be between 0x00 and 0x1f, so e.g. 0x011f is ok, 0x0120 is not.
-. If a type is > 0x010000, it is an extended type, which can be used for points, lines, and polygons.
-. If the type is not extended, it must be >= 0x0100 for a point, <= 0x3f for a line, and <= 0x7f
+. If a type is &ge; 0x010000, it is an extended type, which can be used for points, lines, and polygons.
+. If the type is not extended, it must be &ge; 0x0100 for a point, &le; 0x3f for a line, and &le; 0x7f
 for a polygon. 
-. The polygon tpye 0x4a is reserved for the overview map. 
+. The polygon type 0x4a is reserved for the overview map. 
 . It is known that the usage of routable types for non-routable lines in resolution 24 can cause
 routing problems (e.g. address search doesn't work). The check will flag rules that assign a routable type for a line in resolution 24 without giving road_class or road_speed. A routable type is between 0x01 and 0x13 or one of: 0x1a, 0x1b, 0x16.
 
