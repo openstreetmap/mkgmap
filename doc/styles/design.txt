@@ -1,8 +1,63 @@
-
+[[DESIGN]]
 = Designing the map
-TBW
+You can completely change which features are displayed and at what zoom levels.
 
-== Levels
-TBW
+First you need to understand a little about the way that the zoom works in Garmin maps. There are two concepts 'resolution' and 'level'.
+
+== The Garmin Map
+
+Each Garmin map may contain several separate maps which are prepared at different 'levels' of detail, the most appropriate of these is displayed depending on the zoom selected by the user.
+
+When creating the map, the map maker will choose which of these 'level' maps is displayed according to the 'resolution' (or zoom) selected. For example, a map might contain three levels (0, 1 & 2); On the level 2 map (showing the largest area) a town might just be represented by a named dot; as the user zooms in, the display might switch to the level 1 map showing an outline of the town. Zooming in further might switch to the level 0 map, with the individual streets of the town shown.
+
+In addition the GPS itself might decide when to show or hide individual features in each of the 'level' maps, especially with POIs. This is also affected by the 'detail' setting in the map config menu.
+ 
+=== Resolution ===
+The first is 'resolution' this is a number between 1 and 24 with 24 being the most detailed resolution and each number less is half as detailed. So for example if a road was 12 units long at resolution 24 it would be only 6 at resolution 23 and just 3 at resolution 22.
+
+On a Legend Cx the resolution corresponds the these scales on the device:
+
+
+[width="80%",cols="1,4",frame="topbot",grid="rows",options="header"]
+|====
+| Resolution |Scale on device
+| 16 | 30km-12km
+| 18 | 8km-3km
+| 20 | 2km-800m
+| 22 | 500m-200m
+| 23 | 300m-80m
+| 24 | 120m-50m
+|====
+
+It may be slightly different on different devices.  There is an option
+to increase or decrease the detail and if you change that from 'Normal'
+then it will change the values above too.
+
+=== Level ===
+The next is 'level'.  This is a number between 0 and 16 (although perhaps numbers above 10 are not usable), with 0 corresponding to the most detailed view.  The map consists of a number of levels starting (usually) with 0.  For example 0, 1, 2, 3 and a different amount of detail is added at each level.
+
+The map also contains a table to link the level to the resolution.  So you can say that level 0 corresponds to resolution 24.
+
+This mapping is specified in the file 'options' within the style directory in use. You can also specify it on the command line, for example:
+
+  --levels=0:24,1:22,2:20
+
+This means that the map will have three levels.  Level 0 in the map will correspond to resolution 24 (the most detailed), level 1 will show at
+resolution 22 (between scales of 500m and 200m) and so on. The lowest level needs to include at least an object, therefore the default lowest level of 16 will create a broken map, if your osm input file has no information at zoom level 16 or lower included.
+Up to 8 levels are allowed.
+
+=== Overview Level ===
+The next is 'overview-level'. The meaning is the same as in level, but it is used for the creation of the overview map. The overview
+map is used in PC programs like Basecamp or Mapsource, it improves the drawing speed when looking at the whole map.
+
+The GARMIN map contains only one overview map, so it should not contain too many details, else it will reach size limits.
+
+This mapping is specified in the file 'options' within the style directory in use. You can also specify it on the command line, for example:
+
+  --overview-levels=3:18,4:16,5:12,6:10
+
+It is recommended to continue the numbers of the levels. Again, up to 8 levels are allowed.
+
+
 
 

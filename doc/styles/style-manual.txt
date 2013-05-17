@@ -53,9 +53,7 @@ link:http://wiki.openstreetmap.org[OpenStreetMap wiki].
 
 :leveloffset: 1
 
-////
 include::design.txt[]
-////
 
 include::files.txt[]
 
