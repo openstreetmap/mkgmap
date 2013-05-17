@@ -106,7 +106,7 @@ public class TypeReader {
 				} else {
 					if (kind == FeatureKind.POLYLINE && usedType > 0x3f)
 						isOk = false;
-					else if (kind == FeatureKind.POLYGON && usedType> 0x7f)
+					else if (kind == FeatureKind.POLYGON && (usedType> 0x7f || usedType == 0x4a))
 						isOk = false;
 					else if (kind == FeatureKind.POINT){
 						if (usedType < 0x0100 || (usedType & 0x00ff) > 0x1f) 
