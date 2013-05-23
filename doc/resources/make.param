@@ -8,8 +8,8 @@ RES=../resources
 XSL=$(RES)/docbook-xsl/fo.xsl
 ICONSDIR=$(RES)/common-images/icons
 
-HTML_ATTRS=-a data-uri
+HTML_ATTRS=--conf-file=../resources/asciidoc/local-missing-blockdef.conf -a data-uri
 PDF_OPTS=--icons --icons-dir=$(ICONSDIR) \
-	--asciidoc-opts='--conf-file=../resources/asciidoc/local-docbook45.conf' \
+	--asciidoc-opts='--conf-file=../resources/asciidoc/local-missing-blockdef.conf --conf-file=../resources/asciidoc/local-docbook45.conf' \
 	-a pubdate="$$(date +'%d %B %Y')"
 
