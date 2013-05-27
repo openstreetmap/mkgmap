@@ -227,7 +227,10 @@ public class Main implements ArgumentProcessor {
 		
 		final String ext = extractExtension(filename);
 		log.debug("file", filename, ", extension is", ext);
-
+		// ignore ovm_* files given as command line arguments
+		if (OverviewBuilder.isOverviewImg(filename))
+			return;
+		
 		final MapProcessor mp = mapMaker(ext);
 
 		args.setSort(getSort(args));
@@ -521,6 +524,7 @@ public class Main implements ArgumentProcessor {
 					log.info("  " + fileName);
 					FileInfo fileInfo = FileInfo.getFileInfo(fileName);
 					fileInfo.setArgs(file.getArgs());
+					// add the real input file 
 					foundOvmFiles.add(file.getFilename());
 					for (Combiner c : combiners){
 						if (c instanceof OverviewBuilder)
