@@ -77,13 +77,13 @@ Used to check for duplicate tags. If the value of this tag is equal to
 the value of the tag named as the argument to +not-equal+, then value
 of this tag is set to undefined.
 
-[literal]
---
+....
 place=* {
    name '${name} (${int_name\|not-equal:name})'
        \| '${name}'
    }
---
+....
+
 In that example, if the international name is different to the name then it will be placed
 in parenthesis after the name. Otherwise there will just be the name as given in the "name" tag.
 

@@ -81,12 +81,14 @@ public class MapLine extends MapElement {
 
 	public void insertPointsAtStart(List<Coord> additionalPoints) {
 		testForConsecutivePoints(additionalPoints);
+		points.get(0).preserved(true);
 		points.addAll(0, additionalPoints);
 		points.remove(additionalPoints.size()-1);	//End node exists now twice
 	}
 
 	public void insertPointsAtEnd(List<Coord> additionalPoints) {
 		testForConsecutivePoints(additionalPoints);
+		additionalPoints.get(0).preserved(true);
 		points.remove(points.size()-1); 
 		points.addAll(additionalPoints);
 	}

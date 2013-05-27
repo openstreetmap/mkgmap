@@ -281,15 +281,14 @@ relation have any special tags to indicate that they form part of that
 bus route, and you want to be able to tell from looking at the map which
 buses go where.  You can write a rule in the *relations file* such as:
 
-[listing]
---
+----
 type=route & route=bus {
 	apply {
 		set route=bus;
 		set route_ref='${route_ref}';
 	}
 }
---
+----
 
 
 Then in the *lines file* you will need to write a rule to match _route=bus_.
@@ -302,28 +301,26 @@ The substitution `$(route_ref)` (with parenthesis, rather than curly
 brackets) can be used for accessing the value of the tag on
 the actually processed *member* of the relation, e.g.
 
-[listing]
---
+----
 type=route & route=bus {
 	apply {
 		set route=bus;
 		set name='$(name) ${route_ref}';
 	}
 }
---
+----
 
 The "apply" action can be limited to members with a special role by adding
 _role=rolevalue_ after the _apply_ keyword.
 
-[listing]
---
+----
 type=route & route=bus {
 	apply role=forward {
 		set route=bus;
 		set name='$(name) ${route_ref}';
 	}
 }
---
+----
 
 === apply_once ===
 The apply_once action is like +apply+, but it will apply the action once
