@@ -104,6 +104,10 @@ public class TREHeader extends CommonHeader {
 		int maxLon = reader.get3();
 		int minLat = reader.get3();
 		int minLon = reader.get3();
+		// fix problem with value 0x800000 that is interpreted as a negative value
+		if (maxLon <  minLon && maxLon == -8388608 )
+			maxLon = 8388608; // its 180 degrees, not -180
+		
 		setBounds(new Area(minLat, minLon, maxLat, maxLon));
 		log.info("read area is", getBounds());
 
