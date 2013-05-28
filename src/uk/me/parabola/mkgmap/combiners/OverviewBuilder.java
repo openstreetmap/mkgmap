@@ -287,7 +287,7 @@ public class OverviewBuilder implements Combiner {
 		MapShape bg = new MapShape();
 		bg.setType(0x4a);
 		bg.setPoints(points);
-		bg.setMinResolution(10);
+		bg.setMinResolution(0);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
 		overviewSource.addShape(bg);  	}
