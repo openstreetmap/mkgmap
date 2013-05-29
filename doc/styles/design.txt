@@ -54,7 +54,7 @@ The GARMIN map contains only one overview map, so it should not contain too many
 
 This mapping is specified in the file 'options' within the style directory in use. You can also specify it on the command line, for example:
 
-  --overview-levels=3:18,4:16,5:12,6:10
+  --overview-levels=3:18,4:16,5:12
 
 It is recommended to continue the numbers of the levels. Again, up to 8 levels are allowed.
 
