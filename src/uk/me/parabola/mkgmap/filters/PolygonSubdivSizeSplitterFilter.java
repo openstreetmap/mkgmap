@@ -30,7 +30,6 @@ import uk.me.parabola.mkgmap.general.MapShape;
 public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase implements MapFilter {
 	private static final Logger log = Logger.getLogger(PolygonSubdivSizeSplitterFilter.class);
 
-	private int shift;
 	private int maxSize;
 
 	/**
@@ -40,11 +39,11 @@ public class PolygonSubdivSizeSplitterFilter extends PolygonSplitterBase impleme
 	 * that is being produced through this filter.
 	 */
 	public void init(FilterConfig config) {
-		shift = config.getShift();
+		int shift = config.getShift();
 		if (shift > 15)
 			shift = 16;
 		// allow a size of 0x8000 to avoid splitting of generated precomp-sea polygons
-		maxSize = Math.max(MAX_SIZE << shift, 0x8000);
+		maxSize = Math.min((1<<24)-1, Math.max(MAX_SIZE << shift, 0x8000));
 	}
 
 	/**

@@ -14,7 +14,6 @@ package uk.me.parabola.mkgmap.combiners;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
@@ -82,7 +81,20 @@ public class OverviewBuilder implements Combiner {
 	}
 
 	public void onFinish() {
+		addBackground();
 		writeOverviewMap();
+	}
+	
+	/**
+	 * Add background polygon that covers the whole area of the overview map. 
+	 */
+	private void addBackground() {
+		MapShape background = new MapShape();
+		background.setType(0x4b); // background type
+		background.setMinResolution(0); // On all levels
+		background.setPoints(overviewSource.getBounds().toCoords());
+
+		overviewSource.addShape(background);
 	}
 
 	/**
@@ -225,7 +237,10 @@ public class OverviewBuilder implements Combiner {
 			for (Polygon shape : list) {
 				if (log.isDebugEnabled())
 					log.debug("got polygon", shape);
-
+				if (shape.getType() == 0x4b){
+					// ignore existing background polygons as we will add our own
+					continue;
+				}
 				MapShape ms = new MapShape();
 
 				List<Coord> points = shape.getPoints();
@@ -256,33 +271,11 @@ public class OverviewBuilder implements Combiner {
 	 */
 	private void addMapCoverageArea(FileInfo finfo) {
 		Area bounds = finfo.getBounds();
-
-		int maxLon = bounds.getMaxLong();
-		int maxLat = bounds.getMaxLat();
-		int minLat = bounds.getMinLat();
-		int minLon = bounds.getMinLong();
- 
-		// Add a background polygon for this map.
-		List<Coord> points = new ArrayList<Coord>();
-
-		Coord start = new Coord(minLat, minLon);
-		points.add(start);
-		overviewSource.addToBounds(start);
-
-		Coord co = new Coord(maxLat, minLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		co = new Coord(maxLat, maxLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		co = new Coord(minLat, maxLon);
-		points.add(co);
-		overviewSource.addToBounds(co);
-
-		points.add(start);
-
+		List<Coord> points = bounds.toCoords();
+		
+		for (Coord co: points){
+			overviewSource.addToBounds(co);
+		}
 		// Create the background rectangle
 		MapShape bg = new MapShape();
 		bg.setType(0x4a);
@@ -290,7 +283,8 @@ public class OverviewBuilder implements Combiner {
 		bg.setMinResolution(0);
 		bg.setName(finfo.getDescription() + '\u001d' + finfo.getMapname());
 
-		overviewSource.addShape(bg);  	}
+		overviewSource.addShape(bg); 
+	}
 
 	public Area getBounds() {
 		return overviewSource.getBounds();

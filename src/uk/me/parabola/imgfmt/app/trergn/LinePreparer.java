@@ -228,7 +228,8 @@ class LinePreparer {
 			final int offset = 8+shift;
 			int dx = (lon - lastLong) << offset >> offset;
 			int dy = (lat - lastLat) << offset >> offset;
-
+			assert (dx == 0 && lon != lastLong) == false: ("delta lon too large: " +  (lon - lastLong));
+			assert (dy == 0 && lat != lastLat) == false: ("delta lat too large: " +  (lat - lastLat));
 			lastLong = lon;
 			lastLat = lat;
 

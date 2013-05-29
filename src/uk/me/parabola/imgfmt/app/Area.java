@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -220,5 +221,22 @@ public class Area {
 		result = 31 * result + maxLat;
 		result = 31 * result + maxLong;
 		return result;
+	}
+	
+	/**
+	 * @return list of coords that form the rectangle
+	 */
+	public List<Coord> toCoords(){
+		List<Coord> coords = new ArrayList<Coord>(5);
+		Coord start = new Coord(minLat, minLong);
+		coords.add(start);
+		Coord co = new Coord(minLat, maxLong);
+		coords.add(co);
+		co = new Coord(maxLat, maxLong);
+		coords.add(co);
+		co = new Coord(maxLat, minLong);
+		coords.add(co);
+		coords.add(start);
+		return coords;
 	}
 }

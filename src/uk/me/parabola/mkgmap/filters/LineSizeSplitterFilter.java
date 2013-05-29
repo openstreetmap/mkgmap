@@ -38,12 +38,13 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 	private static final int MAX_SIZE = 0x7fff;
 
-	private int shift;
+	private int maxSize;
 
 	public void init(FilterConfig config) {
-		shift = config.getShift();
+		int shift = config.getShift();
 		if (shift > 15)
 			shift = 16;
+		maxSize = Math.min((1<<24)-1, Math.max(MAX_SIZE << shift, 0x8000));		
 	}
 
 	// return the greater of the absolute values of HEIGHT and WIDTH
@@ -63,8 +64,6 @@ public class LineSizeSplitterFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		// We do not deal with shapes.
 		assert !(element instanceof MapShape) && element instanceof MapLine;
-
-		int maxSize = MAX_SIZE << shift;
 
 		MapLine line = (MapLine) element;
 
