@@ -138,7 +138,6 @@ public class StyleImpl implements Style {
 	public StyleImpl(String loc, String name, EnhancedProperties props, boolean performChecks) throws FileNotFoundException {
 		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
-
 		this.performChecks = performChecks;
 		nameTagList = LocatorUtil.getNameTags(props);
 		
@@ -266,14 +265,28 @@ public class StyleImpl implements Style {
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
+		if (performChecks){
+			if (levels[0].getBits() <= 10){
+				System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+			}
+		}
 		l = generalOptions.get("overview-levels");
 		if (l != null){
 			LevelInfo[] ovLevels = LevelInfo.createFromString(l);
 			// TODO: make sure that the combination of the two level strings makes sense
-			LevelInfo[] tmp = new LevelInfo[levels.length+ ovLevels.length];
-			System.arraycopy(ovLevels, 0, tmp, 0, ovLevels.length);
-			System.arraycopy(levels, 0, tmp, ovLevels.length, levels.length);
-			levels = tmp;
+			if (performChecks){
+				if (ovLevels[0].getBits() <= 10){
+					System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+				}
+				if (levels[0].getLevel() >= ovLevels[ovLevels.length-1].getLevel()){
+					System.err.println("Warning: Overview level not higher than highest normal level. " + l);
+				}
+			}
+			List<LevelInfo> tmp = new ArrayList<LevelInfo>();
+			tmp.addAll(Arrays.asList(levels));
+			tmp.addAll(Arrays.asList(ovLevels));
+			levels = tmp.toArray(new LevelInfo[tmp.size()]);
+			Arrays.sort(levels);
 		}
 
 		try {
