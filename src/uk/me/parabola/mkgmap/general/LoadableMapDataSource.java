@@ -79,7 +79,8 @@ public interface LoadableMapDataSource extends MapDataSource, Configurable {
 	
 	/**
 	 * Levels for the overview map.
-	 * @return
+	 * @return Array of structures that map the level to the resolution or null
+	 * if not defined in options.
 	 */
 	public LevelInfo[] overviewMapLevels();
 

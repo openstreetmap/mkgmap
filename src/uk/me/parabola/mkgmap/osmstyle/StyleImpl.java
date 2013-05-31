@@ -121,8 +121,8 @@ public class StyleImpl implements Style {
 	 * @throws FileNotFoundException If the file doesn't exist.  This can
 	 * include the version file being missing.
 	 */
-	public StyleImpl(String styleFile, String name) throws FileNotFoundException {
-		this(styleFile, name, new EnhancedProperties(), WITHOUT_CHECKS);
+	public StyleImpl(String loc, String name) throws FileNotFoundException {
+		this(loc, name, new EnhancedProperties(), WITHOUT_CHECKS);
 	}
 	
 	/**

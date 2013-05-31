@@ -224,7 +224,7 @@ public class BoundaryQuadTree {
 	/**
 	 * Return the area that is covered by a given admin level
 	 * @param admLevel reasonable values are 2 .. 11 (inclusive)
-	 * @return
+	 * @return a new Area instance (might be empty) 
 	 */
 	public Area getCoveredArea (Integer admLevel){
 		return root.getCoveredArea(admLevel, "_");

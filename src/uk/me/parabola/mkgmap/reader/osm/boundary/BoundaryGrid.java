@@ -43,7 +43,7 @@ public class BoundaryGrid {
 	 * preprocessed boundary files. The grid will fully cover the bounding box
 	 * passed in bbox.
 	 * 
-	 * @param boundaryDir
+	 * @param boundaryDirName
 	 *            the path to the preprocessed boundary files
 	 * @param bbox
 	 *            the bounding box of all points that might be searched

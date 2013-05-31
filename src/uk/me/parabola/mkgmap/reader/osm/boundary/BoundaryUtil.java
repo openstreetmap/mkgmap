@@ -118,10 +118,10 @@ public class BoundaryUtil {
 	}
 
 	/**
-	 * Wrapper for {@link #loadQuadTrees(String, String, uk.me.parabola.imgfmt.app.Area, EnhancedProperties)}
+	 * Wrapper for {@link #loadQuadTrees(String, List, uk.me.parabola.imgfmt.app.Area, EnhancedProperties)}
 	 * @param boundaryDirName a directory name or zip file containing the *.bnd file
 	 * @param boundaryFileName the *.bnd file name
-	 * @return
+	 * @return the quadtree or null in case of errors
 	 */
 	public static BoundaryQuadTree loadQuadTree (String boundaryDirName, 
 			String boundaryFileName){
@@ -135,7 +135,7 @@ public class BoundaryUtil {
 	 * @param boundaryFileNames the list of *.bnd file names
 	 * @param searchBbox null or a bounding box. Data outside of this box is ignored.
 	 * @param props null or the properties to be used for the locator
-	 * @return
+	 * @return a map with quadtrees which can be empty
 	 */
 	public static Map<String,BoundaryQuadTree> loadQuadTrees (String boundaryDirName, 
 			List<String> boundaryFileNames, 
@@ -321,9 +321,10 @@ public class BoundaryUtil {
 	}
 
 	/** 
-	 * return the available *.bnd files in dirName, either dirName has to a directory or a zip file.   
+	 * Check content of directory or zip file with precompiled boundary data, 
+	 * dirName Name has to be a directory or a zip file.
 	 * @param dirName : path to a directory or a zip file containing the *.bnd files
-	 * @return
+	 * @return the available *.bnd files in dirName.
 	 */
 	public static List<String> getBoundaryDirContent(String dirName) {
 		List<String> names = new ArrayList<String>();
@@ -395,7 +396,7 @@ public class BoundaryUtil {
 	
 	/**
 	 * Retrieve the bounding box of the given boundary file.
-	 * @param boundaryFile the boundary file
+	 * @param boundaryFileName the name of the boundary file
 	 * @return the bounding box
 	 */
 	public static uk.me.parabola.imgfmt.app.Area getBbox(String boundaryFileName) {

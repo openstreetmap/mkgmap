@@ -129,9 +129,9 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/** 
-	 * Should this Coord be treated like a Node in short arc removal?
+	 * Should this Coord be treated like a Garmin node in short arc removal?
 	 * The value has no meaning outside of short arc removal.
-	 * @return 
+	 * @return true if this coord should be treated like a Garmin node, else false
 	 */
 	public boolean isTreatAsNode() {
 		return (flags & TREAT_AS_NODE_MASK) != 0;
@@ -151,7 +151,7 @@ public class Coord implements Comparable<Coord> {
 	/**
 	 * Does this coordinate belong to a node with a fixme tag?
 	 * Note that the value is set after evaluating the points style. 
-	 * @return
+	 * @return true if the fixme flag is set, else false
 	 */
 	public boolean isFixme() {
 		return (flags & FIXME_NODE_MASK) != 0;

@@ -96,12 +96,12 @@ public class ElementSaver {
 	}
 
 	/**
-	 * {@inheritDoc}
-	 *
+	 * Store the {@link Coord} with the associated OSM id.
 	 * We use this to calculate a bounding box in the situation where none is
 	 * given.  In the usual case where there is a bounding box, then nothing
 	 * is done.
 	 *
+	 * @param id the OSM id
 	 * @param co The point.
 	 */
 	public void addPoint(long id, Coord co) {
