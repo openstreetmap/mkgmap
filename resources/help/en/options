@@ -174,7 +174,9 @@ Overview map options:
 
 --overview-levels
   like levels, specifies additional levels that are to be written to the
-  overview map.   
+  overview map. Counting of the levels should continue. Up to 8 additional 
+  levels may be specified, but the lowest usable resolution with MapSource 
+  seems to be 11.     
 
 --remove-ovm-work-files
   If overview-levels is used, mkgmap creates one additional file 
@@ -221,7 +223,7 @@ Style options:
 	Change the way that the levels on the map correspond to the zoom
 	levels in the device. See customisation help. The default is:
 	"0=24, 1=22, 2=20, 3=18, 4=16, 5=15", although each style can have
-	its own default.
+	its own default. Up to 8 levels may be specified.
 
 --name-tag-list
 	Get the tag that will be used to supply the name.  Useful for
@@ -294,7 +296,7 @@ Optimization options:
 --polygon-size-limits=limits code
   Allows to specify different min-size-polygon values for each resolution.
   Sample:  
-  --polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 10:0"
+  --polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 11:0"
   If a resolution is not given, mkgmap uses the value for the next higher 
   one. For the given sample, resolutions 19 to 24 will use value 12,
   resolution 17 and 18 will use 10, and so on.
