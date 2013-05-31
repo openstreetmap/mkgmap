@@ -114,7 +114,7 @@ public class Mdr5Record extends RecordBase implements NamedRecord {
 
 	/**
 	 * Set the index into the mdr20 array that we use to get/set the value.
-	 * @see {@link #setMdr20set(int[])}
+	 * @see #setMdr20set(int[])
 	 */
 	public void setMdr20Index(int mdr20Index) {
 		this.mdr20Index = mdr20Index;
