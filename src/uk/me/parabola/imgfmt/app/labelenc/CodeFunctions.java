@@ -176,7 +176,12 @@ public class CodeFunctions {
 		} else if (format == ENCODING_FORMAT9) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			String cpName = "cp" + codePage;
-			funcs.setEncoder(new AnyCharsetEncoder(cpName));
+			if (codePage == 1252)
+				funcs.setEncoder(new LatinEncoder());
+			else
+				funcs.setEncoder(new AnyCharsetEncoder(cpName));
+			guessCodepage(funcs, cpName);
+
 			funcs.setDecoder(new AnyCharsetDecoder(cpName));
 		} else {
 			// TODO TEMP...

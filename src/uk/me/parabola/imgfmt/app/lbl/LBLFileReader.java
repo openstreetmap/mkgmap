@@ -545,4 +545,8 @@ public class LBLFileReader extends ImgFile {
 		private char highwayExitMask;
 		private char tidesMask;
 	}
+
+	public int getEncodingType() {
+		return header.getEncodingType();
+	}
 }

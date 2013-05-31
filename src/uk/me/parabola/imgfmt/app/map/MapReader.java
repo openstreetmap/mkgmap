@@ -201,4 +201,8 @@ public class MapReader implements Closeable {
 			return Collections.emptyList();
 		return netFile.getRoads();
 	}
+	
+	public int getEncodingType(){
+		return lblFile.getEncodingType();
+	}
 }

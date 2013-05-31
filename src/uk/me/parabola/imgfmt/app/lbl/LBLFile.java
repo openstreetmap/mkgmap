@@ -110,6 +110,14 @@ public class LBLFile extends ImgFile {
 		if (forceUpper)
 			transliterator.forceUppercase(true);
 	}
+
+	public void setEncoder(int encodingType, int codepage ) {
+		CodeFunctions cfuncs = CodeFunctions.createEncoderForLBL(encodingType, codepage);
+		
+		lblHeader.setEncodingType(cfuncs.getEncodingType());
+		textEncoder = cfuncs.getEncoder();
+		transliterator = cfuncs.getTransliterator();
+	}
 	
 	/**
 	 * Add a new label with the given text.  Labels are shared, so that identical

@@ -37,6 +37,7 @@ import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -54,7 +55,8 @@ public class OverviewBuilder implements Combiner {
 	private String overviewMapnumber;
 	private Zoom[] levels;
 	private String outputDir;		
-	private Sort sort;
+	private Integer codepage;
+	private Integer encodingType;
 
 
 	public OverviewBuilder(OverviewMap overviewSource) {
@@ -66,7 +68,6 @@ public class OverviewBuilder implements Combiner {
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
-		sort = args.getSort();
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -111,7 +112,15 @@ public class OverviewBuilder implements Combiner {
 		params.setMapDescription(areaName);
 
 		try {
+			if (codepage == null){
+				codepage = 0; // should not happen
+			}
+			Sort sort = SrtTextReader.sortForCodepage(codepage);
 			Map map = Map.createMap(overviewMapname, outputDir, params, overviewMapnumber, sort);
+			
+			if (encodingType != null){
+				map.getLblFile().setEncoder(encodingType, codepage);
+			}
 			mb.makeMap(map, overviewSource);
 			map.close();
 		} catch (FileExistsException e) {
@@ -131,12 +140,26 @@ public class OverviewBuilder implements Combiner {
 
 		MapReader mapReader = null;
 		String filename = finfo.getFilename();
-		if (sort.getCodepage() != finfo.getCodePage())
+		if (codepage == null){
+			codepage = finfo.getCodePage();
+		} 
+		if (codepage != finfo.getCodePage()){
 			System.err.println("WARNING: input file " + filename + " has different code page " + finfo.getCodePage());
+		}
 
 		try{
 			mapReader = new MapReader(filename);
 
+			if (encodingType == null){
+				encodingType = mapReader.getEncodingType();
+			} 
+			if (encodingType != mapReader.getEncodingType()){
+				System.err.println("WARNING: input file " + filename + " has different charset type " + encodingType);
+			}
+			
+			for (String cm: finfo.getCopyrights())
+				overviewSource.addCopyright(cm);
+			
 			levels = mapReader.getLevels();
 			if (overviewSource.mapLevels() == null){
 				LevelInfo[] mapLevels;
