@@ -50,12 +50,17 @@ public class TREFileReader extends ImgReader {
 		header.readHeader(getReader());
 		readMapLevels();
 		readSubdivs();
+		readExtTypeOffsetsRecords();
 	}
 
 	public Area getBounds() {
 		return header.getBounds();
 	}
 
+	public Zoom[] getMapLevels() {
+		return mapLevels;
+	}
+	
 	/**
 	 * Return the subdivisions for the given level.
 	 * @param level The level, 0 being the most detailed.  There may not be
@@ -87,6 +92,7 @@ public class TREFileReader extends ImgReader {
 		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
 
 			Subdivision[] divs = levelDivs[count];
+			Zoom zoom = mapLevels[count];
 			if (divs == null)
 				break;
 
@@ -110,11 +116,46 @@ public class TREFileReader extends ImgReader {
 				subdiv.setNumber(subdivNum++);
 				
 				divs[i] = subdiv;
+				zoom.addSubdivision(subdiv);
 
 				lastRgnOffset = endRgnOffset;
 			}
 		}
 	}
+	
+	/**
+	 * Read the extended type info for the sub divisions. Corresponds to {@link #TREFile.writeExtTypeOffsetsRecords()}.
+	 */
+	private void readExtTypeOffsetsRecords() {
+		ImgFileReader reader = getReader();
+		int start = header.getExtTypeOffsetsPos();
+		int end = start + header.getExtTypeOffsetsSize();
+		int skipBytes = header.getExtTypeSectionSize() - 13;
+			
+		reader.position(start);
+		Subdivision sd = null;
+		Subdivision sdPrev = null;
+		for (int count = 0; count < levelDivs.length && reader.position() < end; count++) {
+			Subdivision[] divs = levelDivs[count];
+			if (divs == null)
+				break;
+
+			for (int i = 0; i < divs.length; i++) {
+				sdPrev = sd;
+				sd = divs[i];
+				sd.readExtTypeOffsetsRecord(reader, sdPrev);
+				if (skipBytes > 0)
+					reader.get(skipBytes);
+			}
+		}
+		if(sd != null) {
+			sd.readLastExtTypeOffsetsRecord(reader);
+			if (skipBytes > 0)
+				reader.get(skipBytes);
+		}
+		
+	}
+
 
 	/**
 	 * Read the map levels.  This is needed to make sense of the subdivision

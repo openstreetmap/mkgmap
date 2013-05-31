@@ -28,7 +28,7 @@ public class LocatorUtil {
 			.compile("[,\\s]+");
 	
 	public static List<String> getNameTags(Properties props) {
-		String nameTagProp= props.getProperty("name-tag-list", "name");
+		String nameTagProp = props.getProperty("name-tag-list", "name");
 		return Arrays.asList(COMMA_OR_SPACE_PATTERN.split(nameTagProp));
 	}
 

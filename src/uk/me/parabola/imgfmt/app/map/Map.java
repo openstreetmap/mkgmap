@@ -40,6 +40,7 @@ import uk.me.parabola.imgfmt.fs.DirectoryEntry;
 import uk.me.parabola.imgfmt.fs.FileSystem;
 import uk.me.parabola.imgfmt.sys.ImgFS;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -114,17 +115,19 @@ public class Map implements InternalFiles, Configurable {
 	}
 
 	public void config(EnhancedProperties props) {
-		try {
-			if (props.containsKey("route")) {
-				addNet();
-				addNod();
-			} else if (props.containsKey("net")) {
-				addNet();
+		// we don't want routing infos in the overview map (for now)
+		if (OverviewBuilder.isOverviewImg(mapName) == false){
+			try {
+				if (props.containsKey("route")) {
+					addNet();
+					addNod();
+				} else if (props.containsKey("net")) {
+					addNet();
+				}
+			} catch (FileExistsException e) {
+				log.warn("Could not add NET and/or NOD sections");
 			}
-		} catch (FileExistsException e) {
-			log.warn("Could not add NET and/or NOD sections");
 		}
-
 		treFile.config(props);
 	}
 

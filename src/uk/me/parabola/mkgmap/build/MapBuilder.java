@@ -58,6 +58,7 @@ import uk.me.parabola.imgfmt.app.trergn.TREFile;
 import uk.me.parabola.imgfmt.app.trergn.Zoom;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.Version;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.filters.BaseFilter;
 import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -84,6 +85,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -125,6 +127,8 @@ public class MapBuilder implements Configurable {
 	private Set<String> locationAutofill;
 
 	private int minSizePolygon;
+	private String polygonSizeLimitsOpt;
+	private HashMap<Integer,Integer> polygonSizeLimits = null;
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
@@ -152,6 +156,7 @@ public class MapBuilder implements Configurable {
 		regionName = props.getProperty("region-name", null);
 		regionAbbr = props.getProperty("region-abbr", null);
  		minSizePolygon = props.getProperty("min-size-polygon", 8);
+ 		polygonSizeLimitsOpt = props.getProperty("polygon-size-limits", null);
 		reducePointError = props.getProperty("reduce-point-density", 2.6);
  		reducePointErrorPolygon = props.getProperty("reduce-point-density-polygon", -1);
 		if (reducePointErrorPolygon == -1)
@@ -605,7 +610,19 @@ public class MapBuilder implements Configurable {
 	private void makeMapAreas(Map map, LoadableMapDataSource src) {
 		// The top level has to cover the whole map without subdividing, so
 		// do a special check to make sure.
-		LevelInfo[] levels = src.mapLevels();
+		LevelInfo[] levels = null; 
+		if (src instanceof OverviewMapDataSource)
+			levels = src.mapLevels();
+		else {
+			if (OverviewBuilder.isOverviewImg(map.getFilename())) {
+				levels = src.overviewMapLevels();
+			} else {
+				levels = src.mapLevels();
+			}
+		}
+		if (levels == null){
+			throw new ExitException("no info about levels available.");
+		}
 		LevelInfo levelInfo = levels[0];
 
 		// If there is already a top level zoom, then we shouldn't add our own
@@ -1020,8 +1037,9 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			if (minSizePolygon > 0)
-				filters.addFilter(new SizeFilter(minSizePolygon));
+			int sizefilterVal =  getMinSizePolygonForResolution(res);
+			if (sizefilterVal > 0)
+				filters.addFilter(new SizeFilter(sizefilterVal));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
@@ -1077,6 +1095,57 @@ public class MapBuilder implements Configurable {
 
 	public void setEnableLineCleanFilters(boolean enable) {
 		this.enableLineCleanFilters = enable;
+	}
+
+	/**
+	 * Determine the minimum size for a polygon for the given level.
+	 * @param res the resolution
+	 * @return the size filter value
+	 */
+	private int getMinSizePolygonForResolution(int res) {
+	
+		if (polygonSizeLimitsOpt == null)
+			return minSizePolygon;
+	
+		if (polygonSizeLimits == null){
+			polygonSizeLimits = new HashMap<Integer, Integer>();
+			String[] desc = polygonSizeLimitsOpt.split("[, \\t\\n]+");
+	
+			int count = 0;
+			for (String s : desc) {
+				String[] keyVal = s.split("[=:]");
+				if (keyVal == null || keyVal.length < 2) {
+					System.err.println("incorrect polygon-size-limits specification " + polygonSizeLimitsOpt);
+					continue;
+				}
+	
+				try {
+					int key = Integer.parseInt(keyVal[0]);
+					int value = Integer.parseInt(keyVal[1]);
+					Integer testDup = polygonSizeLimits.put(key, value);
+					if (testDup != null){
+						System.err.println("duplicate resolution value in polygon-size-limits specification " + polygonSizeLimitsOpt);
+						continue;
+					}
+				} catch (NumberFormatException e) {
+					System.err.println("polygon-size-limits specification not all numbers " + keyVal[count]);
+				}
+				count++;
+			}
+		}
+		if (polygonSizeLimits != null){
+			// return the value for the desired resolution or the next higher one
+			for (int r = res; r <= 24; r++){
+				Integer limit = polygonSizeLimits.get(r);
+				if (limit != null){
+					if (r != res)
+						polygonSizeLimits.put(res, limit);
+					return limit;
+				}
+			}
+			return 0;
+		}
+		return minSizePolygon;
 	}
 
 	private static class SourceSubdiv {

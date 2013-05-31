@@ -295,7 +295,7 @@ public class MdrBuilder implements Combiner {
 	 * @param maps Maps of regions, cities countries etc.
 	 */
 	private void addPoints(MapReader mr, AreaMaps maps) {
-		List<Point> list = mr.pointsForLevel(0);
+		List<Point> list = mr.pointsForLevel(0, MapReader.WITHOUT_EXT_TYPE_DATA);
 		for (Point p : list) {
 			Label label = p.getLabel();
 			if (p.getNumber() > 256) {

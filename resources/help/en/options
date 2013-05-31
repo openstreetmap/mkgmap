@@ -162,6 +162,27 @@ Address search options:
               in the same tile are used only. So the results close to a tile 
               border have less quality.  
 
+Overview map options:
+--overview-mapname=name
+	If --tdbfile is enabled, this gives the name of the overview
+	.img and .tdb files. The default map name is osmmap.
+
+--overview-mapnumber=8 digit number
+	If --tdbfile is enabled, this gives the internal 8 digit
+	number used in the overview map and tdb file.  The default
+	number is 63240000.
+
+--overview-levels
+  like levels, specifies additional levels that are to be written to the
+  overview map.   
+
+--remove-ovm-work-files
+  If overview-levels is used, mkgmap creates one additional file 
+  with the prefix ovm_ for each map (*.img) file. 
+  These files are used to create the overview map.
+  With option --remove-ovm-work-files=true the files are removed 
+  after the overview map was created. The default is to keep the files.  
+
 Style options:
 --style-file=file
 	Specify an external file to obtain the style from.  "file" can
@@ -180,10 +201,6 @@ Style options:
 
 	The argument can also be a URL that specifies the location of a
 	style file.
-
-	For backward compatibility, you can also supply a
-	map-features.csv file here.  Support for that format is likely
-	to be dropped in the future.
 
 --style=name
 	Specify a style name. Must be used if --style-file points to a 
@@ -240,15 +257,6 @@ Product description options:
 
 --area-name
 
---overview-mapname=name
-	If --tdbfile is enabled, this gives the name of the overview
-	.img and .tdb files. The default map name is osmmap.
-
---overview-mapnumber=8 digit number
-	If --tdbfile is enabled, this gives the internal 8 digit
-	number used in the overview map and tdb file.  The default
-	number is 63240000.
-
 --copyright-message=note
 	Specify a copyright message for files that do not contain one.
 
@@ -281,7 +289,18 @@ Optimization options:
   Removes all polygons smaller than NUM from the map.
   This reduces map size and speeds up redrawing of maps. 
   Recommended value is 8 to 15, default is 8.
-
+  See also polygon-size-limits.
+   
+--polygon-size-limits=limits code
+  Allows to specify different min-size-polygon values for each resolution.
+  Sample:  
+  --polygon-size-limits="24:12, 18:10, 16:8, 14:4, 12:2, 10:0"
+  If a resolution is not given, mkgmap uses the value for the next higher 
+  one. For the given sample, resolutions 19 to 24 will use value 12,
+  resolution 17 and 18 will use 10, and so on.
+  Value 0 means to skip the size filter. 
+  Note that in resolution 24 the filter is not used.  
+   
 Miscellaneous options:
 
 --max-jobs[=number]

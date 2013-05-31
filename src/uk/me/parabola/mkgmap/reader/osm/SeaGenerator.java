@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.mkgmap.reader.osm;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -46,6 +48,7 @@ import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.osmstyle.StyleImpl;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5PrecompSeaDataSource;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.Java2DConverter;
 
 /**
  * Code to generate sea polygons from the coastline ways.
@@ -581,6 +584,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		
 		List<Way> landWays = new ArrayList<Way>();
 		List<Way> seaWays = new ArrayList<Way>();
+		List<java.awt.geom.Area> seaOnlyAreas = new ArrayList<java.awt.geom.Area>();
+		List<java.awt.geom.Area> landOnlyAreas = new ArrayList<java.awt.geom.Area>();
+		
 		// get the index with assignment key => sea/land/tilename
 		
 		ZipFile zipFile = null;
@@ -600,25 +606,16 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			if ("sea".equals(tileName) || "land".equals(tileName)) {
 				// the whole precompiled tile is filled with either land or sea
 				// => create a rectangle that covers the whole precompiled tile 
-				Way w = new Way(FakeIdGenerator.makeFakeId());
-				w.addTag("natural", tileName);
 				String[] tileCoords = keySplitter.split(precompKey);
 				int minLat = Integer.valueOf(tileCoords[0]);
 				int minLon = Integer.valueOf(tileCoords[1]);
-				int maxLat = minLat + PRECOMP_RASTER;
-				int maxLon = minLon + PRECOMP_RASTER;
-				w.addPoint(new Coord(minLat,minLon));
-				w.addPoint(new Coord(minLat,maxLon));
-				w.addPoint(new Coord(maxLat,maxLon));
-				w.addPoint(new Coord(maxLat,minLon));
-				w.addPoint(new Coord(minLat,minLon));
-
+				Rectangle r = new Rectangle(minLon,minLat,PRECOMP_RASTER,PRECOMP_RASTER);
+				
 				if ("sea".equals(tileName)) {
-					seaWays.add(w);
+					seaOnlyAreas = addWithoutCreatingHoles(seaOnlyAreas, new java.awt.geom.Area(r));
 				} else {
-					landWays.add(w);
+					landOnlyAreas = addWithoutCreatingHoles(landOnlyAreas, new java.awt.geom.Area(r));
 				}
-
 			} else {
 				distinctTilesOnly = false;
 				try {
@@ -660,6 +657,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 			}
 		}
+ 		landWays.addAll(areaToWays(landOnlyAreas,"land"));
+ 		seaWays.addAll(areaToWays(seaOnlyAreas,"sea"));
+ 		landOnlyAreas = null;
+ 		seaOnlyAreas = null;
  		
 		// check if the land tags need to be changed
 		if (landTag != null && ("natural".equals(landTag[0]) && "land".equals(landTag[1])) == false) {
@@ -697,8 +698,64 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		}
 	}
 
-	
-	
+	 
+	/**
+	 * Try to merge an area with one or more other areas without creating holes.
+	 * If it cannot be merged, it is added to the list.
+	 * @param areas known areas 
+	 * @param toAdd area to add
+	 * @return new list of areas
+	 */
+	private List<java.awt.geom.Area> addWithoutCreatingHoles(List<java.awt.geom.Area> areas,
+			final java.awt.geom.Area toAdd) {
+		List<java.awt.geom.Area> result = new LinkedList<java.awt.geom.Area>();
+		java.awt.geom.Area toMerge = new java.awt.geom.Area(toAdd);
+		
+		for (java.awt.geom.Area area:areas ){
+			java.awt.geom.Area mergedArea = new java.awt.geom.Area(area);
+			mergedArea.add(toMerge);
+			if (mergedArea.isSingular() == false){
+				result.add(area);
+				continue;
+			}
+			toMerge = mergedArea;
+		}
+		// create a sorted list with "smallest" area at the beginning
+		int dimNew = Math.max(toMerge.getBounds().width,toMerge.getBounds().height);
+		boolean added = false;
+		for (int i = 0; i < result.size(); i++){
+			java.awt.geom.Area area = result.get(i);
+			if (dimNew < Math.max(area.getBounds().width,area.getBounds().height)){
+				result.add(i,toMerge);
+				added = true;
+				break;
+			}
+		}
+		if (!added)
+			result.add(toMerge);
+		return result;
+	}
+
+	/**
+	 * @param area
+	 * @param type
+	 * @return
+	 */
+	private List<Way> areaToWays(List<java.awt.geom.Area> areas, String type) {
+		List<Way> ways = new ArrayList<Way>();
+//		int count = 0;
+		for (java.awt.geom.Area area : areas) {
+			List<List<Coord>> shapes = Java2DConverter.areaToShapes(area);
+			for (List<Coord> points : shapes) {
+//				uk.me.parabola.util.GpxCreator.createGpx(type + "_" + count++, points);
+				Way w = new Way(FakeIdGenerator.makeFakeId(), points);
+				w.addTag("natural", type);
+				ways.add(w);
+			}
+		}
+		return ways;
+	}
+
 	/**
 	 * Joins the given segments to closed ways as good as possible.
 	 * @param segments a list of closed and unclosed ways

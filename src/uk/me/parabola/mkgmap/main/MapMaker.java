@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.main;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
 import uk.me.parabola.mkgmap.build.MapBuilder;
+import uk.me.parabola.mkgmap.combiners.OverviewBuilder;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
@@ -50,15 +52,34 @@ import uk.me.parabola.mkgmap.reader.plugin.MapReader;
 public class MapMaker implements MapProcessor {
 	private static final Logger log = Logger.getLogger(MapMaker.class);
 	private Sort sort;
+	private final boolean createOverviewFiles;
+
+	public MapMaker(boolean createOverviewFiles) {
+		this.createOverviewFiles = createOverviewFiles;
+	}
 
 	public String makeMap(CommandArgs args, String filename) {
 		try {
 			LoadableMapDataSource src = loadFromFile(args, filename);
 			sort = args.getSort();
-
 			log.info("Making Road Name POIs for", filename);
 			makeRoadNamePOIS(args, src);
-			return makeMap(args, src);
+			if (createOverviewFiles){
+				if (src.overviewMapLevels() != null){
+					makeMap(args, src, OverviewBuilder.OVERVIEW_PREFIX);
+				} else {
+					String fname = OverviewBuilder.getOverviewImgName(args.getMapname());
+					File f = new File(fname);
+					if (f.exists()) {
+						if (f.isFile() )
+							f.delete();
+						else {
+							// TODO: error message ?
+						}
+					}
+				}
+			}
+			return makeMap(args, src, "");
 		} catch (FormatException e) {
 			System.err.println("Bad file format: " + filename);
 			System.err.println(e.getMessage());
@@ -74,9 +95,10 @@ public class MapMaker implements MapProcessor {
 	 *
 	 * @param args User supplied arguments.
 	 * @param src The data source to load.
+	 * @param mapNameExt 
 	 * @return The output filename for the map.
 	 */
-	private String makeMap(CommandArgs args, LoadableMapDataSource src) {
+	private String makeMap(CommandArgs args, LoadableMapDataSource src, String mapNamePrefix) {
 
 		if (src.getBounds().isEmpty())
 			return null;
@@ -84,16 +106,17 @@ public class MapMaker implements MapProcessor {
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(args.getBlockSize());
 		params.setMapDescription(args.getDescription());
-
 		log.info("Started making", args.getMapname(), "(" + args.getDescription() + ")");
 		try {
-			Map map = Map.createMap(args.getMapname(), args.getOutputDir(), params, args.getMapname(), sort);
+			Map map = Map.createMap(mapNamePrefix + args.getMapname(), args.getOutputDir(), params, args.getMapname(), sort);
 			setOptions(map, args);
 
 			MapBuilder builder = new MapBuilder();
 			builder.config(args.getProperties());
-			if (args.getProperties().getProperty("route", false))
-				builder.setDoRoads(true);
+			if (args.getProperties().getProperty("route", false)){
+				if(! OverviewBuilder.OVERVIEW_PREFIX.equals(mapNamePrefix))
+					builder.setDoRoads(true);
+			}
 			builder.makeMap(map, src);
 
 			// Collect information on map complete.

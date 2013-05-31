@@ -70,6 +70,7 @@ public class LBLFile extends ImgFile {
 		getWriter().put((byte) 0);
 
 		places.init(this, lblHeader.getPlaceHeader());
+		places.setSort(sort);
 	}
 
 	public void write() {

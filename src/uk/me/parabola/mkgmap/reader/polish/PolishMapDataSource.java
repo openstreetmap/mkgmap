@@ -163,6 +163,12 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	}
 
 	
+	@Override
+	public LevelInfo[] overviewMapLevels() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	/**
 	 * Get the copyright message.  We use whatever was specified inside the
 	 * MPF itself.

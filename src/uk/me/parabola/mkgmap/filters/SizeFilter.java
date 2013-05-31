@@ -46,10 +46,12 @@ public class SizeFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
 
-		// Drop things that are too small to get displayed
-		if (line.getBounds().getMaxDimension() < minSize)
-			return;
-
+		if (!line.isSkipSizeFilter()){
+			// Drop things that are too small to get displayed
+			if (line.getBounds().getMaxDimension() < minSize){
+				return;
+			}
+	}
 		next.doFilter(line);
 	}
 }

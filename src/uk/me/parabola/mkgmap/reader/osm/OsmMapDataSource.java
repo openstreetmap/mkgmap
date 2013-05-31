@@ -89,23 +89,38 @@ public abstract class OsmMapDataSource extends MapperBasedMapDataSource
 	 * pair.
 	 */
 	public LevelInfo[] mapLevels() {
-
-		// First try command line, then style, then our default.
-		String levelSpec = getConfig().getProperty("levels");
-		log.debug("levels", levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
-		if (levelSpec == null || levelSpec.length() < 2) {
-			if (style != null) {
-				levelSpec = style.getOption("levels");
-				log.debug("getting levels from style:", levelSpec);
-			}
-		}
-
+		String levelSpec = getLevelSpec("levels");
 		if (levelSpec == null)
 			levelSpec = LevelInfo.DEFAULT_LEVELS;
 
 		return LevelInfo.createFromString(levelSpec);
 	}
 
+	@Override
+	public LevelInfo[] overviewMapLevels() {
+		String levelSpec = getLevelSpec("overview-levels");
+		
+		if (levelSpec == null)
+			return null;
+		LevelInfo[] levels = LevelInfo.createFromString(levelSpec); 
+		for (int i = 0; i < levels.length; i++)
+			levels[i] = new LevelInfo(levels.length-i-1,levels[i].getBits());
+		return levels;
+	}
+		
+	private String getLevelSpec (String optionName){
+		// First try command line, then style, then our default.
+		String levelSpec = getConfig().getProperty(optionName);
+		log.debug(optionName, levelSpec, ", ", ((levelSpec!=null)?levelSpec.length():""));
+		if (levelSpec == null || levelSpec.length() < 2) {
+			if (style != null) {
+				levelSpec = style.getOption(optionName);
+				log.debug("getting " + optionName + " from style:", levelSpec);
+			}
+		}
+		return levelSpec;
+	}
+	
 	@Override
 	public void load(String name) throws FileNotFoundException, FormatException {
 		InputStream is = Utils.openFile(name);

@@ -47,14 +47,7 @@ import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LineAdder;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.osmstyle.actions.Action;
-import uk.me.parabola.mkgmap.osmstyle.actions.NameAction;
-import uk.me.parabola.mkgmap.osmstyle.eval.EqualsOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.ExistsOp;
-import uk.me.parabola.mkgmap.osmstyle.eval.Op;
-import uk.me.parabola.mkgmap.osmstyle.eval.ValueOp;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
-import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
@@ -83,18 +76,16 @@ public class StyleImpl implements Style {
 
 	// General options just have a value and don't need any special processing.
 	private static final Collection<String> OPTION_LIST = new ArrayList<String>(
-			Arrays.asList("levels", "extra-used-tags"));
+			Arrays.asList("levels", "overview-levels", "extra-used-tags"));
 
 	// File names
 	private static final String FILE_VERSION = "version";
 	private static final String FILE_INFO = "info";
-	private static final String FILE_FEATURES = "map-features.csv";
 	private static final String FILE_OPTIONS = "options";
 	private static final String FILE_OVERLAYS = "overlays";
 
 	// Patterns
 	private static final Pattern COMMA_OR_SPACE_PATTERN = Pattern.compile("[,\\s]+");
-	private static final Pattern EQUAL_PATTERN = Pattern.compile("=");
 
 	// A handle on the style directory or file.
 	private final StyleFileLoader fileLoader;
@@ -147,7 +138,6 @@ public class StyleImpl implements Style {
 	public StyleImpl(String loc, String name, EnhancedProperties props, boolean performChecks) throws FileNotFoundException {
 		location = loc;
 		fileLoader = StyleFileLoader.createStyleLoader(loc, name);
-
 		this.performChecks = performChecks;
 		nameTagList = LocatorUtil.getNameTags(props);
 		
@@ -168,8 +158,6 @@ public class StyleImpl implements Style {
 		readOverlays(); 
 		
 		readRules();
-
-		readMapFeatures();
 
 		ListIterator<StyleImpl> listIterator = baseStyles.listIterator(baseStyles.size());
 		while (listIterator.hasPrevious())
@@ -241,7 +229,7 @@ public class StyleImpl implements Style {
 		// around situations that we haven't thought of - the style is expected
 		// to get it right for itself.
 		String s = getOption("extra-used-tags");
-		if (s != null)
+		if (s != null && s.trim().isEmpty() == false)
 			set.addAll(Arrays.asList(COMMA_OR_SPACE_PATTERN.split(s)));
 
 		// These tags are passed on the command line and so must be added
@@ -277,6 +265,29 @@ public class StyleImpl implements Style {
 		if (l == null)
 			l = LevelInfo.DEFAULT_LEVELS;
 		LevelInfo[] levels = LevelInfo.createFromString(l);
+		if (performChecks){
+			if (levels[0].getBits() <= 10){
+				System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+			}
+		}
+		l = generalOptions.get("overview-levels");
+		if (l != null){
+			LevelInfo[] ovLevels = LevelInfo.createFromString(l);
+			// TODO: make sure that the combination of the two level strings makes sense
+			if (performChecks){
+				if (ovLevels[0].getBits() <= 10){
+					System.err.println("Warning: Resolution values <= 10 may confuse MapSource: " + l);
+				}
+				if (levels[0].getLevel() >= ovLevels[ovLevels.length-1].getLevel()){
+					System.err.println("Warning: Overview level not higher than highest normal level. " + l);
+				}
+			}
+			List<LevelInfo> tmp = new ArrayList<LevelInfo>();
+			tmp.addAll(Arrays.asList(levels));
+			tmp.addAll(Arrays.asList(ovLevels));
+			levels = tmp.toArray(new LevelInfo[tmp.size()]);
+			Arrays.sort(levels);
+		}
 
 		try {
 			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);
@@ -307,103 +318,6 @@ public class StyleImpl implements Style {
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");
 		}
-	}
-
-	/**
-	 * Read the map-features file.  This is the old format of the mapping
-	 * between osm and garmin types.
-	 */
-	private void readMapFeatures() {
-		try {
-			Reader r = fileLoader.open(FILE_FEATURES);
-			MapFeatureReader mfr = new MapFeatureReader();
-			String l = generalOptions.get("levels");
-			if (l == null)
-				l = LevelInfo.DEFAULT_LEVELS;
-			mfr.setLevels(LevelInfo.createFromString(l));
-			mfr.readFeatures(new BufferedReader(r));
-			initFromMapFeatures(mfr);
-		} catch (FileNotFoundException e) {
-			// optional file
-			log.debug("no map-features file");
-		} catch (IOException e) {
-			log.error("could not read map features file");
-		}
-	}
-
-	/**
-	 * Take the output of the map-features file and create rules for
-	 * each line and add to this style.  All rules in map-features are
-	 * unconditional, in other words the osm 'amenity=cinema' always
-	 * maps to the same garmin type.
-	 *
-	 * @param mfr The map feature file reader.
-	 */
-	private void initFromMapFeatures(MapFeatureReader mfr) {
-		addBackwardCompatibleRules();
-
-		for (Entry<String, GType> me : mfr.getLineFeatures().entrySet())
-			lines.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-
-		for (Entry<String, GType> me : mfr.getShapeFeatures().entrySet())
-			polygons.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-
-		for (Entry<String, GType> me : mfr.getPointFeatures().entrySet())
-			nodes.add(me.getKey(), createRule(me.getKey(), me.getValue()), Collections.<String>emptySet());
-	}
-
-	/**
-	 * For backward compatibility, when we find a map-features file we add
-	 * rules for actions that were previously hard coded in the conversion.
-	 * These are added even if there was also a lines, points, etc file.
-	 */
-	private void addBackwardCompatibleRules() {
-		// Name rule for highways
-		List<Action> l = new ArrayList<Action>();
-		NameAction action = new NameAction();
-		action.add("${name} (${ref})");
-		action.add("${ref}");
-		action.add("${name}");
-		l.add(action);
-
-		Op expr = new ExistsOp();
-		expr.setFirst(new ValueOp("highway"));
-		Rule rule = new ActionRule(expr, l);
-		lines.add("highway=*", rule, Collections.<String>emptySet());
-
-		// Name rule for contour lines
-		l = new ArrayList<Action>();
-		action = new NameAction();
-		action.add("${ele|conv:m=>ft}");
-		l.add(action);
-
-		EqualsOp expr2 = new EqualsOp();
-		expr2.setFirst(new ValueOp("contour"));
-		expr2.setSecond(new ValueOp("elevation"));
-		rule = new ActionRule(expr2, l);
-		lines.add("contour=elevation", rule, Collections.<String>emptySet()); // "contour=elevation"
-
-		expr2 = new EqualsOp();
-		expr2.setFirst(new ValueOp("contour_ext"));
-		expr2.setSecond(new ValueOp("elevation"));
-		rule = new ActionRule(expr2, l);
-		lines.add("contour_ext=elevation", rule, Collections.<String>emptySet()); // "contour_ext=elevation"
-	}
-
-	/**
-	 * Create a rule from a raw gtype. You get raw gtypes when you
-	 * have read the types from a map-features file.
-	 *
-	 * @return A rule that is conditional on the key string given.
-	 */
-	private Rule createRule(String key, GType gt) {
-		if (gt.getDefaultName() != null)
-			log.debug("set default name of", gt.getDefaultName(), "for", key);
-		String[] tagval = EQUAL_PATTERN.split(key);
-		EqualsOp op = new EqualsOp();
-		op.setFirst(new ValueOp(tagval[0]));
-		op.setSecond(new ValueOp(tagval[1]));
-		return new ExpressionRule(op, gt);
 	}
 
 	/**
