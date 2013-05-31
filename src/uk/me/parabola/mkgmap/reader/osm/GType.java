@@ -251,7 +251,7 @@ public class GType {
 	 */
 	public static String formatType(int type){
 		String s = String.format("%x", type);
-		return (s.length() % 2 == 1 ? "0x0":"0x") + s;
+		return (s.length() % 2 != 0 ? "0x0":"0x") + s;
 	}
 	
 }
