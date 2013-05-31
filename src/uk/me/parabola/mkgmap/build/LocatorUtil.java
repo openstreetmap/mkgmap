@@ -35,7 +35,7 @@ public class LocatorUtil {
 	/**
 	 * Parses the parameters of the location-autofill option. Establishes also downwards
 	 * compatibility with the old integer values of location-autofill. 
-	 * @param optionStr the value of location-autofill
+	 * @param props program properties
 	 * @return the options
 	 */
 	public static Set<String> parseAutofillOption(EnhancedProperties props) {
