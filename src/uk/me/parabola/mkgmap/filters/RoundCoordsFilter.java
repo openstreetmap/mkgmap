@@ -45,7 +45,6 @@ public class RoundCoordsFilter implements MapFilter {
 		else {
 			// round lat/lon values to nearest for shift
 			List<Coord> newPoints = new ArrayList<Coord>(line.getPoints().size());
-			MapLine newLine = line.copy();
 			Coord lastP = null;
 			for(Coord p : line.getPoints()) {
 				int lat = (p.getLatitude() + half) & mask;
@@ -76,6 +75,7 @@ public class RoundCoordsFilter implements MapFilter {
 				}
 			}
 			if(newPoints.size() > 1) {
+				MapLine newLine = line.copy();
 				newLine.setPoints(newPoints);
 				next.doFilter(newLine);
 			}
