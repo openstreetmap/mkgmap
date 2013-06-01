@@ -38,6 +38,7 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -57,6 +58,8 @@ public class OverviewBuilder implements Combiner {
 	private String outputDir;		
 	private Integer codepage;
 	private Integer encodingType;
+	private String copyrightMsg;
+	private String licenseFileName;
 
 
 	public OverviewBuilder(OverviewMap overviewSource) {
@@ -68,6 +71,9 @@ public class OverviewBuilder implements Combiner {
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
+		copyrightMsg = args.getProperties().getProperty("copyright-message",
+				"OpenStreetMap.org contributors. See: http://wiki.openstreetmap.org/index.php/Attribution");
+		licenseFileName = args.get("license-file", null);
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -105,11 +111,17 @@ public class OverviewBuilder implements Combiner {
 		if (overviewSource.mapLevels() == null)
 			return;
 		MapBuilder mb = new MapBuilder();
+		if (licenseFileName != null){
+			EnhancedProperties props = new EnhancedProperties();
+			props.put("license-file", licenseFileName);
+			mb.config(props);
+		}
 		mb.setEnableLineCleanFilters(false);
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
 		params.setMapDescription(areaName);
+		overviewSource.addCopyright(copyrightMsg);
 
 		try {
 			if (codepage == null){
@@ -157,8 +169,6 @@ public class OverviewBuilder implements Combiner {
 				System.err.println("WARNING: input file " + filename + " has different charset type " + encodingType);
 			}
 			
-			for (String cm: finfo.getCopyrights())
-				overviewSource.addCopyright(cm);
 			
 			levels = mapReader.getLevels();
 			if (overviewSource.mapLevels() == null){
