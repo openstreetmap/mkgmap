@@ -190,10 +190,15 @@ class LinePreparer {
 		List<Coord> points = polyline.getPoints();
 
 		// Space to hold the deltas
-		deltas = new int[2 * (points.size() - 1)];
+		int numPointsToUse = points.size();
+		if (polyline instanceof Polygon){
+			if (points.get(0).equals(points.get(points.size()-1)))
+				--numPointsToUse; // no need to write the closing point 
+		}
+		deltas = new int[2 * (numPointsToUse - 1)];
 
 		if (extraBit)
-			nodes = new boolean[points.size()];
+			nodes = new boolean[numPointsToUse];
 		boolean first = true;
 
 		// OK go through the points
@@ -208,7 +213,7 @@ class LinePreparer {
 
 		// index of first point in a series of identical coords (after shift)
 		int firstsame = 0;
-		for (int i = 0; i < points.size(); i++) {
+		for (int i = 0; i < numPointsToUse; i++) {
 			Coord co = points.get(i);
 
 			int lat = subdiv.roundLatToLocalShifted(co.getLatitude());

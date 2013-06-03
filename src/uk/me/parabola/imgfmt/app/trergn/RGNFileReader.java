@@ -481,6 +481,12 @@ public class RGNFileReader extends ImgReader {
 
 			line.addCoord(coord);
 		}
+		if (line instanceof Polygon){
+			int numPoints = line.getPoints().size();
+			// make sure that polygon is closed
+			if (line.getPoints().get(0).equals(line.getPoints().get(numPoints-1)) == false)
+				line.addCoord(line.getPoints().get(0));
+		}
 	}
 
 	/**
