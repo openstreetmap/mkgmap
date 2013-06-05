@@ -140,14 +140,6 @@ public class TREHeader extends CommonHeader {
 			mapInfoOff = copyright.getPosition();
 
 		mapInfoSize = mapInfoOff - getHeaderLength();
-		
-		reader.getInt();
-		reader.getInt();
-		reader.getInt();
-
-		copyright.readSectionInfo(reader, true);
-		reader.getInt();
-
 		if (getHeaderLength() > 116) {
 			reader.position(116);
 			mapId = reader.getInt();
@@ -393,5 +385,9 @@ public class TREHeader extends CommonHeader {
 	}
 	public int getExtTypeSectionSize() {
 		return extTypeOffsets.getItemSize();
+	}
+
+	public Section getCopyrightSection() {
+		return copyright;
 	}
 }

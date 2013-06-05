@@ -127,6 +127,9 @@ public class MapReader implements Closeable {
 		return treFile.getMapLevels();
 	}
 
+	public String[] getCopyrights(){
+		return treFile.getCopyrights(lblFile);
+	}
 	/**
 	 * Get a list of all the lines for a given level.
 	 * @param level The level, lower numbers are the most detailed.

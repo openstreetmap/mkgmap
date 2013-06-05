@@ -17,9 +17,8 @@
 package uk.me.parabola.mkgmap.reader.overview;
 
 import java.io.FileNotFoundException;
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -44,8 +43,7 @@ public class OverviewMapDataSource extends MapperBasedMapDataSource
 {
 	private static final Logger log = Logger.getLogger(OverviewMapDataSource.class);
 	
-	// We keep all non-duplicated copyright messages from the component maps.
-	private final Set<String> copyrights = new HashSet<String>();
+	private final List<String> copyrights = new ArrayList<String>();
 	LevelInfo[] levels = null;	
 	
 	/**

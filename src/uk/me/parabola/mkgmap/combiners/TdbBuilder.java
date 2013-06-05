@@ -16,11 +16,18 @@
  */
 package uk.me.parabola.mkgmap.combiners;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
+import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -41,6 +48,7 @@ public class TdbBuilder implements Combiner {
 	private String overviewMapnumber;
 	private String outputDir;
 	private int tdbVersion;
+	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
 
 	public TdbBuilder(OverviewBuilder ovb) {
 		overviewBuilder = ovb;
@@ -127,9 +135,37 @@ public class TdbBuilder implements Combiner {
 
 		tdb.addDetail(detail);
 
-		String[] msgs = finfo.getCopyrights();
+		String[] msgs = finfo.getLicenseInfo();
 		for (String m : msgs)
 			tdb.addCopyright(m);
+
+		MapReader mapReader = null;
+		String filename = finfo.getFilename();
+		try{
+			mapReader = new MapReader(filename);
+
+			msgs = mapReader.getCopyrights();
+			boolean found = false;
+			for (String[] block : copyrightMsgs) {
+				if (Arrays.deepEquals(block, msgs)){
+					found = true;
+					break;
+				}
+			}
+			if (!found ){
+				copyrightMsgs.add(msgs);
+
+				for (String m : msgs)
+					tdb.addCopyright(m);
+			}
+
+		} catch (FileNotFoundException e) {
+			throw new ExitException("Could not open " + filename + " when creating tdb file");
+		} finally {
+			Utils.closeFile(mapReader);
+		}
+
+
 	}
 
 	/**

@@ -77,7 +77,7 @@ public class FileInfo {
 	private int nodsize;
 
 	private final List<Integer> fileSizes = new ArrayList<Integer>();
-	private String[] copyrights;
+	private String[] licenceInfo;
 	private CommandArgs args;
 	private String mpsName;
 	private int codePage;
@@ -297,7 +297,7 @@ public class FileInfo {
 
 			info.setBounds(treFile.getBounds());
 
-			info.setCopyrights(treFile.getCopyrights());
+			info.setLicenceInfo(treFile.getMapInfo());
 
 			info.setHexname(((TREHeader) treFile.getHeader()).getMapId());
 		} finally {
@@ -398,12 +398,13 @@ public class FileInfo {
 		}
 	}
 
-	protected void setCopyrights(String[] copyrights) {
-		this.copyrights = copyrights;
+	
+	protected void setLicenceInfo(String[] info) {
+		this.licenceInfo = info;
 	}
 
-	public String[] getCopyrights() {
-		return copyrights;
+	public String[] getLicenseInfo() {
+		return licenceInfo;
 	}
 
 	public int getNetsize() {

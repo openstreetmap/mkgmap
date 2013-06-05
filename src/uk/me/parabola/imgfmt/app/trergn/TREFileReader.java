@@ -19,6 +19,9 @@ import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.BufferedImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgFileReader;
 import uk.me.parabola.imgfmt.app.ImgReader;
+import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.Section;
+import uk.me.parabola.imgfmt.app.lbl.LBLFileReader;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -193,7 +196,7 @@ public class TREFileReader extends ImgReader {
 		header.config(props);
 	}
 
-	public String[] getCopyrights() {
+	public String[] getMapInfo() {
 
 		List<String> msgs = new ArrayList<String>();
 
@@ -205,27 +208,26 @@ public class TREFileReader extends ImgReader {
 			msgs.add(m);
 		}
 
-		// Now get the copyright messages that are listed in the section.
-		//Section sect = header.getCopyrightSection();
 
-		// TODO This needs the label section to work...
-		//
-		//long pos = sect.getPosition();
-		//while (pos < sect.getEndPos()) {
-		//	reader.position(pos);
-		//	int labelNum = header.getHeaderLength() + reader.get3();
-		//
-		//
-		//	System.out.println("position at " + labelNum);
-		//	reader.position(labelNum);
-		//	String m = reader.getZString();
-		//	System.out.println("C/R msg " + m);
-		//
-		//	messages.add(m);
-		//
-		//	pos += sect.getItemSize();
-		//}
+		return msgs.toArray(new String[msgs.size()]);
+	}
 
+	public String[] getCopyrights(LBLFileReader lblReader) {
+		Section sect = header.getCopyrightSection();
+		ImgFileReader reader = getReader();
+		List<String> msgs = new ArrayList<String>();
+
+		long pos = sect.getPosition();
+		while (pos < sect.getEndPos()) {
+			reader.position(pos);
+			int offset = reader.get3();
+			Label label = lblReader.fetchLabel(offset);
+			if (label != null) {
+				msgs.add(label.getText());
+			}
+		
+			pos += sect.getItemSize();
+		}
 		return msgs.toArray(new String[msgs.size()]);
 	}
 }

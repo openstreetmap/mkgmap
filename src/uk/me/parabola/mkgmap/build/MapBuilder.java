@@ -107,6 +107,8 @@ public class MapBuilder implements Configurable {
 
 	private final java.util.Map<MapPoint,POIRecord> poimap = new HashMap<MapPoint,POIRecord>();
 	private final java.util.Map<MapPoint,City> cityMap = new HashMap<MapPoint,City>();
+	private List<String> mapInfo = new ArrayList<String>();
+	private List<String> copyrights = new ArrayList<String>();
 
 	private boolean doRoads;
 	private boolean routingErrorMsgPrinted;
@@ -199,6 +201,8 @@ public class MapBuilder implements Configurable {
 				((MapperBasedMapDataSource)src).addBoundaryLine(rc.getArea(), routeCenterBoundaryType, rc.reportSizes());
 			}
 		}
+		if (mapInfo.isEmpty())
+			getMapInfo();
 
 		normalizeCountries(src);
 		
@@ -769,6 +773,62 @@ public class MapBuilder implements Configurable {
 	 * @param map The map to write to.
 	 * @param src The source of map information.
 	 */
+	protected void getMapInfo() {
+		if (licenseFileName != null) {
+			File file = new File(licenseFileName);
+
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(file));
+				String text;
+
+				// repeat until all lines is read
+				while ((text = reader.readLine()) != null) {
+					if (!text.isEmpty()) {
+						mapInfo.add(text);
+					}
+				}
+
+				reader.close();
+			} catch (FileNotFoundException e) {
+				throw new ExitException("Could not open license file " + licenseFileName);
+			} catch (IOException e) {
+				throw new ExitException("Error reading license file " + licenseFileName);
+			}
+		} else {
+			mapInfo.add("Map data (c) OpenStreetMap and its contributors");
+			mapInfo.add("http://www.openstreetmap.org/copyright");
+			mapInfo.add("");
+			mapInfo.add("This map data is made available under the Open Database License:");
+			mapInfo.add("http://opendatacommons.org/licenses/odbl/1.0/");
+			mapInfo.add("Any rights in individual contents of the database are licensed under the");
+			mapInfo.add("Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/");
+			mapInfo.add("");
+
+			// Pad the version number with spaces so that version
+			// strings that are different lengths do not change the size and
+			// offsets of the following sections.
+			mapInfo.add("Map created with mkgmap-r"
+					+ String.format("%-10s", Version.VERSION));
+
+			mapInfo.add("Program released under the GPL");
+		}
+	}
+	
+	public void setMapInfo(List<String> msgs){
+		mapInfo = msgs;
+	}
+	
+	public void setCopyrights(List<String> msgs){
+		copyrights = msgs;
+	}
+	
+	
+	/**
+	 * Set all the information that appears in the header.
+	 *
+	 * @param map The map to write to.
+	 * @param src The source of map information.
+	 */
 	protected void processInfo(Map map, LoadableMapDataSource src) {
 		// The bounds of the map.
 		map.setBounds(src.getBounds());
@@ -781,53 +841,23 @@ public class MapBuilder implements Configurable {
 		//
 		// We use it to add copyright information that there is no room for
 		// elsewhere.
-		if (licenseFileName != null) {
-			File file = new File(licenseFileName);
+		for (String s: mapInfo)
+			map.addInfo(s);
+		
+		if (copyrights.isEmpty()){
+			// There has to be (at least) two copyright messages or else the map
+			// does not show up.  The second one will be displayed at startup,
+			// although the conditions where that happens are not known.
+			map.addCopyright("program licenced under GPL v2");
 
-			try {
-				BufferedReader reader = new BufferedReader(new FileReader(file));
-				String text;
-
-				// repeat until all lines is read
-				while ((text = reader.readLine()) != null) {
-					if (!text.isEmpty()) {
-						map.addInfo(text);
-					}
-				}
-
-				reader.close();
-			} catch (FileNotFoundException e) {
-				throw new ExitException("Could not open license file " + licenseFileName);
-			} catch (IOException e) {
-				throw new ExitException("Error reading license file " + licenseFileName);
-			}
+			// This one gets shown when you switch on, so put the actual
+			// map copyright here.
+			for (String cm : src.copyrightMessages())
+				map.addCopyright(cm);
 		} else {
-			map.addInfo("Map data (c) OpenStreetMap and its contributors");
-			map.addInfo("http://www.openstreetmap.org/copyright");
-			map.addInfo("");
-			map.addInfo("This map data is made available under the Open Database License:");
-			map.addInfo("http://opendatacommons.org/licenses/odbl/1.0/");
-			map.addInfo("Any rights in individual contents of the database are licensed under the");
-			map.addInfo("Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/");
-			map.addInfo("");
-
-			// Pad the version number with spaces so that version
-			// strings that are different lengths do not change the size and
-			// offsets of the following sections.
-			map.addInfo("Map created with mkgmap-r"
-					+ String.format("%-10s", Version.VERSION));
-
-			map.addInfo("Program released under the GPL");
+			for (String cm : copyrights)
+				map.addCopyright(cm);
 		}
-		// There has to be (at least) two copyright messages or else the map
-		// does not show up.  The second one will be displayed at startup,
-		// although the conditions where that happens are not known.
-		map.addCopyright("program licenced under GPL v2");
-
-		// This one gets shown when you switch on, so put the actual
-		// map copyright here.
-		for (String cm : src.copyrightMessages())
-			map.addCopyright(cm);
 	}
 
 	/**

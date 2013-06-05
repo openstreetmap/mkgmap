@@ -14,6 +14,8 @@ package uk.me.parabola.mkgmap.combiners;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.FileExistsException;
@@ -38,7 +40,6 @@ import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
-import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Build the overview map.  This is a low resolution map that covers the whole
@@ -58,8 +59,8 @@ public class OverviewBuilder implements Combiner {
 	private String outputDir;		
 	private Integer codepage;
 	private Integer encodingType;
-	private String copyrightMsg;
-	private String licenseFileName;
+	private List<String[]> copyrightMsgs = new ArrayList<String[]>();
+	private List<String[]> licenseInfos = new ArrayList<String[]>();
 
 
 	public OverviewBuilder(OverviewMap overviewSource) {
@@ -71,9 +72,6 @@ public class OverviewBuilder implements Combiner {
 		overviewMapname = args.get("overview-mapname", "osmmap");
 		overviewMapnumber = args.get("overview-mapnumber", "63240000");
 		outputDir = args.getOutputDir();
-		copyrightMsg = args.getProperties().getProperty("copyright-message",
-				"OpenStreetMap.org contributors. See: http://wiki.openstreetmap.org/index.php/Attribution");
-		licenseFileName = args.get("license-file", null);
 	}
 
 	public void onMapEnd(FileInfo finfo) {
@@ -111,18 +109,15 @@ public class OverviewBuilder implements Combiner {
 		if (overviewSource.mapLevels() == null)
 			return;
 		MapBuilder mb = new MapBuilder();
-		if (licenseFileName != null){
-			EnhancedProperties props = new EnhancedProperties();
-			props.put("license-file", licenseFileName);
-			mb.config(props);
-		}
 		mb.setEnableLineCleanFilters(false);
 
 		FileSystemParam params = new FileSystemParam();
 		params.setBlockSize(512);
 		params.setMapDescription(areaName);
-		overviewSource.addCopyright(copyrightMsg);
-
+		mb.setCopyrights(creMsgList(copyrightMsgs));
+		mb.setMapInfo(creMsgList(licenseInfos));
+		
+		
 		try {
 			if (codepage == null){
 				codepage = 0; // should not happen
@@ -168,6 +163,28 @@ public class OverviewBuilder implements Combiner {
 			if (encodingType != mapReader.getEncodingType()){
 				System.err.println("WARNING: input file " + filename + " has different charset type " + encodingType);
 			}
+
+			String[] msgs = mapReader.getCopyrights();
+			boolean found = false;
+			for (String[] block : copyrightMsgs) {
+				if (Arrays.deepEquals(block, msgs)){
+					found = true;
+					break;
+				}
+			}
+			if (!found )
+				copyrightMsgs.add(msgs);
+			
+			msgs = finfo.getLicenseInfo();
+			found = false;
+			for (String[] block : licenseInfos) {
+				if (Arrays.deepEquals(block, msgs)){
+					found = true;
+					break;
+				}
+			}
+			if (!found )
+				licenseInfos.add(msgs);
 			
 			
 			levels = mapReader.getLevels();
@@ -348,4 +365,18 @@ public class OverviewBuilder implements Combiner {
 		else return name;
 	}
 	
+	private List<String> creMsgList(List<String[]> msgs){
+		ArrayList< String> list = new ArrayList<String>();
+		for (int i = 0; i < msgs.size(); i++){
+			String[] block = msgs.get(i);
+			for (String s : block){
+				list.add(s);
+			} 
+			if (i < msgs.size()-1){
+				// separate blocks 
+				list.add("");
+			}
+		}
+		return list;
+	}
 }
