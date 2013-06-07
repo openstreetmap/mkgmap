@@ -9,7 +9,7 @@ General options:
 	list of all the help topics is printed instead.
 
 --version 
-	Output program version.
+	Output program version to stderr.
 
 filename
 --input-file=filename
