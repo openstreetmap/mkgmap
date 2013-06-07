@@ -176,7 +176,7 @@ Overview map options:
   like levels, specifies additional levels that are to be written to the
   overview map. Counting of the levels should continue. Up to 8 additional 
   levels may be specified, but the lowest usable resolution with MapSource 
-  seems to be 11.     
+  seems to be 11. The hard coded default is empty.      
 
 --remove-ovm-work-files
   If overview-levels is used, mkgmap creates one additional file 
@@ -222,7 +222,7 @@ Style options:
 --levels=levels code
 	Change the way that the levels on the map correspond to the zoom
 	levels in the device. See customisation help. The default is:
-	"0=24, 1=22, 2=20, 3=18, 4=16, 5=15", although each style can have
+	"0:24, 1:22, 2:20, 3:18, 4:16", although each style can have
 	its own default. Up to 8 levels may be specified.
 
 --name-tag-list
@@ -231,7 +231,7 @@ Style options:
 	will be used.  eg. --name-tag-list=name:en,int_name,name
 
 --map-features=file
-	This option is obsolete; use the --style-file option instead.
+	This option is ignored; use the --style-file option instead.
 
 Product description options:
 
@@ -258,14 +258,15 @@ Product description options:
 	drop-down. The default is "OSM map".
 
 --area-name
-
+  Area name is displayed on Garmin units (or at least on eTrex) as the second 
+  part of the mapname in the list of the individual maps.
+   
 --copyright-message=note
 	Specify a copyright message for files that do not contain one.
 
 --license-file=file
-	Specify a file which content will be added as license. Every
-	line is one entry. All entrys of all maps will be merged, unified
-	and shown in random order.
+	Specify a file which content will be added as license. 
+  All entrys of all maps will be merged in the overview map.
 
 Optimization options:
 
