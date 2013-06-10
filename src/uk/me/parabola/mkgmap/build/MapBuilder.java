@@ -840,10 +840,13 @@ public class MapBuilder implements Configurable {
 		// But there has to be something, otherwise the map does not show up.
 		//
 		// We use it to add copyright information that there is no room for
-		// elsewhere.
-		for (String s: mapInfo)
-			map.addInfo(s);
-		
+		// elsewhere
+		String info = "";
+		for (String s: mapInfo){
+			info += s.trim() + "\n";
+		}
+		if (!info.isEmpty())
+			map.addInfo(info);
 		if (copyrights.isEmpty()){
 			// There has to be (at least) two copyright messages or else the map
 			// does not show up.  The second one will be displayed at startup,
