@@ -270,7 +270,7 @@
 		</javac>
 	</target>
 
-	<target name="test" depends="build-test" description="Run the junit tests">
+	<target name="test" depends="build-test, obtain-test-input-files" description="Run the junit tests">
 		<mkdir dir="tmp/report"/>
 		<junit printsummary="yes" failureproperty="junit.failure">
 
