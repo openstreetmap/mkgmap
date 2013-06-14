@@ -19,9 +19,9 @@ package uk.me.parabola.mkgmap.osmstyle;
 import java.io.FileNotFoundException;
 import java.io.OutputStreamWriter;
 
+import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.StyleInfo;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -31,10 +31,11 @@ import static org.junit.Assert.*;
  */
 public class StyleImplTest {
 	private static final String STYLE_LOC = "classpath:teststyles";
-	private static StyleImpl style;
 
 	@Test
-	public void testGetInfo() {
+	public void testGetInfo() throws FileNotFoundException {
+		StyleImpl style = new StyleImpl(STYLE_LOC, "simple");
+
 		printStyle(style);
 		StyleInfo info = style.getInfo();
 		assertEquals("version", "2.2", info.getVersion());
@@ -43,7 +44,9 @@ public class StyleImplTest {
 	}
 
 	@Test
-	public void testGetOption() {
+	public void testGetOption() throws FileNotFoundException {
+		StyleImpl style = new StyleImpl(STYLE_LOC, "simple");
+
 		String val = style.getOption("levels");
 
 		assertEquals("option levels", "0:24\n1:20", val);
@@ -51,7 +54,7 @@ public class StyleImplTest {
 
 	@Test
 	public void testEmptyFiles() throws FileNotFoundException {
-		style = new StyleImpl(STYLE_LOC, "empty");
+		StyleImpl style = new StyleImpl(STYLE_LOC, "empty");
 		assertNotNull("read style ok", style);
 	}
 
@@ -62,7 +65,8 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleName() throws FileNotFoundException {
-		style = new StyleImpl(STYLE_LOC, "no-such-style");
+		//noinspection UnusedDeclaration
+		Style style = new StyleImpl(STYLE_LOC, "no-such-style");
 	}
 
 	/**
@@ -73,7 +77,8 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleFileOnClasspath() throws FileNotFoundException {
-		style = new StyleImpl("classpath:no-such-place", "default");
+		//noinspection UnusedDeclaration
+		Style style = new StyleImpl("classpath:no-such-place", "default");
 	}
 
 	/**
@@ -85,15 +90,11 @@ public class StyleImplTest {
 	 */
 	@Test(expected = FileNotFoundException.class)
 	public void testBadStyleFileOnFilesystem() throws FileNotFoundException {
-		style = new StyleImpl("/no-such-place/hopefully", "default");
+		//noinspection UnusedDeclaration
+		Style style = new StyleImpl("/no-such-place/hopefully", "default");
 	}
 
 	private void printStyle(StyleImpl in) {
 		in.dumpToFile(new OutputStreamWriter(System.out));
-	}
-
-	@BeforeClass
-	public static void setUp() throws FileNotFoundException {
-		style = new StyleImpl(STYLE_LOC, "simple");
 	}
 }
