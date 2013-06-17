@@ -299,11 +299,11 @@ public class Subdivision {
 				String tr = refs[0].trim();
 				String trSansGC = Label.stripGarminCodes(tr);
 				if(trSansGC.length() > 0 &&
-				   !trSansGC.equalsIgnoreCase(nameSansGC)) {
+						!trSansGC.equalsIgnoreCase(nameSansGC)) {
 					pl.addRefLabel(lblFile.newLabel(tr));
 				}
 			}
-			else {
+			else if (refs.length > 1){
 				// multiple refs, always add the first so that it will
 				// be used in routing instructions when the name has a
 				// shield prefix
@@ -315,13 +315,12 @@ public class Subdivision {
 					String tr = refs[i].trim();
 					String trSansGC = Label.stripGarminCodes(tr);
 					if(trSansGC.length() > 0 &&
-					   !trSansGC.equalsIgnoreCase(nameSansGC)) {
+							!trSansGC.equalsIgnoreCase(nameSansGC)) {
 						pl.addRefLabel(lblFile.newLabel(tr));
 					}
 				}
 			}
 		}
-
 		return pl;
 	}
 
