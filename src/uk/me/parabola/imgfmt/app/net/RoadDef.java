@@ -201,8 +201,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		if (numbersList != null) {
 			numbers = new NumberPreparer(numbersList);
 			numbers.fetchBitStream();
-			if (!numbers.isValid())
+			if (!numbers.isValid()){
 				numbers = null;
+				log.warn("Invalid housenumbers in",this.toString());
+			}
 		}
 
 		writeLabels(writer);

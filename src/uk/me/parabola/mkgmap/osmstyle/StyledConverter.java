@@ -623,7 +623,9 @@ public class StyledConverter implements OsmConverter {
 
 		if(name == null && refs != null) {
 			// use first ref as name
-			name = SEMI_PATTERN.split(refs)[0].trim();
+			String[] names = SEMI_PATTERN.split(refs);
+			if (names.length > 0)
+				name = names[0].trim();
 		}
 		else if(name != null) {
 			// remove leading spaces (don't use trim() to avoid zapping
