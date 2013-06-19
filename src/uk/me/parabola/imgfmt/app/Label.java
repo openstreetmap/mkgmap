@@ -76,7 +76,7 @@ public class Label implements Comparable<Label> {
 	}
 
 	public static String squashSpaces(String s) {
-		if(s == null)
+		if(s == null || s.isEmpty())
 			return null;
 		return SQUASH_SPACES.matcher(s).replaceAll(" "); // replace with single space
 	}
