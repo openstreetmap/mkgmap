@@ -57,7 +57,7 @@ public class Label implements Comparable<Label> {
 	}
 
 	// highway shields and "thin" separators
-	private final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
+	public final static Pattern SHIELDS = Pattern.compile("[\u0001-\u0006\u001b-\u001c]");
 
 	// "fat" separators
 	private final static Pattern SEPARATORS = Pattern.compile("[\u001d-\u001f]");

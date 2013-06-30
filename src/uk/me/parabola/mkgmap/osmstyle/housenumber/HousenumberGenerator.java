@@ -19,9 +19,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
@@ -64,13 +66,11 @@ public class HousenumberGenerator {
 	 * @return the street name (or {@code null} if no street name set)
 	 */
 	private String getStreetname(Element e) {
-		if (e.getTag("mkgmap:street") != null) {
-			return e.getTag("mkgmap:street");
-		}
-		if (e.getTag("addr:street") != null) {
-			return e.getTag("addr:street");
+		String streetname = e.getTag("mkgmap:street");
+		if (streetname == null) {
+			streetname = e.getTag("addr:street");
 		}	
-		return null;
+		return stripStreetName(streetname);
 	}
 	
 	/**
@@ -105,14 +105,67 @@ public class HousenumberGenerator {
 		}
 	}
 	
+	private static final Pattern BRACKETS = Pattern.compile("\\(.*\\)"); 
+	
+	/**
+	 * Removes the shield from the given string. This is the shield character 
+	 * including the following part until the first whitespace. Additionally all
+	 * text within brackets is removed. 
+	 * @param s a label
+	 * @return the label without shield ({@code null} if stripped label is empty)
+	 */
+	public static String stripStreetName(String s) {
+		if (s == null || s.isEmpty())
+			return null;
+		
+		if (Label.SHIELDS.matcher(s.substring(0, 1)).matches()) {
+			int whitespaceIndex = s.indexOf(' ', 1);
+			if (whitespaceIndex < 0) {
+				return null;
+			} else {
+				s = s.substring(whitespaceIndex);
+			}
+		}
+		s = BRACKETS.matcher(s).replaceAll(""); // remove text in brackets
+		s = Label.squashSpaces(s);
+		if (s == null) {
+			return null;
+		}
+		s = s.trim();
+		if (s.isEmpty()) {
+			return null;
+		}
+		return s;
+		
+	}
+
+	
 	/**
 	 * Adds a road to be processed by the house number generator.
 	 * @param road a road
 	 */
 	public void addRoad(MapRoad road) {
 		roads.add(road);
-		if (numbersEnabled &&  road.getName() != null) {
-			roadByNames.add(road.getName(), road);
+		if (numbersEnabled) {
+			String name = stripStreetName(road.getName());
+			if (name != null) {
+				roadByNames.add(name, road);
+			} else {
+				name = road.getRef();
+				if (name != null) {
+					String[] refs = name.split(";");
+					if (refs != null)
+					for (String ref : refs) {
+						name = stripStreetName(ref);
+						if (name != null) {
+							roadByNames.add(name, road);
+							break;
+						}
+					}
+
+				}
+			}
+			
 		} 
 	}
 	
