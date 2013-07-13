@@ -36,6 +36,9 @@ public class FunctionFactory {
 		if ("is_complete".equals(name)) {
 			return new IsCompleteFunction();
 		}
+		if ("area_size".equals(name))
+			return new AreaSizeFunction();
+		
 		return null;
 	}
 }

@@ -178,10 +178,13 @@ Functions calculate a specific property of an OSM element.
 |length()      |  | x  | x  |
 Calculates the length in m. For relations its the sum of all member length (including sub relations).
 
+|area_size()   |  | x  |  |
+Calculates area size in (garmin units)^2^. A non closed way has an area_size() of 0.
+
 |is_complete() |  | x  |  |
 +true+ if all nodes of a way are contained in the tile. +false+ if some nodes of the way are missing in the tile.
 
-|is_closed() |  | x  |  |
+|is_closed()   |  | x  |  |
 +true+ the way is closed. +false+ the way is not closed and cannot be processed as polygon.
 |====
 
