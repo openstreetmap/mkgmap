@@ -32,6 +32,10 @@ public class AreaSizeFunction extends CachedFunction {
 		return null;
 	}
 
+	public String getName() {
+		return "area_size";
+	}
+	
 	public boolean supportsWay() {
 		return true;
 	}

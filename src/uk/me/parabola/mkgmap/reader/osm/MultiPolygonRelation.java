@@ -17,6 +17,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
@@ -78,6 +79,9 @@ public class MultiPolygonRelation extends Relation {
 	protected Area bboxArea;
 	
 	private Coord cOfG = null;
+	
+	// the sum of all outer polygons area size 
+	private double mpAreaSize = 0;
 	
 	/** 
 	 * A point that has a lower or equal squared distance from 
@@ -1016,6 +1020,13 @@ public class MultiPolygonRelation extends Relation {
 						mpWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_POLYGON);
 						mpWay.addTag(MP_CREATED_TAG, "true");
 						
+						if (currentPolygon.outer) {
+							mpWay.addTag("mkgmap:mp_role", "outer");
+							mpAreaSize += calcAreaSize(mpWay.getPoints());
+						} else {
+							mpWay.addTag("mkgmap:mp_role", "inner");
+						}
+						
 						getMpPolygons().put(mpWay.getId(), mpWay);
 					}
 				}
@@ -1092,6 +1103,16 @@ public class MultiPolygonRelation extends Relation {
 	}
 	
 	protected void postProcessing() {
+		
+		// assign the area size of the whole multipolygon to all outer polygons
+		String mpAreaSizeStr = new DecimalFormat("0.0####################").format(mpAreaSize);
+		for (Way w : mpPolygons.values()) {
+			if ("outer".equals(w.getTag("mkgmap:mp_role"))) {
+				w.addTag("mkgmap:cache_area_size", mpAreaSizeStr);
+			}
+			w.deleteTag("mkgmap:mp_role");
+		}
+		
 		// copy all polygons created by the multipolygon algorithm to the global way map
 		tileWayMap.putAll(mpPolygons);
 		
