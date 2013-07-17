@@ -46,6 +46,9 @@ public class HousenumberGenerator {
 	private static final Logger log = Logger
 			.getLogger(HousenumberGenerator.class);
 
+	/** Gives the maximum distance between house number element and the matching road */
+	private static final double MAX_DISTANCE_TO_ROAD = 150d;
+	
 	private boolean numbersEnabled;
 	
 	private MultiHashMap<String, MapRoad> roadByNames;
@@ -66,11 +69,11 @@ public class HousenumberGenerator {
 	 * @return the street name (or {@code null} if no street name set)
 	 */
 	private String getStreetname(Element e) {
-		String streetname = e.getTag("mkgmap:street");
+		String streetname = stripStreetName(e.getTag("mkgmap:street"));
 		if (streetname == null) {
-			streetname = e.getTag("addr:street");
+			streetname = stripStreetName(e.getTag("addr:street"));
 		}	
-		return stripStreetName(streetname);
+		return streetname;
 	}
 	
 	/**
@@ -142,15 +145,20 @@ public class HousenumberGenerator {
 	
 	/**
 	 * Adds a road to be processed by the house number generator.
+	 * @param osmRoad the OSM way the defines the road 
 	 * @param road a road
 	 */
-	public void addRoad(MapRoad road) {
+	public void addRoad(Way osmRoad, MapRoad road) {
 		roads.add(road);
 		if (numbersEnabled) {
-			String name = stripStreetName(road.getName());
-			if (name != null) {
-				roadByNames.add(name, road);
-			} else {
+			// first try to get the streetname from mkgmap:streetname
+			String name = getStreetname(osmRoad); 
+			if (name == null) {
+				// 2nd try the name of the road
+				name = stripStreetName(road.getName());
+			}
+			if (name == null) {
+				// 3rd get the name from the ref 
 				name = road.getRef();
 				if (name != null) {
 					String[] refs = name.split(";");
@@ -158,14 +166,16 @@ public class HousenumberGenerator {
 					for (String ref : refs) {
 						name = stripStreetName(ref);
 						if (name != null) {
-							roadByNames.add(name, road);
 							break;
 						}
 					}
-
 				}
 			}
-			
+			if (name != null) {
+				if (log.isDebugEnabled())
+					log.debug("Housenumber - Streetname:", name, "Way:",osmRoad.getId(),osmRoad.toTagString());
+				roadByNames.add(name, road);
+			}
 		} 
 	}
 	
@@ -259,7 +269,7 @@ public class HousenumberGenerator {
 						Coord cx = n.getLocation();
 						double frac = getFrac(c1, c2, cx);
 						double dist = distanceToSegment(c1,c2,cx,frac);
-						if (dist < 150.0d && dist < n.getDistance()) {
+						if (dist <= MAX_DISTANCE_TO_ROAD && dist < n.getDistance()) {
 							n.setDistance(dist);
 							n.setSegmentFrac(frac);
 							n.setRoad(r);

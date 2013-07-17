@@ -1632,8 +1632,7 @@ public class StyledConverter implements OsmConverter {
 
 		// add the road to the housenumber generator
 		// it will add the road later on to the lineAdder
-		housenumberGenerator.addRoad(road);
-		//		lineAdder.add(road);
+		housenumberGenerator.addRoad(way, road);
 
 		if(trailingWay != null)
 			addRoadWithoutLoops(trailingWay, gt);

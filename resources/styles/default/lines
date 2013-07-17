@@ -14,6 +14,9 @@ include 'inc/address';
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
+# Assign the street name for house number search
+highway=* & name=* { set mkgmap:street='${name}' }
+
 # Remove access=yes from highways.
 highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.
