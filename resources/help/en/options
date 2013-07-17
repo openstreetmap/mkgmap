@@ -162,6 +162,25 @@ Address search options:
               in the same tile are used only. So the results close to a tile 
               border have less quality.  
 
+--housenumbers
+  Enables house number search for OSM input files. 
+  All nodes and polygons having addr:housenumber and addr:street set are matched 
+  to streets. A match between house number element and street is created if
+  the street is located within a radius of 150m and the addr:street tag of the 
+  house number element 
+    - equals the mgkmap:street tag of the street. mkgmap:streets should be set 
+      in the style file.
+    - or it equals the name of the street stripped by garmin shields and all text
+      within round brackets. 
+  Example: 
+     Node -  addr:street=Main Street addr:housenumber=2
+     Way 1 - mkgmap:street=Main Street
+     Way 2 - name=Main Street (A504)
+     Way 3 - mkgmap:street=Mainstreet
+     Way 4 - name=Main Street [A504]
+    The node matches to way 1 and way 2 but not to way 3 (does not equal exactly)
+    and not to way 4 (only text in round brackets is ignored)
+  
 Overview map options:
 --overview-mapname=name
 	If --tdbfile is enabled, this gives the name of the overview
