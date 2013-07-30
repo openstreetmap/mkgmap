@@ -27,7 +27,6 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.map.MapReader;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.CommandArgs;
-import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.tdbfmt.DetailMapBlock;
 import uk.me.parabola.tdbfmt.TdbFile;
 
@@ -90,6 +89,7 @@ public class TdbBuilder implements Combiner {
 		tdb = new TdbFile(tdbVersion);
 		tdb.setProductInfo(familyId, productId, productVersion, seriesName,
 				familyName, areaName, enableProfile);
+		tdb.setCodePage(args.getCodePage());
 		
 		outputDir = args.getOutputDir();
 	}
