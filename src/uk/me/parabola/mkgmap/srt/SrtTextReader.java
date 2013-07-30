@@ -44,7 +44,7 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  *
  * The file should start with a codepage declaration, which determines the
  * target codepage for the sort.  This can be followed by a description which is
- * used if this a SRT file is created.
+ * added into the SRT file.
  *
  * The characters are listed in order arranged in a way that shows the strength of the
  * difference between the characters. These are:
@@ -360,7 +360,7 @@ public class SrtTextReader {
 		String outfile = "out.srt";
 		if (args.length > 1)
 			outfile = args[1];
-		ImgChannel chan = new FileImgChannel(outfile, "r");
+		ImgChannel chan = new FileImgChannel(outfile, "rw");
 		SRTFile sf = new SRTFile(chan);
 
 		SrtTextReader tr = new SrtTextReader(infile);

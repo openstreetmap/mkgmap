@@ -1,0 +1,88 @@
+codepage 1250
+id1 12
+id2 1
+description "Central European sort"
+
+code pos2=0 01, 02, 03, 04, 05, 06, 07
+
+code 20 < a0 < 09 < 0a < 0b < 0c < 0d < ! < " < 23 < $ < %
+code & < ( < ) < * < , < . < / < : < ; < ? < @ < [
+code \ < ] < ^ < _ < ` < { < | < } < ~ < a6 < a8 < '
+code b8 < a1 < a2
+
+code ff
+code b2
+code bd
+code 91
+code 92
+code 82
+code 93
+code 94
+code 84
+code 8B
+code 9B
+code a4
+code 80
+code +
+code 3c
+code =
+code >
+code b1
+code ab
+code bb
+code d7
+code f7
+code a7
+code a9
+code ac
+code ae
+code b0
+code b5
+code b6
+code b7
+code 86
+code 87
+code 95
+code 89
+
+code 0
+code 1
+code 2
+code 3
+code 4
+code 5
+code 6
+code 7
+code 8
+code 9
+
+code a,A; ä,Ä; á,Á; â,Â; ă,Ă; ą,Ą
+code b,B
+code c,C; ć,Ć; č,Č; ç,Ç
+code d,D; ď,Ď; đ,Đ
+code e,E; ë,Ë; é,É; ě,Ě; ę,Ę
+code f,F
+code g,G
+code h,H
+code i,I; í,Í; î,Î
+code j,J
+code k,K
+code l,L; ĺ,Ĺ; ľ,Ľ; ł,Ł
+code m,M
+code n,N; ń,Ń; ň,Ň
+code o,O; ö,Ö; ó,Ó; ô,Ô; ő,Ő
+code p,P
+code q,Q
+code r,R; ŕ,Ŕ
+code s,S; ś,Ś; š,Š; ş,Ş
+code t,T; ť,Ť; ţ,Ţ
+code 99
+code u,U; ü,Ü; ú,Ú; ů,Ů; ű,Ű
+code v,V
+code w,W
+code x,X
+code y,Y; ý,Ý
+code z,Z; ż,Ż; ź,Ź; ž,Ž
+
+expand ß to s s
+expand 85 to . . .
