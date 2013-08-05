@@ -14,7 +14,9 @@ package uk.me.parabola.imgfmt.app.mdr;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
@@ -72,7 +74,7 @@ public class Mdr7 extends MdrMapSection {
 	 * we sort and de-duplicate here.
 	 */
 	protected void preWriteImpl() {
-		//List<SortKey<Mdr7Record>> sortedStreets = MdrUtils.sortList(getConfig().getSort(), allStreets);
+		createPartials();
 
 		Sort sort = getConfig().getSort();
 		List<SortKey<Mdr7Record>> sortedStreets = new ArrayList<SortKey<Mdr7Record>>(allStreets.size());
@@ -100,6 +102,110 @@ public class Mdr7 extends MdrMapSection {
 				r.setIndex(recordNumber);
 			}
 		}
+	}
+
+	static class Int {
+		int value = 1;
+		void inc() { value += 1; }
+	}
+
+	// TODO: work in progress
+	private void createPartials() {
+		Map<String, Int> firstWords = new HashMap<String, Int>();
+		Map<String, Int> lastWords = new HashMap<String, Int>();
+		int nWords = 0;
+
+		for (Mdr7Record m : allStreets) {
+			String name = m.getName();
+			String[] split = name.split("\\s+");
+
+			// If just one word (or none) then nothing needs to be done
+			if (split.length < 2)
+				continue;
+
+			int first = 0;
+			String word;
+			do {
+				word = split[first];
+			} while (!Character.isLetter(word.charAt(0)) && ++first < split.length-1);
+
+			if (split.length - first < 2)
+				continue;
+
+			nWords++;
+
+			putWord(firstWords, split[first]);
+			putWord(lastWords, split[split.length - 1]);
+		}
+
+		System.out.println("=== FIRST");
+		int count = 0;
+		int t1 = 0;
+		int t3 = 0;
+		int t2 = 0;
+		int t4 = 0;
+
+		for (Map.Entry<String, Int> ent : firstWords.entrySet()) {
+			int val = ent.getValue().value;
+			if (val > nWords/50) {
+				t1++;
+				t3 += val;
+			} else {
+				t2++;
+				t4 += val;
+			}
+		}
+		int firstMainAv = t4/t2;
+		int firstTopAv = t3/t1;
+
+		t1 = t2 = t3 = t4 = 0;
+		for (Map.Entry<String, Int> ent : lastWords.entrySet()) {
+
+			int val = ent.getValue().value;
+			if (val > nWords/50) {
+				t1++;
+				t3 += val;
+			}
+			else {
+				t2++;
+				t4 += val;
+			}
+		}
+		int lastMainAv = t2==0? 0: t4/t2;
+		int lastTopAv = t1==0? 0: t3/t1;
+
+		System.out.printf("t1=%d, t2=%d\n", t1, t2);
+		System.out.printf("first av %d/%d, last %d/%d\n", firstTopAv, firstMainAv,
+				lastTopAv, lastMainAv);
+
+		int av = 350 * Math.max(firstMainAv, lastMainAv);
+
+		int factor = 200;
+		for (Map.Entry<String, Int> ent : firstWords.entrySet()) {
+			int value = ent.getValue().value;
+			if (value > nWords/ factor && value > av) {
+				System.out.printf("%s : %d\n", ent.getKey(), value);
+			}
+		}
+
+		System.out.println("=== LAST");
+		for (Map.Entry<String, Int> ent : lastWords.entrySet()) {
+			int value = ent.getValue().value;
+			if (value > nWords/ factor && value > av) {
+				System.out.printf("%s : %d\n", ent.getKey(), value);
+			}
+		}
+	}
+
+	private void putWord(Map<String, Int> words, String s) {
+		if (s.length() < 2)
+			return;
+
+		Int val = words.get(s);
+		if (val == null)
+			words.put(s, new Int());
+		else
+			val.inc();
 	}
 
 	public void writeSectData(ImgFileWriter writer) {

@@ -74,11 +74,19 @@ public class Mdr7Record extends RecordBase implements NamedRecord {
 		this.nameOffset = (short) nameOffset;
 	}
 
-	public String toString() {
-		return name + " in " + city.getName();
+	/**
+	 * Get the name starting at the given nameOffset.
+	 *
+	 * To avoid creating unnecessary objects, a check is made for an offset of zero
+	 * and the original name string is returned.
+	 *
+	 * @return A substring of name, starting at the nameOffset value.
+	 */
+	public String getPartialName() {
+		return nameOffset == 0 ? name : name.substring(nameOffset);
 	}
 
-	public String getPartialName() {
-		return name.substring(nameOffset);
+	public String toString() {
+		return name + " in " + city.getName();
 	}
 }
