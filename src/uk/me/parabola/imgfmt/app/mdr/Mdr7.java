@@ -56,17 +56,48 @@ public class Mdr7 extends MdrMapSection {
 		allStreets.add(st);
 
 		// XXX Quick test...
-		int nameOffset = name.indexOf(' ');
-		if (nameOffset > 0) {
-			st = new Mdr7Record();
-			st.setMapIndex(mapId);
-			st.setLabelOffset(lblOffset);
-			st.setStringOffset(strOff);
-			st.setName(name);
-			st.setCity(mdrCity);
-			st.setNameOffset(nameOffset+1);
-			allStreets.add(st);
+		//int nameOffset = name.indexOf(' ');
+		//if (nameOffset > 0) {
+		//	st = new Mdr7Record();
+		//	st.setMapIndex(mapId);
+		//	st.setLabelOffset(lblOffset);
+		//	st.setStringOffset(strOff);
+		//	st.setName(name);
+		//	st.setCity(mdrCity);
+		//	st.setNameOffset(nameOffset+1);
+		//	allStreets.add(st);
+		//}
+
+		boolean start = true;
+
+		for (int nameOffset = 0; nameOffset < name.length(); nameOffset++) {
+			char c = name.charAt(nameOffset);
+			if (Character.isWhitespace(c)) {
+				start = true;
+				continue;
+			}
+			if (!Character.isLetterOrDigit(c)) {
+				start = true;
+				continue;
+			}
+
+			if (start) {
+				st = new Mdr7Record();
+				st.setMapIndex(mapId);
+				st.setLabelOffset(lblOffset);
+				st.setStringOffset(strOff);
+				st.setName(name);
+				st.setCity(mdrCity);
+				st.setNameOffset(nameOffset);
+				if (st.getPartialName().startsWith("CALLE"))
+					continue;
+				allStreets.add(st);
+				String part = st.getPartialName();
+				//System.out.println("adding: " + part);
+				start = false;
+			}
 		}
+
 	}
 
 	/**
@@ -91,10 +122,11 @@ public class Mdr7 extends MdrMapSection {
 		Mdr7Record last = new Mdr7Record();
 		for (SortKey<Mdr7Record> sk : sortedStreets) {
 			Mdr7Record r = sk.getObject();
-			if (r.getMapIndex() != last.getMapIndex() || !r.getName().equals(last.getName())) {
+			if (r.getMapIndex() != last.getMapIndex() || !r.getPartialName().equals(last.getPartialName())) {
 				recordNumber++;
 				last = r;
 				r.setIndex(recordNumber);
+				//System.out.println("sorted: " + r.getPartialName());
 				streets.add(r);
 			} else {
 				// This has the same name (and map number) as the previous one. Save the pointer to that one
