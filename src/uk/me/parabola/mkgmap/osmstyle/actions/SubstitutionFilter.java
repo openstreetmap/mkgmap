@@ -15,16 +15,27 @@ package uk.me.parabola.mkgmap.osmstyle.actions;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Perform simple string substitution on a value.
+ * Perform string substitution on a value.
+ * The operator => can be used for exact string substitution
+ * The operator ~> can be used for regexp substitutions
+ * If no operator is set, the matching string is deleted
  *
  * @author Toby Speight
+ * @author Enrico Liboni
  */
 public class SubstitutionFilter extends ValueFilter {
 	private final String from;
 	private final String to;
+	private boolean isRegexp = false;
 
 	public SubstitutionFilter(String arg) {
 		int i = arg.indexOf("=>");
+
+		if (i == -1) { // no occurrences of =>, let's try with ~>
+			i = arg.indexOf("~>");
+			if ( i >= 0 ) isRegexp = true;
+		}
+
 		if (i >= 0) {
 			from = arg.substring(0, i);
 			to = arg.substring(i + 2);
@@ -39,6 +50,7 @@ public class SubstitutionFilter extends ValueFilter {
 		if (from == null || to == null)
 			// can't happen!
 			return value;
-		return value.replace(from, to);
+		// replaceAll expects a regexp as 1st argument
+		return (isRegexp ? value.replaceAll(from, to) : value.replace(from, to) );
 	}
 }
