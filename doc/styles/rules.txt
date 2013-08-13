@@ -182,6 +182,7 @@ Calculates the length in m. For relations its the sum of all member length (incl
 Calculates area size in (garmin units)^2^. A non closed way has an area_size() of 0. In case a polygon is an outer part
 of a multipolygon the whole area size of all outer multipolygon parts is returned.
 
+The size of one (garmin unit)^2^ in m^2^ varies depending on the latitude. Sample values: 5.71 m^2^ at latitude 0°; 4.03 m^2^ at (+-)45°;  2.85 m^2^ at (+-)60°; 0.5 m^2^ at (+-)85° 
 |is_complete() |  | x  |  |
 +true+ if all nodes of a way are contained in the tile. +false+ if some nodes of the way are missing in the tile.
 
