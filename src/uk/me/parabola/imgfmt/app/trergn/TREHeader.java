@@ -58,6 +58,7 @@ public class TREHeader extends CommonHeader {
 	public static final int POI_FLAG_TRANSPARENT = 0x2;
 	public static final int POI_FLAG_STREET_BEFORE_HOUSENUMBER = 0x4;
 	public static final int POI_FLAG_POSTALCODE_BEFORE_CITY = 0x8;
+	public static final int POI_FLAG_DRIVE_ON_LEFT = 0x20;
 
 	// Bounding box.  All units are in map units.
 	private Area area = new Area(0,0,0,0);
@@ -239,6 +240,9 @@ public class TREHeader extends CommonHeader {
 
 		if (props.containsKey("transparent"))
 			poiDisplayFlags |= POI_FLAG_TRANSPARENT;
+
+		if (props.containsKey("drive-on-left"))
+			poiDisplayFlags |= POI_FLAG_DRIVE_ON_LEFT;
 	}
 	
 	/**
