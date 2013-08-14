@@ -96,6 +96,8 @@ public class CommonSection {
 		} else if (name.equalsIgnoreCase("NightcustomColor")) {
 			current.setNightCustomColor(value);
 
+		} else if (name.equalsIgnoreCase("Comment")) {
+			// a comment that is ignored.
 		} else {
 			return false;
 		}
