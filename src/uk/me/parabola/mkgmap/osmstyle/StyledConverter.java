@@ -180,7 +180,11 @@ public class StyledConverter implements OsmConverter {
 
 		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
-		NODHeader.setDriveOnLeft(driveOnLeft);
+		// check if the setDriveOnLeft flag should be ignored 
+		// (this is the case if precompiled sea is loaded)
+		if (props.getProperty("ignore-drive-on-left") == null)
+			// do not ignore the flag => initialize it
+			NODHeader.setDriveOnLeft(driveOnLeft);
 		driveOnRight = props.getProperty("drive-on-right") != null;
 		checkRoundabouts = props.getProperty("check-roundabouts") != null;
 
