@@ -35,7 +35,15 @@ public class NODHeader extends CommonHeader {
 	private final Section roads = new Section(nodes);
 	private final Section boundary = new Section(roads, BOUNDARY_ITEM_SIZE);
 
-	private static boolean driveOnLeft;
+	/** 
+	 * The driveOnLeft flag is set via a static method. Using a ThreadLocal
+	 * ensures thread safety when using more than one thread.
+	 */
+	private static final ThreadLocal<Boolean> driveOnLeft = new ThreadLocal<Boolean>() {
+		protected Boolean initialValue() {
+			return Boolean.FALSE;
+		}
+	};
 
 	public NODHeader() {
 		super(HEADER_LEN, "GARMIN NOD");
@@ -63,7 +71,7 @@ public class NODHeader extends CommonHeader {
 
 		// now sets 0x02 (enable turn restrictions?)
 		int val = 0x27;
-		if(driveOnLeft)
+		if(driveOnLeft.get())
 			val |= 0x0300;
 		writer.putInt(val);
 
@@ -106,6 +114,6 @@ public class NODHeader extends CommonHeader {
 	}
 
 	public static void setDriveOnLeft(boolean dol) {
-		driveOnLeft = dol;
+		driveOnLeft.set(dol);
 	}
 }
