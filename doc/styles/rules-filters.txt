@@ -18,38 +18,53 @@ number. It is multiplied by the argument.
 
 `${height\|conv:m=>ft}`
 
-| subst | `from=>to` |
+| subst | `from=>to` +
+`from~>to`|
 Substitutes all occurrences of the string +from+ with the string +to+ in
-the value of the tag.
-There isn't a large number of uses for this, perhaps you can use it to
-correct mistakes.
-The +to+ can be empty to remove the +from+ string altogether and this is
-probably the most popular use.
+the tag value. The +`=>`+ operator can be used for an exact matches while +`~>`+ accepts
+regular expressions in the +from+ attribute.
 
-`${name\|ref:A=>}`
++to+ can be empty to remove the +from+ string altogether.
 
-| part | `separator partnumber` |
-Retrieves a part of a value list.
+Example, if name ="Queen Street" 
 
-The value is cut into parts at every occurance of the +separator+ (default +;+)
+`${name\|subst:Queen=>}` returns " Street" 
 
-The the desired part of the value is returned (default +partnumber+ is +1+)
+`${name\|subst:Queen=>King}` returns "King Street" 
 
-Especially useful for tags like ref, exit_to and destination.
+`${name\|subst:.*\s~>}` returns "Street" 
 
-`${name\|part:}`
+| part | `separator operator partnumber` |
+Split a value in parts and returns one or more part(s) of it. If +partnumber+ is negative, the part returned is counted from the end of the split
 
-returns "Munich" if name="Munich;Augsburg;Landsberg"
+If not specified, the default separator is ';' and the first part is returned (i.e. `${name\|part:}`=`${name\|part:;:1}`).
 
-`${name\|part:#}`
+If the operator is `:` the part specified by +partnumber+ is returned.
 
-returns "Munich" if name="Munich#Augsburg#Landsberg"
+If the operator is `<` or `>` the correspondent number of parts before or after the +partnumber+ are returned
 
-`${name\|part:/:2}`
+Example: if the value is "Aa#Bb#Cc#Dd#Ee"
 
-returns "Augsburg" if name="Munich/Augsburg/Landsberg"
+`${name\|part:#:1}`  returns Aa
 
-| highway-symbol | `symbol max-num max-alpha` |
+`${name\|part:#:-1}` returns Ee
+
+`${name\|part:#:2}`  returns Bb
+
+`${name\|part:#:-2}` returns Dd
+
+`${name\|part:#>1}`  returns Bb#Cc#Dd#Ee#
+
+`${name\|part:#<5}`  returns Aa#Bb#Cc#Dd#
+
+`${name\|part:#<-1}` returns Aa#Bb#Cc#Dd#
+
+This can be especially useful for tags like ref, exit_to and destination or to switch words, 
+example if value is "word1 word2 ... wordN-1 wordN"
+
+`${name\|part: :-1}, ${name\|part: <-1}` returns "wordN, word1 word2 ... wordN-1 "
+
+| highway-symbol | `symbol:max-num:max-alpha` |
 Prepares the value as a highway reference such as "A21" "I-80" and so
 on.
 A code is added to the front of the string so that a highway shield is
@@ -119,5 +134,3 @@ The actual symbol will depend on the device that it is displayed on.
 hello
 | `${ref\|prefix:box}`
 ////
-
-
