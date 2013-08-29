@@ -124,7 +124,6 @@ public class StyledConverter implements OsmConverter {
 	private final Rule lineRules;
 	private final Rule polygonRules;
 
-	private final boolean ignoreMaxspeeds;
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
@@ -175,7 +174,6 @@ public class StyledConverter implements OsmConverter {
 		
 		housenumberGenerator = new HousenumberGenerator(props);
 
-		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
 		// check if the setDriveOnLeft flag should be ignored 
 		// (this is the case if precompiled sea is loaded)
@@ -1444,26 +1442,25 @@ public class StyledConverter implements OsmConverter {
 		// road speed (can be overridden by mkgmap:road-speed-class tag or
 		// mkgmap:road-speed tag)
 		int roadSpeed = gt.getRoadSpeed();
-		if(!ignoreMaxspeeds) {
-			String roadSpeedOverride = way.getTag("mkgmap:road-speed-class");
-			if (roadSpeedOverride != null) {
-				try {
-					int rs = Integer.decode(roadSpeedOverride);
-					if (rs >= 0 && rs <= 7) {
-						// override the road speed class
-						roadSpeed = rs;
-					} else {
-						log.error(debugWayName
-								+ " road classification mkgmap:road-speed-class="
-								+ roadSpeedOverride + " must be in [0;7]");
-					}
-				} catch (Exception exp) {
+		String roadSpeedOverride = way.getTag("mkgmap:road-speed-class");
+		if (roadSpeedOverride != null) {
+			try {
+				int rs = Integer.decode(roadSpeedOverride);
+				if (rs >= 0 && rs <= 7) {
+					// override the road speed class
+					roadSpeed = rs;
+				} else {
 					log.error(debugWayName
 							+ " road classification mkgmap:road-speed-class="
 							+ roadSpeedOverride + " must be in [0;7]");
 				}
+			} catch (Exception exp) {
+				log.error(debugWayName
+						+ " road classification mkgmap:road-speed-class="
+						+ roadSpeedOverride + " must be in [0;7]");
 			}
 		}
+
 		val = way.getTag("mkgmap:road-speed");
 		if(val != null) {
 			if(val.startsWith("-")) {
