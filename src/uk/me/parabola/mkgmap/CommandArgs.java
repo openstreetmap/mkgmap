@@ -84,7 +84,8 @@ public class CommandArgs {
 		File outputDir = new File(fileOutputDir);
 		if (!outputDir.exists()) {
 			System.out.println("Output directory not found. Creating directory '" + fileOutputDir + "'");
-			if (!outputDir.mkdirs()) {
+			outputDir.mkdirs();
+			if (!outputDir.exists()) {
 				System.err.println("Unable to create output directory! Using default directory instead");
 				fileOutputDir = DEFAULT_DIR;
 			}
