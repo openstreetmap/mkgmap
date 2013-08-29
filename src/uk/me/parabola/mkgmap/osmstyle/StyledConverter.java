@@ -128,9 +128,6 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
-	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
-	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
-	private static final Pattern REMOVE_KPH_PATTERN = Pattern.compile("[ \t]*kmh");
 	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
 
 	class AccessMapping {
@@ -337,7 +334,16 @@ public class StyledConverter implements OsmConverter {
 		collector.addToBounds(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
 	}
 
+	private void mergeRoads() {
+		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
+		roads.clear();
+		roadTypes.clear();
+		merger.merge(roads, roadTypes);
+	}
+	
 	public void end() {
+		mergeRoads();
+		
 		setHighwayCounts();
 		findUnconnectedRoads();
 		removeShortArcsByMergingNodes(minimumArcLength);
@@ -1435,17 +1441,27 @@ public class StyledConverter implements OsmConverter {
 		}
 		road.setRoadClass(roadClass);
 
-		// road speed (can be overridden by maxspeed (OSM) tag or
+		// road speed (can be overridden by mkgmap:road-speed-class tag or
 		// mkgmap:road-speed tag)
 		int roadSpeed = gt.getRoadSpeed();
 		if(!ignoreMaxspeeds) {
-			// maxspeed attribute overrides default for road type
-			String maxSpeed = way.getTag("maxspeed");
-			if(maxSpeed != null) {
-				int rs = getSpeedIdx(maxSpeed);
-				if(rs >= 0)
-					roadSpeed = rs;
-				log.debug(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
+			String roadSpeedOverride = way.getTag("mkgmap:road-speed-class");
+			if (roadSpeedOverride != null) {
+				try {
+					int rs = Integer.decode(roadSpeedOverride);
+					if (rs >= 0 && rs <= 7) {
+						// override the road speed class
+						roadSpeed = rs;
+					} else {
+						log.error(debugWayName
+								+ " road classification mkgmap:road-speed-class="
+								+ roadSpeedOverride + " must be in [0;7]");
+					}
+				} catch (Exception exp) {
+					log.error(debugWayName
+							+ " road classification mkgmap:road-speed-class="
+							+ roadSpeedOverride + " must be in [0;7]");
+				}
 			}
 		}
 		val = way.getTag("mkgmap:road-speed");
@@ -1740,43 +1756,6 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 		}
-	}
-
-	private int getSpeedIdx(String tag) {
-		double factor = 1.0;
-		
-		String speedTag = tag.toLowerCase().trim();
-		
-		if (ENDS_IN_MPH_PATTERN.matcher(speedTag).matches()) {
-			// Check if it is a limit in mph
-			speedTag = REMOVE_MPH_PATTERN.matcher(speedTag).replaceFirst("");
-			factor = 1.61;
-		} else
-			speedTag = REMOVE_KPH_PATTERN.matcher(speedTag).replaceFirst("");  // get rid of kmh just in case
-
-		double kmh;
-		try {
-			kmh = Integer.parseInt(speedTag) * factor;
-		} catch (Exception e) {
-			return -1;
-		}
-		
-		if(kmh > 110)
-			return 7;
-		if(kmh > 90)
-			return 6;
-		if(kmh > 80)
-			return 5;
-		if(kmh > 60)
-			return 4;
-		if(kmh > 40)
-			return 3;
-		if(kmh > 20)
-			return 2;
-		if(kmh > 10)
-			return 1;
-		else
-			return 0;
 	}
 
 	protected boolean accessExplicitlyAllowed(String val) {

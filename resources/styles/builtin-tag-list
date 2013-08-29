@@ -13,7 +13,6 @@ exit:road_ref
 exit:to
 int_ref
 junction
-maxspeed
 name
 nat_ref
 oneway

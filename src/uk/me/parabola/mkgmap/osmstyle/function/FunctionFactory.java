@@ -38,6 +38,8 @@ public class FunctionFactory {
 		}
 		if ("area_size".equals(name))
 			return new AreaSizeFunction();
+		if ("maxspeedkmh".equals(name))
+			return new MaxSpeedKmhFunction();
 		
 		return null;
 	}

@@ -110,6 +110,9 @@ leisure=track & area!=yes
 (man_made=pier | man_made=piste:halfpipe) & area!=yes
 {add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
 
+# calculate the road speed based on maxspeed tag
+include 'inc/roadspeed'; 
+
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
 junction=roundabout & highway=primary [0x0c road_class=3 road_speed=2 resolution 19]
