@@ -21,19 +21,47 @@ import java.util.regex.Pattern;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Returns the maxspeed converted to km/h.
+ * Returns the maxspeed converted either to km/h or mph.
+ * 
  * @author WanMil
  */
-public class MaxSpeedKmhFunction extends CachedFunction {
+public class MaxSpeedFunction extends CachedFunction {
+
+	public enum SpeedUnit {
+		KMH, MPH;
+
+		public double convert(double value, SpeedUnit valueUnit) {
+			if (this == valueUnit) {
+				// same unit => no conversion necessary
+				return value;
+			} else if (valueUnit == MPH) {
+				// not the same unit - value is mph => target is km/h => factor
+				// 1.61
+				return value * 1.61;
+			} else {
+				// not the same unit - value is kmh => target is mph => factor
+				// 1/1.61
+				return value / 1.61;
+			}
+		}
+	}
+
 	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
-	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
-	private static final Pattern REMOVE_KMH_PATTERN = Pattern.compile("[ \t]*km/?h");
+	private static final Pattern REMOVE_MPH_PATTERN = Pattern
+			.compile("[ \t]*mph");
+	private static final Pattern REMOVE_KMH_PATTERN = Pattern
+			.compile("[ \t]*km/?h");
 
-	private final DecimalFormat nf = new DecimalFormat("0.0#", DecimalFormatSymbols.getInstance(Locale.US));
+	private final DecimalFormat nf = new DecimalFormat("0.0#",
+			DecimalFormatSymbols.getInstance(Locale.US));
 
-	public MaxSpeedKmhFunction() {
+	private final SpeedUnit unit;
+
+	public MaxSpeedFunction(SpeedUnit unit) {
 		// requires maxspeed
 		super("maxspeed");
+
+		this.unit = unit;
 	}
 
 	protected String calcImpl(Element el) {
@@ -43,31 +71,39 @@ public class MaxSpeedKmhFunction extends CachedFunction {
 			// there is no maxspeed => function has no value
 			return null;
 		}
-		
+
 		String speedTag = tagValue.toLowerCase().trim();
-		
-		double factor = 1.0;
+
+		// take KMH as default
+		SpeedUnit speedTagUnit = SpeedUnit.KMH;
 		if (ENDS_IN_MPH_PATTERN.matcher(speedTag).matches()) {
 			// Check if it is a limit in mph
 			speedTag = REMOVE_MPH_PATTERN.matcher(speedTag).replaceFirst("");
-			factor = 1.61;
+			speedTagUnit = SpeedUnit.MPH;
 		} else
-			speedTag = REMOVE_KMH_PATTERN.matcher(speedTag).replaceFirst("");  // get rid of kmh just in case
+			// get rid of kmh just in case
+			speedTag = REMOVE_KMH_PATTERN.matcher(speedTag).replaceFirst("");
 
-		double kmh;
 		try {
-			kmh = Integer.parseInt(speedTag) * factor;
+			// convert to the target unit
+			double speed = this.unit.convert(Integer.parseInt(speedTag), speedTagUnit);
+			// format with two decimals
+			return nf.format(speed);
 		} catch (Exception e) {
 			// parse error => maxspeed cannot be calculated
 			return null;
-		}		
-		
-		// format with two decimals
-		return nf.format(kmh);
+		}
+
 	}
 
 	public String getName() {
-		return "maxspeedkmh";
+		switch (this.unit) {
+		case MPH:
+			return "maxspeedmph";
+		case KMH:
+		default:
+			return "maxspeedkmh";
+		}
 	}
 
 	public boolean supportsWay() {
