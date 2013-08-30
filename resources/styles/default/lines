@@ -9,7 +9,7 @@
 # for more information.
 
 include 'inc/address';
-
+include 'inc/refs';
 
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]

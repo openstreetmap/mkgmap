@@ -568,38 +568,11 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
-	private String combineRefs(Element element) {
-		String ref = Label.squashSpaces(element.getTag("ref"));
-		String int_ref = Label.squashSpaces(element.getTag("int_ref"));
-		if(int_ref != null) {
-			if(ref == null)
-				ref = int_ref;
-			else
-				ref += ";" + int_ref;
-		}
-		String nat_ref = Label.squashSpaces(element.getTag("nat_ref"));
-		if(nat_ref != null) {
-			if(ref == null)
-				ref = nat_ref;
-			else
-				ref += ";" + nat_ref;
-		}
-		String reg_ref = Label.squashSpaces(element.getTag("reg_ref"));
-		if(reg_ref != null) {
-			if(ref == null)
-				ref = reg_ref;
-			else
-				ref += ";" + reg_ref;
-		}
-
-		return ref;
-	}
-
 	private boolean displayNameWarning = true;
 	
 	private void elementSetup(MapElement ms, GType gt, Element element) {
 		String name = Label.squashSpaces(element.getName());
-		String refs = combineRefs(element);
+		String refs = Label.squashSpaces(element.getTag("mkgmap:ref")); 
 		
 		// Insert mkgmap:display_name as first ref.
 		// This causes mkgmap:display_name to be displayed in routing 

@@ -11,11 +11,7 @@
 exit:facility
 exit:road_ref
 exit:to
-int_ref
 junction
 name
-nat_ref
 oneway
-ref
-reg_ref
 type

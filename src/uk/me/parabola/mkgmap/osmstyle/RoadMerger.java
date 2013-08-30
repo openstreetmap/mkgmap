@@ -32,10 +32,7 @@ public class RoadMerger {
 	
 		private final static Set<String> flatCompareTags = new HashSet<String>() {
 			{
-				add("ref");
-				add("int_ref");
-				add("nat_ref");
-				add("reg_ref");
+				add("mkgmap:ref");
 				add("mkgmap:display_name");
 				add("mkgmap:postal_code");
 				add("mkgmap:city");

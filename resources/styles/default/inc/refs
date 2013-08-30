@@ -1,0 +1,29 @@
+#
+#
+#
+#
+#
+#
+
+ref=*  { set mkgmap:ref='${ref};${int_ref};${nat_ref};${reg_ref}' |
+                        '${ref};${int_ref};${nat_ref}' | 
+                        '${ref};${int_ref};${reg_ref}' | 
+                        '${ref};${int_ref}' | 
+                        '${ref};${nat_ref};${reg_ref}' |
+                        '${ref};${nat_ref}' |
+                        '${ref};${reg_ref}' |
+                        '${ref}'  
+                        }
+
+ref!=* & int_ref=* { set mkgmap:ref='${int_ref};${nat_ref};${reg_ref}' |
+                                    '${int_ref};${nat_ref}' |
+                                    '${int_ref};${reg_ref}' |
+                                    '${int_ref}' 
+                                    }
+                                    
+ref!=* & int_ref!=* & nat_ref=* { set mkgmap:ref='${nat_ref};${reg_ref}' | 
+                                                 '${nat_ref}'
+                                                 }                                    
+
+ref!=* & int_ref!=* & nat_ref!=* & reg_ref=* { set mkgmap:ref='${reg_ref}' }                                    
+                                    
