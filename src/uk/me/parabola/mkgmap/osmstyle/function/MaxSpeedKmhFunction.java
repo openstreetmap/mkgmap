@@ -27,7 +27,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
 public class MaxSpeedKmhFunction extends CachedFunction {
 	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
 	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
-	private static final Pattern REMOVE_KMH_PATTERN = Pattern.compile("[ \t]*kmh");
+	private static final Pattern REMOVE_KMH_PATTERN = Pattern.compile("[ \t]*km/?h");
 
 	private final DecimalFormat nf = new DecimalFormat("0.0#", DecimalFormatSymbols.getInstance(Locale.US));
 
