@@ -67,6 +67,8 @@ public class ActionReader {
 			} else if ("delete".equals(cmd)) {
 				String tag = scanner.nextWord();
 				actions.add(new DeleteAction(tag));
+			} else if ("deletealltags".equals(cmd)) {
+				actions.add(new DeleteAllTagsAction());
 			} else if ("rename".equals(cmd)) {
 				String from = scanner.nextWord();
 				String to = scanner.nextWord();
