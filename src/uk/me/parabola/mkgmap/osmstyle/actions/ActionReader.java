@@ -80,6 +80,9 @@ public class ActionReader {
 			} else if ("echo".equals(cmd)) {
 				String str = scanner.nextWord();
 				actions.add(new EchoAction(str));
+			} else if ("echotags".equals(cmd)) {
+				String str = scanner.nextWord();
+				actions.add(new EchoTagsAction(str));
 			} else {
 				throw new SyntaxException(scanner, "Unrecognised command '" + cmd + '\'');
 			}
