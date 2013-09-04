@@ -158,7 +158,9 @@ public class OsmBinHandler extends OsmHandler {
 				for (int j = 0; j < binRel.getKeysCount(); j++) {
 					String key = getStringById(binRel.getKeys(j));
 					String val = getStringById(binRel.getVals(j));
-					key = keepTag(key, val);
+					if ("type".equals(key) == false)
+						// type is required for relations - all other tags are filtered
+						key = keepTag(key, val);
 					if (key == null)
 						tagsIncomplete = true;
 					else
