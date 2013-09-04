@@ -38,7 +38,6 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 		usedTags.add("delivery");
 		usedTags.add("emergency");
 		usedTags.add("except");
-		usedTags.add("exception");
 		usedTags.add("foot");
 		usedTags.add("goods");
 		usedTags.add("hgv");

@@ -132,8 +132,6 @@ public class RestrictionRelation extends Relation {
 		}
 
 		String except = getTag("except");
-		if(except == null)
-			except = getTag("exception"); // be nice
 		if(except != null) {
 			for(String e : except.split("[,;]")) { // be nice
 				e = e.trim();
