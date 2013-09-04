@@ -63,7 +63,7 @@ public class RoadMerger {
 				add("mkgmap:road-speed-max");
 				add("mkgmap:road-speed-min");
 				add("mkgmap:carpool");
-				add("toll");
+				add("mkgmap:toll");
 				add("mkgmap:unpaved");
 				add("mkgmap:ferry");
 			}

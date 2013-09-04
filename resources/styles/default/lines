@@ -17,6 +17,9 @@ aeroway=taxiway [0x27 resolution 24]
 # Assign the street name for house number search
 highway=* & name=* { set mkgmap:street='${name}' }
 
+# Mark highways with the toll flag
+highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
+
 # Remove access=yes from highways.
 highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.

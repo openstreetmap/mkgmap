@@ -110,8 +110,8 @@ public class StyledConverter implements OsmConverter {
 	private List<GType> roadTypes = new ArrayList<GType>();
 	private List<Way> lines = new ArrayList<Way>();
 	private List<GType> lineTypes = new ArrayList<GType>();
-	HashMap<Long, Way> modifiedRoads = new HashMap<Long, Way>();
-	HashSet<Long> deletedRoads = new HashSet<Long>();
+	private HashMap<Long, Way> modifiedRoads = new HashMap<Long, Way>();
+	private HashSet<Long> deletedRoads = new HashSet<Long>();
 
 	private double minimumArcLength;
 	
@@ -1539,7 +1539,7 @@ public class StyledConverter implements OsmConverter {
 
 		road.setAccess(noAccess);
 
-		if(way.isBoolTag("toll"))
+		if(way.isBoolTag("mkgmap:toll"))
 			road.setToll();
 
 		// by default, ways are paved
