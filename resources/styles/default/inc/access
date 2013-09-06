@@ -25,6 +25,20 @@
 #		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
 #	};
 
+# Remove access=yes from highways.
+highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
+# Translate motor_vehicle and vehicle access rules.
+highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
+highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
+
+highway=* & motorroad=yes {add bicycle = no; add foot = no}
+highway=motorway|highway=motorway_link  {add oneway = yes; add bicycle = no; add foot = no }
+highway=pedestrian & area!=yes {add access = no; add foot = yes} 
+highway=bridleway {add access = no; add bicycle = yes; add foot = yes}
+highway=cycleway {add access = no; add bicycle = yes; add foot = yes}
+highway=footway|highway=path|highway=steps {add access = no; add foot = yes}
+railway=platform {add access = no; add foot = yes}
+
 # normalize the tags
 access=private     { set access=no }
 bicycle=private    { set bicycle=no }

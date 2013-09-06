@@ -10,7 +10,6 @@
 
 include 'inc/address';
 include 'inc/refs';
-include 'inc/access';
 
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
@@ -116,6 +115,8 @@ leisure=track & area!=yes
 
 # calculate the road speed based on maxspeed tag
 include 'inc/roadspeed'; 
+# calculate the access rules
+include 'inc/access';
 
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
@@ -138,10 +139,10 @@ highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
 highway=motorway & network=e-road [0x01 resolution 14-14 continue]
-highway=motorway  {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 15]
-highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) { add oneway = yes; add bicycle = no; add foot = no; } [0x06 road_class=3 road_speed=2 resolution 20]
-highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 20]
-highway=* & motorroad=yes {add bicycle = no; add foot = no}
+highway=motorway  [0x01 road_class=4 road_speed=7 resolution 15]
+highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
+highway=motorway_link [0x09 road_class=3 road_speed=2 resolution 20]
+
 highway=trunk & ( network=e-road | int_ref=* ) [0x02 resolution 15-17 continue]
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
 highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
@@ -160,10 +161,10 @@ highway=unclassified [0x06 road_class=0 road_speed=3 resolution 21]
 
 # Some countries allow, others disallow bicycling on pedestrian streets.
 # To allow bicycling, add 'add bicycle=yes'
-highway=pedestrian & area!=yes {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 22]
+highway=pedestrian & area!=yes [0x16 road_class=0 road_speed=0 resolution 22]
 highway=living_street [0x06 road_class=0 road_speed=1 resolution 22]
 highway=residential [0x06 road_class=0 road_speed=2 resolution 22]
-highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=0 resolution 23]
+highway=bridleway [0x07 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 
 highway=service & service=parking_aisle
@@ -172,9 +173,9 @@ highway=service & (service=alley|service=driveway)
 [0x07 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=2 resolution 22]
 
-highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=1 resolution 23]
+highway=cycleway [0x07 road_class=0 road_speed=1 resolution 23]
 
-highway=footway|highway=path|highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+highway=footway|highway=path|highway=steps [0x16 road_class=0 road_speed=0 resolution 23]
 highway=track [0x0a road_class=0 road_speed=1 resolution 22]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 22]
 highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 22]
@@ -186,7 +187,7 @@ natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 21]
 
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
-railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+railway=platform [0x16 road_class=0 road_speed=0 resolution 23]
 railway=* & !(tunnel=yes) [0x14 resolution 22]
 
 man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
