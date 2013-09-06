@@ -1,0 +1,94 @@
+#	public static final int NO_EMERGENCY = 0;
+#	public static final int NO_DELIVERY = 1;
+#	public static final int NO_CAR = 2;
+#	public static final int NO_BUS = 3;
+#	public static final int NO_TAXI = 4;
+#	public static final int NO_FOOT = 5;
+#	public static final int NO_BIKE = 6;
+#	public static final int NO_TRUCK = 7;
+#	public static final int NO_CARPOOL = 8;
+#	public static final int NO_MAX = 9;
+#
+#
+#	private final AccessMapping[] accessMap = {
+#		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
+#		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
+#		new AccessMapping("carpool",    RoadNetwork.NO_CARPOOL),
+#		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
+#		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
+#		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
+#		new AccessMapping("motorcycle", RoadNetwork.NO_CAR),
+#		new AccessMapping("psv",        RoadNetwork.NO_BUS),
+#		new AccessMapping("taxi",       RoadNetwork.NO_TAXI),
+#		new AccessMapping("emergency",  RoadNetwork.NO_EMERGENCY),
+#		new AccessMapping("delivery",   RoadNetwork.NO_DELIVERY),
+#		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
+#	};
+
+# normalize the tags
+access=private     { set access=no }
+bicycle=private    { set bicycle=no }
+carpool=private    { set carpool=no }
+foot=private       { set foot=no }
+hgv=private        { set hgv=no }
+motorcar=private   { set motorcar=no }
+motorcycle=private { set motorcycle=no }
+psv=private        { set psv=no }
+taxi=private       { set taxi=no }
+emergency=private  { set emergency=no }
+delivery=private   { set delivery=no }
+goods=private      { set goods=no }
+
+
+access=* & (access=designated | access=permissive | access=official)     { set access=yes }
+bicycle=* & (bicycle=designated | bicycle=permissive | bicycle=official)     { set bicycle=yes }
+carpool=* & (carpool=designated | carpool=permissive | carpool=official)     { set carpool=yes }
+foot=* & (foot=designated | foot=permissive | foot=official)     { set foot=yes }
+hgv=* & (hgv=designated | hgv=permissive | hgv=official)     { set hgv=yes }
+motorcar=* & (motorcar=designated | motorcar=permissive | motorcar=official)     { set motorcar=yes }
+motorcycle=* & (motorcycle=designated | motorcycle=permissive | motorcycle=official)     { set motorcycle=yes }
+psv=* & (psv=designated | psv=permissive | psv=official)     { set psv=yes }
+taxi=* & (taxi=designated | taxi=permissive | taxi=official)     { set taxi=yes }
+emergency=* & (emergency=designated | emergency=permissive | emergency=official)     { set emergency=yes }
+delivery=* & (delivery=designated | delivery=permissive | delivery=official)     { set delivery=yes }
+goods=* & (goods=designated | goods=permissive | goods=official)     { set goods=yes }
+
+
+motorcar=destination   { set mkgmap:access:nothroughroute=yes; delete motorcar } 
+motorcycle=destination { set mkgmap:access:nothroughroute=yes; delete motorcycle } 
+access=destination     { set mkgmap:access:nothroughroute=yes; delete access }
+bicycle=destination    { delete bicycle }
+carpool=destination    { delete carpool }      
+foot=destination       { delete foot }                  
+hgv=destination        { delete hgv }                  
+psv=destination        { delete psv }                  
+taxi=destination       { delete taxi }                  
+emergency=destination  { delete emergency }                  
+delivery=destination   { delete delivery }                  
+goods=destination      { delete goods }                  
+
+# the access tag defines all restrictions
+access=* { set mkgmap:access:emergency='${access}'; 
+            set mkgmap:access:delivery='${access}'; 
+            set mkgmap:access:car='${access}'; 
+            set mkgmap:access:bus='${access}'; 
+            set mkgmap:access:taxi='${access}';
+            set mkgmap:access:foot='${access}';
+            set mkgmap:access:bike='${access}';
+            set mkgmap:access:truck='${access}';
+            set mkgmap:access:carpool='${access}';
+            }
+            
+# set (override) specific restrictions                        
+bicycle=*    { set mkgmap:access:bike='${bicycle}' }
+carpool=*    { set mkgmap:access:carpool='${carpool}' }      
+foot=*       { set mkgmap:access:foot='${foot}' }                  
+hgv=*        { set mkgmap:access:truck='${hgv}' }                  
+motorcar=*   { set mkgmap:access:car='${motorcar}' }
+motorcycle=* { set mkgmap:access:car='${motorcycle}'s }                  
+psv=*        { set mkgmap:access:bus='${psv}' }                  
+taxi=*       { set mkgmap:access:taxi='${taxi}' }                  
+emergency=*  { set mkgmap:access:emergency='${emergency}' }                  
+delivery=*   { set mkgmap:access:delivery='${delivery}' }                  
+goods=*      { set mkgmap:access:delivery='${goods}' }                  
+

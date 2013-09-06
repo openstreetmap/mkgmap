@@ -9,6 +9,7 @@
 # for more information.
 
 include 'inc/address';
+include 'inc/access';
 
 
 internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]
@@ -164,7 +165,7 @@ healthcare=* | amenity=dentist | amenity=doctors [0x3002 resolution 24]
 
 highway=bus_stop [0x2f17 resolution 24]
 
-highway=motorway_junction [0x2000 resolution 24]
+highway=motorway_junction [0x2100 resolution 24]
 
 highway=services & mkgmap:area2poi!=true [0x210f resolution 24 default_name 'Services']
 

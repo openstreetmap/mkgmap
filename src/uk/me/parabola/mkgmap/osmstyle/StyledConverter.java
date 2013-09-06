@@ -17,6 +17,7 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -128,30 +129,6 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
 	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
-
-	class AccessMapping {
-		private final String type;
-		private final int index;
-		AccessMapping(String type, int index) {
-			this.type = type;
-			this.index = index;
-		}
-	}
-
-	private final AccessMapping[] accessMap = {
-		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
-		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
-		new AccessMapping("carpool",    RoadNetwork.NO_CARPOOL),
-		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
-		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
-		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
-		new AccessMapping("motorcycle", RoadNetwork.NO_CAR),
-		new AccessMapping("psv",        RoadNetwork.NO_BUS),
-		new AccessMapping("taxi",       RoadNetwork.NO_TAXI),
-		new AccessMapping("emergency",  RoadNetwork.NO_EMERGENCY),
-		new AccessMapping("delivery",   RoadNetwork.NO_DELIVERY),
-		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
-	};
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -905,11 +882,12 @@ public class StyledConverter implements OsmConverter {
 
 						// copy all of the POI's access restrictions
 						// to the way segment
-						for (AccessMapping anAccessMap : accessMap) {
-							String accessType = anAccessMap.type;
-							String accessModifier = node.getTag(accessType);
-							if(accessModifier != null)
-								way.addTag(accessType, accessModifier);
+						for (String accessTagEnd : Arrays.asList("bike","carpool","foot","truck","car","bus","taxi","emergency","delivery", "nothroughroute")) {
+							String accessTag = "mkgmap:access:"+accessTagEnd;
+							String accessTagValue = node.getTag(accessTag);
+							if(accessTagValue != null)
+								way.addTag(accessTag, accessTagValue);
+							
 						}
 					}
 				}
@@ -1470,72 +1448,31 @@ public class StyledConverter implements OsmConverter {
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
-		String highwayType = way.getTag("highway");
-		if(highwayType == null) {
-			// it's a routable way but not a highway (e.g. a ferry)
-			// use the value of the route tag as the highwayType for
-			// the purpose of testing for access restrictions
-			highwayType = way.getTag("route");
-		}
-
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		for (AccessMapping anAccessMap : accessMap) {
-			int index = anAccessMap.index;
-			String type = anAccessMap.type;
-			String accessTagValue = way.getTag(type);
-			if (accessTagValue == null)
-				continue;
-			if (accessExplicitlyDenied(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is denied access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = true;
-				} else {
-					// just the specific vehicle class is denied
-					// access
-					noAccess[index] = true;
-				}
-				log.debug(type + " is not allowed in " + highwayType + " " + debugWayName);
-			} else if (accessExplicitlyAllowed(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is allowed access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = false;
-				} else {
-					// just the specific vehicle class is allowed
-					// access
-					noAccess[index] = false;
-				}
-				log.debug(type + " is allowed in " + highwayType + " " + debugWayName);
-			}
-			else if (accessTagValue.equalsIgnoreCase("destination")) {
-				if (type.equals("motorcar") ||
-				    type.equals("motorcycle")) {
-					road.setNoThroughRouting();
-				} else if (type.equals("access")) {
-					log.info("access=destination only affects routing for cars in " + highwayType + " " + debugWayName);
-					road.setNoThroughRouting();
-				} else {
-					log.info(type + "=destination ignored in " + highwayType + " " + debugWayName);
-				}
-			} else if (accessTagValue.equalsIgnoreCase("unknown")) {
-				// implicitly allow access
-			} else {
-				log.info("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
-			}
-		}
-
 		if(way.isBoolTag("mkgmap:carpool")) {
 			// to make a way into a "carpool lane" all access disable
 			// bits must be set except for CARPOOL and EMERGENCY (BUS
 			// can also be clear)
 			road.setNoThroughRouting();
-			for (int j = 1; j < accessMap.length; ++j)
-				noAccess[accessMap[j].index] = true;
+			Arrays.fill(noAccess, true);
 			noAccess[RoadNetwork.NO_CARPOOL] = false;
 			noAccess[RoadNetwork.NO_EMERGENCY] = false;
 			noAccess[RoadNetwork.NO_BUS] = false;
+		} else {
+		noAccess[RoadNetwork.NO_EMERGENCY] = "no".equals("mkgmap:access:emergency");
+		noAccess[RoadNetwork.NO_DELIVERY]  = "no".equals("mkgmap:access:delivery");
+		noAccess[RoadNetwork.NO_CAR]       = "no".equals("mkgmap:access:car");
+		noAccess[RoadNetwork.NO_BUS]       = "no".equals("mkgmap:access:bus");
+		noAccess[RoadNetwork.NO_TAXI]      = "no".equals("mkgmap:access:taxi");
+		noAccess[RoadNetwork.NO_FOOT]      = "no".equals("mkgmap:access:foot");
+		noAccess[RoadNetwork.NO_BIKE]      = "no".equals("mkgmap:access:bike");
+		noAccess[RoadNetwork.NO_TRUCK]     = "no".equals("mkgmap:access:truck");
+		noAccess[RoadNetwork.NO_CARPOOL]   = "no".equals("mkgmap:access:carpool");
+
+		if (way.isBoolTag("mkgmap:access:nothroughroute")) {
+			road.setNoThroughRouting();
 		}
+}
 
 		road.setAccess(noAccess);
 

@@ -30,6 +30,19 @@ public class RoadMerger {
 		private final Way way;
 		private final GType gtype;
 	
+		private final static Set<String> valueNoCompareTags = new HashSet<String>() { {
+			add("mkgmap:access:emergency");
+			add("mkgmap:access:delivery");
+			add("mkgmap:access:car");
+			add("mkgmap:access:bus");
+			add("mkgmap:access:taxi");
+			add("mkgmap:access:foot");
+			add("mkgmap:access:bike");
+			add("mkgmap:access:truck");
+			add("mkgmap:access:carpool");
+		}
+		};
+		
 		private final static Set<String> flatCompareTags = new HashSet<String>() {
 			{
 				add("mkgmap:ref");
@@ -39,18 +52,7 @@ public class RoadMerger {
 				add("mkgmap:region");
 				add("mkgmap:country");
 				add("mkgmap:is_in");
-				add("access");
-				add("bicycle");
-				add("carpool");
-				add("foot");
-				add("hgv");
-				add("motorcar");
-				add("motorcycle");
-				add("psv");
-				add("taxi");
-				add("emergency");
-				add("delivery");
-				add("goods");
+				add("mkgmap:carpool");
 				add("mkgmap:skipSizeFilter");
 				add("junction");
 				add("mkgmap:synthesised");
@@ -193,6 +195,15 @@ public class RoadMerger {
 					log.debug(tagname,"does not match",way.getId(),"("+thisTag+")",otherWay.getId(),"("+otherTag+")");
 //					log.warn(way.getId(), way.toTagString());
 //					log.warn(otherWay.getId(), otherWay.toTagString());
+					return false;
+				}
+			}
+			
+			for (String tagname : valueNoCompareTags) {
+				boolean thisNo = "no".equals(getWay().getTag(tagname));
+				boolean otherNo = "no".equals(otherWay.getTag(tagname));
+				if (thisNo != otherNo) {
+					log.debug(tagname,"does not match",way.getId(),"("+getWay().getTag(tagname)+")",otherWay.getId(),"("+otherWay.getTag(tagname)+")");
 					return false;
 				}
 			}
