@@ -82,7 +82,7 @@ public abstract class Element implements Iterable<String> {
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
+		if (val.equals("yes") || val.equals("true") ||  val.equals("1"))
 			return true;
 
 		return false;
@@ -104,7 +104,7 @@ public abstract class Element implements Iterable<String> {
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
+		if (val.equals("no") || val.equals("false") || val.equals("0"))
 			return true;
 
 		return false;
