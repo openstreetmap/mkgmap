@@ -28,6 +28,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
+import uk.me.parabola.imgfmt.app.Coord;
+
 /**
  * Some miscellaneous functions that are used within the .img code.
  *
@@ -225,6 +227,23 @@ public class Utils {
 		return (val + (1 << shift) - 1) >>> shift << shift;
 	} 
 	
-	
+	/**
+	 * Calculates the angle between the two segments (c1,c2),(c2,c3).
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return angle between the two segments in degree [-180;180]
+	 */
+	public static double getAngle(Coord c1, Coord c2, Coord c3) {
+		double a = c1.bearingTo(c2);
+		double b = c2.bearingTo(c3);
+		double angle = b - a;
+		while(angle > 180)
+			angle -= 360;
+		while(angle < -180)
+			angle += 360;
+		
+		return angle;
+	}
 }
 
