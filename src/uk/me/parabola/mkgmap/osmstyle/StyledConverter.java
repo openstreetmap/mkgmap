@@ -89,6 +89,19 @@ public class StyledConverter implements OsmConverter {
 
 	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
+	/** all tags used for access restrictions */
+	private final static List<String> ACCESS_TAGS = Arrays.asList(
+			"mkgmap:access:bike", 
+			"mkgmap:access:carpool",
+			"mkgmap:access:foot", 
+			"mkgmap:access:truck", 
+			"mkgmap:access:car",
+			"mkgmap:access:bus", 
+			"mkgmap:access:taxi",
+			"mkgmap:access:emergency", 
+			"mkgmap:access:delivery",
+			"mkgmap:access:nothroughroute");
+	
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
 	private static final int MAX_LINE_LENGTH = 40000;
@@ -657,6 +670,15 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	private boolean hasAccessRestriction(Element osmElement) {
+		for (String tag : ACCESS_TAGS) {
+			if ("no".equals(osmElement.getTag(tag))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	void addRoad(Way way, GType gt) {
 
 		String oneWay = way.getTag("oneway");
@@ -819,7 +841,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 
-			// now look for POIs that have the "access" tag defined -
+			// now look for POIs that have an access restriction defined -
 			// if they do, copy the access permissions to the way -
 			// what we want to achieve is modifying the way's access
 			// permissions where it passes through the POI without
@@ -837,7 +859,7 @@ public class StyledConverter implements OsmConverter {
 				if(p instanceof CoordPOI) {
 					CoordPOI cp = (CoordPOI)p;
 					Node node = cp.getNode();
-					if(node.getTag("access") != null) {
+					if(hasAccessRestriction(node)) {
 						// if this or the next point are not the last
 						// points in the way, split at the next point
 						// taking care not to produce a short arc
@@ -882,10 +904,9 @@ public class StyledConverter implements OsmConverter {
 
 						// copy all of the POI's access restrictions
 						// to the way segment
-						for (String accessTagEnd : Arrays.asList("bike","carpool","foot","truck","car","bus","taxi","emergency","delivery", "nothroughroute")) {
-							String accessTag = "mkgmap:access:"+accessTagEnd;
+						for (String accessTag : ACCESS_TAGS) {
 							String accessTagValue = node.getTag(accessTag);
-							if(accessTagValue != null)
+							if("no".equals(accessTagValue))
 								way.addTag(accessTag, accessTagValue);
 							
 						}
@@ -901,7 +922,7 @@ public class StyledConverter implements OsmConverter {
 					if(p1 instanceof CoordPOI) {
 						CoordPOI cp = (CoordPOI)p1;
 						Node node = cp.getNode();
-						if(node.getTag("access") != null) {
+						if(hasAccessRestriction(node)) {
 							// check if this point is further away
 							// from the POI than we would like
 							double dist = p.distance(p1);
