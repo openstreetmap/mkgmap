@@ -44,7 +44,7 @@ public class RoadMerger {
 		private final Way way;
 		private final GType gtype;
 
-		private final static Set<String> valueNoCompareTags = new HashSet<String>() {
+		private final static Set<String> valueNotBoolCompareTags = new HashSet<String>() {
 			{
 				add("mkgmap:access:emergency");
 				add("mkgmap:access:delivery");
@@ -59,6 +59,15 @@ public class RoadMerger {
 			}
 		};
 
+		private final static Set<String> valueBoolCompareTags = new HashSet<String>() {
+			{
+				add("mkgmap:carpool");
+				add("mkgmap:toll");
+				add("mkgmap:unpaved");
+				add("mkgmap:ferry");
+			}
+		};
+		
 		private final static Set<String> flatCompareTags = new HashSet<String>() {
 			{
 				add("mkgmap:ref");
@@ -68,7 +77,6 @@ public class RoadMerger {
 				add("mkgmap:region");
 				add("mkgmap:country");
 				add("mkgmap:is_in");
-				add("mkgmap:carpool");
 				add("mkgmap:skipSizeFilter");
 				add("junction");
 				add("mkgmap:synthesised");
@@ -80,10 +88,6 @@ public class RoadMerger {
 				add("mkgmap:road-speed");
 				add("mkgmap:road-speed-max");
 				add("mkgmap:road-speed-min");
-				add("mkgmap:carpool");
-				add("mkgmap:toll");
-				add("mkgmap:unpaved");
-				add("mkgmap:ferry");
 			}
 		};
 
@@ -222,7 +226,7 @@ public class RoadMerger {
 				}
 			}
 
-			for (String tagname : valueNoCompareTags) {
+			for (String tagname : valueNotBoolCompareTags) {
 				boolean thisNo = getWay().isNotBoolTag(tagname);
 				boolean otherNo = otherWay.isNotBoolTag(tagname);
 				if (thisNo != otherNo) {
@@ -233,6 +237,17 @@ public class RoadMerger {
 				}
 			}
 
+			for (String tagname : valueBoolCompareTags) {
+				boolean thisYes = getWay().isBoolTag(tagname);
+				boolean otherYes = otherWay.isBoolTag(tagname);
+				if (thisYes != otherYes) {
+					log.debug(tagname, "does not match", way.getId(), "("
+							+ getWay().getTag(tagname) + ")", otherWay.getId(),
+							"(" + otherWay.getTag(tagname) + ")");
+					return false;
+				}
+			}			
+			
 			Coord c1;
 			if (getWay().getPoints().get(0).equals(mergePoint)) {
 				c1 = getWay().getPoints().get(1);
