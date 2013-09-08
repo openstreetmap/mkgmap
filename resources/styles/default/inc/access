@@ -1,30 +1,3 @@
-#	public static final int NO_EMERGENCY = 0;
-#	public static final int NO_DELIVERY = 1;
-#	public static final int NO_CAR = 2;
-#	public static final int NO_BUS = 3;
-#	public static final int NO_TAXI = 4;
-#	public static final int NO_FOOT = 5;
-#	public static final int NO_BIKE = 6;
-#	public static final int NO_TRUCK = 7;
-#	public static final int NO_CARPOOL = 8;
-#	public static final int NO_MAX = 9;
-#
-#
-#	private final AccessMapping[] accessMap = {
-#		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
-#		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
-#		new AccessMapping("carpool",    RoadNetwork.NO_CARPOOL),
-#		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
-#		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
-#		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
-#		new AccessMapping("motorcycle", RoadNetwork.NO_CAR),
-#		new AccessMapping("psv",        RoadNetwork.NO_BUS),
-#		new AccessMapping("taxi",       RoadNetwork.NO_TAXI),
-#		new AccessMapping("emergency",  RoadNetwork.NO_EMERGENCY),
-#		new AccessMapping("delivery",   RoadNetwork.NO_DELIVERY),
-#		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
-#	};
-
 # Remove access=yes from highways.
 highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.
