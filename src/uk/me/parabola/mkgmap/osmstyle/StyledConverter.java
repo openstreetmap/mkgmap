@@ -100,7 +100,7 @@ public class StyledConverter implements OsmConverter {
 			"mkgmap:access:taxi",
 			"mkgmap:access:emergency", 
 			"mkgmap:access:delivery",
-			"mkgmap:access:nothroughroute");
+			"mkgmap:access:throughroute");
 	
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
@@ -672,7 +672,7 @@ public class StyledConverter implements OsmConverter {
 
 	private boolean hasAccessRestriction(Element osmElement) {
 		for (String tag : ACCESS_TAGS) {
-			if ("no".equals(osmElement.getTag(tag))) {
+			if (osmElement.isNotBoolTag(tag)) {
 				return true;
 			}
 		}
@@ -905,9 +905,8 @@ public class StyledConverter implements OsmConverter {
 						// copy all of the POI's access restrictions
 						// to the way segment
 						for (String accessTag : ACCESS_TAGS) {
-							String accessTagValue = node.getTag(accessTag);
-							if("no".equals(accessTagValue))
-								way.addTag(accessTag, accessTagValue);
+							if(node.isNotBoolTag(accessTag))
+								way.addTag(accessTag, "no");
 							
 						}
 					}
@@ -1480,17 +1479,17 @@ public class StyledConverter implements OsmConverter {
 			noAccess[RoadNetwork.NO_EMERGENCY] = false;
 			noAccess[RoadNetwork.NO_BUS] = false;
 		} else {
-		noAccess[RoadNetwork.NO_EMERGENCY] = "no".equals("mkgmap:access:emergency");
-		noAccess[RoadNetwork.NO_DELIVERY]  = "no".equals("mkgmap:access:delivery");
-		noAccess[RoadNetwork.NO_CAR]       = "no".equals("mkgmap:access:car");
-		noAccess[RoadNetwork.NO_BUS]       = "no".equals("mkgmap:access:bus");
-		noAccess[RoadNetwork.NO_TAXI]      = "no".equals("mkgmap:access:taxi");
-		noAccess[RoadNetwork.NO_FOOT]      = "no".equals("mkgmap:access:foot");
-		noAccess[RoadNetwork.NO_BIKE]      = "no".equals("mkgmap:access:bike");
-		noAccess[RoadNetwork.NO_TRUCK]     = "no".equals("mkgmap:access:truck");
-		noAccess[RoadNetwork.NO_CARPOOL]   = "no".equals("mkgmap:access:carpool");
+		noAccess[RoadNetwork.NO_EMERGENCY] = way.isNotBoolTag("mkgmap:access:emergency");
+		noAccess[RoadNetwork.NO_DELIVERY]  = way.isNotBoolTag("mkgmap:access:delivery");
+		noAccess[RoadNetwork.NO_CAR]       = way.isNotBoolTag("mkgmap:access:car");
+		noAccess[RoadNetwork.NO_BUS]       = way.isNotBoolTag("mkgmap:access:bus");
+		noAccess[RoadNetwork.NO_TAXI]      = way.isNotBoolTag("mkgmap:access:taxi");
+		noAccess[RoadNetwork.NO_FOOT]      = way.isNotBoolTag("mkgmap:access:foot");
+		noAccess[RoadNetwork.NO_BIKE]      = way.isNotBoolTag("mkgmap:access:bike");
+		noAccess[RoadNetwork.NO_TRUCK]     = way.isNotBoolTag("mkgmap:access:truck");
+		noAccess[RoadNetwork.NO_CARPOOL]   = way.isNotBoolTag("mkgmap:access:carpool");
 
-		if (way.isBoolTag("mkgmap:access:nothroughroute")) {
+		if (way.isNotBoolTag("mkgmap:access:throughroute")) {
 			road.setNoThroughRouting();
 		}
 }
@@ -1694,14 +1693,6 @@ public class StyledConverter implements OsmConverter {
 			val.equalsIgnoreCase("designated") ||
 			val.equalsIgnoreCase("permissive") ||
 			val.equalsIgnoreCase("official"));
-	}
-
-	protected boolean accessExplicitlyDenied(String val) {
-		if (val == null)
-			return false;
-
-		return (val.equalsIgnoreCase("no") ||
-			val.equalsIgnoreCase("private"));
 	}
 	
 	/**

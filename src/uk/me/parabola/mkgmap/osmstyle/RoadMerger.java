@@ -55,6 +55,7 @@ public class RoadMerger {
 				add("mkgmap:access:bike");
 				add("mkgmap:access:truck");
 				add("mkgmap:access:carpool");
+				add("mkgmap:access:throughroute");
 			}
 		};
 
@@ -222,8 +223,8 @@ public class RoadMerger {
 			}
 
 			for (String tagname : valueNoCompareTags) {
-				boolean thisNo = "no".equals(getWay().getTag(tagname));
-				boolean otherNo = "no".equals(otherWay.getTag(tagname));
+				boolean thisNo = getWay().isNotBoolTag(tagname);
+				boolean otherNo = otherWay.isNotBoolTag(tagname);
 				if (thisNo != otherNo) {
 					log.debug(tagname, "does not match", way.getId(), "("
 							+ getWay().getTag(tagname) + ")", otherWay.getId(),

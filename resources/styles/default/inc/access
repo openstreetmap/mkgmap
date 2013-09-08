@@ -41,9 +41,9 @@ delivery=* & (delivery=designated | delivery=permissive | delivery=official)    
 goods=* & (goods=designated | goods=permissive | goods=official)     { set goods=yes }
 
 
-motorcar=destination   { set mkgmap:access:nothroughroute=yes; delete motorcar } 
-motorcycle=destination { set mkgmap:access:nothroughroute=yes; delete motorcycle } 
-access=destination     { set mkgmap:access:nothroughroute=yes; delete access }
+motorcar=destination   { set mkgmap:access:throughroute=no; delete motorcar } 
+motorcycle=destination { set mkgmap:access:throughroute=no; delete motorcycle } 
+access=destination     { set mkgmap:access:throughroute=no; delete access }
 bicycle=destination    { delete bicycle }
 carpool=destination    { delete carpool }      
 foot=destination       { delete foot }                  
