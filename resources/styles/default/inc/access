@@ -41,9 +41,9 @@ delivery=* & (delivery=designated | delivery=permissive | delivery=official)    
 goods=* & (goods=designated | goods=permissive | goods=official)     { set goods=yes }
 
 
-motorcar=destination   { set mkgmap:access:throughroute=no; delete motorcar } 
-motorcycle=destination { set mkgmap:access:throughroute=no; delete motorcycle } 
-access=destination     { set mkgmap:access:throughroute=no; delete access }
+motorcar=destination   { set mkgmap:throughroute=no; delete motorcar } 
+motorcycle=destination { set mkgmap:throughroute=no; delete motorcycle } 
+access=destination     { set mkgmap:throughroute=no; delete access }
 bicycle=destination    { delete bicycle }
 carpool=destination    { delete carpool }      
 foot=destination       { delete foot }                  
@@ -55,27 +55,27 @@ delivery=destination   { delete delivery }
 goods=destination      { delete goods }                  
 
 # the access tag defines all restrictions
-access=* { set mkgmap:access:emergency='${access}'; 
-            set mkgmap:access:delivery='${access}'; 
-            set mkgmap:access:car='${access}'; 
-            set mkgmap:access:bus='${access}'; 
-            set mkgmap:access:taxi='${access}';
-            set mkgmap:access:foot='${access}';
-            set mkgmap:access:bike='${access}';
-            set mkgmap:access:truck='${access}';
-            set mkgmap:access:carpool='${access}';
+access=* { set mkgmap:emergency='${access}'; 
+            set mkgmap:delivery='${access}'; 
+            set mkgmap:car='${access}'; 
+            set mkgmap:bus='${access}'; 
+            set mkgmap:taxi='${access}';
+            set mkgmap:foot='${access}';
+            set mkgmap:bike='${access}';
+            set mkgmap:truck='${access}';
+            set mkgmap:carpool='${access}';
             }
             
 # set (override) specific restrictions                        
-bicycle=*    { set mkgmap:access:bike='${bicycle}' }
-carpool=*    { set mkgmap:access:carpool='${carpool}' }      
-foot=*       { set mkgmap:access:foot='${foot}' }                  
-hgv=*        { set mkgmap:access:truck='${hgv}' }                  
-motorcar=*   { set mkgmap:access:car='${motorcar}' }
-motorcycle=* { set mkgmap:access:car='${motorcycle}'s }                  
-psv=*        { set mkgmap:access:bus='${psv}' }                  
-taxi=*       { set mkgmap:access:taxi='${taxi}' }                  
-emergency=*  { set mkgmap:access:emergency='${emergency}' }                  
-delivery=*   { set mkgmap:access:delivery='${delivery}' }                  
-goods=*      { set mkgmap:access:delivery='${goods}' }                  
+bicycle=*    { set mkgmap:bike='${bicycle}' }
+carpool=*    { set mkgmap:carpool='${carpool}' }      
+foot=*       { set mkgmap:foot='${foot}' }                  
+hgv=*        { set mkgmap:truck='${hgv}' }                  
+motorcar=*   { set mkgmap:car='${motorcar}' }
+motorcycle=* { set mkgmap:car='${motorcycle}'s }                  
+psv=*        { set mkgmap:bus='${psv}' }                  
+taxi=*       { set mkgmap:taxi='${taxi}' }                  
+emergency=*  { set mkgmap:emergency='${emergency}' }                  
+delivery=*   { set mkgmap:delivery='${delivery}' }                  
+goods=*      { set mkgmap:delivery='${goods}' }                  
 

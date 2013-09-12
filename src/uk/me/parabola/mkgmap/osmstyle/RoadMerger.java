@@ -46,16 +46,16 @@ public class RoadMerger {
 
 		private final static Set<String> valueNotBoolCompareTags = new HashSet<String>() {
 			{
-				add("mkgmap:access:emergency");
-				add("mkgmap:access:delivery");
-				add("mkgmap:access:car");
-				add("mkgmap:access:bus");
-				add("mkgmap:access:taxi");
-				add("mkgmap:access:foot");
-				add("mkgmap:access:bike");
-				add("mkgmap:access:truck");
-				add("mkgmap:access:carpool");
-				add("mkgmap:access:throughroute");
+				add("mkgmap:emergency");
+				add("mkgmap:delivery");
+				add("mkgmap:car");
+				add("mkgmap:bus");
+				add("mkgmap:taxi");
+				add("mkgmap:foot");
+				add("mkgmap:bike");
+				add("mkgmap:truck");
+				add("mkgmap:carpool");
+				add("mkgmap:throughroute");
 			}
 		};
 
