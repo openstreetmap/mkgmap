@@ -61,7 +61,6 @@ public class RoadMerger {
 
 		private final static Set<String> valueBoolCompareTags = new HashSet<String>() {
 			{
-				add("mkgmap:carpool");
 				add("mkgmap:toll");
 				add("mkgmap:unpaved");
 				add("mkgmap:ferry");

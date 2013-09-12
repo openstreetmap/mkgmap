@@ -221,6 +221,23 @@ public class StyledConverter implements OsmConverter {
 					// Not sure if this is needed as this really is a completely new way.
 					// originalWay.put(el, way);
 				}
+				if (type.isRoad()) {
+					if (el.isNotBoolTag("mkgmap:access")) {
+						for (String accessTag : ACCESS_TAGS) {
+							el.addTag(accessTag, "no");
+						}
+					} else if (way.isBoolTag("mkgmap:carpool")) {
+						// to make a way into a "carpool lane" all access disable
+						// bits must be set except for CARPOOL and EMERGENCY (BUS
+						// can also be clear)
+						for (String accessTag : ACCESS_TAGS) {
+							el.addTag(accessTag, "no");
+						}
+						el.deleteTag("mkgmap:carpool");
+						el.deleteTag("mkgmap:emergency");
+						el.deleteTag("mkgmap:bus");
+					}
+				}
 				postConvertRules(el, type);
 				addConvertedWay((Way) el, type);
 			}
@@ -1469,32 +1486,20 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		if(way.isBoolTag("mkgmap:carpool")) {
-			// to make a way into a "carpool lane" all access disable
-			// bits must be set except for CARPOOL and EMERGENCY (BUS
-			// can also be clear)
-			road.setNoThroughRouting();
-			Arrays.fill(noAccess, true);
-			noAccess[RoadNetwork.NO_CARPOOL] = false;
-			noAccess[RoadNetwork.NO_EMERGENCY] = false;
-			noAccess[RoadNetwork.NO_BUS] = false;
-		} else {
 		noAccess[RoadNetwork.NO_EMERGENCY] = way.isNotBoolTag("mkgmap:emergency");
-		noAccess[RoadNetwork.NO_DELIVERY]  = way.isNotBoolTag("mkgmap:delivery");
-		noAccess[RoadNetwork.NO_CAR]       = way.isNotBoolTag("mkgmap:car");
-		noAccess[RoadNetwork.NO_BUS]       = way.isNotBoolTag("mkgmap:bus");
-		noAccess[RoadNetwork.NO_TAXI]      = way.isNotBoolTag("mkgmap:taxi");
-		noAccess[RoadNetwork.NO_FOOT]      = way.isNotBoolTag("mkgmap:foot");
-		noAccess[RoadNetwork.NO_BIKE]      = way.isNotBoolTag("mkgmap:bike");
-		noAccess[RoadNetwork.NO_TRUCK]     = way.isNotBoolTag("mkgmap:truck");
-		noAccess[RoadNetwork.NO_CARPOOL]   = way.isNotBoolTag("mkgmap:carpool");
+		noAccess[RoadNetwork.NO_DELIVERY] = way.isNotBoolTag("mkgmap:delivery");
+		noAccess[RoadNetwork.NO_CAR] = way.isNotBoolTag("mkgmap:car");
+		noAccess[RoadNetwork.NO_BUS] = way.isNotBoolTag("mkgmap:bus");
+		noAccess[RoadNetwork.NO_TAXI] = way.isNotBoolTag("mkgmap:taxi");
+		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
+		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bike");
+		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
+		noAccess[RoadNetwork.NO_CARPOOL] = way.isNotBoolTag("mkgmap:carpool");
+		road.setAccess(noAccess);
 
 		if (way.isNotBoolTag("mkgmap:throughroute")) {
 			road.setNoThroughRouting();
 		}
-}
-
-		road.setAccess(noAccess);
 
 		if(way.isBoolTag("mkgmap:toll"))
 			road.setToll();
