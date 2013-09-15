@@ -57,7 +57,7 @@ public abstract class CachedFunction extends StyleFunction {
 		// calculate the function value
 		String functionResult = calcImpl(el);
 		
-		if (isCached()) {
+		if (functionResult != null && isCached()) {
 			// if caching is supported save the value for later usage
 			el.addTag(getCacheTag(), functionResult);
 		}
