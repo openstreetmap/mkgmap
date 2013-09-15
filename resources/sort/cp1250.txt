@@ -5,7 +5,7 @@ description "Central European sort"
 
 code pos2=0 01, 02, 03, 04, 05, 06, 07
 
-code 20 < a0 < 09 < 0a < 0b < 0c < 0d < ! < " < 23 < $ < %
+code pos=1 20 < a0 < 09 < 0a < 0b < 0c < 0d < ! < " < 23 < $ < %
 code & < ( < ) < * < , < . < / < : < ; < ? < @ < [
 code \ < ] < ^ < _ < ` < { < | < } < ~ < a6 < a8 < '
 code b8 < a1 < a2
