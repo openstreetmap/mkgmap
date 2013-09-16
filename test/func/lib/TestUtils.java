@@ -153,7 +153,7 @@ public class TestUtils {
 	public static RuleSet makeRuleSet(StyleFileLoader loader) {
 		RuleSet rs = new RuleSet();
 		RuleFileReader rr = new RuleFileReader(FeatureKind.POLYLINE, LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"),
-				rs);
+				rs, false, null);
 		try {
 			rr.load(loader, "lines");
 		} catch (FileNotFoundException e) {

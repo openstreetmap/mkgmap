@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
@@ -29,7 +30,7 @@ import uk.me.parabola.log.Logger;
  *
  * @author Steve Ratcliffe
  */
-public abstract class StyleFileLoader {
+public abstract class StyleFileLoader implements Closeable {
 	private static final Logger log = Logger.getLogger(StyleFileLoader.class);
 
 	/**

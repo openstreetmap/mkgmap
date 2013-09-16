@@ -290,31 +290,31 @@ public class StyleImpl implements Style {
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations);
-			reader.load(fileLoader, "relations", performChecks, getOverlaidTypeMap());
+			RuleFileReader reader = new RuleFileReader(FeatureKind.RELATION, levels, relations, performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "relations");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
 			log.debug("no relations file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes);
-			reader.load(fileLoader, "points", performChecks, getOverlaidTypeMap());
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POINT, levels, nodes, performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "points");
 		} catch (FileNotFoundException e) {
 			// it is ok for this file to not exist.
 			log.debug("no points file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines);
-			reader.load(fileLoader, "lines", performChecks, getOverlaidTypeMap());
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYLINE, levels, lines, performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "lines");
 		} catch (FileNotFoundException e) {
 			log.debug("no lines file");
 		}
 
 		try {
-			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons);
-			reader.load(fileLoader, "polygons", performChecks, getOverlaidTypeMap());
+			RuleFileReader reader = new RuleFileReader(FeatureKind.POLYGON, levels, polygons, performChecks, getOverlaidTypeMap());
+			reader.load(fileLoader, "polygons");
 		} catch (FileNotFoundException e) {
 			log.debug("no polygons file");
 		}
@@ -536,7 +536,7 @@ public class StyleImpl implements Style {
 			name = "default";
 
 		if (name == null){
-			StyleFileLoader loader;
+			StyleFileLoader loader = null;
 			try {
 				loader = StyleFileLoader.createStyleLoader(loc, null);
 				int numEntries = loader.list().length;
@@ -544,9 +544,12 @@ public class StyleImpl implements Style {
 					throw new ExitException("Style file " + loc + " contains multiple styles, use option --style to select one.");
 			} catch (FileNotFoundException e) {
 				throw new ExitException("Could not open style file " + loc);
+			} finally {
+				Utils.closeFile(loader);
 			}
 		}
-		Style style = null;
+
+		Style style;
 		try {
 			style = new StyleImpl(loc, name, props, WITHOUT_CHECKS);
 		} catch (SyntaxException e) {

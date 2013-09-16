@@ -804,6 +804,21 @@ public class RuleFileReaderTest {
 	}
 
 	@Test
+	public void testIncludeFrom() {
+		// NOTE: this test uses the default style, which could change.
+		StyleFileLoader loader = new StringStyleFileLoader(new String[][] {
+				{"lines", "include 'lines' from default;\n"},
+		});
+		RuleSet rs = makeRuleSet(loader);
+
+		Way way = new Way(1);
+		way.addTag("highway", "motorway");
+		GType type = getFirstType(rs, way);
+		assertNotNull("Check type not null", type);
+		assertEquals(1, type.getType());
+	}
+
+	@Test
 	public void testLengthFunction() {
 		// Its less than 92m
 		RuleSet rs = makeRuleSet("A=B & length() < 92 [0x5]");
@@ -914,7 +929,8 @@ public class RuleFileReaderTest {
 
 		RuleSet rs = new RuleSet();
 				RuleFileReader rr = new RuleFileReader(FeatureKind.POINT,
-						LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"), rs);
+						LevelInfo.createFromString("0:24 1:20 2:18 3:16 4:14"),
+						rs, false, null);
 		try {
 			rr.load(loader, "points");
 		} catch (FileNotFoundException e) {
