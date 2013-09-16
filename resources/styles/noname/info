@@ -8,9 +8,6 @@ version: 1
 
 summary: Special map to highlight roads with no name
 
-# This uses the default style as a base
-base-style: default
-
 description {
 	This style is to help find roads that don't yet have a name in OSM
 	by highlighting those roads.  Roads that have a name or a ref
