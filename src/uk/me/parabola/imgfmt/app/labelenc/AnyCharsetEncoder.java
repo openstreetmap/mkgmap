@@ -16,7 +16,13 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -27,20 +33,24 @@ import java.util.Locale;
  */
 public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 
-	private final Charset charSet;
+	private final CharsetEncoder encoder;
+	private final Transliterator transliterator;
 
-	public AnyCharsetEncoder(String cs) {
+	public AnyCharsetEncoder(String cs, Transliterator transliterator) {
+		this.transliterator = transliterator;
 		prepareForCharacterSet(cs);
-		if (isCharsetSupported())
-			charSet = Charset.forName(cs);
-		else
-			charSet = null;
+		if (isCharsetSupported()) {
+			encoder = Charset.forName(cs).newEncoder();
+			encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+		} else {
+			encoder = null;
+		}
 	}
 
 	public EncodedText encodeText(String text) {
 		if (text == null)
 			return NO_TEXT;
-		
+
 		if (!isCharsetSupported())
 			return simpleEncode(text);
 
@@ -50,10 +60,33 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		else
 			ucText = text;
 
-		byte[] bytes = ucText.getBytes(charSet);
-		byte[] res = new byte[bytes.length + 1];
-		System.arraycopy(bytes, 0, res, 0, bytes.length);
+		byte[] bytes = new byte[(int) (ucText.length() * encoder.maxBytesPerChar()) + 10];
+		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		CharBuffer charBuffer = CharBuffer.wrap(ucText);
 
+		CoderResult result;
+
+		do {
+			result = encoder.encode(charBuffer, bb, true);
+			if (result.isUnmappable()) {
+				char c = charBuffer.get();
+				String s = String.valueOf(c);
+
+				s = transliterator.transliterate(s);
+
+				for (int i = 0; i < s.length(); i++)
+					bb.put((byte) s.charAt(i));
+			}
+		} while (result != CoderResult.UNDERFLOW);
+
+		// We need it to be null terminated but also to trim any extra memory from the allocated
+		// buffer.
+		byte[] res = Arrays.copyOf(bytes, bb.position() + 1);
 		return new EncodedText(res, res.length);
+	}
+
+	public void setUpperCase(boolean upperCase) {
+		super.setUpperCase(upperCase);
+		transliterator.forceUppercase(upperCase);
 	}
 }
