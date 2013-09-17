@@ -60,7 +60,8 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		else
 			ucText = text;
 
-		byte[] bytes = new byte[(int) (ucText.length() * encoder.maxBytesPerChar()) + 10];
+		// TODO: over allocate space. need better way, or perhaps it is not so bad
+		byte[] bytes = new byte[(int) (ucText.length() * encoder.maxBytesPerChar()) * 4 + 5];
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		CharBuffer charBuffer = CharBuffer.wrap(ucText);
 
