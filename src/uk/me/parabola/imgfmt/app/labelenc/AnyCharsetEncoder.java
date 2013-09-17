@@ -60,30 +60,67 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		else
 			ucText = text;
 
-		// TODO: over allocate space. need better way, or perhaps it is not so bad
-		byte[] bytes = new byte[(int) (ucText.length() * encoder.maxBytesPerChar()) * 4 + 5];
-		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		// Allocate a buffer for the encoded text. This will be large enough in almost all cases,
+		// but the code below allocates more space if necessary.
+		ByteBuffer outBuf = ByteBuffer.allocate(ucText.length() + 20);
 		CharBuffer charBuffer = CharBuffer.wrap(ucText);
 
 		CoderResult result;
 
 		do {
-			result = encoder.encode(charBuffer, bb, true);
+			result = encoder.encode(charBuffer, outBuf, true);
+
 			if (result.isUnmappable()) {
-				char c = charBuffer.get();
-				String s = String.valueOf(c);
+				// There is a character that cannot be represented in the target code page.
+				// Read the character(s), transliterate them, and add them to the output.
+				// We then continue onward with the rest of the string.
+				String s;
+				if (result.length() == 1) {
+					s = String.valueOf(charBuffer.get());
+				} else {
+					// Don't know under what circumstances this will be called and may not be the
+					// correct thing to do when it does happen.
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < result.length(); i++)
+						sb.append(charBuffer.get());
+
+					s = sb.toString();
+				}
 
 				s = transliterator.transliterate(s);
 
+				// Make sure that there is enough space for the transliterated string
+				while (outBuf.limit() < outBuf.position() + s.length())
+					outBuf = reallocBuf(outBuf);
+
 				for (int i = 0; i < s.length(); i++)
-					bb.put((byte) s.charAt(i));
+					outBuf.put((byte) s.charAt(i));
+
+			} else if (result == CoderResult.OVERFLOW) {
+				// Ran out of space in the output
+				outBuf = reallocBuf(outBuf);
 			}
 		} while (result != CoderResult.UNDERFLOW);
 
 		// We need it to be null terminated but also to trim any extra memory from the allocated
 		// buffer.
-		byte[] res = Arrays.copyOf(bytes, bb.position() + 1);
+		byte[] res = Arrays.copyOf(outBuf.array(), outBuf.position() + 1);
 		return new EncodedText(res, res.length);
+	}
+
+	/**
+	 * Allocate a new byte buffer that has more space.
+	 *
+	 * It will have the same contents as the existing one and the same position, so you can
+	 * continue writing to it.
+	 *
+	 * @param bb The original byte buffer.
+	 * @return A new byte buffer with the same contents with more space that you can continue
+	 * writing to.
+	 */
+	private ByteBuffer reallocBuf(ByteBuffer bb) {
+		byte[] newbuf = Arrays.copyOf(bb.array(), bb.capacity() * 2);
+		return ByteBuffer.wrap(newbuf, bb.position(), newbuf.length - bb.position());
 	}
 
 	public void setUpperCase(boolean upperCase) {
