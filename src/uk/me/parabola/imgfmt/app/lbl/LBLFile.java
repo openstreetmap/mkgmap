@@ -28,6 +28,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -48,7 +49,7 @@ public class LBLFile extends ImgFile {
 
 	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
 
-	private final Map<String, Label> labelCache = new HashMap<String, Label>();
+	private final Map<EncodedText, Label> labelCache = new HashMap<EncodedText, Label>();
 
 	private final LBLHeader lblHeader = new LBLHeader();
 
@@ -121,13 +122,14 @@ public class LBLFile extends ImgFile {
 	 * @return A reference to the created label.
 	 */
 	public Label newLabel(String text) {
-		Label l = labelCache.get(text);
+		EncodedText encodedText = textEncoder.encodeText(text);
+		Label l = labelCache.get(encodedText);
 		if (l == null) {
 			l = new Label(text);
-			labelCache.put(text, l);
+			labelCache.put(encodedText, l);
 
 			l.setOffset(position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
-			l.write(getWriter(), textEncoder);
+			l.write(getWriter(), encodedText);
 		}
 
 		return l;

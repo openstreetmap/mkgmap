@@ -58,7 +58,7 @@ public class Format6Encoder extends BaseEncoder implements CharacterEncoder {
 	 * some escape sequences will be present.
 	 */
 	public EncodedText encodeText(String text) {
-		if (text == null || text.isEmpty())
+		if (text == null)
 			return NO_TEXT;
 
 		String s = transliterator.transliterate(text).toUpperCase(Locale.ENGLISH);
