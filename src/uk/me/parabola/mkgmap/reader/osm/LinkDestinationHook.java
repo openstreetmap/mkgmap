@@ -187,9 +187,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				Way precedingWay = new Way(FakeIdGenerator.makeFakeId(), w
 						.getPoints().subList(0, 1 + 1));
 				precedingWay.copyTags(w);
-				// the first node of the new way is now used by the org and the
-				// new way
-				cutPoint.incHighwayCount();
 
 				saver.addWay(precedingWay);
 				// remove the points of the new way from the original way
@@ -246,11 +243,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 						cConnection = bestCoord;
 					}
 				}
-				
-				// the new point is used by the old and the new way
-				cConnection.incHighwayCount();
-				cConnection.incHighwayCount();
-				
 				
 				// create the new way with identical tags
 				w.getPoints().add(i,cConnection);
