@@ -299,7 +299,8 @@ public class RoadMerger {
 		this.roads = new ArrayList<Road>(ways.size());
 
 		for (int i = 0; i < ways.size(); i++) {
-			roads.add(new Road(ways.get(i), gtypes.get(i)));
+			if (ways.get(i) != null)
+				roads.add(new Road(ways.get(i), gtypes.get(i)));
 		}
 
 		this.restrictions = new MultiHashMap<Coord, Long>();
