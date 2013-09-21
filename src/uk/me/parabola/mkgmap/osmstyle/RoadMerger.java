@@ -386,6 +386,9 @@ public class RoadMerger {
 		points1.addAll(points2.subList(1, points2.size()));
 		endPoints.add(endPoint, road1);
 		
+		// the mergePoint is now used by one highway less
+		mergePoint.decHighwayCount();
+		
 		List<Long> restrictedWayIds = restrictions.get(endPoint);
 		// road2 is removed - it must not be part of a restriction
 		assert (restrictedWayIds.contains(road2.getWay().getId()) == false);

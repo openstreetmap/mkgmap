@@ -347,8 +347,6 @@ public class StyledConverter implements OsmConverter {
 	}
 	
 	public void end() {
-		mergeRoads();
-		
 		setHighwayCounts();
 		findUnconnectedRoads();
 		removeShortArcsByMergingNodes(minimumArcLength);
@@ -368,6 +366,8 @@ public class StyledConverter implements OsmConverter {
 		}
 		deletedRoads = null;
 		modifiedRoads = null;
+
+		mergeRoads();
 		
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);

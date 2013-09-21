@@ -81,12 +81,24 @@ public class Coord implements Comparable<Coord> {
 		return highwayCount;
 	}
 
+	/**
+	 * Increase the counter how may highways use this coord.
+	 */
 	public void incHighwayCount() {
 		// don't let it wrap
 		if(highwayCount < Byte.MAX_VALUE)
 			++highwayCount;
 	}
 
+	/**
+	 * Decrease the counter how may highways use this coord.
+	 */
+	public void decHighwayCount() {
+		// don't let it wrap
+		if(highwayCount > 0)
+			--highwayCount;
+	}
+	
 	public boolean getOnBoundary() {
 		return (flags & ON_BOUNDARY_MASK) != 0;
 	}
