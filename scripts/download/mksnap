@@ -3,6 +3,8 @@
 PROGDIR=$(dirname $(readlink -f $0))
 PATH=$JAVA_HOME/bin:/opt/jars/apache-ant-1.8.2/bin:/opt/jars/apache-ant-1.7.1/bin:/usr/bin:/bin:/usr/local/bin:$PROGDIR
 
+ANT_JAVAC_TARGET="-Dant.build.javac.target=1.6 -Dant.build.javac.source=1.6"
+
 typeset -i VERSION
 while getopts "r:d:" c
 do
@@ -61,7 +63,7 @@ if [ ! -f $TARGET ]; then
 
 	BUILD_DIR=/usr/tmp/build-mkgmap/$RELNAME
 	mkdir -p $(dirname $BUILD_DIR)
-	trap "rm -rf $BUILD_DIR" 0
+	#trap "rm -rf $BUILD_DIR" 0
 
 	svn export -q -r$VERSION $SVN/trunk $BUILD_DIR
 
@@ -79,10 +81,10 @@ if [ ! -f $TARGET ]; then
 
 	if [ "$BUILD_DIST" = 1 ]; then
 		echo BUILDING TARGET
-		ant -Dhave.version=1 $BUILD_TARGETS || exit 1
+		ant $ANT_JAVAC_TARGET -Dhave.version=1 $BUILD_TARGETS || exit 1
 
 		if [ -x $PROGDIR/mkdoc ]; then
-			mkdoc $PRODUCT
+			$PROGDIR/mkdoc $PRODUCT
 		fi
 
 		mv dist $RELNAME
@@ -93,9 +95,11 @@ fi
 
 cd $SNAPDIR
 rm -f $PRODUCT-latest.tar.gz
+rm -f $PRODUCT-latest.zip
 
 if [ "$LATEST" = 1 -a "$BUILD_DIST" = 1 ]; then
 	ln $RELNAME.tar.gz $PRODUCT-latest.tar.gz
+	ln $RELNAME.zip $PRODUCT-latest.zip
 fi
 
 if [ "$BUILD_DIST" = 1 ]; then

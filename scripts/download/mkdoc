@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Create the documentation
+#
+# We will be in the root directory of a just-built distribution
+# when called normally.
+#
+
+(
+cd doc
+
+if [ -f makefile -o -f Makefile ]; then
+	make install
+fi
+
+for f in *.txt
+do
+	export PYTHONPATH=$HOME/www/mkgmap.org.uk
+	python -m wiki.main -t text $f > ../dist/doc/$f
+done
+
+DOC=~/www/web/mkgmap/content/doc
+WEB_DOC_PDF=~/www/mkgmap.org.uk/docroot/doc/pdf
+cp *.txt $DOC
+cp styles/style-manual.pdf $WEB_DOC_PDF
+)
