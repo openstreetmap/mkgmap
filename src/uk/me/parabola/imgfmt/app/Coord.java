@@ -82,7 +82,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Increase the counter how may highways use this coord.
+	 * Increase the counter how many highways use this coord.
 	 */
 	public void incHighwayCount() {
 		// don't let it wrap
@@ -91,7 +91,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Decrease the counter how may highways use this coord.
+	 * Decrease the counter how many highways use this coord.
 	 */
 	public void decHighwayCount() {
 		// don't let it wrap
