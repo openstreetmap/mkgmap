@@ -28,17 +28,17 @@ import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.MultiHashMap;
+import uk.me.parabola.util.MultiIdentityHashMap;
 
 public class RoadMerger {
 	private static final Logger log = Logger.getLogger(RoadMerger.class);
 
 	// maps which coord of a way(id) are restricted - they should not be merged
-	private final MultiHashMap<Coord, Long> restrictions;
+	private final MultiIdentityHashMap<Coord, Long> restrictions;
 	private final List<Road> roads;
 
-	private final MultiHashMap<Coord, Road> startPoints = new MultiHashMap<Coord, Road>();
-	private final MultiHashMap<Coord, Road> endPoints = new MultiHashMap<Coord, Road>();
+	private final MultiIdentityHashMap<Coord, Road> startPoints = new MultiIdentityHashMap<Coord, Road>();
+	private final MultiIdentityHashMap<Coord, Road> endPoints = new MultiIdentityHashMap<Coord, Road>();
 
 	private static class Road {
 		private final Way way;
@@ -303,7 +303,7 @@ public class RoadMerger {
 				roads.add(new Road(ways.get(i), gtypes.get(i)));
 		}
 
-		this.restrictions = new MultiHashMap<Coord, Long>();
+		this.restrictions = new MultiIdentityHashMap<Coord, Long>();
 		workoutRestrictionRelations(restrictions);
 		workoutThroughRoutes(throughRouteRelations);
 	}
@@ -387,12 +387,11 @@ public class RoadMerger {
 		points1.addAll(points2.subList(1, points2.size()));
 		endPoints.add(endPoint, road1);
 		
-		// the mergePoint is now used by one highway less
+//		// the mergePoint is now used by one highway less
 		mergePoint.decHighwayCount();
 		
-		List<Long> restrictedWayIds = restrictions.get(endPoint);
 		// road2 is removed - it must not be part of a restriction
-		assert (restrictedWayIds.contains(road2.getWay().getId()) == false);
+		assert (restrictions.get(endPoint).contains(road2.getWay().getId()) == false);
 		
 	}
 
