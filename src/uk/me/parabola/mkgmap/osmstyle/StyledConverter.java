@@ -1746,7 +1746,7 @@ public class StyledConverter implements OsmConverter {
 		long lastId = 0;
 		for (Way way :roads){
 			if (way.getId() == lastId) {
-				log.error("Road with identical id: "+way.getId());
+				log.debug("Road with identical id:", way.getId());
 				continue;
 			}
 			lastId = way.getId();
