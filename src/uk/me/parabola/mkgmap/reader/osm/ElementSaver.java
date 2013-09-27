@@ -67,7 +67,7 @@ public class ElementSaver {
 	// Options
 	private final boolean ignoreBuiltinRelations;
 	private final boolean ignoreTurnRestrictions;
-	private final Double minimumArcLength;
+	private final double minimumArcLength;
 
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
 	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
@@ -86,10 +86,7 @@ public class ElementSaver {
 		}
 
 		String rsa = args.getProperty("remove-short-arcs", "5");
-		if(rsa != null)
-			minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
-		else
-			minimumArcLength = null;
+  	minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
 
 		ignoreBuiltinRelations = args.getProperty("ignore-builtin-relations", false);
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
@@ -216,7 +213,7 @@ public class ElementSaver {
 	public void convert(OsmConverter converter) {
 
 		// We only do this if an explicit bounding box was given.
-		if (boundingBox != null && minimumArcLength != null)
+		if (boundingBox != null)
 			makeBoundaryNodes();
 
 		converter.setBoundingBox(getBoundingBox());

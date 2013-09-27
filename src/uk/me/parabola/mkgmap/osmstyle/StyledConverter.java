@@ -192,7 +192,7 @@ public class StyledConverter implements OsmConverter {
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
 		String rsa = props.getProperty("remove-short-arcs", "5");
-		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
+		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
 		
 	}
 
