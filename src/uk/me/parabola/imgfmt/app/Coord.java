@@ -30,8 +30,6 @@ import uk.me.parabola.imgfmt.Utils;
  * You can create one of these with lat/long by calling the constructor with
  * double args.
  *
- * This is an immutable class.
- *
  * @author Steve Ratcliffe
  */
 public class Coord implements Comparable<Coord> {
@@ -97,6 +95,13 @@ public class Coord implements Comparable<Coord> {
 		// don't let it wrap
 		if(highwayCount > 0)
 			--highwayCount;
+	}
+	
+	/**
+	 * Resets the highway counter to 0.
+	 */
+	public void resetHighwayCount() {
+		highwayCount = 0;
 	}
 	
 	public boolean getOnBoundary() {

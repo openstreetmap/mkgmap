@@ -365,6 +365,9 @@ public class StyledConverter implements OsmConverter {
 		modifiedRoads = null;
 
 		mergeRoads();
+
+		resetHighwayCounts();
+		setHighwayCounts();
 		
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
@@ -929,6 +932,7 @@ public class StyledConverter implements OsmConverter {
 								p.incHighwayCount();
 							else {
 								points.set(i,new Coord(p.getLatitude(),p.getLongitude()));
+								points.get(i).incHighwayCount();
 							}
 						}
 
@@ -1744,15 +1748,59 @@ public class StyledConverter implements OsmConverter {
 	private void setHighwayCounts(){
 		log.info("Maintaining highway counters");
 		long lastId = 0;
+		List<Way> dupIdHighways = new ArrayList<>();
 		for (Way way :roads){
+			if (way == null)
+				continue;
+			
 			if (way.getId() == lastId) {
 				log.debug("Road with identical id:", way.getId());
+				dupIdHighways.add(way);
 				continue;
 			}
 			lastId = way.getId();
 			List<Coord> points = way.getPoints();
 			for (Coord p:points){
 				p.incHighwayCount();
+			}
+		}
+		
+		// go through all duplicated highways and increase the highway counter of all crossroads 
+		for (Way way : dupIdHighways) {
+			List<Coord> points = way.getPoints();
+			// increase the highway counter of the first and last point
+			points.get(0).incHighwayCount();
+			points.get(points.size()-1).incHighwayCount();
+			
+			// for all other points increase the counter only if other roads are connected
+			for (int i = 1; i <  points.size()-1; i++) {
+				Coord p = points.get(i);
+				if (p.getHighwayCount() > 1) {
+					// this is a crossroads - mark that the duplicated way is also part of it 
+					p.incHighwayCount();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Increment the highway counter for each coord of each road.
+	 * As a result, all road junctions have a count > 1. 
+	 */
+	private void resetHighwayCounts(){
+		log.info("Resetting highway counters");
+		long lastId = 0;
+		for (Way way :roads){
+			if (way == null)
+				continue;
+			
+			if (way.getId() == lastId) {
+				continue;
+			}
+			lastId = way.getId();
+			List<Coord> points = way.getPoints();
+			for (Coord p:points){
+				p.resetHighwayCount();
 			}
 		}
 	}
