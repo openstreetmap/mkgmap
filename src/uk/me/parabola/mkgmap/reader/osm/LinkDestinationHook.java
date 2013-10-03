@@ -388,7 +388,8 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			Way linkWay = linksWithDestination.poll();
 			String destination = linkWay.getTag("destination");
 
-			log.debug("Check way",linkWay.getId(),linkWay.toTagString());
+			if (log.isDebugEnabled())
+				log.debug("Check way",linkWay.getId(),linkWay.toTagString());
 			
 			// Retrieve all adjacent ways of the current link
 			Coord c = linkWay.getPoints().get(linkWay.getPoints().size()-1);
@@ -400,13 +401,19 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			if (nextWays != null) {
 				for (Way connectedWay : nextWays) {
 					String nextDest = connectedWay.getTag("destination");
-					log.debug("Followed by",connectedWay.getId(),connectedWay.toTagString());
+					if (log.isDebugEnabled())
+						log.debug("Followed by",connectedWay.getId(),connectedWay.toTagString());
 
-					if (connectedWay.equals(linkWay) == false && connectedWay.getTag("highway").endsWith("_link")
+					// remove the way from destination handling only if both ways are connected with start/end points
+					// otherwise it is a crossroads and therefore both ways need to be handled
+					boolean startEndConnection = connectedWay.getPoints().isEmpty()==false && connectedWay.getPoints().get(0).equals(c);
+					if (startEndConnection && connectedWay.equals(linkWay) == false 
+							&& connectedWay.getTag("highway").endsWith("_link")
 							&& destination.equals(nextDest)) {
 						// do not use this way because there is another link before that with the same destination
 						destinationLinkWays.remove(connectedWay.getId());
-						log.debug("Removed",connectedWay.getId(),connectedWay.toTagString());
+						if (log.isDebugEnabled())
+							log.debug("Removed",connectedWay.getId(),connectedWay.toTagString());
 					}
 				}
 			}
