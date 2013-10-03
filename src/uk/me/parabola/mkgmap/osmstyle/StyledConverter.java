@@ -178,7 +178,7 @@ public class StyledConverter implements OsmConverter {
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
 		String rsa = props.getProperty("remove-short-arcs", "5");
-		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
+		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
 		linkPOIsToWays = props.getProperty("link-pois-to-ways") != null;
 		
 	}
@@ -1852,7 +1852,7 @@ public class StyledConverter implements OsmConverter {
 					if (onBoundary){
 						log.info("road not connected to other roads but is on boundary: " + way.toBrowseURL());
 					} else {
-						if ("none".equals(check_type)) 
+						if ("none".equals(check_type))
 							log.info("road not connected to other roads, is ignored: " + way.toBrowseURL());
 						else {
 							int type = -1;
@@ -1875,7 +1875,6 @@ public class StyledConverter implements OsmConverter {
 						}
 						roads.set(i, null);
 						roadTypes.set(i, null);
-						deletedRoads.add(way.getId()); // XXX Maybe not if road is changed to a line?
 					}
 				}
 			}

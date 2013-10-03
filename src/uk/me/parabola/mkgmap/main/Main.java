@@ -141,11 +141,11 @@ public class Main implements ArgumentProcessor {
 				int major = Integer.valueOf(versionParts[1]);
 				if (major < 7) {
 					System.out.println("===========================================================");
-					System.out.println("You are using an old Java runtime environment "+version);
-					System.out.println("mkgmap support for JRE 1.6.x will be discontinued");
-					System.out.println("after June 2013.");
-					System.out.println("Please update the JRE to the latest release.");
+					System.out.println("You are using an old Java runtime environment "+ version);
+					System.out.println("It is no longer supported.");
+					System.out.println("Please update Java to the latest release.");
 					System.out.println("===========================================================");
+					System.exit(1);
 				}
 			}
 		}
