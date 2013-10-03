@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.labelenc;
 
+import java.util.Arrays;
+
 /**
  * Holds the bytes and length of an encoded character string used in a label.
  * The length of the byte array may be longer than the part that is actually
@@ -40,5 +42,23 @@ public class EncodedText {
 
 	public int getLength() {
 		return length;
+	}
+
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		EncodedText that = (EncodedText) o;
+
+		if (length != that.length) return false;
+		if (!Arrays.equals(ctext, that.ctext)) return false;
+
+		return true;
+	}
+
+	public int hashCode() {
+		int result = Arrays.hashCode(ctext);
+		result = 31 * result + length;
+		return result;
 	}
 }

@@ -28,7 +28,7 @@ import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.labelenc.BaseEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.CodeFunctions;
-import uk.me.parabola.imgfmt.app.labelenc.Transliterator;
+import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -48,9 +48,8 @@ public class LBLFile extends ImgFile {
 	private static final Logger log = Logger.getLogger(LBLFile.class);
 
 	private CharacterEncoder textEncoder = CodeFunctions.getDefaultEncoder();
-	private Transliterator transliterator = CodeFunctions.getDefaultTransliterator();
 
-	private final Map<String, Label> labelCache = new HashMap<String, Label>();
+	private final Map<EncodedText, Label> labelCache = new HashMap<EncodedText, Label>();
 
 	private final LBLHeader lblHeader = new LBLHeader();
 
@@ -102,13 +101,10 @@ public class LBLFile extends ImgFile {
 		
 		lblHeader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
-		transliterator = cfuncs.getTransliterator();
 		if (forceUpper && textEncoder instanceof BaseEncoder) {
 			BaseEncoder baseEncoder = (BaseEncoder) textEncoder;
 			baseEncoder.setUpperCase(true);
 		}
-		if (forceUpper)
-			transliterator.forceUppercase(true);
 	}
 
 	public void setEncoder(int encodingType, int codepage ) {
@@ -116,25 +112,24 @@ public class LBLFile extends ImgFile {
 		
 		lblHeader.setEncodingType(cfuncs.getEncodingType());
 		textEncoder = cfuncs.getEncoder();
-		transliterator = cfuncs.getTransliterator();
 	}
 	
 	/**
 	 * Add a new label with the given text.  Labels are shared, so that identical
 	 * text is always represented by the same label.
 	 *
-	 * @param inText The text of the label, it will be in uppercase.
+	 * @param text The text of the label, it will be in uppercase.
 	 * @return A reference to the created label.
 	 */
-	public Label newLabel(String inText) {
-		String text = transliterator.transliterate(inText);
-		Label l = labelCache.get(text);
+	public Label newLabel(String text) {
+		EncodedText encodedText = textEncoder.encodeText(text);
+		Label l = labelCache.get(encodedText);
 		if (l == null) {
 			l = new Label(text);
-			labelCache.put(text, l);
+			labelCache.put(encodedText, l);
 
 			l.setOffset(position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
-			l.write(getWriter(), textEncoder);
+			l.write(getWriter(), encodedText);
 		}
 
 		return l;

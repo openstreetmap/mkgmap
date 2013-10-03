@@ -58,7 +58,7 @@ public class CodeFunctionsTest {
 		CodeFunctions functions = CodeFunctions.createEncoderForLBL(6, 0);
 
 		CharacterEncoder encoder = functions.getEncoder();
-		Transliterator transliterator = functions.getTransliterator();
+		Transliterator transliterator = new TableTransliterator("ascii");
 		EncodedText text = encoder.encodeText(transliterator.transliterate("Körnerstraße, Velkomezeříčská, Skólavörðustigur"));
 
 		CharacterDecoder decoder = functions.getDecoder();
@@ -72,15 +72,15 @@ public class CodeFunctionsTest {
 	}
 
 	/**
-	 * Transliteration when going to ascii in format 6.  This was originally
-	 * the only place where transliteration was available.
-	 */
+	* Transliteration when going to ascii in format 6.  This was originally
+	* the only place where transliteration was available.
+	*/
 	@Test
 	public void testTransliterateLatin() {
 		CodeFunctions functions = CodeFunctions.createEncoderForLBL("latin1");
 
 		CharacterEncoder encoder = functions.getEncoder();
-		Transliterator transliterator = functions.getTransliterator();
+		Transliterator transliterator = new TableTransliterator("latin1");
 		EncodedText text = encoder.encodeText(transliterator.transliterate("Körnerstraße, Velkomezeříčská, Skólavörðustigur"));
 
 		CharacterDecoder decoder = functions.getDecoder();
@@ -88,7 +88,7 @@ public class CodeFunctionsTest {
 		for (int i = 0; i < text.getLength(); i++) {
 			decoder.addByte(ctext[i]);
 		}
-		
+
 		String result = decoder.getText().getText();
 		assertEquals("transliterated text", "Körnerstraße, Velkomezerícská, Skólavörðustigur", result);
 	}

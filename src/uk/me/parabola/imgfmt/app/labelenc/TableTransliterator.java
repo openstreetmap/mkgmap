@@ -125,7 +125,7 @@ public class TableTransliterator implements Transliterator {
 			String line;
 			while ((line = br.readLine()) != null) {
 				line = line.trim();
-				if (line.length() == 0 || line.charAt(0) == '#')
+				if (line.isEmpty() || line.charAt(0) == '#')
 					continue;
 
 				String[] fields = line.split("\\s+");

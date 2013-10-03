@@ -31,7 +31,6 @@ public class CodeFunctions {
 	private int encodingType;
 	private CharacterEncoder encoder;
 	private CharacterDecoder decoder;
-	private Transliterator transliterator = new TableTransliterator("ascii");
 
 	protected void setEncoder(CharacterEncoder encoder) {
 		this.encoder = encoder;
@@ -65,14 +64,6 @@ public class CodeFunctions {
 		this.codepage = codepage;
 	}
 
-	public Transliterator getTransliterator() {
-		return transliterator;
-	}
-
-	public void setTransliterator(Transliterator transliterator) {
-		this.transliterator = transliterator;
-	}
-
 	/**
 	 * Create a CharacterEncoder for the given charset option.  Note that this
 	 * routine also writes to the lblHeader parameter to set the encoding type.
@@ -81,42 +72,53 @@ public class CodeFunctions {
 	 */
 	public static CodeFunctions createEncoderForLBL(String charset) {
 		CodeFunctions funcs = new CodeFunctions();
-
 		if ("ascii".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
-			funcs.setTransliterator(getDefaultTransliterator());
 			funcs.setDecoder(new Format6Decoder());
-		} else if ("latin1".equals(charset)) {
+		} else if ("cp1252".equals(charset) || "latin1".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new LatinEncoder());
-			funcs.setTransliterator(new TableTransliterator("latin1"));
+			funcs.setEncoder(new AnyCharsetEncoder("cp1252", new TableTransliterator("latin1")));
 			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
 			funcs.setCodepage(1252);
-		} else if ("unicode".equals(charset)) {
+		} else if ("cp65001".equals(charset) || "unicode".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new Utf8Encoder());
 			funcs.setDecoder(new Utf8Decoder());
-		} else if ("cp65001".equals(charset)) {
-			funcs.setEncodingType(ENCODING_FORMAT10);
-			funcs.setEncoder(new Utf8Encoder());
-			funcs.setDecoder(new Utf8Decoder());
-			funcs.setTransliterator(new NullTransliterator());
 			funcs.setCodepage(65001);
 		} else if ("simple8".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new Simple8Encoder());
 		} else if ("cp932".equals(charset) || "ms932".equals(charset)) {
 			funcs.setEncodingType(ENCODING_FORMAT10);
-			funcs.setEncoder(new AnyCharsetEncoder("ms932"));
+			funcs.setEncoder(new AnyCharsetEncoder("ms932", new SparseTransliterator("nomacron")));
 			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
-			funcs.setTransliterator(new SparseTransliterator("nomacron"));
 			funcs.setCodepage(932);
 		} else {
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setDecoder(new AnyCharsetDecoder(charset));
-			funcs.setEncoder(new AnyCharsetEncoder(charset));
-			guessCodepage(funcs, charset);
+			funcs.setEncoder(new AnyCharsetEncoder(charset, new TableTransliterator("ascii")));
+			funcs.setCodepage(guessCodepage(charset));
+		}
+
+		return funcs;
+	}
+
+	/**
+	 * Sets encoding functions for a given format and code page.  This is used
+	 * when reading from an existing file.
+	 *
+	 * @param format The format from the lbl header.
+	 * @param codePage The codepage found in the header.
+	 * @return The various character set parameters that will be needed.
+	 */
+	public static CodeFunctions createEncoderForLBL(int format, int codePage) {
+		CodeFunctions funcs;
+
+		if (format == ENCODING_FORMAT6) {
+			funcs = createEncoderForLBL("ascii");
+		} else {
+			funcs = createEncoderForLBL("cp" + codePage);
 		}
 
 		return funcs;
@@ -125,72 +127,28 @@ public class CodeFunctions {
 	/**
 	 * Guess the code page from the given charset.  Only works with things
 	 * like cp1252, windows-1252 and some well known ones.
-	 * @param funcs The code page functions.
 	 * @param charset The charset that was given.
 	 */
-	private static void guessCodepage(CodeFunctions funcs, String charset) {
+	private static int guessCodepage(String charset) {
 		String cs = charset.toLowerCase();
-		Transliterator transliterator = new NullTransliterator();
 		if (cs.startsWith("cp")) {
 			try {
-				funcs.setCodepage(Integer.parseInt(charset.substring(2)));
-				if (cs.equals("cp1252"))
-					transliterator = new TableTransliterator("latin1");
+				return Integer.parseInt(charset.substring(2));
 			} catch (NumberFormatException e) {
 				// wasn't in the right form
 				throw new ExitException("Invalid character set: " + cs);
 			}
 		} else if (cs.startsWith("windows-")) {
 			try {
-				funcs.setCodepage(Integer.parseInt(charset.substring(8)));
+				return Integer.parseInt(charset.substring(8));
 			} catch (NumberFormatException e) {
 				// wasn't in the right form to guess
+				throw new ExitException("Invalid character set: " + cs);
 			}
 		} else if (cs.equals("latin1")) {
-			funcs.setCodepage(1252);
-			transliterator = new TableTransliterator("latin1");
+			return 1252;
 		}
-		funcs.setTransliterator(transliterator);
-	}
-
-	/**
-	 * Sets encoding functions for a given format and code page.  This is used
-	 * when reading from an existing file.
-	 *
-	 *
-	 * @param format The format from the lbl header.
-	 * @param codePage The codepage found in the header.
-	 * @return The various character set parameters that will be needed.
-	 */
-	public static CodeFunctions createEncoderForLBL(int format, int codePage) {
-		CodeFunctions funcs = new CodeFunctions();
-
-		if (format == ENCODING_FORMAT6) {
-			funcs.setEncodingType(ENCODING_FORMAT6);
-			funcs.setEncoder(new Format6Encoder());
-			funcs.setDecoder(new Format6Decoder());
-		} else if (codePage == 932) {
-			funcs.setEncodingType(ENCODING_FORMAT10);
-			funcs.setEncoder(new AnyCharsetEncoder("ms932"));
-			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
-		} else if (format == ENCODING_FORMAT9) {
-			funcs.setEncodingType(ENCODING_FORMAT9);
-			String cpName = "cp" + codePage;
-			if (codePage == 1252)
-				funcs.setEncoder(new LatinEncoder());
-			else
-				funcs.setEncoder(new AnyCharsetEncoder(cpName));
-			guessCodepage(funcs, cpName);
-
-			funcs.setDecoder(new AnyCharsetDecoder(cpName));
-		} else {
-			// TODO TEMP...
-			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new AnyCharsetEncoder("cp1252"));
-			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
-		}
-
-		return funcs;
+		return 0;
 	}
 
 	public static CharacterEncoder getDefaultEncoder() {
@@ -199,11 +157,5 @@ public class CodeFunctions {
 
 	public static CharacterDecoder getDefaultDecoder() {
 		return new Format6Decoder();
-	}
-
-	public static Transliterator getDefaultTransliterator() {
-		TableTransliterator ascii = new TableTransliterator("ascii");
-		ascii.forceUppercase(true);
-		return ascii;
 	}
 }
