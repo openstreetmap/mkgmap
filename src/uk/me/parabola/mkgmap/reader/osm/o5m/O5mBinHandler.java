@@ -316,7 +316,10 @@ public class O5mBinHandler extends OsmHandler{
 			String key = stringPair[0];
 			String val = stringPair[1];
 			// the type tag is required for relations - all other tags are filtered
-			if (elem instanceof Relation == false || "type".equals(key) == false)
+			if (elem instanceof Relation && "type".equals(key))
+				// intern the string
+				key = "type";
+			else
 				key = keepTag(key, val);
 			if (key != null)
 				elem.addTag(key, val.intern());
