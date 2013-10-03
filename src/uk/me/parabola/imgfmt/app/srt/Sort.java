@@ -337,7 +337,7 @@ public class Sort {
 		sort.charset = Charset.forName("ascii");
 		sort.encoder = sort.charset.newEncoder();
 		sort.setDescription("Default sort");
-		sort.setCodepage(codepage == 0? 1252: codepage);
+		sort.setCodepage(codepage);
 		return sort;
 	}
 

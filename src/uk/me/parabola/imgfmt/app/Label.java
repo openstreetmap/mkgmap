@@ -18,7 +18,6 @@ package uk.me.parabola.imgfmt.app;
 
 import java.util.regex.Pattern;
 
-import uk.me.parabola.imgfmt.app.labelenc.CharacterEncoder;
 import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
 
 /**
@@ -103,12 +102,9 @@ public class Label implements Comparable<Label> {
 	 * Write this label to the given img file.
 	 *
 	 * @param writer The LBL file to write to.
-	 * @param textEncoder The encoder to use for this text.  Converts the
-	 * unicode string representation to the correct byte stream for the file.
-	 * This depends on encoding format, character set etc.
+	 * @param encText The encoded version of the text for this label.
 	 */
-	public void write(ImgFileWriter writer, CharacterEncoder textEncoder) {
-		EncodedText encText = textEncoder.encodeText(text);
+	public void write(ImgFileWriter writer, EncodedText encText) {
 		assert encText != null;
 
 		if (encText.getLength() > 0)
@@ -123,10 +119,8 @@ public class Label implements Comparable<Label> {
 	}
 
 	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || !(o instanceof Label))
-			return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		return offset == ((Label) o).offset;
 
