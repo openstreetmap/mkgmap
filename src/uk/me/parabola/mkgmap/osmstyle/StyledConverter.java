@@ -1748,7 +1748,7 @@ public class StyledConverter implements OsmConverter {
 	private void setHighwayCounts(){
 		log.info("Maintaining highway counters");
 		long lastId = 0;
-		List<Way> dupIdHighways = new ArrayList<>();
+		List<Way> dupIdHighways = new ArrayList<Way>();
 		for (Way way :roads){
 			if (way == null)
 				continue;
