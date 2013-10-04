@@ -39,7 +39,6 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 
 	private boolean makeOppositeCycleways;
 	private boolean makeCycleways;
-	private String frigRoundabouts;
 	private ElementSaver saver;
 	private boolean linkPOIsToWays;
 
@@ -75,7 +74,6 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			makeOppositeCycleways = props.getProperty("make-opposite-cycleways", false);
 			makeCycleways = props.getProperty("make-cycleways", false);
 		}
-		frigRoundabouts = props.getProperty("frig-roundabouts");
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		currentNodeInWay = null;
 
@@ -167,10 +165,6 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 					way.addTag("oneway", "yes");
 				}
 
-				if (way.getTag("mkgmap:frig_roundabout") == null) {
-					if(frigRoundabouts != null)
-						way.addTag("mkgmap:frig_roundabout", frigRoundabouts);
-				}
 			}
 
 			String cycleway = way.getTag("cycleway");
