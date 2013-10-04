@@ -67,7 +67,6 @@ public class ElementSaver {
 	// Options
 	private final boolean ignoreBuiltinRelations;
 	private final boolean ignoreTurnRestrictions;
-	private final double minimumArcLength;
 
 	/** name of the tag that contains a ;-separated list of tagnames that should be removed after all elements have been processed */
 	public static final String MKGMAP_REMOVE_TAG = "mkgmap:removetags";
@@ -84,9 +83,6 @@ public class ElementSaver {
 			wayMap = new HashMap<Long, Way>();
 			relationMap = new HashMap<Long, Relation>();
 		}
-
-		String rsa = args.getProperty("remove-short-arcs", "5");
-  	minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
 
 		ignoreBuiltinRelations = args.getProperty("ignore-builtin-relations", false);
 		ignoreTurnRestrictions = args.getProperty("ignore-turn-restrictions", false);
