@@ -1374,7 +1374,7 @@ public class StyledConverter implements OsmConverter {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
 		line.setPoints(points);
-		System.out.println(way.getId() + " " + line.getPoints().size());
+		
 		MapRoad road = new MapRoad(way.getId(), line);
 		if (way.isBoolTag("mkgmap:skipSizeFilter"))
 			road.setSkipSizeFilter(true);
