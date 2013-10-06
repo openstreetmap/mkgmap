@@ -123,7 +123,8 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 						}
 					}
 					
-					destinationLinkWays.put(w.getId(), w);
+					if (destinationTag != null)
+						destinationLinkWays.put(w.getId(), w);
 				}
 			}
 		}
