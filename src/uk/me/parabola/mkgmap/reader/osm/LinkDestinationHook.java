@@ -17,6 +17,7 @@ import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -105,8 +106,23 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 				// if the way is a link way and has a destination tag
 				// put it the list of ways that have to be processed
-				if (tagValues.contains(highwayTag)
-						&& w.getTag("destination") != null) {
+				if (tagValues.contains(highwayTag)) {
+					String destinationTag = w.getTag("destination");
+					
+					if (destinationTag == null) {
+						// destination is not set 
+						// => check if destination:lanes is without any lane specific information (no |) 
+						String destLanesTag = w.getTag("destination:lanes");
+						if (destLanesTag != null && destLanesTag.contains("|") == false) {
+							// the destination:lanes tag contains no | => no lane specific information
+							// use this tag as destination tag 
+							w.addTag("destination", destLanesTag);
+							destinationTag = destLanesTag;
+							if (log.isDebugEnabled())
+								log.debug("Use destination:lanes tag as destination tag because there is one lane information only. Way ",w.getId(),w.toTagString());
+						}
+					}
+					
 					destinationLinkWays.put(w.getId(), w);
 				}
 			}
@@ -618,12 +634,16 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		nameTags = null;
 	}
 
-// Do not return any used tag because this hook only has an effect if the tag destination is
-// additionally used in the style file.
-//	public Set<String> getUsedTags() {
-//		// TODO Auto-generated method stub
-//		return super.getUsedTags();
-//	}	
+	public Set<String> getUsedTags() {
+		if (processDestinations)
+			// When processing destinations also load the destination:lanes tag 
+			// to be able to copy the value to the destination tag
+			// Do not load destination because it makes sense only if the tag is
+			// referenced in the style file
+			return Collections.singleton("destination:lanes");
+		else 
+			return Collections.emptySet();
+	}	
 
 	public void end() {
 		log.info("LinkDestinationHook started");
