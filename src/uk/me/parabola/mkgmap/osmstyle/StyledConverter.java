@@ -924,6 +924,7 @@ public class StyledConverter implements OsmConverter {
 								p.incHighwayCount();
 							else {
 								points.set(i,new Coord(p.getLatitude(),p.getLongitude()));
+								points.get(i).incHighwayCount();
 							}
 						}
 						// copy all of the POI's access restrictions
