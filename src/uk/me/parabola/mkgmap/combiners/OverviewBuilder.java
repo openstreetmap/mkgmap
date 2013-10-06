@@ -220,6 +220,7 @@ public class OverviewBuilder implements Combiner {
 	 * @param mapReader Map reader on the detailed .img file.
 	 */
 	private void readPoints(MapReader mapReader) {
+		Area bounds = overviewSource.getBounds();
 		for (int l = 1; l < levels.length; l++){
 			int min = levels[l].getLevel();
 			int res = levels[l].getResolution();
@@ -227,6 +228,11 @@ public class OverviewBuilder implements Combiner {
 			for (Point point: pointList) {
 				if (log.isDebugEnabled())
 					log.debug("got point", point);
+				if (bounds.contains(point.getLocation()) == false){
+					if (log.isDebugEnabled())
+						log.debug(point, "dropped, is outside of tile boundary");
+					continue;
+				}
 				MapPoint mp = new MapPoint();
 				mp.setType(point.getType());
 				mp.setName(point.getLabel().getText());

@@ -115,8 +115,6 @@ public class StyledConverter implements OsmConverter {
 
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
-	private static final double MIN_DISTANCE_BETWEEN_NODES = 5.5;
-
 	// nodeIdMap maps a Coord into a nodeId
 	private IdentityHashMap<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
 	
@@ -180,7 +178,6 @@ public class StyledConverter implements OsmConverter {
 		String rsa = props.getProperty("remove-short-arcs", "5");
 		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
 		linkPOIsToWays = props.getProperty("link-pois-to-ways") != null;
-		
 	}
 
 	/**
@@ -696,6 +693,12 @@ public class StyledConverter implements OsmConverter {
 		return false;
 	}
 	
+	/**
+	 * Add a way to the road network. May call itself recursively and
+	 * might truncate the way if splitting is required. 
+	 * @param way the way
+	 * @param gt the type assigned by the style
+	 */
 	void addRoad(Way way, GType gt) {
 		if (way.getPoints().size() < 2){
 			log.warn("road has < 2 points ",way.getId(),"(discarding)");
@@ -918,7 +921,6 @@ public class StyledConverter implements OsmConverter {
 								p.incHighwayCount();
 							else {
 								points.set(i,new Coord(p.getLatitude(),p.getLongitude()));
-								points.get(i).incHighwayCount();
 							}
 						}
 
@@ -952,17 +954,13 @@ public class StyledConverter implements OsmConverter {
 								p1 = p1.makeBetweenPoint(p, stubSegmentLength / dist);
 								p1.incHighwayCount();
 								points.add(i + 1, p1);
-								// as p1 is now no longer a CoordPOI,
-								// the split below will be deferred
-								// until the next iteration of the
-								// loop (which is what we want!)
 								continue;
 							}
 
 							// now split the way here if it is not the
 							// first point in the way
 							if(i > 0 &&
-									   safeToSplitWay(points, i, 0, points.size() - 1)) {
+							   safeToSplitWay(points, i, 0, points.size() - 1)) {
 								Way tail = splitWayAt(way, i);
 								// recursively process tail of road
 								addRoad(tail, gt);
@@ -1003,23 +1001,19 @@ public class StyledConverter implements OsmConverter {
 
 		if(clippedWays != null) {
 			for(Way cw : clippedWays) {
-				// make sure the way has nodes at each end
-				cw.getPoints().get(0).incHighwayCount();
-				cw.getPoints().get(cw.getPoints().size() - 1).incHighwayCount();
 				addRoadAfterSplittingLoops(cw, gt);
 			}
 		}
 		else {
 			// no bounding box or way was not clipped
-
-			// make sure the way has nodes at each end
-			way.getPoints().get(0).incHighwayCount();
-			way.getPoints().get(way.getPoints().size() - 1).incHighwayCount();
 			addRoadAfterSplittingLoops(way, gt);
 		}
 	}
 
-	void addRoadAfterSplittingLoops(Way way, GType gt) {
+	private void addRoadAfterSplittingLoops(Way way, GType gt) {
+		// make sure the way has nodes at each end
+		way.getPoints().get(0).incHighwayCount();
+		way.getPoints().get(way.getPoints().size() - 1).incHighwayCount();
 
 		// check if the way is a loop or intersects with itself
 
@@ -1096,17 +1090,18 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	// safeToSplitWay() returns true if it safe (no short arcs will be
-	// created) to split a way at a given position - assumes that the
-	// floor and ceiling points will become nodes even if they are not
-	// yet
-	//
-	// points - the way's points
-	// pos - the position we are testing
-	// floor - lower limit of points to test (inclusive)
-	// ceiling - upper limit of points to test (inclusive)
-
-	boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
+	/**
+	 * safeToSplitWay() returns true if it is safe (no short arcs will be
+	 * created) to split a way at a given position - assumes that the
+	 * floor and ceiling points will become nodes even if they are not
+	 * yet.
+	 * @param points	the way's points
+	 * @param pos	the position we are testing
+	 * @param floor lower limit of points to test (inclusive)
+	 * @param ceiling upper limit of points to test (inclusive)
+	 * @return true if is OK to split as pos
+	 */
+	private boolean safeToSplitWay(List<Coord> points, int pos, int floor, int ceiling) {
 		Coord candidate = points.get(pos);
 		// avoid running off the ends of the list
 		if(floor < 0)
@@ -1130,7 +1125,7 @@ public class StyledConverter implements OsmConverter {
 			}
 			prev = p;
 		}
-		if (arcLength < minimumArcLength)
+		if (arcLength == 0 || arcLength < minimumArcLength)
 			return false;
 		prev = candidate;
 		arcLength = 0;
@@ -1149,10 +1144,10 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 
-		return arcLength >= minimumArcLength;
+		return (arcLength != 0 && arcLength >= minimumArcLength);
 	}
 
-	String getDebugName(Way way) {
+	private static String getDebugName(Way way) {
 		String name = way.getName();
 		if(name == null)
 			name = way.getTag("ref");
@@ -1163,8 +1158,7 @@ public class StyledConverter implements OsmConverter {
 		return name + "(OSM id " + way.getId() + ")";
 	}
 
-	@SuppressWarnings({"AssignmentToForLoopParameter"})
-	void addRoadWithoutLoops(Way way, GType gt) {
+	private void addRoadWithoutLoops(Way way, GType gt) {
 		List<Integer> nodeIndices = new ArrayList<Integer>();
 		List<Coord> points = way.getPoints();
 		Way trailingWay = null;
@@ -1612,10 +1606,14 @@ public class StyledConverter implements OsmConverter {
 		return false;
 	}
 
-	// split a Way at the specified point and return the new Way (the
-	// original Way is truncated)
-
-	Way splitWayAt(Way way, int index) {
+	/**
+	 * split a Way at the specified point and return the new Way (the
+	 * original Way is truncated, both ways will contain the split point)
+	 * @param way the way to split
+	 * @param index the split position. 
+	 * @return the trailing part of the way
+	 */
+	private Way splitWayAt(Way way, int index) {
 		Way trailingWay = new Way(way.getId());
 		List<Coord> wayPoints = way.getPoints();
 		int numPointsInWay = wayPoints.size();
@@ -1815,7 +1813,6 @@ public class StyledConverter implements OsmConverter {
 		if (!linkPOIsToWays)
 			return;
 		log.info("Removing unused CoordPOI");
-
 		for (Way way : roads) {
 			if (way == null)
 				continue;
@@ -1902,7 +1899,7 @@ public class StyledConverter implements OsmConverter {
 						if (removePos >= 0){
 							points.remove(removePos);
 							if (log.isInfoEnabled())
-								log.info("Way", way.toBrowseURL(), "has consecutive equal points at node numbers",i+1, "and",i+2,"(discarding",removePos+1,")");		
+								log.info("Way", way.toBrowseURL(), "has consecutive equal points at node numbers",i+1, "and",i+2,"(discarding",removePos+1,")");						
 							modifiedRoads.put(way.getId(), way);
 						}
 					} else {
