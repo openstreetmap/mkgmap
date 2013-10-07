@@ -77,6 +77,9 @@ public class OsmHandler {
 		}
 		usedTags = new HashMap<String, String>();
 		for (String s : used) {
+			if (s == null) {
+				continue;
+			}
 			// intern the keys
 			s = s.intern();
 			usedTags.put(s, s);
