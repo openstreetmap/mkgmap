@@ -57,16 +57,7 @@ goods=destination      { delete goods }
 # the access tag defines all restrictions
 # or the rule with highway to workaround a bug in the style system which cannot cope
 # with adding the access tag and afterwards a single access rule
-access=* | (highway=* & access=*) { set mkgmap:emergency='${access}'; 
-            set mkgmap:delivery='${access}'; 
-            set mkgmap:car='${access}'; 
-            set mkgmap:bus='${access}'; 
-            set mkgmap:taxi='${access}';
-            set mkgmap:foot='${access}';
-            set mkgmap:bike='${access}';
-            set mkgmap:truck='${access}';
-            set mkgmap:carpool='${access}';
-            }
+access=* | (highway=* & access=*) { addaccess '${access}'; }
             
 # set (override) specific restrictions                        
 bicycle=*    { set mkgmap:bike='${bicycle}' }

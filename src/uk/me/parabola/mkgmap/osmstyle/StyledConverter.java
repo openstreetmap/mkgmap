@@ -90,7 +90,7 @@ public class StyledConverter implements OsmConverter {
 	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
 	/** all tags used for access restrictions */
-	private final static List<String> ACCESS_TAGS = Arrays.asList(
+	public final static List<String> ACCESS_TAGS = Arrays.asList(
 			"mkgmap:bike", 
 			"mkgmap:carpool",
 			"mkgmap:foot", 
@@ -218,11 +218,7 @@ public class StyledConverter implements OsmConverter {
 						el = way.copy();
 				}
 				if (type.isRoad()) {
-					if (el.isNotBoolTag("mkgmap:access")) {
-						for (String accessTag : ACCESS_TAGS) {
-							el.addTag(accessTag, "no");
-						}
-					} else if (way.isBoolTag("mkgmap:carpool")) {
+					if (way.isBoolTag("mkgmap:carpool")) {
 						// to make a way into a "carpool lane" all access disable
 						// bits must be set except for CARPOOL and EMERGENCY (BUS
 						// can also be clear)

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
 import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
@@ -58,6 +59,10 @@ public class ActionReader {
 				actions.add(readTagValue(true, changeableTags));
 			} else if ("add".equals(cmd)) {
 				actions.add(readTagValue(false, changeableTags));
+			} else if ("setaccess".equals(cmd)) { 
+				actions.add(readAccessValue(true, changeableTags));
+			} else if ("addaccess".equals(cmd)) { 
+				actions.add(readAccessValue(false, changeableTags));
 			} else if ("apply".equals(cmd)) {
 				actions.add(readAllCmd(false));
 			} else if ("apply_once".equals(cmd)) {
@@ -175,6 +180,45 @@ public class ActionReader {
 		return action;
 	}
 
+	/**
+	 * Read a tag/value pair.  If the action is executed then the tag name
+	 * will possibly be modified or set.  If that is the case then we will
+	 * have to make sure that we are executing rules for that tag.
+	 *
+	 * @param modify If true the tag value can be modified.  If it is not set
+	 * then a tag can only be added; if it already exists, then it will not
+	 * be changed.
+	 * @param changeableTags Tags that could be changed by the action.  This is
+	 * an output parameter, any such tags should be added to this set.
+	 * @return The new add tag action.
+	 */
+	private AddAccessAction readAccessValue(boolean modify, Set<String> changeableTags) {
+		AddAccessAction action = null;
+		while (inActionCmd()) {
+
+			String val = scanner.nextWord();
+			if (action == null)
+				action = new AddAccessAction(val, modify);
+			else
+				action.add(val);
+			// Save the tag as one that is potentially set during the operation.
+			// If the value contains a variable, then we do not know what the
+			// value will be.  Otherwise save the full tag=value
+			if (val.contains("$")) {
+				for (String accessTag : StyledConverter.ACCESS_TAGS)
+					changeableTags.add(accessTag);
+			} else {
+				for (String accessTag : StyledConverter.ACCESS_TAGS)
+					changeableTags.add(accessTag + "=" + val);
+			}
+			if (scanner.checkToken("|"))
+				scanner.nextToken();
+		}
+		if (action != null)
+			usedTags.addAll(action.getUsedTags());
+		return action;
+	}
+	
 	private boolean inActionCmd() {
 		boolean end = scanner.checkToken(";");
 		return inAction() && !end;
