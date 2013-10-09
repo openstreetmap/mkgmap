@@ -568,8 +568,6 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
-	private boolean displayNameWarning = true;
-	
 	private void elementSetup(MapElement ms, GType gt, Element element) {
 		String name = Label.squashSpaces(element.getName());
 		String refs = Label.squashSpaces(element.getTag("mkgmap:ref")); 
