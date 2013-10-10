@@ -82,15 +82,18 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			if (highwayTag != null) {
 				// the points of the way are kept so that it is easy to get
 				// the adjacent ways for a given _link way
+				String directedDestination = null;
 				List<Coord> points;
 				if (isOnewayInDirection(w)) {
 					// oneway => don't need the last point because the
 					// way cannot be driven standing at the last point
 					points = w.getPoints().subList(0, w.getPoints().size() - 1);
+					directedDestination = w.getTag("direction:forward");
 				} else if (isOnewayOppositeDirection(w)) {
 					// reverse oneway => don't need the first point because the
 					// way cannot be driven standing at the first point
 					points = w.getPoints().subList(1, w.getPoints().size());
+					directedDestination = w.getTag("direction:backward");
 				} else {
 					points = w.getPoints();
 				}
@@ -121,6 +124,11 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 							if (log.isDebugEnabled())
 								log.debug("Use destination:lanes tag as destination tag because there is one lane information only. Way ",w.getId(),w.toTagString());
 						}
+					}
+					
+					if (destinationTag == null) {
+						// use the destination:forward or :backward value
+						destinationTag = directedDestination;
 					}
 					
 					if (destinationTag != null)
