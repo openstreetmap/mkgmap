@@ -644,13 +644,17 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 
 	public Set<String> getUsedTags() {
-		if (processDestinations)
-			// When processing destinations also load the destination:lanes tag 
+		if (processDestinations) {
+			// When processing destinations also load the destination:lanes,forward and backward tag 
 			// to be able to copy the value to the destination tag
 			// Do not load destination because it makes sense only if the tag is
 			// referenced in the style file
-			return Collections.singleton("destination:lanes");
-		else 
+			Set<String> tags = new HashSet<>();
+			tags.add("destination:lanes");
+			tags.add("destination:forward");
+			tags.add("destination:backward");
+			return tags;
+		} else 
 			return Collections.emptySet();
 	}	
 
