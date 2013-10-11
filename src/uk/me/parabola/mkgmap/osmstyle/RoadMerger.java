@@ -54,13 +54,13 @@ public class RoadMerger {
 				add("mkgmap:foot");
 				add("mkgmap:bike");
 				add("mkgmap:truck");
-				add("mkgmap:carpool");
 				add("mkgmap:throughroute");
 			}
 		};
 
 		private final static Set<String> valueBoolCompareTags = new HashSet<String>() {
 			{
+				add("mkgmap:carpool");
 				add("mkgmap:toll");
 				add("mkgmap:unpaved");
 				add("mkgmap:ferry");

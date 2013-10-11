@@ -15,7 +15,6 @@ railway=platform {add access = no; add foot = yes}
 # normalize the tags
 access=private     { set access=no }
 bicycle=private    { set bicycle=no }
-carpool=private    { set carpool=no }
 foot=private       { set foot=no }
 hgv=private        { set hgv=no }
 motorcar=private   { set motorcar=no }
@@ -29,7 +28,6 @@ goods=private      { set goods=no }
 
 access=* & (access=designated | access=permissive | access=official)     { set access=yes }
 bicycle=* & (bicycle=designated | bicycle=permissive | bicycle=official)     { set bicycle=yes }
-carpool=* & (carpool=designated | carpool=permissive | carpool=official)     { set carpool=yes }
 foot=* & (foot=designated | foot=permissive | foot=official)     { set foot=yes }
 hgv=* & (hgv=designated | hgv=permissive | hgv=official)     { set hgv=yes }
 motorcar=* & (motorcar=designated | motorcar=permissive | motorcar=official)     { set motorcar=yes }
@@ -45,7 +43,6 @@ motorcar=destination   { set mkgmap:throughroute=no; delete motorcar }
 motorcycle=destination { set mkgmap:throughroute=no; delete motorcycle } 
 access=destination     { set mkgmap:throughroute=no; delete access }
 bicycle=destination    { delete bicycle }
-carpool=destination    { delete carpool }      
 foot=destination       { delete foot }                  
 hgv=destination        { delete hgv }                  
 psv=destination        { delete psv }                  
@@ -61,7 +58,6 @@ access=* | (highway=* & access=*) { addaccess '${access}'; }
             
 # set (override) specific restrictions                        
 bicycle=*    { set mkgmap:bike='${bicycle}' }
-carpool=*    { set mkgmap:carpool='${carpool}' }      
 foot=*       { set mkgmap:foot='${foot}' }                  
 hgv=*        { set mkgmap:truck='${hgv}' }                  
 motorcar=*   { set mkgmap:car='${motorcar}' }
@@ -72,3 +68,5 @@ emergency=*  { set mkgmap:emergency='${emergency}' }
 delivery=*   { set mkgmap:delivery='${delivery}' }                  
 goods=*      { set mkgmap:delivery='${goods}' }                  
 
+# check for carpool lane 
+(carpool=yes | carpool=designated | carpool=permissive | carpool=official)     { set mkgmap:carpool=yes }

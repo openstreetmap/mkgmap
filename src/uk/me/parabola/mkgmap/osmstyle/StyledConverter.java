@@ -92,7 +92,6 @@ public class StyledConverter implements OsmConverter {
 	/** all tags used for access restrictions */
 	public final static List<String> ACCESS_TAGS = Arrays.asList(
 			"mkgmap:bike", 
-			"mkgmap:carpool",
 			"mkgmap:foot", 
 			"mkgmap:truck", 
 			"mkgmap:car",
@@ -225,7 +224,6 @@ public class StyledConverter implements OsmConverter {
 						for (String accessTag : ACCESS_TAGS) {
 							el.addTag(accessTag, "no");
 						}
-						el.deleteTag("mkgmap:carpool");
 						el.deleteTag("mkgmap:emergency");
 						el.deleteTag("mkgmap:bus");
 					}
@@ -1479,7 +1477,10 @@ public class StyledConverter implements OsmConverter {
 		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
 		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bike");
 		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
-		noAccess[RoadNetwork.NO_CARPOOL] = way.isNotBoolTag("mkgmap:carpool");
+		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is not set to yes
+		// WanMil: sounds crazy (it's a carpool lane only if the flag is not set??) but
+		// that's how it was implemented before the mergeroads branch
+		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool") == false;
 		road.setAccess(noAccess);
 
 		if (way.isNotBoolTag("mkgmap:throughroute")) {
