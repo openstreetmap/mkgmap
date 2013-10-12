@@ -53,11 +53,11 @@ public class LineMergeFilter{
 		endPoints.add(points.get(points.size()-1), line);
 	}
 
-	public List<MapLine> merge(List<MapLine> lines, boolean skipRoads) {
+	public List<MapLine> merge(List<MapLine> lines) {
 		linesMerged = new ArrayList<MapLine>(lines.size());	//better use LinkedList??
 		for (MapLine line : lines) {
 			
-			if (skipRoads && line.isRoad()){
+			if (line.isRoad()){
 				linesMerged.add(line);
 				continue;
 			}

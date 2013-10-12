@@ -1023,7 +1023,7 @@ public class MapBuilder implements Configurable {
 		
 		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
-			lines = merger.merge(lines, doRoads && res == 24);
+			lines = merger.merge(lines);
 		}
 
 		LayerFilterChain filters = new LayerFilterChain(config);
