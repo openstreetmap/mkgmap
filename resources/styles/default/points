@@ -11,11 +11,9 @@
 include 'inc/address';
 
 barrier=bollard | barrier=bus_trap
-    {add access = no; add bicycle = yes; add foot = yes}
+    { add mkgmap:bike='${bicycle|subst:private=>no|def:yes}'; add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
 barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate
-    {add access = no; add foot = yes}
-        
-include 'inc/access';
+    { add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
 
 
 internet_access=yes { name 'Internet ${name}' | 'Internet' } [0x2f12 resolution 24 continue]

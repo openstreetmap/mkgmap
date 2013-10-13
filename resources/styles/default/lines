@@ -20,19 +20,6 @@ highway=* & name=* { set mkgmap:street='${name}' }
 # Mark highways with the toll flag
 highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
-# Remove access=yes from highways.
-highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
-# Translate motor_vehicle and vehicle access rules.
-highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
-highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
-
-# By default, ways are accessible by the highest allowed mode of
-# transportation, and thus access=yes should be redundant.
-# However, sometimes cycleways may be tagged access=destination or similar,
-# to allow cars and motorcycles. In mkgmap, 'access' specifies the
-# generic access rule, and it can be overridden by more specific tags:
-# foot, bicycle, motorcar, motorcycle.
-
 # Hide proposed ways
 highway=proposed {delete highway;delete junction}
 # Hide unaccessible tunnels
@@ -43,6 +30,7 @@ highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
 # Validation-like checks (uncomment to enable)
 #highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
+highway=motorway|highway=motorway_link { add oneway=yes }
 
 # Set highway names to include the reference if there is one
 highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
