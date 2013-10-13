@@ -1,8 +1,8 @@
-# Remove access=yes from highways.
-highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
+# Remove access=yes from highways and barriers.
+(highway=* | barrier=*) & (access=yes|access=permissive|access=designated|access=official) { delete access }
 # Translate motor_vehicle and vehicle access rules.
-highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
-highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
+(highway=* | barrier=*) & motor_vehicle=* { add motorcar='${motor_vehicle}' }
+(highway=* | barrier=*) & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
 
 highway=* & motorroad=yes {add bicycle = no; add foot = no}
 highway=motorway|highway=motorway_link  {add oneway = yes; add bicycle = no; add foot = no }
@@ -14,10 +14,10 @@ railway=platform {add access = no; add foot = yes}
 
 # normalize the tags
 access=private     { set access=no }
-bicycle=private    { set bicycle=no }
+(highway=* | barrier=*) & bicycle=private   { set bicycle=no }
 foot=private       { set foot=no }
 hgv=private        { set hgv=no }
-motorcar=private   { set motorcar=no }
+(highway=* | barrier=*) & motorcar=private   { set motorcar=no }
 motorcycle=private { set motorcycle=no }
 psv=private        { set psv=no }
 taxi=private       { set taxi=no }
@@ -26,47 +26,45 @@ delivery=private   { set delivery=no }
 goods=private      { set goods=no }
 
 
-access=* & (access=designated | access=permissive | access=official)     { set access=yes }
-bicycle=* & (bicycle=designated | bicycle=permissive | bicycle=official)     { set bicycle=yes }
-foot=* & (foot=designated | foot=permissive | foot=official)     { set foot=yes }
-hgv=* & (hgv=designated | hgv=permissive | hgv=official)     { set hgv=yes }
-motorcar=* & (motorcar=designated | motorcar=permissive | motorcar=official)     { set motorcar=yes }
-motorcycle=* & (motorcycle=designated | motorcycle=permissive | motorcycle=official)     { set motorcycle=yes }
-psv=* & (psv=designated | psv=permissive | psv=official)     { set psv=yes }
-taxi=* & (taxi=designated | taxi=permissive | taxi=official)     { set taxi=yes }
-emergency=* & (emergency=designated | emergency=permissive | emergency=official)     { set emergency=yes }
-delivery=* & (delivery=designated | delivery=permissive | delivery=official)     { set delivery=yes }
-goods=* & (goods=designated | goods=permissive | goods=official)     { set goods=yes }
+(access=designated | access=permissive | access=official)     { set access=yes }
+(highway=* | barrier=*) & (bicycle=designated | bicycle=permissive | bicycle=official)     { set bicycle=yes }
+(foot=designated | foot=permissive | foot=official)     { set foot=yes }
+(hgv=designated | hgv=permissive | hgv=official)     { set hgv=yes }
+(highway=* | barrier=*) & (motorcar=designated | motorcar=permissive | motorcar=official)     { set motorcar=yes }
+(motorcycle=designated | motorcycle=permissive | motorcycle=official)     { set motorcycle=yes }
+(psv=designated | psv=permissive | psv=official)     { set psv=yes }
+(taxi=designated | taxi=permissive | taxi=official)     { set taxi=yes }
+(emergency=designated | emergency=permissive | emergency=official)     { set emergency=yes }
+(delivery=designated | delivery=permissive | delivery=official)     { set delivery=yes }
+(goods=designated | goods=permissive | goods=official)     { set goods=yes }
 
 
-motorcar=destination   { set mkgmap:throughroute=no; delete motorcar } 
-motorcycle=destination { set mkgmap:throughroute=no; delete motorcycle } 
-access=destination     { set mkgmap:throughroute=no; delete access }
-bicycle=destination    { delete bicycle }
-foot=destination       { delete foot }                  
-hgv=destination        { delete hgv }                  
-psv=destination        { delete psv }                  
-taxi=destination       { delete taxi }                  
-emergency=destination  { delete emergency }                  
-delivery=destination   { delete delivery }                  
-goods=destination      { delete goods }                  
+(highway=* | barrier=*) & motorcar=destination   { set mkgmap:throughroute=no; delete motorcar } 
+(highway=* | barrier=*) & motorcycle=destination { set mkgmap:throughroute=no; delete motorcycle } 
+(highway=* | barrier=*) & access=destination     { set mkgmap:throughroute=no; delete access }
+(highway=* | barrier=*) & bicycle=destination    { delete bicycle }
+(highway=* | barrier=*) & foot=destination       { delete foot }                  
+(highway=* | barrier=*) & hgv=destination        { delete hgv }                  
+(highway=* | barrier=*) & psv=destination        { delete psv }                  
+(highway=* | barrier=*) & taxi=destination       { delete taxi }                  
+(highway=* | barrier=*) & emergency=destination  { delete emergency }                  
+(highway=* | barrier=*) & delivery=destination   { delete delivery }                  
+(highway=* | barrier=*) & goods=destination      { delete goods }                  
 
 # the access tag defines all restrictions
-# or the rule with highway to workaround a bug in the style system which cannot cope
-# with adding the access tag and afterwards a single access rule
-access=* | (highway=* & access=*) { addaccess '${access}'; }
+(highway=* | barrier=*) & access=* { addaccess '${access}'; }
             
 # set (override) specific restrictions                        
-bicycle=*    { set mkgmap:bike='${bicycle}' }
-foot=*       { set mkgmap:foot='${foot}' }                  
-hgv=*        { set mkgmap:truck='${hgv}' }                  
-motorcar=*   { set mkgmap:car='${motorcar}' }
-motorcycle=* { set mkgmap:car='${motorcycle}' }                  
-psv=*        { set mkgmap:bus='${psv}' }                  
-taxi=*       { set mkgmap:taxi='${taxi}' }                  
-emergency=*  { set mkgmap:emergency='${emergency}' }                  
-delivery=*   { set mkgmap:delivery='${delivery}' }                  
-goods=*      { set mkgmap:delivery='${goods}' }                  
+(highway=* | barrier=*) & bicycle=*    { set mkgmap:bike='${bicycle}' }
+(highway=* | barrier=*) & foot=*       { set mkgmap:foot='${foot}' }                  
+(highway=* | barrier=*) & hgv=*        { set mkgmap:truck='${hgv}' }                  
+(highway=* | barrier=*) & motorcar=*   { set mkgmap:car='${motorcar}' }
+(highway=* | barrier=*) & motorcycle=* { set mkgmap:car='${motorcycle}' }                  
+(highway=* | barrier=*) & psv=*        { set mkgmap:bus='${psv}' }                  
+(highway=* | barrier=*) & taxi=*       { set mkgmap:taxi='${taxi}' }                  
+(highway=* | barrier=*) & emergency=*  { set mkgmap:emergency='${emergency}' }                  
+(highway=* | barrier=*) & delivery=*   { set mkgmap:delivery='${delivery}' }                  
+(highway=* | barrier=*) & goods=*      { set mkgmap:delivery='${goods}' }                  
 
 # check for carpool lane 
 (carpool=yes | carpool=designated | carpool=permissive | carpool=official)     { set mkgmap:carpool=yes }
