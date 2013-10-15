@@ -190,8 +190,12 @@ public class StyledConverter implements OsmConverter {
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
-		String rsa = props.getProperty("remove-short-arcs", "5");
-		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 5.0;
+		String rsa = props.getProperty("remove-short-arcs", "0");
+		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
+		if (minimumArcLength > 0){
+			System.err.println("Warning: remove-short-arcs=" + rsa + " overrides default 0." +
+					" This is no longer recommended for a routable map.");
+		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways") != null;
 	}
 
