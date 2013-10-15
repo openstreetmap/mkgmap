@@ -120,15 +120,15 @@ public class TypeReader {
 						msg += typeOverlaidMsg;
 					System.out.println(msg);
 				}
-				if (kind == FeatureKind.POLYLINE && gt.getMaxResolution() == 24 && GType.isRoutableLineType(usedType)){
+				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && GType.isRoutableLineType(usedType)){
 					if (gt.isRoad() == false){
-						String msg = "Warning: routable type " + type  + " is used for non-routable line with resolution 24. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
+						String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
 						if (fromOverlays)
 							msg += typeOverlaidMsg;
 						System.out.println(msg);
 					}
 					else if (i > 0){
-						System.out.println("Warning: routable type " + type + " is used for non-routable line with resolution 24. " +
+						System.out.println("Warning: routable type " + type + " is used for non-routable line with level 0. " +
 								"This may break routing. Style file " + ts.getFileName() + ", line " + ts.getLinenumber() + 
 								typeOverlaidMsg +
 								" which is used for adding the non-routable copy of the way.");
