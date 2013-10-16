@@ -19,6 +19,7 @@ package uk.me.parabola.imgfmt.app.lbl;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.BufferedImgFileWriter;
 import uk.me.parabola.imgfmt.app.Exit;
@@ -56,9 +57,13 @@ public class LBLFile extends ImgFile {
 	private final PlacesFile places = new PlacesFile();
 	private Sort sort;
 
+	// Shift value for the label offset.
+	private final int offsetMultiplier = 1;
+
 	public LBLFile(ImgChannel chan, Sort sort) {
 		this.sort = sort;
 		lblHeader.setSort(sort);
+		lblHeader.setOffsetMultiplier(offsetMultiplier);
 		setHeader(lblHeader);
 
 		setWriter(new BufferedImgFileWriter(chan));
@@ -67,6 +72,7 @@ public class LBLFile extends ImgFile {
 
 		// The zero offset is for no label.
 		getWriter().put((byte) 0);
+		alignForNext();
 
 		places.init(this, lblHeader.getPlaceHeader());
 		places.setSort(sort);
@@ -128,12 +134,36 @@ public class LBLFile extends ImgFile {
 			l = new Label(text);
 			labelCache.put(encodedText, l);
 
-			l.setOffset(position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength()));
+			l.setOffset(getNextLabelOffset());
 			l.write(getWriter(), encodedText);
+
+			alignForNext();
+
+			if (l.getOffset() > 0x3fffff)
+				throw new MapFailedException("Overflow of LBL section");
 		}
 
 		return l;
 	}
+
+	/**
+	 * Align for the next label.
+	 *
+	 * Only has any effect when offsetMultiplier is not zero.
+	 */
+	private void alignForNext() {
+		// Align ready for next label
+		while ((getCurrentLabelOffset() & ((1 << offsetMultiplier) - 1)) != 0)
+			getWriter().put((byte) 0);
+	}
+
+	private int getNextLabelOffset() {
+		return getCurrentLabelOffset() >> offsetMultiplier;
+	}
+
+	private int getCurrentLabelOffset() {
+		return position() - (LBLHeader.HEADER_LEN + lblHeader.getSortDescriptionLength());
+ 	}
 
 	public POIRecord createPOI(String name) {
 		return places.createPOI(name);

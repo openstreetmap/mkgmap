@@ -112,7 +112,7 @@ public class LBLHeader extends CommonHeader {
 		writer.putInt(HEADER_LEN + sortDescriptionLength);
 		writer.putInt(getLabelSize());
 
-		writer.put((byte) 0);
+		writer.put((byte) offsetMultiplier);
 		writer.put((byte) encodingType);
 
 		placeHeader.writeFileHeader(writer);
@@ -177,5 +177,9 @@ public class LBLHeader extends CommonHeader {
 
 	public PlacesHeader getPlaceHeader() {
 		return placeHeader;
+	}
+
+	public void setOffsetMultiplier(int offsetMultiplier) {
+		this.offsetMultiplier = offsetMultiplier;
 	}
 }

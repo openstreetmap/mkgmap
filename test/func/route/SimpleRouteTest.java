@@ -61,7 +61,7 @@ public class SimpleRouteTest extends Base {
 				assertThat("TRE size", size, new RangeMatcher(1618, 2));
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 27691, size);
+				assertEquals("LBL size", 28834, size);
 			} else if (ext.equals("NET")) {
 				count++;
 				assertEquals("NET size", 73850, size);
@@ -90,7 +90,7 @@ public class SimpleRouteTest extends Base {
 				assertThat("TRE size", size, new RangeMatcher(769, 2));
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 957, size);
+				assertEquals("LBL size", 985, size);
 			} else if (ext.equals("NET")) {
 				count++;
 				assertEquals("NET size", 1280, size);

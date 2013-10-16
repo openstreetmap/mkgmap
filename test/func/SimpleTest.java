@@ -108,7 +108,7 @@ public class SimpleTest extends Base {
 				assertThat("TRE size", size, new RangeMatcher(769, 2));
 			} else if (ext.equals("LBL")) {
 				count++;
-				assertEquals("LBL size", 957, size);
+				assertEquals("LBL size", 985, size);
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
