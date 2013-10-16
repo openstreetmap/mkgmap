@@ -108,8 +108,6 @@ public class Main implements ArgumentProcessor {
 			return;
 		}
 
-		checkJREVersion();
-		
 		Main mm = new Main();
 
 		try {
@@ -128,27 +126,6 @@ public class Main implements ArgumentProcessor {
 	
 	private static void printUsage (){
 		System.err.println("Usage: mkgmap [options...] <file.osm>");
-	}
-	
-	/**
-	 * Check if a JRE 1.7.x or higher is installed.
-	 */
-	private static void checkJREVersion() {
-		String version = System.getProperty("java.version");
-		if (version != null) {
-			String[] versionParts =version.split(Pattern.quote(".")); 
-			if (versionParts.length >= 2) {
-				int major = Integer.valueOf(versionParts[1]);
-				if (major < 7) {
-					System.out.println("===========================================================");
-					System.out.println("You are using an old Java runtime environment "+ version);
-					System.out.println("It is no longer supported.");
-					System.out.println("Please update Java to the latest release.");
-					System.out.println("===========================================================");
-					System.exit(1);
-				}
-			}
-		}
 	}
 
 	/**
