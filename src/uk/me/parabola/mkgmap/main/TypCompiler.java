@@ -31,6 +31,7 @@ import java.nio.charset.CharsetEncoder;
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.typ.TYPFile;
 import uk.me.parabola.imgfmt.app.typ.TypData;
 import uk.me.parabola.imgfmt.app.typ.TypLabelException;
@@ -67,7 +68,7 @@ public class TypCompiler implements MapProcessor {
 
 		TypData data;
 		try {
-			data = compile(filename, readCharset);
+			data = compile(filename, readCharset, args.getSort());
 		} catch (SyntaxException e) {
 			throw new MapFailedException("Compiling TYP txt file: " + e.getMessage());
 		} catch (FileNotFoundException e) {
@@ -75,18 +76,16 @@ public class TypCompiler implements MapProcessor {
 		}
 
 		TypParam param = data.getParam();
-		if (args != null) {
-			int family = args.get("family-id", -1);
-			int product = args.get("product-id", -1);
-			int cp = args.get("code-page", -1);
+		int family = args.get("family-id", -1);
+		int product = args.get("product-id", -1);
+		int cp = args.get("code-page", -1);
 
-			if (family != -1)
-				param.setFamilyId(family);
-			if (product != -1)
-				param.setProductId(product);
-			if (cp != -1)
-				param.setCodePage(cp);
-		}
+		if (family != -1)
+			param.setFamilyId(family);
+		if (product != -1)
+			param.setProductId(product);
+		if (cp != -1)
+			param.setCodePage(cp);
 
 		File outFile = new File(filename);
 		String outName = outFile.getName();
@@ -100,6 +99,9 @@ public class TypCompiler implements MapProcessor {
 
 		try {
 			writeTyp(data, outFile);
+		} catch (TypLabelException e) {
+			throw new MapFailedException("TYP file cannot be written in code page "
+					+ data.getSort().getCodepage());
 		} catch (IOException e) {
 			throw new MapFailedException("Error while writing typ file", e);
 		}
@@ -109,16 +111,25 @@ public class TypCompiler implements MapProcessor {
 
 	/**
 	 * Read and compile a TYP file, returning the compiled form.
+	 *
 	 * @param filename The input filename.
 	 * @param charset The character set to use to read this file. We should have already determined
 	 * that this character set is valid and can be used to read the file.
+	 * @param sort The sort information from command line options, used for the output code page
+	 * only. If null, then the code page set by CodePage in the typ.txt file will be used.
+	 *
 	 * @return The compiled form as a data structure.
 	 * @throws FileNotFoundException If the file doesn't exist.
 	 * @throws SyntaxException All user correctable problems in the input file.
 	 */
-	private TypData compile(String filename, String charset) throws FileNotFoundException, SyntaxException {
+	private TypData compile(String filename, String charset, Sort sort)
+			throws FileNotFoundException, SyntaxException
+	{
 		TypTextReader tr = new TypTextReader();
 
+		TypData data = tr.getData();
+		System.out.println("cmd line sort " + sort);
+		data.setSort(sort);
 		try {
 			Reader r = new BufferedReader(new InputStreamReader(new FileInputStream(filename), charset));
 			tr.read(filename, r);
@@ -170,7 +181,7 @@ public class TypCompiler implements MapProcessor {
 
 		TypData data;
 		try {
-			data = compile(in, readCharset);
+			data = compile(in, readCharset, null);
 		} catch (SyntaxException e) {
 			System.out.println(e.getMessage());
 			return;
@@ -210,7 +221,7 @@ public class TypCompiler implements MapProcessor {
 					readingCharset = e.getCharsetName();
 					tryCharset(file, readingCharset);
 				} catch (Exception e1) {
-					return null;
+					return "utf-8";
 				}
 			}
 
@@ -226,10 +237,17 @@ public class TypCompiler implements MapProcessor {
 
 				String line;
 				while ((line = br.readLine()) != null) {
+					if (line.isEmpty())
+						continue;
+
+					// This is a giveaway the file is in utf-something, so ignore anything else
+					if (line.charAt(0) == 0xfeff)
+						return;
+
 					if (line.startsWith("CodePage")) {
 						String[] split = line.split("=");
 						try {
-							setCodePage("cp" + (int) Integer.decode(split[1].trim()));
+							setCodePage("cp" + Integer.decode(split[1].trim()));
 						} catch (NumberFormatException e) {
 							setCodePage("cp1252");
 						}
