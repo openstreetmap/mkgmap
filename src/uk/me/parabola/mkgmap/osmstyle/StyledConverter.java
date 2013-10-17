@@ -91,7 +91,7 @@ public class StyledConverter implements OsmConverter {
 
 	/** all tags used for access restrictions */
 	public final static List<String> ACCESS_TAGS = Arrays.asList(
-			"mkgmap:bike", 
+			"mkgmap:bicycle", 
 			"mkgmap:foot", 
 			"mkgmap:truck", 
 			"mkgmap:car",
@@ -1475,7 +1475,7 @@ public class StyledConverter implements OsmConverter {
 		noAccess[RoadNetwork.NO_BUS] = way.isNotBoolTag("mkgmap:bus");
 		noAccess[RoadNetwork.NO_TAXI] = way.isNotBoolTag("mkgmap:taxi");
 		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
-		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bike");
+		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bicycle");
 		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
 		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is not set to yes
 		// WanMil: sounds crazy (it's a carpool lane only if the flag is not set??) but
@@ -1638,7 +1638,7 @@ public class StyledConverter implements OsmConverter {
 		// check if bike, truck, car, bus, taxi and emergency are not allowed
 		// not sure about delivery - but check if also
 		// carpool and throughroute can be ignored (I think so...)
-		for (String accessTag : Arrays.asList("mkgmap:bike","mkgmap:truck","mkgmap:car","mkgmap:bus","mkgmap:taxi","mkgmap:emergency","mkgmap:delivery")) 
+		for (String accessTag : Arrays.asList("mkgmap:bicycle","mkgmap:truck","mkgmap:car","mkgmap:bus","mkgmap:taxi","mkgmap:emergency","mkgmap:delivery")) 
 		{
 			if (way.isNotBoolTag(accessTag) == false) {
 				return false;

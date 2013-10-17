@@ -11,7 +11,7 @@
 include 'inc/address';
 
 barrier=bollard | barrier=bus_trap
-    { add mkgmap:bike='${bicycle|subst:private=>no|def:yes}'; add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
+    { add mkgmap:bicycle='${bicycle|subst:private=>no|def:yes}'; add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
 barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate
     { add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
 

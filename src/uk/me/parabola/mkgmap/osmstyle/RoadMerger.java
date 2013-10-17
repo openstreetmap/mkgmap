@@ -52,7 +52,7 @@ public class RoadMerger {
 				add("mkgmap:bus");
 				add("mkgmap:taxi");
 				add("mkgmap:foot");
-				add("mkgmap:bike");
+				add("mkgmap:bicycle");
 				add("mkgmap:truck");
 				add("mkgmap:throughroute");
 			}

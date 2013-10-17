@@ -1,6 +1,6 @@
 # Define the access restrictions
 # The following tags define the restrictions:
-# mkgmap:bike
+# mkgmap:bicycle
 # mkgmap:foot
 # mkgmap:car
 # mkgmap:truck
@@ -23,7 +23,7 @@ delivery=destination   { delete delivery }
 goods=destination      { delete goods }                  
 
 # set (override) specific restrictions                        
-bicycle=*    { set mkgmap:bike='${bicycle|subst:private=>no}' }
+bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no}' }
 foot=*       { set mkgmap:foot='${foot|subst:private=>no}' }                  
 hgv=*        { set mkgmap:truck='${hgv|subst:private=>no}' }                  
 motorcar=*   { set mkgmap:car='${motorcar|subst:private=>no}' }
@@ -36,16 +36,16 @@ goods=*      { set mkgmap:delivery='${goods|subst:private=>no}' }
 # Translate motor_vehicle and vehicle access rules.
 motorcycle=*    { add mkgmap:car='${motorcycle|subst:private=>no}' }                  
 motor_vehicle=* { add mkgmap:car='${motor_vehicle|subst:private=>no}' }
-vehicle=*       { add mkgmap:car='${vehicle|subst:private=>no}'; add mkgmap:bike='${vehicle|subst:private=>no}' }
+vehicle=*       { add mkgmap:car='${vehicle|subst:private=>no}'; add mkgmap:bicycle='${vehicle|subst:private=>no}' }
 
 # the access tag defines all restrictions
 access=* { addaccess '${access|subst:private=>no}' }
 
-highway=* & motorroad=yes               { add mkgmap:bike=no; add mkgmap:foot=no }
-highway=motorway|highway=motorway_link  { add mkgmap:bike=no; add mkgmap:foot=no }
+highway=* & motorroad=yes               { add mkgmap:bicycle=no; add mkgmap:foot=no }
+highway=motorway|highway=motorway_link  { add mkgmap:bicycle=no; add mkgmap:foot=no }
 highway=pedestrian & area!=yes          { add mkgmap:foot=no; addaccess no } 
-highway=bridleway                       { add mkgmap:bike=yes; add mkgmap:foot=yes; addaccess no }
-highway=cycleway                        { add mkgmap:bike=yes; add mkgmap:foot=yes; addaccess no }
+highway=bridleway                       { add mkgmap:bicycle=yes; add mkgmap:foot=yes; addaccess no }
+highway=cycleway                        { add mkgmap:bicycle=yes; add mkgmap:foot=yes; addaccess no }
 highway=footway|highway=path|highway=steps { add mkgmap:foot=yes; addaccess no }
 railway=platform                        { add mkgmap:foot=yes; addaccess no }
 

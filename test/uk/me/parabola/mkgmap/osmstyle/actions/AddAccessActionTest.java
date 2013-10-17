@@ -63,9 +63,9 @@ public class AddAccessActionTest {
 		Action act = new AddAccessAction("${noexist}", true);
 		Element el = stdElement();
 		String val = "before";
-		el.addTag("mkgmap:bike", val);
+		el.addTag("mkgmap:bicycle", val);
 		act.perform(el);
-		assertSame("no substitution", val, el.getTag("mkgmap:bike"));
+		assertSame("no substitution", val, el.getTag("mkgmap:bicycle"));
 	}
 
 	/**
@@ -76,10 +76,10 @@ public class AddAccessActionTest {
 	public void testNoOverwriteValue() {
 		Action act = new AddAccessAction("${access}", false);
 		Element el = stdElement();
-		el.addTag("mkgmap:bike", "yes");
+		el.addTag("mkgmap:bicycle", "yes");
 		act.perform(el);
 		for (String accessTag : StyledConverter.ACCESS_TAGS) {
-			if ("mkgmap:bike".equals(accessTag))
+			if ("mkgmap:bicycle".equals(accessTag))
 				assertEquals("no overwrite", "yes", el.getTag(accessTag));
 			else
 				assertEquals("no overwrite", "no", el.getTag(accessTag));
@@ -94,7 +94,7 @@ public class AddAccessActionTest {
 	public void testOverwriteValue() {
 		Action act = new AddAccessAction("${access}", true);
 		Element el = stdElement();
-		el.addTag("mkgmap:bike", "yes");
+		el.addTag("mkgmap:bicycle", "yes");
 		act.perform(el);
 		for (String accessTag : StyledConverter.ACCESS_TAGS) {
 			assertEquals("no overwrite", "no", el.getTag(accessTag));
