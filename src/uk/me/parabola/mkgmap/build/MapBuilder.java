@@ -1033,6 +1033,7 @@ public class MapBuilder implements Configurable {
 		}
 		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new RemoveObsoletePointsFilter());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
