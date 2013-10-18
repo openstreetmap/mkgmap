@@ -27,7 +27,6 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -1019,17 +1018,14 @@ public class MapBuilder implements Configurable {
 		config.setLevel(div.getZoom().getLevel());
 		config.setRoutable(doRoads);
 
-
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
 		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
 			lines = merger.merge(lines);
 		}
-		boolean checkRoads = doRoads && div.getZoom().getLevel() == 0;
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
-			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
 			if(reducePointError > 0)
