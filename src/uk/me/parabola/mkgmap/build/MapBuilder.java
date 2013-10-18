@@ -1031,7 +1031,7 @@ public class MapBuilder implements Configurable {
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(MIN_SIZE_LINE, checkRoads));
+			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
@@ -1076,7 +1076,7 @@ public class MapBuilder implements Configurable {
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
 			if (sizefilterVal > 0)
-				filters.addFilter(new SizeFilter(sizefilterVal, false));
+				filters.addFilter(new SizeFilter(sizefilterVal));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
