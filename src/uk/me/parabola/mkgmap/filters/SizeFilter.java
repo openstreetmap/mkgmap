@@ -27,15 +27,16 @@ public class SizeFilter implements MapFilter {
 	private final int size;
 
 	private int minSize;
-	private final boolean checkRouting;
+	private boolean checkRouting;
 
-	public SizeFilter(int s, boolean doRoads) {
+	public SizeFilter(int s) {
 		size = s;
-		checkRouting = doRoads;
 	}
 	
 	public void init(FilterConfig config) {
 		minSize = size * (1<<config.getShift());
+		// don't remove roads on level 0
+		checkRouting = config.getLevel() == 0 && config.isRoutable() == true;
 	}
 
 	/**
