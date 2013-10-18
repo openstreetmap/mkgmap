@@ -1016,6 +1016,8 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
 
 
 		//TODO: Maybe this is the wrong place to do merging.
@@ -1033,7 +1035,7 @@ public class MapBuilder implements Configurable {
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
-		filters.addFilter(new LineSplitterFilter(checkRoads));
+		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
@@ -1065,6 +1067,9 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
+		
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
@@ -1240,12 +1245,6 @@ public class MapBuilder implements Configurable {
 
 					pl.setRoadDef(roaddef);
 					roaddef.addPolylineRef(pl);
-					List<Coord> points = line.getPoints();
-					if (div.getZoom().getLevel() == 0 
-							&& (points.get(0) instanceof CoordNode == false
-							|| points.get(points.size() - 1) instanceof CoordNode == false)) {
-						log.error("possible routing problem: road end-points not both coordNodes: " + roaddef);
-					}
 				} else if (routingErrorMsgPrinted == false){
 					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){
 						Coord start = line.getPoints().get(0);
