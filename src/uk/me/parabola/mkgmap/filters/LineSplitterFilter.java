@@ -95,8 +95,8 @@ public class LineSplitterFilter implements MapFilter {
 					log.debug("saving next part");
 				l.setPoints(coords);
 				next.doFilter(l);
-				l = new MapLine(line);
-
+				l = line.copy();
+        
 				count = 0;
 				first = false;
 				coords = new ArrayList<Coord>();
