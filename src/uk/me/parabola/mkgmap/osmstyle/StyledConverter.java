@@ -1173,39 +1173,9 @@ public class StyledConverter implements OsmConverter {
 		// inter-node arc length becomes excessive
 		double arcLength = 0;
 		int numPointsInArc = 0;
-		// track the dimensions of the way's bbox so that we can
-		// detect if it would be split by the LineSizeSplitterFilter
-		class WayBBox {
-			int minLat = Integer.MAX_VALUE;
-			int maxLat = Integer.MIN_VALUE;
-			int minLon = Integer.MAX_VALUE;
-			int maxLon = Integer.MIN_VALUE;
-
-			void addPoint(Coord co) {
-				int lat = co.getLatitude();
-				if(lat < minLat)
-					minLat = lat;
-				if(lat > maxLat)
-					maxLat = lat;
-				int lon = co.getLongitude();
-				if(lon < minLon)
-					minLon = lon;
-				if(lon > maxLon)
-					maxLon = lon;
-			}
-
-			boolean tooBig() {
-				return LineSizeSplitterFilter.testDims(maxLat - minLat,
-													   maxLon - minLon) >= 1.0;
-			}
-		}
-
-		WayBBox wayBBox = new WayBBox();
 
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
-
-			wayBBox.addPoint(p);
 
 			// flag that's set true when we back up to a previous node
 			// while finding a good place to split the line
@@ -1232,8 +1202,6 @@ public class StyledConverter implements OsmConverter {
 					d = newD;
 				}
 
-				wayBBox.addPoint(nextP);
-
 				if((arcLength + d) > MAX_ARC_LENGTH) {
 					assert i > 0 : "long arc segment was not split";
 					assert trailingWay == null : "trailingWay not null #1";
@@ -1241,14 +1209,6 @@ public class StyledConverter implements OsmConverter {
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
-				}
-				else if(wayBBox.tooBig()) {
-					assert i > 0 : "arc segment with big bbox not split";
-					assert trailingWay == null : "trailingWay not null #2";
-					trailingWay = splitWayAt(way, i);
-					// this will have truncated the current Way's
-					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
 				}
 				else if(numPointsInArc >= MAX_POINTS_IN_ARC &&
 						p.getHighwayCount() < 2) {

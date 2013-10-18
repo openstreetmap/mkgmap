@@ -74,7 +74,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		if(line instanceof MapRoad) {
 			MapRoad road = ((MapRoad)line);
-			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split (routing will be broken)");
+			log.debug("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split");
 		}
 		
 		// ensure that all single lines do not exceed the maximum size
@@ -82,7 +82,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// in the subdivision creation
 		List<Coord> points = splitLinesToMaxSize(line.getPoints(), maxSize-10);
 
-		log.debug("line too big, splitting");
+		log.debug("line bbox too big, splitting");
 
 		MapLine l = line.copy();
 
