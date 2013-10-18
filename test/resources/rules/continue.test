@@ -13,14 +13,14 @@ abc=yes
 highway=primary & abc=yes { set oneway=reverse; } [0x1 road_class=1 continue]
 highway=primary [0x2 road_class=1]
 
-highway=secondary & abc=yes { set oneway=reverse; } [0x1 road_class=1 continue
+highway=secondary & abc=yes { set oneway=reverse; } [0x3 road_class=2 continue
 with_actions]
-highway=secondary [0x2 road_class=1]
+highway=secondary [0x4 road_class=2]
 
 <<<results>>>
 WAY 1: Road 0x1, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
 WAY 1: Road 0x2, name=<null>, ref=<null>, res=24-24 (1/1),(2/2), road class=1 speed=0
 
-WAY 2: Road 0x1, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
-WAY 2: Road 0x2, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=1 speed=0
+WAY 2: Road 0x3, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=2 speed=0
+WAY 2: Road 0x4, name=<null>, ref=<null>, res=24-24 oneway (2/2),(1/1), road class=2 speed=0
 

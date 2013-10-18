@@ -24,14 +24,16 @@ import uk.me.parabola.mkgmap.general.MapLine;
  */
 public class SizeFilter implements MapFilter {
 
-	private int size;
+	private final int size;
 
 	private int minSize;
-	
-	public SizeFilter(int s) {
-		size = s;
-	}
+	private final boolean checkRouting;
 
+	public SizeFilter(int s, boolean doRoads) {
+		size = s;
+		checkRouting = doRoads;
+	}
+	
 	public void init(FilterConfig config) {
 		minSize = size * (1<<config.getShift());
 	}
@@ -46,12 +48,11 @@ public class SizeFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
 
-		if (!line.isSkipSizeFilter()){
-			// Drop things that are too small to get displayed
+		if (!line.isSkipSizeFilter() || (checkRouting && line.isRoad()) == false){
 			if (line.getBounds().getMaxDimension() < minSize){
 				return;
 			}
-	}
+		}
 		next.doFilter(line);
 	}
 }

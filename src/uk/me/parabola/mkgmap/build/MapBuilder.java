@@ -1020,21 +1020,20 @@ public class MapBuilder implements Configurable {
 
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
-		
 		if (mergeLines) {
 			LineMergeFilter merger = new LineMergeFilter();
 			lines = merger.merge(lines);
 		}
-
+		boolean checkRoads = doRoads && div.getZoom().getLevel() == 0;
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
+			filters.addFilter(new SizeFilter(MIN_SIZE_LINE, checkRoads));
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
-		filters.addFilter(new LineSplitterFilter(doRoads && res == 24));
+		filters.addFilter(new LineSplitterFilter(checkRoads));
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
@@ -1072,7 +1071,7 @@ public class MapBuilder implements Configurable {
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
 			if (sizefilterVal > 0)
-				filters.addFilter(new SizeFilter(sizefilterVal));
+				filters.addFilter(new SizeFilter(sizefilterVal, false));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
@@ -1122,6 +1121,10 @@ public class MapBuilder implements Configurable {
 		return 24 - minShift;
 	}
 
+	/**
+	 * Enable/disable the creation of a routable map 
+	 * @param doRoads 
+	 */
 	public void setDoRoads(boolean doRoads) {
 		this.doRoads = doRoads;
 	}
@@ -1240,18 +1243,18 @@ public class MapBuilder implements Configurable {
 					List<Coord> points = line.getPoints();
 					Coord p1 = points.get(0); boolean cn1 = p1 instanceof CoordNode;
 					Coord p2 = points.get(points.size() - 1); boolean cn2 = p2 instanceof CoordNode;
-					if (div.getResolution() == 24
+					if (div.getZoom().getLevel() == 0 
 							&& (p1 instanceof CoordNode == false
 							|| p2 instanceof CoordNode == false)) {
 						log.error("possible routing problem: road end-points not both coordNodes: " + roaddef);
 						log.error("Node: "+ (cn1?  p2.toOSMURL() + " "+p2.getLatitude()+":"+p2.getLongitude() : p1.toOSMURL()+ " "+p1.getLatitude()+":"+p1.getLongitude()));
 					}
 				} else if (routingErrorMsgPrinted == false){
-					if (div.getResolution() == 24 && GType.isRoutableLineType(line.getType())){
+					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){
 						Coord start = line.getPoints().get(0);
 						log.error("Non-routable way with routable type " + GType.formatType(line.getType()) + " starting at " +
-					start.toOSMURL() + 
-					" is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
+								start.toOSMURL() + 
+								" is used for a routable map. This leads to routing errors. Try --check-styles to check the style.");
 						
 						routingErrorMsgPrinted = true;
 					}

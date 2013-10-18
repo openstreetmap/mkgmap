@@ -344,7 +344,7 @@ public class StyleTester implements OsmConverter {
 
 		Way w = new Way(id);
 		w.addPoint(new Coord(1, 1));
-		w.addPoint(new Coord(20, 20));
+		w.addPoint(new Coord(2, 2));
 
 		String line;
 		while ((line = br.readLine()) != null) {

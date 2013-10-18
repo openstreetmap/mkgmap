@@ -23,7 +23,6 @@ import uk.me.parabola.mkgmap.main.StyleTester;
 
 import func.lib.TestUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -50,7 +49,7 @@ public class ScriptedStyleTest {
 	 * This is really a whole bunch of tests as we find test files in a
 	 * directory and run each one in turn.
 	 */
-	@Test @Ignore("disabled while remove short arcs is being investigated")
+	@Test
 	public void testAllRuleFiles() throws IOException {
 		File d = new File("test/resources/rules/");
 		assertTrue(d.isDirectory());

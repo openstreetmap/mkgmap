@@ -33,7 +33,7 @@ highway=unclassified [0x06 road_class=1 road_speed=2 resolution 21]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 21]
 
 # Mop up any unrecognised highway types
-highway=* [0x07 ]
+highway=* [0x07 road_class=0 road_speed=1 resolution 22]
 
 natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 20]
@@ -43,7 +43,7 @@ railway=rail [0x14 resolution 17]
 railway=subway [0x14 resolution 17]
 railway=tram [0x14 resolution 18]
 
-route=ferry [0x1a resolution 18]
+route=ferry [0x1a road_class=0 road_speed=1 resolution 18]
 
 waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]

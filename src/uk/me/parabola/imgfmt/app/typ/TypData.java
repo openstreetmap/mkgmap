@@ -12,7 +12,6 @@
  */
 package uk.me.parabola.imgfmt.app.typ;
 
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,8 @@ public class TypData {
 	private final List<TypPoint> points = new ArrayList<TypPoint>();
 	private final List<TypIconSet> icons = new ArrayList<TypIconSet>();
 
-	private Sort sort = Sort.defaultSort(1252);
-	private CharsetEncoder encoder = Charset.forName("latin1").newEncoder();
+	private Sort sort;
+	private CharsetEncoder encoder;
 
 	public void addPolygonStackOrder(int level, int type, int subtype) {
 		stacking.addPolygon(level, type, subtype);
@@ -44,6 +43,19 @@ public class TypData {
 	}
 
 	public void setSort(Sort sort) {
+		if (sort == null)
+			return;
+
+		if (this.sort != null) {
+			int origCodepage = this.sort.getCodepage();
+			if (origCodepage != 0) {
+				if (origCodepage != sort.getCodepage()) {
+					System.out.println("WARNING: SortCode in TYP txt file different from" +
+							" command line setting");
+				}
+				return;
+			}
+		}
 		this.sort = sort;
 		encoder = sort.getCharset().newEncoder();
 		param.setCodePage(sort.getCodepage());
