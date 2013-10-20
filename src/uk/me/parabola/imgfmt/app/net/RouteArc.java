@@ -262,12 +262,8 @@ public class RouteArc {
 		// update haveCurve
 		haveCurve = (curveEnabled && finalHeading != initialHeading);
 
-		if (length >= (1 << 14)) {
-			log.error("warning: Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way will not be routable");
-			//length = (1 << 14) - 1;
-		}
 		if (length >= (1 << 22)) {
-			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way will not be routable");
+			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way might not be routable");
 			length = (1 << 22) - 1;
 		}
 
