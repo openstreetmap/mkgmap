@@ -25,6 +25,7 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 
 /**
  * A filter that ensures that a line does not exceed the allowed number of
@@ -75,29 +76,18 @@ public class LineSplitterFilter implements MapFilter {
 			log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
 		} 
 
-		MapLine l = line.copy();
-
 		List<Coord> coords = new ArrayList<Coord>();
 		int count = 0;
-		boolean first = true;
 		int remaining = points.size();
 		int wantedSize = (remaining < MAX_POINTS_IN_LINE + MIN_POINTS_IN_LINE) ? remaining / 2 + 10 : MAX_POINTS_IN_LINE;
-
+		List<List<Coord>>parts = new ArrayList<List<Coord>>();
 		for (Coord co : points) {
 			coords.add(co);
 			--remaining;
 			
 			if (++count >= wantedSize) {
-				if (first)
-					log.debug("saving first part");
-				else
-					log.debug("saving next part");
-				l.setPoints(coords);
-				next.doFilter(l);
-				l = line.copy();
-        
+				parts.add(coords);
 				count = 0;
-				first = false;
 				coords = new ArrayList<Coord>();
 				coords.add(co);
 				// make sure that the last part has at least 50 points
@@ -107,9 +97,25 @@ public class LineSplitterFilter implements MapFilter {
 		}
 
 		if (count != 0) {
-			log.debug("saving a final part");
-			l.setPoints(coords);
-			next.doFilter(l);
+			parts.add(coords);
 		}
+		List<MapLine> lines = new ArrayList<MapLine>();
+		MapLine l = line;
+		for (int i = 0; i < parts.size();i++){
+			log.debug("max points limit: saving part " + (i+1));
+			l = l.copy();
+			if (i > 0 && l instanceof MapRoad){
+				MapRoad road = (MapRoad) l;
+				long prevSplitId = road.getSplitId();
+				road.setSplitId(-1 * FakeIdGenerator.makeFakeId());
+				road.linkWithPred(prevSplitId);
+			}
+			l.setPoints(parts.get(i));
+			// first collect all lines to make sure that road segments
+			// are properly linked
+			lines.add(l);
+		}
+		for (MapLine mapLine: lines)
+			next.doFilter(mapLine);
 	}
 }

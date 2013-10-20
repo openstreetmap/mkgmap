@@ -26,10 +26,12 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  */
 public class RoadIndex {
 	private final Polyline linkedRoad;
+	private final long splitId;
 	// int Subdivision.getNumber()
 
-	public RoadIndex(Polyline road) {
+	public RoadIndex(Polyline road, long splitId) {
 		linkedRoad = road;
+		this.splitId = splitId;
 	}
 
 	private Subdivision getSubdiv() {
@@ -38,6 +40,10 @@ public class RoadIndex {
 
 	Polyline getLine() {
 		return linkedRoad;
+	}
+
+	public long getSplitId() {
+		return splitId;
 	}
 
 	void write(ImgFileWriter writer) {

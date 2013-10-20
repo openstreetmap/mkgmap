@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.BitWriter;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -106,6 +109,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private int numlabels;
 
 	private final SortedMap<Integer,List<RoadIndex>> roadIndexes = new TreeMap<Integer,List<RoadIndex>>();
+	private  LongArrayList roadParts;
 
 	private City city;
 	private Zip zip;
@@ -336,9 +340,8 @@ public class RoadDef implements Comparable<RoadDef> {
 	 * Add a polyline to this road.
 	 *
 	 * References to these are written to NET. At a given zoom
-	 * level, we're writing these in the order we get them,
-	 * which must(!) be the order the segments have
-	 * in the road.
+	 * level, we have to keep track about the order. 
+	 * See {@link #restoreOrderOfOneLevel(List, int)}
 	 */
 	public void addPolylineRef(Polyline pl) {
 		if(log.isDebugEnabled())
@@ -349,10 +352,13 @@ public class RoadDef implements Comparable<RoadDef> {
 			l = new ArrayList<RoadIndex>(4);
 			roadIndexes.put(level, l);
 		}
-		int s = l.size();
-		if (s > 0)
-			l.get(s-1).getLine().setLastSegment(false);
-		l.add(new RoadIndex(pl));
+		long splitId = pl.getSplitId();
+		if (roadParts != null){
+			int pos = getPosInChain(splitId);
+			if (pos + 1 < roadParts.size())
+				pl.setLastSegment(false);
+		}
+		l.add(new RoadIndex(pl, splitId));
 	}
 
 	private int getMaxZoomLevel() {
@@ -402,10 +408,12 @@ public class RoadDef implements Comparable<RoadDef> {
 	class Offset {
 		final int position;
 		final int flags;
+		final long splitId;
 
-		Offset(int position, int flags) {
+		Offset(int position, int flags, long splitId) {
 			this.position = position;
 			this.flags = flags;
+			this.splitId = splitId;
 		}
 
 		int getPosition() {
@@ -424,9 +432,10 @@ public class RoadDef implements Comparable<RoadDef> {
 	 *
 	 * @param position The offset in RGN.
 	 * @param flags The flags that should be set.
+	 * @param splitId the id of the MapRoad segment
 	 */
-	public void addOffsetTarget(int position, int flags) {
-		rgnOffsets.add(new Offset(position, flags));
+	public void addOffsetTarget(int position, int flags, long splitId) {
+		rgnOffsets.add(new Offset(position, flags, splitId));
 	}
 
 	/**
@@ -717,5 +726,114 @@ public class RoadDef implements Comparable<RoadDef> {
 		boolean previouslyIssued = messageIssued.contains(key);
 		messageIssued.add(key);
 		return previouslyIssued;
+	}
+
+	private int getPosInChain(long splitId) {
+		if (roadParts != null){
+			return roadParts.indexOf(splitId);
+		}
+		return 0;
+	}
+
+	public void linkSegments(long predSplitId, long splitId) {
+		if (roadParts == null){
+			roadParts = new LongArrayList();
+			roadParts.add(predSplitId);
+			roadParts.add(splitId);
+			log.debug("linked splitIds: ",roadParts);
+			return;
+		}
+		int pos = getPosInChain(predSplitId);
+		if (pos < 0){
+			log.error("invalid predSplitId " + predSplitId + " " + roadParts);
+			throw new IllegalArgumentException();
+		}
+		roadParts.add(pos+1, splitId);
+		log.debug("linked splitIds: ",roadParts);
+	}
+
+	/**
+	 * If available, use the data stored in the roadParts
+	 * list to reorder road segments. 
+	 */
+	public void fixOrderOfSegments(){
+		if (roadParts == null)
+			return;
+		int currLevel = roadIndexes.firstKey();
+		restoreOrderOfOneLevel(roadIndexes.get(currLevel), currLevel);
+		filterSegmentList(currLevel);
+	}
+
+	/**
+	 * Remove entries with negative splitIds. These should
+	 * not be passed to a lower level.
+	 * @param currLevel
+	 */
+	private void filterSegmentList(int currLevel){
+		if (currLevel > 0){
+			for (int i = roadParts.size()-1; i >= 0; i--){
+				if (roadParts.get(i) < 0){
+					roadParts.remove(i);
+				}
+			}
+		} 
+		if (currLevel == 0 || roadParts.isEmpty())
+			roadParts = null;
+	}
+	
+	/**
+	 *  Sort segments so that last point of one segment is first point of next.
+	 */
+	private void restoreOrderOfOneLevel(List<RoadIndex> list, int level) {
+		final int num = list.size();
+		if (num <= 1)
+			return;
+		ArrayList<RoadIndex> randomList = new ArrayList<RoadIndex>(list);
+		
+		if (list.size() != roadParts.size())
+			assert list.size() == roadParts.size();
+		boolean wasOutOfOrder = false;
+		for (int i = 0; i < num; i++){
+			RoadIndex ri = randomList.get(i);
+			int pos = getPosInChain(ri.getSplitId());
+			if (pos < 0){
+				log.error("invalid data in road part chain " + this);
+			}
+			if (pos != i){
+				wasOutOfOrder = true;
+			}
+			list.set(pos, ri);
+		}
+		//sanity check
+		if (level == 0){
+			for (int i = 0; i+1 < num; i++){
+				List<Coord> l1 = list.get(i).getLine().getPoints();
+				List<Coord> l2 = list.get(i+1).getLine().getPoints();
+				if (l1.get(l1.size()-1).equals(l2.get(0)) == false){
+					log.error("order of line segments is wrong, routing will be broken " + this);
+					break;
+				}
+			}
+		}
+		if (wasOutOfOrder){
+			// now fix the order of the RGN offsets
+			List<Offset> tmp = new ArrayList<RoadDef.Offset>(num);
+			int first = Integer.MAX_VALUE;
+			for (int i = 0; i < num; i++){
+				RoadIndex ri = list.get(i);
+				// search backwards
+				for (int j = rgnOffsets.size()-1; j>= 0; --j){
+					Offset o = rgnOffsets.get(j);
+					if (o.splitId == ri.getSplitId()){
+						tmp.add(o);
+						if (j < first)
+							first = j;
+						break;
+					}
+				}
+			}		
+			rgnOffsets.subList(first, rgnOffsets.size()).clear();
+			rgnOffsets.addAll(tmp);
+		}
 	}
 }
