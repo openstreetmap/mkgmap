@@ -17,7 +17,6 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +25,6 @@ import java.util.TreeMap;
 
 import uk.me.parabola.imgfmt.MapFailedException;
 import uk.me.parabola.imgfmt.app.BitWriter;
-import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -218,7 +216,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		writer.put3(roadLength);
 
 		int maxlevel = writeLevelCount(writer);
-		restoreOrderOfSegments();
+
 		writeLevelDivs(writer, maxlevel);
 
 		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
@@ -313,72 +311,6 @@ public class RoadDef implements Comparable<RoadDef> {
 		}
 	}
 
-	/**
-	 * Restore the order of line segments. The sub division splitting process
-	 * might split a line into segements. These segements might not be
-	 * processed in the right order, therefore we have to restore the order.  
-	 */
-	private void restoreOrderOfSegments(){
-		int maxlevel = getMaxZoomLevel();
-		for (int i = 0; i <= maxlevel; i++) {
-			List<RoadIndex> l = roadIndexes.get(i);
-			if (l == null || l.size() <= 1) 
-				continue;
-			List<RoadIndex> ordered = restoreOrderOfOneLevel(l, i);
-			roadIndexes.put(i, ordered);
-		}
-	}
-
-	/**
-	 *  Sort segments so that last point of one segment is first point of next.
-	 *  Known problems: Rounding may move start point of one segment to a 
-	 *  different position than the end point of another point, loops 
-	 *  are possible when start and end points are close. 
-	 * TODO: Store the order info somewhere so that this routine doesn't have
-	 * to use the coords.
-	 */
-	private List<RoadIndex> restoreOrderOfOneLevel(List<RoadIndex> list, int level) {
-		final int num = list.size();
-		if (num <= 1)
-			return list;
-		HashMap<Coord, Integer> startPoints = new HashMap<Coord, Integer>();
-		HashMap<Coord, Integer> endPoints = new HashMap<Coord, Integer>();
-		for (int i = 0; i < num; i++){
-			List<Coord> points = list.get(i).getLine().getPoints();
-			Integer test = startPoints.put(points.get(0), i);
-			assert test == null;
-			test = endPoints.put(points.get(points.size()-1), i);
-			assert test == null;
-		}
-		Coord start = null;
-		int countNoPred = 0;
-		for (Coord s: startPoints.keySet()){
-			if (endPoints.containsKey(s) == false){
-				++countNoPred;
-				start = s;
-			}
-		}
-		if (countNoPred != 1){
-			if (countNoPred == 0)
-				log.error("cannot find correct order of segements, segments build a loop in level " + level + " " + this);
-			else 
-				log.error("cannot find correct order of segements, segements form multiple parts  " + level + " " + this);
-			log.error("using existing order");
-			return list;
-		}
-		ArrayList<RoadIndex> newList = new ArrayList<RoadIndex>(num); 
-		for (int i = 0; i < num; i++){
-			Integer pos = startPoints.get(start);
-			if (pos != null){
-				newList.add(list.get(pos));
-			}
-			Polyline line = newList.get(i).getLine();
-			line.setLastSegment(false);
-			start = line.getPoints().get(line.getPoints().size()-1);
-		}
-		return newList;
-	}
-
 	public void addLabel(Label l) {
 		int i;
 		for (i = 0; i < MAX_LABELS && labels[i] != null; ++i) {
@@ -405,7 +337,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	 *
 	 * References to these are written to NET. At a given zoom
 	 * level, we're writing these in the order we get them,
-	 * which possibly needs to be the order the segments have
+	 * which must(!) be the order the segments have
 	 * in the road.
 	 */
 	public void addPolylineRef(Polyline pl) {

@@ -74,7 +74,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		if(line instanceof MapRoad) {
 			MapRoad road = ((MapRoad)line);
-			log.debug("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split");
+			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split (routing will be broken)");
 		}
 		
 		// ensure that all single lines do not exceed the maximum size

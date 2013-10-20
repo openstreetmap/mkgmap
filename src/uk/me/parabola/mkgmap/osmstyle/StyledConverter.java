@@ -38,7 +38,6 @@ import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
-import uk.me.parabola.mkgmap.filters.LineSplitterFilter;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.LineAdder;
@@ -93,9 +92,7 @@ public class StyledConverter implements OsmConverter {
 	private static final int MAX_LINE_LENGTH = 40000;
 
 	// limit arc lengths to what can be handled by RouteArc
-	private static final int MAX_ARC_LENGTH = 75000;
-
-	private static final int MAX_POINTS_IN_ARC = LineSplitterFilter.MAX_POINTS_IN_LINE; // TODO: check why
+	private static final int MAX_ARC_LENGTH = 20450000; // (1 << 22) * 16 / 3.2808 ~ 20455030*/
 
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
@@ -1172,10 +1169,39 @@ public class StyledConverter implements OsmConverter {
 		// collect the Way's nodes and also split the way if any
 		// inter-node arc length becomes excessive
 		double arcLength = 0;
-		int numPointsInArc = 0;
+		// track the dimensions of the way's bbox so that we can
+		// detect if it would be split by the LineSizeSplitterFilter
+		class WayBBox {
+			int minLat = Integer.MAX_VALUE;
+			int maxLat = Integer.MIN_VALUE;
+			int minLon = Integer.MAX_VALUE;
+			int maxLon = Integer.MIN_VALUE;
+
+			void addPoint(Coord co) {
+				int lat = co.getLatitude();
+				if(lat < minLat)
+					minLat = lat;
+				if(lat > maxLat)
+					maxLat = lat;
+				int lon = co.getLongitude();
+				if(lon < minLon)
+					minLon = lon;
+				if(lon > maxLon)
+					maxLon = lon;
+			}
+
+			boolean tooBig() {
+				return LineSizeSplitterFilter.testDims(maxLat - minLat,
+													   maxLon - minLon) >= 1.0;
+			}
+		}
+
+		WayBBox wayBBox = new WayBBox();
 
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
+
+			wayBBox.addPoint(p);
 
 			// flag that's set true when we back up to a previous node
 			// while finding a good place to split the line
@@ -1202,6 +1228,8 @@ public class StyledConverter implements OsmConverter {
 					d = newD;
 				}
 
+				wayBBox.addPoint(nextP);
+
 				if((arcLength + d) > MAX_ARC_LENGTH) {
 					assert i > 0 : "long arc segment was not split";
 					assert trailingWay == null : "trailingWay not null #1";
@@ -1210,34 +1238,21 @@ public class StyledConverter implements OsmConverter {
 					// points so the loop will now terminate
 					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
 				}
-				else if(numPointsInArc >= MAX_POINTS_IN_ARC &&
-						p.getHighwayCount() < 2) {
-					// we have to introduce a node here or earlier
-					// search backwards for a safe place
-					int nodeI = i;
-					int npia = numPointsInArc;
-					while(nodeI > 0 &&
-						  !safeToSplitWay(points, nodeI, i - numPointsInArc - 1, points.size() - 1)) {
-						--nodeI;
-						--npia;
-					}
-					// make point into a node
-					p = points.get(nodeI);
-					p.incHighwayCount();
-					log.info("Making node in " + debugWayName + " at " + p.toOSMURL() + " to limit number of points in arc to " + npia + ", way has " + (points.size() - nodeI) + " more points");
-					i = nodeI; // hack alert! modify loop index
-					arcLength = p.distance(points.get(i + 1));
-					numPointsInArc = 1;
+				else if(wayBBox.tooBig()) {
+					assert i > 0 : "arc segment with big bbox not split";
+					assert trailingWay == null : "trailingWay not null #2";
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
 				}
 				else {
 					if(p.getHighwayCount() > 1) {
 						// point is a node so zero arc length
 						arcLength = 0;
-						numPointsInArc = 0;
 					}
 
 					arcLength += d;
-					++numPointsInArc;
 				}
 			}
 
