@@ -49,7 +49,7 @@ public class SizeFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
 
-		if (!line.isSkipSizeFilter() || (checkRouting && line.isRoad()) == false){
+		if ((line.isSkipSizeFilter() || (checkRouting && line.isRoad())) == false){
 			if (line.getBounds().getMaxDimension() < minSize){
 				return;
 			}
