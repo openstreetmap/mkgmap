@@ -75,11 +75,9 @@ public class AddTagAction implements Action {
 	public Set<String> getUsedTags() {
 		Set<String> set = new HashSet<String>();
 
-		if (values != null) {
-			for (ValueBuilder vb : values) {
-				set.addAll(vb.getUsedTags());
-			}
-		}
+		for (ValueBuilder vb : values)
+			set.addAll(vb.getUsedTags());
+
 		return set;
 	}
 
