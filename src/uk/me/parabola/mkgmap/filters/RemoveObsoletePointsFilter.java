@@ -83,7 +83,6 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 					if (line instanceof MapShape){
 						log.debug("removing spike");
 						newPoints.remove(last);
-						continue;
 					}
 					break;
 				default:
