@@ -45,13 +45,16 @@ public class LinePreparerFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
 
+		int numPoints = line.getPoints().size();
 		boolean first = true;
 		int minPointsRequired = (element instanceof MapShape) ? 3:2;
+		if (minPointsRequired == 3 && line.getPoints().get(0).equals(line.getPoints().get(numPoints-1)))
+			++minPointsRequired;
 
 		int lastLat = 0;
 		int lastLong = 0;
 		int numPointsEncoded = 1;
-		for (int i = 0; i < line.getPoints().size(); i++) {
+		for (int i = 0; i < numPoints; i++) {
 			Coord co = line.getPoints().get(i);
 
 			int lat = subdiv.roundLatToLocalShifted(co.getLatitude());
@@ -70,14 +73,15 @@ public class LinePreparerFilter implements MapFilter {
 			final int offset = 8+shift;
 			int dx = (lon - lastLong) << offset >> offset;
 			int dy = (lat - lastLat) << offset >> offset;
-			if (dx == 0 && dy == 0)
+			lastLong = lon;
+			lastLat = lat;
+			if (dx == 0 && dy == 0){
 				continue;
+			}
 				
 			++numPointsEncoded;
 			if (numPointsEncoded >= minPointsRequired)
 				break;
-			lastLong = lon;
-			lastLat = lat;
 		}		
 		if(numPointsEncoded < minPointsRequired)
 			return;
