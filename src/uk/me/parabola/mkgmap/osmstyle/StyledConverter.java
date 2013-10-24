@@ -1944,7 +1944,6 @@ public class StyledConverter implements OsmConverter {
 							if (i == 0)
 								previousPoint = p;
 							modifiedRoads.put(way.getId(), way);
-							anotherPassRequired = true;
 						}
 					}
 					if (i == 0) {
