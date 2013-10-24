@@ -228,13 +228,17 @@ public class StyleTester implements OsmConverter {
 			List<Way> ways = readSimpleTestFile(br);
 
 			List<MapElement> results = new ArrayList<MapElement>();
-			OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
 
 			List<MapElement> strictResults = new ArrayList<MapElement>();
+
 			OsmConverter strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+			List<String> givenList = ((StyleTester) strict).givenResults;
 
 			List<String> all = new ArrayList<String>();
 			for (Way w : ways) {
+				OsmConverter normal = new StyleTester("styletester.style", new LocalMapCollector(results), false);
+				strict = new StyleTester("styletester.style", new LocalMapCollector(strictResults), true);
+
 				String prefix = "WAY " + w.getId() + ": ";
 				normal.convertWay(w.copy());
 				normal.end();
@@ -257,7 +261,6 @@ public class StyleTester implements OsmConverter {
 				out.println();
 			}
 
-			List<String> givenList = ((StyleTester) strict).givenResults;
 			String[] given = givenList.toArray(new String[givenList.size()]);
 			if ((given.length > 0 || forceUseOfGiven) && !Arrays.deepEquals(all.toArray(), givenList.toArray())) {
 				out.println("ERROR given results were:");
