@@ -347,8 +347,8 @@ public class StyledConverter implements OsmConverter {
 				points.addAll(modWay.getPoints());
 			}
 		}
-		deletedRoads = null;
-		modifiedRoads = null;
+		deletedRoads.clear();
+		modifiedRoads.clear();
 		
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
@@ -357,8 +357,8 @@ public class StyledConverter implements OsmConverter {
 			GType gt = lineTypes.get(i);
 			addLine(line, gt);
 		}
-		lines = null;
-		lineTypes = null;
+		lines.clear();
+		lineTypes.clear();
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -367,8 +367,8 @@ public class StyledConverter implements OsmConverter {
 			GType gt = roadTypes.get(i);
 			addRoad(road, gt);
 		}
-		roads = null;
-		roadTypes = null;
+		roads.clear();
+		roadTypes.clear();
 		
 		housenumberGenerator.generate(lineAdder);
 		
@@ -423,7 +423,7 @@ public class StyledConverter implements OsmConverter {
 				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
 		}
 		// return memory to GC
-		nodeIdMap = null;
+		nodeIdMap.clear();
 		throughRouteRelations.clear();
 		restrictions.clear();
 	}

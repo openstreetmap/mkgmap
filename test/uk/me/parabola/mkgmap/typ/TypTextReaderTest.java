@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
+import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
 import uk.me.parabola.imgfmt.app.typ.TYPFile;
 import uk.me.parabola.imgfmt.app.typ.TypData;
@@ -317,6 +318,8 @@ public class TypTextReaderTest {
 
 		TypTextReader tr = new TypTextReader();
 		tr.read("string", r);
+		if (tr.getData().getSort() == null)
+			tr.getData().setSort(Sort.defaultSort(1252));
 		return tr;
 	}
 }

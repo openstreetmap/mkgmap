@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import uk.me.parabola.mkgmap.reader.osm.Rule;
 
 /**
@@ -160,8 +161,19 @@ public class RuleIndex {
 					// If we know the value that could be set, then we can restrict to
 					// rules that would match that value.  Otherwise we look for any
 					// rule using the tag, no matter what the value.
-					if (s.indexOf('=') >= 0) {
+					int ind = s.indexOf('=');
+					if (ind >= 0) {
 						set = tagVals.get(s);
+
+						// Exists rules can also be triggered, so add them too.
+						String key = s.substring(0, ind);
+						BitSet set1 = existKeys.get(key);
+
+						if (set == null)
+							set = set1;
+						else if (set1 != null)
+							set.or(set1);
+
 					} else {
 						set = tagnames.get(s);
 					}
