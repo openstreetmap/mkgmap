@@ -98,8 +98,7 @@ public class StyledConverter implements OsmConverter {
 			"mkgmap:bus", 
 			"mkgmap:taxi",
 			"mkgmap:emergency", 
-			"mkgmap:delivery",
-			"mkgmap:throughroute");
+			"mkgmap:delivery");
 	
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
