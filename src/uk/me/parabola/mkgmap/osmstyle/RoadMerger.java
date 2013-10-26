@@ -80,13 +80,6 @@ public class RoadMerger {
 				add("junction");
 				add("mkgmap:synthesised");
 				add("mkgmap:flare-check");
-				add("mkgmap:road-class");
-				add("mkgmap:road-class-max");
-				add("mkgmap:road-class-min");
-				add("mkgmap:road-speed-class");
-				add("mkgmap:road-speed");
-				add("mkgmap:road-speed-max");
-				add("mkgmap:road-speed-min");
 			}
 		};
 
@@ -116,10 +109,17 @@ public class RoadMerger {
 			if (cStart.equals(cOtherEnd)) {
 				return false;
 			}
-
+			
 			if (isGTypeMergable(otherRoad.getGtype()) == false) {
 				return false;
 			}
+			
+			// check road speed and road class
+			if (getRoadClass() != otherRoad.getRoadClass())
+				return false;
+			if (getRoadSpeedClass() != otherRoad.getRoadSpeedClass())
+				return false;
+			
 
 			if (isWayMergable(mergePoint, otherRoad.getWay()) == false) {
 				return false;
@@ -128,16 +128,40 @@ public class RoadMerger {
 			return true;
 		}
 
+		/**
+		 * Retrieves the real road speed of this road that will be used by the
+		 * {@link MapRoad}. This is a combination of the gtypes road speed and
+		 * the tag {@code mkgmap:road-speed-class}. 
+		 * 
+		 * @return road speed class
+		 */
+		protected int getRoadSpeedClass() {
+			int roadSpeed = gtype.getRoadSpeed();
+			String roadSpeedClassTag = way.getTag("mkgmap:road-speed-class");
+			if (roadSpeedClassTag != null)
+				roadSpeed = Integer.valueOf(roadSpeedClassTag);
+			return roadSpeed;
+		}
+
+		/**
+		 * Retrieves the real road class of this road that will be used by the
+		 * {@link MapRoad}. This is a combination of the gtypes road class and
+		 * the tag {@code mkgmap:road-class}. 
+		 * 
+		 * @return road class
+		 */
+		protected int getRoadClass() {
+			int roadClass = gtype.getRoadClass();
+			String roadClassTag = way.getTag("mkgmap:road-class");
+			if (roadClassTag != null) 
+				roadClass = Integer.valueOf(roadClassTag);
+			return roadClass;
+		}
+		
 		private boolean isGTypeMergable(GType otherGType) {
 			// log.info("Gtype1",gtype);
 			// log.info("Gtype2",otherGType);
 			if (gtype.getType() != otherGType.getType()) {
-				return false;
-			}
-			if (gtype.getRoadClass() != otherGType.getRoadClass()) {
-				return false;
-			}
-			if (gtype.getRoadSpeed() != otherGType.getRoadSpeed()) {
 				return false;
 			}
 			if (gtype.getMinResolution() != otherGType.getMinResolution()) {

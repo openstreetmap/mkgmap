@@ -31,6 +31,7 @@ import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 
 import org.junit.Test;
 
@@ -237,6 +238,6 @@ public class StyledConverterTest {
 			public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) { }
 		};
 
-		return new StyledConverter(style, coll, new Properties());
+		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 }

@@ -462,7 +462,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private StyledConverter makeStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
 		Style style = new StyleImpl(styleFile, null);
-		return new StyledConverter(style, coll, new Properties());
+		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 
 	/**
@@ -475,7 +475,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private StyledConverter makeStrictStyleConverter(String styleFile, MapCollector coll) throws FileNotFoundException {
 		Style style = new ReferenceStyle(styleFile, null);
-		return new StyledConverter(style, coll, new Properties());
+		return new StyledConverter(style, coll, new EnhancedProperties());
 	}
 
 	public static void forceUseOfGiven(boolean force) {

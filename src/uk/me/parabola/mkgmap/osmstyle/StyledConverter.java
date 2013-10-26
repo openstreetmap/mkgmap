@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -65,6 +64,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 
 /**
  * Convert from OSM to the mkgmap intermediate format using a style.
@@ -149,7 +149,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	};
 
-	public StyledConverter(Style style, MapCollector collector, Properties props) {
+	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
 		nameTagList = LocatorUtil.getNameTags(props);
@@ -179,7 +179,7 @@ public class StyledConverter implements OsmConverter {
 			System.err.println("Warning: remove-short-arcs=" + rsa + " overrides default 0." +
 					" This is no longer recommended for a routable map.");
 		}
-		linkPOIsToWays = props.getProperty("link-pois-to-ways") != null;
+		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 	}
 
 	/**
@@ -218,18 +218,6 @@ public class StyledConverter implements OsmConverter {
 					// If not already copied, do so now
 					if (el == way)
 						el = way.copy();
-				}
-				if (type.isRoad()) {
-					if (way.isBoolTag("mkgmap:carpool")) {
-						// to make a way into a "carpool lane" all access disable
-						// bits must be set except for CARPOOL and EMERGENCY (BUS
-						// can also be clear)
-						for (String accessTag : ACCESS_TAGS) {
-							el.addTag(accessTag, "no");
-						}
-						el.deleteTag("mkgmap:emergency");
-						el.deleteTag("mkgmap:bus");
-					}
 				}
 				postConvertRules(el, type);
 				addConvertedWay((Way) el, type);
@@ -307,6 +295,114 @@ public class StyledConverter implements OsmConverter {
 		el.setName(el.getTag("name"));
 		if (el.getName() == null)
 			el.setName(type.getDefaultName());
+		
+		if (el instanceof Way && type.isRoad()) {
+			Way way = (Way) el;
+			
+			if (type.isRoad()) {
+				if (way.isBoolTag("mkgmap:carpool")) {
+					// to make a way into a "carpool lane" all access disable
+					// bits must be set except for CARPOOL and EMERGENCY (BUS
+					// can also be clear)
+					for (String accessTag : ACCESS_TAGS) {
+						el.addTag(accessTag, "no");
+					}
+					el.deleteTag("mkgmap:emergency");
+					el.deleteTag("mkgmap:bus");
+				}
+			}
+			
+			// road class (can be overridden by mkgmap:road-class tag)
+			int roadClass = type.getRoadClass();
+			String val = way.getTag("mkgmap:road-class");
+			if (val != null) {
+				if (val.startsWith("-")) {
+					roadClass -= Integer.decode(val.substring(1));
+				} else if (val.startsWith("+")) {
+					roadClass += Integer.decode(val.substring(1));
+				} else {
+					roadClass = Integer.decode(val);
+				}
+				val = way.getTag("mkgmap:road-class-max");
+				int roadClassMax = 4;
+				if (val != null)
+					roadClassMax = Integer.decode(val);
+				val = way.getTag("mkgmap:road-class-min");
+
+				int roadClassMin = 0;
+				if (val != null)
+					roadClassMin = Integer.decode(val);
+				if (roadClass > roadClassMax)
+					roadClass = roadClassMax;
+				else if (roadClass < roadClassMin)
+					roadClass = roadClassMin;
+				
+				if (log.isInfoEnabled())
+					log.info("POI changing road class of" + way.getName() + " ("
+						+ way.getId() + ") to " + roadClass + " at "
+						+ way.getPoints().get(0));
+			}
+			if (roadClass == type.getRoadClass()) {
+				way.deleteTag("mkgmap:road-class");
+			} else {
+				way.addTag("mkgmap:road-class", String.valueOf(roadClass));
+			}
+			
+			int roadSpeed = type.getRoadSpeed();
+			String roadSpeedOverride = way.getTag("mkgmap:road-speed-class");
+			if (roadSpeedOverride != null) {
+				try {
+					int rs = Integer.decode(roadSpeedOverride);
+					if (rs >= 0 && rs <= 7) {
+						// override the road speed class
+						roadSpeed = rs;
+					} else {
+						log.error(getDebugName(way)
+								+ " road classification mkgmap:road-speed-class="
+								+ roadSpeedOverride + " must be in [0;7]");
+					}
+				} catch (Exception exp) {
+					log.error(getDebugName(way)
+							+ " road classification mkgmap:road-speed-class="
+							+ roadSpeedOverride + " must be in [0;7]");
+				}
+			}
+
+			val = way.getTag("mkgmap:road-speed");
+			if(val != null) {
+				if(val.startsWith("-")) {
+					roadSpeed -= Integer.decode(val.substring(1));
+				}
+				else if(val.startsWith("+")) {
+					roadSpeed += Integer.decode(val.substring(1));
+				}
+				else {
+					roadSpeed = Integer.decode(val);
+				}
+				val = way.getTag("mkgmap:road-speed-max");
+				int roadSpeedMax = 7;
+				if(val != null)
+					roadSpeedMax = Integer.decode(val);
+				val = way.getTag("mkgmap:road-speed-min");
+
+				int roadSpeedMin = 0;
+				if(val != null)
+					roadSpeedMin = Integer.decode(val);
+				if(roadSpeed > roadSpeedMax)
+					roadSpeed = roadSpeedMax;
+				else if(roadSpeed < roadSpeedMin)
+					roadSpeed = roadSpeedMin;
+				if (log.isInfoEnabled())
+					log.info("POI changing road speed of " + way.getName()
+							+ " (" + way.getId() + ") to " + roadSpeed + " at "
+							+ way.getPoints().get(0));
+			}
+			if (roadSpeed == type.getRoadSpeed()) {
+				way.deleteTag("mkgmap:road-speed-class");
+			} else {
+				way.addTag("mkgmap:road-speed-class", String.valueOf(roadSpeed));
+			}
+		}
 	}
 
 	/**
@@ -1383,84 +1479,17 @@ public class StyledConverter implements OsmConverter {
 
 		// set road parameters 
 
-		// road class (can be overridden by mkgmap:road-class tag)
+		// copy road class and road speed
 		int roadClass = gt.getRoadClass();
-		String val = way.getTag("mkgmap:road-class");
-		if(val != null) {
-			if(val.startsWith("-")) {
-				roadClass -= Integer.decode(val.substring(1));
-			}
-			else if(val.startsWith("+")) {
-				roadClass += Integer.decode(val.substring(1));
-			}
-			else {
-				roadClass = Integer.decode(val);
-			}
-			val = way.getTag("mkgmap:road-class-max");
-			int roadClassMax = 4;
-			if(val != null)
-				roadClassMax = Integer.decode(val);
-			val = way.getTag("mkgmap:road-class-min");
-
-			int roadClassMin = 0;
-			if(val != null)
-				roadClassMin = Integer.decode(val);
-			if(roadClass > roadClassMax)
-				roadClass = roadClassMax;
-			else if(roadClass < roadClassMin)
-				roadClass = roadClassMin;
-			log.info("POI changing road class of " + way.getName() + " (" + way.getId() + ") to " + roadClass + " at " + points.get(0));
-		}
+		String roadClassTag = way.getTag("mkgmap:road-class");
+		if (roadClassTag != null) 
+			roadClass = Integer.valueOf(roadClassTag);
 		road.setRoadClass(roadClass);
-
-		// road speed (can be overridden by mkgmap:road-speed-class tag or
-		// mkgmap:road-speed tag)
+		
 		int roadSpeed = gt.getRoadSpeed();
-		String roadSpeedOverride = way.getTag("mkgmap:road-speed-class");
-		if (roadSpeedOverride != null) {
-			try {
-				int rs = Integer.decode(roadSpeedOverride);
-				if (rs >= 0 && rs <= 7) {
-					// override the road speed class
-					roadSpeed = rs;
-				} else {
-					log.error(debugWayName
-							+ " road classification mkgmap:road-speed-class="
-							+ roadSpeedOverride + " must be in [0;7]");
-				}
-			} catch (Exception exp) {
-				log.error(debugWayName
-						+ " road classification mkgmap:road-speed-class="
-						+ roadSpeedOverride + " must be in [0;7]");
-			}
-		}
-
-		val = way.getTag("mkgmap:road-speed");
-		if(val != null) {
-			if(val.startsWith("-")) {
-				roadSpeed -= Integer.decode(val.substring(1));
-			}
-			else if(val.startsWith("+")) {
-				roadSpeed += Integer.decode(val.substring(1));
-			}
-			else {
-				roadSpeed = Integer.decode(val);
-			}
-			val = way.getTag("mkgmap:road-speed-max");
-			int roadSpeedMax = 7;
-			if(val != null)
-				roadSpeedMax = Integer.decode(val);
-			val = way.getTag("mkgmap:road-speed-min");
-
-			int roadSpeedMin = 0;
-			if(val != null)
-				roadSpeedMin = Integer.decode(val);
-			if(roadSpeed > roadSpeedMax)
-				roadSpeed = roadSpeedMax;
-			else if(roadSpeed < roadSpeedMin)
-				roadSpeed = roadSpeedMin;
-			log.info("POI changing road speed of " + way.getName() + " (" + way.getId() + ") to " + roadSpeed + " at " + points.get(0));
-		}
+		String roadSpeedClassTag = way.getTag("mkgmap:road-speed-class");
+		if (roadSpeedClassTag != null)
+			roadSpeed = Integer.valueOf(roadSpeedClassTag);
 		road.setSpeed(roadSpeed);
 		
 		if (way.isBoolTag("oneway")) {
@@ -1486,9 +1515,8 @@ public class StyledConverter implements OsmConverter {
 		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool") == false;
 		road.setAccess(noAccess);
 
-		if (way.isNotBoolTag("mkgmap:throughroute")) {
+		if (way.isNotBoolTag("mkgmap:throughroute")) 
 			road.setNoThroughRouting();
-		}
 
 		if(way.isBoolTag("mkgmap:toll"))
 			road.setToll();
