@@ -252,6 +252,11 @@ Style options:
 --map-features=file
 	This option is ignored; use the --style-file option instead.
 
+--old-style
+    If this options is set the access handling, maxspeed calculation
+    and the combination of ref tags is performed by mkgmap. Otherwise
+    the style system can be used to perform these steps.
+
 Product description options:
 
 --family-id

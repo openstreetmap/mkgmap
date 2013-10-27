@@ -89,6 +89,16 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			usedTags.add("addr:housenumber");
 		}
 		
+		// in case ref handling is performed by the java source code
+		// the ref tags and the maxspeed tags must be loaded
+		if (props.getProperty("old-style", false)) {
+			usedTags.add("int_ref");
+			usedTags.add("maxspeed");
+			usedTags.add("nat_ref");
+			usedTags.add("ref");
+			usedTags.add("reg_ref");
+		}
+		
 		return true;
 	}
 

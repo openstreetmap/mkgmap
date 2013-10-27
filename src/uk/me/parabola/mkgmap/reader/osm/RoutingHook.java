@@ -37,6 +37,26 @@ public class RoutingHook extends OsmReadingHooksAdaptor {
 	}
 
 	public boolean init(ElementSaver saver, EnhancedProperties props) {
+		
+		if (props.getProperty("old-style", false)) {
+			// the access tags need to be loaded if the old style handling
+			// is active and access restrictions are handled by the java
+			// source code and not by the style
+			usedTags.add("access");
+			usedTags.add("bicycle");
+			usedTags.add("carpool");
+			usedTags.add("delivery");
+			usedTags.add("emergency");
+			usedTags.add("foot");
+			usedTags.add("goods");
+			usedTags.add("hgv");
+			usedTags.add("motorcar");
+			usedTags.add("motorcycle");
+			usedTags.add("psv");
+			usedTags.add("route");
+			usedTags.add("taxi");
+		}
+		
 		// only enabled if the route option is set
 		return props.containsKey("route");
 	}

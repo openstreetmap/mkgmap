@@ -138,6 +138,7 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
 	private final boolean linkPOIsToWays;
+	private final CompatibilityHandler compatHandler;
 	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
 
 	private LineAdder lineAdder = new LineAdder() {
@@ -180,6 +181,11 @@ public class StyledConverter implements OsmConverter {
 					" This is no longer recommended for a routable map.");
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
+		
+		if (props.getProperty("old-style", false))
+			compatHandler = new CompatibilityHandler();
+		else
+			compatHandler = null;
 	}
 
 	/**
@@ -296,20 +302,22 @@ public class StyledConverter implements OsmConverter {
 		if (el.getName() == null)
 			el.setName(type.getDefaultName());
 		
+		if (compatHandler != null) {
+			compatHandler.performCompatHandling(el, type);
+		}
+		
 		if (el instanceof Way && type.isRoad()) {
 			Way way = (Way) el;
 			
-			if (type.isRoad()) {
-				if (way.isBoolTag("mkgmap:carpool")) {
-					// to make a way into a "carpool lane" all access disable
-					// bits must be set except for CARPOOL and EMERGENCY (BUS
-					// can also be clear)
-					for (String accessTag : ACCESS_TAGS) {
-						el.addTag(accessTag, "no");
-					}
-					el.deleteTag("mkgmap:emergency");
-					el.deleteTag("mkgmap:bus");
+			if (way.isBoolTag("mkgmap:carpool")) {
+				// to make a way into a "carpool lane" all access disable
+				// bits must be set except for CARPOOL and EMERGENCY (BUS
+				// can also be clear)
+				for (String accessTag : ACCESS_TAGS) {
+					el.addTag(accessTag, "no");
 				}
+				el.deleteTag("mkgmap:emergency");
+				el.deleteTag("mkgmap:bus");
 			}
 			
 			// road class (can be overridden by mkgmap:road-class tag)
