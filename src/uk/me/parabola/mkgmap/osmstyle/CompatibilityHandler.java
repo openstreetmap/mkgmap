@@ -172,45 +172,17 @@ public class CompatibilityHandler {
 		// road speed (can be overridden by maxspeed (OSM) tag or
 		// mkgmap:road-speed tag)
 		int roadSpeed = gt.getRoadSpeed();
-			// maxspeed attribute overrides default for road type
-			String maxSpeed = way.getTag("maxspeed");
-			if(maxSpeed != null) {
-				int rs = getSpeedIdx(maxSpeed);
-				if(rs >= 0)
-					roadSpeed = rs;
-				log.debug(getDebugName(way), "maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
-			}
-			
-			String val = way.getTag("mkgmap:road-speed");
-			if(val != null) {
-				if(val.startsWith("-")) {
-					roadSpeed -= Integer.decode(val.substring(1));
-				}
-				else if(val.startsWith("+")) {
-					roadSpeed += Integer.decode(val.substring(1));
-				}
-				else {
-					roadSpeed = Integer.decode(val);
-				}
-				val = way.getTag("mkgmap:road-speed-max");
-				int roadSpeedMax = 7;
-				if(val != null)
-					roadSpeedMax = Integer.decode(val);
-				val = way.getTag("mkgmap:road-speed-min");
+		// maxspeed attribute overrides default for road type
+		String maxSpeed = way.getTag("maxspeed");
+		if (maxSpeed != null) {
+			int rs = getSpeedIdx(maxSpeed);
+			if (rs >= 0)
+				roadSpeed = rs;
+			log.debug(getDebugName(way), "maxspeed=" + maxSpeed
+					+ ", speedIndex=" + roadSpeed);
+		}
 
-				int roadSpeedMin = 0;
-				if(val != null)
-					roadSpeedMin = Integer.decode(val);
-				if(roadSpeed > roadSpeedMax)
-					roadSpeed = roadSpeedMax;
-				else if(roadSpeed < roadSpeedMin)
-					roadSpeed = roadSpeedMin;
-				log.info("POI changing road speed of " + way.getName() + " (" + way.getId() + ") to " + roadSpeed + " at " + way.getPoints().get(0));
-			}
-			
-			way.deleteTag("mkgmap:road-speed-max");
-			way.deleteTag("mkgmap:road-speed-min");
-			way.addTag("mkgmap:road-speed", String.valueOf(roadSpeed));
+		way.addTag("mkgmap:road-speed-class", String.valueOf(roadSpeed));
 	}
 
 	private int getSpeedIdx(String tag) {
