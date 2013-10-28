@@ -354,6 +354,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		deletedRoads = null;
+		modifiedRoads = null;
 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
