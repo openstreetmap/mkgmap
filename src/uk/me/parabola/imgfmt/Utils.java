@@ -235,9 +235,9 @@ public class Utils {
 	 * @return angle between the two segments in degree [-180;180]
 	 */
 	public static double getAngle(Coord c1, Coord c2, Coord c3) {
-		double a = c1.bearingTo(c2);
+		double a = c2.bearingTo(c1);
 		double b = c2.bearingTo(c3);
-		double angle = b - a;
+		double angle = b - (a - 180);
 		while(angle > 180)
 			angle -= 360;
 		while(angle < -180)

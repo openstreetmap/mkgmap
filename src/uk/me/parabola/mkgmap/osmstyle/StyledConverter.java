@@ -476,6 +476,7 @@ public class StyledConverter implements OsmConverter {
 		}
 		lines = null;
 		lineTypes = null;
+
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -539,6 +540,7 @@ public class StyledConverter implements OsmConverter {
 			if(nodeId != null && w1 != null && w2 != null)
 				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
 		}
+
 		// return memory to GC
 		nodeIdMap = null;
 		throughRouteRelations.clear();
@@ -1882,7 +1884,6 @@ public class StyledConverter implements OsmConverter {
 	/**
 	 * Routing nodes must not be too close together as this 
 	 * causes routing errors. We try to merge these nodes here.
-	 * @param minArcLength
 	 */
 	private void removeShortArcsByMergingNodes() {
 		log.info("Removing short arcs (min arc length = " + minimumArcLength + "m)");
