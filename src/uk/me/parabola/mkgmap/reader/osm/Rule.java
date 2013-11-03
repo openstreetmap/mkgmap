@@ -32,4 +32,12 @@ public interface Rule {
 	 * @param result The resolved Garmin type that will go into the map.
 	 */
 	public void resolveType(Element el, TypeResult result);
+	
+	/**
+	 * Sets the finalize rules that are executed when 
+	 * an element type definition matches.
+	 * 
+	 * @param finalizeRule finalize rule(s)
+	 */
+	public void setFinalizeRule(Rule finalizeRule);
 }

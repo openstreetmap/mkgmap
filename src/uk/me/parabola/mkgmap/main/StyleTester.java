@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -75,6 +74,7 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler;
 import uk.me.parabola.mkgmap.reader.osm.xml.Osm5XmlHandler.SaxHandler;
 import uk.me.parabola.mkgmap.scan.SyntaxException;
+import uk.me.parabola.mkgmap.scan.Token;
 import uk.me.parabola.mkgmap.scan.TokenScanner;
 import uk.me.parabola.util.EnhancedProperties;
 
@@ -621,9 +621,11 @@ public class StyleTester implements OsmConverter {
 		 */
 		private class ReferenceRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
-
+			private Rule finalizeRule = null;
+			
 			public void add(Rule rule) {
 				rules.add(rule);
+				rule.setFinalizeRule(finalizeRule);
 			}
 
 			public void addAll(ReferenceRuleSet rs) {
@@ -665,6 +667,13 @@ public class StyleTester implements OsmConverter {
 				}
 				return sb.toString();
 			}
+
+			public void setFinalizeRule(Rule finalizeRule) {
+				for (Rule rule : rules) {
+					rule.setFinalizeRule(finalizeRule);
+				}
+				this.finalizeRule = finalizeRule;
+			}
 		}
 
 		/**
@@ -679,6 +688,7 @@ public class StyleTester implements OsmConverter {
 
 			private final ReferenceRuleSet rules;
 			private TokenScanner scanner;
+			private boolean inFinalizeSection = false;
 
 			public SimpleRuleFileReader(FeatureKind kind, LevelInfo[] levels, ReferenceRuleSet rules) {
 				this.rules = rules;
@@ -706,6 +716,9 @@ public class StyleTester implements OsmConverter {
 				// Read all the rules in the file.
 				scanner.skipSpace();
 				while (!scanner.isEndOfFile()) {
+					if (checkCommand(scanner))
+						continue;
+					
 					Op expr = expressionReader.readConditions();
 
 					ActionList actions = actionReader.readActions();
@@ -722,6 +735,33 @@ public class StyleTester implements OsmConverter {
 				}
 			}
 
+			private boolean checkCommand(TokenScanner scanner) {
+				scanner.skipSpace();
+				if (scanner.isEndOfFile())
+					return false;
+
+				if (inFinalizeSection == false && scanner.checkToken("<")) {
+					Token token = scanner.nextToken();
+					if (scanner.checkToken("finalize")) {
+						Token finalizeToken = scanner.nextToken();
+						if (scanner.checkToken(">")) {
+							// consume the > token
+							scanner.nextToken();
+							// mark start of the finalize block
+							inFinalizeSection = true;
+							return true;
+						} else {
+							scanner.pushToken(finalizeToken);
+							scanner.pushToken(token);
+						}
+					} else {
+						scanner.pushToken(token);
+					}
+				}
+				scanner.skipSpace();
+				return false;
+			}
+			
 			/**
 			 * Save the expression as a rule.
 			 */

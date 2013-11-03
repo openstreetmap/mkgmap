@@ -44,6 +44,8 @@ public class FunctionFactory {
 			return new MaxSpeedFunction(SpeedUnit.KMH);
 		if ("maxspeedmph".equals(name))
 			return new MaxSpeedFunction(SpeedUnit.MPH);
+		if ("type".equals(name))
+			return new TypeFunction();
 		
 		return null;
 	}

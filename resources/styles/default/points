@@ -8,8 +8,6 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
-
 barrier=bollard | barrier=bus_trap
     { add mkgmap:bicycle='${bicycle|subst:private=>no|def:yes}'; add mkgmap:foot='${foot|subst:private=>no|def:yes}'; addaccess no }
 barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate
@@ -273,3 +271,8 @@ barrier=block | barrier=cycle_barrier | barrier=stile | barrier=kissing_gate [0x
 
 include 'inc/water_points';
 include 'inc/landuse_points';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+
+include 'inc/address';

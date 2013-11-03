@@ -230,6 +230,9 @@ public class ExpressionReader {
 		case RELATION:
 			if (function.supportsRelation()) supported = true;
 			break;
+		case ALL:
+			if (function.supportsNode() || function.supportsWay() || function.supportsRelation()) supported = true;
+			break;
 		}
 
 		if (!supported)

@@ -16,10 +16,12 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -34,8 +36,6 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 
 /**
@@ -204,7 +204,40 @@ public class StyledConverterTest {
 		assertEquals("found pedestrian type", 6, lines.get(0).getType());
 	}
 
+	@Test
+	public void testFinalizer() throws FileNotFoundException {
+		// test three ways
+		// the first two ways should get the name "OK" by the finalize part
+		// the third way should not be handled by the finalize part
+		String[][] tests = new String[][] {{"residential","OK"}, {"track","OK"},{"secondary",null}};
+		
+		for (String[] test : tests ) {
+			// clear the lines list for each test
+			lines.clear();
+			converter = makeConverter("finalize");
+			Way w = makeWay();
+			w.addTag("highway", test[0]);
+			converter.convertWay(w);
+			converter.end();
 
+			assertEquals("lines converted", 1, lines.size());
+			assertEquals("wrong name set by the finalize block", test[1], lines.get(0).getName());
+		}
+		
+		// check if continue works
+		lines.clear();
+		converter = makeConverter("finalize");
+		Way w = makeWay();
+		w.addTag("highway", "trunk");
+		converter.convertWay(w);
+		converter.end();
+
+		assertEquals("lines converted", 2, lines.size());
+		assertEquals("wrong name set by the finalize block", "OK", lines.get(0).getName());
+		assertEquals("wrong name set by the finalize block", null, lines.get(1).getName());
+		
+	}
+	
 	private Way makeWay() {
 		Way way = new Way(1);
 		way.addPoint(new Coord(100, 100));

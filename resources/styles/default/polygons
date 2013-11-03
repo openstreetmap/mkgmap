@@ -8,12 +8,6 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-# polygons do not have address information in the Garmin map format
-# so as long as the address information is not required in a stlye rule
-# it is not required to include the address rules 
-# include 'inc/address';
-
-
 leisure=* & sport=* & name=* { set name='${name} (${sport})' }
 leisure=* & sport=* & name!=* { add name='${sport}' }
 
@@ -80,3 +74,7 @@ man_made=* & area=yes
 
 include 'inc/water_polygons';
 include 'inc/landuse_polygons';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+

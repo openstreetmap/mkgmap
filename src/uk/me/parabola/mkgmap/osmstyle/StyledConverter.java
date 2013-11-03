@@ -188,6 +188,26 @@ public class StyledConverter implements OsmConverter {
 			compatHandler = null;
 	}
 
+	/** One type result for ways to avoid recreating one for each way. */ 
+	private final WayTypeResult wayTypeResult = new WayTypeResult();
+	private class WayTypeResult implements TypeResult 
+	{
+		private Way way;
+		public void setWay(Way way) {
+			this.way = way;
+		}
+		
+		public void add(Element el, GType type) {
+			if (type.isContinueSearch()) {
+				// If not already copied, do so now
+				if (el == way) 
+					el = way.copy();
+			}
+			postConvertRules(el, type);
+			addConvertedWay((Way) el, type);
+		}
+	}
+	
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
@@ -218,18 +238,10 @@ public class StyledConverter implements OsmConverter {
 		else
 			rules = wayRules;
 		
-		rules.resolveType(way, new TypeResult() {
-			public void add(Element el, GType type) {
-				if (type.isContinueSearch()) {
-					// If not already copied, do so now
-					if (el == way)
-						el = way.copy();
-				}
-				postConvertRules(el, type);
-				addConvertedWay((Way) el, type);
-			}
-		});
+		wayTypeResult.setWay(way);
+		rules.resolveType(way, wayTypeResult);
 	}
+
 
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
@@ -245,6 +257,25 @@ public class StyledConverter implements OsmConverter {
 		}
 		else
 			addShape(way, foundType);
+	}
+
+	/** One type result for nodes to avoid recreating one for each node. */ 
+	private NodeTypeResult nodeTypeResult = new NodeTypeResult();
+	private class NodeTypeResult implements TypeResult {
+		private Node node;
+		public void setNode(Node node) {
+			this.node = node;
+		}
+		
+		public void add(Element el, GType type) {
+			if (type.isContinueSearch()) {
+				// If not already copied, do so now
+				if (el == node) 
+					el = node.copy();
+			}
+			postConvertRules(el, type);
+			addPoint((Node) el, type);
+		}
 	}
 
 	/**
@@ -263,18 +294,10 @@ public class StyledConverter implements OsmConverter {
 
 		housenumberGenerator.addNode(node);
 		
-		nodeRules.resolveType(node, new TypeResult() {
-			public void add(Element el, GType type) {
-				if (type.isContinueSearch()) {
-					// If not already copied, do so now
-					if (el == node)
-						el = node.copy();
-				}
-				postConvertRules(el, type);
-				addPoint((Node) el, type);
-			}
-		});
+		nodeTypeResult.setNode(node);
+		nodeRules.resolveType(node, nodeTypeResult);
 	}
+	
 
 	/**
 	 * Rules to run before converting the element.
@@ -476,7 +499,6 @@ public class StyledConverter implements OsmConverter {
 		}
 		lines = null;
 		lineTypes = null;
-
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -540,7 +562,6 @@ public class StyledConverter implements OsmConverter {
 			if(nodeId != null && w1 != null && w2 != null)
 				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
 		}
-
 		// return memory to GC
 		nodeIdMap = null;
 		throughRouteRelations.clear();

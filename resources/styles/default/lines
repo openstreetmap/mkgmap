@@ -8,7 +8,6 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
 include 'inc/refs';
 
 aeroway=runway [0x27 resolution 20]
@@ -97,11 +96,6 @@ leisure=track & area!=yes
 {add highway=footway; name '${name} (${sport})' | '${name}'}
 (man_made=pier | man_made=piste:halfpipe) & area!=yes
 {add highway=footway; name '${ref} ${name}' | '${ref}' | '${name}' }
-
-# calculate the road speed based on maxspeed tag
-include 'inc/roadspeed'; 
-# calculate the access rules
-include 'inc/access';
 
 # Roundabouts
 junction=roundabout & highway=trunk [0x0c road_class=3 road_speed=2 resolution 18]
@@ -192,3 +186,13 @@ boundary=political [0x1c resolution 19]
 
 include 'inc/water_lines';
 include 'inc/contour_lines';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+
+include 'inc/address';
+# calculate the road speed based on maxspeed tag
+include 'inc/roadspeed'; 
+# calculate the access rules
+include 'inc/access';
+

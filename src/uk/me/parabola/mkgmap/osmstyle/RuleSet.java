@@ -151,4 +151,15 @@ public class RuleSet implements Rule, Iterable<Rule> {
 	public void addUsedTags(Collection<String> usedTags) {
 		this.usedTags.addAll(usedTags);
 	}
+
+	public void setFinalizeRule(Rule finalizeRule) {
+		if (rules == null) {
+			// this method must be called after prepare() is called so
+			// that we have rules to which the finalize rules can be applied
+			throw new IllegalStateException("First call prepare() before setting the finalize rules");
+		}
+		for (Rule rule : rules) 
+			rule.setFinalizeRule(finalizeRule);
+		
+	}
 }
