@@ -347,9 +347,9 @@ public class StyledConverter implements OsmConverter {
 				points.addAll(modWay.getPoints());
 			}
 		}
-		deletedRoads.clear();
-		modifiedRoads.clear();
-		
+		deletedRoads = null;
+		modifiedRoads = null;
+
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
 			if (line == null)
@@ -357,8 +357,9 @@ public class StyledConverter implements OsmConverter {
 			GType gt = lineTypes.get(i);
 			addLine(line, gt);
 		}
-		lines.clear();
-		lineTypes.clear();
+		lines = null;
+		lineTypes = null;
+
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -367,8 +368,8 @@ public class StyledConverter implements OsmConverter {
 			GType gt = roadTypes.get(i);
 			addRoad(road, gt);
 		}
-		roads.clear();
-		roadTypes.clear();
+		roads = null;
+		roadTypes = null;
 		
 		housenumberGenerator.generate(lineAdder);
 		
@@ -422,8 +423,9 @@ public class StyledConverter implements OsmConverter {
 			if(nodeId != null && w1 != null && w2 != null)
 				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
 		}
+
 		// return memory to GC
-		nodeIdMap.clear();
+		nodeIdMap = null;
 		throughRouteRelations.clear();
 		restrictions.clear();
 	}
@@ -1828,7 +1830,6 @@ public class StyledConverter implements OsmConverter {
 	/**
 	 * Routing nodes must not be too close together as this 
 	 * causes routing errors. We try to merge these nodes here.
-	 * @param minArcLength
 	 */
 	private void removeShortArcsByMergingNodes() {
 		log.info("Removing short arcs (min arc length = " + minimumArcLength + "m)");

@@ -226,6 +226,24 @@ public class Utils {
 		return (val + (1 << shift) - 1) >>> shift << shift;
 	} 
 	
+	/**
+	 * Calculates the angle between the two segments (c1,c2),(c2,c3).
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return angle between the two segments in degree [-180;180]
+	 */
+	public static double getAngle(Coord c1, Coord c2, Coord c3) {
+		double a = c2.bearingTo(c1);
+		double b = c2.bearingTo(c3);
+		double angle = b - (a - 180);
+		while(angle > 180)
+			angle -= 360;
+		while(angle < -180)
+			angle += 360;
+		
+		return angle;
+	}
 	public final static int NOT_STRAIGHT = 0;
 	public final static int STRAIGHT_SPIKE = 1;
 	public final static int STRICTLY_STRAIGHT = 2;
