@@ -37,6 +37,7 @@ import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.LocatorUtil;
+import uk.me.parabola.mkgmap.filters.LineSizeSplitterFilter;
 import uk.me.parabola.mkgmap.general.AreaClipper;
 import uk.me.parabola.mkgmap.general.Clipper;
 import uk.me.parabola.mkgmap.general.LineAdder;
@@ -90,7 +91,7 @@ public class StyledConverter implements OsmConverter {
 	// long lines being assigned to the wrong subdivision
 	private static final int MAX_LINE_LENGTH = 40000;
 
-	// limit arc lengths to what can be handled by RouteArc 
+	// limit arc lengths to what can be handled by RouteArc
 	private static final int MAX_ARC_LENGTH = 20450000; // (1 << 22) * 16 / 3.2808 ~ 20455030*/
 
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
@@ -1167,54 +1168,93 @@ public class StyledConverter implements OsmConverter {
 		Way trailingWay = null;
 		String debugWayName = getDebugName(way);
 
+		// collect the Way's nodes and also split the way if any
+		// inter-node arc length becomes excessive
 		double arcLength = 0;
+		// track the dimensions of the way's bbox so that we can
+		// detect if it would be split by the LineSizeSplitterFilter
+		class WayBBox {
+			int minLat = Integer.MAX_VALUE;
+			int maxLat = Integer.MIN_VALUE;
+			int minLon = Integer.MAX_VALUE;
+			int maxLon = Integer.MIN_VALUE;
+
+			void addPoint(Coord co) {
+				int lat = co.getLatitude();
+				if(lat < minLat)
+					minLat = lat;
+				if(lat > maxLat)
+					maxLat = lat;
+				int lon = co.getLongitude();
+				if(lon < minLon)
+					minLon = lon;
+				if(lon > maxLon)
+					maxLon = lon;
+			}
+
+			boolean tooBig() {
+				return LineSizeSplitterFilter.testDims(maxLat - minLat,
+													   maxLon - minLon) >= 1.0;
+			}
+		}
+
+		WayBBox wayBBox = new WayBBox();
 
 		for(int i = 0; i < points.size(); ++i) {
 			Coord p = points.get(i);
 
-			// flag that's set true when we back up to a previous node
-			// while finding a good place to split the line
-			boolean splitAtPreviousNode = false;
-			if (p.getHighwayCount() > 1)
-				arcLength = 0;
-			else {
-				// check if we should split the way at this point to limit
-				// the arc length between nodes
-				if((i + 1) < points.size()) {
-					Coord nextP = points.get(i + 1);
-					double d = p.distance(nextP);
+			wayBBox.addPoint(p);
 
-					if (arcLength + d > MAX_ARC_LENGTH){
-						// very unlikely: arc spans half of planet
-						double fract = 0.95;
-						if (arcLength > MAX_ARC_LENGTH * fract){
-							p.incHighwayCount();
-							log.info("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + "m but I am converting a point to a node to reduce its length to " + (int)arcLength + "m");
-							System.out.println("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + "m but I am converting a point to a node to reduce its length to " + (int)arcLength + "m");
-						} else {
-							// very very unikely: distance between two points is near MAX_ARC_LENGTH
-							while(true){
-								nextP = p.makeBetweenPoint(nextP, fract * (MAX_ARC_LENGTH-arcLength) / d);
-								d = p.distance(nextP);
-								if (arcLength + d < MAX_ARC_LENGTH)
-									break;
-								fract *= 0.9;
-							} 
-							nextP.incHighwayCount();
-							nextP.incHighwayCount();
-							arcLength += d;
-							points.add(i + 1, nextP);
-							log.info("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + "m but I am adding a new point to reduce its length to " + (int)arcLength + "m");
-							System.out.println("Way " + debugWayName + " contains a segment that is longer than " + MAX_ARC_LENGTH + "m but I am adding a new point to reduce its length to " + (int)arcLength + "m");
-						}
+			// check if we should split the way at this point to limit
+			// the arc length between nodes
+			if((i + 1) < points.size()) {
+				Coord nextP = points.get(i + 1);
+				double d = p.distance(nextP);
+				// get arc size as a proportion of the max allowed - a
+				// value greater than 1.0 indicate that the bbox is
+				// too large in at least one dimension
+				double arcProp = LineSizeSplitterFilter.testDims(nextP.getLatitude() -
+																 p.getLatitude(),
+																 nextP.getLongitude() -
+																 p.getLongitude());
+				if(arcProp >= 1.0 || d > MAX_ARC_LENGTH) {
+					nextP = p.makeBetweenPoint(nextP, 0.95 * Math.min(1 / arcProp, MAX_ARC_LENGTH / d));
+					nextP.incHighwayCount();
+					points.add(i + 1, nextP);
+					double newD = p.distance(nextP);
+					log.info("Way " + debugWayName + " contains a segment that is " + (int)d + "m long but I am adding a new point to reduce its length to " + (int)newD + "m");
+					d = newD;
+				}
+
+				wayBBox.addPoint(nextP);
+
+				if((arcLength + d) > MAX_ARC_LENGTH) {
+					assert i > 0 : "long arc segment was not split";
+					assert trailingWay == null : "trailingWay not null #1";
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
+				}
+				else if(wayBBox.tooBig()) {
+					assert i > 0 : "arc segment with big bbox not split";
+					assert trailingWay == null : "trailingWay not null #2";
+					trailingWay = splitWayAt(way, i);
+					// this will have truncated the current Way's
+					// points so the loop will now terminate
+					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
+				}
+				else {
+					if(p.getHighwayCount() > 1) {
+						// point is a node so zero arc length
+						arcLength = 0;
 					}
-					else {
-						arcLength += d;
-					}
+
+					arcLength += d;
 				}
 			}
+
 			if(p.getHighwayCount() > 1) {
-				arcLength = 0;
 				// this point is a node connecting highways
 				Integer nodeId = nodeIdMap.get(p);
 				if(nodeId == null) {
@@ -1222,17 +1262,9 @@ public class StyledConverter implements OsmConverter {
 					nodeIdMap.put(p, nextNodeId++);
 				}
 
-				if(splitAtPreviousNode) {
-					// consistency check - this node index should
-					// already be recorded
-					assert nodeIndices.contains(i) : debugWayName + " has backed up to point " + i + " but can't find a node for that point " + p.toOSMURL();
-				}
-				else {
-					// add this index to node Indexes (should not
-					// already be there)
-					assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i + " new node is " + p.toOSMURL();
-					nodeIndices.add(i);
-				}
+				// add this index to node Indexes (should not already be there)
+				assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i + " new node is " + p.toOSMURL();
+				nodeIndices.add(i);
 
 				if((i + 1) < points.size() &&
 				   nodeIndices.size() == MAX_NODES_IN_WAY) {

@@ -22,7 +22,6 @@ import uk.me.parabola.imgfmt.app.lbl.City;
 import uk.me.parabola.imgfmt.app.lbl.Zip;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 
 /**
  * Used to represent a road.  A road is a special kind of line in that
@@ -40,24 +39,20 @@ import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 public class MapRoad extends MapLine {
 
 	private final RoadDef roadDef;
-	private long splitId; // used to identify segments of roads
 
 	public MapRoad(long id, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());
 		roadDef = new RoadDef(id, getName());
-		splitId = FakeIdGenerator.makeFakeId();
 	}
 
 	private MapRoad(MapRoad r) {
 		super(r);
 		roadDef = r.roadDef;
-		splitId = r.splitId;
 	}
 
 	public MapRoad copy() {
-		MapRoad r = new MapRoad(this);
-		return r;
+		return new MapRoad(this);
 	}
 
 	public boolean isRoad() {
@@ -143,19 +138,5 @@ public class MapRoad extends MapLine {
 
 	public void setLinkRoad(boolean lr) {
 		roadDef.setLinkRoad(lr);
-	}
-
-	public void setSplitId(long splitId){
-		this.splitId = splitId;
-	}
-	
-	public long getSplitId() {
-		return splitId;
-	}
-
-	public void linkWithPred(long prevSplitId) {
-		assert prevSplitId != 0;
-		assert splitId != 0;
-		roadDef.linkSegments(prevSplitId, this.splitId);
 	}
 }

@@ -25,7 +25,6 @@ import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 
 /**
  * A filter to make sure that a line does not have a greater dimension that
@@ -73,6 +72,11 @@ public class LineSizeSplitterFilter implements MapFilter {
 			return;
 		}
 
+		if(line instanceof MapRoad) {
+			MapRoad road = ((MapRoad)line);
+			log.error("Way " + road.getRoadDef() + " has a max dimension of " + line.getBounds().getMaxDimension() + " and is about to be split (routing will be broken)");
+		}
+		
 		// ensure that all single lines do not exceed the maximum size
 		// use a slightly decreased max size (-10) to get better results 
 		// in the subdivision creation
@@ -80,7 +84,10 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		log.debug("line bbox too big, splitting");
 
+		MapLine l = line.copy();
+
 		List<Coord> coords = new ArrayList<Coord>();
+		boolean first = true;
 
 		/**
 		 * Class to keep track of the dimensions.
@@ -125,13 +132,21 @@ public class LineSizeSplitterFilter implements MapFilter {
 
 		Dim dim = new Dim();
 		Coord prev = null;
-		List<List<Coord>>parts = new ArrayList<List<Coord>>();
+		
 		// Add points while not too big and then start again with a fresh line.
 		for (Coord co: points){
 			dim.addToBounds(co);
 			if (dim.getMaxDim() > maxSize) {
-				parts.add(coords);
+				if (first)
+					log.debug("bigness saving first part");
+				else 
+					log.debug("bigness saving next part");
+				l.setPoints(coords);
+				next.doFilter(l);
 
+				l = line.copy();
+
+				first = false;
 				dim.reset();
 				coords = new ArrayList<Coord>();
 				coords.add(prev);
@@ -143,27 +158,10 @@ public class LineSizeSplitterFilter implements MapFilter {
 		}
 		assert coords.size() > 1;
 		if (coords.size() > 1) {
-			parts.add(coords);
+			log.debug("bigness saving a final part");
+			l.setPoints(coords);
+			next.doFilter(l);
 		}
-		List<MapLine> lines = new ArrayList<MapLine>();
-		MapLine l = line;
-		long prevSplitId = 0;
-		for (int i = 0; i < parts.size();i++){
-			log.debug("bigness saving part " + (i+1));
-			l = l.copy();
-			if (i > 0 && l instanceof MapRoad){
-				MapRoad road = (MapRoad) l;
-				prevSplitId = road.getSplitId();
-				road.setSplitId(FakeIdGenerator.makeFakeId());
-				road.linkWithPred(prevSplitId);
-			}
-			l.setPoints(parts.get(i));
-			// first collect all lines to make sure that road segments
-			// are properly linked
-			lines.add(l);
-		}
-		for (MapLine mapLine: lines)
-			next.doFilter(mapLine);
 	}
 	
 	/**

@@ -677,14 +677,8 @@ public class MapBuilder implements Configurable {
 				Subdivision lastdiv = nextList.get(nextList.size() - 1).getSubdiv();
 				lastdiv.setLast(true);
 			}
-			useRoadPartChains(src);
-			srcList = nextList;
-		}
-	}
 
-	private void useRoadPartChains(LoadableMapDataSource src) {
-		for (RoadDef rd : src.getRoadNetwork().getRoadDefs()){
-			rd.fixOrderOfSegments();
+			srcList = nextList;
 		}
 	}
 
@@ -1242,13 +1236,11 @@ public class MapBuilder implements Configurable {
 			pl.setType(line.getType());
 			if (doRoads){
 				if (line.isRoad()) {
-					MapRoad road = (MapRoad) line;
 					if (log.isDebugEnabled())
 						log.debug("adding road def: " + line.getName());
-					RoadDef roaddef = road.getRoadDef();
+					RoadDef roaddef = ((MapRoad) line).getRoadDef();
 
 					pl.setRoadDef(roaddef);
-					pl.setSplitId(road.getSplitId());
 					roaddef.addPolylineRef(pl);
 				} else if (routingErrorMsgPrinted == false){
 					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){

@@ -49,8 +49,6 @@ public class Polyline extends MapObject {
 
 	// Reference to NET section, if any
 	private RoadDef roaddef;
-	
-	private long splitId;
 
 	// If a road gets subdivided into several segments, this
 	// says whether this line is the last segment. Need this
@@ -122,7 +120,7 @@ public class Polyline extends MapObject {
 		if (roaddef != null) {
 			roaddef.addLabel(getLabel());
 			roaddef.addOffsetTarget(file.position(),
-					FLAG_NETINFO | (loff & FLAG_EXTRABIT), splitId);
+					FLAG_NETINFO | (loff & FLAG_EXTRABIT));
 			// also add ref label(s) if present
 			List<Label> refLabels = getRefLabels();
 			if(refLabels != null)
@@ -278,13 +276,5 @@ public class Polyline extends MapObject {
 
 	public int getLong() {
 		return getSubdiv().getLongitude() + (getDeltaLong() << getSubdiv().getShift());
-	}
-
-	public long getSplitId() {
-		return splitId;
-	}
-
-	public void setSplitId(long splitId) {
-		this.splitId = splitId;
 	}
 }
