@@ -644,10 +644,75 @@ checked for additional conversions.
 [0x2 road_class=3 road_speed=5 level 2 default_name 'example street' continue with_actions]
 ----
 
+== Troubleshooting ==
+
+For each node/way/relation, mkgmap goes through the tags exactly once in
+order from the top of the file downward.
+For each rule that matches, any action block will be run.
+As soon as a rule that ends with a type definition is found then
+processing stops and that is the Garmin symbol that is produced.
+
+The only exception is if the Type Definition contains the
++continue+ statement.  In that case _mkgmap_ will continue
+looking for further matches.
+
+* Where possible always have the same tag on the left.  This will make things more predictable.
+* Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
+
+== Including files ==
+Its often convenient to split a file into smaller parts or to use the
+same rules in two different files.  In these cases you can include
+one rule file within another.
+
+ include "inc/common";
+
+Here some common rules have been included in a rule file from a directory
+called "inc" within the style. Note that the line ends in a semi-colon
+which is easy to forget.
+
+[NOTE]
+--
+The included files don't have to be located within the style and can be
+anywhere else.
+--
+
+When you include a file, the effect is exactly as if you had replaced the
+include line with the contents of the file.  An +include+ directive can
+occur anywhere that a rule could start, and it is possible to include
+another file from with in the file that is included.
+
+.Including from another style
+It is also possible to include a file from another style.
+To do this you simply add +from stylename+ to the end of the include
+statement.
+
+ include "points" from default;
+
+That will include the +points+ file from the default style. This might be
+useful if you want to only change a few things about the default style.
+
 == Some examples ==
 The following are some examples of style rules, with explanations of what they do.
 
-=== Points style file ===
+=== Simple examples ===
+In the majority of cases everything is very simple. Say you want roads that are tagged as *highway=motorway* to have the Garmin type 0x01 ("motorway") and for it to appear up until the zoom level 3.
+
+Then you would write the following rule.
+----
+highway=motorway [0x01 level 3]
+----
+
+Nodes that have an id and a subid are referenced by concatenating both ids.
+----
+amenity=bank [0x2f06 level 3]
+----
+
+This will be explained in more detail in the following sections along
+with how to use more than one tag to make the choice.
+
+=== More involved examples ===
+A few tips and tricks showing how the rules can be used to
+create almost any effect.
 
 .Internet cafes 
 ====
@@ -708,67 +773,4 @@ addr:housenumber=7 and opening_hours=09.00-17.00, the address field of
 the Garmin POI will be _7, Alya Street, Lagos, 90210 open 09.00-17.00_.
 
 ====
-
-== Troubleshooting ==
-
-For each node/way/relation, mkgmap goes through the tags exactly once in
-order from the top of the file downward.
-For each rule that matches, any action block will be run.
-As soon as a rule that ends with a type definition is found then
-processing stops and that is the Garmin symbol that is produced.
-
-The only exception is if the Type Definition contains the
-+continue+ statement.  In that case _mkgmap_ will continue
-looking for further matches.
-
-* Where possible always have the same tag on the left.  This will make things more predictable.
-* Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
-
-== Including files ==
-Its often convenient to split a file into smaller parts or to use the
-same rules in two different files.  In these cases you can include
-one rule file within another.
-
- include "inc/common";
-
-Here some common rules have been included in a rule file from a directory
-called "inc" within the style. Note that the line ends in a semi-colon
-which is easy to forget.
-
-[NOTE]
---
-The included files don't have to be located within the style and can be
-anywhere else.
---
-
-When you include a file, the effect is exactly as if you had replaced the
-include line with the contents of the file.  An +include+ directive can
-occur anywhere that a rule could start, and it is possible to include
-another file from with in the file that is included.
-
-.Including from another style
-It is also possible to include a file from another style.
-To do this you simply add +from +_stylename_ to the end of the include
-statement.
-
- include "points" from default;
-
-That will include the +points+ file from the default style. This might be
-useful if you want to only change a few things about the default style.
-
-== Simple example ==
-In the majority of cases everything is very simple. Say you want roads that are tagged as *highway=motorway* to have the Garmin type 0x01 ("motorway") and for it to appear up until the zoom level 3.
-
-Then you would write the following rule.
-----
-highway=motorway [0x01 level 3]
-----
-
-Nodes that have an id and a subid are referenced by concatenating both ids.
-----
-amenity=bank [0x2f06 level 3]
-----
-
-This will be explained in more detail in the following sections along with how to use more than one tag to make the choice.
-However with that one form of rule, you can do everything that the old map-features file could do.
 
