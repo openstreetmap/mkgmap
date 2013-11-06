@@ -84,7 +84,7 @@ public class Coord implements Comparable<Coord> {
 		this.lonDelta = lonDelta;
 	}
 	
-	public Coord makeHighPrecCoord(int lat30, int lon30){
+	public static Coord makeHighPrecCoord(int lat30, int lon30){
 		int lat24 = (lat30 + (1 << 5)) >> 6;  
 		int lon24 = (lon30 + (1 << 5)) >> 6;
 		byte dLat = (byte) ((lat24 << 6) - lat30);
@@ -354,10 +354,16 @@ public class Coord implements Comparable<Coord> {
 		return (double) val30 * (360.0 / (1 << 30));
 	}
 	
+	/**
+	 * @return Latitude as signed 30 bit integer 
+	 */
 	public int getHighPrecLat() {
 		return (latitude << 6) - latDelta;
 	}
 
+	/**
+	 * @return Longitude as signed 30 bit integer 
+	 */
 	public int getHighPrecLon() {
 		return (longitude << 6) - lonDelta;
 	}

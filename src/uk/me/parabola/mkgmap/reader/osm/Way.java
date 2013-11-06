@@ -160,10 +160,10 @@ public class Way extends Element {
 		double lat = 0;
 		double lon = 0;
 		for(Coord p : points) {
-			lat += (double)p.getLatitude()/numPoints;
-			lon += (double)p.getLongitude()/numPoints;
+			lat += (double)p.getHighPrecLat()/numPoints;
+			lon += (double)p.getHighPrecLon()/numPoints;
 		}
-		return new Coord((int)Math.round(lat), (int)Math.round(lon));
+		return Coord.makeHighPrecCoord((int)Math.round(lat), (int)Math.round(lon));
 	}
 
 	public String kind() {
