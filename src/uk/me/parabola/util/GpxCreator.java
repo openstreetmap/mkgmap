@@ -53,14 +53,7 @@ public class GpxCreator {
 	}
 
 	public static void createAreaGpx(String name, Area bbox) {
-		List<Coord> points = new ArrayList<Coord>(5);
-		points.add(new Coord(bbox.getMinLat(), bbox.getMinLong()));
-		points.add(new Coord(bbox.getMaxLat(), bbox.getMinLong()));
-		points.add(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
-		points.add(new Coord(bbox.getMinLat(), bbox.getMaxLong()));
-		points.add(new Coord(bbox.getMinLat(), bbox.getMinLong()));
-
-		GpxCreator.createGpx(name, points);
+		GpxCreator.createGpx(name, bbox.toCoords());
 	}
 	
 	/**
