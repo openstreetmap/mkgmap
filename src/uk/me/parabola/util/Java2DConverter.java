@@ -15,6 +15,7 @@ package uk.me.parabola.util;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +71,17 @@ public class Java2DConverter {
 	 * @return the converted Java2D area
 	 */
 	public static Area createArea(List<Coord> polygonPoints) {
-		return new Area(createPolygon(polygonPoints));
+		Path2D path= new Path2D.Double();
+		double factor = 1.0 / (1<<6);
+		int lat30 = polygonPoints.get(0).getHighPrecLat();
+		int lon30 = polygonPoints.get(0).getHighPrecLon();
+		path.moveTo(factor*lon30, factor*lat30);
+		for (int i = 1; i < polygonPoints.size();i++) {
+			lat30 = polygonPoints.get(i).getHighPrecLat();
+			lon30 = polygonPoints.get(i).getHighPrecLon();
+			path.lineTo(factor*lon30, factor*lat30);
+		}
+		return new Area(path);
 	}
 
 	/**
@@ -105,7 +116,7 @@ public class Java2DConverter {
 			// all ways in the area MUST define outer areas
 			// it is not possible that one of the areas define an inner segment
 
-			float[] res = new float[6];
+			double[] res = new double[6];
 			PathIterator pit = area.getPathIterator(null);
 			int prevLat = Integer.MIN_VALUE;
 			int prevLong = Integer.MIN_VALUE;
@@ -113,16 +124,16 @@ public class Java2DConverter {
 			Polygon p = null;
 			while (!pit.isDone()) {
 				int type = pit.currentSegment(res);
-				int lat = Math.round(res[1]);
-				int lon = Math.round(res[0]);
+				int lat24 = (int)Math.round(res[1]);
+				int lon24 = (int)Math.round(res[0]);
 
 				switch (type) {
 				case PathIterator.SEG_LINETO:
-					if (prevLat != lat || prevLong != lon) {
-						p.addPoint(lon, lat);
+					if (prevLat != lat24 || prevLong != lon24) {
+						p.addPoint(lon24, lat24);
 					}
-					prevLat = lat;
-					prevLong = lon;
+					prevLat = lat24;
+					prevLong = lon24;
 					break;
 				case PathIterator.SEG_CLOSE:
 					p.addPoint(p.xpoints[0], p.ypoints[0]);
@@ -140,15 +151,15 @@ public class Java2DConverter {
 						}
 					}
 					p = new Polygon();
-					p.addPoint(lon, lat);
+					p.addPoint(lon24, lat24);
 					break;
 				default:
 					log.error("Unsupported path iterator type " + type
 							+ ". This is an mkgmap error.");
 				}
 
-				prevLat = lat;
-				prevLong = lon;
+				prevLat = lat24;
+				prevLong = lon24;
 
 				pit.next();
 			}
@@ -170,26 +181,29 @@ public class Java2DConverter {
 
 		List<Coord> points = null;
 
-		float[] res = new float[6];
+		double[] res = new double[6];
 		PathIterator pit = area.getPathIterator(null);
 		int prevLat = Integer.MIN_VALUE;
 		int prevLong = Integer.MIN_VALUE;
-
+		double factor = 1 << 6;
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
 
-			int lat = Math.round(res[1]);
-			int lon = Math.round(res[0]);
+			int lat = (int)Math.round(res[1]);
+			int lon = (int)Math.round(res[0]);
+			int lat30 = (int)Math.round(res[1]*factor);
+			int lon30 = (int)Math.round(res[0]*factor);
+
 
 			switch (type) {
 			case PathIterator.SEG_MOVETO:
 				points = new ArrayList<Coord>();
-				points.add(new Coord(lat, lon));
+				points.add(Coord.makeHighPrecCoord(lat30, lon30));
 				break;
 			case PathIterator.SEG_LINETO:
 				assert points != null;
 				if (prevLat != lat || prevLong != lon) {
-					points.add(new Coord(lat, lon));
+					points.add(Coord.makeHighPrecCoord(lat30, lon30));
 				}
 				break;
 			case PathIterator.SEG_CLOSE:
@@ -223,34 +237,35 @@ public class Java2DConverter {
 	public static List<List<Coord>> areaToShapes(java.awt.geom.Area area) {
 		List<List<Coord>> outputs = new ArrayList<List<Coord>>(4);
 
-		float[] res = new float[6];
+		double[] res = new double[6];
 		PathIterator pit = area.getPathIterator(null);
 		
 		// store float precision coords to check if the direction (cw/ccw)
 		// of a polygon changes due to conversion to int precision 
-		List<Float> floatLat = null;
-		List<Float>	floatLon = null;
+		List<Double> floatLat = null;
+		List<Double> floatLon = null;
 
 		List<Coord> coords = null;
 
 		int iPrevLat = Integer.MIN_VALUE;
 		int iPrevLong = Integer.MIN_VALUE;
-
+		double factor = 1 << 6;
 		while (!pit.isDone()) {
 			int type = pit.currentSegment(res);
 
-			float fLat = res[1];
-			float fLon = res[0];
-			int iLat = Math.round(fLat);
-			int iLon = Math.round(fLon);
-			
+			double fLat = res[1];
+			double fLon = res[0];
+			int iLat = (int)Math.round(fLat);
+			int iLon = (int)Math.round(fLon);
+			int lat30 = (int)Math.round(fLat*factor);
+			int lon30 = (int)Math.round(fLon*factor);
 			switch (type) {
 			case PathIterator.SEG_LINETO:
 				floatLat.add(fLat);
 				floatLon.add(fLon);
 
 				if (iPrevLat != iLat || iPrevLong != iLon) 
-					coords.add(new Coord(iLat,iLon));
+					coords.add(Coord.makeHighPrecCoord(lat30, lon30));
 
 				iPrevLat = iLat;
 				iPrevLong = iLon;
@@ -273,13 +288,13 @@ public class Java2DConverter {
 
 						// calculate area size with float values 
 						double realAreaSize = 0;
-						float pf1Lat = floatLat.get(0);
-						float pf1Lon = floatLon.get(0);
+						double pf1Lat = floatLat.get(0);
+						double pf1Lon = floatLon.get(0);
 						for(int i = 1; i < floatLat.size(); i++) {
-							float pf2Lat = floatLat.get(i);
-							float pf2Lon = floatLon.get(i);
-							realAreaSize += ((double)pf1Lon * pf2Lat - 
-									(double)pf2Lon * pf1Lat);
+							double pf2Lat = floatLat.get(i);
+							double pf2Lon = floatLon.get(i);
+							realAreaSize += (pf1Lon * pf2Lat - 
+									pf2Lon * pf1Lat);
 							pf1Lat = pf2Lat;
 							pf1Lon = pf2Lon;
 						}
@@ -313,12 +328,12 @@ public class Java2DConverter {
 					}
 				}
 				if (type == PathIterator.SEG_MOVETO){
-					floatLat= new ArrayList<Float>();
-					floatLon= new ArrayList<Float>();
+					floatLat= new ArrayList<Double>();
+					floatLon= new ArrayList<Double>();
 					floatLat.add(fLat);
 					floatLon.add(fLon);
 					coords = new ArrayList<Coord>();
-					coords.add(new Coord(iLat,iLon));
+					coords.add(Coord.makeHighPrecCoord(lat30, lon30));
 					iPrevLat = iLat;
 					iPrevLong = iLon;
 				} else {
