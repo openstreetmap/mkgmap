@@ -1786,9 +1786,7 @@ public class MultiPolygonRelation extends Relation {
 			Coord p1 = null;
 			for (Coord p2 : polygon2.getPoints()) {
 				if (p1 != null) {
-					int mLat = p1.getLatitude()+(int)Math.round((p2.getLatitude()-p1.getLatitude())/2d);
-					int mLong = p1.getLongitude()+(int)Math.round((p2.getLongitude()-p1.getLongitude())/2d);
-					Coord pm = new Coord(mLat, mLong); // TODO: use makeBetweenPoint()?
+					Coord pm = p1.makeBetweenPoint(p2, 0.5);
 					middlePoints2.add(pm);
 				}
 				p1 = p2;

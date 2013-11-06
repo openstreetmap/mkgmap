@@ -309,14 +309,13 @@ public class MapMaker implements MapProcessor {
 		List<Coord> points = road.getPoints();
 		int numPoints = points.size();
 		Coord coord;
+		// XXX Why not always use an existing point close to
+		// numpoints/2 ?
 		if ((numPoints & 1) == 0) {
 			int i2 = numPoints / 2;
 			int i1 = i2 - 1;
-			//TODO: use makeBetweenPoint()?
-			coord = new Coord((points.get(i1).getLatitude() +
-					   points.get(i2).getLatitude()) / 2,
-					  (points.get(i1).getLongitude() +
-					   points.get(i2).getLongitude()) / 2);
+			coord = points.get(i1).makeBetweenPoint(points.get(i2), 0.5);
+			
 		} else {
 			coord = points.get(numPoints / 2);
 		}
