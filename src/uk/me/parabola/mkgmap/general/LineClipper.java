@@ -171,7 +171,7 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new0 = new Coord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
+			Coord new0 = new Coord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));// TODO high prec?
 
 			// check the maths worked out
 			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
@@ -192,7 +192,7 @@ public class LineClipper {
 			// line requires clipping so create a new end point and if
 			// its position (in map coordinates) is different from the
 			// original point, use the new point as a boundary node
-			Coord new1 = new Coord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1]));
+			Coord new1 = new Coord(calcCoord(y0, dy, t[1]), calcCoord(x0, dx, t[1])); // TODO high prec?
 
 			// check the maths worked out
 			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";

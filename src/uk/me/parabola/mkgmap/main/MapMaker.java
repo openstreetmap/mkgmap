@@ -312,6 +312,7 @@ public class MapMaker implements MapProcessor {
 		if ((numPoints & 1) == 0) {
 			int i2 = numPoints / 2;
 			int i1 = i2 - 1;
+			//TODO: use makeBetweenPoint()?
 			coord = new Coord((points.get(i1).getLatitude() +
 					   points.get(i2).getLatitude()) / 2,
 					  (points.get(i1).getLongitude() +

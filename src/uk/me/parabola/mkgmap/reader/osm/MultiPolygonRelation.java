@@ -507,9 +507,9 @@ public class MultiPolygonRelation extends Relation {
 						// This can be removed when the splitter guarantees to provide logical complete
 						// multi-polygons.
 						Coord edgePoint1 = new Coord(cd.c1.getLatitude(), cd.c2
-								.getLongitude());
+								.getLongitude()); // TODO high prec?
 						Coord edgePoint2 = new Coord(cd.c2.getLatitude(), cd.c1
-								.getLongitude());
+								.getLongitude());// TODO high prec?
 
 						if (lineCutsBbox(cd.c1, edgePoint1) == false
 								&& lineCutsBbox(edgePoint1, cd.c2) == false) {
@@ -1788,7 +1788,7 @@ public class MultiPolygonRelation extends Relation {
 				if (p1 != null) {
 					int mLat = p1.getLatitude()+(int)Math.round((p2.getLatitude()-p1.getLatitude())/2d);
 					int mLong = p1.getLongitude()+(int)Math.round((p2.getLongitude()-p1.getLongitude())/2d);
-					Coord pm = new Coord(mLat, mLong);
+					Coord pm = new Coord(mLat, mLong); // TODO: use makeBetweenPoint()?
 					middlePoints2.add(pm);
 				}
 				p1 = p2;
@@ -2805,12 +2805,12 @@ public class MultiPolygonRelation extends Relation {
 		
 		public double getSizeOfSide(Rectangle rect) {
 			if (useX) {
-				Coord c1 = new Coord(rect.y, getStart(rect));
-				Coord c2 = new Coord(rect.y, getStop(rect));
+				Coord c1 = new Coord(rect.y, getStart(rect));// TODO high prec?
+				Coord c2 = new Coord(rect.y, getStop(rect));// TODO high prec?
 				return c1.distance(c2);
 			} else {
-				Coord c1 = new Coord(getStart(rect), rect.x );
-				Coord c2 = new Coord(getStop(rect), rect.x );
+				Coord c1 = new Coord(getStart(rect), rect.x );// TODO high prec?
+				Coord c2 = new Coord(getStop(rect), rect.x );// TODO high prec?
 				return c1.distance(c2);
 			}
 		}

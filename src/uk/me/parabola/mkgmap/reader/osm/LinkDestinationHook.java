@@ -287,7 +287,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				if (dLat == 0 && dLon == 0) {
 					continue;
 				}
-				neighbours.add(new Coord(c.getLatitude()+dLat, c.getLongitude()+dLon));
+				neighbours.add(new Coord(c.getLatitude()+dLat, c.getLongitude()+dLon));//TODO: move to Coord class?
 			}
 		}
 		return neighbours;

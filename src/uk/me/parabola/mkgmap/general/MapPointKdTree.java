@@ -153,9 +153,9 @@ public class MapPointKdTree {
 		// do we have to search the other part of the tree?
 		Coord test;
 		if (useLongitude)
-			test = new Coord(p.getLocation().getLatitude(),tree.point.getLocation().getLongitude());
+			test = new Coord(p.getLocation().getLatitude(),tree.point.getLocation().getLongitude());// TODO high prec?
 		else
-			test = new Coord(tree.point.getLocation().getLatitude(),p.getLocation().getLongitude());
+			test = new Coord(tree.point.getLocation().getLatitude(),p.getLocation().getLongitude());// TODO high prec?
 		if (test.distanceInDegreesSquared(p.getLocation()) < minDist){
 			if (continueWithLeft) 
 				nextPoint = findNextPoint(p, tree.left, !useLongitude);
