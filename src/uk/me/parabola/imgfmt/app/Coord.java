@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.util.Formatter;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -222,28 +221,6 @@ public class Coord implements Comparable<Coord> {
 	 * Distance to other point in meters.
 	 */
 	public double distance(Coord other) {
-		return quickDistance(other);
-	}
-
-	protected double slowDistance(Coord other) {
-		if (equals(other))
-			return 0;
-
-		double lat1 = Utils.toRadians(latitude);
-		double lat2 = Utils.toRadians(other.getLatitude());
-		double lon1 = Utils.toRadians(getLongitude());
-		double lon2 = Utils.toRadians(other.getLongitude());
-
-		double R = 6371000; // meters
-
-		// cosine of great circle angle between points
-		double cangle = Math.sin(lat1)*Math.sin(lat2) +
-			        Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1);
-
-		return Math.acos(cangle) * R;
-  	}
-
-	public double quickDistance(Coord other){
 		return 40075000 * Math.sqrt(distanceInDegreesSquared(other)) / 360;
 	}
 
@@ -324,19 +301,18 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public String toDegreeString() {
-		Formatter fmt = new Formatter();
-		return fmt.format("%.5f/%.5f",
+		return String.format(Locale.ENGLISH, "%.5f/%.5f",
 			Utils.toDegrees(latitude),
 			Utils.toDegrees(longitude)).toString();
 	}
 
 	protected String toOSMURL(int zoom) {
 		return ("http://www.openstreetmap.org/?mlat=" +
-			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(latitude)) +
-			"&mlon=" +
-			new Formatter(Locale.ENGLISH).format("%.5f", Utils.toDegrees(longitude)) +
-			"&zoom=" +
-			zoom);
+				String.format(Locale.ENGLISH, "%.5f", Utils.toDegrees(latitude)) +
+				"&mlon=" +
+				String.format(Locale.ENGLISH, "%.5f", Utils.toDegrees(longitude)) +
+				"&zoom=" +
+				zoom);
 	}
 
 	public String toOSMURL() {

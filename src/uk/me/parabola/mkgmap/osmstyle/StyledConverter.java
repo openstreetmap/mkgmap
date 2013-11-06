@@ -741,8 +741,8 @@ public class StyledConverter implements OsmConverter {
 					Coord pi = points.get(i);
 					Coord pi1 = points.get(i + 1);
 					// don't check segments that are very short
-					if(pi.quickDistance(centre) > 2.5 &&
-					   pi.quickDistance(pi1) > 2.5) {
+					if(pi.distance(centre) > 2.5 &&
+					   pi.distance(pi1) > 2.5) {
 						// determine bearing from segment that starts with
 						// point i to centre of roundabout
 						double a = pi.bearingTo(pi1);
