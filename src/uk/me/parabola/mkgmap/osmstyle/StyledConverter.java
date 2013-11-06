@@ -929,7 +929,7 @@ public class StyledConverter implements OsmConverter {
 									safeToSplitWay(points, i, 0, points.size()-1))
 								p.incHighwayCount();
 							else {
-								points.set(i,new Coord(p.getLatitude(),p.getLongitude()));
+								points.set(i,new Coord(p));
 								points.get(i).incHighwayCount();
 							}
 						}
@@ -1588,7 +1588,7 @@ public class StyledConverter implements OsmConverter {
 					log.info("Way " + debugWayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
 				}
 
-				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
+				CoordNode thisCoordNode = new CoordNode(coord, nodeId, boundary);
 				points.set(n, thisCoordNode);
 
 				// see if this node plays a role in any turn
@@ -1937,7 +1937,7 @@ public class StyledConverter implements OsmConverter {
 						}
 						if (!isUsableInThisWay && p.getHighwayCount() < 2){
 							// replace this CoordPoi with a normal coord to avoid merging
-							Coord replacement = new Coord(p.getLatitude(),p.getLongitude());
+							Coord replacement = new Coord(p);
 							replacement.incHighwayCount();
 							replacement.setFixme(p.isFixme()); 
 							points.set(i, replacement);

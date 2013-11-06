@@ -27,13 +27,10 @@ public class CoordPOI extends Coord {
 	private Node node;
 
 	/**
-	 * Construct from co-ordinates that are already in map-units.
-	 *
-	 * @param latitude The latitude in map units.
-	 * @param longitude The longitude in map units.
+	 * Construct only from existing Coord instance
 	 */
-	public CoordPOI(int latitude, int longitude) {
-		super(latitude, longitude);
+	public CoordPOI(Coord co) {
+		super(co);
 	}
 
 	public Node getNode() {

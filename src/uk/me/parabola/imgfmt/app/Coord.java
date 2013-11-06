@@ -44,6 +44,8 @@ public class Coord implements Comparable<Coord> {
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
 	private byte flags; // further attributes
+	private final byte latDelta; // delta to 30 bit lat value 
+	private final byte lonDelta; // delta to 30 bit lon value
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -53,6 +55,7 @@ public class Coord implements Comparable<Coord> {
 	public Coord(int latitude, int longitude) {
 		this.latitude = latitude;
 		this.longitude = longitude;
+		latDelta = lonDelta = 0;
 	}
 
 	/**
@@ -63,6 +66,42 @@ public class Coord implements Comparable<Coord> {
 	public Coord(double latitude, double longitude) {
 		this.latitude = Utils.toMapUnit(latitude);
 		this.longitude = Utils.toMapUnit(longitude);
+		int lat30 = toBit30(latitude);
+		int lon30 = toBit30(longitude);
+		this.latDelta = (byte) ((this.latitude << 6) - lat30); 
+		this.lonDelta = (byte) ((this.longitude << 6) - lon30);
+		
+		// verify math
+		assert (this.latitude << 6) - latDelta == lat30;
+		assert (this.longitude << 6) - lonDelta == lon30;
+
+	}
+	
+	private Coord (int lat, int lon, byte latDelta, byte lonDelta){
+		this.latitude = lat;
+		this.longitude = lon;
+		this.latDelta = latDelta;
+		this.lonDelta = lonDelta;
+	}
+	
+	public Coord makeHighPrecCoord(int lat30, int lon30){
+		int lat24 = (lat30 + (1 << 5)) >> 6;  
+		int lon24 = (lon30 + (1 << 5)) >> 6;
+		byte dLat = (byte) ((lat24 << 6) - lat30);
+		byte dLon = (byte) ((lon24 << 6) - lon30);
+		return new Coord(lat24,lon24,dLat,dLon);
+	}
+	
+	/**
+	 * Construct from other coord instance, copies 
+	 * the lat/lon values in high precision
+	 * @param other
+	 */
+	public Coord(Coord other) {
+		this.latitude = other.latitude;
+		this.longitude = other.longitude;
+		this.latDelta = other.latDelta;
+		this.lonDelta = other.lonDelta;
 	}
 
 	public int getLatitude() {
@@ -212,10 +251,10 @@ public class Coord implements Comparable<Coord> {
 		if (equals(other))
 			return 0;
 
-		double lat1 = Utils.toDegrees(getLatitude());
-		double lat2 = Utils.toDegrees(other.getLatitude());
-		double long1 = Utils.toDegrees(getLongitude());
-		double long2 = Utils.toDegrees(other.getLongitude());
+		double lat1 = int30ToDegrees(getHighPrecLat());
+		double lat2 = int30ToDegrees(other.getHighPrecLat());
+		double long1 = int30ToDegrees(getHighPrecLon());
+		double long2 = int30ToDegrees(other.getHighPrecLon());
 				
 		double latDiff;
 		if (lat1 < lat2)
@@ -240,18 +279,20 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public Coord makeBetweenPoint(Coord other, double fraction) {
-		return new Coord((int)(latitude + (other.latitude - latitude) * fraction),
-						 (int)(longitude + (other.longitude - longitude) * fraction));
+		int lat30 = (int) (getHighPrecLat() + (other.getHighPrecLat() - getHighPrecLat()) * fraction);
+		int lon30 = (int) (getHighPrecLon() + (other.getHighPrecLon() - getHighPrecLon()) * fraction);
+		return makeHighPrecCoord(lat30, lon30);
 	}
 
-
+	
 	// returns bearing (in degrees) from current point to another point
 	public double bearingTo(Coord point) {
-		double lat1 = Utils.toRadians(latitude);
-		double lat2 = Utils.toRadians(point.latitude);
-		double lon1 = Utils.toRadians(longitude);
-		double lon2 = Utils.toRadians(point.longitude);
-
+		// use high precision values for this 
+		double lat1 = int30ToRadians(getHighPrecLat());
+		double lat2 = int30ToRadians(point.getHighPrecLat());
+		double lon1 = int30ToRadians(getHighPrecLon());
+		double lon2 = int30ToRadians(point.getHighPrecLon());
+		
 		double dlon = lon2 - lon1;
 
 		double y = Math.sin(dlon) * Math.cos(lat2);
@@ -302,4 +343,45 @@ public class Coord implements Comparable<Coord> {
 		return toOSMURL(17);
 	}
 
+	/**
+	 * Convert latitude or longitude to 30 bits value.
+	 * This allows higher precision than the 24 bits
+	 * used in map units.
+	 * @param l The lat or long as decimal degrees.
+	 * @return An integer value with 30 bit precision.
+	 */
+	private static int toBit30(double l) {
+		double DELTA = 360.0D / (1 << 30) / 2; //Correct rounding
+		if (l > 0)
+			return (int) ((l + DELTA) * (1 << 30)/360);
+		else
+			return (int) ((l - DELTA) * (1 << 30)/360);
+		
+	}
+
+	/* Factor for conversion to radians using 30 bits
+	 * (Math.PI / 180) * (360.0 / (1 << 30)) 
+	 */
+	final static double BIT30_RAD_FACTOR = 2 * Math.PI / (1 << 30);
+	
+	/**
+	 * Convert to radians using high precision 
+	 * @param val30 a longitude/latitude value with 30 bit precision
+	 * @return an angle in radians.
+	 */
+	private static double int30ToRadians(int val30){
+		return (double) val30 * BIT30_RAD_FACTOR;
+	}
+
+	private static double int30ToDegrees(int val30){
+		return (double) val30 * (360.0 / (1 << 30));
+	}
+	
+	public int getHighPrecLat() {
+		return (latitude << 6) - latDelta;
+	}
+
+	public int getHighPrecLon() {
+		return (longitude << 6) - lonDelta;
+	}
 }

@@ -121,7 +121,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 					if (currentNodeInWay.getTag(cpt) != null) {
 						// the POI has one of the approved tags so
 						// replace the Coord with a CoordPOI
-						CoordPOI cp = new CoordPOI(co.getLatitude(), co.getLongitude());
+						CoordPOI cp = new CoordPOI(co);
 						saver.addPoint(id, cp);
 
 						// we also have to jump through hoops to
