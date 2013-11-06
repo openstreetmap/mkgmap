@@ -922,7 +922,7 @@ public class MapBuilder implements Configurable {
 			catch (AssertionError ae) {
 				log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 				log.error("  Subdivision shift is " + div.getShift() +
-						  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+						  " and its centre is at " + div.getCenter().toOSMURL());
 				log.error("  " + ae.getMessage());
 				continue;
 			}
@@ -973,7 +973,7 @@ public class MapBuilder implements Configurable {
 				catch (AssertionError ae) {
 					log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 					log.error("  Subdivision shift is " + div.getShift() +
-							  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+							  " and its centre is at " + div.getCenter().toOSMURL());
 					log.error("  " + ae.getMessage());
 					continue;
 				}

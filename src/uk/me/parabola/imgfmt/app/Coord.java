@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.imgfmt.app;
 
+import java.util.Formatter;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;

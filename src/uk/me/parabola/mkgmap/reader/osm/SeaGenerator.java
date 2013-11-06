@@ -688,12 +688,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			
 			Area bounds = saver.getBoundingBox();
 			// first add the complete bounding box as sea
-			Way sea = new Way(FakeIdGenerator.makeFakeId());
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMaxLong()));
-			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMaxLong()));
-			sea.addPoint(new Coord(bounds.getMaxLat(), bounds.getMinLong()));
-			sea.addPoint(new Coord(bounds.getMinLat(), bounds.getMinLong()));
+			Way sea = new Way(FakeIdGenerator.makeFakeId(),bounds.toCoords());
 			sea.addTag("natural", "sea");
 			
 			for (Way w : landWays) {
