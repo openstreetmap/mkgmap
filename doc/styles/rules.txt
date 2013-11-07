@@ -691,6 +691,33 @@ statement.
 That will include the +points+ file from the default style. This might be
 useful if you want to only change a few things about the default style.
 
+=== Comparing the values of two tags ===
+Sometimes you may want to compare the values of two tags, rather than
+the value of one tag with a fixed value.
+Use a dollar sign to indicate that you want the tag value.
+
+----
+# If you had the following tags:
+# name=Fford-y-Mor
+# name:en=Terrace Road
+# name:cy=Fford-y-Mor
+
+name = $name:cy {...}  # this would match
+name = $name:en {...}  # and this would not
+----
+
+This tests if the value of the +name+ tag is the same as the welsh name
+tag (+name:cy+) 
+
+It is worth noting that the normal case
+----
+highway=primary
+----
+is exactly the same as
+----
+$highway=primary
+----
+
 == Some examples ==
 The following are some examples of style rules, with explanations of what they do.
 

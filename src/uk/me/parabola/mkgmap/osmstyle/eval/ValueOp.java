@@ -58,7 +58,7 @@ public class ValueOp extends AbstractOp {
 
 	/**
 	 * Returns true if you can index the rule from this value.
-	 * This should almost always return false, override in subclasses where it is the case.
+	 * This should almost always return false, override in subclasses that are indexable.
 	 */
 	public boolean isIndexable() {
 		return false;

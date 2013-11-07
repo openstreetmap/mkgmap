@@ -49,7 +49,10 @@ public abstract class NumericOp extends AbstractBinaryOp {
 			return false;
 
 		ValueWithUnit result = new ValueWithUnit(val);
-		ValueWithUnit ourVal = new ValueWithUnit(getSecond().value(el));
+		String val2 = getSecond().value(el);
+		if (val2 == null)
+			return false;
+		ValueWithUnit ourVal = new ValueWithUnit(val2);
 
 		if (!result.isValid() || !ourVal.isValid())
 			return false;
