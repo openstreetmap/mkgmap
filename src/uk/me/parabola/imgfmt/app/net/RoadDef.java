@@ -337,7 +337,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	 *
 	 * References to these are written to NET. At a given zoom
 	 * level, we're writing these in the order we get them,
-	 * which possibly needs to be the order the segments have
+	 * which must(!) be the order the segments have
 	 * in the road.
 	 */
 	public void addPolylineRef(Polyline pl) {

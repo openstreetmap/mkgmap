@@ -45,9 +45,18 @@ public class ExpressionReader {
 				break;
 
 			WordInfo wordInfo = scanner.nextWordWithInfo();
-			if (isOperation(wordInfo))
+			if (isOperation(wordInfo)) {
 				saveOp(wordInfo.getText());
-			else if (scanner.checkToken("(")) {
+			} else if (wordInfo.isQuoted()) {
+				pushValue(wordInfo.getText());
+			} else if (wordInfo.getText().charAt(0) == '$') {
+				String tagname = scanner.nextWord();
+				if (tagname.equals("{")) {
+					tagname = scanner.nextWord();
+					scanner.validateNext("}");
+				}
+				stack.push(new GetTagFunction(tagname));
+			} else if (scanner.checkToken("(")) {
 				// it is a function
 				// this requires a () after the function name
 				scanner.validateNext("(");
@@ -150,7 +159,7 @@ public class ExpressionReader {
 			Op arg2 = stack.pop();
 			Op arg1 = stack.pop();
 
-			if (arg1.isType(VALUE) && arg2.isType(VALUE))
+			if (arg1.isType(VALUE) /*&& arg2.isType(VALUE)*/)
 				arg1 = new GetTagFunction(arg1.getKeyValue());
 
 			BinaryOp binaryOp = (BinaryOp) op;

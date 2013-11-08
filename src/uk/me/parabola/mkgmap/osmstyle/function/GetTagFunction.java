@@ -41,6 +41,6 @@ public class GetTagFunction extends StyleFunction {
 	}
 
 	public String toString() {
-		return getKeyValue();
+		return "$" + getKeyValue();
 	}
 }

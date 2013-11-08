@@ -26,6 +26,8 @@ import uk.me.parabola.imgfmt.app.Area;
  */
 public class FilterConfig {
 	private int resolution;
+	private int level;
+	private boolean routable;
 
 	protected int getResolution() {
 		return resolution;
@@ -46,5 +48,21 @@ public class FilterConfig {
 
 	public void setBounds(Area bounds) {
 		//this.bounds = bounds;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+	public boolean isRoutable() {
+		return routable;
+	}
+
+	public void setRoutable(boolean routable) {
+		this.routable = routable;
 	}
 }

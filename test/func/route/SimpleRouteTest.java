@@ -83,7 +83,7 @@ public class SimpleRouteTest extends Base {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2934));
+				assertThat("RGN size", size, new RangeMatcher(2780));
 			} else if (ext.equals("TRE")) {
 				count++;
 				// Size varies depending on svn modified status
