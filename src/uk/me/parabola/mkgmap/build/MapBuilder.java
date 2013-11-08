@@ -27,7 +27,6 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -1016,7 +1015,8 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
-
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
 
 		//TODO: Maybe this is the wrong place to do merging.
 		// Maybe more efficient if merging before creating subdivisions.
@@ -1024,17 +1024,16 @@ public class MapBuilder implements Configurable {
 			LineMergeFilter merger = new LineMergeFilter();
 			lines = merger.merge(lines);
 		}
-		boolean checkRoads = doRoads && div.getZoom().getLevel() == 0;
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
-			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
-			filters.addFilter(new SizeFilter(MIN_SIZE_LINE, checkRoads));
+			filters.addFilter(new SizeFilter(MIN_SIZE_LINE));
 			if(reducePointError > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointError));
 		}
-		filters.addFilter(new LineSplitterFilter(checkRoads));
+		filters.addFilter(new LineSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
+		filters.addFilter(new RemoveObsoletePointsFilter());
 		filters.addFilter(new LinePreparerFilter(div));
 		filters.addFilter(new LineAddFilter(div, map, doRoads));
 		
@@ -1065,13 +1064,16 @@ public class MapBuilder implements Configurable {
 
 		FilterConfig config = new FilterConfig();
 		config.setResolution(res);
+		config.setLevel(div.getZoom().getLevel());
+		config.setRoutable(doRoads);
+		
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {
 			filters.addFilter(new PreserveHorizontalAndVerticalLinesFilter());
 			filters.addFilter(new RoundCoordsFilter());
 			int sizefilterVal =  getMinSizePolygonForResolution(res);
 			if (sizefilterVal > 0)
-				filters.addFilter(new SizeFilter(sizefilterVal, false));
+				filters.addFilter(new SizeFilter(sizefilterVal));
 			//DouglasPeucker behaves at the moment not really optimal at low zooms, but acceptable.
 			//Is there an similar algorithm for polygons?
 			if(reducePointErrorPolygon > 0)
@@ -1240,12 +1242,6 @@ public class MapBuilder implements Configurable {
 
 					pl.setRoadDef(roaddef);
 					roaddef.addPolylineRef(pl);
-					List<Coord> points = line.getPoints();
-					if (div.getZoom().getLevel() == 0 
-							&& (points.get(0) instanceof CoordNode == false
-							|| points.get(points.size() - 1) instanceof CoordNode == false)) {
-						log.error("possible routing problem: road end-points not both coordNodes: " + roaddef);
-					}
 				} else if (routingErrorMsgPrinted == false){
 					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){
 						Coord start = line.getPoints().get(0);

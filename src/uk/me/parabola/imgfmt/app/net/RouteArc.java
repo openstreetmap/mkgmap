@@ -179,13 +179,10 @@ public class RouteArc {
 	}
 	 
 
+	// units of 16 feet
+	final static double LENGTH_FACTOR = 3.2808 / 16;
 	private static int convertMeters(double l) {
-		// XXX: really a constant factor?
-		// this factor derived by looking at a variety
-		// of arcs in an IMG of Berlin; 1/4 of
-		// what used to be here
-		double factor = 3.28 / 16;
-		return (int) (l * factor);
+		return (int) (l * LENGTH_FACTOR);
 	}
 
 	public void write(ImgFileWriter writer) {
@@ -265,9 +262,9 @@ public class RouteArc {
 		// update haveCurve
 		haveCurve = (curveEnabled && finalHeading != initialHeading);
 
-		if (length >= (1 << 14)) {
-			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way will not be routable");
-			length = (1 << 14) - 1;
+		if (length >= (1 << 22)) {
+			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way might not be routable");
+			length = (1 << 22) - 1;
 		}
 
 		// clear existing bits in case length or final heading have
@@ -281,7 +278,16 @@ public class RouteArc {
 			flagA |= (length >> 5) & 0x08; // top bit of length
 			lendat = new int[1];		   // one byte of data
 			lendat[0] = length;			   // bottom 8 bits of length
+		} 
+		else if(length >= (1 << 14)) {
+			// 22 bit length with curve
+			flagA |= 0x38;
+			lendat = new int[3];		   // three bytes of data
+			lendat[0] = 0xC0 | (length & 0x3f); // 0x80 set, 0x40 set, 6 low bits of length
+			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+			lendat[2] = (length >> 14) & 0xff; // 8 more bits of length
 		}
+
 		else if(haveCurve) {
 			// 15 bit length with curve
 			flagA |= 0x38;				 // all three bits set

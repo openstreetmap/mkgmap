@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.app.Coord;
-
 /**
  * Some miscellaneous functions that are used within the .img code.
  *
@@ -244,6 +243,44 @@ public class Utils {
 			angle += 360;
 		
 		return angle;
+	}
+	public final static int NOT_STRAIGHT = 0;
+	public final static int STRAIGHT_SPIKE = 1;
+	public final static int STRICTLY_STRAIGHT = 2;
+	/**
+	 * Checks if the two segments (c1,c2),(c2,c3) form a straight line.
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return NOT_STRAIGHT, STRAIGHT_SPIKE or STRICTLY_STRAIGHT 
+	 */
+	public static int isStraight(Coord c1, Coord c2, Coord c3) {
+		if (c1.equals(c3))
+			return STRAIGHT_SPIKE;
+		long area;
+		// calculate the area that is enclosed by the three points
+		// (as if a closing line is drawn from c3 back to c1)
+		area = ((long)c1.getLongitude() * c2.getLatitude() - 
+				(long)c2.getLongitude() * c1.getLatitude());
+		area += ((long)c2.getLongitude() * c3.getLatitude() - 
+				(long)c3.getLongitude() * c2.getLatitude());
+		area += ((long)c3.getLongitude() * c1.getLatitude() - 
+				(long)c1.getLongitude() * c3.getLatitude());
+		if (area == 0){
+			// area is empty-> points lie on a straight line
+			int delta1 = c1.getLatitude() - c2.getLatitude();
+			int delta2 = c2.getLatitude() - c3.getLatitude();
+			if (delta1 < 0 && delta2 > 0 || delta1 > 0 && delta2 < 0)
+				return STRAIGHT_SPIKE;
+			delta1 = c1.getLongitude() - c2.getLongitude();
+			delta2 = c2.getLongitude() - c3.getLongitude();
+			if (delta1 < 0 && delta2 > 0 || delta1 > 0 && delta2 < 0)
+				return STRAIGHT_SPIKE;
+			return STRICTLY_STRAIGHT;
+		}
+		// line is not straight
+		return NOT_STRAIGHT;
+		
 	}
 }
 
