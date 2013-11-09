@@ -27,7 +27,6 @@ import java.util.Set;
 
 import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.lbl.City;
@@ -1243,15 +1242,6 @@ public class MapBuilder implements Configurable {
 
 					pl.setRoadDef(roaddef);
 					roaddef.addPolylineRef(pl);
-					List<Coord> points = line.getPoints();
-					Coord p1 = points.get(0); boolean cn1 = p1 instanceof CoordNode;
-					Coord p2 = points.get(points.size() - 1); boolean cn2 = p2 instanceof CoordNode;
-					if (div.getZoom().getLevel() == 0 
-							&& (p1 instanceof CoordNode == false
-							|| p2 instanceof CoordNode == false)) {
-						log.error("possible routing problem: road end-points not both coordNodes: " + roaddef);
-						log.error("Node: "+ (cn1?  p2.toOSMURL() + " "+p2.getLatitude()+":"+p2.getLongitude() : p1.toOSMURL()+ " "+p1.getLatitude()+":"+p1.getLongitude()));
-					}
 				} else if (routingErrorMsgPrinted == false){
 					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){
 						Coord start = line.getPoints().get(0);
