@@ -152,6 +152,10 @@ public class Way extends Element {
 		return getId() == ((Way) o).getId();
 	}
 
+	/**
+	 * calculate weighted centre of way, using high precision
+	 * @return
+	 */
 	public Coord getCofG() {
 		int numPoints = points.size();
 		if(numPoints < 1)

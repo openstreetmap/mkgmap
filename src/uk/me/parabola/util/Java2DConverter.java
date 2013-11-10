@@ -89,7 +89,7 @@ public class Java2DConverter {
 
 	/**
 	 * Convert an area that may contains multiple areas to a list of singular
-	 * areas
+	 * areas. Note that this routine simplifies the areas!
 	 * 
 	 * @param area an area
 	 * @return list of singular areas

@@ -245,5 +245,21 @@ public class Utils {
 		
 		return angle;
 	}
+	/**
+	 * Calculates the angle between the two segments (c1,c2),(c2,c3)
+	 * using the coords in map units.
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return angle between the two segments in degree [-180;180]
+	 */
+	public static double getDisplayedAngle(Coord c1, Coord c2, Coord c3) {
+		// create copies of the coordinates that have low precision
+		Coord p1 = new Coord(c1.getLatitude(),c1.getLongitude());
+		Coord p2 = new Coord(c2.getLatitude(),c2.getLongitude());
+		Coord p3 = new Coord(c3.getLatitude(),c3.getLongitude());
+		
+		return getAngle(p1, p2, p3);
+	}
 }
 

@@ -16,7 +16,8 @@
  */
 package uk.me.parabola.imgfmt.app;
 
-import java.util.Formatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -40,6 +41,9 @@ public class Coord implements Comparable<Coord> {
 	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
 	private final static byte TREAT_AS_NODE_MASK = 0x08; // bit in flags is true if point should be treated as a node
 	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
+	
+	public final static int HIGH_PREC_BITS = 30;
+	public final static int DELTA_SHIFT = 6;
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
@@ -226,13 +230,10 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public double distanceInDegreesSquared(Coord other) {
-		if (equals(other))
-			return 0;
-
-		double lat1 = int30ToDegrees(getHighPrecLat());
-		double lat2 = int30ToDegrees(other.getHighPrecLat());
-		double long1 = int30ToDegrees(getHighPrecLon());
-		double long2 = int30ToDegrees(other.getHighPrecLon());
+		double lat1 = getLatDegrees();
+		double lat2 = other.getLatDegrees();
+		double long1 = getLonDegrees();
+		double long2 = other.getLonDegrees();
 				
 		double latDiff;
 		if (lat1 < lat2)
@@ -350,10 +351,6 @@ public class Coord implements Comparable<Coord> {
 		return (double) val30 * BIT30_RAD_FACTOR;
 	}
 
-	private static double int30ToDegrees(int val30){
-		return (double) val30 * (360.0 / (1 << 30));
-	}
-	
 	/**
 	 * @return Latitude as signed 30 bit integer 
 	 */
@@ -366,5 +363,62 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public int getHighPrecLon() {
 		return (longitude << 6) - lonDelta;
+	}
+	
+	/**
+	 * @return latitude in degrees with highest avail. precision
+	 */
+	public double getLatDegrees(){
+		return (double) getHighPrecLat() * (360.0D / (1 << 30));
+	}
+	
+	/**
+	 * @return longitude in degrees with highest avail. precision
+	 */
+	public double getLonDegrees(){
+		return (double) getHighPrecLon() * (360.0D / (1 << 30));
+	}
+	
+	/**
+	 * Calculate up to three points with equal 
+	 * high precision coordinate, but
+	 * different map unit coordinates. 
+	 * @return a list of Coord instances, is empty if alternative positions are too far
+	 */
+	public List<Coord> getAlternativePosition(){
+		ArrayList<Coord> list = new ArrayList<Coord>();
+		byte modLatDelta = 0;
+		byte modLonDelta = 0;
+		
+		int modLat = latitude;
+		int modLon = longitude;
+		if (latDelta > 20)
+			modLat--;
+		else if (latDelta < -20)
+			modLat++;
+		if (lonDelta > 20)
+			modLon--;
+		else if (lonDelta < -20)
+			modLon++;
+		int lat30 = getHighPrecLat();
+		int lon30 = getHighPrecLon();
+		modLatDelta = (byte) ((modLat<<6) - lat30);
+		modLonDelta = (byte) ((modLon<<6) - lon30);
+		assert modLatDelta >= -63 && modLatDelta <= 63;
+		assert modLonDelta >= -63 && modLonDelta <= 63;
+		if (modLat != latitude){
+			if (modLon != longitude)
+				list.add(new Coord(modLat, modLon, modLatDelta, modLonDelta));
+			list.add(new Coord(modLat, longitude, modLatDelta, lonDelta));
+		} 
+		if (modLon != longitude)
+			list.add(new Coord(latitude, modLon, latDelta, modLonDelta));
+		/* verify math
+		for(Coord co:list){
+			double d = distance(new Coord (co.getLatitude(),co.getLongitude()));
+			assert d < 3.0;
+		}
+		*/
+		return list;
 	}
 }
