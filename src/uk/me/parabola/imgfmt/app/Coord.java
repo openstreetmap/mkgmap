@@ -379,6 +379,10 @@ public class Coord implements Comparable<Coord> {
 		return (double) getHighPrecLon() * (360.0D / (1 << 30));
 	}
 	
+	public Coord getDisplayedCoord(){
+		return new Coord(latitude,longitude);
+	}
+	
 	/**
 	 * Calculate up to three points with equal 
 	 * high precision coordinate, but

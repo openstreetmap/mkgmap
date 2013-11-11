@@ -59,6 +59,7 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -562,6 +563,10 @@ public class StyledConverter implements OsmConverter {
 			if (gpxPath != null){
 				GpxCreator.createGpx(gpxPath + way.getId() + "_o", points);
 			}
+			String msgPref = "Way " + way.toBrowseURL();
+			if (FakeIdGenerator.isFakeId(way.getId())){
+				msgPref = getDebugName(way);
+			}
 			boolean clockwise = Way.clockwise(points);
 			if (points.get(0) == points.get(points.size()-1))
 				points.remove(points.size()-1); // remove closing point for now
@@ -592,25 +597,34 @@ public class StyledConverter implements OsmConverter {
 			double radius = (distVertical*0.5 + distHorizontal * 0.5) / 2;
 //			Coord center = pWest.makeBetweenPoint(pEast, 0.5);
 			
-			int numSides = Math.max(16,(int) radius); // seems to be a good compromise
-			if (radius < 8)
-				numSides = 8; // very small roundabout
-			if (points.size() < numSides){
-				System.out.println("way " + way.getId() + ": roundabout has rather few points.");
-			}
+
+			// try to find optimal number of sides for given radius
+			int niceNumSides;
+			if (radius < 10.0)
+				niceNumSides = 8; 
+			else if (radius < 13.0)
+				niceNumSides = 12;
+			else if (radius < 20.0)
+				niceNumSides = 16;
+			else 
+				niceNumSides =  20;
 			
-			if ((maxLat30 - minLat30 < (3 << 6)) || maxLon30 - minLon30 < (3 << 6)){
-				System.out.println("way " + way.getId() + ": mini roundabout , skipped beautifying");
-//				continue;
+			if (points.size() < niceNumSides){
+				if (points.size() < 16)
+					System.out.println(msgPref + ": roundabout has rather few distinct points: " + points.size() + " (radius ~ "+Math.round(radius)+" m)");
+				niceNumSides = points.size();
 			}
-			final double sumOfAngles = (numSides - 2) * 180;// for a regular polygon
-			double niceAngle = sumOfAngles / numSides - 180;
+			if (way.getId() == 102037748){
+				long dd  = 4;
+			}
+			final double sumOfAngles = (niceNumSides - 2) * 180;// for a regular polygon
+			double niceAngle = sumOfAngles / niceNumSides - 180;
 			if (clockwise)
 				niceAngle = -niceAngle; // assume drive on left 
 			boolean changed = false;
 
 			//			double sideLength = radius * 2 * Math.sin(Math.PI/numSides);
-			for (int pass = 0; pass < numSides; pass++){
+			for (int pass = 0; pass < niceNumSides; pass++){
 				// find point with greatest error
 				double worstDeltaAngle = 0;
 				TreeMap<Double, IntArrayList> badAngles = new TreeMap<Double, IntArrayList>();
@@ -636,7 +650,7 @@ public class StyledConverter implements OsmConverter {
 				}
 				if (badAngles.isEmpty()){
 					if (changed)
-						System.out.println("no more bad angles found");
+						System.out.println(msgPref + ": no more bad angles found");
 					break;
 				}
 				boolean changedOnePoint = false;
@@ -656,7 +670,7 @@ public class StyledConverter implements OsmConverter {
 						Coord pNext = points.get(nextPos);
 						double displayedAngle = Utils.getDisplayedAngle(pPrev, p, pNext);
 
-						System.out.println("way " + way.getId() + ": bad angle " + Math.round(displayedAngle) + " in roundabout at point " + p.toOSMURL());
+						System.out.println(msgPref + ": bad angle " + Math.round(displayedAngle) + "  due to rounding to map units in roundabout at point " + p.toOSMURL());
 						Coord pBest = null;
 						List<Coord> altPositions = p.getAlternativePosition();
 						double bestDeltaMoveAngle = worstDeltaAngle;
@@ -694,9 +708,9 @@ public class StyledConverter implements OsmConverter {
 								}
 								if (delIsOK){
 									if (Math.abs(displayedAngle) <= 0.1)
-										System.out.println("way " + way.getId() + ": removing obsolete point on straight line in roundabout");
+										System.out.println(msgPref + ": removing obsolete point on straight line in roundabout");
 									else
-										System.out.println("way " + way.getId() + ": removing point to beautify roundabout");
+										System.out.println(msgPref + ": removing point to beautify roundabout");
 									if (gpxPath != null)
 										GpxCreator.createGpx(gpxPath + way.getId() + "_del1_"+badPos + "_" + pass, points);
 									points.remove(badPos);
@@ -709,7 +723,7 @@ public class StyledConverter implements OsmConverter {
 							}
 						}
 						if (pBest != null){
-							System.out.println("way " + way.getId() + ": moving point from " + p.toDegreeString() + " to " + pBest.toDegreeString() + " to beautify roundabout");
+							System.out.println(msgPref + ": moving point from " + p.toDegreeString() + " to " + pBest.toDegreeString() + " to beautify roundabout");
 							pBest.incHighwayCount();
 							if (p.getHighwayCount() < 2 || (badPos == 0 && p.getHighwayCount() < 3)){
 								// nop
@@ -722,12 +736,12 @@ public class StyledConverter implements OsmConverter {
 							changedOnePoint = true;
 						} 
 						else {
-							System.out.println("way " + way.getId() + ": cannot frig roundabout at this position.");
+							System.out.println(msgPref + ": cannot frig roundabout at this position.");
 						}
 					}
 				}
 				if (changedOnePoint == false){
-					System.out.println("giving up");
+					System.out.println(msgPref + ": giving up");
 					break;
 				}
 			}
@@ -748,6 +762,9 @@ public class StyledConverter implements OsmConverter {
 		}
 			
 		System.out.println("replacements.size() = " + replacements.size() );
+		if (replacements.isEmpty())
+			return;
+		
 		for (Way way: roads){
 			if (way == null)
 				continue;
@@ -763,10 +780,36 @@ public class StyledConverter implements OsmConverter {
 				if (p.isReplaced()){
 					Coord replacement = getReplacement(p, way, replacements);
 					if (p != replacement){
+						boolean bigChange = false;
+						if (i > 0){
+							Coord prev = points.get(i-1).getDisplayedCoord();
+							double origDisplayedBearing = prev.bearingTo(p.getDisplayedCoord());
+							double newDisplayedBearing = prev.bearingTo(replacement.getDisplayedCoord());
+							if (Math.abs(newDisplayedBearing-origDisplayedBearing) > 15){
+								bigChange = true;
+							}
+						}
+						if (i+1 < points.size()){
+							Coord next = points.get(i+1).getDisplayedCoord();
+							double origDisplayedBearing  = p.getDisplayedCoord().bearingTo(next);
+							double newDisplayedBearing = replacement.getDisplayedCoord().bearingTo(next);
+							if (Math.abs(newDisplayedBearing-origDisplayedBearing ) > 15){
+								bigChange = true;
+							}
+						}
+						if (bigChange){
+							System.out.println("way " + way.getId() + ": replacement introduces big change in bearing");
+							if (gpxPath != null)
+								GpxCreator.createGpx(gpxPath + way.getId() + "_repl_o_"+ i, points);
+						}
 						p = replacement;
 						p.incHighwayCount();
 						// replace point in way
 						points.set(i, p);
+						if (bigChange){
+							if (gpxPath != null)
+								GpxCreator.createGpx(gpxPath + way.getId() + "_repl_n_"+ i, points);
+						}
 						modifiedRoads.put(way.getId(), way);
 					}
 				}
@@ -775,6 +818,11 @@ public class StyledConverter implements OsmConverter {
 			
 	}
 
+	/**
+	 * Merge points with equal map unit coordinates.
+	 * @param way
+	 * @param replacements
+	 */
 	private void mergeEqualPoints(Way way, Map<Coord, Coord> replacements) {
 		List<Coord> points = way.getPoints();
 		ArrayList<Coord> toReplace = new ArrayList<Coord>();
@@ -783,8 +831,11 @@ public class StyledConverter implements OsmConverter {
 			toReplace.clear();
 			if (p.getOnBoundary())
 				continue;
+			Node poiNode = null;
 			if (p.getHighwayCount() >= 2 || i == 0 && p.getHighwayCount() >= 3)
 				toReplace.add(p);
+			if (p instanceof CoordPOI)
+				poiNode = ((CoordPOI) p).getNode();
 			int nextPos = i+1;
 			Coord pNext = points.get(nextPos);
 			double lat = p.getHighPrecLat();
@@ -798,12 +849,19 @@ public class StyledConverter implements OsmConverter {
 				if (pNext.getHighwayCount() >= 2){
 					toReplace.add(pNext);
 				}
+				if (poiNode == null && pNext instanceof CoordPOI)
+					poiNode = ((CoordPOI) pNext).getNode();
 				if (nextPos >= points.size())
 					break;
 				pNext = points.get(nextPos);
 			}
 			if (numPoints > 1){
+				modifiedRoads.put(way.getId(), way);
 				Coord pNew = Coord.makeHighPrecCoord((int)Math.round(lat / numPoints), (int)Math.round(lon/numPoints));
+				if (poiNode != null){
+					pNew = new CoordPOI(pNew);
+					((CoordPOI) pNew).setNode(poiNode);
+				}
 				pNew.incHighwayCount();
 				points.set(i, pNew);
 				// check if the merged point is a node
