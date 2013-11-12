@@ -82,7 +82,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 		// in the subdivision creation
 		List<Coord> points = splitLinesToMaxSize(line.getPoints(), maxSize-10);
 
-		log.debug("line too big, splitting");
+		log.debug("line bbox too big, splitting");
 
 		MapLine l = line.copy();
 

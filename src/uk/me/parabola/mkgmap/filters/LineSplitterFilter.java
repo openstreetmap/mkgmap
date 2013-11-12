@@ -39,13 +39,12 @@ public class LineSplitterFilter implements MapFilter {
 	// Not sure of the value, probably 255.  Say 250 here.
 	public static final int MAX_POINTS_IN_LINE = 250;
 	public static final int MIN_POINTS_IN_LINE = 50;
-	private boolean checkRouting;
 
-	public LineSplitterFilter(boolean doRoads) {
-		checkRouting = doRoads;
-	}
-
+	private int level;
+	private boolean isRoutable;
 	public void init(FilterConfig config) {
+		this.level = config.getLevel();
+		this.isRoutable = config.isRoutable();
 	}
 
 	
@@ -70,10 +69,10 @@ public class LineSplitterFilter implements MapFilter {
 			return;
 		}
 
-		log.debug("line too long, splitting");
-		if(line.isRoad() && checkRouting) {
+		log.debug("line has too many points, splitting");
+		if(line.isRoad() && level == 0 && isRoutable) {
 			MapRoad road = ((MapRoad)line);
-			log.error("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split (routing will be broken)");
+			log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
 		} 
 
 		MapLine l = line.copy();

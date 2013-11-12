@@ -332,7 +332,8 @@ public class RuleFileReader {
 	 * Exists operation.
 	 */
 	private static boolean isIndexable(Op op) {
-		return (op.isType(EQUALS) && ((ValueOp) op.getFirst()).isIndexable())
+		return (op.isType(EQUALS)
+				&& ((ValueOp) op.getFirst()).isIndexable() && op.getSecond().isType(VALUE))
 				|| (op.isType(EXISTS) && ((ValueOp) op.getFirst()).isIndexable());
 	}
 
@@ -424,12 +425,8 @@ public class RuleFileReader {
 		 * An OR at the top level.
 		 */
 		String keystring;
-		if (op.isType(EQUALS)) {
-			if (first.isType(FUNCTION) && second.isType(VALUE)) {
-				keystring = first.getKeyValue() + "=" + second.getKeyValue();
-			} else {
-				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
-			}
+		if (op.isType(EQUALS) && (first.isType(FUNCTION) && second.isType(VALUE))) {
+			keystring = first.getKeyValue() + "=" + second.getKeyValue();
 		} else if (op.isType(AND)) {
 			if (first.isType(EQUALS)) {
 				keystring = first.getFirst().getKeyValue() + "=" + first.getSecond().getKeyValue();

@@ -35,15 +35,21 @@ public class PreserveHorizontalAndVerticalLinesFilter implements MapFilter {
 		MapLine line = (MapLine) element;
 
 		if(shift != 0) {
-			// preserve the end points of horizontal and vertical lines
+			// preserve the end points of horizontal and vertical lines that lie
+			// on the bbox of the shape. 
+			int minLat = line.getBounds().getMinLat();
+			int maxLat = line.getBounds().getMaxLat();
+			int minLon = line.getBounds().getMinLong();
+			int maxLon = line.getBounds().getMaxLong();
+			
 			List<Coord> points = line.getPoints();
 			Coord first = points.get(0);
 			Coord prev = first;
 			Coord last = first;
 			for(int i = 1; i < points.size(); ++i) {
 				last = points.get(i);
-				if(last.getLatitude() == prev.getLatitude() ||
-				   last.getLongitude() == prev.getLongitude()) {
+				if(last.getLatitude() == prev.getLatitude() && (last.getLatitude() == minLat || last.getLatitude() == maxLat) ||
+				   last.getLongitude() == prev.getLongitude()&& (last.getLongitude() == minLon || last.getLongitude() == maxLon)){
 					last.preserved(true);
 					prev.preserved(true);
 				}

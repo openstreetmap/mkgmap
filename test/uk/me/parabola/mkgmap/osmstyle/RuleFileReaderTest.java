@@ -959,6 +959,45 @@ public class RuleFileReaderTest {
 	}
 
 	/**
+	 * Test the syntax to get a tag value on the RHS of the expression.
+	 */
+	@Test
+	public void testGetTagValueEquality() {
+		RuleSet rs = makeRuleSet("a=b & a=$c [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "b");
+		w.addTag("c", "b");
+
+		GType type = getFirstType(rs, w);
+		assertNotNull(type);
+		assertEquals(5, type.getType());
+
+		w.addTag("c", "x");
+		type = getFirstType(rs, w);
+		assertEquals(6, type.getType());
+	}
+
+	@Test
+	public void testGetTagValueNotFound() {
+		RuleSet rs = makeRuleSet("a=b & b<$c [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "b");
+		w.addTag("b", "50");
+		GType type = getFirstType(rs, w);
+		assertEquals(6, type.getType());
+	}
+
+	@Test
+	public void testGetTagValueAlone() {
+		RuleSet rs = makeRuleSet("a<$b [0x5] a=b [0x6]");
+		Way w = new Way(1);
+		w.addTag("a", "1");
+		w.addTag("b", "2");
+		GType type = getFirstType(rs, w);
+		assertEquals(5, type.getType());
+	}
+
+	/**
 	 * Get a way with a few points for testing length.
 	 *
 	 * The length of this segment was independently confirmed to be around 91m.
