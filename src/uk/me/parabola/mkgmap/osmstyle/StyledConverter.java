@@ -565,7 +565,7 @@ public class StyledConverter implements OsmConverter {
 			boolean clockwise = Way.clockwise(points);
 			if (points.get(0) == points.get(points.size()-1))
 				points.remove(points.size()-1); // remove closing point for now
-			mergeEqualPoints(way, replacements);
+			boolean changed = mergeEqualPoints(way, replacements);
 			int minLat30 = Integer.MAX_VALUE;
 			int maxLat30 = Integer.MIN_VALUE;
 			int minLon30 = Integer.MAX_VALUE;
@@ -616,12 +616,11 @@ public class StyledConverter implements OsmConverter {
 			double niceAngle = sumOfAngles / niceNumSides - 180;
 			if (clockwise)
 				niceAngle = -niceAngle; // assume drive on left 
-			boolean changed = false;
+			
 
 			//			double sideLength = radius * 2 * Math.sin(Math.PI/numSides);
 			for (int pass = 0; pass < niceNumSides; pass++){
 				// find point with greatest error
-				double worstDeltaAngle = 0;
 				TreeMap<Double, IntArrayList> badAngles = new TreeMap<Double, IntArrayList>();
 				for (int i = 0; i < points.size() ; i++) {
 					Coord p = points.get(i);
@@ -644,8 +643,8 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 				if (badAngles.isEmpty()){
-					if (changed)
-						System.out.println(msgPref + ": no more bad angles found");
+					if (pass > 0)
+						log.info(msgPref, ": no more bad angles found");
 					break;
 				}
 				boolean changedOnePoint = false;
@@ -654,7 +653,7 @@ public class StyledConverter implements OsmConverter {
 					if (changedOnePoint)
 						break;
 					IntArrayList badPositions = entry.getValue();
-					worstDeltaAngle = entry.getKey();
+					double worstDeltaAngle = entry.getKey();
 					for (int badPos: badPositions){
 						if (changedOnePoint)
 							break;
@@ -756,7 +755,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 			
-		System.out.println("replacements.size() = " + replacements.size() );
+		//System.out.println("replacements.size() = " + replacements.size() );
 		if (replacements.isEmpty())
 			return;
 		
@@ -814,12 +813,15 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	/**
+	 * TODO: Should this also be called before short-arc-removal?
 	 * Merge points with equal map unit coordinates.
 	 * @param way
 	 * @param replacements
+	 * @return true if one or more points were merged 
 	 */
-	private void mergeEqualPoints(Way way, Map<Coord, Coord> replacements) {
+	private boolean mergeEqualPoints(Way way, Map<Coord, Coord> replacements) {
 		List<Coord> points = way.getPoints();
+		int origNumPoints = points.size();
 		ArrayList<Coord> toReplace = new ArrayList<Coord>();
 		for (int i = 0; i+1  < points.size(); i++){
 			Coord p = points.get(i);
@@ -871,7 +873,7 @@ public class StyledConverter implements OsmConverter {
 		if (last.getHighwayCount() < 2 && last.equals(p)){
 			points.remove(points.size()-1);
 		}
-		
+		return points.size() != origNumPoints;
 	}
 
 	/**
