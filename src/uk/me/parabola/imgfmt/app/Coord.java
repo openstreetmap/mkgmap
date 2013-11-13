@@ -221,6 +221,14 @@ public class Coord implements Comparable<Coord> {
 		Coord other = (Coord) obj;
 		return latitude == other.latitude && longitude == other.longitude;
 	}
+	
+	public boolean highPrecEquals(Object obj) {
+		if (obj == null || !(obj instanceof Coord))
+			return false;
+		Coord other = (Coord) obj;
+		return latitude == other.latitude && longitude == other.longitude && 
+				latDelta == other.latDelta && lonDelta == other.lonDelta;
+	} 
 
 	/**
 	 * Distance to other point in meters.
@@ -230,6 +238,9 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public double distanceInDegreesSquared(Coord other) {
+		if (highPrecEquals(other))
+			return 0;
+		
 		double lat1 = getLatDegrees();
 		double lat2 = other.getLatDegrees();
 		double long1 = getLonDegrees();
@@ -279,7 +290,7 @@ public class Coord implements Comparable<Coord> {
 			Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
 		return Math.atan2(y, x) * 180 / Math.PI;
 	}
-
+	
 	/**
 	 * Sort lexicographically by longitude, then latitude.
 	 *
@@ -391,6 +402,8 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public List<Coord> getAlternativePosition(){
 		ArrayList<Coord> list = new ArrayList<Coord>();
+		if (getOnBoundary())
+			return list; 
 		byte modLatDelta = 0;
 		byte modLonDelta = 0;
 		
@@ -425,4 +438,5 @@ public class Coord implements Comparable<Coord> {
 		*/
 		return list;
 	}
+	
 }
