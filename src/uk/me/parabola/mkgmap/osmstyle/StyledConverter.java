@@ -864,6 +864,7 @@ public class StyledConverter implements OsmConverter {
 				points.set(i, pNew);
 				// check if the merged point is a node
 				for (Coord co:toReplace){
+					pNew.incHighwayCount();
 					co.setReplaced(true);
 					replacements.put(co, pNew);
 				}
