@@ -724,6 +724,7 @@ public class StyledConverter implements OsmConverter {
 							} else {
 								replacements.put(p, pBest);
 								p.setReplaced(true);
+								pBest.incHighwayCount();
 							}
 							points.set(badPos, pBest);
 							changed = true;
