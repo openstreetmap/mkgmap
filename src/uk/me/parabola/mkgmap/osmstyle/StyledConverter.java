@@ -264,7 +264,7 @@ public class StyledConverter implements OsmConverter {
 		}
 		else
 			addShape(way, foundType);
-	}
+		}
 
 	/**
 	 * Takes a node (that has its own identity) and converts it from the OSM
@@ -544,7 +544,7 @@ public class StyledConverter implements OsmConverter {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
-
+		Way lastWay = null;
 		for (Way way: roads){
 			if (way == null)
 				continue;
@@ -552,6 +552,12 @@ public class StyledConverter implements OsmConverter {
 				continue;
 			if (way.isClosed() == false || way.isComplete() == false)
 				continue;
+			if (lastWay != null && lastWay.equals(way)){
+				way.getPoints().clear();
+				way.getPoints().addAll(lastWay.getPoints());
+				continue;
+			}
+			lastWay = way;
 			if (way.getPoints().size()  <= 4 )
 				continue;
 			List<Coord> points = way.getPoints();
@@ -572,6 +578,16 @@ public class StyledConverter implements OsmConverter {
 			int maxLon30 = Integer.MIN_VALUE;
 			for (int i = 0; i < points.size(); i++){
 				Coord co = points.get(i);
+				if (co.isReplaced()){
+					// might happen if two roundabouts share a node
+					Coord replacement = getReplacement(co, way, replacements);
+					if (co != replacement){
+						co = replacement;
+						co.incHighwayCount();
+						points.set(i,co);
+						modifiedRoads.put(way.getId(), way);
+					}
+				}
 				int lat = co.getHighPrecLat();
 				if(lat < minLat30)
 					minLat30 = lat;
@@ -608,9 +624,6 @@ public class StyledConverter implements OsmConverter {
 				if (points.size() < 16)
 					System.out.println(msgPref + ": roundabout has rather few distinct points: " + points.size() + " (radius ~ "+Math.round(radius)+" m)");
 				niceNumSides = points.size();
-			}
-			if (way.getId() == 102037748){
-				long dd  = 4;
 			}
 			final double sumOfAngles = (niceNumSides - 2) * 180;// for a regular polygon
 			double niceAngle = sumOfAngles / niceNumSides - 180;
@@ -710,8 +723,7 @@ public class StyledConverter implements OsmConverter {
 									points.remove(badPos);
 									if (gpxPath != null)
 										GpxCreator.createGpx(gpxPath + way.getId() + "_del2_"+badPos + "_" + pass, points);
-									changed = true;
-									changedOnePoint = true;
+									changed = changedOnePoint = true;
 									continue;
 								}
 							}
@@ -727,8 +739,7 @@ public class StyledConverter implements OsmConverter {
 								pBest.incHighwayCount();
 							}
 							points.set(badPos, pBest);
-							changed = true;
-							changedOnePoint = true;
+							changed = changedOnePoint = true;
 						} 
 						else {
 							System.out.println(msgPref + ": cannot frig roundabout at this position.");
@@ -759,7 +770,7 @@ public class StyledConverter implements OsmConverter {
 		//System.out.println("replacements.size() = " + replacements.size() );
 		if (replacements.isEmpty())
 			return;
-		
+		lastWay = null;
 		for (Way way: roads){
 			if (way == null)
 				continue;
@@ -767,6 +778,12 @@ public class StyledConverter implements OsmConverter {
 				if (way.isClosed() && way.isComplete() )
 					continue;
 			}
+			if (lastWay != null && lastWay.equals(way)){
+				way.getPoints().clear();
+				way.getPoints().addAll(lastWay.getPoints());
+				continue;
+			}
+			lastWay = way;
 			List<Coord> points = way.getPoints();
 			for (int i = 0; i < points.size(); i++){
 				Coord p = points.get(i);
