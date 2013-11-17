@@ -24,7 +24,6 @@ import java.util.Map;
  */
 public abstract class Element implements Iterable<String> {
 	private Tags tags;
-	private String name;
 	private long id;
 
 	public int getTagCount() {
@@ -149,12 +148,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		if (this.name == null)
-			this.name = name;
+		return getTag("mkgmap:label:1");
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {

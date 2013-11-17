@@ -125,8 +125,6 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 
-		setName(other.getName());
-
 		copyTags(other);
 
 		restriction = getTag("restriction");

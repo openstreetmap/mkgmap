@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2013
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -9,41 +9,38 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
- * 
- * Author: Steve Ratcliffe
- * Create date: 02-Dec-2008
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
- * Set the name on the given element.  The tags of the element may be
- * used in setting the name.
+ * Set the first unset label on the given element. The tags of the element may be
+ * used in setting the label.
  *
  * We have a list of possible substitutions.
- *
- * @author Steve Ratcliffe
  */
-public class NameAction extends ValueBuildedAction {
+public class AddLabelAction extends ValueBuildedAction {
 
 	/**
-	 * search for the first matching name pattern and set the element name
+	 * Search for the first matching pattern and set the first unset element label
 	 * to it.
 	 *
-	 * If the element name is already set, then nothing is done.
+	 * If all four labels are already set, then nothing is done.
 	 *
-	 * @param el The element on which the name may be set.
+	 * @param el The element on which a label may be set.
 	 */
 	public void perform(Element el) {
-		if (el.getTag("mkgmap:label:1") != null)
-			return;
-		
-		for (ValueBuilder vb : getValueBuilder()) {
-			String s = vb.build(el, el);
-			if (s != null) {
-				el.addTag("mkgmap:label:1", s);
+		for (int index = 1; index <=4; index++) {
+			// find the first unset label and set it
+			if (el.getTag("mkgmap:label:"+index) == null) {
+				for (ValueBuilder vb : getValueBuilder()) {
+					String s = vb.build(el, el);
+					if (s != null) {
+						el.addTag("mkgmap:label:"+index, s);
+						break;
+					}
+				}
 				break;
 			}
 		}
@@ -51,7 +48,7 @@ public class NameAction extends ValueBuildedAction {
 
 	public String toString() {
 		StringBuilder sb = new  StringBuilder();
-		sb.append("name ");
+		sb.append("addlabel ");
 		for (ValueBuilder vb : getValueBuilder()) {
 			sb.append(vb);
 			sb.append(" | ");

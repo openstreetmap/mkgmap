@@ -274,5 +274,5 @@ include 'inc/landuse_points';
 
 <finalize>
 # The finalizer section is executed for each element when a rule with an element type matches
-
+name=* { name '${name}' }
 include 'inc/address';

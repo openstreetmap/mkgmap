@@ -25,7 +25,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -134,7 +133,6 @@ public class StyledConverter implements OsmConverter {
 	private final boolean checkRoundabouts;
 	private final boolean linkPOIsToWays;
 	private final CompatibilityHandler compatHandler;
-	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -316,9 +314,11 @@ public class StyledConverter implements OsmConverter {
 	private void postConvertRules(Element el, GType type) {
 		// Set the name from the 'name' tag or failing that from
 		// the default_name.
-		el.setName(el.getTag("name"));
-		if (el.getName() == null)
-			el.setName(type.getDefaultName());
+//		el.setName(el.getTag("name"));
+//		if (el.getName() == null)
+//			el.setName(type.getDefaultName());
+		if (type.getDefaultName() != null && el.getName() == null)
+			el.addTag("mkgmap:label:1", type.getDefaultName());
 		
 		if (compatHandler != null) {
 			compatHandler.performCompatHandling(el, type);
@@ -692,52 +692,37 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	private void elementSetup(MapElement ms, GType gt, Element element) {
-		String name = Label.squashSpaces(element.getName());
-		String refs = Label.squashSpaces(element.getTag("mkgmap:ref")); 
-		
-		// Insert mkgmap:display_name as first ref.
-		// This causes mkgmap:display_name to be displayed in routing 
-		// directions, instead of only the ref.
-		String displayName = Label.squashSpaces(element.getTag("mkgmap:display_name"));
-	
-		if (displayName != null) {
-			// substitute '/' for ';' in mkgmap:display_name to avoid it
-			// getting split below
-			displayName = displayName.replace(";","/");
-			if (refs == null)
-				refs = displayName;
-			else
-				refs = displayName + ";" + refs;
-		}
-
-		if(name == null && refs != null) {
-			// use first ref as name
-			String[] names = SEMI_PATTERN.split(refs);
-			if (names.length > 0)
-				name = names[0].trim();
-		}
-		else if(name != null) {
-			// remove leading spaces (don't use trim() to avoid zapping
-			// shield codes)
-			char leadingCode = 0;
-			if(name.length() > 1 &&
-			   name.charAt(0) < 0x20 &&
-			   name.charAt(1) == ' ') {
-				leadingCode = name.charAt(0);
-				name = name.substring(2);
+		String[] labels = new String[4];
+		int noLabels = 0;
+		for (int labelNo = 1; labelNo <= 4; labelNo++) {
+			String label1 = element.getTag("mkgmap:label:"+labelNo);
+			String label = Label.squashSpaces(label1);
+			if (label != null) {
+				labels[noLabels] = label;
+				noLabels++;
+			} else if (labelNo == 1){
+				System.err.println(labelNo+" "+element.getTag("mkgmap:label:"+labelNo)+" "+label1+" "+label+" "+element.toTagString());
 			}
-				
-			while(!name.isEmpty() && name.charAt(0) == ' ')
-				name = name.substring(1);
-
-			if(leadingCode != 0)
-				name = leadingCode + name;
+		}
+		if (element.getId() == 28873483) {
+		System.err.println(element.getId()+" "+ms.hashCode()+ " Labels: "+Arrays.toString(labels)+" El: "+element.toTagString());
 		}
 
-		if(name != null)
-			ms.setName(name);
-		if(refs != null)
-			ms.setRef(refs);
+		if (labels[0] != null) {
+			ms.setName(labels[0]);
+			StringBuilder ref = new StringBuilder();
+			for (int i = 1; i <4 ; i++) {
+				if (labels[i] != null) {
+					if (ref.length() >  0) {
+						ref.append(";");
+					}
+					ref.append(labels[i]);
+				}
+			}
+			if (ref.length()  >0) {
+				ms.setRef(ref.toString());
+			}
+		}
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
@@ -1089,7 +1074,6 @@ public class StyledConverter implements OsmConverter {
 
 				for (List<Coord> lco : lineSegs) {
 					Way nWay = new Way(way.getId());
-					nWay.setName(way.getName());
 					nWay.copyTags(way);
 					for(Coord co : lco) {
 						nWay.addPoint(co);
@@ -1572,7 +1556,6 @@ public class StyledConverter implements OsmConverter {
 		wayPoints.get(index).incHighwayCount();
 
 		// copy the way's name and tags to the new way
-		trailingWay.setName(way.getName());
 		trailingWay.copyTags(way);
 
 		// remove the points after the split from the original way

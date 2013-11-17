@@ -12,10 +12,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import uk.me.parabola.mkgmap.osmstyle.StyledConverter;
 import uk.me.parabola.mkgmap.reader.osm.Element;
@@ -26,9 +23,8 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author WanMil
  */
-public class AddAccessAction implements Action {
+public class AddAccessAction extends ValueBuildedAction {
 	private final boolean modify;
-	private final List<ValueBuilder> values = new ArrayList<ValueBuilder>();
 
 	// The tags used to build the value.
 	private Element valueTags;
@@ -40,14 +36,14 @@ public class AddAccessAction implements Action {
 	 */
 	public AddAccessAction(String value, boolean modify) {
 		this.modify = modify;
-		this.values.add(new ValueBuilder(value));
+		add(value);
 	}
 
 	public void perform(Element el) {
 		// 1st build the value
 		Element tags = valueTags!=null? valueTags: el;
 		String accessValue = null;
-		for (ValueBuilder value : values) {
+		for (ValueBuilder value : getValueBuilder()) {
 			accessValue = value.build(tags, el);
 			if (accessValue != null) {
 				break;
@@ -77,32 +73,14 @@ public class AddAccessAction implements Action {
 		el.addTag(tag, value);
 	}
 
-	/**
-	 * Adds a value expression.
-	 * @param value the value expression
-	 */
-	public void add(String value) {
-		values.add(new ValueBuilder(value));
-	}
-
 	public void setValueTags(Element valueTags) {
 		this.valueTags = valueTags;
-	}
-
-	public Set<String> getUsedTags() {
-		Set<String> set = new HashSet<String>();
-
-		if (values != null) {
-			for (ValueBuilder vb : values) {
-				set.addAll(vb.getUsedTags());
-			}
-		}
-		return set;
 	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(modify ? "setaccess " : "addaccess ");
+		List<ValueBuilder> values = getValueBuilder();
 		for (int i = 0; i < values.size(); i++) {
 			sb.append(values.get(i));
 			if (i < values.size() - 1)

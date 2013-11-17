@@ -153,24 +153,6 @@ public class HousenumberGenerator {
 		if (numbersEnabled) {
 			// first try to get the streetname from mkgmap:streetname
 			String name = getStreetname(osmRoad); 
-			if (name == null) {
-				// 2nd try the name of the road
-				name = stripStreetName(road.getName());
-			}
-			if (name == null) {
-				// 3rd get the name from the ref 
-				name = road.getRef();
-				if (name != null) {
-					String[] refs = name.split(";");
-					if (refs != null)
-					for (String ref : refs) {
-						name = stripStreetName(ref);
-						if (name != null) {
-							break;
-						}
-					}
-				}
-			}
 			if (name != null) {
 				if (log.isDebugEnabled())
 					log.debug("Housenumber - Streetname:", name, "Way:",osmRoad.getId(),osmRoad.toTagString());

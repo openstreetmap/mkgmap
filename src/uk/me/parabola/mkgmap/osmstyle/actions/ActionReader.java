@@ -68,7 +68,12 @@ public class ActionReader {
 			} else if ("apply_once".equals(cmd)) {
 				actions.add(readAllCmd(true));
 			} else if ("name".equals(cmd)) {
-				actions.add(readNameCmd());
+				actions.add(readValueBuilder(new NameAction()));
+				changeableTags.add("mkgmap:label:1");
+			} else if ("addlabel".equals(cmd)) {
+				actions.add(readValueBuilder(new AddLabelAction()));
+				for (int labelNo = 1; labelNo <= 4; labelNo++)
+					changeableTags.add("mkgmap:label:"+labelNo);
 			} else if ("delete".equals(cmd)) {
 				String tag = scanner.nextWord();
 				actions.add(new DeleteAction(tag));
@@ -124,18 +129,17 @@ public class ActionReader {
 	/**
 	 * A name command has a number of alternatives separated by '|' characters.
 	 */
-	private Action readNameCmd() {
-		NameAction nameAct = new NameAction();
+	private Action readValueBuilder(ValueBuildedAction action) {
 		while (inActionCmd()) {
 			if (scanner.checkToken("|")) {
 				scanner.nextToken();
 				continue;
 			}
 			String val = scanner.nextWord();
-			nameAct.add(val);
+			action.add(val);
 		}
-		usedTags.addAll(nameAct.getUsedTags());
-		return nameAct;
+		usedTags.addAll(action.getUsedTags());
+		return action;
 	}
 
 	/**

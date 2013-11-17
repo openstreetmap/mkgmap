@@ -16,10 +16,7 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
@@ -29,10 +26,9 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public class AddTagAction implements Action {
+public class AddTagAction extends ValueBuildedAction {
 	private final boolean modify;
 	private final String tag;
-	private final List<ValueBuilder> values = new ArrayList<ValueBuilder>();
 
 	// The tags used to build the value.
 	private Element valueTags;
@@ -45,7 +41,7 @@ public class AddTagAction implements Action {
 	public AddTagAction(String tag, String value, boolean modify) {
 		this.modify = modify;
 		this.tag = tag;
-		this.values.add(new ValueBuilder(value));
+		add(value);
 	}
 
 	public void perform(Element el) {
@@ -55,7 +51,7 @@ public class AddTagAction implements Action {
 
 		Element tags = valueTags!=null? valueTags: el;
 
-		for (ValueBuilder value : values) {
+		for (ValueBuilder value : getValueBuilder()) {
 			String newval = value.build(tags, el);
 			if (newval != null) {
 				el.addTag(tag, newval);
@@ -64,21 +60,9 @@ public class AddTagAction implements Action {
 		}
 	}
 
-	public void add(String value) {
-		values.add(new ValueBuilder(value));
-	}
 
 	public void setValueTags(Element valueTags) {
 		this.valueTags = valueTags;
-	}
-
-	public Set<String> getUsedTags() {
-		Set<String> set = new HashSet<String>();
-
-		for (ValueBuilder vb : values)
-			set.addAll(vb.getUsedTags());
-
-		return set;
 	}
 
 	public String toString() {
@@ -86,6 +70,7 @@ public class AddTagAction implements Action {
 		sb.append(modify ? "set " : "add ");
 		sb.append(tag);
 		sb.append("=");
+		List<ValueBuilder> values = getValueBuilder();
 		for (int i = 0; i < values.size(); i++) {
 			sb.append(values.get(i));
 			if (i < values.size() - 1)

@@ -8,8 +8,6 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/refs';
-
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
@@ -32,7 +30,7 @@ highway=* & oneway=yes & (access=private|access=no)
 highway=motorway|highway=motorway_link { add oneway=yes }
 
 # Set highway names to include the reference if there is one
-highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
+highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 
 (highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
   { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
@@ -59,9 +57,9 @@ highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-sym
          'Exit ${mkgmap:exit_hint_ref}'
        }
               
-highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
-highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
-highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
+highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; addlabel '${name} (${ref})' }
+highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; addlabel '${name} (${ref})' }
+highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
 highway=* {name '${name}' | '${ref}' }
 
 # Flag unpaved roads.
@@ -196,3 +194,9 @@ include 'inc/roadspeed';
 # calculate the access rules
 include 'inc/access';
 
+name=* { name '${name}' }
+
+highway=* & ref=* { addlabel '${ref}' }
+highway=* & int_ref=* { addlabel '${int_ref}' }
+highway=* & nat_ref=* { addlabel '${nat_ref}' }
+highway=* & ref_ref=* { addlabel '${reg_ref}' }
