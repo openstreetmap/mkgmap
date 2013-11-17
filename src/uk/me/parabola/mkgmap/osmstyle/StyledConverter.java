@@ -694,19 +694,19 @@ public class StyledConverter implements OsmConverter {
 						}
 
 						// try also if we can remove the point
-						if ((p.getHighwayCount() < 2 || badPos == 0 && p.getHighwayCount() < 3)){
+						if ((p.getHighwayCount() < (badPos == 0 ? 3:2))){
 							int overNextPos = getCirclePos(nextPos+1, points.size());
 							double delAngle = Utils.getDisplayedAngle(pPrev, pNext, points.get(overNextPos));
 							double deltaAngleRemove = Math.abs(delAngle-niceAngle);
 							if (deltaAngleRemove < bestDeltaMoveAngle){
 								boolean delIsOK = true;
-								if (pNext.getHighwayCount() >= 2 || nextPos == 0 && pNext.getHighwayCount() >= 3){
+								if (pNext.getHighwayCount() >= (nextPos == 0 ? 3 : 2)){
 									// next neighbour is node, check angles
 									double highPrecDelAngle = Utils.getAngle(pPrev, pNext, points.get(overNextPos));
 									if (Math.abs(highPrecDelAngle - niceAngle) >= 30 )
 										delIsOK = false;
 								}
-								if (pPrev.getHighwayCount() >= 2 || prevPos == 0 && pPrev.getHighwayCount() >= 3){
+								if (pPrev.getHighwayCount() >= (prevPos == 0 ? 3 : 2)){
 									// prev neighbour is node, check angles
 									int prevPrevPos = getCirclePos(badPos-2, points.size());
 									double highPrecDelAngle = Utils.getAngle(points.get(prevPrevPos),pPrev, pNext);
@@ -731,9 +731,7 @@ public class StyledConverter implements OsmConverter {
 						if (pBest != null){
 							System.out.println(msgPref + ": moving point from " + p.toDegreeString() + " to " + pBest.toDegreeString() + " to beautify roundabout");
 							pBest.incHighwayCount();
-							if (p.getHighwayCount() < 2 || (badPos == 0 && p.getHighwayCount() < 3)){
-								// nop
-							} else {
+							if (p.getHighwayCount() >= (badPos == 0 ? 3 : 2)){
 								replacements.put(p, pBest);
 								p.setReplaced(true);
 								pBest.incHighwayCount();
@@ -847,7 +845,7 @@ public class StyledConverter implements OsmConverter {
 			if (p.getOnBoundary())
 				continue;
 			Node poiNode = null;
-			if (p.getHighwayCount() >= 2 || i == 0 && p.getHighwayCount() >= 3)
+			if (p.getHighwayCount() >=  ((way.isClosed() && i == 0) ? 3 : 2))
 				toReplace.add(p);
 			if (p instanceof CoordPOI)
 				poiNode = ((CoordPOI) p).getNode();
