@@ -69,8 +69,10 @@ public class RoadMerger {
 		
 		private final static Set<String> flatCompareTags = new HashSet<String>() {
 			{
-				add("mkgmap:ref");
-				add("mkgmap:display_name");
+				add("mkgmap:label:1");
+				add("mkgmap:label:2");
+				add("mkgmap:label:3");
+				add("mkgmap:label:4");
 				add("mkgmap:postal_code");
 				add("mkgmap:city");
 				add("mkgmap:region");
@@ -185,10 +187,6 @@ public class RoadMerger {
 		}
 
 		private boolean isWayMergable(Coord mergePoint, Way otherWay) {
-
-			if (stringEquals(getWay().getName(), otherWay.getName()) == false) {
-				return false;
-			}
 
 			// special oneway handling
 			String thisOneway = getWay().getTag("oneway");
