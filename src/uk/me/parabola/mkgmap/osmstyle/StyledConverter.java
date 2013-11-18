@@ -16,8 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,9 +23,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -58,7 +54,6 @@ import uk.me.parabola.mkgmap.general.RoadNetwork;
 import uk.me.parabola.mkgmap.osmstyle.housenumber.HousenumberGenerator;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -346,8 +341,8 @@ public class StyledConverter implements OsmConverter {
 		setHighwayCounts();
 		findUnconnectedRoads();
 		filterCoordPOI();
-		beautifyRoundabouts();
-		removeShortArcsByMergingNodes();
+		removeWrongAngles();
+//		removeShortArcsByMergingNodes();
 		// make sure that copies of modified roads are have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
@@ -520,316 +515,8 @@ public class StyledConverter implements OsmConverter {
 		}
 		
 	}
-	/**
-	 * Helper for roundabouts: Return position of a point in a list 
-	 * @param pos
-	 * @param numPoints
-	 * @return
-	 */
-	private int getCirclePos (int pos, int numPoints){
-		int p = pos;
-		while (p < 0)
-			p += numPoints;
-		while(p >= numPoints)
-			p -= numPoints;
-		return p;
-	}
-	
-	/**
-	 * Detect wrong angles in roundabouts caused by rounding to
-	 * map units. Try to move or remove points to frig it.
-	 * Works equally for clockwise and ccw circles.
-	 */
-	private void beautifyRoundabouts() {
-		// replacements maps those nodes that have been replaced to
-		// the node that replaces them
-		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
-		Way lastWay = null;
-		for (Way way: roads){
-			if (way == null)
-				continue;
-			if("roundabout".equals(way.getTag("junction")) == false) 
-				continue;
-			if (way.isClosed() == false || way.isComplete() == false)
-				continue;
-			if (lastWay != null && lastWay.equals(way)){
-				way.getPoints().clear();
-				way.getPoints().addAll(lastWay.getPoints());
-				continue;
-			}
-			lastWay = way;
-			if (way.getPoints().size()  <= 4 )
-				continue;
-			List<Coord> points = way.getPoints();
-			if (gpxPath != null){
-				GpxCreator.createGpx(gpxPath + way.getId() + "_o", points);
-			}
-			String msgPref = "Way " + way.toBrowseURL();
-			if (FakeIdGenerator.isFakeId(way.getId())){
-				msgPref = getDebugName(way);
-			}
-			boolean clockwise = Way.clockwise(points);
-			if (points.get(0) == points.get(points.size()-1))
-				points.remove(points.size()-1); // remove closing point for now
-			boolean changed = mergeEqualPoints(way, replacements);
-			int minLat30 = Integer.MAX_VALUE;
-			int maxLat30 = Integer.MIN_VALUE;
-			int minLon30 = Integer.MAX_VALUE;
-			int maxLon30 = Integer.MIN_VALUE;
-			for (int i = 0; i < points.size(); i++){
-				Coord co = points.get(i);
-				if (co.isReplaced()){
-					// might happen if two roundabouts share a node
-					Coord replacement = getReplacement(co, way, replacements);
-					if (co != replacement){
-						co = replacement;
-						co.incHighwayCount();
-						points.set(i,co);
-						modifiedRoads.put(way.getId(), way);
-					}
-				}
-				int lat = co.getHighPrecLat();
-				if(lat < minLat30)
-					minLat30 = lat;
-				if(lat > maxLat30)
-					maxLat30 = lat;
-				int lon = co.getHighPrecLon();
-				if(lon < minLon30)
-					minLon30 = lon;
-				if(lon > maxLon30)
-					maxLon30 = lon;
-			}
-			Coord pSouth = Coord.makeHighPrecCoord(minLat30, (minLon30 + maxLon30) / 2); 
-			Coord pNorth = Coord.makeHighPrecCoord(maxLat30, (minLon30 + maxLon30) / 2); 
-			Coord pWest = Coord.makeHighPrecCoord((minLat30 + maxLat30) / 2, minLon30 ); 
-			Coord pEast = Coord.makeHighPrecCoord((minLat30 + maxLat30) / 2, maxLon30 ); 
-			double distHorizontal = pWest.distance(pEast); 
-			double distVertical = pSouth.distance(pNorth);
-			double radius = (distVertical*0.5 + distHorizontal * 0.5) / 2;
-//			Coord center = pWest.makeBetweenPoint(pEast, 0.5);
-			
-
-			// try to find optimal number of sides for given radius
-			int niceNumSides;
-			if (radius < 10.0)
-				niceNumSides = 8; 
-			else if (radius < 13.0)
-				niceNumSides = 12;
-			else if (radius < 20.0)
-				niceNumSides = 16;
-			else 
-				niceNumSides =  20;
-			
-			if (points.size() < niceNumSides){
-				if (points.size() < 16)
-					System.out.println(msgPref + ": roundabout has rather few distinct points: " + points.size() + " (radius ~ "+Math.round(radius)+" m)");
-				niceNumSides = points.size();
-			}
-			final double sumOfAngles = (niceNumSides - 2) * 180;// for a regular polygon
-			double niceAngle = sumOfAngles / niceNumSides - 180;
-			if (clockwise)
-				niceAngle = -niceAngle; // assume drive on left 
-			
-
-			//			double sideLength = radius * 2 * Math.sin(Math.PI/numSides);
-			for (int pass = 0; pass < niceNumSides; pass++){
-				// find point with greatest error
-				TreeMap<Double, IntArrayList> badAngles = new TreeMap<Double, IntArrayList>();
-				for (int i = 0; i < points.size() ; i++) {
-					Coord p = points.get(i);
-					if (p.getOnBoundary())
-						continue;
-
-					int prevPos = getCirclePos(i-1, points.size());
-					Coord pPrev = points.get(prevPos);
-					int nextPos = getCirclePos(i+1, points.size());
-					Coord pNext = points.get(nextPos);
-					double displayedAngle = Utils.getDisplayedAngle(pPrev, p, pNext);
-					double deltaAngle = Math.abs(displayedAngle - niceAngle); 
-					if (deltaAngle >= 30 /*Math.abs(niceAngle)*/){
-						IntArrayList list = badAngles.get(deltaAngle);
-						if (list == null){
-							list = new IntArrayList();
-							badAngles.put(deltaAngle,list);
-						}
-						list.add(i);
-					}
-				}
-				if (badAngles.isEmpty()){
-					if (pass > 0)
-						log.info(msgPref, ": no more bad angles found");
-					break;
-				}
-				boolean changedOnePoint = false;
-				
-				for (Entry<Double,IntArrayList> entry : badAngles.descendingMap().entrySet()){
-					if (changedOnePoint)
-						break;
-					IntArrayList badPositions = entry.getValue();
-					double worstDeltaAngle = entry.getKey();
-					for (int badPos: badPositions){
-						if (changedOnePoint)
-							break;
-						Coord p = points.get(badPos);
-						int prevPos = getCirclePos(badPos-1, points.size());
-						Coord pPrev = points.get(prevPos);
-						int nextPos = getCirclePos(badPos+1, points.size());
-						Coord pNext = points.get(nextPos);
-						double displayedAngle = Utils.getDisplayedAngle(pPrev, p, pNext);
-
-						System.out.println(msgPref + ": bad angle " + Math.round(displayedAngle) + "  due to rounding to map units in roundabout at point " + p.toOSMURL());
-						Coord pBest = null;
-						List<Coord> altPositions = p.getAlternativePosition();
-						double bestDeltaMoveAngle = worstDeltaAngle;
-						for (Coord pTest :altPositions){
-							if (p.equals(pTest) || pPrev.equals(pTest) || pNext.equals(pTest))
-								continue;
-
-							double testAngle = Utils.getDisplayedAngle(pPrev, pTest, pNext);
-							double testDeltaAngle = Math.abs(testAngle-niceAngle);
-							if (testDeltaAngle < bestDeltaMoveAngle){
-								pBest = pTest;
-								bestDeltaMoveAngle = testDeltaAngle;
-							}
-						}
-
-						// try also if we can remove the point
-						if ((p.getHighwayCount() < (badPos == 0 ? 3:2))){
-							int overNextPos = getCirclePos(nextPos+1, points.size());
-							double delAngle = Utils.getDisplayedAngle(pPrev, pNext, points.get(overNextPos));
-							double deltaAngleRemove = Math.abs(delAngle-niceAngle);
-							if (deltaAngleRemove < bestDeltaMoveAngle){
-								boolean delIsOK = true;
-								if (pNext.getHighwayCount() >= (nextPos == 0 ? 3 : 2)){
-									// next neighbour is node, check angles
-									double highPrecDelAngle = Utils.getAngle(pPrev, pNext, points.get(overNextPos));
-									if (Math.abs(highPrecDelAngle - niceAngle) >= 30 )
-										delIsOK = false;
-								}
-								if (pPrev.getHighwayCount() >= (prevPos == 0 ? 3 : 2)){
-									// prev neighbour is node, check angles
-									int prevPrevPos = getCirclePos(badPos-2, points.size());
-									double highPrecDelAngle = Utils.getAngle(points.get(prevPrevPos),pPrev, pNext);
-									if (Math.abs(highPrecDelAngle - niceAngle) >= 30 )
-										delIsOK = false;
-								}
-								if (delIsOK){
-									if (Math.abs(displayedAngle) <= 0.1)
-										System.out.println(msgPref + ": removing obsolete point on straight line in roundabout");
-									else
-										System.out.println(msgPref + ": removing point to beautify roundabout");
-									if (gpxPath != null)
-										GpxCreator.createGpx(gpxPath + way.getId() + "_del1_"+badPos + "_" + pass, points);
-									points.remove(badPos);
-									if (gpxPath != null)
-										GpxCreator.createGpx(gpxPath + way.getId() + "_del2_"+badPos + "_" + pass, points);
-									changed = changedOnePoint = true;
-									continue;
-								}
-							}
-						}
-						if (pBest != null){
-							System.out.println(msgPref + ": moving point from " + p.toDegreeString() + " to " + pBest.toDegreeString() + " to beautify roundabout");
-							pBest.incHighwayCount();
-							if (p.getHighwayCount() >= (badPos == 0 ? 3 : 2)){
-								replacements.put(p, pBest);
-								p.setReplaced(true);
-								pBest.incHighwayCount();
-							}
-							points.set(badPos, pBest);
-							changed = changedOnePoint = true;
-						} 
-						else {
-							System.out.println(msgPref + ": cannot frig roundabout at this position.");
-						}
-					}
-				}
-				if (changedOnePoint == false){
-					System.out.println(msgPref + ": giving up");
-					break;
-				}
-			}
-			points.add(points.get(0));
-			points.get(0).incHighwayCount(); // make sure that closing point has highway count > 1
-			if (changed){
-				modifiedRoads.put(way.getId(), way);
-				if (gpxPath != null){
-					List<Coord> grid = new ArrayList<Coord>();
-					for (int lon = (minLon30 >> 6)-1;  lon <= (maxLon30>>6)+1; lon++){
-						for (int lat = (minLat30 >> 6)-1;  lat <= (maxLat30>>6)+1; lat++){
-							grid.add(new Coord(lat,lon));
-						}
-					}
-					GpxCreator.createGpx(gpxPath + way.getId() + "_m", points, grid);
-				}
-			}
-		}
-			
-		//System.out.println("replacements.size() = " + replacements.size() );
-		if (replacements.isEmpty())
-			return;
-		lastWay = null;
-		for (Way way: roads){
-			if (way == null)
-				continue;
-			if("roundabout".equals(way.getTag("junction")) == true){ 
-				if (way.isClosed() && way.isComplete() )
-					continue;
-			}
-			if (lastWay != null && lastWay.equals(way)){
-				way.getPoints().clear();
-				way.getPoints().addAll(lastWay.getPoints());
-				continue;
-			}
-			lastWay = way;
-			List<Coord> points = way.getPoints();
-			for (int i = 0; i < points.size(); i++){
-				Coord p = points.get(i);
-				// check if this point is to be replaced because
-				// it was previously moved 
-				if (p.isReplaced()){
-					Coord replacement = getReplacement(p, way, replacements);
-					if (p != replacement){
-						boolean bigChange = false;
-						if (i > 0){
-							Coord prev = points.get(i-1).getDisplayedCoord();
-							double origDisplayedBearing = prev.bearingTo(p.getDisplayedCoord());
-							double newDisplayedBearing = prev.bearingTo(replacement.getDisplayedCoord());
-							if (Math.abs(newDisplayedBearing-origDisplayedBearing) > 15){
-								bigChange = true;
-							}
-						}
-						if (i+1 < points.size()){
-							Coord next = points.get(i+1).getDisplayedCoord();
-							double origDisplayedBearing  = p.getDisplayedCoord().bearingTo(next);
-							double newDisplayedBearing = replacement.getDisplayedCoord().bearingTo(next);
-							if (Math.abs(newDisplayedBearing-origDisplayedBearing ) > 15){
-								bigChange = true;
-							}
-						}
-						if (bigChange){
-							System.out.println("way " + way.getId() + ": replacement introduces big change in bearing");
-							if (gpxPath != null)
-								GpxCreator.createGpx(gpxPath + way.getId() + "_repl_o_"+ i, points);
-						}
-						p = replacement;
-						p.incHighwayCount();
-						// replace point in way
-						points.set(i, p);
-						if (bigChange){
-							if (gpxPath != null)
-								GpxCreator.createGpx(gpxPath + way.getId() + "_repl_n_"+ i, points);
-						}
-						modifiedRoads.put(way.getId(), way);
-					}
-				}
-			}
-		}
-			
-	}
 
 	/**
-	 * TODO: Should this also be called before short-arc-removal?
 	 * Merge points with equal map unit coordinates.
 	 * @param way
 	 * @param replacements
@@ -838,15 +525,14 @@ public class StyledConverter implements OsmConverter {
 	private boolean mergeEqualPoints(Way way, Map<Coord, Coord> replacements) {
 		List<Coord> points = way.getPoints();
 		int origNumPoints = points.size();
+		boolean closed = (points.get(0) == points.get(origNumPoints-1));
 		ArrayList<Coord> toReplace = new ArrayList<Coord>();
 		for (int i = 0; i+1  < points.size(); i++){
 			Coord p = points.get(i);
-			toReplace.clear();
 			if (p.getOnBoundary())
 				continue;
+			toReplace.clear();
 			Node poiNode = null;
-			if (p.getHighwayCount() >=  ((way.isClosed() && i == 0) ? 3 : 2))
-				toReplace.add(p);
 			if (p instanceof CoordPOI)
 				poiNode = ((CoordPOI) p).getNode();
 			int nextPos = i+1;
@@ -859,9 +545,9 @@ public class StyledConverter implements OsmConverter {
 				lon += pNext.getHighPrecLon();
 				++numPoints;
 				points.remove(nextPos);
-				if (pNext.getHighwayCount() >= 2){
+				if (pNext.getHighwayCount() >=  ((closed && nextPos == points.size()-1) ? 3 : 2))
 					toReplace.add(pNext);
-				}
+				
 				if (poiNode == null && pNext instanceof CoordPOI)
 					poiNode = ((CoordPOI) pNext).getNode();
 				if (nextPos >= points.size())
@@ -878,17 +564,15 @@ public class StyledConverter implements OsmConverter {
 				pNew.incHighwayCount();
 				points.set(i, pNew);
 				// check if the merged point is a node
+				if (p.getHighwayCount() >=  ((closed && i == 0) ? 3 : 2))
+					toReplace.add(p);
+
 				for (Coord co:toReplace){
 					pNew.incHighwayCount();
 					co.setReplaced(true);
 					replacements.put(co, pNew);
 				}
 			}
-		}
-		Coord p = points.get(0);
-		Coord last = points.get(points.size()-1);
-		if (last.getHighwayCount() < 2 && last.equals(p)){
-			points.remove(points.size()-1);
 		}
 		return points.size() != origNumPoints;
 	}
@@ -2546,6 +2230,280 @@ public class StyledConverter implements OsmConverter {
 		else
 			log.info("Removing short arcs - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)");
 	}
+
 	
+	/**
+	 *	Find wrong angles caused by rounding to map units. Try 
+	 *  to fix them. 
+	 */
+	void removeWrongAngles(){
+		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+		Way fakeWay = new Way(0);
+
+		// step 1
+		Way lastWay = null;
+		for (int w = 0; w < roads.size(); w++){
+			Way way = roads.get(w);
+			if (way == null)
+				continue;
+			if (way.equals(lastWay)){
+				way.getPoints().clear();
+				way.getPoints().addAll(lastWay.getPoints());
+				continue;
+			}
+			lastWay = way;
+			if (mergeEqualPoints(way, replacements) == true){
+				// something was changed
+				if (way.getPoints().size() < 2){
+					if (log.isInfoEnabled())
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+					roads.set(w, null);
+					deletedRoads.add(way.getId());
+				}
+			}
+		}
+		boolean anotherPassRequired = true;
+		final double criticalDist = 10;
+		// step 2: find critical points
+		for (int pass = 1; pass < 10 && anotherPassRequired; pass++){
+			anotherPassRequired = false;
+			IdentityHashMap<Coord, List<Coord>> centers = new IdentityHashMap<Coord, List<Coord>>();
+			ArrayList<Coord> centerPoints = new ArrayList<Coord>(); 
+			// replacements maps those nodes that have been replaced to
+			// the node that replaces them
+			lastWay = null;
+			for (int w = 0; w < roads.size(); w++){
+				Way way = roads.get(w);
+				if (way == null)
+					continue;
+				if (way.equals(lastWay)){
+					way.getPoints().clear();
+					way.getPoints().addAll(lastWay.getPoints());
+					continue;
+				}
+				lastWay = way;
+				List<Coord> points = way.getPoints();
+
+
+				// scan through the way's points looking for points which are
+				// close together 
+				int n = points.size();
+				Coord prev = null;
+				double lastDist = Double.MAX_VALUE;
+				for (int i = 0; i < n; ++i) {
+					Coord p = points.get(i);
+					if (p.isReplaced()){
+						p = getReplacement(p, way, replacements);
+					}
+					if (i > 0){
+						if (p.equals(prev)){
+							log.error("found equal consecutive points in pass "+ pass);
+						}
+						double dist = p.distance(prev);// maybe better to use dist between displayed points ?
+						if (dist < criticalDist || lastDist < criticalDist){ 
+							for (int k = -1; k <= 0; k++){
+								p = points.get(i+k);
+								if (p.getOnBoundary())
+									continue;
+								Coord other = points.get((k==0) ? i-1:i);
+								List<Coord> list = centers.get(p);
+								if (list == null){
+									centerPoints.add(p);
+									list = new ArrayList<Coord>(4);
+									centers.put(p, list);
+								}
+								boolean isNew = true;
+								// we want only different Coord instances here
+								for (Coord co:list){
+									if (co == other){
+										isNew = false;
+										break;
+									}
+								}
+								if (isNew)
+									list.add(other);
+							}
+						}
+						lastDist = dist;
+					}
+					prev = p;
+
+				}
+			}
+			System.out.println("Number of points with rather close neighbours (<= " + criticalDist + "m) :" + centers.size());
+			long id = 0;
+
+			for (Coord center: centerPoints){
+				id++;
+				List<Coord> neighbours = centers.get(center);
+				if (neighbours.size() < 2){
+					continue;
+				}
+				if (center.isReplaced())
+					center = getReplacement(center, null, replacements);
+				boolean ok = testCenter(center, neighbours, replacements);
+				if (!ok){
+					if (gpxPath != null){
+						// print lines before change
+						List<Coord> line = new ArrayList<Coord>();
+						HashSet<Coord> grid = new HashSet<Coord>();
+						grid.addAll(center.getAlternativePositions());
+						for (int i = 0; i < neighbours.size(); i++){
+							line.clear();
+							line.add(center);
+							Coord pn = neighbours.get(i);
+							if (pn.isReplaced())
+								pn = getReplacement(pn, fakeWay, replacements);
+							line.add(neighbours.get(i));
+							grid.addAll(neighbours.get(i).getAlternativePositions());
+							if (i+1 == neighbours.size()){
+								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line, new ArrayList<Coord>(grid));
+								if (grid.isEmpty()){
+									log.error("no possible solution found");
+								}
+							}
+							else 
+								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line);
+						}
+					}
+					List<Coord> alternatives = center.getAlternativePositions();
+					boolean solved = false;
+					for (Coord altCenter: alternatives){
+						if (testCenter(altCenter, neighbours, replacements) == false)
+							continue;
+//						System.out.println("found possible solution");
+						boolean nice = true;
+						//test all neighbours
+						for (Coord n: neighbours){
+							List<Coord> otherNeighbours = centers.get(n);
+							if (otherNeighbours != null){
+								if (testCenter(n, otherNeighbours, replacements, center,altCenter) == false){
+//									System.out.println("not good for neighbour");
+									nice = false;
+									break;
+								}
+							}
+						}
+						if (nice){
+							// replace center here and in neighbours
+							center.setReplaced(true);
+							replacements.put(center, altCenter);
+							if (center instanceof CoordPOI){
+								altCenter = new CoordPOI(altCenter);
+								((CoordPOI) altCenter).setNode(((CoordPOI) center).getNode());
+							}
+							altCenter.incHighwayCount();
+							if (center.getHighwayCount() >= 2)
+								altCenter.incHighwayCount();
+							if (gpxPath != null){
+								// print lines after change
+								List<Coord> line = new ArrayList<Coord>();
+								for (int i = 0; i < neighbours.size(); i++){
+									line.clear();
+									line.add(altCenter);
+									Coord pn = neighbours.get(i);
+									if (pn.isReplaced())
+										pn = getReplacement(pn, fakeWay, replacements);
+									line.add(neighbours.get(i));
+									GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_m_" + i, line);
+								}
+							}
+							solved = true;
+							break;
+						}
+					}
+					if (solved == false){
+						if (center.getHighwayCount() < 2){
+							if (center instanceof CoordPOI){
+								log.debug("cannot fix wrong angle at coord poi " + center.toOSMURL());
+							} else {
+								center.setRemove(true);
+								solved = true;
+							}
+						} else {
+							//						System.out.println("found no alternative pos for center id " + id);
+						}
+					}
+					if (solved){
+						System.out.println("found correction for bad angle at " + center.toOSMURL() + " in pass " + pass);
+					}
+				}
+			}
+			lastWay = null;
+			for (Way way: roads){
+				if (way == null)
+					continue;
+
+				if (lastWay != null && lastWay.equals(way)){
+					way.getPoints().clear();
+					way.getPoints().addAll(lastWay.getPoints());
+					continue;
+				}
+				lastWay = way;
+				List<Coord> points = way.getPoints();
+				for (int i = 0; i < points.size(); i++){
+					Coord p = points.get(i);
+					if (p.isToRemove()){
+						points.remove(i);
+						anotherPassRequired = true;
+						i--;
+						continue;
+					}
+					// check if this point is to be replaced because
+					// it was previously moved 
+					if (p.isReplaced()){
+						Coord replacement = getReplacement(p, way, replacements);
+						if (p != replacement){
+							p = replacement;
+							p.incHighwayCount();
+							// replace point in way
+							points.set(i, p);
+							modifiedRoads.put(way.getId(), way);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * return true if no rounding problems at this center
+	 * @param center
+	 * @param neighbours
+	 * @param replacements 
+	 * @return
+	 */
+	private boolean testCenter(Coord center, List<Coord> neighbours, Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
+		Way fakeWay = new Way(0);
+		for (int i = 1; i < neighbours.size(); i++){
+			Coord p1 = neighbours.get(i-1);
+			p1 = getReplacement(p1, fakeWay, replacements);
+			if (p1.isToRemove())
+				continue;
+			if (p1 == toRepl)
+				p1 = replacement;
+			Coord p2 = neighbours.get(i);
+			p2 = getReplacement(p2, fakeWay, replacements);
+			if (p2.isToRemove())
+				continue;
+			if (p2 == toRepl)
+				p2 = replacement;
+			if (p1.equals(center) || p2.equals(center)){
+				return false;
+			}
+			double a1 = Utils.getAngle(p1, center, p2);
+			double a2 = Utils.getDisplayedAngle(p1, center, p2);
+			double err = Math.abs(a1-a2);
+			if (err > 30){ 
+				//TODO: 30 seems to be a good value. Maybe use argument ? Maybe try to find smallest possible error?
+				return false;
+			}
+		}
+		return  true;
+	}
+	
+	private boolean testCenter(Coord center, List<Coord> neighbours, Map<Coord, Coord> replacements){
+		return testCenter(center, neighbours, replacements, null,null);
+	}
 }
 

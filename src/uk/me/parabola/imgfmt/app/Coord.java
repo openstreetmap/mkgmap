@@ -41,6 +41,7 @@ public class Coord implements Comparable<Coord> {
 	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
 	private final static byte TREAT_AS_NODE_MASK = 0x08; // bit in flags is true if point should be treated as a node
 	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
+	private final static byte REMOVE_MASK = 0x20; // bit in flags is true if this point should be removed
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
@@ -207,6 +208,17 @@ public class Coord implements Comparable<Coord> {
 			this.flags &= ~FIXME_NODE_MASK; 
 	}
 	
+	public boolean isToRemove() {
+		return (flags & REMOVE_MASK) != 0;
+	}
+	
+	public void setRemove(boolean b) {
+		if (b) 
+			this.flags |= REMOVE_MASK;
+		else 
+			this.flags &= ~REMOVE_MASK; 
+	}
+	
 	public int hashCode() {
 		// Use a factor for latitude to span over the whole integer range:
 		// max lat: 4194304
@@ -238,7 +250,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public double distanceInDegreesSquared(Coord other) {
-		if (highPrecEquals(other))
+		if (this == other || highPrecEquals(other))
 			return 0;
 		
 		double lat1 = getLatDegrees();
@@ -400,7 +412,7 @@ public class Coord implements Comparable<Coord> {
 	 * different map unit coordinates. 
 	 * @return a list of Coord instances, is empty if alternative positions are too far
 	 */
-	public List<Coord> getAlternativePosition(){
+	public List<Coord> getAlternativePositions(){
 		ArrayList<Coord> list = new ArrayList<Coord>();
 		if (getOnBoundary())
 			return list; 
@@ -409,13 +421,13 @@ public class Coord implements Comparable<Coord> {
 		
 		int modLat = latitude;
 		int modLon = longitude;
-		if (latDelta > 20)
+		if (latDelta > 16)
 			modLat--;
-		else if (latDelta < -20)
+		else if (latDelta < -16)
 			modLat++;
-		if (lonDelta > 20)
+		if (lonDelta > 16)
 			modLon--;
-		else if (lonDelta < -20)
+		else if (lonDelta < -16)
 			modLon++;
 		int lat30 = getHighPrecLat();
 		int lon30 = getHighPrecLon();
@@ -438,5 +450,15 @@ public class Coord implements Comparable<Coord> {
 		*/
 		return list;
 	}
-	
+
+	public int getDeltaLatErr(Coord other){
+		int deltaLat24 = other.getLatitude() - getLatitude();
+		int deltaLat30 = other.getHighPrecLat() - getHighPrecLat();
+		return Math.abs(deltaLat30 - (deltaLat24 << 6));
+	}
+	public int getDeltaLonErr(Coord other){
+		int deltaLon24 = other.getLongitude() - getLongitude();
+		int deltaLon30 = other.getHighPrecLon() - getHighPrecLon();
+		return Math.abs(deltaLon30 - (deltaLon24 << 6));
+	}
 }

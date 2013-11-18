@@ -85,19 +85,20 @@ public class GpxCreator {
 	}
 
 	public static void createGpx(String name, List<Coord> points) {
-		try {
-			File f = new File(name);
-			if (f.getParentFile() != null) {
-				f.getParentFile().mkdirs();
-			}
-			PrintWriter pw = new PrintWriter(new FileWriter(name + ".gpx"));
-			pw.print("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" ");
-			pw.print("xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" version=\"1.1\" ");
-			pw.print("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\"> ");
+		for (int i = 0; i < 2; i++){
+			String fname = name + (i==0 ? "_mu":"_hp");
+			try {
+				File f = new File(fname);
+				if (f.getParentFile() != null) {
+					f.getParentFile().mkdirs();
+				}
+				PrintWriter pw = new PrintWriter(new FileWriter(fname + ".gpx"));
+				pw.print("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" ");
+				pw.print("xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" version=\"1.1\" ");
+				pw.print("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\"> ");
 
-			for (int i = 0; i < 2; i++){
 				pw.print("<trk><name>");
-				pw.print(name);
+				pw.print(fname);
 				pw.print("</name><trkseg>");
 
 				for (Coord c : points) {
@@ -107,26 +108,27 @@ public class GpxCreator {
 						addTrkPoint(pw, c);
 				}
 				pw.print("</trkseg></trk>");
+				pw.print("</gpx>");
+				pw.close();
+			} catch (Exception exp) {
+				// only for debugging so just log
+				log.warn("Could not create gpx file ", fname);
 			}
-			pw.print("</gpx>");
-			pw.close();
-		} catch (Exception exp) {
-			// only for debugging so just log
-			log.warn("Could not create gpx file ", name);
 		}
 	}
 
 	public static void createGpx(String name, List<Coord> polygonpoints,
 			List<Coord> singlePoints) {
-		try {
-			File f = new File(name);
-			f.getParentFile().mkdirs();
-			PrintWriter pw = new PrintWriter(new FileWriter(name + ".gpx"));
-			pw.print("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" ");
-			pw.print("xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" version=\"1.1\" ");
-			pw.print("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\"> ");
+		for (int i = 0; i < 2; i++){
+			String fname = name + (i==0 ? "_mu":"_hp");
+			try {
+				File f = new File(fname);
+				f.getParentFile().mkdirs();
+				PrintWriter pw = new PrintWriter(new FileWriter(fname + ".gpx"));
+				pw.print("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" ");
+				pw.print("xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" version=\"1.1\" ");
+				pw.print("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\"> ");
 
-			for (int i = 0; i < 2; i++){
 				if (singlePoints != null) {
 					for (Coord c : singlePoints) {
 						if (i == 0)
@@ -138,7 +140,7 @@ public class GpxCreator {
 
 				if (polygonpoints != null && polygonpoints.isEmpty() == false) {
 					pw.print("<trk><name>");
-					pw.print(name);
+					pw.print(fname);
 					pw.print("</name><trkseg>");
 
 					for (Coord c : polygonpoints) {
@@ -149,12 +151,12 @@ public class GpxCreator {
 					}
 					pw.print("</trkseg></trk>");
 				}
+				pw.print("</gpx>");
+				pw.close();
+			} catch (Exception exp) {
+				// only for debugging so just log
+				log.warn("Could not create gpx file ", fname);
 			}
-			pw.print("</gpx>");
-			pw.close();
-		} catch (Exception exp) {
-			// only for debugging so just log
-			log.warn("Could not create gpx file ", name);
 		}
 	}
 }
