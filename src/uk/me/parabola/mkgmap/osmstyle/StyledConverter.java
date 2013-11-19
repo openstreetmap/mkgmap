@@ -24,7 +24,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -342,7 +341,6 @@ public class StyledConverter implements OsmConverter {
 		findUnconnectedRoads();
 		filterCoordPOI();
 		removeWrongAngles();
-//		removeShortArcsByMergingNodes();
 		// make sure that copies of modified roads are have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
@@ -563,15 +561,27 @@ public class StyledConverter implements OsmConverter {
 				}
 				pNew.incHighwayCount();
 				points.set(i, pNew);
+				int minHighWayCount = 2;
+				if (closed){
+					if (i == 0 ){
+						// 1st closing point was merged
+						points.set(points.size()-1, pNew);
+						minHighWayCount = 3;
+					}
+					else if (i+1 == points.size()){
+						// final closing point was merged
+						points.set(0, pNew);
+					}
+				}
 				// check if the merged point is a node
-				if (p.getHighwayCount() >=  ((closed && i == 0) ? 3 : 2))
+				if (p.getHighwayCount() >=  minHighWayCount)
 					toReplace.add(p);
-
 				for (Coord co:toReplace){
 					pNew.incHighwayCount();
 					co.setReplaced(true);
 					replacements.put(co, pNew);
 				}
+				i--;
 			}
 		}
 		return points.size() != origNumPoints;
@@ -1194,12 +1204,9 @@ public class StyledConverter implements OsmConverter {
 			floor = 0;
 		if(ceiling >= points.size())
 			ceiling = points.size() - 1;
-		double arcLength = 0;
-		Coord prev = candidate;
 		// test points after pos
 		for(int i = pos + 1; i <= ceiling; ++i) {
 			Coord p = points.get(i);
-			arcLength += p.distance(prev);
 			if(i == ceiling || p.getHighwayCount() > 1) {
 				// point is going to be a node
 				if(candidate.equals(p)) {
@@ -1209,16 +1216,10 @@ public class StyledConverter implements OsmConverter {
 				// no need to test further
 				break;
 			}
-			prev = p;
 		}
-		if (arcLength == 0 || arcLength < minimumArcLength)
-			return false;
-		prev = candidate;
-		arcLength = 0;
 		// test points before pos
 		for(int i = pos - 1; i >= floor; --i) {
 			Coord p = points.get(i);
-			arcLength += p.distance(prev);
 			if(i == floor || p.getHighwayCount() > 1) {
 				// point is going to be a node
 				if(candidate.equals(p)) {
@@ -1229,8 +1230,7 @@ public class StyledConverter implements OsmConverter {
 				break;
 			}
 		}
-
-		return (arcLength != 0 && arcLength >= minimumArcLength);
+		return true;
 	}
 
 	private static String getDebugName(Way way) {
@@ -1940,6 +1940,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 	}
+	
 	/**
 	 * Common code to handle replacements of points in roads.
 	 * Checks for special cases regarding CoordPOI.
@@ -1962,317 +1963,71 @@ public class StyledConverter implements OsmConverter {
 				assert !p.getOnBoundary() : "Boundary node replaced";
 				if (p instanceof CoordPOI){
 					Node node = ((CoordPOI) p).getNode(); 
-					if ("true".equals(node.getTag("mkgmap:use-poi-in-way-"+way.getId()))){
-						if (replacement instanceof CoordPOI){
-							Node rNode = ((CoordPOI) replacement).getNode();
-							if ("true".equals(rNode.getTag("mkgmap:use-poi-in-way-"+way.getId())))
-								log.warn("CoordPOI", node.getId(), "replaced by CoordPOI",rNode.getId(), "in way",  way.toBrowseURL());
-							else
-								log.warn("CoordPOI", node.getId(), "replaced by ignored CoordPOI",rNode.getId(), "in way",  way.toBrowseURL());
+					if (way != null && way.getId() != 0){
+						if ("true".equals(node.getTag("mkgmap:use-poi-in-way-"+way.getId()))){
+							if (replacement instanceof CoordPOI){
+								Node rNode = ((CoordPOI) replacement).getNode();
+								if (rNode.getId() != node.getId()){
+									if ("true".equals(rNode.getTag("mkgmap:use-poi-in-way-"+way.getId())))
+										log.warn("CoordPOI", node.getId(), "replaced by CoordPOI",rNode.getId(), "in way",  way.toBrowseURL());
+									else
+										log.warn("CoordPOI", node.getId(), "replaced by ignored CoordPOI",rNode.getId(), "in way",  way.toBrowseURL());
+								}
+							}
+							else 
+								log.warn("CoordPOI", node.getId(),"replaced by simple coord in way", way.toBrowseURL());
 						}
-						else 
-							log.warn("CoordPOI", node.getId(),"replaced by simple coord in way", way.toBrowseURL());
 					}
 				}
 				return replacement;
+			}
+			else {
+				log.error("replacement not found for point " + p.toOSMURL());
 			}
 		}
 		return p;
 	}
 	
 	/**
-	 * mark points as node-alike and remove obsolete points
-	 */
-	private void prepareRoads() {
-		log.info("prepare: marking points as node-alike and removing obsolete points");
-		for (Way way : roads) {
-			if (way == null)
-				continue;
-			List<Coord> points = way.getPoints();
-			int numPoints = points.size();
-			if (numPoints >= 2) {
-				// all end points should be treated as nodes
-				points.get(0).setTreatAsNode(true);
-				points.get(numPoints - 1).setTreatAsNode(true);
-				// non-end points have 2 arcs but ignore points that
-				// are only in a single way
-				Coord prev = points.get(numPoints - 1);
-				for (int i = numPoints - 2; i >= 0; --i) {
-					Coord p = points.get(i);
-					// if this point is a CoordPOI it may become a
-					// node later even if it isn't actually a connection
-					// between roads at this time - so for the purposes
-					// of short arc removal, consider it to be a node
-					// if it is on a boundary it will become a node later
-					if (p.getHighwayCount() > 1 || p instanceof CoordPOI || p.getOnBoundary())
-						p.setTreatAsNode(true);
-					// remove equal points
-					if (p.equals(prev)) {
-						int removePos = -1;
-						if (prev.isTreatAsNode() == false){
-							removePos = i+1;
-							prev = p;
-						}
-						else if (p.isTreatAsNode() == false){
-							removePos = i;
-						}
-						if (removePos >= 0){
-							points.remove(removePos);
-							if (log.isInfoEnabled())
-								log.info("Way", way.toBrowseURL(), "has consecutive equal points at node numbers",i+1, "and",i+2,"(discarding",removePos+1,")");						
-							modifiedRoads.put(way.getId(), way);
-						}
-					} else {
-						prev = p;
-					}
-				}
-			}
-		}
-
-	}
-	/**
-	 * Routing nodes must not be too close together as this 
-	 * causes routing errors. We try to merge these nodes here.
-	 */
-	private void removeShortArcsByMergingNodes() {
-		log.info("Removing short arcs (min arc length = " + minimumArcLength + "m)");
-		prepareRoads();
-
-		// replacements maps those nodes that have been replaced to
-		// the node that replaces them
-		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
-		Map<Way, Way> complainedAbout = new HashMap<Way, Way>();
-		boolean anotherPassRequired = true;
-		int pass = 0;
-		int numWaysDeleted = 0;
-		int numNodesMerged = 0;
-
-		while (anotherPassRequired && pass < 10) {
-			anotherPassRequired = false;
-			log.info("Removing short arcs - PASS " + ++pass);
-			for (int w = 0; w < roads.size(); w++){
-				Way way = roads.get(w);
-				if (way == null)
-					continue;
-				List<Coord> points = way.getPoints();
-				if (points.size() < 2) {
-					if (log.isInfoEnabled())
-						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
-					roads.set(w, null);
-					deletedRoads.add(way.getId());
-					++numWaysDeleted;
-					continue;
-				}
-				// scan through the way's points looking for nodes and
-				// check to see that the nodes are not too close to
-				// each other
-				int previousNodeIndex = 0; // first point will be a node
-				Coord previousPoint = points.get(0);
-				double arcLength = 0;
-
-				for (int i = 0; i < points.size(); ++i) {
-					Coord p = points.get(i);
-
-					// check if this point is to be replaced because
-					// it was previously merged into another point
-					if (p.isReplaced()){
-						Coord replacement = getReplacement(p, way, replacements);
-						if (p != replacement){
-							p = replacement;
-							p.incHighwayCount();
-							// replace point in way
-							points.set(i, p);
-							if (i == 0)
-								previousPoint = p;
-							modifiedRoads.put(way.getId(), way);
-						}
-					}
-					if (i == 0) {
-						// nothing more to do with this point
-						continue;
-					}
-
-					// this is not the first point in the way
-					if (p == previousPoint) {
-						if (log.isInfoEnabled())
-							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
-						points.remove(i);
-						// hack alert! rewind the loop index
-						--i;
-						modifiedRoads.put(way.getId(), way);
-						anotherPassRequired = true;
-						continue;
-					}
-
-					if (minimumArcLength > 0){
-						// we have to calculate the length of the arc
-						arcLength += p.distance(previousPoint);
-					}
-					else {
-						// if the points are not equal, the arc length is > 0
-						if (!p.equals(previousPoint)){
-							arcLength = 1; // just a value > 0	
-						}
-					}
-					previousPoint = p;
-
-					// do we treat this point as a node ?
-					if (!p.isTreatAsNode()) {
-						// it's not a node so go on to next point
-						continue;
-					}
-					Coord previousNode = points.get(previousNodeIndex);
-					if (p == previousNode) {
-						// this node is the same point object as the
-						// previous node - leave it for now and it
-						// will be handled later by the road loop
-						// splitter
-						previousNodeIndex = i;
-						arcLength = 0;
-						continue;
-					}
-
-					boolean mergeNodes = false;
-
-					if (p.equals(previousNode)) {
-						// nodes have identical coordinates and are
-						// candidates for being merged
-
-						// however, to avoid trashing unclosed loops
-						// (e.g. contours) we only want to merge the
-						// nodes when the length of the arc between
-						// the nodes is small
-
-						if(arcLength == 0 || arcLength < minimumArcLength)
-							mergeNodes = true;
-						else if(complainedAbout.get(way) == null) {
-							if (log.isInfoEnabled())
-								log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
-							complainedAbout.put(way, way);
-						}
-					}
-					else if(minimumArcLength > 0 && minimumArcLength > arcLength) {
-						// nodes have different coordinates but the
-						// arc length is less than minArcLength so
-						// they will be merged
-						mergeNodes = true;
-					}
-
-					if (!mergeNodes) {
-						// keep this node and go look at the next point
-						previousNodeIndex = i;
-						arcLength = 0;
-						continue;
-					}
-
-					if (previousNode.getOnBoundary() && p.getOnBoundary()) {
-						if (p.equals(previousNode)) {
-							// the previous node has identical
-							// coordinates to the current node so it
-							// can be replaced but to avoid the
-							// assertion above we need to forget that
-							// it is on the boundary
-							previousNode.setOnBoundary(false);
-						} else {
-							// both the previous node and this node
-							// are on the boundary and they don't have
-							// identical coordinates
-							if(complainedAbout.get(way) == null) {
-								if (log.isLoggable(Level.WARNING))
-									log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
-								complainedAbout.put(way, way);
-							}
-							break; // give up with this way
-						}
-					}
-
-					// reset arc length
-					arcLength = 0;
-
-					// do the merge
-					++numNodesMerged;
-					if (p.getOnBoundary()) {
-						// current point is a boundary node so we need
-						// to merge the previous node into this node
-						replacements.put(previousNode, p);
-						previousNode.setReplaced(true);
-						p.setTreatAsNode(true);
-						// remove the preceding point(s) back to and
-						// including the previous node
-						for(int j = i - 1; j >= previousNodeIndex; --j) {
-							points.remove(j);
-						}
-					} else {
-						// current point is not on a boundary so merge
-						// this node into the previous one
-						replacements.put(p, previousNode);
-						p.setReplaced(true);
-						previousNode.setTreatAsNode(true);
-						// reset previous point to be the previous
-						// node
-						previousPoint = previousNode;
-						// remove the point(s) back to the previous
-						// node
-						for (int j = i; j > previousNodeIndex; --j) {
-							points.remove(j);
-						}
-					}
-
-					// hack alert! rewind the loop index
-					i = previousNodeIndex;
-					modifiedRoads.put(way.getId(), way);
-					anotherPassRequired = true;
-				}
-			}
-		}
-		if (anotherPassRequired)
-			log.error("Removing short arcs - didn't finish in " + pass + " passes, giving up!");
-		else
-			log.info("Removing short arcs - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)");
-	}
-
-	
-	/**
 	 *	Find wrong angles caused by rounding to map units. Try 
 	 *  to fix them. 
 	 */
 	void removeWrongAngles(){
-		
-		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
-		Way fakeWay = new Way(0);
-
-		// step 1
-		Way lastWay = null;
-		for (int w = 0; w < roads.size(); w++){
-			Way way = roads.get(w);
-			if (way == null)
-				continue;
-			if (way.equals(lastWay)){
-				way.getPoints().clear();
-				way.getPoints().addAll(lastWay.getPoints());
-				continue;
-			}
-			lastWay = way;
-			if (mergeEqualPoints(way, replacements) == true){
-				// something was changed
-				if (way.getPoints().size() < 2){
-					if (log.isInfoEnabled())
-						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
-					roads.set(w, null);
-					deletedRoads.add(way.getId());
-				}
-			}
-		}
-		List<Coord> changedPlaces = new ArrayList<Coord>(); // for GPX output
+		HashSet<Coord> changedPlaces = new HashSet<Coord>();
 		boolean anotherPassRequired = true;
-		final double criticalDist = 10;
-		// step 2: find critical points
 		for (int pass = 1; pass < 10 && anotherPassRequired; pass++){
 			anotherPassRequired = false;
-			IdentityHashMap<Coord, List<Coord>> centers = new IdentityHashMap<Coord, List<Coord>>();
-			ArrayList<Coord> centerPoints = new ArrayList<Coord>(); 
+
 			// replacements maps those nodes that have been replaced to
 			// the node that replaces them
+			Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
+
+			// step 1: remove equal points in ways
+			Way lastWay = null;
+			for (int w = 0; w < roads.size(); w++){
+				Way way = roads.get(w);
+				if (way == null)
+					continue;
+				if (way.equals(lastWay)){
+					way.getPoints().clear();
+					way.getPoints().addAll(lastWay.getPoints());
+					continue;
+				}
+				lastWay = way;
+				if (mergeEqualPoints(way, replacements) == true){
+					// something was changed
+					if (way.getPoints().size() < 2){
+						if (log.isInfoEnabled())
+							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+						roads.set(w, null);
+						deletedRoads.add(way.getId());
+					}
+				}
+			}
+			changedPlaces.addAll(replacements.keySet());
+			IdentityHashMap<Coord, List<Coord>> centers = new IdentityHashMap<Coord, List<Coord>>();
+			ArrayList<Coord> centerPoints = new ArrayList<Coord>(); 
+			final double criticalDist = 10;
 			lastWay = null;
 			for (int w = 0; w < roads.size(); w++){
 				Way way = roads.get(w);
@@ -2299,7 +2054,7 @@ public class StyledConverter implements OsmConverter {
 					}
 					if (i > 0){
 						if (p.equals(prev)){
-							log.error("found equal consecutive points in pass "+ pass);
+							log.error("found equal consecutive points in pass "+ pass + " in way " + way.toBrowseURL());
 						}
 						double dist = p.distance(prev);// maybe better to use dist between displayed points ?
 						if (dist < criticalDist || lastDist < criticalDist){ 
@@ -2343,29 +2098,25 @@ public class StyledConverter implements OsmConverter {
 					center = getReplacement(center, null, replacements);
 				boolean ok = testCenter(center, neighbours, replacements);
 				if (!ok){
-					if (gpxPath != null){
-						// print lines before change
-						List<Coord> line = new ArrayList<Coord>();
-						HashSet<Coord> grid = new HashSet<Coord>();
-						grid.addAll(center.getAlternativePositions());
-						for (int i = 0; i < neighbours.size(); i++){
-							line.clear();
-							line.add(center);
-							Coord pn = neighbours.get(i);
-							if (pn.isReplaced())
-								pn = getReplacement(pn, fakeWay, replacements);
-							line.add(neighbours.get(i));
-							grid.addAll(neighbours.get(i).getAlternativePositions());
-							if (i+1 == neighbours.size()){
-								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line, new ArrayList<Coord>(grid));
-								if (grid.isEmpty()){
-									log.error("no possible solution found");
-								}
-							}
-							else 
-								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line);
-						}
-					}
+//					if (gpxPath != null){
+//						// print lines before change
+//						List<Coord> line = new ArrayList<Coord>();
+//						HashSet<Coord> grid = new HashSet<Coord>();
+//						grid.addAll(center.getAlternativePositions());
+//						for (int i = 0; i < neighbours.size(); i++){
+//							line.clear();
+//							line.add(center);
+//							Coord pn = neighbours.get(i);
+//							if (pn.isReplaced())
+//								pn = getReplacement(pn, null, replacements);
+//							line.add(neighbours.get(i));
+//							if (i+1 == neighbours.size() && grid.isEmpty() == false){
+//								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line, new ArrayList<Coord>(grid));
+//							}
+//							else 
+//								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line);
+//						}
+//					}
 					List<Coord> alternatives = center.getAlternativePositions();
 					boolean solved = false;
 					for (Coord altCenter: alternatives){
@@ -2395,19 +2146,19 @@ public class StyledConverter implements OsmConverter {
 							altCenter.incHighwayCount();
 							if (center.getHighwayCount() >= 2)
 								altCenter.incHighwayCount();
-							if (gpxPath != null){
-								// print lines after change
-								List<Coord> line = new ArrayList<Coord>();
-								for (int i = 0; i < neighbours.size(); i++){
-									line.clear();
-									line.add(altCenter);
-									Coord pn = neighbours.get(i);
-									if (pn.isReplaced())
-										pn = getReplacement(pn, fakeWay, replacements);
-									line.add(neighbours.get(i));
-									GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_m_" + i, line);
-								}
-							}
+//							if (gpxPath != null){
+//								// print lines after change
+//								List<Coord> line = new ArrayList<Coord>();
+//								for (int i = 0; i < neighbours.size(); i++){
+//									line.clear();
+//									line.add(altCenter);
+//									Coord pn = neighbours.get(i);
+//									if (pn.isReplaced())
+//										pn = getReplacement(pn, null, replacements);
+//									line.add(neighbours.get(i));
+//									GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_m_" + i, line);
+//								}
+//							}
 							solved = true;
 							break;
 						}
@@ -2431,11 +2182,11 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 			}
+			
 			lastWay = null;
 			for (Way way: roads){
 				if (way == null)
 					continue;
-
 				if (lastWay != null && lastWay.equals(way)){
 					way.getPoints().clear();
 					way.getPoints().addAll(lastWay.getPoints());
@@ -2467,7 +2218,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		if (gpxPath != null){
-			GpxCreator.createGpx(gpxPath+"changes", bbox.toCoords(), changedPlaces);
+			GpxCreator.createGpx(gpxPath+"changes", bbox.toCoords(), new ArrayList<Coord>(changedPlaces));
 		}
 	}
 
@@ -2479,16 +2230,15 @@ public class StyledConverter implements OsmConverter {
 	 * @return
 	 */
 	private boolean testCenter(Coord center, List<Coord> neighbours, Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
-		Way fakeWay = new Way(0);
 		for (int i = 1; i < neighbours.size(); i++){
 			Coord p1 = neighbours.get(i-1);
-			p1 = getReplacement(p1, fakeWay, replacements);
+			p1 = getReplacement(p1, null, replacements);
 			if (p1.isToRemove())
 				continue;
 			if (p1 == toRepl)
 				p1 = replacement;
 			Coord p2 = neighbours.get(i);
-			p2 = getReplacement(p2, fakeWay, replacements);
+			p2 = getReplacement(p2, null, replacements);
 			if (p2.isToRemove())
 				continue;
 			if (p2 == toRepl)
