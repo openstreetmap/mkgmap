@@ -2237,6 +2237,7 @@ public class StyledConverter implements OsmConverter {
 	 *  to fix them. 
 	 */
 	void removeWrongAngles(){
+		
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
 		Way fakeWay = new Way(0);
 
@@ -2262,6 +2263,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 		}
+		List<Coord> changedPlaces = new ArrayList<Coord>(); // for GPX output
 		boolean anotherPassRequired = true;
 		final double criticalDist = 10;
 		// step 2: find critical points
@@ -2303,8 +2305,6 @@ public class StyledConverter implements OsmConverter {
 						if (dist < criticalDist || lastDist < criticalDist){ 
 							for (int k = -1; k <= 0; k++){
 								p = points.get(i+k);
-								if (p.getOnBoundary())
-									continue;
 								Coord other = points.get((k==0) ? i-1:i);
 								List<Coord> list = centers.get(p);
 								if (list == null){
@@ -2426,6 +2426,8 @@ public class StyledConverter implements OsmConverter {
 					}
 					if (solved){
 						System.out.println("found correction for bad angle at " + center.toOSMURL() + " in pass " + pass);
+						if (gpxPath != null)
+							changedPlaces.add(center);
 					}
 				}
 			}
@@ -2463,6 +2465,9 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 			}
+		}
+		if (gpxPath != null){
+			GpxCreator.createGpx(gpxPath+"changes", bbox.toCoords(), changedPlaces);
 		}
 	}
 
