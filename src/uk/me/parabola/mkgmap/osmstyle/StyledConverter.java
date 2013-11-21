@@ -17,12 +17,16 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -523,6 +527,8 @@ public class StyledConverter implements OsmConverter {
 	private boolean mergeEqualPoints(Way way, Map<Coord, Coord> replacements) {
 		List<Coord> points = way.getPoints();
 		int origNumPoints = points.size();
+		if (origNumPoints < 2)
+			return false;
 		boolean closed = (points.get(0) == points.get(origNumPoints-1));
 		ArrayList<Coord> toReplace = new ArrayList<Coord>();
 		for (int i = 0; i+1  < points.size(); i++){
@@ -2008,6 +2014,8 @@ public class StyledConverter implements OsmConverter {
 				Way way = roads.get(w);
 				if (way == null)
 					continue;
+				if (pass > 1 && modifiedRoads.containsKey(way.getId()) == false)
+					continue;
 				if (way.equals(lastWay)){
 					way.getPoints().clear();
 					way.getPoints().addAll(lastWay.getPoints());
@@ -2025,9 +2033,9 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 			changedPlaces.addAll(replacements.keySet());
-			IdentityHashMap<Coord, List<Coord>> centers = new IdentityHashMap<Coord, List<Coord>>();
-			ArrayList<Coord> centerPoints = new ArrayList<Coord>(); 
-			final double criticalDist = 10;
+			Map<Coord,CenterOfAngle> centers = new LinkedHashMap<Coord, StyledConverter.CenterOfAngle>();
+			int id = 0;
+			final double criticalDist = 20; // with dist > 20 meter max. bearing error is surely < 15°  TODO: find exact formula, depends on latitude
 			lastWay = null;
 			for (int w = 0; w < roads.size(); w++){
 				Way way = roads.get(w);
@@ -2046,7 +2054,6 @@ public class StyledConverter implements OsmConverter {
 				// close together 
 				int n = points.size();
 				Coord prev = null;
-				double lastDist = Double.MAX_VALUE;
 				for (int i = 0; i < n; ++i) {
 					Coord p = points.get(i);
 					if (p.isReplaced()){
@@ -2056,130 +2063,37 @@ public class StyledConverter implements OsmConverter {
 						if (p.equals(prev)){
 							log.error("found equal consecutive points in pass "+ pass + " in way " + way.toBrowseURL());
 						}
-						double dist = p.distance(prev);// maybe better to use dist between displayed points ?
-						if (dist < criticalDist || lastDist < criticalDist){ 
-							for (int k = -1; k <= 0; k++){
-								p = points.get(i+k);
-								Coord other = points.get((k==0) ? i-1:i);
-								List<Coord> list = centers.get(p);
-								if (list == null){
-									centerPoints.add(p);
-									list = new ArrayList<Coord>(4);
-									centers.put(p, list);
+						double dist1 = p.distance(prev);// maybe better to use dist between displayed points ?
+						double dist2 = p.getDisplayedCoord().distance(prev.getDisplayedCoord());// maybe better to use dist between displayed points ?
+						if (dist1 < criticalDist || dist2 < criticalDist){ 
+							Coord p1 = prev;
+							Coord p2 = p;
+							for (int k = 0; k < 2; k++){
+								CenterOfAngle center = centers.get(p1);
+								if (center == null){
+									center = new CenterOfAngle(p1, id++);
+									centers.put(p1, center);
 								}
-								boolean isNew = true;
-								// we want only different Coord instances here
-								for (Coord co:list){
-									if (co == other){
-										isNew = false;
-										break;
-									}
-								}
-								if (isNew)
-									list.add(other);
+								center.addNeighbour(p2);
+								Coord help = p1;
+								p1 = p2;
+								p2 = help;
 							}
 						}
-						lastDist = dist;
 					}
 					prev = p;
 
 				}
 			}
-			System.out.println("Number of points with rather close neighbours (<= " + criticalDist + "m) :" + centers.size());
-			long id = 0;
+			System.out.println("Pass " + pass + ": Number of points with rather close neighbours (<= " + criticalDist + "m) :" + centers.size());
 
-			for (Coord center: centerPoints){
-				id++;
-				List<Coord> neighbours = centers.get(center);
-				if (neighbours.size() < 2){
-					continue;
-				}
-				if (center.isReplaced())
-					center = getReplacement(center, null, replacements);
-				boolean ok = testCenter(center, neighbours, replacements);
-				if (!ok){
-//					if (gpxPath != null){
-//						// print lines before change
-//						List<Coord> line = new ArrayList<Coord>();
-//						HashSet<Coord> grid = new HashSet<Coord>();
-//						grid.addAll(center.getAlternativePositions());
-//						for (int i = 0; i < neighbours.size(); i++){
-//							line.clear();
-//							line.add(center);
-//							Coord pn = neighbours.get(i);
-//							if (pn.isReplaced())
-//								pn = getReplacement(pn, null, replacements);
-//							line.add(neighbours.get(i));
-//							if (i+1 == neighbours.size() && grid.isEmpty() == false){
-//								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line, new ArrayList<Coord>(grid));
-//							}
-//							else 
-//								GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_" + i, line);
-//						}
-//					}
-					List<Coord> alternatives = center.getAlternativePositions();
-					boolean solved = false;
-					for (Coord altCenter: alternatives){
-						if (testCenter(altCenter, neighbours, replacements) == false)
-							continue;
-//						System.out.println("found possible solution");
-						boolean nice = true;
-						//test all neighbours
-						for (Coord n: neighbours){
-							List<Coord> otherNeighbours = centers.get(n);
-							if (otherNeighbours != null){
-								if (testCenter(n, otherNeighbours, replacements, center,altCenter) == false){
-//									System.out.println("not good for neighbour");
-									nice = false;
-									break;
-								}
-							}
-						}
-						if (nice){
-							// replace center here and in neighbours
-							center.setReplaced(true);
-							replacements.put(center, altCenter);
-							if (center instanceof CoordPOI){
-								altCenter = new CoordPOI(altCenter);
-								((CoordPOI) altCenter).setNode(((CoordPOI) center).getNode());
-							}
-							altCenter.incHighwayCount();
-							if (center.getHighwayCount() >= 2)
-								altCenter.incHighwayCount();
-//							if (gpxPath != null){
-//								// print lines after change
-//								List<Coord> line = new ArrayList<Coord>();
-//								for (int i = 0; i < neighbours.size(); i++){
-//									line.clear();
-//									line.add(altCenter);
-//									Coord pn = neighbours.get(i);
-//									if (pn.isReplaced())
-//										pn = getReplacement(pn, null, replacements);
-//									line.add(neighbours.get(i));
-//									GpxCreator.createGpx(gpxPath + pass + "_" + id+ "_m_" + i, line);
-//								}
-//							}
-							solved = true;
-							break;
-						}
-					}
-					if (solved == false){
-						if (center.getHighwayCount() < 2){
-							if (center instanceof CoordPOI){
-								log.debug("cannot fix wrong angle at coord poi " + center.toOSMURL());
-							} else {
-								center.setRemove(true);
-								solved = true;
-							}
-						} else {
-							//						System.out.println("found no alternative pos for center id " + id);
-						}
-					}
-					if (solved){
-						System.out.println("found correction for bad angle at " + center.toOSMURL() + " in pass " + pass);
-						if (gpxPath != null)
-							changedPlaces.add(center);
-					}
+			int travelId = 0;
+			Iterator<Entry<Coord, CenterOfAngle>> iter = centers.entrySet().iterator();
+			while (iter.hasNext()){
+				Entry<Coord, CenterOfAngle> entry = iter.next();
+				CenterOfAngle coa = entry.getValue();
+				if (coa.isOK(replacements) == false) {
+					coa.tryChange(travelId++, 0, replacements, centers);
 				}
 			}
 			
@@ -2199,6 +2113,7 @@ public class StyledConverter implements OsmConverter {
 					if (p.isToRemove()){
 						points.remove(i);
 						anotherPassRequired = true;
+						modifiedRoads.put(way.getId(), way);
 						i--;
 						continue;
 					}
@@ -2216,49 +2131,239 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 			}
+			if (gpxPath != null && anotherPassRequired == false){
+				List<Coord> badAngles = new ArrayList<Coord>();
+				int badId = 0;
+				for (Entry<Coord, CenterOfAngle> entry : centers.entrySet()){
+					badId++;
+					if (entry.getValue().isOK(replacements) == false){
+						badAngles.add(entry.getKey());
+						entry.getValue().createGPX(gpxPath + "bad_" + badId, replacements);
+					}
+				}
+				GpxCreator.createGpx(gpxPath+"unsolved_badAngles", bbox.toCoords(), new ArrayList<Coord>(badAngles));
+				
+			}
 		}
 		if (gpxPath != null){
-			GpxCreator.createGpx(gpxPath+"changes", bbox.toCoords(), new ArrayList<Coord>(changedPlaces));
+			GpxCreator.createGpx(gpxPath+"solved_badAngles", bbox.toCoords(), new ArrayList<Coord>(changedPlaces));
 		}
 	}
 
 	/**
-	 * return true if no rounding problems at this center
-	 * @param center
-	 * @param neighbours
-	 * @param replacements 
-	 * @return
+	 * helper class
 	 */
-	private boolean testCenter(Coord center, List<Coord> neighbours, Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
-		for (int i = 1; i < neighbours.size(); i++){
-			Coord p1 = neighbours.get(i-1);
-			p1 = getReplacement(p1, null, replacements);
-			if (p1.isToRemove())
-				continue;
-			if (p1 == toRepl)
-				p1 = replacement;
-			Coord p2 = neighbours.get(i);
-			p2 = getReplacement(p2, null, replacements);
-			if (p2.isToRemove())
-				continue;
-			if (p2 == toRepl)
-				p2 = replacement;
-			if (p1.equals(center) || p2.equals(center)){
-				return false;
+	private class CenterOfAngle{
+		final Coord center;
+		final List<Coord> neighbours;
+		boolean allowMerge = false;
+		final int id;
+		int visitedWithTravelId = -1;
+		final static int MAX_BEARING_ERR = 15;
+		public CenterOfAngle(Coord center, int id) {
+			this.center = center;
+			if (center.isReplaced()){
+				long dd = 4;
 			}
-			double a1 = Utils.getAngle(p1, center, p2);
-			double a2 = Utils.getDisplayedAngle(p1, center, p2);
-			double err = Math.abs(a1-a2);
-			if (err > 30){ 
-				//TODO: 30 seems to be a good value. Maybe use argument ? Maybe try to find smallest possible error?
-				return false;
-			}
+			this.id = id;
+			neighbours = new ArrayList<Coord>(4);
 		}
-		return  true;
-	}
-	
-	private boolean testCenter(Coord center, List<Coord> neighbours, Map<Coord, Coord> replacements){
-		return testCenter(center, neighbours, replacements, null,null);
+		@Override
+		public int hashCode() {
+			return center.hashCode();
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			return center == ((CenterOfAngle)obj).center;
+		}
+		
+		void addNeighbour(Coord p){
+			boolean isNew = true;
+			// we want only different Coord instances here
+			for (Coord co: neighbours){
+				if (co == p){
+					isNew = false;
+					break;
+				}
+			}
+			if (isNew)
+				neighbours.add(p);
+		}
+		boolean isOK(Map<Coord, Coord> replacements){
+			double err = calcMaxError(replacements, null,null);
+			return err < MAX_BEARING_ERR;
+		}
+
+		private boolean testChange(Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
+			if (center.getOnBoundary())
+				return false;
+			double maxErrTest = calcMaxError(replacements, toRepl, replacement);
+			if (maxErrTest == Double.MAX_VALUE)
+				return false;
+			if (maxErrTest >= MAX_BEARING_ERR){
+				if (toRepl == null)
+					return false;
+				double maxErrAsIs = calcMaxError(replacements, null,null);
+				if (maxErrAsIs < maxErrTest) 
+					return false;
+			}
+			return  true;
+		}
+
+		private double calcMaxError (Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
+			double maxErr = 0;
+			for (Coord n : neighbours) {
+				double err = calcError(n,replacements, toRepl, replacement);
+				if (err > maxErr)
+					maxErr = err;
+				if (err >= MAX_BEARING_ERR){
+//					double dist = n.distance(center);
+//					if (dist > 13)
+//						log.error("visible bearing error " + id + " " + err  + " dist:" + dist);
+				}
+				if (maxErr == Double.MAX_VALUE)
+					break;
+			}			
+			return maxErr;
+		}
+		private double calcError (Coord neighbour, Map<Coord, Coord> replacements, Coord toRepl, Coord replacement){
+			Coord c = getReplacement(center, null, replacements);
+			double realBbearing = c.bearingTo(neighbour);
+			Coord n1 = getReplacement(neighbour, null, replacements);
+			if (toRepl != null){
+				if (n1 == toRepl)
+					n1 = replacement;
+				if (c == toRepl)
+					c = replacement;
+				if (c.equals(n1)){
+					if (allowMerge == false)
+						return Double.MAX_VALUE;
+				}
+			}
+			double dsplBearing = c.getDisplayedCoord().bearingTo(n1.getDisplayedCoord());
+			double angle = dsplBearing - realBbearing;
+			while (angle > 180)
+				angle -= 360;
+			while (angle < -180)
+				angle += 360;
+			return Math.abs(angle);  
+		}
+		
+		boolean testRemove(Map<Coord, Coord> replacements){
+			if (center.getOnBoundary() || center.getHighwayCount() >= 2 || center instanceof CoordPOI)
+				return false;
+			for (int i = 0; i + 1 < neighbours.size(); i++) {
+				Coord n0 = neighbours.get(i);
+				Coord n1 = neighbours.get(i+1);
+				double d0 = n0.distance(center);
+				double d1 = n1.distance(center);
+				if (d0 < d1){
+					Coord help = n0;
+					n0 = n1;
+					n1 = help;
+				}
+				if (Utils.getAngle(n0, center, n1) < 15)
+					continue;
+				double b0c =  n0.bearingTo(center);
+				double b01 = n0.bearingTo(n1);
+				if (Math.abs(b0c-b01) > 15)
+					return false;
+			}
+			return true;
+		}
+		
+		void createGPX(String gpxName, Map<Coord, Coord> replacements){
+			if (gpxName == null)
+				return;
+			// print lines after change
+			Coord c = getReplacement(center, null, replacements);
+			for (int i = 0; i < neighbours.size(); i++){
+				Coord pn = neighbours.get(i);
+				pn = getReplacement(pn, null, replacements);
+				List<Coord> alternatives = c.getAlternativePositions();
+				if (alternatives.isEmpty())
+					GpxCreator.createGpx(gpxName+"_"+i, Arrays.asList(c,pn));
+				else 
+					GpxCreator.createGpx(gpxName+"_"+i, Arrays.asList(c,pn), alternatives);
+			}
+			
+		}
+		
+		/**
+		 * 
+		 * @param travelId
+		 * @param depth
+		 * @param replacements
+		 * @param centers
+		 * @return
+		 */
+		boolean tryChange(int travelId, int depth, Map<Coord, Coord> replacements, Map<Coord,CenterOfAngle> centers){
+			visitedWithTravelId = travelId;
+			if (center.isReplaced() == false){
+				List<Coord> alternatives = center.getAlternativePositions();
+				if (gpxPath != null){
+					// print lines before change
+					//				this.createGPX(gpxPath + id + "_" + travelId, replacements);
+				}
+				for (Coord altCenter: alternatives){
+					if (this.testChange(replacements, center, altCenter) == false)
+						continue;
+					boolean nice = true;
+					//test effect of change on all neighbours
+					for (Coord n: this.neighbours){
+						CenterOfAngle neighbourCenter = centers.get(n);
+						if (neighbourCenter != null){
+							if (neighbourCenter.testChange(replacements, center, altCenter) == false){
+								nice = false;
+								break;
+							}
+						}
+					}
+					if (nice){
+						// store better position as replacement 
+						center.setReplaced(true);
+						if (center instanceof CoordPOI){
+							altCenter = new CoordPOI(altCenter);
+							((CoordPOI) altCenter).setNode(((CoordPOI) center).getNode());
+						}
+						replacements.put(center, altCenter);
+						altCenter.incHighwayCount();
+						if (center.getHighwayCount() >= 2)
+							altCenter.incHighwayCount();
+						if (gpxPath != null){
+							//						this.createGPX(gpxPath + id + "_m_" + travelId, replacements);
+						}
+						return true;
+					}
+				}
+				if (testRemove(replacements)){
+					center.setRemove(true); 
+					return true;
+				}
+			} 
+			// try if we can change a neighbour
+			for (Coord n: this.neighbours){
+				if (calcError(n, replacements, null, null) < MAX_BEARING_ERR)
+					continue;
+				CenterOfAngle neighbourCenter = centers.get(n);
+				if (neighbourCenter != null && neighbourCenter.visitedWithTravelId != travelId){
+					boolean changed = neighbourCenter.tryChange(travelId, depth+1, replacements, centers);
+					if (changed && isOK(replacements)){
+						if (center.isReplaced()){
+							log.error("check me: found solution in neighbour " + neighbourCenter.id + " for already replaced center " + id);
+							createGPX(gpxPath+id+ "_checkme", replacements);
+							neighbourCenter.createGPX(gpxPath+neighbourCenter.id+ "_checkme", replacements);
+						}
+						return true;
+					}
+				}
+			}
+			return false;
+			
+		}
 	}
 }
-
