@@ -327,15 +327,15 @@ public class Coord implements Comparable<Coord> {
 
 	public String toDegreeString() {
 		return String.format(Locale.ENGLISH, "%.5f/%.5f",
-			Utils.toDegrees(latitude),
-			Utils.toDegrees(longitude)).toString();
+			getLatDegrees(),
+			getLonDegrees());
 	}
 
 	protected String toOSMURL(int zoom) {
 		return ("http://www.openstreetmap.org/?mlat=" +
-				String.format(Locale.ENGLISH, "%.5f", Utils.toDegrees(latitude)) +
+				String.format(Locale.ENGLISH, "%.6f", getLatDegrees()) +
 				"&mlon=" +
-				String.format(Locale.ENGLISH, "%.5f", Utils.toDegrees(longitude)) +
+				String.format(Locale.ENGLISH, "%.6f", getLonDegrees()) +
 				"&zoom=" +
 				zoom);
 	}
