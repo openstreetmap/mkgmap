@@ -1996,7 +1996,7 @@ public class StyledConverter implements OsmConverter {
 	
 	/**
 	 *	Find wrong angles caused by rounding to map units. Try 
-	 *  to fix them. 
+	 *  to fix them by moving, removing or merging points.
 	 */
 	void removeWrongAngles(){
 		HashSet<Coord> changedPlaces = new HashSet<Coord>();
@@ -2063,9 +2063,12 @@ public class StyledConverter implements OsmConverter {
 						if (p.equals(prev)){
 							log.error("found equal consecutive points in pass "+ pass + " in way " + way.toBrowseURL());
 						}
-						double dist1 = p.distance(prev);// maybe better to use dist between displayed points ?
-						double dist2 = p.getDisplayedCoord().distance(prev.getDisplayedCoord());// maybe better to use dist between displayed points ?
-						if (dist1 < criticalDist || dist2 < criticalDist){ 
+						double dist1 = p.distance(prev);
+						double dist2 = p.getDisplayedCoord().distance(prev.getDisplayedCoord());
+						if (dist1 < criticalDist || dist2 < criticalDist){
+							// real or displayed distance allows that the bearing error is big,
+							// save both points with its neighbour
+							// TODO: if both points are have highwaycount <= 1, handle right here to avoid centers growing too much?
 							Coord p1 = prev;
 							Coord p2 = p;
 							for (int k = 0; k < 2; k++){
@@ -2097,6 +2100,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 			
+			// apply the calculated corrections to the roads
 			lastWay = null;
 			for (Way way: roads){
 				if (way == null)
@@ -2108,13 +2112,13 @@ public class StyledConverter implements OsmConverter {
 				}
 				lastWay = way;
 				List<Coord> points = way.getPoints();
-				for (int i = 0; i < points.size(); i++){
+				// loop backwards because we may delete points
+				for (int i = points.size()-1; i >= 0; i--){
 					Coord p = points.get(i);
 					if (p.isToRemove()){
 						points.remove(i);
 						anotherPassRequired = true;
 						modifiedRoads.put(way.getId(), way);
-						i--;
 						continue;
 					}
 					// check if this point is to be replaced because
@@ -2275,9 +2279,9 @@ public class StyledConverter implements OsmConverter {
 			}
 			return true;
 		}
-		
+		// TODO: remove this debugging aid
 		void createGPX(String gpxName, Map<Coord, Coord> replacements){
-			if (gpxName == null)
+			if (gpxName == null || gpxPath == null)
 				return;
 			// print lines after change
 			Coord c = getReplacement(center, null, replacements);
@@ -2312,18 +2316,19 @@ public class StyledConverter implements OsmConverter {
 				for (Coord altCenter: alternatives){
 					if (this.testChange(replacements, center, altCenter) == false)
 						continue;
-					boolean nice = true;
+					boolean isBetter = true;
 					//test effect of change on all neighbours
 					for (Coord n: this.neighbours){
 						CenterOfAngle neighbourCenter = centers.get(n);
 						if (neighbourCenter != null){
 							if (neighbourCenter.testChange(replacements, center, altCenter) == false){
-								nice = false;
+								// neighbour would be changed to the worse  
+								isBetter = false;
 								break;
 							}
 						}
 					}
-					if (nice){
+					if (isBetter){
 						// store better position as replacement 
 						center.setReplaced(true);
 						if (center instanceof CoordPOI){
@@ -2352,13 +2357,14 @@ public class StyledConverter implements OsmConverter {
 				CenterOfAngle neighbourCenter = centers.get(n);
 				if (neighbourCenter != null && neighbourCenter.visitedWithTravelId != travelId){
 					boolean changed = neighbourCenter.tryChange(travelId, depth+1, replacements, centers);
-					if (changed && isOK(replacements)){
-						if (center.isReplaced()){
-							log.error("check me: found solution in neighbour " + neighbourCenter.id + " for already replaced center " + id);
-							createGPX(gpxPath+id+ "_checkme", replacements);
-							neighbourCenter.createGPX(gpxPath+neighbourCenter.id+ "_checkme", replacements);
+					if (changed){
+						if (isOK(replacements)){
+							if (center.isReplaced()){
+								log.info("found solution in neighbour " + neighbourCenter.id + " for already replaced center " + id);
+							}
+							return true;
 						}
-						return true;
+						System.out.println("change of neighbour " + neighbourCenter.id + " did not yet fix wrong angle in " + id);
 					}
 				}
 			}
