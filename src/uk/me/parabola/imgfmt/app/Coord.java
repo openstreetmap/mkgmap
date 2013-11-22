@@ -43,6 +43,7 @@ public class Coord implements Comparable<Coord> {
 	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
 	private final static byte REMOVE_MASK = 0x20; // bit in flags is true if this point should be removed
 	
+	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
 	private final int latitude;
@@ -51,6 +52,7 @@ public class Coord implements Comparable<Coord> {
 	private byte flags; // further attributes
 	private final byte latDelta; // delta to 30 bit lat value 
 	private final byte lonDelta; // delta to 30 bit lon value
+	private final static byte MAX_DELTA = 16; // max delta abs value that is considered okay 
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -405,7 +407,10 @@ public class Coord implements Comparable<Coord> {
 	public Coord getDisplayedCoord(){
 		return new Coord(latitude,longitude);
 	}
-	
+
+	public boolean hasAlternativePos(){
+		return (Math.abs(latDelta) > MAX_DELTA || Math.abs(lonDelta) > MAX_DELTA);
+	}
 	/**
 	 * Calculate up to three points with equal 
 	 * high precision coordinate, but
@@ -421,13 +426,13 @@ public class Coord implements Comparable<Coord> {
 		
 		int modLat = latitude;
 		int modLon = longitude;
-		if (latDelta > 16)
+		if (latDelta > MAX_DELTA)
 			modLat--;
-		else if (latDelta < -16)
+		else if (latDelta < -MAX_DELTA)
 			modLat++;
-		if (lonDelta > 16)
+		if (lonDelta > MAX_DELTA)
 			modLon--;
-		else if (lonDelta < -16)
+		else if (lonDelta < -MAX_DELTA)
 			modLon++;
 		int lat30 = getHighPrecLat();
 		int lon30 = getHighPrecLon();
