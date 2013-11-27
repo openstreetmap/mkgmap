@@ -132,7 +132,6 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
 	private final boolean linkPOIsToWays;
-	private final CompatibilityHandler compatHandler;
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -174,11 +173,6 @@ public class StyledConverter implements OsmConverter {
 					" This is no longer recommended for a routable map.");
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
-		
-		if (props.getProperty("old-style", false))
-			compatHandler = new CompatibilityHandler();
-		else
-			compatHandler = null;
 	}
 
 	/** One type result for ways to avoid recreating one for each way. */ 
@@ -319,10 +313,6 @@ public class StyledConverter implements OsmConverter {
 //			el.setName(type.getDefaultName());
 		if (type.getDefaultName() != null && el.getName() == null)
 			el.addTag("mkgmap:label:1", type.getDefaultName());
-		
-		if (compatHandler != null) {
-			compatHandler.performCompatHandling(el, type);
-		}
 		
 		if (el instanceof Way && type.isRoad()) {
 			Way way = (Way) el;
