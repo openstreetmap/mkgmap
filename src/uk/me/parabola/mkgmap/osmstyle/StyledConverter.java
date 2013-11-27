@@ -700,12 +700,7 @@ public class StyledConverter implements OsmConverter {
 			if (label != null) {
 				labels[noLabels] = label;
 				noLabels++;
-			} else if (labelNo == 1){
-				System.err.println(labelNo+" "+element.getTag("mkgmap:label:"+labelNo)+" "+label1+" "+label+" "+element.toTagString());
-			}
-		}
-		if (element.getId() == 28873483) {
-		System.err.println(element.getId()+" "+ms.hashCode()+ " Labels: "+Arrays.toString(labels)+" El: "+element.toTagString());
+			} 
 		}
 
 		if (labels[0] != null) {
