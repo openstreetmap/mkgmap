@@ -355,6 +355,7 @@ public class StyledConverter implements OsmConverter {
 		filterCoordPOI();
 //		gpxPath = null;
 		removeWrongAngles();
+		removeObsoletePoints();
 		// make sure that copies of modified roads are have equal points
 		for (int i = 0; i < lines.size(); i++) {
 			Way line = lines.get(i);
@@ -2258,6 +2259,8 @@ public class StyledConverter implements OsmConverter {
 						bbox.toCoords(), new ArrayList<Coord>(badAngles));
 			}
 		}
+		
+		
 		if (gpxPath != null) {
 			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
 					new ArrayList<Coord>(changedPlaces));
@@ -2268,6 +2271,49 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	/** 
+	 * remove obsolete points in roads
+	 */
+	void removeObsoletePoints(){
+		Way lastWay = null;
+		List<Coord> obsoletePoints = new ArrayList<Coord>();
+		for (int w = 0; w < roads.size(); w++) {
+			Way way = roads.get(w);
+			if (way == null)
+				continue;
+			if (way.equals(lastWay)) {
+				way.getPoints().clear();
+				way.getPoints().addAll(lastWay.getPoints());
+				continue;
+			}
+			lastWay = way;
+			List<Coord> points = way.getPoints();
+
+			// scan through the way's points looking for points which are
+			// on straight line
+			for (int i = points.size() - 2; i >= 1; --i) {
+				Coord cm = points.get(i);
+				if (cm.getHighwayCount() >= 2 || cm.getOnBoundary() || cm instanceof CoordPOI)
+					continue;
+				Coord c1 = points.get(i-1);
+				Coord c2 = points.get(i+1);
+				double angle = Utils.getAngle(c1, cm, c2);
+				if (Math.abs(angle) < 3){ // parameter for the value?
+//					System.out.println(way.getId() + " " + i + " " + angle);
+					if (log.isDebugEnabled())
+						log.info("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
+					if (gpxPath != null){
+						obsoletePoints.add(cm);
+					}
+					points.remove(i);
+				}
+			}
+			
+		}
+		GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
+				new ArrayList<Coord>(obsoletePoints));
+
+	}
 	/**
 	 * helper class
 	 */
