@@ -244,6 +244,7 @@ public class Utils {
 		
 		return angle;
 	}
+	
 	/**
 	 * Calculates the angle between the two segments (c1,c2),(c2,c3)
 	 * using the coords in map units.
@@ -255,6 +256,7 @@ public class Utils {
 	public static double getDisplayedAngle(Coord c1, Coord c2, Coord c3) {
 		return getAngle(c1.getDisplayedCoord(), c2.getDisplayedCoord(), c3.getDisplayedCoord());
 	}
+
 	public final static int NOT_STRAIGHT = 0;
 	public final static int STRAIGHT_SPIKE = 1;
 	public final static int STRICTLY_STRAIGHT = 2;
@@ -293,5 +295,24 @@ public class Utils {
 		return NOT_STRAIGHT;
 		
 	}
+
+	/**
+	 * Calculate the angle between the real line and the displayed line
+	 * between two coordinates.
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @return absolute difference between the two lines in degree [0;180]
+	 */
+	public static double calcBearingError(Coord c1, Coord c2){
+		double realBearing = c1.bearingTo(c2);
+		double displayedBearing = c1.getDisplayedCoord().bearingTo(c2.getDisplayedCoord());
+		double err = displayedBearing - realBearing;
+		while(err > 180)
+			err -= 360;
+		while(err < -180)
+			err += 360;
+		return Math.abs(err);
+	}
+	
 }
 

@@ -409,6 +409,8 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public boolean hasAlternativePos(){
+		if (getOnBoundary())
+			return false;
 		return (Math.abs(latDelta) > MAX_DELTA || Math.abs(lonDelta) > MAX_DELTA);
 	}
 	/**
