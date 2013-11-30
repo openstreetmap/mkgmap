@@ -105,6 +105,7 @@ public class StyledConverter implements OsmConverter {
 
 	// TODO: remove debugging aids
 	private final HashSet<Coord> removedPoints = new LinkedHashSet<Coord>();
+	private final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
 
 	private List<Way> roads = new ArrayList<Way>();
 	private List<GType> roadTypes = new ArrayList<GType>();
@@ -588,9 +589,7 @@ public class StyledConverter implements OsmConverter {
 		double lineLength = 0;
 		Coord lastP = null;
 		for (Coord p : wayPoints) {
-			if (lastP != null && p.equals(lastP)
-					&& p instanceof CoordPOI == false
-					&& p instanceof CoordNode == false)
+			if (lastP != null && p.equals(lastP))
 				continue;
 			points.add(p);
 			if (lastP != null) {
@@ -856,21 +855,20 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		checkRoundabout(way);
-
+		String wayPOI = way.getTag(WAY_POI_NODE_IDS);
 		// process any Coords that have a POI associated with them
-		if ("true".equals(way.getTag("mkgmap:way-has-pois"))) {
+		if (wayPOI != null) {
 			List<Coord> points = way.getPoints();
-
+			
 			// look for POIs that modify the way's road class or speed
 			// this could be e.g. highway=traffic_signals that reduces the
 			// road speed to cause a short increase of traveling time
 			for (int i = 0; i < points.size(); ++i) {
 				Coord p = points.get(i);
-				if (p instanceof CoordPOI) {
+				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
-					if ("true".equals(node.getTag("mkgmap:use-poi-in-way-"
-							+ way.getId()))) {
+					if (wayPOI.contains("["+node.getId()+"]")){
 						String roadClass = node.getTag("mkgmap:road-class");
 						String roadSpeed = node.getTag("mkgmap:road-speed");
 						if (roadClass != null || roadSpeed != null) {
@@ -920,8 +918,7 @@ public class StyledConverter implements OsmConverter {
 						&& points.get(i + 1) instanceof CoordPOI) {
 					CoordPOI cp = (CoordPOI) points.get(i + 1);
 					Node node = cp.getNode();
-					if ("true".equals(node.getTag("mkgmap:use-poi-in-way-"
-							+ way.getId()))) {
+					if (cp.isUsed() && wayPOI.contains("["+node.getId()+"]")){
 						if (node.getTag("mkgmap:road-class") != null
 								|| node.getTag("mkgmap:road-speed") != null) {
 							if (safeToSplitWay(points, i, i - 1,
@@ -950,13 +947,10 @@ public class StyledConverter implements OsmConverter {
 				// check if this POI modifies access and if so, split
 				// the way at the following point (if any) and then
 				// copy its access restrictions to the way
-				if (p instanceof CoordPOI) {
+				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
-					if (node.getTag("access") != null
-							&& "true".equals(node
-									.getTag("mkgmap:use-poi-in-way-"
-											+ way.getId()))) {
+					if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
 						// if this or the next point are not the last
 						// points in the way, split at the next point
 						// taking care not to produce a short arc
@@ -1026,13 +1020,10 @@ public class StyledConverter implements OsmConverter {
 				// short arc
 				if ((i + 1) < points.size()) {
 					Coord p1 = points.get(i + 1);
-					if (p1 instanceof CoordPOI) {
+					if (p1 instanceof CoordPOI && ((CoordPOI) p1).isUsed()) {
 						CoordPOI cp = (CoordPOI) p1;
 						Node node = cp.getNode();
-						if (node.getTag("access") != null
-								&& "true".equals(node
-										.getTag("mkgmap:use-poi-in-way-"
-												+ way.getId()))) {
+						if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
 							// check if this point is further away
 							// from the POI than we would like
 							double dist = p.distance(p1);
@@ -1934,17 +1925,17 @@ public class StyledConverter implements OsmConverter {
 
 	/**
 	 * Make sure that only CoordPOI which affect routing will be treated as
-	 * nodes in the short-arc-removal- and split routines.
+	 * nodes in the following routines.
 	 */
 	private void filterCoordPOI() {
 		if (!linkPOIsToWays)
 			return;
-		log.info("Removing unused CoordPOI");
+		log.info("translating CoordPOI");
 		for (Way way : roads) {
 			if (way == null)
 				continue;
 			if ("true".equals(way.getTag("mkgmap:way-has-pois"))) {
-				boolean stillHasPOIs = false;
+				String wayPOI = "";
 				boolean isFootWay = isFootOnlyAccess(way);
 				// check if the way is for pedestrians only
 				List<Coord> points = way.getPoints();
@@ -1954,35 +1945,24 @@ public class StyledConverter implements OsmConverter {
 					if (p instanceof CoordPOI) {
 						CoordPOI cp = (CoordPOI) p;
 						Node node = cp.getNode();
-						boolean isUsableInThisWay = false;
 						if (!isFootWay) {
 							if (node.getTag("access") != null
 									|| node.getTag("mkgmap:road-class") != null
 									|| node.getTag("mkgmap:road-speed") != null) {
-								isUsableInThisWay = true;
+								wayPOI += "["+ node.getId()+"]"; 
+								cp.setUsed(true);
 							}
-						}
-						if (!isUsableInThisWay && p.getHighwayCount() < 2) {
-							// replace this CoordPoi with a normal coord to
-							// avoid merging
-							Coord replacement = new Coord(p);
-							replacement.incHighwayCount();
-							replacement.setFixme(p.isFixme());
-							points.set(i, replacement);
-							continue;
-						}
-						if (isUsableInThisWay) {
-							node.addTag("mkgmap:use-poi-in-way-" + way.getId(),
-									"true");
-							stillHasPOIs = true;
 						}
 					}
 				}
-				if (!stillHasPOIs) {
+				if (wayPOI.isEmpty()) {
 					way.deleteTag("mkgmap:way-has-pois");
 					log.info("ignoring CoordPOI(s) for way "
 							+ way.toBrowseURL()
 							+ " because routing is not affected.");
+				}
+				else {
+					way.addTag(WAY_POI_NODE_IDS, wayPOI);
 				}
 			}
 		}
@@ -2014,20 +1994,20 @@ public class StyledConverter implements OsmConverter {
 			if (replacement != null) {
 				assert !p.getOnBoundary() : "Boundary node replaced";
 				if (p instanceof CoordPOI) {
-					Node node = ((CoordPOI) p).getNode();
-					if (way != null && way.getId() != 0) {
-						if ("true".equals(node.getTag("mkgmap:use-poi-in-way-"
-								+ way.getId()))) {
+					CoordPOI cp = (CoordPOI) p;
+					Node node = cp.getNode();
+					if (cp.isUsed() && way != null && way.getId() != 0) {
+						String wayPOI = way.getTag(WAY_POI_NODE_IDS);
+						if (wayPOI != null && wayPOI.contains("["+node.getId()+"]")){
 							if (replacement instanceof CoordPOI) {
 								Node rNode = ((CoordPOI) replacement).getNode();
 								if (rNode.getId() != node.getId()) {
-									if ("true".equals(rNode
-											.getTag("mkgmap:use-poi-in-way-"
-													+ way.getId())))
+									if (wayPOI.contains("["+ rNode.getId() + "]")){
 										log.warn("CoordPOI", node.getId(),
 												"replaced by CoordPOI",
 												rNode.getId(), "in way",
 												way.toBrowseURL());
+									}
 									else
 										log.warn("CoordPOI", node.getId(),
 												"replaced by ignored CoordPOI",
@@ -2082,7 +2062,6 @@ public class StyledConverter implements OsmConverter {
 					continue;
 				if (way.equals(lastWay)) {
 					if (lastWayModified){
-						//TODO: handle the case that ways with equal ids have different CoordPOI  
 						way.getPoints().clear();
 						way.getPoints().addAll(lastWay.getPoints());
 					}
@@ -2096,9 +2075,6 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 				List<Coord> points = way.getPoints();
-if (way.getId() == 9604469){
-	long dd = 4;
-}
 				// scan through the way's points looking for points which are
 				// close together
 				Coord prev = null;
@@ -2310,7 +2286,7 @@ if (way.getId() == 9604469){
 			// on almost straight line and therefore obsolete
 			for (int i = points.size() - 2; i >= 1; --i) {
 				Coord cm = points.get(i);
-				if (cm.getHighwayCount() >= 2 || cm.getOnBoundary() || cm instanceof CoordPOI)
+				if (allowedToRemove(cm) == false)
 					continue;
 				Coord c1 = points.get(i-1);
 				Coord c2 = points.get(i+1);
@@ -2347,6 +2323,16 @@ if (way.getId() == 9604469){
 			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
 					new ArrayList<Coord>(obsoletePoints));
 		}
+	}
+	
+	static boolean allowedToRemove(Coord p){
+		if (p instanceof CoordPOI){
+			if (((CoordPOI) p).isUsed())
+				return false;
+		}
+		if (p.getHighwayCount() >= 2 || p.getOnBoundary())
+			return false;
+		return true;
 	}
 	/**
 	 * helper class
@@ -2743,8 +2729,7 @@ if (way.getId() == 9604469){
 		private boolean testRemove(Map<Coord, Coord> replacements,
 				boolean noBetterAltFound) {
 			assert center.isReplaced() == false;
-			if (center.getOnBoundary() || center.getHighwayCount() >= 2
-					|| center instanceof CoordPOI)
+			if (allowedToRemove(center) == false)
 				return false;
 			boolean specialCaseFound = false;
 			for (int i = 0; i + 1 < neighbours.size(); i++) {
@@ -2940,7 +2925,7 @@ if (way.getId() == 9604469){
 				Map<Coord, Coord> replacements) {
 			assert center != altCenter;
 			center.setReplaced(true);
-			if (center instanceof CoordPOI) {
+			if (center instanceof CoordPOI && ((CoordPOI) center).isUsed()) {
 				altCenter = new CoordPOI(altCenter);
 				((CoordPOI) altCenter).setNode(((CoordPOI) center).getNode());
 			}
