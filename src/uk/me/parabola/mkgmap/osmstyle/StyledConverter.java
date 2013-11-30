@@ -2074,34 +2074,40 @@ public class StyledConverter implements OsmConverter {
 			int id = 0;
 			final double uncriticalDist = 50; // ignore points which are far
 												// away for bearing tests
-			long countPoints = 0;
 			lastWay = null;
+			boolean lastWayModified = false;
 			for (int w = 0; w < roads.size(); w++) {
 				Way way = roads.get(w);
 				if (way == null)
 					continue;
 				if (way.equals(lastWay)) {
-					way.getPoints().clear();
-					way.getPoints().addAll(lastWay.getPoints());
+					if (lastWayModified){
+						//TODO: handle the case that ways with equal ids have different CoordPOI  
+						way.getPoints().clear();
+						way.getPoints().addAll(lastWay.getPoints());
+					}
 					continue;
 				}
 				lastWay = way;
+				lastWayModified = false;
 				if (pass == 1 && gpxPath != null) {
 					if ("roundabout".equals(way.getTag("junction"))) {
 						roundabouts.add(way.getCofG());
 					}
 				}
 				List<Coord> points = way.getPoints();
-
+if (way.getId() == 9604469){
+	long dd = 4;
+}
 				// scan through the way's points looking for points which are
 				// close together
 				Coord prev = null;
 				for (int i = 0; i < points.size() - 1; ++i) {
 					Coord p = points.get(i);
-					++countPoints;
 					if (i > 0) {
 						if (p == prev) {
 							modifiedRoads.put(way.getId(), way);
+							lastWayModified = true;
 							points.remove(i);
 							i--;
 							continue;
@@ -2119,9 +2125,6 @@ public class StyledConverter implements OsmConverter {
 							// save both points with its neighbour
 							Coord p1 = prev;
 							Coord p2 = p;
-							if (way.getId() == 120341008 && i < 5) {
-								long dd = 4;
-							}
 							CenterOfAngle oc = null;
 							for (int k = 0; k < 2; k++) {
 								CenterOfAngle center = centerMap.get(p1);
@@ -2155,10 +2158,6 @@ public class StyledConverter implements OsmConverter {
 
 				}
 			}
-			// System.out.println("Pass " + pass +
-			// ": Number of points with rather close neighbours (<= " +
-			// uncriticalDist + "m) :" + centers.size() + " of " + countPoints +
-			// " point references");
 			List<CenterOfAngle> checkAgainList = new ArrayList<CenterOfAngle>();
 			for (CenterOfAngle coa : centers) {
 				if (coa.center.isToRemove())
@@ -2174,15 +2173,19 @@ public class StyledConverter implements OsmConverter {
 
 			// apply the calculated corrections to the roads
 			lastWay = null;
+			lastWayModified = false;
 			for (Way way : roads) {
 				if (way == null)
 					continue;
-				if (lastWay != null && lastWay.equals(way)) {
-					way.getPoints().clear();
-					way.getPoints().addAll(lastWay.getPoints());
+				if (way.equals(lastWay)) {
+					if (lastWayModified){
+						way.getPoints().clear();
+						way.getPoints().addAll(lastWay.getPoints());
+					}
 					continue;
 				}
 				lastWay = way;
+				lastWayModified = false;
 				List<Coord> points = way.getPoints();
 				// loop backwards because we may delete points
 				for (int i = points.size() - 1; i >= 0; i--) {
@@ -2191,6 +2194,7 @@ public class StyledConverter implements OsmConverter {
 					if (p.isToRemove()) {
 						points.remove(i);
 						anotherPassRequired = true;
+						lastWayModified = true;
 						modifiedRoads.put(way.getId(), way);
 						if (i > 0 && i < points.size()) {
 							// special case: handle micro loop
@@ -2207,6 +2211,7 @@ public class StyledConverter implements OsmConverter {
 							p = replacement;
 							// replace point in way
 							points.set(i, p);
+							lastWayModified = true;
 							modifiedRoads.put(way.getId(), way);
 							if (i + 1 < points.size()) {
 								Coord prev = points.get(i + 1);
@@ -2276,43 +2281,72 @@ public class StyledConverter implements OsmConverter {
 	 */
 	void removeObsoletePoints(){
 		Way lastWay = null;
+		boolean lastWasModified = false;
+		List<Coord> removedInWay = new ArrayList<Coord>();
 		List<Coord> obsoletePoints = new ArrayList<Coord>();
 		for (int w = 0; w < roads.size(); w++) {
 			Way way = roads.get(w);
 			if (way == null)
 				continue;
 			if (way.equals(lastWay)) {
-				way.getPoints().clear();
-				way.getPoints().addAll(lastWay.getPoints());
+				if (lastWasModified){
+					way.getPoints().clear();
+					way.getPoints().addAll(lastWay.getPoints());
+				}
 				continue;
 			}
 			lastWay = way;
+			lastWasModified = false;
 			List<Coord> points = way.getPoints();
-
+			Coord p0 = points.get(0);
+			Coord test = new Coord(p0.getLatitude(),p0.getLongitude()+1);
+			double lonErr = p0.getDisplayedCoord().distance(test) / 2;
+			test = new Coord(p0.getLatitude()+1,p0.getLongitude());
+			double latErr = p0.getDisplayedCoord().distance(test) / 2;
+			double maxErrorDistance = Math.min(latErr, lonErr);
+			boolean draw = false;
+			removedInWay.clear();
 			// scan through the way's points looking for points which are
-			// on straight line
+			// on almost straight line and therefore obsolete
 			for (int i = points.size() - 2; i >= 1; --i) {
 				Coord cm = points.get(i);
 				if (cm.getHighwayCount() >= 2 || cm.getOnBoundary() || cm instanceof CoordPOI)
 					continue;
 				Coord c1 = points.get(i-1);
 				Coord c2 = points.get(i+1);
-				double angle = Utils.getAngle(c1, cm, c2);
-				if (Math.abs(angle) < 3){ // parameter for the value?
-//					System.out.println(way.getId() + " " + i + " " + angle);
-					if (log.isDebugEnabled())
-						log.info("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
-					if (gpxPath != null){
-						obsoletePoints.add(cm);
+				// calculate distance of point in the middle to line c1,c2 using herons formula
+				double ab = c1.distance(c2);
+				double ap = cm.distance(c1);
+				double bp = cm.distance(c2);
+				double abpa = (ab+ap+bp)/2;
+				double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
+				if (distance < maxErrorDistance){
+					double angle = Utils.getAngle(c1, cm, c2);
+					// TODO (performance): find simple test to avoid bearing complex calculations
+					if (Math.abs(angle) < 3){ // parameter for the value? 
+						if (log.isDebugEnabled())
+							log.info("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
+						if (gpxPath != null){
+							obsoletePoints.add(cm);
+							removedInWay.add(cm);
+						}
+						points.remove(i);
+						lastWasModified = true;
 					}
-					points.remove(i);
 				}
 			}
-			
+			if (lastWasModified){
+				if (gpxPath != null){
+					if (draw || "roundabout".equals(way.getTag("junction"))) {
+						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
+					}
+				}
+			}
 		}
-		GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
-				new ArrayList<Coord>(obsoletePoints));
-
+		if (gpxPath != null){
+			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
+					new ArrayList<Coord>(obsoletePoints));
+		}
 	}
 	/**
 	 * helper class
