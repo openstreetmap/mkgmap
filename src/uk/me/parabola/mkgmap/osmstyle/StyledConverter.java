@@ -1411,10 +1411,13 @@ public class StyledConverter implements OsmConverter {
 		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
 		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bicycle");
 		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
-		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is not set to yes
-		// WanMil: sounds crazy (it's a carpool lane only if the flag is not set??) but
-		// that's how it was implemented before the mergeroads branch
-		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool") == false;
+		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
+		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool");
+		
+		// compatibility handling with old mkgmap postprocessing
+		if (way.isNotBoolTag("mkgmap:carpool_compat"))
+			noAccess[RoadNetwork.NO_CARPOOL] = true;
+		
 		road.setAccess(noAccess);
 
 		if (way.isNotBoolTag("mkgmap:throughroute")) 
