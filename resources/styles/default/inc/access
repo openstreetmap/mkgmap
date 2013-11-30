@@ -23,23 +23,23 @@ delivery=destination   { delete delivery }
 goods=destination      { delete goods }                  
 
 # set (override) specific restrictions                        
-bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no}' }
-foot=*       { set mkgmap:foot='${foot|subst:private=>no}' }                  
-hgv=*        { set mkgmap:truck='${hgv|subst:private=>no}' }                  
-motorcar=*   { set mkgmap:car='${motorcar|subst:private=>no}' }
-psv=*        { set mkgmap:bus='${psv|subst:private=>no}' }                  
-taxi=*       { set mkgmap:taxi='${taxi|subst:private=>no}' }                  
-emergency=*  { set mkgmap:emergency='${emergency|subst:private=>no}' }                  
-delivery=*   { set mkgmap:delivery='${delivery|subst:private=>no}' }                  
-goods=*      { set mkgmap:delivery='${goods|subst:private=>no}' }                  
+bicycle=*    { set mkgmap:bicycle='${bicycle|subst:private=>no|subst:agricultural=>no}' }
+foot=*       { set mkgmap:foot='${foot|subst:private=>no|subst:agricultural=>no}' }                  
+hgv=*        { set mkgmap:truck='${hgv|subst:private=>no|subst:agricultural=>no}' }                  
+motorcar=*   { set mkgmap:car='${motorcar|subst:private=>no|subst:agricultural=>no}' }
+psv=*        { set mkgmap:bus='${psv|subst:private=>no|subst:agricultural=>no}' }                  
+taxi=*       { set mkgmap:taxi='${taxi|subst:private=>no|subst:agricultural=>no}' }                  
+emergency=*  { set mkgmap:emergency='${emergency|subst:private=>no|subst:agricultural=>no}' }                  
+delivery=*   { set mkgmap:delivery='${delivery|subst:private=>no|subst:agricultural=>no}' }                  
+goods=*      { set mkgmap:delivery='${goods|subst:private=>no|subst:agricultural=>no}' }                  
 
 # Translate motor_vehicle and vehicle access rules.
-motorcycle=*    { add mkgmap:car='${motorcycle|subst:private=>no}' }                  
-motor_vehicle=* { add mkgmap:car='${motor_vehicle|subst:private=>no}' }
-vehicle=*       { add mkgmap:car='${vehicle|subst:private=>no}'; add mkgmap:bicycle='${vehicle|subst:private=>no}' }
+motorcycle=*    { add mkgmap:car='${motorcycle|subst:private=>no|subst:agricultural=>no}' }                  
+motor_vehicle=* { add mkgmap:car='${motor_vehicle|subst:private=>no|subst:agricultural=>no}' }
+vehicle=*       { add mkgmap:car='${vehicle|subst:private=>no|subst:agricultural=>no}'; add mkgmap:bicycle='${vehicle|subst:private=>no|subst:agricultural=>no}' }
 
 # the access tag defines all restrictions
-access=* { addaccess '${access|subst:private=>no}' }
+access=* { addaccess '${access|subst:private=>no|subst:agricultural=>no}' }
 
 highway=* & motorroad=yes               { add mkgmap:bicycle=no; add mkgmap:foot=no }
 highway=motorway|highway=motorway_link  { add mkgmap:bicycle=no; add mkgmap:foot=no }
