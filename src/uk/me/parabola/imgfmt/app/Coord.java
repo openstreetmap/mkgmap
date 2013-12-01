@@ -457,15 +457,4 @@ public class Coord implements Comparable<Coord> {
 		*/
 		return list;
 	}
-
-	public int getDeltaLatErr(Coord other){
-		int deltaLat24 = other.getLatitude() - getLatitude();
-		int deltaLat30 = other.getHighPrecLat() - getHighPrecLat();
-		return Math.abs(deltaLat30 - (deltaLat24 << 6));
-	}
-	public int getDeltaLonErr(Coord other){
-		int deltaLon24 = other.getLongitude() - getLongitude();
-		int deltaLon30 = other.getHighPrecLon() - getHighPrecLon();
-		return Math.abs(deltaLon30 - (deltaLon24 << 6));
-	}
 }

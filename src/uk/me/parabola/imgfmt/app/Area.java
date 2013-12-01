@@ -91,7 +91,7 @@ public class Area {
 	}
 
 	public Coord getCenter() {
-		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);// TODO high prec?
+		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);// high prec not needed
 	}
 
 	public String toString() {
