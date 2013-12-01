@@ -1942,10 +1942,13 @@ public class StyledConverter implements OsmConverter {
 		final HashSet<Coord> changedPlaces = new HashSet<Coord>();
 		final HashSet<Coord> roundabouts = new HashSet<Coord>();
 		int numWaysDeleted = 0;
+		int numNodesMerged = 0; 
 		
+		int pass = 0;
 		boolean anotherPassRequired = true;
-		for (int pass = 1; pass < 10 && anotherPassRequired; pass++) {
+		while (anotherPassRequired && pass < 10) {
 			anotherPassRequired = false;
+			log.info("Removing wrong angles - PASS " + ++pass); 
 
 			// replacements maps those nodes that have been replaced to
 			// the node that replaces them
@@ -2103,6 +2106,8 @@ public class StyledConverter implements OsmConverter {
 							p = replacement;
 							// replace point in way
 							points.set(i, p);
+							if (p.getHighwayCount() >= 2)
+								numNodesMerged++;
 							lastWayModified = true;
 							modifiedRoads.put(way.getId(), way);
 							if (i + 1 < points.size()) {
@@ -2155,9 +2160,8 @@ public class StyledConverter implements OsmConverter {
 				GpxCreator.createGpx(gpxPath + "unsolved_badAngles",
 						bbox.toCoords(), new ArrayList<Coord>(badAngles));
 			}
+			
 		}
-		
-		
 		if (gpxPath != null) {
 			GpxCreator.createGpx(gpxPath + "solved_badAngles", bbox.toCoords(),
 					new ArrayList<Coord>(changedPlaces));
@@ -2166,6 +2170,10 @@ public class StyledConverter implements OsmConverter {
 			GpxCreator.createGpx(gpxPath + "roundabouts", bbox.toCoords(),
 					new ArrayList<Coord>(roundabouts));
 		}
+		if (anotherPassRequired)
+			log.error("Removing wrong angles - didn't finish in " + pass + " passes, giving up!");
+		else
+			log.info("Removing wrong angles - finished in", pass, "passes (", numNodesMerged, "nodes merged,", numWaysDeleted, "ways deleted)"); 		
 	}
 
 	/** 
@@ -2173,6 +2181,7 @@ public class StyledConverter implements OsmConverter {
 	 */
 	void removeObsoletePoints(){
 		Way lastWay = null;
+		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
 		List<Coord> removedInWay = new ArrayList<Coord>();
 		List<Coord> obsoletePoints = new ArrayList<Coord>();
@@ -2217,11 +2226,12 @@ public class StyledConverter implements OsmConverter {
 					// TODO (performance): find simple test to avoid bearing complex calculations
 					if (Math.abs(angle) < 3){ // parameter for the value? 
 						if (log.isDebugEnabled())
-							log.info("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
+							log.debug("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
 						if (gpxPath != null){
 							obsoletePoints.add(cm);
 							removedInWay.add(cm);
 						}
+						numPointsRemoved++;
 						points.remove(i);
 						lastWasModified = true;
 					}
@@ -2239,6 +2249,7 @@ public class StyledConverter implements OsmConverter {
 			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
 					new ArrayList<Coord>(obsoletePoints));
 		}
+		log.info("Removed", numPointsRemoved, "obsolete points in roads"); 
 	}
 	
 	static boolean allowedToRemove(Coord p){
