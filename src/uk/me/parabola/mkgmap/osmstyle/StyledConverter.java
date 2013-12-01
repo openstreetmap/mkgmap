@@ -234,6 +234,11 @@ public class StyledConverter implements OsmConverter {
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 		    if(foundType.isRoad() &&
 			   !MapObject.hasExtendedType(foundType.getType())){
+				if (way.isBoolTag("oneway")) {
+					if (checkFixmeCoords(way))
+						way.addTag("mkgmap:dead-end-check", "false");
+				}
+		    	
 		    	roads.add(way);
 		    	roadTypes.add(new GType(foundType));
 		    }
@@ -1397,8 +1402,6 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
-			if (checkFixmeCoords(way))
-				way.addTag("mkgmap:dead-end-check", "false");
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
@@ -1757,7 +1760,6 @@ public class StyledConverter implements OsmConverter {
 							// replace this CoordPoi with a normal coord to avoid merging
 							Coord replacement = new Coord(p.getLatitude(),p.getLongitude());
 							replacement.incHighwayCount();
-							replacement.setFixme(p.isFixme()); 
 							points.set(i, replacement);
 							continue;
 						}

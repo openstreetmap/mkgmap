@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 PROGDIR=$(dirname $(readlink -f $0))
 
@@ -27,58 +26,33 @@ source mksnapfuncs
 
 export LANG=en_GB.UTF-8
 
-SVN=http://svn.parabola.me.uk/$PRODUCT
-((MIN_VERSION=$(svn log --xml --limit 1 $SVN/trunk 2> /dev/null | sed \
-            -n 's/revision="\([0-9]*\)".*/\1/p') - 100))
-
+SVN=http://svn.mkgmap.org.uk/$PRODUCT
 SNAPDIR=${SNAPDIR:-$HOME/www/mkgmap.org.uk/docroot/download}
 
-BRANCHES=$(svn ls $SVN/branches)
+# Get the commit time of the given path
+svn_get_time() {
+	typeset time
+	time=$(svn log --xml --limit 1 $SVN/$1 2> /dev/null | sed \
+		-n -e 's/<date>\(.*\)<\/date>/\1/;s/T/ /;s/Z/+0000/p'
+		)
+	date -d"$time" +%s
+}
 
+# We ignore all branches older than 90 days
+MIN_TIME=$(svn_get_time trunk)
+((MIN_TIME=MIN_TIME - 3600*24*90))
+
+BRANCHES=$(svn ls $SVN/branches)
 for branch in $BRANCHES
 do
-	branch=${branch%/}
-	cd /usr/tmp
+	BRANCH=${branch%/}
+	BRANCH_TIME=$(svn_get_time branches/$BRANCH)
 
-	RELNAME=$PRODUCT-$branch
-	BUILD_DIR=/usr/tmp/build-$PRODUCT/$RELNAME
-
-	SVN_PATH=$SVN/branches/$branch 
-	VERSION=$(svn log --xml --limit 1 $SVN_PATH 2> /dev/null | sed \
-			-n 's/revision="\([0-9]*\)".*/\1/p')
-	TARGET=$SNAPDIR/${PRODUCT}-${branch}-r$VERSION.jar
-
-	if [ $VERSION -lt $MIN_VERSION ]; then
-		rm -f $SNAPDIR/${PRODUCT}-${branch}-r*.jar
+	if [ $BRANCH_TIME -lt $MIN_TIME ]; then
+		echo Too old ignoring $BRANCH
 		continue
 	fi
 
-	if [ ! -f $TARGET ]; then
-		echo Rebuilding $branch
-		rm -rf $BUILD_DIR
-		mkdir -p $(dirname $BUILD_DIR)
-		svn export -q -r$VERSION $SVN_PATH $BUILD_DIR
-
-		(
-		cd $BUILD_DIR
-		trap "rm -rf $BUILD_DIR" 0 2
-		if [ -d resources ]; then
-			echo "svn.version: ${branch}.${VERSION}" > resources/$PRODUCT-version.properties
-			echo "build.timestamp: $(date -Iseconds)" >> resources/$PRODUCT-version.properties
-		fi
-		ant -Dhave.version=1 dist || exit 1
-
-		rm -f $SNAPDIR/${PRODUCT}-${branch}-r*.jar
-		cp dist/$PRODUCT.jar $TARGET
-		)
-
-		# Set the time to the time of commit.
-		(
-			cd $SNAPDIR
-			mksnap_setdate $TARGET $VERSION
-		)
-	fi
+	echo Building $BRANCH
+	redis-cli lpush svn:build build:$PRODUCT:$BRANCH:
 done
-
-
-mksnapindex -d $SNAPDIR $PRODUCT

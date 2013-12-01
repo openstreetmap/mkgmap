@@ -51,7 +51,7 @@ do
 	0)
 		echo 'ok'
 		version=${base#*-r}
-		mksnap_setdate ${base}.tar.gz $version
+		mksnap_setdate $version ${base}.tar.gz
 		;;
 	1) rm ${base}[.-]*
 		echo 'removed'

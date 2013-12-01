@@ -22,7 +22,7 @@ The three possible parts are:
 the Garmin type and sometimes other parameters that will be used if the tests match. This part is contained
 in square brackets `[...]`.
 
-As a general point, space and newlines don't matter. There is no need to have rules all on the same line (although most of the examples here are shown in one line), and you can spread them out over several lines and add extra spaces wherever you like if it helps to make them easier to read.  Here is an example of a rule containing all three sections:
+Here is an example of a rule containing all three sections:
 
 ----
 natural=cliff { name '${name} cliff' | 'cliff' } [0x10501 resolution 22]
@@ -31,6 +31,48 @@ natural=cliff { name '${name} cliff' | 'cliff' } [0x10501 resolution 22]
 * The tests section is +natural=cliff+
 * The action block is `{ name '${name} cliff' | 'cliff' }`
 * The element type definition is +[0x10501 resolution 22]+
+
+As a general point, space and newlines don't matter. There is no need to
+have rules all on the same line, and you can spread them out over several
+lines and add extra spaces wherever you like if it helps to make them
+easier to read.
+
+.Example with lots of extra space and newlines
+----
+natural=cliff
+	{
+	    name '${name} cliff'
+		| 'cliff'
+	}
+
+	[
+	0x10501
+	resolution 22
+	]
+----
+
+.Example with all unneeded spaces removed
+----
+natural=cliff{name'${name} cliff'|"cliff"}[0x10501 resolution 22]
+----
+
+=== Tag and text values ===
+Tag names and vales are often single words consisting of letters and
+perhaps digits.
+If however a value (or tag, although that is less common) contains a
+space or punctuation character then the whole value must be enclosed in 
+quotation marks. You can use either single quotes (+'+) or
+double quotes (+"+).
+
+If your text contains a quote then you must use the other kind
+of quote around the value.
+
+----
+highway=primary
+"highway"="primary"  # quotes not needed, but do no harm
+name='Main Street'   # quotes needed to keep 'Main Street' as one thing
+name="Ten O'Clock Tavern"  # Double quotes used because text contains single quotes
+----
 
 [[Tag_tests]]
 == Tag tests ==
