@@ -24,9 +24,7 @@
 }
 
 # European E-Road network
-route=road & network=e-road { apply { add ref='${ref}'; add int_ref='${int_ref'}; add network=e-road }
-
-type=TMC & TMC:cid_58:tabcd_1:Direction=negative { apply { add mkgmap:overview=false } }
+route=road & network=e-road { apply { add int_ref='${ref'; add int_ref='${int_ref'}; add network=e-road }
 
 # Public transportation routes.
 # We could want to sort the matching relations by ref first.
