@@ -1941,7 +1941,8 @@ public class StyledConverter implements OsmConverter {
 	void removeWrongAngles() {
 		final HashSet<Coord> changedPlaces = new HashSet<Coord>();
 		final HashSet<Coord> roundabouts = new HashSet<Coord>();
-
+		int numWaysDeleted = 0;
+		
 		boolean anotherPassRequired = true;
 		for (int pass = 1; pass < 10 && anotherPassRequired; pass++) {
 			anotherPassRequired = false;
@@ -2055,19 +2056,29 @@ public class StyledConverter implements OsmConverter {
 			// apply the calculated corrections to the roads
 			lastWay = null;
 			lastWayModified = false;
-			for (Way way : roads) {
+			for (int w = 0; w < roads.size(); w++) {
+				Way way = roads.get(w);
 				if (way == null)
 					continue;
+				List<Coord> points = way.getPoints();
+				if (points.size() < 2) {
+					if (log.isInfoEnabled())
+						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+					roads.set(w, null);
+					deletedRoads.add(way.getId());
+					++numWaysDeleted;
+					continue;
+				} 								
 				if (way.equals(lastWay)) {
 					if (lastWayModified){
-						way.getPoints().clear();
-						way.getPoints().addAll(lastWay.getPoints());
+						points.clear();
+						points.addAll(lastWay.getPoints());
 					}
 					continue;
 				}
 				lastWay = way;
 				lastWayModified = false;
-				List<Coord> points = way.getPoints();
+				
 				// loop backwards because we may delete points
 				for (int i = points.size() - 1; i >= 0; i--) {
 					Coord p = points.get(i);
