@@ -37,11 +37,21 @@ public class AddLabelAction extends ValueBuildedAction {
 				for (ValueBuilder vb : getValueBuilder()) {
 					String s = vb.build(el, el);
 					if (s != null) {
+						// now check if the new label is different to all other labels
+						for (int n = index-1; n>= 1; n--) {
+							if (s.equals(el.getTag("mkgmap:label:"+n))) {
+								// value is equal to a previous label
+								// do not use it
+								return;
+							}
+						}
+						
+						// set the label
 						el.addTag("mkgmap:label:"+index, s);
-						break;
+						return;
 					}
 				}
-				break;
+				return;
 			}
 		}
 	}
