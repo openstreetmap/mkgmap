@@ -1390,8 +1390,6 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
-			if (checkFixmeCoords(way))
-				way.addTag("mkgmap:dead-end-check", "false");
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
