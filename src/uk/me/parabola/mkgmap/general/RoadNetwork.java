@@ -135,8 +135,10 @@ public class RoadNetwork {
 
 				if(node1 == node2)
 					log.error("Road " + road.getRoadDef() + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
+				else if(lastCoord.equals(co) && arcLength == 0)
+					log.error("Road " + road.getRoadDef() + " contains consecutive equal nodes at " + co.toOSMURL() + " - routing will be broken");
 				else if(arcLength == 0)
-					log.error("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
+					log.warn("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
 
 
 				Coord bearingPoint = coordList.get(lastIndex + 1);
