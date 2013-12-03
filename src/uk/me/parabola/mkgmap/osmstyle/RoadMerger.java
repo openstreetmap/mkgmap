@@ -55,6 +55,7 @@ public class RoadMerger {
 				add("mkgmap:bicycle");
 				add("mkgmap:truck");
 				add("mkgmap:throughroute");
+				add("mkgmap:carpool_compat");
 			}
 		};
 
