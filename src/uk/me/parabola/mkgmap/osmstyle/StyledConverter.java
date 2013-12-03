@@ -351,8 +351,12 @@ public class StyledConverter implements OsmConverter {
 		setHighwayCounts();
 		findUnconnectedRoads();
 		filterCoordPOI();
+		gpxPath= null;
+		writeOSM("roads_orig", roads);
 		removeWrongAngles();
+		writeOSM("roads_post_rem_wrong_angles", roads);
 		removeObsoletePoints();
+		writeOSM("roads_post_rem_obsolete_points", roads);
 		// make sure that copies of modified roads are have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
@@ -1948,7 +1952,7 @@ public class StyledConverter implements OsmConverter {
 		boolean anotherPassRequired = true;
 		while (anotherPassRequired && pass < 10) {
 			anotherPassRequired = false;
-			log.info("Removing wrong angles - PASS " + ++pass); 
+			log.info("Removing wrong angles - PASS " + ++pass);
 
 			// replacements maps those nodes that have been replaced to
 			// the node that replaces them
@@ -2047,15 +2051,32 @@ public class StyledConverter implements OsmConverter {
 			for (CenterOfAngle coa : centers) {
 				if (coa.center.isToRemove())
 					continue;
+				
 				if (coa.isOK(replacements) == false) {
-					boolean changed = coa.tryChange(0, replacements, centerMap);
-					if (!changed)
-						checkAgainList.add(coa);
-					if (gpxPath != null && changed)
-						changedPlaces.add(coa.center);
+					boolean changed = coa.tryChange(replacements, centerMap, false);
+					if (changed){
+						if (gpxPath != null)
+							changedPlaces.add(coa.center);
+						continue;
+					}
+					checkAgainList.add(coa);
 				}
 			}
-
+			
+			List<CenterOfAngle> mergeTest = new ArrayList<StyledConverter.CenterOfAngle>(checkAgainList);
+			checkAgainList.clear();
+			for (CenterOfAngle coa: mergeTest){
+				if (coa.isOK(replacements) == false) {
+					boolean changed = coa.tryChange(replacements, centerMap, true);
+					if (changed){
+						if (gpxPath != null)
+							changedPlaces.add(coa.center);
+						continue;
+					}
+					checkAgainList.add(coa);
+				}
+			}
+			
 			// apply the calculated corrections to the roads
 			lastWay = null;
 			lastWayModified = false;
@@ -2221,21 +2242,31 @@ public class StyledConverter implements OsmConverter {
 				double bp = cm.distance(c2);
 				double abpa = (ab+ap+bp)/2;
 				double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
-				if (distance < maxErrorDistance){
-					double angle = Utils.getAngle(c1, cm, c2);
-					// TODO (performance): find simple test to avoid bearing complex calculations
-					if (Math.abs(angle) < 3){ // parameter for the value? 
-						if (log.isDebugEnabled())
-							log.debug("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
-						if (gpxPath != null){
-							obsoletePoints.add(cm);
-							removedInWay.add(cm);
-						}
-						numPointsRemoved++;
-						points.remove(i);
-						lastWasModified = true;
+				if (distance >= maxErrorDistance)
+					continue;
+				double realAngle = Utils.getAngle(c1, cm, c2);
+				// TODO (performance): find simple test to avoid complex bearing calculations
+				boolean keepThis = true;
+				if (Math.abs(realAngle) < 3){ // parameter for the value?
+					keepThis = false;
+				} else {
+					double displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
+					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
+						keepThis = false;
 					}
 				}
+				if (keepThis)
+					continue;
+				if (log.isDebugEnabled())
+					log.debug("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
+				if (gpxPath != null){
+					obsoletePoints.add(cm);
+					removedInWay.add(cm);
+				}
+				numPointsRemoved++;
+				points.remove(i);
+				lastWasModified = true;
+				
 			}
 			if (lastWasModified){
 				if (gpxPath != null){
@@ -2271,7 +2302,6 @@ public class StyledConverter implements OsmConverter {
 		boolean wasMerged;
 		boolean removeIsNotNice;
 		final static int MAX_BEARING_ERR = 15;
-		final static int MAX_DEPTH = 2;
 		List<CenterOfAngle> badMergeCandidates;
 
 		public CenterOfAngle(Coord center, int id) {
@@ -2321,7 +2351,7 @@ public class StyledConverter implements OsmConverter {
 				if (n.isToRemove())
 					continue;
 				double err = calcBearingError(n, replacements);
-				if (err > MAX_BEARING_ERR)
+				if (err >= MAX_BEARING_ERR)
 					return false;
 			}
 			return true;
@@ -2329,181 +2359,146 @@ public class StyledConverter implements OsmConverter {
 
 		/**
 		 * 
-		 * @param depth
 		 * @param replacements
 		 * @param centerMap
-		 * @return
+		 * @param tryAlsoMerge 
+		 * @return true if the centre point was changed or marked to be removed
 		 */
-		public boolean tryChange(int depth, Map<Coord, Coord> replacements,
-				Map<Coord, CenterOfAngle> centerMap) {
-			if (center.isToRemove() || wasMerged) {
+		public boolean tryChange(Map<Coord, Coord> replacements,Map<Coord, CenterOfAngle> centerMap, boolean tryAlsoMerge) {
+			if (center.isToRemove() || center.isReplaced() || wasMerged ) {
 				// System.out.println("ignoring center that is marked as removed");
 				return false;
 			}
+			boolean tryAlternatives = true;
+			
+			for (Coord n:neighbours){
+				if (n.isToRemove())
+					return false;
+				if (center.highPrecEquals(n)){
+					tryAlternatives = false;
+					break;
+				}
+			}
+			
 			double origMaxError = calcMaxError(replacements, null, null);
+			if (origMaxError < MAX_BEARING_ERR){
+				return false;
+			}
+			if (origMaxError ==  Double.MAX_VALUE){
+				tryAlternatives = false;
+			}
 			Coord bestCenterReplacement = null;
 			double minErrRepl = origMaxError;
-			if (center.isReplaced() == false) {
+			
+			if (center.isReplaced() == false && tryAlternatives) {
 				List<Coord> alternatives = center.getAlternativePositions();
-				if (gpxPath != null) {
-					// print lines before change
-					// this.createGPX(gpxPath + id + "_" + travelId,
-					// replacements);
-				}
+				// check alternative positions of center 
 				for (Coord altCenter : alternatives) {
-					boolean isBetter = true;
 					double err = calcMaxError(replacements, center, altCenter);
-					// if (err >= MAX_BEARING_ERR)
-					// continue;
-					// test effect of change on all neighbours
-					for (Coord n : this.neighbours) {
-						CenterOfAngle neighbourCenter = centerMap.get(n);
-						if (neighbourCenter != null) {
-							if (neighbourCenter.testChange(replacements,
-									center, altCenter) == false) {
-								// neighbour would be changed to the worse
-								isBetter = false;
-								break;
-							}
-						}
-					}
-					if (isBetter) {
-						if (err < MAX_BEARING_ERR) {
-							replaceCenter(altCenter, replacements);
-							return true;
-						}
-						if (err < minErrRepl) {
-							bestCenterReplacement = altCenter;
-							minErrRepl = err;
-						}
-					}
-				}
-				if (depth >= MAX_DEPTH)
-					return false;
-				boolean testAgain = false;
-				// check simple change of neighbours that are part of bad line
-				// segments
-				for (Coord n : this.neighbours) {
-					if (n.isToRemove())
-						return false;
-					if (calcBearingError(n, replacements) < MAX_BEARING_ERR)
+					if (err >= minErrRepl)
 						continue;
-					CenterOfAngle neighbourCenter = centerMap.get(n);
-					if (neighbourCenter != null
-							&& /* neighbourCenter.id < this.id && */neighbourCenter.center
-									.isReplaced() == false) {
-						if (neighbourCenter.tryChange(depth + 1, replacements,
-								centerMap)) {
-							// neighbour would be changed to the worse
-							testAgain = true;
+					// alternative is an improvement 
+					bestCenterReplacement = altCenter;
+					minErrRepl = err;
+				}
+				if (minErrRepl < MAX_BEARING_ERR){
+					if (origMaxError - minErrRepl < MAX_BEARING_ERR/2 && minErrRepl > MAX_BEARING_ERR/2)
+						bestCenterReplacement = null;
+					if (bestCenterReplacement != null){
+						if (log.isInfoEnabled()){
+							Coord p1 = center.getDisplayedCoord();
+							Coord p2 = bestCenterReplacement.getDisplayedCoord();
+							double moved = p1.distance(p2); 
+							log.info("moving point " + String.format("%.03fm", moved) + 
+									" from " + p1.toOSMURL() + " to " + p2.toOSMURL() + " to reduce bearing error from " + String.format("%.03f",origMaxError) 
+									+ " to " + String.format("%.03f",minErrRepl));
+									
 						}
-					}
-				}
-				if (testAgain) {
-					if (isOK(replacements))
+						replaceCenter(bestCenterReplacement, replacements);
 						return true;
-				}
-				if (depth >= MAX_DEPTH - 1)
-					return false; // don't try complex changes in recursion
-
-				// no simple change found, try again changing also the
-				// neighbour(s)
-				for (Coord altCenter : alternatives) {
+					}
+				} 
+				// no simple change found, try again changing pairs of points 
+				boolean foundSolution = false;
+				for (int i = 0; i < alternatives.size(); i++) {
+					Coord altCenter = alternatives.get(i);
 					replaceCenter(altCenter, replacements); // for now
-					boolean isBetter = false;
-					boolean changed = false;
-					for (Coord n : this.neighbours) {
-						double altError = calcBearingError(n, replacements);
-						if (altError < MAX_BEARING_ERR
-								|| altError == Double.MAX_VALUE)
-							continue;
-
+					
+					for (int j = 0; j < neighbours.size(); j++) {
+						Coord n = this.neighbours.get(j);
+						if (n.hasAlternativePos() == false)
+							continue; // cannot be the solution
+						double nErr = calcBearingError(n, replacements);
+						if (nErr < MAX_BEARING_ERR)
+							continue; // is already fine
 						CenterOfAngle neighbourCenter = centerMap.get(n);
-						if (neighbourCenter != null) {
+						if (n.isReplaced()){
+							// problem?
+						}
+						List<Coord> nAlternatives = n.getAlternativePositions();
+						for (int k = 0; k < nAlternatives.size(); k++){
+							Coord replacement = nAlternatives.get(k);
+							double errWith2ChangesThis = this.calcMaxError(replacements, n, replacement);
+							if (errWith2ChangesThis >= MAX_BEARING_ERR)
+								continue;
+							if (origMaxError - errWith2ChangesThis < MAX_BEARING_ERR/2 && errWith2ChangesThis> MAX_BEARING_ERR/2){
+								// improvement is too small
+								continue;
+							}
+							double errWith2ChangesNeighbour = neighbourCenter.calcMaxError(replacements, n, replacement);
+							if (errWith2ChangesNeighbour < MAX_BEARING_ERR){
+								log.info("found good double change for id ", id , " and " , neighbourCenter.id);
+									
 
-							changed = neighbourCenter.tryChange(depth + 1,
-									replacements, centerMap);
-							if (changed) {
-								isBetter = true;
+								if (n.isReplaced()){
+//									createGPX(gpxPath+id, replacements);
+//									neighbourCenter.createGPX(gpxPath+neighbourCenter.id, replacements);
+									log.error("replaced neighbour would be replaced again!");
+									continue;
+								}
+								neighbourCenter.replaceCenter(replacement, replacements);
+								return true;
 							}
 						}
 					}
-					if (isBetter == false) {
-						replacements.remove(center);
+					if (foundSolution == false){
 						center.setReplaced(false);
+						replacements.remove(center);
 					}
-					if (isBetter) {
-						// store better position as replacement
-						if (center.isToRemove()) {
-							log.error("about to use a removed center");
-						}
-						replaceCenter(altCenter, replacements);
-						if (isOK(replacements))
-							return true;
-						else {
-							log.error("error increased: " + origMaxError
-									+ " -> "
-									+ calcMaxError(replacements, null, null));
-
-						}
-					}
-				}
-				if (depth == 0 && testRemove(replacements, true)) {
-					if (bestCenterReplacement == null
-							|| removeIsNotNice == false) {
-						center.setRemove(true);
-						log.info("removing point at " + center.toOSMURL()
-								+ " altpos:" + center.getAlternativePositions());
-						if (gpxPath != null)
-							removedPoints.add(center);
-					} else {
-						// System.out.println("using replacement for center although error is too large "
-						// + minErrRepl);
-						// createGPX(gpxPath+"repl_with_err_before"+((int)minErrRepl)
-						// + "_"+id, replacements);
-						replaceCenter(bestCenterReplacement, replacements);
-						// createGPX(gpxPath+"repl_with_err_after"+((int)minErrRepl)
-						// + "_"+id, replacements);
-					}
-					return true;
-
-				}
+				}				
 			}
-			if (depth == 0) {
-				if (mergeEqualNodes(replacements, centerMap))
+			// we found no good solution using the alternative positions
+			if (center.isReplaced() == false && testRemove(replacements)) {
+				if (bestCenterReplacement == null || removeIsNotNice == false) {
+					center.setRemove(true);
+					log.info("removing point at " + center.toOSMURL()
+							+ " altpos:" + center.getAlternativePositions());
+					if (gpxPath != null)
+						removedPoints.add(center);
+				} else {
+					// System.out.println("using replacement for center although error is too large "
+					// + minErrRepl);
+					// createGPX(gpxPath+"repl_with_err_before"+((int)minErrRepl)
+					// + "_"+id, replacements);
+					replaceCenter(bestCenterReplacement, replacements);
+					// createGPX(gpxPath+"repl_with_err_after"+((int)minErrRepl)
+					// + "_"+id, replacements);
+				}
+				return true;
+
+			}
+			
+			if (mergeEqualNodes(replacements, centerMap))
+				return true;
+			
+			if (tryAlsoMerge && tryMerge(minErrRepl, replacements, centerMap))
 					return true;
-				return tryMerge(replacements, centerMap);
+			if (bestCenterReplacement != null){
+				replaceCenter(bestCenterReplacement, replacements);
+				return true;
 			}
 			return false;
-		}
 
-		/**
-		 * Test the effect of a change
-		 * 
-		 * @param replacements
-		 *            map with replacements
-		 * @param toRepl
-		 *            coord which should be changed
-		 * @param replacement
-		 *            the replacement
-		 * @return true if the replacement reduces the error
-		 */
-		private boolean testChange(Map<Coord, Coord> replacements,
-				Coord toRepl, Coord replacement) {
-			if (center.getOnBoundary())
-				return false;
-			double maxErrTest = calcMaxError(replacements, toRepl, replacement);
-			if (maxErrTest == Double.MAX_VALUE)
-				return false;
-			if (maxErrTest >= MAX_BEARING_ERR) {
-				if (toRepl == null || center.isReplaced())
-					return false;
-				double maxErrAsIs = calcMaxError(replacements, null, null);
-				if (maxErrAsIs < maxErrTest) {
-					return false;
-				}
-			}
-			return true;
 		}
 
 		private double calcMaxError(Map<Coord, Coord> replacements,
@@ -2538,6 +2533,10 @@ public class StyledConverter implements OsmConverter {
 		 */
 		private double calcBearingError(Coord neighbour,
 				Map<Coord, Coord> replacements) {
+			if (center.highPrecEquals(neighbour)) {
+//				createGPX(gpxPath+id+"_dist_0_to_next", replacements);
+				return Double.MAX_VALUE;
+			}
 			Coord c1 = getReplacement(center, null, replacements);
 			Coord n1 = getReplacement(neighbour, null, replacements);
 			if (c1.equals(n1)) {
@@ -2583,23 +2582,31 @@ public class StyledConverter implements OsmConverter {
 			Coord c1 = getReplacement(center, null, replacements);
 			if (c1.getHighwayCount() < 2)
 				return false;
-			boolean changed = false;
 			for (Coord n : neighbours) {
 				if (n.isToRemove())
 					continue;
 				if (n == center) {
 					log.error("found neighbour with identical id");
 				}
+				if (c1.highPrecEquals(n)) {
+					// distance with high precision is 0, so merge 
+					replaceCenter(n, replacements);
+					CenterOfAngle otherCenter = centerMap.get(n);
+					wasMerged = true;
+					otherCenter.wasMerged = true;
+					return true;
+				}
 				Coord n1 = getReplacement(n, null, replacements);
 				if (n1.getHighwayCount() < 2)
 					continue;
 				if (c1.equals(n1)) {
 					CenterOfAngle otherCenter = centerMap.get(n);
-					mergeEqual(otherCenter, replacements, centerMap);
+					if (mergeEqual(otherCenter, replacements, centerMap))
+						return true;
 				}
 
 			}
-			return changed;
+			return false;
 		}
 
 		/**
@@ -2653,8 +2660,7 @@ public class StyledConverter implements OsmConverter {
 
 		}
 
-		private boolean testRemove(Map<Coord, Coord> replacements,
-				boolean noBetterAltFound) {
+		private boolean testRemove(Map<Coord, Coord> replacements) {
 			assert center.isReplaced() == false;
 			if (allowedToRemove(center) == false)
 				return false;
@@ -2677,20 +2683,21 @@ public class StyledConverter implements OsmConverter {
 					continue; // real line is almost straight line, remove is
 								// okay
 				}
-				if (noBetterAltFound) {
-					double displayedAngle = Utils.getDisplayedAngle(n0, center,
-							n1);
-					if (Math.abs(displayedAngle) < 10) {
-						// displayed line is almost straight line, remove is
-						// okay since we found no better place for center
-						continue;
-					}
-					if (displayedAngle - realAngle > 30
-							|| realAngle - displayedAngle > 30) {
-						specialCaseFound = true;
-						removeIsNotNice = true;
-						continue;
-					}
+				double displayedAngle = Utils.getDisplayedAngle(n0, center,n1);
+				if (Math.abs(displayedAngle) < 10) {
+					// displayed line is almost straight line, remove is
+					// okay since we found no better place for center
+					continue;
+				}
+				if (Math.signum(realAngle) != Math.signum(displayedAngle))
+					continue;
+				if (Math.abs(realAngle) > 30)
+					return false;
+				if (displayedAngle - realAngle > 30
+						|| realAngle - displayedAngle > 30) {
+					specialCaseFound = true;
+					removeIsNotNice = true;
+					continue;
 				}
 				return false;
 			}
@@ -2726,12 +2733,13 @@ public class StyledConverter implements OsmConverter {
 
 		}
 
-		private boolean tryMerge(Map<Coord, Coord> replacements,
+		private boolean tryMerge(double possibleErrorWithKnownBest, Map<Coord, Coord> replacements,
 				Map<Coord, CenterOfAngle> centerMap) {
 			Coord c = getReplacement(center, null, replacements);
 			Coord oc = null;
 			CenterOfAngle bestMergeCandidate = null;
 			double shortestDist = Double.MAX_VALUE;
+			double usedDist = Double.MAX_VALUE;
 			for (Coord n : this.neighbours) {
 				if (n.isToRemove())
 					return false;
@@ -2739,22 +2747,17 @@ public class StyledConverter implements OsmConverter {
 				if (otherCenter == null || c.getOnBoundary()
 						&& otherCenter.center.getOnBoundary())
 					continue;
-				if (otherCenter.wasMerged)
-					continue;
 				oc = getReplacement(otherCenter.center, null, replacements);
 				double distReal = c.distance(oc);
-				if (distReal > shortestDist)
+				if (distReal < shortestDist)
+					shortestDist = distReal;
+				if (distReal > usedDist)
 					continue;
-				if (distReal > 10) {
+				if (distReal > 3) {
 					// don't try to merge, too far away
+					// Maybe use parm like maxMergeArcLength ?
 					continue;
 				}
-				/*
-				 * if (otherCenter.id > this.id ){ double errOther =
-				 * otherCenter.calcMaxError(replacements, null, null); if
-				 * (errOther > MAX_BEARING_ERR && errOther != Double.MAX_VALUE)
-				 * continue; // better try other later }
-				 */
 				if (badMergeCandidates != null
 						&& badMergeCandidates.contains(otherCenter)
 						|| otherCenter.badMergeCandidates != null
@@ -2765,10 +2768,14 @@ public class StyledConverter implements OsmConverter {
 					// "_not_merged_with_" + id, replacements);
 					continue;
 				}
-				shortestDist = distReal;
+				usedDist = distReal;
 				bestMergeCandidate = otherCenter;
 			}
 			if (bestMergeCandidate != null) {
+				if (bestMergeCandidate.wasMerged || usedDist > shortestDist){
+					return false;
+				}
+				
 				oc = getReplacement(bestMergeCandidate.center, null,
 						replacements);
 				double maxErrThis = this.calcMaxError(replacements, null, null);
@@ -2783,7 +2790,7 @@ public class StyledConverter implements OsmConverter {
 				else
 					mc = c.makeBetweenPoint(oc, 0.5);
 				CenterOfAngle merged = new CenterOfAngle(mc, 0);
-				double worstAngle = 180;
+				double worstAngle = Double.MAX_VALUE;
 				for (Coord n : neighbours) {
 					if (n.isToRemove())
 						continue;
@@ -2806,40 +2813,32 @@ public class StyledConverter implements OsmConverter {
 							worstAngle = angle;
 					}
 				}
-				worstAngle = 180 - worstAngle;
-				if (worstAngle > MAX_BEARING_ERR / 2) { // TODO: what value is
-														// too bad?
+				if (worstAngle != Double.MAX_VALUE)
+					worstAngle = 180 - worstAngle;
+				else
+					worstAngle = -1;
+				if (worstAngle >= MAX_BEARING_ERR / 2) { // TODO: what value is too bad?
 					return false;
 				}
-				double maxErrMerged = merged.calcMaxError(replacements, null,
-						null);
+				
+				double maxErrMerged = merged.calcMaxError(replacements, null, null);
 
-				if (maxErrMerged > maxErrThis || maxErrMerged > maxErrOther)
+				if (maxErrMerged > maxErrThis || maxErrMerged > maxErrOther || maxErrMerged > possibleErrorWithKnownBest)
 					return false;
+				
 				if (log.isInfoEnabled())
 					log.info("merging centers " + id + " and "
 							+ bestMergeCandidate.id + " distance: "
 							+ shortestDist
 							+ " max bearing error because of merge: "
-							+ (worstAngle == 0 ? "?" : worstAngle)
+							+ (worstAngle == -1 ? "?" : worstAngle)
 							+ " visible error reduced to " + maxErrMerged);
-				int hwc = c.getHighwayCount() + oc.getHighwayCount() - 1;
-				for (int i = 0; i < hwc; i++)
-					mc.incHighwayCount();
-				if (c.isToRemove() || oc.isToRemove()) {
-					// should not happen
-					assert false : "about to use a removed point";
+				assert (c.isToRemove() == false && oc.isToRemove() == false) : "about to use a removed point";
+				if (c != mc) {
+					replaceCenter(mc, replacements);
 				}
-
-				if (c.getOnBoundary() == false) {
-					assert c != mc;
-					c.setReplaced(true);
-					replacements.put(c, mc);
-				}
-				if (oc.getOnBoundary() == false) {
-					assert oc != mc;
-					oc.setReplaced(true);
-					replacements.put(oc, mc);
+				if (oc != mc) {
+					bestMergeCandidate.replaceCenter(mc, replacements);
 				}
 				wasMerged = true;
 				bestMergeCandidate.wasMerged = true;
@@ -2848,8 +2847,7 @@ public class StyledConverter implements OsmConverter {
 			return false;
 		}
 
-		private void replaceCenter(Coord altCenter,
-				Map<Coord, Coord> replacements) {
+		private void replaceCenter(Coord altCenter, Map<Coord, Coord> replacements) {
 			assert center != altCenter;
 			center.setReplaced(true);
 			if (center instanceof CoordPOI && ((CoordPOI) center).isUsed()) {
@@ -2861,5 +2859,81 @@ public class StyledConverter implements OsmConverter {
 				altCenter.incHighwayCount();
 		}
 	}
+	private void writeOSM(String name, List<Way> ways){
+		/*
+		if (gpxPath == null)
+			return;
+		File outDir = new File(gpxPath + "/.");
+		if (outDir.getParentFile() != null) {
+			outDir.getParentFile().mkdirs();
+		} 		
+		for (int pass = 1; pass <= 2; pass ++){
+			IdentityHashMap<Coord, Integer> allPoints = new IdentityHashMap<Coord, Integer>();
+			uk.me.parabola.splitter.Area bounds = new uk.me.parabola.splitter.Area(
+					bbox.getMinLat(),bbox.getMinLong(),bbox.getMaxLat(),bbox.getMaxLong());
+
+			
+			O5mMapWriter writer = new O5mMapWriter(bounds, outDir, 0, 0, Collections.<String, byte[]> emptyMap(), Collections.<String, byte[]> emptyMap());
+			writer.initForWrite();
+			Integer nodeId;
+			try {
+
+				for (Way way: ways){
+					if (way == null)
+						continue;
+					for (Coord p: way.getPoints()){
+						nodeId = allPoints.get(p);
+						if (nodeId == null){
+							nodeId = allPoints.size();
+							allPoints.put(p, nodeId);
+							uk.me.parabola.splitter.Node nodeOut = new  uk.me.parabola.splitter.Node();				
+							if (pass == 1)
+								nodeOut.set(nodeId+1000000000L, p.getLatDegrees(), p.getLonDegrees()); // high prec
+							else 
+								nodeOut.set(nodeId+1000000000L, Utils.toDegrees(p.getLatitude()), Utils.toDegrees(p.getLongitude()));
+							if (p instanceof CoordPOI){
+								for (Map.Entry<String, String> tagEntry : ((CoordPOI) p).getNode().getEntryIteratable()) {
+									nodeOut.addTag(tagEntry.getKey(), tagEntry.getValue());
+								}
+							}
+							writer.write(nodeOut);
+						}
+					}
+				}
+				for (int w = 0; w < ways.size(); w++){
+					Way way = ways.get(w);
+					if (way == null)
+						continue;
+					uk.me.parabola.splitter.Way wayOut = new uk.me.parabola.splitter.Way();
+					for (Coord p: way.getPoints()){
+						nodeId = allPoints.get(p);
+						assert nodeId != null;
+						wayOut.addRef(nodeId+1000000000L);
+					}
+					for (Map.Entry<String, String> tagEntry : way.getEntryIteratable()) {
+						wayOut.addTag(tagEntry.getKey(), tagEntry.getValue());
+					}
+					
+					if ("roundabout".equals(way.getTag("junction"))) {
+						wayOut.addTag("junction", "roundabout");
+					}
+					wayOut.setId(way.getId());
+					
+					writer.write(wayOut);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			writer.finishWrite();
+			File f = new File(outDir.getAbsoluteFile() , "00000000.o5m");
+			File ren = new File(outDir.getAbsoluteFile() , name+((pass==1) ? "_hp":"_mu") + ".o5m");
+			if (ren.exists())
+				ren.delete();
+			f.renameTo(ren);
+		}
+		return;
+		*/
+	}
+
 }
 

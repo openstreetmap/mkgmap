@@ -240,8 +240,7 @@ public class Coord implements Comparable<Coord> {
 		if (obj == null || !(obj instanceof Coord))
 			return false;
 		Coord other = (Coord) obj;
-		return latitude == other.latitude && longitude == other.longitude && 
-				latDelta == other.latDelta && lonDelta == other.lonDelta;
+		return getHighPrecLat() == other.getHighPrecLat() && getHighPrecLon() == other.getHighPrecLon(); 
 	} 
 
 	/**
@@ -328,7 +327,7 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	public String toDegreeString() {
-		return String.format(Locale.ENGLISH, "%.5f/%.5f",
+		return String.format(Locale.ENGLISH, "%.6f/%.6f",
 			getLatDegrees(),
 			getLonDegrees());
 	}
