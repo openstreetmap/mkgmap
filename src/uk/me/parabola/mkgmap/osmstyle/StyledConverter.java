@@ -322,16 +322,16 @@ public class StyledConverter implements OsmConverter {
 		if (el instanceof Way && type.isRoad()) {
 			Way way = (Way) el;
 			
-			if (way.isBoolTag("mkgmap:carpool")) {
-				// to make a way into a "carpool lane" all access disable
-				// bits must be set except for CARPOOL and EMERGENCY (BUS
-				// can also be clear)
-				for (String accessTag : ACCESS_TAGS) {
-					el.addTag(accessTag, "no");
-				}
-				el.deleteTag("mkgmap:emergency");
-				el.deleteTag("mkgmap:bus");
-			}
+//			if (way.isBoolTag("mkgmap:carpool")) {
+//				// to make a way into a "carpool lane" all access disable
+//				// bits must be set except for CARPOOL and EMERGENCY (BUS
+//				// can also be clear)
+//				for (String accessTag : ACCESS_TAGS) {
+//					el.addTag(accessTag, "no");
+//				}
+//				el.deleteTag("mkgmap:emergency");
+//				el.deleteTag("mkgmap:bus");
+//			}
 			
 			// road class (can be overridden by mkgmap:road-class tag)
 			int roadClass = type.getRoadClass();
