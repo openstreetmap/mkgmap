@@ -908,6 +908,13 @@ public class StyledConverter implements OsmConverter {
 								if(val != null)
 									way.addTag("mkgmap:road-speed-max", val);
 							}
+							// copy the access tags
+							for (String accessTag : ACCESS_TAGS) {
+								String tagValue = node.getTag(accessTag);
+								if (tagValue != null) {
+									way.addTag(accessTag, tagValue);
+								}
+							}
 						}
 					}
 				}
