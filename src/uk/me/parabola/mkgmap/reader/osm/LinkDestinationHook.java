@@ -649,7 +649,7 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			// to be able to copy the value to the destination tag
 			// Do not load destination because it makes sense only if the tag is
 			// referenced in the style file
-			Set<String> tags = new HashSet<>();
+			Set<String> tags = new HashSet<String>();
 			tags.add("destination:lanes");
 			tags.add("destination:forward");
 			tags.add("destination:backward");
