@@ -410,6 +410,19 @@ public class RoadMerger {
 		points1.addAll(points2.subList(1, points2.size()));
 		endPoints.add(endPoint, road1);
 		
+		// merge the POI info
+		String WayPOI2 = road2.getWay().getTag(StyledConverter.WAY_POI_NODE_IDS);
+		if (WayPOI2 != null){
+			String WayPOI1 = road1.getWay().getTag(StyledConverter.WAY_POI_NODE_IDS);
+			if (WayPOI2.equals(WayPOI1) == false){
+				if (WayPOI1 == null)
+					WayPOI1 = "";
+				// store combination of both ways. This might contain
+				// duplicates, but that is not a problem.
+				road1.getWay().addTag(StyledConverter.WAY_POI_NODE_IDS, WayPOI1 + WayPOI2);
+			}
+		}
+		
 //		// the mergePoint is now used by one highway less
 		mergePoint.decHighwayCount();
 		
