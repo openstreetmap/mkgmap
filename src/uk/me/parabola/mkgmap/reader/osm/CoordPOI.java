@@ -28,7 +28,9 @@ public class CoordPOI extends Coord {
 	private boolean used;
 
 	/**
-	 * Construct only from existing Coord instance
+	 * Construct from other coord instance, copies the lat/lon values in high precision,
+	 * nothing else.
+ 
 	 */
 	public CoordPOI(Coord co) {
 		super(co);
