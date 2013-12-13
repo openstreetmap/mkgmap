@@ -297,22 +297,36 @@ public class Utils {
 	}
 
 	/**
-	 * Calculate the angle between the real line and the displayed line
-	 * between two coordinates.
-	 * @param c1 first point
-	 * @param c2 second point
-	 * @return absolute difference between the two lines in degree [0;180]
+	 * approximate atan2, much faster than Math.atan2()
+	 * Based on a 50-year old arctan approximation due to Hastings
 	 */
-	public static double calcBearingError(Coord c1, Coord c2){
-		double realBearing = c1.bearingTo(c2);
-		double displayedBearing = c1.getDisplayedCoord().bearingTo(c2.getDisplayedCoord());
-		double err = displayedBearing - realBearing;
-		while(err > 180)
-			err -= 360;
-		while(err < -180)
-			err += 360;
-		return Math.abs(err);
-	}
-	
+	private final static double PI_BY_2 = Math.PI / 2;
+	// |error| < 0.005
+	public static double atan2_approximation( double y, double x )
+	{
+		if ( x == 0.0f )
+		{
+			if ( y > 0.0f ) return PI_BY_2 ;
+			if ( y == 0.0f ) return 0.0f;
+			return -PI_BY_2 ;
+		}
+		double atan;
+		double z = y/x;
+		if ( Math.abs( z ) < 1.0f )
+		{
+			atan = z/(1.0f + 0.28f*z*z);
+			if ( x < 0.0f )
+			{
+				if ( y < 0.0f ) return atan - Math.PI;
+				return atan + Math.PI;
+			}
+		}
+		else
+		{
+			atan = PI_BY_2  - z/(z*z + 0.28f);
+			if ( y < 0.0f ) return atan - Math.PI;
+		}
+		return atan;
+	}	
 }
 

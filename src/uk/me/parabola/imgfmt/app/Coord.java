@@ -52,7 +52,8 @@ public class Coord implements Comparable<Coord> {
 	private byte flags; // further attributes
 	private final byte latDelta; // delta to 30 bit lat value 
 	private final byte lonDelta; // delta to 30 bit lon value
-	private final static byte MAX_DELTA = 16; // max delta abs value that is considered okay 
+	private final static byte MAX_DELTA = 16; // max delta abs value that is considered okay
+	private short approxDistanceToDisplayedCoord = -1;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -236,10 +237,7 @@ public class Coord implements Comparable<Coord> {
 		return latitude == other.latitude && longitude == other.longitude;
 	}
 	
-	public boolean highPrecEquals(Object obj) {
-		if (obj == null || !(obj instanceof Coord))
-			return false;
-		Coord other = (Coord) obj;
+	public boolean highPrecEquals(Coord other) {
 		return getHighPrecLat() == other.getHighPrecLat() && getHighPrecLon() == other.getHighPrecLon(); 
 	} 
 
@@ -301,7 +299,7 @@ public class Coord implements Comparable<Coord> {
 		double y = Math.sin(dlon) * Math.cos(lat2);
 		double x = Math.cos(lat1)*Math.sin(lat2) -
 			Math.sin(lat1)*Math.cos(lat2)*Math.cos(dlon);
-		return Math.atan2(y, x) * 180 / Math.PI;
+		return Utils.atan2_approximation(y, x) * 180 / Math.PI;
 	}
 	
 	/**
@@ -455,5 +453,15 @@ public class Coord implements Comparable<Coord> {
 		}
 		*/
 		return list;
+	}
+	
+	/**
+	 * @return approximate distance in cm 
+	 */
+	public short getDistToDisplayedPoint(){
+		if (approxDistanceToDisplayedCoord < 0){
+		  approxDistanceToDisplayedCoord = (short)Math.round(getDisplayedCoord().distance(this)*100);
+		}
+		return approxDistanceToDisplayedCoord;
 	}
 }
