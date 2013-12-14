@@ -50,8 +50,11 @@ public class ExpressionRule implements Rule {
 			// expression matches
 			if (finalizeRule != null) {
 				// run the finalize rules
+				if (gtype.getDefaultName() != null)
+					el.addTag("mkgmap:default_name", gtype.getDefaultName());
 				finalizeRule.resolveType(el, finalizeTypeResult);
 			}
+			System.err.println(el.getId()+" "+toString());
 			result.add(el, gtype);
 		}
 	}

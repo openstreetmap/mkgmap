@@ -1,6 +1,7 @@
 include 'inc/roadspeed';
 
 name=* { name '${name}' }
+mkgmap:default_name=* { name '${mkgmap:default_name}' }
 mkgmap:display_name=* { addlabel '${mkgmap:display_name|subst:;=>/}' }
 
 mkgmap:label:1!=* & ref=* { addlabel '${ref|part:;:1}' }

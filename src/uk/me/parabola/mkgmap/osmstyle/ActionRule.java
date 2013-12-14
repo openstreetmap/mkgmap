@@ -86,9 +86,12 @@ public class ActionRule implements Rule {
 				// the finalize block must not be persistent
 				element = element.copy();
 			// there is a type so first execute the finalize rules
+			if (type.getDefaultName() != null)
+				element.addTag("mkgmap:default_name", type.getDefaultName());
 			finalizeRule.resolveType(element, finalizeTypeResult);
 		}
 		
+		System.err.println(element.getId()+" "+toString());
 		result.add(element, type);
 	}
 
