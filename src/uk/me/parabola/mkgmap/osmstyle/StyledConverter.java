@@ -2375,21 +2375,15 @@ public class StyledConverter implements OsmConverter {
 					keepThis = false;
 				} else {
 					displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
-					if (Math.abs(displayedAngle) < 1){ 
-						// displayed line is nearly straight, we can remove the point
-						keepThis = false;
-					} else if (Math.signum(displayedAngle) != Math.signum(realAngle)){
+					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
 						// straight line is closed to real angle 
 						keepThis = false;
-						/*
-					} else if (Math.abs(displayedAngle) > 2 * Math.abs(realAngle)){
-						// error with point is larger than without
-						double distance = distToLineHeron(cm, c1, c2);
-						if (distance > maxErrorDistance){
+					} else if (Math.abs(displayedAngle) < 1){ 
+						// displayed line is nearly straight
+						if (c1.getHighwayCount() < 2 && c2.getHighwayCount() < 2){
+							// we can remove the point
 							keepThis = false;
-						}*/
-					} else if (Math.abs(displayedAngle - realAngle)> 2*MAX_BEARING_ERROR){
-//						keepThis = false;
+						}
 					}
 				}
 				if (keepThis){
