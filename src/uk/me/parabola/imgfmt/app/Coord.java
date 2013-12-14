@@ -110,6 +110,7 @@ public class Coord implements Comparable<Coord> {
 		this.longitude = other.longitude;
 		this.latDelta = other.latDelta;
 		this.lonDelta = other.lonDelta;
+		this.approxDistanceToDisplayedCoord = other.approxDistanceToDisplayedCoord;
 	}
 
 	public int getLatitude() {
