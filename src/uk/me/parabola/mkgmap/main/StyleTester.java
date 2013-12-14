@@ -388,7 +388,7 @@ public class StyleTester implements OsmConverter {
 	private static String lineToString(MapLine el) {
 		Formatter fmt = new Formatter();
 		fmt.format("Line 0x%x, name=<%s>, ref=<%s>, res=%d-%d",
-				el.getType(), el.getName(), el.getRef(),
+				el.getType(), Arrays.toString(el.getLabels()),
 				el.getMinResolution(), el.getMaxResolution());
 		if (el.isDirection())
 			fmt.format(" oneway");

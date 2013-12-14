@@ -701,19 +701,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if (labels[0] != null) {
-			ms.setName(labels[0]);
-			StringBuilder ref = new StringBuilder();
-			for (int i = 1; i <4 ; i++) {
-				if (labels[i] != null) {
-					if (ref.length() >  0) {
-						ref.append(";");
-					}
-					ref.append(labels[i]);
-				}
-			}
-			if (ref.length()  >0) {
-				ms.setRef(ref.toString());
-			}
+			ms.setLabels(labels);
 		}
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
