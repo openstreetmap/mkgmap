@@ -45,7 +45,8 @@ goods=private         | goods=agricultural         { set goods=no }
 motorcycle=private    | motorcycle=agricultural    { set motorcycle=no }
 motor_vehicle=private | motor_vehicle=agricultural { set motor_vehicle=no }
 vehicle=private       | vehicle=agricultural       { set vehicle=no }
-access=private        | access=agricultural        { set access=no }
+access=private                                     { set access=no }
+access=agricultural                                { set access=no; add foot=yes }
 
 # set (override) specific restrictions                        
 bicycle=*    { set mkgmap:bicycle='${bicycle}' }
