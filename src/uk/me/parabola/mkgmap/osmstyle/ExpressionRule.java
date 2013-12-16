@@ -49,12 +49,14 @@ public class ExpressionRule implements Rule {
 		if (expression.eval(el)) {
 			// expression matches
 			if (finalizeRule != null) {
+				if (gtype.isContinueSearch()) {
+					el = el.copy();
+				}
 				// run the finalize rules
 				if (gtype.getDefaultName() != null)
 					el.addTag("mkgmap:default_name", gtype.getDefaultName());
 				finalizeRule.resolveType(el, finalizeTypeResult);
 			}
-			System.err.println(el.getId()+" "+toString());
 			result.add(el, gtype);
 		}
 	}

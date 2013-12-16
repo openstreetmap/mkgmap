@@ -81,7 +81,7 @@ public class ActionRule implements Rule {
 			a.perform(element);
 
 		if (type != null && finalizeRule != null) {
-			if (type.isContinueSearch() && element == el)
+			if (el == element && type.isContinueSearch())
 				// if there is a continue statement changes performed in 
 				// the finalize block must not be persistent
 				element = element.copy();
@@ -91,7 +91,6 @@ public class ActionRule implements Rule {
 			finalizeRule.resolveType(element, finalizeTypeResult);
 		}
 		
-		System.err.println(element.getId()+" "+toString());
 		result.add(element, type);
 	}
 
