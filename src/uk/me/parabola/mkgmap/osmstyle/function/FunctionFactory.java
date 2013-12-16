@@ -46,6 +46,8 @@ public class FunctionFactory {
 			return new MaxSpeedFunction(SpeedUnit.MPH);
 		if ("type".equals(name))
 			return new TypeFunction();
+		if ("osmid".equals(name))
+			return new OsmIdFunction();
 		
 		return null;
 	}
