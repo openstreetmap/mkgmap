@@ -94,22 +94,20 @@ public class RoadMerger {
 		public boolean isMergable(Coord mergePoint, Road otherRoad) {
 			Coord cStart = way.getPoints().get(0);
 			Coord cEnd = way.getPoints().get(way.getPoints().size() - 1);
-			if (cStart.equals(mergePoint) == false
-					&& cEnd.equals(mergePoint) == false) {
+			if (cStart != mergePoint && cEnd != mergePoint) {
 				return false;
 			}
 
 			Coord cOtherStart = otherRoad.getWay().getPoints().get(0);
 			Coord cOtherEnd = otherRoad.getWay().getPoints()
 					.get(otherRoad.getWay().getPoints().size() - 1);
-			if (cOtherStart.equals(mergePoint) == false
-					&& cOtherEnd.equals(mergePoint) == false) {
+			if (cOtherStart != mergePoint && cOtherEnd != mergePoint) {
 				return false;
 			}
 
 			// check if that would create a closed way - this should no be
 			// created
-			if (cStart.equals(cOtherEnd)) {
+			if (cStart == cOtherEnd) {
 				return false;
 			}
 			
@@ -223,10 +221,8 @@ public class RoadMerger {
 				// log.warn(otherWay.getId(), otherWay.toTagString());
 				return false;
 			} else if ("yes".equals(thisOneway) || "-1".equals(thisOneway)) {
-				boolean thisStart = getWay().getPoints().get(0)
-						.equals(mergePoint);
-				boolean otherStart = otherWay.getPoints().get(0)
-						.equals(mergePoint);
+				boolean thisStart = (getWay().getPoints().get(0) == mergePoint);
+				boolean otherStart = (otherWay.getPoints().get(0) == mergePoint);
 				if (thisStart == otherStart) {
 					// both ways are oneway but they have a different direction
 					log.warn("oneway with different direction", way.getId(),
@@ -271,13 +267,13 @@ public class RoadMerger {
 			}			
 			
 			Coord c1;
-			if (getWay().getPoints().get(0).equals(mergePoint)) {
+			if (getWay().getPoints().get(0) == mergePoint) {
 				c1 = getWay().getPoints().get(1);
 			} else {
 				c1 = getWay().getPoints().get(getWay().getPoints().size() - 2);
 			}
 			Coord cOther;
-			if (otherWay.getPoints().get(0).equals(mergePoint)) {
+			if (otherWay.getPoints().get(0) == mergePoint) {
 				cOther = otherWay.getPoints().get(1);
 			} else {
 				cOther = otherWay.getPoints().get(
@@ -411,15 +407,15 @@ public class RoadMerger {
 		endPoints.add(endPoint, road1);
 		
 		// merge the POI info
-		String WayPOI2 = road2.getWay().getTag(StyledConverter.WAY_POI_NODE_IDS);
-		if (WayPOI2 != null){
+		String wayPOI2 = road2.getWay().getTag(StyledConverter.WAY_POI_NODE_IDS);
+		if (wayPOI2 != null){
 			String WayPOI1 = road1.getWay().getTag(StyledConverter.WAY_POI_NODE_IDS);
-			if (WayPOI2.equals(WayPOI1) == false){
+			if (wayPOI2.equals(WayPOI1) == false){
 				if (WayPOI1 == null)
 					WayPOI1 = "";
 				// store combination of both ways. This might contain
 				// duplicates, but that is not a problem.
-				road1.getWay().addTag(StyledConverter.WAY_POI_NODE_IDS, WayPOI1 + WayPOI2);
+				road1.getWay().addTag(StyledConverter.WAY_POI_NODE_IDS, WayPOI1 + wayPOI2);
 			}
 		}
 		
@@ -445,7 +441,7 @@ public class RoadMerger {
 			Coord start = points.get(0);
 			Coord end = points.get(points.size() - 1);
 
-			if (start.equals(end)) {
+			if (start == end) {
 				// do not merge closed roads
 				roads.add(road);
 				continue;
