@@ -183,6 +183,8 @@ public class Java2DConverter {
 
 			switch (type) {
 			case PathIterator.SEG_MOVETO:
+				if (points != null)
+					log.error("area not singular");
 				points = new ArrayList<Coord>();
 				points.add(new Coord(lat, lon));
 				break;
@@ -194,8 +196,12 @@ public class Java2DConverter {
 				break;
 			case PathIterator.SEG_CLOSE:
 				assert points != null;
-				if (points.get(0).equals(points.get(points.size() - 1)) == false) 
-					points.add(points.get(0));
+				if (prevLat == lat && prevLong == lon){
+					// replace equal last with closing point
+					points.set(points.size() - 1, points.get(0)); 
+				}
+				else
+					points.add(points.get(0)); // add closing point
 				return points;
 			default:
 				log.error("Unsupported path iterator type " + type
@@ -212,7 +218,7 @@ public class Java2DConverter {
 
 	/**
 	 * Convert the area back into a list of polygons each represented by a list
-	 * of coords. It is possible that the area contains multiple discontiguous
+	 * of coords. It is possible that the area contains multiple discontinuous
 	 * polygons, so you may append more than one shape to the output list.<br/>
 	 * <b>Attention:</b> The outline of the polygon is has clockwise order whereas
 	 * holes in the polygon have counterclockwise order. 
@@ -258,8 +264,13 @@ public class Java2DConverter {
 			case PathIterator.SEG_MOVETO: 
 			case PathIterator.SEG_CLOSE:
 				if ((type == PathIterator.SEG_MOVETO && coords != null) || type == PathIterator.SEG_CLOSE) {
-					if (coords.size() > 2 && coords.get(0).equals(coords.get(coords.size() - 1)) == false) {
-						coords.add(coords.get(0));
+					if (coords.size() > 2){
+						if (iPrevLat == iLat && iPrevLong == iLon){
+							// replace equal last with closing point
+							coords.set(coords.size() - 1, coords.get(0)); 
+						}
+						else
+							coords.add(coords.get(0)); // add closing point
 					}
 					if (coords.size() > 3){
 						// use float values to verify area size calculations with higher precision
