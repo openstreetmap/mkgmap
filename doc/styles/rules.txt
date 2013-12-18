@@ -229,7 +229,21 @@ The size of one (garmin unit)^2^ in m^2^ varies depending on the latitude. Sampl
 +true+ if all nodes of a way are contained in the tile. +false+ if some nodes of the way are missing in the tile.
 
 |is_closed()   |  | x  |  |
-+true+ the way is closed. +false+ the way is not closed and cannot be processed as polygon.
++true+ the way is closed (start and end point are the same). +false+ the way is not closed and cannot be processed as polygon.
+
+|maxspeedkmh()   |  | x  |  |
+Retrieves the value of the 'maxspeed' tag converted to km/h. 
+
+|maxspeedmph()   |  | x  |  |
+Retrieves the value of the 'maxspeed' tag converted to mph. 
+
+|type()   | x | x  | x |
+Retrieves the type of the OSM element: 'node', 'way', 'relation'. 
+
+|osmid()   | x | x  | x |
+Retrieves the id of the OSM element. This can be useful for style debugging purposes. Note that due to internal changes like merging, cutting etc. 
+some element ids are changed and some have a faked id > 4611686018427387904.  
+
 |====
 
 The following rule matches for all service ways longer than 50m.
