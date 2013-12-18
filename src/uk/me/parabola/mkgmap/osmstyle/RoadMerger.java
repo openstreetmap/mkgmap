@@ -30,21 +30,43 @@ import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.MultiIdentityHashMap;
 
+/**
+ * Merges connected roads with identical road relevant tags based on the OSM elements 
+ * and the GType class.
+ * 
+ * @author WanMil
+ */
 public class RoadMerger {
 	private static final Logger log = Logger.getLogger(RoadMerger.class);
 
-	// maps which coord of a way(id) are restricted - they should not be merged
+	private static final double MAX_MERGE_ANGLE = 130d;
+	
+	/** maps which coord of a way(id) are restricted - they should not be merged */
 	private final MultiIdentityHashMap<Coord, Long> restrictions;
+	/** Contains a list of all roads (GType + Way) */
 	private final List<Road> roads;
 
+	/** maps the start point of a road to its road definition */
 	private final MultiIdentityHashMap<Coord, Road> startPoints = new MultiIdentityHashMap<Coord, Road>();
+	/** maps the end point of a road to its road definition */
 	private final MultiIdentityHashMap<Coord, Road> endPoints = new MultiIdentityHashMap<Coord, Road>();
 
+	/**
+	 * Helper class to keep the Way and the GType object of a road. 
+	 * Also provides methods that are able to decide if two roads can 
+	 * be merged.
+	 * 
+	 * @author WanMil
+	 */
 	private static class Road {
 		private final Way way;
 		private final GType gtype;
 
-		private final static Set<String> valueNotBoolCompareTags = new HashSet<String>() {
+		/** 
+		 * For these tags two ways need to return the same value for {@link Way#isNotBoolTag(String)} 
+		 * so that their roads can be merged.
+		 */
+		private final static Set<String> mergeTagsNotBool = new HashSet<String>() {
 			{
 				add("mkgmap:emergency");
 				add("mkgmap:delivery");
@@ -55,11 +77,14 @@ public class RoadMerger {
 				add("mkgmap:bicycle");
 				add("mkgmap:truck");
 				add("mkgmap:throughroute");
-				add("mkgmap:carpool_compat");
 			}
 		};
 
-		private final static Set<String> valueBoolCompareTags = new HashSet<String>() {
+		/** 
+		 * For these tags two ways need to return the same value for {@link Way#isBoolTag(String)} 
+		 * so that their roads can be merged.
+		 */
+		private final static Set<String> mergeTagsBool = new HashSet<String>() {
 			{
 				add("mkgmap:carpool");
 				add("mkgmap:toll");
@@ -68,7 +93,10 @@ public class RoadMerger {
 			}
 		};
 		
-		private final static Set<String> flatCompareTags = new HashSet<String>() {
+		/** 
+		 * For these tags two ways need to have an equal value so that their roads can be merged.
+		 */
+		private final static Set<String> mergeTagsEqualValue = new HashSet<String>() {
 			{
 				add("mkgmap:label:1");
 				add("mkgmap:label:2");
@@ -91,26 +119,40 @@ public class RoadMerger {
 			this.gtype = gtype;
 		}
 
+		/**
+		 * Checks if the given {@code otherRoad} can be merged with this road at 
+		 * the given {@code mergePoint}.
+		 * @param mergePoint the coord where this road and otherRoad might be merged
+		 * @param otherRoad another road instance
+		 * @return {@code true} this road can be merged with {@code otherRoad};
+		 * 	{@code false} the roads cannot be merged at {@code mergePoint}
+		 */
 		public boolean isMergable(Coord mergePoint, Road otherRoad) {
+			// first check if this road starts or stops at the mergePoint
 			Coord cStart = way.getPoints().get(0);
 			Coord cEnd = way.getPoints().get(way.getPoints().size() - 1);
 			if (cStart != mergePoint && cEnd != mergePoint) {
+				// it doesn't => roads not mergeable at mergePoint
 				return false;
 			}
 
+			// do the same check for the otherRoad
 			Coord cOtherStart = otherRoad.getWay().getPoints().get(0);
 			Coord cOtherEnd = otherRoad.getWay().getPoints()
 					.get(otherRoad.getWay().getPoints().size() - 1);
 			if (cOtherStart != mergePoint && cOtherEnd != mergePoint) {
+				// otherRoad does not start or stop at mergePoint =>
+				// roads not mergeable at mergePoint
 				return false;
 			}
 
-			// check if that would create a closed way - this should no be
-			// created
+			// check if merging would create a closed way - which should not
+			// be done (why? WanMil)
 			if (cStart == cOtherEnd) {
 				return false;
 			}
 			
+			// check if the GType objects are the same
 			if (isGTypeMergable(otherRoad.getGtype()) == false) {
 				return false;
 			}
@@ -122,6 +164,8 @@ public class RoadMerger {
 				return false;
 			
 
+			// checks if the tag values of both ways match so that the ways
+			// can be merged
 			if (isWayMergable(mergePoint, otherRoad.getWay()) == false) {
 				return false;
 			}
@@ -159,9 +203,18 @@ public class RoadMerger {
 			return roadClass;
 		}
 		
+		/**
+		 * Checks if the given GType can be merged with the GType of this road.
+		 * @param otherGType the GType of the other road
+		 * @return {@code true} both GType objects can be merged; {@code false} GType 
+		 *   objects do not match and must not be merged
+		 */
 		private boolean isGTypeMergable(GType otherGType) {
 			// log.info("Gtype1",gtype);
 			// log.info("Gtype2",otherGType);
+			
+			// check all fields of the GType objects for equality
+			
 			if (gtype.getType() != otherGType.getType()) {
 				return false;
 			}
@@ -177,17 +230,32 @@ public class RoadMerger {
 			if (gtype.getMaxLevel() != otherGType.getMaxLevel()) {
 				return false;
 			}
-			if (stringEquals(gtype.getDefaultName(),
-					otherGType.getDefaultName()) == false) {
-				return false;
-			}
+			
+// default name is applied before the RoadMerger starts
+// so they needn't be equal 
+//			if (stringEquals(gtype.getDefaultName(),
+//					otherGType.getDefaultName()) == false) {
+//				return false;
+//			}
+			
 			// log.info("Matches");
 			return true;
 		}
 
+		/**
+		 * Checks if the tag values of the {@link Way} objects of both roads 
+		 * match so that both roads can be merged. 
+		 * @param mergePoint the coord where both roads should be merged
+		 * @param otherWay the way of the road to merge
+		 * @return {@code true} tag values match so that both roads might be merged;
+		 *  {@code false} tag values differ so that road must not be merged
+		 */
 		private boolean isWayMergable(Coord mergePoint, Way otherWay) {
 
-			// special oneway handling
+			// oneway must not only be checked for equal tag values
+			// but also for correct direction of both ways
+			
+			// first map the different oneway values
 			String thisOneway = getWay().getTag("oneway");
 			if (thisOneway == null) {
 				thisOneway = "no";
@@ -200,6 +268,7 @@ public class RoadMerger {
 					thisOneway = "-1";
 				}
 			}
+			// map oneway value for the other way
 			String otherOneway = otherWay.getTag("oneway");
 			if (otherOneway == null) {
 				otherOneway = "no";
@@ -214,15 +283,21 @@ public class RoadMerger {
 			}
 
 			if (stringEquals(thisOneway, otherOneway) == false) {
+				// the oneway tags differ => cannot merge
+				// (It might be possible to reverse the direction of one way
+				// but this might be implemented later)
 				log.debug("oneway does not match", way.getId(), "("
 						+ thisOneway + ")", otherWay.getId(), "(" + otherOneway
 						+ ")");
-				// log.warn(way.getId(), way.toTagString());
-				// log.warn(otherWay.getId(), otherWay.toTagString());
 				return false;
+				
 			} else if ("yes".equals(thisOneway) || "-1".equals(thisOneway)) {
+				// the oneway tags match and both ways are oneway
+				// now check if both ways have the same direction
+				
 				boolean thisStart = (getWay().getPoints().get(0) == mergePoint);
 				boolean otherStart = (otherWay.getPoints().get(0) == mergePoint);
+				
 				if (thisStart == otherStart) {
 					// both ways are oneway but they have a different direction
 					log.warn("oneway with different direction", way.getId(),
@@ -230,8 +305,12 @@ public class RoadMerger {
 					return false;
 				}
 			}
+			// oneway matches
 
-			for (String tagname : flatCompareTags) {
+			// now check the other tag lists
+			
+			// first: tags that need to have an equal value
+			for (String tagname : mergeTagsEqualValue) {
 				String thisTag = getWay().getTag(tagname);
 				String otherTag = otherWay.getTag(tagname);
 				if (stringEquals(thisTag, otherTag) == false) {
@@ -244,7 +323,8 @@ public class RoadMerger {
 				}
 			}
 
-			for (String tagname : valueNotBoolCompareTags) {
+			// second: tags for which only the NotBool value must be equal 
+			for (String tagname : mergeTagsNotBool) {
 				boolean thisNo = getWay().isNotBoolTag(tagname);
 				boolean otherNo = otherWay.isNotBoolTag(tagname);
 				if (thisNo != otherNo) {
@@ -255,7 +335,8 @@ public class RoadMerger {
 				}
 			}
 
-			for (String tagname : valueBoolCompareTags) {
+			// third: tags for which only the bool value must be equal 
+			for (String tagname : mergeTagsBool) {
 				boolean thisYes = getWay().isBoolTag(tagname);
 				boolean otherYes = otherWay.isBoolTag(tagname);
 				if (thisYes != otherYes) {
@@ -266,6 +347,7 @@ public class RoadMerger {
 				}
 			}			
 			
+			// Check the angle of the two ways
 			Coord c1;
 			if (getWay().getPoints().get(0) == mergePoint) {
 				c1 = getWay().getPoints().get(1);
@@ -281,8 +363,14 @@ public class RoadMerger {
 			}
 
 			double angle = Math.abs(Utils.getAngle(c1, mergePoint, cOther));
-			if (angle > 130) {
-				// log.error("Bearing "+b+" "+getWay().getId()+" "+otherWay.getId());
+			if (angle > MAX_MERGE_ANGLE) {
+				// The angle exceeds the limit => do not merge
+				// Don't know if this is really required or not. 
+				// But the number of merges which do not succeed due to this
+				// restriction is quite low and there have been requests
+				// for this: http://www.mkgmap.org.uk/pipermail/mkgmap-dev/2013q3/018649.html
+				
+				log.info("Do not merge ways"+getWay().getId(),"and",otherWay.getId(),"because they span a too big angle",angle,"°");
 				return false;
 			}
 
@@ -297,6 +385,12 @@ public class RoadMerger {
 			return gtype;
 		}
 
+		/**
+		 * Checks if two strings are equal ({@code null} supported).
+		 * @param s1 first string ({@code null} allowed)
+		 * @param s2 second string ({@code null} allowed)
+		 * @return {@code true} both strings are equal or both {@code null}; {@code false} both strings are not equal
+		 */
 		private boolean stringEquals(String s1, String s2) {
 			if (s1 == null) {
 				return s2 == null;
@@ -390,6 +484,15 @@ public class RoadMerger {
 		return wayRestrictions.contains(w.getId());
 	}
 
+	/**
+	 * Merges {@code road2} into {@code road1}. This means that
+	 * only the way id and the tags of {@code road1} is kept.
+	 * For the tag it should not matter because all tags used after the
+	 * RoadMerger are compared to be the same.
+	 * 
+	 * @param road1 first road (will keep the merged road)
+	 * @param road2 second road
+	 */
 	private void mergeRoads(Road road1, Road road2) {
 		// Removes the second line,
 		// Merges the points in the first one
@@ -427,6 +530,11 @@ public class RoadMerger {
 		
 	}
 
+	/**
+	 * Merge the roads and copy the results to the given lists.
+	 * @param resultingWays list for the merged (and not mergeable) ways
+	 * @param resultingGTypes list for the merged (and not mergeable) GTypes
+	 */
 	public void merge(List<Way> resultingWays, List<GType> resultingGTypes) {
 
 		int noRoadsBeforeMerge = this.roads.size();
@@ -451,19 +559,27 @@ public class RoadMerger {
 			endPoints.add(end, road);
 		}
 
-		HashSet<Coord> fullMergedPoints = new HashSet<Coord>();
+		// a set of all points where no more merging is possible
+		HashSet<Coord> mergeCompletedPoints = new HashSet<Coord>();
+		// flag if at least one road was merged in a merge cycle
 		boolean oneRoadMerged = true;
 		
 		while (oneRoadMerged) {
 			oneRoadMerged = false;
-			HashSet<Coord> mergePoints = new HashSet<Coord>(endPoints.keySet());
-			mergePoints.retainAll(startPoints.keySet());
-			// remove all coords that have been completely processed and that have no more merge candidates
-			mergePoints.removeAll(fullMergedPoints);
 			
+			// first get the potential merge points
+			HashSet<Coord> mergePoints = new HashSet<Coord>(endPoints.keySet());
+			// remove all coords that have been completely processed and that have no more merge candidates
+			mergePoints.removeAll(mergeCompletedPoints);
+			// only keep the points where there is a way with a start point identical to the end point of another way
+			mergePoints.retainAll(startPoints.keySet());
+			
+			// check all potential merge points for merges
 			for (Coord mergePoint : mergePoints) {
-				List<Road> endRoads = endPoints.get(mergePoint);
+				// get all road that start with the merge point
 				List<Road> startRoads = startPoints.get(mergePoint);
+				// get all roads that end with the merge point
+				List<Road> endRoads = endPoints.get(mergePoint);
 				
 				if (endRoads.isEmpty() || startRoads.isEmpty()) {
 					// this might happen if another merge operation changed endPoints and/or startPoints
@@ -477,19 +593,34 @@ public class RoadMerger {
 				Road mergeRoad2 = null;
 				
 				for (Road road1 : endRoads) {
+					// check if the road has a restriction at the merge point
+					// which does not allow us to merge the road at this point
+					if (hasRestriction(mergePoint, road1.getWay())) {
+						continue;
+					}
+					
 					List<Coord> points1 = road1.getWay().getPoints();
+					
+					// go through all candidates to merge
 					for (Road road2 : startRoads) {
-						if (hasRestriction(mergePoint, road1.getWay())) {
-							continue;
-						}
 						if (hasRestriction(mergePoint, road2.getWay())) {
 							continue;
 						}
 						List<Coord> points2 = road2.getWay().getPoints();
+						
+						// the second road is merged into the first road
+						// so only the id of the first road is kept
+						// This also means that the second road must not have a restriction on 
+						// both start and end point
 						if (hasRestriction(points2.get(points2.size()-1), road2.getWay())) {
 							continue;
 						}
+						
+						// check if both roads can be merged
 						if (road1.isMergable(mergePoint, road2)) {
+							// yes they might be merged
+							// calculate the angle between them 
+							// if there is more then one road to merge the one with the lowest angle is merged 
 							double angle = Math.abs(Utils.getAngle(points1.get(points1.size()-2), mergePoint, points2.get(1)));
 							log.debug("Road",road1.getWay().getId(),"and road",road2.getWay().getId(),"are mergeable with angle",angle);
 							if (angle < bestAngle) {
@@ -501,13 +632,17 @@ public class RoadMerger {
 					}
 				}
 				
+				// is there a pair of roads that can be merged?
 				if (mergeRoad1 != null && mergeRoad2 != null) {
+					// yes!! => merge them
 					log.debug("Merge ",mergeRoad1.getWay().getId(),"and",mergeRoad2.getWay().getId(),"with angle",bestAngle);
 					mergeRoads(mergeRoad1, mergeRoad2);
+					// flag that there was at least one merge in this cycle
 					oneRoadMerged = true;
 					noMerges++;
 				} else {
-					fullMergedPoints.add(mergePoint);
+					// no => do not check again this point in the next cylce
+					mergeCompletedPoints.add(mergePoint);
 				}
 			}
 		}
@@ -523,6 +658,7 @@ public class RoadMerger {
 			resultingGTypes.add(r.getGtype());
 		}
 
+		// print out some statistics
 		int noRoadsAfterMerge = this.roads.size();
 		log.info("Roads before/after merge:", noRoadsBeforeMerge, "/",
 				noRoadsAfterMerge);
