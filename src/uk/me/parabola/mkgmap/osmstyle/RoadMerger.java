@@ -370,7 +370,7 @@ public class RoadMerger {
 				// restriction is quite low and there have been requests
 				// for this: http://www.mkgmap.org.uk/pipermail/mkgmap-dev/2013q3/018649.html
 				
-				log.info("Do not merge ways"+getWay().getId(),"and",otherWay.getId(),"because they span a too big angle",angle,"°");
+				log.info("Do not merge ways",getWay().getId(),"and",otherWay.getId(),"because they span a too big angle",angle,"°");
 				return false;
 			}
 

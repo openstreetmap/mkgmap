@@ -313,28 +313,13 @@ public class StyledConverter implements OsmConverter {
 	 * Built in rules to run after converting the element.
 	 */
 	private void postConvertRules(Element el, GType type) {
-		// Set the name from the 'name' tag or failing that from
-		// the default_name.
-//		el.setName(el.getTag("name"));
-//		if (el.getName() == null)
-//			el.setName(type.getDefaultName());
+		// Set the default_name if no name is set
 		if (type.getDefaultName() != null && el.getName() == null)
 			el.addTag("mkgmap:label:1", type.getDefaultName());
 		
 		if (el instanceof Way && type.isRoad()) {
 			Way way = (Way) el;
-			
-//			if (way.isBoolTag("mkgmap:carpool")) {
-//				// to make a way into a "carpool lane" all access disable
-//				// bits must be set except for CARPOOL and EMERGENCY (BUS
-//				// can also be clear)
-//				for (String accessTag : ACCESS_TAGS) {
-//					el.addTag(accessTag, "no");
-//				}
-//				el.deleteTag("mkgmap:emergency");
-//				el.deleteTag("mkgmap:bus");
-//			}
-			
+
 			// road class (can be overridden by mkgmap:road-class tag)
 			int roadClass = type.getRoadClass();
 			String val = way.getTag("mkgmap:road-class");
@@ -448,10 +433,17 @@ public class StyledConverter implements OsmConverter {
 		collector.addToBounds(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
 	}
 
+	/**
+	 * Merges roads with identical attributes (gtype, OSM tags) to reduce the size of the 
+	 * road network.
+	 */
 	private void mergeRoads() {
+		// instantiate the RoadMerger - the roads and roadTypes lists are copied
 		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
+		// clear the lists
 		roads.clear();
 		roadTypes.clear();
+		// merge the roads and copy the results to the roads and roadTypes list
 		merger.merge(roads, roadTypes);
 	}
 	
@@ -865,9 +857,10 @@ public class StyledConverter implements OsmConverter {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
 					if (wayPOI.contains("["+node.getId()+"]")){
+						log.debug("POI",node.getId(),"changes way",way.getId());
 						String roadClass = node.getTag("mkgmap:road-class");
 						String roadSpeed = node.getTag("mkgmap:road-speed");
-						if(roadClass != null || roadSpeed != null) {
+						if(roadClass != null || roadSpeed != null || hasAccessRestriction(node)) {
 							// if the way has more than one point
 							// following this one, split the way at the
 							// next point to limit the size of the
@@ -950,7 +943,7 @@ public class StyledConverter implements OsmConverter {
 				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
-					if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
+					if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
 						// if this or the next point are not the last
 						// points in the way, split at the next point
 						// taking care not to produce a short arc
@@ -1020,7 +1013,7 @@ public class StyledConverter implements OsmConverter {
 					if (p1 instanceof CoordPOI && ((CoordPOI) p1).isUsed()) {
 						CoordPOI cp = (CoordPOI) p1;
 						Node node = cp.getNode();
-						if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
+						if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
 							// check if this point is further away
 							// from the POI than we would like
 							double dist = p.distance(p1);
@@ -1740,7 +1733,7 @@ public class StyledConverter implements OsmConverter {
 						CoordPOI cp = (CoordPOI) p;
 						Node node = cp.getNode();
 						if (!isFootWay){
-							if(node.getTag("access") != null || 
+							if(hasAccessRestriction(node) || 
 									node.getTag("mkgmap:road-class") != null ||
 									node.getTag("mkgmap:road-speed") != null){
 								wayPOI += "["+ node.getId()+"]"; 
