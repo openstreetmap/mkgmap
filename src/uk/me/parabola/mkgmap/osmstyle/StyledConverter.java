@@ -1413,10 +1413,6 @@ public class StyledConverter implements OsmConverter {
 		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
 		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool");
 		
-		// compatibility handling with old mkgmap postprocessing
-		if (way.isNotBoolTag("mkgmap:carpool_compat"))
-			noAccess[RoadNetwork.NO_CARPOOL] = true;
-		
 		road.setAccess(noAccess);
 
 		if (way.isNotBoolTag("mkgmap:throughroute")) 
