@@ -45,6 +45,8 @@ public class Java2DConverterTest {
 		assertEquals(convPolygon.size(), 1);
 		assertEquals(polygon, convPolygon.get(0));
 		assertEquals(polygon, singularPolygon);
+    assertTrue(convPolygon.get(0).get(0) ==  convPolygon.get(0).get(convPolygon.get(0).size()-1));
+    assertTrue(singularPolygon.get(0) ==  singularPolygon.get(singularPolygon.size()-1));
 	}
 	
 	@Test
@@ -94,8 +96,12 @@ public class Java2DConverterTest {
 		assertEquals(4,singularPolygon1.size());
 		assertEquals(4,singularPolygon2.size());
 		assertEquals(5,singularPolygon3.size());
-		
+
+		assertTrue(convPolygon1.get(0).get(0) ==  convPolygon1.get(0).get(convPolygon1.get(0).size()-1));
+		assertTrue(convPolygon2.get(0).get(0) ==  convPolygon2.get(0).get(convPolygon2.get(0).size()-1));
+		assertTrue(convPolygon3.get(0).get(0) ==  convPolygon3.get(0).get(convPolygon3.get(0).size()-1));
+		assertTrue(singularPolygon1.get(0) ==  singularPolygon1.get(singularPolygon1.size()-1));
+		assertTrue(singularPolygon2.get(0) ==  singularPolygon2.get(singularPolygon2.size()-1));
+		assertTrue(singularPolygon3.get(0) ==  singularPolygon3.get(singularPolygon3.size()-1));
 	}
-	
-	
 }
