@@ -107,8 +107,8 @@ public class StyledConverter implements OsmConverter {
 
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
-	// nodeIdMap maps a Coord into a nodeId
-	private IdentityHashMap<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
+	// nodeIdMap maps a Coord into a CoordNode
+	private IdentityHashMap<Coord, CoordNode> nodeIdMap = new IdentityHashMap<Coord, CoordNode>();
 
 	public final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
 	
@@ -526,7 +526,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 
-			Integer nodeId = null;
+			CoordNode coordNode = null;
 			if(node == null)
 				log.warn("Through route relation " + relation.toBrowseURL() + " is missing the junction node");
 			else {
@@ -535,16 +535,16 @@ public class StyledConverter implements OsmConverter {
 					// junction is outside of the tile - ignore it
 					continue;
 				}
-				nodeId = nodeIdMap.get(junctionPoint);
-				if(nodeId == null)
+				coordNode = nodeIdMap.get(junctionPoint);
+				if(coordNode == null)
 					log.warn("Through route relation " + relation.toBrowseURL() + " junction node at " + junctionPoint.toOSMURL() + " is not a routing node");
 			}
 
 			if(w1 == null || w2 == null)
 				log.warn("Through route relation " + relation.toBrowseURL() + " should reference 2 ways that meet at the junction node");
 
-			if(nodeId != null && w1 != null && w2 != null)
-				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
+			if(coordNode != null && w1 != null && w2 != null)
+				collector.addThroughRoute(coordNode.getId(), w1.getId(), w2.getId());
 		}
 		// return memory to GC
 		nodeIdMap = null;
@@ -1320,10 +1320,11 @@ public class StyledConverter implements OsmConverter {
 
 			if(p.getHighwayCount() > 1) {
 				// this point is a node connecting highways
-				Integer nodeId = nodeIdMap.get(p);
-				if(nodeId == null) {
+				CoordNode coordNode = nodeIdMap.get(p);
+				if(coordNode == null) {
 					// assign a node id
-					nodeIdMap.put(p, nextNodeId++);
+					coordNode = new CoordNode(p.getLatitude(), p.getLongitude(), nextNodeId++, p.getOnBoundary());
+					nodeIdMap.put(p, coordNode);
 				}
 
 				// add this index to node Indexes (should not already be there)
@@ -1435,14 +1436,12 @@ public class StyledConverter implements OsmConverter {
 				if(n > 0 && n < points.size() - 1)
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
-				Integer nodeId = nodeIdMap.get(coord);
-				assert nodeId != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null node id";
+				CoordNode thisCoordNode = nodeIdMap.get(coord);
+				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
 				boolean boundary = coord.getOnBoundary();
 				if(boundary) {
-					log.info("Way " + debugWayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
+					log.info("Way " + debugWayName + "'s point #" + n + " at " + coord.toOSMURL() + " is a boundary node");
 				}
-
-				CoordNode thisCoordNode = new CoordNode(coord.getLatitude(), coord.getLongitude(), nodeId, boundary);
 				points.set(n, thisCoordNode);
 
 				// see if this node plays a role in any turn
