@@ -14,6 +14,8 @@
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.Set;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -652,6 +655,58 @@ public class RoadMerger {
 			this.roads.addAll(mergedRoads);
 		}
 
+		// sort the roads to ensure that the order of roads is constant for two runs
+		Collections.sort(roads, new Comparator<Road>() {
+			public int compare(Road o1, Road o2) {
+				Way w1 = o1.getWay();
+				Way w2 = o2.getWay();
+				int cmp = Long.compare(w1.getId(), w2.getId());
+				if (cmp != 0) {
+					return cmp;
+				}
+
+				GType g1 = o1.getGtype();
+				GType g2 = o2.getGtype();
+				cmp= Integer.compare(g1.getType(),  g2.getType());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(g1.getRoadClass(), g2.getRoadClass());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(g1.getRoadSpeed(), g2.getRoadSpeed());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(g1.getMinLevel(), g2.getMinLevel());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(g1.getMaxLevel(), g2.getMaxLevel());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(w1.getPoints().size(), w2.getPoints().size());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp= Integer.compare(w1.getTagCount(), w2.getTagCount());
+				if (cmp != 0) {
+					return cmp;
+				}
+				cmp = w1.toTagString().compareTo(w2.toTagString());
+				if (cmp != 0) {
+					return cmp;
+				}
+				
+				log.error("Two road are quite identical: ");
+				log.error(w1.getId()+" "+w1.toTagString());
+				log.error(w2.getId()+" "+w2.toTagString());
+				return 0;
+			}
+		});
+		
 		// copy the roads to the resulting lists
 		for (Road r : roads) {
 			resultingWays.add(r.getWay());
