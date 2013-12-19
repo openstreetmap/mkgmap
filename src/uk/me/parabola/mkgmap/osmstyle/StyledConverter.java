@@ -73,6 +73,7 @@ import uk.me.parabola.util.EnhancedProperties;
  */
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
+	private static final Logger roadLog = Logger.getLogger(StyledConverter.class.getName()+".roads");
 
 	private final List<String> nameTagList;
 
@@ -483,6 +484,10 @@ public class StyledConverter implements OsmConverter {
 		}
 		lines = null;
 		lineTypes = null;
+		if (roadLog.isInfoEnabled()) {
+			roadLog.info("Flags: oneway,no-emergency, no-delivery, no-throughroute, no-truck, no-bike, no-foot, carpool, no-taxi, no-bus, no-car");
+			roadLog.info(String.format("%19s %4s %11s %s", "Road-OSM-Id","Type","Flags", "Labels"));
+		}
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -1484,6 +1489,14 @@ public class StyledConverter implements OsmConverter {
 			road.setInternalNodes(hasInternalNodes);
 		}
 
+		if (roadLog.isInfoEnabled()) {
+			int cmpAccess = (road.getRoadDef().getTabAAccess() & 0xff) + ((road.getRoadDef().getTabAAccess() & 0xc000) >> 6);
+			if (road.isDirection()) {
+				cmpAccess += 1<<10;
+			}
+			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
+			roadLog.info(String.format("%19d 0x%-2x %11s %s", way.getId(), road.getType(), access, Arrays.toString(road.getLabels())));
+		}
 		// add the road to the housenumber generator
 		// it will add the road later on to the lineAdder
 		housenumberGenerator.addRoad(way, road);
