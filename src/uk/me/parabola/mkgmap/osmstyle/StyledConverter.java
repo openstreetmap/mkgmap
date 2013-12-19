@@ -860,7 +860,7 @@ public class StyledConverter implements OsmConverter {
 						log.debug("POI",node.getId(),"changes way",way.getId());
 						String roadClass = node.getTag("mkgmap:road-class");
 						String roadSpeed = node.getTag("mkgmap:road-speed");
-						if(roadClass != null || roadSpeed != null || hasAccessRestriction(node)) {
+						if(roadClass != null || roadSpeed != null) {
 							// if the way has more than one point
 							// following this one, split the way at the
 							// next point to limit the size of the
@@ -891,13 +891,6 @@ public class StyledConverter implements OsmConverter {
 								val = node.getTag("mkgmap:road-speed-max");
 								if(val != null)
 									way.addTag("mkgmap:road-speed-max", val);
-							}
-							// copy the access tags
-							for (String accessTag : ACCESS_TAGS) {
-								String tagValue = node.getTag(accessTag);
-								if (tagValue != null) {
-									way.addTag(accessTag, tagValue);
-								}
 							}
 						}
 					}
