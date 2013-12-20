@@ -520,14 +520,12 @@ You can apply as many filter expressions to a substitution as you like.
 
 include::rules-filters.txt[]
 
-== Useful tags for routing and address search ==
-For general routing, using avoid options, and address search, the use of
-some special tags is necessary.
-// see [[Mkgmap/help/Tags]]
-
-=== mkgmap internal tags ===
+== mkgmap internal tags ==
 mkgmap uses tags prefixed with +mkgmap:+ to set attributes of the Garmin map 
-elements. These tags need to be set in the style file. 
+elements. These tags need to be set in the style file and allow
+to set e.g. access restrictions, labels, attributes required for address search etc. 
+
+// see [[Mkgmap/help/Tags]]
 
 .Tags for routable roads
 [options="header"]
