@@ -529,21 +529,20 @@ some special tags is necessary.
 mkgmap uses tags prefixed with +mkgmap:+ to set attributes of the Garmin map 
 elements. These tags need to be set in the style file. 
 
-.mkgmap internal tags
+.Tags for routable roads
 [options="header"]
 |=========================================================
 | Attribute   | mkgmap tag     | Example | Notes
 | Labels      | +mkgmap:label:1+ + 
 +mkgmap:label:2+ + 
 +mkgmap:label:3+ + 
-+mkgmap:label:4+ | Pizza Express | Usually only the first label is displayed. On some units the second label of roads is displayed as routing instruction. The other labels can be used for address search. 
++mkgmap:label:4+ | Eastern Avenue +
+A112 | Usually only the first label is displayed. On some units the second label of roads is displayed as routing instruction. All labels are used for address search. 
 | Country     | +mkgmap:country+ | GBR | Three letter ISO code, e.g. for GBR United Kingdom
-| Region      | +mkgmap:region+  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
-| City        | +mkgmap:city+    | Nottingham |
-| Street      | +mkgmap:street+  | King Street |
-| Housenumber | +mkgmap:housenumber+ | 20 |
-| Zipcode     | +mkgmap:postal_code+ | NG1 2AS |
-| Phone       | +mkgmap:phone+   | +44 115 999999 | Phone number in any format
+| Region      | +mkgmap:region+  | London Borough of Waltham Forest | The regions name. Useful if there are multiple cities with the same name.
+| City        | +mkgmap:city+    | London |
+| Street      | +mkgmap:street+  | High Road Leyton | This value is used by house number search to match the +addr:street+ tag of an OSM element with house number to the corresponding road. It must be set so that house number search is working.
+| Zipcode     | +mkgmap:postal_code+ |  E10 5NA |
 | Access restrictions | +mkgmap:foot+ +
 +mkgmap:bicycle+ +
 +mkgmap:car+ +
@@ -557,16 +556,17 @@ elements. These tags need to be set in the style file.
 | Toll road | +mkgmap:toll+   | yes | If this tag is set to _yes_ the road can be used only when paying a specific toll.
 | Unpaved | +mkgmap:unpaved+   | yes | If this tag is set to _yes_ the road is marked to be unpaved. Some units can avoid unpaved roads.
 | Ferry | +mkgmap:ferry+   | yes | If this tag is set to _yes_ the line is marked to be a ferry line. Some units can avoid ferry lines.
+| Road speed | +mkgmap:road-speed-class+   | 2 | A value between 0 and 7. Overrides the +road_speed+ definition in the element type definition if this tag is set.
+| Road speed modifier | +mkgmap:road-speed+   | +1 | Modifies the road speed class by the given value. In case the value is prefixed with + or - the road speed class is modified. In case the value does not start with + or - the road speed class value of the element type definition is overriden. 
+| Road speed limiters | +mkgmap:road-speed-min+ +
+ +mkgmap:road-speed-max+  | 5 | Defines the minimum/maximum road speed class. This can be used to limit the modification of the road speed class (+mkgmap:road-speed+). 
+| Road class | +mkgmap:road-class+   | -1 | Modifies the road class defined in the element type definition. In case the value is prefixed with + or - the road class is modified. In case the value does not start with + or - the road class value of the element type definition is overriden. 
+| Road class limiters | +mkgmap:road-class-min+ +
+ +mkgmap:road-class-max+  | 2 | Defines the minimum/maximum road class. This can be used to limit the modification of the road class (+mkgmap:road-class+). 
 |=========================================================
  
 TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
  
-
-=== Address search tags ===
-POIs and street cans be assigned with additional mkgmap special tags that
-define the address attributes. Searching for addresses can be enabled by 
-using the +index+ option.
-
 .POI address tags
 [options="header"]
 |=========================================================
@@ -580,18 +580,6 @@ using the +index+ option.
 | Zipcode     | mkgmap:postal_code | NG1 2AS |
 | Phone       | mkgmap:phone   | +44 115 999999 | Phone number in any format
 |=========================================================
-
-.Street naming tags
-[options="header"]
-|=========================================================
-| Attribute | mkgmap tag | Example |Notes
-| Name    | mkgmap:label:1 | King Street | Street name
-| Country | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
-| Region  | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
-| City    | mkgmap:city    | Nottingham |
-| Zipcode | mkgmap:postal_code | NG1 2AS |
-|=========================================================
-
 
 [[Element_type]]
 == Element type definition ==
@@ -821,28 +809,35 @@ Its rules are executed each time an element type definition in the style file ma
 The finalize section is often useful to set the mkgmap internal tags.
 
 .Finalize section in the lines file with access handling
-----
-# Two elements tagged with
-# Way 1: highway=motorway, ref=A1
-# Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes
+====
+Two elements tagged with
 
-highway=motorway    [0x01 road_class=4 road_speed=7 resolution 15]
-highway=service     [0x07 road_class=0 road_speed=1 resolution 24]
+ Way 1: highway=motorway, ref=A1 
+ Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes 
 
-<finalize>
-highway=*        { name '${name} (${ref})' | '${name}' | '${ref}' }
-highway=motorway { add bicycle=no; add foot=no }
-bicycle=*        { add mkgmap:bicycle='${bicycle}' } 
-foot=*           { add mkgmap:foot='${foot}' } 
-access=*         { addaccess '${access}' }
+using the lines file
 
-# will result in
-# Way 1: highway=motorway, ref=A1, mkgmap:label:1=A1, mkgmap:foot=no, mkgmap:bicycle=no
-#  Road in Garmin map: Type 0x01, Name 'A1', no access for bicycle and foot
-# Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes, mkgmap:label:1=Main Road, 
-#        mkgmap:foot=yes, mkgmap:bicycle=yes, mkgmap:car=no, mkgmap:truck=no, mkgmap:bus=no, ...
-#  Road in Garmin map: Type 0x07, Name 'Main Road', no access for all vehicle types except bicycle and foot
-----
+ highway=motorway    [0x01 road_class=4 road_speed=7 resolution 15]
+ highway=service     [0x07 road_class=0 road_speed=1 resolution 24]
+
+ <finalize>
+ highway=*        { name '${name} (${ref})' | '${name}' | '${ref}' }
+ highway=motorway { add bicycle=no; add foot=no }
+ bicycle=*        { add mkgmap:bicycle='${bicycle}' } 
+ foot=*           { add mkgmap:foot='${foot}' } 
+ access=*         { addaccess '${access}' }
+
+will result in
+
+ Way 1: highway=motorway, ref=A1, mkgmap:label:1=A1, mkgmap:foot=no, 
+        mkgmap:bicycle=no
+ Road 1 in Garmin map: Type 0x01, Name 'A1', no access for bicycle and foot
+ Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes, 
+        mkgmap:label:1=Main Road, mkgmap:foot=yes, mkgmap:bicycle=yes, 
+        mkgmap:car=no, mkgmap:truck=no, mkgmap:bus=no, ...
+ Road 2 in Garmin map: Type 0x07, Name 'Main Road', no access for all vehicle 
+                                                types except bicycle and foot
+====
 
 [NOTE]
 Actions in the finalize section modify only the element for the current executed element type definition.
@@ -863,7 +858,7 @@ looking for further matches.
 
 * Where possible always have the same tag on the left.  This will make things more predictable.
 * Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
-
+* Use the +echo+ and +echotags+ actions to understand what's going on during style processing.
 
 == Some examples ==
 The following are some examples of style rules, with explanations of what they do.
