@@ -10,7 +10,7 @@
 # mkgmap:delivery
 # A class is not allowed to use the way if its tag is set to 'no'
 
-highway=steps                           { set access=no }
+highway=steps                           { add foot=yes; add access=no }
 highway=* & motorroad=yes               { add bicycle=no; add foot=no }
 highway=motorway|highway=motorway_link  { add bicycle=no; add foot=no }
 highway=pedestrian & area!=yes          { add foot=yes; add access=no } 
