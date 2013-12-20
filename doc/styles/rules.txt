@@ -8,7 +8,7 @@ The rules for converting points, lines and polygons are held in
 correspondingly named files, as described in <<FILES,the structure of a style>>.
 
 Each file contains a number of rules. Rules test the values of the tags of an OSM node, way or relation. 
-They also select a specific Garmin type based on the result of those tests and set specific mkgmap tags to assign specific attributes to a map element.
+They also select a specific Garmin type based on the result of those tests and set mkgmap internal tags (+mkgmap:*+) to assign specific attributes to a map element.
 
 == Introduction ==
 Each rule starts off with an expression to test the value of one or more
@@ -203,6 +203,34 @@ use. Now the only restriction is you must have at least one test that
 depends on a tag existing. So you cannot match on everything, regardless
 of tags, or test for an object that does _not_ have a tag.
 
+=== Comparing the values of two tags ===
+Sometimes you may want to compare the values of two tags, rather than
+the value of one tag with a fixed value.
+Use a dollar sign to indicate that you want the tag value.
+
+----
+# If you had the following tags:
+# name=Fford-y-Mor
+# name:en=Terrace Road
+# name:cy=Fford-y-Mor
+
+name = $name:cy {...}  # this would match
+name = $name:en {...}  # and this would not
+----
+
+This tests if the value of the +name+ tag is the same as the welsh name
+tag (+name:cy+) 
+
+It is worth noting that the normal case
+----
+highway=primary
+----
+is exactly the same as
+----
+$highway=primary
+----
+
+
 [[Functions]]
 === Functions ===
 Functions calculate a specific property of an OSM element.
@@ -325,7 +353,7 @@ On some Garmin units the second label is used for routing instructions. The thir
 and fourth label are known to be used for address search only. The four labels can be assigned
 by setting the tags +mkgmap:label:n+ where n is a number between 1 and 4.
 
-The addlabel command assigns the first empty mgkmap:label:n tag with the given value.
+The addlabel command assigns the first empty +mkgmap:label:n+ tag with the given value.
 
 ----
  {addlabel '${name} (${ref})' | '${ref}' | '${name}'}
@@ -352,6 +380,30 @@ as it is shown in the following example where all three lines have the same effe
  {name '${name} (${ref})' | '${ref}' | '${name}'}
  {add mkgmap:label:1='${name} (${ref})' | '${ref}' | '${name}'}
  mkgmap:label:1!=* {set mkgmap:label:1='${name} (${ref})' | '${ref}' | '${name}'}
+----
+
+=== addaccess ===
+The "addaccess" action sets all unset mkgmap access restriction tags to the given value.
+This is a helper action to avoid long action blocks.
+
+----
+{ addaccess 'no' }
+----
+is the same as
+----
+{ add mkgmap:foot=no; add mkgmap:bicycle=no; add mkgmap:car=no; add mkgmap:taxi=no; add mkgmap:truck=no; add mkgmap:bus=no; add mkgmap:emergency=no; add mkgmap:delivery=no }
+----
+
+=== setaccess ===
+The "setaccess" action sets all mkgmap access restriction tags to the given value no matter if
+they already have a value or not. This is a helper action to avoid long action blocks.
+
+----
+{ setaccess 'no' }
+----
+is the same as
+----
+{ set mkgmap:foot=no; set mkgmap:bicycle=no; set mkgmap:car=no; set mkgmap:taxi=no; set mkgmap:truck=no; set mkgmap:bus=no; set mkgmap:emergency=no; set mkgmap:delivery=no }
 ----
 
 === apply ===
@@ -431,8 +483,9 @@ surrounded by curly braces like so `${name}`.
 The most obvious use for variables is in setting the name of the element.
 You are able to use any combination of tags to make the name from.
 Here we name a fuel station by its brand and the name in brackets following.
-
- amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
+----
+amenity=fuel { name '${brand} (${operator})' } [ 0x2f01 ]
+----
 
 If the operator tag was not set, then the name would not be set because *all*
 substitutions in a string must exist for the result to be valid.
@@ -472,6 +525,43 @@ For general routing, using avoid options, and address search, the use of
 some special tags is necessary.
 // see [[Mkgmap/help/Tags]]
 
+=== mkgmap internal tags ===
+mkgmap uses tags prefixed with +mkgmap:+ to set attributes of the Garmin map 
+elements. These tags need to be set in the style file. 
+
+.mkgmap internal tags
+[options="header"]
+|=========================================================
+| Attribute   | mkgmap tag     | Example | Notes
+| Labels      | +mkgmap:label:1+ + 
++mkgmap:label:2+ + 
++mkgmap:label:3+ + 
++mkgmap:label:4+ | Pizza Express | Usually only the first label is displayed. On some units the second label of roads is displayed as routing instruction. The other labels can be used for address search. 
+| Country     | +mkgmap:country+ | GBR | Three letter ISO code, e.g. for GBR United Kingdom
+| Region      | +mkgmap:region+  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
+| City        | +mkgmap:city+    | Nottingham |
+| Street      | +mkgmap:street+  | King Street |
+| Housenumber | +mkgmap:housenumber+ | 20 |
+| Zipcode     | +mkgmap:postal_code+ | NG1 2AS |
+| Phone       | +mkgmap:phone+   | +44 115 999999 | Phone number in any format
+| Access restrictions | +mkgmap:foot+ +
++mkgmap:bicycle+ +
++mkgmap:car+ +
++mkgmap:taxi+ +
++mkgmap:truck+ +
++mkgmap:bus+ +
++mkgmap:emergency+ +
++mkgmap:delivery+  | no | These tags are evaluated for routable lines (roads) only. By default access for a specific vehicle type is allowed. Only in case the value of the tag is _no_ access is blocked for the given type.  
+| Throughroute | +mkgmap:throughroute+   | no | If this tag is set to _no_ routing is allowed on this road only if the start or end point lies on the road.
+| Carpool lane | +mkgmap:carpool+   | yes | If this tag is set to _yes_ the road is marked to have a carpool lane. This does not seem to work on all units.
+| Toll road | +mkgmap:toll+   | yes | If this tag is set to _yes_ the road can be used only when paying a specific toll.
+| Unpaved | +mkgmap:unpaved+   | yes | If this tag is set to _yes_ the road is marked to be unpaved. Some units can avoid unpaved roads.
+| Ferry | +mkgmap:ferry+   | yes | If this tag is set to _yes_ the line is marked to be a ferry line. Some units can avoid ferry lines.
+|=========================================================
+ 
+TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
+ 
+
 === Address search tags ===
 POIs and street cans be assigned with additional mkgmap special tags that
 define the address attributes. Searching for addresses can be enabled by 
@@ -481,7 +571,7 @@ using the +index+ option.
 [options="header"]
 |=========================================================
 | Attribute   | mkgmap tag     | Example | Notes
-| Name        | name           | Pizza Express | Name of the POI
+| Name        | mkgmap:label:1 | Pizza Express | Name of the POI
 | Country     | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
 | Region      | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
 | City        | mkgmap:city    | Nottingham |
@@ -495,14 +585,13 @@ using the +index+ option.
 [options="header"]
 |=========================================================
 | Attribute | mkgmap tag | Example |Notes
-| Name    | name           | King Street | Street name
+| Name    | mkgmap:label:1 | King Street | Street name
 | Country | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
 | Region  | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
 | City    | mkgmap:city    | Nottingham |
 | Zipcode | mkgmap:postal_code | NG1 2AS |
 |=========================================================
 
-TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
 
 [[Element_type]]
 == Element type definition ==
@@ -691,21 +780,6 @@ checked for additional conversions.
 [0x2 road_class=3 road_speed=5 level 2 default_name 'example street' continue with_actions]
 ----
 
-== Troubleshooting ==
-
-For each node/way/relation, mkgmap goes through the tags exactly once in
-order from the top of the file downward.
-For each rule that matches, any action block will be run.
-As soon as a rule that ends with a type definition is found then
-processing stops and that is the Garmin symbol that is produced.
-
-The only exception is if the Type Definition contains the
-+continue+ statement.  In that case _mkgmap_ will continue
-looking for further matches.
-
-* Where possible always have the same tag on the left.  This will make things more predictable.
-* Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
-
 == Including files ==
 Its often convenient to split a file into smaller parts or to use the
 same rules in two different files.  In these cases you can include
@@ -738,32 +812,58 @@ statement.
 That will include the +points+ file from the default style. This might be
 useful if you want to only change a few things about the default style.
 
-=== Comparing the values of two tags ===
-Sometimes you may want to compare the values of two tags, rather than
-the value of one tag with a fixed value.
-Use a dollar sign to indicate that you want the tag value.
+== Finalize section ==
+The points, lines and polygons style files can have a finalize section at the end
+of the style file. It starts with the line +<finalize>+.
 
-----
-# If you had the following tags:
-# name=Fford-y-Mor
-# name:en=Terrace Road
-# name:cy=Fford-y-Mor
+The finalize section contains actions only and must not have an element type definition.
+Its rules are executed each time an element type definition in the style file matches.  
+The finalize section is often useful to set the mkgmap internal tags.
 
-name = $name:cy {...}  # this would match
-name = $name:en {...}  # and this would not
+.Finalize section in the lines file with access handling
+----
+# Two elements tagged with
+# Way 1: highway=motorway, ref=A1
+# Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes
+
+highway=motorway    [0x01 road_class=4 road_speed=7 resolution 15]
+highway=service     [0x07 road_class=0 road_speed=1 resolution 24]
+
+<finalize>
+highway=*        { name '${name} (${ref})' | '${name}' | '${ref}' }
+highway=motorway { add bicycle=no; add foot=no }
+bicycle=*        { add mkgmap:bicycle='${bicycle}' } 
+foot=*           { add mkgmap:foot='${foot}' } 
+access=*         { addaccess '${access}' }
+
+# will result in
+# Way 1: highway=motorway, ref=A1, mkgmap:label:1=A1, mkgmap:foot=no, mkgmap:bicycle=no
+#  Road in Garmin map: Type 0x01, Name 'A1', no access for bicycle and foot
+# Way 2: highway=service, name=Main Road, access=no, foot=yes, bicycle=yes, mkgmap:label:1=Main Road, 
+#        mkgmap:foot=yes, mkgmap:bicycle=yes, mkgmap:car=no, mkgmap:truck=no, mkgmap:bus=no, ...
+#  Road in Garmin map: Type 0x07, Name 'Main Road', no access for all vehicle types except bicycle and foot
 ----
 
-This tests if the value of the +name+ tag is the same as the welsh name
-tag (+name:cy+) 
+[NOTE]
+Actions in the finalize section modify only the element for the current executed element type definition.
+The +continue+ or +continue with_actions+ statements continue to work with the element but without
+any action of the finalize section applied.
 
-It is worth noting that the normal case
-----
-highway=primary
-----
-is exactly the same as
-----
-$highway=primary
-----
+== Troubleshooting ==
+
+For each node/way/relation, mkgmap goes through the tags exactly once in
+order from the top of the file downward.
+For each rule that matches, any action block will be run.
+As soon as a rule that ends with a type definition is found then
+processing stops and that is the Garmin symbol that is produced.
+
+The only exception is if the Type Definition contains the
++continue+ statement.  In that case _mkgmap_ will continue
+looking for further matches.
+
+* Where possible always have the same tag on the left.  This will make things more predictable.
+* Always set made-up tag names if you want to also match on them later, rather than setting tags that might be used already.
+
 
 == Some examples ==
 The following are some examples of style rules, with explanations of what they do.
