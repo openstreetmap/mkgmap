@@ -12,5 +12,8 @@ highway=residential { add test=yes }
 test=* [0x1]
 highway=residential [0x2]
 
+<finalize>
+name=* { name '${name}' }
+
 <<<results>>>
-WAY 1: Line 0x1, name=<Long Lane>, ref=<null>, res=24-24 (1/1),(2/2),
+WAY 1: Line 0x1, labels=[Long Lane, null, null, null], res=24-24 (1/1),(2/2),

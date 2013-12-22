@@ -49,3 +49,6 @@ waterway=canal [0x1f resolution 21]
 waterway=drain [0x1f resolution 22]
 waterway=river [0x1f resolution 18]
 waterway=stream [0x18 resolution 22]
+
+<finalize>
+name=* | ref=* {name '${name} (${ref})' | '${ref}' | '${name}' }

@@ -14,6 +14,9 @@ E=5
 A=1 [0x1]
 E=5 [0x2]
 
+<finalize>
+name=* { name '${name}' }
+
 <<<results>>>
-WAY 1: Line 0x1, name=<1 2>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 2: Line 0x2, name=<3>, ref=<null>, res=24-24 (1/1),(2/2),
+WAY 1: Line 0x1, labels=[1 2, null, null, null], res=24-24 (1/1),(2/2),
+WAY 2: Line 0x2, labels=[3, null, null, null], res=24-24 (1/1),(2/2),

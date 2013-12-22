@@ -84,17 +84,21 @@ $test1 > 4 { set ref=A4 }
 test1=* & test3 > test1 { set ref=A99}
 highway=secondary [0x2]
 
+<finalize>
+name=* { name '${name}' }
+ref=* { addlabel '${ref}' }
+
 <<<results>>>
-WAY 1: Line 0x1, name=<60>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 2: Line 0x1, name=<30>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 3: Line 0x1, name=<20>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 4: Line 0x1, name=<30>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 5: Line 0x1, name=<28>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 6: Line 0x1, name=<30>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 7: Line 0x1, name=<28>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 8: Line 0x1, name=<26>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 9: Line 0x1, name=<26>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 10: Line 0x2, name=<ok>, ref=<A2>, res=24-24 (1/1),(2/2),
-WAY 11: Line 0x2, name=<fred>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 12: Line 0x2, name=<fred>, ref=<A4>, res=24-24 (1/1),(2/2),
-WAY 14: Line 0x2, name=<fred>, ref=<A99>, res=24-24 (1/1),(2/2),
+WAY 1: Line 0x1, labels=[60, null, null, null], res=24-24 (1/1),(2/2),
+WAY 2: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 3: Line 0x1, labels=[20, null, null, null], res=24-24 (1/1),(2/2),
+WAY 4: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 5: Line 0x1, labels=[28, null, null, null], res=24-24 (1/1),(2/2),
+WAY 6: Line 0x1, labels=[30, null, null, null], res=24-24 (1/1),(2/2),
+WAY 7: Line 0x1, labels=[28, null, null, null], res=24-24 (1/1),(2/2),
+WAY 8: Line 0x1, labels=[26, null, null, null], res=24-24 (1/1),(2/2),
+WAY 9: Line 0x1, labels=[26, null, null, null], res=24-24 (1/1),(2/2),
+WAY 10: Line 0x2, labels=[ok, A2, null, null], res=24-24 (1/1),(2/2),
+WAY 11: Line 0x2, labels=[fred, null, null, null], res=24-24 (1/1),(2/2),
+WAY 12: Line 0x2, labels=[fred, A4, null, null], res=24-24 (1/1),(2/2),
+WAY 14: Line 0x2, labels=[fred, A99, null, null], res=24-24 (1/1),(2/2),

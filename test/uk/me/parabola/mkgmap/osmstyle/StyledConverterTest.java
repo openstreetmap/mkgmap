@@ -233,9 +233,8 @@ public class StyledConverterTest {
 		converter.end();
 
 		assertEquals("lines converted", 2, lines.size());
-		assertEquals("wrong name set by the finalize block", "OK", lines.get(0).getName());
-		assertEquals("wrong name set by the finalize block", null, lines.get(1).getName());
-		
+		assertEquals("wrong name set by the finalize block", null, lines.get(0).getName());
+		assertEquals("wrong name set by the finalize block", "OK", lines.get(1).getName());
 	}
 	
 	private Way makeWay() {
