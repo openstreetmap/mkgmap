@@ -110,7 +110,6 @@ public class MultiPolygonRelation extends Relation {
 		this.bbox = bbox;
 
 		setId(other.getId());
-		setName(other.getName());
 		copyTags(other);
 
 		if (log.isDebugEnabled()) {
@@ -1081,7 +1080,6 @@ public class MultiPolygonRelation extends Relation {
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
-			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : outerTags.entrySet()) {
@@ -2127,7 +2125,6 @@ public class MultiPolygonRelation extends Relation {
 		// the simple line information should be used.
 		for (Way orgOuterWay : outerWaysForLineTagging) {
 			Way lineTagWay =  new Way(FakeIdGenerator.makeFakeId(), orgOuterWay.getPoints());
-			lineTagWay.setName(orgOuterWay.getName());
 			lineTagWay.addTag(STYLE_FILTER_TAG, STYLE_FILTER_LINE);
 			lineTagWay.addTag(MP_CREATED_TAG, "true");
 			for (Entry<String,String> tag : tags.entrySet()) {

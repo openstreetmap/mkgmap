@@ -25,6 +25,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class CoordPOI extends Coord {
 	private Node node;
+	private boolean used;
 
 	/**
 	 * Construct from co-ordinates that are already in map-units.
@@ -42,5 +43,12 @@ public class CoordPOI extends Coord {
 
 	public void setNode(Node node) {
 		this.node = node;
+	}
+
+	public void setUsed(boolean b) {
+		this.used = b;
+	}
+	public boolean isUsed() {
+		return used;
 	}
 }

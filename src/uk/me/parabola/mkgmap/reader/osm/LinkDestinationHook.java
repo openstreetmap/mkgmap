@@ -17,6 +17,7 @@ import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -81,15 +82,18 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 			if (highwayTag != null) {
 				// the points of the way are kept so that it is easy to get
 				// the adjacent ways for a given _link way
+				String directedDestination = null;
 				List<Coord> points;
 				if (isOnewayInDirection(w)) {
 					// oneway => don't need the last point because the
 					// way cannot be driven standing at the last point
 					points = w.getPoints().subList(0, w.getPoints().size() - 1);
+					directedDestination = w.getTag("direction:forward");
 				} else if (isOnewayOppositeDirection(w)) {
 					// reverse oneway => don't need the first point because the
 					// way cannot be driven standing at the first point
 					points = w.getPoints().subList(1, w.getPoints().size());
+					directedDestination = w.getTag("direction:backward");
 				} else {
 					points = w.getPoints();
 				}
@@ -105,9 +109,30 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 				// if the way is a link way and has a destination tag
 				// put it the list of ways that have to be processed
-				if (tagValues.contains(highwayTag)
-						&& w.getTag("destination") != null) {
-					destinationLinkWays.put(w.getId(), w);
+				if (tagValues.contains(highwayTag)) {
+					String destinationTag = w.getTag("destination");
+					
+					if (destinationTag == null) {
+						// destination is not set 
+						// => check if destination:lanes is without any lane specific information (no |) 
+						String destLanesTag = w.getTag("destination:lanes");
+						if (destLanesTag != null && destLanesTag.contains("|") == false) {
+							// the destination:lanes tag contains no | => no lane specific information
+							// use this tag as destination tag 
+							w.addTag("destination", destLanesTag);
+							destinationTag = destLanesTag;
+							if (log.isDebugEnabled())
+								log.debug("Use destination:lanes tag as destination tag because there is one lane information only. Way ",w.getId(),w.toTagString());
+						}
+					}
+					
+					if (destinationTag == null) {
+						// use the destination:forward or :backward value
+						destinationTag = directedDestination;
+					}
+					
+					if (destinationTag != null)
+						destinationLinkWays.put(w.getId(), w);
 				}
 			}
 		}
@@ -187,9 +212,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				Way precedingWay = new Way(FakeIdGenerator.makeFakeId(), w
 						.getPoints().subList(0, 1 + 1));
 				precedingWay.copyTags(w);
-				// the first node of the new way is now used by the org and the
-				// new way
-				cutPoint.incHighwayCount();
 
 				saver.addWay(precedingWay);
 				// remove the points of the new way from the original way
@@ -246,11 +268,6 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 						cConnection = bestCoord;
 					}
 				}
-				
-				// the new point is used by the old and the new way
-				cConnection.incHighwayCount();
-				cConnection.incHighwayCount();
-				
 				
 				// create the new way with identical tags
 				w.getPoints().add(i,cConnection);
@@ -626,12 +643,20 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 		nameTags = null;
 	}
 
-// Do not return any used tag because this hook only has an effect if the tag destination is
-// additionally used in the style file.
-//	public Set<String> getUsedTags() {
-//		// TODO Auto-generated method stub
-//		return super.getUsedTags();
-//	}	
+	public Set<String> getUsedTags() {
+		if (processDestinations) {
+			// When processing destinations also load the destination:lanes,forward and backward tag 
+			// to be able to copy the value to the destination tag
+			// Do not load destination because it makes sense only if the tag is
+			// referenced in the style file
+			Set<String> tags = new HashSet<String>();
+			tags.add("destination:lanes");
+			tags.add("destination:forward");
+			tags.add("destination:backward");
+			return tags;
+		} else 
+			return Collections.emptySet();
+	}	
 
 	public void end() {
 		log.info("LinkDestinationHook started");

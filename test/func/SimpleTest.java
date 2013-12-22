@@ -72,7 +72,7 @@ public class SimpleTest extends Base {
 		assertEquals("number of points at level 0", 204, list.size());
 
 		List<Polyline> list1 = mr.linesForLevel(0);
-		assertEquals("number of lines at level 0", 3695, list1.size());
+		assertEquals("number of lines at level 0", 3382, list1.size());
 	}
 
 	@Test

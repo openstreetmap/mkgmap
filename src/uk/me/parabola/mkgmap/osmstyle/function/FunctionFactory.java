@@ -13,6 +13,8 @@
 
 package uk.me.parabola.mkgmap.osmstyle.function;
 
+import uk.me.parabola.mkgmap.osmstyle.function.MaxSpeedFunction.SpeedUnit;
+
 /**
  * A factory for style functions. 
  * @author WanMil
@@ -38,6 +40,14 @@ public class FunctionFactory {
 		}
 		if ("area_size".equals(name))
 			return new AreaSizeFunction();
+		if ("maxspeedkmh".equals(name))
+			return new MaxSpeedFunction(SpeedUnit.KMH);
+		if ("maxspeedmph".equals(name))
+			return new MaxSpeedFunction(SpeedUnit.MPH);
+		if ("type".equals(name))
+			return new TypeFunction();
+		if ("osmid".equals(name))
+			return new OsmIdFunction();
 		
 		return null;
 	}

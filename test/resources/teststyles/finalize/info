@@ -1,0 +1,19 @@
+#
+# This file contains information about the style.
+# It is completely optional.
+# 
+
+
+# A short one line description of the style
+#
+summary: A test style for finalize rules
+
+# Version of the style itself
+#
+version=1.0
+
+# A longer description of the style.
+description {
+A style to test if the finalize block is triggered by element type definitions in an
+expression rule and an action rule with element type definition. 
+}

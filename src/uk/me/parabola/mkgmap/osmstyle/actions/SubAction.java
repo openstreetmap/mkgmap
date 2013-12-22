@@ -54,6 +54,8 @@ public class SubAction implements Action {
 		for (Action a : actionList)
 			if (a instanceof AddTagAction)
 				((AddTagAction) a).setValueTags(rel);
+			else if (a instanceof AddAccessAction)
+				((AddAccessAction) a).setValueTags(rel);
 
 		HashSet<Element> elems = once ? new HashSet<Element>() : null;
 

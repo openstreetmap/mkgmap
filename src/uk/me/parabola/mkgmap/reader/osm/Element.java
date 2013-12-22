@@ -24,7 +24,6 @@ import java.util.Map;
  */
 public abstract class Element implements Iterable<String> {
 	private Tags tags;
-	private String name;
 	private long id;
 
 	public int getTagCount() {
@@ -82,7 +81,7 @@ public abstract class Element implements Iterable<String> {
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("yes") || val.equals("1"))
+		if (val.equals("yes") || val.equals("true") ||  val.equals("1"))
 			return true;
 
 		return false;
@@ -104,7 +103,7 @@ public abstract class Element implements Iterable<String> {
 		if (val == null)
 			return false;
 
-		if (val.equalsIgnoreCase("false") || val.equalsIgnoreCase("no") || val.equals("0"))
+		if (val.equals("no") || val.equals("false") || val.equals("0"))
 			return true;
 
 		return false;
@@ -149,12 +148,7 @@ public abstract class Element implements Iterable<String> {
 	}
 
 	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		if (this.name == null)
-			this.name = name;
+		return getTag("mkgmap:label:1");
 	}
 
 	public Map<String, String> getTagsWithPrefix(String prefix, boolean removePrefix) {

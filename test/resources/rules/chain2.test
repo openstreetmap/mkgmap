@@ -15,6 +15,6 @@ highway=primary [0x1]
 highway=footway [0x7]
 
 <<<results>>>
-WAY 1: Line 0x2, name=<null>, ref=<null>, res=24-24 (1/1),(2/2),
-WAY 1: Line 0x7, name=<null>, ref=<null>, res=24-24 (1/1),(2/2),
+WAY 1: Line 0x2, labels=[null, null, null, null], res=24-24 (1/1),(2/2),
+WAY 1: Line 0x7, labels=[null, null, null, null], res=24-24 (1/1),(2/2),
 

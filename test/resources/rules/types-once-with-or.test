@@ -6,4 +6,4 @@ mtb:scale:uphill=yes
 ( mtb:scale=* | mtb:scale:uphill=* ) [0x1 continue]
 
 <<<results>>>
-WAY 1: Line 0x1, name=<null>, ref=<null>, res=24-24 (1/1),(2/2),
+WAY 1: Line 0x1, labels=[null, null, null, null], res=24-24 (1/1),(2/2),

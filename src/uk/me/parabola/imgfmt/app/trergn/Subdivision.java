@@ -17,6 +17,7 @@
 package uk.me.parabola.imgfmt.app.trergn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
@@ -281,17 +282,27 @@ public class Subdivision {
 		return p;
 	}
 
-	public Polyline createLine(String name, String ref) {
+	public Polyline createLine(String[] labels) {
 		// don't be tempted to "trim()" the name as it zaps the highway shields
-		Label label = lblFile.newLabel(name);
-		String nameSansGC = Label.stripGarminCodes(name);
+		Label label = lblFile.newLabel(labels[0]);
+		String nameSansGC = Label.stripGarminCodes(labels[0]);
 		Polyline pl = new Polyline(this);
 
 		pl.setLabel(label);
 
-		if(ref != null) {
+		if(labels[1] != null) {
 			// ref may contain multiple ids separated by ";"
-			String[] refs = ref.split(";");
+			int maxSetIdx = 3;
+			if (labels[3] == null) {
+				if (labels[2] == null) {
+					maxSetIdx = 1;
+				} else {
+					maxSetIdx = 2;
+				}
+			} else {
+				maxSetIdx = 3;
+			}
+			String[] refs = Arrays.copyOfRange(labels, 1, maxSetIdx+1);
 			if(refs.length == 1) {
 				// don't bother to add a single ref that looks the
 				// same as the name (sans shield) because it doesn't
