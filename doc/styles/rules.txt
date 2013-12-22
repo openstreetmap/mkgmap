@@ -838,9 +838,8 @@ will result in
 ====
 
 [NOTE]
-Actions in the finalize section modify only the element for the current executed element type definition.
-The +continue+ or +continue with_actions+ statements continue to work with the element but without
-any action of the finalize section applied.
+Actions in the finalize section are not persistent in terms of the +continue+ or
++continue with_actions+ statement
 
 == Troubleshooting ==
 
