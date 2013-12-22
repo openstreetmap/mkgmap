@@ -387,7 +387,7 @@ public class StyleTester implements OsmConverter {
 	 */
 	private static String lineToString(MapLine el) {
 		Formatter fmt = new Formatter();
-		fmt.format("Line 0x%x, name=<%s>, ref=<%s>, res=%d-%d",
+		fmt.format("Line 0x%x, labels=%s, res=%d-%d",
 				el.getType(), Arrays.toString(el.getLabels()),
 				el.getMinResolution(), el.getMaxResolution());
 		if (el.isDirection())
@@ -621,11 +621,9 @@ public class StyleTester implements OsmConverter {
 		 */
 		private class ReferenceRuleSet implements Rule {
 			private final List<Rule> rules = new ArrayList<Rule>();
-			private Rule finalizeRule = null;
 			
 			public void add(Rule rule) {
 				rules.add(rule);
-				rule.setFinalizeRule(finalizeRule);
 			}
 
 			public void addAll(ReferenceRuleSet rs) {
@@ -672,7 +670,6 @@ public class StyleTester implements OsmConverter {
 				for (Rule rule : rules) {
 					rule.setFinalizeRule(finalizeRule);
 				}
-				this.finalizeRule = finalizeRule;
 			}
 		}
 
@@ -687,6 +684,7 @@ public class StyleTester implements OsmConverter {
 			private final TypeReader typeReader;
 
 			private final ReferenceRuleSet rules;
+			private ReferenceRuleSet finalizeRules;
 			private TokenScanner scanner;
 			private boolean inFinalizeSection = false;
 
@@ -733,6 +731,9 @@ public class StyleTester implements OsmConverter {
 					saveRule(expr, actions, type);
 					scanner.skipSpace();
 				}
+				if (finalizeRules != null) {
+					rules.setFinalizeRule(finalizeRules);
+				}
 			}
 
 			private boolean checkCommand(TokenScanner scanner) {
@@ -749,6 +750,7 @@ public class StyleTester implements OsmConverter {
 							scanner.nextToken();
 							// mark start of the finalize block
 							inFinalizeSection = true;
+							finalizeRules = new ReferenceRuleSet();
 							return true;
 						} else {
 							scanner.pushToken(finalizeToken);
@@ -772,7 +774,10 @@ public class StyleTester implements OsmConverter {
 				else
 					rule = new ActionRule(op, actions.getList(), gt);
 
-				rules.add(rule);
+				if (inFinalizeSection) 
+					finalizeRules.add(rule);
+				else
+					rules.add(rule);
 			}
 		}
 	}
