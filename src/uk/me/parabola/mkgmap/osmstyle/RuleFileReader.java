@@ -203,17 +203,22 @@ public class RuleFileReader {
 			}
 		} 
 		// check if it is the start label of the <finalize> section
-		else if (inFinalizeSection == false && scanner.checkToken("<")) {
+		else if (scanner.checkToken("<")) {
 			Token token = scanner.nextToken();
 			if (scanner.checkToken("finalize")) {
 				Token finalizeToken = scanner.nextToken();
 				if (scanner.checkToken(">")) {
-					// consume the > token
-					scanner.nextToken();
-					// mark start of the finalize block
-					inFinalizeSection = true;
-					finalizeRules = new RuleSet();
-					return true;
+					if (inFinalizeSection) {
+						// there are two finalize sections which is not allowed
+						throw new SyntaxException(scanner, "There is only one finalize section allowed");
+					} else {
+						// consume the > token
+						scanner.nextToken();
+						// mark start of the finalize block
+						inFinalizeSection = true;
+						finalizeRules = new RuleSet();
+						return true;
+					}
 				} else {
 					scanner.pushToken(finalizeToken);
 					scanner.pushToken(token);
