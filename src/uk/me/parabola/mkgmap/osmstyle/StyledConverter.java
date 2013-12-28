@@ -135,6 +135,7 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
 	private final boolean linkPOIsToWays;
+	private final boolean mergeRoads;
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -176,6 +177,9 @@ public class StyledConverter implements OsmConverter {
 					" This is no longer recommended for a routable map.");
 		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
+		
+		// undocumented option - usually used for debugging only
+		mergeRoads = props.getProperty("no-mergeroads", false) == false;
 	}
 
 	/** One type result for ways to avoid recreating one for each way. */ 
@@ -480,6 +484,11 @@ public class StyledConverter implements OsmConverter {
 	 * road network.
 	 */
 	private void mergeRoads() {
+		if (mergeRoads == false) { 
+			log.info("Merging roads is disabled");
+			return;
+		}
+		
 		// instantiate the RoadMerger - the roads and roadTypes lists are copied
 		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
 		// clear the lists
