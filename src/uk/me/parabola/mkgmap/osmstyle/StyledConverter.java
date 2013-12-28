@@ -559,7 +559,7 @@ public class StyledConverter implements OsmConverter {
 					if(node == null)
 						node = (Node)member.getValue();
 					else
-						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 1 node");
+						log.warn("Through route relation", relation.toBrowseURL(), "has more than 1 node");
 				}
 				else if(member.getValue() instanceof Way) {
 					Way w = (Way)member.getValue();
@@ -568,13 +568,13 @@ public class StyledConverter implements OsmConverter {
 					else if(w2 == null)
 						w2 = w;
 					else
-						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 2 ways");
+						log.warn("Through route relation", relation.toBrowseURL(), "has more than 2 ways");
 				}
 			}
 
 			CoordNode coordNode = null;
 			if(node == null)
-				log.warn("Through route relation " + relation.toBrowseURL() + " is missing the junction node");
+				log.warn("Through route relation", relation.toBrowseURL(), "is missing the junction node");
 			else {
 				Coord junctionPoint = node.getLocation();
 				if(bbox != null && !bbox.contains(junctionPoint)) {
@@ -583,11 +583,11 @@ public class StyledConverter implements OsmConverter {
 				}
 				coordNode = nodeIdMap.get(junctionPoint);
 				if(coordNode == null)
-					log.warn("Through route relation " + relation.toBrowseURL() + " junction node at " + junctionPoint.toOSMURL() + " is not a routing node");
+					log.warn("Through route relation", relation.toBrowseURL(), "junction node at", junctionPoint.toOSMURL(), "is not a routing node");
 			}
 
 			if(w1 == null || w2 == null)
-				log.warn("Through route relation " + relation.toBrowseURL() + " should reference 2 ways that meet at the junction node");
+				log.warn("Through route relation", relation.toBrowseURL(), "should reference 2 ways that meet at the junction node");
 
 			if(coordNode != null && w1 != null && w2 != null)
 				collector.addThroughRoute(coordNode.getId(), w1.getId(), w2.getId());
@@ -644,7 +644,8 @@ public class StyledConverter implements OsmConverter {
 			if(lastP != null) {
 				lineLength += p.distance(lastP);
 				if(lineLength >= MAX_LINE_LENGTH) {
-					log.info("Splitting line " + way.toBrowseURL() + " at " + p.toOSMURL() + " to limit its length to " + (long)lineLength + "m");
+					if (log.isInfoEnabled())
+						log.info("Splitting line", way.toBrowseURL(), "at", p.toOSMURL(), "to limit its length to", (long)lineLength + "m");
 					addLine(way, gt, points);
 					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
 					points.add(p);
@@ -714,7 +715,7 @@ public class StyledConverter implements OsmConverter {
 			}
 			else {
 				mp = new MapPoint();
-				log.warn("Motorway exit " + node.getName() + " (" + node.getLocation().toOSMURL() + ") has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a " + Exit.TAG_ROAD_REF + " tag)");
+				log.warn("Motorway exit", node.getName(), "(" + node.getLocation().toOSMURL() + ") has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a", Exit.TAG_ROAD_REF, "tag)");
 			}
 		}
 		else {
@@ -809,7 +810,7 @@ public class StyledConverter implements OsmConverter {
 	private void addRoad(Way way, GType gtParm) {
 		GType gt = new GType(gtParm);
 		if (way.getPoints().size() < 2){
-			log.warn("road has < 2 points ",way.getId(),"(discarding)");
+			log.warn("road has < 2 points",way.getId(),"(discarding)");
 			return;
 		}
 
@@ -821,7 +822,7 @@ public class StyledConverter implements OsmConverter {
 			way.reverse();
 			way.addTag("oneway", "yes");
 			if("roundabout".equals(way.getTag("junction")))
-				log.warn("Roundabout " + way.getId() + " has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+				log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
 		}
 
 		if("roundabout".equals(way.getTag("junction"))) {
@@ -859,32 +860,34 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 				if (dir == 0)
-					log.info("Roundabout segment " + way.getId() + " direction unknown (see " + points.get(0).toOSMURL() + ")");
+					log.info("Roundabout segment", way.getId(), "direction unknown (see", points.get(0).toOSMURL() + ")");
 				else {
 					boolean clockwise = dir > 0;
 					if (points.get(0) == points.get(points.size() - 1)) {
 						// roundabout is a loop
 						if (!driveOnLeft && !driveOnRight) {
 							if (clockwise) {
-								log.info("Roundabout " + way.getId() + " is clockwise so assuming vehicles should drive on left side of road (" + centre.toOSMURL() + ")");
+								if (log.isInfoEnabled())
+									log.info("Roundabout", way.getId(), "is clockwise so assuming vehicles should drive on left side of road (" + centre.toOSMURL() + ")");
 								driveOnLeft = true;
 								NODHeader.setDriveOnLeft(true);
 							} else {
-								log.info("Roundabout " + way.getId() + " is anti-clockwise so assuming vehicles should drive on right side of road (" + centre.toOSMURL() + ")");
+								if (log.isInfoEnabled())
+									log.info("Roundabout", way.getId(), "is anti-clockwise so assuming vehicles should drive on right side of road (" + centre.toOSMURL() + ")");
 								driveOnRight = true;
 							}
 						}
 						if (driveOnLeft && !clockwise ||
 								driveOnRight && clockwise)
 						{
-							log.warn("Roundabout " + way.getId() + " direction is wrong - reversing it (see " + centre.toOSMURL() + ")");
+							log.warn("Roundabout", way.getId(), "direction is wrong - reversing it (see", centre.toOSMURL() + ")");
 							way.reverse();
 						}
 					} else if (driveOnLeft && !clockwise ||
 							driveOnRight && clockwise)
 					{
 						// roundabout is a line
-						log.warn("Roundabout segment " + way.getId() + " direction looks wrong (see " + points.get(0).toOSMURL() + ")");
+						log.warn("Roundabout segment", way.getId(), "direction looks wrong (see", points.get(0).toOSMURL() + ")");
 					}
 				}
 			}
@@ -1140,12 +1143,13 @@ public class StyledConverter implements OsmConverter {
 						int splitI = p2I - 1;
 						while(splitI > p1I &&
 							  !safeToSplitWay(wayPoints, splitI, p1I, p2I)) {
-								log.info("Looped way " + getDebugName(way) + " can't safely split at point[" + splitI + "], trying the preceeding point");
+							if (log.isInfoEnabled())
+								log.info("Looped way", getDebugName(way), "can't safely split at point[" + splitI + "], trying the preceeding point");
 							--splitI;
 						}
 
 						if(splitI == p1I) {
-							log.warn("Splitting looped way " + getDebugName(way) + " would make a zero length arc, so it will have to be pruned at " + wayPoints.get(p2I).toOSMURL());
+							log.warn("Splitting looped way", getDebugName(way), "would make a zero length arc, so it will have to be pruned at", wayPoints.get(p2I).toOSMURL());
 							do {
 								log.warn("  Pruning point[" + p2I + "]");
 								wayPoints.remove(p2I);
@@ -1166,7 +1170,8 @@ public class StyledConverter implements OsmConverter {
 						}
 						else {
 							// split the way before the second point
-							log.info("Splitting looped way " + getDebugName(way) + " at " + wayPoints.get(splitI).toOSMURL() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
+							if (log.isInfoEnabled())
+								log.info("Splitting looped way", getDebugName(way), "at", wayPoints.get(splitI).toOSMURL(), "- it has", (numPointsInWay - splitI - 1 ), "following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
 							// recursively check (shortened) head for
 							// more loops
@@ -1314,7 +1319,8 @@ public class StyledConverter implements OsmConverter {
 					nextP.incHighwayCount();
 					points.add(i + 1, nextP);
 					double newD = p.distance(nextP);
-					log.info("Way " + debugWayName + " contains a segment that is " + (int)d + "m long but I am adding a new point to reduce its length to " + (int)newD + "m");
+					if (log.isInfoEnabled())
+						log.info("Way", debugWayName, "contains a segment that is", (int)d + "m long but I am adding a new point to reduce its length to", (int)newD + "m");
 					d = newD;
 				}
 
@@ -1326,7 +1332,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "to limit arc length to", (long)arcLength + "m");
 				}
 				else if(wayBBox.tooBig()) {
 					assert i > 0 : "arc segment with big bbox not split";
@@ -1334,7 +1341,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "to limit the size of its bounding box");
 				}
 				else {
 					if(p.getHighwayCount() > 1) {
@@ -1368,7 +1376,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "as it has at least", MAX_NODES_IN_WAY, "nodes");
 				}
 			}
 		}
@@ -1458,8 +1467,8 @@ public class StyledConverter implements OsmConverter {
 				CoordNode thisCoordNode = nodeIdMap.get(coord);
 				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
 				boolean boundary = coord.getOnBoundary();
-				if(boundary) {
-					log.info("Way " + debugWayName + "'s point #" + n + " at " + coord.toOSMURL() + " is a boundary node");
+				if(boundary && log.isInfoEnabled()) {
+					log.info("Way", debugWayName + "'s point #" + n, "at", coord.toOSMURL(), "is a boundary node");
 				}
 				points.set(n, thisCoordNode);
 
@@ -1706,27 +1715,27 @@ public class StyledConverter implements OsmConverter {
 				}
 				if (!isConnected){
 					if (onBoundary){
-						log.info("road not connected to other roads but is on boundary: " + way.toBrowseURL());
+						log.info("road not connected to other roads but is on boundary:", way.toBrowseURL());
 					} else {
 						if ("none".equals(check_type))
-							log.info("road not connected to other roads, is ignored: " + way.toBrowseURL());
+							log.info("road not connected to other roads, is ignored:", way.toBrowseURL());
 						else {
 							int type = -1;
 							try{
 								type = Integer.decode(check_type);
 								if (GType.isRoutableLineType(type)){
 									type = -1;
-									log.error("type value in mkgmap:set_unconnected_type should not be a routable type: " + check_type);
+									log.error("type value in mkgmap:set_unconnected_type should not be a routable type:" + check_type);
 								}
 							} catch (NumberFormatException e){
-								log.warn("invalid type value in mkgmap:set_unconnected_type: " + check_type);
+								log.warn("invalid type value in mkgmap:set_unconnected_type:", check_type);
 							}
 							if (type != -1 ){
-								log.info("road not connected to other roads, added as line with type " + check_type + ": " + way.toBrowseURL());
+								log.info("road not connected to other roads, added as line with type", check_type + ":", way.toBrowseURL());
 								GType gt = new GType(roadTypes.get(i), check_type); 
 								addLine(way, gt);
 							} else {
-								log.warn("road not connected to other roads, but replacement type is invalid. Dropped: " + way.toBrowseURL());
+								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}
 						}
 						roads.set(i, null);
@@ -1785,7 +1794,7 @@ public class StyledConverter implements OsmConverter {
 	 * causes routing errors. We try to merge these nodes here.
 	 */
 	private void removeShortArcsByMergingNodes() {
-		log.info("Removing short arcs (min arc length = " + minimumArcLength + "m)");
+		log.info("Removing short arcs (min arc length =", minimumArcLength + "m)");
 		log.info("Removing short arcs - marking points as node-alike and removing obsolete points");
 		for (Way way : roads) {
 			if (way == null)
@@ -1842,7 +1851,7 @@ public class StyledConverter implements OsmConverter {
 
 		while (anotherPassRequired && pass < 10) {
 			anotherPassRequired = false;
-			log.info("Removing short arcs - PASS " + ++pass);
+			log.info("Removing short arcs - PASS", ++pass);
 			for (int w = 0; w < roads.size(); w++){
 				Way way = roads.get(w);
 				if (way == null)
@@ -1850,7 +1859,7 @@ public class StyledConverter implements OsmConverter {
 				List<Coord> points = way.getPoints();
 				if (points.size() < 2) {
 					if (log.isInfoEnabled())
-						log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
+						log.info("  Way", way.getTag("name"), "(" + way.toBrowseURL() + ") has less than 2 points - deleting it");
 					roads.set(w, null);
 					deletedRoads.add(way.getId());
 					++numWaysDeleted;
@@ -1912,7 +1921,7 @@ public class StyledConverter implements OsmConverter {
 					// this is not the first point in the way
 					if (p == previousPoint) {
 						if (log.isInfoEnabled())
-							log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has consecutive identical points at " + p.toOSMURL() + " - deleting the second point");
+							log.info("  Way", way.getTag("name"), "(" + way.toBrowseURL() + ") has consecutive identical points at", p.toOSMURL(), "- deleting the second point");
 						points.remove(i);
 						// hack alert! rewind the loop index
 						--i;
@@ -1964,7 +1973,7 @@ public class StyledConverter implements OsmConverter {
 							mergeNodes = true;
 						else if(complainedAbout.get(way) == null) {
 							if (log.isInfoEnabled())
-								log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has unmerged co-located nodes at " + p.toOSMURL() + " - they are joined by a " + (int)(arcLength * 10) / 10.0 + "m arc");
+								log.info("  Way", way.getTag("name"), "(" + way.toBrowseURL() + ") has unmerged co-located nodes at", p.toOSMURL(), "- they are joined by a", (int)(arcLength * 10) / 10.0 + "m arc");
 							complainedAbout.put(way, way);
 						}
 					}
@@ -1996,7 +2005,7 @@ public class StyledConverter implements OsmConverter {
 							// identical coordinates
 							if(complainedAbout.get(way) == null) {
 								if (log.isLoggable(Level.WARNING))
-									log.warn("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at " + p.toOSMURL() + " - but it can't be removed because both ends of the arc are boundary nodes!");
+									log.warn("  Way", way.getTag("name"), "(" + way.toBrowseURL() + ") has short arc (" + String.format("%.2f", arcLength) + "m) at", p.toOSMURL(), "- but it can't be removed because both ends of the arc are boundary nodes!");
 								complainedAbout.put(way, way);
 							}
 							break; // give up with this way
