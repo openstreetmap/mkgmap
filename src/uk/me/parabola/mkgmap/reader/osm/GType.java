@@ -202,7 +202,9 @@ public class GType {
 	}
 
 	public void setRoadClass(int roadClass) {
-		road = true;
+		// road class might also be set for nodes used by the link-pois-to-ways option
+		if (getFeatureKind() == FeatureKind.POLYLINE)
+			road = true;
 		this.roadClass = roadClass;
 	}
 
@@ -211,7 +213,9 @@ public class GType {
 	}
 
 	public void setRoadSpeed(int roadSpeed) {
-		road = true;
+		// road speed might also be set for nodes used by the link-pois-to-ways option
+		if (getFeatureKind() == FeatureKind.POLYLINE)
+			road = true;
 		this.roadSpeed = roadSpeed;
 	}
 

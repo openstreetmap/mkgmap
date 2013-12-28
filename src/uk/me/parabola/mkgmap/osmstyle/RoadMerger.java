@@ -24,7 +24,6 @@ import java.util.Set;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.osm.Node;
@@ -160,13 +159,6 @@ public class RoadMerger {
 				return false;
 			}
 			
-			// check road speed and road class
-			if (getRoadClass() != otherRoad.getRoadClass())
-				return false;
-			if (getRoadSpeedClass() != otherRoad.getRoadSpeedClass())
-				return false;
-			
-
 			// checks if the tag values of both ways match so that the ways
 			// can be merged
 			if (isWayMergable(mergePoint, otherRoad.getWay()) == false) {
@@ -176,36 +168,6 @@ public class RoadMerger {
 			return true;
 		}
 
-		/**
-		 * Retrieves the real road speed of this road that will be used by the
-		 * {@link MapRoad}. This is a combination of the gtypes road speed and
-		 * the tag {@code mkgmap:road-speed-class}. 
-		 * 
-		 * @return road speed class
-		 */
-		protected int getRoadSpeedClass() {
-			int roadSpeed = gtype.getRoadSpeed();
-			String roadSpeedClassTag = way.getTag("mkgmap:road-speed-class");
-			if (roadSpeedClassTag != null)
-				roadSpeed = Integer.valueOf(roadSpeedClassTag);
-			return roadSpeed;
-		}
-
-		/**
-		 * Retrieves the real road class of this road that will be used by the
-		 * {@link MapRoad}. This is a combination of the gtypes road class and
-		 * the tag {@code mkgmap:road-class}. 
-		 * 
-		 * @return road class
-		 */
-		protected int getRoadClass() {
-			int roadClass = gtype.getRoadClass();
-			String roadClassTag = way.getTag("mkgmap:road-class");
-			if (roadClassTag != null) 
-				roadClass = Integer.valueOf(roadClassTag);
-			return roadClass;
-		}
-		
 		/**
 		 * Checks if the given GType can be merged with the GType of this road.
 		 * @param otherGType the GType of the other road
@@ -233,7 +195,12 @@ public class RoadMerger {
 			if (gtype.getMaxLevel() != otherGType.getMaxLevel()) {
 				return false;
 			}
-			
+			if (gtype.getRoadClass() != otherGType.getRoadClass()){
+				return false;
+			}
+			if (gtype.getRoadSpeed() != otherGType.getRoadSpeed()){
+				return false;
+			}
 // default name is applied before the RoadMerger starts
 // so they needn't be equal 
 //			if (stringEquals(gtype.getDefaultName(),
