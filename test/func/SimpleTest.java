@@ -101,9 +101,11 @@ public class SimpleTest extends Base {
 			int size = ent.getSize();
 			if (ext.equals("RGN")) {
 				count++;
-				assertThat("RGN size", size, new RangeMatcher(2901));
+				System.out.println("RGN size " + size);
+				assertThat("RGN size", size, new RangeMatcher(2756));
 			} else if (ext.equals("TRE")) {
 				count++;
+				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
 				assertThat("TRE size", size, new RangeMatcher(769, 2));
 			} else if (ext.equals("LBL")) {
