@@ -562,11 +562,16 @@ Miscellaneous options:
 	(unless that way's bicycle access has been defined).
 
 --link-pois-to-ways
-	If this option is enabled, POIs that are situated at a point
-	in a way will be associated with that way and may modify the
-	way's properties. Currently supported are POIs that restrict
-	access (e.g. bollards). Their access restrictions are applied
-	to a small region of the way near the POI.
+    This option copies some specific attributes of a POI to a 
+    small part of the way the POI is located on. This can be used
+    to let barriers block a way or to lower the calculated speed
+    around traffic signals.
+    POIs with the tags highway=* (e.g. highway=traffic_signals)  
+    or barrier=* (e.g. barrier=cycle_barrier) are supported.
+    The style developer must add at least one of the access tags
+    (mkgmap:foot, mkgmap:car etc.), mkgmap:road-speed and/or 
+    mkgmap:road-class to the POI. These tags are copied to a small
+    part of the way around the POI. 
 
 --process-destination
 	Splits all motorway_link and trunk_link ways tagged with 

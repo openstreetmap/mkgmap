@@ -503,7 +503,7 @@ If only the brand tag exists, then the first option will be skipped and the seco
 will be used.
 
 === Variable filters
-The value of a variable can be modified by `filters'.
+The value of a variable can be modified by 'filters'.
 The value of the tag can be transformed in various ways before being
 substituted.
 
@@ -521,9 +521,20 @@ You can apply as many filter expressions to a substitution as you like.
 include::rules-filters.txt[]
 
 == mkgmap internal tags ==
-mkgmap uses tags prefixed with +mkgmap:+ to set attributes of the Garmin map 
-elements. These tags need to be set in the style file and allow
-to set e.g. access restrictions, labels, attributes required for address search etc. 
+There are lots of tags prefixed with +mkgmap:+. Some of them need to be set in the
+style file to set specific attributes of the Garmin map elements, e.g.  
+access restrictions, labels, attributes required for address search etc.
+Others are added to the OSM elements by mkgmap so that they can be evaluted in
+the style files to change the processing. 
+ 
+=== Tags evaluated by mkgmap ===
+These tags need to be set within the style file to set specific attributes of 
+the Garmin map elements.
+
+----
+  highway=* & (bicycle=no | bicycle=private) { set mkgmap:bicycle='no' }
+----
+This rule defines that the road cannot be used by bicycles.
 
 // see [[Mkgmap/help/Tags]]
 
@@ -569,15 +580,48 @@ TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of al
 [options="header"]
 |=========================================================
 | Attribute   | mkgmap tag     | Example | Notes
-| Name        | mkgmap:label:1 | Pizza Express | Name of the POI
-| Country     | mkgmap:country | GBR | Three letter ISO code, e.g. for GBR United Kingdom
-| Region      | mkgmap:region  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
-| City        | mkgmap:city    | Nottingham |
-| Street      | mkgmap:street  | King Street |
-| Housenumber | mkgmap:housenumber | 20 |
-| Zipcode     | mkgmap:postal_code | NG1 2AS |
-| Phone       | mkgmap:phone   | +44 115 999999 | Phone number in any format
+| Name        | +mkgmap:label:1+ +
++mkgmap:label:2+ +
++mkgmap:label:3+ +
++mkgmap:label:4+ | Pizza Express | Names of the POI
+| Country     | +mkgmap:country+ | GBR | Three letter ISO code, e.g. for GBR United Kingdom
+| Region      | +mkgmap:region+  | Nottinghamshire | The regions name. Useful if there are multiple cities with the same name.
+| City        | +mkgmap:city+    | Nottingham |
+| Street      | +mkgmap:street+  | King Street |
+| Housenumber | +mkgmap:housenumber+ | 20 |
+| Zipcode     | +mkgmap:postal_code+ | NG1 2AS |
+| Phone       | +mkgmap:phone+   | +44 115 999999 | Phone number in any format
 |=========================================================
+
+=== Tags added by mkgmap ===
+Some tags are added by mkgmap to indicate some property calculated by mkgmap.
+
+----
+ mkgmap:admin_level2=* { add mkgmap:country='${mkgmap:admin_level2}' }
+---- 
+The tag +mkgmap:admin_level2+ is added to each OSM element if the 'bounds' option is set. In the rule above it 
+is used to assign the country location.
+
+.Tags added by mkgmap
+[options="header"]
+|=========================================================
+| Tag | Description     | Required mkgmap option
+| +mkgmap:admin_level2+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=2+ the element is located in | 'bounds'    
+| +mkgmap:admin_level3+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=3+ the element is located in | 'bounds'    
+| +mkgmap:admin_level4+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=4+ the element is located in | 'bounds'    
+| +mkgmap:admin_level5+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=5+ the element is located in | 'bounds'    
+| +mkgmap:admin_level6+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=6+ the element is located in | 'bounds'    
+| +mkgmap:admin_level7+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:admin_level8+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:admin_level9+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:admin_level10+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:admin_level11+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:postcode+  | Name of the postal code relation/polygon the element is located in | 'bounds'    
+| +mkgmap:area2poi+  | The value is +true+ if the POI is derived from a polygon | 'add-poi-to-areas'    
+| +mkgmap:line2poi+  | The value is +true+ if the POI is derived from a line | 'add-poi-to-lines'    
+| +mkgmap:line2poitype+  | The tag is set for each POI generated from a line. Possible values are: +start+, +end+, +mid+, +inner+. | 'add-poi-to-lines'    
+|=========================================================
+
 
 [[Element_type]]
 == Element type definition ==

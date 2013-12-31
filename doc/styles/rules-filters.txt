@@ -85,7 +85,7 @@ This is the same as the +conv+ filter, except that it prepends a special
 separation character before the value which is intended for elevations.
 As with +conv+ the only supported conversion currently is from meters to feet.
 
-`${ele\|m=>ft}`
+`${ele\|height:m=>ft}`
 
 | not-equal | `tag` |
 Used to check for duplicate tags. If the value of this tag is equal to
@@ -106,7 +106,7 @@ in parenthesis after the name. Otherwise there will just be the name as given in
 Extract part of the string. The start and end positions
 are counted starting from zero and the end position is not included.
 
-`${name\|2:5}`
+`${name\|substring:2:5}`
 If the "name" was "Dorset Lane", then the result is "rse".  If there is just the one number,
 then the substring starts from that character until the end of the string.
 |=====
