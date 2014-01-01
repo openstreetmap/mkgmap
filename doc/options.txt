@@ -174,21 +174,19 @@ border have less quality.
 : Enables house number search for OSM input files. 
 <p>
 All nodes and polygons having addr:housenumber and addr:street set are matched 
-to streets. A match between house number element and street is created if
-the street is located within a radius of 150m and the addr:street tag of the 
-house number element 
-::   - equals the mgkmap:street tag of the street. mkgmap:streets should be set 
-in the style file.
-::   - or it equals the name of the street stripped by garmin shields and all text
-within round brackets. 
-:  Example: 
-::     Node -  addr:street=Main Street addr:housenumber=2
-::     Way 1 - mkgmap:street=Main Street
-::     Way 2 - name=Main Street (A504)
-::     Way 3 - mkgmap:street=Mainstreet
-::     Way 4 - name=Main Street [A504]
-:    The node matches to way 1 and way 2 but not to way 3 (does not equal exactly)
-and not to way 4 (only text in round brackets is ignored)
+to streets. A match between a house number element and a street is created if
+the street is located within a radius of 150m and the addr:street tag value of 
+the house number element equals the mgkmap:street tag value of the street. 
+The mkgmap:street tag must be added to the street in the style file.
+
+Example: 
+: Node -  addr:street=Main Street addr:housenumber=2
+: Way 1 - name=Main Street
+: Way 2 - name=Main Street, mkgmap:street=Main Street
+: Way 3 - mkgmap:street=Mainstreet
+: Way 4 - name=Main Street [A504]
+: The node matches to way 2. It has mkgmap:street set with a value equal to
+the addr:street tag value of the house  number node.
 <p>
 
 Overview map options:
