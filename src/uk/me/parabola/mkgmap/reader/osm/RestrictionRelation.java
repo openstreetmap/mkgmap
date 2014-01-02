@@ -141,6 +141,7 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 
+		exceptMask = RouteRestriction.EXCEPT_FOOT | RouteRestriction.EXCEPT_EMERGENCY; 
 		String except = getTag("except");
 		if(except != null) {
 			for(String e : except.split("[,;]")) { // be nice
@@ -300,12 +301,12 @@ public class RestrictionRelation extends Relation {
 			if(restriction.startsWith("only_turn"))
 				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way " + toWay.toBrowseURL());
 			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.toBrowseURL());
-			HashSet<CoordNode> otherNodesUnique = new HashSet<CoordNode>(otherNodes);	
+			HashSet<CoordNode> otherNodesUnique = new HashSet<CoordNode>(otherNodes);
 			for(CoordNode otherNode : otherNodesUnique) {
-				if (!otherNode.equals(fromNode) && !otherNode.equals(toNode)) {
+				if (otherNode.getId() != fromNode.getId() && otherNode.getId() != toNode.getId()) {
 					log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
 					collector.addRestriction(fromNode, otherNode, viaNode, exceptMask);
-				}
+				} 
 			}
 		}
 		else {
@@ -321,5 +322,9 @@ public class RestrictionRelation extends Relation {
 
 	public String toString() {
 		return "[restriction = " + restriction + ", from = " + fromWay.toBrowseURL() + ", to = " + toWay.toBrowseURL() + ", via = " + viaCoord.toOSMURL() + "]";
+	}
+	
+	public boolean isOnlyXXXRestriction(){
+		return restriction.startsWith("only");
 	}
 }

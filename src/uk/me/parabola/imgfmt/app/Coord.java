@@ -37,10 +37,10 @@ public class Coord implements Comparable<Coord> {
 	private final static byte ON_BOUNDARY_MASK = 0x01; // bit in flags is true if point lies on a boundary
 	private final static byte PRESERVED_MASK = 0x02; // bit in flags is true if point should not be filtered out
 	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
-	private final static byte TREAT_AS_NODE_MASK = 0x08; // bit in flags is true if point should be treated as a node
+	private final static byte PART_OF_BAD_ANGLE = 0x08; // bit in flags is true if point should be treated as a node
 	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
 	private final static byte REMOVE_MASK = 0x20; // bit in flags is true if this point should be removed
-	
+	private final static byte VIA_NODE_MASK = 0x40; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation 	
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
@@ -194,23 +194,24 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/** 
-	 * Should this Coord be treated like a Garmin node in short arc removal?
-	 * The value has no meaning outside of short arc removal.
-	 * @return true if this coord should be treated like a Garmin node, else false
+	 * Should this Coord be treated by the removeWrongAngle method=
+	 * The value has no meaning outside of StyledConverter.
+	 * @return true if this coord is part of a line that has a big bearing error. 
 	 */
-	public boolean isTreatAsNode() {
-		return (flags & TREAT_AS_NODE_MASK) != 0;
+	public boolean isPartOfBadAngle() {
+		return (flags & PART_OF_BAD_ANGLE) != 0;
 	}
 
 	/**
-	 * Mark the Coord to be treated like a Node in short arc removal 
-	 * @param treatAsNode true or false
+	 * Mark the Coord to be part of a line which has a big bearing
+	 * error because of the rounding to map units. 
+	 * @param b true or false
 	 */
-	public void setTreatAsNode(boolean treatAsNode) {
-		if (treatAsNode) 
-			this.flags |= TREAT_AS_NODE_MASK;
+	public void setPartOfBadAngle(boolean b) {
+		if (b) 
+			this.flags |= PART_OF_BAD_ANGLE;
 		else 
-			this.flags &= ~TREAT_AS_NODE_MASK; 
+			this.flags &= ~PART_OF_BAD_ANGLE; 
 	}
 
 	/**
@@ -238,6 +239,23 @@ public class Coord implements Comparable<Coord> {
 			this.flags |= REMOVE_MASK;
 		else 
 			this.flags &= ~REMOVE_MASK; 
+	}
+	
+	/**
+	 * @return true if this coordinate belong to a via node of a restriction relation
+	 */
+	public boolean isViaNodeOfRestriction() {
+		return (flags & VIA_NODE_MASK) != 0;
+	}
+
+	/**
+	 * @param b true: Mark the coordinate as  via node of a restriction relation
+	 */
+	public void setViaNodeOfRestriction(boolean b) {
+		if (b) 
+			this.flags |= VIA_NODE_MASK;
+		else 
+			this.flags &= ~VIA_NODE_MASK; 
 	}
 	
 	public int hashCode() {

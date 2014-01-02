@@ -278,9 +278,18 @@ public class RoadNetwork {
 
 		assert fa != null : "can't locate arc from 'via' node to 'from' node";
 		assert ta != null : "can't locate arc from 'via' node to 'to' node";
-
+		if(!ta.isForward() && ta.getRoadDef().isOneway()) {
+			// the route restriction connects to the "wrong" end of a oneway
+			if ((exceptMask & RouteRestriction.EXCEPT_FOOT) != 0){
+				// pedestrians are allowed
+				log.info("restriction via "+viaNode.getId() + " to " + fromNode.getId() + " ignored because to-arc is wrong direction in oneway ");
+				return;
+			} else {
+				log.info("restriction via "+viaNode.getId() + " to " + fromNode.getId() + " added although to-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
+			}
+		}
 		vn.addRestriction(new RouteRestriction(fa, ta, exceptMask));
-    }
+	}
 
 	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
 		RouteNode node = nodes.get(junctionNodeId);

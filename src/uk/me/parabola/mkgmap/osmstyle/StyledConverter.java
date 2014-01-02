@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,7 @@ import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
+import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
 import uk.me.parabola.log.Logger;
@@ -87,7 +90,9 @@ public class StyledConverter implements OsmConverter {
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
 	private final Map<Coord, List<RestrictionRelation>> restrictions = new IdentityHashMap<Coord, List<RestrictionRelation>>();
-
+	
+	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<Node, List<Way>>();
+	 
 	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
 	/** all tags used for access restrictions */
@@ -574,6 +579,9 @@ public class StyledConverter implements OsmConverter {
 		
 		housenumberGenerator.generate(lineAdder);
 		
+		createRouteRestrictionsFromPOI();
+		poiRestrictions = null;
+		
 		Collection<List<RestrictionRelation>> lists = restrictions.values();
 		for (List<RestrictionRelation> l : lists) {
 
@@ -760,6 +768,94 @@ public class StyledConverter implements OsmConverter {
 
 	}
 	
+	
+	/**
+	 * If POI changes access restrictions (e.g. bollards), create corresponding
+	 * route restrictions so that only allowed vehicles/pedestrians are routed
+	 * through this point.
+	 */
+	private void createRouteRestrictionsFromPOI() {
+		Iterator<Map.Entry<Node, List<Way>>> iter = poiRestrictions.entrySet().iterator();
+		while (iter.hasNext()){
+			Map.Entry<Node, List<Way>> entry = iter.next();
+			Node node = entry.getKey();
+			Coord p = node.getLocation();
+			// list of ways that are connected to the poi
+			List<Way> wayList = entry.getValue();
+			boolean[] nodeNoAccess = getNoAccess(node);
+			byte exceptMask = 0;
+			// exclude allowed vehicles/pedestrians from restriction
+			if (nodeNoAccess[RoadNetwork.NO_BIKE] == false)
+				exceptMask |= RouteRestriction.EXCEPT_BICYCLE;
+			if (nodeNoAccess[RoadNetwork.NO_BUS] == false)
+				exceptMask |= RouteRestriction.EXCEPT_BUS;
+			if (nodeNoAccess[RoadNetwork.NO_CAR] == false)
+				exceptMask |= RouteRestriction.EXCEPT_CAR;
+			if (nodeNoAccess[RoadNetwork.NO_DELIVERY] == false)
+				exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
+			if (nodeNoAccess[RoadNetwork.NO_TAXI] == false)
+				exceptMask |= RouteRestriction.EXCEPT_TAXI;
+			if (nodeNoAccess[RoadNetwork.NO_TRUCK] == false)
+				exceptMask |= RouteRestriction.EXCEPT_TRUCK;
+			if (nodeNoAccess[RoadNetwork.NO_FOOT] == false)
+				exceptMask |= RouteRestriction.EXCEPT_FOOT;
+			if (nodeNoAccess[RoadNetwork.NO_EMERGENCY] == false)
+				exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
+
+			Map<Long,CoordNode> otherNodeIds = new LinkedHashMap<Long, CoordNode>();
+			CoordNode viaNode = null;
+			boolean viaIsUnique = true;
+			for (Way way:wayList){
+				CoordNode lastNode = null;
+				for (Coord co: way.getPoints()){
+					// not 100% fail safe: points may have been replaced before
+					if (co instanceof CoordNode == false)
+						continue;
+					CoordNode cn = (CoordNode) co;
+					if (p.equals(cn)){
+						if (viaNode == null)
+							viaNode = cn;
+						else if (viaNode != cn){
+							log.error("Found multiple points with equal coords as CoordPOI at " + p.toOSMURL());
+							viaIsUnique = false;
+						}
+						if (lastNode != null)
+							otherNodeIds.put(lastNode.getId(),lastNode);
+					} else {
+						if (p.equals(lastNode))
+							otherNodeIds.put(cn.getId(),cn);
+					}
+					lastNode = cn;
+				}
+			}
+			if (viaNode == null){
+				log.error("Did not find CoordPOI node at " + p.toOSMURL() + " in ways " + wayList);
+				continue;
+			}
+			if (viaIsUnique == false){
+				log.error("Found multiple points with equal coords as CoordPOI at " + p.toOSMURL());
+				continue;
+			}
+			if (otherNodeIds.size() < 2){
+				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
+				continue;
+			}
+			List<CoordNode> otherNodesUniqe = new ArrayList<CoordNode>(otherNodeIds.values());
+			for (int i = 0; i < otherNodesUniqe.size(); i++){
+				CoordNode from = (CoordNode) otherNodesUniqe.get(i);
+				for (int j = i+1; j < otherNodesUniqe.size(); j++){
+					CoordNode to = (CoordNode) otherNodesUniqe.get(j);
+					if (to.getId() != viaNode.getId() && from.getId() != viaNode.getId()){
+						collector.addRestriction(from, to, viaNode, exceptMask);
+						collector.addRestriction(to, from, viaNode, exceptMask);
+						log.info("created route restriction from poi for node " + node.toBrowseURL());
+					}
+				}
+			}
+		}
+	}
+
+ 	
 	/**
 	 * Run the rules for this relation.  As this is not an end object, then
 	 * the only useful rules are action rules that set tags on the contained
@@ -784,7 +880,9 @@ public class StyledConverter implements OsmConverter {
 				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
 				if(lrr == null) {
 					lrr = new ArrayList<RestrictionRelation>();
-					restrictions.put(rr.getViaCoord(), lrr);
+					Coord via = rr.getViaCoord();
+					via.setViaNodeOfRestriction(true);
+					restrictions.put(via, lrr);
 				}
 				lrr.add(rr);
 			}
@@ -954,6 +1052,21 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	private boolean[] getNoAccess(Element osmElement){
+		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
+		noAccess[RoadNetwork.NO_EMERGENCY] = osmElement.isNotBoolTag("mkgmap:emergency");
+		noAccess[RoadNetwork.NO_DELIVERY] = osmElement.isNotBoolTag("mkgmap:delivery");
+		noAccess[RoadNetwork.NO_CAR] = osmElement.isNotBoolTag("mkgmap:car");
+		noAccess[RoadNetwork.NO_BUS] = osmElement.isNotBoolTag("mkgmap:bus");
+		noAccess[RoadNetwork.NO_TAXI] = osmElement.isNotBoolTag("mkgmap:taxi");
+		noAccess[RoadNetwork.NO_FOOT] = osmElement.isNotBoolTag("mkgmap:foot");
+		noAccess[RoadNetwork.NO_BIKE] = osmElement.isNotBoolTag("mkgmap:bicycle");
+		noAccess[RoadNetwork.NO_TRUCK] = osmElement.isNotBoolTag("mkgmap:truck");
+		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
+		noAccess[RoadNetwork.NO_CARPOOL] = osmElement.isBoolTag("mkgmap:carpool");
+		return noAccess;
+	}
+	 	
 	private boolean hasAccessRestriction(Element osmElement) {
 		for (String tag : ACCESS_TAGS) {
 			if (osmElement.isNotBoolTag(tag)) {
@@ -988,15 +1101,19 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		checkRoundabout(way);
+		addNodesForRestrictions(way);
 
 		// process any Coords that have a POI associated with them
+		final double stubSegmentLength = 25; // metres
 		String wayPOI = way.getTag(WAY_POI_NODE_IDS);
 		if (wayPOI != null) {
 			List<Coord> points = way.getPoints();
-
+			
 			// look for POIs that modify the way's road class or speed
-			// this could be e.g. highway=traffic_signals that reduces the
-			// road speed to cause a short increase of traveling time
+			// or contain access restrictions
+			// This could be e.g. highway=traffic_signals that reduces the
+			// road speed to cause a short increase of travelling time
+			// or a barrier
 			for(int i = 0; i < points.size(); ++i) {
 				Coord p = points.get(i);
 				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
@@ -1004,16 +1121,44 @@ public class StyledConverter implements OsmConverter {
 					Node node = cp.getNode();
 					if (wayPOI.contains("["+node.getId()+"]")){
 						log.debug("POI",node.getId(),"changes way",way.getId());
+
+						// make sure that we create nodes for all POI that 
+						// are converted to RouteRestrictions
+						if(p.getHighwayCount() < 2 && cp.getConvertToViaInRouteRestriction() && (i != 0 && i != points.size()-1))
+							p.incHighwayCount();
+						
 						String roadClass = node.getTag("mkgmap:road-class");
 						String roadSpeed = node.getTag("mkgmap:road-speed");
 						if(roadClass != null || roadSpeed != null) {
-							// if the way has more than one point
-							// following this one, split the way at the
-							// next point to limit the size of the
-							// affected region
-							if((i + 2) < points.size() &&
-									safeToSplitWay(points, i + 1, i, points.size() - 1)) {
-								Way tail = splitWayAt(way, i + 1);
+							// find good split point after POI
+							Coord splitPoint;
+							double segmentLength = 0;
+							int splitPos = i+1;
+							while( splitPos+1 < points.size()){
+								splitPoint = points.get(splitPos);
+								segmentLength += splitPoint.distance(points.get(splitPos - 1));
+								if (splitPoint.getHighwayCount() > 1
+										|| segmentLength > stubSegmentLength - 5)
+									break;
+								splitPos++;
+							}
+							if (segmentLength > stubSegmentLength + 10){
+								// insert a new point after the POI to
+								// make a short stub segment
+								splitPoint = points.get(splitPos);
+								Coord prev = points.get(splitPos-1);
+								double dist = splitPoint.distance(prev);
+								double neededLength = stubSegmentLength - (segmentLength - dist);
+								
+								splitPoint = prev.makeBetweenPoint(splitPoint, neededLength / dist);
+								double newDist = splitPoint.distance(prev);
+								segmentLength += newDist - dist;
+								splitPoint.incHighwayCount();
+								points.add(splitPos, splitPoint);
+							}
+							if((splitPos + 1) < points.size() &&
+									safeToSplitWay(points, splitPos, i, points.size() - 1)) {
+								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
 								addRoad(tail, gt);
 							}
@@ -1029,143 +1174,54 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 
-				// if this isn't the first (or last) point in the way
+				// if this isn't the last point in the way
 				// and the next point modifies the way's speed/class,
 				// split the way at this point to limit the size of
 				// the affected region
-				if (i > 0 && (i + 1) < points.size()
+				if (i + 1 < points.size()
 						&& points.get(i + 1) instanceof CoordPOI) {
 					CoordPOI cp = (CoordPOI) points.get(i + 1);
 					Node node = cp.getNode();
 					if (cp.isUsed() && wayPOI.contains("["+node.getId()+"]")){
 						if (node.getTag("mkgmap:road-class") != null
 								|| node.getTag("mkgmap:road-speed") != null) {
-							if (safeToSplitWay(points, i, i - 1,
-									points.size() - 1)) {
-								Way tail = splitWayAt(way, i);
-								// recursively process tail of way
-								addRoad(tail, gt);
+							// find good split point before POI
+							double segmentLength = 0;
+							int splitPos = i;
+							Coord splitPoint;
+							while( splitPos >= 0){
+								splitPoint = points.get(splitPos);
+								segmentLength += splitPoint.distance(points.get(splitPos + 1));
+								if (splitPoint.getHighwayCount() >= 2
+										|| segmentLength > stubSegmentLength - 5)
+									break;
+								--splitPos;			
 							}
-						}
-					}
-				}
-			}
-
-			// now look for POIs that have an access restriction defined -
-			// if they do, copy the access permissions to the way -
-			// what we want to achieve is modifying the way's access
-			// permissions where it passes through the POI without
-			// affecting the rest of the way too much - to that end we
-			// split the way before and after the POI - if necessary,
-			// extra points are inserted before and after the POI to
-			// limit the size of the affected region
-
-			final double stubSegmentLength = 25; // metres
-			for(int i = 0; i < points.size(); ++i) {
-				Coord p = points.get(i);
-				// check if this POI modifies access and if so, split
-				// the way at the following point (if any) and then
-				// copy its access restrictions to the way
-				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
-					CoordPOI cp = (CoordPOI) p;
-					Node node = cp.getNode();
-					if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
-						// if this or the next point are not the last
-						// points in the way, split at the next point
-						// taking care not to produce a short arc
-						if((i + 1) < points.size()) {
-							Coord p1 = points.get(i + 1);
-							// check if the next point is further away
-							// than we would like
-							double dist = p.distance(p1);
-							if(dist >= (2 * stubSegmentLength)) {
-								// insert a new point after the POI to
+							if (segmentLength > stubSegmentLength + 10){
+								// insert a new point before the POI to
 								// make a short stub segment
-								p1 = p.makeBetweenPoint(p1, stubSegmentLength / dist);
-								p1.incHighwayCount();
-								points.add(i + 1, p1);
+								splitPoint = points.get(splitPos);
+								Coord prev = points.get(splitPos+1);
+								double dist = splitPoint.distance(prev);
+								double neededLength = stubSegmentLength - (segmentLength - dist);
+								splitPoint = prev.makeBetweenPoint(splitPoint, neededLength / dist);
+								segmentLength += splitPoint.distance(prev) - dist;
+								splitPoint.incHighwayCount();
+								splitPos++;
+								points.add(splitPos, splitPoint);
 							}
-
-							// now split the way at the next point to
-							// limit the region that has restricted
-							// access
-							if((i+2 < points.size() && 
-									safeToSplitWay(points, i+1, 0, points.size()-1))) {
-								Way tail = splitWayAt(way, i + 1);
+							if(splitPos > 0 &&
+									safeToSplitWay(points, splitPos, 0, points.size()-1)) {
+								Way tail = splitWayAt(way, splitPos);
 								// recursively process tail of way
-								addRoad(tail, gt);
-							}
-						}
-
-						// make the POI a node so that the region with
-						// restricted access is split into two as far
-						// as routing is concerned - this should stop
-						// routing across the POI when the start point
-						// is within the restricted region and the
-						// destination point is outside of the
-						// restricted region on the other side of the
-						// POI
-
-						// however, this still doesn't stop routing
-						// across the POI when both the start and end
-						// points are either side of the POI and both
-						// are in the restricted region
-						if (p.getHighwayCount() < 2){
-							if (i == 0|| i == points.size()-1 ||
-									safeToSplitWay(points, i, 0, points.size()-1))
-								p.incHighwayCount();
-							else {
-								points.set(i,new Coord(p));
-								points.get(i).incHighwayCount();
-							}
-						}
-
-						// copy all of the POI's access restrictions
-						// to the way segment
-						for (String accessTag : ACCESS_TAGS) {
-							if(node.isNotBoolTag(accessTag))
-								way.addTag(accessTag, "no");
-							
-						}
-					}
-				}
-
-				// check if the next point modifies access and if so,
-				// split the way either here or at a new point that's
-				// closer to the POI taking care not to introduce a
-				// short arc
-				if((i + 1) < points.size()) {
-					Coord p1 = points.get(i + 1);
-					if (p1 instanceof CoordPOI && ((CoordPOI) p1).isUsed()) {
-						CoordPOI cp = (CoordPOI) p1;
-						Node node = cp.getNode();
-						if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
-							// check if this point is further away
-							// from the POI than we would like
-							double dist = p.distance(p1);
-							if(dist >= (2 * stubSegmentLength)) {
-								// insert a new point to make a short
-								// stub segment
-								p1 = p1.makeBetweenPoint(p, stubSegmentLength / dist);
-								p1.incHighwayCount();
-								points.add(i + 1, p1);
-								continue;
-							}
-
-							// now split the way here if it is not the
-							// first point in the way
-							if(i > 0 &&
-							   safeToSplitWay(points, i, 0, points.size() - 1)) {
-								Way tail = splitWayAt(way, i);
-								// recursively process tail of road
 								addRoad(tail, gt);
 							}
 						}
 					}
 				}
 			}
-		}
 
+		} 
 		// if there is a bounding box, clip the way with it
 
 		List<Way> clippedWays = null;
@@ -1297,6 +1353,81 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	
+	/**
+	 * Detect the case that two nodes are connected with 
+	 * different road segments and at least one node
+	 * is the via node of an "only-xxx" restriction.
+	 * If that is the case, make sure that there is
+	 * a node between them. If not, add it or change 
+	 * an existing point to a node by incrementing the highway
+	 * count.
+	 * Without this trick, only-restrictions might be ignored.
+	 * 
+	 * @param way the road
+	 */
+	private void addNodesForRestrictions(Way way) {
+		List<Coord> points = way.getPoints();
+		// loop downwards as we may add points
+		Coord lastNode = null;
+		int lastNodePos = -1;
+		for (int i = points.size() - 1; i >= 0; i--) {
+			Coord p1 = points.get(i);
+			if (p1.getHighwayCount() > 1){
+				if (lastNode != null){
+					if (lastNode.isViaNodeOfRestriction() && p1.isViaNodeOfRestriction()
+							|| (i == 0 && lastNodePos == points.size()-1 && (lastNode.isViaNodeOfRestriction() || p1.isViaNodeOfRestriction()))){
+						boolean addNode = false;
+						Coord[] testCoords = { p1, lastNode };
+						for (int k = 0; k < 2; k++){
+							if (testCoords[k].isViaNodeOfRestriction() == false)
+								continue;
+							List<RestrictionRelation> lrr = restrictions.get(testCoords[k]);
+							Coord test = k==0 ? testCoords[1]:testCoords[0];
+							for (RestrictionRelation rr : lrr) {
+								if (rr.isOnlyXXXRestriction() == false || rr.getFromWay() == way || rr.getToWay() == way)
+									continue;
+								// check if our way shares a point with either the to or from way
+								// we have to use Coord.equals() here because some
+								// points may already be CoordNodes while others are not
+								for (Coord co: rr.getToWay().getPoints()){
+									if (co.equals(test)){
+										addNode = true;
+										break;
+									}
+								}
+								for (Coord co: rr.getFromWay().getPoints()){
+									if (co.equals(test)){
+										addNode = true;
+										break;
+									}
+								}
+							}
+						}
+						if (addNode == false)
+							continue;
+						Coord co = null;
+						if (lastNodePos-i == 1){
+							if (p1.distance(lastNode) > 2 * minimumArcLength){
+								// create new point
+								co = lastNode.makeBetweenPoint(p1, 0.5);
+								co.incHighwayCount();
+								log.info("adding node in way ", way.toBrowseURL(), " to have node between two via points at " , co.toOSMURL());
+								points.add(lastNodePos,co);
+							}
+						} else {
+							co = points.get(i+1);
+							log.info("changing point to node in way " , way.toBrowseURL() , " to have node between two via points at " , co.toOSMURL());
+						}
+						if (co != null)
+							co.incHighwayCount();
+					}
+				}
+				lastNode = p1;
+				lastNodePos = i;
+			}
+		}
+	} 	
 	/**
 	 * safeToSplitWay() returns true if it is safe (no short arcs will be
 	 * created) to split a way at a given position - assumes that the
@@ -1459,7 +1590,27 @@ public class StyledConverter implements OsmConverter {
 					coordNode = new CoordNode(p, nextNodeId++, p.getOnBoundary());
 					nodeIdMap.put(p, coordNode);
 				}
-
+				
+				if (p instanceof CoordPOI){
+					// check if this poi should be converted to a route restriction
+					CoordPOI cp = (CoordPOI) p;
+					if (cp.getConvertToViaInRouteRestriction()){
+						String wayPOI = way.getTag(WAY_POI_NODE_IDS);
+						if (wayPOI != null && wayPOI.contains("[" + cp.getNode().getId() + "]")){
+							boolean[] nodeNoAccess = getNoAccess(cp.getNode());
+							boolean[] wayNoAccess = getNoAccess(way);
+							if (Arrays.equals(nodeNoAccess, wayNoAccess) == false){
+								List<Way> wayList = poiRestrictions.get(cp.getNode());
+								if (wayList == null){
+									wayList = new ArrayList<Way>(4);
+									poiRestrictions.put(cp.getNode(), wayList);
+								}
+								wayList.add(way);
+							}
+						}
+					}
+				}
+				
 				// add this index to node Indexes (should not already be there)
 				assert !nodeIndices.contains(i) : debugWayName + " has multiple nodes for point " + i + " new node is " + p.toOSMURL();
 				nodeIndices.add(i);
@@ -1520,20 +1671,8 @@ public class StyledConverter implements OsmConverter {
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
-		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		noAccess[RoadNetwork.NO_EMERGENCY] = way.isNotBoolTag("mkgmap:emergency");
-		noAccess[RoadNetwork.NO_DELIVERY] = way.isNotBoolTag("mkgmap:delivery");
-		noAccess[RoadNetwork.NO_CAR] = way.isNotBoolTag("mkgmap:car");
-		noAccess[RoadNetwork.NO_BUS] = way.isNotBoolTag("mkgmap:bus");
-		noAccess[RoadNetwork.NO_TAXI] = way.isNotBoolTag("mkgmap:taxi");
-		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
-		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bicycle");
-		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
-		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
-		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool");
+		road.setAccess(getNoAccess(way));
 		
-		road.setAccess(noAccess);
-
 		if (way.isNotBoolTag("mkgmap:throughroute")) 
 			road.setNoThroughRouting();
 
@@ -1588,7 +1727,11 @@ public class StyledConverter implements OsmConverter {
 					}
 				}
 
-				List<RestrictionRelation> theseRestrictions = restrictions.get(coord);
+				List<RestrictionRelation> theseRestrictions;
+				if (coord.isViaNodeOfRestriction())
+					theseRestrictions = restrictions.get(coord);
+				else
+					theseRestrictions = null;
 				if(theseRestrictions != null) {
 					// this node is the location of one or more
 					// restrictions
@@ -1856,9 +1999,7 @@ public class StyledConverter implements OsmConverter {
 				continue;
 			if ("true".equals(way.getTag("mkgmap:way-has-pois"))) {
 				String wayPOI = "";
-				boolean isFootWay = isFootOnlyAccess(way); 
-				if (!isFootWay){
-					// check if the way is for pedestrians only 
+				
 					List<Coord> points = way.getPoints();
 					int numPoints = points.size();
 					for (int i = 0;i < numPoints; i++) {
@@ -1866,12 +2007,35 @@ public class StyledConverter implements OsmConverter {
 						if (p instanceof CoordPOI){
 							CoordPOI cp = (CoordPOI) p;
 							Node node = cp.getNode();
-							if(hasAccessRestriction(node) || 
-									node.getTag("mkgmap:road-class") != null ||
-									node.getTag("mkgmap:road-speed") != null){
-								wayPOI += "["+ node.getId()+"]"; 
-								cp.setUsed(true);
+						boolean usedInThisWay = false;
+						if (node.getTag("mkgmap:road-class") != null
+								|| node.getTag("mkgmap:road-speed") != null ) {
+							if (isFootOnlyAccess(way) == false)
+								usedInThisWay = true;
+						}
+						if(hasAccessRestriction(node)){
+							// barriers etc. 
+							boolean nodeIsMoreRestrictive = false;
+							for (String tag : ACCESS_TAGS) {
+								if (node.isNotBoolTag(tag) && way.isNotBoolTag(tag) == false) {
+									nodeIsMoreRestrictive = true;
+									break;
+								}
 							}
+							if (nodeIsMoreRestrictive){
+								if (p.getHighwayCount() >= 2 || (i != 0 && i != numPoints-1)){
+									usedInThisWay = true;
+									cp.setConvertToViaInRouteRestriction(true);
+								}
+								else {
+									log.info("POI node", node.getId(), "with access restriction is ignored, it is not connected to other routable ways");
+								}
+							} else 
+								log.info("Access restriction in POI node", node.toBrowseURL(), "was ignored for way", way.toBrowseURL());
+						}
+						if (usedInThisWay){
+								cp.setUsed(true);
+							wayPOI += "["+ node.getId()+"]";
 						}
 					}
 				} 
@@ -2004,8 +2168,8 @@ public class StyledConverter implements OsmConverter {
 						double err = calcBearingError(p,prev);
 						if (err >= MAX_BEARING_ERROR){
 							// bearing error is big
-							p.setTreatAsNode(true);
-							prev.setTreatAsNode(true);
+							p.setPartOfBadAngle(true);
+							prev.setPartOfBadAngle(true);
 						}
 					}
 					prev = p;
@@ -2044,7 +2208,7 @@ public class StyledConverter implements OsmConverter {
 							modifiedRoads.put(way.getId(), way);
 							continue;
 						}
-						if (p.isTreatAsNode() || prev.isTreatAsNode()) {
+						if (p.isPartOfBadAngle() || prev.isPartOfBadAngle()) {
 							wayHasSpecialPoints = true;
 							// real distance allows that the
 							// bearing error is big,
@@ -2114,7 +2278,7 @@ public class StyledConverter implements OsmConverter {
 			while (true){
 				checkAgainList = new ArrayList<CenterOfAngle>();
 				for (CenterOfAngle coa : centers) {
-					coa.center.setTreatAsNode(false); // reset flag for next pass
+					coa.center.setPartOfBadAngle(false); // reset flag for next pass
 					if (coa.getCurrentLocation(replacements) == null)
 						continue; // removed center
 					if (coa.isOK(replacements) == false) {
@@ -2440,15 +2604,21 @@ public class StyledConverter implements OsmConverter {
 		writeOSM(name, badWays);
 	}
 	
-	static boolean allowedToRemove(Coord p){
+	/**
+	 * Check if the point can safely be removed from a road. 
+	 * @param p
+	 * @return true if remove is okay
+	 */
+	private static boolean allowedToRemove(Coord p){
 		if (p instanceof CoordPOI){
 			if (((CoordPOI) p).isUsed())
 				return false;
 		}
-		if (p.getHighwayCount() >= 2 || p.getOnBoundary())
+		if (p.getHighwayCount() >= 2 || p.getOnBoundary() || p.isViaNodeOfRestriction())
 			return false;
 		return true;
 	}
+	
 	/**
 	 * helper class
 	 */
@@ -2716,6 +2886,8 @@ public class StyledConverter implements OsmConverter {
 			Coord n = neighbour.getCurrentLocation(replacements);
 			if (c.getOnBoundary() && n.getOnBoundary() && c.equals(n) == false)
 				return false;
+			 if (c.isViaNodeOfRestriction() && n.isViaNodeOfRestriction())
+				 return false;
 			Coord mergePoint;
 			if (c.getOnBoundary())
 				mergePoint = c;

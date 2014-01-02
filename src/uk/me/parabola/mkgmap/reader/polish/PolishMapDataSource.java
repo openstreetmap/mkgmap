@@ -824,7 +824,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                 if ("1".equals(params[i])) {
                     switch(i) {
 					case 0:
-						// Mask is not known for Emergency.
+						exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
 						break;
 					case 1:
 						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
@@ -839,7 +839,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 						exceptMask |= RouteRestriction.EXCEPT_TAXI;
 						break;
 					case 5:
-						// Mask is not known for Pedestrian.
+						exceptMask |= RouteRestriction.EXCEPT_FOOT;
 						break;
 					case 6:
 						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;

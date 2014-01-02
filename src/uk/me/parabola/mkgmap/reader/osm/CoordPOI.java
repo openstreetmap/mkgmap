@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 public class CoordPOI extends Coord {
 	private Node node;
 	private boolean used;
+	private boolean convertToViaInRouteRestriction;
 
 	/**
 	 * Construct from other coord instance, copies the lat/lon values in high precision,
@@ -49,5 +50,20 @@ public class CoordPOI extends Coord {
 	}
 	public boolean isUsed() {
 		return used;
+	}
+
+	/** 
+	 * @param b true means: Convert the access restriction coded in the node to a via
+	 * node in an route restriction. 
+	 */
+	public void setConvertToViaInRouteRestriction(boolean b) {
+		this.convertToViaInRouteRestriction = b;
+	}
+	
+	/**
+	 * @return true if the node should be converted 
+	 */
+	public boolean getConvertToViaInRouteRestriction(){
+		return convertToViaInRouteRestriction;
 	}
 }
