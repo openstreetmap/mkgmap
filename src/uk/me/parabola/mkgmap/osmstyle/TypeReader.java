@@ -90,6 +90,9 @@ public class TypeReader {
 		if (performChecks){
 			boolean fromOverlays = false;
 			List<Integer> usedTypes = null;
+			if (gt.getMaxResolution() < levels[0].getBits()){
+				System.out.println("Warning: Object with max resolution of " + gt.getMaxResolution() + " is ignored. Check levels option and style file "+ ts.getFileName() + ", line " + ts.getLinenumber());
+			}
 			if (overlays != null && kind == FeatureKind.POLYLINE){
 				usedTypes = overlays.get(gt.getType());
 				if (usedTypes != null)
@@ -120,7 +123,7 @@ public class TypeReader {
 						msg += typeOverlaidMsg;
 					System.out.println(msg);
 				}
-				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && GType.isRoutableLineType(usedType)){
+				if (kind == FeatureKind.POLYLINE && gt.getMinLevel() == 0 && gt.getMaxLevel() >= 0 && GType.isRoutableLineType(usedType)){
 					if (gt.isRoad() == false){
 						String msg = "Warning: routable type " + type  + " is used for non-routable line with level 0. This may break routing. Style file "+ ts.getFileName() + ", line " + ts.getLinenumber();
 						if (fromOverlays)

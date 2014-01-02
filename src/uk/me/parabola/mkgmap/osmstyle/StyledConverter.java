@@ -25,8 +25,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
@@ -65,6 +63,7 @@ import uk.me.parabola.mkgmap.reader.osm.Rule;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.TypeResult;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.GpxCreator;
 
 /**
@@ -76,6 +75,7 @@ import uk.me.parabola.util.GpxCreator;
  */
 public class StyledConverter implements OsmConverter {
 	private static final Logger log = Logger.getLogger(StyledConverter.class);
+	private static final Logger roadLog = Logger.getLogger(StyledConverter.class.getName()+".roads");
 
 	private final List<String> nameTagList;
 
@@ -90,6 +90,17 @@ public class StyledConverter implements OsmConverter {
 
 	private final List<Relation> throughRouteRelations = new ArrayList<Relation>();
 
+	/** all tags used for access restrictions */
+	public final static List<String> ACCESS_TAGS = Arrays.asList(
+			"mkgmap:bicycle", 
+			"mkgmap:foot", 
+			"mkgmap:truck", 
+			"mkgmap:car",
+			"mkgmap:bus", 
+			"mkgmap:taxi",
+			"mkgmap:emergency", 
+			"mkgmap:delivery");
+	
 	// limit line length to avoid problems with portions of really
 	// long lines being assigned to the wrong subdivision
 	private static final int MAX_LINE_LENGTH = 40000;
@@ -99,12 +110,11 @@ public class StyledConverter implements OsmConverter {
 
 	private static final int MAX_NODES_IN_WAY = 64; // possibly could be increased
 
-	// nodeIdMap maps a Coord into a nodeId
-	private IdentityHashMap<Coord, Integer> nodeIdMap = new IdentityHashMap<Coord, Integer>();
-	
-	// TODO: remove debugging aids
-	private final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
+	// nodeIdMap maps a Coord into a CoordNode
+	private IdentityHashMap<Coord, CoordNode> nodeIdMap = new IdentityHashMap<Coord, CoordNode>();
 
+	public final static String WAY_POI_NODE_IDS = "mkgmap:way-poi-node-ids";
+	
 	private List<Way> roads = new ArrayList<Way>();
 	private List<GType> roadTypes = new ArrayList<GType>();
 	private List<Way> lines = new ArrayList<Way>();
@@ -124,39 +134,11 @@ public class StyledConverter implements OsmConverter {
 	private final Rule lineRules;
 	private final Rule polygonRules;
 
-	private final boolean ignoreMaxspeeds;
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
 	private final boolean linkPOIsToWays;
-	private static final Pattern ENDS_IN_MPH_PATTERN = Pattern.compile(".*mph");
-	private static final Pattern REMOVE_MPH_PATTERN = Pattern.compile("[ \t]*mph");
-	private static final Pattern REMOVE_KPH_PATTERN = Pattern.compile("[ \t]*kmh");
-	private static final Pattern SEMI_PATTERN = Pattern.compile(";");
-
-	class AccessMapping {
-		private final String type;
-		private final int index;
-		AccessMapping(String type, int index) {
-			this.type = type;
-			this.index = index;
-		}
-	}
-
-	private final AccessMapping[] accessMap = {
-		new AccessMapping("access",     RoadNetwork.NO_MAX), // must be first in list
-		new AccessMapping("bicycle",    RoadNetwork.NO_BIKE),
-		new AccessMapping("carpool",    RoadNetwork.NO_CARPOOL),
-		new AccessMapping("foot",       RoadNetwork.NO_FOOT),
-		new AccessMapping("hgv",        RoadNetwork.NO_TRUCK),
-		new AccessMapping("motorcar",   RoadNetwork.NO_CAR),
-		new AccessMapping("motorcycle", RoadNetwork.NO_CAR),
-		new AccessMapping("psv",        RoadNetwork.NO_BUS),
-		new AccessMapping("taxi",       RoadNetwork.NO_TAXI),
-		new AccessMapping("emergency",  RoadNetwork.NO_EMERGENCY),
-		new AccessMapping("delivery",   RoadNetwork.NO_DELIVERY),
-		new AccessMapping("goods",      RoadNetwork.NO_DELIVERY),
-	};
+	private final boolean mergeRoads;
 
 	private LineAdder lineAdder = new LineAdder() {
 		public void add(MapLine element) {
@@ -167,7 +149,7 @@ public class StyledConverter implements OsmConverter {
 		}
 	};
 
-	public StyledConverter(Style style, MapCollector collector, Properties props) {
+	public StyledConverter(Style style, MapCollector collector, EnhancedProperties props) {
 		this.collector = collector;
 
 		nameTagList = LocatorUtil.getNameTags(props);
@@ -179,7 +161,6 @@ public class StyledConverter implements OsmConverter {
 		
 		housenumberGenerator = new HousenumberGenerator(props);
 
-		ignoreMaxspeeds = props.getProperty("ignore-maxspeeds") != null;
 		driveOnLeft = props.getProperty("drive-on-left") != null;
 		// check if the setDriveOnLeft flag should be ignored 
 		// (this is the case if precompiled sea is loaded)
@@ -198,7 +179,11 @@ public class StyledConverter implements OsmConverter {
 			System.err.println("Warning: remove-short-arcs=" + rsa + " overrides default 0." +
 					" This is no longer recommended for a routable map.");
 		}
-		linkPOIsToWays = props.getProperty("link-pois-to-ways") != null;
+		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
+		
+		// undocumented option - usually used for debugging only
+		mergeRoads = props.getProperty("no-mergeroads", false) == false;
+
 		gpxPath = props.getProperty("gpx-dir", null);
 		if (gpxPath != null) {
 			if (gpxPath.endsWith("/") == false
@@ -207,6 +192,26 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	/** One type result for ways to avoid recreating one for each way. */ 
+	private final WayTypeResult wayTypeResult = new WayTypeResult();
+	private class WayTypeResult implements TypeResult 
+	{
+		private Way way;
+		public void setWay(Way way) {
+			this.way = way;
+		}
+		
+		public void add(Element el, GType type) {
+			if (type.isContinueSearch()) {
+				// If not already copied, do so now
+				if (el == way) 
+					el = way.copy();
+			}
+			postConvertRules(el, type);
+			addConvertedWay((Way) el, type);
+		}
+	}
+	
 	/**
 	 * This takes the way and works out what kind of map feature it is and makes
 	 * the relevant call to the mapper callback.
@@ -237,18 +242,10 @@ public class StyledConverter implements OsmConverter {
 		else
 			rules = wayRules;
 		
-		rules.resolveType(way, new TypeResult() {
-			public void add(Element el, GType type) {
-				if (type.isContinueSearch()) {
-					// If not already copied, do so now
-					if (el == way)
-						el = way.copy();
-				}
-				postConvertRules(el, type);
-				addConvertedWay((Way) el, type);
-			}
-		});
+		wayTypeResult.setWay(way);
+		rules.resolveType(way, wayTypeResult);
 	}
+
 
 	private void addConvertedWay(Way way, GType foundType) {
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
@@ -258,6 +255,7 @@ public class StyledConverter implements OsmConverter {
 					if (checkFixmeCoords(way))
 						way.addTag("mkgmap:dead-end-check", "false");
 				}
+		    	
 		    	roads.add(way);
 		    	roadTypes.add(new GType(foundType));
 		    }
@@ -268,6 +266,25 @@ public class StyledConverter implements OsmConverter {
 		}
 		else
 			addShape(way, foundType);
+	}
+
+	/** One type result for nodes to avoid recreating one for each node. */ 
+	private NodeTypeResult nodeTypeResult = new NodeTypeResult();
+	private class NodeTypeResult implements TypeResult {
+		private Node node;
+		public void setNode(Node node) {
+			this.node = node;
+		}
+		
+		public void add(Element el, GType type) {
+			if (type.isContinueSearch()) {
+				// If not already copied, do so now
+				if (el == node) 
+					el = node.copy();
+			}
+			postConvertRules(el, type);
+			addPoint((Node) el, type);
+		}
 	}
 
 	/**
@@ -286,18 +303,10 @@ public class StyledConverter implements OsmConverter {
 
 		housenumberGenerator.addNode(node);
 		
-		nodeRules.resolveType(node, new TypeResult() {
-			public void add(Element el, GType type) {
-				if (type.isContinueSearch()) {
-					// If not already copied, do so now
-					if (el == node)
-						el = node.copy();
-				}
-				postConvertRules(el, type);
-				addPoint((Node) el, type);
-			}
-		});
+		nodeTypeResult.setNode(node);
+		nodeRules.resolveType(node, nodeTypeResult);
 	}
+	
 
 	/**
 	 * Rules to run before converting the element.
@@ -316,14 +325,148 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	/**
+	 * Recalculates the road class defined in the given {@link GType} object based on the tags
+	 * <ul>
+	 * <li>{@code mkgmap:road-class}</li>
+	 * <li>{@code mkgmap:road-class-min}</li>
+	 * <li>{@code mkgmap:road-class-max}</li>
+	 * </ul>
+	 * The road class of the {@link GType} object is changed if the tags modify its road class. 
+	 * 
+	 * @param el an element 
+	 * @param type a GType instance with the current road class.
+	 * @return {@code true} the road class of {@code type} has been changed; 
+	 *    {@code false} the road class of of {@code type} has not been changed
+	 */
+	private boolean recalcRoadClass(Element el, GType type) {
+		// retrieve the original road class value
+		int roadClass = type.getRoadClass();
+		
+		// check if the road class is modified
+		String val = el.getTag("mkgmap:road-class");
+		if (val != null) {
+			if (val.startsWith("-")) {
+				roadClass -= Integer.decode(val.substring(1));
+			} else if (val.startsWith("+")) {
+				roadClass += Integer.decode(val.substring(1));
+			} else {
+				roadClass = Integer.decode(val);
+			}
+			val = el.getTag("mkgmap:road-class-max");
+			int roadClassMax = 4;
+			if (val != null)
+				roadClassMax = Integer.decode(val);
+			val = el.getTag("mkgmap:road-class-min");
+
+			int roadClassMin = 0;
+			if (val != null)
+				roadClassMin = Integer.decode(val);
+			if (roadClass > roadClassMax)
+				roadClass = roadClassMax;
+			else if (roadClass < roadClassMin)
+				roadClass = roadClassMin;
+
+		}
+		
+		if (roadClass == type.getRoadClass()) {
+			// no change of road class
+			return false;
+		} else {
+			// change the road class
+			type.setRoadClass(roadClass);
+			return true;
+		}
+	}
+	
+	/**
+	 * Recalculates the road speed defined in the given {@link GType} object based on the tags
+	 * <ul>
+	 * <li>{@code mkgmap:road-speed-class}</li>
+	 * <li>{@code mkgmap:road-speed}</li>
+	 * <li>{@code mkgmap:road-speed-min}</li>
+	 * <li>{@code mkgmap:road-speed-max}</li>
+	 * </ul>
+	 * The road speed of the {@link GType} object is changed if the tags modify its road speed. 
+	 * 
+	 * @param el an element 
+	 * @param type a GType instance with the current road speed.
+	 * @return {@code true} the road speed of {@code type} has been changed; 
+	 *    {@code false} the road speed of of {@code type} has not been changed
+	 */
+	private boolean recalcRoadSpeed(Element el, GType type) {
+		// retrieve the original road speed value
+		int roadSpeed = type.getRoadSpeed();
+		
+		// check if the road speed defined in the GType object is overridden
+		String roadSpeedOverride = el.getTag("mkgmap:road-speed-class");
+		if (roadSpeedOverride != null) {
+			try {
+				int rs = Integer.decode(roadSpeedOverride);
+				if (rs >= 0 && rs <= 7) {
+					// override the road speed class
+					roadSpeed = rs;
+				} else {
+					log.error(getDebugName(el)
+							+ " road classification mkgmap:road-speed-class="
+							+ roadSpeedOverride + " must be in [0;7]");
+				}
+			} catch (Exception exp) {
+				log.error(getDebugName(el)
+						+ " road classification mkgmap:road-speed-class="
+						+ roadSpeedOverride + " must be in [0;7]");
+			}
+		}
+		
+		// check if the road speed should be modified more
+		String val = el.getTag("mkgmap:road-speed");
+		if(val != null) {
+			if(val.startsWith("-")) {
+				roadSpeed -= Integer.decode(val.substring(1));
+			}
+			else if(val.startsWith("+")) {
+				roadSpeed += Integer.decode(val.substring(1));
+			}
+			else {
+				roadSpeed = Integer.decode(val);
+			}
+			val = el.getTag("mkgmap:road-speed-max");
+			int roadSpeedMax = 7;
+			if(val != null)
+				roadSpeedMax = Integer.decode(val);
+			val = el.getTag("mkgmap:road-speed-min");
+
+			int roadSpeedMin = 0;
+			if(val != null)
+				roadSpeedMin = Integer.decode(val);
+			if(roadSpeed > roadSpeedMax)
+				roadSpeed = roadSpeedMax;
+			else if(roadSpeed < roadSpeedMin)
+				roadSpeed = roadSpeedMin;
+		}
+		
+		if (roadSpeed == type.getRoadSpeed()) {
+			// road speed is not changed
+			return false;
+		} else {
+			type.setRoadSpeed(roadSpeed);
+			return true;
+		}
+	}
+	
+	/**
 	 * Built in rules to run after converting the element.
 	 */
 	private void postConvertRules(Element el, GType type) {
-		// Set the name from the 'name' tag or failing that from
-		// the default_name.
-		el.setName(el.getTag("name"));
-		if (el.getName() == null)
-			el.setName(type.getDefaultName());
+		// Set the default_name if no name is set
+		if (type.getDefaultName() != null && el.getName() == null)
+			el.addTag("mkgmap:label:1", type.getDefaultName());
+		
+		if (el instanceof Way && type.isRoad()) {
+			Way way = (Way) el;
+			
+			recalcRoadClass(way, type);
+			recalcRoadSpeed(way, type);
+		}
 	}
 
 	/**
@@ -346,6 +489,25 @@ public class StyledConverter implements OsmConverter {
 		collector.addToBounds(new Coord(bbox.getMaxLat(), bbox.getMaxLong()));
 	}
 
+	/**
+	 * Merges roads with identical attributes (gtype, OSM tags) to reduce the size of the 
+	 * road network.
+	 */
+	private void mergeRoads() {
+		if (mergeRoads == false) { 
+			log.info("Merging roads is disabled");
+			return;
+		}
+		
+		// instantiate the RoadMerger - the roads and roadTypes lists are copied
+		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
+		// clear the lists
+		roads.clear();
+		roadTypes.clear();
+		// merge the roads and copy the results to the roads and roadTypes list
+		merger.merge(roads, roadTypes);
+	}
+	
 	public void end() {
 //		gpxPath= null;		
 		setHighwayCounts();
@@ -377,6 +539,11 @@ public class StyledConverter implements OsmConverter {
 		deletedRoads = null;
 		modifiedRoads = null;
 
+		mergeRoads();
+
+		resetHighwayCounts();
+		setHighwayCounts();
+		
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
 			if (line == null)
@@ -386,7 +553,10 @@ public class StyledConverter implements OsmConverter {
 		}
 		lines = null;
 		lineTypes = null;
-
+		if (roadLog.isInfoEnabled()) {
+			roadLog.info("Flags: oneway,no-emergency, no-delivery, no-throughroute, no-truck, no-bike, no-foot, carpool, no-taxi, no-bus, no-car");
+			roadLog.info(String.format("%19s %4s %11s %s", "Road-OSM-Id","Type","Flags", "Labels"));
+		}
 		// add the roads after the other lines
 		for (int i = 0; i < roads.size(); i++){
 			Way road = roads.get(i);
@@ -417,7 +587,7 @@ public class StyledConverter implements OsmConverter {
 					if(node == null)
 						node = (Node)member.getValue();
 					else
-						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 1 node");
+						log.warn("Through route relation", relation.toBrowseURL(), "has more than 1 node");
 				}
 				else if(member.getValue() instanceof Way) {
 					Way w = (Way)member.getValue();
@@ -426,31 +596,30 @@ public class StyledConverter implements OsmConverter {
 					else if(w2 == null)
 						w2 = w;
 					else
-						log.warn("Through route relation " + relation.toBrowseURL() + " has more than 2 ways");
+						log.warn("Through route relation", relation.toBrowseURL(), "has more than 2 ways");
 				}
 			}
 
-			Integer nodeId = null;
+			CoordNode coordNode = null;
 			if(node == null)
-				log.warn("Through route relation " + relation.toBrowseURL() + " is missing the junction node");
+				log.warn("Through route relation", relation.toBrowseURL(), "is missing the junction node");
 			else {
 				Coord junctionPoint = node.getLocation();
 				if(bbox != null && !bbox.contains(junctionPoint)) {
 					// junction is outside of the tile - ignore it
 					continue;
 				}
-				nodeId = nodeIdMap.get(junctionPoint);
-				if(nodeId == null)
-					log.warn("Through route relation " + relation.toBrowseURL() + " junction node at " + junctionPoint.toOSMURL() + " is not a routing node");
+				coordNode = nodeIdMap.get(junctionPoint);
+				if(coordNode == null)
+					log.warn("Through route relation", relation.toBrowseURL(), "junction node at", junctionPoint.toOSMURL(), "is not a routing node");
 			}
 
 			if(w1 == null || w2 == null)
-				log.warn("Through route relation " + relation.toBrowseURL() + " should reference 2 ways that meet at the junction node");
+				log.warn("Through route relation", relation.toBrowseURL(), "should reference 2 ways that meet at the junction node");
 
-			if(nodeId != null && w1 != null && w2 != null)
-				collector.addThroughRoute(nodeId, w1.getId(), w2.getId());
+			if(coordNode != null && w1 != null && w2 != null)
+				collector.addThroughRoute(coordNode.getId(), w1.getId(), w2.getId());
 		}
-
 		// return memory to GC
 		nodeIdMap = null;
 		throughRouteRelations.clear();
@@ -633,7 +802,8 @@ public class StyledConverter implements OsmConverter {
 			if(lastP != null) {
 				lineLength += p.distance(lastP);
 				if(lineLength >= MAX_LINE_LENGTH) {
-					log.info("Splitting line " + way.toBrowseURL() + " at " + p.toOSMURL() + " to limit its length to " + (long)lineLength + "m");
+					if (log.isInfoEnabled())
+						log.info("Splitting line", way.toBrowseURL(), "at", p.toOSMURL(), "to limit its length to", (long)lineLength + "m");
 					addLine(way, gt, points);
 					points = new ArrayList<Coord>(wayPoints.size() - points.size() + 1);
 					points.add(p);
@@ -703,7 +873,7 @@ public class StyledConverter implements OsmConverter {
 			}
 			else {
 				mp = new MapPoint();
-				log.warn("Motorway exit " + node.getName() + " (" + node.getLocation().toOSMURL() + ") has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a " + Exit.TAG_ROAD_REF + " tag)");
+				log.warn("Motorway exit", node.getName(), "(" + node.getLocation().toOSMURL() + ") has no motorway! (either make the exit share a node with the motorway or specify the motorway ref with a", Exit.TAG_ROAD_REF, "tag)");
 			}
 		}
 		else {
@@ -715,95 +885,21 @@ public class StyledConverter implements OsmConverter {
 		collector.addPoint(mp);
 	}
 
-	private String combineRefs(Element element) {
-		String ref = Label.squashSpaces(element.getTag("ref"));
-		String int_ref = Label.squashSpaces(element.getTag("int_ref"));
-		if(int_ref != null) {
-			if(ref == null)
-				ref = int_ref;
-			else
-				ref += ";" + int_ref;
-		}
-		String nat_ref = Label.squashSpaces(element.getTag("nat_ref"));
-		if(nat_ref != null) {
-			if(ref == null)
-				ref = nat_ref;
-			else
-				ref += ";" + nat_ref;
-		}
-		String reg_ref = Label.squashSpaces(element.getTag("reg_ref"));
-		if(reg_ref != null) {
-			if(ref == null)
-				ref = reg_ref;
-			else
-				ref += ";" + reg_ref;
-		}
-
-		return ref;
-	}
-
-	private boolean displayNameWarning = true;
-	
 	private void elementSetup(MapElement ms, GType gt, Element element) {
-		String name = Label.squashSpaces(element.getName());
-		String refs = combineRefs(element);
-		
-		// Insert mkgmap:display_name as first ref.
-		// This causes mkgmap:display_name to be displayed in routing 
-		// directions, instead of only the ref.
-		String displayName = Label.squashSpaces(element.getTag("mkgmap:display_name"));
-		
-		// be downward compatible if old tag display_name is used
-		if (displayName == null) {
-			// get the old tag display_name which should not be used any more (Dec 2012)
-			displayName = Label.squashSpaces(element.getTag("display_name"));
-			if (displayName != null && displayNameWarning) {
-				System.err.println("WARNING: Style uses tag 'display_name' which is deprecated " +
-						"and will be removed soon. Please use the new tag 'mkgmap:display_name' instead.");
-				log.warn("Style uses tag 'display_name' which is deprecated",
-						"and will be removed soon. Please use the new tag 'mkgmap:display_name' instead.");
-				displayNameWarning = false;
-			}
-		}
-		
-		if (displayName != null) {
-			// substitute '/' for ';' in mkgmap:display_name to avoid it
-			// getting split below
-			displayName = displayName.replace(";","/");
-			if (refs == null)
-				refs = displayName;
-			else
-				refs = displayName + ";" + refs;
+		String[] labels = new String[4];
+		int noLabels = 0;
+		for (int labelNo = 1; labelNo <= 4; labelNo++) {
+			String label1 = element.getTag("mkgmap:label:"+labelNo);
+			String label = Label.squashSpaces(label1);
+			if (label != null) {
+				labels[noLabels] = label;
+				noLabels++;
+			} 
 		}
 
-		if(name == null && refs != null) {
-			// use first ref as name
-			String[] names = SEMI_PATTERN.split(refs);
-			if (names.length > 0)
-				name = names[0].trim();
+		if (labels[0] != null) {
+			ms.setLabels(labels);
 		}
-		else if(name != null) {
-			// remove leading spaces (don't use trim() to avoid zapping
-			// shield codes)
-			char leadingCode = 0;
-			if(name.length() > 1 &&
-			   name.charAt(0) < 0x20 &&
-			   name.charAt(1) == ' ') {
-				leadingCode = name.charAt(0);
-				name = name.substring(2);
-			}
-				
-			while(!name.isEmpty() && name.charAt(0) == ' ')
-				name = name.substring(1);
-
-			if(leadingCode != 0)
-				name = leadingCode + name;
-		}
-
-		if(name != null)
-			ms.setName(name);
-		if(refs != null)
-			ms.setRef(refs);
 		ms.setType(gt.getType());
 		ms.setMinResolution(gt.getMinResolution());
 		ms.setMaxResolution(gt.getMaxResolution());
@@ -854,17 +950,28 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
+	private boolean hasAccessRestriction(Element osmElement) {
+		for (String tag : ACCESS_TAGS) {
+			if (osmElement.isNotBoolTag(tag)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Add a way to the road network. May call itself recursively and
 	 * might truncate the way if splitting is required. 
 	 * @param way the way
 	 * @param gt the type assigned by the style
 	 */
-	private void addRoad(Way way, GType gt) {
+	private void addRoad(Way way, GType gtParm) {
+		GType gt = new GType(gtParm);
 		if (way.getPoints().size() < 2){
-			log.warn("road has < 2 points ",way.getId(),"(discarding)");
+			log.warn("road has < 2 points",way.getId(),"(discarding)");
 			return;
 		}
+
 		String oneWay = way.getTag("oneway");
 		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
 			// it's a oneway street in the reverse direction
@@ -873,11 +980,13 @@ public class StyledConverter implements OsmConverter {
 			way.reverse();
 			way.addTag("oneway", "yes");
 			if("roundabout".equals(way.getTag("junction")))
-				log.warn("Roundabout " + way.getId() + " has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+				log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
 		}
+
 		checkRoundabout(way);
-		String wayPOI = way.getTag(WAY_POI_NODE_IDS);
+
 		// process any Coords that have a POI associated with them
+		String wayPOI = way.getTag(WAY_POI_NODE_IDS);
 		if (wayPOI != null) {
 			List<Coord> points = way.getPoints();
 
@@ -890,6 +999,7 @@ public class StyledConverter implements OsmConverter {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
 					if (wayPOI.contains("["+node.getId()+"]")){
+						log.debug("POI",node.getId(),"changes way",way.getId());
 						String roadClass = node.getTag("mkgmap:road-class");
 						String roadSpeed = node.getTag("mkgmap:road-speed");
 						if(roadClass != null || roadSpeed != null) {
@@ -903,26 +1013,13 @@ public class StyledConverter implements OsmConverter {
 								// recursively process tail of way
 								addRoad(tail, gt);
 							}
-							// we can't modify the road class or type in
-							// the GType as that's global so for now just
-							// transfer the tags to the way
-							if(roadClass != null) {
-								way.addTag("mkgmap:road-class", roadClass);
-								String val = node.getTag("mkgmap:road-class-min");
-								if(val != null)
-									way.addTag("mkgmap:road-class-min", val);
-								val = node.getTag("mkgmap:road-class-max");
-								if(val != null)
-									way.addTag("mkgmap:road-class-max", val);
+							boolean classChanged = recalcRoadClass(node, gt);
+							if (classChanged && log.isInfoEnabled()){
+								log.info("POI changing road class of", way.toBrowseURL(), "to", gt.getRoadClass(), "at", points.get(0).toOSMURL()); 								
 							}
-							if(roadSpeed != null) {
-								way.addTag("mkgmap:road-speed", roadSpeed);
-								String val = node.getTag("mkgmap:road-speed-min");
-								if(val != null)
-									way.addTag("mkgmap:road-speed-min", val);
-								val = node.getTag("mkgmap:road-speed-max");
-								if(val != null)
-									way.addTag("mkgmap:road-speed-max", val);
+							boolean speedChanged = recalcRoadSpeed(node, gt);
+							if (speedChanged && log.isInfoEnabled()){
+								log.info("POI changing road speed of", way.toBrowseURL(), "to", gt.getRoadSpeed(), "at" , points.get(0).toOSMURL());
 							}
 						}
 					}
@@ -950,7 +1047,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 
-			// now look for POIs that have the "access" tag defined -
+			// now look for POIs that have an access restriction defined -
 			// if they do, copy the access permissions to the way -
 			// what we want to achieve is modifying the way's access
 			// permissions where it passes through the POI without
@@ -968,7 +1065,7 @@ public class StyledConverter implements OsmConverter {
 				if (p instanceof CoordPOI && ((CoordPOI) p).isUsed()) {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
-					if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
+					if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
 						// if this or the next point are not the last
 						// points in the way, split at the next point
 						// taking care not to produce a short arc
@@ -1014,17 +1111,17 @@ public class StyledConverter implements OsmConverter {
 									safeToSplitWay(points, i, 0, points.size()-1))
 								p.incHighwayCount();
 							else {
-								points.set(i, new Coord(p));
+								points.set(i,new Coord(p));
 								points.get(i).incHighwayCount();
 							}
 						}
+
 						// copy all of the POI's access restrictions
 						// to the way segment
-						for (AccessMapping anAccessMap : accessMap) {
-							String accessType = anAccessMap.type;
-							String accessModifier = node.getTag(accessType);
-							if(accessModifier != null)
-								way.addTag(accessType, accessModifier);
+						for (String accessTag : ACCESS_TAGS) {
+							if(node.isNotBoolTag(accessTag))
+								way.addTag(accessTag, "no");
+							
 						}
 					}
 				}
@@ -1038,7 +1135,7 @@ public class StyledConverter implements OsmConverter {
 					if (p1 instanceof CoordPOI && ((CoordPOI) p1).isUsed()) {
 						CoordPOI cp = (CoordPOI) p1;
 						Node node = cp.getNode();
-						if (node.getTag("access") != null && wayPOI.contains("["+node.getId()+"]")){
+						if (hasAccessRestriction(node) && wayPOI.contains("["+node.getId()+"]")){
 							// check if this point is further away
 							// from the POI than we would like
 							double dist = p.distance(p1);
@@ -1078,7 +1175,6 @@ public class StyledConverter implements OsmConverter {
 
 				for (List<Coord> lco : lineSegs) {
 					Way nWay = new Way(way.getId());
-					nWay.setName(way.getName());
 					nWay.copyTags(way);
 					for(Coord co : lco) {
 						nWay.addPoint(co);
@@ -1104,7 +1200,8 @@ public class StyledConverter implements OsmConverter {
 		}
 	}
 
-	private void addRoadAfterSplittingLoops(Way way, GType gt) {
+	private void addRoadAfterSplittingLoops(Way way, final GType gtParm) {
+		GType gt = new GType(gtParm);
 		// make sure the way has nodes at each end
 		way.getPoints().get(0).incHighwayCount();
 		way.getPoints().get(way.getPoints().size() - 1).incHighwayCount();
@@ -1146,14 +1243,15 @@ public class StyledConverter implements OsmConverter {
 							splitI = niceSplitPos;
 						else {
 							splitI = p2I - 1;
-							while(splitI > p1I &&
-									!safeToSplitWay(wayPoints, splitI, p1I, p2I)) {
-								log.info("Looped way " + getDebugName(way) + " can't safely split at point[" + splitI + "], trying the preceeding point");
-								--splitI;
-							}
+						while(splitI > p1I &&
+							  !safeToSplitWay(wayPoints, splitI, p1I, p2I)) {
+							if (log.isInfoEnabled())
+								log.info("Looped way", getDebugName(way), "can't safely split at point[" + splitI + "], trying the preceeding point");
+							--splitI;
+						}
 						}
 						if(splitI == p1I) {
-							log.warn("Splitting looped way " + getDebugName(way) + " would make a zero length arc, so it will have to be pruned at " + wayPoints.get(p2I).toOSMURL());
+							log.warn("Splitting looped way", getDebugName(way), "would make a zero length arc, so it will have to be pruned at", wayPoints.get(p2I).toOSMURL());
 							do {
 								log.warn("  Pruning point[" + p2I + "]");
 								wayPoints.remove(p2I);
@@ -1161,6 +1259,7 @@ public class StyledConverter implements OsmConverter {
 								--p2I;
 								// but number of points has reduced
 								--numPointsInWay;
+
 								if (p2I + 1 == numPointsInWay) 
 									wayPoints.get(p2I).incHighwayCount();
 								// if wayPoints[p2I] is the last point
@@ -1173,7 +1272,8 @@ public class StyledConverter implements OsmConverter {
 						}
 						else {
 							// split the way before the second point
-							log.info("Splitting looped way " + getDebugName(way) + " at " + wayPoints.get(splitI).toOSMURL() + " - it has " + (numPointsInWay - splitI - 1 ) + " following segment(s).");
+							if (log.isInfoEnabled())
+								log.info("Splitting looped way", getDebugName(way), "at", wayPoints.get(splitI).toOSMURL(), "- it has", (numPointsInWay - splitI - 1 ), "following segment(s).");
 							Way loopTail = splitWayAt(way, splitI);
 							// recursively check (shortened) head for
 							// more loops
@@ -1241,15 +1341,15 @@ public class StyledConverter implements OsmConverter {
 		return true;
 	}
 
-	private static String getDebugName(Way way) {
-		String name = way.getName();
+	private static String getDebugName(Element el) {
+		String name = el.getName();
 		if(name == null)
-			name = way.getTag("ref");
+			name = el.getTag("ref");
 		if(name == null)
 			name = "";
 		else
 			name += " ";
-		return name + "(OSM id " + way.getId() + ")";
+		return name + "(OSM id " + el.getId() + ")";
 	}
 
 	private void addRoadWithoutLoops(Way way, GType gt) {
@@ -1312,7 +1412,8 @@ public class StyledConverter implements OsmConverter {
 					nextP.incHighwayCount();
 					points.add(i + 1, nextP);
 					double newD = p.distance(nextP);
-					log.info("Way " + debugWayName + " contains a segment that is " + (int)d + "m long but I am adding a new point to reduce its length to " + (int)newD + "m");
+					if (log.isInfoEnabled())
+						log.info("Way", debugWayName, "contains a segment that is", (int)d + "m long but I am adding a new point to reduce its length to", (int)newD + "m");
 					d = newD;
 				}
 
@@ -1324,7 +1425,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit arc length to " + (long)arcLength + "m");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "to limit arc length to", (long)arcLength + "m");
 				}
 				else if(wayBBox.tooBig()) {
 					assert i > 0 : "arc segment with big bbox not split";
@@ -1332,7 +1434,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " to limit the size of its bounding box");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "to limit the size of its bounding box");
 				}
 				else {
 					if(p.getHighwayCount() > 1) {
@@ -1346,10 +1449,11 @@ public class StyledConverter implements OsmConverter {
 
 			if(p.getHighwayCount() > 1) {
 				// this point is a node connecting highways
-				Integer nodeId = nodeIdMap.get(p);
-				if(nodeId == null) {
+				CoordNode coordNode = nodeIdMap.get(p);
+				if(coordNode == null) {
 					// assign a node id
-					nodeIdMap.put(p, nextNodeId++);
+					coordNode = new CoordNode(p, nextNodeId++, p.getOnBoundary());
+					nodeIdMap.put(p, coordNode);
 				}
 
 				// add this index to node Indexes (should not already be there)
@@ -1365,7 +1469,8 @@ public class StyledConverter implements OsmConverter {
 					trailingWay = splitWayAt(way, i);
 					// this will have truncated the current Way's
 					// points so the loop will now terminate
-					log.info("Splitting way " + debugWayName + " at " + points.get(i).toOSMURL() + " as it has at least " + MAX_NODES_IN_WAY + " nodes");
+					if (log.isInfoEnabled())
+						log.info("Splitting way", debugWayName, "at", points.get(i).toOSMURL(), "as it has at least", MAX_NODES_IN_WAY, "nodes");
 				}
 			}
 		}
@@ -1401,76 +1506,9 @@ public class StyledConverter implements OsmConverter {
 
 		// set road parameters 
 
-		// road class (can be overridden by mkgmap:road-class tag)
-		int roadClass = gt.getRoadClass();
-		String val = way.getTag("mkgmap:road-class");
-		if(val != null) {
-			if(val.startsWith("-")) {
-				roadClass -= Integer.decode(val.substring(1));
-			}
-			else if(val.startsWith("+")) {
-				roadClass += Integer.decode(val.substring(1));
-			}
-			else {
-				roadClass = Integer.decode(val);
-			}
-			val = way.getTag("mkgmap:road-class-max");
-			int roadClassMax = 4;
-			if(val != null)
-				roadClassMax = Integer.decode(val);
-			val = way.getTag("mkgmap:road-class-min");
-
-			int roadClassMin = 0;
-			if(val != null)
-				roadClassMin = Integer.decode(val);
-			if(roadClass > roadClassMax)
-				roadClass = roadClassMax;
-			else if(roadClass < roadClassMin)
-				roadClass = roadClassMin;
-			log.info("POI changing road class of " + way.getName() + " (" + way.getId() + ") to " + roadClass + " at " + points.get(0));
-		}
-		road.setRoadClass(roadClass);
-
-		// road speed (can be overridden by maxspeed (OSM) tag or
-		// mkgmap:road-speed tag)
-		int roadSpeed = gt.getRoadSpeed();
-		if(!ignoreMaxspeeds) {
-			// maxspeed attribute overrides default for road type
-			String maxSpeed = way.getTag("maxspeed");
-			if(maxSpeed != null) {
-				int rs = getSpeedIdx(maxSpeed);
-				if(rs >= 0)
-					roadSpeed = rs;
-				log.debug(debugWayName + " maxspeed=" + maxSpeed + ", speedIndex=" + roadSpeed);
-			}
-		}
-		val = way.getTag("mkgmap:road-speed");
-		if(val != null) {
-			if(val.startsWith("-")) {
-				roadSpeed -= Integer.decode(val.substring(1));
-			}
-			else if(val.startsWith("+")) {
-				roadSpeed += Integer.decode(val.substring(1));
-			}
-			else {
-				roadSpeed = Integer.decode(val);
-			}
-			val = way.getTag("mkgmap:road-speed-max");
-			int roadSpeedMax = 7;
-			if(val != null)
-				roadSpeedMax = Integer.decode(val);
-			val = way.getTag("mkgmap:road-speed-min");
-
-			int roadSpeedMin = 0;
-			if(val != null)
-				roadSpeedMin = Integer.decode(val);
-			if(roadSpeed > roadSpeedMax)
-				roadSpeed = roadSpeedMax;
-			else if(roadSpeed < roadSpeedMin)
-				roadSpeed = roadSpeedMin;
-			log.info("POI changing road speed of " + way.getName() + " (" + way.getId() + ") to " + roadSpeed + " at " + points.get(0));
-		}
-		road.setSpeed(roadSpeed);
+		// copy road class and road speed
+		road.setRoadClass(gt.getRoadClass());
+		road.setSpeed(gt.getRoadSpeed());
 		
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
@@ -1478,76 +1516,24 @@ public class StyledConverter implements OsmConverter {
 			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
-		String highwayType = way.getTag("highway");
-		if(highwayType == null) {
-			// it's a routable way but not a highway (e.g. a ferry)
-			// use the value of the route tag as the highwayType for
-			// the purpose of testing for access restrictions
-			highwayType = way.getTag("route");
-		}
-
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		for (AccessMapping anAccessMap : accessMap) {
-			int index = anAccessMap.index;
-			String type = anAccessMap.type;
-			String accessTagValue = way.getTag(type);
-			if (accessTagValue == null)
-				continue;
-			if (accessExplicitlyDenied(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is denied access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = true;
-				} else {
-					// just the specific vehicle class is denied
-					// access
-					noAccess[index] = true;
-				}
-				log.debug(type + " is not allowed in " + highwayType + " " + debugWayName);
-			} else if (accessExplicitlyAllowed(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is allowed access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = false;
-				} else {
-					// just the specific vehicle class is allowed
-					// access
-					noAccess[index] = false;
-				}
-				log.debug(type + " is allowed in " + highwayType + " " + debugWayName);
-			}
-			else if (accessTagValue.equalsIgnoreCase("destination")) {
-				if (type.equals("motorcar") ||
-				    type.equals("motorcycle")) {
-					road.setNoThroughRouting();
-				} else if (type.equals("access")) {
-					log.info("access=destination only affects routing for cars in " + highwayType + " " + debugWayName);
-					road.setNoThroughRouting();
-				} else {
-					log.info(type + "=destination ignored in " + highwayType + " " + debugWayName);
-				}
-			} else if (accessTagValue.equalsIgnoreCase("unknown")) {
-				// implicitly allow access
-			} else {
-				log.info("Ignoring unsupported access tag value " + type + "=" + accessTagValue + " in " + highwayType + " " + debugWayName);
-			}
-		}
-
-		if(way.isBoolTag("mkgmap:carpool")) {
-			// to make a way into a "carpool lane" all access disable
-			// bits must be set except for CARPOOL and EMERGENCY (BUS
-			// can also be clear)
-			road.setNoThroughRouting();
-			for (int j = 1; j < accessMap.length; ++j)
-				noAccess[accessMap[j].index] = true;
-			noAccess[RoadNetwork.NO_CARPOOL] = false;
-			noAccess[RoadNetwork.NO_EMERGENCY] = false;
-			noAccess[RoadNetwork.NO_BUS] = false;
-		}
-
+		noAccess[RoadNetwork.NO_EMERGENCY] = way.isNotBoolTag("mkgmap:emergency");
+		noAccess[RoadNetwork.NO_DELIVERY] = way.isNotBoolTag("mkgmap:delivery");
+		noAccess[RoadNetwork.NO_CAR] = way.isNotBoolTag("mkgmap:car");
+		noAccess[RoadNetwork.NO_BUS] = way.isNotBoolTag("mkgmap:bus");
+		noAccess[RoadNetwork.NO_TAXI] = way.isNotBoolTag("mkgmap:taxi");
+		noAccess[RoadNetwork.NO_FOOT] = way.isNotBoolTag("mkgmap:foot");
+		noAccess[RoadNetwork.NO_BIKE] = way.isNotBoolTag("mkgmap:bicycle");
+		noAccess[RoadNetwork.NO_TRUCK] = way.isNotBoolTag("mkgmap:truck");
+		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
+		noAccess[RoadNetwork.NO_CARPOOL] = way.isBoolTag("mkgmap:carpool");
+		
 		road.setAccess(noAccess);
 
-		if(way.isBoolTag("toll"))
+		if (way.isNotBoolTag("mkgmap:throughroute")) 
+			road.setNoThroughRouting();
+
+		if(way.isBoolTag("mkgmap:toll"))
 			road.setToll();
 
 		// by default, ways are paved
@@ -1571,14 +1557,12 @@ public class StyledConverter implements OsmConverter {
 				if(n > 0 && n < points.size() - 1)
 					hasInternalNodes = true;
 				Coord coord = points.get(n);
-				Integer nodeId = nodeIdMap.get(coord);
-				assert nodeId != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null node id";
+				CoordNode thisCoordNode = nodeIdMap.get(coord);
+				assert thisCoordNode != null : "Way " + debugWayName + " node " + i + " (point index " + n + ") at " + coord.toOSMURL() + " yields a null coord node";
 				boolean boundary = coord.getOnBoundary();
-				if(boundary) {
-					log.info("Way " + debugWayName + "'s point #" + n + " at " + points.get(n).toDegreeString() + " is a boundary node");
+				if(boundary && log.isInfoEnabled()) {
+					log.info("Way", debugWayName + "'s point #" + n, "at", coord.toOSMURL(), "is a boundary node");
 				}
-
-				CoordNode thisCoordNode = new CoordNode(coord, nodeId, boundary);
 				points.set(n, thisCoordNode);
 
 				// see if this node plays a role in any turn
@@ -1628,6 +1612,15 @@ public class StyledConverter implements OsmConverter {
 			road.setInternalNodes(hasInternalNodes);
 		}
 
+		if (roadLog.isInfoEnabled()) {
+			int cmpAccess = (road.getRoadDef().getTabAAccess() & 0xff) + ((road.getRoadDef().getTabAAccess() & 0xc000) >> 6);
+			if (road.isDirection()) {
+				cmpAccess += 1<<10;
+			}
+			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
+			roadLog.info(String.format("%19d 0x%-2x %11s %s", way.getId(), road.getType(), access, Arrays.toString(road.getLabels())));
+		}
+		
 		// add the road to the housenumber generator
 		// it will add the road later on to the lineAdder
 		housenumberGenerator.addRoad(way, road);
@@ -1668,7 +1661,6 @@ public class StyledConverter implements OsmConverter {
 		wayPoints.get(index).incHighwayCount();
 
 		// copy the way's name and tags to the new way
-		trailingWay.setName(way.getName());
 		trailingWay.copyTags(way);
 
 		// remove the points after the split from the original way
@@ -1677,43 +1669,6 @@ public class StyledConverter implements OsmConverter {
 			wayPoints.remove(i);
 
 		return trailingWay;
-	}
-
-	private int getSpeedIdx(String tag) {
-		double factor = 1.0;
-		
-		String speedTag = tag.toLowerCase().trim();
-		
-		if (ENDS_IN_MPH_PATTERN.matcher(speedTag).matches()) {
-			// Check if it is a limit in mph
-			speedTag = REMOVE_MPH_PATTERN.matcher(speedTag).replaceFirst("");
-			factor = 1.61;
-		} else
-			speedTag = REMOVE_KPH_PATTERN.matcher(speedTag).replaceFirst("");  // get rid of kmh just in case
-
-		double kmh;
-		try {
-			kmh = Integer.parseInt(speedTag) * factor;
-		} catch (Exception e) {
-			return -1;
-		}
-		
-		if(kmh > 110)
-			return 7;
-		if(kmh > 90)
-			return 6;
-		if(kmh > 80)
-			return 5;
-		if(kmh > 60)
-			return 4;
-		if(kmh > 40)
-			return 3;
-		if(kmh > 20)
-			return 2;
-		if(kmh > 10)
-			return 1;
-		else
-			return 0;
 	}
 
 	protected boolean accessExplicitlyAllowed(String val) {
@@ -1726,80 +1681,24 @@ public class StyledConverter implements OsmConverter {
 			val.equalsIgnoreCase("official"));
 	}
 
-	protected boolean accessExplicitlyDenied(String val) {
-		if (val == null)
-			return false;
-
-		return (val.equalsIgnoreCase("no") ||
-			val.equalsIgnoreCase("private"));
-	}
-	
 	private boolean isFootOnlyAccess(Way way){
-		String debugWayName = getDebugName(way);		
-		String highwayType = way.getTag("highway");
-		if(highwayType == null) {
-			// it's a routable way but not a highway (e.g. a ferry)
-			// use the value of the route tag as the highwayType for
-			// the purpose of testing for access restrictions
-			highwayType = way.getTag("route");
-		}
 
-		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
-		for (AccessMapping anAccessMap : accessMap) {
-			int index = anAccessMap.index;
-			String type = anAccessMap.type;
-			String accessTagValue = way.getTag(type);
-			if (accessTagValue == null)
-				continue;
-			if (accessExplicitlyDenied(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is denied access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = true;
-				} else {
-					// just the specific vehicle class is denied
-					// access
-					noAccess[index] = true;
-				}
-				log.debug(type + " is not allowed in " + highwayType + " " + debugWayName);
-			} else if (accessExplicitlyAllowed(accessTagValue)) {
-				if (index == RoadNetwork.NO_MAX) {
-					// everything is allowed access
-					for (int j = 1; j < accessMap.length; ++j)
-						noAccess[accessMap[j].index] = false;
-				} else {
-					// just the specific vehicle class is allowed
-					// access
-					noAccess[index] = false;
-				}
-				log.debug(type + " is allowed in " + highwayType + " " + debugWayName);
-			}
+		// foot must be allowed
+		if (way.isNotBoolTag("mkgmap:foot")) {
+			return false;
 		}
-
-		if(way.isBoolTag("mkgmap:carpool")) {
-			// to make a way into a "carpool lane" all access disable
-			// bits must be set except for CARPOOL and EMERGENCY (BUS
-			// can also be clear)
-			for (int j = 1; j < accessMap.length; ++j)
-				noAccess[accessMap[j].index] = true;
-			noAccess[RoadNetwork.NO_CARPOOL] = false;
-			noAccess[RoadNetwork.NO_EMERGENCY] = false;
-			noAccess[RoadNetwork.NO_BUS] = false;
-		}
-		for (AccessMapping anAccessMap : accessMap) {
-			int index = anAccessMap.index;
-			if (index == RoadNetwork.NO_MAX)
-				continue;
-			if (index == RoadNetwork.NO_FOOT) { 
-				if(noAccess[index])
-					return false;
-			}
-			else if (noAccess[index] == false ){
+		// check if bike, truck, car, bus, taxi and emergency are not allowed
+		// not sure about delivery - but check if also
+		// carpool and throughroute can be ignored (I think so...)
+		for (String accessTag : Arrays.asList("mkgmap:bicycle","mkgmap:truck","mkgmap:car","mkgmap:bus","mkgmap:taxi","mkgmap:emergency","mkgmap:delivery")) 
+		{
+			if (way.isNotBoolTag(accessTag) == false) {
 				return false;
 			}
-		}		
+		}
 		return true;
 	}
+
 	/**
 	 * Increment the highway counter for each coord of each road.
 	 * As a result, all road junctions have a count > 1. 
@@ -1807,13 +1706,59 @@ public class StyledConverter implements OsmConverter {
 	private void setHighwayCounts(){
 		log.info("Maintaining highway counters");
 		long lastId = 0;
+		List<Way> dupIdHighways = new ArrayList<Way>();
 		for (Way way :roads){
-			if (way.getId() == lastId)
+			if (way == null)
 				continue;
+			
+			if (way.getId() == lastId) {
+				log.debug("Road with identical id:", way.getId());
+				dupIdHighways.add(way);
+				continue;
+			}
 			lastId = way.getId();
 			List<Coord> points = way.getPoints();
 			for (Coord p:points){
 				p.incHighwayCount();
+			}
+		}
+		
+		// go through all duplicated highways and increase the highway counter of all crossroads 
+		for (Way way : dupIdHighways) {
+			List<Coord> points = way.getPoints();
+			// increase the highway counter of the first and last point
+			points.get(0).incHighwayCount();
+			points.get(points.size()-1).incHighwayCount();
+			
+			// for all other points increase the counter only if other roads are connected
+			for (int i = 1; i <  points.size()-1; i++) {
+				Coord p = points.get(i);
+				if (p.getHighwayCount() > 1) {
+					// this is a crossroads - mark that the duplicated way is also part of it 
+					p.incHighwayCount();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Increment the highway counter for each coord of each road.
+	 * As a result, all road junctions have a count > 1. 
+	 */
+	private void resetHighwayCounts(){
+		log.info("Resetting highway counters");
+		long lastId = 0;
+		for (Way way :roads){
+			if (way == null)
+				continue;
+			
+			if (way.getId() == lastId) {
+				continue;
+			}
+			lastId = way.getId();
+			List<Coord> points = way.getPoints();
+			for (Coord p:points){
+				p.resetHighwayCount();
 			}
 		}
 	}
@@ -1863,27 +1808,27 @@ public class StyledConverter implements OsmConverter {
 				}
 				if (!isConnected){
 					if (onBoundary){
-						log.info("road not connected to other roads but is on boundary: " + way.toBrowseURL());
+						log.info("road not connected to other roads but is on boundary:", way.toBrowseURL());
 					} else {
 						if ("none".equals(check_type))
-							log.info("road not connected to other roads, is ignored: " + way.toBrowseURL());
+							log.info("road not connected to other roads, is ignored:", way.toBrowseURL());
 						else {
 							int type = -1;
 							try{
 								type = Integer.decode(check_type);
 								if (GType.isRoutableLineType(type)){
 									type = -1;
-									log.error("type value in mkgmap:set_unconnected_type should not be a routable type: " + check_type);
+									log.error("type value in mkgmap:set_unconnected_type should not be a routable type:" + check_type);
 								}
 							} catch (NumberFormatException e){
-								log.warn("invalid type value in mkgmap:set_unconnected_type: " + check_type);
+								log.warn("invalid type value in mkgmap:set_unconnected_type:", check_type);
 							}
 							if (type != -1 ){
-								log.info("road not connected to other roads, added as line with type " + check_type + ": " + way.toBrowseURL());
+								log.info("road not connected to other roads, added as line with type", check_type + ":", way.toBrowseURL());
 								GType gt = new GType(roadTypes.get(i), check_type); 
 								addLine(way, gt);
 							} else {
-								log.warn("road not connected to other roads, but replacement type is invalid. Dropped: " + way.toBrowseURL());
+								log.warn("road not connected to other roads, but replacement type is invalid. Dropped:", way.toBrowseURL());
 							}
 						}
 						roads.set(i, null);
@@ -1908,16 +1853,16 @@ public class StyledConverter implements OsmConverter {
 			if ("true".equals(way.getTag("mkgmap:way-has-pois"))) {
 				String wayPOI = "";
 				boolean isFootWay = isFootOnlyAccess(way); 
-				// check if the way is for pedestrians only 
-				List<Coord> points = way.getPoints();
-				int numPoints = points.size();
-				for (int i = 0;i < numPoints; i++) {
-					Coord p = points.get(i);
-					if (p instanceof CoordPOI){
-						CoordPOI cp = (CoordPOI) p;
-						Node node = cp.getNode();
-						if (!isFootWay){
-							if(node.getTag("access") != null || 
+				if (!isFootWay){
+					// check if the way is for pedestrians only 
+					List<Coord> points = way.getPoints();
+					int numPoints = points.size();
+					for (int i = 0;i < numPoints; i++) {
+						Coord p = points.get(i);
+						if (p instanceof CoordPOI){
+							CoordPOI cp = (CoordPOI) p;
+							Node node = cp.getNode();
+							if(hasAccessRestriction(node) || 
 									node.getTag("mkgmap:road-class") != null ||
 									node.getTag("mkgmap:road-speed") != null){
 								wayPOI += "["+ node.getId()+"]"; 
@@ -1925,10 +1870,10 @@ public class StyledConverter implements OsmConverter {
 							}
 						}
 					}
-				}
+				} 
 				if (wayPOI.isEmpty()) {
 					way.deleteTag("mkgmap:way-has-pois");
-					log.info("ignoring CoordPOI(s) for way " + way.toBrowseURL() + " because routing is not affected.");
+					log.info("ignoring CoordPOI(s) for way", way.toBrowseURL(), "because routing is not affected.");
 				}
 				else {
 					way.addTag(WAY_POI_NODE_IDS, wayPOI);
@@ -1936,7 +1881,7 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 	}
-
+	
 	private void replaceCoord(Coord toRepl, Coord replacement, Map<Coord, Coord> replacements) {
 		assert toRepl != replacement;
 		toRepl.setReplaced(true);
@@ -2089,6 +2034,12 @@ public class StyledConverter implements OsmConverter {
 				for (int i = 0; i < points.size(); ++i) {
 					Coord p = points.get(i);
 					if (prev != null) {
+						if (p == prev){
+							points.remove(i);
+							--i;
+							modifiedRoads.put(way.getId(), way);
+							continue;
+						}
 						if (p.isTreatAsNode() || prev.isTreatAsNode()) {
 							wayHasSpecialPoints = true;
 							// real distance allows that the

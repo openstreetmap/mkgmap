@@ -1219,7 +1219,7 @@ public class MapBuilder implements Configurable {
 			MapLine line = (MapLine) element;
 			assert line.getPoints().size() < 255 : "too many points";
 
-			Polyline pl = div.createLine(line.getName(), line.getRef());
+			Polyline pl = div.createLine(line.getLabels());
 			if (element.hasExtendedType()) {
 				ExtTypeAttributes eta = element.getExtTypeAttributes();
 				if (eta != null) {

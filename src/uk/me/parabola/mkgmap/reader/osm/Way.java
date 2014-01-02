@@ -56,7 +56,6 @@ public class Way extends Element {
 
 	public Way copy() {
 		Way dup = new Way(getId(), points);
-		dup.setName(getName());
 		dup.copyTags(this);
 		dup.closed = this.closed;
 		dup.complete = this.complete;

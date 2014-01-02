@@ -165,21 +165,18 @@ Address search options:
 --housenumbers
   Enables house number search for OSM input files. 
   All nodes and polygons having addr:housenumber and addr:street set are matched 
-  to streets. A match between house number element and street is created if
-  the street is located within a radius of 150m and the addr:street tag of the 
-  house number element 
-    - equals the mgkmap:street tag of the street. mkgmap:streets should be set 
-      in the style file.
-    - or it equals the name of the street stripped by garmin shields and all text
-      within round brackets. 
+  to streets. A match between a house number element and a street is created if
+  the street is located within a radius of 150m and the addr:street tag value of 
+  the house number element equals the mgkmap:street tag value of the street. 
+  The mkgmap:street tag must be added to the street in the style file.
   Example: 
      Node -  addr:street=Main Street addr:housenumber=2
-     Way 1 - mkgmap:street=Main Street
-     Way 2 - name=Main Street (A504)
+     Way 1 - name=Main Street
+     Way 2 - name=Main Street, mkgmap:street=Main Street
      Way 3 - mkgmap:street=Mainstreet
      Way 4 - name=Main Street [A504]
-    The node matches to way 1 and way 2 but not to way 3 (does not equal exactly)
-    and not to way 4 (only text in round brackets is ignored)
+    The node matches to way 2. It has mkgmap:street set with a value equal to
+    the addr:street tag value of the house number node.
   
 Overview map options:
 --overview-mapname=name
@@ -375,9 +372,6 @@ Miscellaneous options:
 	problems. Default value is 0 (disabled) because it's not a
 	completely reliable heuristic.
 
---ignore-maxspeeds
-	When reading OSM files, ignore any "maxspeed" tags.
-
 --ignore-builtin-relations
 	When reading OSM files, skip the built-in processing of
 	relations. This speeds up the processing non-routable map
@@ -565,11 +559,16 @@ Miscellaneous options:
 	(unless that way's bicycle access has been defined).
 
 --link-pois-to-ways
-	If this option is enabled, POIs that are situated at a point
-	in a way will be associated with that way and may modify the
-	way's properties. Currently supported are POIs that restrict
-	access (e.g. bollards). Their access restrictions are applied
-	to a small region of the way near the POI.
+    This option copies some specific attributes of a POI to a 
+    small part of the way the POI is located on. This can be used
+    to let barriers block a way or to lower the calculated speed
+    around traffic signals.
+    POIs with the tags highway=* (e.g. highway=traffic_signals)  
+    or barrier=* (e.g. barrier=cycle_barrier) are supported.
+    The style developer must add at least one of the access tags
+    (mkgmap:foot, mkgmap:car etc.), mkgmap:road-speed and/or 
+    mkgmap:road-class to the POI. These tags are copied to a small
+    part of the way around the POI. 
 
 --process-destination
 	Splits all motorway_link and trunk_link ways tagged with 

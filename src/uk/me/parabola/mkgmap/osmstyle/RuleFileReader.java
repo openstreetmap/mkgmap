@@ -61,10 +61,14 @@ public class RuleFileReader {
 	private final TypeReader typeReader;
 
 	private final RuleSet rules;
+	private RuleSet finalizeRules;
 	private final boolean performChecks;
 	private final Map<Integer, List<Integer>> overlays;
 
-	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules, boolean performChecks, Map<Integer, List<Integer>> overlays) {
+	private boolean inFinalizeSection = false;
+	
+	public RuleFileReader(FeatureKind kind, LevelInfo[] levels, RuleSet rules, boolean performChecks, 
+			Map<Integer, List<Integer>> overlays) {
 		this.kind = kind;
 		this.rules = rules;
 		this.performChecks = performChecks;
@@ -81,6 +85,10 @@ public class RuleFileReader {
 	public void load(StyleFileLoader loader, String name) throws FileNotFoundException {
 		loadFile(loader, name);
 		rules.prepare();
+		if (finalizeRules != null) {
+			finalizeRules.prepare();
+			rules.setFinalizeRule(finalizeRules);
+		}
 	}
 
 	/**
@@ -193,6 +201,31 @@ public class RuleFileReader {
 				// Wrong syntax for include statement, so push back token to allow a possible expression to be read
 				scanner.pushToken(token);
 			}
+		} 
+		// check if it is the start label of the <finalize> section
+		else if (scanner.checkToken("<")) {
+			Token token = scanner.nextToken();
+			if (scanner.checkToken("finalize")) {
+				Token finalizeToken = scanner.nextToken();
+				if (scanner.checkToken(">")) {
+					if (inFinalizeSection) {
+						// there are two finalize sections which is not allowed
+						throw new SyntaxException(scanner, "There is only one finalize section allowed");
+					} else {
+						// consume the > token
+						scanner.nextToken();
+						// mark start of the finalize block
+						inFinalizeSection = true;
+						finalizeRules = new RuleSet();
+						return true;
+					}
+				} else {
+					scanner.pushToken(finalizeToken);
+					scanner.pushToken(token);
+				}
+			} else {
+				scanner.pushToken(token);
+			}
 		}
 		scanner.skipSpace();
 		return false;
@@ -212,6 +245,10 @@ public class RuleFileReader {
 	private void saveRule(TokenScanner scanner, Op op, ActionList actions, GType gt) {
 		log.info("EXP", op, ", type=", gt);
 
+		// check if the type definition is allowed
+		if (inFinalizeSection && gt != null)
+			throw new SyntaxException(scanner, "Element type definition is not allowed in <finalize> section");
+		
 		//System.out.println("From: " + op);
 		Op op2 = rearrangeExpression(op);
 		//System.out.println("TO  : " + op2);
@@ -483,7 +520,10 @@ public class RuleFileReader {
 		else
 			rule = new ActionRule(expr, actions.getList(), gt);
 
-		rules.add(keystring, rule, actions.getChangeableTags());
+		if (inFinalizeSection)
+			finalizeRules.add(keystring, rule, actions.getChangeableTags());
+		else
+			rules.add(keystring, rule, actions.getChangeableTags());
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {

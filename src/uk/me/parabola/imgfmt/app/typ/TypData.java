@@ -50,10 +50,10 @@ public class TypData {
 			int origCodepage = this.sort.getCodepage();
 			if (origCodepage != 0) {
 				if (origCodepage != sort.getCodepage()) {
+					// This is just a warning, not a definite problem
 					System.out.println("WARNING: SortCode in TYP txt file different from" +
 							" command line setting");
 				}
-				return;
 			}
 		}
 		this.sort = sort;

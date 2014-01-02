@@ -88,7 +88,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 			usedTags.add("addr:street");
 			usedTags.add("addr:housenumber");
 		}
-		
+	
 		return true;
 	}
 
@@ -148,7 +148,8 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				// flag this Way as having a CoordPOI so it
 				// will be processed later
 				way.addTag("mkgmap:way-has-pois", "true");
-				log.info("Linking POI " + currentNodeInWay.toBrowseURL() + " to way at " + co.toOSMURL());
+				if (log.isInfoEnabled())
+					log.info("Linking POI", currentNodeInWay.toBrowseURL(), "to way at", co.toOSMURL());
 			}
 		}
 	}
@@ -266,10 +267,10 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				}
 				
 				if (ref != null) {
-					log.info("Adding " + refTag + "=" + ref + " to exit " + exitName);
+					log.info("Adding", refTag + "=" + ref, "to exit", exitName);
 					e.addTag(refTag, ref);
 				} else if(motorway != null) {
-					log.warn("Motorway exit " + exitName + " is positioned on a motorway that doesn't have a 'ref' tag (" + e.getLocation().toOSMURL() + ")");
+					log.warn("Motorway exit", exitName, "is positioned on a motorway that doesn't have a 'ref' tag (" + e.getLocation().toOSMURL() + ")");
 				}
 			}
 		}

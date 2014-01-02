@@ -15,6 +15,8 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.util.Arrays;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
 import uk.me.parabola.imgfmt.app.trergn.MapObject;
@@ -26,8 +28,7 @@ import uk.me.parabola.imgfmt.app.trergn.MapObject;
  * @author Steve Ratcliffe.
  */
 public abstract class MapElement {
-	private String name;
-	private String ref;
+	private String[] labels;
 	private int type;
 
 	private int minResolution = 24;
@@ -38,11 +39,11 @@ public abstract class MapElement {
 	private String zip,country,region,city,street,phone,houseNumber,isIn;
 
 	protected MapElement() {
+		labels = new String[4];
 	}
 
 	protected MapElement(MapElement orig) {
-		name = orig.name;
-		ref = orig.ref;
+		labels = Arrays.copyOf(orig.labels, 4);
 		type = orig.type;
 		minResolution = orig.minResolution;
 		maxResolution = orig.maxResolution;
@@ -66,19 +67,19 @@ public abstract class MapElement {
 	public abstract MapElement copy();
 
 	public String getName() {
-		return name;
+		return labels[0];
 	}
-
-	public String getRef() {
-		return ref;
+	
+	public String[] getLabels() {
+		return this.labels;
 	}
-
+	
 	public void setName(String name) {
-		this.name = name;
+		this.labels[0] = name;
 	}
 
-	public void setRef(String ref) {
-		this.ref = ref;
+	public void setLabels(String[] labels) {
+		this.labels = Arrays.copyOf(labels, 4);
 	}
 
 	public ExtTypeAttributes getExtTypeAttributes() {

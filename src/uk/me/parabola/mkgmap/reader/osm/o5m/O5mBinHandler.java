@@ -16,11 +16,13 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.GeneralRelation;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmHandler;
+import uk.me.parabola.mkgmap.reader.osm.Relation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 
 /**
@@ -313,7 +315,12 @@ public class O5mBinHandler extends OsmHandler{
 			readStringPair();
 			String key = stringPair[0];
 			String val = stringPair[1];
-			key = keepTag(key, val);
+			// the type tag is required for relations - all other tags are filtered
+			if (elem instanceof Relation && "type".equals(key))
+				// intern the string
+				key = "type";
+			else
+				key = keepTag(key, val);
 			if (key != null)
 				elem.addTag(key, val.intern());
 			else 

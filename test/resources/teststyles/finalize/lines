@@ -1,0 +1,19 @@
+
+# Expression rule must be matched by the finalize 
+highway=residential [0x01 road_class=0 road_speed=0 resolution 22]
+
+# Action rules with element type definition must also run the finalize block
+highway=track { set road=yes } [0x01 road_class=0 road_speed=0 resolution 22]
+
+# The first two action rules should not trigger the finalize block
+highway=secondary { set road=yes }
+road=yes { delete road }
+# this triggers the finalize block but there is no matching rule
+highway=secondary [0x01 road_class=0 road_speed=0 resolution 22]
+
+highway=trunk { set road=yes } [0x01 road_class=0 road_speed=0 resolution 22 continue with_actions] 
+highway=trunk & road=yes { delete road } [0x01 road_class=0 road_speed=0 resolution 22]
+
+<finalize>
+highway=residential { name 'OK' }
+road=yes { name 'OK' }

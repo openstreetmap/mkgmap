@@ -277,7 +277,12 @@ public class Osm5XmlHandler extends OsmHandler {
 		} else if (qName.equals("tag")) {
 			String key = attributes.getValue("k");
 			String val = attributes.getValue("v");
-			key = keepTag(key, val);
+			// the type tag is required for relations - all other tags are filtered
+			if ("type".equals(key))
+				// intern the key
+				key = "type";
+			else
+				key = keepTag(key, val);
 			if (key == null) {
 				currentRelation.addTag(TAGS_INCOMPLETE_TAG, "true");
 			} else {

@@ -81,3 +81,6 @@ tourism=museum [0x2c02 resolution 20]
 tourism=picnic_site [0x4a00 resolution 20]
 tourism=theme_park [0x2c01 resolution 20]
 tourism=zoo [0x2c07 resolution 20]
+
+<finalize>
+name=* | ref=* {name '${name} (${ref})' | '${ref}' | '${name}' }

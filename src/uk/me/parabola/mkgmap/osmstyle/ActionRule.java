@@ -39,7 +39,15 @@ public class ActionRule implements Rule {
 	private final Op expression;
 	private final List<Action> actions;
 	private final GType type;
+	private Rule finalizeRule;
 
+	/** Finalize rules must not have an element type definition so the add method must never be called. */
+	private final static TypeResult finalizeTypeResult = new TypeResult() {
+		public void add(Element el, GType type) {
+			throw new UnsupportedOperationException("Finalize rules must not contain an action block.");
+		}
+	};	
+	
 	public ActionRule(Op expression, List<Action> actions, GType type) {
 		assert actions != null;
 		this.expression = expression;
@@ -53,6 +61,7 @@ public class ActionRule implements Rule {
 		this.actions = actions;
 		this.type = null;
 	}
+	
 	public void resolveType(Element el, TypeResult result) {
 		Element element = el;
 		if (expression != null) {
@@ -71,6 +80,17 @@ public class ActionRule implements Rule {
 		for (Action a : actions)
 			a.perform(element);
 
+		if (type != null && finalizeRule != null) {
+			if (el == element && type.isContinueSearch())
+				// if there is a continue statement changes performed in 
+				// the finalize block must not be persistent
+				element = element.copy();
+			// there is a type so first execute the finalize rules
+			if (type.getDefaultName() != null)
+				element.addTag("mkgmap:default_name", type.getDefaultName());
+			finalizeRule.resolveType(element, finalizeTypeResult);
+		}
+		
 		result.add(element, type);
 	}
 
@@ -90,5 +110,9 @@ public class ActionRule implements Rule {
 		}
 
 		return fmt.toString();
+	}
+
+	public void setFinalizeRule(Rule finalizeRule) {
+		this.finalizeRule = finalizeRule;
 	}
 }

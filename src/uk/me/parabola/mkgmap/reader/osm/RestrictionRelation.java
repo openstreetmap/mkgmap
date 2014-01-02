@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2013.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 
 package uk.me.parabola.mkgmap.reader.osm;
 
@@ -113,8 +125,6 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 
-		setName(other.getName());
-
 		copyTags(other);
 
 		restriction = getTag("restriction");
@@ -132,8 +142,6 @@ public class RestrictionRelation extends Relation {
 		}
 
 		String except = getTag("except");
-		if(except == null)
-			except = getTag("exception"); // be nice
 		if(except != null) {
 			for(String e : except.split("[,;]")) { // be nice
 				e = e.trim();

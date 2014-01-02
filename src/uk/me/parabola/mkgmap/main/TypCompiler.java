@@ -128,7 +128,7 @@ public class TypCompiler implements MapProcessor {
 		TypTextReader tr = new TypTextReader();
 
 		TypData data = tr.getData();
-		System.out.println("cmd line sort " + sort);
+
 		data.setSort(sort);
 		try {
 			Reader r = new BufferedReader(new InputStreamReader(new FileInputStream(filename), charset));

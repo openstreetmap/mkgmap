@@ -8,27 +8,14 @@
 # and http://wiki.openstreetmap.org/wiki/Mkgmap/help/Custom_styles
 # for more information.
 
-include 'inc/address';
-
-
 aeroway=runway [0x27 resolution 20]
 aeroway=taxiway [0x27 resolution 24]
 
 # Assign the street name for house number search
 highway=* & name=* { set mkgmap:street='${name}' }
 
-# Remove access=yes from highways.
-highway=* & (access=yes|access=permissive|access=designated|access=official) { delete access }
-# Translate motor_vehicle and vehicle access rules.
-highway=* & motor_vehicle=* { add motorcar='${motor_vehicle}' }
-highway=* & vehicle=* { add motorcar='${vehicle}'; add bicycle='${vehicle}' }
-
-# By default, ways are accessible by the highest allowed mode of
-# transportation, and thus access=yes should be redundant.
-# However, sometimes cycleways may be tagged access=destination or similar,
-# to allow cars and motorcycles. In mkgmap, 'access' specifies the
-# generic access rule, and it can be overridden by more specific tags:
-# foot, bicycle, motorcar, motorcycle.
+# Mark highways with the toll flag
+highway=* & (toll=yes|toll=true) { set mkgmap:toll=yes }
 
 # Hide proposed ways
 highway=proposed {delete highway;delete junction}
@@ -40,13 +27,13 @@ highway=* & oneway=yes & (access=private|access=no)
 {add mkgmap:dead-end-check=false}
 # Validation-like checks (uncomment to enable)
 #highway=motorway_link & oneway!=yes & oneway!=no { echo "motorway_link lacks oneway" }
+highway=motorway|highway=motorway_link { add oneway=yes }
 
 # Set highway names to include the reference if there is one
-highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
+highway=motorway { name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}' }
 
 (highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint=true
-  { delete mkgmap:display_name; 
-    name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
+  { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${destination|subst:;=> |subst:/=> }' |
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
@@ -57,24 +44,22 @@ highway=motorway {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-sym
        }
 
 (highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint!=* & mkgmap:dest_hint=true
-  { delete mkgmap:display_name; 
-    name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
+  { name '${destination:ref|subst: =>} ${destination|subst:;=> |subst:/=> }' |
          '${ref|subst: =>} ${destination|subst:;=> |subst:/=> }' | 
          '${destination|subst:;=> |subst:/=> }'
        }
 
 (highway=motorway_link | highway=trunk_link) & mkgmap:exit_hint=true & mkgmap:dest_hint!=*
-  { delete mkgmap:display_name; 
-    name 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
+  { name 'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_name}' | 
          'Exit ${mkgmap:exit_hint_ref} ${mkgmap:exit_hint_exit_to}' | 
          'Exit ${mkgmap:exit_hint_exit_to}' |
          'Exit ${mkgmap:exit_hint_name}' |
          'Exit ${mkgmap:exit_hint_ref}'
        }
               
-highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
-highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
-highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; add mkgmap:display_name = '${name} (${ref})' }
+highway=trunk {name '${ref|highway-symbol:hbox} ${name}' | '${ref|highway-symbol:hbox}' | '${name}'; addlabel '${name} (${ref})' }
+highway=primary {name '${ref|highway-symbol:box} ${name}' | '${ref|highway-symbol:box}' | '${name}'; addlabel '${name} (${ref})' }
+highway=secondary | highway=tertiary {name '${ref|highway-symbol:oval} ${name}' | '${ref|highway-symbol:oval}' | '${name}'; addlabel '${name} (${ref})' }
 highway=* {name '${name}' | '${ref}' }
 
 # Flag unpaved roads.
@@ -131,10 +116,10 @@ highway=* & disused=yes & maxspeed!=* { add mkgmap:road-speed = '-2' }
 
 # Ways sorted roughly by descending order of class
 highway=motorway & network=e-road [0x01 resolution 14-14 continue]
-highway=motorway  {add oneway = yes; add bicycle = no; add foot = no } [0x01 road_class=4 road_speed=7 resolution 15]
-highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) { add oneway = yes; add bicycle = no; add foot = no; } [0x06 road_class=3 road_speed=2 resolution 20]
-highway=motorway_link {add oneway = yes; add bicycle = no; add foot = no } [0x09 road_class=3 road_speed=2 resolution 20]
-highway=* & motorroad=yes {add bicycle = no; add foot = no}
+highway=motorway  [0x01 road_class=4 road_speed=7 resolution 15]
+highway=motorway_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
+highway=motorway_link [0x09 road_class=3 road_speed=2 resolution 20]
+
 highway=trunk & ( network=e-road | int_ref=* ) [0x02 resolution 15-17 continue]
 highway=trunk [0x02 road_class=4 road_speed=5 resolution 18]
 highway=trunk_link & (mkgmap:exit_hint=true | mkgmap:dest_hint=true) [0x06 road_class=3 road_speed=2 resolution 20]
@@ -153,10 +138,10 @@ highway=unclassified [0x06 road_class=0 road_speed=3 resolution 21]
 
 # Some countries allow, others disallow bicycling on pedestrian streets.
 # To allow bicycling, add 'add bicycle=yes'
-highway=pedestrian & area!=yes {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 22]
+highway=pedestrian & area!=yes [0x16 road_class=0 road_speed=0 resolution 22]
 highway=living_street [0x06 road_class=0 road_speed=1 resolution 22]
 highway=residential [0x06 road_class=0 road_speed=2 resolution 22]
-highway=bridleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=0 resolution 23]
+highway=bridleway [0x07 road_class=0 road_speed=0 resolution 23]
 highway=byway [0x16 road_class=0 road_speed=0 resolution 23]
 
 highway=service & service=parking_aisle
@@ -165,9 +150,9 @@ highway=service & (service=alley|service=driveway)
 [0x07 road_class=0 road_speed=0 resolution 23]
 highway=service [0x07 road_class=0 road_speed=2 resolution 22]
 
-highway=cycleway {add access = no; add bicycle = yes; add foot = yes} [0x07 road_class=0 road_speed=1 resolution 23]
+highway=cycleway [0x07 road_class=0 road_speed=1 resolution 23]
 
-highway=footway|highway=path|highway=steps {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+highway=footway|highway=path|highway=steps [0x16 road_class=0 road_speed=0 resolution 23]
 highway=track [0x0a road_class=0 road_speed=1 resolution 22]
 highway=unsurfaced [0x0a road_class=0 road_speed=1 resolution 22]
 highway=road { add mkgmap:dead-end-check = false} [0x06 road_class=0 road_speed=1 resolution 22]
@@ -179,7 +164,7 @@ natural=coastline [0x15 resolution 12]
 power=line [0x29 resolution 21]
 
 railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
-railway=platform {add access = no; add foot = yes} [0x16 road_class=0 road_speed=0 resolution 23]
+railway=platform [0x16 road_class=0 road_speed=0 resolution 23]
 railway=* & !(tunnel=yes) [0x14 resolution 22]
 
 man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
@@ -199,3 +184,19 @@ boundary=political [0x1c resolution 19]
 
 include 'inc/water_lines';
 include 'inc/contour_lines';
+
+<finalize>
+# The finalizer section is executed for each element when a rule with an element type matches
+
+include 'inc/address';
+# calculate the road speed based on maxspeed tag
+include 'inc/roadspeed'; 
+# calculate the access rules
+include 'inc/access';
+
+name=* { name '${name}' }
+
+highway=* & ref=* { addlabel '${ref}' }
+highway=* & int_ref=* { addlabel '${int_ref}' }
+highway=* & nat_ref=* { addlabel '${nat_ref}' }
+highway=* & reg_ref=* { addlabel '${reg_ref}' }

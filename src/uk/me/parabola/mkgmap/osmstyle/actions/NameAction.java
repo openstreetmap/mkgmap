@@ -16,11 +16,6 @@
  */
 package uk.me.parabola.mkgmap.osmstyle.actions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import uk.me.parabola.mkgmap.reader.osm.Element;
 
 /**
@@ -31,9 +26,7 @@ import uk.me.parabola.mkgmap.reader.osm.Element;
  *
  * @author Steve Ratcliffe
  */
-public class NameAction implements Action {
-
-	private final List<ValueBuilder> names = new ArrayList<ValueBuilder>();
+public class NameAction extends ValueBuildedAction {
 
 	/**
 	 * search for the first matching name pattern and set the element name
@@ -44,36 +37,22 @@ public class NameAction implements Action {
 	 * @param el The element on which the name may be set.
 	 */
 	public void perform(Element el) {
-		if (el.getName() != null)
+		if (el.getTag("mkgmap:label:1") != null)
 			return;
 		
-		for (ValueBuilder vb : names) {
+		for (ValueBuilder vb : getValueBuilder()) {
 			String s = vb.build(el, el);
 			if (s != null) {
-				el.setName(s);
+				el.addTag("mkgmap:label:1", s);
 				break;
 			}
 		}
 	}
 
-	public void add(String val) {
-		names.add(new ValueBuilder(val));
-	}
-
-	public Set<String> getUsedTags() {
-		Set<String> set = new HashSet<String>();
-		if (names != null) {
-			for (ValueBuilder vb : names) {
-				set.addAll(vb.getUsedTags());
-			}
-		}
-		return set;
-	}
-
 	public String toString() {
 		StringBuilder sb = new  StringBuilder();
 		sb.append("name ");
-		for (ValueBuilder vb : names) {
+		for (ValueBuilder vb : getValueBuilder()) {
 			sb.append(vb);
 			sb.append(" | ");
 		}
