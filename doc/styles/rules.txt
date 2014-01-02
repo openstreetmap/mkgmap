@@ -413,14 +413,8 @@ relation have any special tags to indicate that they form part of that
 bus route, and you want to be able to tell from looking at the map which
 buses go where.  You can write a rule in the *relations file* such as:
 
-----
-type=route & route=bus {
-	apply {
-		set route=bus;
-		set route_ref='${route_ref}';
-	}
-}
-----
+---- type=route & route=bus { apply { set route=bus; set 
+route_ref='${route_ref}'; } } ----
 
 
 Then in the *lines file* you will need to write a rule to match _route=bus_.
@@ -573,8 +567,19 @@ A112 | Usually only the first label is displayed. On some units the second label
 | Road class limiters | +mkgmap:road-class-min+ +
  +mkgmap:road-class-max+  | 2 | Defines the minimum/maximum road class. This can be used to limit the modification of the road class (+mkgmap:road-class+). 
 |=========================================================
- 
-TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
+
+.Tags that control the treatment of roads
+[options="header"]
+|=========================================================
+| Tag | Description     | Required mkgmap option
+| +mkgmap:way-has-pois+  | +true+ for ways that have at least one point with a tag +access=\*+, +barrier=\*+, or +highway=*+ | 'link-pois-to-ways'
+| +mkgmap:dead-end-check+  | Set to +false+ to disable the dead end check for a specific way | 'report-dead-ends'
+| +mkgmap:flare-check+  | Set to +true+ to force the flare check for a specific way, set to +false+ to disable it | 'check-roundabout-flares'
+| +mkgmap:dir-check+  | Set to +false+ to tell mkgmap to ignore the way when checking roundabouts for clockwise direction | 'check-roundabouts'
+| +mkgmap:no-dir-check+  | Set to +true+ to tell mkgmap to ignore the way when checking roundabouts for clockwise direction | 'check-roundabouts'
+    
+|=========================================================
+
  
 .POI address tags
 [options="header"]
@@ -593,6 +598,8 @@ TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of al
 | Phone       | +mkgmap:phone+   | +44 115 999999 | Phone number in any format
 |=========================================================
 
+TIP: http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3[Wikipedia] has a list of all ISO 3166-1 alpha 3 codes
+ 
 === Tags added by mkgmap ===
 Some tags are added by mkgmap to indicate some property calculated by mkgmap.
 
@@ -612,10 +619,10 @@ is used to assign the country location.
 | +mkgmap:admin_level5+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=5+ the element is located in | 'bounds'    
 | +mkgmap:admin_level6+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=6+ the element is located in | 'bounds'    
 | +mkgmap:admin_level7+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
-| +mkgmap:admin_level8+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
-| +mkgmap:admin_level9+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
-| +mkgmap:admin_level10+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
-| +mkgmap:admin_level11+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=7+ the element is located in | 'bounds'    
+| +mkgmap:admin_level8+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=8+ the element is located in | 'bounds'    
+| +mkgmap:admin_level9+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=9+ the element is located in | 'bounds'    
+| +mkgmap:admin_level10+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=10+ the element is located in | 'bounds'    
+| +mkgmap:admin_level11+  | Name of the +boundary=administrative+ relation/polygon with +admin_level=11+ the element is located in | 'bounds'    
 | +mkgmap:postcode+  | Name of the postal code relation/polygon the element is located in | 'bounds'    
 | +mkgmap:area2poi+  | The value is +true+ if the POI is derived from a polygon | 'add-poi-to-areas'    
 | +mkgmap:line2poi+  | The value is +true+ if the POI is derived from a line | 'add-poi-to-lines'    
@@ -625,8 +632,16 @@ is used to assign the country location.
 | +mkgmap:exit_hint_ref+  | The +ref+ tag value of the links exit node | 'process-exits'    
 | +mkgmap:exit_hint_exit_to+  | The +exit_to+ tag value of the links exit node | 'process-exits'    
 | +mkgmap:dest_hint+  | +true+ for the part on link roads that should contain destination information about the link | 'process-destination'    
+| +mkgmap:synthesised+  | The value is +yes+ if the way was added by the make-cycleways option | 'make-cycleways' or 'make-opposite-cycleways'
+| +mkgmap:mp_created+  | The value is +true+ if the way was created by the internal multi-polygon-relation handling | none
 |=========================================================
 
+.Other internal tags
+[options="header"]
+|=========================================================
+| Tag | Description     
+| +mkgmap:skipSizeFilter+  | If set to +true+ the line or polygon will pass the size filter, no matter what size it has    
+|=========================================================
 
 [[Element_type]]
 == Element type definition ==
