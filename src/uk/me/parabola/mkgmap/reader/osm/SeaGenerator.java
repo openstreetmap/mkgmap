@@ -22,8 +22,8 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -762,10 +762,10 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 	 */
 	public static ArrayList<Way> joinWays(Collection<Way> segments) {
 		ArrayList<Way> joined = new ArrayList<Way>((int)Math.ceil(segments.size()*0.5));
-		Map<Coord, Way> beginMap = new HashMap<Coord, Way>();
+		Map<Coord, Way> beginMap = new IdentityHashMap<Coord, Way>();
 
 		for (Way w : segments) {
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				joined.add(w);
 			} else if (w.getPoints() != null && w.getPoints().size() > 1){
 				List<Coord> points = w.getPoints();
@@ -780,7 +780,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		while (merged > 0) {
 			merged = 0;
 			for (Way w1 : beginMap.values()) {
-				if (w1.isClosed()) {
+				if (w1.hasIdenticalEndPoints()) {
 					// this should not happen
 					log.error("joinWays2: Way "+w1+" is closed but contained in the begin map");
 					joined.add(w1);
@@ -807,7 +807,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					beginMap.remove(points2.get(0));
 					merged++;
 					
-					if (wm.isClosed()) {
+					if (wm.hasIdenticalEndPoints()) {
 						joined.add(wm);
 						beginMap.remove(wm.getPoints().get(0));
 					}
@@ -831,7 +831,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			return;
 		}
 
-		Area seaBounds = saver.getBoundingBox();
+		final Area seaBounds = saver.getBoundingBox();
 		if (coastlineFilenames == null) {
 			log.info("Shorelines before join", shoreline.size());
 			shoreline = joinWays(shoreline);
@@ -844,7 +844,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		int closedS = 0;
 		int unclosedS = 0;
 		for (Way w : shoreline) {
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				closedS++;
 			} else {
 				unclosedS++;
@@ -873,12 +873,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// match the land colour on the tiles that do contain
 			// some sea
 			long landId = FakeIdGenerator.makeFakeId();
-			Way land = new Way(landId);
-			land.addPoint(nw);
-			land.addPoint(sw);
-			land.addPoint(se);
-			land.addPoint(ne);
-			land.addPoint(nw);
+			Way land = new Way(landId, seaBounds.toCoords());
 			land.addTag(landTag[0], landTag[1]);
 			// no matter if the multipolygon option is used it is
 			// only necessary to create a land polygon
@@ -965,8 +960,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					se.getLongitude() + 1));
 			sea.addPoint(new Coord(ne.getLatitude() - 1,
 					ne.getLongitude() + 1));
-			sea.addPoint(new Coord(nw.getLatitude() - 1,
-					nw.getLongitude() - 1));
+			sea.addPoint(sea.getPoints().get(0)); // close shape
 			sea.addTag("natural", "sea");
 
 			log.info("sea: ", sea);
@@ -982,12 +976,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			// background colour will match the land colour on the
 			// tiles that do contain some sea
 			long landId = FakeIdGenerator.makeFakeId();
-			Way land = new Way(landId);
-			land.addPoint(nw);
-			land.addPoint(sw);
-			land.addPoint(se);
-			land.addPoint(ne);
-			land.addPoint(nw);
+			Way land = new Way(landId, seaBounds.toCoords());
 			land.addTag(landTag[0], landTag[1]);
 			saver.addWay(land);
 			if (generateSeaUsingMP) {
@@ -1051,7 +1040,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		Iterator<Way> it = shoreline.iterator();
 		while (it.hasNext()) {
 			Way w = it.next();
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				log.info("adding island", w);
 				islands.add(w);
 				it.remove();
@@ -1063,7 +1052,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		it = shoreline.iterator();
 		while (it.hasNext()) {
 			Way w = it.next();
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				log.debug("island after concatenating");
 				islands.add(w);
 				it.remove();
@@ -1127,8 +1116,8 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				hit = hNext;
 			} while (!hits.isEmpty() && !hit.equals(hFirst));
 
-			if (!w.isClosed())
-				w.getPoints().add(w.getPoints().get(0));
+			if (!w.hasIdenticalEndPoints())
+				w.addPoint(w.getPoints().get(0)); // close shape
 			log.info("adding non-island landmass, hits.size()=" + hits.size());
 			islands.add(w);
 			shorelineReachesBoundary = true;
@@ -1270,6 +1259,9 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					// show the coastline even though we can't produce
 					// a polygon for the land
 					w.addTag("natural", "coastline");
+					if (w.hasIdenticalEndPoints() == false){
+						log.error("adding sea shape that is not really closed");
+					}
 					saver.addWay(w);
 				}
 			} else {
@@ -1419,7 +1411,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 			while (changed) {
 				changed = false;
 				for (Way w1 : ways) {
-					if(w1.isClosed())
+					if(w1.hasIdenticalEndPoints())
 						continue;
 					List<Coord> points1 = w1.getPoints();
 					Coord w1e = points1.get(points1.size() - 1);
@@ -1428,7 +1420,7 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 					Way nearest = null;
 					double smallestGap = Double.MAX_VALUE;
 					for (Way w2 : ways) {
-						if(w1 == w2 || w2.isClosed())
+						if(w1 == w2 || w2.hasIdenticalEndPoints())
 							continue;
 						List<Coord> points2 = w2.getPoints();
 						Coord w2s = points2.get(0);

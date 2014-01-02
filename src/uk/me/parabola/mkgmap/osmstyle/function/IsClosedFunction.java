@@ -45,7 +45,8 @@ public class IsClosedFunction extends StyleFunction {
 	
 	public String value(Element el) {
 		if (el instanceof Way) {
-			return String.valueOf(((Way)el).isClosed());
+			Way w = (Way) el;
+			return String.valueOf((w.getPoints().size() > 2 && w.hasIdenticalEndPoints()));
 		}
 		return null;
 	}

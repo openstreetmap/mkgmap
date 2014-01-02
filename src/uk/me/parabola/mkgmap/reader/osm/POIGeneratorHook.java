@@ -16,8 +16,8 @@ package uk.me.parabola.mkgmap.reader.osm;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -175,7 +175,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 	}
 	
 	private void addPOIsToWays() {
-		Map<Coord, Integer> labelCoords = new HashMap<Coord, Integer>(); 
+		Map<Coord, Integer> labelCoords = new IdentityHashMap<Coord, Integer>(); 
 		
 		// save all coords with one of the placement tags to a map
 		// so that ways use this coord as its labeling point
@@ -210,7 +210,7 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			
 			
 			// check if it is an area
-			if (w.isClosed()) {
+			if (w.hasIdenticalEndPoints()) {
 				if (poisToAreas) {
 					addPOItoPolygon(w, labelCoords);
 					ways2POI++;

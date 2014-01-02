@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -249,14 +250,15 @@ public class MultiPolygonRelation extends Relation {
 		for (Way orgSegment : segments) {
 			JoinedWay jw = new JoinedWay(orgSegment);
 			roleMap.put(jw.getId(), getRole(orgSegment));
-			if (orgSegment.isClosed()) {
+			if (orgSegment.isClosedInOSM()) {
 				if (orgSegment.isComplete() == false) {
-					// the way is complete in planet but some points are missing in this tile
+					// the way is closed in planet but some points are missing in this tile
 					// we can close it artificially
 					if (log.isDebugEnabled())
 						log.debug("Close incomplete but closed polygon:",orgSegment);
 					jw.closeWayArtificially();
 				}
+				assert 	jw.hasIdenticalEndPoints() : "way is not closed";
 				joinedWays.add(jw);
 			} else {
 				unclosedWays.add(jw);
@@ -268,7 +270,7 @@ public class MultiPolygonRelation extends Relation {
 
 			// check if the current way is already closed or if it is the last
 			// way
-			if (joinWay.isClosed() || unclosedWays.isEmpty()) {
+			if (joinWay.hasIdenticalEndPoints() || unclosedWays.isEmpty()) {
 				joinedWays.add(joinWay);
 				continue;
 			}
@@ -287,7 +289,7 @@ public class MultiPolygonRelation extends Relation {
 			// joinWay to the beginning of the list
 			// (not optimal but understandable - can be optimized later)
 			for (JoinedWay tempWay : unclosedWays) {
-				if (tempWay.isClosed()) {
+				if (tempWay.hasIdenticalEndPoints()) {
 					continue;
 				}
 
@@ -346,7 +348,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (joined) {
-				if (joinWay.isClosed()) {
+				if (joinWay.hasIdenticalEndPoints()) {
 					// it's closed => don't process it again
 					joinedWays.add(joinWay);
 				} else if (unclosedWays.isEmpty()) {
@@ -374,7 +376,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	protected void closeWays(ArrayList<JoinedWay> wayList) {
 		for (JoinedWay way : wayList) {
-			if (way.isClosed() || way.getPoints().size() < 3) {
+			if (way.hasIdenticalEndPoints() || way.getPoints().size() < 3) {
 				continue;
 			}
 			Coord p1 = way.getPoints().get(0);
@@ -458,14 +460,14 @@ public class MultiPolygonRelation extends Relation {
 		List<JoinedWay> unclosed = new ArrayList<JoinedWay>();
 
 		for (JoinedWay w : allWays) {
-			if (w.isClosed() == false) {
+			if (w.hasIdenticalEndPoints() == false) {
 				unclosed.add(w);
 			}
 		}
 		// try to connect ways lying outside or on the bbox
 		if (unclosed.size() >= 2) {
 			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
-			Map<Coord, JoinedWay> outOfBboxPoints = new HashMap<Coord, JoinedWay>();
+			Map<Coord, JoinedWay> outOfBboxPoints = new IdentityHashMap<Coord, JoinedWay>();
 			
 			// check all ways for endpoints outside or on the bbox
 			for (JoinedWay w : unclosed) {
@@ -550,10 +552,10 @@ public class MultiPolygonRelation extends Relation {
 				} else {
 					log.debug("Connect", minCon.w1, "with", minCon.w2);
 
-					if (minCon.w1.getPoints().get(0).equals(minCon.c1)) {
+					if (minCon.w1.getPoints().get(0) == minCon.c1) {
 						Collections.reverse(minCon.w1.getPoints());
 					}
-					if (minCon.w2.getPoints().get(0).equals(minCon.c2) == false) {
+					if (minCon.w2.getPoints().get(0) != minCon.c2) {
 						Collections.reverse(minCon.w2.getPoints());
 					}
 
@@ -570,7 +572,7 @@ public class MultiPolygonRelation extends Relation {
 	
 	/**
 	 * Removes all ways non closed ways from the given list (
-	 * <code>{@link Way#isClosed()} == false</code>)
+	 * <code>{@link Way#hasIdenticalEndPoints()} == false</code>)
 	 * 
 	 * @param wayList
 	 *            list of ways
@@ -580,7 +582,7 @@ public class MultiPolygonRelation extends Relation {
 		boolean firstWarn = true;
 		while (it.hasNext()) {
 			JoinedWay tempWay = it.next();
-			if (!tempWay.isClosed()) {
+			if (!tempWay.hasIdenticalEndPoints()) {
 				// warn only if the way intersects the bounding box 
 				boolean inBbox = tempWay.intersects(bbox);
 				if (inBbox) {
@@ -1738,7 +1740,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @return true if polygon1 contains polygon2
 	 */
 	private boolean contains(JoinedWay polygon1, JoinedWay polygon2) {
-		if (!polygon1.isClosed()) {
+		if (!polygon1.hasIdenticalEndPoints()) {
 			return false;
 		}
 		// check if the bounds of polygon2 are completely inside/enclosed the bounds
@@ -1924,7 +1926,7 @@ public class MultiPolygonRelation extends Relation {
 	private boolean locatedOnLine(Coord p, List<Coord> points) {
 		Coord cp1 = null;
 		for (Coord cp2 : points) {
-			if (p.equals(cp2)) {
+			if (p.equals(cp2)) { 
 				return true;
 			}
 
@@ -2095,8 +2097,8 @@ public class MultiPolygonRelation extends Relation {
 		for (Way orgWay : fakeWay.getOriginalWays()) {
 			log.log(logLevel, " Way",orgWay.getId(),"is composed of other artificial ways. Details:");
 			log.log(logLevel, "  Start:",orgWay.getPoints().get(0).toOSMURL());
-			if (orgWay.isClosed()) {
-				// the way is closed so start==end - log the point in the middle of the way
+			if (orgWay.hasEqualEndPoints()) {
+				// the way is closed so start and end are equal - log the point in the middle of the way
 				int mid = orgWay.getPoints().size()/2;
 				log.log(logLevel, "  Mid:  ",orgWay.getPoints().get(mid).toOSMURL());
 			} else {
@@ -2249,8 +2251,8 @@ public class MultiPolygonRelation extends Relation {
 	 * @return the size of the area (unitless)
 	 */
 	public static double calcAreaSize(List<Coord> polygon) {
-		if (polygon.size() < 4 || polygon.get(0).equals(polygon.get(polygon.size()-1)) == false) {
-			return 0;
+		if (polygon.size() < 4 || polygon.get(0) != polygon.get(polygon.size()-1)) {
+			return 0; // line or not closed
 		}
 		double area = 0;
 		Iterator<Coord> polyIter = polygon.iterator();

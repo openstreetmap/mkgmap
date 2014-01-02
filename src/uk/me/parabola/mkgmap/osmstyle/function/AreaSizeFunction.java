@@ -24,7 +24,7 @@ public class AreaSizeFunction extends CachedFunction {
 		if (el instanceof Way) {
 			Way w = (Way)el;
 			// a non closed way has size 0
-			if (w.isClosed() == false) {
+			if (w.hasEqualEndPoints() == false) {
 				return "0";
 			}
 			return nf.format(MultiPolygonRelation.calcAreaSize(((Way) el).getPoints()));

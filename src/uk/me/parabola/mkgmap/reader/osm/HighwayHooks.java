@@ -258,6 +258,8 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				String ref = null;
 				Way motorway = null;
 				for (Way w : motorways) {
+					// XXX: this test might fail if the exit point was removed or changed in StyledConverter
+					// as it uses an implicit call of Coord.equals()
 					if (w.getPoints().contains(e.getLocation())) {
 						motorway = w;
 						ref = w.getTag("ref");

@@ -233,14 +233,18 @@ public class StyledConverter implements OsmConverter {
 		preConvertRules(way);
 
 		housenumberGenerator.addWay(way);
-		
+		String styleFilterTag = way.getTag("mkgmap:stylefilter");
 		Rule rules;
-		if ("polyline".equals(way.getTag("mkgmap:stylefilter")))
+		if ("polyline".equals(styleFilterTag))
 			rules = lineRules;
-		else if ("polygon".equals(way.getTag("mkgmap:stylefilter")))
+		else if ("polygon".equals(styleFilterTag))
 			rules = polygonRules;
-		else
-			rules = wayRules;
+		else {
+			if (way.hasIdenticalEndPoints() == false)
+				rules = lineRules;
+			else
+				rules = wayRules;
+		}
 		
 		wayTypeResult.setWay(way);
 		rules.resolveType(way, wayTypeResult);
@@ -835,11 +839,11 @@ public class StyledConverter implements OsmConverter {
 		// the tile and some distance around it.  Therefore a way that is closed in reality may not be closed
 		// as we see it in its incomplete state.
 		//
-		// Here isClosed means that it is really closed in OSM, and therefore it is safe to clip the line
-		// segment to the tile boundaries.
-		if (!way.isClosed())
+		if (!way.hasIdenticalEndPoints() && way.hasEqualEndPoints())
+			log.error("shape is not closed with identical points " + way.getId());
+		if (!way.hasEqualEndPoints())
 			return;
-
+		
 		final MapShape shape = new MapShape();
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
