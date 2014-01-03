@@ -70,8 +70,12 @@ public class RoadDef implements Comparable<RoadDef> {
 	private static final int TABA_FLAG_ONEWAY = 0x08;
 	private static final int TABA_MASK_SPEED = 0x07;
 
+	private static final int TABAACCESS_FLAG_CARPOOL = 0x0008;
+	private static final int TABAACCESS_FLAG_NOTHROUGHROUTE = 0x0080;
+	
 	// second byte: access flags - order must correspond to constants
-	// in RoadNetwork - bits 0x08, 0x80 missing (purpose unknown)
+	// in RoadNetwork 
+	// bits 0x08, 0x80 are set separately
 	private static final int[] ACCESS = {
 		0x8000, // emergency (net pointer bit 31)
 		0x4000, // delivery (net pointer bit 30)
@@ -81,7 +85,6 @@ public class RoadDef implements Comparable<RoadDef> {
 		0x0010, // foot
 		0x0020, // bike
 		0x0040, // truck
-		0x0008, // carpool
 	};
 
 	// the offset in Nod2 of our Nod2 record
@@ -553,15 +556,32 @@ public class RoadDef implements Comparable<RoadDef> {
 		return offsetNet1;
 	}
 
+	/**
+	 * Flag that a toll must be payed when using this road.
+	 */
 	public void setToll() {
 		tabAInfo |= TABA_FLAG_TOLL;
 	}
+	
+	/**
+	 * Flag that the road has a carpool lane.<br>
+	 * Warning: This bit does not seem to work. Maybe it does not control
+	 * the carpool flag.
+	 */
+	public void setCarpoolLane() {
+		tabAAccess |= TABAACCESS_FLAG_CARPOOL;
+	}
 
+	/**
+	 * Sets the flag that routing is allowed only if the route starts or
+	 * end on this road. 
+	 */
 	public void setNoThroughRouting() {
-		tabAAccess |= 0x80;
+		tabAAccess |= TABAACCESS_FLAG_NOTHROUGHROUTE;
 	}
 
 	public void setAccess(boolean[] access) {
+		assert access.length <= ACCESS.length;
 		for (int i = 0; i < access.length; i++)
 			if (access[i])
 				tabAAccess |= ACCESS[i];

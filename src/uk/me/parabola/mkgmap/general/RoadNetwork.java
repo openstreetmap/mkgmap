@@ -50,8 +50,7 @@ public class RoadNetwork {
 	public static final int NO_FOOT = 5;
 	public static final int NO_BIKE = 6;
 	public static final int NO_TRUCK = 7;
-	public static final int NO_CARPOOL = 8;
-	public static final int NO_MAX = 9;
+	public static final int NO_MAX = 8;
 
 	private final Map<Long, RouteNode> nodes = new LinkedHashMap<Long, RouteNode>();
 
