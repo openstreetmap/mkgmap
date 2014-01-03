@@ -53,7 +53,7 @@ public class TypeReader {
 
 		GType gt = new GType(kind, type);
 		if (GType.checkType(gt.getFeatureKind(), gt.getType()) == false){
-			if (!performChecks)
+			if (!performChecks && (kind != FeatureKind.POLYLINE || overlays == null || overlays.get(gt.getType()) == null))
 				throw new SyntaxException("invalid type " + type + " for " + kind + " in style file " + ts.getFileName() + ", line " + ts.getLinenumber());
 		}
 			

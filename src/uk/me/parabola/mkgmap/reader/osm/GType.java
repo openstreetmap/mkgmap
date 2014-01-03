@@ -76,7 +76,7 @@ public class GType {
 		this.featureKind = featureKind;
 		try {
 			int t = Integer.decode(type);
-			if (featureKind == FeatureKind.POLYGON || featureKind == FeatureKind.POLYLINE){
+			if (featureKind == FeatureKind.POLYGON){
 				// allow 0xYY00 instead of 0xYY
 				if (t >= 0x100 && t < 0x10000 && (t & 0xff) == 0)
 					t >>= 8;
