@@ -144,6 +144,8 @@ public class ElementSaver {
 			} else if("restriction".equals(type)) {
 				if (ignoreTurnRestrictions)
 					rel = null;
+				else if (rel.getTag("restriction") == null)
+					log.warn("ignoring unspecified restriction " + rel.toBrowseURL());
 				else
 					rel = new RestrictionRelation(rel);
 			}
