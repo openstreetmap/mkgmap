@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -530,7 +531,7 @@ public class RoadMerger {
 		}
 
 		// a set of all points where no more merging is possible
-		HashSet<Coord> mergeCompletedPoints = new HashSet<Coord>();
+		Set<Coord> mergeCompletedPoints = Collections.newSetFromMap(new IdentityHashMap<Coord, Boolean>());
 		// flag if at least one road was merged in a merge cycle
 		boolean oneRoadMerged = true;
 		
@@ -538,7 +539,8 @@ public class RoadMerger {
 			oneRoadMerged = false;
 			
 			// first get the potential merge points
-			HashSet<Coord> mergePoints = new HashSet<Coord>(endPoints.keySet());
+			Set<Coord> mergePoints = Collections.newSetFromMap(new IdentityHashMap<Coord, Boolean>());
+			mergePoints.addAll(endPoints.keySet());
 			// remove all coords that have been completely processed and that have no more merge candidates
 			mergePoints.removeAll(mergeCompletedPoints);
 			// only keep the points where there is a way with a start point identical to the end point of another way
@@ -597,7 +599,7 @@ public class RoadMerger {
 								mergeRoad1 = road1;
 								mergeRoad2 = road2;
 								bestAngle = angle;
-							}
+							} 
 						}
 					}
 				}
@@ -605,7 +607,7 @@ public class RoadMerger {
 				// is there a pair of roads that can be merged?
 				if (mergeRoad1 != null && mergeRoad2 != null) {
 					// yes!! => merge them
-					log.debug("Merge ",mergeRoad1.getWay().getId(),"and",mergeRoad2.getWay().getId(),"with angle",bestAngle);
+					log.debug("Merge",mergeRoad1.getWay().getId(),"and",mergeRoad2.getWay().getId(),"with angle",bestAngle);
 					mergeRoads(mergeRoad1, mergeRoad2);
 					// flag that there was at least one merge in this cycle
 					oneRoadMerged = true;
