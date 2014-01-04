@@ -62,6 +62,8 @@ public class RoadMerger {
 	 * @author WanMil
 	 */
 	private static class Road {
+		/** gives the index of the original position in the way/road list */
+		private final int index;
 		private final Way way;
 		private final GType gtype;
 
@@ -117,7 +119,8 @@ public class RoadMerger {
 			}
 		};
 
-		public Road(Way way, GType gtype) {
+		public Road(int index, Way way, GType gtype) {
+			this.index = index;
 			this.way = way;
 			this.gtype = gtype;
 		}
@@ -373,6 +376,10 @@ public class RoadMerger {
 		public String toString() {
 			return gtype + " " + way.getId() + " " + way.toTagString();
 		}
+
+		public final int getIndex() {
+			return index;
+		}
 	}
 
 	public RoadMerger(List<Way> ways, List<GType> gtypes,
@@ -384,7 +391,7 @@ public class RoadMerger {
 
 		for (int i = 0; i < ways.size(); i++) {
 			if (ways.get(i) != null)
-				roads.add(new Road(ways.get(i), gtypes.get(i)));
+				roads.add(new Road(i, ways.get(i), gtypes.get(i)));
 		}
 
 		this.restrictions = new MultiIdentityHashMap<Coord, Long>();
@@ -627,52 +634,7 @@ public class RoadMerger {
 		// sort the roads to ensure that the order of roads is constant for two runs
 		Collections.sort(roads, new Comparator<Road>() {
 			public int compare(Road o1, Road o2) {
-				Way w1 = o1.getWay();
-				Way w2 = o2.getWay();
-				int cmp = Long.compare(w1.getId(), w2.getId());
-				if (cmp != 0) {
-					return cmp;
-				}
-
-				GType g1 = o1.getGtype();
-				GType g2 = o2.getGtype();
-				cmp= Integer.compare(g1.getType(),  g2.getType());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(g1.getRoadClass(), g2.getRoadClass());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(g1.getRoadSpeed(), g2.getRoadSpeed());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(g1.getMinLevel(), g2.getMinLevel());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(g1.getMaxLevel(), g2.getMaxLevel());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(w1.getPoints().size(), w2.getPoints().size());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp= Integer.compare(w1.getTagCount(), w2.getTagCount());
-				if (cmp != 0) {
-					return cmp;
-				}
-				cmp = w1.toTagString().compareTo(w2.toTagString());
-				if (cmp != 0) {
-					return cmp;
-				}
-				
-				log.error("Two road are quite identical: ");
-				log.error(w1.getId()+" "+w1.toTagString());
-				log.error(w2.getId()+" "+w2.toTagString());
-				return 0;
+				return Integer.compare(o1.getIndex(), o2.getIndex());
 			}
 		});
 		
