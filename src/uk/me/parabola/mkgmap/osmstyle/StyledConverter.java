@@ -1062,8 +1062,6 @@ public class StyledConverter implements OsmConverter {
 		noAccess[RoadNetwork.NO_FOOT] = osmElement.isNotBoolTag("mkgmap:foot");
 		noAccess[RoadNetwork.NO_BIKE] = osmElement.isNotBoolTag("mkgmap:bicycle");
 		noAccess[RoadNetwork.NO_TRUCK] = osmElement.isNotBoolTag("mkgmap:truck");
-		// carpool is special => the default is no/unset and the flag is set only if mkgmap:carpool is set to yes
-		noAccess[RoadNetwork.NO_CARPOOL] = osmElement.isBoolTag("mkgmap:carpool");
 		return noAccess;
 	}
 	 	
@@ -1673,6 +1671,10 @@ public class StyledConverter implements OsmConverter {
 
 		road.setAccess(getNoAccess(way));
 		
+		// does the road have a carpool lane?
+		if (way.isBoolTag("mkgmap:carpool"))
+			road.setCarpoolLane();
+
 		if (way.isNotBoolTag("mkgmap:throughroute")) 
 			road.setNoThroughRouting();
 
@@ -1760,9 +1762,11 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		if (roadLog.isInfoEnabled()) {
+			// shift the bits so that they have the correct position
 			int cmpAccess = (road.getRoadDef().getTabAAccess() & 0xff) + ((road.getRoadDef().getTabAAccess() & 0xc000) >> 6);
 			if (road.isDirection()) {
-				cmpAccess += 1<<10;
+				
+				cmpAccess |= 1<<10;
 			}
 			String access = String.format("%11s",Integer.toBinaryString(cmpAccess)).replace(' ', '0');
 			roadLog.info(String.format("%19d 0x%-2x %11s %s", way.getId(), road.getType(), access, Arrays.toString(road.getLabels())));
@@ -2433,7 +2437,7 @@ public class StyledConverter implements OsmConverter {
 	
 	/** 
 	 * remove obsolete points in roads. Obsolete are points which are
-	 * very close to 180° angles in the real line.
+	 * very close to 180� angles in the real line.
 	 */
 	private void removeObsoletePoints(){
 		Way lastWay = null;

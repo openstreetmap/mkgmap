@@ -183,7 +183,7 @@ The mkgmap:street tag must be added to the street in the style file.
 : The node matches to way 2. It has mkgmap:street set with a value equal to
 the addr:street tag value of the house  number node.
 
-=== Overview map options ==
+=== Overview map options ===
 ;--overview-mapname=name
 : 	If --tdbfile is enabled, this gives the name of the overview
 .img and .tdb files. The default map name is osmmap.

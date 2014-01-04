@@ -92,6 +92,10 @@ public class MapRoad extends MapLine {
 		roadDef.setAccess(access);
 	}
 
+	public void setCarpoolLane() {
+		roadDef.setCarpoolLane();
+	}
+	
 	public void setNoThroughRouting() {
 		roadDef.setNoThroughRouting();
 	}

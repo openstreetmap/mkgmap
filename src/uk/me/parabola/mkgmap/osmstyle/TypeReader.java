@@ -49,8 +49,14 @@ public class TypeReader {
 			throw new SyntaxException(ts, "Garmin type number must be first.  Saw '" + type + '\'');
 
 		log.debug("gtype", type);
+		
 
 		GType gt = new GType(kind, type);
+		if (GType.checkType(gt.getFeatureKind(), gt.getType()) == false){
+			if (!performChecks && (kind != FeatureKind.POLYLINE || overlays == null || overlays.get(gt.getType()) == null))
+				throw new SyntaxException("invalid type " + type + " for " + kind + " in style file " + ts.getFileName() + ", line " + ts.getLinenumber());
+		}
+			
 		while (!ts.isEndOfFile()) {
 			ts.skipSpace();
 			String w = ts.nextValue();
@@ -102,22 +108,8 @@ public class TypeReader {
 				usedTypes = Arrays.asList(gt.getType());
 			for (int i = 0; i < usedTypes.size(); i++){
 				int usedType = usedTypes.get(i);
-				boolean isOk = true;
-				if (usedType >= 0x010000){
-					if ((usedType & 0xff) > 0x1f)
-						isOk = false;
-				} else {
-					if (kind == FeatureKind.POLYLINE && usedType > 0x3f)
-						isOk = false;
-					else if (kind == FeatureKind.POLYGON && (usedType> 0x7f || usedType == 0x4a))
-						isOk = false;
-					else if (kind == FeatureKind.POINT){
-						if (usedType < 0x0100 || (usedType & 0x00ff) > 0x1f) 
-							isOk = false;
-					}
-				}
 				String typeOverlaidMsg = ". Type is overlaid with " + GType.formatType(usedType);
-				if (!isOk){
+				if (GType.checkType(kind, usedType) == false){
 					String msg = "Warning: invalid type " + type + " for " + kind + " in style file " + ts.getFileName() + ", line " + ts.getLinenumber();
 					if (fromOverlays)
 						msg += typeOverlaidMsg;

@@ -55,23 +55,36 @@ public class GType {
 	// actions will always be executed
 	private boolean propogateActionsOnContinue;
 
+	public static boolean checkType(FeatureKind featureKind, int type) {
+		if (type >= 0x010000){
+			if ((type & 0xff) > 0x1f)
+				return false;
+		} else {
+			if (featureKind == FeatureKind.POLYLINE && type > 0x3f)
+				return false;
+			else if (featureKind == FeatureKind.POLYGON && (type> 0x7f || type == 0x4a))
+				return false;
+			else if (featureKind == FeatureKind.POINT){
+				if (type < 0x0100 || (type & 0x00ff) > 0x1f) 
+					return false;
+			}
+		}
+		return true;
+	}
+	
 	public GType(FeatureKind featureKind, String type) {
 		this.featureKind = featureKind;
 		try {
-			this.type = Integer.decode(type);
+			int t = Integer.decode(type);
+			if (featureKind == FeatureKind.POLYGON){
+				// allow 0xYY00 instead of 0xYY
+				if (t >= 0x100 && t < 0x10000 && (t & 0xff) == 0)
+					t >>= 8;
+			}
+			this.type = t;
 		} catch (NumberFormatException e) {
 			log.error("not numeric " + type);
 			throw new ExitException("non-numeric type in style file");
-		}
-	}
-
-	public GType(FeatureKind featureKind, String type, String subtype) {
-		this.featureKind = featureKind;
-		try {
-			this.type = (Integer.decode(type) << 8) + Integer.decode(subtype);
-		} catch (NumberFormatException e) {
-			log.error("not numeric " + type + ' ' + subtype);
-			throw new ExitException("non-numeric type in map-features file");
 		}
 	}
 
