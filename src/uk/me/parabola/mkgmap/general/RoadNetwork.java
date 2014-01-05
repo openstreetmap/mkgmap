@@ -67,7 +67,6 @@ public class RoadNetwork {
 	private int maxFlareLengthRatio ;
 	private boolean reportSimilarArcs;
 	private boolean outputCurveData;
-	private int reportDeadEnds ;
 
 	public void config(EnhancedProperties props) {
 		String ath = props.getProperty("adjust-turn-headings");
@@ -80,8 +79,6 @@ public class RoadNetwork {
 		checkRoundabouts = props.getProperty("check-roundabouts", false);
 		checkRoundaboutFlares = props.getProperty("check-roundabout-flares", false);
 		maxFlareLengthRatio = props.getProperty("max-flare-length-ratio", 0);
-
-		reportDeadEnds = props.getProperty("report-dead-ends", 1);
 
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
 
@@ -238,8 +235,6 @@ public class RoadNetwork {
 					node.checkRoundaboutFlares(maxFlareLengthRatio);
 				if(reportSimilarArcs)
 					node.reportSimilarArcs();
-				if(reportDeadEnds != 0)
-					node.reportDeadEnds(reportDeadEnds);
 			}
 			if(adjustTurnHeadings != 0)
 				node.tweezeArcs(adjustTurnHeadings);

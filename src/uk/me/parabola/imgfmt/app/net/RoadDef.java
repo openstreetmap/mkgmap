@@ -118,7 +118,6 @@ public class RoadDef implements Comparable<RoadDef> {
 	private boolean linkRoad;
 	private boolean synthesised;
 	private boolean flareCheck;
-	private boolean deadEndCheck;
 	private Set<String> messageIssued;
 
 	private final List<Offset> rgnOffsets = new ArrayList<Offset>(4);
@@ -721,14 +720,6 @@ public class RoadDef implements Comparable<RoadDef> {
 
 	public boolean doFlareCheck() {
 		return flareCheck;
-	}
-
-	public void doDeadEndCheck(boolean dec) {
-		deadEndCheck = dec;
-	}
-
-	public boolean doDeadEndCheck() {
-		return deadEndCheck;
 	}
 
 	public boolean messagePreviouslyIssued(String key) {

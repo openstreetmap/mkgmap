@@ -80,7 +80,7 @@ public class StyledConverter implements OsmConverter {
 	private final MapCollector collector;
 
 	private Clipper clipper = Clipper.NULL_CLIPPER;
-	private Area bbox;
+	private Area bbox = new Area(-90.0d, -180.0d, 90.0d, 180.0d); // default is planet
 
 	// restrictions associates lists of turn restrictions with the
 	// Coord corresponding to the restrictions' 'via' node
@@ -134,6 +134,7 @@ public class StyledConverter implements OsmConverter {
 	private boolean driveOnLeft;
 	private boolean driveOnRight;
 	private final boolean checkRoundabouts;
+	private int reportDeadEnds; 
 	private final boolean linkPOIsToWays;
 	private final boolean mergeRoads;
 
@@ -166,7 +167,8 @@ public class StyledConverter implements OsmConverter {
 			NODHeader.setDriveOnLeft(driveOnLeft);
 		driveOnRight = props.getProperty("drive-on-right") != null;
 		checkRoundabouts = props.getProperty("check-roundabouts") != null;
-
+		reportDeadEnds = props.getProperty("report-dead-ends", 1);  
+		
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
@@ -241,11 +243,6 @@ public class StyledConverter implements OsmConverter {
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
 		    if(foundType.isRoad() &&
 			   !MapObject.hasExtendedType(foundType.getType())){
-				if (way.isBoolTag("oneway")) {
-					if (checkFixmeCoords(way))
-						way.addTag("mkgmap:dead-end-check", "false");
-				}
-		    	
 		    	roads.add(way);
 		    	roadTypes.add(new GType(foundType));
 		    }
@@ -451,11 +448,30 @@ public class StyledConverter implements OsmConverter {
 		if (type.getDefaultName() != null && el.getName() == null)
 			el.addTag("mkgmap:label:1", type.getDefaultName());
 		
-		if (el instanceof Way && type.isRoad()) {
+		if (el instanceof Way) {
 			Way way = (Way) el;
-			
-			recalcRoadClass(way, type);
-			recalcRoadSpeed(way, type);
+
+			String oneWay = way.getTag("oneway");
+			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+				// it's a oneway street in the reverse direction
+				// so reverse the order of the nodes and change
+				// the oneway tag to "yes"
+				way.reverse();
+				way.addTag("oneway", "yes");
+				if (type.isRoad() && "roundabout".equals(way.getTag("junction")))
+					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+			}
+
+			if (way.isBoolTag("oneway")) {
+				way.addTag("oneway", "yes");
+				if (type.isRoad() && checkFixmeCoords(way) )
+					way.addTag("mkgmap:dead-end-check", "false");
+			} else 
+				way.deleteTag("oneway");
+			if (type.isRoad()){			
+				recalcRoadClass(way, type);
+				recalcRoadSpeed(way, type);
+			}
 		}
 	}
 
@@ -503,7 +519,7 @@ public class StyledConverter implements OsmConverter {
 		findUnconnectedRoads();
 		filterCoordPOI();
 		removeShortArcsByMergingNodes();
-		// make sure that copies of modified roads are have equal points 
+		// make sure that copies of modified roads have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
 			if (deletedRoads.contains(line.getId())){
@@ -673,6 +689,7 @@ public class StyledConverter implements OsmConverter {
 		elementSetup(line, gt, way);
 		line.setPoints(points);
 
+		
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
 		if (way.isBoolTag("mkgmap:skipSizeFilter"))
@@ -821,17 +838,6 @@ public class StyledConverter implements OsmConverter {
 		if (way.getPoints().size() < 2){
 			log.warn("road has < 2 points",way.getId(),"(discarding)");
 			return;
-		}
-
-		String oneWay = way.getTag("oneway");
-		if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-			// it's a oneway street in the reverse direction
-			// so reverse the order of the nodes and change
-			// the oneway tag to "yes"
-			way.reverse();
-			way.addTag("oneway", "yes");
-			if("roundabout".equals(way.getTag("junction")))
-				log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
 		}
 
 		if("roundabout".equals(way.getTag("junction"))) {
@@ -1429,7 +1435,6 @@ public class StyledConverter implements OsmConverter {
 		if (way.isBoolTag("oneway")) {
 			road.setDirection(true);
 			road.setOneway();
-			road.doDeadEndCheck(!way.isNotBoolTag("mkgmap:dead-end-check"));
 		}
 
 		boolean[] noAccess = new boolean[RoadNetwork.NO_MAX];
@@ -1687,8 +1692,11 @@ public class StyledConverter implements OsmConverter {
 	 * If such a road has the mkgmap:set_unconnected_type tag, add it as line, not as a road. 
 	 */
 	private void findUnconnectedRoads(){
-		
 		Map<Coord, HashSet<Way>> connectors = new IdentityHashMap<Coord, HashSet<Way>>(roads.size()*2);
+		
+		// for dead-end-check only: will contain ways with loops (also simply closed ways)
+		HashSet<Way> selfConnectors = new HashSet<Way>();
+		
 		// collect nodes that might connect roads
 		long lastId = 0;
 		for (Way way :roads){
@@ -1702,7 +1710,9 @@ public class StyledConverter implements OsmConverter {
 						ways = new HashSet<Way>(4);
 						connectors.put(p, ways);
 					}
-					ways.add(way);
+					boolean wasNew = ways.add(way);
+					if (!wasNew && reportDeadEnds > 0)
+						selfConnectors.add(way);
 				}
 			}
 		}
@@ -1710,7 +1720,83 @@ public class StyledConverter implements OsmConverter {
 		// find roads that are not connected
 		for (int i = 0; i < roads.size(); i++){
 			Way way = roads.get(i);
-			String check_type = way.getTag("mkgmap:set_unconnected_type");
+			if(reportDeadEnds > 0){
+				// report dead ends of oneway roads 
+				if (way.isBoolTag("oneway") && !way.isNotBoolTag("mkgmap:dead-end-check")) {
+					List<Coord> points = way.getPoints();
+					int[] pointsToCheck = {0, points.size()-1};
+					if (points.get(pointsToCheck[0]) == points.get(pointsToCheck[1]))
+						continue; // skip closed way
+					for (int pos: pointsToCheck ){
+						boolean isDeadEnd = true;
+						boolean isDeadEndOfMultipleWays = true;
+						Coord p = points.get(pos);
+						if (bbox.contains(p) == false || p.getOnBoundary())
+							isDeadEnd = false;  // we don't know enough about possible connections 
+						else if (p.getHighwayCount() < 2){
+							isDeadEndOfMultipleWays = false;
+						} else {
+							HashSet<Way> ways = connectors.get(p);
+							if (ways.size() <= 1)
+								isDeadEndOfMultipleWays = false;
+							for (Way connectedWay: ways){
+								if (!isDeadEnd)
+									break;
+								if (way == connectedWay){
+									if (selfConnectors.contains(way)){
+										// this might be a P-shaped oneway,
+										// check if it has other exists in the loop part
+										if (pos == 0){
+											for (int k = pos+1; k < points.size()-1; k++){
+												Coord pTest = points.get(k);
+												if (pTest == p)
+													break; // found no other exit
+												if (pTest.getHighwayCount() > 1){
+													isDeadEnd = false;
+													break;
+												}
+											} 
+
+										}else {
+											for (int k = pos-1; k >= 0; k--){
+												Coord pTest = points.get(k);
+												if (pTest == p)
+													break; // found no other exit
+												if (pTest.getHighwayCount() > 1){
+													isDeadEnd = false;
+													break;
+												}
+											} 
+										}
+									}
+									continue;
+								}
+								List<Coord> otherPoints = connectedWay.getPoints();
+								Coord otherFirst = otherPoints.get(0);
+								Coord otherLast = otherPoints.get(otherPoints.size()-1);
+								if (otherFirst == otherLast || connectedWay.isBoolTag("oneway") == false)
+									isDeadEnd = false;  
+								else {
+									Coord pOther;
+									if (pos != 0)
+										pOther = otherLast;
+									else
+										pOther = otherFirst;
+									if (p != pOther){
+										// way is connected to a point on a oneway which allows going on
+										isDeadEnd = false;
+									}
+								}
+							}
+						}
+						
+						if (isDeadEnd && (isDeadEndOfMultipleWays || reportDeadEnds > 1)){
+							log.warn("Oneway road " + way.getId() + " with tags " + way.toTagString() + ((pos==0) ? " comes from":" goes to") + " nowhere at " + p.toOSMURL());
+						}
+					}
+				}
+			}
+  			String check_type = way.getTag("mkgmap:set_unconnected_type");
 			if (check_type != null){
 				boolean isConnected = false;
 				boolean onBoundary = false;

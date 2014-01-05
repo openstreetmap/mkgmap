@@ -231,30 +231,8 @@ public class RoadMerger {
 			
 			// first map the different oneway values
 			String thisOneway = getWay().getTag("oneway");
-			if (thisOneway == null) {
-				thisOneway = "no";
-			} else {
-				if (thisOneway.equals("true") || thisOneway.equals("1")) {
-					thisOneway = "yes";
-				} else if (thisOneway.equals("false")) {
-					thisOneway = "no";
-				} else if (thisOneway.equals("reverse")) {
-					thisOneway = "-1";
-				}
-			}
 			// map oneway value for the other way
 			String otherOneway = otherWay.getTag("oneway");
-			if (otherOneway == null) {
-				otherOneway = "no";
-			} else {
-				if (otherOneway.equals("true") || otherOneway.equals("1")) {
-					otherOneway = "yes";
-				} else if (otherOneway.equals("false")) {
-					otherOneway = "no";
-				} else if (otherOneway.equals("reverse")) {
-					otherOneway = "-1";
-				}
-			}
 
 			if (stringEquals(thisOneway, otherOneway) == false) {
 				// the oneway tags differ => cannot merge
@@ -265,7 +243,7 @@ public class RoadMerger {
 						+ ")");
 				return false;
 				
-			} else if ("yes".equals(thisOneway) || "-1".equals(thisOneway)) {
+			} else if ("yes".equals(thisOneway)) {
 				// the oneway tags match and both ways are oneway
 				// now check if both ways have the same direction
 				
