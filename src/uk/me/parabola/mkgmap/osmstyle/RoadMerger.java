@@ -231,30 +231,8 @@ public class RoadMerger {
 			
 			// first map the different oneway values
 			String thisOneway = getWay().getTag("oneway");
-			if (thisOneway == null) {
-				thisOneway = "no";
-			} else {
-				if (thisOneway.equals("true") || thisOneway.equals("1")) {
-					thisOneway = "yes";
-				} else if (thisOneway.equals("false")) {
-					thisOneway = "no";
-				} else if (thisOneway.equals("reverse")) {
-					thisOneway = "-1";
-				}
-			}
 			// map oneway value for the other way
 			String otherOneway = otherWay.getTag("oneway");
-			if (otherOneway == null) {
-				otherOneway = "no";
-			} else {
-				if (otherOneway.equals("true") || otherOneway.equals("1")) {
-					otherOneway = "yes";
-				} else if (otherOneway.equals("false")) {
-					otherOneway = "no";
-				} else if (otherOneway.equals("reverse")) {
-					otherOneway = "-1";
-				}
-			}
 
 			if (stringEquals(thisOneway, otherOneway) == false) {
 				// the oneway tags differ => cannot merge
@@ -265,7 +243,7 @@ public class RoadMerger {
 						+ ")");
 				return false;
 				
-			} else if ("yes".equals(thisOneway) || "-1".equals(thisOneway)) {
+			} else if ("yes".equals(thisOneway)) {
 				// the oneway tags match and both ways are oneway
 				// now check if both ways have the same direction
 				
@@ -519,6 +497,8 @@ public class RoadMerger {
 		int noMerges = 0;
 		List<Road> roadsToMerge = new ArrayList<Road>(this.roads);
 		this.roads.clear();
+		
+		List<Coord> mergePoints = new ArrayList<>();
 
 		// first add all roads with their start and end points to the
 		// start/endpoint lists
@@ -533,96 +513,88 @@ public class RoadMerger {
 				continue;
 			}
 
+			mergePoints.add(start);
+			mergePoints.add(end);
 			startPoints.add(start, road);
 			endPoints.add(end, road);
 		}
 
 		// a set of all points where no more merging is possible
 		Set<Coord> mergeCompletedPoints = Collections.newSetFromMap(new IdentityHashMap<Coord, Boolean>());
-		// flag if at least one road was merged in a merge cycle
-		boolean oneRoadMerged = true;
 		
-		while (oneRoadMerged) {
-			oneRoadMerged = false;
+		// go through all start/end points and check if a merge is possible
+		for (Coord mergePoint : mergePoints) {
+			if (mergeCompletedPoints.contains(mergePoint)) {
+				// a previous run did not show any possible merge
+				// do not check again
+				continue;
+			}
 			
-			// first get the potential merge points
-			Set<Coord> mergePoints = Collections.newSetFromMap(new IdentityHashMap<Coord, Boolean>());
-			mergePoints.addAll(endPoints.keySet());
-			// remove all coords that have been completely processed and that have no more merge candidates
-			mergePoints.removeAll(mergeCompletedPoints);
-			// only keep the points where there is a way with a start point identical to the end point of another way
-			mergePoints.retainAll(startPoints.keySet());
+			// get all road that start with the merge point
+			List<Road> startRoads = startPoints.get(mergePoint);
+			// get all roads that end with the merge point
+			List<Road> endRoads = endPoints.get(mergePoint);
 			
-			// check all potential merge points for merges
-			for (Coord mergePoint : mergePoints) {
-				// get all road that start with the merge point
-				List<Road> startRoads = startPoints.get(mergePoint);
-				// get all roads that end with the merge point
-				List<Road> endRoads = endPoints.get(mergePoint);
-				
-				if (endRoads.isEmpty() || startRoads.isEmpty()) {
-					// this might happen if another merge operation changed endPoints and/or startPoints
+			if (endRoads.isEmpty() || startRoads.isEmpty()) {
+				// this might happen if another merge operation changed endPoints and/or startPoints
+				mergeCompletedPoints.add(mergePoint);
+				continue;
+			}
+			
+			// go through all combinations and test which combination is the best
+			double bestAngle = Double.MAX_VALUE;
+			Road mergeRoad1 = null;
+			Road mergeRoad2 = null;
+			
+			for (Road road1 : endRoads) {
+				// check if the road has a restriction at the merge point
+				// which does not allow us to merge the road at this point
+				if (hasRestriction(mergePoint, road1.getWay())) {
 					continue;
 				}
 				
+				List<Coord> points1 = road1.getWay().getPoints();
 				
-				// go through all combinations and test which combination is the best
-				double bestAngle = Double.MAX_VALUE;
-				Road mergeRoad1 = null;
-				Road mergeRoad2 = null;
-				
-				for (Road road1 : endRoads) {
-					// check if the road has a restriction at the merge point
-					// which does not allow us to merge the road at this point
-					if (hasRestriction(mergePoint, road1.getWay())) {
+				// go through all candidates to merge
+				for (Road road2 : startRoads) {
+					if (hasRestriction(mergePoint, road2.getWay())) {
+						continue;
+					}
+					List<Coord> points2 = road2.getWay().getPoints();
+					
+					// the second road is merged into the first road
+					// so only the id of the first road is kept
+					// This also means that the second road must not have a restriction on 
+					// both start and end point
+					if (hasRestriction(points2.get(points2.size()-1), road2.getWay())) {
 						continue;
 					}
 					
-					List<Coord> points1 = road1.getWay().getPoints();
-					
-					// go through all candidates to merge
-					for (Road road2 : startRoads) {
-						if (hasRestriction(mergePoint, road2.getWay())) {
-							continue;
-						}
-						List<Coord> points2 = road2.getWay().getPoints();
-						
-						// the second road is merged into the first road
-						// so only the id of the first road is kept
-						// This also means that the second road must not have a restriction on 
-						// both start and end point
-						if (hasRestriction(points2.get(points2.size()-1), road2.getWay())) {
-							continue;
-						}
-						
-						// check if both roads can be merged
-						if (road1.isMergable(mergePoint, road2)) {
-							// yes they might be merged
-							// calculate the angle between them 
-							// if there is more then one road to merge the one with the lowest angle is merged 
-							double angle = Math.abs(Utils.getAngle(points1.get(points1.size()-2), mergePoint, points2.get(1)));
-							log.debug("Road",road1.getWay().getId(),"and road",road2.getWay().getId(),"are mergeable with angle",angle);
-							if (angle < bestAngle) {
-								mergeRoad1 = road1;
-								mergeRoad2 = road2;
-								bestAngle = angle;
-							} 
-						}
+					// check if both roads can be merged
+					if (road1.isMergable(mergePoint, road2)) {
+						// yes they might be merged
+						// calculate the angle between them 
+						// if there is more then one road to merge the one with the lowest angle is merged 
+						double angle = Math.abs(Utils.getAngle(points1.get(points1.size()-2), mergePoint, points2.get(1)));
+						log.debug("Road",road1.getWay().getId(),"and road",road2.getWay().getId(),"are mergeable with angle",angle);
+						if (angle < bestAngle) {
+							mergeRoad1 = road1;
+							mergeRoad2 = road2;
+							bestAngle = angle;
+						} 
 					}
 				}
-				
-				// is there a pair of roads that can be merged?
-				if (mergeRoad1 != null && mergeRoad2 != null) {
-					// yes!! => merge them
-					log.debug("Merge",mergeRoad1.getWay().getId(),"and",mergeRoad2.getWay().getId(),"with angle",bestAngle);
-					mergeRoads(mergeRoad1, mergeRoad2);
-					// flag that there was at least one merge in this cycle
-					oneRoadMerged = true;
-					noMerges++;
-				} else {
-					// no => do not check again this point in the next cylce
-					mergeCompletedPoints.add(mergePoint);
-				}
+			}
+			
+			// is there a pair of roads that can be merged?
+			if (mergeRoad1 != null && mergeRoad2 != null) {
+				// yes!! => merge them
+				log.debug("Merge",mergeRoad1.getWay().getId(),"and",mergeRoad2.getWay().getId(),"with angle",bestAngle);
+				mergeRoads(mergeRoad1, mergeRoad2);
+				noMerges++;
+			} else {
+				// no => do not check again this point again
+				mergeCompletedPoints.add(mergePoint);
 			}
 		}
 
@@ -632,7 +604,7 @@ public class RoadMerger {
 		}
 
 		// sort the roads to ensure that the order of roads is constant for two runs
-		Collections.sort(roads, new Comparator<Road>() {
+		Collections.sort(this.roads, new Comparator<Road>() {
 			public int compare(Road o1, Road o2) {
 				return Integer.compare(o1.getIndex(), o2.getIndex());
 			}
@@ -643,13 +615,12 @@ public class RoadMerger {
 			resultingWays.add(r.getWay());
 			resultingGTypes.add(r.getGtype());
 		}
-
+		
 		// print out some statistics
 		int noRoadsAfterMerge = this.roads.size();
 		log.info("Roads before/after merge:", noRoadsBeforeMerge, "/",
 				noRoadsAfterMerge);
-		int percentage = (int) Math
-				.round((noRoadsBeforeMerge - noRoadsAfterMerge) * 100.0d
+		int percentage = (int) Math.round((noRoadsBeforeMerge - noRoadsAfterMerge) * 100.0d
 						/ noRoadsBeforeMerge);
 		log.info("Road network reduced by", percentage, "%",noMerges,"merges");
 	}
