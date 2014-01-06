@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2013.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.mkgmap.osmstyle;
 
 import java.util.ArrayList;
@@ -18,6 +30,21 @@ import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.GpxCreator;
 
+/**
+ * We are rounding coordinates with double precision to map units with a
+ * precision of < 2m. This hasn't a big visible effect for single points,
+ * but wherever points are connected with lines the lines may show
+ * heavy zig-zagging while the original lines were almost straight.
+ * This happens when one of the points was rounded to one direction
+ * and the next point was rounded to the opposite direction.
+ * The effect is esp. visible with parallel roads and buildings,
+ * but also in small roundabouts.
+ * The methods in this class try to fix these wrong bearings by
+ * moving or removing points.
+ *         
+ * @author GerdP
+ *
+ */
 public class WrongAngleFixer {
 	private static final Logger log = Logger.getLogger(WrongAngleFixer.class);
 
