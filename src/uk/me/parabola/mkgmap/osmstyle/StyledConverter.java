@@ -816,11 +816,12 @@ public class StyledConverter implements OsmConverter {
 					if (co instanceof CoordNode == false)
 						continue;
 					CoordNode cn = (CoordNode) co;
-					if (p.equals(cn)){
+					if (p.highPrecEquals(cn)){
 						if (viaNode == null)
 							viaNode = cn;
 						else if (viaNode != cn){
 							log.error("Found multiple points with equal coords as CoordPOI at " + p.toOSMURL());
+							// if we ever get here we can add code to identify the exact node 
 							viaIsUnique = false;
 						}
 						if (lastNode != null)
