@@ -47,6 +47,7 @@ public class Coord implements Comparable<Coord> {
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
+	private byte shapeCount; // used by ShapeMerger 
 	private byte flags; // further attributes
 	private final byte latDelta; // delta to 30 bit lat value 
 	private final byte lonDelta; // delta to 30 bit lon value
@@ -152,6 +153,26 @@ public class Coord implements Comparable<Coord> {
 		highwayCount = 0;
 	}
 	
+	public int getShapeCount() {
+		return shapeCount;
+	}
+
+	/**
+	 * Increase the counter how many shapes use this coord.
+	 */
+	public int incShapeCount() {
+		// don't let it wrap
+		if(shapeCount < Byte.MAX_VALUE)
+			++shapeCount;
+		return shapeCount;
+	}
+
+	/**
+	 * Resets the shape counter to 0.
+	 */
+	public void resetShapeCount() {
+		shapeCount = 0;
+	}
 	public boolean getOnBoundary() {
 		return (flags & ON_BOUNDARY_MASK) != 0;
 	}

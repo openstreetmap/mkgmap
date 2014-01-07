@@ -1070,11 +1070,12 @@ public class MapBuilder implements Configurable {
 		config.setLevel(div.getZoom().getLevel());
 		config.setRoutable(doRoads);
 		
-		if (res == 24 && mergeShapes){
-			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(div.getShift());
+		if (mergeShapes){
+			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
 			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes, div.getStartRgnPointer());
-			log.info("merged shapes " + shapes.size() + "->" + mergedShapes.size());
-			shapes = mergedShapes; 
+//			log.error("res: " + res + " merged shapes " + shapes.size() + "->" + mergedShapes.size());
+			shapes = mergedShapes;
+			
 		}
 		
 		LayerFilterChain filters = new LayerFilterChain(config);
