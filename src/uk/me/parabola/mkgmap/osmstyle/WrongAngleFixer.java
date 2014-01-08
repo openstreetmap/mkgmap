@@ -83,6 +83,13 @@ public class WrongAngleFixer {
 	
 	private void replaceCoord(Coord toRepl, Coord replacement, Map<Coord, Coord> replacements) {
 		assert toRepl != replacement;
+		if (toRepl.getOnBoundary()){
+			if (replacement.equals(toRepl) == false){
+				log.error("boundary node is replaced by node with non-equal coordinates at " + toRepl);
+				assert false : "boundary node is replaced" ;
+			}
+			replacement.setOnBoundary(true);
+		}
 		toRepl.setReplaced(true);
 		if (toRepl instanceof CoordPOI && ((CoordPOI) toRepl).isUsed()) {
 			replacement = new CoordPOI(replacement);
@@ -114,7 +121,6 @@ public class WrongAngleFixer {
 			}
 
 			if (replacement != null) {
-				assert !p.getOnBoundary() : "Boundary node replaced";
 				if (p instanceof CoordPOI) {
 					CoordPOI cp = (CoordPOI) p;
 					Node node = cp.getNode();
