@@ -230,9 +230,9 @@ public class ShapeMergeFilter{
 						stopSearch = true;
 						if (merged.size() < 4 || merged.get(0) != merged.get(merged.size()-1)){
 							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe duplicate shapes?)");
-							GpxCreator.createGpx("e:/ld/sh", sh.points);
-							GpxCreator.createGpx("e:/ld/toadd", toMerge.points);
-							GpxCreator.createGpx("e:/ld/merged", merged);
+							// GpxCreator.createGpx("e:/ld/sh", sh.points);
+							// GpxCreator.createGpx("e:/ld/toadd", toMerge.points);
+							// GpxCreator.createGpx("e:/ld/merged", merged);
 							merged = null;
 						} else {
 							toMerge = new ShapeHelper(merged);
