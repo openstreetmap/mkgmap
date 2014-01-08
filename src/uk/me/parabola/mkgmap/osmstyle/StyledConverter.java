@@ -945,10 +945,10 @@ public class StyledConverter implements OsmConverter {
 		//
 		if (!way.hasIdenticalEndPoints() && way.hasEqualEndPoints())
 			log.error("shape is not closed with identical points " + way.getId());
-		if (!way.hasEqualEndPoints())
+		if (!way.hasIdenticalEndPoints())
 			return;
 		
-		final MapShape shape = new MapShape();
+		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
 		if (way.isBoolTag("mkgmap:skipSizeFilter"))

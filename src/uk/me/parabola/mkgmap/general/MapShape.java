@@ -22,12 +22,16 @@ package uk.me.parabola.mkgmap.general;
  * @author Steve Ratcliffe.
  */
 public class MapShape extends MapLine {// So top code can link objects from here
-
+	final private long osmid; //TODO: remove debug aid
 	public MapShape() {
+		osmid = 0;
 	}
-
+	public MapShape(long id) {
+		osmid = id;
+	}
 	MapShape(MapShape s) {
 		super(s);
+		this.osmid = s.osmid;
 	}
 
 	public MapShape copy() {
@@ -37,5 +41,9 @@ public class MapShape extends MapLine {// So top code can link objects from here
 	public void setDirection(boolean direction) {
 		throw new IllegalArgumentException(
 				"can't set a direction on a polygon");
+	}
+
+	public long getOsmid() {
+		return osmid;
 	}
 }

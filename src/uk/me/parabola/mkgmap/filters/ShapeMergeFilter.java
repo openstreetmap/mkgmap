@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2014.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 or
+ * version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ */
 package uk.me.parabola.mkgmap.filters;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -9,15 +21,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
-//import uk.me.parabola.util.GpxCreator;
+import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 
-
+/**
+ * Merge shapes with same type and resolution attributes if they share 
+ * identical points.
+ * @author GerdP
+ *
+ */
 public class ShapeMergeFilter{
 	private static final Logger log = Logger.getLogger(ShapeMergeFilter.class);
 	private final int resolution;
@@ -40,7 +60,13 @@ public class ShapeMergeFilter{
 				mergedShapes.add(shape);
 				continue;
 			}
-			
+			if (shape.getPoints().size() < 10){
+				double areaSize = Utils.calcHighPrecAreaSize(shape.getPoints());
+				if (areaSize == 0){
+					log.warn("shape with id " + shape.getOsmid()  + " has " + shape.getPoints().size() + " points but zero area size, ignoring it");
+					continue;
+				}
+			}
 //			GpxCreator.createGpx("e:/ld/tm_" + i++, shape.getPoints());
 			List<Map<MapShape, List<ShapeHelper>>> sameTypeList = topMap.get(shape.getType());
 			ShapeHelper sh = new ShapeHelper(shape);
@@ -57,7 +83,7 @@ public class ShapeMergeFilter{
 				for (MapShape ms: lowMap.keySet()){
 					if (ms.isSimilar(shape)){
 						List<ShapeHelper> list = lowMap.get(ms);
-						list = addWithoutCreatingHoles(list, sh);
+						list = addWithoutCreatingHoles(list, sh, ms.getType());
 						lowMap.put(ms, list);
 						added = true;
 						break;
@@ -112,12 +138,12 @@ public class ShapeMergeFilter{
 	 * @return
 	 */
 	private List<ShapeHelper> addWithoutCreatingHoles(List<ShapeHelper> list,
-			final ShapeHelper toAdd) {
+			final ShapeHelper toAdd, final int type) {
 		assert toAdd.points.size() > 3;
 		List<ShapeHelper> result = new ArrayList<ShapeHelper>();
 		ShapeHelper toMerge = new ShapeHelper(toAdd.points);
 		List<Coord>merged = null;
-		IntArrayList positionsToCheck = new IntArrayList(); 
+		IntArrayList positionsToCheck = new IntArrayList();
 		for (ShapeHelper sh:list){
 			int shSize = sh.points.size();
 			int toMergeSize = toMerge.points.size();
@@ -129,11 +155,13 @@ public class ShapeMergeFilter{
 			positionsToCheck.clear();
 			for (Coord co: sh.points)
 				co.resetShapeCount();
-			for (Coord co: toMerge.points)
+			for (Coord co: toMerge.points){
 				co.resetShapeCount();
+			}
 			// increment the shape counter for all points, but
 			// only once 
 			int numDistinctPoints = 0;
+			
 			for (Coord co : sh.points) {
 				if (co.getShapeCount() == 0){
 					co.incShapeCount();
@@ -154,8 +182,13 @@ public class ShapeMergeFilter{
 				continue;
 			}
 			if (positionsToCheck.size() + 1 == toMergeSize){
-				// toMerge is equal to sh, ignore it
-				continue;
+				// all points are identical, might be a duplicate
+				// or a piece that fills a hole 
+				if (shSize == toMergeSize){
+					// it is a duplicate, we can ignore it
+					log.warn("ignoring duplicate shape with id " + toAdd.id + " at " +  toAdd.points.get(0).toOSMURL() + " with type " + GType.formatType(type) + " for resolution " + resolution);
+					continue;
+				}
 			}
 			for (int i: positionsToCheck)
 				toMerge.points.get(i).incShapeCount();
@@ -166,14 +199,15 @@ public class ShapeMergeFilter{
 				long dd = 4; 
 			}
 			// TODO: merge also when only one point is shared
+			boolean stopSearch = false;
 			for (int i = 0; i < shSize; i++) {
+				if (stopSearch)
+					break;
 				Coord other = sh.points.get(i);
 				if (other.getShapeCount() < 2)
 					continue;
-				if (merged != null)
-					break;
 				for (int j : positionsToCheck){
-					if (merged != null)
+					if (stopSearch)
 						break;
 					Coord toAddCurrent = toMerge.points.get(j);
 					if (other == toAddCurrent){
@@ -187,10 +221,20 @@ public class ShapeMergeFilter{
 							Collections.reverse(reversed);
 							int jr = reversed.size()-1 - j;
 							merged = combine(sh.points, reversed, i, jr, otherNext);
-							toMerge = new ShapeHelper(merged);
 						}
 						else if (otherNext == toAddPrev){
 							merged = combine(sh.points, toMerge.points, i, j, otherNext);
+						}
+						if (merged == null)
+							continue;
+						stopSearch = true;
+						if (merged.size() < 4 || merged.get(0) != merged.get(merged.size()-1)){
+							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe duplicate shapes?)");
+							GpxCreator.createGpx("e:/ld/sh", sh.points);
+							GpxCreator.createGpx("e:/ld/toadd", toMerge.points);
+							GpxCreator.createGpx("e:/ld/merged", merged);
+							merged = null;
+						} else {
 							toMerge = new ShapeHelper(merged);
 						}
 					}
@@ -238,20 +282,16 @@ public class ShapeMergeFilter{
 		}
 		
 		merged.addAll(shape1.subList(k-1, n1));
-		if (merged.size() < 4 || merged.get(0) != merged.get(merged.size()-1)){
-			log.error("merginf shapes failed for shapes near " + stop.toOSMURL());
-//			GpxCreator.createGpx("e:/ld/sh", shape1);
-//			GpxCreator.createGpx("e:/ld/toadd", shape2);
-//			GpxCreator.createGpx("e:/ld/merged", merged);
-		}
 		return merged;
 	}
 	
 	private class ShapeHelper{
 		List<Coord> points;
+		long id;
 		
 		public ShapeHelper(MapShape shape) {
 			this.points = shape.getPoints();
+			this.id = shape.getOsmid();
 		}
 
 		public ShapeHelper(List<Coord> merged) {
@@ -259,42 +299,5 @@ public class ShapeMergeFilter{
 		}
 		
 	}
-	
-	/*
-	private class HighPrecCoord  {
-		final Coord co;
-		int usageCount;
-		
-		public HighPrecCoord(Coord co){
-			this.co = co;
-		}
-		
-		@Override
-		public int hashCode() {
-			return co.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (!(obj instanceof HighPrecCoord))
-				return false;
-			HighPrecCoord other = (HighPrecCoord) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
-			if (!co.highPrecEquals(other.co))
-				return false;
-			return true;
-		}
-
-		private ShapeMergeFilter getOuterType() {
-			return ShapeMergeFilter.this;
-		}
-		
-	}
-	*/
 }
 

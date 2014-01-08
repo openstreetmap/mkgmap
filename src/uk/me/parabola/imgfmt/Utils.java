@@ -26,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import uk.me.parabola.imgfmt.app.Coord;
@@ -328,5 +330,32 @@ public class Utils {
 		}
 		return atan;
 	}	
+	
+	/**
+	 * Calculates a unitless number that gives a value for the size
+	 * of the area. The calculation does not correct to any earth 
+	 * coordinate system. It uses the high precision coordinates.
+	 * 
+	 * @param polygon the points of the area
+	 * @return the size of the area (unitless)
+	 */
+	
+	public static double calcHighPrecAreaSize(List<Coord> polygon) {
+		if (polygon.size() < 4 || polygon.get(0) != polygon.get(polygon.size()-1)) {
+			return 0; // line or not closed
+		}
+		double area = 0;
+		Iterator<Coord> polyIter = polygon.iterator();
+		Coord c2 = polyIter.next();
+		while (polyIter.hasNext()) {
+			Coord c1 = c2;
+			c2 = polyIter.next();
+			area += (double) (c2.getHighPrecLon() + c1.getHighPrecLon())
+					* (c1.getHighPrecLat() - c2.getHighPrecLat());
+		}
+		area /= (1<<6) * 2.0d;
+		return Math.abs(area);
+	}
+
 }
 
