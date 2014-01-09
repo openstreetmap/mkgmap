@@ -22,13 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
 import uk.me.parabola.mkgmap.reader.osm.GType;
-import uk.me.parabola.util.GpxCreator;
+//import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.MultiHashMap;
 
 
@@ -56,16 +55,9 @@ public class ShapeMergeFilter{
 		for (MapShape shape: shapes) {
 			if (shape.getMinResolution() > resolution || shape.getMaxResolution() < resolution)
 				continue;
-			if (shape.getPoints().size() > 100){
+			if (shape.getPoints().size() > PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
 				mergedShapes.add(shape);
 				continue;
-			}
-			if (shape.getPoints().size() < 10){
-				double areaSize = Utils.calcHighPrecAreaSize(shape.getPoints());
-				if (areaSize == 0){
-					log.warn("shape with id " + shape.getOsmid()  + " has " + shape.getPoints().size() + " points but zero area size, ignoring it");
-					continue;
-				}
 			}
 //			GpxCreator.createGpx("e:/ld/tm_" + i++, shape.getPoints());
 			List<Map<MapShape, List<ShapeHelper>>> sameTypeList = topMap.get(shape.getType());
@@ -113,15 +105,12 @@ public class ShapeMergeFilter{
 					for (ShapeHelper sh:shapeHelpers){
 						l++;
 						MapShape newShape = ms.copy();
-						assert sh.points.get(0) == sh.points.get(sh.points.size()-1);
-//						int oldSize = sh.points.size();
-//						GpxCreator.createGpx("e:/ld/mr_" + resolution+ "_" + subdivId + "_" + ms.getType() + "_"+i+"_"+j+"_"+k+"_"+l+ "m", sh.points);
-						WrongAngleFixer.fixAnglesInShape(sh.points);
-//						GpxCreator.createGpx("e:/ld/mr_" + resolution+ "_" + subdivId + "_" + ms.getType() + "_"+i+"_"+j+"_"+k+"_"+l+ "f", sh.points);
-//						if (oldSize > sh.points.size() + 10){
-//							long dd = 4;
-//						}
-						newShape.setPoints(sh.points);
+						assert sh.getPoints().get(0) == sh.getPoints().get(sh.getPoints().size()-1);
+						if (sh.id == 0){
+							List<Coord> optimizedPoints = WrongAngleFixer.fixAnglesInShape(sh.getPoints());
+							newShape.setPoints(optimizedPoints);
+						} else
+							newShape.setPoints(sh.getPoints());
 						mergedShapes.add(newShape);
 					}
 				}
@@ -139,30 +128,30 @@ public class ShapeMergeFilter{
 	 */
 	private List<ShapeHelper> addWithoutCreatingHoles(List<ShapeHelper> list,
 			final ShapeHelper toAdd, final int type) {
-		assert toAdd.points.size() > 3;
+		assert toAdd.getPoints().size() > 3;
 		List<ShapeHelper> result = new ArrayList<ShapeHelper>();
-		ShapeHelper toMerge = new ShapeHelper(toAdd.points);
+		ShapeHelper toMerge = new ShapeHelper(toAdd.getPoints());
 		List<Coord>merged = null;
 		IntArrayList positionsToCheck = new IntArrayList();
 		for (ShapeHelper sh:list){
-			int shSize = sh.points.size();
-			int toMergeSize = toMerge.points.size();
+			int shSize = sh.getPoints().size();
+			int toMergeSize = toMerge.getPoints().size();
 			if (shSize + toMergeSize - 3 >= PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
 				// don't merge because merged polygon would be split again
 				result.add(sh);
 				continue;
 			}
 			positionsToCheck.clear();
-			for (Coord co: sh.points)
+			for (Coord co: sh.getPoints())
 				co.resetShapeCount();
-			for (Coord co: toMerge.points){
+			for (Coord co: toMerge.getPoints()){
 				co.resetShapeCount();
 			}
 			// increment the shape counter for all points, but
 			// only once 
 			int numDistinctPoints = 0;
 			
-			for (Coord co : sh.points) {
+			for (Coord co : sh.getPoints()) {
 				if (co.getShapeCount() == 0){
 					co.incShapeCount();
 					++numDistinctPoints;
@@ -173,7 +162,7 @@ public class ShapeMergeFilter{
 				long dd = 4;
 			}
 			for (int i = 0; i+1 < toMergeSize; i++){ 
-				int usage = toMerge.points.get(i).getShapeCount();			
+				int usage = toMerge.getPoints().get(i).getShapeCount();			
 				if (usage > 0)
 					positionsToCheck.add(i);
 			}
@@ -181,62 +170,95 @@ public class ShapeMergeFilter{
 				result.add(sh);
 				continue;
 			}
-			if (positionsToCheck.size() + 1 == toMergeSize){
+			if (positionsToCheck.size() + 1 >= toMergeSize){
 				// all points are identical, might be a duplicate
 				// or a piece that fills a hole 
 				if (shSize == toMergeSize){
 					// it is a duplicate, we can ignore it
-					log.warn("ignoring duplicate shape with id " + toAdd.id + " at " +  toAdd.points.get(0).toOSMURL() + " with type " + GType.formatType(type) + " for resolution " + resolution);
+					log.warn("ignoring duplicate shape with id " + toAdd.id + " at " +  toAdd.getPoints().get(0).toOSMURL() + " with type " + GType.formatType(type) + " for resolution " + resolution);
 					continue;
 				}
 			}
 			for (int i: positionsToCheck)
-				toMerge.points.get(i).incShapeCount();
+				toMerge.getPoints().get(i).incShapeCount();
 			
 			if (positionsToCheck.size() < 2){
-//				GpxCreator.createGpx("e:/ld/sh", sh.points);
-//				GpxCreator.createGpx("e:/ld/toadd", toMerge.points);
+//				GpxCreator.createGpx("e:/ld/sh", sh.getPoints());
+//				GpxCreator.createGpx("e:/ld/toadd", toMerge.getPoints());
 				long dd = 4; 
 			}
 			// TODO: merge also when only one point is shared
+			// TODO: merge if sh shares all points with toMerge (but has less points) 
 			boolean stopSearch = false;
-			for (int i = 0; i < shSize; i++) {
+			int rotation = 0;
+			while (rotation < shSize && sh.getPoints().get(rotation).getShapeCount() >= 2)
+				rotation++;
+			
+			if (rotation >= shSize){
+				rotation = 0;
+				Coord goodPointToStart = toMerge.getPoints().get(positionsToCheck.getInt(0));
+				while (rotation < shSize && sh.getPoints().get(rotation) != goodPointToStart)
+					rotation++;
+			}
+			
+			if (rotation > 0){
+				sh.points.remove(shSize-1);
+				Collections.rotate(sh.points, -rotation);
+				sh.points.add(sh.points.get(0));
+			}
+			int start = 0;
+			while (start < shSize && sh.getPoints().get(start).getShapeCount() < 2)
+				start++;
+			for (int i = start; i < shSize; i++) {
 				if (stopSearch)
 					break;
-				Coord other = sh.points.get(i);
-				if (other.getShapeCount() < 2)
+				Coord other = sh.getPoints().get(i);
+				if (other.getShapeCount() < 2){
 					continue;
+				}
 				for (int j : positionsToCheck){
 					if (stopSearch)
 						break;
-					Coord toAddCurrent = toMerge.points.get(j);
+					Coord toAddCurrent = toMerge.getPoints().get(j);
 					if (other == toAddCurrent){
 						// shapes share one point
-						Coord otherNext = sh.points.get((i == shSize-1) ? 1: i + 1);
-						Coord toAddPrev = toMerge.points.get((j == 0) ? toMergeSize-2 : j - 1);
-						Coord toAddNext = toMerge.points.get((j == toMergeSize-1) ? 1: j + 1);
+						Coord otherNext = sh.getPoints().get((i == shSize-1) ? 1: i + 1);
+						Coord toAddPrev = toMerge.getPoints().get((j == 0) ? toMergeSize-2 : j - 1);
+						Coord toAddNext = toMerge.getPoints().get((j == toMergeSize-1) ? 1: j + 1);
+						if (positionsToCheck.size() > 10){
+							long dd = 4;
+						}
 						if (otherNext == toAddNext){
 							// shapes share an edge, one is clockwise, one is not
-							List<Coord> reversed = new ArrayList<>(toMerge.points);
+							List<Coord> reversed = new ArrayList<>(toMerge.getPoints());
 							Collections.reverse(reversed);
 							int jr = reversed.size()-1 - j;
-							merged = combine(sh.points, reversed, i, jr, otherNext);
+							merged = combine(sh.getPoints(), reversed, i, jr, otherNext);
 						}
 						else if (otherNext == toAddPrev){
-							merged = combine(sh.points, toMerge.points, i, j, otherNext);
+							merged = combine(sh.getPoints(), toMerge.getPoints(), i, j, otherNext);
 						}
 						if (merged == null)
 							continue;
 						stopSearch = true;
+						if (positionsToCheck.size() > 10){
+//							 GpxCreator.createGpx("e:/ld/sh", sh.getPoints());
+//							 GpxCreator.createGpx("e:/ld/toadd", toMerge.getPoints());
+//							 GpxCreator.createGpx("e:/ld/merged", merged);
+							 log.error("warning: large number of identical points in two shapes with equal type " + GType.formatType(type) + " near " + otherNext.toOSMURL());
+						}
 						if (merged.size() < 4 || merged.get(0) != merged.get(merged.size()-1)){
 							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe duplicate shapes?)");
-							// GpxCreator.createGpx("e:/ld/sh", sh.points);
-							// GpxCreator.createGpx("e:/ld/toadd", toMerge.points);
-							// GpxCreator.createGpx("e:/ld/merged", merged);
 							merged = null;
-						} else {
-							toMerge = new ShapeHelper(merged);
-						}
+							continue;
+						} 
+						ShapeHelper shm = new ShapeHelper(merged);
+						if (Math.abs(shm.areaSize) != Math.abs(sh.areaSize) + Math.abs(toMerge.areaSize)){
+							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe overlapping shapes?)");
+							merged = null;
+							continue;
+						} else 
+							toMerge = shm;
 					}
 				}
 			}
@@ -264,7 +286,10 @@ public class ShapeMergeFilter{
 		int n1 = shape1.size();
 		int n2 = shape2.size();
 		List<Coord> merged = new ArrayList<Coord>(n1 + n2 - 3);
-		merged.addAll(shape1.subList(0, posIn1+1));
+		if (posIn1+1 < n1)
+			merged.addAll(shape1.subList(0, posIn1+1));
+		else 
+			merged.addAll(shape1.subList(1, posIn1+1));
 		int k = posIn2+1;
 		while (true){
 			if (k == n2)
@@ -274,29 +299,59 @@ public class ShapeMergeFilter{
 				break;
 			merged.add(co);
 		}
-		k = posIn1+2;
+		k = posIn1 + 2;
 		while(k < n1 && shape1.get(k) == merged.get(merged.size()-1)){
-			// remove spike
+			// remove duplicated points
 			k++;
 			merged.remove(merged.size()-1);
 		}
+		if (k-1 < n1)
+			merged.addAll(shape1.subList(k-1, n1));
+		else 
+			merged.add(merged.get(0));
 		
-		merged.addAll(shape1.subList(k-1, n1));
 		return merged;
 	}
 	
 	private class ShapeHelper{
-		List<Coord> points;
+		final private List<Coord> points;
 		long id;
+		long areaSize;
 		
 		public ShapeHelper(MapShape shape) {
 			this.points = shape.getPoints();
 			this.id = shape.getOsmid();
+			prep();
 		}
 
 		public ShapeHelper(List<Coord> merged) {
 			this.points = merged;
+			prep();
 		}
+
+		public List<Coord> getPoints() {
+//			return Collections.unmodifiableList(points); // too slow, use only while testing
+			return points;
+		}
+
+		/**
+		 * Calculates a unitless number that gives a value for the size
+		 * of the area and the direction (clockwise/ccw)
+		 * 
+		 */
+		void prep() {
+			assert points.size() >= 4;
+			assert points.get(0) == points.get(points.size()-1);
+			Iterator<Coord> polyIter = points.iterator();
+			Coord c2 = polyIter.next();
+			while (polyIter.hasNext()) {
+				Coord c1 = c2;
+				c2 = polyIter.next();
+				areaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
+						* (c1.getHighPrecLat() - c2.getHighPrecLat());
+			}
+		}
+
 		
 	}
 }

@@ -298,36 +298,43 @@ public class HousenumberGenerator {
 			log.info("Numbers:",roadX.getValue());
 			
 			int n = 0;
-			int lastRoutableNodeIndex = -1;
+			int nodeIndex = 0;
+			int lastRoutableNodeIndex = 0;
 			for (Coord p : r.getPoints()) {
-				if (n== 0) {
+				if (n == 0) {
 					assert p instanceof CoordNode; 
 				}
-				
-				if (p instanceof CoordNode == false) {
-					n++;
-					continue;
-				}
-				
-				if (lastRoutableNodeIndex < 0) {
-					lastRoutableNodeIndex=n;
+
+				// An ordinary point in the road.
+				if (p.getId() == 0) {
 					n++;
 					continue;
 				}
 
+				// The first time round, this is guaranteed to be a CoordNode
+				if (n == 0) {
+					nodeIndex++;
+					n++;
+					continue;
+				}
+
+				// Now we have a CoordNode and it is not the first one.
 				Numbers numbers = new Numbers();
 				numbers.setNodeNumber(0);
 				numbers.setRnodNumber(lastRoutableNodeIndex);
 			
 				applyNumbers(numbers,leftNumbers,n,true);
 				applyNumbers(numbers,rightNumbers,n,false);
-				log.info("Left: ",numbers.getLeftNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getLeftStart(),"End:",numbers.getLeftEnd(), "Remaining: "+leftNumbers);
-				log.info("Right:",numbers.getRightNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getRightStart(),"End:",numbers.getRightEnd(), "Remaining: "+rightNumbers);
+
+				if (log.isInfoEnabled()) {
+					log.info("Left: ",numbers.getLeftNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getLeftStart(),"End:",numbers.getLeftEnd(), "Remaining: "+leftNumbers);
+					log.info("Right:",numbers.getRightNumberStyle(),numbers.getRnodNumber(),"Start:",numbers.getRightStart(),"End:",numbers.getRightEnd(), "Remaining: "+rightNumbers);
+				}
 				
 				numbersListing.add(numbers);
 				
-				lastRoutableNodeIndex=n;
-				
+				lastRoutableNodeIndex = nodeIndex;
+				nodeIndex++;
 				n++;
 			}
 			

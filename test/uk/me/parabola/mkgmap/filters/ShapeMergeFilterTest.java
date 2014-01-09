@@ -36,13 +36,10 @@ public class ShapeMergeFilterTest {
 		}
 	};
 	/**
+	 * two simple shapes, sharing two points
 	 */
 	@Test
-	public void testNonOverlapping(){
-		MapShape s1 = new MapShape(1);
-		MapShape s2 = new MapShape(2);
-		s1.setMinResolution(22);
-		s2.setMinResolution(22);
+	public void testSimpleNonOverlapping(){
 		List<Coord> points1 = new ArrayList<>();
 		points1.add(getPoint(15,10));
 		points1.add(getPoint(30,25));
@@ -58,23 +55,144 @@ public class ShapeMergeFilterTest {
 		points2.add(getPoint(15,35));
 		points2.add(points2.get(0)); // close
 		
+		testVariants("simple shapes", points1, points2,1,8);
+	}
+
+	/**
+	 * two simple shapes, sharing three consecutive points 
+	 */
+
+	@Test
+	public void test3SharedPointsNonOverlapping(){
+		List<Coord> points1 = new ArrayList<>();
+		points1.add(getPoint(15,10));
+		points1.add(getPoint(30,25));
+		points1.add(getPoint(25,30));
+		points1.add(getPoint(20,35)); 
+		points1.add(getPoint(15,35));
+		points1.add(getPoint(5,20));
+		points1.add(points1.get(0)); // close
 		
-		s1.setPoints(points1);
-		s2.setPoints(points2);
+		List<Coord> points2 = new ArrayList<>();
+		points2.add(getPoint(25,30));
+		points2.add(getPoint(30,35));
+		points2.add(getPoint(20,40));
+		points2.add(getPoint(15,35));
+		points2.add(getPoint(20,35));
+		points2.add(points2.get(0)); // close
 		
-		for (int i = 1; i < points2.size(); i++){
-			points2.remove(0);
-			Collections.rotate(points2, i);
-			points2.add(points2.get(0));
-			s2.setPoints(points2);
-			ShapeMergeFilter smf = new ShapeMergeFilter(24);
-			List<MapShape> res = smf.merge(Arrays.asList(s1,s2), 0);
-			assertTrue(res != null);
-			assertEquals(1, res.size() );
-			assertEquals(8, res.get(0).getPoints().size());
-		}
+		testVariants("test3SharedPoints", points1, points2, 1, 8);
 	}
 	
+	/**
+	 * one u-formed shape, the other closes it to a rectangular shape with a hole
+	 * They are sharing 4 points. 
+	 */
+
+	@Test
+	public void testCloseUFormed(){
+		List<Coord> points1 = new ArrayList<>();
+		// u-formed shaped (open at top)
+		points1.add(getPoint(15,50));
+		points1.add(getPoint(30,50));
+		points1.add(getPoint(30,55));
+		points1.add(getPoint(20,55)); 
+		points1.add(getPoint(20,65));
+		points1.add(getPoint(30,65));
+		points1.add(getPoint(30,70));
+		points1.add(getPoint(15,70));
+		points1.add(points1.get(0)); // close
+		
+		
+		List<Coord> points2 = new ArrayList<>();
+		points2.add(getPoint(35,50));
+		points2.add(getPoint(35,70));
+		points2.add(getPoint(30,70));
+		points2.add(getPoint(30,65));
+		points2.add(getPoint(30,55));
+		points2.add(getPoint(30,50));
+		points2.add(points2.get(0)); // close
+		
+		testVariants("testCloseUFormed", points1, points2, 1, 11);
+	}
+	
+	/**
+	 * one u-formed shape, the fits into the u and shares all points
+	 */
+
+	@Test
+	public void testFillUFormed(){
+		List<Coord> points1 = new ArrayList<>();
+		// u-formed shaped (open at top)
+		points1.add(getPoint(15,50));
+		points1.add(getPoint(30,50));
+		points1.add(getPoint(30,55));
+		points1.add(getPoint(20,55)); 
+		points1.add(getPoint(20,65));
+		points1.add(getPoint(30,65));
+		points1.add(getPoint(30,70));
+		points1.add(getPoint(15,70));
+		points1.add(points1.get(0)); // close
+		
+		
+		List<Coord> points2 = new ArrayList<>();
+		points2.add(getPoint(30,55));
+		points2.add(getPoint(30,65));
+		points2.add(getPoint(20,65));
+		points2.add(getPoint(20,55));
+		points2.add(points2.get(0)); // close
+		
+		testVariants("testCloseUFormed", points1, points2, 1, 5);
+	}
+	
+	
+	/**
+	 * Test all variants regarding clockwise/ccw direction and positions of the points 
+	 * in the list and the order of shapes. 
+	 * @param list1
+	 * @param list2
+	 */
+	void testVariants(String msg, List<Coord> list1, List<Coord> list2, int expectedNumShapes, int expectedNumPoints){
+		MapShape s1 = new MapShape(1);
+		MapShape s2 = new MapShape(2);
+		s1.setMinResolution(22);
+		s2.setMinResolution(22);
+		for (int i = 0; i < 4; i++){
+			for (int j = 0; j < list1.size(); j++){
+				List<Coord> points1 = new ArrayList<>(list1);
+				if (i == 1 || i == 3)
+					Collections.reverse(points1);
+				points1.remove(0);
+				Collections.rotate(points1, j);
+				points1.add(points1.get(0));
+				s1.setPoints(points1);
+				for (int k = 0; k < list2.size(); k++){
+					List<Coord> points2 = new ArrayList<>(list2);
+					if (i >= 2)
+						Collections.reverse(points2);
+					points2.remove(0);
+					Collections.rotate(points2, k);
+					points2.add(points2.get(0));
+					s2.setPoints(points2);
+					ShapeMergeFilter smf = new ShapeMergeFilter(24);
+					for (int l = 0; l < 2; l++){
+						String testId = msg+" i="+i+",j="+j+",k="+k+",l="+l;
+						if (i == 0 && j == 0 && k == 2 && l == 1){
+							long dd = 4;
+						}
+						List<MapShape> res;
+						if (l == 0)
+							res = smf.merge(Arrays.asList(s1,s2), 0);
+						else 
+							res = smf.merge(Arrays.asList(s2,s1), 0);
+						assertTrue(testId, res != null);
+						assertEquals(testId,expectedNumShapes, res.size() );
+						assertEquals(testId,expectedNumPoints, res.get(0).getPoints().size());
+					}
+				}
+			}
+		}
+	}
 	Coord getPoint(int lat, int lon){
 		Coord co = map.get(lat*1000+lon);
 		assert co != null;

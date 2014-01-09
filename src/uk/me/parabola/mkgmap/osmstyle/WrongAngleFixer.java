@@ -1220,7 +1220,7 @@ public class WrongAngleFixer {
 		
 	}
 
-	public static void fixAnglesInShape(List<Coord> points) {
+	public static List<Coord> fixAnglesInShape(List<Coord> points) {
 		List<Coord> modifiedPoints = new ArrayList<Coord>();
 		modifiedPoints.clear();
 		Coord p0 = points.get(0);
@@ -1230,25 +1230,22 @@ public class WrongAngleFixer {
 		double latErr = p0.getDisplayedCoord().distance(test) / 2;
 		double maxErrorDistance = Math.min(latErr, lonErr);
 		
-		modifiedPoints.add(points.get(0));
+		int n = points.size();
 		// scan through the way's points looking for points which are
 		// on almost straight line and therefore obsolete
-		for (int i = 1; i+1 < points.size(); i++) {
-			if (points.size() == 25 && i > 20){
-				long dd = 4;
-			}
+		for (int i = 0; i+1 < points.size(); i++) {
 			Coord cm = points.get(i);
-			Coord c1 = points.get(i-1);
+			Coord c1 = (i > 0) ? points.get(i-1):points.get(n-2);
 			Coord c2 = points.get(i+1);
 			if (c1 == c2){
-				// loop, handled by split routine
+				// self intersection is OK for shapes, but we can't calculate an angle
 				modifiedPoints.add(cm);
 				continue; 
 			}
 			
 			boolean keepThis = true;
 			double realAngle = Utils.getAngle(c1, cm, c2);
-			double displayedAngle = Double.MAX_VALUE;
+//			double displayedAngle = Double.MAX_VALUE;
 			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
 				double distance = distToLineHeron(cm, c1, c2);
 				if (distance >= maxErrorDistance){
@@ -1274,8 +1271,8 @@ public class WrongAngleFixer {
 				continue;
 			}
 		}
-		modifiedPoints.add(points.get(points.size()-1));
-		points.clear();
-		points.addAll(modifiedPoints);
+		if (modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
+			modifiedPoints.add(modifiedPoints.get(0));
+		return modifiedPoints;
 	}
 }
