@@ -40,21 +40,22 @@ public class ShapeMergeFilterTest {
 	 */
 	@Test
 	public void testSimpleNonOverlapping(){
-		List<Coord> points1 = new ArrayList<>();
-		points1.add(getPoint(15,10));
-		points1.add(getPoint(30,25));
-		points1.add(getPoint(25,30));
-		points1.add(getPoint(15,35));
-		points1.add(getPoint(5,20));
-		points1.add(points1.get(0)); // close
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(15,10));
+			add(getPoint(30,25));
+			add(getPoint(25,30));
+			add(getPoint(15,35));
+			add(getPoint(5,20));
+			add(getPoint(15,10)); // close
+		}};
 		
-		List<Coord> points2 = new ArrayList<>();
-		points2.add(getPoint(25,30));
-		points2.add(getPoint(30,35));
-		points2.add(getPoint(20,40));
-		points2.add(getPoint(15,35));
-		points2.add(points2.get(0)); // close
-		
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(25,30));
+			add(getPoint(30,35));
+			add(getPoint(20,40));
+			add(getPoint(15,35));
+			add(getPoint(25,30));
+		}};
 		testVariants("simple shapes", points1, points2,1,8);
 	}
 
@@ -64,24 +65,25 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void test3SharedPointsNonOverlapping(){
-		List<Coord> points1 = new ArrayList<>();
-		points1.add(getPoint(15,10));
-		points1.add(getPoint(30,25));
-		points1.add(getPoint(25,30));
-		points1.add(getPoint(20,35)); 
-		points1.add(getPoint(15,35));
-		points1.add(getPoint(5,20));
-		points1.add(points1.get(0)); // close
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(15,10));
+			add(getPoint(30,25));
+			add(getPoint(25,30));
+			add(getPoint(20,35)); 
+			add(getPoint(15,35));
+			add(getPoint(5,20));
+			add(getPoint(15,10));// close
+		}};
 		
-		List<Coord> points2 = new ArrayList<>();
-		points2.add(getPoint(25,30));
-		points2.add(getPoint(30,35));
-		points2.add(getPoint(20,40));
-		points2.add(getPoint(15,35));
-		points2.add(getPoint(20,35));
-		points2.add(points2.get(0)); // close
-		
-		testVariants("test3SharedPoints", points1, points2, 1, 8);
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(25,30));
+			add(getPoint(30,35));
+			add(getPoint(20,40));
+			add(getPoint(15,35));
+			add(getPoint(20,35));
+			add(getPoint(25,30));// close
+		}};
+		testVariants("test 3 consecutive shared points", points1, points2, 1, 8);
 	}
 	
 	/**
@@ -91,29 +93,31 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testCloseUFormed(){
-		List<Coord> points1 = new ArrayList<>();
-		// u-formed shaped (open at top)
-		points1.add(getPoint(15,50));
-		points1.add(getPoint(30,50));
-		points1.add(getPoint(30,55));
-		points1.add(getPoint(20,55)); 
-		points1.add(getPoint(20,65));
-		points1.add(getPoint(30,65));
-		points1.add(getPoint(30,70));
-		points1.add(getPoint(15,70));
-		points1.add(points1.get(0)); // close
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			// u-formed shaped (open at top)
+			add(getPoint(15,50));
+			add(getPoint(30,50));
+			add(getPoint(30,55));
+			add(getPoint(20,55)); 
+			add(getPoint(20,65));
+			add(getPoint(30,65));
+			add(getPoint(30,70));
+			add(getPoint(15,70));
+			add(getPoint(15,50));// close
+		}};
+
+
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(35,50));
+			add(getPoint(35,70));
+			add(getPoint(30,70));
+			add(getPoint(30,65));
+			add(getPoint(30,55));
+			add(getPoint(30,50));
+			add(getPoint(35,50)); // close
+		}};
 		
-		
-		List<Coord> points2 = new ArrayList<>();
-		points2.add(getPoint(35,50));
-		points2.add(getPoint(35,70));
-		points2.add(getPoint(30,70));
-		points2.add(getPoint(30,65));
-		points2.add(getPoint(30,55));
-		points2.add(getPoint(30,50));
-		points2.add(points2.get(0)); // close
-		
-		testVariants("testCloseUFormed", points1, points2, 1, 11);
+		testVariants("test close U formed shape", points1, points2, 1, 11);
 	}
 	
 	/**
@@ -122,29 +126,96 @@ public class ShapeMergeFilterTest {
 
 	@Test
 	public void testFillUFormed(){
-		List<Coord> points1 = new ArrayList<>();
-		// u-formed shaped (open at top)
-		points1.add(getPoint(15,50));
-		points1.add(getPoint(30,50));
-		points1.add(getPoint(30,55));
-		points1.add(getPoint(20,55)); 
-		points1.add(getPoint(20,65));
-		points1.add(getPoint(30,65));
-		points1.add(getPoint(30,70));
-		points1.add(getPoint(15,70));
-		points1.add(points1.get(0)); // close
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			// u-formed shaped (open at top)
+			add(getPoint(15,50));
+			add(getPoint(30,50));
+			add(getPoint(30,55));
+			add(getPoint(20,55)); 
+			add(getPoint(20,65));
+			add(getPoint(30,65));
+			add(getPoint(30,70));
+			add(getPoint(15,70));
+			add(getPoint(15,50)); // close
+		}};
+
 		
-		
-		List<Coord> points2 = new ArrayList<>();
-		points2.add(getPoint(30,55));
-		points2.add(getPoint(30,65));
-		points2.add(getPoint(20,65));
-		points2.add(getPoint(20,55));
-		points2.add(points2.get(0)); // close
-		
-		testVariants("testCloseUFormed", points1, points2, 1, 5);
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(30,55));
+			add(getPoint(30,65));
+			add(getPoint(20,65));
+			add(getPoint(20,55));
+			add(getPoint(30,55)); // close
+		}};
+		testVariants("test fill U-formed shape", points1, points2, 1, 5);
 	}
 	
+	/**
+	 * one u-formed shape, the fits into the u and shares all points
+	 */
+
+	@Test
+	public void testFillHole(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			// a rectangle with a hole 
+			add(getPoint(35,50));
+			add(getPoint(35,70));
+			add(getPoint(15,70));
+			add(getPoint(15,50));
+			add(getPoint(30,50));
+			add(getPoint(30,55));
+			add(getPoint(20,55)); 
+			add(getPoint(20,65));
+			add(getPoint(30,65));
+			add(getPoint(30,70));
+			add(getPoint(30,50));
+			add(getPoint(35,50));// close
+		}};
+
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(30,55));
+			add(getPoint(30,65));
+			add(getPoint(20,65));
+			add(getPoint(20,55));
+			add(getPoint(30,55)); // close
+		}};
+		testVariants("test-fill-hole", points1, points2, 1, 5);
+	}
+
+	@Test
+	public void testDuplicate(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(30,55));
+			add(getPoint(30,65));
+			add(getPoint(20,65));
+			add(getPoint(20,55));
+			add(getPoint(30,55)); // close
+		}};
+		List<Coord> points2 = new ArrayList<Coord>(points1);
+		
+		testVariants("test duplicate", points1, points2, 1, 5);
+	}
+
+	@Test
+	public void testFullyContains(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(30,55));
+			add(getPoint(30,65));
+			add(getPoint(20,65));
+			add(getPoint(20,55));
+			add(getPoint(30,55)); // close
+		}};
+
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(30,55));
+			add(getPoint(30,65));
+			add(getPoint(25,65));
+			add(getPoint(25,55));
+			add(getPoint(30,55)); // close
+		}};
+		
+		testVariants("test overlap", points1, points2, 2, 5);
+	}
 	
 	/**
 	 * Test all variants regarding clockwise/ccw direction and positions of the points 
