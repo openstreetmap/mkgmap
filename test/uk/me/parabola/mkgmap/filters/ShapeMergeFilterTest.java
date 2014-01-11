@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
+
 public class ShapeMergeFilterTest {
 	private static final HashMap<Integer,Coord> map = new HashMap<Integer,Coord>(){
 		{
@@ -35,8 +36,45 @@ public class ShapeMergeFilterTest {
 			}
 		}
 	};
+
+	@Test
+	public void testAreaTestVal(){
+		List<Coord> points = new ArrayList<Coord>(){{
+			add(getPoint(10,10));
+			add(getPoint(30,10));
+			add(getPoint(30,30));
+			add(getPoint(10,30));
+			add(getPoint(10,10)); // close
+			
+		}};
+		assertEquals(2 * (20*(1<<6) * 20*(1<<6)),ShapeMergeFilter.calcAreaSizeTestVal(points));
+	}	
 	/**
-	 * two simple shapes, sharing two points
+	 * two simple shapes, sharing one point
+	 */
+	@Test
+	public void testSimpleSharingOne(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(15,10));
+			add(getPoint(30,25));
+			add(getPoint(25,30));
+			add(getPoint(10,30));
+			add(getPoint(5,20));
+			add(getPoint(15,10)); // close
+		}};
+		
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(25,30));
+			add(getPoint(30,35));
+			add(getPoint(20,40));
+			add(getPoint(15,35));
+			add(getPoint(25,30));
+		}};
+		testVariants("simple shapes sharing one point", points1, points2,1,10);
+	}
+	
+	/**
+	 * two simple shapes, sharing one edge 
 	 */
 	@Test
 	public void testSimpleNonOverlapping(){
@@ -84,6 +122,32 @@ public class ShapeMergeFilterTest {
 			add(getPoint(25,30));// close
 		}};
 		testVariants("test 3 consecutive shared points", points1, points2, 1, 8);
+	}
+	
+	/**
+	 * two simple shapes, sharing three consecutive points 
+	 */
+
+	@Test
+	public void test2SharedPointsNoEdge(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(15,10));
+			add(getPoint(30,25));
+			add(getPoint(25,30));
+			add(getPoint(15,35));
+			add(getPoint(5,20));
+			add(getPoint(15,10));// close
+		}};
+		
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(25,30));
+			add(getPoint(30,35));
+			add(getPoint(20,40));
+			add(getPoint(15,35));
+			add(getPoint(20,35));
+			add(getPoint(25,30));// close
+		}};
+		testVariants("test 2 non-consecutive shared points", points1, points2, 1, 10);
 	}
 	
 	/**
@@ -167,7 +231,6 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,55)); 
 			add(getPoint(20,65));
 			add(getPoint(30,65));
-			add(getPoint(30,70));
 			add(getPoint(30,50));
 			add(getPoint(35,50));// close
 		}};
@@ -179,7 +242,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,55));
 			add(getPoint(30,55)); // close
 		}};
-		testVariants("test-fill-hole", points1, points2, 1, 5);
+		testVariants("test-fill-hole", points1, points2, 1, 8); // merged shape contains spike
 	}
 
 	@Test
@@ -197,7 +260,7 @@ public class ShapeMergeFilterTest {
 	}
 
 	@Test
-	public void testFullyContains(){
+	public void testOverlap(){
 		List<Coord> points1 = new ArrayList<Coord>(){{
 			add(getPoint(30,55));
 			add(getPoint(30,65));
@@ -213,10 +276,50 @@ public class ShapeMergeFilterTest {
 			add(getPoint(25,55));
 			add(getPoint(30,55)); // close
 		}};
-		
+		// no merge expected
 		testVariants("test overlap", points1, points2, 2, 5);
 	}
-	
+
+	/*
+	 * shapes are connected at multiple edges like two 
+	 * w-formed shapes.
+	 */
+	@Test
+	public void testTwoWShaped(){
+		List<Coord> points1 = new ArrayList<Coord>(){{
+			add(getPoint(0,5));
+			add(getPoint(35,5));
+			add(getPoint(35,20));
+			add(getPoint(30,15));
+			add(getPoint(25,20));
+			add(getPoint(25,10));
+			add(getPoint(15,10));
+			add(getPoint(15,20));
+			add(getPoint(10,15));
+			add(getPoint(5,20));
+			add(getPoint(0,20));
+			add(getPoint(0,5)); // close
+		}};
+
+		List<Coord> points2 = new ArrayList<Coord>(){{
+			add(getPoint(35,35));
+			add(getPoint(35,20));
+			add(getPoint(30,15));
+			add(getPoint(25,20));
+			add(getPoint(25,25));
+			add(getPoint(15,25));
+			add(getPoint(15,20));
+			add(getPoint(10,15));
+			add(getPoint(5,20));
+			add(getPoint(0,20));
+			add(getPoint(5,35));
+			add(getPoint(35,35)); // close
+		}};
+		
+		// wanted: merge that removes at least the longer shared sequence
+		testVariants("test two w-shaped", points1, points2, 1, 17);
+	}
+
 	/**
 	 * Test all variants regarding clockwise/ccw direction and positions of the points 
 	 * in the list and the order of shapes. 
@@ -245,24 +348,32 @@ public class ShapeMergeFilterTest {
 					Collections.rotate(points2, k);
 					points2.add(points2.get(0));
 					s2.setPoints(points2);
-					ShapeMergeFilter smf = new ShapeMergeFilter(24);
+					
 					for (int l = 0; l < 2; l++){
 						String testId = msg+" i="+i+",j="+j+",k="+k+",l="+l;
-						if (i == 0 && j == 0 && k == 2 && l == 1){
-							long dd = 4;
-						}
-						List<MapShape> res;
 						if (l == 0)
-							res = smf.merge(Arrays.asList(s1,s2), 0);
+							testOneVariant(testId, s1, s2, expectedNumShapes,expectedNumPoints);
 						else 
-							res = smf.merge(Arrays.asList(s2,s1), 0);
-						assertTrue(testId, res != null);
-						assertEquals(testId,expectedNumShapes, res.size() );
-						assertEquals(testId,expectedNumPoints, res.get(0).getPoints().size());
+							testOneVariant(testId, s2, s1, expectedNumShapes,expectedNumPoints);
 					}
 				}
 			}
 		}
+		return;
+	}
+	
+	void testOneVariant(String testId, MapShape s1, MapShape s2, int expectedNumShapes, int expectedNumPoints){
+		ShapeMergeFilter smf = new ShapeMergeFilter(24);
+		List<MapShape> res = smf.merge(Arrays.asList(s1,s2), 0);
+		if (testId.startsWith("test two w-shaped") && res.get(0).getPoints().size() < expectedNumPoints){
+//			GpxCreator.createGpx("e:/ld/s1", s1.getPoints());
+//			GpxCreator.createGpx("e:/ld/s2", s2.getPoints());
+//			GpxCreator.createGpx("e:/ld/res", res.get(0).getPoints());
+		}
+		assertTrue(testId, res != null);
+		assertEquals(testId,expectedNumShapes, res.size() );
+		assertTrue(testId + " number of points > " + expectedNumPoints, res.get(0).getPoints().size() <= expectedNumPoints);
+		// TODO: test shape size
 	}
 	Coord getPoint(int lat, int lon){
 		Coord co = map.get(lat*1000+lon);

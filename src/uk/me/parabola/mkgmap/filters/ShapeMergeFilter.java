@@ -130,28 +130,28 @@ public class ShapeMergeFilter{
 			final ShapeHelper toAdd, final int type) {
 		assert toAdd.getPoints().size() > 3;
 		List<ShapeHelper> result = new ArrayList<ShapeHelper>();
-		ShapeHelper toMerge = new ShapeHelper(toAdd.getPoints());
+		ShapeHelper shNew = new ShapeHelper(toAdd.getPoints());
 		List<Coord>merged = null;
 		IntArrayList positionsToCheck = new IntArrayList();
-		for (ShapeHelper sh:list){
-			int shSize = sh.getPoints().size();
-			int toMergeSize = toMerge.getPoints().size();
+		for (ShapeHelper shOld:list){
+			int shSize = shOld.getPoints().size();
+			int toMergeSize = shNew.getPoints().size();
 			if (shSize + toMergeSize - 3 >= PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
 				// don't merge because merged polygon would be split again
-				result.add(sh);
+				result.add(shOld);
 				continue;
 			}
 			positionsToCheck.clear();
-			for (Coord co: sh.getPoints())
+			for (Coord co: shOld.getPoints())
 				co.resetShapeCount();
-			for (Coord co: toMerge.getPoints()){
+			for (Coord co: shNew.getPoints()){
 				co.resetShapeCount();
 			}
 			// increment the shape counter for all points, but
 			// only once 
 			int numDistinctPoints = 0;
 			
-			for (Coord co : sh.getPoints()) {
+			for (Coord co : shOld.getPoints()) {
 				if (co.getShapeCount() == 0){
 					co.incShapeCount();
 					++numDistinctPoints;
@@ -162,119 +162,110 @@ public class ShapeMergeFilter{
 				long dd = 4;
 			}
 			for (int i = 0; i+1 < toMergeSize; i++){ 
-				int usage = toMerge.getPoints().get(i).getShapeCount();			
+				int usage = shNew.getPoints().get(i).getShapeCount();			
 				if (usage > 0)
 					positionsToCheck.add(i);
 			}
 			if (positionsToCheck.isEmpty()){
-				result.add(sh);
+				result.add(shOld);
 				continue;
+			}
+			Coord firstSharedInNew = shNew.getPoints().get(positionsToCheck.getInt(0));
+			if (positionsToCheck.size() > 10){
+				 log.error("warning: high number of identical points ("+positionsToCheck.size()+ ") in two shapes with equal type " + GType.formatType(type) + " near " + firstSharedInNew.toOSMURL());
 			}
 			if (positionsToCheck.size() + 1 >= toMergeSize){
 				// all points are identical, might be a duplicate
 				// or a piece that fills a hole 
-				if (shSize == toMergeSize){
+				if (shSize == toMergeSize && Math.abs(shOld.areaTestVal) == Math.abs(shNew.areaTestVal)){ 
 					// it is a duplicate, we can ignore it
 					log.warn("ignoring duplicate shape with id " + toAdd.id + " at " +  toAdd.getPoints().get(0).toOSMURL() + " with type " + GType.formatType(type) + " for resolution " + resolution);
 					continue;
 				}
 			}
-			for (int i: positionsToCheck)
-				toMerge.getPoints().get(i).incShapeCount();
 			
-			if (positionsToCheck.size() < 2){
-//				GpxCreator.createGpx("e:/ld/sh", sh.getPoints());
-//				GpxCreator.createGpx("e:/ld/toadd", toMerge.getPoints());
-				long dd = 4; 
-			}
-			// TODO: merge also when only one point is shared
-			// TODO: merge if sh shares all points with toMerge (but has less points) 
+			for (int i: positionsToCheck)
+				shNew.getPoints().get(i).incShapeCount();
+			
 			boolean stopSearch = false;
 			int rotation = 0;
-			while (rotation < shSize && sh.getPoints().get(rotation).getShapeCount() >= 2)
+			while (rotation < shSize && shOld.getPoints().get(rotation).getShapeCount() >= 2)
 				rotation++;
 			
 			if (rotation >= shSize){
 				rotation = 0;
-				Coord goodPointToStart = toMerge.getPoints().get(positionsToCheck.getInt(0));
-				while (rotation < shSize && sh.getPoints().get(rotation) != goodPointToStart)
+				Coord goodPointToStart = firstSharedInNew;
+				while (rotation < shSize && shOld.getPoints().get(rotation) != goodPointToStart)
 					rotation++;
 			}
 			
 			if (rotation > 0){
-				sh.points.remove(shSize-1);
-				Collections.rotate(sh.points, -rotation);
-				sh.points.add(sh.points.get(0));
+				shOld.getPoints().remove(shSize-1);
+				Collections.rotate(shOld.getPoints(), -rotation);
+				shOld.points.add(shOld.getPoints().get(0));
 			}
+			// both clockwise or both ccw ?
+			boolean sameDir = shOld.areaTestVal > 0 && shNew.areaTestVal > 0 || shOld.areaTestVal < 0 && shNew.areaTestVal < 0;
 			int start = 0;
-			while (start < shSize && sh.getPoints().get(start).getShapeCount() < 2)
+			while (start < shSize && shOld.getPoints().get(start).getShapeCount() < 2)
 				start++;
+			if (positionsToCheck.size() < 2){
+				merged = combineOneSharedPoint(shOld.getPoints(), shNew.getPoints(), start, positionsToCheck.getInt(0), firstSharedInNew, sameDir);
+				stopSearch = true;
+			}
 			for (int i = start; i < shSize; i++) {
 				if (stopSearch)
 					break;
-				Coord other = sh.getPoints().get(i);
+				Coord other = shOld.getPoints().get(i);
 				if (other.getShapeCount() < 2){
 					continue;
 				}
 				for (int j : positionsToCheck){
 					if (stopSearch)
 						break;
-					Coord toAddCurrent = toMerge.getPoints().get(j);
+					Coord toAddCurrent = shNew.getPoints().get(j);
 					if (other == toAddCurrent){
 						// shapes share one point
-						Coord otherNext = sh.getPoints().get((i == shSize-1) ? 1: i + 1);
-						Coord toAddPrev = toMerge.getPoints().get((j == 0) ? toMergeSize-2 : j - 1);
-						Coord toAddNext = toMerge.getPoints().get((j == toMergeSize-1) ? 1: j + 1);
-						if (positionsToCheck.size() > 10){
-							long dd = 4;
-						}
+						Coord otherNext = shOld.getPoints().get((i == shSize-1) ? 1: i + 1);
+						Coord toAddPrev = shNew.getPoints().get((j == 0) ? toMergeSize-2 : j - 1);
+						Coord toAddNext = shNew.getPoints().get((j == toMergeSize-1) ? 1: j + 1);
 						if (otherNext == toAddNext){
 							// shapes share an edge, one is clockwise, one is not
-							List<Coord> reversed = new ArrayList<>(toMerge.getPoints());
+							List<Coord> reversed = new ArrayList<>(shNew.getPoints());
 							Collections.reverse(reversed);
 							int jr = reversed.size()-1 - j;
-							merged = combine(sh.getPoints(), reversed, i, jr, otherNext);
+							merged = combine(shOld.getPoints(), reversed, i, jr, otherNext);
 						}
 						else if (otherNext == toAddPrev){
-							merged = combine(sh.getPoints(), toMerge.getPoints(), i, j, otherNext);
+							merged = combine(shOld.getPoints(), shNew.getPoints(), i, j, otherNext);
 						}
 						if (merged == null)
 							continue;
 						stopSearch = true;
-						if (positionsToCheck.size() > 10){
-//							 GpxCreator.createGpx("e:/ld/sh", sh.getPoints());
-//							 GpxCreator.createGpx("e:/ld/toadd", toMerge.getPoints());
-//							 GpxCreator.createGpx("e:/ld/merged", merged);
-							 log.error("warning: large number of identical points in two shapes with equal type " + GType.formatType(type) + " near " + otherNext.toOSMURL());
-						}
-						if (merged.size() < 4 || merged.get(0) != merged.get(merged.size()-1)){
-							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe duplicate shapes?)");
-							merged = null;
-							continue;
-						} 
-						ShapeHelper shm = new ShapeHelper(merged);
-						if (Math.abs(shm.areaSize) != Math.abs(sh.areaSize) + Math.abs(toMerge.areaSize)){
-							log.error("merging shapes failed for shapes near " + otherNext.toOSMURL() + " (maybe overlapping shapes?)");
-							merged = null;
-							continue;
-						} else 
-							toMerge = shm;
 					}
 				}
 			}
+			if (merged != null){
+				ShapeHelper shm = new ShapeHelper(merged);
+				if (Math.abs(shm.areaTestVal) != Math.abs(shOld.areaTestVal) + Math.abs(shNew.areaTestVal)){
+					log.warn("merging shapes skipped for shapes near " + firstSharedInNew.toOSMURL() + " (maybe overlapping shapes?)");
+					merged = null;
+				} else 
+					shNew = shm;
+			}
 			if (merged == null)
-				result.add(sh);
+				result.add(shOld);
 			merged = null;
 		}
 		if (merged == null)
-			result.add(toMerge);
+			result.add(shNew);
 		if (result.size() > list.size()+1 )
 			log.error("result list size is wrong " + list.size() + " -> " + result.size());
 		return result;
 	}
 
 	/**
-	 * Combine to shapes that share at least one edge 
+	 * Combine two shapes that share at least one edge 
 	 * @param shape1 
 	 * @param shape2
 	 * @param posIn1
@@ -313,46 +304,73 @@ public class ShapeMergeFilter{
 		return merged;
 	}
 	
+	/**
+	 * Combine two shapes that share only one point 
+	 * @param shape1 
+	 * @param shape2
+	 * @param posIn1
+	 * @param posIn2
+	 * @param shared
+	 * @param sameDir 
+	 * @return merged shape
+	 */
+	private List<Coord> combineOneSharedPoint(List<Coord> shape1, List<Coord> shape2, int posIn1, int posIn2, Coord shared, boolean sameDir){
+		int n1 = shape1.size();
+		int n2 = shape2.size();
+		List<Coord> merged = new ArrayList<Coord>(n1 + n2);
+		merged.addAll(shape1.subList(0, n1-1));
+		Collections.rotate(merged, -posIn1);
+		
+		merged.addAll(shape2.subList(0, n2-1));
+		Collections.rotate(merged.subList(n1-1, merged.size()),-posIn2);
+		merged.add(merged.get(0));
+		if (!sameDir)
+			Collections.reverse(merged.subList(n1-1,merged.size()));
+		assert merged.get(0) == shared;
+		return merged;
+	}
+	
 	private class ShapeHelper{
 		final private List<Coord> points;
-		long id;
-		long areaSize;
+		long id; // TODO: remove debugging aid
+		long areaTestVal;
 		
 		public ShapeHelper(MapShape shape) {
 			this.points = shape.getPoints();
 			this.id = shape.getOsmid();
-			prep();
+			areaTestVal = calcAreaSizeTestVal(points);
 		}
 
 		public ShapeHelper(List<Coord> merged) {
 			this.points = merged;
-			prep();
+			areaTestVal = calcAreaSizeTestVal(points);
 		}
 
 		public List<Coord> getPoints() {
 //			return Collections.unmodifiableList(points); // too slow, use only while testing
 			return points;
 		}
-
-		/**
-		 * Calculates a unitless number that gives a value for the size
-		 * of the area and the direction (clockwise/ccw)
-		 * 
-		 */
-		void prep() {
-			assert points.size() >= 4;
-			assert points.get(0) == points.get(points.size()-1);
-			Iterator<Coord> polyIter = points.iterator();
-			Coord c2 = polyIter.next();
-			while (polyIter.hasNext()) {
-				Coord c1 = c2;
-				c2 = polyIter.next();
-				areaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
-						* (c1.getHighPrecLat() - c2.getHighPrecLat());
-			}
+	}
+	
+	/**
+	 * Calculate the high precision area size test value.  
+	 * @param points
+	 * @return area size in high precision map units * 2.
+	 * The value is >= 0 if the shape is clockwise, else < 0   
+	 */
+	public static long calcAreaSizeTestVal(List<Coord> points){
+		assert points.size() >= 4;
+		assert points.get(0) == points.get(points.size()-1);
+		Iterator<Coord> polyIter = points.iterator();
+		Coord c2 = polyIter.next();
+		long signedAreaSize = 0;
+		while (polyIter.hasNext()) {
+			Coord c1 = c2;
+			c2 = polyIter.next();
+			signedAreaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
+					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}
-
-		
+		return signedAreaSize;
 	}
 }
 

@@ -947,7 +947,7 @@ public class StyledConverter implements OsmConverter {
 			log.error("shape is not closed with identical points " + way.getId());
 		if (!way.hasIdenticalEndPoints())
 			return;
-		
+		// TODO: split self intersecting polygons?
 		final MapShape shape = new MapShape(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
