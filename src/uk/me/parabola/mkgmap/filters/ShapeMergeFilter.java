@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
@@ -134,6 +135,10 @@ public class ShapeMergeFilter{
 		List<Coord>merged = null;
 		IntArrayList positionsToCheck = new IntArrayList();
 		for (ShapeHelper shOld:list){
+			if (shOld.bounds.intersects(shNew.bounds) == false){
+				result.add(shOld);
+				continue;
+			}
 			int shSize = shOld.getPoints().size();
 			int toMergeSize = shNew.getPoints().size();
 			if (shSize + toMergeSize - 3 >= PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
@@ -334,21 +339,49 @@ public class ShapeMergeFilter{
 		final private List<Coord> points;
 		long id; // TODO: remove debugging aid
 		long areaTestVal;
-		
+		private final Area bounds;
+
 		public ShapeHelper(MapShape shape) {
 			this.points = shape.getPoints();
 			this.id = shape.getOsmid();
 			areaTestVal = calcAreaSizeTestVal(points);
+			bounds = new Area(shape.getBounds().getMinLat(), 
+					shape.getBounds().getMinLong(), 
+					shape.getBounds().getMaxLat(), 
+					shape.getBounds().getMaxLong());
 		}
 
 		public ShapeHelper(List<Coord> merged) {
 			this.points = merged;
 			areaTestVal = calcAreaSizeTestVal(points);
+			bounds = prep();
 		}
 
 		public List<Coord> getPoints() {
 //			return Collections.unmodifiableList(points); // too slow, use only while testing
 			return points;
+		}
+		/**
+		 * Calculates a unitless number that gives a value for the size
+		 * of the area and the direction (clockwise/ccw)
+		 * 
+		 */
+		Area prep() {
+			int minLat = Integer.MAX_VALUE;
+			int maxLat = Integer.MIN_VALUE;
+			int minLon = Integer.MAX_VALUE;
+			int maxLon = Integer.MIN_VALUE;
+			for (Coord co: points) {
+				if (co.getLatitude() > maxLat)
+					maxLat = co.getLatitude();
+				if (co.getLatitude() < minLat)
+					minLat = co.getLatitude();
+				if (co.getLongitude() > maxLon)
+					maxLon = co.getLongitude();
+				if (co.getLongitude() < minLon)
+					minLon = co.getLongitude();
+			}
+			return new Area(minLat, minLon, maxLat, maxLon);
 		}
 	}
 	
