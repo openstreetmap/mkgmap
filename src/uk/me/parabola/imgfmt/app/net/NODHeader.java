@@ -35,6 +35,9 @@ public class NODHeader extends CommonHeader {
 	private final Section roads = new Section(nodes);
 	private final Section boundary = new Section(roads, BOUNDARY_ITEM_SIZE);
 
+    private int flags;
+    private int align;
+
 	/** 
 	 * The driveOnLeft flag is set via a static method. Using a ThreadLocal
 	 * ensures thread safety when using more than one thread.
@@ -57,7 +60,15 @@ public class NODHeader extends CommonHeader {
 	 * @param reader The header is read from here.
 	 */
 	protected void readFileHeader(ImgFileReader reader) throws ReadFailedException {
-	}
+        nodes.readSectionInfo(reader, false);
+        flags = reader.getChar();
+        reader.getChar();
+        align = reader.getChar();
+        reader.getChar();
+        roads.readSectionInfo(reader, false);
+        reader.getInt();
+        boundary.readSectionInfo(reader, true);
+    }
 
 	/**
 	 * Write the rest of the header.  It is guaranteed that the writer will be set
@@ -85,9 +96,17 @@ public class NODHeader extends CommonHeader {
 		boundary.writeSectionInfo(writer);
 	}
 
+    public int getNodeStart() {
+        return nodes.getPosition();
+    }
+
 	public void setNodeStart(int start) {
 		nodes.setPosition(start);
 	}
+
+    public int getNodeSize() {
+        return nodes.getSize();
+    }
 
 	public void setNodeSize(int size) {
 		nodes.setSize(size);
@@ -116,4 +135,12 @@ public class NODHeader extends CommonHeader {
 	public static void setDriveOnLeft(boolean dol) {
 		driveOnLeft.set(dol);
 	}
+
+    public int getFlags() {
+        return flags;
+    }
+
+    public int getAlign() {
+        return align;
+    }
 }
