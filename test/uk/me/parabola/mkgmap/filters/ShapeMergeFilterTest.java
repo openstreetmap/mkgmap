@@ -26,6 +26,7 @@ import org.junit.Test;
 
 
 public class ShapeMergeFilterTest {
+	// create one Coord instance for each point in a small test grid 
 	private static final HashMap<Integer,Coord> map = new HashMap<Integer,Coord>(){
 		{
 			for (int lat = 0; lat < 100; lat +=5){
@@ -147,7 +148,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,35));
 			add(getPoint(25,30));// close
 		}};
-		testVariants("test 2 non-consecutive shared points", points1, points2, 1, 10);
+		testVariants("test 2 non-consecutive shared points", points1, points2, 1, 11);
 	}
 	
 	/**
@@ -317,7 +318,7 @@ public class ShapeMergeFilterTest {
 		}};
 		
 		// wanted: merge that removes at least the longer shared sequence
-		testVariants("test two w-shaped", points1, points2, 1, 17);
+		testVariants("test two w-shaped", points1, points2, 1, 16);
 	}
 
 	/**
@@ -334,17 +335,17 @@ public class ShapeMergeFilterTest {
 		for (int i = 0; i < 4; i++){
 			for (int j = 0; j < list1.size(); j++){
 				List<Coord> points1 = new ArrayList<>(list1);
-				if (i == 1 || i == 3)
+				if ((i & 1) != 0)
 					Collections.reverse(points1);
-				points1.remove(0);
+				points1.remove(points1.size()-1);
 				Collections.rotate(points1, j);
 				points1.add(points1.get(0));
 				s1.setPoints(points1);
 				for (int k = 0; k < list2.size(); k++){
 					List<Coord> points2 = new ArrayList<>(list2);
-					if (i >= 2)
+					if ((i & 2) != 0)
 						Collections.reverse(points2);
-					points2.remove(0);
+					points2.remove(points2.size()-1);
 					Collections.rotate(points2, k);
 					points2.add(points2.get(0));
 					s2.setPoints(points2);
@@ -365,13 +366,13 @@ public class ShapeMergeFilterTest {
 	void testOneVariant(String testId, MapShape s1, MapShape s2, int expectedNumShapes, int expectedNumPoints){
 		ShapeMergeFilter smf = new ShapeMergeFilter(24);
 		List<MapShape> res = smf.merge(Arrays.asList(s1,s2), 0);
-		if (testId.startsWith("test two w-shaped") && res.get(0).getPoints().size() < expectedNumPoints){
+		assertTrue(testId, res != null);
+		assertEquals(testId,expectedNumShapes, res.size() );
+//		if (res.get(0).getPoints().size() < expectedNumPoints){
 //			GpxCreator.createGpx("e:/ld/s1", s1.getPoints());
 //			GpxCreator.createGpx("e:/ld/s2", s2.getPoints());
 //			GpxCreator.createGpx("e:/ld/res", res.get(0).getPoints());
-		}
-		assertTrue(testId, res != null);
-		assertEquals(testId,expectedNumShapes, res.size() );
+//		}
 		assertTrue(testId + " number of points > " + expectedNumPoints, res.get(0).getPoints().size() <= expectedNumPoints);
 		// TODO: test shape size
 	}
