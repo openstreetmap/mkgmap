@@ -1255,10 +1255,6 @@ public class WrongAngleFixer {
 				if (distance < maxErrorDistance)
 					continue;
 			}
-			double displAngle = Utils.getDisplayedAngle(c1, cm, c2);
-			if (Math.abs(displAngle  - realAngle) > 30){
-				System.out.println("opt");
-			}
 			modifiedPoints.add(cm);
 		}
 		if (modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
