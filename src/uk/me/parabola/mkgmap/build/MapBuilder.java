@@ -165,7 +165,9 @@ public class MapBuilder implements Configurable {
 		if (reducePointErrorPolygon == -1)
 			reducePointErrorPolygon = reducePointError;
 		mergeLines = props.containsKey("merge-lines");
-		mergeShapes = props.getProperty("merge-shapes",false);
+
+		// undocumented option - usually used for debugging only
+		mergeShapes = props.getProperty("no-mergeshapes", false) == false;
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
