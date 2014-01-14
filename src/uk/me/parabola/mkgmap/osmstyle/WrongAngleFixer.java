@@ -497,12 +497,7 @@ public class WrongAngleFixer {
 			lastWasModified = false;
 			List<Coord> points = way.getPoints();
 			modifiedPoints.clear();
-			Coord p0 = points.get(0);
-			Coord test = new Coord(p0.getLatitude(),p0.getLongitude()+1);
-			double lonErr = p0.getDisplayedCoord().distance(test) / 2;
-			test = new Coord(p0.getLatitude()+1,p0.getLongitude());
-			double latErr = p0.getDisplayedCoord().distance(test) / 2;
-			double maxErrorDistance = Math.min(latErr, lonErr);
+			double maxErrorDistance = calcMarErrorDistance(points.get(0));
 			boolean draw = false;
 			removedInWay.clear();
 			modifiedPoints.add(points.get(0));
@@ -1220,15 +1215,22 @@ public class WrongAngleFixer {
 		
 	}
 
-	public static List<Coord> fixAnglesInShape(List<Coord> points) {
-		List<Coord> modifiedPoints = new ArrayList<Coord>();
-		modifiedPoints.clear();
-		Coord p0 = points.get(0);
+	private static double calcMarErrorDistance(Coord p0){
 		Coord test = new Coord(p0.getLatitude(),p0.getLongitude()+1);
 		double lonErr = p0.getDisplayedCoord().distance(test) / 2;
 		test = new Coord(p0.getLatitude()+1,p0.getLongitude());
 		double latErr = p0.getDisplayedCoord().distance(test) / 2;
-		double maxErrorDistance = Math.min(latErr, lonErr);
+		return Math.min(latErr, lonErr);
+	}
+
+	/**
+	 * TODO: fix wrong angles caused by rounding errors.
+	 * @param points
+	 * @return
+	 */
+	public static List<Coord> fixAnglesInShape(List<Coord> points) {
+		List<Coord> modifiedPoints = new ArrayList<Coord>(points.size());
+		double maxErrorDistance = calcMarErrorDistance(points.get(0));
 		
 		int n = points.size();
 		// scan through the way's points looking for points which are
@@ -1237,39 +1239,27 @@ public class WrongAngleFixer {
 			Coord cm = points.get(i);
 			Coord c1 = (i > 0) ? points.get(i-1):points.get(n-2);
 			Coord c2 = points.get(i+1);
-			if (c1 == c2){
-				// self intersection is OK for shapes, but we can't calculate an angle
-				modifiedPoints.add(cm);
+			int straightCheck = Utils.isStraight(c1, cm, c2);
+			if (straightCheck == Utils.STRAIGHT_SPIKE){
+//				System.out.println("found spike at " + cm.toOSMURL());
+				// don't add current and next point
+				i++;
 				continue; 
-			}
-			
-			boolean keepThis = true;
-			double realAngle = Utils.getAngle(c1, cm, c2);
-//			double displayedAngle = Double.MAX_VALUE;
-			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
-				double distance = distToLineHeron(cm, c1, c2);
-				if (distance >= maxErrorDistance){
-					modifiedPoints.add(cm);
-					continue;
-				}
-				keepThis = false;
-			/*} else {
-				displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
-				if (Math.signum(displayedAngle) != Math.signum(realAngle)){
-					// straight line is closer to real angle 
-					keepThis = false;
-				} else if (Math.abs(displayedAngle) < 1){ 
-					// displayed line is nearly straight
-					if (c1.getHighwayCount() < 2 && c2.getHighwayCount() < 2){
-						// we can remove the point
-						keepThis = false;
-					}
-				}*/
-			}
-			if (keepThis){
-				modifiedPoints.add(cm);
+			} else if (straightCheck == Utils.STRICTLY_STRAIGHT){
 				continue;
 			}
+			
+			double realAngle = Utils.getAngle(c1, cm, c2);
+			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
+				double distance = distToLineHeron(cm, c1, c2);
+				if (distance < maxErrorDistance)
+					continue;
+			}
+			double displAngle = Utils.getDisplayedAngle(c1, cm, c2);
+			if (Math.abs(displAngle  - realAngle) > 30){
+				System.out.println("opt");
+			}
+			modifiedPoints.add(cm);
 		}
 		if (modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
 			modifiedPoints.add(modifiedPoints.get(0));

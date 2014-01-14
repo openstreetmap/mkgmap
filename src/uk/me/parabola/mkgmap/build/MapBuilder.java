@@ -1073,7 +1073,6 @@ public class MapBuilder implements Configurable {
 		if (mergeShapes){
 			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
 			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes, div.getStartRgnPointer());
-//			log.error("res: " + res + " merged shapes " + shapes.size() + "->" + mergedShapes.size());
 			shapes = mergedShapes;
 			
 		}

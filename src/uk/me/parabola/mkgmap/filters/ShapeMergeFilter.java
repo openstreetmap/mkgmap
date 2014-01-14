@@ -28,6 +28,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+//import uk.me.parabola.util.GpxCreator;
 import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.util.MultiHashMap;
 
@@ -112,6 +113,7 @@ public class ShapeMergeFilter{
 						MapShape newShape = ms.copy();
 						assert sh.getPoints().get(0) == sh.getPoints().get(sh.getPoints().size()-1);
 						if (sh.id == 0){
+							// this shape ist the result of a merge
 							List<Coord> optimizedPoints = WrongAngleFixer.fixAnglesInShape(sh.getPoints());
 							newShape.setPoints(optimizedPoints);
 						} else
@@ -303,87 +305,75 @@ public class ShapeMergeFilter{
 			return null;
 		int s1Size = points1.size(); 
 		int s2Size = points2.size();
-		int bestLength = 0;
-		int bestStart = 0;
+		int longestSequence = 0;
+		int startOfLongestSequence = 0;
 		int length = 0;
 		int start = -1;
 		int n1 = sh1PositionsToCheck.size();
+		
 		assert sh2PositionsToCheck.size() == n1;
+		boolean inSequence = false;
 		for (int i = 0; i+1 < n1; i++){
-			int p0 = sh1PositionsToCheck.getInt(i);
-			int p1 = sh1PositionsToCheck.getInt(i+1);
-			if (Math.abs(p1-p0) == 1 || p0+2 == s1Size && p1 == 0 || p1+2 == s1Size && p0 == 0 ){
-				// found sequence in old
-				p0 = sh2PositionsToCheck.getInt(i);
-				p1 = sh2PositionsToCheck.getInt(i+1);
-				if (Math.abs(p1-p0) == 1 || p0+2 == s2Size && p1 == 0 || p1+2 == s2Size && p0 == 0 ){
-					// found common seqence
+			int pred1 = sh1PositionsToCheck.getInt(i);
+			int succ1 = sh1PositionsToCheck.getInt(i+1);
+			if (Math.abs(succ1-pred1) == 1 || pred1+2 == s1Size && succ1 == 0 || succ1+2 == s1Size && pred1 == 0 ){
+				// found sequence in s1
+				int pred2 = sh2PositionsToCheck.getInt(i);
+				int succ2 = sh2PositionsToCheck.getInt(i+1);
+				if (Math.abs(succ2-pred2) == 1 || pred2+2 == s2Size && succ2 == 0 || succ2+2 == s2Size && pred2 == 0 ){
+					// found common sequence
 					if (start < 0)
 						start = i;
+					inSequence = true;
 					length++; 
 				} else {
-					if (length > bestLength){
-						bestLength = length;
-						bestStart = start;
-					}
-					length = 0;
-					start = -1;
+					inSequence = false;
 				}
 			} else {
-				if (length > bestLength){
-					bestLength = length;
-					bestStart = start;
+				inSequence = false;
+			}
+			if (!inSequence){
+				if (length > longestSequence){
+					longestSequence = length;
+					startOfLongestSequence = start;
 				}
 				length = 0;
 				start = -1;
 			}
 		}
-		if (length > bestLength){
-			bestLength = length;
-			bestStart = start;
+		if (length > longestSequence){
+			longestSequence = length;
+			startOfLongestSequence = start;
 		}
-		return combineShapes(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, bestStart, bestLength, sameDir);
-	}
- 	
-	/**
-	 * Combine two shapes. The longest sequence of common points is removed.
-	 * The remaining points are connected in the direction of the 1st shape. 
-	 * @param points1 list of Coord instances that describes the 1st shape 
-	 * @param points2 list of Coord instances that describes the 2nd shape
-	 * @param sh1PositionsToCheck positions in the 1st shape that are common
-	 * @param sh2PositionsToCheck positions in the 2nd shape that are common
-	 * @param startOfLongestSequence index of sh1PositionsToCheck/sh2PositionsToCheck 
-	 *   that contains the start of the longest common sequence
-	 * @param seqLength length of the longest common sequence
-	 * @param sameDir true if both shapes are clockwise or both are ccw
-	 * @return list of Coord instances that describes the merged shape
-	 */
-	private List<Coord> combineShapes(List<Coord> points1, List<Coord> points2,
-			IntArrayList sh1PositionsToCheck, IntArrayList sh2PositionsToCheck,
-			int startOfLongestSequence, int seqLength, boolean sameDir) {
-		int n1 = points1.size();
-		int n2 = points2.size();
-		
-		List<Coord> merged = new ArrayList<Coord>(n1 + n2 - 2*seqLength -1);
-		int s1Pos = sh1PositionsToCheck.getInt(startOfLongestSequence+seqLength);
-		for (int i = 0; i < n1 - seqLength - 1; i++){
-			merged.add(points1.get(s1Pos++));
-			if (s1Pos+1 >= n1)
+		// now merge the shapes. The longest sequence of common points is removed.
+		// The remaining points are connected in the direction of the 1st shape.
+		List<Coord> merged = new ArrayList<Coord>(s1Size + s2Size - 2*longestSequence -1);
+		int s1Pos = sh1PositionsToCheck.getInt(startOfLongestSequence+longestSequence);
+		for (int i = 0; i < s1Size - longestSequence - 1; i++){
+			merged.add(points1.get(s1Pos));
+			s1Pos++;
+			if (s1Pos+1 >= s1Size)
 				s1Pos = 0;
 		}
 		int s2Pos = sh2PositionsToCheck.getInt(startOfLongestSequence);
 		int s2Step = sameDir ? 1:-1;
-		for (int i = 0; i < n2 - seqLength; i++){
+		for (int i = 0; i < s2Size - longestSequence; i++){
 			merged.add(points2.get(s2Pos));
 			s2Pos += s2Step;
 			if (s2Pos < 0) 
-				s2Pos = n2-2;
-			else if (s2Pos+1 >= n2)
+				s2Pos = s2Size-2;
+			else if (s2Pos+1 >= s2Size)
 				s2Pos = 0;
 		}
+//		if (merged.get(0).equals(new Coord(2438126,342573))){
+//			GpxCreator.createGpx("e:/ld/s1", points1);
+//			GpxCreator.createGpx("e:/ld/s2", points2);
+//			GpxCreator.createGpx("e:/ld/merged", merged);
+//			long dd = 4;
+//		}
 		return merged;
 	}
-
+ 	
 	private class ShapeHelper{
 		final private List<Coord> points;
 		long id; // TODO: remove debugging aid

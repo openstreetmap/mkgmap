@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapShape;
+//import uk.me.parabola.util.GpxCreator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
@@ -243,7 +244,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,55));
 			add(getPoint(30,55)); // close
 		}};
-		testVariants("test-fill-hole", points1, points2, 1, 8); // merged shape contains spike
+		testVariants("test-fill-hole", points1, points2, 1, 6); 
 	}
 
 	@Test
@@ -373,7 +374,7 @@ public class ShapeMergeFilterTest {
 //			GpxCreator.createGpx("e:/ld/s2", s2.getPoints());
 //			GpxCreator.createGpx("e:/ld/res", res.get(0).getPoints());
 //		}
-		assertTrue(testId + " number of points > " + expectedNumPoints, res.get(0).getPoints().size() <= expectedNumPoints);
+		assertEquals(testId, expectedNumPoints, res.get(0).getPoints().size());
 		// TODO: test shape size
 	}
 	Coord getPoint(int lat, int lon){
