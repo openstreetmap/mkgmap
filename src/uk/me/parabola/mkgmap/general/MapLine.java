@@ -80,10 +80,10 @@ public class MapLine extends MapElement {
 	}
 
 	public void insertPointsAtStart(List<Coord> additionalPoints) {
+		assert points.get(0).equals(additionalPoints.get(additionalPoints.size()-1));
 		testForConsecutivePoints(additionalPoints);
 		points.get(0).preserved(true);
-		points.addAll(0, additionalPoints);
-		points.remove(additionalPoints.size()-1);	//End node exists now twice
+		points.addAll(0, additionalPoints.subList(0, additionalPoints.size()-1));
 	}
 
 	public void insertPointsAtEnd(List<Coord> additionalPoints) {
