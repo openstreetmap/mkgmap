@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -65,16 +66,24 @@ public class ShapeMergeFilter{
 			
 			if (shape.getPoints().get(0) != shape.getPoints().get(shape.getPoints().size()-1)){
 				// should not happen here
-				log.error("shape is not closed with identical points" + shape.getOsmid());
+				log.error("shape is not closed with identical points", shape.getOsmid());
 				mergedShapes.add(shape);
 				continue;
 			}
 			List<Map<MapShape, List<ShapeHelper>>> sameTypeList = topMap.get(shape.getType());
 			ShapeHelper sh = new ShapeHelper(shape.getPoints());
 			sh.id = shape.getOsmid();
+			if (sh.areaTestVal == 0){
+				// should not happen here
+				log.error("ignoring shape with id", sh.id, "and type",
+						GType.formatType(shape.getType()), "at resolution", resolution + ", it", 
+						(shape.wasClipped() ?   "was clipped to" : "has"), 
+						shape.getPoints().size(), "points and has an empty area ");
+				continue;
+			}
 			if (sameTypeList.isEmpty()){
 				Map<MapShape, List<ShapeHelper>> lowMap = new LinkedHashMap<MapShape, List<ShapeHelper>>();
-				ArrayList<ShapeHelper> list = new ArrayList<ShapeHelper>(4);
+				ArrayList<ShapeHelper> list = new ArrayList<ShapeHelper>();
 				list.add(sh);
 				lowMap.put(shape, list);
 				topMap.add(shape.getType(),lowMap);
@@ -89,7 +98,7 @@ public class ShapeMergeFilter{
 						list = addWithConnectedHoles(list, sh, ms.getType());
 						lowMap.put(ms, list);
 						if (list.size() < oldSize+1)
-							log.debug("shape with id " + sh.id + " was merged " + (oldSize+1 - list.size()) + "  time(s) at resolution " + resolution);
+							log.debug("shape with id", sh.id, "was merged", (oldSize+1 - list.size()), " time(s) at resolution", resolution);
 						added = true;
 						break;
 					}
@@ -113,17 +122,20 @@ public class ShapeMergeFilter{
 						MapShape newShape = ms.copy();
 						assert sh.getPoints().get(0) == sh.getPoints().get(sh.getPoints().size()-1);
 						if (sh.id == 0){
-							// this shape ist the result of a merge
+							// this shape is the result of a merge
 							List<Coord> optimizedPoints = WrongAngleFixer.fixAnglesInShape(sh.getPoints());
+							if (optimizedPoints.isEmpty())
+								continue;
 							newShape.setPoints(optimizedPoints);
 						} else
 							newShape.setPoints(sh.getPoints());
+						
 						mergedShapes.add(newShape);
 					}
 				}
 			}
 		}
-		log.info("merged shapes " + count + "->" + mergedShapes.size() + " at resolution " + resolution);
+		log.info("merged shapes", count, "->", mergedShapes.size(), "at resolution", resolution);
 		return mergedShapes;
 	}
 
@@ -162,14 +174,14 @@ public class ShapeMergeFilter{
 				shNew = mergeRes;
 			}
 			if (shNew == dupShape){
-				log.warn("ignoring duplicate shape with id " + toAdd.id + " at " +  toAdd.getPoints().get(0).toOSMURL() + " with type " + GType.formatType(type) + " for resolution " + resolution);
+				log.warn("ignoring duplicate shape with id", toAdd.id, "at",  toAdd.getPoints().get(0).toOSMURL(), "with type", GType.formatType(type), "for resolution", resolution);
 				return list; // nothing to do
 			}
 		}
 		if (shNew != null && shNew != dupShape)
 			result.add(shNew);
 		if (result.size() > list.size()+1 )
-			log.error("result list size is wrong " + list.size() + " -> " + result.size());
+			log.error("result list size is wrong", list.size(), "->", result.size());
 		return result;
 	}
 
@@ -220,7 +232,7 @@ public class ShapeMergeFilter{
 		if (merged != null){
 			shm = new ShapeHelper(merged);
 			if (Math.abs(shm.areaTestVal) != Math.abs(sh1.areaTestVal) + Math.abs(sh2.areaTestVal)){
-				log.warn("merging shapes skipped for shapes near " + points1.get(sh1PositionsToCheck.getInt(0)).toOSMURL() + " (maybe overlapping shapes?)");
+				log.warn("merging shapes skipped for shapes near", points1.get(sh1PositionsToCheck.getInt(0)).toOSMURL(), "(maybe overlapping shapes?)");
 				merged = null;
 				shm = null;
 			} 
@@ -427,6 +439,7 @@ public class ShapeMergeFilter{
 			return new Area(minLat, minLon, maxLat, maxLon);
 		}
 	}
+	private final static long smallArea = 1L<<6 * 1L<<6;
 	
 	/**
 	 * Calculate the high precision area size test value.  
@@ -438,9 +451,6 @@ public class ShapeMergeFilter{
 		if (points.isEmpty())
 			return 0;
 		assert points.size() >= 4;
-		if (points.get(0) != points.get(points.size()-1)){
-			long dd  = 4;
-		}
 		assert points.get(0) == points.get(points.size()-1) : "shape is not closed with identical points";
 		Iterator<Coord> polyIter = points.iterator();
 		Coord c2 = polyIter.next();
@@ -450,6 +460,9 @@ public class ShapeMergeFilter{
 			c2 = polyIter.next();
 			signedAreaSize += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
 					* (c1.getHighPrecLat() - c2.getHighPrecLat());
+		}
+		if (Math.abs(signedAreaSize) < smallArea){
+			log.warn("very small shape near", points.get(0).toOSMURL(), "signed area in high prec map units:", signedAreaSize );
 		}
 		return signedAreaSize;
 	}

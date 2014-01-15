@@ -56,6 +56,7 @@ public class AreaClipper implements Clipper {
 			for (List<Coord> lco : list) {
 				MapShape nshape = new MapShape(shape);
 				nshape.setPoints(lco);
+				nshape.setClipped(true);
 				collector.addShape(nshape);
 			}
 		}

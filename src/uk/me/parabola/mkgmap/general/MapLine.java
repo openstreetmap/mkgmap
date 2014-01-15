@@ -34,6 +34,7 @@ public class MapLine extends MapElement {
 	private List<Coord> points;
 	private boolean direction; // set if direction is important.
 	private boolean skipSizeFilter;
+	private boolean wasClipped;
 	private int minLat = Integer.MAX_VALUE;
 	private int minLong = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
@@ -113,6 +114,14 @@ public class MapLine extends MapElement {
 		this.skipSizeFilter = skipSizeFilter;
 	}
 
+
+	public boolean wasClipped() {
+		return wasClipped;
+	}
+
+	public void setClipped(boolean wasClipped) {
+		this.wasClipped = wasClipped;
+	}
 
 	/**
 	 * Get the mid-point of the bounding box for this element.  This is as good

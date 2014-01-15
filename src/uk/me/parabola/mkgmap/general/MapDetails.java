@@ -29,6 +29,9 @@ import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolylineOverview;
+import uk.me.parabola.log.Logger;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
+import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.util.EnhancedProperties;
 
 /**
@@ -37,6 +40,8 @@ import uk.me.parabola.util.EnhancedProperties;
  * @author Steve Ratcliffe
  */
 public class MapDetails implements MapCollector, MapDataSource {
+	private static final Logger log = Logger.getLogger(MapDetails.class);
+	
 	private final List<MapLine> lines = new ArrayList<MapLine>();
 	private final List<MapShape> shapes = new ArrayList<MapShape>();
 	private final List<MapPoint> points = new ArrayList<MapPoint>();
@@ -98,7 +103,13 @@ public class MapDetails implements MapCollector, MapDataSource {
 	public void addShape(MapShape shape) {
 		if (shape.getPoints().isEmpty())
 			return;
-
+		if (ShapeMergeFilter.calcAreaSizeTestVal(shape.getPoints()) == 0){
+			log.info("ignoring shape with id", shape.getOsmid(), "and type",
+					GType.formatType(shape.getType()) + ", it", 
+					(shape.wasClipped() ?   "was clipped to" : "has"), 
+					shape.getPoints().size(), "points and has an empty area ");
+			return;
+		}
 		int type;
 		if(shape.hasExtendedType())
 			type = shape.getType();

@@ -1239,16 +1239,10 @@ public class WrongAngleFixer {
 			Coord cm = points.get(i);
 			Coord c1 = (i > 0) ? points.get(i-1):points.get(n-2);
 			Coord c2 = points.get(i+1);
-			int straightCheck = Utils.isStraight(c1, cm, c2);
-			if (straightCheck == Utils.STRAIGHT_SPIKE){
-//				System.out.println("found spike at " + cm.toOSMURL());
-				// don't add current and next point
-				i++;
-				continue; 
-			} else if (straightCheck == Utils.STRICTLY_STRAIGHT){
+			int straightTest = Utils.isHighPrecStraight(c1, cm, c2);
+			if (straightTest == Utils.STRICTLY_STRAIGHT){
 				continue;
 			}
-			
 			double realAngle = Utils.getAngle(c1, cm, c2);
 			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
 				double distance = distToLineHeron(cm, c1, c2);

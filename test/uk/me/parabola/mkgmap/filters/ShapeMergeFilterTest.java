@@ -30,10 +30,10 @@ public class ShapeMergeFilterTest {
 	// create one Coord instance for each point in a small test grid 
 	private static final HashMap<Integer,Coord> map = new HashMap<Integer,Coord>(){
 		{
-			for (int lat = 0; lat < 100; lat +=5){
-				for (int lon = 0; lon < 100; lon += 5){
-					Coord co = new Coord(lat,lon);
-					put(lat*1000 + lon,co);
+			for (int lat30 = 0; lat30 < 100; lat30 +=5){
+				for (int lon30 = 0; lon30 < 100; lon30 += 5){
+					Coord co = Coord.makeHighPrecCoord(lat30, lon30);
+					put(lat30*1000 + lon30,co);
 				}
 			}
 		}
@@ -49,7 +49,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(10,10)); // close
 			
 		}};
-		assertEquals(2 * (20*(1<<6) * 20*(1<<6)),ShapeMergeFilter.calcAreaSizeTestVal(points));
+		assertEquals(2 * (20 * 20),ShapeMergeFilter.calcAreaSizeTestVal(points));
 	}	
 	/**
 	 * two simple shapes, sharing one point
@@ -244,7 +244,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,55));
 			add(getPoint(30,55)); // close
 		}};
-		testVariants("test-fill-hole", points1, points2, 1, 6); 
+		testVariants("test-fill-hole", points1, points2, 1, 8); // merged shape contains spike  
 	}
 
 	@Test
@@ -369,7 +369,7 @@ public class ShapeMergeFilterTest {
 		List<MapShape> res = smf.merge(Arrays.asList(s1,s2), 0);
 		assertTrue(testId, res != null);
 		assertEquals(testId,expectedNumShapes, res.size() );
-//		if (res.get(0).getPoints().size() < expectedNumPoints){
+//		if (res.get(0).getPoints().size() != expectedNumPoints){
 //			GpxCreator.createGpx("e:/ld/s1", s1.getPoints());
 //			GpxCreator.createGpx("e:/ld/s2", s2.getPoints());
 //			GpxCreator.createGpx("e:/ld/res", res.get(0).getPoints());
