@@ -27,7 +27,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.Way;
-import uk.me.parabola.util.EnhancedProperties;
 import uk.me.parabola.util.GpxCreator;
 
 /**
@@ -54,10 +53,6 @@ public class WrongAngleFixer {
 	private Area bbox;
 	private String gpxPath;
 	
-	public WrongAngleFixer(EnhancedProperties props) {
-		gpxPath = props.getProperty("gpx-dir", null);
-	}
-
 	public void setBounds(Area bbox){
 		this.bbox = bbox;
 	}
@@ -85,7 +80,7 @@ public class WrongAngleFixer {
 		assert toRepl != replacement;
 		if (toRepl.getOnBoundary()){
 			if (replacement.equals(toRepl) == false){
-				log.error("boundary node is replaced by node with non-equal coordinates at " + toRepl);
+				log.error("boundary node is replaced by node with non-equal coordinates at", toRepl.toOSMURL());
 				assert false : "boundary node is replaced" ;
 			}
 			replacement.setOnBoundary(true);
@@ -249,9 +244,7 @@ public class WrongAngleFixer {
 						}
 						if (p.isPartOfBadAngle() || prev.isPartOfBadAngle()) {
 							wayHasSpecialPoints = true;
-							// real distance allows that the
-							// bearing error is big,
-							// save both points with its neighbour
+							// save both points with their neighbour
 							Coord p1 = prev;
 							Coord p2 = p;
 							CenterOfAngle coa1 = centerMap.get(p);

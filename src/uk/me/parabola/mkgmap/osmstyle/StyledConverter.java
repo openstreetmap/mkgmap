@@ -189,7 +189,7 @@ public class StyledConverter implements OsmConverter {
 		// undocumented option - usually used for debugging only
 		mergeRoads = props.getProperty("no-mergeroads", false) == false;
 
-		wrongAngleFixer = new WrongAngleFixer(props);
+		wrongAngleFixer = new WrongAngleFixer();
 	}
 
 	/** One type result for ways to avoid recreating one for each way. */ 
@@ -1405,12 +1405,14 @@ public class StyledConverter implements OsmConverter {
 								// create new point
 								co = lastNode.makeBetweenPoint(p1, 0.5);
 								co.incHighwayCount();
-								log.info("adding node in way ", way.toBrowseURL(), " to have node between two via points at " , co.toOSMURL());
+								if (log.isInfoEnabled())
+									log.info("adding node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
 								points.add(lastNodePos,co);
 							}
 						} else {
 							co = points.get(i+1);
-							log.info("changing point to node in way " , way.toBrowseURL() , " to have node between two via points at " , co.toOSMURL());
+							if (log.isInfoEnabled())
+								log.info("changing point to node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
 						}
 						if (co != null)
 							co.incHighwayCount();

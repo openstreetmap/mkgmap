@@ -1074,9 +1074,8 @@ public class MapBuilder implements Configurable {
 		
 		if (mergeShapes){
 			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
-			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes, div.getStartRgnPointer());
+			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes);
 			shapes = mergedShapes;
-			
 		}
 		
 		LayerFilterChain filters = new LayerFilterChain(config);

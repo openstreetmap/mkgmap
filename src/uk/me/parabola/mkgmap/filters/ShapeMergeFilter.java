@@ -21,16 +21,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
 import uk.me.parabola.mkgmap.reader.osm.GType;
-//import uk.me.parabola.util.GpxCreator;
-import uk.me.parabola.util.Java2DConverter;
 import uk.me.parabola.util.MultiHashMap;
 
 
@@ -49,7 +45,7 @@ public class ShapeMergeFilter{
 		this.resolution = resolution;
 	}
 
-	public List<MapShape> merge(List<MapShape> shapes, int subdivId) {
+	public List<MapShape> merge(List<MapShape> shapes) {
 		if (shapes.size() <= 1)
 			return shapes;
 		int count = 0;
@@ -59,17 +55,17 @@ public class ShapeMergeFilter{
 			if (shape.getMinResolution() > resolution || shape.getMaxResolution() < resolution)
 				continue;
 			count++;
-			if (shape.getPoints().size() > PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
-				mergedShapes.add(shape);
-				continue;
-			}
-			
 			if (shape.getPoints().get(0) != shape.getPoints().get(shape.getPoints().size()-1)){
 				// should not happen here
 				log.error("shape is not closed with identical points", shape.getOsmid());
 				mergedShapes.add(shape);
 				continue;
 			}
+			/*
+			if (shape.wasClipped()){
+				mergedShapes.add(shape); // TODO: change clipper so that clipped shapes share points 
+			}
+			*/
 			List<Map<MapShape, List<ShapeHelper>>> sameTypeList = topMap.get(shape.getType());
 			ShapeHelper sh = new ShapeHelper(shape.getPoints());
 			sh.id = shape.getOsmid();
@@ -159,13 +155,6 @@ public class ShapeMergeFilter{
 				result.add(shOld);
 				continue;
 			}
-			int shSize = shOld.getPoints().size();
-			int toMergeSize = shNew.getPoints().size();
-			if (shSize + toMergeSize - 3 >= PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
-				// don't merge because merged polygon would be split again
-				result.add(shOld);
-				continue;
-			}
 			ShapeHelper mergeRes = tryMerge(shOld, shNew, type);
 			if (mergeRes == shOld){
 				result.add(shOld);
@@ -206,7 +195,6 @@ public class ShapeMergeFilter{
 			points1 = sh1.getPoints();
 			points2 = sh2.getPoints();
 		}
-		List<Coord> merged = null; 
 		// find all coords that are common in the two shapes 
 		IntArrayList sh1PositionsToCheck = new IntArrayList();
 		IntArrayList sh2PositionsToCheck = new IntArrayList();
@@ -224,18 +212,32 @@ public class ShapeMergeFilter{
 				return dupShape;
 			}
 		}
-		
-		merged = mergeLongestSequence(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, sameDir);
-		if (merged.get(0) != merged.get(merged.size()-1))
-			merged = null;
+		List<Coord> merged = null; 
+		if (points1.size() + points2.size() - 2*sh1PositionsToCheck.size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
+			merged = mergeLongestSequence(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, sameDir);
+			if (merged.get(0) != merged.get(merged.size()-1))
+				merged = null;
+			else if (merged.size() > PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
+				// don't merge because merged polygon would be split again
+				log.info("merge rejected: merged shape has too many points " + merged.size());
+				merged = null;
+			}
+		}
 		ShapeHelper shm = null;
 		if (merged != null){
 			shm = new ShapeHelper(merged);
 			if (Math.abs(shm.areaTestVal) != Math.abs(sh1.areaTestVal) + Math.abs(sh2.areaTestVal)){
-				log.warn("merging shapes skipped for shapes near", points1.get(sh1PositionsToCheck.getInt(0)).toOSMURL(), "(maybe overlapping shapes?)");
+				log.warn("merging shapes skipped for shapes near", points1.get(sh1PositionsToCheck.getInt(0)).toOSMURL(), 
+						"(maybe overlapping shapes?)");
 				merged = null;
 				shm = null;
-			} 
+			} else {
+				if (log.isInfoEnabled()){
+					log.info("merge of shapes near",points1.get(sh1PositionsToCheck.getInt(0)).toOSMURL(), 
+							"reduces number of points from",(points1.size()+points2.size()),
+							"to",merged.size());
+				}
+			}
 		}
 		if (shm != null)
 			return shm;

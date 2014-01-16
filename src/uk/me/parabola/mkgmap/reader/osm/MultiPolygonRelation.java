@@ -431,10 +431,12 @@ public class MultiPolygonRelation extends Relation {
 				// close the polygon
 				// the new way segment does not intersect the rest of the
 				// polygon
-				log.info("Closing way", way);
-				log.info("from", way.getPoints().get(0).toOSMURL());
-				log.info("to", way.getPoints().get(way.getPoints().size() - 1)
-						.toOSMURL());
+				if (log.isInfoEnabled()){
+					log.info("Closing way", way);
+					log.info("from", way.getPoints().get(0).toOSMURL());
+					log.info("to", way.getPoints().get(way.getPoints().size() - 1)
+							.toOSMURL());
+				} 
 				// mark this ways as artificially closed
 				way.closeWayArtificially();
 			}
@@ -1516,9 +1518,24 @@ public class MultiPolygonRelation extends Relation {
 		
 		// convert the java.awt.geom.Area back to the mkgmap way
 		List<Way> cuttedOuterPolygon = new ArrayList<Way>(finishedAreas.size());
+		HashMap<Coord,Coord> commonCoordMap = new HashMap<>();
 		for (Area area : finishedAreas) {
 			Way w = singularAreaToWay(area, FakeIdGenerator.makeFakeId());
 			if (w != null) {
+				// make sure that equal coords are changed to identical coord instances
+				// this allows merging in the ShapeMerger
+				// TODO: maybe better merge here?
+				int n = w.getPoints().size();
+				for (int i = 0; i < n; i++){
+					Coord p = w.getPoints().get(i);
+
+					Coord replacement = commonCoordMap.get(p);
+					if (replacement == null)
+						commonCoordMap.put(p, p);
+					else {
+						w.getPoints().set(i, replacement);
+					}
+				}
 				w.copyTags(outerPolygon);
 				cuttedOuterPolygon.add(w);
 				if (log.isDebugEnabled()) {
