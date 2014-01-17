@@ -88,20 +88,17 @@ public class ShapeMergeFilter{
 			for (Map<MapShape, List<ShapeHelper>> lowMap : sameTypeList){
 				boolean added = false;
 				for (MapShape ms: lowMap.keySet()){
-					if (ms.isSimilar(shape) == false){
-						String s1 = ms.getName();
-						String s2 = shape.getName();
-						if (s1 == s2 || s1 != null && s1.equals(s2)){
-							System.out.println("shapes can be merged  ");
-						}
-					}
-					if (ms.isSimilar(shape)){
+					// we do not use isSimilar() here, as it compares minRes and maxRes as well
+					String s1 = ms.getName();
+					String s2 = shape.getName();
+					if (s1 == s2 || s1 != null && s1.equals(s2)){
 						List<ShapeHelper> list = lowMap.get(ms);
 						int oldSize = list.size();
 						list = addWithConnectedHoles(list, sh, ms.getType());
 						lowMap.put(ms, list);
-						if (list.size() < oldSize+1)
+						if (list.size() < oldSize+1){
 							log.debug("shape with id", sh.id, "was merged", (oldSize+1 - list.size()), " time(s) at resolution", resolution);
+						}
 						added = true;
 						break;
 					}
