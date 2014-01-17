@@ -101,7 +101,7 @@ public class MapDetails implements MapCollector, MapDataSource {
 	 * @param shape The polygon to add.
 	 */
 	public void addShape(MapShape shape) {
-		if (shape.getPoints().isEmpty())
+		if (shape.getPoints().size() < 4)
 			return;
 		if (ShapeMergeFilter.calcAreaSizeTestVal(shape.getPoints()) == 0){
 			log.info("ignoring shape with id", shape.getOsmid(), "and type",

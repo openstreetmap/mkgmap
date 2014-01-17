@@ -88,6 +88,13 @@ public class ShapeMergeFilter{
 			for (Map<MapShape, List<ShapeHelper>> lowMap : sameTypeList){
 				boolean added = false;
 				for (MapShape ms: lowMap.keySet()){
+					if (ms.isSimilar(shape) == false){
+						String s1 = ms.getName();
+						String s2 = shape.getName();
+						if (s1 == s2 || s1 != null && s1.equals(s2)){
+							System.out.println("shapes can be merged  ");
+						}
+					}
 					if (ms.isSimilar(shape)){
 						List<ShapeHelper> list = lowMap.get(ms);
 						int oldSize = list.size();
@@ -450,10 +457,12 @@ public class ShapeMergeFilter{
 	 * The value is >= 0 if the shape is clockwise, else < 0   
 	 */
 	public static long calcAreaSizeTestVal(List<Coord> points){
-		if (points.isEmpty())
+		if (points.size() < 4)
+			return 0; // straight line cannot enclose an area
+		if (points.get(0) != points.get(points.size()-1)){
+			log.warn("shape is not closed with identical points");
 			return 0;
-		assert points.size() >= 4;
-		assert points.get(0) == points.get(points.size()-1) : "shape is not closed with identical points";
+		}
 		Iterator<Coord> polyIter = points.iterator();
 		Coord c2 = polyIter.next();
 		long signedAreaSize = 0;
