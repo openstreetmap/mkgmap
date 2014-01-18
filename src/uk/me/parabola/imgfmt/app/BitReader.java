@@ -80,25 +80,28 @@ public class BitReader {
 	}
 
 	/**
-	 * Get a signed n-bit value, treating 1 << (n-1) as a
-	 * flag to read another signed n-bit value for extended
-	 * range (mysteriously only in the negative direction).
-	 *
-	 * At least two levels of recursion show up in the wild;
-	 * current code computes correctly in that example.
+	 * Get a signed n-bit value, treating 1 << (n-1) as a flag to read another signed n-bit value
+	 * for extended range.
 	 */
 	public int sget2(int n) {
-		int res = get(n);
 		int top = 1 << (n - 1);
-		if ((res & top) != 0) {
-			int mask = top - 1;
-			if ((res & mask) == 0) {
-				int res2 = sget2(n);
-				res = (~mask | res) + 1 + res2;
-			} else {
-				res = ~mask | res;
-			}
+		int mask = top - 1;
+		int base = 0;
+
+		int res = get(n);
+		while (res == top) {
+			// Add to the base value, and read another
+			base += mask;
+			res = get(n);
 		}
+
+		// The final byte determines the sign of the result. Add or subtract the base as
+		// appropriate.
+		if ((res & top) == 0)
+			res += base;
+		else
+			res = (res | ~mask) - base; // Make negative and subtract the base
+
 		return res;
 	}
 
