@@ -37,6 +37,7 @@ public class NODHeader extends CommonHeader {
 
     private int flags;
     private int align;
+	private int tableARecordLen;
 
 	/** 
 	 * The driveOnLeft flag is set via a static method. Using a ThreadLocal
@@ -64,7 +65,7 @@ public class NODHeader extends CommonHeader {
         flags = reader.getChar();
         reader.getChar();
         align = reader.getChar();
-        reader.getChar();
+        tableARecordLen = reader.getChar();
         roads.readSectionInfo(reader, false);
         reader.getInt();
         boundary.readSectionInfo(reader, true);
@@ -88,7 +89,7 @@ public class NODHeader extends CommonHeader {
 
 		char align = DEF_ALIGN;
 		writer.putChar(align);
-		writer.putChar((char) (align - 1));
+		writer.putChar((char) 5);
 
 		roads.writeSectionInfo(writer);
 		writer.putInt(0);
@@ -143,4 +144,8 @@ public class NODHeader extends CommonHeader {
     public int getAlign() {
         return align;
     }
+
+	public int getTableARecordLen() {
+		return tableARecordLen;
+	}
 }
