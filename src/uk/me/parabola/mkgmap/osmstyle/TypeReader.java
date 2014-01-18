@@ -179,7 +179,7 @@ public class TypeReader {
 				gt.setMinResolution(Integer.parseInt(str));
 			}
 		} catch (NumberFormatException e) {
-			gt.setMinResolution(24);
+			throw new SyntaxException(ts, "Invalid value for resolution: '" + str + '\'');
 		}
 	}
 
@@ -207,7 +207,7 @@ public class TypeReader {
 				gt.setMinResolution(toResolution(Integer.parseInt(str)));
 			}
 		} catch (NumberFormatException e) {
-			gt.setMinResolution(24);
+			throw new SyntaxException(ts, "Invalid value for level: '" + str + '\'');
 		}
 	}
 
