@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012.
+ * Copyright (C) 2011-2014.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -18,6 +18,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
@@ -30,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -1025,7 +1027,8 @@ public class MultiPolygonRelation extends Relation {
 						
 						if (currentPolygon.outer) {
 							mpWay.addTag("mkgmap:mp_role", "outer");
-							mpAreaSize += calcAreaSize(mpWay.getPoints());
+							if (isAreaSizeCalculated())
+								mpAreaSize += calcAreaSize(mpWay.getPoints());
 						} else {
 							mpWay.addTag("mkgmap:mp_role", "inner");
 						}
@@ -1106,12 +1109,18 @@ public class MultiPolygonRelation extends Relation {
 	
 	protected void postProcessing() {
 		
-		// assign the area size of the whole multipolygon to all outer polygons
-		String mpAreaSizeStr = new DecimalFormat("0.0####################").format(mpAreaSize);
-		for (Way w : mpPolygons.values()) {
-			if ("outer".equals(w.getTag("mkgmap:mp_role"))) {
-				w.addTag("mkgmap:cache_area_size", mpAreaSizeStr);
+		if (isAreaSizeCalculated()) {
+			// assign the area size of the whole multipolygon to all outer polygons
+			String mpAreaSizeStr = new DecimalFormat("0.0####################", 
+					DecimalFormatSymbols.getInstance(Locale.US)).format(mpAreaSize);
+			for (Way w : mpPolygons.values()) {
+				if ("outer".equals(w.getTag("mkgmap:mp_role"))) {
+					w.addTag("mkgmap:cache_area_size", mpAreaSizeStr);
+				}
 			}
+		}
+
+		for (Way w : mpPolygons.values()) {
 			w.deleteTag("mkgmap:mp_role");
 		}
 		
@@ -2244,6 +2253,14 @@ public class MultiPolygonRelation extends Relation {
 		} else if (removedTagsTag.equals(tag) == false) {
 			way.addTag(ElementSaver.MKGMAP_REMOVE_TAG, removedTagsTag+";"+tag);
 		}
+	}
+	
+	/**
+	 * Flag if the area size of the mp should be calculated and added as tag.
+	 * @return {@code true} area size should be calculated; {@code false} area size should not be calculated
+	 */
+	protected boolean isAreaSizeCalculated() {
+		return true;
 	}
 
 	protected Map<Long, Way> getTileWayMap() {

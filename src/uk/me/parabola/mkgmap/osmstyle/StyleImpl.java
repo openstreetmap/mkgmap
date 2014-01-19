@@ -554,7 +554,7 @@ public class StyleImpl implements Style {
 			style = new StyleImpl(loc, name, props, WITHOUT_CHECKS);
 		} catch (SyntaxException e) {
 			System.err.println("Error in style: " + e.getMessage());
-			throw new ExitException("Could not open style " + name);
+			throw new ExitException("Could not open style " + (name == null? "":name));
 		} catch (FileNotFoundException e) {
 			String msg = "Could not open style ";
 			if (name != null){

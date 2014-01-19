@@ -93,9 +93,12 @@ public class LineSplitterFilter implements MapFilter {
 				else
 					log.debug("saving next part");
 				l.setPoints(coords);
+				if (l instanceof MapRoad){
+					((MapRoad)l).setSegmentsFollowing(true);
+				}
 				next.doFilter(l);
+
 				l = line.copy();
-        
 				count = 0;
 				first = false;
 				coords = new ArrayList<Coord>();

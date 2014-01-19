@@ -277,4 +277,14 @@ public class Polyline extends MapObject {
 	public int getLong() {
 		return getSubdiv().getLongitude() + (getDeltaLong() << getSubdiv().getShift());
 	}
+
+	public int getNodeCount() {
+		int idx = 0;
+		int count = 0;
+		for (Coord co : points) {
+			if (idx++ > 0 && co.getId() > 0)
+				count++;
+		}
+		return count;
+	}
 }

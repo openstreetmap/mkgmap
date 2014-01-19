@@ -316,7 +316,7 @@ on it elsewhere in the rules.
 
 You can also use substitutions.
 ----
-{set name='${ele}'; set name='${ref}';}
+{add name='${ele}'; add name='${ref}';}
 ----
 
 These two commands would set the 'name' tag to the value of the 'ele' tag if it exists, or to the value of the 'ref' tag if that exists.
@@ -326,10 +326,10 @@ vertical bar in the same way as on the name command.  The first
 one that is fully defined will be used.
 
 ----
-{set key123 = '${name:en}' | '${name}'; } 
+{add key123 = '${name:en}' | '${name}'; } 
 ----
 
-Will set 'key123' to the value of the 'name:en' tag if it exists and to the 'name' tag if not.
+If 'key123' is not set it will set 'key123' to the value of the 'name:en' tag if it exists and to the 'name' tag if not.
 
 === set ===
 The 'set' command is just like the 'add' command, except that it sets the
@@ -391,7 +391,16 @@ This is a helper action to avoid long action blocks.
 ----
 is the same as
 ----
-{ add mkgmap:foot=no; add mkgmap:bicycle=no; add mkgmap:car=no; add mkgmap:taxi=no; add mkgmap:truck=no; add mkgmap:bus=no; add mkgmap:emergency=no; add mkgmap:delivery=no }
+{ 
+  add mkgmap:foot=no; 
+  add mkgmap:bicycle=no; 
+  add mkgmap:car=no; 
+  add mkgmap:taxi=no; 
+  add mkgmap:truck=no; 
+  add mkgmap:bus=no; 
+  add mkgmap:emergency=no; 
+  add mkgmap:delivery=no 
+}
 ----
 
 === setaccess ===
@@ -403,7 +412,16 @@ they already have a value or not. This is a helper action to avoid long action b
 ----
 is the same as
 ----
-{ set mkgmap:foot=no; set mkgmap:bicycle=no; set mkgmap:car=no; set mkgmap:taxi=no; set mkgmap:truck=no; set mkgmap:bus=no; set mkgmap:emergency=no; set mkgmap:delivery=no }
+{ 
+  set mkgmap:foot=no; 
+  set mkgmap:bicycle=no; 
+  set mkgmap:car=no; 
+  set mkgmap:taxi=no; 
+  set mkgmap:truck=no; 
+  set mkgmap:bus=no; 
+  set mkgmap:emergency=no; 
+  set mkgmap:delivery=no 
+}
 ----
 
 === apply ===
@@ -413,8 +431,14 @@ relation have any special tags to indicate that they form part of that
 bus route, and you want to be able to tell from looking at the map which
 buses go where.  You can write a rule in the *relations file* such as:
 
----- type=route & route=bus { apply { set route=bus; set 
-route_ref='${route_ref}'; } } ----
+----
+type=route & route=bus {
+	apply {
+		set route=bus;
+		set route_ref='${route_ref}';
+	}
+}
+----
 
 
 Then in the *lines file* you will need to write a rule to match _route=bus_.
@@ -728,8 +752,8 @@ highway=residential [0x06 resolution 16-22 continue]
 highway=residential [0x07 resolution 23-24]
 ----
 
-This example creates roads of type 0x08 between resolutions 16 and
-22, then roads of type 0x09 between resolutions 23 and 24.  This
+This example creates roads of type 0x06 between resolutions 16 and
+22, then roads of type 0x07 between resolutions 23 and 24.  This
 example makes use of the continue statement, which is discussed in more
 detail below.
 
@@ -827,7 +851,8 @@ checked for additional conversions.
 
 .Example of a full element type definition
 ----
-[0x2 road_class=3 road_speed=5 level 2 default_name 'example street' continue with_actions]
+[0x2 road_class=3 road_speed=5 level 2 
+default_name 'example street' continue with_actions]
 ----
 
 == Including files ==

@@ -146,6 +146,7 @@ public class RoadDef implements Comparable<RoadDef> {
 	private final long id;
 	private final String name;
 	private List<Numbers> numbersList;
+	private int nodeCount;
 
 	public RoadDef(long id, String name) {
 		this.id = id;
@@ -222,8 +223,11 @@ public class RoadDef implements Comparable<RoadDef> {
 		writeLevelDivs(writer, maxlevel);
 
 		if((netFlags & NET_FLAG_ADDRINFO) != 0) {
-			writer.put((byte)0); // unknown (nearly always zero)
+			nodeCount--;
+			writer.put((byte) (nodeCount & 0xff)); // lo bits of node count
+
 			int code = 0xe8;     // zip and city present
+			code |= ((nodeCount >> 8) & 0x3); // top bits of node count
 			if(city == null)
 				code |= 0x10; // no city
 			if(zip == null)
@@ -231,7 +235,7 @@ public class RoadDef implements Comparable<RoadDef> {
 			if (numbers != null) {
 				code &= ~0xc0;
 				if (numbers.fetchBitStream().getLength() > 255)
-					code |= 1;
+					code |= 0x40;
 			}
 			writer.put((byte)code);
 			if(zip != null) {
@@ -352,9 +356,12 @@ public class RoadDef implements Comparable<RoadDef> {
 			roadIndexes.put(level, l);
 		}
 		int s = l.size();
-		if (s > 0)
-			l.get(s-1).getLine().setLastSegment(false);
 		l.add(new RoadIndex(pl));
+
+		// XXX needs to be the lowest level, which might not always be zero in the future
+		if (level == 0) {
+			nodeCount += pl.getNodeCount();
+		}
 	}
 
 	private int getMaxZoomLevel() {

@@ -535,7 +535,8 @@ public class RuleFileReader {
 
 			StyleFileLoader loader = new DirectoryFileLoader(
 					new File(args[0]).getAbsoluteFile().getParentFile());
-			rr.load(loader, args[0]);
+			String fname = new File(args[0]).getName();
+			rr.load(loader, fname);
 
 			System.out.println("Result: " + rs);
 		} else {
