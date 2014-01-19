@@ -356,8 +356,6 @@ public class RoadDef implements Comparable<RoadDef> {
 			roadIndexes.put(level, l);
 		}
 		int s = l.size();
-		if (s > 0)
-			l.get(s-1).getLine().setLastSegment(false);
 		l.add(new RoadIndex(pl));
 
 		// XXX needs to be the lowest level, which might not always be zero in the future

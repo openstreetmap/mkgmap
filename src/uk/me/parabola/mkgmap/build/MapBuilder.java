@@ -1235,12 +1235,16 @@ public class MapBuilder implements Configurable {
 
 			pl.setType(line.getType());
 			if (doRoads){
-				if (line.isRoad()) {
+				if (line instanceof MapRoad) {
 					if (log.isDebugEnabled())
 						log.debug("adding road def: " + line.getName());
-					RoadDef roaddef = ((MapRoad) line).getRoadDef();
+					MapRoad road = (MapRoad) line;
+					RoadDef roaddef = road.getRoadDef();
 
 					pl.setRoadDef(roaddef);
+					if (road.hasSegmentsFollowing() )
+						pl.setLastSegment(false);
+					
 					roaddef.addPolylineRef(pl);
 				} else if (routingErrorMsgPrinted == false){
 					if (div.getZoom().getLevel() == 0 && GType.isRoutableLineType(line.getType())){

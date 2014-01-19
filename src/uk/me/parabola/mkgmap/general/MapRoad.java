@@ -39,7 +39,8 @@ import uk.me.parabola.imgfmt.app.net.RoadDef;
 public class MapRoad extends MapLine {
 
 	private final RoadDef roadDef;
-
+	private boolean segmentsFollowing;
+	
 	public MapRoad(long id, MapLine line) {
 		super(line);
 		setPoints(line.getPoints());
@@ -49,6 +50,7 @@ public class MapRoad extends MapLine {
 	private MapRoad(MapRoad r) {
 		super(r);
 		roadDef = r.roadDef;
+		segmentsFollowing = r.segmentsFollowing;
 	}
 
 	public MapRoad copy() {
@@ -139,4 +141,13 @@ public class MapRoad extends MapLine {
 	public void setLinkRoad(boolean lr) {
 		roadDef.setLinkRoad(lr);
 	}
+
+	public boolean hasSegmentsFollowing() {
+		return segmentsFollowing;
+	}
+
+	public void setSegmentsFollowing(boolean segmentsFollowing) {
+		this.segmentsFollowing = segmentsFollowing;
+	}
+
 }
