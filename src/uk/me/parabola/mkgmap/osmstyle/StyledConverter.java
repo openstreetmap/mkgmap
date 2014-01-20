@@ -240,15 +240,38 @@ public class StyledConverter implements OsmConverter {
 
 
 	private void addConvertedWay(Way way, GType foundType) {
+		
 		if (foundType.getFeatureKind() == FeatureKind.POLYLINE) {
-		    if(foundType.isRoad() &&
+			GType type = new GType(foundType);
+
+			String oneWay = way.getTag("oneway");
+			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
+				// it's a oneway street in the reverse direction
+				// so reverse the order of the nodes and change
+				// the oneway tag to "yes"
+				way.reverse();
+				way.addTag("oneway", "yes");
+				if (type.isRoad() && "roundabout".equals(way.getTag("junction")))
+					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
+			}
+
+			if (way.isBoolTag("oneway")) {
+				way.addTag("oneway", "yes");
+				if (type.isRoad() && checkFixmeCoords(way) )
+					way.addTag("mkgmap:dead-end-check", "false");
+			} else 
+				way.deleteTag("oneway");
+			
+			if(foundType.isRoad() &&
 			   !MapObject.hasExtendedType(foundType.getType())){
+				recalcRoadClass(way, type);
+				recalcRoadSpeed(way, type);
 		    	roads.add(way);
-		    	roadTypes.add(new GType(foundType));
+		    	roadTypes.add(type);
 		    }
 		    else {
 		    	lines.add(way);
-		    	lineTypes.add(new GType(foundType));
+		    	lineTypes.add(type);
 		    }
 		}
 		else
@@ -269,6 +292,7 @@ public class StyledConverter implements OsmConverter {
 				if (el == node) 
 					el = node.copy();
 			}
+			
 			postConvertRules(el, type);
 			addPoint((Node) el, type);
 		}
@@ -447,32 +471,6 @@ public class StyledConverter implements OsmConverter {
 		// Set the default_name if no name is set
 		if (type.getDefaultName() != null && el.getName() == null)
 			el.addTag("mkgmap:label:1", type.getDefaultName());
-		
-		if (el instanceof Way) {
-			Way way = (Way) el;
-
-			String oneWay = way.getTag("oneway");
-			if("-1".equals(oneWay) || "reverse".equals(oneWay)) {
-				// it's a oneway street in the reverse direction
-				// so reverse the order of the nodes and change
-				// the oneway tag to "yes"
-				way.reverse();
-				way.addTag("oneway", "yes");
-				if (type.isRoad() && "roundabout".equals(way.getTag("junction")))
-					log.warn("Roundabout", way.getId(), "has reverse oneway tag (" + way.getPoints().get(0).toOSMURL() + ")");
-			}
-
-			if (way.isBoolTag("oneway")) {
-				way.addTag("oneway", "yes");
-				if (type.isRoad() && checkFixmeCoords(way) )
-					way.addTag("mkgmap:dead-end-check", "false");
-			} else 
-				way.deleteTag("oneway");
-			if (type.isRoad()){			
-				recalcRoadClass(way, type);
-				recalcRoadSpeed(way, type);
-			}
-		}
 	}
 
 	/**
