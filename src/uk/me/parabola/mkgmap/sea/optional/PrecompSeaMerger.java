@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012.
+ * Copyright (C) 2012-2014.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 or
@@ -175,7 +175,14 @@ class PrecompSeaMerger implements Runnable {
 
 			// process the tile as sea multipolygon to create simple polygons only
 			MultiPolygonRelation mpr = new MultiPolygonRelation(rel, landWays,
-					Java2DConverter.createBbox(new Area(mergeData.bounds)));
+					Java2DConverter.createBbox(new Area(mergeData.bounds))) 
+			{
+				// do not calculate the area size => it is not required and adds
+				// a superfluous tag 
+				protected boolean isAreaSizeCalculated() {
+					return false;
+				}
+			};
 			mpr.addTag("type", "multipolygon");
 			mpr.addTag("natural", "sea");
 			mpr.processElements();
