@@ -17,6 +17,7 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -1439,8 +1440,16 @@ public class MultiPolygonRelation extends Relation {
 			assert cutPoint.getNumberOfAreas() > 0 : "Number of cut areas == 0 in mp "+getId();
 			
 			// cut out the holes
-			for (Area cutArea : cutPoint.getAreas()) {
-				areaCutData.outerArea.subtract(cutArea);
+			if (cutPoint.getAreas().size() == 1)
+				areaCutData.outerArea.subtract(cutPoint.getAreas().get(0));
+			else {
+				// first combine the areas that should be subtracted
+				Path2D.Double path = new Path2D.Double();
+				for (Area cutArea : cutPoint.getAreas()) {
+					path.append(cutArea, false);
+				}
+				Area combinedCutAreas = new Area(path);
+				areaCutData.outerArea.subtract(combinedCutAreas);
 			}
 			
 			if (areaCutData.outerArea.isEmpty()) {
@@ -1481,11 +1490,10 @@ public class MultiPolygonRelation extends Relation {
 				// Now find the intersection of these two boxes with the
 				// original polygon. This will make two new areas, and each
 				// area will be one (or more) polygons.
-				Area a1 = areaCutData.outerArea;
-				Area a2 = (Area) a1.clone();
-				a1.intersect(new Area(r1));
-				a2.intersect(new Area(r2));
-
+				Area a1 = new Area(r1); 
+				Area a2 = new Area(r2);
+				a1.intersect(areaCutData.outerArea);
+				a2.intersect(areaCutData.outerArea);
 				if (areaCutData.innerAreas.isEmpty()) {
 					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a1));
 					finishedAreas.addAll(Java2DConverter.areaToSingularAreas(a2));
@@ -2665,7 +2673,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 		}
 		
-		public Collection<Area> getAreas() {
+		public List<Area> getAreas() {
 			return areas;
 		}
 

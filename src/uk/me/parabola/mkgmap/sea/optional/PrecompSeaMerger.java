@@ -14,6 +14,7 @@
 package uk.me.parabola.mkgmap.sea.optional;
 
 import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -50,8 +51,8 @@ class PrecompSeaMerger implements Runnable {
 		public final Rectangle2D bounds;
 		public final BlockingQueue<Area> toMerge;
 		public final AtomicBoolean ready = new AtomicBoolean(false);
-		public Area tmpLandArea = new Area();
-		public final Area landArea = new Area();
+		public Path2D.Double tmpLandPath = new Path2D.Double();
+		public Area landArea = new Area();
 		private final String key;
 
 		public MergeData(Rectangle2D bounds, String key) {
@@ -116,20 +117,23 @@ class PrecompSeaMerger implements Runnable {
 		while (merge != null) {
 			Area landClipped = new Area(mergeData.bounds);
 			landClipped.intersect(merge);
-			mergeData.tmpLandArea.add(landClipped);
+			mergeData.tmpLandPath.append(landClipped, false);
 			merges++;
+			
 			if (merges % 500 == 0) {
 				// store each 500 polygons into a temporary area
 				// and merge them after that. That seems to be quicker
 				// than adding lots of very small areas to a highly 
 				// scattered area 
-				mergeData.landArea.add(mergeData.tmpLandArea);
-				mergeData.tmpLandArea = new Area();
+				Area tmpLandArea = new Area(mergeData.tmpLandPath);
+				mergeData.landArea.add(tmpLandArea);
+				mergeData.tmpLandPath.reset();
 			}
 
 			if (merges % 500 == 0) {
 				break;
 			}
+			
 			merge = mergeData.toMerge.poll();
 		}
 
@@ -139,9 +143,11 @@ class PrecompSeaMerger implements Runnable {
 			service.execute(this);
 			return;
 		}
-
-		mergeData.landArea.add(mergeData.tmpLandArea);
-		mergeData.tmpLandArea = null;
+		if (mergeData.landArea.isEmpty())
+			mergeData.landArea = new Area(mergeData.tmpLandPath);
+		else
+			mergeData.landArea.add(new Area(mergeData.tmpLandPath));
+		mergeData.tmpLandPath = null;
 
 		// post processing //
 		
