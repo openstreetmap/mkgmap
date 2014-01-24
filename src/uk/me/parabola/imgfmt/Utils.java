@@ -367,6 +367,20 @@ public class Utils {
 			if ( y < 0.0f ) return atan - Math.PI;
 		}
 		return atan;
-	}	
 	}
+	
+	/**
+	 * calculate a long value for the latitude and longitude of a coord
+	 * in high precision. 
+	 * @param co
+	 * @return a long that can be used as a key in HashMaps 
+	 */
+	public static long coord2Long(Coord co){
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		
+		return (long)(lat30 & 0xffffffffL) << 32 | (lon30 & 0xffffffffL);
+	}
+	
+}
 

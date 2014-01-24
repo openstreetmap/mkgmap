@@ -669,36 +669,6 @@ public class BoundaryUtil {
 	}
 
 	/**
-	 * Add the path of an area to an existing path. 
-	 * @param path
-	 * @param area
-	 */
-	public static void addToPath (Path2D.Double path, Area area){
-		PathIterator pit = area.getPathIterator(null);
-		double[] res = new double[6];
-		path.setWindingRule(pit.getWindingRule());
-		while (!pit.isDone()) {
-			int type = pit.currentSegment(res);
-			switch (type) {
-			case PathIterator.SEG_LINETO:
-				path.lineTo(res[0],res[1]);
-				break;
-			case PathIterator.SEG_MOVETO: 
-				path.moveTo(res[0],res[1]);
-				break;
-			case PathIterator.SEG_CLOSE:
-				path.closePath();
-				break;
-			default:
-				log.error("Unsupported path iterator type " + type
-						+ ". This is an mkgmap error.");
-			}
-
-			pit.next();
-		}
-	}
-
-	/**
 	 * read a varying length double. See BoundarySaver.writeVarDouble().
 	 * @param inp the already opened DataInputStream
 	 * @return the extracted double value

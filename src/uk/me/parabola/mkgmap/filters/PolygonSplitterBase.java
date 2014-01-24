@@ -36,7 +36,9 @@ public class PolygonSplitterBase extends BaseFilter {
 	 * @param outputs The output list.
 	 */
 	protected void split(MapShape shape, List<MapShape> outputs) {
-
+		// TODO: use different algo which will keep track of holes which are
+		// connected with the outer polygon
+		
 		// Convert to a awt area
 		Area a1 = Java2DConverter.createArea(shape.getPoints());
 
@@ -72,7 +74,7 @@ public class PolygonSplitterBase extends BaseFilter {
 
 	/**
 	 * Convert the area back into {@link MapShape}s.  It is possible that the
-	 * area is multiple discontiguous polygons, so you may append more than one
+	 * area is multiple discontinuous polygons, so you may append more than one
 	 * shape to the output list.
 	 *
 	 * @param origShape The original shape, this is only used as a prototype to

@@ -170,17 +170,16 @@ public class BoundaryDiff {
 			return (bqt.getCoveredArea(Integer.valueOf(value)));
 		Map<String, Tags> bTags = bqt.getTagsMap();
 		Map<String, List<Area>> areas = bqt.getAreas();
-		Area a = new Area();
 		Path2D.Double path = new Path2D.Double();
 		for (Entry<String, Tags> entry: bTags.entrySet()){
 			if (value.equals(entry.getValue().get(tag))){
 				List<Area> aList = areas.get(entry.getKey());
 				for (Area area : aList){
-					BoundaryUtil.addToPath(path, area);
+					path.append(area, false);
 				}
 			}
 		}
-		a = new Area(path);
+		Area a = new Area(path);
 		return a;
 	}
 

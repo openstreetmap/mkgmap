@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.osmstyle.WrongAngleFixer;
+import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.util.MultiHashMap;
 
@@ -120,6 +121,7 @@ public class ShapeMergeFilter{
 					List<ShapeHelper> shapeHelpers = item.getValue();
 					for (ShapeHelper sh:shapeHelpers){
 						MapShape newShape = ms.copy();
+						
 						assert sh.getPoints().get(0) == sh.getPoints().get(sh.getPoints().size()-1);
 						if (sh.id == 0){
 							// this shape is the result of a merge
@@ -127,8 +129,11 @@ public class ShapeMergeFilter{
 							if (optimizedPoints.isEmpty())
 								continue;
 							newShape.setPoints(optimizedPoints);
-						} else
+							newShape.setOsmid(FakeIdGenerator.makeFakeId());
+						} else {
 							newShape.setPoints(sh.getPoints());
+							newShape.setOsmid(sh.id);
+						}
 						
 						mergedShapes.add(newShape);
 					}
