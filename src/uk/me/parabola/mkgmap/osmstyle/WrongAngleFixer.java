@@ -71,7 +71,7 @@ public class WrongAngleFixer {
 		writeOSM("roads_orig", roads);
 		removeWrongAngles(roads, lines, modifiedRoads, deletedRoads);
 		writeOSM("roads_post_rem_wrong_angles", roads);
-		removeObsoletePoints(roads);
+		removeObsoletePoints(roads, modifiedRoads);
 		writeOSM("roads_post_rem_obsolete_points", roads);
 		printBadAngles("bad_angles_finish", roads);
 	}	
@@ -467,8 +467,9 @@ public class WrongAngleFixer {
 	 * remove obsolete points in roads. Obsolete are points which are
 	 * very close to 180� angles in the real line.
 	 * @param roads 
+	 * @param modifiedRoads 
 	 */
-	private void removeObsoletePoints(List<Way> roads){
+	private void removeObsoletePoints(List<Way> roads, HashMap<Long, Way> modifiedRoads){
 		Way lastWay = null;
 		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
@@ -551,6 +552,7 @@ public class WrongAngleFixer {
 				modifiedPoints.add(points.get(points.size()-1));
 				points.clear();
 				points.addAll(modifiedPoints);
+				modifiedRoads.put(way.getId(), way);
 				if (gpxPath != null){
 					if (draw || "roundabout".equals(way.getTag("junction"))) {
 						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
