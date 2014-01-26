@@ -104,6 +104,9 @@ public class Java2DConverter {
 		return polygon;
 	}
 
+	public static List<Area> areaToSingularAreas(Area area) {
+		return areaToSingularAreas(0, area);
+	}
 	/**
 	 * Convert an area that may contains multiple areas to a list of singular
 	 * areas keeping the highest possible precision.
@@ -111,7 +114,7 @@ public class Java2DConverter {
 	 * @param area an area
 	 * @return list of singular areas
 	 */
-	public static List<Area> areaToSingularAreas(Area area) {
+	private static List<Area> areaToSingularAreas(int depth, Area area) {
 		if (area.isEmpty()) {
 			return Collections.emptyList();
 		} else if (area.isSingular()) {
@@ -124,10 +127,7 @@ public class Java2DConverter {
 
 			double[] res = new double[6];
 			PathIterator pit = area.getPathIterator(null);
-			
-			double prevLat = Double.MIN_VALUE;
-			double prevLong = Double.MIN_VALUE;
-			Path2D path = new Path2D.Double();
+			Path2D path = null;
 			while (!pit.isDone()) {
 				int type = pit.currentSegment(res);
 				double lat = res[1];
@@ -135,27 +135,22 @@ public class Java2DConverter {
 
 				switch (type) {
 				case PathIterator.SEG_LINETO:
-					if (prevLat != lat || prevLong != lon) {
-						path.lineTo(lon, lat);
-					}
-					prevLat = lat;
-					prevLong = lon;
+					path.lineTo(lon, lat);
 					break;
 				case PathIterator.SEG_CLOSE:
 					path.closePath();
 					Area a = new Area(path);
 					if (!a.isEmpty()) {
-						singularAreas.add(a);
+						if (depth < 10 && !a.isSingular()){
+							// should not happen, but it does. Error in Area code?
+							singularAreas.addAll(depth+1,areaToSingularAreas(a));
+						}
+						else 
+							singularAreas.add(a);
 					}
 					path = null;
 					break;
 				case PathIterator.SEG_MOVETO:
-					if (path != null) {
-						Area a2 = new Area(path);
-						if (!a2.isEmpty()) {
-							singularAreas.add(a2);
-						}
-					}
 					path = new Path2D.Double();
 					path.moveTo(lon, lat);
 					break;
@@ -163,10 +158,6 @@ public class Java2DConverter {
 					log.error("Unsupported path iterator type " + type
 							+ ". This is an mkgmap error.");
 				}
-
-				prevLat = lat;
-				prevLong = lon;
-
 				pit.next();
 			}
 			return singularAreas;
@@ -175,7 +166,7 @@ public class Java2DConverter {
 
 	/**
 	 * Convert an area to an mkgmap way. The caller must ensure that the area is
-	 * singular. Otherwise only the first part of the area is converted.
+	 * singular. Otherwise only the first non-empty part of the area is converted.
 	 * 
 	 * @param area the area
 	 * @return a new mkgmap way
@@ -213,13 +204,21 @@ public class Java2DConverter {
 				break;
 			case PathIterator.SEG_CLOSE:
 				assert points != null;
-				if (points.get(0).highPrecEquals(points.get(points.size() - 1))) { 
-					// replace equal last with closing point
-					points.set(points.size() - 1, points.get(0)); 
+				if (points.size() < 3)
+					points = null; 
+				else {
+					if (points.get(0).highPrecEquals(points.get(points.size() - 1))) { 
+						// replace equal last with closing point
+						points.set(points.size() - 1, points.get(0)); 
+					}
+					else
+						points.add(points.get(0)); // add closing point
+					if (points.size() < 4)
+						points = null;
+					else
+						return points;
 				}
-				else
-					points.add(points.get(0)); // add closing point
-				return points;
+				break;
 			default:
 				log.error("Unsupported path iterator type " + type
 						+ ". This is an mkgmap error.");
