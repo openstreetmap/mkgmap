@@ -143,7 +143,7 @@ public class Java2DConverter {
 					if (!a.isEmpty()) {
 						if (depth < 10 && !a.isSingular()){
 							// should not happen, but it does. Error in Area code?
-							singularAreas.addAll(depth+1,areaToSingularAreas(a));
+							singularAreas.addAll(areaToSingularAreas(depth+1,a));
 						}
 						else 
 							singularAreas.add(a);
