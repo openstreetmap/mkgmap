@@ -149,6 +149,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground(havePolygon4B);
+		coordMap = null;
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -275,7 +276,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
 					points.set(0, points.get(points.size()-1));
 				} else {
-					//points.add(points.get(0));
+					//points.add(points.get(0)); // close it ?
 				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
