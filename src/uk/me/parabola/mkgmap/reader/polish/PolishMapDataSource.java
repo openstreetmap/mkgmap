@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -97,6 +99,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
+	Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
     public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
@@ -233,7 +236,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (points != null) {
 				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
 					points.set(0, points.get(points.size()-1));
-				}
+				} 
 				
 				if (roadHelper.isRoad()) {
 					polyline.setPoints(points);
@@ -271,6 +274,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			if (points != null) {
 				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
 					points.set(0, points.get(points.size()-1));
+				} else {
+					//points.add(points.get(0));
 				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
@@ -684,7 +689,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
-		return new Coord(f1, f2);
+		Coord co = new Coord(f1, f2);
+		long key = Utils.coord2Long(co);
+		Coord co2 = coordMap.get(key);
+		if (co2 != null)
+			return co2;
+		coordMap.put(key, co);
+		return co;
 	}
 
 	private ExtTypeAttributes makeExtTypeAttributes() {
