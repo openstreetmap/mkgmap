@@ -231,6 +231,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYLINE:
 			if (points != null) {
+				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
+					points.set(0, points.get(points.size()-1));
+				}
+				
 				if (roadHelper.isRoad()) {
 					polyline.setPoints(points);
 					mapper.addRoad(roadHelper.makeRoad(polyline));
@@ -265,6 +269,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYGON:
 			if (points != null) {
+				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
+					points.set(0, points.get(points.size()-1));
+				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
 					shape.setExtTypeAttributes(makeExtTypeAttributes());
