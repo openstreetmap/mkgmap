@@ -240,6 +240,9 @@ public class StyledConverter implements OsmConverter {
 		else if ("polygon".equals(styleFilterTag))
 			rules = polygonRules;
 		else {
+			if (way.isClosedInOSM() && !way.isComplete() && !way.hasIdenticalEndPoints())
+				way.getPoints().add(way.getPoints().get(0));
+			
 			if (way.hasIdenticalEndPoints() == false || way.getPoints().size() < 4)
 				rules = lineRules;
 			else
