@@ -100,7 +100,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	private CharsetDecoder dec;
 
 	Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
-    public boolean isFileSupported(String name) {
+	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
@@ -149,6 +149,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground(havePolygon4B);
+		System.out.println(coordMap.size());
 		coordMap = null;
 	}
 
@@ -235,10 +236,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYLINE:
 			if (points != null) {
-				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
-					points.set(0, points.get(points.size()-1));
-				} 
-				
 				if (roadHelper.isRoad()) {
 					polyline.setPoints(points);
 					mapper.addRoad(roadHelper.makeRoad(polyline));
@@ -273,10 +270,9 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYGON:
 			if (points != null) {
-				if (points.get(0).highPrecEquals(points.get(points.size()-1))){
-					points.set(0, points.get(points.size()-1));
-				} else {
-					//points.add(points.get(0)); // close it ?
+				if (points.get(0) != points.get(points.size()-1)){
+					// not closed, close it
+					points.add(points.get(0));  
 				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
