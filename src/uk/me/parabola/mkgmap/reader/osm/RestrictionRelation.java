@@ -14,9 +14,9 @@
 package uk.me.parabola.mkgmap.reader.osm;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
@@ -167,8 +167,16 @@ public class RestrictionRelation extends Relation {
 		return fromWay;
 	}
 
+	public void setFromWay(Way fromWay) {
+		this.fromWay = fromWay;
+	}
+
 	public Way getToWay() {
 		return toWay;
+	}
+
+	public void setToWay(Way toWay) {
+		this.toWay = toWay;
 	}
 
 	public Coord getViaCoord() {
