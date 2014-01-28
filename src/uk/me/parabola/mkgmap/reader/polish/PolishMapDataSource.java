@@ -149,7 +149,6 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground(havePolygon4B);
-		System.out.println(coordMap.size());
 		coordMap = null;
 	}
 
