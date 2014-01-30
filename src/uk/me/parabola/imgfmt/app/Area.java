@@ -162,6 +162,15 @@ public class Area {
 				&& co.getLongitude() <= maxLong;
 	}
 
+	public final boolean contains(Area other) {
+		// return true if other is inside the Area (it may touch the
+		// boundary)
+		return other.getMinLat() >= minLat
+				&& other.getMaxLat() <= maxLat
+				&& other.getMinLong() >= minLong
+				&& other.getMaxLong() <= maxLong;
+	}
+
 	public final boolean insideBoundary(Coord co) {
 		// return true if co is inside the Area and doesn't touch the
 		// boundary
@@ -171,6 +180,16 @@ public class Area {
 				&& co.getLongitude() < maxLong;
 	}
 
+	public final boolean insideBoundary(Area other) {
+		// return true if other is inside the Area and doesn't touch the
+		// boundary
+		return other.getMinLat() > minLat
+				&& other.getMaxLat() < maxLat
+				&& other.getMinLong() > minLong
+				&& other.getMaxLong() < maxLong;
+	}
+
+	
 	public final boolean onBoundary(Coord co) {
 		// return true if co is on the boundary
 		return contains(co) && !insideBoundary(co);
