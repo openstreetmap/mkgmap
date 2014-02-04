@@ -195,6 +195,12 @@ public class RestrictionRelation extends Relation {
 		this.viaNode = viaNode;
 	}
 
+	public void setViaCoord(Coord viaCoord) {
+		log.warn(messagePrefix + restriction + " 'via' coord redefined from " +
+				 this.viaCoord.toOSMURL() + " to " + viaCoord.toOSMURL());
+		this.viaCoord = viaCoord;
+	}
+
 	public void addOtherNode(CoordNode otherNode) {
 		otherNodes.add(otherNode);
 		log.debug(messagePrefix + restriction + " adding 'other' node " + otherNode.toOSMURL());
@@ -224,7 +230,7 @@ public class RestrictionRelation extends Relation {
 			List<Coord>toPoints = toWay.getPoints();
 			for(Coord fp : fromPoints) {
 				for(Coord tp : toPoints) {
-					if(fp.equals(tp)) {
+					if(fp == tp) {
 						if(viaCoord == null) {
 							viaCoord = fp;
 						}
@@ -254,16 +260,14 @@ public class RestrictionRelation extends Relation {
 
 		Coord e1 = fromWay.getPoints().get(0);
 		Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
-		if(!e1.equals(v1) && !e2.equals(v1) &&
-		   !e1.equals(v2) && !e2.equals(v2)) {
+		if(e1 != v1 && e2 != v1 && e1 != v2 && e2 != v2) {
 			log.warn(messagePrefix + "'from' way " + fromWay.toBrowseURL() + " doesn't start or end at 'via' node or way");
 			result = false;
 		}
 
 		e1 = toWay.getPoints().get(0);
 		e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
-		if(!e1.equals(v1) && !e2.equals(v1) &&
-		   !e1.equals(v2) && !e2.equals(v2)) {
+		if(e1 != v1 && e2 != v1 && e1 != v2 && e2 != v2) {
 			log.warn(messagePrefix + "'to' way " + toWay.toBrowseURL() + " doesn't start or end at 'via' node or way");
 			result = false;
 		}
@@ -272,14 +276,19 @@ public class RestrictionRelation extends Relation {
 			log.warn(messagePrefix + "sorry, 'via' ways are not supported - ignoring restriction");
 			result = false;
 		}
-
 		return result;
 	}
 
 	public void addRestriction(MapCollector collector) {
-
+		if ("no_u_turn".equals(restriction)){
+			if (toNode != null && fromNode == null)
+				fromNode = toNode;
+			else if (fromNode != null && toNode == null)
+				toNode = fromNode;
+		}
 		if(restriction == null || viaNode == null || fromNode == null || toNode == null) {
-			// restriction must have some error (reported earlier)
+			if (viaCoord != null)
+				log.warn("can't add restriction relation", this.getId(), "type", restriction);
 			return;
 		}
 

@@ -534,7 +534,7 @@ public class StyledConverter implements OsmConverter {
 		filterCoordPOI();
 
 		wrongAngleFixer.setBounds(bbox);
-		wrongAngleFixer.optimizeRoads(roads, lines, modifiedRoads, deletedRoads);
+		wrongAngleFixer.optimizeRoads(roads, lines, modifiedRoads, deletedRoads, restrictions);
 
 		// make sure that copies of modified roads have equal points 
 		for (int i = 0; i < lines.size(); i++){
@@ -882,7 +882,7 @@ public class StyledConverter implements OsmConverter {
 		
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
-			if(rr.isValid()) {
+			if(rr.isValid() && bbox.contains(rr.getViaCoord())) {
 				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
 				if(lrr == null) {
 					lrr = new ArrayList<RestrictionRelation>();

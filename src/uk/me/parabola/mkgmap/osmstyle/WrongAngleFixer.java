@@ -26,6 +26,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
+import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.util.GpxCreator;
 
@@ -65,11 +66,12 @@ public class WrongAngleFixer {
 	 * @param lines list of non-routable ways  
 	 * @param modifiedRoads Will be enlarged by all roads modified in this method 
 	 * @param deletedRoads Will be enlarged by all roads in roads that were set to null by this method 
+	 * @param restrictions Map with restriction relations 
 	 */
-	public void optimizeRoads(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads ) {
+	public void optimizeRoads(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions ) {
 		printBadAngles("bad_angles_start", roads);
 		writeOSM("roads_orig", roads);
-		removeWrongAngles(roads, lines, modifiedRoads, deletedRoads);
+		removeWrongAngles(roads, lines, modifiedRoads, deletedRoads, restrictions);
 		writeOSM("roads_post_rem_wrong_angles", roads);
 		removeObsoletePoints(roads, modifiedRoads);
 		writeOSM("roads_post_rem_obsolete_points", roads);
@@ -159,8 +161,9 @@ public class WrongAngleFixer {
 	 * @param modifiedRoads 
 	 * @param lines 
 	 * @param roads 
+	 * @param restrictions Map with restriction relations 
 	 */
-	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads) {
+	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions) {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
@@ -368,6 +371,17 @@ public class WrongAngleFixer {
 					Coord replacement = getReplacement(p, way, replacements);
 					if (p == replacement) 
 						continue;
+					
+					if (p.isViaNodeOfRestriction()){
+						// make sure that we find the restriction with the new coord instance
+						replacement.setViaNodeOfRestriction(true);
+						List<RestrictionRelation> lrr = restrictions.remove(p);
+						if (lrr != null)
+							restrictions.put(replacement,lrr);
+						for (RestrictionRelation rr: lrr)
+							rr.setViaCoord(replacement);
+						p.setViaNodeOfRestriction(false);
+					}
 					p = replacement;
 					// replace point in way
 					points.set(i, p);
