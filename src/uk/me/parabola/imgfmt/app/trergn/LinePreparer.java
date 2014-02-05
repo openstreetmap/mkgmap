@@ -25,7 +25,7 @@ import uk.me.parabola.log.Logger;
  * This class holds all of the calculations needed to encode a line into
  * the garmin format.
  */
-class LinePreparer {
+public class LinePreparer {
 	private static final Logger log = Logger.getLogger(LinePreparer.class);
 
 	// These are our inputs.
@@ -130,7 +130,7 @@ class LinePreparer {
 				log.debug("x delta", dx, "~", xbits);
 			assert dx >> xbits == 0 || dx >> xbits == -1;
 			if (xSameSign) {
-				bw.putn(abs(dx), xbits);
+				bw.putn(Math.abs(dx), xbits);
 			} else {
 				// catch inadvertent output of "magic" value that has
 				// sign bit set but other bits all 0
@@ -143,7 +143,7 @@ class LinePreparer {
 				log.debug("y delta", dy, ybits);
 			assert dy >> ybits == 0 || dy >> ybits == -1;
 			if (ySameSign) {
-				bw.putn(abs(dy), ybits);
+				bw.putn(Math.abs(dy), ybits);
 			} else {
 				// catch inadvertent output of "magic" value that has
 				// sign bit set but other bits all 0
@@ -358,8 +358,8 @@ class LinePreparer {
 	 * @param val The number for bit counting.
 	 * @return The number of bits required.
 	 */
-	private int bitsNeeded(int val) {
-		int n = abs(val);
+	public static int bitsNeeded(int val) {
+		int n = Math.abs(val);
 
 		int count = val < 0? 1: 0;
 		while (n != 0) {
@@ -367,13 +367,6 @@ class LinePreparer {
 			count++;
 		}
 		return count;
-	}
-
-	private int abs(int val) {
-		if (val < 0)
-			return -val;
-		else
-			return val;
 	}
 
 	public boolean isExtraBit() {

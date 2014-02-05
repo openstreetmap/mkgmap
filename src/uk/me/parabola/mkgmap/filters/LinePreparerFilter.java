@@ -13,7 +13,11 @@
  
 package uk.me.parabola.mkgmap.filters;
 
+import java.util.Collections;
+import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.trergn.LinePreparer;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
@@ -21,7 +25,8 @@ import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * This filter does more or less the same calculations as LinePreparer.calcDeltas   
- * It rejects lines that have not enough different points
+ * It rejects lines that have not enough different points, and it optimises
+ * shapes so that they require fewer bits in the img file.
  * @author GerdP
  *
  */
@@ -40,7 +45,7 @@ public class LinePreparerFilter implements MapFilter {
 
 	/**
 	 * @param element A map element that will be a line or a polygon.
-	 * @param next This is used to pass the (unchanged) element onward.
+	 * @param next This is used to pass the element onward.
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
@@ -54,6 +59,11 @@ public class LinePreparerFilter implements MapFilter {
 		int lastLat = 0;
 		int lastLong = 0;
 		int numPointsEncoded = 1;
+		// fields to keep track of the largest delta values  
+		int[] maxBits = {0,0};
+		int[] maxBits2nd = {0,0};
+		int[] maxBitsPos = {0,0};
+		
 		for (int i = 0; i < numPoints; i++) {
 			Coord co = line.getPoints().get(i);
 
@@ -78,14 +88,59 @@ public class LinePreparerFilter implements MapFilter {
 			if (dx == 0 && dy == 0){
 				continue;
 			}
-				
 			++numPointsEncoded;
-			if (numPointsEncoded >= minPointsRequired)
+			if (numPointsEncoded >= minPointsRequired && element instanceof MapShape == false)
 				break;
+			// find out largest and 2nd largest delta for both dx and dy
+			for (int k = 0; k < 2; k++){
+				int nBits = LinePreparer.bitsNeeded((k==0) ? dx:dy);
+				if (nBits > maxBits2nd[k]){
+					if (nBits > maxBits[k]){
+						maxBits2nd[k] = maxBits[k];
+						maxBits[k] = nBits;
+						maxBitsPos[k] = i;
+					} 
+					else
+						maxBits2nd[k] = nBits;
+				}
+			}
+			
 		}		
 		if(numPointsEncoded < minPointsRequired)
 			return;
-		
+		if (minPointsRequired >= 3){
+			// check if we can optimise shape by rotating
+			// so that the longest line segment is not encoded and thus fewer bits 
+			// are required for all points
+			// TODO: maybe add additional points to further reduce max. delta values
+			// or reverse order if largest delta is negative
+			int maxReduction = 0;
+			int rotation = 0;
+			
+			for (int k = 0; k < 2; k++){
+				int delta = maxBits[k] - maxBits2nd[k]; 
+				// prefer largest delta, then smallest rotation
+				if (delta > maxReduction || delta == maxReduction && rotation > maxBitsPos[k]){
+					maxReduction = delta;
+					rotation = maxBitsPos[k];
+				} 
+			}
+			/*
+			int savedBits = (numPoints-1 * maxReduction);
+			if (savedBits > 100){
+				System.out.println("rotation of shape saves " + savedBits + " bits");
+			}
+			*/
+			if (rotation != 0){
+				List<Coord> points = line.getPoints();
+				if (minPointsRequired == 4)
+					points.remove(numPoints-1);
+				Collections.rotate(points, -rotation);
+				if (minPointsRequired == 4)
+					points.add(points.get(0));
+			}
+			
+		}
 		next.doFilter(element);
 	}
 }
