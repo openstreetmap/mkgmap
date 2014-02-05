@@ -461,8 +461,8 @@ public class ShapeMergeFilter{
 	public static long calcAreaSizeTestVal(List<Coord> points){
 		if (points.size() < 4)
 			return 0; // straight line cannot enclose an area
-		if (points.get(0) != points.get(points.size()-1)){
-			log.warn("shape is not closed with identical points");
+		if (points.get(0).highPrecEquals(points.get(points.size()-1)) == false){
+			log.error("shape is not closed");
 			return 0;
 		}
 		Iterator<Coord> polyIter = points.iterator();
