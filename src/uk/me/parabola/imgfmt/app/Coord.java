@@ -297,6 +297,8 @@ public class Coord implements Comparable<Coord> {
 	public boolean highPrecEquals(Coord other) {
 		if (other == null)
 			return false;
+		if (this == other)
+			return true;
 		return getHighPrecLat() == other.getHighPrecLat() && getHighPrecLon() == other.getHighPrecLon(); 
 	} 
 
