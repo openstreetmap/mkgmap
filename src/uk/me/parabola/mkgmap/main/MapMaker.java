@@ -224,7 +224,7 @@ public class MapMaker implements MapProcessor {
 		if(r1 != r2) {
 			for(Coord c1 : r1.getPoints()) {
 				for(Coord c2 : r2.getPoints()) {
-					if(c1 == c2 || c1.equals(c2))
+					if(c1 == c2 || c1.highPrecEquals(c2))
 						return true;
 				}
 			}
