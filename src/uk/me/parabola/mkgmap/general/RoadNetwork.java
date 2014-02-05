@@ -262,16 +262,24 @@ public class RoadNetwork {
 		RouteNode fn = nodes.get(fromNode.getId());
 		RouteNode tn = nodes.get(toNode.getId());
 		RouteNode vn = nodes.get(viaNode.getId());
-
-		assert fn != null : "can't locate 'from' RouteNode with id " + fromNode.getId();
-		assert tn != null : "can't locate 'to' RouteNode with id " + toNode.getId();
-		assert vn != null : "can't locate 'via' RouteNode with id " + viaNode.getId();
-
+		if (fn == null  || tn == null || vn == null){
+			if (fn == null)
+				log.error("can't locate 'from' RouteNode with id", fromNode.getId());
+			if (tn == null)
+				log.error("can't locate 'to' RouteNode with id", toNode.getId());
+			if (vn == null)
+				log.error("can't locate 'via' RouteNode with id", viaNode.getId());
+			return;
+		}
 		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
 		RouteArc ta = vn.getArcTo(tn);
-
-		assert fa != null : "can't locate arc from 'via' node to 'from' node";
-		assert ta != null : "can't locate arc from 'via' node to 'to' node";
+		if (fa == null || ta == null){
+			if (fa == null)
+				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'from' node",fromNode.getId());
+			if (ta == null)
+				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'to' node",toNode.getId());
+			return;
+		}
 		if(!ta.isForward() && ta.getRoadDef().isOneway()) {
 			// the route restriction connects to the "wrong" end of a oneway
 			if ((exceptMask & RouteRestriction.EXCEPT_FOOT) != 0){

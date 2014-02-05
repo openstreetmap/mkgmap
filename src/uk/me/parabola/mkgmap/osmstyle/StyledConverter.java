@@ -828,7 +828,7 @@ public class StyledConverter implements OsmConverter {
 						if (lastNode != null)
 							otherNodeIds.put(lastNode.getId(),lastNode);
 					} else {
-						if (p.equals(lastNode))
+						if (p.highPrecEquals(lastNode))
 							otherNodeIds.put(cn.getId(),cn);
 					}
 					lastNode = cn;
@@ -904,8 +904,9 @@ public class StyledConverter implements OsmConverter {
 		double lineLength = 0;
 		Coord lastP = null;
 		for (Coord p : wayPoints) {
-			if (lastP != null && p.equals(lastP))
+			if (p.highPrecEquals(lastP))
 				continue;
+			
 			points.add(p);
 			if(lastP != null) {
 				lineLength += p.distance(lastP);
