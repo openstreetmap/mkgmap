@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 
 import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 
 /**
  * A point coordinate in unshifted map-units.
@@ -34,21 +35,23 @@ import uk.me.parabola.imgfmt.Utils;
  * @author Steve Ratcliffe
  */
 public class Coord implements Comparable<Coord> {
-	private final static byte ON_BOUNDARY_MASK = 0x01; // bit in flags is true if point lies on a boundary
-	private final static byte PRESERVED_MASK = 0x02; // bit in flags is true if point should not be filtered out
-	private final static byte REPLACED_MASK = 0x04;  // bit in flags is true if point was replaced 
-	private final static byte PART_OF_BAD_ANGLE = 0x08; // bit in flags is true if point should be treated as a node
-	private final static byte FIXME_NODE_MASK = 0x10; // bit in flags is true if a node with this coords has a fixme tag
-	private final static byte REMOVE_MASK = 0x20; // bit in flags is true if this point should be removed
-	private final static byte VIA_NODE_MASK = 0x40; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation 	
+	private final static short ON_BOUNDARY_MASK = 0x0001; // bit in flags is true if point lies on a boundary
+	private final static short PRESERVED_MASK = 0x0002; // bit in flags is true if point should not be filtered out
+	private final static short REPLACED_MASK = 0x0004;  // bit in flags is true if point was replaced 
+	private final static short TREAT_AS_NODE_MASK = 0x0008; // bit in flags is true if point should be treated as a node 
+	private final static short FIXME_NODE_MASK = 0x0010; // bit in flags is true if a node with this coords has a fixme tag
+	private final static short REMOVE_MASK = 0x0020; // bit in flags is true if this point should be removed
+	private final static short VIA_NODE_MASK = 0x0040; // bit in flags is true if a node with this coords is the via node of a RestrictionRelation
+	
+	private final static short PART_OF_BAD_ANGLE = 0x0080; // bit in flags is true if point should be treated as a node
+	private final static short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
-	private byte shapeCount; // used by ShapeMerger 
-	private byte flags; // further attributes
+	private short flags; // further attributes
 	private final byte latDelta; // delta to 30 bit lat value 
 	private final byte lonDelta; // delta to 30 bit lon value
 	private final static byte MAX_DELTA = 16; // max delta abs value that is considered okay
@@ -153,26 +156,6 @@ public class Coord implements Comparable<Coord> {
 		highwayCount = 0;
 	}
 	
-	public int getShapeCount() {
-		return shapeCount;
-	}
-
-	/**
-	 * Increase the counter how many shapes use this coord.
-	 */
-	public int incShapeCount() {
-		// don't let it wrap
-		if(shapeCount < Byte.MAX_VALUE)
-			++shapeCount;
-		return shapeCount;
-	}
-
-	/**
-	 * Resets the shape counter to 0.
-	 */
-	public void resetShapeCount() {
-		shapeCount = 0;
-	}
 	public boolean getOnBoundary() {
 		return (flags & ON_BOUNDARY_MASK) != 0;
 	}
@@ -215,26 +198,25 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/** 
-	 * Should this Coord be treated by the removeWrongAngle method=
-	 * The value has no meaning outside of StyledConverter.
-	 * @return true if this coord is part of a line that has a big bearing error. 
+	 * Should this Coord be treated like a Garmin node in short arc removal?
+	 * The value has no meaning outside of short arc removal.
+	 * @return true if this coord should be treated like a Garmin node, else false
 	 */
-	public boolean isPartOfBadAngle() {
-		return (flags & PART_OF_BAD_ANGLE) != 0;
+	public boolean isTreatAsNode() {
+		return (flags & TREAT_AS_NODE_MASK) != 0;
 	}
 
 	/**
-	 * Mark the Coord to be part of a line which has a big bearing
-	 * error because of the rounding to map units. 
-	 * @param b true or false
+	 * Mark the Coord to be treated like a Node in short arc removal 
+	 * @param treatAsNode true or false
 	 */
-	public void setPartOfBadAngle(boolean b) {
-		if (b) 
-			this.flags |= PART_OF_BAD_ANGLE;
+	public void setTreatAsNode(boolean treatAsNode) {
+		if (treatAsNode) 
+			this.flags |= TREAT_AS_NODE_MASK;
 		else 
-			this.flags &= ~PART_OF_BAD_ANGLE; 
-	}
-
+			this.flags &= ~TREAT_AS_NODE_MASK; 
+	} 
+	
 	/**
 	 * Does this coordinate belong to a node with a fixme tag?
 	 * Note that the value is set after evaluating the points style. 
@@ -279,6 +261,47 @@ public class Coord implements Comparable<Coord> {
 			this.flags &= ~VIA_NODE_MASK; 
 	}
 	
+	/** 
+	 * Should this Coord be treated by the removeWrongAngle method=
+	 * The value has no meaning outside of StyledConverter.
+	 * @return true if this coord is part of a line that has a big bearing error. 
+	 */
+	public boolean isPartOfBadAngle() {
+		return (flags & PART_OF_BAD_ANGLE) != 0;
+	}
+
+	/**
+	 * Set or unset flag for {@link ShapeMergeFilter} 
+	 * @param b true or false
+	 */
+	public void setPartOfShape2(boolean b) {
+		if (b) 
+			this.flags |= PART_OF_SHAPE2;
+		else 
+			this.flags &= ~PART_OF_SHAPE2; 
+	}
+
+	/** 
+	 * Get flag for {@link ShapeMergeFilter}
+	 * The value has no meaning outside of {@link ShapeMergeFilter}
+	 * @return  
+	 */
+	public boolean isPartOfShape2() {
+		return (flags & PART_OF_SHAPE2) != 0;
+	}
+
+	/**
+	 * Mark the Coord to be part of a line which has a big bearing
+	 * error because of the rounding to map units. 
+	 * @param b true or false
+	 */
+	public void setPartOfBadAngle(boolean b) {
+		if (b) 
+			this.flags |= PART_OF_BAD_ANGLE;
+		else 
+			this.flags &= ~PART_OF_BAD_ANGLE; 
+	}
+
 	public int hashCode() {
 		// Use a factor for latitude to span over the whole integer range:
 		// max lat: 4194304

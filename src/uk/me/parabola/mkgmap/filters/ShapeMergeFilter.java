@@ -269,27 +269,18 @@ public class ShapeMergeFilter{
 		
 		for (int i = 0; i+1 < s1.size(); i++){
 		    Coord co = s1.get(i);
-		    co.resetShapeCount();
+		    co.setPartOfShape2(false);
 		}
 		for (int i = 0; i+1 < s2.size(); i++){
 		    Coord co = s2.get(i);
-			co.resetShapeCount();
+		    co.setPartOfShape2(true);
 		    s2PosMap.put(co, i); 
-		}
-		
-		// increment the shape counter for all points, but
-		// only once for each distinct point
-		for (Coord co : s2) {
-			if (co.getShapeCount() == 0){
-				co.incShapeCount();
-			}
 		}
 		
 		int start = 0;
 		while(start < s1.size()){
 			Coord co = s1.get(start);
-			int usage = co.getShapeCount();			
-			if (usage == 0)
+			if (!co.isPartOfShape2())
 				break;
 			start++;
 		}
@@ -299,10 +290,9 @@ public class ShapeMergeFilter{
 			if (pos+1 >= s1.size())
 				pos = 0;
 			Coord co = s1.get(pos);
-			int usage = co.getShapeCount();
 			if (++tested >= s1.size())
 				break;
-			if (usage > 0){
+			if (co.isPartOfShape2()){
 				s1PositionsToCheck.add(pos);
 				Integer posInSh2 = s2PosMap.get(co);
 				assert posInSh2 != null;
