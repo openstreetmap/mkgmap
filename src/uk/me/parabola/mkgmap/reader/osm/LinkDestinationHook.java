@@ -32,6 +32,7 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.LocatorUtil;
 import uk.me.parabola.mkgmap.osmstyle.function.LengthFunction;
 import uk.me.parabola.util.EnhancedProperties;
+import uk.me.parabola.util.MultiHashMap;
 
 /**
  * Copies the destination tag from motorway_link and trunk_link ways to the 
@@ -52,6 +53,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	private HashSet<String> tagValues = new HashSet<String>(Arrays.asList(
 			"motorway_link", "trunk_link"));
 
+	/** Map way ids to its restriction relations so that the relations can easily be updated when the way is split. */
+	private MultiHashMap<Long, RestrictionRelation> restrictions = new MultiHashMap<>();
+	
 	private List<String> nameTags;
 
 	/** Maps which nodes contains to which ways */ 
@@ -136,6 +140,19 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				}
 			}
 		}
+		
+		// get all restriction relations
+		// eventually they must be modified if one of its ways is split
+		for (Relation rel : saver.getRelations().values()) {
+			if (rel instanceof RestrictionRelation) {
+				RestrictionRelation rrel = (RestrictionRelation) rel;
+				if (rrel.isValid()==false)
+					// ignore invalid restrictions
+					continue;
+				restrictions.add(rrel.getFromWay().getId(), rrel);
+				restrictions.add(rrel.getToWay().getId(), rrel);
+			}
+		}
 	}
 	
 	
@@ -189,6 +206,37 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 	}
 	
 	/**
+	 * Check all restriction relations and eventually update the relations to use
+	 * the split way if appropriate.
+	 * 
+	 * @param oldWay the original way
+	 * @param newWay the split part of the old way
+	 */
+	private void changeWayIdInRelations(Way oldWay, Way newWay) {
+		List<RestrictionRelation> wayRestrictions = restrictions.get(oldWay.getId());
+		if (wayRestrictions.isEmpty()) {
+			return;
+		}
+		// create a copy because original list may be modified within the loop
+		for (RestrictionRelation rr : new ArrayList<>(wayRestrictions)) {
+			Coord lastPointNewWay = newWay.getPoints().get(0);
+			if (rr.getViaCoord() == lastPointNewWay) {
+				if (rr.getToWay().equals(oldWay)) {
+					log.debug("Change to-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+					rr.setToWay(newWay);
+					restrictions.remove(oldWay.getId(), rr);
+					restrictions.add(newWay.getId(), rr);
+				} else if (rr.getFromWay().equals(oldWay)) {
+					log.debug("Change from-way",oldWay.getId(),"to",newWay.getId(),"for relation",rr.getId(),"at",lastPointNewWay.toOSMURL());
+					rr.setFromWay(newWay);
+					restrictions.remove(oldWay.getId(), rr);
+					restrictions.add(newWay.getId(), rr);
+				} 
+			}
+		}
+	}
+	
+	/**
 	 * Cuts off at least minLength meter of the given way and returns the cut off way tagged
 	 * identical to the given way.   
 	 * @param w the way to be cut 
@@ -219,6 +267,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 
 				registerPointsOfWay(precedingWay);
 
+				// check and update relations so that they use the new way if appropriate
+				changeWayIdInRelations(w, precedingWay);
+				
 				log.debug("Cut way", w, "at existing point 1. New way:",
 						precedingWay);
 
@@ -279,6 +330,9 @@ public class LinkDestinationHook extends OsmReadingHooksAdaptor {
 				// remove the points of the new way from the old way
 				removePointsFromWay(w, 0, i);
 				registerPointsOfWay(precedingWay);
+
+				// check and update relations so that they use the new way if appropriate
+				changeWayIdInRelations(w, precedingWay);
 
 				// return the split way
 				return precedingWay;			

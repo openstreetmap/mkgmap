@@ -37,6 +37,7 @@ public class NODHeader extends CommonHeader {
 
     private int flags;
     private int align;
+    private int mult1;
 	private int tableARecordLen;
 
 	/** 
@@ -64,7 +65,8 @@ public class NODHeader extends CommonHeader {
         nodes.readSectionInfo(reader, false);
         flags = reader.getChar();
         reader.getChar();
-        align = reader.getChar();
+        align = reader.get();
+        mult1 = reader.get();
         tableARecordLen = reader.getChar();
         roads.readSectionInfo(reader, false);
         reader.getInt();
@@ -87,8 +89,9 @@ public class NODHeader extends CommonHeader {
 			val |= 0x0300;
 		writer.putInt(val);
 
-		char align = DEF_ALIGN;
-		writer.putChar(align);
+		byte align = DEF_ALIGN;
+		writer.put(align);
+		writer.put((byte) 0); // pointer multiplier
 		writer.putChar((char) 5);
 
 		roads.writeSectionInfo(writer);
@@ -144,6 +147,10 @@ public class NODHeader extends CommonHeader {
     public int getAlign() {
         return align;
     }
+
+	public int getMult1() {
+		return mult1;
+	}
 
 	public int getTableARecordLen() {
 		return tableARecordLen;
