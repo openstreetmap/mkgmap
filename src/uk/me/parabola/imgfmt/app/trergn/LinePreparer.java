@@ -208,9 +208,8 @@ public class LinePreparer {
 		boolean yDiffSign = false; // The lat values have different sign
 		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
 		int ySign = 0;  // As above for lat.
-		int xBits = 0;  // Number of bits needed for long
-		int yBits = 0;  // Number of bits needed for lat.
-
+		int minDx = Integer.MAX_VALUE, maxDx = 0;
+		int minDy = Integer.MAX_VALUE, maxDy = 0;
 		// index of first point in a series of identical coords (after shift)
 		int firstsame = 0;
 		for (int i = 0; i < numPointsToUse; i++) {
@@ -294,19 +293,23 @@ public class LinePreparer {
 				}
 			}
 
-			// Find the maximum number of bits required to hold the value.
-			int nbits = bitsNeeded(dx);
-			if (nbits > xBits)
-				xBits = nbits;
-
-			nbits = bitsNeeded(dy);
-			if (nbits > yBits)
-				yBits = nbits;
-
+			// find largest delta values
+			if (dx < minDx)
+				minDx = dx;
+			if (dx > maxDx)
+				maxDx = dx;
+			if (dy < minDy)
+				minDy = dy;
+			if (dy > maxDy)
+				maxDy = dy;
+			
 			// Save the deltas
 			deltas[2*(i-1)] = dx;
 			deltas[2*(i-1) + 1] = dy;
 		}
+		// Find the maximum number of bits required to hold the delta values.
+		int xBits = Math.max(bitsNeeded(minDx), bitsNeeded(maxDx)); 
+		int yBits = Math.max(bitsNeeded(minDy), bitsNeeded(maxDy));
 
 		// Now we need to know the 'base' number of bits used to represent
 		// the value.  In decoding you start with that number and add various
