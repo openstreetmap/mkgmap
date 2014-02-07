@@ -930,7 +930,7 @@ public class StyledConverter implements OsmConverter {
 		MapLine line = new MapLine();
 		elementSetup(line, gt, way);
 		line.setPoints(points);
-
+		line.setOsmid(way.getId());
 		
 		if (way.isBoolTag("oneway"))
 			line.setDirection(true);
@@ -951,6 +951,7 @@ public class StyledConverter implements OsmConverter {
 			return;
 		// TODO: split self intersecting polygons?
 		final MapShape shape = new MapShape(way.getId());
+		shape.setOsmid(way.getId());
 		elementSetup(shape, gt, way);
 		shape.setPoints(way.getPoints());
 		if (way.isBoolTag("mkgmap:skipSizeFilter"))
@@ -1628,6 +1629,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		MapLine line = new MapLine();
+		line.setOsmid(way.getId());
 		elementSetup(line, gt, way);
 		line.setPoints(points);
 		

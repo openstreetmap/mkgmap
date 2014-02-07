@@ -30,13 +30,18 @@ import uk.me.parabola.imgfmt.app.Coord;
  */
 public class AreaClipper implements Clipper {
 	private final Area bbox;
+	private int minLat30, maxLat30,minLon30,maxLon30;
 
 	public AreaClipper(Area bbox) {
 		this.bbox = bbox;
+		minLat30 = bbox.getMinLat() << Coord.DELTA_SHIFT;
+		minLon30 = bbox.getMinLat() << Coord.DELTA_SHIFT;
+		maxLat30 = bbox.getMaxLat() << Coord.DELTA_SHIFT;
+		maxLon30 = bbox.getMaxLong() << Coord.DELTA_SHIFT;
 	}
 
 	public void clipLine(MapLine line, LineAdder collector) {
-		if (bbox == null || bbox.insideBoundary(line.getBounds())){
+		if (bbox == null){
 			collector.add(line);
 			return;
 		}
@@ -53,20 +58,16 @@ public class AreaClipper implements Clipper {
 	}
 
 	public void clipShape(MapShape shape, MapCollector collector) {
-		if (bbox == null || bbox.contains(shape.getBounds())){
+		if (bbox == null){
 			collector.addShape(shape);
 			return;
 		}
-		List<List<Coord>> list = PolygonClipper.clip(bbox, shape.getPoints());
-		if (list == null) {
-			collector.addShape(shape);
-		} else {
-			for (List<Coord> lco : list) {
-				MapShape nshape = new MapShape(shape);
-				nshape.setPoints(lco);
-				nshape.setClipped(true);
-				collector.addShape(nshape);
-			}
+		List<Coord> clipped = SutherlandHodgmanPolygonClipper.clipPolygon(shape.getPoints(), bbox);
+		if (clipped != null){
+			MapShape nshape = new MapShape(shape);
+			nshape.setPoints(clipped);
+			nshape.setClipped(true);
+			collector.addShape(nshape);
 		}
 	}
 

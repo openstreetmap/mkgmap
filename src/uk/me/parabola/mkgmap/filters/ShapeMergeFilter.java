@@ -222,16 +222,9 @@ public class ShapeMergeFilter{
 			}
 		}
 		List<Coord> merged = null; 
-		if (points1.size() + points2.size() - 2*sh1PositionsToCheck.size() < PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
-			merged = mergeLongestSequence(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, sameDir);
-			if (merged.get(0) != merged.get(merged.size()-1))
-				merged = null;
-			else if (merged.size() > PolygonSplitterFilter.MAX_POINT_IN_ELEMENT){
-				// don't merge because merged polygon would be split again
-				log.info("merge rejected: merged shape has too many points " + merged.size());
-				merged = null;
-			}
-		}
+		merged = mergeLongestSequence(points1, points2, sh1PositionsToCheck, sh2PositionsToCheck, sameDir);
+		if (merged.get(0) != merged.get(merged.size()-1))
+			merged = null;
 		ShapeHelper shm = null;
 		if (merged != null){
 			shm = new ShapeHelper(merged);
@@ -274,7 +267,10 @@ public class ShapeMergeFilter{
 		for (int i = 0; i+1 < s2.size(); i++){
 		    Coord co = s2.get(i);
 		    co.setPartOfShape2(true);
-		    s2PosMap.put(co, i); 
+		    Integer old = s2PosMap.put(co, i);
+		    if (old != null){
+//		    	co.preserved(true);
+		    }
 		}
 		
 		int start = 0;
@@ -335,8 +331,9 @@ public class ShapeMergeFilter{
 				int succ2 = sh2PositionsToCheck.getInt(i+1);
 				if (Math.abs(succ2-pred2) == 1 || pred2+2 == s2Size && succ2 == 0 || succ2+2 == s2Size && pred2 == 0 ){
 					// found common sequence
-					if (start < 0)
+					if (start < 0){
 						start = i;
+					}
 					inSequence = true;
 					length++; 
 				} else {

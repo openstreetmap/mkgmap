@@ -16,13 +16,13 @@
  */
 package uk.me.parabola.mkgmap.filters;
 
-import java.awt.*;
-import java.awt.geom.Area;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.util.Java2DConverter;
+import uk.me.parabola.mkgmap.general.SutherlandHodgmanPolygonClipper;
 
 /**
  * @author Steve Ratcliffe
@@ -36,59 +36,26 @@ public class PolygonSplitterBase extends BaseFilter {
 	 * @param outputs The output list.
 	 */
 	protected void split(MapShape shape, List<MapShape> outputs) {
-		// TODO: use different algo which will keep track of holes which are
-		// connected with the outer polygon
-		
-		// Convert to a awt area
-		Area a1 = Java2DConverter.createArea(shape.getPoints());
-
-		// Get the bounds of this polygon
-		Rectangle bounds = a1.getBounds();
-
-		if (bounds.isEmpty())
-			return;  // Drop it
-
-		// Cut the bounding box into two rectangles
-		Rectangle r1;
-		Rectangle r2;
-		if (bounds.width > bounds.height) {
-			int halfWidth = bounds.width / 2;
-			r1 = new Rectangle(bounds.x, bounds.y, halfWidth, bounds.height);
-			r2 = new Rectangle(bounds.x + halfWidth, bounds.y, bounds.width - halfWidth, bounds.height);
+		Area bounds = shape.getBounds();
+		// calculate a bit larger bbox so that we are sure that we clip only in the middle
+		Area outerBounds = new Area(Math.max(Utils.toMapUnit(-90.0),bounds.getMinLat() - 1),
+				Math.max(Utils.toMapUnit(-180.0), bounds.getMinLong() -1),
+				Math.min(Utils.toMapUnit(90.0), bounds.getMaxLat() + 1),
+				Math.min(Utils.toMapUnit(180.0), bounds.getMaxLong() + 1));
+		Area[] clipRectangles;
+		if (outerBounds.getWidth() > outerBounds.getHeight()) {
+			clipRectangles = outerBounds.split(2, 1);
 		} else {
-			int halfHeight = bounds.height / 2;
-			r1 = new Rectangle(bounds.x, bounds.y, bounds.width, halfHeight);
-			r2 = new Rectangle(bounds.x, bounds.y + halfHeight, bounds.width, bounds.height - halfHeight);
+			clipRectangles = outerBounds.split(1, 2);
 		}
-
-		// Now find the intersection of these two boxes with the original
-		// polygon.  This will make two new areas, and each area will be one
-		// (or more) polygons.
-		Area a2 = (Area) a1.clone();
-		a1.intersect(new Area(r1));
-		a2.intersect(new Area(r2));
-
-		areaToShapes(shape, a1, outputs);
-		areaToShapes(shape, a2, outputs);
-	}
-
-	/**
-	 * Convert the area back into {@link MapShape}s.  It is possible that the
-	 * area is multiple discontinuous polygons, so you may append more than one
-	 * shape to the output list.
-	 *
-	 * @param origShape The original shape, this is only used as a prototype to
-	 * copy for the newly created shapes.
-	 * @param area The area to be converted.
-	 * @param outputs Used to hold output shapes.
-	 */
-	private void areaToShapes(MapShape origShape, Area area, List<MapShape> outputs) {
-		List<List<Coord>> subShapePoints = Java2DConverter.areaToShapes(area);
-		
-		for (List<Coord> subShape : subShapePoints) {
-			MapShape s = origShape.copy();
-			s.setPoints(subShape);
-			outputs.add(s);
+		for (int i = 0; i < clipRectangles.length; i++){
+			List<Coord> clipped = SutherlandHodgmanPolygonClipper.clipPolygon(shape.getPoints(), clipRectangles[i]);
+			if (clipped != null){
+				MapShape s = shape.copy();
+				s.setPoints(clipped);
+				s.setClipped(true);
+				outputs.add(s);
+			}
 		}
 	}
 }
