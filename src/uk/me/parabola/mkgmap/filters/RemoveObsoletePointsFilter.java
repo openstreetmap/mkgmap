@@ -92,6 +92,13 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 
 			newPoints.add(newP);
 		}
+		if (line instanceof MapShape && newPoints.size() > 3){
+			// check special case: shape starts with spike
+			if (Utils.isStraight(newPoints.get(0), newPoints.get(1), newPoints.get(newPoints.size()-2)) == Utils.STRICTLY_STRAIGHT){
+				newPoints.remove(0);
+				newPoints.set(newPoints.size()-1, newPoints.get(0));
+			}
+		}
 		if (newPoints.size() != line.getPoints().size()){
 			if (line instanceof MapShape && newPoints.size() <= 3 || newPoints.size() <= 1)
 				return;
