@@ -517,7 +517,7 @@ public class WrongAngleFixer {
 					modifiedPoints.add(cm);
 					continue;
 				}
-				Coord c1 = points.get(i-1);
+				Coord c1 = modifiedPoints.get(modifiedPoints.size()-1);
 				Coord c2 = points.get(i+1);
 				if (c1 == c2){
 					// loop, handled by split routine
