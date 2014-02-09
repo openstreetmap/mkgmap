@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -460,7 +461,7 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addPoint(MapPoint p) {
 		points.add(p);
-		addToBounds(p.getBounds());
+		addToBounds(p.getLocation());
 		addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 	}
 
@@ -509,6 +510,22 @@ public class MapArea implements MapDataSource {
 			maxLon = l;
 	}
 
+	private void addToBounds(Coord co) {
+		int l = co.getLatitude();
+		if (l < minLat)
+			minLat = l;
+		if (l > maxLat)
+			maxLat = l;
+
+		l = co.getLongitude();
+		if (l < minLon)
+			minLon = l;
+		if (l > maxLon)
+			maxLon = l;
+	}
+
+	
+	
 	/**
 	 * Out of all the available areas, it picks the one that the map element
 	 * should be placed into.
