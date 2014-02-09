@@ -88,7 +88,6 @@ import uk.me.parabola.mkgmap.reader.osm.GType;
 import uk.me.parabola.mkgmap.reader.overview.OverviewMapDataSource;
 import uk.me.parabola.util.Configurable;
 import uk.me.parabola.util.EnhancedProperties;
-import uk.me.parabola.util.GpxCreator;
 
 /**
  * This is the core of the code to translate from the general representation
@@ -1091,7 +1090,6 @@ public class MapBuilder implements Configurable {
 			if(reducePointErrorPolygon > 0)
 				filters.addFilter(new DouglasPeuckerFilter(reducePointErrorPolygon));
 		}
-		filters.addFilter(new RemoveObsoletePointsFilter());
 		filters.addFilter(new PolygonSplitterFilter());
 		filters.addFilter(new RemoveEmpty());
 		filters.addFilter(new RemoveObsoletePointsFilter());
@@ -1101,9 +1099,6 @@ public class MapBuilder implements Configurable {
 		for (MapShape shape : shapes) {
 			if (shape.getMinResolution() > res || shape.getMaxResolution() < res)
 				continue;
-			if (shape.getOsmid() == 4611686018427397194L){
-//				GpxCreator.createGpx("e:/ld/orig"+shape.getOsmid(), shape.getPoints());
-			}
 
 			filters.startFilter(shape);
 		}
@@ -1289,6 +1284,7 @@ public class MapBuilder implements Configurable {
 		public void doFilter(MapElement element, MapFilterChain next) {
 			MapShape shape = (MapShape) element;
 			assert shape.getPoints().size() < 255 : "too many points";
+
 			Polygon pg = div.createPolygon(shape.getName());
 
 			pg.addCoords(shape.getPoints());

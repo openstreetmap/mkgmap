@@ -18,7 +18,6 @@ package uk.me.parabola.mkgmap.filters;
 
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
-import uk.me.parabola.mkgmap.general.MapShape;
 
 /**
  * This is a filter that dismisses elements too small for the current resolution
@@ -50,10 +49,6 @@ public class SizeFilter implements MapFilter {
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
 
-		if (line instanceof MapShape){
-			if (line.getRect().height == 0 || line.getRect().height == 0)
-				return;
-		}
 		if ((line.isSkipSizeFilter() || (checkRouting && line.isRoad())) == false){
 			if (line.getBounds().getMaxDimension() < minSize){
 				return;

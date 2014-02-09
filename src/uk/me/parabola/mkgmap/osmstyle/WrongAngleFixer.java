@@ -24,7 +24,6 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
-import uk.me.parabola.mkgmap.filters.DouglasPeuckerFilter;
 import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.RestrictionRelation;
@@ -43,7 +42,6 @@ import uk.me.parabola.util.GpxCreator;
  * The methods in this class try to fix these wrong bearings by
  * moving or removing points.
  *         
- * TODO: implement Visvalingam-Whyatt and find out if it's better than DouglasPeucker
  * @author GerdP
  *
  */
@@ -480,7 +478,8 @@ public class WrongAngleFixer {
 
 	
 	/** 
-	 * remove obsolete points in roads with Douglas-Peucker algorithm.
+	 * remove obsolete points in roads. Obsolete are points which are
+	 * very close to 180� angles in the real line.
 	 * @param roads 
 	 * @param modifiedRoads 
 	 */
@@ -488,6 +487,9 @@ public class WrongAngleFixer {
 		Way lastWay = null;
 		int numPointsRemoved = 0;
 		boolean lastWasModified = false;
+		List<Coord> removedInWay = new ArrayList<Coord>();
+		List<Coord> obsoletePoints = new ArrayList<Coord>();
+		List<Coord> modifiedPoints = new ArrayList<Coord>();
 		for (int w = 0; w < roads.size(); w++) {
 			Way way = roads.get(w);
 			if (way == null)
@@ -502,26 +504,80 @@ public class WrongAngleFixer {
 			lastWay = way;
 			lastWasModified = false;
 			List<Coord> points = way.getPoints();
-			
+			modifiedPoints.clear();
 			double maxErrorDistance = calcMarErrorDistance(points.get(0));
-			List<Coord> dpPoints = new ArrayList<Coord>(points.size());
-			dpPoints.addAll(points);
-			
-			int endIndex = dpPoints.size()-1;
-			for(int i = endIndex-1; i > 0; i--) {
-				Coord p = dpPoints.get(i);
-				if (allowedToRemove(p) == false){
-					DouglasPeuckerFilter.douglasPeucker(dpPoints, i, endIndex, maxErrorDistance);
-					endIndex = i;
+			boolean draw = false;
+			removedInWay.clear();
+			modifiedPoints.add(points.get(0));
+			// scan through the way's points looking for points which are
+			// on almost straight line and therefore obsolete
+			for (int i = 1; i+1 < points.size(); i++) {
+				Coord cm = points.get(i);
+				if (allowedToRemove(cm) == false){
+					modifiedPoints.add(cm);
+					continue;
+				}
+				Coord c1 = points.get(i-1);
+				Coord c2 = points.get(i+1);
+				if (c1 == c2){
+					// loop, handled by split routine
+					modifiedPoints.add(cm);
+					continue; 
+				}
+				
+				boolean keepThis = true;
+				double realAngle = Utils.getAngle(c1, cm, c2);
+				double displayedAngle = Double.MAX_VALUE;
+				if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
+					double distance = distToLineHeron(cm, c1, c2);
+					if (distance >= maxErrorDistance){
+						modifiedPoints.add(cm);
+						continue;
+					}
+					keepThis = false;
+				} else {
+					displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
+					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
+						// straight line is closer to real angle 
+						keepThis = false;
+					} else if (Math.abs(displayedAngle) < 1){ 
+						// displayed line is nearly straight
+						if (c1.getHighwayCount() < 2 && c2.getHighwayCount() < 2){
+							// we can remove the point
+							keepThis = false;
+						}
+					}
+				}
+				if (keepThis){
+					modifiedPoints.add(cm);
+					continue;
+				}
+				if (log.isDebugEnabled())
+					log.debug("removing obsolete point on almost straight segement in way ",way.toBrowseURL(),"at",cm.toOSMURL());
+				if (gpxPath != null){
+					obsoletePoints.add(cm);
+					removedInWay.add(cm);
+				}
+				numPointsRemoved++;
+				lastWasModified = true;
+				
+			}
+			if (lastWasModified){
+				modifiedPoints.add(points.get(points.size()-1));
+				points.clear();
+				points.addAll(modifiedPoints);
+				modifiedRoads.put(way.getId(), way);
+				if (gpxPath != null){
+					if (draw || "roundabout".equals(way.getTag("junction"))) {
+						GpxCreator.createGpx(gpxPath+way.getId()+"_dpmod", points,removedInWay);
+					}
 				}
 			}
-			// Simplify the rest
-			DouglasPeuckerFilter.douglasPeucker(dpPoints, 0, endIndex, maxErrorDistance);
-			if (lastWasModified){
-				points.clear();
-				points.addAll(dpPoints);
-				modifiedRoads.put(way.getId(), way);
-			}
+		}
+		if (gpxPath != null){
+			GpxCreator.createGpx(gpxPath + "obsolete", bbox.toCoords(),
+					new ArrayList<Coord>(obsoletePoints));
+			
 		}
 		log.info("Removed", numPointsRemoved, "obsolete points in roads"); 
 	}
@@ -1183,21 +1239,29 @@ public class WrongAngleFixer {
 	 */
 	public static List<Coord> fixAnglesInShape(List<Coord> points) {
 		List<Coord> modifiedPoints = new ArrayList<Coord>(points.size());
-		modifiedPoints.addAll(points);
 		double maxErrorDistance = calcMarErrorDistance(points.get(0));
 		
-		int endIndex = modifiedPoints.size()-1;
-		for(int i = endIndex-1; i > 0; i--) {
-			Coord p = modifiedPoints.get(i);
-
-			if (p.preserved()) {
-				// point is "preserved", don't remove it
-				DouglasPeuckerFilter.douglasPeucker(modifiedPoints, i, endIndex, maxErrorDistance);
-				endIndex = i;
+		int n = points.size();
+		// scan through the way's points looking for points which are
+		// on almost straight line and therefore obsolete
+		for (int i = 0; i+1 < points.size(); i++) {
+			Coord cm = points.get(i);
+			Coord c1 = (i > 0) ? points.get(i-1):points.get(n-2);
+			Coord c2 = points.get(i+1);
+			int straightTest = Utils.isHighPrecStraight(c1, cm, c2);
+			if (straightTest == Utils.STRICTLY_STRAIGHT){
+				continue;
 			}
+			double realAngle = Utils.getAngle(c1, cm, c2);
+			if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
+				double distance = distToLineHeron(cm, c1, c2);
+				if (distance < maxErrorDistance)
+					continue;
+			}
+			modifiedPoints.add(cm);
 		}
-		// Simplify the rest
-		DouglasPeuckerFilter.douglasPeucker(modifiedPoints, 0, endIndex, maxErrorDistance);
+		if (modifiedPoints.get(0) != modifiedPoints.get(modifiedPoints.size()-1))
+			modifiedPoints.add(modifiedPoints.get(0));
 		return modifiedPoints;
 	}
 }

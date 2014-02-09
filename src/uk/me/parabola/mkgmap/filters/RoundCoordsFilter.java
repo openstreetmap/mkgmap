@@ -16,7 +16,6 @@ package uk.me.parabola.mkgmap.filters;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -47,18 +46,6 @@ public class RoundCoordsFilter implements MapFilter {
 			next.doFilter(line);
 		}
 		else {
-			if (line.getPoints().size() > 10){
-				// check bbox first
-				Area bounds = line.getBounds();
-				int lat = (bounds.getMinLat() + half) & mask;
-				int lon = (bounds.getMinLong() + half) & mask;
-				Coord ll = new Coord (lat,lon);
-				lat = (bounds.getMaxLat() + half) & mask;
-				lon = (bounds.getMaxLong() + half) & mask;
-				Coord ur = new Coord (lat,lon);
-				if (ll.equals(ur))
-					return; // all points in bbox are mapped to a single point
-			}
 			// round lat/lon values to nearest for shift
 			List<Coord> newPoints = new ArrayList<Coord>(line.getPoints().size());
 			Coord lastP = null;
@@ -95,7 +82,6 @@ public class RoundCoordsFilter implements MapFilter {
 				MapLine newLine = line.copy();
 				newLine.setPoints(newPoints);
 				next.doFilter(newLine);
-				return;
 			}
 		}
 	}

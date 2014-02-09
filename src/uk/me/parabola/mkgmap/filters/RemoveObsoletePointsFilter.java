@@ -21,7 +21,6 @@ import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapShape;
-import uk.me.parabola.util.GpxCreator;
 
 /**
  * Filter for lines and shapes. Remove obsolete points on straight lines and spikes.
@@ -44,67 +43,54 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
-		List<Coord> points = line.getPoints();
-		int numPoints = points.size();
+		int numPoints = line.getPoints().size();
 		if (numPoints <= 1){
 			return;
 		}
-		if (line.getOsmid() == 4611686018427397194L){
-//			GpxCreator.createGpx("e:/ld/"+line.getOsmid(), line.getPoints());
-		}
+		
 		List<Coord> newPoints = new ArrayList<Coord>(numPoints);
-		while (true){
-			boolean removedSpike = false;
-			numPoints = points.size();
-			
-
-			Coord lastP = points.get(0);
-			newPoints.add(lastP);
-			for(int i = 1; i < numPoints; i++) {
-				Coord newP = points.get(i);
-				int last = newPoints.size()-1;
-				lastP = newPoints.get(last);
-				if (lastP.equals(newP)){
-					// only add the new point if it has different
-					// coordinates to the last point or is preserved
-					if (checkPreserved && line.isRoad()){
-						if (newP.preserved() == false)
-							continue;
-						else if (lastP.preserved() == false){
-							newPoints.set(last, newP); // replace last
-						}
-					} 
-					continue;
-				}
-				if (newPoints.size() > 1) {
-					switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){
-					case Utils.STRICTLY_STRAIGHT:
-						if (checkPreserved && lastP.preserved() && line.isRoad()){
-							// keep it
-						} else {
-							log.debug("found three consecutive points on strictly straight line");
-							newPoints.set(last, newP);
-							continue;
-						}
-						break;
-					case Utils.STRAIGHT_SPIKE:
-						if (line instanceof MapShape){
-							log.debug("removing spike");
-							newPoints.remove(last);
-							removedSpike = true;
-						}
-						break;
-					default:
-						break;
+		
+		Coord lastP = line.getPoints().get(0);
+		newPoints.add(lastP);
+		for(int i = 1; i < numPoints; i++) {
+			Coord newP = line.getPoints().get(i);
+			int last = newPoints.size()-1;
+			lastP = newPoints.get(last);
+			if (lastP.equals(newP)){
+				// only add the new point if it has different
+				// coordinates to the last point or is preserved
+				if (checkPreserved && line.isRoad()){
+					if (newP.preserved() == false)
+						continue;
+					else if (lastP.preserved() == false){
+						newPoints.set(last, newP); // replace last
 					}
-				}
-
-				newPoints.add(newP);
+				} 
+				continue;
 			}
-			if (!removedSpike)
-				break;
-			points = newPoints;
-			newPoints = new ArrayList<Coord>(points.size());
+			if (newPoints.size() > 1) {
+				switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){
+				case Utils.STRICTLY_STRAIGHT:
+					if (checkPreserved && lastP.preserved() && line.isRoad()){
+						// keep it
+					} else {
+						log.debug("found three consecutive points on strictly straight line");
+						newPoints.set(last, newP);
+						continue;
+					}
+					break;
+				case Utils.STRAIGHT_SPIKE:
+					if (line instanceof MapShape){
+						log.debug("removing spike");
+						newPoints.remove(last);
+					}
+					break;
+				default:
+					break;
+				}
+			}
+
+			newPoints.add(newP);
 		}
 		if (line instanceof MapShape && newPoints.size() > 3){
 			// check special case: shape starts with spike
@@ -113,10 +99,6 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 				newPoints.set(newPoints.size()-1, newPoints.get(0));
 			}
 		}
-		if (line.getOsmid() == 4611686018427397194L){
-//			GpxCreator.createGpx("e:/ld/"+line.getOsmid(), newPoints);
-		}
-		
 		if (newPoints.size() != line.getPoints().size()){
 			if (line instanceof MapShape && newPoints.size() <= 3 || newPoints.size() <= 1)
 				return;

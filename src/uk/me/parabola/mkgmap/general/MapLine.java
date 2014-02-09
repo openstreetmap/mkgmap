@@ -16,7 +16,6 @@
  */
 package uk.me.parabola.mkgmap.general;
 
-import java.awt.Rectangle;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -41,21 +40,11 @@ public class MapLine extends MapElement {
 	private int maxLat = Integer.MIN_VALUE;
 	private int maxLong = Integer.MIN_VALUE;
 
-	private long osmid;
-	public void setOsmid(long osmid) {
-		this.osmid = osmid;
-	}
-
-	public long getOsmid() {
-		return osmid;
-	}
-
 	public MapLine() {
 	}
 
 	public MapLine(MapLine orig) {
 		super(orig);
-		osmid = orig.osmid;
 		direction = orig.direction;
 		skipSizeFilter = orig.skipSizeFilter;
 		//roadDef = orig.roadDef;
@@ -173,11 +162,5 @@ public class MapLine extends MapElement {
 	public Area getBounds() {
 		return new Area(minLat, minLong, maxLat, maxLong);
 	}
-	
-	/**
-	 * @return bounding box that can have 0 height or width
-	 */
-	public Rectangle getRect(){
-		return new Rectangle(minLong, minLat, maxLong-minLong, maxLat-minLat);
-	}
+
 }

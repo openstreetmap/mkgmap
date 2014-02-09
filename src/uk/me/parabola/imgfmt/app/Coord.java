@@ -48,7 +48,6 @@ public class Coord implements Comparable<Coord> {
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
-	public final static int DELTA_ROUND = 1 << (DELTA_SHIFT-1);
 	private final int latitude;
 	private final int longitude;
 	private byte highwayCount; // number of highways that use this point
@@ -79,12 +78,12 @@ public class Coord implements Comparable<Coord> {
 		this.longitude = Utils.toMapUnit(longitude);
 		int lat30 = toBit30(latitude);
 		int lon30 = toBit30(longitude);
-		this.latDelta = (byte) ((this.latitude << DELTA_SHIFT) - lat30); 
-		this.lonDelta = (byte) ((this.longitude << DELTA_SHIFT) - lon30);
+		this.latDelta = (byte) ((this.latitude << 6) - lat30); 
+		this.lonDelta = (byte) ((this.longitude << 6) - lon30);
 		
 		// verify math
-		assert (this.latitude << DELTA_SHIFT) - latDelta == lat30;
-		assert (this.longitude << DELTA_SHIFT) - lonDelta == lon30;
+		assert (this.latitude << 6) - latDelta == lat30;
+		assert (this.longitude << 6) - lonDelta == lon30;
 
 	}
 	
@@ -96,10 +95,10 @@ public class Coord implements Comparable<Coord> {
 	}
 	
 	public static Coord makeHighPrecCoord(int lat30, int lon30){
-		int lat24 = int30toMapUnits(lat30);  
-		int lon24 = int30toMapUnits(lon30);
-		byte dLat = (byte) ((lat24 << DELTA_SHIFT) - lat30);
-		byte dLon = (byte) ((lon24 << DELTA_SHIFT) - lon30);
+		int lat24 = (lat30 + (1 << 5)) >> 6;  
+		int lon24 = (lon30 + (1 << 5)) >> 6;
+		byte dLat = (byte) ((lat24 << 6) - lat30);
+		byte dLon = (byte) ((lon24 << 6) - lon30);
 		return new Coord(lat24,lon24,dLat,dLon);
 	}
 	
@@ -462,14 +461,14 @@ public class Coord implements Comparable<Coord> {
 	 * @return Latitude as signed 30 bit integer 
 	 */
 	public int getHighPrecLat() {
-		return (latitude << DELTA_SHIFT) - latDelta;
+		return (latitude << 6) - latDelta;
 	}
 
 	/**
 	 * @return Longitude as signed 30 bit integer 
 	 */
 	public int getHighPrecLon() {
-		return (longitude << DELTA_SHIFT) - lonDelta;
+		return (longitude << 6) - lonDelta;
 	}
 	
 	/**
@@ -520,8 +519,8 @@ public class Coord implements Comparable<Coord> {
 			modLon++;
 		int lat30 = getHighPrecLat();
 		int lon30 = getHighPrecLon();
-		modLatDelta = (byte) ((modLat << DELTA_SHIFT) - lat30);
-		modLonDelta = (byte) ((modLon << DELTA_SHIFT) - lon30);
+		modLatDelta = (byte) ((modLat<<6) - lat30);
+		modLonDelta = (byte) ((modLon<<6) - lon30);
 		assert modLatDelta >= -63 && modLatDelta <= 63;
 		assert modLonDelta >= -63 && modLonDelta <= 63;
 		if (modLat != latitude){
@@ -548,9 +547,5 @@ public class Coord implements Comparable<Coord> {
 		  approxDistanceToDisplayedCoord = (short)Math.round(getDisplayedCoord().distance(this)*100);
 		}
 		return approxDistanceToDisplayedCoord;
-	}
-
-	public static int int30toMapUnits(int val30) {
-		return (val30 + DELTA_ROUND) >> DELTA_SHIFT; 
 	}
 }

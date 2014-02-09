@@ -110,8 +110,7 @@ public class LinePreparerFilter implements MapFilter {
 			return;
 		if (minPointsRequired >= 3){
 			// check if we can optimise shape by rotating
-			// so that the line segment that requires the highest number of bits 
-			// is not encoded and thus fewer bits 
+			// so that the longest line segment is not encoded and thus fewer bits 
 			// are required for all points
 			// TODO: maybe add additional points to further reduce max. delta values
 			// or reverse order if largest delta is negative
@@ -140,6 +139,7 @@ public class LinePreparerFilter implements MapFilter {
 				if (minPointsRequired == 4)
 					points.add(points.get(0));
 			}
+			
 		}
 		next.doFilter(element);
 	}

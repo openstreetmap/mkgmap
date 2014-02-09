@@ -114,7 +114,7 @@ public class DouglasPeuckerFilter implements MapFilter {
 	 * @param allowedError Maximal allowed error to be introduced by simplification. 
 	 * returns number of removed points.
 	 */
-	public static void douglasPeucker(List<Coord> points, int startIndex, int endIndex, double allowedError)
+	protected void douglasPeucker(List<Coord> points, int startIndex, int endIndex, double allowedError)
 	{
 		if (startIndex >= endIndex)
 			return;
