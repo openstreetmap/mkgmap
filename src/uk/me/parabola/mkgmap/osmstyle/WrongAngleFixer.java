@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -505,7 +504,7 @@ public class WrongAngleFixer {
 			lastWasModified = false;
 			List<Coord> points = way.getPoints();
 			modifiedPoints.clear();
-			double maxErrorDistance = calcMarErrorDistance(points.get(0));
+			double maxErrorDistance = calcMaxErrorDistance(points.get(0));
 			boolean draw = false;
 			removedInWay.clear();
 			modifiedPoints.add(points.get(0));
@@ -517,7 +516,7 @@ public class WrongAngleFixer {
 					modifiedPoints.add(cm);
 					continue;
 				}
-				Coord c1 = points.get(i-1);
+				Coord c1 = modifiedPoints.get(modifiedPoints.size()-1);
 				Coord c2 = points.get(i+1);
 				if (c1 == c2){
 					// loop, handled by split routine
@@ -527,7 +526,6 @@ public class WrongAngleFixer {
 				
 				boolean keepThis = true;
 				double realAngle = Utils.getAngle(c1, cm, c2);
-				double displayedAngle = Double.MAX_VALUE;
 				if (Math.abs(realAngle) < MAX_DIFF_ANGLE_STRAIGHT_LINE){ 
 					double distance = distToLineHeron(cm, c1, c2);
 					if (distance >= maxErrorDistance){
@@ -536,7 +534,7 @@ public class WrongAngleFixer {
 					}
 					keepThis = false;
 				} else {
-					displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
+					double displayedAngle = Utils.getDisplayedAngle(c1, cm, c2);
 					if (Math.signum(displayedAngle) != Math.signum(realAngle)){
 						// straight line is closer to real angle 
 						keepThis = false;
@@ -1224,7 +1222,7 @@ public class WrongAngleFixer {
 		
 	}
 
-	private static double calcMarErrorDistance(Coord p0){
+	private static double calcMaxErrorDistance(Coord p0){
 		Coord test = new Coord(p0.getLatitude(),p0.getLongitude()+1);
 		double lonErr = p0.getDisplayedCoord().distance(test) / 2;
 		test = new Coord(p0.getLatitude()+1,p0.getLongitude());
@@ -1233,23 +1231,38 @@ public class WrongAngleFixer {
 	}
 
 	/**
-	 * TODO: fix wrong angles caused by rounding errors.
-	 * @param points
-	 * @return
+	 * Remove obsolete points on straight lines and spikes
+	 * and some wrong angles caused by rounding errors.  
+	 * TODO: optimise by moving 
+	 * @param points list of coordinates that form a shape
+	 * @return reduced list 
 	 */
 	public static List<Coord> fixAnglesInShape(List<Coord> points) {
 		List<Coord> modifiedPoints = new ArrayList<Coord>(points.size());
-		double maxErrorDistance = calcMarErrorDistance(points.get(0));
+		double maxErrorDistance = calcMaxErrorDistance(points.get(0));
 		
 		int n = points.size();
 		// scan through the way's points looking for points which are
 		// on almost straight line and therefore obsolete
 		for (int i = 0; i+1 < points.size(); i++) {
+			Coord c1;
+			if (modifiedPoints.size() > 0)
+				c1 = modifiedPoints.get(modifiedPoints.size()-1);
+			else {
+				c1 = (i > 0) ? points.get(i-1):points.get(n-2);
+			}
 			Coord cm = points.get(i);
-			Coord c1 = (i > 0) ? points.get(i-1):points.get(n-2);
+			if (cm.highPrecEquals(c1)){
+				if (modifiedPoints.size() > 1){
+					modifiedPoints.remove(modifiedPoints.size()-1);
+					c1 = modifiedPoints.get(modifiedPoints.size()-1); // might be part of spike
+				} else {
+					continue;
+				}
+			}
 			Coord c2 = points.get(i+1);
 			int straightTest = Utils.isHighPrecStraight(c1, cm, c2);
-			if (straightTest == Utils.STRICTLY_STRAIGHT){
+			if (straightTest == Utils.STRICTLY_STRAIGHT || straightTest == Utils.STRAIGHT_SPIKE){
 				continue;
 			}
 			double realAngle = Utils.getAngle(c1, cm, c2);

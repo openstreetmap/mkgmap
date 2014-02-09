@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.awt.Rectangle;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -163,4 +164,10 @@ public class MapLine extends MapElement {
 		return new Area(minLat, minLong, maxLat, maxLong);
 	}
 
+	/**
+	 * @return bounding box that can have 0 height or width
+	 */
+	public Rectangle getRect(){
+		return new Rectangle(minLong, minLat, maxLong-minLong, maxLat-minLat);
+	}
 }
