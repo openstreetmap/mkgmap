@@ -244,7 +244,7 @@ public class ShapeMergeFilterTest {
 			add(getPoint(20,55));
 			add(getPoint(30,55)); // close
 		}};
-		testVariants("test-fill-hole", points1, points2, 1, 8); // merged shape contains spike  
+		testVariants("test-fill-hole", points1, points2, 1, 6); // expect 8 points if spike is not removed  
 	}
 
 	@Test

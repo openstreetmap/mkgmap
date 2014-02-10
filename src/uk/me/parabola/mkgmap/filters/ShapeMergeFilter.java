@@ -62,11 +62,6 @@ public class ShapeMergeFilter{
 				mergedShapes.add(shape);
 				continue;
 			}
-			/*
-			if (shape.wasClipped()){
-				mergedShapes.add(shape); // TODO: change clipper so that clipped shapes share points 
-			}
-			*/
 			List<Map<MapShape, List<ShapeHelper>>> sameTypeList = topMap.get(shape.getType());
 			ShapeHelper sh = new ShapeHelper(shape.getPoints());
 			sh.id = shape.getOsmid();
