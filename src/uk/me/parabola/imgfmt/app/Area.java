@@ -159,10 +159,12 @@ public class Area {
 	 * @return true if co is inside the Area (it may touch the boundary)
 	 */
 	public final boolean contains(Coord co) {
-		return co.getLatitude() >= minLat
-				&& co.getLatitude() <= maxLat
-				&& co.getLongitude() >= minLong
-				&& co.getLongitude() <= maxLong;
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		return lat30  >= (minLat << Coord.DELTA_SHIFT)
+				&& lat30 <= (maxLat << Coord.DELTA_SHIFT)
+				&& lon30 >= (minLong << Coord.DELTA_SHIFT)
+				&& lon30 <= (maxLong << Coord.DELTA_SHIFT);
 	}
 
 	/**
@@ -182,11 +184,15 @@ public class Area {
 	 * @return true if co is inside the Area and doesn't touch the boundary
 	 */
 	public final boolean insideBoundary(Coord co) {
-		return co.getLatitude() > minLat
-				&& co.getLatitude() < maxLat
-				&& co.getLongitude() > minLong
-				&& co.getLongitude() < maxLong;
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		
+		return lat30  > (minLat << Coord.DELTA_SHIFT)
+				&& lat30 < (maxLat << Coord.DELTA_SHIFT)
+				&& lon30 > (minLong << Coord.DELTA_SHIFT)
+				&& lon30 < (maxLong << Coord.DELTA_SHIFT);
 	}
+	
 
 	
 	/**

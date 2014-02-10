@@ -177,7 +177,7 @@ public class LineClipper {
 			Coord new0 = Coord.makeHighPrecCoord(calcCoord(y0, dy, t[0]), calcCoord(x0, dx, t[0]));
 			// check the maths worked out
 			assert a.onBoundary(new0) : "New boundary point at " + new0.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
-			if(!new0.equals(orig0))
+			if(!new0.highPrecEquals(orig0))
 				ends[0] = new0;
 			ends[0].setOnBoundary(true);
 		}
@@ -198,7 +198,7 @@ public class LineClipper {
 			
 			// check the maths worked out
 			assert a.onBoundary(new1) : "New boundary point at " + new1.toString() + " not on boundary of [" + a.getMinLat() + ", " + a.getMinLong() + ", " + a.getMaxLat() + ", " + a.getMaxLong() + "]";
-			if(!new1.equals(orig1))
+			if(!new1.highPrecEquals(orig1))
 				ends[1] = new1;
 			ends[1].setOnBoundary(true);
 		}
