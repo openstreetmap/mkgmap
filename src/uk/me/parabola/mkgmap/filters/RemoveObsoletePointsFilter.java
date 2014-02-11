@@ -69,9 +69,9 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 							continue;
 						else if (lastP.preserved() == false){
 							newPoints.set(last, newP); // replace last
-						}
-					} 
-					continue;
+						} 
+					} else  
+						continue;
 				}
 				if (newPoints.size() > 1) {
 					switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){

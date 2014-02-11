@@ -121,9 +121,10 @@ public class LinePreparer {
 		for (int i = 0; i < deltas.length; i+=2) {
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
-			if (dx == 0 && dy == 0)
-				continue;
-			
+			if (dx == 0 && dy == 0){
+				if (extraBit && nodes[i/2+1] == false && i+2 != deltas.length) // don't skip CoordNode
+					continue;
+			}
 			++numPointsEncoded;
 
 			if (log.isDebugEnabled())

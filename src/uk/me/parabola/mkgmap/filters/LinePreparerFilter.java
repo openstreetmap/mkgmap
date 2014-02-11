@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.trergn.LinePreparer;
 import uk.me.parabola.imgfmt.app.trergn.Subdivision;
 import uk.me.parabola.mkgmap.general.MapElement;
@@ -86,7 +87,8 @@ public class LinePreparerFilter implements MapFilter {
 			lastLong = lon;
 			lastLat = lat;
 			if (dx == 0 && dy == 0){
-				continue;
+				if(!line.isRoad() || co instanceof CoordNode== false)
+					continue;
 			}
 			++numPointsEncoded;
 			if (numPointsEncoded >= minPointsRequired && element instanceof MapShape == false)
