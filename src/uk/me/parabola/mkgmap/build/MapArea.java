@@ -33,6 +33,7 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -215,7 +216,7 @@ public class MapArea implements MapDataSource {
 			int areaIndex = 0;
 			for (MapLine l : this.lines) {
 				// Drop any zero sized lines.
-				if (l.getRect().height <= 0 && l.getRect().width <= 0)
+				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
 				if (useNormalSplit)
 					areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
