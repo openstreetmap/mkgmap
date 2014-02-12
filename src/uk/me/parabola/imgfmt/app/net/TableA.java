@@ -39,11 +39,11 @@ public class TableA {
 	private int offset;
 
 	// arcs for paved ways
-	private final HashMap<Arc,Integer> pavedArcs = new LinkedHashMap<Arc,Integer>();
+	private final HashMap<RoadDef,Integer> pavedArcs = new LinkedHashMap<RoadDef,Integer>();
 	// arcs for unpaved ways
-	private final HashMap<Arc,Integer> unpavedArcs = new LinkedHashMap<Arc,Integer>();
+	private final HashMap<RoadDef,Integer> unpavedArcs = new LinkedHashMap<RoadDef,Integer>();
 	// arcs for ferry ways
-	private final HashMap<Arc,Integer> ferryArcs = new LinkedHashMap<Arc,Integer>();
+	private final HashMap<RoadDef,Integer> ferryArcs = new LinkedHashMap<RoadDef,Integer>();
 
 	private static int count;
 
@@ -55,44 +55,6 @@ public class TableA {
 	}
 
 	/**
-	 * Internal class tracking all the data a Table A entry needs.
-	 * Basically a "forward arc".
-	 */
-	private class Arc {
-		final RouteNode first; final RouteNode second;
-		final RoadDef roadDef;
-
-		Arc(RouteArc arc) {
-			if (arc.isForward()) {
-				first = arc.getSource();
-				second = arc.getDest();
-			} else {
-				first = arc.getDest();
-				second = arc.getSource();
-			}
-			roadDef = arc.getRoadDef();
-		}
-
-		public boolean equals(Object obj) {
-			if (this == obj) return true;
-			if (obj == null || getClass() != obj.getClass()) return false;
-
-			Arc arc = (Arc) obj;
-			return first.equals(arc.first)
-				&& second.equals(arc.second)
-				&& roadDef.equals(arc.roadDef);
-		}
-
-		public int hashCode() {
-			return first.hashCode() + 2*second.hashCode() + roadDef.hashCode();
-		}
-
-		public String toString() {
-			return "" + first + "->" + second + " (" + roadDef + ")";
-		}
-	}
-
-	/**
 	 * Add an arc to the table if not present and set its index.
 	 *
 	 * The value may overflow while it isn't certain that
@@ -100,27 +62,27 @@ public class TableA {
 	 */
 	public void addArc(RouteArc arc) {
 		assert !frozen : "trying to add arc to Table A after it has been frozen";
-		Arc narc = new Arc(arc);
 		int i;
-		if(arc.getRoadDef().ferry()) {
-			if (!ferryArcs.containsKey(narc)) {
+		RoadDef rd = arc.getRoadDef();
+		if(rd.ferry()) {
+			if (!ferryArcs.containsKey(rd)) {
 				i = ferryArcs.size();
-				ferryArcs.put(narc, i);
-				log.debug("added ferry arc", count, narc, i);
+				ferryArcs.put(rd, i);
+				log.debug("added ferry arc", count, rd, i);
 			}
 		}
-		else if(arc.getRoadDef().paved()) {
-			if (!pavedArcs.containsKey(narc)) {
+		else if(rd.paved()) {
+			if (!pavedArcs.containsKey(rd)) {
 				i = pavedArcs.size();
-				pavedArcs.put(narc, i);
-				log.debug("added paved arc", count, narc, i);
+				pavedArcs.put(rd, i);
+				log.debug("added paved arc", count, rd, i);
 			}
 		}
 		else {
-			if (!unpavedArcs.containsKey(narc)) {
+			if (!unpavedArcs.containsKey(rd)) {
 				i = unpavedArcs.size();
-				unpavedArcs.put(narc, i);
-				log.debug("added unpaved arc", count, narc, i);
+				unpavedArcs.put(rd, i);
+				log.debug("added unpaved arc", count, rd, i);
 			}
 		}
 	}
@@ -130,24 +92,24 @@ public class TableA {
 	 */
 	public byte getIndex(RouteArc arc) {
 		frozen = true;			// don't allow any more arcs to be added
-		Arc narc = new Arc(arc);
 		int i;
-		if(arc.getRoadDef().ferry()) {
-			assert ferryArcs.containsKey(narc):
-			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
-			i = unpavedArcs.size() + ferryArcs.get(narc);
+		RoadDef rd = arc.getRoadDef();
+		if(rd.ferry()) {
+			assert ferryArcs.containsKey(rd):
+			"Trying to read Table A index for non-registered arc: " + count + " " + rd;
+			i = unpavedArcs.size() + ferryArcs.get(rd);
 		}
-		else if(arc.getRoadDef().paved()) {
-			assert pavedArcs.containsKey(narc):
-			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
-			i = unpavedArcs.size() + ferryArcs.size() + pavedArcs.get(narc);
+		else if(rd.paved()) {
+			assert pavedArcs.containsKey(rd):
+			"Trying to read Table A index for non-registered arc: " + count + " " + rd;
+			i = unpavedArcs.size() + ferryArcs.size() + pavedArcs.get(rd);
 		}
 		else {
-			assert unpavedArcs.containsKey(narc):
-			"Trying to read Table A index for non-registered arc: " + count + " " + narc;
-			i = unpavedArcs.get(narc);
+			assert unpavedArcs.containsKey(rd):
+			"Trying to read Table A index for non-registered arc: " + count + " " + rd;
+			i = unpavedArcs.get(rd);
 		}
-		assert i < 0x100 : "Table A index too large: " + narc;
+		assert i < 0x100 : "Table A index too large: " + rd;
 		return (byte) i;
 	}
 
@@ -202,30 +164,30 @@ public class TableA {
 	public void writePost(ImgFileWriter writer) {
 		writer.position(offset);
 		// unpaved arcs first
-		for (Arc arc : unpavedArcs.keySet()) {
-			writePost(writer, arc);
+		for (RoadDef rd: unpavedArcs.keySet()) {
+			writePost(writer, rd);
 		}
 		// followed by the ferry arcs
-		for (Arc arc : ferryArcs.keySet()) {
-			writePost(writer, arc);
+		for (RoadDef rd : ferryArcs.keySet()) {
+			writePost(writer, rd);
 		}
 		// followed by the paved arcs
-		for (Arc arc : pavedArcs.keySet()) {
-			writePost(writer, arc);
+		for (RoadDef rd : pavedArcs.keySet()) {
+			writePost(writer, rd);
 		}
 	}
 
-	public void writePost(ImgFileWriter writer, Arc arc) {
+	public void writePost(ImgFileWriter writer, RoadDef rd) {
 		// write the table A entries.  Consists of a pointer to net
 		// followed by 2 bytes of class and speed flags and road restrictions.
-		int pos = arc.roadDef.getOffsetNet1();
-		int access = arc.roadDef.getTabAAccess();
+		int pos = rd.getOffsetNet1();
+		int access = rd.getTabAAccess();
 		// top bits of access go into net1 offset
 		final int ACCESS_TOP_BITS = 0xc000;
 		pos |= (access & ACCESS_TOP_BITS) << 8;
 		access &= ~ACCESS_TOP_BITS;
 		writer.put3(pos);
-		writer.put((byte) arc.roadDef.getTabAInfo());
+		writer.put((byte) rd.getTabAInfo());
 		writer.put((byte) access);
 	}
 }
