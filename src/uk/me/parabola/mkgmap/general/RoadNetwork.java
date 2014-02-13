@@ -135,41 +135,49 @@ public class RoadNetwork {
 					log.warn("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
 
 
-				Coord bearingPoint = coordList.get(lastIndex + 1);
-				if(lastCoord.equals(bearingPoint)) {
+				Coord forwardBearingPoint = coordList.get(lastIndex + 1);
+				if(lastCoord.equals(forwardBearingPoint)) {
 					// bearing point is too close to last node to be
 					// useful - try some more points
 					for(int bi = lastIndex + 2; bi <= index; ++bi) {
 						if(!lastCoord.equals(coordList.get(bi))) {
-							bearingPoint = coordList.get(bi);
+							forwardBearingPoint = coordList.get(bi);
 							break;
 						}
 					}
 				}
-				int forwardBearing = (int)lastCoord.bearingTo(bearingPoint);
-				int inverseForwardBearing = (int)bearingPoint.bearingTo(lastCoord);
-
-				bearingPoint = coordList.get(index - 1);
-				if(co.equals(bearingPoint)) {
+				Coord reverseBearingPoint = coordList.get(index - 1);
+				if(co.equals(reverseBearingPoint)) {
 					// bearing point is too close to this node to be
 					// useful - try some more points
 					for(int bi = index - 2; bi > lastIndex; --bi) {
 						if(!co.equals(coordList.get(bi))) {
-							bearingPoint = coordList.get(bi);
+							reverseBearingPoint = coordList.get(bi);
 							break;
 						}
 					}
 				}
-				int reverseBearing = (int)co.bearingTo(bearingPoint);
-				int inverseReverseBearing = (int)bearingPoint.bearingTo(co);
+				
+				double forwardInitialBearing = lastCoord.bearingTo(forwardBearingPoint);
+				double forwardDirectBearing = (co == forwardBearingPoint) ? forwardInitialBearing: lastCoord.bearingTo(co); 
 
+				double reverseInitialBearing = co.bearingTo(reverseBearingPoint);
+				double reverseDirectBearing = (lastCoord == reverseBearingPoint) ? reverseInitialBearing: co.bearingTo(lastCoord); 
+
+				// TODO: maybe detect cases where bearing was already calculated above 
+				double forwardFinalBearing = reverseBearingPoint.bearingTo(co); 
+				double reverseFinalBearing = forwardBearingPoint.bearingTo(lastCoord);
+
+				double directLength = (lastIndex + 1 == index) ? arcLength : lastCoord.distance(co);
 				// Create forward arc from node1 to node2
 				RouteArc arc = new RouteArc(road.getRoadDef(),
 											node1,
 											node2,
-											forwardBearing,
-											inverseReverseBearing,
+											forwardInitialBearing,
+											forwardFinalBearing,
+											forwardDirectBearing,
 											arcLength,
+											directLength,
 											outputCurveData,
 											pointsHash);
 				arc.setForward();
@@ -179,9 +187,11 @@ public class RoadNetwork {
 				// Create the reverse arc
 				arc = new RouteArc(road.getRoadDef(),
 								   node2, node1,
-								   reverseBearing,
-								   inverseForwardBearing,
+								   reverseInitialBearing,
+								   reverseFinalBearing,
+								   reverseDirectBearing,
 								   arcLength,
+								   directLength,
 								   outputCurveData,
 								   pointsHash);
 				node2.addArc(arc);

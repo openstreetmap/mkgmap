@@ -336,7 +336,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		return false;
 	}
 
-	private static boolean rightTurnRequired(int inHeading, int outHeading, int sideHeading) {
+	private static boolean rightTurnRequired(float inHeading, float outHeading, float otherHeading) {
 		// given the headings of the incoming, outgoing and side
 		// roads, decide whether a side road is to the left or the
 		// right of the main road
@@ -347,13 +347,13 @@ public class RouteNode implements Comparable<RouteNode> {
 		while(outHeading > 180)
 			outHeading -= 360;
 
-		sideHeading -= inHeading;
-		while(sideHeading < -180)
-			sideHeading += 360;
-		while(sideHeading > 180)
-			sideHeading -= 360;
+		otherHeading -= inHeading;
+		while(otherHeading < -180)
+			otherHeading += 360;
+		while(otherHeading > 180)
+			otherHeading -= 360;
 
-		return sideHeading > outHeading;
+		return otherHeading > outHeading;
 	}
 
 	private static final int ATH_OUTGOING = 1;
@@ -415,7 +415,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					continue;
 				}
 
-				int inHeading = inArc.getFinalHeading();
+				float inHeading = inArc.getFinalHeading();
 				// determine the outgoing arc that is likely to be the
 				// same road as the incoming arc
 				RouteArc outArc = null;
@@ -508,8 +508,8 @@ public class RouteNode implements Comparable<RouteNode> {
 				// remember that this arc is an outgoing arc
 				outgoingArcs.add(outArc);
 
-				int outHeading = outArc.getInitialHeading();
-				int mainHeadingDelta = outHeading - inHeading;
+				float outHeading = outArc.getInitialHeading();
+				float mainHeadingDelta = outHeading - inHeading;
 				while(mainHeadingDelta > 180)
 					mainHeadingDelta -= 360;
 				while(mainHeadingDelta < -180)
@@ -562,19 +562,19 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					}
 
-					int otherHeading = otherArc.getInitialHeading();
-					int outToOtherDelta = otherHeading - outHeading;
+					float otherHeading = otherArc.getInitialHeading();
+					float outToOtherDelta = otherHeading - outHeading;
 					while(outToOtherDelta > 180)
 						outToOtherDelta -= 360;
 					while(outToOtherDelta < -180)
 						outToOtherDelta += 360;
-					int inToOtherDelta = otherHeading - inHeading;
+					float inToOtherDelta = otherHeading - inHeading;
 					while(inToOtherDelta > 180)
 						inToOtherDelta -= 360;
 					while(inToOtherDelta < -180)
 						inToOtherDelta += 360;
 
-					int newHeading = otherHeading;
+					float newHeading = otherHeading;
 					if(rightTurnRequired(inHeading, outHeading, otherHeading)) {
 						// side road to the right
 						if((mask & ATH_OUTGOING) != 0 &&
@@ -582,7 +582,7 @@ public class RouteNode implements Comparable<RouteNode> {
 							newHeading = outHeading + MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
 						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							int nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
+							float nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh > newHeading)
 								newHeading = nh;
 						}
@@ -597,7 +597,7 @@ public class RouteNode implements Comparable<RouteNode> {
 							newHeading = outHeading - MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
 						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							int nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
+							float nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh < newHeading)
 								newHeading = nh;
 						}
