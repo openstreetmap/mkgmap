@@ -44,11 +44,11 @@ public class RouteNode implements Comparable<RouteNode> {
 	 */
 
 	// Values for the first flag byte at offset 1
+	private static final int MAX_DEST_CLASS_MASK = 0x07;
 	private static final int F_BOUNDARY = 0x08;
 	private static final int F_RESTRICTIONS = 0x10;
 	private static final int F_LARGE_OFFSETS = 0x20;
 	private static final int F_ARCS = 0x40;
-	private static final int F_UNK_NEEDED = 0x04; // XXX
 	// only used internally in mkgmap
 	private static final int F_DISCARDED = 0x100; // node has been discarded
 
@@ -65,7 +65,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	// arcs to this node
 	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>(4);
 
-	private int flags = F_UNK_NEEDED;
+	private int flags;
 
 	private final CoordNode coord;
 	private char latOff;
@@ -166,6 +166,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		assert (flags & F_DISCARDED) == 0 : "attempt to write discarded node";
 
 		writer.put((byte) 0);  // will be overwritten later
+		flags |= (nodeClass & MAX_DEST_CLASS_MASK); // max. road class of any outgoing road
 		writer.put((byte) flags);
 
 		if (haveLargeOffsets()) {
