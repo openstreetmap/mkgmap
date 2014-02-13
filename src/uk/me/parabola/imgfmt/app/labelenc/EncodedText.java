@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2007,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -30,10 +30,12 @@ import java.util.Arrays;
 public class EncodedText {
 	private final byte[] ctext;
 	private final int length;
+	private final char[] chars;
 
-	public EncodedText(byte[] buf, int len) {
+	public EncodedText(byte[] buf, int len, char[] chars) {
 		this.ctext = buf;
 		this.length = len;
+		this.chars = chars;
 	}
 
 	public byte[] getCtext() {

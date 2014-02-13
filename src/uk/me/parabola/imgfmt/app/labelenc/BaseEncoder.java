@@ -30,7 +30,7 @@ import uk.me.parabola.log.Logger;
 public class BaseEncoder {
 	private static final Logger log = Logger.getLogger(BaseEncoder.class);
 
-	protected static final EncodedText NO_TEXT = new EncodedText(null, 0);
+	protected static final EncodedText NO_TEXT = new EncodedText(null, 0, null);
 
 	private boolean charsetSupported = true;
 
@@ -62,7 +62,7 @@ public class BaseEncoder {
 		for (char c : in)
 			out[off++] = (byte) (c & 0xff);
 
-		return new EncodedText(out, out.length);
+		return new EncodedText(out, out.length, in);
 	}
 
 	public boolean isUpperCase() {

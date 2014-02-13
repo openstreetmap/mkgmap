@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Steve Ratcliffe
+ * Copyright (C) 2007,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -105,7 +105,10 @@ public class AnyCharsetEncoder extends BaseEncoder implements CharacterEncoder {
 		// We need it to be null terminated but also to trim any extra memory from the allocated
 		// buffer.
 		byte[] res = Arrays.copyOf(outBuf.array(), outBuf.position() + 1);
-		return new EncodedText(res, res.length);
+		char[] cres = new char[res.length];
+		for (int i = 0; i < res.length; i++)
+			cres[i] = (char) (res[i] & 0xff);
+		return new EncodedText(res, res.length, cres);
 	}
 
 	/**

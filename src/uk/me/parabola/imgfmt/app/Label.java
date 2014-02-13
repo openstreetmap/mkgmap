@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
+ * Copyright (C) 2006,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -33,15 +33,22 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
  *
  * @author Steve Ratcliffe
  */
-public class Label implements Comparable<Label> {
+public class Label {
 
 	private final String text;
+	private final char[] encText;
 
 	// The offset in to the data section.
 	private int offset;
 
 	public Label(String text) {
 		this.text = text;
+		this.encText = null;
+	}
+
+	public Label(char[] encText) {
+		this.encText = encText;
+		this.text = null;
 	}
 
 	public int getLength() {
@@ -52,7 +59,12 @@ public class Label implements Comparable<Label> {
 	}
 
 	public String getText() {
+		assert text != null;
 		return text;
+	}
+
+	public char[] getEncText() {
+		return encText;
 	}
 
 	// highway shields and "thin" separators
@@ -123,20 +135,9 @@ public class Label implements Comparable<Label> {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		return offset == ((Label) o).offset;
-
 	}
 
 	public int hashCode() {
 		return offset;
-	}
-
-	/**
-	 * Note: this class has a natural ordering that is inconsistent with equals.
-	 * (But perhaps it shouldn't?)
-	 */
-	public int compareTo(Label other) {
-		if(this == other)
-			return 0;
-		return text.compareToIgnoreCase(other.text);
 	}
 }
