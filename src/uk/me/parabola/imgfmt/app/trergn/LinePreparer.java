@@ -19,7 +19,6 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.app.BitWriter;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.log.Logger;
 
 /**
@@ -239,7 +238,7 @@ public class LinePreparer {
 			lastLong = lon;
 			lastLat = lat;
 
-			if (dx != 0 || dy != 0 || (extraBit && co instanceof CoordNode))
+			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
 				firstsame = i;
 
 			/*
