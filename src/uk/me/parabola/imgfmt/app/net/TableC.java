@@ -41,25 +41,18 @@ public class TableC {
 	 * Write the table including size field.
 	 */
 	public void write(ImgFileWriter writer, int tablesOffset) {
-		if (restrictions.isEmpty()) {
-			if(tabA.numUnpavedArcs() > 0)
-				writer.put((byte)tabA.numUnpavedArcs());
-			if(tabA.numFerryArcs() > 0)
-				writer.put((byte)tabA.numFerryArcs());
-			writer.put((byte) 0);
-		}
-		else {
+		if (!restrictions.isEmpty()) {
 			if (size < 0x100)
 				writer.put((byte) size);
 			else
 				writer.putChar((char) size);
 			for (RouteRestriction restr : restrictions)
 				restr.write(writer, tablesOffset);
-			if(tabA.numUnpavedArcs() > 0)
-				writer.put((byte)tabA.numUnpavedArcs());
-			if(tabA.numFerryArcs() > 0)
-				writer.put((byte)tabA.numFerryArcs());
 		}
+		if(tabA.numUnpavedArcs() > 0)
+			writer.put((byte)tabA.numUnpavedArcs());
+		if(tabA.numFerryArcs() > 0)
+			writer.put((byte)tabA.numFerryArcs());
 	}
 
 	/**
