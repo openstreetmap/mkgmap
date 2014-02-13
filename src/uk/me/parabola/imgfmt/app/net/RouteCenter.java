@@ -80,13 +80,11 @@ public class RouteCenter {
 		for (RouteNode node : nodes)
 			node.write(writer);
 
-		int mult = 1 << NODHeader.DEF_ALIGN;
+		int alignment = 1 << NODHeader.DEF_ALIGN;
+		int alignMask = alignment - 1;
 
-		// Get the position of the tables, and position there.
-		int roundpos = (writer.position() + mult - 1) 
-					>> NODHeader.DEF_ALIGN
-					<< NODHeader.DEF_ALIGN;
-		int tablesOffset = roundpos + mult;
+		// Calculate the position of the tables.
+		int tablesOffset = (writer.position() + alignment) & ~alignMask;
 		log.debug("write table a at offset", Integer.toHexString(tablesOffset));
 
 		// Go back and fill in all the table offsets
