@@ -205,9 +205,11 @@ public class RouteArc {
 	 
 
 	// units of 16 feet
-	final static double LENGTH_FACTOR = 3.2808 / 16;
+	final static double LENGTH_FACTOR = 1.0 / (2.391 * 2);
+	//old 3.2808 / 16;
 	private static int convertMeters(double l) {
-		return (int) (l * LENGTH_FACTOR);
+		return (int) (l * LENGTH_FACTOR + 0.5);
+
 	}
 
 	public void write(ImgFileWriter writer) {
