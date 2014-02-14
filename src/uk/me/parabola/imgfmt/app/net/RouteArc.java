@@ -43,7 +43,7 @@ public class RouteArc {
 
 	// heading / bearing: 
 	private float initialHeading; // degrees (A-> B in an arc ABCD) 
-	private final float finalHeading; // degrees (D-> D in an arc ABCD)
+	private final float finalHeading; // degrees (C-> D in an arc ABCD)
 	private final float directHeading; // degrees (A-> D in an arc ABCD)
 
 	private final RoadDef roadDef;
@@ -65,7 +65,6 @@ public class RouteArc {
 	private final byte lengthRatio;
 	private final int pointsHash;
 
-	/**
 	/**
 	 * Create a new arc. An arc can contain multiple points (eg. A->B->C->D->E)
 	 * @param roadDef The road that this arc segment is part of.
@@ -282,42 +281,42 @@ public class RouteArc {
 	 * There's even more different encodings supposedly.
 	 */
 	private int[] encodeLength() {
-		// clear existing bits in case length or final heading have
-		// been changed
-		flagA &= ~0x38;
 		int[] lendat;
-		if(length < 0x200) {
-			// 9 bit length optional curve
+		if(length < 0x300 || (length < 0x400 && haveCurve == false)) {
+			// 10 bit length optional curve
+			// clear bits 
+			flagA &= ~0x38;
+			
 			if(haveCurve)
 				flagA |= 0x20;
-			flagA |= (length >> 5) & 0x08; // top bit of length
+			flagA |= (length >> 5) & 0x18; // top two bits of length (at least one must be zero)
 			lendat = new int[1];		   // one byte of data
 			lendat[0] = length;			   // bottom 8 bits of length
-		} 
-		else if(length >= (1 << 14)) {
-			// 22 bit length with curve
-			flagA |= 0x38;
-			lendat = new int[3];		   // three bytes of data
-			lendat[0] = 0xC0 | (length & 0x3f); // 0x80 set, 0x40 set, 6 low bits of length
-			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
-			lendat[2] = (length >> 14) & 0xff; // 8 more bits of length
-		}
-
-		else if(haveCurve) {
-			// 15 bit length with curve
-			flagA |= 0x38;				 // all three bits set
-			lendat = new int[2];		 // two bytes of data
-			lendat[0] = (length & 0x7f); // 0x80 not set, 7 low bits of length
-			lendat[1] = (length >> 7) & 0xff; // 8 more bits of length
-		}
-		else {
-			// 14 bit length no curve
+			if (length >= 0x200)
+				System.out.println(roadDef);
+			assert (flagA & 0x38) != 0x38;
+		} else {
 			flagA |= 0x38;		 // all three bits set
-			lendat = new int[2]; // two bytes of data
-			lendat[0] = 0x80 | (length & 0x3f); // 0x80 set, 0x40 not set, 6 low bits of length
-			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+			if(length >= (1 << 14)) {
+				// 22 bit length with curve
+				lendat = new int[3];		   // three bytes of data
+				lendat[0] = 0xC0 | (length & 0x3f); // 0x80 set, 0x40 set, 6 low bits of length
+				lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+				lendat[2] = (length >> 14) & 0xff; // 8 more bits of length
+			}
+			else if(haveCurve) {
+				// 15 bit length with curve
+				lendat = new int[2];		 // two bytes of data
+				lendat[0] = (length & 0x7f); // 0x80 not set, 7 low bits of length
+				lendat[1] = (length >> 7) & 0xff; // 8 more bits of length
+			}
+			else {
+				// 14 bit length no curve
+				lendat = new int[2]; // two bytes of data
+				lendat[0] = 0x80 | (length & 0x3f); // 0x80 set, 0x40 not set, 6 low bits of length
+				lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+			}
 		}
-
 		return lendat;
 	}
 
