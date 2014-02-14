@@ -251,16 +251,23 @@ public class Sort {
 
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
-		if (codepage == 0)
-			charset = Charset.forName("cp1252");
-		else if (codepage == 65001)
+		switch (codepage) {
+		case 0:
+			charset = Charset.forName("ascii");
+			break;
+		case 65001:
 			charset = Charset.forName("UTF-8");
-		else if (codepage == 932)
+			break;
+		case 932:
 			// Java uses "ms932" for code page 932
 			// (Windows-31J, Shift-JIS + MS extensions)
 			charset = Charset.forName("ms932");
-		else
+			break;
+		default:
 			charset = Charset.forName("cp" + codepage);
+			break;
+		}
+
 		encoder = charset.newEncoder();
 		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
 	}
@@ -334,8 +341,6 @@ public class Sort {
 		for (int i = 1; i < 256; i++) {
 			sort.add(i, i, 0, 0, 0);
 		}
-		sort.charset = Charset.forName("ascii");
-		sort.encoder = sort.charset.newEncoder();
 		sort.setDescription("Default sort");
 		sort.setCodepage(codepage);
 		return sort;
