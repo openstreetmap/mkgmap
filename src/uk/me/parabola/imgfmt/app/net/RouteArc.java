@@ -98,9 +98,6 @@ public class RouteArc {
 			len = (1 << 22) - 1;
 		}
 		this.length = len;
-		if (len > (1 << 14)){
-			long dd = 4;
-		}
 		this.pointsHash = pointsHash;
 		int ratio = 0;
 		if (arcLength > directLength){
