@@ -53,12 +53,15 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * Secondary difference - different accents (eg a and a-acute)
  * Tertiary difference - different case (eg a and A)
  *
- * Primary differences are represented by an new 'code' line, or alternatively by the less-than separator.
+ * The sort order section begins with the word 'code'.
+ *
+ * Primary differences are represented by the less-than separator.
  * Secondary differences are represented by the semi-colon separator.
  * Tertiary differences are represented by the comma separator.
  *
- * Characters are represented by a two digit hex number that is the code point in the target code page. Alternatively
- * you can write the characters as themselves in <emphasis>unicode (utf-8)</emphasis> (the whole file must be in utf-8).
+ * Characters are represented in <emphasis>unicode (utf-8)</emphasis> (the whole file must be in utf-8).
+ * Or alternatively you can use a four hex-digit number. A few special punctuation characters must
+ * be written that way to prevent them being mistaken for separators.
  *
  * Example
  * <pre>
@@ -66,14 +69,10 @@ import uk.me.parabola.mkgmap.scan.TokenScanner;
  * codepage 1252
  * description "Example sort"
  * code a, A; â Â
- * code b, B
+ * < b, B
  * # Last two lines could be written:
  * # code a, A; â, Â < b, B
  * </pre>
- *
- * NOTE: as we always use upper case in an img file, the upper-lower case sorting differences are untested
- * and based on guess work. In particular you might expect that upper-case sorts before lowercase, but we
- * have the opposite.
  *
  * @author Steve Ratcliffe
  */
@@ -84,13 +83,10 @@ public class SrtTextReader {
 	private static final int IN_CODE = 1;
 	private static final int IN_EXPAND = 2;
 
-	private int codepage;
-
 	// Data that is read in, the output of the reading operation
 	private final Sort sort = new Sort();
 
 	private CharsetEncoder encoder;
-	private CharsetDecoder decoder;
 
 	// Used during parsing.
 	private int pos1;
@@ -142,7 +138,7 @@ public class SrtTextReader {
 		resetPos();
 		state = IN_INITIAL;
 		while (!scanner.isEndOfFile()) {
-			Token tok = scanner.nextRawToken();
+			Token tok = scanner.nextToken();
 
 			// We deal with whole line comments here
 			if (tok.isValue("#")) {
@@ -174,28 +170,35 @@ public class SrtTextReader {
 		String val = tok.getValue();
 		TokType type = tok.getType();
 		if (type == TokType.TEXT) {
-			if (val.equals("codepage")) {
-				codepage = scanner.nextInt();
+			switch (val) {
+			case "codepage":
+				int codepage = scanner.nextInt();
 				sort.setCodepage(codepage);
 				Charset charset = Charset.forName("cp" + codepage);
 				encoder = charset.newEncoder();
-				decoder = charset.newDecoder();
+				CharsetDecoder decoder = charset.newDecoder();
 				decoder.onMalformedInput(CodingErrorAction.REPORT);
-			} else if (val.equals("description")) {
+				break;
+			case "description":
 				sort.setDescription(scanner.nextWord());
-			} else if (val.equals("id1")) {
+				break;
+			case "id1":
 				sort.setId1(scanner.nextInt());
-			} else if (val.equals("id2")) {
+				break;
+			case "id2":
 				sort.setId2(scanner.nextInt());
-			} else if (val.equals("code")) {
-				if (codepage == 0)
+				break;
+			case "code":
+				if (encoder == null)
 					throw new SyntaxException(scanner, "Missing codepage declaration before code");
 				state = IN_CODE;
 				scanner.skipSpace();
-			} else if (val.equals("expand")) {
+				break;
+			case "expand":
 				state = IN_EXPAND;
 				scanner.skipSpace();
-			} else {
+				break;
+			default:
 				throw new SyntaxException(scanner, "Unrecognised command " + val);
 			}
 		}
@@ -211,11 +214,13 @@ public class SrtTextReader {
 		String val = tok.getValue();
 		TokType type = tok.getType();
 		if (type == TokType.TEXT) {
-			if (val.equals("flags")) {
+			switch (val) {
+			case "flags":
 				scanner.validateNext("=");
 				cflags = scanner.nextWord();
 				// TODO not yet
-			} else if (val.equals("pos")) {
+				break;
+			case "pos":
 				scanner.validateNext("=");
 				try {
 					int newPos = Integer.decode(scanner.nextWord());
@@ -225,38 +230,53 @@ public class SrtTextReader {
 				} catch (NumberFormatException e) {
 					throw new SyntaxException(scanner, "invalid integer for position");
 				}
-			} else if (val.equals("pos2")) {
+				break;
+			case "pos2":
 				scanner.validateNext("=");
 				pos2 = Integer.decode(scanner.nextWord());
-			} else if (val.equals("pos3")) {
+				break;
+			case "pos3":
 				scanner.validateNext("=");
 				pos3 = Integer.decode(scanner.nextWord());
-			} else if (val.length() == 1 || val.length() == 2) {
+				break;
+			case "code":
+				advancePos();
+				break;
+			case "expand":
+				//scanner.pushToken(tok);
+				state = IN_EXPAND;
+				break;
+			default:
 				addCharacter(scanner, val);
-			} else {
-				throw new SyntaxException(scanner, "Unexpected word " + val);
+
+
 			}
 		} else if (type == TokType.SYMBOL) {
-			if (val.equals(",")) {
+			switch (val) {
+			case "=":
+				break;
+			case ",":
 				pos3++;
-			} else if (val.equals(";")) {
+				break;
+			case ";":
 				pos3 = 1;
 				pos2++;
-			} else if (val.equals("<")) {
+				break;
+			case "<":
 				advancePos();
-			} else {
+				break;
+			default:
 				addCharacter(scanner, val);
+				break;
 			}
 
-		} else if (type == TokType.EOL) {
-			state = IN_INITIAL;
-			advancePos();
 		}
 	}
 
 	/**
-	 * Within an 'expand' command. The whole command is read before
-	 * return, they can not span lines.
+	 * Within an 'expand' command. The whole command is read before return, they can not span
+	 * lines.
+	 *
 	 * @param tok The first token after the keyword.
 	 */
 	private void expandState(TokenScanner scanner, Token tok) {
@@ -268,14 +288,14 @@ public class SrtTextReader {
 		if (!s.equals("to"))
 			throw new SyntaxException(scanner, "Expected the word 'to' in expand command");
 
-		List<Byte> expansionList = new ArrayList<Byte>();
+		List<Byte> expansionList = new ArrayList<>();
 		while (!scanner.isEndOfFile()) {
 			Token t = scanner.nextRawToken();
 			if (t.isEol())
 				break;
 			if (t.isWhiteSpace())
 				continue;
-			
+
 			Code r = new Code(scanner, t.getValue()).invoke();
 			expansionList.add(r.getBval());
 		}
@@ -293,34 +313,33 @@ public class SrtTextReader {
 	 */
 	private void addCharacter(TokenScanner scanner, String val) {
 		Code code = new Code(scanner, val).invoke();
-		setSortcode(code.getBval(), code.getCval());
+		setSortcode(code.getBval());
 	}
 
 	/**
 	 * Set the sort code for the given 8-bit character.
-	 * @param b The 8-bit character in the character set of the codepage.
-	 * @param cval The same character in unicode.
+	 * @param ch The same character in unicode.
 	 */
-	private void setSortcode(byte b, char cval) {
-		int flags = charFlags(cval);
+	private void setSortcode(int ch) {
+		int flags = charFlags(ch);
 		if (cflags.contains("0"))
 			flags = 0;
 
-		sort.add(b, pos1, pos2, pos3, flags);
+		sort.add(ch, pos1, pos2, pos3, flags);
 		this.cflags = "";
 	}
 
 	/**
 	 * The flags that describe the kind of character. Known ones
 	 * are letter and digit. There may be others.
-	 * @param cval The actual character (unicode).
+	 * @param ch The actual character (unicode).
 	 * @return The flags that apply to it.
 	 */
-	private int charFlags(char cval) {
+	private int charFlags(int ch) {
 		int flags = 0;
-		if (Character.isLetter(cval) && (Character.getType(cval) & Character.MODIFIER_LETTER) == 0)
+		if (Character.isLetter(ch) && (Character.getType(ch) & Character.MODIFIER_LETTER) == 0)
 			flags = 1;
-		if (Character.isDigit(cval))
+		if (Character.isDigit(ch))
 			flags = 2;
 		return flags;
 	}
@@ -382,8 +401,8 @@ public class SrtTextReader {
 	private class Code {
 		private final TokenScanner scanner;
 		private final String val;
+		private int cval;
 		private byte bval;
-		private char cval;
 
 		public Code(TokenScanner scanner, String val) {
 			this.scanner = scanner;
@@ -394,38 +413,36 @@ public class SrtTextReader {
 			return bval;
 		}
 
-		public char getCval() {
+		public int getCval() {
 			return cval;
 		}
 
 		public Code invoke() {
 			try {
 				if (val.length() == 1) {
-					CharBuffer cbuf = CharBuffer.wrap(val.toCharArray());
-					ByteBuffer out = encoder.encode(cbuf);
-					if (out.remaining() > 1)
-						throw new SyntaxException(scanner, "more than one character resulted from conversion of " + val);
-
-					bval = out.get();
 					cval = val.charAt(0);
 				} else {
-					bval = (byte) Integer.parseInt(val, 16);
-					ByteBuffer bin = ByteBuffer.allocate(1);
-					bin.put(bval);
-					bin.flip();
-					CharBuffer out = decoder.decode(bin);
-					cval = out.get();
+					cval = Integer.parseInt(val, 16);
 				}
-			} catch (CharacterCodingException e) {
-				throw new SyntaxException(scanner, "Not a valid character (" + val + ") in codepage");
+
+				CharBuffer cbuf = CharBuffer.wrap(new char[] {(char) cval});
+				ByteBuffer out = encoder.encode(cbuf);
+				if (out.remaining() > 1)
+					throw new SyntaxException(scanner, "more than one character resulted from conversion of " + val);
+
+				// TODO: this is only for single byte charsets
+				bval = out.get();
 			} catch (NumberFormatException e) {
 				throw new SyntaxException(scanner, "Not a valid hex number " + val);
+			} catch (CharacterCodingException e) {
+				throw new SyntaxException(scanner, "Character not valid in character set '"
+						+ val + "'");
 			}
 			return this;
 		}
 
 		public String toString() {
-			return String.format("%02x: %c (0x%x)", bval, cval, (int) cval);
+			return String.format("%x", cval);
 		}
 	}
 }
