@@ -292,8 +292,6 @@ public class RouteArc {
 			flagA |= (length >> 5) & 0x18; // top two bits of length (at least one must be zero)
 			lendat = new int[1];		   // one byte of data
 			lendat[0] = length;			   // bottom 8 bits of length
-			if (length >= 0x200)
-				System.out.println(roadDef);
 			assert (flagA & 0x38) != 0x38;
 		} else {
 			flagA |= 0x38;		 // all three bits set
