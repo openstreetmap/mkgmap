@@ -30,7 +30,7 @@ public class RouteArc {
 	private static final Logger log = Logger.getLogger(RouteArc.class);
 	
 	// Flags A
-	private static final int FLAG_NEWDIR = 0x80;
+	private static final int FLAG_HASNET = 0x80;
 	private static final int FLAG_FORWARD = 0x40;
 	private static final int MASK_DESTCLASS = 0x7;
 	public static final int MASK_CURVE_LEN = 0x38;
@@ -64,6 +64,7 @@ public class RouteArc {
 	private final int length;
 	private final byte lengthRatio;
 	private final int pointsHash;
+	private boolean isForward;
 
 	/**
 	 * Create a new arc. An arc can contain multiple points (eg. A->B->C->D->E)
@@ -142,7 +143,7 @@ public class RouteArc {
 	public int boundSize() {
 
 		int[] lendat = encodeLength();
-
+		//TODO: take into account that initialHeading and indexA are not always written
 		// 1 (flagA) + 1-2 (offset) + 1 (indexA) + 1 (initialHeading)
 		int size = 5 + lendat.length;
 		if(haveCurve)
@@ -208,7 +209,16 @@ public class RouteArc {
 
 	}
 
-	public void write(ImgFileWriter writer) {
+	public void write(ImgFileWriter writer, RouteArc lastArc) {
+		boolean first = lastArc == null;
+		if (!first && lastArc.getRoadDef() != this.getRoadDef()){
+			flagA |= FLAG_HASNET;
+		}
+		boolean hasNet = (flagA & FLAG_HASNET) != 0;
+
+		if (isForward)
+			flagA |= FLAG_FORWARD;
+		
 		offset = writer.position();
 		if(log.isDebugEnabled())
 			log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
@@ -233,16 +243,20 @@ public class RouteArc {
 			else
 				writer.put((byte) (flagB | indexB));
 		}
-
-		writer.put(indexA);
+		
+		 // only write out the local net index if it is the first arc or else if newDir is set.
+		if (first || lastArc.indexA != this.indexA)
+			writer.put(indexA);
 
 		if(log.isDebugEnabled())
 			log.debug("writing length", length);
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
-		writer.put((byte)(initialHeading * 256 / 360));
-
+		// determine if we have to write direction info
+		if (first || hasNet || lastArc.isForward() != this.isForward())
+			writer.put((byte)(initialHeading * 256 / 360));
+		
 		if (haveCurve) {
 			int[] curvedat = encodeCurve();
 			for (int aCurvedat : curvedat)
@@ -360,16 +374,12 @@ public class RouteArc {
 		return roadDef;
 	}
 
-	public void setNewDir() {
-		flagA |= FLAG_NEWDIR;
-	}
-
 	public void setForward() {
-		flagA |= FLAG_FORWARD;
+		isForward = true;
 	}
 
 	public boolean isForward() {
-		return (flagA & FLAG_FORWARD) != 0;
+		return isForward;
 	}
 
 	public void setLast() {

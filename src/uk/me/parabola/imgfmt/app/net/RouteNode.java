@@ -98,8 +98,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void addArc(RouteArc arc) {
-		if (!arcs.isEmpty())
-			arc.setNewDir();
 		arcs.add(arc);
 		int cl = arc.getRoadDef().getRoadClass();
 		if(log.isDebugEnabled())
@@ -177,8 +175,11 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		if (!arcs.isEmpty()) {
 			arcs.get(arcs.size() - 1).setLast();
-			for (RouteArc arc : arcs)
-				arc.write(writer);
+			RouteArc lastArc = null;
+			for (RouteArc arc: arcs){
+				arc.write(writer, lastArc);
+				lastArc = arc;
+			}
 		}
 
 		if (!restrictions.isEmpty()) {
