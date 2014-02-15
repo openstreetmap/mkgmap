@@ -71,6 +71,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	private char latOff;
 	private char lonOff;
 	private List<RouteArc[]> throughRoutes;
+	private RoadDef roadDef;
 
 	// this is for setting destination class on arcs
 	// we're taking the maximum of roads this node is
@@ -82,6 +83,10 @@ public class RouteNode implements Comparable<RouteNode> {
 		setBoundary(this.coord.getOnBoundary());
 	}
 
+	public void setRoad (RoadDef road){
+		assert roadDef == null;
+		this.roadDef = road;
+	}
 	private boolean haveLargeOffsets() {
 		return (flags & F_LARGE_OFFSETS) != 0;
 	}
@@ -175,16 +180,6 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		if (!arcs.isEmpty()) {
 			// TODO: find out how GARMIN orders the nodes, as this seems to be important
-			Collections.sort(arcs, new Comparator<RouteArc>() {
-				public int compare(RouteArc ra1, RouteArc ra2) {
-					int c1 = ra1.getIndexA();
-					int c2 = ra2.getIndexA();
-					if (c1 != c2)
-						return c1 - c2;
-					return 0;
-				}
-			});
-
 			boolean useCompactDirs = true;
 			IntArrayList initialDirs = new IntArrayList(arcs.size()+1);
 			for (RouteArc arc: arcs){
