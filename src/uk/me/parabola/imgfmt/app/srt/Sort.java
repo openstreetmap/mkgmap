@@ -339,27 +339,6 @@ public class Sort {
 		return new SrtCollator(codepage);
 	}
 
-	/**
-	 * Create a default sort that simply sorts by the values of the characters.
-	 * It has to pretend to be associated with a particular code page, otherwise
-	 * it will not be recognised at all.
-	 *
-	 * This is not likely to be very useful. You need to create a sort description for your language
-	 * to make things work properly.
-	 *
-	 * @return A default sort.
-	 * @param codepage The code page that we are pretending to be.
-	 */
-	public static Sort defaultSort(int codepage) {
-		Sort sort = new Sort();
-		for (int i = 1; i < 256; i++) {
-			sort.add(i, i, 0, 0, 0);
-		}
-		sort.setDescription("Default sort");
-		sort.setCodepage(codepage);
-		return sort;
-	}
-
 	public int getExpansionSize() {
 		return expansions.size();
 	}

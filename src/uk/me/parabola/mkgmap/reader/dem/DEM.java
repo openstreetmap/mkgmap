@@ -30,7 +30,6 @@ import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.map.Map;
-import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.build.MapBuilder;
 import uk.me.parabola.mkgmap.general.LevelInfo;
@@ -41,6 +40,7 @@ import uk.me.parabola.mkgmap.reader.MapperBasedMapDataSource;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Style;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 import uk.me.parabola.util.EnhancedProperties;
 
 
@@ -85,15 +85,19 @@ public abstract class DEM {
 		try {
 			String dataPath;
 			Class demClass;
-			if (demType.equals("ASTER")) {
+			switch (demType) {
+			case "ASTER":
 				dataPath = config.getProperty("dem-path", "ASTER");
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.optional.GeoTiffDEM$ASTER");
-			} else if (demType.equals("CGIAR")) {
+				break;
+			case "CGIAR":
 				dataPath = config.getProperty("dem-path", "CGIAR");
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.optional.GeoTiffDEM$CGIAR");
-			} else {
+				break;
+			default:
 				dataPath = config.getProperty("dem-path", "SRTM");
 				demClass = Class.forName("uk.me.parabola.mkgmap.reader.dem.HGTDEM");
+				break;
 			}
 			Constructor<DEM> constructor = demClass.getConstructor(String.class,
 					Double.TYPE, Double.TYPE,
@@ -163,7 +167,7 @@ public abstract class DEM {
 			long mapName = Integer.valueOf(config.getProperty("mapname", "63240000"));
 			try {
 				String mapname = String.format("%08d", mapName + 10000000);
-				Map map = Map.createMap(mapname, fileOutputDir, params, mapname, Sort.defaultSort(1252));
+				Map map = Map.createMap(mapname, fileOutputDir, params, mapname, SrtTextReader.sortForCodepage(1252));
 				builder.makeMap(map, dest);
 				map.close();
 			}
@@ -367,7 +371,7 @@ public abstract class DEM {
 		double min;
 		double max;
 
-		final ArrayList<Isoline> isolines = new ArrayList<Isoline>();
+		final ArrayList<Isoline> isolines = new ArrayList<>();
 
 		class Isoline {
 			final int id;
@@ -377,7 +381,7 @@ public abstract class DEM {
 			private Isoline(double level) {
 				this.level = level;
 				id = lastId++;
-				points = new ArrayList<Coord>();
+				points = new ArrayList<>();
 			}
 
 			private class Edge implements Brent.Function {
@@ -826,7 +830,7 @@ public abstract class DEM {
 
 	private static class DEMMapDataSource extends MapperBasedMapDataSource implements LoadableMapDataSource {
 		final LoadableMapDataSource parent;
-		final List<String> copyright = new ArrayList<String>();
+		final List<String> copyright = new ArrayList<>();
 
 		DEMMapDataSource(LoadableMapDataSource parent, EnhancedProperties props) {
 			this.parent = parent;

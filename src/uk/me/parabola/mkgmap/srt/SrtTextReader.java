@@ -21,13 +21,11 @@ import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.me.parabola.imgfmt.ExitException;
 import uk.me.parabola.imgfmt.app.srt.SRTFile;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.fs.ImgChannel;
@@ -108,20 +106,27 @@ public class SrtTextReader {
 	}
 
 	/**
-	 * Find and read in the sort description for the given codepage.
+	 * Find and read in the default sort description for the given codepage.
 	 */
 	public static Sort sortForCodepage(int codepage) {
 		String name = "sort/cp" + codepage + ".txt";
 		InputStream is = Sort.class.getClassLoader().getResourceAsStream(name);
-		if (is == null)
-			return Sort.defaultSort(codepage);
+		if (is == null) {
+			if (codepage == 1252)
+				throw new ExitException("No sort description for code-page 1252 available");
+
+			Sort defaultSort = SrtTextReader.sortForCodepage(1252);
+			defaultSort.setCodepage(codepage);
+			defaultSort.setDescription("Default sort");
+			return defaultSort;
+		}
 
 		try {
 			InputStreamReader r = new InputStreamReader(is, "utf-8");
 			SrtTextReader sr = new SrtTextReader(r);
 			return sr.getSort();
 		} catch (IOException e) {
-			return Sort.defaultSort(codepage);
+			return SrtTextReader.sortForCodepage(codepage);
 		}
 	}
 
@@ -174,10 +179,7 @@ public class SrtTextReader {
 			case "codepage":
 				int codepage = scanner.nextInt();
 				sort.setCodepage(codepage);
-				Charset charset = Charset.forName("cp" + codepage);
-				encoder = charset.newEncoder();
-				CharsetDecoder decoder = charset.newDecoder();
-				decoder.onMalformedInput(CodingErrorAction.REPORT);
+				encoder = sort.getCharset().newEncoder();
 				break;
 			case "description":
 				sort.setDescription(scanner.nextWord());

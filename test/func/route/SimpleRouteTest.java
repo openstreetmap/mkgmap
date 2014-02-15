@@ -52,24 +52,30 @@ public class SimpleRouteTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
 				assertThat("RGN size", size, new RangeMatcher(130140));
-			} else if (ext.equals("TRE")) {
+				break;
+			case "TRE":
 				count++;
 				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
 				assertThat("TRE size", size, new RangeMatcher(1478, 2));
-			} else if (ext.equals("LBL")) {
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 28730, size);
-			} else if (ext.equals("NET")) {
+				assertEquals("LBL size", 28734, size);
+				break;
+			case "NET":
 				count++;
 				assertEquals("NET size", 66804, size);
-			} else if (ext.equals("NOD")) {
+				break;
+			case "NOD":
 				count++;
 				assertEquals("NOD size", 186800, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count == 5);
@@ -83,24 +89,30 @@ public class SimpleRouteTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
-        System.out.println("RGN size " + size);
+				System.out.println("RGN size " + size);
 				assertThat("RGN size", size, new RangeMatcher(2780));
-			} else if (ext.equals("TRE")) {
+				break;
+			case "TRE":
 				count++;
-        System.out.println("TRE size " + size);
+				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
 				assertThat("TRE size", size, new RangeMatcher(769, 2));
-			} else if (ext.equals("LBL")) {
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 985, size);
-			} else if (ext.equals("NET")) {
+				assertEquals("LBL size", 989, size);
+				break;
+			case "NET":
 				count++;
 				assertEquals("NET size", 1280, size);
-			} else if (ext.equals("NOD")) {
+				break;
+			case "NOD":
 				count++;
 				assertEquals("NOD size", 3114, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count == 5);

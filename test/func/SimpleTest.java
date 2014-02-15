@@ -99,18 +99,22 @@ public class SimpleTest extends Base {
 			String ext = ent.getExt();
 
 			int size = ent.getSize();
-			if (ext.equals("RGN")) {
+			switch (ext) {
+			case "RGN":
 				count++;
 				System.out.println("RGN size " + size);
 				assertThat("RGN size", size, new RangeMatcher(2756));
-			} else if (ext.equals("TRE")) {
+				break;
+			case "TRE":
 				count++;
 				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
 				assertThat("TRE size", size, new RangeMatcher(769, 2));
-			} else if (ext.equals("LBL")) {
+				break;
+			case "LBL":
 				count++;
-				assertEquals("LBL size", 985, size);
+				assertEquals("LBL size", 989, size);
+				break;
 			}
 		}
 		assertTrue("enough checks run", count >= 3);
