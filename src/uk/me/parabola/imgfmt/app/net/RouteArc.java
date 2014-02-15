@@ -102,11 +102,13 @@ public class RouteArc {
 		int ratio = 0;
 		if (arcLength > directLength){
 			ratio = (byte) ((int)(directLength * 32 / arcLength) & 0x1f);
-			if (ratio > 26 && this.length < (1 << 14))
+			if (ratio > 26) 
 				ratio = 0;
 		}
+		if (ratio == 0 && length >= (1 << 14))
+			ratio = 0x1f;
 		lengthRatio = (byte)ratio;
-		haveCurve = curveEnabled && (ratio > 0 || length > (1 << 14));
+		haveCurve = curveEnabled && lengthRatio > 0;
 	}
 
 	public float getInitialHeading() {
