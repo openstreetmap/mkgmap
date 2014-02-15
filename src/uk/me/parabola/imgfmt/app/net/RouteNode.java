@@ -14,12 +14,12 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -71,7 +71,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	private char latOff;
 	private char lonOff;
 	private List<RouteArc[]> throughRoutes;
-	private RoadDef roadDef;
 
 	// this is for setting destination class on arcs
 	// we're taking the maximum of roads this node is
@@ -83,10 +82,6 @@ public class RouteNode implements Comparable<RouteNode> {
 		setBoundary(this.coord.getOnBoundary());
 	}
 
-	public void setRoad (RoadDef road){
-		assert roadDef == null;
-		this.roadDef = road;
-	}
 	private boolean haveLargeOffsets() {
 		return (flags & F_LARGE_OFFSETS) != 0;
 	}
@@ -179,28 +174,10 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 
 		if (!arcs.isEmpty()) {
-			// TODO: find out how GARMIN orders the nodes, as this seems to be important
-			boolean useCompactDirs = true;
-			IntArrayList initialDirs = new IntArrayList(arcs.size()+1);
-			for (RouteArc arc: arcs){
-				int dir = (byte)(arc.getInitialHeading() * 256 / 360);
-				dir = dir & 0xf0;
-				if (initialDirs.contains(dir)){
-					useCompactDirs = false;
-					break;
-				}
-				initialDirs.add(dir);
-			}
-			initialDirs.add(0); // add dummy 0 so that we don't have to check for existence
 			arcs.get(arcs.size() - 1).setLast();
 			RouteArc lastArc = null;
-			for (int i = 0; i < arcs.size(); i++){
-				RouteArc arc = arcs.get(i);
-				Byte compactedDir = null;
-				if (useCompactDirs  && i % 2 == 0)
-					compactedDir = (byte) ((initialDirs.get(i) >> 4) | initialDirs.getInt(i+1));
-				
-				arc.write(writer, lastArc, useCompactDirs, compactedDir);
+			for (RouteArc arc: arcs){
+				arc.write(writer, lastArc);
 				lastArc = arc;
 			}
 		}
@@ -326,7 +303,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(labb != null && labb.getOffset() != 0) {
 						bothArcsNamed = true;
 						if(laba.equals(labb)) {
-							// the roads have the same label
+							// the roads have the same name
 							if(rda.isLinkRoad() == rdb.isLinkRoad()) {
 								// if both are a link road or both are
 								// not a link road, consider them the
