@@ -297,10 +297,10 @@ public class SrtTextReader {
 				continue;
 
 			Code r = new Code(scanner, t.getValue()).invoke();
-			expansionList.add(r.getBval());
+			expansionList.add((byte) r.getBval());
 		}
 
-		sort.addExpansion(code.getBval(), charFlags(code.getCval()), expansionList);
+		sort.addExpansion((byte) code.getBval(), charFlags(code.getCval()), expansionList);
 		state = IN_INITIAL;
 	}
 
@@ -409,8 +409,8 @@ public class SrtTextReader {
 			this.val = val;
 		}
 
-		public byte getBval() {
-			return bval;
+		public int getBval() {
+			return bval & 0xff;
 		}
 
 		public int getCval() {
