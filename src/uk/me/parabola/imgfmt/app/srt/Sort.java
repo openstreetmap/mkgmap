@@ -251,6 +251,13 @@ public class Sort {
 
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
+		charset = charsetFromCodepage(codepage);
+		encoder = charset.newEncoder();
+		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+	}
+
+	public static Charset charsetFromCodepage(int codepage) {
+		Charset charset;
 		if (codepage == 0)
 			charset = Charset.forName("cp1252");
 		else if (codepage == 65001)
@@ -261,8 +268,7 @@ public class Sort {
 			charset = Charset.forName("ms932");
 		else
 			charset = Charset.forName("cp" + codepage);
-		encoder = charset.newEncoder();
-		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		return charset;
 	}
 
 	public String getDescription() {
