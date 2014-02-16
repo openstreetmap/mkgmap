@@ -31,9 +31,13 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
  * 2. An 8 bit format.  This seems to be a fairly straightforward latin-1 like
  * encoding with no tricks to reduce the amount of space required.
  *
+ * 3. A multi-byte format. For unicode, cp932 etc.
+ *
  * @author Steve Ratcliffe
  */
 public class Label {
+	public static final Label NULL_LABEL = new Label("");
+	public static final Label NULL_OUT_LABEL = new Label(new char[0]);
 
 	private final String text;
 	private final char[] encText;
@@ -52,10 +56,11 @@ public class Label {
 	}
 
 	public int getLength() {
-		if (text == null)
-			return 0;
-		else
+		if (text != null)
 			return text.length();
+		if (encText != null)
+			return encText.length;
+		return 0;
 	}
 
 	public String getText() {
@@ -100,10 +105,7 @@ public class Label {
 	 * @return The offset within the LBL file of this string.
 	 */
 	public int getOffset() {
-		if (text == null || text.isEmpty())
-			return 0;
-		else
-			return offset;
+		return offset;
 	}
 
 	public void setOffset(int offset) {
@@ -127,7 +129,7 @@ public class Label {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return "[" + offset + "]" + text;
+		return text != null ? text : "[" + offset + "]";
 	}
 
 	public boolean equals(Object o) {

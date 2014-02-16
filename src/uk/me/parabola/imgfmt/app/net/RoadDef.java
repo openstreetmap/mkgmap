@@ -170,9 +170,9 @@ public class RoadDef implements Comparable<RoadDef> {
 	public String toString() {
 		// assumes id is an OSM id
 		String browseURL = "http://www.openstreetmap.org/browse/way/" + id;
-		if(getName() != null)
-			return "(" + getName() + ", " + browseURL + ")";
-		else
+		//if(getName() != null)
+		//	return "(" + getName() + ", " + browseURL + ")";
+		//else
 			return "(" + browseURL + ")";
 	}
 
@@ -180,7 +180,7 @@ public class RoadDef implements Comparable<RoadDef> {
 		if (name != null)
 			return name;
 		if (labels[0] != null)
-			return labels[0].getText();
+			return labels[0].toString();
 		return null;
 	}
 

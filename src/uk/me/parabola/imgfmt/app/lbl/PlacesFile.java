@@ -35,23 +35,23 @@ import uk.me.parabola.imgfmt.app.trergn.Subdivision;
  * This is really part of the LBLFile.  We split out all the parts of the file
  * that are to do with location to here.
  */
-@SuppressWarnings({"RawUseOfParameterizedType"})
+@SuppressWarnings({"RawUseOfParameterizedType", "unchecked", "rawtypes"})
 public class PlacesFile {
-	private final Map<String, Country> countries = new LinkedHashMap<String, Country>();
-	private final List<Country> countryList = new ArrayList<Country>();
+	private final Map<String, Country> countries = new LinkedHashMap<>();
+	private final List<Country> countryList = new ArrayList<>();
 
-	private final Map<String, Region> regions = new LinkedHashMap<String, Region>();
-	private final List<Region> regionList = new ArrayList<Region>();
+	private final Map<String, Region> regions = new LinkedHashMap<>();
+	private final List<Region> regionList = new ArrayList<>();
 
-	private final Map<String, City> cities = new LinkedHashMap<String, City>();
-	private final List<City> cityList = new ArrayList<City>();
+	private final Map<String, City> cities = new LinkedHashMap<>();
+	private final List<City> cityList = new ArrayList<>();
 
-	private final Map<String, Zip> postalCodes = new LinkedHashMap<String, Zip>();
-	private final List<Zip> zipList = new ArrayList<Zip>();
+	private final Map<String, Zip> postalCodes = new LinkedHashMap<>();
+	private final List<Zip> zipList = new ArrayList<>();
 
-	private final List<Highway> highways = new ArrayList<Highway>();
-	private final List<ExitFacility> exitFacilities = new ArrayList<ExitFacility>();
-	private final List<POIRecord> pois = new ArrayList<POIRecord>();
+	private final List<Highway> highways = new ArrayList<>();
+	private final List<ExitFacility> exitFacilities = new ArrayList<>();
+	private final List<POIRecord> pois = new ArrayList<>();
 	private final List[] poiIndex = new ArrayList[256];
 
 	private LBLFile lblFile;
@@ -91,7 +91,7 @@ public class PlacesFile {
 		for (List<POIIndex> pil : poiIndex) {
 			if(pil != null) {
 				// sort entries by POI name
-				List<SortKey<POIIndex>> sorted = new ArrayList<SortKey<POIIndex>>();
+				List<SortKey<POIIndex>> sorted = new ArrayList<>();
 				for (POIIndex index : pil) {
 					SortKey<POIIndex> sortKey = sort.createSortKey(index, index.getName());
 					sorted.add(sortKey);
@@ -178,7 +178,7 @@ public class PlacesFile {
 	}
 
 	City createCity(Country country, String name, boolean unique) {
-		
+
 		String uniqueCityName = name.toUpperCase() + "_C" + country.getLabel().getOffset();
 		
 		// if unique is true, make sure that the name really is unique
@@ -333,9 +333,9 @@ public class PlacesFile {
 	 * But why not?
 	 */
 	private void sortCountries() {
-		List<SortKey<Country>> keys = new ArrayList<SortKey<Country>>();
+		List<SortKey<Country>> keys = new ArrayList<>();
 		for (Country c : countries.values()) {
-			SortKey<Country> key = sort.createSortKey(c, c.getLabel().getText());
+			SortKey<Country> key = sort.createSortKey(c, c.getLabel());
 			keys.add(key);
 		}
 		Collections.sort(keys);
@@ -353,9 +353,9 @@ public class PlacesFile {
 	 * Sort the regions by the defined sort.
 	 */
 	private void sortRegions() {
-		List<SortKey<Region>> keys = new ArrayList<SortKey<Region>>();
+		List<SortKey<Region>> keys = new ArrayList<>();
 		for (Region r : regionList) {
-			SortKey<Region> key = sort.createSortKey(r, r.getLabel().getText(), r.getCountry().getIndex());
+			SortKey<Region> key = sort.createSortKey(r, r.getLabel(), r.getCountry().getIndex());
 			keys.add(key);
 		}
 		Collections.sort(keys);
@@ -373,10 +373,10 @@ public class PlacesFile {
 	 * Sort the cities by the defined sort.
 	 */
 	private void sortCities() {
-		List<SortKey<City>> keys = new ArrayList<SortKey<City>>();
+		List<SortKey<City>> keys = new ArrayList<>();
 		for (City c : cityList) {
-			SortKey<City> sortKey = sort.createSortKey(c, c.getName());
-			sortKey = new CombinedSortKey<City>(sortKey, c.getRegionNumber(), c.getCountryNumber());
+			SortKey<City> sortKey = sort.createSortKey(c, c.getLabel());
+			sortKey = new CombinedSortKey<>(sortKey, c.getRegionNumber(), c.getCountryNumber());
 			keys.add(sortKey);
 		}
 		Collections.sort(keys);
@@ -391,9 +391,9 @@ public class PlacesFile {
 	}
 
 	private void sortZips() {
-		List<SortKey<Zip>> keys = new ArrayList<SortKey<Zip>>();
+		List<SortKey<Zip>> keys = new ArrayList<>();
 		for (Zip c : postalCodes.values()) {
-			SortKey<Zip> sortKey = sort.createSortKey(c, c.getLabel().getText());
+			SortKey<Zip> sortKey = sort.createSortKey(c, c.getLabel());
 			keys.add(sortKey);
 		}
 		Collections.sort(keys);

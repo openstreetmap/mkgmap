@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.ExitException;
+import uk.me.parabola.imgfmt.app.Label;
 
 /**
  * Represents the sorting positions for all the characters in a codepage.
@@ -107,9 +108,8 @@ public class Sort {
 				return new SrtSortKey<>(object, key, second);
 		}
 
-		CharBuffer inb = CharBuffer.wrap(s);
 		try {
-			ByteBuffer out = encoder.encode(inb);
+			ByteBuffer out = encoder.encode(CharBuffer.wrap(s));
 			byte[] bval = out.array();
 
 			// In theory you could have a string where every character expands into maxExpSize separate characters
@@ -136,6 +136,42 @@ public class Sort {
 		}
 	}
 
+	public <T> SortKey<T> createSortKey(T object, Label label, int second, Map<Label, byte[]> cache) {
+		byte[] key;
+		if (cache != null) {
+			key = cache.get(label);
+			if (key != null)
+				return new SrtSortKey<>(object, key, second);
+		}
+
+		char[] encText = label.getEncText();
+		byte[] bval = new byte[encText.length];
+		for (int i = 0; i < encText.length; i++) {
+			assert (encText[i] & 0xff00) == 0;
+			bval[i] = (byte) encText[i];
+		}
+
+		// In theory you could have a string where every character expands into maxExpSize separate characters
+		// in the key.  However if we allocate enough space to deal with the worst case, then we waste a
+		// vast amount of memory. So allocate a minimal amount of space, try it and if it fails reallocate the
+		// maximum amount.
+		//
+		// We need +1 for the null bytes, we also +2 for a couple of expanded characters. For a complete
+		// german map this was always enough in tests.
+		key = new byte[(bval.length + 1 + 2) * 3];
+		try {
+			fillCompleteKey(bval, key);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// Ok try again with the max possible key size allocated.
+			key = new byte[bval.length * 3 * maxExpSize + 3];
+		}
+
+		if (cache != null)
+			cache.put(label, key);
+
+		return new SrtSortKey<>(object, key, second);
+	}
+
 	/**
 	 * Convenient version of create sort key method.
 	 * @see #createSortKey(Object, String, int, Map)
@@ -151,6 +187,14 @@ public class Sort {
 	 */
 	public <T> SortKey<T> createSortKey(T object, String s) {
 		return createSortKey(object, s, 0, null);
+	}
+
+	public <T> SortKey<T> createSortKey(T object, Label label) {
+		return createSortKey(object, label, 0, null);
+	}
+
+	public <T> SortKey<T> createSortKey(T object, Label label, int second) {
+		return createSortKey(object, label, second, null);
 	}
 
 	/**
@@ -265,22 +309,7 @@ public class Sort {
 
 	public void setCodepage(int codepage) {
 		this.codepage = codepage;
-		switch (codepage) {
-		case 0:
-			charset = Charset.forName("ascii");
-			break;
-		case 65001:
-			charset = Charset.forName("UTF-8");
-			break;
-		case 932:
-			// Java uses "ms932" for code page 932
-			// (Windows-31J, Shift-JIS + MS extensions)
-			charset = Charset.forName("ms932");
-			break;
-		default:
-			charset = Charset.forName("cp" + codepage);
-			break;
-		}
+		charset = charsetFromCodepage(codepage);
 
 		encoder = charset.newEncoder();
 		encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
@@ -361,6 +390,27 @@ public class Sort {
 
 	private void setFlags(int ch, int val) {
 		this.pages[ch >>> 8].flags[ch & 0xff] = (byte) val;
+	}
+
+	public static Charset charsetFromCodepage(int codepage) {
+		Charset charset;
+		switch (codepage) {
+		case 0:
+			charset = Charset.forName("ascii");
+			break;
+		case 65001:
+			charset = Charset.forName("UTF-8");
+			break;
+		case 932:
+			// Java uses "ms932" for code page 932
+			// (Windows-31J, Shift-JIS + MS extensions)
+			charset = Charset.forName("ms932");
+			break;
+		default:
+			charset = Charset.forName("cp" + codepage);
+			break;
+		}
+		return charset;
 	}
 
 	private static class Page {

@@ -161,4 +161,8 @@ public class City {
 	public int getCountryNumber() {
 		return country != null ? country.getIndex() : 0;
 	}
+
+	public Label getLabel() {
+		return label;
+	}
 }

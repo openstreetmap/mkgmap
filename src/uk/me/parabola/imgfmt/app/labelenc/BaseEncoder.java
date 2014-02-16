@@ -30,7 +30,7 @@ import uk.me.parabola.log.Logger;
 public class BaseEncoder {
 	private static final Logger log = Logger.getLogger(BaseEncoder.class);
 
-	protected static final EncodedText NO_TEXT = new EncodedText(null, 0, null);
+	public static final EncodedText NO_TEXT = new EncodedText(null, 0, null);
 
 	private boolean charsetSupported = true;
 
