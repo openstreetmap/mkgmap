@@ -211,12 +211,16 @@ public class RouteArc {
 
 	}
 
-	public void write(ImgFileWriter writer, RouteArc lastArc) {
+	public void write(ImgFileWriter writer, RouteArc lastArc, boolean useCompactDirs, Byte compactedDir) {
 		boolean first = lastArc == null;
-		if (!first && lastArc.getRoadDef() != this.getRoadDef()){
-			flagA |= FLAG_HASNET;
+		if (first){
+			if (useCompactDirs)
+				flagA |= FLAG_HASNET; // first arc: the 1 tells us that initial directions are in compacted format
+		} else {
+			if (lastArc.getRoadDef() != this.getRoadDef())
+				flagA |= FLAG_HASNET; // not first arc: the 1 tells us that we have to read table A 
+			
 		}
-		boolean hasNet = (flagA & FLAG_HASNET) != 0;
 
 		if (isForward)
 			flagA |= FLAG_FORWARD;
@@ -255,8 +259,11 @@ public class RouteArc {
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
-		// determine if we have to write direction info
-		if (first || hasNet || lastArc.isForward() != this.isForward())
+		if (useCompactDirs){
+			// determine if we have to write direction info
+			if (compactedDir != null)
+				writer.put(compactedDir);
+		} else 
 			writer.put((byte)(initialHeading * 256 / 360));
 		
 		if (haveCurve) {

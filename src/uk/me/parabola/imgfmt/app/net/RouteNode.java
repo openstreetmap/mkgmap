@@ -14,12 +14,12 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -174,10 +174,38 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 
 		if (!arcs.isEmpty()) {
-			arcs.get(arcs.size() - 1).setLast();
+			boolean useCompactDirs = true;
+			IntArrayList initialHeadings = new IntArrayList(arcs.size()+1);
 			RouteArc lastArc = null;
 			for (RouteArc arc: arcs){
-				arc.write(writer, lastArc);
+				if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
+					int dir = (byte)(arc.getInitialHeading() * 256 / 360);
+					dir = dir & 0xf0;
+					if (initialHeadings.contains(dir)){
+						useCompactDirs = false;
+						break;
+					}
+					initialHeadings.add(dir);
+				} else {
+					// 
+				}
+				lastArc = arc;
+			}
+			initialHeadings.add(0); // add dummy 0 so that we don't have to check for existence
+			arcs.get(arcs.size() - 1).setLast();
+			lastArc = null;
+			
+			int index = 0;
+			for (RouteArc arc: arcs){
+				Byte compactedDir = null;
+				if (useCompactDirs){
+					if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
+						if (index % 2 == 0)
+							compactedDir = (byte) ((initialHeadings.get(index) >> 4) | initialHeadings.getInt(index+1));
+						index++;
+					}
+				}
+				arc.write(writer, lastArc, useCompactDirs, compactedDir);
 				lastArc = arc;
 			}
 		}
@@ -303,7 +331,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(labb != null && labb.getOffset() != 0) {
 						bothArcsNamed = true;
 						if(laba.equals(labb)) {
-							// the roads have the same name
+							// the roads have the same label
 							if(rda.isLinkRoad() == rdb.isLinkRoad()) {
 								// if both are a link road or both are
 								// not a link road, consider them the
