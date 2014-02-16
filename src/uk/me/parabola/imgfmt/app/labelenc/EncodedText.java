@@ -36,9 +36,9 @@ public class EncodedText {
 		this.length = len;
 		this.chars = chars;
 
-		int hc = length;
+		int hc = 0;
 		for (int i = 0; i < length; i++)
-			hc += 31*ctext[i];
+			hc = 31*hc + ctext[i];
 		hashCode = hc;
 	}
 

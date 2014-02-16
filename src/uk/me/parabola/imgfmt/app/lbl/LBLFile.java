@@ -130,6 +130,7 @@ public class LBLFile extends ImgFile {
 	 */
 	public Label newLabel(String text) {
 		EncodedText encodedText = textEncoder.encodeText(text);
+
 		Label l = labelCache.get(encodedText);
 		if (l == null) {
 			l = new Label(encodedText.getChars());
