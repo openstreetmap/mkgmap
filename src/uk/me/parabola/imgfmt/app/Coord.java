@@ -271,14 +271,15 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Set or unset flag for {@link ShapeMergeFilter} 
+	 * Mark the Coord to be part of a line which has a big bearing
+	 * error because of the rounding to map units. 
 	 * @param b true or false
 	 */
-	public void setPartOfShape2(boolean b) {
+	public void setPartOfBadAngle(boolean b) {
 		if (b) 
-			this.flags |= PART_OF_SHAPE2;
+			this.flags |= PART_OF_BAD_ANGLE;
 		else 
-			this.flags &= ~PART_OF_SHAPE2; 
+			this.flags &= ~PART_OF_BAD_ANGLE; 
 	}
 
 	/** 
@@ -291,15 +292,14 @@ public class Coord implements Comparable<Coord> {
 	}
 
 	/**
-	 * Mark the Coord to be part of a line which has a big bearing
-	 * error because of the rounding to map units. 
+	 * Set or unset flag for {@link ShapeMergeFilter} 
 	 * @param b true or false
 	 */
-	public void setPartOfBadAngle(boolean b) {
+	public void setPartOfShape2(boolean b) {
 		if (b) 
-			this.flags |= PART_OF_BAD_ANGLE;
+			this.flags |= PART_OF_SHAPE2;
 		else 
-			this.flags &= ~PART_OF_BAD_ANGLE; 
+			this.flags &= ~PART_OF_SHAPE2; 
 	}
 
 	public int hashCode() {
