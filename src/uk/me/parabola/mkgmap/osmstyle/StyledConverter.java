@@ -534,11 +534,14 @@ public class StyledConverter implements OsmConverter {
 		filterCoordPOI();
 
 		wrongAngleFixer.setBounds(bbox);
-		wrongAngleFixer.optimizeRoads(roads, lines, modifiedRoads, deletedRoads, restrictions);
+		wrongAngleFixer.optimizeWays(roads, lines, modifiedRoads, deletedRoads, restrictions);
 
 		// make sure that copies of modified roads have equal points 
 		for (int i = 0; i < lines.size(); i++){
 			Way line = lines.get(i);
+			if (line == null){
+				continue; // should not happen
+			}
 			if (deletedRoads.contains(line.getId())){
 				lines.set(i, null);
 				continue;

@@ -45,6 +45,7 @@ public class Coord implements Comparable<Coord> {
 	
 	private final static short PART_OF_BAD_ANGLE = 0x0080; // bit in flags is true if point should be treated as a node
 	private final static short PART_OF_SHAPE2 = 0x0100; // use only in ShapeMerger
+	private final static short END_OF_WAY = 0x0200; // use only in WrongAngleFixer
 	
 	public final static int HIGH_PREC_BITS = 30;
 	public final static int DELTA_SHIFT = 6;
@@ -300,6 +301,26 @@ public class Coord implements Comparable<Coord> {
 			this.flags |= PART_OF_SHAPE2;
 		else 
 			this.flags &= ~PART_OF_SHAPE2; 
+	}
+
+	/** 
+	 * Get flag for {@link WrongAngleFixer}
+	 * The value has no meaning outside of {@link WrongAngleFixer}
+	 * @return  
+	 */
+	public boolean isEndOfWay() {
+		return (flags & END_OF_WAY) != 0;
+	}
+
+	/**
+	 * Set or unset flag for {@link WrongAngleFixer} 
+	 * @param b true or false
+	 */
+	public void setEndOfWay(boolean b) {
+		if (b) 
+			this.flags |= END_OF_WAY;
+		else 
+			this.flags &= ~END_OF_WAY; 
 	}
 
 	public int hashCode() {
