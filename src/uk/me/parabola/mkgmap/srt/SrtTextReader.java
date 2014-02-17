@@ -351,15 +351,18 @@ public class SrtTextReader {
 	 */
 	private void resetPos() {
 		pos1 = 0;
-		pos2 = 1;
-		pos3 = 1;
+		pos2 = 0;
+		pos3 = 0;
 	}
 
 	/**
 	 * Advance the major position value, resetting the minor position variables.
 	 */
 	private void advancePos() {
-		pos1 += pos2;
+		if (pos1 == 0)
+			pos1 = 1;
+		else
+			pos1 += pos2;
 		pos2 = 1;
 		pos3 = 1;
 	}

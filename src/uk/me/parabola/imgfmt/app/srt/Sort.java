@@ -125,6 +125,7 @@ public class Sort {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				// Ok try again with the max possible key size allocated.
 				key = new byte[bval.length * 3 * maxExpSize + 3];
+				fillCompleteKey(bval, key);
 			}
 
 			if (cache != null)
@@ -164,6 +165,7 @@ public class Sort {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// Ok try again with the max possible key size allocated.
 			key = new byte[bval.length * 3 * maxExpSize + 3];
+			fillCompleteKey(bval, key);
 		}
 
 		if (cache != null)
@@ -225,9 +227,6 @@ public class Sort {
 
 			int exp = (getFlags(b) >> 4) & 0x3;
 			if (exp == 0) {
-				// I am guessing that a sort position of 0 means that the character is ignorable at this
-				// strength. In other words it is as if it is not present in the string.  This appears to
-				// be true for shield symbols, but perhaps not for other kinds of control characters.
 				byte pos = sortPositions[b];
 				if (pos != 0)
 					outKey[index++] = pos;

@@ -31,8 +31,11 @@ public class SortTest {
 	@Before
 	public void setUp() throws Exception {
 		Reader r = new StringReader("codepage 1252\n" +
-				"code 01\n" +
-				"code a, A; â, Â < b, B;\n");
+				"code 0001\n" +
+				"< a, ª, A; â, Â < b, B < e,E < m,M < t,T\n" +
+				"expand ™ to T M\n" +
+				"expand æ to a e\n" +
+				"expand Æ to A E\n");
 		SrtTextReader srr = new SrtTextReader(r);
 		sort = srr.getSort();
 		collator = sort.getCollator();
@@ -59,35 +62,35 @@ public class SortTest {
 
 	@Test
 	public void testPrimaryDifference() {
-		checkOrder("AAA", "AAB");
+		checkOrdered("AAA", "AAB");
 	}
 
 	@Test
 	public void testSecondaryDifferences() {
-		checkOrder("AAA", "AÂA");
+		checkOrdered("AAA", "AÂA");
 	}
 
 	@Test
 	public void testTertiaryDifferences() {
-		checkOrder("AAa", "AAA");
+		checkOrdered("AAa", "AAA");
 	}
 
 	@Test
 	public void testPrimaryOverridesSecondary() {
-		checkOrder("AAAA", "ÂAAA");
-		checkOrder("ÂAAA", "AAAB");
+		checkOrdered("AAAA", "ÂAAA");
+		checkOrdered("ÂAAA", "AAAB");
 	}
 
 	@Test
 	public void testSecondaryOverridesTertiary() {
-		checkOrder("aaa", "Aaa");
-		checkOrder("Aaa", "aâa");
-		checkOrder("Aaa", "aÂa");
+		checkOrdered("aaa", "Aaa");
+		checkOrdered("Aaa", "aâa");
+		checkOrdered("Aaa", "aÂa");
 	}
 
 	@Test
 	public void testSecondarySort() {
-		checkOrder(1, 24);
+		checkOrdered(1, 24);
 	}
 
 	/**
@@ -121,52 +124,47 @@ public class SortTest {
 	}
 
 	@Test
-	public void testCollatorPrimary() {
-		Collator collator = sort.getCollator();
-		collator.setStrength(Collator.PRIMARY);
-		assertEquals(0, collator.compare("aa", "aa"));
-		assertEquals(0, collator.compare("aa", "âa"));
-		assertEquals(0, collator.compare("Aa", "aA"));
-		assertEquals(1, collator.compare("ab", "âa"));
+	public void testTertiaryPlusExpansion() {
+		assertEquals(-1, keyCompare("æ", "ªe"));
+		assertEquals(-1, keyCompare("`æ", "`ªe"));
+	}
 
-		assertEquals(1, collator.compare("aaa", "aa"));
-		assertEquals(-1, collator.compare("aa", "aaa"));
+	/**
+	 * Make the internal initial buffer overflow so it has to be reallocated.
+	 */
+	@Test
+	public void testKeyOverflow() {
+		assertEquals(1, keyCompare("™™™™™", "AA"));
 	}
 
 	@Test
-	public void testCollatorSecondary() {
-		Collator collator = sort.getCollator();
-		collator.setStrength(Collator.SECONDARY);
-		assertEquals(0, collator.compare("aa", "aa"));
-		assertEquals(0, collator.compare("aA", "aa"));
-		assertEquals(-1, collator.compare("aa", "âa"));
-		assertEquals(0, collator.compare("âa", "âa"));
-		assertEquals(1, collator.compare("ab", "âa"));
-
-		assertEquals(1, collator.compare("aaaa", "aaa"));
-		assertEquals(-1, collator.compare("aaa", "aaaa"));
-	}
-
-	@Test
-	public void testCollatorTertiary() {
-		Collator collator = sort.getCollator();
-		collator.setStrength(Collator.TERTIARY);
-		assertEquals(0, collator.compare("aa", "aa"));
-		assertEquals(1, collator.compare("aA", "aa"));
-		assertEquals(-1, collator.compare("aaa", "âaa"));
-		assertEquals(0, collator.compare("âaa", "âaa"));
-		assertEquals(1, collator.compare("ab", "âa"));
-
-		assertEquals(1, collator.compare("AAA", "AA"));
-		assertEquals(-1, collator.compare("AA", "AAA"));
+	public void testExpanded() {
+		assertEquals(1, keyCompare("æ", "Ae"));
+		assertEquals(1, keyCompare("æ", "AE"));
+		assertEquals(0, keyCompare("æ", "ae"));
+		assertEquals(1, keyCompare("æ", "AE"));
+		assertEquals(1, keyCompare("æ", "aE"));
+		assertEquals(1, keyCompare("AE", "aE"));
+		assertEquals(1, keyCompare("Æ", "aE"));
 	}
 
 	@Test
 	public void testIgnorableCharacters() {
-		checkOrder("aa", "\004aa");
+		assertEquals(0, keyCompare("aaa", "a\u0001aa"));
+
+		assertEquals(-1, keyCompare("\u007f", "(T"));
 	}
 
-	private void checkOrder(int i1, int i2) {
+	private int keyCompare(String s1, String s2) {
+		SortKey<Object> k1 = sort.createSortKey(null, s1);
+		SortKey<Object> k2 = sort.createSortKey(null, s2);
+		System.out.println("K1: " + k1);
+		System.out.println("K2: " + k2);
+
+		return k1.compareTo(k2);
+	}
+
+	private void checkOrdered(int i1, int i2) {
 		String s = "aaa";
 		SortKey<Object> k1 = sort.createSortKey(null, s, i1);
 		SortKey<Object> k2 = sort.createSortKey(null, s, i2);
@@ -178,11 +176,13 @@ public class SortTest {
 	 * @param s First string.
 	 * @param s1 Second string.
 	 */
-	private void checkOrder(String s, String s1) {
+	private void checkOrdered(String s, String s1) {
 		SortKey<Object> k1 = sort.createSortKey(null, s);
 		SortKey<Object> k2 = sort.createSortKey(null, s1);
 
 		assertEquals(1, k2.compareTo(k1));
+		assertEquals(-1, k1.compareTo(k2));
 		assertEquals(-1, collator.compare(s, s1));
+		assertEquals(1, collator.compare(s1, s));
 	}
 }

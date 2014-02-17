@@ -76,7 +76,8 @@ public class CollationRules {
 		for (int i = 0; i < 0x100; i++) {
 			int ch = (block << 8) + i;
 			String testString = getString(ch);
-			if (Character.getType(testString.charAt(0)) == Character.UNASSIGNED)
+			char conv = testString.charAt(0);
+			if (Character.getType(conv) == Character.UNASSIGNED || conv == 65533)
 				continue;
 			CollationElementIterator it = col.getCollationElementIterator(testString);
 
@@ -129,7 +130,7 @@ public class CollationRules {
 		Formatter chars = new Formatter();
 		Formatter comment = new Formatter();
 		CharPosition last = new CharPosition(0);
-		last.first = -1;
+		last.first = 0;
 		for (CharPosition cp : charmap) {
 			if (cp.isExpansion())
 				continue;
@@ -197,6 +198,7 @@ public class CollationRules {
 		case ';':
 		case ',':
 		case '=':
+		case '#':
 			asChar = false;
 			break;
 		default:

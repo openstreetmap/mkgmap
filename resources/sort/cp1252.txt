@@ -49,7 +49,7 @@ description "Western European sort"
  < /
  < \
  < &
- < #
+ < 0023
  < %
  < ‰
  < †
@@ -58,6 +58,7 @@ description "Western European sort"
  < `
  < ´
  < ^
+ < ˜
  < ¯
  < ¨
  < ¸
@@ -125,7 +126,7 @@ description "Western European sort"
  < µ
 
 expand … to  . . .
-expand ˜ to  ^ 0020
+#expand ˜ to  ^ 0020
 expand ¼ to  1 / 4
 expand ½ to  1 / 2
 expand ¾ to  3 / 4
