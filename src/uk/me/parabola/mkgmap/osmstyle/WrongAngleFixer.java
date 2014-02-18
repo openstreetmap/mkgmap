@@ -107,6 +107,9 @@ public class WrongAngleFixer {
 		replacements.put(toRepl, replacement);
 		while (toRepl.getHighwayCount() > replacement.getHighwayCount())
 			replacement.incHighwayCount();
+		if (mode == MODE_LINES && toRepl.isEndOfWay() ){
+			replacement.setEndOfWay(true);
+		}
 	}
 	
 	/**
@@ -183,15 +186,16 @@ public class WrongAngleFixer {
 		final HashSet<Coord> changedPlaces = new HashSet<Coord>();
 		int numNodesMerged = 0; 
 		HashSet<Way> waysWithBearingErrors = new HashSet<Way>();
+		HashSet<Long> waysThatMapToOnePoint = new HashSet<>();
 		int pass = 0;
 		Way lastWay = null;
 		List<Way> ways = (roads != null) ? roads: lines;
 		
 		boolean anotherPassRequired = true;
-		while (anotherPassRequired && pass < 10) {
+		while (anotherPassRequired && pass < 20) {
 			anotherPassRequired = false;
 			log.info("Removing wrong angles - PASS " + ++pass);
-
+			writeOSM(((mode==MODE_LINES) ? "lines_pass_" + pass:"roads_pass_" + pass), ways);	
 			// Step 1: detect points which are parts of line segments with wrong bearings
 			lastWay = null;
 			for (int w = 0; w < ways.size(); w++) {
@@ -210,6 +214,7 @@ public class WrongAngleFixer {
 				Coord prev = null;
 				if (points.get(0) == points.get(points.size()-1) && points.size() >= 2)
 					prev = points.get(points.size()-2);
+				boolean hasNonEqualPoints = false;
 				for (int i = 0; i < points.size(); ++i) {
 					Coord p = points.get(i);
 					if (pass == 1)
@@ -220,6 +225,8 @@ public class WrongAngleFixer {
 					}
 					
 					if (prev != null) {
+						if (pass == 1 && p.equals(prev) == false)
+							hasNonEqualPoints = true;
 						double err = calcBearingError(p,prev);
 						if (err >= MAX_BEARING_ERROR){
 							// bearing error is big
@@ -228,6 +235,10 @@ public class WrongAngleFixer {
 						}
 					}
 					prev = p;
+				}
+				if (pass == 1 && hasNonEqualPoints == false){
+					waysThatMapToOnePoint.add(way.getId());
+					log.info("all points of way",way.toBrowseURL(),"are rounded to equal map units" );
 				}
 			}
 			// Step 2: collect the line segments that are connected to critical points
@@ -443,8 +454,8 @@ public class WrongAngleFixer {
 			if (points.size() < 2) {
 				if (log.isInfoEnabled())
 					log.info("  Way " + way.getTag("name") + " (" + way.toBrowseURL() + ") has less than 2 points - deleting it");
-				if (mode == MODE_LINES)
-					log.error("non-routable way " ,way.getId(),"was removed");
+				if (mode == MODE_LINES && waysThatMapToOnePoint.contains(way.getId()) == false)
+					log.warn("non-routable way " ,way.getId(),"was removed");
 				
 				ways.set(w, null);
 				if (mode == MODE_ROADS)
