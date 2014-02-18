@@ -39,7 +39,7 @@ import uk.me.parabola.util.GpxCreator;
  * heavy zig-zagging while the original lines were almost straight.
  * This happens when one of the points was rounded to one direction
  * and the next point was rounded to the opposite direction.
- * The effect is esp. visible with parallel roads and buildings,
+ * The effect is esp. visible with parallel roads, rails, and buildings,
  * but also in small roundabouts.
  * The methods in this class try to fix these wrong bearings by
  * moving or removing points.
@@ -110,7 +110,7 @@ public class WrongAngleFixer {
 	}
 	
 	/**
-	 * Common code to handle replacements of points in roads. Checks for special 
+	 * Common code to handle replacements of points in ways. Checks for special 
 	 * cases regarding CoordPOI.
 	 * 
 	 * @param p point to replace
@@ -212,6 +212,8 @@ public class WrongAngleFixer {
 					prev = points.get(points.size()-2);
 				for (int i = 0; i < points.size(); ++i) {
 					Coord p = points.get(i);
+					if (pass == 1)
+						p.setRemove(false);
 					p = getReplacement(p, way, replacements);
 					if (i == 0 || i == points.size()-1){
 						p.setEndOfWay(true);
@@ -304,7 +306,7 @@ public class WrongAngleFixer {
 				if (pass == 1 && wayHasSpecialPoints)
 					waysWithBearingErrors.add(way);
 			}
-			// Step 3: Update list of roads with bearing errors or points next to them 
+			// Step 3: Update list of ways with bearing errors or points next to them 
 			lastWay = null;
 			for (int w = 0; w < ways.size(); w++) {
 				Way way = ways.get(w);
@@ -354,7 +356,7 @@ public class WrongAngleFixer {
 				centers = checkAgainList;
 			}
 			
-			// Step 5: apply the calculated corrections to the roads
+			// Step 5: apply the calculated corrections to the ways
 			lastWay = null;
 			boolean lastWayModified = false;
 			for (int w = 0; w < ways.size(); w++){
@@ -388,7 +390,7 @@ public class WrongAngleFixer {
 							// special case: handle micro loop
 							if (points.get(i - 1) == points.get(i))
 								points.remove(i);
-						}
+							}
 						continue;
 					}
 					// check if this point is to be replaced because
