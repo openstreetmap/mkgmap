@@ -412,17 +412,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		String natural = way.getTag("natural");
 		if(natural != null) {
 			if("coastline".equals(natural)) {
-				way.deleteTag("natural");
-				if (coastlineFilenames == null && precompSeaDir == null)
+				if (coastlineFilenames == null && precompSeaDir == null){
+					way.deleteTag("natural");
 					shoreline.add(way);
-				
+				}
 				if (precompSeaDir != null) {
-					// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
-					Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
-					coastlineWay.addTag("natural", "coastline");
-					// tag that this way is used as line only
-					coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
-					saver.addWay(coastlineWay);
+					// make sure that the way is not processed as a shape
+					way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
 				}
 			} else if (natural.contains(";")) {
 				// cope with compound tag value
@@ -438,19 +434,15 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 
 				if(foundCoastline) {
-					way.deleteTag("natural");
-					if(others != null)
-						way.addTag("natural", others);
-					if (coastlineFilenames == null && precompSeaDir == null)
+					if (coastlineFilenames == null && precompSeaDir == null){
+						way.deleteTag("natural");
+						if(others != null)
+							way.addTag("natural", others);
 						shoreline.add(way);
-					
+					}
 					if (precompSeaDir != null) {
-						// add a copy of this way to be able to draw the coastline which is not possible with precompiled sea
-						Way coastlineWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
-						coastlineWay.addTag("natural", "coastline");
-						// tag that this way is used as line only
-						coastlineWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
-						saver.addWay(coastlineWay);
+						// make sure that the way is not processed as a shape
+						way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
 					}
 				}
 			}
