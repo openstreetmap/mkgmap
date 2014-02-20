@@ -412,13 +412,13 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 		String natural = way.getTag("natural");
 		if(natural != null) {
 			if("coastline".equals(natural)) {
-				if (coastlineFilenames == null && precompSeaDir == null){
-					way.deleteTag("natural");
-					shoreline.add(way);
-				}
-				if (precompSeaDir != null) {
-					// make sure that the way is not processed as a shape
-					way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+				if (precompSeaDir != null)
+					splitCoastLineToLineAndShape(way, natural);
+				else {
+					if (coastlineFilenames == null){
+						way.deleteTag("natural");
+						shoreline.add(way);
+					}
 				}
 			} else if (natural.contains(";")) {
 				// cope with compound tag value
@@ -434,21 +434,46 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 				}
 
 				if(foundCoastline) {
-					if (coastlineFilenames == null && precompSeaDir == null){
-						way.deleteTag("natural");
-						if(others != null)
-							way.addTag("natural", others);
-						shoreline.add(way);
-					}
-					if (precompSeaDir != null) {
-						// make sure that the way is not processed as a shape
-						way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+					if (precompSeaDir != null)
+						splitCoastLineToLineAndShape(way, natural);
+					else { 
+						if (coastlineFilenames == null){
+							way.deleteTag("natural");
+							if(others != null)
+								way.addTag("natural", others);
+							shoreline.add(way);
+						}
 					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * With precompiled sea, we don't want to process all natural=coastline
+	 * ways as shapes without additional processing.   
+	 * This should avoid duplicate shapes for islands that are also in the 
+	 * precompiled data. 
+	 * @param way the OSM way with tag key natural 
+	 * @param naturalVal the tag value
+	 */
+	private void splitCoastLineToLineAndShape(Way way, String naturalVal){
+		if (precompSeaDir == null)
+			return;
+		if (way.hasIdenticalEndPoints()){
+			// add a copy of this way to be able to draw it as a shape
+			Way shapeWay = new Way(FakeIdGenerator.makeFakeId(), way.getPoints());
+			// change the tag so that only special rules looking for it are firing
+			shapeWay.deleteTag("natural"); 
+			shapeWay.addTag("mkgmap:removed_natural",naturalVal); 
+			// tag that this way so that it is used as shape only
+			shapeWay.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_POLYGON);
+			saver.addWay(shapeWay);		
+		}
+		// make sure that the original (unchanged) way is not processed as a shape
+		way.addTag(MultiPolygonRelation.STYLE_FILTER_TAG, MultiPolygonRelation.STYLE_FILTER_LINE);
+	}
+	
 	/**
 	 * Creates a reader for the given filename of the precomiled sea tile.
 	 * @param filename precompiled sea tile 
