@@ -349,8 +349,10 @@ public class Sort {
 		for (Byte b : expansionList) {
 			CodePosition cp = new CodePosition();
 			cp.setPrimary((byte) getPrimary(b & 0xff));
+
+			// Currently sort without secondary or tertiary differences to the base letters.
 			cp.setSecondary((byte) getSecondary(b & 0xff));
-			cp.setTertiary((byte) (getTertiary(b & 0xff) + 2));
+			cp.setTertiary((byte) getTertiary(b & 0xff));
 			expansions.add(cp);
 		}
 	}

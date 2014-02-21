@@ -20,7 +20,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
@@ -43,8 +45,9 @@ import com.ibm.icu.text.RuleBasedCollator;
 public class CollationRules {
 
 	private CharsetDecoder decoder;
-	private final NavigableSet<CharPosition> charmap = new TreeSet<>();
-	private final NavigableSet<CharPosition> basemap = new TreeSet<>();
+	private final NavigableSet<CharPosition> positionMap = new TreeSet<>();
+	private final NavigableSet<CharPosition> basePositionMap = new TreeSet<>();
+	private final Map<Character, CharPosition> charMap = new HashMap<>();
 	private boolean isUnicode;
 	private Charset charset;
 
@@ -105,15 +108,52 @@ public class CollationRules {
 
 			tweak(cp);
 			if (ch > 0)
-				charmap.add(cp);
-			if (cp.nextChar == null)
-				basemap.add(cp);
+				positionMap.add(cp);
+			if (cp.nextChar == null) {
+				basePositionMap.add(cp);
+				charMap.put(conv, cp);
+			}
 		}
 	}
 
+	/**
+	 * Fix up a few characters that we always want to be in well known places.
+	 *
+	 * @param cp The position to change.
+	 */
 	private void tweak(CharPosition cp) {
 		if (cp.val < 8)
 			cp.third = cp.val + 7;
+
+		switch (cp.getUnicode()) {
+		case '¼':
+			cp.nextChar = charMap.get('/').copy();
+			cp.nextChar.nextChar = charMap.get('4');
+			break;
+		case '½':
+			cp.nextChar = charMap.get('/').copy();
+			cp.nextChar.nextChar = charMap.get('2');
+			break;
+		case '¾':
+			cp.nextChar = charMap.get('/').copy();
+			cp.nextChar.nextChar = charMap.get('4');
+			break;
+		case '˜':
+			CharPosition tilde = charMap.get('~');
+			cp.first = tilde.first;
+			cp.second = tilde.second + 1;
+			cp.third = tilde.third + 1;
+			cp.nextChar = null;
+			break;
+		case '™':
+			CharPosition o = charMap.get('T');
+			cp.first = o.first;
+			cp.second = o.second;
+			cp.third = o.third;
+			cp.nextChar = charMap.get('M').copy();
+			System.out.println("TM as " + cp);
+			break;
+		}
 	}
 
 	private String getString(int i) {
@@ -128,37 +168,33 @@ public class CollationRules {
 	private void printCharMap() {
 
 		Formatter chars = new Formatter();
-		Formatter comment = new Formatter();
+		chars.format("\n");
+
 		CharPosition last = new CharPosition(0);
 		last.first = 0;
-		for (CharPosition cp : charmap) {
+		for (CharPosition cp : positionMap) {
 			if (cp.isExpansion())
 				continue;
 
 			if (cp.first != last.first) {
 				chars.format("\n < ");
-				comment = new Formatter();
 			} else if (cp.second != last.second) {
 				chars.format(" ; ");
-				comment.format(" ; ");
 			} else if (cp.third != last.third) {
 				chars.format(",");
-				comment.format(",");
 			} else {
 				chars.format("=");
-				comment.format("=");
 			}
 			last = cp;
 			int uni = toUnicode(cp.val);
 			chars.format("%s", fmtChar(uni));
-			comment.format("U+%04x", uni);
 		}
 
 		System.out.println(chars);
 	}
 
 	private void printExpansions() {
-		for (CharPosition cp : charmap) {
+		for (CharPosition cp : positionMap) {
 			if (!cp.isExpansion())
 				continue;
 
@@ -167,8 +203,8 @@ public class CollationRules {
 
 			for (CharPosition cp2 = cp; cp2 != null; cp2 = cp2.nextChar) {
 				cp2.second &= 0xff0000;
-				cp2.third = cp2.third > 0x8f0000 ? 0x8f0000 - 1 : 0x000000;
-				CharPosition floor = basemap.ceiling(cp2);
+				cp2.third = cp2.third >= 0x8f0000 ? 0x8f0000 - 1 : 0x000000;
+				CharPosition floor = basePositionMap.ceiling(cp2);
 				if (floor == null) {
 					System.out.printf(" NF");
 					continue;
@@ -179,8 +215,8 @@ public class CollationRules {
 
 			for (CharPosition cp2 = cp; cp2 != null; cp2 = cp2.nextChar) {
 				cp2.second &= 0xff0000;
-				cp2.third = cp2.third>0x8f0000? 0x8f0000-1: 0x000000;
-				CharPosition floor = basemap.ceiling(cp2);
+				cp2.third = cp2.third>=0x8f0000? 0x8f0000: 0x000000;
+				CharPosition floor = basePositionMap.ceiling(cp2);
 				if (floor == null) {
 					System.out.println("#FIX: NF ref=" + cp2);
 				} else {
@@ -323,6 +359,14 @@ public class CollationRules {
 
 		public int getUnicode() {
 			return toUnicode(val);
+		}
+
+		public CharPosition copy() {
+			CharPosition cp = new CharPosition(this.val);
+			cp.first = this.first;
+			cp.second = this.second;
+			cp.third = this.third;
+			return cp;
 		}
 	}
 }

@@ -18,23 +18,25 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 
+import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 public class SortTest {
 
-	private static final int LIST_SIZE = 500_000;
+	private static final int LIST_SIZE = 100_000;
 	private Sort sort;
 
 	private void test() throws Exception {
 		sort = SrtTextReader.sortForCodepage(1252);
+
+		//testPairs();
+
 		Charset charset = sort.getCharset();
 
 		Random rand = new Random(22909278L);
@@ -78,6 +80,43 @@ public class SortTest {
 			if (!s1.equals(s2))
 				mark = "*";
 			System.out.printf("%6d |%-10s |%-10s %s\n", i, s1, s2, mark);
+		}
+	}
+
+	/**
+	 * Test every pair of characters and make sure that if A&lt;B the B>A and if A=B then B=A.
+	 */
+	private void testPairs() {
+		List<Label> labels = new ArrayList<>();
+		for (int i = 0; i < 256; i++) {
+			for (int j = 0; j < 256; j++) {
+				char[] ch = new char[2];
+				ch[0] = (char) i;
+				ch[1] = (char) j;
+				Label label = new Label(ch);
+				labels.add(label);
+			}
+		}
+
+		for (int i = 0; i < 256 * 256; i++) {
+		for (int j = 0; j < 256 * 256; j++) {
+			SortKey<Object> k1 = sort.createSortKey(null, labels.get(i));
+			SortKey<Object> k2 = sort.createSortKey(null, labels.get(j));
+
+			if (i == j) {
+				if (k1.compareTo(k2) != 0)
+					System.out.println("ERROR: k1!=k2 for " + i + "," + j);
+				if (k2.compareTo(k1) != 0)
+					System.out.println("ERROR: k2!=k1 for " + i + "," + j);
+			} else {
+				int r1 = k1.compareTo(k2);
+				//if (r1 == 0)
+				//	System.out.println("ERROR: k1==k2 for " + i + "," + j);
+				int r2 = k2.compareTo(k1);
+				if (r1 != -r2)
+					System.out.println("ERROR: not commutative for " + i + "," + j );
+			}
+		}
 		}
 	}
 
@@ -163,21 +202,20 @@ public class SortTest {
 
 	private String getRules() {
 		return "='\u0008'='\u000e'='\u000f'='\u0010'='\u0011'='\u0012'='\u0013'='\u0014'='\u0015'='\u0016'"
-				+	" ='\u0017' ='\u0018' = '\u0019' ='\u001a' ='\u001b'= '\u001c' ='\u001d'= '\u001e'= '\u001f' "
-				+ "='\u007f' "
-				+ "='\u00ad'"
+				+ "='\u0017' ='\u0018' = '\u0019' ='\u001a' ='\u001b'= '\u001c' ='\u001d'= '\u001e'= '\u001f' "
+				+ "='\u007f' ='\u00ad'"
 				+ ", '\u0001', '\u0002', '\u0003', '\u0004' ,'\u0005' ,'\u0006', '\u0007'"
 				+ "< '\u0009' < '\n' < '\u000b' < '\u000c' < '\r' < '\u0020','\u00a0'"
 				+ "< '_' < '-' < '–' < '—' < '\u002c' < '\u003b' < ':' < '!' < '¡' < '?' < '¿'"
 				+ "< '.' < '·' "
 				//+"&'·' < \\' "  // ICU
-				+"&'·' < ''' "  // java 7
-				+"< '‘' < '’' < '‚' < '‹' < '›' < '“' < '”' < '„' < '«' < '»' "
-				+" < '\"' "
-				+"< '“' < '”' < '„' < '«'< '»' < '(' < ')' "
-				+"< '[' < ']' < '{' < '}' < '@' < '*' < '/' < '\\' < '&' < '#' < '%'"
-				+"< '‰' < '†' < '‡' < '•' < '`' < '´' < '^' < '˜' < '¯' < '¨' < '¸' < '§' < '¶' < '©' < '®' < 'ˆ'"
-				+ "< '°' < '+' < '±' < '÷' < '×' < '\u003c' < '\u003d' < '>' < '¬' < '|' < '¦' < '~' <  '¤'"
+				+ "&'·' < ''' "  // java 7
+				+ "< '‘' < '’' < '‚' < '‹' < '›' < '“' < '”' < '„' < '«' < '»' "
+				+ " < '\"' "
+				+ "< '“' < '”' < '„' < '«'< '»' < '(' < ')' "
+				+ "< '[' < ']' < '{' < '}' < '§' < '¶' < '@' < '*' < '/' < '\\' < '&' < '#' < '%'"
+				+ "< '‰' < '†' < '‡' < '•' < '`' < '´' < '^' < '¯' < '¨' < '¸' < 'ˆ' < '°' < '©' < '®'"
+				+ "< '+' < '±' < '÷' < '×' < '\u003c' < '\u003d' < '>' < '¬' < '|' < '¦' < '~' ; '˜' <  '¤'"
 				+ "< '¢' < '$' < '£' < '¥' < '€' < 0 < 1,¹ < 2,² < 3,³ < 4 < 5 < 6 < 7 < 8 < 9"
 				+ "< a,ª,A ; á,Á ; à,À ; â,Â ; å,Å ; ä,Ä ; ã,Ã"
 				+ "< b,B"

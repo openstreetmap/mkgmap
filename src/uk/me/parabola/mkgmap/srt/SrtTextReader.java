@@ -190,7 +190,8 @@ public class SrtTextReader {
 			case "id2":
 				sort.setId2(scanner.nextInt());
 				break;
-			case "code":
+			case "code":  // The old name; use characters
+			case "characters":
 				if (encoder == null)
 					throw new SyntaxException(scanner, "Missing codepage declaration before code");
 				state = IN_CODE;
@@ -241,7 +242,8 @@ public class SrtTextReader {
 				scanner.validateNext("=");
 				pos3 = Integer.decode(scanner.nextWord());
 				break;
-			case "code":
+			case "code":  // the old name, use 'characters'
+			case "characters":
 				advancePos();
 				break;
 			case "expand":

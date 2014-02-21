@@ -31,13 +31,13 @@ public class SortTest {
 	@Before
 	public void setUp() throws Exception {
 		Reader r = new StringReader("codepage 1252\n" +
-				"code 0001\n" +
+				"code =0001=007f\n" +
 				"< a, ª, A; â, Â < b, B < e,E < m,M < t,T\n" +
 				"expand ™ to T M\n" +
 				"expand æ to a e\n" +
 				"expand Æ to A E\n");
-		SrtTextReader srr = new SrtTextReader(r);
-		sort = srr.getSort();
+		sort = SrtTextReader.sortForCodepage(1252);
+		//sort = srr.getSort();
 		collator = sort.getCollator();
 		collator.setStrength(Collator.TERTIARY);
 	}
@@ -139,18 +139,28 @@ public class SortTest {
 
 	@Test
 	public void testExpanded() {
-		assertEquals(1, keyCompare("æ", "Ae"));
-		assertEquals(1, keyCompare("æ", "AE"));
+		assertEquals(-1, keyCompare("æ", "Ae"));
+		assertEquals(-1, keyCompare("æ", "AE"));
 		assertEquals(0, keyCompare("æ", "ae"));
-		assertEquals(1, keyCompare("æ", "AE"));
-		assertEquals(1, keyCompare("æ", "aE"));
+		assertEquals(-1, keyCompare("æ", "aE"));
 		assertEquals(1, keyCompare("AE", "aE"));
 		assertEquals(1, keyCompare("Æ", "aE"));
 	}
 
 	@Test
+	public void testExpand2() {
+		assertEquals(1, keyCompare("™ð", "tMÐ"));
+	}
+
+	@Test
+	public void testExpandedAndIgnorable() {
+		assertEquals(0, keyCompare("æ", "ae"));
+		assertEquals(-1, keyCompare("\u007fæ", "Ae"));
+	}
+
+	@Test
 	public void testIgnorableCharacters() {
-		assertEquals(0, keyCompare("aaa", "a\u0001aa"));
+		assertEquals(0, keyCompare("aaa", "a\u0008aa"));
 
 		assertEquals(-1, keyCompare("\u007f", "(T"));
 	}

@@ -3,8 +3,8 @@ id1 14
 id2 1
 description "Turkish sort"
 
-code
- 0008=000e=000f=0010=0011=0012=0013=0014=0015=0016=0017=0018=0019=001a=001b=001c=001d=001e=001f=007f=00ad,0001,0002,0003,0004,0005,0006,0007
+characters
+= 0008=000e=000f=0010=0011=0012=0013=0014=0015=0016=0017=0018=0019=001a=001b=001c=001d=001e=001f=007f=00ad,0001,0002,0003,0004,0005,0006,0007
  < 0009
  < 000a
  < 000b
@@ -75,7 +75,7 @@ code
  < ¬
  < |
  < ¦
- < ~
+ < ~ ; ˜
  < ¤
  < ¢
  < $
@@ -122,13 +122,12 @@ code
  < z,Z
  < µ
 expand … to  . . .
-expand ˜ to  ^ 0020
-expand ¼ to  1 ˆ 0020 4
-expand ½ to  1 ˆ 0020 2
-expand ¾ to  3 ˆ 0020 4
+expand ¼ to  1 / 4
+expand ½ to  1 / 2
+expand ¾ to  3 / 4
 expand æ to  a e
-expand Æ to  A e
+expand Æ to  A E
 expand œ to  o e
-expand Œ to  O e
+expand Œ to  O E
 expand ß to  s s
-expand ™ to  t m
+expand ™ to  T M
