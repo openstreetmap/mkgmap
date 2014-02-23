@@ -22,15 +22,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.srt.SortKey;
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
+/**
+ * Test to compare sorting results and timings between sort keys and collator.
+ *
+ * Also have tested against java7 RuleBasedCollator and the ICU one.
+ *
+ * In general our implementation is fastest by a long way; key based sort 3 times faster, collation
+ * based sort even more so.  The java collator does not result in the same sort as using sort keys.
+ *
+ * I also tried out the ICU collation with mixed results. Could not get the correct desired results with
+ * it.  It was not faster than our implementation for a 1252 cp sort.
+ */
 public class SortTest {
 
-	private static final int LIST_SIZE = 100_000;
+	private static final int LIST_SIZE = 500000;
 	private Sort sort;
+	private boolean time;
+	private boolean fullOutput;
 
 	private void test() throws Exception {
 		sort = SrtTextReader.sortForCodepage(1252);
@@ -39,8 +51,36 @@ public class SortTest {
 
 		Charset charset = sort.getCharset();
 
-		Random rand = new Random(22909278L);
+		Random rand = new Random(21909278L);
 
+		List<String> list = createList(rand, charset);
+
+		if (time) {
+			// Run a few times without output, to warm up
+			compareLists(sortWithKeys(list), sortWithKeys(list));
+			compareLists(sortWithCollator(list), sortWithCollator(list));
+			compareLists(sortWithJavaKeys(list), sortWithJavaKeys(list));
+			compareLists(sortWithJavaCollator(list), sortWithJavaCollator(list));
+			// re-create the list to make sure it wasn't too optimised to the data
+			list = createList(rand, charset);
+		}
+
+		System.out.println("Compare key sort and collator sort");
+		int n = compareLists(sortWithKeys(list), sortWithCollator(list));
+		System.out.println("N errors " + n);
+
+		System.out.println("Compare our sort with java sort");
+		n = compareLists(sortWithKeys(list), sortWithJavaKeys(list));
+		System.out.println("N errors " + n);
+
+		if (time) {
+			System.out.println("Compare java keys with java collator");
+			n = compareLists(sortWithJavaKeys(list), sortWithJavaCollator(list));
+			System.out.println("N errors " + n);
+		}
+	}
+
+	private List<String> createList(Random rand, Charset charset) {
 		List<String> list = new ArrayList<>();
 
 		for (int n = 0; n < LIST_SIZE; n++) {
@@ -62,69 +102,24 @@ public class SortTest {
 		}
 
 		list = Collections.unmodifiableList(list);
+		return list;
+	}
 
-		compareKeysAndCollator(list);
-
-		List<String> r2;
-		List<String> r1;
-		//r2 = sortWithCollator(list);
-		r2 = sortWithKeys(list);
-		//r1 = sortJavaCollator(list);
-		r1 = sortWithJavaKeys(list);
-		//r1 = sortWithICUKeys(list);
-
+	private int compareLists(List<String> r1, List<String> r2) {
+		int count = 0;
 		for (int i = 0; i < LIST_SIZE; i++) {
 			String s1 = r1.get(i);
 			String s2 = r2.get(i);
 			String mark = "";
-			if (!s1.equals(s2))
+			if (!s1.equals(s2)) {
 				mark = "*";
-			System.out.printf("%6d |%-10s |%-10s %s\n", i, s1, s2, mark);
-		}
-	}
-
-	/**
-	 * Test every pair of characters and make sure that if A&lt;B the B>A and if A=B then B=A.
-	 */
-	private void testPairs() {
-		List<Label> labels = new ArrayList<>();
-		for (int i = 0; i < 256; i++) {
-			for (int j = 0; j < 256; j++) {
-				char[] ch = new char[2];
-				ch[0] = (char) i;
-				ch[1] = (char) j;
-				Label label = new Label(ch);
-				labels.add(label);
+				count++;
 			}
+
+			if (fullOutput || !mark.isEmpty())
+				System.out.printf("%6d |%-10s |%-10s %s\n", i, s1, s2, mark);
 		}
-
-		for (int i = 0; i < 256 * 256; i++) {
-		for (int j = 0; j < 256 * 256; j++) {
-			SortKey<Object> k1 = sort.createSortKey(null, labels.get(i));
-			SortKey<Object> k2 = sort.createSortKey(null, labels.get(j));
-
-			if (i == j) {
-				if (k1.compareTo(k2) != 0)
-					System.out.println("ERROR: k1!=k2 for " + i + "," + j);
-				if (k2.compareTo(k1) != 0)
-					System.out.println("ERROR: k2!=k1 for " + i + "," + j);
-			} else {
-				int r1 = k1.compareTo(k2);
-				//if (r1 == 0)
-				//	System.out.println("ERROR: k1==k2 for " + i + "," + j);
-				int r2 = k2.compareTo(k1);
-				if (r1 != -r2)
-					System.out.println("ERROR: not commutative for " + i + "," + j );
-			}
-		}
-		}
-	}
-
-	private void compareKeysAndCollator(List<String> list) {
-		List<String> list1 = sortWithKeys(list);
-		List<String> list2 = sortWithCollator(list);
-
-		list1.equals(list2);
+		return count;
 	}
 
 	private boolean reject(Random rand, int ch) {
@@ -161,14 +156,10 @@ public class SortTest {
 	}
 
 	private List<String> sortWithCollator(List<String> list) {
-		List<String> ret = new ArrayList<>(list);
 		long start = System.currentTimeMillis();
+		List<String> ret = new ArrayList<>(list);
 		Collections.sort(ret, sort.getCollator());
-		long end = System.currentTimeMillis();
-		System.out.println("time coll: " + (end - start) + "ms");
-		//for (String s: list) {
-		//	System.out.println(s);
-		//}
+		System.out.println("time coll: " + (System.currentTimeMillis() - start) + "ms");
 		return ret;
 	}
 
@@ -177,9 +168,8 @@ public class SortTest {
 		long start = System.currentTimeMillis();
 		List<CollationKey> keys = new ArrayList<>();
 		Collator jcol;
-		// jcol = Collator.getInstance(Locale.ENGLISH);
 		try {
-			jcol = new RuleBasedCollator(getRules());
+			jcol = new RuleBasedCollator(getRules(false));
 		} catch (ParseException e) {
 			e.printStackTrace();
 			return null;
@@ -200,7 +190,27 @@ public class SortTest {
 		return ret;
 	}
 
-	private String getRules() {
+	private List<String> sortWithJavaCollator(List<String> list) {
+
+		long start = System.currentTimeMillis();
+
+		List<String> out = new ArrayList<>(list);
+		Collator jcol;
+		try {
+			jcol = new RuleBasedCollator(getRules(false));
+			jcol.setStrength(Collator.TERTIARY);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		Collections.sort(out, jcol);
+
+		System.out.println("time J collator: " + (System.currentTimeMillis() - start) + "ms");
+		return out;
+	}
+
+	private String getRules(boolean forICU) {
 		return "='\u0008'='\u000e'='\u000f'='\u0010'='\u0011'='\u0012'='\u0013'='\u0014'='\u0015'='\u0016'"
 				+ "='\u0017' ='\u0018' = '\u0019' ='\u001a' ='\u001b'= '\u001c' ='\u001d'= '\u001e'= '\u001f' "
 				+ "='\u007f' ='\u00ad'"
@@ -208,8 +218,7 @@ public class SortTest {
 				+ "< '\u0009' < '\n' < '\u000b' < '\u000c' < '\r' < '\u0020','\u00a0'"
 				+ "< '_' < '-' < '–' < '—' < '\u002c' < '\u003b' < ':' < '!' < '¡' < '?' < '¿'"
 				+ "< '.' < '·' "
-				//+"&'·' < \\' "  // ICU
-				+ "&'·' < ''' "  // java 7
+				+ ((forICU)? "< \\' ": "< ''' ")
 				+ "< '‘' < '’' < '‚' < '‹' < '›' < '“' < '”' < '„' < '«' < '»' "
 				+ " < '\"' "
 				+ "< '“' < '”' < '„' < '«'< '»' < '(' < ')' "
@@ -251,28 +260,14 @@ public class SortTest {
 				;
 	}
 
-	//private List<String> sortWithICUKeys(List<String> list) throws Exception {
-	//	long start = System.currentTimeMillis();
-	//	List<com.ibm.icu.text.CollationKey> keys = new ArrayList<>();
-	//	com.ibm.icu.text.RuleBasedCollator jcol = new com.ibm.icu.text.RuleBasedCollator(getRules());
-	//	System.out.println(jcol.getRules(true));
-	//	for (String s : list) {
-	//		com.ibm.icu.text.CollationKey key = jcol.getCollationKey(s);
-	//		keys.add(key);
-	//	}
-	//	Collections.sort(keys);
-	//
-	//	long end = System.currentTimeMillis();
-	//
-	//	List<String> ret = new ArrayList<>();
-	//	for (com.ibm.icu.text.CollationKey key : keys) {
-	//		ret.add(key.getSourceString());
-	//	}
-	//	System.out.println("time ICU keys: " + (end - start) + "ms");
-	//	return ret;
-	//}
-
 	public static void main(String[] args) throws Exception {
-		(new SortTest()).test();
+		SortTest sortTest = new SortTest();
+		for (String arg : args) {
+			if (arg.equals("--time"))
+				sortTest.time = true;
+			else if (arg.equals("--full"))
+				sortTest.fullOutput = true;
+		}
+		sortTest.test();
 	}
 }

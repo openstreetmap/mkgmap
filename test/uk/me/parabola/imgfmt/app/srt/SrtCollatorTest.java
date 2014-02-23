@@ -65,6 +65,12 @@ public class SrtCollatorTest {
 		assertEquals(0, collator.compare("aabBb", "aabBb"));
 		assertEquals(-1, collator.compare("aabbB", "aabBb"));
 		assertEquals(-1, collator.compare("aAbb", "aabbb"));
+		assertEquals(1, collator.compare("t", "a"));
+		assertEquals(1, collator.compare("ß", "a"));
+		assertEquals(-1, collator.compare("ESA", "Eß"));
+		assertEquals(-1, collator.compare(":.e", "\u007fæ"));
+		assertEquals(-1, collator.compare(";œ", ";Œ"));
+		assertEquals(-1, collator.compare("œ;", "Œ;"));
 	}
 
 	/**
@@ -72,10 +78,27 @@ public class SrtCollatorTest {
 	 */
 	@Test
 	public void testIgnoreable() throws Exception {
-		assertEquals(0, collator.compare("\u0008fred", "fred"));
+		assertEquals("ignorable at beginning", 0, collator.compare("\u0008fred", "fred"));
+		assertEquals("ignorable at end", 0, collator.compare("fred\u0008", "fred"));
+		assertEquals("ignorable in middle", 0, collator.compare("fr\u0008ed", "fred"));
+		assertEquals(1, collator.compare("\u0001A", "A\u0008"));
 
 		collator.setStrength(Collator.PRIMARY);
 		assertEquals("prim: different case", 0, collator.compare("AabBb\u0008", "aabbb"));
+	}
+
+	@Test
+	public void testSecondaryIgnorable() {
+		assertEquals(-1, collator.compare("A", "A\u0001"));
+	}
+
+	@Test
+	public void testLengths() {
+		assertEquals(-1, collator.compare("-Û", "-ü:X"));
+		assertEquals(-1, collator.compare("-Û", "-Û$"));
+		assertEquals(-1, collator.compare("-ü:X", "-Û$"));
+		assertEquals(-1, collator.compare("–", "–X"));
+		assertEquals(1, collator.compare("–TÛ‡²", "–"));
 	}
 
 	/**
@@ -113,6 +136,7 @@ public class SrtCollatorTest {
 		assertEquals(0, collator.compare("aabBb", "aabBb"));
 		assertEquals(-1, collator.compare("aabbB", "aabBb"));
 		assertEquals(-1, collator.compare("aAbb", "aabbb"));
+		assertEquals(1, collator.compare("t", "a"));
 	}
 
 }

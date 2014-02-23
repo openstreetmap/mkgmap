@@ -2393,7 +2393,7 @@
     <inspection_tool class="UnnecessaryFinalOnParameter" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="onlyWarnOnAbstractMethods" value="false" />
     </inspection_tool>
-    <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_ignoreJavadoc" value="false" />
     </inspection_tool>
     <inspection_tool class="UnnecessaryInheritDoc" enabled="false" level="WARNING" enabled_by_default="false" />

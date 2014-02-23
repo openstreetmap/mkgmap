@@ -163,6 +163,8 @@ public class SrtTextReader {
 				break;
 			}
 		}
+
+		sort.finish();
 	}
 
 	/**
@@ -252,8 +254,7 @@ public class SrtTextReader {
 				break;
 			default:
 				addCharacter(scanner, val);
-
-
+				break;
 			}
 		} else if (type == TokType.SYMBOL) {
 			switch (val) {
@@ -286,7 +287,7 @@ public class SrtTextReader {
 	private void expandState(TokenScanner scanner, Token tok) {
 		String val = tok.getValue();
 
-		Code code = new Code(scanner, val).invoke();
+		Code code = new Code(scanner, val).read();
 
 		String s = scanner.nextValue();
 		if (!s.equals("to"))
@@ -300,7 +301,7 @@ public class SrtTextReader {
 			if (t.isWhiteSpace())
 				continue;
 
-			Code r = new Code(scanner, t.getValue()).invoke();
+			Code r = new Code(scanner, t.getValue()).read();
 			expansionList.add((byte) r.getBval());
 		}
 
@@ -316,7 +317,7 @@ public class SrtTextReader {
 	 * two characters which is the hex representation of the code point in the target codepage.
 	 */
 	private void addCharacter(TokenScanner scanner, String val) {
-		Code code = new Code(scanner, val).invoke();
+		Code code = new Code(scanner, val).read();
 		setSortcode(code.getBval());
 	}
 
@@ -401,7 +402,7 @@ public class SrtTextReader {
 	/**
 	 * Helper to represent a code read from the file.
 	 *
-	 * You can write it in unicode, or as a two digit hex number.
+	 * You can write it in unicode, or as a hex number.
 	 * We work out what you wrote, and return both the code point in
 	 * the codepage and the unicode character form of the letter.
 	 */
@@ -424,7 +425,7 @@ public class SrtTextReader {
 			return cval;
 		}
 
-		public Code invoke() {
+		public Code read() {
 			try {
 				if (val.length() == 1) {
 					cval = val.charAt(0);

@@ -13,8 +13,6 @@
 
 package uk.me.parabola.imgfmt.app.srt;
 
-import java.io.Reader;
-import java.io.StringReader;
 import java.text.Collator;
 
 import uk.me.parabola.mkgmap.srt.SrtTextReader;
@@ -30,14 +28,8 @@ public class SortTest {
 
 	@Before
 	public void setUp() throws Exception {
-		Reader r = new StringReader("codepage 1252\n" +
-				"code =0001=007f\n" +
-				"< a, ª, A; â, Â < b, B < e,E < m,M < t,T\n" +
-				"expand ™ to T M\n" +
-				"expand æ to a e\n" +
-				"expand Æ to A E\n");
 		sort = SrtTextReader.sortForCodepage(1252);
-		//sort = srr.getSort();
+
 		collator = sort.getCollator();
 		collator.setStrength(Collator.TERTIARY);
 	}
@@ -91,6 +83,14 @@ public class SortTest {
 	@Test
 	public void testSecondarySort() {
 		checkOrdered(1, 24);
+	}
+
+	@Test
+	public void testLengths() {
+		assertEquals(-1, keyCompare("-Û", "-ü:X"));
+		assertEquals(-1, keyCompare("-ü:X", "-Û$"));
+		assertEquals(-1, keyCompare("–", "–X"));
+		assertEquals(1, keyCompare("–TÛ‡²", "–"));
 	}
 
 	/**
@@ -163,6 +163,11 @@ public class SortTest {
 		assertEquals(0, keyCompare("aaa", "a\u0008aa"));
 
 		assertEquals(-1, keyCompare("\u007f", "(T"));
+	}
+
+	@Test
+	public void testSecondaryIgnorable() {
+		assertEquals(1, keyCompare("\u0001A", "A\u0008"));
 	}
 
 	private int keyCompare(String s1, String s2) {

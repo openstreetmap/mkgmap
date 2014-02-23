@@ -36,10 +36,22 @@ import uk.me.parabola.imgfmt.app.Label;
  * have to have to be able to create such a file and sort with exactly the same rules
  * as is contained in it.
  *
+ * What about the java {@link java.text.RuleBasedCollator}? It turns out that it is possible to
+ * make it work in the way we need it to, although it doesn't help with creating the srt file.
+ * Also it is significantly slower than this implementation, so this one is staying. I also
+ * found that sorting with the sort keys and the collator gave different results in some
+ * cases. This implementation does not.
+ *
+ * Be careful when benchmarking. With small lists (< 10000 entries) repeated runs cause some
+ * pretty aggressive optimisation to kick in. This tends to favour this implementation which has
+ * much tighter loops that the java7 or ICU implementations, but this may not be realised with
+ * real workloads.
+ *
  * @author Steve Ratcliffe
  */
 public class Sort {
 	private static final byte[] ZERO_KEY = new byte[3];
+	private static final Integer NO_ORDER = 0;
 
 	private int codepage;
 	private int id1; // Unknown - identifies the sort
@@ -63,15 +75,66 @@ public class Sort {
 		if (getPrimary(ch) != 0)
 			throw new ExitException(String.format("Repeated primary index 0x%x", ch & 0xff));
 		setPrimary (ch, primary);
-		setSecondary(ch, (byte) secondary);
+		setSecondary(ch, secondary);
 		setTertiary( ch, tertiary);
 
 		setFlags(ch, flags);
 	}
 
 	/**
+	 * Run after all sorting order points have been added.
+	 *
+	 * Make sure that all tertiary values of secondary ignorable are greater
+	 * than any normal tertiary value.
+	 *
+	 * And the same for secondaries on primary ignorable.
+	 */
+	public void finish() {
+		int maxSecondary = 0;
+		int maxTertiary = 0;
+		for (Page p : pages) {
+			if (p == null)
+				continue;
+
+			for (int i = 0; i < 256; i++) {
+				if (((p.flags[i] >>> 4) & 0x3) == 0) {
+					if (p.primary[i] != 0) {
+						byte second = p.secondary[i];
+						maxSecondary = Math.max(maxSecondary, second);
+						if (second != 0) {
+							maxTertiary = Math.max(maxTertiary, p.tertiary[i]);
+						}
+					}
+				}
+			}
+		}
+
+		for (Page p : pages) {
+			if (p == null)
+				continue;
+
+			for (int i = 0; i < 256; i++) {
+				if (((p.flags[i] >>> 4) & 0x3) != 0) continue;
+
+				if (p.primary[i] == 0) {
+					if (p.secondary[i] == 0) {
+						if (p.tertiary[i] != 0) {
+							p.tertiary[i] += maxTertiary;
+						}
+					} else {
+						p.secondary[i] += maxSecondary;
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Return a table indexed by a character value in the target codepage, that gives the complete sort
 	 * position of the character.
+	 *
+	 * This is only used for testing.
+	 *
 	 * @return A table of sort positions.
 	 */
 	public char[] getSortPositions() {
@@ -426,6 +489,8 @@ public class Sort {
 	 * strings against each other once.
 	 *
 	 * The sort key is better when the comparison must be done several times as in a sort operation.
+	 *
+	 * This implementation has the same effect when used for sorting as the sort keys.
 	 */
 	private class SrtCollator extends Collator {
 		private final int codepage;
@@ -456,12 +521,6 @@ public class Sort {
 				}
 			}
 
-			if (res == 0) {
-				if (source.length() < target.length())
-					res = -1;
-				else if (source.length() > target.length())
-					res = 1;
-			}
 			return res;
 		}
 
@@ -472,17 +531,16 @@ public class Sort {
 		 * @param typePositions The strength array to use in the comparison.
 		 * @return Comparison result -1, 0 or 1.
 		 */
-		@SuppressWarnings({"AssignmentToForLoopParameter"})
 		private int compareOneStrength(byte[] bytes1, byte[] bytes2, byte[] typePositions, int type) {
 			int res = 0;
 
 			PositionIterator it1 = new PositionIterator(bytes1, typePositions, type);
 			PositionIterator it2 = new PositionIterator(bytes2, typePositions, type);
 
-			while (it1.hasNext() && it2.hasNext()) {
+			while (it1.hasNext() || it2.hasNext()) {
 				int p1 = it1.next();
 				int p2 = it2.next();
-				
+
 				if (p1 < p2) {
 					res = -1;
 					break;
@@ -491,6 +549,7 @@ public class Sort {
 					break;
 				}
 			}
+
 			return res;
 		}
 
@@ -535,32 +594,45 @@ public class Sort {
 				return pos < len || expPos != 0;
 			}
 
+			/**
+			 * Get the next sort order value for the input string. Does not ever return values
+			 * that are ignorable. Returns NO_ORDER at (and beyond) the end of the string, this
+			 * value sorts less than any other and so makes shorter strings sort first.
+			 * @return The next non-ignored sort position. At the end of the string it returns
+			 * NO_ORDER.
+			 */
 			public Integer next() {
 				int next;
 				if (expPos == 0) {
-					int in = pos++ & 0xff;
-					byte b = bytes[in];
-					int n = (getFlags(b & 0xff) >> 4) & 0x3;
-					if (n > 0) {
-						expStart = getPrimary(b & 0xff) - 1;
-						expEnd = expStart + n;
-						expPos = expStart;
-						next = expansions.get(expPos).getPosition(type);
 
-						if (++expPos > expEnd)
-							expPos = 0;
-
-					} else {
-						for (next = sortPositions[bytes[in] & 0xff]; next == 0 && pos < len; ) {
-							next = sortPositions[bytes[pos++ & 0xff] & 0xff];
+					do {
+						if (pos >= len) {
+							next = NO_ORDER;
+							break;
 						}
-					}
+
+						// Get the first non-ignorable at this level
+						byte b = bytes[(pos++ & 0xff)];
+						next = sortPositions[b & 0xff] & 0xff;
+						int nExpand = (getFlags(b & 0xff) >> 4) & 0x3;
+
+						// Check if this is an expansion.
+						if (nExpand > 0) {
+							expStart = getPrimary(b & 0xff) - 1;
+							expEnd = expStart + nExpand;
+							expPos = expStart;
+							next = expansions.get(expPos).getPosition(type) & 0xff;
+
+							if (++expPos > expEnd)
+								expPos = 0;
+						}
+					} while (next == 0);
 				} else {
-					next = expansions.get(expPos).getPosition(type);
+					next = expansions.get(expPos).getPosition(type) & 0xff;
 					if (++expPos > expEnd)
 						expPos = 0;
-
 				}
+
 				return next;
 			}
 
