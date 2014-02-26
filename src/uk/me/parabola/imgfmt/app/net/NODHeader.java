@@ -23,6 +23,10 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
 import uk.me.parabola.imgfmt.app.Section;
 
 /**
+ * Header information for the NOD file.
+ *
+ * This is a routing network for the map.
+ *
  * @author Steve Ratcliffe
  */
 public class NODHeader extends CommonHeader {
@@ -34,6 +38,8 @@ public class NODHeader extends CommonHeader {
 	private final Section nodes = new Section();
 	private final Section roads = new Section(nodes);
 	private final Section boundary = new Section(roads, BOUNDARY_ITEM_SIZE);
+	private final Section highClassBoundary = new Section();
+	private final int[] classBoundaries = new int[5];
 
     private int flags;
     private int align;
@@ -71,7 +77,17 @@ public class NODHeader extends CommonHeader {
         roads.readSectionInfo(reader, false);
         reader.getInt();
         boundary.readSectionInfo(reader, true);
-    }
+		reader.getInt();
+		if (getHeaderLength() > 0x3f) {
+			highClassBoundary.readSectionInfo(reader, false);
+
+			classBoundaries[0] = reader.getInt();
+			classBoundaries[1] = classBoundaries[0] + reader.getInt();
+			classBoundaries[2] = classBoundaries[1] + reader.getInt();
+			classBoundaries[3] = classBoundaries[2] + reader.getInt();
+			classBoundaries[4] = classBoundaries[3] + reader.getInt();
+		}
+	}
 
 	/**
 	 * Write the rest of the header.  It is guaranteed that the writer will be set
@@ -134,6 +150,14 @@ public class NODHeader extends CommonHeader {
 
 	public Section getBoundarySection() {
 		return boundary;
+	}
+
+	public Section getHighClassBoundary() {
+		return highClassBoundary;
+	}
+
+	public int[] getClassBoundaries() {
+		return classBoundaries;
 	}
 
 	public static void setDriveOnLeft(boolean dol) {
