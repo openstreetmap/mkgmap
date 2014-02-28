@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Steve Ratcliffe
+ * Copyright (C) 2008,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -108,6 +108,7 @@ public class TokenScanner {
 	}
 
 	public boolean isEndOfFile() {
+		ensureTok();
 		if (tokens.isEmpty()) {
 			return isEOF;
 		} else {
@@ -121,7 +122,6 @@ public class TokenScanner {
 	 */
 	public void skipSpace() {
 		while (!isEndOfFile()) {
-			ensureTok();
 			if (tokens.peek().isValue(commentChar)) {
 				skipLine();
 				continue;
@@ -178,10 +178,13 @@ public class TokenScanner {
 		val.append((char) c);
 
 		TokType tt;
-		if (c == '\n') {
+		if (c == '\n' || c == '\r') {
+			while ((c = readChar()) == '\n' || c == '\r')
+				val.append(c);
+			pushback = c;
 			tt = TokType.EOL;
 		} else if (isSpace(c)) {
-			while (isSpace(c = readChar()) && c != '\n')
+			while (isSpace(c = readChar()) && (c != '\n' && c != '\r'))
 				val.append((char) c);
 
 			pushback = c;

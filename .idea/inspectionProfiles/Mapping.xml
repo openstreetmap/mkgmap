@@ -1929,7 +1929,9 @@
     <inspection_tool class="RecordStoreResource" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantArrayCreation" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="RedundantFieldInitialization" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="RedundantFieldInitialization" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="onlyWarnOnNull" value="true" />
+    </inspection_tool>
     <inspection_tool class="RedundantImplements" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSerializable" value="false" />
       <option name="ignoreCloneable" value="false" />

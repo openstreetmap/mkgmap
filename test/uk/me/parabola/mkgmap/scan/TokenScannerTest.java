@@ -88,4 +88,50 @@ public class TokenScannerTest {
 		assertEquals("hello", ts.nextValue());
 		assertEquals("#", ts.nextValue());
 	}
+
+	@Test
+	public void testNextWithNoEOL() {
+		String s = "hello";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		Token token = ts.nextToken();
+		assertEquals("hello", token.getValue());
+	}
+
+	@Test
+	public void testReadLineWithNoEOL() {
+		String s = "hello";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		String line = ts.readLine();
+		assertEquals("hello", line);
+	}
+
+	@Test
+	public void testReadLineWithCR() {
+		String s = "hello\rworld\r";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		String line = ts.readLine();
+		assertEquals("hello", line);
+		line = ts.readLine();
+		assertEquals("world", line);
+	}
+
+	@Test
+	public void testReadLineReturnsEmptyIfNothing() {
+		String s = "";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		String line = ts.readLine();
+		assertEquals("", line);
+	}
+
+	@Test
+	public void testCRLFIsOneLineEnding() {
+		String s = "fred\r\n";
+		TokenScanner ts = new TokenScanner("", new StringReader(s));
+		Token token = ts.nextRawToken();
+		assertEquals(TokType.TEXT, token.getType());
+		token = ts.nextRawToken();
+		assertEquals(TokType.EOL, token.getType());
+		token = ts.nextRawToken();
+		assertEquals(TokType.EOF, token.getType());
+	}
 }
