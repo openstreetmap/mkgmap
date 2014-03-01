@@ -23,7 +23,6 @@ import java.util.List;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.Java2DConverter;
 
 /**
@@ -33,7 +32,6 @@ import uk.me.parabola.util.Java2DConverter;
  * @author Steve Ratcliffe
  */
 public class PolygonClipper {
-	private static final Logger log = Logger.getLogger(PolygonClipper.class);
 	/**
 	 * Clip the input polygon to the given area.
 	 * @param bbox The bounding box.
@@ -68,9 +66,7 @@ public class PolygonClipper {
 		shape.intersect(bbarea);
 
 		List<List<Coord>> shapes = Java2DConverter.areaToShapes(shape);
-		int n=0;
 		for (List<Coord> sh: shapes){
-			n++;
 			for (int i = 0; i < sh.size(); i++){
 				Coord co = sh.get(i);
 				Coord origCoord = map.get(Utils.coord2Long(co));
