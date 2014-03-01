@@ -356,6 +356,17 @@ public class RuleFileReaderTest {
 	}
 
 	@Test
+	public void testNEAtTopWithRE() {
+		RuleSet rs = makeRuleSet("a != 'fred' &  a ~ '.*' [0x2]");
+		Element el = new Way(1);
+		el.addTag("a", "tom");
+
+		GType type = getFirstType(rs, el);
+		assertNotNull(type);
+		assertEquals(2, type.getType());
+	}
+
+	@Test
 	public void testNumberOpAtTop() {
 		RuleSet rs = makeRuleSet("QUOTA > 10 [0x1] QUOTA < 6 [0x2]");
 		Element el = new Way(1);

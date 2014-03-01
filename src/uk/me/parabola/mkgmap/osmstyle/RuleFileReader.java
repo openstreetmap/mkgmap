@@ -471,6 +471,14 @@ public class RuleFileReader {
 				keystring = first.getFirst().getKeyValue() + "=*";
 			} else if (first.isType(NOT_EXISTS)) {
 				throw new SyntaxException(scanner, "Cannot start rule with tag!=*");
+			} else if (first.getFirst() != null &&
+					first.getFirst().getType() == FUNCTION
+					&& ((StyleFunction) first.getFirst()).isIndexable())
+			{
+				// Extract the initial key and add an exists clause at the beginning
+				AndOp aop = combineWithExists(new ValueOp(first.getFirst().getKeyValue()), op);
+				optimiseAndSaveBinaryOp(scanner, aop, actions, gt);
+				return;
 			} else {
 				throw new SyntaxException(scanner, "Invalid rule expression: " + op);
 			}
@@ -486,17 +494,22 @@ public class RuleFileReader {
 
 			// We can make every other binary op work by converting to AND(EXISTS, op), as long as it does
 			// not involve an un-indexable function.
-			Op existsOp = new ExistsOp();
-			existsOp.setFirst(first);
-
-			AndOp andOp = new AndOp();
-			andOp.setFirst(existsOp);
-			andOp.setSecond(op);
+			AndOp andOp = combineWithExists(first, op);
 			optimiseAndSaveBinaryOp(scanner, andOp, actions, gt);
 			return;
 		}
 
 		createAndSaveRule(keystring, op, actions, gt);
+	}
+
+	private AndOp combineWithExists(Op first, BinaryOp op) {
+		Op existsOp = new ExistsOp();
+		existsOp.setFirst(first);
+
+		AndOp andOp = new AndOp();
+		andOp.setFirst(existsOp);
+		andOp.setSecond(op);
+		return andOp;
 	}
 
 	private void saveRestOfOr(TokenScanner scanner, ActionList actions, GType gt, Op second, LinkedOp op1) {
