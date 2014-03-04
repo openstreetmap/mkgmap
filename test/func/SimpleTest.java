@@ -102,12 +102,12 @@ public class SimpleTest extends Base {
 			if (ext.equals("RGN")) {
 				count++;
 				System.out.println("RGN size " + size);
-				assertThat("RGN size", size, new RangeMatcher(2756));
+				assertThat("RGN size", size, new RangeMatcher(2702));
 			} else if (ext.equals("TRE")) {
 				count++;
 				System.out.println("TRE size " + size);
 				// Size varies depending on svn modified status
-				assertThat("TRE size", size, new RangeMatcher(769, 2));
+				assertThat("TRE size", size, new RangeMatcher(768, 2));
 			} else if (ext.equals("LBL")) {
 				count++;
 				assertEquals("LBL size", 985, size);
