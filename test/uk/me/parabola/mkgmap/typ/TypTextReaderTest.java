@@ -13,7 +13,6 @@
 package uk.me.parabola.mkgmap.typ;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -25,7 +24,6 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
-import uk.me.parabola.imgfmt.app.srt.Sort;
 import uk.me.parabola.imgfmt.app.typ.ShapeStacking;
 import uk.me.parabola.imgfmt.app.typ.TYPFile;
 import uk.me.parabola.imgfmt.app.typ.TypData;
@@ -34,6 +32,7 @@ import uk.me.parabola.imgfmt.app.typ.TypParam;
 import uk.me.parabola.imgfmt.app.typ.TypPoint;
 import uk.me.parabola.imgfmt.app.typ.TypPolygon;
 import uk.me.parabola.imgfmt.sys.FileImgChannel;
+import uk.me.parabola.mkgmap.srt.SrtTextReader;
 
 import func.lib.ArrayImgWriter;
 import func.lib.TestUtils;
@@ -229,8 +228,6 @@ public class TypTextReaderTest {
 			OutputStream os = new FileOutputStream("hello");
 			os.write(w.getBytes());
 			os.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -319,7 +316,7 @@ public class TypTextReaderTest {
 		TypTextReader tr = new TypTextReader();
 		tr.read("string", r);
 		if (tr.getData().getSort() == null)
-			tr.getData().setSort(Sort.defaultSort(1252));
+			tr.getData().setSort(SrtTextReader.sortForCodepage(1252));
 		return tr;
 	}
 }

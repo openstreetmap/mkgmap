@@ -16,8 +16,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -64,7 +62,7 @@ public class MdrBuilder implements Combiner {
 	private MDRFile mdrFile;
 
 	// Push things onto this stack to have them closed in the reverse order.
-	private final Deque<Closeable> toClose = new ArrayDeque<Closeable>();
+	private final Deque<Closeable> toClose = new ArrayDeque<>();
 
 	// We write to a temporary file name, and then rename once all is OK.
 	private File tmpName;
@@ -104,7 +102,7 @@ public class MdrBuilder implements Combiner {
 		}
 
 		// Create the sort description
-		Sort sort = createSort(args.getCodePage());
+		Sort sort = SrtTextReader.sortForCodepage(args.getCodePage());
 
 		// Set the options that we are using for the mdr.
 		MdrConfig config = new MdrConfig();
@@ -151,31 +149,6 @@ public class MdrBuilder implements Combiner {
 	}
 
 	/**
-	 * Create the sort description for the mdr.  This is converted into a SRT which is included
-	 * in the mdr.img and also it is used to actually sort the text items within the file itself.
-	 *
-	 * We simply use the code page to locate a sorting description, we could have several for the same
-	 * code page for different countries for example.
-	 *
-	 * @param codepage The code page which is used to find a suitable sort description.
-	 * @return A sort description object.
-	 */
-	private Sort createSort(int codepage) {
-		String name = "sort/cp" + codepage + ".txt";
-		InputStream is = getClass().getClassLoader().getResourceAsStream(name);
-		if (is == null) {
-			return Sort.defaultSort(codepage);
-		}
-		try {
-			InputStreamReader r = new InputStreamReader(is, "utf-8");
-			SrtTextReader sr = new SrtTextReader(r);
-			return sr.getSort();
-		} catch (IOException e) {
-			return Sort.defaultSort(codepage);
-		}
-	}
-
-	/**
 	 * Adds a new map to the file.  We need to read in the img file and
 	 * extract all the information that can be indexed from it.
 	 *
@@ -212,7 +185,7 @@ public class MdrBuilder implements Combiner {
 	}
 
 	private Map<Integer, Mdr14Record> addCountries(MapReader mr) {
-		Map<Integer, Mdr14Record> countryMap = new HashMap<Integer, Mdr14Record>();
+		Map<Integer, Mdr14Record> countryMap = new HashMap<>();
 		List<Country> countries = mr.getCountries();
 		for (Country c : countries) {
 			if (c != null) {
@@ -224,7 +197,7 @@ public class MdrBuilder implements Combiner {
 	}
 
 	private Map<Integer, Mdr13Record> addRegions(MapReader mr, AreaMaps maps) {
-		Map<Integer, Mdr13Record> regionMap = new HashMap<Integer, Mdr13Record>();
+		Map<Integer, Mdr13Record> regionMap = new HashMap<>();
 
 		List<Region> regions = mr.getRegions();
 		for (Region region : regions) {
@@ -245,7 +218,7 @@ public class MdrBuilder implements Combiner {
 	private List<Mdr5Record> fetchCities(MapReader mr, AreaMaps maps) {
 		Map<Integer, Mdr5Record> cityMap = maps.cities;
 
-		List<Mdr5Record> cityList = new ArrayList<Mdr5Record>();
+		List<Mdr5Record> cityList = new ArrayList<>();
 		List<City> cities = mr.getCities();
 		for (City c : cities) {
 			int regionCountryNumber = c.getRegionCountryNumber();
@@ -402,7 +375,7 @@ public class MdrBuilder implements Combiner {
 	 * sufficient to link them all up.
 	 */
 	class AreaMaps {
-		private final Map<Integer, Mdr5Record> cities = new HashMap<Integer, Mdr5Record>();
+		private final Map<Integer, Mdr5Record> cities = new HashMap<>();
 		private Map<Integer, Mdr13Record> regions;
 		private Map<Integer, Mdr14Record> countries;
 		private List<Mdr5Record> cityList;

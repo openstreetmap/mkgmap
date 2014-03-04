@@ -13,6 +13,8 @@
 
 package uk.me.parabola.imgfmt.app.srt;
 
+import java.util.Arrays;
+
 /**
  * Sort key created from a Srt {@link Sort} object that allows strings to be compared according to that sorting
  * scheme.
@@ -48,10 +50,10 @@ class SrtSortKey<T> implements SortKey<T> {
 			}
 		}
 
-		if (this.key.length < other.key.length)
-			return -1;
-		else if (this.key.length > other.key.length)
-			return 1;
+		//if (this.key.length < other.key.length)
+		//	return -1;
+		//else if (this.key.length > other.key.length)
+		//	return 1;
 
 		if (second == other.second)
 			return 0;
@@ -63,5 +65,9 @@ class SrtSortKey<T> implements SortKey<T> {
 
 	public T getObject() {
 		return orig;
+	}
+
+	public String toString() {
+		return String.format("%s,%d", Arrays.toString(key), second);
 	}
 }

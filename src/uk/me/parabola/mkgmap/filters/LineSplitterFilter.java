@@ -72,7 +72,8 @@ public class LineSplitterFilter implements MapFilter {
 		log.debug("line has too many points, splitting");
 		if(line.isRoad() && level == 0 && isRoutable) {
 			MapRoad road = ((MapRoad)line);
-			log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
+			if (log.isDebugEnabled())
+				log.debug("Way " + road.getRoadDef() + " has more than "+ MAX_POINTS_IN_LINE + " points and is about to be split");
 		} 
 
 		MapLine l = line.copy();

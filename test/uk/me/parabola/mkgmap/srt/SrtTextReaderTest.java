@@ -17,12 +17,14 @@ import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 
 import uk.me.parabola.imgfmt.app.srt.Sort;
 
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotSame;
 
 public class SrtTextReaderTest {
 
@@ -30,6 +32,8 @@ public class SrtTextReaderTest {
 			"\n" +
 			"codepage 1252\n" +
 			"code 01, 02, 03\n";
+
+	private static final Charset charset = Charset.forName("cp1252");
 
 	/**
 	 * Test for a simple case of two letters that have the same major and minor
@@ -99,15 +103,30 @@ public class SrtTextReaderTest {
 	}
 
 	/**
-	 * Check that 88 is not a letter in 1252.
+	 * We can have any unicode character in the file.
+	 */
+	@Test
+	public void testUnicodeChars() throws IOException {
+		char[] sortcodes = getSortcodes("< :\n< ›\n");
+		assertEquals(1, major(sortcodes[':']));
+		int b = getByteInCodePage("›");
+		assertEquals(2, major(sortcodes[b & 0xff]));
+	}
+
+	/**
+	 * Check character that is not a letter in 1252.
 	 * @throws Exception
 	 */
 	@Test
 	public void testNotLetter() throws Exception {
-		Sort sort = getSort("code 88");
-		byte flags = sort.getFlags(0x88);
+		Sort sort = getSort("code 00a8");
+		byte flags = sort.getFlags(0xa8);
 
 		assertEquals(0, flags);
+
+		sort = getSort("code 0041");
+		flags = sort.getFlags(0x41);
+		assertNotSame(0, flags);
 	}
 
 	@Test
@@ -121,6 +140,10 @@ public class SrtTextReaderTest {
 	private char[] getSortcodes(String text) throws IOException {
 		Sort sort = getSort(text);
 		return sort.getSortPositions();
+	}
+
+	private byte getByteInCodePage(String ch) {
+		return ch.getBytes(charset)[0];
 	}
 
 	private Sort getSort(String text) throws IOException {

@@ -113,8 +113,8 @@ public class NETFile extends ImgFile {
 	 * @return A sorted list of road labels that identify all the different roads.
 	 */
 	private List<LabeledRoadDef> sortRoads() {
-		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<SortKey<LabeledRoadDef>>(roads.size());
-		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+		List<SortKey<LabeledRoadDef>> sortKeys = new ArrayList<>(roads.size());
+		Map<Label, byte[]> cache = new HashMap<>();
 
 		for (RoadDef rd : roads) {
 			Label[] labels = rd.getLabels();
@@ -125,7 +125,7 @@ public class NETFile extends ImgFile {
 
 				// Sort by name, city, region/country and subdivision number.
 				LabeledRoadDef lrd = new LabeledRoadDef(label, rd);
-				SortKey<LabeledRoadDef> nameKey = sort.createSortKey(lrd, label.getText(), 0, cache);
+				SortKey<LabeledRoadDef> nameKey = sort.createSortKey(lrd, label, 0, cache);
 
 				// If there is a city add it to the sort.
 				City city = rd.getCity();
@@ -133,12 +133,13 @@ public class NETFile extends ImgFile {
 				if (city != null) {
 					int region = city.getRegionNumber();
 					int country = city.getCountryNumber();
-					cityKey = sort.createSortKey(null, city.getName(), (region & 0xffff) << 16 | (country & 0xffff), cache);
+					cityKey = sort.createSortKey(null, city.getLabel(), (region & 0xffff) << 16 | (country & 0xffff),
+							cache);
 				} else {
-					cityKey = sort.createSortKey(null, "", 0, cache);
+					cityKey = sort.createSortKey(null, Label.NULL_OUT_LABEL, 0, cache);
 				}
 
-				SortKey<LabeledRoadDef> sortKey = new MultiSortKey<LabeledRoadDef>(nameKey, cityKey,
+				SortKey<LabeledRoadDef> sortKey = new MultiSortKey<>(nameKey, cityKey,
 						new IntegerSortKey<LabeledRoadDef>(null, rd.getStartSubdivNumber(), 0));
 				sortKeys.add(sortKey);
 			}
@@ -146,18 +147,18 @@ public class NETFile extends ImgFile {
 
 		Collections.sort(sortKeys);
 
-		List<LabeledRoadDef> out = new ArrayList<LabeledRoadDef>(sortKeys.size());
+		List<LabeledRoadDef> out = new ArrayList<>(sortKeys.size());
 
-		String lastName = null;
+		Label lastName = null;
 		City lastCity = null;
-		List<LabeledRoadDef> dupes = new ArrayList<LabeledRoadDef>();
+		List<LabeledRoadDef> dupes = new ArrayList<>();
 
 		// Since they are sorted we can easily remove the duplicates.
 		// The duplicates are saved to the dupes list.
 		for (SortKey<LabeledRoadDef> key : sortKeys) {
 			LabeledRoadDef lrd = key.getObject();
 
-			String name = lrd.label.getText();
+			Label name = lrd.label;
 			RoadDef road = lrd.roadDef;
 			City city = road.getCity();
 
@@ -165,7 +166,7 @@ public class NETFile extends ImgFile {
 
 				// process any previously collected duplicate road names and reset.
 				addDisconnected(dupes, out);
-				dupes = new ArrayList<LabeledRoadDef>();
+				dupes = new ArrayList<>();
 
 				lastName = name;
 				lastCity = city;
@@ -266,12 +267,12 @@ public class NETFile extends ImgFile {
 		});
 
 		int lastDiv = 0;
-		List<LabeledRoadDef> dupes = new ArrayList<LabeledRoadDef>();
+		List<LabeledRoadDef> dupes = new ArrayList<>();
 		for (LabeledRoadDef lrd : in) {
 			int sd = lrd.roadDef.getStartSubdivNumber();
 			if (sd != lastDiv) {
 				addDisconnectedSmall(dupes, out);
-				dupes = new ArrayList<LabeledRoadDef>();
+				dupes = new ArrayList<>();
 				lastDiv = sd;
 			}
 			dupes.add(lrd);

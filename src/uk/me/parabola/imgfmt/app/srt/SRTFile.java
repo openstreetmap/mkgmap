@@ -88,7 +88,7 @@ public class SRTFile extends ImgFile {
 	}
 
 	private void writeWeights(ImgFileWriter writer, int i) {
-		writer.put(sort.getPrimary(i));
+		writer.put((byte) sort.getPrimary(i));
 		writer.put((byte) ((sort.getTertiary(i) << 4) | (sort.getSecondary(i) & 0xf)));
 	}
 

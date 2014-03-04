@@ -72,33 +72,39 @@ public class CodeFunctions {
 	 */
 	public static CodeFunctions createEncoderForLBL(String charset) {
 		CodeFunctions funcs = new CodeFunctions();
-		if ("ascii".equals(charset)) {
+		switch (charset) {
+		case "ascii":
 			funcs.setEncodingType(ENCODING_FORMAT6);
 			funcs.setEncoder(new Format6Encoder());
 			funcs.setDecoder(new Format6Decoder());
-		} else if ("cp1252".equals(charset) || "latin1".equals(charset)) {
+			break;
+		case "cp1252":
+		case "latin1":
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setEncoder(new AnyCharsetEncoder("cp1252", new TableTransliterator("latin1")));
 			funcs.setDecoder(new AnyCharsetDecoder("cp1252"));
 			funcs.setCodepage(1252);
-		} else if ("cp65001".equals(charset) || "unicode".equals(charset)) {
+			break;
+		case "cp65001":
+		case "unicode":
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new Utf8Encoder());
 			funcs.setDecoder(new Utf8Decoder());
 			funcs.setCodepage(65001);
-		} else if ("simple8".equals(charset)) {
-			funcs.setEncodingType(ENCODING_FORMAT9);
-			funcs.setEncoder(new Simple8Encoder());
-		} else if ("cp932".equals(charset) || "ms932".equals(charset)) {
+			break;
+		case "cp932":
+		case "ms932":
 			funcs.setEncodingType(ENCODING_FORMAT10);
 			funcs.setEncoder(new AnyCharsetEncoder("ms932", new SparseTransliterator("nomacron")));
 			funcs.setDecoder(new AnyCharsetDecoder("ms932"));
 			funcs.setCodepage(932);
-		} else {
+			break;
+		default:
 			funcs.setEncodingType(ENCODING_FORMAT9);
 			funcs.setDecoder(new AnyCharsetDecoder(charset));
 			funcs.setEncoder(new AnyCharsetEncoder(charset, new TableTransliterator("ascii")));
 			funcs.setCodepage(guessCodepage(charset));
+			break;
 		}
 
 		return funcs;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Steve Ratcliffe
+ * Copyright (C) 2006,2014 Steve Ratcliffe
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -31,28 +31,45 @@ import uk.me.parabola.imgfmt.app.labelenc.EncodedText;
  * 2. An 8 bit format.  This seems to be a fairly straightforward latin-1 like
  * encoding with no tricks to reduce the amount of space required.
  *
+ * 3. A multi-byte format. For unicode, cp932 etc.
+ *
  * @author Steve Ratcliffe
  */
-public class Label implements Comparable<Label> {
+public class Label {
+	public static final Label NULL_LABEL = new Label("");
+	public static final Label NULL_OUT_LABEL = new Label(new char[0]);
 
 	private final String text;
+	private final char[] encText;
 
 	// The offset in to the data section.
 	private int offset;
 
 	public Label(String text) {
 		this.text = text;
+		this.encText = null;
+	}
+
+	public Label(char[] encText) {
+		this.encText = encText;
+		this.text = null;
 	}
 
 	public int getLength() {
-		if (text == null)
-			return 0;
-		else
+		if (text != null)
 			return text.length();
+		if (encText != null)
+			return encText.length;
+		return 0;
 	}
 
 	public String getText() {
+		assert text != null;
 		return text;
+	}
+
+	public char[] getEncText() {
+		return encText;
 	}
 
 	// highway shields and "thin" separators
@@ -88,10 +105,7 @@ public class Label implements Comparable<Label> {
 	 * @return The offset within the LBL file of this string.
 	 */
 	public int getOffset() {
-		if (text == null || text.isEmpty())
-			return 0;
-		else
-			return offset;
+		return offset;
 	}
 
 	public void setOffset(int offset) {
@@ -115,7 +129,7 @@ public class Label implements Comparable<Label> {
 	 * String version of the label, for diagnostic purposes.
 	 */
 	public String toString() {
-		return "[" + offset + "]" + text;
+		return text != null ? text : "[" + offset + "]";
 	}
 
 	public boolean equals(Object o) {
@@ -123,20 +137,9 @@ public class Label implements Comparable<Label> {
 		if (o == null || getClass() != o.getClass()) return false;
 
 		return offset == ((Label) o).offset;
-
 	}
 
 	public int hashCode() {
 		return offset;
-	}
-
-	/**
-	 * Note: this class has a natural ordering that is inconsistent with equals.
-	 * (But perhaps it shouldn't?)
-	 */
-	public int compareTo(Label other) {
-		if(this == other)
-			return 0;
-		return text.compareToIgnoreCase(other.text);
 	}
 }

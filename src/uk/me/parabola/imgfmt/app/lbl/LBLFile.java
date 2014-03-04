@@ -76,6 +76,7 @@ public class LBLFile extends ImgFile {
 
 		places.init(this, lblHeader.getPlaceHeader());
 		places.setSort(sort);
+		labelCache.put(BaseEncoder.NO_TEXT, Label.NULL_OUT_LABEL);
 	}
 
 	public void write() {
@@ -129,9 +130,10 @@ public class LBLFile extends ImgFile {
 	 */
 	public Label newLabel(String text) {
 		EncodedText encodedText = textEncoder.encodeText(text);
+
 		Label l = labelCache.get(encodedText);
 		if (l == null) {
-			l = new Label(text);
+			l = new Label(encodedText.getChars());
 			labelCache.put(encodedText, l);
 
 			l.setOffset(getNextLabelOffset());
