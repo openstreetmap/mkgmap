@@ -27,7 +27,7 @@ import java.util.Locale;
 public class Utf8Encoder extends BaseEncoder implements CharacterEncoder {
 	
 	public EncodedText encodeText(String text) {
-		if (text == null)
+		if (text == null || text.isEmpty())
 			return NO_TEXT;
 
 		String uctext;
