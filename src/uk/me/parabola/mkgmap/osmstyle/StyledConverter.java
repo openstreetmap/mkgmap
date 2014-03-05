@@ -125,8 +125,6 @@ public class StyledConverter implements OsmConverter {
 	private HashMap<Long, Way> modifiedRoads = new HashMap<Long, Way>();
 	private HashSet<Long> deletedRoads = new HashSet<Long>();
 
-	private final double minimumArcLength;
-	
 	private int nextNodeId = 1;
 	
 	private HousenumberGenerator housenumberGenerator;
@@ -178,12 +176,6 @@ public class StyledConverter implements OsmConverter {
 		LineAdder overlayAdder = style.getOverlays(lineAdder);
 		if (overlayAdder != null)
 			lineAdder = overlayAdder;
-		String rsa = props.getProperty("remove-short-arcs", "0");
-		minimumArcLength = (!rsa.isEmpty())? Double.parseDouble(rsa) : 0.0;
-		if (minimumArcLength > 0){
-			System.err.println("Warning: remove-short-arcs=" + rsa + " overrides default 0." +
-					" This is no longer recommended for a routable map.");
-		}
 		linkPOIsToWays = props.getProperty("link-pois-to-ways", false);
 		
 		// undocumented option - usually used for debugging only
@@ -1406,7 +1398,7 @@ public class StyledConverter implements OsmConverter {
 							continue;
 						Coord co = null;
 						if (lastNodePos-i == 1){
-							if (p1.distance(lastNode) > 2 * minimumArcLength){
+							if (p1.distance(lastNode) > 0){
 								// create new point
 								co = lastNode.makeBetweenPoint(p1, 0.5);
 								co.incHighwayCount();
