@@ -372,6 +372,10 @@ Miscellaneous options:
 	problems. Default value is 0 (disabled) because it's not a
 	completely reliable heuristic.
 
+--ignore-maxspeeds
+	Now ignored, former usage:
+	When reading OSM files, ignore any "maxspeed" tags.
+
 --ignore-builtin-relations
 	When reading OSM files, skip the built-in processing of
 	relations. This speeds up the processing non-routable map
@@ -390,6 +394,13 @@ Miscellaneous options:
 	Process the map elements (nodes, ways, relations) in the order
 	in which they appear in the OSM input. Without this option,
 	the order in which the elements are processed is not defined.
+
+--remove-short-arcs[=MinLength]
+  	Now ignored, former usage:	
+	Merge nodes to remove short arcs that can cause routing
+	problems. If MinLength is specified (in metres), arcs shorter
+	than that length will be removed. If a length is not
+	specified, only zero-length arcs will be removed.
 
 --adjust-turn-headings[=BITMASK]
 	Where possible, ensure that turns off to side roads change
@@ -464,17 +475,10 @@ Miscellaneous options:
 --precomp-sea=directory|zipfile
     Defines the directory or a zip file that contains precompiled sea tiles. 
     Sea files in a zipfile must be located in the zipfiles root directory or in 
-    a sub directory sea. When this option is defined all ways with natural=coastline tag 
-    from the input OSM tiles are handled like this:
-    * the original OSM way is only passed through the lines rules 
-    * if the way is closed a copy is created, the natural=* tag
-      is replaced with mkgmap:removed_natural=* and this copy is only passed through 
-      the polygon rules
-
-    The precompiled data is used to generate ways with tag natural=sea
-    and natural=land. This option can be combined with the generate-sea 
-    options multipolygon, polygons and land-tag. The coastlinefile option is 
-    ignored if precomp-sea is set.
+    a sub directory sea. When this option is defined all natural=coastline tags 
+    from the input OSM tiles are removed and the precompiled data is used instead. 
+    This option can be combined with the generate-sea options multipolygon, polygons 
+    and land-tag. The coastlinefile option is ignored if precomp-sea is set.      
 
 --coastlinefile=filename[,filename]
 	Defines a comma separated list of files that contain coastline 
