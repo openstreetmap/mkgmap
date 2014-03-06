@@ -226,7 +226,7 @@ public class NOD1Part {
 		for (RouteArc arc : node.arcsIteration()) {
 			tabA.addArc(arc);
 			RouteNode dest = arc.getDest();
-			if (bbox != null && !bbox.contains(dest.getCoord())) {
+			if (bbox != null && !bbox.contains(dest.getCoord()) || dest.getGroup() != node.getGroup()) {
 				arc.setInternal(false);
 				tabB.addNode(dest);
 			}

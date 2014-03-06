@@ -355,7 +355,6 @@ public class RoadDef implements Comparable<RoadDef> {
 			l = new ArrayList<RoadIndex>(4);
 			roadIndexes.put(level, l);
 		}
-		int s = l.size();
 		l.add(new RoadIndex(pl));
 
 		// XXX needs to be the lowest level, which might not always be zero in the future
@@ -396,9 +395,8 @@ public class RoadDef implements Comparable<RoadDef> {
 	/**
 	 * Set the road length (in meters).
 	 */
-	public void setLength(double l) {
-		// XXX: this is from test.display.NetDisplay, possibly varies
-		roadLength = (int) l / 2;
+	public void setLength(double lenInMeter) {
+		roadLength = NODHeader.metersToRaw(lenInMeter);
 	}
 
 	public boolean hasHouseNumbers() {
@@ -481,6 +479,10 @@ public class RoadDef implements Comparable<RoadDef> {
 		this.node = node;
 	}
 
+	public RouteNode getNode(){
+		return node;
+	}
+	
 	private boolean hasNodInfo() {
 		return (netFlags & NET_FLAG_NODINFO) != 0;
 	}
