@@ -17,6 +17,8 @@
 package uk.me.parabola.imgfmt.app.net;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -299,6 +301,12 @@ public class NOD1Part {
 	 * be a legal RouteCenter.
 	 */
 	private RouteCenter toRouteCenter() {
+		Collections.sort(nodes, new Comparator<RouteNode>() {
+			public int compare(RouteNode n1, RouteNode n2) {
+				return n1.getCoord().compareTo(n2.getCoord());
+			}
+		});
+
 		return new RouteCenter(bboxActual.toArea(), nodes, tabA, tabB);
 	}
 }
