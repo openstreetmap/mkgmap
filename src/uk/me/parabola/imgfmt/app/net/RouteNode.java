@@ -227,7 +227,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		assert isBoundary() : "trying to write nod3 for non-boundary node";
 
 		writer.put3(coord.getLongitude());
-		writer.put3(coord.getLatitude() + 0x800000); // + 180 degrees
+		writer.put3(coord.getLatitude()); 
 		writer.put3(offsetNod1);
 	}
 
