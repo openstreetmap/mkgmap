@@ -49,6 +49,8 @@ public class TableC {
 			for (RouteRestriction restr : restrictions)
 				restr.write(writer, tablesOffset);
 		}
+		if(tabA.numRoundaboutArcs() > 0)
+			writer.put((byte)tabA.numRoundaboutArcs());
 		if(tabA.numUnpavedArcs() > 0)
 			writer.put((byte)tabA.numUnpavedArcs());
 		if(tabA.numFerryArcs() > 0)
@@ -100,6 +102,8 @@ public class TableC {
 			if(size > 0xff)
 				++format;
 		}
+		if(tabA.numRoundaboutArcs() > 0)
+			format |= 0x04;
 		if(tabA.numUnpavedArcs() > 0)
 			format |= 0x08;
 		if(tabA.numFerryArcs() > 0)
