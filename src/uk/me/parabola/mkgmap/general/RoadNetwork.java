@@ -275,7 +275,7 @@ public class RoadNetwork {
 			if (rd.getRoadClass() >= 1)
 				rd.getNode().addArcsToMajorRoads(rd);
 		}
-		log.error(" added arcs in " + (System.currentTimeMillis() - t1) + " ms");
+		log.info(" added major road arcs in " + (System.currentTimeMillis() - t1) + " ms");
 	}
 
 	/**
