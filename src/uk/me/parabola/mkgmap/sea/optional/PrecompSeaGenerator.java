@@ -15,7 +15,6 @@ package uk.me.parabola.mkgmap.sea.optional;
 
 import java.awt.Rectangle;
 import java.awt.geom.Area;
-import java.awt.geom.Path2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,10 +30,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import uk.me.parabola.imgfmt.Utils;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.SeaGenerator;
 import uk.me.parabola.mkgmap.reader.osm.Way;
+import uk.me.parabola.util.Java2DConverter;
 
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
@@ -202,13 +202,11 @@ public class PrecompSeaGenerator {
 	 */
 	private Area convertToArea(Geometry geometry) {
 		Coordinate[] c = geometry.getCoordinates();
-		Path2D.Double path = new Path2D.Double();
-		path.moveTo(Utils.toMapUnit(c[0].x), Utils.toMapUnit(c[0].y));
-		for (int n = 1; n < c.length; n++) {
-			path.lineTo(Utils.toMapUnit(c[n].x), Utils.toMapUnit(c[n].y));
+		List<Coord> points = new ArrayList<>(c.length);
+		for (int n = 0; n < c.length; n++) {
+			points.add(new Coord(c[n].y, c[n].x));
 		}
-		path.closePath();
-		return new Area(path);
+		return Java2DConverter.createArea(points);
 	}
 
 	

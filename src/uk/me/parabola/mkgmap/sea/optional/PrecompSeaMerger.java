@@ -101,6 +101,7 @@ class PrecompSeaMerger implements Runnable {
 		for (List<Coord> points : pointLists) {
 			Way w = new Way(FakeIdGenerator.makeFakeId(), points);
 			w.addTag("natural", naturalTag);
+			w.setClosedInOSM(true);
 			ways.add(w);
 		}
 		return ways;
@@ -171,7 +172,8 @@ class PrecompSeaMerger implements Runnable {
 			seaWay.addPoint(new Coord(90.0d, -180.0d));
 			seaWay.addPoint(new Coord(90.0d, 180.0d));
 			seaWay.addPoint(new Coord(-90.0d, 180.0d));
-			seaWay.addPoint(new Coord(-90.0d, -180.0d));
+			seaWay.addPoint(seaWay.getPoints().get(0)); // close shape
+			seaWay.setClosedInOSM(true);
 			landWays.put(seaWay.getId(), seaWay);
 
 			Relation rel = new GeneralRelation(FakeIdGenerator.makeFakeId());

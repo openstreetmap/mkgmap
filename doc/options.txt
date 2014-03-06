@@ -378,6 +378,10 @@ number of legitimate roads that are flagged as flare road
 problems. Default value is 0 (disabled) because it's not a
 completely reliable heuristic.
 
+;--ignore-maxspeeds
+:	Now ignored, former usage: 	
+When reading OSM files, ignore any "maxspeed" tags.
+
 ;--ignore-builtin-relations
 : 	When reading OSM files, skip the built-in processing of
 relations. This speeds up the processing non-routable map
@@ -393,15 +397,17 @@ With this option selected generate-sea sometimes works better,
 but routing across tiles will not work.
 
 ;--preserve-element-order
-: 	Process the map elements (nodes, ways, relations) in the order
+:  Process the map elements (nodes, ways, relations) in the order
 in which they appear in the OSM input. Without this option,
 the order in which the elements are processed is not defined.
 
 ;--remove-short-arcs[=MinLength]
-: 	Merge nodes to remove short arcs that can cause routing
+:  now ignored, former explanation:
+Merge nodes to remove short arcs that can cause routing
 problems. If MinLength is specified (in metres), arcs shorter
 than that length will be removed. If a length is not
 specified, only zero-length arcs will be removed.
+ 
 
 ;--adjust-turn-headings[=BITMASK]
 : 	Where possible, ensure that turns off to side roads change

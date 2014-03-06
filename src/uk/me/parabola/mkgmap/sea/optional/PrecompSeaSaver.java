@@ -13,11 +13,12 @@
 
 package uk.me.parabola.mkgmap.sea.optional;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,6 @@ import java.util.zip.GZIPOutputStream;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.mkgmap.reader.osm.FakeIdGenerator;
 import uk.me.parabola.mkgmap.reader.osm.SeaGenerator;
 import uk.me.parabola.mkgmap.reader.osm.Way;
 import uk.me.parabola.splitter.BinaryMapWriter;
@@ -111,10 +111,9 @@ class PrecompSeaSaver implements Runnable {
 
 					OSMWriter writer = createWriter(id, tileData.getKey());
 
-					Map<Coord, Long> coordIds = new HashMap<Coord, Long>();
-
-					List<uk.me.parabola.splitter.Way> pbfWays = new ArrayList<uk.me.parabola.splitter.Way>();
-
+					Long2ObjectOpenHashMap<Long> coordIds = new Long2ObjectOpenHashMap<>();
+					Map<Long,uk.me.parabola.splitter.Way> pbfWays = new TreeMap<Long, uk.me.parabola.splitter.Way>();
+					long maxNodeId = 1;
 					for (Way w : tileData.getValue()) {
 						uk.me.parabola.splitter.Way pbfWay = new uk.me.parabola.splitter.Way();
 						pbfWay.set(w.getId());
@@ -124,13 +123,14 @@ class PrecompSeaSaver implements Runnable {
 						}
 						for (Coord c : w.getPoints()) {
 							Node n = new Node();
-							Long nodeId = coordIds.get(c);
+							long key = Utils.coord2Long(c);
+							Long nodeId = coordIds.get(key);
 							if (nodeId == null) {
-								nodeId = FakeIdGenerator.makeFakeId();
-								coordIds.put(c, nodeId);
+								nodeId = new Long(maxNodeId++);
+								coordIds.put(key, nodeId);
 								n.set(nodeId,
-										Utils.toDegrees(c.getLatitude()),
-										Utils.toDegrees(c.getLongitude()));
+										c.getLatDegrees(),
+										c.getLonDegrees());
 								try {
 									writer.write(n);
 								} catch (IOException exp) {
@@ -139,9 +139,9 @@ class PrecompSeaSaver implements Runnable {
 							}
 							pbfWay.addRef(nodeId);
 						}
-						pbfWays.add(pbfWay);
+						pbfWays.put(pbfWay.getId(),pbfWay);
 					}
-					for (uk.me.parabola.splitter.Way pbfWay : pbfWays) {
+					for (uk.me.parabola.splitter.Way pbfWay : pbfWays.values()) {
 						try {
 							writer.write(pbfWay);
 						} catch (IOException exp) {

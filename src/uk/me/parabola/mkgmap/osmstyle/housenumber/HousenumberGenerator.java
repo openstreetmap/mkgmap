@@ -318,6 +318,7 @@ public class HousenumberGenerator {
 					continue;
 				}
 
+				// Now we have a CoordNode and it is not the first one.
 				Numbers numbers = new Numbers();
 				numbers.setNodeNumber(0);
 				numbers.setRnodNumber(lastRoutableNodeIndex);

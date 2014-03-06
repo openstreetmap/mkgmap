@@ -111,7 +111,7 @@ public class BoundaryElementSaver extends ElementSaver {
 		} else if (element instanceof Way) {
 			Way w = (Way) element;
 			// a single way must be closed
-			if (w.isClosed() == false) {
+			if (w.isClosedInOSM() == false) {
 				return false;
 			}
 			// the boundary tag must be "administrative" or "postal_code"

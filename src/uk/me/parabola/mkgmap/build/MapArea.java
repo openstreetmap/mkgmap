@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
+import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.filters.FilterConfig;
@@ -32,6 +33,7 @@ import uk.me.parabola.mkgmap.general.MapDataSource;
 import uk.me.parabola.mkgmap.general.MapElement;
 import uk.me.parabola.mkgmap.general.MapLine;
 import uk.me.parabola.mkgmap.general.MapPoint;
+import uk.me.parabola.mkgmap.general.MapRoad;
 import uk.me.parabola.mkgmap.general.MapShape;
 import uk.me.parabola.mkgmap.general.RoadNetwork;
 
@@ -197,15 +199,15 @@ public class MapArea implements MapDataSource {
 					log.debug("area before", mapAreas[i].getBounds());
 			}
 
-			int xbase = areas[0].getMinLong();
-			int ybase = areas[0].getMinLat();
-			int dx = areas[0].getWidth();
-			int dy = areas[0].getHeight();
+			int xbase30 = areas[0].getMinLong() << Coord.DELTA_SHIFT;
+			int ybase30 = areas[0].getMinLat() << Coord.DELTA_SHIFT;
+			int dx30 = areas[0].getWidth() << Coord.DELTA_SHIFT;
+			int dy30 = areas[0].getHeight() << Coord.DELTA_SHIFT;
 			
 			boolean[] used = new boolean[nx * ny];
 			// Now sprinkle each map element into the correct map area.
 			for (MapPoint p : this.points) {
-				int pos = pickArea(mapAreas, p, xbase, ybase, nx, ny, dx, dy);
+				int pos = pickArea(mapAreas, p, xbase30, ybase30, nx, ny, dx30, dy30);
 				mapAreas[pos].addPoint(p);
 				used[pos] = true;
 			}
@@ -214,10 +216,10 @@ public class MapArea implements MapDataSource {
 			int areaIndex = 0;
 			for (MapLine l : this.lines) {
 				// Drop any zero sized lines.
-				if (l.getBounds().getMaxDimension() <= 0)
+				if (l instanceof MapRoad == false && l.getRect().height <= 0 && l.getRect().width <= 0)
 					continue;
 				if (useNormalSplit)
-					areaIndex = pickArea(mapAreas, l, xbase, ybase, nx, ny, dx, dy);
+					areaIndex = pickArea(mapAreas, l, xbase30, ybase30, nx, ny, dx30, dy30);
 				else 
 					areaIndex = ++areaIndex % mapAreas.length;
 				mapAreas[areaIndex].addLine(l);
@@ -226,7 +228,7 @@ public class MapArea implements MapDataSource {
 
 			for (MapShape e : this.shapes) {
 				if (useNormalSplit)
-					areaIndex = pickArea(mapAreas, e, xbase, ybase, nx, ny, dx, dy);
+					areaIndex = pickArea(mapAreas, e, xbase30, ybase30, nx, ny, dx30, dy30);
 				else 
 					areaIndex = ++areaIndex % mapAreas.length;
 				mapAreas[areaIndex].addShape(e);
@@ -460,7 +462,7 @@ public class MapArea implements MapDataSource {
 	 */
 	private void addPoint(MapPoint p) {
 		points.add(p);
-		addToBounds(p.getBounds());
+		addToBounds(p.getLocation());
 		addSize(p, p.hasExtendedType()? XT_POINT_KIND : POINT_KIND);
 	}
 
@@ -509,6 +511,22 @@ public class MapArea implements MapDataSource {
 			maxLon = l;
 	}
 
+	private void addToBounds(Coord co) {
+		int l = co.getLatitude();
+		if (l < minLat)
+			minLat = l;
+		if (l > maxLat)
+			maxLat = l;
+
+		l = co.getLongitude();
+		if (l < minLon)
+			minLon = l;
+		if (l > maxLon)
+			maxLon = l;
+	}
+
+	
+	
 	/**
 	 * Out of all the available areas, it picks the one that the map element
 	 * should be placed into.
@@ -519,31 +537,30 @@ public class MapArea implements MapDataSource {
 	 *
 	 * @param areas The available areas to choose from.
 	 * @param e The map element.
-	 * @param xbase The x coord at the origin
-	 * @param ybase The y coord of the origin
+	 * @param xbase30 The 30-bit x coord at the origin
+	 * @param ybase30 The 30-bit y coord of the origin
 	 * @param nx number of divisions.
 	 * @param ny number of divisions in y.
-	 * @param dx The size of each division (x direction)
-	 * @param dy The size of each division (y direction)
+	 * @param dx30 The size of each division (x direction)
+	 * @param dy30 The size of each division (y direction)
 	 * @return The index to areas where the map element fits.
 	 */
 	private int pickArea(MapArea[] areas, MapElement e,
-			int xbase, int ybase,
+			int xbase30, int ybase30,
 			int nx, int ny,
-			int dx, int dy)
+			int dx30, int dy30)
 	{
-		int x = e.getLocation().getLongitude();
-		int y = e.getLocation().getLatitude();
-
-		int xcell = (x - xbase) / dx;
-		int ycell = (y - ybase) / dy;
+		int x = e.getLocation().getHighPrecLon();
+		int y = e.getLocation().getHighPrecLat();
+		int xcell = (x - xbase30) / dx30;
+		int ycell = (y - ybase30) / dy30;
 
 		if (xcell < 0) {
-			log.info("xcell was", xcell, "x", x, "xbase", xbase);
+			log.info("xcell was", xcell, "x", x, "xbase", xbase30);
 			xcell = 0;
 		}
 		if (ycell < 0) {
-			log.info("ycell was", ycell, "y", y, "ybase", ybase);
+			log.info("ycell was", ycell, "y", y, "ybase", ybase30);
 			ycell = 0;
 		}
 		

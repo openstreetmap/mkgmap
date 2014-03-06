@@ -31,7 +31,7 @@ public class BoundaryElement  {
 
 	public Area getArea() {
 		if (area == null) {
-			area = new Area(Java2DConverter.createArea(points));
+			area = Java2DConverter.createArea(points);
 		}
 		return area;
 	}

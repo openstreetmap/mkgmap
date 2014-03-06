@@ -372,6 +372,10 @@ Miscellaneous options:
 	problems. Default value is 0 (disabled) because it's not a
 	completely reliable heuristic.
 
+--ignore-maxspeeds
+	Now ignored, former usage:
+	When reading OSM files, ignore any "maxspeed" tags.
+
 --ignore-builtin-relations
 	When reading OSM files, skip the built-in processing of
 	relations. This speeds up the processing non-routable map
@@ -392,6 +396,7 @@ Miscellaneous options:
 	the order in which the elements are processed is not defined.
 
 --remove-short-arcs[=MinLength]
+  	Now ignored, former usage:	
 	Merge nodes to remove short arcs that can cause routing
 	problems. If MinLength is specified (in metres), arcs shorter
 	than that length will be removed. If a length is not

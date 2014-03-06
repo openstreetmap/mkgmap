@@ -244,6 +244,19 @@ public class Utils {
 		
 		return angle;
 	}
+	
+	/**
+	 * Calculates the angle between the two segments (c1,c2),(c2,c3)
+	 * using the coords in map units.
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return angle between the two segments in degree [-180;180]
+	 */
+	public static double getDisplayedAngle(Coord c1, Coord c2, Coord c3) {
+		return getAngle(c1.getDisplayedCoord(), c2.getDisplayedCoord(), c3.getDisplayedCoord());
+	}
+
 	public final static int NOT_STRAIGHT = 0;
 	public final static int STRAIGHT_SPIKE = 1;
 	public final static int STRICTLY_STRAIGHT = 2;
@@ -282,5 +295,92 @@ public class Utils {
 		return NOT_STRAIGHT;
 		
 	}
+
+	/**
+	 * Checks if the two segments (c1,c2),(c2,c3) form a straight line
+	 * using high precision coordinates.
+	 * @param c1 first point
+	 * @param c2 second point
+	 * @param c3 third point
+	 * @return NOT_STRAIGHT, STRAIGHT_SPIKE or STRICTLY_STRAIGHT 
+	 */
+	public static int isHighPrecStraight(Coord c1, Coord c2, Coord c3) {
+		if (c1.highPrecEquals(c3))
+			return STRAIGHT_SPIKE;
+		long area;
+		long c1Lat = c1.getHighPrecLat();
+		long c2Lat = c2.getHighPrecLat();
+		long c3Lat = c3.getHighPrecLat();
+		long c1Lon = c1.getHighPrecLon();
+		long c2Lon = c2.getHighPrecLon();
+		long c3Lon = c3.getHighPrecLon();
+		// calculate the area that is enclosed by the three points
+		// (as if a closing line is drawn from c3 back to c1)
+		area = c1Lon * c2Lat - c2Lon * c1Lat;
+		area += c2Lon * c3Lat - c3Lon * c2Lat;
+		area += c3Lon * c1Lat - c1Lon * c3Lat;
+		if (area == 0){
+			// area is empty-> points lie on a straight line
+			long delta1 = c1Lat - c2Lat;
+			long delta2 = c2Lat - c3Lat;
+			if (delta1 < 0 && delta2 > 0 || delta1 > 0 && delta2 < 0)
+				return STRAIGHT_SPIKE;
+			delta1 = c1Lon - c2Lon;
+			delta2 = c2Lon - c3Lon;
+			if (delta1 < 0 && delta2 > 0 || delta1 > 0 && delta2 < 0)
+				return STRAIGHT_SPIKE;
+			return STRICTLY_STRAIGHT;
+		}
+		// line is not straight
+		return NOT_STRAIGHT;
+		
+	}
+
+	/**
+	 * approximate atan2, much faster than Math.atan2()
+	 * Based on a 50-year old arctan approximation due to Hastings
+	 */
+	private final static double PI_BY_2 = Math.PI / 2;
+	// |error| < 0.005
+	public static double atan2_approximation( double y, double x )
+	{
+		if ( x == 0.0f )
+		{
+			if ( y > 0.0f ) return PI_BY_2 ;
+			if ( y == 0.0f ) return 0.0f;
+			return -PI_BY_2 ;
+		}
+		double atan;
+		double z = y/x;
+		if ( Math.abs( z ) < 1.0f )
+		{
+			atan = z/(1.0f + 0.28f*z*z);
+			if ( x < 0.0f )
+			{
+				if ( y < 0.0f ) return atan - Math.PI;
+				return atan + Math.PI;
+			}
+		}
+		else
+		{
+			atan = PI_BY_2  - z/(z*z + 0.28f);
+			if ( y < 0.0f ) return atan - Math.PI;
+		}
+		return atan;
+	}
+	
+	/**
+	 * calculate a long value for the latitude and longitude of a coord
+	 * in high precision. 
+	 * @param co
+	 * @return a long that can be used as a key in HashMaps 
+	 */
+	public static long coord2Long(Coord co){
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		
+		return (long)(lat30 & 0xffffffffL) << 32 | (lon30 & 0xffffffffL);
+	}
+	
 }
 

@@ -181,9 +181,7 @@ public class LineSizeSplitterFilter implements MapFilter {
 			int width = Math.abs( p1.getLongitude() - p2.getLongitude());
 			int height = Math.abs( p1.getLatitude() - p2.getLatitude());
 			if (width > maxSize || height > maxSize){
-				int midLon = (p1.getLongitude() + p2.getLongitude())/2;
-				int midLat = (p1.getLatitude() + p2.getLatitude())/2;
-				testedCoords.add(posToTest+1, new Coord(midLat,midLon));
+				testedCoords.add(posToTest+1, p1.makeBetweenPoint(p2, 0.5));
 				++posToTest;
 			}
 			else

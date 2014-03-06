@@ -160,8 +160,14 @@ public class DouglasPeuckerFilter implements MapFilter {
 
 			// Remove the endpoint if it is the same as the start point
 			if (ab == 0 && points.get(endIndex).preserved() == false)
-				points.remove(endIndex);
+				endIndex++;
 
+			if (endIndex - startIndex > 4){
+				// faster than many repeated remove actions
+				points.subList(startIndex+1, endIndex).clear();  
+				return;
+			}
+			
 			// Remove the points in between
 			for (int i = endIndex - 1; i > startIndex; i--) {
 				points.remove(i);

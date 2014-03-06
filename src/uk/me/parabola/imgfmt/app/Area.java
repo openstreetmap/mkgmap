@@ -91,7 +91,7 @@ public class Area {
 	}
 
 	public Coord getCenter() {
-		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);
+		return new Coord((minLat + maxLat)/2, (minLong + maxLong)/2);// high prec not needed
 	}
 
 	public String toString() {
@@ -153,26 +153,66 @@ public class Area {
 		return Math.max(getWidth(), getHeight());
 	}
 
+	/**
+	 * 
+	 * @param co a coord
+	 * @return true if co is inside the Area (it may touch the boundary)
+	 */
 	public final boolean contains(Coord co) {
-		// return true if co is inside the Area (it may touch the
-		// boundary)
-		return co.getLatitude() >= minLat
-				&& co.getLatitude() <= maxLat
-				&& co.getLongitude() >= minLong
-				&& co.getLongitude() <= maxLong;
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		return lat30  >= (minLat << Coord.DELTA_SHIFT)
+				&& lat30 <= (maxLat << Coord.DELTA_SHIFT)
+				&& lon30 >= (minLong << Coord.DELTA_SHIFT)
+				&& lon30 <= (maxLong << Coord.DELTA_SHIFT);
 	}
 
+	/**
+	 * 
+	 * @param other an area
+	 * @return true if the other area is inside the Area (it may touch the boundary)
+	 */
+	public final boolean contains(Area other) {
+		return other.getMinLat() >= minLat
+				&& other.getMaxLat() <= maxLat
+				&& other.getMinLong() >= minLong
+				&& other.getMaxLong() <= maxLong;
+	}
+
+	/**
+	 * @param co a coord
+	 * @return true if co is inside the Area and doesn't touch the boundary
+	 */
 	public final boolean insideBoundary(Coord co) {
-		// return true if co is inside the Area and doesn't touch the
-		// boundary
-		return co.getLatitude() > minLat
-				&& co.getLatitude() < maxLat
-				&& co.getLongitude() > minLong
-				&& co.getLongitude() < maxLong;
+		int lat30 = co.getHighPrecLat();
+		int lon30 = co.getHighPrecLon();
+		
+		return lat30  > (minLat << Coord.DELTA_SHIFT)
+				&& lat30 < (maxLat << Coord.DELTA_SHIFT)
+				&& lon30 > (minLong << Coord.DELTA_SHIFT)
+				&& lon30 < (maxLong << Coord.DELTA_SHIFT);
+	}
+	
+
+	
+	/**
+	 * 
+	 * @param other an area
+	 * @return true if the other area is inside the Area and doesn't touch the boundary 
+	 */
+	public final boolean insideBoundary(Area other) {
+		return other.getMinLat() > minLat
+				&& other.getMaxLat() < maxLat
+				&& other.getMinLong() > minLong
+				&& other.getMaxLong() < maxLong;
 	}
 
+
+	/**
+	 * @param co
+	 * @return true if co is on the boundary
+	 */
 	public final boolean onBoundary(Coord co) {
-		// return true if co is on the boundary
 		return contains(co) && !insideBoundary(co);
 	}
 	
@@ -193,6 +233,11 @@ public class Area {
 		return minLat >= maxLat || minLong >= maxLong;
 	}
 
+	/**
+	 * 	
+	 * @param coords a list of coord instances
+	 * @return false if any of the coords lies on or outside of this area
+	 */
 	public boolean allInsideBoundary(List<Coord> coords) {
 		for (Coord co : coords) {
 			if (!insideBoundary(co))

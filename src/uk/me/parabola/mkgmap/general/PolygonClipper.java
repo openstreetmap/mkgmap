@@ -16,8 +16,11 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.util.List;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.util.Java2DConverter;
@@ -29,7 +32,6 @@ import uk.me.parabola.util.Java2DConverter;
  * @author Steve Ratcliffe
  */
 public class PolygonClipper {
-
 	/**
 	 * Clip the input polygon to the given area.
 	 * @param bbox The bounding box.
@@ -53,13 +55,28 @@ public class PolygonClipper {
 		}
 		if (!foundOutside)
 			return null;
-
+		Long2ObjectOpenHashMap<Coord> map = new Long2ObjectOpenHashMap<>(coords.size());
+		for (int i = 1; i < coords.size(); i++){
+			Coord co = coords.get(i);
+			map.put(Utils.coord2Long(co), co);
+		}
 		java.awt.geom.Area bbarea = Java2DConverter.createBoundsArea(bbox); 
 		java.awt.geom.Area shape = Java2DConverter.createArea(coords);
 
 		shape.intersect(bbarea);
 
-		return Java2DConverter.areaToShapes(shape);
+		List<List<Coord>> shapes = Java2DConverter.areaToShapes(shape);
+		for (List<Coord> sh: shapes){
+			for (int i = 0; i < sh.size(); i++){
+				Coord co = sh.get(i);
+				Coord origCoord = map.get(Utils.coord2Long(co));
+				if (origCoord != null)
+					sh.set(i, origCoord);
+				else 
+					map.put(Utils.coord2Long(co), co);
+			}
+		}
+		return shapes;
 	}
 
 }

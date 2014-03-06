@@ -16,6 +16,7 @@
  */
 package uk.me.parabola.mkgmap.general;
 
+import java.awt.Rectangle;
 import java.util.List;
 
 import uk.me.parabola.imgfmt.app.Area;
@@ -34,6 +35,7 @@ public class MapLine extends MapElement {
 	private List<Coord> points;
 	private boolean direction; // set if direction is important.
 	private boolean skipSizeFilter;
+	private boolean wasClipped;
 	private int minLat = Integer.MAX_VALUE;
 	private int minLong = Integer.MAX_VALUE;
 	private int maxLat = Integer.MIN_VALUE;
@@ -71,7 +73,7 @@ public class MapLine extends MapElement {
 		Coord last = null;
 		for (Coord co : points) {
 			if (last != null && last.equals(co))
-				log.info("Line " + getName() + " has consecutive identical points at " + co.toDegreeString() + " (discarding)");
+				log.info("Line " + getName() + " has consecutive equal points at " + co.toDegreeString());
 			else {
 				addToBounds(co);
 				last = co;
@@ -80,10 +82,10 @@ public class MapLine extends MapElement {
 	}
 
 	public void insertPointsAtStart(List<Coord> additionalPoints) {
+		assert points.get(0).equals(additionalPoints.get(additionalPoints.size()-1));
 		testForConsecutivePoints(additionalPoints);
 		points.get(0).preserved(true);
-		points.addAll(0, additionalPoints);
-		points.remove(additionalPoints.size()-1);	//End node exists now twice
+		points.addAll(0, additionalPoints.subList(0, additionalPoints.size()-1));
 	}
 
 	public void insertPointsAtEnd(List<Coord> additionalPoints) {
@@ -114,6 +116,14 @@ public class MapLine extends MapElement {
 	}
 
 
+	public boolean wasClipped() {
+		return wasClipped;
+	}
+
+	public void setClipped(boolean wasClipped) {
+		this.wasClipped = wasClipped;
+	}
+
 	/**
 	 * Get the mid-point of the bounding box for this element.  This is as good
 	 * an indication of 'where the element is' as any.  Previously we just
@@ -123,7 +133,7 @@ public class MapLine extends MapElement {
 	 * @return The mid-point of the bounding box.
 	 */
 	public Coord getLocation() {
-		return new Coord((minLat + maxLat) / 2, (minLong + maxLong) / 2);
+		return new Coord((minLat + maxLat) / 2, (minLong + maxLong) / 2);// high prec not needed
 	}
 
 	/**
@@ -154,4 +164,10 @@ public class MapLine extends MapElement {
 		return new Area(minLat, minLong, maxLat, maxLong);
 	}
 
+	/**
+	 * @return bounding box that can have 0 height or width
+	 */
+	public Rectangle getRect(){
+		return new Rectangle(minLong, minLat, maxLong-minLong, maxLat-minLat);
+	}
 }

@@ -188,7 +188,7 @@ public class BoundaryPreprocessor implements Runnable {
 			System.err.println(exp);
 			exp.printStackTrace();
 		}
-		
+		System.out.println("Bnd files converted in " +  (System.currentTimeMillis()-t1) + " ms");
 		log.info("Bnd files converted in", (System.currentTimeMillis()-t1), "ms");
 	}
 

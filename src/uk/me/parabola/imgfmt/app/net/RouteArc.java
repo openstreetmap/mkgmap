@@ -30,7 +30,7 @@ public class RouteArc {
 	private static final Logger log = Logger.getLogger(RouteArc.class);
 	
 	// Flags A
-	private static final int FLAG_NEWDIR = 0x80;
+	private static final int FLAG_HASNET = 0x80;
 	private static final int FLAG_FORWARD = 0x40;
 	private static final int MASK_DESTCLASS = 0x7;
 	public static final int MASK_CURVE_LEN = 0x38;
@@ -41,8 +41,10 @@ public class RouteArc {
 
 	private int offset;
 
-	private int initialHeading; // degrees
-	private final int finalHeading; // degrees
+	// heading / bearing: 
+	private float initialHeading; // degrees (A-> B in an arc ABCD) 
+	private final float finalHeading; // degrees (C-> D in an arc ABCD)
+	private final float directHeading; // degrees (A-> D in an arc ABCD)
 
 	private final RoadDef roadDef;
 
@@ -58,44 +60,66 @@ public class RouteArc {
 	private byte flagA;
 	private byte flagB;
 
-	private boolean haveCurve;
-	private int length;
+	private final boolean haveCurve;
+	private final int length;
+	private final byte lengthRatio;
 	private final int pointsHash;
-	private final boolean curveEnabled;
+	private boolean isForward;
 
 	/**
-	 * Create a new arc.
-	 *
+	 * Create a new arc. An arc can contain multiple points (eg. A->B->C->D->E)
 	 * @param roadDef The road that this arc segment is part of.
-	 * @param source The source node.
-	 * @param dest The destination node.
-	 * @param initialHeading The initial heading (signed degrees)
+	 * @param source The source node. (A)
+	 * @param dest The destination node (E).
+	 * @param initialBearing The initial heading (signed degrees) (A->B)
+	 * @param finalBearing The final heading (signed degrees) (D->E)
+	 * @param directBearing The direct heading (signed degrees) (A->E)
+	 * @param arcLength the length of the arc in meter (A->B->C->D->E)
+	 * @param directLength the length of the arc in meter (A-E) 
+	 * @param curveEnabled false means don't write curve bytes 
+	 * @param pointsHash
 	 */
 	public RouteArc(RoadDef roadDef,
 					RouteNode source, RouteNode dest,
-					int initialHeading, int finalHeading,
-					double length,
+					double initialBearing, double finalBearing, double directBearing,
+					double arcLength,
+					double directLength,
 					boolean curveEnabled,
 					int pointsHash) {
 		this.roadDef = roadDef;
 		this.source = source;
 		this.dest = dest;
-		this.initialHeading = initialHeading;
-		this.finalHeading = finalHeading;
-		this.length = convertMeters(length);
-		this.curveEnabled = curveEnabled;
+		this.initialHeading = (float) initialBearing;
+		this.finalHeading = (float) finalBearing;
+		this.directHeading = (directBearing < 180) ? (float) directBearing : -180.0f;
+		int len = convertMeters(arcLength);
+		if (len >= (1 << 22)) {
+			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + len + " units) is too big to be encoded, using length",((1 << 22) - 1));
+			len = (1 << 22) - 1;
+		}
+		this.length = len;
 		this.pointsHash = pointsHash;
+		int ratio = 0;
+		if (arcLength > directLength){
+			ratio = (byte) ((int)(directLength * 32 / arcLength) & 0x1f);
+			if (ratio > 26) 
+				ratio = 0;
+		}
+		if (ratio == 0 && length >= (1 << 14))
+			ratio = 0x1f;
+		lengthRatio = (byte)ratio;
+		haveCurve = curveEnabled && lengthRatio > 0;
 	}
 
-	public int getInitialHeading() {
+	public float getInitialHeading() {
 		return initialHeading;
 	}
 
-	public void setInitialHeading(int ih) {
+	public void setInitialHeading(float ih) {
 		initialHeading = ih;
 	}
 
-	public int getFinalHeading() {
+	public float getFinalHeading() {
 		return finalHeading;
 	}
 
@@ -121,7 +145,7 @@ public class RouteArc {
 	public int boundSize() {
 
 		int[] lendat = encodeLength();
-
+		//TODO: take into account that initialHeading and indexA are not always written
 		// 1 (flagA) + 1-2 (offset) + 1 (indexA) + 1 (initialHeading)
 		int size = 5 + lendat.length;
 		if(haveCurve)
@@ -180,12 +204,27 @@ public class RouteArc {
 	 
 
 	// units of 16 feet
-	final static double LENGTH_FACTOR = 3.2808 / 16;
+	final static double LENGTH_FACTOR = 1.0 / (2.391 * 2);
+	//old 3.2808 / 16;
 	private static int convertMeters(double l) {
-		return (int) (l * LENGTH_FACTOR);
+		return (int) (l * LENGTH_FACTOR + 0.5);
+
 	}
 
-	public void write(ImgFileWriter writer) {
+	public void write(ImgFileWriter writer, RouteArc lastArc, boolean useCompactDirs, Byte compactedDir) {
+		boolean first = lastArc == null;
+		if (first){
+			if (useCompactDirs)
+				flagA |= FLAG_HASNET; // first arc: the 1 tells us that initial directions are in compacted format
+		} else {
+			if (lastArc.getRoadDef() != this.getRoadDef())
+				flagA |= FLAG_HASNET; // not first arc: the 1 tells us that we have to read table A 
+			
+		}
+
+		if (isForward)
+			flagA |= FLAG_FORWARD;
+		
 		offset = writer.position();
 		if(log.isDebugEnabled())
 			log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
@@ -210,16 +249,23 @@ public class RouteArc {
 			else
 				writer.put((byte) (flagB | indexB));
 		}
-
-		writer.put(indexA);
+		
+		 // only write out the local net index if it is the first arc or else if newDir is set.
+		if (first || lastArc.indexA != this.indexA)
+			writer.put(indexA);
 
 		if(log.isDebugEnabled())
 			log.debug("writing length", length);
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
-		writer.put((byte)(256 * initialHeading / 360));
-
+		if (useCompactDirs){
+			// determine if we have to write direction info
+			if (compactedDir != null)
+				writer.put(compactedDir);
+		} else 
+			writer.put((byte)(initialHeading * 256 / 360));
+		
 		if (haveCurve) {
 			int[] curvedat = encodeCurve();
 			for (int aCurvedat : curvedat)
@@ -258,81 +304,78 @@ public class RouteArc {
 	 * There's even more different encodings supposedly.
 	 */
 	private int[] encodeLength() {
-
-		// update haveCurve
-		haveCurve = (curveEnabled && finalHeading != initialHeading);
-
-		if (length >= (1 << 22)) {
-			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + length + " units) is too big to be encoded so the way might not be routable");
-			length = (1 << 22) - 1;
-		}
-
-		// clear existing bits in case length or final heading have
-		// been changed
-		flagA &= ~0x38;
 		int[] lendat;
-		if(length < 0x200) {
-			// 9 bit length optional curve
+		if(length < 0x300 || (length < 0x400 && haveCurve == false)) {
+			// 10 bit length optional curve
+			// clear bits 
+			flagA &= ~0x38;
+			
 			if(haveCurve)
 				flagA |= 0x20;
-			flagA |= (length >> 5) & 0x08; // top bit of length
+			flagA |= (length >> 5) & 0x18; // top two bits of length (at least one must be zero)
 			lendat = new int[1];		   // one byte of data
 			lendat[0] = length;			   // bottom 8 bits of length
-		} 
-		else if(length >= (1 << 14)) {
-			// 22 bit length with curve
-			flagA |= 0x38;
-			lendat = new int[3];		   // three bytes of data
-			lendat[0] = 0xC0 | (length & 0x3f); // 0x80 set, 0x40 set, 6 low bits of length
-			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
-			lendat[2] = (length >> 14) & 0xff; // 8 more bits of length
-		}
-
-		else if(haveCurve) {
-			// 15 bit length with curve
-			flagA |= 0x38;				 // all three bits set
-			lendat = new int[2];		 // two bytes of data
-			lendat[0] = (length & 0x7f); // 0x80 not set, 7 low bits of length
-			lendat[1] = (length >> 7) & 0xff; // 8 more bits of length
-		}
-		else {
-			// 14 bit length no curve
+			assert (flagA & 0x38) != 0x38;
+		} else {
 			flagA |= 0x38;		 // all three bits set
-			lendat = new int[2]; // two bytes of data
-			lendat[0] = 0x80 | (length & 0x3f); // 0x80 set, 0x40 not set, 6 low bits of length
-			lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+			if(length >= (1 << 14)) {
+				// 22 bit length with curve
+				lendat = new int[3];		   // three bytes of data
+				lendat[0] = 0xC0 | (length & 0x3f); // 0x80 set, 0x40 set, 6 low bits of length
+				lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+				lendat[2] = (length >> 14) & 0xff; // 8 more bits of length
+			}
+			else if(haveCurve) {
+				// 15 bit length with curve
+				lendat = new int[2];		 // two bytes of data
+				lendat[0] = (length & 0x7f); // 0x80 not set, 7 low bits of length
+				lendat[1] = (length >> 7) & 0xff; // 8 more bits of length
+			}
+			else {
+				// 14 bit length no curve
+				lendat = new int[2]; // two bytes of data
+				lendat[0] = 0x80 | (length & 0x3f); // 0x80 set, 0x40 not set, 6 low bits of length
+				lendat[1] = (length >> 6) & 0xff; // 8 more bits of length
+			}
 		}
-
 		return lendat;
 	}
 
 	/**
 	 * Encode the curve data into a sequence of bytes.
-	 *
-	 * 1 or 2 bytes show up in practice, but they're not at
-	 * all well understood yet.
+	 * Curve data contains a ratio between arc length and direct distance
+	 * and the direct bearing. This is typically encode in one byte, 
+	 * for extreme ratios two bytes are used.
 	 */
 	private int[] encodeCurve() {
-		// most examples of curve data are a single byte that encodes
-		// the final heading of the arc. The bits appear to be
-		// reorganised into the order 21076543 (i.e. the top 5 bits
-		// are shifted down to the bottom).  Unfortunately, it's not
-		// that simple because sometimes the curve is encoded using 2
-		// bytes. The presence of the 2nd byte is indicated by the top
-		// 3 bits of the first byte all being zero. As the encoding of
-		// the 2-byte variant is not yet understood, for the moment,
-		// if the resulting value would have the top 3 bits all zero,
-		// we set what we hope is the LSB so that it becomes valid
-		// 1-byte curve data
-		int heading = 256 * finalHeading / 360;
-		int encodedHeading = ((heading & 0xf8) >> 3) | ((heading & 0x07) << 5);
-		if((encodedHeading & 0xe0) == 0) {
-			// hack - set a bit (hopefully, the LSB) to force 1-byte
-			// encoding
-			encodedHeading |= 0x20;
+		assert lengthRatio != 0;
+		int[] curveData;
+		
+			
+		int dh = ((int) (directHeading * 256 / 360));
+		if (lengthRatio >= 1 && lengthRatio <= 17) {
+			// two byte curve data neeeded
+			curveData = new int[2];
+			curveData[0] = lengthRatio;
+			curveData[1] = dh;
+			
+		} else {
+			// use compacted form
+			int compactedRatio = lengthRatio / 2 - 8;
+			assert compactedRatio > 0 && compactedRatio < 8;
+			curveData = new int[1];
+			
+			curveData[0] = (compactedRatio << 5) | ((dh >> 3) & 0x1f);
+			/* check math:
+			int dhx = curveData[0] & 0x1f;
+			int decodedDirectHeading = (dhx <16) ?  dhx << 3 : -(256 - (dhx<<3));
+			if ((dh & 0xfffffff8) != decodedDirectHeading)
+				log.error("failed to encode direct heading", directHeading, dh, decodedDirectHeading);
+			int ratio = (curveData[0] & 0xe0) >> 5;
+			if (ratio != compactedRatio)
+				log.error("failed to encode length ratio", lengthRatio, compactedRatio, ratio);
+				*/
 		}
-		int[] curveData = new int[1];
-		curveData[0] = encodedHeading;
 		return curveData;
 	}
 
@@ -340,16 +383,12 @@ public class RouteArc {
 		return roadDef;
 	}
 
-	public void setNewDir() {
-		flagA |= FLAG_NEWDIR;
-	}
-
 	public void setForward() {
-		flagA |= FLAG_FORWARD;
+		isForward = true;
 	}
 
 	public boolean isForward() {
-		return (flagA & FLAG_FORWARD) != 0;
+		return isForward;
 	}
 
 	public void setLast() {

@@ -132,44 +132,52 @@ public class RoadNetwork {
 				if(node1 == node2)
 					log.error("Road " + road.getRoadDef() + " contains consecutive identical nodes at " + co.toOSMURL() + " - routing will be broken");
 				else if(arcLength == 0)
-					log.error("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
+					log.warn("Road " + road.getRoadDef() + " contains zero length arc at " + co.toOSMURL());
 
 
-				Coord bearingPoint = coordList.get(lastIndex + 1);
-				if(lastCoord.equals(bearingPoint)) {
+				Coord forwardBearingPoint = coordList.get(lastIndex + 1);
+				if(lastCoord.equals(forwardBearingPoint)) {
 					// bearing point is too close to last node to be
 					// useful - try some more points
 					for(int bi = lastIndex + 2; bi <= index; ++bi) {
 						if(!lastCoord.equals(coordList.get(bi))) {
-							bearingPoint = coordList.get(bi);
+							forwardBearingPoint = coordList.get(bi);
 							break;
 						}
 					}
 				}
-				int forwardBearing = (int)lastCoord.bearingTo(bearingPoint);
-				int inverseForwardBearing = (int)bearingPoint.bearingTo(lastCoord);
-
-				bearingPoint = coordList.get(index - 1);
-				if(co.equals(bearingPoint)) {
+				Coord reverseBearingPoint = coordList.get(index - 1);
+				if(co.equals(reverseBearingPoint)) {
 					// bearing point is too close to this node to be
 					// useful - try some more points
 					for(int bi = index - 2; bi > lastIndex; --bi) {
 						if(!co.equals(coordList.get(bi))) {
-							bearingPoint = coordList.get(bi);
+							reverseBearingPoint = coordList.get(bi);
 							break;
 						}
 					}
 				}
-				int reverseBearing = (int)co.bearingTo(bearingPoint);
-				int inverseReverseBearing = (int)bearingPoint.bearingTo(co);
+				
+				double forwardInitialBearing = lastCoord.bearingTo(forwardBearingPoint);
+				double forwardDirectBearing = (co == forwardBearingPoint) ? forwardInitialBearing: lastCoord.bearingTo(co); 
 
+				double reverseInitialBearing = co.bearingTo(reverseBearingPoint);
+				double reverseDirectBearing = (lastCoord == reverseBearingPoint) ? reverseInitialBearing: co.bearingTo(lastCoord); 
+
+				// TODO: maybe detect cases where bearing was already calculated above 
+				double forwardFinalBearing = reverseBearingPoint.bearingTo(co); 
+				double reverseFinalBearing = forwardBearingPoint.bearingTo(lastCoord);
+
+				double directLength = (lastIndex + 1 == index) ? arcLength : lastCoord.distance(co);
 				// Create forward arc from node1 to node2
 				RouteArc arc = new RouteArc(road.getRoadDef(),
 											node1,
 											node2,
-											forwardBearing,
-											inverseReverseBearing,
+											forwardInitialBearing,
+											forwardFinalBearing,
+											forwardDirectBearing,
 											arcLength,
+											directLength,
 											outputCurveData,
 											pointsHash);
 				arc.setForward();
@@ -179,9 +187,11 @@ public class RoadNetwork {
 				// Create the reverse arc
 				arc = new RouteArc(road.getRoadDef(),
 								   node2, node1,
-								   reverseBearing,
-								   inverseForwardBearing,
+								   reverseInitialBearing,
+								   reverseFinalBearing,
+								   reverseDirectBearing,
 								   arcLength,
+								   directLength,
 								   outputCurveData,
 								   pointsHash);
 				node2.addArc(arc);
@@ -262,19 +272,36 @@ public class RoadNetwork {
 		RouteNode fn = nodes.get(fromNode.getId());
 		RouteNode tn = nodes.get(toNode.getId());
 		RouteNode vn = nodes.get(viaNode.getId());
-
-		assert fn != null : "can't locate 'from' RouteNode with id " + fromNode.getId();
-		assert tn != null : "can't locate 'to' RouteNode with id " + toNode.getId();
-		assert vn != null : "can't locate 'via' RouteNode with id " + viaNode.getId();
-
+		if (fn == null  || tn == null || vn == null){
+			if (fn == null)
+				log.error("can't locate 'from' RouteNode with id", fromNode.getId());
+			if (tn == null)
+				log.error("can't locate 'to' RouteNode with id", toNode.getId());
+			if (vn == null)
+				log.error("can't locate 'via' RouteNode with id", viaNode.getId());
+			return;
+		}
 		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
 		RouteArc ta = vn.getArcTo(tn);
-
-		assert fa != null : "can't locate arc from 'via' node to 'from' node";
-		assert ta != null : "can't locate arc from 'via' node to 'to' node";
-
+		if (fa == null || ta == null){
+			if (fa == null)
+				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'from' node",fromNode.getId());
+			if (ta == null)
+				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'to' node",toNode.getId());
+			return;
+		}
+		if(!ta.isForward() && ta.getRoadDef().isOneway()) {
+			// the route restriction connects to the "wrong" end of a oneway
+			if ((exceptMask & RouteRestriction.EXCEPT_FOOT) != 0){
+				// pedestrians are allowed
+				log.info("restriction via "+viaNode.getId() + " to " + fromNode.getId() + " ignored because to-arc is wrong direction in oneway ");
+				return;
+			} else {
+				log.info("restriction via "+viaNode.getId() + " to " + fromNode.getId() + " added although to-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
+			}
+		}
 		vn.addRestriction(new RouteRestriction(fa, ta, exceptMask));
-    }
+	}
 
 	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
 		RouteNode node = nodes.get(junctionNodeId);

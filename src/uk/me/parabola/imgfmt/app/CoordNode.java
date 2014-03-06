@@ -40,6 +40,13 @@ public class CoordNode extends Coord {
 		preserved(true);
 	}
 
+	public CoordNode(Coord other, long id, boolean boundary){
+		super(other);
+		this.id = id;
+		setOnBoundary(boundary);
+		preserved(true);
+		
+	}
 	public long getId() {
 		return id;
 	}

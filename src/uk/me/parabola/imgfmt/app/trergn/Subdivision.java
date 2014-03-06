@@ -124,12 +124,12 @@ public class Subdivision {
 		h = ((h + 1)/2 + mask) >> shift;
 		
 		if (w > 0x7fff) {
-			log.warn("Subdivision width is " + w + " at " + new Coord(latitude, longitude));
+			log.warn("Subdivision width is " + w + " at " + getCenter());
 			w = 0x7fff;
 		}
 
 		if (h > 0xffff) {
-			log.warn("Subdivision height is " + h + " at " + new Coord(latitude, longitude));
+			log.warn("Subdivision height is " + h + " at " + getCenter());
 			h = 0xffff;
 		}
 
@@ -435,7 +435,7 @@ public class Subdivision {
 	}
 
 	public String toString() {
-		return "Sub" + zoomLevel + '(' + new Coord(latitude, longitude).toOSMURL() + ')';
+		return "Sub" + zoomLevel + '(' + getCenter().toOSMURL() + ')';
 	}
 	/**
 	 * Get a type that shows if this area has lines, points etc.
@@ -636,5 +636,8 @@ public class Subdivision {
 		return (val >> shift);
 	}
 
-	
+
+	public Coord getCenter(){
+		return new Coord(getLatitude(),getLongitude());
+	}
 }

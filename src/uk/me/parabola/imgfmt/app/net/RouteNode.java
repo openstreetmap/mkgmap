@@ -14,12 +14,12 @@
  */
 package uk.me.parabola.imgfmt.app.net;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.ImgFileWriter;
@@ -44,11 +44,11 @@ public class RouteNode implements Comparable<RouteNode> {
 	 */
 
 	// Values for the first flag byte at offset 1
+	private static final int MAX_DEST_CLASS_MASK = 0x07;
 	private static final int F_BOUNDARY = 0x08;
 	private static final int F_RESTRICTIONS = 0x10;
 	private static final int F_LARGE_OFFSETS = 0x20;
 	private static final int F_ARCS = 0x40;
-	private static final int F_UNK_NEEDED = 0x04; // XXX
 	// only used internally in mkgmap
 	private static final int F_DISCARDED = 0x100; // node has been discarded
 
@@ -65,7 +65,7 @@ public class RouteNode implements Comparable<RouteNode> {
 	// arcs to this node
 	private final List<RouteArc> incomingArcs = new ArrayList<RouteArc>(4);
 
-	private int flags = F_UNK_NEEDED;
+	private int flags;
 
 	private final CoordNode coord;
 	private char latOff;
@@ -98,8 +98,6 @@ public class RouteNode implements Comparable<RouteNode> {
 	}
 
 	public void addArc(RouteArc arc) {
-		if (!arcs.isEmpty())
-			arc.setNewDir();
 		arcs.add(arc);
 		int cl = arc.getRoadDef().getRoadClass();
 		if(log.isDebugEnabled())
@@ -166,6 +164,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		assert (flags & F_DISCARDED) == 0 : "attempt to write discarded node";
 
 		writer.put((byte) 0);  // will be overwritten later
+		flags |= (nodeClass & MAX_DEST_CLASS_MASK); // max. road class of any outgoing road
 		writer.put((byte) flags);
 
 		if (haveLargeOffsets()) {
@@ -175,9 +174,40 @@ public class RouteNode implements Comparable<RouteNode> {
 		}
 
 		if (!arcs.isEmpty()) {
+			boolean useCompactDirs = true;
+			IntArrayList initialHeadings = new IntArrayList(arcs.size()+1);
+			RouteArc lastArc = null;
+			for (RouteArc arc: arcs){
+				if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
+					int dir = (byte)(arc.getInitialHeading() * 256 / 360);
+					dir = dir & 0xf0;
+					if (initialHeadings.contains(dir)){
+						useCompactDirs = false;
+						break;
+					}
+					initialHeadings.add(dir);
+				} else {
+					// 
+				}
+				lastArc = arc;
+			}
+			initialHeadings.add(0); // add dummy 0 so that we don't have to check for existence
 			arcs.get(arcs.size() - 1).setLast();
-			for (RouteArc arc : arcs)
-				arc.write(writer);
+			lastArc = null;
+			
+			int index = 0;
+			for (RouteArc arc: arcs){
+				Byte compactedDir = null;
+				if (useCompactDirs){
+					if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
+						if (index % 2 == 0)
+							compactedDir = (byte) ((initialHeadings.get(index) >> 4) | initialHeadings.getInt(index+1));
+						index++;
+					}
+				}
+				arc.write(writer, lastArc, useCompactDirs, compactedDir);
+				lastArc = arc;
+			}
 		}
 
 		if (!restrictions.isEmpty()) {
@@ -301,7 +331,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					if(labb != null && labb.getOffset() != 0) {
 						bothArcsNamed = true;
 						if(laba.equals(labb)) {
-							// the roads have the same name
+							// the roads have the same label
 							if(rda.isLinkRoad() == rdb.isLinkRoad()) {
 								// if both are a link road or both are
 								// not a link road, consider them the
@@ -335,7 +365,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		return false;
 	}
 
-	private static boolean rightTurnRequired(int inHeading, int outHeading, int sideHeading) {
+	private static boolean rightTurnRequired(float inHeading, float outHeading, float otherHeading) {
 		// given the headings of the incoming, outgoing and side
 		// roads, decide whether a side road is to the left or the
 		// right of the main road
@@ -346,13 +376,13 @@ public class RouteNode implements Comparable<RouteNode> {
 		while(outHeading > 180)
 			outHeading -= 360;
 
-		sideHeading -= inHeading;
-		while(sideHeading < -180)
-			sideHeading += 360;
-		while(sideHeading > 180)
-			sideHeading -= 360;
+		otherHeading -= inHeading;
+		while(otherHeading < -180)
+			otherHeading += 360;
+		while(otherHeading > 180)
+			otherHeading -= 360;
 
-		return sideHeading > outHeading;
+		return otherHeading > outHeading;
 	}
 
 	private static final int ATH_OUTGOING = 1;
@@ -414,7 +444,7 @@ public class RouteNode implements Comparable<RouteNode> {
 					continue;
 				}
 
-				int inHeading = inArc.getFinalHeading();
+				float inHeading = inArc.getFinalHeading();
 				// determine the outgoing arc that is likely to be the
 				// same road as the incoming arc
 				RouteArc outArc = null;
@@ -507,8 +537,8 @@ public class RouteNode implements Comparable<RouteNode> {
 				// remember that this arc is an outgoing arc
 				outgoingArcs.add(outArc);
 
-				int outHeading = outArc.getInitialHeading();
-				int mainHeadingDelta = outHeading - inHeading;
+				float outHeading = outArc.getInitialHeading();
+				float mainHeadingDelta = outHeading - inHeading;
 				while(mainHeadingDelta > 180)
 					mainHeadingDelta -= 360;
 				while(mainHeadingDelta < -180)
@@ -561,19 +591,19 @@ public class RouteNode implements Comparable<RouteNode> {
 						continue;
 					}
 
-					int otherHeading = otherArc.getInitialHeading();
-					int outToOtherDelta = otherHeading - outHeading;
+					float otherHeading = otherArc.getInitialHeading();
+					float outToOtherDelta = otherHeading - outHeading;
 					while(outToOtherDelta > 180)
 						outToOtherDelta -= 360;
 					while(outToOtherDelta < -180)
 						outToOtherDelta += 360;
-					int inToOtherDelta = otherHeading - inHeading;
+					float inToOtherDelta = otherHeading - inHeading;
 					while(inToOtherDelta > 180)
 						inToOtherDelta -= 360;
 					while(inToOtherDelta < -180)
 						inToOtherDelta += 360;
 
-					int newHeading = otherHeading;
+					float newHeading = otherHeading;
 					if(rightTurnRequired(inHeading, outHeading, otherHeading)) {
 						// side road to the right
 						if((mask & ATH_OUTGOING) != 0 &&
@@ -581,7 +611,7 @@ public class RouteNode implements Comparable<RouteNode> {
 							newHeading = outHeading + MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
 						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							int nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
+							float nh = inHeading + MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh > newHeading)
 								newHeading = nh;
 						}
@@ -596,7 +626,7 @@ public class RouteNode implements Comparable<RouteNode> {
 							newHeading = outHeading - MIN_DIFF_BETWEEN_OUTGOING_AND_OTHER_ARCS;
 						if((mask & ATH_INCOMING) != 0 &&
 						   Math.abs(inToOtherDelta) < MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS) {
-							int nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
+							float nh = inHeading - MIN_DIFF_BETWEEN_INCOMING_AND_OTHER_ARCS;
 							if(nh < newHeading)
 								newHeading = nh;
 						}

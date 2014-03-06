@@ -13,11 +13,14 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +44,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.LinkedHashMap;
 
+import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.util.Java2DConverter;
@@ -52,8 +57,7 @@ import uk.me.parabola.util.Java2DConverter;
  * @author WanMil
  */
 public class MultiPolygonRelation extends Relation {
-	private static final Logger log = Logger
-			.getLogger(MultiPolygonRelation.class);
+	private static final Logger log = Logger.getLogger(MultiPolygonRelation.class);
 
 	public static final String STYLE_FILTER_TAG = "mkgmap:stylefilter";
 	public static final String STYLE_FILTER_LINE = "polyline";
@@ -125,8 +129,12 @@ public class MultiPolygonRelation extends Relation {
 			if (log.isDebugEnabled()) {
 				log.debug(" ", role, el.toBrowseURL(), el.toTagString());
 			}
-			addElement(role, el);
-			roleMap.put(el.getId(), role);
+			if (roleMap.containsKey(el.getId()) )
+				log.warn("repeated member with id ", el.getId(), "in multipolygon relation",this.getId(),"is ignored");
+			else {
+				addElement(role, el);
+				roleMap.put(el.getId(), role);
+			}
 		}
 	}
 	
@@ -254,12 +262,13 @@ public class MultiPolygonRelation extends Relation {
 			roleMap.put(jw.getId(), getRole(orgSegment));
 			if (orgSegment.isClosed()) {
 				if (orgSegment.isComplete() == false) {
-					// the way is complete in planet but some points are missing in this tile
+					// the way is closed in planet but some points are missing in this tile
 					// we can close it artificially
 					if (log.isDebugEnabled())
 						log.debug("Close incomplete but closed polygon:",orgSegment);
 					jw.closeWayArtificially();
 				}
+				assert 	jw.hasIdenticalEndPoints() : "way is not closed";
 				joinedWays.add(jw);
 			} else {
 				unclosedWays.add(jw);
@@ -271,7 +280,7 @@ public class MultiPolygonRelation extends Relation {
 
 			// check if the current way is already closed or if it is the last
 			// way
-			if (joinWay.isClosed() || unclosedWays.isEmpty()) {
+			if (joinWay.hasIdenticalEndPoints() || unclosedWays.isEmpty()) {
 				joinedWays.add(joinWay);
 				continue;
 			}
@@ -290,7 +299,7 @@ public class MultiPolygonRelation extends Relation {
 			// joinWay to the beginning of the list
 			// (not optimal but understandable - can be optimized later)
 			for (JoinedWay tempWay : unclosedWays) {
-				if (tempWay.isClosed()) {
+				if (tempWay.hasIdenticalEndPoints()) {
 					continue;
 				}
 
@@ -349,7 +358,7 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (joined) {
-				if (joinWay.isClosed()) {
+				if (joinWay.hasIdenticalEndPoints()) {
 					// it's closed => don't process it again
 					joinedWays.add(joinWay);
 				} else if (unclosedWays.isEmpty()) {
@@ -377,7 +386,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	protected void closeWays(ArrayList<JoinedWay> wayList) {
 		for (JoinedWay way : wayList) {
-			if (way.isClosed() || way.getPoints().size() < 3) {
+			if (way.hasIdenticalEndPoints() || way.getPoints().size() < 3) {
 				continue;
 			}
 			Coord p1 = way.getPoints().get(0);
@@ -432,10 +441,12 @@ public class MultiPolygonRelation extends Relation {
 				// close the polygon
 				// the new way segment does not intersect the rest of the
 				// polygon
-				log.info("Closing way", way);
-				log.info("from", way.getPoints().get(0).toOSMURL());
-				log.info("to", way.getPoints().get(way.getPoints().size() - 1)
-						.toOSMURL());
+				if (log.isInfoEnabled()){
+					log.info("Closing way", way);
+					log.info("from", way.getPoints().get(0).toOSMURL());
+					log.info("to", way.getPoints().get(way.getPoints().size() - 1)
+							.toOSMURL());
+				} 
 				// mark this ways as artificially closed
 				way.closeWayArtificially();
 			}
@@ -461,14 +472,14 @@ public class MultiPolygonRelation extends Relation {
 		List<JoinedWay> unclosed = new ArrayList<JoinedWay>();
 
 		for (JoinedWay w : allWays) {
-			if (w.isClosed() == false) {
+			if (w.hasIdenticalEndPoints() == false) {
 				unclosed.add(w);
 			}
 		}
 		// try to connect ways lying outside or on the bbox
 		if (unclosed.size() >= 2) {
 			log.debug("Checking",unclosed.size(),"unclosed ways for connections outside the bbox");
-			Map<Coord, JoinedWay> outOfBboxPoints = new HashMap<Coord, JoinedWay>();
+			Map<Coord, JoinedWay> outOfBboxPoints = new IdentityHashMap<Coord, JoinedWay>();
 			
 			// check all ways for endpoints outside or on the bbox
 			for (JoinedWay w : unclosed) {
@@ -553,10 +564,10 @@ public class MultiPolygonRelation extends Relation {
 				} else {
 					log.debug("Connect", minCon.w1, "with", minCon.w2);
 
-					if (minCon.w1.getPoints().get(0).equals(minCon.c1)) {
+					if (minCon.w1.getPoints().get(0) == minCon.c1) {
 						Collections.reverse(minCon.w1.getPoints());
 					}
-					if (minCon.w2.getPoints().get(0).equals(minCon.c2) == false) {
+					if (minCon.w2.getPoints().get(0) != minCon.c2) {
 						Collections.reverse(minCon.w2.getPoints());
 					}
 
@@ -573,7 +584,7 @@ public class MultiPolygonRelation extends Relation {
 	
 	/**
 	 * Removes all ways non closed ways from the given list (
-	 * <code>{@link Way#isClosed()} == false</code>)
+	 * <code>{@link Way#hasIdenticalEndPoints()} == false</code>)
 	 * 
 	 * @param wayList
 	 *            list of ways
@@ -583,7 +594,7 @@ public class MultiPolygonRelation extends Relation {
 		boolean firstWarn = true;
 		while (it.hasNext()) {
 			JoinedWay tempWay = it.next();
-			if (!tempWay.isClosed()) {
+			if (!tempWay.hasIdenticalEndPoints()) {
 				// warn only if the way intersects the bounding box 
 				boolean inBbox = tempWay.intersects(bbox);
 				if (inBbox) {
@@ -1277,7 +1288,7 @@ public class MultiPolygonRelation extends Relation {
 			return null;
 		}
 		
-		Rectangle outerBounds = areaData.outerArea.getBounds();
+		Rectangle2D outerBounds = areaData.outerArea.getBounds2D();
 		
 		if (areaData.innerAreas.size() == 1) {
 			// make it short if there is only one inner area
@@ -1303,7 +1314,7 @@ public class MultiPolygonRelation extends Relation {
 			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the start
 			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START: COMP_LAT_START));
 			for (Area anInnerStart : innerStart) {
-				if (axis.getStart(anInnerStart) <= axis.getStart(outerBounds)) {
+				if (axis.getStart30(anInnerStart) <= axis.getStart30(outerBounds)) {
 					// found a touching area
 					edgeCutPoint.addArea(anInnerStart);
 				} else {
@@ -1318,7 +1329,7 @@ public class MultiPolygonRelation extends Relation {
 			Collections.sort(innerStart, (axis == CoordinateAxis.LONGITUDE ? COMP_LONG_STOP: COMP_LAT_STOP));
 			// go through the inner polygon list and use all polygons that intersect the outer polygons bbox at the stop
 			for (Area anInnerStart : innerStart) {
-				if (axis.getStop(anInnerStart) >= axis.getStop(outerBounds)) {
+				if (axis.getStop30(anInnerStart) >= axis.getStop30(outerBounds)) {
 					// found a touching area
 					edgeCutPoint.addArea(anInnerStart);
 				} else {
@@ -1412,8 +1423,8 @@ public class MultiPolygonRelation extends Relation {
 				initialCutData.innerAreas = new ArrayList<Area>(innerAreas
 						.size());
 				for (Area innerArea : innerAreas) {
-					if (outerArea.getBounds().intersects(
-						innerArea.getBounds())) {
+					if (outerArea.getBounds2D().intersects(
+						innerArea.getBounds2D())) {
 						initialCutData.innerAreas.add(innerArea);
 					}
 				}
@@ -1451,7 +1462,7 @@ public class MultiPolygonRelation extends Relation {
 				Area combinedCutAreas = new Area(path);
 				areaCutData.outerArea.subtract(combinedCutAreas);
 			}
-			
+				
 			if (areaCutData.outerArea.isEmpty()) {
 				// this outer area space can be abandoned
 				continue;
@@ -1484,8 +1495,8 @@ public class MultiPolygonRelation extends Relation {
 				}
 			} else {
 				// we need to cut the area into two halves to get singular areas
-				Rectangle r1 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, true);
-				Rectangle r2 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, false);
+				Rectangle2D r1 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, true);
+				Rectangle2D r2 = cutPoint.getCutRectangleForArea(areaCutData.outerArea, false);
 
 				// Now find the intersection of these two boxes with the
 				// original polygon. This will make two new areas, and each
@@ -1531,9 +1542,26 @@ public class MultiPolygonRelation extends Relation {
 		
 		// convert the java.awt.geom.Area back to the mkgmap way
 		List<Way> cuttedOuterPolygon = new ArrayList<Way>(finishedAreas.size());
+		Long2ObjectOpenHashMap<Coord> commonCoordMap = new Long2ObjectOpenHashMap<>();
 		for (Area area : finishedAreas) {
 			Way w = singularAreaToWay(area, FakeIdGenerator.makeFakeId());
 			if (w != null) {
+				// make sure that equal coords are changed to identical coord instances
+				// this allows merging in the ShapeMerger
+				// TODO: maybe better merge here?
+				
+				int n = w.getPoints().size();
+				for (int i = 0; i < n; i++){
+					Coord p = w.getPoints().get(i);
+					long key = Utils.coord2Long(p);
+					Coord replacement = commonCoordMap.get(key);
+					if (replacement == null)
+						commonCoordMap.put(key, p);
+					else {
+						assert p.highPrecEquals(replacement);
+						w.getPoints().set(i, replacement);
+					}
+				}
 				w.copyTags(outerPolygon);
 				cuttedOuterPolygon.add(w);
 				if (log.isDebugEnabled()) {
@@ -1556,7 +1584,7 @@ public class MultiPolygonRelation extends Relation {
 	 */
 	private List<Area> createAreas(Way w, boolean clipBbox) {
 		Area area = Java2DConverter.createArea(w.getPoints());
-		if (clipBbox && !bboxArea.contains(area.getBounds())) {
+		if (clipBbox && !bboxArea.contains(area.getBounds2D())) {
 			// the area intersects the bounding box => clip it
 			area.intersect(bboxArea);
 		}
@@ -1755,7 +1783,7 @@ public class MultiPolygonRelation extends Relation {
 	 * @return true if polygon1 contains polygon2
 	 */
 	private boolean contains(JoinedWay polygon1, JoinedWay polygon2) {
-		if (!polygon1.isClosed()) {
+		if (!polygon1.hasIdenticalEndPoints()) {
 			return false;
 		}
 		// check if the bounds of polygon2 are completely inside/enclosed the bounds
@@ -1764,7 +1792,7 @@ public class MultiPolygonRelation extends Relation {
 			return false;
 		}
 
-		Polygon p = Java2DConverter.createPolygon(polygon1.getPoints());
+		Polygon highPrecPolygon = Java2DConverter.createHighPrecPolygon(polygon1.getPoints());
 		// check first if one point of polygon2 is in polygon1
 
 		// ignore intersections outside the bounding box
@@ -1773,7 +1801,7 @@ public class MultiPolygonRelation extends Relation {
 		boolean onePointContained = false;
 		boolean allOnLine = true;
 		for (Coord px : polygon2.getPoints()) {
-			if (p.contains(px.getLongitude(), px.getLatitude())) {
+			if (highPrecPolygon.contains(px.getHighPrecLon(), px.getHighPrecLat())){
 				// there's one point that is in polygon1 and in the bounding
 				// box => polygon1 may contain polygon2
 				onePointContained = true;
@@ -1801,16 +1829,14 @@ public class MultiPolygonRelation extends Relation {
 			Coord p1 = null;
 			for (Coord p2 : polygon2.getPoints()) {
 				if (p1 != null) {
-					int mLat = p1.getLatitude()+(int)Math.round((p2.getLatitude()-p1.getLatitude())/2d);
-					int mLong = p1.getLongitude()+(int)Math.round((p2.getLongitude()-p1.getLongitude())/2d);
-					Coord pm = new Coord(mLat, mLong);
+					Coord pm = p1.makeBetweenPoint(p2, 0.5);
 					middlePoints2.add(pm);
 				}
 				p1 = p2;
 			}
 			
 			for (Coord px : middlePoints2) {
-				if (p.contains(px.getLongitude(), px.getLatitude())) {
+				if (highPrecPolygon.contains(px.getHighPrecLon(), px.getHighPrecLat())){
 					// there's one point that is in polygon1 and in the bounding
 					// box => polygon1 may contain polygon2
 					onePointContained = true;
@@ -1943,7 +1969,7 @@ public class MultiPolygonRelation extends Relation {
 	private boolean locatedOnLine(Coord p, List<Coord> points) {
 		Coord cp1 = null;
 		for (Coord cp2 : points) {
-			if (p.equals(cp2)) {
+			if (p.highPrecEquals(cp2)) { 
 				return true;
 			}
 
@@ -1952,27 +1978,23 @@ public class MultiPolygonRelation extends Relation {
 					// first init
 					continue;
 				}
-
-				if (p.getLongitude() < Math.min(cp1.getLongitude(), cp2
-						.getLongitude())) {
+				
+				if (p.getHighPrecLon() < Math.min(cp1.getHighPrecLon(), cp2.getHighPrecLon())) {
 					continue;
 				}
-				if (p.getLongitude() > Math.max(cp1.getLongitude(), cp2
-						.getLongitude())) {
+				if (p.getHighPrecLon() > Math.max(cp1.getHighPrecLon(), cp2.getHighPrecLon())) {
 					continue;
 				}
-				if (p.getLatitude() < Math.min(cp1.getLatitude(), cp2
-						.getLatitude())) {
+				if (p.getHighPrecLat() < Math.min(cp1.getHighPrecLat(), cp2.getHighPrecLat())) {
 					continue;
 				}
-				if (p.getLatitude() > Math.max(cp1.getLatitude(), cp2
-						.getLatitude())) {
+				if (p.getHighPrecLat() > Math.max(cp1.getHighPrecLat(), cp2.getHighPrecLat())) {
 					continue;
 				}
 
-				double dist = Line2D.ptSegDistSq(cp1.getLongitude(), cp1
-						.getLatitude(), cp2.getLongitude(), cp2.getLatitude(),
-					p.getLongitude(), p.getLatitude());
+				double dist = Line2D.ptSegDistSq(cp1.getHighPrecLon(), cp1.getHighPrecLat(),
+						cp2.getHighPrecLon(), cp2.getHighPrecLat(),
+						p.getHighPrecLon(), p.getHighPrecLat());
 
 				if (dist <= OVERLAP_TOLERANCE_DISTANCE) {
 					log.debug("Point", p, "is located on line between", cp1, "and",
@@ -2114,8 +2136,8 @@ public class MultiPolygonRelation extends Relation {
 		for (Way orgWay : fakeWay.getOriginalWays()) {
 			log.log(logLevel, " Way",orgWay.getId(),"is composed of other artificial ways. Details:");
 			log.log(logLevel, "  Start:",orgWay.getPoints().get(0).toOSMURL());
-			if (orgWay.isClosed()) {
-				// the way is closed so start==end - log the point in the middle of the way
+			if (orgWay.hasEqualEndPoints()) {
+				// the way is closed so start and end are equal - log the point in the middle of the way
 				int mid = orgWay.getPoints().size()/2;
 				log.log(logLevel, "  Mid:  ",orgWay.getPoints().get(mid).toOSMURL());
 			} else {
@@ -2276,20 +2298,21 @@ public class MultiPolygonRelation extends Relation {
 	 * @return the size of the area (unitless)
 	 */
 	public static double calcAreaSize(List<Coord> polygon) {
-		if (polygon.size() < 4 || polygon.get(0).equals(polygon.get(polygon.size()-1)) == false) {
-			return 0;
+		if (polygon.size() < 4 || polygon.get(0) != polygon.get(polygon.size()-1)) {
+			return 0; // line or not closed
 		}
-		double area = 0;
+		long area = 0;
 		Iterator<Coord> polyIter = polygon.iterator();
 		Coord c2 = polyIter.next();
 		while (polyIter.hasNext()) {
 			Coord c1 = c2;
 			c2 = polyIter.next();
-			area += (double) (c2.getLongitude() + c1.getLongitude())
-					* (c1.getLatitude() - c2.getLatitude());
+			area += (long) (c2.getHighPrecLon() + c1.getHighPrecLon())
+					* (c1.getHighPrecLat() - c2.getHighPrecLat());
 		}
-		area /= 2.0d;
-		return Math.abs(area);
+		//  convert from high prec to value in map units
+		double areaSize = (double) area / (2 * (1<<Coord.DELTA_SHIFT) * (1<<Coord.DELTA_SHIFT));  
+		return Math.abs(areaSize);
 	}
 
 
@@ -2528,20 +2551,20 @@ public class MultiPolygonRelation extends Relation {
 		List<Area> innerAreas;
 	}
 
-	private static final int CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD = 1<<11;
-	private static final int CUT_POINT_CLASSIFICATION_BAD_THRESHOLD = 1<<8;
+	private static final int CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD = 1<<(11 + Coord.DELTA_SHIFT);
+	private static final int CUT_POINT_CLASSIFICATION_BAD_THRESHOLD = 1<< (8 + Coord.DELTA_SHIFT);
 	private static class CutPoint implements Comparable<CutPoint>{
-		private int startPoint = Integer.MAX_VALUE;
-		private int stopPoint = Integer.MIN_VALUE;
-		private Integer cutPoint = null;
+		private int startPoint30 = Integer.MAX_VALUE; // 30 bits precision map units
+		private int stopPoint30 = Integer.MIN_VALUE;  // 30 bits precision map units
+		private Integer cutPoint30 = null; // 30 bits precision map units
 		private final LinkedList<Area> areas;
 		private final Comparator<Area> comparator;
 		private final CoordinateAxis axis;
-		private Rectangle bounds;
-		private final Rectangle outerBounds;
+		private Rectangle2D bounds;
+		private final Rectangle2D outerBounds;
 		private Double minAspectRatio;
 
-		public CutPoint(CoordinateAxis axis, Rectangle outerBounds) {
+		public CutPoint(CoordinateAxis axis, Rectangle2D outerBounds) {
 			this.axis = axis;
 			this.outerBounds = outerBounds;
 			this.areas = new LinkedList<Area>();
@@ -2551,79 +2574,79 @@ public class MultiPolygonRelation extends Relation {
 		public CutPoint duplicate() {
 			CutPoint newCutPoint = new CutPoint(this.axis, this.outerBounds);
 			newCutPoint.areas.addAll(areas);
-			newCutPoint.startPoint = startPoint;
-			newCutPoint.stopPoint = stopPoint;
+			newCutPoint.startPoint30 = startPoint30;
+			newCutPoint.stopPoint30 = stopPoint30;
 			return newCutPoint;
 		}
 
 		private boolean isGoodCutPoint() {
 			// It is better if the cutting line is on a multiple of 2048. 
 			// Otherwise MapSource and QLandkarteGT paints gaps between the cuts
-			return getCutPoint() % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD == 0;
+			return getCutPoint30() % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD == 0;
 		}
 		
 		private boolean isBadCutPoint() {
-			int d1 = getCutPoint() - startPoint;
-			int d2 = stopPoint - getCutPoint();
+			int d1 = getCutPoint30() - startPoint30;
+			int d2 = stopPoint30 - getCutPoint30();
 			return Math.min(d1, d2) < CUT_POINT_CLASSIFICATION_BAD_THRESHOLD;
 		}
 		
 		private boolean isStartCut() {
-			return (startPoint <= axis.getStart(outerBounds));
+			return (startPoint30 <= axis.getStart30(outerBounds));
 		}
 		
 		private boolean isStopCut() {
-			return (stopPoint >= axis.getStop(outerBounds));
+			return (stopPoint30 >= axis.getStop30(outerBounds));
 		}
 		
 		/**
 		 * Calculates the point where the cut should be applied.
 		 * @return the point of cut
 		 */
-		public int getCutPoint() {
-			if (cutPoint != null) {
+		private int getCutPoint30() {
+			if (cutPoint30 != null) {
 				// already calculated => just return it
-				return cutPoint;
+				return cutPoint30;
 			}
 			
-			if (startPoint == stopPoint) {
+			if (startPoint30 == stopPoint30) {
 				// there is no choice => return the one possible point 
-				cutPoint = startPoint;
-				return cutPoint;
+				cutPoint30 = startPoint30;
+				return cutPoint30;
 			}
 			
 			if (isStartCut()) {
 				// the polygons can be cut out at the start of the sector
 				// thats good because the big polygon need not to be cut into two halves
-				cutPoint = startPoint;
-				return cutPoint;
+				cutPoint30 = startPoint30;
+				return cutPoint30;
 			}
 			
 			if (isStopCut()) {
 				// the polygons can be cut out at the end of the sector
 				// thats good because the big polygon need not to be cut into two halves
-				cutPoint = startPoint;
-				return cutPoint;
+				cutPoint30 = startPoint30;
+				return cutPoint30;
 			}
 			
 			// try to cut with a good aspect ratio so try the middle of the polygon to be cut
-			int midOuter = axis.getStart(outerBounds)+(axis.getStop(outerBounds) - axis.getStart(outerBounds)) / 2;
-			cutPoint = midOuter;
+			int midOuter30 = axis.getStart30(outerBounds)+(axis.getStop30(outerBounds) - axis.getStart30(outerBounds)) / 2;
+			cutPoint30 = midOuter30;
 
-			if (midOuter < startPoint) {
+			if (midOuter30 < startPoint30) {
 				// not possible => the start point is greater than the middle so correct to the startPoint
-				cutPoint = startPoint;
+				cutPoint30 = startPoint30;
 				
-				if (((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD) <= stopPoint) {
-					cutPoint = ((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD);
+				if (((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD) <= stopPoint30) {
+					cutPoint30 = ((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1)) + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD);
 				}
 				
-			} else if (midOuter > stopPoint) {
+			} else if (midOuter30 > stopPoint30) {
 				// not possible => the stop point is smaller than the middle so correct to the stopPoint
-				cutPoint = stopPoint;
+				cutPoint30 = stopPoint30;
 
-				if ((cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1))  >= startPoint) {
-					cutPoint = (cutPoint & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1));
+				if ((cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1))  >= startPoint30) {
+					cutPoint30 = (cutPoint30 & ~(CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD-1));
 				}
 			}
 			
@@ -2631,44 +2654,45 @@ public class MultiPolygonRelation extends Relation {
 			// try to find a cut point that is a multiple of 2048 to 
 			// avoid that gaps are painted by MapSource and QLandkarteGT
 			// between the cutting lines
-			int cutMod = cutPoint % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD;
+			int cutMod = cutPoint30 % CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD;
 			if (cutMod == 0) {
-				return cutPoint;
+				return cutPoint30;
 			}
 			
-			int cut1 = (cutMod > 0 ? cutPoint-cutMod : cutPoint  - CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD- cutMod);
-			if (cut1 >= startPoint && cut1 <= stopPoint) {
-				cutPoint = cut1;
-				return cutPoint;
+			int cut1 = (cutMod > 0 ? cutPoint30-cutMod : cutPoint30  - CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD- cutMod);
+			if (cut1 >= startPoint30 && cut1 <= stopPoint30) {
+				cutPoint30 = cut1;
+				return cutPoint30;
 			}
 			
-			int cut2 = (cutMod > 0 ? cutPoint + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD -cutMod : cutPoint - cutMod);
-			if (cut2 >= startPoint && cut2 <= stopPoint) {
-				cutPoint = cut2;
-				return cutPoint;
+			int cut2 = (cutMod > 0 ? cutPoint30 + CUT_POINT_CLASSIFICATION_GOOD_THRESHOLD -cutMod : cutPoint30 - cutMod);
+			if (cut2 >= startPoint30 && cut2 <= stopPoint30) {
+				cutPoint30 = cut2;
+				return cutPoint30;
 			}
 			
-			return cutPoint;
+			return cutPoint30;
 		}
 
-		public Rectangle getCutRectangleForArea(Area toCut, boolean firstRect) {
-			return getCutRectangleForArea(toCut.getBounds(), firstRect);
+		public Rectangle2D getCutRectangleForArea(Area toCut, boolean firstRect) {
+			return getCutRectangleForArea(toCut.getBounds2D(), firstRect);
 		}
 		
-		public Rectangle getCutRectangleForArea(Rectangle areaRect, boolean firstRect) {
+		public Rectangle2D getCutRectangleForArea(Rectangle2D areaRect, boolean firstRect) {
+			double cp = (double)  getCutPoint30() / (1<<Coord.DELTA_SHIFT);
 			if (axis == CoordinateAxis.LONGITUDE) {
-				int newWidth = getCutPoint()-areaRect.x;
+				double newWidth = cp-areaRect.getX();
 				if (firstRect) {
-					return new Rectangle(areaRect.x, areaRect.y, newWidth, areaRect.height); 
+					return new Rectangle2D.Double(areaRect.getX(), areaRect.getY(), newWidth, areaRect.getHeight()); 
 				} else {
-					return new Rectangle(areaRect.x+newWidth, areaRect.y, areaRect.width-newWidth, areaRect.height); 
+					return new Rectangle2D.Double(areaRect.getX()+newWidth, areaRect.getY(), areaRect.getWidth()-newWidth, areaRect.getHeight()); 
 				}
 			} else {
-				int newHeight = getCutPoint()-areaRect.y;
+				double newHeight = cp-areaRect.getY();
 				if (firstRect) {
-					return new Rectangle(areaRect.x, areaRect.y, areaRect.width, newHeight); 
+					return new Rectangle2D.Double(areaRect.getX(), areaRect.getY(), areaRect.getWidth(), newHeight); 
 				} else {
-					return new Rectangle(areaRect.x, areaRect.y+newHeight, areaRect.width, areaRect.height-newHeight); 
+					return new Rectangle2D.Double(areaRect.getX(), areaRect.getY()+newHeight, areaRect.getWidth(), areaRect.getHeight()-newHeight); 
 				}
 			}
 		}
@@ -2679,21 +2703,21 @@ public class MultiPolygonRelation extends Relation {
 
 		public void addArea(Area area) {
 			// remove all areas that do not overlap with the new area
-			while (!areas.isEmpty() && axis.getStop(areas.getFirst()) < axis.getStart(area)) {
+			while (!areas.isEmpty() && axis.getStop30(areas.getFirst()) < axis.getStart30(area)) {
 				// remove the first area
 				areas.removeFirst();
 			}
 
 			areas.add(area);
 			Collections.sort(areas, comparator);
-			startPoint = axis.getStart(Collections.max(areas,
+			startPoint30 = axis.getStart30(Collections.max(areas,
 				(axis == CoordinateAxis.LONGITUDE ? COMP_LONG_START
 						: COMP_LAT_START)));
-			stopPoint = axis.getStop(areas.getFirst());
+			stopPoint30 = axis.getStop30(areas.getFirst());
 			
 			// reset the cached value => need to be recalculated the next time they are needed
 			bounds = null;
-			cutPoint = null;
+			cutPoint30 = null;
 			minAspectRatio = null;
 		}
 
@@ -2709,13 +2733,13 @@ public class MultiPolygonRelation extends Relation {
 		public double getMinAspectRatio() {
 			if (minAspectRatio == null) {
 				// first get the left/upper cut
-				Rectangle r1 = getCutRectangleForArea(outerBounds, true);
+				Rectangle2D r1 = getCutRectangleForArea(outerBounds, true);
 				double s1_1 = CoordinateAxis.LATITUDE.getSizeOfSide(r1);
 				double s1_2 = CoordinateAxis.LONGITUDE.getSizeOfSide(r1);
 				double ar1 = Math.min(s1_1, s1_2) / Math.max(s1_1, s1_2);
 
 				// second get the right/lower cut
-				Rectangle r2 = getCutRectangleForArea(outerBounds, false);
+				Rectangle2D r2 = getCutRectangleForArea(outerBounds, false);
 				double s2_1 = CoordinateAxis.LATITUDE.getSizeOfSide(r2);
 				double s2_2 = CoordinateAxis.LONGITUDE.getSizeOfSide(r2);
 				double ar2 = Math.min(s2_1, s2_2) / Math.max(s2_1, s2_2);
@@ -2775,8 +2799,8 @@ public class MultiPolygonRelation extends Relation {
 			}
 			
 			// prefer the larger area that is split
-			double ss1 = axis.getSizeOfSide(getBounds());
-			double ss2 = o.axis.getSizeOfSide(o.getBounds());
+			double ss1 = axis.getSizeOfSide(getBounds2D());
+			double ss2 = o.axis.getSizeOfSide(o.getBounds2D());
 			if (ss1-ss2 != 0)
 				return Double.compare(ss1,ss2); 
 
@@ -2785,18 +2809,18 @@ public class MultiPolygonRelation extends Relation {
 
 		}
 
-		private Rectangle getBounds() {
+		private Rectangle2D getBounds2D() {
 			if (bounds == null) {
 				// lazy init
-				bounds = new Rectangle();
+				bounds = new Rectangle2D.Double();
 				for (Area a : areas)
-					bounds.add(a.getBounds());
+					bounds.add(a.getBounds2D());
 			}
 			return bounds;
 		}
 
 		public String toString() {
-			return axis +" "+getNumberOfAreas()+" "+startPoint+" "+stopPoint+" "+getCutPoint();
+			return axis +" "+getNumberOfAreas()+" "+startPoint30+" "+stopPoint30+" "+getCutPoint30();
 		}
 	}
 
@@ -2809,30 +2833,34 @@ public class MultiPolygonRelation extends Relation {
 
 		private final boolean useX;
 
-		public int getStart(Area area) {
-			return getStart(area.getBounds());
+		public int getStart30(Area area) {
+			return getStart30(area.getBounds2D());
 		}
 
-		public int getStart(Rectangle rect) {
-			return (useX ? rect.x : rect.y);
+		public int getStart30(Rectangle2D rect) {
+			double val = (useX ? rect.getX() : rect.getY());
+			return (int)Math.round(val * (1<<Coord.DELTA_SHIFT));
 		}
 
-		public int getStop(Area area) {
-			return getStop(area.getBounds());
+		public int getStop30(Area area) {
+			return getStop30(area.getBounds2D());
 		}
 
-		public int getStop(Rectangle rect) {
-			return (useX ? rect.x + rect.width : rect.y + rect.height);
+		public int getStop30(Rectangle2D rect) {
+			double val = (useX ? rect.getMaxX() : rect.getMaxY());
+			return (int)Math.round(val * (1<<Coord.DELTA_SHIFT));
 		}
 		
-		public double getSizeOfSide(Rectangle rect) {
+		public double getSizeOfSide(Rectangle2D rect) {
 			if (useX) {
-				Coord c1 = new Coord(rect.y, getStart(rect));
-				Coord c2 = new Coord(rect.y, getStop(rect));
+				int lat30 = (int)Math.round(rect.getY() * (1<<Coord.DELTA_SHIFT));
+				Coord c1 = Coord.makeHighPrecCoord(lat30, getStart30(rect));
+				Coord c2 = Coord.makeHighPrecCoord(lat30, getStop30(rect));
 				return c1.distance(c2);
 			} else {
-				Coord c1 = new Coord(getStart(rect), rect.x );
-				Coord c2 = new Coord(getStop(rect), rect.x );
+				int lon30 = (int)Math.round(rect.getX() * (1<<Coord.DELTA_SHIFT));
+				Coord c1 = Coord.makeHighPrecCoord(getStart30(rect), lon30);
+				Coord c2 = Coord.makeHighPrecCoord(getStop30(rect), lon30);
 				return c1.distance(c2);
 			}
 		}
@@ -2863,16 +2891,16 @@ public class MultiPolygonRelation extends Relation {
 			}
 
 			if (startPoint) {
-				int cmp = axis.getStart(o1) - axis.getStart(o2);
+				int cmp = axis.getStart30(o1) - axis.getStart30(o2);
 				if (cmp == 0) {
-					return axis.getStop(o1) - axis.getStop(o2);
+					return axis.getStop30(o1) - axis.getStop30(o2);
 				} else {
 					return cmp;
 				}
 			} else {
-				int cmp = axis.getStop(o1) - axis.getStop(o2);
+				int cmp = axis.getStop30(o1) - axis.getStop30(o2);
 				if (cmp == 0) {
-					return axis.getStart(o1) - axis.getStart(o2);
+					return axis.getStart30(o1) - axis.getStart30(o2);
 				} else {
 					return cmp;
 				}

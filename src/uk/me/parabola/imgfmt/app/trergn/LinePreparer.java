@@ -25,7 +25,7 @@ import uk.me.parabola.log.Logger;
  * This class holds all of the calculations needed to encode a line into
  * the garmin format.
  */
-class LinePreparer {
+public class LinePreparer {
 	private static final Logger log = Logger.getLogger(LinePreparer.class);
 
 	// These are our inputs.
@@ -121,16 +121,17 @@ class LinePreparer {
 		for (int i = 0; i < deltas.length; i+=2) {
 			int dx = deltas[i];
 			int dy = deltas[i + 1];
-			if (dx == 0 && dy == 0)
-				continue;
-			
+			if (dx == 0 && dy == 0){
+				if (extraBit && nodes[i/2+1] == false && i+2 != deltas.length) // don't skip CoordNode
+					continue;
+			}
 			++numPointsEncoded;
 
 			if (log.isDebugEnabled())
 				log.debug("x delta", dx, "~", xbits);
 			assert dx >> xbits == 0 || dx >> xbits == -1;
 			if (xSameSign) {
-				bw.putn(abs(dx), xbits);
+				bw.putn(Math.abs(dx), xbits);
 			} else {
 				// catch inadvertent output of "magic" value that has
 				// sign bit set but other bits all 0
@@ -143,7 +144,7 @@ class LinePreparer {
 				log.debug("y delta", dy, ybits);
 			assert dy >> ybits == 0 || dy >> ybits == -1;
 			if (ySameSign) {
-				bw.putn(abs(dy), ybits);
+				bw.putn(Math.abs(dy), ybits);
 			} else {
 				// catch inadvertent output of "magic" value that has
 				// sign bit set but other bits all 0
@@ -208,9 +209,8 @@ class LinePreparer {
 		boolean yDiffSign = false; // The lat values have different sign
 		int xSign = 0;  // If all the same sign, then this 1 or -1 depending on +ve or -ve
 		int ySign = 0;  // As above for lat.
-		int xBits = 0;  // Number of bits needed for long
-		int yBits = 0;  // Number of bits needed for lat.
-
+		int minDx = Integer.MAX_VALUE, maxDx = 0;
+		int minDy = Integer.MAX_VALUE, maxDy = 0;
 		// index of first point in a series of identical coords (after shift)
 		int firstsame = 0;
 		for (int i = 0; i < numPointsToUse; i++) {
@@ -238,7 +238,7 @@ class LinePreparer {
 			lastLong = lon;
 			lastLat = lat;
 
-			if (dx != 0 || dy != 0)
+			if (dx != 0 || dy != 0 || (extraBit && co.getId() != 0))
 				firstsame = i;
 
 			/*
@@ -294,19 +294,23 @@ class LinePreparer {
 				}
 			}
 
-			// Find the maximum number of bits required to hold the value.
-			int nbits = bitsNeeded(dx);
-			if (nbits > xBits)
-				xBits = nbits;
-
-			nbits = bitsNeeded(dy);
-			if (nbits > yBits)
-				yBits = nbits;
-
+			// find largest delta values
+			if (dx < minDx)
+				minDx = dx;
+			if (dx > maxDx)
+				maxDx = dx;
+			if (dy < minDy)
+				minDy = dy;
+			if (dy > maxDy)
+				maxDy = dy;
+			
 			// Save the deltas
 			deltas[2*(i-1)] = dx;
 			deltas[2*(i-1) + 1] = dy;
 		}
+		// Find the maximum number of bits required to hold the delta values.
+		int xBits = Math.max(bitsNeeded(minDx), bitsNeeded(maxDx)); 
+		int yBits = Math.max(bitsNeeded(minDy), bitsNeeded(maxDy));
 
 		// Now we need to know the 'base' number of bits used to represent
 		// the value.  In decoding you start with that number and add various
@@ -358,8 +362,8 @@ class LinePreparer {
 	 * @param val The number for bit counting.
 	 * @return The number of bits required.
 	 */
-	private int bitsNeeded(int val) {
-		int n = abs(val);
+	public static int bitsNeeded(int val) {
+		int n = Math.abs(val);
 
 		int count = val < 0? 1: 0;
 		while (n != 0) {
@@ -367,13 +371,6 @@ class LinePreparer {
 			count++;
 		}
 		return count;
-	}
-
-	private int abs(int val) {
-		if (val < 0)
-			return -val;
-		else
-			return val;
 	}
 
 	public boolean isExtraBit() {

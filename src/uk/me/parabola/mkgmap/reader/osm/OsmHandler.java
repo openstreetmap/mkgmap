@@ -169,7 +169,7 @@ public class OsmHandler {
 	 * @param way The way that was read.
 	 */
 	protected void endWay(Way way) {
-		way.setClosed(firstNodeRef == lastNodeRef);
+		way.setClosedInOSM(firstNodeRef == lastNodeRef);
 		way.setComplete(!missingNodeRef);
 
 		saver.addWay(way);

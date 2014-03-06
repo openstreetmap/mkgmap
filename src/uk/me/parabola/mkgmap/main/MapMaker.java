@@ -224,7 +224,7 @@ public class MapMaker implements MapProcessor {
 		if(r1 != r2) {
 			for(Coord c1 : r1.getPoints()) {
 				for(Coord c2 : r2.getPoints()) {
-					if(c1 == c2 || c1.equals(c2))
+					if(c1 == c2 || c1.highPrecEquals(c2))
 						return true;
 				}
 			}
@@ -309,13 +309,13 @@ public class MapMaker implements MapProcessor {
 		List<Coord> points = road.getPoints();
 		int numPoints = points.size();
 		Coord coord;
+		// XXX Why not always use an existing point close to
+		// numpoints/2 ?
 		if ((numPoints & 1) == 0) {
 			int i2 = numPoints / 2;
 			int i1 = i2 - 1;
-			coord = new Coord((points.get(i1).getLatitude() +
-					   points.get(i2).getLatitude()) / 2,
-					  (points.get(i1).getLongitude() +
-					   points.get(i2).getLongitude()) / 2);
+			coord = points.get(i1).makeBetweenPoint(points.get(i2), 0.5);
+			
 		} else {
 			coord = points.get(numPoints / 2);
 		}

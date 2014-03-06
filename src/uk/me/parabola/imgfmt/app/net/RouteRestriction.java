@@ -59,12 +59,20 @@ public class RouteRestriction {
 	// mask that specifies which vehicle types the restriction doesn't apply to
 	private final byte exceptMask;
 
+	private final boolean exceptPedestrian;
+	private final boolean exceptEmergency;
+
 	public final static byte EXCEPT_CAR      = 0x01;
 	public final static byte EXCEPT_BUS      = 0x02;
 	public final static byte EXCEPT_TAXI     = 0x04;
 	public final static byte EXCEPT_DELIVERY = 0x10;
 	public final static byte EXCEPT_BICYCLE  = 0x20;
 	public final static byte EXCEPT_TRUCK    = 0x40;
+	
+	// additional flags that can be passed via exceptMask  
+	public final static byte EXCEPT_FOOT     = 0x08; // not written as such
+	public final static byte EXCEPT_EMERGENCY = (byte)0x80; // not written as such
+	private final static byte SPECIAL_EXCEPTION_MASK = ~(EXCEPT_FOOT|EXCEPT_EMERGENCY);
 
 	/**
 	 * Create a route restriction.
@@ -76,7 +84,9 @@ public class RouteRestriction {
 		assert from.getSource().equals(to.getSource()) : "arcs in restriction don't meet";
 		this.from = from;
 		this.to = to;
-		this.exceptMask = exceptMask;
+		this.exceptMask = (byte)(exceptMask & SPECIAL_EXCEPTION_MASK); 
+		this.exceptPedestrian = (exceptMask & EXCEPT_FOOT) != 0;
+		this.exceptEmergency  = (exceptMask & EXCEPT_EMERGENCY) != 0;
 	}
 
 	private int calcOffset(RouteNode node, int tableOffset) {
@@ -94,7 +104,12 @@ public class RouteRestriction {
 	 */
 	public void write(ImgFileWriter writer, int tableOffset) {
 		int header = HEADER;
-
+		
+		if (exceptPedestrian)
+			header |= 0x0200;
+		if (exceptEmergency)
+			header |= 0x0400;
+		
 		if(exceptMask != 0)
 			header |= 0x0800;
 

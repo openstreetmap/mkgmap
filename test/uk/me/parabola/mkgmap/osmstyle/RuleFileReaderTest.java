@@ -1034,9 +1034,9 @@ public class RuleFileReaderTest {
 		el.addPoint(new Coord(2000,2000));
 		el.addPoint(new Coord(2000,1000));
 		if (closed)
-			el.addPoint(new Coord(1000,1000));
+			el.addPoint(el.getPoints().get(0));
 		el.setComplete(complete);
-		el.setClosed(true);
+		el.setClosedInOSM(true);
 		return el;
 	}
 	

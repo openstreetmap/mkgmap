@@ -56,6 +56,7 @@ public class SeaPolygonRelation extends MultiPolygonRelation {
 		addTag("type", "mkgmap:seapolygon");
 	}
 
+	@Override
 	protected boolean isAreaSizeCalculated() {
 		return false;
 	}

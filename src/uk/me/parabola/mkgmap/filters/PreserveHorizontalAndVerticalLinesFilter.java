@@ -55,12 +55,6 @@ public class PreserveHorizontalAndVerticalLinesFilter implements MapFilter {
 				}
 				prev = last;
 			}
-			// if the way has the same point at each end, make sure
-			// that if either is preserved, they both are
-			if(first.equals(last) && first.preserved() != last.preserved()) {
-				first.preserved(true);
-				last.preserved(true);
-			}
 		}
 
 		next.doFilter(line);

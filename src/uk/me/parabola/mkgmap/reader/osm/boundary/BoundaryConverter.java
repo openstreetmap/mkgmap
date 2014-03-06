@@ -29,7 +29,7 @@ public class BoundaryConverter implements OsmConverter {
 	@Override
 	public void convertWay(Way way) {
 		if (BoundaryElementSaver.isBoundary(way)) {
-			java.awt.geom.Area boundArea = new java.awt.geom.Area(Java2DConverter.createArea(way.getPoints()));
+			java.awt.geom.Area boundArea = Java2DConverter.createArea(way.getPoints());
 			Boundary boundary = new Boundary(boundArea, way.getEntryIteratable(), "w"+way.getId());
 			saver.addBoundary(boundary);
 		}

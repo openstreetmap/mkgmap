@@ -71,6 +71,7 @@ import uk.me.parabola.mkgmap.filters.PreserveHorizontalAndVerticalLinesFilter;
 import uk.me.parabola.mkgmap.filters.RemoveEmpty;
 import uk.me.parabola.mkgmap.filters.RemoveObsoletePointsFilter;
 import uk.me.parabola.mkgmap.filters.RoundCoordsFilter;
+import uk.me.parabola.mkgmap.filters.ShapeMergeFilter;
 import uk.me.parabola.mkgmap.filters.SizeFilter;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.LoadableMapDataSource;
@@ -133,6 +134,7 @@ public class MapBuilder implements Configurable {
 	private double reducePointError;
 	private double reducePointErrorPolygon;
 	private boolean mergeLines;
+	private boolean mergeShapes;
 
 	private boolean	poiAddresses;
 	private int		poiDisplayFlags;
@@ -163,6 +165,9 @@ public class MapBuilder implements Configurable {
 		if (reducePointErrorPolygon == -1)
 			reducePointErrorPolygon = reducePointError;
 		mergeLines = props.containsKey("merge-lines");
+
+		// undocumented option - usually used for debugging only
+		mergeShapes = props.getProperty("no-mergeshapes", false) == false;
 
 		makePOIIndex = props.getProperty("make-poi-index", false);
 
@@ -921,7 +926,7 @@ public class MapBuilder implements Configurable {
 			catch (AssertionError ae) {
 				log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 				log.error("  Subdivision shift is " + div.getShift() +
-						  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+						  " and its centre is at " + div.getCenter().toOSMURL());
 				log.error("  " + ae.getMessage());
 				continue;
 			}
@@ -972,7 +977,7 @@ public class MapBuilder implements Configurable {
 				catch (AssertionError ae) {
 					log.error("Problem with point of type 0x" + Integer.toHexString(point.getType()) + " at " + coord.toOSMURL());
 					log.error("  Subdivision shift is " + div.getShift() +
-							  " and its centre is at " + new Coord(div.getLatitude(), div.getLongitude()).toOSMURL());
+							  " and its centre is at " + div.getCenter().toOSMURL());
 					log.error("  " + ae.getMessage());
 					continue;
 				}
@@ -1066,6 +1071,12 @@ public class MapBuilder implements Configurable {
 		config.setResolution(res);
 		config.setLevel(div.getZoom().getLevel());
 		config.setRoutable(doRoads);
+		
+		if (mergeShapes){
+			ShapeMergeFilter shapeMergeFilter = new ShapeMergeFilter(res);
+			List<MapShape> mergedShapes = shapeMergeFilter.merge(shapes);
+			shapes = mergedShapes;
+		}
 		
 		LayerFilterChain filters = new LayerFilterChain(config);
 		if (enableLineCleanFilters && (res < 24)) {

@@ -184,6 +184,10 @@ public class Logger {
 		log.severe(tagMessage(o == null? "null" : o.toString()));
 	}
 
+	public void error(Object ... olist) {
+			arrayFormat(Level.SEVERE, olist);
+	}
+	
 	public void error(Object o, Throwable e) {
 		log.log(Level.SEVERE, tagMessage(o == null? "null" : o.toString()), e);
 	}

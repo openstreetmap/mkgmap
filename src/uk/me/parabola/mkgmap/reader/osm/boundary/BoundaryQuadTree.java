@@ -668,7 +668,7 @@ public class BoundaryQuadTree {
 						continue;
 					Path2D.Double path = new Path2D.Double();
 					for (Area area : aList){
-						BoundaryUtil.addToPath(path, area);
+						path.append(area, false);
 					}
 					add(new Area(path), id, null);
 				}
@@ -688,7 +688,7 @@ public class BoundaryQuadTree {
 			Path2D.Double path = new Path2D.Double();
 			for (Entry <String, List<Area>> entry : areas.entrySet()){
 				for (Area area: entry.getValue()){
-					BoundaryUtil.addToPath(path,area);
+					path.append(area, false);
 				}
 			}
 			Area combinedArea = new Area(path);

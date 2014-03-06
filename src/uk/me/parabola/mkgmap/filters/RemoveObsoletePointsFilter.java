@@ -43,55 +43,78 @@ public class RemoveObsoletePointsFilter implements MapFilter {
 	 */
 	public void doFilter(MapElement element, MapFilterChain next) {
 		MapLine line = (MapLine) element;
-		int numPoints = line.getPoints().size();
+		List<Coord> points = line.getPoints();
+		int numPoints = points.size();
 		if (numPoints <= 1){
 			return;
 		}
-		
+		int requiredPoints = (line instanceof MapShape ) ? 4:2; 
 		List<Coord> newPoints = new ArrayList<Coord>(numPoints);
-		
-		Coord lastP = line.getPoints().get(0);
-		newPoints.add(lastP);
-		for(int i = 1; i < numPoints; i++) {
-			Coord newP = line.getPoints().get(i);
-			int last = newPoints.size()-1;
-			lastP = newPoints.get(last);
-			if (lastP.equals(newP)){
-				// only add the new point if it has different
-				// coordinates to the last point or is preserved
-				if (checkPreserved && line.isRoad()){
-					if (newP.preserved() == false)
-						continue;
-					else if (lastP.preserved() == false){
-						newPoints.set(last, newP); // replace last
-					}
-				} 
-				continue;
-			}
-			if (newPoints.size() > 1) {
-				switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){
-				case Utils.STRICTLY_STRAIGHT:
-					if (checkPreserved && lastP.preserved() && line.isRoad()){
-						// keep it
-					} else {
-						log.debug("found three consecutive points on strictly straight line");
-						newPoints.set(last, newP);
-						continue;
-					}
-					break;
-				case Utils.STRAIGHT_SPIKE:
-					if (line instanceof MapShape){
-						log.debug("removing spike");
-						newPoints.remove(last);
-					}
-					break;
-				default:
-					break;
-				}
-			}
+		while (true){
+			boolean removedSpike = false;
+			numPoints = points.size();
+			
 
-			newPoints.add(newP);
+			Coord lastP = points.get(0);
+			newPoints.add(lastP);
+			for(int i = 1; i < numPoints; i++) {
+				Coord newP = points.get(i);
+				int last = newPoints.size()-1;
+				lastP = newPoints.get(last);
+				if (lastP.equals(newP)){
+					// only add the new point if it has different
+					// coordinates to the last point or is preserved
+					if (checkPreserved && line.isRoad()){
+						if (newP.preserved() == false)
+							continue;
+						else if (lastP.preserved() == false){
+							newPoints.set(last, newP); // replace last
+						} 
+					} else  
+						continue;
+				}
+				if (newPoints.size() > 1) {
+					switch (Utils.isStraight(newPoints.get(last-1), lastP, newP)){
+					case Utils.STRICTLY_STRAIGHT:
+						if (checkPreserved && lastP.preserved() && line.isRoad()){
+							// keep it
+						} else {
+							log.debug("found three consecutive points on strictly straight line");
+							newPoints.set(last, newP);
+							continue;
+						}
+						break;
+					case Utils.STRAIGHT_SPIKE:
+						if (line instanceof MapShape){
+							log.debug("removing spike");
+							newPoints.remove(last);
+							removedSpike = true;
+							if (newPoints.get(last-1).equals(newP))
+								continue;
+						}
+						break;
+					default:
+						break;
+					}
+				}
+
+				newPoints.add(newP);
+			}
+			if (!removedSpike || newPoints.size() < requiredPoints)
+				break;
+			points = newPoints;
+			newPoints = new ArrayList<Coord>(points.size());
 		}
+		if (line instanceof MapShape && newPoints.size() > 3){
+			// check special case: shape starts with spike
+			if (Utils.isStraight(newPoints.get(0), newPoints.get(1), newPoints.get(newPoints.size()-2)) == Utils.STRICTLY_STRAIGHT){
+				newPoints.remove(0);
+				newPoints.set(newPoints.size()-1, newPoints.get(0));
+				if (newPoints.get(newPoints.size()-2).equals(newPoints.get(newPoints.size()-1)))
+					newPoints.remove(newPoints.size()-1);
+			}
+		}
+		
 		if (newPoints.size() != line.getPoints().size()){
 			if (line instanceof MapShape && newPoints.size() <= 3 || newPoints.size() <= 1)
 				return;

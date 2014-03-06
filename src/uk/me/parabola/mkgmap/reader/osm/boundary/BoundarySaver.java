@@ -198,7 +198,7 @@ public class BoundarySaver {
 	}
 
 	private Map<String, Area> splitArea(Area areaToSplit) {
-		return splitArea(areaToSplit, new HashMap<String, Area>());
+		return splitArea(areaToSplit, new HashMap<String, Area>(), null);
 	}
 	
 	/**
@@ -207,45 +207,51 @@ public class BoundarySaver {
 	 * @param splits a map the splitted tiles are added to
 	 * @return the map with the splitted tiles
 	 */
-	private Map<String, Area> splitArea(Area areaToSplit, Map<String, Area> splits) {
+	private Map<String, Area> splitArea(Area areaToSplit, Map<String, Area> splits, Rectangle knownBbox) {
 		if (areaToSplit.isEmpty())
 			return splits;
+		Rectangle2D areaBounds;
 		
+		if (knownBbox != null){
+			// within recursion: use the calculated rectangle, not the area,
+			// as the latter might contain a spike that "looks" out of the bbox
+			// and can cause a stack overflow
+			areaBounds = knownBbox.getBounds2D();
+		}
+		else 
+			areaBounds = areaToSplit.getBounds2D();
+
 		// use high precision bounds with later rounding to avoid some little rounding
 		// errors (49999.99999999 instead of 50000.0)
-		Rectangle2D areaBounds = areaToSplit.getBounds2D();
 		int sMinLong = BoundaryUtil.getSplitBegin((int)Math.round(areaBounds.getMinX()));
 		int sMinLat = BoundaryUtil.getSplitBegin((int)Math.round(areaBounds.getMinY()));
 		int sMaxLong = BoundaryUtil.getSplitEnd((int)Math.round(areaBounds.getMaxX()));
 		int sMaxLat = BoundaryUtil.getSplitEnd((int)Math.round(areaBounds.getMaxY()));
-
+		
 		int dLon = sMaxLong- sMinLong;
 		int dLat = sMaxLat - sMinLat;
-		if (dLon > BoundaryUtil.RASTER || dLat > BoundaryUtil.RASTER) {
+		if (dLon > BoundaryUtil.RASTER || dLat > BoundaryUtil.RASTER){ 
 			// split into two halves
-			Area a1;
-			Area a2;
+			Rectangle r1,r2;
+			int middle; 
 			if (dLon > dLat) {
-				int midLon = BoundaryUtil.getSplitEnd(sMinLong+dLon/2);
-				a1 = new Area(new Rectangle(sMinLong, sMinLat, midLon-sMinLong, dLat));
-				a2 = new Area(new Rectangle(midLon, sMinLat, sMaxLong-midLon, dLat));
+				middle = BoundaryUtil.getSplitEnd(sMinLong+dLon/2);
+				r1 = new Rectangle(sMinLong, sMinLat, middle-sMinLong, dLat);
+				r2 = new Rectangle(middle, sMinLat, sMaxLong-middle, dLat);
 			} else {
-				int midLat = BoundaryUtil.getSplitEnd(sMinLat+dLat/2);
-				a1 = new Area(new Rectangle(sMinLong, sMinLat, dLon, midLat-sMinLat));
-				a2 = new Area(new Rectangle(sMinLong, midLat, dLon, sMaxLat-midLat));
+				middle = BoundaryUtil.getSplitEnd(sMinLat+dLat/2);
+				r1 = new Rectangle(sMinLong, sMinLat, dLon, middle-sMinLat);
+				r2 = new Rectangle(sMinLong, middle, dLon, sMaxLat-middle);
 			}
-
+			Area a = new Area(r1);
 			// intersect with the both halves
 			// and split both halves recursively
-
-			a1.intersect(areaToSplit);
-			splitArea(a1, splits);
-			// a1 is no longer needed => GC
-			a1 = null;
+			a.intersect(areaToSplit);
+			splitArea(a, splits, r1);
 			
-			a2.intersect(areaToSplit);
-			splitArea(a2, splits);
-			
+			a = new Area(r2);
+			a.intersect(areaToSplit);
+			splitArea(a, splits, r2);
 		} else {
 			// the area fully fits into one raster tile
 			splits.put(BoundaryUtil.getKey(sMinLat, sMinLong), areaToSplit);
@@ -465,6 +471,7 @@ public class BoundarySaver {
 					dos.writeInt(len);
 				}
 				// no break
+				//$FALL-THROUGH$
 			case PathIterator.SEG_MOVETO: 
 				len--;
 				for (int i = 0; i < 2; i++){

@@ -16,6 +16,8 @@
  */
 package uk.me.parabola.mkgmap.reader.polish;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -97,7 +99,8 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 	// Use to decode labels if they are not in cp1252
 	private CharsetDecoder dec;
 
-    public boolean isFileSupported(String name) {
+	Long2ObjectOpenHashMap<Coord> coordMap = new Long2ObjectOpenHashMap<>();
+	public boolean isFileSupported(String name) {
 		// Supported if the extension is .mp
 		return name.endsWith(".mp") || name.endsWith(".MP") || name.endsWith(".mp.gz");
 	}
@@ -146,6 +149,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 		}
 
 		addBackground(havePolygon4B);
+		coordMap = null;
 	}
 
 	public LevelInfo[] mapLevels() {
@@ -265,6 +269,10 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 			break;
 		case S_POLYGON:
 			if (points != null) {
+				if (points.get(0) != points.get(points.size()-1)){
+					// not closed, close it
+					points.add(points.get(0));  
+				}
 				shape.setPoints(points);
 				if(extraAttributes != null && shape.hasExtendedType())
 					shape.setExtTypeAttributes(makeExtTypeAttributes());
@@ -677,7 +685,13 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 
 		Double f1 = Double.valueOf(fields[i]);
 		Double f2 = Double.valueOf(fields[i+1]);
-		return new Coord(f1, f2);
+		Coord co = new Coord(f1, f2);
+		long key = Utils.coord2Long(co);
+		Coord co2 = coordMap.get(key);
+		if (co2 != null)
+			return co2;
+		coordMap.put(key, co);
+		return co;
 	}
 
 	private ExtTypeAttributes makeExtTypeAttributes() {
@@ -824,7 +838,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
                 if ("1".equals(params[i])) {
                     switch(i) {
 					case 0:
-						// Mask is not known for Emergency.
+						exceptMask |= RouteRestriction.EXCEPT_EMERGENCY;
 						break;
 					case 1:
 						exceptMask |= RouteRestriction.EXCEPT_DELIVERY;
@@ -839,7 +853,7 @@ public class PolishMapDataSource extends MapperBasedMapDataSource implements Loa
 						exceptMask |= RouteRestriction.EXCEPT_TAXI;
 						break;
 					case 5:
-						// Mask is not known for Pedestrian.
+						exceptMask |= RouteRestriction.EXCEPT_FOOT;
 						break;
 					case 6:
 						exceptMask |= RouteRestriction.EXCEPT_BICYCLE;

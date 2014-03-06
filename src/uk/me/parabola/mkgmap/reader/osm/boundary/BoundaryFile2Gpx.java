@@ -124,7 +124,7 @@ public class BoundaryFile2Gpx {
 				Path2D.Double path = new Path2D.Double();
 				List<Area> aList = areas.get(bId);
 				for (Area area : aList){
-					BoundaryUtil.addToPath(path, area);
+					path.append(area, false);
 				}
 				int i = 0;
 				List<BoundaryElement> bElements = BoundaryUtil.splitToElements(new Area(path),bId);

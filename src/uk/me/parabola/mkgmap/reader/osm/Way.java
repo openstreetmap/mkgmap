@@ -37,8 +37,8 @@ public class Way extends Element {
 	// This will be set if a way is read from an OSM file and the first node is the same node as the last
 	// one in the way. This can be set to true even if there are missing nodes and so the nodes that we
 	// have do not form a closed loop.
-	// Note: this is not always set, you must use isClosed()
-	private boolean closed;
+	// Note: this is not always set
+	private boolean closedInOSM;
 
 	// This is set to false if, we know that there are nodes missing from this way.
 	// If you set this to false, then you *must* also set closed to the correct value.
@@ -57,7 +57,7 @@ public class Way extends Element {
 	public Way copy() {
 		Way dup = new Way(getId(), points);
 		dup.copyTags(this);
-		dup.closed = this.closed;
+		dup.closedInOSM = this.closedInOSM;
 		dup.complete = this.complete;
 		return dup;
 	}
@@ -95,13 +95,40 @@ public class Way extends Element {
 	 */
 	public boolean isClosed() {
 		if (!isComplete())
-			return closed;
+			return closedInOSM;
 
+		return !points.isEmpty() && hasIdenticalEndPoints();
+	}
+
+	/**
+	 * 
+	 * @return true if the way is really closed in OSM,
+	 * false if the way was created by mkgmap or read from polish
+	 * input file (*.mp). 
+	 * 
+	 */
+	public boolean isClosedInOSM() {
+		return closedInOSM;
+	}
+
+	/**
+	 *  
+	 * @return Returns true if the first point in the way is identical to the last.
+	 */
+	public boolean hasIdenticalEndPoints() {
+		return !points.isEmpty() && points.get(0) == points.get(points.size()-1);
+	}
+
+	/**
+	 *  
+	 * @return Returns true if the first point in the way is identical to the last.
+	 */
+	public boolean hasEqualEndPoints() {
 		return !points.isEmpty() && points.get(0).equals(points.get(points.size()-1));
 	}
 
-	public void setClosed(boolean closed) {
-		this.closed = closed;
+	public void setClosedInOSM(boolean closed) {
+		this.closedInOSM = closed;
 	}
 
 	public boolean isComplete() {
@@ -151,6 +178,10 @@ public class Way extends Element {
 		return getId() == ((Way) o).getId();
 	}
 
+	/**
+	 * calculate weighted centre of way, using high precision
+	 * @return
+	 */
 	public Coord getCofG() {
 		int numPoints = points.size();
 		if(numPoints < 1)
@@ -159,10 +190,10 @@ public class Way extends Element {
 		double lat = 0;
 		double lon = 0;
 		for(Coord p : points) {
-			lat += (double)p.getLatitude()/numPoints;
-			lon += (double)p.getLongitude()/numPoints;
+			lat += (double)p.getHighPrecLat()/numPoints;
+			lon += (double)p.getHighPrecLon()/numPoints;
 		}
-		return new Coord((int)Math.round(lat), (int)Math.round(lon));
+		return Coord.makeHighPrecCoord((int)Math.round(lat), (int)Math.round(lon));
 	}
 
 	public String kind() {
