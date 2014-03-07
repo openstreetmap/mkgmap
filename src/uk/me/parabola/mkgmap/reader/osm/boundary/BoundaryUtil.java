@@ -51,7 +51,7 @@ public class BoundaryUtil {
 	private static final int UNKNOWN_DATA_FORMAT = 0;
 	private static final int RAW_DATA_FORMAT_V1 = 2;
 	private static final int QUADTREE_DATA_FORMAT_V1 = 3;
-	
+	public static final double MIN_DIMENSION = 0.0000001;
 	/**
 	 * Calculate the polygons that describe the area.
 	 * @param area the Area instance
@@ -201,6 +201,8 @@ public class BoundaryUtil {
 		int windingRule = inpStream.readInt();
 		path.setWindingRule(windingRule);
 		int type = inpStream.readInt(); 
+		double minX = Double.MAX_VALUE,maxX = Double.MIN_VALUE;
+		double minY = Double.MAX_VALUE,maxY = Double.MIN_VALUE;
 		while (type >= 0) {
 			switch (type) {
 			case PathIterator.SEG_LINETO:
@@ -213,6 +215,14 @@ public class BoundaryUtil {
 						else
 							res[ii] = res[ii] + delta;
 					}
+					if (res[0] < minX)
+						minX = res[0];
+					if (res[0] > maxX)
+						maxX = res[0];
+					if (res[1] < minY)
+						minY = res[1];
+					if (res[1] > maxY)
+						maxY = res[1];
 					path.lineTo(res[0],res[1]);
 					--len;
 				}
@@ -225,6 +235,14 @@ public class BoundaryUtil {
 					else
 						res[ii] = res[ii] + delta;
 				}
+				if (res[0] < minX)
+					minX = res[0];
+				if (res[0] > maxX)
+					maxX = res[0];
+				if (res[1] < minY)
+					minY = res[1];
+				if (res[1] > maxY)
+					maxY = res[1];
 				path.moveTo(res[0],res[1]);
 				break;
 			case PathIterator.SEG_CLOSE:
@@ -242,7 +260,12 @@ public class BoundaryUtil {
 			log.error("Final type value != -1: " + type);
 		}
 		else{
-			return new Area(path);
+			if (maxX - minX >= MIN_DIMENSION || maxY - minY >= MIN_DIMENSION)
+				return new Area(path);
+			else {
+				// ignore micro area caused by rounding errors in awt area routines
+			}
+				
 		}
 		return null;
 	}

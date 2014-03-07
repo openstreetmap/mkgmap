@@ -355,6 +355,9 @@ public class BoundaryQuadTree {
 						
 						if (area != null && area.isEmpty() == false)
 							root.add(area, refs, id, treePath);
+						else {
+							log.warn(refs,id,treePath,"invalid or empty or too small area");
+						}
 					} else {
 						log.debug("Bbox does not intersect. Skip",bSize);
 						inpStream.skipBytes(bSize);
@@ -1057,7 +1060,8 @@ public class BoundaryQuadTree {
 		 * the tags should be ignored.
 		 */
 		private boolean isValid(){
-			if (tagMask == 0 || area == null || area.isEmpty())
+			if (tagMask == 0 || area == null || area.isEmpty() 
+					|| area.getBounds2D().getWidth() <= BoundaryUtil.MIN_DIMENSION && area.getBounds2D().getHeight() <= BoundaryUtil.MIN_DIMENSION)
 				return false;
 			return true;
 		}
