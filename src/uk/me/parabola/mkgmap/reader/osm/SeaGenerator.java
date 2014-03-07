@@ -158,20 +158,21 @@ public class SeaGenerator extends OsmReadingHooksAdaptor {
 							}
 						} else if (precompSea.endsWith(".zip")){
 							zipFile = new ZipFile(precompSeaDir);
-							internalPath = "sea";
-							ZipEntry entry = zipFile.getEntry(internalPath);
-							if (entry == null)
-								internalPath = "";
-							else 
-								internalPath = internalPath + "/";
-							entry = zipFile.getEntry(internalPath + indexFileName);
+							internalPath = "sea/";
+							ZipEntry entry = zipFile.getEntry(internalPath + indexFileName);
 							if (entry == null){
 								indexFileName = "index.txt";
 								entry = zipFile.getEntry(internalPath + indexFileName);
 							}
+							if (entry == null){
+								internalPath = "";
+								indexFileName = "index.txt.gz";
+								entry = zipFile.getEntry(internalPath + indexFileName);
+							}
 							if (entry != null){
 								indexStream = zipFile.getInputStream(entry);
-							}
+							} else 
+								log.error("Don't know how to read " + precompSeaDir);
 						} else {
 							log.error("Don't know how to read " + precompSeaDir);
 						}
