@@ -300,8 +300,8 @@ public class RoadNetwork {
 				log.error("can't locate 'via' RouteNode with id", viaNode.getId());
 			return;
 		}
-		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
-		RouteArc ta = vn.getArcTo(tn);
+		RouteArc fa = vn.getDirectArcTo(fn); // inverse arc gets used
+		RouteArc ta = vn.getDirectArcTo(tn);
 		if (fa == null || ta == null){
 			if (fa == null)
 				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'from' node",fromNode.getId());

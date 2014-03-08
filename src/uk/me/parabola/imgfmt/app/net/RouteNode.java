@@ -119,9 +119,9 @@ public class RouteNode implements Comparable<RouteNode> {
 		flags |= F_RESTRICTIONS;
 	}
 
-	public RouteArc getArcTo(RouteNode otherNode) {
+	public RouteArc getDirectArcTo(RouteNode otherNode) {
 		for(RouteArc a : arcs)
-			if(a.getDest() == otherNode)
+			if(a.isDirect() && a.getDest() == otherNode)
 				return a;
 
 		return null;
