@@ -12,6 +12,7 @@
  */
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +31,8 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  * @author Steve Ratcliffe
  */
 public class Mdr5 extends MdrMapSection {
-	private List<Mdr5Record> allCities = new ArrayList<Mdr5Record>();
-	private List<Mdr5Record> cities = new ArrayList<Mdr5Record>();
+	private List<Mdr5Record> allCities = new ArrayList<>();
+	private List<Mdr5Record> cities = new ArrayList<>();
 	private int maxCityIndex;
 	private int localCitySize;
 
@@ -52,7 +53,7 @@ public class Mdr5 extends MdrMapSection {
 	public void preWriteImpl() {
 		localCitySize = numberToPointerSize(maxCityIndex + 1);
 
-		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<SortKey<Mdr5Record>>(allCities.size());
+		List<SortKey<Mdr5Record>> sortKeys = new ArrayList<>(allCities.size());
 		Sort sort = getConfig().getSort();
 		for (Mdr5Record m : allCities) {
 			if (m.getName() == null)
@@ -62,10 +63,12 @@ public class Mdr5 extends MdrMapSection {
 			SortKey<Mdr5Record> sortKey = sort.createSortKey(m, m.getName());
 			SortKey<Mdr5Record> regionKey = sort.createSortKey(null, m.getRegionName());
 			SortKey<Mdr5Record> countryKey = sort.createSortKey(null, m.getCountryName(), m.getMapIndex());
-			sortKey = new MultiSortKey<Mdr5Record>(sortKey, regionKey, countryKey);
+			sortKey = new MultiSortKey<>(sortKey, regionKey, countryKey);
 			sortKeys.add(sortKey);
 		}
 		Collections.sort(sortKeys);
+
+		Collator collator = getConfig().getSort().getCollator();
 
 		int count = 0;
 		Mdr5Record lastCity = null;
@@ -79,11 +82,11 @@ public class Mdr5 extends MdrMapSection {
 			Mdr5Record c = key.getObject();
 			c.setMdr20set(mdr20s);
 
-			if (!c.isSameByName(lastCity))
+			if (!c.isSameByName(collator, lastCity))
 				mdr20count++;
 			c.setMdr20Index(mdr20count);
 
-			if (c.isSameByMapAndName(lastCity)) {
+			if (c.isSameByMapAndName(collator, lastCity)) {
 				c.setGlobalCityIndex(count);
 			} else {
 				count++;
@@ -100,6 +103,7 @@ public class Mdr5 extends MdrMapSection {
 		Mdr5Record lastCity = null;
 		boolean hasString = hasFlag(0x8);
 		boolean hasRegion = hasFlag(0x4);
+		Collator collator = getConfig().getSort().getCollator();
 		for (Mdr5Record city : cities) {
 			int gci = city.getGlobalCityIndex();
 			addIndexPointer(city.getMapIndex(), gci);
@@ -111,7 +115,7 @@ public class Mdr5 extends MdrMapSection {
 			int region = city.getRegionIndex();
 
 			// Set the no-repeat flag if the name/region is different
-			if (!city.isSameByName(lastCity)) {
+			if (!city.isSameByName(collator, lastCity)) {
 				flag = 0x800000;
 				lastCity = city;
 			}
