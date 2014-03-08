@@ -204,8 +204,8 @@ public class RouteArc {
 	 *
 	 * Required for writing restrictions (Table C).
 	 */
-	public byte getIndexB() {
-		return indexB;
+	public int getIndexB() {
+		return indexB & 0xff;
 	}
 	 
 	public int getArcDestClass(){
