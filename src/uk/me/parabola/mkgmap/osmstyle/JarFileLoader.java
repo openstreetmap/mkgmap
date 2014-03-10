@@ -130,7 +130,7 @@ public class JarFileLoader extends StyleFileLoader {
 		} catch (IOException e) {
 			throw new FileNotFoundException("Could not open " + filename);
 		}
-		return new InputStreamReader(new BufferedInputStream(stream));
+		return new InputStreamReader(new BufferedInputStream(stream), "UTF-8"); 
 	}
 
 	public void close() {
