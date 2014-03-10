@@ -13,6 +13,7 @@
 
 package uk.me.parabola.imgfmt.app.mdr;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,9 +58,9 @@ public class Mdr20 extends Mdr2x {
 		// Use a key cache because there are a large number of street names but a much smaller number
 		// of city, region and country names. Therefore we can reuse the memory needed for the keys
 		// most of the time, particularly for the country and region names.
-		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+		Map<String, byte[]> cache = new HashMap<>();
 
-		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
+		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
 			if (city == null)
@@ -78,29 +79,32 @@ public class Mdr20 extends Mdr2x {
 					cache);
 
 			// Combine all together so we can sort on it.
-			SortKey<Mdr7Record> key = new MultiSortKey<Mdr7Record>(cityKey, regionKey, countryStreetKey);
+			SortKey<Mdr7Record> key = new MultiSortKey<>(cityKey, regionKey, countryStreetKey);
 
 			keys.add(key);
 		}
 		Collections.sort(keys);
+
+		Collator collator = getConfig().getSort().getCollator();
 
 		String lastName = null;
 		Mdr5Record lastCity = null;
 		int record = 0;
 		int cityRecord = 0;
 		int lastMapNumber = 0;
+
 		for (SortKey<Mdr7Record> key : keys) {
 			Mdr7Record street = key.getObject();
 
 			String name = street.getName();
 			Mdr5Record city = street.getCity();
 
-			boolean citySameByName = city.isSameByName(lastCity);
+			boolean citySameByName = city.isSameByName(collator, lastCity);
 
 			int mapNumber = city.getMapIndex();
 
 			// Only save a single copy of each street name.
-			if (!name.equals(lastName) || !citySameByName || mapNumber != lastMapNumber) {
+			if (!citySameByName || mapNumber != lastMapNumber || lastName == null || collator.compare(name, lastName) != 0) {
 				record++;
 
 				streets.add(street);

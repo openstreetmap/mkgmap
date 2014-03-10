@@ -198,7 +198,7 @@ public class RestrictionRelation extends Relation {
 		if(this.viaNode == null)
 			log.debug(messagePrefix + restriction + " 'via' node is " + viaNode.toOSMURL());
 		else if(!this.viaNode.equals(viaNode))
-			log.warn(messagePrefix + restriction + " 'via' node redefined from " +
+			log.debug(messagePrefix + restriction + " 'via' node redefined from " +
 					 this.viaNode.toOSMURL() + " to " + viaNode.toOSMURL());
 		this.viaNode = viaNode;
 	}
