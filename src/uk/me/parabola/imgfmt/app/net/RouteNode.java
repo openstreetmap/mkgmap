@@ -954,15 +954,16 @@ public class RouteNode implements Comparable<RouteNode> {
 		for (int dir = 0; dir < 2; dir++){
 			// forward arcs first
 			for (int i = 0; i + 2 < nodes.size(); i++){
-				newArcs.clear();
-				RouteNode sourceNode = nodes.get(i+1);
-				RouteArc arcToSourceNode = roadArcs.get(i);
-				assert arcToSourceNode.getDest() == sourceNode;
-				double arcLength = 0;
-				int currentClass = arcToSourceNode.getArcDestClass();
+				RouteNode sourceNode = nodes.get(i); // original source node of direct arc
+				RouteNode stepNode = nodes.get(i+1); 
+				RouteArc arcToStepNode = roadArcs.get(i);
+				assert arcToStepNode.getDest() == stepNode;
+				int currentClass = arcToStepNode.getArcDestClass();
 				int finalClass = road.getRoadClass();
 				if (finalClass <= currentClass)
 					continue;
+				newArcs.clear();
+				double arcLength = 0;
 				for (int j = i+2; j < nodes.size(); j++){
 					RouteArc arcToDest = roadArcs.get(j-1);
 					arcLength += arcToDest.getLengthInMeter();
@@ -972,28 +973,28 @@ public class RouteNode implements Comparable<RouteNode> {
 							cl = finalClass;
 						currentClass = cl;
 						// create indirect arc from node i+1 to node j
-						RouteNode dest = nodes.get(j);
+						RouteNode destNode = nodes.get(j);
 						Coord c1 = sourceNode.getCoord();
-						Coord c2 = dest.getCoord();
+						Coord c2 = destNode.getCoord();
 						RouteArc newArc = new RouteArc(road, 
-								nodes.get(i), // original source node of direct arc
-								dest, 
+								sourceNode, 
+								destNode, 
 								roadArcs.get(i).getInitialHeading(), // not used
 								arcToDest.getFinalHeading(),  // not used
 								c1.bearingTo(c2),
-								arcLength, 
+								arcLength, // from stepNode to destNode on road
 								c1.distance(c2), 
 								c1.hashCode() + c2.hashCode());
-						if (arcToSourceNode.isDirect())
-							arcToSourceNode.setMaxDestClass(0);
+						if (arcToStepNode.isDirect())
+							arcToStepNode.setMaxDestClass(0);
 						else 
 							newArc.setMaxDestClass(cl);
 						if (dir == 0)
 							newArc.setForward();
 						newArc.setIndirect();
 						newArcs.add(newArc);
-						arcToSourceNode = newArc;
-						sourceNode = dest;
+						arcToStepNode = newArc;
+						stepNode = destNode;
 						arcLength = 0;
 						if (cl >= finalClass)
 							break;
