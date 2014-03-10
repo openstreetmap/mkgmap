@@ -216,6 +216,10 @@ public class RouteArc {
 		return lengthInMeter;
 	}
 	
+	public static byte directionFromDegrees(double dir) {
+		return (byte) Math.round(dir * 256.0 / 360) ;
+	}
+
 	public void write(ImgFileWriter writer, RouteArc lastArc, boolean useCompactDirs, Byte compactedDir) {
 		boolean first = lastArc == null;
 		if (first){
@@ -269,7 +273,7 @@ public class RouteArc {
 				if (compactedDir != null)
 					writer.put(compactedDir);
 			} else 
-				writer.put((byte)(initialHeading * 256 / 360));
+				writer.put(directionFromDegrees(initialHeading));
 		} else {
 //			System.out.println("skipped writing of initial dir");
 		}
@@ -359,7 +363,7 @@ public class RouteArc {
 		int[] curveData;
 		
 			
-		int dh = ((int) (directHeading * 256 / 360));
+		int dh = directionFromDegrees(directHeading);
 		if (lengthRatio >= 1 && lengthRatio <= 17) {
 			// two byte curve data neeeded
 			curveData = new int[2];
@@ -371,17 +375,17 @@ public class RouteArc {
 			int compactedRatio = lengthRatio / 2 - 8;
 			assert compactedRatio > 0 && compactedRatio < 8;
 			curveData = new int[1];
-			
 			curveData[0] = (compactedRatio << 5) | ((dh >> 3) & 0x1f);
+			
 			/* check math:
 			int dhx = curveData[0] & 0x1f;
 			int decodedDirectHeading = (dhx <16) ?  dhx << 3 : -(256 - (dhx<<3));
-			if ((dh & 0xfffffff8) != decodedDirectHeading)
+			if ((byte) (dh & 0xfffffff8) != (byte) decodedDirectHeading)
 				log.error("failed to encode direct heading", directHeading, dh, decodedDirectHeading);
 			int ratio = (curveData[0] & 0xe0) >> 5;
 			if (ratio != compactedRatio)
 				log.error("failed to encode length ratio", lengthRatio, compactedRatio, ratio);
-				*/
+			 */
 		}
 		return curveData;
 	}

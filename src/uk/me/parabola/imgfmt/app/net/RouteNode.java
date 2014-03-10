@@ -182,7 +182,7 @@ public class RouteNode implements Comparable<RouteNode> {
 			RouteArc lastArc = null;
 			for (RouteArc arc: arcs){
 				if (lastArc == null || lastArc.getIndexA() != arc.getIndexA() || lastArc.isForward() != arc.isForward()){
-					int dir = (byte)(arc.getInitialHeading() * 256 / 360);
+					int dir = RouteArc.directionFromDegrees(arc.getInitialHeading());
 					dir = dir & 0xf0;
 					if (initialHeadings.contains(dir)){
 						useCompactDirs = false;
