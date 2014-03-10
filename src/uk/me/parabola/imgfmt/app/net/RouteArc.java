@@ -81,6 +81,7 @@ public class RouteArc {
 	 * @param finalBearing The final heading (signed degrees) (D->E)
 	 * @param directBearing The direct heading (signed degrees) (A->E)
 	 * @param arcLength the length of the arc in meter (A->B->C->D->E)
+	 * @param pathLength the length of the arc in meter (summed length for additional arcs)
 	 * @param directLength the length of the arc in meter (A-E) 
 	 * @param pointsHash
 	 */
@@ -88,6 +89,7 @@ public class RouteArc {
 					RouteNode source, RouteNode dest,
 					double initialBearing, double finalBearing, double directBearing,
 					double arcLength,
+					double pathLength,
 					double directLength,
 					int pointsHash) {
 		this.isDirect = true; // unless changed
@@ -106,13 +108,13 @@ public class RouteArc {
 		this.lengthInMeter = (float) arcLength;
 		this.pointsHash = pointsHash;
 		int ratio = 0;
-		if (arcLength > directLength){
-			ratio = (byte) ((int)(directLength * 32 / arcLength) & 0x1f);
+		if (pathLength > directLength){
+			ratio = (int) Math.min(31, Math.round(32.0d * directLength/ pathLength));
 			if (ratio > 26) 
-				ratio = 0;
+				ratio = 0; // don't encode curve info
 		}
-		if (ratio == 0 && length >= (1 << 14))
-			ratio = 0x1f;
+		if (ratio == 0 && len >= (1 << 14))
+			ratio = 0x1f; // force encoding of curve info for very long arcs
 		lengthRatio = (byte)ratio;
 		haveCurve = lengthRatio > 0;
 	}
@@ -361,8 +363,6 @@ public class RouteArc {
 	private int[] encodeCurve() {
 		assert lengthRatio != 0;
 		int[] curveData;
-		
-			
 		int dh = directionFromDegrees(directHeading);
 		if (lengthRatio >= 1 && lengthRatio <= 17) {
 			// two byte curve data neeeded

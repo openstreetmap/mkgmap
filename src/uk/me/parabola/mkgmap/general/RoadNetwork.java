@@ -174,6 +174,7 @@ public class RoadNetwork {
 											forwardFinalBearing,
 											forwardDirectBearing,
 											arcLength,
+											arcLength,
 											directLength,
 											pointsHash);
 				arc.setForward();
@@ -186,6 +187,7 @@ public class RoadNetwork {
 								   reverseInitialBearing,
 								   reverseFinalBearing,
 								   reverseDirectBearing,
+								   arcLength,
 								   arcLength,
 								   directLength,
 								   pointsHash);

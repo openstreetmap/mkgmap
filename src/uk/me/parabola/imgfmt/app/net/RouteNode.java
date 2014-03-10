@@ -963,10 +963,12 @@ public class RouteNode implements Comparable<RouteNode> {
 				if (finalClass <= currentClass)
 					continue;
 				newArcs.clear();
-				double arcLength = 0;
+				double partialArcLength = 0;
+				double pathLength = arcToStepNode.getLengthInMeter();
 				for (int j = i+2; j < nodes.size(); j++){
 					RouteArc arcToDest = roadArcs.get(j-1);
-					arcLength += arcToDest.getLengthInMeter();
+					partialArcLength += arcToDest.getLengthInMeter();
+					pathLength += arcToDest.getLengthInMeter();
 					int cl = nodes.get(j).getGroup();
 					if (cl > currentClass){
 						if (cl > finalClass)
@@ -982,7 +984,8 @@ public class RouteNode implements Comparable<RouteNode> {
 								roadArcs.get(i).getInitialHeading(), // not used
 								arcToDest.getFinalHeading(),  // not used
 								c1.bearingTo(c2),
-								arcLength, // from stepNode to destNode on road
+								partialArcLength, // from stepNode to destNode on road
+								pathLength, // from sourceNode to destNode on road
 								c1.distance(c2), 
 								c1.hashCode() + c2.hashCode());
 						if (arcToStepNode.isDirect())
@@ -995,7 +998,8 @@ public class RouteNode implements Comparable<RouteNode> {
 						newArcs.add(newArc);
 						arcToStepNode = newArc;
 						stepNode = destNode;
-						arcLength = 0;
+						
+						partialArcLength = 0;
 						if (cl >= finalClass)
 							break;
 					}
