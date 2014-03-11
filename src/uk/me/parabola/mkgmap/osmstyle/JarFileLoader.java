@@ -16,12 +16,13 @@
  */
 package uk.me.parabola.mkgmap.osmstyle;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -130,7 +131,14 @@ public class JarFileLoader extends StyleFileLoader {
 		} catch (IOException e) {
 			throw new FileNotFoundException("Could not open " + filename);
 		}
-		return new InputStreamReader(new BufferedInputStream(stream), "UTF-8"); 
+		Reader reader = null;
+		try {
+			reader = new InputStreamReader(stream, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			System.out.println("JarFileLoader: Encoding UTF-8 not supported");
+			reader = new InputStreamReader(stream);
+		}
+		return new BufferedReader(reader);
 	}
 
 	public void close() {
