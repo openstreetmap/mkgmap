@@ -107,11 +107,14 @@ public class RouteArc {
 		this.length = len;
 		this.lengthInMeter = (float) arcLength;
 		this.pointsHash = pointsHash;
+		// calculate length ratio between way length on road and direct distance between end points
 		int ratio = 0;
-		if (pathLength > directLength){
-			ratio = (int) Math.min(31, Math.round(32.0d * directLength/ pathLength));
-			if (ratio > 26) 
-				ratio = 0; // don't encode curve info
+		int pathEncoded = NODHeader.metersToRaw(pathLength);
+		if (pathEncoded >= 2){
+			int directEncoded = NODHeader.metersToRaw(directLength);
+			if (pathEncoded > directEncoded){
+				ratio = (int) Math.min(31, Math.round(32.0d * directLength/ pathLength));
+			}
 		}
 		if (ratio == 0 && len >= (1 << 14))
 			ratio = 0x1f; // force encoding of curve info for very long arcs
