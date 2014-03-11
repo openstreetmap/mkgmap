@@ -414,10 +414,11 @@ public class WrongAngleFixer {
 						// make sure that we find the restriction with the new coord instance
 						replacement.setViaNodeOfRestriction(true);
 						List<RestrictionRelation> lrr = restrictions.remove(p);
-						if (lrr != null)
+						if (lrr != null){
 							restrictions.put(replacement,lrr);
-						for (RestrictionRelation rr: lrr)
-							rr.setViaCoord(replacement);
+							for (RestrictionRelation rr: lrr)
+								rr.setViaCoord(replacement);
+						}
 						p.setViaNodeOfRestriction(false);
 					}
 					p = replacement;
