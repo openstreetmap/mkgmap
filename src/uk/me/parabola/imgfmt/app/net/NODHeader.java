@@ -98,7 +98,11 @@ public class NODHeader extends CommonHeader {
 	 *
 	 * @param writer The header is written here.
 	 */
-	final static int DISTANCE_MULT = 2;
+	
+	// multiplier shift for road + arc length values, the smaller the shift the higher the precision and NOD size 
+	// as it has an influence on the number of bits needed to encode a length
+	final static int DISTANCE_MULT_SHIFT = 1; // 0..7  1 seems to be a good compromise
+	final static int DISTANCE_MULT = 1 << DISTANCE_MULT_SHIFT;
 	protected void writeFileHeader(ImgFileWriter writer) {
 		nodes.setPosition(HEADER_LEN);
 		nodes.writeSectionInfo(writer);
@@ -108,8 +112,9 @@ public class NODHeader extends CommonHeader {
 		// 0x001c meaning ?
 		// 0x00E0 distance multiplier, effects predicted travel time
 		int flags = 0x0207;
-		
-		flags |= (DISTANCE_MULT>>1) << 5;
+		assert Integer.bitCount(DISTANCE_MULT) == 1;
+		assert DISTANCE_MULT_SHIFT < 8;
+		flags |= DISTANCE_MULT_SHIFT << 5;
 		if(driveOnLeft.get())
 			flags |= 0x0100;
 		
