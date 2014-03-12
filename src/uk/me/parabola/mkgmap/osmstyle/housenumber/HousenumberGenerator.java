@@ -19,11 +19,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
-import uk.me.parabola.imgfmt.app.Label;
 import uk.me.parabola.imgfmt.app.net.NumberStyle;
 import uk.me.parabola.imgfmt.app.net.Numbers;
 import uk.me.parabola.log.Logger;
@@ -69,9 +67,9 @@ public class HousenumberGenerator {
 	 * @return the street name (or {@code null} if no street name set)
 	 */
 	private String getStreetname(Element e) {
-		String streetname = stripStreetName(e.getTag("mkgmap:street"));
+		String streetname = e.getTag("mkgmap:street");
 		if (streetname == null) {
-			streetname = stripStreetName(e.getTag("addr:street"));
+			streetname = e.getTag("addr:street");
 		}	
 		return streetname;
 	}
@@ -108,40 +106,6 @@ public class HousenumberGenerator {
 		}
 	}
 	
-	private static final Pattern BRACKETS = Pattern.compile("\\(.*\\)"); 
-	
-	/**
-	 * Removes the shield from the given string. This is the shield character 
-	 * including the following part until the first whitespace. Additionally all
-	 * text within brackets is removed. 
-	 * @param s a label
-	 * @return the label without shield ({@code null} if stripped label is empty)
-	 */
-	public static String stripStreetName(String s) {
-		if (s == null || s.isEmpty())
-			return null;
-		
-		if (Label.SHIELDS.matcher(s.substring(0, 1)).matches()) {
-			int whitespaceIndex = s.indexOf(' ', 1);
-			if (whitespaceIndex < 0) {
-				return null;
-			} else {
-				s = s.substring(whitespaceIndex);
-			}
-		}
-		s = BRACKETS.matcher(s).replaceAll(""); // remove text in brackets
-		s = Label.squashSpaces(s);
-		if (s == null) {
-			return null;
-		}
-		s = s.trim();
-		if (s.isEmpty()) {
-			return null;
-		}
-		return s;
-		
-	}
-
 	
 	/**
 	 * Adds a road to be processed by the house number generator.
