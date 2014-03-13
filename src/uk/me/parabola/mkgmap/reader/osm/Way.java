@@ -23,6 +23,7 @@ import java.util.List;
 
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Coord;
+import uk.me.parabola.log.Logger;
 
 /**
  * Represent a OSM way in the 0.5 api.  A way consists of an ordered list of
@@ -31,7 +32,7 @@ import uk.me.parabola.imgfmt.app.Coord;
  * @author Steve Ratcliffe
  */
 public class Way extends Element {
-
+	private static final Logger log = Logger.getLogger(Way.class);
 	private final List<Coord> points;
 
 	// This will be set if a way is read from an OSM file and the first node is the same node as the last
@@ -204,15 +205,19 @@ public class Way extends Element {
 	// direction
 	public static boolean clockwise(List<Coord> points) {
 
+		
 		if(points.size() < 3 || !points.get(0).equals(points.get(points.size() - 1)))
 			return false;
-
+		if (points.get(0).highPrecEquals(points.get(points.size() - 1)) == false){
+			log.error("Way.clockwise was called for way that is not closed in high precision");
+		}
+		
 		long area = 0;
 		Coord p1 = points.get(0);
 		for(int i = 1; i < points.size(); ++i) {
 			Coord p2 = points.get(i);
-			area += ((long)p1.getLongitude() * p2.getLatitude() - 
-					 (long)p2.getLongitude() * p1.getLatitude());
+			area += ((long)p1.getHighPrecLon() * p2.getHighPrecLat() - 
+					 (long)p2.getHighPrecLon() * p1.getHighPrecLat());
 			p1 = p2;
 		}
 
@@ -227,9 +232,9 @@ public class Way extends Element {
 	public boolean containsPointsOf(Way other) {
 		Polygon thisPoly = new Polygon();
 		for(Coord p : points)
-			thisPoly.addPoint(p.getLongitude(), p.getLatitude());
+			thisPoly.addPoint(p.getHighPrecLon(), p.getHighPrecLat());
 		for(Coord p : other.points)
-			if(!thisPoly.contains(p.getLongitude(), p.getLatitude()))
+			if(!thisPoly.contains(p.getHighPrecLon(), p.getHighPrecLat()))
 				return false;
 		return true;
 	}
