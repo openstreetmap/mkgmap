@@ -167,7 +167,8 @@ railway=abandoned [0x0a road_class=0 road_speed=1 resolution 22]
 railway=platform [0x16 road_class=0 road_speed=0 resolution 23]
 railway=* & !(tunnel=yes) [0x14 resolution 22]
 
-man_made=cable|(man_made=* & man_made ~ '.*pipe.*')
+(man_made=cable|(man_made=* & man_made ~ '.*pipe.*')) & area!=yes &
+tunnel!=yes & location != underground
 {name '${name} (${operator})' | '${name}' | '${operator}' }
 [0x28 resolution 23]
 
