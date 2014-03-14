@@ -74,12 +74,23 @@ public class RouteCenter {
 	 * writer.position() is relative to the start of NOD 1.
 	 * Space for Table A is reserved but not written. See writeTableA.
 	 */
-	public void write(ImgFileWriter writer) {
+	public void write(ImgFileWriter writer, int[] classBoundaries) {
 		assert !nodes.isEmpty(): "RouteCenter without nodes";
 
-		for (RouteNode node : nodes)
+		int centerPos = writer.position();
+		for (RouteNode node : nodes){
 			node.write(writer);
-
+			int group = node.getGroup();
+			if (group == 0)
+				continue;
+			if (centerPos < classBoundaries[group-1]){
+				// update positions (loop is used because style might not use all classes  
+				for (int i = group-1; i >= 0; i--){
+					if (centerPos < classBoundaries[i] )
+						classBoundaries[i] = centerPos;
+				}
+			}
+		}
 		int alignment = 1 << NODHeader.DEF_ALIGN;
 		int alignMask = alignment - 1;
 

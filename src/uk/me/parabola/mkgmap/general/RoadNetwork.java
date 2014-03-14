@@ -66,7 +66,6 @@ public class RoadNetwork {
 	private boolean checkRoundaboutFlares;
 	private int maxFlareLengthRatio ;
 	private boolean reportSimilarArcs;
-	private boolean outputCurveData;
 
 	public void config(EnhancedProperties props) {
 		String ath = props.getProperty("adjust-turn-headings");
@@ -81,8 +80,6 @@ public class RoadNetwork {
 		maxFlareLengthRatio = props.getProperty("max-flare-length-ratio", 0);
 
 		reportSimilarArcs = props.getProperty("report-similar-arcs", false);
-
-		outputCurveData = !props.getProperty("no-arc-curves", false);
 	}
 
 	public void addRoad(MapRoad road) {
@@ -177,13 +174,13 @@ public class RoadNetwork {
 											forwardFinalBearing,
 											forwardDirectBearing,
 											arcLength,
+											arcLength,
 											directLength,
-											outputCurveData,
 											pointsHash);
 				arc.setForward();
 				node1.addArc(arc);
 				node2.addIncomingArc(arc);
-
+				
 				// Create the reverse arc
 				arc = new RouteArc(road.getRoadDef(),
 								   node2, node1,
@@ -191,8 +188,8 @@ public class RoadNetwork {
 								   reverseFinalBearing,
 								   reverseDirectBearing,
 								   arcLength,
+								   arcLength,
 								   directLength,
-								   outputCurveData,
 								   pointsHash);
 				node2.addArc(arc);
 				node1.addIncomingArc(arc);
@@ -235,28 +232,52 @@ public class RoadNetwork {
 			return;
 		assert centers.isEmpty() : "already subdivided into centers";
 
-		NOD1Part nod1 = new NOD1Part();
-
-		for (RouteNode node : nodes.values()) {
-			if(!node.isBoundary()) {
-				if(checkRoundabouts)
-					node.checkRoundabouts();
-				if(checkRoundaboutFlares)
-					node.checkRoundaboutFlares(maxFlareLengthRatio);
-				if(reportSimilarArcs)
-					node.reportSimilarArcs();
+		// sort nodes by NodeGroup 
+		List<RouteNode> nodeList = new ArrayList<>(nodes.values());
+		nodes.clear(); // return to GC
+		for (int group = 0; group <= 4; group++){
+			NOD1Part nod1 = new NOD1Part();
+			int n = 0;
+			for (RouteNode node : nodeList) {
+				if (node.getGroup() != group)
+					continue;
+				if(!node.isBoundary()) {
+					if(checkRoundabouts)
+						node.checkRoundabouts();
+					if(checkRoundaboutFlares)
+						node.checkRoundaboutFlares(maxFlareLengthRatio);
+					if(reportSimilarArcs)
+						node.reportSimilarArcs();
+				}
+				if(adjustTurnHeadings != 0)
+					node.tweezeArcs(adjustTurnHeadings);
+				nod1.addNode(node);
+				n++;
 			}
-			if(adjustTurnHeadings != 0)
-				node.tweezeArcs(adjustTurnHeadings);
-			nod1.addNode(node);
+			if (n > 0)
+				centers.addAll(nod1.subdivide());
 		}
-		centers = nod1.subdivide();
 	}
 
 	public List<RouteCenter> getCenters() {
-		if (centers.isEmpty())
+		if (centers.isEmpty()){
+			addArcsToMajorRoads();
 			splitCenters();
+		}
 		return centers;
+	}
+
+	/**
+	 * add indirect arcs for each road class (in descending order)
+	 */
+	private void addArcsToMajorRoads() {
+		long t1 = System.currentTimeMillis();
+		
+		for (RoadDef rd: roadDefs){
+			if (rd.getRoadClass() >= 1)
+				rd.getNode().addArcsToMajorRoads(rd);
+		}
+		log.info(" added major road arcs in " + (System.currentTimeMillis() - t1) + " ms");
 	}
 
 	/**
@@ -281,8 +302,8 @@ public class RoadNetwork {
 				log.error("can't locate 'via' RouteNode with id", viaNode.getId());
 			return;
 		}
-		RouteArc fa = vn.getArcTo(fn); // inverse arc gets used
-		RouteArc ta = vn.getArcTo(tn);
+		RouteArc fa = vn.getDirectArcTo(fn); // inverse arc gets used
+		RouteArc ta = vn.getDirectArcTo(tn);
 		if (fa == null || ta == null){
 			if (fa == null)
 				log.error("can't locate arc from 'via' node ",viaNode.getId(),"to 'from' node",fromNode.getId());

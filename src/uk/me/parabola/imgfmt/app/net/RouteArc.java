@@ -65,6 +65,12 @@ public class RouteArc {
 	private final byte lengthRatio;
 	private final int pointsHash;
 	private boolean isForward;
+	private final float lengthInMeter;
+
+	private boolean isDirect;
+
+	// this field may limit the arcs destination class
+	private byte maxDestClass = -1;
 
 	/**
 	 * Create a new arc. An arc can contain multiple points (eg. A->B->C->D->E)
@@ -75,40 +81,45 @@ public class RouteArc {
 	 * @param finalBearing The final heading (signed degrees) (D->E)
 	 * @param directBearing The direct heading (signed degrees) (A->E)
 	 * @param arcLength the length of the arc in meter (A->B->C->D->E)
+	 * @param pathLength the length of the arc in meter (summed length for additional arcs)
 	 * @param directLength the length of the arc in meter (A-E) 
-	 * @param curveEnabled false means don't write curve bytes 
 	 * @param pointsHash
 	 */
 	public RouteArc(RoadDef roadDef,
 					RouteNode source, RouteNode dest,
 					double initialBearing, double finalBearing, double directBearing,
 					double arcLength,
+					double pathLength,
 					double directLength,
-					boolean curveEnabled,
 					int pointsHash) {
+		this.isDirect = true; // unless changed
 		this.roadDef = roadDef;
 		this.source = source;
 		this.dest = dest;
 		this.initialHeading = (float) initialBearing;
 		this.finalHeading = (float) finalBearing;
 		this.directHeading = (directBearing < 180) ? (float) directBearing : -180.0f;
-		int len = convertMeters(arcLength);
+		int len = NODHeader.metersToRaw(arcLength);
 		if (len >= (1 << 22)) {
 			log.error("Way " + roadDef.getName() + " (id " + roadDef.getId() + ") contains an arc whose length (" + len + " units) is too big to be encoded, using length",((1 << 22) - 1));
 			len = (1 << 22) - 1;
 		}
 		this.length = len;
+		this.lengthInMeter = (float) arcLength;
 		this.pointsHash = pointsHash;
+		// calculate length ratio between way length on road and direct distance between end points
 		int ratio = 0;
-		if (arcLength > directLength){
-			ratio = (byte) ((int)(directLength * 32 / arcLength) & 0x1f);
-			if (ratio > 26) 
-				ratio = 0;
+		int pathEncoded = NODHeader.metersToRaw(pathLength);
+		if (pathEncoded >= 2){
+			int directEncoded = NODHeader.metersToRaw(directLength);
+			if (pathEncoded > directEncoded){
+				ratio = (int) Math.min(31, Math.round(32.0d * directLength/ pathLength));
+			}
 		}
-		if (ratio == 0 && length >= (1 << 14))
-			ratio = 0x1f;
+		if (ratio == 0 && len >= (1 << 14))
+			ratio = 0x1f; // force encoding of curve info for very long arcs
 		lengthRatio = (byte)ratio;
-		haveCurve = curveEnabled && lengthRatio > 0;
+		haveCurve = lengthRatio > 0;
 	}
 
 	public float getInitialHeading() {
@@ -198,17 +209,20 @@ public class RouteArc {
 	 *
 	 * Required for writing restrictions (Table C).
 	 */
-	public byte getIndexB() {
-		return indexB;
+	public int getIndexB() {
+		return indexB & 0xff;
 	}
 	 
-
-	// units of 16 feet
-	final static double LENGTH_FACTOR = 1.0 / (2.391 * 2);
-	//old 3.2808 / 16;
-	private static int convertMeters(double l) {
-		return (int) (l * LENGTH_FACTOR + 0.5);
-
+	public int getArcDestClass(){
+		return Math.min(getRoadDef().getRoadClass(), dest.getGroup());
+	}
+	
+	public float getLengthInMeter(){
+		return lengthInMeter;
+	}
+	
+	public static byte directionFromDegrees(double dir) {
+		return (byte) Math.round(dir * 256.0 / 360) ;
 	}
 
 	public void write(ImgFileWriter writer, RouteArc lastArc, boolean useCompactDirs, Byte compactedDir) {
@@ -230,19 +244,18 @@ public class RouteArc {
 			log.debug("writing arc at", offset, ", flagA=", Integer.toHexString(flagA));
 
 		// fetch destination class -- will have been set correctly by now
-		setDestinationClass(dest.getNodeClass());
+		setDestinationClass(getArcDestClass());
 
 		// determine how to write length and curve bit
 		int[] lendat = encodeLength();
 
 		writer.put(flagA);
-
 		if (isInternal()) {
 			// space for 14 bit node offset, written in writeSecond.
 			writer.put(flagB);
 			writer.put((byte) 0);
 		} else {
-			if(indexB >= 0x3f) {
+			if(indexB < 0 || indexB >= 0x3f) {
 				writer.put((byte) (flagB | 0x3f));
 				writer.put(indexB);
 			}
@@ -259,13 +272,16 @@ public class RouteArc {
 		for (int aLendat : lendat)
 			writer.put((byte) aLendat);
 
-		if (useCompactDirs){
-			// determine if we have to write direction info
-			if (compactedDir != null)
-				writer.put(compactedDir);
-		} else 
-			writer.put((byte)(initialHeading * 256 / 360));
-		
+		if (first || lastArc.indexA != this.indexA || lastArc.isForward != isForward){
+			if (useCompactDirs){
+				// determine if we have to write direction info
+				if (compactedDir != null)
+					writer.put(compactedDir);
+			} else 
+				writer.put(directionFromDegrees(initialHeading));
+		} else {
+//			System.out.println("skipped writing of initial dir");
+		}
 		if (haveCurve) {
 			int[] curvedat = encodeCurve();
 			for (int aCurvedat : curvedat)
@@ -350,9 +366,7 @@ public class RouteArc {
 	private int[] encodeCurve() {
 		assert lengthRatio != 0;
 		int[] curveData;
-		
-			
-		int dh = ((int) (directHeading * 256 / 360));
+		int dh = directionFromDegrees(directHeading);
 		if (lengthRatio >= 1 && lengthRatio <= 17) {
 			// two byte curve data neeeded
 			curveData = new int[2];
@@ -364,17 +378,17 @@ public class RouteArc {
 			int compactedRatio = lengthRatio / 2 - 8;
 			assert compactedRatio > 0 && compactedRatio < 8;
 			curveData = new int[1];
-			
 			curveData[0] = (compactedRatio << 5) | ((dh >> 3) & 0x1f);
+			
 			/* check math:
 			int dhx = curveData[0] & 0x1f;
 			int decodedDirectHeading = (dhx <16) ?  dhx << 3 : -(256 - (dhx<<3));
-			if ((dh & 0xfffffff8) != decodedDirectHeading)
+			if ((byte) (dh & 0xfffffff8) != (byte) decodedDirectHeading)
 				log.error("failed to encode direct heading", directHeading, dh, decodedDirectHeading);
 			int ratio = (curveData[0] & 0xe0) >> 5;
 			if (ratio != compactedRatio)
 				log.error("failed to encode length ratio", lengthRatio, compactedRatio, ratio);
-				*/
+			 */
 		}
 		return curveData;
 	}
@@ -400,4 +414,28 @@ public class RouteArc {
 			log.debug("setting destination class", destinationClass);
 		flagA |= (destinationClass & MASK_DESTCLASS);
 	}
+
+	public void setIndirect() {
+		this.isDirect = false;
+		
+	}
+
+	public boolean isDirect() {
+		return isDirect;
+	}
+
+	public void setMaxDestClass(int destClass) {
+		if (this.maxDestClass < 0)
+			this.maxDestClass = (byte) destClass;
+		else if (destClass < maxDestClass)
+			maxDestClass = (byte)destClass;
+	}
+
+	@Override
+	public String toString() {
+		return "RouteArc [" + (isForward ? "->":"<-") + (isDirect ? "direct":"indirect")
+				+ roadDef +  " " + dest + "]";
+	}
+
+	
 }

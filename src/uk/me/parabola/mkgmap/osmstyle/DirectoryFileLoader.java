@@ -61,6 +61,7 @@ public class DirectoryFileLoader extends StyleFileLoader {
 			r = new InputStreamReader(new FileInputStream(file), "UTF-8");
         } catch (UnsupportedEncodingException uee) {
             System.out.println("DirectoryFileLoader: Encoding UTF-8 not supported");
+            r = new InputStreamReader(new FileInputStream(file));
         }
 
 		return new BufferedReader(r);

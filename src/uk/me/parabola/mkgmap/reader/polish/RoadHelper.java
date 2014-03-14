@@ -89,7 +89,15 @@ class RoadHelper {
 	public void setParam(String param) {
 		String[] f = param.split(",");
 		speed = Integer.parseInt(f[0]);
+		if (speed < 0)
+			speed = 0;
+		if (speed > 7)
+			speed = 7;
 		roadClass = Integer.parseInt(f[1]);
+		if (roadClass < 0)
+			roadClass = 0;
+		if (roadClass > 4)
+			roadClass = 4;
 		oneway = Integer.parseInt(f[2]) > 0;
 		toll = Integer.parseInt(f[3]) > 0;
 		for (int j = 0; j < f.length - 4; j++)

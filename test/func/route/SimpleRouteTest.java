@@ -74,7 +74,7 @@ public class SimpleRouteTest extends Base {
 				break;
 			case "NOD":
 				count++;
-				assertEquals("NOD size", 149782, size);
+				assertEquals("NOD size", 169698, size);
 				break;
 			}
 		}
@@ -111,7 +111,7 @@ public class SimpleRouteTest extends Base {
 				break;
 			case "NOD":
 				count++;
-				assertEquals("NOD size", 2562, size);
+				assertEquals("NOD size", 3584, size);
 				break;
 			}
 		}
