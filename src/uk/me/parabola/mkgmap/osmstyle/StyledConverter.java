@@ -2077,14 +2077,14 @@ public class StyledConverter implements OsmConverter {
 				continue;
 			if ("true".equals(way.getTag("mkgmap:way-has-pois"))) {
 				String wayPOI = "";
-				
-					List<Coord> points = way.getPoints();
-					int numPoints = points.size();
-					for (int i = 0;i < numPoints; i++) {
-						Coord p = points.get(i);
-						if (p instanceof CoordPOI){
-							CoordPOI cp = (CoordPOI) p;
-							Node node = cp.getNode();
+
+				List<Coord> points = way.getPoints();
+				int numPoints = points.size();
+				for (int i = 0;i < numPoints; i++) {
+					Coord p = points.get(i);
+					if (p instanceof CoordPOI){
+						CoordPOI cp = (CoordPOI) p;
+						Node node = cp.getNode();
 						boolean usedInThisWay = false;
 						if (node.getTag("mkgmap:road-class") != null
 								|| node.getTag("mkgmap:road-speed") != null ) {
@@ -2112,7 +2112,7 @@ public class StyledConverter implements OsmConverter {
 								log.info("Access restriction in POI node", node.toBrowseURL(), "was ignored for way", way.toBrowseURL());
 						}
 						if (usedInThisWay){
-								cp.setUsed(true);
+							cp.setUsed(true);
 							wayPOI += "["+ node.getId()+"]";
 						}
 					}
@@ -2127,6 +2127,6 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 	}
-	
+
 }
 
