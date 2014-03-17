@@ -658,7 +658,7 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		for(RouteArc a : arcs) {
 			// ignore ways that have been synthesised by mkgmap
-			if(!a.getRoadDef().isSynthesised() &&
+			if(!a.getRoadDef().isSynthesised() && a.isDirect() && 
 			   a.getRoadDef().isRoundabout()) {
 				roundaboutArcs.add(a);
 			}
@@ -673,10 +673,10 @@ public class RouteNode implements Comparable<RouteNode> {
 
 		if(roundaboutArcs.size() > 2) {
 			for(RouteArc fa : arcs) {
-				if(fa.isForward()) {
+				if(fa.isForward() && fa.isDirect()) {
 					RoadDef rd = fa.getRoadDef();
 					for(RouteArc fb : arcs) {
-						if(fb != fa &&
+						if(fb != fa && fb.isDirect() && 
 						   fa.getPointsHash() == fb.getPointsHash() &&
 						   ((fb.isForward() && fb.getDest() == fa.getDest()) ||
 							(!fb.isForward() && fb.getSource() == fa.getDest()))) {
@@ -731,7 +731,7 @@ public class RouteNode implements Comparable<RouteNode> {
 		for(RouteArc r : arcs) {
 			// see if node has a forward arc that is part of a
 			// roundabout
-			if(!r.isForward() || !r.getRoadDef().isRoundabout() || r.getRoadDef().isSynthesised())
+			if(!r.isForward() || !r.isDirect() || !r.getRoadDef().isRoundabout() || r.getRoadDef().isSynthesised())
 				continue;
 
 			// follow the arc to find the first node that connects the
@@ -754,6 +754,8 @@ public class RouteNode implements Comparable<RouteNode> {
 				boolean connectsToNonRoundaboutSegment = false;
 				RouteArc nextRoundaboutArc = null;
 				for (RouteArc nba : nb.arcs) {
+					if (nba.isDirect() == false)
+						continue;
 					if (!nba.getRoadDef().isSynthesised()) {
 						if (nba.getRoadDef().isRoundabout()) {
 							if (nba.isForward())
@@ -786,11 +788,11 @@ public class RouteNode implements Comparable<RouteNode> {
 			// triangular "flare" connected to both ends of the
 			// roundabout segment
 			for(RouteArc fa : arcs) {
-				if(!fa.getRoadDef().doFlareCheck())
+				if(!fa.isDirect() || !fa.getRoadDef().doFlareCheck())
 					continue;
 
 				for(RouteArc fb : nb.arcs) {
-					if(!fb.getRoadDef().doFlareCheck())
+					if(!fb.isDirect() || !fb.getRoadDef().doFlareCheck())
 						continue;
 					if(fa.getDest() == fb.getDest()) {
 						// found the 3rd point of the triangle that
@@ -837,7 +839,7 @@ public class RouteNode implements Comparable<RouteNode> {
 							// check that the flare road arcs are not
 							// part of a longer way
 							for(RouteArc a : fa.getDest().arcs) {
-								if(a.getDest() != this && a.getDest() != nb) {
+								if(a.isDirect() && a.getDest() != this && a.getDest() != nb) {
 									if(a.getRoadDef() == fa.getRoadDef())
 										log.warn("Outgoing roundabout flare road " + fb.getRoadDef() + " does not finish at flare? " + fa.getDest().coord.toOSMURL());
 									else if(a.getRoadDef() == fb.getRoadDef())
