@@ -569,7 +569,7 @@ Miscellaneous options:
     to let barriers block a way or to lower the calculated speed
     around traffic signals.
     POIs with the tags highway=* (e.g. highway=traffic_signals)  
-    or barrier=* (e.g. barrier=cycle_barrier) or access=* are supported.
+    or barrier=* (e.g. barrier=cycle_barrier) are supported.
     The style developer must add at least one of the access tags
     (mkgmap:foot, mkgmap:car etc.), mkgmap:road-speed and/or 
     mkgmap:road-class to the POI. 

@@ -116,7 +116,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 				// for now, only do this for nodes that have
 				// certain tags otherwise we will end up creating
 				// a CoordPOI for every node in the way
-				final String[] coordPOITags = { "access", "barrier", "highway" };
+				final String[] coordPOITags = { "barrier", "highway" };
 				for (String cpt : coordPOITags) {
 					if (currentNodeInWay.getTag(cpt) != null) {
 						// the POI has one of the approved tags so
