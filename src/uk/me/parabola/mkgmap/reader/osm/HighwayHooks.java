@@ -32,8 +32,6 @@ import uk.me.parabola.util.EnhancedProperties;
 public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(HighwayHooks.class);
 
-	private static final long CYCLEWAY_ID_OFFSET = 0x10000000;
-
 	private final List<Way> motorways = new ArrayList<Way>();
 	private final List<Node> exits = new ArrayList<Node>();
 
@@ -212,8 +210,7 @@ public class HighwayHooks extends OsmReadingHooksAdaptor {
 	 * @return The new way, which will have the same points and have suitable cycle tags.
 	 */
 	private Way makeCycleWay(Way way) {
-		long cycleWayId = way.getId() + CYCLEWAY_ID_OFFSET;
-		Way cycleWay = new Way(cycleWayId);
+		Way cycleWay = new Way(way.getId());
 		saver.addWay(cycleWay);
 
 		// this reverses the direction of the way but
