@@ -73,7 +73,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads Will be enlarged by all roads in roads that were set to null by this method 
 	 * @param restrictions Map with restriction relations 
 	 */
-	public void optimizeWays(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions ) {
+	public void optimizeWays(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions ) {
 		printBadAngles("bad_angles_start", roads);
 		writeOSM("roads_orig", roads);
 		writeOSM("lines_orig", lines);
@@ -178,7 +178,7 @@ public class WrongAngleFixer {
 	 * @param deletedRoads set of ids of deleted routable ways (modified by this routine)
 	 * @param restrictions Map with restriction relations. The restriction relations may be modified by this routine 
 	 */
-	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, Map<Coord, List<RestrictionRelation>> restrictions) {
+	private void removeWrongAngles(List<Way> roads, List<Way> lines, HashMap<Long, Way> modifiedRoads, HashSet<Long> deletedRoads, List<RestrictionRelation> restrictions) {
 		// replacements maps those nodes that have been replaced to
 		// the node that replaces them
 		Map<Coord, Coord> replacements = new IdentityHashMap<Coord, Coord>();
@@ -413,11 +413,8 @@ public class WrongAngleFixer {
 					if (p.isViaNodeOfRestriction()){
 						// make sure that we find the restriction with the new coord instance
 						replacement.setViaNodeOfRestriction(true);
-						List<RestrictionRelation> lrr = restrictions.remove(p);
-						if (lrr != null){
-							restrictions.put(replacement,lrr);
-							for (RestrictionRelation rr: lrr)
-								rr.setViaCoord(p,replacement);
+						for (RestrictionRelation rr: restrictions){
+							rr.replaceViaCoord(p,replacement);
 						}
 						p.setViaNodeOfRestriction(false);
 					}

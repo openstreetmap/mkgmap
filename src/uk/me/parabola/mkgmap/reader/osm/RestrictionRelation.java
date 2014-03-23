@@ -17,6 +17,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
@@ -192,20 +193,19 @@ public class RestrictionRelation extends Relation {
 	public Coord getViaCoord() {
 		return viaCoord;
 	}
-
-	public void setViaCoord(Coord oldP, Coord newP) {
+	
+	public void replaceViaCoord(Coord oldP, Coord newP) {
 		if (viaCoord == oldP)
 			this.viaCoord = newP;
 		else if (via2Coord == oldP)
 			this.via2Coord = newP;
 		else {
-			log.error(messagePrefix, "can't locate via coord");
+			// not affected
 			return;
 		}
 		log.info(messagePrefix, restriction, "'via' coord redefined from",
 				oldP.toOSMURL(), "to", newP.toOSMURL());
 	}
-
 	public boolean isValid() {
 		if(restriction == null) {
 			log.warn(messagePrefix, "lacks 'restriction' tag (e.g. no_left_turn)");
@@ -401,5 +401,15 @@ public class RestrictionRelation extends Relation {
 			}
 		}
 		return null;
+	}
+
+	public boolean isValid(Area bbox) {
+		if (!isValid())
+			return false;
+		if (viaCoord != null && bbox.contains(viaCoord) == false)
+			return false;
+		if (via2Coord != null && bbox.contains(via2Coord) == false)
+			return false;
+		return true;
 	}
 }

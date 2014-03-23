@@ -360,7 +360,6 @@ public class RoadMerger {
 	}
 
 	public RoadMerger(List<Way> ways, List<GType> gtypes,
-			Map<Coord, List<RestrictionRelation>> restrictions,
 			List<Relation> throughRouteRelations) {
 		assert ways.size() == gtypes.size();
 
@@ -372,26 +371,9 @@ public class RoadMerger {
 		}
 
 		this.restrictions = new MultiIdentityHashMap<Coord, Long>();
-		workoutRestrictionRelations(restrictions);
 		workoutThroughRoutes(throughRouteRelations);
 	}
 
-	private void workoutRestrictionRelations(Map<Coord, List<RestrictionRelation>> restrictionRels) {
-		for (List<RestrictionRelation> rels : restrictionRels.values()) {
-			for (RestrictionRelation rel : rels) {
-				if (rel.getViaCoord() == null) {
-					continue;
-				}
-				if (rel.getFromWay() != null) {
-					restrictions.add(rel.getViaCoord(), rel.getFromWay().getId());
-				}
-				if (rel.getToWay() != null) {
-					restrictions.add(rel.getViaCoord(), rel.getToWay().getId());
-				}
-			}
-		}
-	}
-	
 	private void workoutThroughRoutes(List<Relation> throughRouteRelations) {
 		for (Relation relation : throughRouteRelations) {
 			Node node = null;

@@ -87,9 +87,7 @@ public class StyledConverter implements OsmConverter {
 	private Clipper clipper = Clipper.NULL_CLIPPER;
 	private Area bbox = new Area(-90.0d, -180.0d, 90.0d, 180.0d); // default is planet
 
-	// restrictions associates lists of turn restrictions with the
-	// Coord corresponding to the restrictions' 'via' node
-	private final Map<Coord, List<RestrictionRelation>> restrictions = new IdentityHashMap<Coord, List<RestrictionRelation>>();
+	private final List<RestrictionRelation> restrictions = new ArrayList<>();
 	
 	private Map<Node, List<Way>> poiRestrictions = new LinkedHashMap<Node, List<Way>>();
 	 
@@ -520,7 +518,7 @@ public class StyledConverter implements OsmConverter {
 		}
 		
 		// instantiate the RoadMerger - the roads and roadTypes lists are copied
-		RoadMerger merger = new RoadMerger(roads, roadTypes, restrictions, throughRouteRelations);
+		RoadMerger merger = new RoadMerger(roads, roadTypes, throughRouteRelations);
 		// clear the lists
 		roads.clear();
 		roadTypes.clear();
@@ -591,11 +589,8 @@ public class StyledConverter implements OsmConverter {
 		createRouteRestrictionsFromPOI();
 		poiRestrictions = null;
 		
-		Collection<List<RestrictionRelation>> lists = restrictions.values();
-		for (List<RestrictionRelation> l : lists) {
-			for (RestrictionRelation rr : l) {
-				rr.addRestriction(collector, nodeIdMap);
-			}
+		for (RestrictionRelation rr : restrictions) {
+			rr.addRestriction(collector, nodeIdMap);
 		}
 
 		for(Relation relation : throughRouteRelations) {
@@ -873,18 +868,10 @@ public class StyledConverter implements OsmConverter {
 
 		// relation rules are not applied here because they are applied
 		// earlier by the RelationStyleHook
-		
 		if(relation instanceof RestrictionRelation) {
 			RestrictionRelation rr = (RestrictionRelation)relation;
-			if(rr.isValid() && bbox.contains(rr.getViaCoord())) {
-				List<RestrictionRelation> lrr = restrictions.get(rr.getViaCoord());
-				if(lrr == null) {
-					lrr = new ArrayList<RestrictionRelation>();
-					Coord via = rr.getViaCoord();
-					via.setViaNodeOfRestriction(true);
-					restrictions.put(via, lrr);
-				}
-				lrr.add(rr);
+			if(rr.isValid(bbox)) {
+				restrictions.add(rr);
 			}
 		}
 		else if("through_route".equals(relation.getTag("type"))) {
@@ -1343,86 +1330,6 @@ public class StyledConverter implements OsmConverter {
 	}
 
 	
-	/**
-	 * Detect the case that two nodes are connected with 
-	 * different road segments and at least one node
-	 * is the via node of an "only-xxx" restriction.
-	 * If that is the case, make sure that there is
-	 * a node between them. If not, add it or change 
-	 * an existing point to a node by incrementing the highway
-	 * count.
-	 * Without this trick, only-restrictions might be ignored.
-	 * 
-	 * @param way the road
-	 */
-	private void addNodesForRestrictions(Way way) {
-		if (way.isViaWay()){
-			// we must not change the number of nodes for via ways
-			return;
-		}
-		List<Coord> points = way.getPoints();
-		// loop downwards as we may add points
-		Coord lastNode = null;
-		int lastNodePos = -1;
-		for (int i = points.size() - 1; i >= 0; i--) {
-			Coord p1 = points.get(i);
-			if (p1.getHighwayCount() > 1){
-				if (lastNode != null){
-					if (lastNode.isViaNodeOfRestriction() && p1.isViaNodeOfRestriction()
-							|| (i == 0 && lastNodePos == points.size()-1 && (lastNode.isViaNodeOfRestriction() || p1.isViaNodeOfRestriction()))){
-						boolean addNode = false;
-						Coord[] testCoords = { p1, lastNode };
-						for (int k = 0; k < 2; k++){
-							if (testCoords[k].isViaNodeOfRestriction() == false)
-								continue;
-							List<RestrictionRelation> lrr = restrictions.get(testCoords[k]);
-							Coord test = k==0 ? testCoords[1]:testCoords[0];
-							for (RestrictionRelation rr : lrr) {
-								if (rr.isOnlyXXXRestriction() == false || rr.getFromWay() == way || rr.getToWay() == way)
-									continue;
-								// check if our way shares a point with either the to or from way
-								// we have to use Coord.equals() here because some
-								// points may already be CoordNodes while others are not
-								for (Coord co: rr.getToWay().getPoints()){
-									if (co.equals(test)){
-										addNode = true;
-										break;
-									}
-								}
-								for (Coord co: rr.getFromWay().getPoints()){
-									if (co.equals(test)){
-										addNode = true;
-										break;
-									}
-								}
-							}
-						}
-						if (addNode == false)
-							continue;
-						Coord co = null;
-						if (lastNodePos-i == 1){
-							if (p1.distance(lastNode) > 0){
-								// create new point
-								co = lastNode.makeBetweenPoint(p1, 0.5);
-								co.incHighwayCount();
-								if (log.isInfoEnabled())
-									log.info("adding node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
-								points.add(lastNodePos,co);
-							}
-						} else {
-							co = points.get(i+1);
-							if (log.isInfoEnabled())
-								log.info("changing point to node in way", way.toBrowseURL(), "to have node between two via points at", co.toOSMURL());
-						}
-						if (co != null)
-							co.incHighwayCount();
-					}
-				}
-				lastNode = p1;
-				lastNodePos = i;
-			}
-		}
-	} 	
 	/**
 	 * safeToSplitWay() returns true if it is safe (no short arcs will be
 	 * created) to split a way at a given position - assumes that the
