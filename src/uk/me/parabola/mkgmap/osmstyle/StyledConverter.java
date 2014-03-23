@@ -33,6 +33,7 @@ import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
 import uk.me.parabola.imgfmt.app.Exit;
 import uk.me.parabola.imgfmt.app.Label;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.NODHeader;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.ExtTypeAttributes;
@@ -57,6 +58,7 @@ import uk.me.parabola.mkgmap.reader.osm.CoordPOI;
 import uk.me.parabola.mkgmap.reader.osm.Element;
 import uk.me.parabola.mkgmap.reader.osm.FeatureKind;
 import uk.me.parabola.mkgmap.reader.osm.GType;
+import uk.me.parabola.mkgmap.reader.osm.HighwayHooks;
 import uk.me.parabola.mkgmap.reader.osm.Node;
 import uk.me.parabola.mkgmap.reader.osm.OsmConverter;
 import uk.me.parabola.mkgmap.reader.osm.Relation;
@@ -273,6 +275,13 @@ public class StyledConverter implements OsmConverter {
 			   !MapObject.hasExtendedType(foundType.getType())){
 				recalcRoadClass(way, type);
 				recalcRoadSpeed(way, type);
+				if (roads.size() > 0 && roads.get(roads.size()-1).getId() == way.getId() + HighwayHooks.CYCLEWAY_ID_OFFSET){
+					Way way2 = new Way(way.getId() - HighwayHooks.CYCLEWAY_ID_OFFSET, way.getPoints());
+					way2.copyTags(way);
+					way2.setClosedInOSM(way.isClosedInOSM());
+					way2.setComplete(way.isComplete());
+					way = way2;
+				}
 		    	roads.add(way);
 		    	roadTypes.add(type);
 		    }
@@ -584,9 +593,8 @@ public class StyledConverter implements OsmConverter {
 		
 		Collection<List<RestrictionRelation>> lists = restrictions.values();
 		for (List<RestrictionRelation> l : lists) {
-
 			for (RestrictionRelation rr : l) {
-				rr.addRestriction(collector);
+				rr.addRestriction(collector, nodeIdMap);
 			}
 		}
 
@@ -841,18 +849,9 @@ public class StyledConverter implements OsmConverter {
 				log.info("Access restriction in POI node " + node.toBrowseURL() + " was ignored, has no effect on any connected way");
 				continue;
 			}
-			List<CoordNode> otherNodesUniqe = new ArrayList<CoordNode>(otherNodeIds.values());
-			for (int i = 0; i < otherNodesUniqe.size(); i++){
-				CoordNode from = (CoordNode) otherNodesUniqe.get(i);
-				for (int j = i+1; j < otherNodesUniqe.size(); j++){
-					CoordNode to = (CoordNode) otherNodesUniqe.get(j);
-					if (to.getId() != viaNode.getId() && from.getId() != viaNode.getId()){
-						collector.addRestriction(from, to, viaNode, exceptMask);
-						collector.addRestriction(to, from, viaNode, exceptMask);
-						log.info("created route restriction from poi for node " + node.toBrowseURL());
-					}
-				}
-			}
+			GeneralRouteRestriction rr = new GeneralRouteRestriction("no_through", exceptMask);
+			rr.setVia1Node(viaNode);
+			collector.addRestriction(rr);
 		}
 	}
 
@@ -1091,7 +1090,7 @@ public class StyledConverter implements OsmConverter {
 		}
 
 		checkRoundabout(way);
-		addNodesForRestrictions(way);
+		//addNodesForRestrictions(way); TODO: check if this is still needed
 
 		// process any Coords that have a POI associated with them
 		final double stubSegmentLength = 25; // metres
@@ -1357,6 +1356,10 @@ public class StyledConverter implements OsmConverter {
 	 * @param way the road
 	 */
 	private void addNodesForRestrictions(Way way) {
+		if (way.isViaWay()){
+			// we must not change the number of nodes for via ways
+			return;
+		}
 		List<Coord> points = way.getPoints();
 		// loop downwards as we may add points
 		Coord lastNode = null;
@@ -1684,12 +1687,13 @@ public class StyledConverter implements OsmConverter {
 
 		int numNodes = nodeIndices.size();
 		road.setNumNodes(numNodes);
-
+		if (way.getId() == 32906345){
+			long dd = 4;
+		}
 		if(numNodes > 0) {
 			// replace Coords that are nodes with CoordNodes
 			boolean hasInternalNodes = false;
-			CoordNode lastCoordNode = null;
-			List<RestrictionRelation> lastRestrictions = null;
+			
 			for(int i = 0; i < numNodes; ++i) {
 				int n = nodeIndices.get(i);
 				if(n > 0 && n < points.size() - 1)
@@ -1702,52 +1706,6 @@ public class StyledConverter implements OsmConverter {
 					log.info("Way", debugWayName + "'s point #" + n, "at", coord.toOSMURL(), "is a boundary node");
 				}
 				points.set(n, thisCoordNode);
-
-				// see if this node plays a role in any turn
-				// restrictions
-
-				if(lastRestrictions != null) {
-					// the previous node was the location of one or
-					// more restrictions
-					for(RestrictionRelation rr : lastRestrictions) {
-						if(rr.getToWay().getId() == way.getId()) {
-							rr.setToNode(thisCoordNode);
-						}
-						else if(rr.getFromWay().getId() == way.getId()) {
-							rr.setFromNode(thisCoordNode);
-						}
-						else {
-							rr.addOtherNode(thisCoordNode);
-						}
-					}
-				}
-
-				List<RestrictionRelation> theseRestrictions;
-				if (coord.isViaNodeOfRestriction())
-					theseRestrictions = restrictions.get(coord);
-				else
-					theseRestrictions = null;
-				if(theseRestrictions != null) {
-					// this node is the location of one or more
-					// restrictions
-					for(RestrictionRelation rr : theseRestrictions) {
-						rr.setViaNode(thisCoordNode);
-						if(rr.getToWay().getId() == way.getId()) {
-							if(lastCoordNode != null)
-								rr.setToNode(lastCoordNode);
-						}
-						else if(rr.getFromWay().getId() == way.getId()) {
-							if(lastCoordNode != null)
-								rr.setFromNode(lastCoordNode);
-						}
-						else if(lastCoordNode != null) {
-							rr.addOtherNode(lastCoordNode);
-						}
-					}
-				}
-
-				lastRestrictions = theseRestrictions;
-				lastCoordNode = thisCoordNode;
 			}
 
 			road.setStartsWithNode(nodeIndices.get(0) == 0);
@@ -1854,7 +1812,6 @@ public class StyledConverter implements OsmConverter {
 		for (Way way :roads){
 			if (way == null)
 				continue;
-			
 			if (way.getId() == lastId) {
 				log.debug("Road with identical id:", way.getId());
 				dupIdHighways.add(way);
@@ -1867,7 +1824,8 @@ public class StyledConverter implements OsmConverter {
 			}
 		}
 		
-		// go through all duplicated highways and increase the highway counter of all crossroads 
+		// go through all duplicated highways and increase the highway counter of all crossroads
+		
 		for (Way way : dupIdHighways) {
 			List<Coord> points = way.getPoints();
 			// increase the highway counter of the first and last point
@@ -1883,6 +1841,7 @@ public class StyledConverter implements OsmConverter {
 				}
 			}
 		}
+		
 	}
 	
 	/**

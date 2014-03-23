@@ -16,6 +16,7 @@ package uk.me.parabola.imgfmt.app.net;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -119,11 +120,14 @@ public class RouteNode implements Comparable<RouteNode> {
 		flags |= F_RESTRICTIONS;
 	}
 
-	public RouteArc getDirectArcTo(RouteNode otherNode) {
+	public RouteArc getDirectArcTo(RouteNode otherNode, long roadId) {
 		for(RouteArc a : arcs)
-			if(a.isDirect() && a.getDest() == otherNode)
-				return a;
-
+			if(a.isDirect() && a.getDest() == otherNode){
+				if(a.getRoadDef().getId() == roadId)
+					return a;
+				else 
+					log.error("check: old code would have selected wrong arc from road ", a.getRoadDef().getId(), " instead of road ", roadId);
+			}
 		return null;
 	}
 
@@ -1076,5 +1080,9 @@ public class RouteNode implements Comparable<RouteNode> {
 			}
 		}
 		return nodeGroup;
+	}
+
+	public List<RouteArc> getArcs() {
+		return arcs;
 	}
 }

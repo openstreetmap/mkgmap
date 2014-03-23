@@ -61,8 +61,18 @@ public class RouteCenter {
 				if (!arc.isInternal())
 					arc.setIndexB(tabB.getIndex(arc.getDest()));
 			}
-			for (RouteRestriction restr : node.getRestrictions())
+			
+			for (RouteRestriction restr : node.getRestrictions()){
+				if (restr.getArcs().size() >= 3){
+					// only restrictions with more than 2 arcs can contain external nodes 
+					for (RouteArc arc : restr.getArcs()){
+						arc.setIndexA(tabA.getIndex(arc));
+						if (!arc.isInternal())
+							arc.setIndexB(tabB.getIndex(arc.getDest()));
+					}
+				}
 				restr.setOffsetC(tabC.addRestriction(restr));
+			}
 		}
 		// update size of tabC offsets, now that tabC has been populated
 		tabC.propagateSizeBytes();

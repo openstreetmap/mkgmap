@@ -13,13 +13,13 @@
 
 package uk.me.parabola.mkgmap.reader.osm;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
 import uk.me.parabola.imgfmt.app.Coord;
 import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.RouteRestriction;
 import uk.me.parabola.log.Logger;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -36,15 +36,16 @@ public class RestrictionRelation extends Relation {
     private Way fromWay;
     private Way toWay;
     private Way viaWay;
-    private Coord viaCoord;
+    private Coord viaCoord, via2Coord;
     private final String restriction;
 
     private CoordNode fromNode;
     private CoordNode toNode;
     private CoordNode viaNode;
-    private final List<CoordNode> otherNodes = new ArrayList<CoordNode>();
+    private CoordNode via2Node;
 	private byte exceptMask;
     private String messagePrefix;
+    private boolean valid;
 
 	/**
 	 * Create an instance based on an existing relation.  We need to do
@@ -53,12 +54,12 @@ public class RestrictionRelation extends Relation {
 	 * @param other The relation to base this one on.
 	 */
 	public RestrictionRelation(Relation other) {
-
+		
 		setId(other.getId());
-
+		valid = true;
 		final String browseURL = toBrowseURL();
 
-		messagePrefix = "Turn restriction " + browseURL + " ";
+		messagePrefix = "Turn restriction " + browseURL;
 
 		for (Map.Entry<String, Element> pair : other.getElements()) {
 			String role = pair.getKey();
@@ -75,37 +76,40 @@ public class RestrictionRelation extends Relation {
 				location = toWay.getPoints().get(0);
 
 			if(location != null)
-				messagePrefix = "Turn restriction " + browseURL + " (at " + location.toOSMURL() + ") ";
+				messagePrefix = "Turn restriction " + browseURL + " (at " + location.toOSMURL() + ")";
 
 			if("to".equals(role)) {
 				if(toWay != null) {
-					log.warn(messagePrefix + "has extra 'to' member " + el.toBrowseURL());
+					log.warn(messagePrefix, "has extra 'to' member", el.toBrowseURL());
+					valid = false;
 				}
 				else if(!(el instanceof Way)) {
-					log.warn(messagePrefix + "'to' member " + el.toBrowseURL() + " is not a way but it should be");
+					log.warn(messagePrefix, "'to' member", el.toBrowseURL(), "is not a way but it should be");
 				}
 				else if(((Way)el).getPoints().isEmpty()) {
-					log.warn(messagePrefix + "ignoring empty 'to' way " + el.toBrowseURL());
+					log.warn(messagePrefix, "ignoring empty 'to' way", el.toBrowseURL());
 				}
 				else
 					toWay = (Way)el;
 			}
 			else if("from".equals(role)) {
 				if(fromWay != null) {
-					log.warn(messagePrefix + "has extra 'from' member " + el.toBrowseURL());
+					log.warn(messagePrefix, "has extra 'from' member", el.toBrowseURL());
+					valid = false;
 				}
 				else if(!(el instanceof Way)) {
-					log.warn(messagePrefix + "'from' member " + el.toBrowseURL() + " is not a way but it should be");
+					log.warn(messagePrefix, "'from' member", el.toBrowseURL(), "is not a way but it should be");
 				}
 				else if(((Way)el).getPoints().isEmpty()) {
-					log.warn(messagePrefix + "ignoring empty 'from' way " + el.toBrowseURL());
+					log.warn(messagePrefix, "ignoring empty 'from' way", el.toBrowseURL());
 				}
 				else
 					fromWay = (Way)el;
 			}
 			else if("via".equals(role)) {
 				if(viaCoord != null || viaWay != null) {
-					log.warn(messagePrefix + "has extra 'via' member " + el.toBrowseURL());
+					log.warn(messagePrefix, "has extra 'via' member", el.toBrowseURL());
+					valid = false;
 				}
 				else if(el instanceof Node) {
 					viaCoord = ((Node)el).getLocation();
@@ -114,14 +118,14 @@ public class RestrictionRelation extends Relation {
 					viaWay = (Way)el;
 				}
 				else {
-					log.warn(messagePrefix + "'via' member " + el.toBrowseURL() + " is not a node or way");
+					log.warn(messagePrefix, "'via' member", el.toBrowseURL(), "is not a node or way");
 				}
 			}
 			else if("location_hint".equals(role)) {
 				// relax - we don't care about this
 			}
 			else {
-				log.warn(messagePrefix + "unknown member role '" + role + "'");
+				log.warn(messagePrefix, "unknown member role '" + role + "'");
 			}
 		}
 
@@ -137,7 +141,7 @@ public class RestrictionRelation extends Relation {
 		    "hour_off" };
 		for (String unsupportedTag : unsupportedTags) {
 			if (getTag(unsupportedTag) != null) {
-				log.warn(messagePrefix + "ignoring unsupported '" + unsupportedTag + "' tag");
+				log.warn(messagePrefix, "ignoring unsupported '" + unsupportedTag + "' tag");
 			}
 		}
 
@@ -159,8 +163,12 @@ public class RestrictionRelation extends Relation {
 				else if(e.equals("hgv") || e.equals("truck"))
 					exceptMask |= RouteRestriction.EXCEPT_TRUCK;
 				else
-					log.warn(messagePrefix + "ignoring unsupported vehicle class '" + e + "' in turn restriction exception");
+					log.warn(messagePrefix, "ignoring unsupported vehicle class '" + e + "' in turn restriction exception");
 			}
+		}
+		if (valid && viaWay != null){
+			viaWay.getPoints().get(0).setViaNodeOfRestriction(true);
+			viaWay.getPoints().get(viaWay.getPoints().size()-1).setViaNodeOfRestriction(true);
 		}
 	}
 
@@ -180,57 +188,39 @@ public class RestrictionRelation extends Relation {
 		this.toWay = toWay;
 	}
 
+	@Deprecated
 	public Coord getViaCoord() {
 		return viaCoord;
 	}
 
-	public void setFromNode(CoordNode fromNode) {
-		this.fromNode = fromNode;
-		log.debug(messagePrefix + restriction + " 'from' node is " + fromNode.toOSMURL());
-	}
-
-	public void setToNode(CoordNode toNode) {
-		this.toNode = toNode;
-		log.debug(messagePrefix + restriction + " 'to' node is " + toNode.toOSMURL());
-	}
-
-	public void setViaNode(CoordNode viaNode) {
-		if(this.viaNode == null)
-			log.debug(messagePrefix + restriction + " 'via' node is " + viaNode.toOSMURL());
-		else if(!this.viaNode.equals(viaNode))
-			log.debug(messagePrefix + restriction + " 'via' node redefined from " +
-					 this.viaNode.toOSMURL() + " to " + viaNode.toOSMURL());
-		this.viaNode = viaNode;
-	}
-
-	public void setViaCoord(Coord viaCoord) {
-		log.warn(messagePrefix + restriction + " 'via' coord redefined from " +
-				 this.viaCoord.toOSMURL() + " to " + viaCoord.toOSMURL());
-		this.viaCoord = viaCoord;
-	}
-
-	public void addOtherNode(CoordNode otherNode) {
-		otherNodes.add(otherNode);
-		log.debug(messagePrefix + restriction + " adding 'other' node " + otherNode.toOSMURL());
+	public void setViaCoord(Coord oldP, Coord newP) {
+		if (viaCoord == oldP)
+			this.viaCoord = newP;
+		else if (via2Coord == oldP)
+			this.via2Coord = newP;
+		else {
+			log.error(messagePrefix, "can't locate via coord");
+			return;
+		}
+		log.info(messagePrefix, restriction, "'via' coord redefined from",
+				oldP.toOSMURL(), "to", newP.toOSMURL());
 	}
 
 	public boolean isValid() {
-		boolean result = true;
-
 		if(restriction == null) {
-			log.warn(messagePrefix + "lacks 'restriction' tag (e.g. no_left_turn)");
-			result = false;
+			log.warn(messagePrefix, "lacks 'restriction' tag (e.g. no_left_turn)");
+			valid = false;
 		}
 
 		if(fromWay == null) {
-			log.warn(messagePrefix + "lacks 'from' way");
+			log.warn(messagePrefix, "lacks 'from' way");
 		}
 
 		if(toWay == null) {
-			log.warn(messagePrefix + "lacks 'to' way");
+			log.warn(messagePrefix, "lacks 'to' way");
 		}
 
-		if(fromWay == null || toWay == null)
+		if(fromWay == null || toWay == null || !valid)
 			return false;
 
 		if(viaCoord == null && viaWay == null) {
@@ -243,7 +233,7 @@ public class RestrictionRelation extends Relation {
 							viaCoord = fp;
 						}
 						else {
-							log.warn(messagePrefix + "lacks 'via' node and the 'from' (" + fromWay.toBrowseURL() + ") and 'to' (" + toWay.toBrowseURL() + ") ways connect in more than one place");
+							log.warn(messagePrefix, "lacks 'via' node and the 'from' (", fromWay.toBrowseURL(), ") and 'to' (", toWay.toBrowseURL(), ") ways connect in more than one place");
 							return false;
 						}
 					}
@@ -251,11 +241,11 @@ public class RestrictionRelation extends Relation {
 			}
 
 			if(viaCoord == null) {
-				log.warn(messagePrefix + "lacks 'via' node and the 'from' (" + fromWay.toBrowseURL() + ") and 'to' (" + toWay.toBrowseURL() + ") ways don't connect");
+				log.warn(messagePrefix, "lacks 'via' node and the 'from' (" + fromWay.toBrowseURL() + ") and 'to' (" + toWay.toBrowseURL() + ") ways don't connect");
 				return false;
 			}
 
-			log.warn(messagePrefix + "lacks 'via' node (guessing it should be at " + viaCoord.toOSMURL() + ", why don't you add it to the OSM data?)");
+			log.warn(messagePrefix, "lacks 'via' node (guessing it should be at", viaCoord.toOSMURL() + ", why don't you add it to the OSM data?)");
 		}
 
 		Coord v1 = viaCoord;
@@ -265,29 +255,57 @@ public class RestrictionRelation extends Relation {
 			v1 = viaWay.getPoints().get(0);
 			v2 = viaWay.getPoints().get(viaWay.getPoints().size() - 1);
 		}
-
+		
 		Coord e1 = fromWay.getPoints().get(0);
 		Coord e2 = fromWay.getPoints().get(fromWay.getPoints().size() - 1);
 		if(e1 != v1 && e2 != v1 && e1 != v2 && e2 != v2) {
-			log.warn(messagePrefix + "'from' way " + fromWay.toBrowseURL() + " doesn't start or end at 'via' node or way");
-			result = false;
+			log.warn(messagePrefix, "'from' way", fromWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
+			valid = false;
+		} else {
+			viaCoord = (e1 == v1 || e1 == v2) ? e1:e2;
+			via2Coord = (viaCoord == v1) ? v2:v1;
 		}
 
 		e1 = toWay.getPoints().get(0);
 		e2 = toWay.getPoints().get(toWay.getPoints().size() - 1);
 		if(e1 != v1 && e2 != v1 && e1 != v2 && e2 != v2) {
-			log.warn(messagePrefix + "'to' way " + toWay.toBrowseURL() + " doesn't start or end at 'via' node or way");
-			result = false;
+			log.warn(messagePrefix, "'to' way", toWay.toBrowseURL(), "doesn't start or end at 'via' node or way");
+			valid = false;
+		} 
+		if (valid && viaWay != null && isOnlyXXXRestriction()){
+			log.error(messagePrefix, "check: 'via' ways in only-restrictions ");
+			//valid = false;
 		}
-
-		if (result && viaWay != null) {
-			log.warn(messagePrefix + "sorry, 'via' ways are not supported - ignoring restriction");
-			result = false;
-		}
-		return result;
+		if (valid && viaWay != null)
+			viaWay.setViaWay(true);
+		
+		return valid;
 	}
 
-	public void addRestriction(MapCollector collector) {
+	public void addRestriction(MapCollector collector, IdentityHashMap<Coord, CoordNode> nodeIdMap) {
+		viaNode = nodeIdMap.get(viaCoord);
+		fromNode = findNextNode(fromWay, viaNode);
+		if (viaWay != null){
+			if (viaWay.getPoints().get(0).getId() == 0 || viaWay.getPoints().get(viaWay.getPoints().size()-1).getId() == 0){
+				log.error(messagePrefix, "'via' way", viaWay.toBrowseURL(), "doesn't end with CoordNode");
+				return;
+			}
+			if (viaWay.getPoints().get(0) == viaNode)
+				via2Coord= viaWay.getPoints().get(viaWay.getPoints().size()-1);
+			else 
+				via2Coord= viaWay.getPoints().get(0);
+			assert via2Coord instanceof CoordNode;
+			via2Node = (CoordNode) via2Coord;
+			Coord co = findNextNode(viaWay, viaNode);
+			if (via2Node != co){
+				log.warn(messagePrefix, "'via' way", viaWay.toBrowseURL(), "is also connected to other roads between end-points at",co.toDegreeString()); 
+				return;
+			}
+				
+			toNode = findNextNode(toWay, via2Node);		
+		} else
+			toNode = findNextNode(toWay, viaNode);		
+
 		if ("no_u_turn".equals(restriction)){
 			if (toNode != null && fromNode == null)
 				fromNode = toNode;
@@ -299,35 +317,51 @@ public class RestrictionRelation extends Relation {
 				log.warn("can't add restriction relation", this.getId(), "type", restriction);
 			return;
 		}
-
+		
+		GeneralRouteRestriction rr;
 		if(restriction.equals("no_left_turn") ||
 		   restriction.equals("no_right_turn") ||
 		   restriction.equals("no_straight_on") ||
 		   restriction.equals("no_u_turn") ||
 		   restriction.startsWith("no_turn")) {
-			collector.addRestriction(fromNode, toNode, viaNode, exceptMask);
+			rr = new GeneralRouteRestriction("not", exceptMask);
+			rr.setFromNode(fromNode);
+			rr.setToNode(toNode);
+			rr.setVia1Node(viaNode);
+			rr.setFromWayId(fromWay.getId());
+			rr.setToWayId(toWay.getId());
+			if (via2Node != null && viaWay != null){
+				rr.setVia2Node(via2Node);
+				rr.setViaWayId(viaWay.getId());
+			} 
+				
+			collector.addRestriction(rr);
 			if(restriction.startsWith("no_turn"))
-				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way " + toWay.toBrowseURL());
-			else
-				log.info(messagePrefix + restriction + " added - blocks routing to way " + toWay.toBrowseURL());
+				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form no_X_turn rather than no_turn_X - I added the restriction anyway - blocks routing to way", toWay.toBrowseURL());
+			else 
+				log.info(messagePrefix, restriction, "added - blocks routing to way", toWay.toBrowseURL());
 		}
 		else if(restriction.equals("only_left_turn") ||
 				restriction.equals("only_right_turn") ||
 				restriction.startsWith("only_straight") ||
 				restriction.startsWith("only_turn")) {
 			if(restriction.startsWith("only_turn"))
-				log.warn(messagePrefix + "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way " + toWay.toBrowseURL());
-			log.info(messagePrefix + restriction + " added - allows routing to way " + toWay.toBrowseURL());
-			HashSet<CoordNode> otherNodesUnique = new HashSet<CoordNode>(otherNodes);
-			for(CoordNode otherNode : otherNodesUnique) {
-				if (otherNode.getId() != fromNode.getId() && otherNode.getId() != toNode.getId()) {
-					log.info(messagePrefix + restriction + "  blocks routing to node " + otherNode.toOSMURL());
-					collector.addRestriction(fromNode, otherNode, viaNode, exceptMask);
-				} 
-			}
+				log.warn(messagePrefix, "has bad type '" + restriction + "' it should be of the form only_X_turn rather than only_turn_X - I added the restriction anyway - allows routing to way", toWay.toBrowseURL());
+			log.info(messagePrefix, restriction, "added - allows routing to way", toWay.toBrowseURL());
+			rr = new GeneralRouteRestriction("only", exceptMask);
+			rr.setFromNode(fromNode);
+			rr.setToNode(toNode);
+			rr.setVia1Node(viaNode);
+			rr.setFromWayId(fromWay.getId());
+			rr.setToWayId(toWay.getId());
+			if (via2Node != null && viaWay != null){
+				rr.setVia2Node(via2Node);
+				rr.setViaWayId(viaWay.getId());
+			} 
+			collector.addRestriction(rr);
 		}
 		else {
-			log.warn(messagePrefix + "has unsupported type '" + restriction + "'");
+			log.warn(messagePrefix, "has unsupported type '" + restriction + "'");
 		}
 	}
 
@@ -343,5 +377,29 @@ public class RestrictionRelation extends Relation {
 	
 	public boolean isOnlyXXXRestriction(){
 		return restriction.startsWith("only");
+	}
+	
+	/**
+	 * First next CoordNode on the way, starting search at start
+	 * @param way the way
+	 * @param start the start node (
+	 * @return the next node or null if none was found
+	 */
+	private CoordNode findNextNode(Way way, CoordNode start){
+		List<Coord> points = way.getPoints();
+		if (points.get(0) == start){
+			for (int i = 1; i < points.size(); i++){
+				Coord co = points.get(i);
+				if (co.getId() != 0)
+					return (CoordNode)co;
+			}
+		} else {
+			for (int i = points.size()-2; i >= 0; --i){
+				Coord co = points.get(i);
+				if (co.getId() != 0)
+					return (CoordNode)co;
+			}
+		}
+		return null;
 	}
 }

@@ -417,7 +417,7 @@ public class WrongAngleFixer {
 						if (lrr != null){
 							restrictions.put(replacement,lrr);
 							for (RestrictionRelation rr: lrr)
-								rr.setViaCoord(replacement);
+								rr.setViaCoord(p,replacement);
 						}
 						p.setViaNodeOfRestriction(false);
 					}
@@ -902,12 +902,12 @@ public class WrongAngleFixer {
 			}
 			
 			if (bestReplErr < MAX_BEARING_ERROR){
-				String msg = "_good"; 
+//				String msg = "_good"; 
 				if (removeErr < bestReplErr && initialMaxError - removeErr >= MAX_BEARING_ERROR/2 && removeErr < MAX_BEARING_ERROR/2){
 					bestCenterReplacement = null;
 //					createGPX(gpxPath+id+"_rem_pref", replacements);
 				} else if (initialMaxError - bestReplErr < MAX_BEARING_ERROR/2 || bestReplErr > MAX_BEARING_ERROR/2){
-					msg = "_rather_good";
+//					msg = "_rather_good";
 				}
 				if (bestCenterReplacement != null){
 					replaceCoord(currentCenter, bestCenterReplacement, replacements);

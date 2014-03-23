@@ -32,7 +32,7 @@ import uk.me.parabola.util.EnhancedProperties;
 public class HighwayHooks extends OsmReadingHooksAdaptor {
 	private static final Logger log = Logger.getLogger(HighwayHooks.class);
 
-	private static final long CYCLEWAY_ID_OFFSET = 0x10000000;
+	public static final long CYCLEWAY_ID_OFFSET = 0x10000000;
 
 	private final List<Way> motorways = new ArrayList<Way>();
 	private final List<Node> exits = new ArrayList<Node>();

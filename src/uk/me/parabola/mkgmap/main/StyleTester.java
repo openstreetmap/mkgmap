@@ -40,7 +40,7 @@ import uk.me.parabola.imgfmt.FormatException;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.net.RoadDef;
 import uk.me.parabola.mkgmap.general.LevelInfo;
 import uk.me.parabola.mkgmap.general.MapCollector;
@@ -808,7 +808,7 @@ public class StyleTester implements OsmConverter {
 			lines.add(road);
 		}
 
-		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		public void addRestriction(GeneralRouteRestriction rr) {
 		}
 
 		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {
@@ -850,7 +850,7 @@ public class StyleTester implements OsmConverter {
 			}
 		}
 
-		public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
+		public void addRestriction(GeneralRouteRestriction rr) {
 		}
 
 		public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {

@@ -24,7 +24,7 @@ import java.util.Map;
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
-import uk.me.parabola.imgfmt.app.CoordNode;
+import uk.me.parabola.imgfmt.app.net.GeneralRouteRestriction;
 import uk.me.parabola.imgfmt.app.trergn.Overview;
 import uk.me.parabola.imgfmt.app.trergn.PointOverview;
 import uk.me.parabola.imgfmt.app.trergn.PolygonOverview;
@@ -126,8 +126,8 @@ public class MapDetails implements MapCollector, MapDataSource {
 		addLine(road);
 	}
 
-	public void addRestriction(CoordNode fromNode, CoordNode toNode, CoordNode viaNode, byte exceptMask) {
-		roadNetwork.addRestriction(fromNode, toNode, viaNode, exceptMask);
+	public void addRestriction(GeneralRouteRestriction rr) {
+		roadNetwork.addRestriction(rr);
 	}
 
 	public void addThroughRoute(long junctionNodeId, long roadIdA, long roadIdB) {

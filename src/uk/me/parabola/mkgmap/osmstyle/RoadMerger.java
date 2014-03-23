@@ -44,7 +44,6 @@ public class RoadMerger {
 
 	private static final double MAX_MERGE_ANGLE = 130d;
 	
-	/** maps which coord of a way(id) are restricted - they should not be merged */
 	private final MultiIdentityHashMap<Coord, Long> restrictions;
 	/** Contains a list of all roads (GType + Way) */
 	private final List<Road> roads;
@@ -436,7 +435,12 @@ public class RoadMerger {
 	}
 
 	private boolean hasRestriction(Coord c, Way w) {
+		if (c.isViaNodeOfRestriction())
+			return true;
 		List<Long> wayRestrictions = restrictions.get(c);
+		if (wayRestrictions.isEmpty() == false){
+			long dd = 4;
+		}
 		return wayRestrictions.contains(w.getId());
 	}
 
@@ -512,7 +516,7 @@ public class RoadMerger {
 				roads.add(road);
 				continue;
 			}
-
+			
 			mergePoints.add(start);
 			mergePoints.add(end);
 			startPoints.add(start, road);
@@ -524,6 +528,10 @@ public class RoadMerger {
 		
 		// go through all start/end points and check if a merge is possible
 		for (Coord mergePoint : mergePoints) {
+			if (mergePoint.isViaNodeOfRestriction()){
+				// don't merge at any point that is part of a restriction
+				continue;
+			}
 			if (mergeCompletedPoints.contains(mergePoint)) {
 				// a previous run did not show any possible merge
 				// do not check again
@@ -547,19 +555,10 @@ public class RoadMerger {
 			Road mergeRoad2 = null;
 			
 			for (Road road1 : endRoads) {
-				// check if the road has a restriction at the merge point
-				// which does not allow us to merge the road at this point
-				if (hasRestriction(mergePoint, road1.getWay())) {
-					continue;
-				}
-				
 				List<Coord> points1 = road1.getWay().getPoints();
 				
 				// go through all candidates to merge
 				for (Road road2 : startRoads) {
-					if (hasRestriction(mergePoint, road2.getWay())) {
-						continue;
-					}
 					List<Coord> points2 = road2.getWay().getPoints();
 					
 					// the second road is merged into the first road
