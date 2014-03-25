@@ -42,8 +42,8 @@ public class Mdr21 extends Mdr2x {
 	public void buildFromStreets(List<Mdr7Record> inStreets) {
 		Sort sort = getConfig().getSort();
 
-		List<SortKey<Mdr7Record>> keys = new ArrayList<SortKey<Mdr7Record>>();
-		Map<String, byte[]> cache = new HashMap<String, byte[]>();
+		List<SortKey<Mdr7Record>> keys = new ArrayList<>();
+		Map<String, byte[]> cache = new HashMap<>();
 
 		for (Mdr7Record s : inStreets) {
 			Mdr5Record city = s.getCity();
@@ -83,6 +83,10 @@ public class Mdr21 extends Mdr2x {
 				lastName = name;
 			}
 		}
+	}
+
+	protected boolean sameGroup(Mdr7Record street1, Mdr7Record street2) {
+		return true;
 	}
 
 	/**
