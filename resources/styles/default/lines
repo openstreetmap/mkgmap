@@ -87,8 +87,6 @@ highway=path & snowplowing!=no
 {set highway=cycleway; set bicycle=yes}
 highway=path & (horse=designated|horse=permissive|horse=official)
 {set highway=bridleway; set horse=yes}
-highway=path
-{set highway=footway}
 
 leisure=track & area!=yes
 {add highway=footway; name '${name} (${sport})' | '${name}'}
