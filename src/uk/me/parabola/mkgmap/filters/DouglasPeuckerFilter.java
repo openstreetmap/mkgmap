@@ -67,12 +67,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 		// Create a new list to rewrite the points into. Don't alter the original one
 		List<Coord> coords = new ArrayList<Coord>(points.size());
 		coords.addAll(points);
-
-//#if (Node version)
-//Don't touch Coords, which are nodes.
-//So points at crossings will not be moved
-		// For now simplify all points, which are not nodes
-		// and no start and no end point
 		// Loop runs downwards, as the list length gets modified while running
 		int endIndex = coords.size()-1;
 		if (level == 0 || line instanceof MapShape){
@@ -91,14 +85,6 @@ public class DouglasPeuckerFilter implements MapFilter {
 		}
 		// Simplify the rest
 		douglasPeucker(coords, 0, endIndex, maxErrorDistance);
-
-//#else Straight version
-//Do the douglasPeucker on the whole line. 
-//Deletes more points, but may lead to incorrect display of crossings at given high error distances
-/*		
-		douglasPeucker(coords, 0, n, maxErrorDistance);
-	*/	
-//#endif
 		MapLine newline = line.copy();
 
 		newline.setPoints(coords);
@@ -126,28 +112,34 @@ public class DouglasPeuckerFilter implements MapFilter {
 		Coord b = points.get(endIndex);
 		double ab = a.distance(b);
 
-		if (ab == 0) { // Start- and endpoint are the same
-			// Find point with highest distance to start- and endpoint
-			for (int i = endIndex-1; i > startIndex; i--) {
-				Coord p = points.get(i);
-				double distance = p.distance(a);
-				if (distance > maxDistance) {
-					maxDistance = distance;
-					maxIndex = i;
-				}
-			}
-		} else {
-			// Find point with highest distance to line between start- and endpoint by using herons formula.
-			for(int i = endIndex-1; i > startIndex; i--) {
-				Coord p = points.get(i);
+		// Find point with highest distance to line between start- and endpoint by using herons formula.
+		for(int i = endIndex-1; i > startIndex; i--) {
+			Coord p = points.get(i);
+			double distance;
+			// handle also closed or nearly closed lines and spikes on straight lines
+			double frac;
+			double dx = b.getLongitude() - a.getLongitude();
+			double dy = b.getLatitude() - a.getLatitude();
+
+			if ((dx == 0) && (dy == 0)) 
+				frac = 0;
+			else 
+				frac = ((p.getLongitude() - a.getLongitude()) * dx + (p.getLatitude() - a.getLatitude()) * dy) / (dx * dx + dy * dy);
+
+			if (frac <= 0) {
+				distance = a.distance(p);
+			} else if (frac >= 1) {
+				distance = b.distance(p);
+			} else {
+				// normal case: calculate perpendicular distance with herons formula
 				double ap = p.distance(a);
 				double bp = p.distance(b);
 				double abpa = (ab+ap+bp)/2;
-				double distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
-				if (distance > maxDistance) {
-					maxDistance = distance;
-					maxIndex = i;
-				}
+				distance = 2 * Math.sqrt(abpa * (abpa-ab) * (abpa-ap) * (abpa-bp)) / ab;
+			}
+			if (distance > maxDistance) {
+				maxDistance = distance;
+				maxIndex = i;
 			}
 		}
 		if (maxDistance > allowedError) {
@@ -174,5 +166,4 @@ public class DouglasPeuckerFilter implements MapFilter {
 			}
 		}
 	}
-
 }
