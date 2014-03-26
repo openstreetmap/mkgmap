@@ -71,12 +71,6 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	 * The maps must be sorted in numerical order.
 	 */
 	public void finish() {
-		int count = 1;
-		for (Mdr1Record r : maps) {
-			r.setMapIndex(count++);
-			System.out.printf("map %d\n", r.getMapIndex());
-		}
-
 		Collections.sort(maps, new Comparator<Mdr1Record>() {
 			public int compare(Mdr1Record o1, Mdr1Record o2) {
 				if (o1.getMapNumber() == o2.getMapNumber())
@@ -88,10 +82,10 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 			}
 		});
 
+		// Used to renumber all the existing (pre-sorted) map index numbers.
 		mapping = new int[maps.size() + 1];
-		count = 1;
+		int count = 1;
 		for (Mdr1Record r : maps) {
-			System.out.printf("%d->%d\n", count, r.getMapIndex());
 			mapping[r.getMapIndex()] = count;
 			count++;
 		}
