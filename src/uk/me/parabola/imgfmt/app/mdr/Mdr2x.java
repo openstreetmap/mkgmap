@@ -25,7 +25,7 @@ import uk.me.parabola.imgfmt.app.Label;
  * @author Steve Ratcliffe
  */
 public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
-	protected List<Mdr7Record> streets = new ArrayList<Mdr7Record>();
+	protected List<Mdr7Record> streets = new ArrayList<>();
 
 	/**
 	 * Write out the contents of this section.
@@ -109,4 +109,8 @@ public abstract class Mdr2x extends MdrMapSection implements HasHeaderFlags {
 	 * @return True if the streets are in the same group (city, region etc).
 	 */
 	protected abstract boolean sameGroup(Mdr7Record street1, Mdr7Record street2);
+
+	public void relabelMaps(Mdr1 maps) {
+		// Nothing to do, since all streets are re-labeled in their own section.
+	}
 }

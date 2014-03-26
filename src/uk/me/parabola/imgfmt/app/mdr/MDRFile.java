@@ -151,7 +151,7 @@ public class MDRFile extends ImgFile {
 
 		String name = country.getLabel().getText();
 		record.setMapIndex(currentMap);
-		record.setCountryIndex((int) country.getIndex());
+		record.setCountryIndex(country.getIndex());
 		record.setLblOffset(country.getLabel().getOffset());
 		record.setName(name);
 		record.setStrOff(createString(name));
@@ -243,11 +243,6 @@ public class MDRFile extends ImgFile {
 	public void write() {
 		mdr15.release();
 		
-		for (MdrSection s : sections) {
-			if (s != null)
-				s.finish();
-		}
-
 		ImgFileWriter writer = getWriter();
 		writeSections(writer);
 
@@ -270,6 +265,8 @@ public class MDRFile extends ImgFile {
 	 */
 	private void writeSections(ImgFileWriter writer) {
 		sizes = new MdrMapSection.PointerSizes(sections);
+
+		mdr1.finish();
 
 		// Deal with the dependencies between the sections. The order of the following
 		// statements is sometimes important.
@@ -386,6 +383,7 @@ public class MDRFile extends ImgFile {
 			MdrMapSection mapSection = (MdrMapSection) section;
 			mapSection.setMapIndex(mdr1);
 			mapSection.initIndex(sectionNumber);
+			mapSection.relabelMaps(mdr1);
 		}
 
 		if (section instanceof HasHeaderFlags)

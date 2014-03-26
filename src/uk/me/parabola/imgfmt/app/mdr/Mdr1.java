@@ -45,7 +45,8 @@ import uk.me.parabola.imgfmt.app.ImgFileWriter;
  * @author Steve Ratcliffe
  */
 public class Mdr1 extends MdrSection implements HasHeaderFlags {
-	private final List<Mdr1Record> maps = new ArrayList<Mdr1Record>();
+	private final List<Mdr1Record> maps = new ArrayList<>();
+	private int[] mapping;
 
 	public Mdr1(MdrConfig config) {
 		setConfig(config);
@@ -70,6 +71,12 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 	 * The maps must be sorted in numerical order.
 	 */
 	public void finish() {
+		int count = 1;
+		for (Mdr1Record r : maps) {
+			r.setMapIndex(count++);
+			System.out.printf("map %d\n", r.getMapIndex());
+		}
+
 		Collections.sort(maps, new Comparator<Mdr1Record>() {
 			public int compare(Mdr1Record o1, Mdr1Record o2) {
 				if (o1.getMapNumber() == o2.getMapNumber())
@@ -80,6 +87,14 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 					return 1;
 			}
 		});
+
+		mapping = new int[maps.size() + 1];
+		count = 1;
+		for (Mdr1Record r : maps) {
+			System.out.printf("%d->%d\n", count, r.getMapIndex());
+			mapping[r.getMapIndex()] = count;
+			count++;
+		}
 	}
 
 	public void writeSubSections(ImgFileWriter writer) {
@@ -153,5 +168,9 @@ public class Mdr1 extends MdrSection implements HasHeaderFlags {
 		if (!isForDevice())
 			magic |= 1;
 		return magic;
+	}
+
+	public int sortedMapIndex(int n) {
+		return mapping[n];
 	}
 }

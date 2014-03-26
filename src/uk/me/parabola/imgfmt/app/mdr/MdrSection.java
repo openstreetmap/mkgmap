@@ -117,15 +117,6 @@ public abstract class MdrSection extends ConfigBase {
 	}
 
 	/**
-	 * This is called after all the sections are read in but before any section is written.
-	 *
-	 * This is now pretty much redundant and could be replaced with direct calls for sections
-	 * that need it.
-	 */
-	public void finish() {
-	}
-
-	/**
 	 * Called before the section is written and before the actual size of the section
 	 * is required.
 	 *

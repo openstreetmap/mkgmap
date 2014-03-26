@@ -29,7 +29,7 @@ import uk.me.parabola.imgfmt.app.srt.SortKey;
  */
 public class Mdr6 extends MdrMapSection {
 
-	private final List<Mdr6Record> zips = new ArrayList<Mdr6Record>();
+	private final List<Mdr6Record> zips = new ArrayList<>();
 
 
 	public Mdr6(MdrConfig config) {
@@ -87,5 +87,9 @@ public class Mdr6 extends MdrMapSection {
 	 */
 	public int getExtraValue() {
 		return  ((getSizes().getZipSize()-1)&0x03) | (isForDevice() ? 0 : 0x04);
+	}
+
+	public void relabelMaps(Mdr1 maps) {
+		relabel(maps, zips);
 	}
 }
