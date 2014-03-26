@@ -274,16 +274,19 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 		saver.addNode(endNode);
 
 		int noPOIs = 2;
-		
+		Coord lastPoint = line.getPoints().get(0);
 		if (line.getPoints().size() > 2) {
 			for (Coord inPoint : line.getPoints().subList(1, line.getPoints().size()-1)) {
+				if (inPoint.equals(lastPoint)){
+					continue;
+				}
+				lastPoint = inPoint;
 				Node innerNode = createPOI(line, inPoint, LINE2POI_TAG);
 				innerNode.addTag(LINE2POI_TYPE_TAG,"inner");
 				saver.addNode(innerNode);
 				noPOIs++;
 			}
 		}
-		
 		
 		// calculate the middle of the line
 		Coord prevC = null;
@@ -309,14 +312,13 @@ public class POIGeneratorHook extends OsmReadingHooksAdaptor {
 			} 
 			remMidDist -= nextDist;
 		}
-
+		
 		if (midPoint != null) {
 			Node midNode = createPOI(line, midPoint, LINE2POI_TAG);
 			midNode.addTag(LINE2POI_TYPE_TAG,"mid");
 			saver.addNode(midNode);
 			noPOIs++;
 		}
-
 		return noPOIs;
 
 	}

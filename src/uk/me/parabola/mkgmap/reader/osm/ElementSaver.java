@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import uk.me.parabola.imgfmt.Utils;
 import uk.me.parabola.imgfmt.app.Area;
 import uk.me.parabola.imgfmt.app.Coord;
@@ -220,37 +219,13 @@ public class ElementSaver {
 		for (Relation r : relationMap.values())
 			converter.convertRelation(r);
 
-		Node lastPOI = null;
-		boolean complainedAboutLastPOI = false;
 		for (Node n : nodeMap.values()){
-			if (lastPOI != null && n.getLocation().equals(lastPOI.getLocation())){
-				if (n.getTagCount() == lastPOI.getTagCount()){
-					boolean equalPOI = true;
-					for (Map.Entry<String, String> entry: n.getEntryIteratable()){
-						if (entry.getValue().equals(lastPOI.getTag(entry.getKey())) == false){
-							equalPOI = false;
-							break;
-						}
-					}
-
-					if(equalPOI && !complainedAboutLastPOI){
-						complainedAboutLastPOI = true;
-						if (FakeIdGenerator.isFakeId(n.getId()))
-							log.warn("ignoring duplicate (generated) POI at", n.getLocation().toDegreeString(), n.toTagString());
-						else
-							log.warn("ignoring duplicate POI ", n.toBrowseURL());
-						continue;
-					}
-				}  
+			converter.convertNode(n);
+			if (n.getTag("fixme") != null || n.getTag("FIXME") != null){
+				n.getLocation().setFixme(true);
 			}
-			lastPOI = n;
-			complainedAboutLastPOI = false;
-			
- 			converter.convertNode(n);
- 			if (n.getTag("fixme") != null || n.getTag("FIXME") != null){
- 				n.getLocation().setFixme(true);
- 			}
 		}
+
 		nodeMap = null;
 
 		Iterator<Way> wayIter = wayMap.values().iterator();
