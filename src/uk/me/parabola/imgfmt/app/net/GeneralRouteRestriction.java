@@ -18,7 +18,7 @@ public class GeneralRouteRestriction {
 	private final byte exceptionMask;
 	private final byte type;
 	
-	private Coord fromPoint,toPoint,via1Point,via2Point;
+	private Coord fromPoint,toPoint;
 	private long fromWayId,toWayId,viaWayId;
 	private CoordNode fromNode,toNode,via1Node,via2Node;
 	LongArrayList onlyWays;
@@ -46,18 +46,6 @@ public class GeneralRouteRestriction {
 	}
 	public void setToPoint(Coord toPoint) {
 		this.toPoint = toPoint;
-	}
-	public Coord getVia1Point() {
-		return via1Point;
-	}
-	public void setVia1Point(Coord via1Point) {
-		this.via1Point = via1Point;
-	}
-	public Coord getVia2Point() {
-		return via2Point;
-	}
-	public void setVia2Point(Coord via2Point) {
-		this.via2Point = via2Point;
 	}
 	public long getFromWayId() {
 		return fromWayId;
