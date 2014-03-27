@@ -300,12 +300,12 @@ public class RoadNetwork {
 			return addNoThroughRoute(grr);
 		
 		long fromId = grr.getFromNode().getId();
-		long via1Id = grr.getVia1Node().getId();
-		long via2Id = (grr.getVia2Node() == null) ? -1 : grr.getVia2Node().getId();  
+		long firstViaId = grr.getVia1Node().getId();
+		long lastViaId = (grr.getVia2Node() == null) ? -1 : grr.getVia2Node().getId();  
 		long toId = grr.getToNode().getId();
 		RouteNode fn = nodes.get(fromId);
-		RouteNode v1n = nodes.get(via1Id);
-		RouteNode v2n = (via2Id >= 0) ? nodes.get(via2Id) : null; 
+		RouteNode v1n = nodes.get(firstViaId);
+		RouteNode v2n = (lastViaId >= 0) ? nodes.get(lastViaId) : null; 
 		RouteNode tn = nodes.get(toId);
 		if (fn == null  || tn == null || v1n == null){
 			if (fn == null)
@@ -313,11 +313,11 @@ public class RoadNetwork {
 			if (tn == null)
 				log.error("can't locate 'to' RouteNode with id", toId);
 			if (v1n == null)
-				log.error("can't locate 'via' RouteNode with id", via1Id);
+				log.error("can't locate 'via' RouteNode with id", firstViaId);
 			return 0; 
 		}
-		if (via2Id >= 0 && v2n == null){
-			log.error("can't locate 2nd 'via' RouteNode with id", via2Id);
+		if (lastViaId >= 0 && v2n == null){
+			log.error("can't locate 2nd 'via' RouteNode with id", lastViaId);
 			return 0;
 		}
 		RouteArc fa = v1n.getDirectArcTo(fn, grr.getFromWayId()); // inverse arc gets used
@@ -331,68 +331,64 @@ public class RoadNetwork {
 		}
 		if (fa == null || ta == null){
 			if (fa == null)
-				log.error("can't locate arc from 'via' node ",via1Id,"to 'from' node",fromId,"on way",grr.getFromWayId());
+				log.error("can't locate arc from first 'via' node ",firstViaId,"to 'from' node",fromId,"on way",grr.getFromWayId());
 			if (ta == null)
-				log.error("can't locate arc from 'via' node ",via1Id,"to 'to' node",toId,"on way",grr.getToWayId());
+				log.error("can't locate arc from last 'via' node ",lastViaId,"to 'to' node",toId,"on way",grr.getToWayId());
 			return 0;
 		}
 		if (va == null && v2n != null){
-			log.error("can't locate arc from 1st 'via' node ",via1Id,"to 2nd 'via' node",via2Id,"on way",grr.getViaWayId());
+			log.error("can't locate arc from 1st 'via' node ",firstViaId,"to 2nd 'via' node",lastViaId,"on way",grr.getViaWayId());
 			return 0;
 			
 		}
+		if(va != null && !va.isForward() && va.getRoadDef().isOneway()) {
+			// the route restriction via nodes connects to the "wrong" end of a oneway
+			if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
+				// pedestrians are allowed
+				log.warn("restriction via "+firstViaId + " to " + lastViaId + " ignored because via-arc is wrong direction in oneway ");
+				return 0;
+			} else {
+				log.info("restriction via "+firstViaId + " to " + lastViaId + " added although via-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
+			}
+		}
+		List<RouteArc> badArcs = new ArrayList<>();
+		
 		if (grr.getType() == GeneralRouteRestriction.TYPE_NOT){
 			if(!ta.isForward() && ta.getRoadDef().isOneway()) {
 				// the route restriction connects to the "wrong" end of a oneway
 				if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
 					// pedestrians are allowed
-					log.info("restriction via "+via1Id + " to " + fromId + " ignored because to-arc is wrong direction in oneway ");
+					log.warn("restriction via "+lastViaId + " to " + toId + " ignored because to-arc is wrong direction in oneway ");
 					return 0;
 				} else {
-					log.info("restriction via "+via1Id + " to " + fromId + " added although to-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
+					log.info("restriction via "+lastViaId + " to " + toId + " added although to-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
 				}
 			}
-			if(va != null && !va.isForward() && va.getRoadDef().isOneway()) {
-				// the route restriction connects to the "wrong" end of a oneway
-				if ((grr.getExceptionMask() & RouteRestriction.EXCEPT_FOOT) != 0){
-					// pedestrians are allowed
-					log.info("restriction via "+via1Id + " to " + via2Id + " ignored because via-arc is wrong direction in oneway ");
-					return 0;
-				} else {
-					log.info("restriction via "+via1Id + " to " + via2Id + " added although via-arc is wrong direction in oneway, but restriction also excludes pedestrians.");
-				}
-			}
-			
-			if (va == null){
-				v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, ta), grr.getExceptionMask()));
-				return 1;
-			} 
-			// we need separate objects for each restriction
-			v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, ta), grr.getExceptionMask()));
-			v2n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, ta), grr.getExceptionMask()));
-			return 2; 
+			badArcs.add(ta);
 		}
 		else if (grr.getType() == GeneralRouteRestriction.TYPE_ONLY){
 			// this is the inverse logic, rr gives the allowed path, we have to find the others
 			RouteNode source = ta.getSource();
-			int added = 0;
 			for (RouteArc badArc : source.arcsIteration()){
-				if (!badArc.isDirect() || badArc.getRoadDef() == ta.getRoadDef())
+				if (!badArc.isDirect() || badArc.getRoadDef() == ta.getRoadDef()) // XXX: roadDef or roadId?
 					continue;
-				if (va == null){
-					v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, badArc), grr.getExceptionMask()));
-					++added;
-				} else {
-					// we need separate objects for each restriction
-					v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, badArc), grr.getExceptionMask()));
-					v2n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, badArc), grr.getExceptionMask()));
-					added += 2;
-				}
+				badArcs.add(badArc);
 			}
-			return added;
+			
 		}
-		assert false: "unexpected case ";
-		return 0;
+		int added = 0;
+		for (RouteArc badArc: badArcs){
+			if (va == null){
+				v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, badArc), grr.getExceptionMask()));
+				++added;
+			} else {
+				// we need separate objects for each restriction
+				v1n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, badArc), grr.getExceptionMask()));
+				v2n.addRestriction(new RouteRestriction(Arrays.asList(fa, va, badArc), grr.getExceptionMask()));
+				added += 2;
+			}
+		}
+		return added;
 	}
 
 	private int addNoThroughRoute(GeneralRouteRestriction grr) {
